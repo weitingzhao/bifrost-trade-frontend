@@ -181,9 +181,10 @@ describe('design adoption', () => {
     // reported that not one station page records what it made. Then the first
     // of the seven the design had moved past was re-walked: Research Overview
     // leaves `stale` for `reviewing`, which is outside this sum until the
-    // Owner looks (45→44).
-    expect(counts.aligned + counts.byState.stale).toBe(44)
-    expect(counts.aligned).toBe(38)
+    // Owner looks (45→44), and 45 again when the Owner signed it off the same
+    // day — the first of the seven answered rather than counted.
+    expect(counts.aligned + counts.byState.stale).toBe(45)
+    expect(counts.aligned).toBe(39)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -322,10 +323,10 @@ describe('design adoption', () => {
     // learned, and the four lanes' capture verbs had been folded away with
     // nothing mounting them. `reviewing` is empty; what is left is the seven
     // pages the design moved past and the walk that has not started. The
-    // first of those seven is back in `reviewing`: Research Overview, whose
-    // six-station table became the loop drawn as a circuit at Rev
-    // 2026-09-20.23.
-    expect(counts.byState.reviewing).toBe(1)
+    // first of those seven was re-walked and signed off the same day: Research
+    // Overview, whose six-station table became the loop drawn as a circuit at
+    // Rev 2026-09-20.23.
+    expect(counts.byState.reviewing).toBe(0)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -349,13 +350,14 @@ describe('design adoption', () => {
       '/research/loop/candidates',
       '/research/loop/harness',
       '/research/loop/hypotheses',
+      '/research/overview',
       '/research/ratings/stocks',
       '/research/screener',
       '/research/workbench',
-      // `/research/overview`, `/review` and `/trade/desk` left this list for
-      // `stale`: each became the heading of its own layer in Package
-      // 2026-09-20.3 (§5a.1), which is a change to the page, not only to the
-      // tree around it.
+      // `/review` and `/trade/desk` are still in `stale`: each became the
+      // heading of its own layer in Package 2026-09-20.3 (§5a.1), which is a
+      // change to the page, not only to the tree around it. `/research/
+      // overview` was the third and is back here, re-walked against .23.
       '/review/fit',
       '/review/habits',
       '/review/objectives',
@@ -378,9 +380,7 @@ describe('design adoption', () => {
     // Empty for the first time since the Research walk began: every page this
     // side has walked and built is either in place or waiting on a rev, not on
     // a look.
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/research/overview',
-    ])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row

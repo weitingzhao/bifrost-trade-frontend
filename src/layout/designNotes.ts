@@ -79,7 +79,10 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'the prototype has never had a panel for it, here or anywhere). They sit below the design\u2019s four '
     + 'sections until that ruling. '
     + 'Swept: 38 links, every one resolving; no horizontal overflow at 1024; the Vol ratings chip '
-    + 'clicked through to a page whose h1 is the chip\u2019s own label.',
+    + 'clicked through to a page whose h1 is the chip\u2019s own label. '
+    + 'Owner 2026-09-21: all three blocks stay for now \u2014 the ruling is «\u5148\u7559\u7740», not a '
+    + 'destination, so they keep their place below the design\u2019s four sections and this note carries '
+    + 'the question rather than a silent deletion. Signed off the same day.',
   '/research/workbench':
     'Walked 2026-09-19 against Research Overview.dc.html (workbench view, Rev 2026-09-18.2). The prototype rules the seat home is not redesigned — what changed is around it — so the directory page stands, and the walk adds only the seat-context strip (hand · operator, rail-follows-route sentence). The prototype EmptyState points at Screener Fork lineage and Symbol hand verdicts; both land in W2/W3. Owner ruling 2026-09-19 (Vision §15 Q2, the way §12.3 argued): the seats retire — one tree, Autopilot and the stations standing together — and this page takes the Vision’s own name for them, Pipeline (§12.2: Workbench seat → Pipeline, renamed and de-seated). The current prototype still titles the view Workbench; the rename follows the Vision over the lagging contract, and the seat rail, header chip and ?seat= deep link went with the split. '
     + 'Swept 2026-09-21 under the interaction standard, and it found the worst kind of dead '

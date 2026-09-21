@@ -112,7 +112,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Research',
     crumbs: [],
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.23',
       note: DESIGN_NOTES['/research/overview'],
     },

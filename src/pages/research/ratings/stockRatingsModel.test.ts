@@ -3,9 +3,15 @@ import {
   RATING_LENSES,
   SERVER_WEIGHTS,
   WEIGHT_PRESETS,
+  GROWTH_CHECKS,
+  TREND_CHECKS,
   composite,
+  compositeParts,
+  flagOf,
   lensSpread,
+  pathVariant,
   presetOf,
+  ratingsTape,
   toRatingRow,
   weightSum,
   type RatingRow,
@@ -20,6 +26,7 @@ const row = (over: Partial<RatingRow['scores']> = {}, rest: Partial<RatingRow> =
   stage: null,
   close: null,
   rangePos: null,
+  passes: { trend: null, growth: null },
   ...rest,
 })
 
@@ -126,5 +133,103 @@ describe('lensSpread', () => {
 describe('RATING_LENSES', () => {
   it('is the four the model combines, in the design’s reading order', () => {
     expect(RATING_LENSES.map((l) => l.key)).toEqual(['trend', 'growth', 'momentum', 'structure'])
+  })
+})
+
+
+describe('the checklists behind the two scores that have one', () => {
+  it('reads the pass counts the row reports', () => {
+    const r = toRatingRow({
+      symbol: 'x',
+      trend_template_score: 81.8182,
+      tech_pass_count: 9,
+      fundamental_score: 37.5,
+      fund_pass_count: 3,
+    })
+    expect(r?.passes).toEqual({ trend: 9, growth: 3 })
+  })
+
+  it('keeps the count absent rather than deriving it from the score', () => {
+    // The two agree on DEV — 9/11 is 81.8182 — but a score without its count
+    // is a score, and inventing `Math.round(v / 100 * 11)` would print a
+    // checklist result nobody counted.
+    const r = toRatingRow({ symbol: 'x', trend_template_score: 81.8182 })
+    expect(r?.passes.trend).toBeNull()
+    expect(r?.scores.trend).toBeCloseTo(81.8182, 4)
+  })
+
+  it('counts eleven trend checks and eight fundamental ones', () => {
+    expect([TREND_CHECKS, GROWTH_CHECKS]).toEqual([11, 8])
+  })
+})
+
+describe('flagOf', () => {
+  it('cuts hot at 70 and cold at 35, and calls the gap neutral', () => {
+    expect(flagOf(70)).toBe('hot')
+    expect(flagOf(69.9)).toBe('neutral')
+    expect(flagOf(35)).toBe('cold')
+    expect(flagOf(35.1)).toBe('neutral')
+  })
+
+  it('does not call an unscored name cold', () => {
+    // No composite is not a bad composite.
+    expect(flagOf(null)).toBe('neutral')
+  })
+})
+
+describe('pathVariant', () => {
+  it('colours by what the model says to do', () => {
+    expect(pathVariant('PIVOT')).toBe('success')
+    expect(pathVariant('SETUP')).toBe('info')
+    expect(pathVariant('AVOID')).toBe('danger')
+    expect(pathVariant('WATCH')).toBe('neutral')
+    expect(pathVariant(null)).toBe('neutral')
+  })
+})
+
+describe('ratingsTape', () => {
+  it('calls breadth constructive at a quarter of the set', () => {
+    expect(ratingsTape(5, 0, 20).label).toBe('Constructive tape')
+    expect(ratingsTape(4, 0, 20).label).toBe('Mixed tape')
+  })
+
+  it('has a floor of three, so a tiny set does not read as breadth', () => {
+    expect(ratingsTape(2, 0, 4).label).toBe('Mixed tape')
+    expect(ratingsTape(3, 0, 4).label).toBe('Constructive tape')
+  })
+
+  it('says so when nothing is scored rather than reading as mixed', () => {
+    expect(ratingsTape(0, 0, 0).label).toBe('Nothing scored')
+  })
+
+  it('names the counts it read the verdict from', () => {
+    expect(ratingsTape(1, 1, 10).sentence).toContain('1 strong · 1 weak of 10')
+  })
+})
+
+describe('compositeParts', () => {
+  it('splits the composite into points that add back up to it', () => {
+    const r = row({ trend: 80, growth: 60, momentum: 40, structure: 20 })
+    const w = { trend: 40, growth: 30, momentum: 20, structure: 10 }
+    const parts = compositeParts(r, w)
+    const total = parts.reduce((a, p) => a + (p.points ?? 0), 0)
+    expect(total).toBeCloseTo(composite(r, w).score ?? 0, 10)
+  })
+
+  it('leaves a missing lens without points and still adds up', () => {
+    const r = row({ growth: null })
+    const w = { trend: 40, growth: 30, momentum: 20, structure: 10 }
+    const parts = compositeParts(r, w)
+    expect(parts.find((p) => p.key === 'growth')?.points).toBeNull()
+    const total = parts.reduce((a, p) => a + (p.points ?? 0), 0)
+    expect(total).toBeCloseTo(composite(r, w).score ?? 0, 10)
+  })
+
+  it('lists a lens you turned off rather than hiding it', () => {
+    const parts = compositeParts(row(), { trend: 100, growth: 0, momentum: 0, structure: 0 })
+    const growth = parts.find((p) => p.key === 'growth')
+    expect(growth?.weight).toBe(0)
+    expect(growth?.points).toBeNull()
+    expect(parts).toHaveLength(4)
   })
 })

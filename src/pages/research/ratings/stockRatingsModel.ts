@@ -43,6 +43,57 @@ export type RatingLensKey = (typeof RATING_LENSES)[number]['key']
 export type RatingWeights = Record<RatingLensKey, number>
 
 /**
+ * The checklists behind the two scores that have one.
+ *
+ * `trend_template_score` is exactly `tech_pass_count / 11 × 100` — measured
+ * across all 500 rows on DEV 2026-09-21, the score takes only the eleven
+ * values 45.45, 54.55 … 100 and each one is a pass count. `fundamental_score`
+ * is the same against eight. So the design's `8/11` and `3/8` are not a
+ * different reading from the percentage; they are the *same number in a form
+ * that says what it counted*.
+ *
+ * Which matters here more than it looks: 231 of the 500 rows score exactly
+ * 100 on trend, so a column of percentages is a column of hundreds, while
+ * `11/11` beside `10/11` still says which checks a name is missing.
+ */
+export const TREND_CHECKS = 11
+export const GROWTH_CHECKS = 8
+
+/** Where the design cuts the composite. Hot is the design's own 70. */
+export const HOT_AT = 70
+export const COLD_AT = 35
+
+export type RatingFlag = 'hot' | 'cold' | 'neutral'
+
+export function flagOf(score: number | null): RatingFlag {
+  if (score == null) return 'neutral'
+  if (score >= HOT_AT) return 'hot'
+  return score <= COLD_AT ? 'cold' : 'neutral'
+}
+
+/**
+ * The tag a path wears.
+ *
+ * The design colours this cell by **path** — what the model says to do —
+ * rather than by grade, and the two disagree: on DEV grade splits 15 A / 298
+ * B / 187 C while path splits 15 PIVOT / 298 SETUP / 187 WATCH. Colouring by
+ * grade made every A green and said nothing about whether the name is
+ * actionable today.
+ */
+export function pathVariant(path: string | null): 'success' | 'info' | 'danger' | 'neutral' {
+  switch ((path ?? '').toUpperCase()) {
+    case 'PIVOT':
+      return 'success'
+    case 'SETUP':
+      return 'info'
+    case 'AVOID':
+      return 'danger'
+    default:
+      return 'neutral'
+  }
+}
+
+/**
  * The server's own weights, read off `factors_json` rather than guessed.
  *
  * Written as whole percentages because that is what a slider moves. They sum
@@ -99,6 +150,11 @@ export interface RatingRow {
   close: number | null
   /** Where the close sits between the 52-week low and high, 0–1. */
   rangePos: number | null
+  /**
+   * The two scores the row also reports as a count of checks passed —
+   * `trend` out of {@link TREND_CHECKS}, `growth` out of {@link GROWTH_CHECKS}.
+   */
+  passes: { trend: number | null; growth: number | null }
 }
 
 /** A row from `/research/sepa/model/daily`, as the page reads it. */
@@ -115,6 +171,8 @@ export interface RawRatingRow {
   latest_close?: number | null
   high_52w?: number | null
   low_52w?: number | null
+  tech_pass_count?: number | null
+  fund_pass_count?: number | null
 }
 
 export function toRatingRow(raw: RawRatingRow): RatingRow | null {
@@ -136,6 +194,10 @@ export function toRatingRow(raw: RawRatingRow): RatingRow | null {
     path: raw.path ?? null,
     stage: raw.stage ?? null,
     close,
+    passes: {
+      trend: finiteOrNull(raw.tech_pass_count),
+      growth: finiteOrNull(raw.fund_pass_count),
+    },
     // Price against its own year, which is the one range this row carries.
     rangePos:
       close != null && hi != null && lo != null && hi > lo
@@ -219,4 +281,87 @@ export function lensSpread(
     else mid += 1
   }
   return { hot, mid, cold, scored }
+}
+
+/**
+ * The Tape panel's verdict on the working set.
+ *
+ * The design writes three: constructive, weak, mixed, each a sentence about
+ * breadth rather than about any one name. The thresholds are the design's —
+ * a quarter of the set, floor of three — and the sentence names the counts it
+ * read them from, so a reader can disagree with the verdict without having to
+ * guess what it saw.
+ */
+export function ratingsTape(
+  hot: number,
+  cold: number,
+  total: number,
+): { label: string; sentence: string } {
+  const quarter = Math.max(3, Math.floor(total * 0.25))
+  if (total === 0) {
+    return {
+      label: 'Nothing scored',
+      sentence: 'No name in this universe carries a score today.',
+    }
+  }
+  if (hot >= quarter) {
+    return {
+      label: 'Constructive tape',
+      sentence: `${hot} of ${total} clear ${HOT_AT} at these weights. Breadth is there; work down the list.`,
+    }
+  }
+  if (cold >= quarter) {
+    return {
+      label: 'Weak tape',
+      sentence: `${cold} of ${total} sit at or under ${COLD_AT}. Sit on hands or hedge — the breadth is against you.`,
+    }
+  }
+  return {
+    label: 'Mixed tape',
+    sentence: `${hot} strong · ${cold} weak of ${total}. Nothing systemic; work the top of the list name by name.`,
+  }
+}
+
+export interface CompositePart {
+  key: RatingLensKey
+  label: string
+  /** The lens score, 0–100, or null where the row has none. */
+  value: number | null
+  /** The weight you gave it. */
+  weight: number
+  /** What it contributed to the composite, in composite points. */
+  points: number | null
+}
+
+/**
+ * The composite, taken apart.
+ *
+ * This is the page's own sentence made checkable: *a ranked list whose
+ * ranking you cannot interrogate is a number to take on faith*. Each lens
+ * contributes `score × weight / Σ(weights actually applied)`, and the parts
+ * sum to the composite — including when a lens is missing, because the
+ * divisor is the applied weight rather than the weight you set.
+ *
+ * A lens weighted zero is listed with no points rather than hidden: you
+ * turned it off, and the panel should show that you did.
+ *
+ * The parts sum to the composite exactly; what the panel prints does not
+ * always, because each part is rounded on its own. The panel says so.
+ */
+export function compositeParts(row: RatingRow, weights: RatingWeights): CompositePart[] {
+  let applied = 0
+  for (const lens of RATING_LENSES) {
+    if (weights[lens.key] > 0 && row.scores[lens.key] != null) applied += weights[lens.key]
+  }
+  return RATING_LENSES.map((lens) => {
+    const value = row.scores[lens.key]
+    const weight = weights[lens.key]
+    return {
+      key: lens.key,
+      label: lens.label,
+      value,
+      weight,
+      points: value == null || weight <= 0 || applied <= 0 ? null : (value * weight) / applied,
+    }
+  })
 }

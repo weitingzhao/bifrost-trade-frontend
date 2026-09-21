@@ -157,7 +157,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'The Book',
     crumbs: RESEARCH,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.24',
       note: DESIGN_NOTES['/research/book'],
     },
@@ -488,7 +488,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Risk',
     crumbs: [],
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.19',
       note: DESIGN_NOTES['/risk'],
     },

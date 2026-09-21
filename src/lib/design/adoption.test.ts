@@ -161,8 +161,8 @@ describe('design adoption', () => {
     // Research Overview, the Trade Desk and the Review Queue are each now the
     // layer itself rather than its first row — so they leave `aligned` for
     // `stale` without leaving the walked set.
-    expect(counts.aligned + counts.byState.stale).toBe(37)
-    expect(counts.aligned).toBe(30)
+    expect(counts.aligned + counts.byState.stale).toBe(39)
+    expect(counts.aligned).toBe(32)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -278,8 +278,12 @@ describe('design adoption', () => {
     // signed off (reviewing 8→7, aligned 28→29). `/research/screener` follows,
     // signed off knowing it is unfinished — the funnel, the rail and the loop
     // are enough to use, and its note lists what a later round still owes
-    // (reviewing 7→6, aligned 29→30).
-    expect(counts.byState.reviewing).toBe(6)
+    // (reviewing 7→6, aligned 29→30). Then the two layer pages that had been
+    // walked twice and were waiting only on a look — `/research/book` and
+    // `/risk` — were signed off together (reviewing 6→4, aligned 30→32). What
+    // is left in `reviewing` is the R1 batch: three loop pages built before
+    // the interaction standard existed.
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -297,6 +301,7 @@ describe('design adoption', () => {
       '/portfolio/pnl-explain',
       '/portfolio/positions',
       '/portfolio/transfer',
+      '/research/book',
       '/research/copilot/trading',
       '/research/screener',
       // `/research/overview`, `/review` and `/trade/desk` left this list for
@@ -308,6 +313,7 @@ describe('design adoption', () => {
       '/review/objectives',
       '/review/playbook-stats',
       '/review/proposals',
+      '/risk',
       '/risk/budget',
       '/risk/limits',
       '/risk/margin',
@@ -322,12 +328,10 @@ describe('design adoption', () => {
       '/trade/rules',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/research/book',
       '/research/loop/candidates',
       '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/workbench',
-      '/risk',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they

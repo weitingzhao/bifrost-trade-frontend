@@ -105,6 +105,10 @@ export const router = createBrowserRouter([
       { path: 'market/live', lazy: lazyPage(() => import('@/pages/market/LivePage')) },
 
       { path: 'research/watchlist', lazy: lazyPage(() => import('@/pages/research/data/StockWatchlistPage')) },
+      {
+        path: 'research/journal',
+        lazy: lazyPage(() => import('@/pages/research/journal/JournalPage')),
+      },
 
       // The layer's own page (design §5a.1): two folds, neither of which is
       // Portfolio, so the layer gets a page rather than an alias.

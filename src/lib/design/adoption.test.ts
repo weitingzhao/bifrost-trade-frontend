@@ -294,8 +294,11 @@ describe('design adoption', () => {
     // objective panel — are named on the page (reviewing 4→3, aligned 32→33).
     // Then Stock ratings was built from nothing — the page the Screener's Rank
     // by was blocked on — which is the first row to leave `unbuilt` for
-    // `reviewing` in this round (unbuilt 27→26, reviewing 3→4).
-    expect(counts.byState.reviewing).toBe(4)
+    // `reviewing` in this round (unbuilt 27→26, reviewing 3→4). The Journal
+    // followed the same way on 2026-09-21 (unbuilt 26→25, reviewing 4→5): The
+    // Book's index, joined out of five stores because no artifact store
+    // exists on this side.
+    expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -341,6 +344,7 @@ describe('design adoption', () => {
       '/trade/rules',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/research/journal',
       '/research/loop/candidates',
       '/research/loop/hypotheses',
       '/research/ratings/stocks',
@@ -398,8 +402,10 @@ describe('design adoption', () => {
     // carries it as an alias of that same page, so it is answered, not built.
     // 32 with Package 2026-09-20.3's three layer overview pages, back to 29
     // once all three were built, 28 when the Owner's ruling gave the Stock
-    // screen to a page that exists, and 27 with Review Objectives.
-    expect(counts.byState.unbuilt).toBe(26)
+    // screen to a page that exists, and 27 with Review Objectives. 26 with
+    // Stock ratings, and 25 with the Journal — W4's own page, built the day
+    // after (2026-09-21).
+    expect(counts.byState.unbuilt).toBe(25)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

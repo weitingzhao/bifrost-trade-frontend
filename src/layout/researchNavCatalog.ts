@@ -71,9 +71,13 @@ export const BOOK_PAGES = {
   hypotheses: route('Hypothesis Board', '/research/loop/hypotheses', BookOpen),
   candidates: route('Candidate Pool', '/research/loop/candidates', ListFilter),
   watchlist: route('Watchlist', '/research/watchlist', Star),
+  // The fourth row the design's `fold:book` has always carried. It waited on
+  // the page, not on the ruling — built 2026-09-21, routed the same hour,
+  // because a page nobody can reach is a page nobody reads.
+  journal: route('Journal', '/research/journal', History),
 }
 
-/** One id, the design's own `fold:book`. The Journal row joins beside it in W4. */
+/** One id, the design's own `fold:book`. */
 /**
  * A dual row since §5a.4: the fold has a page of its own now.
  *

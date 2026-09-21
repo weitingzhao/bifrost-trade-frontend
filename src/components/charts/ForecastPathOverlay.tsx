@@ -4,6 +4,7 @@
  */
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { numericOrNull } from '@/utils/finite'
 
 export interface ForecastPathHourly {
   hour_et: number
@@ -25,12 +26,6 @@ interface ForecastPathOverlayProps {
   className?: string
 }
 
-function num(v: unknown): number | null {
-  if (v == null) return null
-  const n = Number(v)
-  return Number.isFinite(n) ? n : null
-}
-
 export function ForecastPathOverlay({
   forecast,
   realized,
@@ -44,9 +39,9 @@ export function ForecastPathOverlay({
     const hours = forecast
       .map((h) => ({
         hour_et: Number(h.hour_et),
-        low: num(h.level_low),
-        high: num(h.level_high),
-        target: num(h.level_target),
+        low: numericOrNull(h.level_low),
+        high: numericOrNull(h.level_high),
+        target: numericOrNull(h.level_target),
         realized: null as number | null,
       }))
       .filter((h) => Number.isFinite(h.hour_et))
@@ -56,7 +51,7 @@ export function ForecastPathOverlay({
 
     const realizedByHour = new Map<number, number>()
     for (const r of realized ?? []) {
-      const c = num(r.close)
+      const c = numericOrNull(r.close)
       if (c != null) realizedByHour.set(Number(r.hour_et), c)
     }
     for (const h of hours) {

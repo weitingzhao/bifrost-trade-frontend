@@ -67,11 +67,12 @@ describe('scopeRouteLabel', () => {
     // path, so the Lens's footer used to read "… Hypothesis Board · Bifrost
     // Trade" — a sentence that names the product where it meant a page.
     //
-    // `/review/objectives` was the example until it was built on 2026-09-20;
-    // any design route this side has no page for exercises the same fall-back,
-    // so the test moved to one that is still unbuilt rather than being dropped.
-    expect(scopeRouteLabel('/research/journal')).toBe('Journal')
-    expect(scopeRouteLabel('/research/journal')).not.toBe(routeFor('/research/journal').label)
+    // `/review/objectives` was the example until it was built on 2026-09-20,
+    // and `/research/journal` until 2026-09-21; any design route this side has
+    // no page for exercises the same fall-back, so the test moves to one that
+    // is still unbuilt rather than being dropped. It will move again.
+    expect(scopeRouteLabel('/research/narrative')).toBe('Narrative')
+    expect(scopeRouteLabel('/research/narrative')).not.toBe(routeFor('/research/narrative').label)
     // And the built one now answers with this side's own label, which is the
     // other half of the same rule.
     expect(scopeRouteLabel('/review/objectives')).toBe(routeFor('/review/objectives').label)

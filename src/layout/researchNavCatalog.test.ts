@@ -115,10 +115,13 @@ describe('one tree, both homes', () => {
     // every dual row, so it lights while you stand on it.
     const fold = flatten(researchItems(ctx)).find((i) => i.label === 'The Book')
     expect([fold?.id, fold?.to]).toEqual([BOOK_PAGE, BOOK_PAGE])
+    // Four since 2026-09-21: the design's `fold:book` has carried a Journal
+    // row since the package was written, and the row waited on the page.
     expect(fold?.children?.map((c) => [c.label, c.to])).toEqual([
       ['Hypothesis Board', '/research/loop/hypotheses'],
       ['Candidate Pool', '/research/loop/candidates'],
       ['Watchlist', '/research/watchlist'],
+      ['Journal', '/research/journal'],
     ])
   })
 

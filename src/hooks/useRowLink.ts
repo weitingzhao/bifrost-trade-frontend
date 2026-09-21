@@ -45,3 +45,44 @@ export function useRowLink(): (to: string, className?: string) => RowLinkProps {
     [navigate],
   )
 }
+
+/**
+ * A row that picks something on this page rather than opening another one.
+ *
+ * Same six lines as `useRowLink` minus the navigation: the Review queue picks
+ * the trade the panel beside it reviews, Stock ratings picks the symbol the
+ * inspector explains. Both grew the pointer and the keyboard route by hand,
+ * which is when it becomes one helper — and the Review queue had grown only
+ * the pointer, so sixty-eight rows were mouse-only.
+ *
+ * `aria-pressed` rather than `aria-selected`: the row is a toggle, and
+ * `aria-selected` on a `<tr>` means a selectable grid, which this table is
+ * not.
+ */
+export interface RowSelectProps {
+  role: 'button'
+  tabIndex: 0
+  'aria-pressed': boolean
+  className: string
+  onClick: () => void
+  onKeyDown: (e: KeyboardEvent<HTMLElement>) => void
+}
+
+export function rowSelectProps(
+  selected: boolean,
+  pick: () => void,
+  className?: string,
+): RowSelectProps {
+  return {
+    role: 'button',
+    tabIndex: 0,
+    'aria-pressed': selected,
+    className: cn('cursor-pointer', className),
+    onClick: pick,
+    onKeyDown: (e: KeyboardEvent<HTMLElement>) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      e.preventDefault()
+      pick()
+    },
+  }
+}

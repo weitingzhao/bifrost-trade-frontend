@@ -16,6 +16,9 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
+import { rowSelectProps } from '@/hooks/useRowLink'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -89,11 +92,13 @@ function QueueRow({
 }) {
   return (
     <tr
-      onClick={onPick}
-      aria-selected={picked}
-      className={cn(
-        'cursor-pointer hover:[&>td]:bg-[var(--sk-raised2)]',
-        picked && '[&>td]:bg-[var(--sk-raised2)]',
+      {...rowSelectProps(
+        picked,
+        onPick,
+        cn(
+          'hover:[&>td]:bg-[var(--sk-raised2)]',
+          picked && '[&>td]:bg-[var(--sk-raised2)]',
+        ),
       )}
     >
       <td className={cn(positionsUi.td, 'pl-2 text-left whitespace-normal')}>
@@ -105,9 +110,18 @@ function QueueRow({
         </span>
       </td>
       {/* `symbol` on a closed option trade is the raw OCC string; the column wants the
-          underlying, the way §14.4 draws one. */}
+          underlying, the way §14.4 draws one. The name is its own destination —
+          and it sits inside a row that picks, so its click must stop there or
+          both fire and the row wins. */}
       <td className={cn(positionsUi.td, 'text-left font-bold text-sky-300')}>
-        {extractUnderlyingRootSymbol(t.symbol)}
+        <Link
+          to={withSymbolParam(SYMBOL_PATH, extractUnderlyingRootSymbol(t.symbol))}
+          onClick={(e) => e.stopPropagation()}
+          className="hover:underline"
+          title={`Open ${extractUnderlyingRootSymbol(t.symbol)} on Symbol`}
+        >
+          {extractUnderlyingRootSymbol(t.symbol)}
+        </Link>
       </td>
       <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}>
         {t.play ?? 'no play recorded'}

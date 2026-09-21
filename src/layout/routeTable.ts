@@ -452,7 +452,7 @@ export const ROUTES: readonly RouteEntry[] = [
     // same level twice.
     label: 'Review',
     crumbs: [],
-    design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review'] },
+    design: { state: 'reviewing', rev: '2026-09-20.23', note: DESIGN_NOTES['/review'] },
   },
   {
     path: '/review/fit',

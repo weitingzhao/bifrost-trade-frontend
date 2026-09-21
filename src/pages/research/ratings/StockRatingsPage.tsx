@@ -46,6 +46,7 @@ import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { WhyInspector } from './WhyInspector'
 import { cn } from '@/lib/utils'
 import { fetchSepaDaily } from '@/api/researchEngine'
+import { rowSelectProps } from '@/hooks/useRowLink'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import {
@@ -484,18 +485,10 @@ export default function StockRatingsPage() {
                   {scored.slice(0, ROW_CAP).map(({ row, score, missing }) => (
                     <DenseTableRow
                       key={row.symbol}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={selected === row.symbol}
-                      onClick={() => setSelected(selected === row.symbol ? null : row.symbol)}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter' && e.key !== ' ') return
-                        e.preventDefault()
-                        setSelected(selected === row.symbol ? null : row.symbol)
-                      }}
-                      className={cn(
-                        'cursor-pointer',
-                        selected === row.symbol && 'bg-primary/[0.06]',
+                      {...rowSelectProps(
+                        selected === row.symbol,
+                        () => setSelected(selected === row.symbol ? null : row.symbol),
+                        cn(selected === row.symbol && 'bg-primary/[0.06]'),
                       )}
                     >
                       <DenseTableCell className="max-w-none whitespace-nowrap">

@@ -26,6 +26,23 @@
  * layer page goes amber when a source has gone quiet, the way a breach panel
  * goes red. It is a meaning, not a colour — the component decides how amber
  * looks, so two panels saying the same thing cannot say it differently.
+ *
+ * ## The two surfaces
+ *
+ * A panel is a **well**: its body is the inset surface and its header is the
+ * elevated one, so the header lifts off the body and the body sits below the
+ * canvas. Both come straight from the design's own tokens — the prototypes
+ * paint `.os-panel` with `--sk-ground` and `.os-panel-h` with `--sk-surface`,
+ * which are `bg-background` and `bg-secondary` here, value for value.
+ *
+ * It was `bg-card` on both until 2026-09-21, which is the canvas colour: the
+ * panels were the same shade as the page behind them and only a hairline
+ * border said where one ended. Pages built this way read flat beside their
+ * prototypes, and the repo's own canvas rule had been saying so the whole
+ * time — *a `bg-card` block the same colour as the canvas is forbidden*.
+ * Changed for every reader at once rather than per page, because a panel that
+ * looks different on two pages one click apart is worse than one that
+ * disagrees with a prototype.
  */
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
@@ -69,7 +86,7 @@ export function SectionPanel({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-lg border bg-card',
+        'overflow-hidden rounded-lg border bg-background',
         tone == null ? 'border-border' : TONE_PANEL[tone],
         className,
       )}
@@ -77,7 +94,7 @@ export function SectionPanel({
       <header
         className={cn(
           'flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2',
-          tone == null ? 'bg-secondary/40' : TONE_HEADER[tone],
+          tone == null ? 'bg-secondary' : TONE_HEADER[tone],
         )}
       >
         {cap != null ? (

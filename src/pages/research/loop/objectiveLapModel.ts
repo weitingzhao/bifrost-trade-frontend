@@ -200,3 +200,68 @@ export function splitByObjective<T extends Pick<ResearchCandidate, 'source_ref'>
   }
   return { kept, otherObjective, noObjective, total: rows.length }
 }
+
+/**
+ * Why this name was nominated — the design's "Thesis sketch".
+ *
+ * An earlier walk recorded that this column "has no field", which was too
+ * strong. There is no prose thesis, but every candidate carries a
+ * `lens_snapshot`: the lenses that fired when the run proposed it. Measured
+ * on DEV over 62 rows — `path` and `grade` on 51, `stage` on 50,
+ * `sepa_score` on 50, `momentum_score` on 49, and an options lens
+ * (`iv_rank_1y`, `vrp_pct_252d`, `option_composite`) on a handful.
+ *
+ * That *is* the sketch, in the vocabulary this side actually has: the
+ * objective's own plan says `analyze_symbol` attaches "which layer(s) fired",
+ * and this is what it attached. Writing it out beats a blank column, and
+ * beats prose nobody wrote.
+ *
+ * Only the lenses present are printed. A name proposed by a screen rather
+ * than a run carries nothing here, and gets an empty sketch rather than a
+ * sentence invented for it.
+ */
+export function candidateSketch(row: Pick<ResearchCandidate, 'lens_snapshot'>): string[] {
+  const ls = (row.lens_snapshot ?? {}) as Record<string, unknown>
+  const num = (k: string): number | null => {
+    const v = ls[k]
+    return typeof v === 'number' && Number.isFinite(v) ? v : null
+  }
+  const str = (k: string): string | null => {
+    const v = ls[k]
+    return typeof v === 'string' && v ? v : null
+  }
+  const out: string[] = []
+  const stage = str('stage')
+  const path = str('path')
+  if (path && stage) out.push(`${path} · ${stage.replace(/^STAGE_/, 'stage ')}`)
+  else if (path) out.push(path)
+  else if (stage) out.push(stage.replace(/^STAGE_/, 'stage '))
+  const grade = str('grade')
+  if (grade) out.push(`grade ${grade}`)
+  const sepa = num('sepa_score')
+  if (sepa != null) out.push(`SEPA ${sepa.toFixed(1)}`)
+  const mom = num('momentum_score')
+  if (mom != null) out.push(`momentum ${mom.toFixed(1)}`)
+  const ivr = num('iv_rank_1y') ?? num('iv_rank')
+  if (ivr != null) out.push(`IV rank ${Math.round(ivr)}`)
+  const vrp = num('vrp_pct_252d')
+  if (vrp != null) out.push(`VRP ${vrp.toFixed(1)}`)
+  const terrain = str('terrain_regime')
+  if (terrain) out.push(terrain)
+  return out
+}
+
+/**
+ * The bar beside a candidate's score, measured against the best in view.
+ *
+ * The design's Fit is a share of hypothesis conditions satisfied, so its bar
+ * runs to 100%. This side's `score` is the loop's composite at ingest and
+ * nothing documents its ceiling — observed 0.71 to 85.2 — so a bar drawn to
+ * 100 would invent a scale. Measured against the highest score on screen it
+ * invents nothing and still answers the question the bar is for: which of
+ * these did the loop rank highest.
+ */
+export function scoreShare(score: number | null, best: number | null): number | null {
+  if (score == null || best == null || best <= 0) return null
+  return Math.max(0, Math.min(1, score / best))
+}

@@ -29,7 +29,10 @@ function routerPaths(routes: readonly RouteObject[], parent = ''): string[] {
   })
 }
 
-const ROUTER_PATHS = routerPaths(router.routes).filter((p) => p !== '/')
+// `/` is the layout itself and `/*` is the boundary a path nobody routed lands
+// on — neither is a page, so neither wants a registry entry with a label and a
+// trail. Everything else must have one.
+const ROUTER_PATHS = routerPaths(router.routes).filter((p) => p !== '/' && p !== '/*')
 
 describe('route registry', () => {
   it('covers every path the router registers — a new route without an entry fails here', () => {

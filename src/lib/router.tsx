@@ -399,6 +399,15 @@ export const router = createBrowserRouter([
       // The old names, kept working. `/settings/*` and `/operations/*` were
       // two words for the same machine; bookmarks and old links predate the
       // rename and must not 404.
+      //
+      // Anything else. Without this a path nobody routed rendered a blank
+      // document — no shell, no sidebar, forty-four characters of nothing —
+      // because `errorElement` only fires on a throw and a no-match does not
+      // throw. Found by clicking a link whose comment claimed React Router
+      // would "simply render the 404 boundary"; it did not, and the claim had
+      // never been checked. Inside the layout, so a wrong URL still lands
+      // somewhere with a way out.
+      { path: '*', element: <RouteErrorPage /> },
     ],
   },
 ])

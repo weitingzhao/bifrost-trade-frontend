@@ -13,9 +13,16 @@
  * cards whose grades and scores had been clipped away.
  *
  * The card itself is a clickable link. Consumers can override the target via
- * `to`, otherwise it navigates to `/research/hypothesis/{id}` (detail page is
- * scaffolded post-A4 — for now the link is graceful even if the route is not
- * yet mounted, because React Router simply renders the 404 boundary).
+ * `to`; otherwise it opens the Hypothesis Board, which is where a hypothesis
+ * is drawn on this side.
+ *
+ * It used to default to `/research/hypothesis/{id}`, with a comment saying the
+ * link was "graceful even if the route is not yet mounted, because React
+ * Router simply renders the 404 boundary". Neither half held: the route was
+ * never mounted, and an unmatched path rendered a blank document rather than
+ * a boundary. Every card on Pipeline was a dead link. The rule this cost:
+ * never point at a page that does not exist yet, however gracefully you
+ * believe the failure degrades — check it.
  */
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, FlaskConical } from 'lucide-react'
@@ -63,7 +70,7 @@ export interface HypothesisCardProps {
 }
 
 export function HypothesisCard({ hypothesis, to, className }: HypothesisCardProps) {
-  const target = to ?? `/research/hypothesis/${encodeURIComponent(hypothesis.id)}`
+  const target = to ?? '/research/loop/hypotheses'
   // Carries the hypothesis and its symbols so the builder opens ready to run,
   // rather than asking you to find the thesis again in a dropdown.
   const backtestTarget = `/research/backtest?tab=event-query&hypothesis_id=${encodeURIComponent(hypothesis.id)}${

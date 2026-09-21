@@ -8,7 +8,11 @@ import { ArrowUpRight, ListFilter, X } from 'lucide-react'
 import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
 import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
-import { splitByObjective } from '@/pages/research/loop/objectiveLapModel'
+import {
+  candidateSketch,
+  scoreShare,
+  splitByObjective,
+} from '@/pages/research/loop/objectiveLapModel'
 import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
 import { CandidateOutcomeSummary } from '@/components/research/CandidateOutcomeSummary'
 import { useCandidateOutcomeByCandidate } from '@/hooks/useCandidateOutcome'
@@ -125,6 +129,13 @@ export default function CandidatePoolPage() {
     : dismiss.isPending
       ? dismiss.variables
       : null
+
+  // The bar's ceiling: the best score on screen. Nothing documents the
+  // composite's own ceiling, so this is the only one that cannot lie.
+  const bestScore = useMemo(
+    () => items.reduce<number | null>((b, c) => (c.score != null && (b == null || c.score > b) ? c.score : b), null),
+    [items],
+  )
 
   const openCount = useMemo(
     () => items.filter((c) => c.status === 'open').length,
@@ -264,6 +275,7 @@ export default function CandidatePoolPage() {
               <DenseTableHead className="text-right">Score</DenseTableHead>
               <DenseTableHead>Trade date</DenseTableHead>
               <DenseTableHead>Age</DenseTableHead>
+              <DenseTableHead>Why</DenseTableHead>
               <DenseTableHead>Tags</DenseTableHead>
               <DenseTableHead>Book</DenseTableHead>
               <DenseTableHead>Status</DenseTableHead>
@@ -301,7 +313,20 @@ export default function CandidatePoolPage() {
                       </span>
                     </span>
                   </DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>{fmtScore(row.score)}</DenseTableCell>
+                  <DenseTableCell className={cn(denseTableNumCell, 'max-w-none')}>
+                    <span className="block">{fmtScore(row.score)}</span>
+                    {/* Against the best in view, not against 100: the composite
+                        has no documented ceiling, and a bar drawn to one would
+                        invent a scale. */}
+                    <span className="mt-0.5 block h-[3px] overflow-hidden rounded-sm bg-muted">
+                      {scoreShare(row.score, bestScore) != null ? (
+                        <span
+                          className="block h-full rounded-sm bg-foreground/45"
+                          style={{ width: `${Math.max(3, scoreShare(row.score, bestScore)! * 100)}%` }}
+                        />
+                      ) : null}
+                    </span>
+                  </DenseTableCell>
                   <DenseTableCell className="font-mono tabular-nums text-dense-meta">
                     {row.trade_date || '—'}
                   </DenseTableCell>
@@ -317,6 +342,24 @@ export default function CandidatePoolPage() {
                     title={row.ttl_at ? `ttl ${row.ttl_at.slice(0, 10)}` : 'no ttl'}
                   >
                     {candidateAge(row, nowIso).label}
+                  </DenseTableCell>
+                  {/* The design's Thesis sketch, in the vocabulary this side
+                      has: the lenses that fired when the run proposed it.
+                      Empty for a name no run nominated, rather than a
+                      sentence invented for it. */}
+                  <DenseTableCell className="max-w-none whitespace-normal">
+                    {candidateSketch(row).length > 0 ? (
+                      <span className="text-dense-meta leading-snug text-muted-foreground">
+                        {candidateSketch(row).join(' · ')}
+                      </span>
+                    ) : (
+                      <span
+                        className="text-muted-foreground"
+                        title="No lens snapshot on this nomination — nothing recorded why it was proposed."
+                      >
+                        —
+                      </span>
+                    )}
                   </DenseTableCell>
                   <DenseTableCell>
                     <div className="flex flex-wrap gap-1">
@@ -386,8 +429,12 @@ export default function CandidatePoolPage() {
 
       <p className="text-dense-caption leading-normal text-muted-foreground">
         Score is the loop's composite at ingest — it ranks attention, it does not size or trade
-        anything (D10). Promote writes a Hypothesis directly and the row keeps the link; Dismiss
-        and ttl expiry keep history.
+        anything (D10); its bar is drawn against the best score in view, because nothing documents
+        the composite's own ceiling. <span className="text-foreground/80">Why</span> is the lens
+        snapshot the run attached when it proposed the name — this side's version of the design's
+        thesis sketch, which is a record of what fired rather than prose anybody wrote. Promote
+        writes a Hypothesis directly and the row keeps the link; Dismiss and ttl expiry keep
+        history.
       </p>
 
       <ConfirmDialog

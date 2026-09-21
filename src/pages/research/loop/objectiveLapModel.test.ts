@@ -5,6 +5,8 @@ import {
   draftObjectiveId,
   hypothesisRunId,
   objectiveLap,
+  candidateSketch,
+  scoreShare,
   splitByObjective,
   type LapInput,
 } from './objectiveLapModel'
@@ -143,5 +145,48 @@ describe('splitByObjective', () => {
       noObjective: 0,
       total: 0,
     })
+  })
+})
+
+describe('candidateSketch', () => {
+  const snap = (lens_snapshot: Record<string, unknown> | null): ResearchCandidate =>
+    ({ lens_snapshot }) as unknown as ResearchCandidate
+
+  it('writes out the lenses that fired, in the order a reader scans them', () => {
+    expect(
+      candidateSketch(
+        snap({
+          path: 'EXT',
+          stage: 'STAGE_2A',
+          grade: 'A',
+          sepa_score: 71.75,
+          momentum_score: 84.0311,
+        }),
+      ),
+    ).toEqual(['EXT · stage 2A', 'grade A', 'SEPA 71.8', 'momentum 84.0'])
+  })
+
+  it('prints only what is there, never a placeholder for what is not', () => {
+    // A name a screen nominated carries no run snapshot, and the column says
+    // nothing rather than inventing the sentence nobody wrote.
+    expect(candidateSketch(snap(null))).toEqual([])
+    expect(candidateSketch(snap({ grade: 'B' }))).toEqual(['grade B'])
+  })
+
+  it('ignores a lens whose value is not a number where a number is meant', () => {
+    expect(candidateSketch(snap({ sepa_score: 'high', grade: 'A' }))).toEqual(['grade A'])
+  })
+})
+
+describe('scoreShare', () => {
+  it('measures against the best in view, because the composite has no ceiling', () => {
+    expect(scoreShare(40, 80)).toBe(0.5)
+    expect(scoreShare(80, 80)).toBe(1)
+  })
+
+  it('has no share to give when either half is missing', () => {
+    expect(scoreShare(null, 80)).toBeNull()
+    expect(scoreShare(40, null)).toBeNull()
+    expect(scoreShare(40, 0)).toBeNull()
   })
 })

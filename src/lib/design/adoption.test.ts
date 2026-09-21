@@ -167,8 +167,8 @@ describe('design adoption', () => {
     // Research Overview, the Trade Desk and the Review Queue are each now the
     // layer itself rather than its first row — so they leave `aligned` for
     // `stale` without leaving the walked set.
-    expect(counts.aligned + counts.byState.stale).toBe(39)
-    expect(counts.aligned).toBe(32)
+    expect(counts.aligned + counts.byState.stale).toBe(40)
+    expect(counts.aligned).toBe(33)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -288,8 +288,11 @@ describe('design adoption', () => {
     // walked twice and were waiting only on a look — `/research/book` and
     // `/risk` — were signed off together (reviewing 6→4, aligned 30→32). What
     // is left in `reviewing` is the R1 batch: three loop pages built before
-    // the interaction standard existed.
-    expect(counts.byState.reviewing).toBe(4)
+    // the interaction standard existed. Autopilot leaves it first: the
+    // page-level Runs today section it had never had was built, and the two
+    // things it cannot draw — five objective states, the three-origin New
+    // objective panel — are named on the page (reviewing 4→3, aligned 32→33).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -309,6 +312,7 @@ describe('design adoption', () => {
       '/portfolio/transfer',
       '/research/book',
       '/research/copilot/trading',
+      '/research/loop/harness',
       '/research/screener',
       // `/research/overview`, `/review` and `/trade/desk` left this list for
       // `stale`: each became the heading of its own layer in Package
@@ -335,7 +339,6 @@ describe('design adoption', () => {
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/research/loop/candidates',
-      '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/workbench',
     ])

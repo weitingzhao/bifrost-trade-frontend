@@ -134,8 +134,8 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Autopilot',
     crumbs: RESEARCH,
     design: {
-      state: 'reviewing',
-      rev: '2026-09-18.2',
+      state: 'aligned',
+      rev: '2026-09-20.1',
       note: DESIGN_NOTES['/research/loop/harness'],
     },
   },

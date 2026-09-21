@@ -11,7 +11,7 @@
  *
  * Advisory only — D10 BLOCKED (no trade execution).
  */
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -292,6 +292,7 @@ export default function HarnessConsolePage() {
   // The shell's objective scope, applied. Here the link needs no resolving —
   // these rows *are* the objectives — so a scope narrows the console to the
   // one machine, which is the whole point of laying a scope over it.
+  const navigate = useNavigate()
   const { objective, select: setObjective } = useObjectiveScope()
   const objectives = useMemo(
     () =>
@@ -323,13 +324,16 @@ export default function HarnessConsolePage() {
     return out
   }, [runs])
 
-  // Runs whose objective is not in the list on screen — archived, or deleted.
-  // Without this they would simply vanish under the Active filter, which is the
-  // kind of silent disappearance this console exists to prevent.
-  const orphanGroups = useMemo(() => {
-    const shown = new Set(objectives.map((o) => o.id))
-    return groupIdenticalRuns(runs.filter((r) => !shown.has(r.objective_id)))
-  }, [runs, objectives])
+  // The design's page-level table: every run the loop made, across objectives.
+  // The card's own expander answers a different question — *this* objective's
+  // history — so the two are not two views of one thing; without this one the
+  // console cannot say what ran today at all.
+  const allGroups = useMemo(() => groupIdenticalRuns(runs), [runs])
+  const objectiveTitleById = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const o of allObjectives) m.set(o.id, o.title)
+    return m
+  }, [allObjectives])
 
   const runsTableProps = {
     lang,
@@ -460,7 +464,15 @@ export default function HarnessConsolePage() {
       <section className="min-w-0 space-y-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <h2 className="shrink-0 text-base font-semibold">Objectives</h2>
-          <span className="text-dense-label text-muted-foreground">one standing brief each</span>
+          {/* The design draws five states here — "a draft and a retired one are
+              not the same absence". The backend has exactly two and refuses the
+              rest with a 422 (`OBJECTIVE_STATUSES`), so the filter is the pair
+              that exists and the note says what is missing rather than drawing
+              three tabs nothing can enter. */}
+          <span className="text-dense-label text-muted-foreground">
+            one standing brief each · two states here, not the design's five — draft, paused and
+            retired have no column and the API refuses them
+          </span>
           <SegmentControl
             value={objStatus}
             onChange={(v) => setObjStatus(v as 'active' | 'archived')}
@@ -472,13 +484,6 @@ export default function HarnessConsolePage() {
           <span className="ml-auto shrink-0 text-dense-caption text-muted-foreground">
             Runs
           </span>
-          <SegmentControl
-            value={runStatus}
-            onChange={(v) => setRunStatus(v as RunStatusFilter)}
-            options={RUN_STATUS_OPTIONS}
-            size="sm"
-            ariaLabel="Filter runs by status"
-          />
         </div>
 
         {objectivesQ.isError ? (
@@ -534,25 +539,53 @@ export default function HarnessConsolePage() {
               })}
           </ul>
         )}
+      </section>
 
-        {/* The section's ground rules, stated once (the design's own closing
-            line): folding, the bill, and what deletion can and cannot take. */}
+      {/* Runs today — the design's page-level reading. A run belongs to exactly
+          one objective, so the Objective column is what makes the table
+          answerable across them; a run whose objective was archived is a row
+          with its name on it rather than a footnote about disappearance. */}
+      <section className="min-w-0 space-y-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h2 className="shrink-0 text-base font-semibold">Runs today</h2>
+          <span className="text-dense-label text-muted-foreground">
+            {objective === ALL_OBJECTIVES
+              ? "across every objective — one objective's own history is behind its card"
+              : `filtered to ${scopeName} — a run belongs to exactly one objective`}
+          </span>
+          <span className="ml-auto">
+            <SegmentControl
+              value={runStatus}
+              onChange={(v) => setRunStatus(v as RunStatusFilter)}
+              options={RUN_STATUS_OPTIONS}
+              size="sm"
+              ariaLabel="Filter runs by status"
+            />
+          </span>
+        </div>
+
+        <HarnessRunsTable
+          groups={
+            objective === ALL_OBJECTIVES
+              ? allGroups
+              : allGroups.filter((g) => g.run.objective_id === objective)
+          }
+          objectiveTitle="—"
+          objectiveTitleFor={(run) =>
+            objectiveTitleById.get(run.objective_id) ?? run.objective_id
+          }
+          onOpenObjective={(id) => navigate(`/research/loop/objectives/${id}`)}
+          {...runsTableProps}
+        />
+
         <p className="text-dense-caption leading-relaxed text-muted-foreground">
           Identical re-runs fold into one row but not out of the bill. A run whose objective was
-          archived stays listed here — silent disappearance is the failure this console exists to
+          archived stays listed — silent disappearance is the failure this console exists to
           prevent. Deleting a run takes its funnel and trace; candidates with a settled outcome are
           kept, because that measurement is what the leash reads.
         </p>
 
-        {orphanGroups.length > 0 ? (
-          <div className="space-y-1">
-            <p className="text-dense-caption text-muted-foreground">
-              {orphanGroups.length} run{orphanGroups.length === 1 ? '' : 's'} whose
-              objective is not in this list — archived, or since deleted.
-            </p>
-            <HarnessRunsTable groups={orphanGroups} objectiveTitle="—" {...runsTableProps} />
-          </div>
-        ) : null}
+
 
         <MutationNotices
           notices={[

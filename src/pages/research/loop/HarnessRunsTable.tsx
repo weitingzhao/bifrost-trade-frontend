@@ -154,10 +154,23 @@ export function HarnessRunsTable({
   approvingId,
   curatingId,
   deleteBusy,
+  objectiveTitleFor,
+  onOpenObjective,
 }: {
   groups: RunGroup[]
   lang: CopilotPromptLang
   objectiveTitle: string
+  /**
+   * Name each run's objective in a column of its own.
+   *
+   * The console draws this table twice, for two different questions. Inside a
+   * card it answers "this objective's runs", and the objective is the card —
+   * so a column repeating it would be the same word down the page. At page
+   * level it answers "what ran, across every objective", and without the
+   * column a row cannot say whose run it was.
+   */
+  objectiveTitleFor?: (run: RunGroup['run']) => string
+  onOpenObjective?: (objectiveId: string) => void
   onOpenPipeline: (runId: string) => void
   onApprove: (runId: string) => void
   onCurate: (runId: string) => void
@@ -170,7 +183,9 @@ export function HarnessRunsTable({
   if (groups.length === 0) {
     return (
       <p className="px-1 py-2 text-dense-meta text-muted-foreground">
-        No runs yet for this objective.
+        {objectiveTitleFor == null
+          ? 'No runs yet for this objective.'
+          : 'No run in this state. The filter is narrower than the record — clear it to see every run the loop made.'}
       </p>
     )
   }
@@ -179,6 +194,7 @@ export function HarnessRunsTable({
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead>Run</DenseTableHead>
+          {objectiveTitleFor != null ? <DenseTableHead>Objective</DenseTableHead> : null}
           <DenseTableHead>Funnel</DenseTableHead>
           <DenseTableHead>Spend</DenseTableHead>
           <DenseTableHead>Started</DenseTableHead>
@@ -236,6 +252,21 @@ export function HarnessRunsTable({
                   ) : null}
                 </div>
               </DenseTableCell>
+              {objectiveTitleFor != null ? (
+                <DenseTableCell className="max-w-none">
+                  {onOpenObjective != null ? (
+                    <button
+                      type="button"
+                      className="text-left text-dense-meta text-primary hover:underline"
+                      onClick={() => onOpenObjective(row.objective_id)}
+                    >
+                      {objectiveTitleFor(row)}
+                    </button>
+                  ) : (
+                    <span className="text-dense-meta">{objectiveTitleFor(row)}</span>
+                  )}
+                </DenseTableCell>
+              ) : null}
               <DenseTableCell>
                 <RunFunnelCell trace={row.trace_json} />
               </DenseTableCell>

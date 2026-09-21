@@ -3,8 +3,10 @@ import type { Hypothesis } from '@/api/researchHypothesis'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { ObjectiveLeash } from '@/pages/research/loop/leash'
 import {
+  LOOP_STATIONS,
   candidatesBook,
   dialLevelFromTrust,
+  loopCards,
   earnRow,
   hypothesesBook,
   isToday,
@@ -89,5 +91,50 @@ describe('isToday', () => {
     expect(isToday('2026-09-19T01:00:00Z', NOW)).toBe(true)
     expect(isToday('2026-09-18T23:59:00Z', NOW)).toBe(false)
     expect(isToday(null, NOW)).toBe(false)
+  })
+})
+
+describe('the loop circuit', () => {
+  it('keeps all six stations, in the order the circuit is read', () => {
+    // The order is the argument: 01→03 across the top, then back 06→05→04
+    // along the bottom. A station sorted by number would draw the return
+    // edge as a straight line, which is the one thing the panel exists to
+    // deny.
+    expect(LOOP_STATIONS.map((s) => s.n)).toEqual(['01', '02', '03', '06', '05', '04'])
+    expect(LOOP_STATIONS.filter((s) => s.row === 'top')).toHaveLength(3)
+    expect(LOOP_STATIONS.filter((s) => s.row === 'bottom')).toHaveLength(3)
+  })
+
+  it('marks the two stations whose product leaves Research', () => {
+    const crossing = LOOP_STATIONS.filter((s) => s.crossNote).map((s) => s.name)
+    expect(crossing).toEqual(['Feed back', 'Settle'])
+  })
+
+  it('takes the counts the stations table already computed', () => {
+    // Not recomputed here: the same figure computed twice is the failure an
+    // overview invites (§14.2).
+    const cards = loopCards([
+      { name: 'Scan', h: '—', l: '3', c: '—' },
+      { name: 'Decide', h: '2', l: '2', c: '1' },
+    ])
+    expect(cards.find((c) => c.name === 'Scan')?.counts).toBe('— · 3 · —')
+    expect(cards.find((c) => c.name === 'Decide')?.counts).toBe('2 · 2 · 1')
+  })
+
+  it('keeps a station the page did not count, and says nothing rather than zero', () => {
+    // A station missing from the loop would say the loop has five.
+    const cards = loopCards([])
+    expect(cards).toHaveLength(6)
+    expect(cards.every((c) => c.counts === '— · — · —')).toBe(true)
+  })
+
+  it('sends every chip to a route, and names the page it opens', () => {
+    for (const st of LOOP_STATIONS) {
+      expect(st.pages.length, st.name).toBeGreaterThan(0)
+      for (const p of st.pages) {
+        expect(p.to.startsWith('/'), `${st.name} · ${p.label}`).toBe(true)
+        expect(p.tip.length, `${st.name} · ${p.label}`).toBeGreaterThan(10)
+      }
+    }
   })
 })

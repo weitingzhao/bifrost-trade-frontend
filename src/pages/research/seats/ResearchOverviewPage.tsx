@@ -39,9 +39,11 @@ import {
   type StationRow,
   type TodayItem,
 } from './OverviewPanels'
+import { LoopCircuit, type MachineChip } from './LoopCircuit'
 import {
   candidatesBook,
   DIAL_LEVELS,
+  loopCards,
   dialLevelFromTrust,
   earnRow,
   hypothesesBook,
@@ -307,6 +309,20 @@ export default function ResearchOverviewPage() {
 
   const inboxN = standingQ.data?.pending_drafts ?? standingQ.data?.pending_memos ?? 0
 
+  // ── The machines ───────────────────────────────────────────────────────
+  // The band inside the circuit: the objectives running laps on it. The
+  // design draws five states; this store keeps two (`active` / `archived`,
+  // `OBJECTIVE_STATUSES`), so the chip prints the one the row actually
+  // carries rather than a state the server cannot mean.
+  const machines: MachineChip[] = (objectivesQ.data?.items ?? []).map((o) => ({
+    id: o.id,
+    name: o.title,
+    state: o.status,
+    meta: o.schedule,
+    tip: `${o.persona || 'objective'} · ${o.schedule}`,
+    tone: o.status === 'active' ? 'bg-success' : 'bg-muted-foreground/50',
+  }))
+
   return (
     <PageShell padding="default" className="min-w-0 space-y-3">
       <PageHeader
@@ -333,22 +349,32 @@ export default function ResearchOverviewPage() {
         }
       />
 
+      {/* The design's order, and the order is the argument: the loop first —
+          what this layer is — then how much of it passes without you, then
+          what came out today and whether the engines behind it are up. */}
+      <LoopCircuit cards={loopCards(stations)} machines={machines} />
       <DialStrip cells={dialCells} earn={earn} />
-      <OperatorCards cards={cards} />
-
-      <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
-        <StationsTable rows={stations} footnote={stationsFootnote} />
-        <BookPanel rows={bookRows} />
-      </div>
 
       <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
         <TodayFeed items={today} asOf={fmtIsoTs(nowIso)} />
         <HealthPanel cells={health} />
       </div>
 
-      {/* Kept beyond the design: the circuit — is the loop learning — has no
-          panel in the prototype, and losing it would lose the one view that
-          catches a starving segment. Its destination is for the Owner to call. */}
+      {/* ── Beyond Rev 2026-09-20.23, kept until the Owner rules ───────────
+          The prototype's Overview has four sections and these are not among
+          them. None is dropped here: «设计里没有 ≠ 该删». Where each looks to
+          have gone, for that ruling:
+            · Operator cards → the stations now carry `h · l · c` themselves,
+              and the machines band carries the loop's standing. What has no
+              home in the new shape is the Copilot's own row.
+            · The Book → `/research/book` is its own page, and aligned.
+            · The circuit strip → is the loop learning; the prototype has
+              never had a panel for it, on this page or another. */}
+      <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
+        <StationsTable rows={stations} footnote={stationsFootnote} />
+        <BookPanel rows={bookRows} />
+      </div>
+      <OperatorCards cards={cards} />
       <LoopOverviewStrip />
     </PageShell>
   )

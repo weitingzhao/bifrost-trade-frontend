@@ -139,3 +139,176 @@ export function isToday(iso: string | null | undefined, nowIso: string): boolean
   if (!iso) return false
   return iso.slice(0, 10) === nowIso.slice(0, 10)
 }
+
+// ── The loop, drawn as a circuit (design Rev 2026-09-20.23) ────────────────
+
+/**
+ * A page a station writes at, and why a reader would open it.
+ *
+ * The prototype carries these as chips on each station card, with the tip as
+ * the chip's title. `to` is the app's route: the design's chip for Vol ratings
+ * points at `/research/ratings`, which neither side has — its own registry
+ * calls `/research/scan` Vol ratings, and that is the page this app built.
+ */
+export interface LoopPage {
+  label: string
+  to: string
+  tip: string
+}
+
+export interface LoopStation {
+  /** `01`…`06` — the station's place on the loop, not an index. */
+  n: string
+  /** Matches `StationRow.name`, which carries the live counts. */
+  name: string
+  produces: string
+  /** Top row runs left→right, bottom row right→left: the circuit. */
+  row: 'top' | 'bottom'
+  pages: LoopPage[]
+  /** Set where the station's product leaves Research altogether. */
+  crossNote?: string
+}
+
+/**
+ * The six stations with the pages each writes at.
+ *
+ * Straight from the prototype's `TOP` / `BOTTOM`, in its order — the order is
+ * the argument: 01→03 across the top, 06→04 back along the bottom, and the
+ * return edge closing the circuit on the left. Two stations cross the outer
+ * loop, which is why the sidebar spine ends in `↺ 5 → 1` rather than a stop.
+ */
+export const LOOP_STATIONS: readonly LoopStation[] = [
+  {
+    n: '01',
+    name: 'Scan',
+    produces: 'screen',
+    row: 'top',
+    pages: [
+      {
+        label: 'Stock ratings',
+        to: '/research/ratings/stocks',
+        tip: 'The equity model’s daily opinion.',
+      },
+      { label: 'Vol ratings', to: '/research/scan', tip: 'The vol model.' },
+      {
+        label: 'Stock screen',
+        to: '/research/screener',
+        tip: 'Conditions in, a set out — the ranked universe browse lives here too.',
+      },
+    ],
+  },
+  {
+    n: '02',
+    name: 'Nominate',
+    produces: 'nomination',
+    row: 'top',
+    pages: [
+      {
+        label: 'Candidate Pool',
+        to: '/research/loop/candidates',
+        tip: 'What the loop is considering — Curator screens in, decay screens out, you promote.',
+      },
+      {
+        label: 'Watchlist',
+        to: '/research/watchlist',
+        tip: 'Promoted candidates with the thesis carried over.',
+      },
+    ],
+  },
+  {
+    n: '03',
+    name: 'Judge',
+    produces: 'verdict · memo',
+    row: 'top',
+    pages: [
+      { label: 'Symbol', to: '/research/symbol', tip: 'One symbol, every read.' },
+      {
+        label: 'Compare',
+        to: '/research/compare',
+        tip: 'Side-by-side. Assembly, not estimation — owes no Method face.',
+      },
+      { label: 'History', to: '/research/history', tip: 'Where IV sits.' },
+      {
+        label: 'Personas',
+        to: '/research/agent-personas',
+        tip: 'Who judges, and their settled record.',
+      },
+    ],
+  },
+  {
+    n: '06',
+    name: 'Feed back',
+    produces: 'patch',
+    row: 'bottom',
+    crossNote: 'a verdict is a judgment in Review',
+    pages: [
+      {
+        label: 'Review · Objectives',
+        to: '/review/objectives',
+        tip: 'The closing page: did the machine earn its keep. Patches are drafted from its verdicts.',
+      },
+      {
+        label: 'Decision Inbox',
+        to: '/research/loop/decisions',
+        tip: 'Every patch waits here, whoever drafted it.',
+      },
+    ],
+  },
+  {
+    n: '05',
+    name: 'Settle',
+    produces: 'settlement',
+    row: 'bottom',
+    crossNote: 'a settlement is money in Portfolio',
+    pages: [
+      { label: 'Outcome', to: '/portfolio/outcome', tip: 'Settled money, attributed.' },
+      { label: 'Positions', to: '/portfolio/positions', tip: 'What is still open.' },
+    ],
+  },
+  {
+    n: '04',
+    name: 'Decide',
+    produces: 'decision → hypothesis',
+    row: 'bottom',
+    pages: [
+      {
+        label: 'Decision Inbox',
+        to: '/research/loop/decisions',
+        tip: 'Accept opens a hypothesis — never an order (D10).',
+      },
+      {
+        label: 'Hypothesis Board',
+        to: '/research/loop/hypotheses',
+        tip: 'What I currently believe, and its record.',
+      },
+      { label: 'Backtest', to: '/research/backtest', tip: 'Validate before you believe.' },
+    ],
+  },
+]
+
+export interface LoopCard extends LoopStation {
+  /** `h · l · c` — today's artifacts by operator, as the card prints them. */
+  counts: string
+  countsTip: string
+}
+
+/**
+ * The circuit's cards: the design's stations carrying the page's live counts.
+ *
+ * The counts are not recomputed here — `StationsTable`'s rows already carry
+ * them, one definition for both readings (§14.2). A station the app does not
+ * count keeps its card and prints dashes, because a station missing from the
+ * loop would say the loop has five.
+ */
+export function loopCards(
+  counts: readonly { name: string; h: string; l: string; c: string }[],
+): LoopCard[] {
+  return LOOP_STATIONS.map((st) => {
+    const row = counts.find((c) => c.name === st.name)
+    return {
+      ...st,
+      counts: row ? `${row.h} · ${row.l} · ${row.c}` : '— · — · —',
+      countsTip: 'today’s artifacts · hand / loop / copilot',
+    }
+  })
+}

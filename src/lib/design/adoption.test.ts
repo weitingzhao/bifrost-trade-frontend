@@ -178,14 +178,16 @@ describe('design adoption', () => {
     // sixteen pixels by a fixed table with no column widths. 44 with the
     // Hypothesis Board, whose scope had resolved down one road only. 45 with
     // Pipeline, the layer page the design gave a scale to only after this side
-    // reported that not one station page records what it made.
-    expect(counts.aligned + counts.byState.stale).toBe(45)
+    // reported that not one station page records what it made. Then the first
+    // of the seven the design had moved past was re-walked: Research Overview
+    // leaves `stale` for `reviewing`, which is outside this sum until the
+    // Owner looks (45→44).
+    expect(counts.aligned + counts.byState.stale).toBe(44)
     expect(counts.aligned).toBe(38)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
       '/research/loop/decisions',
-      '/research/overview',
       '/research/symbol',
       '/review',
       '/trade/desk',
@@ -319,8 +321,11 @@ describe('design adoption', () => {
     // zero because 19 Save buttons stamp a vocabulary the census had never
     // learned, and the four lanes' capture verbs had been folded away with
     // nothing mounting them. `reviewing` is empty; what is left is the seven
-    // pages the design moved past and the walk that has not started.
-    expect(counts.byState.reviewing).toBe(0)
+    // pages the design moved past and the walk that has not started. The
+    // first of those seven is back in `reviewing`: Research Overview, whose
+    // six-station table became the loop drawn as a circuit at Rev
+    // 2026-09-20.23.
+    expect(counts.byState.reviewing).toBe(1)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -373,7 +378,9 @@ describe('design adoption', () => {
     // Empty for the first time since the Research walk began: every page this
     // side has walked and built is either in place or waiting on a rev, not on
     // a look.
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/research/overview',
+    ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row
@@ -493,7 +500,9 @@ describe('design adoption', () => {
     // Each stale note names the batch that re-walks it (W2/W3), the same way
     // the count fell 4 → 0 across the .18.1 round.
     // 4 → 7: Package 2026-09-20.3 moved three more walked pages' own revs.
-    expect(counts.byState.stale).toBe(7)
+    // 7 → 6: Research Overview was re-walked against Rev 2026-09-20.23, the
+    // first of the seven to be answered rather than counted.
+    expect(counts.byState.stale).toBe(6)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

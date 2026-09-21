@@ -16,10 +16,21 @@ import { digestBatches, digestDissents, digestExhibits, digestLamps, digestResol
 export function DailyDigestBody({
   payload,
   readingsOpen = false,
+  clampProse = true,
 }: {
   payload: Record<string, unknown>
   /** Open the readings table on arrival — the Desk reads the digest; the Inbox decides on it. */
   readingsOpen?: boolean
+  /**
+   * Cap the prose and scroll it inside the card.
+   *
+   * Right in a card: the dock is 440 wide and a draft card sits in a list of
+   * them, so one long digest must not push the rest off the screen. Wrong in
+   * a page panel: the design's digest has no inner scroller, and a scrollbar
+   * inside a panel on a page that already scrolls is two scrollers for one
+   * gesture (Owner, 2026-09-21: «纵向滚动条好丑»).
+   */
+  clampProse?: boolean
 }) {
   const [batchesOpen, setBatchesOpen] = useState(false)
   const batches = digestBatches(payload)
@@ -63,7 +74,7 @@ export function DailyDigestBody({
       </div>
 
       {markdown ? (
-        <div className="max-w-prose max-h-80 overflow-y-auto">
+        <div className={clampProse ? 'max-w-prose max-h-80 overflow-y-auto' : 'max-w-prose'}>
           <MarkdownContent className="text-foreground/90">{markdown}</MarkdownContent>
         </div>
       ) : null}

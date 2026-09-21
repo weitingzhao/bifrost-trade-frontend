@@ -40,6 +40,7 @@ import {
 } from '@/api/researchCopilotSessions'
 import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { copilotSessionStore } from '@/hooks/useCopilotSession'
+import { rowSelectProps } from '@/hooks/useRowLink'
 import { useCopilotSessions } from '@/hooks/useCopilotSessions'
 import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 import { fmtIsoTs } from '@/lib/format'
@@ -235,7 +236,16 @@ export function Threads() {
               const cost = threadCostUsd(row)
               const renaming = renamingId === row.id
               return (
-                <DenseTableRow key={row.id}>
+                <DenseTableRow
+                  key={row.id}
+                  // The page says «click a row to open it in the panel», and
+                  // until 2026-09-21 only the title did. A row that promises a
+                  // click and does not take one is the defect the interaction
+                  // standard exists for — and a `<tr>` needs the keyboard route
+                  // written out, which `rowSelectProps` carries.
+                  {...rowSelectProps(false, () => void open(row), 'hover:[&>td]:bg-[var(--sk-raised2)]')}
+                  aria-label={`Open ${row.title || 'this thread'} in the Copilot panel`}
+                >
                   <DenseTableCell className="max-w-[18rem]">
                     {renaming ? (
                       <SessionRenameField
@@ -248,7 +258,10 @@ export function Threads() {
                         type="button"
                         className="flex w-full min-w-0 items-start gap-1.5 text-left hover:underline disabled:opacity-60"
                         disabled={opening === row.id}
-                        onClick={() => void open(row)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void open(row)
+                        }}
                         title="Open this thread in the Copilot panel"
                       >
                         {row.pinned ? (
@@ -312,7 +325,10 @@ export function Threads() {
                         aria-pressed={Boolean(row.pinned)}
                         aria-label={row.pinned ? `Unpin "${title}"` : `Pin "${title}"`}
                         title={row.pinned ? 'Unpin' : 'Pin'}
-                        onClick={() => void togglePin(row)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          void togglePin(row)
+                        }}
                       >
                         {row.pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
                       </Button>
@@ -322,7 +338,10 @@ export function Threads() {
                         className="size-7 p-0"
                         aria-label={`Export a memory brief of "${title}"`}
                         title="Export a memory brief for an outside model (Bridge)"
-                        onClick={() => setExportFor(row.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setExportFor(row.id)
+                        }}
                       >
                         <ArrowUpRight className="size-3.5" />
                       </Button>
@@ -333,6 +352,7 @@ export function Threads() {
                             variant="ghost"
                             className="size-7 p-0"
                             aria-label={`More actions for "${title}"`}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="size-3.5" />
                           </Button>

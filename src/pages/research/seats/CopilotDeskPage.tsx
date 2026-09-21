@@ -272,7 +272,7 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
           with the lens it came from. The readings table is the draft's own
           working, so it stays behind its toggle here — open, this panel was
           taller than the three above it together. */}
-      <DailyDigestBody payload={draft.payload} />
+      <DailyDigestBody payload={draft.payload} clampProse={false} />
     </div>
   )
 }

@@ -185,15 +185,14 @@ describe('design adoption', () => {
     // day — the first of the seven answered rather than counted. Review is the
     // second, and it moves inside the sum rather than into it: `stale` →
     // `reviewing` (45→44), with `aligned` untouched at 39 until the Owner
-    // looks.
-    expect(counts.aligned + counts.byState.stale).toBe(44)
+    // looks. The Desk is the third and moves the same way (44→43).
+    expect(counts.aligned + counts.byState.stale).toBe(43)
     expect(counts.aligned).toBe(39)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
       '/research/loop/decisions',
       '/research/symbol',
-      '/trade/desk',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -329,8 +328,9 @@ describe('design adoption', () => {
     // Overview, whose six-station table became the loop drawn as a circuit at
     // Rev 2026-09-20.23. Review follows it: the same §5a.1 bump, a page body
     // unchanged at .23, and an interaction sweep that found sixty-eight
-    // mouse-only rows.
-    expect(counts.byState.reviewing).toBe(1)
+    // mouse-only rows. The Trade Desk closes the batch — the three layer
+    // heads §5a.1 moved, walked together because one section moved them.
+    expect(counts.byState.reviewing).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -386,6 +386,7 @@ describe('design adoption', () => {
     // a look.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/review',
+      '/trade/desk',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
@@ -508,8 +509,10 @@ describe('design adoption', () => {
     // 4 → 7: Package 2026-09-20.3 moved three more walked pages' own revs.
     // 7 → 6: Research Overview was re-walked against Rev 2026-09-20.23, the
     // first of the seven to be answered rather than counted. 6 → 5 with
-    // Review, the second.
-    expect(counts.byState.stale).toBe(5)
+    // Review, the second, and 5 → 4 with the Trade Desk: the three §5a.1
+    // layer heads are answered, and what is left in `stale` is the four
+    // Research pages the Vision redesign moved.
+    expect(counts.byState.stale).toBe(4)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

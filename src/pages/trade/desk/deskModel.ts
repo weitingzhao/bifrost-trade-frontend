@@ -48,6 +48,14 @@ export interface DeskItem {
   key: string
   /** The ticker, or the source's own word when a row is not about one name. */
   symbol: string
+  /**
+   * The one name this row is about, when it is about one — so the label can
+   * open it. Null where `symbol` is several names («MU · 2 more»), an import's
+   * own word, or a draft with no leg to take a name from: a label that is not
+   * a ticker has no page to open, and linking it approximately is worse than
+   * not linking it.
+   */
+  name: string | null
   title: string
   /** Right-aligned: when it happened, or how long is left. */
   when: string
@@ -94,6 +102,23 @@ function namesOf(symbols: readonly string[]): string {
 }
 
 /**
+ * Whether a word can be taken for a ticker.
+ *
+ * The desk builds a few labels out of words that are not names — an import's
+ * own word, a draft's `IDEA` fallback — and a label that is not a ticker has
+ * no page to open.
+ */
+function tickerish(word: string): boolean {
+  return /^[A-Z][A-Z.]{0,5}$/.test(word) && word !== 'IDEA'
+}
+
+/** The single name behind that label, or null when it stands for several. */
+function oneName(symbols: readonly string[]): string | null {
+  const uniq = [...new Set(symbols)]
+  return uniq.length === 1 ? uniq[0] : null
+}
+
+/**
  * 1 · Decide — what was handed to you.
  *
  * Two feeds, deliberately kept apart: Research proposes (advisory, D10 BLOCKED
@@ -119,6 +144,11 @@ export function decideItems(
     items.push({
       key: `intent:${d.id}`,
       symbol,
+      // A leg's own symbol first. Failing that the scope word, which is how
+      // the Research side names a hypothesis's subject — but only when it
+      // reads as a ticker: a differently shaped scope, and the `IDEA`
+      // fallback, name no page.
+      name: legSymbols[0] ?? (tickerish(scopeName) ? scopeName : null),
       title: String(p.strategy_template ?? 'Order intent'),
       when: d.created_at ? d.created_at.slice(0, 10) : '—',
       // The rationale is the whole argument and it is long; the card carries
@@ -154,6 +184,7 @@ export function decideItems(
     items.push({
       key: `leg:${leg.contract_key ?? `${leg.symbol}${leg.strike}${leg.right}`}`,
       symbol: leg.symbol,
+      name: leg.symbol,
       title: `Short ${leg.right === 'P' ? 'put' : 'call'} ${leg.strike ?? '—'} · ${Math.abs(leg.qty)}`,
       when: dte == null ? 'no expiry' : `${dte}d`,
       sub:
@@ -173,6 +204,7 @@ export function decideItems(
     items.push({
       key: 'legs:unpriced',
       symbol: namesOf(unpriced.map((l) => l.symbol)),
+      name: oneName(unpriced.map((l) => l.symbol)),
       title: `${unpriced.length} short ${unpriced.length === 1 ? 'leg' : 'legs'} carry no spot`,
       when: 'now',
       sub: 'Their cushion cannot be taken, so they are neither safe nor tight — unknown. The underlying quote is what is missing, not the position.',
@@ -206,6 +238,7 @@ export function executeItems(
     items.push({
       key: `order:${o.order_id ?? o.perm_id ?? o.contract_key ?? o.symbol}`,
       symbol: o.symbol ?? '—',
+      name: o.symbol ?? null,
       title: `${(o.action ?? '').toUpperCase()} ${total || '—'} · working in TWS`,
       when: o.order_id == null ? 'ib' : `ord ${o.order_id}`,
       sub: `${filled} of ${total || '—'} filled${o.limit_price == null ? '' : ` · limit ${o.limit_price}`}. Cancel and amend in TWS — this side reads the broker.`,
@@ -224,6 +257,7 @@ export function executeItems(
     items.push({
       key: `plan:${p.strategy_plan_id}`,
       symbol: p.symbol,
+      name: p.symbol,
       title: `${p.structure_label || 'Plan'} ×${p.qty ?? '—'} · intended, not in TWS`,
       when: p.intended_at ? p.intended_at.slice(0, 10) : '—',
       sub:
@@ -265,6 +299,7 @@ export function settleItems(fills: readonly Execution[], today: string): DeskIte
     items.push({
       key: 'fills:linked',
       symbol: namesOf(linked.map((e) => rootOf(e))),
+      name: oneName(linked.map((e) => rootOf(e))),
       title: `${linked.length} ${linked.length === 1 ? 'fill' : 'fills'} claimed by an instance`,
       when: newestOf(recent) ?? '—',
       sub: 'Each one is attached to the instance its contract and window belong to. Nothing to do — they are in the book.',
@@ -278,6 +313,7 @@ export function settleItems(fills: readonly Execution[], today: string): DeskIte
     items.push({
       key: 'fills:orphan',
       symbol: namesOf(orphan.map((e) => rootOf(e))),
+      name: oneName(orphan.map((e) => rootOf(e))),
       title: `${orphan.length} ${orphan.length === 1 ? 'fill' : 'fills'} nothing claims`,
       when: newestOf(orphan) ?? '—',
       sub: 'No instance carries them, so they price the book but no strategy is credited with them. Link them on the Ledger or leave them as hand trades.',
@@ -304,6 +340,7 @@ export function expiringItem(legs: readonly ShortLeg[], today: string): DeskItem
   return {
     key: 'legs:expiring',
     symbol: namesOf(soon.map((l) => l.symbol)),
+    name: oneName(soon.map((l) => l.symbol)),
     title: `${soon.length} short ${soon.length === 1 ? 'leg' : 'legs'} expiring`,
     when: `${nearest}d`,
     sub: 'Each one either expires worthless, is rolled, or becomes stock. Deciding is cheaper before the last session than during it.',

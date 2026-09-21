@@ -197,3 +197,56 @@ describe('what is in force', () => {
     expect(unread(7, 87)).toBe(false)
   })
 })
+
+describe('the name a desk row can open', () => {
+  // The label and the link are different questions: "MU · 2 more" is a good
+  // label and a bad destination, and a row built from an import carries a
+  // word that is not a ticker at all.
+  it('gives a one-name row its own name', () => {
+    const items = decideItems(
+      [],
+      [
+        { symbol: 'NVDA', right: 'P', strike: 165, qty: -2, expiry: '2026-10-16', spot: 168, contract_key: 'k1' },
+      ] as never,
+      0.05,
+      '2026-09-21',
+    )
+    expect(items[0]?.name).toBe('NVDA')
+    expect(items[0]?.symbol).toBe('NVDA')
+  })
+
+  it('gives a row that stands for several names none', () => {
+    const items = decideItems(
+      [],
+      [
+        { symbol: 'NVDA', right: 'P', strike: 165, qty: -2, expiry: '2026-10-16', spot: null, contract_key: 'k1' },
+        { symbol: 'AMD', right: 'P', strike: 140, qty: -1, expiry: '2026-10-16', spot: null, contract_key: 'k2' },
+      ] as never,
+      0.05,
+      '2026-09-21',
+    )
+    const unpriced = items.find((i) => i.key === 'legs:unpriced')
+    expect(unpriced?.symbol).toBe('NVDA · 1 more')
+    expect(unpriced?.name).toBeNull()
+  })
+})
+
+describe('a draft with no legs', () => {
+  const draft = (scope: string) =>
+    [{ id: 'd1', scope, created_at: '2026-09-21T00:00:00Z', payload: { strategy_template: 'Watch' } }] as never
+
+  it('takes the name off the scope when the scope is a name', () => {
+    // Invented, not copied: the shape is `hypothesis:<sym>-<slug>`.
+    const [item] = decideItems(draft('hypothesis:vnce-stage2a'), [], 0.05, '2026-09-21')
+    expect(item.symbol).toBe('VNCE')
+    expect(item.name).toBe('VNCE')
+  })
+
+  it('opens nothing when the scope is not a name', () => {
+    const [none] = decideItems(draft(''), [], 0.05, '2026-09-21')
+    expect(none.symbol).toBe('IDEA')
+    expect(none.name).toBeNull()
+    const [phrase] = decideItems(draft('hypothesis:earnings season'), [], 0.05, '2026-09-21')
+    expect(phrase.name).toBeNull()
+  })
+})

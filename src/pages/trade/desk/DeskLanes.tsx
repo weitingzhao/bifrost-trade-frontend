@@ -10,6 +10,8 @@ import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import type { DeskItem, DeskLane, DeskTone } from './deskModel'
 
 const DOT: Record<DeskTone, string> = {
@@ -121,9 +123,29 @@ export function DeskLaneList({
               <span className={cn('mt-1.5 h-2 w-2 flex-none rounded-full', DOT[it.tone])} aria-hidden />
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-baseline gap-2">
-                  <span className={cn(positionsUi.mono, 'flex-none text-dense-body font-bold text-foreground')}>
-                    {it.symbol}
-                  </span>
+                  {/* The name is its own destination where the row is about
+                      one. Where the label stands for several, or is an
+                      import's own word, it stays plain and says so rather
+                      than opening an approximate page. */}
+                  {it.name ? (
+                    <Link
+                      to={withSymbolParam(SYMBOL_PATH, it.name)}
+                      className={cn(
+                        positionsUi.mono,
+                        'flex-none text-dense-body font-bold text-foreground hover:underline',
+                      )}
+                      title={`Open ${it.name} on Symbol`}
+                    >
+                      {it.symbol}
+                    </Link>
+                  ) : (
+                    <span
+                      className={cn(positionsUi.mono, 'flex-none text-dense-body font-bold text-foreground')}
+                      title="Not one name — nothing to open."
+                    >
+                      {it.symbol}
+                    </span>
+                  )}
                   <span className="min-w-0 flex-1 truncate text-dense-body leading-normal text-secondary-foreground">
                     {it.title}
                   </span>

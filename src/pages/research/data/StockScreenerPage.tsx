@@ -1,7 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
-import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
+import {
+  PageFaceSwitch,
+  PageHeader,
+  PageShell,
+  SectionPanel,
+  SECTION_CAP_CLASS,
+} from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
 import {
@@ -335,19 +341,22 @@ export default function StockScreenerPage() {
         title="Screener · Stocks"
         description="Conditions in, a set out — deterministic and saveable. Pick a universe, stack criteria, watch the count fall. Ranking the survivors is the model’s job."
         actions={
-          <AskCopilotButton
-            originPage="sepa"
-            originLabel="Stock screen"
-            symbol={
-              inspector?.symbol ||
-              symbolText.split(/[,\s]+/).map((s) => s.trim().toUpperCase()).find(Boolean)
-            }
-            snapshot={compactSnapshot({
-              result_count: sortedRows.length,
-              symbol_text: symbolText.slice(0, 120),
-            })}
-            suggestedPrompt="From this SEPA stock screener view, which names look most interesting to investigate next?"
-          />
+          <>
+            <PageFaceSwitch path="/research/screener" />
+            <AskCopilotButton
+              originPage="sepa"
+              originLabel="Stock screen"
+              symbol={
+                inspector?.symbol ||
+                symbolText.split(/[,\s]+/).map((s) => s.trim().toUpperCase()).find(Boolean)
+              }
+              snapshot={compactSnapshot({
+                result_count: sortedRows.length,
+                symbol_text: symbolText.slice(0, 120),
+              })}
+              suggestedPrompt="From this SEPA stock screener view, which names look most interesting to investigate next?"
+            />
+          </>
         }
       />
 

@@ -15,7 +15,13 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
+import {
+  PageFaceSwitch,
+  PageHeader,
+  PageShell,
+  SectionPanel,
+  SECTION_CAP_CLASS,
+} from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -117,13 +123,20 @@ export default function StockRatingsPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className="max-w-[84ch]">
-        <PageHeader
-          breadcrumb={<p className="text-xs font-medium text-primary/90">Research</p>}
-          title="Ratings · Stocks"
-          titleSize="large"
-          description={LEAD}
-        />
+      {/* The prototype carries `_Part Face` here: this page has a Method face,
+          and the switch belongs to the page rather than to the tree. It renders
+          disabled while `/research/lab/today` is unbuilt, and lights up by
+          itself the day that page lands. */}
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="min-w-0 max-w-[84ch] flex-[1_1_28rem]">
+          <PageHeader
+            breadcrumb={<p className="text-xs font-medium text-primary/90">Research</p>}
+            title="Ratings · Stocks"
+            titleSize="large"
+            description={LEAD}
+          />
+        </div>
+        <PageFaceSwitch path="/research/ratings/stocks" className="ml-auto mt-1 flex-none" />
       </div>
 
       {q.isError ? <QueryErrorAlert error={q.error} /> : null}

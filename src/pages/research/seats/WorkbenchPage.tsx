@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 import { Beaker, ClipboardList, Compass, Plus, Radar } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { BenchDirectory } from '@/pages/research/home/BenchDirectory'
+import { PipelineCensus } from '@/pages/research/pipeline/PipelineCensus'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import { EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
@@ -42,7 +43,7 @@ export default function WorkbenchPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Pipeline"
-        description="Your hand on the stations — Discover · Analyze · Validate · Data, the same pipeline the loop runs. Advisory only, D10 BLOCKED."
+        description="Your hand on the stations. Discover · Analyze · Validate — the design puts every artifact you made today on one scale and asks which station it is stuck at. Advisory only, D10 BLOCKED."
         actions={
           <div className="flex items-center gap-2">
             <AskCopilotButton
@@ -87,6 +88,11 @@ export default function WorkbenchPage() {
           the stations all three operators run — your hand is the one at the controls here
         </span>
       </div>
+
+      {/* The layer's own reading (§5a.6), above the bench it is about: a layer
+          page leads with the verdict and then shows the detail, the way Risk
+          and Portfolio do. */}
+      <PipelineCensus />
 
       <BenchDirectory />
 

@@ -338,7 +338,8 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'while the tree list still showed the day you came from put the answer in the right '
     + 'panel and nothing on the left. Swept at 1500 and 1024: no horizontal overflow, node '
     + 'rows select and carry the name in ?sel=, Escape clears it, and the aside’s one way '
-    + 'out goes to the page that owns the artifact. Awaiting the Owner’s read.',
+    + 'out goes to the page that owns the artifact. '
+    + 'Owner signed off 2026-09-21 on local DEV (:5173) at this rev.',
   '/research/ratings/stocks':
     'Built from nothing 2026-09-21 against Research Ratings Stocks.dc.html, then re-walked the '
     + 'same day after the Owner read it beside the prototype: the colour was off and the ranked '

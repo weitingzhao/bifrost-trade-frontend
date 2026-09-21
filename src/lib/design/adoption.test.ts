@@ -171,9 +171,11 @@ describe('design adoption', () => {
     // 41 with Stock ratings: built from nothing on 2026-09-21, re-walked the
     // same day after the Owner read it beside the prototype — the ranked list
     // was five hundred rows with no filter bar, and the lens cells were solid
-    // colour where the design is a quiet track — and signed off after.
-    expect(counts.aligned + counts.byState.stale).toBe(41)
-    expect(counts.aligned).toBe(34)
+    // colour where the design is a quiet track — and signed off after. 42 with
+    // the Journal, built and walked the same day: The Book's index, joined out
+    // of five stores because no artifact store exists on this side.
+    expect(counts.aligned + counts.byState.stale).toBe(42)
+    expect(counts.aligned).toBe(35)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -303,8 +305,9 @@ describe('design adoption', () => {
     // followed the same way on 2026-09-21 (unbuilt 26→25, reviewing 4→5): The
     // Book's index, joined out of five stores because no artifact store
     // exists on this side. Then Stock ratings was signed off the same day
-    // (reviewing 5→4, aligned 33→34).
-    expect(counts.byState.reviewing).toBe(4)
+    // (reviewing 5→4, aligned 33→34), and the Journal after its own walk
+    // (reviewing 4→3, aligned 34→35).
+    expect(counts.byState.reviewing).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -324,6 +327,7 @@ describe('design adoption', () => {
       '/portfolio/transfer',
       '/research/book',
       '/research/copilot/trading',
+      '/research/journal',
       '/research/loop/harness',
       '/research/ratings/stocks',
       '/research/screener',
@@ -351,7 +355,6 @@ describe('design adoption', () => {
       '/trade/rules',
     ])
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/research/journal',
       '/research/loop/candidates',
       '/research/loop/hypotheses',
       '/research/workbench',

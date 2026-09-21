@@ -12,6 +12,7 @@ import {
   journalDays,
   journalDefaultDay,
   journalNodes,
+  journalStation,
   journalPct,
   policyChanges,
   type JournalNode,
@@ -252,8 +253,28 @@ describe('what the store cannot answer', () => {
     const nulls = counts.filter((c) => c.value == null).map((c) => c.label)
     // A zero here would say the loop tried nothing, rather than that nobody
     // writes a fork down.
-    expect(nulls).toEqual(['branches', 'considered, not merged'])
+    expect(nulls).toEqual(['branches', 'merged', 'considered, not merged'])
     expect(counts.find((c) => c.label === 'branches')?.detail).toMatch(/no fork is recorded/)
+  })
+
+  it("keeps the design's five slots in the design's order", () => {
+    const counts = journalCounts(build(), [])
+    expect(counts.map((c) => c.label)).toEqual([
+      'artifacts today',
+      'branches',
+      'merged',
+      'settled',
+      'considered, not merged',
+    ])
+  })
+
+  it('keeps the Inbox count in the slot the design gave it', () => {
+    // The design writes it as `merged`'s own subtitle. Promoting it to a
+    // sixth tile and dropping `merged` reorders the argument.
+    const nodes = build()
+    const merged = journalCounts(nodes, []).find((c) => c.label === 'merged')
+    const waiting = nodes.filter((n) => n.state.startsWith('in Inbox')).length
+    expect(merged?.detail).toContain(`${waiting} waiting in the Inbox`)
   })
 
   it('keeps a thread row on every artifact and marks it unrecorded', () => {
@@ -298,5 +319,25 @@ describe('a cycle', () => {
     const a: JournalNode = { ...build()[0], id: 'a', parentId: 'b', depth: 0 }
     const b: JournalNode = { ...a, id: 'b', parentId: 'a' }
     expect(buildJournalTrees([a, b])).toEqual([])
+  })
+})
+
+
+describe('journalStation', () => {
+  it('files each kind at the point of the lap that writes it', () => {
+    expect(journalStation('run')).toBe('scan')
+    expect(journalStation('candidate')).toBe('nominate')
+    expect(journalStation('hypothesis')).toBe('judge')
+    expect(journalStation('verdict')).toBe('judge')
+    expect(journalStation('decision')).toBe('decide')
+    expect(journalStation('settlement')).toBe('settle')
+    expect(journalStation('patch')).toBe('feedback')
+  })
+
+  it('answers null for the two written about a day rather than at a station', () => {
+    // A near-enough station would be a claim about where in the loop a digest
+    // came from, and nothing made that claim.
+    expect(journalStation('digest')).toBeNull()
+    expect(journalStation('note')).toBeNull()
   })
 })

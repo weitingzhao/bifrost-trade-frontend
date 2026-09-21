@@ -485,6 +485,36 @@ export function journalDefaultDay(
   return days.find((d) => runDays.has(d)) ?? days[0] ?? ''
 }
 
+/**
+ * Where in the loop's lap an artifact was written.
+ *
+ * The design caps each tree with a station rather than with the kind of thing
+ * at its root — *which part of the machine produced this* is what makes a
+ * day's list scannable, and the six stations are already this repo's own
+ * vocabulary (`objectiveLapModel`), not a word invented here.
+ *
+ * Two kinds belong to no station and say so rather than being filed under a
+ * near-enough one: a daily digest and a playbook note are written *about* a
+ * day rather than at a point in its lap.
+ */
+export type JournalStation = 'scan' | 'nominate' | 'judge' | 'decide' | 'settle' | 'feedback'
+
+const STATION_OF: Partial<Record<JournalNodeType, JournalStation>> = {
+  run: 'scan',
+  candidate: 'nominate',
+  batch: 'nominate',
+  hypothesis: 'judge',
+  verdict: 'judge',
+  decision: 'decide',
+  intent: 'decide',
+  patch: 'feedback',
+  settlement: 'settle',
+}
+
+export function journalStation(type: JournalNodeType): JournalStation | null {
+  return STATION_OF[type] ?? null
+}
+
 export interface JournalCount {
   label: string
   /** Null when the store cannot answer — the row stays and says why. */
@@ -493,13 +523,18 @@ export interface JournalCount {
 }
 
 /**
- * The header's five readings.
+ * The header's five readings, in the design's five slots and its order.
  *
- * Three of the design's five count forks: *branches*, *merged*, and
- * *considered, not merged*. Nothing in this store records a fork — no
- * artifact says "I am that one with a parameter changed" — so those three
- * carry no number and name what is missing instead of reading zero. A zero
- * would say the loop tried nothing; the truth is that nobody writes it down.
+ * Three of them count forks: *branches*, *merged*, and *considered, not
+ * merged*. Nothing in this store records a fork — no artifact says "I am that
+ * one with a parameter changed" — so those three carry no number and name
+ * what is missing instead of reading zero. A zero would say the loop tried
+ * nothing; the truth is that nobody writes it down.
+ *
+ * The Inbox count keeps the slot the design gave it — the second half of the
+ * *merged* tile's own subtitle. An earlier version promoted it to a tile of
+ * its own and dropped *merged*, which is a reordering of the design's
+ * argument dressed up as an addition.
  */
 export function journalCounts(
   dayNodes: readonly JournalNode[],
@@ -512,24 +547,24 @@ export function journalCounts(
   const unjudged = settledToday.length - right - wrong
   return [
     {
-      label: 'artifacts',
+      label: 'artifacts today',
       value: dayNodes.length,
-      detail: `loop ${by('loop')} · copilot ${by('copilot')} · hand ${by('hand')}`,
-    },
-    {
-      label: 'waiting on you',
-      value: inbox,
-      detail: 'drafts in the Decision Inbox',
-    },
-    {
-      label: 'settled',
-      value: settledToday.length,
-      detail: `${right} right · ${wrong} wrong${unjudged ? ` · ${unjudged} unjudged` : ''}`,
+      detail: `hand ${by('hand')} · loop ${by('loop')} · copilot ${by('copilot')}`,
     },
     {
       label: 'branches',
       value: null,
       detail: 'no fork is recorded anywhere in the store',
+    },
+    {
+      label: 'merged',
+      value: null,
+      detail: `needs the same fork record · ${inbox} waiting in the Inbox`,
+    },
+    {
+      label: 'settled',
+      value: settledToday.length,
+      detail: `${right} right · ${wrong} wrong${unjudged ? ` · ${unjudged} unjudged` : ''}`,
     },
     {
       label: 'considered, not merged',

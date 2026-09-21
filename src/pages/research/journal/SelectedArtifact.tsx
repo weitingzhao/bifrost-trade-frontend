@@ -7,6 +7,12 @@
  * conversation id, so the row stays and says `not recorded` rather than
  * quietly leaving.
  *
+ * Provenance is also where the chain is walked. The design's own Explain verb
+ * says it in one line — *each input is a node in this Journal; click one to
+ * walk the chain* — so a value that names another artifact selects it, and a
+ * symbol opens the name. A value nothing in view answers stays plain rather
+ * than becoming a link to nowhere.
+ *
  * The verb row the prototype hangs under Provenance is not here. The Owner
  * ruled on 2026-09-21 that the six verbs — Explain · Challenge · Fork ·
  * Extend · Settle · Distill — are a piece of work of their own: what each one
@@ -16,12 +22,64 @@
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { SECTION_CAP_CLASS } from '@/components/layout'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { cn } from '@/lib/utils'
 import type { JournalNode } from './journalModel'
 import { journalTypeLabel } from './journalModel'
 import { OPERATOR_LABEL, OPERATOR_TAG, TYPE_TAG, journalStateClass } from './journalUi'
 
-export function SelectedArtifact({ node }: { node: JournalNode | null }) {
+/**
+ * One provenance value: a way into the chain where the value is one, plain
+ * text where it is not.
+ */
+function ProvenanceValue({
+  field,
+  value,
+  known,
+  onSelect,
+}: {
+  field: string
+  value: string
+  known: ReadonlySet<string>
+  onSelect: (id: string) => void
+}) {
+  if (field === 'symbol' && /^[A-Z.]{1,8}$/.test(value)) {
+    return (
+      <Link
+        to={withSymbolParam(SYMBOL_PATH, value)}
+        className="font-mono text-dense-micro text-entity-symbol hover:underline"
+        title={`Open ${value} on Symbol`}
+      >
+        {value}
+      </Link>
+    )
+  }
+  if (known.has(value)) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(value)}
+        className="break-all text-left font-mono text-dense-micro text-primary hover:underline"
+        title="Walk to this artifact"
+      >
+        {value}
+      </button>
+    )
+  }
+  return <span className="break-words font-mono text-dense-micro">{value}</span>
+}
+
+export function SelectedArtifact({
+  node,
+  known,
+  onSelect,
+}: {
+  node: JournalNode | null
+  /** Every artifact id the day's view can answer for. */
+  known: ReadonlySet<string>
+  onSelect: (id: string) => void
+}) {
   if (node == null) {
     return (
       <div className="px-3 py-4 text-dense-meta text-muted-foreground">
@@ -54,7 +112,9 @@ export function SelectedArtifact({ node }: { node: JournalNode | null }) {
           {node.provenance.map(([k, v]) => (
             <div key={k} className="contents">
               <dt className="font-mono text-dense-micro text-muted-foreground">{k}</dt>
-              <dd className="min-w-0 break-words font-mono text-dense-micro">{v}</dd>
+              <dd className="min-w-0">
+                <ProvenanceValue field={k} value={v} known={known} onSelect={onSelect} />
+              </dd>
             </div>
           ))}
         </dl>

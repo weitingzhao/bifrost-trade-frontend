@@ -5,7 +5,7 @@
  * panel cannot drift into three different colours for one word.
  */
 import type { DenseTagVariant } from '@/components/data-display'
-import type { JournalNodeType, JournalOperator } from './journalModel'
+import type { JournalNodeType, JournalOperator, JournalStation } from './journalModel'
 
 /**
  * The type tag. `patch` and `intent` are the two that change something
@@ -58,3 +58,27 @@ export function journalClock(at: string): string {
   if (t < 0) return at
   return `${at.slice(t + 1, t + 6)}Z`
 }
+
+
+/**
+ * The station a tree is capped with.
+ *
+ * The design caps a tree with the station rather than the kind at its root:
+ * *which part of the machine wrote this* is what makes a day scannable.
+ *
+ * It gives each of the six its own colour; this side does not, because the
+ * app already decided how a station is coloured and decided differently —
+ * `ObjectiveLap` draws all six in one muted ink and spends colour on the one
+ * distinction that matters, the two stations that leave the research loop.
+ * Six hues here would be a second convention for the same word one click
+ * away, so the cap is the word alone.
+ */
+export const STATION_LABEL: Record<JournalStation, string> = {
+  scan: 'scan',
+  nominate: 'nominate',
+  judge: 'judge',
+  decide: 'decide',
+  settle: 'settle',
+  feedback: 'feed back',
+}
+

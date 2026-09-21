@@ -33,13 +33,14 @@ import {
   journalDays,
   journalDefaultDay,
   journalNodes,
+  journalStation,
   journalTypeLabel,
   type JournalNode,
   type JournalOperator,
 } from './journalModel'
 import { JournalNodeRow } from './JournalTree'
 import { SelectedArtifact } from './SelectedArtifact'
-import { TYPE_TAG, OPERATOR_LABEL } from './journalUi'
+import { OPERATOR_LABEL, STATION_LABEL, TYPE_TAG } from './journalUi'
 import { DenseTag } from '@/components/data-display'
 import {
   useJournalCandidates,
@@ -114,6 +115,26 @@ export default function JournalPage() {
     () => nodes.find((n) => n.id === selectedId) ?? null,
     [nodes, selectedId],
   )
+  // Every id the Journal can answer for, so a provenance value becomes a way
+  // into the chain only when there is something at the other end.
+  const knownIds = useMemo(() => new Set(nodes.map((n) => n.id)), [nodes])
+
+  /**
+   * Walking the chain takes the day with it.
+   *
+   * A parent is usually older than the artifact that names it — a candidate
+   * proposed on the 11th, settled on the 18th — so landing on it while the
+   * tree list still shows the day you came from puts the answer in the right
+   * panel and nothing on the left. Dropping the explicit day lets it fall
+   * back to the selection's own; a walk inside one day resolves to that same
+   * day, so nothing moves when nothing should.
+   */
+  const walkTo = (id: string) => {
+    const next = new URLSearchParams(params)
+    next.set('sel', id)
+    next.delete('day')
+    setParams(next, { replace: true })
+  }
   /**
    * What a settled candidate cited when it was nominated. The settlement node
    * carries the return; the evidence lives on the candidate above it, which
@@ -207,7 +228,15 @@ export default function JournalPage() {
           {trees.map((tree) => (
             <SectionPanel
               key={tree.root.id}
-              cap={journalTypeLabel(tree.root.type)}
+              // The design caps a tree with the station, not the kind at its
+              // root. A digest and a playbook note belong to no station — they
+              // are written about a day rather than at a point in its lap — so
+              // those fall back to the kind and the title says why.
+              cap={
+                journalStation(tree.root.type)
+                  ? STATION_LABEL[journalStation(tree.root.type)!]
+                  : journalTypeLabel(tree.root.type)
+              }
               title={
                 <span className="flex flex-wrap items-baseline gap-2">
                   {tree.root.title}
@@ -254,7 +283,11 @@ export default function JournalPage() {
           }
           className="lg:sticky lg:top-2"
         >
-          <SelectedArtifact node={selected} />
+          <SelectedArtifact
+            node={selected}
+            known={knownIds}
+            onSelect={walkTo}
+          />
         </SectionPanel>
       </div>
     </PageShell>

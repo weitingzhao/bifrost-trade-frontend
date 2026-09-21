@@ -141,7 +141,6 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "eye": "M2.5 12C5 8 8.2 6 12 6s7 2 9.5 6c-2.5 4-5.7 6-9.5 6s-7-2-9.5-6zM12 9.2a2.8 2.8 0 100 5.6 2.8 2.8 0 000-5.6z",
   "flows": "M3 12h18M8 8V3M5 6l3-3 3 3M16 16v5M13 18l3 3 3-3",
   "fork": "M12 3v5M12 8l-5 4M12 8l5 4M7 12v4M17 12v4M4 16h6M14 16h6",
-  "funnel": "M3 5h18l-7 8v6l-4 2v-8z",
   "gap": "M3 13h6v6H3zM15 13h6v6h-6zM10.5 16h.01M13.5 16h.01",
   "gates": "M3 6l4 6-4 6M10 6l4 6-4 6M19 4v16",
   "gauge": "M4 17a8 8 0 0116 0M12 17l4.5-5.5",
@@ -153,7 +152,6 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "ladder": "M6 5h12M6 9h12M6 13h12M6 17h12M3 13h2M19 13h2",
   "lamprows": "M5 7h.01M5 12h.01M5 17h.01M9 7h10M9 12h10M9 17h6",
   "layers": "M12 3l9 5-9 5-9-5 9-5zM3 14l9 5 9-5",
-  "lens": "M11 4a7 7 0 100 14 7 7 0 000-14M16.2 16.2L20.5 20.5",
   "map": "M4 4h6v6H4zM14 4h6v6h-6zM9 14h6v6H9zM7 10v3h10v-3M12 13v1",
   "matched": "M3 9h13l-3.5-3.5M21 15H8l3.5 3.5",
   "matrix": "M4 5h16v14H4zM4 10h16M4 15h16M9.3 5v14M14.6 5v14M14.6 15h5.4v4h-5.4z",
@@ -175,7 +173,6 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "rotor": "M12 7a5 5 0 100 10 5 5 0 000-10M12 3v4M12 17v4M3 12h4M17 12h4",
   "scale": "M12 4v16M8 20h8M4 8h16M4 8l-2 5h4zM20 8l2 5h-4z",
   "setsquare": "M5 4v15h15zM5 8h2.5M5 12h2.5M5 16h2.5",
-  "shieldcheck": "M12 3l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V6zM9 12l2 2 4-4",
   "sidebar": "M4 5h16v14H4zM9 5v14M11.5 9h6M11.5 13h4",
   "sieve": "M3 6h10M3 11h6M3 16h4M15 8.5a4 4 0 100 8 4 4 0 000-8M18.5 16.5L21 19",
   "sliders": "M4 8h16M9 6v4M4 16h16M15 14v4",
@@ -273,15 +270,12 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
  * it while carrying different shapes.
  */
 export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
-  "Analyze": "lens",
   "Data": "db",
   "Design": "setsquare",
-  "Discover": "funnel",
   "Reference": "doc",
-  "Validate": "shieldcheck",
 }
 
-export const DESIGN_REV = "2026-09-20.24"
+export const DESIGN_REV = "2026-09-21.3"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},

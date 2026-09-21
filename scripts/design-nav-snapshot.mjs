@@ -162,12 +162,17 @@ function generate(pkg) {
    * quietly wrong shape, which is worse than failing here.
    */
   function glyphPath(node, where) {
-    // A group row's glyph arrives wrapped: since Rev 2026-09-20.12 the registry
-    // puts it inside `<span data-navrow="group">`, which is the hook its CSS
-    // uses to give container rows their unboxed caret. Unwrap that one marker
-    // by name rather than descending through anything — a different wrapper is
-    // a change worth failing on.
-    if (node && node.__el === 'span' && node.props?.['data-navrow']) {
+    // A glyph can arrive wrapped, and only in ways this list knows by name:
+    // `data-navrow` since Rev 2026-09-20.12 (the hook the registry's CSS uses
+    // to give container rows their unboxed caret), and `data-capsec` since
+    // Rev 2026-09-21.3 (§5a.7 — each row under a caption carries its section
+    // so collapsing is one CSS rule, and the marker rides on the icon slot).
+    //
+    // Unwrapped by name rather than by descending through anything: a wrapper
+    // this list has not seen is a change to the design worth failing on, and
+    // it duly failed on both of these.
+    const MARKERS = ['data-navrow', 'data-capsec']
+    if (node && node.__el === 'span' && MARKERS.some((m) => node.props?.[m] != null)) {
       const inner = (node.children ?? [])[0]
       node = typeof inner?.__el === 'function' ? inner.__el(inner.props ?? {}) : inner
     }
@@ -230,11 +235,23 @@ function generate(pkg) {
    * Validate fold points at its *second* child — and a heading and a page
    * sharing a path carry different shapes.
    */
+  /**
+   * A caption row (§5a.7): `cap('Discover')` builds `{ id: 'cap:discover',
+   * label, icon }` where the icon is a marker, not a glyph — the design has
+   * no other per-row hook to hang it on. It names the rows after it and has
+   * no route, so it belongs in neither glyph map.
+   */
+  const isCaption = (it) => typeof it.id === 'string' && it.id.startsWith('cap:')
+
   function glyphs(table) {
     const byRoute = new Map()
     const byFold = new Map()
     const walk = (items) => {
       for (const it of items ?? []) {
+        // A caption is a heading, not a row (§5a.7): the design builds it with
+        // a hidden icon slot because the DS gives it no other per-row hook, so
+        // asking it for a glyph throws. It has no route to key one on either.
+        if (isCaption(it)) continue
         if (it.icon) {
           const d = glyphPath(it.icon({ className: '' }), it.label)
           const name = table.get(d)

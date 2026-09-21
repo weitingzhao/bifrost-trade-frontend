@@ -29,11 +29,21 @@ describe('the generated glyph table', () => {
   })
 
   it('keys folds by label, because a heading borrows a child’s route', () => {
-    // `/research/backtest` is both the Validate heading and a page under it,
-    // and the two carry different shapes. Keying folds by path would give the
+    // `/research/book` is both The Book's heading and a page under it, and
+    // the two carry different shapes. Keying folds by path would give the
     // heading its child's glyph.
-    expect(DESIGN_FOLD_GLYPH['Validate']).toBe('shieldcheck')
+    //
+    // Validate was the example until §5a.7 (Rev 2026-09-21.3) turned the
+    // three Pipeline folds into captions — a caption draws no glyph, so its
+    // three entries left the table along with the shapes only they used.
+    expect(DESIGN_FOLD_GLYPH['Data']).toBe('db')
     expect(DESIGN_ROUTE_GLYPH['/research/backtest']).toBe('replay')
+  })
+
+  it('keeps no fold glyph for a heading that became a caption', () => {
+    for (const label of ['Discover', 'Analyze', 'Validate']) {
+      expect(DESIGN_FOLD_GLYPH[label], label).toBeUndefined()
+    }
   })
 })
 

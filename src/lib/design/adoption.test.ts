@@ -472,7 +472,12 @@ describe('design adoption', () => {
     // Package 2026-09-20.1 @ Rev .11 is a full baseline. The .11 round bumps
     // only the global Rev — the glyph table is shell, not page — so the 28
     // aligned pages hold and `stale` does not move.
-    expect(DESIGN_REV).toBe('2026-09-20.24')
+    //
+    // Package 2026-09-21.1 @ Rev .3 is the same kind of round: three shell
+    // rulings (page names, the Pipeline layer page, container rows becoming
+    // captions) and not one route changed. So the global Rev moves and no
+    // page stamp does, which is why the aligned set holds through it.
+    expect(DESIGN_REV).toBe('2026-09-21.3')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

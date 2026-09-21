@@ -65,7 +65,7 @@ describe('the sidebar', () => {
     // its glyph is identified by that glyph alone. Siblings, not the whole
     // tree — three Docs rows deliberately borrow the shape of the thing they
     // document, and they sit in different groups from it.
-    const groups = [...NAV_GROUPS, buildResearchNavGroup({ objectives: [] })]
+    const groups = [...NAV_GROUPS, buildResearchNavGroup()]
     for (const group of groups) {
       const lists = [group.items, ...(group.subGroups ?? []).map((s) => s.items)]
       for (const list of lists) {

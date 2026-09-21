@@ -6,6 +6,7 @@
  * the engine and the stations are short enough to stand together, and a
  * switcher that hides one of them answers nothing.
  */
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { isSystemRoute } from './routeRegistry'
 import {
@@ -18,12 +19,6 @@ import {
 } from './researchNavCatalog'
 import type { ShellNavItem } from '@bifrost/ui'
 
-const ctx = {
-  objectives: [
-    { id: 'obj-a', title: 'Daily Loop Stock Explorer' },
-    { id: 'obj-b', title: 'Morning IV Hot Watch' },
-  ],
-}
 
 const OVERVIEW = '/research/overview'
 const AUTOPILOT_HOME = '/research/loop/harness'
@@ -49,8 +44,8 @@ describe('one tree, both homes', () => {
     // Market left for Home (§5a.1): Home is organised by time of day, and
     // Live · Alerts · Events are the market's own clock. Overview left the
     // list in the same round — it is the layer's heading now, not a row in it.
-    expect(buildResearchNavGroup(ctx).to).toBe(OVERVIEW)
-    expect(researchItems(ctx).map((i) => i.to)).toEqual([
+    expect(buildResearchNavGroup().to).toBe(OVERVIEW)
+    expect(researchItems().map((i) => i.to)).toEqual([
       AUTOPILOT_HOME,
       PIPELINE_HOME,
       BOOK_PAGE,
@@ -59,21 +54,33 @@ describe('one tree, both homes', () => {
   })
 
   it('shows Autopilot and Pipeline at once — the split the Owner retired', () => {
-    const routes = routesOf(researchItems(ctx))
+    const routes = routesOf(researchItems())
     expect(routes).toContain(AUTOPILOT_HOME)
     expect(routes).toContain(PIPELINE_HOME)
   })
 
-  it('keeps the Autopilot home to the engine: Inbox and the objectives', () => {
-    const home = researchItems(ctx).find((i) => i.to === AUTOPILOT_HOME)
+  it('keeps the Autopilot home to two rows: the Console and its Inbox', () => {
+    // Objectives left on 2026-09-21 (design Rev 2026-09-20.1). It was the one
+    // row that made **data rows** into **menu rows**, which is the same line
+    // that keeps every hypothesis, candidate and symbol out of the tree — and
+    // an objective is live data a static menu cannot honestly hold.
+    const home = researchItems().find((i) => i.to === AUTOPILOT_HOME)
     expect(home?.defaultOpen).toBe(true)
-    expect(home?.children?.map((c) => c.label)).toEqual(['Decision Inbox', 'Objectives'])
+    expect(home?.children?.map((c) => c.label)).toEqual(['Decision Inbox'])
+  })
+
+  it('puts no objective in the menu at all', () => {
+    const everything = flatten(researchItems())
+    expect(everything.filter((i) => (i.to ?? '').startsWith('/research/loop/objectives/'))).toEqual(
+      [],
+    )
+    expect(everything.filter((i) => i.label === 'Objectives')).toEqual([])
   })
 
   it('names the stations Pipeline — the Vision destination for the Workbench folds', () => {
     // Vision §12.2: "Workbench seat (四折) → Pipeline — 改名, 去 seat 化". The
     // route keeps its path; only the name and the standing changed.
-    const home = researchItems(ctx).find((i) => i.to === PIPELINE_HOME)
+    const home = researchItems().find((i) => i.to === PIPELINE_HOME)
     expect(home?.label).toBe('Pipeline')
     // §5a.7: the three are captions now, and their nine pages are siblings —
     // twelve entries at one depth, not three rows over three lists.
@@ -95,7 +102,7 @@ describe('one tree, both homes', () => {
   })
 
   it('gives a caption no address, so nothing can navigate to a heading', () => {
-    const home = researchItems(ctx).find((i) => i.to === PIPELINE_HOME)
+    const home = researchItems().find((i) => i.to === PIPELINE_HOME)
     for (const cap of (home?.children ?? []).filter((i) => i.kind === 'caption')) {
       expect([cap.to, cap.href, cap.children], cap.label).toEqual([undefined, undefined, undefined])
     }
@@ -105,7 +112,7 @@ describe('one tree, both homes', () => {
     // Discover is a caption now, so its pages are the siblings that follow it
     // rather than its children — the run ends at the next caption.
     const rows = (label: string) => {
-      const siblings = flatten(researchItems(ctx))
+      const siblings = flatten(researchItems())
       const at = siblings.findIndex((i) => i.kind === 'caption' && i.label === label)
       if (at < 0) return []
       const out: [string, string | undefined][] = []
@@ -140,7 +147,7 @@ describe('one tree, both homes', () => {
     // §5a.4: four parallel children and none of them is The Book, so the fold
     // stopped aliasing its first child and got a page. Keyed by path, like
     // every dual row, so it lights while you stand on it.
-    const fold = flatten(researchItems(ctx)).find((i) => i.label === 'The Book')
+    const fold = flatten(researchItems()).find((i) => i.label === 'The Book')
     expect([fold?.id, fold?.to]).toEqual([BOOK_PAGE, BOOK_PAGE])
     // Four since 2026-09-21: the design's `fold:book` has carried a Journal
     // row since the package was written, and the row waited on the page.
@@ -157,7 +164,7 @@ describe('one tree, both homes', () => {
     // selected Desk and two rows lit for one page. The Desk is the fold now,
     // and the id is the path — the sidebar matches the active row by id
     // alone, so a `fold:*` id would never light while you stood on it.
-    const fold = flatten(researchItems(ctx)).find((i) => i.label === 'Copilot')
+    const fold = flatten(researchItems()).find((i) => i.label === 'Copilot')
     expect([fold?.id, fold?.to]).toEqual([COPILOT_DESK, COPILOT_DESK])
     expect(fold?.children?.map((c) => [c.label, c.to])).toEqual([
       ['Daily Brief', '/research/daily-brief'],
@@ -166,10 +173,10 @@ describe('one tree, both homes', () => {
   })
 
   it('reaches every route the catalog knows, each exactly once', () => {
-    const group = buildResearchNavGroup(ctx)
+    const group = buildResearchNavGroup()
     // The group's own heading is a route too (§5a.1) — the Overview — so the
     // reach is the rows plus it, not the rows alone.
-    const routes = [group.to as string, ...routesOf(researchItems(ctx))].filter(
+    const routes = [group.to as string, ...routesOf(researchItems())].filter(
       (r) => !r.startsWith('/research/loop/objectives/'),
     )
     expect(new Set(routes).size).toBe(routes.length)
@@ -177,7 +184,7 @@ describe('one tree, both homes', () => {
   })
 
   it('carries no section headings — a heading you cannot click is a wasted row', () => {
-    expect(buildResearchNavGroup(ctx).subGroups).toBeUndefined()
+    expect(buildResearchNavGroup().subGroups).toBeUndefined()
   })
 })
 
@@ -187,34 +194,24 @@ describe('no page lights two rows', () => {
     // `/system/*` page, and clicking the heading swapped the whole sidebar
     // for the System tree. The row may cross (it is the one that earns it);
     // the heading may not.
-    for (const f of flatten(researchItems(ctx)).filter((i) => i.children?.length)) {
+    for (const f of flatten(researchItems()).filter((i) => i.children?.length)) {
       expect(isSystemRoute(f.to ?? ''), `heading "${f.label}" -> ${f.to}`).toBe(false)
     }
   })
 
-  it('sends Objectives to an objective, not to the console above it', () => {
-    const [objectives] = flatten(researchItems(ctx)).filter((i) => i.label === 'Objectives')
-    expect(objectives.to).toBe('/research/loop/objectives/obj-a')
-    expect(objectives.to).not.toBe(AUTOPILOT_HOME)
+  it('reaches an objective from the Console instead, which is its roster', () => {
+    // The page is not orphaned by the fold's removal: `ObjectiveBriefRow`
+    // renders a link per objective on the Autopilot console, which is where
+    // the design says the roster lives.
+    const src = readFileSync('src/pages/research/loop/ObjectiveBriefRow.tsx', 'utf8')
+    expect(src).toContain('objectivePath(row.id)')
   })
 
-  it('drops the Objectives row when there is nothing to list', () => {
-    expect(flatten(researchItems({ objectives: [] })).filter((i) => i.label === 'Objectives')).toEqual([])
-  })
-
-  it('folded categories land where the design points them', () => {
-    // Copilot left this list when it became a dual row (§5a) and Market left
-    // the group entirely (§5a.1) — a `fold:` id now means a true container.
-    // Objectives alone since §5a.7: the three Pipeline folds became captions,
-    // and a caption is not a container — it names its siblings.
-    const folds = flatten(researchItems(ctx)).filter((i) => i.id.startsWith('fold:'))
-    expect(folds.map((f) => f.label)).toEqual(['Objectives'])
-    for (const f of folds) {
-      // Validate is the design's own exception: its heading lands on Backtest
-      // (shell-registry `fold:validate`) while Signal Decay stays the first row.
-      const target = f.label === 'Validate' ? '/research/backtest' : f.children?.[0].to
-      expect(f.to, f.label).toBe(target)
-    }
+  it('has no container row left in the business tree', () => {
+    // §5a.7 turned Discover · Analyze · Validate into captions and the
+    // Objectives cancellation took the last fold with it: every row is a
+    // place, and the rest are headings.
+    expect(flatten(researchItems()).filter((i) => i.id.startsWith('fold:'))).toEqual([])
   })
 })
 

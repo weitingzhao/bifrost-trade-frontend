@@ -1,11 +1,14 @@
 /**
- * The Research group as the current seat lays it out, with live objectives
- * under "Objects" and the badges the seat cares about.
+ * The Research group and the badges that ride on it.
+ *
+ * It no longer reads the objective list. The Objectives fold was cancelled
+ * (Owner 2026-09-21, design Rev 2026-09-20.1) because it was the one row that
+ * made data rows into menu rows, so the tree is now the same for every reader
+ * and only the badges are live.
  */
 import { useMemo, type ReactNode } from 'react'
 import { DenseTag } from '@/components/data-display'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
-import { objectivePath } from '@/lib/harness/objectivePolicy'
 import type { ShellNavGroup, ShellNavItem } from '@bifrost/ui'
 import { AUTOPILOT_PAGES, buildResearchNavGroup } from './researchNavCatalog'
 
@@ -16,13 +19,7 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
   // One tree, both homes (Owner ruling 2026-09-19 on Vision §15 Q2): the
   // Autopilot engine and the Pipeline stations stand together; nothing swaps
   // under the reader.
-  const group = useMemo(
-    () =>
-      buildResearchNavGroup({
-        objectives: (standing?.objectives ?? []).map((o) => ({ id: o.id, title: o.title ?? o.id })),
-      }),
-    [standing],
-  )
+  const group = useMemo(() => buildResearchNavGroup(), [])
 
   const extras = useMemo(() => {
     const byPath = new Map<string, ReactNode>()
@@ -51,16 +48,9 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
           </DenseTag>,
         )
       }
-      for (const o of standing.objectives) {
-        if (o.pending_memos > 0) {
-          byPath.set(
-            objectivePath(o.id),
-            <DenseTag variant="warning" size="cell" title="Memos waiting on you">
-              {o.pending_memos}
-            </DenseTag>,
-          )
-        }
-      }
+      // The per-objective memo badges retired with the rows that carried
+      // them. The Autopilot row's own `running` chip stays: it is an
+      // aggregate over every objective, not a row's own count.
     }
     // Fold rows borrow their first child's `to` (fold:copilot carries Desk's,
     // fold:market Live's) — keying them by `to` would pin the child's badge on

@@ -70,7 +70,7 @@ describe('visibleUnderCaptions', () => {
 })
 
 describe('the Research tree uses captions where §5a.7 says to', () => {
-  const pipeline = researchItems({ objectives: [] }).find((i) => i.label === 'Pipeline')
+  const pipeline = researchItems().find((i) => i.label === 'Pipeline')
 
   it('names its three stations with captions, not rows', () => {
     expect(captionsOf(pipeline?.children ?? []).map((c) => c.label)).toEqual([

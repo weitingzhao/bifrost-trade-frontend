@@ -6,6 +6,7 @@
  * match, and which tree the sidebar shows. Re-exports `RouteEntry` and
  * `ROUTES` so no caller has to know about the split.
  */
+import { shellNavMatchByPathPrefix, type ShellNavItem } from '@bifrost/ui'
 import { matchPath } from 'react-router-dom'
 import { ROUTES, type RouteEntry } from './routeTable'
 
@@ -94,6 +95,47 @@ const SYSTEM_TREE_PAGES: ReadonlySet<string> = new Set([
   '/research/signal-health',
   '/research/lens-coverage',
 ])
+
+/**
+ * The menu row a page belongs to when it has no row of its own.
+ *
+ * Prefix matching gets this right for every page the tree lists, and wrong
+ * for a page reached from somewhere else: an objective's path does not begin
+ * with the Autopilot Console's, so with the Objectives fold cancelled (Owner
+ * 2026-09-21, design Rev 2026-09-20.1) nothing in the tree lit at all — the
+ * reader stood inside Research with the whole tree dark.
+ *
+ * The Console is the objectives' roster, so the Console's row is the one that
+ * owns them. Kept as a short explicit list rather than a rule: it is a list
+ * of pages the menu deliberately does not carry, and it should stay short
+ * enough to read.
+ */
+const OWNED_BY_ROW: ReadonlyArray<{ prefix: string; row: string }> = [
+  { prefix: '/research/loop/objectives/', row: '/research/loop/harness' },
+]
+
+/**
+ * Which row lights, given the id the sidebar is standing on.
+ *
+ * `shellNavMatchByPathPrefix` reads an item's `to` first and its `id` only as
+ * a fallback. That is right for every row in the tree and wrong for a pinned
+ * one, which carries both: `activeId` becomes `pin:<path>` on a pinned page —
+ * so the shelf row lights instead of the home row, two lit rows for one page
+ * being the thing to avoid — and the matcher then compared `pin:/x` against
+ * `/x` and matched nothing at all. Pinning a page made the whole tree go dark
+ * on it, which is the opposite of what a shortcut is for.
+ *
+ * A `pin:` id is an identity, not a path, so it is matched as one.
+ */
+export function matchActiveRow(item: ShellNavItem, activeId: string): boolean {
+  if (activeId.startsWith('pin:')) return item.id === activeId
+  return shellNavMatchByPathPrefix(item, activeId)
+}
+
+export function navRowFor(pathname: string): string {
+  const owner = OWNED_BY_ROW.find((o) => pathname.startsWith(o.prefix))
+  return owner?.row ?? pathname
+}
 
 export function isSystemRoute(pathname: string): boolean {
   if (pathname.startsWith('/system/') || pathname.startsWith('/docs/')) return true

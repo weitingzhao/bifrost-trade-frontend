@@ -1,7 +1,6 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   ShellNavSidebar,
-  shellNavMatchByPathPrefix,
   type ShellNavLinkRenderProps,
   type ShellNavItem,
 } from '@bifrost/ui'
@@ -12,7 +11,7 @@ import { STORAGE_KEYS } from '@/constants/storage'
 import { lifecycleMark } from './LifecycleMark'
 import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
 import { LIFECYCLE, orderGroups, useNavOrder } from './navOrder'
-import { isSystemRoute } from './routeRegistry'
+import { isSystemRoute, matchActiveRow, navRowFor } from './routeRegistry'
 import { ScopeMark } from './ScopeMark'
 import { useResearchNavGroup } from './useResearchNavGroup'
 import { useMemo } from 'react'
@@ -119,8 +118,12 @@ export function AppSidebar() {
         // A pinned page lights its shelf row instead of its home row: two lit
         // rows for one page reads as a bug. Unpinned, it falls back to the
         // section that owns it (an objective lights Autopilot).
-        activeId={pins.some((p) => p.to === location.pathname) ? `pin:${location.pathname}` : location.pathname}
-        matchActive={shellNavMatchByPathPrefix}
+        activeId={
+          pins.some((p) => p.to === location.pathname)
+            ? `pin:${location.pathname}`
+            : navRowFor(location.pathname)
+        }
+        matchActive={matchActiveRow}
         // The three-kind row grammar (design §5a, 2026-09-20). It replaces
         // the 2026-09-15 rule this side had adopted a day earlier — every
         // parent "expands first, navigates second" — which the design itself

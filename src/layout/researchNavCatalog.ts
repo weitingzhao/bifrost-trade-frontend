@@ -32,7 +32,6 @@ import {
   Radar,
   ScanSearch,
   Star,
-  Target,
   Terminal,
   Users,
   Wrench,
@@ -40,7 +39,6 @@ import {
 } from 'lucide-react'
 import type { IconComponent, ShellNavGroup, ShellNavItem, ShellNavSubGroup } from '@bifrost/ui'
 import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
-import { objectivePath } from '@/lib/harness/objectivePolicy'
 
 /**
  * The design's glyph for this route when it has one, the lucide icon as the
@@ -260,24 +258,15 @@ export function staticResearchSubGroups(): ShellNavSubGroup[] {
 }
 
 // ── The tree ─────────────────────────────────────────────────────────────
-export interface ObjectiveNavRow {
-  id: string
-  title: string
-}
-
-export interface ResearchNavContext {
-  objectives: ObjectiveNavRow[]
-}
-
-/**
- * A folded entry: one row whose children are the pages. Clicking it lands on
- * the first (or where `to` points). Kept for the Objectives fold, which is a
- * row over rows the reader can genuinely go to.
- */
-function fold(id: string, label: string, icon: IconComponent, items: ShellNavItem[], to?: string): ShellNavItem {
-  const first = items[0]
-  return { id: `fold:${id}`, label, icon, to: to ?? first?.to ?? first?.id, children: items }
-}
+//
+// It takes no context. The one thing that ever varied was the objective list,
+// and with the Objectives fold cancelled the Research tree is the same tree
+// for every reader and every session — which is what a menu should be.
+//
+// `fold()` went with it. Between §5a.7 turning Discover · Analyze · Validate
+// into captions and this cancelling Objectives, the business tree has no
+// container rows left at all: every row is a place, and the rest are
+// headings.
 
 /**
  * A group heading, not a row (§5a.7, Owner 2026-09-21).
@@ -307,28 +296,24 @@ function home(page: ShellNavItem, children: ShellNavItem[]): ShellNavItem {
 }
 
 /**
- * The objectives, folded under one row. The row lands on the first objective,
- * like every other fold: a row that goes where its children live, not where
- * its parent does (Owner, 2026-09-08: "I clicked Autopilot and Objectives was
- * selected too").
- */
-function objectivesItem(objectives: ObjectiveNavRow[]): ShellNavItem[] {
-  if (objectives.length === 0) return []
-  const rows = objectives.map((o) => route(o.title, objectivePath(o.id), Target))
-  return [fold('objectives', 'Objectives', Target, rows)]
-}
-
-/**
  * The group, top down: the standing, the engine, the stations, the state, the
  * sediment, the tape. Autopilot before Pipeline because the registry's seat
  * slot sat there and the default seat was the engine — the two homes keep
  * that reading order now that both stand.
  */
-export function researchItems(ctx: ResearchNavContext): ShellNavItem[] {
+export function researchItems(): ShellNavItem[] {
   const [discover, analyze, validate] = BENCHES
   return [
     // Overview is the layer heading now (§5a.1), not a row inside it.
-    home(AUTOPILOT_PAGES.autopilot, [AUTOPILOT_PAGES.inbox, ...objectivesItem(ctx.objectives)]),
+    // Two rows, not three (Owner 2026-09-21, design Rev 2026-09-20.1): every
+    // other row in this tree is a page, and Objectives was the one that made
+    // **data rows** into **menu rows** — the same line that keeps every
+    // hypothesis, every candidate and every symbol out of the menu. The
+    // Console is already the objectives' roster and its rows link to each
+    // page, so listing them again in the sidebar moved the main content into
+    // the navigation; and an objective is live data — one gets added, one
+    // gets archived — which a static menu cannot honestly hold.
+    home(AUTOPILOT_PAGES.autopilot, [AUTOPILOT_PAGES.inbox]),
     // Flat, with headings: §5a.7. Twelve rows fully open — nine pages and the
     // three captions naming them.
     home(WORKBENCH_PAGE, [
@@ -344,13 +329,13 @@ export function researchItems(ctx: ResearchNavContext): ShellNavItem[] {
   ]
 }
 
-export function buildResearchNavGroup(ctx: ResearchNavContext): ShellNavGroup {
+export function buildResearchNavGroup(): ShellNavGroup {
   return {
     label: 'Research',
     icon: BookOpen,
     // The heading is the Overview (§5a.1): the layer's own page, so the word
     // goes there and only the chevron folds.
     to: OVERVIEW_PAGE.to,
-    items: researchItems(ctx),
+    items: researchItems(),
   }
 }

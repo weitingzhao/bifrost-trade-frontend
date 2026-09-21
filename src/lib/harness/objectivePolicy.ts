@@ -586,6 +586,9 @@ export function describeEdits(policy: Record<string, unknown>, edits: Record<str
     .join(' · ')
 }
 
+/** One definition of where an objective lives, for the builder and the reader. */
+export const OBJECTIVE_PATH_PREFIX = '/research/loop/objectives/'
+
 export function objectivePath(objectiveId: string): string {
-  return `/research/loop/objectives/${encodeURIComponent(objectiveId)}`
+  return `${OBJECTIVE_PATH_PREFIX}${encodeURIComponent(objectiveId)}`
 }

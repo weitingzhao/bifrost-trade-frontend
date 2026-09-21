@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { omnibar } from '@/lib/omnibar'
 import { useCopilotDock } from '@/hooks/useCopilotDock'
 import { routeFor } from './routeRegistry'
+import { useCrumbLabel } from './useCrumbLabel'
 import { Lens } from './Lens'
 import {
   SHELL_TOP_BAR_CONTROL_CLASS,
@@ -27,7 +28,8 @@ import {
 
 export function AppHeader() {
   const location = useLocation()
-  const { label, crumbs } = routeFor(location.pathname)
+  const { label: registryLabel, crumbs } = routeFor(location.pathname)
+  const label = useCrumbLabel(location.pathname, registryLabel)
   const copilot = useCopilotDock()
 
   return (

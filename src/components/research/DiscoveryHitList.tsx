@@ -14,24 +14,14 @@
  */
 import { Link } from 'react-router-dom'
 import { AlertTriangle, type LucideIcon } from 'lucide-react'
-import {
-  Activity,
-  ArrowUpRight,
-  Pin,
-  Radar,
-  Sparkles,
-  Zap,
-} from 'lucide-react'
+import { Activity, ArrowUpRight, Radar, Sparkles, Zap } from 'lucide-react'
 import { fmtNum } from '@/lib/format'
-import { DenseTag, EmptyState, IconActionButton } from '@/components/data-display'
+import { DenseTag, EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { LANE_ORIGIN } from './discoveryLanes'
-import { AddToPoolButton } from '@/components/research/AddToPoolButton'
-import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
-import { cockpitPinStore } from '@/store/cockpitPinStore'
+import { DiscoveryCapture } from './DiscoveryCapture'
 import type {
   EventDiscoveryHit,
   IvExtremeHit,
@@ -125,12 +115,11 @@ interface HitRowProps {
   entity: React.ReactNode
   detail: React.ReactNode
   meta?: React.ReactNode
-  saveButton: React.ReactNode
-  poolButton?: React.ReactNode
-  pinButton?: React.ReactNode
+  /** The capture verbs — one cluster, shared with the Pipeline census. */
+  actions: React.ReactNode
 }
 
-function HitRow({ entity, detail, meta, saveButton, poolButton, pinButton }: HitRowProps) {
+function HitRow({ entity, detail, meta, actions }: HitRowProps) {
   return (
     <div
       className={cn(
@@ -145,11 +134,7 @@ function HitRow({ entity, detail, meta, saveButton, poolButton, pinButton }: Hit
           <div className="text-dense-micro text-muted-foreground">{meta}</div>
         ) : null}
       </div>
-      <div className="flex shrink-0 items-center gap-0.5">
-        {pinButton}
-        {poolButton}
-        {saveButton}
-      </div>
+      {actions}
     </div>
   )
 }
@@ -245,60 +230,7 @@ export function DiscoveryHitList({
                 Composite {fmtNum(hit.score, 1)}
               </span>
             }
-            poolButton={
-              <AddToPoolButton
-                symbol={hit.symbol}
-                source="sepa"
-                score={hit.score}
-                tags={['sepa', hit.path.toLowerCase(), hit.grade].filter(Boolean)}
-                lens_snapshot={{
-                  sepa_score: hit.score,
-                  grade: hit.grade,
-                  path: hit.path,
-                  stage: hit.stage,
-                }}
-                source_ref={{ trade_date: hit.trade_date }}
-              />
-            }
-            saveButton={
-              <SaveAsHypothesisButton
-                originPage={LANE_ORIGIN.sepa}
-                defaultTitle={`${hit.symbol} ${hit.path.toLowerCase()} — SEPA ${hit.grade}`}
-                defaultThesis={`SEPA fusion flagged ${hit.symbol} as ${hit.path} on ${hit.trade_date}. Grade ${hit.grade}, composite ${fmtNum(hit.score, 1)}.`}
-                defaultSymbols={[hit.symbol]}
-                defaultTags={['sepa', hit.path.toLowerCase()]}
-                originRef={{
-                  source: 'sepa-hit',
-                  symbol: hit.symbol,
-                  trade_date: hit.trade_date,
-                  path: hit.path,
-                  stage: hit.stage,
-                  grade: hit.grade,
-                  score: hit.score,
-                }}
-              />
-            }
-            pinButton={
-              <IconActionButton
-                title="Pin discovery hit to Cockpit"
-                ariaLabel={`Pin ${hit.symbol}`}
-                onClick={() =>
-                  cockpitPinStore.getState().pinHit({
-                    kind: 'sepa',
-                    symbol: hit.symbol,
-                    ts: hit.trade_date,
-                    detail: {
-                      path: hit.path,
-                      grade: hit.grade,
-                      score: hit.score,
-                    },
-                    originPage: LANE_ORIGIN.sepa,
-                  })
-                }
-              >
-                <Pin className="h-3.5 w-3.5" />
-              </IconActionButton>
-            }
+            actions={<DiscoveryCapture target={{ lane: 'sepa', hit }} />}
           />
         ))}
       </HitColumn>
@@ -338,41 +270,7 @@ export function DiscoveryHitList({
               meta={
                 hit.theme ? <span>Theme {hit.theme}</span> : null
               }
-              poolButton={
-                symbolPreview ? (
-                  <AddToPoolButton
-                    symbol={symbolPreview}
-                    source="event_radar"
-                    tags={['event_radar', hit.theme].filter(Boolean) as string[]}
-                    source_ref={{
-                      event_id: hit.event_id,
-                      subject: hit.subject,
-                      importance: hit.importance,
-                      direction: hit.direction,
-                    }}
-                  />
-                ) : null
-              }
-              saveButton={
-                <SaveAsHypothesisButton
-                  originPage={LANE_ORIGIN.event}
-                  defaultTitle={
-                    symbolPreview
-                      ? `${symbolPreview} event — ${hit.subject || hit.theme || 'radar'}`
-                      : `Event — ${hit.subject || hit.theme || 'radar'}`
-                  }
-                  defaultThesis={hit.summary || hit.subject || ''}
-                  defaultSymbols={hit.affected_symbols}
-                  defaultTags={['events', hit.theme].filter(Boolean) as string[]}
-                  originRef={{
-                    source: 'event-radar',
-                    event_id: hit.event_id,
-                    batch_id: hit.batch_id,
-                    importance: hit.importance,
-                    direction: hit.direction,
-                  }}
-                />
-              }
+              actions={<DiscoveryCapture target={{ lane: 'event', hit }} />}
             />
           )
         })}
@@ -412,36 +310,7 @@ export function DiscoveryHitList({
               </span>
             }
             meta={hit.trade_date ? <span>{hit.trade_date}</span> : null}
-            poolButton={
-              <AddToPoolButton
-                symbol={hit.symbol}
-                source="iv_extreme"
-                score={hit.iv_rank_1y}
-                tags={['iv-regime', hit.bucket].filter(Boolean)}
-                lens_snapshot={{
-                  iv_rank_1y: hit.iv_rank_1y,
-                  iv_current: hit.iv_current,
-                  bucket: hit.bucket,
-                }}
-                source_ref={{ trade_date: hit.trade_date }}
-              />
-            }
-            saveButton={
-              <SaveAsHypothesisButton
-                originPage={LANE_ORIGIN.iv}
-                defaultTitle={`${hit.symbol} IV regime — ${hit.bucket}`}
-                defaultThesis={`IV rank ${fmtNum(hit.iv_rank_1y, 0)} places ${hit.symbol} in the ${hit.bucket} bucket. Investigate vol trades.`}
-                defaultSymbols={[hit.symbol]}
-                defaultTags={['iv-regime', hit.bucket]}
-                originRef={{
-                  source: 'iv-extreme',
-                  symbol: hit.symbol,
-                  trade_date: hit.trade_date,
-                  bucket: hit.bucket,
-                  iv_rank_1y: hit.iv_rank_1y,
-                }}
-              />
-            }
+            actions={<DiscoveryCapture target={{ lane: 'iv', hit }} />}
           />
         ))}
       </HitColumn>
@@ -478,36 +347,7 @@ export function DiscoveryHitList({
             meta={
               hit.data_source ? <span>Source {hit.data_source}</span> : null
             }
-            poolButton={
-              <AddToPoolButton
-                symbol={hit.symbol}
-                source="order_sentiment"
-                score={hit.sentiment_score}
-                tags={['sentiment', hit.sentiment_score >= 0 ? 'bull-tilt' : 'bear-tilt']}
-                lens_snapshot={{
-                  sentiment_score: hit.sentiment_score,
-                  pcr_volume: hit.pcr_volume,
-                  strike_concentration: hit.strike_concentration,
-                }}
-                source_ref={{ trade_date: hit.trade_date }}
-              />
-            }
-            saveButton={
-              <SaveAsHypothesisButton
-                originPage={LANE_ORIGIN.sentiment}
-                defaultTitle={`${hit.symbol} order sentiment anomaly`}
-                defaultThesis={`Sentiment score ${fmtNum(hit.sentiment_score, 1)} on ${hit.trade_date}. Investigate flow imbalance.`}
-                defaultSymbols={[hit.symbol]}
-                defaultTags={['sentiment', hit.sentiment_score >= 0 ? 'bull-tilt' : 'bear-tilt']}
-                originRef={{
-                  source: 'order-sentiment',
-                  symbol: hit.symbol,
-                  trade_date: hit.trade_date,
-                  sentiment_score: hit.sentiment_score,
-                  pcr_volume: hit.pcr_volume,
-                }}
-              />
-            }
+            actions={<DiscoveryCapture target={{ lane: 'sentiment', hit }} />}
           />
         ))}
       </HitColumn>

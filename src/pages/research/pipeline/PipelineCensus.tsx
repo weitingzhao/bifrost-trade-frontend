@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
+import { DiscoveryCapture, type DiscoveryTarget } from '@/components/research/DiscoveryCapture'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
@@ -274,7 +275,7 @@ function CensusRowView({
 }: {
   row: CensusRow
   /** What this page wrote today — the design's "a row opens into what it wrote". */
-  hits: { label: string; line: string }[]
+  hits: { label: string; line: string; target?: DiscoveryTarget }[]
   open: boolean
   onToggle: () => void
 }) {
@@ -361,13 +362,21 @@ function CensusRowView({
           {hits.length > 0 ? (
             <ul className="space-y-0.5">
               {hits.map((h) => (
-                <li key={`${h.label}-${h.line}`} className="flex items-baseline gap-2.5">
+                <li
+                  key={`${h.label}-${h.line}`}
+                  className="flex items-center gap-2.5 rounded-sm px-1 py-0.5 hover:bg-secondary/60"
+                >
                   <span className="w-16 shrink-0 font-mono text-dense-caption font-bold text-entity-symbol">
                     {h.label}
                   </span>
-                  <span className="min-w-0 truncate text-dense-caption text-muted-foreground">
+                  <span className="min-w-0 flex-1 truncate text-dense-caption text-muted-foreground">
                     {h.line}
                   </span>
+                  {/* The verbs belong beside the thing they act on — the row
+                      that opens into what a page made is where you pin it,
+                      pool it or state a thesis about it. Same component as
+                      the lane list, so the origin stamp is the same too. */}
+                  {h.target ? <DiscoveryCapture target={h.target} /> : null}
                 </li>
               ))}
             </ul>

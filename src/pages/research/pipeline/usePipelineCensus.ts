@@ -8,6 +8,8 @@
  * disagreeing about the same page.
  */
 import { useMemo } from 'react'
+import type { DiscoveryTarget } from '@/components/research/DiscoveryCapture'
+import { LANE_ORIGIN } from '@/components/research/discoveryLanes'
 import { useQuery } from '@tanstack/react-query'
 import { fetchBacktestRuns } from '@/api/research/backtestEvent'
 import { fetchSepaDaily, fetchOrderSentiment } from '@/api/researchEngine'
@@ -116,35 +118,50 @@ export function usePipelineCensus() {
   /**
    * What each row wrote, for its expand area — the design's "a row opens into
    * what it wrote". Keyed by route so a row and its contents cannot drift.
+   *
+   * A hit carries the lane it came from as well as its line, because the row
+   * that opens into what a page made is also where you capture it: pin, pool,
+   * hypothesis. The target is the hit as its engine published it, so the
+   * verbs here pre-fill exactly what the lane list's did. A backtest run has
+   * no lane and no verbs — it is already an artifact.
+   *
+   * The four lanes are keyed by `LANE_ORIGIN` rather than by a route written
+   * out again here: the row a hit is shown under and the origin its buttons
+   * stamp then come from one constant, so they cannot drift into saying a
+   * hypothesis came from a station other than the row it was captured on.
    */
   const hits = useMemo(() => {
-    const m = new Map<string, { label: string; line: string }[]>()
+    const m = new Map<string, { label: string; line: string; target?: DiscoveryTarget }[]>()
     m.set(
-      '/research/ratings/stocks',
+      LANE_ORIGIN.sepa,
       home.sepaHits.map((h) => ({
         label: h.symbol,
         line: `${h.path} · grade ${h.grade} · ${h.stage} · ${h.score.toFixed(1)}`,
+        target: { lane: 'sepa', hit: h } as const,
       })),
     )
     m.set(
-      '/research/scan',
+      LANE_ORIGIN.iv,
       home.ivExtremes.map((h) => ({
         label: h.symbol,
         line: `${h.bucket} · IV rank ${h.iv_rank_1y ?? '—'} · ${h.trade_date ?? '—'}`,
+        target: { lane: 'iv', hit: h } as const,
       })),
     )
     m.set(
-      '/research/narrative',
+      LANE_ORIGIN.sentiment,
       home.sentimentAnomalies.map((h) => ({
         label: h.symbol,
         line: `${h.sentiment_score.toFixed(1)} · PCR vol ${h.pcr_volume.toFixed(2)} · concentration ${Math.round(h.strike_concentration * 100)}%`,
+        target: { lane: 'sentiment', hit: h } as const,
       })),
     )
     m.set(
-      '/research/event-radar',
+      LANE_ORIGIN.event,
       home.eventHits.map((h) => ({
         label: h.affected_symbols[0] ?? h.subject.slice(0, 12),
         line: h.summary.slice(0, 120),
+        target: { lane: 'event', hit: h } as const,
       })),
     )
     m.set(

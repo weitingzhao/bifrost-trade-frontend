@@ -9,10 +9,17 @@ import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout
 import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import {
+  candidateRunId,
   candidateSketch,
+  curatorRunReading,
   scoreShare,
   splitByObjective,
 } from '@/pages/research/loop/objectiveLapModel'
+import { fetchObjectiveRuns } from '@/api/research/harness'
+import { runSpend } from '@/lib/harness/runSpend'
+import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
+import { fmtUsd } from '@/utils/positions'
+import { useQuery } from '@tanstack/react-query'
 import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
 import { CandidateOutcomeSummary } from '@/components/research/CandidateOutcomeSummary'
 import { useCandidateOutcomeByCandidate } from '@/hooks/useCandidateOutcome'
@@ -132,6 +139,19 @@ export default function CandidatePoolPage() {
 
   // The bar's ceiling: the best score on screen. Nothing documents the
   // composite's own ceiling, so this is the only one that cannot lie.
+  // The design's Curator-run cell reads the machine's last act, not the rows'
+  // newest date: the two diverge exactly when a run proposes nothing, which is
+  // when you most want to know it ran.
+  const runsQ = useQuery({
+    queryKey: ['research', 'objective-runs', 'pool'],
+    queryFn: () => fetchObjectiveRuns({ limit: 200 }),
+    staleTime: 5 * 60_000,
+  })
+  const curator = useMemo(
+    () => curatorRunReading(runsQ.data?.items ?? [], all, (r) => runSpend(r).total_usd),
+    [runsQ.data, all],
+  )
+
   const bestScore = useMemo(
     () => items.reduce<number | null>((b, c) => (c.score != null && (b == null || c.score > b) ? c.score : b), null),
     [items],
@@ -197,14 +217,24 @@ export default function CandidatePoolPage() {
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
-            Latest batch
+            Curator run
           </span>
-          <span className="font-mono text-dense-label font-semibold text-secondary-foreground">
-            {latestBatch ? latestBatch.date : '—'}
+          <span
+            className="font-mono text-dense-label font-semibold text-secondary-foreground"
+            title="When the loop last ran for any objective. The pool's newest trade_date is a fact about the rows; this is a fact about the machine, and they part company the moment a run proposes nothing."
+          >
+            {curator?.startedAt ? curator.startedAt.slice(0, 16).replace('T', ' ') : '—'}
           </span>
           <span className="text-dense-caption text-muted-foreground">
-            {latestBatch ? `+${latestBatch.n} in` : 'nothing dated'}
+            {curator == null
+              ? 'no run recorded'
+              : `+${curator.proposed} in · ${curator.expired} expired · ${fmtUsd(curator.usd)}`}
           </span>
+          {latestBatch ? (
+            <span className="text-dense-caption text-muted-foreground">
+              newest batch {latestBatch.date} · {latestBatch.n}
+            </span>
+          ) : null}
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
@@ -351,6 +381,24 @@ export default function CandidatePoolPage() {
                     {candidateSketch(row).length > 0 ? (
                       <span className="text-dense-meta leading-snug text-muted-foreground">
                         {candidateSketch(row).join(' · ')}
+                        {/* The design's `parent`: it writes one as free text,
+                            and this side has the real run, with a page. */}
+                        {candidateRunId(row) ? (
+                          <>
+                            {' · '}
+                            <Link
+                              // The console's own path for a run, not the
+                              // `/research/loop/runs/:id` address that only
+                              // redirects to it — one hop, and one definition
+                              // of where a run opens.
+                              to={loopPipelinePath(candidateRunId(row)!)}
+                              className="font-mono text-dense-caption text-primary hover:underline"
+                              title="The run that proposed this name — opens its pipeline"
+                            >
+                              parent run
+                            </Link>
+                          </>
+                        ) : null}
                       </span>
                     ) : (
                       <span

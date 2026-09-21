@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { ResearchCandidate } from '@/api/research/candidates'
+import type { ObjectiveRun } from '@/api/research/harness'
 import {
   candidateObjectiveId,
   draftObjectiveId,
   hypothesisRunId,
   objectiveLap,
+  candidateRunId,
   candidateSketch,
+  curatorRunReading,
   scoreShare,
   splitByObjective,
   type LapInput,
@@ -188,5 +191,40 @@ describe('scoreShare', () => {
     expect(scoreShare(null, 80)).toBeNull()
     expect(scoreShare(40, null)).toBeNull()
     expect(scoreShare(40, 0)).toBeNull()
+  })
+})
+
+describe('curatorRunReading', () => {
+  const run = (startedAt: string, ids: string[], ): ObjectiveRun =>
+    ({ id: `r-${startedAt}`, objective_id: 'o', started_at: startedAt, outputs: { candidate_ids: ids } }) as unknown as ObjectiveRun
+  const cand = (status: string) => ({ status }) as Pick<ResearchCandidate, 'status'>
+
+  it('reads the newest run, not the first in the list', () => {
+    const out = curatorRunReading(
+      [run('2026-09-10T00:00:00Z', ['a']), run('2026-09-18T13:30:00Z', ['b', 'c']), run('2026-09-12T00:00:00Z', [])],
+      [],
+      () => 0.0125,
+    )
+    expect(out).toMatchObject({ startedAt: '2026-09-18T13:30:00Z', proposed: 2, usd: 0.0125 })
+  })
+
+  it('counts what expiry screened out of the pool, which is a different question', () => {
+    const out = curatorRunReading([run('2026-09-18T00:00:00Z', [])], [cand('expired'), cand('open'), cand('expired')], () => 0)
+    expect(out?.expired).toBe(2)
+    // A run that proposed nothing still ran, and the cell must say so rather
+    // than falling back to the rows' newest date.
+    expect(out?.proposed).toBe(0)
+  })
+
+  it('has nothing to report when no run was recorded', () => {
+    expect(curatorRunReading([], [cand('open')], () => 0)).toBeNull()
+  })
+})
+
+describe('candidateRunId', () => {
+  it('finds the run that proposed a name, and none where none did', () => {
+    expect(candidateRunId({ source_ref: { run_id: 'run_1' } } as never)).toBe('run_1')
+    expect(candidateRunId({ source_ref: { objective_id: 'o' } } as never)).toBeNull()
+    expect(candidateRunId({ source_ref: null } as never)).toBeNull()
   })
 })

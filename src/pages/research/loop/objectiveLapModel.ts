@@ -26,7 +26,7 @@
  *   Settle     the track record: judged, hit rate, still pending
  *   Feed back  pending policy_suggestion drafts carrying its id
  */
-import type { AutopilotObjective } from '@/api/research/harness'
+import type { AutopilotObjective, ObjectiveRun } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { AiDraft } from '@/api/researchDrafts'
@@ -264,4 +264,64 @@ export function candidateSketch(row: Pick<ResearchCandidate, 'lens_snapshot'>): 
 export function scoreShare(score: number | null, best: number | null): number | null {
   if (score == null || best == null || best <= 0) return null
   return Math.max(0, Math.min(1, score / best))
+}
+
+/**
+ * The design's "Curator run" cell: when the loop last put something in here,
+ * what it put in, and what that cost.
+ *
+ * The app's strip had "Latest batch" — the newest `trade_date` among the
+ * candidates and how many carry it. That is a fact about the rows. The design
+ * asks a different question: *when did the machine last act, and what did the
+ * act cost.* Those diverge the moment a run proposes nothing, which is
+ * exactly when you want to know it ran.
+ *
+ * Both halves are real here. `/research/objective-runs` carries `started_at`
+ * and, in its outputs, the `candidate_ids` that run proposed and the token
+ * spend `runSpend` already reads for the console.
+ */
+export interface CuratorRunReading {
+  /** When the newest run started. Null when no run has been recorded. */
+  startedAt: string | null
+  /** Candidates that run proposed. */
+  proposed: number
+  /** What the run cost, in dollars. */
+  usd: number
+  /** Rows in the pool that expiry has screened out. */
+  expired: number
+}
+
+export function curatorRunReading(
+  runs: readonly ObjectiveRun[],
+  candidates: readonly Pick<ResearchCandidate, 'status'>[],
+  spendOf: (run: ObjectiveRun) => number,
+): CuratorRunReading | null {
+  const newest = runs.reduce<ObjectiveRun | null>((best, r) => {
+    const t = r.started_at ?? ''
+    return best == null || t > (best.started_at ?? '') ? r : best
+  }, null)
+  const expired = candidates.filter((c) => c.status === 'expired').length
+  if (newest == null) return null
+  const ids = (newest.outputs as { candidate_ids?: unknown } | null)?.candidate_ids
+  return {
+    startedAt: newest.started_at ?? null,
+    proposed: Array.isArray(ids) ? ids.length : 0,
+    usd: spendOf(newest),
+    expired,
+  }
+}
+
+/**
+ * The run that proposed a candidate — the design's `parent` on the row.
+ *
+ * The prototype writes it as free text ("memo r-0918-2", "screen s-0918-3").
+ * This side has the real thing: `source_ref.run_id`, which is a run with a
+ * page of its own. So the parent is a link rather than a caption, and a
+ * candidate nobody's run proposed has none rather than a made-up one.
+ */
+export function candidateRunId(row: Pick<ResearchCandidate, 'source_ref'>): string | null {
+  const ref = row.source_ref
+  if (!ref || typeof ref !== 'object') return null
+  const id = (ref as Record<string, unknown>).run_id
+  return typeof id === 'string' && id ? id : null
 }

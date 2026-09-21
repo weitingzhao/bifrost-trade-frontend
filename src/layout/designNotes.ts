@@ -162,7 +162,27 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'has no documented ceiling (observed 0.71 to 85.2) and a bar to one would invent a scale. '
     + 'The footnote says both. Interaction sweep: Decision Inbox, each symbol’s own link and '
     + 'Promote/Dismiss all resolve; the row is not clickable, which matches the prototype — it '
-    + 'has explicit actions rather than a row target.',
+    + 'has explicit actions rather than a row target. '
+    + 'Full walk 2026-09-21 on the Owner’s reading that the gap was still large. Two of the '
+    + 'design’s cells turned out to be buildable after all, and both had been written off. '
+    + '**Curator run** replaces the strip’s “Latest batch”. Latest batch was the newest '
+    + 'trade_date among the rows — a fact about the rows; the design asks when the *machine* '
+    + 'last acted and what the act cost, and the two part company exactly when a run proposes '
+    + 'nothing, which is when you most want to know it ran. Both halves are real: '
+    + '/research/objective-runs carries started_at and, in outputs, the candidate_ids that run '
+    + 'proposed; runSpend already reads the token bill for the console. The cell reads the '
+    + 'newest run, what it put in, what expiry has screened out, and the cost, and keeps the '
+    + 'newest batch beneath it as the smaller fact it is. **Parent** is the other: the '
+    + 'prototype writes it as free text (“memo r-0918-2”), and this side has the real run on '
+    + '`source_ref.run_id`, so the row links to it — through loopPipelinePath, the console’s '
+    + 'own address for a run, rather than the /research/loop/runs/:id path that only redirects '
+    + 'there. Verified by clicking: the pipeline drawer opens on that run. A candidate no run '
+    + 'proposed has no parent rather than an invented one. What the design still draws and '
+    + 'this side does not: the per-row **verb row** and the vehicle column. The verbs are a '
+    + 'shared component that does not exist and are a product decision (what each of the six '
+    + 'writes, and where it lands) rather than a walk’s work; the vehicle has no field. '
+    + 'Everything else on the page is this side’s own and stays: the outcome strip, the Book '
+    + 'column, Status, T+5 vs SPY and the confirm-on-dismiss dialog.',
   '/strategy/instances':
     'Trade › Rules — the Instances column of the lineage chain; its running-state summary also lands on the Desk status strip',
   '/strategy/win-rate':

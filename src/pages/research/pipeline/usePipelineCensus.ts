@@ -13,6 +13,8 @@ import { fetchBacktestRuns } from '@/api/research/backtestEvent'
 import { fetchSepaDaily, fetchOrderSentiment } from '@/api/researchEngine'
 import { fetchScan } from '@/api/research/scan'
 import { useHypothesisList } from '@/hooks/useHypotheses'
+import { useResearchHomeData } from '@/hooks/useResearchHomeData'
+import { useUniverseReach } from '@/hooks/useUniverseReach'
 import {
   censusRows,
   censusTotals,
@@ -43,6 +45,15 @@ export function usePipelineCensus() {
     staleTime: 5 * 60_000,
   })
   const hypQ = useHypothesisList({ include_retired: true, limit: 200 })
+  /**
+   * The four discovery lanes and the universe funnel, which used to be blocks
+   * of their own on this page. Design folds them in (Rev 2026-09-21.5): a
+   * lane is the *product of the page that wrote it*, so it belongs in that
+   * row rather than in a list of its own, and the funnel belongs to Discover
+   * rather than to the page.
+   */
+  const home = useResearchHomeData()
+  const reachQ = useUniverseReach()
 
   const error = sepaQ.error ?? scanQ.error ?? sentimentQ.error ?? runsQ.error ?? hypQ.error ?? null
   const loading =
@@ -100,6 +111,76 @@ export function usePipelineCensus() {
   }, [hypQ.data])
 
   const rows = useMemo(() => censusRows(readings, movedOn), [readings, movedOn])
+
+  /**
+   * What each row wrote, for its expand area — the design's "a row opens into
+   * what it wrote". Keyed by route so a row and its contents cannot drift.
+   */
+  const hits = useMemo(() => {
+    const m = new Map<string, { label: string; line: string }[]>()
+    m.set(
+      '/research/ratings/stocks',
+      home.sepaHits.map((h) => ({
+        label: h.symbol,
+        line: `${h.path} · grade ${h.grade} · ${h.stage} · ${h.score.toFixed(1)}`,
+      })),
+    )
+    m.set(
+      '/research/scan',
+      home.ivExtremes.map((h) => ({
+        label: h.symbol,
+        line: `${h.bucket} · IV rank ${h.iv_rank_1y ?? '—'} · ${h.trade_date ?? '—'}`,
+      })),
+    )
+    m.set(
+      '/research/narrative',
+      home.sentimentAnomalies.map((h) => ({
+        label: h.symbol,
+        line: `${h.sentiment_score.toFixed(1)} · PCR vol ${h.pcr_volume.toFixed(2)} · concentration ${Math.round(h.strike_concentration * 100)}%`,
+      })),
+    )
+    m.set(
+      '/research/event-radar',
+      home.eventHits.map((h) => ({
+        label: h.affected_symbols[0] ?? h.subject.slice(0, 12),
+        line: h.summary.slice(0, 120),
+      })),
+    )
+    m.set(
+      '/research/backtest',
+      (runsQ.data?.rows ?? []).slice(0, 6).map((r) => ({
+        label: r.id.slice(0, 10),
+        line: `${r.strategy_template} · ${r.event_def?.kind ?? '—'} · ${(r.created_at ?? '').slice(0, 10)}`,
+      })),
+    )
+    return m
+  }, [home.sepaHits, home.ivExtremes, home.sentimentAnomalies, home.eventHits, runsQ.data])
+
+  /**
+   * The design's **Left the pipeline**: what came out of the stations, by the
+   * page each names as its origin. It is also the numerator of `moved on`.
+   */
+  const left = useMemo(
+    () =>
+      (hypQ.data?.rows ?? [])
+        .slice()
+        .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+        .slice(0, 12)
+        .map((h) => ({
+          kind: 'hypothesis' as const,
+          id: h.id,
+          origin: h.origin_page ?? 'unrecorded',
+          title: h.title,
+          at: (h.created_at ?? '').slice(0, 10),
+        })),
+    [hypQ.data],
+  )
+
+  /** The widest layer the universe funnel measured, for Discover's heading. */
+  const universeScanned = useMemo(() => {
+    const measured = (reachQ.data?.layers ?? []).filter((l) => l.symbols != null)
+    return measured.length > 0 ? Math.max(...measured.map((l) => l.symbols as number)) : null
+  }, [reachQ.data])
   const stations = useMemo(() => stationReadings(rows), [rows])
   const totals = useMemo(() => censusTotals(rows), [rows])
   const oldest = useMemo(() => oldestUntouched(rows), [rows])
@@ -109,5 +190,17 @@ export function usePipelineCensus() {
     null,
   )
 
-  return { rows, stations, totals, oldest, worst, loading, error, hypothesisCount: hypQ.data?.rows.length ?? 0 }
+  return {
+    rows,
+    stations,
+    totals,
+    oldest,
+    worst,
+    hits,
+    left,
+    universeScanned,
+    loading,
+    error,
+    hypothesisCount: hypQ.data?.rows.length ?? 0,
+  }
 }

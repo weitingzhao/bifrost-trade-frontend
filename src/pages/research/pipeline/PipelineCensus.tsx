@@ -36,7 +36,7 @@ function day(stamp: string | null): string {
 
 export function PipelineCensus() {
   const [open, setOpen] = useState<string | null>(null)
-  const { rows, stations, totals, oldest, worst, loading, error, hypothesisCount } =
+  const { rows, stations, totals, oldest, worst, hits, left, universeScanned, loading, error, hypothesisCount } =
     usePipelineCensus()
 
   return (
@@ -131,11 +131,37 @@ export function PipelineCensus() {
               const reading = stations.find((s) => s.station === station)
               return (
                 <div key={station}>
+                  {/* The bench card and the universe strip live here now: a
+                      station's page count was a card of its own, and the
+                      funnel was a strip above the page. Both are facts about
+                      Discover, so they are in Discover's heading. */}
                   <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border/60 bg-secondary/60 px-3 py-1.5">
                     <span className={SECTION_CAP_CLASS}>{mine[0].stationLabel}</span>
                     <span className="text-dense-caption text-muted-foreground">
                       {mine.length} page{mine.length === 1 ? '' : 's'}
                     </span>
+                    {station === 'discover' ? (
+                      universeScanned != null ? (
+                        <span
+                          className="text-dense-caption text-muted-foreground"
+                          title="The widest layer the universe funnel measured — what Discover is scanning over."
+                        >
+                          universe {universeScanned.toLocaleString()} scanned
+                        </span>
+                      ) : (
+                        /* Marked, not omitted: all five layers of the funnel
+                           answer `unavailable` on this side, so the strip this
+                           folded in was reporting five not-measureds. Leaving
+                           the figure out would read as "Discover scans
+                           nothing" rather than "nobody counted". */
+                        <span
+                          className="text-dense-caption text-muted-foreground/60"
+                          title="The universe funnel has five layers and every one answers `unavailable` — nothing counts what Discover scans over."
+                        >
+                          universe not measured
+                        </span>
+                      )
+                    ) : null}
                     {reading ? (
                       <span className="text-dense-caption text-muted-foreground">
                         {reading.made} written · {reading.movedOn} left
@@ -151,6 +177,7 @@ export function PipelineCensus() {
                     <CensusRowView
                       key={r.to}
                       row={r}
+                      hits={hits.get(r.to) ?? []}
                       open={open === r.to}
                       onToggle={() => setOpen(open === r.to ? null : r.to)}
                     />
@@ -176,16 +203,63 @@ export function PipelineCensus() {
           denominator, so neither is. That is also why the fork lineage cannot be drawn.
         </p>
       </SectionPanel>
+
+      {/* The design's fourth block, and where the Active hypotheses cards
+          went. A hypothesis has **left** the pipeline — its original is on the
+          Hypothesis Board — so this page does not keep a second copy of it. It
+          lists them by the page each came out of, which is the same reading as
+          the Moved on column: the numerator, named. */}
+      <SectionPanel
+        cap="Left the pipeline"
+        title={`What came out of the stations · ${left.length} shown`}
+        note="every row is one unit of the Moved on column, and the page it came from"
+        action={
+          <Link to="/research/loop/hypotheses" className="text-dense-meta text-primary hover:underline">
+            Hypothesis Board →
+          </Link>
+        }
+      >
+        {left.length === 0 ? (
+          <p className="px-3 py-3 text-dense-meta leading-relaxed text-muted-foreground">
+            Nothing has come out of the stations. Read with the Census above: the pages that keep
+            a store have had nothing leave them, and nothing that left carries a station as its
+            origin — see the footnote for why that is a stamping fault rather than an empty day.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border/40">
+            {left.map((row) => (
+              <li key={row.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-1.5">
+                <DenseTag variant="category" size="cell">
+                  {row.kind}
+                </DenseTag>
+                <span
+                  className="font-mono text-dense-caption text-muted-foreground"
+                  title="The page this names as its origin. A container page here means the stamp names where the button was, not where the hit came from."
+                >
+                  {row.origin}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-dense-meta">{row.title}</span>
+                <span className="font-mono text-dense-caption tabular-nums text-muted-foreground/70">
+                  {row.at}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SectionPanel>
     </div>
   )
 }
 
 function CensusRowView({
   row,
+  hits,
   open,
   onToggle,
 }: {
   row: CensusRow
+  /** What this page wrote today — the design's "a row opens into what it wrote". */
+  hits: { label: string; line: string }[]
   open: boolean
   onToggle: () => void
 }) {
@@ -254,7 +328,7 @@ function CensusRowView({
         </span>
       </div>
       {open ? (
-        <div className="border-t border-border/40 bg-background px-3 py-2 pl-10">
+        <div className="space-y-1.5 border-t border-border/40 bg-background px-3 py-2 pl-10">
           <div className="flex flex-wrap items-center gap-2">
             <DenseTag variant={tag.variant} size="cell">
               {tag.label}
@@ -269,6 +343,24 @@ function CensusRowView({
                     : 'its product is not an object anybody names again, so it owes nothing'}
             </span>
           </div>
+          {hits.length > 0 ? (
+            <ul className="space-y-0.5">
+              {hits.map((h) => (
+                <li key={`${h.label}-${h.line}`} className="flex items-baseline gap-2.5">
+                  <span className="w-16 shrink-0 font-mono text-dense-caption font-bold text-entity-symbol">
+                    {h.label}
+                  </span>
+                  <span className="min-w-0 truncate text-dense-caption text-muted-foreground">
+                    {h.line}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-dense-caption text-muted-foreground/70">
+              Nothing to open — this page wrote nothing today that anything kept.
+            </p>
+          )}
         </div>
       ) : null}
     </div>

@@ -14,16 +14,33 @@
  */
 export type LayerId = 'base' | 'home' | 'execution' | 'result' | 'analysis' | 'risk' | 'review'
 
+/**
+ * The three pages Home took from Market (§5a.1, Rev 2026-09-20.23).
+ *
+ * The routes did not move, so a prefix cannot find them: Home is organised by
+ * time, and these three are the market's own clock — what is trading now,
+ * what I armed and what has fired, what arrives inside thirty days. That
+ * overturns §0's reading, which judged them by content (the market's facts →
+ * analysis) and missed the axis.
+ */
+const HOME_ROUTES: ReadonlySet<string> = new Set([
+  '/market/live',
+  '/research/events',
+  '/research/event-radar',
+])
+
 export function layerForPath(pathname: string): LayerId {
   const p = pathname || ''
+  if (HOME_ROUTES.has(p)) return 'home'
   if (p === '/home' || p.startsWith('/home/')) return 'home'
   if (p === '/review' || p.startsWith('/review/')) return 'review'
-  if (p.startsWith('/risk/')) return 'risk'
+  // A layer's own page wears its layer: `/risk` and `/portfolio` are pages,
+  // not just prefixes, and matching only `/risk/` left the layer page in the
+  // base ramp — the one place the layer should be most itself (§5a.1).
+  if (p === '/risk' || p.startsWith('/risk/')) return 'risk'
   if (p.startsWith('/trade/')) return 'execution'
-  if (p.startsWith('/portfolio/')) return 'result'
+  if (p === '/portfolio' || p.startsWith('/portfolio/')) return 'result'
   if (p.startsWith('/research/')) return 'analysis'
-  // Market is a fold inside Research, not a layer of its own: it states the
-  // market's facts, which is what the analysis layer is about.
   if (p.startsWith('/market/')) return 'analysis'
   // Strategy has no layer of its own because the design has no Strategy group
   // — it dissolves into Trade › Rules, and inherits `execution` when it moves.

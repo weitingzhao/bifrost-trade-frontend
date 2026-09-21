@@ -12,10 +12,24 @@ describe('layerForPath', () => {
     expect(layerForPath('/home')).toBe('home')
   })
 
-  it('keeps Market on the analysis layer', () => {
-    // A fold inside Research in the design, not a layer: the market's facts are
-    // what the analysis layer is about.
-    expect(layerForPath('/market/live')).toBe('analysis')
+  it('puts the three pages Home took from Market on the home layer', () => {
+    // §5a.1 (Rev 2026-09-20.23) overturned §0's reading: those three are the
+    // market's own clock, and Home is the layer organised by time. The routes
+    // did not move with the fold, so a prefix cannot find them.
+    expect(layerForPath('/market/live')).toBe('home')
+    expect(layerForPath('/research/event-radar')).toBe('home')
+    expect(layerForPath('/research/events')).toBe('home')
+    // Everything else under those prefixes keeps its own layer.
+    expect(layerForPath('/market/depth')).toBe('analysis')
+    expect(layerForPath('/research/symbol')).toBe('analysis')
+  })
+
+  it('gives a layer page its own layer, not the base ramp', () => {
+    // The page that IS the layer is where the ramp should be most itself.
+    expect(layerForPath('/risk')).toBe('risk')
+    expect(layerForPath('/portfolio')).toBe('result')
+    expect(layerForPath('/riskier')).toBe('base')
+    expect(layerForPath('/portfolios')).toBe('base')
   })
 
   it('matches on whole segments', () => {

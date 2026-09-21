@@ -1,80 +1,154 @@
 /**
- * The census is mostly a record of what is *not* recorded, so the tests are
- * mostly about that: a station that keeps nothing must say so with a reason,
- * never with a zero.
+ * The census mostly records what is *not* recorded, so the tests are mostly
+ * about that: a page that owes a store must say which one and never show a
+ * zero, and a page that owes none must be told apart from one that does.
  */
 import { describe, expect, it } from 'vitest'
-import { censusReach, stationCensus, stationRollup } from './pipelineModel'
+import {
+  censusRows,
+  censusTotals,
+  oldestUntouched,
+  stationReadings,
+  type StoreReading,
+} from './pipelineModel'
 
-describe('stationCensus', () => {
-  const rows = stationCensus(43)
+const NO_READINGS = new Map<string, StoreReading>()
+const NO_ORIGINS = new Map<string, number>()
 
-  it('covers every station page the menu carries, and nothing else', () => {
-    // Built from `BENCHES`, the same list the sidebar draws its captions
-    // over, so the census and the menu cannot disagree about what a station
-    // contains.
-    expect(rows.length).toBeGreaterThanOrEqual(7)
-    expect(new Set(rows.map((r) => r.station))).toEqual(
-      new Set(['discover', 'analyze', 'validate']),
-    )
+const READINGS = new Map<string, StoreReading>([
+  ['/research/ratings/stocks', { made: 500, newest: '2026-09-19' }],
+  ['/research/scan', { made: 500, newest: null }],
+  ['/research/narrative', { made: 100, newest: '2026-09-21T06:45:00Z' }],
+  ['/research/backtest', { made: 43, newest: '2026-09-06T08:20:00Z' }],
+])
+
+const rowsAt = (origins = NO_ORIGINS) => censusRows(READINGS, origins)
+
+describe('the four classes', () => {
+  const rows = rowsAt()
+  const by = (to: string) => rows.find((r) => r.to === to)!
+
+  it('counts a store that exists', () => {
+    expect(by('/research/ratings/stocks').made).toBe(500)
+    expect(by('/research/ratings/stocks').storeState).toBe('has-store')
   })
 
-  it('counts the one store that keeps an artifact', () => {
-    const backtest = rows.find((r) => r.to === '/research/backtest')
-    expect(backtest?.made).toBe(43)
-    expect(backtest?.missing).toBeNull()
-  })
-
-  it('leaves every other page unmeasured, with its own reason', () => {
-    // Not "no data": each names the record it would need. A page whose reason
-    // reads the same as its neighbour's is a reason nobody checked.
-    const unmeasured = rows.filter((r) => r.to !== '/research/backtest')
-    expect(unmeasured.length).toBeGreaterThan(0)
-    for (const r of unmeasured) {
-      expect(r.made, r.to).toBeNull()
-      expect(r.missing, r.to).toBeTruthy()
-      expect(r.missing, r.to).not.toMatch(/^no data$/i)
+  it('names the store a page owes instead of showing a zero', () => {
+    // Owing a store is not having none: a screen is an object you fork and
+    // cite, so something should be keeping it.
+    for (const to of ['/research/screener', '/research/contract-screener', '/research/symbol', '/research/signal-decay']) {
+      expect(by(to).storeState, to).toBe('store-owed')
+      expect(by(to).made, to).toBeNull()
+      expect(by(to).store, to).toBeTruthy()
+      expect(by(to).note, to).toMatch(/store owed/)
     }
   })
 
-  it('says so rather than inventing a count when the query has not answered', () => {
-    const pending = stationCensus(null).find((r) => r.to === '/research/backtest')
-    expect(pending?.made).toBeNull()
-    expect(pending?.missing).toBeTruthy()
+  it('tells a page that owes nothing from one that owes a store', () => {
+    // Compare assembles; History recomputes a denominator. Nobody names one
+    // run of either again, so neither owes a record of it.
+    for (const to of ['/research/compare', '/research/history']) {
+      expect(by(to).storeState, to).toBe('no-store-owed')
+      expect(by(to).note, to).toMatch(/no store owed/)
+    }
   })
 
-  it('names what each page writes, in the design’s words', () => {
-    expect(rows.find((r) => r.to === '/research/screener')?.writes).toBe('screen')
-    expect(rows.find((r) => r.to === '/research/symbol')?.writes).toBe('read · verdict')
+  it('keeps Alerts on the page and out of every denominator', () => {
+    expect(by('/research/event-radar').storeState).toBe('off-bench')
+    expect(censusTotals(rows).onBench).toBe(rows.length - 1)
+    expect(stationReadings(rows).map((s) => s.station)).not.toContain('off-bench')
+  })
+
+  it('marks a page the design has and this side has not built', () => {
+    // Decided against the app's own route table, because "not built" is a
+    // fact about this side — Design's ruling on our question 3.1.
+    expect(by('/research/narrative').pageBuilt).toBe(false)
+    expect(by('/research/narrative').note).toMatch(/page not built/)
+    expect(by('/research/ratings/stocks').pageBuilt).toBe(true)
+  })
+
+  it('keeps Narrative measurable even though its page is missing', () => {
+    // The one row where building a page adds a measurable station rather than
+    // uncovering a dead end.
+    expect(by('/research/narrative').made).toBe(100)
   })
 })
 
-describe('stationRollup', () => {
-  it('counts pages and how many of them report, per station', () => {
-    const out = stationRollup(stationCensus(43))
-    const validate = out.find((s) => s.station === 'validate')
-    expect(validate?.recorded).toBe(1)
-    expect(validate?.pages).toBeGreaterThanOrEqual(1)
-    expect(out.find((s) => s.station === 'discover')?.recorded).toBe(0)
+describe('a row can have moved on without made', () => {
+  it('shows the numerator with no base, and says so', () => {
+    // `origin_page` is real on a page that keeps no store: you know what came
+    // out, not what it came out of.
+    const rows = censusRows(READINGS, new Map([['/research/symbol', 2]]))
+    const symbol = rows.find((r) => r.to === '/research/symbol')!
+    expect(symbol.made).toBeNull()
+    expect(symbol.movedOn).toBe(2)
+    expect(symbol.note).toMatch(/2 out, base unknown/)
   })
 
-  it('keeps the stations in the order the pipeline runs them', () => {
-    expect(stationRollup(stationCensus(43)).map((s) => s.station)).toEqual([
-      'discover',
-      'analyze',
-      'validate',
-    ])
+  it('does not say it when nothing came out', () => {
+    expect(rowsAt().find((r) => r.to === '/research/symbol')!.note).not.toMatch(/base unknown/)
   })
 })
 
-describe('censusReach', () => {
-  it('states how much of the pipeline can be measured at all', () => {
-    const reach = censusReach(stationCensus(43))
-    expect(reach.recorded).toBe(1)
-    expect(reach.total).toBe(stationCensus(43).length)
+describe('stationReadings', () => {
+  it('reports coverage beside stuck, because stuck alone misreads', () => {
+    // Analyze is fully stuck on one measurable page out of four; without
+    // coverage that reads as the worst station rather than the thinnest.
+    const analyze = stationReadings(rowsAt()).find((s) => s.station === 'analyze')!
+    expect(analyze.stuck).toBe(1)
+    expect(analyze.withStore).toBe(1)
+    expect(analyze.onBench).toBe(4)
   })
 
-  it('reports nothing measurable while the one store is still loading', () => {
-    expect(censusReach(stationCensus(null)).recorded).toBe(0)
+  it('counts a page that owes no store as on the bench', () => {
+    // It is still a page you work at; only Alerts is excluded.
+    const discover = stationReadings(rowsAt()).find((s) => s.station === 'discover')!
+    expect(discover.onBench).toBe(4)
+    expect(discover.withStore).toBe(2)
+  })
+
+  it('answers null rather than zero when a station has no store at all', () => {
+    const none = stationReadings(censusRows(NO_READINGS, NO_ORIGINS))
+    for (const s of none) expect(s.stuck, s.label).toBeNull()
+  })
+
+  it('lowers the stuck share as things leave', () => {
+    const before = stationReadings(rowsAt()).find((s) => s.station === 'validate')!
+    const after = stationReadings(rowsAt(new Map([['/research/backtest', 43]]))).find(
+      (s) => s.station === 'validate',
+    )!
+    expect(before.stuck).toBe(1)
+    expect(after.stuck).toBe(0)
+  })
+})
+
+describe('censusTotals', () => {
+  it('adds up only what is on the bench', () => {
+    const t = censusTotals(rowsAt())
+    expect(t.written).toBe(500 + 500 + 100 + 43)
+    expect(t.left).toBe(0)
+    expect(t.stillHere).toBe(t.written)
+    expect(t.withStore).toBe(4)
+  })
+
+  it('counts separately what left a page with no base to measure it against', () => {
+    const t = censusTotals(rowsAt(new Map([['/research/symbol', 3]])))
+    expect(t.leftWithoutBase).toBe(3)
+  })
+})
+
+describe('oldestUntouched', () => {
+  it('ages by the engine stamp, not by a page-read log', () => {
+    // The first scale waited on a log nothing keeps; this one does not.
+    expect(oldestUntouched(rowsAt())?.to).toBe('/research/backtest')
+  })
+
+  it('ignores a row whose rows have all left', () => {
+    const rows = rowsAt(new Map([['/research/backtest', 43]]))
+    expect(oldestUntouched(rows)?.to).not.toBe('/research/backtest')
+  })
+
+  it('answers null when nothing carries an age', () => {
+    expect(oldestUntouched(censusRows(NO_READINGS, NO_ORIGINS))).toBeNull()
   })
 })

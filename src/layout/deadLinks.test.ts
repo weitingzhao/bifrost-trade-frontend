@@ -89,13 +89,43 @@ describe('every internal link reaches a route', () => {
 
   const reaches = (p: string) => exact.has(p) || dynamic.some((re) => re.test(p))
 
+  /**
+   * Paths that appear in the source as **data, not as somewhere to go**.
+   *
+   * The Pipeline census is keyed by route because the design's eleven rows
+   * are eleven pages, and three of them this side has not built. The census
+   * renders those rows without a link — `pageBuilt` is read off this same
+   * router — so nothing here points anywhere. The scan cannot tell a key from
+   * a target, which is the price of a scan that reads the source rather than
+   * the running app, and is worth paying.
+   *
+   * Each entry earns its place twice: the path must be one the design has and
+   * the app does not, and no file may actually link to it. The second test
+   * below checks the first half; the census's own `pageBuilt` check is the
+   * second.
+   */
+  const PATHS_USED_AS_DATA: Record<string, string> = {
+    '/research/compare': 'a Pipeline census row — the design has this page, the app has not built it',
+    '/research/history': 'a Pipeline census row — the design has this page, the app has not built it',
+    '/research/narrative': 'a Pipeline census row — it has a store and data, only the page is missing',
+  }
+
   it('finds no link pointing at a path the router cannot match', () => {
     const dead = [...linkTargets()]
-      .filter(([p]) => !reaches(p))
+      .filter(([p]) => !reaches(p) && PATHS_USED_AS_DATA[p] == null)
       .map(([p, files]) => `${p}  ←  ${files.join(', ')}`)
       .sort()
     expect(dead).toEqual([])
   })
+
+  it('drops a data path from the list once the app builds the page', () => {
+    // An allowance for a route that now exists is an allowance nobody reviews,
+    // and it would hide a genuine dead link behind a stale excuse.
+    for (const p of Object.keys(PATHS_USED_AS_DATA)) {
+      expect(reaches(p), `${p} is routed now — take it off PATHS_USED_AS_DATA`).toBe(false)
+    }
+  })
+
 
   it('reads the router, and reads enough of the source to be worth trusting', () => {
     // Two ways this gate goes quiet without anyone noticing: the glob stops

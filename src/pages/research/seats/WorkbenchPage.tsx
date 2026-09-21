@@ -6,10 +6,11 @@
  * recent backtests. Was the Research home until the seats arrived.
  */
 import { Link } from 'react-router-dom'
-import { Beaker, ClipboardList, Compass, Plus, Radar } from 'lucide-react'
+import { Beaker, ClipboardList, Plus, Radar } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { BenchDirectory } from '@/pages/research/home/BenchDirectory'
 import { PipelineCensus } from '@/pages/research/pipeline/PipelineCensus'
+import { usePipelineCensus } from '@/pages/research/pipeline/usePipelineCensus'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import { EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
@@ -28,11 +29,13 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import type { BacktestRunRow } from '@/api/research/backtestEvent'
 
 export default function WorkbenchPage() {
+  // The same reading the census panel renders — one computation, two readers
+  // (the panel and the header's Copilot snapshot).
+  const census = usePipelineCensus()
   const activeQ = useActiveHypotheses(5)
   const home = useResearchHomeData()
   const backtestsQ = useBacktestRuns({ limit: 5 })
 
-  const activeCount = activeQ.data?.total_active ?? 0
   const recent = activeQ.data?.recent_active ?? []
   const recentBacktests = backtestsQ.data?.rows ?? []
 
@@ -43,32 +46,31 @@ export default function WorkbenchPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Pipeline"
-        description="Your hand on the stations. Discover · Analyze · Validate — the design puts every artifact you made today on one scale and asks which station it is stuck at. Advisory only, D10 BLOCKED."
+        description="Your hand on the stations. Discover · Analyze · Validate — every store the stations wrote today on one scale, and how much of it nothing came out of. Made is what the engine kept; moved on is a hypothesis, a promotion or a pin that carries the page as its origin. Most stuck first. Advisory only — D10 blocked."
         actions={
-          <div className="flex items-center gap-2">
-            <AskCopilotButton
-              originPage="research-workbench"
-              originLabel="Pipeline"
-              snapshot={compactSnapshot({
-                active_hypotheses: activeCount,
-                discoveries: home.totalDiscoveries,
-                recent_backtests: recentBacktests.length,
-              })}
-              suggestedPrompt="Summarize today's workbench: which hypotheses or discoveries should I open first?"
-            />
-            <SaveAsHypothesisButton
-              originPage="research-workbench"
-              defaultTitle=""
-              defaultTags={['manual']}
-              size="button"
-            />
-            <Button asChild variant="outline" size="sm">
-              <Link to="/research/daily-brief">
-                <Compass className="mr-1 h-3.5 w-3.5" />
-                Daily Brief
-              </Link>
-            </Button>
-          </div>
+          /* Design's ruling (Rev 2026-09-21.5) on the three controls this
+             page's header carried. **Ask Copilot stays** — Copilot is a shell
+             capability (⌘J on any page), so the button belongs to the shell,
+             not to the page — but its snapshot changes: the three numbers it
+             used to carry named blocks this page no longer has, so it carries
+             the census instead. **Save as Hypothesis went**, and the reason is
+             the question we asked: under the new scale a hypothesis is the
+             numerator of this page's own `moved on` column, so writing one
+             here, with the layer page as its origin, would add to a number
+             this page reads. It belongs on the hit that produced it.
+             **Daily Brief went** too — it is Copilot's sediment and already a
+             menu row; a page repeating a menu row is furniture. */
+          <AskCopilotButton
+            originPage="research-workbench"
+            originLabel="Pipeline"
+            snapshot={compactSnapshot({
+              stores: `${census.totals.withStore}/${census.totals.onBench}`,
+              written: census.totals.written,
+              left: census.totals.left,
+              worst_station: census.worst ? `${census.worst.label} ${Math.round((census.worst.stuck ?? 0) * 100)}%` : null,
+            })}
+            suggestedPrompt="From this Pipeline census: which station should I open first, and what is it waiting on?"
+          />
         }
       />
 
@@ -185,10 +187,6 @@ export default function WorkbenchPage() {
         />
       </section>
 
-      <p className="text-dense-caption text-muted-foreground">
-        The workbench aggregates existing engines only — observe-only (D10). Trade execution remains
-        BLOCKED until Owner unlock.
-      </p>
     </PageShell>
   )
 }

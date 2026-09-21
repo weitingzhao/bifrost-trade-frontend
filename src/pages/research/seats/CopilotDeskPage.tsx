@@ -10,8 +10,8 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Users } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Plus, Users } from 'lucide-react'
+import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
 import { CopilotTabs, useCopilotTab } from '@/components/research/CopilotTabs'
 import { DenseTag, EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
@@ -23,7 +23,8 @@ import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
 import { listResearchDrafts, type DraftStatus } from '@/api/researchDrafts'
 import { useCopilotStanding } from '@/hooks/useCopilotStanding'
 import { fmtIsoTs } from '@/lib/format'
-import { openDigestInCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { openDigestInCopilot, openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { copilotSessionStore } from '@/hooks/useCopilotSession'
 import { digestExhibits } from '@/lib/harness/dailyDigest'
 import { WaitingOnYou } from '@/pages/research/seats/WaitingOnYou'
 import { RanToday } from '@/pages/research/seats/RanToday'
@@ -42,7 +43,7 @@ export default function CopilotDeskPage() {
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
       <PageHeader
         title="Copilot"
-        description="Level 2 · on request. A brief each morning, a chat that reads every page, writes only with your approval. Advisory only, D10 BLOCKED."
+        description="Level 2 · on request · reads every page · writes only with your approval · D10 advisory. Open it from any page with ⌘J or an Ask on a panel; this page is what it did today and what it is waiting on."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <SpendChip usage={s?.usage} />
@@ -61,6 +62,22 @@ export default function CopilotDeskPage() {
               <Link to="/research/daily-brief">
                 <ClipboardList className="mr-1 size-3.5" /> Daily Brief
               </Link>
+            </Button>
+            {/* The design's primary action on this page: a thread with
+                nothing attached, as ⌘J opens one from anywhere. `Ask Copilot`
+                beside it is the other kind — this page's own context. */}
+            <Button
+              size="sm"
+              onClick={() => {
+                copilotSessionStore.clearSession()
+                openResearchCopilot()
+              }}
+              title="Start a thread with nothing attached — the same panel ⌘J opens"
+            >
+              <Plus className="mr-1 size-3.5" /> New thread
+              <span className="ml-1.5 rounded border border-primary-foreground/30 px-1 font-mono text-dense-micro">
+                ⌘J
+              </span>
             </Button>
           </div>
         }
@@ -84,15 +101,6 @@ export default function CopilotDeskPage() {
           (owner · harness · morning_agent · eod_agent) but carries no chat
           origin, so the rows cannot be reconstructed from it. The tile stays
           until that read exists. */}
-      <div className="flex">
-        <Fact label="Chat asked to write" title="Writes the chat proposed today, by what happened to them in the ledger">
-          <span className="font-mono text-lg font-semibold tabular-nums">{a.proposed ?? 0}</span>
-          <span className="text-dense-label text-muted-foreground">
-            proposed · {a.executed ?? 0} ran · {a.rejected ?? 0} refused
-          </span>
-        </Fact>
-      </div>
-
       {tab === 'threads' ? (
         <section className="min-w-0 space-y-2">
           <div className="flex items-baseline gap-2">
@@ -110,23 +118,58 @@ export default function CopilotDeskPage() {
         </section>
       ) : (
         <>
-      {/* First, as in the design's Today: what is waiting for an answer comes
-          before what already happened. */}
+      {/* The design's Today is four panels, and the order is the argument:
+          what is waiting comes before what already happened, and the digest
+          — the longest read — sits at the foot (Rev 2026-09-20.20). */}
       <WaitingOnYou />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <section className="min-w-0 space-y-2">
-          <h2 className="text-dense-body font-semibold">Today’s digest</h2>
-          <DigestToday draftId={s?.brief?.draft_id ?? null} status={s?.brief?.status ?? null} loading={standingQ.isLoading} />
-        </section>
-        <div className="min-w-0 space-y-3">
-          <section className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-dense-body font-semibold">Ran today</h2>
-              <span className="text-dense-meta text-muted-foreground">scheduled agents · ET</span>
-            </div>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <SectionPanel cap="Ran today" title="scheduled agents" note="ET">
+          <div className="px-3 py-2">
             <RanToday />
-          </section>
+          </div>
+        </SectionPanel>
+
+        <SectionPanel
+          cap="Writes"
+          title="what the chat asked to change"
+          note="every write goes through a card · nothing silent"
+        >
+          <div className="space-y-1.5 px-3 py-2.5">
+            <p className="m-0 flex flex-wrap items-baseline gap-2">
+              <span className="font-mono text-lg font-semibold tabular-nums">{a.proposed ?? 0}</span>
+              <span className="text-dense-label text-muted-foreground">
+                proposed · {a.executed ?? 0} ran · {a.rejected ?? 0} refused
+              </span>
+            </p>
+            {/* The design's table is kind · change · thread · result, one row
+                per write. Measured 2026-09-20 on DEV: the standing returns
+                these three counts and nothing else, and `/research/drafts`
+                distinguishes `generated_by` (owner · harness · morning_agent
+                · eod_agent) but carries no chat origin — so the rows cannot
+                be reconstructed. The count stands in for the table until that
+                read exists, rather than a table of invented rows. */}
+            <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
+              Row by row — which thread asked, and what became of it — needs a write ledger that carries
+              the chat’s own origin. Nothing on this side records one yet, so this panel counts what it
+              can and names what it cannot.
+            </p>
+          </div>
+        </SectionPanel>
+      </div>
+
+      <SectionPanel
+        cap="Digest"
+        title="11:30 UTC · book + watchlist"
+        note="the morning read, and what it was written from"
+      >
+        <div className="px-3 py-2.5">
+          <DigestToday draftId={s?.brief?.draft_id ?? null} status={s?.brief?.status ?? null} loading={standingQ.isLoading} />
+        </div>
+      </SectionPanel>
+
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="min-w-0">
           {/* Kept beyond the design, and the tab strip now repeats one of its
               three rows: it is the only place that says what the Copilot
               reads *from*, which the strip does not. Its fate is the Owner's
@@ -162,14 +205,6 @@ export default function CopilotDeskPage() {
   )
 }
 
-function Fact({ label, title, children }: { label: string; title?: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3" title={title}>
-      <div className="text-dense-meta uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-1 flex flex-wrap items-baseline gap-2">{children}</div>
-    </div>
-  )
-}
 
 function DigestToday({ draftId, status, loading }: { draftId: string | null; status: string | null; loading: boolean }) {
   const q = useQuery({
@@ -208,7 +243,7 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
     )
   }
   return (
-    <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3">
+    <div>
       <div className="mb-2 flex flex-wrap items-center gap-2 text-dense-label text-muted-foreground">
         <span>{fmtIsoTs(draft.created_at)}</span>
         <DenseTag variant={draft.status === 'pending' ? 'warning' : 'neutral'} size="cell">
@@ -233,7 +268,11 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
           {draft.status === 'pending' ? 'Approve or dismiss in the Inbox' : 'Open in the Inbox'} <ArrowRight className="size-3" />
         </Link>
       </div>
-      <DailyDigestBody payload={draft.payload} readingsOpen />
+      {/* The design's digest is a read, not the draft itself: a line per name
+          with the lens it came from. The readings table is the draft's own
+          working, so it stays behind its toggle here — open, this panel was
+          taller than the three above it together. */}
+      <DailyDigestBody payload={draft.payload} />
     </div>
   )
 }

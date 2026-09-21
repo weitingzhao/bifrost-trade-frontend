@@ -32,7 +32,19 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'no chat origin, so the rows cannot be reconstructed \u2014 the tile that counts them stays until that '
     + 'read exists. Kept beyond the design and now partly repeated by the strip: **What it works from**, '
     + 'the only place that says what the Copilot reads *from*. Its fate is the Owner\u2019s to call. '
-    + 'Swept: every link resolves, both faces and Personas; no horizontal overflow at the pane width.',
+    + 'Swept: every link resolves, both faces and Personas; no horizontal overflow at the pane width. '
+    + 'SECOND PASS THE SAME DAY, after the Owner read it beside the prototype and said the gap was '
+    + 'still wide \u2014 the first pass had landed the tab strip and left the body as it was. Rendered '
+    + 'side by side (prototype on :8099, app on :5173, one viewport) and rebuilt Today to the four '
+    + 'panels the design draws: **Waiting on you** is a panel now, not a heading over a table (cap \u00b7 '
+    + 'count \u00b7 scope \u00b7 Decision Inbox on the right edge); **Ran today** and **Writes** sit side by '
+    + 'side; **Digest** takes the foot, and its readings table went back behind its toggle \u2014 open, '
+    + 'that one panel was taller than the three above it together, which is what made the page read '
+    + 'nothing like the design. The header gained the design\u2019s kicker (\u2318J or an Ask on a panel) and '
+    + 'its primary action, **New thread \u2318J**, which clears the session and opens the dock \u2014 verified '
+    + 'by clicking: the dock opens on a blank thread. `Ask Copilot` stays beside it as the other '
+    + 'kind of opening, this page\u2019s own context. '
+    + 'The Writes panel now says in words what it cannot draw, instead of a bare count in a tile.',
   '/research/copilot/trading':
     'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner signed off on STG 2026-09-15 after L1/L2.',
   '/research/agent-personas':

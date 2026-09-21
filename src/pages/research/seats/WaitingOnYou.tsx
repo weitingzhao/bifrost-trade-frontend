@@ -28,6 +28,7 @@ import {
   isDecisionKind,
 } from '@/lib/harness/harnessDraftHelpers'
 import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
+import { SectionPanel } from '@/components/layout'
 import { approveEffect, draftAskedBy, draftKindLabel, draftTitle } from '@/lib/harness/draftText'
 import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { fmtSince } from '@/lib/format'
@@ -71,25 +72,21 @@ export function WaitingOnYou() {
   const more = groups.length - shown.length
 
   return (
-    <section className="space-y-2">
-      <div className="flex flex-wrap items-baseline gap-2">
-        <h2 className="text-dense-body font-semibold">Waiting on you</h2>
-        {query.data ? (
-          <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">
-            {groups.length} to answer
-          </span>
-        ) : null}
-        <span className="text-dense-meta text-muted-foreground">
-          what a scheduled agent or the Copilot asked, and nobody has answered — the Decision Inbox&rsquo;s queue
-        </span>
+    // The design draws this as a panel, not a heading over a table: a cap, a
+    // count, the scope, and the way out on the right edge (Rev 2026-09-20.20).
+    <SectionPanel
+      cap="Waiting on you"
+      title={query.data ? `${groups.length} items` : 'loading…'}
+      note="everything a scheduled agent or the Copilot asked and nobody has answered — the same queue the Decision Inbox shows"
+      action={
         <Link
           to="/research/loop/decisions"
-          className="ml-auto inline-flex items-center gap-1 text-dense-meta hover:underline"
+          className="inline-flex items-center gap-1 text-dense-meta hover:underline"
         >
           Decision Inbox <ArrowRight className="size-3" />
         </Link>
-      </div>
-
+      }
+    >
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
       {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
       <ApprovedStrip state={approvedStrip} />
@@ -217,6 +214,6 @@ export function WaitingOnYou() {
           ) : null}
         </>
       )}
-    </section>
+    </SectionPanel>
   )
 }

@@ -185,9 +185,12 @@ describe('design adoption', () => {
     // day — the first of the seven answered rather than counted. Review is the
     // second, and it moves inside the sum rather than into it: `stale` →
     // `reviewing` (45→44), with `aligned` untouched at 39 until the Owner
-    // looks. The Desk is the third and moves the same way (44→43).
-    expect(counts.aligned + counts.byState.stale).toBe(43)
-    expect(counts.aligned).toBe(39)
+    // looks. The Desk is the third and moves the same way (44→43). The Owner
+    // signed both off 2026-09-21, which closes the batch: the three layer
+    // heads §5a.1 moved are answered and back in the sum (43→45, aligned
+    // 39→41).
+    expect(counts.aligned + counts.byState.stale).toBe(45)
+    expect(counts.aligned).toBe(41)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -329,8 +332,9 @@ describe('design adoption', () => {
     // Rev 2026-09-20.23. Review follows it: the same §5a.1 bump, a page body
     // unchanged at .23, and an interaction sweep that found sixty-eight
     // mouse-only rows. The Trade Desk closes the batch — the three layer
-    // heads §5a.1 moved, walked together because one section moved them.
-    expect(counts.byState.reviewing).toBe(2)
+    // heads §5a.1 moved, walked together because one section moved them. Both
+    // were signed off the same day, so nothing waits on a look.
+    expect(counts.byState.reviewing).toBe(0)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -358,10 +362,10 @@ describe('design adoption', () => {
       '/research/ratings/stocks',
       '/research/screener',
       '/research/workbench',
-      // `/review` and `/trade/desk` are still in `stale`: each became the
-      // heading of its own layer in Package 2026-09-20.3 (§5a.1), which is a
-      // change to the page, not only to the tree around it. `/research/
-      // overview` was the third and is back here, re-walked against .23.
+      // All three layer heads §5a.1 moved are back on this list, re-walked
+      // against .23 and signed off together: `/research/overview`, `/review`
+      // and `/trade/desk`.
+      '/review',
       '/review/fit',
       '/review/habits',
       '/review/objectives',
@@ -375,6 +379,7 @@ describe('design adoption', () => {
       '/risk/sizing',
       '/risk/stress',
       '/trade/assignment',
+      '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
       '/trade/plans',
@@ -384,10 +389,7 @@ describe('design adoption', () => {
     // Empty for the first time since the Research walk began: every page this
     // side has walked and built is either in place or waiting on a rev, not on
     // a look.
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/review',
-      '/trade/desk',
-    ])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row

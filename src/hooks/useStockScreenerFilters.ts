@@ -193,6 +193,19 @@ export function useStockScreenerFilters() {
     previewMutation.mutate()
   }, [anyFilterActive, previewMutation])
 
+  /**
+   * The same preview, awaited.
+   *
+   * The funnel runs the preview and applies its result in one press, which
+   * needs the symbols back rather than a state change to watch for — syncing
+   * two pieces of state through an effect is how a cascading render starts.
+   */
+  const runFilter = useCallback(async (): Promise<string[] | null> => {
+    if (!anyFilterActive) return null
+    const data = await previewMutation.mutateAsync()
+    return data.symbols
+  }, [anyFilterActive, previewMutation])
+
   const clearFilterPreview = useCallback(() => {
     setFilterPreview(null)
   }, [])
@@ -218,6 +231,7 @@ export function useStockScreenerFilters() {
     clearSepaGroupFilter,
     clearAllFilters,
     previewFilter,
+    runFilter,
     clearFilterPreview,
   }
 }

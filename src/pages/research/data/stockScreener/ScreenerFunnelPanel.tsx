@@ -34,6 +34,20 @@ export interface FunnelPanelProps {
   onToggle: (stageId: string, conditionId: string) => void
   onClearAll: () => void
   loading?: boolean
+  /**
+   * Run the selection and put the names in Results.
+   *
+   * The prototype has no Search step because its counts *are* the set. Here
+   * the counts come from one cheap endpoint and the set comes from another,
+   * so the step stays — but it belongs in this panel, beside what it acts on.
+   * The first pass of this walk left it at the foot of the page, which made
+   * the loop unusable: you picked conditions at the top and the control that
+   * did anything with them was off-screen.
+   */
+  onRun?: () => void
+  runBusy?: boolean
+  /** What the last run put in Results, when it has run. */
+  ranCount?: number | null
 }
 
 function fmt(n: number | null): string {
@@ -100,6 +114,7 @@ function StageRow({
         <div className="mt-1.5 flex flex-wrap gap-1">
           {stage.chips.map((c) => {
             const n = chipCount(chips, c.id)
+            const capped = chips?.find((x) => x.id === c.id)?.capped === true
             const on = active.has(c.id)
             return (
               <button
@@ -124,7 +139,9 @@ function StageRow({
                 )}
               >
                 <span>{c.label}</span>
-                <span className="font-mono text-dense-caption text-muted-foreground">{fmt(n)}</span>
+                <span className="font-mono text-dense-caption text-muted-foreground">
+                  {capped ? `${fmt(n)}+` : fmt(n)}
+                </span>
               </button>
             )
           })}
@@ -171,6 +188,9 @@ export function ScreenerFunnelPanel({
   onToggle,
   onClearAll,
   loading,
+  onRun,
+  runBusy,
+  ranCount,
 }: FunnelPanelProps) {
   const readings = funnelReadings(universe, stageCounts)
   const counted = readings.map((r) => r.n).filter((n): n is number => n != null)
@@ -187,14 +207,34 @@ export function ScreenerFunnelPanel({
           {fmt(universe)} universe · narrowest stage{' '}
           <span className="text-foreground">{fmt(narrowest)}</span>
         </span>
-        <button
-          type="button"
-          onClick={onClearAll}
-          disabled={active.size === 0}
-          className="ml-auto cursor-pointer text-dense-meta text-primary hover:underline disabled:cursor-default disabled:text-muted-foreground disabled:no-underline"
-        >
-          {active.size === 0 ? 'nothing selected' : `Clear ${active.size}`}
-        </button>
+        <span className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onClearAll}
+            disabled={active.size === 0}
+            className="cursor-pointer text-dense-meta text-primary hover:underline disabled:cursor-default disabled:text-muted-foreground disabled:no-underline"
+          >
+            {active.size === 0 ? 'nothing selected' : `Clear ${active.size}`}
+          </button>
+          {/* In the header, not at the foot of the stages: the panel is taller
+              than a screen, and a control the reader has to scroll past seven
+              stages to find is one they will not find. */}
+          {onRun != null ? (
+            <button
+              type="button"
+              disabled={active.size === 0 || runBusy}
+              onClick={onRun}
+              title={
+                active.size === 0
+                  ? 'Pick a condition, or load a preset from the rail'
+                  : 'The counts here are read from one endpoint; the names come from another, so this runs the second'
+              }
+              className="inline-flex h-5 cursor-pointer items-center rounded-sm border border-primary/50 bg-primary/10 px-2 text-dense-meta text-foreground hover:bg-primary/20 disabled:cursor-default disabled:border-border disabled:bg-transparent disabled:text-muted-foreground"
+            >
+              {runBusy ? 'Running…' : 'Run → Results'}
+            </button>
+          ) : null}
+        </span>
       </header>
       {loading ? (
         <p className="px-3 py-6 text-center text-dense-meta text-muted-foreground">
@@ -214,6 +254,9 @@ export function ScreenerFunnelPanel({
         ))
       )}
       <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
+        {ranCount != null ? (
+          <span className="text-foreground/80">{ranCount.toLocaleString()} names in Results. </span>
+        ) : null}
         Stages are AND. Chips inside a stage are OR unless the stage has a <em>min</em>, then it is
         “at least N of these”. Counts update as you click — no Search step. Each stage's number is
         measured <em>against the universe</em>, not against the stage above it: the running

@@ -17,9 +17,16 @@
  *
  * The other five are not, and each is missing for its own reason:
  *
- *   Momentum   `momentum-filter` answers 200 with 0 and says why —
- *              `dw_stock.mart_sepa_tier_momentum` is awaiting 252+ trading days.
- *   Structure  `tier-filter?tier=structure`, the same mart, the same note.
+ *   Momentum   countable, but **not** through `momentum-filter`: that reads
+ *              `dw_stock.mart_sepa_tier_momentum`, which answers 200 with 0
+ *              and a note saying it is awaiting 252+ trading days. The radar
+ *              at `/research/momentum/radar` answers today — A+ 2, A 92, and
+ *              B and C both at the route's 500 cap. The first pass of this
+ *              walk read only the tier mart and called the whole stage dead,
+ *              which was wrong, and is the reason a stage's reason has to
+ *              name the endpoint rather than say "no data".
+ *   Structure  `tier-filter?tier=structure`, the same mart, and here the note
+ *              does hold: no second source answers it.
  *   Quality    `fundamental-filter` works — it returns rows for the growth
  *              conditions — and returns nothing for any of the seven quality
  *              ids. So this is no data for these conditions, not a broken
@@ -105,8 +112,9 @@ export const FUNNEL_STAGES: readonly FunnelStage[] = [
     title: 'Momentum',
     mode: 'grade · any selected',
     kind: 'any',
-    missing:
-      'dw_stock.mart_sepa_tier_momentum is awaiting 252+ trading days of data — the endpoint answers, with nothing in it yet.',
+    // Live through the radar. The tier mart behind `momentum-filter` is still
+    // accumulating, which is a fact about that mart and not about the grade.
+    missing: null,
     chips: [
       { id: 'grade_aplus', label: 'A+' },
       { id: 'grade_a', label: 'A' },
@@ -200,6 +208,8 @@ export function atLeast(buckets: readonly DistBucket[] | null | undefined, n: nu
 export interface ConditionCount {
   id: string
   pass: number
+  /** The route capped its page, so `pass` is a floor rather than a count. */
+  capped?: boolean
 }
 
 /** A chip's own count, or null when nothing counts that condition. */

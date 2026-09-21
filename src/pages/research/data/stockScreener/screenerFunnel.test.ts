@@ -6,6 +6,7 @@ import {
   funnelReadings,
   type DistBucket,
 } from './screenerFunnel'
+import { SCREENER_PRESETS } from './screenerPresets'
 
 // Invented buckets in the endpoint's shape, not a copy of DEV's.
 const dist: DistBucket[] = [
@@ -60,9 +61,13 @@ describe('FUNNEL_STAGES', () => {
     for (const s of FUNNEL_STAGES) {
       if (s.missing != null) expect(s.missing.length).toBeGreaterThan(40)
     }
+    // Momentum is in this list because the radar answers it, even though the
+    // tier mart behind the other endpoint does not. A stage is dead only when
+    // every source for it is.
     expect(FUNNEL_STAGES.filter((s) => s.missing == null).map((s) => s.id)).toEqual([
       'trend',
       'growth',
+      'momentum',
     ])
   })
 })
@@ -91,5 +96,29 @@ describe('funnelReadings', () => {
   it('knows nothing rather than zero when the universe has not answered', () => {
     const out = funnelReadings(null, {})
     expect(out.every((r) => r.n == null && r.dropped == null && r.share == null)).toBe(true)
+  })
+})
+
+describe('SCREENER_PRESETS', () => {
+  it('offers the design’s four, and only greys the ones with no source', () => {
+    expect(SCREENER_PRESETS.map((p) => p.label)).toEqual([
+      'SEPA Daily Core',
+      'Momentum Radar',
+      'Event Radar',
+      'Premium seller',
+    ])
+    // The correction this file exists to record: an earlier pass called all
+    // four unavailable. Two of them are pages that work today.
+    expect(SCREENER_PRESETS.filter((p) => p.load != null).map((p) => p.id)).toEqual([
+      'sepa-daily-core',
+      'momentum-radar',
+    ])
+  })
+
+  it('gives every unavailable preset a reason on the row, not a blank', () => {
+    for (const p of SCREENER_PRESETS) {
+      if (p.load == null) expect(p.missing && p.missing.length).toBeGreaterThan(40)
+      else expect(p.missing).toBeNull()
+    }
   })
 })

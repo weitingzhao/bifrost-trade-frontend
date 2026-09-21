@@ -32,6 +32,9 @@ import { TierFilterCard } from './stockScreener/TierFilterCard'
 import { screenerStackColClass } from './stockScreener/stockScreenerUi'
 import { ScreenerFunnelPanel } from './stockScreener/ScreenerFunnelPanel'
 import { FUNNEL_STAGES, atLeast } from './stockScreener/screenerFunnel'
+import { SCREENER_PRESETS, PRESET_PAGE_LIMIT } from './stockScreener/screenerPresets'
+import { fetchMomentumRadar } from '@/api/researchEngine'
+import { useQuery } from '@tanstack/react-query'
 import type { ReadinessSnapshotRow } from '@/types/stockScreener'
 import { formatCriteriaAsOf, prepareDistBuckets } from '@/utils/stockScreener'
 
@@ -231,6 +234,49 @@ export default function StockScreenerPage() {
   // It drives the page's own filter sets rather than keeping a second copy:
   // the trend chips are the technical conditions, the growth chips the
   // fundamental ones, and the five stages with no data are inert.
+  // The Momentum stage's chips, read from the radar. The tier mart behind
+  // `momentum-filter` is still accumulating; this route answers today.
+  const momentumQ = useQuery({
+    queryKey: ['screener', 'momentum-grades'],
+    queryFn: async () => {
+      const grades = ['A+', 'A', 'B', 'C'] as const
+      const res = await Promise.all(
+        grades.map((g) => fetchMomentumRadar({ grade: g, limit: PRESET_PAGE_LIMIT })),
+      )
+      return grades.map((g, i) => {
+        const rows = res[i].rows ?? []
+        return {
+          id: `grade_${g === 'A+' ? 'aplus' : g.toLowerCase()}`,
+          // **Names, not rows.** The radar returns a row per symbol per
+          // date — grade A comes back as 92 rows over 56 names — and every
+          // other chip on this panel counts names out of the universe. Two
+          // chips side by side meaning different things is worse than either
+          // number being wrong.
+          pass: new Set(rows.map((r) => r.symbol)).size,
+          // The route caps its page, so a full page is a floor, not a count.
+          capped: rows.length >= PRESET_PAGE_LIMIT,
+        }
+      })
+    },
+    staleTime: 5 * 60_000,
+  })
+
+  const [presetBusy, setPresetBusy] = useState<string | null>(null)
+  const applyPreset = useCallback(
+    async (id: string) => {
+      const preset = SCREENER_PRESETS.find((x) => x.id === id)
+      if (preset?.load == null) return
+      setPresetBusy(id)
+      try {
+        const symbols = await preset.load()
+        setSymbolText(symbols.join(','))
+      } finally {
+        setPresetBusy(null)
+      }
+    },
+    [],
+  )
+
   const universe = criteriaStats?.universe_count ?? null
   const funnelActive = useMemo(
     () => new Set<string>([...filters.techCondFilter, ...filters.condFilter]),
@@ -240,16 +286,41 @@ export default function StockScreenerPage() {
     () => ({
       trend: atLeast(criteriaStats?.technical?.pass_count_distribution, mins.trend ?? 0),
       growth: atLeast(criteriaStats?.fundamental?.pass_count_distribution, mins.growth ?? 0),
+      // Every graded name the radar can reach. Two of the four grades come
+      // back at the route's cap, so this is a floor — the panel says so.
+      momentum: momentumQ.data?.reduce((n, g) => n + g.pass, 0) ?? null,
     }),
-    [criteriaStats, mins],
+    [criteriaStats, mins, momentumQ.data],
   )
   const chipCounts = useMemo(
     () => ({
       trend: criteriaStats?.technical?.conditions ?? null,
       growth: criteriaStats?.fundamental?.conditions ?? null,
+      momentum: momentumQ.data ?? null,
     }),
-    [criteriaStats],
+    [criteriaStats, momentumQ.data],
   )
+  // The design's "no Search step" cannot be honoured literally — the counts
+  // and the names come from different endpoints — so the step moves into the
+  // panel and does both halves in one press.
+  const [runBusy, setRunBusy] = useState(false)
+  const runFunnel = useCallback(async () => {
+    if (!filters.anyFilterActive) return
+    setRunBusy(true)
+    try {
+      const symbols = await filters.runFilter()
+      if (symbols != null) {
+        fundBucket.clearActive()
+        techBucket.clearActive()
+        fundCond.clearActive()
+        techCond.clearActive()
+        setSymbolText(symbols.join(','))
+      }
+    } finally {
+      setRunBusy(false)
+    }
+  }, [filters, fundBucket, techBucket, fundCond, techCond])
+
   const toggleFunnelChip = useCallback(
     (stageId: string, conditionId: string) => {
       if (stageId === 'trend') filters.toggleTechCondFilter(conditionId)
@@ -300,9 +371,38 @@ export default function StockScreenerPage() {
             </p>
           </SectionPanel>
           <SectionPanel cap="Presets" title="Starting points, not models">
-            <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-              No preset store on this side, so none are offered — an empty list of saved starting
-              points and a list nobody has written to look the same, and they are not.
+            <div className="flex flex-col">
+              {SCREENER_PRESETS.map((pr) =>
+                pr.load == null ? (
+                  <span
+                    key={pr.id}
+                    title={pr.missing ?? undefined}
+                    className="flex items-baseline justify-between gap-2 border-b border-border/60 px-3 py-1.5 text-muted-foreground last:border-b-0"
+                  >
+                    <span className="text-dense-label">{pr.label}</span>
+                    <span className="font-mono text-dense-caption">{pr.meta}</span>
+                  </span>
+                ) : (
+                  <button
+                    key={pr.id}
+                    type="button"
+                    disabled={presetBusy != null}
+                    onClick={() => void applyPreset(pr.id)}
+                    title={`Load ${pr.label} (${pr.meta}) into Results`}
+                    className="flex cursor-pointer items-baseline justify-between gap-2 border-b border-border/60 px-3 py-1.5 text-left last:border-b-0 hover:bg-secondary/40 disabled:cursor-default disabled:opacity-60"
+                  >
+                    <span className="text-dense-label">{pr.label}</span>
+                    <span className="font-mono text-dense-caption text-muted-foreground">
+                      {presetBusy === pr.id ? 'loading…' : pr.meta}
+                    </span>
+                  </button>
+                ),
+              )}
+            </div>
+            <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
+              A preset here resolves to a set of names and lands in Results. It is not a saved
+              screen — nothing on this side stores criteria. The two that are greyed say why on
+              hover.
             </p>
           </SectionPanel>
           <SectionPanel cap="My screens" title="Saved by you">
@@ -324,6 +424,9 @@ export default function StockScreenerPage() {
             onToggle={toggleFunnelChip}
             onClearAll={filters.clearAllFilters}
             loading={criteriaLoading}
+            onRun={() => void runFunnel()}
+            runBusy={runBusy || filters.filterLoading}
+            ranCount={readiness.symbols.length > 0 ? readiness.symbols.length : null}
           />
         </div>
 

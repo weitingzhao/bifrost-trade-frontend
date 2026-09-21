@@ -34,6 +34,20 @@ Where the app has no number, the row is **marked, not dropped** — it keeps its
 place and names the missing half. `—` is not `0`: a zero is a count, and
 "nothing counts this" is not one.
 
+Three ways a measurement lies, all of which have cost a re-walk:
+
+- **One endpoint is not the answer.** A reading is dead only when *every*
+  source for it is. The Screener's Momentum stage was marked dead on
+  `momentum-filter`, whose mart is still accumulating, while
+  `/research/momentum/radar` answered it the whole time. So a reason names the
+  endpoint — "`X` returns 0 because Y" — never "no data".
+- **An empty 200 is not an empty set.** Before writing "nothing qualifies",
+  call the same endpoint with an argument you know has rows. If that answers,
+  the emptiness is the data; if it does not, the emptiness is the endpoint.
+- **`count` is not always names.** Check whether a route returns one row per
+  entity or one per entity per date, and whether a full page is the count or
+  the cap. Two figures side by side must count the same thing.
+
 ## 3. Extract before you duplicate (§14.2)
 
 An overview page quotes figures other pages compute. When this page becomes the

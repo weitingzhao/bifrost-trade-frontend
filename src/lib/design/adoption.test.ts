@@ -161,8 +161,8 @@ describe('design adoption', () => {
     // Research Overview, the Trade Desk and the Review Queue are each now the
     // layer itself rather than its first row — so they leave `aligned` for
     // `stale` without leaving the walked set.
-    expect(counts.aligned + counts.byState.stale).toBe(35)
-    expect(counts.aligned).toBe(28)
+    expect(counts.aligned + counts.byState.stale).toBe(36)
+    expect(counts.aligned).toBe(29)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -271,8 +271,12 @@ describe('design adoption', () => {
     // chain honestly broken. Then `/risk` and `/portfolio` were re-walked
     // section by section against their prototypes on the Owner's reading that
     // the first builds were not close enough, and `/portfolio` was signed off
-    // at the end of that pass (reviewing 9→8, aligned 27→28).
-    expect(counts.byState.reviewing).toBe(8)
+    // at the end of that pass (reviewing 9→8, aligned 27→28). `/review/
+    // objectives` followed: re-walked under the interaction standard — the
+    // page's duplicate objective control dropped for the shell's own scope,
+    // the design's last column and floor line added, every link clicked — and
+    // signed off (reviewing 8→7, aligned 28→29).
+    expect(counts.byState.reviewing).toBe(7)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -297,6 +301,7 @@ describe('design adoption', () => {
       // tree around it.
       '/review/fit',
       '/review/habits',
+      '/review/objectives',
       '/review/playbook-stats',
       '/review/proposals',
       '/risk/budget',
@@ -319,7 +324,6 @@ describe('design adoption', () => {
       '/research/loop/hypotheses',
       '/research/screener',
       '/research/workbench',
-      '/review/objectives',
       '/risk',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

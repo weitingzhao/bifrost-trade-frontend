@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
 import {
@@ -30,11 +30,18 @@ import { SepaHeroCard } from './stockScreener/SepaHeroCard'
 import { SymbolsStrip } from './stockScreener/SymbolsStrip'
 import { TierFilterCard } from './stockScreener/TierFilterCard'
 import { screenerStackColClass } from './stockScreener/stockScreenerUi'
+import { ScreenerFunnelPanel } from './stockScreener/ScreenerFunnelPanel'
+import { FUNNEL_STAGES, atLeast } from './stockScreener/screenerFunnel'
 import type { ReadinessSnapshotRow } from '@/types/stockScreener'
 import { formatCriteriaAsOf, prepareDistBuckets } from '@/utils/stockScreener'
 
 export default function StockScreenerPage() {
   const [symbolText, setSymbolText] = useState('')
+  // The design's `min` stepper, per stage that has one. Its defaults are the
+  // prototype's: eight of the eleven trend conditions, none of the growth.
+  const [mins, setMins] = useState<Record<string, number>>(() =>
+    Object.fromEntries(FUNNEL_STAGES.filter((st) => st.min != null).map((st) => [st.id, st.min!])),
+  )
   const [inspector, setInspector] = useState<{
     symbol: string
     seed?: { passCount: number; passedConditions?: string[]; insufficientData?: boolean }
@@ -219,11 +226,43 @@ export default function StockScreenerPage() {
     fundFilterActive > 0 && { label: 'Conditions', count: fundFilterActive, colorClass: 'bg-emerald-400/15 text-emerald-300' },
   ].filter(Boolean) as { label: string; count: number; colorClass: string }[]
 
+  // ── The funnel (design Criteria · Funnel) ──
+  //
+  // It drives the page's own filter sets rather than keeping a second copy:
+  // the trend chips are the technical conditions, the growth chips the
+  // fundamental ones, and the five stages with no data are inert.
+  const universe = criteriaStats?.universe_count ?? null
+  const funnelActive = useMemo(
+    () => new Set<string>([...filters.techCondFilter, ...filters.condFilter]),
+    [filters.techCondFilter, filters.condFilter],
+  )
+  const stageCounts = useMemo(
+    () => ({
+      trend: atLeast(criteriaStats?.technical?.pass_count_distribution, mins.trend ?? 0),
+      growth: atLeast(criteriaStats?.fundamental?.pass_count_distribution, mins.growth ?? 0),
+    }),
+    [criteriaStats, mins],
+  )
+  const chipCounts = useMemo(
+    () => ({
+      trend: criteriaStats?.technical?.conditions ?? null,
+      growth: criteriaStats?.fundamental?.conditions ?? null,
+    }),
+    [criteriaStats],
+  )
+  const toggleFunnelChip = useCallback(
+    (stageId: string, conditionId: string) => {
+      if (stageId === 'trend') filters.toggleTechCondFilter(conditionId)
+      else if (stageId === 'growth') filters.toggleCondFilter(conditionId)
+    },
+    [filters],
+  )
+
   return (
     <PageShell className="flex w-full min-w-0 flex-col gap-2">
       <PageHeader
-        title="Stock screen"
-        description="Discover symbols by SEPA conditions and inspect their daily readiness snapshot."
+        title="Screener · Stocks"
+        description="Conditions in, a set out — deterministic and saveable. Pick a universe, stack criteria, watch the count fall. Ranking the survivors is the model’s job."
         actions={
           <AskCopilotButton
             originPage="sepa"
@@ -244,6 +283,89 @@ export default function StockScreenerPage() {
       {criteriaError && (
         <QueryErrorAlert error={criteriaError} onRetry={() => void refetch()} />
       )}
+
+      {/* ── The design's three columns: universe rail · funnel · results ── */}
+      <div className="flex w-full min-w-0 flex-wrap items-start gap-2">
+        <aside className="flex w-full flex-col gap-2 min-[1100px]:w-[15rem] min-[1100px]:flex-none">
+          <SectionPanel cap="Universe" title="What the screen starts from">
+            <div className="flex items-baseline justify-between gap-2 px-3 py-2">
+              <span className="text-dense-label">Readiness snapshot</span>
+              <span className="font-mono text-dense-label tabular-nums">
+                {universe == null ? '—' : universe.toLocaleString()}
+              </span>
+            </div>
+            <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
+              One universe on this side, evaluated {techAsOf || 'on an unknown date'}. The design
+              offers a choice of four; the others have no list behind them here.
+            </p>
+          </SectionPanel>
+          <SectionPanel cap="Presets" title="Starting points, not models">
+            <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
+              No preset store on this side, so none are offered — an empty list of saved starting
+              points and a list nobody has written to look the same, and they are not.
+            </p>
+          </SectionPanel>
+          <SectionPanel cap="My screens" title="Saved by you">
+            <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
+              Nothing saves a screen yet. The design writes one as a Workbench preset or an
+              Autopilot objective, both through the Decision Inbox; neither write exists here.
+            </p>
+          </SectionPanel>
+        </aside>
+
+        <div className="min-w-0 max-w-[32.5rem] flex-[1_1_24rem]">
+          <ScreenerFunnelPanel
+            universe={universe}
+            stageCounts={stageCounts}
+            chipCounts={chipCounts}
+            mins={mins}
+            onMinChange={(id, next) => setMins((m) => ({ ...m, [id]: next }))}
+            active={funnelActive}
+            onToggle={toggleFunnelChip}
+            onClearAll={filters.clearAllFilters}
+            loading={criteriaLoading}
+          />
+        </div>
+
+        <div className="min-w-0 flex-[999_1_35rem]">
+          <SymbolsStrip
+            symbolText={symbolText}
+            onSymbolTextChange={handleSymbolTextChange}
+            parsedCount={readiness.symbols.length}
+            asOf={readiness.asOf}
+            loading={readiness.isLoading}
+            error={readiness.error}
+            summary={readiness.summary}
+          />
+          <div className="mt-2">
+            <ReadinessResultsTable
+              rows={readiness.rows}
+              sortedRows={sortedRows}
+              sortCol={sortCol}
+              sortDir={sortDir}
+              loading={readiness.isLoading}
+              error={readiness.error}
+              symbolCount={readiness.symbols.length}
+              activeSymbol={inspector?.symbol ?? null}
+              onSort={toggleSort}
+              onOpenInspector={toggleInspector}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── The older arrangement of the same conditions, kept until the Owner
+          rules on it. The funnel above replaces both of these surfaces in the
+          design; what they still carry that it does not is the distribution
+          histogram and the tier cards for the three stages with no data. ── */}
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pt-1">
+        <span className={SECTION_CAP_CLASS}>Also here</span>
+        <span className="text-dense-meta text-muted-foreground">
+          the same conditions in this page’s earlier arrangement — the design replaces both with the
+          funnel above, and where each capability should land is the Owner’s call, not a deletion I
+          should make
+        </span>
+      </div>
 
       {/* ── SEPA Dashboard: hero cards ── */}
       <div className="grid w-full grid-cols-1 gap-2 min-[900px]:grid-cols-2 items-stretch">
@@ -419,29 +541,6 @@ export default function StockScreenerPage() {
           onClear={filters.clearAllFilters}
         />
       )}
-
-      <SymbolsStrip
-        symbolText={symbolText}
-        onSymbolTextChange={handleSymbolTextChange}
-        parsedCount={readiness.symbols.length}
-        asOf={readiness.asOf}
-        loading={readiness.isLoading}
-        error={readiness.error}
-        summary={readiness.summary}
-      />
-
-      <ReadinessResultsTable
-        rows={readiness.rows}
-        sortedRows={sortedRows}
-        sortCol={sortCol}
-        sortDir={sortDir}
-        loading={readiness.isLoading}
-        error={readiness.error}
-        symbolCount={readiness.symbols.length}
-        activeSymbol={inspector?.symbol ?? null}
-        onSort={toggleSort}
-        onOpenInspector={toggleInspector}
-      />
 
       <InspectorDrawer
         state={

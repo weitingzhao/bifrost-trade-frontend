@@ -4,6 +4,7 @@ import {
   ageOf,
   laneCounts,
   laneRows,
+  hypothesisObjectiveId,
   objectiveScopeReading,
   originDest,
   scopeOf,
@@ -46,8 +47,12 @@ describe('objectiveScopeReading', () => {
     ['run-a', 'obj-1'],
     ['run-b', 'obj-2'],
   ])
+  const cands = new Map([
+    ['cand-a', 'obj-1'],
+    ['cand-b', 'obj-2'],
+  ])
 
-  it('separates the three reasons a row is not attributable', () => {
+  it('separates the four reasons a row is or is not in scope', () => {
     // They are different facts and they need different answers: a row opened
     // by hand never had a machine, and a row whose run has been deleted did.
     const out = objectiveScopeReading(
@@ -55,23 +60,73 @@ describe('objectiveScopeReading', () => {
         born({ origin_ref: { run_id: 'run-a' } }),
         born({ origin_ref: { run_id: 'run-b' } }),
         born({ origin_ref: { run_id: 'run-gone' } }),
-        born({ origin_ref: { candidate_id: 'c1' } }),
+        born({ origin_ref: { candidate_id: 'cand-a' } }),
         born(),
       ],
       runs,
+      cands,
       'obj-1',
     )
-    expect(out).toEqual({ attributable: 1, byHand: 2, danglingRun: 1, total: 5 })
+    expect(out).toEqual({
+      attributable: 2,
+      byHand: 1,
+      danglingRun: 1,
+      otherObjective: 1,
+      total: 5,
+    })
   })
 
-  it('counts a run that resolves to another objective as neither hand nor dangling', () => {
-    // It belongs to a machine, just not this one — so it is simply not in the
-    // scope, and inflating either explanation would misdescribe the record.
-    const out = objectiveScopeReading([born({ origin_ref: { run_id: 'run-b' } })], runs, 'obj-1')
-    expect(out).toEqual({ attributable: 0, byHand: 0, danglingRun: 0, total: 1 })
+  it('reaches the objective through the candidate when the run is gone', () => {
+    // The case that mattered on DEV: nine rows name runs that were deleted and
+    // a candidate that was not. A link is dead only when every path to it is.
+    const out = objectiveScopeReading(
+      [born({ origin_ref: { run_id: 'run-gone', candidate_id: 'cand-a' } })],
+      runs,
+      cands,
+      'obj-1',
+    )
+    expect(out.attributable).toBe(1)
+    expect(out.danglingRun).toBe(0)
+  })
+
+  it('prefers the run when both paths answer', () => {
+    expect(
+      objectiveScopeReading(
+        [born({ origin_ref: { run_id: 'run-b', candidate_id: 'cand-a' } })],
+        runs,
+        cands,
+        'obj-2',
+      ).attributable,
+    ).toBe(1)
   })
 
   it('treats an empty run id as no run at all', () => {
-    expect(objectiveScopeReading([born({ origin_ref: { run_id: '' } })], runs, 'obj-1').byHand).toBe(1)
+    expect(
+      objectiveScopeReading([born({ origin_ref: { run_id: '' } })], runs, cands, 'obj-1').byHand,
+    ).toBe(1)
+  })
+})
+
+describe('hypothesisObjectiveId', () => {
+  const runs = new Map([['run-a', 'obj-1']])
+  const cands = new Map([['cand-a', 'obj-2']])
+
+  it('answers undefined for a row with no provenance to follow', () => {
+    // Different from null: one never had a machine, the other had one and the
+    // record of it is gone. The banner says which.
+    expect(hypothesisObjectiveId({ origin_ref: null }, runs, cands)).toBeUndefined()
+    expect(hypothesisObjectiveId({ origin_ref: { source: 'copilot' } }, runs, cands)).toBeUndefined()
+  })
+
+  it('answers null when it carried provenance and none of it resolves', () => {
+    expect(
+      hypothesisObjectiveId({ origin_ref: { run_id: 'gone', candidate_id: 'gone' } }, runs, cands),
+    ).toBeNull()
+  })
+
+  it('follows the candidate when the run does not answer', () => {
+    expect(
+      hypothesisObjectiveId({ origin_ref: { run_id: 'gone', candidate_id: 'cand-a' } }, runs, cands),
+    ).toBe('obj-2')
   })
 })

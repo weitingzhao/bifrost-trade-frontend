@@ -13,11 +13,15 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchObjectiveRuns } from '@/api/research/harness'
+import { fetchCandidates } from '@/api/research/candidates'
+import { QUERY_KEYS } from '@/constants/queryKeys'
+import { candidateObjectiveId } from './objectiveLapModel'
 import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookOpen } from 'lucide-react'
 import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
+import { HypothesisDraftQueue } from './HypothesisDraftQueue'
 import { DenseTag, EmptyState, type DenseTagVariant } from '@/components/data-display'
 import { Card } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
@@ -39,6 +43,7 @@ import {
   BOARD_LANES,
   laneCounts,
   laneRows,
+  hypothesisObjectiveId,
   objectiveScopeReading,
   originDest,
   scopeOf,
@@ -183,8 +188,6 @@ export default function HypothesisBoardPage() {
   const [lane, setLane] = useState<BoardLane>('all')
   const query = useHypothesisList({ include_retired: true, limit: 100 })
   const rows = useMemo(() => query.data?.rows ?? [], [query.data])
-  const counts = laneCounts(rows)
-  const shown = laneRows(rows, lane)
   const nowIso = new Date().toISOString()
 
   // The shell's objective scope. The design scopes this page by provenance and
@@ -205,13 +208,56 @@ export default function HypothesisBoardPage() {
     }
     return m
   }, [runsQ.data])
+  /**
+   * The second road to an objective: a hypothesis promoted from a candidate
+   * carries `origin_ref.candidate_id`, and the candidate carries the
+   * objective that proposed it. On DEV that path answers for 9 rows where the
+   * run path answers for none, because the runs those hypotheses name have
+   * been deleted.
+   */
+  const candidatesQ = useQuery({
+    queryKey: QUERY_KEYS.research.candidates({ status: 'all', days: 365 }),
+    queryFn: () => fetchCandidates({ status: 'all', days: 365 }),
+    staleTime: 5 * 60_000,
+    enabled: objective !== ALL_OBJECTIVES,
+  })
+  const candidateToObjective = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const c of candidatesQ.data?.items ?? []) {
+      const obj = candidateObjectiveId(c)
+      if (c.id && obj) m.set(c.id, obj)
+    }
+    return m
+  }, [candidatesQ.data])
   const scope = useMemo(
     () =>
       objective === ALL_OBJECTIVES
         ? null
-        : objectiveScopeReading(rows, runToObjective, objective),
-    [rows, runToObjective, objective],
+        : objectiveScopeReading(rows, runToObjective, candidateToObjective, objective),
+    [rows, runToObjective, candidateToObjective, objective],
   )
+  /**
+   * Filter when anything resolves; report when nothing does.
+   *
+   * The design filters, and so does this — but emptying the board because the
+   * runs that wrote it were deleted would be a statement about the record
+   * rather than about the machine, and that is the one case where hiding
+   * every row answers nothing.
+   */
+  const scopeFilters = scope != null && scope.attributable > 0
+  const inScope = useMemo(
+    () =>
+      !scopeFilters
+        ? rows
+        : rows.filter(
+            (r) => hypothesisObjectiveId(r, runToObjective, candidateToObjective) === objective,
+          ),
+    [rows, scopeFilters, runToObjective, candidateToObjective, objective],
+  )
+  // The lane counts read the scoped set, so a chip never promises rows the
+  // scope has already taken away.
+  const counts = laneCounts(inScope)
+  const shown = laneRows(inScope, lane)
   const scopeName =
     objectivesQ.data?.items?.find((o) => o.id === objective)?.title ?? objective
 
@@ -230,20 +276,32 @@ export default function HypothesisBoardPage() {
         }
       />
 
-      {/* Reported, not applied. Nothing on this board resolves to an objective
-          today — see `objectiveScopeReading` — so filtering on it would empty
-          the page for a reason about the record rather than about the machine.
-          The banner says which of the two reasons each row falls under. */}
+      {/* The design's own order: what is waiting on you before what is
+          already on the board. */}
+      <HypothesisDraftQueue />
+
       {scope != null ? (
         <ObjectiveScopeBanner
           name={scopeName}
           onClear={() => setObjective(ALL_OBJECTIVES)}
           clearLabel="Clear — show every origin"
         >
-          {scope.attributable} of {scope.total} hypotheses can be attributed to it —{' '}
-          {scope.byHand} were opened by hand or by the Copilot queue and carry no run, and{' '}
-          {scope.danglingRun} carry a run id that no longer resolves to any objective. The board is
-          not filtered while that is true.
+          {scopeFilters ? (
+            <>
+              {scope.attributable} of {scope.total} hypotheses came from it — {scope.byHand} were
+              opened by hand or by the Copilot queue and carry no provenance to follow,{' '}
+              {scope.danglingRun} name a run or a candidate that no longer exists
+              {scope.otherObjective > 0 ? `, and ${scope.otherObjective} came from another objective` : ''}
+              . All of those are hidden; clearing the scope brings them back.
+            </>
+          ) : (
+            <>
+              None of the {scope.total} hypotheses resolves to it — {scope.byHand} carry no
+              provenance to follow and {scope.danglingRun} name a run or a candidate that no
+              longer exists. The board is not filtered while that is true: emptying it would say
+              something about the record, not about this objective.
+            </>
+          )}
         </ObjectiveScopeBanner>
       ) : null}
 
@@ -301,7 +359,10 @@ export default function HypothesisBoardPage() {
       <footer className="text-dense-caption leading-normal text-muted-foreground">
         Candidate-born theses settle by the objective's outcome rule at its horizon; the rest wait
         for your call. There is no falsifier field yet — a thesis that cannot fail belongs in the
-        thesis text as its own falsifier.
+        thesis text as its own falsifier. A hypothesis the machine proposes arrives in the
+        Copilot queue above rather than on the board, and the queue has been empty in every
+        status since it was last read — the panel appears when something is waiting, as the
+        design draws it.
       </footer>
     </PageShell>
   )

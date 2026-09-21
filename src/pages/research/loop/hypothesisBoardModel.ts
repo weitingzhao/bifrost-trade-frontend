@@ -109,40 +109,75 @@ export function originDest(
  *       runs exists any more. `/research/objective-runs` returns 29 runs and
  *       none of them matches; asked directly, the API says `run not found`.
  *
- * So nothing on this board can be attributed to an objective today, and the
- * link that would do it points at runs that have been deleted. Filtering on
- * it would empty the board for a reason that is about the record rather than
- * about the machine — so the scope is **reported and not applied**, and the
- * banner says which of the two reasons each row falls under. When the runs
- * resolve, `attributable` stops being zero and the filter can turn on.
+ * That reading had only looked down one road. Re-measured 2026-09-21: a
+ * hypothesis born from a candidate carries `origin_ref.candidate_id`, and the
+ * candidate carries `source_ref.objective_id` — which is exactly how the
+ * Candidate Pool scopes itself. Through that second hop **9 of the 53 resolve**,
+ * all to `obj-daily-loop-stock`, where the run path resolves none. A link is
+ * dead only when every path to it is, and this one was not.
+ *
+ * So the scope **filters** when anything is attributable, and falls back to
+ * reporting when nothing is: emptying the board because the runs that wrote
+ * it were deleted would be a statement about the record rather than about the
+ * machine, and that is the one case where hiding every row answers nothing.
  */
 export interface ScopeReading {
-  /** Rows whose run resolves to the scoped objective. */
+  /** Rows that resolve to the scoped objective, by either path. */
   attributable: number
-  /** Rows that never carried a run — the design's "opened by hand". */
+  /** Rows that carried no provenance at all — the design's "opened by hand". */
   byHand: number
-  /** Rows carrying a run id that no longer resolves to any objective. */
+  /** Rows carrying a run or candidate id that no longer resolves. */
   danglingRun: number
+  /** Rows that resolve to a *different* objective. */
+  otherObjective: number
   total: number
+}
+
+/**
+ * The objective a hypothesis belongs to, by whichever path answers.
+ *
+ * Two roads, tried in the order they are reliable: the run that opened it,
+ * then the candidate it was promoted from — the candidate carries the
+ * objective that proposed it, which is the same field the Candidate Pool
+ * scopes on. `null` means no path answered; `undefined` means it carried no
+ * provenance to follow, which is a different thing and the banner says so.
+ */
+export function hypothesisObjectiveId(
+  row: Pick<Hypothesis, 'origin_ref'>,
+  runToObjective: ReadonlyMap<string, string>,
+  candidateToObjective: ReadonlyMap<string, string>,
+): string | null | undefined {
+  const ref = (row.origin_ref ?? {}) as Record<string, unknown>
+  const runId = typeof ref.run_id === 'string' && ref.run_id ? ref.run_id : null
+  const candId = typeof ref.candidate_id === 'string' && ref.candidate_id ? ref.candidate_id : null
+  if (runId == null && candId == null) return undefined
+  if (runId != null) {
+    const viaRun = runToObjective.get(runId)
+    if (viaRun != null) return viaRun
+  }
+  if (candId != null) {
+    const viaCandidate = candidateToObjective.get(candId)
+    if (viaCandidate != null) return viaCandidate
+  }
+  return null
 }
 
 export function objectiveScopeReading(
   rows: readonly Hypothesis[],
   runToObjective: ReadonlyMap<string, string>,
+  candidateToObjective: ReadonlyMap<string, string>,
   objectiveId: string,
 ): ScopeReading {
   let attributable = 0
   let byHand = 0
   let danglingRun = 0
+  let otherObjective = 0
   for (const r of rows) {
-    const runId = (r.origin_ref as { run_id?: unknown } | null)?.run_id
-    if (typeof runId !== 'string' || runId === '') {
-      byHand += 1
-      continue
-    }
-    const obj = runToObjective.get(runId)
-    if (obj == null) danglingRun += 1
+    const obj = hypothesisObjectiveId(r, runToObjective, candidateToObjective)
+    if (obj === undefined) byHand += 1
+    else if (obj === null) danglingRun += 1
     else if (obj === objectiveId) attributable += 1
+    else otherObjective += 1
   }
-  return { attributable, byHand, danglingRun, total: rows.length }
+  return { attributable, byHand, danglingRun, otherObjective, total: rows.length }
 }

@@ -216,7 +216,19 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'hypothesis\u2019s settled record \u2014 none of the 29 active hypotheses links an opportunity, '
     + 'so no entry condition is attached to any of them, and none carries a resolution, so '
     + 'there is no settled record to weight by. A Fit percentage would be a number with '
-    + 'nothing behind it, and the footnote says so. Awaiting the Owner\u2019s read.',
+    + 'nothing behind it, and the footnote says so. '
+    + 'Read again the same day and the rows were still wrong in shape. The design gives every '
+    + 'candidate a **second line** \u2014 the artifact it is, who wrote it, what it grew from \u2014 and '
+    + 'this side had scattered those three: the operator chip sat in the Source cell beside a '
+    + 'tag that said the same thing (harness maps to loop and to nothing else), and the parent '
+    + 'run sat inside the Why cell, which is about the lenses that fired. Each was next to '
+    + 'something it is not about, and the table read as a thin spreadsheet instead of the '
+    + 'design\u2019s two-line blocks. The provenance line is built now and carries all three, with '
+    + 'the parent as a link to the run\u2019s pipeline; Source is one tag again and Why is the '
+    + 'sketch alone. The six verbs share that line in the design and are named on it as owed '
+    + 'rather than drawn, per the Owner\u2019s 2026-09-21 ruling. Checked under both Open and All '
+    + '\u2014 the colspan follows the Status column in and out \u2014 and the table fits its panel in '
+    + 'both. Awaiting the Owner\u2019s read.',
   '/strategy/instances':
     'Trade › Rules — the Instances column of the lineage chain; its running-state summary also lands on the Desk status strip',
   '/strategy/win-rate':

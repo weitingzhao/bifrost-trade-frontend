@@ -2,7 +2,7 @@
  * Candidate Pool — Research Loop v1.
  * `/research/loop/candidates`
  */
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, ListFilter } from 'lucide-react'
 import { ObjectiveScopeBanner, PageHeader, PageShell, SectionPanel } from '@/components/layout'
@@ -25,7 +25,7 @@ import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
 import { CandidateOutcomeSummary } from '@/components/research/CandidateOutcomeSummary'
 import { useCandidateOutcomeByCandidate } from '@/hooks/useCandidateOutcome'
 import { cn } from '@/lib/utils'
-import { OPERATOR_CHIP, sourceOperatorOf } from '@/lib/research/operatorOf'
+import { sourceOperatorOf } from '@/lib/research/operatorOf'
 import { fmtPctSigned } from '@/lib/format'
 import { labHref } from '@/lib/analyzeHubs'
 import {
@@ -342,8 +342,10 @@ export default function CandidatePoolPage() {
             {items.map((row) => {
               const canAct = row.status === 'open'
               const rowBusy = busyId === row.id
+              const colCount = status === 'all' ? 11 : 10
               return (
-                <DenseTableRow key={row.id}>
+                <Fragment key={row.id}>
+                <DenseTableRow>
                   <DenseTableCell className={denseTableEntityCell}>
                     <div className="flex items-center gap-1.5">
                       <Link
@@ -354,19 +356,13 @@ export default function CandidatePoolPage() {
                       </Link>
                     </div>
                   </DenseTableCell>
+                  {/* One tag, as the design draws it. The operator chip used
+                      to sit beside it, and the two said the same thing twice —
+                      `harness` maps to `loop` and nothing else. It is on the
+                      provenance line under the row now, which is where the
+                      design puts it. */}
                   <DenseTableCell>
-                    <span className="flex items-center gap-1.5">
-                      <DenseTag variant="neutral">{row.source}</DenseTag>
-                      <span
-                        className={cn(
-                          'rounded border px-1 font-mono text-dense-micro font-bold',
-                          OPERATOR_CHIP[sourceOperatorOf(row.source)],
-                        )}
-                        title="The operator behind this nomination — the design's own rule: YOU → hand, CURATOR → loop, a screen → hand."
-                      >
-                        {sourceOperatorOf(row.source)}
-                      </span>
-                    </span>
+                    <DenseTag variant="neutral">{row.source}</DenseTag>
                   </DenseTableCell>
                   <DenseTableCell className={cn(denseTableNumCell, 'max-w-none')}>
                     <span className="block">{fmtScore(row.score)}</span>
@@ -406,24 +402,6 @@ export default function CandidatePoolPage() {
                     {candidateSketch(row).length > 0 ? (
                       <span className="text-dense-meta leading-snug text-muted-foreground">
                         {candidateSketch(row).join(' · ')}
-                        {/* The design's `parent`: it writes one as free text,
-                            and this side has the real run, with a page. */}
-                        {candidateRunId(row) ? (
-                          <>
-                            {' · '}
-                            <Link
-                              // The console's own path for a run, not the
-                              // `/research/loop/runs/:id` address that only
-                              // redirects to it — one hop, and one definition
-                              // of where a run opens.
-                              to={loopPipelinePath(candidateRunId(row)!)}
-                              className="font-mono text-dense-caption text-primary hover:underline"
-                              title="The run that proposed this name — opens its pipeline"
-                            >
-                              parent run
-                            </Link>
-                          </>
-                        ) : null}
                       </span>
                     ) : (
                       <span
@@ -514,6 +492,61 @@ export default function CandidatePoolPage() {
                     </div>
                   </DenseTableCell>
                 </DenseTableRow>
+                {/* The design gives every candidate a second line: the
+                    artifact it is, who wrote it, and what it grew from. The
+                    app had scattered those three — the operator into the
+                    Source cell, the parent into the Why cell — which said
+                    each of them next to something it is not about, and left
+                    the rows reading as a thin spreadsheet rather than the
+                    design's two-line blocks.
+
+                    The six verbs share this line in the design and are not
+                    here: the Owner ruled on 2026-09-21 (option B) that what
+                    each verb writes and where it lands is a product decision,
+                    so the line says they are owed where they would sit. */}
+                <tr>
+                  <td colSpan={colCount} className="border-b border-border/55 px-2.5 pb-1.5 pt-0">
+                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-dense-caption text-muted-foreground">
+                      <span
+                        className="font-mono text-muted-foreground/70"
+                        title="The artifact this row is — the same nomination the Journal files under its run."
+                      >
+                        nomination {row.id}
+                      </span>
+                      <span
+                        className="text-muted-foreground/50"
+                        title="The design hangs Explain · Challenge · Fork · Extend · Settle · Distill here. What each writes and where it lands is still open, so the row is a piece of work of its own rather than a guess baked into three pages."
+                      >
+                        Explain · Challenge · Fork · Extend · Settle · Distill
+                      </span>
+                      <span className="ml-auto flex flex-wrap items-center gap-x-2 font-mono">
+                        <span>operator · {sourceOperatorOf(row.source)}</span>
+                        <span aria-hidden>·</span>
+                        {candidateRunId(row) ? (
+                          <Link
+                            // The console's own path for a run, not the
+                            // `/research/loop/runs/:id` address that only
+                            // redirects to it — one hop, and one definition
+                            // of where a run opens.
+                            to={loopPipelinePath(candidateRunId(row)!)}
+                            className="text-primary hover:underline"
+                            title="The run that proposed this name — opens its pipeline"
+                          >
+                            parent {candidateRunId(row)}
+                          </Link>
+                        ) : (
+                          <span
+                            className="text-muted-foreground/60"
+                            title="No run proposed this name — it arrived from a screen, a scan, or your own hand."
+                          >
+                            parent —
+                          </span>
+                        )}
+                      </span>
+                    </span>
+                  </td>
+                </tr>
+                </Fragment>
               )
             })}
           </DenseTableBody>

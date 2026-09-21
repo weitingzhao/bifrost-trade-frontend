@@ -22,7 +22,13 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
+import {
+  ObjectiveScopeBanner,
+  PageHeader,
+  PageShell,
+  SectionPanel,
+  SECTION_CAP_CLASS,
+} from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -220,27 +226,12 @@ export default function ReviewObjectivesPage() {
           offers the way out, rather than growing a second control that can
           disagree with the first. */}
       {objective !== ALL_OBJECTIVES ? (
-        // The violet is the Lens's own objective ink, not the prototype's:
-        // the control that sets this scope is one glance away in the top bar,
-        // and two violets for one idea is two ideas.
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-md border-[var(--color-entity-strategy)]/40 border bg-[var(--color-entity-strategy)]/[0.07] px-3 py-1.5">
-          <span className={cn(SECTION_CAP_CLASS, 'text-[var(--color-entity-strategy)]')}>
-            Objective scope
-          </span>
-          <span className="text-dense-label">
-            {chain.rows.find((r) => r.id === objective)?.title ?? objective}
-          </span>
-          <span className="text-dense-meta text-muted-foreground">
-            its row is lit; the others are dimmed, because the comparison is the point of this page
-          </span>
-          <button
-            type="button"
-            onClick={() => setObjective(ALL_OBJECTIVES)}
-            className="ml-auto cursor-pointer text-dense-meta text-[var(--color-entity-strategy)] hover:underline"
-          >
-            Clear
-          </button>
-        </div>
+        <ObjectiveScopeBanner
+          name={chain.rows.find((r) => r.id === objective)?.title ?? objective}
+          onClear={() => setObjective(ALL_OBJECTIVES)}
+        >
+          its row is lit; the others are dimmed, because the comparison is the point of this page
+        </ObjectiveScopeBanner>
       ) : null}
 
       {objectivesQ.isError ? <QueryErrorAlert error={objectivesQ.error} /> : null}

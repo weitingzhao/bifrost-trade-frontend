@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import type { ResearchCandidate } from '@/api/research/candidates'
 import {
   candidateObjectiveId,
   draftObjectiveId,
   hypothesisRunId,
   objectiveLap,
+  splitByObjective,
   type LapInput,
 } from './objectiveLapModel'
 
@@ -107,5 +109,39 @@ describe('the joins each station uses', () => {
   it('reads a draft’s objective off the payload', () => {
     expect(draftObjectiveId({ payload: { objective_id: OBJ } })).toBe(OBJ)
     expect(draftObjectiveId({ payload: {} })).toBeNull()
+  })
+})
+
+describe('splitByObjective', () => {
+  const c = (objectiveId: string | null): ResearchCandidate =>
+    ({
+      id: `c-${objectiveId ?? 'none'}-${Math.random()}`,
+      source_ref: objectiveId ? { objective_id: objectiveId } : null,
+    }) as unknown as ResearchCandidate
+
+  it('keeps this objective’s rows and counts the two kinds it hid', () => {
+    // Both hidden kinds are part of the answer to "what did THIS one
+    // produce", and they are different answers: another machine proposed
+    // some, and nobody's machine proposed the rest.
+    const out = splitByObjective([c('a'), c('a'), c('b'), c(null)], 'a')
+    expect(out.kept).toHaveLength(2)
+    expect(out).toMatchObject({ otherObjective: 1, noObjective: 1, total: 4 })
+  })
+
+  it('treats a source_ref without an objective as no objective, not another one', () => {
+    const out = splitByObjective(
+      [{ source_ref: { symbol: 'NVDA' } } as unknown as ResearchCandidate],
+      'a',
+    )
+    expect(out).toMatchObject({ otherObjective: 0, noObjective: 1, total: 1 })
+  })
+
+  it('answers an empty list without pretending anything was hidden', () => {
+    expect(splitByObjective([], 'a')).toEqual({
+      kept: [],
+      otherObjective: 0,
+      noObjective: 0,
+      total: 0,
+    })
   })
 })

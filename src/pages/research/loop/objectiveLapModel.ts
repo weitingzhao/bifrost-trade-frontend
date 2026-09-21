@@ -161,3 +161,42 @@ export function objectiveLap(input: LapInput): Station[] {
     },
   ]
 }
+
+/**
+ * How a scope lands on a list whose rows carry an objective directly.
+ *
+ * The Candidate Pool's rows do: `source_ref.objective_id` is written by the
+ * run that proposed them, and on DEV 55 of 62 carry one. That is the case the
+ * design assumes and the case where the scope really should **filter** — the
+ * rows it hides are rows another machine proposed, or rows nobody's machine
+ * did, and both are the answer to "what did THIS one produce".
+ *
+ * Contrast the Hypothesis Board, where the same question has to be answered
+ * with the filter off because the link does not resolve. One shared shape,
+ * two honest outcomes: the count is what tells them apart.
+ */
+export interface ScopeSplit<T> {
+  /** Rows this objective proposed. */
+  kept: T[]
+  /** Rows another objective proposed. */
+  otherObjective: number
+  /** Rows no objective proposed — hand, scan, copilot. */
+  noObjective: number
+  total: number
+}
+
+export function splitByObjective<T extends Pick<ResearchCandidate, 'source_ref'>>(
+  rows: readonly T[],
+  objectiveId: string,
+): ScopeSplit<T> {
+  const kept: T[] = []
+  let otherObjective = 0
+  let noObjective = 0
+  for (const r of rows) {
+    const id = candidateObjectiveId(r)
+    if (id == null) noObjective += 1
+    else if (id === objectiveId) kept.push(r)
+    else otherObjective += 1
+  }
+  return { kept, otherObjective, noObjective, total: rows.length }
+}

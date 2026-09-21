@@ -5,7 +5,10 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, ListFilter, X } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
+import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
+import { useActiveObjectives } from '@/hooks/useLoopHarness'
+import { splitByObjective } from '@/pages/research/loop/objectiveLapModel'
 import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
 import { CandidateOutcomeSummary } from '@/components/research/CandidateOutcomeSummary'
 import { useCandidateOutcomeByCandidate } from '@/hooks/useCandidateOutcome'
@@ -101,7 +104,22 @@ export default function CandidatePoolPage() {
   const promote = usePromoteCandidate()
   const dismiss = useDismissCandidate()
 
-  const items = useMemo(() => query.data?.items ?? [], [query.data?.items])
+  const all = useMemo(() => query.data?.items ?? [], [query.data?.items])
+
+  // The shell's objective scope, applied. Every row here carries the objective
+  // that proposed it on `source_ref.objective_id` — 55 of 62 on DEV — so the
+  // link resolves and the scope really filters. That is the difference from
+  // the Hypothesis Board, where the same scope is reported with the filter off
+  // because its link points at runs that no longer exist.
+  const { objective, select: setObjective } = useObjectiveScope()
+  const objectivesQ = useActiveObjectives()
+  const split = useMemo(
+    () => (objective === ALL_OBJECTIVES ? null : splitByObjective(all, objective)),
+    [all, objective],
+  )
+  const items = split ? split.kept : all
+  const scopeName =
+    objectivesQ.data?.items?.find((o) => o.id === objective)?.title ?? objective
   const busyId = promote.isPending
     ? promote.variables?.id
     : dismiss.isPending
@@ -196,6 +214,21 @@ export default function CandidatePoolPage() {
           </span>
         </div>
       </div>
+
+      {/* Applied, not just reported: the rows this hides were proposed by
+          another machine or by nobody's, and both are part of the answer to
+          "what did THIS one produce". */}
+      {split != null ? (
+        <ObjectiveScopeBanner
+          name={scopeName}
+          onClear={() => setObjective(ALL_OBJECTIVES)}
+          clearLabel="Clear — show every origin"
+        >
+          {split.kept.length} of {split.total} candidates came from it — {split.otherObjective}{' '}
+          {split.otherObjective === 1 ? 'was' : 'were'} proposed by another objective and{' '}
+          {split.noObjective} by no objective at all (a screen, a scan, or your own hand).
+        </ObjectiveScopeBanner>
+      ) : null}
 
       <CandidateOutcomeSummary />
 

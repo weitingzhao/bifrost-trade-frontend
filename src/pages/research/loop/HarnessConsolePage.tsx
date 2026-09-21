@@ -19,7 +19,8 @@ import {
   ShieldAlert,
   Terminal,
 } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
+import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import {
   CollapsibleGroup,
@@ -283,10 +284,28 @@ export default function HarnessConsolePage() {
     return [group.run.id, ...group.repeats.map((r) => r.id)]
   }
 
-  const objectives = useMemo(
+  const allObjectives = useMemo(
     () => objectivesQ.data?.items ?? [],
     [objectivesQ.data?.items],
   )
+
+  // The shell's objective scope, applied. Here the link needs no resolving —
+  // these rows *are* the objectives — so a scope narrows the console to the
+  // one machine, which is the whole point of laying a scope over it.
+  const { objective, select: setObjective } = useObjectiveScope()
+  const objectives = useMemo(
+    () =>
+      objective === ALL_OBJECTIVES
+        ? allObjectives
+        : allObjectives.filter((o) => o.id === objective),
+    [allObjectives, objective],
+  )
+  const scopeName =
+    allObjectives.find((o) => o.id === objective)?.title ?? objective
+  // A scope naming an objective this filter does not list — archived while
+  // the console shows Active, or deleted — would otherwise read as "this
+  // machine has nothing", which is a different claim from "it is not here".
+  const scopeMissing = objective !== ALL_OBJECTIVES && objectives.length === 0
   const runs = useMemo(() => runsQ.data?.items ?? [], [runsQ.data?.items])
 
   // One row per result, not per record. The console listed 23 runs with the same
@@ -422,6 +441,21 @@ export default function HarnessConsolePage() {
           </CollapsibleGroupBody>
         ) : null}
       </CollapsibleGroup>
+
+      {/* Applied. These rows are the objectives, so a scope narrows the
+          console to one machine rather than describing what it could not
+          narrow. */}
+      {objective !== ALL_OBJECTIVES ? (
+        <ObjectiveScopeBanner
+          name={scopeName}
+          onClear={() => setObjective(ALL_OBJECTIVES)}
+          clearLabel="Clear — show every objective"
+        >
+          {scopeMissing
+            ? `Not in the ${objStatus} list — it is archived, or it has been deleted. The console is showing nothing rather than implying this machine has no runs.`
+            : `Showing this objective alone, of ${allObjectives.length} ${objStatus}. Its runs, funnels and candidates are unchanged; the others are hidden, not filtered out of existence.`}
+        </ObjectiveScopeBanner>
+      ) : null}
 
       <section className="min-w-0 space-y-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">

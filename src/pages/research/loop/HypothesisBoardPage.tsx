@@ -17,7 +17,7 @@ import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookOpen } from 'lucide-react'
-import { PageHeader, PageShell, SECTION_CAP_CLASS } from '@/components/layout'
+import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
 import { DenseTag, EmptyState, type DenseTagVariant } from '@/components/data-display'
 import { Card } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
@@ -235,25 +235,16 @@ export default function HypothesisBoardPage() {
           the page for a reason about the record rather than about the machine.
           The banner says which of the two reasons each row falls under. */}
       {scope != null ? (
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-md border border-[var(--color-entity-strategy)]/40 bg-[var(--color-entity-strategy)]/[0.07] px-3 py-1.5">
-          <span className={cn(SECTION_CAP_CLASS, 'text-[var(--color-entity-strategy)]')}>
-            Objective scope
-          </span>
-          <span className="text-dense-label">{scopeName}</span>
-          <span className="text-dense-meta text-muted-foreground">
-            {scope.attributable} of {scope.total} hypotheses can be attributed to it —{' '}
-            {scope.byHand} were opened by hand or by the Copilot queue and carry no run, and{' '}
-            {scope.danglingRun} carry a run id that no longer resolves to any objective. The board
-            is not filtered while that is true.
-          </span>
-          <button
-            type="button"
-            onClick={() => setObjective(ALL_OBJECTIVES)}
-            className="ml-auto cursor-pointer text-dense-meta text-[var(--color-entity-strategy)] hover:underline"
-          >
-            Clear — show every origin
-          </button>
-        </div>
+        <ObjectiveScopeBanner
+          name={scopeName}
+          onClear={() => setObjective(ALL_OBJECTIVES)}
+          clearLabel="Clear — show every origin"
+        >
+          {scope.attributable} of {scope.total} hypotheses can be attributed to it —{' '}
+          {scope.byHand} were opened by hand or by the Copilot queue and carry no run, and{' '}
+          {scope.danglingRun} carry a run id that no longer resolves to any objective. The board is
+          not filtered while that is true.
+        </ObjectiveScopeBanner>
       ) : null}
 
       <div className="flex flex-wrap gap-1.5">

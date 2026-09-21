@@ -94,9 +94,10 @@ export function usePipelineCensus() {
   /**
    * Products that left, by the page they name as their origin.
    *
-   * Zero on every station row today, and the footnote says why: the buttons
-   * that write these stamp the page the list is rendered on, not the station
-   * that produced the hit.
+   * Route-shaped stamps only, which is the contract as of 2026-09-21: the
+   * discovery lanes now write the station's route, and a stamp that is still
+   * a token names either a container page (the old defect) or the loop's or
+   * Copilot's own path, neither of which is a station on this bench.
    */
   const movedOn = useMemo(() => {
     const m = new Map<string, number>()

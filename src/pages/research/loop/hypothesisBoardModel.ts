@@ -8,6 +8,7 @@
  * field — are not invented; the cells that do read are read.
  */
 import type { Hypothesis, HypothesisStatus } from '@/api/researchHypothesis'
+import { ROUTES } from '@/layout/routeTable'
 
 export type BoardLane = HypothesisStatus | 'all'
 
@@ -84,6 +85,14 @@ export function originDest(
   originPage: string | null | undefined,
 ): { label: string; to: string } | null {
   if (!originPage) return null
+  // A stamp that is already an address needs no table. The discovery list
+  // stamps the route of the station that produced the hit (2026-09-21), so
+  // the Pipeline census can join on it; here it means the card links to the
+  // page a reader would expect without a token having to be invented for it.
+  if (originPage.startsWith('/')) {
+    const known = ROUTES.find((r) => r.path === originPage)
+    return known ? { label: known.label, to: known.path } : null
+  }
   return ORIGIN_DEST[originPage] ?? null
 }
 

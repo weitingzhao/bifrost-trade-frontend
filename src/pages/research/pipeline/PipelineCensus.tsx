@@ -190,14 +190,15 @@ export function PipelineCensus() {
         <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
           <span className="text-foreground/80">Made</span> counts what the station’s engine wrote,
           not page visits. <span className="text-foreground/80">Moved on</span> counts a
-          hypothesis, promotion or pin whose origin is that page — so a row can carry one without
-          the other, and a page that owes a store shows the numerator with no base.{' '}
-          <span className="text-foreground/80">It reads zero everywhere today for a reason worth
-          fixing</span>: every Save-as-Hypothesis button on the discovery list stamps{' '}
-          <span className="font-mono">research-home</span>, the page the list is rendered on,
-          rather than the station that produced the hit — so all {hypothesisCount}{' '}
-          hypotheses name a container page and none names a station. The join works; what this
-          side writes into it does not. Owing a store is not the same as owing a method face: a
+          hypothesis whose origin is that page — so a row can carry one without the other, and a
+          page that owes a store shows the numerator with no base. It read zero everywhere until
+          2026-09-21, and the join was never the reason: every Save-as-Hypothesis button on the
+          discovery lanes stamped <span className="font-mono">research-home</span>, the page the
+          list is rendered on, rather than the station that produced the hit. The buttons now
+          stamp the station’s route, so this column counts what has been saved since —{' '}
+          {totals.left} of the {hypothesisCount} hypotheses on file. The rest keep the stamp they
+          were given, and the loop’s and Copilot’s own saves name their path rather than a
+          station, which is right: they came out of no station. Owing a store is not the same as owing a method face: a
           page owes one when its product is an object you name again later — you fork a screen and
           cite a verdict, so both are owed; Compare only assembles and History recomputes a
           denominator, so neither is. That is also why the fork lineage cannot be drawn.

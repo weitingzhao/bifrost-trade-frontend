@@ -35,13 +35,16 @@
  *   sentiment_row                100 rows (`/research/flow/sentiment`)
  *   backtest_run                  43 rows, newest 2026-09-06
  *
- * **`moved on` is zero on every station row**, and not because the join is
- * missing. Every Save-as-Hypothesis button on the discovery list stamps
- * `origin_page: 'research-home'` — the page the list is *rendered* on, not
- * the station that produced the hit — so all 53 hypotheses carry one of four
- * container pages and none carries a station. The join Design describes works;
- * what is wrong is what this side writes into it. Until the stamp is fixed the
- * column reads 0 and the page says why, which is the honest version.
+ * **`moved on` read zero on every station row until 2026-09-21**, and never
+ * because the join was missing. Every Save-as-Hypothesis button on the
+ * discovery lanes stamped `origin_page: 'research-home'` — the page the list
+ * is *rendered* on, not the station that produced the hit. The join Design
+ * describes worked; what was wrong was what this side wrote into it. The
+ * buttons now stamp the station's route (`LANE_ORIGIN` in
+ * `components/research/DiscoveryHitList.tsx`), so this column counts stamps
+ * written since. The 53 rows already on file keep what they were given: 8
+ * through those buttons, and 45 the loop and Copilot wrote, which name their
+ * own path rather than a station and belong at none.
  */
 import { ROUTES } from '@/layout/routeTable'
 
@@ -110,6 +113,16 @@ const SPECS: readonly Spec[] = [
 ]
 
 const APP_ROUTES: ReadonlySet<string> = new Set(ROUTES.map((r) => r.path))
+
+/**
+ * The routes this census counts, for whoever writes a stamp it has to read.
+ *
+ * A station's `Moved on` number is only ever as good as what the write side
+ * puts in `origin_page`, and the two lists sat in different files with no way
+ * to fail when they drifted — which is exactly how the column came to read
+ * zero. The discovery lanes now assert against this.
+ */
+export const CENSUS_ROUTES: readonly string[] = SPECS.map((s) => s.to)
 
 /** What a station's engines wrote, keyed by route. Absent means unmeasured. */
 export interface StoreReading {

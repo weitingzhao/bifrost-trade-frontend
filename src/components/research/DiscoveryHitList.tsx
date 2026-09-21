@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { LANE_ORIGIN } from './discoveryLanes'
 import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { cockpitPinStore } from '@/store/cockpitPinStore'
@@ -261,7 +262,7 @@ export function DiscoveryHitList({
             }
             saveButton={
               <SaveAsHypothesisButton
-                originPage="research-home"
+                originPage={LANE_ORIGIN.sepa}
                 defaultTitle={`${hit.symbol} ${hit.path.toLowerCase()} — SEPA ${hit.grade}`}
                 defaultThesis={`SEPA fusion flagged ${hit.symbol} as ${hit.path} on ${hit.trade_date}. Grade ${hit.grade}, composite ${fmtNum(hit.score, 1)}.`}
                 defaultSymbols={[hit.symbol]}
@@ -291,7 +292,7 @@ export function DiscoveryHitList({
                       grade: hit.grade,
                       score: hit.score,
                     },
-                    originPage: '/research/sepa-daily-core',
+                    originPage: LANE_ORIGIN.sepa,
                   })
                 }
               >
@@ -354,7 +355,7 @@ export function DiscoveryHitList({
               }
               saveButton={
                 <SaveAsHypothesisButton
-                  originPage="research-home"
+                  originPage={LANE_ORIGIN.event}
                   defaultTitle={
                     symbolPreview
                       ? `${symbolPreview} event — ${hit.subject || hit.theme || 'radar'}`
@@ -427,7 +428,7 @@ export function DiscoveryHitList({
             }
             saveButton={
               <SaveAsHypothesisButton
-                originPage="research-home"
+                originPage={LANE_ORIGIN.iv}
                 defaultTitle={`${hit.symbol} IV regime — ${hit.bucket}`}
                 defaultThesis={`IV rank ${fmtNum(hit.iv_rank_1y, 0)} places ${hit.symbol} in the ${hit.bucket} bucket. Investigate vol trades.`}
                 defaultSymbols={[hit.symbol]}
@@ -493,7 +494,7 @@ export function DiscoveryHitList({
             }
             saveButton={
               <SaveAsHypothesisButton
-                originPage="research-home"
+                originPage={LANE_ORIGIN.sentiment}
                 defaultTitle={`${hit.symbol} order sentiment anomaly`}
                 defaultThesis={`Sentiment score ${fmtNum(hit.sentiment_score, 1)} on ${hit.trade_date}. Investigate flow imbalance.`}
                 defaultSymbols={[hit.symbol]}

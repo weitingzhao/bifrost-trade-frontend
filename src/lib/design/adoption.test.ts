@@ -167,8 +167,13 @@ describe('design adoption', () => {
     // Research Overview, the Trade Desk and the Review Queue are each now the
     // layer itself rather than its first row — so they leave `aligned` for
     // `stale` without leaving the walked set.
-    expect(counts.aligned + counts.byState.stale).toBe(40)
-    expect(counts.aligned).toBe(33)
+    //
+    // 41 with Stock ratings: built from nothing on 2026-09-21, re-walked the
+    // same day after the Owner read it beside the prototype — the ranked list
+    // was five hundred rows with no filter bar, and the lens cells were solid
+    // colour where the design is a quiet track — and signed off after.
+    expect(counts.aligned + counts.byState.stale).toBe(41)
+    expect(counts.aligned).toBe(34)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -297,8 +302,9 @@ describe('design adoption', () => {
     // `reviewing` in this round (unbuilt 27→26, reviewing 3→4). The Journal
     // followed the same way on 2026-09-21 (unbuilt 26→25, reviewing 4→5): The
     // Book's index, joined out of five stores because no artifact store
-    // exists on this side.
-    expect(counts.byState.reviewing).toBe(5)
+    // exists on this side. Then Stock ratings was signed off the same day
+    // (reviewing 5→4, aligned 33→34).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -319,6 +325,7 @@ describe('design adoption', () => {
       '/research/book',
       '/research/copilot/trading',
       '/research/loop/harness',
+      '/research/ratings/stocks',
       '/research/screener',
       // `/research/overview`, `/review` and `/trade/desk` left this list for
       // `stale`: each became the heading of its own layer in Package
@@ -347,7 +354,6 @@ describe('design adoption', () => {
       '/research/journal',
       '/research/loop/candidates',
       '/research/loop/hypotheses',
-      '/research/ratings/stocks',
       '/research/workbench',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

@@ -192,7 +192,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     scope: 'underlying',
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.10',
       note: DESIGN_NOTES['/research/ratings/stocks'],
     },

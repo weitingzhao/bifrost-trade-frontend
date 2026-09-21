@@ -380,7 +380,7 @@ export const DESIGN_NOTES: Record<string, string> = {
     + '(bg-background), header on --sk-surface (bg-secondary), which exist here value for value '
     + '— and the Owner chose to change the component rather than override it here, so Portfolio, '
     + 'Risk, The Book and Review › Objectives gained the same depth in the same commit. '
-    + 'Awaiting the Owner’s read.',
+    + 'Owner signed off 2026-09-21 on local DEV (:5173) at this rev.',
   '/research/screener':
     "Owner ruled 2026-09-20 which of this side's pages the design's Stock screen is, and the "
     + "page took the design's own path with the name. The evidence is the prototype's content, "

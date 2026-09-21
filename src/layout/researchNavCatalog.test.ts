@@ -35,11 +35,12 @@ function flatten(items: ShellNavItem[]): ShellNavItem[] {
 
 /**
  * Every page the tree reaches. A fold owns no page — its row borrows its
- * first child's route — so counting it would count that page twice.
+ * first child's route — so counting it would count that page twice. A caption
+ * (§5a.7) owns none either: it is a heading, not a row.
  */
 function routesOf(items: ShellNavItem[]): string[] {
   return flatten(items)
-    .filter((i) => !i.id.startsWith('fold:'))
+    .filter((i) => !i.id.startsWith('fold:') && i.kind !== 'caption')
     .map((i) => i.to ?? i.id)
 }
 
@@ -74,20 +75,46 @@ describe('one tree, both homes', () => {
     // route keeps its path; only the name and the standing changed.
     const home = researchItems(ctx).find((i) => i.to === PIPELINE_HOME)
     expect(home?.label).toBe('Pipeline')
-    // Three folds, not four: package 2026-09-20.1 dissolved Data by the rule
-    // that a page taking no symbol is plumbing and belongs to System.
-    expect(home?.children?.map((i) => [i.label, i.id.startsWith('fold:')])).toEqual([
-      ['Discover', true],
-      ['Analyze', true],
-      ['Validate', true],
+    // §5a.7: the three are captions now, and their nine pages are siblings —
+    // twelve entries at one depth, not three rows over three lists.
+    // Ten entries: three captions and the seven pages they name. The design
+    // draws twelve because its Analyze carries three rows where this side
+    // carries one — a difference that predates §5a.7 and is not its business.
+    expect(home?.children?.map((i) => [i.label, i.kind ?? 'row'])).toEqual([
+      ['Discover', 'caption'],
+      ['Stock ratings', 'row'],
+      ['Vol ratings', 'row'],
+      ['Stock screen', 'row'],
+      ['Option screen', 'row'],
+      ['Analyze', 'caption'],
+      ['Symbol', 'row'],
+      ['Validate', 'caption'],
+      ['Signal Decay', 'row'],
+      ['Backtest', 'row'],
     ])
   })
 
+  it('gives a caption no address, so nothing can navigate to a heading', () => {
+    const home = researchItems(ctx).find((i) => i.to === PIPELINE_HOME)
+    for (const cap of (home?.children ?? []).filter((i) => i.kind === 'caption')) {
+      expect([cap.to, cap.href, cap.children], cap.label).toEqual([undefined, undefined, undefined])
+    }
+  })
+
   it('carries the design labels and order inside Discover', () => {
-    const rows = (label: string) =>
-      (flatten(researchItems(ctx)).find((i) => i.label === label)?.children ?? []).map(
-        (i) => [i.label, i.to],
-      )
+    // Discover is a caption now, so its pages are the siblings that follow it
+    // rather than its children — the run ends at the next caption.
+    const rows = (label: string) => {
+      const siblings = flatten(researchItems(ctx))
+      const at = siblings.findIndex((i) => i.kind === 'caption' && i.label === label)
+      if (at < 0) return []
+      const out: [string, string | undefined][] = []
+      for (const i of siblings.slice(at + 1)) {
+        if (i.kind === 'caption') break
+        out.push([i.label, i.to])
+      }
+      return out
+    }
     // All four of the design's now. Stock ratings landed 2026-09-21 and leads
     // the fold: it is the model's own opinion, and the screens below it are
     // ways of asking about that opinion. It was built before it was routed
@@ -178,13 +205,10 @@ describe('no page lights two rows', () => {
   it('folded categories land where the design points them', () => {
     // Copilot left this list when it became a dual row (§5a) and Market left
     // the group entirely (§5a.1) — a `fold:` id now means a true container.
+    // Objectives alone since §5a.7: the three Pipeline folds became captions,
+    // and a caption is not a container — it names its siblings.
     const folds = flatten(researchItems(ctx)).filter((i) => i.id.startsWith('fold:'))
-    expect(folds.map((f) => f.label)).toEqual([
-      'Objectives',
-      'Discover',
-      'Analyze',
-      'Validate',
-    ])
+    expect(folds.map((f) => f.label)).toEqual(['Objectives'])
     for (const f of folds) {
       // Validate is the design's own exception: its heading lands on Backtest
       // (shell-registry `fold:validate`) while Signal Decay stays the first row.

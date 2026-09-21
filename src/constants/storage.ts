@@ -2,6 +2,8 @@
 export const STORAGE_KEYS = {
   sidebarAccordion: 'bifrost-sidebar-accordion',
   sidebarOpenGroups: 'bifrost-sidebar-open-groups',
+  /** Captions the reader has folded away in the business tree (§5a.7). */
+  sidebarCaptions: 'bifrost-sidebar-captions',
   // The sidebar's group order — the design's own key (`shell-registry.js`).
   navOrder: 'bifrost.navorder',
   // The System tree keeps its own folds. Sharing one key had two costs: the

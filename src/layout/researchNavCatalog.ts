@@ -271,13 +271,30 @@ export interface ResearchNavContext {
 
 /**
  * A folded entry: one row whose children are the pages. Clicking it lands on
- * the first (or where `to` points — Validate's heading lands on Backtest by
- * the design's own `to`). For a category that owns no page, this is as close
- * to a home as it gets: the row still goes somewhere.
+ * the first (or where `to` points). Kept for the Objectives fold, which is a
+ * row over rows the reader can genuinely go to.
  */
 function fold(id: string, label: string, icon: IconComponent, items: ShellNavItem[], to?: string): ShellNavItem {
   const first = items[0]
   return { id: `fold:${id}`, label, icon, to: to ?? first?.to ?? first?.id, children: items }
+}
+
+/**
+ * A group heading, not a row (§5a.7, Owner 2026-09-21).
+ *
+ * Discover · Analyze · Validate carried nothing of their own: each row's
+ * destination was an alias of the page directly beneath it, so clicking the
+ * heading selected a child while the heading stayed lit. §5a answered that
+ * with the caret's shape, and the Owner's reading is that the channel is too
+ * narrow — every other row in the tree is a place, and a row that looks like
+ * a row reads like one whatever its caret does.
+ *
+ * So they stop being rows. Their nine pages rise to sit beside Autopilot's
+ * own children, one depth, always visible; the heading names the run that
+ * follows it and folds it away.
+ */
+function caption(id: string, label: string): ShellNavItem {
+  return { id: `cap:${id}`, label, kind: 'caption' }
 }
 
 /**
@@ -312,10 +329,15 @@ export function researchItems(ctx: ResearchNavContext): ShellNavItem[] {
   return [
     // Overview is the layer heading now (§5a.1), not a row inside it.
     home(AUTOPILOT_PAGES.autopilot, [AUTOPILOT_PAGES.inbox, ...objectivesItem(ctx.objectives)]),
+    // Flat, with headings: §5a.7. Twelve rows fully open — nine pages and the
+    // three captions naming them.
     home(WORKBENCH_PAGE, [
-      fold(discover.id, discover.label, discover.icon, discover.items),
-      fold(analyze.id, analyze.label, analyze.icon, analyze.items),
-      fold(validate.id, validate.label, validate.icon, validate.items, '/research/backtest'),
+      caption(discover.id, discover.label),
+      ...discover.items,
+      caption(analyze.id, analyze.label),
+      ...analyze.items,
+      caption(validate.id, validate.label),
+      ...validate.items,
     ]),
     BOOK_ITEM,
     COPILOT_ITEM,

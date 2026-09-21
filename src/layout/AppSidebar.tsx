@@ -151,6 +151,7 @@ export function AppSidebar() {
         openGroupsStorageKey={
           inSystem ? STORAGE_KEYS.sidebarSystemOpenGroups : STORAGE_KEYS.sidebarOpenGroups
         }
+        captionsStorageKey={STORAGE_KEYS.sidebarCaptions}
         accordionStorageKey={STORAGE_KEYS.sidebarAccordion}
       />
     </SystemNavLampProvider>

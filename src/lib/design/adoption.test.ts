@@ -176,9 +176,11 @@ describe('design adoption', () => {
     // of five stores because no artifact store exists on this side. 43 with
     // the Candidate Pool, whose walk found the page's two verbs squeezed to
     // sixteen pixels by a fixed table with no column widths. 44 with the
-    // Hypothesis Board, whose scope had resolved down one road only.
-    expect(counts.aligned + counts.byState.stale).toBe(44)
-    expect(counts.aligned).toBe(37)
+    // Hypothesis Board, whose scope had resolved down one road only. 45 with
+    // Pipeline, the layer page the design gave a scale to only after this side
+    // reported that not one station page records what it made.
+    expect(counts.aligned + counts.byState.stale).toBe(45)
+    expect(counts.aligned).toBe(38)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
       '/research/copilot',
@@ -311,9 +313,14 @@ describe('design adoption', () => {
     // (reviewing 5→4, aligned 33→34), and the Journal after its own walk
     // (reviewing 4→3, aligned 34→35), and the Candidate Pool after its
     // own (reviewing 3→2, aligned 35→36), and the Hypothesis Board last
-    // (reviewing 2→1, aligned 36→37) — what is left in `reviewing` is
-    // Pipeline alone.
-    expect(counts.byState.reviewing).toBe(1)
+    // (reviewing 2→1, aligned 36→37). Pipeline closes the round
+    // (reviewing 1→0, aligned 37→38): the layer page built to §5a.6's reduced
+    // scale, then re-walked twice over its one live number — `Moved on` read
+    // zero because 19 Save buttons stamp a vocabulary the census had never
+    // learned, and the four lanes' capture verbs had been folded away with
+    // nothing mounting them. `reviewing` is empty; what is left is the seven
+    // pages the design moved past and the walk that has not started.
+    expect(counts.byState.reviewing).toBe(0)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -339,6 +346,7 @@ describe('design adoption', () => {
       '/research/loop/hypotheses',
       '/research/ratings/stocks',
       '/research/screener',
+      '/research/workbench',
       // `/research/overview`, `/review` and `/trade/desk` left this list for
       // `stale`: each became the heading of its own layer in Package
       // 2026-09-20.3 (§5a.1), which is a change to the page, not only to the
@@ -362,9 +370,10 @@ describe('design adoption', () => {
       '/trade/playbook',
       '/trade/rules',
     ])
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/research/workbench',
-    ])
+    // Empty for the first time since the Research walk began: every page this
+    // side has walked and built is either in place or waiting on a rev, not on
+    // a look.
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row

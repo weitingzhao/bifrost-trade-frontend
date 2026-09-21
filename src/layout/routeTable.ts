@@ -122,8 +122,11 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Pipeline',
     crumbs: RESEARCH,
     design: {
-      state: 'reviewing',
-      rev: '2026-09-21.2',
+      state: 'aligned',
+      // The package's own Rev, not the registry's per-page 2026-09-19.2: the
+      // Pipeline scale was rewritten in Shell Spec §5a.6 for this package and
+      // the registry row was not bumped with it.
+      rev: '2026-09-21.5',
       note: DESIGN_NOTES['/research/workbench'],
     },
   },

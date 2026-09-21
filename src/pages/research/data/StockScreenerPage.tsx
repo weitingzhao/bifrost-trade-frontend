@@ -343,8 +343,12 @@ export default function StockScreenerPage() {
         actions={
           <>
             <PageFaceSwitch path="/research/screener" />
+            {/* `sepa` until 2026-09-21, which made everything asked here read
+                as SEPA's — a different station with a different store. The
+                Pipeline census keeps the old token pointing at Stock ratings
+                so rows already on file stay readable. */}
             <AskCopilotButton
-              originPage="sepa"
+              originPage="stock-screener"
               originLabel="Stock screen"
               symbol={
                 inspector?.symbol ||

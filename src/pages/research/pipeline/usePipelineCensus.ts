@@ -16,6 +16,8 @@ import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useResearchHomeData } from '@/hooks/useResearchHomeData'
 import { useUniverseReach } from '@/hooks/useUniverseReach'
 import {
+  NOT_A_STATION,
+  censusRowFor,
   censusRows,
   censusTotals,
   oldestUntouched,
@@ -92,21 +94,19 @@ export function usePipelineCensus() {
   }, [sepaQ.data, scanQ.data, sentimentQ.data, runsQ.data])
 
   /**
-   * Products that left, by the page they name as their origin.
+   * Products that left, by the station they name as their origin.
    *
-   * Route-shaped stamps only, which is the contract as of 2026-09-21: the
-   * discovery lanes now write the station's route, and a stamp that is still
-   * a token names either a container page (the old defect) or the loop's or
-   * Copilot's own path, neither of which is a station on this bench.
+   * Both vocabularies, through one table: the Save buttons stamp tokens and
+   * the shell's ambient Copilot context stamps addresses, and `censusRowFor`
+   * is where the two meet the census's rows. A stamp it cannot place counts
+   * nowhere rather than counting somewhere plausible.
    */
   const movedOn = useMemo(() => {
     const m = new Map<string, number>()
     for (const h of hypQ.data?.rows ?? []) {
-      const page = h.origin_page
-      if (!page) continue
-      const route = page.startsWith('/') ? page : null
-      if (route == null) continue
-      m.set(route, (m.get(route) ?? 0) + 1)
+      const row = censusRowFor(h.origin_page)
+      if (row == null) continue
+      m.set(row, (m.get(row) ?? 0) + 1)
     }
     return m
   }, [hypQ.data])
@@ -161,21 +161,28 @@ export function usePipelineCensus() {
    * The design's **Left the pipeline**: what came out of the stations, by the
    * page each names as its origin. It is also the numerator of `moved on`.
    */
-  const left = useMemo(
-    () =>
-      (hypQ.data?.rows ?? [])
-        .slice()
-        .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
-        .slice(0, 12)
-        .map((h) => ({
+  const left = useMemo(() => {
+    const labelOf = new Map(rows.map((r) => [r.to, r.label]))
+    return (hypQ.data?.rows ?? [])
+      .slice()
+      .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+      .slice(0, 12)
+      .map((h) => {
+        const to = censusRowFor(h.origin_page)
+        return {
           kind: 'hypothesis' as const,
           id: h.id,
-          origin: h.origin_page ?? 'unrecorded',
+          /** What the row actually carries, kept for the ones that name no station. */
+          stamp: h.origin_page ?? 'unrecorded',
+          station: to ? (labelOf.get(to) ?? to) : null,
+          to,
+          /** Why a stamp is not a gap, when the table knows. */
+          why: h.origin_page ? (NOT_A_STATION[h.origin_page] ?? null) : null,
           title: h.title,
           at: (h.created_at ?? '').slice(0, 10),
-        })),
-    [hypQ.data],
-  )
+        }
+      })
+  }, [hypQ.data, rows])
 
   /** The widest layer the universe funnel measured, for Discover's heading. */
   const universeScanned = useMemo(() => {

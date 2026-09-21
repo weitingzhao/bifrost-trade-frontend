@@ -34,7 +34,7 @@ export default function WorkbenchPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Pipeline"
-        description="Your hand on the stations. Discover · Analyze · Validate — every store the stations wrote today on one scale, and how much of it nothing came out of. Made is what the engine kept; moved on is a hypothesis, a promotion or a pin that carries the page as its origin. Most stuck first. Advisory only — D10 blocked."
+        description="Your hand on the stations. Discover · Analyze · Validate — every store the stations wrote today on one scale, and how much of it nothing came out of. Made is what the engine kept; moved on is a hypothesis that carries the page as its origin. Most stuck first. Advisory only — D10 blocked."
         actions={
           /* Design's ruling (Rev 2026-09-21.5) on the three controls this
              page's header carried. **Ask Copilot stays** — Copilot is a shell

@@ -35,16 +35,16 @@
  *   sentiment_row                100 rows (`/research/flow/sentiment`)
  *   backtest_run                  43 rows, newest 2026-09-06
  *
- * **`moved on` read zero on every station row until 2026-09-21**, and never
- * because the join was missing. Every Save-as-Hypothesis button on the
- * discovery lanes stamped `origin_page: 'research-home'` — the page the list
- * is *rendered* on, not the station that produced the hit. The join Design
- * describes worked; what was wrong was what this side wrote into it. The
- * buttons now stamp the station's route (`LANE_ORIGIN` in
- * `components/research/DiscoveryHitList.tsx`), so this column counts stamps
- * written since. The 53 rows already on file keep what they were given: 8
- * through those buttons, and 45 the loop and Copilot wrote, which name their
- * own path rather than a station and belong at none.
+ * **`moved on` read zero on every station row**, and never because the join
+ * was missing. The write side stamps a vocabulary the reading side had never
+ * learned: 19 Save-as-Hypothesis buttons write short tokens (`analyze-scan`,
+ * `sepa-daily-core`), while this census keys by the design's routes, so every
+ * stamp fell through. `STAMP_ROW` below is where the two meet.
+ *
+ * It still reads zero on DEV, and now for a reason the page can state: all 53
+ * hypotheses on file came from the loop (36), the Copilot (9) or a container
+ * page (8), and none from a station. A save from any station page lands on
+ * its row from here on.
  */
 import { ROUTES } from '@/layout/routeTable'
 
@@ -113,6 +113,87 @@ const SPECS: readonly Spec[] = [
 ]
 
 const APP_ROUTES: ReadonlySet<string> = new Set(ROUTES.map((r) => r.path))
+
+/**
+ * A station by the name the write side stamps for it.
+ *
+ * The census keys by the design's routes; the app's Save-as-Hypothesis
+ * buttons have stamped short tokens since long before those routes existed,
+ * and the same tokens key the Copilot's page context and `operatorOf`. So the
+ * join lives here, on the reading side, rather than in 19 write sites: one
+ * table, measured 2026-09-21 by reading which page each button is on and, for
+ * a page the design is moving, where `routeTable`'s design note sends it.
+ *
+ * Eight of these tokens are the Symbol page's own tabs — `/research/symbol`
+ * absorbed six pages, so a hypothesis saved from its volatility, dealer,
+ * scenario or flow face came out of Symbol. Narrative keeps a store and no
+ * token, because its page is not built: nothing can stamp it yet, which is
+ * what its row already says.
+ */
+const STAMP_ROW: Record<string, string> = {
+  'analysis-model': '/research/symbol',
+  'analyze-scan': '/research/scan',
+  'analyze-signal-decay': '/research/signal-decay',
+  backtest: '/research/backtest',
+  discovery: '/research/symbol',
+  'event-radar': '/research/event-radar',
+  'forecast-sessions': '/research/symbol',
+  'gex-intraday': '/research/symbol',
+  'intraday-playbook': '/research/symbol',
+  'iv-radar': '/research/symbol',
+  'momentum-radar': '/research/ratings/stocks',
+  'opex-cycle-lab': '/research/symbol',
+  'order-sentiment': '/research/symbol',
+  // Historical: the Stock screener stamped `sepa` until 2026-09-21, so rows
+  // already on file read as SEPA's. They are kept pointing at Stock ratings
+  // rather than silently re-labelled — the page that writes them now says
+  // `stock-screener`.
+  sepa: '/research/ratings/stocks',
+  'sepa-daily-core': '/research/ratings/stocks',
+  screener: '/research/contract-screener',
+  'stock-screener': '/research/screener',
+  'vol-surface-lab': '/research/symbol',
+  'vrp-lab': '/research/symbol',
+}
+
+/**
+ * Stamps that name no station, each with the reason it is not a gap.
+ *
+ * A `Moved on` of zero is only honest if the things that legitimately came
+ * from elsewhere are named as such. These are the container pages, the
+ * operators' own paths and the pages that are not on this bench.
+ */
+export const NOT_A_STATION: Record<string, string> = {
+  'candidate-pool': 'the loop’s own pool, not a station',
+  candidate_batch_approve: 'the loop promoted it; no station made it',
+  cockpit_inbox: 'the Copilot’s inbox',
+  'contract-greeks': 'Contract Greeks is not on this bench',
+  'copilot-loop': 'the Copilot wrote it',
+  'daily-brief': 'a brief assembles other pages’ output',
+  greeks: 'Contract Greeks is not on this bench',
+  'market-live': 'outside Research',
+  positions: 'outside Research',
+  'research-copilot-desk': 'the Copilot’s desk',
+  'research-home': 'a container page — the old defect’s stamp',
+  'research-workbench': 'this page itself is a container',
+  'trade-rules': 'outside Research',
+  watchlist: 'a data page, not a station',
+}
+
+/**
+ * The census row a stamp belongs to, or null when it belongs to none.
+ *
+ * Takes both vocabularies: an address as it stands (what the discovery lanes
+ * and the shell's ambient Copilot context write) and a token (what the 19
+ * Save buttons write). An address that is not a bench page answers null, the
+ * same as an unknown token — a stamp this census cannot place is not a row it
+ * may invent.
+ */
+export function censusRowFor(originPage: string | null | undefined): string | null {
+  if (!originPage) return null
+  if (originPage.startsWith('/')) return CENSUS_ROUTES.includes(originPage) ? originPage : null
+  return STAMP_ROW[originPage] ?? null
+}
 
 /**
  * The routes this census counts, for whoever writes a stamp it has to read.

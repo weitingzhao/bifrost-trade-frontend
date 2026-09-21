@@ -191,14 +191,14 @@ export function PipelineCensus() {
           <span className="text-foreground/80">Made</span> counts what the station’s engine wrote,
           not page visits. <span className="text-foreground/80">Moved on</span> counts a
           hypothesis whose origin is that page — so a row can carry one without the other, and a
-          page that owes a store shows the numerator with no base. It read zero everywhere until
-          2026-09-21, and the join was never the reason: every Save-as-Hypothesis button on the
-          discovery lanes stamped <span className="font-mono">research-home</span>, the page the
-          list is rendered on, rather than the station that produced the hit. The buttons now
-          stamp the station’s route, so this column counts what has been saved since —{' '}
-          {totals.left} of the {hypothesisCount} hypotheses on file. The rest keep the stamp they
-          were given, and the loop’s and Copilot’s own saves name their path rather than a
-          station, which is right: they came out of no station. Owing a store is not the same as owing a method face: a
+          page that owes a store shows the numerator with no base. The Save buttons stamp short
+          tokens and the shell stamps addresses; both are read through one table, so a save from
+          any station page lands on its row. It reads {totals.left} of the {hypothesisCount}{' '}
+          hypotheses on file
+          {totals.left === 0
+            ? ' because every one of those came out of the loop, the Copilot or a container page — not from a station'
+            : '; the rest came out of the loop, the Copilot or a container page rather than a station'}
+          , which the rows below name one by one. Owing a store is not the same as owing a method face: a
           page owes one when its product is an object you name again later — you fork a screen and
           cite a verdict, so both are owed; Compare only assembles and History recomputes a
           denominator, so neither is. That is also why the fork lineage cannot be drawn.
@@ -233,12 +233,26 @@ export function PipelineCensus() {
                 <DenseTag variant="category" size="cell">
                   {row.kind}
                 </DenseTag>
-                <span
-                  className="font-mono text-dense-caption text-muted-foreground"
-                  title="The page this names as its origin. A container page here means the stamp names where the button was, not where the hit came from."
-                >
-                  {row.origin}
-                </span>
+                {row.station && row.to ? (
+                  <Link
+                    to={row.to}
+                    className="text-dense-caption text-muted-foreground hover:text-foreground hover:underline"
+                    title={`Stamped ${row.stamp} — the station it came out of.`}
+                  >
+                    {row.station}
+                  </Link>
+                ) : (
+                  <span
+                    className="font-mono text-dense-caption text-muted-foreground/70"
+                    title={
+                      row.why
+                        ? `${row.stamp} — ${row.why}, so it counts at no station.`
+                        : `${row.stamp} — this census cannot place it, so it counts at no station.`
+                    }
+                  >
+                    {row.stamp}
+                  </span>
+                )}
                 <span className="min-w-0 flex-1 truncate text-dense-meta">{row.title}</span>
                 <span className="font-mono text-dense-caption tabular-nums text-muted-foreground/70">
                   {row.at}

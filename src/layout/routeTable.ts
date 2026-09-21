@@ -262,13 +262,13 @@ export const ROUTES: readonly RouteEntry[] = [
     // 2026-09-20). The design makes momentum a lens of Stock ratings —
     // `/research/ratings/stocks`, the composite with the weight sliders —
     // which is unbuilt, so this page stands until it exists.
-    design: { state: 'moving', note: 'Stock ratings — a lens of its composite; that page is unbuilt' },
+    design: { state: 'moving', note: 'Stock ratings — a lens of its composite, and that page is now built' },
   },
   {
     path: '/research/sepa-daily-core',
     label: 'SEPA Daily Core',
     crumbs: DISCOVER,
-    design: { state: 'moving', note: 'Stock ratings — a lens of its composite; that page is unbuilt' },
+    design: { state: 'moving', note: 'Stock ratings — a lens of its composite, and that page is now built' },
   },
 
   // ── Research · Workbench · Analyze ─────────────────────────────────────

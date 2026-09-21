@@ -177,7 +177,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Candidate Pool',
     crumbs: THE_BOOK,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/loop/candidates'],
     },

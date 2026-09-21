@@ -228,7 +228,7 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'sketch alone. The six verbs share that line in the design and are named on it as owed '
     + 'rather than drawn, per the Owner\u2019s 2026-09-21 ruling. Checked under both Open and All '
     + '\u2014 the colspan follows the Status column in and out \u2014 and the table fits its panel in '
-    + 'both. Awaiting the Owner\u2019s read.',
+    + 'both. Owner signed off 2026-09-21 on local DEV (:5173) at this rev.',
   '/strategy/instances':
     'Trade › Rules — the Instances column of the lineage chain; its running-state summary also lands on the Desk status strip',
   '/strategy/win-rate':

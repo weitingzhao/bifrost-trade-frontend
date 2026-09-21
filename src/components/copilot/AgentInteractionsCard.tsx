@@ -88,7 +88,7 @@ export function AgentInteractionsCard({
           invokedBy.map(({ by, kind }) => (
             <DenseTag
               key={`${by}:${kind}`}
-              variant={kind === 'handoff' ? 'success' : 'strategy'}
+              variant={kind === 'handoff' ? 'success' : kind === 'chain' ? 'warning' : 'strategy'}
               size="cell"
               className={
                 kind === 'as_tool'
@@ -96,20 +96,24 @@ export function AgentInteractionsCard({
                   : ''
               }
               title={
-                kind === 'handoff'
+                kind === 'chain'
                   ? lang === 'zh'
-                    ? 'Triage 完全转交控制权'
-                    : 'Full handoff of control'
-                  : lang === 'zh'
-                    ? '作为子工具被调用 (agent-as-tool)'
-                    : 'Invoked as a sub-tool (agent-as-tool)'
+                    ? '批跑链后运行，不接受提问转交'
+                    : 'Runs after a batch — never handed a question'
+                  : kind === 'handoff'
+                    ? lang === 'zh'
+                      ? 'Triage 完全转交控制权'
+                      : 'Full handoff of control'
+                    : lang === 'zh'
+                      ? '作为子工具被调用 (agent-as-tool)'
+                      : 'Invoked as a sub-tool (agent-as-tool)'
               }
             >
               {by === 'triage'
                 ? copy.triageName
                 : agentLabel(by, lang)}{' '}
               <span className="opacity-70">
-                · {kind === 'handoff' ? copy.handoffLabel : copy.asToolLabel}
+                · {kind === 'chain' ? 'after a batch' : kind === 'handoff' ? copy.handoffLabel : copy.asToolLabel}
               </span>
             </DenseTag>
           ))

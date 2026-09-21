@@ -60,9 +60,30 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'source answering a question the digest already answered its own way, so the names are one '
     + 'section that says as much in its note. The split returns the day the digest records it. '
     + 'The prose is not dropped: it sits behind a toggle at the foot, because the draft is what the '
-    + 'Inbox approves.',
+    + 'Inbox approves. '
+    + 'Owner signed off 2026-09-21. Stamped at Rev 2026-09-21.1 rather than the .20 this was walked '
+    + 'against: Package 2026-09-21.4 moved all three Copilot rows\u2019 rev while changing only the '
+    + 'Personas face \u2014 Today and Threads are untouched at .1, so the walk holds and the page would '
+    + 'otherwise read stale the moment the snapshot was regenerated.',
   '/research/copilot/trading':
     'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner signed off on STG 2026-09-15 after L1/L2.',
+  '/research/orchestration':
+    'Built from nothing 2026-09-21 against Research Orchestration.dc.html (Rev 2026-09-21.1), the page '
+    + 'Design split out of Personas: whose reading to trust is the trader\u2019s question and stays on the '
+    + 'bench; who hands to whom, and what each may call, is the engineer\u2019s and is this page '
+    + '(Shell Spec \u00a711.4). The diagram did not change \u2014 it moved, whole, with its triage router, its '
+    + 'nine agents, the `handoff` / `as_tool` edges and the batch band. '
+    + 'What changed around it: the SDK and transport names left the page head for a **How it is wired** '
+    + 'fold at the foot, with the tool server and the `BIFROST_PERSONA_EVAL_AGENTS` switch \u2014 a page a '
+    + 'trader opens does not lead with a library name, and which of model or heuristic is running is a '
+    + 'deployment reading that stays on System \u203a Status. The D10 lock stayed on the diagram: it is the '
+    + 'one runtime fact that changes what the reader may do. '
+    + 'Picking an agent here hands the name to Personas as `?agent=`, which that page now reads \u2014 a '
+    + 'parameter the destination ignored would be the same dead end as a link to nowhere. '
+    + 'Not built from the prototype: the Chat/Batch path columns and the Wiring table with its path '
+    + 'filter. The diagram already says what they say, in the shape this side has had since the '
+    + 'Personas page was built, and a second rendering of one graph is the drift this walk keeps '
+    + 'finding. Named here so the choice is visible, and reversible.',
   '/research/agent-personas':
     'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 adds the Track record table — you · hand verdicts beside the four judges, same 20d rule, n<10 amber — so the sign-off reads stale until W2 builds the verdict store and the table over it.'
     + ' '
@@ -72,7 +93,28 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'three rows landing on one file. The persona list is read through `useAgentPersonas`, one key '
     + 'shared with the strip\u2019s count, so the tab and the page cannot disagree about how many operators '
     + 'there are. Nothing else on the page moved at .18.2. Swept: the three tab links resolve; no '
-    + 'horizontal overflow.',
+    + 'horizontal overflow.'
+    + ' '
+    + 'RE-WALKED 2026-09-21 against Rev 2026-09-21.1, which redrew this face: the flat roster and the '
+    + 'Track record table below it became one table, **The bench** \u2014 Agent (business name over its '
+    + 'mono runtime id, which is never translated) \u00b7 Role \u00b7 Path \u00b7 May call \u00b7 Settled \u00b7 Hit 20d \u00b7 '
+    + 'Agrees \u00b7 Weight \u2014 and the wiring diagram moved to its own page (\u00a711.4). '
+    + '**Path** is derived, not a second table: `chat` is a triage handoff, `batch` is the review chain '
+    + 'a candidate batch takes (`lib/copilot/agentPaths.ts`, with its own tests), so the bench and the '
+    + 'Orchestration wiring table cannot disagree. The two rows you cannot route to are greyed and say '
+    + 'why \u2014 Verdict composes, Loop Curator follows a batch \u2014 read from a new '
+    + '`AGENT_DIRECTLY_ROUTABLE` in the catalog, because every agent carries the same '
+    + '`{ by: triage, kind: handoff }` edge and the graph alone could not tell them apart. Design asked '
+    + 'for exactly that rather than two ids in a component. '
+    + 'FOUR COLUMNS ARE EMPTY, AND THE REASON IS ONE SENTENCE: nothing records a judge\u2019s verdict '
+    + 'against the outcome that followed it. The outcome store attributes a settled candidate to its '
+    + 'SOURCE \u2014 where it came from \u2014 which is a different question from who graded it, and the Track '
+    + 'record table has said so since it was built. So Settled / Hit 20d / Agrees / Weight read '
+    + '`not recorded` in grey rather than 0 (\u00a72.1: grey is not red), and three rows read `not a judge` '
+    + 'instead, which is a fact about the role and not a gap. The source-attributed table stays below '
+    + 'the bench rather than being folded into it: it answers the question this side can answer. '
+    + 'Untouched, as the brief says: the persona markdown editor, the preference slots, the Cannot '
+    + 'lines and the D10 lock.',
   '/research/symbol':
     'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page). Re-stamped on Rev 2026-09-17.1 (§14.7 colours only: green / red direction, unrealized orange, applied in e05dce2); Owner re-signed after the colour look 2026-09-17. Rev 2026-09-18.2 replaces the header keys with the six verbs, adds the Your verdict panel and seats you · hand verdicts in the Record table, so the sign-off reads stale; the verdict panel and record row are W2, the verbs W3.',
   '/research/backtest':

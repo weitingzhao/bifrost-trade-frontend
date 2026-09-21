@@ -213,8 +213,11 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Copilot',
     crumbs: RESEARCH,
     design: {
-      state: 'reviewing',
-      rev: '2026-09-20.20',
+      state: 'aligned',
+      // Package 2026-09-21.4 moved all three Copilot rows' rev while changing
+      // only the Personas face; Today and Threads are untouched, so the walk
+      // holds at the newer stamp.
+      rev: '2026-09-21.1',
       note: DESIGN_NOTES['/research/copilot'],
     },
   },
@@ -241,8 +244,20 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: COPILOT,
     design: {
       state: 'reviewing',
-      rev: '2026-09-18.2',
+      rev: '2026-09-21.1',
       note: DESIGN_NOTES['/research/agent-personas'],
+    },
+  },
+  {
+    // Split out of Personas at Rev 2026-09-21.6: the wiring diagram answers
+    // the engineer's question, the bench answers the trader's (§11.4).
+    path: '/research/orchestration',
+    label: 'Orchestration',
+    crumbs: COPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-21.1',
+      note: DESIGN_NOTES['/research/orchestration'],
     },
   },
 

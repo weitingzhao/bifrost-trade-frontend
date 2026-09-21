@@ -33,6 +33,7 @@ import {
   ScanSearch,
   Star,
   Terminal,
+  Network,
   Users,
   Wrench,
   type LucideIcon,
@@ -104,6 +105,10 @@ export const BOOK_ITEM: ShellNavItem = {
 export const COPILOT_PAGES = {
   brief: route('Daily Brief', '/research/daily-brief', ClipboardList),
   personas: route('Personas', '/research/agent-personas', Users),
+  // A menu row, not a fourth tab on the Desk (design Rev 2026-09-21.6): a tab
+  // is another face of one route, and the wiring diagram is its own page with
+  // its own reader — the engineer's, where Personas answers the trader's.
+  orchestration: route('Orchestration', '/research/orchestration', Network),
 }
 
 /** The Desk itself — the fold's own page since §5a, not a row beneath it. */

@@ -7,7 +7,6 @@ import {
   AGENT_ROLE_KIND,
   AGENT_TRIAGE_HINT,
   agentLabel,
-  ORCHESTRATION_RUNTIME,
   PAGE_COPY,
   ROLE_ACCENT,
   ROLE_LABELS,
@@ -265,13 +264,11 @@ export function AgentOrchestrationDiagram({
           </h3>
           <p className="text-dense-caption text-muted-foreground">{copy.orchestrationSubtitle}</p>
         </div>
+        {/* The SDK and the transport moved into the page's «How it is wired»
+            fold (Rev 2026-09-21.6): a trader's page does not print a library
+            name. The D10 lock stays — it is the one runtime fact that changes
+            what the reader may do. */}
         <div className="flex flex-wrap items-center gap-1">
-          <DenseTag variant="neutral" size="cell" className="font-mono">
-            {ORCHESTRATION_RUNTIME.sdk}
-          </DenseTag>
-          <DenseTag variant="neutral" size="cell" className="font-mono">
-            {ORCHESTRATION_RUNTIME.transport}
-          </DenseTag>
           <DenseTag variant="warning" size="cell" title={copy.d10LockHint}>
             <Lock className="mr-0.5 inline size-2.5" />
             {copy.d10Lock}

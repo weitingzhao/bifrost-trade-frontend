@@ -255,6 +255,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/copilot/AgentPersonaPage')),
       },
       {
+        path: 'research/orchestration',
+        lazy: lazyPage(() => import('@/pages/research/orchestration/OrchestrationPage')),
+      },
+      {
         path: 'research/symbol',
         lazy: lazyPage(() => import('@/pages/research/analyze/symbol/SymbolPage')),
       },

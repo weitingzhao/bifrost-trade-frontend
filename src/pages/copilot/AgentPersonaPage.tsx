@@ -9,10 +9,10 @@ import {
 } from '@/api/agentPersona'
 import { useAgentPersonas } from '@/hooks/useAgentPersonas'
 import { CopilotTabs } from '@/components/research/CopilotTabs'
+import { useSearchParams } from 'react-router-dom'
 import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { AgentInteractionsCard } from '@/components/copilot/AgentInteractionsCard'
-import { AgentOrchestrationDiagram } from '@/components/copilot/AgentOrchestrationDiagram'
 import {
   CollapsibleChevron,
   CollapsibleGroup,
@@ -26,6 +26,7 @@ import {
 } from '@/components/data-display'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { JudgeTrackRecord } from '@/pages/copilot/personas/JudgeTrackRecord'
+import { TheBench } from '@/pages/copilot/personas/TheBench'
 import { PageShell } from '@/components/layout/PageShell'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -532,7 +533,12 @@ function AgentPersonaNav({
 
 export function AgentPersonaPage() {
   const qc = useQueryClient()
-  const [selected, setSelected] = useState<string | null>(null)
+  // `?agent=` is how Orchestration hands a name over: picking an agent on the
+  // wiring diagram is a question about that agent's persona, and the persona
+  // lives here. A link that attached a parameter this page ignored would be
+  // the same dead end as one pointing nowhere.
+  const [params] = useSearchParams()
+  const [selected, setSelected] = useState<string | null>(params.get('agent'))
   const editorRef = useRef<HTMLDivElement>(null)
 
   const { data, isLoading, isError, error } = useAgentPersonas()
@@ -543,12 +549,6 @@ export function AgentPersonaPage() {
       ? selected
       : (agents[0]?.agent_name ?? null)
   const selectedPersona = agents.find((a) => a.agent_name === activeAgentName)
-
-  const agentApiLabels = useMemo(() => {
-    const map: Record<string, string | undefined> = {}
-    for (const a of agents) map[a.agent_name] = a.label
-    return map
-  }, [agents])
 
   const handleSelect = (name: string) => {
     setSelected(name)
@@ -574,12 +574,6 @@ export function AgentPersonaPage() {
 
       <p className="text-dense-caption text-muted-foreground">{copy.originPick}</p>
 
-      {/* Design `Research Copilot.dc.html`, the Personas face: who answers is
-          one question, how often they are right is the other, and the second
-          one is what decides whether a judge should keep its weight. It sits
-          above the editor because a record you have not read is a poor reason
-          to change a preference. */}
-      <JudgeTrackRecord />
 
       {isLoading ? (
         <p className="text-dense-meta text-muted-foreground">Loading personas…</p>
@@ -590,11 +584,14 @@ export function AgentPersonaPage() {
 
       {!isLoading && !isError && agents.length > 0 ? (
         <div className="flex flex-col gap-4">
-          <AgentOrchestrationDiagram
-            activeAgent={activeAgentName}
+          {/* Rev 2026-09-21.6 merged the roster and the Track record into one
+              table, and moved the wiring diagram to its own page: who to
+              trust is the trader's question, who hands off to whom is the
+              engineer's (Shell Spec §11.4). */}
+          <TheBench
+            agents={agents}
+            selected={activeAgentName}
             onSelect={handleSelect}
-            lang="en"
-            agentApiLabels={agentApiLabels}
           />
 
           <div
@@ -620,6 +617,11 @@ export function AgentPersonaPage() {
               )}
             </div>
           </div>
+
+          {/* Kept below the bench, not merged into it: this reads where a
+              candidate came from, which is a different question from who
+              graded it — and the only one of the two this side can answer. */}
+          <JudgeTrackRecord />
         </div>
       ) : null}
     </PageShell>

@@ -190,10 +190,19 @@ describe('design adoption', () => {
     // heads §5a.1 moved are answered and back in the sum (43→45, aligned
     // 39→41). Then the second batch left the sum while it waits for a look:
     // the Copilot and its Personas face, one prototype and one cause
-    // (45→43).
-    expect(counts.aligned + counts.byState.stale).toBe(43)
+    // (45→43). The Owner signed the Copilot the same day, and Package
+    // 2026-09-21.4 took `/research/copilot/trading` with it: that package
+    // moved all three Copilot rows' rev, so the Book starters page — walked
+    // at .15.5 and not re-walked — reads stale (aligned 41, stale 3, so the
+    // sum holds at 44).
+    expect(counts.aligned + counts.byState.stale).toBe(44)
     expect(counts.aligned).toBe(41)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
+      // Walked at .15.5 and carried along by the Copilot rows' rev bump. The
+      // design also renamed it — ROUTES now says «Book starters» where this
+      // side says «Trading Copilot» — so its re-walk has a naming question
+      // in it, not only a diff.
+      '/research/copilot/trading',
       '/research/loop/decisions',
       '/research/symbol',
     ])
@@ -355,7 +364,9 @@ describe('design adoption', () => {
       '/portfolio/positions',
       '/portfolio/transfer',
       '/research/book',
-      '/research/copilot/trading',
+      '/research/copilot',
+      // `/research/copilot/trading` left this list for `stale` when Package
+      // 2026-09-21.4 moved the Copilot rows' rev.
       '/research/journal',
       '/research/loop/candidates',
       '/research/loop/harness',
@@ -393,7 +404,7 @@ describe('design adoption', () => {
     // a look.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/research/agent-personas',
-      '/research/copilot',
+      '/research/orchestration',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
@@ -435,7 +446,9 @@ describe('design adoption', () => {
     // Package 2026-09-20.3 grew it to 91: the three layer overview pages —
     // `/risk`, `/portfolio` and `/research/book` — which exist because a
     // layer that is only a container cannot be its own first child (§5a.1).
-    expect(counts.designed).toBe(91)
+    // 92 with Package 2026-09-21.4: `/research/orchestration`, split out of
+    // the Personas page.
+    expect(counts.designed).toBe(92)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three
     // designed with no app page yet (Journal and Narrative are Vision batches
@@ -507,7 +520,10 @@ describe('design adoption', () => {
     // rulings (page names, the Pipeline layer page, container rows becoming
     // captions) and not one route changed. So the global Rev moves and no
     // page stamp does, which is why the aligned set holds through it.
-    expect(DESIGN_REV).toBe('2026-09-21.3')
+    // Package 2026-09-21.4 @ Rev .6: the Personas face redrawn and one new
+    // route (`/research/orchestration`). It moved the three Copilot rows'
+    // own rev, which is why one of them is stale and two were re-walked.
+    expect(DESIGN_REV).toBe('2026-09-21.6')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -519,8 +535,10 @@ describe('design adoption', () => {
     // Review, the second, and 5 → 4 with the Trade Desk: the three §5a.1
     // layer heads are answered, and what is left in `stale` is the four
     // Research pages the Vision redesign moved. 4 → 2 with the Copilot pair,
-    // re-walked together because they are one prototype.
-    expect(counts.byState.stale).toBe(2)
+    // re-walked together because they are one prototype. 2 → 3 when Package
+    // 2026-09-21.4 moved the three Copilot rows' rev: Book starters was
+    // walked at .15.5 and is not part of this round.
+    expect(counts.byState.stale).toBe(3)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

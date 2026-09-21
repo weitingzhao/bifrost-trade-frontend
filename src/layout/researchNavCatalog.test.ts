@@ -166,9 +166,13 @@ describe('one tree, both homes', () => {
     // alone, so a `fold:*` id would never light while you stood on it.
     const fold = flatten(researchItems()).find((i) => i.label === 'Copilot')
     expect([fold?.id, fold?.to]).toEqual([COPILOT_DESK, COPILOT_DESK])
+    // Three rows since Rev 2026-09-21.6: Orchestration is a menu row, not a
+    // fourth tab on the Desk — a tab is another face of one route, and the
+    // wiring diagram is its own page with its own reader.
     expect(fold?.children?.map((c) => [c.label, c.to])).toEqual([
       ['Daily Brief', '/research/daily-brief'],
       ['Personas', '/research/agent-personas'],
+      ['Orchestration', '/research/orchestration'],
     ])
   })
 

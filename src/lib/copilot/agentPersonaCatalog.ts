@@ -165,7 +165,13 @@ export const AGENT_MCP_SCOPES: Record<string, string[]> = {
   verdict: [],
 }
 
-export type InvokedBy = { by: string; kind: 'handoff' | 'as_tool' }
+/**
+ * `chain` joins the two 2026-09-21: the loop's curator is not handed a
+ * question by triage, it runs off the back of a candidate batch. It carried a
+ * triage handoff until the Personas redesign asked which agents you can
+ * actually choose, and the answer was not in the data.
+ */
+export type InvokedBy = { by: string; kind: 'handoff' | 'as_tool' | 'chain' }
 
 /** Who calls this agent, and how. All 8 agents receive a Triage handoff.
  * Discovery / Analyze / Validate are also invoked by Verdict as sub-tools. */
@@ -190,7 +196,26 @@ export const AGENT_INVOKED_BY: Record<string, InvokedBy[]> = {
   explain: [{ by: 'triage', kind: 'handoff' }],
   verdict: [{ by: 'triage', kind: 'handoff' }],
   curator: [{ by: 'triage', kind: 'handoff' }],
-  loop_curator: [{ by: 'triage', kind: 'handoff' }],
+  loop_curator: [{ by: 'research-loop-batch', kind: 'chain' }],
+}
+
+/**
+ * Whether you can send a question straight to this agent.
+ *
+ * Every agent carries a `{ by: 'triage', kind: 'handoff' }` edge, so the graph
+ * alone cannot say which ones you may actually choose — the design's Personas
+ * face greys two rows and the data had no way to say why (Rev 2026-09-21.6).
+ *
+ * - **Verdict** composes: it calls the other four as sub-tools and assembles
+ *   a brief. Triage reaches it; a question of yours does not.
+ * - **Loop Curator** runs after a candidate batch, never from a thread.
+ *
+ * Absent means routable, so a new agent is reachable until someone says it is
+ * not — the safe default for a roster that grows.
+ */
+export const AGENT_DIRECTLY_ROUTABLE: Record<string, boolean> = {
+  verdict: false,
+  loop_curator: false,
 }
 
 /** Agents this one calls (only the composer chain: verdict → D/A/V). */

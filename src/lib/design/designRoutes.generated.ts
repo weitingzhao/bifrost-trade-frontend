@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 95 routes, 91 with a designed page,
+ * Derived, not typed: 96 routes, 92 with a designed page,
  * 4 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -235,6 +235,7 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/research/loop/decisions": "valve",
   "/research/loop/harness": "rotor",
   "/research/loop/hypotheses": "fork",
+  "/research/orchestration": "tree",
   "/research/ratings/stocks": "gauge",
   "/research/scan": "smile",
   "/research/screener": "sieve",
@@ -275,7 +276,7 @@ export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
   "Reference": "doc",
 }
 
-export const DESIGN_REV = "2026-09-21.3"
+export const DESIGN_REV = "2026-09-21.6"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},
@@ -321,10 +322,11 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/watchlist","label":"Watchlist","crumbs":["Research","The Book"],"designed":true,"file":"Research Watchlist.dc.html","round":null,"rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/research/greeks","label":"Contract Greeks","crumbs":["Research","Pipeline","Analyze"],"designed":true,"file":"Research Contract Greeks.dc.html","round":null,"rev":"2026-09-19.2","inNav":false,"group":null},
   {"path":"/research/narrative","label":"Narrative","crumbs":["Research","Pipeline","Analyze"],"designed":true,"file":"Research Narrative Lens.dc.html","round":null,"rev":"2026-09-19.2","inNav":false,"group":null},
-  {"path":"/research/copilot","label":"Copilot","crumbs":["Research"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-20.20","inNav":true,"group":"Research"},
+  {"path":"/research/copilot","label":"Copilot","crumbs":["Research"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-21.1","inNav":true,"group":"Research"},
   {"path":"/research/daily-brief","label":"Daily Brief","crumbs":["Research","Copilot"],"designed":true,"file":"Research Daily Brief.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
-  {"path":"/research/copilot/trading","label":"Book starters","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-15.5","inNav":false,"group":null},
-  {"path":"/research/agent-personas","label":"Personas","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-18.2","inNav":true,"group":"Research"},
+  {"path":"/research/copilot/trading","label":"Book starters","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-21.1","inNav":false,"group":null},
+  {"path":"/research/agent-personas","label":"Personas","crumbs":["Research","Copilot"],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-21.1","inNav":true,"group":"Research"},
+  {"path":"/research/orchestration","label":"Orchestration","crumbs":["Research","Copilot"],"designed":true,"file":"Research Orchestration.dc.html","round":null,"rev":"2026-09-21.1","inNav":true,"group":"Research"},
   {"path":"/research/loop/harness","label":"Autopilot","crumbs":["Research"],"designed":true,"file":"Research Autopilot Console.dc.html","round":null,"rev":"2026-09-20.1","inNav":true,"group":"Research"},
   {"path":"/research/loop/objectives/obj-daily-stock","label":"Daily Loop Stock Explorer","crumbs":["Research","Autopilot"],"designed":true,"file":"Research Objective.dc.html","round":null,"rev":"2026-09-20.1","inNav":false,"group":null},
   {"path":"/research/loop/objectives/obj-earnings-iv","label":"Earnings-week IV","crumbs":["Research","Autopilot"],"designed":true,"file":"Research Objective.dc.html","round":null,"rev":"2026-09-20.1","inNav":false,"group":null},

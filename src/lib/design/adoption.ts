@@ -252,16 +252,28 @@ export interface AdoptionGroup {
   byState: Record<AdoptionState, number>
 }
 
+/**
+ * Which group a row belongs to.
+ *
+ * A page with no crumbs is either the shell's own front door or a layer's own
+ * page. The design flattened the layer pages' trails to one level
+ * (Rev 2026-09-20.23) so that `/risk` does not read "Risk › Risk" — but it is
+ * still a Risk row, and its group is the one the design's tree puts it in.
+ * Without this fall-back every layer page lands under Home and the group it
+ * belongs to under-counts itself by one.
+ *
+ * Exported because the tracker groups twice: once for the summary, and again
+ * inside each state's list. Two derivations of "which group" would eventually
+ * disagree, and the reader would have no way to tell which one was lying.
+ */
+export function adoptionGroupOf(row: AdoptionRow): string {
+  return row.crumbs[0] ?? row.design?.group ?? 'Home'
+}
+
 export function adoptionByGroup(rows: readonly AdoptionRow[]): AdoptionGroup[] {
   const by = new Map<string, AdoptionGroup>()
   for (const r of rows) {
-    // A page with no crumbs is either the shell's own front door or a layer's
-    // own page. The design flattened the layer pages' trails to one level
-    // (Rev 2026-09-20.23) so that `/risk` does not read "Risk › Risk" — but it
-    // is still a Risk row, and its group is the one the design's tree puts it
-    // in. Without this fall-back every layer page lands under Home and the
-    // group it belongs to under-counts itself by one.
-    const group = r.crumbs[0] ?? r.design?.group ?? 'Home'
+    const group = adoptionGroupOf(r)
     const g =
       by.get(group) ??
       ({

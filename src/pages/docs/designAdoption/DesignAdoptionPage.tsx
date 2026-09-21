@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
+  CollapsibleChevron,
+  CollapsibleGroupBody,
+  CollapsibleGroupHeader,
   DenseDataTable,
   DenseTableBody,
   DenseTableCell,
@@ -19,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ADOPTION_SECTIONS,
   adoptionByGroup,
+  adoptionGroupOf,
   adoptionCounts,
   adoptionRows,
   DESIGN_REV,
@@ -40,6 +44,18 @@ import {
  * tallest of them 956px. A note now opens under its row, and the two panels
  * above answer the questions that used to need a scroll — the whole shape, and
  * how far one group has to go.
+ *
+ * Even with the notes folded the page ran to a hundred rows in eight lists,
+ * which is a scroll nobody reads. So each state now **collapses**, and the
+ * rows inside one are **grouped again by page group** — because the question
+ * asked of a list is almost never "show me all 27", it is "what is left in
+ * Research". A closed section still answers that: its header carries the
+ * per-group split, so the shape of the work is readable without opening
+ * anything.
+ *
+ * Sections start closed and remember what you opened, per browser. That is a
+ * convenience and nothing depends on it — a viewer with storage blocked gets
+ * every section closed and the page still works.
  */
 
 /** Reserve the lamp colours for state; a count is not a fault. */
@@ -210,7 +226,48 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
   )
 }
 
+const OPEN_KEY = 'bifrost.design-adoption.open'
+
+function readOpen(): Set<AdoptionState> {
+  try {
+    const raw = localStorage.getItem(OPEN_KEY)
+    return new Set(raw ? (JSON.parse(raw) as AdoptionState[]) : [])
+  } catch {
+    // Private mode, blocked storage, or something else wrote nonsense here.
+    return new Set()
+  }
+}
+
+function writeOpen(open: Set<AdoptionState>) {
+  try {
+    localStorage.setItem(OPEN_KEY, JSON.stringify([...open]))
+  } catch {
+    // The page is fully usable without it; the preference is just not kept.
+  }
+}
+
+/** The rows of one state, split by page group, biggest group first. */
+function byPageGroup(rows: readonly AdoptionRow[]): { group: string; rows: AdoptionRow[] }[] {
+  const m = new Map<string, AdoptionRow[]>()
+  for (const r of rows) {
+    const g = adoptionGroupOf(r)
+    m.set(g, [...(m.get(g) ?? []), r])
+  }
+  return [...m]
+    .map(([group, list]) => ({ group, rows: list }))
+    .sort((a, b) => b.rows.length - a.rows.length || a.group.localeCompare(b.group))
+}
+
 export default function DesignAdoptionPage() {
+  const [open, setOpen] = useState<Set<AdoptionState>>(readOpen)
+  const toggle = (state: AdoptionState) =>
+    setOpen((prev) => {
+      const next = new Set(prev)
+      if (next.has(state)) next.delete(state)
+      else next.add(state)
+      writeOpen(next)
+      return next
+    })
   const rows = useMemo(() => adoptionRows(), [])
   const counts = useMemo(() => adoptionCounts(rows), [rows])
   const groups = useMemo(() => adoptionByGroup(rows), [rows])
@@ -325,25 +382,57 @@ export default function DesignAdoptionPage() {
 
       {ADOPTION_SECTIONS.map((s) => {
         const list = byState.get(s.state) ?? []
+        const expanded = open.has(s.state)
+        const perGroup = byPageGroup(list)
         return (
-          <Card key={s.state} variant="elevated">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <DenseTag variant={TAG[s.state]}>{s.state}</DenseTag>
-                <span>{s.title}</span>
-                <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
-                  {list.length}
-                </span>
-              </CardTitle>
-              <p className="text-dense-caption text-muted-foreground">{s.blurb}</p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {list.length === 0 ? (
-                <EmptyState title="Nothing here" description="This list is empty." />
-              ) : (
-                <Rows rows={list} state={s.state} />
-              )}
-            </CardContent>
+          <Card key={s.state} variant="elevated" className="overflow-hidden">
+            <CollapsibleGroupHeader
+              expanded={expanded}
+              onToggle={() => toggle(s.state)}
+              className="w-full px-4 py-3"
+              aria-label={`${s.title} — ${list.length} pages`}
+            >
+              <CollapsibleChevron expanded={expanded} />
+              <DenseTag variant={TAG[s.state]}>{s.state}</DenseTag>
+              <span className="text-base font-semibold">{s.title}</span>
+              <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
+                {list.length}
+              </span>
+              {/* The split, on the closed header. "What is left in Research" is
+                  the question this page is actually asked, and a section that
+                  has to be opened to answer it is a section that gets opened
+                  every time. */}
+              <span className="ml-auto flex min-w-0 flex-wrap justify-end gap-x-3 gap-y-0.5">
+                {perGroup.map((g) => (
+                  <span key={g.group} className="text-dense-caption whitespace-nowrap">
+                    <span className="text-muted-foreground">{g.group}</span>{' '}
+                    <span className="font-mono tabular-nums text-foreground/80">{g.rows.length}</span>
+                  </span>
+                ))}
+              </span>
+            </CollapsibleGroupHeader>
+            {expanded ? (
+              <CollapsibleGroupBody className="px-4 pb-3">
+                <p className="mb-2 text-dense-caption text-muted-foreground">{s.blurb}</p>
+                {list.length === 0 ? (
+                  <EmptyState title="Nothing here" description="This list is empty." />
+                ) : (
+                  <div className="space-y-3">
+                    {perGroup.map((g) => (
+                      <div key={g.group} className="space-y-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-dense-label font-semibold">{g.group}</span>
+                          <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
+                            {g.rows.length}
+                          </span>
+                        </div>
+                        <Rows rows={g.rows} state={s.state} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CollapsibleGroupBody>
+            ) : null}
           </Card>
         )
       })}

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { PAGE_ROUTES } from '@/layout/routeRegistry'
-import { adoptionByGroup, adoptionCounts, adoptionRows, DESIGN_REV } from './adoption'
+import {
+  adoptionByGroup,
+  adoptionCounts,
+  adoptionGroupOf,
+  adoptionRows,
+  DESIGN_REV,
+} from './adoption'
 import { DESIGN_ROUTES } from './designRoutes.generated'
 import { revIsNewer } from './rev'
 
@@ -487,5 +493,32 @@ describe('adoptionByGroup', () => {
     expect(groups.reduce((n, g) => n + g.aligned, 0)).toBe(counts.aligned)
     // Closest to done first, so the group being walked sits at the top.
     expect(groups.map((g) => g.left)).toEqual([...groups.map((g) => g.left)].sort((a, b) => a - b))
+  })
+})
+
+describe('adoptionGroupOf', () => {
+  it('is the one derivation the tracker groups by, twice', () => {
+    // The summary panel and each state's own list both group; two
+    // derivations would eventually disagree and the reader would have no way
+    // to tell which was lying.
+    const byGroup = adoptionByGroup(rows)
+    const counted = new Map<string, number>()
+    for (const r of rows) {
+      const g = adoptionGroupOf(r)
+      counted.set(g, (counted.get(g) ?? 0) + 1)
+    }
+    for (const g of byGroup) {
+      const all = g.total + g.byState.backlog
+      expect(counted.get(g.group), `group ${g.group}`).toBe(all)
+    }
+    expect([...counted.keys()].sort()).toEqual(byGroup.map((g) => g.group).sort())
+  })
+
+  it('puts a layer page in its layer, not under Home', () => {
+    // `/risk` carries no crumbs — the design flattened the layer trails — so
+    // without the design-group fall-back every layer page lands under Home.
+    const risk = rows.find((r) => r.path === '/risk')
+    expect(risk?.crumbs).toEqual([])
+    expect(adoptionGroupOf(risk!)).toBe('Risk')
   })
 })

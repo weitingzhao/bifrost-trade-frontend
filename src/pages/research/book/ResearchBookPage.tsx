@@ -331,9 +331,15 @@ export default function ResearchBookPage() {
             Symbol
           </Link>
           ,{' '}
-          <Link to="/research/compare" className="text-primary hover:underline">
+          {/* Not a link: Compare is unbuilt here. The design names three
+              birthplaces and this side has two, which the word says on hover
+              rather than by leading somewhere that does not exist. */}
+          <span
+            className="text-muted-foreground"
+            title="Compare is one of the design's three birthplaces for a thesis. It is not built on this side yet, so there is nowhere for this to go."
+          >
             Compare
-          </Link>{' '}
+          </span>{' '}
           or in{' '}
           <Link to="/review" className="text-primary hover:underline">
             Review

@@ -177,7 +177,10 @@ export function useTodayChecks(accountFilter: string) {
       seg: 'pre',
       layer: 'research',
       question: 'Does a holding report earnings this week?',
-      to: '/research/events',
+      // Events is unbuilt, so the check opens the page that carries what this
+      // side does have — the event feeds per name. Pointing at the unbuilt
+      // page would be a row whose only action lands on nothing.
+      to: '/research/event-radar',
       rows: [],
       cannotRun:
         'no future earnings date reaches this side for any name in the book, so the week ahead cannot be read',

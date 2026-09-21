@@ -84,9 +84,11 @@ const m = document.querySelector('#main-content')
 ;[...m.querySelectorAll('tbody tr')].map(r => [r.getAttribute('role'), getComputedStyle(r).cursor])
 ```
 
-3. **Check every href against the route table.** A link to a retired path or a
-   redirect is a dead end wearing a link's clothes:
-   `grep -c "path: '<href>'," src/layout/routeTable.ts`
+3. **Check every href against the router.** A link to a path nobody routed is
+   a dead end wearing a link's clothes. `src/layout/deadLinks.test.ts` does
+   this for every literal target in the source and runs with the gates — so
+   what is left for the sweep is the targets it cannot see: anything built
+   from a variable at render time.
 4. **Click what changed.** Reading the markup does not prove a destination
    renders. Click it in the browser and read back `location.pathname`.
 
@@ -103,6 +105,11 @@ Four rules the sweep enforces:
   a link — render plain and put the reason in `title`. Never link somewhere
   approximate: answering a click about history with a list of beliefs is worse
   than not linking.
+- **Never point at a page that does not exist yet**, however gracefully you
+  believe the failure degrades. Pipeline's hypothesis cards carried a comment
+  saying an unmounted route would "simply render the 404 boundary"; it rendered
+  a blank document, and nobody had checked. Two more of the same were found by
+  scanning, one of them written in the same pass that wrote this rule.
 - **No deep link a page ignores.** Only attach `?param=` the destination
   actually reads; a parameter it drops is the same failure in a new place.
 

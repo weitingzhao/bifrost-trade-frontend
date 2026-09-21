@@ -26,6 +26,10 @@ import { readFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 import type { RouteObject } from 'react-router-dom'
+import type { ShellNavItem } from '@bifrost/ui'
+import { getAllNavItems, NAV_GROUPS, SYSTEM_NAV_GROUPS } from '@/layout/navConfig'
+import { allResearchRoutes } from '@/layout/researchNavCatalog'
+import { REDIRECTS } from '@/layout/redirectRoutes'
 import { router } from '@/lib/router'
 
 /** Every path the router can match, with its dynamic segments intact. */
@@ -108,5 +112,72 @@ describe('every internal link reaches a route', () => {
     // …while the dynamic segments it must not flag still resolve.
     expect(reaches('/research/loop/objectives/obj-1')).toBe(true)
     expect(reaches('/risk/margin')).toBe(true)
+  })
+})
+
+/**
+ * …and no page may be unreachable.
+ *
+ * The other direction of the same failure. A dead link points at nothing; an
+ * orphan *is* nothing pointed at — routed, rendering, and with no way in but
+ * the address bar. Stock ratings shipped that way and spent a day reachable
+ * only by URL, which the Owner found by looking at the sidebar rather than by
+ * anything the suite checked.
+ *
+ * "Reachable" is the nav tree or a link from some page. The nav set is
+ * composed the way the sidebar composes it — the static groups plus the
+ * Research catalog, which is built per-render from the objectives and so
+ * cannot be read from a constant.
+ */
+const REACHABLE_BY_DESIGN: Record<string, string> = {
+  // Owner ruling 2026-09-20: a tab shell over SEPA, Momentum and Event Radar,
+  // all three of which the design redistributed. It answers to no design row,
+  // so it holds no menu row — the route stays for the bookmarks that predate
+  // the ruling.
+  '/research/explorer': 'out of the menu by ruling, route kept for old bookmarks',
+}
+
+function navPaths(): Set<string> {
+  const out = new Set<string>()
+  const walk = (items: readonly ShellNavItem[]) => {
+    for (const it of items) {
+      const to = it.to ?? it.href
+      if (to?.startsWith('/')) out.add(to.split('?')[0].split('#')[0])
+      if (it.children) walk(it.children)
+    }
+  }
+  for (const g of [...NAV_GROUPS, ...SYSTEM_NAV_GROUPS]) {
+    if (g.to) out.add(g.to)
+    walk(getAllNavItems(g))
+  }
+  // The Research group is rebuilt per render, so its rows are not in the
+  // static constant the others live in.
+  for (const p of allResearchRoutes()) out.add(p)
+  return out
+}
+
+describe('every page can be reached', () => {
+  const redirects = new Set(REDIRECTS.map((r) => r.path))
+  const pages = routerPaths(router.routes).filter(
+    (p) => p !== '/' && p !== '/*' && !p.includes(':') && !redirects.has(p),
+  )
+
+  it('finds no page with neither a menu row nor a link into it', () => {
+    const nav = navPaths()
+    const linked = new Set(linkTargets().keys())
+    const orphans = pages
+      .filter((p) => !nav.has(p) && !linked.has(p) && REACHABLE_BY_DESIGN[p] == null)
+      .sort()
+    expect(orphans).toEqual([])
+  })
+
+  it('keeps the allow-list honest — every entry is still a real route', () => {
+    // An allow-list that outlives its route is a note about nothing, and the
+    // next reader has to work out whether it ever mattered.
+    for (const p of Object.keys(REACHABLE_BY_DESIGN)) expect(pages).toContain(p)
+  })
+
+  it('reads enough of the nav to be worth trusting', () => {
+    expect(navPaths().size).toBeGreaterThan(50)
   })
 })

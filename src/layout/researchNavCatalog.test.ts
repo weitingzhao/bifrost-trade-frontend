@@ -88,8 +88,10 @@ describe('one tree, both homes', () => {
       (flatten(researchItems(ctx)).find((i) => i.label === label)?.children ?? []).map(
         (i) => [i.label, i.to],
       )
-    // Three of the design's four. Stock ratings — the composite with the
-    // weight sliders — is unbuilt and leads the fold when it lands.
+    // All four of the design's now. Stock ratings landed 2026-09-21 and leads
+    // the fold: it is the model's own opinion, and the screens below it are
+    // ways of asking about that opinion. It was built before it was routed
+    // into the menu, which is how it spent a day reachable only by URL.
     //
     // The Owner settled the Stock screen on 2026-09-20 by what the prototype
     // holds rather than what it is labelled: universe, criteria stages and
@@ -97,6 +99,7 @@ describe('one tree, both homes', () => {
     // that ruling — it is a tab shell over three subjects the design
     // redistributed — and keeps its route.
     expect(rows('Discover')).toEqual([
+      ['Stock ratings', '/research/ratings/stocks'],
       ['Vol ratings', '/research/scan'],
       ['Stock screen', '/research/screener'],
       ['Option screen', '/research/contract-screener'],

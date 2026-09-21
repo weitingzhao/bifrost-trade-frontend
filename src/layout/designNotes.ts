@@ -319,7 +319,16 @@ export const DESIGN_NOTES: Record<string, string> = {
     + 'is also the name of a formatter and of a *coercing* reader in the chart overlay. It '
     + 'moved to src/utils/finite.ts as `finiteOrNull`, named for what it does and saying in '
     + 'its own comment that it does not coerce — the overlay’s stayed, because taking '
-    + '`Number(v)` is deliberate there and merging them would have changed its behaviour.',
+    + '`Number(v)` is deliberate there and merging them would have changed its behaviour. '
+    + 'Owner review 2026-09-21 found the page had **no menu row** — built and routed, '
+    + 'reachable only by typing the address. It now leads the Discover fold, which is where '
+    + 'the catalog’s own comment had said it would go when it landed. A scan of all 72 '
+    + 'routed pages found this was the only real orphan: /research/explorer is out of the '
+    + 'menu by the Owner’s own ruling, and /research/book read as one only because the '
+    + 'first scan looked at the static nav constant rather than the Research group the '
+    + 'sidebar builds per render. The gate that now guards it is in deadLinks.test.ts, '
+    + 'beside the one for the opposite failure: a dead link points at nothing, an orphan is '
+    + 'nothing pointed at.',
   '/research/screener':
     "Owner ruled 2026-09-20 which of this side's pages the design's Stock screen is, and the "
     + "page took the design's own path with the name. The evidence is the prototype's content, "

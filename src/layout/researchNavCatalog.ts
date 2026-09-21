@@ -24,6 +24,7 @@ import {
   BookOpen,
   ClipboardList,
   Compass,
+  Gauge,
   History,
   LayoutGrid,
   ListFilter,
@@ -191,14 +192,15 @@ export const BENCHES: Bench[] = [
     // Owner retired on 2026-09-08. `/research/screener` becomes a home in W3,
     // `/research/ratings` in the W5 sweep.
     icon: foldGlyph('Discover') ?? Compass,
-    // The design's four rows, three of which this side has. Stock ratings —
-    // the composite with the weight sliders — is unbuilt and leads the fold
-    // when it lands.
+    // The design's four rows. Stock ratings landed 2026-09-21 and leads the
+    // fold, as this comment said it would: it is the model's own opinion, and
+    // the screens below it are ways of asking about that opinion.
     //
     // Stock Explorer left this list on 2026-09-20 (Owner ruling): it is a tab
     // shell over SEPA, Momentum and Event Radar, and the design redistributed
     // all three, so it answers to no row here. Its route stays.
     items: [
+      route('Stock ratings', '/research/ratings/stocks', Gauge),
       route('Vol ratings', '/research/scan', ScanSearch),
       route('Stock screen', '/research/screener', ListFilter),
       route('Option screen', '/research/contract-screener', ListFilter),

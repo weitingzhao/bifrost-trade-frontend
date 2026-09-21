@@ -44,7 +44,23 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'its primary action, **New thread \u2318J**, which clears the session and opens the dock \u2014 verified '
     + 'by clicking: the dock opens on a blank thread. `Ask Copilot` stays beside it as the other '
     + 'kind of opening, this page\u2019s own context. '
-    + 'The Writes panel now says in words what it cannot draw, instead of a bare count in a tile.',
+    + 'The Writes panel now says in words what it cannot draw, instead of a bare count in a tile. '
+    + 'THIRD PASS, on the Owner\u2019s read of the digest panel: the design does not print the draft\u2019s '
+    + 'prose there at all. It prints columns of `SYM \u00b7 one sentence \u00b7 cite`, where the cite opens the '
+    + 'page whose lens produced that sentence \u2014 the reading, not the writing. Built from the payload '
+    + 'the digest already carries: each name\u2019s most notable lens reading (a band at an extreme over '
+    + 'one that is only leaning; a name whose every lens declined still prints, because \u00abnothing '
+    + 'stands out\u00bb is the read and a vanished row would be taken for one never looked at), with the '
+    + 'lens\u2019 own page as the chip \u2014 measured: `GEX` on AMD opens '
+    + '`/research/symbol?tab=dealer&symbol=AMD#gex`. The lamps and the two ways out moved into the '
+    + 'panel header, where the design has them. '
+    + 'ONE DIVERGENCE, MEASURED: the design splits the names into **Book** and **Watchlist**; the '
+    + 'payload has no such split \u2014 `symbols` is one list with `holdings_status: applied` and '
+    + '`candidates` is separate and empty. Splitting it from this side\u2019s own book would be a second '
+    + 'source answering a question the digest already answered its own way, so the names are one '
+    + 'section that says as much in its note. The split returns the day the digest records it. '
+    + 'The prose is not dropped: it sits behind a toggle at the foot, because the draft is what the '
+    + 'Inbox approves.',
   '/research/copilot/trading':
     'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner signed off on STG 2026-09-15 after L1/L2.',
   '/research/agent-personas':

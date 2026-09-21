@@ -13,13 +13,14 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Plus, Users } from 'lucide-react'
 import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
 import { CopilotTabs, useCopilotTab } from '@/components/research/CopilotTabs'
-import { DenseTag, EmptyState } from '@/components/data-display'
+import { EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
+import { DigestLampRow, DigestRead } from '@/components/cockpit/DigestRead'
 import { listResearchDrafts, type DraftStatus } from '@/api/researchDrafts'
 import { useCopilotStanding } from '@/hooks/useCopilotStanding'
 import { fmtIsoTs } from '@/lib/format'
@@ -158,15 +159,11 @@ export default function CopilotDeskPage() {
         </SectionPanel>
       </div>
 
-      <SectionPanel
-        cap="Digest"
-        title="11:30 UTC · book + watchlist"
-        note="the morning read, and what it was written from"
-      >
-        <div className="px-3 py-2.5">
-          <DigestToday draftId={s?.brief?.draft_id ?? null} status={s?.brief?.status ?? null} loading={standingQ.isLoading} />
-        </div>
-      </SectionPanel>
+      <DigestPanel
+        draftId={s?.brief?.draft_id ?? null}
+        status={s?.brief?.status ?? null}
+        loading={standingQ.isLoading}
+      />
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0">
@@ -206,7 +203,7 @@ export default function CopilotDeskPage() {
 }
 
 
-function DigestToday({ draftId, status, loading }: { draftId: string | null; status: string | null; loading: boolean }) {
+function DigestPanel({ draftId, status, loading }: { draftId: string | null; status: string | null; loading: boolean }) {
   const q = useQuery({
     queryKey: ['research', 'drafts', 'digest', draftId, status],
     queryFn: () => listResearchDrafts({ kind: 'daily_digest', status: (status ?? 'pending') as DraftStatus, limit: 10 }),
@@ -242,38 +239,43 @@ function DigestToday({ draftId, status, loading }: { draftId: string | null; sta
       </p>
     )
   }
+  // The design's digest panel: the lamps and the two ways out sit in the
+  // header, and the body is the read — a line per name with the page its
+  // lens came from. The draft's own prose keeps its place behind a toggle.
   return (
-    <div>
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-dense-label text-muted-foreground">
-        <span>{fmtIsoTs(draft.created_at)}</span>
-        <DenseTag variant={draft.status === 'pending' ? 'warning' : 'neutral'} size="cell">
-          {draft.status}
-        </DenseTag>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="ml-auto h-6 gap-1 px-2"
-          title="Prefills the Copilot with this digest — does not send"
-          onClick={() =>
-            openDigestInCopilot({
-              draftId: draft.id,
-              day: typeof draft.payload.day === 'string' ? draft.payload.day : null,
-              symbols: digestExhibits(draft.payload).map((r) => r.symbol),
-            })
-          }
-        >
-          <MessageCircle className="size-3.5" /> Ask about it
-        </Button>
-        <Link to="/research/loop/decisions" className="inline-flex items-center gap-1 hover:underline">
-          {draft.status === 'pending' ? 'Approve or dismiss in the Inbox' : 'Open in the Inbox'} <ArrowRight className="size-3" />
-        </Link>
-      </div>
-      {/* The design's digest is a read, not the draft itself: a line per name
-          with the lens it came from. The readings table is the draft's own
-          working, so it stays behind its toggle here — open, this panel was
-          taller than the three above it together. */}
-      <DailyDigestBody payload={draft.payload} clampProse={false} />
-    </div>
+    <SectionPanel
+      cap="Digest"
+      title={`${fmtIsoTs(draft.created_at)} · ${draft.status}`}
+      note={<DigestLampRow payload={draft.payload} />}
+      action={
+        <span className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 gap-1 px-2"
+            title="Prefills the Copilot with this digest — does not send"
+            onClick={() =>
+              openDigestInCopilot({
+                draftId: draft.id,
+                day: typeof draft.payload.day === 'string' ? draft.payload.day : null,
+                symbols: digestExhibits(draft.payload).map((r) => r.symbol),
+              })
+            }
+          >
+            <MessageCircle className="size-3.5" /> Ask about it
+          </Button>
+          <Link to="/research/loop/decisions" className="inline-flex items-center gap-1 text-dense-meta hover:underline">
+            {draft.status === 'pending' ? 'Approve or dismiss in the Inbox' : 'Open in the Inbox'}{' '}
+            <ArrowRight className="size-3" />
+          </Link>
+        </span>
+      }
+    >
+      <DigestRead
+        payload={draft.payload}
+        prose={<DailyDigestBody payload={draft.payload} clampProse={false} />}
+      />
+    </SectionPanel>
   )
 }
 

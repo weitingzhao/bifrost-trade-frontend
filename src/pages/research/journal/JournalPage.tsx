@@ -31,6 +31,7 @@ import {
   journalCounts,
   journalDayTrees,
   journalDays,
+  journalDefaultDay,
   journalNodes,
   journalTypeLabel,
   type JournalNode,
@@ -94,18 +95,10 @@ export default function JournalPage() {
   )
 
   const days = useMemo(() => journalDays(nodes), [nodes])
-  /**
-   * The newest day that holds a run. A day with only an expiring draft on it
-   * is a real day in this history, but it is not a day the loop worked, and
-   * opening on one shows a page with no tree in it.
-   */
-  const defaultDay = useMemo(() => {
-    const runDays = new Set(nodes.filter((n) => n.type === 'run').map((n) => n.day))
-    return days.find((d) => runDays.has(d)) ?? days[0] ?? ''
-  }, [days, nodes])
-  const day = params.get('day') ?? defaultDay
   const operator = params.get('op') ?? 'all'
   const selectedId = params.get('sel')
+  // An explicit `?day=` wins — that is the picker.
+  const day = params.get('day') ?? journalDefaultDay(nodes, selectedId)
 
   const dayNodes = useMemo(() => nodes.filter((n) => n.day === day), [nodes, day])
   // Built once over everything, then cut to the day. A day's artifact keeps

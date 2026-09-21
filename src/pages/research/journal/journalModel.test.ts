@@ -10,6 +10,7 @@ import {
   hypothesisCandidateId,
   journalCounts,
   journalDays,
+  journalDefaultDay,
   journalNodes,
   journalPct,
   policyChanges,
@@ -151,6 +152,34 @@ describe('the join', () => {
 
   it('lists only days that hold an artifact, newest first', () => {
     expect(journalDays(build())).toEqual(['2026-01-03', '2026-01-02'])
+  })
+})
+
+describe('which day the page opens on', () => {
+  it('opens on the newest day that holds a run, not the newest day of any kind', () => {
+    // The settlement lands on the 3rd; the run worked on the 2nd. A draft can
+    // expire on a Sunday, and opening there shows a page with no tree in it.
+    expect(journalDefaultDay(build())).toBe('2026-01-02')
+  })
+
+  it('lets a deep link bring its own day', () => {
+    expect(journalDefaultDay(build(), 'settlement cand-aaa @1d')).toBe('2026-01-03')
+  })
+
+  it('falls back to the newest day of any kind when no run is in reach', () => {
+    const nodes = journalNodes(
+      { runs: [], candidates: [], hypotheses: [], drafts: [], outcomes: [outcome] },
+      sketch,
+    )
+    expect(journalDefaultDay(nodes)).toBe('2026-01-03')
+  })
+
+  it('answers empty rather than guessing when there is nothing at all', () => {
+    expect(journalDefaultDay([])).toBe('')
+  })
+
+  it('ignores a selection nothing in the window answers', () => {
+    expect(journalDefaultDay(build(), 'no-such-artifact')).toBe('2026-01-02')
   })
 })
 

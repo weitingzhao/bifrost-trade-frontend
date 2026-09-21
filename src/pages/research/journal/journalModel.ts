@@ -460,6 +460,31 @@ export function journalDays(nodes: readonly JournalNode[]): string[] {
   return [...new Set(nodes.map((n) => n.day).filter(Boolean))].sort().reverse()
 }
 
+/**
+ * Which day the page opens on.
+ *
+ * A `?sel=` deep link brings its own: every page's way in here is "Journal →"
+ * on one artifact, and landing on today with a fortnight-old artifact in the
+ * right panel and no tree around it answers the wrong question.
+ *
+ * Otherwise it is the newest day that holds a **run**, not the newest day of
+ * any kind and not today. A draft can expire on a Sunday; a run is the
+ * machine having worked, and opening on a day with no tree in it says the
+ * loop is broken when it is only the weekend.
+ */
+export function journalDefaultDay(
+  nodes: readonly JournalNode[],
+  selectedId?: string | null,
+): string {
+  if (selectedId) {
+    const sel = nodes.find((n) => n.id === selectedId)
+    if (sel?.day) return sel.day
+  }
+  const runDays = new Set(nodes.filter((n) => n.type === 'run').map((n) => n.day))
+  const days = journalDays(nodes)
+  return days.find((d) => runDays.has(d)) ?? days[0] ?? ''
+}
+
 export interface JournalCount {
   label: string
   /** Null when the store cannot answer — the row stays and says why. */

@@ -460,7 +460,7 @@ export default function TradeLedgerPage() {
       <div className={ledgerPageCardClass}>
         <PageHeader
           breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Trade ledger</p>}
-          title="Trade ledger"
+          title="Trade Ledger"
           titleSize="large"
           description={PAGE_LEAD}
           actions={

@@ -61,8 +61,13 @@ import {
   type Verdict,
 } from '@/pages/review/objectives/objectiveChainModel'
 
+/**
+ * §5a.5 split the second half out of the h1 and into the grey subtitle, so
+ * the page is headed by the name its menu row promised and the question it
+ * answers is the first thing under it.
+ */
 const LEAD =
-  'Research builds machines. Only settled money says whether one was worth running — so this page reads the whole chain for each of them, proposed through settled, and it is the one place the loop closes: a verdict here is what sends a patch back to the objective.'
+  'Did the machine earn its keep? Research builds machines, and only settled money says whether one was worth running — so this page reads the whole chain for each of them, proposed through settled, and it is the one place the loop closes: a verdict here is what sends a patch back to the objective.'
 
 const VERDICT_TAG: Record<Verdict, { variant: 'success' | 'danger' | 'warning' | 'neutral' }> = {
   EARNING: { variant: 'success' },
@@ -200,7 +205,7 @@ export default function ReviewObjectivesPage() {
         <div className="min-w-0 max-w-[84ch] flex-[1_1_420px]">
           <PageHeader
             breadcrumb={<p className="text-xs font-medium text-primary/90">Review</p>}
-            title="Objectives · did the machine earn its keep"
+            title="Objectives"
             titleSize="large"
             description={LEAD}
           />

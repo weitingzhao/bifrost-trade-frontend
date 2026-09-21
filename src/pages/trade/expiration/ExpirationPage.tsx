@@ -239,7 +239,7 @@ export default function ExpirationPage() {
       <section className={positionsUi.pageCard} aria-label="Expiration Desk">
         <PageHeader
           breadcrumb={<p className="text-xs text-primary/90 font-medium">Trade / Expiration</p>}
-          title="Expiration Desk"
+          title="Expiration"
           titleSize="large"
           description={PAGE_LEAD}
           actions={

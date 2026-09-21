@@ -38,7 +38,7 @@ export default function CoveragePage() {
   return (
     <PageShell className="space-y-4">
       <PageHeader
-        title="Data Coverage"
+        title="Coverage"
         description={active.description}
         actions={
           <span className="flex items-center gap-1">

@@ -328,6 +328,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/loop/ObjectivePage')),
       },
       {
+        path: 'research/ratings/stocks',
+        lazy: lazyPage(() => import('@/pages/research/ratings/StockRatingsPage')),
+      },
+      {
         path: 'research/loop/runs/:runId',
         lazy: lazyPage(() => import('@/pages/research/loop/LoopRunPipelinePage')),
       },

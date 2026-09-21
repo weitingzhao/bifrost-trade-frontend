@@ -292,7 +292,10 @@ describe('design adoption', () => {
     // page-level Runs today section it had never had was built, and the two
     // things it cannot draw — five objective states, the three-origin New
     // objective panel — are named on the page (reviewing 4→3, aligned 32→33).
-    expect(counts.byState.reviewing).toBe(3)
+    // Then Stock ratings was built from nothing — the page the Screener's Rank
+    // by was blocked on — which is the first row to leave `unbuilt` for
+    // `reviewing` in this round (unbuilt 27→26, reviewing 3→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -340,6 +343,7 @@ describe('design adoption', () => {
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/research/loop/candidates',
       '/research/loop/hypotheses',
+      '/research/ratings/stocks',
       '/research/workbench',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
@@ -395,7 +399,7 @@ describe('design adoption', () => {
     // 32 with Package 2026-09-20.3's three layer overview pages, back to 29
     // once all three were built, 28 when the Owner's ruling gave the Stock
     // screen to a page that exists, and 27 with Review Objectives.
-    expect(counts.byState.unbuilt).toBe(27)
+    expect(counts.byState.unbuilt).toBe(26)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

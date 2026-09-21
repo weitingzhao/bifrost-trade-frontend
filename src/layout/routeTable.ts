@@ -184,6 +184,19 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   { path: '/research/loop/objectives/:objectiveId', label: 'Objective', crumbs: AUTOPILOT },
   { path: '/research/loop/runs/:runId', label: 'Loop Run', crumbs: AUTOPILOT },
+  {
+    // The Screener's `Rank by` was blocked on this page, and the design gives
+    // Momentum Radar and SEPA Daily Core their home in it when they dissolve.
+    path: '/research/ratings/stocks',
+    label: 'Stock ratings',
+    crumbs: DISCOVER,
+    scope: 'underlying',
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.10',
+      note: DESIGN_NOTES['/research/ratings/stocks'],
+    },
+  },
 
   // ── Research · Copilot (a seat-free fold since 2026-09-14 — §11.0) ─────
   // The menu row and crumbs read Research › Copilot › Desk; the page's own

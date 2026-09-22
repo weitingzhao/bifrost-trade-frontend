@@ -16,7 +16,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { omnibar } from '@/lib/omnibar'
-import { useCopilotDock } from '@/hooks/useCopilotDock'
+import { toggleThread, useThread } from '@/hooks/useCopilotThread'
 import { routeFor } from './routeRegistry'
 import { useCrumbLabel } from './useCrumbLabel'
 import { Lens } from './Lens'
@@ -30,7 +30,7 @@ export function AppHeader() {
   const location = useLocation()
   const { label: registryLabel, crumbs } = routeFor(location.pathname)
   const label = useCrumbLabel(location.pathname, registryLabel)
-  const copilot = useCopilotDock()
+  const thread = useThread()
 
   return (
     <header
@@ -101,19 +101,23 @@ export function AppHeader() {
             sit to its right is gone with it. */}
         <Lens />
 
-        {/* The fourth item. ⌘J was the only way to it, which made the Copilot
-            discoverable to whoever already knew about it — the design puts it
-            on the bar for the same reason the Omnibar shows its own key. */}
+        {/* The fourth item, and the Copilot's second avatar: the rail opens
+            its Desk (a page), this opens the conversation (§5a.8 sixteenth
+            round). Autopilot has no conversation avatar, so it has no button
+            here — the asymmetry is real, not an omission. ⌘J was the only way
+            to it, which made the Copilot discoverable to whoever already knew
+            about it; the design puts it on the bar for the same reason the
+            Omnibar shows its own key. */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               type="button"
-              onClick={copilot.toggle}
-              aria-pressed={copilot.open}
+              onClick={toggleThread}
+              aria-pressed={thread.open}
               className={cn(
                 SHELL_TOP_BAR_CONTROL_CLASS,
                 'shrink-0',
-                copilot.open
+                thread.open
                   ? 'border-primary/45 bg-primary/[0.08] text-primary'
                   : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
               )}
@@ -127,7 +131,13 @@ export function AppHeader() {
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {copilot.open ? 'Close the Research Copilot' : 'Open the Research Copilot'} · ⌘J
+            {/* One lit state, and the tooltip says where — a conversation
+                behind another tab is open, and the click brings it forward
+                rather than opening a second one. */}
+            {thread.open
+              ? `${thread.place === 'float' ? 'The Copilot — in a float' : 'The Copilot — in the side panel'}`
+              : 'Open the Research Copilot'}{' '}
+            · ⌘J
           </TooltipContent>
         </Tooltip>
       </div>

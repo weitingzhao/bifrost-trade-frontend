@@ -2,8 +2,8 @@
  * Global shell keybinds.
  *
  *   ⌘K / Ctrl+K — Omnibar
- *   ⌘J / Ctrl+J — toggle Research Copilot panel
- *   Esc        — close the topmost inspector, else the Copilot panel
+ *   ⌘J / Ctrl+J — toggle the Copilot conversation
+ *   Esc        — close the topmost inspector, else the open float
  *                (either way, not while focus is inside an editable field)
  *
  * ⌘K used to be a second key for the Copilot, which meant the app's most
@@ -11,11 +11,17 @@
  * get somewhere. It is the Omnibar now; the Copilot keeps ⌘J, which was always
  * its own.
  *
- * Cockpit ("workspace tabs") is hosted inside the same floating panel — a single entry point.
+ * **Esc is stated here rather than left to which listener mounted first.** The
+ * inspector goes before the float: it is the thing the reader just opened, and
+ * it sits over the page the float is beside. The side panel answers to neither
+ * — §5a.8 makes it the companion that stays, so it closes by `×` or by the
+ * icon that opened it, the same two ways it did as a dock.
+ *
  * Mount once via `useCockpitKeybinds()` from App layout.
  */
 import { useEffect } from 'react'
-import { copilotDockStore } from '@/hooks/useCopilotDock'
+import { closeSurface, useSurfaces } from '@/layout/equipSurface'
+import { toggleThread } from '@/hooks/useCopilotThread'
 import { omnibar } from '@/lib/omnibar'
 import { KEY_COPILOT, KEY_OMNIBAR } from './shortcuts'
 import { closeTopInspector } from './inspectorEscape'
@@ -29,6 +35,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 export function useCockpitKeybinds() {
+  const { float } = useSurfaces()
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const meta = e.metaKey || e.ctrlKey
@@ -39,7 +46,7 @@ export function useCockpitKeybinds() {
       }
       if (meta && e.key.toLowerCase() === KEY_COPILOT) {
         e.preventDefault()
-        copilotDockStore.getState().toggle()
+        toggleThread()
         return
       }
       if (e.key === 'Escape') {
@@ -51,13 +58,13 @@ export function useCockpitKeybinds() {
           e.preventDefault()
           return
         }
-        if (copilotDockStore.getState().open) {
+        if (float) {
           e.preventDefault()
-          copilotDockStore.getState().close()
+          closeSurface(float.key)
         }
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [float])
 }

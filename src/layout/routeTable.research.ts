@@ -62,8 +62,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Autopilot',
     crumbs: [],
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.1',
+      // Package 2026-09-22.3 retired this page's own run drawer and pointed
+      // its Copilot button at the one Thread. Both are landed; the Owner has
+      // not looked since, and only the Owner marks a page aligned.
+      state: 'reviewing',
+      rev: '2026-09-22.6',
       note: DESIGN_NOTES['/research/loop/harness'],
     },
   },
@@ -141,11 +144,14 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Copilot',
     crumbs: RESEARCH,
     design: {
-      state: 'aligned',
       // Package 2026-09-21.4 moved all three Copilot rows' rev while changing
-      // only the Personas face; Today and Threads are untouched, so the walk
-      // holds at the newer stamp.
-      rev: '2026-09-21.1',
+      // only the Personas face; Today and Threads were untouched, so the walk
+      // held at the newer stamp. Package 2026-09-22.3 then retired the page's
+      // own conversation aside — which this side never grew: the Desk is a
+      // page and the Thread is the shell's surface, which is exactly the two
+      // avatars the design arrived at.
+      state: 'reviewing',
+      rev: '2026-09-22.6',
       note: DESIGN_NOTES['/research/copilot'],
     },
   },

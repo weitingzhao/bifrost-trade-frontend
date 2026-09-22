@@ -38,7 +38,6 @@ import {
   patchCopilotSession,
   type CopilotSessionSummary,
 } from '@/api/researchCopilotSessions'
-import { copilotDockStore } from '@/hooks/useCopilotDock'
 import { copilotSessionStore } from '@/hooks/useCopilotSession'
 import { rowSelectProps } from '@/hooks/useRowLink'
 import { useCopilotSessions } from '@/hooks/useCopilotSessions'
@@ -107,8 +106,8 @@ export function Threads() {
       })
       openResearchCopilot()
     } catch {
-      // best effort — the panel's own list can still open it
-      copilotDockStore.getState().setSessionsOpen(true)
+      // Best effort: the conversation opens on whatever it already had, and
+      // its own thread switcher is the way back to this one.
       openResearchCopilot()
     } finally {
       setOpening(null)

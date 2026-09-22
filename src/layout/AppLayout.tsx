@@ -14,7 +14,7 @@ import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useAlerts } from '@/hooks/useAlerts'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
-import { CopilotDock } from '@/components/copilot/CopilotDock'
+import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
 import { EquipRail } from './EquipRail'
 import { EquipFloat } from './EquipFloat'
 import { EquipPanel } from './EquipPanel'
@@ -97,10 +97,9 @@ export function AppLayout() {
           about the whole desk rather than one row. `display: contents` so an
           empty slot costs the row nothing. */}
         <div ref={setInspectorSlot} className="contents" />
-        {/* A peer of the nav sidebar, not a layer over the page: `SidebarProvider`
-          renders a flex row, so at the reading width on a wide screen the dock
-          takes its space from the content instead of covering it. */}
-        <CopilotDock />
+        {/* Every page's Ask, listening from the shell rather than from the
+          conversation — it has to be awake while the conversation is closed. */}
+        <AskCopilotIntentHost />
         {/* The one side panel (design Rev 2026-09-22.6, §5a.8 seventeenth
             round). A sibling of the content, like the dock, so that when
             there is room it takes its column out of the page instead of

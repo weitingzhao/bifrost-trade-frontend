@@ -17,7 +17,7 @@
  * so they float and the page is whole again the moment they close.
  */
 import { panelDocks } from '@/lib/panelDocks'
-import { COPILOT_DOCK_WIDTH, copilotDockPushes } from '@/hooks/useCopilotDock'
+import { PANEL_CARD_PX } from '@/layout/equipSurface'
 
 /** The reading width — the default, and what `useInspectorWide` toggles away from. */
 export const INSPECTOR_WIDTH_READ_PX = 560
@@ -30,20 +30,29 @@ export function inspectorDocksAt(panelWidthPx: number, viewportWidthPx: number):
   return panelDocks(panelWidthPx, viewportWidthPx)
 }
 
+/** Does the shell's one side panel have the room to push the page aside? */
+export function sidePanelPushes(panelOpen: boolean, viewportWidthPx: number): boolean {
+  return panelOpen && panelDocks(PANEL_CARD_PX, viewportWidthPx)
+}
+
 /**
  * How far the floating inspector must sit in from the viewport's right edge.
  *
- * The overlay used to be `fixed inset-0` with the 560 panel flush right, so
- * at 1560 it covered the docked Copilot (x=1120–1560) entirely — the screenshot
- * that was supposed to prove both-open showed no Copilot. Design 09-14 ③:
- * the conversation keeps its seat; the inspector glances and closes, so the
- * overlay yields the Copilot column when that column is pushing. Overlay or
- * wide Copilot keep the flush-right overlay (the Copilot is already covering
- * the page itself).
+ * The overlay used to be `fixed inset-0` with the 560 panel flush right, so at
+ * 1560 it covered the docked Copilot entirely — the screenshot that was
+ * supposed to prove both-open showed no Copilot. Design 09-14 ③: the
+ * companion keeps its seat; the inspector glances and closes, so the overlay
+ * yields that column whenever it is pushing. When it overlays instead, the
+ * flush-right overlay stands, because the page is already covered.
+ *
+ * The column used to be the Copilot dock's. §5a.8 collapsed every right-hand
+ * column into the one side panel, so the rule reads the panel — and it is the
+ * same rule, which is the point: the inspector never had an opinion about
+ * *what* was in the column, only that something was holding it.
  */
 export function inspectorOverlayInsetRightPx(
-  copilot: { open: boolean; wide: boolean },
+  panelOpen: boolean,
   viewportWidthPx: number,
 ): number {
-  return copilotDockPushes(copilot, viewportWidthPx) ? COPILOT_DOCK_WIDTH : 0
+  return sidePanelPushes(panelOpen, viewportWidthPx) ? PANEL_CARD_PX : 0
 }

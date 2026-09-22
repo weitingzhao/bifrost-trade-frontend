@@ -28,7 +28,7 @@ import {
   useRunObjective,
 } from '@/hooks/useLoopHarness'
 import { useRunEodAgent, useRunMorningAgent } from '@/hooks/useResearchDrafts'
-import { copilotDockStore } from '@/hooks/useCopilotDock'
+import { openThread } from '@/hooks/useCopilotThread'
 import { cn } from '@/lib/utils'
 
 /**
@@ -61,7 +61,7 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
   function runAndRevealInbox(run: typeof morning) {
     run.mutate(undefined, {
       onSuccess: () => {
-        copilotDockStore.getState().open_()
+        openThread()
         cockpitDrawerStore.getState().revealInbox()
       },
     })

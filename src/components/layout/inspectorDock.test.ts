@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX, inspectorDocksAt, inspectorOverlayInsetRightPx } from './inspectorDock'
-import { COPILOT_DOCK_WIDTH } from '@/hooks/useCopilotDock'
+import { INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX, inspectorDocksAt, inspectorOverlayInsetRightPx, sidePanelPushes } from './inspectorDock'
+import { PANEL_CARD_PX } from '@/layout/equipSurface'
 
 describe('inspectorDocksAt', () => {
   it('docks the reading width by the shared formula: sidebar 240 + floor 760 + panel', () => {
@@ -25,13 +25,19 @@ describe('inspectorDocksAt', () => {
 })
 
 describe('inspectorOverlayInsetRightPx', () => {
-  const copilotOpen = { open: true, wide: false }
+  it('yields the side panel when that column is pushing, otherwise 0', () => {
+    // The column used to be the Copilot dock's. §5a.8 collapsed every
+    // right-hand column into the one side panel — and the rule did not
+    // change, which is the point: the inspector never had an opinion about
+    // what was in the column, only that something was holding it.
+    expect(inspectorOverlayInsetRightPx(true, 1560)).toBe(PANEL_CARD_PX)
+    expect(inspectorOverlayInsetRightPx(true, 1456)).toBe(PANEL_CARD_PX)
+    expect(inspectorOverlayInsetRightPx(true, 1455)).toBe(0)
+    expect(inspectorOverlayInsetRightPx(false, 1920)).toBe(0)
+  })
 
-  it('yields the Copilot column when that column is pushing, otherwise 0', () => {
-    expect(inspectorOverlayInsetRightPx(copilotOpen, 1560)).toBe(COPILOT_DOCK_WIDTH)
-    expect(inspectorOverlayInsetRightPx(copilotOpen, 1440)).toBe(COPILOT_DOCK_WIDTH)
-    expect(inspectorOverlayInsetRightPx(copilotOpen, 1439)).toBe(0)
-    expect(inspectorOverlayInsetRightPx({ open: true, wide: true }, 2560)).toBe(0)
-    expect(inspectorOverlayInsetRightPx({ open: false, wide: false }, 1920)).toBe(0)
+  it('a closed panel never pushes', () => {
+    expect(sidePanelPushes(false, 2560)).toBe(false)
+    expect(sidePanelPushes(true, 2560)).toBe(true)
   })
 })

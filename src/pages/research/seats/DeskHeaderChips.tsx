@@ -1,7 +1,7 @@
 import type { CopilotUsage } from '@/api/aiCopilot'
 import { DenseTag } from '@/components/data-display'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
-import { copilotDockStore } from '@/hooks/useCopilotDock'
+import { openThread } from '@/hooks/useCopilotThread'
 import { useCopilotModels } from '@/hooks/useCopilotModels'
 import { useCopilotSession } from '@/hooks/useCopilotSession'
 import { fmtUsd } from '@/lib/harness/runSpend'
@@ -60,7 +60,7 @@ export function ProviderChip() {
       className={cn(CHIP, 'hover:bg-secondary')}
       title={title}
       onClick={() => {
-        copilotDockStore.getState().open_()
+        openThread()
         cockpitDrawerStore.getState().setTab('settings')
       }}
     >

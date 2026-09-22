@@ -3,9 +3,9 @@ import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
 import { inspectorShell } from './rightInspectorUi'
-import { inspectorDocksAt, inspectorOverlayInsetRightPx, INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX } from './inspectorDock'
+import { inspectorDocksAt, inspectorOverlayInsetRightPx, sidePanelPushes, INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX } from './inspectorDock'
 import { registerInspectorEscape } from '@/lib/cockpit/inspectorEscape'
-import { copilotDockPushes, useCopilotDock } from '@/hooks/useCopilotDock'
+import { useSurfaces } from '@/layout/equipSurface'
 import { useInspectorWide } from '@/hooks/useInspectorWide'
 import { useInspectorSlot } from './inspectorSlot'
 
@@ -15,7 +15,7 @@ interface Props {
   children: ReactNode
   /** Override the reading width — e.g. instance compare mode, the run inspector's S/M/L. */
   panelWidthPx?: number
-  /** Bound to Escape while the panel is open, ahead of the Copilot's. */
+  /** Bound to Escape while the panel is open, ahead of the float's. */
   onClose?: () => void
 }
 
@@ -38,7 +38,7 @@ export function RightInspectorShell({
   const slot = useInspectorSlot()
   const viewport = useWindowWidth()
   const { wide } = useInspectorWide()
-  const copilot = useCopilotDock()
+  const surfaces = useSurfaces()
 
   useEffect(() => {
     if (!open || !onClose) return
@@ -48,10 +48,11 @@ export function RightInspectorShell({
   if (!open) return null
 
   const width = panelWidthPx ?? (wide ? INSPECTOR_WIDTH_WIDE_PX : INSPECTOR_WIDTH_READ_PX)
-  // While the Copilot is pushing the page, the inspector always floats — the
-  // page never pays for two docked columns at once (Design 09-14 ③).
+  // While the side panel is pushing the page, the inspector always floats —
+  // the page never pays for two docked columns at once (Design 09-14 ③).
+  const panelOpen = surfaces.panel != null
   const docked =
-    slot != null && !copilotDockPushes(copilot, viewport) && inspectorDocksAt(width, viewport)
+    slot != null && !sidePanelPushes(panelOpen, viewport) && inspectorDocksAt(width, viewport)
 
   const panel = (
     <aside
@@ -72,7 +73,7 @@ export function RightInspectorShell({
 
   if (docked) return createPortal(panel, slot)
 
-  const overlayRight = inspectorOverlayInsetRightPx(copilot, viewport)
+  const overlayRight = inspectorOverlayInsetRightPx(panelOpen, viewport)
   return (
     <div
       className="pointer-events-none fixed inset-y-0 left-0 z-[200] flex justify-end"

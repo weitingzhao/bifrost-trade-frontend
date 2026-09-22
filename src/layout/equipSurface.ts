@@ -73,6 +73,8 @@ export interface Surface {
   def: Exclude<Place, 'page'>
   /** Set when the surface is a loop run rather than a whole route. */
   run?: string
+  /** Set when the surface is the Copilot conversation rather than a page. */
+  thread?: boolean
 }
 
 /** A tab remembers when it was last looked at — the overflow orders by it. */
@@ -159,6 +161,30 @@ export function runSurface(id: string): Surface {
     canPage: false,
     def: 'panel',
     run: id,
+  }
+}
+
+/**
+ * The Copilot conversation — the second of the Copilot's two avatars.
+ *
+ * §5a.8's sixteenth round: **the rail opens its home (the Desk, a page), the
+ * top bar's button opens the conversation.** They share a route and are not
+ * the same surface, which is why this has a key of its own; Autopilot has no
+ * conversation avatar, so it has no top-bar button, and the asymmetry is real
+ * rather than an omission.
+ *
+ * `canPage: false` — a conversation is not a place. `⤢` is greyed, and the
+ * Desk, which *is* a place, is one rail click away.
+ */
+export function threadSurface(): Surface {
+  return {
+    key: 'thread',
+    to: '/research/copilot',
+    label: 'Thread',
+    group: 'copilot',
+    canPage: false,
+    def: 'panel',
+    thread: true,
   }
 }
 

@@ -212,20 +212,15 @@ describe('design adoption', () => {
     // evening, merged into the Inbox as its fourth view (43→42).
     //
     // Package 2026-09-22.3 @ Rev .6 — the "one surface, three places"
-    // restructure — then moved three walked pages' own revs, and the sum is
-    // unchanged because nothing left the walk: aligned 42→39, stale 0→3. All
-    // three are the same edit seen from three sides. Positions and the
-    // Copilot page changed because "open beside" became one destination
-    // (`Reg.ask` → a tab in the panel); the Autopilot Console changed because
-    // its run drawer retired. The run half of the Console is landed; its
-    // Copilot button, and both of the other two, are the Thread's round.
-    expect(counts.aligned + counts.byState.stale).toBe(42)
+    // restructure — moved three walked pages' own revs: Positions and the
+    // Copilot page because "open beside" became one destination, the
+    // Autopilot Console because its run drawer retired. All three are landed
+    // and all three left the sum for `reviewing` rather than sitting in
+    // `stale`, which is why aligned falls 42→39 while stale stays empty:
+    // nothing here is owed work, only a look.
+    expect(counts.aligned + counts.byState.stale).toBe(39)
     expect(counts.aligned).toBe(39)
-    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
-      '/portfolio/positions',
-      '/research/copilot',
-      '/research/loop/harness',
-    ])
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -379,7 +374,12 @@ describe('design adoption', () => {
     // face and its alias stopped being a page (aligned 45→43, reviewing 2→4).
     // Daily Brief joins them: it stopped being a per-symbol lens dashboard
     // and became the morning digest the design draws (reviewing 5→6).
-    expect(counts.byState.reviewing).toBe(6)
+    // Three more with Package 2026-09-22.3, and none of them for the usual
+    // reason — they were aligned, the design moved one thing on each, and
+    // that one thing was landed the same round: Positions' Ask, the Copilot
+    // page's aside (which this side never grew) and the Console's run drawer
+    // (reviewing 6→9).
+    expect(counts.byState.reviewing).toBe(9)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -432,7 +432,10 @@ describe('design adoption', () => {
     // The two ratings pages' own siblings: Symbol, and the Vol ratings rebuild
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/portfolio/positions',
+      '/research/copilot',
       '/research/daily-brief',
+      '/research/loop/harness',
       '/research/overview',
       '/research/scan',
       '/research/symbol',
@@ -578,11 +581,11 @@ describe('design adoption', () => {
     // re-walked and took the design's own name, and 2 → 1 with the Decision
     // Inbox. 1 → 0 with Symbol: for the first time since Package 2026-09-18.1
     // there is no page whose design has moved past its walk.
-        // 0 → 3 with Package 2026-09-22.3: the surfaces round moved the Copilot
-    // page, the Autopilot Console and Positions. None of the three lost its
-    // walk — what changed is that "open beside" now has one destination, and
-    // saying so on those three pages is the Thread's round.
-    expect(counts.byState.stale).toBe(3)
+        // Package 2026-09-22.3 moved the Copilot page, the Autopilot Console and
+    // Positions. None of the three lost its walk — what changed is that "open
+    // beside" now has one destination — and all three were answered in the
+    // same round, so they wait for a look in `reviewing` rather than here.
+    expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design
@@ -610,10 +613,11 @@ describe('adoptionByGroup', () => {
     // prototype, and signed off 2026-09-20 — so the group is whole again at
     // ten of ten, with nothing left waiting on a look.
     // Positions went stale in Package 2026-09-22.3 — still walked, still
-    // built, its Ask now owed a destination — so the group has one left to
-    // answer without having lost a page.
+    // built, its Ask owed a destination — and left `stale` for `reviewing`
+    // the same day the Thread became a surface and the Ask got one. One left
+    // to answer, and it is the Owner's look rather than any work.
     expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
-    expect(portfolio?.byState.reviewing).toBe(0)
+    expect(portfolio?.byState.reviewing).toBe(1)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

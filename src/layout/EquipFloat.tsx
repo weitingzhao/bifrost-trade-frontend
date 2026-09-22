@@ -114,21 +114,9 @@ export function EquipFloat() {
     [key, size, panelOpen, viewport],
   )
 
-  // Esc is one of the three ways out, and the one that works with your hands
-  // on the keyboard. It stands down inside a field: Esc in a search box
-  // belongs to the box. Only the float answers to it — the panel is the
-  // companion that stays.
-  useEffect(() => {
-    if (!key) return
-    function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Escape' || !key) return
-      const el = e.target as HTMLElement | null
-      if (el && (/INPUT|TEXTAREA|SELECT/.test(el.tagName) || el.isContentEditable)) return
-      closeSurface(key)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [key])
+  // Esc lives in `useCockpitKeybinds`, not here: an inspector and a float can
+  // both be open, and two listeners racing would close both. The order is one
+  // reading, so it is written in one place.
 
   /**
    * Resizing is the browser's own handle; this watches the result so the size

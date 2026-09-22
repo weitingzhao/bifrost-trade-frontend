@@ -1,6 +1,6 @@
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
-import { copilotDockStore } from '@/hooks/useCopilotDock'
+import { openThread } from '@/hooks/useCopilotThread'
 import {
   readCopilotPromptLang,
   type CopilotPromptLang,
@@ -106,7 +106,7 @@ export function openCandidateInCopilot(params: {
       pipeline_path: loopPipelinePath(params.runId, { live: false }),
     },
   })
-  copilotDockStore.getState().open_()
+  openThread()
   cockpitDrawerStore.getState().setTab('copilot')
 }
 
@@ -134,7 +134,7 @@ export function openLoopRunInCopilot(params: {
       pipeline_path: loopPipelinePath(params.runId, { live: true }),
     },
   })
-  copilotDockStore.getState().open_()
+  openThread()
   cockpitDrawerStore.getState().setTab('copilot')
 }
 
@@ -176,7 +176,7 @@ export function openDraftInCopilot(params: {
       prompt_lang: lang,
     },
   })
-  copilotDockStore.getState().open_()
+  openThread()
   cockpitDrawerStore.getState().setTab('copilot')
 }
 
@@ -229,17 +229,17 @@ export function openDigestInCopilot(params: {
       prompt_lang: lang,
     },
   })
-  copilotDockStore.getState().open_()
+  openThread()
   cockpitDrawerStore.getState().setTab('copilot')
 }
 
 export function openResearchCopilot() {
-  copilotDockStore.getState().open_()
+  openThread()
   cockpitDrawerStore.getState().setTab('copilot')
 }
 
 export function openCopilotInbox() {
-  copilotDockStore.getState().open_()
+  openThread()
   cockpitDrawerStore.getState().revealInbox()
 }
 

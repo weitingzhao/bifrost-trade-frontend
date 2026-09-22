@@ -18,11 +18,10 @@
  * ## Push or overlay
  *
  * The shared formula, not a threshold of its own (`panelDocks`): the page
- * keeps its 760px of columns or the panel floats over it. One addition while
- * the Copilot is still a dock of its own — if it is pushing, its 440 counts
- * against the room left, otherwise two docked columns can squeeze the content
- * to a third of the floor. That coupling disappears when the Thread becomes a
- * tab in here, which is the next round's work, not this one's.
+ * keeps its 760px of columns or the panel floats over it. There is nothing to
+ * coordinate with any more — the Copilot was the other column that pushed,
+ * and it is a tab in here now, so one panel is the only thing the content
+ * ever gives width to.
  */
 import { useEffect, useState } from 'react'
 import { EQUIP_HUE } from './equip'
@@ -39,7 +38,6 @@ import { PlaceButtons } from './PlaceButtons'
 import { SurfaceBody } from './SurfaceBody'
 import { SurfaceGlyph } from './SurfaceGlyph'
 import { SHELL_TOP_BAR_PX } from './shellChrome'
-import { COPILOT_DOCK_WIDTH, copilotDockPushes, useCopilotDock } from '@/hooks/useCopilotDock'
 import { panelDocks } from '@/lib/panelDocks'
 import css from './equipSurface.module.css'
 
@@ -85,7 +83,6 @@ function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact
 
 export function EquipPanel() {
   const { panel } = useSurfaces()
-  const dock = useCopilotDock()
   // The overflow menu belongs to *this* active tab: remembering which tab it
   // was opened over closes it for free when you pick another one, when the
   // panel is re-opened on something else, or when the strip stops overflowing
@@ -104,8 +101,7 @@ export function EquipPanel() {
 
   const strip = stripFor(panel)
   const menuOpen = menuOver === panel.active && strip.over.length > 0
-  const copilotRoom = copilotDockPushes(dock, viewport) ? COPILOT_DOCK_WIDTH : 0
-  const pushes = panelDocks(PANEL_CARD_PX + copilotRoom, viewport)
+  const pushes = panelDocks(PANEL_CARD_PX, viewport)
 
   return (
     <>

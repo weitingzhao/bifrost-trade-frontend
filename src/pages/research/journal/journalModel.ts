@@ -24,6 +24,7 @@
  * keeps its row and names the missing half.
  */
 import type { ObjectiveRun } from '@/api/research/harness'
+import { readStr as str } from '@/lib/readUnknown'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { AiDraft } from '@/api/researchDrafts'
@@ -135,10 +136,6 @@ const MACHINE_ORIGIN: Record<string, JournalOperator> = {
 
 function dayOf(iso: string | null | undefined): string {
   return typeof iso === 'string' && iso.length >= 10 ? iso.slice(0, 10) : ''
-}
-
-function str(v: unknown): string | null {
-  return typeof v === 'string' && v ? v : null
 }
 
 /** A draft's parent, in the order the store makes it available. */

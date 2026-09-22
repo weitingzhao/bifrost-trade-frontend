@@ -175,6 +175,11 @@ export function adoptionRows(): AdoptionRow[] {
         crumbs: d.crumbs,
         state: stateOf(viaRoute, d),
         design: d,
+        // The walk belongs to the `:param` route that answers for this path,
+        // so the note and the stamp come from there. Without them a walked
+        // param page reads as `reviewing` with nothing to review.
+        rev: viaRoute.design?.rev,
+        note: viaRoute.design?.note,
         via,
         inApp: true,
       })

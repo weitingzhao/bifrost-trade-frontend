@@ -116,7 +116,16 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/loop/candidates'],
     },
   },
-  { path: '/research/loop/objectives/:objectiveId', label: 'Objective', crumbs: AUTOPILOT },
+  {
+    path: '/research/loop/objectives/:objectiveId',
+    label: 'Objective',
+    crumbs: AUTOPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.3',
+      note: DESIGN_NOTES['/research/loop/objectives/:objectiveId'],
+    },
+  },
   { path: '/research/loop/runs/:runId', label: 'Loop Run', crumbs: AUTOPILOT },
   {
     // The Screener's `Rank by` was blocked on this page, and the design gives

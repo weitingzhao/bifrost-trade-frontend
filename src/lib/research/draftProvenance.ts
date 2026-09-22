@@ -21,10 +21,7 @@
  *   id and reads `?sel=`.
  */
 import type { AiDraft } from '@/api/researchDrafts'
-
-function str(v: unknown): string | null {
-  return typeof v === 'string' && v.trim() !== '' ? v : null
-}
+import { readStr as str } from '@/lib/readUnknown'
 
 /** The artifact this draft is about — the Journal's own rule, one copy. */
 export function draftParentId(d: Pick<AiDraft, 'payload' | 'scope'>): string | null {

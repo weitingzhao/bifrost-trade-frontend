@@ -3,6 +3,7 @@
  * one post per trading day with the candidate batches folded beneath it.
  */
 import type { AiDraft } from '@/api/researchDrafts'
+import { readStr as str, readStrings as strings } from '@/lib/readUnknown'
 import { rowLamp } from '@/lib/harness/runLamp'
 import type { LampTone } from '@/lib/lampTone'
 
@@ -37,14 +38,6 @@ export interface DigestResolution {
   symbols: string[]
   excess: number | null
   by_rule: boolean
-}
-
-function str(v: unknown): string | null {
-  return typeof v === 'string' && v.trim() ? v : null
-}
-
-function strings(v: unknown): string[] {
-  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
 }
 
 function records(v: unknown): Record<string, unknown>[] {

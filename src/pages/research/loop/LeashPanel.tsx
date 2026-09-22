@@ -20,11 +20,10 @@ import {
   DEFAULT_MIN_SOURCE_HIT_RATE,
   LEASH_CONDITIONS,
   MIN_SOURCE_JUDGED,
+  leashPct,
   objectiveLeash,
   type ObjectiveLeash,
 } from '@/pages/research/loop/leash'
-
-const leashPct = (x: number) => `${Math.round(x * 100)}%`
 
 const STANDING_TAG: Record<ObjectiveLeash['standing'], { label: string; variant: 'success' | 'warning' | 'neutral' }> = {
   clears: { label: 'CLEARS', variant: 'success' },

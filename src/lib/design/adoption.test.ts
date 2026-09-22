@@ -381,8 +381,12 @@ describe('design adoption', () => {
     // (reviewing 6→9).
     // The Watchlist is the tenth, and the first walked in this round rather
     // than caught by it: it was `pending`, and the design turns it from a
-    // list into a ledger (reviewing 9→10, pending 12→11).
-    expect(counts.byState.reviewing).toBe(10)
+    // list into a ledger (reviewing 9→10, pending 12→11). The objective page
+    // is the eleventh and twelfth — one `:param` route answers two design
+    // rows, and the walk found four whole sections missing from a page built
+    // from that design and never checked against it (reviewing 10→12,
+    // pending 11→9).
+    expect(counts.byState.reviewing).toBe(12)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -439,6 +443,8 @@ describe('design adoption', () => {
       '/research/copilot',
       '/research/daily-brief',
       '/research/loop/harness',
+      '/research/loop/objectives/obj-daily-stock',
+      '/research/loop/objectives/obj-earnings-iv',
       '/research/overview',
       '/research/scan',
       '/research/symbol',
@@ -514,8 +520,9 @@ describe('design adoption', () => {
     // Workbench home.
     // 12 since Vol ratings and then Daily Brief left it for `reviewing`, and
     // 11 since the Watchlist did — the first page of this round walked rather
-    // than caught by it.
-    expect(counts.byState.pending).toBe(11)
+    // than caught by it — and 9 since the two objective rows followed, both
+    // answered by the one `:param` route that was walked.
+    expect(counts.byState.pending).toBe(9)
     expect(
       rows
         .filter((r) => r.via)

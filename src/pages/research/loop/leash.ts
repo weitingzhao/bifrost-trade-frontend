@@ -25,6 +25,16 @@ export const LEASH_CONDITIONS: readonly { id: string; text: string }[] = [
   },
 ]
 
+/**
+ * A hit rate as the leash prints it — whole percent, no decimal.
+ *
+ * Three surfaces read this model (the Inbox aside, the Console panel, the
+ * objective page) and each had rounded it for itself. A floor and a record
+ * compared at different precisions is how "58% clears 45%" and "58% is below
+ * 58%" end up on the same screen.
+ */
+export const leashPct = (x: number) => `${Math.round(x * 100)}%`
+
 export type LeashStanding = 'clears' | 'below' | 'no-record'
 
 export interface ObjectiveLeash {

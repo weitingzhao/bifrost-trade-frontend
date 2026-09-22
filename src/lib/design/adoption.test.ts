@@ -405,7 +405,10 @@ describe('design adoption', () => {
     // pending 5→4). Live is the eighteenth: the prototype calls itself a
     // redraw of the production page, and the walk found the production page
     // had no header and not one link on it (reviewing 17→18, pending 4→3).
-    expect(counts.byState.reviewing).toBe(18)
+    // Contract Greeks is the nineteenth, and its walk found one contract held
+    // across instances drawing one position's greeks three times
+    // (reviewing 18→19, pending 3→2).
+    expect(counts.byState.reviewing).toBe(19)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -464,6 +467,7 @@ describe('design adoption', () => {
       '/research/copilot',
       '/research/daily-brief',
       '/research/event-radar',
+      '/research/greeks',
       '/research/lens-coverage',
       '/research/loop/harness',
       '/research/loop/objectives/obj-daily-stock',
@@ -548,8 +552,8 @@ describe('design adoption', () => {
     // than caught by it — 9 since the two objective rows followed, both
     // answered by the one `:param` route that was walked, 8 with the Option
     // screen, 7 with Signal Decay, 6 with Signal Health, 5 with Lens Coverage
-    // 4 with Alerts and 3 with Live.
-    expect(counts.byState.pending).toBe(3)
+    // 4 with Alerts, 3 with Live and 2 with Contract Greeks.
+    expect(counts.byState.pending).toBe(2)
     expect(
       rows
         .filter((r) => r.via)

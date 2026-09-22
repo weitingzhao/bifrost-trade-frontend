@@ -1,283 +1,179 @@
-import { useMemo, useRef, useState } from 'react'
+/**
+ * Contract Greeks — walked against `Research Contract Greeks.dc.html`
+ * (Rev 2026-09-19.2) on 2026-09-22. Observe-only (D10).
+ *
+ * ## The route changed subject, and the old one kept its place
+ *
+ * The design calls this page *"every option leg in the book, greek by greek —
+ * the per-leg detail behind Risk › Exposure's aggregates"*. This side held
+ * something else: a chain calculator — pick a symbol and a past trade date,
+ * fetch the chain, read greeks per contract with the Black-Scholes derivation
+ * behind each row. Both are real, and they answer different questions, so the
+ * design's page leads and the calculator is the second face rather than a
+ * deletion (Owner ruling 2026-09-18: absence from the design is not deletion).
+ *
+ * ## The strip is not computed here, and that is the design's own rule
+ *
+ * Its footer: *β-weighted aggregation across the whole book — including stock
+ * — is Risk › Exposure's job; this page never re-aggregates differently.* So
+ * the strip prints `useOptionGreeks`'s rollup — the same object Risk ›
+ * Exposure prints — with Risk's own captions (`Γ · per point`, `Vega · per
+ * vol pt`, `Θ · per day`). The design's `Γ$ / 1%` is a rescaling this side
+ * does not make; two pages showing one book's gamma at two scales is exactly
+ * what that sentence forbids.
+ *
+ * ## What the book holds
+ *
+ * Measured on DEV 2026-09-22: 11 short option legs over three expiries, nine
+ * underlyings, nine calls and two puts. **9 of the 11 price.** The two that do
+ * not are both AMD, and `/market/options/snapshots` answers `count: 0` for AMD
+ * at every expiry tried while the other eight underlyings answer with today's
+ * capture — AMD is absent from the snapshot store, not behind in it. Those two
+ * rows are drawn, marked UNPRICED, and counted out of the totals.
+ */
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PageHeader, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { SymbolPicker } from '@/components/symbol'
-import { AskCopilotButton } from '@/components/research/AskCopilotButton'
-import { compactSnapshot } from '@/components/research/compactSnapshot'
-import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
-import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import { useGreeksAvailableDates, useGreeksLoad } from '@/hooks/useGreeksHistory'
-import type { GreeksResponse, GreeksRow } from '@/types/research'
-import { GreeksCalcTooltip } from './greeks/GreeksCalcTooltip'
-import { GreeksHistoryTable } from './greeks/GreeksHistoryTable'
-import {
-  greeksControlsInnerClass,
-  greeksEmptyHintClass,
-  greeksFieldLabelClass,
-  greeksInfoApproxClass,
-  greeksInfoBarClass,
-  greeksInfoLabelClass,
-  greeksLoadingHintClass,
-} from './greeks/greeksUi'
+import { cn } from '@/lib/utils'
+import { fmtUsd } from '@/utils/positions'
+import { pnlColorClass } from '@/utils/dailyChange'
+import { ChainCalculatorFace } from './greeks/ChainCalculatorFace'
+import { BookLegsPanel } from './greeks/BookLegsPanel'
+import { useBookGreeks } from './greeks/useBookGreeks'
 
-const DEFAULT_SYMBOL = 'NVDA'
-const DEFAULT_RFR = 0.045
+type Face = 'book' | 'chain'
 
-export default function GreeksPage() {
-  const [symbol, setSymbol] = useState(DEFAULT_SYMBOL)
-  const [tradeDate, setTradeDate] = useState('')
-  const [riskFreeRate, setRiskFreeRate] = useState(DEFAULT_RFR)
-  const [rightFilter, setRightFilter] = useState<'ALL' | 'C' | 'P'>('ALL')
-  const [result, setResult] = useState<GreeksResponse | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
+const FACES = [
+  { value: 'book', label: 'Book legs' },
+  { value: 'chain', label: 'Chain calculator' },
+]
 
-  const [hoveredRow, setHoveredRow] = useState<GreeksRow | null>(null)
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
-  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+function Stat({
+  cap,
+  value,
+  ink,
+  sub,
+}: {
+  cap: string
+  value: string
+  ink?: string
+  sub?: string
+}) {
+  return (
+    <div className="flex min-w-[96px] flex-col gap-0.5">
+      <span className="text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        {cap}
+      </span>
+      <span className={cn('font-mono text-base font-bold tabular-nums', ink)}>{value}</span>
+      {sub ? <span className="text-dense-caption text-muted-foreground">{sub}</span> : null}
+    </div>
+  )
+}
 
-  const { data: availableDates = [], isLoading: datesLoading } = useGreeksAvailableDates(symbol)
-  const loadMutation = useGreeksLoad()
-
-  const resolvedTradeDate = useMemo(() => {
-    if (tradeDate && availableDates.includes(tradeDate)) return tradeDate
-    return availableDates[0] ?? ''
-  }, [tradeDate, availableDates])
-
-  function commitSymbol(next: string) {
-    const s = next.trim().toUpperCase()
-    if (!s || s === symbol) return
-    setSymbol(s)
-    setTradeDate('')
-    setResult(null)
-    setLoadError(null)
-  }
-
-  function handleLoad() {
-    if (!symbol || !resolvedTradeDate) return
-    setLoadError(null)
-    setResult(null)
-
-    const params = {
-      symbol,
-      trade_date: resolvedTradeDate,
-      risk_free_rate: riskFreeRate,
-      limit: 1000,
-      ...(rightFilter !== 'ALL' ? { right: rightFilter } : {}),
-    }
-
-    loadMutation.mutate(params, {
-      onSuccess: (res) => {
-        if (!res.ok) {
-          setLoadError(res.error ?? 'Request failed')
-          return
-        }
-        setResult(res)
-      },
-      onError: (err) => {
-        setLoadError(err instanceof Error ? err.message : 'fetch failed')
-      },
-    })
-  }
-
-  function handleRowHover(row: GreeksRow | null, e: React.MouseEvent | null) {
-    if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current)
-    if (row == null || e == null) {
-      tooltipTimerRef.current = setTimeout(() => setHoveredRow(null), 80)
-      return
-    }
-    setTooltipPos({ x: e.clientX, y: e.clientY })
-    setHoveredRow(row)
-  }
-
-  const loading = loadMutation.isPending
+function BookFace() {
+  // Read once: DTE must not change under the reader between renders.
+  const [todayIso] = useState(() => new Date().toISOString().slice(0, 10))
+  const b = useBookGreeks(todayIso)
+  // Contracts for the table and the marks line, holdings for the totals: the
+  // rollup sums the book's per-instance legs, and one contract can be three.
+  const contracts = b.rows.length
+  const priced = contracts - b.marks.unpriced
+  const holdings = b.totals.matched + b.totals.unmatched
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="Contract Greeks"
-        description="Historical option greeks from the research API: pick symbol and trade date, then fetch chain rows."
-        actions={
-          <div className="flex items-center gap-1.5">
-            <AskCopilotButton
-              originPage="greeks"
-              originLabel="Contract Greeks"
-              symbol={symbol}
-              date={resolvedTradeDate || undefined}
-              snapshot={compactSnapshot({
-                risk_free_rate: riskFreeRate,
-                right_filter: rightFilter,
-                rows: result?.count,
-              })}
-              suggestedPrompt={`Interpret the ${symbol} contract greeks on this date and flag unusual risk.`}
-            />
-            <SaveAsHypothesisButton
-              originPage="contract-greeks"
-              defaultTitle={symbol ? `${symbol} greeks hypothesis` : 'Contract Greeks hypothesis'}
-              defaultSymbols={symbol ? [symbol] : []}
-              defaultTags={['greeks']}
-              originRef={{
-                symbol,
-                trade_date: resolvedTradeDate || null,
-                risk_free_rate: riskFreeRate,
-                right_filter: rightFilter,
-                rows: result?.count ?? null,
-              }}
-            />
-          </div>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-start gap-x-7 gap-y-3 rounded-md border border-border px-3.5 py-2.5">
+        <Stat
+          cap="Contracts"
+          value={String(contracts)}
+          sub={`${priced} priced · ${holdings} holdings`}
+        />
+        <Stat
+          cap="Δ · options only"
+          value={priced > 0 ? fmtUsd(b.totals.delta, true) : '—'}
+          ink={pnlColorClass(b.totals.delta)}
+          sub="shares-equivalent, not β-weighted"
+        />
+        <Stat
+          cap="Γ · per point"
+          value={priced > 0 ? fmtUsd(b.totals.gamma, true) : '—'}
+          ink={b.totals.gamma < 0 ? 'text-warning' : undefined}
+          sub={b.totals.gamma < 0 ? 'short gamma' : 'long gamma'}
+        />
+        <Stat cap="Vega · per vol pt" value={priced > 0 ? fmtUsd(b.totals.vega, true) : '—'} />
+        <Stat
+          cap="Θ · per day"
+          value={priced > 0 ? fmtUsd(b.totals.theta, true) : '—'}
+          ink={pnlColorClass(b.totals.theta)}
+        />
+        <div className="ml-auto flex min-w-[180px] flex-col gap-0.5">
+          <span className="text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            Marks
+          </span>
+          <span
+            className={cn(
+              'text-dense-caption leading-relaxed',
+              b.marks.tone === 'warn' ? 'text-warning' : 'text-muted-foreground',
+            )}
+          >
+            {b.isLoading ? 'reading the chains…' : b.marks.text}
+          </span>
+          <span className="text-dense-caption text-muted-foreground">
+            spot {b.spotMix.live} live · {b.spotMix.close} close · {b.spotMix.mark} broker mark
+            {b.spotMix.none > 0 ? ` · ${b.spotMix.none} unpriced` : ''}
+          </span>
+        </div>
+      </div>
+
+      {b.isError ? (
+        <p role="status" className="text-dense-meta text-danger">
+          The chain snapshots did not answer — no leg on this page can be called priced.
+        </p>
+      ) : null}
+
+      <BookLegsPanel
+        groups={b.groups}
+        tightPct={b.tightPct}
+        loading={b.isLoading}
+        footer={
+          <>
+            Greeks are per leg from the vendor&rsquo;s dated chain snapshot — the same capture{' '}
+            <Link to="/portfolio/positions" className="text-foreground hover:underline">
+              Positions
+            </Link>{' '}
+            prices from — scaled to the position (per share × contracts × 100) and signed by it. A
+            leg the vendor cannot price keeps its row and is counted out of the totals, never summed
+            as zero. β-weighted aggregation across the whole book, including stock, is{' '}
+            <Link to="/risk/portfolio" className="text-foreground hover:underline">
+              Risk › Portfolio Exposure
+            </Link>
+            &rsquo;s job; the strip above is that page&rsquo;s own rollup, not a second one.
+          </>
         }
       />
+    </div>
+  )
+}
 
-      <Card variant="elevated">
-        <CardContent className="p-4">
-          <div className={greeksControlsInnerClass}>
-            <div className="space-y-1">
-              <Label htmlFor="greeks-symbol" className={greeksFieldLabelClass}>Symbol</Label>
-              <SymbolPicker
-                id="greeks-symbol"
-                value={symbol}
-                onSelect={commitSymbol}
-                placeholder="NVDA"
-                className="h-8 w-[5.5rem] text-xs"
-              />
-            </div>
-
-            <div className="space-y-1 min-w-[10rem]">
-              <Label htmlFor="greeks-date" className={greeksFieldLabelClass}>
-                Trade Date
-                {datesLoading && <span className="ml-1 normal-case tracking-normal">…</span>}
-              </Label>
-              <Select
-                value={resolvedTradeDate || undefined}
-                onValueChange={setTradeDate}
-                disabled={availableDates.length === 0}
-              >
-                <SelectTrigger id="greeks-date" className="h-8 text-xs font-mono">
-                  <SelectValue placeholder={availableDates.length === 0 ? '— no data —' : 'Select date'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDates.map(d => (
-                    <SelectItem key={d} value={d} className="text-xs font-mono">{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="greeks-rfr" className={greeksFieldLabelClass}>Risk-free Rate</Label>
-              <Input
-                id="greeks-rfr"
-                type="number"
-                className="h-8 w-20 text-xs font-mono tabular-nums"
-                value={riskFreeRate}
-                onChange={e => setRiskFreeRate(Number(e.target.value))}
-                min={0.001}
-                max={0.2}
-                step={0.001}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <span className={greeksFieldLabelClass}>C / P</span>
-              <SegmentControl
-                ariaLabel="Call or put filter"
-                value={rightFilter}
-                onChange={v => setRightFilter(v as 'ALL' | 'C' | 'P')}
-                options={[
-                  { value: 'ALL', label: 'All' },
-                  { value: 'C', label: 'C' },
-                  { value: 'P', label: 'P' },
-                ]}
-              />
-            </div>
-
-            <Button
-              type="button"
-              size="sm"
-              className="h-8"
-              onClick={handleLoad}
-              disabled={loading || !symbol || !resolvedTradeDate}
-            >
-              {loading ? 'Loading…' : 'Load'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <SymbolContextGuard symbol={symbol}>
-        {result && (
-          <Card variant="elevated">
-            <CardContent className={greeksInfoBarClass}>
-              <span>
-                <span className={greeksInfoLabelClass}>Symbol</span>
-                <strong className="font-mono">{result.symbol}</strong>
-              </span>
-              <span>
-                <span className={greeksInfoLabelClass}>Trade Date</span>
-                <strong className="font-mono">{result.trade_date}</strong>
-              </span>
-              {result.stock_price != null && (
-                <span>
-                  <span className={greeksInfoLabelClass}>Stock Price</span>
-                  <strong className="font-mono">${result.stock_price.toFixed(2)}</strong>
-                </span>
-              )}
-              <span>
-                <span className={greeksInfoLabelClass}>r</span>
-                <strong className="font-mono">{(result.risk_free_rate * 100).toFixed(2)}%</strong>
-              </span>
-              <span>
-                <span className={greeksInfoLabelClass}>Contracts</span>
-                <strong className="font-mono">{result.count.toLocaleString()}</strong>
-              </span>
-              <span className={greeksInfoApproxClass}>
-                Black-Scholes (European approximation for American options) · Hover row for BS detail
-              </span>
-            </CardContent>
-          </Card>
-        )}
-
-        {loadError && (
-          <Alert variant="destructive">
-            <AlertDescription>{loadError}</AlertDescription>
-          </Alert>
-        )}
-
-        {loading && (
-          <p className={greeksLoadingHintClass}>
-            Computing Contract Greeks…
-          </p>
-        )}
-
-        {result && result.rows.length > 0 && !loading && (
-          <GreeksHistoryTable
-            rows={result.rows}
-            tradeDate={result.trade_date}
-            onRowHover={handleRowHover}
-          />
-        )}
-
-        {result && result.rows.length === 0 && !loading && (
-          <p className={greeksEmptyHintClass}>
-            No option data found for {result.symbol} on {result.trade_date}.
-          </p>
-        )}
-
-        {hoveredRow && (
-          <GreeksCalcTooltip
-            row={hoveredRow}
-            pos={tooltipPos}
-            riskFreeRate={riskFreeRate}
-          />
-        )}
-      </SymbolContextGuard>
+export default function GreeksPage() {
+  const [face, setFace] = useState<Face>('book')
+  return (
+    <PageShell padding="compact" className="space-y-3">
+      <PageHeader
+        title="Contract Greeks"
+        description="Every option leg in the book, greek by greek — the per-leg detail behind Risk › Exposure's aggregates."
+        actions={
+          <Link
+            to="/risk/portfolio"
+            className="text-dense-meta text-muted-foreground hover:text-foreground"
+          >
+            Aggregates in Risk →
+          </Link>
+        }
+      />
+      <SegmentControl value={face} onChange={(v) => setFace(v as Face)} options={FACES} />
+      {face === 'book' ? <BookFace /> : <ChainCalculatorFace />}
     </PageShell>
   )
 }

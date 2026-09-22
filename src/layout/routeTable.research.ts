@@ -378,7 +378,17 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   // none is pipeline plumbing and goes to System › Data. Greeks takes a
   // contract, so it reads — and it holds no menu row, because it is a tab of
   // Symbol and the tree gives places, not tabs.
-  { path: '/research/greeks', label: 'Contract Greeks', crumbs: ANALYZE, scope: 'contract' },
+  {
+    path: '/research/greeks',
+    label: 'Contract Greeks',
+    crumbs: ANALYZE,
+    scope: 'contract',
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-19.2',
+      note: DESIGN_NOTES['/research/greeks'],
+    },
+  },
 
   // ── Research · Market ──────────────────────────────────────────────────
   {

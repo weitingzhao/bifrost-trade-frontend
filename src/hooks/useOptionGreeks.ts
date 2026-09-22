@@ -36,6 +36,16 @@ export interface GreeksRollup {
   /** Per leg, keyed by the vendor ticker. */
   byTicker: Map<string, PositionGreeks>
   /**
+   * The vendor's row per contract — per share, unscaled by any position.
+   *
+   * `byTicker` holds position greeks and is keyed by contract, so when one
+   * contract is held in two instances the second write wins and the first
+   * position's numbers are lost. That is harmless for the totals, which sum
+   * per leg, and wrong for anything that prints a row per contract. A caller
+   * that nets its own quantities scales from here instead.
+   */
+  perShareByTicker: Map<string, VendorGreeksRow>
+  /**
    * The vendor's dated close per leg, keyed the same way.
    *
    * Kept apart from `byTicker` because it survives a row the vendor could not
@@ -123,6 +133,7 @@ export function rollupGreeks(
   state: { isLoading: boolean; isError: boolean },
 ): GreeksRollup {
   const byTicker = new Map<string, PositionGreeks>()
+  const perShareByTicker = new Map<string, VendorGreeksRow>()
   const closeByTicker = new Map<string, { close: number; asOf: string | null }>()
   let delta = 0
   let gamma = 0
@@ -144,6 +155,7 @@ export function rollupGreeks(
       unmatched += 1
       continue
     }
+    perShareByTicker.set(ticker, row)
     const d = positionGreek(row.delta, leg.qty)
     const g = positionGreek(row.gamma, leg.qty)
     const t = positionGreek(row.theta, leg.qty)
@@ -173,6 +185,7 @@ export function rollupGreeks(
 
   return {
     byTicker,
+    perShareByTicker,
     closeByTicker,
     delta,
     gamma,

@@ -83,7 +83,14 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'questions. '
     + 'Swept: the Gates fact tile pointed at `/strategy/gates`, which still resolves through the '
     + 'redirect those seven retired pages left \u2014 it opens Trade \u203a Rules now, the page that owns that '
-    + 'reading. Every other link resolves; no horizontal overflow.',
+    + 'reading. Every other link resolves; no horizontal overflow. '
+    + 'REACHABILITY (Owner asked, 2026-09-21: \u300c\u8fd9\u4e2a\u5728 UI \u4e0a\u6ca1\u6709\u8fdb\u5165\u7684\u94fe\u63a5\u5427\uff1f\u300d). Measured: the only '
+    + 'door was the dock\u2019s empty state \u2014 the \u00aball starters \u2192\u00bb link on its book group \u2014 and that '
+    + 'group renders on a blank thread and nowhere else, so a reader with a thread open could not '
+    + 'reach the page at all. It is not a menu row on either side (`inNav: false` in the design, '
+    + 'out of the menu here since 2026-09-14), so the fix is not a row: the Copilot desk\u2019s header '
+    + 'carries **Book starters \u2192** beside Daily Brief, which is fixed and always visible. Owner '
+    + 'chose this over adding a menu row. Verified by clicking it.',
   '/research/orchestration':
     'Built from nothing 2026-09-21 against Research Orchestration.dc.html (Rev 2026-09-21.1), the page '
     + 'Design split out of Personas: whose reading to trust is the trader\u2019s question and stays on the '

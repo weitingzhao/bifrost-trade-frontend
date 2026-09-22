@@ -64,6 +64,16 @@ export default function CopilotDeskPage() {
                 <ClipboardList className="mr-1 size-3.5" /> Daily Brief
               </Link>
             </Button>
+            {/* The catalogue's only door used to be the dock's empty state —
+                the «all starters →» link on its book group — which appears on
+                a blank thread and nowhere else, so a reader with a thread
+                open could not reach it at all (Owner, 2026-09-21). It is not
+                a menu row on either side; this is the fixed entry instead. */}
+            <Button asChild variant="outline" size="sm">
+              <Link to="/research/copilot/trading">
+                <BookOpen className="mr-1 size-3.5" /> Book starters
+              </Link>
+            </Button>
             {/* The design's primary action on this page: a thread with
                 nothing attached, as ⌘J opens one from anywhere. `Ask Copilot`
                 beside it is the other kind — this page's own context. */}

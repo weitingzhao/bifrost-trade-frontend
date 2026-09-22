@@ -1,6 +1,12 @@
 /**
  * The Book, counted: where an idea is standing, and what is holding it.
  *
+ * It lives in the shared layer rather than beside the Book page because the
+ * Watchlist became its second reader (2026-09-22): the census says *how many*
+ * watched names carry a thesis, and the Watchlist says *which*. Two features,
+ * one definition — the alternative is two answers to the same question, which
+ * is the failure these pages invite.
+ *
  * Design §5a.4 — `/research/book` answers the one question its four children
  * cannot. Each of them draws its own table; none of them can say that a name
  * has been on the watchlist for months with no live reason behind it, or that
@@ -23,6 +29,28 @@ export function watchlistNames(items: readonly WatchlistItem[]): string[] {
     if (s) seen.add(s)
   }
   return [...seen].sort()
+}
+
+/**
+ * The hypothesis a name's thesis is, or null.
+ *
+ * A watch's thesis is not a field on the watch — it is the belief that names
+ * it. The design writes one sentence in the row; this side finds the belief
+ * and prints its title, which is the same claim written where it is editable
+ * and where its evidence hangs.
+ */
+export function thesisFor(
+  hypotheses: readonly Hypothesis[],
+  symbol: string,
+): Hypothesis | null {
+  const want = symbol.trim().toUpperCase()
+  if (!want) return null
+  // Active first: a retired belief is a reason the name *had*, and the row is
+  // asking what is holding it up now.
+  const about = hypotheses.filter((h) =>
+    (h.symbols ?? []).some((s) => String(s).trim().toUpperCase() === want),
+  )
+  return about.find((h) => h.status === 'active') ?? about[0] ?? null
 }
 
 /** Every symbol some hypothesis is about — the live reasons on the board. */

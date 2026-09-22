@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,7 +46,10 @@ export function WatchlistPageHeader({
   return (
     <PageHeader
       title="Watchlist"
-      description="Watching → Sizing → Positions. Use the inspector on symbol click for fundamentals and technicals."
+      // The design's own line. What the page *is* belongs here; how it is
+      // worked — Watching → Sizing → Positions — is the tab strip's job and
+      // the info tip's, and was saying it twice.
+      description="Names with a thesis attached — pinned from the Screener, from Scan, from a Symbol page or from an Inspector."
       className="max-w-none [&>div:last-child]:items-start"
       actions={
         <>
@@ -62,6 +66,13 @@ export function WatchlistPageHeader({
               {INFO_TEXT}
             </TooltipContent>
           </Tooltip>
+          {/* The design's one header link: this list is fed from the screen. */}
+          <Link
+            to="/research/screener"
+            className="text-dense-caption text-primary hover:underline"
+          >
+            Screener →
+          </Link>
           {extraActions}
           {showPosBtn && (
             <Button type="button" variant="outline" size="sm" onClick={onTogglePositionPicker}>

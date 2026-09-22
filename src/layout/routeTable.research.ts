@@ -284,7 +284,16 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   // machinery is filling up — which is System's question, not Research's.
   { path: '/research/lens-coverage', label: 'Lens Coverage', crumbs: SYSTEM_DATA },
   { path: '/research/signal-health', label: 'Signal Health', crumbs: SYSTEM_DATA },
-  { path: '/research/watchlist', label: 'Watchlist', crumbs: THE_BOOK },
+  {
+    path: '/research/watchlist',
+    label: 'Watchlist',
+    crumbs: THE_BOOK,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-18.2',
+      note: DESIGN_NOTES['/research/watchlist'],
+    },
+  },
   {
     // The Book's index: the object pages hold the objects, this one holds the
     // order they were written in. No artifact store exists on this side, so

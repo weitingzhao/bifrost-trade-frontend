@@ -367,13 +367,13 @@ export default function StockWatchlistPage() {
           categories={categories}
           quoteBySymbol={quoteBySymbol}
           quoteByContractKey={quoteByContractKey}
-          watchingCategoryId={watchingId}
           showPositionPicker={showPositionPicker}
           positionsNotInWatchlist={workflow.positionsNotInWatchlist}
           addPending={addItem.isPending}
-          itemCount={items.length}
-          onSymbolClick={item => handleSymbolClick(item)}
-          onToggleOptionable={item => void upsertFromItem(item, { optionable: !item.optionable })}
+          onSymbolClick={(item: WatchlistItem) => handleSymbolClick(item)}
+          onToggleOptionable={(item: WatchlistItem) =>
+            void upsertFromItem(item, { optionable: !item.optionable })
+          }
           onCategoryChange={(item, catId) => void upsertFromItem(item, { category_id: catId })}
           onRemove={item => void removeItem.mutateAsync(item.contract_key)}
           onAddOption={item => setAddOptionSymbol(symbolFromItem(item))}

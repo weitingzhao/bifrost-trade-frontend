@@ -53,7 +53,7 @@ import {
   waitingOnYou,
   type CensusBand,
   type StuckKind,
-} from '@/pages/research/book/bookCensusModel'
+} from '@/lib/research/bookCensus'
 
 const LEAD =
   'One ledger read four ways. An idea is watched, pooled as a candidate, believed as a hypothesis, and settled into the journal — the four pages below are four views of that one lifecycle, and this is the census across them.'

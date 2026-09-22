@@ -379,7 +379,10 @@ describe('design adoption', () => {
     // that one thing was landed the same round: Positions' Ask, the Copilot
     // page's aside (which this side never grew) and the Console's run drawer
     // (reviewing 6→9).
-    expect(counts.byState.reviewing).toBe(9)
+    // The Watchlist is the tenth, and the first walked in this round rather
+    // than caught by it: it was `pending`, and the design turns it from a
+    // list into a ledger (reviewing 9→10, pending 12→11).
+    expect(counts.byState.reviewing).toBe(10)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -439,6 +442,7 @@ describe('design adoption', () => {
       '/research/overview',
       '/research/scan',
       '/research/symbol',
+      '/research/watchlist',
       '/research/workbench',
       '/review/proposals',
     ])
@@ -508,8 +512,10 @@ describe('design adoption', () => {
     // routes (the objective page, the run redirect into the console drawer) —
     // built, designed, not yet walked. 14 since W1 walked Overview and the
     // Workbench home.
-    // 12 since Vol ratings and then Daily Brief left it for `reviewing`.
-    expect(counts.byState.pending).toBe(12)
+    // 12 since Vol ratings and then Daily Brief left it for `reviewing`, and
+    // 11 since the Watchlist did — the first page of this round walked rather
+    // than caught by it.
+    expect(counts.byState.pending).toBe(11)
     expect(
       rows
         .filter((r) => r.via)

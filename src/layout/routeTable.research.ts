@@ -225,7 +225,16 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   // all three — the first two are lenses of Stock ratings, the third moved to
   // Home as Alerts. So it answers to no design page; what it holds is not
   // lost, it is elsewhere.
-  { path: '/research/explorer', label: 'Stock Explorer', crumbs: DISCOVER, scope: 'underlying' },
+  {
+    path: '/research/explorer',
+    label: 'Stock Explorer',
+    crumbs: DISCOVER,
+    scope: 'underlying',
+    design: {
+      state: 'moving',
+      note: DESIGN_NOTES['/research/explorer'],
+    },
+  },
   // "Vol ratings", the design's own label since package 2026-09-20.1: the page
   // rates the vol on a name, and "Option Scan" described the machinery rather
   // than the reading. `/research/ratings` is its alias in the design registry.

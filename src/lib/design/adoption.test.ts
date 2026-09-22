@@ -484,8 +484,11 @@ describe('design adoption', () => {
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row
-    // here, so `moving` is the three the design still dissolves elsewhere.
-    expect(counts.byState.moving).toBe(3)
+    // here, so `moving` is what the design still dissolves elsewhere. Stock
+    // Explorer joined them on 2026-09-22: it is the tab shell over the first
+    // two, it answers to no design page of its own, and its walk left one open
+    // question — where the events board goes.
+    expect(counts.byState.moving).toBe(4)
     // Rev 2026-09-15.13 collapsed nine `/system/*` routes into `/system/status`
     // and `/settings` (the Owner's OLTP/OLAP/Ops ruling). The app still has the
     // nine pages, so each one asks where it goes — that is nine rows in "to
@@ -552,8 +555,11 @@ describe('design adoption', () => {
     // than caught by it — 9 since the two objective rows followed, both
     // answered by the one `:param` route that was walked, 8 with the Option
     // screen, 7 with Signal Decay, 6 with Signal Health, 5 with Lens Coverage
-    // 4 with Alerts, 3 with Live and 2 with Contract Greeks.
-    expect(counts.byState.pending).toBe(2)
+    // 4 with Alerts, 3 with Live and 2 with Contract Greeks. Stock Explorer
+    // was the next, and it turned out to be `moving` rather than a walk: its
+    // registry row is an alias of the Screener prototype, which is aligned at
+    // `/research/screener`.
+    expect(counts.byState.pending).toBe(1)
     expect(
       rows
         .filter((r) => r.via)

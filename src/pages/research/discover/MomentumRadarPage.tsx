@@ -4,6 +4,11 @@ import { Radar } from 'lucide-react'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { AddToPoolButton } from '@/components/research/AddToPoolButton'
+import { Link } from 'react-router-dom'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { ANALYZE_HUB } from '@/lib/analyzeHubs'
+import { fmtIsoDateToken } from '@/lib/format'
+import { momentumWindow } from './momentumWindow'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
   CollapsibleGroup,
@@ -48,6 +53,14 @@ function gradeAccentColor(grade: string): string {
   return 'border-border'
 }
 
+/**
+ * One score, and the day it was scored on.
+ *
+ * The endpoint returns the top 100 scores over its whole history rather than
+ * one row per symbol on the latest session — 24 symbols appear twice on DEV,
+ * PLTR at 85 on 04AUG and 81 on 07AUG — so a card without its date reads as
+ * today's grade for a name that was graded six weeks ago.
+ */
 function MomentumCard({ item }: { item: MomentumScore }) {
   const spot =
     typeof item.factors_json?.latest_close === 'number'
@@ -57,7 +70,13 @@ function MomentumCard({ item }: { item: MomentumScore }) {
     <Card variant="elevated" className={`border ${gradeAccentColor(item.grade)}`}>
       <CardContent className="flex flex-col items-center gap-1 px-3 py-3">
         <div className="flex items-center gap-1">
-          <p className="text-dense-body font-semibold text-entity-symbol">{item.symbol}</p>
+          <Link
+            to={withSymbolParam(ANALYZE_HUB.dossier, item.symbol)}
+            className="text-dense-body font-semibold text-entity-symbol hover:underline"
+            title={`Open ${item.symbol} in the Dossier`}
+          >
+            {item.symbol}
+          </Link>
           <AddToPoolButton
             symbol={item.symbol}
             source="momentum"
@@ -83,6 +102,12 @@ function MomentumCard({ item }: { item: MomentumScore }) {
             <DenseTag variant="neutral">{item.path}</DenseTag>
           ) : null}
         </div>
+        <p
+          className="font-mono text-dense-caption tabular-nums text-muted-foreground"
+          title="The session this score was computed on — the radar ranks across its whole history, not one day."
+        >
+          {fmtIsoDateToken(item.trade_date)}
+        </p>
       </CardContent>
     </Card>
   )
@@ -140,6 +165,12 @@ export function MomentumRadarBody({ state: injected }: { state?: MomentumState }
         </CardContent>
       </Card>
 
+      {items.length > 0 ? (
+        <p className="text-dense-caption leading-relaxed text-muted-foreground">
+          {momentumWindow(items)}
+        </p>
+      ) : null}
+
       {isError && <QueryErrorAlert error={error} onRetry={() => void refetch()} />}
 
       {isLoading ? (
@@ -157,7 +188,7 @@ export function MomentumRadarBody({ state: injected }: { state?: MomentumState }
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
           {items.map((item) => (
-            <MomentumCard key={item.symbol} item={item} />
+            <MomentumCard key={`${item.symbol}:${item.trade_date}`} item={item} />
           ))}
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Compass, Target } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
@@ -24,6 +25,8 @@ import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { AddToPoolButton } from '@/components/research/AddToPoolButton'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { ANALYZE_HUB } from '@/lib/analyzeHubs'
 import {
   fetchSepaCandidates,
   fetchSepaDaily,
@@ -96,7 +99,13 @@ function CandidateCard({ item }: { item: SepaScoreRow }) {
     <Card variant="elevated" className="border border-emerald-500/40">
       <CardContent className="flex flex-col items-center gap-1 px-3 py-3">
         <div className="flex items-center gap-1">
-          <p className="text-dense-body font-semibold text-entity-symbol">{item.symbol}</p>
+          <Link
+            to={withSymbolParam(ANALYZE_HUB.dossier, item.symbol)}
+            className="text-dense-body font-semibold text-entity-symbol hover:underline"
+            title={`Open ${item.symbol} in the Dossier`}
+          >
+            {item.symbol}
+          </Link>
           <AddToPoolButton
             symbol={item.symbol}
             source="sepa"
@@ -362,7 +371,15 @@ export function SepaDailyCoreBody({ state: injected }: { state?: SepaState } = {
             {rows.map((r) => (
               <DenseTableRow key={r.symbol}>
                 <DenseTableCell className={denseTableEntityCell}>
-                  <strong className="text-entity-symbol">{r.symbol}</strong>
+                  {/* A ticker is its own destination (design-walk §5). Both
+                      faces of this tab drew 200 names and linked none. */}
+                  <Link
+                    to={withSymbolParam(ANALYZE_HUB.dossier, r.symbol)}
+                    className="font-semibold text-entity-symbol hover:underline"
+                    title={`Open ${r.symbol} in the Dossier`}
+                  >
+                    {r.symbol}
+                  </Link>
                 </DenseTableCell>
                 <DenseTableCell>
                   <AddToPoolButton

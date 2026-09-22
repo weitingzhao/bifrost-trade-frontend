@@ -1,3 +1,35 @@
+/**
+ * Signal Decay — walked against `Research Signal Decay.dc.html`
+ * (Rev 2026-09-17.1) on 2026-09-22.
+ *
+ * ## The design asks a question this page could not answer
+ *
+ * The page was a per-lens instrument: pick a lens, a window and a regime, and
+ * read that one signal's hot/cold matrix, its intersections and its symbols.
+ * The design's page asks *which of them is slipping* — a roster of every
+ * signal, worst drift first, with an amber panel over it. No amount of
+ * picking one at a time answers that, so the roster leads and the instrument
+ * stays below it.
+ *
+ * ## The rule, and where its two numbers come from
+ *
+ * The design's footer is the whole argument: **decay is judged against each
+ * signal's own 1-year average, not against other signals.** The endpoint
+ * takes a `window_days`, so "now" and "its own year" are the same call asked
+ * twice — 90 against 252. Measured on DEV 2026-09-22 for `vrp hot`: 40.1% on
+ * 152 settled at 90 days against 43.7% on 245 at 252. That is the drift, in
+ * the design's terms.
+ *
+ * ## What is owed, and why
+ *
+ * **Profit factor** has no field: the response carries hit rates and no
+ * payoff, so the column is named in the footer rather than drawn empty. The
+ * trend bars are the engine's weekly **5-day** rolling rate, which is the only
+ * series it keeps — the header says `5d` rather than letting a 20-day column
+ * sit over a 5-day chart. And the design's alert *"zeroes the conviction cap
+ * in Compare"*: Compare has no page on this side, so the panel names where the
+ * credit would flow instead of linking into nothing.
+ */
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useQueries, useQuery } from '@tanstack/react-query'
@@ -15,7 +47,10 @@ import {
   SegmentControl,
   denseTableNumCell,
 } from '@/components/data-display'
-import { fmtNum } from '@/lib/format'
+import { fmtNum, fmtPctFromFraction } from '@/lib/format'
+
+/** Whole-percent from a 0–1 rate — the shared formatter, named for this page. */
+const pct = (v: number | null | undefined) => fmtPctFromFraction(v, 0)
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -41,6 +76,8 @@ import {
   type SignalDecayTrendPoint,
 } from '@/api/research/signalDecay'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { DecayRoster } from './DecayRoster'
+import { useDecayRoster } from './useDecayRoster'
 
 const LENS_OPTIONS: { value: SignalDecayLens; label: string }[] = [
   { value: 'iv_rank', label: 'IV Rank' },
@@ -77,11 +114,6 @@ const MATRIX_COLS: Array<{ side: 'hot' | 'cold'; label: string }> = [
 function parseRegime(raw: string | null): SignalDecayRegime {
   if (raw === 'bull' || raw === 'rangy' || raw === 'bear' || raw === 'any') return raw
   return 'any'
-}
-
-function pct(rate: number | null | undefined): string {
-  if (rate == null || !Number.isFinite(rate)) return '—'
-  return `${(rate * 100).toFixed(0)}%`
 }
 
 function fmtHit(v: boolean | null | undefined): string {
@@ -448,15 +480,22 @@ export default function SignalDecayPage() {
 
   const loading = q30.isLoading || q90.isLoading || q252.isLoading
   const err = q30.error || q90.error || q252.error
+  const roster = useDecayRoster()
 
   return (
     <PageShell padding="compact">
       <PageHeader
         title="Signal Decay"
         titleSize="default"
-        description="Lens trigger → forward return hit-rate for the registry's decay lenses (IV Rank / VRP / OpEx Pin / Skew / Gamma / Terrain)."
+        description="Is each signal still earning its keep — rolling hit rates, drift against its own year, and the alerts that cut conviction credit."
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/review/playbook-stats"
+              className="text-dense-caption text-primary hover:underline"
+            >
+              Playbook stats →
+            </Link>
             <AskCopilotButton
               originPage="analyze-signal-decay"
               originLabel="Signal Decay"
@@ -515,6 +554,19 @@ export default function SignalDecayPage() {
             for per-symbol recent triggers.
           </p>
         )}
+
+        {/* The design's lead, and the question the picker below cannot ask:
+            which of the twelve is slipping. */}
+        <DecayRoster rows={roster.rows} alerts={roster.alerts} loading={roster.loading} />
+        {roster.failed.length > 0 ? (
+          <p className="text-dense-caption text-muted-foreground">
+            No reading arrived for {roster.failed.join(', ')} — those rows are absent rather than
+            zero.
+          </p>
+        ) : null}
+
+        {/* Below the roster: the per-lens instrument this page already was. */}
+        <h2 className="pt-1 text-dense-body font-semibold">One lens, up close</h2>
 
         <AnalyzeVerdictStrip
           tone={verdict.tone}

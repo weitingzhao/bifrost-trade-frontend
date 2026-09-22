@@ -11,6 +11,7 @@
  * describes from the same objects the cockpit reads.
  */
 import type { BookVsBase, CoverRow, GaugeLevel } from './bookVsBase'
+import { fmtPctFromFraction } from '@/lib/format'
 import { PRESSURE_BANDS } from './bookVsBase'
 import type { ExposureSummary } from './assignmentExposure'
 import type { MarginRollup } from './marginPressure'
@@ -64,7 +65,7 @@ export interface ExplainInputs {
   room?: RoomSummary
 }
 
-const pct = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${Math.round(v * 100)}%`)
+const pct = (v: number | null | undefined) => fmtPctFromFraction(v, 0)
 const pct1 = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${(v * 100).toFixed(1)}%`)
 const usd = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : fmtUsd(v))
 const n = (v: number) => v.toLocaleString()

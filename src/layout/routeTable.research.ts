@@ -275,7 +275,16 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   },
 
   // ── Research · Workbench · Validate ────────────────────────────────────
-  { path: '/research/signal-decay', label: 'Signal Decay', crumbs: VALIDATE },
+  {
+    path: '/research/signal-decay',
+    label: 'Signal Decay',
+    crumbs: VALIDATE,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/research/signal-decay'],
+    },
+  },
   { path: '/research/signal-decay/:symbol', label: 'Signal Decay', crumbs: VALIDATE },
   {
     path: '/research/backtest',

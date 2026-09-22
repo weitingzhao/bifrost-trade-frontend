@@ -390,8 +390,11 @@ describe('design adoption', () => {
     // pending 11→9). The Option screen is the thirteenth and closes the
     // Discover fold; its walk's finding is that the screener's chain store is
     // dark, which the page now diagnoses instead of going blank
-    // (reviewing 12→13, pending 9→8).
-    expect(counts.byState.reviewing).toBe(13)
+    // (reviewing 12→13, pending 9→8). Signal Decay is the fourteenth: it was
+    // a per-lens instrument, and the design's page asks which of the twelve
+    // is slipping — a question picking one at a time cannot answer
+    // (reviewing 13→14, pending 8→7).
+    expect(counts.byState.reviewing).toBe(14)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -453,6 +456,7 @@ describe('design adoption', () => {
       '/research/loop/objectives/obj-earnings-iv',
       '/research/overview',
       '/research/scan',
+      '/research/signal-decay',
       '/research/symbol',
       '/research/watchlist',
       '/research/workbench',
@@ -527,9 +531,9 @@ describe('design adoption', () => {
     // 12 since Vol ratings and then Daily Brief left it for `reviewing`, and
     // 11 since the Watchlist did — the first page of this round walked rather
     // than caught by it — 9 since the two objective rows followed, both
-    // answered by the one `:param` route that was walked, and 8 with the
-    // Option screen.
-    expect(counts.byState.pending).toBe(8)
+    // answered by the one `:param` route that was walked, 8 with the Option
+    // screen and 7 with Signal Decay.
+    expect(counts.byState.pending).toBe(7)
     expect(
       rows
         .filter((r) => r.via)

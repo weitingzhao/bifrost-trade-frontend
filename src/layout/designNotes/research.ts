@@ -93,7 +93,7 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'glance \u2014 and two renderings of one graph should not both be the first thing. '
     + 'One divergence, and the gate found it: the design\u2019s runtime fold points at **System '
     + 'Status**, a page this side has not collapsed into one \u2014 the link goes to System \u203a Daemon, '
-    + 'which holds that reading here.',
+    + 'which holds that reading here. Owner signed off 2026-09-21.',
   '/research/agent-personas':
     'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 adds the Track record table — you · hand verdicts beside the four judges, same 20d rule, n<10 amber — so the sign-off reads stale until W2 builds the verdict store and the table over it.'
     + ' '

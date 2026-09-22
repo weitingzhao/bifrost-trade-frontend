@@ -38,7 +38,7 @@ const exhibits: ExhibitPayload[] = [
 describe('FaceCard', () => {
   it('shows the face, its coverage, each lens in the lab words, and where to read it in full', () => {
     const view = faceView(
-      DOSSIER_FACES.find((f) => f.id === 'positioning')!,
+      DOSSIER_FACES.find((f) => f.id === 'dealer')!,
       exhibits,
       'NVDA',
       () => undefined
@@ -48,28 +48,51 @@ describe('FaceCard', () => {
         <FaceCard view={view} loading={false} />
       </MemoryRouter>
     )
-    expect(screen.getByText('Positioning')).toBeTruthy()
+    expect(screen.getByText('Dealer levels')).toBeTruthy()
     expect(screen.getByText('1/2 read')).toBeTruthy()
-    // The decisive lens is the headline and a row — but the row is the
-    // design's four columns now (Rev 2026-09-18.2): the lens's name, its
-    // reading, and what that reading has been worth. The band's word stays
-    // in the headline, which is where the answer belongs; the row leads with
-    // the number the lens actually produced.
-    expect(screen.getByText(`Gamma · ${labelForBand('gex_regime', 'cold')}`)).toBeTruthy()
+    // The headline is the verdict, and the line under it is what that verdict
+    // means — the design's verdict block (Rev 2026-09-18.2). This side printed
+    // `lens · verdict` and dropped the meaning entirely, so the card said what
+    // it found without saying why that matters.
+    expect(screen.getByText(labelForBand('gex_regime', 'cold'))).toBeTruthy()
+    expect(screen.getByText('Positive net gamma — dealers damp moves.')).toBeTruthy()
+    // The row leads with the lens's own name and the number it produced.
     expect(screen.getAllByText('Gamma').length).toBeGreaterThan(0)
-    // What a reading *means* is the headline's job now. It stays on every
-    // row as its title, so a lens that is not the headline has not lost its
-    // sentence — it is one hover away, where the long record line already
-    // was.
-    expect(screen.getByTitle('Positive net gamma — dealers damp moves.')).toBeTruthy()
-    // A lens that did not answer still holds its row and says so, in the
-    // column where its reading would be.
+    // The link says where it goes, and it goes to this page's own tab.
+    const open = screen.getByRole('link', { name: 'Dealer tab →' })
+    expect(open.getAttribute('href')).toBe('/research/symbol?tab=dealer&symbol=NVDA')
+  })
+
+  it('keeps a lens that did not answer, and says so where its reading would be', () => {
+    const view = faceView(
+      DOSSIER_FACES.find((f) => f.id === 'flow')!,
+      exhibits,
+      'NVDA',
+      () => undefined
+    )
+    render(
+      <MemoryRouter>
+        <FaceCard view={view} loading={false} />
+      </MemoryRouter>
+    )
     expect(screen.getByText('Sentiment')).toBeTruthy()
     expect(screen.getByText('no reading')).toBeTruthy()
     expect(screen.getByText('No options trades tape on the current data plan')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Open' }).getAttribute('href')).toBe(
-      '/research/dealer-levels?symbol=NVDA'
+  })
+
+  it('marks the one face the list was ranking on', () => {
+    const view = faceView(
+      DOSSIER_FACES.find((f) => f.id === 'dealer')!,
+      exhibits,
+      'NVDA',
+      () => undefined
     )
+    render(
+      <MemoryRouter>
+        <FaceCard view={view} loading={false} drove />
+      </MemoryRouter>
+    )
+    expect(screen.getByText('drove the rating')).toBeTruthy()
   })
 
   it('reads as loading until the first exhibit lands', () => {

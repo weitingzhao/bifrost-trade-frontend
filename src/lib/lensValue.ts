@@ -48,3 +48,32 @@ export function recordColumns(
     v == null || !Number.isFinite(v) ? '—' : `${Math.round(v * 100)}%`
   return { rates: `${pct(s.hit_rate_5d)} · ${pct(s.hit_rate_20d)}`, n: `n${s.evaluated_20d}` }
 }
+
+/**
+ * The 20-day record as numbers, for the rail that ranks lenses by it.
+ *
+ * Same side rule as {@link recordColumns} — a lens sitting cold is judged on
+ * its cold triggers — and the same refusal to invent one: a side with nothing
+ * evaluated returns null rather than a zero, because "never settled" is not
+ * "settled and wrong".
+ */
+export function record20(
+  tr:
+    | {
+        symbol_scoped?: boolean | null
+        by_side?: Record<
+          string,
+          { evaluated_20d?: number; hit_rate_20d?: number | null }
+        >
+      }
+    | null
+    | undefined,
+  band: string | null,
+): { hit: number; n: number; scoped: boolean } | null {
+  if (!tr?.by_side) return null
+  const side = band === 'cold' || band === 'lean_cold' ? 'cold' : 'hot'
+  const s = tr.by_side[side]
+  const n = s?.evaluated_20d ?? 0
+  if (!s || n === 0 || s.hit_rate_20d == null || !Number.isFinite(s.hit_rate_20d)) return null
+  return { hit: s.hit_rate_20d, n, scoped: tr.symbol_scoped === true }
+}

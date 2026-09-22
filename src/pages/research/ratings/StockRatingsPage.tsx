@@ -12,7 +12,7 @@
  * not; every column the model cannot carry is marked on the page rather than
  * drawn empty.
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -39,6 +39,7 @@ import {
   LensBarCell,
   LensSpreadPanel,
   WeightsPanel,
+  presetOf,
   type LensSpread,
 } from '@/components/research'
 import {
@@ -54,6 +55,7 @@ import { cn } from '@/lib/utils'
 import { fetchSepaDaily } from '@/api/researchEngine'
 import { rowSelectProps } from '@/hooks/useRowLink'
 import { withSymbolParam } from '@/lib/symbolLink'
+import { publishSymbolTrail } from '@/lib/symbolTrail'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import {
   COLD_AT,
@@ -201,6 +203,42 @@ export default function StockRatingsPage() {
   const setSelected = (sym: string | null) => setParam('sym', sym ?? '', '')
   const selectedIndex = scored.findIndex((r) => r.row.symbol === selected)
   const selectedRow = selectedIndex >= 0 ? scored[selectedIndex] : null
+
+  /**
+   * What this list is ranking, and why each name is on it.
+   *
+   * The Symbol page's `From …` strip and its `WHY IT WAS THERE` chips read this
+   * — so a name opened from here arrives carrying the equity model's reading of
+   * it, not just its ticker. `drove: 'trend'` is why that page says "trend
+   * drove the screen" rather than naming a volatility lens: this table sorted
+   * on the company, and only the table knows that.
+   */
+  useEffect(() => {
+    if (scored.length === 0) return
+    publishSymbolTrail({
+      label: 'Stock ratings',
+      href: '/research/ratings/stocks',
+      note: `${WEIGHT_PRESETS.find((p) => p.id === presetOf(WEIGHT_PRESETS, RATING_LENSES, weights))?.label.toLowerCase() ?? 'custom'} weights`,
+      drove: 'trend',
+      items: scored.map(({ row, score }) => ({
+        symbol: row.symbol,
+        why: [row.grade, row.path].filter(Boolean).join(' · ') || undefined,
+        chips: [
+          {
+            k: 'composite',
+            v: score == null ? '—' : score.toFixed(1),
+            tone: flagOf(score) === 'neutral' ? ('neutral' as const) : flagOf(score),
+          },
+          ...RATING_LENSES.map((lens) => ({
+            k: lens.label,
+            v: row.scores[lens.key] == null ? '—' : row.scores[lens.key]!.toFixed(0),
+            tone: 'neutral' as const,
+          })),
+          { k: 'path', v: row.path ?? '—', tone: 'neutral' as const },
+        ],
+      })),
+    })
+  }, [scored, weights])
 
   const tape = ratingsTape(counts.hot, counts.cold, counts.total)
   /* One bar per lens, over the universe rather than the Hot/Cold cut: the

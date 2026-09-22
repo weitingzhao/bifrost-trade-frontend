@@ -7,33 +7,49 @@
  * meant leaving the name each time. Owner overrode the standing defer-merges
  * decision for this page specifically, 2026-09-12.
  *
- * The container owns everything the six pages each used to carry — the shell,
- * the title, the context bar, the regime ribbon, the verdict strip — so a tab
- * change is a body change and nothing above it moves. `?tab=` drives it, so a
- * tab is bookmarkable and linkable exactly as `?view=` was.
+ * ## Re-walked 2026-09-21 against Rev 2026-09-18.2
  *
- * Sections stack rather than sub-tab. Volatility is four lenses read *together*
- * to reach one verdict; hiding three behind a sub-tab is the shape the twelve
- * separate pages had. Every retired `?view=` survives as that section's anchor,
- * so a link written before the merge still lands on what it pointed at.
+ * The page had the right *pieces* and the wrong *shape*. The design reads, top
+ * to bottom: the face switch, the list you came from, the name and its verdict
+ * with the verbs beside it, then a **tab strip that divides the header from the
+ * body**, then — on Overview — two columns, the faces and a rail. This side had
+ * the tabs as a control among the header's buttons, no rail at all, and the
+ * page's own strips (context, Copilot, legs, since-snapshot) stacked between
+ * the title and the body so the body began below the fold.
+ *
+ * Three things moved rather than being added:
+ *
+ * - **the tab strip** is the spine now, sticky, with a dot per face and the
+ *   `opt` mark before the option faces. `1`–`6` switch, which is the design's
+ *   own shortcut and the reason a strip beats a segment control here.
+ * - **Since last snapshot** was above the tabs, where it claimed to be about
+ *   the whole page; it is one of the design's three rail panels and sits in the
+ *   rail, on the face that reads it.
+ * - **the regime ribbon left.** Its five chips are the five faces' verdicts,
+ *   which the cards below now print with their records — the strip was the same
+ *   reading twice, once without its evidence. It stays on the other tabs'
+ *   sections, where the card grid is not there to say it.
+ *
+ * `?tab=` still drives the tabs, so every link and bookmark written against
+ * them is unchanged, and every retired `?view=` still lands on its anchor.
  */
-import { useMemo } from 'react'
+import { Fragment, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { SegmentControl } from '@/components/data-display'
 import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
+import { StatusLamp } from '@/components/StatusLamp'
 import { ResearchContextBar } from '@/components/research/ResearchContextBar'
-import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
-import { CompositeRegimeRibbon } from '@/components/research/CompositeRegimeRibbon'
 import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
-import { useDossier } from '@/hooks/useDossier'
 import { useResearchContext } from '@/hooks/useResearchContext'
-import { verdictView } from '@/lib/lensVerdict'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
-import { PlanThisButton } from '@/components/research/PlanThisButton'
-import { SymbolMyLegs } from '@/pages/research/analyze/symbol/SymbolMyLegs'
-import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
+import { cn } from '@/lib/utils'
+import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
 import { SymbolIdentity } from '@/pages/research/analyze/symbol/SymbolIdentity'
+import { SymbolMyLegs } from '@/pages/research/analyze/symbol/SymbolMyLegs'
 import { SymbolOriginRail } from '@/pages/research/analyze/symbol/SymbolOriginRail'
+import { SymbolRecordRail } from '@/pages/research/analyze/symbol/SymbolRecordRail'
+import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
+import { SymbolVerdictPanel } from '@/pages/research/analyze/symbol/SymbolVerdictPanel'
+import { useSymbolFaces } from '@/pages/research/analyze/symbol/useSymbolFaces'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
 import { IvRankSection } from '@/pages/research/analyze/volRegime/IvRankSection'
 import { VrpSection } from '@/pages/research/analyze/volRegime/VrpSection'
@@ -46,17 +62,15 @@ import { PlaybookSection } from '@/pages/research/analyze/scenario/PlaybookSecti
 import { FlowBody } from '@/pages/research/analyze/flow/FlowBody'
 import { DiscoveryBody } from '@/pages/research/analyze/discovery/DiscoveryBody'
 
-const TAB_DESCRIPTION: Record<SymbolTabId, string> = {
-  overview: 'One symbol, every face. Observe-only (D10).',
-  volatility: 'How volatility is priced here — read the four together, not one at a time.',
-  dealer: 'Where the dealers sit: gamma levels and the OpEx cycle.',
-  scenario: 'What the model expects, and how its paths have settled.',
-  flow: 'Order sentiment — placeholder until the options tape is on the plan.',
-  chain: 'The chain for this name: expiries, strikes, structures.',
+/** The design's line at the right of the tab strip — what this face is for. */
+const TAB_HINT: Record<SymbolTabId, string> = {
+  overview: 'six faces · open a face to read it in full · 1–6 switch tabs',
+  volatility: 'one name only — the universe tables stay in Discover',
+  dealer: 'where the dealers sit: gamma levels and the OpEx cycle',
+  scenario: 'what the model expects · observe-only (D10)',
+  flow: 'a proxy until the options tape is on the data plan',
+  chain: 'expiries, strikes and structures for this name',
 }
-
-/** Amber outranks green, and a real fault outranks both. */
-const TONE_RANK: Record<string, number> = { danger: 0, warning: 1, success: 2, info: 3, neutral: 4 }
 
 /** One section of a stacked tab, anchored by the `?view=` it used to be. */
 function Anchored({ id, children }: { id: string; children: React.ReactNode }) {
@@ -72,22 +86,7 @@ export default function SymbolPage() {
   const [params, setParams] = useSearchParams()
   const active = tabFor(params.get(TAB_PARAM), params.get('view'))
   const { symbol } = useResearchContext()
-  // One batch for every registry lens, shared with the Overview tab's faces —
-  // so the dots cost nothing beyond what the page already fetches.
-  const { exhibits } = useDossier(symbol)
-
-  const dotFor = useMemo(() => {
-    const byLens = new Map(exhibits.map((ex) => [ex.lens, ex]))
-    return (tab: (typeof SYMBOL_TABS)[number]) => {
-      let worst: string | null = null
-      for (const lens of tab.lenses) {
-        const v = verdictView(lens, byLens.get(lens))
-        if (v.band == null) continue
-        if (worst == null || TONE_RANK[v.tone] < TONE_RANK[worst]) worst = v.tone
-      }
-      return worst
-    }
-  }, [exhibits])
+  const faces = useSymbolFaces(symbol)
 
   const setTab = (id: SymbolTabId) => {
     setParams((prev) => {
@@ -99,68 +98,142 @@ export default function SymbolPage() {
     })
   }
 
+  /**
+   * `1`–`6` switch faces — the design's own shortcut.
+   *
+   * It stands down while a field has focus: the page carries a symbol box and
+   * the Copilot composer, and a digit typed into either is a digit.
+   */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const el = e.target as HTMLElement | null
+      if (el && (/INPUT|TEXTAREA|SELECT/.test(el.tagName) || el.isContentEditable)) return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const n = Number(e.key)
+      if (!Number.isInteger(n) || n < 1 || n > SYMBOL_TABS.length) return
+      e.preventDefault()
+      setTab(SYMBOL_TABS[n - 1].id)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  /** A tab's dot is the lamp of the face it opens — one reading, not two. */
+  const lampFor = useMemo(() => {
+    const byTab = new Map(
+      faces.views.filter((v) => v.face.isTab).map((v) => [v.face.openTo, v.lamp]),
+    )
+    return (id: SymbolTabId) => byTab.get(id) ?? null
+  }, [faces.views])
+
+  const decisive = faces.views.flatMap((v) => v.rows).filter((r) => r.band === 'hot' || r.band === 'cold')
+  const thesis =
+    decisive.length > 0
+      ? decisive.map((r) => r.verdict).join(' · ')
+      : 'No lens is decisive on this name today'
+
   return (
-    <PageShell padding="compact" className="space-y-3">
-      <div>
-        <PageHeader
-          title="Symbol"
-          description={TAB_DESCRIPTION[active]}
-          actions={
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Reading | Method: this page's back is the Symbol method face
-                  (design 2026-09-20.4). It sits with the page's own controls
-                  because a face is a view of the page, not a place. */}
-              <PageFaceSwitch path={SYMBOL_PATH} />
-              {symbol ? (
-                <PlanThisButton
-                  symbol={symbol}
-                  source={`symbol:${active}`}
-                  sourceLabel={`Symbol · ${active}`}
-                  variant="primary"
-                />
-              ) : null}
-              <SegmentControl
-                ariaLabel="Symbol tab"
-                size="sm"
-                value={active}
-                onChange={(v) => setTab(v as SymbolTabId)}
-                options={SYMBOL_TABS.map((t) => {
-                  const dot = dotFor(t)
-                  return {
-                    value: t.id,
-                    // The worst band inside a tab, on the tab: a name's problem is
-                    // visible without opening the tab that holds it.
-                    label: dot ? `${t.label} ●` : t.label,
-                  }
-                })}
-              />
-            </div>
-          }
-        />
-        {/* The design opens the page with the name, its price and what the
-            lenses concluded — this side opened with the word «Symbol» and a
-            chip strip, which says what the page is and not what it found
-            (Rev 2026-09-18.2). */}
-        {symbol ? <SymbolIdentity symbol={symbol} /> : null}
-        {/* Where this name came from, and the way through that list — stepping
-            it keeps the tab you are reading. */}
-        <SymbolOriginRail symbol={symbol} tabQuery={`${SYMBOL_PATH}?${TAB_PARAM}=${active}`} />
-        <ResearchContextBar
-          showDate={active === 'dealer' || active === 'chain'}
-          asof={symbol ? <SymbolAsofTag symbol={symbol} /> : null}
-        />
-        {symbol ? <CompositeRegimeRibbon symbol={symbol} /> : null}
-        <CopilotVerdictStrip originPage={`symbol:${active}`} originLabel={`Symbol · ${active}`} />
-        {/* Contract §11.7 — the judgement is read against what you already
-            carry on this name, so the leg rail sits with the ribbon. */}
-        {symbol ? <SymbolMyLegs symbol={symbol} /> : null}
-        {symbol ? <SymbolSinceSnapshot symbol={symbol} /> : null}
+    <PageShell padding="compact" className="space-y-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Reading | Method: this page's back is the Symbol method face
+            (design 2026-09-20.4). A face is a view of the page, not a place. */}
+        <PageFaceSwitch path={SYMBOL_PATH} />
+        {!symbol ? (
+          <PageHeader title="Symbol" description="One symbol, every face. Observe-only (D10)." />
+        ) : null}
       </div>
+
+      {/* Where this name came from, and the way through that list — stepping it
+          keeps the tab you are reading. */}
+      <SymbolOriginRail symbol={symbol} tabQuery={`${SYMBOL_PATH}?${TAB_PARAM}=${active}`} />
+
+      {symbol ? (
+        <SymbolIdentity symbol={symbol} faces={faces} asof={<SymbolAsofTag symbol={symbol} />} />
+      ) : null}
+
+      <div className="sticky top-0 z-10 -mx-3 flex items-end overflow-x-auto border-b border-border bg-card px-3">
+        {SYMBOL_TABS.map((t, i) => {
+          const lamp = lampFor(t.id)
+          const on = t.id === active
+          return (
+            <Fragment key={t.id}>
+              {t.id === 'chain' ? (
+                <span
+                  className="ml-2 self-center border-l border-border pl-3 font-mono text-dense-micro tracking-wide text-entity-contract opacity-75"
+                  title="The option faces. The design draws two — Chain and Payoff — and this side has no payoff page, no route and no data behind one."
+                >
+                  opt
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setTab(t.id)}
+                aria-current={on ? 'page' : undefined}
+                title={`${TAB_HINT[t.id]} — ${i + 1}`}
+                className={cn(
+                  'inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-dense-label',
+                  on
+                    ? 'border-primary font-semibold text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {lamp ? <StatusLamp lamp={lamp} className="h-1.5 w-1.5" /> : null}
+                {t.label}
+              </button>
+            </Fragment>
+          )
+        })}
+        <span className="ml-auto hidden min-w-0 shrink truncate pb-2 pl-3 text-dense-meta text-muted-foreground lg:block">
+          {TAB_HINT[active]}
+        </span>
+      </div>
+
+      {/* The strips that belong to a face rather than to the page.
+    
+          The symbol picker goes where the design puts it — nowhere: the shell's
+          own field sets the symbol and stays on the page while doing it, so a
+          second box under the tabs was a second way to do one thing. It is kept
+          on the two faces that also need the as-of date beside it.
+    
+          The Copilot strip leaves Overview for the same reason the regime
+          ribbon left: the rail's `Your verdict` panel now lists the very claims
+          it was summarising, with their approval states. It stays on the five
+          faces that have no rail. */}
+      {active === 'dealer' || active === 'chain' ? (
+        <ResearchContextBar showDate />
+      ) : null}
+      {active === 'overview' ? null : (
+        <CopilotVerdictStrip originPage={`symbol:${active}`} originLabel={`Symbol · ${active}`} />
+      )}
+      {/* Contract §11.7 — the judgement is read against what you already
+          carry on this name, so the leg rail sits above the body. */}
+      {symbol ? <SymbolMyLegs symbol={symbol} /> : null}
 
       {/* Keyed so a tab switch remounts: a lab's selected row, sort and filters
           belong to that lab, not to its neighbour. */}
       <div key={active}>
-        {active === 'overview' && <DossierBody />}
+        {active === 'overview' && (
+          /* Two columns, as the design draws them. The rail is not a seventh
+             face: your own verdict is a thing you write, what moved is a
+             comparison with yesterday, and the record is a ranking *of* the
+             cards beside it. */
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="min-w-0 flex-[1_1_34rem]">
+              <DossierBody faces={faces} />
+            </div>
+            {symbol ? (
+              <aside className="flex min-w-0 flex-[1_1_18rem] flex-col gap-3 lg:max-w-[22rem]">
+                <SymbolVerdictPanel symbol={symbol} thesis={thesis} />
+                <SymbolSinceSnapshot symbol={symbol} />
+                <SymbolRecordRail
+                  symbol={symbol}
+                  record={faces.record}
+                  loading={faces.loading}
+                />
+              </aside>
+            ) : null}
+          </div>
+        )}
         {active === 'volatility' && (
           <div className="space-y-4">
             <Anchored id="iv-rank"><IvRankSection /></Anchored>

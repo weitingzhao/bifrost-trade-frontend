@@ -49,6 +49,7 @@ import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import {
   AddToPoolButton,
+  presetOf,
   LensBarCell,
   LensSpreadPanel,
   PlanThisButton,
@@ -211,22 +212,49 @@ export default function ScanPage() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  // What this list is ranking, in the order it is ranking it — so the Symbol
-  // page can say `From Underlyings · 3/40` and step the list without coming
-  // back here. The reason is the row's own hot/cold flags, in its own words.
+  /**
+   * What this list is ranking, in the order it is ranking it — and why.
+   *
+   * The Symbol page reads this to say `From Vol ratings · neutral weights · 3
+   * of 19` and to draw the design's `WHY IT WAS THERE` chips. The chips are
+   * this page's own numbers, formatted here: the reading that earned a name its
+   * place has to be checkable against the page that ranked it, and a second
+   * formatting of the same figure is how the two drift apart.
+   */
   useEffect(() => {
     if (scored.length === 0) return
+    const preset = presetOf(presets, VOL_LENSES, weights)
     publishSymbolTrail({
-      label: 'Underlyings',
+      label: 'Vol ratings',
       href: '/research/scan',
-      items: scored.map(({ row }) => {
+      note: `${presets.find((p) => p.id === preset)?.label.toLowerCase() ?? 'custom'} weights`,
+      // A ranked table is an opinion about one thing, and this one ranks on how
+      // volatility is priced. The Symbol page says so rather than guessing.
+      drove: 'volatility',
+      items: scored.map(({ row, score }) => {
         const called = Object.entries(row.flags)
           .filter(([, v]) => v === 'hot' || v === 'cold')
           .map(([lens, v]) => `${lens} ${v}`)
-        return { symbol: row.symbol, why: called.length > 0 ? called.join(' · ') : undefined }
+        return {
+          symbol: row.symbol,
+          why: called.length > 0 ? called.join(' · ') : undefined,
+          chips: [
+            {
+              k: 'composite',
+              v: score == null ? '—' : score.toFixed(1),
+              tone: flagOf(score) === 'neutral' ? ('neutral' as const) : flagOf(score),
+            },
+            ...BAR_LENSES.map((lens) => ({
+              k: lens.label,
+              v: lensReading(row, lens.key),
+              tone: (row.flags[lens.key] ?? 'neutral') as 'hot' | 'cold' | 'neutral',
+            })),
+            { k: 'terrain', v: row.regime ?? '—', tone: 'neutral' as const },
+          ],
+        }
       }),
     })
-  }, [scored])
+  }, [scored, presets, weights])
 
   const tape = volTape(counts.hot, counts.cold, counts.total)
   const spreads: LensSpread[] = useMemo(

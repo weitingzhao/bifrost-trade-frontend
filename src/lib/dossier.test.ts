@@ -49,14 +49,26 @@ const face = (id: string) => DOSSIER_FACES.find((f) => f.id === id)!
 describe('the dossier faces', () => {
   it('fetch every registry lens exactly once between them', () => {
     expect([...DOSSIER_LENSES].sort()).toEqual([...REGISTRY_LENSES].sort())
+    // The design's cut: the faces are this page's own tabs, in the order the
+    // tab strip draws them. Positioning split into Dealer levels and Flow,
+    // Forecast became Scenario, and Validation left the grid for the rail.
     expect(DOSSIER_FACES.map((f) => f.id)).toEqual([
       'trend',
       'volatility',
-      'positioning',
+      'dealer',
+      'scenario',
+      'flow',
       'events',
-      'forecast',
-      'validation',
     ])
+    // Every tab face opens its own tab, and the one that is not a tab says so.
+    expect(DOSSIER_FACES.filter((f) => f.isTab).map((f) => f.openTo)).toEqual([
+      'volatility',
+      'dealer',
+      'scenario',
+      'flow',
+      'chain',
+    ])
+    expect(face('trend').isTab).toBe(false)
   })
 
   it('lead with the decisive lens, count what was read, and colour the lamp by coverage and freshness', () => {
@@ -78,19 +90,23 @@ describe('the dossier faces', () => {
       exhibit('skew'),
     ]
     const v = faceView(face('volatility'), exhibits, 'NVDA', noSpec)
-    expect(v.headline).toBe(`IV Rank · ${labelForBand('iv_rank', 'cold')}`) // cold beats lean_cold, whatever the order
+    // The verdict alone, not `lens · verdict`: the row below names the lens,
+    // and the design's headline is the conclusion (Rev 2026-09-18.2).
+    expect(v.headline).toBe(labelForBand('iv_rank', 'cold')) // cold beats lean_cold, whatever the order
+    expect(v.means).toBe('premium is cheap')
     expect(v.tone).toBe('danger')
-    expect(v.coverage).toEqual({ read: 2, of: 6 })
+    expect(v.coverage).toEqual({ read: 2, of: 4 })
     expect(v.lamp).toBe('yellow')
     expect(v.rows.map((r) => r.id)).toEqual(['iv_rank', 'vrp', 'skew']) // the face's order, not the payload's
     expect(v.rows[0].record).toContain('cold 72%')
     expect(v.rows[0].recordDetail).toContain('cold side hit 5d 72%')
     expect(v.rows[2].verdict).toBe('no reading')
-    expect(v.href).toBe('/research/vol-regime?symbol=NVDA')
+    // Its full reading is a tab of this page, so the link is a tab of this page.
+    expect(v.href).toBe('/research/symbol?tab=volatility&symbol=NVDA')
   })
 
   it('reads as empty before any exhibit lands, and fully green only when every lens is fresh and read', () => {
-    expect(faceView(face('forecast'), [], 'NVDA', noSpec)).toMatchObject({
+    expect(faceView(face('scenario'), [], 'NVDA', noSpec)).toMatchObject({
       headline: 'No reading yet',
       // Grey, not red: no reading is not a fault (DESIGN_CONTRACTS 2026-09-13.1).
       lamp: 'gray',
@@ -104,7 +120,7 @@ describe('the dossier faces', () => {
         verdict: { band: 'hot', label: 'Hot', value: 0.6, unit: 'x', means: 'paths hit' },
       }),
     ]
-    expect(faceView(face('forecast'), all, 'NVDA', noSpec)).toMatchObject({
+    expect(faceView(face('scenario'), all, 'NVDA', noSpec)).toMatchObject({
       lamp: 'green',
       coverage: { read: 2, of: 2 },
     })
@@ -122,45 +138,41 @@ describe('the dossier faces', () => {
       noSpec
     )
     expect(v).toMatchObject({ headline: NOT_MEASURED, rows: [], coverage: null, lamp: 'gray' })
-    expect(v.href).toBe('/docs/research-calibration?symbol=NVDA')
+    expect(v.href).toBe('/research/symbol?tab=chain&symbol=NVDA')
   })
 
-  it('reports which lenses settled on this symbol instead of re-listing their readings', () => {
+  it('carries the readings that are not lenses, printed as the page handed them over', () => {
+    const v = faceView(face('events'), [], 'NVDA', noSpec, {
+      rows: [
+        { id: 'opex', label: 'OpEx', value: '5 days' },
+        { id: 'held', label: 'Held', value: 'not held' },
+      ],
+    })
+    // A gate, not a lens: nothing here is scored, so nothing is coloured, and
+    // the record columns are a dash rather than a rate.
+    expect(v.headline).toBe('A gate, not a lens')
+    expect(v.rows.map((r) => [r.label, r.value, r.band, r.rates])).toEqual([
+      ['OpEx', '5 days', null, null],
+      ['Held', 'not held', null, null],
+    ])
+    expect(v.coverage).toBeNull()
+  })
+
+  it('prints a lens value in the form the page asked for, and counts it read all the same', () => {
     const exhibits = [
       exhibit('sepa', {
-        verdict: { band: 'hot', label: 'Hot', value: 80, unit: 'x', means: 'setup' },
-        track_record: record(8, 0.33),
-      }),
-      exhibit('momentum', {
-        verdict: { band: 'lean_hot', label: 'Lean hot', value: 66, unit: 'x', means: 'release' },
-        track_record: record(0, 0),
-      }),
-      exhibit('vrp', {
-        verdict: { band: 'cold', label: 'Cold', value: 0, unit: 'x', means: 'cheap' },
-        track_record: record(23, 0.72, 'cold'),
-      }),
-      exhibit('gex_regime', {
-        verdict: { band: 'hot', label: 'Hot', value: 0, unit: 'x', means: 'chase' },
-        track_record: { ...record(5, 0.5), symbol_scoped: false },
+        verdict: { band: 'hot', label: 'Hot', value: 100, unit: 'pct', means: 'setup' },
       }),
     ]
-    const v = faceView(face('validation'), exhibits, 'NVDA', noSpec)
-    // No rows: FaceCard renders `record` on every face, so each of these lenses
-    // already shows its track record on the face that owns it. Repeating them
-    // here put the same eight lines on screen twice.
-    expect(v.rows).toEqual([])
-    // What only this face knows is the split — settled here versus borrowed
-    // from a pooled record — and that is a list of names.
-    expect(v.recordScopes?.scoped).toHaveLength(2)
-    expect(v.recordScopes?.pooled).toHaveLength(1)
-    expect(v.headline).toBe('2 lenses have a settled record on NVDA; 1 reads all symbols')
-    expect(v.lamp).toBe('green')
-    // A lens with no settled trigger is in neither list — momentum has n=0.
-    expect([...(v.recordScopes?.scoped ?? []), ...(v.recordScopes?.pooled ?? [])]).toHaveLength(3)
-    expect(faceView(face('validation'), [], 'NVDA', noSpec)).toMatchObject({
-      headline: 'No settled track record on NVDA yet',
-      lamp: 'yellow',
-      recordScopes: { scoped: [], pooled: [] },
+    const v = faceView(face('trend'), exhibits, 'NVDA', noSpec, {
+      values: { sepa: '11 / 11' },
+      rows: [{ id: 'structure', label: 'Structure · VCP', value: '80.8' }],
     })
+    expect(v.rows[0].value).toBe('11 / 11')
+    // The override is a form, not a reading: the band, the tone and the count
+    // of what was read are untouched by it.
+    expect(v.rows[0].band).toBe('hot')
+    expect(v.coverage).toEqual({ read: 1, of: 2 })
+    expect(v.rows[v.rows.length - 1].label).toBe('Structure · VCP')
   })
 })

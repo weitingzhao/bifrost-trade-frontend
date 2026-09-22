@@ -18,10 +18,29 @@ import { createExternalStore } from '@/lib/cockpit/externalStore'
 
 const STORAGE_KEY = 'bifrost.symbol.trail'
 
+/**
+ * One reading the list was ranking on, as the list printed it.
+ *
+ * The design's `WHY IT WAS THERE` strip is chips, not a sentence: `composite 77
+ * · IV rank 71 · VRP +5.9 · terrain RANGY`. A sentence would have to be parsed
+ * to be laid out, and the numbers are the point — you are checking whether the
+ * reading that earned the name its place still holds.
+ */
+export interface TrailChip {
+  /** What it is, in the list's words. */
+  k: string
+  /** The reading, formatted by the list that produced it. */
+  v: string
+  /** How the list read it, for the chip's colour. */
+  tone?: 'hot' | 'cold' | 'neutral'
+}
+
 export interface SymbolTrailItem {
   symbol: string
   /** Why the list put it here — the rank line, in the list's own words. */
   why?: string
+  /** The same reason as the design's chips. */
+  chips?: TrailChip[]
 }
 
 export interface SymbolTrail {
@@ -29,6 +48,19 @@ export interface SymbolTrail {
   label: string
   /** Back to it. */
   href: string
+  /**
+   * What the list was ranking with, when that is a choice — "Neutral weights".
+   * The same list under different weights is a different list.
+   */
+  note?: string
+  /**
+   * The face the list ranked on, so the page can say what drove the rating.
+   *
+   * A ranked table is an opinion about one thing; the Symbol page's sub-line
+   * and the `drove the rating` tag on one card both read this rather than
+   * guessing from the lenses, because only the list knows why it sorted.
+   */
+  drove?: string
   items: SymbolTrailItem[]
 }
 
@@ -68,12 +100,15 @@ export function publishSymbolTrail(trail: SymbolTrail): void {
 export interface SymbolTrailPosition {
   label: string
   href: string
+  note?: string
+  drove?: string
   /** 1-based, for reading. */
   index: number
   total: number
   prev: string | null
   next: string | null
   why?: string
+  chips?: TrailChip[]
 }
 
 /**
@@ -91,11 +126,14 @@ export function trailPositionFor(
   return {
     label: trail.label,
     href: trail.href,
+    note: trail.note,
+    drove: trail.drove,
     index: at + 1,
     total: trail.items.length,
     prev: at > 0 ? trail.items[at - 1].symbol : null,
     next: at < trail.items.length - 1 ? trail.items[at + 1].symbol : null,
     why: trail.items[at].why,
+    chips: trail.items[at].chips,
   }
 }
 

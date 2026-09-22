@@ -124,7 +124,7 @@ const APP_ROUTES: ReadonlySet<string> = new Set(ROUTES.map((r) => r.path))
  * table, measured 2026-09-21 by reading which page each button is on and, for
  * a page the design is moving, where `routeTable`'s design note sends it.
  *
- * Eight of these tokens are the Symbol page's own tabs — `/research/symbol`
+ * Nine of these tokens are the Symbol page's own faces — `/research/symbol`
  * absorbed six pages, so a hypothesis saved from its volatility, dealer,
  * scenario or flow face came out of Symbol. Narrative keeps a store and no
  * token, because its page is not built: nothing can stamp it yet, which is
@@ -150,6 +150,10 @@ const STAMP_ROW: Record<string, string> = {
   // `stock-screener`.
   sepa: '/research/ratings/stocks',
   'sepa-daily-core': '/research/ratings/stocks',
+  // The Overview face stamps the page itself rather than one of the six tab
+  // tokens beside it: a hypothesis written from the identity line or the rail
+  // was read across every face, not out of one.
+  symbol: '/research/symbol',
   screener: '/research/contract-screener',
   'stock-screener': '/research/screener',
   'vol-surface-lab': '/research/symbol',

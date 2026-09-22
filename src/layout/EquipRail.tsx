@@ -4,33 +4,43 @@
  * `equip.ts` holds why the three modules are not in the business tree;
  * `equipRail.module.css` holds the material and the motion, transcribed from
  * the design's own stylesheet. This holds the states: which icon is lit, and
- * what a click opens.
+ * what a click does.
  *
- * ## Four states, and what each one means
- *
- * The design's rail says two different things at once and keeps them apart:
+ * ## Two states, and what each one means
  *
  * - **`here`** — you are standing on one of the module's pages. These pages
  *   have no row in the tree, so the group is their "you are here": the box
  *   takes the hue on its border and the page's icon takes it on its ink.
- * - **`open`** — this route's float or drawer is open. Dock semantics: an open
- *   surface rides across navigation until you close it, and its icon stays
- *   filled the whole time. That is the whole of what the retired pin button
- *   did.
+ * - **`open`** — this surface is open, in the float or in the panel. Dock
+ *   semantics: an open surface rides across navigation until you close it,
+ *   and its icon stays filled the whole time. That is the whole of what the
+ *   retired pin button did.
  *
  * Both can be true, neither can be, and they are drawn differently on purpose:
  * standing somewhere is a fact about the page, having something open is a fact
  * about your desk.
  *
- * **A click opens a surface, it does not navigate** (§5a.8, seventh round):
- * *from the rail = floating, from the address bar = a page*. The float's title
- * bar carries `open as page →` for when you want the real thing.
+ * ## One click, three outcomes
+ *
+ * **Visible → close · open but behind another tab → bring it forward · not
+ * open → open where you last put it** (§5a.8, seventeenth round). The tooltip
+ * says which of the two places it is in, so the icon never just means "on".
+ *
+ * **A click opens a surface, it does not navigate**: *from the rail =
+ * floating, from the address bar = a page*. `⤢` in the header is there for
+ * when you want the real thing.
  */
 import { useLocation } from 'react-router-dom'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
-import { toggleSurface, useSurfaces } from './equipSurface'
+import { placeOf, surfaceForRoute, toggleSurface, useSurfaces } from './equipSurface'
 import css from './equipRail.module.css'
+
+/** What the tooltip adds once something is open — "on" alone is not a place. */
+function placeNote(to: string): string {
+  const at = placeOf(to)
+  return at === 'float' ? ' · in a float' : at === 'panel' ? ' · in the side panel' : ''
+}
 
 function RailButton({
   page,
@@ -41,7 +51,7 @@ function RailButton({
 }: {
   page: EquipPage
   head?: boolean
-  /** This route's own surface is open. */
+  /** This surface is open, wherever it is. */
   open: boolean
   /** The frame page is this route. */
   here: boolean
@@ -51,18 +61,25 @@ function RailButton({
   return (
     <button
       type="button"
-      onClick={() => toggleSurface(page.to)}
+      onClick={() => {
+        const surface = surfaceForRoute(page.to)
+        if (surface) toggleSurface(surface)
+      }}
       aria-label={page.label}
       aria-pressed={open}
+      title={page.label + placeNote(page.to)}
       className={`${css.btn} ${head ? css.head : css.item}`}
       style={{
-        // Open is the loud state, standing here is the quiet one — a surface
-        // you left open is news, a page you are on is not.
+        // Opaque tiles, not holes in the glass: the group's box is what stays
+        // translucent, the icons keep full ink (the design says so in its own
+        // stylesheet, after the first build dimmed the whole group to 40% and
+        // made them unreadable). Open is the loud state, standing here is the
+        // quiet one — a surface you left open is news, a page you are on is not.
         background: open
-          ? 'color-mix(in oklab, var(--rh) 18%, transparent)'
+          ? 'color-mix(in oklab, var(--rh) 26%, var(--sk-raised2))'
           : here
-            ? 'color-mix(in oklab, var(--rh) 13%, transparent)'
-            : 'transparent',
+            ? 'color-mix(in oklab, var(--rh) 16%, var(--sk-raised2))'
+            : 'var(--sk-surface)',
         color: open || here ? 'var(--rh)' : 'var(--sk-mute)',
         ...(head
           ? {
@@ -93,8 +110,10 @@ function Group({
   lamp?: boolean
   count?: number
 }) {
-  const { float, drawer } = useSurfaces()
-  const openAt = (to: string) => float?.to === to || drawer?.to === to
+  // Subscribed so the lit states follow the surfaces; `placeOf` reads the same
+  // store, and this is what tells React to look again.
+  useSurfaces()
+  const openAt = (to: string) => placeOf(to) != null
   const here = equipGroupOf(activePath)?.id === group.id
   const anyOpen = openAt(group.hub.to) || group.pages.some((p) => openAt(p.to))
 

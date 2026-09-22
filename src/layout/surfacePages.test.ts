@@ -1,13 +1,13 @@
 /**
- * The gate on the one duplication this pass introduces.
+ * The gate on the one duplication the surfaces introduce.
  *
- * A float renders the route's component directly, which means a second map
+ * A surface renders the route's component directly, which means a second map
  * from route to module beside `router.tsx`. Two maps drift; this one reads the
  * router's source and fails if they ever disagree.
  */
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { FLOAT_PAGES } from './floatPages'
+import { SURFACE_PAGES } from './surfacePages'
 import { equipRoutes } from './equip'
 
 /** `path: 'x', lazy: lazyPage(() => import('@/…'))` — the router's own shape. */
@@ -21,8 +21,8 @@ function routerModules(): Map<string, string> {
 }
 
 /** The same shape, read out of this module's own source. */
-function floatModules(): Map<string, string> {
-  const src = readFileSync('src/layout/floatPages.ts', 'utf8')
+function surfaceModules(): Map<string, string> {
+  const src = readFileSync('src/layout/surfacePages.ts', 'utf8')
   const out = new Map<string, string>()
   const re = /'([^']+)':\s*lazy\(\(\)\s*=>\s*import\('([^']+)'\)\)/g
   let m: RegExpExecArray | null
@@ -30,16 +30,16 @@ function floatModules(): Map<string, string> {
   return out
 }
 
-describe('the float page table', () => {
+describe('the surface page table', () => {
   it('covers every route the rail can open', () => {
     for (const to of equipRoutes()) {
-      expect(FLOAT_PAGES[to], `${to} has no float component`).toBeDefined()
+      expect(SURFACE_PAGES[to], `${to} has no surface component`).toBeDefined()
     }
   })
 
   it('renders the same module the router renders for that route', () => {
     const router = routerModules()
-    for (const [to, module] of floatModules()) {
+    for (const [to, module] of surfaceModules()) {
       expect(router.get(to), `${to} is not a router route`).toBe(module)
     }
   })
@@ -47,6 +47,6 @@ describe('the float page table', () => {
   it('offers nothing the rail cannot open', () => {
     // A page in here that no icon reaches is a chunk nobody loads and a claim
     // nobody checks.
-    expect(Object.keys(FLOAT_PAGES).sort()).toEqual([...equipRoutes()].sort())
+    expect(Object.keys(SURFACE_PAGES).sort()).toEqual([...equipRoutes()].sort())
   })
 })

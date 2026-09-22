@@ -210,9 +210,22 @@ describe('design adoption', () => {
     // a look (45→43): the layer grew a second face and the alias stopped
     // being a page of its own. Rule proposals followed them out the same
     // evening, merged into the Inbox as its fourth view (43→42).
+    //
+    // Package 2026-09-22.3 @ Rev .6 — the "one surface, three places"
+    // restructure — then moved three walked pages' own revs, and the sum is
+    // unchanged because nothing left the walk: aligned 42→39, stale 0→3. All
+    // three are the same edit seen from three sides. Positions and the
+    // Copilot page changed because "open beside" became one destination
+    // (`Reg.ask` → a tab in the panel); the Autopilot Console changed because
+    // its run drawer retired. The run half of the Console is landed; its
+    // Copilot button, and both of the other two, are the Thread's round.
     expect(counts.aligned + counts.byState.stale).toBe(42)
-    expect(counts.aligned).toBe(42)
-    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
+    expect(counts.aligned).toBe(39)
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
+      '/portfolio/positions',
+      '/research/copilot',
+      '/research/loop/harness',
+    ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -382,16 +395,13 @@ describe('design adoption', () => {
       '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
-      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/book',
-      '/research/copilot',
       '/research/copilot/trading',
       '/research/journal',
       '/research/loop/candidates',
       '/research/loop/decisions',
-      '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/orchestration',
       '/research/ratings/stocks',
@@ -547,7 +557,10 @@ describe('design adoption', () => {
     // Package 2026-09-21.4 @ Rev .6: the Personas face redrawn and one new
     // route (`/research/orchestration`). It moved the three Copilot rows'
     // own rev, which is why one of them is stale and two were re-walked.
-    expect(DESIGN_REV).toBe('2026-09-21.6')
+    // Package 2026-09-22.3 @ Rev .6 is the same kind of round again, and the
+    // largest: eighteen rulings about surfaces, three page stamps moved, and
+    // the whole of the Research layer re-crumbed as Pipeline left the tree.
+    expect(DESIGN_REV).toBe('2026-09-22.6')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -565,7 +578,11 @@ describe('design adoption', () => {
     // re-walked and took the design's own name, and 2 → 1 with the Decision
     // Inbox. 1 → 0 with Symbol: for the first time since Package 2026-09-18.1
     // there is no page whose design has moved past its walk.
-    expect(counts.byState.stale).toBe(0)
+        // 0 → 3 with Package 2026-09-22.3: the surfaces round moved the Copilot
+    // page, the Autopilot Console and Positions. None of the three lost its
+    // walk — what changed is that "open beside" now has one destination, and
+    // saying so on those three pages is the Thread's round.
+    expect(counts.byState.stale).toBe(3)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design
@@ -592,7 +609,10 @@ describe('adoptionByGroup', () => {
     // page (§5a.1). It was built, re-walked section by section against the
     // prototype, and signed off 2026-09-20 — so the group is whole again at
     // ten of ten, with nothing left waiting on a look.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 10, left: 0 })
+    // Positions went stale in Package 2026-09-22.3 — still walked, still
+    // built, its Ask now owed a destination — so the group has one left to
+    // answer without having lost a page.
+    expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
     expect(portfolio?.byState.reviewing).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 

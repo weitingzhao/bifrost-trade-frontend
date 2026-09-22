@@ -17,7 +17,7 @@ import { PageRouteFallback } from '@/components/layout'
 import { CopilotDock } from '@/components/copilot/CopilotDock'
 import { EquipRail } from './EquipRail'
 import { EquipFloat } from './EquipFloat'
-import { EquipDrawer } from './EquipDrawer'
+import { EquipPanel } from './EquipPanel'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
 import { useRecentPagesTrail } from '@/lib/omnibar'
@@ -101,19 +101,21 @@ export function AppLayout() {
           renders a flex row, so at the reading width on a wide screen the dock
           takes its space from the content instead of covering it. */}
         <CopilotDock />
-        {/* The equipment's edge (design Rev 2026-09-22.2, §5a.8). After the
-            dock, so the dock's own surface wins when both are at the right
-            edge — the rail fades to near-nothing when it is not being reached
-            for, which is how it can live on top of two other right-edge
-            things without owning the space. */}
+        {/* The one side panel (design Rev 2026-09-22.6, §5a.8 seventeenth
+            round). A sibling of the content, like the dock, so that when
+            there is room it takes its column out of the page instead of
+            covering it. */}
+        <EquipPanel />
+        {/* The equipment's edge. After the panel and the dock, so it floats
+            over both — the rail is shell furniture, not page furniture, and
+            it keeps the screen edge for Fitts. */}
         <EquipRail />
-        {/* The two surfaces the rail opens. Neither takes a scrim: the page
+        {/* The other place a surface can rest. No scrim on either: the page
             behind stays completely interactive, which is the whole claim of
             the word float — and the evidence of cross-phase work is approving
             a decision while standing on a Trade page, not a Review page
             hovering over a Trade page. */}
         <EquipFloat />
-        <EquipDrawer />
         <Omnibar />
         <MessageToastStack
           messages={stream.messages}

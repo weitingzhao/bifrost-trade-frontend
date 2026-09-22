@@ -46,7 +46,6 @@ import {
   openLoopRunInCopilot,
 } from '@/lib/harness/loopCopilotPrefill'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
-import { INSPECTOR_WIDTH_OPTIONS, useInspectorWidth } from '@/lib/harness/inspectorWidth'
 import { copyText, personaStageMarkdown } from '@/lib/harness/personaExport'
 import { SegmentControl } from '@/components/data-display'
 import { TriageFold } from '@/components/research/harness/PersonaVerdicts'
@@ -101,7 +100,6 @@ export function LoopRunPipelineBody({
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
     },
   })
-  const [inspectorWidth, setInspectorWidth] = useInspectorWidth()
 
   const run = runQ.data
   const draftIds = Array.isArray(run?.outputs?.draft_ids)
@@ -211,14 +209,6 @@ export function LoopRunPipelineBody({
                 ]}
                 onChange={(v) => setLang(v as typeof lang)}
                 ariaLabel="Reasoning language"
-              />
-              {/* The reader decides how much of the screen a paragraph of
-                  reasoning deserves, and the choice is remembered. */}
-              <SegmentControl
-                value={inspectorWidth}
-                options={INSPECTOR_WIDTH_OPTIONS}
-                onChange={(v) => setInspectorWidth(v as typeof inspectorWidth)}
-                ariaLabel="Panel width"
               />
             </>
           ) : null

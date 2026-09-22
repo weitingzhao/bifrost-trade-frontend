@@ -25,15 +25,17 @@
  *
  * ## One table, every surface
  *
- * The design's `equip()` feeds its rail, its floats and its drawers from one
- * object, and so does this. Phase B reads `hub` and `pages` to navigate; the
- * float geometry (`size`, `kind`) is carried now and used when the surfaces
- * land, so the table does not have to be revisited to grow them.
+ * The design's `equip()` feeds its rail and all three places from one object,
+ * and so does this: the rail reads it to draw, `equipSurface.ts` reads it to
+ * decide what a route opens as.
  *
- * **One icon the design has and this side does not draw: Loop Run.** It is a
- * drawer over the Console in the design; this app has no `/research/loop/runs`
- * route at all, so the rail would be offering a door to nothing. It returns
- * with the route.
+ * **One icon the design has and this side does not draw: Loop Run.** In the
+ * design it is a route (`/research/loop/runs`) that a rail icon can open with
+ * no run in mind. Here a run is never a page — it is a reading opened *from a
+ * run*, either from the Console's runs table or from the
+ * `/research/loop/harness?run=<id>` deep link (`runSurface`). An icon with no
+ * run behind it would be a door to nothing, so the rail draws nine, not ten,
+ * and says which one is missing rather than drawing it hollow.
  */
 import {
   BookOpen,
@@ -48,18 +50,21 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-/** Which surface a page opens as. Only `page` is built in this phase. */
-export type EquipKind = 'page' | 'float' | 'drawer'
-
-/** The float's default device grade — the design's Phone / Pad / Full. */
-export type EquipSize = 'phone' | 'pad' | 'full'
-
 export interface EquipPage {
   to: string
   label: string
   icon: LucideIcon
-  size?: EquipSize
-  kind?: EquipKind
+  /**
+   * Where this page opens the first time, before place memory has an opinion.
+   *
+   * Nothing sets it today and the default is right: §5a.8's fourteenth round
+   * collapsed the per-task size grades into one rule — **every surface first
+   * opens as a Phone float**, because a first open is a glance, not a
+   * commitment, and the size you choose afterwards is remembered per surface.
+   * The design's one `panel` default is Loop Run, which is not a route here
+   * (see `runSurface` in `equipSurface.ts`).
+   */
+  def?: 'float' | 'panel'
 }
 
 export interface EquipGroup {
@@ -107,18 +112,13 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
     id: 'autopilot',
     label: 'Autopilot',
     icon: Terminal,
-    hub: { to: '/research/loop/harness', label: 'Autopilot Console', icon: Terminal, size: 'pad' },
+    hub: { to: '/research/loop/harness', label: 'Autopilot Console', icon: Terminal },
     // The Inbox seats in Review as a menu row (§5a.8) *and* rides here: the
     // rail is not a second tree, it is the equipment's own reach, and the one
     // page that accumulates work without me is the one I most want one click
     // from wherever I am standing.
     pages: [
-      {
-        to: '/research/loop/decisions',
-        label: 'Decision Inbox',
-        icon: ClipboardList,
-        size: 'phone',
-      },
+      { to: '/research/loop/decisions', label: 'Decision Inbox', icon: ClipboardList },
     ],
     owns: ['/research/loop/objectives/', '/research/loop/runs'],
   },
@@ -126,11 +126,11 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
     id: 'book',
     label: 'The Book',
     icon: BookOpen,
-    hub: { to: '/research/book', label: 'The Book', icon: BookOpen, size: 'pad' },
+    hub: { to: '/research/book', label: 'The Book', icon: BookOpen },
     pages: [
       { to: '/research/loop/hypotheses', label: 'Hypothesis Board', icon: GitFork },
       { to: '/research/loop/candidates', label: 'Candidate Pool', icon: ListFilter },
-      { to: '/research/watchlist', label: 'Watchlist', icon: Star, size: 'phone' },
+      { to: '/research/watchlist', label: 'Watchlist', icon: Star },
       { to: '/research/journal', label: 'Journal', icon: History },
     ],
   },
@@ -138,7 +138,7 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
     id: 'copilot',
     label: 'Copilot',
     icon: MessageCircle,
-    hub: { to: '/research/copilot', label: 'Copilot Desk', icon: MessageCircle, size: 'pad' },
+    hub: { to: '/research/copilot', label: 'Copilot Desk', icon: MessageCircle },
     pages: [
       { to: '/research/copilot/trading', label: 'Book starters', icon: NotebookPen },
     ],

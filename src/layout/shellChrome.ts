@@ -11,8 +11,18 @@
  * bar 24px always present, sidebar 240px expanded.
  */
 
-/** Top bar: sidebar toggle · breadcrumb · Omnibar · symbol chip · market strip · inbox · Copilot. */
+/** Top bar: sidebar toggle · breadcrumb · Omnibar · Lens · Copilot. */
 export const SHELL_TOP_BAR_HEIGHT_CLASS = 'h-[42px] shrink-0'
+
+/**
+ * The same 42, as a number, for the surfaces that start below it.
+ *
+ * The design measures its own top bar with a ResizeObserver because that bar
+ * wraps to two rows on a narrow viewport. This one does not — it is a single
+ * flex row with a shrinking breadcrumb — so there is nothing to measure and a
+ * constant is the honest spelling.
+ */
+export const SHELL_TOP_BAR_PX = 42
 
 /** Bottom bar: always present, never scrolls away, never grows. */
 export const SHELL_STATUS_BAR_HEIGHT_CLASS = 'h-6 shrink-0'

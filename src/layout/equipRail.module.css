@@ -17,7 +17,13 @@
  * deepens it.
  */
 
-/* ── The group: an Apple-style glass bubble welded to the right edge ────── */
+/* ── The group: a glass bubble that floats, like everything else ────────── */
+/* Eighteenth round. It used to be welded to the screen edge — no right
+   border, two square corners — which made it the one thing on this layer
+   that was not a card. The Owner read that as the split: "侧边栏和侧边工具栏
+   的交互和 Page 的浮动感相比心智上割裂". So: off the edge, radius on all four
+   corners, a full border, the float's own shadow. Whether it hovers over page
+   content or sits beside an open panel, it is the same floating object. */
 .group {
   display: flex;
   flex-direction: column;
@@ -25,8 +31,7 @@
   gap: 2px;
   padding: 5px 4px;
   border: 1px solid var(--rh-box, rgba(255, 255, 255, 0.1));
-  border-right: 0;
-  border-radius: 10px 0 0 10px;
+  border-radius: 12px;
   pointer-events: auto;
   background: rgba(20, 25, 33, 0.3);
   -webkit-backdrop-filter: blur(5px) saturate(1.15);
@@ -34,7 +39,7 @@
   /* The inset top highlight is what sells the bubble read. */
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 6px 18px rgba(0, 0, 0, 0.22);
+    0 12px 32px rgba(0, 0, 0, 0.5);
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
@@ -53,7 +58,11 @@
     0 0 18px color-mix(in oklab, var(--rh) 14%, transparent);
 }
 
-/* ── The buttons: dock magnification, growing leftward off the edge ─────── */
+/* ── The buttons: macOS-dock tiles that magnify ─────────────────────────── */
+/* Each icon sits on its own opaque tile — a top inner highlight and a bottom
+   shade are what make it read as a tile rather than a hole in the glass. The
+   magnification grows from the centre now that the group is off the edge:
+   pinned to the right edge it would push the icon out of its own box. */
 .btn {
   position: relative;
   width: 28px;
@@ -64,9 +73,11 @@
   border-radius: 7px;
   flex: none;
   cursor: pointer;
-  /* Pinned to the edge so the icon grows into the page rather than off it,
-     and a spring curve so it settles rather than stops. */
-  transform-origin: right center;
+  /* A spring curve so it settles rather than stops. */
+  transform-origin: center center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
   transition:
     background 0.16s ease,
     color 0.16s ease,
@@ -77,7 +88,7 @@
 
 .btn:hover {
   color: var(--rh);
-  background: color-mix(in oklab, var(--rh) 16%, transparent);
+  background: color-mix(in oklab, var(--rh) 24%, var(--sk-raised2));
   transform: scale(1.38);
   box-shadow: 0 0 16px color-mix(in oklab, var(--rh) 38%, transparent);
   z-index: 2;
@@ -168,10 +179,16 @@
   }
 }
 
-/* ── The strip itself: welded to the right edge, vertically centred ─────── */
+/* ── The strip itself: 6px off the right edge, vertically centred ───────── */
+/* It stays on top of everything, including the panel's right edge. The design
+   records that overlap as known debt — the rail covering the middle of a
+   column's content is the same occlusion problem as the rail covering the
+   middle of a page's, and it settles both in one round rather than inventing
+   a lane here. The panel header's own 44px of right padding is the part that
+   could not wait: controls you cannot click are not a style question. */
 .rail {
   position: fixed;
-  right: 0;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 58;

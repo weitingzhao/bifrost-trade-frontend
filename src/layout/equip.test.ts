@@ -65,13 +65,13 @@ describe('the companion rail', () => {
     expect(equipGroupOf('/research/loop/hypotheses')?.id).toBe('book')
   })
 
-  it('carries a float size for the two list pages the design grades Phone', () => {
-    // Not used until the float lands, and carried now so the table does not
-    // have to be revisited to grow it. Phone is the grade for a page you scan
-    // or act one row of; Pad is for the tables.
-    const phones = EQUIP_GROUPS.flatMap((g) => [g.hub, ...g.pages]).filter(
-      (p) => p.size === 'phone',
-    )
-    expect(phones.map((p) => p.to)).toEqual(['/research/loop/decisions', '/research/watchlist'])
+  it('grades nothing by size, because every first open is a Phone', () => {
+    // §5a.8's fourteenth round: per-task size grades were architected away by
+    // per-surface memory — someone who wants a work surface clicks ▭ once and
+    // it is remembered. Leaving the field populated would mean two rules for
+    // the same question, and the dead one would win by being written down.
+    for (const page of EQUIP_GROUPS.flatMap((g) => [g.hub, ...g.pages])) {
+      expect(Object.keys(page), page.to).not.toContain('size')
+    }
   })
 })

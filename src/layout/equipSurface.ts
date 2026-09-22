@@ -1,143 +1,356 @@
 /**
- * The surfaces the companion rail opens — and the one rule that governs them.
+ * One surface, three places — the rule the design spent eighteen rounds on.
  *
- * **Page floats, drawer slides, conversation docks** (§5a.8, ninth round). A
- * float is a window over the page you are on; a drawer is the right-edge form
- * the frame page's own drawers already take, so a run — "a read, not an
- * object" — slides rather than being put in a window of its own. At most one
- * of each, and they can coexist: one is central, one is at the edge.
+ * Anything you can open (the Watchlist, the Console, a Thread, a Run) is a
+ * **surface**, and it lives in exactly one of three places at a time:
  *
- * **Dock semantics** (tenth round). The design tried a pin button and retired
- * it in one round: *open IS persistent*. A surface rides across navigation
- * until you close it, the icon that opened it stays lit, and there is no
- * second concept. Three ways out: `×`, `Esc`, or the same icon again.
+ * - **page** — the frame itself.
+ * - **panel** — one side column, drawn by the shell, 440 wide. More than one
+ *   surface there means **tabs**, never a second column.
+ * - **float** — one window, new tops old. The only place that has a *size*
+ *   (▯ Phone 420 · ▭ Pad 880).
  *
- * **No scrim** (eleventh round). The page behind stays completely interactive,
- * which is the whole claim of the word "float" — the Owner's test was that a
- * scrimmed 84vw panel is a modal with a different name. Closing by clicking
- * the backdrop goes with it.
+ * Opening a surface somewhere removes it from wherever it was. Every header
+ * carries the same three place buttons; the current place is lit and inert.
+ *
+ * ## Why the previous shape is gone
+ *
+ * This module used to hold `{ float, drawer }` — the ninth round's *page
+ * floats, drawer slides, conversation docks*. The Owner's test killed it:
+ * "用户心智上是一回事" — four implementations of the right-hand column
+ * (docked float 420 / Thread 440 / shell drawer 480 / a page's own aside),
+ * each with its own width, header, close and coexistence rules. The drawer
+ * retires with a clean conscience: `equipSurface.test.ts` asserted that
+ * nothing in this app was ever flagged one, and nothing was.
+ *
+ * Retired with it: `⛶ Full` (it is *the page*, said twice) and the `⇥ Dock`
+ * mode (the panel absorbed it).
+ *
+ * ## Dock semantics, unchanged since the tenth round
+ *
+ * **Open IS persistent.** A surface rides across navigation until you close
+ * it; the icon that opened it stays lit; there is no pin and no second
+ * concept. Three ways out: `×`, `Esc`, the same icon again.
+ *
+ * **No scrim, anywhere.** The page behind stays completely interactive, which
+ * is the whole claim of the word float — and the evidence of cross-phase work
+ * is approving a decision while standing on a Trade page.
  *
  * ## What this app does differently from the design, and why
  *
- * The design's float is an **iframe** loading `<file>?embed=1#<route>`, because
- * its prototypes are separate HTML documents and each needs its own shell
- * hidden. This app is one SPA: a float renders the route's own component, so
- * the entire embed mechanism — the flag, the CSS that hides the embedded
- * shell, `data-embed`, the `postMessage` remote control — has no counterpart
- * here and is not built.
+ * The design's surfaces are **iframes** loading `<file>?embed=1#<route>`,
+ * because its prototypes are separate documents. This app is one SPA, so a
+ * surface renders the route's own component and the whole embed mechanism —
+ * the flag, the CSS that hides the embedded shell, `postMessage` — has no
+ * counterpart here.
  *
- * One consequence is real and is not hidden: **a link inside a float navigates
+ * One consequence is real and not hidden: **a link inside a surface navigates
  * the frame page**, because React Router forbids a second router inside the
- * first and the float therefore shares the page's. For a spine route that is
- * exactly the design's remote-control rule — *"click a name in the notebook
- * and what changes is the board on the desk"*. For an equipment route it is
- * half of it: the float keeps showing what it was showing rather than
- * following the link. Owed, and it needs the pages to take their route as
- * input rather than reading it from the URL.
+ * first. For a spine route that is exactly the design's remote-control rule —
+ * *click a name in the notebook and what changes is the board on the desk*.
+ * For an equipment route it is half of it. Owed.
  */
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 import { readJson, writeJson } from '@/lib/localStore'
-import { EQUIP_GROUPS, type EquipGroup, type EquipSize } from './equip'
+import { EQUIP_GROUPS, type EquipGroup } from './equip'
 
-export type SurfaceKind = 'float' | 'drawer'
+/** Where a surface can be. `page` is a destination, not a resting state. */
+export type Place = 'float' | 'panel' | 'page'
 
-export interface OpenSurface {
+/** The float is the only place with a size. Phone is a glance, Pad is a table. */
+export type FloatSize = 'phone' | 'pad'
+
+export interface Surface {
+  /** Identity. A route for equipment, `run:<id>` for a loop run. */
+  key: string
+  /** The route it belongs to — what the title bar prints and the rail lights. */
   to: string
   label: string
-  /** The group's hue token, so the window can wear it. */
   group: EquipGroup['id']
-  size: EquipSize
+  /** False for a reading that has no page of its own: a run, a conversation. */
+  canPage: boolean
+  /** Where it opens the first time, before place memory has an opinion. */
+  def: Exclude<Place, 'page'>
+  /** Set when the surface is a loop run rather than a whole route. */
+  run?: string
+}
+
+/** A tab remembers when it was last looked at — the overflow orders by it. */
+export interface PanelTab extends Surface {
+  t: number
+}
+
+export interface PanelState {
+  tabs: PanelTab[]
+  active: string
+}
+
+export interface FloatState extends Surface {
+  size: FloatSize
 }
 
 /** The design's own keys, so the two sides stay legible to each other. */
-const KEY = { float: 'bifrost.float', drawer: 'bifrost.drawer', geo: 'bifrost.floatgeo' }
+const KEY = {
+  float: 'bifrost.float',
+  panel: 'bifrost.panel',
+  where: 'bifrost.where',
+  geo: 'bifrost.floatgeo',
+}
+
+/** The card's own width plus the 8px it is inset from each side. */
+export const PANEL_WIDTH_PX = 440
+export const PANEL_CARD_PX = PANEL_WIDTH_PX + 16
 
 export interface FloatGeometry {
-  /** Pixels from the top, once you have dragged it. */
   t?: number
   l?: number
   w?: number
   h?: number
+  /** Which size it was dragged at — geometry set at Phone must not survive ▭. */
+  size?: FloatSize
 }
 
 interface SurfaceState {
-  float: OpenSurface | null
-  drawer: OpenSurface | null
-  /** The device mode you last chose for the open float, if you chose one. */
-  mode: EquipSize | null
+  float: FloatState | null
+  panel: PanelState | null
+}
+
+// The ninth round's drawer, cleared rather than left to rot: a stale key that
+// nothing reads is a trap for whoever next greps for it.
+writeJson('bifrost.drawer', null)
+
+function loadPanel(): PanelState | null {
+  const saved = readJson<PanelState>(KEY.panel)
+  if (!saved?.tabs?.length) return null
+  return saved
 }
 
 const store = createExternalStore<SurfaceState>({
-  float: readJson<OpenSurface>(KEY.float),
-  drawer: readJson<OpenSurface>(KEY.drawer),
-  mode: null,
+  float: readJson<FloatState>(KEY.float),
+  panel: loadPanel(),
 })
 
-/** Where a route opens from, and how — the table, not the caller. */
-export function surfaceFor(to: string): { surface: OpenSurface; kind: SurfaceKind } | null {
+/* ── The table: which surface a route is, and where it opens ─────────────── */
+
+/** The surface a rail route opens as — read off `equip.ts`, not off the caller. */
+export function surfaceForRoute(to: string): Surface | null {
   for (const g of EQUIP_GROUPS) {
     const page = g.hub.to === to ? g.hub : g.pages.find((p) => p.to === to)
     if (!page) continue
-    return {
-      surface: { to, label: page.label, group: g.id, size: page.size ?? 'pad' },
-      kind: page.kind === 'drawer' ? 'drawer' : 'float',
-    }
+    return { key: to, to, label: page.label, group: g.id, canPage: true, def: page.def ?? 'float' }
   }
   return null
 }
 
 /**
- * Open it, or close it if it is the one already open.
+ * A loop run — the reading the Console's own inspector used to host.
  *
- * The same icon is the way in and the way out — that is what retiring the pin
- * bought. Opening a second surface of the same kind replaces the first, which
- * is the multi-float ruling seen from the inside: two near-full windows
- * occlude each other, so there is only ever one.
+ * `canPage: false` is the honest part: the design routes a run at
+ * `/research/loop/runs` and this app has no such page, so ⤢ is greyed rather
+ * than offering a door to nothing. The deep link that does exist —
+ * `/research/loop/harness?run=<id>` — opens this surface instead.
  */
-export function toggleSurface(to: string): void {
-  const found = surfaceFor(to)
-  if (!found) return
-  const { surface, kind } = found
-  const current = store.getState()[kind]
-  const next = current?.to === to ? null : surface
-  writeJson(KEY[kind], next)
-  store.setState(kind === 'float' ? { float: next, mode: null } : { drawer: next })
+export function runSurface(id: string): Surface {
+  return {
+    key: `run:${id}`,
+    to: '/research/loop/harness',
+    label: `Run ${id.length > 12 ? `${id.slice(0, 12)}…` : id}`,
+    group: 'autopilot',
+    canPage: false,
+    def: 'panel',
+    run: id,
+  }
 }
 
-export function closeSurface(kind: SurfaceKind): void {
-  writeJson(KEY[kind], null)
-  store.setState(kind === 'float' ? { float: null, mode: null } : { drawer: null })
+/* ── Place memory ────────────────────────────────────────────────────────── */
+
+/** Runs share one memory: where you put the last one is where the next goes. */
+function memoryKey(key: string): string {
+  return key.startsWith('run:') ? 'run' : key
 }
 
-/** Which device grade the float is drawn at: your choice, else the table's. */
-export function setFloatMode(mode: EquipSize): void {
-  // Choosing a mode clears the geometry you dragged for this route — the
-  // design's precedence is manual > chosen mode > the table's default, and a
-  // mode button that left a stale drag behind would appear to do nothing.
+function rememberedPlace(key: string): Place | null {
+  const all = readJson<Record<string, Place>>(KEY.where) ?? {}
+  return all[memoryKey(key)] ?? null
+}
+
+function rememberPlace(key: string, place: Place): void {
+  const all = readJson<Record<string, Place>>(KEY.where) ?? {}
+  all[memoryKey(key)] = place
+  writeJson(KEY.where, all)
+}
+
+/* ── Reading the state ───────────────────────────────────────────────────── */
+
+export function placeOf(key: string): Exclude<Place, 'page'> | null {
+  const s = store.getState()
+  if (s.float?.key === key) return 'float'
+  return s.panel?.tabs.some((t) => t.key === key) ? 'panel' : null
+}
+
+/** Open *and* in front — a tab behind another tab is open but not visible. */
+export function isVisible(key: string): boolean {
+  const s = store.getState()
+  return s.float?.key === key || s.panel?.active === key
+}
+
+/** Everything open, in either place — what the rail's group frame reads. */
+export function openSurfaceKeys(): string[] {
+  const s = store.getState()
+  return [...(s.float ? [s.float.key] : []), ...(s.panel?.tabs.map((t) => t.key) ?? [])]
+}
+
+/* ── Moving surfaces around ──────────────────────────────────────────────── */
+
+function commit(float: FloatState | null, panel: PanelState | null): void {
+  writeJson(KEY.float, float)
+  writeJson(KEY.panel, panel)
+  store.setState({ float, panel })
+}
+
+/** Drop a tab, keeping the panel a panel only while it still has one. */
+function withoutTab(panel: PanelState | null, key: string): PanelState | null {
+  if (!panel) return null
+  const tabs = panel.tabs.filter((t) => t.key !== key)
+  if (!tabs.length) return null
+  return { tabs, active: panel.active === key ? tabs[tabs.length - 1].key : panel.active }
+}
+
+/**
+ * Put a surface in a place — the one operation the three place buttons, the
+ * rail and every "open beside" share.
+ *
+ * A surface lives in exactly one place, so arriving somewhere is also leaving
+ * everywhere else.
+ */
+export function openSurface(surf: Surface, place?: Place): void {
+  const where = place ?? rememberedPlace(surf.key) ?? surf.def
+  const s = store.getState()
+
+  if (where === 'page') {
+    // Not a resting place: the surface closes and the frame navigates. The
+    // caller does the navigating — this module does not own the router.
+    if (!surf.canPage) return
+    rememberPlace(surf.key, 'page')
+    commit(s.float?.key === surf.key ? null : s.float, withoutTab(s.panel, surf.key))
+    return
+  }
+
+  rememberPlace(surf.key, where)
+
+  if (where === 'float') {
+    const size: FloatSize =
+      (s.float?.key === surf.key ? s.float.size : null) ?? loadGeometry(surf.key)?.size ?? 'phone'
+    commit({ ...surf, size }, withoutTab(s.panel, surf.key))
+    return
+  }
+
+  const tabs = s.panel ? s.panel.tabs.slice() : []
+  const tab: PanelTab = { ...surf, t: Date.now() }
+  const at = tabs.findIndex((x) => x.key === surf.key)
+  if (at >= 0) tabs[at] = tab
+  else tabs.push(tab)
+  commit(s.float?.key === surf.key ? null : s.float, { tabs, active: surf.key })
+}
+
+export function closeSurface(key: string): void {
+  const s = store.getState()
+  commit(s.float?.key === key ? null : s.float, withoutTab(s.panel, key))
+}
+
+/** Bring a tab forward without moving it — the strip's own click. */
+export function focusTab(key: string): void {
+  const s = store.getState()
+  if (!s.panel) return
+  commit(s.float, {
+    tabs: s.panel.tabs.map((x) => (x.key === key ? { ...x, t: Date.now() } : x)),
+    active: key,
+  })
+}
+
+/**
+ * The rail's click, and the Copilot button's: **visible → close · open but
+ * behind another tab → bring it forward · not open → open where you last put
+ * it.** One gesture covers all three, which is what retiring the pin bought.
+ */
+export function toggleSurface(surf: Surface): void {
+  if (isVisible(surf.key)) {
+    closeSurface(surf.key)
+    return
+  }
+  if (placeOf(surf.key) === 'panel') {
+    focusTab(surf.key)
+    return
+  }
+  openSurface(surf)
+}
+
+/* ── The float's size, and the geometry that beats it ────────────────────── */
+
+export function setFloatSize(size: FloatSize): void {
   const open = store.getState().float
-  if (open) saveGeometry(open.to, null)
-  store.setState({ mode })
+  if (!open) return
+  // Precedence is the design's: geometry you dragged beats the size you
+  // clicked. A size button that left a stale drag in place would appear to do
+  // nothing, so choosing a size clears it.
+  saveGeometry(open.key, null)
+  commit({ ...open, size }, store.getState().panel)
 }
 
-export function loadGeometry(to: string): FloatGeometry | null {
+/** Geometry belongs to a surface *at a size* — a Phone drag must not size a Pad. */
+export function loadGeometry(key: string): FloatGeometry | null {
   const all = readJson<Record<string, FloatGeometry>>(KEY.geo) ?? {}
-  return all[to] ?? null
+  return all[key] ?? null
 }
 
-/** Drag saves the position, resize saves the size — per route, as the design does. */
-export function saveGeometry(to: string, patch: FloatGeometry | null): void {
+export function saveGeometry(key: string, patch: FloatGeometry | null): void {
   const all = readJson<Record<string, FloatGeometry>>(KEY.geo) ?? {}
-  if (patch == null) delete all[to]
-  else all[to] = { ...all[to], ...patch }
+  if (patch == null) delete all[key]
+  else all[key] = { ...all[key], ...patch }
   writeJson(KEY.geo, all)
+}
+
+/* ── The tab strip ───────────────────────────────────────────────────────── */
+
+export interface Strip {
+  /** Drawn in the strip, in the order they were opened. */
+  shown: PanelTab[]
+  /** Behind `+N`. Never evicted, never closed on your behalf. */
+  over: PanelTab[]
+  /** True once the strip has to shed labels — 4 tabs and up. */
+  compact: boolean
+}
+
+/**
+ * ≤3 tabs are full (icon · name · ×). From 4, the active tab stays full, the
+ * two most recently looked at shrink to their icons, and the rest go into a
+ * `+N` menu. **Nothing is ever evicted** — overflow is a menu, not a queue,
+ * because a column that quietly drops what you opened is worse than one that
+ * asks for a click.
+ */
+export function stripFor(panel: PanelState): Strip {
+  const compact = panel.tabs.length > 3
+  if (!compact) return { shown: panel.tabs, over: [], compact }
+  const keep = new Set(
+    panel.tabs
+      .filter((x) => x.key !== panel.active)
+      .sort((a, b) => b.t - a.t)
+      .slice(0, 2)
+      .map((x) => x.key),
+  )
+  return {
+    shown: panel.tabs.filter((x) => x.key === panel.active || keep.has(x.key)),
+    over: panel.tabs.filter((x) => x.key !== panel.active && !keep.has(x.key)),
+    compact,
+  }
 }
 
 export function useSurfaces(): SurfaceState {
   return store.useStore()
 }
 
-/** True when this route's own surface is open — what lights an icon. */
-export function isSurfaceOpen(to: string): boolean {
-  const s = store.getState()
-  return s.float?.to === to || s.drawer?.to === to
+/** The active tab, or null — the panel's hue and its place buttons read it. */
+export function activeTabOf(panel: PanelState | null): PanelTab | null {
+  if (!panel) return null
+  return panel.tabs.find((x) => x.key === panel.active) ?? panel.tabs[0] ?? null
 }

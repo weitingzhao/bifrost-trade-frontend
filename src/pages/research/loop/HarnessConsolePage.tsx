@@ -12,7 +12,7 @@
  * Advisory only — D10 BLOCKED (no trade execution).
  */
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   MessageCircle,
@@ -20,8 +20,8 @@ import {
   Terminal,
 } from 'lucide-react'
 import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
+import { closeSurface, openSurface, runSurface } from '@/layout/equipSurface'
 import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
-import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import {
   CollapsibleGroup,
   CollapsibleGroupBody,
@@ -36,7 +36,6 @@ import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { LoopRunPipelineBody } from '@/components/research/harness/LoopRunPipelineBody'
 import {
   approveAllRun,
   batchRunObjective,
@@ -60,7 +59,6 @@ import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
 
-import { inspectorWidthPx, useInspectorWidth } from '@/lib/harness/inspectorWidth'
 import { RunLoopDialog } from '@/components/research/harness/RunLoopDialog'
 import { AutopilotKpis } from '@/components/research/harness/AutopilotStanding'
 import { ObjectiveRows } from '@/pages/research/loop/ObjectiveBriefRow'
@@ -104,38 +102,28 @@ export default function HarnessConsolePage() {
   const trustQ = useLoopTrust()
   const trust = trustQ.data
 
-  const pipelineRunId = searchParams.get('run')
-  const [inspectorWidth] = useInspectorWidth()
   const [runDialog, setRunDialog] = useState<ResearchObjective | null>(null)
   const standingQ = useAutopilotStanding()
   const standingById = useMemo(
     () => new Map((standingQ.data?.objectives ?? []).map((o) => [o.id, o])),
     [standingQ.data],
   )
-  const pipelineLive = searchParams.get('live') !== '0'
-
+  /**
+   * A run opens as a **surface**, not as this page's inspector.
+   *
+   * §5a.8's seventeenth round retires the page-owned right column, and a run
+   * is the clearest case for it: it has an identity of its own, it can be
+   * carried to the panel or a float, and it outlives the page that opened it
+   * — which an inspector, whose whole job is to explain a row of the table
+   * beside it, cannot. The nine other pages that use `RightInspectorShell`
+   * keep it, because what they open really is an explanation of a row.
+   *
+   * The URL stops carrying it, so the page's own address no longer changes
+   * when you glance at a run; `?run=` still works as a deep link and is
+   * consumed into a surface below.
+   */
   function openPipeline(runId: string) {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev)
-        next.set('run', runId)
-        next.set('live', '1')
-        return next
-      },
-      { replace: true },
-    )
-  }
-
-  function closePipeline() {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev)
-        next.delete('run')
-        next.delete('live')
-        return next
-      },
-      { replace: true },
-    )
+    openSurface(runSurface(runId))
   }
 
   const objectivesQ = useQuery({
@@ -172,6 +160,24 @@ export default function HarnessConsolePage() {
       if (runId) openPipeline(runId)
     },
   })
+
+  // `/research/loop/harness?run=<id>` is still a link people paste. It opens
+  // the surface and gives the address bar back — the run is not this page's
+  // state, so it should not sit in this page's URL after it has been read.
+  const deepRun = searchParams.get('run')
+  useEffect(() => {
+    if (!deepRun) return
+    openSurface(runSurface(deepRun))
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('run')
+        next.delete('live')
+        return next
+      },
+      { replace: true },
+    )
+  }, [deepRun, setSearchParams])
 
   const [approveFeedback, setApproveFeedback] = useState<string | null>(null)
 
@@ -248,8 +254,8 @@ export default function HarnessConsolePage() {
     },
     onSuccess: (res) => {
       setDeletingGroup(null)
-      // If the open pipeline drawer points at a deleted run, close it.
-      if (pipelineRunId && res.runIds.includes(pipelineRunId)) closePipeline()
+      // A surface pointing at a run that no longer exists is a dead tab.
+      for (const id of res.runIds) closeSurface(runSurface(id).key)
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
@@ -678,21 +684,6 @@ export default function HarnessConsolePage() {
           }}
         />
       ) : null}
-
-      <RightInspectorShell
-        open={Boolean(pipelineRunId)}
-        ariaLabel="Smart Decision Run"
-        panelWidthPx={inspectorWidthPx(inspectorWidth)}
-        onClose={closePipeline}
-      >
-        {pipelineRunId ? (
-          <LoopRunPipelineBody
-            runId={pipelineRunId}
-            live={pipelineLive}
-            onClose={closePipeline}
-          />
-        ) : null}
-      </RightInspectorShell>
     </PageShell>
   )
 }

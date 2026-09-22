@@ -15,7 +15,7 @@ describe('the generated glyph table', () => {
     }
   })
 
-  it('carries the six that no icon library has', () => {
+  it('carries the drawn glyphs that no icon library has', () => {
     // The design's handoff names these as the ones that must be drawn rather
     // than imported. Losing any of them would not fail a build — the row would
     // simply fall back to its lucide argument and look plausible, which is
@@ -25,7 +25,19 @@ describe('the generated glyph table', () => {
     expect(DESIGN_ROUTE_GLYPH['/research/scan']).toBe('smile')
     expect(DESIGN_ROUTE_GLYPH['/research/contract-screener']).toBe('ladder')
     expect(DESIGN_ROUTE_GLYPH['/research/loop/decisions']).toBe('valve')
-    expect(DESIGN_ROUTE_GLYPH['/research/loop/harness']).toBe('rotor')
+  })
+
+  it('has no glyph for a page the tree no longer holds', () => {
+    // This table is built from the tree, so §5a.8 takes the equipment's
+    // glyphs out with its rows — `rotor` (the Console) was asserted here
+    // until Package 2026-09-22.3, and the seven others went with it. Nothing
+    // was lost: the companion rail draws them, and on this side it draws them
+    // from lucide rather than from the design's paths, because the rail is
+    // the one surface where the glyph is the only readable thing and the app
+    // owns its own icon set there.
+    for (const to of ['/research/loop/harness', '/research/book', '/research/watchlist']) {
+      expect(DESIGN_ROUTE_GLYPH[to], to).toBeUndefined()
+    }
   })
 
   it('keys folds by label, because a heading borrows a child’s route', () => {

@@ -108,7 +108,7 @@ function generate(pkg) {
     // way a prototype does beats a second parser for the SVG.
     React: { createElement: (t, p, ...c) => ({ __el: t, props: p ?? {}, children: c.flat() }) },
     localStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => (store[k] = v) },
-    location: { hash: '' },
+    location: { hash: '', search: '' },
     addEventListener() {},
     innerWidth: 1800,
   }
@@ -128,6 +128,11 @@ function generate(pkg) {
     removeEventListener() {},
   }
   globalThis.localStorage = window.localStorage
+  // Rev 2026-09-22.6 reads the embed flag off a bare `location.search` at load
+  // time. In a browser `window.location` and `location` are the same object; in
+  // Node they are not, so the alias has to be made explicitly or the registry
+  // throws a ReferenceError before it has defined anything.
+  globalThis.location = window.location
 
   const ROUND = roundsByFile(pkg)
 

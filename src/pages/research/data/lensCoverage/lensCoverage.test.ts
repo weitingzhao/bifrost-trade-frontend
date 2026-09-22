@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CoverageLens } from '@/api/research/lensCoverage'
-import { coverageLamp, coveragePct } from './LensCoveragePage'
+import { coverageLamp, coveragePct } from './coverageModel'
 
 const lens = (over: Partial<CoverageLens>): CoverageLens => ({
   lens: 'iv_rank',

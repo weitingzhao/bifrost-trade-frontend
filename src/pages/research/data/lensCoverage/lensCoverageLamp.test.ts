@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { coverageLamp, coveragePct } from './LensCoveragePage'
+import { coverageLamp, coveragePct } from './coverageModel'
 import type { CoverageLens } from '@/api/research/lensCoverage'
 
 const lens = (o: Partial<CoverageLens>): CoverageLens =>

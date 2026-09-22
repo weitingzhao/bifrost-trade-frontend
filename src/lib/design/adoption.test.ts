@@ -396,7 +396,10 @@ describe('design adoption', () => {
     // (reviewing 13→14, pending 8→7). Signal Health is the fifteenth, and its
     // walk found two headline numbers hiding their own composition and an
     // `error` field the page had never read (reviewing 14→15, pending 7→6).
-    expect(counts.byState.reviewing).toBe(15)
+    // Lens Coverage is the sixteenth: the design's one change is the tier
+    // split, and it pays on the first row — IV Rank reads 99% of core and 71%
+    // of the edge behind a single 97% (reviewing 15→16, pending 6→5).
+    expect(counts.byState.reviewing).toBe(16)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -453,6 +456,7 @@ describe('design adoption', () => {
       '/research/contract-screener',
       '/research/copilot',
       '/research/daily-brief',
+      '/research/lens-coverage',
       '/research/loop/harness',
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
@@ -535,8 +539,9 @@ describe('design adoption', () => {
     // 11 since the Watchlist did — the first page of this round walked rather
     // than caught by it — 9 since the two objective rows followed, both
     // answered by the one `:param` route that was walked, 8 with the Option
-    // screen, 7 with Signal Decay and 6 with Signal Health.
-    expect(counts.byState.pending).toBe(6)
+    // screen, 7 with Signal Decay, 6 with Signal Health and 5 with Lens
+    // Coverage.
+    expect(counts.byState.pending).toBe(5)
     expect(
       rows
         .filter((r) => r.via)

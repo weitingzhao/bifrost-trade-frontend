@@ -90,6 +90,7 @@ import {
   REVIEW,
   RISK,
   SYSTEM_CONFIG,
+  SYSTEM,
   SYSTEM_DATA,
   SYSTEM_RUNTIME,
   TRADE_DESK,
@@ -452,6 +453,19 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       state: 'staging',
       note: DESIGN_NOTES['/system/data-readiness'],
+    },
+  },
+  {
+    // The design's collapse target (Owner ruling 2026-09-15). Built
+    // 2026-09-22; the nine `/system/*` pages below it keep their rows and
+    // their "to ask" question — where each capability lands is the Owner's.
+    path: '/system/status',
+    label: 'System Status',
+    crumbs: SYSTEM,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.16',
+      note: DESIGN_NOTES['/system/status'],
     },
   },
   {

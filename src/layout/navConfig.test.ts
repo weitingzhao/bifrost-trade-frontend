@@ -145,13 +145,18 @@ function systemDestinations(): string[] {
 }
 
 describe('System nav', () => {
-  it('is one group of five folds — what we hold, who reads it, whether it answers, what it was told, and the reading', () => {
+  it('is one group: the landing, then five folds — what we hold, who reads it, whether it answers, what it was told, and the reading', () => {
     expect(SYSTEM_NAV_GROUPS).toHaveLength(1)
     expect(system.label).toBe('System')
     // Agents arrived 2026-09-22 (§5a.8): the roster and the wiring diagram are
     // the operator's and the engineer's pages, and a trader's tree is the one
-    // place they do not belong.
+    // place they do not belong. Status arrived the same day, built against the
+    // design — it is the group's landing (Owner ruling 2026-09-15: System
+    // collapses to it and Settings), so it sits above the folds rather than
+    // inside one: the three questions come before the machinery that answers
+    // how.
     expect(system.items!.map((i) => i.label)).toEqual([
+      'Status',
       'Data',
       'Agents',
       'Runtime',
@@ -167,6 +172,7 @@ describe('System nav', () => {
     const ids = (system.items ?? []).flatMap((i) => [i.id, ...(i.children?.map((c) => c.id) ?? [])])
     expect(new Set(ids).size).toBe(ids.length)
     expect(system.items!.map((i) => i.id)).toEqual([
+      '/system/status',
       'system:data',
       'system:agents',
       'system:runtime',

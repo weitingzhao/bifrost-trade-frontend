@@ -77,15 +77,22 @@ const DESIGN_BY_PATH = new Map(DESIGN_ROUTES.map((d) => [d.path, d]))
  * Design rows the app answers with a parametrized page.
  *
  * The design's registry cannot hold `:id`, so it seeds concrete fixture rows —
- * two objectives so its menu and crumbs resolve, and a dry `/runs` stem whose
- * per-run form is `?run=`. The app's answer to all three is a real page at a
- * `:param` route (the objective page, and the run redirect into the console's
- * drawer). Counted as `unbuilt`, built pages would have sat in "to build";
- * these rows take their state from the param route instead.
+ * **four** objectives so its menu and crumbs resolve, and a dry `/runs` stem
+ * whose per-run form is `?run=`. The app's answer to all five is a real page
+ * at a `:param` route (the objective page, and the run redirect that opens the
+ * run surface in the panel). Counted as `unbuilt`, built pages would have sat
+ * in "to build"; these rows take their state from the param route instead.
+ *
+ * Two of the four were listed here and two were not, so `obj-smallcap-sepa`
+ * and `obj-vol-crush` sat in "to build" as pages to write — they are the same
+ * route as the two above, with an id the store does not happen to hold. A
+ * fixture id is not a page (found 2026-09-22, opening the build list).
  */
 const PARAM_COVERED: Record<string, string> = {
   '/research/loop/objectives/obj-daily-stock': '/research/loop/objectives/:objectiveId',
   '/research/loop/objectives/obj-earnings-iv': '/research/loop/objectives/:objectiveId',
+  '/research/loop/objectives/obj-smallcap-sepa': '/research/loop/objectives/:objectiveId',
+  '/research/loop/objectives/obj-vol-crush': '/research/loop/objectives/:objectiveId',
   '/research/loop/runs': '/research/loop/runs/:runId',
 }
 

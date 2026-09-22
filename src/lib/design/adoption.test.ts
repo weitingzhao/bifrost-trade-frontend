@@ -410,8 +410,14 @@ describe('design adoption', () => {
     // (reviewing 18→19, pending 3→2). Loop Run is the twentieth and the last
     // of the round: the prototype says it is a surface rather than a page, so
     // the walk verified the deep link into the panel and took out the second
-    // close (reviewing 19→20, pending 1→0).
-    expect(counts.byState.reviewing).toBe(20)
+    // close (reviewing 19→20, pending 1→0). Then 22, without a walk: opening
+    // the build list found `obj-smallcap-sepa` and `obj-vol-crush` sitting in
+    // "to build" as pages to write. They are the same `:objectiveId` route as
+    // the two already covered, with an id the store does not hold — a fixture
+    // id is not a page, and two of the 25 builds were never builds. 23 with
+    // System Status — the first of the build list rather than the walk list,
+    // and the design's collapse target for the nine `/system/*` pages.
+    expect(counts.byState.reviewing).toBe(23)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -475,6 +481,8 @@ describe('design adoption', () => {
       '/research/loop/harness',
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
+      '/research/loop/objectives/obj-smallcap-sepa',
+      '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
       '/research/overview',
       '/research/scan',
@@ -484,6 +492,7 @@ describe('design adoption', () => {
       '/research/watchlist',
       '/research/workbench',
       '/review/proposals',
+      '/system/status',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
@@ -544,8 +553,11 @@ describe('design adoption', () => {
     // once all three were built, 28 when the Owner's ruling gave the Stock
     // screen to a page that exists, and 27 with Review Objectives. 26 with
     // Stock ratings, and 25 with the Journal — W4's own page, built the day
-    // after (2026-09-21).
-    expect(counts.byState.unbuilt).toBe(25)
+    // after (2026-09-21). 23 on 2026-09-22 without anything being built: two
+    // of the 25 were objective fixture ids, which the `:objectiveId` route has
+    // always answered. 22 with System Status, the first page of the build
+    // round and the design's collapse target for the nine `/system/*` pages.
+    expect(counts.byState.unbuilt).toBe(22)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since
@@ -573,6 +585,8 @@ describe('design adoption', () => {
     ).toEqual([
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
+      '/research/loop/objectives/obj-smallcap-sepa',
+      '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
     ])
     expect(counts.byState.backlog).toBe(4)

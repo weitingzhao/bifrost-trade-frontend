@@ -65,6 +65,8 @@ export const STRATEGY = ['Strategy'] as const
 // One group, three folds. `/settings` and `/operations` were two names for one
 // thing — the machine under the desk — and Settings additionally ran a second
 // navigation shell of its own. Both are `/system/*` now; the old paths redirect.
+/** The System landing itself (design's collapse target) sits above the folds. */
+export const SYSTEM = ['System'] as const
 export const SYSTEM_DATA = ['System', 'Data'] as const
 export const SYSTEM_RUNTIME = ['System', 'Runtime'] as const
 export const SYSTEM_CONFIG = ['System', 'Configuration'] as const

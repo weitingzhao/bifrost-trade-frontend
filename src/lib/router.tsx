@@ -357,6 +357,13 @@ export const router = createBrowserRouter([
       // its own, which cost the breadcrumb, the Omnibar, the Lens and
       // Alerts the moment you opened one of them.
       {
+        // The design's collapse target (Owner ruling 2026-09-15): the nine
+        // other `/system/*` pages become diagnosis, and this answers the three
+        // questions a trader asks before opening a position.
+        path: 'system/status',
+        lazy: lazyPage(() => import('@/pages/system/status/SystemStatusPage')),
+      },
+      {
         path: 'system/coverage',
         lazy: lazyPage(() => import('@/pages/system/CoveragePage')),
       },

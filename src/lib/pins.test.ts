@@ -1,30 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { memoryStorage } from '@/test/memoryStorage'
 import { PIN_MAX, SHELF_GROUP, isPinned, isStalePin, readPins, togglePin } from './pins'
-
-/**
- * A real Storage, because the ambient one is not.
- *
- * Node 25 defines a `localStorage` global that is inert without
- * `--localstorage-file` — it is an object with no methods, and it shadows
- * jsdom's. Code under test reaches for the global and gets that, so anything
- * storage-backed silently does nothing in a test run. Stubbing it is the only
- * way these assertions are about the shelf rather than about the environment.
- */
-function memoryStorage(): Storage {
-  let map = new Map<string, string>()
-  return {
-    get length() {
-      return map.size
-    },
-    clear: () => {
-      map = new Map()
-    },
-    getItem: (k: string) => map.get(k) ?? null,
-    key: (i: number) => [...map.keys()][i] ?? null,
-    removeItem: (k: string) => void map.delete(k),
-    setItem: (k: string, v: string) => void map.set(k, String(v)),
-  }
-}
 
 beforeEach(() => {
   vi.stubGlobal('localStorage', memoryStorage())

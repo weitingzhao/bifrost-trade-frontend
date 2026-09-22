@@ -16,6 +16,8 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
 import { CopilotDock } from '@/components/copilot/CopilotDock'
 import { EquipRail } from './EquipRail'
+import { EquipFloat } from './EquipFloat'
+import { EquipDrawer } from './EquipDrawer'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
 import { useRecentPagesTrail } from '@/lib/omnibar'
@@ -105,6 +107,13 @@ export function AppLayout() {
             for, which is how it can live on top of two other right-edge
             things without owning the space. */}
         <EquipRail />
+        {/* The two surfaces the rail opens. Neither takes a scrim: the page
+            behind stays completely interactive, which is the whole claim of
+            the word float — and the evidence of cross-phase work is approving
+            a decision while standing on a Trade page, not a Review page
+            hovering over a Trade page. */}
+        <EquipFloat />
+        <EquipDrawer />
         <Omnibar />
         <MessageToastStack
           messages={stream.messages}

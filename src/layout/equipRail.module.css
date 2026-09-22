@@ -1,0 +1,205 @@
+/*
+ * The companion rail's material and motion — transcribed from the design's own
+ * `_Shell TopBar.dc.html`, not paraphrased from its prose.
+ *
+ * It is CSS rather than utility classes for one reason: every hue in here is
+ * mixed from `--rh`, the group's own colour, which the component sets per
+ * group. `color-mix(in oklab, var(--rh) 16%, transparent)` has no Tailwind
+ * spelling worth reading, and a rail written as twelve arbitrary-value classes
+ * would hide exactly the part that matters.
+ *
+ * The first build of this rail dropped the **whole group** to 40% at rest and
+ * switched `backdrop-filter` on and off. Both were wrong, and the design had
+ * already said so: *"the BOX is what stays translucent — the ICONS keep full
+ * ink; dimming the whole group made them unreadable (Owner 2026-09-21)"*. A
+ * hard `none` → `blur(18px)` switch is the other half of why it felt stiff:
+ * the design's idle state is already glass (5px, 1.15 saturate) and hover only
+ * deepens it.
+ */
+
+/* ── The group: an Apple-style glass bubble welded to the right edge ────── */
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 4px;
+  border: 1px solid var(--rh-box, rgba(255, 255, 255, 0.1));
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  pointer-events: auto;
+  background: rgba(20, 25, 33, 0.3);
+  -webkit-backdrop-filter: blur(5px) saturate(1.15);
+  backdrop-filter: blur(5px) saturate(1.15);
+  /* The inset top highlight is what sells the bubble read. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 6px 18px rgba(0, 0, 0, 0.22);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.22s ease,
+    backdrop-filter 0.22s ease;
+}
+
+.group:hover {
+  background: rgba(20, 25, 33, 0.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.7);
+  backdrop-filter: blur(18px) saturate(1.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 12px 32px rgba(0, 0, 0, 0.45),
+    0 0 18px color-mix(in oklab, var(--rh) 14%, transparent);
+}
+
+/* ── The buttons: dock magnification, growing leftward off the edge ─────── */
+.btn {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  flex: none;
+  cursor: pointer;
+  /* Pinned to the edge so the icon grows into the page rather than off it,
+     and a spring curve so it settles rather than stops. */
+  transform-origin: right center;
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.btn:hover {
+  color: var(--rh);
+  background: color-mix(in oklab, var(--rh) 16%, transparent);
+  transform: scale(1.38);
+  box-shadow: 0 0 16px color-mix(in oklab, var(--rh) 38%, transparent);
+  z-index: 2;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--rh);
+  outline-offset: 2px;
+}
+
+.head {
+  border: 1px solid var(--rh-head-border, var(--sk-line2));
+  background-clip: padding-box;
+}
+
+.item {
+  border: 0;
+}
+
+/* ── The name pill: slides out of the left edge, counter-scaled ─────────── */
+.label {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  transform: translate(8px, -50%);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: var(--sk-raised);
+  border: 1px solid color-mix(in oklab, var(--rh) 50%, transparent);
+  color: var(--rh);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.5),
+    0 0 10px color-mix(in oklab, var(--rh) 20%, transparent);
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+  z-index: 3;
+}
+
+/* The pill counter-scales so its text stays 10px while the icon magnifies. */
+.btn:hover .label,
+.btn:focus-visible .label {
+  opacity: 1;
+  transform: translate(0, -50%) scale(0.725);
+  transform-origin: right center;
+}
+
+/* ── The running lamp: a ring that breathes, not an opacity blink ───────── */
+@keyframes railpulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.55);
+  }
+  60% {
+    box-shadow: 0 0 0 5px rgba(22, 163, 74, 0);
+  }
+}
+
+.dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+  border: 1px solid var(--sk-raised);
+  animation: railpulse 2.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .group,
+  .label {
+    transition-duration: 0.01ms;
+  }
+  .btn:hover {
+    transform: none;
+  }
+  .dot {
+    animation: none;
+  }
+}
+
+/* ── The strip itself: welded to the right edge, vertically centred ─────── */
+.rail {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 58;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* Below the tablet width the rail would sit on top of the page's own content
+   rather than beside it; the equipment is reachable by URL and by ⌘K there. */
+@media (max-width: 767px) {
+  .rail {
+    display: none;
+  }
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 9px;
+  line-height: 1;
+  color: #ca8a04;
+}
+
+.rule {
+  width: 16px;
+  height: 1px;
+  background: var(--sk-line);
+  margin: 3px 0;
+}

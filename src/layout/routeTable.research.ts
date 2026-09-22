@@ -381,7 +381,16 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   { path: '/research/greeks', label: 'Contract Greeks', crumbs: ANALYZE, scope: 'contract' },
 
   // ── Research · Market ──────────────────────────────────────────────────
-  { path: '/market/live', label: 'Live', crumbs: MARKET },
+  {
+    path: '/market/live',
+    label: 'Live',
+    crumbs: MARKET,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.16',
+      note: DESIGN_NOTES['/market/live'],
+    },
+  },
   {
     // The design's `bell` glyph and its own label. The events board this route
     // used to hold is on the Stock Explorer's `events` tab, unchanged.

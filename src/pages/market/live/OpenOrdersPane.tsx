@@ -1,5 +1,7 @@
 import { Activity, Clock } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { ANALYZE_HUB } from '@/lib/analyzeHubs'
 import { StatusLamp } from '@/components/StatusLamp'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import {
@@ -16,6 +18,25 @@ import type { StatusResponse } from '@/types/monitor'
 import { fmtSince, fmtTs, parseOptionContractKey } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import { liveTable } from './liveTableClasses'
+
+/**
+ * An order's symbol opens the name it is about — the chain for an option leg,
+ * the Dossier for a stock. This pane drew forty tickers and none of them went
+ * anywhere (design-walk §5).
+ */
+function OrderSymbol({ symbol, isOption }: { symbol: string | null | undefined; isOption: boolean }) {
+  const sym = (symbol ?? '').trim()
+  if (!sym) return <>—</>
+  return (
+    <Link
+      to={withSymbolParam(isOption ? ANALYZE_HUB.discovery : ANALYZE_HUB.dossier, sym)}
+      className="hover:underline"
+      title={isOption ? `Open the ${sym} chain` : `Open ${sym} in the Dossier`}
+    >
+      {sym}
+    </Link>
+  )
+}
 import {
   liveEmptyHintClass,
   liveFreshnessBadgeClass,
@@ -82,7 +103,12 @@ export function OpenOrdersPane({
           </button>
         </div>
       </div>
-      <p className={liveSourceHintClass}>Source: DB table daemon_open_orders</p>
+      <p className={liveSourceHintClass}>
+        Source: DB table daemon_open_orders ·{' '}
+        <span className="text-foreground/70">
+          orders are placed in TWS — this view is read-only (D10)
+        </span>
+      </p>
 
       {total === 0 ? (
         <p className={liveEmptyHintClass}>No open orders</p>
@@ -119,7 +145,9 @@ export function OpenOrdersPane({
                     return (
                       <DenseTableRow key={o.order_id ?? o.perm_id ?? i}>
                         <DenseTableCell>{o.account_id ?? '—'}</DenseTableCell>
-                        <DenseTableCell className={liveTable.symbolCell}>{o.symbol ?? '—'}</DenseTableCell>
+                        <DenseTableCell className={liveTable.symbolCell}>
+                          <OrderSymbol symbol={o.symbol} isOption={true} />
+                        </DenseTableCell>
                         <DenseTableCell>{optParts.expiry}</DenseTableCell>
                         <DenseTableCell className={denseTableNumCell}>
                           {optParts.strike === '—' ? '—' : fmtUsd(Number(optParts.strike))}
@@ -180,7 +208,9 @@ export function OpenOrdersPane({
                     return (
                       <DenseTableRow key={o.order_id ?? o.perm_id ?? i}>
                         <DenseTableCell>{o.account_id ?? '—'}</DenseTableCell>
-                        <DenseTableCell className={liveTable.symbolCell}>{o.symbol ?? '—'}</DenseTableCell>
+                        <DenseTableCell className={liveTable.symbolCell}>
+                          <OrderSymbol symbol={o.symbol} isOption={false} />
+                        </DenseTableCell>
                         <DenseTableCell>{o.action ?? '—'}</DenseTableCell>
                         <DenseTableCell className={denseTableNumCell}>
                           {o.total_quantity != null ? Math.round(Number(o.total_quantity)) : '—'}

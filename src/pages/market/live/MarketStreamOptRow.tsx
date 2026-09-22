@@ -6,6 +6,9 @@ import {
   denseTableEntityCell,
   denseTableNumCell,
 } from '@/components/data-display'
+import { Link } from 'react-router-dom'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { ANALYZE_HUB } from '@/lib/analyzeHubs'
 import { fmtUsd } from '@/utils/positions'
 import {
   computeOptMidAndLivePnl,
@@ -171,7 +174,21 @@ export function MarketStreamOptRow({
               ⋮⋮
             </span>
           )}
-          <span className="font-mono font-semibold text-entity-option">{contractLabel}</span>
+          {/* The contract opens its underlying's chain — the design's `Chain →`.
+              `/research/discovery` is the hub alias and resolves to the Symbol
+              page's chain tab. */}
+          {row.symbol ? (
+            <Link
+              to={withSymbolParam(ANALYZE_HUB.discovery, row.symbol)}
+              onClick={e => e.stopPropagation()}
+              className="font-mono font-semibold text-entity-option hover:underline"
+              title={`Open the ${row.symbol} chain`}
+            >
+              {contractLabel}
+            </Link>
+          ) : (
+            <span className="font-mono font-semibold text-entity-option">{contractLabel}</span>
+          )}
           <OptQuoteAgeLabel ts={quote?.ts ?? quote?.updated_ts} />
         </span>
       </DenseTableCell>

@@ -402,8 +402,10 @@ describe('design adoption', () => {
     // is the seventeenth, and the only one so far where the design changed the
     // route's subject: Event Radar became Alerts, and the events board it used
     // to hold already renders on the Explorer's own tab (reviewing 16→17,
-    // pending 5→4).
-    expect(counts.byState.reviewing).toBe(17)
+    // pending 5→4). Live is the eighteenth: the prototype calls itself a
+    // redraw of the production page, and the walk found the production page
+    // had no header and not one link on it (reviewing 17→18, pending 4→3).
+    expect(counts.byState.reviewing).toBe(18)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -456,6 +458,7 @@ describe('design adoption', () => {
     // The two ratings pages' own siblings: Symbol, and the Vol ratings rebuild
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/market/live',
       '/portfolio/positions',
       '/research/contract-screener',
       '/research/copilot',
@@ -545,8 +548,8 @@ describe('design adoption', () => {
     // than caught by it — 9 since the two objective rows followed, both
     // answered by the one `:param` route that was walked, 8 with the Option
     // screen, 7 with Signal Decay, 6 with Signal Health, 5 with Lens Coverage
-    // and 4 with Alerts.
-    expect(counts.byState.pending).toBe(4)
+    // 4 with Alerts and 3 with Live.
+    expect(counts.byState.pending).toBe(3)
     expect(
       rows
         .filter((r) => r.via)

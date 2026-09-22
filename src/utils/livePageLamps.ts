@@ -16,7 +16,9 @@ function liveIbServiceLabel(
   return 'IB Account Agent'
 }
 
-const RECENT_QUOTE_MAX_AGE_S = 60
+/** A quote older than this is not the tape any more. The lamp and the
+ *  header's `streams N/M` count answer to the same number. */
+export const RECENT_QUOTE_MAX_AGE_S = 60
 export const ACCOUNT_SYNC_HEARTBEAT_MAX_AGE_S = 35
 
 /**
@@ -40,6 +42,33 @@ export function computeMarketStreamsOk(
       ingestRedisTruthyConnected(status?.socket?.ib_ingestor?.connected)) ||
     hasRecentQuotes
   )
+}
+
+/**
+ * How many streamed symbols have a quote young enough to call live — the
+ * design header's `streams N/M`.
+ *
+ * It lives beside the lamp because the two must answer to the same number: a
+ * green lamp over a count of zero, or the reverse, is the page arguing with
+ * itself about whether the tape is running.
+ */
+export function countFreshQuotes(
+  quotesMap: Record<string, QuoteItem>,
+  /**
+   * What the page asked to stream — symbols and contract keys. Counting the
+   * map itself instead reads 27 of 23: the map holds option contracts as well
+   * as symbols, and a fraction that can invert is worse than no fraction.
+   */
+  expectedKeys: readonly string[],
+  nowSec: number = Date.now() / 1000,
+): { fresh: number; total: number } {
+  const cutoff = nowSec - RECENT_QUOTE_MAX_AGE_S
+  let fresh = 0
+  for (const key of new Set(expectedKeys)) {
+    const q = quotesMap[key]
+    if (q?.ts != null && q.ts >= cutoff) fresh += 1
+  }
+  return { fresh, total: new Set(expectedKeys).size }
 }
 
 export function computeMarketStreamsLamp(

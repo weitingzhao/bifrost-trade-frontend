@@ -3,6 +3,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Badge } from '@/components/ui/badge'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { PageShell } from '@/components/layout'
+import { LiveHeader } from './LiveHeader'
+import { ReferencePanel } from './ReferencePanel'
+import { REFERENCE_INSTRUMENTS } from './referenceModel'
+import { etWallClock } from '@/lib/marketSession'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -25,6 +29,7 @@ import {
   computeMarketStreamsOk,
   computeMarketStreamsLamp,
   computeOpenOrdersLamp,
+  countFreshQuotes,
 } from '@/utils/livePageLamps'
 import { partitionOpenOrders } from './openOrdersPartition'
 import { MarketStreamsSection } from './MarketStreamsSection'
@@ -102,6 +107,9 @@ export default function LivePage() {
       [
         ...new Set([
           ...allSymbols.filter(s => s.length <= 5),
+          // The Reference panel's own five, so the panel does not depend on
+          // whether the book happens to hold them today.
+          ...REFERENCE_INSTRUMENTS.map(r => r.symbol),
           ...(status?.live_ui?.reference_indices?.map(r => r.symbol) ?? []),
         ]),
       ],
@@ -229,6 +237,14 @@ export default function LivePage() {
   const openOrdersUpdatedAt =
     openOrdersFetched && openOrdersUpdatedMs ? openOrdersUpdatedMs / 1000 : null
 
+  // Read once: a render must not watch a moving hand, and the session this
+  // page is about is New York's, not this machine's.
+  const [clock] = useState(() => etWallClock())
+
+  // "streams N/M" in the design's header, from the same module as the lamp
+  // beside it so the two cannot disagree.
+  const streamCount = countFreshQuotes(quotesMap, [...allSymbols, ...allContractKeys])
+
   const handleSymbolReorder = useCallback(
     (category: string, fromSymbol: string, toSymbol: string) => {
       const rows =
@@ -250,11 +266,18 @@ export default function LivePage() {
           <QueryErrorAlert error="Failed to load live quotes — check Market API connection." />
         )}
 
-        {/* Program research-copilot-reach P1 — Live had no Copilot entry point
-            even though the backend exposes trade.market_watchlist / market_quotes.
-            No PageHeader on this compact page, so the button gets its own row. */}
-        <div className="flex items-center justify-end">
-          <AskCopilotButton
+        {/* The design's header (Rev 2026-09-20.16). It also carries the Copilot
+            entry point added by research-copilot-reach P1, which had its own
+            row only because this page had no header to sit in. */}
+        <LiveHeader
+          streamsLamp={streamsLamp}
+          ordersLamp={ordersLamp}
+          freshQuotes={streamCount.fresh}
+          totalStreams={streamCount.total}
+          ordersWorking={optOrders.length + stkOrders.length}
+          clock={clock}
+          actions={
+            <AskCopilotButton
             originPage="market-live"
             originLabel="Market Live"
             snapshot={compactSnapshot({
@@ -264,9 +287,10 @@ export default function LivePage() {
               active_structure: strategyActive?.structure?.name ?? undefined,
               active_gate: strategyActive?.gate_safety?.name ?? undefined,
             })}
-            suggestedPrompt="这些标的今天有什么值得注意的？结合我的持仓说说异常波动和风险。"
-          />
-        </div>
+              suggestedPrompt="这些标的今天有什么值得注意的？结合我的持仓说说异常波动和风险。"
+            />
+          }
+        />
 
 
         {strategyActive && (
@@ -343,6 +367,12 @@ export default function LivePage() {
           hasStreamAccounts={streams.hasStreamAccounts}
           openOrdersUpdatedAt={openOrdersUpdatedAt}
           status={status}
+        />
+
+        <ReferencePanel
+          benchmarks={benchmarks}
+          quotes={quotesMap}
+          declared={status?.live_ui?.reference_indices?.map(r => r.symbol)}
         />
       </div>
     </PageShell>

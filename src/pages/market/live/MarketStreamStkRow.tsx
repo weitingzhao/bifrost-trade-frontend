@@ -1,5 +1,8 @@
 import type { DailyBenchmark } from '@/types/market'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { ANALYZE_HUB } from '@/lib/analyzeHubs'
 import {
   DenseTableCell,
   DenseTag,
@@ -119,14 +122,19 @@ export function MarketStreamStkRow({
               ⋮⋮
             </span>
           )}
-          <strong
+          {/* A ticker is its own destination (design-walk §5). This page had
+              no link on it at all — forty-odd names and nowhere to go. */}
+          <Link
+            to={withSymbolParam(ANALYZE_HUB.dossier, symbol)}
+            onClick={e => e.stopPropagation()}
             className={cn(
-              'font-semibold text-entity-symbol',
+              'font-semibold text-entity-symbol hover:underline',
               liveSymbolFreshnessTagClass(symbolFreshness),
             )}
+            title={`Open ${symbol} in the Dossier`}
           >
             {symbol}
-          </strong>
+          </Link>
         </span>
       </DenseTableCell>
 

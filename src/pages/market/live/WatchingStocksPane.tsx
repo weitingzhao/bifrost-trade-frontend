@@ -1,5 +1,8 @@
 import type { DailyBenchmark, QuoteItem, WatchlistItem } from '@/types/market'
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { ANALYZE_HUB } from '@/lib/analyzeHubs'
 import { StatusLamp } from '@/components/StatusLamp'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import {
@@ -205,9 +208,15 @@ export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }:
                   <DenseTableRow key={item.contract_key}>
                     <DenseTableCell className={denseTableEntityCell} title={item.contract_key}>
                       <span className="inline-flex min-w-0 max-w-full items-center gap-1">
-                        <span className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}>
+                        {/* It already wore `denseTableEntityLink` and was a
+                            span — a dead end in a link's clothes. */}
+                        <Link
+                          to={withSymbolParam(ANALYZE_HUB.discovery, item.symbol)}
+                          className={cn(denseTableEntityLink, 'font-mono font-semibold text-entity-option')}
+                          title={`Open the ${item.symbol} chain`}
+                        >
                           {watchlistItemLabel(item)}
-                        </span>
+                        </Link>
                         <OptQuoteAgeLabel ts={q?.ts ?? q?.updated_ts} />
                       </span>
                     </DenseTableCell>

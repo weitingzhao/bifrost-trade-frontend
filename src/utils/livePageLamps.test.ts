@@ -1,28 +1,34 @@
-import { describe, it, expect } from 'vitest'
-import {
-  computeLiveNavLamp,
-  computeMarketStreamsLamp,
-  computeOpenOrdersLamp,
-} from './livePageLamps'
+/**
+ * The header's `streams N/M` — a fraction that must not invert.
+ */
+import { describe, expect, it } from 'vitest'
+import type { QuoteItem } from '@/types/market'
+import { countFreshQuotes } from './livePageLamps'
 
-describe('lamps with nothing to read', () => {
-  it('does not light the sidebar red before the monitor query resolves', () => {
-    // useMonitorStatus hands `undefined` on the first render of every page, so
-    // this branch ran constantly. It answered 'red' while its own title said
-    // "cannot determine".
-    const { color, title } = computeLiveNavLamp(undefined, false)
-    expect(color).toBe('none')
-    expect(color).not.toBe('red')
-    expect(title).toMatch(/cannot determine/i)
+const q = (ts: number): QuoteItem => ({ symbol: 'X', last: 1, ts }) as QuoteItem
+
+describe('countFreshQuotes', () => {
+  it('counts against what the page asked for, not against the map', () => {
+    // The map holds option contract keys as well as symbols. Counting it read
+    // 27 of 23 on DEV — a fraction over one is not a reading.
+    const map = { NVDA: q(1000), SPY: q(1000), 'NVDA|OPT|20261017|165|P': q(1000) }
+    expect(countFreshQuotes(map, ['NVDA', 'SPY'], 1000)).toEqual({ fresh: 2, total: 2 })
   })
 
-  it('answers the same for a null status', () => {
-    expect(computeLiveNavLamp(null, false).color).toBe('none')
+  it('does not call a quote older than a minute live', () => {
+    // The window is 60s and the boundary is inclusive, so 940 is the last
+    // timestamp that still counts at 1000.
+    expect(countFreshQuotes({ NVDA: q(941) }, ['NVDA'], 1000).fresh).toBe(1)
+    expect(countFreshQuotes({ NVDA: q(940) }, ['NVDA'], 1000).fresh).toBe(1)
+    expect(countFreshQuotes({ NVDA: q(939) }, ['NVDA'], 1000).fresh).toBe(0)
+    expect(countFreshQuotes({ NVDA: q(900) }, ['NVDA'], 1000).fresh).toBe(0)
   })
 
-  it('agrees with the two sibling lamps in this file', () => {
-    expect(computeMarketStreamsLamp(undefined)).toBe('none')
-    expect(computeOpenOrdersLamp(undefined)).toBe('none')
-    expect(computeLiveNavLamp(undefined, false).color).toBe('none')
+  it('counts a symbol that never answered in the denominator', () => {
+    expect(countFreshQuotes({}, ['NVDA', 'SPY'], 1000)).toEqual({ fresh: 0, total: 2 })
+  })
+
+  it('does not double-count a key the page asked for twice', () => {
+    expect(countFreshQuotes({ NVDA: q(1000) }, ['NVDA', 'NVDA'], 1000)).toEqual({ fresh: 1, total: 1 })
   })
 })

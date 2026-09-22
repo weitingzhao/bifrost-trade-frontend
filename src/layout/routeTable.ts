@@ -303,8 +303,8 @@ export const ROUTES: readonly RouteEntry[] = [
     // rev is the package's own label at the walk; the design did not bump it
     // for the 2026-09-13 and 2026-09-14 rounds.
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      state: 'reviewing',
+      rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/symbol'],
     },
   },

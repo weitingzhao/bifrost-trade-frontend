@@ -32,6 +32,7 @@ import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@
 import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { SymbolMyLegs } from '@/pages/research/analyze/symbol/SymbolMyLegs'
 import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
+import { SymbolIdentity } from '@/pages/research/analyze/symbol/SymbolIdentity'
 import { SymbolOriginRail } from '@/pages/research/analyze/symbol/SymbolOriginRail'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
 import { IvRankSection } from '@/pages/research/analyze/volRegime/IvRankSection'
@@ -136,6 +137,11 @@ export default function SymbolPage() {
             </div>
           }
         />
+        {/* The design opens the page with the name, its price and what the
+            lenses concluded — this side opened with the word «Symbol» and a
+            chip strip, which says what the page is and not what it found
+            (Rev 2026-09-18.2). */}
+        {symbol ? <SymbolIdentity symbol={symbol} /> : null}
         {/* Where this name came from, and the way through that list — stepping
             it keeps the tab you are reading. */}
         <SymbolOriginRail symbol={symbol} tabQuery={`${SYMBOL_PATH}?${TAB_PARAM}=${active}`} />

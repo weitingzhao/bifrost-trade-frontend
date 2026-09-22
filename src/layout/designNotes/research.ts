@@ -171,7 +171,31 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'Untouched, as the brief says: the persona markdown editor, the preference slots, the Cannot '
     + 'lines and the D10 lock. Owner signed off 2026-09-21.',
   '/research/symbol':
-    'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page). Re-stamped on Rev 2026-09-17.1 (§14.7 colours only: green / red direction, unrealized orange, applied in e05dce2); Owner re-signed after the colour look 2026-09-17. Rev 2026-09-18.2 replaces the header keys with the six verbs, adds the Your verdict panel and seats you · hand verdicts in the Record table, so the sign-off reads stale; the verdict panel and record row are W2, the verbs W3.',
+    'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page). Re-stamped on Rev 2026-09-17.1 (§14.7 colours only: green / red direction, unrealized orange, applied in e05dce2); Owner re-signed after the colour look 2026-09-17. Rev 2026-09-18.2 replaces the header keys with the six verbs, adds the Your verdict panel and seats you · hand verdicts in the Record table, so the sign-off reads stale; the verdict panel and record row are W2, the verbs W3.'
+    + ' '
+    + 'RE-WALKED 2026-09-21 against Rev 2026-09-18.2, prototype beside the app at one viewport. The '
+    + 'first thing the comparison said was about the top of the page: the design opens with the name '
+    + '\u2014 `PLTR \u00b7 156.90` and one line of verdict over `3 of 8 lenses decisive` \u2014 and this side opened '
+    + 'with the word \u00abSymbol\u00bb and a chip strip. The page said what it was, not what it had concluded '
+    + 'about the name in it. **`SymbolIdentity` is that line**: ticker (linking to the name in the '
+    + 'book), last price, the decisive lenses in their own words, and the count. '
+    + 'Three things it deliberately does not print, each measured: the **company name** is in none of '
+    + 'this app\u2019s market payloads; the **change %** cannot be computed because the quote carries '
+    + 'bid/ask/last/mid and no previous close, so the figure says `last` and stops; and the design\u2019s '
+    + 'one synthesised sentence (\u00abSell premium bias\u00bb) is not synthesised here \u2014 nothing on this side '
+    + 'composes lenses into a stance, and writing one would put a judgement in the app\u2019s mouth that no '
+    + 'lens made. The decisive lenses are listed instead. '
+    + 'THE RIGHT RAIL, item by item. **Since last snapshot** is already here as a strip under the '
+    + 'header (`SymbolSinceSnapshot`). **Record on this symbol** is already here as the Validation '
+    + 'face, which says which lenses have a settled record on this name and which read all symbols \u2014 '
+    + 'the same reading, in a face rather than a rail. **Your verdict** is blocked and measured: '
+    + '`/research/symbol-verdicts` answers 404, there is no verdict store, and that is the same hole '
+    + 'the Pipeline census recorded as `symbol_verdict` owed. Recording a verdict is also what the '
+    + 'deferred six verbs would settle, so both wait on one thing. '
+    + 'The prototype\u2019s seventh tab, **Payoff**, is not missing: an earlier round folded it onto the '
+    + 'Chain tab\u2019s structure panel, which reuses the portfolio risk-profile engine rather than '
+    + 'standing up a second payoff maths. That decision stands and is named here so the tab count '
+    + 'difference is not read as a gap.',
   '/research/backtest':
     'Lab — Docs Index marks it LAB: "handed to lab (2026-09-12.3), the Trade original is deleted". Lab is not built here, so it stays until it is; absent from Trade is not retired',
   '/research/overview':

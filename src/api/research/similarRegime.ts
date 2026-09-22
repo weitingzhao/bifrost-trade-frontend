@@ -103,6 +103,13 @@ export interface SignalFreshnessItem {
   row_count: number
   status: string
   age_hours: number | null
+  /**
+   * The cadence this row is judged against — the engine sends it per row and
+   * again at the top. Optional because the type is the contract and the
+   * engine may not always carry it; a row without one says so rather than
+   * being measured against a number invented here.
+   */
+  sla_hours?: number | null
   error?: string
 }
 

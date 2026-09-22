@@ -393,8 +393,10 @@ describe('design adoption', () => {
     // (reviewing 12→13, pending 9→8). Signal Decay is the fourteenth: it was
     // a per-lens instrument, and the design's page asks which of the twelve
     // is slipping — a question picking one at a time cannot answer
-    // (reviewing 13→14, pending 8→7).
-    expect(counts.byState.reviewing).toBe(14)
+    // (reviewing 13→14, pending 8→7). Signal Health is the fifteenth, and its
+    // walk found two headline numbers hiding their own composition and an
+    // `error` field the page had never read (reviewing 14→15, pending 7→6).
+    expect(counts.byState.reviewing).toBe(15)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -457,6 +459,7 @@ describe('design adoption', () => {
       '/research/overview',
       '/research/scan',
       '/research/signal-decay',
+      '/research/signal-health',
       '/research/symbol',
       '/research/watchlist',
       '/research/workbench',
@@ -532,8 +535,8 @@ describe('design adoption', () => {
     // 11 since the Watchlist did — the first page of this round walked rather
     // than caught by it — 9 since the two objective rows followed, both
     // answered by the one `:param` route that was walked, 8 with the Option
-    // screen and 7 with Signal Decay.
-    expect(counts.byState.pending).toBe(7)
+    // screen, 7 with Signal Decay and 6 with Signal Health.
+    expect(counts.byState.pending).toBe(6)
     expect(
       rows
         .filter((r) => r.via)

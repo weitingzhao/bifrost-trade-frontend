@@ -301,7 +301,16 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   // Plumbing: neither takes a symbol, and what they answer is whether the
   // machinery is filling up — which is System's question, not Research's.
   { path: '/research/lens-coverage', label: 'Lens Coverage', crumbs: SYSTEM_DATA },
-  { path: '/research/signal-health', label: 'Signal Health', crumbs: SYSTEM_DATA },
+  {
+    path: '/research/signal-health',
+    label: 'Signal Health',
+    crumbs: SYSTEM_DATA,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-19.2',
+      note: DESIGN_NOTES['/research/signal-health'],
+    },
+  },
   {
     path: '/research/watchlist',
     label: 'Watchlist',

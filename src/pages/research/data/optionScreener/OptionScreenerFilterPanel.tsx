@@ -1,3 +1,16 @@
+/**
+ * `2 · Structure` and `3 · Filters` — the rail's other two steps.
+ *
+ * The symbol box moved out into `1 · Underlyings`, where the design puts it:
+ * a list arrives from a source, and typing one is the exception rather than
+ * the way in. What is left is the two questions the design numbers — what
+ * shape am I looking for, and how tight.
+ *
+ * The Run button stays, against the design's *"live — no Run button"*: the
+ * call measures 15–31 seconds on DEV, so a live re-run would fire a
+ * half-minute request per slider drag. The design's phrase describes a
+ * prototype that computes its chain in the browser.
+ */
 import { Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -8,30 +21,20 @@ import { OptionScreenerNumInput } from './OptionScreenerNumInput'
 import {
   optionScreenerFilterLabelClass,
   optionScreenerFilterPanelClass,
-  optionScreenerSymbolsTextareaClass,
 } from './optionScreenerUi'
 
 type Props = {
   filters: ScreenerFilters
-  symbolsText: string
   isPending: boolean
   onFiltersChange: (updater: (f: ScreenerFilters) => ScreenerFilters) => void
-  onSymbolsTextChange: (text: string) => void
   onRun: () => void
 }
 
-export function OptionScreenerFilterPanel({
-  filters,
-  symbolsText,
-  isPending,
-  onFiltersChange,
-  onSymbolsTextChange,
-  onRun,
-}: Props) {
+export function OptionScreenerFilterPanel({ filters, isPending, onFiltersChange, onRun }: Props) {
   return (
     <div className={optionScreenerFilterPanelClass}>
       <div className="space-y-1">
-        <Label className={optionScreenerFilterLabelClass}>Structure Type</Label>
+        <Label className={optionScreenerFilterLabelClass}>2 · Structure</Label>
         <SegmentControl
           ariaLabel="Structure type"
           className="flex-wrap"
@@ -43,9 +46,21 @@ export function OptionScreenerFilterPanel({
             disabled: !st.enabled,
           }))}
         />
+        {/* The design says which of its four the engine can answer; so does
+            this. Three are drawn and refused rather than hidden, because a
+            structure missing from the picker reads as a structure nobody
+            trades. */}
+        <p className="text-dense-caption leading-relaxed text-muted-foreground">
+          Cash-secured put is the one the engine screens. The other three are drawn and refused —
+          the spread structures need two legs priced together, which it does not do yet.
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="space-y-1">
+        <Label className={optionScreenerFilterLabelClass}>3 · Filters</Label>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
         <OptionScreenerNumInput
           label="DTE Min"
           value={filters.dte_min}
@@ -78,16 +93,6 @@ export function OptionScreenerFilterPanel({
           label="Min Premium ($)"
           value={filters.min_premium}
           onChange={v => onFiltersChange(f => ({ ...f, min_premium: v }))}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <Label className={optionScreenerFilterLabelClass}>Symbols (comma or newline separated)</Label>
-        <textarea
-          className={optionScreenerSymbolsTextareaClass}
-          placeholder={'AAPL\nMSFT\nNVDA'}
-          value={symbolsText}
-          onChange={e => onSymbolsTextChange(e.target.value)}
         />
       </div>
 

@@ -71,7 +71,9 @@ describe('design adoption', () => {
     expect(home?.state).toBe('aligned')
     expect(home?.inApp).toBe(true)
     const contracts = rows.find((r) => r.path === '/research/contract-screener')
-    expect(contracts?.state).toBe('pending')
+    // Walked 2026-09-22 on its own path; what this line pins is the `aliasOf`,
+    // not the state — the rule is that the forward never counted as adoption.
+    expect(contracts?.state).toBe('reviewing')
     expect(contracts?.aliasOf).toBeUndefined()
     // The Analyze hubs are the case the rule has to keep: all of them resolve
     // to the prototype the Symbol page was built from.
@@ -385,8 +387,11 @@ describe('design adoption', () => {
     // is the eleventh and twelfth — one `:param` route answers two design
     // rows, and the walk found four whole sections missing from a page built
     // from that design and never checked against it (reviewing 10→12,
-    // pending 11→9).
-    expect(counts.byState.reviewing).toBe(12)
+    // pending 11→9). The Option screen is the thirteenth and closes the
+    // Discover fold; its walk's finding is that the screener's chain store is
+    // dark, which the page now diagnoses instead of going blank
+    // (reviewing 12→13, pending 9→8).
+    expect(counts.byState.reviewing).toBe(13)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -440,6 +445,7 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/portfolio/positions',
+      '/research/contract-screener',
       '/research/copilot',
       '/research/daily-brief',
       '/research/loop/harness',
@@ -520,9 +526,10 @@ describe('design adoption', () => {
     // Workbench home.
     // 12 since Vol ratings and then Daily Brief left it for `reviewing`, and
     // 11 since the Watchlist did — the first page of this round walked rather
-    // than caught by it — and 9 since the two objective rows followed, both
-    // answered by the one `:param` route that was walked.
-    expect(counts.byState.pending).toBe(9)
+    // than caught by it — 9 since the two objective rows followed, both
+    // answered by the one `:param` route that was walked, and 8 with the
+    // Option screen.
+    expect(counts.byState.pending).toBe(8)
     expect(
       rows
         .filter((r) => r.via)

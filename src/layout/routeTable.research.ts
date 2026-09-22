@@ -336,7 +336,16 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   // this page is Contracts (Design 2026-09-15). `/research/screener` is the
   // design's screener home, which the app has not built, so the page moves off
   // that path rather than squatting on it.
-  { path: '/research/contract-screener', label: 'Option screen', crumbs: DISCOVER },
+  {
+    path: '/research/contract-screener',
+    label: 'Option screen',
+    crumbs: DISCOVER,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-19.2',
+      note: DESIGN_NOTES['/research/contract-screener'],
+    },
+  },
   // Analyze, not Data. The design's rule (shell-registry, Discover fold): a
   // page that takes a symbol is a read and joins Analyze; a page that takes
   // none is pipeline plumbing and goes to System › Data. Greeks takes a

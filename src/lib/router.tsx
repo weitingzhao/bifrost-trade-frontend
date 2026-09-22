@@ -357,6 +357,12 @@ export const router = createBrowserRouter([
       // its own, which cost the breadcrumb, the Omnibar, the Lens and
       // Alerts the moment you opened one of them.
       {
+        // The other half of the same collapse: Status answers the three
+        // questions, this holds the trader's own configuration.
+        path: 'settings',
+        lazy: lazyPage(() => import('@/pages/system/settings/SettingsPage')),
+      },
+      {
         // The design's collapse target (Owner ruling 2026-09-15): the nine
         // other `/system/*` pages become diagnosis, and this answers the three
         // questions a trader asks before opening a position.

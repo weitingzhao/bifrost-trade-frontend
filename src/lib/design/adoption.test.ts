@@ -416,8 +416,10 @@ describe('design adoption', () => {
     // the two already covered, with an id the store does not hold — a fixture
     // id is not a page, and two of the 25 builds were never builds. 23 with
     // System Status — the first of the build list rather than the walk list,
-    // and the design's collapse target for the nine `/system/*` pages.
-    expect(counts.byState.reviewing).toBe(23)
+    // and the design's collapse target for the nine `/system/*` pages. 24 with
+    // Settings, the collapse's other half — `/settings` had been redirecting
+    // to the Coverage page the same ruling retired.
+    expect(counts.byState.reviewing).toBe(24)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -492,6 +494,7 @@ describe('design adoption', () => {
       '/research/watchlist',
       '/research/workbench',
       '/review/proposals',
+      '/settings',
       '/system/status',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
@@ -556,8 +559,9 @@ describe('design adoption', () => {
     // after (2026-09-21). 23 on 2026-09-22 without anything being built: two
     // of the 25 were objective fixture ids, which the `:objectiveId` route has
     // always answered. 22 with System Status, the first page of the build
-    // round and the design's collapse target for the nine `/system/*` pages.
-    expect(counts.byState.unbuilt).toBe(22)
+    // round and the design's collapse target for the nine `/system/*` pages,
+    // and 21 with Settings, its other half.
+    expect(counts.byState.unbuilt).toBe(21)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

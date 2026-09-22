@@ -196,7 +196,8 @@ export const REDIRECTS: readonly RouteEntry[] = [
   { path: '/portfolio/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
   // The `/settings/*` and `/operations/*` names, kept working. Bookmarks and
   // anything that linked them predate the rename and must not 404.
-  { path: '/settings', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/coverage' },
+  // `/settings` is a page now (built 2026-09-22 against the design) — it was
+  // redirecting to the Coverage page the same 2026-09-15 ruling retired.
   {
     path: '/settings/coverage',
     label: 'Coverage',

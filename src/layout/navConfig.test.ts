@@ -157,6 +157,7 @@ describe('System nav', () => {
     // how.
     expect(system.items!.map((i) => i.label)).toEqual([
       'Status',
+      'Settings',
       'Data',
       'Agents',
       'Runtime',
@@ -173,6 +174,7 @@ describe('System nav', () => {
     expect(new Set(ids).size).toBe(ids.length)
     expect(system.items!.map((i) => i.id)).toEqual([
       '/system/status',
+      '/settings',
       'system:data',
       'system:agents',
       'system:runtime',
@@ -232,8 +234,10 @@ describe('isSystemRoute', () => {
 
 describe('the old names', () => {
   it('still resolve, so bookmarks predating the rename do not 404', () => {
+    // `/settings` itself left this list on 2026-09-22: it is the design's own
+    // address for the collapse's second half and a real page now. Its children
+    // are still the old names and still redirect.
     const renamed = [
-      '/settings',
       '/settings/coverage',
       '/settings/feed',
       '/settings/data-readiness',

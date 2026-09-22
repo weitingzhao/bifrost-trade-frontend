@@ -456,6 +456,16 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    path: '/settings',
+    label: 'Settings',
+    crumbs: SYSTEM,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.16',
+      note: DESIGN_NOTES['/settings'],
+    },
+  },
+  {
     // The design's collapse target (Owner ruling 2026-09-15). Built
     // 2026-09-22; the nine `/system/*` pages below it keep their rows and
     // their "to ask" question — where each capability lands is the Owner's.

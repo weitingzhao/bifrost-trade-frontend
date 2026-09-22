@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { parseQuery } from '@/lib/omnibar'
-import { KEY_COPILOT, KEY_OMNIBAR, SHORTCUTS } from './shortcuts'
+import { KEY_COPILOT, KEY_OMNIBAR, KEY_SIDEBAR, SHORTCUTS } from './shortcuts'
 
 describe('the shortcut list', () => {
   it('answers `?` in the Omnibar and nothing else', () => {
@@ -24,6 +24,22 @@ describe('the shortcut list', () => {
     expect(SHORTCUTS.find((s) => s.keys === '⌘J')?.what).toMatch(/Copilot/)
     expect(KEY_OMNIBAR).toBe('k')
     expect(KEY_COPILOT).toBe('j')
+  })
+
+  it('describes what Esc actually closes, which is not the Copilot', () => {
+    // §5a.8 made the side panel the companion that stays; Esc has closed the
+    // top inspector and then the float since. The list said "close the
+    // Copilot" until Settings went to publish it (2026-09-22).
+    const esc = SHORTCUTS.find((s) => s.keys === 'Esc')
+    expect(esc?.what).toMatch(/inspector/)
+    expect(esc?.what).not.toMatch(/Copilot/)
+    const src = readFileSync('src/lib/cockpit/keybinds.ts', 'utf8')
+    expect(src).toContain('closeTopInspector')
+  })
+
+  it('lists the sidebar key, which the design system owns and the list forgot', () => {
+    expect(SHORTCUTS.find((s) => s.keys === '⌘B')?.scope).toBe('Anywhere')
+    expect(KEY_SIDEBAR).toBe('b')
   })
 
   it('says where a page-scoped key fires', () => {

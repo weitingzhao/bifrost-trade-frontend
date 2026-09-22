@@ -101,6 +101,9 @@ const SYSTEM_TREE_PAGES: ReadonlySet<string> = new Set([
   // the trader's.
   '/research/agent-personas',
   '/research/orchestration',
+  // `/settings` is the design's own address for the System collapse's second
+  // half (Owner ruling 2026-09-15), and it is not under `/system/`.
+  '/settings',
 ])
 
 /**

@@ -242,6 +242,7 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
       // The design's System landing (Owner ruling 2026-09-15): the three
       // questions a trader asks, above the folds that answer how.
       route('Status', '/system/status', Gauge),
+      route('Settings', '/settings', Settings),
       // Signal Health and Lens Coverage arrived from Research (design package
       // 2026-09-20.1). The design's rule is about what a page takes: one that
       // takes a symbol is a read and stays in Research › Analyze; one that

@@ -98,8 +98,11 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/seats/TradingCopilotPage')),
       },
       {
+        // One page, two faces (§5a.9). The alias renders the layer page with
+        // the census face selected; the route drives the face, so the deep
+        // link the design keeps still lands on the reading it names.
         path: 'research/workbench',
-        lazy: lazyPage(() => import('@/pages/research/seats/WorkbenchPage')),
+        lazy: lazyPage(() => import('@/pages/research/seats/ResearchOverviewPage')),
       },
 
       { path: 'market/live', lazy: lazyPage(() => import('@/pages/market/LivePage')) },

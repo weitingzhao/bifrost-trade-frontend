@@ -94,6 +94,13 @@ export function routeFor(pathname: string): RouteEntry {
 const SYSTEM_TREE_PAGES: ReadonlySet<string> = new Set([
   '/research/signal-health',
   '/research/lens-coverage',
+  // Personas and Orchestration joined them on 2026-09-22 (design Rev
+  // 2026-09-22.2, its own `SYS_ROUTES`). Same rule, read on the reader rather
+  // than on the path: the roster says whose readings to trust and the diagram
+  // says who hands to whom — the operator's question and the engineer's, not
+  // the trader's.
+  '/research/agent-personas',
+  '/research/orchestration',
 ])
 
 /**

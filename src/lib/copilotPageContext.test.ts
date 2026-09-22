@@ -33,7 +33,7 @@ describe('ambientPageContext', () => {
     expect(ambientPageContext('/research/workbench', '', null)).toEqual({
       originPage: '/research/workbench',
       // The route's label took the Vision name with the seat retirement.
-      originLabel: 'Pipeline',
+      originLabel: 'Pipeline census',
     })
   })
 })

@@ -145,11 +145,15 @@ function systemDestinations(): string[] {
 }
 
 describe('System nav', () => {
-  it('is one group of four folds — what we hold, whether it answers, what it was told, and the reading', () => {
+  it('is one group of five folds — what we hold, who reads it, whether it answers, what it was told, and the reading', () => {
     expect(SYSTEM_NAV_GROUPS).toHaveLength(1)
     expect(system.label).toBe('System')
+    // Agents arrived 2026-09-22 (§5a.8): the roster and the wiring diagram are
+    // the operator's and the engineer's pages, and a trader's tree is the one
+    // place they do not belong.
     expect(system.items!.map((i) => i.label)).toEqual([
       'Data',
+      'Agents',
       'Runtime',
       'Configuration',
       'Reference',
@@ -164,6 +168,7 @@ describe('System nav', () => {
     expect(new Set(ids).size).toBe(ids.length)
     expect(system.items!.map((i) => i.id)).toEqual([
       'system:data',
+      'system:agents',
       'system:runtime',
       'system:config',
       'system:reference',
@@ -254,7 +259,11 @@ describe('Review nav', () => {
       '/review/habits',
       '/review/playbook-stats',
       '/review/objectives',
-      '/review/proposals',
+      // One inbox, not two (§5a.8): Decision Inbox replaced Rule proposals
+      // here — the same act with a row each, because the engine touches both
+      // ends of the loop. `/review/proposals` stays a route and a deep link
+      // until its rows fold into the Inbox page.
+      '/research/loop/decisions',
     ])
   })
 })

@@ -1,10 +1,15 @@
 /**
- * The Research group and the badges that ride on it.
+ * The Research group and the one badge still riding on the tree.
  *
  * It no longer reads the objective list. The Objectives fold was cancelled
  * (Owner 2026-09-21, design Rev 2026-09-20.1) because it was the one row that
- * made data rows into menu rows, so the tree is now the same for every reader
- * and only the badges are live.
+ * made data rows into menu rows, so the tree is the same for every reader.
+ *
+ * And since §5a.8 it is barely a Research badge at all: the Decision Inbox
+ * seats in **Review** now, so the count is handed to whichever group draws
+ * that row — the sidebar asks this for every item in every group, which is
+ * why one function still answers for a page that left this tree. The
+ * Autopilot lamp went to the companion rail with its home.
  */
 import { useMemo, type ReactNode } from 'react'
 import { DenseTag } from '@/components/data-display'
@@ -37,20 +42,13 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
           </DenseTag>,
         )
       }
-      // The design's chip on the home row is the word, not a lamp: `running`
-      // while a run is in flight, nothing when the loop is idle. Trust moved
-      // to where it is judged — the console's standing and the leash panel.
-      if (standing.objectives.some((o) => o.last_run?.status === 'running')) {
-        byPath.set(
-          AUTOPILOT_PAGES.autopilot.to!,
-          <DenseTag variant="success" size="cell" title="A loop run is in flight">
-            running
-          </DenseTag>,
-        )
-      }
-      // The per-objective memo badges retired with the rows that carried
-      // them. The Autopilot row's own `running` chip stays: it is an
-      // aggregate over every objective, not a row's own count.
+      // The `running` chip retired with its row (§5a.8, 2026-09-22): the
+      // Autopilot home left the tree for the companion rail, and the lamp went
+      // with it — it rides the rail's head icon now, beside this count. A
+      // badge keyed to a row that no tree draws is a badge nobody sees.
+      //
+      // The per-objective memo badges retired earlier, with the rows that
+      // carried them.
     }
     // Fold rows borrow their first child's `to` (fold:copilot carries Desk's,
     // fold:market Live's) — keying them by `to` would pin the child's badge on

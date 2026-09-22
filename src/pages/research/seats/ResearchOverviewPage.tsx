@@ -1,6 +1,17 @@
 /**
- * Research overview — `/research/overview`, walked against
- * `Research Overview.dc.html` (Rev 2026-09-18.2).
+ * The Research layer page — `/research/overview`, walked against
+ * `Research Overview.dc.html` (Rev 2026-09-22.2).
+ *
+ * **Two faces since §5a.9.** The Pipeline fold merged into this layer, and it
+ * could because the design's FILES table always mapped `/research/overview`
+ * and `/research/workbench` to one prototype: the census was a face of this
+ * page, not a page of its own. The menu row went; the reading did not. `The
+ * loop` is what this layer *is*, `Pipeline census` is what its stations
+ * *produced*, and the second route still lands straight on the second face.
+ *
+ * A face is not a place (§12.2), so this is a segment control and not a tab
+ * row in the tree — and the route drives it rather than a `?face=` param,
+ * because `/research/workbench` is the deep link the design keeps.
  *
  * The design rewrote this page from a seat chooser into the module's own
  * standing: one dial, three operators, six stations, one book. The seat
@@ -8,7 +19,7 @@
  * 2026-09-14, so a chooser chose nothing). What the stores cannot say yet
  * stays grey and says why — see `OverviewPanels`.
  */
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { BookOpen, Inbox } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -26,6 +37,8 @@ import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { operatorOf, sourceOperatorOf } from '@/lib/research/operatorOf'
 import { objectiveLeash } from '@/pages/research/loop/leash'
 import { LoopOverviewStrip } from '@/pages/research/home/LoopOverviewStrip'
+import { PipelineCensusFace } from '@/pages/research/seats/PipelineCensusFace'
+import { SegmentControl } from '@/components/data-display'
 import {
   BookPanel,
   DialStrip,
@@ -50,6 +63,15 @@ import {
   isToday,
   watchlistBook,
 } from './overviewModel'
+
+/**
+ * The two routes of one page.
+ *
+ * `/research/workbench` is the menu-less alias the design keeps for the census
+ * face — it lights the Research layer row, not a row of its own.
+ */
+const OVERVIEW_PATH = '/research/overview'
+const CENSUS_PATH = '/research/workbench'
 
 const DESCRIPTION =
   'One pipeline — scan · nominate · judge · decide · settle · feed back — driven by three operators ' +
@@ -323,6 +345,10 @@ export default function ResearchOverviewPage() {
     tone: o.status === 'active' ? 'bg-success' : 'bg-muted-foreground/50',
   }))
 
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const face = pathname === CENSUS_PATH ? 'census' : 'loop'
+
   return (
     <PageShell padding="default" className="min-w-0 space-y-3">
       <PageHeader
@@ -330,6 +356,19 @@ export default function ResearchOverviewPage() {
         description={DESCRIPTION}
         actions={
           <div className="flex flex-wrap items-center gap-2">
+            {/* The design's two-segment switch. The face is the route, so it
+                is bookmarkable, it is what the sidebar's alias lights, and a
+                link written to the census still lands on the census. */}
+            <SegmentControl
+              size="xs"
+              ariaLabel="Research face"
+              value={face}
+              onChange={(v) => navigate(v === 'census' ? CENSUS_PATH : OVERVIEW_PATH)}
+              options={[
+                { value: 'loop', label: 'The loop', title: 'What this layer is: the circuit, the dial, today.' },
+                { value: 'census', label: 'Pipeline census', title: 'What its stations produced — every store on one scale.' },
+              ]}
+            />
             <Link
               to="/docs/research-blueprint"
               className="inline-flex items-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1 text-dense-meta text-muted-foreground hover:border-primary/40 hover:text-foreground"
@@ -349,6 +388,42 @@ export default function ResearchOverviewPage() {
         }
       />
 
+      {face === 'census' ? <PipelineCensusFace /> : null}
+
+      {face === 'loop' ? <LoopFace
+        stations={stations}
+        machines={machines}
+        dialCells={dialCells}
+        earn={earn}
+        today={today}
+        nowIso={nowIso}
+        health={health}
+        stationsFootnote={stationsFootnote}
+        bookRows={bookRows}
+        cards={cards}
+      /> : null}
+    </PageShell>
+  )
+}
+
+/** The layer's own face: what it is, rather than what it produced. */
+function LoopFace(props: {
+  stations: StationRow[]
+  machines: React.ComponentProps<typeof LoopCircuit>['machines']
+  dialCells: DialCell[]
+  earn: React.ComponentProps<typeof DialStrip>['earn']
+  today: TodayItem[]
+  nowIso: string
+  health: HealthCell[]
+  stationsFootnote: string
+  bookRows: React.ComponentProps<typeof BookPanel>['rows']
+  cards: OpCardData[]
+}) {
+  const {
+    stations, machines, dialCells, earn, today, nowIso, health, stationsFootnote, bookRows, cards,
+  } = props
+  return (
+    <>
       {/* The design's order, and the order is the argument: the loop first —
           what this layer is — then how much of it passes without you, then
           what came out today and whether the engines behind it are up. */}
@@ -376,6 +451,6 @@ export default function ResearchOverviewPage() {
       </div>
       <OperatorCards cards={cards} />
       <LoopOverviewStrip />
-    </PageShell>
+    </>
   )
 }

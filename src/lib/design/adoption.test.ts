@@ -205,9 +205,12 @@ describe('design adoption', () => {
     // followed it out of `stale` the same way (45→44), and Symbol — the last
     // page in `stale` — with it (44→43). Nothing is stale now: every walked
     // page is either in place or waiting on a look. Book starters and the
-    // Decision Inbox were signed off the same day (43→45).
-    expect(counts.aligned + counts.byState.stale).toBe(45)
-    expect(counts.aligned).toBe(45)
+    // Decision Inbox were signed off the same day (43→45). Then the shell
+    // restructure took the Research layer page and its census alias back for
+    // a look (45→43): the layer grew a second face and the alias stopped
+    // being a page of its own.
+    expect(counts.aligned + counts.byState.stale).toBe(43)
+    expect(counts.aligned).toBe(43)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -355,7 +358,12 @@ describe('design adoption', () => {
     // option side of Stock ratings, walked the same evening, and the pass that
     // pulled the weights panel, the tape and the lens bar out of the Stocks
     // page so both ratings pages read one implementation (reviewing 1→2).
-    expect(counts.byState.reviewing).toBe(2)
+    //
+    // Then the shell restructure (Rev 2026-09-22.2) takes the two routes of
+    // the Research layer page with it: the equipment left the tree and the
+    // Pipeline fold merged into the layer, so the layer page grew a second
+    // face and its alias stopped being a page (aligned 45→43, reviewing 2→4).
+    expect(counts.byState.reviewing).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -383,10 +391,8 @@ describe('design adoption', () => {
       '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/orchestration',
-      '/research/overview',
       '/research/ratings/stocks',
       '/research/screener',
-      '/research/workbench',
       // All three layer heads §5a.1 moved are back on this list, re-walked
       // against .23 and signed off together: `/research/overview`, `/review`
       // and `/trade/desk`.
@@ -414,8 +420,10 @@ describe('design adoption', () => {
     // The two ratings pages' own siblings: Symbol, and the Vol ratings rebuild
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/research/overview',
       '/research/scan',
       '/research/symbol',
+      '/research/workbench',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they

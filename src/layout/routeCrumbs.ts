@@ -26,23 +26,40 @@ export const TRADE_DESK = ['Trade'] as const
 export const RISK = ['Risk'] as const
 export const REVIEW = ['Review'] as const
 export const RESEARCH = ['Research'] as const
-export const AUTOPILOT = ['Research', 'Autopilot'] as const
-/** The object layer is seat-free (Vision §12): its trail names the Book, not the loop. */
-export const THE_BOOK = ['Research', 'The Book'] as const
-export const COPILOT = ['Research', 'Copilot'] as const
+/**
+ * Equipment trails do not begin in Research any more (design Rev 2026-09-22.2,
+ * §5a.8).
+ *
+ * The three modules left the business tree because they are not phases of the
+ * script — Autopilot runs it, The Book remembers it, the Copilot is held while
+ * playing it. The breadcrumb was the last thing still filing them under
+ * Research, and a trail whose first segment names a tree the page is no longer
+ * in points at a row that is not there.
+ *
+ * So each module is its own root: `The Book › Journal`, `Copilot › Book
+ * starters`, and the module homes carry no prefix at all because there is
+ * nothing above them. The two pages that moved into a phase take that phase's
+ * trail instead — the Decision Inbox reads `Review`, Daily Brief reads `Home`.
+ */
+export const AUTOPILOT = ['Autopilot'] as const
+export const THE_BOOK = ['The Book'] as const
+export const COPILOT = ['Copilot'] as const
+export const AGENTS = ['System', 'Agents'] as const
 /**
  * The three Pipeline folds carry Pipeline in the trail.
  *
  * The Workbench seat became **Pipeline** when the seats were retired (Owner
- * 2026-09-19), and the sidebar has nested these three under it since. The
- * trails had not followed, so a reader standing on Symbol was told
- * `Research / Analyze` while the tree beside them said
- * `Research / Pipeline / Analyze` — the breadcrumb's one job is to say where
- * you are, and it was naming a level the menu no longer has.
+ * 2026-09-19), and the sidebar nested these three under it — so the trails
+ * grew a `Pipeline` segment to match, because a breadcrumb naming a level the
+ * menu does not have is a breadcrumb lying about where you are.
+ *
+ * The segment went again on 2026-09-22 (§5a.9) for exactly the same reason,
+ * read the other way: the fold merged into the Research layer, so the three
+ * captions sit directly under it and the trail is two deep again.
  */
-export const DISCOVER = ['Research', 'Pipeline', 'Discover'] as const
-export const ANALYZE = ['Research', 'Pipeline', 'Analyze'] as const
-export const VALIDATE = ['Research', 'Pipeline', 'Validate'] as const
+export const DISCOVER = ['Research', 'Discover'] as const
+export const ANALYZE = ['Research', 'Analyze'] as const
+export const VALIDATE = ['Research', 'Validate'] as const
 export const DATA = ['Research', 'Data'] as const
 export const STRATEGY = ['Strategy'] as const
 // One group, three folds. `/settings` and `/operations` were two names for one

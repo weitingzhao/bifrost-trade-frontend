@@ -18,6 +18,21 @@ import {
   staticResearchSubGroups,
 } from './researchNavCatalog'
 import type { ShellNavItem } from '@bifrost/ui'
+import { getAllNavItems } from '@bifrost/ui'
+import { EQUIP_GROUPS, equipRoutes } from './equip'
+import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
+
+/** Home's rows — where Daily Brief went (§5a.8). */
+function homeItems(): ShellNavItem[] {
+  return NAV_GROUPS.find((g) => g.label === 'Home')?.items ?? []
+}
+
+/** Every route the System tree reaches — where the two agent pages went. */
+function systemRoutes(): string[] {
+  return SYSTEM_NAV_GROUPS.flatMap((g) =>
+    getAllNavItems(g).flatMap((i) => [i.to ?? i.id, ...(i.children ?? []).map((c) => c.to ?? c.id)]),
+  )
+}
 
 
 const OVERVIEW = '/research/overview'
@@ -40,33 +55,20 @@ function routesOf(items: ShellNavItem[]): string[] {
 }
 
 describe('one tree, both homes', () => {
-  it('stands four rows in the design order: engine, stations, Book, Copilot', () => {
-    // Market left for Home (§5a.1): Home is organised by time of day, and
-    // Live · Alerts · Events are the market's own clock. Overview left the
-    // list in the same round — it is the layer's heading now, not a row in it.
+  it('holds no equipment at all — the tree is stations only', () => {
+    // §5a.8 (design Rev 2026-09-22.2): Research → Risk → Trade → Portfolio →
+    // Review is the script; Autopilot runs it, The Book remembers it, the
+    // Copilot is held while playing it. None of the three is a stage, and a
+    // tree cannot say "not a place" — every pixel of it says place. They
+    // enter through the companion rail now (`equip.ts`).
     expect(buildResearchNavGroup().to).toBe(OVERVIEW)
-    expect(researchItems().map((i) => i.to)).toEqual([
-      AUTOPILOT_HOME,
-      PIPELINE_HOME,
-      BOOK_PAGE,
-      COPILOT_DESK,
-    ])
-  })
-
-  it('shows Autopilot and Pipeline at once — the split the Owner retired', () => {
     const routes = routesOf(researchItems())
-    expect(routes).toContain(AUTOPILOT_HOME)
-    expect(routes).toContain(PIPELINE_HOME)
-  })
-
-  it('keeps the Autopilot home to two rows: the Console and its Inbox', () => {
-    // Objectives left on 2026-09-21 (design Rev 2026-09-20.1). It was the one
-    // row that made **data rows** into **menu rows**, which is the same line
-    // that keeps every hypothesis, candidate and symbol out of the tree — and
-    // an objective is live data a static menu cannot honestly hold.
-    const home = researchItems().find((i) => i.to === AUTOPILOT_HOME)
-    expect(home?.defaultOpen).toBe(true)
-    expect(home?.children?.map((c) => c.label)).toEqual(['Decision Inbox'])
+    expect(routes).not.toContain(AUTOPILOT_HOME)
+    expect(routes).not.toContain(BOOK_PAGE)
+    expect(routes).not.toContain(COPILOT_DESK)
+    // And no Pipeline row either (§5a.9): its page and the layer's page are
+    // one page, so two rows over it was the shape §5a.1 already swept.
+    expect(routes).not.toContain(PIPELINE_HOME)
   })
 
   it('puts no objective in the menu at all', () => {
@@ -77,17 +79,13 @@ describe('one tree, both homes', () => {
     expect(everything.filter((i) => i.label === 'Objectives')).toEqual([])
   })
 
-  it('names the stations Pipeline — the Vision destination for the Workbench folds', () => {
-    // Vision §12.2: "Workbench seat (四折) → Pipeline — 改名, 去 seat 化". The
-    // route keeps its path; only the name and the standing changed.
-    const home = researchItems().find((i) => i.to === PIPELINE_HOME)
-    expect(home?.label).toBe('Pipeline')
-    // §5a.7: the three are captions now, and their nine pages are siblings —
-    // twelve entries at one depth, not three rows over three lists.
-    // Ten entries: three captions and the seven pages they name. The design
-    // draws twelve because its Analyze carries three rows where this side
-    // carries one — a difference that predates §5a.7 and is not its business.
-    expect(home?.children?.map((i) => [i.label, i.kind ?? 'row'])).toEqual([
+  it('stands the stations directly under the layer, one depth', () => {
+    // §5a.9: the Pipeline fold merged into the Research layer, so the three
+    // captions and their pages are the layer's own rows. Ten entries: three
+    // captions and the seven pages they name. The design draws twelve because
+    // its Analyze carries three rows where this side carries one — Compare and
+    // History have no route here.
+    expect(researchItems().map((i) => [i.label, i.kind ?? 'row'])).toEqual([
       ['Discover', 'caption'],
       ['Stock ratings', 'row'],
       ['Vol ratings', 'row'],
@@ -102,8 +100,7 @@ describe('one tree, both homes', () => {
   })
 
   it('gives a caption no address, so nothing can navigate to a heading', () => {
-    const home = researchItems().find((i) => i.to === PIPELINE_HOME)
-    for (const cap of (home?.children ?? []).filter((i) => i.kind === 'caption')) {
+    for (const cap of researchItems().filter((i) => i.kind === 'caption')) {
       expect([cap.to, cap.href, cap.children], cap.label).toEqual([undefined, undefined, undefined])
     }
   })
@@ -143,15 +140,12 @@ describe('one tree, both homes', () => {
     expect(rows('Data')).toEqual([])
   })
 
-  it('carries The Book — a page of its own, with the object layer under it', () => {
-    // §5a.4: four parallel children and none of them is The Book, so the fold
-    // stopped aliasing its first child and got a page. Keyed by path, like
-    // every dual row, so it lights while you stand on it.
-    const fold = flatten(researchItems()).find((i) => i.label === 'The Book')
-    expect([fold?.id, fold?.to]).toEqual([BOOK_PAGE, BOOK_PAGE])
-    // Four since 2026-09-21: the design's `fold:book` has carried a Journal
-    // row since the package was written, and the row waited on the page.
-    expect(fold?.children?.map((c) => [c.label, c.to])).toEqual([
+  it('carries The Book on the rail, with the object layer under it', () => {
+    // §5a.4 gave the fold a page of its own; §5a.8 took the fold out of the
+    // tree. The five pages did not move — only the surface that reaches them.
+    const book = EQUIP_GROUPS.find((g) => g.id === 'book')
+    expect(book?.hub.to).toBe(BOOK_PAGE)
+    expect(book?.pages.map((p) => [p.label, p.to])).toEqual([
       ['Hypothesis Board', '/research/loop/hypotheses'],
       ['Candidate Pool', '/research/loop/candidates'],
       ['Watchlist', '/research/watchlist'],
@@ -159,32 +153,66 @@ describe('one tree, both homes', () => {
     ])
   })
 
-  it('makes Copilot a page with pages under it, not a container', () => {
-    // §5a: the fold's `to` was its own first child, so clicking Copilot
-    // selected Desk and two rows lit for one page. The Desk is the fold now,
-    // and the id is the path — the sidebar matches the active row by id
-    // alone, so a `fold:*` id would never light while you stood on it.
-    const fold = flatten(researchItems()).find((i) => i.label === 'Copilot')
-    expect([fold?.id, fold?.to]).toEqual([COPILOT_DESK, COPILOT_DESK])
-    // Three rows since Rev 2026-09-21.6: Orchestration is a menu row, not a
-    // fourth tab on the Desk — a tab is another face of one route, and the
-    // wiring diagram is its own page with its own reader.
-    expect(fold?.children?.map((c) => [c.label, c.to])).toEqual([
-      ['Daily Brief', '/research/daily-brief'],
-      ['Personas', '/research/agent-personas'],
-      ['Orchestration', '/research/orchestration'],
+  it('makes the Copilot Desk the group head, not a row under one', () => {
+    // §5a made the Desk the fold rather than a child of it; §5a.8 moved the
+    // whole group to the rail, where a head icon is exactly that shape.
+    const copilot = EQUIP_GROUPS.find((g) => g.id === 'copilot')
+    expect(copilot?.hub.to).toBe(COPILOT_DESK)
+    // The Desk's three old children scattered on 2026-09-22 (§5a.8), each to
+    // where its reader is: Daily Brief is the 9am read and went to Home, and
+    // Personas and Orchestration answer the operator's and the engineer's
+    // questions rather than the trader's, so they went to System › Agents.
+    // What is left on the rail is the one page that is Copilot's own work.
+    expect(copilot?.pages.map((p) => [p.label, p.to])).toEqual([
+      ['Book starters', '/research/copilot/trading'],
     ])
+    expect(homeItems().map((i) => i.to)).toContain('/research/daily-brief')
+    expect(systemRoutes()).toEqual(
+      expect.arrayContaining(['/research/agent-personas', '/research/orchestration']),
+    )
   })
 
-  it('reaches every route the catalog knows, each exactly once', () => {
+  it('reaches every route the catalog knows — tree, rail, Home or System', () => {
+    // The invariant this pass is really about. Taking three folds out of the
+    // tree is only safe if nothing lost its entrance, and the first version of
+    // §5a.8 failed on exactly that: the Copilot's pages became unreachable.
+    // So the gate is reach, not shape — and it counts every surface.
     const group = buildResearchNavGroup()
-    // The group's own heading is a route too (§5a.1) — the Overview — so the
-    // reach is the rows plus it, not the rows alone.
-    const routes = [group.to as string, ...routesOf(researchItems())].filter(
-      (r) => !r.startsWith('/research/loop/objectives/'),
+    const reached = [
+      group.to as string,
+      ...routesOf(researchItems()),
+      ...equipRoutes(),
+      ...homeItems().map((i) => i.to ?? i.id),
+      ...systemRoutes(),
+    ].filter((r) => !r.startsWith('/research/loop/objectives/'))
+    const owed = allResearchRoutes().filter(
+      (r) =>
+        !r.startsWith('/research/loop/objectives/') &&
+        // §5a.9's menu-less alias: `/research/workbench` is the census face of
+        // the layer page, so the page it names IS reached — by the row above
+        // it and by the face switch on it. A row of its own would be the two
+        // rows over one page the merge removed.
+        r !== '/research/workbench',
     )
-    expect(new Set(routes).size).toBe(routes.length)
-    expect([...routes].sort()).toEqual([...allResearchRoutes()].sort())
+    for (const route of owed) expect(reached, route).toContain(route)
+  })
+
+  it('reaches a page from the tree or from the rail, not both', () => {
+    // Two lit entrances for one page is the double-selection §5a has swept
+    // three times. One exception, declared rather than discovered: the
+    // Decision Inbox is a Review row *and* an Autopilot icon, because it is
+    // the only page that accumulates work without my hand — the design puts
+    // it in both surfaces for that reason and marks the menu row `in Review`.
+    const ON_BOTH = ['/research/loop/decisions']
+    const tree = NAV_GROUPS.flatMap((g) => [
+      g.to,
+      ...getAllNavItems(g).flatMap((i) => [i.to, ...(i.children ?? []).map((c) => c.to)]),
+    ]).filter((r): r is string => r != null)
+    const doubled = equipRoutes().filter((r) => tree.includes(r) && !ON_BOTH.includes(r))
+    expect(doubled).toEqual([])
+    // And the exception is real rather than aspirational.
+    expect(tree).toContain(ON_BOTH[0])
+    expect(equipRoutes()).toContain(ON_BOTH[0])
   })
 
   it('carries no section headings — a heading you cannot click is a wasted row', () => {
@@ -221,14 +249,14 @@ describe('no page lights two rows', () => {
 
 describe('the seat-less layout', () => {
   it('lists the levels top down for the top nav and the home page', () => {
+    // The seat-less layout the top nav reads mirrors the tree: the layer's
+    // own page, then its three stations. The equipment groups left it with
+    // the folds (§5a.8).
     expect(staticResearchSubGroups().map((s) => s.label)).toEqual([
       '',
-      'The Book',
-      'Autopilot · unattended',
-      'Copilot · on request',
-      'Pipeline · Discover',
-      'Pipeline · Analyze',
-      'Pipeline · Validate',
+      'Discover',
+      'Analyze',
+      'Validate',
     ])
   })
 })

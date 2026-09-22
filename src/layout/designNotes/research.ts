@@ -200,7 +200,18 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'clicked through to a page whose h1 is the chip\u2019s own label. '
     + 'Owner 2026-09-21: all three blocks stay for now \u2014 the ruling is «\u5148\u7559\u7740», not a '
     + 'destination, so they keep their place below the design\u2019s four sections and this note carries '
-    + 'the question rather than a silent deletion. Signed off the same day.',
+    + 'the question rather than a silent deletion. Signed off the same day.'
+    + ' '
+    + 'RE-WALKED 2026-09-22 for the shell restructure (Rev 2026-09-22.2). The page gained a second '
+    + 'face and lost four neighbours. **Two faces** (\u00a75a.9): The loop is what this layer is, '
+    + 'Pipeline census is what its stations produced, and the switch is a segment control because a '
+    + 'face is not a place (\u00a712.2). The route drives it rather than a `?face=` param \u2014 '
+    + '/research/workbench is the deep link the design keeps, so it has to be the thing that '
+    + 'selects. **Four neighbours** (\u00a75a.8): Autopilot, The Book and the Copilot left the tree '
+    + 'for the companion rail, and the Pipeline fold merged into this layer row. What is under '
+    + 'Research now is three captions and seven pages at one depth \u2014 the design draws nine because '
+    + 'its Analyze has Compare and History, which have no route on this side and so get no row that '
+    + 'goes nowhere.',
   '/research/workbench':
     'Walked 2026-09-19 against Research Overview.dc.html (workbench view, Rev 2026-09-18.2). The prototype rules the seat home is not redesigned — what changed is around it — so the directory page stands, and the walk adds only the seat-context strip (hand · operator, rail-follows-route sentence). The prototype EmptyState points at Screener Fork lineage and Symbol hand verdicts; both land in W2/W3. Owner ruling 2026-09-19 (Vision §15 Q2, the way §12.3 argued): the seats retire — one tree, Autopilot and the stations standing together — and this page takes the Vision’s own name for them, Pipeline (§12.2: Workbench seat → Pipeline, renamed and de-seated). The current prototype still titles the view Workbench; the rename follows the Vision over the lagging contract, and the seat rail, header chip and ?seat= deep link went with the split. '
     + 'Swept 2026-09-21 under the interaction standard, and it found the worst kind of dead '
@@ -295,7 +306,17 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + '(`DiscoveryCapture`), rendered both here and by the lane list, and the expand area keys its '
     + 'four lanes by the same constant the buttons stamp \u2014 a hit cannot be captured on one '
     + 'row and claim another. A backtest run gets none: it is already an artifact. '
-    + 'Signed off by the Owner 2026-09-21.',
+    + 'Signed off by the Owner 2026-09-21.'
+    + ' '
+    + 'A FACE, NOT A PAGE, since 2026-09-22 (Rev 2026-09-22.2, \u00a75a.9). The design\u2019s FILES table '
+    + 'has always mapped this route and /research/overview to one prototype \u2014 the census was built '
+    + 'into the layer page \u2014 and this side had built them as two pages under two menu rows, which '
+    + 'is the shape \u00a75a.1 swept everywhere else. The Pipeline row left the menu, the body moved '
+    + 'into `PipelineCensusFace`, and both routes render the layer page with the face the route '
+    + 'names. Nothing of the reading was lost \u2014 the Owner\u2019s question when the fold left '
+    + '(\u300cPipeline \u9875\u9762\u91cc\u7684\u4e1a\u52a1\u4ef7\u503c\u8fd8\u662f\u9700\u8981\u4fdd\u7559\u5427\u300d) is answered by the segment: one click, or this '
+    + 'same deep link. The row is menu-less on purpose, so standing on the census lights the '
+    + 'Research layer row rather than a row of its own.',
   '/research/loop/harness':
     'Walked 2026-09-18 against Research Overview.dc.html (the seat-home view) at page rev 2026-09-14.1, on local DEV (:5173) \u2014 batch R1 of the Research walk. The prototype\u2019s own ruling for the seat homes is that they are NOT redesigned (\u201cstays as it is \u2014 what changed is around them\u201d): the menu must not reshuffle on arrival (the R0 seat model already follows the route), the seat must show on the page as a context tag, and Plan this rides on outputs (the Inbox side, aligned earlier). Built accordingly: the design\u2019s Context strip under the header \u2014 the L3 tag with the autopilot seat name and one sentence \u2014 with the prototype\u2019s \u201cvisiting\u201d note deliberately absent, because this side\u2019s rail follows the route and there is no visiting state to describe. The console itself (objectives, runs, leash, curate) is production\u2019s own and stays untouched, which is exactly what the prototype asks. Withdrawn 2026-09-19: the walk above leaned on the prototype ruling that the seat home is not redesigned. Package 2026-09-19.1 gives harness its own prototype — Research Autopilot Console.dc.html at Rev 2026-09-18.2: D10 badge, five-cell standing, universe reach, the leash panel, objective cards with the run and objective drawers — so that basis is gone and the W1 re-walk is against that page. Re-walked 2026-09-19 against Research Autopilot Console.dc.html (Rev 2026-09-18.2), the page’s first prototype of its own. The console the app already had was most of it — D10 badge, trust chip, context strip, standing, reach, policy templates, objective cards with runs and the pipeline drawer — which is the package’s own reading (the design catching the app, not the reverse). Added to close the walk: the leash panel mounted on the console (same component the Inbox mounts, per-objective floor vs record), the standing split to the design’s five cells (Drafts beside the calls they fold into), the per-objective Spend today cell, and the section’s closing paragraph on folding, the bill and what deletion keeps. Not drawn, with reasons: the trust chip’s dial suffix (no dial store until W4), the six-verb row on memos (the shared component is W3), the drawer’s Journal link (the page is W4). Objective and run detail keep their own routes — the drawer form is the design’s compact rendering of the same content and it does not require the route change. '
     + 'Objective scope wired 2026-09-21, the third page carrying the same bug. Here no link '

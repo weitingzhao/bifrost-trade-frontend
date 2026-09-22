@@ -254,11 +254,7 @@ export function allResearchRoutes(): string[] {
 export function staticResearchSubGroups(): ShellNavSubGroup[] {
   return [
     { label: '', items: [OVERVIEW_PAGE] },
-    { label: 'The Book', items: Object.values(BOOK_PAGES) },
-    { label: 'Autopilot · unattended', items: Object.values(AUTOPILOT_PAGES) },
-    { label: 'Copilot · on request', items: Object.values(COPILOT_PAGES) },
-    { label: 'Pipeline · Discover', items: [WORKBENCH_PAGE, ...BENCHES[0].items] },
-    ...BENCHES.slice(1).map((b) => ({ label: `Pipeline · ${b.label}`, items: b.items })),
+    ...BENCHES.map((b) => ({ label: b.label, items: b.items })),
   ]
 }
 
@@ -292,45 +288,37 @@ function caption(id: string, label: string): ShellNavItem {
 }
 
 /**
- * A home: a real page that is also the heading for the pages beneath it.
- * The row navigates to its own page — not to the first child, the way a fold
- * does — so the heading is somewhere you can go.
- */
-function home(page: ShellNavItem, children: ShellNavItem[]): ShellNavItem {
-  return { id: `home:${page.id}`, label: page.label, to: page.to, icon: page.icon, children, defaultOpen: true }
-}
-
-/**
- * The group, top down: the standing, the engine, the stations, the state, the
- * sediment, the tape. Autopilot before Pipeline because the registry's seat
- * slot sat there and the default seat was the engine — the two homes keep
- * that reading order now that both stand.
+ * The Research layer's rows: nine pages under three captions, one depth.
+ *
+ * It held four homes — Autopilot, Pipeline, The Book, Copilot — and now holds
+ * none of them. Two rulings landed together (design Rev 2026-09-22.2):
+ *
+ * **The equipment left the tree** (§5a.8). Research → Risk → Trade → Portfolio
+ * → Review is the script; Autopilot *runs* it, The Book *remembers* it, and
+ * the Copilot is *held while playing* it. None of the three is a stage, and
+ * the tree cannot say so: every pixel of a tree says "place". They enter
+ * through the companion rail at the right edge now — `equip.ts` — which is
+ * present on every page, which is what cross-phase means.
+ *
+ * **Pipeline merged into the layer** (§5a.9). Once the equipment was gone,
+ * Research wrapped exactly one fold, and that fold's page and the layer's page
+ * are the same page: the census is a face of the Overview. Two menu rows over
+ * one page is the shape §5a.1 already swept (the Copilot precedent), so the
+ * fold goes and its nine pages and three captions come up a level.
+ * `/research/workbench` stays as a deep-link alias onto the census face.
+ *
+ * What is left is the shape the other four layers have: one layer row that is
+ * also a page, and its pages under it.
  */
 export function researchItems(): ShellNavItem[] {
   const [discover, analyze, validate] = BENCHES
   return [
-    // Overview is the layer heading now (§5a.1), not a row inside it.
-    // Two rows, not three (Owner 2026-09-21, design Rev 2026-09-20.1): every
-    // other row in this tree is a page, and Objectives was the one that made
-    // **data rows** into **menu rows** — the same line that keeps every
-    // hypothesis, every candidate and every symbol out of the menu. The
-    // Console is already the objectives' roster and its rows link to each
-    // page, so listing them again in the sidebar moved the main content into
-    // the navigation; and an objective is live data — one gets added, one
-    // gets archived — which a static menu cannot honestly hold.
-    home(AUTOPILOT_PAGES.autopilot, [AUTOPILOT_PAGES.inbox]),
-    // Flat, with headings: §5a.7. Twelve rows fully open — nine pages and the
-    // three captions naming them.
-    home(WORKBENCH_PAGE, [
-      caption(discover.id, discover.label),
-      ...discover.items,
-      caption(analyze.id, analyze.label),
-      ...analyze.items,
-      caption(validate.id, validate.label),
-      ...validate.items,
-    ]),
-    BOOK_ITEM,
-    COPILOT_ITEM,
+    caption(discover.id, discover.label),
+    ...discover.items,
+    caption(analyze.id, analyze.label),
+    ...analyze.items,
+    caption(validate.id, validate.label),
+    ...validate.items,
   ]
 }
 
@@ -339,7 +327,9 @@ export function buildResearchNavGroup(): ShellNavGroup {
     label: 'Research',
     icon: BookOpen,
     // The heading is the Overview (§5a.1): the layer's own page, so the word
-    // goes there and only the chevron folds.
+    // goes there and only the chevron folds. Since §5a.9 that page is also
+    // the census — one page, two faces — so the row below it that used to
+    // point at the census is gone rather than duplicated.
     to: OVERVIEW_PAGE.to,
     items: researchItems(),
   }

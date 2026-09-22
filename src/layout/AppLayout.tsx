@@ -15,6 +15,7 @@ import { useAlerts } from '@/hooks/useAlerts'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
 import { CopilotDock } from '@/components/copilot/CopilotDock'
+import { EquipRail } from './EquipRail'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
 import { useRecentPagesTrail } from '@/lib/omnibar'
@@ -98,6 +99,12 @@ export function AppLayout() {
           renders a flex row, so at the reading width on a wide screen the dock
           takes its space from the content instead of covering it. */}
         <CopilotDock />
+        {/* The equipment's edge (design Rev 2026-09-22.2, §5a.8). After the
+            dock, so the dock's own surface wins when both are at the right
+            edge — the rail fades to near-nothing when it is not being reached
+            for, which is how it can live on top of two other right-edge
+            things without owning the space. */}
+        <EquipRail />
         <Omnibar />
         <MessageToastStack
           messages={stream.messages}

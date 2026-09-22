@@ -32,6 +32,10 @@ const TITLE_MAY_DIFFER: Record<string, string> = {
   '/research/ratings/stocks': 'design ROUTES says Stock ratings, its own prototype heads it Ratings · Stocks',
   '/research/screener': 'design ROUTES says Stock screen, its own prototype heads it Screener · Stocks',
   '/trade/desk': 'design ROUTES says Trade (a layer head, no crumbs), its own prototype heads it Trade Desk',
+  // §5a.9: the alias names a *face*, and the page it lands on is the Research
+  // layer page — whose h1 is the layer's name, as §5a.5 requires of the row
+  // above it. One page, two routes, one title.
+  '/research/workbench': 'a menu-less alias onto the layer page’s census face',
 }
 
 /** The page file each route renders, read out of the router source. */

@@ -70,21 +70,31 @@ describe('visibleUnderCaptions', () => {
 })
 
 describe('the Research tree uses captions where §5a.7 says to', () => {
-  const pipeline = researchItems().find((i) => i.label === 'Pipeline')
+  // §5a.9: the three captions sit directly under the layer row now — the
+  // Pipeline fold they used to live in merged into it.
+  const items = researchItems()
 
   it('names its three stations with captions, not rows', () => {
-    expect(captionsOf(pipeline?.children ?? []).map((c) => c.label)).toEqual([
-      'Discover',
-      'Analyze',
-      'Validate',
-    ])
+    expect(captionsOf(items).map((c) => c.label)).toEqual(['Discover', 'Analyze', 'Validate'])
   })
 
   it('folding one takes its pages and leaves the others', () => {
-    const all = pipeline?.children ?? []
-    const shown = visibleUnderCaptions(all, new Set(['cap:discover']))
+    const shown = visibleUnderCaptions(items, new Set(['cap:discover']))
     expect(shown.map((i) => i.label)).not.toContain('Stock ratings')
     expect(shown.map((i) => i.label)).toContain('Symbol')
     expect(shown.map((i) => i.label)).toContain('Discover')
+  })
+
+  it('holds the seven pages this side has, and nothing that only expands', () => {
+    const rows = items.filter((i) => i.kind !== 'caption')
+    // The design's nine minus the two it has and this app does not: Compare
+    // and History are prototypes with no route here, and the design's own
+    // rule is that a menu row navigates — so Analyze carries one row until
+    // those pages exist rather than two that go nowhere.
+    expect(rows).toHaveLength(7)
+    // Equipment left the tree (§5a.8) — no Autopilot, Book or Copilot row,
+    // and no row with children, because there is nothing left to nest.
+    expect(rows.some((r) => (r.children?.length ?? 0) > 0)).toBe(false)
+    expect(rows.every((r) => r.to != null)).toBe(true)
   })
 })

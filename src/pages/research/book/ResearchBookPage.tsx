@@ -160,7 +160,6 @@ export default function ResearchBookPage() {
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 max-w-[78ch] flex-[1_1_420px]">
           <PageHeader
-            breadcrumb={<p className="text-xs font-medium text-primary/90">Research</p>}
             title="The Book"
             titleSize="large"
             description={LEAD}

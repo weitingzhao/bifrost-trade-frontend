@@ -300,6 +300,21 @@
     --sk-mute: #98a2b0;
     --sk-accent: #a3e635;
 
+    /*
+     * The companion rail's three hues (design Rev 2026-09-22.2, §5a.8).
+     *
+     * One per equipment group, each taken from a layer skin rather than
+     * invented: Autopilot wears the shell's own lime because it is the engine,
+     * The Book wears the analysis blue because it is Research's sediment, and
+     * the Copilot wears the violet the Lens family already wears. They do not
+     * follow `data-layer` — the rail is the same rail in every phase, and a
+     * group that changed colour as you walked would be saying something it
+     * does not mean.
+     */
+    --equip-autopilot: #a3e635;
+    --equip-book: #60a5fa;
+    --equip-copilot: #a78bfa;
+
     /* Backgrounds — Legacy 3-layer blue-gray */
     --background: var(--sk-ground);
     --foreground: var(--sk-ink);

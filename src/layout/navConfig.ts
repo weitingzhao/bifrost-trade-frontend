@@ -30,10 +30,16 @@ import {
   TrendingUp,
   Trophy,
   Workflow,
+  Users,
 } from 'lucide-react'
 import { getAllNavItems, type ShellNavGroup, type ShellNavItem } from '@bifrost/ui'
 import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
-import { MARKET_PAGES, staticResearchSubGroups } from './researchNavCatalog'
+import {
+  AUTOPILOT_PAGES,
+  COPILOT_PAGES,
+  MARKET_PAGES,
+  staticResearchSubGroups,
+} from './researchNavCatalog'
 
 export { getAllNavItems }
 
@@ -107,7 +113,11 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     //
     // The heading is Today (§5a.1): the layer wrapped exactly one row and
     // that row was the layer, so the row is gone and the word goes there.
-    items: [...Object.values(MARKET_PAGES)],
+    //
+    // Daily Brief joined them on 2026-09-22 (design Rev 2026-09-22.2, §5a.8):
+    // it left Copilot with the fold, and it is the 9am read — the same class
+    // as Live, Event Radar and Events, which is what is true right now.
+    items: [...Object.values(MARKET_PAGES), COPILOT_PAGES.brief],
   },
   {
     label: 'Trade',
@@ -185,7 +195,16 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       route('Habits', '/review/habits', Activity),
       route('Playbook stats', '/review/playbook-stats', BarChart2),
       route('Objectives', '/review/objectives', Target),
-      route('Rule proposals', '/review/proposals', ListTodo),
+      // One inbox, not two (design Rev 2026-09-22.2, §5a.8). Decision Inbox
+      // sat under Autopilot and Rule proposals sat here: the same act — a
+      // machine proposes, I approve — with a row each, because the engine
+      // touches both ends of the loop. It seats here for the reason Objectives
+      // does: the subject of judging the machine I built is myself.
+      //
+      // `/review/proposals` stays a route and a deep link; folding its rows
+      // into the Inbox page is page work the design books as owed, not this
+      // pass. Until then it is reachable by URL and by the Omnibar.
+      AUTOPILOT_PAGES.inbox,
     ],
   },
   {
@@ -232,6 +251,16 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
         route('Data Readiness', '/system/data-readiness', Database),
         route('Signal Health', '/research/signal-health', Activity),
         route('Lens Coverage', '/research/lens-coverage', Radar),
+      ]),
+      // Personas and Orchestration arrived from Copilot (design Rev
+      // 2026-09-22.2, §5a.8 · `SYS_ROUTES`). Neither is a trader's page: the
+      // roster says whose readings to trust and the diagram says who hands to
+      // whom, which are the operator's question and the engineer's. They keep
+      // their `/research/*` paths — every deep link still works — and only the
+      // row moved, the way Signal Health's did.
+      fold('system:agents', 'Agents', '/research/agent-personas', Users, [
+        COPILOT_PAGES.personas,
+        COPILOT_PAGES.orchestration,
       ]),
       fold('system:runtime', 'Runtime', '/system/topology', Cpu, [
         route('Topology', '/system/topology', Network),

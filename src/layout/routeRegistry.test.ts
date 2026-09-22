@@ -58,10 +58,11 @@ describe('route registry', () => {
   it('resolves dynamic segments', () => {
     expect(routeFor('/research/loop/objectives/obj-1').label).toBe('Objective')
     expect(routeFor('/research/loop/runs/42').label).toBe('Loop Run')
-    // Pipeline joined the trail when the Workbench seat was renamed to it
-    // (design package 2026-09-20.1): the folds are nested under Pipeline in
-    // the tree, so the breadcrumb names the same three levels.
-    expect(routeFor('/research/signal-decay/AAPL').crumbs).toEqual(['Research', 'Pipeline', 'Validate'])
+    // Pipeline left the trail again on 2026-09-22 (§5a.9): the fold merged
+    // into the Research layer, so the three captions sit directly under it and
+    // a breadcrumb naming a level the menu does not have would be lying about
+    // where the reader is.
+    expect(routeFor('/research/signal-decay/AAPL').crumbs).toEqual(['Research', 'Validate'])
     expect(routeFor('/strategy/instances/7').label).toBe('Instances')
   })
 

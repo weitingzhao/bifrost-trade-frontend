@@ -31,7 +31,8 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'the right rail\u2019s Where approvals land and Leash. Repeats fold as the design asks \u2014 the app '
     + 'lists them under their card with a Dismiss for the batch, where the prototype offers a show '
     + 'toggle. The per-card dial line stays off: the Leash panel states it once for the page, and a '
-    + 'second surface for one rule is what the design itself keeps deleting.',
+    + 'second surface for one rule is what the design itself keeps deleting. '
+    + 'Owner signed off 2026-09-21.',
   '/research/copilot':
     'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Owner 2026-09-15: three tiles stay dissolved (Design ⑫); Desk is dark-only (R8). Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 anchors the dock to an artifact (anchored bar under the panel head, verb turns as ordinary assistant messages) and gives Personas a Track record table, so this sign-off reads stale; the dock re-walk is W3, the record table lands with the verdict store in W2.'
     + ' '
@@ -111,7 +112,7 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'reach the page at all. It is not a menu row on either side (`inNav: false` in the design, '
     + 'out of the menu here since 2026-09-14), so the fix is not a row: the Copilot desk\u2019s header '
     + 'carries **Book starters \u2192** beside Daily Brief, which is fixed and always visible. Owner '
-    + 'chose this over adding a menu row. Verified by clicking it.',
+    + 'chose this over adding a menu row. Verified by clicking it. Owner signed off 2026-09-21.',
   '/research/orchestration':
     'Built from nothing 2026-09-21 against Research Orchestration.dc.html (Rev 2026-09-21.1), the page '
     + 'Design split out of Personas: whose reading to trust is the trader\u2019s question and stays on the '
@@ -195,7 +196,24 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'The prototype\u2019s seventh tab, **Payoff**, is not missing: an earlier round folded it onto the '
     + 'Chain tab\u2019s structure panel, which reuses the portfolio risk-profile engine rather than '
     + 'standing up a second payoff maths. That decision stands and is named here so the tab count '
-    + 'difference is not read as a gap.',
+    + 'difference is not read as a gap. '
+    + 'SECOND PASS the same day, on the Owner\u2019s read (\u300c\u548c Design \u7684\u8bbe\u8ba1\u5dee\u8ddd\u6709\u70b9\u5927\u300d): the identity '
+    + 'line alone was not the page. The design\u2019s Overview is six panels of dense rows \u2014 '
+    + '`IV rank (1y) 71 60% \u00b7 60% n17` \u2014 and this side printed the band\u2019s word with two sentences '
+    + 'under it, which reads as prose where the design reads as a sheet. **The one thing missing '
+    + 'was the number the lens produced**, and it was in the payload all along: measured on DEV, '
+    + 'every exhibit carries `verdict.value` with its own `unit`, and `track_record.by_side` carries '
+    + 'both hit rates with their samples. '
+    + 'A row is the design\u2019s four columns now: lens \u00b7 reading \u00b7 `5d% \u00b7 20d%` \u00b7 `nN`. '
+    + '`lib/lensValue.ts` formats a reading by its own unit (a percentile as a whole number, vol '
+    + 'points signed, a share of spot as a percentage) and refuses to guess a scale it does not '
+    + 'know \u2014 a wrong scale is worse than an unfamiliar one. Each rate keeps its own denominator, '
+    + 'the rule the long record line already followed. '
+    + 'What moved rather than went: what a reading **means** is the panel headline\u2019s job and stays '
+    + 'on every row as its title \u2014 one hover, where the long record sentence already lived. A lens '
+    + 'that did **not** answer keeps its sentence on screen, because an absent reading has to say '
+    + 'what is missing. Measured after: Volatility reads `IV Rank 20 \u00b7 58% \u00b7 67% \u00b7 n9`, '
+    + '`IV-RV Spread 39 \u00b7 70% \u00b7 73% \u00b7 n15`, `OpEx pin 9.9% \u00b7 68% \u00b7 63% \u00b7 n24`.',
   '/research/backtest':
     'Lab — Docs Index marks it LAB: "handed to lab (2026-09-12.3), the Trade original is deleted". Lab is not built here, so it stays until it is; absent from Trade is not retired',
   '/research/overview':

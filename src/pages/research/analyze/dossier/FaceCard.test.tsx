@@ -50,10 +50,22 @@ describe('FaceCard', () => {
     )
     expect(screen.getByText('Positioning')).toBeTruthy()
     expect(screen.getByText('1/2 read')).toBeTruthy()
-    // The decisive lens is the headline and a row — once as the answer, once as the reading.
-    expect(screen.getAllByText(`Gamma · ${labelForBand('gex_regime', 'cold')}`)).toHaveLength(2)
-    expect(screen.getByText('Positive net gamma — dealers damp moves.')).toBeTruthy()
-    expect(screen.getByText('Sentiment · no reading')).toBeTruthy()
+    // The decisive lens is the headline and a row — but the row is the
+    // design's four columns now (Rev 2026-09-18.2): the lens's name, its
+    // reading, and what that reading has been worth. The band's word stays
+    // in the headline, which is where the answer belongs; the row leads with
+    // the number the lens actually produced.
+    expect(screen.getByText(`Gamma · ${labelForBand('gex_regime', 'cold')}`)).toBeTruthy()
+    expect(screen.getAllByText('Gamma').length).toBeGreaterThan(0)
+    // What a reading *means* is the headline's job now. It stays on every
+    // row as its title, so a lens that is not the headline has not lost its
+    // sentence — it is one hover away, where the long record line already
+    // was.
+    expect(screen.getByTitle('Positive net gamma — dealers damp moves.')).toBeTruthy()
+    // A lens that did not answer still holds its row and says so, in the
+    // column where its reading would be.
+    expect(screen.getByText('Sentiment')).toBeTruthy()
+    expect(screen.getByText('no reading')).toBeTruthy()
     expect(screen.getByText('No options trades tape on the current data plan')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Open' }).getAttribute('href')).toBe(
       '/research/dealer-levels?symbol=NVDA'

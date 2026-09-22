@@ -9,6 +9,7 @@
 import type { LensBand } from '@/api/research/lenses'
 import type { AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
 import { withSymbolParam } from '@/lib/symbolLink'
+import { lensValueText } from '@/lib/lensValue'
 import { labelForBand, toneForBand } from '@/lib/lensVerdict'
 import type { LampColor } from '@/lib/researchFreshness'
 
@@ -17,7 +18,13 @@ export interface RegimeExhibit {
   lens: string
   freshness: string
   as_of?: string | null
-  verdict?: { band?: string | null; means?: string | null } | null
+  verdict?: {
+    band?: string | null
+    means?: string | null
+    /** The reading and its unit — each lens states its own (`pct_of_1y_range`…). */
+    value?: unknown
+    unit?: string | null
+  } | null
   caveats?: string[]
 }
 
@@ -27,6 +34,11 @@ export interface RegimeLensItem {
   band: LensBand | null
   /** The lab's words for the band — the same text its verdict strip shows. */
   verdict: string
+  /**
+   * The reading itself, formatted by its own unit — what the design leads a
+   * dossier row with. Null when the lens answered without a value.
+   */
+  value: string | null
   means: string | null
   asOf: string | null
   href: string
@@ -115,6 +127,7 @@ export function regimeItems(
       label: spec?.label ?? LENS_LABELS[ex.lens] ?? ex.lens,
       band,
       verdict: labelForBand(canonical, band, 'no reading'),
+      value: lensValueText(ex.verdict?.value, ex.verdict?.unit),
       means: ex.verdict?.means ?? ex.caveats?.[0] ?? null,
       asOf: ex.as_of ?? null,
       href: withSymbolParam(spec?.page_route ?? LENS_ROUTES[ex.lens] ?? '/research', symbol),

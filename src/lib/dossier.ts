@@ -11,6 +11,7 @@ import type { ExhibitLens, ExhibitPayload } from '@/api/research/exhibit'
 import type { AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
 import { ANALYZE_HUB } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
+import { recordColumns } from '@/lib/lensValue'
 import { trackRecordDetail, trackRecordLine } from '@/lib/lensVerdict'
 import { canonicalLens, regimeItems, type RegimeLensItem } from '@/lib/regimeRibbon'
 import type { LampColor } from '@/lib/researchFreshness'
@@ -87,6 +88,10 @@ export const DOSSIER_LENSES: readonly ExhibitLens[] = [
 export interface DossierRow extends RegimeLensItem {
   /** The lens's track record on this symbol, in words — or null before any trigger settled. */
   record: string | null
+  /** `60% · 67%` — the same record as the design's two columns, 5d then 20d. */
+  rates: string | null
+  /** `n9` — the sample the 20d rate rests on, never separated from it. */
+  sample: string | null
   /** The same record with its pipeline state, for the hover — never the only home of a fact. */
   recordDetail: string | null
 }
@@ -140,6 +145,8 @@ export function faceView(
     means: face.id === 'validation' ? null : it.means,
     record: trackRecordLine(own[i].track_record, it.band),
     recordDetail: trackRecordDetail(own[i].track_record, it.band),
+    rates: recordColumns(own[i].track_record, it.band)?.rates ?? null,
+    sample: recordColumns(own[i].track_record, it.band)?.n ?? null,
   }))
   const href = withSymbolParam(face.openTo, symbol)
   if (face.id === 'validation') {

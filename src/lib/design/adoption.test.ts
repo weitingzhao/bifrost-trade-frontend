@@ -204,9 +204,10 @@ describe('design adoption', () => {
     // `reviewing` while the Owner looks (46→45), and the Decision Inbox
     // followed it out of `stale` the same way (45→44), and Symbol — the last
     // page in `stale` — with it (44→43). Nothing is stale now: every walked
-    // page is either in place or waiting on a look.
-    expect(counts.aligned + counts.byState.stale).toBe(43)
-    expect(counts.aligned).toBe(43)
+    // page is either in place or waiting on a look. Book starters and the
+    // Decision Inbox were signed off the same day (43→45).
+    expect(counts.aligned + counts.byState.stale).toBe(45)
+    expect(counts.aligned).toBe(45)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -350,7 +351,8 @@ describe('design adoption', () => {
     // Orchestration, the page Rev 2026-09-21.6 split out of Personas — built
     // and signed off the same day. What waits now is Book starters, the last
     // of the Copilot rows that package moved, the Decision Inbox and Symbol.
-    expect(counts.byState.reviewing).toBe(3)
+    // The first two were signed off; Symbol waits.
+    expect(counts.byState.reviewing).toBe(1)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -371,10 +373,10 @@ describe('design adoption', () => {
       '/research/agent-personas',
       '/research/book',
       '/research/copilot',
-      // `/research/copilot/trading` left this list for `stale` when Package
-      // 2026-09-21.4 moved the Copilot rows' rev.
+      '/research/copilot/trading',
       '/research/journal',
       '/research/loop/candidates',
+      '/research/loop/decisions',
       '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/orchestration',
@@ -410,8 +412,6 @@ describe('design adoption', () => {
     // side has walked and built is either in place or waiting on a rev, not on
     // a look.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/research/copilot/trading',
-      '/research/loop/decisions',
       '/research/symbol',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

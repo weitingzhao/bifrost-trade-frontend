@@ -147,7 +147,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Decision Inbox',
     crumbs: AUTOPILOT,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/loop/decisions'],
     },
@@ -233,7 +233,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Book starters',
     crumbs: COPILOT,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-21.1',
       note: DESIGN_NOTES['/research/copilot/trading'],
     },

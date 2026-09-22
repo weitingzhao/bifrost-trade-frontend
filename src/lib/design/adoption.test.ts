@@ -351,8 +351,11 @@ describe('design adoption', () => {
     // Orchestration, the page Rev 2026-09-21.6 split out of Personas — built
     // and signed off the same day. What waits now is Book starters, the last
     // of the Copilot rows that package moved, the Decision Inbox and Symbol.
-    // The first two were signed off; Symbol waits.
-    expect(counts.byState.reviewing).toBe(1)
+    // The first two were signed off; Symbol waits. Vol ratings joins it: the
+    // option side of Stock ratings, walked the same evening, and the pass that
+    // pulled the weights panel, the tape and the lens bar out of the Stocks
+    // page so both ratings pages read one implementation (reviewing 1→2).
+    expect(counts.byState.reviewing).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -408,10 +411,10 @@ describe('design adoption', () => {
       '/trade/playbook',
       '/trade/rules',
     ])
-    // Empty for the first time since the Research walk began: every page this
-    // side has walked and built is either in place or waiting on a rev, not on
-    // a look.
+    // The two ratings pages' own siblings: Symbol, and the Vol ratings rebuild
+    // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/research/scan',
       '/research/symbol',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
@@ -480,7 +483,8 @@ describe('design adoption', () => {
     // routes (the objective page, the run redirect into the console drawer) —
     // built, designed, not yet walked. 14 since W1 walked Overview and the
     // Workbench home.
-    expect(counts.byState.pending).toBe(14)
+    // 13 since Vol ratings left it for `reviewing`.
+    expect(counts.byState.pending).toBe(13)
     expect(
       rows
         .filter((r) => r.via)

@@ -274,7 +274,17 @@ export const ROUTES: readonly RouteEntry[] = [
   // "Vol ratings", the design's own label since package 2026-09-20.1: the page
   // rates the vol on a name, and "Option Scan" described the machinery rather
   // than the reading. `/research/ratings` is its alias in the design registry.
-  { path: '/research/scan', label: 'Vol ratings', crumbs: DISCOVER, scope: 'contract' },
+  {
+    path: '/research/scan',
+    label: 'Vol ratings',
+    crumbs: DISCOVER,
+    scope: 'contract',
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.10',
+      note: DESIGN_NOTES['/research/scan'],
+    },
+  },
   {
     path: '/research/momentum-radar',
     label: 'Momentum Radar',

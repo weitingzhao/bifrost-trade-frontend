@@ -10,12 +10,11 @@ import {
   flagOf,
   lensSpread,
   pathVariant,
-  presetOf,
   ratingsTape,
   toRatingRow,
-  weightSum,
   type RatingRow,
 } from './stockRatingsModel'
+import { presetOf, weightSum } from '@/components/research/weightModel'
 
 const row = (over: Partial<RatingRow['scores']> = {}, rest: Partial<RatingRow> = {}): RatingRow => ({
   symbol: 'X',
@@ -81,12 +80,14 @@ describe('composite', () => {
 
 describe('the weights themselves', () => {
   it('every preset sums to 100, so two composites are comparable', () => {
-    for (const p of WEIGHT_PRESETS) expect(weightSum(p.weights), p.id).toBe(100)
+    for (const p of WEIGHT_PRESETS) expect(weightSum(RATING_LENSES, p.weights), p.id).toBe(100)
   })
 
   it('names the preset you are on, and stops naming one once you move', () => {
-    expect(presetOf(SERVER_WEIGHTS)).toBe('model')
-    expect(presetOf({ ...SERVER_WEIGHTS, trend: 36 })).toBeNull()
+    expect(presetOf(WEIGHT_PRESETS, RATING_LENSES, SERVER_WEIGHTS)).toBe('model')
+    expect(
+      presetOf(WEIGHT_PRESETS, RATING_LENSES, { ...SERVER_WEIGHTS, trend: 36 }),
+    ).toBeNull()
   })
 
   it('opens on the server’s weights', () => {

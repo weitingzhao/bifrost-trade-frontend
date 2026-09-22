@@ -245,18 +245,6 @@ export function composite(
   return { score: applied > 0 ? sum / applied : null, scoredOn, missing }
 }
 
-export function weightSum(weights: RatingWeights): number {
-  return RATING_LENSES.reduce((n, l) => n + weights[l.key], 0)
-}
-
-/** Which preset these weights are, when they are one. */
-export function presetOf(weights: RatingWeights): string | null {
-  const hit = WEIGHT_PRESETS.find((p) =>
-    RATING_LENSES.every((l) => p.weights[l.key] === weights[l.key]),
-  )
-  return hit?.id ?? null
-}
-
 /**
  * How a lens is spread across the ranked set — the design's Tape panel.
  *

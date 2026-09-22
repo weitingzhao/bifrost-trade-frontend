@@ -12,6 +12,7 @@
 import { HOME_NOTES } from './home'
 import { PORTFOLIO_NOTES } from './portfolio'
 import { RESEARCH_NOTES } from './research'
+import { RESEARCH_PIPELINE_NOTES } from './researchPipeline'
 import { REVIEW_NOTES } from './review'
 import { RISK_NOTES } from './risk'
 import { SYSTEM_NOTES } from './system'
@@ -21,6 +22,7 @@ export const DESIGN_NOTES: Record<string, string> = {
   ...HOME_NOTES,
   ...PORTFOLIO_NOTES,
   ...RESEARCH_NOTES,
+  ...RESEARCH_PIPELINE_NOTES,
   ...REVIEW_NOTES,
   ...RISK_NOTES,
   ...SYSTEM_NOTES,

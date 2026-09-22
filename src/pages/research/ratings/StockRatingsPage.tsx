@@ -36,6 +36,12 @@ import {
 } from '@/components/data-display'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import {
+  LensBarCell,
+  LensSpreadPanel,
+  WeightsPanel,
+  type LensSpread,
+} from '@/components/research'
+import {
   PORTFOLIO_UNIVERSE_OPTIONS,
   usePortfolioSymbols,
   type PortfolioUniverse,
@@ -61,10 +67,8 @@ import {
   flagOf,
   lensSpread,
   pathVariant,
-  presetOf,
   ratingsTape,
   toRatingRow,
-  weightSum,
   type RatingLensKey,
   type RatingRow,
   type RatingWeights,
@@ -88,54 +92,26 @@ function lensInk(v: number | null): string {
 }
 
 /**
- * A lens score and where it sits on its own scale.
+ * A lens score, as this page reads it.
  *
- * The design draws a 6px track with a grey band (the 252-session range) and a
- * thin accent marker at today's value, and colours only the number. This page
- * drew a solid bar filled to the value in green or red instead, which put
- * four columns of saturated colour across every row and left the tags and the
- * grades — the cells that are actually trying to say something — competing
- * with it. The track is neutral here and the marker carries the accent.
- *
- * The band is absent, not forgotten: `high_52w`/`low_52w` are price, and
- * nothing on this row carries a year of the lens's own history, so there is
- * no range to shade. The fill to the value stands in for it — it still ranks
- * rows against each other, which is what the column is for — and the title
- * says what it is not.
- *
- * `out` turns the percentage back into what it counted: trend is eleven
- * checks, growth is eight, and `9/11` says something a `81.8` does not.
+ * The drawing is shared (`LensBarCell`); what belongs to this page is what the
+ * cell *says*: `out` turns the percentage back into what it counted — trend is
+ * eleven checks, growth is eight, and `9/11` says something `81.8` does not —
+ * and the title states that the fill is the score on its own scale, because
+ * this row carries no year of the lens's own history to band it against.
  */
 function LensCell({ v, pass, out }: { v: number | null; pass?: number | null; out?: number }) {
-  const label =
-    pass != null && out != null ? `${pass}/${out}` : v == null ? '—' : v.toFixed(0)
   return (
-    <span
-      className="flex items-center gap-1.5"
+    <LensBarCell
+      label={pass != null && out != null ? `${pass}/${out}` : v == null ? '—' : v.toFixed(0)}
+      pos={v}
+      ink={lensInk(v)}
       title={
         v == null
           ? 'No score for this lens on this name.'
           : `${v.toFixed(1)} of 100 on this lens. The bar is the score on its own scale — this row carries no history for the lens, so there is no 1-year band behind it.`
       }
-    >
-      <span className={cn('w-9 shrink-0 text-right font-mono tabular-nums', lensInk(v))}>
-        {label}
-      </span>
-      <span className="relative block h-1.5 w-full min-w-10 rounded-sm bg-secondary">
-        {v != null ? (
-          <>
-            <span
-              className="absolute inset-y-0 left-0 rounded-sm bg-foreground/20"
-              style={{ width: `${Math.max(2, v)}%` }}
-            />
-            <span
-              className="absolute -top-0.5 h-2.5 w-0.5 rounded-sm bg-primary"
-              style={{ left: `calc(${Math.min(99, Math.max(0, v))}% - 1px)` }}
-            />
-          </>
-        ) : null}
-      </span>
-    </span>
+    />
   )
 }
 
@@ -227,9 +203,26 @@ export default function StockRatingsPage() {
   const selectedRow = selectedIndex >= 0 ? scored[selectedIndex] : null
 
   const tape = ratingsTape(counts.hot, counts.cold, counts.total)
-  const preset = presetOf(weights)
-  const sum = weightSum(weights)
-  const onModel = preset === 'model'
+  /* One bar per lens, over the universe rather than the Hot/Cold cut: the
+     panel answers "is it breadth", and a spread of the names that already
+     passed the filter cannot. */
+  const spreads: LensSpread[] = useMemo(
+    () =>
+      RATING_LENSES.map((lens) => {
+        const sp = lensSpread(inUniverse, lens.key)
+        return {
+          key: lens.key,
+          label: lens.label,
+          ...sp,
+          titles: [
+            `${sp.hot} at 70 or above`,
+            `${sp.mid} between 40 and 70`,
+            `${sp.cold} under 40`,
+          ] as [string, string, string],
+        }
+      }),
+    [inUniverse],
+  )
   const asOf = q.data?.trade_date ?? null
 
   return (
@@ -312,103 +305,28 @@ export default function StockRatingsPage() {
 
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-[1_1_20rem] space-y-3">
-          <SectionPanel
-            cap="Composite"
-            title="Weights"
-            note={
-              onModel
-                ? 'on the server’s own — this list agrees with its score'
-                : `moved off the model · Σ ${sum}`
-            }
-          >
-            <div className="px-3 py-2">
-              <SegmentControl
-                size="xs"
-                ariaLabel="Weight preset"
-                value={preset ?? 'custom'}
-                onChange={(id) => {
-                  const p = WEIGHT_PRESETS.find((x) => x.id === id)
-                  if (p) setWeights(p.weights)
-                }}
-                options={[
-                  ...WEIGHT_PRESETS.map((p) => ({ value: p.id, label: p.label })),
-                  ...(preset == null ? [{ value: 'custom', label: 'Custom' }] : []),
-                ]}
-              />
-            </div>
-            <div className="flex flex-col gap-2 px-3 pb-2">
-              {RATING_LENSES.map((lens) => (
-                <label key={lens.key} className="grid grid-cols-[4.5rem_minmax(0,1fr)_2rem] items-center gap-2">
-                  <span className="text-dense-label">{lens.label}</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={50}
-                    step={5}
-                    value={weights[lens.key]}
-                    onChange={(e) =>
-                      setWeights((w) => ({ ...w, [lens.key]: Number(e.target.value) }))
-                    }
-                    className="h-3.5 w-full accent-[var(--color-profit)]"
-                    aria-label={`${lens.label} weight`}
-                  />
-                  <span className="text-right font-mono text-dense-label tabular-nums">
-                    {weights[lens.key]}
-                  </span>
-                </label>
-              ))}
-              <p className="text-dense-caption leading-relaxed text-muted-foreground">
-                {WEIGHT_PRESETS.find((p) => p.id === preset)?.note ??
-                  'Your own weights. A lens a company has no score for is left out of both halves rather than counted as zero, so a thinly-scored name is not pushed down for being thin.'}
-              </p>
-            </div>
-          </SectionPanel>
+          <WeightsPanel
+            lenses={RATING_LENSES}
+            presets={WEIGHT_PRESETS}
+            weights={weights}
+            onWeights={(w) => setWeights(w as RatingWeights)}
+            serverPresetId="model"
+            customNote="Your own weights. A lens a company has no score for is left out of both halves rather than counted as zero, so a thinly-scored name is not pushed down for being thin."
+          />
 
-          <SectionPanel cap="Tape" title={tape.label} note={`${counts.total} in view`}>
-            <p className="px-3 py-2 text-dense-meta leading-relaxed text-muted-foreground">
-              {tape.sentence}
-            </p>
-            {/* Five thin bars in one row, the way the design draws them: this
-                panel answers "is it breadth or is it one name", and it should
-                not out-shout the list it is a caption for. The earlier version
-                was two columns of tall blocks and read as the page's subject. */}
-            <div className="grid grid-cols-4 gap-2 px-3 pb-2">
-              {RATING_LENSES.map((lens) => {
-                const sp = lensSpread(inUniverse, lens.key)
-                const total = Math.max(1, sp.scored)
-                return (
-                  <div key={lens.key} className="min-w-0">
-                    <div className={cn(SECTION_CAP_CLASS, 'truncate')}>{lens.label}</div>
-                    <div className="mt-1 flex h-2.5 gap-px overflow-hidden rounded-sm">
-                      <span
-                        className="block bg-[var(--color-profit)]/70"
-                        style={{ width: `${(sp.hot / total) * 100}%` }}
-                        title={`${sp.hot} at 70 or above`}
-                      />
-                      <span
-                        className="block bg-secondary"
-                        style={{ width: `${(sp.mid / total) * 100}%` }}
-                        title={`${sp.mid} between 40 and 70`}
-                      />
-                      <span
-                        className="block bg-destructive/70"
-                        style={{ width: `${(sp.cold / total) * 100}%` }}
-                        title={`${sp.cold} under 40`}
-                      />
-                    </div>
-                    <div className="mt-0.5 font-mono text-dense-caption text-muted-foreground">
-                      {sp.hot} / {sp.cold}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-              Strong / weak per lens, at 70 and under 40. The thresholds are this page’s, not the
-              model’s. The design draws a fifth bar for relative strength; this row carries no RS
-              field, so there are four.
-            </p>
-          </SectionPanel>
+          <LensSpreadPanel
+            label={tape.label}
+            sentence={tape.sentence}
+            note={`${counts.total} in view`}
+            spreads={spreads}
+            caption={
+              <>
+                Strong / weak per lens, at 70 and under 40. The thresholds are this page’s, not
+                the model’s. The design draws a fifth bar for relative strength; this row
+                carries no RS field, so there are four.
+              </>
+            }
+          />
         </div>
 
         <div className="min-w-0 flex-[999_1_40rem]">

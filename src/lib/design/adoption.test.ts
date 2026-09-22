@@ -201,11 +201,11 @@ describe('design adoption', () => {
     // Orchestration signed off the day it was built, which closes the round
     // the Personas redesign opened (aligned 42→43, 45→46). Book starters —
     // the Copilot row the same package renamed — then left the sum for
-    // `reviewing` while the Owner looks (46→45).
-    expect(counts.aligned + counts.byState.stale).toBe(45)
+    // `reviewing` while the Owner looks (46→45), and the Decision Inbox
+    // followed it out of `stale` the same way (45→44).
+    expect(counts.aligned + counts.byState.stale).toBe(44)
     expect(counts.aligned).toBe(43)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
-      '/research/loop/decisions',
       '/research/symbol',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
@@ -349,8 +349,8 @@ describe('design adoption', () => {
     // Personas page became its third face. Both signed off; what waits now is
     // Orchestration, the page Rev 2026-09-21.6 split out of Personas — built
     // and signed off the same day. What waits now is Book starters, the last
-    // of the Copilot rows that package moved.
-    expect(counts.byState.reviewing).toBe(1)
+    // of the Copilot rows that package moved, and the Decision Inbox.
+    expect(counts.byState.reviewing).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -411,6 +411,7 @@ describe('design adoption', () => {
     // a look.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/research/copilot/trading',
+      '/research/loop/decisions',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
@@ -544,8 +545,9 @@ describe('design adoption', () => {
     // re-walked together because they are one prototype. 2 → 3 when Package
     // 2026-09-21.4 moved the three Copilot rows' rev: Book starters was
     // walked at .15.5 and is not part of this round. 3 → 2 when it was
-    // re-walked and took the design's own name.
-    expect(counts.byState.stale).toBe(2)
+    // re-walked and took the design's own name, and 2 → 1 with the Decision
+    // Inbox — what is left is Symbol, the page six others folded into.
+    expect(counts.byState.stale).toBe(1)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

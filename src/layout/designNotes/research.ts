@@ -10,7 +10,28 @@
  */
 export const RESEARCH_NOTES: Record<string, string> = {
   '/research/loop/decisions':
-    'Walked 2026-09-13 against Research Autopilot Decisions.dc.html (OLD) and the design response of that day; digest actions, kind colour and the approval strip changed 2026-09-14. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page). Package 2026-09-19.1 moved the page to Rev 2026-09-18.2 — patch cards with a structured diff and evidence, the six-verb row, the ?card= deep link — so the sign-off reads stale; the re-walk is batch W3 of the Vision plan.',
+    'Walked 2026-09-13 against Research Autopilot Decisions.dc.html (OLD) and the design response of that day; digest actions, kind colour and the approval strip changed 2026-09-14. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page). Package 2026-09-19.1 moved the page to Rev 2026-09-18.2 — patch cards with a structured diff and evidence, the six-verb row, the ?card= deep link — so the sign-off reads stale; the re-walk is batch W3 of the Vision plan.'
+    + ' '
+    + 'RE-WALKED 2026-09-21 against Rev 2026-09-18.2, rendered beside the prototype at one viewport. '
+    + 'That package added two things to this page. The first is built: a patch card closes with '
+    + '**where it came from** \u2014 `parent \u00b7 \u2026 thread \u00b7 \u2026 Journal \u2192` \u2014 because a merge proposal is only '
+    + 'as good as what it was distilled from. `parent` reads the artifact the draft is about by the '
+    + 'same rule the Journal reads it (moved to `lib/research/draftProvenance` now that the card is '
+    + 'its second reader), and `Journal \u2192` lands on that draft\u2019s own node \u2014 verified by clicking: '
+    + '`/research/journal?sel=drf_\u2026`. '
+    + '`thread` is empty and says so: measured over the 60 pending drafts on DEV, every one is '
+    + 'written by an agent on a schedule (`eod_agent` 56 \u00b7 `harness` 2 \u00b7 `digest_agent` \u00b7 '
+    + '`weekly_policy_review`), and nothing on this side distils a patch out of a Copilot thread yet. '
+    + 'The field is kept so the line fills itself the day something does. '
+    + 'The second is the six-verb row the package put on all four card kinds \u2014 **owed, by the Owner\u2019s '
+    + 'option B of 2026-09-18**: the verbs are not built until their semantics are settled, and this '
+    + 'walk records that rather than counting it as a gap. '
+    + 'Everything else the prototype draws is here and was already: the filter row with its split '
+    + 'counts, the digest strip, the four card bodies, the Approve\u2192what line with its negative half, '
+    + 'the right rail\u2019s Where approvals land and Leash. Repeats fold as the design asks \u2014 the app '
+    + 'lists them under their card with a Dismiss for the batch, where the prototype offers a show '
+    + 'toggle. The per-card dial line stays off: the Leash panel states it once for the page, and a '
+    + 'second surface for one rule is what the design itself keeps deleting.',
   '/research/copilot':
     'Walked 2026-09-13 against Research Copilot.dc.html (REDO), six steps built; Threads Origin / Symbol / Writes / Cost and Ran today next tick restored 2026-09-14. Owner 2026-09-15: three tiles stay dissolved (Design ⑫); Desk is dark-only (R8). Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 anchors the dock to an artifact (anchored bar under the panel head, verb turns as ordinary assistant messages) and gives Personas a Track record table, so this sign-off reads stale; the dock re-walk is W3, the record table lands with the verdict store in W2.'
     + ' '

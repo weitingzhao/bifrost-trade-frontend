@@ -11,6 +11,11 @@ import {
 import type { AiDraft } from '@/api/researchDrafts'
 import { isHitRateWarnActive, isPersonaDissentActive } from '@/lib/harness/harnessDraftHelpers'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
+import {
+  draftJournalHref,
+  draftParentId,
+  draftThreadId,
+} from '@/lib/research/draftProvenance'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
 import { DecisionDraftBody } from '@/components/research/harness/DecisionDraftBody'
 import { cn } from '@/lib/utils'
@@ -84,6 +89,8 @@ export function DraftCard({
     typeof draft.payload.proposed_status === 'string'
       ? draft.payload.proposed_status
       : null
+  const parentId = draftParentId(draft)
+  const threadId = draftThreadId(draft)
   const personaDiff =
     draft.kind === 'playbook_rule' && draft.payload.persona_diff
       ? (draft.payload.persona_diff as Record<string, unknown>)
@@ -229,6 +236,31 @@ export function DraftCard({
           {JSON.stringify(draft.payload, null, 2)}
         </pre>
       )}
+
+      {/* The design closes a card with where it came from (Rev 2026-09-18.2):
+          a merge proposal is only as good as what it was distilled from, and
+          the reader should be one click away from it. */}
+      <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-border/40 pt-1.5 font-mono text-dense-micro text-muted-foreground">
+        <span title="The artifact this draft is about — the same rule the Journal reads it by.">
+          parent · {parentId ?? 'none recorded'}
+        </span>
+        <span
+          title={
+            threadId
+              ? 'The Copilot thread this was distilled from.'
+              : 'No thread: every draft here is written by an agent on a schedule. Nothing on this side distils a patch out of a Copilot thread yet, so the field stays empty rather than borrowing one.'
+          }
+        >
+          thread · {threadId ?? 'not distilled from one'}
+        </span>
+        <Link
+          to={draftJournalHref(draft.id)}
+          className="ml-auto text-primary hover:underline"
+          title="This draft as a node in the Journal, under what it came from"
+        >
+          Journal →
+        </Link>
+      </p>
 
       {personaDiff && Object.keys(personaDiff).length > 0 ? (
         <p className="text-dense-meta text-warning">

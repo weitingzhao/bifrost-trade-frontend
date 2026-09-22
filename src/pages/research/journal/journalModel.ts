@@ -27,6 +27,7 @@ import type { ObjectiveRun } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { AiDraft } from '@/api/researchDrafts'
+import { draftParentId } from '@/lib/research/draftProvenance'
 import type { CandidateOutcomeRow } from '@/api/research/candidateOutcome'
 import { numericOrNull } from '@/utils/finite'
 
@@ -141,10 +142,9 @@ function str(v: unknown): string | null {
 }
 
 /** A draft's parent, in the order the store makes it available. */
-export function draftParentId(d: Pick<AiDraft, 'payload' | 'scope'>): string | null {
-  const p = (d.payload ?? {}) as Record<string, unknown>
-  return str(p.hypothesis_id) ?? str(p.candidate_id) ?? str(p.run_id) ?? str(d.scope)
-}
+/** Moved to `lib/research/draftProvenance` when the Inbox card became its
+ *  second reader — one rule for what a draft is about. */
+export { draftParentId }
 
 /** A hypothesis's birth candidate, when it was promoted from one. */
 export function hypothesisCandidateId(h: Pick<Hypothesis, 'origin_ref'>): string | null {

@@ -147,8 +147,8 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Decision Inbox',
     crumbs: AUTOPILOT,
     design: {
-      state: 'aligned',
-      rev: '2026-09-15.5',
+      state: 'reviewing',
+      rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/loop/decisions'],
     },
   },

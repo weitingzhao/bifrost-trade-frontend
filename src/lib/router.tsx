@@ -205,8 +205,12 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/review/objectives/ReviewObjectivesPage')),
       },
       {
+        // The Rule proposals page merged into the Decision Inbox (§5a.8, 2026-09-22):
+        // one inbox, not two, because a machine proposing and me approving is one
+        // act however many ends of the loop it touches. The route stays as the
+        // deep link the design keeps, and lands on the view that holds it.
         path: 'review/proposals',
-        lazy: lazyPage(() => import('@/pages/review/proposals/RuleProposalsPage')),
+        lazy: lazyPage(() => import('@/pages/research/loop/DecisionInboxPage')),
       },
       {
         path: 'risk/budget',

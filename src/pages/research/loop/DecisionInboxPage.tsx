@@ -16,6 +16,7 @@
  * destination the design imagined for it.
  */
 import { useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { Inbox } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { EmptyState, SegmentControl } from '@/components/data-display'
@@ -43,12 +44,16 @@ import {
 } from '@/lib/harness/harnessDraftHelpers'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { unreadCount, useReadDrafts } from '@/pages/research/loop/inboxRead'
+import { ProposalsView } from '@/pages/research/loop/ProposalsView'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
 
 /** Enough to see a working session's worth without the rail outgrowing the queue. */
 const LANDED_MAX = 8
 
-type View = 'decisions' | 'briefings' | 'all'
+type View = 'decisions' | 'briefings' | 'all' | 'proposals'
+
+/** The alias the design keeps for the queue that merged in (§5a.8). */
+const PROPOSALS_PATH = '/review/proposals'
 type Narrow = 'any' | 'loop' | DraftKind
 
 /**
@@ -57,10 +62,18 @@ type Narrow = 'any' | 'loop' | DraftKind
  * nine peers in one row — the three views beside six kinds — so "EOD" sat next
  * to "Decisions" as if it were another answer to the same question.
  */
-const VIEW_OPTIONS: { value: View; label: string }[] = [
+const VIEW_OPTIONS: { value: View; label: string; title?: string }[] = [
   { value: 'decisions', label: 'Decisions' },
   { value: 'briefings', label: 'Briefings' },
   { value: 'all', label: 'All' },
+  // The fourth queue, merged in on 2026-09-22 (§5a.8). Its rows are derived
+  // from habits rather than fetched as drafts, and unlike the other three
+  // nothing can accept them — which the view says rather than hides.
+  {
+    value: 'proposals',
+    label: 'Proposals',
+    title: 'What the habits argue for — a machine proposing, the other end of the same loop',
+  },
 ]
 
 /** Narrowing to one kind is still one step away — every kind the API knows, and the Loop as a group. */
@@ -94,7 +107,12 @@ export default function DecisionInboxPage() {
   // what is left here is a real decision). Today's digest is one click away —
   // a strip above the list says it is there. Briefings keep their own count,
   // so nothing is hidden.
-  const [view, setViewState] = useState<View>('decisions')
+  // The route seeds the view, so `/review/proposals` still lands on what it
+  // names — the same way `/research/workbench` lands on the census face.
+  const { pathname } = useLocation()
+  const [view, setViewState] = useState<View>(
+    pathname === PROPOSALS_PATH ? 'proposals' : 'decisions',
+  )
   const [narrow, setNarrowState] = useState<Narrow>('any')
   // A kind belongs to one view or another; narrowing inside the wrong one would
   // show an empty list for a kind that has drafts. So a kind widens to All, and
@@ -204,6 +222,10 @@ export default function DecisionInboxPage() {
         </span>
         <span className="text-dense-meta font-medium text-muted-foreground shrink-0">View:</span>
         <SegmentControl value={view} onChange={(v) => setView(v as View)} options={VIEW_OPTIONS} />
+        {/* The kind selector narrows server-side draft kinds; a proposal is
+            derived here from habits, so it stands down rather than offering
+            thirteen filters that would all empty the list. */}
+        {view === 'proposals' ? null : (
         <Select value={narrow} onValueChange={(v) => setNarrow(v as Narrow)}>
           <SelectTrigger className="h-7 w-52 text-dense-meta" aria-label="Narrow to one kind">
             <SelectValue />
@@ -216,8 +238,11 @@ export default function DecisionInboxPage() {
             ))}
           </SelectContent>
         </Select>
+        )}
         <span className="text-dense-meta text-muted-foreground ml-auto">
-          {narrow !== 'any' ? (
+          {view === 'proposals' ? (
+            'derived from the habits — nothing here can be accepted, and the chain below says where that breaks'
+          ) : narrow !== 'any' ? (
             // Counts of decisions and briefings are meaningless on one kind: the
             // query itself is narrowed. Say what the list is instead.
             `${groups.length} ${narrowLabel.toLowerCase()} shown · ${counts.total} pending${
@@ -243,6 +268,14 @@ export default function DecisionInboxPage() {
         </span>
       </div>
 
+      {/* The fourth queue renders instead of the draft list, not beside it:
+          it is a different queue, not a filter on the same one. Everything
+          above stays — the header, the L3 chip and the View segment belong to
+          the page rather than to one of its views. */}
+      {view === 'proposals' ? (
+        <ProposalsView />
+      ) : (
+      <>
       {/* Until it is read: the strip exists to say the digest is waiting, and a read digest is not.
           Neutral, not a hue: classification is not colour (§7 / Design 09-13 ④). */}
       {digest && !read.has(digest.id) && view !== 'briefings' && narrow === 'any' ? (
@@ -363,6 +396,8 @@ export default function DecisionInboxPage() {
         <LeashPanel />
       </div>
       </div>
+      </>
+      )}
     </PageShell>
   )
 }

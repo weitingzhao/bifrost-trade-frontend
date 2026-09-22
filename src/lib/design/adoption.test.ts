@@ -208,9 +208,10 @@ describe('design adoption', () => {
     // Decision Inbox were signed off the same day (43→45). Then the shell
     // restructure took the Research layer page and its census alias back for
     // a look (45→43): the layer grew a second face and the alias stopped
-    // being a page of its own.
-    expect(counts.aligned + counts.byState.stale).toBe(43)
-    expect(counts.aligned).toBe(43)
+    // being a page of its own. Rule proposals followed them out the same
+    // evening, merged into the Inbox as its fourth view (43→42).
+    expect(counts.aligned + counts.byState.stale).toBe(42)
+    expect(counts.aligned).toBe(42)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -363,7 +364,7 @@ describe('design adoption', () => {
     // the Research layer page with it: the equipment left the tree and the
     // Pipeline fold merged into the layer, so the layer page grew a second
     // face and its alias stopped being a page (aligned 45→43, reviewing 2→4).
-    expect(counts.byState.reviewing).toBe(4)
+    expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -401,7 +402,6 @@ describe('design adoption', () => {
       '/review/habits',
       '/review/objectives',
       '/review/playbook-stats',
-      '/review/proposals',
       '/risk',
       '/risk/budget',
       '/risk/limits',
@@ -424,6 +424,7 @@ describe('design adoption', () => {
       '/research/scan',
       '/research/symbol',
       '/research/workbench',
+      '/review/proposals',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they

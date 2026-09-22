@@ -36,6 +36,10 @@ const TITLE_MAY_DIFFER: Record<string, string> = {
   // layer page — whose h1 is the layer's name, as §5a.5 requires of the row
   // above it. One page, two routes, one title.
   '/research/workbench': 'a menu-less alias onto the layer page’s census face',
+  // §5a.8: Rule proposals merged into the Decision Inbox as its fourth view.
+  // Same shape as the census alias — the route names the queue, the h1 names
+  // the page that holds it.
+  '/review/proposals': 'a deep-link alias onto the Decision Inbox’s Proposals view',
 }
 
 /** The page file each route renders, read out of the router source. */

@@ -17,6 +17,29 @@ export type SignalDecayLens =
   | 'terrain_regime'
   | 'order_sentiment'
 
+/**
+ * The lenses the decay page can select, in the order it lists them.
+ *
+ * One list, in the module that owns the vocabulary, because two surfaces read
+ * it for different reasons and a deep link may only name a lens the
+ * destination can actually show: the page's own selector, the roster that asks
+ * each of them twice, and `alertHref`, which attaches `?lens=` to an alert's
+ * link. `order_sentiment` is a `SignalDecayLens` and is deliberately not here
+ * — it reads nothing (0 of 647 on Lens Coverage), so the page never offered it.
+ */
+export const SIGNAL_DECAY_LENSES: readonly { value: SignalDecayLens; label: string }[] = [
+  { value: 'iv_rank', label: 'IV Rank' },
+  { value: 'vrp', label: 'VRP' },
+  { value: 'opex_pin', label: 'OpEx Pin' },
+  { value: 'skew', label: 'Skew' },
+  { value: 'gex_regime', label: 'Gamma' },
+  { value: 'terrain_regime', label: 'Terrain' },
+]
+
+export function isSignalDecayLens(v: string | null | undefined): v is SignalDecayLens {
+  return SIGNAL_DECAY_LENSES.some((l) => l.value === v)
+}
+
 export type SignalDecayRegime = 'any' | 'bull' | 'rangy' | 'bear'
 
 export interface SignalDecaySideStats {

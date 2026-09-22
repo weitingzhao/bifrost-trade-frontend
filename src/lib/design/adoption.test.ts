@@ -398,8 +398,12 @@ describe('design adoption', () => {
     // `error` field the page had never read (reviewing 14→15, pending 7→6).
     // Lens Coverage is the sixteenth: the design's one change is the tier
     // split, and it pays on the first row — IV Rank reads 99% of core and 71%
-    // of the edge behind a single 97% (reviewing 15→16, pending 6→5).
-    expect(counts.byState.reviewing).toBe(16)
+    // of the edge behind a single 97% (reviewing 15→16, pending 6→5). Alerts
+    // is the seventeenth, and the only one so far where the design changed the
+    // route's subject: Event Radar became Alerts, and the events board it used
+    // to hold already renders on the Explorer's own tab (reviewing 16→17,
+    // pending 5→4).
+    expect(counts.byState.reviewing).toBe(17)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -456,6 +460,7 @@ describe('design adoption', () => {
       '/research/contract-screener',
       '/research/copilot',
       '/research/daily-brief',
+      '/research/event-radar',
       '/research/lens-coverage',
       '/research/loop/harness',
       '/research/loop/objectives/obj-daily-stock',
@@ -539,9 +544,9 @@ describe('design adoption', () => {
     // 11 since the Watchlist did — the first page of this round walked rather
     // than caught by it — 9 since the two objective rows followed, both
     // answered by the one `:param` route that was walked, 8 with the Option
-    // screen, 7 with Signal Decay, 6 with Signal Health and 5 with Lens
-    // Coverage.
-    expect(counts.byState.pending).toBe(5)
+    // screen, 7 with Signal Decay, 6 with Signal Health, 5 with Lens Coverage
+    // and 4 with Alerts.
+    expect(counts.byState.pending).toBe(4)
     expect(
       rows
         .filter((r) => r.via)

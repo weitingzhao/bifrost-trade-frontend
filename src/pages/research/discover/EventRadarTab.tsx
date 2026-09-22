@@ -1,6 +1,17 @@
+/**
+ * The events board — the table, the theme aggregates and the forward calendar.
+ *
+ * It was `/research/event-radar`'s page until the design relabelled that route
+ * **Alerts** (`Research Event Radar.dc.html`, Rev 2026-09-20.16, walked
+ * 2026-09-22). Its one consumer now is the Stock Explorer's `events` tab,
+ * which has rendered the same body since the Owner's 2026-09-20 tab ruling —
+ * so nothing here was deleted, only the route it used to own.
+ *
+ * All four stores answer zero rows on DEV; the empty states say so, and the
+ * gap behind them is a vendor subscription one.
+ */
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -425,16 +436,3 @@ export function EventRadarBody({ state: injected }: { state?: EventRadarState } 
   )
 }
 
-export default function EventRadarPage() {
-  const state = useEventRadarState()
-  return (
-    <PageShell>
-      <PageHeader
-        title="Event Radar"
-        description="Event table, theme aggregates, and forward calendar"
-        actions={<EventRadarActions state={state} />}
-      />
-      <EventRadarBody state={state} />
-    </PageShell>
-  )
-}

@@ -16,7 +16,7 @@ import {
 import {
   EventRadarActions,
   EventRadarBody,
-} from './EventRadarPage'
+} from './EventRadarTab'
 
 type TabKey = 'sepa' | 'momentum' | 'events' | 'rules'
 

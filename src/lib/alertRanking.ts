@@ -9,8 +9,11 @@
  * survived the closed state.
  *
  * Extracted here because this is the part that was wrong and it needs a test,
- * not because it is shared yet — the bell is its only consumer today.
+ * not because it is shared yet — the bell was its only consumer. The Alerts
+ * page is the second, and brought the three per-row readings down with it.
  */
+import { isSignalDecayLens } from '@/api/research/signalDecay'
+import { withSymbolParam } from '@/lib/symbolLink'
 
 /** Anything the API sends that is not one of these sorts last. */
 export type AlertSeverityLevel = 'high' | 'warn' | 'info'
@@ -121,4 +124,66 @@ export function bellState(q: {
 export function bellBadgeClass(state: BellState): string {
   if (state.kind === 'alerts') return severityBadgeClass(state.worst)
   return 'bg-lamp-gray text-white'
+}
+
+/* ── Reading one alert ─────────────────────────────────────────────────── */
+
+/**
+ * What an analyze alert says, where it goes and how loud it is.
+ *
+ * These three moved here from `useAlerts` when the Alerts page became their
+ * second reader (§14.2). The design calls the page and the shell panel *one
+ * queue, two views* — two copies of "what does this row mean" is exactly how
+ * two views of one queue start disagreeing about it.
+ */
+export interface AlertShape {
+  kind: string
+  symbol: string | null
+  lens: string | null
+  reason: Record<string, unknown> | string | null
+}
+
+export function alertLamp(severity: string): 'red' | 'yellow' | 'gray' {
+  const rank = severityRank(severity)
+  return rank === 0 ? 'red' : rank === 1 ? 'yellow' : 'gray'
+}
+
+/**
+ * Where the row goes.
+ *
+ * `?lens=` is attached only when the lens is one Signal Decay can select. It
+ * used to be attached unconditionally, and the page never read the parameter
+ * at all — a link that looks like it lands on a lens and lands on the default
+ * one instead. `momentum` is the case that makes the guard necessary: the
+ * alert store emits it and the decay page has no such lens.
+ */
+export function alertHref(item: AlertShape): string {
+  if (item.kind === 'composite_high') return withSymbolParam('/research/scan', item.symbol)
+  if (item.kind === 'hit_rate_drop' || item.kind === 'weight_shift') {
+    const lens = item.lens?.trim()
+    return isSignalDecayLens(lens)
+      ? `/research/signal-decay?lens=${encodeURIComponent(lens)}`
+      : '/research/signal-decay'
+  }
+  return '/research/scan'
+}
+
+/** The alert's own words for why it fired, out of its `reason` payload. */
+export function alertSummary(item: AlertShape): string {
+  const r = item.reason
+  if (r == null) return ''
+  if (typeof r === 'string') return r
+  if (item.kind === 'composite_high') {
+    const parts: string[] = []
+    if (r.composite_score != null) parts.push(`score ${String(r.composite_score)}`)
+    if (r.rank != null) parts.push(`rank ${String(r.rank)}`)
+    return parts.join(' · ')
+  }
+  if (item.kind === 'hit_rate_drop') {
+    return r.drop_pp != null ? `hot hit-rate −${String(r.drop_pp)}pp` : ''
+  }
+  if (item.kind === 'weight_shift') {
+    return r.z != null ? `z=${String(r.z)}` : ''
+  }
+  return Object.keys(r).slice(0, 2).map((k) => `${k}=${String(r[k])}`).join(' · ')
 }

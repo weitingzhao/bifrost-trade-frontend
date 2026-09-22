@@ -70,6 +70,8 @@ import {
   fetchSignalDecay,
   fetchSignalDecayIntersect,
   type SignalDecayIntersectResponse,
+  SIGNAL_DECAY_LENSES,
+  isSignalDecayLens,
   type SignalDecayLens,
   type SignalDecayRegime,
   type SignalDecaySideStats,
@@ -79,14 +81,12 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 import { DecayRoster } from './DecayRoster'
 import { useDecayRoster } from './useDecayRoster'
 
-const LENS_OPTIONS: { value: SignalDecayLens; label: string }[] = [
-  { value: 'iv_rank', label: 'IV Rank' },
-  { value: 'vrp', label: 'VRP' },
-  { value: 'opex_pin', label: 'OpEx Pin' },
-  { value: 'skew', label: 'Skew' },
-  { value: 'gex_regime', label: 'Gamma' },
-  { value: 'terrain_regime', label: 'Terrain' },
-]
+/**
+ * The page's selector, and what `?lens=` may name — one list, in the module
+ * that owns the vocabulary (`api/research/signalDecay`), because the alert
+ * rows link here by lens and a link may only name a lens this page can show.
+ */
+const LENS_OPTIONS = [...SIGNAL_DECAY_LENSES]
 
 const WINDOW_OPTIONS = [
   { value: '30', label: '30d' },
@@ -388,7 +388,13 @@ export default function SignalDecayPage() {
   const { symbol: symbolParam } = useParams<{ symbol?: string }>()
   const symbol = symbolParam?.trim().toUpperCase() || undefined
   const [searchParams, setSearchParams] = useSearchParams()
-  const [lens, setLens] = useState<SignalDecayLens>('iv_rank')
+  // An alert names the lens it is about, so the link that opens this page
+  // carries it. Reading it here is what makes that link mean what it says —
+  // it was attached and dropped, which lands on IV Rank whatever it named.
+  const urlLens = searchParams.get('lens')
+  const [lens, setLens] = useState<SignalDecayLens>(
+    isSignalDecayLens(urlLens) ? urlLens : 'iv_rank',
+  )
   // 90d by default: the 20-session horizon has settled rows to show, 30d never did.
   const [windowDays, setWindowDays] = useState(90)
   const regime = parseRegime(searchParams.get('regime'))

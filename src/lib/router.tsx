@@ -312,7 +312,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'research/event-radar',
-        lazy: lazyPage(() => import('@/pages/research/discover/EventRadarPage')),
+        lazy: lazyPage(() => import('@/pages/research/alerts/AlertsPage')),
       },
 
       /* Wave Z+R — Research Loop */

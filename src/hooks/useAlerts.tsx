@@ -27,10 +27,9 @@
  */
 import { useMemo, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchAlerts, type AnalyzeAlert } from '@/api/research/alertScan'
+import { fetchAlerts } from '@/api/research/alertScan'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { withSymbolParam } from '@/lib/symbolLink'
-import { rankAlerts, severityRank } from '@/lib/alertRanking'
+import { alertHref, alertLamp, alertSummary, rankAlerts } from '@/lib/alertRanking'
 import { usePlatformPlugins } from '@/hooks/usePlatformPlugins'
 import { useRiskLimitWatch, UNWATCHED_HERE } from '@/hooks/useRiskLimitWatch'
 import { fmtReading } from '@/utils/limitsModel'
@@ -136,38 +135,8 @@ export function alertsSummary(groups: readonly AlertGroup[]): AlertsSummary {
 
 /* ── Analyze alerts ─────────────────────────────────────────────────────── */
 
-function alertLamp(severity: string): AlertLamp {
-  const rank = severityRank(severity)
-  return rank === 0 ? 'red' : rank === 1 ? 'yellow' : 'gray'
-}
 
-function alertHref(item: AnalyzeAlert): string {
-  if (item.kind === 'composite_high') return withSymbolParam('/research/scan', item.symbol)
-  if (item.kind === 'hit_rate_drop' || item.kind === 'weight_shift') {
-    const lens = item.lens?.trim()
-    return lens ? `/research/signal-decay?lens=${encodeURIComponent(lens)}` : '/research/signal-decay'
-  }
-  return '/research/scan'
-}
 
-function alertSummary(item: AnalyzeAlert): string {
-  const r = item.reason
-  if (r == null) return ''
-  if (typeof r === 'string') return r
-  if (item.kind === 'composite_high') {
-    const parts: string[] = []
-    if (r.composite_score != null) parts.push(`score ${String(r.composite_score)}`)
-    if (r.rank != null) parts.push(`rank ${String(r.rank)}`)
-    return parts.join(' · ')
-  }
-  if (item.kind === 'hit_rate_drop') {
-    return r.drop_pp != null ? `hot hit-rate −${String(r.drop_pp)}pp` : ''
-  }
-  if (item.kind === 'weight_shift') {
-    return r.z != null ? `z=${String(r.z)}` : ''
-  }
-  return Object.keys(r).slice(0, 2).map((k) => `${k}=${String(r[k])}`).join(' · ')
-}
 
 /* ── System messages ────────────────────────────────────────────────────── */
 

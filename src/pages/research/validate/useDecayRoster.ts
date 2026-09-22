@@ -7,18 +7,11 @@
  * while the reader scrolls buys nothing.
  */
 import { useQueries } from '@tanstack/react-query'
-import { fetchSignalDecay, type SignalDecayLens } from '@/api/research/signalDecay'
+import { fetchSignalDecay, SIGNAL_DECAY_LENSES } from '@/api/research/signalDecay'
 import { decayAlerts, decayRoster, type LensPair } from './decayRosterModel'
 
-/** The registry's six decay lenses, in the order the page already lists them. */
-export const DECAY_LENSES: { value: SignalDecayLens; label: string }[] = [
-  { value: 'iv_rank', label: 'IV Rank' },
-  { value: 'vrp', label: 'VRP' },
-  { value: 'opex_pin', label: 'OpEx Pin' },
-  { value: 'skew', label: 'Skew' },
-  { value: 'gex_regime', label: 'Gamma' },
-  { value: 'terrain_regime', label: 'Terrain' },
-]
+/** The page's own six, from the module that owns the vocabulary. */
+export const DECAY_LENSES = SIGNAL_DECAY_LENSES
 
 /** Now, and the signal's own year. The design's baseline is the second one. */
 const NOW_DAYS = 90

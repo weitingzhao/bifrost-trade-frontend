@@ -102,6 +102,20 @@ describe('rollupGreeks', () => {
     expect(g.theta).toBeCloseTo(78.63 + 100, 2)
   })
 
+  it('loses a holding from byTicker but never from perShareByTicker', () => {
+    // The book flattens a leg per account × strategy instance, so one contract
+    // arrives more than once — DEV 2026-09-22: HIMS 18DEC26 40C at -9 and +5.
+    const g = rollupGreeks([{ ...muLeg, qty: -9 }, { ...muLeg, qty: 5 }], rows(MU_CALL), IDLE)
+    // Totals sum per leg, so they were never wrong.
+    expect(g.matched).toBe(2)
+    expect(g.theta).toBeCloseTo(0.7863207463181576 * 900 - 0.7863207463181576 * 500, 2)
+    // The scaled map keeps only the last leg written — the +5 one.
+    expect(g.byTicker.get('O:MU261120C01200000')?.theta).toBeCloseTo(-393.16, 2)
+    // The per-share row is a property of the contract, so both holdings can
+    // scale from it and each gets its own sign.
+    expect(g.perShareByTicker.get('O:MU261120C01200000')?.theta).toBe(MU_CALL.theta)
+  })
+
   it('reports an empty book without pretending it is complete', () => {
     const g = rollupGreeks([], new Map(), IDLE)
     expect(g.matched).toBe(0)

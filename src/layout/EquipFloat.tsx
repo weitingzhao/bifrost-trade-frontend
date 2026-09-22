@@ -26,7 +26,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   PANEL_CARD_PX,
-  closeSurface,
   loadGeometry,
   saveGeometry,
   setFloatSize,
@@ -208,7 +207,7 @@ export function EquipFloat() {
         <PlaceButtons surface={float} here="float" />
       </div>
       <div className={css.body}>
-        <SurfaceBody surface={float} onClose={() => closeSurface(float.key)} />
+        <SurfaceBody surface={float} />
       </div>
     </div>
   )

@@ -37,7 +37,16 @@ const CopilotThreadBody = lazy(() =>
   })),
 )
 
-export function SurfaceBody({ surface, onClose }: { surface: Surface; onClose: () => void }) {
+/**
+ * The place owns the close, not the body.
+ *
+ * `Research Autopilot Console.dc.html` says it in its own embed rules: when
+ * the shell hosts the run face, *"its own backdrop, edge chrome and close give
+ * way"* — `.ap-dw-x { display: none }`. The panel and the float both draw
+ * `▢ ⇥ ⤢ ×` in their header, so a body drawing a second ✕ put two closes in
+ * one frame, which is what this used to do.
+ */
+export function SurfaceBody({ surface }: { surface: Surface }) {
   const Page = surface.run || surface.thread ? null : surfacePageFor(surface.to)
 
   return (
@@ -46,7 +55,7 @@ export function SurfaceBody({ surface, onClose }: { surface: Surface; onClose: (
         {surface.thread ? (
           <CopilotThreadBody />
         ) : surface.run ? (
-          <LoopRunPipelineBody runId={surface.run} live onClose={onClose} />
+          <LoopRunPipelineBody runId={surface.run} live />
         ) : Page ? (
           // `createElement`, not `<Page />`: the lint rule reads a capitalised
           // local as a component *defined* during render, which loses its

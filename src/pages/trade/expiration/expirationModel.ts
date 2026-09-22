@@ -198,22 +198,39 @@ function rightOf(a: PositionAttribution): 'C' | 'P' | '' {
 }
 
 /**
- * One row per contract, not per account row.
+ * One row per contract, not per attribution row.
  *
- * The attribution service answers per account, so a contract held in two of
- * them arrives twice. They are one leg on a desk — the same strike, the same
- * expiry, decided together — so the quantity is summed and the accounts are
- * kept, which is the part a reader still needs.
+ * The attribution service answers one row per *scope* — an instance-attributed
+ * row per strategy instance plus an unattributed one — and `position_qty` is
+ * the whole position repeated on each of them. On DEV 2026-09-22 RKLB 18DEC26
+ * 90C arrives three times carrying -26 every time, so summing every row drew a
+ * -78 position that does not exist (and would have written a 78-contract draft
+ * plan). Only the first row per *account* contributes the quantity; a second
+ * account is a genuine addition, and those are still summed, because one
+ * contract in two accounts is one leg to a reader — the same strike, the same
+ * expiry, decided together — with both accounts kept.
+ *
+ * The per-instance split lives in `open_qty_est`, which is what the Positions
+ * book flattens; this desk wants the position, not the slices.
  */
 export function buildExpiryLegs(input: {
   attributions: readonly PositionAttribution[]
   /** Vendor close per contract key. */
   markByKey: ReadonlyMap<string, { close: number | null; asOf: string | null }>
   spotBySymbol: ReadonlyMap<string, number | null>
-  /** Position θ per day per contract key, where the vendor matched the leg. */
-  thetaByKey?: ReadonlyMap<string, number>
+  /**
+   * The vendor's θ *per share* per contract key, where it matched the leg.
+   *
+   * Per share rather than per position: this builder nets the quantity itself,
+   * so scaling here is the only way a row's θ follows the quantity printed
+   * beside it — including when two accounts hold the contract and the netted
+   * quantity is larger than any one of them.
+   */
+  thetaPerShareByKey?: ReadonlyMap<string, number>
 }): ExpiryLeg[] {
   const byKey = new Map<string, ExpiryLeg>()
+  /** `contract\u0000account` already counted — see the note above. */
+  const countedAccounts = new Set<string>()
   for (const a of input.attributions) {
     if ((a.sec_type ?? '').toUpperCase() !== 'OPT') continue
     const qty = Number(a.position_qty ?? a.open_qty_est ?? 0)
@@ -228,16 +245,24 @@ export function buildExpiryLegs(input: {
     const cushion = cushionPct(spot, strike, right)
     const key = a.contract_key ?? `${symbol}|${expiry}|${strike}|${right}`
     const prev = byKey.get(key)
-    const totalQty = (prev?.qty ?? 0) + qty
     const account = (a.account_id ?? '').trim()
+    const seen = `${key}\u0000${account}`
+    const alreadyCounted = countedAccounts.has(seen)
+    countedAccounts.add(seen)
+    const totalQty = (prev?.qty ?? 0) + (alreadyCounted ? 0 : qty)
     // IB's avgCost is per contract, not per share — no ×100 (the 100× trap).
-    const rowEntry = a.avg_cost == null ? null : Math.abs(Number(a.avg_cost)) * Math.abs(qty)
+    const rowEntry = alreadyCounted
+      ? 0
+      : a.avg_cost == null
+        ? null
+        : Math.abs(Number(a.avg_cost)) * Math.abs(qty)
     const entryCost =
       prev === undefined
         ? rowEntry
         : prev.entryCost == null || rowEntry == null
           ? null
           : prev.entryCost + rowEntry
+    const thetaPerShare = input.thetaPerShareByKey?.get(key)
     byKey.set(key, {
       contractKey: key,
       symbol,
@@ -253,7 +278,7 @@ export function buildExpiryLegs(input: {
       // Buying back a short costs money; buying back a long returns it.
       closeCost: mark == null ? null : -totalQty * mark * 100,
       entryCost,
-      thetaPerDay: input.thetaByKey?.get(key) ?? null,
+      thetaPerDay: thetaPerShare == null ? null : thetaPerShare * totalQty * 100,
       instanceId: prev?.instanceId ?? a.strategy_instance_id ?? null,
       structure: prev?.structure ?? a.structure_type ?? a.strategy_instance_label ?? null,
       accounts: account && !prev?.accounts.includes(account) ? [...(prev?.accounts ?? []), account] : (prev?.accounts ?? []),

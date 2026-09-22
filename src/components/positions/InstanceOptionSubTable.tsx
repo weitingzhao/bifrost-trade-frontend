@@ -48,18 +48,24 @@ import { instancePanel } from './instancePanelClasses'
 import { positionsUi } from './positionsUi'
 import { localDayStamp } from '@/utils/positions'
 import { LEG_GREEKS_TITLE, OptionLegGreeksCell } from './OptionLegGreeksCell'
-import { buildOptionTicker } from '@/utils/optionTicker'
+import { buildOptionTicker, positionGreek } from '@/utils/optionTicker'
 import { fmtIsoDateToken } from '@/lib/format'
 import { extractUnderlyingRootSymbol } from './linkExecutionModalHelpers'
 import type { PositionGreeks } from '@/hooks/useOptionGreeks'
+import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
 
 interface Props {
   group: Pick<InstanceAllGroup, 'strategy_instance_id' | 'strategy_opportunity_id'>
   options: OpenOptionPosition[]
   quotesBySymbol: Record<string, QuoteItem>
   quotesByCk: Record<string, QuoteItem>
-  /** Vendor Greeks keyed by the warehouse ticker — see useOptionGreeks. */
-  greeksByTicker: ReadonlyMap<string, PositionGreeks>
+  /**
+   * The vendor's per-share row per contract — see useOptionGreeks.
+   *
+   * Per share, not per position: this table draws a row per *holding*, and the
+   * rollup's `byTicker` carries one holding's scaled numbers per contract.
+   */
+  perShareByTicker: ReadonlyMap<string, VendorGreeksRow>
   executionsFinal: Execution[]
   executionsTws: Execution[]
   finalMap: Map<string, Execution[]>
@@ -86,7 +92,7 @@ export function InstanceOptionSubTable({
   options,
   quotesBySymbol,
   quotesByCk,
-  greeksByTicker,
+  perShareByTicker,
   finalMap,
   twsMap,
   detailViewMode = 'accordion',
@@ -99,7 +105,22 @@ export function InstanceOptionSubTable({
   canonicalOptContractKeys = new Set(),
 }: Props) {
   const todayStamp = localDayStamp()
-  /** Positions carry the parts; the warehouse keys rows by one ticker string. */
+  /**
+   * Positions carry the parts; the warehouse keys rows by one ticker string.
+   *
+   * Scaled here from the vendor's per-share row by *this* row's own signed
+   * quantity, rather than read from the rollup's `byTicker`. The book flattens
+   * a leg per account × strategy instance, so one contract reaches this table
+   * more than once — on DEV 2026-09-22, RKLB 18DEC26 90C three times (-10 /
+   * -6 / -10) and HIMS 18DEC26 40C twice (-9 / +5) — while `byTicker` holds
+   * *position* greeks keyed by contract, so the last leg written wins. Every
+   * row of that contract then printed one holding's numbers: the -6 RKLB row
+   * showed the -10 row's θ+61, and the short HIMS row showed the long one's
+   * θ-13 Δ162 — decay inverted, which is the wrong sign for the seller who has
+   * to decide the leg. The per-share row is a property of the contract and
+   * cannot be overwritten wrongly, so scaling from it makes a row's θ follow
+   * its own Qty (`bookGreeksModel.ts` nets the same way for the same reason).
+   */
   const legGreeks = (pos: OpenOptionPosition): PositionGreeks | undefined => {
     const ticker = buildOptionTicker({
       underlying: extractUnderlyingRootSymbol(pos.symbol),
@@ -107,7 +128,16 @@ export function InstanceOptionSubTable({
       strike: pos.strike,
       right: pos.right,
     })
-    return ticker ? greeksByTicker.get(ticker) : undefined
+    const row = ticker ? perShareByTicker.get(ticker) : undefined
+    if (!row) return undefined
+    return {
+      delta: positionGreek(row.delta, pos.qty),
+      gamma: positionGreek(row.gamma, pos.qty),
+      theta: positionGreek(row.theta, pos.qty),
+      vega: positionGreek(row.vega, pos.qty),
+      iv: row.iv,
+      asOf: row.snapshot_ts,
+    }
   }
 
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())

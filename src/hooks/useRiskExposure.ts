@@ -18,7 +18,7 @@ import { fetchRiskBeta, fetchRiskCorrelation } from '@/api/research/riskStats'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
 import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
-import { buildOptionTicker, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
+import { buildOptionTicker, extractUnderlyingRootSymbol, positionGreek } from '@/utils/optionTicker'
 import {
   buildRiskExposureRows,
   correlationClusters,
@@ -113,7 +113,20 @@ export function useRiskExposure(accountFilter: string) {
     0,
   )
 
-  /** The vendor legs, as the Positions page priced them — one rollup, cited twice. */
+  /**
+   * The vendor legs, as the Positions page priced them — one rollup, cited twice.
+   *
+   * One entry per *holding*, each scaled by its own signed quantity, because
+   * `greeksByUnderlying` and `riskByExpiry` both sum what is in here and the
+   * book flattens a leg per account × strategy instance. Read from the
+   * rollup's `byTicker` this loop pushed one holding's scaled numbers once per
+   * holding: on DEV 2026-09-22 that made RKLB's Γ/Θ/vega the -10 leg's three
+   * times over (a -30 book against a -26 position) and HIMS's the +5 leg's
+   * twice (a +10 book against a -4 position — the wrong sign for a row that is
+   * net short). `perShareByTicker` is the vendor's own row, a property of the
+   * contract, so scaling it here makes the sums equal the rollup's totals,
+   * which is what §14.2 means by one book read one way.
+   */
   const legs = useMemo<LegGreeks[]>(() => {
     const out: LegGreeks[] = []
     for (const g of book.scopedInstanceGroups ?? []) {
@@ -125,13 +138,19 @@ export function useRiskExposure(accountFilter: string) {
           strike: p.strike,
           right: p.right,
         })
-        const priced = ticker ? book.greeks.byTicker.get(ticker) : undefined
-        if (!priced) continue
-        out.push({ underlying, expiry: p.expiry, gamma: priced.gamma, theta: priced.theta, vega: priced.vega })
+        const perShare = ticker ? book.greeks.perShareByTicker.get(ticker) : undefined
+        if (!perShare) continue
+        out.push({
+          underlying,
+          expiry: p.expiry,
+          gamma: positionGreek(perShare.gamma, p.qty),
+          theta: positionGreek(perShare.theta, p.qty),
+          vega: positionGreek(perShare.vega, p.qty),
+        })
       }
     }
     return out
-  }, [book.scopedInstanceGroups, book.greeks.byTicker])
+  }, [book.scopedInstanceGroups, book.greeks.perShareByTicker])
 
   const betaBySymbol = useMemo(() => {
     const by = new Map<string, { beta: number | null; n: number }>()

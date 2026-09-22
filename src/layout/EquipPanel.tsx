@@ -191,7 +191,7 @@ export function EquipPanel() {
             key={t.key}
             className={`${css.body} ${t.key === panel.active ? '' : css.bodyHidden}`}
           >
-            <SurfaceBody surface={t} onClose={() => closeSurface(t.key)} />
+            <SurfaceBody surface={t} />
           </div>
         ))}
       </aside>

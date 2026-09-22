@@ -81,6 +81,41 @@ describe('buildExpiryLegs', () => {
     expect(legs[0].accounts).toEqual(['U0000001', 'U0000002'])
   })
 
+  it('counts one position once, however many attribution scopes report it', () => {
+    // The service answers a row per scope and repeats the whole position on
+    // each — DEV 2026-09-22: RKLB 18DEC26 90C three times carrying -26.
+    const legs = buildExpiryLegs({
+      attributions: [
+        leg({ position_qty: -26, strategy_instance_id: 158 } as Partial<PositionAttribution>),
+        leg({ position_qty: -26, strategy_instance_id: 160 } as Partial<PositionAttribution>),
+        leg({ position_qty: -26, strategy_instance_id: null } as Partial<PositionAttribution>),
+      ],
+      markByKey: MARKS,
+      spotBySymbol: SPOTS,
+    })
+    expect(legs).toHaveLength(1)
+    expect(legs[0].qty).toBe(-26)
+    expect(legs[0].accounts).toEqual(['U0000001'])
+    // Buying back 26 at 1.50, not 78.
+    expect(legs[0].closeCost).toBe(3900)
+  })
+
+  it('scales θ to the netted quantity, so it matches the Qty beside it', () => {
+    const legs = buildExpiryLegs({
+      attributions: [
+        leg({ account_id: 'U0000001', position_qty: -2 }),
+        leg({ account_id: 'U0000001', position_qty: -2 }),
+        leg({ account_id: 'U0000002', position_qty: -3 }),
+      ],
+      markByKey: MARKS,
+      spotBySymbol: SPOTS,
+      thetaPerShareByKey: new Map([['ZZZ|OPT|20261016|90.0|C', -0.06]]),
+    })
+    expect(legs[0].qty).toBe(-5)
+    // A short leg collects decay: -0.06 × -5 × 100.
+    expect(legs[0].thetaPerDay).toBeCloseTo(30)
+  })
+
   it('keeps a long leg’s sign: buying it back is a credit, not a cost', () => {
     const [l] = buildExpiryLegs({ attributions: [leg({ position_qty: 2 })], markByKey: MARKS, spotBySymbol: SPOTS })
     expect(l.closeCost).toBe(-300)

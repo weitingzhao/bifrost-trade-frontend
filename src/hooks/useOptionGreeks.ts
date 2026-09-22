@@ -43,6 +43,10 @@ export interface GreeksRollup {
    * position's numbers are lost. That is harmless for the totals, which sum
    * per leg, and wrong for anything that prints a row per contract. A caller
    * that nets its own quantities scales from here instead.
+   *
+   * Every reader in the app now does, `byTicker` having drawn a -6 RKLB leg
+   * with a -10 leg's theta and a short HIMS leg with a long one's sign. A new
+   * one needs a reason to prefer a map that a second holding can overwrite.
    */
   perShareByTicker: Map<string, VendorGreeksRow>
   /**

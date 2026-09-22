@@ -126,7 +126,18 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/loop/objectives/:objectiveId'],
     },
   },
-  { path: '/research/loop/runs/:runId', label: 'Loop Run', crumbs: AUTOPILOT },
+  {
+    // The design's Loop Run is a surface, not a page — this route is its
+    // deep-link address, and it lands on the Console with the run in the panel.
+    path: '/research/loop/runs/:runId',
+    label: 'Loop Run',
+    crumbs: AUTOPILOT,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-18.2',
+      note: DESIGN_NOTES['/research/loop/runs/:runId'],
+    },
+  },
   {
     // The Screener's `Rank by` was blocked on this page, and the design gives
     // Momentum Radar and SEPA Daily Core their home in it when they dissolve.

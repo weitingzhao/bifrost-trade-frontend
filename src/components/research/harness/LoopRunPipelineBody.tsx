@@ -75,11 +75,9 @@ function fmtDuration(ms: number | null): string {
 export function LoopRunPipelineBody({
   runId,
   live = true,
-  onClose,
 }: {
   runId: string
   live?: boolean
-  onClose?: () => void
 }) {
   const [lang, setLang] = useCopilotPromptLang()
   const runQ = useObjectiveRun(runId, { live })
@@ -213,8 +211,6 @@ export function LoopRunPipelineBody({
             </>
           ) : null
         }
-        onClose={onClose}
-        closeLabel="Close pipeline"
       />
 
       {runQ.isError ? <QueryErrorAlert error={runQ.error} /> : null}

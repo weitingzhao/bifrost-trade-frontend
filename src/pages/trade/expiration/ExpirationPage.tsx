@@ -139,7 +139,23 @@ export default function ExpirationPage() {
   )
   const greeks = useOptionGreeks(greekLegs)
 
-  const { markByKey, thetaByKey } = useMemo(() => {
+  /**
+   * Keyed by contract, and safe to key that way.
+   *
+   * `useOptionGreeks`'s `byTicker` holds *position* greeks keyed by contract,
+   * so when the same contract is held more than once the last leg written wins
+   * — which is why the Positions sub-table and Research › Contract Greeks scale
+   * from `perShareByTicker` instead. This page cannot show one holding's greeks
+   * on another holding's row, because it never draws a row per holding:
+   * `buildExpiryLegs` nets every attribution row into one `ExpiryLeg` per
+   * contract key and the table renders `key={l.contractKey}`. A desk decides a
+   * contract once.
+   *
+   * It reads the per-share row all the same. The netted quantity can exceed any
+   * single holding's — one contract in two accounts is summed — and only an
+   * unscaled θ can then be scaled to match the Qty printed beside it.
+   */
+  const { markByKey, thetaPerShareByKey } = useMemo(() => {
     const marks = new Map<string, { close: number | null; asOf: string | null }>()
     const thetas = new Map<string, number>()
     for (const a of attributions) {
@@ -153,15 +169,15 @@ export default function ExpirationPage() {
       if (!ticker) continue
       const hit = greeks.closeByTicker.get(ticker)
       if (hit) marks.set(a.contract_key ?? '', hit)
-      const theta = greeks.byTicker.get(ticker)?.theta
+      const theta = greeks.perShareByTicker.get(ticker)?.theta
       if (theta != null) thetas.set(a.contract_key ?? '', theta)
     }
-    return { markByKey: marks, thetaByKey: thetas }
-  }, [attributions, greeks.closeByTicker, greeks.byTicker])
+    return { markByKey: marks, thetaPerShareByKey: thetas }
+  }, [attributions, greeks.closeByTicker, greeks.perShareByTicker])
 
   const legs = useMemo(
-    () => buildExpiryLegs({ attributions, markByKey, spotBySymbol, thetaByKey }),
-    [attributions, markByKey, spotBySymbol, thetaByKey],
+    () => buildExpiryLegs({ attributions, markByKey, spotBySymbol, thetaPerShareByKey }),
+    [attributions, markByKey, spotBySymbol, thetaPerShareByKey],
   )
 
   /**

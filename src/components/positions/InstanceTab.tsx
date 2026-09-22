@@ -39,7 +39,7 @@ import {
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { compareInstanceRisk, summarizeCushion, summarizeExpiry } from '@/utils/positionsOptionRisk'
 import type { SpotResolver } from '@/utils/spotPrice'
-import type { PositionGreeks } from '@/hooks/useOptionGreeks'
+import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
 import type { RiskProfile } from '@/utils/riskProfile'
 
 const EXEC_QTY_TITLE =
@@ -86,8 +86,14 @@ interface Props {
   attributions: PositionInstanceAttribution[]
   instanceStructureById: ReadonlyMap<number, number | null | undefined>
   portfolioAccounts: IbAccountSnapshot[] | undefined
-  /** Vendor Greeks keyed by warehouse ticker, for the expanded per-leg row. */
-  greeksByTicker: ReadonlyMap<string, PositionGreeks>
+  /**
+   * The vendor's per-share row per contract, for the expanded per-leg row.
+   *
+   * Per share rather than the rollup's position greeks: a contract held in two
+   * instances reaches the sub-table twice, and only an unscaled row survives
+   * being keyed by contract — see InstanceOptionSubTable.
+   */
+  perShareByTicker: ReadonlyMap<string, VendorGreeksRow>
   detailViewMode?: DetailViewMode
   onEditExec?: (exec: Execution) => void
   onLinkExec?: (exec: Execution, sameContractTrades?: Execution[]) => void
@@ -140,7 +146,7 @@ export function InstanceTab({
   attributions,
   instanceStructureById,
   portfolioAccounts,
-  greeksByTicker,
+  perShareByTicker,
   detailViewMode = 'accordion',
   onEditExec,
   onLinkExec,
@@ -448,7 +454,7 @@ export function InstanceTab({
                       options={group.options}
                       quotesBySymbol={quotesBySymbol}
                       quotesByCk={quotesByCk}
-                      greeksByTicker={greeksByTicker}
+                      perShareByTicker={perShareByTicker}
                       executionsFinal={executionsFinal}
                       executionsTws={executionsTws}
                       finalMap={finalMap}

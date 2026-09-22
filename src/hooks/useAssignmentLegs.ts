@@ -85,13 +85,16 @@ export function useAssignmentLegs() {
       const key = a.contract_key ?? ''
       const close = ticker ? greeks.closeByTicker.get(ticker) : undefined
       if (close) marks.set(key, close)
-      const g = ticker ? greeks.byTicker.get(ticker) : undefined
-      // The rollup scales delta by the position; per contract is what reads as odds.
-      const contracts = Math.abs(Number(a.position_qty ?? 0)) || 0
-      if (g?.delta != null && contracts > 0) deltas.set(key, g.delta / (contracts * 100))
+      // Per contract is what reads as odds, which is the vendor's row as it
+      // stands. Taken from the rollup's `byTicker` it had to be divided back
+      // out by this row's own size — and that map is keyed by contract while
+      // the legs are per holding, so one contract held in two accounts would
+      // have been divided by the wrong one. `|Δ|` is unchanged either way.
+      const perShare = ticker ? greeks.perShareByTicker.get(ticker) : undefined
+      if (perShare?.delta != null) deltas.set(key, perShare.delta)
     }
     return { markByKey: marks, deltaByKey: deltas }
-  }, [attributions, greeks.closeByTicker, greeks.byTicker])
+  }, [attributions, greeks.closeByTicker, greeks.perShareByTicker])
 
   const legs = useMemo(
     () =>

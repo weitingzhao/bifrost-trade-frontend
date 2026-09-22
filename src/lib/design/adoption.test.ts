@@ -407,8 +407,11 @@ describe('design adoption', () => {
     // had no header and not one link on it (reviewing 17→18, pending 4→3).
     // Contract Greeks is the nineteenth, and its walk found one contract held
     // across instances drawing one position's greeks three times
-    // (reviewing 18→19, pending 3→2).
-    expect(counts.byState.reviewing).toBe(19)
+    // (reviewing 18→19, pending 3→2). Loop Run is the twentieth and the last
+    // of the round: the prototype says it is a surface rather than a page, so
+    // the walk verified the deep link into the panel and took out the second
+    // close (reviewing 19→20, pending 1→0).
+    expect(counts.byState.reviewing).toBe(20)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -472,6 +475,7 @@ describe('design adoption', () => {
       '/research/loop/harness',
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
+      '/research/loop/runs',
       '/research/overview',
       '/research/scan',
       '/research/signal-decay',
@@ -558,8 +562,9 @@ describe('design adoption', () => {
     // 4 with Alerts, 3 with Live and 2 with Contract Greeks. Stock Explorer
     // was the next, and it turned out to be `moving` rather than a walk: its
     // registry row is an alias of the Screener prototype, which is aligned at
-    // `/research/screener`.
-    expect(counts.byState.pending).toBe(1)
+    // `/research/screener`. Loop Run was the last, and it is `reviewing` now —
+    // "to walk" is empty for the first time.
+    expect(counts.byState.pending).toBe(0)
     expect(
       rows
         .filter((r) => r.via)

@@ -225,3 +225,51 @@ export function digestLamps(payload: Record<string, unknown>): DigestLamp[] {
 
   return [book, lenses, loop, events]
 }
+
+/**
+ * The digest's markdown, cut at its own headings.
+ *
+ * The agent writes one document with `###` sections — *What changed / needs a
+ * decision*, *Holdings ∪ candidates*, *Dissents*, *Resolutions* — and the
+ * design's Daily Brief page wants the first of them on its own, under **The
+ * one thing**. Splitting here rather than in the page keeps the two surfaces
+ * that read this document (the page and the dock card) cutting it the same
+ * way, and it is a split rather than a rewrite: the text is the agent's.
+ *
+ * The lead — everything before the first `###` — comes back under the empty
+ * key, because it belongs to no section and is the run's own summary line.
+ */
+export function digestSections(markdown: string): { heading: string; body: string }[] {
+  const out: { heading: string; body: string }[] = []
+  let heading = ''
+  let body: string[] = []
+  for (const line of markdown.split('\n')) {
+    const m = /^###\s+(.*)$/.exec(line)
+    if (m) {
+      out.push({ heading, body: body.join('\n').trim() })
+      heading = m[1].trim()
+      body = []
+      continue
+    }
+    body.push(line)
+  }
+  out.push({ heading, body: body.join('\n').trim() })
+  return out.filter((s) => s.heading !== '' || s.body !== '')
+}
+
+/** One section's body, by a case-insensitive prefix of its heading. */
+export function digestSection(markdown: string, headingStartsWith: string): string | null {
+  const want = headingStartsWith.toLowerCase()
+  const hit = digestSections(markdown).find((s) => s.heading.toLowerCase().startsWith(want))
+  return hit?.body || null
+}
+
+/** The same document with one section taken out — so nothing prints twice. */
+export function digestWithout(markdown: string, headingStartsWith: string): string {
+  const want = headingStartsWith.toLowerCase()
+  return digestSections(markdown)
+    .filter((s) => !s.heading.toLowerCase().startsWith(want))
+    .map((s) => (s.heading ? `### ${s.heading}\n${s.body}` : s.body))
+    .join('\n\n')
+    .trim()
+}

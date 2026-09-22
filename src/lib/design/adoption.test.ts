@@ -364,7 +364,9 @@ describe('design adoption', () => {
     // the Research layer page with it: the equipment left the tree and the
     // Pipeline fold merged into the layer, so the layer page grew a second
     // face and its alias stopped being a page (aligned 45→43, reviewing 2→4).
-    expect(counts.byState.reviewing).toBe(5)
+    // Daily Brief joins them: it stopped being a per-symbol lens dashboard
+    // and became the morning digest the design draws (reviewing 5→6).
+    expect(counts.byState.reviewing).toBe(6)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -420,6 +422,7 @@ describe('design adoption', () => {
     // The two ratings pages' own siblings: Symbol, and the Vol ratings rebuild
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/research/daily-brief',
       '/research/overview',
       '/research/scan',
       '/research/symbol',
@@ -492,8 +495,8 @@ describe('design adoption', () => {
     // routes (the objective page, the run redirect into the console drawer) —
     // built, designed, not yet walked. 14 since W1 walked Overview and the
     // Workbench home.
-    // 13 since Vol ratings left it for `reviewing`.
-    expect(counts.byState.pending).toBe(13)
+    // 12 since Vol ratings and then Daily Brief left it for `reviewing`.
+    expect(counts.byState.pending).toBe(12)
     expect(
       rows
         .filter((r) => r.via)

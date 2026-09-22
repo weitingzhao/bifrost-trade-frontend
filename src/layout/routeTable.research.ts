@@ -153,7 +153,19 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   // written product, filed under the Copilot fold); its state derives from the
   // snapshot now, no tag needed.
   // Left Copilot with the fold (§5a.8): the 9am read is Home's own clock.
-  { path: '/research/daily-brief', label: 'Daily Brief', crumbs: MARKET, symbolScope: true },
+  {
+    path: '/research/daily-brief',
+    label: 'Daily Brief',
+    crumbs: MARKET,
+    // It stopped reading a symbol on 2026-09-22: the design's brief is the
+    // morning's reading of the book, and the per-symbol dashboard it used to
+    // be is the Symbol page's six faces.
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/research/daily-brief'],
+    },
+  },
   {
     path: '/research/copilot/trading',
     // The design's own word since Rev 2026-09-21.1, and §5a.5 keeps the h1

@@ -1,308 +1,266 @@
-import { useState, type ReactNode } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { ClipboardList } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
-import {
-  CollapsibleGroup,
-  CollapsibleGroupBody,
-  CollapsibleGroupHeader,
-  CollapsibleGroupTitle,
-  DenseTag,
-  EmptyState,
-} from '@/components/data-display'
-import { SettlementBadges } from '@/components/data-display/SettlementBadges'
-import { EmptyHint } from '@/components/research/EmptyHint'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
+/**
+ * Daily Brief — `/research/daily-brief`, walked against
+ * `Research Daily Brief.dc.html` (Rev 2026-09-17.1) on 2026-09-22.
+ *
+ * ## The page was answering a different question
+ *
+ * This is the largest mismatch the walk has found, and it was not a shape: the
+ * design's Daily Brief has **no symbol at all** (`symbol=""` in the prototype).
+ * It is the morning's reading of *the book* — the Morning Prep run's output
+ * kept as a page, "a sedimented conversation" in its own words. This side had
+ * built a **per-symbol lens dashboard**: a symbol context bar, a verdict strip
+ * and nine cards — terrain, forecast, gex, opex, iv, vrp, skew, term slope,
+ * sentiment — for one name on one date.
+ *
+ * Every one of those nine is now a row on a Symbol face. The page was a second
+ * rendering of the Symbol page's lenses with a date picker on it, which is the
+ * same duplication this round removed from Pipeline and from the Symbol
+ * Overview. The Owner ruled on 2026-09-22 that it goes.
+ *
+ * ## What it reads now, measured before it was built
+ *
+ * The design's page **is the `daily_digest` draft**, which this app already
+ * receives and already renders in the dock. Measured on DEV 2026-09-22:
+ *
+ * | the design's block | where it comes from | state |
+ * |---|---|---|
+ * | run · persona · cost | `generated_by`, `prose.{provider,model,cost_usd}` | real |
+ * | The one thing | the agent's `### What changed / needs a decision` | real |
+ * | Overnight — book + pipeline | nowhere: P&L, fills and pipeline health are three other stores | owed |
+ * | Today & next — events | `/research/events/calendar` answers `count 0` | blocked |
+ * | Loop — what Autopilot left | `loop.{pending,runs,objectives,trust}` | real |
+ *
+ * So two of the design's four blocks are drawn from the artifact, one is owed
+ * and one is blocked — and each says which it is rather than being left out.
+ *
+ * The artifact carries three sections the design does not draw (the holdings'
+ * readings, the dissents, the resolutions). They are not dropped: the design's
+ * page is a summary of a run and this *is* that run, so they render below
+ * under the run's own heading, by the same component the dock uses.
+ */
+import { Link } from 'react-router-dom'
+import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { DenseTag } from '@/components/data-display'
+import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { Skeleton } from '@/components/ui/skeleton'
+import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
+import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
-import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
-import { VerdictStrip } from '@/components/research/VerdictStrip'
-import { settlementFineGrain } from '@/lib/researchSettlement'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import {
-  fetchDailyBriefSynth,
-  type DailyBriefLensCard,
-  type DailyBriefLensKey,
-  type SepaScoreRow,
-} from '@/api/researchEngine'
-import { useDailyVerdict } from '@/hooks/useDailyVerdict'
-import { useResearchContext } from '@/hooks/useResearchContext'
-import { CARD_TITLES, sourceLamps } from '@/lib/dailyBrief'
-import { BriefLensCard } from './dailyBrief/BriefLensCard'
+import { useDailyDigest } from '@/hooks/useDailyDigest'
+import { digestSection } from '@/lib/harness/dailyDigest'
+import { loopLines } from '@/lib/harness/digestRead'
+import { fmtIsoTs } from '@/lib/format'
 
-interface EmptyCopy {
-  title: string
-  hint: string
-  triggerId?: string
-  triggerLabel?: string
-  linkLabel?: string
-}
+/** The lifted section, named once — the page and the body must agree on it. */
+const ONE_THING = 'What changed'
 
-/** What the card says when its exhibit has no reading, and which CronJob fills it. */
-const EMPTY: Record<DailyBriefLensKey | 'events', EmptyCopy> = {
-  terrain: {
-    title: 'No terrain row',
-    hint: 'Terrain is produced by the forecast engine; intraday snapshots every 15min.',
-    triggerId: 'terrain-forecast',
-    triggerLabel: 'Trigger terrain forecast',
-  },
-  forecast: {
-    title: 'No settled forecast session',
-    hint: 'Forecast sessions settle after the close; the path record needs settled sessions.',
-    triggerId: 'terrain-forecast',
-    triggerLabel: 'Trigger forecast',
-  },
-  gex: {
-    title: 'No GEX levels',
-    hint: 'Try SPY / QQQ — SPX OI may not be backfilled yet.',
-    triggerId: 'gex-intraday',
-    triggerLabel: 'Trigger GEX intraday',
-    linkLabel: 'Open Dealer Levels',
-  },
-  opex: {
-    title: 'No OpEx pin reading',
-    hint: 'Max pain needs the OpEx cycle engine (option OI by strike).',
-  },
-  iv: {
-    title: 'No IV percentile',
-    hint: 'IV percentile requires the volatility engine run.',
-    triggerId: 'iv-percentile',
-    triggerLabel: 'Trigger IV percentile',
-  },
-  vrp: { title: 'No VRP row', hint: 'VRP needs the volatility engine (ATM IV vs realised vol).' },
-  skew: { title: 'No SVI fit', hint: 'Skew needs the vol-surface engine (daily SVI fit).' },
-  term_slope: { title: 'No term structure', hint: 'Needs two fitted expiries from the vol-surface engine.' },
-  sepa: {
-    title: 'No SEPA candidates',
-    hint: 'Wait for dbt SEPA mart (04:15 UTC).',
-    triggerId: 'dbt-sepa',
-    triggerLabel: 'Trigger dbt SEPA',
-  },
-  momentum: {
-    title: 'No momentum rows',
-    hint: 'Momentum CronJob runs daily at 05:00 UTC.',
-    triggerId: 'momentum',
-    triggerLabel: 'Trigger momentum',
-  },
-  events: {
-    title: 'No events',
-    hint: 'Run event radar CronJob or drop CSV into the ingest folder.',
-    triggerId: 'event-radar',
-    triggerLabel: 'Trigger event radar',
-  },
-  sentiment: { title: 'No sentiment row', hint: 'Options tape ingest may not be enabled.' },
-}
-
-function GroupTitle({ children }: { children: ReactNode }) {
-  return (
-    <p className="mb-2 text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">{children}</p>
-  )
+/** `deepseek-chat · $0.0011` — what the run cost, when the payload says. */
+function runCost(payload: Record<string, unknown> | null): string | null {
+  const prose = (payload?.prose ?? null) as Record<string, unknown> | null
+  if (!prose) return null
+  const model = typeof prose.model === 'string' ? prose.model : null
+  const cost = typeof prose.cost_usd === 'number' ? prose.cost_usd : null
+  return [model, cost != null ? `$${cost.toFixed(4)}` : null].filter(Boolean).join(' · ') || null
 }
 
 export default function DailyBriefPage() {
-  const { symbol, dateInput, selectedDate, apiDate } = useResearchContext()
-  const [contextOpen, setContextOpen] = useState(true)
-  const sym = symbol
-
-  const synthQ = useQuery({
-    queryKey: ['daily-brief-synth', sym, apiDate],
-    queryFn: () => fetchDailyBriefSynth(sym, apiDate),
-    enabled: sym.length > 0,
-    refetchInterval: 60_000,
+  const { digest, payload, isLoading, isError, error, refetch } = useDailyDigest({
+    refetchIntervalMs: 60_000,
   })
-  const synth = synthQ.data
-  const { verdict, withContext } = useDailyVerdict(synth, sym, dateInput)
-  const invalidateKeys = [['daily-brief-synth', sym, apiDate ?? '']] as const
-  const cards = synth?.cards
-  const anyPresent = cards ? Object.values(cards).some((c) => c.present) : false
 
-  const empty = (key: DailyBriefLensKey | 'events', to: string) => {
-    const copy = EMPTY[key]
-    return (
-      <EmptyHint
-        title={copy.title}
-        hint={copy.hint}
-        to={withContext(to)}
-        linkLabel={copy.linkLabel}
-        triggerId={copy.triggerId}
-        triggerLabel={copy.triggerLabel}
-        invalidateKeys={invalidateKeys}
-      />
-    )
-  }
-
-  /** A lens card: the exhibit's verdict, or the empty hint when the reader has nothing. */
-  const lensCard = (
-    key: DailyBriefLensKey,
-    emphasis: 'primary' | 'default' = 'default',
-    extra?: (card: DailyBriefLensCard) => ReactNode,
-    hasOwnData?: (card: DailyBriefLensCard) => boolean,
-  ) => {
-    if (!cards) return null
-    const card = cards[key]
-    const filled = hasOwnData ? hasOwnData(card) : card.present
-    return (
-      <BriefLensCard key={key} title={CARD_TITLES[key]} card={card} openTo={withContext(card.to)} emphasis={emphasis}>
-        {filled ? extra?.(card) : empty(key, card.to)}
-      </BriefLensCard>
-    )
-  }
+  const day = typeof payload?.day === 'string' ? payload.day : null
+  const oneThing = typeof payload?.markdown === 'string'
+    ? digestSection(payload.markdown, ONE_THING)
+    : null
+  const loop = payload ? loopLines(payload) : []
+  const advisory = typeof payload?.advisory === 'string' ? payload.advisory : null
 
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Daily Brief"
+        description={
+          digest
+            ? `${digest.generated_by ?? 'the morning run'} · ${fmtIsoTs(digest.created_at)}${
+                runCost(payload) ? ` · ${runCost(payload)}` : ''
+              }`
+            : 'The morning run, kept as a page.'
+        }
         actions={
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* The design's `Thread in Desk →`. The digest carries no thread or
+                session id — `generated_by: digest_agent` is all it says about
+                where it came from — so this opens the Desk rather than a
+                conversation it cannot name. */}
+            <Link
+              to="/research/copilot"
+              className="text-dense-meta text-primary hover:underline"
+              title="The digest carries no thread id, so this opens the Desk rather than a conversation it cannot name."
+            >
+              Desk →
+            </Link>
+            <Link to="/research/loop/decisions" className="text-dense-meta text-primary hover:underline">
+              Inbox →
+            </Link>
+            {/* The design's `⟳ Re-run` queues the Morning Prep run. Nothing on
+                this side triggers a digest: the agent runs on its own schedule
+                and there is no route that asks for another. Marked rather than
+                drawn — a button that queued nothing would be worse. */}
+            <span
+              className="rounded border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
+              title="The design offers ⟳ Re-run here. The digest agent runs on a schedule and no route asks it for another run, so there is nothing to queue."
+            >
+              ⟳ re-run · not on this side
+            </span>
             <AskCopilotButton
               originPage="daily-brief"
               originLabel="Daily Brief"
-              symbol={sym}
-              date={dateInput || undefined}
-              snapshot={compactSnapshot({
-                narrative: verdict?.narrative.text,
-                risk: verdict?.risk.text,
-                opportunity: verdict?.opportunity.text,
-              })}
-              suggestedPrompt={`Based on today's daily brief for ${sym}, highlight the signals I should act on.`}
-            />
-            <SaveAsHypothesisButton
-              originPage="daily-brief"
-              defaultTitle={`${sym} daily brief`}
-              defaultSymbols={sym ? [sym] : []}
-              originRef={{ symbol: sym, date: selectedDate }}
+              snapshot={compactSnapshot({ day, one_thing: oneThing?.slice(0, 400) })}
+              suggestedPrompt="From this morning's digest: what is the one thing I should decide before the open?"
             />
           </div>
         }
       />
 
-      <ResearchContextBar />
+      {/* The design's note, and it is the page's whole argument: this is a
+          conversation that was kept, not a dashboard that was computed. */}
+      <p
+        role="note"
+        className="max-w-[92ch] rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-relaxed text-muted-foreground"
+      >
+        The brief is a <span className="font-semibold text-foreground">sedimented conversation</span>{' '}
+        — the morning run&rsquo;s output kept as a page. Every claim cites the page it read; nothing
+        here is knowable only here.
+        {advisory ? <span className="ml-1 text-warning">{advisory}</span> : null}
+      </p>
 
-      {synthQ.isError ? <QueryErrorAlert error={synthQ.error} onRetry={() => void synthQ.refetch()} /> : null}
+      {isError ? <QueryErrorAlert error={error} onRetry={() => void refetch()} /> : null}
 
-      {synthQ.isLoading || !synth || !verdict || !cards ? (
-        synthQ.isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-28 rounded-xl" />
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-32 rounded-xl" />
-              ))}
-            </div>
-          </div>
-        ) : null
+      {isLoading ? (
+        <Skeleton className="h-64 rounded-xl" />
+      ) : !digest || !payload ? (
+        <SectionPanel cap="The one thing" title="No digest for today">
+          <p className="px-3 py-3 text-dense-meta leading-relaxed text-muted-foreground">
+            The digest agent writes one post per trading day and none is waiting. It is a draft in
+            the queue like any other, so it appears here the moment it is written — and it is
+            approved, or left, in{' '}
+            <Link to="/research/loop/decisions" className="text-primary hover:underline">
+              the Inbox
+            </Link>
+            .
+          </p>
+        </SectionPanel>
       ) : (
         <>
-          <VerdictStrip
-            narrative={verdict.narrative}
-            risk={verdict.risk}
-            opportunity={verdict.opportunity}
-            actionHint={verdict.actionHint}
-            sourceLamps={sourceLamps(synth)}
-            footnote="Every card is the exhibit its hub view reads — same numbers, same verdict. *Order Sentiment is an OI proxy without a tape; it carries no verdict."
-          />
-
-          <div>
-            <GroupTitle>Scenario & dealer levels</GroupTitle>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {lensCard('terrain', 'primary')}
-              {lensCard('forecast', 'primary', (card) =>
-                card.settlement ? (
-                  <SettlementBadges
-                    pathHit={card.settlement.path_hit}
-                    pathHitCount={card.settlement.path_hit_count}
-                    pathTotal={card.settlement.path_total}
-                    closeMissPct={card.settlement.close_miss_pct}
-                    {...settlementFineGrain(card.settlement)}
-                  />
-                ) : (
-                  <p className="text-dense-meta text-muted-foreground">No settlement yet</p>
-                ),
+          <SectionPanel cap="The one thing" title={day ? `for ${day}` : 'this morning'}>
+            <div className="px-3 py-2.5">
+              {oneThing ? (
+                <MarkdownContent className="max-w-[92ch] text-foreground/90">
+                  {oneThing}
+                </MarkdownContent>
+              ) : (
+                <p className="text-dense-meta text-muted-foreground">
+                  This run wrote no <span className="font-mono">{ONE_THING}…</span> section — the
+                  heuristic digest has one only when something changed.
+                </p>
               )}
-              {lensCard('gex', 'primary')}
-              {lensCard('opex')}
             </div>
+          </SectionPanel>
+
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {/* Owed, not forgotten. The design's Overnight reads four stores
+                this page does not: the book's overnight mark, the night's
+                fills, the pipeline's own run and the decay alerts. Each is a
+                page of its own here, and the brief would be quoting them. */}
+            <SectionPanel cap="Overnight" title="book + pipeline" note="owed">
+              <p className="px-3 py-2.5 text-dense-meta leading-relaxed text-muted-foreground">
+                The design opens with what moved while you were away — the book&rsquo;s overnight
+                mark, the fills, whether the pipeline ran, and any decay alert that fired. The
+                digest does not carry them: they are four other stores, and quoting them here means
+                the brief agrees with{' '}
+                <Link to="/risk/portfolio" className="text-primary hover:underline">
+                  Risk
+                </Link>
+                ,{' '}
+                <Link to="/portfolio/ledger" className="text-primary hover:underline">
+                  the Ledger
+                </Link>{' '}
+                and{' '}
+                <Link to="/research/signal-health" className="text-primary hover:underline">
+                  Signal Health
+                </Link>{' '}
+                on every number. Until it does, they are one click away rather than quoted wrong.
+              </p>
+            </SectionPanel>
+
+            {/* Blocked, and by the same gap three other pages name. */}
+            <SectionPanel cap="Today &amp; next" title="events touching the book" note="no calendar">
+              <p className="px-3 py-2.5 text-dense-meta leading-relaxed text-muted-foreground">
+                The design lists what is on the calendar and what it does to the book — a print
+                today, an ex-date on a covered call, Friday&rsquo;s OPEX.{' '}
+                <span className="text-foreground/80">No forward calendar reaches this side</span>:{' '}
+                <span className="font-mono">/research/events/calendar</span> answers with nothing,
+                and the gap behind it is a vendor subscription. It is the same absence the Symbol
+                page&rsquo;s Events card and both ratings pages carry.
+              </p>
+            </SectionPanel>
           </div>
 
-          <div>
-            <GroupTitle>Vol regime</GroupTitle>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {lensCard('iv')}
-              {lensCard('vrp')}
-              {lensCard('skew')}
-              {lensCard('term_slope')}
-            </div>
-          </div>
-
-          <CollapsibleGroup variant="card">
-            <CollapsibleGroupHeader expanded={contextOpen} onToggle={() => setContextOpen((o) => !o)}>
-              <CollapsibleGroupTitle>Context — screeners, events, flow</CollapsibleGroupTitle>
-            </CollapsibleGroupHeader>
-            {contextOpen ? (
-              <CollapsibleGroupBody>
-                <div className="grid grid-cols-1 gap-3 p-3 pt-0 md:grid-cols-2 xl:grid-cols-4">
-                  {lensCard(
-                    'sepa',
-                    'default',
-                    (card) => (
-                      <div className="flex flex-wrap gap-1">
-                        {(card.candidates ?? []).map((r: SepaScoreRow) => (
-                          <DenseTag key={r.symbol} variant="symbol">
-                            {r.symbol}
-                          </DenseTag>
-                        ))}
-                      </div>
-                    ),
-                    (card) => (card.candidates ?? []).length > 0,
-                  )}
-                  {lensCard(
-                    'momentum',
-                    'default',
-                    (card) => (
-                      <p className="text-dense-meta text-muted-foreground">
-                        {card.count ?? 0} scored · sample {(card.sample_symbols ?? []).join(', ') || '—'}
-                      </p>
-                    ),
-                    (card) => (card.count ?? 0) > 0,
-                  )}
-                  <BriefLensCard title={CARD_TITLES.events} card={cards.events} openTo={withContext(cards.events.to)}>
-                    {cards.events.rows.length > 0 ? (
-                      <ul className="space-y-1">
-                        {cards.events.rows.slice(0, 4).map((e) => (
-                          <li
-                            key={e.event_id}
-                            className="truncate text-dense-meta text-muted-foreground"
-                            title={e.subject || e.event_summary}
-                          >
-                            <span className="mr-1 font-mono text-dense-micro">i{e.importance ?? '—'}</span>
-                            {e.subject || e.event_summary || e.theme || e.event_id}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      empty('events', cards.events.to)
-                    )}
-                  </BriefLensCard>
-                  {lensCard('sentiment')}
+          <SectionPanel
+            cap="Loop"
+            title="what Autopilot left for you"
+            note="the same queue as the Inbox — one queue, two readings"
+          >
+            {loop.length === 0 ? (
+              <p className="px-3 py-2.5 text-dense-meta text-muted-foreground">
+                The loop left nothing waiting.
+              </p>
+            ) : (
+              loop.map((row) => (
+                <div
+                  key={row.text}
+                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border/50 px-3 py-2 last:border-b-0"
+                >
+                  <DenseTag variant={row.tag === 'AWAITING' ? 'warning' : 'neutral'} size="cell">
+                    {row.tag ?? row.sym}
+                  </DenseTag>
+                  <span className="min-w-0 flex-1 text-dense-meta leading-relaxed">{row.text}</span>
+                  {row.cite ? (
+                    <Link to={row.cite.to} className="text-dense-meta text-primary hover:underline">
+                      {row.cite.label} →
+                    </Link>
+                  ) : null}
                 </div>
-              </CollapsibleGroupBody>
-            ) : null}
-          </CollapsibleGroup>
+              ))
+            )}
+          </SectionPanel>
 
-          {!anyPresent ? (
-            <EmptyState
-              icon={<ClipboardList />}
-              title="No brief data"
-              description={`No Research engine rows for ${sym} on ${selectedDate}. Empty lamps are honest — no fabricated signals.`}
-            />
-          ) : null}
+          {/* The run's own sections — the three the design does not draw. The
+              page is a summary of a run and this is that run, so they render
+              by the component the dock already uses, with the section this
+              page lifted taken out so nothing prints twice. */}
+          <SectionPanel
+            cap="The run"
+            title="everything else it wrote"
+            note={`read ${(payload.symbols as unknown[] | undefined)?.length ?? 0} names`}
+          >
+            <div className="px-3 py-2.5">
+              <DailyDigestBody payload={payload} clampProse={false} omitSection={ONE_THING} />
+            </div>
+          </SectionPanel>
+
+          <p className="text-dense-caption leading-relaxed text-muted-foreground">
+            Sources read by this run: the lens exhibits for{' '}
+            {(payload.symbols as unknown[] | undefined)?.length ?? 0} names, the loop&rsquo;s own
+            queue and its objectives. Window:{' '}
+            <span className="font-mono">{fmtIsoTs(String(payload.since ?? ''))}</span> →{' '}
+            <span className="font-mono">{fmtIsoTs(String(payload.generated_at ?? ''))}</span>. The
+            design&rsquo;s footer also names Positions, Risk Exposure, Events and the Playbook; this
+            run reads none of them, which is the same gap Overnight names above.
+          </p>
         </>
       )}
-
-      <p className="text-dense-caption text-muted-foreground">
-        Daily Brief reads the same exhibits as the Analyze hubs — observe only (D10). Not investment advice.
-      </p>
     </PageShell>
   )
 }

@@ -892,6 +892,20 @@ export interface DailyBriefSynth {
 
 const validateDailyBrief = withValidation<DailyBriefSynth>(DailyBriefSynthSchema, 'research/daily-brief/synth')
 
+/**
+ * The per-symbol synthesis. **It has no caller since 2026-09-22** — the Daily
+ * Brief page stopped being a per-symbol lens dashboard and became the morning
+ * digest the design draws — and it is kept because of what it returns.
+ *
+ * Measured that day on AMD, `verdict` carries a *synthesised* reading with a
+ * destination each: `narrative` "AMD trending — spot 615.52 below E[close]
+ * 617.76 (-0.36%)", `risk` "IV rank 100 — High vol regime", `opportunity`,
+ * `action_hint`. That matters beyond this endpoint: the Symbol page's own note
+ * says the design writes a synthesised verdict and "nothing here synthesises",
+ * which is too strong — **this does**. Whether the Symbol header should read
+ * it instead of listing its decisive lenses is a walk decision for that page,
+ * and the wrapper is here for it.
+ */
 export async function fetchDailyBriefSynth(symbol: string, date?: string): Promise<DailyBriefSynth> {
   const params = new URLSearchParams({ symbol })
   if (date) params.set('date', date)

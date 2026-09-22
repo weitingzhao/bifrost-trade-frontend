@@ -11,12 +11,20 @@ import { DigestReadings } from '@/components/cockpit/DigestReadings'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { StatusLamp } from '@/components/StatusLamp'
-import { digestBatches, digestDissents, digestExhibits, digestLamps, digestResolutions } from '@/lib/harness/dailyDigest'
+import {
+  digestBatches,
+  digestDissents,
+  digestExhibits,
+  digestLamps,
+  digestResolutions,
+  digestWithout,
+} from '@/lib/harness/dailyDigest'
 
 export function DailyDigestBody({
   payload,
   readingsOpen = false,
   clampProse = true,
+  omitSection,
 }: {
   payload: Record<string, unknown>
   /** Open the readings table on arrival — the Desk reads the digest; the Inbox decides on it. */
@@ -31,12 +39,23 @@ export function DailyDigestBody({
    * gesture (Owner, 2026-09-21: «纵向滚动条好丑»).
    */
   clampProse?: boolean
+  /**
+   * A section of the agent's document to leave out, by a prefix of its
+   * heading.
+   *
+   * The Daily Brief page lifts *What changed / needs a decision* into its own
+   * panel — the design's **The one thing** — and then renders the rest here.
+   * Without this the page would print that paragraph twice, once as the
+   * headline and once inside the prose it was lifted from.
+   */
+  omitSection?: string
 }) {
   const [batchesOpen, setBatchesOpen] = useState(false)
   const batches = digestBatches(payload)
   const dissents = digestDissents(payload)
   const resolutions = digestResolutions(payload)
-  const markdown = typeof payload.markdown === 'string' ? payload.markdown : ''
+  const raw = typeof payload.markdown === 'string' ? payload.markdown : ''
+  const markdown = omitSection ? digestWithout(raw, omitSection) : raw
   const model = typeof payload.model === 'string' ? payload.model : 'heuristic'
   const holdings = typeof payload.holdings_status === 'string' ? payload.holdings_status : null
 

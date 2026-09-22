@@ -24,6 +24,15 @@ export interface DigestLine {
   text: string
   /** The page that produced the sentence; null when nothing routes to it. */
   cite: { label: string; to: string } | null
+  /**
+   * What kind of loop row this is — `RUN`, `AWAITING`, `TRUST`.
+   *
+   * The design's Daily Brief tags each Loop row so the column reads as a
+   * category rather than three dashes; the dock's digest panel has no room for
+   * a tag column and keeps using `sym`. One list, two readings of its first
+   * column.
+   */
+  tag?: string
 }
 
 /** Which lab view owns a lens id, for the cite chip. */
@@ -119,6 +128,7 @@ export function loopLines(payload: Record<string, unknown>): DigestLine[] {
   if (objectives.length > 0) {
     out.push({
       sym: '—',
+      tag: 'RUN',
       text:
         runs > 0
           ? `${objectives.length} active objective${objectives.length === 1 ? '' : 's'} · ${runs} run${runs === 1 ? '' : 's'} since yesterday`
@@ -136,6 +146,7 @@ export function loopLines(payload: Record<string, unknown>): DigestLine[] {
   if (waiting.length > 0) {
     out.push({
       sym: '—',
+      tag: 'AWAITING',
       text: `waiting on you: ${waiting
         .map(([k, n]) => {
           const label = PENDING_LABEL[k]
@@ -150,6 +161,7 @@ export function loopLines(payload: Record<string, unknown>): DigestLine[] {
   if (loop.trust && loop.trust.l0 !== true) {
     out.push({
       sym: '—',
+      tag: 'TRUST',
       text: `not L0${loop.trust.reason ? ` — ${loop.trust.reason}` : ''}`,
       cite: { label: 'Autopilot', to: '/research/loop/harness' },
     })

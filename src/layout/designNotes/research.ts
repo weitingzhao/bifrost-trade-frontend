@@ -66,7 +66,24 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'Personas face \u2014 Today and Threads are untouched at .1, so the walk holds and the page would '
     + 'otherwise read stale the moment the snapshot was regenerated.',
   '/research/copilot/trading':
-    'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner signed off on STG 2026-09-15 after L1/L2.',
+    'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner signed off on STG 2026-09-15 after L1/L2.'
+    + ' '
+    + 'RE-WALKED 2026-09-21 against Rev 2026-09-21.1, which carried this row along when the package '
+    + 'moved all three Copilot revs \u2014 and renamed it. **The page is «Book starters» now**: the '
+    + 'design\u2019s own ROUTES word, and \u00a75a.5 keeps the h1 equal to it. «Trading Copilot» read as a '
+    + 'second Copilot, which it never was \u2014 it is where the book\u2019s starters are written down. '
+    + 'ONE DIVERGENCE, and it is this side\u2019s arrangement rather than a gap: the design treats the '
+    + 'route as a deep link that opens the dock on its «The book» starter group, and here it is a page '
+    + 'the dock\u2019s own group links to. The reason is that on this side there is one catalogue \u2014 '
+    + '`TRADE_QUESTIONS` \u2014 read by both the dock\u2019s empty state and this page, so they cannot drift; '
+    + 'the prototype hard-codes four starters in its script. Both sides agree it is not a menu row. '
+    + 'Added the one starter the catalogue was missing against the design\u2019s four: **short legs inside '
+    + '5% of their strike this week** \u2014 the first question an option seller asks, answerable today '
+    + 'from the snapshot and quotes. The other three were already covered by the risk, gates and fills '
+    + 'questions. '
+    + 'Swept: the Gates fact tile pointed at `/strategy/gates`, which still resolves through the '
+    + 'redirect those seven retired pages left \u2014 it opens Trade \u203a Rules now, the page that owns that '
+    + 'reading. Every other link resolves; no horizontal overflow.',
   '/research/orchestration':
     'Built from nothing 2026-09-21 against Research Orchestration.dc.html (Rev 2026-09-21.1), the page '
     + 'Design split out of Personas: whose reading to trust is the trader\u2019s question and stays on the '

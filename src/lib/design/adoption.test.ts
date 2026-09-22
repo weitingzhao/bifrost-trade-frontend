@@ -199,15 +199,12 @@ describe('design adoption', () => {
     // 44→45): the bench, the derived Path, and four record columns that say
     // why they are empty.
     // Orchestration signed off the day it was built, which closes the round
-    // the Personas redesign opened (aligned 42→43, 45→46).
-    expect(counts.aligned + counts.byState.stale).toBe(46)
+    // the Personas redesign opened (aligned 42→43, 45→46). Book starters —
+    // the Copilot row the same package renamed — then left the sum for
+    // `reviewing` while the Owner looks (46→45).
+    expect(counts.aligned + counts.byState.stale).toBe(45)
     expect(counts.aligned).toBe(43)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
-      // Walked at .15.5 and carried along by the Copilot rows' rev bump. The
-      // design also renamed it — ROUTES now says «Book starters» where this
-      // side says «Trading Copilot» — so its re-walk has a naming question
-      // in it, not only a diff.
-      '/research/copilot/trading',
       '/research/loop/decisions',
       '/research/symbol',
     ])
@@ -351,8 +348,9 @@ describe('design adoption', () => {
     // two: the Copilot gained the design's three-face tab strip and the
     // Personas page became its third face. Both signed off; what waits now is
     // Orchestration, the page Rev 2026-09-21.6 split out of Personas — built
-    // and signed off the same day, so nothing waits on a look again.
-    expect(counts.byState.reviewing).toBe(0)
+    // and signed off the same day. What waits now is Book starters, the last
+    // of the Copilot rows that package moved.
+    expect(counts.byState.reviewing).toBe(1)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -411,7 +409,9 @@ describe('design adoption', () => {
     // Empty for the first time since the Research walk began: every page this
     // side has walked and built is either in place or waiting on a rev, not on
     // a look.
-    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([])
+    expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/research/copilot/trading',
+    ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they
     // carried had a home — they are redirects now, and a redirect is not a row
@@ -543,8 +543,9 @@ describe('design adoption', () => {
     // Research pages the Vision redesign moved. 4 → 2 with the Copilot pair,
     // re-walked together because they are one prototype. 2 → 3 when Package
     // 2026-09-21.4 moved the three Copilot rows' rev: Book starters was
-    // walked at .15.5 and is not part of this round.
-    expect(counts.byState.stale).toBe(3)
+    // walked at .15.5 and is not part of this round. 3 → 2 when it was
+    // re-walked and took the design's own name.
+    expect(counts.byState.stale).toBe(2)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

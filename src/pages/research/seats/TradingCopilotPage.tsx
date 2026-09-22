@@ -71,7 +71,7 @@ export default function TradingCopilotPage() {
   return (
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
       <PageHeader
-        title="Trading Copilot"
+        title="Book starters"
         description="Ask about the book — positions, risk, gates, executions, instances. It reads and explains; it never places, modifies or cancels. D10 BLOCKED."
         actions={<CopilotPromptLangToggle />}
       />
@@ -93,7 +93,10 @@ export default function TradingCopilotPage() {
           label="Gates armed"
           value={gates.isLoading ? null : String(activeGates)}
           sub={`of ${totalGates} configured`}
-          to="/strategy/gates"
+          // `/strategy/gates` still resolves, through the redirect the seven
+          // retired Strategy pages left behind, but a fact tile should open
+          // the page that owns its reading now: the chain lives on Rules.
+          to="/trade/rules"
         />
         <BookFact
           label="Executions"

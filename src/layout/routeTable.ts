@@ -227,11 +227,14 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/research/daily-brief', label: 'Daily Brief', crumbs: COPILOT, symbolScope: true },
   {
     path: '/research/copilot/trading',
-    label: 'Trading Copilot',
+    // The design's own word since Rev 2026-09-21.1, and §5a.5 keeps the h1
+    // equal to it: the page is the book's starter catalogue, not a second
+    // Copilot.
+    label: 'Book starters',
     crumbs: COPILOT,
     design: {
-      state: 'aligned',
-      rev: '2026-09-15.5',
+      state: 'reviewing',
+      rev: '2026-09-21.1',
       note: DESIGN_NOTES['/research/copilot/trading'],
     },
   },

@@ -95,6 +95,20 @@ export const TRADE_QUESTIONS: TradeQuestion[] = [
     tools: ['trade.trading.position_attribution', 'trade.portfolio.snapshot'],
   },
   {
+    // The design's own book starter (Rev 2026-09-21.1, «Which short legs are
+    // inside 5% of strike into Friday»). The catalogue had the book's risk
+    // and its attribution and not the one question an option seller asks
+    // first, which the snapshot can answer today.
+    id: 'legs-near-strike',
+    group: 'positions',
+    label: { zh: '哪些空头腿快到行权价了', en: 'Short legs near their strike' },
+    prompt: {
+      zh: '哪些空头腿距离行权价在 5% 以内、且本周到期？逐条给出标的、行权价、当前价、缓冲百分比和到期天数，并说明哪些是真的要处理、哪些只是读数难看。（D10 冻结中，只要判断不要下单）',
+      en: 'Which short legs are inside 5% of their strike, expiring this week? List each one with its symbol, strike, spot, cushion and days to expiry, and say which actually need a decision and which only read badly. (D10 frozen — judgement only, no orders.)',
+    },
+    tools: ['trade.portfolio.snapshot', 'trade.market.quotes'],
+  },
+  {
     id: 'gates-blocking',
     group: 'gates',
     label: { zh: '现在什么在挡着开仓', en: 'What is blocking entries' },

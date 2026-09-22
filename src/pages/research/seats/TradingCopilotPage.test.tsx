@@ -38,7 +38,9 @@ describe('TradingCopilotPage language', () => {
         </MemoryRouter>
       </QueryClientProvider>,
     )
-    expect(screen.getByRole('heading', { name: 'Trading Copilot' })).toBeTruthy()
+    // «Book starters» since Rev 2026-09-21.1 — the design's own ROUTES word,
+    // and §5a.5 ties the h1 to it.
+    expect(screen.getByRole('heading', { name: 'Book starters' })).toBeTruthy()
     expect(screen.getByText('The book')).toBeTruthy()
     expect(screen.getByText('Open orders')).toBeTruthy()
     expect(screen.getByText('Gates armed')).toBeTruthy()

@@ -195,8 +195,11 @@ describe('design adoption', () => {
     // moved all three Copilot rows' rev, so the Book starters page — walked
     // at .15.5 and not re-walked — reads stale (aligned 41, stale 3, so the
     // sum holds at 44).
-    expect(counts.aligned + counts.byState.stale).toBe(44)
-    expect(counts.aligned).toBe(41)
+    // Personas signed off the same day it was re-walked (aligned 41→42,
+    // 44→45): the bench, the derived Path, and four record columns that say
+    // why they are empty.
+    expect(counts.aligned + counts.byState.stale).toBe(45)
+    expect(counts.aligned).toBe(42)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       // Walked at .15.5 and carried along by the Copilot rows' rev bump. The
       // design also renamed it — ROUTES now says «Book starters» where this
@@ -344,8 +347,9 @@ describe('design adoption', () => {
     // heads §5a.1 moved, walked together because one section moved them. Both
     // were signed off the same day, so nothing waits on a look. Then batch
     // two: the Copilot gained the design's three-face tab strip and the
-    // Personas page became its third face.
-    expect(counts.byState.reviewing).toBe(2)
+    // Personas page became its third face. Both signed off; what waits now is
+    // Orchestration, the page Rev 2026-09-21.6 split out of Personas.
+    expect(counts.byState.reviewing).toBe(1)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -363,6 +367,7 @@ describe('design adoption', () => {
       '/portfolio/pnl-explain',
       '/portfolio/positions',
       '/portfolio/transfer',
+      '/research/agent-personas',
       '/research/book',
       '/research/copilot',
       // `/research/copilot/trading` left this list for `stale` when Package
@@ -403,7 +408,6 @@ describe('design adoption', () => {
     // side has walked and built is either in place or waiting on a rev, not on
     // a look.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/research/agent-personas',
       '/research/orchestration',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

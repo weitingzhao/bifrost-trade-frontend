@@ -80,10 +80,20 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'one runtime fact that changes what the reader may do. '
     + 'Picking an agent here hands the name to Personas as `?agent=`, which that page now reads \u2014 a '
     + 'parameter the destination ignored would be the same dead end as a link to nowhere. '
-    + 'Not built from the prototype: the Chat/Batch path columns and the Wiring table with its path '
-    + 'filter. The diagram already says what they say, in the shape this side has had since the '
-    + 'Personas page was built, and a second rendering of one graph is the drift this walk keeps '
-    + 'finding. Named here so the choice is visible, and reversible.',
+    + 'SECOND PASS the same day, on the Owner\u2019s word to keep aligning: the four sections the '
+    + 'prototype actually has are built. **Chat path** (3 stages) beside **Batch path** (4), each '
+    + 'stage with its tag and its sentence; the **Agent as tool** strip \u2014 the four specialists \u2192 '
+    + 'Verdict, with why a brief cites four readings and carries one stance; and the **Wiring** '
+    + 'table (Agent \u00b7 Role \u00b7 Called by \u00b7 How \u00b7 It calls \u00b7 Path) with the path filter and a live '
+    + 'edge count \u2014 measured: All 9 rows / 17 edges, Batch 5 rows / 12. Rows are built by '
+    + '`wiringRows` off the catalog, so the table and the bench read one graph. Every row opens '
+    + 'that agent\u2019s persona. '
+    + 'The diagram is not dropped: it sits behind a fold, **The same graph, drawn**, because the '
+    + 'table can be filtered and read row by row while only the diagram shows the shape at a '
+    + 'glance \u2014 and two renderings of one graph should not both be the first thing. '
+    + 'One divergence, and the gate found it: the design\u2019s runtime fold points at **System '
+    + 'Status**, a page this side has not collapsed into one \u2014 the link goes to System \u203a Daemon, '
+    + 'which holds that reading here.',
   '/research/agent-personas':
     'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 adds the Track record table — you · hand verdicts beside the four judges, same 20d rule, n<10 amber — so the sign-off reads stale until W2 builds the verdict store and the table over it.'
     + ' '
@@ -114,7 +124,7 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'instead, which is a fact about the role and not a gap. The source-attributed table stays below '
     + 'the bench rather than being folded into it: it answers the question this side can answer. '
     + 'Untouched, as the brief says: the persona markdown editor, the preference slots, the Cannot '
-    + 'lines and the D10 lock.',
+    + 'lines and the D10 lock. Owner signed off 2026-09-21.',
   '/research/symbol':
     'Walked 2026-09-14 against Research Symbol.dc.html (REDO); my legs, since-you-looked, Plan this and the Structure panel built. Owner signed off on STG 2026-09-15. Re-stamped on Rev 2026-09-15.5 (no construction change to the page). Re-stamped on Rev 2026-09-17.1 (§14.7 colours only: green / red direction, unrealized orange, applied in e05dce2); Owner re-signed after the colour look 2026-09-17. Rev 2026-09-18.2 replaces the header keys with the six verbs, adds the Your verdict panel and seats you · hand verdicts in the Record table, so the sign-off reads stale; the verdict panel and record row are W2, the verbs W3.',
   '/research/backtest':

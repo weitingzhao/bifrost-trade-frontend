@@ -243,7 +243,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Personas',
     crumbs: COPILOT,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-21.1',
       note: DESIGN_NOTES['/research/agent-personas'],
     },

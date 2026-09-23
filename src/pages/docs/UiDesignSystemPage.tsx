@@ -1,8 +1,6 @@
 import { fmtPctSigned } from '@/lib/format'
-import { type ReactNode } from 'react'
 import { PageHeader, PageShell } from '@/components/layout'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -33,7 +31,14 @@ import { fmtDollar, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { cn } from '@/lib/utils'
 import { Pencil, Trash2, Inbox } from 'lucide-react'
 import { PromptCopyDialog } from './uiDesignSystem/PromptCopyDialog'
-import type { PromptSpecId } from './uiDesignSystem/promptSpecs'
+import {
+  CodeRef,
+  DocsQuickNav,
+  PlannedTokenSwatch,
+  SampleBox,
+  SectionCard,
+  TokenSwatch,
+} from '@/components/docs/docsUi'
 
 // ─── Section nav ─────────────────────────────────────────────────────────────
 
@@ -50,122 +55,6 @@ const DESIGN_SYSTEM_SECTIONS = [
   { id: 'status-lamp', label: 'StatusLamp' },
   { id: 'compliance', label: 'Compliance' },
 ] as const
-
-function DesignSystemQuickNav() {
-  return (
-    <nav
-      aria-label="Design system sections"
-      className="sticky top-0 z-10 rounded-lg border border-border bg-secondary/95 px-3 py-2.5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-secondary/85"
-    >
-      <div className="flex flex-wrap items-center gap-1.5">
-        {DESIGN_SYSTEM_SECTIONS.map(section => (
-          <a
-            key={section.id}
-            href={`#${section.id}`}
-            className={cn(
-              'inline-flex h-7 shrink-0 items-center rounded-md border border-border bg-background/70 px-2.5',
-              'text-xs font-medium text-foreground transition-colors hover:bg-background hover:text-primary',
-            )}
-          >
-            {section.label}
-          </a>
-        ))}
-      </div>
-    </nav>
-  )
-}
-
-// ─── Building blocks ─────────────────────────────────────────────────────────
-
-function SectionCard({
-  id,
-  title,
-  description,
-  specId,
-  promptLabel = 'Copy Prompt',
-  children,
-}: {
-  id: string
-  title: string
-  description?: string
-  specId?: PromptSpecId
-  promptLabel?: string
-  children: ReactNode
-}) {
-  return (
-    <Card id={id} variant="elevated" className="scroll-mt-24">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <CardTitle className="text-base">{title}</CardTitle>
-          {specId ? <PromptCopyDialog specId={specId} label={promptLabel} /> : null}
-        </div>
-        {description ? <CardDescription>{description}</CardDescription> : null}
-      </CardHeader>
-      <CardContent className="space-y-4 text-sm leading-relaxed text-muted-foreground">
-        {children}
-      </CardContent>
-    </Card>
-  )
-}
-
-function CodeRef({ children }: { children: ReactNode }) {
-  return (
-    <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-foreground">
-      {children}
-    </code>
-  )
-}
-
-function TokenSwatch({ label, varName }: { label: string; varName: string }) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-md border border-border bg-background px-2.5 py-2">
-      <span
-        className="h-5 w-5 shrink-0 rounded-full border border-border/60"
-        style={{ background: `var(${varName})` }}
-      />
-      <div className="min-w-0">
-        <p className="truncate text-xs font-semibold text-foreground">{label}</p>
-        <p className="truncate font-mono text-dense-caption text-muted-foreground">{varName}</p>
-      </div>
-    </div>
-  )
-}
-
-function PlannedTokenSwatch({
-  label,
-  color,
-  note,
-}: {
-  label: string
-  color: string
-  note: string
-}) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-md border border-dashed border-border bg-background px-2.5 py-2">
-      <span
-        className="h-5 w-5 shrink-0 rounded-full border border-border/60"
-        style={{ background: color }}
-      />
-      <div className="min-w-0">
-        <p className="truncate text-xs font-semibold text-foreground">{label}</p>
-        <p className="truncate font-mono text-dense-caption text-muted-foreground">{note}</p>
-      </div>
-    </div>
-  )
-}
-
-function SampleBox({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div
-      className={cn(
-        'flex flex-wrap items-center gap-3 rounded-md border border-border bg-background px-3 py-2.5',
-        className,
-      )}
-    >
-      {children}
-    </div>
-  )
-}
 
 // ─── Demo data ───────────────────────────────────────────────────────────────
 
@@ -248,13 +137,13 @@ export default function UiDesignSystemPage() {
         }
       />
 
-      <DesignSystemQuickNav />
+      <DocsQuickNav sections={DESIGN_SYSTEM_SECTIONS} ariaLabel="Design system sections" />
 
       {/* 1 — PnL semantics */}
       <SectionCard
         id="pnl-semantics"
         title="1 · PnL Semantics — profit green / loss red / unrealized orange"
-        specId="pnl"
+        action={<PromptCopyDialog specId="pnl" />}
         description="Realized PnL uses classic green (profit) and red (loss), brighter than the lamp green / red so a number and a status dot never share a value (§14.7). Unrealized PnL is always orange, whatever its sign — never green/red. Zero or missing values are muted. Pages never pick these colors directly; they call the accessor functions."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -306,7 +195,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="entity-asset-class"
         title="2 · Entity — Stock / Option / Fixed Income / Cash-like"
-        specId="entity"
+        action={<PromptCopyDialog specId="entity" />}
         description="Four asset-class entities share distinct token colors site-wide. Strategy / Instance / Opportunity / Structure are Option Category (§3), not Entity. Table identity columns use link/text — never Tag pills."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -417,7 +306,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="option-category"
         title="3 · Option Category — Instance / Strategy / Opportunity / Structure"
-        specId="option-category"
+        action={<PromptCopyDialog specId="option-category" />}
         description="Four strategy-domain concepts for options workflows. Distinct from Entity (§2) and Position Category (§4). Contract strings remain Option Entity — never render as Option Category tags."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -522,7 +411,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="position-category"
         title="4 · Position Category — watchlist / portfolio"
-        specId="position-category"
+        action={<PromptCopyDialog specId="position-category" />}
         description="watchlist and portfolio are two fixed Position Category labels. User-defined names (Fix Income, Tech, Watching…) share the same purple outline pill. Not tradable entities — never mix with Entity (§2) or Option Category (§3)."
       >
         <TokenSwatch label="Position Category" varName="--color-entity-category" />
@@ -630,7 +519,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="status-tags"
         title="5 · Status & Source Tags"
-        specId="status"
+        action={<PromptCopyDialog specId="status" />}
         description="Generic state (success / warning / danger / info / neutral) and execution source badges share one outline-pill language."
       >
         <SampleBox>
@@ -660,7 +549,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="density"
         title="6 · Density & Typography"
-        specId="density"
+        action={<PromptCopyDialog specId="density" />}
         description="Dense tables: 13px body, 11px meta, fixed layout. Entity identity columns (Stock, Option) and Option Category columns must show full text — wrap inside the cell, never ellipsis (...)."
       >
         <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
@@ -807,7 +696,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="surfaces"
         title="7 · Surface Layers"
-        specId="surface"
+        action={<PromptCopyDialog specId="surface" />}
         description="Three-level canvas: page root bg-card → elevated panels bg-secondary → inset wells bg-background."
       >
         <div className="rounded-lg border border-border bg-card p-3">
@@ -949,8 +838,7 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="compliance"
         title="11 · Compliance Checklist — validate any page against this contract"
-        specId="full"
-        promptLabel="Copy Full Prompt"
+        action={<PromptCopyDialog specId="full" label="Copy Full Prompt" />}
         description="Walk a page against these checks. Mechanical guards run in npm run check:legacy-css; the rest is reviewed against the samples above."
       >
         <ul className="list-disc space-y-1.5 pl-5 text-foreground/85">

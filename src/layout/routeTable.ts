@@ -539,6 +539,20 @@ export const ROUTES: readonly RouteEntry[] = [
   { path: '/docs/research-calibration', label: 'Research Calibration', crumbs: DOCS },
   { path: '/docs/tech-stack', label: 'Tech Stack', crumbs: DOCS },
   { path: '/docs/ui-design-system', label: 'UI Design System', crumbs: DOCS },
+  {
+    // The options half of the gallery `/docs/ui-design-system` already is. The
+    // design files it under a third crumb, `Design`; this side keeps the two
+    // reference crumbs and lets the page sit beside its sibling, because a
+    // fold with one row is a heading pretending to be a place (§5a.1).
+    path: '/docs/options-kit',
+    label: 'Options Kit',
+    crumbs: DOCS,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.2',
+      note: DESIGN_NOTES['/docs/options-kit'],
+    },
+  },
   ...REDIRECTS,
 ]
 

@@ -438,8 +438,9 @@ describe('design adoption', () => {
     // Owner's walk took Positions and the Watchlist out to `aligned` and put
     // the Decision Inbox back in, which is two out and one in. 8 after
     // the 2026-09-23 pass through the queue (fifteen rows on eleven looks), 7
-    // with Live, 6 with the census face.
-    expect(counts.byState.reviewing).toBe(6)
+    // with Live, 6 with the census face. 7 with Options Kit, the first of the
+    // four `/docs/*` builds the judgement of 2026-09-23 recommended.
+    expect(counts.byState.reviewing).toBe(7)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -507,6 +508,7 @@ describe('design adoption', () => {
     // The two ratings pages' own siblings: Symbol, and the Vol ratings rebuild
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
+      '/docs/options-kit',
       '/research/contract-screener',
       '/research/greeks',
       '/research/lens-coverage',
@@ -577,8 +579,9 @@ describe('design adoption', () => {
     // of the 25 were objective fixture ids, which the `:objectiveId` route has
     // always answered. 22 with System Status, the first page of the build
     // round and the design's collapse target for the nine `/system/*` pages,
-    // and 21 with Settings, its other half.
-    expect(counts.byState.unbuilt).toBe(21)
+    // and 21 with Settings, its other half. 20 on 2026-09-23: Options Kit was
+    // the first of the four `/docs/*` the judgement recommended building.
+    expect(counts.byState.unbuilt).toBe(20)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since
@@ -766,20 +769,23 @@ describe('the build list is not one kind of work', () => {
   it('carries a recommendation on each `/docs/*` prototype, and rules on none', () => {
     // Ten of them went in undifferentiated. Six document the design process
     // rather than this app; four are references about the app and belong
-    // beside the ones the Reference fold already carries. The note is the
-    // whole change — the state and the counts do not move, because absence
-    // from the design is not deletion and this side reports rather than rules
-    // (Owner, 2026-09-18).
+    // beside the ones the Reference fold already carries. The note was the
+    // whole change — no state and no count moved, because absence from the
+    // design is not deletion and this side reports rather than rules (Owner,
+    // 2026-09-18). Nine since 2026-09-23: Options Kit, the first of the four
+    // recommended builds, was built and left the list the way a build does.
     const docs = adoptionRows().filter(
       (r) => r.state === 'unbuilt' && r.path.startsWith('/docs/'),
     )
-    expect(docs).toHaveLength(10)
+    expect(docs).toHaveLength(9)
     expect(docs.every((r) => (r.note ?? '').startsWith('Recommend:'))).toBe(true)
+    // A built page leaves the recommendation list rather than keeping a stale
+    // one — the judgement is about what is not built yet.
+    expect(docs.map((r) => r.path)).not.toContain('/docs/options-kit')
     const build = docs.filter((r) => r.note!.startsWith('Recommend: build'))
     expect(build.map((r) => r.path).sort()).toEqual([
       '/docs/capability',
       '/docs/drilldown',
-      '/docs/options-kit',
       '/docs/research-vision',
     ])
     // Every "not this app" says which instrument already answers it, so the

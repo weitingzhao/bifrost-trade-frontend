@@ -1,4 +1,4 @@
-import { approveEffect, draftKindLabel, draftLinks, draftTitle } from '@/lib/harness/draftText'
+import { approveEffect, draftAskedBy, draftKindLabel, draftLinks, draftTitle } from '@/lib/harness/draftText'
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,8 +17,11 @@ import {
   draftThreadId,
 } from '@/lib/research/draftProvenance'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
+import { ArtifactVerbs } from '@/components/research/ArtifactVerbs'
+import { EXPLAIN_UNHELD, verbNote, verbsOff, type VerbKey } from '@/lib/harness/artifactVerbs'
 import { DecisionDraftBody } from '@/components/research/harness/DecisionDraftBody'
 import { OrderIntentBody } from '@/components/research/harness/OrderIntentBody'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -128,6 +131,12 @@ export function DraftCard({
   const busy = Boolean(approving || dismissing)
   const title = draftTitle(draft, hypothesisTitle)
   const recordOnly = RECORD_ONLY_KINDS.has(draft.kind)
+  // One verb open at a time. The five that are not Explain have nothing behind
+  // them here, so the row reports and this panel says what the verb would do —
+  // drawn rather than omitted, because a card without them says the vocabulary
+  // does not apply, and inert rather than wired, because it does not yet.
+  const [verb, setVerb] = useState<VerbKey | null>(null)
+  const off = verbsOff(draft.kind)
   const proposed =
     typeof draft.payload.proposed_status === 'string'
       ? draft.payload.proposed_status
@@ -288,7 +297,26 @@ export function DraftCard({
       {/* The design closes a card with where it came from (Rev 2026-09-18.2):
           a merge proposal is only as good as what it was distilled from, and
           the reader should be one click away from it. */}
-      <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-border/40 pt-1.5 font-mono text-dense-micro text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/40 pt-1.5">
+        <ArtifactVerbs
+          artifact={draft.id}
+          active={verb}
+          off={off}
+          onVerb={(k) => setVerb((cur) => (cur === k ? null : k))}
+        />
+        <span className="ml-auto text-dense-micro text-muted-foreground">
+          operator · {draftAskedBy(draft.generated_by)}
+        </span>
+      </div>
+      {verb ? (
+        <p className="m-0 rounded-md border border-border/50 bg-secondary/30 px-2.5 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
+          {verb === 'explain'
+            ? `Explain — this draft is about ${parentId ?? 'nothing recorded'}, written by ${draftAskedBy(draft.generated_by)}, and it opens in the Journal under what it came from. Beyond that, ${EXPLAIN_UNHELD}`
+            : verbNote(draft.kind, verb)}
+        </p>
+      ) : null}
+
+      <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-dense-micro text-muted-foreground">
         <span title="The artifact this draft is about — the same rule the Journal reads it by.">
           parent · {parentId ?? 'none recorded'}
         </span>

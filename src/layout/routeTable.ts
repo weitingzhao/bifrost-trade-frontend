@@ -52,7 +52,14 @@ export interface RouteEntry {
   /**
    * Unit of analysis, which is not the same question as where the data comes
    * from: `underlying` is one answer per symbol, `contract` is an answer per
-   * strike x expiry. The sidebar marks the row `stk` or `opt` from this.
+   * strike x expiry. The sidebar marks the row `stk` or `opt` from it.
+   *
+   * **Only for a page the design has no row for.** The design keeps this per
+   * route and `ScopeMark` reads `DESIGN_SCOPE` first; the four that used to be
+   * typed here were four of its nineteen, so two of the Discover leaves sat
+   * unmarked beside two that did not — which reads as "this page has no unit"
+   * rather than "nobody wrote it down". `scopeMark.test.ts` fails on any
+   * disagreement, so a tag set here is a claim the design has not made.
    */
   scope?: 'underlying' | 'contract'
   /**

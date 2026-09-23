@@ -310,6 +310,23 @@ function generate(pkg) {
   ].sort()
   const dByName = new Map([...GLYPH_NAMES].map(([d, name]) => [name, d]))
 
+  /**
+   * The unit of analysis each page answers in, off the registry's `scopeOf`.
+   *
+   * `stk` or `opt` at the end of a row says what *one row of the answer* is,
+   * not where the data comes from — Vol Regime reads option prices and still
+   * answers once per symbol. This side had been hand-typing the field on its
+   * own route table and had four of the design's eighteen, which is exactly
+   * how a hand-kept copy of someone else's table goes.
+   */
+  const scope = Object.fromEntries(
+    (R.ROUTES ?? [])
+      .map((r) => r.path)
+      .filter((path) => typeof path === 'string')
+      .map((path) => [path, R.scopeOf?.(path) ?? null])
+      .filter(([, v]) => v === 'underlying' || v === 'contract'),
+  )
+
   /** The design's `FACES` pairs, straight off the registry. */
   const faces = (R.FACES ?? []).map(([reading, method]) => ({ reading, method }))
 
@@ -484,6 +501,14 @@ export const DESIGN_EQUIP_ROUTE_GLYPH: Readonly<Record<string, string>> = {
 ${[...equipGlyph.byRoute].sort(([a], [b]) => (a < b ? -1 : 1)).map(([path, name]) => '  ' + JSON.stringify(path) + ': ' + JSON.stringify(name) + ',').join('\n')}
 }
 
+/**
+ * The unit of analysis a page answers in: "stk" (one row per symbol) or "opt"
+ * (per strike x expiry). The sidebar's trailing mark reads this.
+ */
+export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> = {
+${Object.entries(scope).sort(([a], [b]) => (a < b ? -1 : 1)).map(([path, v]) => '  ' + JSON.stringify(path) + ': ' + JSON.stringify(v) + ',').join('\n')}
+}
+
 export const DESIGN_REV = ${JSON.stringify(revOf(pkg))}
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
@@ -493,7 +518,7 @@ ${entries.map((e) => '  ' + JSON.stringify(e) + ',').join('\n')}
   writeFileSync(out, body)
   console.log(
     `${entries.length} routes (${designed} designed, ${faces.length} faces, ${objTarget.length} objective-scoped, ` +
-      `${glyphUsed.length} glyphs over ${glyph.byRoute.size} rows + ${glyph.byFold.size} folds + ${equipGlyph.byRoute.size} rail surfaces) -> ${out}`,
+      `${glyphUsed.length} glyphs over ${glyph.byRoute.size} rows + ${glyph.byFold.size} folds + ${equipGlyph.byRoute.size} rail surfaces, ${Object.keys(scope).length} scoped) -> ${out}`,
   )
 }
 

@@ -290,6 +290,32 @@ export const DESIGN_EQUIP_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/research/watchlist": "eye",
 }
 
+/**
+ * The unit of analysis a page answers in: "stk" (one row per symbol) or "opt"
+ * (per strike x expiry). The sidebar's trailing mark reads this.
+ */
+export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> = {
+  "/research/compare": "contract",
+  "/research/contract-screener": "contract",
+  "/research/dealer-levels": "underlying",
+  "/research/discovery": "contract",
+  "/research/explorer": "underlying",
+  "/research/flow": "underlying",
+  "/research/greeks": "contract",
+  "/research/history": "underlying",
+  "/research/lab/history": "underlying",
+  "/research/lab/screener": "underlying",
+  "/research/lab/symbol": "underlying",
+  "/research/payoff": "contract",
+  "/research/ratings/stocks": "underlying",
+  "/research/scan": "contract",
+  "/research/scenario": "underlying",
+  "/research/screener": "underlying",
+  "/research/symbol": "underlying",
+  "/research/vol-regime": "underlying",
+  "/review/fit": "contract",
+}
+
 export const DESIGN_REV = "2026-09-23.8"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [

@@ -145,7 +145,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/ratings/stocks',
     label: 'Stock ratings',
     crumbs: DISCOVER,
-    scope: 'underlying',
     design: {
       // Re-walked 2026-09-23 against Rev .6, which is the design answering the
       // §15.2 disposition tables. Back to `reviewing`: the walk and the build
@@ -244,7 +243,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/explorer',
     label: 'Stock Explorer',
     crumbs: DISCOVER,
-    scope: 'underlying',
     design: {
       state: 'moving',
       note: DESIGN_NOTES['/research/explorer'],
@@ -257,7 +255,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/scan',
     label: 'Vol ratings',
     crumbs: DISCOVER,
-    scope: 'contract',
     design: {
       state: 'aligned',
       rev: '2026-09-20.10',
@@ -288,7 +285,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Symbol',
     crumbs: ANALYZE,
     symbolScope: true,
-    scope: 'underlying',
     // rev is the package's own label at the walk; the design did not bump it
     // for the 2026-09-13 and 2026-09-14 rounds.
     design: {

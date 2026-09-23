@@ -153,7 +153,7 @@ export const ROUTES: readonly RouteEntry[] = [
       // destination, the shell's Thread. Landed with the Ask bus. Rev
       // 2026-09-23.3 added one more: the contract face's third door into
       // Contract Greeks. Built 2026-09-23.
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-23.3',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
@@ -256,7 +256,7 @@ export const ROUTES: readonly RouteEntry[] = [
       // Rev 2026-09-23.3 added the two doors into Contract Greeks, which the
       // design re-homed here: the Legs cell per row (carrying `?sym=`) and the
       // header's unfiltered one. Built 2026-09-23.
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-23.3',
       note: DESIGN_NOTES['/risk/portfolio'],
     },

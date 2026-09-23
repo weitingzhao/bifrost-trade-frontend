@@ -121,6 +121,15 @@ export default function RiskPortfolioPage() {
               <Link to="/portfolio/positions" className={positionsUi.link}>
                 Positions →
               </Link>
+              {/* The reverse of Contract Greeks' own `Aggregates in Risk →`.
+                  The design asked for the pair and this side put its half in
+                  the table header instead, where the Owner could not find it:
+                  a muted note, third of four things in a row that ends with an
+                  amber concentration warning. A page's counterpart belongs
+                  beside the page's other counterpart. */}
+              <Link to="/research/greeks" className={positionsUi.link}>
+                Contract Greeks →
+              </Link>
             </span>
           }
         />
@@ -203,7 +212,7 @@ export default function RiskPortfolioPage() {
                 {/* The second door: the same detail with no filter on it. */}
                 <Link
                   to="/research/greeks"
-                  className="text-dense-meta text-muted-foreground hover:text-foreground"
+                  className={positionsUi.link}
                   title="Every option leg in the book, greek by greek"
                 >
                   every leg · Contract Greeks →
@@ -322,13 +331,17 @@ export default function RiskPortfolioPage() {
                                 stock
                               </span>
                             ) : (
+                              // A bare count in the eleventh numeric column
+                              // reads as a number, not a door — the Owner
+                              // could not find it. The arrow is the
+                              // affordance, and it matches the header's.
                               <Link
                                 to={`/research/greeks?sym=${encodeURIComponent(r.symbol)}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-primary hover:underline"
+                                className={cn(positionsUi.link, 'underline decoration-dotted underline-offset-2')}
                                 title={`Every ${r.symbol} leg in the book, greek by greek`}
                               >
-                                {r.legs}
+                                {r.legs} →
                               </Link>
                             )}
                           </td>

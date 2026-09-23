@@ -69,9 +69,10 @@ describe('design adoption', () => {
     expect(home?.state).toBe('aligned')
     expect(home?.inApp).toBe(true)
     const contracts = rows.find((r) => r.path === '/research/contract-screener')
-    // Walked 2026-09-22 on its own path; what this line pins is the `aliasOf`,
-    // not the state — the rule is that the forward never counted as adoption.
-    expect(contracts?.state).toBe('reviewing')
+    // Walked 2026-09-22 on its own path, signed 2026-09-23; what this line
+    // pins is the `aliasOf`, not the state — the rule is that the forward
+    // never counted as adoption.
+    expect(contracts?.state).toBe('aligned')
     expect(contracts?.aliasOf).toBeUndefined()
     // The Analyze hubs are the case the rule has to keep: all of them resolve
     // to the prototype the Symbol page was built from.
@@ -244,13 +245,15 @@ describe('design adoption', () => {
     // 57 → 56 when Stock ratings was re-walked on 2026-09-23 and left for
     // `reviewing`: a re-walked page is not a walked page until the Owner has
     // looked at it again. 56 → 54 when Portfolio Exposure and Positions grew
-    // their doors into Contract Greeks and went the same way.
-    expect(counts.aligned + counts.byState.stale).toBe(54)
+    // their doors into Contract Greeks and went the same way. 54 → 58 on
+    // 2026-09-23, the Owner signing four together: Option screen, Stock
+    // ratings, Portfolio Exposure and Positions.
+    expect(counts.aligned + counts.byState.stale).toBe(58)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
     // nav any more. Both were signed; both are now behind their own rev.
-    expect(counts.aligned).toBe(52)
+    expect(counts.aligned).toBe(56)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/market/live',
       '/research/event-radar',
@@ -458,8 +461,9 @@ describe('design adoption', () => {
     // four `/docs/*` builds the judgement of 2026-09-23 recommended, and 8
     // with Stock ratings, re-walked the same day onto the capabilities the
     // design moved there, and 10 with Portfolio Exposure and Positions, which
-    // grew Contract Greeks' three doors between them.
-    expect(counts.byState.reviewing).toBe(10)
+    // grew Contract Greeks' three doors between them. Back to 6 when the Owner
+    // signed four of them together on 2026-09-23.
+    expect(counts.byState.reviewing).toBe(6)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -475,9 +479,11 @@ describe('design adoption', () => {
       '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
+      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/book',
+      '/research/contract-screener',
       '/research/copilot',
       '/research/copilot/trading',
       '/research/daily-brief',
@@ -493,6 +499,7 @@ describe('design adoption', () => {
       '/research/loop/runs',
       '/research/orchestration',
       '/research/overview',
+      '/research/ratings/stocks',
       '/research/scan',
       '/research/screener',
       '/research/signal-decay',
@@ -509,6 +516,7 @@ describe('design adoption', () => {
       '/risk/budget',
       '/risk/limits',
       '/risk/margin',
+      '/risk/portfolio',
       '/risk/sizing',
       '/risk/stress',
       '/trade/assignment',
@@ -523,13 +531,9 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/docs/options-kit',
-      '/portfolio/positions',
-      '/research/contract-screener',
       '/research/greeks',
       '/research/lens-coverage',
-      '/research/ratings/stocks',
       '/research/signal-health',
-      '/risk/portfolio',
       '/settings',
       '/system/status',
     ])

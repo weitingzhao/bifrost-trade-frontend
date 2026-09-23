@@ -149,7 +149,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Re-walked 2026-09-23 against Rev .6, which is the design answering the
       // §15.2 disposition tables. Back to `reviewing`: the walk and the build
       // are this side's, and only the Owner's look puts a page in place.
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-23.6',
       note: DESIGN_NOTES['/research/ratings/stocks'],
     },
@@ -395,7 +395,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Option screen',
     crumbs: DISCOVER,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.10',
       note: DESIGN_NOTES['/research/contract-screener'],
     },

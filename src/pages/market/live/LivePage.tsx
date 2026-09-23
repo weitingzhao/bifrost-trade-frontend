@@ -147,24 +147,16 @@ export default function LivePage() {
   )
 
   const unifiedGroupedRows = useMemo(() => {
-    const sumOptPnl = (rows: OptPositionRow[]) =>
-      rows.reduce((acc, row) => {
-        const basis = optionLiveBasisByRow.get(
-          `${row.account_id.toLowerCase()}\t${row.contract_key}`,
-        )
-        const { livePnl } = computeOptMidAndLivePnl(
-          row,
-          quotesByContractKey[row.contract_key],
-          basis,
-        )
-        return acc + (livePnl != null && Number.isFinite(livePnl) ? livePnl : 0)
-      }, 0)
+    const optPnl = (row: OptPositionRow) => {
+      const basis = optionLiveBasisByRow.get(`${row.account_id.toLowerCase()}\t${row.contract_key}`)
+      return computeOptMidAndLivePnl(row, quotesByContractKey[row.contract_key], basis).livePnl
+    }
 
     return buildUnifiedGroupedRows({
       mode: msSortMode,
       filteredRows: streams.filteredRows,
       optPositionRows: streams.optPositionRows,
-      sumOptPnl,
+      optPnl,
     })
   }, [
     msSortMode,

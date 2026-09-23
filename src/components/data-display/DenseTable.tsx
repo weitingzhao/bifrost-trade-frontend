@@ -24,12 +24,19 @@ export function GroupHeaderRow({
   onClick,
   variant = 'default',
   title,
+  trailing,
 }: {
   colSpan: number
   label: ReactNode
   onClick?: () => void
   variant?: 'default' | 'category'
   title?: string
+  /**
+   * Cells after the label, for a group header that carries its own totals
+   * under the columns they sum. The caller narrows `colSpan` by as many cells
+   * as it adds here, so the row still spans the table.
+   */
+  trailing?: ReactNode
 }) {
   const isCategory = variant === 'category'
 
@@ -65,6 +72,7 @@ export function GroupHeaderRow({
           content
         )}
       </td>
+      {trailing}
     </tr>
   )
 }

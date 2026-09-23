@@ -7,7 +7,15 @@ export type LiveSortGroup = {
   showGroupHeader: boolean
   stkRows: MarketStreamsRow[]
   optRows: OptPositionRow[]
-  totalPnl: number
+  /**
+   * The group's Since $, summed over the rows that have one; `null` when none
+   * does. After the close the option quotes are empty, so a short-options
+   * group of seven unpriced rows used to total `$0` — a sum of unknowns
+   * printed as a measured zero, beside seven rows that each said `—`.
+   */
+  totalPnl: number | null
+  /** Rows in the group with no Since $ to add, so a partial sum can say so. */
+  unpriced: number
 }
 
 export function cmpSymbolLocale(a: string, b: string, dir: 1 | -1): number {
@@ -58,40 +66,80 @@ export function marketStreamsSortHeaderMeta(
   return { suffix: null, arrow: null }
 }
 
-export function marketStreamsSortHeaderAccentClass(mode: MarketStreamsSortMode): string {
-  if (mode === 1) return 'default'
+export type MarketStreamsSortFamily = 'def' | 'alpha' | 'type' | 'side' | 'exp'
+
+/**
+ * Which family a mode belongs to; the accent follows the family, so the two
+ * arrows of one mode read as the same sort.
+ *
+ * `side` was called `gamma` and took `--color-success` — the severity green
+ * on a column header, which §14.7 rule 2 reserves for dots and tags (design
+ * Rev 2026-09-23.2). The family is Type × side, so it is named for that.
+ */
+export function marketStreamsSortFamily(mode: MarketStreamsSortMode): MarketStreamsSortFamily {
+  if (mode === 1) return 'def'
   if (mode === 2 || mode === 3) return 'alpha'
   if (mode === 4 || mode === 5) return 'type'
-  if (mode === 6 || mode === 7) return 'gamma'
-  return 'expiry'
+  if (mode === 6 || mode === 7) return 'side'
+  return 'exp'
 }
 
-export function sumFiniteMsPnl(rows: MarketStreamsRow[]): number {
-  return rows.reduce((acc, r) => {
-    const v = r.pnlCost
-    return acc + (v != null && Number.isFinite(v) ? v : 0)
-  }, 0)
+/**
+ * The sort line under the section header (design Rev 2026-09-23.2).
+ *
+ * Nine modes live behind one column header that cycles on click, so which one
+ * is standing — and what order it actually produces — was only knowable by
+ * remembering. The copy is the design's, verbatim.
+ */
+export const MARKET_STREAMS_SORT_LINE: Record<
+  MarketStreamsSortMode,
+  { name: string; order: string; hint: string }
+> = {
+  1: { name: 'Default', order: 'by category, in your order', hint: 'drag ⋮⋮ to reorder rows and categories' },
+  2: { name: 'A–Z ▲', order: 'stocks, then options', hint: 'row order is yours only in Default' },
+  3: { name: 'Z–A ▼', order: 'stocks, then options', hint: 'row order is yours only in Default' },
+  4: { name: 'Type ▲', order: 'stocks → options', hint: 'row order is yours only in Default' },
+  5: { name: 'Type ▼', order: 'options → stocks', hint: 'row order is yours only in Default' },
+  6: {
+    name: 'Type × side ▲',
+    order: 'long stocks → short options → short stocks → long options → no position',
+    hint: 'row order is yours only in Default',
+  },
+  7: {
+    name: 'Type × side ▼',
+    order: 'short options → long stocks → long options → short stocks → no position',
+    hint: 'row order is yours only in Default',
+  },
+  8: { name: 'Expiry ▲', order: 'stocks, then options by expiry, nearest first', hint: 'row order is yours only in Default' },
+  9: { name: 'Expiry ▼', order: 'stocks, then options by expiry, furthest first', hint: 'row order is yours only in Default' },
 }
 
 export function buildUnifiedGroupedRows(args: {
   mode: MarketStreamsSortMode
   filteredRows: MarketStreamsRow[]
   optPositionRows: OptPositionRow[]
-  sumOptPnl: (rows: OptPositionRow[]) => number
+  /** One option row's Since $, or null when it cannot be priced. */
+  optPnl: (row: OptPositionRow) => number | null
 }): LiveSortGroup[] | null {
-  const { mode, filteredRows, optPositionRows, sumOptPnl } = args
+  const { mode, filteredRows, optPositionRows, optPnl } = args
   if (mode === 1) return null
 
   const stkRows = [...filteredRows]
   const optRows = [...optPositionRows]
 
-  const grp = (label: string, show: boolean, stk: MarketStreamsRow[], opt: OptPositionRow[]): LiveSortGroup => ({
-    label,
-    showGroupHeader: show,
-    stkRows: stk,
-    optRows: opt,
-    totalPnl: sumFiniteMsPnl(stk) + sumOptPnl(opt),
-  })
+  const finite = (v: number | null | undefined) => (v != null && Number.isFinite(v) ? v : null)
+  const grp = (label: string, show: boolean, stk: MarketStreamsRow[], opt: OptPositionRow[]): LiveSortGroup => {
+    const vals = [...stk.map((r) => finite(r.pnlCost)), ...opt.map((r) => finite(optPnl(r)))]
+    const known = vals.filter((v): v is number => v != null)
+    return {
+      label,
+      showGroupHeader: show,
+      stkRows: stk,
+      optRows: opt,
+      totalPnl: known.length > 0 ? known.reduce((a, b) => a + b, 0) : null,
+      unpriced: vals.length - known.length,
+    }
+  }
 
   const sortStk = (rows: MarketStreamsRow[], dir: 1 | -1) =>
     [...rows].sort((a, b) => cmpSymbolLocale(a.symbol, b.symbol, dir))
@@ -132,6 +180,7 @@ export function buildUnifiedGroupedRows(args: {
   if (mode === 7) {
     const longStk = stkRows.filter(r => (r.qty ?? 0) > 0)
     const shortStk = stkRows.filter(r => (r.qty ?? 0) < 0)
+    const flatStk = stkRows.filter(r => !(r.qty ?? 0))
     const shortOpt = optRows.filter(r => r.qty < 0)
     const longOpt = optRows.filter(r => r.qty > 0)
     const out: LiveSortGroup[] = []
@@ -139,6 +188,11 @@ export function buildUnifiedGroupedRows(args: {
     if (longStk.length) out.push(grp('Total Long Stocks', true, sortStk(longStk, -1), []))
     if (longOpt.length) out.push(grp('Total Long Options', true, [], sortOpt(longOpt, -1)))
     if (shortStk.length) out.push(grp('Total Short Stocks', true, sortStk(shortStk, -1), []))
+    // The descending half of the pair dropped every watched stock the book
+    // holds none of, while the ascending half kept them — the same rows
+    // appeared and vanished with the arrow. Judged a defect, not a ruling
+    // (design Rev 2026-09-23.2).
+    if (flatStk.length) out.push(grp('No position', true, sortStk(flatStk, -1), []))
     return out.length ? out : [grp('', false, stkRows, optRows)]
   }
 

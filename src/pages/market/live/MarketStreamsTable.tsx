@@ -16,7 +16,9 @@ import { fmtUsd } from '@/utils/positions'
 import type { MarketStreamsRow, OptPositionRow } from '@/utils/marketStreamsRows'
 import type { LiveSortGroup, MarketStreamsSortMode } from '@/utils/marketStreamsSort'
 import {
-  marketStreamsSortHeaderAccentClass,
+  marketStreamsSortFamily,
+  MARKET_STREAMS_SORT_LINE,
+  type MarketStreamsSortFamily,
   marketStreamsSortHeaderMeta,
 } from '@/utils/marketStreamsSort'
 import type { OptionLiveBasis } from '@/utils/optionLiveBasis'
@@ -65,6 +67,34 @@ interface Props {
   onOptRowReorder: (fromBasisKey: string, toBasisKey: string) => void
 }
 
+/**
+ * The accent per sort family (design Rev 2026-09-23.2): A–Z blue, T+ amber,
+ * T+S+ violet, E+ fuchsia, Default ink. None of them is a severity colour —
+ * the header used `--color-success` for T+S+, and a column header is neither
+ * a dot nor a tag. The sort line under the section header takes the same
+ * accent, so the header and the sentence that explains it read as one thing.
+ */
+const SORT_ACCENT: Record<MarketStreamsSortFamily, string> = {
+  def: 'text-foreground',
+  alpha: 'text-blue-300',
+  type: 'text-amber-400',
+  side: 'text-violet-300',
+  exp: 'text-fuchsia-300',
+}
+
+/** Which sort is standing and what order it produces, in the design's words. */
+function SortLine({ mode }: { mode: MarketStreamsSortMode }) {
+  const line = MARKET_STREAMS_SORT_LINE[mode]
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 border-b border-border px-3 py-1.25 text-dense-caption text-muted-foreground">
+      <span>Sort</span>
+      <span className={cn('font-semibold', SORT_ACCENT[marketStreamsSortFamily(mode)])}>{line.name}</span>
+      <span>· {line.order}</span>
+      <span className="ml-auto">{line.hint}</span>
+    </div>
+  )
+}
+
 function SortHeaderButton({
   mode,
   onCycleSort,
@@ -73,24 +103,14 @@ function SortHeaderButton({
   onCycleSort: () => void
 }) {
   const meta = marketStreamsSortHeaderMeta(mode)
-  const accent = marketStreamsSortHeaderAccentClass(mode)
-  const accentClass =
-    accent === 'alpha'
-      ? styles.sortHeaderAlpha
-      : accent === 'type'
-        ? styles.sortHeaderType
-        : accent === 'gamma'
-          ? styles.sortHeaderGamma
-          : accent === 'expiry'
-            ? styles.sortHeaderExpiry
-            : ''
+  const accentClass = SORT_ACCENT[marketStreamsSortFamily(mode)]
 
   return (
     <button
       type="button"
       className={cn(styles.sortHeader, accentClass)}
       onClick={onCycleSort}
-      title="Cycle sort: default → A–Z → Z–A → T+ modes → E+ by expiry"
+      title="Click to cycle: Default → A–Z → Z–A → T+ ▲▼ (type) → T+S+ ▲▼ (type × side) → E+ ▲▼ (expiry) → Default"
     >
       Symbol
       {meta.suffix && <span className={styles.sortSuffix}>{meta.suffix}</span>}
@@ -197,6 +217,7 @@ export function MarketStreamsTable({
 
   return (
     <div className={liveTable.shell}>
+      <SortLine mode={msSortMode} />
       <table className={liveTable.table}>
         <DenseTableHeader className={liveTable.stickyThead}>
           <DenseTableHeadRow>
@@ -233,7 +254,41 @@ export function MarketStreamsTable({
             unifiedGroupedRows.map(g => (
               <Fragment key={g.label || 'flat'}>
                 {g.showGroupHeader && g.label ? (
-                  <GroupHeaderRow colSpan={msColSpan} label={g.label} variant="category" />
+                  // A group called "Total Long Stocks" owes its total. It was
+                  // already computed (totalPnl) and never drawn; it sits under
+                  // Since $ because that is the column it sums (design Rev
+                  // 2026-09-23.2).
+                  <GroupHeaderRow
+                    colSpan={msColSpan - 2}
+                    label={g.label}
+                    variant="category"
+                    trailing={
+                      <>
+                        <DenseTableCell
+                          className={cn(denseTableNumCell, 'border-y border-border bg-secondary/60 font-semibold')}
+                          title={
+                            g.totalPnl == null
+                              ? `None of the ${g.unpriced} rows has a Since $ to add — not a zero`
+                              : g.unpriced > 0
+                                ? `Sum of the priced rows; ${g.unpriced} row${g.unpriced === 1 ? '' : 's'} not priced and not counted`
+                                : undefined
+                          }
+                        >
+                          {g.totalPnl == null ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            <>
+                              <InlinePnl value={g.totalPnl}>{fmtUsd(g.totalPnl, true)}</InlinePnl>
+                              {g.unpriced > 0 ? (
+                                <span className="ml-1 font-normal text-muted-foreground">+{g.unpriced}?</span>
+                              ) : null}
+                            </>
+                          )}
+                        </DenseTableCell>
+                        <DenseTableCell className="border-y border-border bg-secondary/60" />
+                      </>
+                    }
+                  />
                 ) : null}
                 {g.stkRows.map(row => (
                   <MarketStreamStkRow

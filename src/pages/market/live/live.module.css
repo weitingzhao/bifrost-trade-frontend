@@ -48,28 +48,18 @@
   padding: 0;
   font: inherit;
   font-weight: 600;
-  color: inherit;
+  /* No colour here: every sort family sets its own accent as a utility class,
+     and an unlayered rule in this module outranks a layered utility, so
+     `color: inherit` here painted every mode the header's grey. */
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.sortHeaderAlpha {
-  color: var(--color-link);
-}
 
-.sortHeaderType {
-  color: var(--color-warning);
-}
 
-.sortHeaderGamma {
-  color: var(--color-success);
-}
 
-.sortHeaderExpiry {
-  color: var(--chart-2);
-}
 
 .sortSuffix {
   font-size: 0.75em;

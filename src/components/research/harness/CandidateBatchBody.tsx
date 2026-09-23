@@ -360,10 +360,30 @@ export function CandidateBatchBody({
                     </DenseTableCell>
                     <DenseTableCell>
                       <div className="flex flex-wrap items-center gap-0.5">
+                        {/* `net_stance` carries the agreement state instead of a
+                            stance whenever the judges disagree — measured on DEV
+                            2026-09-22: 11 of 13 candidates read `dissent` in both
+                            fields, and only the 2 that agreed carry a real stance
+                            (`caution`). Printing both put the same word twice and
+                            implied the net was known. One tag, and it says the net
+                            is the thing that went missing. */}
+                        {net === agreement ? (
+                          <DenseTag
+                            variant={agreementVariant(agreement)}
+                            size="cell"
+                            title={
+                              'The judges disagreed, and no net stance was recorded — the batch writes the disagreement into the stance field. ' +
+                              (split ?? '')
+                            }
+                          >
+                            {agreement} · net not recorded
+                          </DenseTag>
+                        ) : (
                         <DenseTag variant={stanceVariant(net)} size="cell">
                           {net}
                         </DenseTag>
-                        {agreement && agreement !== 'single' ? (
+                        )}
+                        {net !== agreement && agreement && agreement !== 'single' ? (
                           <DenseTag
                             variant={agreementVariant(agreement)}
                             size="cell"
@@ -457,15 +477,17 @@ export function CandidateBatchBody({
                               <span className="text-muted-foreground">—</span>
                             )}
                           </span>
-                    <DenseTableCell>
-                      <DenseTag variant={settled ? 'success' : 'neutral'} size="cell">
+                          <span>
+                            <span className="mr-1 text-dense-micro uppercase tracking-wide text-muted-foreground">Track record</span>
+                            <DenseTag variant={settled ? 'success' : 'neutral'} size="cell">
                         {settled
                           ? `T+${settled.horizon_days} ${Math.round((settled.hit_rate ?? 0) * 100)}% beat`
                           : 'no settled record yet'}
                       </DenseTag>
-                    </DenseTableCell>
-                    <DenseTableCell>
-                      {verdicts.length > 0 ? (
+                    </span>
+                          <span>
+                            <span className="mr-1 text-dense-micro uppercase tracking-wide text-muted-foreground">Personas</span>
+                            {verdicts.length > 0 ? (
                         <div className="space-y-0.5">
                           <p className="text-dense-micro text-muted-foreground">
                             +{counts.support} / !{counts.caution} / −{counts.oppose} / ~
@@ -513,7 +535,7 @@ export function CandidateBatchBody({
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
-                    </DenseTableCell>
+                    </span>
                         </div>
                       </details>
                     </DenseTableCell>

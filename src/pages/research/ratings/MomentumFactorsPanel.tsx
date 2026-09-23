@@ -29,15 +29,29 @@ import { cn } from '@/lib/utils'
 
 export function MomentumFactorsPanel({
   symbol,
+  session,
   isSelection,
 }: {
   /** The selected row, or the top of the ranking when nothing is selected. */
   symbol: string | null
+  /**
+   * A specific session to read, when the caller has one in mind.
+   *
+   * Leaders selects a *cell*, which is a name on a day — the latest row would
+   * answer a question the reader did not ask. Today has no session axis, so
+   * it passes null and takes the name's newest.
+   */
+  session?: string | null
   isSelection: boolean
 }) {
   const q = useQuery({
-    queryKey: ['momentum-radar-symbol', symbol],
-    queryFn: () => fetchMomentumRadar({ symbol: symbol ?? undefined, limit: 1 }),
+    queryKey: ['momentum-radar-symbol', symbol, session ?? 'latest'],
+    queryFn: () =>
+      fetchMomentumRadar({
+        symbol: symbol ?? undefined,
+        trade_date: session || undefined,
+        limit: 1,
+      }),
     enabled: !!symbol,
     staleTime: 5 * 60_000,
   })

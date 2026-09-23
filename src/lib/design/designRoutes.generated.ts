@@ -316,7 +316,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-23.8"
+export const DESIGN_REV = "2026-09-23.9"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},
@@ -330,7 +330,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/portfolio","label":"Portfolio","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Overview.dc.html","round":null,"rev":"2026-09-20.15","inNav":true,"group":"Portfolio"},
   {"path":"/research/workbench","label":"Pipeline","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-22.2","inNav":false,"group":null},
   {"path":"/research/ratings","label":"Vol ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Scan.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null},
-  {"path":"/research/ratings/stocks","label":"Stock ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Ratings Stocks.dc.html","round":"OLD","rev":"2026-09-23.6","inNav":true,"group":"Research"},
+  {"path":"/research/ratings/stocks","label":"Stock ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Ratings Stocks.dc.html","round":"OLD","rev":"2026-09-23.9","inNav":true,"group":"Research"},
   {"path":"/research/scan","label":"Vol ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Scan.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":true,"group":"Research"},
   {"path":"/research/screener","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":true,"group":"Research"},
   {"path":"/research/explorer","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null},

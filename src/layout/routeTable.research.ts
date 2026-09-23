@@ -149,8 +149,10 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Re-walked 2026-09-23 against Rev .6, which is the design answering the
       // §15.2 disposition tables. Back to `reviewing`: the walk and the build
       // are this side's, and only the Owner's look puts a page in place.
-      state: 'aligned',
-      rev: '2026-09-23.6',
+      // Rev .9 adds the Leaders view — the design answering this side's own
+      // ask about Momentum Radar's ranking. Re-walked 2026-09-23.
+      state: 'reviewing',
+      rev: '2026-09-23.9',
       note: DESIGN_NOTES['/research/ratings/stocks'],
     },
   },

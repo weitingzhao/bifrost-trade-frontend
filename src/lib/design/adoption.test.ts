@@ -248,13 +248,14 @@ describe('design adoption', () => {
     // their doors into Contract Greeks and went the same way. 54 → 58 on
     // 2026-09-23, the Owner signing four together: Option screen, Stock
     // ratings, Portfolio Exposure and Positions, and Contract Greeks once its
-    // door was findable — 59.
-    expect(counts.aligned + counts.byState.stale).toBe(59)
+    // door was findable — 59. Back to 58 when Stock ratings was re-walked
+    // again for the Leaders view and left for `reviewing`.
+    expect(counts.aligned + counts.byState.stale).toBe(58)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
     // nav any more. Both were signed; both are now behind their own rev.
-    expect(counts.aligned).toBe(57)
+    expect(counts.aligned).toBe(56)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/market/live',
       '/research/event-radar',
@@ -464,7 +465,8 @@ describe('design adoption', () => {
     // design moved there, and 10 with Portfolio Exposure and Positions, which
     // grew Contract Greeks' three doors between them. Back to 6 when the Owner
     // signed four of them together on 2026-09-23, and 5 with Contract Greeks.
-    expect(counts.byState.reviewing).toBe(5)
+    // 6 again with Stock ratings, re-walked onto the Leaders view.
+    expect(counts.byState.reviewing).toBe(6)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -501,7 +503,6 @@ describe('design adoption', () => {
       '/research/loop/runs',
       '/research/orchestration',
       '/research/overview',
-      '/research/ratings/stocks',
       '/research/scan',
       '/research/screener',
       '/research/signal-decay',
@@ -534,6 +535,7 @@ describe('design adoption', () => {
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/docs/options-kit',
       '/research/lens-coverage',
+      '/research/ratings/stocks',
       '/research/signal-health',
       '/settings',
       '/system/status',
@@ -712,8 +714,10 @@ describe('design adoption', () => {
     // use beside it, and Live and Alerts are the second kind.
     // Package 2026-09-23.4 @ Rev .8 moves one row's stamp: `/research/events`
     // gains the Market face the Explorer walk's events board is waiting on.
-    // That page is `unbuilt` here, so no state moves with it.
-    expect(DESIGN_REV).toBe('2026-09-23.8')
+    // That page is `unbuilt` here, so no state moves with it. Rev .9 answers
+    // this side's ask about Momentum Radar's ranking with a Leaders view on
+    // Stock ratings, which moves that page's stamp and nothing else.
+    expect(DESIGN_REV).toBe('2026-09-23.9')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

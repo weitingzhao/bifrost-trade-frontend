@@ -13,33 +13,23 @@
  * drawn empty.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { TodayFace } from './TodayFace'
 import { useQuery } from '@tanstack/react-query'
-import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 import { MomentumFactorsPanel } from './MomentumFactorsPanel'
+import { LeadersFace } from './LeadersFace'
+import type { LeaderSortKey } from './leadersModel'
 import {
   PageFaceSwitch,
   PageHeader,
   PageShell,
-  SectionPanel,
   SECTION_CAP_CLASS,
 } from '@/components/layout'
 import {
-  DenseDataTable,
-  DenseTableBody,
-  DenseTableCell,
-  DenseTableHead,
-  DenseTableHeadRow,
-  DenseTableHeader,
-  DenseTableRow,
-  DenseTag,
   SegmentControl,
   type SegmentOption,
-  denseTableNumCell,
 } from '@/components/data-display'
-import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import {
-  LensBarCell,
   LensSpreadPanel,
   WeightsPanel,
   presetOf,
@@ -50,28 +40,20 @@ import {
   usePortfolioSymbols,
   type PortfolioUniverse,
 } from '@/hooks/usePortfolioSymbols'
-import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { WhyInspector } from './WhyInspector'
-import { cn } from '@/lib/utils'
 import { fetchSepaDaily } from '@/api/researchEngine'
-import { rowSelectProps } from '@/hooks/useRowLink'
-import { withSymbolParam } from '@/lib/symbolLink'
 import { publishSymbolTrail } from '@/lib/symbolTrail'
-import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import {
   COLD_AT,
-  GROWTH_CHECKS,
   HOT_AT,
   RATING_LENSES,
   SERVER_WEIGHTS,
-  TREND_CHECKS,
   WEIGHT_PRESETS,
   composite,
   flagOf,
   lensSpread,
-  pathVariant,
   ratingsTape,
   toRatingRow,
   ratingsStanding,
@@ -120,6 +102,11 @@ const PATH_OPTIONS: SegmentOption[] = [
   { value: 'AVOID', label: 'Avoid' },
 ]
 
+const VIEW_OPTIONS: SegmentOption[] = [
+  { value: 'today', label: 'Today', title: "The stock model's ranking for today's session" },
+  { value: 'leaders', label: 'Leaders', title: "The momentum model's ranking across the window" },
+]
+
 const GRADE_OPTIONS: SegmentOption[] = [
   { value: 'all', label: 'All' },
   { value: 'A+', label: 'A+' },
@@ -130,54 +117,36 @@ const GRADE_OPTIONS: SegmentOption[] = [
 ]
 
 /** How many rows the list draws before it stops and says so. */
-const ROW_CAP = 200
-
-type SortKey = 'composite' | RatingLensKey
-
-function lensInk(v: number | null): string {
-  if (v == null) return 'text-muted-foreground'
-  if (v >= 70) return 'text-[var(--color-profit)]'
-  return v < 40 ? 'text-destructive' : ''
-}
-
-/**
- * A lens score, as this page reads it.
- *
- * The drawing is shared (`LensBarCell`); what belongs to this page is what the
- * cell *says*: `out` turns the percentage back into what it counted — trend is
- * eleven checks, growth is eight, and `9/11` says something `81.8` does not —
- * and the title states that the fill is the score on its own scale, because
- * this row carries no year of the lens's own history to band it against.
- */
-function LensCell({ v, pass, out }: { v: number | null; pass?: number | null; out?: number }) {
-  return (
-    <LensBarCell
-      label={pass != null && out != null ? `${pass}/${out}` : v == null ? '—' : v.toFixed(0)}
-      pos={v}
-      ink={lensInk(v)}
-      title={
-        v == null
-          ? 'No score for this lens on this name.'
-          : `${v.toFixed(1)} of 100 on this lens. The bar is the score on its own scale — this row carries no history for the lens, so there is no 1-year band behind it.`
-      }
-    />
-  )
-}
-
-/** All / Hot / Cold, the design's own third filter. */
 const SHOW_OPTIONS = [
-  { value: 'all', label: 'All', title: 'Every scored name in this universe' },
+  { value: 'all', label: 'All' },
   { value: 'hot', label: 'Hot', title: `Composite ${HOT_AT} and over` },
   { value: 'cold', label: 'Cold', title: `Composite ${COLD_AT} and under` },
 ]
 
+type SortKey = 'composite' | RatingLensKey
 export default function StockRatingsPage() {
   const [weights, setWeights] = useState<RatingWeights>(SERVER_WEIGHTS)
   const [sort, setSort] = useState<SortKey>('composite')
   // Universe and Show live in the URL: this page is a working set, and a
   // working set you cannot send to someone is half a page.
   const [params, setParams] = useSearchParams()
-  const universe = (params.get('universe') ?? 'both') as PortfolioUniverse
+  // Leaders defaults to the whole market, Today to your book and watchlist:
+  // one is a reading of what the momentum model saw anywhere, the other of
+  // what you are actually carrying. A deep link into Leaders has to open the
+  // same way the toggle does, or `?view=leaders` shows a filtered ranking
+  // while the toggle shows the market (found by opening the link).
+  const universe = (params.get('universe') ??
+    (params.get('view') === 'leaders' ? 'all' : 'both')) as PortfolioUniverse
+  // The design's View (Package 2026-09-23.5): Today is the stock model's
+  // ranking for one session; Leaders is the momentum model's ranking across
+  // the window. Two models, two questions, one page — which is why it is a
+  // View and not a second route.
+  const view = params.get('view') === 'leaders' ? 'leaders' : 'today'
+  const isLeaders = view === 'leaders'
+  const leaderSort = (params.get('lsort') ?? 'peak') as LeaderSortKey
+  const leaderSel = params.get('lsym')
+    ? { symbol: params.get('lsym')!, date: params.get('lsess') ?? '' }
+    : null
   const show = params.get('show') ?? 'all'
   // SEPA Daily Core's three filters, which the design moved here with the
   // rest of that page (§15.2). URL state like the two above, so a filtered
@@ -360,6 +329,33 @@ export default function StockRatingsPage() {
           in one list, which is a database dump with a headline on it. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-background px-3 py-2">
         <span className="flex items-center gap-2">
+          <span className={SECTION_CAP_CLASS}>View</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="View"
+            value={view}
+            onChange={(v) => {
+              // Leaders is a reading of the whole market, so it opens at All
+              // — the book filter belongs to today's ranking. Narrowing it
+              // again afterwards is the reader's to do.
+              const next = new URLSearchParams(params)
+              if (v === 'leaders') {
+                next.set('view', 'leaders')
+                next.set('universe', 'all')
+              } else {
+                next.delete('view')
+                next.delete('universe')
+              }
+              next.delete('sym')
+              next.delete('lsym')
+              next.delete('lsess')
+              setParams(next, { replace: true })
+            }}
+            options={VIEW_OPTIONS}
+          />
+        </span>
+        <span className="h-4 w-px bg-border" aria-hidden />
+        <span className="flex items-center gap-2">
           <span className={SECTION_CAP_CLASS}>Universe</span>
           <SegmentControl
             size="xs"
@@ -402,8 +398,12 @@ export default function StockRatingsPage() {
         </span>
       </div>
 
-      {/* The design's second filter bar — SEPA Daily Core's three, moved here
+{isLeaders ? null : (
+      <>
+            {/* The design's second filter bar — SEPA Daily Core's three, moved here
           with the rest of that page (design Package 2026-09-23.2, §15.2).
+          Hidden on Leaders: these filter today's stock-model reading, and a
+          momentum leader need not have a SEPA row at all.
 
           They filter in the browser, not on the server, even though the
           endpoint takes all three: the composite is computed here from your
@@ -460,9 +460,12 @@ export default function StockRatingsPage() {
           avg · of {standing.scored} ranked
         </span>
       </div>
+      </>
+      )}
 
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-[1_1_20rem] space-y-3">
+          {isLeaders ? null : (
           <WeightsPanel
             lenses={RATING_LENSES}
             presets={WEIGHT_PRESETS}
@@ -471,15 +474,25 @@ export default function StockRatingsPage() {
             serverPresetId="model"
             customNote="Your own weights. A lens a company has no score for is left out of both halves rather than counted as zero, so a thinly-scored name is not pushed down for being thin."
           />
+          )}
 
           {/* Momentum Radar's nine sub-factors, which the design moved here
               (§15.2). The selected row, or the top of the ranking when nothing
               is selected — the design's own default. */}
           <MomentumFactorsPanel
-            symbol={selected ?? scored[0]?.row.symbol ?? null}
-            isSelection={!!selectedRow}
+            symbol={
+              isLeaders
+                ? (leaderSel?.symbol ?? null)
+                : (selected ?? scored[0]?.row.symbol ?? null)
+            }
+            // On Leaders a cell is a session, so the panel reads that one
+            // rather than the name's latest — clicking a cell is the whole
+            // point of the bar.
+            session={isLeaders ? (leaderSel?.date || null) : null}
+            isSelection={isLeaders ? !!leaderSel : !!selectedRow}
           />
 
+          {isLeaders ? null : (
           <LensSpreadPanel
             label={tape.label}
             sentence={tape.sentence}
@@ -493,248 +506,48 @@ export default function StockRatingsPage() {
               </>
             }
           />
+          )}
         </div>
 
         <div className="min-w-0 flex-[999_1_40rem]">
-          <SectionPanel
-            cap="Ranked"
-            title={
-              scored.length > ROW_CAP
-                ? `${ROW_CAP} of ${scored.length} underlyings`
-                : `${scored.length} underlying${scored.length === 1 ? '' : 's'}`
-            }
-            note={
-              sort === 'composite'
-                ? 'by your composite · click a lens header to rank by it instead'
-                : `by ${RATING_LENSES.find((l) => l.key === sort)?.label} · click Comp to go back`
-            }
-          >
-            {q.isLoading ? (
-              <Skeleton className="m-3 h-64 rounded-md" />
-            ) : scored.length === 0 ? (
-              /* The design draws an empty state here, and it has to name which
-                 filter emptied the list — otherwise a page with nothing on it
-                 is indistinguishable from a page whose data did not load. */
-              <p className="px-3 py-6 text-center text-dense-meta text-muted-foreground">
-                {counts.total === 0
-                  ? universe === 'all'
-                    ? 'Nothing is scored today.'
-                    : `No name in this universe carries a score today. ${rows.length} are scored across all names.`
-                  : `${counts.total} scored in this universe, and the Show filter removed all of them — ${counts.hot} are hot, ${counts.cold} cold, and the rest sit in between.`}
-              </p>
-            ) : (
-              <DenseDataTable
-                wrapClassName="rounded-none border-0 overflow-x-auto"
-                tableClassName="min-w-[68rem]"
-              >
-                <DenseTableHeader>
-                  <DenseTableHeadRow>
-                    <DenseTableHead className="w-20 max-w-none">Symbol</DenseTableHead>
-                    <DenseTableHead className="w-16 max-w-none">Book</DenseTableHead>
-                    <DenseTableHead
-                      className="w-16 max-w-none cursor-pointer text-right"
-                      onClick={() => setSort('composite')}
-                      title="Rank by your composite"
-                    >
-                      Comp {sort === 'composite' ? '↓' : ''}
-                    </DenseTableHead>
-                    {RATING_LENSES.map((lens) => (
-                      <DenseTableHead
-                        key={lens.key}
-                        className="w-28 max-w-none cursor-pointer"
-                        onClick={() => setSort(lens.key)}
-                        title={`Rank by ${lens.label}`}
-                      >
-                        {lens.label} {sort === lens.key ? '↓' : ''}
-                      </DenseTableHead>
-                    ))}
-                    <DenseTableHead className="w-28 max-w-none">Grade · path</DenseTableHead>
-                    <DenseTableHead className="w-16 max-w-none text-right">52w</DenseTableHead>
-                    <DenseTableHead
-                      className="w-14 max-w-none text-right"
-                      title="Days to the next print. No future earnings date reaches this side: /research/events/calendar, /research/events and /research/event-radar/events all answer with count 0, and the vendor gap behind them is a subscription one. The column stays so the absence is visible where the design put the number."
-                    >
-                      Earn
-                    </DenseTableHead>
-                    <DenseTableHead
-                      className="w-20 max-w-none text-right"
-                      title="Where today's implied vol sits in its own year. Measured on DEV 2026-09-23: /research/sepa/model/daily carries it, and 146 of the 500 ranked names have one — the rest print — because the option side has not reached them, not because the reading is zero."
-                    >
-                      IV %ile
-                    </DenseTableHead>
-                    <DenseTableHead
-                      className="w-20 max-w-none text-right"
-                      title="Put/call ratio on open interest, from the same row. Populated for the same 146 of 500."
-                    >
-                      PCR OI
-                    </DenseTableHead>
-                    <DenseTableHead
-                      className="w-32 max-w-none"
-                      title="Which playbook rule fits this name. /research/playbook/rules answers, and holds nothing today — but the shape is the harder half: a rule carries a title, a category and prose, with no symbol and no predicate, so nothing can decide which rule a row matches. The column stays and says so."
-                    >
-                      Rule
-                    </DenseTableHead>
-                    <DenseTableHead className="w-24 max-w-none">Capture</DenseTableHead>
-                  </DenseTableHeadRow>
-                </DenseTableHeader>
-                <DenseTableBody>
-                  {scored.slice(0, ROW_CAP).map(({ row, score, missing }) => (
-                    <DenseTableRow
-                      key={row.symbol}
-                      {...rowSelectProps(
-                        selected === row.symbol,
-                        () => setSelected(selected === row.symbol ? null : row.symbol),
-                        cn(selected === row.symbol && 'bg-primary/[0.06]'),
-                      )}
-                    >
-                      <DenseTableCell className="max-w-none whitespace-nowrap">
-                        <Link
-                          to={withSymbolParam(SYMBOL_PATH, row.symbol)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="font-semibold text-entity-symbol hover:underline"
-                          title={`Open ${row.symbol} on Symbol`}
-                        >
-                          {row.symbol}
-                        </Link>
-                      </DenseTableCell>
-                      <DenseTableCell className="max-w-none">
-                        <PortfolioTag symbol={row.symbol} variant="inline" />
-                      </DenseTableCell>
-                      <DenseTableCell
-                        className={cn(denseTableNumCell, 'max-w-none font-semibold')}
-                        title={
-                          missing > 0
-                            ? `${missing} of the lenses you weighted has no score for this name — left out of the average rather than counted as zero.`
-                            : row.serverScore != null
-                              ? `The server scored this ${row.serverScore.toFixed(1)} at its own weights.`
-                              : undefined
-                        }
-                      >
-                        {score == null ? '—' : score.toFixed(1)}
-                        {missing > 0 ? <span className="text-muted-foreground">*</span> : null}
-                      </DenseTableCell>
-                      {RATING_LENSES.map((lens) => (
-                        <DenseTableCell key={lens.key} className="max-w-none">
-                          <LensCell
-                            v={row.scores[lens.key]}
-                            pass={
-                              lens.key === 'trend'
-                                ? row.passes.trend
-                                : lens.key === 'growth'
-                                  ? row.passes.growth
-                                  : null
-                            }
-                            out={
-                              lens.key === 'trend'
-                                ? TREND_CHECKS
-                                : lens.key === 'growth'
-                                  ? GROWTH_CHECKS
-                                  : undefined
-                            }
-                          />
-                        </DenseTableCell>
-                      ))}
-                      <DenseTableCell className="max-w-none whitespace-nowrap">
-                        {/* Coloured by path, which is what the model says to do
-                            about the name — not by grade, which made every A
-                            green and said nothing about whether it is actionable. */}
-                        <DenseTag variant={pathVariant(row.path)} size="cell">
-                          {[row.grade, row.path].filter(Boolean).join(' · ') || '—'}
-                        </DenseTag>
-                      </DenseTableCell>
-                      <DenseTableCell className={cn(denseTableNumCell, 'max-w-none')}>
-                        {row.rangePos == null ? '—' : `${Math.round(row.rangePos * 100)}%`}
-                      </DenseTableCell>
-                      <DenseTableCell
-                        className={cn(denseTableNumCell, 'max-w-none text-muted-foreground')}
-                        title="No earnings date on this side — see the column header."
-                      >
-                        —
-                      </DenseTableCell>
-                      <DenseTableCell
-                        className={cn(
-                          denseTableNumCell,
-                          'max-w-none',
-                          row.ivPercentile == null && 'text-muted-foreground',
-                        )}
-                      >
-                        {row.ivPercentile == null ? '—' : row.ivPercentile.toFixed(0)}
-                      </DenseTableCell>
-                      <DenseTableCell
-                        className={cn(
-                          denseTableNumCell,
-                          'max-w-none',
-                          row.pcrOi == null && 'text-muted-foreground',
-                        )}
-                      >
-                        {row.pcrOi == null ? '—' : row.pcrOi.toFixed(2)}
-                      </DenseTableCell>
-                      <DenseTableCell
-                        className="max-w-none whitespace-nowrap text-dense-meta text-muted-foreground"
-                        title="No rule can be matched to a name — see the column header."
-                      >
-                        no rule binding
-                      </DenseTableCell>
-                      <DenseTableCell className="max-w-none">
-                        <span className="flex items-center gap-1">
-                          <Link
-                            to={`/trade/plans?symbol=${encodeURIComponent(row.symbol)}&new=1`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="rounded px-1.5 py-0.5 text-dense-meta text-primary hover:bg-secondary"
-                            title={`Plan a trade on ${row.symbol} — opens the Plans desk with the form on this name`}
-                          >
-                            Plan
-                          </Link>
-                          {/* Pool was owed on a product question — what this
-                              page stamps as the source — and the design
-                              answered it: source `scan`, carrying the preset
-                              the composite was read at. Pin and Hypothesis
-                              stay owed with the six-verb row. */}
-                          <AddToPoolButton
-                            symbol={row.symbol}
-                            source="scan"
-                            score={score ?? undefined}
-                            tags={['ratings', ...(row.grade ? [row.grade] : [])]}
-                            lens_snapshot={{
-                              grade: row.grade,
-                              path: row.path,
-                              stage: row.stage,
-                              composite: score,
-                              preset: presetOf(WEIGHT_PRESETS, RATING_LENSES, weights),
-                            }}
-                            size="icon"
-                          />
-                          <span
-                            className="rounded px-1.5 py-0.5 text-dense-meta text-muted-foreground/70"
-                            title="The design also puts Pin and Hypothesis here. Each writes somewhere — the sidebar shelf, the Book — and what this page should stamp as the source is still a product call for those two. Owed, with the six-verb row they belong to."
-                          >
-                            ⊹ ≋
-                          </span>
-                        </span>
-                      </DenseTableCell>
-                    </DenseTableRow>
-                  ))}
-                </DenseTableBody>
-              </DenseDataTable>
-            )}
-            <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-              Trend and Growth are counts of checks passed — eleven for the trend template,
-              eight for the fundamental screen — because that is what the two scores are:{' '}
-              <span className="font-mono">trend_template_score</span> takes only the eleven values{' '}
-              <span className="font-mono">n/11 × 100</span>, and 231 of the 500 names score exactly
-              100, so a column of percentages was a column of hundreds. Momentum and Structure have
-              no such checklist and stay on their own 0–100 scale. The bar is the score on that
-              scale, not against a year of the lens’s own history — this row carries none.{' '}
-              <span className="font-mono">52w</span> is where the close sits between its own
-              52-week low and high, which is the one range it does carry. A{' '}
-              <span className="font-mono">*</span> marks a composite scored on fewer than four
-              lenses. The design draws a fifth lens, relative strength; no RS field reaches this
-              row, so there are four. Observe-only: nothing here sizes or trades (D10).
-              {scored.length > ROW_CAP
-                ? ` The list stops at ${ROW_CAP} rows; ${scored.length} are in view. Narrow the universe rather than scrolling — that is what the filter bar is for.`
-                : ''}
-            </p>
-          </SectionPanel>
+          {isLeaders ? (
+            <LeadersFace
+              universe={universe}
+              inUniverse={(sym) => isHolding(sym) || isWatchlist(sym)}
+              sort={leaderSort}
+              onSort={(k) => setParam('lsort', k, 'peak')}
+              selected={leaderSel}
+              onSelect={(sel) => {
+                const next = new URLSearchParams(params)
+                if (sel) {
+                  next.set('lsym', sel.symbol)
+                  next.set('lsess', sel.date)
+                } else {
+                  next.delete('lsym')
+                  next.delete('lsess')
+                }
+                setParams(next, { replace: true })
+              }}
+              todayOf={(sym) => {
+                const hit = withComposite.find((r) => r.row.symbol === sym)
+                return hit ? { grade: hit.row.grade, path: hit.row.path } : null
+              }}
+              onUniverseAll={() => setParam('universe', 'all', 'both')}
+            />
+          ) : (
+          <TodayFace
+            scored={scored}
+            rows={rows}
+            counts={counts}
+            q={q}
+            universe={universe}
+            sort={sort}
+            setSort={setSort}
+            selected={selected}
+            setSelected={setSelected}
+            weights={weights}
+          />
+          )}
         </div>
       </div>
 

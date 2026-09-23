@@ -113,6 +113,38 @@ function leftLabel(byState: Record<AdoptionState, number>): string {
   return parts.length === 0 ? 'nothing left' : parts.join(' · ')
 }
 
+/**
+ * Fold the design rows one parametrized page answers into a single row.
+ *
+ * The design's registry cannot hold `:id`, so it seeds a concrete row per
+ * fixture — four objectives, so its own menu and crumbs resolve. This side
+ * answers all four with one page. Listed one per fixture they read as four
+ * things to confirm that all open the same URL, which is what the Owner found
+ * on 2026-09-23 ("why are five listed?"): five design rows, two pages.
+ *
+ * The fold is display only. The counts above are taken over the design's rows,
+ * because the denominator is the design's route table and folding there would
+ * quietly shrink it.
+ */
+function foldParamRows(rows: AdoptionRow[]): { row: AdoptionRow; standsFor: number }[] {
+  const out: { row: AdoptionRow; standsFor: number }[] = []
+  const at = new Map<string, number>()
+  for (const row of rows) {
+    if (!row.via) {
+      out.push({ row, standsFor: 1 })
+      continue
+    }
+    const seen = at.get(row.via)
+    if (seen == null) {
+      at.set(row.via, out.length)
+      out.push({ row, standsFor: 1 })
+      continue
+    }
+    out[seen].standsFor += 1
+  }
+  return out
+}
+
 function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
   const [open, setOpen] = useState<string | null>(null)
   // `unbuilt` shows the prototype file rather than a walk note, because there
@@ -147,7 +179,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
         </DenseTableHeadRow>
       </DenseTableHeader>
       <DenseTableBody>
-        {rows.map((r) => {
+        {foldParamRows(rows).map(({ row: r, standsFor }) => {
           const expanded = open === r.path
           return [
             <DenseTableRow key={r.path}>
@@ -167,17 +199,23 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
                   {r.inApp ? (
                     /* A `via` row's own path is the design's fixture id, which
                        does not open here; the link goes to where the real ones
-                       are picked. */
+                       are picked. A folded row takes the answering page's own
+                       name, because it is no longer one fixture. */
                     <Link
                       to={r.openAt ?? r.path}
                       className="text-link hover:underline"
                       title={r.openWhy}
                     >
-                      {trail(r)}
+                      {standsFor > 1 ? [...r.crumbs, r.viaLabel ?? r.label].join(' / ') : trail(r)}
                     </Link>
                   ) : (
                     trail(r)
                   )}
+                  {standsFor > 1 ? (
+                    <span className="ml-1.5 text-dense-caption text-muted-foreground">
+                      {standsFor} design rows, one page
+                    </span>
+                  ) : null}
                 </span>
                 {/* NEW is this round's work; OLD is an early round a later
                     contract may have overtaken, so aligning to it can align to
@@ -190,10 +228,16 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
               </DenseTableCell>
               <DenseTableCell className="max-w-0 truncate whitespace-nowrap">
                 <div className="truncate font-mono text-dense-caption text-muted-foreground">
-                  {r.path}
-                  {/* Two param rows open the same page; the route that answers
-                      each one is what tells them apart. */}
-                  {r.via ? <span className="text-muted-foreground/60"> → {r.via}</span> : null}
+                  {/* A folded row is the answering route; an unfolded one is
+                      the design's path, with the route that answers it beside. */}
+                  {standsFor > 1 ? (
+                    r.via
+                  ) : (
+                    <>
+                      {r.path}
+                      {r.via ? <span className="text-muted-foreground/60"> → {r.via}</span> : null}
+                    </>
+                  )}
                 </div>
                 {r.aliasOf?.length ? (
                   <div className="text-dense-caption text-muted-foreground">

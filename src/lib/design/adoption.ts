@@ -78,6 +78,8 @@ export interface AdoptionRow {
   openAt?: string
   /** Why `openAt` is not this row's own path. */
   openWhy?: string
+  /** The `via` route's own name, for a row that folds several design fixtures. */
+  viaLabel?: string
   /** Whether the app has a page at this path (false for rows only the design has). */
   inApp: boolean
 }
@@ -262,6 +264,7 @@ export function adoptionRows(): AdoptionRow[] {
         via,
         openAt: PARAM_PICKER[via]?.to,
         openWhy: PARAM_PICKER[via]?.why,
+        viaLabel: viaRoute.label,
         inApp: true,
       })
       continue

@@ -44,6 +44,32 @@ function InstanceRedirect() {
   )
 }
 
+/**
+ * `/research/explorer?tab=…` — retired 2026-09-23, and the tab says where.
+ *
+ * A single static target would have forwarded `?tab=events` to Stock ratings,
+ * a page that does not read `tab` — the deep link a page ignores, which is the
+ * failure the walk rules name. Each of the four tabs went to its own home.
+ */
+function ExplorerRedirect() {
+  const location = useLocation()
+  const tab = new URLSearchParams(location.search).get('tab')
+  // SEPA's tab went to Stock ratings; no tab lands where the design says the
+  // path itself belongs — its registry files `/research/explorer` against the
+  // Stock screen's own prototype.
+  const to =
+    tab === 'events'
+      ? '/research/events'
+      : tab === 'momentum'
+        ? '/research/ratings/stocks?view=leaders'
+        : tab === 'sepa'
+          ? '/research/ratings/stocks'
+          : '/research/screener'
+  return <Navigate to={to} replace />
+}
+
+const EXPLORER_PATH = '/research/explorer'
+
 function RedirectKeepingQuery({ to }: { to: string }) {
   const location = useLocation()
   return <Navigate to={redirectTargetFor(to, location.search, location.hash)} replace />
@@ -69,8 +95,11 @@ export function redirectRoutes(): RouteObject[] {
       entry.redirect === SYMBOL_PATH ? (
         <LabRedirect from={entry.path} />
       ) : entry.path === INSTANCE_PATH ? (
-        // The only forward whose target depends on the path: the id travels.
+        // A forward whose target depends on the path: the id travels.
         <InstanceRedirect />
+      ) : entry.path === EXPLORER_PATH ? (
+        // And one whose target depends on the query: the tab decides.
+        <ExplorerRedirect />
       ) : (
         <RedirectKeepingQuery to={entry.redirect} />
       ),
@@ -279,10 +308,6 @@ export const router = createBrowserRouter([
       },
       /* Wave Discover-IA — new grouped Stock Explorer (SEPA + Momentum + Events + Rules link) */
       {
-        path: 'research/explorer',
-        lazy: lazyPage(() => import('@/pages/research/discover/StockExplorerPage')),
-      },
-      {
         path: 'research/signal-decay',
         lazy: lazyPage(() => import('@/pages/research/validate/SignalDecayPage')),
       },
@@ -301,14 +326,6 @@ export const router = createBrowserRouter([
       {
         path: 'research/backtest',
         lazy: lazyPage(() => import('@/pages/research/validate/BacktestPage')),
-      },
-      {
-        path: 'research/momentum-radar',
-        lazy: lazyPage(() => import('@/pages/research/discover/MomentumRadarPage')),
-      },
-      {
-        path: 'research/sepa-daily-core',
-        lazy: lazyPage(() => import('@/pages/research/discover/SepaDailyCorePage')),
       },
       {
         path: 'research/event-radar',

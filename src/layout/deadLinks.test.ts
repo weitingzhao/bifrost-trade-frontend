@@ -164,7 +164,6 @@ const REACHABLE_BY_DESIGN: Record<string, string> = {
   // all three of which the design redistributed. It answers to no design row,
   // so it holds no menu row — the route stays for the bookmarks that predate
   // the ruling.
-  '/research/explorer': 'out of the menu by ruling, route kept for old bookmarks',
 }
 
 function navPaths(): Set<string> {

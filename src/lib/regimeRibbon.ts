@@ -73,8 +73,8 @@ const LENS_ROUTES: Record<string, string> = {
   order_sentiment: '/research/flow',
   iv_percentile: '/research/vol-regime?view=iv-rank',
   term_slope: '/research/vol-regime?view=skew',
-  momentum: '/research/momentum-radar',
-  sepa: '/research/explorer',
+  momentum: '/research/ratings/stocks?view=leaders',
+  sepa: '/research/ratings/stocks',
   forecast_path: '/research/scenario?view=sessions',
 }
 

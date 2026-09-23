@@ -39,6 +39,37 @@ export const REDIRECTS: readonly RouteEntry[] = [
   { path: '/strategy/gates', label: 'Gates', crumbs: STRATEGY, redirect: '/trade/rules' },
   { path: '/strategy/option-category', label: 'Option Category', crumbs: STRATEGY, redirect: '/trade/rules' },
 
+  // Retired 2026-09-23 by the Owner, once every capability had a home the
+  // design put in its §15.2 disposition table (Stock ratings for SEPA and
+  // Momentum, Events for the board). Each forwards to where its reading went
+  // rather than to a page that approximates it.
+  {
+    path: '/research/sepa-daily-core',
+    label: 'SEPA Daily Core',
+    crumbs: DISCOVER,
+    redirect: '/research/ratings/stocks',
+  },
+  {
+    path: '/research/momentum-radar',
+    label: 'Momentum Radar',
+    crumbs: DISCOVER,
+    redirect: '/research/ratings/stocks?view=leaders',
+  },
+  // The one whose target depends on the link: Explorer was four tabs, and
+  // each tab went somewhere different. `router.tsx` renders a component for
+  // it, the same way the retired instance route keeps its id.
+  //
+  // With no tab it lands on Stock screen, because that is what the design
+  // says this path *is*: its registry files `/research/explorer` against the
+  // same prototype as `/research/screener`. Sending it to Stock ratings made
+  // the tracker count a covered design route as unbuilt — found by the count.
+  {
+    path: '/research/explorer',
+    label: 'Stock Explorer',
+    crumbs: DISCOVER,
+    redirect: '/research/screener',
+  },
+
   // ── Research · home and seats ──────────────────────────────────────────
   // The design has Overview and the seat homes but no group root, and answered
   // the open question on 2026-09-15: `/research` is Overview. It forwards

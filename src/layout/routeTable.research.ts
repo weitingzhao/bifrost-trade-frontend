@@ -235,21 +235,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
 
-  // ── Research · Workbench · Discover ────────────────────────────────────
-  // Out of the menu, still a route (Owner ruling 2026-09-20). It is a tab
-  // shell over SEPA, Momentum and Event Radar, and the design redistributed
-  // all three — the first two are lenses of Stock ratings, the third moved to
-  // Home as Alerts. So it answers to no design page; what it holds is not
-  // lost, it is elsewhere.
-  {
-    path: '/research/explorer',
-    label: 'Stock Explorer',
-    crumbs: DISCOVER,
-    design: {
-      state: 'moving',
-      note: DESIGN_NOTES['/research/explorer'],
-    },
-  },
   // "Vol ratings", the design's own label since package 2026-09-20.1: the page
   // rates the vol on a name, and "Option Scan" described the machinery rather
   // than the reading. `/research/ratings` is its alias in the design registry.
@@ -262,22 +247,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       rev: '2026-09-20.10',
       note: DESIGN_NOTES['/research/scan'],
     },
-  },
-  {
-    path: '/research/momentum-radar',
-    label: 'Momentum Radar',
-    crumbs: DISCOVER,
-    // Was "a tab on Stock Explorer"; that destination is gone (Owner ruling
-    // 2026-09-20). The design makes momentum a lens of Stock ratings —
-    // `/research/ratings/stocks`, the composite with the weight sliders —
-    // which is unbuilt, so this page stands until it exists.
-    design: { state: 'moving', note: 'Stock ratings — a lens of its composite, and that page is now built' },
-  },
-  {
-    path: '/research/sepa-daily-core',
-    label: 'SEPA Daily Core',
-    crumbs: DISCOVER,
-    design: { state: 'moving', note: 'Stock ratings — a lens of its composite, and that page is now built' },
   },
 
   // ── Research · Workbench · Analyze ─────────────────────────────────────

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 import {
   FACTOR_COLD_AT,
@@ -27,15 +27,19 @@ describe('the nine factors', () => {
   })
 
   it('are defined here and nowhere else', () => {
-    // They were prose inside the radar's legend until Stock ratings became the
-    // second reader. The legend now renders from this list, so the invariant
-    // worth holding is the absence of a second copy — not that two copies
-    // agree, which is the state §14.2 exists to get out of.
-    const page = readFileSync('src/pages/research/discover/MomentumRadarPage.tsx', 'utf8')
-    expect(page).toContain("from '@/lib/momentumFactors'")
-    for (const f of MOMENTUM_FACTORS) {
-      expect(page, `${f.key} is written out again in the radar page`).not.toContain(f.note)
-    }
+    // They were prose inside Momentum Radar's legend until Stock ratings
+    // became the second reader; that page has since been retired (2026-09-23)
+    // and these are the only copy. The invariant worth holding is that no
+    // page writes one out again — two copies that happen to agree today are
+    // the state §14.2 exists to get out of.
+    const files = execSync("grep -rl --include=*.ts --include=*.tsx 'extended up' src", {
+      encoding: 'utf8',
+    })
+      .split('\n')
+      .filter(Boolean)
+      .filter((f) => !f.endsWith('momentumFactors.ts') && !f.endsWith('momentumFactors.test.ts'))
+    expect(files, 'a second copy of the factor legend').toEqual([])
+    for (const f of MOMENTUM_FACTORS) expect(f.note.length, f.key).toBeGreaterThan(0)
   })
 
   it('names the one factor that cannot be read, and only that one', () => {

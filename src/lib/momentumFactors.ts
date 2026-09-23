@@ -1,11 +1,11 @@
 /**
  * The nine named sub-factors behind a momentum score, and how to read one.
  *
- * The annotations were written once, as prose inside `MomentumRadarPage`'s
- * legend. Stock ratings is the second reader — the design moved the factors
- * there in Package 2026-09-23.2 — so they move here first rather than being
- * copied (§14.2). The prototype's own copy came from that same legend, which
- * is how three copies were one edit away.
+ * The annotations were written once, as prose inside Momentum Radar's legend.
+ * Stock ratings became the second reader — the design moved the factors there
+ * in Package 2026-09-23.2 — so they moved here first rather than being copied
+ * (§14.2). Momentum Radar was retired on 2026-09-23 once Stock ratings' Leaders
+ * view held its ranking too; this module is now the only copy.
  *
  * ## They are scores, not z-scores (measured on DEV 2026-09-23)
  *

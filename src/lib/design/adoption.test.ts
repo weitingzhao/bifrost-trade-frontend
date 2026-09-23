@@ -553,12 +553,12 @@ describe('design adoption', () => {
     // question — where the events board goes. Backtest left on 2026-09-23:
     // the design voided the LAB mark that put it here (round LAB → OLD), and
     // an unwalked page with a current prototype is `pending`, not `moving`.
-    expect(counts.byState.moving).toBe(3)
-    expect(rows.filter((r) => r.state === 'moving').map((r) => r.path).sort()).toEqual([
-      '/research/explorer',
-      '/research/momentum-radar',
-      '/research/sepa-daily-core',
-    ])
+    // 3 → 0 on 2026-09-23: the Owner retired all three once every capability
+    // had a home in the design's §15.2 disposition tables — SEPA's five and
+    // Momentum's nine factors on Stock ratings, the ranking as its Leaders
+    // view, and Explorer's events board on Events. A redirect is not a row
+    // here, so nothing is left for the design to dissolve elsewhere.
+    expect(counts.byState.moving).toBe(0)
     // Rev 2026-09-15.13 collapsed nine `/system/*` routes into `/system/status`
     // and `/settings` (the Owner's OLTP/OLAP/Ops ruling). The app still has the
     // nine pages, so each one asks where it goes — that is nine rows in "to

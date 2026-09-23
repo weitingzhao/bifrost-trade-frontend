@@ -204,7 +204,7 @@ export function DiscoveryHitList({
         title="SEPA hits"
         icon={Sparkles}
         hint={sepaTradeDate ? `Trade date ${sepaTradeDate}` : 'SETUP / PIVOT short-list'}
-        link={{ to: '/research/sepa-daily-core', label: 'View all' }}
+        link={{ to: '/research/ratings/stocks?path=sp', label: 'View all' }}
         isLoading={isLoading && sepaHits.length === 0}
         isError={failed?.sepa === true && sepaHits.length === 0}
         isEmpty={!isLoading && !failed?.sepa && sepaHits.length === 0}

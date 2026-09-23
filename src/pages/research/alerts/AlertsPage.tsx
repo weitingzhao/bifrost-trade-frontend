@@ -12,7 +12,7 @@
  * Events to exist before the calendar could come off.
  *
  * Two measurements made the move safe now rather than later. The events half
- * has a home that is not this route: `/research/explorer?tab=events` renders
+ * has a home that is not this route: `/research/events` renders
  * the same `EventRadarBody`, and has since the Owner's 2026-09-20 tab ruling.
  * And the events half has nothing in it: all four stores answer zero rows on
  * DEV 2026-09-22 — `event-radar/events` (also with `include_dropped`),
@@ -91,7 +91,7 @@ export default function AlertsPage() {
         description="Conditions you armed, and what has fired. The calendar itself lives with the events board."
         actions={
           <Link
-            to="/research/explorer?tab=events"
+            to="/research/events"
             className="text-dense-meta text-muted-foreground hover:text-foreground"
           >
             Events calendar →

@@ -82,7 +82,7 @@ export function ReferencePanel({
         Chosen for an options book: SPY · QQQ · IWM proxies, VIX for the vol regime, TLT for the
         rate leg. Home&rsquo;s tape is not these five — there it is the β benchmark plus the names
         carrying the most exposure, by that page&rsquo;s own design rule. Deeper event context is on{' '}
-        <Link to="/research/explorer?tab=events" className="text-foreground hover:underline">
+        <Link to="/research/events" className="text-foreground hover:underline">
           the events board
         </Link>
         .

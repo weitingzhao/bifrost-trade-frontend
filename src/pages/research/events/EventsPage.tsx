@@ -40,7 +40,7 @@ import {
 import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { eventsStanding, type StoreReading } from './eventsStanding'
-import { EventRadarBody } from '@/pages/research/discover/EventRadarTab'
+import { EventRadarBody } from './EventsBoard'
 
 const BATCHES = '/research/events/batches'
 

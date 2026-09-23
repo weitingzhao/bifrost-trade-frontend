@@ -12,7 +12,7 @@ import type { DiscoveryTarget } from '@/components/research/DiscoveryCapture'
 import { LANE_ORIGIN } from '@/components/research/discoveryLanes'
 import { useQuery } from '@tanstack/react-query'
 import { fetchBacktestRuns } from '@/api/research/backtestEvent'
-import { fetchSepaDaily, fetchOrderSentiment } from '@/api/researchEngine'
+import { fetchSepaDaily } from '@/api/researchEngine'
 import { fetchScan } from '@/api/research/scan'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useResearchHomeData } from '@/hooks/useResearchHomeData'
@@ -38,11 +38,6 @@ export function usePipelineCensus() {
     queryFn: () => fetchScan({ limit: 500 }),
     staleTime: 5 * 60_000,
   })
-  const sentimentQ = useQuery({
-    queryKey: ['research', 'pipeline', 'sentiment'],
-    queryFn: () => fetchOrderSentiment(),
-    staleTime: 5 * 60_000,
-  })
   const runsQ = useQuery({
     queryKey: ['research', 'pipeline', 'backtests'],
     queryFn: () => fetchBacktestRuns({ limit: 200 }),
@@ -59,9 +54,9 @@ export function usePipelineCensus() {
   const home = useResearchHomeData()
   const reachQ = useUniverseReach()
 
-  const error = sepaQ.error ?? scanQ.error ?? sentimentQ.error ?? runsQ.error ?? hypQ.error ?? null
+  const error = sepaQ.error ?? scanQ.error ?? runsQ.error ?? hypQ.error ?? null
   const loading =
-    sepaQ.isLoading || scanQ.isLoading || sentimentQ.isLoading || runsQ.isLoading || hypQ.isLoading
+    sepaQ.isLoading || scanQ.isLoading || runsQ.isLoading || hypQ.isLoading
 
   /** What each station's engine wrote, keyed by the page that reads it. */
   const readings = useMemo(() => {
@@ -75,16 +70,6 @@ export function usePipelineCensus() {
     if (scanQ.data) {
       m.set('/research/scan', { made: scanQ.data.rows.length, newest: null })
     }
-    if (sentimentQ.data) {
-      const stamps = sentimentQ.data.rows
-        .map((r) => (r as { computed_at?: string }).computed_at ?? '')
-        .filter(Boolean)
-        .sort()
-      m.set('/research/narrative', {
-        made: sentimentQ.data.rows.length,
-        newest: stamps.length > 0 ? stamps[stamps.length - 1] : null,
-      })
-    }
     if (runsQ.data) {
       const stamps = runsQ.data.rows.map((r) => r.created_at ?? '').filter(Boolean).sort()
       m.set('/research/backtest', {
@@ -93,7 +78,7 @@ export function usePipelineCensus() {
       })
     }
     return m
-  }, [sepaQ.data, scanQ.data, sentimentQ.data, runsQ.data])
+  }, [sepaQ.data, scanQ.data, runsQ.data])
 
   /**
    * Products that left, by the station they name as their origin.

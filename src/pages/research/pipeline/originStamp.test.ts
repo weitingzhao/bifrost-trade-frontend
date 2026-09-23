@@ -37,16 +37,17 @@ describe('LANE_ORIGIN', () => {
   })
 
   it('links a card back to its birthplace wherever that page is built', () => {
-    // Narrative is the one station the design has and this side has not
-    // built, so its stamp is provenance without a link — which is right: a
-    // hypothesis still came from that engine, and a card must not offer a
-    // route that resolves to nothing.
+    // Every lane's page is built. The sentiment lane was the exception until
+    // 2026-09-23, stamped Narrative on a mislabel; it is order flow, and it
+    // lands on Symbol's flow face. `originDest` still answers null for a page
+    // that is not built, so a card never offers a route to nothing.
     const built = new Set(ROUTES.map((r) => r.path))
     for (const [lane, path] of LANES) {
       if (built.has(path)) expect(originDest(path), lane).toMatchObject({ to: path })
       else expect(originDest(path), lane).toBeNull()
     }
-    expect(LANES.filter(([, p]) => !built.has(p)).map(([l]) => l)).toEqual(['sentiment'])
+    expect(LANES.filter(([, p]) => !built.has(p)).map(([l]) => l)).toEqual([])
+    expect(originDest('/research/narrative')).toBeNull()
   })
 })
 

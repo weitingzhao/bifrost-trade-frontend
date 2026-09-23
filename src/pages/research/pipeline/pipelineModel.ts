@@ -18,8 +18,9 @@
  * a page **owes a store** when its product is *an object you will name again
  * later* — one you fork, compare, or cite as another product's origin.
  *
- *   has-store      Stock ratings · Vol ratings · Narrative · Backtest
- *   store-owed     Stock screen · Option screen · Symbol · Signal decay
+ *   has-store      Stock ratings · Vol ratings · Backtest
+ *   store-owed     Stock screen · Option screen · Symbol · Narrative ·
+ *                  Signal decay
  *   no-store-owed  Compare (assembles only) · History (recomputes a
  *                  denominator; nobody names one run of it again)
  *   off-bench      Alerts — it belongs to Home › Alerts, so it keeps a row
@@ -32,8 +33,24 @@
  *
  *   sepa_daily_core              500 rows, trade_date 2026-09-19
  *   option_snapshot_aggregates   500 rows (`/research/scan`)
- *   sentiment_row                100 rows (`/research/flow/sentiment`)
  *   backtest_run                  43 rows, newest 2026-09-06
+ *
+ * ## Narrative was counted on the wrong store until 2026-09-23
+ *
+ * This census first gave Narrative `sentiment_row` — the 100 rows of
+ * `/research/flow/sentiment` — and called it the one Analyze page with a
+ * store. Those rows are options order flow (call/put notional, PCR, strike
+ * concentration): not one word of text. The design's Narrative reads what
+ * filings and calls *say*, and the engine had no route that holds any of it,
+ * so the row owes its store like Symbol does. Design took the old reading at
+ * face value ("有库有数、只差一张页"), which is how a label this side wrote
+ * came back as a design ruling; it was this side's mislabel, not theirs.
+ *
+ * The source is not missing. Massive's SEC filing endpoints are in the
+ * Stocks plan already paid for (measured the same day: 8-K disclosures and
+ * risk factors answer with classified, quoted rows), and nothing ingests
+ * them yet — Owner ruling 2026-09-23 is to ingest those two first. Until a
+ * store exists the row says so rather than counting someone else's.
  *
  * **`moved on` read zero on every station row**, and never because the join
  * was missing. The write side stamps a vocabulary the reading side had never
@@ -105,7 +122,7 @@ const SPECS: readonly Spec[] = [
   { to: '/research/contract-screener', label: 'Option screen', station: 'discover', store: 'screen_run', storeState: 'store-owed', note: 'store owed — a screen is an object you fork and cite' },
   { to: '/research/event-radar', label: 'Alerts', station: 'off-bench', store: null, storeState: 'off-bench', note: 'off this bench — Home › Alerts' },
   { to: '/research/symbol', label: 'Symbol', station: 'analyze', store: 'symbol_verdict', storeState: 'store-owed', note: 'store owed — a verdict is cited as a hypothesis’s origin' },
-  { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: 'sentiment_row', storeState: 'has-store', note: null },
+  { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: 'narrative_tag', storeState: 'store-owed', note: 'store owed — the filings it reads are entitled and not yet ingested' },
   { to: '/research/compare', label: 'Compare', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed — it assembles, it does not produce' },
   { to: '/research/history', label: 'History', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed — it recomputes a denominator nobody names again' },
   { to: '/research/signal-decay', label: 'Signal decay', station: 'validate', store: 'decay_check', storeState: 'store-owed', note: 'store owed — a page that declares a signal dead should hold the certificate' },
@@ -126,9 +143,9 @@ const APP_ROUTES: ReadonlySet<string> = new Set(ROUTES.map((r) => r.path))
  *
  * Nine of these tokens are the Symbol page's own faces — `/research/symbol`
  * absorbed six pages, so a hypothesis saved from its volatility, dealer,
- * scenario or flow face came out of Symbol. Narrative keeps a store and no
- * token, because its page is not built: nothing can stamp it yet, which is
- * what its row already says.
+ * scenario or flow face came out of Symbol. Narrative has no token because
+ * its page is not built: nothing can stamp it yet, which is what its row
+ * already says.
  */
 const STAMP_ROW: Record<string, string> = {
   'analysis-model': '/research/symbol',

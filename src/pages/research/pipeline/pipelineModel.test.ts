@@ -18,6 +18,8 @@ const NO_ORIGINS = new Map<string, number>()
 const READINGS = new Map<string, StoreReading>([
   ['/research/ratings/stocks', { made: 500, newest: '2026-09-19' }],
   ['/research/scan', { made: 500, newest: null }],
+  // Handed a count on purpose: Narrative was once read off order flow's 100
+  // rows, and a row that owes its store must not take one it is given.
   ['/research/narrative', { made: 100, newest: '2026-09-21T06:45:00Z' }],
   ['/research/backtest', { made: 43, newest: '2026-09-06T08:20:00Z' }],
 ])
@@ -36,7 +38,7 @@ describe('the four classes', () => {
   it('names the store a page owes instead of showing a zero', () => {
     // Owing a store is not having none: a screen is an object you fork and
     // cite, so something should be keeping it.
-    for (const to of ['/research/screener', '/research/contract-screener', '/research/symbol', '/research/signal-decay']) {
+    for (const to of ['/research/screener', '/research/contract-screener', '/research/symbol', '/research/narrative', '/research/signal-decay']) {
       expect(by(to).storeState, to).toBe('store-owed')
       expect(by(to).made, to).toBeNull()
       expect(by(to).store, to).toBeTruthy()
@@ -67,10 +69,15 @@ describe('the four classes', () => {
     expect(by('/research/ratings/stocks').pageBuilt).toBe(true)
   })
 
-  it('keeps Narrative measurable even though its page is missing', () => {
-    // The one row where building a page adds a measurable station rather than
-    // uncovering a dead end.
-    expect(by('/research/narrative').made).toBe(100)
+  it('does not count order flow as Narrative', () => {
+    // Until 2026-09-23 this row read `/research/flow/sentiment` — options
+    // order flow, no text — and called Narrative the one Analyze page with a
+    // store. It owes one; the filings it would read are entitled and not yet
+    // ingested, and the note says which of those it is.
+    const narrative = by('/research/narrative')
+    expect(narrative.made).toBeNull()
+    expect(narrative.store).toBe('narrative_tag')
+    expect(narrative.note).toMatch(/entitled and not yet ingested/)
   })
 })
 
@@ -92,12 +99,21 @@ describe('a row can have moved on without made', () => {
 
 describe('stationReadings', () => {
   it('reports coverage beside stuck, because stuck alone misreads', () => {
-    // Analyze is fully stuck on one measurable page out of four; without
+    // Validate is fully stuck on one measurable page out of two; without
     // coverage that reads as the worst station rather than the thinnest.
+    const validate = stationReadings(rowsAt()).find((s) => s.station === 'validate')!
+    expect(validate.stuck).toBe(1)
+    expect(validate.withStore).toBe(1)
+    expect(validate.onBench).toBe(2)
+  })
+
+  it('reads Analyze as unmeasured, not as empty', () => {
+    // None of its four pages keeps a store since Narrative stopped borrowing
+    // order flow's, so there is no share to state — null, never 0%.
     const analyze = stationReadings(rowsAt()).find((s) => s.station === 'analyze')!
-    expect(analyze.stuck).toBe(1)
-    expect(analyze.withStore).toBe(1)
+    expect(analyze.withStore).toBe(0)
     expect(analyze.onBench).toBe(4)
+    expect(analyze.stuck).toBeNull()
   })
 
   it('counts a page that owes no store as on the bench', () => {
@@ -125,10 +141,10 @@ describe('stationReadings', () => {
 describe('censusTotals', () => {
   it('adds up only what is on the bench', () => {
     const t = censusTotals(rowsAt())
-    expect(t.written).toBe(500 + 500 + 100 + 43)
+    expect(t.written).toBe(500 + 500 + 43)
     expect(t.left).toBe(0)
     expect(t.stillHere).toBe(t.written)
-    expect(t.withStore).toBe(4)
+    expect(t.withStore).toBe(3)
   })
 
   it('counts separately what left a page with no base to measure it against', () => {

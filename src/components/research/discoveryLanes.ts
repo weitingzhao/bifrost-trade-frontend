@@ -25,11 +25,12 @@ export const LANE_ORIGIN = {
   /** IV extremes — Vol ratings, over `option_snapshot_aggregates`. */
   iv: '/research/scan',
   /**
-   * Order sentiment — Narrative, over `sentiment_row`. The one lane whose
-   * page the design has and this side has not built: the stamp is still
-   * provenance, and `originDest` answers null so no card offers a dead link.
+   * Order sentiment — options order flow, read on Symbol's flow face (the
+   * `order-sentiment` token already lands there). It was stamped Narrative
+   * until 2026-09-23 on the census's mislabel; Narrative reads filing text,
+   * and none of the 57 hypotheses on DEV that day carried its route.
    */
-  sentiment: '/research/narrative',
+  sentiment: '/research/symbol',
   /** Events belong to Home › Alerts, off the Pipeline bench but still an origin. */
   event: '/research/event-radar',
 } as const

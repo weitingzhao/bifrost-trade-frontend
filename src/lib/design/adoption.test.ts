@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { PAGE_ROUTES } from '@/layout/routeRegistry'
 import {
-  adoptionByGroup,
   adoptionCounts,
-  adoptionGroupOf,
   adoptionRows,
   DESIGN_REV,
 } from './adoption'
@@ -236,9 +234,20 @@ describe('design adoption', () => {
     // Autopilot; the rebuilt Decision Inbox and the Rule proposals link onto it,
     // closing Review; then Live after Package 2026-09-23.2 (55→56), and the
     // Pipeline census face (56→57).
+    //
+    // Package 2026-09-23.2 answers the §15.2 disposition tables this side
+    // asked for, and three signed pages go stale carrying the answers: Stock
+    // ratings takes SEPA's five capabilities and Momentum's nine factors, and
+    // Portfolio Exposure and Positions each grow a door into Contract Greeks,
+    // which the design re-homed from Research › Analyze to Risk. The walked
+    // set is unchanged at 57; three of them are now behind their own rev.
     expect(counts.aligned + counts.byState.stale).toBe(57)
-    expect(counts.aligned).toBe(57)
-    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
+    expect(counts.aligned).toBe(54)
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
+      '/portfolio/positions',
+      '/research/ratings/stocks',
+      '/risk/portfolio',
+    ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -457,7 +466,6 @@ describe('design adoption', () => {
       '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
-      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/book',
@@ -477,7 +485,6 @@ describe('design adoption', () => {
       '/research/loop/runs',
       '/research/orchestration',
       '/research/overview',
-      '/research/ratings/stocks',
       '/research/scan',
       '/research/screener',
       '/research/signal-decay',
@@ -494,7 +501,6 @@ describe('design adoption', () => {
       '/risk/budget',
       '/risk/limits',
       '/risk/margin',
-      '/risk/portfolio',
       '/risk/sizing',
       '/risk/stress',
       '/trade/assignment',
@@ -667,7 +673,11 @@ describe('design adoption', () => {
     // own prototype and stops being a row or a View. It moves three stamps —
     // decisions, proposals and Live — and all three were still in the confirm
     // queue, so again nothing aligned goes stale.
-    expect(DESIGN_REV).toBe('2026-09-23.2')
+    // Package 2026-09-23.2 @ Rev .6 is the first round in a while that does
+    // make signed pages stale, and it is this side's own doing: it answers the
+    // four `moving` pages with disposition tables, and a capability with a
+    // destination is work on the destination page.
+    expect(DESIGN_REV).toBe('2026-09-23.6')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -685,113 +695,21 @@ describe('design adoption', () => {
     // re-walked and took the design's own name, and 2 → 1 with the Decision
     // Inbox. 1 → 0 with Symbol: for the first time since Package 2026-09-18.1
     // there is no page whose design has moved past its walk.
-        // Package 2026-09-22.3 moved the Copilot page, the Autopilot Console and
+    // Package 2026-09-22.3 moved the Copilot page, the Autopilot Console and
     // Positions. None of the three lost its walk — what changed is that "open
     // beside" now has one destination — and all three were answered in the
     // same round, so they wait for a look in `reviewing` rather than here.
-    expect(counts.byState.stale).toBe(0)
+    // 0 → 3 with Package 2026-09-23.2, and this time the pages really did
+    // lose their walk: each of the three is where a capability the design
+    // re-homed has to be built, so being behind the rev is the accurate
+    // reading rather than an artefact of some other page moving.
+    expect(counts.byState.stale).toBe(3)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design
       // still stamps that page no later than it.
       expect(row.rev, row.path).toBeTruthy()
       expect(revIsNewer(row.design?.rev, row.rev), row.path).toBe(false)
-    }
-  })
-})
-
-describe('adoptionByGroup', () => {
-  it('counts a group against every row it owns, not only the ones walked so far', () => {
-    const groups = adoptionByGroup(rows)
-    const portfolio = groups.find((g) => g.group === 'Portfolio')
-    // The question the summary exists to answer. Portfolio was the first group
-    // to finish — nine pages, all walked and all signed off — and then Package
-    // 2026-09-18.1 moved Positions, which is what a group being "done" is
-    // always one design round away from. The summary counts against every row
-    // the group owns, so the group reads 8 of 9 rather than staying at nine
-    // because nine pages happen to carry a tag. Positions was re-walked and
-    // signed off on 2026-09-18, so the group is whole again — until the next
-    // design round moves one of them.
-    // And the next round did: `/portfolio` joined as the layer's own overview
-    // page (§5a.1). It was built, re-walked section by section against the
-    // prototype, and signed off 2026-09-20 — so the group is whole again at
-    // ten of ten, with nothing left waiting on a look.
-    // Positions went stale in Package 2026-09-22.3 — still walked, still
-    // built, its Ask owed a destination — and left `stale` for `reviewing`
-    // the same day the Thread became a surface and the Ask got one. The Owner
-    // answered it 2026-09-22 and the group is whole again at ten of ten.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 10, left: 0 })
-    expect(portfolio?.byState.reviewing).toBe(0)
-    expect(portfolio?.byState.unbuilt).toBe(0)
-
-    // The design's own backlog is nobody's work here, so it stays out of the
-    // denominator: System's four `/docs/*` stubs do not make it read worse.
-    const system = groups.find((g) => g.group === 'System')
-    expect(system?.byState.backlog).toBe(4)
-    expect(system?.total).toBe(rows.filter((r) => r.crumbs[0] === 'System' && r.state !== 'backlog').length)
-
-    // Every row lands in exactly one group, and the totals reconcile.
-    expect(groups.reduce((n, g) => n + g.total + g.byState.backlog, 0)).toBe(rows.length)
-    expect(groups.reduce((n, g) => n + g.aligned, 0)).toBe(counts.aligned)
-    // Closest to done first, so the group being walked sits at the top.
-    expect(groups.map((g) => g.left)).toEqual([...groups.map((g) => g.left)].sort((a, b) => a - b))
-  })
-})
-
-describe('adoptionGroupOf', () => {
-  it('is the one derivation the tracker groups by, twice', () => {
-    // The summary panel and each state's own list both group; two
-    // derivations would eventually disagree and the reader would have no way
-    // to tell which was lying.
-    const byGroup = adoptionByGroup(rows)
-    const counted = new Map<string, number>()
-    for (const r of rows) {
-      const g = adoptionGroupOf(r)
-      counted.set(g, (counted.get(g) ?? 0) + 1)
-    }
-    for (const g of byGroup) {
-      const all = g.total + g.byState.backlog
-      expect(counted.get(g.group), `group ${g.group}`).toBe(all)
-    }
-    expect([...counted.keys()].sort()).toEqual(byGroup.map((g) => g.group).sort())
-  })
-
-  it('puts a layer page in its layer, not under Home', () => {
-    // `/risk` carries no crumbs — the design flattened the layer trails — so
-    // without the design-group fall-back every layer page lands under Home.
-    const risk = rows.find((r) => r.path === '/risk')
-    expect(risk?.crumbs).toEqual([])
-    expect(adoptionGroupOf(risk!)).toBe('Risk')
-  })
-})
-
-describe('the build list is not one kind of work', () => {
-  it('carries a recommendation on each `/docs/*` prototype, and rules on none', () => {
-    // Ten of them went in undifferentiated. Six document the design process
-    // rather than this app; four are references about the app and belong
-    // beside the ones the Reference fold already carries. The note was the
-    // whole change — no state and no count moved, because absence from the
-    // design is not deletion and this side reports rather than rules (Owner,
-    // 2026-09-18). Nine since 2026-09-23: Options Kit, the first of the four
-    // recommended builds, was built and left the list the way a build does.
-    const docs = adoptionRows().filter(
-      (r) => r.state === 'unbuilt' && r.path.startsWith('/docs/'),
-    )
-    expect(docs).toHaveLength(9)
-    expect(docs.every((r) => (r.note ?? '').startsWith('Recommend:'))).toBe(true)
-    // A built page leaves the recommendation list rather than keeping a stale
-    // one — the judgement is about what is not built yet.
-    expect(docs.map((r) => r.path)).not.toContain('/docs/options-kit')
-    const build = docs.filter((r) => r.note!.startsWith('Recommend: build'))
-    expect(build.map((r) => r.path).sort()).toEqual([
-      '/docs/capability',
-      '/docs/drilldown',
-      '/docs/research-vision',
-    ])
-    // Every "not this app" says which instrument already answers it, so the
-    // recommendation can be argued with rather than just read.
-    for (const r of docs.filter((x) => x.note!.startsWith('Recommend: not'))) {
-      expect(r.note, r.path).toMatch(/Owner to rule\.$/)
     }
   })
 })

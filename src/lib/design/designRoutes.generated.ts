@@ -260,13 +260,13 @@ export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
   "Reference": "doc",
 }
 
-export const DESIGN_REV = "2026-09-23.2"
+export const DESIGN_REV = "2026-09-23.6"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},
   {"path":"/research/events","label":"Events","crumbs":["Home"],"designed":true,"file":"Research Events.dc.html","round":"NEW","rev":"2026-09-20.16","inNav":true,"group":"Home"},
   {"path":"/market/live","label":"Live","crumbs":["Home"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-23.2","inNav":true,"group":"Home"},
-  {"path":"/risk/portfolio","label":"Portfolio Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Risk"},
+  {"path":"/risk/portfolio","label":"Portfolio Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-23.3","inNav":true,"group":"Risk"},
   {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
   {"path":"/trade/expiration","label":"Expiration","crumbs":["Trade"],"designed":true,"file":"Trade Expiration.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Trade"},
   {"path":"/research/overview","label":"Research","crumbs":[],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-20.23","inNav":true,"group":"Research"},
@@ -274,7 +274,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/portfolio","label":"Portfolio","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Overview.dc.html","round":null,"rev":"2026-09-20.15","inNav":true,"group":"Portfolio"},
   {"path":"/research/workbench","label":"Pipeline","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-22.2","inNav":false,"group":null},
   {"path":"/research/ratings","label":"Vol ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Scan.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null},
-  {"path":"/research/ratings/stocks","label":"Stock ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Ratings Stocks.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":true,"group":"Research"},
+  {"path":"/research/ratings/stocks","label":"Stock ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Ratings Stocks.dc.html","round":"OLD","rev":"2026-09-23.6","inNav":true,"group":"Research"},
   {"path":"/research/scan","label":"Vol ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Scan.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":true,"group":"Research"},
   {"path":"/research/screener","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":true,"group":"Research"},
   {"path":"/research/explorer","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null},
@@ -300,11 +300,11 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/book","label":"The Book","crumbs":[],"designed":true,"file":"Research Book.dc.html","round":null,"rev":"2026-09-20.24","inNav":false,"group":null},
   {"path":"/research/journal","label":"Journal","crumbs":["The Book"],"designed":true,"file":"Research Journal.dc.html","round":null,"rev":"2026-09-19.2","inNav":false,"group":null},
   {"path":"/research/signal-decay","label":"Signal Decay","crumbs":["Research","Validate"],"designed":true,"file":"Research Signal Decay.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research"},
-  {"path":"/research/backtest","label":"Backtest","crumbs":["Research","Validate"],"designed":true,"file":"Research Backtest.dc.html","round":"LAB","rev":"2026-09-22.6","inNav":true,"group":"Research"},
+  {"path":"/research/backtest","label":"Backtest","crumbs":["Research","Validate"],"designed":true,"file":"Research Backtest.dc.html","round":"OLD","rev":"2026-09-22.6","inNav":true,"group":"Research"},
   {"path":"/research/signal-health","label":"Signal Health","crumbs":["System","Data"],"designed":true,"file":"Research Signal Health.dc.html","round":null,"rev":"2026-09-19.2","inNav":true,"group":"System"},
   {"path":"/research/lens-coverage","label":"Lens Coverage","crumbs":["System","Data"],"designed":true,"file":"Research Lens Coverage.dc.html","round":"OLD","rev":"2026-09-19.2","inNav":true,"group":"System"},
   {"path":"/research/watchlist","label":"Watchlist","crumbs":["The Book"],"designed":true,"file":"Research Watchlist.dc.html","round":null,"rev":"2026-09-18.2","inNav":false,"group":null},
-  {"path":"/research/greeks","label":"Contract Greeks","crumbs":["Research","Analyze"],"designed":true,"file":"Research Contract Greeks.dc.html","round":null,"rev":"2026-09-19.2","inNav":false,"group":null},
+  {"path":"/research/greeks","label":"Contract Greeks","crumbs":["Risk","Portfolio Exposure"],"designed":true,"file":"Research Contract Greeks.dc.html","round":null,"rev":"2026-09-23.3","inNav":false,"group":null},
   {"path":"/research/narrative","label":"Narrative","crumbs":["Research","Analyze"],"designed":true,"file":"Research Narrative Lens.dc.html","round":null,"rev":"2026-09-19.2","inNav":false,"group":null},
   {"path":"/research/copilot","label":"Copilot","crumbs":[],"designed":true,"file":"Research Copilot.dc.html","round":"REDO","rev":"2026-09-22.6","inNav":false,"group":null},
   {"path":"/research/daily-brief","label":"Daily Brief","crumbs":["Home"],"designed":true,"file":"Research Daily Brief.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Home"},
@@ -330,7 +330,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/review/habits","label":"Habits","crumbs":["Review"],"designed":true,"file":"Review Habits.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Review"},
   {"path":"/review/proposals","label":"Rule proposals","crumbs":["Review"],"designed":true,"file":"Research Autopilot Decisions.dc.html","round":"OLD","rev":"2026-09-23.1","inNav":false,"group":null},
   {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Performance.dc.html","round":null,"rev":"2026-09-17.2","inNav":true,"group":"Portfolio"},
-  {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-22.6","inNav":true,"group":"Portfolio"},
+  {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-23.3","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Backing.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/outcome","label":"Outcome","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Outcome.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/accounts","label":"Accounts","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Accounts.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},

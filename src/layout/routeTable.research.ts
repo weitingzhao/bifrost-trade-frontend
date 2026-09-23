@@ -264,6 +264,19 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/symbol'],
     },
   },
+  {
+    // One name against its own past. Two of its four panels wait on stores
+    // (print dates, a correlation series); the note says which.
+    path: '/research/history',
+    label: 'History',
+    crumbs: ANALYZE,
+    symbolScope: true,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-17.1',
+      note: DESIGN_NOTES['/research/history'],
+    },
+  },
 
   // ── Research · Workbench · Validate ────────────────────────────────────
   {

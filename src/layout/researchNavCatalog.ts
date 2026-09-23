@@ -252,9 +252,9 @@ export const BENCHES: Bench[] = [
     icon: foldGlyph('Analyze') ?? Radar,
     // Six rows became one page with six tabs. A row per tab would put the
     // reader back where the merge found them — leaving the name to read
-    // another of its faces. The design's Compare and History rows join when
-    // those pages exist (W5).
-    items: [route('Symbol', '/research/symbol', BookOpen)],
+    // another of its faces. The design's History row joined 2026-09-23;
+    // Compare's joins when that page exists.
+    items: [route('Symbol', '/research/symbol', BookOpen), route('History', '/research/history', History)],
   },
   {
     id: 'validate',

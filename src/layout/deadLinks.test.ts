@@ -106,8 +106,7 @@ describe('every internal link reaches a route', () => {
    */
   const PATHS_USED_AS_DATA: Record<string, string> = {
     '/research/compare': 'a Pipeline census row — the design has this page, the app has not built it',
-    '/research/history': 'a Pipeline census row — the design has this page, the app has not built it',
-    '/research/narrative': 'a Pipeline census row — it has a store and data, only the page is missing',
+    '/research/narrative': 'a Pipeline census row — the design has this page; its store is owed (filings ingest, plugin 0.37.0)',
   }
 
   it('finds no link pointing at a path the router cannot match', () => {

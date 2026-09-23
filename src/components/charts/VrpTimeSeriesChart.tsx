@@ -10,17 +10,36 @@
  * Uses Tailwind + tokenized text-dense-* / text-primary / text-muted-foreground
  * (no `text-[Npx]`, no raw emerald/red). Follows the pattern established by
  * SessionTimelineChart but scoped for a daily VRP view.
+ *
+ * Two readers since 2026-09-23. Symbol's volatility face draws it as it always
+ * has (RV60, fixed width). History draws the design's "IV vs realized": RV20,
+ * a band for where IV has sat, and the width of its panel — so those are
+ * props with the old behaviour as their defaults, rather than a second chart
+ * of the same two lines (§14.2).
  */
 import { fmtPctFromFraction } from '@/lib/format'
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { VrpRow } from '@/api/research/vrp'
 
+type RealizedKey = 'rv_20d' | 'rv_60d'
+
+const REALIZED_LABEL: Record<RealizedKey, { legend: string; short: string }> = {
+  rv_20d: { legend: 'Realized Vol 20d', short: 'RV20' },
+  rv_60d: { legend: 'Realized Vol 60d', short: 'RV60' },
+}
+
 interface VrpTimeSeriesChartProps {
   rows: VrpRow[]
   width?: number
   height?: number
   className?: string
+  /** Which realised series is drawn against IV. */
+  realized?: RealizedKey
+  /** A shaded range of IV, as fractions — e.g. its 20th–80th percentile. */
+  band?: { lo: number; hi: number; label: string } | null
+  /** Scale to the container instead of a fixed pixel width. */
+  fluid?: boolean
 }
 
 function sparseLabelIndices(count: number, target = 6): Set<number> {
@@ -38,6 +57,9 @@ export function VrpTimeSeriesChart({
   width = 640,
   height = 220,
   className,
+  realized = 'rv_60d',
+  band = null,
+  fluid = false,
 }: VrpTimeSeriesChartProps) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
 
@@ -49,8 +71,10 @@ export function VrpTimeSeriesChart({
     const values: number[] = []
     rows.forEach((r) => {
       if (r.atm_iv_30d != null) values.push(r.atm_iv_30d)
-      if (r.rv_60d != null) values.push(r.rv_60d)
+      const rv = r[realized]
+      if (rv != null) values.push(rv)
     })
+    if (band) values.push(band.hi)
     if (values.length === 0) return null
     const maxV = Math.max(...values)
     const minV = 0
@@ -84,9 +108,9 @@ export function VrpTimeSeriesChart({
       xScale,
       yScale,
       ivPath: seriesPath((r) => r.atm_iv_30d),
-      rvPath: seriesPath((r) => r.rv_60d),
+      rvPath: seriesPath((r) => r[realized]),
     }
-  }, [rows, width, height])
+  }, [rows, width, height, realized, band])
 
   if (!chart || rows.length === 0) {
     return (
@@ -106,12 +130,24 @@ export function VrpTimeSeriesChart({
   return (
     <div className={cn('relative', className)}>
       <svg
-        width={width}
-        height={height}
+        width={fluid ? '100%' : width}
+        height={fluid ? undefined : height}
+        viewBox={fluid ? `0 0 ${width} ${height}` : undefined}
         className="max-w-full"
         role="img"
         aria-label="IV vs RV time series"
       >
+        {band ? (
+          <rect
+            x={chart.pad.left}
+            width={chart.chartW}
+            y={chart.yScale(band.hi)}
+            height={Math.max(0, chart.yScale(band.lo) - chart.yScale(band.hi))}
+            className="fill-primary/10"
+          >
+            <title>{band.label}</title>
+          </rect>
+        ) : null}
         <line
           x1={chart.pad.left}
           x2={chart.pad.left + chart.chartW}
@@ -183,8 +219,14 @@ export function VrpTimeSeriesChart({
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-1 w-4 rounded bg-muted-foreground" />
-          <span className="text-muted-foreground">Realized Vol 60d</span>
+          <span className="text-muted-foreground">{REALIZED_LABEL[realized].legend}</span>
         </span>
+        {band ? (
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-4 rounded-sm bg-primary/10" />
+            <span className="text-muted-foreground">{band.label}</span>
+          </span>
+        ) : null}
       </div>
 
       {tooltipRow ? (
@@ -196,13 +238,13 @@ export function VrpTimeSeriesChart({
           </span>
           <span className="mx-2 text-muted-foreground">·</span>
           <span className="font-mono tabular-nums">
-            RV60 {fmtPctFromFraction(tooltipRow.rv_60d)}
+            {REALIZED_LABEL[realized].short} {fmtPctFromFraction(tooltipRow[realized])}
           </span>
-          {tooltipRow.vrp_60d != null ? (
+          {(realized === 'rv_20d' ? tooltipRow.vrp_20d : tooltipRow.vrp_60d) != null ? (
             <>
               <span className="mx-2 text-muted-foreground">·</span>
               <span className="font-mono tabular-nums">
-                VRP {fmtPctFromFraction(tooltipRow.vrp_60d)}
+                VRP {fmtPctFromFraction(realized === 'rv_20d' ? tooltipRow.vrp_20d : tooltipRow.vrp_60d)}
               </span>
             </>
           ) : null}

@@ -3,9 +3,11 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import {
+  fetchRvCone,
   fetchVrpExtremes,
   fetchVrpHistory,
   fetchVrpLatest,
+  type RvCone,
   type VrpExtremesResponse,
   type VrpRow,
 } from '@/api/research/vrp'
@@ -35,6 +37,15 @@ export function useVrpExtremes(bucket: 'high' | 'low', limit = 20) {
   return useQuery<VrpExtremesResponse>({
     queryKey: QUERY_KEYS.research.vrp.extremes(bucket, limit),
     queryFn: () => fetchVrpExtremes(bucket, limit),
+    staleTime: DEFAULT_STALE_MS,
+  })
+}
+
+export function useRvCone(symbol: string, years = 2) {
+  return useQuery<RvCone | null>({
+    queryKey: QUERY_KEYS.research.vrp.rvCone(symbol, years),
+    queryFn: () => fetchRvCone(symbol, years),
+    enabled: Boolean(symbol),
     staleTime: DEFAULT_STALE_MS,
   })
 }

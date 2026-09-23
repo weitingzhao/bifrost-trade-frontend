@@ -22,7 +22,8 @@ function signedPctText(fraction: number, digits = 1): string {
   return `${pct >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(digits)}%`
 }
 
-function ordinal(n: number): string {
+/** 1 → "1st", 12 → "12th", 23 → "23rd". History reads it too. */
+export function ordinal(n: number): string {
   const r = Math.round(n)
   const mod100 = r % 100
   if (mod100 >= 11 && mod100 <= 13) return `${r}th`

@@ -299,6 +299,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/analyze/symbol/SymbolPage')),
       },
       {
+        path: 'research/history',
+        lazy: lazyPage(() => import('@/pages/research/analyze/history/HistoryPage')),
+      },
+      {
         path: 'research/lens-coverage',
         lazy: lazyPage(() => import('@/pages/research/data/lensCoverage/LensCoveragePage')),
       },

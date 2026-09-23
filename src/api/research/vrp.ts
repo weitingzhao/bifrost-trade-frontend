@@ -7,6 +7,7 @@ import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import {
   ResearchEnvelopeSchema,
+  RvConeSchema,
 } from '@/lib/schemas/research'
 import { numOrNull } from '@/lib/researchParseHelpers'
 
@@ -123,4 +124,44 @@ export async function fetchVrpExtremes(
     limit: env.data?.limit ?? limit,
     as_of: env.data?.as_of ?? null,
   }
+}
+
+/** One horizon of the realised-vol cone. Vol as a fraction, like the rest of this module. */
+export interface RvConeTenor {
+  days: number
+  /** Overlapping windows the percentiles were taken over. */
+  n: number
+  p05: number | null
+  p20: number | null
+  p50: number | null
+  p80: number | null
+  p95: number | null
+  /** Today's realised vol over this horizon. */
+  current: number | null
+}
+
+export interface RvCone {
+  as_of: string | null
+  symbol: string
+  years: number
+  /** Daily closes behind the cone. */
+  sessions: number
+  tenors: RvConeTenor[]
+}
+
+const validateRvCone = withValidation<RvCone>(RvConeSchema, 'research/analytics/vol/rv-cone')
+
+/**
+ * Realised vol by horizon, as percentiles over overlapping windows (R9 F4).
+ *
+ * The schema was written with the route and nothing read it until History
+ * (2026-09-23), which draws the design's vol cone from it.
+ */
+export async function fetchRvCone(symbol: string, years = 2): Promise<RvCone | null> {
+  const sym = (symbol || '').trim().toUpperCase()
+  if (!sym) return null
+  const q = new URLSearchParams({ symbol: sym, years: String(years) })
+  const res = await fetch(`${researchEngineUrl('/analytics/vol/rv-cone')}?${q.toString()}`)
+  const env = await jsonOrThrow<unknown>(res)
+  return validateRvCone(env.data) as RvCone
 }

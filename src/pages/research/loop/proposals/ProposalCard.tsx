@@ -55,7 +55,7 @@ export function ProposalCard({ proposal }: { proposal: Proposal }) {
         </span>
       </header>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,17rem),1fr))] gap-3 px-3 py-2.5">
+      <div className="grid gap-3 px-3 py-2.5 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-2">
           <p className="m-0 text-dense-body leading-normal text-secondary-foreground text-pretty">
             {proposal.evidence}

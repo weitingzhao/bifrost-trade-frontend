@@ -53,7 +53,31 @@ export const REVIEW_NOTES: Record<string, string> = {
     + 'second, so the count line says so where the other views print their pending totals. The '
     + 'cards, the chain and the boundary paragraph came over unchanged; the model and the card moved '
     + 'to `pages/research/loop/proposals/` with them, because a page importing another page\u2019s '
-    + 'feature directory is the reverse dependency `module-placement` forbids.',
+    + 'feature directory is the reverse dependency `module-placement` forbids. '
+    + 'WALKED AGAIN 2026-09-22 at 1680\u00d71100 on local DEV (:5173), interactions included. The '
+    + 'text is the design\u2019s: the three states carry their tags, n 54 and \u2212$701 sit on the '
+    + 'header, the evidence prose and its cite buttons read as drawn, the Diff box carries its '
+    + 'target, and twelve decision buttons over four cards are drawn disabled with the reason '
+    + 'beside them. All seventeen links resolve: eleven cites into Single trade, which reads the '
+    + 'same `trade` key they write and selects the cited contract \u2014 TSLA 10APR26 345P opens '
+    + 'with its two fills, ten of eleven sessions of contract marks and eleven underlying closes '
+    + '\u2014 plus `Habits \u2192` and the chain\u2019s five `where it would come from \u2192` into '
+    + '/review/habits, /trade/plans, /risk/limits and /review/playbook-stats. One defect found and '
+    + 'fixed: the card\u2019s two columns were laid out with '
+    + '`repeat(auto-fit,minmax(min(100%,17rem),1fr))`, the idiom for a grid of chips whose count '
+    + 'varies rather than for a designed split \u2014 at 1680 it computed four tracks with two '
+    + 'empty, and the design\u2019s 1.1:1 ratio never applied. It is '
+    + '`md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]` now, as eight other splits in this repo are '
+    + 'written, measured at 711.9px against 647.1px, ratio 1.100. One question is owed to Design '
+    + 'rather than answered here: the prototype draws the diff\u2019s `\u2212` in #fb923c and `+` '
+    + 'in #2dd4bf, the teal/orange pair that \u00a714.7 retired as direction tokens on '
+    + '2026-09-16. Its sweep rewrote the wrapped `var(\u2026)` form across 210 sites and missed '
+    + 'these two, which are bare literals \u2014 so those colours are '
+    + 'stale rather than a ruling. This side\u2019s `+` meanwhile borrows `text-success`, the '
+    + 'severity green that \u00a714.7 rule 2 reserves for dots and tags. Neither is right: a '
+    + 'diff\u2019s add and remove lines are neither a signed direction nor a severity, and the '
+    + 'design names no colour for them. The `\u2212` line stays muted meanwhile, which is honest '
+    + '\u2014 it carries no before value at all.',
   '/review/objectives':
     "Built 2026-09-20 against Review Objectives.dc.html (Rev 2026-09-20.5) on the Owner's "
     + "option (c): build the honest version now, and file the backfill as a request. Re-walked "

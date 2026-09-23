@@ -50,7 +50,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Pipeline census',
     crumbs: RESEARCH,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-22.2',
       note: DESIGN_NOTES['/research/workbench'],
     },

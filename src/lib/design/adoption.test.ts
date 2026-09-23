@@ -234,9 +234,10 @@ describe('design adoption', () => {
     // Research pages, Alerts, Daily Brief and the layer page; the objective page
     // (four fixture rows on one look), Loop Run and the console, closing
     // Autopilot; the rebuilt Decision Inbox and the Rule proposals link onto it,
-    // closing Review; then Live after Package 2026-09-23.2 (55→56).
-    expect(counts.aligned + counts.byState.stale).toBe(56)
-    expect(counts.aligned).toBe(56)
+    // closing Review; then Live after Package 2026-09-23.2 (55→56), and the
+    // Pipeline census face (56→57).
+    expect(counts.aligned + counts.byState.stale).toBe(57)
+    expect(counts.aligned).toBe(57)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -437,8 +438,8 @@ describe('design adoption', () => {
     // Owner's walk took Positions and the Watchlist out to `aligned` and put
     // the Decision Inbox back in, which is two out and one in. 8 after
     // the 2026-09-23 pass through the queue (fifteen rows on eleven looks), 7
-    // with Live.
-    expect(counts.byState.reviewing).toBe(7)
+    // with Live, 6 with the census face.
+    expect(counts.byState.reviewing).toBe(6)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -481,6 +482,7 @@ describe('design adoption', () => {
       '/research/signal-decay',
       '/research/symbol',
       '/research/watchlist',
+      '/research/workbench',
       '/review',
       '/review/fit',
       '/review/habits',
@@ -509,7 +511,6 @@ describe('design adoption', () => {
       '/research/greeks',
       '/research/lens-coverage',
       '/research/signal-health',
-      '/research/workbench',
       '/settings',
       '/system/status',
     ])

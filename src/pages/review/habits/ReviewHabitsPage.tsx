@@ -28,6 +28,7 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { daysBetween } from '@/lib/isoDate'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
+import { ProposalChainPanel } from './ProposalChainPanel'
 import { THIN_SAMPLE } from '@/utils/reviewTrades'
 import { habitReadings, type HabitReading } from '@/utils/reviewHabits'
 import { HabitStrip } from './HabitStrip'
@@ -217,6 +218,11 @@ export default function ReviewHabitsPage() {
           </>
         )}
       </section>
+      {/* The chain that turns a habit into a rule change, and where it is
+          broken. The proposals it feeds are decided in the Decision Inbox
+          since Package 2026-09-23.1; what is still Habits' own is the reason
+          some of them cannot be argued yet. */}
+      <ProposalChainPanel habits={habits} trades={trades} paths={paths} pathsLoading={pathsLoading} />
     </PageShell>
   )
 }

@@ -202,21 +202,14 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       // touches both ends of the loop. It seats here for the reason Objectives
       // does: the subject of judging the machine I built is myself.
       //
-      // `/review/proposals` stays a route and a deep link; folding its rows
-      // into the Inbox page is page work the design books as owed, not this
-      // pass.
-      //
-      // It carried no entry of any kind in the meantime — the row went away
-      // with the page and the route was reachable only by URL or the Omnibar,
-      // so the Owner could not find a page they were asked to review. It is a
-      // child of the Inbox rather than a sibling of it: a view of that page,
-      // not a second one, which is what §5a.8 merged. Spelled out here rather
-      // than on the shared `AUTOPILOT_PAGES.inbox`, because the rail draws the
-      // same object and the Inbox has no children there.
-      {
-        ...AUTOPILOT_PAGES.inbox,
-        children: [route('Rule proposals', '/review/proposals', ClipboardList)],
-      },
+      // A `Rule proposals` child sat under it while the rows were still a page
+      // of their own, so the route the Owner was asked to review could be
+      // found. Package 2026-09-23.1 draws the merge and withdraws the row:
+      // it is the second row §5a.8 deleted, wearing an indent. The proposals
+      // are reachable as what they became — cards in this queue, counted in
+      // its badge — and by the deep link, which the Queue and Habits pages
+      // both offer a button to.
+      AUTOPILOT_PAGES.inbox,
     ],
   },
   {

@@ -40,6 +40,8 @@ export interface ProposalCite {
 
 export interface Proposal {
   key: string
+  /** The habit this argues from — the design prints it on the card's foot. */
+  habitKey: string
   title: string
   /** The rule it would change. */
   target: string
@@ -62,7 +64,25 @@ export interface Proposal {
   beforeText: string
   /** What this proposal is still waiting on, when it is not fully argued. */
   blockedBy: string | null
+  /**
+   * Measured on too few trades to argue a rule change.
+   *
+   * Design Rev 2026-09-23.1: a thin proposal does not become a card in the
+   * Inbox at all. The Inbox is a queue of decisions, and a sample of one is
+   * not a decision — it is a habit still being measured, which is Habits'
+   * subject. Thin ones are named on a single grey strip instead, so nothing
+   * disappears without saying where it went.
+   */
+  thin: boolean
 }
+
+/**
+ * Below this, a habit has not argued anything yet (design Rev 2026-09-23.1).
+ * Three is the design's own floor, not ours; it is deliberately far under the
+ * twenty the Review grid calls a readable sample, because the question here is
+ * only whether there is an argument at all.
+ */
+export const THIN_N = 3
 
 const NO_RULE_TEXT = 'n/c — rule text not on file'
 
@@ -95,9 +115,17 @@ export function buildProposals(
 
   const byKey = new Map(trades.map((t) => [t.contractKey, t]))
 
-  return [
+  // `thin` is derived rather than written four times: it is a fact about the
+  // sample, and a per-proposal literal is a fact that can be set wrong. A
+  // proposal with no n at all is not thin — nothing has been measured, which
+  // is a different absence and keeps its own state.
+  const withThin = (ps: Omit<Proposal, 'thin'>[]): Proposal[] =>
+    ps.map((p) => ({ ...p, thin: p.n != null && p.n < THIN_N }))
+
+  return withThin([
     {
       key: 'hard_exit',
+      habitKey: 'disposition',
       title: 'Make the profit target a hard exit',
       target: 'Playbook · all short-premium plays',
       state: disposition?.measuring
@@ -124,6 +152,7 @@ export function buildProposals(
     },
     {
       key: 'stop_latency',
+      habitKey: 'cut_latency',
       title: 'Add a time stop after a new worst mark',
       target: 'Playbook · all short-premium plays',
       state: cut?.measuring ? 'measuring' : cut?.value == null ? 'no-habit' : 'no-cost',
@@ -141,6 +170,7 @@ export function buildProposals(
     },
     {
       key: 'ivr_floor',
+      habitKey: 'ivr_entry',
       title: 'Enforce the IV-rank floor at entry',
       target: 'Playbook · IV-rich entries',
       state: 'no-habit',
@@ -156,6 +186,7 @@ export function buildProposals(
     },
     {
       key: 'retarget',
+      habitKey: 'capture',
       title: 'Move the target to where the trades actually print',
       target: 'Playbook · the plays whose plans under-aim',
       state: 'no-habit',
@@ -169,7 +200,7 @@ export function buildProposals(
       beforeText: NO_RULE_TEXT,
       blockedBy: 'the planned exit — the best mark it would be divided by is already read',
     },
-  ]
+  ])
 }
 
 /** The chain the design draws, with the state of each link. */

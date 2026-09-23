@@ -23,7 +23,6 @@ import { EmptyState, SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApprovalsLanded, landedApproval, type LandedApproval } from '@/pages/research/loop/ApprovalsLanded'
 import { DraftCard } from '@/components/cockpit/DraftCard'
@@ -37,40 +36,42 @@ import {
   useResearchDrafts,
   DRAFTS_PAGE_MAX,
 } from '@/hooks/useResearchDrafts'
-import type { DraftKind } from '@/api/researchDrafts'
+import {
+  WRITES_TO_LABEL,
+  WRITES_TO_ORDER,
+  writesTo,
+  type WritesTo,
+} from '@/lib/harness/writesTo'
+import { buildProposals } from '@/pages/research/loop/proposals/proposalsModel'
+import { RuleProposalCard } from '@/pages/research/loop/proposals/RuleProposalCard'
+import { Link } from 'react-router-dom'
+import { StatusLamp } from '@/components/StatusLamp'
+import { positionsUi } from '@/components/positions/positionsUi'
+import { cn } from '@/lib/utils'
+import { useReviewHabits } from '@/hooks/useReviewHabits'
 import {
   BRIEFING_KINDS,
-  LOOP_KINDS,
   groupIdenticalDrafts,
   isActionableDraft,
   isDecisionKind,
 } from '@/lib/harness/harnessDraftHelpers'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { unreadCount, useReadDrafts } from '@/pages/research/loop/inboxRead'
-import { ProposalsView } from '@/pages/research/loop/ProposalsView'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
 
 /** Enough to see a working session's worth without the rail outgrowing the queue. */
 const LANDED_MAX = 8
 
-type View = 'decisions' | 'briefings' | 'all' | 'proposals'
+type View = 'decisions' | 'briefings' | 'all'
 
 /** The alias the design keeps for the queue that merged in (§5a.8). */
 const PROPOSALS_PATH = '/review/proposals'
 
 const INBOX_LEDE =
-  'Drafts that need a call. Approving accepts the draft into The Book — a candidate enters the pool, a hypothesis opens, a patch merges into its policy. Nothing is handed to Trade: an order is yours to originate, always (D10). Posts that only need reading live under Briefings and have no Approve button.'
+  'Drafts that need a call. Approving accepts the draft into The Book — a candidate enters the pool, a hypothesis opens, a patch merges into its policy, a rule change edits Rules. Nothing is handed to Trade: an order is yours to originate, always (D10). Posts that only need reading live under Briefings and have no Approve button.'
 
-/**
- * Why a row called Rule proposals lands on a page called Decision Inbox: they
- * are one inbox (design Rev 2026-09-22.2, §5a.8), and the lede has to say so
- * on the view the signpost row points at. The inbox lede cannot stand here —
- * it promises that approving writes, and this is the one view where nothing
- * can be approved at all.
- */
-const PROPOSALS_LEDE =
-  'Rule proposals — one view of this inbox, because a proposal and a draft are the same act: the machine proposes, you answer. What differs is the end of the loop it touches. A proposal is derived here from the habits rather than posted by the engine, which is why the kind filter stands down.'
-type Narrow = 'any' | 'loop' | DraftKind
+/** `any` plus the design's five places. */
+type Dest = 'any' | WritesTo
 
 /**
  * Three views, as in the design (`Research Autopilot Decisions.dc.html`):
@@ -82,32 +83,17 @@ const VIEW_OPTIONS: { value: View; label: string; title?: string }[] = [
   { value: 'decisions', label: 'Decisions' },
   { value: 'briefings', label: 'Briefings' },
   { value: 'all', label: 'All' },
-  // The fourth queue, merged in on 2026-09-22 (§5a.8). Its rows are derived
-  // from habits rather than fetched as drafts, and unlike the other three
-  // nothing can accept them — which the view says rather than hides.
-  {
-    value: 'proposals',
-    label: 'Proposals',
-    title: 'What the habits argue for — a machine proposing, the other end of the same loop',
-  },
 ]
 
-/** Narrowing to one kind is still one step away — every kind the API knows, and the Loop as a group. */
-const NARROW_OPTIONS: { value: Narrow; label: string }[] = [
-  { value: 'any', label: 'Any kind' },
-  { value: 'loop', label: 'Loop · batches + policy' },
-  { value: 'candidate_batch', label: 'Candidate batches' },
-  { value: 'policy_suggestion', label: 'Policy suggestions' },
-  { value: 'decision_draft', label: 'Curator decisions' },
-  { value: 'playbook_rule', label: 'Playbook rules' },
-  { value: 'playbook_note', label: 'Playbook notes' },
-  { value: 'hypothesis_suggestion', label: 'Hypothesis suggestions' },
-  { value: 'hypothesis_draft', label: 'Hypothesis drafts' },
-  { value: 'order_intent', label: 'Order intents' },
-  { value: 'eod_verdict', label: 'EOD verdicts' },
-  { value: 'morning_brief', label: 'Morning briefs' },
-  { value: 'daily_digest', label: 'Daily digests' },
-]
+/**
+ * The kind filter, along the axis the kind tag's colour already used.
+ *
+ * It was thirteen server kinds in a Select — the record's name rather than
+ * the consequence, so "Candidate batches" and "Hypothesis drafts" read as two
+ * unrelated choices when the reader is deciding between the pool and the book.
+ * Design Rev 2026-09-23.1 collapses them to the five places Approve writes,
+ * each carrying what is pending there.
+ */
 
 /**
  * Recurring agent posts — read them, then move on.
@@ -125,26 +111,33 @@ export default function DecisionInboxPage() {
   // so nothing is hidden.
   // The route seeds the view, so `/review/proposals` still lands on what it
   // names — the same way `/research/workbench` lands on the census face.
+  //
+  // `/review/proposals` is a deep-link alias (design Rev 2026-09-23.1): it
+  // lands on the Decisions view narrowed to what writes to Rules, which is
+  // where its rows went. It is not a view and not a row.
   const { pathname } = useLocation()
-  const [view, setViewState] = useState<View>(
-    pathname === PROPOSALS_PATH ? 'proposals' : 'decisions',
-  )
-  const [narrow, setNarrowState] = useState<Narrow>('any')
-  // A kind belongs to one view or another; narrowing inside the wrong one would
-  // show an empty list for a kind that has drafts. So a kind widens to All, and
-  // picking a view lets go of the kind.
+  const [view, setViewState] = useState<View>('decisions')
+  const [dest, setDestState] = useState<Dest>(pathname === PROPOSALS_PATH ? 'rules' : 'any')
+  // One card open at a time (design Rev 2026-09-23.1). A queue of eleven cards
+  // each carrying a diff, a table and a paragraph is a page you scroll past
+  // rather than read; folded, the header line is what a reader chooses from.
+  // `null` means "the first pending one", resolved at render so it follows the
+  // list rather than freezing on whatever was first when the page loaded.
+  const [openId, setOpenId] = useState<string | null>(null)
+  // A place belongs to the decisions side, so narrowing to one inside Briefings
+  // would show an empty list for a place that has cards.
   const setView = (next: View) => {
     setViewState(next)
-    setNarrowState('any')
+    if (next === 'briefings') setDestState('any')
   }
-  const setNarrow = (next: Narrow) => {
-    setNarrowState(next)
-    if (next !== 'any') setViewState('all')
+  const setDest = (next: Dest) => {
+    setDestState(next)
+    if (next !== 'any' && view === 'briefings') setViewState('decisions')
   }
 
-  // A concrete kind is filtered by the server, so a kind longer than one page
-  // still lists in full. The Loop group is two kinds, filtered here.
-  const apiKind = narrow === 'any' || narrow === 'loop' ? undefined : narrow
+  // The whole queue is read and narrowed here: `Writes to` is a grouping over
+  // kinds rather than one of them, so there is no server filter that answers it.
+  const apiKind = undefined
 
   // The whole queue, not a page of it: every count on this page is computed
   // from what comes back, and the cards are the work itself.
@@ -163,7 +156,7 @@ export default function DecisionInboxPage() {
   // not hold every pending draft, would un-read everything it did not contain.
   const allRows = query.data?.rows ?? []
   const wholeQueue =
-    query.data != null && narrow === 'any' && (query.data.pending_count ?? 0) <= allRows.length
+    query.data != null && (query.data.pending_count ?? 0) <= allRows.length
   const { read, setRead } = useReadDrafts(wholeQueue ? allRows.map((d) => d.id) : null)
 
   // Three kinds — decision_draft, order_intent, policy_suggestion — carry only
@@ -178,18 +171,43 @@ export default function DecisionInboxPage() {
     return m
   }, [hypotheses.data?.rows])
 
+  // The proposals, read off the habits rather than fetched: they are the fourth
+  // thing the engine proposes, and since Rev 2026-09-23.1 they are cards in
+  // this queue rather than a queue of their own. `thin` ones are not cards at
+  // all — a sample of one is a habit still being measured, and it is named on
+  // a strip instead of asked about.
+  const habitsQ = useReviewHabits('all')
+  const proposals = useMemo(
+    () =>
+      buildProposals(
+        habitsQ.habits,
+        habitsQ.trades,
+        habitsQ.paths,
+      ),
+    [habitsQ.habits, habitsQ.trades, habitsQ.paths],
+  )
+  const ruleCards = useMemo(() => proposals.filter((p) => !p.thin), [proposals])
+  const thin = useMemo(() => proposals.filter((p) => p.thin), [proposals])
+
   const rows = useMemo(() => {
     const all = query.data?.rows ?? []
-    if (narrow === 'loop') return all.filter((d) => LOOP_KINDS.has(d.kind))
-    if (narrow !== 'any') return all
+    const place = (d: { kind: string }) => writesTo(d.kind)
+    const narrowed = dest === 'any' ? all : all.filter((d) => place(d) === dest)
     if (view === 'decisions') {
-      return typedFirst(all.filter((d) => isDecisionKind(d.kind)))
+      return typedFirst(narrowed.filter((d) => isDecisionKind(d.kind)))
     }
     if (view === 'briefings') {
       return digestFirst(all.filter((d) => BRIEFING_KINDS.has(d.kind)))
     }
-    return all
-  }, [query.data?.rows, view, narrow])
+    return narrowed
+  }, [query.data?.rows, view, dest])
+
+  // Rule cards ride the same two filters as everything else: they write to
+  // Rules, and they are decisions rather than posts to read.
+  const shownRules = useMemo(
+    () => (view === 'briefings' || (dest !== 'any' && dest !== 'rules') ? [] : ruleCards),
+    [ruleCards, view, dest],
+  )
 
   // One card per decision, not per draft. Repeated runs of the same objective
   // post an identical batch each time; they are folded into the newest and
@@ -230,13 +248,46 @@ export default function DecisionInboxPage() {
     }
   }, [query.data?.rows, query.data?.pending_count, apiKind, read])
 
-  const narrowLabel = NARROW_OPTIONS.find((o) => o.value === narrow)?.label ?? narrow
+  /** Pending per place, for the segment's own labels. */
+  const pendingByDest = useMemo(() => {
+    const all = query.data?.rows ?? []
+    const n: Record<WritesTo, number> = { rules: 0, policy: 0, book: 0, pool: 0, nothing: 0 }
+    for (const d of all) {
+      const place = writesTo(d.kind)
+      if (place && isDecisionKind(d.kind)) n[place] += 1
+    }
+    n.rules += ruleCards.length
+    return n
+  }, [query.data?.rows, ruleCards.length])
+
+  /**
+   * Which card is open when nothing has been picked: the first pending one, in
+   * the order the list draws. A collapsed card carries no Approve, so opening
+   * on none would mean nothing could be answered without a click first.
+   */
+  const firstCardId =
+    shownRules.length > 0
+      ? `rule:${shownRules[0].key}`
+      : groups.length > 0
+        ? `draft:${groups[0].draft.id}`
+        : ''
+
+  const destOptions = useMemo(
+    () => [
+      { value: 'any' as Dest, label: 'Any' },
+      ...WRITES_TO_ORDER.map((w) => ({
+        value: w as Dest,
+        label: `${WRITES_TO_LABEL[w]} ${pendingByDest[w]}`,
+      })),
+    ],
+    [pendingByDest],
+  )
 
   return (
     <PageShell padding="default" className="space-y-3">
       <PageHeader
-        title={view === 'proposals' ? 'Decision Inbox · Rule proposals' : 'Decision Inbox'}
-        description={view === 'proposals' ? PROPOSALS_LEDE : INBOX_LEDE}
+        title="Decision Inbox"
+        description={INBOX_LEDE}
         actions={<NewDraftDialog />}
       />
 
@@ -250,35 +301,39 @@ export default function DecisionInboxPage() {
         </span>
         <span className="text-dense-meta font-medium text-muted-foreground shrink-0">View:</span>
         <SegmentControl value={view} onChange={(v) => setView(v as View)} options={VIEW_OPTIONS} />
-        {/* The kind selector narrows server-side draft kinds; a proposal is
-            derived here from habits, so it stands down rather than offering
-            thirteen filters that would all empty the list. */}
-        {view === 'proposals' ? null : (
-        <Select value={narrow} onValueChange={(v) => setNarrow(v as Narrow)}>
-          <SelectTrigger className="h-7 w-52 text-dense-meta" aria-label="Narrow to one kind">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {NARROW_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value} className="text-dense-meta">
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Not a second row of views: the kind tag's colour already says where
+            Approve writes, and this narrows along that same axis. Hidden under
+            Briefings, which are read rather than written anywhere. */}
+        {view === 'briefings' ? null : (
+          <>
+            <span
+              className="text-dense-meta font-medium text-muted-foreground shrink-0"
+              title="Kind, read as where Approve writes. The tag colour on each card says the same thing."
+            >
+              Writes to:
+            </span>
+            <SegmentControl
+              value={dest}
+              onChange={(v) => setDest(v as Dest)}
+              options={destOptions}
+              aria-label="Writes to"
+            />
+          </>
         )}
         <span className="text-dense-meta text-muted-foreground ml-auto">
-          {view === 'proposals' ? (
-            'derived from the habits — nothing here can be accepted, and the chain below says where that breaks'
-          ) : narrow !== 'any' ? (
-            // Counts of decisions and briefings are meaningless on one kind: the
-            // query itself is narrowed. Say what the list is instead.
-            `${groups.length} ${narrowLabel.toLowerCase()} shown · ${counts.total} pending${
-              apiKind && counts.pageFull ? ` — the newest ${DRAFTS_PAGE_MAX}; older ones not shown` : ''
-            }`
+          {dest !== 'any' ? (
+            // Counted over one place, the decisions and briefings split says
+            // nothing: the list itself is narrowed. Say what the list is.
+            `${groups.length + shownRules.length} shown · ${counts.total} pending`
           ) : (
             <>
-              {counts.decisions} to decide
+              {counts.decisions + shownRules.length} to decide
+              {/* The design's own line: rule changes are named inside the
+                  count rather than beside it, because they are decisions of
+                  the same kind and not a second queue. */}
+              {shownRules.length > 0
+                ? ` (${shownRules.length} rule change${shownRules.length === 1 ? '' : 's'})`
+                : ''}
               {/* Not "nothing to merge": since the kinds the server passes through
                   joined this bucket, most of it is not a merge at all. */}
               {counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''} ·{' '}
@@ -296,17 +351,28 @@ export default function DecisionInboxPage() {
         </span>
       </div>
 
-      {/* The fourth queue renders instead of the draft list, not beside it:
-          it is a different queue, not a filter on the same one. Everything
-          above stays — the header, the L3 chip and the View segment belong to
-          the page rather than to one of its views. */}
-      {view === 'proposals' ? (
-        <ProposalsView />
-      ) : (
-      <>
+      {/* A thin proposal is not a card: it has not argued anything yet, and
+          asking about it would be asking a question the sample cannot answer.
+          Named on one strip so it is visible as measured-but-not-yet-arguing
+          rather than absent. */}
+      {thin.length > 0 && view !== 'briefings' && (dest === 'any' || dest === 'rules') ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.5 text-dense-meta">
+          <StatusLamp lamp="gray" variant="dot" title="Measured, not yet arguing" />
+          <span className={cn(positionsUi.mono, 'font-semibold')}>
+            {thin.map((p) => `${p.title} · n ${p.n}`).join(' · ')}
+          </span>
+          <span className="min-w-0 text-muted-foreground">
+            measured on too few trades to argue a rule. Not a card until the sample is.
+          </span>
+          <Link to="/review/habits" className="ml-auto shrink-0 text-dense-micro text-primary hover:underline">
+            Habits →
+          </Link>
+        </div>
+      ) : null}
+
       {/* Until it is read: the strip exists to say the digest is waiting, and a read digest is not.
           Neutral, not a hue: classification is not colour (§7 / Design 09-13 ④). */}
-      {digest && !read.has(digest.id) && view !== 'briefings' && narrow === 'any' ? (
+      {digest && !read.has(digest.id) && view !== 'briefings' && dest === 'any' ? (
         <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-secondary/40 px-3 py-1.5 text-dense-meta">
           <span className="font-medium">
             {typeof digest.payload.title === 'string' ? digest.payload.title : 'Daily digest'}
@@ -332,19 +398,19 @@ export default function DecisionInboxPage() {
         <ResearchAuthGap error={query.error} />
       ) : query.isLoading ? (
         <Skeleton className="h-48 w-full rounded-md" />
-      ) : rows.length === 0 ? (
+      ) : rows.length === 0 && shownRules.length === 0 ? (
         <EmptyState
           icon={<Inbox />}
-          title={view === 'decisions' && narrow === 'any' ? 'Nothing needs a call' : 'Nothing waiting'}
+          title={view === 'decisions' && dest === 'any' ? 'Nothing needs a call' : 'Nothing waiting'}
           description={
-            view === 'decisions' && narrow === 'any' && counts.briefings > 0
-              ? `No draft needs a call. ${counts.briefings} agent briefing${counts.briefings === 1 ? '' : 's'} waiting under Briefings.`
-              : narrow !== 'any'
-                ? `No pending ${narrowLabel.toLowerCase()}.`
+            dest !== 'any'
+              ? `Nothing pending that writes to ${WRITES_TO_LABEL[dest]}.`
+              : view === 'decisions' && counts.briefings > 0
+                ? `No draft needs a call. ${counts.briefings} agent briefing${counts.briefings === 1 ? '' : 's'} waiting under Briefings.`
                 : 'Every decision draft has a verdict. Approved ones are in The Book; the leash accepted the rest on its own.'
           }
           action={
-            view === 'decisions' && narrow === 'any' && counts.briefings > 0 ? (
+            view === 'decisions' && dest === 'any' && counts.briefings > 0 ? (
               <Button type="button" size="sm" variant="outline" onClick={() => setView('briefings')}>
                 Read briefings
               </Button>
@@ -362,6 +428,16 @@ export default function DecisionInboxPage() {
         // Gap is 4, not 2: at 2 the space between two decisions matched the
         // space between a card's own lines, so eleven cards read as one wall.
         <div className="space-y-4">
+          {shownRules.map((p) => (
+            <RuleProposalCard
+              key={p.key}
+              proposal={p}
+              expanded={(openId ?? firstCardId) === `rule:${p.key}`}
+              onToggle={() =>
+                setOpenId((openId ?? firstCardId) === `rule:${p.key}` ? '' : `rule:${p.key}`)
+              }
+            />
+          ))}
           {groups.map(({ draft, superseded }) => {
             // A card that would write nothing on Approve keeps its content and
             // its colour, at lower weight — the calls that matter sit forward,
@@ -371,6 +447,12 @@ export default function DecisionInboxPage() {
               <div key={draft.id} className="space-y-1">
                 <DraftCard
                   draft={draft}
+                  expanded={(openId ?? firstCardId) === `draft:${draft.id}`}
+                  onToggle={() =>
+                    setOpenId(
+                      (openId ?? firstCardId) === `draft:${draft.id}` ? '' : `draft:${draft.id}`,
+                    )
+                  }
                   hypothesisTitle={titleById.get(draftParentId(draft) ?? '') ?? null}
                   muted={!actionable}
                   approving={approve.isPending && approve.variables === draft.id}
@@ -425,8 +507,6 @@ export default function DecisionInboxPage() {
         <LeashPanel />
       </div>
       </div>
-      </>
-      )}
     </PageShell>
   )
 }

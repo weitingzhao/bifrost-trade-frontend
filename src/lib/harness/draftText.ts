@@ -18,7 +18,11 @@ export function draftKindLabel(kind: string): string {
   if (kind === 'eod_verdict') return 'EOD'
   if (kind === 'hypothesis_suggestion') return 'Suggestion'
   if (kind === 'candidate_batch') return 'Candidate Batch'
-  if (kind === 'policy_suggestion') return 'Policy Suggestion'
+  // `rule`, not `Policy Suggestion` (design Rev 2026-09-23.1): the engine's
+  // rule-keeper and a Review proposal write to the same place, and two labels
+  // for one consequence say they are different things. The tag was already
+  // warning on both, which is the colour saying what the words did not.
+  if (kind === 'policy_suggestion') return 'rule'
   // The decision kinds the card used to print as snake_case. The Desk's queue
   // put them in a column called Kind, where `decision_draft` read as a bug.
   if (kind === 'decision_draft') return 'Decision'

@@ -108,6 +108,8 @@ export function DraftCard({
   onToggleRead,
   className,
   hypothesisTitle,
+  expanded = true,
+  onToggle,
 }: {
   draft: AiDraft
   /**
@@ -122,6 +124,18 @@ export function DraftCard({
   onDismiss: () => void
   /** Same hue, lower weight — for a draft whose Approve would write nothing. */
   muted?: boolean
+  /**
+   * Folded to its header line (design Rev 2026-09-23.1). A queue where every
+   * card is open is a page to scroll past; folded, the header is what a reader
+   * chooses from. A folded card carries no Approve on purpose — you have to
+   * have looked at the evidence to accept it, which is the same reason a
+   * briefing has no Approve at all.
+   *
+   * Defaults to open, so the two callers that show one card at a time are
+   * unchanged by the accordion the queue needs.
+   */
+  expanded?: boolean
+  onToggle?: () => void
   /** Marked read by this viewer. Briefings only; a decision is answered, not read. */
   read?: boolean
   /** Given, the card offers "Mark read" / undo. */
@@ -203,7 +217,24 @@ export function DraftCard({
         tags — six blocks before any content, in five type sizes. Kind and title
         read left, provenance sits right where it stops competing.
       */}
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+      <div
+        className={cn('flex flex-wrap items-baseline gap-x-2 gap-y-0.5', onToggle ? 'cursor-pointer' : '')}
+        role={onToggle ? 'button' : undefined}
+        tabIndex={onToggle ? 0 : undefined}
+        aria-expanded={onToggle ? expanded : undefined}
+        title={onToggle ? (expanded ? 'Fold' : 'Open this card') : undefined}
+        onClick={onToggle}
+        onKeyDown={
+          onToggle
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onToggle()
+                }
+              }
+            : undefined
+        }
+      >
         <DenseTag variant={KIND_VARIANT[draft.kind] ?? 'category'} size="cell">
           {draftKindLabel(draft.kind)}
         </DenseTag>
@@ -249,6 +280,8 @@ export function DraftCard({
         ) : null}
       </div>
 
+      {expanded ? (
+        <>
       {filedSymbols.length > 0 || filedTags.length > 0 ? (
         <div className="flex flex-wrap items-center gap-1">
           {filedSymbols.map((sym) => (
@@ -415,6 +448,8 @@ export function DraftCard({
           </span>
         )}
       </div>
+        </>
+      ) : null}
     </div>
   )
 }

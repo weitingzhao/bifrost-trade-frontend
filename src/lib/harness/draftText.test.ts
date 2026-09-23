@@ -5,7 +5,7 @@ import { APPROVE_WRITES_KINDS, isDecisionKind } from './harnessDraftHelpers'
 describe('draftKindLabel', () => {
   it('names the kinds it models and passes the rest through', () => {
     expect(draftKindLabel('candidate_batch')).toBe('Candidate Batch')
-    expect(draftKindLabel('policy_suggestion')).toBe('Policy Suggestion')
+    expect(draftKindLabel('policy_suggestion')).toBe('rule')
     expect(draftKindLabel('decision_draft')).toBe('Decision')
     // `vehicle` since the design's Rev 2026-09-22.7 ruling — the card draws a
     // shape for expressing a belief, and it never reaches Trade.

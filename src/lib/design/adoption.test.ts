@@ -733,3 +733,31 @@ describe('adoptionGroupOf', () => {
     expect(adoptionGroupOf(risk!)).toBe('Risk')
   })
 })
+
+describe('the build list is not one kind of work', () => {
+  it('carries a recommendation on each `/docs/*` prototype, and rules on none', () => {
+    // Ten of them went in undifferentiated. Six document the design process
+    // rather than this app; four are references about the app and belong
+    // beside the ones the Reference fold already carries. The note is the
+    // whole change — the state and the counts do not move, because absence
+    // from the design is not deletion and this side reports rather than rules
+    // (Owner, 2026-09-18).
+    const docs = adoptionRows().filter(
+      (r) => r.state === 'unbuilt' && r.path.startsWith('/docs/'),
+    )
+    expect(docs).toHaveLength(10)
+    expect(docs.every((r) => (r.note ?? '').startsWith('Recommend:'))).toBe(true)
+    const build = docs.filter((r) => r.note!.startsWith('Recommend: build'))
+    expect(build.map((r) => r.path).sort()).toEqual([
+      '/docs/capability',
+      '/docs/drilldown',
+      '/docs/options-kit',
+      '/docs/research-vision',
+    ])
+    // Every "not this app" says which instrument already answers it, so the
+    // recommendation can be argued with rather than just read.
+    for (const r of docs.filter((x) => x.note!.startsWith('Recommend: not'))) {
+      expect(r.note, r.path).toMatch(/Owner to rule\.$/)
+    }
+  })
+})

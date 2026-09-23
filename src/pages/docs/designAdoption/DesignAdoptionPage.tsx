@@ -115,9 +115,15 @@ function leftLabel(byState: Record<AdoptionState, number>): string {
 
 function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
   const [open, setOpen] = useState<string | null>(null)
-  const showsFile = state === 'unbuilt'
+  // `unbuilt` shows the prototype file rather than a walk note, because there
+  // is no walk. It can still carry a recommendation about whether this app
+  // should have the page at all, and when it does, that is the thing to read —
+  // the file name is in the page label already.
+  const isUnbuilt = state === 'unbuilt'
+  const hasNotes = state !== 'backlog'
   const showsApp = state === 'backlog'
-  const hasNotes = !showsFile && !showsApp
+  /** `unbuilt` has no walk and therefore no rev to stamp. */
+  const showsRev = hasNotes && !isUnbuilt
   return (
     <DenseDataTable>
       {/* The table lays out fixed, so the narrow columns are sized here and the
@@ -126,7 +132,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
         {hasNotes ? <col style={{ width: 34 }} /> : null}
         <col style={{ width: 260 }} />
         <col style={{ width: 240 }} />
-        {hasNotes ? <col style={{ width: 96 }} /> : null}
+        {showsRev ? <col style={{ width: 96 }} /> : null}
         <col />
       </colgroup>
       <DenseTableHeader>
@@ -134,8 +140,10 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
           {hasNotes ? <DenseTableHead aria-label="Open the walk note" /> : null}
           <DenseTableHead className="whitespace-nowrap">Page</DenseTableHead>
           <DenseTableHead className="whitespace-nowrap">Route</DenseTableHead>
-          {hasNotes ? <DenseTableHead className="whitespace-nowrap">Rev</DenseTableHead> : null}
-          <DenseTableHead>{showsFile ? 'Prototype' : showsApp ? 'App' : 'Note'}</DenseTableHead>
+          {showsRev ? <DenseTableHead className="whitespace-nowrap">Rev</DenseTableHead> : null}
+          <DenseTableHead>
+            {showsApp ? 'App' : isUnbuilt ? 'Prototype · recommendation' : 'Note'}
+          </DenseTableHead>
         </DenseTableHeadRow>
       </DenseTableHeader>
       <DenseTableBody>
@@ -181,7 +189,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
                   </div>
                 ) : null}
               </DenseTableCell>
-              {hasNotes ? (
+              {showsRev ? (
                 <DenseTableCell className="whitespace-nowrap font-mono text-dense-caption text-muted-foreground">
                   {r.rev ?? '—'}
                 </DenseTableCell>
@@ -189,7 +197,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
               {/* `max-w-0` with `w-full` is what lets a truncating cell stop
                   contributing its full text to an auto table's column widths. */}
               <DenseTableCell className="max-w-0 text-muted-foreground">
-                {showsFile ? (
+                {isUnbuilt && !r.note ? (
                   <span className="font-mono text-dense-caption">{r.design?.file}</span>
                 ) : showsApp ? (
                   <span className="text-dense-caption">{r.inApp ? 'page here' : 'no page here'}</span>
@@ -212,7 +220,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
             </DenseTableRow>,
             expanded && r.note ? (
               <DenseTableRow key={`${r.path}:note`}>
-                <DenseTableCell colSpan={5} className="bg-[var(--sk-raised2)]">
+                <DenseTableCell colSpan={showsRev ? 5 : 4} className="bg-[var(--sk-raised2)]">
                   <p className="m-0 max-w-[110ch] py-1 text-dense-caption leading-normal text-secondary-foreground text-pretty">
                     {r.note}
                   </p>

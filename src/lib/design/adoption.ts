@@ -96,6 +96,46 @@ const PARAM_COVERED: Record<string, string> = {
   '/research/loop/runs': '/research/loop/runs/:runId',
 }
 
+
+/**
+ * What this side recommends for a design page it has not built.
+ *
+ * `unbuilt` says the app has no page; it does not say whether it should. Ten
+ * `/docs/*` prototypes went into the build list undifferentiated, and six of
+ * them document the *design process* rather than this app — a changelog of the
+ * package, an index of its own prototypes, the layout spec the app was built
+ * to. Building those here would put a second, hand-written copy of something
+ * the app already answers from live data, or a specification inside the thing
+ * it specifies.
+ *
+ * These are **recommendations, not rulings** (Owner's rule, 2026-09-18:
+ * absence from the design is not deletion, and the Agent reports rather than
+ * decides). The state is untouched and the counts do not move; the note is
+ * what changes, so the list stops presenting ten rows as one kind of work.
+ */
+const UNBUILT_JUDGEMENT: Record<string, string> = {
+  '/docs/index':
+    'Recommend: not this app. 「设计产出索引」 is a one-line summary per prototype — an index of the design package. Design Adoption already lists all of the design\'s routes with their state, generated from both registries so it cannot drift from either; a hand-written index is a second list that can. Owner to rule.',
+  '/docs/progress':
+    'Recommend: not this app. 「设计进展报告」 is dated notes on the design\'s own revisions (2026-09-16 重做, 09-18 …) — a changelog of the package, which belongs with the package. Owner to rule.',
+  '/docs/gaps':
+    'Recommend: not this app. 「原型覆盖缺口」 lists the app pages the prototypes do not cover — which is exactly what this tracker\'s "to ask" answers, from live data rather than by hand. Two answers to one question, one of them stale by construction. Owner to rule.',
+  '/docs/layout':
+    'Recommend: not this app. 「布局重构 · 修订版」 is the Shell Spec\'s layout map — the specification the shell was built to. A specification rendered inside the thing it specifies cannot be checked against it; `shellChrome.ts` and the layout tests are where it is enforced. Owner to rule.',
+  '/docs/research-menu':
+    'Recommend: not this app. 「Research 菜单 · 四棵树」 is the nav specification. `routeRegistry.ts` and `researchNavCatalog.ts` are this side\'s authority for the menu and `navConfig.test.ts` enforces it, so a page describing the menu would be a third copy that can disagree with the menu itself. Owner to rule.',
+  '/docs/audit':
+    'Recommend: not this app. 「UI 能力盘点与 ROI 判断」 is a one-time analysis made to decide what to build — a planning artifact, not a reference a reader returns to. Its conclusions are already in the design\'s own revisions. Owner to rule.',
+  '/docs/options-kit':
+    'Recommend: build. "Dense UI · Options & Quant extension — each block shows the rendered primitive and where it lands in bifrost-ui/src" is the same kind of page as `/docs/ui-design-system`, which this app already carries and which runs to a thousand lines. This is its options half, and a component gallery is only useful beside the code it documents. The most valuable of the ten.',
+  '/docs/capability':
+    'Recommend: build. 「业务能力地图 · 量化交易员视角」 says what the system can do, in the six stages a trader works through. It is about this app rather than about the design, and the Reference fold already carries that kind.',
+  '/docs/drilldown':
+    'Recommend: build. "Drill-down · one join across the app" is an interactive statement of how one entity drills across pages — a contract the app\'s links must honour. The 2026-09-22 walks found four pages carrying no destination at all, so a page that states the join has teeth here.',
+  '/docs/research-vision':
+    'Recommend: build. Research Vision §8 (the artifact-anchored Copilot and the dial over the three operators) is the sibling of Research Blueprint and Research Calibration, both of which this app already carries under Reference.',
+}
+
 /**
  * Design routes the app answers with a redirect, grouped by where they land.
  *
@@ -198,6 +238,7 @@ export function adoptionRows(): AdoptionRow[] {
       crumbs: d.crumbs,
       state: d.designed ? 'unbuilt' : 'backlog',
       design: d,
+      note: UNBUILT_JUDGEMENT[d.path],
       inApp: false,
     })
   }

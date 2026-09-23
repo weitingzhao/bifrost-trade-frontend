@@ -171,7 +171,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
                     <Link
                       to={r.openAt ?? r.path}
                       className="text-link hover:underline"
-                      title={r.openAt ? `${r.path} is a design fixture id — opens ${r.openAt}, which lists the real ones` : undefined}
+                      title={r.openWhy}
                     >
                       {trail(r)}
                     </Link>
@@ -189,7 +189,12 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
                 ) : null}
               </DenseTableCell>
               <DenseTableCell className="max-w-0 truncate whitespace-nowrap">
-                <div className="truncate font-mono text-dense-caption text-muted-foreground">{r.path}</div>
+                <div className="truncate font-mono text-dense-caption text-muted-foreground">
+                  {r.path}
+                  {/* Two param rows open the same page; the route that answers
+                      each one is what tells them apart. */}
+                  {r.via ? <span className="text-muted-foreground/60"> → {r.via}</span> : null}
+                </div>
                 {r.aliasOf?.length ? (
                   <div className="text-dense-caption text-muted-foreground">
                     also answers {r.aliasOf.join(', ')}

@@ -76,6 +76,8 @@ export interface AdoptionRow {
    * page that lists the real ones is openable, so the link goes there.
    */
   openAt?: string
+  /** Why `openAt` is not this row's own path. */
+  openWhy?: string
   /** Whether the app has a page at this path (false for rows only the design has). */
   inApp: boolean
 }
@@ -106,12 +108,24 @@ const PARAM_COVERED: Record<string, string> = {
 }
 
 /**
- * Where a `:param` route is picked from. Both of ours are picked on the
- * Autopilot console: it lists the objectives and, under one, its runs.
+ * Where a `:param` route is opened from, and why that is the same page twice.
+ *
+ * The Autopilot console lists the objectives, and a run is not a page you
+ * navigate to at all: the design files `/research/loop/runs` as a stem whose
+ * per-run form is `?run=` — "the pipeline drawer" — and this side answers it
+ * the same way, with the console opening the run as a surface in place. So two
+ * rows share one link honestly, and each says which route answers it rather
+ * than looking like a duplicate (the Owner asked, 2026-09-23).
  */
-const PARAM_PICKER: Record<string, string> = {
-  '/research/loop/objectives/:objectiveId': '/research/loop/harness',
-  '/research/loop/runs/:runId': '/research/loop/harness',
+const PARAM_PICKER: Record<string, { to: string; why: string }> = {
+  '/research/loop/objectives/:objectiveId': {
+    to: '/research/loop/harness',
+    why: 'a fixture id the store does not hold — opens the console, which lists the real objectives',
+  },
+  '/research/loop/runs/:runId': {
+    to: '/research/loop/harness',
+    why: 'a run is a surface, not a page — opens the console, where picking a run opens it in place',
+  },
 }
 
 
@@ -246,7 +260,8 @@ export function adoptionRows(): AdoptionRow[] {
         rev: viaRoute.design?.rev,
         note: viaRoute.design?.note,
         via,
-        openAt: PARAM_PICKER[via],
+        openAt: PARAM_PICKER[via]?.to,
+        openWhy: PARAM_PICKER[via]?.why,
         inApp: true,
       })
       continue

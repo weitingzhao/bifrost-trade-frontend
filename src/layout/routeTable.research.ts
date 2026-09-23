@@ -37,7 +37,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Research',
     crumbs: [],
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-22.2',
       note: DESIGN_NOTES['/research/overview'],
     },
@@ -187,7 +187,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // morning's reading of the book, and the per-symbol dashboard it used to
     // be is the Symbol page's six faces.
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-17.1',
       note: DESIGN_NOTES['/research/daily-brief'],
     },
@@ -428,7 +428,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Alerts',
     crumbs: MARKET,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.16',
       note: DESIGN_NOTES['/research/event-radar'],
     },

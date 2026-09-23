@@ -220,8 +220,17 @@ describe('design adoption', () => {
     // and all three left the sum for `reviewing` rather than sitting in
     // `stale`, which is why aligned falls 42→39 while stale stays empty:
     // nothing here is owed work, only a look.
-    expect(counts.aligned + counts.byState.stale).toBe(39)
-    expect(counts.aligned).toBe(39)
+    //
+    // The Owner walked the three faces that were one page short each,
+    // 2026-09-22: Positions and the Watchlist signed off (39→41), which closes
+    // Portfolio at ten of ten and The Book at four of four. The same look put
+    // the Decision Inbox back in the queue (41→40): it had been signed off
+    // 2026-09-21 and re-walked, and the Owner's reading is that the page still
+    // does not match — the card bodies have the design's shape and not its
+    // readings. Only the Owner's look puts a page in place, and the same rule
+    // takes one back out.
+    expect(counts.aligned + counts.byState.stale).toBe(40)
+    expect(counts.aligned).toBe(40)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -418,8 +427,10 @@ describe('design adoption', () => {
     // System Status — the first of the build list rather than the walk list,
     // and the design's collapse target for the nine `/system/*` pages. 24 with
     // Settings, the collapse's other half — `/settings` had been redirecting
-    // to the Coverage page the same ruling retired.
-    expect(counts.byState.reviewing).toBe(24)
+    // to the Coverage page the same ruling retired. 23 on 2026-09-22: the
+    // Owner's walk took Positions and the Watchlist out to `aligned` and put
+    // the Decision Inbox back in, which is two out and one in.
+    expect(counts.byState.reviewing).toBe(23)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -435,20 +446,18 @@ describe('design adoption', () => {
       '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
+      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/book',
       '/research/copilot/trading',
       '/research/journal',
       '/research/loop/candidates',
-      '/research/loop/decisions',
       '/research/loop/hypotheses',
       '/research/orchestration',
       '/research/ratings/stocks',
       '/research/screener',
-      // All three layer heads §5a.1 moved are back on this list, re-walked
-      // against .23 and signed off together: `/research/overview`, `/review`
-      // and `/trade/desk`.
+      '/research/watchlist',
       '/review',
       '/review/fit',
       '/review/habits',
@@ -473,13 +482,13 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/market/live',
-      '/portfolio/positions',
       '/research/contract-screener',
       '/research/copilot',
       '/research/daily-brief',
       '/research/event-radar',
       '/research/greeks',
       '/research/lens-coverage',
+      '/research/loop/decisions',
       '/research/loop/harness',
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
@@ -491,7 +500,6 @@ describe('design adoption', () => {
       '/research/signal-decay',
       '/research/signal-health',
       '/research/symbol',
-      '/research/watchlist',
       '/research/workbench',
       '/review/proposals',
       '/settings',
@@ -687,10 +695,10 @@ describe('adoptionByGroup', () => {
     // ten of ten, with nothing left waiting on a look.
     // Positions went stale in Package 2026-09-22.3 — still walked, still
     // built, its Ask owed a destination — and left `stale` for `reviewing`
-    // the same day the Thread became a surface and the Ask got one. One left
-    // to answer, and it is the Owner's look rather than any work.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
-    expect(portfolio?.byState.reviewing).toBe(1)
+    // the same day the Thread became a surface and the Ask got one. The Owner
+    // answered it 2026-09-22 and the group is whole again at ten of ten.
+    expect(portfolio).toMatchObject({ total: 10, aligned: 10, left: 0 })
+    expect(portfolio?.byState.reviewing).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

@@ -170,7 +170,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // own conversation aside — which this side never grew: the Desk is a
       // page and the Thread is the shell's surface, which is exactly the two
       // avatars the design arrived at.
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-22.6',
       note: DESIGN_NOTES['/research/copilot'],
     },
@@ -255,7 +255,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     scope: 'contract',
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.10',
       note: DESIGN_NOTES['/research/scan'],
     },
@@ -288,7 +288,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // rev is the package's own label at the walk; the design did not bump it
     // for the 2026-09-13 and 2026-09-14 rounds.
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/symbol'],
     },
@@ -300,7 +300,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Signal Decay',
     crumbs: VALIDATE,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-17.1',
       note: DESIGN_NOTES['/research/signal-decay'],
     },

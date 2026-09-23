@@ -229,8 +229,13 @@ describe('design adoption', () => {
     // does not match — the card bodies have the design's shape and not its
     // readings. Only the Owner's look puts a page in place, and the same rule
     // takes one back out.
-    expect(counts.aligned + counts.byState.stale).toBe(40)
-    expect(counts.aligned).toBe(40)
+    //
+    // 2026-09-23, the first pass through the confirm queue rather than through
+    // a group: Symbol, Copilot, Vol ratings and Signal Decay signed off
+    // (40→44). They are four of Research's eight, and the first time the
+    // Owner has cleared rows by reading the queue itself.
+    expect(counts.aligned + counts.byState.stale).toBe(44)
+    expect(counts.aligned).toBe(44)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -429,8 +434,9 @@ describe('design adoption', () => {
     // Settings, the collapse's other half — `/settings` had been redirecting
     // to the Coverage page the same ruling retired. 23 on 2026-09-22: the
     // Owner's walk took Positions and the Watchlist out to `aligned` and put
-    // the Decision Inbox back in, which is two out and one in.
-    expect(counts.byState.reviewing).toBe(23)
+    // the Decision Inbox back in, which is two out and one in. 19 on
+    // 2026-09-23 with the four Research sign-offs.
+    expect(counts.byState.reviewing).toBe(19)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -450,13 +456,17 @@ describe('design adoption', () => {
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/book',
+      '/research/copilot',
       '/research/copilot/trading',
       '/research/journal',
       '/research/loop/candidates',
       '/research/loop/hypotheses',
       '/research/orchestration',
       '/research/ratings/stocks',
+      '/research/scan',
       '/research/screener',
+      '/research/signal-decay',
+      '/research/symbol',
       '/research/watchlist',
       '/review',
       '/review/fit',
@@ -483,7 +493,6 @@ describe('design adoption', () => {
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/market/live',
       '/research/contract-screener',
-      '/research/copilot',
       '/research/daily-brief',
       '/research/event-radar',
       '/research/greeks',
@@ -496,10 +505,7 @@ describe('design adoption', () => {
       '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
       '/research/overview',
-      '/research/scan',
-      '/research/signal-decay',
       '/research/signal-health',
-      '/research/symbol',
       '/research/workbench',
       '/review/proposals',
       '/settings',

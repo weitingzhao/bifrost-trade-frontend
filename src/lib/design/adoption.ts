@@ -67,6 +67,15 @@ export interface AdoptionRow {
   aliasOf?: readonly string[]
   /** The app's `:param` route that answers this design fixture row. */
   via?: string
+  /**
+   * Where to open a `via` row. The design's fixture path is not a URL on this
+   * side — `/research/loop/objectives/obj-daily-stock` reaches the built page
+   * and is told there is no such objective, and `/research/loop/runs` has no
+   * route at all and falls to the catch-all. Linking the fixture path made
+   * five rows the Owner could not open to confirm (found 2026-09-23). The
+   * page that lists the real ones is openable, so the link goes there.
+   */
+  openAt?: string
   /** Whether the app has a page at this path (false for rows only the design has). */
   inApp: boolean
 }
@@ -94,6 +103,15 @@ const PARAM_COVERED: Record<string, string> = {
   '/research/loop/objectives/obj-smallcap-sepa': '/research/loop/objectives/:objectiveId',
   '/research/loop/objectives/obj-vol-crush': '/research/loop/objectives/:objectiveId',
   '/research/loop/runs': '/research/loop/runs/:runId',
+}
+
+/**
+ * Where a `:param` route is picked from. Both of ours are picked on the
+ * Autopilot console: it lists the objectives and, under one, its runs.
+ */
+const PARAM_PICKER: Record<string, string> = {
+  '/research/loop/objectives/:objectiveId': '/research/loop/harness',
+  '/research/loop/runs/:runId': '/research/loop/harness',
 }
 
 
@@ -228,6 +246,7 @@ export function adoptionRows(): AdoptionRow[] {
         rev: viaRoute.design?.rev,
         note: viaRoute.design?.note,
         via,
+        openAt: PARAM_PICKER[via],
         inApp: true,
       })
       continue

@@ -165,7 +165,14 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
               <DenseTableCell className="max-w-0 truncate whitespace-nowrap">
                 <span className="mr-2">
                   {r.inApp ? (
-                    <Link to={r.path} className="text-link hover:underline">
+                    /* A `via` row's own path is the design's fixture id, which
+                       does not open here; the link goes to where the real ones
+                       are picked. */
+                    <Link
+                      to={r.openAt ?? r.path}
+                      className="text-link hover:underline"
+                      title={r.openAt ? `${r.path} is a design fixture id — opens ${r.openAt}, which lists the real ones` : undefined}
+                    >
                       {trail(r)}
                     </Link>
                   ) : (

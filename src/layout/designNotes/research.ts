@@ -103,7 +103,7 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'Owner signed off 2026-09-21. Stamped at Rev 2026-09-21.1 rather than the .20 this was walked '
     + 'against: Package 2026-09-21.4 moved all three Copilot rows\u2019 rev while changing only the '
     + 'Personas face \u2014 Today and Threads are untouched at .1, so the walk holds and the page would '
-    + 'otherwise read stale the moment the snapshot was regenerated.',
+    + 'otherwise read stale the moment the snapshot was regenerated. Owner signed off 2026-09-23 on local DEV (:5173) at this rev.',
   '/research/copilot/trading':
     'Walked 2026-09-15 against Research Copilot.dc.html (The book / all starters). The page is the prompt catalogue; the dock The book group uses the same TRADE_QUESTIONS (C2-c). Owner signed off on STG 2026-09-15 after L1/L2.'
     + ' '

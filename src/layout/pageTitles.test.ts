@@ -39,6 +39,9 @@ const TITLE_MAY_DIFFER: Record<string, string> = {
   // §5a.8: Rule proposals merged into the Decision Inbox as its fourth view.
   // Same shape as the census alias — the route names the queue, the h1 names
   // the page that holds it.
+  // The Owner asked for both names on that view (2026-09-23), so the h1 is
+  // `Decision Inbox · Rule proposals` — it carries the row's name and the
+  // page's, which is why this is still an exemption rather than agreement.
   '/review/proposals': 'a deep-link alias onto the Decision Inbox’s Proposals view',
 }
 
@@ -69,7 +72,7 @@ function resolve(importPath: string): string | null {
  * ran past a JSX title into a later literal two panels down, which reported
  * drift on a page that had none.
  */
-function literalPageTitle(src: string): string | null {
+function literalPageTitle(src: string): string[] | null {
   const start = src.indexOf('<PageHeader')
   if (start < 0) return null
   let depth = 0
@@ -91,7 +94,18 @@ function literalPageTitle(src: string): string | null {
     // pages whose own title is built at render time.
     if (!src.startsWith('title=', i)) continue
     const m = /^title=(?:"([^"]*)"|\{'([^']*)'\})/.exec(src.slice(i))
-    return m ? (m[1] ?? m[2] ?? '').trim() : null
+    if (m) return [(m[1] ?? m[2] ?? '').trim()]
+    // A page with more than one view heads itself differently on each, so its
+    // title is an expression rather than a literal. Returning null there drops
+    // the page out of this gate entirely — silently, and the exemption for it
+    // then looks like an exemption for a page nobody renders. Read every
+    // literal the expression can yield instead, and let the caller ask whether
+    // any of them is the name its row promised (2026-09-23).
+    // Only a one-line conditional between two string literals. A looser read
+    // walked into a `title={...}` holding a comment and reported its prose as
+    // the page's name, which is worse than reading nothing.
+    const expr = /^title=\{[^\n}]*\?\s*'([^']*)'\s*:\s*'([^']*)'\s*\}/.exec(src.slice(i))
+    return expr ? [expr[1].trim(), expr[2].trim()] : null
   }
   return null
 }
@@ -99,7 +113,8 @@ function literalPageTitle(src: string): string | null {
 interface Checked {
   path: string
   label: string
-  title: string
+  /** Every name this page can head itself with; one entry for a single-view page. */
+  titles: string[]
 }
 
 function checkedTitles(): Checked[] {
@@ -110,9 +125,9 @@ function checkedTitles(): Checked[] {
     if (!imported) continue
     const file = resolve(imported)
     if (!file) continue
-    const title = literalPageTitle(readFileSync(file, 'utf8'))
-    if (title == null) continue
-    out.push({ path: row.path, label: row.label, title })
+    const titles = literalPageTitle(readFileSync(file, 'utf8'))
+    if (titles == null) continue
+    out.push({ path: row.path, label: row.label, titles })
   }
   return out
 }
@@ -128,8 +143,8 @@ describe('a page is headed by the name its menu row promised (§5a.5)', () => {
 
   it('finds no page headed by a name other than its label', () => {
     const drift = rows
-      .filter((r) => r.title !== r.label && TITLE_MAY_DIFFER[r.path] == null)
-      .map((r) => `${r.path}: menu says "${r.label}", page says "${r.title}"`)
+      .filter((r) => !r.titles.includes(r.label) && TITLE_MAY_DIFFER[r.path] == null)
+      .map((r) => `${r.path}: menu says "${r.label}", page says "${r.titles.join('" / "')}"`)
     expect(drift).toEqual([])
   })
 
@@ -142,7 +157,7 @@ describe('a page is headed by the name its menu row promised (§5a.5)', () => {
   it('holds no exemption for a page that already agrees with its label', () => {
     // When the design settles those two names, this fails and the exemption
     // has to go — which is how a temporary allowance stays temporary.
-    const agreeing = rows.filter((r) => TITLE_MAY_DIFFER[r.path] != null && r.title === r.label)
+    const agreeing = rows.filter((r) => TITLE_MAY_DIFFER[r.path] != null && r.titles.includes(r.label))
     expect(agreeing.map((r) => r.path)).toEqual([])
   })
 })

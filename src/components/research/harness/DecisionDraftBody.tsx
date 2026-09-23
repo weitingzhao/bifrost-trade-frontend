@@ -10,6 +10,7 @@
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { decisionDraftView } from '@/lib/harness/decisionDraft'
+import { cn } from '@/lib/utils'
 
 export function DecisionDraftBody({ payload }: { payload: Record<string, unknown> }) {
   const v = decisionDraftView(payload)
@@ -50,7 +51,17 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
       ) : null}
 
       {v.invalidation.length > 0 || v.caveats.length > 0 ? (
-        <div className="grid gap-x-6 gap-y-2 md:grid-cols-2">
+        // Two columns only when both are there. Measured on DEV 2026-09-22:
+        // four of the six pending decision drafts carry invalidation and no
+        // caveats, and the other two carry neither — so the pair has never once
+        // filled this grid, and every card that drew it wrapped a half-width
+        // list beside an empty half.
+        <div
+          className={cn(
+            'grid gap-x-6 gap-y-2',
+            v.invalidation.length > 0 && v.caveats.length > 0 ? 'md:grid-cols-2' : '',
+          )}
+        >
           {v.invalidation.length > 0 ? (
             <div>
               <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Wrong if</div>

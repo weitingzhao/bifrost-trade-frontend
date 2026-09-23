@@ -7,10 +7,42 @@
  * order (D10). The sizing text mentions NetLiq because the curator reasons in
  * it, not because anything will act on it.
  */
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { decisionDraftView } from '@/lib/harness/decisionDraft'
 import { cn } from '@/lib/utils'
+
+/**
+ * The curator's argument, clamped rather than scrolled.
+ *
+ * It ran 769–1254 characters on DEV and used to sit in a 160px scroll area
+ * inside a card that has no height of its own — a second scrollbar for one
+ * paragraph. The design's answer (Rev 2026-09-22.7) is three lines and a
+ * `Read all` that grows the card, and it is deliberately not remembered: the
+ * queue is read top to bottom, and a card that stayed open from yesterday
+ * pushes the next call off the screen.
+ */
+function Rationale({ text }: { text: string }) {
+  const [full, setFull] = useState(false)
+  return (
+    <div className="space-y-0.5">
+      <p
+        className={cn('max-w-prose whitespace-pre-line text-foreground/85', full ? '' : 'overflow-hidden')}
+        style={full ? undefined : { maxHeight: '4.5em' }}
+      >
+        {text}
+      </p>
+      <button
+        type="button"
+        onClick={() => setFull((v) => !v)}
+        className="text-dense-micro text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+      >
+        {full ? 'Collapse' : `Read all · ${text.length.toLocaleString('en-US')} chars`}
+      </button>
+    </div>
+  )
+}
 
 export function DecisionDraftBody({ payload }: { payload: Record<string, unknown> }) {
   const v = decisionDraftView(payload)
@@ -22,6 +54,10 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
         <DenseTag variant="neutral" size="cell" className="font-semibold">
           {v.verdict ?? 'none given'}
         </DenseTag>
+        {/* The verdict is two axes — an action and a condition — so it is not
+            coloured by strength; the gloss carries the half the slug cannot
+            (design Rev 2026-09-22.7). */}
+        {v.verdictGloss ? <span className="text-muted-foreground">{v.verdictGloss}</span> : null}
         {v.hypothesisId ? (
           <span className="min-w-0 text-dense-micro text-muted-foreground">
             on{' '}
@@ -39,18 +75,16 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
         </span>
       </div>
 
-      {v.levels.length > 0 ? (
-        <p className="font-mono text-dense-meta tabular-nums">
-          {v.levels.map((l, i) => (
-            <span key={`${l.label}-${i}`}>
-              {i > 0 ? <span className="text-muted-foreground"> · </span> : null}
-              <span className="text-muted-foreground">{l.label}</span> {l.value}
-            </span>
-          ))}
-        </p>
-      ) : null}
-
-      {v.invalidation.length > 0 || v.caveats.length > 0 ? (
+      {v.invalidation.length === 0 && v.caveats.length === 0 ? (
+        // A decision draft sometimes carries invalidation (four of six on DEV)
+        // and sometimes does not, so its absence is owed rather than a fact
+        // about this call — the design's rule for a field a kind *sometimes*
+        // has.
+        <div>
+          <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Wrong if</div>
+          <p className="text-muted-foreground">not stated · owed by the curator</p>
+        </div>
+      ) : (
         // Two columns only when both are there. Measured on DEV 2026-09-22:
         // four of the six pending decision drafts carry invalidation and no
         // caveats, and the other two carry neither — so the pair has never once
@@ -83,7 +117,22 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
             </div>
           ) : null}
         </div>
-      ) : null}
+      )}
+
+      {/* Key risk and the walls, in the design's order: what breaks it, then
+          the numbers it is read against. */}
+      <p>
+        <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">Key risk</span>{' '}
+        <span className={v.keyRisk === 'not stated' ? 'text-muted-foreground' : ''}>{v.keyRisk}</span>
+      </p>
+      <p className="font-mono text-dense-meta tabular-nums">
+        <span className={v.levelsLine === 'not stated' ? 'text-muted-foreground' : ''}>{v.levelsLine}</span>
+        {v.levels.map((l) => (
+          <span key={l.label}>
+            <span className="text-muted-foreground"> · {l.label}</span> {l.value}
+          </span>
+        ))}
+      </p>
 
       {v.sizingHeadline || v.sizing.length > 0 ? (
         <div className="space-y-0.5">
@@ -107,9 +156,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
         </div>
       ) : null}
 
-      {v.rationale ? (
-        <p className="max-h-40 max-w-prose overflow-y-auto whitespace-pre-line text-foreground/85">{v.rationale}</p>
-      ) : null}
+      {v.rationale ? <Rationale text={v.rationale} /> : null}
     </div>
   )
 }

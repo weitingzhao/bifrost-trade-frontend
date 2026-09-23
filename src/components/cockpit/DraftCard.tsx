@@ -46,6 +46,17 @@ import { cn } from '@/lib/utils'
  * cards it has, and giving the rest one by guess is the drift §7 was right
  * about.
  */
+/**
+ * The two kinds whose button says what it does instead of borrowing a word
+ * that means something else here (design Rev 2026-09-22.7).
+ *
+ * `Approve` everywhere else accepts a draft into The Book. On these two
+ * nothing is accepted and nothing is written — the button records the Owner's
+ * answer, and calling that "approve" is the one place this page could read as
+ * if a call reached Trade.
+ */
+const RECORD_ONLY_KINDS: ReadonlySet<string> = new Set(['decision_draft', 'order_intent'])
+
 const KIND_VARIANT: Record<string, DenseTagVariant> = {
   candidate_batch: 'info',
   hypothesis_suggestion: 'success',
@@ -115,6 +126,7 @@ export function DraftCard({
 }) {
   const busy = Boolean(approving || dismissing)
   const title = draftTitle(draft, hypothesisTitle)
+  const recordOnly = RECORD_ONLY_KINDS.has(draft.kind)
   const proposed =
     typeof draft.payload.proposed_status === 'string'
       ? draft.payload.proposed_status
@@ -321,7 +333,15 @@ export function DraftCard({
             onClick={onApprove}
           >
             <Check className="size-3.5" />
-            {approving ? 'Approving…' : effect ? `Approve → ${effect.label}` : 'Approve'}
+            {approving
+              ? recordOnly
+                ? 'Recording…'
+                : 'Approving…'
+              : recordOnly
+                ? 'Record answer'
+                : effect
+                  ? `Approve → ${effect.label}`
+                  : 'Approve'}
           </Button>
         )}
         <Button

@@ -39,8 +39,38 @@ export interface HintLine {
   value: string
 }
 
+/**
+ * What each verdict means, from the design's own table (Rev 2026-09-22.7).
+ *
+ * The verdict is not coloured by strength, and this is why: it is a word on
+ * two axes — an action and a condition — so a strength ramp would read
+ * `avoid_watch_only` as worse than `watch_only_no_entry` when neither writes
+ * anything and the difference is what to do, not how bad it is. The slug says
+ * the action; the gloss says the condition.
+ */
+export const VERDICT_GLOSS: Readonly<Record<string, string>> = {
+  no_new_action: 'nothing to do today; the hypothesis stays open',
+  watch_only_no_entry: 'watch it; do not enter',
+  watch_defined_risk_only: 'watch it; if entered, defined risk only',
+  avoid_watch_only: 'avoid; keep watching',
+  avoid_at_current_price_pullback_watch: 'avoid at this price; watch for a pullback',
+}
+
+/** The three walls, in the design's order, on one line beside each other. */
+const WALLS: readonly (readonly [string, string])[] = [
+  ['put_wall', 'PUT WALL'],
+  ['zero_gamma', 'ZERO Γ'],
+  ['call_wall', 'CALL WALL'],
+]
+
 export interface DecisionDraftView {
   verdict: string | null
+  /** One sentence for what the verdict asks, or null for a slug we do not know. */
+  verdictGloss: string | null
+  /** `PUT WALL 170 · ZERO Γ 176.5 · CALL WALL 185`, or `not stated`. */
+  levelsLine: string
+  /** The single risk sentence, or `not stated`. */
+  keyRisk: string
   hypothesisId: string | null
   rationale: string | null
   /** Stop, targets, levels and early trigger — the numbers, on one line. */
@@ -52,7 +82,7 @@ export interface DecisionDraftView {
   sizing: HintLine[]
 }
 
-const RISK_KNOWN = new Set(['stop', 'targets', 'levels', 'early_trigger', 'invalidation', 'caveats'])
+const RISK_KNOWN = new Set(['stop', 'targets', 'levels', 'reference_levels', 'early_trigger', 'invalidation', 'caveats'])
 const SIZING_HEADLINE = ['recommended', 'action', 'sizing'] as const
 const SIZING_ORDER = ['conditional', 'tranche', 'max_risk_pct_netliq', 'instrument', 'notional_note', 'notional', 'note']
 
@@ -60,16 +90,26 @@ export function decisionDraftView(payload: Rec): DecisionDraftView {
   const risk = isRec(payload.risk_hint) ? payload.risk_hint : {}
   const sizing = isRec(payload.sizing_hint) ? payload.sizing_hint : {}
 
+  // DEV writes the walls under `reference_levels`; the design's fixture calls
+  // the same object `levels`. Read both — one of them is the one this payload
+  // used, and guessing wrong printed `not stated` beside three walls that were
+  // right there.
+  const walls = isRec(risk.reference_levels) ? risk.reference_levels : isRec(risk.levels) ? risk.levels : {}
+  const wallParts = WALLS.filter(([k]) => walls[k] != null).map(([k, label]) => `${label} ${hintValue(walls[k])}`)
+
   const levels: HintLine[] = []
   if (risk.stop != null) levels.push({ label: 'stop', value: hintValue(risk.stop) })
   if (Array.isArray(risk.targets) && risk.targets.length > 0) levels.push({ label: 'targets', value: hintValue(risk.targets) })
-  if (isRec(risk.levels)) {
-    for (const [k, v] of Object.entries(risk.levels)) levels.push({ label: hintLabel(k), value: hintValue(v) })
+  // The three walls have their own line; anything else `levels` carries keeps
+  // the label/value list, so a key the design did not name is not dropped.
+  for (const [k, v] of Object.entries(walls)) {
+    if (WALLS.some(([wall]) => wall === k)) continue
+    levels.push({ label: hintLabel(k), value: hintValue(v) })
   }
   if (text(risk.early_trigger)) levels.push({ label: 'early trigger', value: text(risk.early_trigger)! })
 
   const riskOther = Object.entries(risk)
-    .filter(([k]) => !RISK_KNOWN.has(k))
+    .filter(([k]) => !RISK_KNOWN.has(k) && k !== 'key_risk')
     .map(([k, v]) => ({ label: hintLabel(k), value: hintValue(v) }))
 
   const headlineKey = SIZING_HEADLINE.find((k) => text(sizing[k]))
@@ -85,11 +125,18 @@ export function decisionDraftView(payload: Rec): DecisionDraftView {
     )
   }
   for (const [k, v] of Object.entries(sizing)) {
+    // 0 here is "size not decided", not a zero position, and a row reading
+    // `delta 0` says the opposite of what the curator meant.
+    if ((k === 'delta' || k === 'add_size') && v === 0) continue
     if (!seen.has(k)) sizingLines.push({ label: hintLabel(k), value: hintValue(v) })
   }
 
+  const verdict = text(payload.verdict)
   return {
-    verdict: text(payload.verdict),
+    verdict,
+    verdictGloss: (verdict && VERDICT_GLOSS[verdict]) || null,
+    levelsLine: wallParts.length > 0 ? wallParts.join(' · ') : 'not stated',
+    keyRisk: text(risk.key_risk) ?? 'not stated',
     hypothesisId: text(payload.hypothesis_id),
     rationale: text(payload.rationale),
     levels,

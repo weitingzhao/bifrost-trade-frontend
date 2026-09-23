@@ -705,7 +705,10 @@ describe('design adoption', () => {
     // all, and it moves two more signed pages by moving the menu rather than
     // the page: the left rail is where you stand, the right rail is what you
     // use beside it, and Live and Alerts are the second kind.
-    expect(DESIGN_REV).toBe('2026-09-23.7')
+    // Package 2026-09-23.4 @ Rev .8 moves one row's stamp: `/research/events`
+    // gains the Market face the Explorer walk's events board is waiting on.
+    // That page is `unbuilt` here, so no state moves with it.
+    expect(DESIGN_REV).toBe('2026-09-23.8')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

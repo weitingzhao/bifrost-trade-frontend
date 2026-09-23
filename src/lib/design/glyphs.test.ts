@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { DESIGN_FOLD_GLYPH, DESIGN_GLYPHS, DESIGN_ROUTE_GLYPH } from './designRoutes.generated'
+import {
+  DESIGN_EQUIP_GROUP_GLYPH,
+  DESIGN_EQUIP_ROUTE_GLYPH,
+  DESIGN_FOLD_GLYPH,
+  DESIGN_GLYPHS,
+  DESIGN_ROUTE_GLYPH,
+} from './designRoutes.generated'
+import { EQUIP_GROUPS } from '@/layout/equip'
 import { foldGlyph, glyph, routeGlyph } from './glyphs'
 import { NAV_GROUPS } from '@/layout/navConfig'
 import { buildResearchNavGroup } from '@/layout/researchNavCatalog'
@@ -97,6 +104,62 @@ describe('the sidebar', () => {
             icons.length,
           )
         })
+      }
+    }
+  })
+})
+
+describe('the equipment rail', () => {
+  it('has a shape for each of its surfaces, and no two alike', () => {
+    // The rail is always folded, so the glyph is not decoration on a row — it
+    // *is* the row. Two surfaces sharing a shape is the one failure that
+    // cannot be read around.
+    const names = Object.values(DESIGN_EQUIP_ROUTE_GLYPH)
+    expect(names.length).toBeGreaterThan(0)
+    expect(new Set(names).size).toBe(names.length)
+    for (const n of names) expect(DESIGN_GLYPHS[n], n).toBeTruthy()
+  })
+
+  it('carries the head of every group the rail draws', () => {
+    // `market` joined in Package 2026-09-23.3: Live and Alerts left the left
+    // sidebar for a fourth rail group.
+    expect(Object.keys(DESIGN_EQUIP_GROUP_GLYPH).sort()).toEqual([
+      'autopilot',
+      'book',
+      'copilot',
+      'market',
+    ])
+    expect(DESIGN_EQUIP_GROUP_GLYPH.autopilot).toBe('rotor')
+  })
+
+  it('is where the shapes the tree has none for live', () => {
+    // The nine surfaces left the tree in §5a.8, so `DESIGN_ROUTE_GLYPH` has
+    // nothing for them — which is correct, not a gap. Asserted so that a
+    // future reader looking at the empty half does not "fix" it by inventing
+    // a nav glyph for a page the tree does not carry.
+    // Not the Decision Inbox: it seats in Review as a menu row *and* rides
+    // the rail, so it is the one surface that carries both — and both are
+    // `valve`, which is the point of keying the two maps off one glyph table.
+    expect(DESIGN_ROUTE_GLYPH['/research/loop/decisions']).toBe('valve')
+    expect(DESIGN_EQUIP_ROUTE_GLYPH['/research/loop/decisions']).toBe('valve')
+    for (const path of [
+      '/research/loop/harness',
+      '/research/book',
+      '/research/journal',
+      '/research/watchlist',
+      '/research/copilot',
+    ]) {
+      expect(DESIGN_ROUTE_GLYPH[path], path).toBeUndefined()
+      expect(DESIGN_EQUIP_ROUTE_GLYPH[path], path).toBeTruthy()
+    }
+  })
+
+  it('draws the design shape on every rail row it declares one for', () => {
+    for (const g of EQUIP_GROUPS) {
+      for (const p of [g.hub, ...g.pages]) {
+        const name = DESIGN_EQUIP_ROUTE_GLYPH[p.to]
+        if (!name) continue
+        expect((p.icon as { displayName?: string }).displayName, p.label).toBe(`Glyph(${name})`)
       }
     }
   })

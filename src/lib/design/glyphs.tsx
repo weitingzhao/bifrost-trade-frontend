@@ -16,15 +16,29 @@
  * right, and a row silently wearing the wrong shape is worse on the rail than
  * a row wearing an obvious blank.
  */
-import type { ComponentType } from 'react'
-import { DESIGN_GLYPHS, DESIGN_FOLD_GLYPH, DESIGN_ROUTE_GLYPH } from './designRoutes.generated'
+import type { ComponentType, CSSProperties } from 'react'
+import {
+  DESIGN_EQUIP_GROUP_GLYPH,
+  DESIGN_EQUIP_ROUTE_GLYPH,
+  DESIGN_FOLD_GLYPH,
+  DESIGN_GLYPHS,
+  DESIGN_ROUTE_GLYPH,
+} from './designRoutes.generated'
 
 export type GlyphName = keyof typeof DESIGN_GLYPHS
 
 /** What a missing name draws: a plain box, so the gap is visible on the rail. */
 const MISSING = 'M4 4h16v16H4z'
 
-export function Glyph({ name, className }: { name: string; className?: string }) {
+export function Glyph({
+  name,
+  className,
+  style,
+}: {
+  name: string
+  className?: string
+  style?: CSSProperties
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -34,6 +48,7 @@ export function Glyph({ name, className }: { name: string; className?: string })
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      style={style}
       aria-hidden
     >
       <path d={DESIGN_GLYPHS[name] ?? MISSING} />
@@ -49,12 +64,29 @@ export function Glyph({ name, className }: { name: string; className?: string })
  * sidebar a brand-new component type on every render, which would remount
  * every row.
  */
-const cache = new Map<string, ComponentType<{ className?: string }>>()
+/**
+ * What a glyph is, as a prop.
+ *
+ * `aria-hidden` is in the shape because the callers that render an icon
+ * beside its own label pass it, and a lucide component takes arbitrary SVG
+ * props while this one does not — leaving it out made the rail the one place
+ * a design glyph could not be substituted for a lucide icon.
+ */
+export type GlyphComponent = ComponentType<{
+  className?: string
+  style?: CSSProperties
+  'aria-hidden'?: boolean
+}>
 
-export function glyph(name: string): ComponentType<{ className?: string }> {
+const cache = new Map<string, GlyphComponent>()
+
+export function glyph(name: string): GlyphComponent {
   let made = cache.get(name)
   if (!made) {
-    made = ({ className }: { className?: string }) => <Glyph name={name} className={className} />
+    made = ({ className, style }: { className?: string; style?: CSSProperties }) => (
+      // `aria-hidden` is accepted and ignored: `Glyph` always sets it.
+      <Glyph name={name} className={className} style={style} />
+    )
     made.displayName = `Glyph(${name})`
     cache.set(name, made)
   }
@@ -68,13 +100,32 @@ export function glyph(name: string): ComponentType<{ className?: string }> {
  * and those keep whatever icon they already had rather than borrowing a shape
  * that means something else.
  */
-export function routeGlyph(path: string): ComponentType<{ className?: string }> | null {
+export function routeGlyph(path: string): GlyphComponent | null {
   const name = DESIGN_ROUTE_GLYPH[path]
   return name ? glyph(name) : null
 }
 
 /** The same for a fold heading, which the design keys by label, not by route. */
-export function foldGlyph(label: string): ComponentType<{ className?: string }> | null {
+export function foldGlyph(label: string): GlyphComponent | null {
   const name = DESIGN_FOLD_GLYPH[label]
+  return name ? glyph(name) : null
+}
+
+/**
+ * The equipment rail's shapes.
+ *
+ * The nine surfaces left the tree in §5a.8, so they carry no nav row and
+ * `routeGlyph` finds nothing for them. Their shapes are declared in the
+ * design's `equip()` instead — by route for a tab, by group id for a rail
+ * head — and the rail reads them here for the same reason the tree does: on
+ * a rail the glyph is the row.
+ */
+export function equipRouteGlyph(path: string): GlyphComponent | null {
+  const name = DESIGN_EQUIP_ROUTE_GLYPH[path]
+  return name ? glyph(name) : null
+}
+
+export function equipGroupGlyph(id: string): GlyphComponent | null {
+  const name = DESIGN_EQUIP_GROUP_GLYPH[id]
   return name ? glyph(name) : null
 }

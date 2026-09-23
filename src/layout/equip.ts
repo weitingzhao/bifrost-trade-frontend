@@ -49,11 +49,12 @@ import {
   Terminal,
   type LucideIcon,
 } from 'lucide-react'
+import { equipGroupGlyph, equipRouteGlyph, type GlyphComponent } from '@/lib/design/glyphs'
 
 export interface EquipPage {
   to: string
   label: string
-  icon: LucideIcon
+  icon: GlyphComponent | LucideIcon
   /**
    * Where this page opens the first time, before place memory has an opinion.
    *
@@ -70,7 +71,7 @@ export interface EquipPage {
 export interface EquipGroup {
   id: 'autopilot' | 'book' | 'copilot'
   label: string
-  icon: LucideIcon
+  icon: GlyphComponent | LucideIcon
   /** The module's home — what the group's head icon opens. */
   hub: EquipPage
   /** One icon each, in the design's order. */
@@ -107,40 +108,81 @@ export const EQUIP_HUE: Record<EquipGroup['id'], string> = {
   copilot: 'var(--equip-copilot)',
 }
 
+
+/**
+ * A rail icon: the design's shape where it declares one, the lucide argument
+ * only where it does not.
+ *
+ * The same rule `navConfig.route()` follows, and for a stronger reason here —
+ * the rail is always folded, so the glyph is not decoration on a row, it *is*
+ * the row. The design redrew the set precisely so no two of them collide, and
+ * an icon library's nearest name for two adjacent surfaces is very often the
+ * same picture.
+ */
+const railIcon = (path: string, fallback: LucideIcon): GlyphComponent | LucideIcon =>
+  equipRouteGlyph(path) ?? fallback
+
+const railHead = (id: string, fallback: LucideIcon): GlyphComponent | LucideIcon =>
+  equipGroupGlyph(id) ?? fallback
+
 export const EQUIP_GROUPS: readonly EquipGroup[] = [
   {
     id: 'autopilot',
     label: 'Autopilot',
-    icon: Terminal,
-    hub: { to: '/research/loop/harness', label: 'Autopilot Console', icon: Terminal },
+    icon: railHead('autopilot', Terminal),
+    hub: {
+      to: '/research/loop/harness',
+      label: 'Autopilot Console',
+      icon: railIcon('/research/loop/harness', Terminal),
+    },
     // The Inbox seats in Review as a menu row (§5a.8) *and* rides here: the
     // rail is not a second tree, it is the equipment's own reach, and the one
     // page that accumulates work without me is the one I most want one click
     // from wherever I am standing.
     pages: [
-      { to: '/research/loop/decisions', label: 'Decision Inbox', icon: ClipboardList },
+      {
+        to: '/research/loop/decisions',
+        label: 'Decision Inbox',
+        icon: railIcon('/research/loop/decisions', ClipboardList),
+      },
     ],
     owns: ['/research/loop/objectives/', '/research/loop/runs'],
   },
   {
     id: 'book',
     label: 'The Book',
-    icon: BookOpen,
-    hub: { to: '/research/book', label: 'The Book', icon: BookOpen },
+    icon: railHead('book', BookOpen),
+    hub: { to: '/research/book', label: 'The Book', icon: railIcon('/research/book', BookOpen) },
     pages: [
-      { to: '/research/loop/hypotheses', label: 'Hypothesis Board', icon: GitFork },
-      { to: '/research/loop/candidates', label: 'Candidate Pool', icon: ListFilter },
-      { to: '/research/watchlist', label: 'Watchlist', icon: Star },
-      { to: '/research/journal', label: 'Journal', icon: History },
+      {
+        to: '/research/loop/hypotheses',
+        label: 'Hypothesis Board',
+        icon: railIcon('/research/loop/hypotheses', GitFork),
+      },
+      {
+        to: '/research/loop/candidates',
+        label: 'Candidate Pool',
+        icon: railIcon('/research/loop/candidates', ListFilter),
+      },
+      { to: '/research/watchlist', label: 'Watchlist', icon: railIcon('/research/watchlist', Star) },
+      { to: '/research/journal', label: 'Journal', icon: railIcon('/research/journal', History) },
     ],
   },
   {
     id: 'copilot',
     label: 'Copilot',
-    icon: MessageCircle,
-    hub: { to: '/research/copilot', label: 'Copilot Desk', icon: MessageCircle },
+    icon: railHead('copilot', MessageCircle),
+    hub: {
+      to: '/research/copilot',
+      label: 'Copilot Desk',
+      icon: railIcon('/research/copilot', MessageCircle),
+    },
     pages: [
-      { to: '/research/copilot/trading', label: 'Book starters', icon: NotebookPen },
+      {
+        to: '/research/copilot/trading',
+        label: 'Book starters',
+        icon: railIcon('/research/copilot/trading', NotebookPen),
+      },
     ],
   },
 ]

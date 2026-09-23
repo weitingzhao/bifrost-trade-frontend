@@ -272,10 +272,42 @@ function generate(pkg) {
     return { byRoute, byFold }
   }
 
+  /**
+   * The equipment rail's shapes.
+   *
+   * The nine surfaces left the tree in §5a.8, so they carry no nav row and
+   * `glyphs()` finds nothing for them — which is exactly the set the sidebar
+   * probe reports as missing. Their shapes live in `equip()` instead, and as
+   * plain names rather than components: `autopilot: { icon: 'rotor' }`.
+   *
+   * Keyed two ways because the rail draws two kinds of thing: a group's head
+   * (by group id) and a tab (by the route it opens).
+   */
+  function equipGlyphs() {
+    const byGroup = new Map()
+    const byRoute = new Map()
+    const eq = R.equip ? R.equip() : {}
+    for (const [id, g] of Object.entries(eq)) {
+      if (!g || typeof g !== 'object') continue
+      if (typeof g.icon === 'string') {
+        byGroup.set(id, g.icon)
+        if (typeof g.hub === 'string') byRoute.set(g.hub, g.icon)
+      }
+      for (const t of g.tabs ?? []) {
+        if (typeof t?.icon === 'string' && typeof t.to === 'string') byRoute.set(t.to, t.icon)
+      }
+    }
+    return { byGroup, byRoute }
+  }
+
   const GLYPH_NAMES = glyphTable(src)
   const glyph = glyphs(GLYPH_NAMES)
-  /** name -> path data, only for the shapes the tree actually uses. */
-  const glyphUsed = [...new Set([...glyph.byRoute.values(), ...glyph.byFold.values()])].sort()
+  const equipGlyph = equipGlyphs()
+  const equipNames = [...equipGlyph.byGroup.values(), ...equipGlyph.byRoute.values()]
+  /** name -> path data, only for the shapes the tree and the rail actually use. */
+  const glyphUsed = [
+    ...new Set([...glyph.byRoute.values(), ...glyph.byFold.values(), ...equipNames]),
+  ].sort()
   const dByName = new Map([...GLYPH_NAMES].map(([d, name]) => [name, d]))
 
   /** The design's `FACES` pairs, straight off the registry. */
@@ -440,6 +472,18 @@ export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
 ${[...glyph.byFold].sort(([a], [b]) => (a < b ? -1 : 1)).map(([label, name]) => '  ' + JSON.stringify(label) + ': ' + JSON.stringify(name) + ',').join('\n')}
 }
 
+/**
+ * The equipment rail's shapes — the nine surfaces that left the tree (§5a.8)
+ * and so carry no nav row. By group id for a rail head, by route for a tab.
+ */
+export const DESIGN_EQUIP_GROUP_GLYPH: Readonly<Record<string, string>> = {
+${[...equipGlyph.byGroup].sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, name]) => '  ' + JSON.stringify(id) + ': ' + JSON.stringify(name) + ',').join('\n')}
+}
+
+export const DESIGN_EQUIP_ROUTE_GLYPH: Readonly<Record<string, string>> = {
+${[...equipGlyph.byRoute].sort(([a], [b]) => (a < b ? -1 : 1)).map(([path, name]) => '  ' + JSON.stringify(path) + ': ' + JSON.stringify(name) + ',').join('\n')}
+}
+
 export const DESIGN_REV = ${JSON.stringify(revOf(pkg))}
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
@@ -449,7 +493,7 @@ ${entries.map((e) => '  ' + JSON.stringify(e) + ',').join('\n')}
   writeFileSync(out, body)
   console.log(
     `${entries.length} routes (${designed} designed, ${faces.length} faces, ${objTarget.length} objective-scoped, ` +
-      `${glyphUsed.length} glyphs over ${glyph.byRoute.size} rows + ${glyph.byFold.size} folds) -> ${out}`,
+      `${glyphUsed.length} glyphs over ${glyph.byRoute.size} rows + ${glyph.byFold.size} folds + ${equipGlyph.byRoute.size} rail surfaces) -> ${out}`,
   )
 }
 

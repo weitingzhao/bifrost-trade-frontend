@@ -118,9 +118,11 @@ export const DESIGN_SYM_TARGET: readonly string[] = [
  */
 export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "anchored": "M4 4h8v16H4zM6.5 8.5h3M6.5 12h2M12 11h3M15 7h6v5h-2l-2 2.5V12h-2z",
+  "bell": "M18 16H6l1.5-2.2V10a4.5 4.5 0 019 0v3.8zM10 19a2 2 0 004 0",
   "binder": "M4 4h16v16H4zM8 4v16M11 9h6M11 14h4",
   "blueprint": "M4 4h16v16H4zM9 4v16M4 9h16M12 13h5M12 16h3",
   "brief": "M5 3h14v18H5zM8 7h8M8 11h8M8 15h4",
+  "bubble": "M21 12a8 8 0 01-8 8H5l-2 2V12a8 8 0 018-8h2a8 8 0 018 8z",
   "bucket": "M5 8h14l-1.5 12h-11zM6.6 14h10.8",
   "bullseye": "M12 3a9 9 0 100 18 9 9 0 000-18M12 8a4 4 0 100 8 4 4 0 000-8M12 11.5h.01",
   "caliper": "M4 6v12M20 6v12M4 12h16M9 9l-3 3 3 3M15 9l3 3-3 3",
@@ -136,7 +138,9 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "decay": "M3 5h4v5h4v5h4v5h6",
   "deliver": "M12 3v8M8.5 7.5L12 11l3.5-3.5M4 14h16v6H4z",
   "doc": "M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h3",
+  "eye": "M2.5 12C5 8 8.2 6 12 6s7 2 9.5 6c-2.5 4-5.7 6-9.5 6s-7-2-9.5-6zM12 9.2a2.8 2.8 0 100 5.6 2.8 2.8 0 000-5.6z",
   "flows": "M3 12h18M8 8V3M5 6l3-3 3 3M16 16v5M13 18l3 3 3-3",
+  "fork": "M12 3v5M12 8l-5 4M12 8l5 4M7 12v4M17 12v4M4 16h6M14 16h6",
   "gap": "M3 13h6v6H3zM15 13h6v6h-6zM10.5 16h.01M13.5 16h.01",
   "gates": "M3 6l4 6-4 6M10 6l4 6-4 6M19 4v16",
   "gauge": "M4 17a8 8 0 0116 0M12 17l4.5-5.5",
@@ -153,16 +157,19 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "matrix": "M4 5h16v14H4zM4 10h16M4 15h16M9.3 5v14M14.6 5v14M14.6 15h5.4v4h-5.4z",
   "model": "M6 6a2 2 0 100 4 2 2 0 000-4M6 14a2 2 0 100 4 2 2 0 000-4M18 10a2 2 0 100 4 2 2 0 000-4M8 8.6l8 2.8M8 15.4l8-2.8",
   "openbook": "M12 7C10 5 7 4.4 4 5v13c3-.6 6 0 8 2 2-2 5-2.6 8-2V5c-3-.6-6 0-8 2zM12 7v14",
+  "pages": "M3 8c3-1.2 6-1.2 9 0 3-1.2 6-1.2 9 0M3 13c3-1.2 6-1.2 9 0 3-1.2 6-1.2 9 0M3 18c3-1.2 6-1.2 9 0 3-1.2 6-1.2 9 0",
   "panel3": "M10 7a3 3 0 106 0 3 3 0 00-6 0M6 20a7 7 0 0114 0M3.5 10.5a2.5 2.5 0 103 4M2 19a5 5 0 013-4.2",
   "pathmarks": "M3 18c3.5 0 4.5-9 7.5-9s3.5 7 5.5 7 3-4.5 5-7M10.5 9h.01M21 9h.01",
   "payoff": "M3 17h6l5-9h7M9 20v-6",
   "pie": "M12 3a9 9 0 100 18 9 9 0 000-18M12 12V3M12 12l7 5",
   "pillars": "M12 3l8 4H4zM7 7v10M12 7v10M17 7v10M4 20h16",
   "planactual": "M3 6h18v4H3zM9 6v4M15 6v4M3 14h11v4H3zM14 12v8",
+  "promote": "M4 6h10M4 11h10M4 16h10M18 17V6M18 6l-2.5 2.5M18 6l2.5 2.5",
   "pulse": "M3 12h4l3 7 4-14 3 7h4",
   "reliability": "M4 20V4M4 20h16M5 19L19 5M5 19c3 0 5-2.5 7-6s4-6.5 7-8",
   "replay": "M3 20h18M11 6L4 11l7 5zM20 6l-7 5 7 5z",
   "restrike": "M3 7h6v10H3zM15 7h6v10h-6M10 12h4M12.5 9.5L15 12l-2.5 2.5",
+  "rotor": "M12 7a5 5 0 100 10 5 5 0 000-10M12 3v4M12 17v4M3 12h4M17 12h4",
   "scale": "M12 4v16M8 20h8M4 8h16M4 8l-2 5h4zM20 8l2 5h-4z",
   "setsquare": "M5 4v15h15zM5 8h2.5M5 12h2.5M5 16h2.5",
   "sidebar": "M4 5h16v14H4zM9 5v14M11.5 9h6M11.5 13h4",
@@ -178,6 +185,7 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "vs": "M11 3v18M4 17V9M7.5 17v-5M14.5 17v-8M18 17v-3",
   "wallet": "M4 6h12a4 4 0 014 4v7H4zM4 6v11M14 12h4",
   "waterfall": "M3 21V3M6 16h3v5H6zM12 11h3v5h-3zM18 6h3v5h-3z",
+  "waves": "M12 12h.01M8.5 8.5a5 5 0 000 7M15.5 8.5a5 5 0 010 7M5.6 5.6a9 9 0 000 12.8M18.4 5.6a9 9 0 010 12.8",
   "zoomin": "M4 4h6M4 4v6M20 20h-6M20 20v-6M9 9L4 4M15 15l5 5",
 }
 
@@ -256,11 +264,37 @@ export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
   "Reference": "doc",
 }
 
-export const DESIGN_REV = "2026-09-23.7"
+/**
+ * The equipment rail's shapes — the nine surfaces that left the tree (§5a.8)
+ * and so carry no nav row. By group id for a rail head, by route for a tab.
+ */
+export const DESIGN_EQUIP_GROUP_GLYPH: Readonly<Record<string, string>> = {
+  "autopilot": "rotor",
+  "book": "pages",
+  "copilot": "bubble",
+  "market": "waves",
+}
+
+export const DESIGN_EQUIP_ROUTE_GLYPH: Readonly<Record<string, string>> = {
+  "/market/live": "waves",
+  "/research/book": "pages",
+  "/research/copilot": "bubble",
+  "/research/copilot/trading": "brief",
+  "/research/event-radar": "bell",
+  "/research/journal": "tree",
+  "/research/loop/candidates": "promote",
+  "/research/loop/decisions": "valve",
+  "/research/loop/harness": "rotor",
+  "/research/loop/hypotheses": "fork",
+  "/research/loop/runs": "replay",
+  "/research/watchlist": "eye",
+}
+
+export const DESIGN_REV = "2026-09-23.8"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},
-  {"path":"/research/events","label":"Events","crumbs":["Home"],"designed":true,"file":"Research Events.dc.html","round":"NEW","rev":"2026-09-20.16","inNav":true,"group":"Home"},
+  {"path":"/research/events","label":"Events","crumbs":["Home"],"designed":true,"file":"Research Events.dc.html","round":"NEW","rev":"2026-09-23.8","inNav":true,"group":"Home"},
   {"path":"/market/live","label":"Live","crumbs":["Market"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-23.7","inNav":false,"group":null},
   {"path":"/risk/portfolio","label":"Portfolio Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-23.3","inNav":true,"group":"Risk"},
   {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},

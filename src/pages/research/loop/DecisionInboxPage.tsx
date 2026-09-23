@@ -234,7 +234,11 @@ export default function DecisionInboxPage() {
 
   return (
     <PageShell padding="default" className="space-y-3">
-      <PageHeader title="Decision Inbox" description={view === 'proposals' ? PROPOSALS_LEDE : INBOX_LEDE} actions={<NewDraftDialog />} />
+      <PageHeader
+        title={view === 'proposals' ? 'Decision Inbox · Rule proposals' : 'Decision Inbox'}
+        description={view === 'proposals' ? PROPOSALS_LEDE : INBOX_LEDE}
+        actions={<NewDraftDialog />}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         {/* The design's chip. It reads "the engine", not "autopilot seat": the

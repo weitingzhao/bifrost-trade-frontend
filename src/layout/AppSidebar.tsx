@@ -109,7 +109,11 @@ export function AppSidebar() {
       })
     }
     return marked
-  }, [inSystem, research.group, order, pins])
+    // `hereLayer` is read from the route, so the route is a dependency. It was
+    // missing, and every navigation that does not reload — which is all of
+    // them — left the previous page's numeral lit. Invisible in a
+    // full-page check, obvious the moment you click through the tree.
+  }, [inSystem, research.group, order, pins, location.pathname])
 
   return (
     <SystemNavLampProvider>

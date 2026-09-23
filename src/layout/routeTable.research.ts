@@ -307,14 +307,18 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   },
   { path: '/research/signal-decay/:symbol', label: 'Signal Decay', crumbs: VALIDATE },
   {
+    // Not moving. It was tagged `moving` on Docs Index's LAB mark — *handed to
+    // lab (2026-09-12.3), the Trade original is deleted* — and the design
+    // voided that in Package 2026-09-23.2: the round goes LAB → OLD, the
+    // registry has kept it in `Research › Validate` and in its own nav the
+    // whole time, and Lab itself was dissolved on 2026-09-20. So it is an
+    // ordinary unwalked page with a current prototype (Rev 2026-09-22.6), and
+    // carrying a retracted classification in a worklist is clutter: the row
+    // takes no tag at all and derives as `pending`.
     path: '/research/backtest',
     label: 'Backtest',
     crumbs: VALIDATE,
     symbolScope: true,
-    design: {
-      state: 'moving',
-      note: DESIGN_NOTES['/research/backtest'],
-    },
   },
 
   // ── Research · Workbench · Data ────────────────────────────────────────

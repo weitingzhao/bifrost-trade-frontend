@@ -126,8 +126,6 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + 'overflow at 1024 or 1600; the whole Overview fits one viewport at 1600. The chip tones took '
     + 'the P&L tokens at first and `check:legacy-css` caught it \u2014 \u00a714.7 \u2461: a bordered chip takes '
     + 'a lamp colour, and a hot lens is not a loss. Owner signed off 2026-09-23 on local DEV (:5173) at this rev.',
-  '/research/backtest':
-    'Lab — Docs Index marks it LAB: "handed to lab (2026-09-12.3), the Trade original is deleted". Lab is not built here, so it stays until it is; absent from Trade is not retired',
   '/research/scan':
     'Walked 2026-09-21 against Research Scan.dc.html (Rev 2026-09-20.10) — the option side of '
     + 'Stock ratings, and deliberately the same page twice. What stood here printed the weights '

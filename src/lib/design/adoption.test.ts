@@ -242,9 +242,15 @@ describe('design adoption', () => {
     // which the design re-homed from Research › Analyze to Risk. The walked
     // set is unchanged at 57; three of them are now behind their own rev.
     expect(counts.aligned + counts.byState.stale).toBe(57)
-    expect(counts.aligned).toBe(54)
+    // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
+    // Live and Alerts leave the left sidebar for the right rail's new Market
+    // group, so their crumbs become `['Market']` and neither is in the design's
+    // nav any more. Both were signed; both are now behind their own rev.
+    expect(counts.aligned).toBe(52)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
+      '/market/live',
       '/portfolio/positions',
+      '/research/event-radar',
       '/research/ratings/stocks',
       '/risk/portfolio',
     ])
@@ -457,7 +463,6 @@ describe('design adoption', () => {
         .sort(),
     ).toEqual([
       '/home',
-      '/market/live',
       '/portfolio',
       '/portfolio/accounts',
       '/portfolio/backing',
@@ -472,7 +477,6 @@ describe('design adoption', () => {
       '/research/copilot',
       '/research/copilot/trading',
       '/research/daily-brief',
-      '/research/event-radar',
       '/research/journal',
       '/research/loop/candidates',
       '/research/loop/decisions',
@@ -528,8 +532,15 @@ describe('design adoption', () => {
     // here, so `moving` is what the design still dissolves elsewhere. Stock
     // Explorer joined them on 2026-09-22: it is the tab shell over the first
     // two, it answers to no design page of its own, and its walk left one open
-    // question — where the events board goes.
-    expect(counts.byState.moving).toBe(4)
+    // question — where the events board goes. Backtest left on 2026-09-23:
+    // the design voided the LAB mark that put it here (round LAB → OLD), and
+    // an unwalked page with a current prototype is `pending`, not `moving`.
+    expect(counts.byState.moving).toBe(3)
+    expect(rows.filter((r) => r.state === 'moving').map((r) => r.path).sort()).toEqual([
+      '/research/explorer',
+      '/research/momentum-radar',
+      '/research/sepa-daily-core',
+    ])
     // Rev 2026-09-15.13 collapsed nine `/system/*` routes into `/system/status`
     // and `/settings` (the Owner's OLTP/OLAP/Ops ruling). The app still has the
     // nine pages, so each one asks where it goes — that is nine rows in "to
@@ -605,8 +616,14 @@ describe('design adoption', () => {
     // was the next, and it turned out to be `moving` rather than a walk: its
     // registry row is an alias of the Screener prototype, which is aligned at
     // `/research/screener`. Loop Run was the last, and it is `reviewing` now —
-    // "to walk" is empty for the first time.
-    expect(counts.byState.pending).toBe(0)
+    // "to walk" is empty for the first time. 0 → 1 on 2026-09-23: Backtest
+    // came back into it from `moving`, which is the honest place for a page
+    // with a current prototype and no walk — the LAB mark that took it out
+    // was voided by the design, not by anything this side did.
+    expect(counts.byState.pending).toBe(1)
+    expect(rows.filter((r) => r.state === 'pending').map((r) => r.path)).toEqual([
+      '/research/backtest',
+    ])
     expect(
       rows
         .filter((r) => r.via)
@@ -677,7 +694,11 @@ describe('design adoption', () => {
     // make signed pages stale, and it is this side's own doing: it answers the
     // four `moving` pages with disposition tables, and a capability with a
     // destination is work on the destination page.
-    expect(DESIGN_REV).toBe('2026-09-23.6')
+    // Package 2026-09-23.3 @ Rev .7 is the full package that supersedes them
+    // all, and it moves two more signed pages by moving the menu rather than
+    // the page: the left rail is where you stand, the right rail is what you
+    // use beside it, and Live and Alerts are the second kind.
+    expect(DESIGN_REV).toBe('2026-09-23.7')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -702,8 +723,9 @@ describe('design adoption', () => {
     // 0 → 3 with Package 2026-09-23.2, and this time the pages really did
     // lose their walk: each of the three is where a capability the design
     // re-homed has to be built, so being behind the rev is the accurate
-    // reading rather than an artefact of some other page moving.
-    expect(counts.byState.stale).toBe(3)
+    // reading rather than an artefact of some other page moving. 3 → 5 with
+    // Package 2026-09-23.3, where Live and Alerts moved rail rather than page.
+    expect(counts.byState.stale).toBe(5)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

@@ -118,7 +118,6 @@ export const DESIGN_SYM_TARGET: readonly string[] = [
  */
 export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "anchored": "M4 4h8v16H4zM6.5 8.5h3M6.5 12h2M12 11h3M15 7h6v5h-2l-2 2.5V12h-2z",
-  "bell": "M18 16H6l1.5-2.2V10a4.5 4.5 0 019 0v3.8zM10 19a2 2 0 004 0",
   "binder": "M4 4h16v16H4zM8 4v16M11 9h6M11 14h4",
   "blueprint": "M4 4h16v16H4zM9 4v16M4 9h16M12 13h5M12 16h3",
   "brief": "M5 3h14v18H5zM8 7h8M8 11h8M8 15h4",
@@ -179,7 +178,6 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "vs": "M11 3v18M4 17V9M7.5 17v-5M14.5 17v-8M18 17v-3",
   "wallet": "M4 6h12a4 4 0 014 4v7H4zM4 6v11M14 12h4",
   "waterfall": "M3 21V3M6 16h3v5H6zM12 11h3v5h-3zM18 6h3v5h-3z",
-  "waves": "M12 12h.01M8.5 8.5a5 5 0 000 7M15.5 8.5a5 5 0 010 7M5.6 5.6a9 9 0 000 12.8M18.4 5.6a9 9 0 010 12.8",
   "zoomin": "M4 4h6M4 4v6M20 20h-6M20 20v-6M9 9L4 4M15 15l5 5",
 }
 
@@ -199,7 +197,6 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/docs/research-vision": "anchored",
   "/docs/tech-stack": "layers",
   "/docs/ui-design-system": "swatch",
-  "/market/live": "waves",
   "/portfolio/accounts": "wallet",
   "/portfolio/backing": "pillars",
   "/portfolio/corporate-actions": "restrike",
@@ -214,7 +211,6 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/research/compare": "vs",
   "/research/contract-screener": "ladder",
   "/research/daily-brief": "brief",
-  "/research/event-radar": "bell",
   "/research/events": "datecal",
   "/research/history": "clockback",
   "/research/lab/calibration": "sliders",
@@ -260,12 +256,12 @@ export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
   "Reference": "doc",
 }
 
-export const DESIGN_REV = "2026-09-23.6"
+export const DESIGN_REV = "2026-09-23.7"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},
   {"path":"/research/events","label":"Events","crumbs":["Home"],"designed":true,"file":"Research Events.dc.html","round":"NEW","rev":"2026-09-20.16","inNav":true,"group":"Home"},
-  {"path":"/market/live","label":"Live","crumbs":["Home"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-23.2","inNav":true,"group":"Home"},
+  {"path":"/market/live","label":"Live","crumbs":["Market"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-23.7","inNav":false,"group":null},
   {"path":"/risk/portfolio","label":"Portfolio Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-23.3","inNav":true,"group":"Risk"},
   {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
   {"path":"/trade/expiration","label":"Expiration","crumbs":["Trade"],"designed":true,"file":"Trade Expiration.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Trade"},
@@ -279,7 +275,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/screener","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":true,"group":"Research"},
   {"path":"/research/explorer","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Screener.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null},
   {"path":"/research/contract-screener","label":"Option screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Contract Screener.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":true,"group":"Research"},
-  {"path":"/research/event-radar","label":"Alerts","crumbs":["Home"],"designed":true,"file":"Research Event Radar.dc.html","round":null,"rev":"2026-09-20.16","inNav":true,"group":"Home"},
+  {"path":"/research/event-radar","label":"Alerts","crumbs":["Market"],"designed":true,"file":"Research Event Radar.dc.html","round":null,"rev":"2026-09-23.7","inNav":false,"group":null},
   {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-18.2","inNav":true,"group":"Research"},
   {"path":"/research/vol-regime","label":"Vol Regime","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null},
   {"path":"/research/dealer-levels","label":"Dealer Levels","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null},

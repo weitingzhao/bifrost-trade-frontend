@@ -387,10 +387,13 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/screener'],
     },
   },
-  // The design's Discover › Screener has Stocks and Contracts under it, and
-  // this page is Contracts (Design 2026-09-15). `/research/screener` is the
-  // design's screener home, which the app has not built, so the page moves off
-  // that path rather than squatting on it.
+  // The Contracts half of the design's screener, on its own path since
+  // 2026-09-15 — and since Package 2026-09-23.3 there is no other half to be
+  // under. The design found its own two-level Discover to be a false
+  // hierarchy (`/research/explorer` is the same file as `/research/screener`,
+  // so the parent row was its own child's alias) and flattened it to four
+  // leaves, which is row for row what this side already had. `/research/
+  // screener` is the Stock screen leaf, not an unbuilt home.
   {
     path: '/research/contract-screener',
     label: 'Option screen',

@@ -209,17 +209,30 @@ export const BENCHES: Bench[] = [
   {
     id: 'discover',
     label: 'Discover',
-    // The design's Discover holds two homes — Ratings (Stocks · Underlyings)
-    // and Screener (Stocks · Contracts) — and neither home page is built yet,
-    // so the fold carries their existing children flat, in the design's order
-    // and under the design's labels. Folding now would point each heading at
-    // its only child's route — two rows, one page, the double-selection the
-    // Owner retired on 2026-09-08. `/research/screener` becomes a home in W3,
-    // `/research/ratings` in the W5 sweep.
+    // Four flat rows, and no fold is coming — the design cancelled the one
+    // this comment used to promise.
+    //
+    // It had held two homes, Ratings (Stocks · Underlyings) and Screener
+    // (Stocks · Contracts), and this side carried their children flat on the
+    // ground that folding would point each heading at its only child's route:
+    // two rows, one page, the double-selection the Owner retired on
+    // 2026-09-08. Package 2026-09-23.3 reached the same conclusion from the
+    // design's own side and went further — the two middle folds were
+    // **aliases**, not parents (`/research/ratings` is the same file as
+    // `/research/scan`, `/research/explorer` the same as `/research/screener`),
+    // which is exactly why clicking "Ratings" landed on Underlyings and
+    // "Screener" on Stocks. Both alias routes keep their deep links and leave
+    // the menu, which is what this side already did with them.
+    //
+    // Still owed from that package, and not done here: the `stk` / `opt` unit
+    // marks and the `⧉` method-face mark the design puts on these rows, and a
+    // glyph per row — Stock screen and Option screen share `ListFilter` below,
+    // which is one instance of the 26-glyphs-over-70-rows finding that package
+    // opens with.
     icon: foldGlyph('Discover') ?? Compass,
-    // The design's four rows. Stock ratings landed 2026-09-21 and leads the
-    // fold, as this comment said it would: it is the model's own opinion, and
-    // the screens below it are ways of asking about that opinion.
+    // The design's four rows, row for row and in its order. Stock ratings
+    // leads: it is the model's own opinion, and the screens below it are ways
+    // of asking about that opinion.
     //
     // Stock Explorer left this list on 2026-09-20 (Owner ruling): it is a tab
     // shell over SEPA, Momentum and Event Radar, and the design redistributed

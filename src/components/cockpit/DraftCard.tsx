@@ -212,6 +212,9 @@ export function DraftCard({
         </div>
       ) : null}
 
+      {/* Keep `TYPED_BODY_KINDS` (lib/harness/inboxOrder.ts) in step with this
+          chain: the Inbox orders by it, and a kind that gains a body here and
+          not there sinks below the prose cards it just stopped being one of. */}
       {draft.kind === 'candidate_batch' ? (
         <CandidateBatchBody payload={draft.payload} />
       ) : draft.kind === 'daily_digest' ? (

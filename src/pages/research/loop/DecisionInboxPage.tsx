@@ -27,6 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApprovalsLanded, landedApproval, type LandedApproval } from '@/pages/research/loop/ApprovalsLanded'
 import { DraftCard } from '@/components/cockpit/DraftCard'
+import { typedFirst } from '@/lib/harness/inboxOrder'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
 import {
   useApproveDraft,
@@ -155,7 +156,7 @@ export default function DecisionInboxPage() {
     if (narrow === 'loop') return all.filter((d) => LOOP_KINDS.has(d.kind))
     if (narrow !== 'any') return all
     if (view === 'decisions') {
-      return all.filter((d) => isDecisionKind(d.kind))
+      return typedFirst(all.filter((d) => isDecisionKind(d.kind)))
     }
     if (view === 'briefings') {
       return digestFirst(all.filter((d) => BRIEFING_KINDS.has(d.kind)))

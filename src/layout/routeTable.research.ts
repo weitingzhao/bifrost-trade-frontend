@@ -77,7 +77,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: REVIEW,
     design: {
       state: 'reviewing',
-      rev: '2026-09-18.2',
+      rev: '2026-09-22.8',
       note: DESIGN_NOTES['/research/loop/decisions'],
     },
   },

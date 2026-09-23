@@ -151,7 +151,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // are this side's, and only the Owner's look puts a page in place.
       // Rev .9 adds the Leaders view — the design answering this side's own
       // ask about Momentum Radar's ranking. Re-walked 2026-09-23.
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-23.9',
       note: DESIGN_NOTES['/research/ratings/stocks'],
     },
@@ -433,6 +433,20 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       state: 'aligned',
       rev: '2026-09-23.2',
       note: DESIGN_NOTES['/market/live'],
+    },
+  },
+  {
+    // The design's Home page for the market's own calendar, and the home
+    // Explorer's events board was missing. Built 2026-09-23 against Rev
+    // 2026-09-23.8, whose four-state rule is why it did not have to wait on
+    // the pipeline: `unfed` is a designed reading, not a blank page.
+    path: '/research/events',
+    label: 'Events',
+    crumbs: MARKET,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-23.8',
+      note: DESIGN_NOTES['/research/events'],
     },
   },
   {

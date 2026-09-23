@@ -421,6 +421,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/docs/UiDesignSystemPage')),
       },
       {
+        path: 'research/events',
+        lazy: lazyPage(() => import('@/pages/research/events/EventsPage')),
+      },
+      {
         path: 'docs/options-kit',
         lazy: lazyPage(() => import('@/pages/docs/optionsKit/OptionsKitPage')),
       },

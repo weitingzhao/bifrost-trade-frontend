@@ -22,6 +22,7 @@
 import {
   Activity,
   Bell,
+  CalendarClock,
   BookOpen,
   ClipboardList,
   Compass,
@@ -162,13 +163,14 @@ export const COPILOT_ITEM: ShellNavItem = {
 export const MARKET_PAGES = {
   live: route('Live', '/market/live', Activity),
   /**
-   * The design splits this in two — `/research/events` for the 30-day
-   * calendar and `/research/event-radar` labelled `Alerts`. Walked
-   * 2026-09-22, and the route is Alerts now: the calendar half did not have
-   * to wait for Events to exist, because it already renders on the Stock
-   * Explorer's `events` tab and all four of its stores answer zero rows.
+   * The design splits this in two — `/research/events` for the market's own
+   * calendar and `/research/event-radar` labelled `Alerts`. Both rows exist
+   * now: Events was built on 2026-09-23 once the design gave the board a
+   * four-state rule, so the page could say `unfed` honestly rather than wait
+   * for the pipeline to fill it.
    */
   radar: route('Alerts', '/research/event-radar', Bell),
+  events: route('Events', '/research/events', CalendarClock),
 }
 
 export const MARKET_ITEM: ShellNavItem = {

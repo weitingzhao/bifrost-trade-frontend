@@ -249,13 +249,14 @@ describe('design adoption', () => {
     // 2026-09-23, the Owner signing four together: Option screen, Stock
     // ratings, Portfolio Exposure and Positions, and Contract Greeks once its
     // door was findable — 59. Back to 58 when Stock ratings was re-walked
-    // again for the Leaders view and left for `reviewing`.
-    expect(counts.aligned + counts.byState.stale).toBe(58)
+    // again for the Leaders view and left for `reviewing`. 59 when the Owner
+    // signed that walk too.
+    expect(counts.aligned + counts.byState.stale).toBe(59)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
     // nav any more. Both were signed; both are now behind their own rev.
-    expect(counts.aligned).toBe(56)
+    expect(counts.aligned).toBe(57)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/market/live',
       '/research/event-radar',
@@ -465,7 +466,9 @@ describe('design adoption', () => {
     // design moved there, and 10 with Portfolio Exposure and Positions, which
     // grew Contract Greeks' three doors between them. Back to 6 when the Owner
     // signed four of them together on 2026-09-23, and 5 with Contract Greeks.
-    // 6 again with Stock ratings, re-walked onto the Leaders view.
+    // 6 again with Stock ratings, re-walked onto the Leaders view, and back
+    // to 5 when that walk was signed. 6 with Events, built on the design's
+    // four-state rule so an unfed pipeline reads as unfed.
     expect(counts.byState.reviewing).toBe(6)
     expect(
       rows
@@ -503,6 +506,7 @@ describe('design adoption', () => {
       '/research/loop/runs',
       '/research/orchestration',
       '/research/overview',
+      '/research/ratings/stocks',
       '/research/scan',
       '/research/screener',
       '/research/signal-decay',
@@ -534,8 +538,8 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/docs/options-kit',
+      '/research/events',
       '/research/lens-coverage',
-      '/research/ratings/stocks',
       '/research/signal-health',
       '/settings',
       '/system/status',
@@ -611,8 +615,9 @@ describe('design adoption', () => {
     // always answered. 22 with System Status, the first page of the build
     // round and the design's collapse target for the nine `/system/*` pages,
     // and 21 with Settings, its other half. 20 on 2026-09-23: Options Kit was
-    // the first of the four `/docs/*` the judgement recommended building.
-    expect(counts.byState.unbuilt).toBe(20)
+    // the first of the four `/docs/*` the judgement recommended building. 19
+    // with Events, whose four-state rule let it be built on an unfed pipeline.
+    expect(counts.byState.unbuilt).toBe(19)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

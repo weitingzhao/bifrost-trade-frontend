@@ -389,7 +389,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     design: {
       state: 'reviewing',
-      rev: '2026-09-19.2',
+      rev: '2026-09-20.10',
       note: DESIGN_NOTES['/research/contract-screener'],
     },
   },

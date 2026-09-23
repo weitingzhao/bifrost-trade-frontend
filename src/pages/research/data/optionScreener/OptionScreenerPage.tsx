@@ -1,269 +1,279 @@
 /**
- * Contract Screener — walked against `Research Contract Screener.dc.html`
- * (Rev 2026-09-19.2) on 2026-09-22.
+ * Option screen — rebuilt 2026-09-23 against `Research Contract Screener.dc.html`
+ * (page rev 2026-09-20.10), in the prototype's order: header, funnel, the
+ * numbered rail beside the Contracts table.
  *
- * ## The design's argument, and where this page sat outside it
+ * The walk of 2026-09-22 kept a Run button and left the table unbuilt, because
+ * the engine answers nothing on DEV. The Owner chose to build the design's
+ * page anyway and fix the engine separately, so this is the design's shape:
  *
- * The design's own description places this page third: *Stock Explorer picks
- * companies, Option Scan picks underlyings with premium, this picks the
- * contracts that fit a structure.* The page had no first step at all — it
- * opened on an empty textarea, which asks the reader to retype a list three
- * other pages already hold. And it had no funnel, which is the design's one
- * device for the thing this page does most: return nothing.
+ * - **Live, no Run button.** The engine is asked once per name, structure and
+ *   earnings choice, at the widest window a slider can reach; the six sliders
+ *   filter that in the browser (`screenerModel.ts`). A drag never refetches.
+ *   One request per name, because three in one request ran past the 60-second
+ *   abort at that window (`useScreenerChain.ts`).
+ * - **The table is always drawn**, and when it has nothing in it the panel says
+ *   which of the reasons it is — no names picked, screening, the engine
+ *   returned no chain, or every contract fails a filter.
  *
- * Built: the funnel strip, `1 · Underlyings` with its sources, and the
- * numbered rail the design draws around the structure and the filters.
- *
- * ## The engine is dark, and the page now says so
- *
- * Measured on DEV 2026-09-22, and it is the finding of this walk:
- * `POST /research/screener` answers `ok: true` with `total_contracts: 0` for
- * every symbol tried — including ANET, which the market-data plugin's own
- * coverage reports as **2,150 contracts across 21 expiries**, newest stamped
- * the same morning. It answers the same at every `source` value (`massive`,
- * `ib`, `polygon`, `chain`, `snapshot`, and omitted) and with the filters
- * opened to their widest: DTE 7–120, P(ITM) ≤ 90%, return ≥ 0, spread ≤ 50%,
- * premium ≥ 0, earnings allowed. The engine gives the same reason each time —
- * *No snapshot data — run Market Data Plugin sync first* — so the emptiness
- * is neither the filters nor the symbols; the screener reads a snapshot store
- * that the plugin's contract coverage does not fill.
- *
- * The contracts table is therefore **not rebuilt**. It cannot be checked
- * against a single row, and a table reshaped against a design without ever
- * being seen with data in it is the walk failing quietly. What is built is
- * the half that makes the dark engine legible: the funnel names the stage
- * that emptied and carries the engine's own sentence.
- *
- * ## Diverged, with its reason
- *
- * **The Run button stays**, against the design's *"live — no Run button"*.
- * The call takes **15–31 seconds** on DEV. Re-running on every slider move
- * would fire a half-minute request per drag, and the design's phrase
- * describes a prototype that computes its chain in the browser.
+ * What DEV cannot show yet is any row: `POST /research/screener` returns no
+ * chain for any name, because the market-data plugin's `/options/chain/latest`
+ * answers empty (measured 2026-09-23, tracked as its own task). Everything
+ * with a row in it is built from the response's own fields and checked by
+ * the model's tests, not against a live row.
  */
 import { useEffect, useMemo, useState } from 'react'
+import { Download } from 'lucide-react'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { PageHeader, PageShell } from '@/components/layout'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
-import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
-import { useOptionScreener } from '@/hooks/useOptionScreener'
-import type { ScreenerFilters } from '@/types/research'
-import { OptionScreenerFilterPanel } from './OptionScreenerFilterPanel'
+import { STORAGE_KEYS } from '@/constants/storage'
+import { useOpportunities } from '@/hooks/useStrategies'
+import { OptionScreenerContracts } from './OptionScreenerContracts'
 import { OptionScreenerFunnel } from './OptionScreenerFunnel'
+import { FiltersPanel, StructurePanel } from './OptionScreenerRail'
 import { OptionScreenerSources } from './OptionScreenerSources'
-import { screenerFunnel } from './screenerFunnelModel'
-import { useScreenerSources, type ScreenerSource } from './useScreenerSources'
-import { OptionScreenerResultsBar } from './OptionScreenerResultsBar'
-import { OptionScreenerSymbolGroup } from './OptionScreenerSymbolGroup'
-import { OptionScreenerWarnings } from './OptionScreenerWarnings'
-import { loadSavedFilters, STRUCTURE_LABEL } from './optionScreenerConstants'
+import { STRUCTURE_LABEL, STRUCTURE_TYPES } from './optionScreenerConstants'
 import { exportScreenerCsv } from './optionScreenerExport'
 import {
-  optionScreenerGroupListClass,
-  optionScreenerSymbolsTextareaClass,
-} from './optionScreenerUi'
+  buildScreenGroups,
+  DEFAULT_LIVE_FILTERS,
+  screenerFunnel,
+  type LiveFilters,
+  type ScreenView,
+} from './screenerModel'
+import { useScreenerChain } from './useScreenerChain'
+import { useScreenerSources, type ScreenerSource } from './useScreenerSources'
+
+interface Saved {
+  symbols: string[]
+  structure: string
+  filters: LiveFilters
+  includeEarnings: boolean
+}
+
+const FRESH: Saved = {
+  symbols: [],
+  structure: 'cash_secured_put',
+  filters: DEFAULT_LIVE_FILTERS,
+  includeEarnings: false,
+}
+
+function loadSaved(): Saved {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.optionScreenerLive)
+    if (!raw) return FRESH
+    const s = JSON.parse(raw) as Partial<Saved>
+    return {
+      symbols: Array.isArray(s.symbols) ? s.symbols : [],
+      structure: typeof s.structure === 'string' ? s.structure : FRESH.structure,
+      filters: { ...DEFAULT_LIVE_FILTERS, ...(s.filters ?? {}) },
+      includeEarnings: s.includeEarnings === true,
+    }
+  } catch {
+    return FRESH
+  }
+}
+
+const LEDE =
+  'Third step of Discover: Stock Explorer picks companies, Option Scan picks underlyings with premium, this picks the contracts that fit a structure. Results re-run as you move a filter; every row ends in ＋ Plan this.'
 
 export default function OptionScreenerPage() {
-  const [filters, setFilters] = useState<ScreenerFilters>(loadSavedFilters)
-  const [symbolsText, setSymbolsText] = useState(() => filters.symbols.join('\n'))
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
-  const [saveSymbol, setSaveSymbol] = useState<string | null>(null)
-  const [runError, setRunError] = useState<string | null>(null)
+  const [saved] = useState(loadSaved)
+  const [symbols, setSymbols] = useState<string[]>(saved.symbols)
+  const [structure, setStructure] = useState(saved.structure)
+  const [filters, setFilters] = useState<LiveFilters>(saved.filters)
+  const [includeEarnings, setIncludeEarnings] = useState(saved.includeEarnings)
+  const [view, setView] = useState<ScreenView>('grouped')
+  const [selected, setSelected] = useState<string | null>(null)
   const [sourceId, setSourceId] = useState<string | null>(null)
-
-  const mutation = useOptionScreener()
-  const { sources } = useScreenerSources()
-
-  const picked = useMemo(
-    () =>
-      symbolsText
-        .split(/[\n,\s]+/)
-        .map((s) => s.trim().toUpperCase())
-        .filter(Boolean),
-    [symbolsText],
-  )
+  const [saveOpen, setSaveOpen] = useState(false)
 
   useEffect(() => {
-    localStorage.setItem('optionScreenerFilters', JSON.stringify(filters))
-  }, [filters])
+    try {
+      localStorage.setItem(
+        STORAGE_KEYS.optionScreenerLive,
+        JSON.stringify({ symbols, structure, filters, includeEarnings } satisfies Saved),
+      )
+    } catch {
+      // Private window or blocked storage: the page works, it just forgets.
+    }
+  }, [symbols, structure, filters, includeEarnings])
+
+  const { sources } = useScreenerSources()
+  const opportunities = useOpportunities()
+  const structureOn = STRUCTURE_TYPES.some((s) => s.value === structure && s.enabled)
+  const chain = useScreenerChain({ symbols, structure, includeEarnings, enabled: structureOn })
+  const data = chain.data
+
+  const failed = useMemo(() => {
+    const out: Record<string, string> = {}
+    for (const sym of data?.symbols_failed ?? []) out[sym] = data?.warnings?.[sym] ?? 'the engine returned nothing'
+    return out
+  }, [data])
+
+  const groups = useMemo(
+    () => buildScreenGroups(data?.groups ?? [], filters, view, failed, chain.pending),
+    [data?.groups, filters, view, failed, chain.pending],
+  )
+  const pass = groups.reduce((n, g) => n + g.rows.length, 0)
+  const sourceLabel = sources.find((s) => s.id === sourceId)?.label ?? null
+
+  const funnel = screenerFunnel({
+    picked: symbols,
+    sourceLabel,
+    data,
+    loading: chain.isFetching,
+    f: filters,
+    groups,
+    pending: chain.pending,
+  })
+
+  const status = ((): Parameters<typeof OptionScreenerContracts>[0]['status'] => {
+    if (symbols.length === 0) {
+      return {
+        kind: 'empty',
+        title: 'Pick underlyings',
+        detail: 'Choose a source in step 1, or add a symbol. The table fills when the engine answers.',
+      }
+    }
+    if (!data && chain.pending.length > 0) {
+      return {
+        kind: 'empty',
+        title: `Screening ${symbols.length} name${symbols.length === 1 ? '' : 's'}…`,
+        detail:
+          'About ten seconds a name. Once it answers the sliders are live — moving one never re-screens; changing the names, the structure or earnings does.',
+      }
+    }
+    if (groups.length === 0) {
+      // Passing only drops the names with no chain, so an empty table there
+      // can mean the engine returned nothing at all — which is not the same
+      // as every contract failing a filter, and loosening one will not help.
+      const scanned = data?.symbols_scanned?.length ?? 0
+      const noChain = scanned > 0 && (data?.symbols_failed?.length ?? 0) >= scanned
+      const reason = Object.values(data?.warnings ?? {})[0]
+      return noChain
+        ? {
+            kind: 'empty',
+            title: 'No name has a chain',
+            detail: `The engine returned no chain for any of the ${scanned} names${reason ? ` — “${reason}”` : ''}. That is the chain store, not a filter: no slider will change it.`,
+          }
+        : {
+            kind: 'empty',
+            title: 'No contract passes',
+            detail: 'Every contract in the window fails a filter. The funnel strip says which stage empties.',
+          }
+    }
+    return { kind: 'rows' }
+  })()
 
   function pickSource(source: ScreenerSource) {
-    // Replace, never accumulate: the design's source buttons are exclusive,
-    // and a picker that adds leaves you unable to say what you are screening.
+    // Replace, never accumulate: the design's source buttons are exclusive.
     if (!source.symbols) return
     setSourceId(source.id)
-    setSymbolsText(source.take.join('\n'))
-    if (runError) setRunError(null)
+    setSymbols(source.take)
+    setSelected(null)
   }
 
-  function dropSymbol(symbol: string) {
-    setSymbolsText(picked.filter((s) => s !== symbol).join('\n'))
-  }
-
-  function handleRun() {
-    const symbols = picked
-    if (symbols.length === 0) {
-      setRunError('Enter at least one symbol.')
-      return
-    }
-    setRunError(null)
-    const f = { ...filters, symbols }
-    setFilters(f)
-    mutation.mutate(f, {
-      onSuccess: data => {
-        if (!data.ok && data.error) setRunError(data.error)
-      },
-    })
-    setExpandedGroups(new Set(symbols))
-  }
-
-  function toggleGroup(symbol: string) {
-    setExpandedGroups(prev => {
-      const next = new Set(prev)
-      if (next.has(symbol)) next.delete(symbol)
-      else next.add(symbol)
-      return next
-    })
-  }
-
-  const groups = mutation.data?.groups ?? []
-
-  const warnings = useMemo(() => {
-    const w = mutation.data?.warnings ?? {}
-    return Object.entries(w)
-  }, [mutation.data])
-
-  const prefillData: PrefillData | undefined =
-    saveSymbol != null
-      ? {
-          name: `${saveSymbol} ${STRUCTURE_LABEL[filters.structure_type] ?? filters.structure_type}`,
-          structureId: '',
-          gateSafetyId: '',
-          scopeType: 'explicit_symbols',
-          symbols: [saveSymbol],
-          conditions: [],
-        }
-      : undefined
+  const structureLabel = STRUCTURE_LABEL[structure] ?? structure
 
   return (
     <PageShell className="space-y-3">
       <PageHeader
         title="Option screen"
-        description="Third step of Discover: Stock Explorer picks companies, Option Scan picks underlyings with premium, this picks the contracts that fit a structure."
+        description={LEDE}
         actions={
-          <AskCopilotButton
-            originPage="screener"
-            originLabel="Option Screener"
-            symbol={
-              symbolsText.split(/[\n,\s]+/).map((s) => s.trim().toUpperCase()).find(Boolean)
-            }
-            snapshot={compactSnapshot({
-              structure_type: filters.structure_type,
-              group_count: groups.length,
-            })}
-            suggestedPrompt="Interpret these option screener results and flag contracts worth a closer look."
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 text-dense-meta"
+              disabled={pass === 0}
+              title={pass === 0 ? 'Nothing passes, so there is nothing to export' : `Export the ${pass} passing rows`}
+              onClick={() => exportScreenerCsv(groups, structure)}
+            >
+              <Download className="size-3.5" />
+              Export CSV
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 text-dense-meta"
+              disabled={symbols.length === 0}
+              title="Turns these names and this structure into an Opportunity in Trade › Rules — the daemon then screens daily"
+              onClick={() => setSaveOpen(true)}
+            >
+              Save as rule →
+            </Button>
+            <AskCopilotButton
+              originPage="screener"
+              originLabel="Option screen"
+              symbol={symbols[0]}
+              snapshot={compactSnapshot({ structure_type: structure, names: symbols.length, pass })}
+              suggestedPrompt="Interpret these option screener results and flag contracts worth a closer look."
+            />
+          </div>
         }
       />
 
-      {/* The design's own device for the thing this page does most: return
-          nothing. It names the stage that emptied and carries the engine's
-          own sentence for it. */}
-      <OptionScreenerFunnel
-        cells={screenerFunnel(
-          picked,
-          STRUCTURE_LABEL[filters.structure_type] ?? filters.structure_type,
-          mutation.data ?? null,
-        )}
-      />
+      <OptionScreenerFunnel cells={funnel} />
 
       <div className="flex flex-wrap items-start gap-3">
-        <div className="flex min-w-[280px] flex-[0_1_320px] flex-col gap-2.5">
+        <aside className="flex min-w-[280px] flex-[0_1_320px] flex-col gap-2.5">
           <OptionScreenerSources
             sources={sources}
             activeId={sourceId}
-            symbols={picked}
+            symbols={symbols}
             onPickSource={pickSource}
-            onDrop={dropSymbol}
-          >
-            <textarea
-              className={optionScreenerSymbolsTextareaClass}
-              placeholder={'or type them: ANET\nCAVA'}
-              aria-label="Symbols"
-              value={symbolsText}
-              onChange={(e) => {
-                setSymbolsText(e.target.value)
-                setSourceId(null)
-                if (runError) setRunError(null)
-              }}
-            />
-          </OptionScreenerSources>
-          <OptionScreenerFilterPanel
-            filters={filters}
-            isPending={mutation.isPending}
-            onFiltersChange={(updater) => setFilters(updater)}
-            onRun={handleRun}
+            onDrop={(sym) => {
+              setSymbols((prev) => prev.filter((s) => s !== sym))
+              setSourceId(null)
+            }}
+            onAdd={(add) => {
+              setSymbols((prev) => [...new Set([...prev, ...add])])
+              setSourceId(null)
+            }}
           />
-        </div>
+          <StructurePanel value={structure} onChange={setStructure} />
+          <FiltersPanel
+            filters={filters}
+            onChange={setFilters}
+            onReset={() => setFilters(DEFAULT_LIVE_FILTERS)}
+            includeEarnings={includeEarnings}
+            onIncludeEarnings={setIncludeEarnings}
+          />
+        </aside>
 
-        <div className="min-w-0 flex-[999_1_600px] space-y-3">
-
-      {(runError || mutation.isError) && (
-        <Alert variant="destructive">
-          <AlertDescription>
-            {runError ??
-              (mutation.error instanceof Error && mutation.error.name === 'AbortError'
-                ? 'Request timed out after 60 seconds.'
-                : (mutation.error as Error).message)}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {mutation.data?.ok && (
-        <OptionScreenerResultsBar
-          data={mutation.data}
-          onExport={() => exportScreenerCsv(groups, filters.structure_type)}
+        <OptionScreenerContracts
+          groups={groups}
+          pass={pass}
+          view={view}
+          onView={setView}
+          filters={filters}
+          opportunities={opportunities.data?.items}
+          selected={selected}
+          onSelect={setSelected}
+          source="massive"
+          status={status}
         />
-      )}
-
-      <OptionScreenerWarnings warnings={warnings} />
-
-      {mutation.data && groups.length === 0 ? (
-        <div className="rounded-lg border border-border px-4 py-6 text-center">
-          <p className="text-dense-body font-semibold">No contract passes</p>
-          <p className="mx-auto mt-1 max-w-[70ch] text-dense-meta leading-relaxed text-muted-foreground">
-            The funnel above says which stage emptied. When <span className="font-mono">Screened</span>{' '}
-            reads 0 it is the chain store rather than anything on this page: the screener reads an
-            option snapshot that the market-data plugin&rsquo;s contract coverage does not fill, and
-            it says so per symbol.
-          </p>
-        </div>
-      ) : null}
-
-      {groups.length > 0 && (
-        <div className={optionScreenerGroupListClass}>
-          {groups.map(g => (
-            <OptionScreenerSymbolGroup
-              key={g.symbol}
-              group={g}
-              expanded={expandedGroups.has(g.symbol)}
-              onToggle={() => toggleGroup(g.symbol)}
-              onSave={setSaveSymbol}
-            />
-          ))}
-        </div>
-      )}
-
-        </div>
       </div>
 
       <OpportunityFormModal
-        key={saveSymbol ?? 'screener-save'}
-        open={saveSymbol != null}
-        onClose={() => setSaveSymbol(null)}
-        prefill={prefillData}
+        key={saveOpen ? 'screener-save-open' : 'screener-save'}
+        open={saveOpen}
+        onClose={() => setSaveOpen(false)}
+        prefill={{
+          name: `${structureLabel} · ${sourceLabel?.split(' ·')[0] ?? symbols.join(' ')}`,
+          structureId: '',
+          gateSafetyId: '',
+          scopeType: 'explicit_symbols',
+          symbols,
+          conditions: [],
+        }}
       />
     </PageShell>
   )

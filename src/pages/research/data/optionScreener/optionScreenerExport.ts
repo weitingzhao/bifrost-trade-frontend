@@ -1,31 +1,39 @@
-import type { ScreenerSymbolGroup } from '@/types/research'
+/**
+ * Export CSV — the rows the table is showing, with the engine's own columns
+ * beside the design's. Score, rating and risk are not table columns (the design
+ * draws none of them); the export keeps them, so nothing the engine said is
+ * lost by being left off the screen.
+ */
+import type { ScreenGroup } from './screenerModel'
+import { annReturnPct, cashPerContract, contractToken } from './screenerModel'
 
-export function exportScreenerCsv(groups: ScreenerSymbolGroup[], structureType: string): void {
+export function exportScreenerCsv(groups: readonly ScreenGroup[], structureType: string): void {
   const header = [
-    'symbol', 'strike', 'right', 'expiry', 'dte',
-    'rating', 'risk', 'score', 'iv', 'premium', 'prob_itm',
-    'bid', 'ask', 'mid', 'spread_pct', 'oi',
-    'delta', 'gamma', 'theta', 'vega',
+    'contract', 'symbol', 'expiry', 'strike', 'right', 'dte',
+    'delta', 'prob_itm_pct', 'mid', 'ann_return_pct', 'spread_pct', 'oi', 'cash_per_contract',
+    'engine_score', 'engine_rating', 'engine_risk',
   ]
-  const rows = groups.flatMap(g =>
-    g.contracts.map(c => [
-      g.symbol, c.strike, c.right, c.expiry, c.dte,
-      c.rating, c.risk, c.score,
-      c.iv != null ? (c.iv * 100).toFixed(2) : '',
-      c.premium != null ? c.premium.toFixed(2) : '',
-      c.prob_itm != null ? (c.prob_itm * 100).toFixed(1) : '',
-      c.bid ?? '', c.ask ?? '', c.mid ?? '',
-      c.spread_pct != null ? (c.spread_pct * 100).toFixed(2) : '',
-      c.oi ?? '',
-      c.delta ?? '', c.gamma ?? '', c.theta ?? '', c.vega ?? '',
-    ]),
+  const rows = groups.flatMap((g) =>
+    g.rows.map((r) => {
+      const ret = annReturnPct(r)
+      return [
+        contractToken(g.symbol, r), g.symbol, r.expiry, r.strike, r.right, r.dte,
+        r.delta ?? '',
+        r.prob_itm != null ? (r.prob_itm * 100).toFixed(1) : '',
+        r.mid ?? '',
+        ret != null ? ret.toFixed(2) : '',
+        r.spread_pct != null ? (r.spread_pct * 100).toFixed(2) : '',
+        r.oi ?? '',
+        cashPerContract(r),
+        r.score, r.rating, r.risk,
+      ]
+    }),
   )
-  const csv = [header, ...rows].map(r => r.join(',')).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
+  const csv = [header, ...rows].map((r) => r.join(',')).join('\n')
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
   const a = document.createElement('a')
   a.href = url
-  a.download = `screener_${structureType}_${Date.now()}.csv`
+  a.download = `option_screen_${structureType}_${Date.now()}.csv`
   a.click()
   URL.revokeObjectURL(url)
 }

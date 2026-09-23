@@ -1,12 +1,12 @@
 /**
  * The funnel strip — four cells above everything, as the design places it.
  *
- * `screenerFunnelModel.ts` decides what they say; this draws them. Tone is
+ * `screenerModel.ts` decides what they say; this draws them. Tone is
  * the whole visual argument: a stage that emptied is the one the reader is
  * looking for, so it is the one that is loud.
  */
 import { cn } from '@/lib/utils'
-import type { FunnelCell } from './screenerFunnelModel'
+import type { FunnelCell } from './screenerModel'
 
 const TONE: Record<FunnelCell['tone'], string> = {
   ok: 'text-foreground',

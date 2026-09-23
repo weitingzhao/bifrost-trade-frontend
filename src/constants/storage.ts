@@ -20,7 +20,13 @@ export const STORAGE_KEYS = {
   symbolExhibitSnapshot: 'bifrost-symbol-exhibit-snapshot',
   // Option Discovery compare drawer — survives symbol / expiry switches.
   discoveryCompare: 'bifrost-discovery-compare',
-  optionScreenerFilters: 'optionScreenerFilters',
+  /**
+   * The Option screen's list, structure and six sliders. Replaced
+   * `optionScreenerFilters` on 2026-09-23 when the sliders moved from 0–1
+   * fractions to the design's percents: a saved 0.3 read as 0.3% would have
+   * emptied every screen on first load.
+   */
+  optionScreenerLive: 'optionScreenerLive',
   optionDiscoveryPrefs: 'optionDiscoveryPrefs',
   positionsCushionPct: 'bifrost-positions-cushion-pct',
   positionsSections: 'bifrost-positions-sections',

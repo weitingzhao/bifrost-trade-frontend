@@ -27,6 +27,9 @@ export const TYPED_BODY_KINDS: ReadonlySet<string> = new Set([
   'daily_digest',
   'policy_suggestion',
   'decision_draft',
+  // Gained a body 2026-09-22 when the design ruled on it; it belongs in the
+  // typed band from that moment, not from the next time someone reads this.
+  'order_intent',
 ])
 
 export function hasTypedBody(draft: { kind: string }): boolean {

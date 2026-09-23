@@ -7,42 +7,11 @@
  * order (D10). The sizing text mentions NetLiq because the curator reasons in
  * it, not because anything will act on it.
  */
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
+import { DraftRationale } from '@/components/research/harness/DraftRationale'
 import { decisionDraftView } from '@/lib/harness/decisionDraft'
 import { cn } from '@/lib/utils'
-
-/**
- * The curator's argument, clamped rather than scrolled.
- *
- * It ran 769–1254 characters on DEV and used to sit in a 160px scroll area
- * inside a card that has no height of its own — a second scrollbar for one
- * paragraph. The design's answer (Rev 2026-09-22.7) is three lines and a
- * `Read all` that grows the card, and it is deliberately not remembered: the
- * queue is read top to bottom, and a card that stayed open from yesterday
- * pushes the next call off the screen.
- */
-function Rationale({ text }: { text: string }) {
-  const [full, setFull] = useState(false)
-  return (
-    <div className="space-y-0.5">
-      <p
-        className={cn('max-w-prose whitespace-pre-line text-foreground/85', full ? '' : 'overflow-hidden')}
-        style={full ? undefined : { maxHeight: '4.5em' }}
-      >
-        {text}
-      </p>
-      <button
-        type="button"
-        onClick={() => setFull((v) => !v)}
-        className="text-dense-micro text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-      >
-        {full ? 'Collapse' : `Read all · ${text.length.toLocaleString('en-US')} chars`}
-      </button>
-    </div>
-  )
-}
 
 export function DecisionDraftBody({ payload }: { payload: Record<string, unknown> }) {
   const v = decisionDraftView(payload)
@@ -156,7 +125,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
         </div>
       ) : null}
 
-      {v.rationale ? <Rationale text={v.rationale} /> : null}
+      {v.rationale ? <DraftRationale text={v.rationale} /> : null}
     </div>
   )
 }

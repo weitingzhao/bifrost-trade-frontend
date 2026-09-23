@@ -7,7 +7,9 @@ describe('draftKindLabel', () => {
     expect(draftKindLabel('candidate_batch')).toBe('Candidate Batch')
     expect(draftKindLabel('policy_suggestion')).toBe('Policy Suggestion')
     expect(draftKindLabel('decision_draft')).toBe('Decision')
-    expect(draftKindLabel('order_intent')).toBe('Order Intent')
+    // `vehicle` since the design's Rev 2026-09-22.7 ruling — the card draws a
+    // shape for expressing a belief, and it never reaches Trade.
+    expect(draftKindLabel('order_intent')).toBe('vehicle')
     expect(draftKindLabel('some_future_kind')).toBe('some_future_kind')
   })
 

@@ -22,7 +22,11 @@ export function draftKindLabel(kind: string): string {
   // The decision kinds the card used to print as snake_case. The Desk's queue
   // put them in a column called Kind, where `decision_draft` read as a bug.
   if (kind === 'decision_draft') return 'Decision'
-  if (kind === 'order_intent') return 'Order Intent'
+  // `vehicle`, not the payload's own name (design Rev 2026-09-22.7, Vision §21's
+  // thesis/vehicle pair): the card draws a shape for expressing a belief, and it
+  // stops here — calling it an order is the one word on this page that could
+  // read as if something reached Trade. The meta line keeps `order_intent`.
+  if (kind === 'order_intent') return 'vehicle'
   if (kind === 'hypothesis_draft') return 'Hypothesis Draft'
   if (kind === 'playbook_rule') return 'Playbook Rule'
   if (kind === 'playbook_note') return 'Playbook Note'

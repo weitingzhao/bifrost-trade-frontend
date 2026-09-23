@@ -235,9 +235,11 @@ describe('design adoption', () => {
     // (40→44). They are four of Research's eight, and the first time the
     // Owner has cleared rows by reading the queue itself. Alerts, Daily Brief
     // and the Research layer page followed in the same pass (44→47), which
-    // closes Home at seven of seven.
-    expect(counts.aligned + counts.byState.stale).toBe(47)
-    expect(counts.aligned).toBe(47)
+    // closes Home at seven of seven. Then the objective page (47→51): one
+    // page, but it answers four of the design's fixture rows, which is why a
+    // single look moves the count by four.
+    expect(counts.aligned + counts.byState.stale).toBe(51)
+    expect(counts.aligned).toBe(51)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -438,8 +440,9 @@ describe('design adoption', () => {
     // Owner's walk took Positions and the Watchlist out to `aligned` and put
     // the Decision Inbox back in, which is two out and one in. 19 on
     // 2026-09-23 with the four Research sign-offs, then 16 with Alerts, Daily
-    // Brief and the Research layer page.
-    expect(counts.byState.reviewing).toBe(16)
+    // Brief and the Research layer page, then 12 with the objective page's four
+    // fixture rows.
+    expect(counts.byState.reviewing).toBe(12)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -466,6 +469,10 @@ describe('design adoption', () => {
       '/research/journal',
       '/research/loop/candidates',
       '/research/loop/hypotheses',
+      '/research/loop/objectives/obj-daily-stock',
+      '/research/loop/objectives/obj-earnings-iv',
+      '/research/loop/objectives/obj-smallcap-sepa',
+      '/research/loop/objectives/obj-vol-crush',
       '/research/orchestration',
       '/research/overview',
       '/research/ratings/stocks',
@@ -503,10 +510,6 @@ describe('design adoption', () => {
       '/research/lens-coverage',
       '/research/loop/decisions',
       '/research/loop/harness',
-      '/research/loop/objectives/obj-daily-stock',
-      '/research/loop/objectives/obj-earnings-iv',
-      '/research/loop/objectives/obj-smallcap-sepa',
-      '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
       '/research/signal-health',
       '/research/workbench',

@@ -121,7 +121,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Objective',
     crumbs: AUTOPILOT,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.3',
       note: DESIGN_NOTES['/research/loop/objectives/:objectiveId'],
     },

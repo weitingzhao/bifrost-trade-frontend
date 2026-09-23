@@ -234,9 +234,9 @@ describe('design adoption', () => {
     // Research pages, Alerts, Daily Brief and the layer page; the objective page
     // (four fixture rows on one look), Loop Run and the console, closing
     // Autopilot; the rebuilt Decision Inbox and the Rule proposals link onto it,
-    // closing Review.
-    expect(counts.aligned + counts.byState.stale).toBe(55)
-    expect(counts.aligned).toBe(55)
+    // closing Review; then Live after Package 2026-09-23.2 (55→56).
+    expect(counts.aligned + counts.byState.stale).toBe(56)
+    expect(counts.aligned).toBe(56)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -436,8 +436,9 @@ describe('design adoption', () => {
     // to the Coverage page the same ruling retired. 23 on 2026-09-22: the
     // Owner's walk took Positions and the Watchlist out to `aligned` and put
     // the Decision Inbox back in, which is two out and one in. 8 after
-    // the 2026-09-23 pass through the queue (fifteen rows on eleven looks).
-    expect(counts.byState.reviewing).toBe(8)
+    // the 2026-09-23 pass through the queue (fifteen rows on eleven looks), 7
+    // with Live.
+    expect(counts.byState.reviewing).toBe(7)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -445,6 +446,7 @@ describe('design adoption', () => {
         .sort(),
     ).toEqual([
       '/home',
+      '/market/live',
       '/portfolio',
       '/portfolio/accounts',
       '/portfolio/backing',
@@ -503,7 +505,6 @@ describe('design adoption', () => {
     // The two ratings pages' own siblings: Symbol, and the Vol ratings rebuild
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
-      '/market/live',
       '/research/contract-screener',
       '/research/greeks',
       '/research/lens-coverage',

@@ -17,6 +17,7 @@ import { DESIGN_NOTES } from './designNotes'
 import {
   AGENTS,
   ANALYZE,
+  RISK_EXPOSURE,
   AUTOPILOT,
   COPILOT,
   DISCOVER,
@@ -400,19 +401,24 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/contract-screener'],
     },
   },
-  // Analyze, not Data. The design's rule (shell-registry, Discover fold): a
-  // page that takes a symbol is a read and joins Analyze; a page that takes
-  // none is pipeline plumbing and goes to System › Data. Greeks takes a
-  // contract, so it reads — and it holds no menu row, because it is a tab of
-  // Symbol and the tree gives places, not tabs.
+  // Risk, not Research. The design moved it on 2026-09-23 and said why the
+  // earlier reasoning was wrong: the 09-19 rule read "takes a symbol → joins
+  // Analyze", but this page's subject is **the whole book's option legs** and
+  // the symbol is a filter on it. The 09-20 pass then cut its menu row on the
+  // premise that it was a deep-link alias of a Symbol tab — and Symbol has no
+  // Greeks tab, so the page was left with a prototype and no way in. The
+  // design calls that its own error, not something this side failed to build.
+  //
+  // It holds no row of its own by design: it is the per-leg detail of
+  // Portfolio Exposure, so that row lights and three doors lead here. The
+  // path does not move — addresses are cheap to keep and expensive to break.
   {
     path: '/research/greeks',
     label: 'Contract Greeks',
-    crumbs: ANALYZE,
-    scope: 'contract',
+    crumbs: RISK_EXPOSURE,
     design: {
       state: 'reviewing',
-      rev: '2026-09-19.2',
+      rev: '2026-09-23.3',
       note: DESIGN_NOTES['/research/greeks'],
     },
   },

@@ -243,8 +243,9 @@ describe('design adoption', () => {
     // set is unchanged at 57; three of them are now behind their own rev.
     // 57 → 56 when Stock ratings was re-walked on 2026-09-23 and left for
     // `reviewing`: a re-walked page is not a walked page until the Owner has
-    // looked at it again.
-    expect(counts.aligned + counts.byState.stale).toBe(56)
+    // looked at it again. 56 → 54 when Portfolio Exposure and Positions grew
+    // their doors into Contract Greeks and went the same way.
+    expect(counts.aligned + counts.byState.stale).toBe(54)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -252,9 +253,7 @@ describe('design adoption', () => {
     expect(counts.aligned).toBe(52)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/market/live',
-      '/portfolio/positions',
       '/research/event-radar',
-      '/risk/portfolio',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -458,8 +457,9 @@ describe('design adoption', () => {
     // with Live, 6 with the census face. 7 with Options Kit, the first of the
     // four `/docs/*` builds the judgement of 2026-09-23 recommended, and 8
     // with Stock ratings, re-walked the same day onto the capabilities the
-    // design moved there.
-    expect(counts.byState.reviewing).toBe(8)
+    // design moved there, and 10 with Portfolio Exposure and Positions, which
+    // grew Contract Greeks' three doors between them.
+    expect(counts.byState.reviewing).toBe(10)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -523,11 +523,13 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/docs/options-kit',
+      '/portfolio/positions',
       '/research/contract-screener',
       '/research/greeks',
       '/research/lens-coverage',
       '/research/ratings/stocks',
       '/research/signal-health',
+      '/risk/portfolio',
       '/settings',
       '/system/status',
     ])
@@ -731,8 +733,10 @@ describe('design adoption', () => {
     // reading rather than an artefact of some other page moving. 3 → 5 with
     // Package 2026-09-23.3, where Live and Alerts moved rail rather than page.
     // 5 → 4: Stock ratings was the first of the three to be built to its new
-    // rev, and it is the one the two `moving` pages are waiting on.
-    expect(counts.byState.stale).toBe(4)
+    // rev, and it is the one the two `moving` pages are waiting on. 4 → 2 with
+    // the two pages that hold Contract Greeks' doors — all that is left is
+    // Live and Alerts, which move rail rather than page.
+    expect(counts.byState.stale).toBe(2)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

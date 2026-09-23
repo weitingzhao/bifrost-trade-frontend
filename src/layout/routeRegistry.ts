@@ -122,6 +122,11 @@ const SYSTEM_TREE_PAGES: ReadonlySet<string> = new Set([
  */
 const OWNED_BY_ROW: ReadonlyArray<{ prefix: string; row: string }> = [
   { prefix: '/research/loop/objectives/', row: '/research/loop/harness' },
+  // Contract Greeks, since design Rev 2026-09-23.3. It is the per-leg detail
+  // behind Portfolio Exposure's aggregates and holds no row of its own, so
+  // that row lights — the reader arrived from it and should be able to see
+  // where they are standing.
+  { prefix: '/research/greeks', row: '/risk/portfolio' },
 ]
 
 /**
@@ -143,7 +148,16 @@ export function matchActiveRow(item: ShellNavItem, activeId: string): boolean {
 }
 
 export function navRowFor(pathname: string): string {
-  const owner = OWNED_BY_ROW.find((o) => pathname.startsWith(o.prefix))
+  // On a path boundary, not on characters: a bare prefix would let
+  // `/research/greeks` claim a future `/research/greeks-history`, and a row
+  // lighting for the wrong page is worse than no row lighting at all.
+  // A prefix ending in `/` claims descendants only — the stem is its own page
+  // and keeps its own row. One without claims itself and anything under it.
+  const owner = OWNED_BY_ROW.find((o) =>
+    o.prefix.endsWith('/')
+      ? pathname.startsWith(o.prefix)
+      : pathname === o.prefix || pathname.startsWith(`${o.prefix}/`),
+  )
   return owner?.row ?? pathname
 }
 

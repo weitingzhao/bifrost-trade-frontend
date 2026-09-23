@@ -24,6 +24,13 @@ export const TRADE = ['Trade'] as const
  */
 export const TRADE_DESK = ['Trade'] as const
 export const RISK = ['Risk'] as const
+/**
+ * Contract Greeks' own crumbs since design Rev 2026-09-23.3. It is the
+ * per-leg detail behind Portfolio Exposure's aggregates, and the design moved
+ * it out of Research › Analyze on the ground that its subject is the whole
+ * book's option legs — the symbol is a filter, not a subject.
+ */
+export const RISK_EXPOSURE = ['Risk', 'Portfolio Exposure'] as const
 export const REVIEW = ['Review'] as const
 export const RESEARCH = ['Research'] as const
 /**

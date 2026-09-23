@@ -207,3 +207,65 @@ export function marksStanding(
     tone: dead.length > 0 || rollup.staleLegs > 0 ? 'warn' : 'ok',
   }
 }
+
+// ─── `?sym=` is a filter on the book, not a scope on a symbol ──────────────
+
+/**
+ * Narrow the book to one underlying.
+ *
+ * The design is explicit about what this is (DECISIONS 2026-09-23): the three
+ * doors into this page carry `?sym=`, and it **filters** the book rather than
+ * scoping the page to a symbol. Clearing it shows every leg again, and the
+ * page's subject is still the whole book — which is why the page moved to
+ * Risk › Portfolio Exposure rather than joining Symbol.
+ *
+ * Matching is on the underlying, not the contract token: `?sym=NVDA` means
+ * every NVDA leg at every expiry and strike.
+ */
+export function filterLegsBySymbol(
+  rows: readonly BookLegRow[],
+  symbol: string | null | undefined,
+): readonly BookLegRow[] {
+  const sym = (symbol ?? '').trim().toUpperCase()
+  if (!sym) return rows
+  return rows.filter((r) => r.underlying.trim().toUpperCase() === sym)
+}
+
+export interface LegTotals {
+  legs: number
+  /** Legs the vendor could price — the divisor the strip is honest about. */
+  priced: number
+  delta: number
+  gamma: number
+  vega: number
+  theta: number
+}
+
+/**
+ * The strip's figures, summed over whatever set of legs is in view.
+ *
+ * Unfiltered this must agree with `usePositionsBook`'s own rollup, and the
+ * page keeps reading that rollup when nothing is filtered — one number, one
+ * place (§14.2). Under a filter there is no rollup to read, so the same sum is
+ * taken here over the legs on screen.
+ *
+ * A leg the vendor could not price is **counted out**, never summed as zero: a
+ * missing greek is not a flat one, and averaging it in would quietly move the
+ * book's delta towards nothing.
+ */
+export function sumLegs(rows: readonly BookLegRow[]): LegTotals {
+  let priced = 0
+  let delta = 0
+  let gamma = 0
+  let vega = 0
+  let theta = 0
+  for (const r of rows) {
+    if (r.delta == null && r.gamma == null && r.vega == null && r.theta == null) continue
+    priced += 1
+    delta += r.delta ?? 0
+    gamma += r.gamma ?? 0
+    vega += r.vega ?? 0
+    theta += r.theta ?? 0
+  }
+  return { legs: rows.length, priced, delta, gamma, vega, theta }
+}

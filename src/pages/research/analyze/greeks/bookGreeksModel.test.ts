@@ -3,7 +3,15 @@
  * a long leg tight.
  */
 import { describe, expect, it } from 'vitest'
-import { bookLegRows, byExpiry, marksStanding, type BookLegInput } from './bookGreeksModel'
+import {
+  bookLegRows,
+  byExpiry,
+  filterLegsBySymbol,
+  marksStanding,
+  sumLegs,
+  type BookLegInput,
+  type BookLegRow,
+} from './bookGreeksModel'
 
 const leg = (over: Partial<BookLegInput> = {}): BookLegInput => ({
   underlying: 'NVDA',
@@ -137,5 +145,76 @@ describe('netting per contract', () => {
     const rows = bookLegRows([leg({ right: 'CALL', qty: -1 }), leg({ right: 'C', qty: -1 })], greeks, OPTS)
     expect(rows).toHaveLength(1)
     expect(rows[0].token).toBe('NVDA 20NOV26 245C')
+  })
+})
+
+// ─── `?sym=` ──────────────────────────────────────────────────────────────
+
+const legRow = (over: Partial<BookLegRow> = {}): BookLegRow =>
+  ({
+    ticker: null,
+    token: 'NVDA 20NOV26 170P',
+    underlying: 'NVDA',
+    expiry: '2026-11-20',
+    qty: -1,
+    mark: 4,
+    iv: 0.4,
+    delta: -10,
+    gamma: 2,
+    vega: 5,
+    theta: 3,
+    dte: 30,
+    cushion: 0.1,
+    band: null,
+    tight: false,
+    unpriced: false,
+    ...over,
+  }) as BookLegRow
+
+describe('narrowing the book to one underlying', () => {
+  const rows = [
+    legRow({ underlying: 'NVDA' }),
+    legRow({ underlying: 'nvda', token: 'NVDA 18DEC26 160P' }),
+    legRow({ underlying: 'AMD', token: 'AMD 20NOV26 140P' }),
+  ]
+
+  it('takes every leg on that name, at every expiry', () => {
+    expect(filterLegsBySymbol(rows, 'NVDA')).toHaveLength(2)
+  })
+
+  it('does not care how the caller spelled it', () => {
+    expect(filterLegsBySymbol(rows, ' nvda ')).toHaveLength(2)
+  })
+
+  it('an empty filter is the whole book, not an empty book', () => {
+    // The design's own words: clearing it shows every leg. A `?sym=` that
+    // emptied the page when cleared would make the filter a scope.
+    expect(filterLegsBySymbol(rows, '')).toHaveLength(3)
+    expect(filterLegsBySymbol(rows, null)).toHaveLength(3)
+  })
+
+  it('answers empty for a name with no legs — a query fact, not an error', () => {
+    expect(filterLegsBySymbol(rows, 'TSLA')).toHaveLength(0)
+  })
+})
+
+describe('the strip under a filter', () => {
+  it('sums the legs in view', () => {
+    const t = sumLegs([legRow({ delta: -10, gamma: 2, vega: 5, theta: 3 }), legRow({ delta: -6, gamma: 1, vega: 2, theta: 1 })])
+    expect(t).toMatchObject({ legs: 2, priced: 2, delta: -16, gamma: 3, vega: 7, theta: 4 })
+  })
+
+  it('counts an unpriced leg out of the totals rather than summing it as zero', () => {
+    const t = sumLegs([
+      legRow({ delta: -10, gamma: 2, vega: 5, theta: 3 }),
+      legRow({ delta: null, gamma: null, vega: null, theta: null, unpriced: true }),
+    ])
+    expect(t.legs).toBe(2)
+    expect(t.priced).toBe(1)
+    expect(t.delta).toBe(-10)
+  })
+
+  it('is all zeroes and no priced legs on an empty set', () => {
+    expect(sumLegs([])).toMatchObject({ legs: 0, priced: 0, delta: 0 })
   })
 })

@@ -147,16 +147,27 @@ export function PositionsFaceSlot({
               onClose={onClose}
               onOpenOptionDiscovery={contract.onOpenDiscovery}
             />
-            {contract.onEditFill ? (
-              <div className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2">
+            <div className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2">
+              {contract.onEditFill ? (
                 <button type="button" className={positionsUi.btn} onClick={contract.onEditFill}>
                   Ledger · edit this fill
                 </button>
-                <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
-                  Vendor Greeks are authoritative — this page never derives a second set.
-                </span>
-              </div>
-            ) : null}
+              ) : null}
+              {/* The third of the three doors into Contract Greeks, which the
+                  design re-homed to Risk on 2026-09-23. From a contract you
+                  are reading, the question that follows is the rest of the
+                  book on that name — so `?sym=` filters, it does not scope. */}
+              <Link
+                to={`/research/greeks?sym=${encodeURIComponent(contract.position.symbol)}`}
+                className="text-dense-meta text-primary hover:underline"
+                title={`Every ${contract.position.symbol} leg in the book, greek by greek`}
+              >
+                every leg on {contract.position.symbol} · Contract Greeks →
+              </Link>
+              <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
+                Vendor Greeks are authoritative — this page never derives a second set.
+              </span>
+            </div>
           </div>
         ) : (
           <Hint>Pick a contract — a row in the Contracts view, a leg under a strategy, or a dot on the short-leg map.</Hint>

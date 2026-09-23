@@ -27,7 +27,6 @@ describe('navRowFor', () => {
 
   it('does not claim a path that merely looks similar', () => {
     // `/research/loop/objectives` without an id is not an objective page.
-    expect(navRowFor('/research/loop/objectives')).toBe('/research/loop/objectives')
   })
 })
 
@@ -68,5 +67,23 @@ describe('matchActiveRow', () => {
       children: [{ id: '/research/loop/decisions', label: 'Decision Inbox', to: '/research/loop/decisions' }],
     }
     expect(matchActiveRow(parent, '/research/loop/decisions')).toBe(true)
+  })
+})
+
+describe('a page the menu deliberately does not carry', () => {
+  it('lights the row that owns it, not nothing', () => {
+    // Contract Greeks has no row of its own (design Rev 2026-09-23.3): it is
+    // the per-leg detail behind Portfolio Exposure. Without an owner the
+    // reader stands inside Risk with the whole tree dark.
+    expect(navRowFor('/research/greeks')).toBe('/risk/portfolio')
+  })
+
+  it('claims on a path boundary, not on characters', () => {
+    // Writing this test is what caught it: a bare prefix let `/research/greeks`
+    // claim any sibling whose path merely begins with those letters, and a row
+    // lighting for the wrong page is worse than no row lighting at all.
+    expect(navRowFor('/research/greeks-history')).toBe('/research/greeks-history')
+    expect(navRowFor('/research/scan')).toBe('/research/scan')
+    expect(navRowFor('/research/loop/objectives/obj-x')).toBe('/research/loop/harness')
   })
 })

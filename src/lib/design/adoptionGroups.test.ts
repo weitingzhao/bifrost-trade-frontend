@@ -34,9 +34,11 @@ describe('adoptionByGroup', () => {
     // answered it 2026-09-22 and the group is whole again at ten of ten.
     // Stale again in Package 2026-09-23.2, for one line: the contract face
     // gains `every leg on <SYM> · Contract Greeks →`, the third of the three
-    // doors the design gave that page when it moved it to Risk.
+    // doors the design gave that page when it moved it to Risk. Built the
+    // same day, so it waits for a look in `reviewing` rather than in `stale`.
     expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
-    expect(portfolio?.byState.reviewing).toBe(0)
+    expect(portfolio?.byState.reviewing).toBe(1)
+    expect(portfolio?.byState.stale).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

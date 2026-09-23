@@ -200,6 +200,14 @@ export default function RiskPortfolioPage() {
                     {totals.withoutBetaDelta} without a β-weighted Δ$
                   </span>
                 ) : null}
+                {/* The second door: the same detail with no filter on it. */}
+                <Link
+                  to="/research/greeks"
+                  className="text-dense-meta text-muted-foreground hover:text-foreground"
+                  title="Every option leg in the book, greek by greek"
+                >
+                  every leg · Contract Greeks →
+                </Link>
                 {concentrated ? (
                   <span className="ml-auto text-dense-meta font-semibold text-warning">
                     concentration · {rows[0].symbol} {Math.round((topShare ?? 0) * 100)}% of β-Δ (over{' '}
@@ -300,8 +308,29 @@ export default function RiskPortfolioPage() {
                           <td className={cn(positionsUi.td, r.theta == null ? 'text-muted-foreground' : pnlColorClass(r.theta))}>
                             {r.theta == null ? '—' : fmtSignedUsd0(r.theta)}
                           </td>
+                          {/* The first of the three doors the design gave
+                              Contract Greeks when it moved that page here
+                              (2026-09-23): this row's legs, which is the
+                              per-leg detail behind this row's aggregate.
+                              `?sym=` filters the book; it does not scope the
+                              page to the name. A stock-only row has no legs,
+                              so it gets no door rather than a link to an
+                              empty page. */}
                           <td className={cn(positionsUi.td, r.legs === 0 ? 'text-muted-foreground' : 'text-secondary-foreground')}>
-                            {r.legs === 0 ? 'stock' : r.legs}
+                            {r.legs === 0 ? (
+                              <span title={`${r.symbol} is stock only — no option legs to detail`}>
+                                stock
+                              </span>
+                            ) : (
+                              <Link
+                                to={`/research/greeks?sym=${encodeURIComponent(r.symbol)}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-primary hover:underline"
+                                title={`Every ${r.symbol} leg in the book, greek by greek`}
+                              >
+                                {r.legs}
+                              </Link>
+                            )}
                           </td>
                         </tr>
                       )

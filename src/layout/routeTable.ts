@@ -143,9 +143,11 @@ export const ROUTES: readonly RouteEntry[] = [
     symbolScope: true,
     design: {
       // Package 2026-09-22.3 changed one thing here: Ask Copilot has a single
-      // destination, the shell's Thread. Landed with the Ask bus.
-      state: 'aligned',
-      rev: '2026-09-22.6',
+      // destination, the shell's Thread. Landed with the Ask bus. Rev
+      // 2026-09-23.3 added one more: the contract face's third door into
+      // Contract Greeks. Built 2026-09-23.
+      state: 'reviewing',
+      rev: '2026-09-23.3',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },
@@ -244,8 +246,11 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Portfolio Exposure',
     crumbs: RISK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev 2026-09-23.3 added the two doors into Contract Greeks, which the
+      // design re-homed here: the Legs cell per row (carrying `?sym=`) and the
+      // header's unfiltered one. Built 2026-09-23.
+      state: 'reviewing',
+      rev: '2026-09-23.3',
       note: DESIGN_NOTES['/risk/portfolio'],
     },
   },

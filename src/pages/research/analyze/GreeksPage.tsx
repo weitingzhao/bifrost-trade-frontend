@@ -32,7 +32,7 @@
  * rows are drawn, marked UNPRICED, and counted out of the totals.
  */
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { PageHeader, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import { cn } from '@/lib/utils'
@@ -74,12 +74,25 @@ function Stat({
 function BookFace() {
   // Read once: DTE must not change under the reader between renders.
   const [todayIso] = useState(() => new Date().toISOString().slice(0, 10))
-  const b = useBookGreeks(todayIso)
+  const [params, setParams] = useSearchParams()
+  // `?sym=` is a filter on the book, not a scope on a symbol — the design is
+  // explicit (DECISIONS 2026-09-23), and it is why this page's subject stayed
+  // the whole book when it moved to Risk. Clearing it shows every leg.
+  const filterSym = (params.get('sym') ?? '').trim().toUpperCase()
+  const clearSym = () => {
+    const next = new URLSearchParams(params)
+    next.delete('sym')
+    setParams(next, { replace: true })
+  }
+  const b = useBookGreeks(todayIso, filterSym)
   // Contracts for the table and the marks line, holdings for the totals: the
   // rollup sums the book's per-instance legs, and one contract can be three.
   const contracts = b.rows.length
-  const priced = contracts - b.marks.unpriced
+  const priced = b.legTotals ? b.legTotals.priced : contracts - b.marks.unpriced
   const holdings = b.totals.matched + b.totals.unmatched
+  // Under a filter there is no rollup for a subset, so the strip reads the sum
+  // of the legs on screen; unfiltered it keeps reading Risk's own rollup.
+  const t = b.legTotals ?? b.totals
 
   return (
     <div className="space-y-3">
@@ -87,25 +100,29 @@ function BookFace() {
         <Stat
           cap="Contracts"
           value={String(contracts)}
-          sub={`${priced} priced · ${holdings} holdings`}
+          sub={
+            b.filtered
+              ? `${priced} priced · netted from ${b.rawLegCount} book ${b.rawLegCount === 1 ? 'leg' : 'legs'}`
+              : `${priced} priced · ${holdings} holdings`
+          }
         />
         <Stat
           cap="Δ · options only"
-          value={priced > 0 ? fmtUsd(b.totals.delta, true) : '—'}
-          ink={pnlColorClass(b.totals.delta)}
+          value={priced > 0 ? fmtUsd(t.delta, true) : '—'}
+          ink={pnlColorClass(t.delta)}
           sub="shares-equivalent, not β-weighted"
         />
         <Stat
           cap="Γ · per point"
-          value={priced > 0 ? fmtUsd(b.totals.gamma, true) : '—'}
-          ink={b.totals.gamma < 0 ? 'text-warning' : undefined}
-          sub={b.totals.gamma < 0 ? 'short gamma' : 'long gamma'}
+          value={priced > 0 ? fmtUsd(t.gamma, true) : '—'}
+          ink={t.gamma < 0 ? 'text-warning' : undefined}
+          sub={t.gamma < 0 ? 'short gamma' : 'long gamma'}
         />
-        <Stat cap="Vega · per vol pt" value={priced > 0 ? fmtUsd(b.totals.vega, true) : '—'} />
+        <Stat cap="Vega · per vol pt" value={priced > 0 ? fmtUsd(t.vega, true) : '—'} />
         <Stat
           cap="Θ · per day"
-          value={priced > 0 ? fmtUsd(b.totals.theta, true) : '—'}
-          ink={pnlColorClass(b.totals.theta)}
+          value={priced > 0 ? fmtUsd(t.theta, true) : '—'}
+          ink={pnlColorClass(t.theta)}
         />
         <div className="ml-auto flex min-w-[180px] flex-col gap-0.5">
           <span className="text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
@@ -129,6 +146,35 @@ function BookFace() {
       {b.isError ? (
         <p role="status" className="text-dense-meta text-danger">
           The chain snapshots did not answer — no leg on this page can be called priced.
+        </p>
+      ) : null}
+
+      {b.filtered ? (
+        <p className="flex flex-wrap items-center gap-2 text-dense-meta">
+          <span className="text-muted-foreground">filter</span>
+          <span className="font-mono font-bold text-entity-symbol">{filterSym}</span>
+          <button
+            type="button"
+            onClick={clearSym}
+            className="rounded border border-border px-1.5 py-0.5 text-dense-meta text-muted-foreground hover:text-foreground"
+          >
+            whole book ✕
+          </button>
+          <span className="text-dense-caption text-muted-foreground">
+            A filter on the book, not a scope on the name — the page is still every leg.
+          </span>
+        </p>
+      ) : null}
+
+      {b.filtered && !b.isLoading && b.rows.length === 0 ? (
+        <p className="flex flex-wrap items-baseline gap-3 rounded-md border border-border px-3 py-3 text-dense-meta text-muted-foreground">
+          <span>
+            No option legs on <span className="font-mono text-foreground">{filterSym}</span> in the
+            book — the position is stock only, or the legs have closed.
+          </span>
+          <button type="button" onClick={clearSym} className="text-primary hover:underline">
+            Show the whole book
+          </button>
         </p>
       ) : null}
 

@@ -12,9 +12,17 @@ import {
   pathVariant,
   ratingsTape,
   toRatingRow,
+  HOT_AT,
+  COLD_AT,
+  stageToken,
+  matchesStage,
+  matchesPath,
+  matchesGrade,
+  ratingsStanding,
   type RatingRow,
 } from './stockRatingsModel'
 import { presetOf, weightSum } from '@/components/research/weightModel'
+import { FACTOR_COLD_AT, FACTOR_HOT_AT } from '@/lib/momentumFactors'
 
 const row = (over: Partial<RatingRow['scores']> = {}, rest: Partial<RatingRow> = {}): RatingRow => ({
   symbol: 'X',
@@ -22,6 +30,8 @@ const row = (over: Partial<RatingRow['scores']> = {}, rest: Partial<RatingRow> =
   serverScore: null,
   grade: null,
   path: null,
+  ivPercentile: null,
+  pcrOi: null,
   stage: null,
   close: null,
   rangePos: null,
@@ -232,5 +242,78 @@ describe('compositeParts', () => {
     expect(growth?.weight).toBe(0)
     expect(growth?.points).toBeNull()
     expect(parts).toHaveLength(4)
+  })
+})
+
+describe('the second filter bar', () => {
+  it('reads the store\'s own stage spelling', () => {
+    expect(stageToken('STAGE_2A')).toBe('2A')
+    expect(stageToken('STAGE_4')).toBe('4')
+    expect(stageToken(null)).toBeNull()
+    // Unrecognised text is kept rather than dropped — a stage this side has
+    // not seen is still a stage.
+    expect(stageToken('late-2')).toBe('LATE-2')
+  })
+
+  it('treats 2A / 2B / 2C as one stage, because the design gives them one button', () => {
+    for (const s of ['STAGE_2A', 'STAGE_2B', 'STAGE_2C']) {
+      expect(matchesStage(s, '2'), s).toBe(true)
+      expect(matchesStage(s, '1'), s).toBe(false)
+    }
+    expect(matchesStage('STAGE_4', '4')).toBe(true)
+    expect(matchesStage(null, '4')).toBe(false)
+    expect(matchesStage(null, 'all')).toBe(true)
+  })
+
+  it('folds Setup and Pivot onto one button and leaves the rest exact', () => {
+    expect(matchesPath('SETUP', 'sp')).toBe(true)
+    expect(matchesPath('PIVOT', 'sp')).toBe(true)
+    expect(matchesPath('EXTENDED', 'sp')).toBe(false)
+    expect(matchesPath('PIVOT', 'PIVOT')).toBe(true)
+    expect(matchesPath('pivot', 'PIVOT')).toBe(true)
+    expect(matchesPath(null, 'PIVOT')).toBe(false)
+  })
+
+  it('matches a grade exactly, A+ included', () => {
+    expect(matchesGrade('A+', 'A+')).toBe(true)
+    expect(matchesGrade('A', 'A+')).toBe(false)
+    expect(matchesGrade(null, 'all')).toBe(true)
+  })
+})
+
+describe('the figures beside the filters', () => {
+  const pool = [
+    { row: row({}, { path: 'PIVOT', stage: 'STAGE_2A' }), score: 80 },
+    { row: row({}, { path: 'SETUP', stage: 'STAGE_2B' }), score: 60 },
+    { row: row({}, { path: 'AVOID', stage: 'STAGE_4' }), score: 20 },
+    { row: row({}, { path: 'WATCH', stage: 'STAGE_3' }), score: null },
+  ]
+
+  it('counts the two paths that are an invitation, and stage 4', () => {
+    const s = ratingsStanding(pool)
+    expect(s.setupPivot).toBe(2)
+    expect(s.stage4).toBe(1)
+  })
+
+  it('leaves an unscored row out of the average rather than calling it zero', () => {
+    const s = ratingsStanding(pool)
+    expect(s.scored).toBe(3)
+    expect(s.avgComposite).toBe('53.3')
+  })
+
+  it('says — rather than 0.0 when nothing is scored', () => {
+    expect(ratingsStanding([{ row: row(), score: null }]).avgComposite).toBe('—')
+    expect(ratingsStanding([]).avgComposite).toBe('—')
+  })
+})
+
+describe('the factor panel reads on this page\'s own cuts', () => {
+  it('uses the composite\'s thresholds — one rule, not two', () => {
+    // `lib/momentumFactors` repeats 70 / 35 because a shared module may not
+    // read a page's constants (the module-placement gate enforces the
+    // direction). The assertion lives here, where both sides are importable,
+    // so the repetition cannot drift into a disagreement.
+    expect(FACTOR_HOT_AT).toBe(HOT_AT)
+    expect(FACTOR_COLD_AT).toBe(COLD_AT)
   })
 })

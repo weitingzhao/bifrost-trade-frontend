@@ -147,6 +147,14 @@ export interface RatingRow {
   grade: string | null
   path: string | null
   stage: string | null
+  /**
+   * The two option-side readings SEPA Daily Core drew and this page did not.
+   * They cost nothing: `/research/sepa/model/daily` — the call this page
+   * already makes — carries both, and on DEV 2026-09-23 both are populated
+   * for today's session. `RawRatingRow` simply had not declared them.
+   */
+  ivPercentile: number | null
+  pcrOi: number | null
   close: number | null
   /** Where the close sits between the 52-week low and high, 0–1. */
   rangePos: number | null
@@ -168,6 +176,8 @@ export interface RawRatingRow {
   grade?: string | null
   path?: string | null
   stage?: string | null
+  iv_percentile?: number | null
+  pcr_oi?: number | null
   latest_close?: number | null
   high_52w?: number | null
   low_52w?: number | null
@@ -193,6 +203,8 @@ export function toRatingRow(raw: RawRatingRow): RatingRow | null {
     grade: raw.grade ?? null,
     path: raw.path ?? null,
     stage: raw.stage ?? null,
+    ivPercentile: finiteOrNull(raw.iv_percentile),
+    pcrOi: finiteOrNull(raw.pcr_oi),
     close,
     passes: {
       trend: finiteOrNull(raw.tech_pass_count),
@@ -352,4 +364,93 @@ export function compositeParts(row: RatingRow, weights: RatingWeights): Composit
       points: value == null || weight <= 0 || applied <= 0 ? null : (value * weight) / applied,
     }
   })
+}
+
+// ─── The design's second filter bar, and the counts beside it ──────────────
+
+/**
+ * Stage / Path / Grade, the three filters SEPA Daily Core had and this page
+ * did not (design Package 2026-09-23.2, §15.2 disposition).
+ *
+ * They filter in the browser rather than on the server, even though
+ * `/research/sepa/model/daily` takes all three as parameters. The page loads
+ * one page of rows and the composite is computed here from your weights — a
+ * server filter would change the pool the average and the counts are taken
+ * over, so the same slider would read differently depending on which filter
+ * was set. One fetch, one pool, filters on top.
+ *
+ * The store spells stage `STAGE_2A`; the design's control says `S2`. A stage
+ * filter of `2` matches every `2*`, because 2A / 2B / 2C are phases of one
+ * stage and the design gives them one button.
+ */
+export type StageFilter = 'all' | '1' | '2' | '3' | '4'
+export type PathFilter = 'all' | 'sp' | 'PIVOT' | 'SETUP' | 'WATCH' | 'AVOID' | 'EXTENDED'
+export type GradeFilter = 'all' | 'A+' | 'A' | 'B' | 'C' | 'D'
+
+/** `STAGE_2A` → `2A`; anything unrecognised keeps its own text. */
+export function stageToken(stage: string | null): string | null {
+  if (!stage) return null
+  const m = /^STAGE_(.+)$/.exec(stage.trim().toUpperCase())
+  return (m ? m[1] : stage.trim().toUpperCase()) || null
+}
+
+export function matchesStage(stage: string | null, filter: StageFilter): boolean {
+  if (filter === 'all') return true
+  const tok = stageToken(stage)
+  if (!tok) return false
+  return tok.charAt(0) === filter
+}
+
+export function matchesPath(path: string | null, filter: PathFilter): boolean {
+  if (filter === 'all') return true
+  const p = (path ?? '').trim().toUpperCase()
+  if (filter === 'sp') return p === 'SETUP' || p === 'PIVOT'
+  return p === filter
+}
+
+export function matchesGrade(grade: string | null, filter: GradeFilter): boolean {
+  if (filter === 'all') return true
+  return (grade ?? '').trim().toUpperCase() === filter
+}
+
+export interface RatingsStanding {
+  /** Names in SETUP or PIVOT — the two paths that are an invitation to act. */
+  setupPivot: number
+  /** Stage 4 — the design's Avoid count. */
+  stage4: number
+  /** Average composite over the pool, or `—` when nothing is scored. */
+  avgComposite: string
+  /** How many rows the average is actually taken over. */
+  scored: number
+}
+
+/**
+ * The three figures the design puts to the right of the filter bar.
+ *
+ * Taken over the **pool**, not the filtered view: a Setup+Pivot count that
+ * changed every time you pressed the Setup+Pivot button would be answering a
+ * question nobody asked. A row with no composite is left out of the average
+ * rather than counted as zero, the same rule `composite` already follows.
+ */
+export function ratingsStanding(
+  pool: readonly { row: RatingRow; score: number | null }[],
+): RatingsStanding {
+  let setupPivot = 0
+  let stage4 = 0
+  let sum = 0
+  let scored = 0
+  for (const { row, score } of pool) {
+    if (matchesPath(row.path, 'sp')) setupPivot += 1
+    if (matchesStage(row.stage, '4')) stage4 += 1
+    if (score != null && Number.isFinite(score)) {
+      sum += score
+      scored += 1
+    }
+  }
+  return {
+    setupPivot,
+    stage4,
+    avgComposite: scored > 0 ? (sum / scored).toFixed(1) : '—',
+    scored,
+  }
 }

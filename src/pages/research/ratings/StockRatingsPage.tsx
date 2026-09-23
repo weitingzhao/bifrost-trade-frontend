@@ -15,6 +15,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { AddToPoolButton } from '@/components/research/AddToPoolButton'
+import { MomentumFactorsPanel } from './MomentumFactorsPanel'
 import {
   PageFaceSwitch,
   PageHeader,
@@ -32,6 +34,7 @@ import {
   DenseTableRow,
   DenseTag,
   SegmentControl,
+  type SegmentOption,
   denseTableNumCell,
 } from '@/components/data-display'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
@@ -71,6 +74,13 @@ import {
   pathVariant,
   ratingsTape,
   toRatingRow,
+  ratingsStanding,
+  matchesStage,
+  matchesPath,
+  matchesGrade,
+  type StageFilter,
+  type PathFilter,
+  type GradeFilter,
   type RatingLensKey,
   type RatingRow,
   type RatingWeights,
@@ -81,6 +91,43 @@ const LEAD =
 
 /** The page reads 500, which is the route’s own cap. */
 const PAGE_LIMIT = 500
+
+/**
+ * The design's own three, in its own order — S2 leads because it is the stage
+ * a trader acts in. Measured on DEV 2026-09-23: today's ranking window holds
+ * only 2A and 2B, but `stage=STAGE_4` and `path=AVOID` both answer with rows
+ * when asked directly, so the buttons stay — an empty result here is a fact
+ * about the ranking, not about the store.
+ *
+ * `EXTENDED` is in the store's path enum and is not drawn: the design's bar
+ * does not have it and the endpoint answers 0 for it, so a sixth button would
+ * be one nothing can ever select.
+ */
+const STAGE_OPTIONS: SegmentOption[] = [
+  { value: 'all', label: 'All' },
+  { value: '2', label: 'S2', title: 'Stage 2 — 2A, 2B and 2C are phases of one stage' },
+  { value: '1', label: 'S1' },
+  { value: '3', label: 'S3' },
+  { value: '4', label: 'S4' },
+]
+
+const PATH_OPTIONS: SegmentOption[] = [
+  { value: 'all', label: 'All' },
+  { value: 'sp', label: 'Setup+Pivot' },
+  { value: 'PIVOT', label: 'Pivot' },
+  { value: 'SETUP', label: 'Setup' },
+  { value: 'WATCH', label: 'Watch' },
+  { value: 'AVOID', label: 'Avoid' },
+]
+
+const GRADE_OPTIONS: SegmentOption[] = [
+  { value: 'all', label: 'All' },
+  { value: 'A+', label: 'A+' },
+  { value: 'A', label: 'A' },
+  { value: 'B', label: 'B' },
+  { value: 'C', label: 'C' },
+  { value: 'D', label: 'D' },
+]
 
 /** How many rows the list draws before it stops and says so. */
 const ROW_CAP = 200
@@ -132,6 +179,12 @@ export default function StockRatingsPage() {
   const [params, setParams] = useSearchParams()
   const universe = (params.get('universe') ?? 'both') as PortfolioUniverse
   const show = params.get('show') ?? 'all'
+  // SEPA Daily Core's three filters, which the design moved here with the
+  // rest of that page (§15.2). URL state like the two above, so a filtered
+  // view is a link.
+  const stage = (params.get('stage') ?? 'all') as StageFilter
+  const path = (params.get('path') ?? 'all') as PathFilter
+  const grade = (params.get('grade') ?? 'all') as GradeFilter
   const setParam = (k: string, v: string, fallback: string) => {
     const next = new URLSearchParams(params)
     if (v === fallback) next.delete(k)
@@ -186,15 +239,23 @@ export default function StockRatingsPage() {
     return { hot, cold, total: withComposite.length }
   }, [withComposite])
 
+  // The design's standing figures are taken over the pool, before the filters
+  // — a Setup+Pivot count that changed when you pressed Setup+Pivot would be
+  // answering a question nobody asked.
+  const standing = useMemo(() => ratingsStanding(withComposite), [withComposite])
+
   const scored = useMemo(
     () =>
       withComposite
         .filter((r) => show === 'all' || flagOf(r.score) === show)
+        .filter((r) => matchesStage(r.row.stage, stage))
+        .filter((r) => matchesPath(r.row.path, path))
+        .filter((r) => matchesGrade(r.row.grade, grade))
         .sort((a, b) => {
           if (sort === 'composite') return (b.score ?? -1) - (a.score ?? -1)
           return (b.row.scores[sort] ?? -1) - (a.row.scores[sort] ?? -1)
         }),
-    [withComposite, show, sort],
+    [withComposite, show, sort, stage, path, grade],
   )
 
   // The design opens the Why panel on a row click, and keeps it in the URL so
@@ -341,6 +402,65 @@ export default function StockRatingsPage() {
         </span>
       </div>
 
+      {/* The design's second filter bar — SEPA Daily Core's three, moved here
+          with the rest of that page (design Package 2026-09-23.2, §15.2).
+
+          They filter in the browser, not on the server, even though the
+          endpoint takes all three: the composite is computed here from your
+          weights, so a server filter would change the pool the average is
+          taken over and the same slider would read differently under each
+          filter. One fetch, one pool, filters on top. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-background px-3 py-2">
+        <span className="flex items-center gap-2">
+          <span className={SECTION_CAP_CLASS}>Stage</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Stage"
+            value={stage}
+            onChange={(v) => setParam('stage', v, 'all')}
+            options={STAGE_OPTIONS}
+          />
+        </span>
+        <span className="h-4 w-px bg-border" aria-hidden />
+        <span className="flex items-center gap-2">
+          <span className={SECTION_CAP_CLASS}>Path</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Path"
+            value={path}
+            onChange={(v) => setParam('path', v, 'all')}
+            options={PATH_OPTIONS}
+          />
+        </span>
+        <span className="h-4 w-px bg-border" aria-hidden />
+        <span className="flex items-center gap-2">
+          <span className={SECTION_CAP_CLASS}>Grade</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Grade"
+            value={grade}
+            onChange={(v) => setParam('grade', v, 'all')}
+            options={GRADE_OPTIONS}
+          />
+        </span>
+        {/* The design puts three figures here. Each says the window it is
+            taken over, because this page ranks: the store holds Stage 4,
+            Avoid and grade D rows — asked for directly the endpoint returns
+            them — and none of them is inside the top {PAGE_LIMIT} by score.
+            A bare "0 in stage 4" would read as "none exist". */}
+        <span
+          className="ml-auto flex items-center gap-1.5 whitespace-nowrap text-dense-meta text-muted-foreground"
+          title={`Taken over the ${standing.scored} scored names in this ranking — the top ${PAGE_LIMIT} by SEPA score — not over the whole universe. Stage 4, Avoid and grade D rows exist in the store and do not reach this window.`}
+        >
+          <span className="font-mono tabular-nums text-foreground">{standing.setupPivot}</span>{' '}
+          setup+pivot ·{' '}
+          <span className="font-mono tabular-nums text-foreground">{standing.stage4}</span> stage 4
+          ·{' '}
+          <span className="font-mono tabular-nums text-foreground">{standing.avgComposite}</span>{' '}
+          avg · of {standing.scored} ranked
+        </span>
+      </div>
+
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-[1_1_20rem] space-y-3">
           <WeightsPanel
@@ -350,6 +470,14 @@ export default function StockRatingsPage() {
             onWeights={(w) => setWeights(w as RatingWeights)}
             serverPresetId="model"
             customNote="Your own weights. A lens a company has no score for is left out of both halves rather than counted as zero, so a thinly-scored name is not pushed down for being thin."
+          />
+
+          {/* Momentum Radar's nine sub-factors, which the design moved here
+              (§15.2). The selected row, or the top of the ranking when nothing
+              is selected — the design's own default. */}
+          <MomentumFactorsPanel
+            symbol={selected ?? scored[0]?.row.symbol ?? null}
+            isSelection={!!selectedRow}
           />
 
           <LensSpreadPanel
@@ -427,6 +555,18 @@ export default function StockRatingsPage() {
                       title="Days to the next print. No future earnings date reaches this side: /research/events/calendar, /research/events and /research/event-radar/events all answer with count 0, and the vendor gap behind them is a subscription one. The column stays so the absence is visible where the design put the number."
                     >
                       Earn
+                    </DenseTableHead>
+                    <DenseTableHead
+                      className="w-20 max-w-none text-right"
+                      title="Where today's implied vol sits in its own year. Measured on DEV 2026-09-23: /research/sepa/model/daily carries it, and 146 of the 500 ranked names have one — the rest print — because the option side has not reached them, not because the reading is zero."
+                    >
+                      IV %ile
+                    </DenseTableHead>
+                    <DenseTableHead
+                      className="w-20 max-w-none text-right"
+                      title="Put/call ratio on open interest, from the same row. Populated for the same 146 of 500."
+                    >
+                      PCR OI
                     </DenseTableHead>
                     <DenseTableHead
                       className="w-32 max-w-none"
@@ -512,6 +652,24 @@ export default function StockRatingsPage() {
                         —
                       </DenseTableCell>
                       <DenseTableCell
+                        className={cn(
+                          denseTableNumCell,
+                          'max-w-none',
+                          row.ivPercentile == null && 'text-muted-foreground',
+                        )}
+                      >
+                        {row.ivPercentile == null ? '—' : row.ivPercentile.toFixed(0)}
+                      </DenseTableCell>
+                      <DenseTableCell
+                        className={cn(
+                          denseTableNumCell,
+                          'max-w-none',
+                          row.pcrOi == null && 'text-muted-foreground',
+                        )}
+                      >
+                        {row.pcrOi == null ? '—' : row.pcrOi.toFixed(2)}
+                      </DenseTableCell>
+                      <DenseTableCell
                         className="max-w-none whitespace-nowrap text-dense-meta text-muted-foreground"
                         title="No rule can be matched to a name — see the column header."
                       >
@@ -527,11 +685,30 @@ export default function StockRatingsPage() {
                           >
                             Plan
                           </Link>
+                          {/* Pool was owed on a product question — what this
+                              page stamps as the source — and the design
+                              answered it: source `scan`, carrying the preset
+                              the composite was read at. Pin and Hypothesis
+                              stay owed with the six-verb row. */}
+                          <AddToPoolButton
+                            symbol={row.symbol}
+                            source="scan"
+                            score={score ?? undefined}
+                            tags={['ratings', ...(row.grade ? [row.grade] : [])]}
+                            lens_snapshot={{
+                              grade: row.grade,
+                              path: row.path,
+                              stage: row.stage,
+                              composite: score,
+                              preset: presetOf(WEIGHT_PRESETS, RATING_LENSES, weights),
+                            }}
+                            size="icon"
+                          />
                           <span
                             className="rounded px-1.5 py-0.5 text-dense-meta text-muted-foreground/70"
-                            title="The design also puts Pin, Pool and Hypothesis here. Each writes somewhere — the sidebar shelf, the Candidate Pool, the Book — and what this page should stamp as the source is a product call, not a layout one. Owed, with the six-verb row it belongs to."
+                            title="The design also puts Pin and Hypothesis here. Each writes somewhere — the sidebar shelf, the Book — and what this page should stamp as the source is still a product call for those two. Owed, with the six-verb row they belong to."
                           >
-                            ⊹ ◫ ≋
+                            ⊹ ≋
                           </span>
                         </span>
                       </DenseTableCell>

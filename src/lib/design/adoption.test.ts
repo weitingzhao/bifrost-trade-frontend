@@ -241,7 +241,10 @@ describe('design adoption', () => {
     // Portfolio Exposure and Positions each grow a door into Contract Greeks,
     // which the design re-homed from Research › Analyze to Risk. The walked
     // set is unchanged at 57; three of them are now behind their own rev.
-    expect(counts.aligned + counts.byState.stale).toBe(57)
+    // 57 → 56 when Stock ratings was re-walked on 2026-09-23 and left for
+    // `reviewing`: a re-walked page is not a walked page until the Owner has
+    // looked at it again.
+    expect(counts.aligned + counts.byState.stale).toBe(56)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -251,7 +254,6 @@ describe('design adoption', () => {
       '/market/live',
       '/portfolio/positions',
       '/research/event-radar',
-      '/research/ratings/stocks',
       '/risk/portfolio',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
@@ -454,8 +456,10 @@ describe('design adoption', () => {
     // the Decision Inbox back in, which is two out and one in. 8 after
     // the 2026-09-23 pass through the queue (fifteen rows on eleven looks), 7
     // with Live, 6 with the census face. 7 with Options Kit, the first of the
-    // four `/docs/*` builds the judgement of 2026-09-23 recommended.
-    expect(counts.byState.reviewing).toBe(7)
+    // four `/docs/*` builds the judgement of 2026-09-23 recommended, and 8
+    // with Stock ratings, re-walked the same day onto the capabilities the
+    // design moved there.
+    expect(counts.byState.reviewing).toBe(8)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -522,6 +526,7 @@ describe('design adoption', () => {
       '/research/contract-screener',
       '/research/greeks',
       '/research/lens-coverage',
+      '/research/ratings/stocks',
       '/research/signal-health',
       '/settings',
       '/system/status',
@@ -725,7 +730,9 @@ describe('design adoption', () => {
     // re-homed has to be built, so being behind the rev is the accurate
     // reading rather than an artefact of some other page moving. 3 → 5 with
     // Package 2026-09-23.3, where Live and Alerts moved rail rather than page.
-    expect(counts.byState.stale).toBe(5)
+    // 5 → 4: Stock ratings was the first of the three to be built to its new
+    // rev, and it is the one the two `moving` pages are waiting on.
+    expect(counts.byState.stale).toBe(4)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MOMENTUM_FACTORS } from '@/lib/momentumFactors'
 import { useQuery } from '@tanstack/react-query'
 import { Radar } from 'lucide-react'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
@@ -200,15 +201,16 @@ export function MomentumRadarBody({ state: injected }: { state?: MomentumState }
         {legendOpen ? (
           <CollapsibleGroupBody>
             <div className="grid gap-2 md:grid-cols-2 text-dense-meta text-muted-foreground">
-              <p><strong>z_sdt</strong> — Short-term trend deviation; high = extended up.</p>
-              <p><strong>z_v</strong> — Volume z-score; spikes flag participation.</p>
-              <p><strong>accept_vwap</strong> — Price vs session VWAP acceptance.</p>
-              <p><strong>z_ofi</strong> — Order flow imbalance proxy.</p>
-              <p><strong>h_52w</strong> — Distance from 52-week high.</p>
-              <p><strong>o_plus</strong> — Opening range extension factor.</p>
-              <p><strong>a_factor</strong> — Acceleration / momentum persistence.</p>
-              <p><strong>r_sec</strong> — Sector relative strength.</p>
-              <p><strong>crash</strong> — Tail-risk / crash sensitivity.</p>
+              {MOMENTUM_FACTORS.map((f) => (
+                <p key={f.key}>
+                  <strong>{f.key}</strong> — {f.note}
+                  {f.pinned ? (
+                    <span className="text-warning" title={f.pinned}>
+                      {' '}· not computed
+                    </span>
+                  ) : null}
+                </p>
+              ))}
               <p>Grade A+/A/B = constructive; C/D = caution. Path EXT/PB = expansion vs pullback.</p>
             </div>
           </CollapsibleGroupBody>

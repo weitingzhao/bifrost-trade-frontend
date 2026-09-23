@@ -146,8 +146,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     scope: 'underlying',
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.10',
+      // Re-walked 2026-09-23 against Rev .6, which is the design answering the
+      // §15.2 disposition tables. Back to `reviewing`: the walk and the build
+      // are this side's, and only the Owner's look puts a page in place.
+      state: 'reviewing',
+      rev: '2026-09-23.6',
       note: DESIGN_NOTES['/research/ratings/stocks'],
     },
   },

@@ -28,6 +28,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ApprovalsLanded, landedApproval, type LandedApproval } from '@/pages/research/loop/ApprovalsLanded'
 import { DraftCard } from '@/components/cockpit/DraftCard'
 import { typedFirst } from '@/lib/harness/inboxOrder'
+import { useHypothesisList } from '@/hooks/useHypotheses'
+import { draftParentId } from '@/lib/research/draftProvenance'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
 import {
   useApproveDraft,
@@ -150,6 +152,18 @@ export default function DecisionInboxPage() {
   const wholeQueue =
     query.data != null && narrow === 'any' && (query.data.pending_count ?? 0) <= allRows.length
   const { read, setRead } = useReadDrafts(wholeQueue ? allRows.map((d) => d.id) : null)
+
+  // Three kinds — decision_draft, order_intent, policy_suggestion — carry only
+  // a `hypothesis_id`, so without this every one of their cards was headed by
+  // its scope: `hypothesis:intc-stage-2a-setup-perfect-…`. The Book already
+  // holds the sentence; all ten pending on DEV resolve. Same list the Watchlist
+  // reads, so it is one query between them rather than a second copy.
+  const hypotheses = useHypothesisList({ limit: 200 })
+  const titleById = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const h of hypotheses.data?.rows ?? []) m.set(h.id, h.title)
+    return m
+  }, [hypotheses.data?.rows])
 
   const rows = useMemo(() => {
     const all = query.data?.rows ?? []
@@ -344,6 +358,7 @@ export default function DecisionInboxPage() {
               <div key={draft.id} className="space-y-1">
                 <DraftCard
                   draft={draft}
+                  hypothesisTitle={titleById.get(draftParentId(draft) ?? '') ?? null}
                   muted={!actionable}
                   approving={approve.isPending && approve.variables === draft.id}
                   dismissing={dismiss.isPending && dismiss.variables === draft.id}

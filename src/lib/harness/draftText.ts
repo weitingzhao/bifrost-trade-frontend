@@ -31,11 +31,36 @@ export function draftKindLabel(kind: string): string {
 }
 
 /** The draft's headline: its own title, the hypothesis it is about, or its scope. */
-export function draftTitle(draft: Pick<AiDraft, 'payload' | 'scope'>): string {
+/**
+ * A run id in parentheses, which several hypothesis titles end with.
+ *
+ * It is provenance, not the name of the belief, and the card already carries
+ * provenance on its own line. Left in, every title on the page ended in forty
+ * characters of hex.
+ */
+const TRAILING_RUN_ID = /\s*\(run_[0-9a-f]+\)\s*$/i
+
+/**
+ * What the card calls this draft.
+ *
+ * `decision_draft`, `order_intent` and `policy_suggestion` carry no title of
+ * their own — only `hypothesis_id` — so without the join the headline of every
+ * one of them was its scope, which is the raw slug
+ * `hypothesis:intc-stage-2a-setup-perfect-technique-thin-funda-5140a1e0be`.
+ * All ten pending on DEV resolve, so the title is passed in rather than
+ * guessed: the caller holds the hypothesis list, and a draft whose hypothesis
+ * is not in it falls back the way it always did.
+ */
+export function draftTitle(
+  draft: Pick<AiDraft, 'payload' | 'scope'>,
+  hypothesisTitle?: string | null,
+): string {
   const p = draft.payload
+  const joined = (hypothesisTitle ?? '').replace(TRAILING_RUN_ID, '').trim()
   return (
     (typeof p.title === 'string' && p.title) ||
     (typeof p.hypothesis_title === 'string' && p.hypothesis_title) ||
+    joined ||
     (draft.scope === 'global' ? "Today's Discoveries" : draft.scope)
   )
 }

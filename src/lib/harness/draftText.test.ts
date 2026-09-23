@@ -57,3 +57,39 @@ describe('draftLandsIn', () => {
     }
   })
 })
+
+const scoped = { payload: {}, scope: 'hypothesis:intc-stage-2a-setup-perfect-technique-thin-funda-5140a1e0be' }
+
+describe('draftTitle · the hypothesis join', () => {
+  it('heads the card with the belief, not the slug', () => {
+    expect(draftTitle(scoped, 'INTC STAGE_2A SETUP — perfect technique, thin fundamental')).toBe(
+      'INTC STAGE_2A SETUP — perfect technique, thin fundamental',
+    )
+  })
+
+  // Provenance, and the card carries it on its own line. Left in, every title
+  // on the page ended in forty characters of hex.
+  it('drops a trailing run id', () => {
+    expect(draftTitle(scoped, 'ANET STAGE_2A PIVOT — tape not paying (run_1a0c94f361039007f)')).toBe(
+      'ANET STAGE_2A PIVOT — tape not paying',
+    )
+  })
+
+  it('keeps the payload title when the draft has one of its own', () => {
+    expect(draftTitle({ payload: { title: 'Daily Loop Stock Explorer' }, scope: 'x' }, 'ignored')).toBe(
+      'Daily Loop Stock Explorer',
+    )
+  })
+
+  // The join is a lookup, and a lookup can miss. Falling back to the scope is
+  // the behaviour that was there before — worse to read, never wrong.
+  it('falls back to the scope when the hypothesis is not in the list', () => {
+    expect(draftTitle(scoped, null)).toBe(scoped.scope)
+    expect(draftTitle(scoped, '   ')).toBe(scoped.scope)
+    expect(draftTitle(scoped, '(run_1a0c94f361039007f)')).toBe(scoped.scope)
+  })
+
+  it('still names the global digest', () => {
+    expect(draftTitle({ payload: {}, scope: 'global' })).toBe("Today's Discoveries")
+  })
+})

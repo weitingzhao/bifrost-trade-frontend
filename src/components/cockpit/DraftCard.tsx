@@ -2,7 +2,7 @@ import { approveEffect, draftKindLabel, draftLinks, draftTitle } from '@/lib/har
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DenseTag } from '@/components/data-display'
+import { DenseTag, type DenseTagVariant } from '@/components/data-display'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import {
   CandidateBatchBody,
@@ -21,15 +21,38 @@ import { DecisionDraftBody } from '@/components/research/harness/DecisionDraftBo
 import { cn } from '@/lib/utils'
 
 /**
- * One neutral face for every kind (§7: classification is not colour — Design
- * 2026-09-13 ④). Kinds used to carry entity hues on the border and left rail
- * and the briefings a sky tint; the queue read apart by hue, but that put the
- * palette on a semantic slot it does not own. A kind now reads from its tag's
- * text. `muted` is the same face at lower weight, for a draft whose Approve
- * would write nothing — weight, not hue, carries that distinction. The card's
- * real states keep their colour: warn / dissent below, and the EOD verdict's
- * own status tag (active / validated / rejected).
+ * One neutral *card* for every kind — the tag is where the kind reads.
+ *
+ * §7 (Design 2026-09-13 ④) took the hue off the border and the left rail and
+ * the briefings' sky tint, because the queue reading apart by hue put the
+ * palette on a semantic slot it does not own. That half stands: the card body
+ * is still one face, and `muted` is the same face at lower weight for a draft
+ * whose Approve would write nothing.
+ *
+ * What §7 also took, and the Owner put back on 2026-09-22, is the kind tag's
+ * own colour. The prototype does not paint kinds by identity — it encodes them
+ * as variants (`kindVariant`: candidate_batch → info, hypothesis → success,
+ * policy and patch → warning), and that slot *is* semantic: warning means this
+ * card edits your rules. A neutral tag said only "this has a kind", and the
+ * page it produced read as unbuilt beside its prototype.
+ *
+ * The card's real states keep their colour as before: warn / dissent below,
+ * and the EOD verdict's own status tag.
  */
+/**
+ * The prototype's `kindVariant`, for the kinds it drew.
+ *
+ * Anything else stays `category`: the design assigned a colour to the four
+ * cards it has, and giving the rest one by guess is the drift §7 was right
+ * about.
+ */
+const KIND_VARIANT: Record<string, DenseTagVariant> = {
+  candidate_batch: 'info',
+  hypothesis_suggestion: 'success',
+  hypothesis_draft: 'success',
+  policy_suggestion: 'warning',
+}
+
 const ACCENT = {
   normal: 'border-border/60 border-l-border bg-secondary/40',
   muted: 'border-border/35 border-l-border/60 bg-transparent',
@@ -69,8 +92,15 @@ export function DraftCard({
   read,
   onToggleRead,
   className,
+  hypothesisTitle,
 }: {
   draft: AiDraft
+  /**
+   * The title of the hypothesis this draft is about, when the caller holds the
+   * list. Three kinds carry no title of their own and would otherwise head
+   * their card with a raw scope slug.
+   */
+  hypothesisTitle?: string | null
   approving?: boolean
   dismissing?: boolean
   onApprove: () => void
@@ -84,7 +114,7 @@ export function DraftCard({
   className?: string
 }) {
   const busy = Boolean(approving || dismissing)
-  const title = draftTitle(draft)
+  const title = draftTitle(draft, hypothesisTitle)
   const proposed =
     typeof draft.payload.proposed_status === 'string'
       ? draft.payload.proposed_status
@@ -152,7 +182,7 @@ export function DraftCard({
         read left, provenance sits right where it stops competing.
       */}
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <DenseTag variant="category" size="cell">
+        <DenseTag variant={KIND_VARIANT[draft.kind] ?? 'category'} size="cell">
           {draftKindLabel(draft.kind)}
         </DenseTag>
         {proposed ? (

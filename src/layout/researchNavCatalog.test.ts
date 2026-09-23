@@ -12,6 +12,7 @@ import { isSystemRoute } from './routeRegistry'
 import {
   allResearchRoutes,
   BOOK_PAGE,
+  BOOK_PAGES,
   buildResearchNavGroup,
   COPILOT_DESK,
   researchItems,
@@ -55,17 +56,28 @@ function routesOf(items: ShellNavItem[]): string[] {
 }
 
 describe('one tree, both homes', () => {
-  it('holds no equipment at all — the tree is stations only', () => {
+  it('holds no equipment page — one signpost to the Book, and nothing else', () => {
     // §5a.8 (design Rev 2026-09-22.2): Research → Risk → Trade → Portfolio →
     // Review is the script; Autopilot runs it, The Book remembers it, the
     // Copilot is held while playing it. None of the three is a stage, and a
     // tree cannot say "not a place" — every pixel of it says place. They
     // enter through the companion rail now (`equip.ts`).
+    //
+    // Narrowed 2026-09-22 on the Owner's call, and only by one row: the rail
+    // answered "what is the Book" but nothing answered "where is it", and the
+    // Owner went looking for the Watchlist in this tree and found nothing.
+    // `/research/book` is a page about the equipment, so naming it once is a
+    // place and not a lie — but its four pages, Autopilot's home and the
+    // Copilot Desk stay out, which is the part of §5a.8 that was about the
+    // tree filling up again.
     expect(buildResearchNavGroup().to).toBe(OVERVIEW)
     const routes = routesOf(researchItems())
     expect(routes).not.toContain(AUTOPILOT_HOME)
-    expect(routes).not.toContain(BOOK_PAGE)
     expect(routes).not.toContain(COPILOT_DESK)
+    expect(routes.filter((r) => r === BOOK_PAGE)).toHaveLength(1)
+    for (const page of Object.values(BOOK_PAGES)) {
+      expect(routes, `${page.label} is equipment and belongs on the rail`).not.toContain(page.to)
+    }
     // And no Pipeline row either (§5a.9): its page and the layer's page are
     // one page, so two rows over it was the shape §5a.1 already swept.
     expect(routes).not.toContain(PIPELINE_HOME)
@@ -96,6 +108,8 @@ describe('one tree, both homes', () => {
       ['Validate', 'caption'],
       ['Signal Decay', 'row'],
       ['Backtest', 'row'],
+      // The signpost, last: not a bench, and not one of the seven pages.
+      ['The Book', 'row'],
     ])
   })
 

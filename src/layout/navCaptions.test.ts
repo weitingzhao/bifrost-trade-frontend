@@ -85,15 +85,19 @@ describe('the Research tree uses captions where §5a.7 says to', () => {
     expect(shown.map((i) => i.label)).toContain('Discover')
   })
 
-  it('holds the seven pages this side has, and nothing that only expands', () => {
+  it('holds the seven pages this side has plus the Book signpost, and nothing that only expands', () => {
     const rows = items.filter((i) => i.kind !== 'caption')
     // The design's nine minus the two it has and this app does not: Compare
     // and History are prototypes with no route here, and the design's own
     // rule is that a menu row navigates — so Analyze carries one row until
     // those pages exist rather than two that go nowhere.
-    expect(rows).toHaveLength(7)
-    // Equipment left the tree (§5a.8) — no Autopilot, Book or Copilot row,
-    // and no row with children, because there is nothing left to nest.
+    //
+    // Eight since 2026-09-22: the seven, and one row naming the Book's own
+    // page so a reader can find the rail. See BOOK_SIGNPOST.
+    expect(rows).toHaveLength(8)
+    // The half of §5a.8 that still holds without exception: no row nests. The
+    // equipment's pages are on the rail, and the signpost carries none of
+    // them — a row with children here is the tree filling up again.
     expect(rows.some((r) => (r.children?.length ?? 0) > 0)).toBe(false)
     expect(rows.every((r) => r.to != null)).toBe(true)
   })

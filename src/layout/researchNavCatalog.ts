@@ -97,6 +97,22 @@ export const BOOK_ITEM: ShellNavItem = {
 }
 
 /**
+ * The tree's one mention of the Book — its page, without its pages.
+ *
+ * §5a.8 moved the equipment out of the tree because every pixel of a tree says
+ * "place", and that ruling stands: the four Book pages stay on the rail. What
+ * the ruling did not answer is how a reader learns the rail is there. The
+ * Owner went looking for the Watchlist in this tree and found nothing, which
+ * is the only test a menu has to pass.
+ *
+ * `/research/book` is a real page that says what the Book holds, so a row
+ * pointing at it is a place and not a lie. Derived from `BOOK_ITEM` so the
+ * label, icon and id cannot drift from the rail's; `children` dropped, because
+ * those are the four rows §5a.8 removed.
+ */
+export const BOOK_SIGNPOST: ShellNavItem = { ...BOOK_ITEM, children: undefined }
+
+/**
  * The conversation's sediment — pages, where the conversation itself is not
  * one (Owner 2026-09-14, §11.0). "Ask the Copilot" is a command (⌘J, the
  * top-bar button, a page's Ask — `?copilot=open` stays as the deep-link
@@ -321,6 +337,11 @@ export function researchItems(): ShellNavItem[] {
     ...analyze.items,
     caption(validate.id, validate.label),
     ...validate.items,
+    // A signpost, not a home — see BOOK_SIGNPOST. It sits last because it is
+    // not a bench: Discover, Analyze and Validate are things you do here, and
+    // the Book is what you keep. Research is the seat the Book's own route
+    // already names, though the Book belongs to all three operators.
+    BOOK_SIGNPOST,
   ]
 }
 

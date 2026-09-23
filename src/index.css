@@ -298,7 +298,30 @@
     --sk-ink: #e4e9ef;
     --sk-soft: #c3cad4;
     --sk-mute: #98a2b0;
-    --sk-accent: #a3e635;
+    /* One accent for the whole product (design Package 2026-09-23.3). The
+       layer used to own it, so every page's primary was its layer's hue —
+       and a place should not outrank the data drawn on it. */
+    --sk-accent: #a78bfa;
+    --sk-accent2: #c4b5fd;
+    --sk-accent-rgb: 167 139 250;
+    /* The three the app had only ever read through `var()` fallbacks. */
+    --sk-line0: #1f242c;
+    --sk-mute2: #98a2b0;
+    --sk-faint: #566270;
+
+    /* The layer hues at 60% opacity, which is the demotion in one number:
+       the hue stays recognisable while its weight stays BELOW the data
+       colours — profit/loss, lamp, ticker/contract — which are always drawn
+       at full strength. Home and System are neutral; neither is a layer. */
+    --sk-l-home: #8a93a0;
+    --sk-l-analysis: color-mix(in srgb, #818cf8 60%, transparent);
+    --sk-l-review: color-mix(in srgb, #a78bfa 60%, transparent);
+    --sk-l-risk: color-mix(in srgb, #e879f9 60%, transparent);
+    --sk-l-result: color-mix(in srgb, #e0a458 60%, transparent);
+    --sk-l-execution: color-mix(in srgb, #a3e635 60%, transparent);
+    --sk-l-base: #566270;
+    /* Where you are standing. Every layer mark reads this one. */
+    --sk-layer: var(--sk-l-base);
 
     /*
      * The companion rail's three hues (design Rev 2026-09-22.2, §5a.8).
@@ -458,73 +481,41 @@
 }
 
 /*
- * The layers. Each block redefines only the ramp; every DS token above reads
- * it through `var()`, so a layer is these few lines and nothing else.
+ * The layers, since design Package 2026-09-23.3: **a layer sets one variable**.
  *
- * Values are the design's own (`shell-registry.js` SKINS), not derived here.
- * `execution` and `home` share the base neutrals on purpose — Trade is the
- * product's centre of gravity and Home belongs to no layer; only their accents
- * differ, and Home's is a cool neutral rather than any layer's hue because on
- * a surface whose every row is a link an ink accent would read as prose.
+ * Each of these blocks used to redefine the ramp — six skins, four of them
+ * rewriting ten tokens — so walking from Research to Risk changed the page's
+ * ground, its lines, its ink and its accent together. The design retired
+ * that: one ramp, one violet accent, and the layer hue demoted to a mark in
+ * two places (the top bar's bottom edge, and the sidebar numeral you are
+ * standing in). Breadcrumbs go fully neutral.
+ *
+ * The reason is a ranking, not a taste: a page's *place* was outranking the
+ * data drawn on it. Six grounds also meant six sets of contrast to keep
+ * honest, and the four coloured ones moved ink and mute as well as ground.
  */
-.dark[data-layer='execution'] {
-    --sk-accent: #a3e635;
+.dark[data-layer='home'] {
+    --sk-layer: var(--sk-l-home);
 }
 
-.dark[data-layer='home'] {
-    --sk-accent: #cbd5e1;
+.dark[data-layer='execution'] {
+    --sk-layer: var(--sk-l-execution);
 }
 
 .dark[data-layer='result'] {
-    --sk-ground: #0b0d0d;
-    --sk-surface: #171a19;
-    --sk-raised: #0f1211;
-    --sk-raised2: #131716;
-    --sk-line: #2b3130;
-    --sk-line2: #3e4644;
-    --sk-ink: #e7eae8;
-    --sk-soft: #c5cac7;
-    --sk-mute: #9aa39f;
-    --sk-accent: #d6d3d1;
+    --sk-layer: var(--sk-l-result);
 }
 
 .dark[data-layer='analysis'] {
-    --sk-ground: #0a0c12;
-    --sk-surface: #1a1d29;
-    --sk-raised: #0e1019;
-    --sk-raised2: #12151f;
-    --sk-line: #242a3a;
-    --sk-line2: #363e52;
-    --sk-ink: #e4e8f2;
-    --sk-soft: #c0c7d8;
-    --sk-mute: #949db4;
-    --sk-accent: #60a5fa;
+    --sk-layer: var(--sk-l-analysis);
 }
 
 .dark[data-layer='risk'] {
-    --sk-ground: #100c0e;
-    --sk-surface: #241d21;
-    --sk-raised: #140f12;
-    --sk-raised2: #1c1519;
-    --sk-line: #382a30;
-    --sk-line2: #4d3a42;
-    --sk-ink: #f2e4e7;
-    --sk-soft: #d8c4c9;
-    --sk-mute: #b8a0a6;
-    --sk-accent: #fda4af;
+    --sk-layer: var(--sk-l-risk);
 }
 
 .dark[data-layer='review'] {
-    --sk-ground: #0b0a10;
-    --sk-surface: #151221;
-    --sk-raised: #0f0c18;
-    --sk-raised2: #12101c;
-    --sk-line: #2c2542;
-    --sk-line2: #3b3452;
-    --sk-ink: #e6e4ef;
-    --sk-soft: #c9c4da;
-    --sk-mute: #a49cba;
-    --sk-accent: #a78bfa;
+    --sk-layer: var(--sk-l-review);
 }
 
 

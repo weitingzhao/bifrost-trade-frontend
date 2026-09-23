@@ -29,6 +29,23 @@ const HOME_ROUTES: ReadonlySet<string> = new Set([
   '/research/event-radar',
 ])
 
+/**
+ * Which layer a sidebar group belongs to — the design's own `LAYER_OF_GROUP`.
+ *
+ * Needed because the numeral is drawn per *group* and the layer is read from
+ * the *route*, and the two do not always agree: Contract Greeks keeps a
+ * `/research/` path and reads under Risk, so the route's layer is `risk`
+ * while no Risk row holds that page.
+ */
+export const LAYER_OF_GROUP: Readonly<Record<string, LayerId>> = {
+  Home: 'home',
+  Research: 'analysis',
+  Risk: 'risk',
+  Trade: 'execution',
+  Portfolio: 'result',
+  Review: 'review',
+}
+
 export function layerForPath(pathname: string): LayerId {
   const p = pathname || ''
   if (HOME_ROUTES.has(p)) return 'home'
@@ -40,6 +57,14 @@ export function layerForPath(pathname: string): LayerId {
   if (p === '/risk' || p.startsWith('/risk/')) return 'risk'
   if (p.startsWith('/trade/')) return 'execution'
   if (p === '/portfolio' || p.startsWith('/portfolio/')) return 'result'
+  // Contract Greeks kept its `/research/` path and reads under Risk since
+  // design Rev 2026-09-23.3 — its subject is the whole book's option legs,
+  // not the market. The crumbs and the lit nav row moved with it; the layer
+  // did not, and nothing showed it until the layer became a mark rather than
+  // a whole skin, at which point the top bar's edge and the sidebar numeral
+  // both pointed at the wrong layer. The design's own `layerOf` carries the
+  // same line.
+  if (p === '/research/greeks') return 'risk'
   if (p.startsWith('/research/')) return 'analysis'
   if (p.startsWith('/market/')) return 'analysis'
   // Strategy has no layer of its own because the design has no Strategy group

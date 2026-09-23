@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { PAGE_ROUTES } from '@/layout/routeRegistry'
-import { layerForPath } from './layers'
+import { LAYER_OF_GROUP, layerForPath } from './layers'
 
 describe('layerForPath', () => {
   it('gives each design group its own layer', () => {
@@ -59,5 +59,29 @@ describe('layerForPath', () => {
     // every layer the design names now has at least one page here.
     const seen = new Set(PAGE_ROUTES.map((r) => layerForPath(r.path)))
     expect([...seen].sort()).toEqual(['analysis', 'base', 'execution', 'home', 'result', 'review', 'risk'])
+  })
+})
+
+describe('a page whose path and layer disagree', () => {
+  it('reads Contract Greeks under Risk, where the design re-homed it', () => {
+    // The path stays `/research/` because addresses are cheap to keep and
+    // expensive to break; the layer follows the subject. Found live once the
+    // layer became a mark: the top bar's edge and the lit numeral both said
+    // Research on a page filed under Risk.
+    expect(layerForPath('/research/greeks')).toBe('risk')
+    expect(layerForPath('/research/symbol')).toBe('analysis')
+  })
+
+  it('maps each sidebar group to its layer', () => {
+    expect(LAYER_OF_GROUP.Risk).toBe('risk')
+    expect(LAYER_OF_GROUP.Research).toBe('analysis')
+    expect(Object.keys(LAYER_OF_GROUP).sort()).toEqual([
+      'Home',
+      'Portfolio',
+      'Research',
+      'Review',
+      'Risk',
+      'Trade',
+    ])
   })
 })

@@ -11,6 +11,7 @@ import { STORAGE_KEYS } from '@/constants/storage'
 import { lifecycleMark } from './LifecycleMark'
 import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
 import { LIFECYCLE, orderGroups, useNavOrder } from './navOrder'
+import { LAYER_OF_GROUP, layerForPath } from '@/lib/design/layers'
 import { isSystemRoute, matchActiveRow, navRowFor } from './routeRegistry'
 import { ScopeMark } from './ScopeMark'
 import { useResearchNavGroup } from './useResearchNavGroup'
@@ -64,10 +65,16 @@ export function AppSidebar() {
     const swapped = NAV_GROUPS.map((g) => (g.label === 'Research' ? research.group : g))
     const ordered = orderGroups(swapped, order)
     const chain = ordered.filter((g) => LIFECYCLE[g.label] != null)
+    // The one numeral that takes its layer's hue is the one you are standing
+    // in (design Rev 2026-09-23.5) — read from the route, not from which row
+    // happens to be active, because a page can belong to a layer whose group
+    // holds no row for it (Contract Greeks under Risk is the standing case).
+    const hereLayer = layerForPath(location.pathname)
     const marked = ordered.map((g) => {
       const n = LIFECYCLE[g.label]
+      const here = LAYER_OF_GROUP[g.label] === hereLayer
       if (n == null) {
-        return g.label === 'Home' ? { ...g, icon: lifecycleMark('·') } : g
+        return g.label === 'Home' ? { ...g, icon: lifecycleMark('·', { here }) } : g
       }
       const i = chain.indexOf(g)
       return {
@@ -76,6 +83,7 @@ export function AppSidebar() {
           spine: order === 'loop',
           first: i === 0,
           last: i === chain.length - 1,
+          here,
         }),
       }
     })

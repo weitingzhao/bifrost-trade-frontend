@@ -10,9 +10,9 @@ import { cn } from '@/lib/utils'
 
 export function lifecycleMark(
   glyph: string,
-  opts: { spine?: boolean; first?: boolean; last?: boolean } = {},
+  opts: { spine?: boolean; first?: boolean; last?: boolean; here?: boolean } = {},
 ): IconComponent {
-  const { spine = false, first = false, last = false } = opts
+  const { spine = false, first = false, last = false, here = false } = opts
   return function LifecycleMark({ className }: { className?: string }) {
     return (
       <span
@@ -25,7 +25,18 @@ export function lifecycleMark(
             style={{ top: first ? '50%' : '-13px', bottom: last ? '50%' : '-13px' }}
           />
         ) : null}
-        <span className="relative inline-flex size-3.5 items-center justify-center rounded-full border border-border bg-secondary font-mono text-dense-micro font-bold leading-3 text-muted-foreground">
+        {/* Only the numeral for the layer you are standing in takes its hue
+            (design Rev 2026-09-23.5). Colouring all six would make the column
+            a palette; colouring none would waste the one place in the tree
+            that can say which layer a group belongs to. The rest stay a ring
+            and a digit in the neutral ramp. */}
+        <span
+          className={cn(
+            'relative inline-flex size-3.5 items-center justify-center rounded-full border bg-secondary font-mono text-dense-micro font-bold leading-3',
+            here ? 'border-current' : 'border-border text-muted-foreground',
+          )}
+          style={here ? { color: 'var(--sk-layer)' } : undefined}
+        >
           {glyph}
         </span>
       </span>

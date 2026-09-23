@@ -644,7 +644,13 @@ describe('design adoption', () => {
     // Package 2026-09-22.3 @ Rev .6 is the same kind of round again, and the
     // largest: eighteen rulings about surfaces, three page stamps moved, and
     // the whole of the Research layer re-crumbed as Pipeline left the tree.
-    expect(DESIGN_REV).toBe('2026-09-22.6')
+    // Package 2026-09-22.6 @ Rev .9 is three incremental answers to questions
+    // this side asked rather than a round of its own: .7 the Decision Inbox's
+    // two undrawn card kinds, .8 the VRP field on the candidate column, .9 the
+    // diff's colours. Only the two routes that were asked about moved their own
+    // stamp — decisions to .8 and proposals to .9 — and neither is aligned yet,
+    // so the aligned set holds and `stale` does not move.
+    expect(DESIGN_REV).toBe('2026-09-22.9')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

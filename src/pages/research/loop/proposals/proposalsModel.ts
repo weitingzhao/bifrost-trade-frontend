@@ -53,14 +53,18 @@ export interface Proposal {
   cites: ProposalCite[]
   /** What the rule would have to say instead — the design's `+` line. */
   after: string
-  /** Why the `−` line cannot be written. Always present: there is no rules store. */
-  beforeMissing: string
+  /**
+   * The `−` line's text. Design Rev 2026-09-22.9 fixes the literal for the
+   * case where no before exists; it is the only case here, because a diff
+   * subtracts from the rule's current text and no rules store exists on this
+   * side. Nothing is struck through: nothing is being replaced.
+   */
+  beforeText: string
   /** What this proposal is still waiting on, when it is not fully argued. */
   blockedBy: string | null
 }
 
-const NO_RULE_TEXT =
-  'the rule’s current text — a diff subtracts from it, and no rules store exists on this side'
+const NO_RULE_TEXT = 'n/c — rule text not on file'
 
 const MAX_CITES = 6
 
@@ -114,7 +118,7 @@ export function buildProposals(
         return best == null || realised == null ? 0 : Math.max(0, best - realised)
       }),
       after: 'exit: resting GTC close at the target, no discretion inside the window',
-      beforeMissing: NO_RULE_TEXT,
+      beforeText: NO_RULE_TEXT,
       blockedBy:
         disposition?.measuring || disposition?.consequence != null ? null : 'the mark path on winning trades',
     },
@@ -132,7 +136,7 @@ export function buildProposals(
           : `${cut.read} A time stop does not have to predict the bottom, only to stop the drift. What it would have saved is the part that is missing: that is this exit against the one the plan would have taken, and no plan is linked to a position.`,
       cites: citesFor(cut, trades, (d) => d.value),
       after: 'stop: force a review three sessions after any new worst mark',
-      beforeMissing: NO_RULE_TEXT,
+      beforeText: NO_RULE_TEXT,
       blockedBy: cut?.measuring ? null : 'a cost — the planned exit to measure the delay against',
     },
     {
@@ -147,7 +151,7 @@ export function buildProposals(
         'Where in its own year’s volatility each trade was opened, against the floor the rule states.',
       cites: [],
       after: 'entry: below the floor blocks the order; an override needs a written reason on the plan',
-      beforeMissing: NO_RULE_TEXT,
+      beforeText: NO_RULE_TEXT,
       blockedBy: 'the underlying’s IV rank on each entry date, and the floor itself',
     },
     {
@@ -162,7 +166,7 @@ export function buildProposals(
         'What the plan aimed at, as a share of the best mark the trade printed. This one is a plan fix, not a discipline fix — it needs a backtest before it is accepted, not more willpower.',
       cites: [],
       after: 'target: raised, pending a backtest re-run over the same window',
-      beforeMissing: NO_RULE_TEXT,
+      beforeText: NO_RULE_TEXT,
       blockedBy: 'the planned exit — the best mark it would be divided by is already read',
     },
   ]

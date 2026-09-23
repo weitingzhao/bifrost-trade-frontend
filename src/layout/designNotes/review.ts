@@ -77,7 +77,29 @@ export const REVIEW_NOTES: Record<string, string> = {
     + 'severity green that \u00a714.7 rule 2 reserves for dots and tags. Neither is right: a '
     + 'diff\u2019s add and remove lines are neither a signed direction nor a severity, and the '
     + 'design names no colour for them. The `\u2212` line stays muted meanwhile, which is honest '
-    + '\u2014 it carries no before value at all.',
+    + '\u2014 it carries no before value at all. '
+    + 'ANSWERED at Rev 2026-09-22.9, and the answer was that a diff does not take a hue at '
+    + 'all. Design\u2019s other two diff surfaces already said so and we had not read them: the '
+    + 'Decision Inbox\u2019s own patch card and the Copilot proposal card both draw before in '
+    + '`--sk-mute` with a strikethrough and after in `--sk-ink` at 600, and the one place either '
+    + 'of them colours an after value is a signed credit figure \u2014 which is the number being '
+    + 'coloured, not the diff. The contrast is lightness and weight. So the \u2212 and + lines are '
+    + 'a 14px glyph slot at half-muted against `--sk-mute` and `--sk-ink` semibold, `text-success` '
+    + 'is gone, and the prototype\u2019s two stale literals were swept on Design\u2019s side. The '
+    + 'shape stays two stacked lines rather than the patch card\u2019s three columns, which Design '
+    + 'ruled on directly: a patch diffs a parameter, short and single-valued, while a proposal '
+    + 'diffs a whole rule sentence, and three columns would squeeze that sentence into half a '
+    + 'column. What one page shares is the colour vocabulary, not the row form. The missing '
+    + 'before takes option (a): both lines are drawn, the \u2212 line is muted and carries no '
+    + 'strikethrough because nothing is being replaced, and its literal is Design\u2019s own \u2014 '
+    + '`n/c \u2014 rule text not on file`. Measured after: \u2212 at rgb(164,156,186) weight 400 '
+    + 'with no decoration, + at the theme\u2019s ink weight 600, both on a 14px slot, no hue on '
+    + 'either. One token is owed rather than invented: the prototypes reach for `--sk-faint` 46 '
+    + 'times across 21 files and never define it, always falling back to #566270, and this repo\u2019s '
+    + 'palette has no such member \u2014 so the glyphs use the house `text-muted-foreground/50`, '
+    + 'which blends to #555c66 on this box\u2019s raised2 ground, within about six per channel of '
+    + 'the design\u2019s value. When a page needs it properly, ask Design for the token rather than '
+    + 'deriving the light-theme value here.',
   '/review/objectives':
     "Built 2026-09-20 against Review Objectives.dc.html (Rev 2026-09-20.5) on the Owner's "
     + "option (c): build the honest version now, and file the backfill as a request. Re-walked "

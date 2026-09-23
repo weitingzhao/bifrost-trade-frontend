@@ -234,7 +234,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: REVIEW,
     design: {
       state: 'reviewing',
-      rev: '2026-09-22.2',
+      rev: '2026-09-22.9',
       note: DESIGN_NOTES['/review/proposals'],
     },
   },

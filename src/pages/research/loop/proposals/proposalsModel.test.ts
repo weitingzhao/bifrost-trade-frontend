@@ -77,7 +77,7 @@ describe('buildProposals', () => {
 
   it('never writes a before line, whatever the state', () => {
     for (const p of buildProposals(MEASURED, TRADES, PATHS)) {
-      expect(p.beforeMissing).toMatch(/no rules store/)
+      expect(p.beforeText).toBe('n/c — rule text not on file')
       expect(p.after.length).toBeGreaterThan(0)
     }
   })

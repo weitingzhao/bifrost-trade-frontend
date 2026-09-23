@@ -19,6 +19,15 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import type { Proposal, ProposalState } from './proposalsModel'
 
+/**
+ * Design Rev 2026-09-22.9: a diff does not take a hue. The contrast is
+ * lightness and weight — the before line muted, the after line ink at 600 —
+ * and the −/+ glyphs recede into a fixed slot. A hue here would read as
+ * direction or severity, and §14.7 rule 2 reserves both for other forms.
+ */
+const DIFF_LINE = 'grid grid-cols-[14px_minmax(0,1fr)]'
+const DIFF_GLYPH = 'text-muted-foreground/50'
+
 const STATE_TAG: Record<ProposalState, { variant: 'success' | 'warning' | 'neutral'; label: string }> = {
   argued: { variant: 'success', label: 'argued' },
   'no-cost': { variant: 'warning', label: 'no cost' },
@@ -88,12 +97,26 @@ export function ProposalCard({ proposal }: { proposal: Proposal }) {
           <div className="border-b border-border px-2.5 py-1">
             <span className={cn(positionsUi.cap, 'tracking-[0.07em]')}>Diff · {proposal.target}</span>
           </div>
-          <div className="flex flex-col gap-1 px-2.5 py-1.75">
-            <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground text-pretty')}>
-              − n/c — needs {proposal.beforeMissing}
+          <div className="flex flex-col gap-0.75 px-2.5 py-1.75">
+            <span
+              className={cn(
+                positionsUi.mono,
+                DIFF_LINE,
+                'text-dense-meta leading-normal text-muted-foreground text-pretty',
+              )}
+            >
+              <span className={DIFF_GLYPH}>−</span>
+              <span>{proposal.beforeText}</span>
             </span>
-            <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-success text-pretty')}>
-              + {proposal.after}
+            <span
+              className={cn(
+                positionsUi.mono,
+                DIFF_LINE,
+                'text-dense-meta leading-normal font-semibold text-foreground text-pretty',
+              )}
+            >
+              <span className={cn(DIFF_GLYPH, 'font-normal')}>+</span>
+              <span>{proposal.after}</span>
             </span>
           </div>
         </div>

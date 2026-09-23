@@ -65,7 +65,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Package 2026-09-22.3 retired this page's own run drawer and pointed
       // its Copilot button at the one Thread. Both are landed; the Owner has
       // not looked since, and only the Owner marks a page aligned.
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-22.6',
       note: DESIGN_NOTES['/research/loop/harness'],
     },

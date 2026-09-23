@@ -260,12 +260,12 @@ export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
   "Reference": "doc",
 }
 
-export const DESIGN_REV = "2026-09-22.9"
+export const DESIGN_REV = "2026-09-23.2"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},
   {"path":"/research/events","label":"Events","crumbs":["Home"],"designed":true,"file":"Research Events.dc.html","round":"NEW","rev":"2026-09-20.16","inNav":true,"group":"Home"},
-  {"path":"/market/live","label":"Live","crumbs":["Home"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-20.16","inNav":true,"group":"Home"},
+  {"path":"/market/live","label":"Live","crumbs":["Home"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-23.2","inNav":true,"group":"Home"},
   {"path":"/risk/portfolio","label":"Portfolio Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Risk"},
   {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},
   {"path":"/trade/expiration","label":"Expiration","crumbs":["Trade"],"designed":true,"file":"Trade Expiration.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Trade"},
@@ -317,7 +317,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/loop/objectives/obj-smallcap-sepa","label":"Small-cap SEPA","crumbs":["Autopilot"],"designed":true,"file":"Research Objective.dc.html","round":null,"rev":"2026-09-20.3","inNav":false,"group":null},
   {"path":"/research/loop/objectives/obj-vol-crush","label":"Post-earnings vol crush","crumbs":["Autopilot"],"designed":true,"file":"Research Objective.dc.html","round":null,"rev":"2026-09-20.3","inNav":false,"group":null},
   {"path":"/research/loop/runs","label":"Loop Run","crumbs":["Autopilot"],"designed":true,"file":"Research Autopilot Console.dc.html","round":null,"rev":"2026-09-18.2","inNav":false,"group":null},
-  {"path":"/research/loop/decisions","label":"Decision Inbox","crumbs":["Review"],"designed":true,"file":"Research Autopilot Decisions.dc.html","round":"OLD","rev":"2026-09-22.8","inNav":true,"group":"Review"},
+  {"path":"/research/loop/decisions","label":"Decision Inbox","crumbs":["Review"],"designed":true,"file":"Research Autopilot Decisions.dc.html","round":"OLD","rev":"2026-09-23.1","inNav":true,"group":"Review"},
   {"path":"/research/loop/hypotheses","label":"Hypothesis Board","crumbs":["The Book"],"designed":true,"file":"Research Hypothesis Board.dc.html","round":null,"rev":"2026-09-18.2","inNav":false,"group":null},
   {"path":"/research/loop/candidates","label":"Candidate Pool","crumbs":["The Book"],"designed":true,"file":"Research Candidate Pool.dc.html","round":null,"rev":"2026-09-18.2","inNav":false,"group":null},
   {"path":"/trade/desk","label":"Trade","crumbs":[],"designed":true,"file":"Trade Desk.dc.html","round":"OLD","rev":"2026-09-20.23","inNav":true,"group":"Trade"},
@@ -328,7 +328,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/review","label":"Review","crumbs":[],"designed":true,"file":"Review Queue.dc.html","round":null,"rev":"2026-09-20.23","inNav":true,"group":"Review"},
   {"path":"/review/fit","label":"Single trade","crumbs":["Review"],"designed":true,"file":"Review Fit.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Review"},
   {"path":"/review/habits","label":"Habits","crumbs":["Review"],"designed":true,"file":"Review Habits.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Review"},
-  {"path":"/review/proposals","label":"Rule proposals","crumbs":["Review"],"designed":true,"file":"Review Queue.dc.html","round":null,"rev":"2026-09-22.9","inNav":false,"group":null},
+  {"path":"/review/proposals","label":"Rule proposals","crumbs":["Review"],"designed":true,"file":"Research Autopilot Decisions.dc.html","round":"OLD","rev":"2026-09-23.1","inNav":false,"group":null},
   {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Performance.dc.html","round":null,"rev":"2026-09-17.2","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-22.6","inNav":true,"group":"Portfolio"},
   {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Backing.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Portfolio"},

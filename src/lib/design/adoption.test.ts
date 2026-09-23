@@ -239,9 +239,10 @@ describe('design adoption', () => {
     // page, but it answers four of the design's fixture rows, which is why a
     // single look moves the count by four. Loop Run followed (51→52): the
     // Owner read the app's run against the design's pipeline face and signed
-    // it — what is left there is the six verbs, owed rather than missing.
-    expect(counts.aligned + counts.byState.stale).toBe(52)
-    expect(counts.aligned).toBe(52)
+    // it — what is left there is the six verbs, owed rather than missing. The
+    // console closed the group at six of six (52→53).
+    expect(counts.aligned + counts.byState.stale).toBe(53)
+    expect(counts.aligned).toBe(53)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -443,8 +444,8 @@ describe('design adoption', () => {
     // the Decision Inbox back in, which is two out and one in. 19 on
     // 2026-09-23 with the four Research sign-offs, then 16 with Alerts, Daily
     // Brief and the Research layer page, then 12 with the objective page's four
-    // fixture rows, then 11 with Loop Run.
-    expect(counts.byState.reviewing).toBe(11)
+    // fixture rows, then 11 with Loop Run and 10 with the Autopilot console.
+    expect(counts.byState.reviewing).toBe(10)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -470,6 +471,7 @@ describe('design adoption', () => {
       '/research/event-radar',
       '/research/journal',
       '/research/loop/candidates',
+      '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
@@ -512,7 +514,6 @@ describe('design adoption', () => {
       '/research/greeks',
       '/research/lens-coverage',
       '/research/loop/decisions',
-      '/research/loop/harness',
       '/research/signal-health',
       '/research/workbench',
       '/review/proposals',
@@ -664,7 +665,12 @@ describe('design adoption', () => {
     // diff's colours. Only the two routes that were asked about moved their own
     // stamp — decisions to .8 and proposals to .9 — and neither is aligned yet,
     // so the aligned set holds and `stale` does not move.
-    expect(DESIGN_REV).toBe('2026-09-22.9')
+    // Package 2026-09-23.1 @ Rev .2 draws the Rule proposals merge rather than
+    // only ruling it: /review/proposals changes file to the Decision Inbox's
+    // own prototype and stops being a row or a View. It moves three stamps —
+    // decisions, proposals and Live — and all three were still in the confirm
+    // queue, so again nothing aligned goes stale.
+    expect(DESIGN_REV).toBe('2026-09-23.2')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

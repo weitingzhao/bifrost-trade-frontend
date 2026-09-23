@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { AlertTriangle, MessageCircle } from 'lucide-react'
 import {
   DenseDataTable,
@@ -28,6 +29,11 @@ import {
 } from '@/lib/harness/harnessDraftHelpers'
 import { openCandidateInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { optionCell } from '@/lib/harness/optionCell'
+import { ruleThatFits } from '@/lib/harness/candidateRuleFit'
+import { candidateBacking } from '@/lib/harness/candidateBacking'
+import { useOpportunities } from '@/hooks/useStrategies'
+import { usePositionsBook } from '@/hooks/usePositionsBook'
+import { CUSHION_TIGHT_PCT_DEFAULT } from '@/hooks/useCushionThreshold'
 import { cn } from '@/lib/utils'
 import {
   NET_AGENT,
@@ -73,6 +79,25 @@ export function CandidateBatchBody({
 }: {
   payload: Record<string, unknown>
 }) {
+  // Two front-end joins the design asked for rather than new payload fields
+  // (Rev 2026-09-22.7): the Rules book and the position book are facts about
+  // this side, and they move when a rule or a position does, not when the run
+  // does. Both queries are shared — six candidate cards on one page issue one
+  // of each.
+  const opps = useOpportunities()
+  const opportunities = opps.data?.items
+  // The whole book, both accounts, no filter: a candidate is a name the book
+  // may or may not already back, and the Inbox has no scope strip to honour.
+  // The cushion percentage is irrelevant here — Backing reads contract counts,
+  // not tightness — so it takes the page default rather than inventing one.
+  const book = usePositionsBook(
+    { accountFilter: { host: true, secondary: true }, filterSymbol: '', filterExpiry: '' },
+    CUSHION_TIGHT_PCT_DEFAULT,
+  )
+  const coverRows = book.coverRows
+  const accountLabel = (id: string) =>
+    id === book.hostAccountId ? 'HOST' : id === book.secondaryAccountId ? 'SEC' : id.slice(-4)
+
   const items = candidateBatchItems(payload)
   const warn = isHitRateWarnActive(payload)
   const dissent = isPersonaDissentActive(payload)
@@ -251,10 +276,10 @@ export function CandidateBatchBody({
                 <DenseTableHead>Rating</DenseTableHead>
                 <DenseTableHead>Score</DenseTableHead>
                 <DenseTableHead>Net</DenseTableHead>
-                <DenseTableHead>Selection</DenseTableHead>
                 <DenseTableHead>Option</DenseTableHead>
-                <DenseTableHead>Track record</DenseTableHead>
-                <DenseTableHead>Personas</DenseTableHead>
+                <DenseTableHead>Rule that fits</DenseTableHead>
+                <DenseTableHead>Backing</DenseTableHead>
+                <DenseTableHead>Plan</DenseTableHead>
               </DenseTableHeadRow>
             </DenseTableHeader>
             <DenseTableBody>
@@ -271,7 +296,8 @@ export function CandidateBatchBody({
                 const byModel = verdictsByModel(verdicts)
                 const split = agreement === 'dissent' ? describeSplit(verdicts) : null
                 return (
-                  <DenseTableRow key={item.id}>
+                  <Fragment key={item.id}>
+                  <DenseTableRow>
                     <DenseTableCell>
                       <span className="inline-flex items-center gap-1">
                         <span className="font-mono font-semibold">{item.symbol}</span>
@@ -358,16 +384,6 @@ export function CandidateBatchBody({
                       </div>
                     </DenseTableCell>
                     <DenseTableCell>
-                      {sel?.path ? (
-                        <DenseTag variant="category" size="cell">
-                          {sel.path}
-                          {sel.grade ? ` · ${sel.grade}` : ''}
-                        </DenseTag>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </DenseTableCell>
-                    <DenseTableCell>
                       {(() => {
                         const cell = optionCell(opt)
                         return (
@@ -383,6 +399,64 @@ export function CandidateBatchBody({
                         )
                       })()}
                     </DenseTableCell>
+                    <DenseTableCell>
+                      {(() => {
+                        const fit = ruleThatFits(item.symbol, opportunities)
+                        return (
+                          <span
+                            className={fit.fits ? '' : 'text-muted-foreground'}
+                            title={fit.title ?? undefined}
+                          >
+                            {fit.label}
+                          </span>
+                        )
+                      })()}
+                    </DenseTableCell>
+                    <DenseTableCell>
+                      {(() => {
+                        const back = candidateBacking(item.symbol, coverRows, accountLabel)
+                        return (
+                          <span
+                            className={cn('font-mono tabular-nums', back.any ? '' : 'text-muted-foreground')}
+                            title={back.title ?? undefined}
+                          >
+                            {back.label}
+                          </span>
+                        )
+                      })()}
+                    </DenseTableCell>
+                    <DenseTableCell>
+                      {/* An action, not a field (the design's words). There is no
+                          Plan sheet to pre-fill on this side yet, so the cell says
+                          where it would go rather than drawing a button that does
+                          nothing. */}
+                      <span className="text-dense-micro text-muted-foreground" title="A Plan sheet pre-filled from this candidate. Trade › Plans does not accept one yet.">
+                        —
+                      </span>
+                    </DenseTableCell>
+                  </DenseTableRow>
+                  <DenseTableRow>
+                    <DenseTableCell colSpan={8} className="pt-0">
+                      {/* Selection, the settled record and the judges moved off the
+                          row (design Rev 2026-09-22.7): eight columns is what the
+                          reader compares across candidates, and these three are
+                          what one candidate is read on. */}
+                      <details className="text-dense-meta">
+                        <summary className="cursor-pointer select-none text-dense-micro text-muted-foreground">
+                          {item.symbol} · selection, record and judges
+                        </summary>
+                        <div className="mt-1 flex flex-wrap items-start gap-x-6 gap-y-2">
+                          <span>
+                            <span className="mr-1 text-dense-micro uppercase tracking-wide text-muted-foreground">Selection</span>
+                            {sel?.path ? (
+                              <DenseTag variant="category" size="cell">
+                                {sel.path}
+                                {sel.grade ? ` · ${sel.grade}` : ''}
+                              </DenseTag>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </span>
                     <DenseTableCell>
                       <DenseTag variant={settled ? 'success' : 'neutral'} size="cell">
                         {settled
@@ -440,7 +514,11 @@ export function CandidateBatchBody({
                         <span className="text-muted-foreground">—</span>
                       )}
                     </DenseTableCell>
+                        </div>
+                      </details>
+                    </DenseTableCell>
                   </DenseTableRow>
+                  </Fragment>
                 )
               })}
             </DenseTableBody>

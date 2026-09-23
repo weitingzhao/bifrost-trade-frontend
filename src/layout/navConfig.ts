@@ -204,8 +204,19 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       //
       // `/review/proposals` stays a route and a deep link; folding its rows
       // into the Inbox page is page work the design books as owed, not this
-      // pass. Until then it is reachable by URL and by the Omnibar.
-      AUTOPILOT_PAGES.inbox,
+      // pass.
+      //
+      // It carried no entry of any kind in the meantime — the row went away
+      // with the page and the route was reachable only by URL or the Omnibar,
+      // so the Owner could not find a page they were asked to review. It is a
+      // child of the Inbox rather than a sibling of it: a view of that page,
+      // not a second one, which is what §5a.8 merged. Spelled out here rather
+      // than on the shared `AUTOPILOT_PAGES.inbox`, because the rail draws the
+      // same object and the Inbox has no children there.
+      {
+        ...AUTOPILOT_PAGES.inbox,
+        children: [route('Rule proposals', '/review/proposals', ClipboardList)],
+      },
     ],
   },
   {

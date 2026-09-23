@@ -230,21 +230,13 @@ describe('design adoption', () => {
     // readings. Only the Owner's look puts a page in place, and the same rule
     // takes one back out.
     //
-    // 2026-09-23, the first pass through the confirm queue rather than through
-    // a group: Symbol, Copilot, Vol ratings and Signal Decay signed off
-    // (40→44). They are four of Research's eight, and the first time the
-    // Owner has cleared rows by reading the queue itself. Alerts, Daily Brief
-    // and the Research layer page followed in the same pass (44→47), which
-    // closes Home at seven of seven. Then the objective page (47→51): one
-    // page, but it answers four of the design's fixture rows, which is why a
-    // single look moves the count by four. Loop Run followed (51→52): the
-    // Owner read the app's run against the design's pipeline face and signed
-    // it — what is left there is the six verbs, owed rather than missing. The
-    // console closed the group at six of six (52→53). The Decision Inbox
-    // followed once Package 2026-09-23.1's rebuild landed (53→54) — the
-    // page the Owner took back out on 2026-09-22 comes back in.
-    expect(counts.aligned + counts.byState.stale).toBe(54)
-    expect(counts.aligned).toBe(54)
+    // 2026-09-23, the Owner reading the confirm queue itself (40→55): four
+    // Research pages, Alerts, Daily Brief and the layer page; the objective page
+    // (four fixture rows on one look), Loop Run and the console, closing
+    // Autopilot; the rebuilt Decision Inbox and the Rule proposals link onto it,
+    // closing Review.
+    expect(counts.aligned + counts.byState.stale).toBe(55)
+    expect(counts.aligned).toBe(55)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -443,12 +435,9 @@ describe('design adoption', () => {
     // Settings, the collapse's other half — `/settings` had been redirecting
     // to the Coverage page the same ruling retired. 23 on 2026-09-22: the
     // Owner's walk took Positions and the Watchlist out to `aligned` and put
-    // the Decision Inbox back in, which is two out and one in. 19 on
-    // 2026-09-23 with the four Research sign-offs, then 16 with Alerts, Daily
-    // Brief and the Research layer page, then 12 with the objective page's four
-    // fixture rows, then 11 with Loop Run and 10 with the Autopilot console,
-    // and 9 with the rebuilt Decision Inbox.
-    expect(counts.byState.reviewing).toBe(9)
+    // the Decision Inbox back in, which is two out and one in. 8 after
+    // the 2026-09-23 pass through the queue (fifteen rows on eleven looks).
+    expect(counts.byState.reviewing).toBe(8)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -495,6 +484,7 @@ describe('design adoption', () => {
       '/review/habits',
       '/review/objectives',
       '/review/playbook-stats',
+      '/review/proposals',
       '/risk',
       '/risk/budget',
       '/risk/limits',
@@ -519,7 +509,6 @@ describe('design adoption', () => {
       '/research/lens-coverage',
       '/research/signal-health',
       '/research/workbench',
-      '/review/proposals',
       '/settings',
       '/system/status',
     ])

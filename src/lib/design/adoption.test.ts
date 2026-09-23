@@ -247,13 +247,14 @@ describe('design adoption', () => {
     // looked at it again. 56 → 54 when Portfolio Exposure and Positions grew
     // their doors into Contract Greeks and went the same way. 54 → 58 on
     // 2026-09-23, the Owner signing four together: Option screen, Stock
-    // ratings, Portfolio Exposure and Positions.
-    expect(counts.aligned + counts.byState.stale).toBe(58)
+    // ratings, Portfolio Exposure and Positions, and Contract Greeks once its
+    // door was findable — 59.
+    expect(counts.aligned + counts.byState.stale).toBe(59)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
     // nav any more. Both were signed; both are now behind their own rev.
-    expect(counts.aligned).toBe(56)
+    expect(counts.aligned).toBe(57)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/market/live',
       '/research/event-radar',
@@ -462,8 +463,8 @@ describe('design adoption', () => {
     // with Stock ratings, re-walked the same day onto the capabilities the
     // design moved there, and 10 with Portfolio Exposure and Positions, which
     // grew Contract Greeks' three doors between them. Back to 6 when the Owner
-    // signed four of them together on 2026-09-23.
-    expect(counts.byState.reviewing).toBe(6)
+    // signed four of them together on 2026-09-23, and 5 with Contract Greeks.
+    expect(counts.byState.reviewing).toBe(5)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -487,6 +488,7 @@ describe('design adoption', () => {
       '/research/copilot',
       '/research/copilot/trading',
       '/research/daily-brief',
+      '/research/greeks',
       '/research/journal',
       '/research/loop/candidates',
       '/research/loop/decisions',
@@ -531,7 +533,6 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/docs/options-kit',
-      '/research/greeks',
       '/research/lens-coverage',
       '/research/signal-health',
       '/settings',

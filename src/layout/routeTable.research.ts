@@ -416,7 +416,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Contract Greeks',
     crumbs: RISK_EXPOSURE,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-23.3',
       note: DESIGN_NOTES['/research/greeks'],
     },

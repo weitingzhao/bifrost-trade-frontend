@@ -60,6 +60,17 @@ export interface HabitReading {
    * it is a sentence the page has not earned yet.
    */
   needsPath?: boolean
+  /**
+   * True while the bars this reading needs are still in flight.
+   *
+   * `needsPath` alone was not enough: it says the reading *can* come from the
+   * path, and every caller then had to pair it with the fetch's state itself.
+   * Two of them did not, and printed `n 0` and `no cost` — which is exactly
+   * what this page says when a habit was measured and came back empty. A
+   * reading that has not arrived is not a finding, and the difference has to
+   * survive the trip to the callers rather than be re-derived by each of them.
+   */
+  measuring?: boolean
 }
 
 function mean(values: readonly number[]): number | null {
@@ -179,11 +190,12 @@ function unmeasured(
 export function habitReadings(
   trades: readonly ReviewTrade[],
   paths: Map<string, MarkPath> = new Map(),
+  pathsLoading = false,
 ): HabitReading[] {
   const ctx = { trades, paths }
   const pathed = withPath(ctx)
 
-  return [
+  const readings = [
     holdTime(ctx),
     disposition(pathed),
     cutLatency(pathed),
@@ -193,6 +205,9 @@ export function habitReadings(
     planCapture(trades),
     lateExit(trades),
   ]
+
+  if (!pathsLoading) return readings
+  return readings.map((h) => (h.needsPath && h.value == null ? { ...h, measuring: true } : h))
 }
 
 function holdTime({ trades }: Ctx): HabitReading {

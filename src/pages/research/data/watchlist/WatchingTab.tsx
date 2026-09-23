@@ -100,15 +100,16 @@ export function WatchingTab({
       [...new Set(stockItems.map((i) => (i.symbol ?? '').trim().toUpperCase()).filter(Boolean))],
     [stockItems],
   )
-  const { benchmarks, hypotheses, ivBySymbol, isJoining, thesisUnavailable } = useWatchBook(symbols)
+  const { benchmarks, hypotheses, ivBySymbol, isJoining, ivLoading, thesisUnavailable } =
+    useWatchBook(symbols)
 
   // One clock for the whole face, read once, so the render stays pure and the
   // ages and the DTEs cannot disagree about "now" — the same pattern the Book
   // page uses for the same reason.
   const [now] = useState(() => Date.now())
   const rows = useMemo(
-    () => watchBookRows(stockItems, quoteBySymbol, benchmarks, ivBySymbol, hypotheses, now),
-    [stockItems, quoteBySymbol, benchmarks, ivBySymbol, hypotheses, now],
+    () => watchBookRows(stockItems, quoteBySymbol, benchmarks, ivBySymbol, hypotheses, now, ivLoading),
+    [stockItems, quoteBySymbol, benchmarks, ivBySymbol, hypotheses, now, ivLoading],
   )
   const standing = useMemo(() => watchBookStanding(rows), [rows])
 

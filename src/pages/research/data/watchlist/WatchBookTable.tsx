@@ -116,9 +116,9 @@ export function WatchBookTable({
                 denseTableNumCell,
                 r.ivRank != null && r.ivRank >= IV_HIGH ? 'text-warning' : 'text-muted-foreground',
               )}
-              title={r.ivAbsence ?? undefined}
+              title={r.ivMeasuring ? 'Still reading this name’s IV percentile' : (r.ivAbsence ?? undefined)}
             >
-              {r.ivRank == null ? '—' : r.ivRank.toFixed(0)}
+              {r.ivRank != null ? r.ivRank.toFixed(0) : r.ivMeasuring ? '…' : '—'}
             </DenseTableCell>
             {/* Owed, and named rather than left blank — see the section note. */}
             <DenseTableCell

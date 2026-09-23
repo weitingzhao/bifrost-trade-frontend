@@ -6,7 +6,7 @@
  * cost something repeatedly, its sample, its cost, and the trades that make the
  * case. Four of them, each pointed at a different rule.
  *
- * A proposal here can be in one of three states, and the difference matters:
+ * A proposal here can be in one of four states, and the difference matters:
  *
  * - **argued** — the habit is measured, it has a sample, and it has a cost in
  *   dollars. Since 2026-09-18 one proposal reaches this: the give-back on
@@ -14,6 +14,10 @@
  * - **no cost** — the habit is measured but its cost is not, because a cost is
  *   what the behaviour did against what the plan would have produced.
  * - **no habit** — the tendency itself cannot be measured on this side.
+ * - **measuring** — the bars have not come back yet. Kept apart from "no habit"
+ *   because for the ~40 seconds the marks are in flight this page used to make
+ *   the strongest negative claim it has, about a habit it was in the middle of
+ *   measuring: the give-back reads `argued` once the bars land.
  *
  * Every proposal's *diff* is marked regardless of state, and that is not a
  * formality: a diff needs the rule's current text to subtract from, and no
@@ -24,7 +28,7 @@ import { fmtUsd } from '@/utils/positions'
 import type { HabitReading } from '@/utils/reviewHabits'
 import type { ReviewTrade } from '@/utils/reviewTrades'
 
-export type ProposalState = 'argued' | 'no-cost' | 'no-habit'
+export type ProposalState = 'argued' | 'no-cost' | 'no-habit' | 'measuring'
 
 export interface ProposalCite {
   /** The trade's §14.4 contract token. */
@@ -92,11 +96,16 @@ export function buildProposals(
       key: 'hard_exit',
       title: 'Make the profit target a hard exit',
       target: 'Playbook · all short-premium plays',
-      state: disposition?.consequence == null ? 'no-habit' : 'argued',
+      state: disposition?.measuring
+        ? 'measuring'
+        : disposition?.consequence == null
+          ? 'no-habit'
+          : 'argued',
       n: disposition?.value == null ? null : disposition.n,
       effect: disposition?.consequence ?? null,
-      evidence:
-        disposition?.value == null
+      evidence: disposition?.measuring
+        ? 'Reading each winning contract’s own daily marks to find the peak it printed. Whether this is argued is not known yet.'
+        : disposition?.value == null
           ? 'The give-back on winners is what would argue for this, and it needs each contract’s daily marks to know what the peak was.'
           : `${disposition.read} Across them, ${fmtUsd(Math.abs(disposition.consequence ?? 0), true)} of what the positions had already printed was not taken. A resting order at the target takes it without a decision being made in the moment.`,
       cites: citesFor(disposition, trades, (d) => {
@@ -106,23 +115,25 @@ export function buildProposals(
       }),
       after: 'exit: resting GTC close at the target, no discretion inside the window',
       beforeMissing: NO_RULE_TEXT,
-      blockedBy: disposition?.consequence == null ? 'the mark path on winning trades' : null,
+      blockedBy:
+        disposition?.measuring || disposition?.consequence != null ? null : 'the mark path on winning trades',
     },
     {
       key: 'stop_latency',
       title: 'Add a time stop after a new worst mark',
       target: 'Playbook · all short-premium plays',
-      state: cut?.value == null ? 'no-habit' : 'no-cost',
+      state: cut?.measuring ? 'measuring' : cut?.value == null ? 'no-habit' : 'no-cost',
       n: cut?.value == null ? null : cut.n,
       effect: null,
-      evidence:
-        cut?.value == null
+      evidence: cut?.measuring
+        ? 'Reading each losing contract’s own daily marks to find the worst it printed.'
+        : cut?.value == null
           ? 'How long a loser stays open past its worst mark is the reading, and it needs the mark path.'
           : `${cut.read} A time stop does not have to predict the bottom, only to stop the drift. What it would have saved is the part that is missing: that is this exit against the one the plan would have taken, and no plan is linked to a position.`,
       cites: citesFor(cut, trades, (d) => d.value),
       after: 'stop: force a review three sessions after any new worst mark',
       beforeMissing: NO_RULE_TEXT,
-      blockedBy: 'a cost — the planned exit to measure the delay against',
+      blockedBy: cut?.measuring ? null : 'a cost — the planned exit to measure the delay against',
     },
     {
       key: 'ivr_floor',
@@ -162,6 +173,10 @@ export function proposalChain(habits: readonly HabitReading[], proposals: readon
   const measured = habits.filter((h) => h.value != null).length
   const costed = habits.filter((h) => h.consequence != null).length
   const argued = proposals.filter((p) => p.state === 'argued').length
+  // A count taken mid-flight is a claim about a book still being read. The
+  // links keep their shape and withhold the number instead of printing a
+  // smaller one that will change on its own.
+  const measuring = habits.some((h) => h.measuring)
 
   return [
     {
@@ -169,7 +184,9 @@ export function proposalChain(habits: readonly HabitReading[], proposals: readon
       step: 'A habit',
       what: 'a behaviour repeated across enough trades to be a pattern rather than an anecdote',
       state: measured > 0 ? ('partial' as const) : ('missing' as const),
-      note: `${measured} of ${habits.length} are measured; the rest need a plan linked to a position.`,
+      note: measuring
+        ? `${measured} of ${habits.length} are measured so far; the ones read off the daily marks are still arriving.`
+        : `${measured} of ${habits.length} are measured; the rest need a plan linked to a position.`,
       to: '/review/habits',
     },
     {
@@ -177,8 +194,9 @@ export function proposalChain(habits: readonly HabitReading[], proposals: readon
       step: 'Its cost',
       what: 'what the behaviour did to P&L — the dollars that make it worth changing a rule over',
       state: costed > 0 ? ('partial' as const) : ('missing' as const),
-      note:
-        costed > 0
+      note: measuring
+        ? 'Reading the contracts’ own daily marks — which habits carry a cost is not known yet.'
+        : costed > 0
           ? `${costed} carries one, read off the contract’s own daily marks. The others are the plan’s subtraction, and no plan is linked to a position.`
           : 'No habit carries a cost: the subtraction that turns a tendency into one needs the plan.',
       to: '/trade/plans',
@@ -188,7 +206,9 @@ export function proposalChain(habits: readonly HabitReading[], proposals: readon
       step: 'A proposal',
       what: 'a diff against a specific rule, carrying the habit, its cost and the trades that argued it',
       state: 'missing' as const,
-      note: `${argued} of ${proposals.length} has evidence above the floor, and none can be written as a diff — a diff needs the rule’s current text, and no rules store exists here.`,
+      note: measuring
+        ? 'How many have evidence above the floor is still being read; none can be written as a diff regardless — a diff needs the rule’s current text, and no rules store exists here.'
+        : `${argued} of ${proposals.length} has evidence above the floor, and none can be written as a diff — a diff needs the rule’s current text, and no rules store exists here.`,
       to: '/trade/plans',
     },
     {

@@ -44,6 +44,14 @@ export function useWatchBook(symbols: readonly string[]) {
     ivBySymbol: iv.data ?? EMPTY_IV,
     /** True while the joins are still arriving; the names are already there. */
     isJoining: benchmarks.isLoading || hypotheses.isLoading || iv.isLoading,
+    /**
+     * The IV join on its own.
+     *
+     * `isJoining` gates the whole empty state, so once one name has a row the
+     * IV column started saying "no IV percentile row for this name yet" about
+     * requests still in flight — a claim, in a cell that is a dash either way.
+     */
+    ivLoading: iv.isLoading,
     thesisUnavailable: hypotheses.isError,
   }
 }

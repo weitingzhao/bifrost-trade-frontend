@@ -157,3 +157,42 @@ describe('watchBookStanding', () => {
     expect(watchBookStanding(rows)).toMatchObject({ names: 3, withThesis: 1, withoutThesis: 2 })
   })
 })
+
+// The dash was the same glyph for three different facts: a rank that has not
+// arrived, a name with no percentile row, and a fixed-income ETF that has no
+// chain to rank at all. Only the last is knowable without asking.
+describe('watchBookRows while the IV percentiles are in flight', () => {
+  it('says measuring rather than claiming the row is absent', () => {
+    const [row] = watchBookRows([item('AMD')], QUOTES, { AMD: SETTLED }, ivMap({}), [], NOW, true)
+    expect(row.ivMeasuring).toBe(true)
+    expect(row.ivAbsence).toBeNull()
+  })
+
+  it('does not say measuring for a name that has no chain to rank', () => {
+    const [row] = watchBookRows(
+      [{ ...item('SGOV'), category: 'Fix Income' }],
+      QUOTES,
+      { SGOV: SETTLED },
+      ivMap({}),
+      [],
+      NOW,
+      true,
+    )
+    expect(row.ivMeasuring).toBe(false)
+    expect(row.ivAbsence).toMatch(/no options chain/)
+  })
+
+  it('stops measuring once the rank lands', () => {
+    const [row] = watchBookRows(
+      [item('AMD')],
+      QUOTES,
+      { AMD: SETTLED },
+      ivMap({ AMD: 42 }),
+      [],
+      NOW,
+      true,
+    )
+    expect(row.ivMeasuring).toBe(false)
+    expect(row.ivRank).toBe(42)
+  })
+})

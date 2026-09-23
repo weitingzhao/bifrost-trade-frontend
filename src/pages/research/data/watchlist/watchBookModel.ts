@@ -41,6 +41,13 @@ export interface WatchBookRow {
   ivRank: number | null
   /** Why there is no IV rank, when there is none. Null when there is one. */
   ivAbsence: string | null
+  /**
+   * True while this name's IV percentile is still in flight.
+   *
+   * A name with no chain is not measuring — that is known without asking — so
+   * the fixed-income rows keep their sentence from the first paint.
+   */
+  ivMeasuring: boolean
   /** The belief this name is held on, or null — the design's Thesis column. */
   thesis: Hypothesis | null
   ageDays: number | null
@@ -61,6 +68,7 @@ export function watchBookRows(
   ivBySymbol: ReadonlyMap<string, IvPercentileRow | null>,
   hypotheses: readonly Hypothesis[],
   now: number,
+  ivLoading = false,
 ): WatchBookRow[] {
   return items.map((item) => {
     const symbol = (item.symbol ?? '').trim().toUpperCase()
@@ -71,6 +79,8 @@ export function watchBookRows(
     const base = resolveDailyBasePrice(null, benchmarks[symbol])
     const { dailyPct } = computeDailyChange(last, base, 1)
     const iv = ivBySymbol.get(symbol)?.iv_rank_1y ?? null
+    const noChain = NO_CHAIN_CATEGORIES.has(item.category ?? '')
+    const ivMeasuring = iv == null && ivLoading && !noChain
     const at = addedAt(item)
     const ageDays = at == null ? null : Math.floor((now - at) / 86_400_000)
     return {
@@ -80,11 +90,12 @@ export function watchBookRows(
       dayPct: dailyPct,
       ivRank: iv,
       ivAbsence:
-        iv != null
+        iv != null || ivMeasuring
           ? null
-          : NO_CHAIN_CATEGORIES.has(item.category ?? '')
+          : noChain
             ? 'no options chain — a fixed-income ETF has no IV to rank'
             : 'no IV percentile row for this name yet',
+      ivMeasuring,
       thesis: thesisFor(hypotheses, symbol),
       ageDays,
       ageTone: stuckAgeTone(ageDays),

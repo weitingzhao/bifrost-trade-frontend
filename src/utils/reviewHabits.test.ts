@@ -98,6 +98,30 @@ describe('habitReadings', () => {
     expect(needs).toEqual(['disposition', 'cut_latency'])
   })
 
+  // The flag the pages actually read. `needsPath` said a reading *can* come
+  // from the path and left every caller to pair it with the fetch state; two
+  // did not, and printed `n 0` / `no cost` for the ~40 seconds the bars were in
+  // flight — indistinguishable from a habit that was measured and came back
+  // empty.
+  it('marks a reading as measuring while its bars are in flight', () => {
+    const inFlight = habitReadings(TRADES, new Map(), true)
+    expect(inFlight.filter((h) => h.measuring).map((h) => h.key)).toEqual([
+      'disposition',
+      'cut_latency',
+    ])
+  })
+
+  it('does not mark a reading as measuring once its bars have landed', () => {
+    for (const h of habitReadings(TRADES, PATHS, true)) {
+      expect(h.measuring, `${h.key} has its reading and must not still say measuring`).toBeFalsy()
+    }
+  })
+
+  it('never marks a habit that does not come from the path', () => {
+    const measuring = habitReadings(TRADES, new Map(), true).filter((h) => h.measuring)
+    expect(measuring.every((h) => h.needsPath)).toBe(true)
+  })
+
   it('marks the path habits rather than zeroing them when no path loaded', () => {
     const habits = habitReadings(TRADES)
     const d = habits.find((h) => h.key === 'disposition')!

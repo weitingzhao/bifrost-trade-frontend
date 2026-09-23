@@ -83,9 +83,9 @@ export default function ReviewHabitsPage() {
   // The window narrows the sample, so it has to narrow the readings too — a
   // gate that says "12 closed trades" above tendencies computed over 67 is the
   // worst of both.
-  const habits = useMemo(() => habitReadings(inWindow, paths), [inWindow, paths])
+  const habits = useMemo(() => habitReadings(inWindow, paths, pathsLoading), [inWindow, paths, pathsLoading])
   const measured = habits.filter((h) => h.value != null)
-  const pending = pathsLoading && habits.some((h) => h.needsPath && h.value == null)
+  const pending = habits.some((h) => h.measuring)
   const n = inWindow.length
   const gate =
     n === 0
@@ -188,7 +188,7 @@ export default function ReviewHabitsPage() {
                     </span>
                   </header>
                   {habits.map((h) => (
-                    <HabitRow key={h.key} habit={h} loading={pathsLoading && Boolean(h.needsPath)} />
+                    <HabitRow key={h.key} habit={h} />
                   ))}
                 </section>
               </div>
@@ -221,8 +221,9 @@ export default function ReviewHabitsPage() {
   )
 }
 
-function HabitRow({ habit, loading }: { habit: HabitReading; loading: boolean }) {
+function HabitRow({ habit }: { habit: HabitReading }) {
   const fmt = fmtFor(habit)
+  const measuring = Boolean(habit.measuring)
   const thin = habit.value != null && habit.n < THIN_SAMPLE
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] items-start gap-x-4 gap-y-2 border-b border-border/55 px-3 py-2.5 last:border-b-0">
@@ -236,7 +237,7 @@ function HabitRow({ habit, loading }: { habit: HabitReading; loading: boolean })
           >
             {habit.value == null ? (
               <span className="inline-flex items-center gap-1.5">
-                <StatusLamp lamp="gray" variant="dot" title="Unmeasured" />
+                <StatusLamp lamp="gray" variant="dot" title={measuring ? 'Still reading' : 'Unmeasured'} />
                 {habit.label}
               </span>
             ) : (
@@ -244,7 +245,7 @@ function HabitRow({ habit, loading }: { habit: HabitReading; loading: boolean })
             )}
           </span>
           <DenseTag variant={habit.value == null ? 'neutral' : thin ? 'warning' : 'success'} size="cell">
-            n {habit.n}
+            n {measuring ? '…' : habit.n}
           </DenseTag>
         </div>
         <div className="flex flex-wrap items-baseline gap-2">
@@ -255,7 +256,7 @@ function HabitRow({ habit, loading }: { habit: HabitReading; loading: boolean })
               habit.value == null ? 'text-muted-foreground' : 'text-foreground',
             )}
           >
-            {habit.value == null ? (loading ? '…' : 'n/c') : fmt(habit.value)}
+            {habit.value == null ? (measuring ? '…' : 'n/c') : fmt(habit.value)}
           </span>
           <span className="text-dense-meta text-muted-foreground">{habit.unit}</span>
           {habit.ci ? (
@@ -266,7 +267,7 @@ function HabitRow({ habit, loading }: { habit: HabitReading; loading: boolean })
           <span className="text-dense-caption uppercase tracking-[0.1em] text-muted-foreground">{habit.stat}</span>
         </div>
         <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
-          {loading && habit.value == null ? 'Reading this contract’s daily bars…' : habit.read}
+          {measuring ? 'Reading this contract’s daily bars…' : habit.read}
         </p>
         <div className="flex flex-wrap items-baseline gap-2">
           <span
@@ -276,7 +277,7 @@ function HabitRow({ habit, loading }: { habit: HabitReading; loading: boolean })
               habit.consequence == null ? 'text-muted-foreground' : pnlColorClass(habit.consequence),
             )}
           >
-            {habit.consequence == null ? 'no cost' : fmtUsd(habit.consequence, true)}
+            {habit.consequence == null ? (measuring ? 'measuring…' : 'no cost') : fmtUsd(habit.consequence, true)}
           </span>
           <span className="min-w-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
             {habit.consequenceLabel}

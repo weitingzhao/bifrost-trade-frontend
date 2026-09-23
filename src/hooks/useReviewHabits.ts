@@ -16,7 +16,10 @@ export function useReviewHabits(accountFilter: string) {
   const book = useReviewTrades(accountFilter)
   const marks = useBookMarkPaths(book.trades)
 
-  const habits = useMemo(() => habitReadings(book.trades, marks.paths), [book.trades, marks.paths])
+  const habits = useMemo(
+    () => habitReadings(book.trades, marks.paths, marks.loading),
+    [book.trades, marks.paths, marks.loading],
+  )
   // Re-derived with the paths so a play's MAE column is not a second
   // computation of the same trades (§14.2).
   const plays = useMemo(() => playbookStats(book.trades, marks.paths), [book.trades, marks.paths])

@@ -23,6 +23,7 @@ const STATE_TAG: Record<ProposalState, { variant: 'success' | 'warning' | 'neutr
   argued: { variant: 'success', label: 'argued' },
   'no-cost': { variant: 'warning', label: 'no cost' },
   'no-habit': { variant: 'neutral', label: 'no habit' },
+  measuring: { variant: 'neutral', label: 'measuring…' },
 }
 
 export function ProposalCard({ proposal }: { proposal: Proposal }) {
@@ -40,7 +41,7 @@ export function ProposalCard({ proposal }: { proposal: Proposal }) {
         <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{proposal.target}</span>
         <span className="ml-auto flex items-center gap-2.5">
           <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-            n {proposal.n ?? '—'}
+            n {proposal.n ?? (proposal.state === 'measuring' ? '…' : '—')}
           </span>
           <span
             className={cn(

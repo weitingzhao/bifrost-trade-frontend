@@ -51,12 +51,16 @@ export function ProposalsView() {
   const proposals = useMemo(() => buildProposals(habits, trades, paths), [habits, trades, paths])
   const chain = useMemo(() => proposalChain(habits, proposals), [habits, proposals])
   const argued = proposals.filter((p) => p.state === 'argued').length
+  const measuring = proposals.some((p) => p.state === 'measuring')
 
   return (
     <section className="space-y-2.5" aria-label="Rule proposals">
       <div className="flex flex-wrap items-center gap-2.5">
-        <DenseTag variant={argued > 0 ? 'success' : 'warning'} size="cell">
-          {argued} of {proposals.length} argued · none can be written as a diff
+        <DenseTag variant={measuring ? 'neutral' : argued > 0 ? 'success' : 'warning'} size="cell">
+          {measuring
+            ? `reading the marks — ${argued} of ${proposals.length} argued so far`
+            : `${argued} of ${proposals.length} argued`}{' '}
+          · none can be written as a diff
         </DenseTag>
         <span className="text-dense-meta text-muted-foreground">
           What the habits argue for, before any of it becomes a rule. A proposal needs a habit with

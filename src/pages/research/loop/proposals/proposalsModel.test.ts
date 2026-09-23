@@ -102,3 +102,37 @@ describe('proposalChain', () => {
     expect(chain.find((c) => c.key === 'cost')!.state).toBe('missing')
   })
 })
+
+// The state the page used to skip. While the daily marks are in flight the
+// give-back habit has no consequence yet, and reading that as `no-habit` made
+// the strongest negative claim the page has — about a habit it was in the
+// middle of measuring, which reads `argued` once the bars land.
+describe('proposals while the marks are still being read', () => {
+  const inFlight: HabitReading[] = [
+    habit({ key: 'disposition', measuring: true }),
+    habit({ key: 'cut_latency', measuring: true }),
+  ]
+
+  it('says measuring, not no-habit', () => {
+    const byKey = new Map(buildProposals(inFlight, TRADES, PATHS).map((p) => [p.key, p]))
+    expect(byKey.get('hard_exit')?.state).toBe('measuring')
+    expect(byKey.get('stop_latency')?.state).toBe('measuring')
+  })
+
+  it('blocks on nothing while it is still reading', () => {
+    const p = buildProposals(inFlight, TRADES, PATHS).find((x) => x.key === 'hard_exit')!
+    expect(p.blockedBy).toBeNull()
+  })
+
+  it('withholds the chain counts rather than printing a number that will change', () => {
+    const chain = proposalChain(inFlight, buildProposals(inFlight, TRADES, PATHS))
+    const proposal = chain.find((c) => c.key === 'proposal')!
+    expect(proposal.note).not.toMatch(/^\d+ of \d+ has evidence/)
+    expect(chain.find((c) => c.key === 'cost')!.note).toMatch(/not known yet/)
+  })
+
+  it('still reaches argued once the same habit has its reading', () => {
+    const p = buildProposals(MEASURED, TRADES, PATHS).find((x) => x.key === 'hard_exit')!
+    expect(p.state).toBe('argued')
+  })
+})

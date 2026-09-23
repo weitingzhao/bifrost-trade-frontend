@@ -133,7 +133,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Loop Run',
     crumbs: AUTOPILOT,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/loop/runs/:runId'],
     },

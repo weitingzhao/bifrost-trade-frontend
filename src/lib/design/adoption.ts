@@ -352,12 +352,20 @@ export interface AdoptionGroup {
  * Without this fall-back every layer page lands under Home and the group it
  * belongs to under-counts itself by one.
  *
+ * The design's tree cannot place the three pieces of equipment, though: §5a.8
+ * moved Autopilot, The Book and Copilot out of the business tree, so they are
+ * on the rail rather than in the nav and `navGroups` gives them no group. The
+ * fall-back sent them to Home, which reads as though Home holds an Autopilot
+ * page — the Owner found it there (2026-09-23). A page with no group is not a
+ * Home page; it heads a group of its own, and its own name is that group, so
+ * the console joins the objectives and runs already filed under Autopilot.
+ *
  * Exported because the tracker groups twice: once for the summary, and again
  * inside each state's list. Two derivations of "which group" would eventually
  * disagree, and the reader would have no way to tell which one was lying.
  */
 export function adoptionGroupOf(row: AdoptionRow): string {
-  return row.crumbs[0] ?? row.design?.group ?? 'Home'
+  return row.crumbs[0] ?? row.design?.group ?? row.label
 }
 
 export function adoptionByGroup(rows: readonly AdoptionRow[]): AdoptionGroup[] {

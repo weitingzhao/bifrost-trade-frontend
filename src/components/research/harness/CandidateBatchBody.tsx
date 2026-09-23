@@ -27,6 +27,8 @@ import {
   type CandidateAgreement,
 } from '@/lib/harness/harnessDraftHelpers'
 import { openCandidateInCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { optionCell } from '@/lib/harness/optionCell'
+import { cn } from '@/lib/utils'
 import {
   NET_AGENT,
   batchLeash,
@@ -366,12 +368,20 @@ export function CandidateBatchBody({
                       )}
                     </DenseTableCell>
                     <DenseTableCell>
-                      <DenseTag
-                        variant={opt?.status === 'ok' ? 'info' : 'neutral'}
-                        size="cell"
-                      >
-                        {opt?.status === 'ok' ? 'option view' : 'no option data'}
-                      </DenseTag>
+                      {(() => {
+                        const cell = optionCell(opt)
+                        return (
+                          <span
+                            className={cn(
+                              'font-mono tabular-nums',
+                              cell.ok ? '' : 'text-muted-foreground',
+                            )}
+                            title={cell.title ?? undefined}
+                          >
+                            {cell.text}
+                          </span>
+                        )
+                      })()}
                     </DenseTableCell>
                     <DenseTableCell>
                       <DenseTag variant={settled ? 'success' : 'neutral'} size="cell">

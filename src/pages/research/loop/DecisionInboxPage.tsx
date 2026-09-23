@@ -57,6 +57,19 @@ type View = 'decisions' | 'briefings' | 'all' | 'proposals'
 
 /** The alias the design keeps for the queue that merged in (§5a.8). */
 const PROPOSALS_PATH = '/review/proposals'
+
+const INBOX_LEDE =
+  'Drafts that need a call. Approving accepts the draft into The Book — a candidate enters the pool, a hypothesis opens, a patch merges into its policy. Nothing is handed to Trade: an order is yours to originate, always (D10). Posts that only need reading live under Briefings and have no Approve button.'
+
+/**
+ * Why a row called Rule proposals lands on a page called Decision Inbox: they
+ * are one inbox (design Rev 2026-09-22.2, §5a.8), and the lede has to say so
+ * on the view the signpost row points at. The inbox lede cannot stand here —
+ * it promises that approving writes, and this is the one view where nothing
+ * can be approved at all.
+ */
+const PROPOSALS_LEDE =
+  'Rule proposals — one view of this inbox, because a proposal and a draft are the same act: the machine proposes, you answer. What differs is the end of the loop it touches. A proposal is derived here from the habits rather than posted by the engine, which is why the kind filter stands down.'
 type Narrow = 'any' | 'loop' | DraftKind
 
 /**
@@ -221,11 +234,7 @@ export default function DecisionInboxPage() {
 
   return (
     <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="Decision Inbox"
-        description="Drafts that need a call. Approving accepts the draft into The Book — a candidate enters the pool, a hypothesis opens, a patch merges into its policy. Nothing is handed to Trade: an order is yours to originate, always (D10). Posts that only need reading live under Briefings and have no Approve button."
-        actions={<NewDraftDialog />}
-      />
+      <PageHeader title="Decision Inbox" description={view === 'proposals' ? PROPOSALS_LEDE : INBOX_LEDE} actions={<NewDraftDialog />} />
 
       <div className="flex flex-wrap items-center gap-2">
         {/* The design's chip. It reads "the engine", not "autopilot seat": the

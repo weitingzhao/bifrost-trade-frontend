@@ -240,9 +240,11 @@ describe('design adoption', () => {
     // single look moves the count by four. Loop Run followed (51→52): the
     // Owner read the app's run against the design's pipeline face and signed
     // it — what is left there is the six verbs, owed rather than missing. The
-    // console closed the group at six of six (52→53).
-    expect(counts.aligned + counts.byState.stale).toBe(53)
-    expect(counts.aligned).toBe(53)
+    // console closed the group at six of six (52→53). The Decision Inbox
+    // followed once Package 2026-09-23.1's rebuild landed (53→54) — the
+    // page the Owner took back out on 2026-09-22 comes back in.
+    expect(counts.aligned + counts.byState.stale).toBe(54)
+    expect(counts.aligned).toBe(54)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -444,8 +446,9 @@ describe('design adoption', () => {
     // the Decision Inbox back in, which is two out and one in. 19 on
     // 2026-09-23 with the four Research sign-offs, then 16 with Alerts, Daily
     // Brief and the Research layer page, then 12 with the objective page's four
-    // fixture rows, then 11 with Loop Run and 10 with the Autopilot console.
-    expect(counts.byState.reviewing).toBe(10)
+    // fixture rows, then 11 with Loop Run and 10 with the Autopilot console,
+    // and 9 with the rebuilt Decision Inbox.
+    expect(counts.byState.reviewing).toBe(9)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -471,6 +474,7 @@ describe('design adoption', () => {
       '/research/event-radar',
       '/research/journal',
       '/research/loop/candidates',
+      '/research/loop/decisions',
       '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/loop/objectives/obj-daily-stock',
@@ -513,7 +517,6 @@ describe('design adoption', () => {
       '/research/contract-screener',
       '/research/greeks',
       '/research/lens-coverage',
-      '/research/loop/decisions',
       '/research/signal-health',
       '/research/workbench',
       '/review/proposals',

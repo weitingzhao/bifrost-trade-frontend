@@ -6,7 +6,8 @@
  * this panel does not follow them: a broken link is not a decision anyone can
  * take, it is a fact about what the habits can still argue — which is this
  * page's subject. So it lands here rather than being deleted with the page it
- * used to sit on.
+ * used to sit on. The design's Habits prototype does not draw it; the Owner
+ * ruled on 2026-09-23 that it stays.
  */
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'

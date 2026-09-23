@@ -76,7 +76,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // One inbox, and it seats in Review (§5a.8). The trail follows the row.
     crumbs: REVIEW,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-23.1',
       note: DESIGN_NOTES['/research/loop/decisions'],
     },

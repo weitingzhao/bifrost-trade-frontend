@@ -558,10 +558,12 @@ export interface ForecastSettlement {
   lean_miss?: boolean
 }
 
-export function fetchSettlements(symbol?: string, sessionId?: string) {
+export function fetchSettlements(symbol?: string, sessionId?: string, limit?: number) {
   const params = new URLSearchParams()
   if (symbol) params.set('symbol', symbol)
   if (sessionId) params.set('session_id', sessionId)
+  // The endpoint caps at 200 (le=200) and answers newest first.
+  if (limit) params.set('limit', String(Math.min(limit, 200)))
   return get<{ rows: ForecastSettlement[]; count: number }>(
     `/research/backtest/settlement?${params}`,
   )

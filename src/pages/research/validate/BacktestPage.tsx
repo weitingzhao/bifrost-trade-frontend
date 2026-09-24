@@ -1,29 +1,23 @@
 /**
- * Backtest page (Wave RS-C4).
+ * Backtest — event-driven replays of the strategy templates, and the
+ * settlement record of every forecast the engine made (design
+ * `Research Backtest.dc.html`, route rev 2026-09-22.6). Historical only —
+ * nothing on this page places an order (D10).
  *
- * Two tabs:
- *   1. Settlement — original forecast-settlement replay (RS-A/B baseline).
- *   2. Event Query — event-driven backtest (RS-C1–C4). Builds an
- *      `EventDef` + strategy template, calls
- *      `POST /research/backtest/event-query`, and renders the result.
- *
- * The `run_id` query param opens a previously persisted run.
+ * The Event tab is run-first: the persisted `research.backtest_run` rows are
+ * the page's spine (newest first), a click opens the run's detail, and the
+ * builder is behind ＋ New run rather than always open. The Settlement tab
+ * reads every symbol's sessions (the endpoint's newest 200) — runs carry
+ * their own symbol set, so the shell's symbol scope is held, not followed.
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { History } from 'lucide-react'
+import { Button } from '@bifrost/ui'
 import { PageHeader, PageShell } from '@/components/layout'
 import {
-  DenseDataTable,
-  DenseTableBody,
-  DenseTableCell,
-  DenseTableHead,
-  DenseTableHeader,
-  DenseTableHeadRow,
-  DenseTableRow,
-  denseTableCellPadding,
-  denseTableNumCell,
+  DenseTag,
   EmptyState,
   SegmentControl,
   SettlementBadges,
@@ -36,23 +30,33 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { fetchSettlements, type ForecastSettlement } from '@/api/researchEngine'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { EventQueryBuilder } from '@/components/research/EventQueryBuilder'
 import { BacktestRunResultCard } from '@/components/research/BacktestRunResultCard'
-import { useBacktestRun } from '@/hooks/useBacktestEventQuery'
+import { cap, mono, panel, panelHead, td, th } from '@/components/research/labFaceUi'
+import { useBacktestRun, useBacktestRuns } from '@/hooks/useBacktestEventQuery'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { settlementFineGrain } from '@/lib/researchSettlement'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { SYMBOL_PATH } from '@/lib/symbolTabs'
+import { cn } from '@/lib/utils'
+import { runConfidence, runScope, runSymbols, settleAgg } from '@/utils/backtestRuns'
 import type {
   BacktestRunRow,
   EventQueryResponse,
 } from '@/api/research/backtestEvent'
 
-type TabKey = 'settlement' | 'event-query'
+type TabKey = 'event' | 'settlement'
 
 const TAB_OPTIONS: { value: TabKey; label: string }[] = [
+  { value: 'event', label: 'Event backtest' },
   { value: 'settlement', label: 'Settlement' },
-  { value: 'event-query', label: 'Event Query' },
 ]
+
+function normalizeTab(raw: string | null): TabKey {
+  // 'event-query' is the page's own old name for the tab; bookmarks predate it.
+  if (raw === 'settlement') return 'settlement'
+  return 'event'
+}
 
 function rowToResponse(row: BacktestRunRow): EventQueryResponse {
   return {
@@ -60,10 +64,9 @@ function rowToResponse(row: BacktestRunRow): EventQueryResponse {
     run: row,
     summary: row.summary,
     runs: [],
-    event_source: null,
-    event_source_notes:
-      'Persisted run — per-event trades are not stored. Rerun the query to regenerate the leg-level table.',
-    skipped_events: 0,
+    event_source: row.summary.event_source ?? null,
+    event_source_notes: null,
+    skipped_events: row.summary.skipped_events ?? 0,
     walk_forward: row.walk_forward,
     benchmark: row.benchmark,
     advisory: 'D10 BLOCKED — historical replay only',
@@ -72,116 +75,393 @@ function rowToResponse(row: BacktestRunRow): EventQueryResponse {
 
 export default function BacktestPage() {
   const { symbol } = useResearchContext()
+  const heldSymbol = symbol.trim().toUpperCase()
   const [params, setParams] = useSearchParams()
-  const initialTab = (params.get('tab') as TabKey) || (params.get('run_id') ? 'event-query' : 'settlement')
-  const [tab, setTab] = useState<TabKey>(
-    initialTab === 'settlement' || initialTab === 'event-query' ? initialTab : 'settlement',
-  )
+  const [tab, setTab] = useState<TabKey>(normalizeTab(params.get('tab')))
 
   const runIdParam = params.get('run_id') || undefined
-  // Arriving from a Hypothesis card: preselect the thesis and its symbols so the
-  // builder opens ready to run. EventQueryBuilder already accepts both and
-  // writes the resulting run id back to linked_backtest_ids.
+  // Arriving from a Hypothesis card: open the builder seeded with the thesis
+  // and its symbols. EventQueryBuilder writes the run id back to the link.
   const hypothesisIdParam = params.get('hypothesis_id') || null
   const symbolsParam = params.get('symbols')
-  const defaultSymbols = symbolsParam
-    ? symbolsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+  const seededSymbols = symbolsParam
+    ? symbolsParam.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
     : undefined
-  const persistedRunQ = useBacktestRun(runIdParam, tab === 'event-query')
+
+  const [showBuilder, setShowBuilder] = useState(Boolean(hypothesisIdParam || seededSymbols))
+  const [builderSeed, setBuilderSeed] = useState<{ hyp: string | null; symbols?: string[] }>({
+    hyp: hypothesisIdParam,
+    symbols: seededSymbols,
+  })
   const [liveResult, setLiveResult] = useState<EventQueryResponse | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(runIdParam ?? null)
+
+  const runsQ = useBacktestRuns({ limit: 100 }, tab === 'event')
+  const rows = useMemo(() => runsQ.data?.rows ?? [], [runsQ.data?.rows])
+  // Nothing picked yet: the newest run is the rest state, derived rather than
+  // set so the first render after load already shows it.
+  const effectiveId = selectedId ?? rows[0]?.id ?? null
+  // The list carries every persisted field; the by-id read is only needed for
+  // a deep link that outruns the list (a run past the first 100).
+  const listedRun = rows.find((r) => r.id === effectiveId) ?? null
+  const byIdQ = useBacktestRun(
+    effectiveId && !listedRun ? effectiveId : undefined,
+    tab === 'event'
+  )
+  const selectedRow = listedRun ?? byIdQ.data?.row ?? null
 
   const activeResult: EventQueryResponse | null = useMemo(() => {
-    if (liveResult) return liveResult
-    if (runIdParam && persistedRunQ.data?.row) return rowToResponse(persistedRunQ.data.row)
+    if (liveResult && (!effectiveId || liveResult.run_id === effectiveId)) return liveResult
+    if (selectedRow) return rowToResponse(selectedRow)
     return null
-  }, [liveResult, runIdParam, persistedRunQ.data])
+  }, [liveResult, effectiveId, selectedRow])
 
   useEffect(() => {
-    const current = params.get('tab')
-    if (current !== tab) {
-      const next = new URLSearchParams(params)
-      next.set('tab', tab)
-      setParams(next, { replace: true })
-    }
+    const next = new URLSearchParams(params)
+    next.set('tab', tab)
+    if (effectiveId) next.set('run_id', effectiveId)
+    else next.delete('run_id')
+    if (next.toString() !== params.toString()) setParams(next, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab])
+  }, [tab, effectiveId])
+
+  const fills = selectedRow?.fill_config ?? null
+  const newestRun = rows[0]?.created_at ?? null
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="Backtest"
-        description="Settlement replay (RS-A/B baseline) · Event Query (RS-C event-driven engine)"
-        actions={
+    <PageShell padding="compact" className="space-y-3">
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="min-w-0 max-w-[84ch] flex-[1_1_26rem]">
+          <PageHeader
+            breadcrumb={<p className="text-xs font-medium text-primary/90">Research / Validate</p>}
+            title="Backtest"
+            titleSize="large"
+            description="Event-driven replays of the strategy templates, and the settlement record of every forecast the engine made. Historical only — nothing on this page places an order."
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <SegmentControl
+            ariaLabel="Backtest tab"
+            size="sm"
+            options={TAB_OPTIONS}
+            value={tab}
+            onChange={(v) => setTab(v as TabKey)}
+          />
           <AskCopilotButton
             originPage="backtest"
             originLabel="Backtest"
-            symbol={symbol}
+            symbol={heldSymbol}
             snapshot={compactSnapshot({
               tab,
-              run_id: runIdParam ?? activeResult?.run_id,
+              run_id: selectedId,
+              runs: rows.length,
             })}
             suggestedPrompt="Interpret these backtest results and suggest the next validation step."
           />
-        }
-      />
+          {tab === 'event' ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                setBuilderSeed({ hyp: null, symbols: undefined })
+                setShowBuilder((v) => !v)
+              }}
+            >
+              ＋ New run
+            </Button>
+          ) : null}
+        </div>
+      </div>
 
-      <SegmentControl
-        options={TAB_OPTIONS}
-        value={tab}
-        onChange={(v) => setTab(v as TabKey)}
-      />
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-[5px] border px-2 py-0.5 font-mono text-dense-caption tracking-[0.05em]',
+            'border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.08)] text-[var(--sk-accent)]'
+          )}
+          title="Lab mode — method and parameters only. No order can be placed from here (D10)."
+        >
+          ◆ LAB · NO ORDERS
+        </span>
+        {heldSymbol ? (
+          <span
+            className="inline-flex items-center gap-1.5 rounded-[5px] border border-border px-2 py-0.5 opacity-55"
+            title="Held — runs carry their own symbol set"
+          >
+            <span className={cn(mono, 'text-dense-caption font-bold')}>{heldSymbol}</span>
+            <span className="text-dense-caption text-muted-foreground">held</span>
+          </span>
+        ) : null}
+        {tab === 'event' && fills ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className={cap}>fills</span>
+            <span className={cn(mono, 'text-dense-caption')}>
+              {fills.slippage_pct_of_spread} × spread · ${fills.commission_per_contract} / contract
+            </span>
+          </span>
+        ) : null}
+        <span className={cn(mono, 'ml-auto text-dense-micro text-muted-foreground')}>
+          {tab === 'event'
+            ? newestRun
+              ? `research.backtest_run · newest ${newestRun.slice(0, 10)}`
+              : 'research.backtest_run'
+            : 'stock_backtest_settlement · newest 200 sessions'}
+        </span>
+      </div>
 
-      {tab === 'settlement' ? (
-        <SettlementTab />
-      ) : (
+      {tab === 'event' ? (
         <div className="space-y-3">
-          <EventQueryBuilder
-            initialHypothesisId={hypothesisIdParam}
-            defaultSymbols={defaultSymbols}
-            onRun={(res) => {
-              setLiveResult(res)
-              if (res.run_id) {
-                const next = new URLSearchParams(params)
-                next.set('tab', 'event-query')
-                next.set('run_id', res.run_id)
-                setParams(next, { replace: true })
-              }
-            }}
-          />
-          {persistedRunQ.isError && runIdParam && !liveResult ? (
-            <QueryErrorAlert
-              error={persistedRunQ.error}
-              onRetry={() => void persistedRunQ.refetch()}
+          {showBuilder ? (
+            <EventQueryBuilder
+              initialHypothesisId={builderSeed.hyp}
+              defaultSymbols={builderSeed.symbols}
+              onRun={(res) => {
+                setLiveResult(res)
+                setShowBuilder(false)
+                if (res.run_id) setSelectedId(res.run_id)
+                void runsQ.refetch()
+              }}
             />
           ) : null}
-          {activeResult ? (
-            <BacktestRunResultCard response={activeResult} />
-          ) : (
-            <Card variant="elevated">
-              <CardContent className="px-3 py-6">
-                <EmptyState
-                  icon={<History />}
-                  title="No run yet"
-                  description="Configure an event kind, strategy template, and lookback window, then Run event query. Result appears here."
-                />
-              </CardContent>
-            </Card>
-          )}
+          {runsQ.isError ? (
+            <QueryErrorAlert error={runsQ.error} onRetry={() => void runsQ.refetch()} />
+          ) : null}
+          <div className="flex flex-wrap items-start gap-3">
+            <section className={cn(panel, 'max-w-[36rem] flex-[1_1_24rem]')}>
+              <header className={panelHead}>
+                <span className="text-dense-body font-semibold">Runs</span>
+                <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
+                  {runsQ.data ? fmtNumLocale(runsQ.data.count, 0) : '…'}
+                </span>
+                <span className="ml-auto text-dense-caption text-muted-foreground">
+                  research.backtest_run · newest first
+                </span>
+              </header>
+              {runsQ.isLoading ? (
+                <div className="space-y-1.5 p-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-full" />
+                  ))}
+                </div>
+              ) : rows.length === 0 ? (
+                <div className="p-3.5">
+                  <EmptyState
+                    icon={<History />}
+                    title="No persisted runs"
+                    description="＋ New run builds an event query; a run that produces events is persisted here."
+                  />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[460px] border-collapse">
+                    <thead>
+                      <tr>
+                        <th className={cn(th, 'text-left')}>Run</th>
+                        <th className={cn(th, 'text-left')}>Template · event</th>
+                        <th className={th}>n</th>
+                        <th className={th}>Win</th>
+                        <th className={th}>Sharpe</th>
+                        <th className={cn(th, 'text-left')}>Thesis</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r) => {
+                        const conf = runConfidence(r.summary.n_events)
+                        const noise = conf.level === 'noise'
+                        const on = r.id === effectiveId
+                        return (
+                          <tr
+                            key={r.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setSelectedId(r.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault()
+                                setSelectedId(r.id)
+                              }
+                            }}
+                            className={cn(
+                              'cursor-pointer hover:bg-[color-mix(in_oklab,var(--sk-accent)_5%,transparent)]',
+                              on &&
+                                'bg-[rgb(var(--sk-accent-rgb)/0.06)] shadow-[inset_2px_0_0_var(--sk-ticker)]'
+                            )}
+                          >
+                            <td className={cn(td, 'text-left')}>
+                              <div className={cn(mono, 'text-dense-caption font-semibold')}>
+                                {r.id.slice(0, 11)}
+                              </div>
+                              <div className={cn(mono, 'text-dense-micro text-muted-foreground')}>
+                                {r.created_at.slice(0, 10)}
+                              </div>
+                            </td>
+                            <td className={cn(td, 'min-w-0 text-left')}>
+                              <div className={cn(mono, 'text-dense-caption')}>
+                                {r.strategy_template}
+                              </div>
+                              <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap font-sans text-dense-micro text-muted-foreground">
+                                {r.event_def.kind} · {runScope(r.event_def.params)}
+                              </div>
+                            </td>
+                            <td
+                              className={cn(
+                                td,
+                                noise
+                                  ? 'text-destructive'
+                                  : conf.level === 'thin'
+                                    ? 'text-warning'
+                                    : 'text-foreground'
+                              )}
+                            >
+                              {r.summary.n_events}
+                            </td>
+                            <td
+                              className={cn(
+                                td,
+                                noise
+                                  ? 'text-muted-foreground'
+                                  : r.summary.win_rate > 0.55
+                                    ? 'text-profit'
+                                    : r.summary.win_rate < 0.45
+                                      ? 'text-loss'
+                                      : 'text-foreground'
+                              )}
+                            >
+                              {Math.round(r.summary.win_rate * 100)}%
+                            </td>
+                            <td
+                              className={cn(
+                                td,
+                                noise
+                                  ? 'text-muted-foreground'
+                                  : r.summary.sharpe_annual > 0.5
+                                    ? 'text-profit'
+                                    : r.summary.sharpe_annual < 0
+                                      ? 'text-loss'
+                                      : 'text-foreground'
+                              )}
+                            >
+                              {noise ? '—' : r.summary.sharpe_annual.toFixed(2)}
+                            </td>
+                            <td className={cn(td, 'text-left')}>
+                              <span
+                                className={cn(
+                                  mono,
+                                  'text-dense-micro',
+                                  r.hypothesis_id
+                                    ? 'text-[var(--sk-contract,#7dd3fc)]'
+                                    : 'text-muted-foreground'
+                                )}
+                                title={r.hypothesis_id ?? 'No thesis linked to this run.'}
+                              >
+                                {r.hypothesis_id ? `${r.hypothesis_id.slice(0, 14)}…` : '—'}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            <section className="min-w-0 flex-[999_1_34rem] space-y-3">
+              {selectedRow ? (
+                <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+                  <span className={cn(mono, 'text-dense-body font-bold')}>
+                    {selectedRow.id.slice(0, 11)}
+                  </span>
+                  <DenseTag size="cell" variant="neutral">
+                    {selectedRow.strategy_template}
+                  </DenseTag>
+                  <span className="text-dense-caption text-muted-foreground">
+                    event <span className={cn(mono, 'text-foreground')}>{selectedRow.event_def.kind}</span>
+                    {selectedRow.summary.event_source ? (
+                      <>
+                        {' '}· source{' '}
+                        <span className={cn(mono, 'text-foreground')}>
+                          {selectedRow.summary.event_source}
+                        </span>
+                      </>
+                    ) : null}
+                  </span>
+                  <span className="inline-flex flex-wrap gap-1">
+                    {runSymbols(selectedRow.event_def.params).map((s) => (
+                      <Link
+                        key={s}
+                        to={withSymbolParam(SYMBOL_PATH, s)}
+                        className={cn(
+                          mono,
+                          'rounded-[3px] border border-border px-1.25 text-dense-caption font-bold leading-4 text-[var(--sk-ticker)] hover:underline'
+                        )}
+                      >
+                        {s}
+                      </Link>
+                    ))}
+                  </span>
+                  <span className="ml-auto inline-flex flex-wrap items-center gap-1.5">
+                    {selectedRow.hypothesis_id ? (
+                      <Link
+                        to="/research/loop/hypotheses"
+                        className="rounded border border-border px-1.75 py-0.5 text-dense-caption text-primary hover:bg-secondary"
+                        title={`This run settles ${selectedRow.hypothesis_id} — the board holds the thesis; no per-id focus yet.`}
+                      >
+                        Hypothesis →
+                      </Link>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBuilderSeed({
+                          hyp: selectedRow.hypothesis_id,
+                          symbols: runSymbols(selectedRow.event_def.params),
+                        })
+                        setShowBuilder(true)
+                      }}
+                      className="cursor-pointer rounded border border-border px-1.75 py-0.5 text-dense-caption text-primary hover:bg-secondary"
+                      title="Opens the builder seeded with this run's symbols and thesis; template and window are picked there."
+                    >
+                      Rerun
+                    </button>
+                  </span>
+                </div>
+              ) : null}
+              {byIdQ.isError && selectedId && !listedRun ? (
+                <QueryErrorAlert error={byIdQ.error} onRetry={() => void byIdQ.refetch()} />
+              ) : null}
+              {activeResult ? (
+                <BacktestRunResultCard response={activeResult} />
+              ) : (
+                <Card variant="elevated">
+                  <CardContent className="px-3 py-6">
+                    <EmptyState
+                      icon={<History />}
+                      title="No run selected"
+                      description="Pick a run on the left, or ＋ New run to build an event query."
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </section>
+          </div>
         </div>
+      ) : (
+        <SettlementTab />
       )}
     </PageShell>
   )
 }
 
 function SettlementTab() {
-  const { symbol } = useResearchContext()
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
 
+  // Cross-symbol on purpose: forecasts settle per session per symbol, and the
+  // question this tab answers is the engine's record, not one name's.
   const settlementsQ = useQuery({
-    queryKey: ['backtest-settlements', symbol],
-    queryFn: () => fetchSettlements(symbol.trim() || undefined),
-    enabled: symbol.trim().length > 0,
+    queryKey: ['backtest-settlements', 'all'],
+    queryFn: () => fetchSettlements(undefined, undefined, 200),
   })
 
   const rows = (settlementsQ.data?.rows ?? []).filter((r) => {
@@ -189,17 +469,13 @@ function SettlementTab() {
     if (end && r.trade_date > end) return false
     return true
   })
-
-  const hitRate =
-    rows.length > 0 ? rows.filter((r) => r.path_hit).length / rows.length : null
+  const agg = settleAgg(rows)
 
   return (
     <div className="space-y-3">
-      <ResearchContextBar showDate={false} />
-
       <Card variant="elevated">
         <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
-          <span className="text-xs font-medium text-muted-foreground shrink-0">Range:</span>
+          <span className="shrink-0 text-xs font-medium text-muted-foreground">Range:</span>
           <Input
             type="date"
             className="h-7 w-36 text-dense-label"
@@ -214,6 +490,9 @@ function SettlementTab() {
             onChange={(e) => setEnd(e.target.value)}
             title="End date"
           />
+          <span className="ml-auto text-dense-caption text-muted-foreground">
+            Every forecast session, marked against the realised close at its horizon.
+          </span>
         </CardContent>
       </Card>
 
@@ -221,21 +500,32 @@ function SettlementTab() {
         <QueryErrorAlert error={settlementsQ.error} onRetry={() => void settlementsQ.refetch()} />
       )}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card variant="elevated">
-          <CardContent className="px-3 py-2">
-            <span className="text-dense-caption text-muted-foreground">Sessions settled</span>
-            <p className="font-mono text-xl font-semibold tabular-nums">{rows.length}</p>
-          </CardContent>
-        </Card>
-        <Card variant="elevated">
-          <CardContent className="px-3 py-2">
-            <span className="text-dense-caption text-muted-foreground">Path hit rate</span>
-            <p className="font-mono text-xl font-semibold tabular-nums text-success">
-              {hitRate != null ? `${(hitRate * 100).toFixed(0)}%` : '—'}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+        <AggTile label="Sessions" value={String(agg.sessions)} note="newest 200 the API serves" />
+        <AggTile
+          label="Within ±3%"
+          value={agg.within3Pct != null ? `${agg.within3Pct.toFixed(0)}%` : '—'}
+          note={`${agg.within3} of ${agg.sessions}`}
+          cls={agg.within3Pct != null && agg.within3Pct >= 60 ? 'text-profit' : undefined}
+        />
+        <AggTile
+          label="Mean abs miss"
+          value={agg.meanAbsMissPct != null ? `${agg.meanAbsMissPct.toFixed(2)}%` : '—'}
+          note="realised vs forecast"
+        />
+        <AggTile
+          label="Path hit"
+          value={agg.pathHitPct != null ? `${agg.pathHitPct.toFixed(0)}%` : '—'}
+          note={`${agg.pathHits} of ${agg.sessions} sessions`}
+          cls={agg.pathHitPct != null && agg.pathHitPct >= 60 ? 'text-profit' : undefined}
+        />
+        {/* The design's calibration tile needs the forecast's own claimed
+            probability, which the settlement store does not record. */}
+        <AggTile
+          label="Realised − claimed"
+          value="—"
+          note="no claimed p in the store — calibration unmeasured"
+        />
       </div>
 
       {settlementsQ.isLoading ? (
@@ -248,56 +538,89 @@ function SettlementTab() {
         <EmptyState
           icon={<History />}
           title="No settlement rows"
-          description="Run intraday settlement Cron or settle sessions via Research API. Filter by symbol and date range."
+          description="Run intraday settlement Cron or settle sessions via Research API."
         />
       ) : (
-        <DenseDataTable scrollX>
-          <DenseTableHeader>
-            <DenseTableHeadRow>
-              <DenseTableHead className={denseTableCellPadding}>Date</DenseTableHead>
-              <DenseTableHead className={denseTableCellPadding}>Session</DenseTableHead>
-              <DenseTableHead className={denseTableNumCell}>Expected</DenseTableHead>
-              <DenseTableHead className={denseTableNumCell}>Actual</DenseTableHead>
-              <DenseTableHead className={denseTableNumCell}>Miss %</DenseTableHead>
-              <DenseTableHead className={denseTableCellPadding}>Outcome</DenseTableHead>
-            </DenseTableHeadRow>
-          </DenseTableHeader>
-          <DenseTableBody>
-            {rows.map((r: ForecastSettlement) => {
-              const fine = settlementFineGrain(r)
-              return (
-                <DenseTableRow key={r.settlement_id}>
-                  <DenseTableCell className={denseTableCellPadding}>{r.trade_date}</DenseTableCell>
-                  <DenseTableCell className="font-mono text-dense-meta">
-                    {r.session_id}
-                  </DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>
-                    {fmtNumLocale(r.expected_close)}
-                  </DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>
-                    {fmtNumLocale(r.actual_close)}
-                  </DenseTableCell>
-                  <DenseTableCell className={denseTableNumCell}>
-                    {(r.close_miss_pct * 100).toFixed(2)}%
-                  </DenseTableCell>
-                  <DenseTableCell className={denseTableCellPadding}>
-                    <SettlementBadges
-                      pathHit={r.path_hit}
-                      pathHitCount={r.path_hit_count}
-                      pathTotal={r.path_total}
-                      closeMissPct={r.close_miss_pct}
-                      directionHit={fine.directionHit}
-                      pathShape={fine.pathShape}
-                      closeZone={fine.closeZone}
-                      leanMiss={fine.leanMiss}
-                    />
-                  </DenseTableCell>
-                </DenseTableRow>
-              )
-            })}
-          </DenseTableBody>
-        </DenseDataTable>
+        <div className={panel}>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse">
+              <thead>
+                <tr>
+                  <th className={cn(th, 'text-left')}>Session</th>
+                  <th className={cn(th, 'text-left')}>Symbol</th>
+                  <th className={th}>Forecast</th>
+                  <th className={th}>Realised</th>
+                  <th className={th}>Miss</th>
+                  <th className={cn(th, 'text-left')}>Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r: ForecastSettlement) => {
+                  const fine = settlementFineGrain(r)
+                  const missPct = r.close_miss_pct * 100
+                  const absMiss = Math.abs(missPct)
+                  return (
+                    <tr key={r.settlement_id} className="hover:bg-[color-mix(in_oklab,var(--sk-accent)_5%,transparent)]">
+                      <td className={cn(td, 'text-left text-muted-foreground')}>{r.trade_date}</td>
+                      <td className={cn(td, 'text-left')}>
+                        <Link
+                          to={withSymbolParam(SYMBOL_PATH, r.symbol)}
+                          className={cn(mono, 'font-bold text-[var(--sk-ticker)] hover:underline')}
+                        >
+                          {r.symbol}
+                        </Link>
+                      </td>
+                      <td className={td}>{fmtNumLocale(r.expected_close)}</td>
+                      <td className={td}>{fmtNumLocale(r.actual_close)}</td>
+                      <td
+                        className={cn(
+                          td,
+                          absMiss < 1
+                            ? 'text-profit'
+                            : absMiss < 3
+                              ? 'text-foreground'
+                              : 'text-loss'
+                        )}
+                      >
+                        {missPct >= 0 ? '+' : '−'}
+                        {absMiss.toFixed(2)}%
+                      </td>
+                      <td className={cn(td, 'text-left')}>
+                        <SettlementBadges
+                          pathHit={r.path_hit}
+                          pathHitCount={r.path_hit_count}
+                          pathTotal={r.path_total}
+                          closeMissPct={r.close_miss_pct}
+                          directionHit={fine.directionHit}
+                          pathShape={fine.pathShape}
+                          closeZone={fine.closeZone}
+                          leanMiss={fine.leanMiss}
+                        />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
     </div>
+  )
+}
+
+function AggTile({ label, value, note, cls }: { label: string; value: string; note: string; cls?: string }) {
+  return (
+    <Card variant="elevated">
+      <CardContent className="px-3 py-2">
+        <span className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+        <p className={cn('font-mono text-lg font-semibold tabular-nums', cls ?? 'text-foreground')}>
+          {value}
+        </p>
+        <p className="m-0 text-dense-caption text-muted-foreground">{note}</p>
+      </CardContent>
+    </Card>
   )
 }

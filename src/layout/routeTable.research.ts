@@ -319,6 +319,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Backtest',
     crumbs: VALIDATE,
     symbolScope: true,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-22.6',
+      note: DESIGN_NOTES['/research/backtest'],
+    },
   },
 
   // ── Research · Workbench · Data ────────────────────────────────────────

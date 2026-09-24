@@ -400,8 +400,9 @@ describe('the design walk, as it stands', () => {
     // Symbol lab, the third — the raw SVI fit under hand sliders. 18 with the
     // Screener authoring face, the fourth and last — the filter vocabulary
     // over the SEPA wide table. 19 with Calibration, the document rendered
-    // as a page with its own count disagreement on display.
-    expect(counts.byState.reviewing).toBe(19)
+    // as a page with its own count disagreement on display. 20 with Backtest,
+    // the pending pool's last page, walked run-first onto the design.
+    expect(counts.byState.reviewing).toBe(20)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -474,6 +475,7 @@ describe('the design walk, as it stands', () => {
       '/docs/options-kit',
       '/market/live',
       '/portfolio/positions',
+      '/research/backtest',
       '/research/compare',
       '/research/event-radar',
       '/research/events',
@@ -600,11 +602,10 @@ describe('the design walk, as it stands', () => {
     // "to walk" is empty for the first time. 0 → 1 on 2026-09-23: Backtest
     // came back into it from `moving`, which is the honest place for a page
     // with a current prototype and no walk — the LAB mark that took it out
-    // was voided by the design, not by anything this side did.
-    expect(counts.byState.pending).toBe(1)
-    expect(rows.filter((r) => r.state === 'pending').map((r) => r.path)).toEqual([
-      '/research/backtest',
-    ])
+    // was voided by the design, not by anything this side did. 1 → 0 on
+    // 2026-09-25: the walk happened, and the pool is empty again.
+    expect(counts.byState.pending).toBe(0)
+    expect(rows.filter((r) => r.state === 'pending').map((r) => r.path)).toEqual([])
     expect(
       rows
         .filter((r) => r.via)

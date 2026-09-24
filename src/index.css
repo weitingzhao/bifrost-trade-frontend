@@ -135,38 +135,86 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    /*
+     * Light = grey paper (design Rev 2026-09-23.18). The ground is #e9ebef,
+     * not white: cards read as raised paper and data colours keep their
+     * ink-on-paper weight. Same ladder as dark, same names, so everything
+     * that reads `--sk-*` follows the theme without knowing it exists.
+     */
+    --sk-ground: #e9ebef;
+    --sk-surface: #f4f5f8;
+    --sk-raised: #eef0f4;
+    --sk-raised2: #fafbfc;
+    --sk-line: #c9ced7;
+    --sk-line2: #aeb6c2;
+    --sk-line0: #dbdfe6;
+    --sk-ink: #171c26;
+    --sk-soft: #3a4250;
+    --sk-mute2: #5b6572;
+    --sk-mute: #5b6572;
+    --sk-faint: #959daa;
+    --sk-accent: #6d28d9;
+    --sk-accent2: #5b21b6;
+    --sk-accent-rgb: 109 40 217;
+
+    /* The data inks, one step deeper than dark so they clear 4.5:1 on paper. */
+    --sk-ticker: #3f6212;
+    --sk-contract: #075985;
+    --sk-instance: #6b21a8;
+    --sk-ticker-rgb: 63 98 18;
+    --sk-contract-rgb: 7 89 133;
+    --sk-instance-rgb: 107 33 168;
+    --color-profit-rgb: 21 128 61;
+    --color-loss-rgb: 185 28 28;
+    --color-unrealized-rgb: 154 52 18;
+
+    --sk-l-home: #5a6472;
+    --sk-l-analysis: color-mix(in srgb, #4f46e5 60%, transparent);
+    --sk-l-review: color-mix(in srgb, #6d28d9 60%, transparent);
+    --sk-l-risk: color-mix(in srgb, #a21caf 60%, transparent);
+    --sk-l-result: color-mix(in srgb, #9a5b13 60%, transparent);
+    --sk-l-execution: color-mix(in srgb, #4d7c0f 60%, transparent);
+    --sk-l-base: #8a93a0;
+    --sk-layer: var(--sk-l-base);
+
+    /* Module hues are tool identity, not data: the same in both themes. */
+    --equip-autopilot: #a3e635;
+    --equip-book: #60a5fa;
+    --equip-copilot: #a78bfa;
+
+    /* The DS tokens read the ramp, exactly as the dark block does. */
+    --background: var(--sk-ground);
+    --foreground: var(--sk-ink);
+    --card: var(--sk-raised2);
+    --card-foreground: var(--sk-ink);
+    --popover: var(--sk-raised2);
+    --popover-foreground: var(--sk-ink);
+    --primary: var(--sk-accent);
+    --primary-foreground: var(--sk-ground);
+    --secondary: var(--sk-surface);
+    --secondary-foreground: var(--sk-soft);
+    --muted: var(--sk-surface);
+    --muted-foreground: var(--sk-mute);
+    --accent: var(--sk-surface);
+    --accent-foreground: var(--sk-ink);
+    --destructive: #b91c1c;
+    --border: var(--sk-line);
+    --input: var(--sk-line2);
+    --ring: var(--sk-accent);
+    --chart-1: #4d7c0f;
+    --chart-2: #075985;
+    --chart-3: #15803d;
+    --chart-4: #a16207;
+    --chart-5: #b91c1c;
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar: var(--sk-raised2);
+    --sidebar-foreground: var(--sk-soft);
+    --sidebar-primary: var(--sk-accent);
+    --sidebar-primary-foreground: var(--sk-ground);
+    --sidebar-accent: var(--sk-surface);
+    --sidebar-accent-foreground: var(--sk-ink);
+    --sidebar-border: var(--sk-line);
+    --sidebar-ring: var(--sk-accent);
 
     /* Trading semantic colors (light) */
     --color-success: #16a34a;
@@ -204,12 +252,11 @@
        only, direction colours on signed mono numbers only, and the two never
        share a hex (lamp #16a34a / #dc2626 against P&L #4ade80 / #f87171).
 
-       The contract's values are its dark ones — the design is dark-only. On
-       white they read too faintly, so light takes the same hues at the 700
-       step (5.0:1, 6.5:1 and 5.2:1), still a different hex from every lamp. */
+       Light takes the design's own paper values (Rev 2026-09-23.18), still a
+       different hex from every lamp. */
     --color-profit: #15803d; /* green-700 */
     --color-loss: #b91c1c; /* red-700 */
-    --color-unrealized: #c2410c; /* orange-700 */
+    --color-unrealized: #9a3412; /* orange-800 — the design's paper step */
 
     /* Business semantics — entity identity (light) */
     --color-entity-symbol: var(--primary);
@@ -276,8 +323,8 @@
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
     --scrollbar-track: transparent;
-    --scrollbar-thumb: rgba(100, 116, 139, 0.38);
-    --scrollbar-thumb-hover: rgba(100, 116, 139, 0.58);
+    --scrollbar-thumb: color-mix(in srgb, var(--sk-ink) 16%, transparent);
+    --scrollbar-thumb-hover: color-mix(in srgb, var(--sk-ink) 30%, transparent);
 }
 
 .dark {
@@ -288,10 +335,9 @@
      * primitives, and every DS token below reads them through `var()`, so a
      * layer is one small block rather than a second palette.
      *
-     * Dark only, deliberately. The design is dark-only and gives no light
-     * ramps; deriving seven of them here would be inventing design rather than
-     * adopting it. In light mode every layer reads as the base palette, and
-     * that is a stated gap, not an oversight (Owner, 2026-09-13, option A).
+     * Dark was the only theme until design Rev 2026-09-23.11 gave the light
+     * ramp (grey paper, Rev .18); the light values live in `:root` above and
+     * this block overrides them whenever `html.dark` is set.
      */
     /* Design Rev 2026-09-23.14: the same lightness ladder with a quiet indigo
        cast — hue only, so every contrast ratio the neutral set cleared still
@@ -515,27 +561,27 @@
  * data drawn on it. Six grounds also meant six sets of contrast to keep
  * honest, and the four coloured ones moved ink and mute as well as ground.
  */
-.dark[data-layer='home'] {
+[data-layer='home'] {
     --sk-layer: var(--sk-l-home);
 }
 
-.dark[data-layer='execution'] {
+[data-layer='execution'] {
     --sk-layer: var(--sk-l-execution);
 }
 
-.dark[data-layer='result'] {
+[data-layer='result'] {
     --sk-layer: var(--sk-l-result);
 }
 
-.dark[data-layer='analysis'] {
+[data-layer='analysis'] {
     --sk-layer: var(--sk-l-analysis);
 }
 
-.dark[data-layer='risk'] {
+[data-layer='risk'] {
     --sk-layer: var(--sk-l-risk);
 }
 
-.dark[data-layer='review'] {
+[data-layer='review'] {
     --sk-layer: var(--sk-l-review);
 }
 
@@ -553,7 +599,7 @@
   /* The ground's ambient light (design Rev 2026-09-23.14, #sr-polish-css):
      two faint accent glows, top right and bottom left, fixed to the window.
      Data surfaces sit on top of it opaque; only floating things let it show. */
-  .dark body {
+  body {
     background:
       radial-gradient(1100px 520px at 78% -8%, rgb(var(--sk-accent-rgb) / 0.06), transparent 62%),
       radial-gradient(900px 520px at -12% 110%, rgb(var(--sk-accent-rgb) / 0.04), transparent 60%),
@@ -626,17 +672,17 @@
  * unlayered rule is the stylesheet's own way of saying the same thing.
  */
 /* The row you are standing on in the sidebar, as a soft accent pill. */
-.dark [data-sidebar='menu-button'][data-active='true'] {
+[data-sidebar='menu-button'][data-active='true'] {
   background: rgb(var(--sk-accent-rgb) / 0.13);
   box-shadow: inset 0 0 0 1px rgb(var(--sk-accent-rgb) / 0.22);
   border-radius: 8px;
 }
-.dark tbody tr:hover > td {
+tbody tr:hover > td {
   background-color: rgb(var(--sk-accent-rgb) / 0.03);
 }
 /* Glass is for floating things only (Rev .20): the sidebar floats over the
    ambient ground, so it is translucent; panels and table bodies never are. */
-.dark [data-sidebar='sidebar'] {
+[data-sidebar='sidebar'] {
   background: color-mix(in srgb, var(--sk-ground) 68%, transparent);
   -webkit-backdrop-filter: blur(22px) saturate(1.35);
   backdrop-filter: blur(22px) saturate(1.35);

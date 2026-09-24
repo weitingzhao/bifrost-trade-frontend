@@ -125,7 +125,7 @@ function Group({
         ['--rh-box' as string]:
           anyOpen || here
             ? 'color-mix(in oklab, var(--rh) 40%, transparent)'
-            : 'rgba(255, 255, 255, 0.10)',
+            : 'color-mix(in srgb, var(--sk-ink) 10%, transparent)',
       }}
       aria-label={group.label}
     >

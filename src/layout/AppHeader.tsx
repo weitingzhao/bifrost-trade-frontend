@@ -20,6 +20,7 @@ import { toggleThread, useThread } from '@/hooks/useCopilotThread'
 import { routeFor } from './routeRegistry'
 import { useCrumbLabel } from './useCrumbLabel'
 import { Lens } from './Lens'
+import { UserCenter } from './UserCenter'
 import {
   SHELL_TOP_BAR_CONTROL_CLASS,
   SHELL_TOP_BAR_HEIGHT_CLASS,
@@ -151,6 +152,11 @@ export function AppHeader() {
             · ⌘J
           </TooltipContent>
         </Tooltip>
+
+        {/* The user centre (design Rev 2026-09-23.13): identity, the three
+            theme modes, and the System doors. Last on the bar, the only round
+            control. */}
+        <UserCenter />
       </div>
     </header>
   )

@@ -2,8 +2,24 @@
 <html lang="zh-CN" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <!-- Dark only (Owner, 2026-09-13): native controls — date inputs, scrollbars — follow. -->
-    <meta name="color-scheme" content="dark" />
+    <!-- Three modes since design Rev 2026-09-23.11: dark · light · auto by the local clock.
+         `class="dark"` above is the default when this script cannot run; the script picks the
+         stored mode before the first paint so the ground never flashes. It mirrors
+         `src/lib/theme.ts` (same key, same hours), and `theme.test.ts` pins the two together. -->
+    <meta name="color-scheme" content="dark light" />
+    <script>
+      (function () {
+        try {
+          var m = localStorage.getItem('bifrost.theme');
+          var h = new Date().getHours();
+          var t = m === 'light' ? 'light' : m === 'auto' ? (h >= 7 && h < 19 ? 'light' : 'dark') : 'dark';
+          var r = document.documentElement;
+          r.classList.toggle('dark', t === 'dark');
+          r.dataset.theme = t;
+          r.style.colorScheme = t;
+        } catch (e) {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bifrost Trade</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

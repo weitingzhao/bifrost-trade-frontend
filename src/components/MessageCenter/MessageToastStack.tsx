@@ -75,7 +75,7 @@ export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) 
           className={cn(
             'relative overflow-hidden flex gap-2.5 rounded-[14px] border border-white/[0.085] p-3 pointer-events-auto',
             'bg-[rgba(18,23,31,0.91)] dark:bg-[rgba(18,23,31,0.91)] backdrop-blur-[22px] backdrop-saturate-[160%]',
-            'shadow-[0_4px_28px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.05)]',
+            'shadow-[0_4px_28px_rgba(0,0,0,0.55),inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_5%,transparent)]',
             'animate-in slide-in-from-right-4 fade-in-0 duration-[260ms]',
             'before:absolute before:left-0 before:top-[20%] before:bottom-[20%] before:w-[3px] before:rounded-r-sm before:opacity-90',
             LEVEL_ACCENT[msg.level],

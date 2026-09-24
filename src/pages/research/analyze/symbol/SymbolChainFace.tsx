@@ -11,7 +11,7 @@
  * quote-shaped column says mark and the contract card dashes the NBBO row
  * with the reason instead of dressing a close as a market.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchChainExpirations, fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils'
 import { bsComputeDetail, normalCDF } from '@/utils/blackScholes'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
+import { ContractCandles, OiMini, SmileMini } from './symbolChainCharts'
 import {
   LADDER_COLUMNS,
   ladderRows,
@@ -55,6 +56,34 @@ const td =
 
 const numOf = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 
+export interface CompareEntry {
+  sym: string
+  expiry: string
+  strike: number
+  right: 'C' | 'P'
+  ticker: string
+}
+
+const COMPARE_KEY = 'bifrost.chain.compare'
+
+function readCompare(): CompareEntry[] {
+  try {
+    const raw = sessionStorage.getItem(COMPARE_KEY)
+    const list = raw ? (JSON.parse(raw) as CompareEntry[]) : []
+    return Array.isArray(list) ? list.slice(0, 12) : []
+  } catch {
+    return []
+  }
+}
+
+function writeCompare(list: CompareEntry[]): void {
+  try {
+    sessionStorage.setItem(COMPARE_KEY, JSON.stringify(list))
+  } catch {
+    // private mode — the drawer just will not persist
+  }
+}
+
 export function SymbolChainFace({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const today = todayIso()
@@ -62,6 +91,8 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
   const [win, setWin] = useState<5 | 9 | 14>(9)
   const [cols, setCols] = useState<LadderColumnSet>('marks')
   const [sel, setSel] = useState<{ strike: number; right: 'C' | 'P' } | null>(null)
+  const [compare, setCompare] = useState<CompareEntry[]>(() => readCompare())
+  useEffect(() => writeCompare(compare), [compare])
 
   const exQ = useExhibitComposite(['gex_regime', 'opex_pin'], sym)
   const g = (exQ.data?.find((e) => e.lens === 'gex_regime')?.readings ?? {}) as Record<string, unknown>
@@ -526,6 +557,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                     <p className="m-0 text-dense-micro text-muted-foreground">Needs a mark and an IV on the row.</p>
                   )}
                 </div>
+                <ContractCandles ticker={selected.ticker} mark={selected.mark} today={today} />
                 <div className="flex flex-wrap items-center gap-1.5 px-3 py-2">
                   <PlanThisButton
                     symbol={sym}
@@ -544,12 +576,26 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                   >
                     Payoff →
                   </Link>
-                  <Link
-                    to={withSymbolParam('/research/compare', sym)}
-                    className="rounded-[6px] border border-border px-2.5 py-1 text-dense-label text-muted-foreground no-underline hover:bg-[var(--sk-surface)]"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!expiry) return
+                      const entry: CompareEntry = {
+                        sym,
+                        expiry,
+                        strike: selected.strike,
+                        right: selected.right,
+                        ticker: selected.ticker,
+                      }
+                      setCompare((list) =>
+                        list.some((e) => e.ticker === entry.ticker) ? list : [...list, entry]
+                      )
+                    }}
+                    className="cursor-pointer rounded-[6px] border border-border px-2.5 py-1 text-dense-label text-muted-foreground hover:bg-[var(--sk-surface)]"
+                    title="Keep this contract in the Compare drawer — it holds contracts across expiries and symbols for this session."
                   >
-                    Compare
-                  </Link>
+                    Compare +
+                  </button>
                 </div>
               </>
             ) : (
@@ -559,112 +605,93 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
               </p>
             )}
           </section>
-          <p className={cn(mono, 'm-0 px-1 text-dense-micro leading-normal text-muted-foreground text-pretty')}>
-            The design&rsquo;s 20-session contract candles and its Compare drawer wait on their
-            own reads — the per-contract daily bars exist and land in a later pass; the drawer
-            keeps its seat on the Compare page.
-          </p>
+          <section className={panel}>
+            <header className={panelHead}>
+              <span className={cap}>Compare</span>
+              <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
+                {compare.length} contract{compare.length === 1 ? '' : 's'}
+              </span>
+              {compare.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setCompare([])}
+                  className="ml-auto cursor-pointer text-dense-micro text-muted-foreground hover:text-foreground"
+                >
+                  clear
+                </button>
+              ) : null}
+            </header>
+            {compare.length === 0 ? (
+              <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                The drawer keeps contracts across expiries and symbols for this session —
+                Compare + on a contract adds it here.
+              </p>
+            ) : (
+              <div className="flex flex-col">
+                {compare.map((e) => {
+                  const live =
+                    e.sym === sym
+                      ? (chains.get(e.expiry) ?? []).find(
+                          (c) => c.strike === e.strike && c.right === e.right
+                        )
+                      : null
+                  return (
+                    <div
+                      key={e.ticker}
+                      className="flex items-baseline gap-2 border-b border-border/55 px-3 py-1.5 text-dense-caption"
+                    >
+                      {e.sym === sym ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserExpiry(e.expiry)
+                            setSel({ strike: e.strike, right: e.right })
+                          }}
+                          className={cn(mono, 'cursor-pointer font-semibold text-entity-option hover:underline')}
+                        >
+                          {e.sym} {e.expiry.slice(5)} {e.strike}
+                          {e.right}
+                        </button>
+                      ) : (
+                        <Link
+                          to={withSymbolParam(`${SYMBOL_PATH}?${TAB_PARAM}=chain`, e.sym)}
+                          className={cn(mono, 'font-semibold text-entity-option hover:underline')}
+                        >
+                          {e.sym} {e.expiry.slice(5)} {e.strike}
+                          {e.right}
+                        </Link>
+                      )}
+                      {live ? (
+                        <span className={cn(mono, 'ml-auto text-muted-foreground')}>
+                          {live.mark != null ? live.mark.toFixed(2) : '—'}
+                          {live.iv != null ? ` · ${(live.iv * 100).toFixed(0)}v` : ''}
+                          {live.delta != null ? ` · Δ${Math.abs(live.delta).toFixed(2)}` : ''}
+                        </span>
+                      ) : (
+                        <span className="ml-auto text-dense-micro text-muted-foreground">
+                          {e.sym === sym ? 'expiry not loaded' : 'other name'}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setCompare((l) => l.filter((x) => x.ticker !== e.ticker))}
+                        className="cursor-pointer text-muted-foreground hover:text-foreground"
+                        aria-label={`Remove ${e.ticker} from compare`}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )
+                })}
+                <p className="m-0 px-3 py-1.5 text-dense-micro leading-normal text-muted-foreground">
+                  Marks fill in for contracts on the five loaded expiries of this name; a row from
+                  another name links to its own chain.
+                </p>
+              </div>
+            )}
+          </section>
         </aside>
       </div>
     </div>
-  )
-}
-
-/** The 600×110 smile: call IVs, put IVs, the fit dashed, σ band shaded. */
-function SmileMini({
-  chain,
-  spot,
-  move,
-  fitIvPts,
-  selStrike,
-}: {
-  chain: ChainContract[]
-  spot: number | null
-  move: number | null
-  fitIvPts: ((k: number) => number) | null
-  selStrike: number | null
-}) {
-  const pts = chain.filter((c) => c.iv != null && c.iv > 0)
-  if (pts.length === 0 || spot == null) {
-    return <p className="m-0 py-3 text-dense-micro text-muted-foreground">No IVs on this expiry&rsquo;s rows.</p>
-  }
-  const ks = pts.map((c) => c.strike)
-  const lo = Math.min(...ks)
-  const hi = Math.max(...ks)
-  const ivs = pts.map((c) => (c.iv as number) * 100)
-  const vLo = Math.min(...ivs) - 2
-  const vHi = Math.max(...ivs) + 2
-  const X = (k: number) => ((k - lo) / (hi - lo || 1)) * 580 + 10
-  const Y = (v: number) => 100 - ((v - vLo) / (vHi - vLo || 1)) * 92
-  const line = (right: 'C' | 'P') =>
-    pts
-      .filter((c) => c.right === right)
-      .sort((a, b) => a.strike - b.strike)
-      .map((c, i) => `${i === 0 ? 'M' : 'L'}${X(c.strike).toFixed(1)} ${Y((c.iv as number) * 100).toFixed(1)}`)
-      .join('')
-  const fit =
-    fitIvPts != null
-      ? ks
-          .slice()
-          .sort((a, b) => a - b)
-          .map((k, i) => `${i === 0 ? 'M' : 'L'}${X(k).toFixed(1)} ${Y(fitIvPts(Math.log(k / spot))).toFixed(1)}`)
-          .join('')
-      : null
-  return (
-    <>
-      <svg viewBox="0 0 600 110" className="block h-auto w-full" role="img" aria-label="IV smile for the selected expiry">
-        {move != null ? (
-          <rect x={X(spot - move)} y="0" width={Math.max(0, X(spot + move) - X(spot - move))} height="104" fill="color-mix(in srgb, var(--sk-ink) 4%, transparent)" />
-        ) : null}
-        {fit ? <path d={fit} fill="none" stroke="var(--sk-faint,var(--border))" strokeWidth="1" strokeDasharray="4 3" /> : null}
-        <path d={line('P')} fill="none" stroke="var(--color-loss)" strokeWidth="1.5" />
-        <path d={line('C')} fill="none" stroke="var(--color-profit)" strokeWidth="1.5" />
-        <line x1={X(spot)} x2={X(spot)} y1="0" y2="104" stroke="var(--sk-ticker)" strokeWidth="1" />
-        {selStrike != null ? (
-          <line x1={X(selStrike)} x2={X(selStrike)} y1="0" y2="104" stroke="var(--foreground)" strokeWidth="1" strokeDasharray="2 2" />
-        ) : null}
-      </svg>
-      <div className="flex justify-between pt-0.5 font-mono text-dense-micro text-muted-foreground">
-        {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-          <span key={t}>{(lo + (hi - lo) * t).toFixed(0)}</span>
-        ))}
-      </div>
-    </>
-  )
-}
-
-/** The 600×110 OI columns: calls above puts, max pain dashed, spot ruled. */
-function OiMini({ chain, spot, mp }: { chain: ChainContract[]; spot: number | null; mp: number | null }) {
-  const strikes = [...new Set(chain.map((c) => c.strike))].sort((a, b) => a - b)
-  if (strikes.length === 0 || spot == null) {
-    return <p className="m-0 py-3 text-dense-micro text-muted-foreground">No open interest on this expiry&rsquo;s rows.</p>
-  }
-  const lo = strikes[0]
-  const hi = strikes[strikes.length - 1]
-  const X = (k: number) => ((k - lo) / (hi - lo || 1)) * 580 + 10
-  const oiAt = (k: number, right: 'C' | 'P') => chain.find((c) => c.strike === k && c.right === right)?.oi ?? 0
-  const maxOi = Math.max(1, ...strikes.map((k) => oiAt(k, 'C') + oiAt(k, 'P')))
-  return (
-    <>
-      <svg viewBox="0 0 600 110" className="block h-auto w-full" role="img" aria-label="Open interest by strike for the selected expiry">
-        {strikes.map((k) => {
-          const c = (oiAt(k, 'C') / maxOi) * 96
-          const p = (oiAt(k, 'P') / maxOi) * 96
-          return (
-            <g key={k}>
-              <rect x={X(k) - 2.5} y={104 - c} width="5" height={c} fill="var(--color-profit)" opacity="0.75" />
-              <rect x={X(k) - 2.5} y={104 - c - p} width="5" height={p} fill="var(--color-loss)" opacity="0.75" />
-            </g>
-          )
-        })}
-        {mp != null ? <line x1={X(mp)} x2={X(mp)} y1="0" y2="104" stroke="var(--foreground)" strokeWidth="1" strokeDasharray="3 3" /> : null}
-        <line x1={X(spot)} x2={X(spot)} y1="0" y2="104" stroke="var(--sk-ticker)" strokeWidth="1" />
-      </svg>
-      <div className="flex justify-between pt-0.5 font-mono text-dense-micro text-muted-foreground">
-        {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-          <span key={t}>{(lo + (hi - lo) * t).toFixed(0)}</span>
-        ))}
-      </div>
-    </>
   )
 }

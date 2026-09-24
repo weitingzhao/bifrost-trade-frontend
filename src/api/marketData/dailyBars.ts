@@ -27,11 +27,21 @@ export interface DailyBar {
   high: number | null
   low: number | null
   close: number | null
+  /** Contracts carry session volume; the stock mapper leaves it unset. */
+  volume?: number | null
 }
 
 interface OptionDailyResponse {
   ok: boolean
-  rows: { option_ticker: string; bar_date: string; open: number | null; high: number | null; low: number | null; close: number | null }[]
+  rows: {
+    option_ticker: string
+    bar_date: string
+    open: number | null
+    high: number | null
+    low: number | null
+    close: number | null
+    volume?: number | null
+  }[]
 }
 
 interface StockDailyResponse {
@@ -77,7 +87,14 @@ export async function fetchOptionDailyBars(
   const j = validateOptionDaily(await res.json()) as Partial<OptionDailyResponse>
   const rows = Array.isArray(j.rows) ? j.rows : []
   return rows
-    .map((r) => ({ date: String(r.bar_date).slice(0, 10), open: r.open, high: r.high, low: r.low, close: r.close }))
+    .map((r) => ({
+      date: String(r.bar_date).slice(0, 10),
+      open: r.open,
+      high: r.high,
+      low: r.low,
+      close: r.close,
+      volume: r.volume ?? null,
+    }))
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 

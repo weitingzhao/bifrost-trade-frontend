@@ -412,6 +412,20 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // The calibration document rendered as a page — 28 contracts with their
+    // evidence, the document's own smallest-change list, and the roll-up
+    // disagreement it exists to surface. Built 2026-09-24; the page renders
+    // the document and probes its live version stamp, it does not judge.
+    path: '/research/lab/calibration',
+    label: 'Calibration',
+    crumbs: SYSTEM_DATA,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.4',
+      note: DESIGN_NOTES['/research/lab/calibration'],
+    },
+  },
+  {
     path: '/research/watchlist',
     label: 'Watchlist',
     crumbs: THE_BOOK,

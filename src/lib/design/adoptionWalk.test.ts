@@ -399,8 +399,9 @@ describe('the design walk, as it stands', () => {
     // method face, the second — the estimators on real OHLC. 17 with the
     // Symbol lab, the third — the raw SVI fit under hand sliders. 18 with the
     // Screener authoring face, the fourth and last — the filter vocabulary
-    // over the SEPA wide table.
-    expect(counts.byState.reviewing).toBe(18)
+    // over the SEPA wide table. 19 with Calibration, the document rendered
+    // as a page with its own count disagreement on display.
+    expect(counts.byState.reviewing).toBe(19)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -477,6 +478,7 @@ describe('the design walk, as it stands', () => {
       '/research/event-radar',
       '/research/events',
       '/research/history',
+      '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lab/history',
       '/research/lab/screener',
@@ -575,8 +577,9 @@ describe('the design walk, as it stands', () => {
     // Today's candidates, the first method face, once every tile's store had
     // been measured on DEV. 13 with History's method face the same day, and
     // 12 with the Symbol lab — the third method face, measured the same way,
-    // and 11 with the Screener authoring face, the last of the four.
-    expect(counts.byState.unbuilt).toBe(11)
+    // and 11 with the Screener authoring face, the last of the four. 10 with
+    // Calibration — the last page of the approved batch.
+    expect(counts.byState.unbuilt).toBe(10)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

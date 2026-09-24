@@ -262,9 +262,10 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
         route('Signal Health', '/research/signal-health', Activity),
         route('Lens Coverage', '/research/lens-coverage', Radar),
         // The design's two `/research/lab/*` System pages sit after them
-        // (sys:data, Rev 2026-09-20.4). Calibration joins when it is built —
-        // a nav row must navigate.
+        // (sys:data, Rev 2026-09-20.4). Calibration joined 2026-09-24, when
+        // its page landed — a nav row must navigate.
         route('Discover model', '/research/lab/discover-model', BookOpen),
+        route('Calibration', '/research/lab/calibration', Gauge),
       ]),
       // Personas and Orchestration arrived from Copilot (design Rev
       // 2026-09-22.2, §5a.8 · `SYS_ROUTES`). Neither is a trader's page: the

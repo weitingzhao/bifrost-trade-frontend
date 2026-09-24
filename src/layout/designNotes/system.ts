@@ -9,6 +9,20 @@
  * is the seam the reader already has in their head.
  */
 export const SYSTEM_NOTES: Record<string, string> = {
+  '/research/lab/calibration':
+    'Built 2026-09-24 against System Data Calibration.dc.html at route rev 2026-09-20.4, on local '
+    + 'DEV (:5173). The page renders RESEARCH_CALIBRATION.md round 2026-09-08.9 \u2014 the same round '
+    + 'the design transcribed, and GET /research/docs/calibration still serves that version, checked '
+    + 'before building. Built: the four state tiles as filters, the layer segment, all 28 contract '
+    + 'rows with their evidence across the five layers, the document\u2019s own smallest-change list, '
+    + 'the COUNT-DISAGREES panel (drawn only while the document\u2019s roll-up of 27 disagrees with its '
+    + 'rows\u2019 28 \u2014 a round that reconciles them retires the panel by itself), and the footer holding '
+    + 'the state-symbols line. Probe: the page fetches the live document\u2019s version stamp and says '
+    + 'matches / moved-to-round-X / unreachable \u2014 a transcription must not impersonate a newer '
+    + 'round. Diverged, named: the design routed blueprint \u2197 and calibration \u2197 through its shell '
+    + 'stub; here both /docs pages exist and the links are real; the AsofTag part becomes the '
+    + 'strip\u2019s own round line (the round is the asof); the Copilot draft panel lands as AskCopilot '
+    + 'with the open contracts in its snapshot (no draft store). Owner to look before aligned.',
   '/research/lab/discover-model':
     'Built 2026-09-24 against System Data Discover Model.dc.html at Rev 2026-09-20.4, transcribed '
     + 'whole rather than summarised: the page is the design\u2019s own document \u2014 the Rank \u00b7 Screen \u00b7 '

@@ -1,0 +1,295 @@
+/**
+ * Calibration — the calibration document rendered as a page (design
+ * `System Data Calibration.dc.html`, route rev 2026-09-20.4).
+ *
+ * The blueprint says what Research should be; the calibration says what it
+ * is. Twenty-eight numbered contracts, each with the evidence behind its
+ * state. This page renders the document; it does not judge — and it probes
+ * the live document's version stamp so a transcription of a stale round
+ * says so instead of impersonating the current one.
+ */
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
+import { DenseTag, EmptyState, HealthLamp } from '@bifrost/ui'
+import { fetchResearchDoc } from '@/api/research/docs'
+import { SegmentControl } from '@/components/data-display'
+import { PageHeader, PageShell } from '@/components/layout'
+import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { compactSnapshot } from '@/components/research/compactSnapshot'
+import { cap, mono, panel, panelHead } from '@/components/research/labFaceUi'
+import { cn } from '@/lib/utils'
+import {
+  countNote,
+  DOC_TALLY,
+  FIXES,
+  LAYERS,
+  ROWS,
+  rowTally,
+  STATE,
+  STATE_ORDER,
+  talliesDisagree,
+  TRANSCRIBED_ASOF,
+  TRANSCRIBED_ROUND,
+  type ContractState,
+} from './labCalibrationModel'
+
+const lampColor: Record<ContractState, string> = {
+  ok: 'var(--color-lamp-green)',
+  warn: 'var(--color-lamp-yellow)',
+  fail: 'var(--color-lamp-red)',
+  ramp: 'var(--color-lamp-gray)',
+}
+
+export default function LabCalibrationPage() {
+  const [layer, setLayer] = useState('all')
+  const [pick, setPick] = useState<ContractState | 'all'>('all')
+
+  // The live document, for its version stamp alone — the rows below are the
+  // transcription and stay put; the probe only says whether the document has
+  // moved past the round they render.
+  const docQ = useQuery({
+    queryKey: ['research', 'doc', 'calibration'],
+    queryFn: () => fetchResearchDoc('calibration'),
+    staleTime: 10 * 60_000,
+  })
+  const liveRound = docQ.data?.version ?? null
+
+  const counts = useMemo(() => rowTally(ROWS), [])
+  const shown = useMemo(
+    () =>
+      ROWS.filter(
+        (r) => (layer === 'all' || r.layer === layer) && (pick === 'all' || r.state === pick)
+      ),
+    [layer, pick]
+  )
+  const groups = useMemo(
+    () =>
+      LAYERS.map(([key, title, sub]) => {
+        const rows = shown.filter((r) => r.layer === key)
+        const tally = STATE_ORDER.filter((k) => rows.some((r) => r.state === k))
+          .map((k) => `${STATE[k].sym} ${rows.filter((r) => r.state === k).length}`)
+          .join('  ')
+        return { key, title, sub, tally, rows }
+      }).filter((g) => g.rows.length > 0),
+    [shown]
+  )
+  const disagrees = talliesDisagree(DOC_TALLY, counts)
+
+  return (
+    <PageShell padding="compact" className="space-y-3">
+      <PageHeader
+        breadcrumb={<p className="text-xs font-medium text-primary/90">System / Data</p>}
+        title="Calibration"
+        titleSize="large"
+        description="The blueprint says what Research should be; the calibration says what it is. Twenty-eight numbered contracts, each with the evidence behind its state."
+      />
+
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+        <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
+          RESEARCH_CALIBRATION.md · round {TRANSCRIBED_ROUND} · asof {TRANSCRIBED_ASOF}
+        </span>
+        {docQ.isLoading ? null : liveRound == null ? (
+          <span
+            className={cn(mono, 'text-dense-micro text-muted-foreground')}
+            title="GET /research/docs/calibration did not answer — the live round cannot be checked."
+          >
+            live check unreachable
+          </span>
+        ) : liveRound === TRANSCRIBED_ROUND ? (
+          <span
+            className={cn(mono, 'text-dense-micro text-muted-foreground')}
+            title="The live document's version stamp equals the round these rows transcribe."
+          >
+            matches the live document
+          </span>
+        ) : (
+          <span className={cn(mono, 'text-dense-micro font-semibold text-warning')}>
+            the document has moved to round {liveRound} — these rows render {TRANSCRIBED_ROUND}
+          </span>
+        )}
+        <span className={cn(mono, 'ml-auto flex items-center gap-2 text-dense-caption')}>
+          <Link to="/docs/research-blueprint" className="text-primary hover:underline">
+            blueprint ↗
+          </Link>
+          <span className="text-muted-foreground">·</span>
+          <Link to="/docs/research-calibration" className="text-primary hover:underline">
+            calibration ↗
+          </Link>
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {STATE_ORDER.map((k) => {
+          const st = STATE[k]
+          const on = pick === k
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setPick(on ? 'all' : k)}
+              className={cn(panel, 'flex-[1_1_150px] cursor-pointer px-3 py-2.25 text-left')}
+              style={
+                on
+                  ? {
+                      background: `color-mix(in oklab, ${lampColor[k]} 10%, var(--sk-raised))`,
+                      borderColor: lampColor[k],
+                    }
+                  : undefined
+              }
+            >
+              <span className="flex items-center gap-1.75">
+                <HealthLamp lamp={st.lamp} variant="dot" title={st.label} />
+                <span className={cap}>{st.label}</span>
+              </span>
+              <span
+                className={cn(mono, 'mt-0.75 block type-section font-semibold')}
+                style={{ color: lampColor[k] }}
+              >
+                {counts[k]}
+              </span>
+              <span className={cn(mono, 'block text-dense-micro text-muted-foreground')}>
+                {st.note}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className={cap}>layer</span>
+        <SegmentControl
+          ariaLabel="Layer"
+          size="xs"
+          value={layer}
+          onChange={setLayer}
+          options={[{ value: 'all', label: 'All' }].concat(
+            LAYERS.map(([key, title]) => ({ value: key, label: title.split(' · ')[1] ?? title }))
+          )}
+        />
+        <span className={cn(mono, 'ml-auto text-dense-caption text-muted-foreground')}>
+          {shown.length} of {ROWS.length} contracts shown
+          {pick === 'all' ? '' : ` · ${STATE[pick].label}`}
+        </span>
+      </div>
+
+      <div className={panel}>
+        {groups.map((g) => (
+          <div key={g.key}>
+            <header className={panelHead}>
+              <span className="text-dense-body font-semibold">{g.title}</span>
+              <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>{g.sub}</span>
+              <span className={cn(mono, 'ml-auto text-dense-micro text-muted-foreground')}>
+                {g.tally}
+              </span>
+            </header>
+            {g.rows.map((r) => {
+              const st = STATE[r.state]
+              const fix = FIXES.find((f) => f.ids.includes(r.id))
+              return (
+                <div
+                  key={r.id}
+                  className="grid grid-cols-1 items-start gap-x-3.5 gap-y-2 border-b border-border/60 px-3 py-2.75 md:grid-cols-[56px_20px_minmax(0,1.05fr)_minmax(0,1.35fr)]"
+                >
+                  <span className={cn(mono, 'text-dense-caption font-semibold text-primary')}>
+                    {r.id}
+                  </span>
+                  <span className="pt-0.75">
+                    <HealthLamp
+                      lamp={st.lamp}
+                      variant="dot"
+                      title={`${st.sym} ${st.label} — ${st.note}`}
+                    />
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-0.75">
+                    <span className="text-dense-body leading-normal text-pretty">{r.contract}</span>
+                    <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>
+                      blueprint · stable anchor
+                    </span>
+                  </div>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
+                      {r.evidence}
+                    </p>
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <DenseTag size="cell" variant={st.variant}>
+                        {st.label}
+                      </DenseTag>
+                      {fix ? (
+                        <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>
+                          smallest change listed below
+                        </span>
+                      ) : null}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ))}
+        {shown.length === 0 ? (
+          <div className="p-3.5">
+            <EmptyState
+              title="No contract in this state at this layer"
+              description={`Filter: ${layer === 'all' ? 'all layers' : layer} · ${pick === 'all' ? 'all states' : STATE[pick].label}`}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      <div className={panel}>
+        <header className={panelHead}>
+          <span className="text-dense-body font-semibold">Smallest change that closes it</span>
+          <span className="text-dense-caption text-muted-foreground">
+            the document&rsquo;s own list, not a plan invented here
+          </span>
+        </header>
+        {FIXES.map((f) => (
+          <div
+            key={f.ids}
+            className="grid grid-cols-1 items-start gap-x-3.5 gap-y-1.5 border-b border-border/60 px-3 py-2.5 md:grid-cols-[112px_minmax(0,1fr)_minmax(0,1.4fr)]"
+          >
+            <span className={cn(mono, 'text-dense-caption text-primary')}>{f.ids}</span>
+            <span className="text-dense-body text-pretty">{f.gap}</span>
+            <span className="text-dense-caption leading-normal text-muted-foreground text-pretty">
+              {f.fix}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {disagrees ? (
+        <div className={cn(panel, 'border-[color-mix(in_srgb,var(--color-lamp-yellow)_60%,transparent)]')}>
+          <div className="flex flex-col gap-1.25 px-3 py-2.75">
+            <div className={cn(mono, 'text-dense-micro tracking-[0.1em] text-warning')}>
+              COUNT DISAGREES WITH ITS OWN ROWS
+            </div>
+            <p className="m-0 max-w-[78ch] text-dense-body leading-relaxed text-pretty">
+              {countNote(DOC_TALLY, counts)}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="flex">
+        <AskCopilotButton
+          originPage="lab-calibration"
+          originLabel="Calibration"
+          snapshot={compactSnapshot({
+            round: TRANSCRIBED_ROUND,
+            live_round: liveRound,
+            tally: counts,
+            open: ROWS.filter((r) => r.state !== 'ok').map((r) => r.id),
+          })}
+          suggestedPrompt="Which open contracts close through one change, and which one is worth reading twice?"
+        />
+      </div>
+
+      <p className={cn(mono, 'm-0 text-dense-micro leading-normal text-muted-foreground text-pretty')}>
+        State symbols belong to the calibration document only — the blueprint never carries one,
+        and a test holds that line. This page renders the document; it does not judge. Contracts
+        are referenced by number because the numbers are the stable anchor and the wording is not.
+      </p>
+    </PageShell>
+  )
+}

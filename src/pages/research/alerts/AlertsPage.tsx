@@ -54,8 +54,14 @@ import { Link } from 'react-router-dom'
 import { PageHeader, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { ALERTS_WINDOW_DAYS, useFiredAlerts } from '@/hooks/useFiredAlerts'
+import { useLimitBook } from '@/hooks/useLimitBook'
+import { LIMIT_WATCH, fmtReading } from '@/utils/limitsModel'
 import { firedRows, firedStanding } from './alertsModel'
 import { cn } from '@/lib/utils'
+
+const armedTh =
+  'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
+const armedTd = 'border-b border-border/40 px-2 py-1.5 text-right font-mono text-dense-meta tabular-nums'
 
 /** The store's own caps live with the shared query (`useFiredAlerts`). */
 const WINDOW_DAYS = ALERTS_WINDOW_DAYS
@@ -79,6 +85,11 @@ export default function AlertsPage() {
   const rows = firedRows(items)
   const today = new Date().toISOString().slice(0, 10)
   const standing = firedStanding(items, today, WINDOW_DAYS)
+  // The limit book is the armed table's store — same hook Limits & Breaches
+  // reads, so the two pages cannot disagree (§14.2).
+  const limitBook = useLimitBook('all')
+  const armedRows = limitBook.rows.filter((r) => r.current != null && r.limit != null)
+
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -163,54 +174,110 @@ export default function AlertsPage() {
         </ul>
       </section>
 
-      <section className="overflow-hidden rounded-lg border border-dashed border-border">
+      {/* ARMED — the design’s table, fed by the one store on this side that
+          truly holds armed conditions: the risk limit book. Each row names
+          the page that owns its reading; per-symbol arming from Symbol,
+          Dealer and Watchlist has no store yet and the header says so. */}
+      <section className="overflow-hidden rounded-lg border border-border">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
           <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
             Armed
           </span>
-          <span className="text-dense-body font-semibold">0 rules</span>
+          <span className="text-dense-body font-semibold">
+            {armedRows.length} rule{armedRows.length === 1 ? '' : 's'}
+          </span>
           <span className="ml-auto text-dense-caption text-muted-foreground">
-            alerts notify — they never trade (D10)
+            alerts notify — they never trade (D10) · the limit book’s lines; per-symbol arming has no
+            store yet
           </span>
         </header>
-        <div className="space-y-2 px-3 py-3 text-dense-caption leading-relaxed text-muted-foreground">
-          <p>
-            The design lists the conditions you armed with their reading, their trigger and the
-            distance between.{' '}
-            <span className="text-foreground/80">
-              Nothing on this side records a condition before it fires
-            </span>
-            , and there is no control anywhere in the app that arms one.
+        {limitBook.statusLoading ? (
+          <p className="px-3 py-3 text-dense-caption text-muted-foreground">Reading the limit book…</p>
+        ) : armedRows.length === 0 ? (
+          <p className="px-3 py-3 text-dense-caption text-muted-foreground">
+            No limit carries both a reading and a line right now — the book is on{' '}
+            <Link to="/risk/limits" className="text-foreground hover:underline">
+              Limits &amp; Breaches
+            </Link>
+            .
           </p>
-          <ul className="space-y-1">
-            <li>
-              <span className="font-mono text-foreground/70">/research/alerts</span> — what has
-              fired, never what is waiting.
-            </li>
-            <li>
-              <span className="font-mono text-foreground/70">/research/playbook/rules</span> — a
-              title, a category and prose; no symbol and no predicate, so nothing can be compared
-              against a reading.
-            </li>
-            <li>
-              <span className="font-mono text-foreground/70">/research/playbook/triggers</span> —
-              needs a symbol, and every row it returns is already satisfied: a log, not a queue.
-            </li>
-            <li>
-              The risk limit book has the shape — a reading, a line, the distance — and is a
-              different object.{' '}
-              <Link to="/risk/limits" className="text-foreground hover:underline">
-                Limits &amp; Breaches
-              </Link>{' '}
-              owns those, and drawing them here would be one book with two pages disagreeing.
-            </li>
-          </ul>
-          <p>
-            What would fill it is one store: a scope, a predicate, a threshold, the surface it was
-            armed from, and when. Until then this section says so rather than showing an empty
-            table that reads as “nothing is armed”.
-          </p>
-        </div>
+        ) : (
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={cn(armedTh, 'text-left')}>Scope</th>
+                <th className={cn(armedTh, 'text-left')}>Condition</th>
+                <th className={armedTh}>Now</th>
+                <th className={armedTh}>Trigger</th>
+                <th className={cn(armedTh, 'w-[22%] text-left')}>Distance</th>
+                <th className={cn(armedTh, 'text-left')}>Source</th>
+                <th className={cn(armedTh, 'text-left')} />
+              </tr>
+            </thead>
+            <tbody>
+              {armedRows.map((r) => {
+                const use = r.use
+                const close = !r.breached && use != null && use > LIMIT_WATCH
+                const away = use != null ? Math.max(0, Math.round((1 - use) * 100)) : null
+                return (
+                  <tr key={r.key}>
+                    <td className={cn(armedTd, 'text-left font-mono font-bold text-foreground')}>{r.scope}</td>
+                    <td className={cn(armedTd, 'text-left font-sans text-secondary-foreground')}>
+                      {r.name} {r.bound === 'ceiling' ? '≥' : '≤'} {fmtReading(r, r.limit)}
+                    </td>
+                    <td className={armedTd}>{fmtReading(r, r.current)}</td>
+                    <td className={armedTd}>{fmtReading(r, r.limit)}</td>
+                    <td className={cn(armedTd, 'text-left')}>
+                      <span className="inline-flex w-full items-center gap-2">
+                        <span className="relative block h-[5px] min-w-14 flex-1 overflow-hidden rounded-[3px] bg-[var(--sk-line0,var(--border))]">
+                          <span
+                            className={cn(
+                              'absolute inset-y-0 left-0',
+                              r.breached ? 'bg-destructive' : close ? 'bg-warning' : 'bg-[var(--sk-mute2,#98a2b0)]',
+                            )}
+                            style={{ width: `${use != null ? Math.min(100, use * 100) : 0}%` }}
+                          />
+                        </span>
+                        <span
+                          className={cn(
+                            'whitespace-nowrap font-mono text-dense-micro',
+                            r.breached ? 'text-destructive' : close ? 'text-warning' : 'text-muted-foreground',
+                          )}
+                        >
+                          {r.breached ? 'breached' : close ? 'close' : away != null ? `${away}% away` : '—'}
+                        </span>
+                      </span>
+                    </td>
+                    <td className={cn(armedTd, 'text-left font-sans text-muted-foreground')}>
+                      {r.citedFrom ? (
+                        <Link to={r.citedFrom.to} className="hover:underline">
+                          {r.citedFrom.label}
+                        </Link>
+                      ) : (
+                        r.group
+                      )}
+                    </td>
+                    <td className={cn(armedTd, 'text-left')}>
+                      {/* The design disarms in place; a limit’s line is owned by
+                          its own page, so the honest verb here is the door. */}
+                      <Link to="/risk/limits" className="whitespace-nowrap text-dense-caption text-muted-foreground hover:text-foreground hover:underline">
+                        Limits →
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+        <p className="m-0 border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground text-pretty">
+          These are the limit book’s own lines — the one store on this side holding a reading, a
+          trigger and the distance between. Arming a condition from the Symbol, Dealer or Watchlist
+          pages needs a store none of the four candidates keeps (alerts hold what fired; playbook
+          rules carry prose without predicates; triggers log only what already satisfied). A fired
+          alert’s row opens the lens page that holds its history — the design’s per-alert
+          Inspector with its Trigger context is owed with the per-symbol store.
+        </p>
       </section>
     </PageShell>
   )

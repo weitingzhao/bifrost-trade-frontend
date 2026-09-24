@@ -29,6 +29,8 @@ import {
   EmptyState,
 } from '@/components/data-display'
 import { pnlColorClass } from '@/utils/dailyChange'
+import { cap, panel, panelHead } from '@/components/research/labFaceUi'
+import { cn } from '@/lib/utils'
 import {
   equityFrom,
   histogramFrom,
@@ -46,7 +48,11 @@ import type {
 function fmtDollar(v: number | null | undefined, digits = 2): string {
   if (v == null || Number.isNaN(v) || !Number.isFinite(v)) return '—'
   const sign = v > 0 ? '+' : v < 0 ? '−' : ''
-  return `${sign}$${Math.abs(v).toFixed(digits)}`
+  const a = Math.abs(v)
+  // The design's money(): big figures read as locale integers, cents only
+  // where they still mean something.
+  if (a >= 1000) return `${sign}$${Math.round(a).toLocaleString('en-US')}`
+  return `${sign}$${a.toFixed(digits)}`
 }
 
 function pctSigned(v: number | null, digits = 1): string {
@@ -155,9 +161,11 @@ function PnlHistogram({ runs }: { runs: EventRun[] }) {
 
 interface BacktestRunResultCardProps {
   response: EventQueryResponse
+  /** The page already names the run above the card — skip the id line. */
+  headerless?: boolean
 }
 
-export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) {
+export function BacktestRunResultCard({ response, headerless }: BacktestRunResultCardProps) {
   const summary = response.summary
   const runs: EventRun[] = response.runs ?? []
 
@@ -199,19 +207,25 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
 
   return (
     <div className="space-y-3">
+      {!headerless ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Beaker className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-dense-body font-semibold">Run result</h3>
+          {response.run_id && (
+            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-dense-caption text-muted-foreground">
+              {response.run_id}
+            </span>
+          )}
+          {response.event_source && (
+            <span className="text-dense-caption text-muted-foreground">
+              source: <code className="rounded bg-muted px-1 py-0.5">{response.event_source}</code>
+            </span>
+          )}
+        </div>
+      ) : null}
+      {/* The design's SUMMARY head: the confidence tag rides with the cap. */}
       <div className="flex flex-wrap items-center gap-2">
-        <Beaker className="h-4 w-4 text-muted-foreground" />
-        <h3 className="text-dense-body font-semibold">Run result</h3>
-        {response.run_id && (
-          <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-dense-caption text-muted-foreground">
-            {response.run_id}
-          </span>
-        )}
-        {response.event_source && (
-          <span className="text-dense-caption text-muted-foreground">
-            source: <code className="rounded bg-muted px-1 py-0.5">{response.event_source}</code>
-          </span>
-        )}
+        <span className={cap}>Summary</span>
         <DenseTag size="cell" variant={conf.variant}>
           {conf.label}
         </DenseTag>
@@ -242,7 +256,7 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
         </Alert>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
+      <div className="grid grid-cols-2 overflow-hidden rounded-md border border-border md:grid-cols-6">
         <SummaryTile
           label="Events"
           value={fmtNumLocale(summary.n_events, 0)}
@@ -339,11 +353,13 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
           </CardContent>
         </Card>
       ) : (
-        <div>
-          <div className="mb-1 flex items-center gap-2 text-dense-label font-semibold text-muted-foreground">
-            <GitCommit className="h-3.5 w-3.5" />
-            Per-event trades ({runs.length})
-          </div>
+        <section className={panel}>
+          <header className={panelHead}>
+            <GitCommit className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-dense-body font-semibold">Events</span>
+            <span className="font-mono text-dense-caption text-muted-foreground">{runs.length}</span>
+            <span className="ml-auto text-dense-caption text-muted-foreground">entry → exit · net of fills</span>
+          </header>
           <DenseDataTable scrollX>
             <DenseTableHeader>
               <DenseTableHeadRow>
@@ -386,20 +402,23 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
               ))}
             </DenseTableBody>
           </DenseDataTable>
-        </div>
+        </section>
       )}
 
-      <div>
-        <div className="mb-1 flex items-center gap-2 text-dense-label font-semibold text-muted-foreground">
-          <Layers className="h-3.5 w-3.5" />
-          Walk-forward
-          <span className="font-normal">
-            · IS 12m · OOS 3m · P&L proxy series (RS-C3 v1)
+      <section className={panel}>
+        <header className={panelHead}>
+          <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-dense-body font-semibold">Walk-forward</span>
+          <span className="font-mono text-dense-caption text-muted-foreground">
+            {walkForward ? `${walkForward.windows.length} OOS windows` : 'not requested'}
           </span>
-        </div>
+          <span className="ml-auto text-dense-caption text-muted-foreground">
+            IS 12m · OOS 3m · P&L proxy series (RS-C3 v1)
+          </span>
+        </header>
         {walkForward ? (
-          <>
-            <div className="mb-2 grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="space-y-3 px-3 py-2.5">
+            <div className="grid grid-cols-2 overflow-hidden rounded-md border border-border md:grid-cols-4">
               <SummaryTile
                 label="OOS windows"
                 value={fmtNumLocale(walkForward.nWindows, 0)}
@@ -441,7 +460,9 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
                 }
               />
             </div>
-            <DenseDataTable scrollX>
+            <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))]">
+              <WalkForwardBars windows={walkForward.windows} />
+              <DenseDataTable scrollX>
               <DenseTableHeader>
                 <DenseTableHeadRow>
                   <DenseTableHead className={denseTableCellPadding}>#</DenseTableHead>
@@ -476,31 +497,33 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
                   </DenseTableRow>
                 ))}
               </DenseTableBody>
-            </DenseDataTable>
-            <p className="mt-1 text-dense-caption text-muted-foreground">
+              </DenseDataTable>
+            </div>
+            <p className="m-0 text-dense-caption text-muted-foreground">
               The engine sends no in-sample metrics (fit is null in RS-C3 v1), so there is no
               IS column and no OOS / IS decay figure — unmeasured, not omitted.
             </p>
-          </>
+          </div>
         ) : (
-          <Card variant="elevated">
-            <CardContent className="px-3 py-5">
-              <EmptyState
-                title="Walk-forward not requested for this run"
-                description="Rerun with include_walk_forward to get OOS windows. With few priced events the windows would be empty anyway."
-              />
-            </CardContent>
-          </Card>
+          <div className="px-3 py-4">
+            <EmptyState
+              title="Walk-forward not requested for this run"
+              description="Rerun with include_walk_forward to get OOS windows. With few priced events the windows would be empty anyway."
+            />
+          </div>
         )}
-      </div>
+      </section>
 
       {benchmark ? (
-        <div>
-          <div className="mb-1 flex items-center gap-2 text-dense-label font-semibold text-muted-foreground">
-            <GitCommit className="h-3.5 w-3.5" />
-            SPY buy-hold · same window, P&L proxy series
-          </div>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <section className={panel}>
+          <header className={panelHead}>
+            <span className={cap}>Against the benchmark</span>
+            <span className="text-dense-body font-semibold">SPY buy-hold</span>
+            <span className="ml-auto text-dense-caption text-muted-foreground">
+              same window · P&L proxy series
+            </span>
+          </header>
+          <div className="grid grid-cols-2 overflow-hidden md:grid-cols-4">
             <SummaryTile
               label="Total return"
               value={pctSigned(benchmark.totalReturn)}
@@ -530,8 +553,67 @@ export function BacktestRunResultCard({ response }: BacktestRunResultCardProps) 
               tone="loss"
             />
           </div>
-        </div>
+          <p className="m-0 border-t border-border/60 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            The strategy row and the excess row need the strategy's return in the same proxy
+            units, which the store does not keep — two figures in different units side by side
+            would read as a comparison. Unmeasured, not omitted.
+          </p>
+        </section>
       ) : null}
+    </div>
+  )
+}
+
+/**
+ * The design's window strip: each window's in-sample span in hairline grey
+ * with its OOS slice coloured by sign — the eye's version of the table.
+ */
+function WalkForwardBars({
+  windows,
+}: {
+  windows: { isStart: string | null; oosStart: string | null; oosEnd: string | null; oosTotal: number | null }[]
+}) {
+  const dates = windows
+    .flatMap((w) => [w.isStart, w.oosEnd])
+    .filter((d): d is string => d != null)
+    .sort()
+  if (dates.length < 2) return null
+  const t0 = Date.parse(dates[0])
+  const t1 = Date.parse(dates[dates.length - 1])
+  const span = t1 - t0 || 1
+  const pos = (d: string | null) => (d == null ? 0 : ((Date.parse(d) - t0) / span) * 100)
+  return (
+    <div className="flex flex-col gap-1.5 py-1">
+      {windows.map((w, i) => (
+        <div key={i} className="grid grid-cols-[22px_minmax(0,1fr)_56px] items-center gap-2">
+          <span className="font-mono text-dense-caption text-muted-foreground">{i + 1}</span>
+          <div className="relative h-2.5 rounded-[2px] bg-background">
+            <span
+              className="absolute inset-y-0.5 rounded-[2px] bg-[var(--sk-line2)]"
+              style={{ left: `${pos(w.isStart)}%`, width: `${Math.max(2, pos(w.oosStart) - pos(w.isStart))}%` }}
+            />
+            <span
+              className={cn(
+                'absolute inset-y-0 rounded-[2px]',
+                (w.oosTotal ?? 0) >= 0 ? 'bg-profit' : 'bg-loss'
+              )}
+              style={{ left: `${pos(w.oosStart)}%`, width: `${Math.max(2, pos(w.oosEnd) - pos(w.oosStart))}%` }}
+            />
+          </div>
+          <span
+            className={cn(
+              'text-right font-mono text-dense-caption tabular-nums',
+              w.oosTotal == null ? 'text-muted-foreground' : w.oosTotal >= 0 ? 'text-profit' : 'text-loss'
+            )}
+          >
+            {w.oosTotal != null ? `${w.oosTotal >= 0 ? '+' : '−'}${Math.abs(w.oosTotal * 100).toFixed(1)}%` : '—'}
+          </span>
+        </div>
+      ))}
+      <div className="flex justify-between text-dense-micro text-muted-foreground">
+        <span className="font-mono">{dates[0]} → {dates[dates.length - 1]}</span>
+        <span>grey = in-sample · coloured = OOS return</span>
+      </div>
     </div>
   )
 }
@@ -550,14 +632,16 @@ function SummaryTile({
   const toneClass =
     tone === 'profit' ? 'text-profit' : tone === 'loss' ? 'text-loss' : 'text-foreground'
   return (
-    <Card variant="elevated">
-      <CardContent className="px-3 py-2">
-        <span className="text-dense-caption uppercase tracking-wide text-muted-foreground">
-          {label}
-        </span>
-        <p className={`font-mono text-lg font-semibold tabular-nums ${toneClass}`}>{value}</p>
-        {note ? <p className="m-0 text-dense-caption text-muted-foreground">{note}</p> : null}
-      </CardContent>
-    </Card>
+    <div className="border-b border-r border-border/60 bg-background px-3 py-2 last:border-r-0 md:border-b-0">
+      <span className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <p className={`m-0 mt-0.5 whitespace-nowrap font-mono text-lg font-semibold tabular-nums ${toneClass}`}>
+        {value}
+      </p>
+      {note ? (
+        <p className="m-0 whitespace-nowrap text-dense-caption text-muted-foreground">{note}</p>
+      ) : null}
+    </div>
   )
 }

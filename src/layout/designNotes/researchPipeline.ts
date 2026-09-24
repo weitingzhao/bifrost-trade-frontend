@@ -42,7 +42,7 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + 'the calibration tile keeps its place saying no claimed p is recorded; the grain segment is not '
     + 'drawn (sessions carry no 2d/5d in the store); the date-range filter, an existing capability the '
     + 'design does not draw, stays. Hypothesis \u2192 lands on the board (no per-id focus there yet). '
-    + 'Owner to look before aligned.',
+    + 'Re-dressed 2026-09-26 side by side at :8099 after the Owner's second look: the summary and walk-forward aggregates became the design's joined tile grids, Walk-forward / Events / benchmark took the panel material with their own heads, the window strip (in-sample grey, OOS slice coloured by sign) now draws beside the table from the real window dates, big dollar figures format as locale integers, the run rows carry their time, and the card's confidence tag rides the SUMMARY cap while the duplicate id line yields to the page's own header (headerless). Owner to look before aligned.',
   '/research/lab/screener':
     'Built 2026-09-24 against Research Stock Screen Method.dc.html at route rev 2026-09-20.4, on '
     + 'local DEV (:5173). Measured first: /analytics/sepa/screener-wide serves the whole mart \u2014 '

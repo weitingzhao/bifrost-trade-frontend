@@ -292,7 +292,7 @@ export default function BacktestPage() {
                                 {r.id.slice(0, 11)}
                               </div>
                               <div className={cn(mono, 'text-dense-micro text-muted-foreground')}>
-                                {r.created_at.slice(0, 10)}
+                                {r.created_at.slice(0, 16).replace('T', ' ')}
                               </div>
                             </td>
                             <td className={cn(td, 'min-w-0 text-left')}>
@@ -431,7 +431,7 @@ export default function BacktestPage() {
                 <QueryErrorAlert error={byIdQ.error} onRetry={() => void byIdQ.refetch()} />
               ) : null}
               {activeResult ? (
-                <BacktestRunResultCard response={activeResult} />
+                <BacktestRunResultCard response={activeResult} headerless />
               ) : (
                 <Card variant="elevated">
                   <CardContent className="px-3 py-6">

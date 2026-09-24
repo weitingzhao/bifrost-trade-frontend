@@ -40,8 +40,8 @@ import {
 import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { eventsStanding, type StoreReading } from './eventsStanding'
-import { EventRadarBody } from './EventsBoard'
 import { EventsBookFace } from './EventsBookFace'
+import { EventsMarketFace } from './EventsMarketFace'
 
 const BATCHES = '/research/events/batches'
 
@@ -137,19 +137,15 @@ export default function EventsPage() {
           ))}
         </div>
       ) : standing.state === 'live' ? (
-        /* The board itself, moved rather than rewritten (design step D2).
-           Its three blocks — the events table, the theme aggregates and the
-           forward calendar — are the ones Explorer carried, and they already
-           read these four stores.
-
-           OWED, and named rather than half-built: the design restructures
-           this face around an Importance / Direction / Theme filter bar, a
-           themes panel with a bull-neutral-bear stacked bar, and a Pool
-           action per event row. None of it can be walked against data while
-           the pipeline is unfed — reshaping a table against a design without
-           ever seeing it hold a row is the walk failing quietly, which this
-           side has recorded once already on the Option screener. */
-        <EventRadarBody />
+        /* The design's own restructure, built 2026-10-02 on the Owner's ask:
+           Importance / Direction / theme filters, the themes panel with its
+           bull-neutral-bear stack, the forward calendar and the ingest rows.
+           `EventRadarBody` stays the Explorer tab's body — nothing deleted. */
+        <EventsMarketFace
+          events={events.data?.rows ?? []}
+          themes={themes.data?.rows ?? []}
+          batches={batches.data?.rows ?? []}
+        />
       ) : (
         <StoreStanding standing={standing} onRetry={() => { void batches.refetch(); void events.refetch(); void themes.refetch(); void calendar.refetch() }} />
       )}
@@ -189,8 +185,10 @@ function StoreStanding({
         </p>
         {standing.state === 'unfed' ? (
           <p className="max-w-[90ch] text-dense-caption leading-relaxed text-muted-foreground">
-            The radar is fed by the event pipeline, not by this page — a batch is collected, scored
-            and written, and the four readings below are what a fed board would return.
+            The radar is fed by the event pipeline, not by this page. Drop .txt / .md / .json into{' '}
+            <span className="font-mono text-foreground/80">事件雷达工作流/input/</span> and the cron
+            ingest fills <span className="font-mono text-foreground/80">research.event_radar</span> —
+            the four readings below are what a fed board would return.
           </p>
         ) : null}
       </div>
@@ -206,8 +204,16 @@ function StoreStanding({
               <td className="px-1 py-1.5 font-mono text-dense-caption text-muted-foreground">
                 {s.path}
               </td>
-              <td className={cn('px-3 py-1.5 text-right font-mono text-dense-meta', s.isError ? 'text-danger' : 'text-muted-foreground')}>
-                {s.isError ? 'did not answer' : s.rows == null ? '—' : `${s.rows} rows`}
+              <td className={cn('px-3 py-1.5 text-right font-mono text-dense-caption', s.isError ? 'text-danger' : 'text-muted-foreground')}>
+                {s.isError
+                  ? 'no answer'
+                  : s.rows == null
+                    ? '—'
+                    : standing.state === 'unfed'
+                      ? 'answered, 0 rows · never fed'
+                      : s.rows === 0
+                        ? 'answered, 0 rows in window'
+                        : `answered · ${s.rows} rows`}
               </td>
             </tr>
           ))}

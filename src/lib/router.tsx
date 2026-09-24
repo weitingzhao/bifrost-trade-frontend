@@ -328,6 +328,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/data/SignalHealthPage')),
       },
       {
+        path: 'research/lab/discover-model',
+        lazy: lazyPage(() => import('@/pages/research/lab/discoverModel/DiscoverModelPage')),
+      },
+      {
         path: 'research/greeks',
         lazy: lazyPage(() => import('@/pages/research/analyze/GreeksPage')),
       },

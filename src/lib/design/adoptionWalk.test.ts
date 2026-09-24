@@ -393,8 +393,9 @@ describe('the design walk, as it stands', () => {
     // Rev .24's table for its three owed inputs. 10 with Positions, redrawn
     // at Rev .21 as the §16 north-star page and rebuilt the same day. 12 with
     // Live and Alerts, moved on to the rail's Market group. 13 with Symbol,
-    // whose seventh face (Payoff) was built 2026-09-24.
-    expect(counts.byState.reviewing).toBe(13)
+    // whose seventh face (Payoff) was built 2026-09-24. 14 with Discover
+    // model, the design's Discover vocabulary transcribed into System › Data.
+    expect(counts.byState.reviewing).toBe(14)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -471,6 +472,7 @@ describe('the design walk, as it stands', () => {
       '/research/event-radar',
       '/research/events',
       '/research/history',
+      '/research/lab/discover-model',
       '/research/lens-coverage',
       '/research/overview',
       '/research/signal-health',
@@ -559,8 +561,9 @@ describe('the design walk, as it stands', () => {
     // 18 with History (2026-09-23), the first Analyze page after Symbol, and
     // 17 with Compare the same evening. 16 with Payoff (2026-09-24): the
     // Symbol page's seventh face, built once the vendor snapshots carried the
-    // iv and delta it prices from.
-    expect(counts.byState.unbuilt).toBe(16)
+    // iv and delta it prices from. 15 with Discover model the same day —
+    // the design's own document, so building it is transcription.
+    expect(counts.byState.unbuilt).toBe(15)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

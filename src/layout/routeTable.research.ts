@@ -345,6 +345,18 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // The design's vocabulary page for the Discover menu — a System › Data
+    // reference with no data behind it, transcribed whole. Built 2026-09-24.
+    path: '/research/lab/discover-model',
+    label: 'Discover model',
+    crumbs: SYSTEM_DATA,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.4',
+      note: DESIGN_NOTES['/research/lab/discover-model'],
+    },
+  },
+  {
     path: '/research/watchlist',
     label: 'Watchlist',
     crumbs: THE_BOOK,

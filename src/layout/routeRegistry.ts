@@ -94,6 +94,10 @@ export function routeFor(pathname: string): RouteEntry {
 const SYSTEM_TREE_PAGES: ReadonlySet<string> = new Set([
   '/research/signal-health',
   '/research/lens-coverage',
+  // The design's two `/research/lab/*` System Data pages (its own SYS_ROUTES,
+  // Rev 2026-09-20.4): a vocabulary and a calibration, the machine room's
+  // reading matter. Calibration's line lands with its page.
+  '/research/lab/discover-model',
   // Personas and Orchestration joined them on 2026-09-22 (design Rev
   // 2026-09-22.2, its own `SYS_ROUTES`). Same rule, read on the reader rather
   // than on the path: the roster says whose readings to trust and the diagram

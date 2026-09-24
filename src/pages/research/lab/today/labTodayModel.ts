@@ -62,11 +62,25 @@ export interface CandidateCard {
   sepaLine: string
   chips: CandidateChip[]
   tiles: CandidateTile[]
+  company: string | null
+  /** 20-session momentum as a fraction; null until the bars arrive. */
+  mom20: number | null
+  hit: { hits: number; n: number } | null
 }
 
 const fmt0 = (v: number | null | undefined) => (v == null ? '—' : String(Math.round(v)))
 
-export function candidateCard(row: SepaScoreRow, rank: number): CandidateCard {
+export interface CandidateExtras {
+  /** From the SEPA wide table, joined by symbol. */
+  company?: string | null
+  rs?: number | null
+  /** 20-session momentum, a fraction, from the store's own closes. */
+  mom20?: number | null
+  /** Settled candidate outcomes for this name: hits over judged. */
+  hit?: { hits: number; n: number } | null
+}
+
+export function candidateCard(row: SepaScoreRow, rank: number, x: CandidateExtras = {}): CandidateCard {
   const stage = stageLabel(row.stage)
   return {
     rank,
@@ -74,14 +88,23 @@ export function candidateCard(row: SepaScoreRow, rank: number): CandidateCard {
     score: Math.round(row.sepa_score),
     grade: row.grade,
     momScore: Math.round(row.momentum_score),
-    sepaLine: `STAGE ${stage} · ${row.path} · MOM ${Math.round(row.momentum_score)}`,
+    company: x.company ?? null,
+    mom20: x.mom20 ?? null,
+    hit: x.hit ?? null,
+    sepaLine: `STAGE ${stage} · ${row.path} · ${x.rs != null ? `RS ${Math.round(x.rs)}` : `MOM ${Math.round(row.momentum_score)}`}`,
     chips: [
       { label: `SEPA STAGE ${stage} · ${row.path}`, variant: 'info' },
       { label: `GRADE ${row.grade}`, variant: 'info' },
+      ...(x.rs != null ? [{ label: `RS ${Math.round(x.rs)}`, variant: 'info' as const }] : []),
       {
         label: `TECH ${row.tech_pass_count}/11 · FUND ${row.fund_pass_count}/8`,
         variant: 'neutral',
       },
+      // The option face was never measured for this name; the design's own
+      // HALO row prints the miss instead of hiding it.
+      ...(row.iv_percentile == null
+        ? [{ label: 'THIN CHAIN', variant: 'warning' as const }]
+        : []),
     ],
     tiles: [
       {
@@ -174,4 +197,28 @@ export function funnelTiles(
       warn: (h5?.hit_rate ?? 1) < 0.45,
     },
   ]
+}
+
+/** 20-session momentum from a closes series (needs 21 bars), as a fraction. */
+export function mom20From(bars: readonly { close: number | null }[]): number | null {
+  const closes = bars.map((b) => b.close).filter((c): c is number => c != null && c > 0)
+  if (closes.length < 21) return null
+  const last = closes[closes.length - 1]
+  const base = closes[closes.length - 21]
+  return base > 0 ? last / base - 1 : null
+}
+
+/** Settled outcomes grouped per symbol — the row-level hit record. */
+export function perSymbolHits(
+  rows: readonly { symbol: string; hit: boolean | null }[],
+): Map<string, { hits: number; n: number }> {
+  const out = new Map<string, { hits: number; n: number }>()
+  for (const r of rows) {
+    if (r.hit == null) continue
+    const cur = out.get(r.symbol) ?? { hits: 0, n: 0 }
+    cur.n += 1
+    if (r.hit) cur.hits += 1
+    out.set(r.symbol, cur)
+  }
+  return out
 }

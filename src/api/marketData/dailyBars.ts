@@ -113,6 +113,30 @@ export async function fetchStockDailyCloses(symbol: string, from: string, to: st
 }
 
 /**
+ * Recent closes for many underlyings in one request — the endpoint's
+ * `symbols` was always plural; the single-symbol reader above just never
+ * passed more than one. A queue page asking per name would be thirty round
+ * trips for one column.
+ */
+export async function fetchDailyClosesMulti(
+  symbols: readonly string[],
+  days: number,
+): Promise<Record<string, { date: string; close: number | null }[]>> {
+  if (symbols.length === 0) return {}
+  const qs = new URLSearchParams({ symbols: symbols.join(','), days: String(days) })
+  const res = await fetch(marketDataPluginUrl(`/market/stocks/db/bars/daily?${qs}`))
+  if (!res.ok) throw new Error(`market-data /stocks/db/bars/daily: ${res.status}`)
+  const j = (await res.json()) as { data?: Record<string, { bar_time: string; close: number | null }[]> }
+  const out: Record<string, { date: string; close: number | null }[]> = {}
+  for (const [sym, rows] of Object.entries(j.data ?? {})) {
+    out[sym.toUpperCase()] = (rows ?? [])
+      .map((r) => ({ date: String(r.bar_time).slice(0, 10), close: r.close }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }
+  return out
+}
+
+/**
  * Every contract on one underlying and one expiry, over a window.
  *
  * The book-wide pages need a path for all 67 closed trades, and asking per

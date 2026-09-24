@@ -15,9 +15,10 @@
  * scaled to the horizon. A cell a store cannot answer reads `—`.
  */
 import { useMemo } from 'react'
-import { useQueries } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
+import { fetchEventCalendar } from '@/api/researchEngine'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { fmtIsoDateToken } from '@/lib/format'
@@ -90,6 +91,27 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
   const status = useMonitorStatus()
   const today = new Date().toISOString().slice(0, 10)
   const opexDates = useMemo(() => opexDatesAround(today), [today])
+
+  // Forward-dated radar events (time_code=2, event_date ASC on the server).
+  // Same query key as the page shell, so the cache is shared. Macro = the
+  // rows with no affected symbol: a dated event the radar holds that is not
+  // tied to a name (FOMC decisions, CPI prints). Symbol-tied forward rows
+  // (dividend dates) are the Market face's forward panel, not this lane.
+  const calendar = useQuery({
+    queryKey: ['research', 'events', 'calendar'],
+    queryFn: fetchEventCalendar,
+    staleTime: 5 * 60_000,
+  })
+  const macroByDate = useMemo(() => {
+    const m = new Map<string, string[]>()
+    for (const r of calendar.data?.rows ?? []) {
+      if (r.affected_symbols || !r.event_date) continue
+      const inDays = daysUntil(today, r.event_date)
+      if (inDays < 0 || inDays >= WINDOW_DAYS) continue
+      m.set(r.event_date, [...(m.get(r.event_date) ?? []), r.event_summary || r.subject])
+    }
+    return m
+  }, [calendar.data, today])
   const days = useMemo(
     () =>
       Array.from({ length: WINDOW_DAYS }, (_, i) => {
@@ -202,10 +224,13 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                     label: 'MACRO',
                     // The radar is the macro source either way; the reason
                     // just changes once it has been fed.
-                    owed: radarUnfed
-                      ? 'macro dates come from the event radar — unfed, 0 batches'
-                      : 'no macro dates in the radar’s window — the ingested batches carry none',
-                    marks: new Set<string>(),
+                    owed:
+                      macroByDate.size > 0
+                        ? null
+                        : radarUnfed
+                          ? 'macro dates come from the event radar — unfed, 0 batches'
+                          : 'no macro dates in the radar’s window — the ingested batches carry none',
+                    marks: new Set(macroByDate.keys()),
                   },
                   {
                     key: 'opex' as const,
@@ -238,7 +263,13 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                       <td
                         key={d.iso}
                         className={cn('border-t border-border/30 py-1.5 text-center', d.today && 'bg-[rgb(var(--sk-accent-rgb,163_230_53)/0.06)]', d.weekend && 'opacity-40')}
-                        title={lane.marks.has(d.iso) ? `OPEX · ${fmtIsoDateToken(d.iso)}` : undefined}
+                        title={
+                          !lane.marks.has(d.iso)
+                            ? undefined
+                            : lane.key === 'macro'
+                              ? `${macroByDate.get(d.iso)?.join(' · ') ?? 'macro'} · ${fmtIsoDateToken(d.iso)}`
+                              : `OPEX · ${fmtIsoDateToken(d.iso)}`
+                        }
                       >
                         {lane.marks.has(d.iso) ? (
                           <span className={cn('mx-auto block h-2 w-2', laneDot(lane.key))} />

@@ -200,9 +200,11 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                   {
                     key: 'macro' as const,
                     label: 'MACRO',
+                    // The radar is the macro source either way; the reason
+                    // just changes once it has been fed.
                     owed: radarUnfed
                       ? 'macro dates come from the event radar — unfed, 0 batches'
-                      : null,
+                      : 'no macro dates in the radar’s window — the ingested batches carry none',
                     marks: new Set<string>(),
                   },
                   {

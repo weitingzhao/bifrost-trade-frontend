@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Button, HealthLamp } from '@bifrost/ui'
 import { fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
+import { fetchSepaScreenerWide } from '@/api/research/sepaScreenerWide'
 import { fetchStockDailyCloses } from '@/api/marketData/dailyBars'
 import type { ExhibitPayload } from '@/api/research/exhibit'
 import { SegmentControl } from '@/components/data-display'
@@ -162,6 +163,15 @@ export default function LabSymbolPage() {
   const vrpDiff = numReading(vrpEx, 'vrp_60d')
   const asOf = ivRankEx?.as_of ?? vrpEx?.as_of ?? skewEx?.as_of ?? null
 
+  // The company's name off the wide universe row — one request, cached an hour.
+  const wideQ = useQuery({
+    queryKey: ['research', 'sepa-wide-one', sym],
+    queryFn: () => fetchSepaScreenerWide(5, [sym]),
+    enabled: Boolean(sym),
+    staleTime: 60 * 60_000,
+  })
+  const company = wideQ.data?.rows.find((r) => r.symbol === sym)?.company_name ?? null
+
   // Spot and change are the store's closes — this face draws no live quote.
   const barsQ = useQuery({
     queryKey: ['market', 'daily-closes-tail', sym, today],
@@ -294,6 +304,11 @@ export default function LabSymbolPage() {
           ◆ METHOD · NO ORDERS
         </span>
         <span className={cn(mono, 'text-dense-body font-bold text-[var(--sk-ticker)]')}>{sym || '—'}</span>
+        {company ? (
+          <span className="max-w-[22ch] overflow-hidden text-ellipsis whitespace-nowrap text-dense-caption text-muted-foreground">
+            {company}
+          </span>
+        ) : null}
         {lastClose != null ? (
           <span className={cn(mono, 'text-dense-meta text-secondary-foreground')}>
             {lastClose.toFixed(2)}
@@ -565,7 +580,7 @@ export default function LabSymbolPage() {
                       <tr>
                         <th className={cn(th, 'text-left')}>spot \ IV</th>
                         {GRID_VOL_COLS.map((c) => (
-                          <th key={c} className={th}>
+                          <th key={c} className={cn(th, c === 0 && 'font-bold text-foreground')}>
                             {c >= 0 ? '+' : '−'}
                             {Math.abs(c)}v
                           </th>
@@ -656,6 +671,10 @@ export default function LabSymbolPage() {
           <AssumptionLedger sym={sym} settings={settings} onSettings={setSettings} />
         )}
       </SymbolContextGuard>
+
+      <p className={cn(mono, 'm-0 text-dense-micro text-muted-foreground text-pretty')}>
+        Direction is teal/orange in every domain; red is reserved for a real fault.
+      </p>
     </PageShell>
   )
 }

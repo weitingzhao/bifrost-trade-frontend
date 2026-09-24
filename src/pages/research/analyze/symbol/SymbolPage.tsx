@@ -163,7 +163,7 @@ export default function SymbolPage() {
                     : 'border-transparent text-muted-foreground hover:text-foreground',
                 )}
               >
-                {lamp ? <StatusLamp lamp={lamp} className="h-1.5 w-1.5" /> : null}
+                {lamp ? <StatusLamp variant="dot" lamp={lamp} className="h-1.5 w-1.5" /> : null}
                 {t.label}
               </button>
             </Fragment>

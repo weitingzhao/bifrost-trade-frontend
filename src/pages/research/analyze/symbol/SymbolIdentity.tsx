@@ -68,7 +68,7 @@ function FaceLamps({ symbol, faces }: { symbol: string; faces: SymbolFaces }) {
           className="inline-flex items-center gap-1.5 whitespace-nowrap rounded border border-border px-1.5 py-0.5 text-dense-meta hover:bg-muted"
           title={v.headline}
         >
-          <StatusLamp lamp={v.lamp} className="h-1.5 w-1.5" />
+          <StatusLamp variant="dot" lamp={v.lamp} className="h-1.5 w-1.5" />
           {v.face.title.split(' ')[0]}
         </Link>
       ))}

@@ -15,9 +15,10 @@
  * list's, formatted by the list: nothing is recomputed here, so the strip
  * cannot disagree with the table you came from.
  *
- * It renders nothing when the symbol is not on the last list published, which
- * is most of the time: a name reached by typing has no list behind it, and
- * saying otherwise would be a claim about where you had been.
+ * When the symbol is not on the last list published — a name reached by
+ * typing has no list behind it — the strip keeps its seat and says so, and
+ * names the two lists that would fill it. A strip that vanishes reads as
+ * unbuilt, and inventing an origin would be a claim about where you had been.
  */
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
@@ -76,7 +77,24 @@ export function SymbolOriginRail({ symbol, tabQuery }: { symbol: string; tabQuer
     return () => window.removeEventListener('keydown', onKey)
   }, [prev, next, navigate, tabQuery])
 
-  if (!at) return null
+  if (!at) {
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border bg-background px-3 py-1.5">
+        <span className={SECTION_CAP_CLASS}>From</span>
+        <span className="text-dense-meta text-muted-foreground">
+          opened directly — no list behind this read. Step in from{' '}
+          <Link to="/research/ratings/stocks" className="text-foreground hover:underline">
+            Stock ratings
+          </Link>{' '}
+          or{' '}
+          <Link to="/research/scan" className="text-foreground hover:underline">
+            Vol ratings
+          </Link>{' '}
+          and this strip carries your place in the list, and why the name was on it.
+        </span>
+      </div>
+    )
+  }
 
   const step = (to: string | null, label: string, icon: React.ReactNode) =>
     to ? (

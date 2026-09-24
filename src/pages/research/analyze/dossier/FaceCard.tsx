@@ -24,11 +24,20 @@ import type { DossierFaceView } from '@/lib/dossier'
 
 /** The 3px rail the design paints beside a verdict, in the verdict's tone. */
 const TONE_BAR: Record<string, string> = {
-  success: 'bg-[var(--color-profit)]',
+  success: 'bg-success',
   danger: 'bg-destructive',
   warning: 'bg-warning',
   info: 'bg-primary',
   neutral: 'bg-border',
+}
+
+/** The verdict wears the bar's colour — the design paints both from one value. */
+const TONE_TEXT: Record<string, string> = {
+  success: 'text-success',
+  danger: 'text-destructive',
+  warning: 'text-warning',
+  info: 'text-primary',
+  neutral: 'text-foreground',
 }
 
 export function FaceCard({
@@ -41,7 +50,7 @@ export function FaceCard({
   /** True on the one face whose decisive lens carried the rating. */
   drove?: boolean
 }) {
-  const { face, rows, headline, means, tone, lamp, coverage, href } = view
+  const { face, rows, headline, means, tone, coverage, href } = view
   return (
     <Card
       variant="elevated"
@@ -50,17 +59,16 @@ export function FaceCard({
     >
       <CardContent className="p-0">
         <div className="flex items-center gap-2 border-b border-border/60 bg-secondary/50 px-3 py-1.5">
-          <StatusLamp lamp={loading ? 'yellow' : lamp} className="h-2.5 w-2.5 shrink-0" />
-          <p className="truncate text-dense-label font-semibold" title={face.question}>
+          <p
+            className="truncate text-dense-label font-semibold"
+            title={`${face.question}${coverage ? ` — ${coverage.read}/${coverage.of} lenses read` : ''}`}
+          >
             {face.title}
           </p>
           {drove ? (
             <DenseTag variant="info" size="cell">
               drove the rating
             </DenseTag>
-          ) : null}
-          {coverage ? (
-            <span className="shrink-0 text-dense-micro text-muted-foreground">{`${coverage.read}/${coverage.of} read`}</span>
           ) : null}
           <Link
             to={href}
@@ -78,7 +86,12 @@ export function FaceCard({
         <div className="flex gap-2.5 border-b border-border/60 py-1.5 pr-3">
           <span className={cn('w-[3px] shrink-0 rounded-r-sm', TONE_BAR[tone] ?? TONE_BAR.neutral)} />
           <div className="min-w-0">
-            <p className={cn('text-dense-label font-semibold leading-snug', tone)}>
+            <p
+              className={cn(
+                'text-dense-label font-semibold leading-snug',
+                TONE_TEXT[tone] ?? TONE_TEXT.neutral,
+              )}
+            >
               {loading && rows.length === 0 ? 'Reading…' : headline}
             </p>
             {means ? (
@@ -96,7 +109,7 @@ export function FaceCard({
                 title={row.recordDetail ?? (row.asOf ? `as of ${row.asOf}` : undefined)}
               >
                 <span className="flex min-w-0 items-baseline gap-1.5">
-                  <StatusLamp lamp={row.lamp} className="mt-0.5 h-2 w-2 shrink-0 self-center" />
+                  <StatusLamp variant="dot" lamp={row.lamp} className="mt-0.5 h-2 w-2 shrink-0 self-center" />
                   <Link
                     to={row.href}
                     className="min-w-0 truncate text-dense-label no-underline hover:underline"

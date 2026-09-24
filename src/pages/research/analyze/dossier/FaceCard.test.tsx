@@ -48,8 +48,12 @@ describe('FaceCard', () => {
         <FaceCard view={view} loading={false} />
       </MemoryRouter>
     )
-    expect(screen.getByText('Dealer levels')).toBeTruthy()
-    expect(screen.getByText('1/2 read')).toBeTruthy()
+    const title = screen.getByText('Dealer levels')
+    expect(title).toBeTruthy()
+    // Coverage folded into the title hover (2026-09-29): the design's card
+    // header is title · drove · open link, and a visible «N/N read» chip was
+    // this side's own. The count survives where the face's question lives.
+    expect(title.getAttribute('title')).toContain('1/2 lenses read')
     // The headline is the verdict, and the line under it is what that verdict
     // means — the design's verdict block (Rev 2026-09-18.2). This side printed
     // `lens · verdict` and dropped the meaning entirely, so the card said what

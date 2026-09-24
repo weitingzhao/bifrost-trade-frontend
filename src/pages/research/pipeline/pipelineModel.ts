@@ -122,8 +122,10 @@ const SPECS: readonly Spec[] = [
   { to: '/research/contract-screener', label: 'Option screen', station: 'discover', store: 'screen_run', storeState: 'store-owed', note: 'store owed — a screen is an object you fork and cite' },
   { to: '/research/event-radar', label: 'Alerts', station: 'off-bench', store: null, storeState: 'off-bench', note: 'off this bench — Home › Alerts' },
   { to: '/research/symbol', label: 'Symbol', station: 'analyze', store: 'symbol_verdict', storeState: 'store-owed', note: 'store owed — a verdict is cited as a hypothesis’s origin' },
-  { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: 'narrative_tag', storeState: 'store-owed', note: 'store owed — the filings it reads are entitled and not yet ingested' },
-  { to: '/research/compare', label: 'Compare', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed — it assembles, it does not produce' },
+  // The two rows the design redrew at Rev 2026-09-23.24, answering this side's
+  // ask: their notes are the design's own words.
+  { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: 'narrative_tag', storeState: 'store-owed', note: 'store owed · 8-K / 10-K ingest pending release' },
+  { to: '/research/compare', label: 'Compare', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed · 3 inputs owed: quotes · 20d distribution · regime record' },
   { to: '/research/history', label: 'History', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed — it recomputes a denominator nobody names again' },
   { to: '/research/signal-decay', label: 'Signal decay', station: 'validate', store: 'decay_check', storeState: 'store-owed', note: 'store owed — a page that declares a signal dead should hold the certificate' },
   { to: '/research/backtest', label: 'Backtest', station: 'validate', store: 'backtest_run', storeState: 'has-store', note: null },

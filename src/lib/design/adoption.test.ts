@@ -250,15 +250,21 @@ describe('design adoption', () => {
     // ratings, Portfolio Exposure and Positions, and Contract Greeks once its
     // door was findable — 59. Back to 58 when Stock ratings was re-walked
     // again for the Leaders view and left for `reviewing`. 59 when the Owner
-    // signed that walk too.
-    expect(counts.aligned + counts.byState.stale).toBe(59)
+    // signed that walk too. 58 when Research Overview was re-walked against
+    // Rev .24 (its census rows) and left `stale` for `reviewing`.
+    expect(counts.aligned + counts.byState.stale).toBe(58)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
     // nav any more. Both were signed; both are now behind their own rev.
-    expect(counts.aligned).toBe(57)
+    // Package 2026-09-23.6 @ Rev .24 adds two by redrawing the pages
+    // themselves: Positions becomes the §16 north-star page (Rev .21), and
+    // Research Overview's census carries the two rows this side's ask
+    // corrected — Narrative `store owed`, Compare `3 inputs owed` (Rev .24).
+    expect(counts.aligned).toBe(55)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/market/live',
+      '/portfolio/positions',
       '/research/event-radar',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
@@ -469,8 +475,9 @@ describe('design adoption', () => {
     // 6 again with Stock ratings, re-walked onto the Leaders view, and back
     // to 5 when that walk was signed. 6 with Events, built on the design's
     // four-state rule so an unfed pipeline reads as unfed. 7 with History,
-    // two panels built and two owed with what each waits on.
-    expect(counts.byState.reviewing).toBe(7)
+    // two panels built and two owed with what each waits on. 8 with Research
+    // Overview, re-walked onto Rev .24's census rows.
+    expect(counts.byState.reviewing).toBe(8)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -486,7 +493,6 @@ describe('design adoption', () => {
       '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
-      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/book',
@@ -506,7 +512,6 @@ describe('design adoption', () => {
       '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
       '/research/orchestration',
-      '/research/overview',
       '/research/ratings/stocks',
       '/research/scan',
       '/research/screener',
@@ -542,6 +547,7 @@ describe('design adoption', () => {
       '/research/events',
       '/research/history',
       '/research/lens-coverage',
+      '/research/overview',
       '/research/signal-health',
       '/settings',
       '/system/status',
@@ -725,7 +731,13 @@ describe('design adoption', () => {
     // That page is `unbuilt` here, so no state moves with it. Rev .9 answers
     // this side's ask about Momentum Radar's ranking with a Leaders view on
     // Stock ratings, which moves that page's stamp and nothing else.
-    expect(DESIGN_REV).toBe('2026-09-23.9')
+    // Package 2026-09-23.6 @ Rev .24 is the next full package, and most of its
+    // fifteen revs are shell and colour (three-way theme, light as grey paper,
+    // the identity-colour ratchet, glass for floating things, the system
+    // font) — global Rev only. Twenty-six files were renamed to mirror the
+    // menu rather than the route, with no route, label or stamp moved. Four
+    // stamps did: Positions (.21), and Narrative, Overview and Compare (.24).
+    expect(DESIGN_REV).toBe('2026-09-23.24')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -755,8 +767,12 @@ describe('design adoption', () => {
     // 5 → 4: Stock ratings was the first of the three to be built to its new
     // rev, and it is the one the two `moving` pages are waiting on. 4 → 2 with
     // the two pages that hold Contract Greeks' doors — all that is left is
-    // Live and Alerts, which move rail rather than page.
-    expect(counts.byState.stale).toBe(2)
+    // Live and Alerts, which move rail rather than page. 2 → 4 with Package
+    // 2026-09-23.6: Positions redrawn as the §16 north star, and Research
+    // Overview's census carrying the two rows this side's ask corrected. 4 → 3
+    // the same evening: Overview's two rows took the design's words and it
+    // waits for a look in `reviewing`.
+    expect(counts.byState.stale).toBe(3)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

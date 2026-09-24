@@ -53,6 +53,9 @@ describe('the four classes', () => {
       expect(by(to).storeState, to).toBe('no-store-owed')
       expect(by(to).note, to).toMatch(/no store owed/)
     }
+    // Owing no store is not owing nothing: Compare assembles from three inputs
+    // this data plan does not carry (Rev 2026-09-23.24).
+    expect(by('/research/compare').note).toMatch(/^no store owed · 3 inputs owed: quotes · 20d distribution · regime record/)
   })
 
   it('keeps Alerts on the page and out of every denominator', () => {
@@ -77,7 +80,7 @@ describe('the four classes', () => {
     const narrative = by('/research/narrative')
     expect(narrative.made).toBeNull()
     expect(narrative.store).toBe('narrative_tag')
-    expect(narrative.note).toMatch(/entitled and not yet ingested/)
+    expect(narrative.note).toMatch(/8-K \/ 10-K ingest pending release/)
   })
 })
 

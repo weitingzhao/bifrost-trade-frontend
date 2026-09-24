@@ -38,8 +38,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Research',
     crumbs: [],
     design: {
-      state: 'aligned',
-      rev: '2026-09-22.2',
+      state: 'reviewing',
+      rev: '2026-09-23.24',
       note: DESIGN_NOTES['/research/overview'],
     },
   },

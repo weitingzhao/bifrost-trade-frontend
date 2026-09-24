@@ -37,9 +37,12 @@ describe('adoptionByGroup', () => {
     // doors the design gave that page when it moved it to Risk. Built the
     // same day, so it waits for a look in `reviewing` rather than in `stale`.
     // Signed 2026-09-23 — the group is whole again at ten of ten.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 10, left: 0 })
+    // Package 2026-09-23.6 @ Rev .21 makes Positions the design's north-star
+    // page (§16): the four gauges become a hero reading band, the notes move
+    // into tooltips, capabilities unchanged. Nine of ten until it is re-walked.
+    expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
     expect(portfolio?.byState.reviewing).toBe(0)
-    expect(portfolio?.byState.stale).toBe(0)
+    expect(portfolio?.byState.stale).toBe(1)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

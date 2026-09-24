@@ -225,7 +225,7 @@ export const LOOP_STATIONS: readonly LoopStation[] = [
       {
         label: 'Compare',
         to: '/research/compare',
-        tip: 'Side-by-side. Assembly, not estimation — owes no Method face.',
+        tip: 'Side-by-side. Assembly, not estimation — owes no Method face, but three of its inputs are not on the data plan yet.',
       },
       { label: 'History', to: '/research/history', tip: 'Where IV sits.' },
       {

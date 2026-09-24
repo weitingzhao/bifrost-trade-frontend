@@ -137,7 +137,12 @@ function generate(pkg) {
   const ROUND = roundsByFile(pkg)
 
   const src = readFileSync(join(pkg, 'shell-registry.js'), 'utf8')
-  new Function(src)()
+  // Rev 2026-09-23.11 starts a one-minute watcher at load time (auto theme by
+  // the clock), and a live interval keeps Node running after the file is
+  // written — the sync hung until killed. The timers are shadowed for the
+  // registry alone: reading a route table schedules nothing.
+  const noTimer = () => 0
+  new Function('setInterval', 'setTimeout', src)(noTimer, noTimer)
   const R = window.ShellRegistry
 
   /** The design's Research seats — the keys of `SEAT_HOME` in `shell-registry.js`. Copilot left the rail 2026-09-14 (§11.0). */

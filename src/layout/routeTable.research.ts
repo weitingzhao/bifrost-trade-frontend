@@ -275,7 +275,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-23.24',
       note: DESIGN_NOTES['/research/compare'],
     },
@@ -288,7 +288,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-17.1',
       note: DESIGN_NOTES['/research/history'],
     },
@@ -358,7 +358,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.4',
       note: DESIGN_NOTES['/research/lab/history'],
     },

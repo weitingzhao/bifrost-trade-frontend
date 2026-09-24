@@ -13,16 +13,25 @@ import { ROUTES } from './routeTable'
 const byPath = new Map(ROUTES.map((r) => [r.path, r]))
 
 describe('the companion rail', () => {
-  it('is three groups, in the design order: will, memory, instrument', () => {
+  it('is four groups, in the design order: will, memory, instrument, tape', () => {
     // The order is the Owner's criterion: what has state that changes without
-    // my hand comes first, and it is the only one that earns an indicator.
-    expect(EQUIP_GROUPS.map((g) => g.id)).toEqual(['autopilot', 'book', 'copilot'])
-    expect(EQUIP_GROUPS.map((g) => g.label)).toEqual(['Autopilot', 'The Book', 'Copilot'])
+    // my hand comes first. Market joined fourth at Rev 2026-09-23.7 (§5a.10,
+    // option B): Live and Alerts left Home for the rail — the left rail is
+    // where you stand, the right rail is what you glance at beside the page —
+    // and both change without your hand, which is what earns the group its
+    // feed dot and its amber fired-today count.
+    expect(EQUIP_GROUPS.map((g) => g.id)).toEqual(['autopilot', 'book', 'copilot', 'market'])
+    expect(EQUIP_GROUPS.map((g) => g.label)).toEqual(['Autopilot', 'The Book', 'Copilot', 'Market'])
+  })
+
+  it('says on every head what the module is and which key opens it', () => {
+    // Rev .26: the dock's tooltips print the alt-digit key, as the Omnibar prints its own.
+    EQUIP_GROUPS.forEach((g, i) => expect(g.title, g.id).toContain(String(i + 1)))
   })
 
   it('gives every group a hue of its own, and none of them a rainbow inside', () => {
     const hues = EQUIP_GROUPS.map((g) => EQUIP_HUE[g.id])
-    expect(new Set(hues).size).toBe(3)
+    expect(new Set(hues).size).toBe(4)
     // The buttons do not carry their own colours: in this design system a
     // colour variation is a meaning, so a row of hues reads as status lamps.
     for (const g of EQUIP_GROUPS) {
@@ -42,13 +51,16 @@ describe('the companion rail', () => {
     }
   })
 
-  it('claims nine pages — the design\u2019s eleven less what this app has not built', () => {
+  it('claims eleven pages — the design\u2019s thirteen less what this app has not built', () => {
     // Loop Run has no route here at all, so the rail would be offering a door
     // to nothing; the design draws it as a drawer over the Console. Objectives
     // are reached from the Console, which is their roster — a data row is not
     // a place, so they are not icons in either design.
-    expect(equipRoutes()).toHaveLength(9)
+    expect(equipRoutes()).toHaveLength(11)
     expect(equipRoutes()).not.toContain('/research/loop/runs')
+    // The Market pair, out of the tree since Rev .7.
+    expect(equipRoutes()).toContain('/market/live')
+    expect(equipRoutes()).toContain('/research/event-radar')
   })
 
   it('answers which group a page belongs to, and nothing for a page that is not equipment', () => {

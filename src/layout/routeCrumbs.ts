@@ -16,6 +16,11 @@
  * The routes do not move; only the trail does.
  */
 export const MARKET = ['Home'] as const
+/**
+ * The rail's Market group (§5a.10, Rev 2026-09-23.7): Live and Alerts are out
+ * of the tree, so their trail names the group that holds them now.
+ */
+export const MARKET_RAIL = ['Market'] as const
 export const PORTFOLIO = ['Portfolio'] as const
 export const TRADE = ['Trade'] as const
 /**

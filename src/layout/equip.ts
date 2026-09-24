@@ -38,6 +38,8 @@
  * and says which one is missing rather than drawing it hollow.
  */
 import {
+  Activity,
+  Bell,
   BookOpen,
   ClipboardList,
   GitFork,
@@ -69,8 +71,13 @@ export interface EquipPage {
 }
 
 export interface EquipGroup {
-  id: 'autopilot' | 'book' | 'copilot'
+  id: 'autopilot' | 'book' | 'copilot' | 'market'
   label: string
+  /**
+   * What the head's tooltip says: the module, its key (⌥ + its place in the
+   * rail, design Rev .26), and what its indicator means where it has one.
+   */
+  title: string
   icon: GlyphComponent | LucideIcon
   /** The module's home — what the group's head icon opens. */
   hub: EquipPage
@@ -106,6 +113,7 @@ export const EQUIP_HUE: Record<EquipGroup['id'], string> = {
   autopilot: 'var(--equip-autopilot)',
   book: 'var(--equip-book)',
   copilot: 'var(--equip-copilot)',
+  market: 'var(--equip-market)',
 }
 
 
@@ -129,6 +137,7 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
   {
     id: 'autopilot',
     label: 'Autopilot',
+    title: 'Autopilot Console (⌥1). Green: running. Amber: decisions waiting.',
     icon: railHead('autopilot', Terminal),
     hub: {
       to: '/research/loop/harness',
@@ -151,6 +160,7 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
   {
     id: 'book',
     label: 'The Book',
+    title: 'The Book (⌥2) — state × history.',
     icon: railHead('book', BookOpen),
     hub: { to: '/research/book', label: 'The Book', icon: railIcon('/research/book', BookOpen) },
     pages: [
@@ -171,6 +181,7 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
   {
     id: 'copilot',
     label: 'Copilot',
+    title: 'Copilot Desk (⌥3) — personas, schedules, book starters. To ask a question, use Ask in the top bar (⌘J).',
     icon: railHead('copilot', MessageCircle),
     hub: {
       to: '/research/copilot',
@@ -184,6 +195,20 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
         icon: railIcon('/research/copilot/trading', NotebookPen),
       },
     ],
+  },
+  {
+    // The market's live instruments (design §5a.10, Owner option B, Rev
+    // 2026-09-23.7): the tape and the rules you armed. They left Home — which
+    // is where you stand, organised by the clock — for the rail, which is what
+    // you glance at beside the page. Both change without your hand, which is
+    // what earns them a resident indicator: the feed lamp on the head, and
+    // today's fired alerts under it. Events and the Daily Brief stay in Home.
+    id: 'market',
+    label: 'Market',
+    title: 'Market Live (⌥4) — the tape. Lamp: the feed. Amber: alerts fired today.',
+    icon: railHead('market', Activity),
+    hub: { to: '/market/live', label: 'Live', icon: railIcon('/market/live', Activity) },
+    pages: [{ to: '/research/event-radar', label: 'Alerts', icon: railIcon('/research/event-radar', Bell) }],
   },
 ]
 

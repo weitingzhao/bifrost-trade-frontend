@@ -51,16 +51,14 @@
  */
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
-import { fetchAlerts } from '@/api/research/alertScan'
+import { ALERTS_WINDOW_DAYS, useFiredAlerts } from '@/hooks/useFiredAlerts'
 import { firedRows, firedStanding } from './alertsModel'
 import { cn } from '@/lib/utils'
 
-/** The store's own caps: it refuses more than 200 rows or 90 days. */
-const WINDOW_DAYS = 90
-const ROW_CAP = 200
+/** The store's own caps live with the shared query (`useFiredAlerts`). */
+const WINDOW_DAYS = ALERTS_WINDOW_DAYS
 
 const SINCE_TONE: Record<string, string> = {
   up: 'text-success',
@@ -74,11 +72,9 @@ const STANDING_TONE: Record<string, string> = {
 }
 
 export default function AlertsPage() {
-  const q = useQuery({
-    queryKey: ['research', 'alerts', 'page', WINDOW_DAYS],
-    queryFn: () => fetchAlerts({ limit: ROW_CAP, days: WINDOW_DAYS }),
-    staleTime: 60_000,
-  })
+  // Shared with the rail's Market count — one query, so the page's FIRED and
+  // the dock's amber number cannot disagree.
+  const q = useFiredAlerts()
   const items = useMemo(() => q.data?.items ?? [], [q.data?.items])
   const rows = firedRows(items)
   const today = new Date().toISOString().slice(0, 10)

@@ -151,6 +151,10 @@
     --sk-ink: #171c26;
     --sk-soft: #3a4250;
     --sk-mute2: #5b6572;
+    /* The paper highlight: the white inset a lifted card wears on the grey
+       ground (Rev .26). A token so component CSS never writes white raw —
+       the §14.8 ratchet reads a bare 255,255,255 as an invisible-on-dark bug. */
+    --sk-paper-glow: rgba(255, 255, 255, 0.7);
     --sk-mute: #5b6572;
     --sk-faint: #959daa;
     --sk-accent: #6d28d9;
@@ -181,6 +185,7 @@
     --equip-autopilot: #a3e635;
     --equip-book: #60a5fa;
     --equip-copilot: #a78bfa;
+    --equip-market: #2dd4bf;
 
     /* The DS tokens read the ramp, exactly as the dark block does. */
     --background: var(--sk-ground);
@@ -410,6 +415,7 @@
     --equip-autopilot: #a3e635;
     --equip-book: #60a5fa;
     --equip-copilot: #a78bfa;
+    --equip-market: #2dd4bf;
 
     /* Backgrounds — Legacy 3-layer blue-gray */
     --background: var(--sk-ground);
@@ -834,6 +840,61 @@ tbody tr:hover > td {
   li:focus-within .sk-quiet,
   li:has([data-active='true']) .sk-quiet {
     opacity: 1;
+  }
+}
+
+/* One popover material and motion (design Rev 2026-09-23.26): every Radix
+   popper — popovers, dropdown and select menus, tooltips, the sidebar's
+   collapsed flyout — wears the shell's glass and enters with the same 160ms
+   scale-fade. Unlayered on purpose: the components set their surfaces with
+   layered utilities (bg-popover, bg-foreground), and unlayered rules win.
+   Floats and panels are not poppers and keep their own opaque material. */
+@keyframes sk-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-radix-popper-content-wrapper] > * {
+  background: color-mix(in srgb, var(--sk-raised) 86%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border-color: color-mix(in srgb, var(--sk-ink) 14%, transparent);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 7%, transparent),
+    0 18px 48px -14px rgb(0 0 0 / 0.5);
+  animation: sk-pop-in 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Black 50% shadows read as a smudge on grey paper: same lift, a fraction of
+   the ink (Rev .26). */
+html[data-theme='light'] [data-radix-popper-content-wrapper] > * {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 12px 32px -12px rgba(15, 20, 30, 0.18);
+}
+
+/* The DS tooltip is an inverted chip (bg-foreground / text-background); on
+   glass that ink disappears, so it flips to the page's own, and the chip's
+   diamond arrow — a solid inverted corner poking out of a translucent card —
+   goes with it. */
+[data-radix-popper-content-wrapper] > [data-slot='tooltip-content'] {
+  color: var(--foreground);
+}
+
+[data-radix-popper-content-wrapper] > [data-slot='tooltip-content'] [class~='bg-foreground'] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-radix-popper-content-wrapper] > * {
+    animation: none;
   }
 }
 

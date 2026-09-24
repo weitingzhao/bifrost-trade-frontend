@@ -3,6 +3,8 @@
  *
  *   ⌘K / Ctrl+K — Omnibar
  *   ⌘J / Ctrl+J — toggle the Copilot conversation
+ *   ⌥1–⌥4     — the dock's four modules, from their rail icons (Rev .26);
+ *                ⌘W and ⌘1–9 stay the browser's
  *   Esc        — close the topmost inspector, else the open float
  *                (either way, not while focus is inside an editable field)
  *
@@ -20,8 +22,9 @@
  * Mount once via `useCockpitKeybinds()` from App layout.
  */
 import { useEffect } from 'react'
-import { useSurfaces } from '@/layout/equipSurface'
-import { dismissSurface } from '@/layout/equipMotion'
+import { EQUIP_GROUPS } from '@/layout/equip'
+import { surfaceForRoute, useSurfaces } from '@/layout/equipSurface'
+import { dismissSurface, toggleSurfaceFrom } from '@/layout/equipMotion'
 import { toggleThread } from '@/hooks/useCopilotThread'
 import { omnibar } from '@/lib/omnibar'
 import { KEY_COPILOT, KEY_OMNIBAR } from './shortcuts'
@@ -48,6 +51,17 @@ export function useCockpitKeybinds() {
       if (meta && e.key.toLowerCase() === KEY_COPILOT) {
         e.preventDefault()
         toggleThread()
+        return
+      }
+      // ⌥ + a digit types a glyph on macOS, so an editable field keeps it.
+      // The float springs from the module's rail icon, as a click would.
+      if (e.altKey && !meta && /^Digit[1-4]$/.test(e.code)) {
+        if (isEditableTarget(e.target)) return
+        const group = EQUIP_GROUPS[Number(e.code.slice(5)) - 1]
+        const surface = group ? surfaceForRoute(group.hub.to) : null
+        if (!surface) return
+        e.preventDefault()
+        toggleSurfaceFrom(surface, document.querySelector(`[data-equip-head="${group.id}"]`))
         return
       }
       if (e.key === 'Escape') {

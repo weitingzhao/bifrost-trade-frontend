@@ -4,7 +4,6 @@ import {
   type ShellNavLinkRenderProps,
   type ShellNavItem,
 } from '@bifrost/ui'
-import { LiveNavLamp } from '@/components/layout/LiveNavLamp'
 import { NavSubItemIcon } from '@/components/layout/SystemNavIcon'
 import { SystemNavLampProvider } from '@/components/layout/SystemNavLampProvider'
 import { STORAGE_KEYS } from '@/constants/storage'
@@ -20,7 +19,6 @@ import { Pin as PinIcon } from 'lucide-react'
 import { SHELF_GROUP, isStalePin, usePins } from '@/lib/pins'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
 
-const LIVE_NAV_PATH = '/market/live'
 function renderInAppLink({
   item,
   children,
@@ -157,10 +155,7 @@ export function AppSidebar() {
         //
         // A badge outranks the scope mark: a count is news, the unit of
         // analysis is a standing fact about the page.
-        renderItemExtras={(item) => {
-          if (item.id === LIVE_NAV_PATH) return <LiveNavLamp />
-          return research.extras(item) ?? <ScopeMark path={item.id} />
-        }}
+        renderItemExtras={(item) => research.extras(item) ?? <ScopeMark path={item.id} />}
         renderInAppLink={renderInAppLink}
         footer={<TradeSidebarFooter />}
         openGroupsStorageKey={

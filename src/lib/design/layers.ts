@@ -15,18 +15,19 @@
 export type LayerId = 'base' | 'home' | 'execution' | 'result' | 'analysis' | 'risk' | 'review'
 
 /**
- * The three pages Home took from Market (§5a.1, Rev 2026-09-20.23).
+ * The pages Home holds without a `/home` path — the design registry's own
+ * `HOME_ROUTES`, kept in step with it.
  *
- * The routes did not move, so a prefix cannot find them: Home is organised by
- * time, and these three are the market's own clock — what is trading now,
- * what I armed and what has fired, what arrives inside thirty days. That
- * overturns §0's reading, which judged them by content (the market's facts →
- * analysis) and missed the axis.
+ * Their routes did not move, so a prefix cannot find them: Home is organised
+ * by time of day. Events is the market's own calendar; the Daily Brief is the
+ * 9am read (it joined at Rev 2026-09-22.2 and this table had missed it). Live
+ * and Alerts left for the rail's Market group at Rev 2026-09-23.7 — like the
+ * Book's pages, an equipment page belongs to no layer and takes the analysis
+ * fallback, which is the design's own `layerOf` line for `/market/`.
  */
 const HOME_ROUTES: ReadonlySet<string> = new Set([
-  '/market/live',
   '/research/events',
-  '/research/event-radar',
+  '/research/daily-brief',
 ])
 
 /**

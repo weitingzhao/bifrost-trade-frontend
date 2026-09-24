@@ -21,7 +21,6 @@
  */
 import {
   Activity,
-  Bell,
   CalendarClock,
   BookOpen,
   ClipboardList,
@@ -154,32 +153,16 @@ export const COPILOT_ITEM: ShellNavItem = {
 }
 
 /**
- * The tape — under **Home** since design §5a.1, not Research.
+ * The market's rows under **Home** — Events alone since design Rev 2026-09-23.7.
  *
- * The old ruling read the content (these state the market's facts, and facts
- * about the market are Research's subject) and missed the axis: Home is
- * organised by time of day, and these three are the market's own clock. The
- * routes are untouched; only where they hang changed.
+ * Live and Alerts left the tree for the rail's fourth group (§5a.10, Owner
+ * option B): the left rail is where you stand, the right rail is what you use
+ * beside it, and the tape and the rules you armed are the second kind. Their
+ * routes are untouched — they live in `layout/equip.ts` now. Events stays: the
+ * market's own calendar is a page you stand on, organised by the clock.
  */
 export const MARKET_PAGES = {
-  live: route('Live', '/market/live', Activity),
-  /**
-   * The design splits this in two — `/research/events` for the market's own
-   * calendar and `/research/event-radar` labelled `Alerts`. Both rows exist
-   * now: Events was built on 2026-09-23 once the design gave the board a
-   * four-state rule, so the page could say `unfed` honestly rather than wait
-   * for the pipeline to fill it.
-   */
-  radar: route('Alerts', '/research/event-radar', Bell),
   events: route('Events', '/research/events', CalendarClock),
-}
-
-export const MARKET_ITEM: ShellNavItem = {
-  id: 'fold:market',
-  label: 'Market',
-  to: MARKET_PAGES.live.to,
-  icon: foldGlyph('Market') ?? Activity,
-  children: [MARKET_PAGES.live, MARKET_PAGES.radar],
 }
 
 export interface Bench {

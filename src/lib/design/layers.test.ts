@@ -12,13 +12,16 @@ describe('layerForPath', () => {
     expect(layerForPath('/home')).toBe('home')
   })
 
-  it('puts the three pages Home took from Market on the home layer', () => {
-    // §5a.1 (Rev 2026-09-20.23) overturned §0's reading: those three are the
-    // market's own clock, and Home is the layer organised by time. The routes
-    // did not move with the fold, so a prefix cannot find them.
-    expect(layerForPath('/market/live')).toBe('home')
-    expect(layerForPath('/research/event-radar')).toBe('home')
+  it('keeps Home to the pages that still hang there, and lets the rail pair fall through', () => {
+    // §5a.1 put the market's clock under Home; Rev 2026-09-23.7 moved Live and
+    // Alerts on to the rail, where — like the Book's pages — an equipment page
+    // belongs to no layer and takes the analysis fallback (the design's own
+    // `layerOf` line for `/market/`). Events stays, and the Daily Brief joined
+    // Home at Rev 2026-09-22.2 (this table had missed it).
+    expect(layerForPath('/market/live')).toBe('analysis')
+    expect(layerForPath('/research/event-radar')).toBe('analysis')
     expect(layerForPath('/research/events')).toBe('home')
+    expect(layerForPath('/research/daily-brief')).toBe('home')
     // Everything else under those prefixes keeps its own layer.
     expect(layerForPath('/market/depth')).toBe('analysis')
     expect(layerForPath('/research/symbol')).toBe('analysis')

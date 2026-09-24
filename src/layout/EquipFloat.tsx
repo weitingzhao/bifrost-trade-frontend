@@ -131,7 +131,13 @@ export function EquipFloat() {
   // already the animation's first frame rather than the window at rest.
   useLayoutEffect(() => {
     registerSurfaceElement('float', ref.current)
-    if (key && key !== shown.current && ref.current) animateFloatIn(ref.current, key)
+    if (key && key !== shown.current && ref.current) {
+      animateFloatIn(ref.current, key)
+      // Focus follows the eye (Rev .26): the keyboard lands in the window that
+      // just opened; closing hands it back (`equipMotion`). The panel never
+      // takes focus — it is beside the work, not in front of it.
+      ref.current.focus({ preventScroll: true })
+    }
     shown.current = key
   }, [key])
 
@@ -202,6 +208,7 @@ export function EquipFloat() {
   return (
     <div
       ref={ref}
+      tabIndex={-1}
       className={`${css.card} ${css.float}`}
       style={{ ...box, ['--rh' as string]: EQUIP_HUE[float.group] }}
       role="dialog"

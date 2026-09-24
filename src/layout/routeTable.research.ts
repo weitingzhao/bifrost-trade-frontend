@@ -22,6 +22,7 @@ import {
   COPILOT,
   DISCOVER,
   MARKET,
+  MARKET_RAIL,
   RESEARCH,
   REVIEW,
   SYSTEM_DATA,
@@ -421,12 +422,15 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
 
   // ── Research · Market ──────────────────────────────────────────────────
   {
+    // Package 2026-09-23.3 (Rev .7) moved the row, not the page: Live left
+    // Home for the rail's Market group (§5a.10, Owner option B). Built
+    // 2026-09-23 with the fourth rail group; waiting for the Owner's look.
     path: '/market/live',
     label: 'Live',
-    crumbs: MARKET,
+    crumbs: MARKET_RAIL,
     design: {
-      state: 'aligned',
-      rev: '2026-09-23.2',
+      state: 'reviewing',
+      rev: '2026-09-23.7',
       note: DESIGN_NOTES['/market/live'],
     },
   },
@@ -446,13 +450,15 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   },
   {
     // The design's `bell` glyph and its own label. The events board this route
-    // used to hold is on the Stock Explorer's `events` tab, unchanged.
+    // used to hold is on the Stock Explorer's `events` tab, unchanged. Rev .7
+    // moved the row with Live — Home to the rail's Market group; built
+    // 2026-09-23, waiting for the Owner's look.
     path: '/research/event-radar',
     label: 'Alerts',
-    crumbs: MARKET,
+    crumbs: MARKET_RAIL,
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.16',
+      state: 'reviewing',
+      rev: '2026-09-23.7',
       note: DESIGN_NOTES['/research/event-radar'],
     },
   },

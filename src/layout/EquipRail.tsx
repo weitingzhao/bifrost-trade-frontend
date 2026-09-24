@@ -30,9 +30,12 @@
  * floating, from the address bar = a page*. `⤢` in the header is there for
  * when you want the real thing.
  */
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
+import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { firedTodayCount, useFiredAlerts } from '@/hooks/useFiredAlerts'
+import { computeLiveNavLamp } from '@/utils/livePageLamps'
 import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
 import { PANEL_CARD_PX, placeOf, surfaceForRoute, useSurfaces } from './equipSurface'
 import { toggleSurfaceFrom } from './equipMotion'
@@ -55,17 +58,23 @@ function placeNote(to: string): string {
 function RailButton({
   page,
   head,
+  headOf,
+  title,
   open,
   here,
   children,
 }: {
   page: EquipPage
   head?: boolean
+  /** The group id, stamped on the head so ⌥1–4 can spring the float from it. */
+  headOf?: string
+  /** The head's tooltip — the group's own words, with its key (Rev .26). */
+  title?: string
   /** This surface is open, wherever it is. */
   open: boolean
   /** The frame page is this route. */
   here: boolean
-  children?: React.ReactNode
+  children?: ReactNode
 }) {
   const Icon = page.icon
   return (
@@ -78,7 +87,8 @@ function RailButton({
       }}
       aria-label={page.label}
       aria-pressed={open}
-      title={page.label + placeNote(page.to)}
+      title={(title ?? page.label) + placeNote(page.to)}
+      data-equip-head={headOf}
       className={`${css.btn} ${head ? css.head : css.item}`}
       style={{
         // Opaque tiles, not holes in the glass: the group's box is what stays
@@ -115,12 +125,15 @@ function Group({
   activePath,
   lamp,
   count,
+  countTitle,
   full,
 }: {
   group: EquipGroup
   activePath: string
-  lamp?: boolean
+  /** A dot on the head: Autopilot's run, Market's feed. */
+  lamp?: ReactNode
   count?: number
+  countTitle?: string
   /** Room for the page icons; without it the group is its head alone. */
   full: boolean
 }) {
@@ -146,12 +159,14 @@ function Group({
       <RailButton
         page={group.hub}
         head
+        headOf={group.id}
+        title={group.title}
         open={openAt(group.hub.to)}
         here={activePath === group.hub.to}
       >
-        {/* Only Autopilot carries one: it is the one module with state that
-            changes without your hand. Green for a run in flight. */}
-        {lamp ? <span className={css.dot} title="A loop run is in flight" /> : null}
+        {/* Only the two modules whose state changes without your hand carry
+            one: Autopilot's run, Market's feed. */}
+        {lamp}
       </RailButton>
       {/* macOS's running dot: something of this module is open, in the float
           or the panel. The box border says it too; the dot is what reads at a
@@ -160,7 +175,7 @@ function Group({
       {/* The count is its own line under the head, not a badge on it — the
           design's own placement, and it keeps the 28px button square. */}
       {(count ?? 0) > 0 ? (
-        <span className={css.count} title={`${count} waiting on a call`}>
+        <span className={css.count} title={countTitle}>
           {count}
         </span>
       ) : null}
@@ -174,9 +189,20 @@ function Group({
   )
 }
 
+/** The feed's dot on the Market head — the sidebar Live lamp, moved with its row. */
+function MarketFeedDot() {
+  const { data: status } = useMonitorStatus()
+  const daemonAlive = status?.daemon?.heartbeat?.daemon_alive === true
+  const { color, title } = computeLiveNavLamp(status, daemonAlive)
+  if (color === 'none') return null
+  return <span className={css.dot} style={{ background: `var(--color-lamp-${color})`, animation: 'none' }} title={title} />
+}
+
 export function EquipRail() {
   const { pathname } = useLocation()
   const standing = useAutopilotStanding().data
+  const alerts = useFiredAlerts().data
+  const firedToday = firedTodayCount(alerts, new Date().toISOString().slice(0, 10))
   const { panel } = useSurfaces()
   const [height, setHeight] = useState(() => window.innerHeight)
 
@@ -211,8 +237,17 @@ export function EquipRail() {
           key={g.id}
           group={g}
           activePath={pathname}
-          lamp={g.id === 'autopilot' && running}
-          count={g.id === 'autopilot' ? waiting : 0}
+          lamp={
+            g.id === 'autopilot' && running ? (
+              <span className={css.dot} title="A loop run is in flight" />
+            ) : g.id === 'market' ? (
+              <MarketFeedDot />
+            ) : null
+          }
+          count={g.id === 'autopilot' ? waiting : g.id === 'market' ? firedToday : 0}
+          countTitle={
+            g.id === 'autopilot' ? `${waiting} waiting on a call` : `${firedToday} alert${firedToday === 1 ? '' : 's'} fired today`
+          }
           full={full}
         />
       ))}

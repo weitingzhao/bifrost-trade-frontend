@@ -253,8 +253,10 @@ describe('design adoption', () => {
     // signed that walk too. 58 when Research Overview was re-walked against
     // Rev .24 (its census rows) and left `stale` for `reviewing`. 57 when
     // Positions was re-walked against Rev .21 as the §16 north-star page and
-    // went the same way.
-    expect(counts.aligned + counts.byState.stale).toBe(57)
+    // went the same way. 55 when Live and Alerts — the last two in `stale`,
+    // waiting on the rail move — were built into the rail's Market group and
+    // left the same way.
+    expect(counts.aligned + counts.byState.stale).toBe(55)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -264,10 +266,7 @@ describe('design adoption', () => {
     // Research Overview's census carries the two rows this side's ask
     // corrected — Narrative `store owed`, Compare `3 inputs owed` (Rev .24).
     expect(counts.aligned).toBe(55)
-    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
-      '/market/live',
-      '/research/event-radar',
-    ])
+    expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -479,8 +478,9 @@ describe('design adoption', () => {
     // two panels built and two owed with what each waits on. 8 with Research
     // Overview, re-walked onto Rev .24's census rows. 9 with Compare, built on
     // Rev .24's table for its three owed inputs. 10 with Positions, redrawn
-    // at Rev .21 as the §16 north-star page and rebuilt the same day.
-    expect(counts.byState.reviewing).toBe(10)
+    // at Rev .21 as the §16 north-star page and rebuilt the same day. 12 with
+    // Live and Alerts, moved on to the rail's Market group.
+    expect(counts.byState.reviewing).toBe(12)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -547,8 +547,10 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/docs/options-kit',
+      '/market/live',
       '/portfolio/positions',
       '/research/compare',
+      '/research/event-radar',
       '/research/events',
       '/research/history',
       '/research/lens-coverage',
@@ -783,8 +785,10 @@ describe('design adoption', () => {
     // Overview's census carrying the two rows this side's ask corrected. 4 → 3
     // the same evening: Overview's two rows took the design's words and it
     // waits for a look in `reviewing`. 3 → 2 with Positions, rebuilt to its
-    // north-star rev and waiting the same way. Live and Alerts are what is left.
-    expect(counts.byState.stale).toBe(2)
+    // north-star rev and waiting the same way. 2 → 0 with Live and Alerts,
+    // built into the rail's Market group (Rev .7): for the first time since
+    // Package 2026-09-23.2 nothing walked is behind its rev.
+    expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

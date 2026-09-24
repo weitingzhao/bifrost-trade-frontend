@@ -29,6 +29,8 @@ export const SURFACE_PAGES: Record<string, PageComponent> = {
   '/research/journal': lazy(() => import('@/pages/research/journal/JournalPage')),
   '/research/copilot': lazy(() => import('@/pages/research/seats/CopilotDeskPage')),
   '/research/copilot/trading': lazy(() => import('@/pages/research/seats/TradingCopilotPage')),
+  '/market/live': lazy(() => import('@/pages/market/LivePage')),
+  '/research/event-radar': lazy(() => import('@/pages/research/alerts/AlertsPage')),
 }
 
 export function surfacePageFor(to: string): PageComponent | null {

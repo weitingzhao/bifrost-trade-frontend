@@ -13,10 +13,11 @@
  * Research-side store — the save button says so rather than pretending.
  */
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Button, DenseTag, EmptyState, Input } from '@bifrost/ui'
 import { fetchSepaScreenerWide, type SepaWideRow } from '@/api/research/sepaScreenerWide'
+import { createSavedScreen, fetchSavedScreens } from '@/api/research/savedScreens'
 import { fetchSepaDaily } from '@/api/researchEngine'
 import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
@@ -139,6 +140,35 @@ function condDots(r: SepaWideRow, conds: readonly [string, string][]) {
 
 export default function LabScreenerPage() {
   const [filter, setFilter] = useState<ScreenFilter>(EMPTY_FILTER)
+  // ── Saved screens (6A · research 0.107.0): one object, one id ──
+  const qc = useQueryClient()
+  const [saveOpen, setSaveOpen] = useState(false)
+  const [screenName, setScreenName] = useState('')
+  const screensQ = useQuery({
+    queryKey: ['research', 'saved-screens'],
+    queryFn: fetchSavedScreens,
+    staleTime: 60_000,
+  })
+  const saveScreen = useMutation({
+    mutationFn: () =>
+      createSavedScreen({
+        name: screenName.trim(),
+        origin_page: '/research/lab/screener',
+        definition: {
+          q: filter.q,
+          paths: filter.paths,
+          grades: filter.grades,
+          min_composite: filter.minScore,
+          tech: filter.tech,
+          fund: filter.fund,
+        },
+      }),
+    onSuccess: () => {
+      setSaveOpen(false)
+      setScreenName('')
+      void qc.invalidateQueries({ queryKey: ['research', 'saved-screens'] })
+    },
+  })
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
     key: 'composite_score',
     dir: 'desc',
@@ -208,14 +238,54 @@ export default function LabScreenerPage() {
           <PageFaceSwitch path="/research/lab/screener" />
         </div>
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button
-            type="button"
-            size="sm"
-            disabled
-            title="The saved-screen store is not built yet — the Research-side table and endpoint wait on the Owner's schema sign-off (6A). Until it lands, a screen lives only in this session."
-          >
-            Save as screen
-          </Button>
+          {saveOpen ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Input
+                autoFocus
+                value={screenName}
+                onChange={(e) => setScreenName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && screenName.trim() && !saveScreen.isPending) saveScreen.mutate()
+                  if (e.key === 'Escape') setSaveOpen(false)
+                }}
+                placeholder="Screen name"
+                className="h-8 w-44"
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={!screenName.trim() || saveScreen.isPending}
+                onClick={() => saveScreen.mutate()}
+                title="Writes research.saved_screen — Trade's result face renders the same object read-only."
+              >
+                {saveScreen.isPending ? 'Saving…' : 'Save'}
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setSaveOpen(false)}>
+                Cancel
+              </Button>
+            </span>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setSaveOpen(true)}
+              title="Save the current filters as one screen with one id (research.saved_screen, 0.107.0)."
+            >
+              Save as screen
+            </Button>
+          )}
+          {saveScreen.isError ? (
+            <span className="text-dense-caption text-destructive">
+              {(saveScreen.error as Error).message.slice(0, 120)}
+            </span>
+          ) : screensQ.data && screensQ.data.count > 0 ? (
+            <span
+              className="text-dense-caption text-muted-foreground"
+              title={screensQ.data.screens.map((sc) => sc.name).join(' · ')}
+            >
+              {screensQ.data.count} saved · latest {screensQ.data.screens[0]?.name}
+            </span>
+          ) : null}
           <Button
             type="button"
             variant="outline"

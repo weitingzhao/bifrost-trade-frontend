@@ -67,7 +67,7 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + 'top-1000 and prints \u2014 with the reason below the cut; Save as screen is drawn disabled with '
     + 'the reason on it \u2014 the saved-screen store (6A) waits on the Owner\u2019s schema sign-off, and '
     + 'the design\u2019s own button only flashed a toast; the Copilot ask replaces no drawn draft here '
-    + '(the design has none on this page). Owner to look before aligned.',
+    + '(the design has none on this page). Owner to look before aligned. THE SAVE IS LIVE 2026-10-02: research 0.107.0 shipped (built, manifests bumped, ArgoCD converged, health answers 0.107.0), the research.saved_screen table applied, and the button writes it — name in, one object with one id out, the saved count and latest name read back beside the button from the same store. Verified end to end on DEV (a smoke screen saved and then retired through the store’s own retire route). The definition crosses in the v1 vocabulary exactly (minScore travels as min_composite); a 422 from the server names vocabulary drift instead of storing it.',
   '/research/lab/symbol':
     'Built 2026-09-24 against Research Symbol Method.dc.html at route rev 2026-09-20.4, on local '
     + 'DEV (:5173). Measured first: /vol-surface/fit answers nine expiries of full SVI params and '

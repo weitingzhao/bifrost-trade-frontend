@@ -25,14 +25,10 @@ import { cn } from '@/lib/utils'
 
 const MODES: readonly { mode: ThemeMode; label: string; title: string }[] = [
   { mode: 'dark', label: 'Dark', title: 'Near-black ground with an indigo cast' },
-  {
-    mode: 'light',
-    label: 'Light',
-    // The design calls light a preview too: the shell and the token-driven
-    // pages are paper-ready, a few charts and module stylesheets still carry
-    // dark-only literals (about fifty, counted 2026-09-23).
-    title: 'Grey-paper ground, deepened data inks — preview: a few charts still carry dark-only colours',
-  },
+  // Out of preview since T3 (2026-09-23): the §14.8 scan finds no bare entity
+  // ink, dark neutral or dark tint left — what remains is exempt by the same
+  // rule (lamp green, category chart palettes, black shadows and scrims).
+  { mode: 'light', label: 'Light', title: 'Grey-paper ground, deepened data inks' },
   { mode: 'auto', label: 'Auto', title: 'By clock — light 07:00–19:00 local' },
 ]
 

@@ -20,7 +20,7 @@ export const ASSET_MIX_CHART_COLORS = {
 } as const
 
 /** Legacy coverage-asset-pie-ring-track stroke. */
-export const COVERAGE_PIE_EMPTY = 'rgba(255, 255, 255, 0.14)'
+export const COVERAGE_PIE_EMPTY = 'color-mix(in srgb, var(--sk-ink) 14%, transparent)'
 
 export const UNDERLYING_CATEGORY_COLORS: Record<UnderlyingCategoryFilter, string> = {
   Stocks: 'var(--color-chart-stock)',

@@ -421,11 +421,7 @@
 }
 
 .detailsTable tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-:global(.light) .detailsTable tbody tr:hover td {
-  background: rgba(0, 0, 0, 0.03);
+  background: color-mix(in srgb, var(--sk-ink) 2%, transparent);
 }
 
 .detailsConstraints {
@@ -487,7 +483,7 @@
   padding: 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--sk-ink) 2%, transparent);
 }
 
 .templateFiltersCompact {
@@ -581,7 +577,7 @@
 
 .templateCard:hover {
   border-color: var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--sk-ink) 3%, transparent);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
@@ -591,7 +587,7 @@
   background: var(--color-accent-soft);
   box-shadow:
     0 0 0 1px var(--primary),
-    0 4px 12px rgba(163, 230, 53, 0.08);
+    0 4px 12px rgb(var(--sk-accent-rgb) / 0.08);
 }
 
 .templateCardSelected:hover {
@@ -652,22 +648,14 @@
   font-size: 0.6875rem;
   font-weight: 500;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--sk-ink) 6%, transparent);
   color: var(--muted-foreground);
   text-transform: capitalize;
 }
 
 .templateCardSelected .templateCardTag {
-  background: rgba(163, 230, 53, 0.1);
+  background: rgb(var(--sk-accent-rgb) / 0.1);
   color: var(--primary);
-}
-
-:global(.light) .templateCard:hover {
-  background: rgba(0, 0, 0, 0.02);
-}
-
-:global(.light) .templateCardTag {
-  background: rgba(0, 0, 0, 0.05);
 }
 
 .copyGrid {
@@ -734,7 +722,7 @@
   color: var(--muted-foreground);
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--sk-ink) 3%, transparent);
   border: 1px solid var(--border);
   margin-bottom: 0.75rem;
 }

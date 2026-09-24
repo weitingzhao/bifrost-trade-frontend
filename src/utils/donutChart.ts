@@ -9,7 +9,8 @@ export interface DonutSegment {
 
 /** Shared donut segment colors (Positions charts + other dashboards). */
 export const DONUT_CHART_PALETTE = [
-  '#38bdf8',
+  // The contract ink rather than the retired sky (§14.8), so it flips with the theme.
+  'var(--sk-contract)',
   '#76b900',
   '#fbbf24',
   '#ef4444',

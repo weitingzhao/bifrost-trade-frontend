@@ -53,11 +53,11 @@ export const screenerChipCheckClass = cn(
 )
 
 export const screenerChipActiveCheckClass =
-  'border-lime-400 bg-lime-400 text-[#0a0c0f]'
+  'border-primary bg-primary text-primary-foreground'
 
 export const screenerFilterBadgeClass = cn(
   'inline-flex h-3.5 min-w-3.5 items-center justify-center rounded-full',
-  'bg-lime-400 px-[2px] text-dense-micro font-semibold text-[#0a0c0f]',
+  'bg-primary px-[2px] text-dense-micro font-semibold text-primary-foreground',
 )
 
 export const screenerScoreSliderClass = 'h-1 flex-1 cursor-pointer accent-lime-400'

@@ -386,7 +386,7 @@
   top: 0.08rem;
   width: 0.24rem;
   height: 0.5rem;
-  border: solid #fff;
+  border: solid var(--primary-foreground);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg) scale(0);
   transform-origin: center;
@@ -598,7 +598,7 @@
   top: 0.08rem;
   width: 0.24rem;
   height: 0.5rem;
-  border: solid #fff;
+  border: solid var(--primary-foreground);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg) scale(0);
   transform-origin: center;

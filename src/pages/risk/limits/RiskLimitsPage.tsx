@@ -258,7 +258,7 @@ export default function RiskLimitsPage() {
                                   className={cn(
                                     'ml-1.5 inline-flex h-4 items-center rounded-[3px] border px-1 font-mono text-dense-micro font-bold',
                                     // The design's gate violet is the Strategy
-                                    // entity hue it already had: #a78bfa in dark.
+                                    // entity hue it already had: violet-400 in dark.
                                     r.kind === 'gate'
                                       ? 'border-[var(--color-entity-strategy)]/45 text-[var(--color-entity-strategy)]'
                                       : 'border-lamp-red/45 text-lamp-red',

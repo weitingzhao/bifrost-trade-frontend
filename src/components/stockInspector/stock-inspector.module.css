@@ -290,8 +290,8 @@
 }
 
 .chipExch {
-  background: color-mix(in srgb, #38bdf8 8%, transparent);
-  border-color: color-mix(in srgb, #38bdf8 20%, transparent);
+  background: rgb(var(--sk-contract-rgb) / 0.08);
+  border-color: rgb(var(--sk-contract-rgb) / 0.2);
   color: var(--color-link, hsl(var(--primary)));
   font-family: var(--font-mono);
 }
@@ -1004,7 +1004,7 @@
 .chainTotalOi {
   position: relative;
   min-width: 72px;
-  background: color-mix(in srgb, #a78bfa 8%, transparent);
+  background: rgb(var(--sk-accent-rgb) / 0.08);
 }
 
 .chainPc {

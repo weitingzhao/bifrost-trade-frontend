@@ -33,7 +33,7 @@
   border: 1px solid var(--rh-box, color-mix(in srgb, var(--sk-ink) 10%, transparent));
   border-radius: 12px;
   pointer-events: auto;
-  background: rgba(20, 25, 33, 0.3);
+  background: color-mix(in srgb, var(--sk-raised) 30%, transparent);
   -webkit-backdrop-filter: blur(5px) saturate(1.15);
   backdrop-filter: blur(5px) saturate(1.15);
   /* The inset top highlight is what sells the bubble read. */
@@ -48,7 +48,7 @@
 }
 
 .group:hover {
-  background: rgba(20, 25, 33, 0.5);
+  background: color-mix(in srgb, var(--sk-raised) 50%, transparent);
   -webkit-backdrop-filter: blur(18px) saturate(1.7);
   backdrop-filter: blur(18px) saturate(1.7);
   box-shadow:

@@ -80,9 +80,9 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
             title="Balance Sheet"
             legend={
               <>
-                <LegendItem color="rgba(74,222,128,0.85)" label="Cash" />
-                <LegendItem color="rgba(56,189,248,0.85)" label="Equity" />
-                <LegendItem color="rgba(248,113,113,0.75)" label="LT Debt" />
+                <LegendItem color="rgb(var(--color-profit-rgb) / 0.85)" label="Cash" />
+                <LegendItem color="rgb(var(--sk-contract-rgb) / 0.85)" label="Equity" />
+                <LegendItem color="rgb(var(--color-loss-rgb) / 0.75)" label="LT Debt" />
               </>
             }
             chart={
@@ -92,11 +92,11 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                 h={110}
                 vw={500}
                 series={[
-                  { key: 'Cash', color: 'rgba(74,222,128,0.82)', values: bs.map((r) => r.cash_and_equivalents) },
-                  { key: 'Equity', color: 'rgba(56,189,248,0.82)', values: bs.map((r) => r.total_equity) },
+                  { key: 'Cash', color: 'rgb(var(--color-profit-rgb) / 0.82)', values: bs.map((r) => r.cash_and_equivalents) },
+                  { key: 'Equity', color: 'rgb(var(--sk-contract-rgb) / 0.82)', values: bs.map((r) => r.total_equity) },
                   {
                     key: 'LT Debt',
-                    color: 'rgba(248,113,113,0.72)',
+                    color: 'rgb(var(--color-loss-rgb) / 0.72)',
                     values: bs.map((r) => r.long_term_debt_and_capital_lease_obligations),
                   },
                 ]}
@@ -148,7 +148,7 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
             title="Cash Flow"
             legend={
               <>
-                <LegendItem color="rgba(74,222,128,0.85)" label="Net Inc" />
+                <LegendItem color="rgb(var(--color-profit-rgb) / 0.85)" label="Net Inc" />
                 <LegendItem color="rgba(99,179,237,0.85)" label="Op CF" />
               </>
             }
@@ -161,14 +161,14 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                 series={[
                   {
                     key: 'Net Income',
-                    color: 'rgba(74,222,128,0.82)',
-                    negColor: 'rgba(248,113,113,0.75)',
+                    color: 'rgb(var(--color-profit-rgb) / 0.82)',
+                    negColor: 'rgb(var(--color-loss-rgb) / 0.75)',
                     values: cf.map((r) => r.net_income),
                   },
                   {
                     key: 'Op CF',
                     color: 'rgba(99,179,237,0.82)',
-                    negColor: 'rgba(248,113,113,0.65)',
+                    negColor: 'rgb(var(--color-loss-rgb) / 0.65)',
                     values: cf.map((r) => r.net_cash_from_operating_activities),
                   },
                 ]}
@@ -280,7 +280,7 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
             title="Short Interest"
             legend={
               <>
-                <LegendItem color="rgba(248,113,113,0.8)" label="Shares Short" />
+                <LegendItem color="rgb(var(--color-loss-rgb) / 0.8)" label="Shares Short" />
                 <LegendItem color="rgba(251,191,36,0.8)" label="Days-to-Cover" />
               </>
             }
@@ -294,7 +294,7 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                   series={[
                     {
                       key: 'Short Interest',
-                      color: 'rgba(248,113,113,0.75)',
+                      color: 'rgb(var(--color-loss-rgb) / 0.75)',
                       values: si.map((r) => r.short_interest),
                     },
                   ]}
@@ -342,7 +342,7 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
         return (
           <StmtBlock
             title="Short Volume"
-            legend={<LegendItem color="rgba(239,68,68,0.8)" label="Short Vol Ratio (%)" />}
+            legend={<LegendItem color="rgb(var(--color-loss-rgb) / 0.8)" label="Short Vol Ratio (%)" />}
             chart={
               <SvgAreaChart
                 className={styles.pcrChart}
@@ -350,8 +350,8 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                 values={sv.map((r) =>
                   r.short_volume_ratio != null ? r.short_volume_ratio * 100 : null,
                 )}
-                color="rgba(239,68,68,0.9)"
-                areaColor="rgba(239,68,68,0.12)"
+                color="rgb(var(--color-loss-rgb) / 0.9)"
+                areaColor="rgb(var(--color-loss-rgb) / 0.12)"
                 h={110}
                 vw={500}
               />
@@ -400,7 +400,7 @@ function MiniBarInline({
 }) {
   if (value == null || !Number.isFinite(value) || max === min) return null
   const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100))
-  const color = value >= 0 ? 'rgba(74,222,128,0.28)' : 'rgba(248,113,113,0.28)'
+  const color = value >= 0 ? 'rgb(var(--color-profit-rgb) / 0.28)' : 'rgb(var(--color-loss-rgb) / 0.28)'
   return (
     <div className={styles.miniBar} style={{ width: `${pct}%`, background: color }} />
   )

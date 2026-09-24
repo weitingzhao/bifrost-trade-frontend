@@ -359,13 +359,13 @@ export const sizingCashPieClass = cn('relative h-[7.75rem] w-[7.75rem] shrink-0'
 
 export const sizingCashPieRingClass = cn(
   'absolute inset-0 rounded-full',
-  'shadow-[0_4px_18px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.05)]',
+  'shadow-[0_4px_18px_rgba(0,0,0,0.35),inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_5%,transparent)]',
 )
 
 export const sizingCashPieHoleClass = cn(
   'absolute inset-[17%] flex flex-col items-center justify-center rounded-full',
   'border border-border/85 bg-secondary',
-  'shadow-[inset_0_2px_8px_rgba(0,0,0,0.28),0_1px_0_rgba(255,255,255,0.04)]',
+  'shadow-[inset_0_2px_8px_rgba(0,0,0,0.28),0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
 )
 
 export const sizingCashPiePctClass = cn(

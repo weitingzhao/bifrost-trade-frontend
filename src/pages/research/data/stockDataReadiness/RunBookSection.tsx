@@ -48,7 +48,7 @@ export function RunBookSection({
             className={cn(
               'flex flex-col min-w-0 rounded-lg border overflow-hidden transition-shadow',
               stage.containsActive
-                ? 'border-sky-500/35 shadow-[0_0_0_1px_rgba(56,189,248,0.12)]'
+                ? 'border-primary/35 shadow-[0_0_0_1px_rgb(var(--sk-accent-rgb)/0.12)]'
                 : 'border-white/10',
               stage.stageDone && !stage.containsActive && 'border-lamp-green/25',
             )}

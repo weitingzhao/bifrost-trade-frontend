@@ -224,7 +224,7 @@
     --color-warning: #ca8a04;
     --color-warning-soft: rgba(202, 138, 4, 0.12);
     /* Ledger Options: multiple distinct instance IDs on one contract group */
-    --color-instance-multi: #7c3aed;
+    --color-instance-multi: var(--sk-instance);
 
     --color-link: #0284c7;
     --color-link-hover: #0369a1;
@@ -237,8 +237,8 @@
     --color-surface-elevated: #f8f9fa;
     --color-border-strong: #d1d5db;
     --color-text-dim: #9ca3af;
-    --color-accent-soft: rgba(14, 165, 233, 0.12);
-    --color-accent-glow: rgba(14, 165, 233, 0.25);
+    --color-accent-soft: rgb(var(--sk-accent-rgb) / 0.12);
+    --color-accent-glow: rgb(var(--sk-accent-rgb) / 0.25);
     --color-dashboard-tile: rgba(0, 0, 0, 0.04);
     --color-dashboard-shadow: rgba(0, 0, 0, 0.08);
 
@@ -259,10 +259,17 @@
     --color-unrealized: #9a3412; /* orange-800 — the design's paper step */
 
     /* Business semantics — entity identity (light) */
-    --color-entity-symbol: var(--primary);
-    --color-entity-option: #0284c7;   /* sky-600 */
+    /* §14.8: the three entity inks are the ramp's own (--sk-ticker ·
+       --sk-contract · --sk-instance), so a ticker, a contract and an instance
+       look the same on every page in either theme. Symbol read the accent
+       until 2026-09-23, which quietly turned every ticker violet when the
+       accent moved from lime (Package 2026-09-23.3); the design keeps lime
+       for tickers, and now that the accent is violet the two no longer
+       collide. */
+    --color-entity-symbol: var(--sk-ticker);
+    --color-entity-option: var(--sk-contract);
     --color-entity-strategy: #7c3aed; /* violet-600 — Option Category: strategy */
-    --color-entity-instance: #0d9488; /* teal-600 — Option Category: instance */
+    --color-entity-instance: var(--sk-instance);
     --color-option-category-opportunity: #c026d3; /* fuchsia-600 — warm, distinct from teal/cyan */
     --color-option-category-structure: #16a34a; /* green-600 — structure type, distinct from instance teal */
     --color-entity-category: #a855f7; /* purple-500 */
@@ -463,7 +470,7 @@
     --color-danger-soft: rgba(239, 68, 68, 0.15);
     --color-warning: #eab308;
     --color-warning-soft: rgba(234, 179, 8, 0.15);
-    --color-instance-multi: #a78bfa;
+    --color-instance-multi: var(--sk-instance);
 
     --color-link: #7dd3fc;
     --color-link-hover: #bae6fd;
@@ -479,8 +486,9 @@
     --color-surface-elevated: #1a1f26;
     --color-border-strong: #3d4754;
     --color-text-dim: #5c6572;
-    --color-accent-soft: rgba(163, 230, 53, 0.12);
-    --color-accent-glow: rgba(163, 230, 53, 0.35);
+    /* Were lime — the accent until Package 2026-09-23.3 — and never moved. */
+    --color-accent-soft: rgb(var(--sk-accent-rgb) / 0.12);
+    --color-accent-glow: rgb(var(--sk-accent-rgb) / 0.35);
     --color-dashboard-tile: rgba(255, 255, 255, 0.05);
     --color-dashboard-shadow: rgba(0, 0, 0, 0.25);
 
@@ -490,37 +498,37 @@
     --color-unrealized: #fb923c; /* orange-400 */
 
     /* Business semantics — entity identity (dark) */
-    --color-entity-symbol: var(--primary);
-    --color-entity-option: #38bdf8;   /* sky-400 */
+    --color-entity-symbol: var(--sk-ticker);
+    --color-entity-option: var(--sk-contract);
     --color-entity-strategy: #a78bfa; /* violet-400 */
-    --color-entity-instance: #2dd4bf; /* teal-400 */
+    --color-entity-instance: var(--sk-instance);
     --color-option-category-opportunity: #e879f9; /* fuchsia-400 */
     --color-option-category-structure: #4ade80; /* green-400 */
     --color-entity-category: #c084fc; /* purple-400 */
 
     /* Directional / market-structure semantics (dark) */
-    --color-option-call: #38bdf8;      /* sky-400 */
+    --color-option-call: var(--sk-contract);      /* the retired sky-400 (§14.8) */
     --color-option-put: #fb7185;       /* rose-400 */
-    --color-side-buy: #38bdf8;         /* sky-400 */
+    --color-side-buy: var(--sk-contract);         /* the retired sky-400 (§14.8) */
     --color-side-sell: #fbbf24;        /* amber-400 */
-    --color-quote-bid: #38bdf8;        /* sky-400 */
+    --color-quote-bid: var(--sk-contract);        /* the retired sky-400 (§14.8) */
     --color-quote-ask: #fb7185;        /* rose-400 */
-    --color-expiry-weekly: #38bdf8;    /* sky-400 */
+    --color-expiry-weekly: var(--sk-contract);    /* the retired sky-400 (§14.8) */
     --color-expiry-quarterly: #a78bfa; /* violet-400 */
 
     /* SEPA screener dimensions (dark) */
     --color-screener-tech: #a78bfa;           /* violet-400 */
     --color-screener-fund: #4ade80;           /* emerald-400 */
-    --color-screener-momentum: #38bdf8;       /* sky-400 */
+    --color-screener-momentum: var(--sk-contract);       /* the retired sky-400 (§14.8) */
     --color-screener-structure-tier: #fbbf24; /* amber-400 */
     --color-screener-sentiment: #fb7185;      /* rose-400 */
 
     /* Chart palette (dark) */
-    --color-chart-stock: #38bdf8;        /* sky-400 */
+    --color-chart-stock: var(--sk-contract);        /* the retired sky-400 (§14.8) */
     --color-chart-option: #c084fc;       /* purple-400 */
     --color-chart-fi: #4ade80;           /* green-400 */
     --color-chart-cash: #fbbf24;         /* amber-400 */
-    --color-chart-macd: #38bdf8;         /* sky-400 */
+    --color-chart-macd: var(--sk-contract);         /* the retired sky-400 (§14.8) */
     --color-chart-bb: #a78bfa;           /* violet-400 */
     --color-chart-oi-call: #4ade80;      /* green-400 */
     --color-chart-oi-put: #f87171;       /* red-400 */

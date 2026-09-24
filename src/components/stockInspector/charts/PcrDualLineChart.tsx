@@ -68,8 +68,8 @@ export function PcrDualLineChart({ points, windowDays, asOfDate }: Props) {
       className={styles.pcrChart}
       aria-hidden
     >
-      <rect x={pl} y={pt} width={cw} height={refY - pt} fill="rgba(88, 28, 135, 0.22)" />
-      <rect x={pl} y={refY} width={cw} height={pt + ch - refY} fill="rgba(15, 76, 92, 0.28)" />
+      <rect x={pl} y={pt} width={cw} height={refY - pt} fill="rgb(var(--sk-instance-rgb) / 0.12)" />
+      <rect x={pl} y={refY} width={cw} height={pt + ch - refY} fill="rgb(var(--sk-contract-rgb) / 0.1)" />
       {yTicks.map((tv) => {
         const ty = yOf(tv)
         return (

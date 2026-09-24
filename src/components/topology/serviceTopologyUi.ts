@@ -5,11 +5,11 @@ export const TOPOLOGY_VIEWBOX_WIDTH = 1280
 export const TOPOLOGY_VIEWBOX_HEIGHT = 480
 
 export const topologyShellClass = cn(
-  'relative overflow-hidden rounded-lg border border-border/60 bg-[#0a0e14] dark:bg-[#060a0f]',
+  'relative overflow-hidden rounded-lg border border-border/60 bg-[var(--sk-ground)]',
 )
 
 export const topologyShellEmbeddedClass = cn(
-  'relative flex h-full min-h-0 w-full flex-col bg-[#0a0e14] dark:bg-[#060a0f]',
+  'relative flex h-full min-h-0 w-full flex-col bg-[var(--sk-ground)]',
 )
 
 export const topologyGridOverlayClass = cn('pointer-events-none absolute inset-0 opacity-[0.35]')

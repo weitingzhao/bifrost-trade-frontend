@@ -167,8 +167,8 @@ export function ServiceTopologyOverview({
         className={topologyGridOverlayClass}
         style={{
           backgroundImage: `
-            linear-gradient(rgba(56,189,248,0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(56,189,248,0.06) 1px, transparent 1px)
+            linear-gradient(rgb(var(--sk-contract-rgb) / 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgb(var(--sk-contract-rgb) / 0.06) 1px, transparent 1px)
           `,
           backgroundSize: '24px 24px',
         }}

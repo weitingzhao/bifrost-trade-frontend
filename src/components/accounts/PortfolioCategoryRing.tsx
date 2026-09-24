@@ -144,13 +144,13 @@ export function PortfolioCategoryRing({ accounts, embedded }: Props) {
         <div className={cn(styles.mixLegendCol, 'flex-1 min-w-[10rem]')}>
           <LegendItem
             label="Stock"
-            dotClass="bg-[#38bdf8]"
+            dotClass="bg-[var(--color-chart-stock)]"
             pct={denom > 0 ? `${(pStock * 100).toFixed(1)}%` : '—'}
             value={fmtUsd(coreStockMV, true)}
           />
           <LegendItem
             label="Fixed income"
-            dotClass="bg-[#4ade80]"
+            dotClass="bg-[var(--color-chart-fi)]"
             pct={includeFiInChart && denom > 0 ? `${(pFixedIncome * 100).toFixed(1)}%` : '—'}
             value={fmtUsd(fixedIncomeMV, true)}
             excluded={!includeFiInChart}
@@ -162,13 +162,13 @@ export function PortfolioCategoryRing({ accounts, embedded }: Props) {
           />
           <LegendItem
             label="Cash + Cash-like"
-            dotClass="bg-[#fbbf24]"
+            dotClass="bg-[var(--color-chart-cash)]"
             pct={denom > 0 && cashMergedMV > 0 ? `${(pCashMerged * 100).toFixed(1)}%` : '—'}
             value={fmtUsd(cashMergedMV, true)}
           />
           <LegendItem
             label="Options"
-            dotClass="bg-[#c084fc]"
+            dotClass="bg-[var(--color-chart-option)]"
             pct={includeOptInChart && denom > 0 ? `${(pOpt * 100).toFixed(1)}%` : '—'}
             value={fmtUsd(optionsMV, true)}
             excluded={!includeOptInChart}

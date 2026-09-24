@@ -63,7 +63,7 @@ export function OpenInterestTrendChart({ points, windowDays, asOfDate }: Props) 
       className={styles.pcrChart}
       aria-hidden
     >
-      <rect x={pl} y={pt} width={cw} height={ch} fill="rgba(0, 0, 0, 0.2)" rx={2} />
+      <rect x={pl} y={pt} width={cw} height={ch} fill="color-mix(in srgb, var(--sk-ground) 70%, transparent)" rx={2} />
       {yTicks.map((tv) => {
         const ty = yOf(tv)
         return (

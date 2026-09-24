@@ -5,7 +5,7 @@
 }
 
 .ringTrack {
-  stroke: rgba(255, 255, 255, 0.14);
+  stroke: color-mix(in srgb, var(--sk-ink) 14%, transparent);
   opacity: 0.85;
 }
 

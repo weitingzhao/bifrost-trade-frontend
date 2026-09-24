@@ -16,14 +16,14 @@ export interface GrowthLayerDef {
 }
 
 export const GROWTH_LAYERS: GrowthLayerDef[] = [
-  { key: 'options', label: 'Options', color: 'rgb(74,222,128)', colorFill: 'rgba(74,222,128,0.14)', strokeWidth: 2.5, mark: 'options' },
+  { key: 'options', label: 'Options', color: 'var(--color-profit)', colorFill: 'rgb(var(--color-profit-rgb) / 0.14)', strokeWidth: 2.5, mark: 'options' },
   { key: 'stocks', label: 'Stocks', color: 'rgb(96,165,250)', colorFill: 'rgba(96,165,250,0.14)', strokeWidth: 1.75, mark: 'stocks' },
   { key: 'fixed_income', label: 'FI Stream', color: 'rgb(251,191,36)', colorFill: 'rgba(251,191,36,0.14)', strokeWidth: 1.5, mark: 'fi' },
   { key: 'cash_like', label: 'Cash-like', color: 'rgb(167,139,250)', colorFill: 'rgba(167,139,250,0.14)', strokeWidth: 1.25, dash: '1 3', mark: 'cash' },
 ]
 
 /** The one fill on the chart: the area under the Total line. */
-export const GROWTH_TOTAL_AREA_FILL = 'rgba(74,222,128,0.14)'
+export const GROWTH_TOTAL_AREA_FILL = 'rgb(var(--color-profit-rgb) / 0.14)'
 
 export const DEFAULT_LAYERS_VISIBLE: Record<GrowthLayer, boolean> = {
   options: true,

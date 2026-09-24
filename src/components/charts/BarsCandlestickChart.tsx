@@ -478,7 +478,7 @@ export function BarsCandlestickChart({
           y={top}
           width={w}
           height={h}
-          fill={pt.hist >= 0 ? 'rgba(34,197,94,0.55)' : 'rgba(239,68,68,0.55)'}
+          fill={pt.hist >= 0 ? 'rgb(var(--color-profit-rgb) / 0.55)' : 'rgb(var(--color-loss-rgb) / 0.55)'}
         />,
       )
     }

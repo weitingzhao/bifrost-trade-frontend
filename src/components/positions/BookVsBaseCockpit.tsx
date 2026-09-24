@@ -162,7 +162,7 @@ export function BookVsBaseCockpit({
       ) : null}
 
       {/* flex-1: on a §16.5 band the panel is as tall as its row, and the two cells fill it. */}
-      <div className="grid flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,13.125rem),1fr))] gap-px rounded-b-md bg-border">
+      <div className="grid flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,13.125rem),1fr))] gap-px rounded-b-[9px] bg-[var(--sk-line0)]">
         <DemandSupplyCell
           name="Demand — what the options need"
           items={[
@@ -210,7 +210,7 @@ function DemandSupplyCell({
   explanationFor: (t: ExplainTopic, boxClass?: string) => ReactNode
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5 bg-[var(--sk-raised)] px-3 pt-2 pb-2.5 leading-normal first:rounded-bl-md last:rounded-br-md">
+    <div className="flex min-w-0 flex-col gap-1.5 bg-[var(--sk-raised)] px-3 pt-2 pb-2.5 leading-normal first:rounded-bl-[9px] last:rounded-br-[9px]">
       <span className={positionsUi.cap}>{name}</span>
       {items.map((it) => (
         <div key={it.topic} className="flex min-w-0 flex-col gap-0.5">

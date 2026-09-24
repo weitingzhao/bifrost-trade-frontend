@@ -34,9 +34,18 @@ export const positionsUi = {
   bandItem: 'flex min-w-0 flex-[1_1_20rem] *:min-w-0 *:flex-1',
   bandItemWide: 'flex min-w-0 flex-[1_1_28.75rem] *:min-w-0 *:flex-1',
 
-  panel: 'min-w-0 rounded-md border border-border bg-[var(--sk-raised)]',
+  /**
+   * §16.6 material (design Rev .19–.21): a solid data card — 10px corners, the
+   * faintest line step for its frame, a 4% highlight along the top edge. Layers
+   * read by ground and light rather than by drawn lines; rows inside tables keep
+   * their dividers, which are for scanning, not decoration.
+   */
+  panel: cn(
+    'min-w-0 rounded-[10px] border border-[var(--sk-line0)] bg-[var(--sk-raised)]',
+    'shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+  ),
   panelHead: cn(
-    'flex flex-wrap items-center gap-2.5 rounded-t-md border-b border-border',
+    'flex flex-wrap items-center gap-2.5 rounded-t-[9px] border-b border-[var(--sk-line0)]',
     'bg-[var(--sk-raised2)] px-3 py-1.75 text-dense-body leading-normal',
   ),
   panelTitle: 'text-dense-body font-semibold leading-normal text-foreground',

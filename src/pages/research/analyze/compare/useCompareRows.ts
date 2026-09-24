@@ -7,6 +7,7 @@
  * gate from the same exposure hook Risk › Sizing cites.
  */
 import { useMemo } from 'react'
+import { daysBack } from '@/lib/researchFreshness'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchStructure, fetchStructures } from '@/api/strategy'
 import { fetchChainExpirations, fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
@@ -51,12 +52,6 @@ export interface CompareRow {
   caps: Caps | null
   /** The thinnest option leg's open interest and session volume — a liquidity proxy, not a spread. */
   thinnest: { oi: number | null; volume: number | null } | null
-}
-
-function daysBack(today: string, n: number): string {
-  const d = new Date(`${today}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - n)
-  return d.toISOString().slice(0, 10)
 }
 
 /**

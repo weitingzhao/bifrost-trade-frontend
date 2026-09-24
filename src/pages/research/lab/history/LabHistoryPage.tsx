@@ -23,7 +23,7 @@ import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { VolCone, type ConeRow as VolConeRow } from '@/components/research/VolCone'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useResearchContext } from '@/hooks/useResearchContext'
-import { todayIso } from '@/lib/researchFreshness'
+import { daysBack, todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { ivReading } from '@/utils/ivHistory'
 import {
@@ -47,12 +47,6 @@ const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
 const td =
   'whitespace-nowrap border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums'
-
-function daysBack(today: string, n: number): string {
-  const d = new Date(`${today}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - n)
-  return d.toISOString().slice(0, 10)
-}
 
 interface Control<T extends string | number> {
   label: string

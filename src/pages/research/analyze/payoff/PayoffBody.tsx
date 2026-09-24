@@ -23,7 +23,7 @@ import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { Button } from '@/components/ui/button'
 import { useCreateHypothesis } from '@/hooks/useHypotheses'
 import { useResearchContext } from '@/hooks/useResearchContext'
-import { todayIso } from '@/lib/researchFreshness'
+import { daysBack, todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots, pickExpiry } from '@/utils/optionChain'
 import { daysTo } from '@/utils/optionTicker'
@@ -40,12 +40,6 @@ import {
   pickDefaultLeg,
   scenarioRows,
 } from './payoffModel'
-
-function daysBack(today: string, n: number): string {
-  const d = new Date(`${today}T12:00:00Z`)
-  d.setUTCDate(d.getUTCDate() - n)
-  return d.toISOString().slice(0, 10)
-}
 
 const fmtSigned = (v: number) => `${v >= 0 ? '+' : '−'}$${Math.abs(v).toFixed(0)}`
 

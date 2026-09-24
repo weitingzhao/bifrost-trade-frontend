@@ -14,6 +14,13 @@ export function todayIso(): string {
   return `${y}-${m}-${day}`
 }
 
+/** The ISO date `n` days before `today` — the far edge of a bars window. */
+export function daysBack(today: string, n: number): string {
+  const d = new Date(`${today}T12:00:00Z`)
+  d.setUTCDate(d.getUTCDate() - n)
+  return d.toISOString().slice(0, 10)
+}
+
 export function datePrefix(value: string | null | undefined): string | null {
   if (!value) return null
   const s = String(value).trim()

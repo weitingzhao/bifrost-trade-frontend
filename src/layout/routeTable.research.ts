@@ -359,6 +359,20 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // The Method face of Symbol — the raw SVI fit under hand sliders, the
+    // what-if grid, and the six-assumption ledger. Built 2026-09-24; the
+    // ⧉ switch on both faces lights by itself.
+    path: '/research/lab/symbol',
+    label: 'Symbol lab',
+    crumbs: ANALYZE,
+    symbolScope: true,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.4',
+      note: DESIGN_NOTES['/research/lab/symbol'],
+    },
+  },
+  {
     // The Method face of Ratings · Stocks — the night batch's queue with the
     // evidence behind each name, in the batch's own four states. Built
     // 2026-09-24; the ⧉ switch on both faces lights by itself.

@@ -340,6 +340,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/lab/history/LabHistoryPage')),
       },
       {
+        path: 'research/lab/symbol',
+        lazy: lazyPage(() => import('@/pages/research/lab/symbol/LabSymbolPage')),
+      },
+      {
         path: 'research/greeks',
         lazy: lazyPage(() => import('@/pages/research/analyze/GreeksPage')),
       },

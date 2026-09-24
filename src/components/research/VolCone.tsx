@@ -6,7 +6,26 @@
  * together, and the grid labels are values that scale reaches.
  */
 import { cn } from '@/lib/utils'
-import type { ConeRow } from './historyModel'
+
+/** Where today's implied sits against the cone — the reading face's word. */
+export type ConePlace = 'above-p80' | 'above-median' | 'below-median' | 'unread'
+
+/**
+ * One tenor's band. Lives with the drawing since the Method face became its
+ * second reader (§14.2): both faces feed it, only History computes `place`.
+ */
+export interface ConeRow {
+  days: number
+  p05: number | null
+  p20: number | null
+  p50: number | null
+  p80: number | null
+  p95: number | null
+  /** Windows the percentiles were taken over. */
+  n: number
+  ivToday: number | null
+  place: ConePlace
+}
 
 const W = 560
 const H = 210
@@ -34,17 +53,13 @@ export function VolCone({ rows, className }: { rows: readonly ConeRow[]; classNa
   const band = (top: keyof ConeRow, bottom: keyof ConeRow) =>
     [
       ...usable.map((r, i) => `${x(i).toFixed(1)},${y(r[top] as number).toFixed(1)}`),
-      ...usable
-        .map((r, i) => `${x(i).toFixed(1)},${y(r[bottom] as number).toFixed(1)}`)
-        .reverse(),
+      ...usable.map((r, i) => `${x(i).toFixed(1)},${y(r[bottom] as number).toFixed(1)}`).reverse(),
     ].join(' ')
 
   const grid: number[] = []
   for (let v = lo; v <= hi + 1e-9; v += step) grid.push(Number(v.toFixed(2)))
 
-  const placed = usable
-    .map((r, i) => ({ r, i }))
-    .filter(({ r }) => r.ivToday != null)
+  const placed = usable.map((r, i) => ({ r, i })).filter(({ r }) => r.ivToday != null)
 
   return (
     <svg
@@ -56,7 +71,14 @@ export function VolCone({ rows, className }: { rows: readonly ConeRow[]; classNa
     >
       {grid.map((v) => (
         <g key={v}>
-          <line x1={PAD.left} x2={W - PAD.right} y1={y(v)} y2={y(v)} className="stroke-border" strokeWidth={1} />
+          <line
+            x1={PAD.left}
+            x2={W - PAD.right}
+            y1={y(v)}
+            y2={y(v)}
+            className="stroke-border"
+            strokeWidth={1}
+          />
           <text x={0} y={y(v) + 3} className="fill-muted-foreground font-mono text-dense-micro">
             {Math.round(v * 100)}
           </text>
@@ -76,7 +98,9 @@ export function VolCone({ rows, className }: { rows: readonly ConeRow[]; classNa
       />
       {placed.length > 1 ? (
         <polyline
-          points={placed.map(({ r, i }) => `${x(i).toFixed(1)},${y(r.ivToday!).toFixed(1)}`).join(' ')}
+          points={placed
+            .map(({ r, i }) => `${x(i).toFixed(1)},${y(r.ivToday!).toFixed(1)}`)
+            .join(' ')}
           fill="none"
           className="stroke-primary"
           strokeWidth={1.8}
@@ -95,7 +119,10 @@ export function VolCone({ rows, className }: { rows: readonly ConeRow[]; classNa
           x={x(i)}
           y={H - 6}
           textAnchor="middle"
-          className={cn('font-mono text-dense-micro', r.ivToday == null ? 'fill-muted-foreground/60' : 'fill-muted-foreground')}
+          className={cn(
+            'font-mono text-dense-micro',
+            r.ivToday == null ? 'fill-muted-foreground/60' : 'fill-muted-foreground'
+          )}
         >
           {r.days}d
         </text>

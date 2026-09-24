@@ -45,8 +45,8 @@ import {
   windowRows,
   type HistoryWindow,
   type TermPoint,
-} from './historyModel'
-import { VolCone } from './VolCone'
+} from '@/utils/ivHistory'
+import { VolCone } from '@/components/research/VolCone'
 
 const PATH = '/research/history'
 
@@ -97,15 +97,15 @@ export default function HistoryPage() {
         <span className="ml-auto mt-1 flex flex-none flex-wrap items-center gap-2.5">
           <PageFaceSwitch path={PATH} />
           <SegmentControl size="xs" ariaLabel="Window" value={win} onChange={setWin} options={WINDOW_OPTIONS} />
-          {/* The design's second way to the method face. That face is not
-              built, so this names it without going anywhere — the switch
-              beside it says the same. */}
-          <span
-            className="whitespace-nowrap font-mono text-dense-meta text-muted-foreground/60"
-            title="The Method face — window, estimator, percentile definition — is not built on this side yet."
+          {/* The design's second way to the method face, live since it was
+              built (2026-09-24) — the ⧉ switch beside the header is the first. */}
+          <Link
+            to="/research/lab/history"
+            className="whitespace-nowrap font-mono text-dense-meta text-primary hover:underline"
+            title="The Method face — window, estimator, percentile definition — with this reading held fixed."
           >
             Method → window · estimator
-          </span>
+          </Link>
         </span>
       </div>
 

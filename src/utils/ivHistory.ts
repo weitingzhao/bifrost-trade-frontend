@@ -29,6 +29,10 @@
  * so the page names each suspect reading and withholds the percentile and the
  * band while any sit in the window. It does not drop or repair them — that
  * would be this page defining clean IV30 a second time; the store owns it.
+ *
+ * Moved from `pages/research/analyze/history/historyModel.ts` when the Method
+ * face became its second reader (§14.2, module-placement): two features, one
+ * model.
  */
 import type { VrpRow } from '@/api/research/vrp'
 import { quantile } from '@/utils/reviewHabits'
@@ -68,7 +72,9 @@ export const SPIKE_RATIO = 1.8
  * — today's value cannot be called a spike until tomorrow says so.
  */
 export function suspectIvDates(rows: readonly VrpRow[]): string[] {
-  const pts = rows.filter((r) => r.trade_date != null && r.atm_iv_30d != null && Number.isFinite(r.atm_iv_30d))
+  const pts = rows.filter(
+    (r) => r.trade_date != null && r.atm_iv_30d != null && Number.isFinite(r.atm_iv_30d)
+  )
   const out: string[] = []
   pts.forEach((r, i) => {
     const v = r.atm_iv_30d as number
@@ -77,7 +83,8 @@ export function suspectIvDates(rows: readonly VrpRow[]): string[] {
     const spike =
       prev != null &&
       next != null &&
-      ((v > SPIKE_RATIO * prev && v > SPIKE_RATIO * next) || (v * SPIKE_RATIO < prev && v * SPIKE_RATIO < next))
+      ((v > SPIKE_RATIO * prev && v > SPIKE_RATIO * next) ||
+        (v * SPIKE_RATIO < prev && v * SPIKE_RATIO < next))
     if (v < IV_FLOOR || spike) out.push(r.trade_date as string)
   })
   return out
@@ -167,7 +174,10 @@ export function ivReading(rows: readonly VrpRow[], win: HistoryWindow): IvReadin
 export function suspectLine(r: IvReading): string | null {
   const n = r.suspects.length
   if (n === 0) return null
-  const shown = r.suspects.slice(0, 6).map((d) => d.slice(5)).join(', ')
+  const shown = r.suspects
+    .slice(0, 6)
+    .map((d) => d.slice(5))
+    .join(', ')
   const more = n > 6 ? ` and ${n - 6} more` : ''
   return (
     `${n} IV30 reading${n === 1 ? '' : 's'} in this window look${n === 1 ? 's' : ''} like faults in the store ` +
@@ -193,7 +203,7 @@ export function coverageLine(r: IvReading): string | null {
     parts.push(
       r.ivPoints === 0
         ? 'IV30 has no readings in it'
-        : `IV30 covers ${r.ivPoints} of those sessions, from ${r.ivFrom}`,
+        : `IV30 covers ${r.ivPoints} of those sessions, from ${r.ivFrom}`
     )
   }
   if (parts.length === 0) return null
@@ -248,20 +258,10 @@ export function ivAtTenor(points: readonly TermPoint[], days: number): number | 
   return v > 0 ? Math.sqrt(v / days) : null
 }
 
-export type ConePlace = 'above-p80' | 'above-median' | 'below-median' | 'unread'
-
-export interface ConeRow {
-  days: number
-  p05: number | null
-  p20: number | null
-  p50: number | null
-  p80: number | null
-  p95: number | null
-  /** Windows the percentiles were taken over. */
-  n: number
-  ivToday: number | null
-  place: ConePlace
-}
+// The cone's row moved to the drawing when the Method face became its second
+// reader (§14.2); re-exported so this model's callers keep one import path.
+export type { ConePlace, ConeRow } from '@/components/research/VolCone'
+import type { ConePlace, ConeRow } from '@/components/research/VolCone'
 
 export function conePlace(iv: number | null, p50: number | null, p80: number | null): ConePlace {
   if (iv == null || p50 == null || p80 == null) return 'unread'
@@ -280,7 +280,7 @@ export function coneRows(
     p80: number | null
     p95: number | null
   }[],
-  term: readonly TermPoint[],
+  term: readonly TermPoint[]
 ): ConeRow[] {
   return tenors.map((t) => {
     const ivToday = ivAtTenor(term, t.days)

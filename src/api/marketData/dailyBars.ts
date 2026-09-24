@@ -98,7 +98,16 @@ export async function fetchStockDailyCloses(symbol: string, from: string, to: st
   const j = validateStockDaily(await res.json()) as Partial<StockDailyResponse>
   const rows = j.data?.[symbol] ?? []
   return rows
-    .map((r) => ({ date: String(r.bar_time).slice(0, 10), open: null, high: null, low: null, close: r.close }))
+    .map((r) => ({
+      date: String(r.bar_time).slice(0, 10),
+      // The store carries the whole bar; the range estimators (Parkinson,
+      // Garman–Klass) read it, so dropping OHLC here would silently disable
+      // them. Callers that only want the close still read `.close`.
+      open: (r as { open?: number | null }).open ?? null,
+      high: (r as { high?: number | null }).high ?? null,
+      low: (r as { low?: number | null }).low ?? null,
+      close: r.close,
+    }))
     .filter((b) => b.date >= from && b.date <= to)
     .sort((a, b) => a.date.localeCompare(b.date))
 }

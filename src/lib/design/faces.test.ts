@@ -51,6 +51,7 @@ describe('faceOf', () => {
     // half disabled rather than navigating to a route with no page.
     expect(DESIGN_FACES.filter((f) => built.has(f.method)).map((f) => f.method)).toEqual([
       '/research/lab/today',
+      '/research/lab/history',
     ])
   })
 

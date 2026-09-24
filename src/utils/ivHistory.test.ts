@@ -12,7 +12,7 @@ import {
   suspectLine,
   volPts,
   windowRows,
-} from './historyModel'
+} from '@/utils/ivHistory'
 
 /** Invented series — dates are sessions only in name. */
 function rows(n: number, opts: { ivFrom?: number; iv?: (i: number) => number; rv?: (i: number) => number } = {}): VrpRow[] {

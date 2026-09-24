@@ -145,6 +145,7 @@ export default function EventsPage() {
           events={events.data?.rows ?? []}
           themes={themes.data?.rows ?? []}
           batches={batches.data?.rows ?? []}
+          calendar={calendar.data?.rows ?? []}
         />
       ) : (
         <StoreStanding standing={standing} onRetry={() => { void batches.refetch(); void events.refetch(); void themes.refetch(); void calendar.refetch() }} />

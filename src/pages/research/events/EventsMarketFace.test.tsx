@@ -48,6 +48,7 @@ function mount(events: EventRadarRow[]) {
             { theme: 'Fixture theme', count: 2, direction_avg: 1, sentiment_avg: 0.4, bull_count: 2, bear_count: 0, neutral_count: 0 },
           ]}
           batches={[{ batch_id: 'b1', collected_at: '2026-01-05T10:00:00Z' }]}
+          calendar={events}
         />
       </MemoryRouter>
     </QueryClientProvider>,

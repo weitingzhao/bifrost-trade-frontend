@@ -488,19 +488,35 @@ export function fetchEventBatches() {
   )
 }
 
-export function fetchEventThemes() {
-  return get<{
-    rows: {
-      theme: string
-      count: number
-      direction_avg: number
-      sentiment_avg: number
-      bull_count?: number
-      bear_count?: number
-      neutral_count?: number
-    }[]
-    count: number
-  }>('/research/events/themes')
+export interface EventThemeAggRow {
+  theme: string
+  count: number
+  direction_avg: number
+  sentiment_avg: number
+  bull_count?: number
+  bear_count?: number
+  neutral_count?: number
+}
+
+export async function fetchEventThemes(): Promise<{ rows: EventThemeAggRow[]; count: number }> {
+  // The store rounds the averages as ::numeric, which arrives as a string
+  // ("0.00"); coerce once here so no reader calls toFixed on a string. Found
+  // the day the themes table first held real rows — the fixtures were numbers.
+  const j = await get<{ rows: Record<string, unknown>[]; count: number }>(
+    '/research/events/themes',
+  )
+  return {
+    count: j.count,
+    rows: (j.rows ?? []).map((r) => ({
+      theme: String(r.theme ?? ''),
+      count: Number(r.count ?? 0),
+      direction_avg: Number(r.direction_avg ?? 0),
+      sentiment_avg: Number(r.sentiment_avg ?? 0),
+      bull_count: r.bull_count == null ? undefined : Number(r.bull_count),
+      bear_count: r.bear_count == null ? undefined : Number(r.bear_count),
+      neutral_count: r.neutral_count == null ? undefined : Number(r.neutral_count),
+    })),
+  }
 }
 
 export interface MacroEventRow {

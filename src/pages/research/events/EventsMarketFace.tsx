@@ -86,10 +86,15 @@ export function EventsMarketFace({
   events,
   themes,
   batches,
+  calendar,
 }: {
   events: EventRadarRow[]
   themes: EventThemeRow[]
   batches: { batch_id: string; collected_at: string }[]
+  /** Rows from /research/events/calendar (time_code=2, event_date ASC) — the
+   *  recency-ordered events fetch loses dated rows once the SEC backfill
+   *  floods it, so FORWARD reads the store that keeps them. */
+  calendar: EventRadarRow[]
 }) {
   const [imp, setImp] = useState<'all' | 'high' | 'med' | 'low'>('all')
   const [dir, setDir] = useState<'all' | 'bull' | 'neutral' | 'bear'>('all')
@@ -114,10 +119,10 @@ export function EventsMarketFace({
   )
   const forward = useMemo(
     () =>
-      events
+      calendar
         .filter((e) => e.event_date != null && daysUntil(e.event_date) >= 0 && daysUntil(e.event_date) <= 30)
         .sort((a, b) => (a.event_date ?? '').localeCompare(b.event_date ?? '')),
-    [events],
+    [calendar],
   )
   const themeMax = Math.max(1, ...themes.map((t) => t.count))
 
@@ -236,7 +241,7 @@ export function EventsMarketFace({
             <span className="text-dense-body font-semibold">
               {forward.length} dated event{forward.length === 1 ? '' : 's'} ahead
             </span>
-            <span className="text-dense-meta text-muted-foreground">next 30 days · from the rows carrying a date</span>
+            <span className="text-dense-meta text-muted-foreground">next 30 days · from events/calendar</span>
           </header>
           {forward.length === 0 ? (
             <p className="px-3 py-3 text-dense-meta text-muted-foreground">

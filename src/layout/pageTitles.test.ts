@@ -31,6 +31,8 @@ import { ROUTES } from './routeTable'
 const TITLE_MAY_DIFFER: Record<string, string> = {
   '/research/ratings/stocks': 'design ROUTES says Stock ratings, its own prototype heads it Ratings · Stocks',
   '/research/screener': 'design ROUTES says Stock screen, its own prototype heads it Screener · Stocks',
+  '/research/lab/screener':
+    'design ROUTES says Stock screen · method, its own prototype heads it Symbol Screener · authoring',
   '/trade/desk': 'design ROUTES says Trade (a layer head, no crumbs), its own prototype heads it Trade Desk',
   // §5a.9: the alias names a *face*, and the page it lands on is the Research
   // layer page — whose h1 is the layer's name, as §5a.5 requires of the row

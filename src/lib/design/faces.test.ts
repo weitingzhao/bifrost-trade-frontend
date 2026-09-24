@@ -47,10 +47,11 @@ describe('faceOf', () => {
     }
     // The state this side is actually in: the design pairs four readings, and
     // the first method face landed 2026-09-24 — Ratings · Stocks flips to
-    // Today's candidates; only the Screener's switch still renders its
-    // method half disabled rather than navigating to a route with no page.
+    // Today's candidates; all four flips are live as of 2026-09-24, and no
+    // switch renders a disabled half any more.
     expect(DESIGN_FACES.filter((f) => built.has(f.method)).map((f) => f.method)).toEqual([
       '/research/lab/today',
+      '/research/lab/screener',
       '/research/lab/symbol',
       '/research/lab/history',
     ])

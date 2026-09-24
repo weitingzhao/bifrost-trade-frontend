@@ -177,6 +177,29 @@ export const VolSurfaceFitSchema = z
   })
   .passthrough()
 
+// ── SEPA screener wide ──────────────────────────────────────────────────
+// The authoring face reads the whole evaluated universe in one page; rank,
+// composite and the two pass counts are load-bearing, everything else
+// passes through (the 19 condition booleans are read by name at parse).
+
+export const SepaScreenerWideRowSchema = z
+  .object({
+    symbol: z.string(),
+    overall_rank: z.number(),
+    composite_score: z.number(),
+    tech_pass_count: z.number(),
+    fund_pass_count: z.number(),
+  })
+  .passthrough()
+
+export const SepaScreenerWideSchema = z
+  .object({
+    ok: z.boolean(),
+    count: z.number(),
+    rows: z.array(SepaScreenerWideRowSchema),
+  })
+  .passthrough()
+
 // ── Universe reach ──────────────────────────────────────────────────────
 // `symbols` is nullable on purpose: a layer that could not be counted must not
 // arrive as 0, which would read as "this layer covers nothing".

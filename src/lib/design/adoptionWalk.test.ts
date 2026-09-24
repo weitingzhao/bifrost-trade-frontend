@@ -397,8 +397,10 @@ describe('the design walk, as it stands', () => {
     // model, the design's Discover vocabulary transcribed into System › Data.
     // 15 with Today's candidates, the first ⧉ method face. 16 with History's
     // method face, the second — the estimators on real OHLC. 17 with the
-    // Symbol lab, the third — the raw SVI fit under hand sliders.
-    expect(counts.byState.reviewing).toBe(17)
+    // Symbol lab, the third — the raw SVI fit under hand sliders. 18 with the
+    // Screener authoring face, the fourth and last — the filter vocabulary
+    // over the SEPA wide table.
+    expect(counts.byState.reviewing).toBe(18)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -477,6 +479,7 @@ describe('the design walk, as it stands', () => {
       '/research/history',
       '/research/lab/discover-model',
       '/research/lab/history',
+      '/research/lab/screener',
       '/research/lab/symbol',
       '/research/lab/today',
       '/research/lens-coverage',
@@ -571,8 +574,9 @@ describe('the design walk, as it stands', () => {
     // the design's own document, so building it is transcription. 14 with
     // Today's candidates, the first method face, once every tile's store had
     // been measured on DEV. 13 with History's method face the same day, and
-    // 12 with the Symbol lab — the third method face, measured the same way.
-    expect(counts.byState.unbuilt).toBe(12)
+    // 12 with the Symbol lab — the third method face, measured the same way,
+    // and 11 with the Screener authoring face, the last of the four.
+    expect(counts.byState.unbuilt).toBe(11)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

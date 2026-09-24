@@ -386,6 +386,20 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // The Method face of Stock screen — the authoring face where the filter
+    // vocabulary is defined against the SEPA wide table. Built 2026-09-24;
+    // the ⧉ switch on both faces lights by itself. The saved-screen store
+    // (6A) waits on the Owner's schema sign-off.
+    path: '/research/lab/screener',
+    label: 'Stock screen · method',
+    crumbs: DISCOVER,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-20.4',
+      note: DESIGN_NOTES['/research/lab/screener'],
+    },
+  },
+  {
     // The design's vocabulary page for the Discover menu — a System › Data
     // reference with no data behind it, transcribed whole. Built 2026-09-24.
     path: '/research/lab/discover-model',

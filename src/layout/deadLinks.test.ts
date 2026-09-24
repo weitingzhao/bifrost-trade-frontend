@@ -166,6 +166,8 @@ const REACHABLE_BY_DESIGN: Record<string, string> = {
     'A method face holds no menu row by design — the ⧉ switch on its reading (Ratings · Stocks) is the way in, and the link is built from the faces table at render, which this scan cannot see.',
   '/research/lab/symbol':
     'A method face holds no menu row by design — the ⧉ switch on its reading (Symbol) is the way in, and the link is built from the faces table at render, which this scan cannot see.',
+  '/research/lab/screener':
+    'A method face holds no menu row by design — the ⧉ switch on its reading (Stock screen) is the way in, and the link is built from the faces table at render, which this scan cannot see.',
 }
 
 function navPaths(): Set<string> {

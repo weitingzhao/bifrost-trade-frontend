@@ -216,6 +216,7 @@ export function SymbolIdentity({
           <IconActionButton
             title="Pin to Cockpit"
             ariaLabel={`Pin ${sym}`}
+            className="w-auto gap-1 px-1.5"
             onClick={() =>
               cockpitPinStore.getState().pinHit({
                 kind: 'iv',
@@ -227,11 +228,13 @@ export function SymbolIdentity({
             }
           >
             <Pin className="h-3.5 w-3.5" />
+            <span className="text-dense-meta">Pin</span>
           </IconActionButton>
           <AddToPoolButton
             symbol={sym}
             source="symbol"
             tags={['symbol']}
+            label="Pool"
             lens_snapshot={{ verdict: thesis, decisive: faces.decisive.n }}
           />
           <SaveAsHypothesisButton
@@ -240,6 +243,7 @@ export function SymbolIdentity({
             defaultThesis={thesis}
             defaultSymbols={[sym]}
             defaultTags={['symbol']}
+            label="Hypothesis"
             originRef={{ source: 'symbol', symbol: sym }}
           />
           <PlanThisButton

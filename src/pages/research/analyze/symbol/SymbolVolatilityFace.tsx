@@ -5,19 +5,22 @@
  * ATM term structure, and the SVI skew. The universe tables stay in
  * Ratings › Underlyings — this page is one name.
  */
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { fetchStockDailyCloses } from '@/api/marketData/dailyBars'
 import { fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
+import { SegmentControl } from '@/components/data-display'
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
 import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useResiduals, useTermStructure, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
+import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
-import { chainFromSnapshots } from '@/utils/optionChain'
-import { smileRows, sviFromRow } from '@/utils/sviSmile'
-import { SviSmileChart } from '@/components/research/SviSmileChart'
+import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
+import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
+import { SkewSurfaceChart, TermCurveChart } from '@/pages/research/analyze/symbol/symbolVolCharts'
 
 const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
@@ -26,6 +29,10 @@ const panel =
   'min-w-0 rounded-[10px] border border-[var(--sk-line0)] bg-[var(--sk-raised)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
 const panelHead =
   'flex flex-wrap items-center gap-2.5 rounded-t-[9px] border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3 py-1.75 text-dense-body leading-normal'
+const thCls =
+  'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
+const tdCls =
+  'whitespace-nowrap border-b border-border/40 px-2 py-1 text-right font-mono text-dense-meta tabular-nums'
 const note =
   'm-0 border-t border-border/60 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
@@ -42,6 +49,38 @@ function BarStrip({ bars, title }: { bars: { h: number; on?: boolean }[]; title:
       ))}
     </div>
   )
+}
+
+/** Annualised realised vol over the last n closes, in pts; null under 6 samples. */
+function realisedVol(closes: readonly { close: number | null }[], n: number): number | null {
+  const vals = closes.map((c) => c.close).filter((v): v is number => v != null && v > 0)
+  const take = vals.slice(-Math.max(2, Math.min(n, vals.length)))
+  if (take.length < 6) return null
+  const rets = take.slice(1).map((v, i) => Math.log(v / take[i]))
+  const mean = rets.reduce((a, b) => a + b, 0) / rets.length
+  const varr = rets.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (rets.length - 1)
+  return Math.sqrt(varr * 252) * 100
+}
+
+/**
+ * The 25Δ risk reversal off the chain's own greeks: the call nearest
+ * Δ +.25 minus the put nearest Δ −.25, in vol pts. A sparse chain whose
+ * nearest legs sit further than .08 from the target answers nothing.
+ */
+function rr25Of(chain: readonly ChainContract[]): number | null {
+  let call: ChainContract | null = null
+  let put: ChainContract | null = null
+  for (const c of chain) {
+    if (c.delta == null || c.iv == null) continue
+    if (c.right === 'C') {
+      if (call == null || Math.abs(c.delta - 0.25) < Math.abs((call.delta ?? 9) - 0.25)) call = c
+    } else if (put == null || Math.abs(c.delta + 0.25) < Math.abs((put.delta ?? 9) + 0.25)) {
+      put = c
+    }
+  }
+  if (!call?.iv || !put?.iv || call.delta == null || put.delta == null) return null
+  if (Math.abs(call.delta - 0.25) > 0.08 || Math.abs(put.delta + 0.25) > 0.08) return null
+  return (call.iv - put.iv) * 100
 }
 
 export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
@@ -106,10 +145,11 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   const term = useMemo(
     () =>
       (termQ.data ?? [])
-        .filter((p) => p.dte != null && p.atm_vol != null)
+        .filter((p) => p.dte != null && p.atm_vol != null && p.expiry != null)
         .slice(0, 6)
         .map((p) => ({
-          label: p.expiry?.slice(5) ?? '—',
+          expiry: p.expiry as string,
+          label: (p.expiry as string).slice(5),
           dte: p.dte as number,
           iv: (p.atm_vol as number) * 100,
         })),
@@ -117,13 +157,59 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   )
   const termMax = Math.max(1, ...term.map((t) => t.iv))
 
-  // ── Skew: the nearest ~30d fit and its near-money smile, the lab's own rows ──
+  // Realised vol at roughly each expiry's horizon, from the name's own closes
+  // — the design's grey companion line. Calendar days → trading days.
+  const today = todayIso()
+  const closesQ = useQuery({
+    queryKey: ['market', 'stock-daily-closes-1y', sym],
+    queryFn: () =>
+      fetchStockDailyCloses(sym, new Date(Date.now() - 420 * 86_400_000).toISOString().slice(0, 10), today),
+    enabled: Boolean(sym),
+    staleTime: 10 * 60_000,
+  })
+  const rvLine = (closesQ.data ?? []).length > 0
+    ? term
+        .map((t) => ({ dte: t.dte, rv: realisedVol(closesQ.data ?? [], Math.round((t.dte * 252) / 365)) }))
+        .filter((r): r is { dte: number; rv: number } => r.rv != null)
+    : []
+
+  // One snapshot read per listed expiry, for the 25Δ risk reversal — the
+  // same query keys the Chain face uses, so the cache is shared.
+  const termSnapQs = useQueries({
+    queries: term.map((t) => ({
+      queryKey: ['market', 'option-snapshots', sym, t.expiry],
+      queryFn: () => fetchOptionSnapshots(sym, t.expiry),
+      enabled: Boolean(sym),
+      staleTime: 5 * 60_000,
+    })),
+  })
+  const chainsByExpiry = new Map(
+    term.map((t, i) => [t.expiry, chainFromSnapshots(termSnapQs[i]?.data?.rows ?? [])])
+  )
+  const rrByExpiry = new Map(term.map((t) => [t.expiry, rr25Of(chainsByExpiry.get(t.expiry) ?? [])]))
+
+  // ── Skew: the fitted expiries as the design's tenor switch; nearest ~30d
+  // opens, and the picked one drives the smile, the table and the term
+  // panel's lime row. ──
+  const fitRows = useMemo(
+    () =>
+      (fitQ.data ?? [])
+        .filter((r) => r.expiry && r.dte != null && sviFromRow(r))
+        .sort((a, b) => (a.dte ?? 0) - (b.dte ?? 0)),
+    [fitQ.data]
+  )
+  const [skewExpiry, setSkewExpiry] = useState<string | null>(null)
   const fitRow = useMemo(() => {
-    const rows = (fitQ.data ?? []).filter((r) => r.expiry && r.dte != null && sviFromRow(r))
-    let best = null as (typeof rows)[number] | null
-    for (const r of rows) if (best == null || Math.abs((r.dte ?? 0) - 30) < Math.abs((best.dte ?? 0) - 30)) best = r
+    const picked = skewExpiry ? fitRows.find((r) => r.expiry === skewExpiry) : null
+    if (picked) return picked
+    let best = null as (typeof fitRows)[number] | null
+    for (const r of fitRows) if (best == null || Math.abs((r.dte ?? 0) - 30) < Math.abs((best.dte ?? 0) - 30)) best = r
     return best
-  }, [fitQ.data])
+  }, [fitRows, skewExpiry])
+  const nextFitRow = useMemo(() => {
+    if (!fitRow) return null
+    return fitRows.find((r) => (r.dte ?? 0) > (fitRow.dte ?? 0)) ?? null
+  }, [fitRows, fitRow])
   const residQ = useResiduals(sym, fitRow?.expiry ?? '')
   const chainQ = useQuery({
     queryKey: ['market', 'option-snapshots', sym, fitRow?.expiry],
@@ -131,11 +217,65 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
     enabled: Boolean(sym && fitRow?.expiry),
     staleTime: 5 * 60_000,
   })
-  const smile = useMemo(() => {
-    const p = fitRow ? sviFromRow(fitRow) : null
-    if (!p || fitRow?.dte == null || fitRow.dte <= 0) return []
-    return smileRows(residQ.data ?? [], chainFromSnapshots(chainQ.data?.rows ?? []), p, fitRow.dte / 365)
-  }, [fitRow, residQ.data, chainQ.data?.rows])
+  // The chain's own two sides for the picked expiry. The residual rows hand
+  // the spot back (strike · e^−k), so no second store is asked for it.
+  const chain = chainFromSnapshots(chainQ.data?.rows ?? [])
+  const spotVals = (residQ.data ?? [])
+    .filter((r) => r.strike != null && r.log_moneyness != null)
+    .map((r) => (r.strike as number) * Math.exp(-(r.log_moneyness as number)))
+    .sort((a, b) => a - b)
+  const spot = spotVals.length > 0 ? spotVals[Math.floor(spotVals.length / 2)] : null
+  const svi = fitRow ? sviFromRow(fitRow) : null
+  const nextSvi = nextFitRow ? sviFromRow(nextFitRow) : null
+  const fitT = fitRow?.dte != null && fitRow.dte > 0 ? fitRow.dte / 365 : null
+  const nextT = nextFitRow?.dte != null && nextFitRow.dte > 0 ? nextFitRow.dte / 365 : null
+  const inWindow = (K: number) => spot != null && Math.abs(K / spot - 1) <= 0.2
+  const sideOf = (right: 'C' | 'P') =>
+    chain
+      .filter((c) => c.right === right && c.iv != null && inWindow(c.strike))
+      .map((c) => ({ strike: c.strike, iv: (c.iv as number) * 100 }))
+  const putsSide = sideOf('P')
+  const callsSide = sideOf('C')
+  // The design's strike table: the OTM side per strike, ±15% of spot,
+  // residual against the fit in bp.
+  const strikeRows = (() => {
+    if (spot == null || !svi || fitT == null) return []
+    const picked = chain.filter(
+      (c) =>
+        c.iv != null &&
+        c.right === (c.strike < spot ? 'P' : 'C') &&
+        Math.abs(c.strike / spot - 1) <= 0.15,
+    )
+    const uniq = new Map<number, ChainContract>()
+    for (const c of picked) if (!uniq.has(c.strike)) uniq.set(c.strike, c)
+    const strikes = [...uniq.keys()]
+    if (strikes.length === 0) return []
+    const atm = strikes.reduce((a, b) => (Math.abs(b - spot) < Math.abs(a - spot) ? b : a))
+    return [...uniq.values()]
+      .sort((a, b) => a.strike - b.strike)
+      .map((c) => {
+        const mkt = (c.iv as number) * 100
+        const fitIv = sviIvPts(svi, Math.log(c.strike / spot), fitT)
+        return {
+          strike: c.strike,
+          atm: c.strike === atm,
+          delta: c.delta != null ? Math.abs(c.delta) : null,
+          mkt,
+          fitIv,
+          residBp: (mkt - fitIv) * 100,
+        }
+      })
+  })()
+  const worstBp = Math.max(30, ...strikeRows.map((r) => Math.abs(r.residBp)))
+  /* A residual is only a richness signal when the fit holds near money. This
+     store's SVI is routinely wing-dominated (fit_rmse is an IV fraction —
+     0.37 is 37 pts), and against a broken fit every strike reads «rich».
+     Median |resid| near money is the self-computed check the trap demands. */
+  const medResidBp = (() => {
+    const v = strikeRows.map((r) => Math.abs(r.residBp)).sort((a, b) => a - b)
+    return v.length > 0 ? v[Math.floor(v.length / 2)] : null
+  })()
+  const fitDegraded = medResidBp != null && medResidBp > 150
   const skewEx = exOf('skew')
   const skewPctl = (skewEx?.readings as Record<string, unknown> | undefined)?.slope_pctile_252d
 
@@ -216,30 +356,73 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
           <span className="ml-auto text-dense-caption text-muted-foreground">source · vol-surface fit</span>
         </header>
         <LensVerdictBlock lensId="term_slope" exhibit={exOf('term_slope')} />
-        <div className="flex flex-col gap-1.5 px-3 py-2.5">
-          {term.length === 0 ? (
-            <p className="m-0 text-dense-meta text-muted-foreground">No fitted expiries for this name.</p>
-          ) : (
-            term.map((t) => (
-              <div key={t.label} className="grid grid-cols-[56px_34px_minmax(0,1fr)_52px] items-center gap-2 text-dense-meta">
-                <span className={cn(mono, 'text-secondary-foreground')}>{t.label}</span>
-                <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>{t.dte}d</span>
-                <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
-                  <span className="absolute inset-y-0 left-0 bg-[var(--sk-ticker)]" style={{ width: `${(t.iv / termMax) * 100}%` }} />
-                </span>
-                <span className={cn(mono, 'text-right')}>{t.iv.toFixed(1)}</span>
+        {term.length === 0 ? (
+          <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No fitted expiries for this name.</p>
+        ) : (
+          <>
+            <div className="pt-2.5">
+              <TermCurveChart
+                points={term.map((t) => ({ dte: t.dte, iv: t.iv }))}
+                rv={rvLine}
+                selDte={fitRow?.dte ?? null}
+              />
+            </div>
+            <div className="flex flex-wrap gap-x-3.5 gap-y-1 px-3 pb-1.5 text-dense-micro text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <i className="h-0 w-3.5 border-t-2 border-[var(--sk-ticker)]" />ATM IV today
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <i className="h-0 w-3.5 border-t-2 border-[var(--sk-mute2)]" />realised (RV) at matching horizon
+              </span>
+              <span
+                className="text-muted-foreground/60"
+                title="The 1y cone per horizon needs a term-structure history no store keeps, and the earnings kink a forward earnings date not on the data plan — unmeasured, not omitted."
+              >
+                1y cone · earnings marker — owed
+              </span>
+            </div>
+            <div className="flex flex-col gap-1.5 border-t border-border/40 px-3 py-2">
+              {term.map((t) => {
+                const sel = fitRow?.expiry === t.expiry
+                const rr = rrByExpiry.get(t.expiry) ?? null
+                return (
+                  <div
+                    key={t.expiry}
+                    className="grid grid-cols-[56px_34px_minmax(0,1fr)_52px_56px] items-center gap-2 text-dense-meta"
+                  >
+                    <span className={cn(mono, sel ? 'font-semibold text-[var(--sk-ticker)]' : 'text-secondary-foreground')}>
+                      {t.label}
+                    </span>
+                    <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>{t.dte}d</span>
+                    <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+                      <span
+                        className={cn('absolute inset-y-0 left-0', sel ? 'bg-[var(--sk-ticker)]' : 'bg-[var(--sk-line2)]')}
+                        style={{ width: `${(t.iv / termMax) * 100}%` }}
+                      />
+                    </span>
+                    <span className={cn(mono, 'text-right')}>{t.iv.toFixed(1)}</span>
+                    <span
+                      className={cn(mono, 'text-right', rr != null && rr <= -5 ? 'text-destructive' : 'text-muted-foreground')}
+                      title="25Δ risk reversal — the call nearest Δ +.25 minus the put nearest Δ −.25, off the chain’s own greeks. A chain too sparse to reach .25 answers nothing."
+                    >
+                      {rr != null ? `${rr >= 0 ? '+' : '−'}${Math.abs(rr).toFixed(1)}` : '—'}
+                    </span>
+                  </div>
+                )
+              })}
+              <div className="grid grid-cols-[56px_34px_minmax(0,1fr)_52px_56px] gap-2 text-dense-micro text-muted-foreground">
+                <span /> <span /> <span />
+                <span className="text-right">ATM IV</span>
+                <span className="text-right">25Δ RR</span>
               </div>
-            ))
-          )}
-          <div className="grid grid-cols-[56px_34px_minmax(0,1fr)_52px] gap-2 text-dense-micro text-muted-foreground">
-            <span /> <span /> <span />
-            <span className="text-right">ATM IV</span>
-          </div>
-        </div>
+            </div>
+          </>
+        )}
         <p className={note}>
           Front expiries carry more IV than the back in backwardation — an event or a squeeze is
-          priced in. The design&rsquo;s 1y cone per horizon needs a term-structure history no store
-          keeps yet, and the 25Δ risk-reversal column the same — unmeasured, not omitted.
+          priced in. The lime row is the tenor the Skew panel is reading. The design&rsquo;s 1y
+          cone needs a per-horizon history no store keeps yet, and its earnings kink a forward
+          earnings date not on the data plan — both owed, neither faked.
         </p>
       </section>
 
@@ -247,8 +430,17 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         <header className={panelHead}>
           <span className={cap}>Skew &amp; surface</span>
           <span className="text-dense-body font-semibold">
-            SVI fit · {fitRow?.expiry ? `${fitRow.expiry.slice(5)} · ${fitRow.dte}d` : '—'}
+            SVI fit · {fitRow?.expiry ? fitRow.expiry.slice(5) : '—'}
           </span>
+          {fitRows.length > 1 ? (
+            <SegmentControl
+              ariaLabel="Skew tenor"
+              size="xs"
+              value={fitRow?.expiry ?? ''}
+              onChange={(v) => setSkewExpiry(v)}
+              options={fitRows.slice(0, 6).map((r) => ({ value: r.expiry as string, label: `${r.dte}d` }))}
+            />
+          ) : null}
           <span className="ml-auto text-dense-caption text-muted-foreground">
             own pctl{' '}
             <span className={cn(mono, 'text-foreground')}>
@@ -257,16 +449,93 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
           </span>
         </header>
         <LensVerdictBlock lensId="skew" exhibit={exOf('skew')} />
-        {smile.length > 0 ? (
-          <SviSmileChart rows={smile} />
+        {putsSide.length + callsSide.length >= 3 && spot != null ? (
+          <>
+            <div className="pt-2">
+              <SkewSurfaceChart
+                puts={putsSide}
+                calls={callsSide}
+                fit={svi}
+                fitT={fitT}
+                nextFit={nextSvi}
+                nextT={nextT}
+                spot={spot}
+                richBp={fitDegraded ? Number.POSITIVE_INFINITY : 30}
+              />
+            </div>
+            <div className="flex flex-wrap gap-x-3.5 gap-y-1 px-3 pb-1.5 text-dense-micro text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <i className="h-0 w-3.5 border-t-2 border-destructive" />puts
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <i className="h-0 w-3.5 border-t-2 border-success" />calls
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <i className="h-0 w-3.5 border-t-2 border-dashed border-[var(--sk-mute2)]" />raw-SVI fit
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <i className="h-0 w-3.5 border-t-2 border-[var(--sk-line2)]" />next expiry
+              </span>
+              {fitDegraded ? (
+                <span
+                  className="text-warning"
+                  title="Rich/cheap is a reading against the fit, and this fit is not holding the market near money — wing-dominated SVI, the store’s own residuals agree. The no-arbitrage lamps on the Surface face say why."
+                >
+                  fit off the market · median |resid| {medResidBp?.toFixed(0)} bp — richness unreadable
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5">
+                  <i className="h-1.5 w-1.5 rounded-full bg-warning" />rich to fit &gt; 30 bp
+                </span>
+              )}
+            </div>
+            {strikeRows.length > 0 ? (
+              <table className="w-full border-collapse border-t border-border/40">
+                <thead>
+                  <tr>
+                    <th className={cn(thCls, 'text-left')}>Strike</th>
+                    <th className={thCls}>Δ</th>
+                    <th className={thCls}>Mkt IV</th>
+                    <th className={thCls}>Fit IV</th>
+                    <th className={thCls}>Resid</th>
+                    <th className={cn(thCls, 'w-[30%] text-left')}>|resid| vs 30 bp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {strikeRows.map((r) => (
+                    <tr key={r.strike}>
+                      <td className={cn(tdCls, 'text-left', r.atm ? 'font-semibold text-[var(--sk-ticker)]' : 'text-secondary-foreground')}>
+                        {r.strike}
+                      </td>
+                      <td className={cn(tdCls, 'text-muted-foreground')}>{r.delta != null ? r.delta.toFixed(2) : '—'}</td>
+                      <td className={tdCls}>{r.mkt.toFixed(1)}</td>
+                      <td className={tdCls}>{r.fitIv.toFixed(1)}</td>
+                      <td className={cn(tdCls, !fitDegraded && r.residBp > 30 ? 'text-destructive' : 'text-muted-foreground')}>
+                        {`${r.residBp >= 0 ? '+' : '−'}${Math.abs(r.residBp).toFixed(0)} bp`}
+                      </td>
+                      <td className={cn(tdCls, 'text-left')}>
+                        <span className="relative block h-[5px] w-full overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+                          <span
+                            className={cn('absolute inset-y-0 left-0', !fitDegraded && Math.abs(r.residBp) > 30 ? 'bg-destructive' : 'bg-[var(--sk-mute2)]')}
+                            style={{ width: `${Math.min(100, (Math.abs(r.residBp) / worstBp) * 100)}%` }}
+                          />
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : null}
+          </>
         ) : (
           <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
-            No near-money residual rows for the anchor expiry.
+            No chain snapshot with greeks for this expiry yet.
           </p>
         )}
         <p className={note}>
-          Market IV by strike against the raw-SVI fit, the lab&rsquo;s own rows at the nearest
-          monthly tenor. The hand sliders and the no-arbitrage lamps live on the{' '}
+          Residual = market minus Gatheral raw-SVI fit; strikes rich to the fit are candidates
+          to sell, cheap ones to own. Cross-symbol skew extremes live in Vol ratings. The hand
+          sliders and the no-arbitrage lamps live on the{' '}
           <Link to="/research/lab/symbol" className="text-primary hover:underline">
             Surface face ⧉
           </Link>

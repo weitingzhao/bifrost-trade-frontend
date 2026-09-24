@@ -30,6 +30,8 @@ interface SaveAsHypothesisButtonProps {
   originRef?: Record<string, unknown>
   size?: 'dense' | 'button'
   onSaved?: (h: Hypothesis) => void
+  /** A word beside the glyph — the Symbol page draws the verb labelled. */
+  label?: string
   className?: string
 }
 
@@ -41,6 +43,7 @@ export function SaveAsHypothesisButton({
   defaultTags,
   originRef,
   size = 'dense',
+  label,
   onSaved,
   className,
 }: SaveAsHypothesisButtonProps) {
@@ -125,9 +128,10 @@ export function SaveAsHypothesisButton({
         title="Save current view as a Hypothesis"
         ariaLabel="Save as Hypothesis"
         onClick={openDialog}
-        className={className}
+        className={cn(label && 'w-auto gap-1 px-1.5', className)}
       >
         <BookmarkPlus className="h-3.5 w-3.5" />
+        {label ? <span className="text-dense-meta">{label}</span> : null}
       </IconActionButton>
     )
 

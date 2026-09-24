@@ -19,6 +19,8 @@ export interface AddToPoolButtonProps {
   tags?: string[]
   source_ref?: Record<string, unknown>
   size?: 'dense' | 'icon'
+  /** A word beside the glyph — the Symbol page draws the verb labelled. */
+  label?: string
   className?: string
 }
 
@@ -30,6 +32,7 @@ export function AddToPoolButton({
   tags,
   source_ref,
   size = 'dense',
+  label,
   className,
 }: AddToPoolButtonProps) {
   const mutation = useAddCandidates()
@@ -78,13 +81,14 @@ export function AddToPoolButton({
       tone={failed ? 'danger' : undefined}
       disabled={!sym || mutation.isPending}
       onClick={(e) => void onClick(e)}
-      className={cn(className)}
+      className={cn(label && 'w-auto gap-1 px-1.5', className)}
     >
       {savedFlash ? (
         <Check className="h-3.5 w-3.5 text-success" aria-hidden />
       ) : (
         <Plus className="h-3.5 w-3.5" />
       )}
+      {label ? <span className="text-dense-meta">{label}</span> : null}
     </IconActionButton>
   )
 }

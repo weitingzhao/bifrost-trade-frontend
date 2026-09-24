@@ -38,7 +38,7 @@ export function AppHeader() {
         SHELL_TOP_BAR_HEIGHT_CLASS,
         // 10px between controls, 12px from the edge — the design's own
         // `gap: 6px 10px; padding: 5px 12px`.
-        'flex items-center gap-x-2.5 border-b border-border bg-card px-3',
+        'flex items-center gap-x-2.5 border-b px-3',
         // The layer's one line, on the top bar's bottom edge — the design puts
         // it here rather than on the page header, which renders as an
         // unclassed div with nothing stable to hook.
@@ -47,9 +47,15 @@ export function AppHeader() {
         // the accent *was* the layer's hue, so `border-primary` said where you
         // were standing by accident; now the accent is one violet everywhere
         // and this line would have said nothing at all.
-        'border-b-2',
+        //
+        // Since Rev .14 it is a 1px hairline at 62% plus a 6% wash of the same
+        // hue down the bar, rather than a 2px solid edge: the place is still
+        // there, and still below the data.
       )}
-      style={{ borderBottomColor: 'var(--sk-layer)' }}
+      style={{
+        borderBottomColor: 'color-mix(in srgb, var(--sk-layer) 62%, transparent)',
+        background: 'linear-gradient(180deg, color-mix(in srgb, var(--sk-layer) 6%, var(--card)), var(--card))',
+      }}
     >
       {/* Sized and framed like every other control on the bar. The glyph
           stays chevrons rather than the design's panel rect: it comes from

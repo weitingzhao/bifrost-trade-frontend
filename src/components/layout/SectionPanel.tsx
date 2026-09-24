@@ -86,14 +86,17 @@ export function SectionPanel({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-lg border bg-background',
-        tone == null ? 'border-border' : TONE_PANEL[tone],
+        // Panel material (design Rev 2026-09-23.19): the faintest line for the
+        // frame and a 4% ink highlight along the top edge, so a panel reads as
+        // one lifted object rather than a box drawn around a region.
+        'overflow-hidden rounded-lg border bg-background shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+        tone == null ? 'border-[var(--sk-line0)]' : TONE_PANEL[tone],
         className,
       )}
     >
       <header
         className={cn(
-          'flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2',
+          'flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-[var(--sk-line0)] px-3 py-2',
           tone == null ? 'bg-secondary' : TONE_HEADER[tone],
         )}
       >

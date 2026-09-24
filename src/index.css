@@ -14,9 +14,13 @@
        Linux. This keeps Chinese and English in the UI at the same optical
        weight and rhythm without shipping a heavy CJK web font.  Same
        strategy for mono so bilingual code / JSON blocks look consistent. */
-    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'PingFang SC',
-        'HarmonyOS Sans SC', 'Microsoft YaHei UI', 'Microsoft YaHei',
-        'Noto Sans SC', system-ui, sans-serif;
+    /* Design Rev 2026-09-23.23: the Apple system face first on Apple devices,
+       DM Sans everywhere else — kept from the retired Stocks style, whose
+       colours were rejected and whose type was not. Digits stay mono (§14.4).
+       The design registers it as its one deviation from the DS font. */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+        'Helvetica Neue', 'DM Sans', 'PingFang SC', 'HarmonyOS Sans SC',
+        'Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo,
         Consolas, 'PingFang SC', 'Microsoft YaHei UI', monospace;
     --color-sidebar-ring: var(--sidebar-ring);
@@ -289,15 +293,18 @@
      * adopting it. In light mode every layer reads as the base palette, and
      * that is a stated gap, not an oversight (Owner, 2026-09-13, option A).
      */
-    --sk-ground: #0a0c0f;
-    --sk-surface: #1a1f26;
-    --sk-raised: #0e1116;
-    --sk-raised2: #12161c;
-    --sk-line: #2a313c;
-    --sk-line2: #3d4754;
-    --sk-ink: #e4e9ef;
-    --sk-soft: #c3cad4;
-    --sk-mute: #98a2b0;
+    /* Design Rev 2026-09-23.14: the same lightness ladder with a quiet indigo
+       cast — hue only, so every contrast ratio the neutral set cleared still
+       holds. One global cast, not per layer. */
+    --sk-ground: #0a0b11;
+    --sk-surface: #191d29;
+    --sk-raised: #0e1017;
+    --sk-raised2: #121522;
+    --sk-line: #2a3040;
+    --sk-line2: #3d4559;
+    --sk-ink: #e6e9f2;
+    --sk-soft: #c5cad8;
+    --sk-mute: #99a1b3;
     /* One accent for the whole product (design Package 2026-09-23.3). The
        layer used to own it, so every page's primary was its layer's hue —
        and a place should not outrank the data drawn on it. */
@@ -305,9 +312,22 @@
     --sk-accent2: #c4b5fd;
     --sk-accent-rgb: 167 139 250;
     /* The three the app had only ever read through `var()` fallbacks. */
-    --sk-line0: #1f242c;
-    --sk-mute2: #98a2b0;
-    --sk-faint: #566270;
+    --sk-line0: #1f2330;
+    --sk-mute2: #99a1b3;
+    --sk-faint: #566175;
+
+    /* Entity inks and tint triplets (Rev 2026-09-23.15–.17, §14.8). A tint
+       fill writes rgb(var(--color-profit-rgb) / .12), so a 12% wash is the
+       right green on either ground once the light values land. */
+    --sk-ticker: #a3e635;
+    --sk-contract: #7dd3fc;
+    --sk-instance: #c084fc;
+    --sk-ticker-rgb: 163 230 53;
+    --sk-contract-rgb: 125 211 252;
+    --sk-instance-rgb: 192 132 252;
+    --color-profit-rgb: 74 222 128;
+    --color-loss-rgb: 248 113 113;
+    --color-unrealized-rgb: 251 146 60;
 
     /* The layer hues at 60% opacity, which is the demotion in one number:
        the hue stays recognisable while its weight stays BELOW the data
@@ -476,8 +496,9 @@
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
     --scrollbar-track: transparent;
-    --scrollbar-thumb: rgba(148, 163, 184, 0.32);
-    --scrollbar-thumb-hover: rgba(148, 163, 184, 0.52);
+    /* Hairlines drawn in the ink, so they follow the ground (Rev .14). */
+    --scrollbar-thumb: color-mix(in srgb, var(--sk-ink) 14%, transparent);
+    --scrollbar-thumb-hover: color-mix(in srgb, var(--sk-ink) 26%, transparent);
 }
 
 /*
@@ -527,17 +548,30 @@
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background: radial-gradient(ellipse 100% 60% at 50% 0%, rgba(14, 165, 233, 0.04), transparent 50%);
+  /* The ground's ambient light (design Rev 2026-09-23.14, #sr-polish-css):
+     two faint accent glows, top right and bottom left, fixed to the window.
+     Data surfaces sit on top of it opaque; only floating things let it show. */
+  .dark body {
+    background:
+      radial-gradient(1100px 520px at 78% -8%, rgb(var(--sk-accent-rgb) / 0.06), transparent 62%),
+      radial-gradient(900px 520px at -12% 110%, rgb(var(--sk-accent-rgb) / 0.04), transparent 60%),
+      var(--sk-ground);
+    background-attachment: fixed;
     }
-  .dark body::before {
-    background: radial-gradient(ellipse 120% 80% at 50% -20%, rgba(26, 31, 38, 0.6), transparent 50%);
+  ::selection {
+    background: rgb(var(--sk-accent-rgb, 167 139 250) / 0.32);
+    }
+  :focus-visible {
+    outline: 2px solid rgb(var(--sk-accent-rgb, 167 139 250) / 0.55);
+    outline-offset: 1px;
+    }
+  button, a, [role='button'], [data-sidebar='menu-button'] {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+  tbody td {
+    transition: background-color 0.12s ease;
     }
   html {
     @apply font-sans;
@@ -549,18 +583,22 @@
     scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 9px;
+    height: 9px;
   }
   ::-webkit-scrollbar-track {
     background: var(--scrollbar-track);
   }
   ::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
-    border-radius: 999px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
   ::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
   ::-webkit-scrollbar-corner {
     background: transparent;
@@ -577,6 +615,31 @@
     -moz-appearance: textfield;
     appearance: textfield;
   }
+}
+
+/*
+ * Shell polish that has to beat utilities (design Rev 2026-09-23.14 · .20).
+ *
+ * Unlayered on purpose: Tailwind's utilities layer outranks `base` whatever
+ * the specificity, so `bg-sidebar` on the sidebar would quietly win over the
+ * glass. The prototype reaches the same result with `!important`; an
+ * unlayered rule is the stylesheet's own way of saying the same thing.
+ */
+/* The row you are standing on in the sidebar, as a soft accent pill. */
+.dark [data-sidebar='menu-button'][data-active='true'] {
+  background: rgb(var(--sk-accent-rgb) / 0.13);
+  box-shadow: inset 0 0 0 1px rgb(var(--sk-accent-rgb) / 0.22);
+  border-radius: 8px;
+}
+.dark tbody tr:hover > td {
+  background-color: rgb(var(--sk-accent-rgb) / 0.03);
+}
+/* Glass is for floating things only (Rev .20): the sidebar floats over the
+   ambient ground, so it is translucent; panels and table bodies never are. */
+.dark [data-sidebar='sidebar'] {
+  background: color-mix(in srgb, var(--sk-ground) 68%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+  backdrop-filter: blur(22px) saturate(1.35);
 }
 
 @layer utilities {

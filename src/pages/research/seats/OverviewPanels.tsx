@@ -378,9 +378,25 @@ export function BookPanel({ rows }: { rows: BookPanelRow[] }) {
 export interface TodayItem {
   op: ResearchOperator
   title: string
+  /** The row id / run id trimmed out of the title — hover keeps it. */
+  titleTip?: string
   when: string
   sub: string
+  /** The design's leading dot: amber = waiting on you, purple = fresh copilot output, grey = quiet. */
+  tone?: 'wait' | 'new' | 'quiet'
   actions: { label: string; to: string }[]
+}
+
+const TODAY_DOT: Record<'wait' | 'new' | 'quiet', string> = {
+  wait: 'bg-warning',
+  new: 'bg-primary',
+  quiet: 'bg-muted-foreground/40',
+}
+
+const TODAY_OP_INK: Record<ResearchOperator, string> = {
+  hand: 'text-muted-foreground',
+  loop: 'text-muted-foreground',
+  copilot: 'text-primary',
 }
 
 export function TodayFeed({ items, asOf }: { items: TodayItem[]; asOf: string }) {
@@ -398,13 +414,17 @@ export function TodayFeed({ items, asOf }: { items: TodayItem[]; asOf: string })
       ) : (
         items.map((t, i) => (
           <div key={i} className="flex gap-2.5 border-b border-border/50 px-3 py-2 last:border-b-0">
-            <span className={cn('mt-1 rounded border px-1 font-mono text-dense-micro font-bold', OPERATOR_CHIP[t.op])}>
+            <span
+              className={cn('mt-[7px] h-2 w-2 shrink-0 rounded-full', TODAY_DOT[t.tone ?? 'quiet'])}
+              title={t.tone === 'wait' ? 'Waiting on you.' : t.tone === 'new' ? 'Fresh output.' : undefined}
+            />
+            <span className={cn('mt-0.5 shrink-0 font-mono text-dense-micro font-bold', TODAY_OP_INK[t.op])}>
               {t.op}
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline gap-2">
-                <span className="min-w-0 text-dense-label">{t.title}</span>
-                <span className="ml-auto shrink-0 font-mono text-dense-meta text-muted-foreground">{t.when}</span>
+                <span className="min-w-0 text-dense-label font-semibold" title={t.titleTip}>{t.title}</span>
+                <span className="ml-auto shrink-0 font-mono text-dense-micro text-muted-foreground">{t.when}</span>
               </div>
               <div className="mt-0.5 text-dense-meta leading-relaxed text-muted-foreground">{t.sub}</div>
               {t.actions.length ? (

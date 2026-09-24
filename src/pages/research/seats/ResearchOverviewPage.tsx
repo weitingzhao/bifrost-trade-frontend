@@ -20,6 +20,8 @@
  * stays grey and says why — see `OverviewPanels`.
  */
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { useQuery } from '@tanstack/react-query'
 import { BookOpen, Inbox } from 'lucide-react'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -118,6 +120,8 @@ export default function ResearchOverviewPage() {
   })
 
   const nowIso = new Date().toISOString()
+  // The design's timestamps: `13:30Z`, and the header's `2026-09-18 · 13:42Z`.
+  const zTime = (iso: string | null | undefined) => (iso ? `${iso.slice(11, 16)}Z` : '')
   const trustL0 = Boolean(trustQ.data?.matrix_l0 ?? trustQ.data?.l0)
   const current = dialLevelFromTrust(trustQ.isSuccess ? trustL0 : undefined)
   const leashRows = objectiveLeash(objectivesQ.data?.items ?? [], standingQ.data?.objectives ?? [])
@@ -280,11 +284,24 @@ export default function ResearchOverviewPage() {
   if (latestRun) {
     const objTitle = objectivesQ.data?.items.find((o) => o.id === latestRun.objective_id)?.title ?? latestRun.objective_id
     const reach = funnelReach(parseHarnessTrace(latestRun.trace_json))
+    // The design leads with the memo's own headline; the standing carries the
+    // last memo per objective, so when it is this run's, the row speaks it.
+    const memo = (standingQ.data?.objectives ?? [])
+      .map((o) => o.last_memo)
+      .find((m) => m != null && m.run_id === latestRun.id)
+    const waiting = /await|pending/i.test(latestRun.status)
+    const funnel = memo
+      ? `${(memo.considered ?? reach?.considered)?.toLocaleString('en-US') ?? '—'} → ${reach?.proposed ?? '—'} → ${memo.actionable} actionable · ${memo.split} split · ${memo.blocked} blocked.`
+      : reach
+        ? `${reach.considered.toLocaleString('en-US')} → ${reach.proposed} proposed this run.`
+        : 'No funnel recorded for this run.'
     today.push({
       op: 'loop',
-      title: `${objTitle} · ${latestRun.status.replace(/_/g, ' ')}`,
-      when: latestRun.started_at ? fmtIsoTs(latestRun.started_at) : '',
-      sub: reach ? `${reach.considered.toLocaleString('en-US')} → ${reach.proposed} proposed this run.` : 'No funnel recorded for this run.',
+      title: memo ? `memo · ${memo.headline}` : `${objTitle} · ${latestRun.status.replace(/_/g, ' ')}`,
+      titleTip: `${objTitle} · ${latestRun.id}`,
+      when: zTime(latestRun.started_at),
+      sub: waiting ? `${funnel} Awaiting your call in the Inbox.` : funnel,
+      tone: waiting ? 'wait' : 'quiet',
       actions: [
         { label: 'Decision Inbox →', to: '/research/loop/decisions' },
         { label: 'Pipeline →', to: loopPipelinePath(latestRun.id) },
@@ -297,16 +314,36 @@ export default function ResearchOverviewPage() {
       title: `policy suggestion${pendingPatches === 1 ? '' : 's'} · ${pendingPatches} awaiting you`,
       when: '',
       sub: 'Proposed changes to an objective policy. Nothing applies until you approve it in the Inbox.',
+      tone: 'wait',
       actions: [{ label: 'Decision Inbox →', to: '/research/loop/decisions' }],
     })
   }
-  for (const h of hypsToday.slice(0, 2)) {
+  // A hand verdict is its own row form (the design's «You · verdict on …»);
+  // everything else stays a hypothesis row, its run id trimmed to the hover.
+  const verdictsToday = hypsToday.filter((h) => h.tags?.includes('hand-verdict'))
+  const plainHypsToday = hypsToday.filter((h) => !h.tags?.includes('hand-verdict'))
+  for (const h of verdictsToday.slice(0, 2)) {
+    const ref = (h.origin_ref ?? {}) as { stance?: string; cites?: string[] }
+    const sym = h.symbols?.[0]
+    today.push({
+      op: 'hand',
+      title: `You · verdict${sym ? ` on ${sym}` : ''}${ref.stance ? ` · ${ref.stance}` : ''}${ref.cites?.length ? ` · cites ${ref.cites.join(', ')}` : ''}`,
+      when: zTime(h.created_at),
+      sub: `“${h.thesis}” Open, settles in 20d into the same record as the judges.`,
+      tone: 'quiet',
+      actions: sym ? [{ label: 'Symbol →', to: withSymbolParam(SYMBOL_PATH, sym) }] : [],
+    })
+  }
+  for (const h of plainHypsToday.slice(0, 2)) {
     const op = operatorOf(h.origin_page)
+    const title = h.title.replace(/\s*\(run_[a-z0-9]+\)\s*$/i, '')
     today.push({
       op,
-      title: `${op === 'hand' ? 'You' : op === 'loop' ? 'The loop' : 'The Copilot'} · hypothesis · ${h.title}`,
-      when: h.created_at ? fmtIsoTs(h.created_at) : '',
+      title: `${op === 'hand' ? 'You' : op === 'loop' ? 'The loop' : 'The Copilot'} · hypothesis · ${title}`,
+      titleTip: title === h.title ? undefined : h.title,
+      when: zTime(h.created_at),
       sub: h.origin_page ? `Born on ${h.origin_page}. Settles by the outcome rule at its horizon.` : 'Settles by the outcome rule at its horizon.',
+      tone: op === 'copilot' ? 'new' : 'quiet',
       actions: [{ label: 'Hypothesis Board →', to: '/research/loop/hypotheses' }],
     })
   }
@@ -315,8 +352,9 @@ export default function ResearchOverviewPage() {
     today.push({
       op: 'copilot',
       title: `Daily Brief · ${brief.headline}`,
-      when: brief.created_at ? fmtIsoTs(brief.created_at) : '',
+      when: zTime(brief.created_at),
       sub: 'The morning agent’s brief for today.',
+      tone: 'new',
       actions: [{ label: 'Daily Brief →', to: '/research/daily-brief' }],
     })
   }
@@ -433,7 +471,7 @@ function LoopFace(props: {
       <DialStrip cells={dialCells} earn={earn} current={dialCurrent} />
 
       <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
-        <TodayFeed items={today} asOf={fmtIsoTs(nowIso)} />
+        <TodayFeed items={today} asOf={`${nowIso.slice(0, 10)} · ${nowIso.slice(11, 16)}Z`} />
         <HealthPanel cells={health} />
       </div>
 

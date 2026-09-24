@@ -166,7 +166,9 @@ describe('the design walk, as it stands', () => {
     // 2026-09-25: the Owner signed the two method faces that read right side
     // by side — Today's candidates and the Screener authoring face. 59 the
     // same day, round two: Compare, History and History's method face.
-    expect(counts.aligned + counts.byState.stale).toBe(59)
+    // 62 on 2026-09-30: the Owner signed Symbol (after the five tab-by-tab
+    // re-alignment rounds), the Symbol lab method face, and Backtest.
+    expect(counts.aligned + counts.byState.stale).toBe(62)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -178,8 +180,9 @@ describe('the design walk, as it stands', () => {
     // 54 on 2026-09-24: Symbol left for `reviewing` with its new Payoff face.
     // 56 on 2026-09-25: the Owner signed Today's candidates and the Screener
     // authoring face in the re-alignment round; 59 the same day with Compare,
-    // History and History's method face.
-    expect(counts.aligned).toBe(59)
+    // History and History's method face. 62 on 2026-09-30: Symbol, the
+    // Symbol lab and Backtest, signed together after the tab-by-tab rounds.
+    expect(counts.aligned).toBe(62)
     expect(
       rows
         .filter((r) => r.state === 'stale')
@@ -409,8 +412,9 @@ describe('the design walk, as it stands', () => {
     // as a page with its own count disagreement on display. 20 with Backtest,
     // the pending pool's last page, walked run-first onto the design. 18 on
     // 2026-09-25: the Owner signed lab/today and lab/screener out of it, then
-    // 15 with Compare, History and History's method face.
-    expect(counts.byState.reviewing).toBe(15)
+    // 15 with Compare, History and History's method face. 12 on 2026-09-30,
+    // the Owner signing Symbol, the Symbol lab and Backtest out of it.
+    expect(counts.byState.reviewing).toBe(12)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -428,6 +432,7 @@ describe('the design walk, as it stands', () => {
       '/portfolio/pnl-explain',
       '/portfolio/transfer',
       '/research/agent-personas',
+      '/research/backtest',
       '/research/book',
       '/research/compare',
       '/research/contract-screener',
@@ -439,6 +444,7 @@ describe('the design walk, as it stands', () => {
       '/research/journal',
       '/research/lab/history',
       '/research/lab/screener',
+      '/research/lab/symbol',
       '/research/lab/today',
       '/research/loop/candidates',
       '/research/loop/decisions',
@@ -454,6 +460,7 @@ describe('the design walk, as it stands', () => {
       '/research/scan',
       '/research/screener',
       '/research/signal-decay',
+      '/research/symbol',
       '/research/watchlist',
       '/research/workbench',
       '/review',
@@ -488,16 +495,13 @@ describe('the design walk, as it stands', () => {
       '/docs/options-kit',
       '/market/live',
       '/portfolio/positions',
-      '/research/backtest',
       '/research/event-radar',
       '/research/events',
       '/research/lab/calibration',
       '/research/lab/discover-model',
-      '/research/lab/symbol',
       '/research/lens-coverage',
       '/research/overview',
       '/research/signal-health',
-      '/research/symbol',
       '/settings',
       '/system/status',
     ])

@@ -7,6 +7,7 @@
  * store (W4) are not built, and inventing their numbers is what this page
  * exists not to do.
  */
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { StatusLamp } from '@/components/StatusLamp'
 import { cn } from '@/lib/utils'
@@ -21,7 +22,67 @@ export interface DialCell extends DialLevelDef {
   tip: string
 }
 
-export function DialStrip({ cells, earn }: { cells: DialCell[]; earn: EarnRow | null }) {
+/**
+ * The confirm strip a level click opens (design: MOVE THE DIAL → Lx ·
+ * Set Lx · cancel · Esc). The design’s Set writes a dial store; none
+ * exists on this side — the level is read off the Trust grant the Owner
+ * sets on the platform matrix — so Set stays disabled and says exactly
+ * where the mechanism lives instead of pretending to be it.
+ */
+function dialConfirm(
+  target: DialCell,
+  current: string,
+  earn: EarnRow | null,
+): { title: string; text: string; why: string } {
+  const order = ['L0', 'L1', 'L2', 'L3']
+  const down = order.indexOf(target.level) < order.indexOf(current)
+  if (target.level === 'L3')
+    return {
+      title: `Cannot move → L3`,
+      text: `L3 stays locked until L2-era patches are themselves settled and verified. The dial is earned, not set — and orders never pass at any level (D10).`,
+      why: 'L3 is locked.',
+    }
+  if (target.level === 'L2') {
+    const cleared =
+      earn != null && earn.settled >= earn.need && earn.hit != null && earn.hit >= earn.floor
+    if (!cleared)
+      return {
+        title: `Cannot move → L2`,
+        text: `${earn ? `${earn.title} stands at ${earn.settled} / ${earn.need} settled${earn.hit != null ? ` · ${Math.round(earn.hit * 100)}%` : ''}` : 'Nothing settled under L1 yet'}. The dial is earned, not set — keep running under ${current} and this row lights when the sample is there.`,
+        why: 'The record has not cleared the gate.',
+      }
+    return {
+      title: `Move the dial → L2`,
+      text: `The record clears the gate${earn ? ` (${earn.settled} settled · ${earn.hit != null ? Math.round(earn.hit * 100) : '—'}%)` : ''}. From now ${target.passes} passes without you. Orders never do (D10) — but no mechanism grants L2 yet: the dial store lands with W4.`,
+      why: 'No dial store exists to write — the L2 grant arrives with W4.',
+    }
+  }
+  return {
+    title: `Move the dial → ${target.level}`,
+    text: `${down ? 'Down is immediate. ' : ''}From now ${target.passes} pass${down ? 'es' : ''} without you; ${target.waits} wait${down ? 's' : ''}. Nothing already merged is undone. The level is read off the Trust grant the Owner sets on the platform matrix — there is no dial store to write here, so the move happens on the grant.`,
+    why: 'No dial store — the level follows the Trust grant, set on the platform matrix.',
+  }
+}
+
+export function DialStrip({
+  cells,
+  earn,
+  current,
+}: {
+  cells: DialCell[]
+  earn: EarnRow | null
+  current: string
+}) {
+  const [confirm, setConfirm] = useState<DialCell | null>(null)
+  useEffect(() => {
+    if (!confirm) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setConfirm(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [confirm])
+  const c = confirm ? dialConfirm(confirm, current, earn) : null
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-background">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
@@ -36,12 +97,18 @@ export function DialStrip({ cells, earn }: { cells: DialCell[]; earn: EarnRow | 
       </header>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         {cells.map((d) => (
-          <div
+          <button
             key={d.level}
-            title={d.tip}
+            type="button"
+            title={d.tone === 'current' ? d.tip : `${d.tip} Click for the move.`}
+            onClick={() => {
+              if (d.tone !== 'current') setConfirm(d)
+            }}
             className={cn(
-              'flex flex-col gap-1 border-t-2 px-3 py-2.5 sm:border-r sm:border-r-border/60',
-              d.tone === 'current' ? 'border-t-primary bg-primary/5' : 'border-t-transparent',
+              'flex flex-col gap-1 border-t-2 px-3 py-2.5 text-left sm:border-r sm:border-r-border/60',
+              d.tone === 'current'
+                ? 'cursor-default border-t-primary bg-primary/5'
+                : 'border-t-transparent hover:bg-secondary/40',
             )}
           >
             <div className="flex w-full items-baseline gap-2">
@@ -68,9 +135,43 @@ export function DialStrip({ cells, earn }: { cells: DialCell[]; earn: EarnRow | 
               <span>waits · </span>
               {d.waits}
             </div>
-          </div>
+          </button>
         ))}
       </div>
+      {confirm && c ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-warning/40 bg-warning/5 px-3 py-2">
+          <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-warning">
+            {c.title}
+          </span>
+          <span className="min-w-0 flex-1 basis-64 text-dense-meta leading-relaxed text-foreground/85 text-pretty">
+            {c.text}
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              disabled
+              title={c.why}
+              className="cursor-not-allowed rounded border border-warning/50 px-2.5 py-1 text-dense-label font-semibold text-warning opacity-55"
+            >
+              Set {confirm.level}
+            </button>
+            <Link
+              to="/research/loop/harness"
+              className="whitespace-nowrap text-dense-meta text-primary hover:underline"
+              title="The Trust grant the level reads — the console’s leash panel shows it."
+            >
+              Console → Trust
+            </Link>
+            <button
+              type="button"
+              onClick={() => setConfirm(null)}
+              className="whitespace-nowrap text-dense-meta text-muted-foreground hover:text-foreground"
+            >
+              cancel · Esc
+            </button>
+          </span>
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-border/60 bg-secondary/20 px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">to L2</span>
         {earn ? (

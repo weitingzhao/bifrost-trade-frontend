@@ -262,7 +262,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // face, Payoff — the one tab this side had deliberately withheld until
     // there was data behind it. Waiting for the Owner's look.
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/symbol'],
     },
@@ -320,7 +320,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: VALIDATE,
     symbolScope: true,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-22.6',
       note: DESIGN_NOTES['/research/backtest'],
     },
@@ -372,7 +372,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.4',
       note: DESIGN_NOTES['/research/lab/symbol'],
     },

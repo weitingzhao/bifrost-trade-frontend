@@ -394,6 +394,7 @@ export default function ResearchOverviewPage() {
         stations={stations}
         machines={machines}
         dialCells={dialCells}
+        dialCurrent={current}
         earn={earn}
         today={today}
         nowIso={nowIso}
@@ -411,6 +412,7 @@ function LoopFace(props: {
   stations: StationRow[]
   machines: React.ComponentProps<typeof LoopCircuit>['machines']
   dialCells: DialCell[]
+  dialCurrent: string
   earn: React.ComponentProps<typeof DialStrip>['earn']
   today: TodayItem[]
   nowIso: string
@@ -420,7 +422,7 @@ function LoopFace(props: {
   cards: OpCardData[]
 }) {
   const {
-    stations, machines, dialCells, earn, today, nowIso, health, stationsFootnote, bookRows, cards,
+    stations, machines, dialCells, dialCurrent, earn, today, nowIso, health, stationsFootnote, bookRows, cards,
   } = props
   return (
     <>
@@ -428,7 +430,7 @@ function LoopFace(props: {
           what this layer is — then how much of it passes without you, then
           what came out today and whether the engines behind it are up. */}
       <LoopCircuit cards={loopCards(stations)} machines={machines} />
-      <DialStrip cells={dialCells} earn={earn} />
+      <DialStrip cells={dialCells} earn={earn} current={dialCurrent} />
 
       <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
         <TodayFeed items={today} asOf={fmtIsoTs(nowIso)} />

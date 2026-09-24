@@ -743,7 +743,12 @@ describe('design adoption', () => {
     // font) — global Rev only. Twenty-six files were renamed to mirror the
     // menu rather than the route, with no route, label or stamp moved. Four
     // stamps did: Positions (.21), and Narrative, Overview and Compare (.24).
-    expect(DESIGN_REV).toBe('2026-09-23.24')
+    // Package 2026-09-23.7 @ Rev .28 is three rounds of shell interaction
+    // (.25–.27: dock, floats, keyboard, focus, the StageRail into the crumb)
+    // and a pre-export sweep (.28), and Package .8 @ Rev .29 answers this
+    // side's §14.4 ask in the contract alone — the snapshot moved by its
+    // global Rev and nothing else, so no page stamp and no state moves.
+    expect(DESIGN_REV).toBe('2026-09-23.29')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

@@ -316,7 +316,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-23.24"
+export const DESIGN_REV = "2026-09-23.29"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home"},

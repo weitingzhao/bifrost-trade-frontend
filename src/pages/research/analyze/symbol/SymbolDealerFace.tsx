@@ -38,6 +38,8 @@ interface DistRow {
   put_oi: number
   call_gex: number
   put_gex: number
+  call_volume: number
+  put_volume: number
 }
 
 function parseDist(rows: unknown[]): DistRow[] {
@@ -53,6 +55,8 @@ function parseDist(rows: unknown[]): DistRow[] {
         expiry,
         call_oi: num(r.call_oi),
         put_oi: num(r.put_oi),
+        call_volume: num(r.call_volume),
+        put_volume: num(r.put_volume),
         call_gex: num(r.call_gex),
         put_gex: num(r.put_gex),
       },
@@ -61,6 +65,15 @@ function parseDist(rows: unknown[]): DistRow[] {
 }
 
 const netOf = (r: DistRow) => r.call_gex + r.put_gex
+
+/* The store keeps per-strike volumes beside the OI (gex_source says so:
+   oi_gamma+volume) — the volume-basis GEX is the same per-contract gamma
+   re-weighted by what actually traded, not a second aggregation. */
+const volGexOf = (r: DistRow) => {
+  const c = r.call_oi > 0 ? (r.call_gex / r.call_oi) * r.call_volume : 0
+  const put = r.put_oi > 0 ? (r.put_gex / r.put_oi) * r.put_volume : 0
+  return c + put
+}
 
 function walkGex(rows: DistRow[]): { maxAbs: number; cums: number[] } {
   let c = 0
@@ -165,10 +178,28 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
     return ((k - lo) / (hi - lo)) * (W - 20) + 10
   }
 
-  const topStrikes = [...rows]
-    .sort((a, b) => Math.abs(netOf(b)) - Math.abs(netOf(a)))
-    .slice(0, 11)
-    .sort((a, b) => a.strike - b.strike)
+  // The design's window is contiguous around spot — the small put books
+  // below are half the reading, and a top-N cut hides them.
+  const tableRows = (() => {
+    if (rows.length === 0 || spot == null) return []
+    let idx = 0
+    for (let i = 1; i < rows.length; i++)
+      if (Math.abs(rows[i].strike - spot) < Math.abs(rows[idx].strike - spot)) idx = i
+    const lo = Math.max(0, idx - 5)
+    return rows.slice(lo, Math.min(rows.length, idx + 6))
+  })()
+  const sideMax = Math.max(
+    1,
+    ...tableRows.flatMap((r) => [Math.abs(r.call_gex), Math.abs(r.put_gex)]),
+  )
+  const nearestTo = (v: number | null) => {
+    if (v == null || tableRows.length === 0) return null
+    let best = tableRows[0].strike
+    for (const r of tableRows) if (Math.abs(r.strike - v) < Math.abs(best - v)) best = r.strike
+    return best
+  }
+  const zeroRowStrike = nearestTo(zeroG)
+  const spotRowStrike = nearestTo(spot)
   const dist = (v: number | null) =>
     v == null || spot == null || spot === 0 ? '—' : `${(((v - spot) / spot) * 100).toFixed(1)}%`
 
@@ -179,6 +210,29 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const dte = num(p.dte)
   const totalOi = num(p.total_oi)
   const oiMax = Math.max(1, ...rows.map((r) => r.call_oi + r.put_oi))
+  /* What option sellers pay out if the cycle closes at each strike — the
+     max-pain payout function on the same book, ×100 shares a contract. The
+     minimum of this curve is the max pain the exhibit already names. */
+  const liab = rows.map((s0) => ({
+    strike: s0.strike,
+    v:
+      rows.reduce(
+        (a, r) =>
+          a + Math.max(0, s0.strike - r.strike) * r.call_oi + Math.max(0, r.strike - s0.strike) * r.put_oi,
+        0,
+      ) * 100,
+  }))
+  const liabMax = Math.max(1, ...liab.map((l) => l.v))
+  const liabPath =
+    liab.length >= 2
+      ? liab
+          .map((l, i) => `${i === 0 ? 'M' : 'L'}${((i / Math.max(1, liab.length - 1)) * 580 + 10).toFixed(1)},${(8 + (1 - l.v / liabMax) * 100).toFixed(1)}`)
+          .join(' ')
+      : null
+  const liabAtMp =
+    maxPain != null && liab.length > 0
+      ? liab.reduce((best, l) => (Math.abs(l.strike - (maxPain ?? 0)) < Math.abs(best.strike - (maxPain ?? 0)) ? l : best)).v
+      : null
   const mpX = maxPain != null ? strikeX(maxPain) : null
   const spotX = spot != null ? strikeX(spot) : null
 
@@ -292,52 +346,75 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
       <section className={panel}>
         <header className={panelHead}>
           <span className={cap}>Strike GEX</span>
-          <span className="text-dense-body font-semibold">largest books near spot</span>
-          <span className="ml-auto text-dense-caption text-muted-foreground">OI basis · {expiry ?? '—'}</span>
+          <span className="text-dense-body font-semibold">OI solid · volume inner</span>
+          <span className="ml-auto text-dense-caption text-muted-foreground">{expiry ?? '—'}</span>
         </header>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr>
                 <th className={cn(th, 'text-left')}>Strike</th>
-                <th className={cn(th, 'w-[44%] text-left')}>− puts · calls +</th>
+                <th className={cn(th, 'w-[38%] text-left')}>− puts · calls +</th>
                 <th className={th}>OI GEX</th>
-                <th className={th}>OI</th>
+                <th className={th}>Vol GEX</th>
                 <th className={cn(th, 'w-8')} />
               </tr>
             </thead>
             <tbody>
-              {topStrikes.map((r) => {
+              {tableRows.map((r) => {
                 const v = netOf(r)
-                const tag =
-                  r.strike === callWall
-                    ? 'call wall'
-                    : r.strike === putWall
-                      ? 'put wall'
-                      : null
+                const vv = volGexOf(r)
+                const isZero = r.strike === zeroRowStrike
+                const tag = [
+                  r.strike === callWall ? 'call wall' : null,
+                  r.strike === putWall ? 'put wall' : null,
+                  isZero ? 'zero γ' : null,
+                  !isZero && r.strike === spotRowStrike ? 'spot' : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || null
                 return (
-                  <tr key={r.strike}>
+                  <tr key={r.strike} className={cn(isZero && 'shadow-[inset_0_0_0_1px_var(--color-warning)]')}>
                     <td className={cn(td, 'text-left', tag ? 'font-bold text-foreground' : 'text-secondary-foreground')}>
                       {r.strike}
-                      {tag ? <span className="ml-1.5 font-sans text-dense-micro text-muted-foreground">{tag}</span> : null}
+                      {tag ? (
+                        <span className={cn('ml-1.5 font-sans text-dense-micro', isZero ? 'text-warning' : 'text-muted-foreground')}>
+                          {tag}
+                        </span>
+                      ) : null}
                     </td>
                     <td className={cn(td, 'text-left')}>
-                      <div className="relative h-3">
+                      {/* Puts left, calls right of one axis — the design's bar;
+                          the solid bar is the OI book, the thinner inner one is
+                          the session's volume on the same per-contract gamma. */}
+                      <div className="relative h-3.5">
                         <span className="absolute inset-y-0 left-1/2 w-px bg-[var(--sk-line2)]" />
                         <span
-                          className={cn('absolute top-0.5 h-2 opacity-80', v >= 0 ? 'bg-profit' : 'bg-loss')}
-                          style={
-                            v >= 0
-                              ? { left: '50%', width: `${(Math.abs(v) / maxAbs) * 50}%` }
-                              : { right: '50%', width: `${(Math.abs(v) / maxAbs) * 50}%` }
-                          }
+                          className="absolute top-0.5 h-1.5 bg-destructive opacity-80"
+                          style={{ right: '50%', width: `${(Math.abs(r.put_gex) / sideMax) * 50}%` }}
+                        />
+                        <span
+                          className="absolute top-0.5 h-1.5 bg-success opacity-80"
+                          style={{ left: '50%', width: `${(Math.abs(r.call_gex) / sideMax) * 50}%` }}
+                        />
+                        <span
+                          className="absolute bottom-0.5 h-[3px] bg-destructive opacity-50"
+                          style={{
+                            right: '50%',
+                            width: `${(Math.min(Math.abs(r.put_oi > 0 ? (r.put_gex / r.put_oi) * r.put_volume : 0), sideMax) / sideMax) * 50}%`,
+                          }}
+                        />
+                        <span
+                          className="absolute bottom-0.5 h-[3px] bg-success opacity-50"
+                          style={{
+                            left: '50%',
+                            width: `${(Math.min(Math.abs(r.call_oi > 0 ? (r.call_gex / r.call_oi) * r.call_volume : 0), sideMax) / sideMax) * 50}%`,
+                          }}
                         />
                       </div>
                     </td>
-                    <td className={cn(td, v >= 0 ? 'text-profit' : 'text-loss')}>{fmtM(v)}</td>
-                    <td className={cn(td, 'text-muted-foreground')}>
-                      {(r.call_oi + r.put_oi).toLocaleString()}
-                    </td>
+                    <td className={cn(td, v >= 0 ? 'text-success' : 'text-destructive')}>{fmtM(v)}</td>
+                    <td className={cn(td, vv >= 0 ? 'text-success' : 'text-destructive')}>{fmtM(vv)}</td>
                     <td className={cn(td, 'w-8 text-center')}>
                       <Link
                         to={withSymbolParam(
@@ -358,9 +435,10 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
         </div>
         <p className={note}>
           Positive = dealers long gamma at that strike (they sell rallies, buy dips into it).
-          Walls are the largest books each side; zero γ is where the cumulative sum crosses. A
-          volume-basis GEX column needs the ledger&rsquo;s other aggregation, which no store keeps
-          per strike — unmeasured, not omitted.
+          Walls are the largest books each side; zero γ is where the cumulative sum crosses,
+          ringed amber. The volume column is real after all — the store keeps per-strike
+          volumes beside the OI, so both bases are drawn at once and the design’s OI/Volume
+          toggle has nothing left to switch. ⇢ rules the strike in the Chain ladder.
         </p>
       </section>
 
@@ -387,29 +465,35 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           <span className="ml-auto text-dense-caption text-muted-foreground">source · opex_pin exhibit</span>
         </header>
         <LensVerdictBlock lensId="opex_pin" exhibit={pinEx} />
-        <div className="grid grid-cols-2 gap-2.5 px-3 py-2.5 sm:grid-cols-3">
-          <FaceKv label="max-pain strike" value={maxPain != null ? String(maxPain) : '—'} />
+        <div className="grid grid-cols-1 items-start border-b border-border/60 md:grid-cols-[250px_minmax(0,1fr)]">
+        <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5 px-3 py-2.5 md:border-r md:border-border/60">
+          <FaceKv label="pin strike" value={maxPain != null ? String(maxPain) : '—'} title="The strike the current cycle would pin to — today's max pain." />
           <FaceKv
             label="distance"
             value={pinDist != null ? `${(pinDist * 100).toFixed(1)}%` : '—'}
             cls={pinDist != null && pinDist < 0.01 ? 'text-warning' : undefined}
           />
-          <FaceKv label="close" value={close != null ? close.toFixed(2) : '—'} />
-          <FaceKv label="total OI" value={totalOi != null ? totalOi.toLocaleString() : '—'} />
+          <FaceKv
+            label="pin score"
+            value="—"
+            cls="text-muted-foreground"
+            title="The design scores the pin 0–100 as OpEx approaches; no store computes one — unmeasured, not omitted."
+          />
+          <FaceKv label="close · OI" value={`${close != null ? close.toFixed(2) : '—'} · ${totalOi != null ? totalOi.toLocaleString() : '—'}`} />
           <FaceKv
             label="vanna"
-            value={vanna != null ? `${vanna >= 0 ? '+' : '−'}${Math.abs(vanna) >= 1000 ? `${(Math.abs(vanna) / 1000).toFixed(1)}k` : Math.abs(vanna).toFixed(0)}` : '—'}
-            cls={vanna != null ? (vanna >= 0 ? 'text-profit' : 'text-loss') : 'text-muted-foreground'}
-            title="Vanna > 0 with falling IV means dealers buy into strength — supportive into the print."
+            value={vanna != null ? `${vanna >= 0 ? '+' : '−'}${Math.abs(vanna) >= 1000 ? `${(Math.abs(vanna) / 1000).toFixed(1)}k` : Math.abs(vanna).toFixed(0)} /vol pt` : '—'}
+            cls={vanna != null ? (vanna >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'}
+            title="Delta picked up per point of IV — vanna > 0 with falling IV means dealers buy into strength, supportive into the print."
           />
           <FaceKv
             label="charm"
-            value={charm != null ? `${charm >= 0 ? '+' : '−'}${Math.abs(charm) >= 1000 ? `${(Math.abs(charm) / 1000).toFixed(1)}k` : Math.abs(charm).toFixed(0)}` : '—'}
-            cls={charm != null ? (charm >= 0 ? 'text-profit' : 'text-loss') : 'text-muted-foreground'}
-            title="Charm accelerates in the last three sessions — when a pin either takes or fails."
+            value={charm != null ? `${charm >= 0 ? '+' : '−'}${Math.abs(charm) >= 1000 ? `${(Math.abs(charm) / 1000).toFixed(1)}k` : Math.abs(charm).toFixed(0)} /day` : '—'}
+            cls={charm != null ? (charm >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'}
+            title="Delta decaying off per day — charm accelerates in the last three sessions, when a pin either takes or fails."
           />
         </div>
-        <div className="border-b border-border/60">
+        <div>
           <div className="flex items-baseline gap-2 px-3 pt-2">
             <span className={cap}>past cycles</span>
             <span className="ml-auto font-mono text-dense-micro tabular-nums text-muted-foreground">
@@ -437,19 +521,17 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
               <tbody>
                 {pins.map((r) => {
                   const pct = r.pct_distance != null ? Math.abs(r.pct_distance) * 100 : null
-                  const pinned = pct != null && pct < 0.5
+                  const tier = pct == null ? null : pct < 0.5 ? 'pinned' : pct < 1.25 ? 'near' : 'no'
+                  const tierCls =
+                    tier === 'pinned' ? 'text-success' : tier === 'near' ? 'text-warning' : 'text-muted-foreground'
                   return (
                     <tr key={r.opex_date ?? r.expiry ?? ''}>
                       <td className={cn(td, 'text-left text-muted-foreground')}>{r.opex_date?.slice(5) ?? '—'}</td>
                       <td className={td}>{r.max_pain_strike ?? '—'}</td>
                       <td className={td}>{r.settle_close != null ? r.settle_close.toFixed(2) : '—'}</td>
-                      <td className={cn(td, pinned ? 'text-warning' : 'text-muted-foreground')}>
-                        {pct != null ? `${pct.toFixed(1)}%` : '—'}
-                      </td>
+                      <td className={cn(td, tierCls)}>{pct != null ? `${pct.toFixed(1)}%` : '—'}</td>
                       <td className={cn(td, 'text-muted-foreground/60')}>—</td>
-                      <td className={cn(td, 'text-left font-sans', pinned ? 'text-warning' : 'text-muted-foreground')}>
-                        {pinned ? 'pinned' : 'escaped'}
-                      </td>
+                      <td className={cn(td, 'text-left font-sans', tierCls)}>{tier ?? '—'}</td>
                     </tr>
                   )
                 })}
@@ -457,19 +539,29 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
             </table>
           )}
         </div>
+        </div>
         <div className="grid grid-cols-1 items-start md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         {rows.length > 0 ? (
           <div className="px-3 pb-1">
-            <div className={cn(cap, 'mb-1')}>OI by strike · {expiry?.slice(5) ?? ''}</div>
-            <svg viewBox="0 0 600 150" className="block h-auto w-full" role="img" aria-label="Open interest by strike, calls above puts, with max pain and spot">
+            <div className="mb-1 flex flex-wrap items-baseline gap-2">
+              <span className={cap}>OI by strike · {expiry?.slice(5) ?? ''}</span>
+              {liabAtMp != null ? (
+                <span className="ml-auto font-mono text-dense-micro tabular-nums text-muted-foreground">
+                  max pain <b className="text-foreground">{maxPain}</b> · seller liability there{' '}
+                  <b className="text-foreground">${fmtM(liabAtMp)}</b>
+                </span>
+              ) : null}
+            </div>
+            <svg viewBox="0 0 600 150" className="block h-auto w-full" role="img" aria-label="Open interest by strike, calls above puts, seller liability curve, max pain and spot">
+              {liabPath ? <path d={liabPath} fill="none" stroke="var(--foreground)" strokeWidth="1.1" opacity="0.85" /> : null}
               {rows.map((r, i) => {
                 const x = (i / Math.max(1, rows.length - 1)) * 580 + 10
                 const ch = (r.call_oi / oiMax) * 130
                 const ph = (r.put_oi / oiMax) * 130
                 return (
                   <g key={r.strike}>
-                    <rect x={x - 2.5} y={140 - ch} width="5" height={ch} fill="var(--color-profit)" opacity="0.75" />
-                    <rect x={x - 2.5} y={140 - ch - ph} width="5" height={ph} fill="var(--color-loss)" opacity="0.75" />
+                    <rect x={x - 2.5} y={140 - ch} width="5" height={ch} fill="var(--color-success)" opacity="0.75" />
+                    <rect x={x - 2.5} y={140 - ch - ph} width="5" height={ph} fill="var(--color-destructive)" opacity="0.75" />
                   </g>
                 )
               })}
@@ -481,8 +573,9 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
               ) : null}
             </svg>
             <div className="flex flex-wrap gap-x-3.5 gap-y-1 pt-1 text-dense-micro text-muted-foreground">
-              <span><i className="mr-1 inline-block h-0.5 w-3.5 bg-profit align-[3px]" />call OI</span>
-              <span><i className="mr-1 inline-block h-0.5 w-3.5 bg-loss align-[3px]" />put OI (stacked)</span>
+              <span><i className="mr-1 inline-block h-0.5 w-3.5 bg-success align-[3px]" />call OI</span>
+              <span><i className="mr-1 inline-block h-0.5 w-3.5 bg-destructive align-[3px]" />put OI (stacked)</span>
+              <span><i className="mr-1 inline-block w-3.5 border-t border-foreground align-[3px]" />seller liability if it closes here</span>
               <span><i className="mr-1 inline-block w-3.5 border-t-2 border-dashed border-foreground align-[3px]" />max pain</span>
               <span><i className="mr-1 inline-block w-3.5 border-t-2 border-[var(--sk-ticker)] align-[3px]" />spot</span>
             </div>

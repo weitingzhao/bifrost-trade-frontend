@@ -29,9 +29,8 @@
  * snapshot, because the plan carries no bid or ask. The page says so beside
  * the number; it is the reason the fills block is owed.
  */
-import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
 import type { StrategyStructure, WinRateStructureRow } from '@/types/strategy'
-import { daysTo, parseOptionTicker, positionGreek } from '@/utils/optionTicker'
+import { positionGreek } from '@/utils/optionTicker'
 import { winRateBand } from '@/utils/reviewTrades'
 import { ALLOWANCE_SHARE, sizeCapFor, type SizeCap } from '@/utils/sizeCap'
 
@@ -81,62 +80,12 @@ export function structuresFor(all: readonly StrategyStructure[], stance: Stance)
 
 // ── the chain ─────────────────────────────────────────────────────────────
 
-export interface ChainContract {
-  ticker: string
-  strike: number
-  right: 'C' | 'P'
-  /** The session's last trade — not a quote. */
-  mark: number | null
-  delta: number | null
-  gamma: number | null
-  theta: number | null
-  vega: number | null
-  oi: number | null
-  volume: number | null
-}
-
-export function chainFromSnapshots(rows: readonly VendorGreeksRow[]): ChainContract[] {
-  const out: ChainContract[] = []
-  for (const r of rows) {
-    const p = parseOptionTicker(r.option_ticker)
-    if (!p || (p.right !== 'C' && p.right !== 'P')) continue
-    out.push({
-      ticker: r.option_ticker,
-      strike: p.strike,
-      right: p.right,
-      mark: r.day_close != null && r.day_close > 0 ? r.day_close : null,
-      delta: r.delta,
-      gamma: r.gamma,
-      theta: r.theta,
-      vega: r.vega,
-      oi: r.open_interest,
-      volume: r.day_volume ?? null,
-    })
-  }
-  return out
-}
-
-/** A standard monthly: the third Friday, the only Friday that falls on the 15th–21st. */
-export function isMonthly(expiry: string): boolean {
-  const d = new Date(`${expiry.slice(0, 10)}T12:00:00Z`)
-  const day = d.getUTCDate()
-  return d.getUTCDay() === 5 && day >= 15 && day <= 21
-}
-
-/**
- * The first listed expiry at least `horizon` days out — a monthly when the
- * rule's own time dimension says monthly, since that is what the rule was
- * written for. Null when nothing that far is listed.
- */
-export function pickExpiry(expiries: readonly string[], today: string, horizon: number, monthly: boolean): string | null {
-  for (const e of [...expiries].sort()) {
-    const dte = daysTo(e, today)
-    if (dte == null || dte < horizon) continue
-    if (monthly && !isMonthly(e)) continue
-    return e
-  }
-  return null
-}
+// The chain helpers moved to `utils/optionChain` when the Payoff face became
+// their second reader (§14.2); re-exported so this page's own vocabulary — and
+// its tests — keep one import path.
+export { chainFromSnapshots, isMonthly, pickExpiry } from '@/utils/optionChain'
+export type { ChainContract } from '@/utils/optionChain'
+import type { ChainContract } from '@/utils/optionChain'
 
 function strikes(chain: readonly ChainContract[], right: 'C' | 'P'): number[] {
   return [...new Set(chain.filter((c) => c.right === right).map((c) => c.strike))].sort((a, b) => a - b)

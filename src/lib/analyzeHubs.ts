@@ -53,7 +53,7 @@ export const LAB_VIEW_LENS: Partial<Record<LabViewId, string>> = {
 export const SYMBOL_PATH = '/research/symbol'
 export const TAB_PARAM = 'tab'
 
-export type SymbolTabId = 'overview' | 'volatility' | 'dealer' | 'scenario' | 'flow' | 'chain'
+export type SymbolTabId = 'overview' | 'volatility' | 'dealer' | 'scenario' | 'flow' | 'chain' | 'payoff'
 
 /**
  * Which Symbol tab a lab view lives in.

@@ -48,15 +48,11 @@ export const SYMBOL_TABS: readonly SymbolTabDef[] = [
   { id: 'scenario', label: 'Scenario', lenses: ['terrain_regime'] },
   { id: 'flow', label: 'Flow', lenses: ['order_sentiment'] },
   { id: 'chain', label: 'Chain', lenses: [] },
+  // The seventh face, built 2026-09-24: a structure on this name, priced at
+  // expiry and today off the chain's own EOD marks. It waited on data that now
+  // exists (`market-data` snapshots carry iv/delta per contract).
+  { id: 'payoff', label: 'Payoff', lenses: [] },
 ]
-
-/**
- * Payoff is a seventh tab in the design and is deliberately absent here: this
- * app has no payoff page, no route and no data behind one. A tab that opens on
- * "not built yet" is a promise the menu should not be making — the design's own
- * rule is that a nav row navigates.
- */
-export const SYMBOL_TABS_NOT_BUILT = ['payoff'] as const
 
 const TAB_IDS = new Set<string>(SYMBOL_TABS.map((t) => t.id))
 

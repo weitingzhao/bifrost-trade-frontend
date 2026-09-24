@@ -2,7 +2,7 @@ function normalPDF(x: number): number {
   return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI)
 }
 
-function normalCDF(x: number): number {
+export function normalCDF(x: number): number {
   // Abramowitz & Stegun 26.2.17 — max error 7.5e-8
   const t = 1 / (1 + 0.2316419 * Math.abs(x))
   const poly = t * (0.319381530

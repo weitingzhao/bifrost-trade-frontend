@@ -27,7 +27,9 @@ import { expirationDaysFromToday } from '@/utils/optionDiscovery/expirationMeta'
 import { DiscoveryUnderlyingBar } from './DiscoveryUnderlyingBar'
 import { DiscoveryIvTermBlock } from './DiscoveryIvTermBlock'
 import { DiscoveryChainLayers } from './DiscoveryChainLayers'
-import { DiscoveryStructurePanel } from '@/components/optionDiscovery/DiscoveryStructurePanel'
+import { Link } from 'react-router-dom'
+import { rightOf } from '@/utils/optionDiscovery/discoveryStructure'
+import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { useDiscoveryStrikeWindow } from './useDiscoveryStrikeWindow'
 import { useDiscoveryChainTable } from './useDiscoveryChainTable'
 
@@ -328,14 +330,27 @@ export function DiscoveryBody() {
               />
 
               {chainTable.selectedRow ? (
-                <DiscoveryStructurePanel
-                  symbol={selectedSymbol}
-                  expiration={selectedExpiration}
-                  row={chainTable.selectedRow}
-                  spot={snapshots.underlyingPrice}
-                  chain={snapshots.snapshotRows}
-                  strikes={chainTable.chainStrikesSorted}
-                />
+                /* The structure builder grew into the Payoff face (2026-09-24,
+                   the design's own seventh tab): Single / Vertical / Covered
+                   with the expiry and today lines, scenarios, greeks by spot
+                   and P(profit). This strip is the hand-off — the face opens
+                   on this contract, and everything the inline panel could do
+                   is there, with more. */
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-border/60 bg-muted/15 px-3 py-1.5">
+                  <span className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+                    Structure
+                  </span>
+                  <span className="font-mono text-dense-meta text-foreground">
+                    {selectedSymbol} {selectedExpiration} {chainTable.selectedRow.strike}
+                    {rightOf(chainTable.selectedRow)}
+                  </span>
+                  <Link
+                    className="text-dense-meta text-primary hover:underline"
+                    to={`${SYMBOL_PATH}?symbol=${encodeURIComponent(selectedSymbol)}&${TAB_PARAM}=payoff&expiration=${encodeURIComponent(selectedExpiration)}&strike=${chainTable.selectedRow.strike}&right=${rightOf(chainTable.selectedRow)}`}
+                  >
+                    Single / Vertical / Covered on this contract — priced at expiry and today · Payoff →
+                  </Link>
+                </div>
               ) : null}
 
               <RightInspectorShell

@@ -194,6 +194,10 @@ export const REDIRECTS: readonly RouteEntry[] = [
   },
   { path: '/research/scenario', label: 'Scenario', crumbs: ANALYZE, redirect: '/research/symbol' },
   { path: '/research/flow', label: 'Flow', crumbs: ANALYZE, redirect: '/research/symbol' },
+  // The design's own address for the seventh face (rev 2026-09-17.1) — never
+  // an app page, so unlike its siblings it lands on its tab rather than on the
+  // page that absorbed it.
+  { path: '/research/payoff', label: 'Payoff', crumbs: ANALYZE, redirect: '/research/symbol?tab=payoff' },
   {
     path: '/research/discovery',
     label: 'Option Discovery',

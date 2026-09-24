@@ -61,6 +61,7 @@ import { SessionsSection } from '@/pages/research/analyze/scenario/SessionsSecti
 import { PlaybookSection } from '@/pages/research/analyze/scenario/PlaybookSection'
 import { FlowBody } from '@/pages/research/analyze/flow/FlowBody'
 import { DiscoveryBody } from '@/pages/research/analyze/discovery/DiscoveryBody'
+import { PayoffBody } from '@/pages/research/analyze/payoff/PayoffBody'
 
 /** The design's line at the right of the tab strip — what this face is for. */
 const TAB_HINT: Record<SymbolTabId, string> = {
@@ -70,6 +71,7 @@ const TAB_HINT: Record<SymbolTabId, string> = {
   scenario: 'what the model expects · observe-only (D10)',
   flow: 'a proxy until the options tape is on the data plan',
   chain: 'expiries, strikes and structures for this name',
+  payoff: 'a structure priced before it exists · at close, not a quote',
 }
 
 /** One section of a stacked tab, anchored by the `?view=` it used to be. */
@@ -160,7 +162,7 @@ export default function SymbolPage() {
               {t.id === 'chain' ? (
                 <span
                   className="ml-2 self-center border-l border-border pl-3 font-mono text-dense-micro tracking-wide text-entity-contract opacity-75"
-                  title="The option faces. The design draws two — Chain and Payoff — and this side has no payoff page, no route and no data behind one."
+                  title="The option faces — Chain and Payoff, contract-level where the rest of the page is the underlying."
                 >
                   opt
                 </span>
@@ -202,6 +204,7 @@ export default function SymbolPage() {
       {active === 'dealer' || active === 'chain' ? (
         <ResearchContextBar showDate />
       ) : null}
+      {active === 'payoff' ? <ResearchContextBar /> : null}
       {active === 'overview' ? null : (
         <CopilotVerdictStrip originPage={`symbol:${active}`} originLabel={`Symbol · ${active}`} />
       )}
@@ -256,6 +259,7 @@ export default function SymbolPage() {
         )}
         {active === 'flow' && <FlowBody />}
         {active === 'chain' && <DiscoveryBody />}
+        {active === 'payoff' && <PayoffBody />}
       </div>
     </PageShell>
   )

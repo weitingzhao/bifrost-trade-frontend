@@ -258,9 +258,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     // rev is the package's own label at the walk; the design did not bump it
-    // for the 2026-09-13 and 2026-09-14 rounds.
+    // for the 2026-09-13 and 2026-09-14 rounds. Built 2026-09-24: the seventh
+    // face, Payoff — the one tab this side had deliberately withheld until
+    // there was data behind it. Waiting for the Owner's look.
     design: {
-      state: 'aligned',
+      state: 'reviewing',
       rev: '2026-09-18.2',
       note: DESIGN_NOTES['/research/symbol'],
     },

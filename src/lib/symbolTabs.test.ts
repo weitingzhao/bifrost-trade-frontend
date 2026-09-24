@@ -95,7 +95,10 @@ describe('the tab table', () => {
 
   it('knows its own tabs', () => {
     expect(isSymbolTab('chain')).toBe(true)
-    expect(isSymbolTab('payoff')).toBe(false)
+    // The seventh face, built 2026-09-24 — the one tab that used to be the
+    // design's promise this side would not make until the data existed.
+    expect(isSymbolTab('payoff')).toBe(true)
+    expect(isSymbolTab('whatif')).toBe(false)
     expect(isSymbolTab(null)).toBe(false)
   })
 })

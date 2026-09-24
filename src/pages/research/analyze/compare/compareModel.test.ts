@@ -55,6 +55,7 @@ function chain(): ChainContract[] {
         strike: k,
         right,
         mark: Math.max(0.05, 3 - otm * 0.12),
+        iv: 0.4,
         delta: right === 'P' ? -0.3 : 0.3,
         gamma: 0.02,
         theta: -0.04,

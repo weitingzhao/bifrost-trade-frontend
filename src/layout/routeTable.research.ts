@@ -345,6 +345,19 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // The Method face of Ratings · Stocks — the night batch's queue with the
+    // evidence behind each name, in the batch's own four states. Built
+    // 2026-09-24; the ⧉ switch on both faces lights by itself.
+    path: '/research/lab/today',
+    label: "Today's candidates",
+    crumbs: DISCOVER,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-22.6',
+      note: DESIGN_NOTES['/research/lab/today'],
+    },
+  },
+  {
     // The design's vocabulary page for the Discover menu — a System › Data
     // reference with no data behind it, transcribed whole. Built 2026-09-24.
     path: '/research/lab/discover-model',

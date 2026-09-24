@@ -27,6 +27,12 @@ export interface OrchestrationSchedule {
 export interface OrchestrationStatus {
   verdict?: string
   as_of?: string
+  /** The nightly batch's own standing — passthrough fields the schema keeps. */
+  job_name?: string
+  last_run_status?: string | null
+  last_run_ended_at?: string | null
+  overdue?: boolean
+  detail?: string
   schedules: OrchestrationSchedule[]
 }
 

@@ -45,10 +45,13 @@ describe('faceOf', () => {
       expect(faceOf(reading)?.otherBuilt).toBe(built.has(method))
       expect(faceOf(method)?.otherBuilt).toBe(built.has(reading))
     }
-    // The state this side is actually in: the design pairs four readings and
-    // no method face is built yet, so every switch renders its other half
-    // disabled rather than navigating to a route with no page.
-    expect(DESIGN_FACES.every((f) => !built.has(f.method))).toBe(true)
+    // The state this side is actually in: the design pairs four readings, and
+    // the first method face landed 2026-09-24 — Ratings · Stocks flips to
+    // Today's candidates; the other three switches still render their method
+    // half disabled rather than navigating to a route with no page.
+    expect(DESIGN_FACES.filter((f) => built.has(f.method)).map((f) => f.method)).toEqual([
+      '/research/lab/today',
+    ])
   })
 
   it('is generated, not typed — four pairs, eight distinct routes', () => {

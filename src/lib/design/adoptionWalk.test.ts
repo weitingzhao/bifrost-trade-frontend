@@ -168,7 +168,8 @@ describe('the design walk, as it stands', () => {
     // same day, round two: Compare, History and History's method face.
     // 62 on 2026-09-30: the Owner signed Symbol (after the five tab-by-tab
     // re-alignment rounds), the Symbol lab method face, and Backtest.
-    expect(counts.aligned + counts.byState.stale).toBe(62)
+    // 63 on 2026-10-01: Research Overview, after the dial and Today-feed rounds.
+    expect(counts.aligned + counts.byState.stale).toBe(63)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -182,7 +183,8 @@ describe('the design walk, as it stands', () => {
     // authoring face in the re-alignment round; 59 the same day with Compare,
     // History and History's method face. 62 on 2026-09-30: Symbol, the
     // Symbol lab and Backtest, signed together after the tab-by-tab rounds.
-    expect(counts.aligned).toBe(62)
+    // 63 on 2026-10-01 with Research Overview.
+    expect(counts.aligned).toBe(63)
     expect(
       rows
         .filter((r) => r.state === 'stale')
@@ -413,8 +415,9 @@ describe('the design walk, as it stands', () => {
     // the pending pool's last page, walked run-first onto the design. 18 on
     // 2026-09-25: the Owner signed lab/today and lab/screener out of it, then
     // 15 with Compare, History and History's method face. 12 on 2026-09-30,
-    // the Owner signing Symbol, the Symbol lab and Backtest out of it.
-    expect(counts.byState.reviewing).toBe(12)
+    // the Owner signing Symbol, the Symbol lab and Backtest out of it; 11 on
+    // 2026-10-01 with Research Overview.
+    expect(counts.byState.reviewing).toBe(11)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -456,6 +459,7 @@ describe('the design walk, as it stands', () => {
       '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
       '/research/orchestration',
+      '/research/overview',
       '/research/ratings/stocks',
       '/research/scan',
       '/research/screener',
@@ -500,7 +504,6 @@ describe('the design walk, as it stands', () => {
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lens-coverage',
-      '/research/overview',
       '/research/signal-health',
       '/settings',
       '/system/status',

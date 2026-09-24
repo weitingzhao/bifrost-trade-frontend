@@ -28,7 +28,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
-import { EmptyState, SegmentControl } from '@/components/data-display'
+import { SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -41,6 +41,7 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { eventsStanding, type StoreReading } from './eventsStanding'
 import { EventRadarBody } from './EventsBoard'
+import { EventsBookFace } from './EventsBookFace'
 
 const BATCHES = '/research/events/batches'
 
@@ -48,18 +49,16 @@ const FACE_OPTIONS = [
   {
     value: 'book',
     label: 'Book',
-    title: 'The design reads the calendar against the book here. Not built on this side yet.',
-    disabled: true,
+    title: 'The calendar against the book — which legs cross a dated event, and what it is priced at.',
   },
   { value: 'market', label: 'Market', title: "The market's own events, themes and forward calendar" },
 ]
 
 export default function EventsPage() {
   const [params, setParams] = useSearchParams()
-  // The design defaults to Book; this side opens on Market because Book is
-  // the face it has not built, and a page that opens on nothing is worse
-  // than one that opens on the half it has.
-  const face = params.get('face') === 'book' ? 'book' : 'market'
+  // The design's default face, now that both are built. `?face=market` keeps
+  // every existing link to the other one working.
+  const face = params.get('face') === 'market' ? 'market' : 'book'
 
   const batches = useQuery({
     queryKey: ['research', 'events', 'batches'],
@@ -97,7 +96,7 @@ export default function EventsPage() {
 
   const setFace = (v: string) => {
     const next = new URLSearchParams(params)
-    if (v === 'book') next.set('face', 'book')
+    if (v === 'market') next.set('face', 'market')
     else next.delete('face')
     setParams(next, { replace: true })
   }
@@ -130,10 +129,7 @@ export default function EventsPage() {
       />
 
       {face === 'book' ? (
-        <EmptyState
-          title="The Book face is not built here"
-          description="The design reads the calendar against the book on this face — which legs expire on an OPEX, what a print is priced at against the model. Nothing on this side draws that yet."
-        />
+        <EventsBookFace radarUnfed={standing.state === 'unfed'} />
       ) : standing.loading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (

@@ -22,6 +22,7 @@ import {
   marketStreamsSortHeaderMeta,
 } from '@/utils/marketStreamsSort'
 import type { OptionLiveBasis } from '@/utils/optionLiveBasis'
+import { computeOptMidAndLivePnl } from '@/utils/optionLiveBasis'
 import {
   resolveStkAccountMetrics,
   sumStkCostBasis,
@@ -42,6 +43,55 @@ import { liveEmptyHintClass } from './liveUi'
 function marketStreamsColSpan(hasStreamAccounts: boolean): number {
   void hasStreamAccounts
   return 8
+}
+
+/**
+ * The two cells a group header carries under Since $ — the design puts the
+ * category’s own subtotal on its row («Core 3 … +$1,260»). A sum of
+ * unknowns stays —, and a partial sum names how many rows it left out.
+ */
+function SinceSubtotalCells({ totalPnl, unpriced }: { totalPnl: number | null; unpriced: number }) {
+  return (
+    <>
+      <DenseTableCell
+        className={cn(denseTableNumCell, 'border-y border-border bg-secondary/60 font-semibold')}
+        title={
+          totalPnl == null
+            ? `None of the ${unpriced} rows has a Since $ to add — not a zero`
+            : unpriced > 0
+              ? `Sum of the priced rows; ${unpriced} row${unpriced === 1 ? '' : 's'} not priced and not counted`
+              : undefined
+        }
+      >
+        {totalPnl == null ? (
+          <span className="text-muted-foreground">—</span>
+        ) : (
+          <>
+            <InlinePnl value={totalPnl}>{fmtUsd(totalPnl, true)}</InlinePnl>
+            {unpriced > 0 ? <span className="ml-1 font-normal text-muted-foreground">+{unpriced}?</span> : null}
+          </>
+        )}
+      </DenseTableCell>
+      <DenseTableCell className="border-y border-border bg-secondary/60" />
+    </>
+  )
+}
+
+/** Count + Since $ over one category’s stock rows, nulls kept honest. */
+function stkGroupStats(rows: MarketStreamsRow[]): { count: number; totalPnl: number | null; unpriced: number } {
+  const vals = rows.map((r) => (r.pnlCost != null && Number.isFinite(r.pnlCost) ? r.pnlCost : null))
+  const known = vals.filter((v): v is number => v != null)
+  return { count: rows.length, totalPnl: known.length > 0 ? known.reduce((a, b) => a + b, 0) : null, unpriced: vals.length - known.length }
+}
+
+/** The design’s group label: name, then the row count in quiet ink. */
+function groupLabelWithCount(label: string, count: number) {
+  return (
+    <>
+      {label}
+      <span className="ml-1.5 font-normal text-muted-foreground">{count}</span>
+    </>
+  )
 }
 
 interface Props {
@@ -143,6 +193,17 @@ export function MarketStreamsTable({
   onOptRowReorder,
 }: Props) {
   const msColSpan = marketStreamsColSpan(hasStreamAccounts)
+  // The Options group's own Since $, from the same live-basis math its rows
+  // print — one source, so the header cannot disagree with the rows.
+  const optGroupStats = (() => {
+    const vals = sortedOptRows.map((r) => {
+      const basis = optionLiveBasisByRow.get(optBasisKey(r))
+      const v = computeOptMidAndLivePnl(r, quotesByContractKey[r.contract_key], basis).livePnl
+      return v != null && Number.isFinite(v) ? v : null
+    })
+    const known = vals.filter((v): v is number => v != null)
+    return { totalPnl: known.length > 0 ? known.reduce((a, b) => a + b, 0) : null, unpriced: vals.length - known.length }
+  })()
   const viewMode = hasStreamAccounts ? accountViewMode : 'combine'
   const { costSum, pnlSum } = sumStkCostBasis(filteredRows, viewMode)
   const totalPct = costSum > 0 && Number.isFinite(pnlSum) ? (pnlSum / costSum) * 100 : null
@@ -262,32 +323,7 @@ export function MarketStreamsTable({
                     colSpan={msColSpan - 2}
                     label={g.label}
                     variant="category"
-                    trailing={
-                      <>
-                        <DenseTableCell
-                          className={cn(denseTableNumCell, 'border-y border-border bg-secondary/60 font-semibold')}
-                          title={
-                            g.totalPnl == null
-                              ? `None of the ${g.unpriced} rows has a Since $ to add — not a zero`
-                              : g.unpriced > 0
-                                ? `Sum of the priced rows; ${g.unpriced} row${g.unpriced === 1 ? '' : 's'} not priced and not counted`
-                                : undefined
-                          }
-                        >
-                          {g.totalPnl == null ? (
-                            <span className="text-muted-foreground">—</span>
-                          ) : (
-                            <>
-                              <InlinePnl value={g.totalPnl}>{fmtUsd(g.totalPnl, true)}</InlinePnl>
-                              {g.unpriced > 0 ? (
-                                <span className="ml-1 font-normal text-muted-foreground">+{g.unpriced}?</span>
-                              ) : null}
-                            </>
-                          )}
-                        </DenseTableCell>
-                        <DenseTableCell className="border-y border-border bg-secondary/60" />
-                      </>
-                    }
+                    trailing={<SinceSubtotalCells totalPnl={g.totalPnl} unpriced={g.unpriced} />}
                   />
                 ) : null}
                 {g.stkRows.map(row => (
@@ -319,9 +355,16 @@ export function MarketStreamsTable({
             ))
           ) : (
             <>
-              {categoryOrderFiltered.map(cat => (
+              {categoryOrderFiltered.map(cat => {
+                const stats = stkGroupStats(sortedRowsByCategory[cat] ?? [])
+                return (
                 <Fragment key={cat}>
-                  <GroupHeaderRow colSpan={msColSpan} label={cat} variant="category" />
+                  <GroupHeaderRow
+                    colSpan={msColSpan - 2}
+                    label={groupLabelWithCount(cat, stats.count)}
+                    variant="category"
+                    trailing={<SinceSubtotalCells totalPnl={stats.totalPnl} unpriced={stats.unpriced} />}
+                  />
                   {(sortedRowsByCategory[cat] ?? []).map(row => (
                     <MarketStreamStkRow
                       key={row.symbol}
@@ -335,10 +378,16 @@ export function MarketStreamsTable({
                     />
                   ))}
                 </Fragment>
-              ))}
+                )
+              })}
               {optPositionRows.length > 0 && (
                 <>
-                  <GroupHeaderRow colSpan={msColSpan} label="Options" variant="category" />
+                  <GroupHeaderRow
+                    colSpan={msColSpan - 2}
+                    label={groupLabelWithCount('Options', sortedOptRows.length)}
+                    variant="category"
+                    trailing={<SinceSubtotalCells {...optGroupStats} />}
+                  />
                   {sortedOptRows.map(row => (
                     <MarketStreamOptRow
                       key={optBasisKey(row)}

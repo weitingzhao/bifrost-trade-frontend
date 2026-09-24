@@ -1,4 +1,5 @@
 import type { QuoteItem } from '@/types/market'
+import { formatExpiryIbGroupLabel } from '@/utils/marketStreamsSort'
 import { cn } from '@/lib/utils'
 import {
   DenseTableCell,
@@ -82,8 +83,14 @@ export function MarketStreamOptRow({
         ].join('\n')
       : `Live MTM needs quote mid and avg $/share (${describeOptionLegMtm(row)}).`
 
+  // The design's token carries the expiry — `NVDA Oct 17'26 CALL 165`. The
+  // position payload has no expiry field, but the contract key always does:
+  // its pipe form is SYM|OPT|YYYYMMDD|strike|right.
+  const expiryDigits = String(row.expiry ?? '').replace(/\D/g, '')
+  const keyDate = (row.contract_key ?? '').split('|').find((seg) => /^\d{8}$/.test(seg))
+  const expiryLabel = formatExpiryIbGroupLabel(expiryDigits.length >= 8 ? expiryDigits : (keyDate ?? ''))
   const contractLabel = row.symbol
-    ? `${row.symbol} ${row.right === 'C' ? 'CALL' : row.right === 'P' ? 'PUT' : row.right} ${row.strike}`
+    ? `${row.symbol}${expiryLabel === 'Other' ? '' : ` ${expiryLabel}`} ${row.right === 'C' ? 'CALL' : row.right === 'P' ? 'PUT' : row.right} ${row.strike}`
     : row.contract_key
 
   const accIdNorm = (row.account_id ?? '').trim().toLowerCase()

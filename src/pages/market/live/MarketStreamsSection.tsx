@@ -187,6 +187,11 @@ export function MarketStreamsSection({
         onOptRowReorder={onOptRowReorder}
       />
       </div>
+      <p className="m-0 border-t border-border/60 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+        Total sums stocks only, as production does: an option&rsquo;s Since $ is (mid − avg) ×
+        contracts × 100 and has no daily reference, so its Daily cells read —. Opt unit scales
+        option Cost and Last only (Contract = ×100, Share = $/sh).
+      </p>
     </div>
   )
 }

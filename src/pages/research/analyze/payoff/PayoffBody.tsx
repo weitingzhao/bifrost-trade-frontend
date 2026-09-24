@@ -41,7 +41,8 @@ import {
   scenarioRows,
 } from './payoffModel'
 
-const fmtSigned = (v: number) => `${v >= 0 ? '+' : '−'}$${Math.abs(v).toFixed(0)}`
+const fmtSigned = (v: number) =>
+  `${v >= 0 ? '+' : '−'}$${Math.round(Math.abs(v)).toLocaleString('en-US')}`
 
 function Kv({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
@@ -351,7 +352,7 @@ export function PayoffBody() {
                   value={margin == null ? '—' : `$${Math.abs(margin).toFixed(0)}`}
                 />
                 <Kv
-                  label="return on margin"
+                  label="return on risk"
                   value={
                     margin != null && margin > 0 && maxP != null
                       ? `${((maxP / margin) * 100).toFixed(1)}%`

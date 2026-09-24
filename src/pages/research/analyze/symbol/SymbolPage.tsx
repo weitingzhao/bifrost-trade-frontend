@@ -37,7 +37,6 @@ import { Fragment, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
-import { ResearchContextBar } from '@/components/research/ResearchContextBar'
 import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
@@ -55,9 +54,9 @@ import { SymbolVolatilityFace } from '@/pages/research/analyze/symbol/SymbolVola
 import { SymbolDealerFace } from '@/pages/research/analyze/symbol/SymbolDealerFace'
 import { SymbolScenarioFace } from '@/pages/research/analyze/symbol/SymbolScenarioFace'
 import { SymbolFlowFace } from '@/pages/research/analyze/symbol/SymbolFlowFace'
+import { SymbolChainFace } from '@/pages/research/analyze/symbol/SymbolChainFace'
 import { SessionsSection } from '@/pages/research/analyze/scenario/SessionsSection'
 import { PlaybookSection } from '@/pages/research/analyze/scenario/PlaybookSection'
-import { DiscoveryBody } from '@/pages/research/analyze/discovery/DiscoveryBody'
 import { PayoffBody } from '@/pages/research/analyze/payoff/PayoffBody'
 
 /** The design's line at the right of the tab strip — what this face is for. */
@@ -198,10 +197,7 @@ export default function SymbolPage() {
           ribbon left: the rail's `Your verdict` panel now lists the very claims
           it was summarising, with their approval states. It stays on the five
           faces that have no rail. */}
-      {/* The Dealer face reads the shell's symbol like every other face now;
-          only Chain still takes a date. */}
-      {active === 'chain' ? <ResearchContextBar showDate /> : null}
-      {active === 'payoff' ? <ResearchContextBar /> : null}
+      {/* Every face reads the shell's symbol now — no per-tab context bar. */}
       {active === 'overview' ? null : (
         <CopilotVerdictStrip originPage={`symbol:${active}`} originLabel={`Symbol · ${active}`} />
       )}
@@ -246,7 +242,7 @@ export default function SymbolPage() {
           </div>
         )}
         {active === 'flow' && <SymbolFlowFace symbol={symbol} />}
-        {active === 'chain' && <DiscoveryBody />}
+        {active === 'chain' && <SymbolChainFace symbol={symbol} />}
         {active === 'payoff' && <PayoffBody />}
       </div>
     </PageShell>

@@ -278,7 +278,7 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + 'change →), the default label (default Δ 0.26 put · pick in Chain →) landing on the Chain '
     + 'tab, all three structures and both sides against DEV numbers (short put 215: BE 212.07 = strike '
     + '− credit, max loss = strike×100 − credit; vertical 212.5/215: +$56 / −$194 = width − '
-    + 'credit), no horizontal overflow at 1024. Owner to look before aligned.',
+    + 'credit), no horizontal overflow at 1024. Owner to look before aligned. Re-walked 2026-09-26\u201327 tab by tab after the Owner\u2019s review: every face is one name now \u2014 Volatility, Dealer, Scenario and Flow rebuilt on the shared LensVerdictBlock with each lens\u2019s own track record, and Chain rebuilt as the design\u2019s four numbered steps (expiry cards off the fit\u2019s ATM vols, the chain strip with the other faces\u2019 ruled levels, the puts-left ladder with three column sets, the contract card with BS-vs-snapshot and a real Plan/Payoff hand-off) \u2014 the embedded Discovery page with its own symbol input and wishlist strip retired from the tab. NBBO stays dashed with the reason; contract candles and the screen-band carry are named next passes.',
   '/research/scan':
     'Walked 2026-09-21 against Research Scan.dc.html (Rev 2026-09-20.10) — the option side of '
     + 'Stock ratings, and deliberately the same page twice. What stood here printed the weights '

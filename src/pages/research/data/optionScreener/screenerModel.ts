@@ -25,6 +25,7 @@
  * design draws neither — but they stay on each row's hover and in the export.
  */
 import { fmtIsoDateToken } from '@/lib/format'
+import { SCREEN_DELTA_BAND } from '@/lib/screenBand'
 import type { ScreenerContractRow, ScreenerResponse, ScreenerSymbolGroup } from '@/types/research'
 
 /** The design's six sliders, in its units: days, percent, dollars. */
@@ -76,8 +77,9 @@ export const FILTER_SPECS: readonly FilterSpec[] = [
  */
 export const FETCH_WINDOW = { dte_min: 7, dte_max: 120, max_prob_itm: 1 } as const
 
-/** The structure's target delta band — lime in the Δ column. */
-const DELTA_BAND: readonly [number, number] = [0.15, 0.35]
+/** The structure's target delta band — lime in the Δ column, and the Δ half
+ * of the band the Contracts panel carries into the Chain face. */
+const DELTA_BAND = SCREEN_DELTA_BAND
 
 /** The design keeps the four best a name. */
 export const TOP_PER_NAME = 4

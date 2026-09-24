@@ -25,6 +25,8 @@ export interface PlanThisButtonProps {
   className?: string
   /** Dense text button (default) or a primary accent for the page header. */
   variant?: 'default' | 'primary'
+  /** A bare ＋ for a table edge cell — same draft write, no label. */
+  compact?: boolean
 }
 
 export function PlanThisButton({
@@ -36,6 +38,7 @@ export function PlanThisButton({
   note,
   className,
   variant = 'default',
+  compact = false,
 }: PlanThisButtonProps) {
   const navigate = useNavigate()
   const { defaultAccount } = usePlanAccounts()
@@ -73,6 +76,31 @@ export function PlanThisButton({
     )
   }
 
+  const title = !sym
+    ? 'Pick a symbol first'
+    : !defaultAccount
+      ? 'No account from monitor /status yet'
+      : (failed ?? `Write a plan draft for ${contract ?? sym} (advisory — observe-only)`)
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        className={cn(
+          'inline-flex size-5 items-center justify-center rounded border border-border text-dense-meta text-muted-foreground hover:bg-secondary/70 hover:text-foreground disabled:opacity-40',
+          failed && 'border-destructive/60 text-destructive',
+          className,
+        )}
+        title={title}
+        aria-label={`Plan ${contract ?? sym}`}
+      >
+        {failed ? '!' : create.isPending ? '…' : '＋'}
+      </button>
+    )
+  }
+
   return (
     <Button
       type="button"
@@ -81,13 +109,7 @@ export function PlanThisButton({
       disabled={disabled}
       onClick={onClick}
       className={cn('h-7 gap-1 px-2 text-dense-meta', className)}
-      title={
-        !sym
-          ? 'Pick a symbol first'
-          : !defaultAccount
-            ? 'No account from monitor /status yet'
-            : (failed ?? `Write a plan draft for ${sym} (advisory — observe-only)`)
-      }
+      title={title}
     >
       {failed ? 'Failed' : create.isPending ? 'Writing…' : '＋ Plan this'}
     </Button>

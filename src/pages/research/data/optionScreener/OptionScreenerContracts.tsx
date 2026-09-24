@@ -22,6 +22,7 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import { ruleThatFits, type RuleFitOpportunity } from '@/lib/harness/candidateRuleFit'
+import { SCREEN_BAND_PARAM, SCREEN_DELTA_BAND, encodeScreenBand } from '@/lib/screenBand'
 import { SYMBOL_PATH, symbolTabHref } from '@/lib/symbolTabs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import type { ScreenerContractRow } from '@/types/research'
@@ -236,9 +237,14 @@ export function OptionScreenerContracts({
                             <ArrowLeftRight className="size-3.5" />
                           </Link>
                           <Link
-                            to={symbolTabHref('chain', g.symbol)}
+                            to={`${symbolTabHref('chain', g.symbol)}&${SCREEN_BAND_PARAM}=${encodeScreenBand({
+                              dteMin: filters.dteMin,
+                              dteMax: filters.dteMax,
+                              deltaMin: SCREEN_DELTA_BAND[0],
+                              deltaMax: SCREEN_DELTA_BAND[1],
+                            })}`}
                             className={ICON_BTN}
-                            title={`Open ${g.symbol}'s chain on the Symbol page`}
+                            title={`Open ${g.symbol}'s chain on the Symbol page — the screen band (${filters.dteMin}–${filters.dteMax}d · Δ .15–.35) rides along and rules the ladder`}
                             aria-label="Open in Discovery"
                           >
                             <Columns2 className="size-3.5" />

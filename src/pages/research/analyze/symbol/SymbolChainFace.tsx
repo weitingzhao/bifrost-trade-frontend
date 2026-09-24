@@ -21,6 +21,7 @@ import { PlanThisButton } from '@/components/research'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { todayIso } from '@/lib/researchFreshness'
+import { SCREEN_BAND_PARAM, legInScreenBand, parseScreenBand, screenBandLabel } from '@/lib/screenBand'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
@@ -94,6 +95,10 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
   const [urlParams] = useSearchParams()
   const urlStrikeN = Number(urlParams.get('strike'))
   const urlRight = urlParams.get('right')
+  // Screener › Contracts sends its live rule along (`?band=`); arrive any
+  // other way and there is no band, so no chip pretends there was one.
+  const screenBand = parseScreenBand(urlParams.get(SCREEN_BAND_PARAM))
+  const [bandOn, setBandOn] = useState(true)
   const [userExpiry, setUserExpiry] = useState<string | null>(() => urlParams.get('expiration'))
   const [win, setWin] = useState<5 | 9 | 14>(9)
   const [cols, setCols] = useState<LadderColumnSet>('marks')
@@ -162,6 +167,23 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
   const move = spot != null && atmIv != null && dte != null ? sigmaMove(spot, atmIv, dte) : null
 
   const rows = spot != null ? ladderRows(chain, spot, win, cols, fitIvPts) : []
+  // The design's rule verbatim: DTE in the window, |Δ| in the band, never ITM.
+  const inBand = (right: 'C' | 'P', strike: number, delta: number | null) =>
+    screenBand != null &&
+    bandOn &&
+    legInScreenBand(
+      screenBand,
+      dte,
+      delta,
+      spot != null && (right === 'P' ? strike > spot : strike < spot),
+    )
+  const inBandN = rows.reduce(
+    (n, r) =>
+      n +
+      (r.put && inBand('P', r.strike, r.put.contract.delta) ? 1 : 0) +
+      (r.call && inBand('C', r.strike, r.call.contract.delta) ? 1 : 0),
+    0,
+  )
   const colLabels = LADDER_COLUMNS[cols]
 
   const selected: ChainContract | null = sel
@@ -335,6 +357,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
             <span className={cap}>3 · Strikes</span>
             <span className="text-dense-body font-semibold">
               {dte ?? '—'} DTE · {rows.length} in window
+              {screenBand && bandOn ? ` · ${inBandN} in band` : ''}
             </span>
             <span className="ml-auto inline-flex items-center gap-2">
               <span className={cap}>Window</span>
@@ -364,11 +387,27 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                 ]}
               />
             </span>
+            {screenBand ? (
+              <button
+                type="button"
+                onClick={() => setBandOn((v) => !v)}
+                title="Carried in from Screener › Contracts — the screen’s live rule at click time. Toggles the ladder’s highlight."
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-dense-micro',
+                  bandOn ? 'border-[var(--sk-ticker)]' : 'border-border',
+                )}
+              >
+                <span className="text-[var(--sk-mute2)]">screen band</span>
+                <span className={cn(mono, 'text-foreground')}>{screenBandLabel(screenBand)}</span>
+                <span className="text-muted-foreground">{bandOn ? 'on' : 'off'}</span>
+              </button>
+            ) : null}
           </header>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse" style={{ minWidth: 720 }}>
               <thead>
                 <tr>
+                  {screenBand ? <th className={cn(th, 'w-9')} /> : null}
                   {colLabels.map((l, i) => (
                     <th key={`p${i}`} className={th}>
                       {l}
@@ -380,6 +419,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                       {l}
                     </th>
                   ))}
+                  {screenBand ? <th className={cn(th, 'w-9')} /> : null}
                 </tr>
               </thead>
               <tbody>
@@ -393,11 +433,27 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                           ? 'max pain'
                           : null
                   const isSel = (right: 'C' | 'P') => sel?.strike === r.strike && sel.right === right
+                  const putInB = r.put != null && inBand('P', r.strike, r.put.contract.delta)
+                  const callInB = r.call != null && inBand('C', r.strike, r.call.contract.delta)
                   return (
                     <tr
                       key={r.strike}
                       className={cn(r.atm && 'shadow-[inset_2px_0_0_var(--sk-ticker)]')}
                     >
+                      {screenBand ? (
+                        <td className={cn(td, 'text-left')}>
+                          {putInB ? (
+                            <PlanThisButton
+                              compact
+                              symbol={sym}
+                              source="symbol:chain"
+                              sourceLabel="Symbol · chain"
+                              contract={`${sym} ${expiry?.slice(5)} ${r.strike}P`}
+                              note="from the ladder · in screen band"
+                            />
+                          ) : null}
+                        </td>
+                      ) : null}
                       {r.put ? (
                         r.put.values.map((v, i) => (
                           <td
@@ -407,7 +463,11 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                               td,
                               'cursor-pointer',
                               isSel('P') ? 'bg-[rgb(var(--sk-accent-rgb)/0.08)]' : 'hover:bg-[var(--sk-surface)]',
-                              i === 3 ? 'text-foreground' : 'text-secondary-foreground'
+                              i === 3
+                                ? putInB
+                                  ? 'text-[var(--sk-ticker)]'
+                                  : 'text-foreground'
+                                : 'text-secondary-foreground'
                             )}
                           >
                             {v}
@@ -444,7 +504,11 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                               td,
                               'cursor-pointer',
                               isSel('C') ? 'bg-[rgb(var(--sk-accent-rgb)/0.08)]' : 'hover:bg-[var(--sk-surface)]',
-                              i === 0 ? 'text-foreground' : 'text-secondary-foreground'
+                              i === 0
+                                ? callInB
+                                  ? 'text-[var(--sk-ticker)]'
+                                  : 'text-foreground'
+                                : 'text-secondary-foreground'
                             )}
                           >
                             {v}
@@ -455,6 +519,20 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                           —
                         </td>
                       )}
+                      {screenBand ? (
+                        <td className={cn(td, 'text-right')}>
+                          {callInB ? (
+                            <PlanThisButton
+                              compact
+                              symbol={sym}
+                              source="symbol:chain"
+                              sourceLabel="Symbol · chain"
+                              contract={`${sym} ${expiry?.slice(5)} ${r.strike}C`}
+                              note="from the ladder · in screen band"
+                            />
+                          ) : null}
+                        </td>
+                      ) : null}
                     </tr>
                   )
                 })}
@@ -464,8 +542,9 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
           <p className={note}>
             Puts left, calls right, Δ always beside the strike so the three column sets line up.
             Click a side to open the contract; the ATM row is ruled lime, and a strike another
-            face ruled is named under its price. The screen band lands here when the contract
-            screen sends one — no carry yet, so no chip pretends.
+            face ruled is named under its price. Arrive from Screener › Contracts and its live
+            rule rides along as the screen-band chip — in-band Δs turn lime and each in-band
+            leg grows a ＋ that writes a plan draft; arrive any other way and no chip pretends.
           </p>
         </section>
 

@@ -1,38 +1,32 @@
 /**
- * `Your verdict` — what has been claimed on this name, and the half you cannot add.
+ * `Your verdict` — the design's write form, kept honestly.
  *
- * The design puts a write form at the top of the Overview rail: three stance
- * buttons, one line for the claim, citation chips, `Record verdict`, and under
- * it the verdicts already recorded with how each one settled.
- *
- * ## What is real, measured 2026-09-21
- *
- * **The list is.** `/research/verdicts/{symbol}` answers with every claim the
- * Copilot and the Loop have made on this name, each with its approval state —
- * the same rows the Decision Inbox reads. So the panel's lower half is drawn
- * from the store the design points at, and the page that had this reading
- * already (the Copilot strip) is now not the only place it appears.
- *
- * **The form is not.** That route is GET and nothing else: `symbol_verdicts.py`
- * declares one read and there is no POST for a stance anywhere in the research
- * API. So there is nowhere to put *your* call — which is the same absence the
- * Copilot bench reports from the other end, where four record columns read
- * `not recorded` because no store holds a judge's verdict against the outcome
- * that followed it.
- *
- * A form whose Record button silently kept nothing would be worse than an
- * absence: it would teach the reader that their verdict had been stored. So the
- * stance buttons are not drawn, and what *is* offered is the nearest artifact
- * that genuinely persists — a hypothesis, which is a claim with a falsifier —
- * named as a different thing rather than passed off as the same one.
+ * The earlier walk left the form undrawn because no research route accepted a
+ * stance. The design's own hint settles where it belongs: “a hand verdict is
+ * the same artifact a judge persona writes — stance, one line, optional
+ * citations — and it settles into the same record.” That artifact store
+ * exists: `research.hypothesis`. Record verdict writes one, tagged
+ * `hand-verdict` with the stance, the cited faces in `origin_ref`, and the
+ * 20d horizon named — a real write, not a form that keeps nothing. The list
+ * below reads the same store back, and the machine's own claims on the name
+ * stay underneath, labelled as not yours.
  */
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SectionPanel } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
-import { SaveAsHypothesisButton } from '@/components/research'
+import { useCreateHypothesis, useHypothesisList } from '@/hooks/useHypotheses'
 import { useSymbolVerdicts } from '@/hooks/useSymbolVerdicts'
+import { cn } from '@/lib/utils'
 
-/** Approval states, in the words the Inbox uses. */
+const STANCES = [
+  { id: 'support', cls: 'border-success/50 text-success', on: 'bg-success/15' },
+  { id: 'caution', cls: 'border-warning/50 text-warning', on: 'bg-warning/15' },
+  { id: 'oppose', cls: 'border-destructive/50 text-destructive', on: 'bg-destructive/15' },
+] as const
+
+const CITES = ['Volatility', 'Dealer', 'Scenario', 'Flow'] as const
+
 function stateVariant(state: string): 'success' | 'warning' | 'info' | 'neutral' {
   const s = state.toLowerCase()
   if (s.includes('accept') || s.includes('active') || s.includes('executed')) return 'success'
@@ -41,14 +35,46 @@ function stateVariant(state: string): 'success' | 'warning' | 'info' | 'neutral'
   return 'info'
 }
 
-export function SymbolVerdictPanel({ symbol, thesis }: { symbol: string; thesis: string }) {
-  const q = useSymbolVerdicts(symbol)
-  const proposals = q.data?.proposals ?? []
+export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string }) {
+  const sym = symbol.trim().toUpperCase()
+  const [stance, setStance] = useState<string | null>(null)
+  const [line, setLine] = useState('')
+  const [cites, setCites] = useState<string[]>([])
+  const [note, setNote] = useState<string | null>(null)
+  const createHyp = useCreateHypothesis()
+
+  const mineQ = useHypothesisList({ symbol: sym, limit: 30 }, Boolean(sym))
+  const mine = (mineQ.data?.rows ?? []).filter((h) => h.tags?.includes('hand-verdict')).slice(0, 4)
+  const machineQ = useSymbolVerdicts(sym)
+  const proposals = machineQ.data?.proposals ?? []
+
+  const record = () => {
+    if (!stance || !line.trim()) return
+    createHyp.mutate(
+      {
+        title: `${sym} · ${stance} · 20d`,
+        thesis: line.trim(),
+        symbols: [sym],
+        tags: ['hand-verdict', stance],
+        origin_page: 'symbol:verdict',
+        origin_ref: { stance, cites, horizon_days: 20 },
+      },
+      {
+        onSuccess: () => {
+          setNote('Recorded — it settles into the same record the personas are scored by.')
+          setLine('')
+          setStance(null)
+          setCites([])
+        },
+        onError: (e) => setNote(`Record failed: ${(e as Error).message}`),
+      }
+    )
+  }
 
   return (
     <SectionPanel
       cap="Your verdict"
-      title={`on ${symbol} · 20d`}
+      title={`on ${sym} · 20d`}
       note="operator · hand"
       action={
         <Link to="/research/journal" className="text-dense-meta hover:underline">
@@ -56,40 +82,110 @@ export function SymbolVerdictPanel({ symbol, thesis }: { symbol: string; thesis:
         </Link>
       }
     >
-      <div className="border-b border-border/60 px-3 py-2">
-        <p className="text-dense-meta leading-relaxed text-muted-foreground">
-          The design records your own call here — a stance, one line, and the lenses you cited.{' '}
-          <span className="text-foreground/80">There is nowhere to put it.</span>{' '}
-          <span className="font-mono">/research/verdicts/{symbol}</span> is read-only — it answers
-          with what the Copilot and the Loop have claimed, below — and no route in the research API
-          accepts a stance. The form is not drawn, because a Record button that kept nothing would
-          be worse than this sentence.
-        </p>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <SaveAsHypothesisButton
-            originPage="symbol"
-            defaultTitle={`${symbol} — ${thesis}`}
-            defaultThesis={thesis}
-            defaultSymbols={[symbol]}
-            defaultTags={['symbol']}
-            originRef={{ source: 'symbol-overview', symbol }}
-          />
-          <span className="text-dense-caption text-muted-foreground">
-            a claim with a falsifier, and it does persist — a different artifact from a verdict,
-            not a stand-in for one
+      <div className="flex flex-col gap-1.5 border-b border-border/60 px-3 py-2">
+        <div className="flex gap-1">
+          {STANCES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setStance(stance === s.id ? null : s.id)}
+              className={cn(
+                'h-6 flex-1 cursor-pointer rounded-[5px] border text-dense-caption font-semibold',
+                s.cls,
+                stance === s.id ? s.on : 'bg-transparent opacity-80 hover:opacity-100'
+              )}
+            >
+              {s.id}
+            </button>
+          ))}
+        </div>
+        <input
+          value={line}
+          onChange={(e) => setLine(e.target.value)}
+          placeholder="One line — the claim, and what would prove it wrong"
+          className="h-7 rounded-[5px] border border-border bg-background px-2 text-dense-meta text-foreground outline-none placeholder:text-muted-foreground/70"
+        />
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+            cites
+          </span>
+          {CITES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() =>
+                setCites((l) => (l.includes(c) ? l.filter((x) => x !== c) : [...l, c]))
+              }
+              className={cn(
+                'cursor-pointer rounded border px-1.5 py-0.5 font-mono text-dense-micro',
+                cites.includes(c)
+                  ? 'border-[color-mix(in_srgb,var(--sk-accent)_50%,transparent)] text-[var(--sk-accent)]'
+                  : 'border-border text-muted-foreground hover:text-foreground'
+              )}
+              title={`Cite the ${c} face's reading behind this call.`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={record}
+            disabled={!stance || !line.trim() || createHyp.isPending}
+            className={cn(
+              'rounded-[5px] border px-2.5 py-1 text-dense-label font-semibold',
+              stance && line.trim()
+                ? 'cursor-pointer border-[color-mix(in_srgb,var(--sk-accent)_50%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.16)] text-[var(--sk-accent)] hover:brightness-110'
+                : 'cursor-default border-border text-muted-foreground'
+            )}
+            title="Writes the verdict as a hand-verdict artifact in the hypothesis store — the same store the personas' claims settle in."
+          >
+            Record verdict
+          </button>
+          <span className="text-dense-micro leading-tight text-muted-foreground">
+            {note ?? 'Stance is required; a line without one is a note, not a verdict. Citations are optional.'}
           </span>
         </div>
       </div>
 
-      {q.isLoading ? (
-        <p className="px-3 py-2 text-dense-meta text-muted-foreground">Reading the claims…</p>
-      ) : proposals.length === 0 ? (
-        <p className="px-3 py-2 text-dense-meta text-muted-foreground">
-          Nothing has been claimed on {symbol} — no candidate, hypothesis or draft.
-        </p>
-      ) : (
+      {mine.length > 0 ? (
         <>
-          {proposals.slice(0, 6).map((p, i) => (
+          {mine.map((h) => {
+            const st = h.tags?.find((t) => t === 'support' || t === 'caution' || t === 'oppose')
+            return (
+              <div
+                key={h.id}
+                className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-2 border-b border-border/50 px-3 py-1.5"
+                title={`${h.created_at?.slice(0, 10) ?? ''} · ${h.status}`}
+              >
+                <span
+                  className={cn(
+                    'font-mono text-dense-micro font-bold uppercase',
+                    st === 'support'
+                      ? 'text-success'
+                      : st === 'oppose'
+                        ? 'text-destructive'
+                        : 'text-warning'
+                  )}
+                >
+                  {st ?? 'hand'}
+                </span>
+                <span className="min-w-0 truncate text-dense-meta text-secondary-foreground">
+                  {h.thesis}
+                </span>
+                <span className="font-mono text-dense-micro text-muted-foreground">{h.status}</span>
+              </div>
+            )
+          })}
+        </>
+      ) : null}
+
+      {machineQ.isLoading ? (
+        <p className="px-3 py-2 text-dense-meta text-muted-foreground">Reading the claims…</p>
+      ) : proposals.length === 0 ? null : (
+        <>
+          {proposals.slice(0, 4).map((p, i) => (
             <div
               key={`${p.kind}:${p.id ?? i}`}
               className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-baseline gap-2 border-b border-border/50 px-3 py-1.5"
@@ -106,17 +202,16 @@ export function SymbolVerdictPanel({ symbol, thesis }: { symbol: string; thesis:
               </DenseTag>
             </div>
           ))}
-          <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-            {proposals.length > 6 ? `${proposals.length - 6} more · ` : ''}
-            The machine&rsquo;s claims on this name and where each one stands. None of them is
-            yours: they were written by the Copilot or by a rule, and how they settle is read in{' '}
-            <Link to="/research/loop/decisions" className="text-primary hover:underline">
-              the Inbox
-            </Link>
-            .
-          </p>
         </>
       )}
+      <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
+        Your hand verdicts settle at 20d into the same record the lenses are scored by; the rows
+        under them are the machine&rsquo;s claims, read in{' '}
+        <Link to="/research/loop/decisions" className="text-primary hover:underline">
+          the Inbox
+        </Link>
+        .
+      </p>
     </SectionPanel>
   )
 }

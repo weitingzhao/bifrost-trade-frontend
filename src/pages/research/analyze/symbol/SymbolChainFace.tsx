@@ -12,6 +12,7 @@
  * with the reason instead of dressing a close as a market.
  */
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchChainExpirations, fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
@@ -87,10 +88,20 @@ function writeCompare(list: CompareEntry[]): void {
 export function SymbolChainFace({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const today = todayIso()
-  const [userExpiry, setUserExpiry] = useState<string | null>(null)
+  // The Dealer face's ⇢ hands a strike over as `?expiration=&strike=&right=`
+  // (right optional — a wall is not a side). Read once as the seed: from
+  // there the ladder's own clicks own the selection, same as Payoff's anchor.
+  const [urlParams] = useSearchParams()
+  const urlStrikeN = Number(urlParams.get('strike'))
+  const urlRight = urlParams.get('right')
+  const [userExpiry, setUserExpiry] = useState<string | null>(() => urlParams.get('expiration'))
   const [win, setWin] = useState<5 | 9 | 14>(9)
   const [cols, setCols] = useState<LadderColumnSet>('marks')
-  const [sel, setSel] = useState<{ strike: number; right: 'C' | 'P' } | null>(null)
+  const [sel, setSel] = useState<{ strike: number; right: 'C' | 'P' } | null>(() =>
+    Number.isFinite(urlStrikeN) && urlStrikeN > 0
+      ? { strike: urlStrikeN, right: urlRight === 'P' ? 'P' : 'C' }
+      : null
+  )
   const [compare, setCompare] = useState<CompareEntry[]>(() => readCompare())
   useEffect(() => writeCompare(compare), [compare])
 

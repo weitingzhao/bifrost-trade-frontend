@@ -1,11 +1,15 @@
 /**
  * The Scenario face — one name only (design `Research Symbol.dc.html`,
  * §isScenario). The analysis model's own verdict with the close expectation
- * on a ruler and the gamma zone behind it, then the forecast sessions and
- * the intraday playbook the page already carried — both were one-name
- * sections all along; only the model panel was missing its face.
+ * on a ruler and the gamma zone behind it, then the design's own two panels:
+ * Forecast sessions (how the paths settled) and the Intraday playbook
+ * (scenario fan · LIVE bias). The universe-wide SessionsSection/
+ * PlaybookSection left this tab with them — their per-session drilldown has
+ * no seat in the design; where it lands is the Owner's call.
  */
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
+import { SymbolForecastSessions } from '@/pages/research/analyze/symbol/SymbolForecastSessions'
+import { SymbolPlaybookPanel } from '@/pages/research/analyze/symbol/SymbolPlaybookPanel'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { cn } from '@/lib/utils'
 
@@ -68,7 +72,8 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
   })()
 
   return (
-    <section className={panel}>
+    <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
+    <section className={cn(panel, 'xl:col-span-2')}>
       <header className={panelHead}>
         <span className={cap}>Analysis model</span>
         <span className="text-dense-body font-semibold">terrain · close expectation · gamma zone</span>
@@ -157,5 +162,8 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
         </div>
       </div>
     </section>
+    <SymbolForecastSessions symbol={sym} />
+    <SymbolPlaybookPanel symbol={sym} />
+    </div>
   )
 }

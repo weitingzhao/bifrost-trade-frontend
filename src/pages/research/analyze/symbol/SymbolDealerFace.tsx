@@ -9,6 +9,10 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { fetchGexDistribution } from '@/api/researchEngine'
+import { fetchOpexCurrent, fetchOpexPinAnalysis } from '@/api/research/opexCycle'
+import { Link } from 'react-router-dom'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
 import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
@@ -104,6 +108,25 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,
   })
+  // Vanna/charm live in the opex store's own daily row; the past cycles in
+  // its pin analysis — both were owed until the endpoint was probed.
+  const opexQ = useQuery({
+    queryKey: ['research', 'opex-current', sym],
+    queryFn: () => fetchOpexCurrent(sym),
+    enabled: Boolean(sym),
+    staleTime: 5 * 60_000,
+  })
+  const pinsQ = useQuery({
+    queryKey: ['research', 'opex-pins', sym],
+    queryFn: () => fetchOpexPinAnalysis(sym, 8),
+    enabled: Boolean(sym),
+    staleTime: 10 * 60_000,
+  })
+  const vanna = opexQ.data?.row?.total_vanna ?? null
+  const charm = opexQ.data?.row?.total_charm ?? null
+  const pins = pinsQ.data?.rows ?? []
+  const pinRate = pinsQ.data?.pin_rate ?? null
+
   // The exhibit's own expiry, near-the-money — the chart the regime was read from.
   const rows = nearMoneyRows(distQ.data?.rows ?? [], expiry, spot)
 
@@ -280,6 +303,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
                 <th className={cn(th, 'w-[44%] text-left')}>− puts · calls +</th>
                 <th className={th}>OI GEX</th>
                 <th className={th}>OI</th>
+                <th className={cn(th, 'w-8')} />
               </tr>
             </thead>
             <tbody>
@@ -314,6 +338,18 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
                     <td className={cn(td, 'text-muted-foreground')}>
                       {(r.call_oi + r.put_oi).toLocaleString()}
                     </td>
+                    <td className={cn(td, 'w-8 text-center')}>
+                      <Link
+                        to={withSymbolParam(
+                          `${SYMBOL_PATH}?${TAB_PARAM}=chain&expiration=${expiry ?? ''}&strike=${r.strike}`,
+                          sym
+                        )}
+                        className="text-muted-foreground no-underline hover:text-foreground"
+                        title="Rule this strike in the Chain face's ladder"
+                      >
+                        ⇢
+                      </Link>
+                    </td>
                   </tr>
                 )
               })}
@@ -330,9 +366,23 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
 
       <section className={panel}>
         <header className={panelHead}>
+          <span className={cap}>Regime timeline</span>
+          <span className="text-dense-body font-semibold">last 12 sessions</span>
+          <span className="ml-auto text-dense-caption text-muted-foreground">spot vs zero γ</span>
+        </header>
+        <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
+          A flip that held two sessions is a regime; a one-day cross is noise. The table needs a
+          per-session levels history, and the store keeps only the current session
+          (gex/levels answers one trade date) — unmeasured, not omitted. The panel keeps its
+          seat for the day the history lands.
+        </p>
+      </section>
+
+      <section className={cn(panel, 'col-[1/-1]')}>
+        <header className={panelHead}>
           <span className={cap}>OpEx cycle</span>
           <span className="text-dense-body font-semibold">
-            {expiry ?? '—'}{dte != null ? ` · ${dte} days` : ''}
+            third Friday · {expiry ?? '—'}{dte != null ? ` · ${dte} days` : ''}
           </span>
           <span className="ml-auto text-dense-caption text-muted-foreground">source · opex_pin exhibit</span>
         </header>
@@ -346,9 +396,68 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           />
           <FaceKv label="close" value={close != null ? close.toFixed(2) : '—'} />
           <FaceKv label="total OI" value={totalOi != null ? totalOi.toLocaleString() : '—'} />
-          <FaceKv label="vanna" value="—" cls="text-muted-foreground" title="The vanna/charm store is not exposed per name — unmeasured, not omitted." />
-          <FaceKv label="charm" value="—" cls="text-muted-foreground" title="The vanna/charm store is not exposed per name — unmeasured, not omitted." />
+          <FaceKv
+            label="vanna"
+            value={vanna != null ? `${vanna >= 0 ? '+' : '−'}${Math.abs(vanna) >= 1000 ? `${(Math.abs(vanna) / 1000).toFixed(1)}k` : Math.abs(vanna).toFixed(0)}` : '—'}
+            cls={vanna != null ? (vanna >= 0 ? 'text-profit' : 'text-loss') : 'text-muted-foreground'}
+            title="Vanna > 0 with falling IV means dealers buy into strength — supportive into the print."
+          />
+          <FaceKv
+            label="charm"
+            value={charm != null ? `${charm >= 0 ? '+' : '−'}${Math.abs(charm) >= 1000 ? `${(Math.abs(charm) / 1000).toFixed(1)}k` : Math.abs(charm).toFixed(0)}` : '—'}
+            cls={charm != null ? (charm >= 0 ? 'text-profit' : 'text-loss') : 'text-muted-foreground'}
+            title="Charm accelerates in the last three sessions — when a pin either takes or fails."
+          />
         </div>
+        <div className="border-b border-border/60">
+          <div className="flex items-baseline gap-2 px-3 pt-2">
+            <span className={cap}>past cycles</span>
+            <span className="ml-auto font-mono text-dense-micro tabular-nums text-muted-foreground">
+              pinned within 0.5% · {pinRate != null ? `${Math.round(pinRate * 100)}%` : '—'} of {pins.length}
+            </span>
+          </div>
+          {pins.length === 0 ? (
+            <p className="m-0 px-3 py-2 text-dense-micro text-muted-foreground">
+              No settled cycles in the store yet for this name.
+            </p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className={cn(th, 'text-left')}>Cycle</th>
+                  <th className={th}>Pin strike</th>
+                  <th className={th}>Close</th>
+                  <th className={th}>|dist|</th>
+                  <th className={th} title="The design scores each cycle at T-6; no store keeps a per-cycle pin score history — unmeasured, not omitted.">
+                    Score at T−6
+                  </th>
+                  <th className={cn(th, 'text-left')}>Pinned?</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pins.map((r) => {
+                  const pct = r.pct_distance != null ? Math.abs(r.pct_distance) * 100 : null
+                  const pinned = pct != null && pct < 0.5
+                  return (
+                    <tr key={r.opex_date ?? r.expiry ?? ''}>
+                      <td className={cn(td, 'text-left text-muted-foreground')}>{r.opex_date?.slice(5) ?? '—'}</td>
+                      <td className={td}>{r.max_pain_strike ?? '—'}</td>
+                      <td className={td}>{r.settle_close != null ? r.settle_close.toFixed(2) : '—'}</td>
+                      <td className={cn(td, pinned ? 'text-warning' : 'text-muted-foreground')}>
+                        {pct != null ? `${pct.toFixed(1)}%` : '—'}
+                      </td>
+                      <td className={cn(td, 'text-muted-foreground/60')}>—</td>
+                      <td className={cn(td, 'text-left font-sans', pinned ? 'text-warning' : 'text-muted-foreground')}>
+                        {pinned ? 'pinned' : 'escaped'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+        <div className="grid grid-cols-1 items-start md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         {rows.length > 0 ? (
           <div className="px-3 pb-1">
             <div className={cn(cap, 'mb-1')}>OI by strike · {expiry?.slice(5) ?? ''}</div>
@@ -379,11 +488,19 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
             </div>
           </div>
         ) : null}
+        <div className="border-l border-border/60 px-3 pb-1 pt-0 md:pt-0">
+          <div className={cn(cap, 'mb-1 pt-0')}>max pain vs spot · 30 sessions</div>
+          <p className="m-0 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            The design tracks the close against the cycle&rsquo;s max pain for 30 sessions. The
+            store keeps max pain only for the current session (the strike map is recomputed, not
+            archived) — unmeasured, not omitted. The chart keeps its seat for the day a max-pain
+            history lands.
+          </p>
+        </div>
+        </div>
         <p className={note}>
           Charm accelerates in the last three sessions; that is when a pin either takes or fails.
-          The design&rsquo;s pin history and its seller-liability curve need a max-pain history no
-          endpoint serves yet, and the 12-session regime timeline the same — each keeps its seat
-          here rather than vanishing.
+          Pin history is this symbol&rsquo;s own, {pins.length} settled cycle{pins.length === 1 ? '' : 's'}.
         </p>
       </section>
     </div>

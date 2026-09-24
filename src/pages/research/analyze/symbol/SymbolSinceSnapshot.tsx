@@ -90,7 +90,34 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
     saveSymbolSnapshot(sym, current)
   }, [sym, current, rows])
 
-  if (!rows || rows.length === 0) return null
+  // Still loading (or no symbol): nothing to seat yet.
+  if (rows == null) return null
+
+  /* The panel keeps its seat when there is nothing to list — a rail section
+     that vanishes on a first visit reads as unbuilt, not as quiet. Which of
+     the two quiets it is matters: no prior snapshot is a different fact from
+     "nothing moved". */
+  if (rows.length === 0) {
+    const firstLook = current != null && loadSymbolSnapshot(sym) == null
+    return (
+      <section
+        className="rounded border border-border/60 bg-muted/20 px-2 py-1.5"
+        aria-label="Since you last looked"
+        title="Prior readings come from this browser, not Research's last snapshot."
+      >
+        <header className="mb-0.5 flex flex-wrap items-baseline gap-x-2">
+          <span className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+            Since you last looked
+          </span>
+        </header>
+        <p className="m-0 text-dense-meta text-muted-foreground">
+          {firstLook
+            ? 'First look on this browser — the next visit compares against today.'
+            : 'Nothing moved since your last look.'}
+        </p>
+      </section>
+    )
+  }
 
   const flips = rows.filter((r) => r.kind === 'flip').length
 

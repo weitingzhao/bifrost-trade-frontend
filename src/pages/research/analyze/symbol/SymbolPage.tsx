@@ -55,8 +55,6 @@ import { SymbolDealerFace } from '@/pages/research/analyze/symbol/SymbolDealerFa
 import { SymbolScenarioFace } from '@/pages/research/analyze/symbol/SymbolScenarioFace'
 import { SymbolFlowFace } from '@/pages/research/analyze/symbol/SymbolFlowFace'
 import { SymbolChainFace } from '@/pages/research/analyze/symbol/SymbolChainFace'
-import { SessionsSection } from '@/pages/research/analyze/scenario/SessionsSection'
-import { PlaybookSection } from '@/pages/research/analyze/scenario/PlaybookSection'
 import { PayoffBody } from '@/pages/research/analyze/payoff/PayoffBody'
 
 /** The design's line at the right of the tab strip — what this face is for. */
@@ -68,16 +66,6 @@ const TAB_HINT: Record<SymbolTabId, string> = {
   flow: 'a proxy until the options tape is on the data plan',
   chain: 'expiries, strikes and structures for this name',
   payoff: 'a structure priced before it exists · at close, not a quote',
-}
-
-/** One section of a stacked tab, anchored by the `?view=` it used to be. */
-function Anchored({ id, children }: { id: string; children: React.ReactNode }) {
-  // `scroll-mt` so a hash landing does not tuck the section under the top bar.
-  return (
-    <section id={id} className="scroll-mt-16 space-y-3">
-      {children}
-    </section>
-  )
 }
 
 export default function SymbolPage() {
@@ -234,13 +222,7 @@ export default function SymbolPage() {
         {active === 'dealer' && (
           <SymbolDealerFace symbol={symbol} />
         )}
-        {active === 'scenario' && (
-          <div className="space-y-4">
-            <SymbolScenarioFace symbol={symbol} />
-            <Anchored id="sessions"><SessionsSection /></Anchored>
-            <Anchored id="playbook"><PlaybookSection /></Anchored>
-          </div>
-        )}
+        {active === 'scenario' && <SymbolScenarioFace symbol={symbol} />}
         {active === 'flow' && <SymbolFlowFace symbol={symbol} />}
         {active === 'chain' && <SymbolChainFace symbol={symbol} />}
         {active === 'payoff' && <PayoffBody />}

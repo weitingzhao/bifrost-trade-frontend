@@ -52,12 +52,11 @@ import { SymbolVerdictPanel } from '@/pages/research/analyze/symbol/SymbolVerdic
 import { useSymbolFaces } from '@/pages/research/analyze/symbol/useSymbolFaces'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
 import { SymbolVolatilityFace } from '@/pages/research/analyze/symbol/SymbolVolatilityFace'
-import { GexSection } from '@/pages/research/analyze/dealerLevels/GexSection'
-import { OpexSection } from '@/pages/research/analyze/dealerLevels/OpexSection'
-import { ModelSection } from '@/pages/research/analyze/scenario/ModelSection'
+import { SymbolDealerFace } from '@/pages/research/analyze/symbol/SymbolDealerFace'
+import { SymbolScenarioFace } from '@/pages/research/analyze/symbol/SymbolScenarioFace'
+import { SymbolFlowFace } from '@/pages/research/analyze/symbol/SymbolFlowFace'
 import { SessionsSection } from '@/pages/research/analyze/scenario/SessionsSection'
 import { PlaybookSection } from '@/pages/research/analyze/scenario/PlaybookSection'
-import { FlowBody } from '@/pages/research/analyze/flow/FlowBody'
 import { DiscoveryBody } from '@/pages/research/analyze/discovery/DiscoveryBody'
 import { PayoffBody } from '@/pages/research/analyze/payoff/PayoffBody'
 
@@ -199,9 +198,9 @@ export default function SymbolPage() {
           ribbon left: the rail's `Your verdict` panel now lists the very claims
           it was summarising, with their approval states. It stays on the five
           faces that have no rail. */}
-      {active === 'dealer' || active === 'chain' ? (
-        <ResearchContextBar showDate />
-      ) : null}
+      {/* The Dealer face reads the shell's symbol like every other face now;
+          only Chain still takes a date. */}
+      {active === 'chain' ? <ResearchContextBar showDate /> : null}
       {active === 'payoff' ? <ResearchContextBar /> : null}
       {active === 'overview' ? null : (
         <CopilotVerdictStrip originPage={`symbol:${active}`} originLabel={`Symbol · ${active}`} />
@@ -237,19 +236,16 @@ export default function SymbolPage() {
         )}
         {active === 'volatility' && <SymbolVolatilityFace symbol={symbol} />}
         {active === 'dealer' && (
-          <div className="space-y-4">
-            <Anchored id="gex"><GexSection /></Anchored>
-            <Anchored id="opex"><OpexSection /></Anchored>
-          </div>
+          <SymbolDealerFace symbol={symbol} />
         )}
         {active === 'scenario' && (
           <div className="space-y-4">
-            <Anchored id="model"><ModelSection /></Anchored>
+            <SymbolScenarioFace symbol={symbol} />
             <Anchored id="sessions"><SessionsSection /></Anchored>
             <Anchored id="playbook"><PlaybookSection /></Anchored>
           </div>
         )}
-        {active === 'flow' && <FlowBody />}
+        {active === 'flow' && <SymbolFlowFace symbol={symbol} />}
         {active === 'chain' && <DiscoveryBody />}
         {active === 'payoff' && <PayoffBody />}
       </div>

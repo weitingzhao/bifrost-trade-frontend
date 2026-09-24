@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
+import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useResiduals, useTermStructure, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
@@ -27,15 +28,6 @@ const panelHead =
   'flex flex-wrap items-center gap-2.5 rounded-t-[9px] border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3 py-1.75 text-dense-body leading-normal'
 const note =
   'm-0 border-t border-border/60 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty'
-
-function Kv({ label, value, cls }: { label: string; value: string; cls?: string }) {
-  return (
-    <div className="flex min-w-0 flex-col gap-0.5">
-      <span className={cap}>{label}</span>
-      <b className={cn(mono, 'text-dense-body font-semibold', cls ?? 'text-foreground')}>{value}</b>
-    </div>
-  )
-}
 
 /** Tiny bar strip — the 60d rank path / decile histogram of the prototype. */
 function BarStrip({ bars, title }: { bars: { h: number; on?: boolean }[]; title: string }) {
@@ -179,9 +171,9 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
             ) : null}
           </div>
           <div className="grid grid-cols-2 gap-2.5 pb-2 sm:grid-cols-4">
-            <Kv label="IV rank" value={rank != null ? rank.toFixed(0) : '—'} cls={rank != null && rank >= 70 ? 'text-profit' : rank != null && rank <= 30 ? 'text-loss' : undefined} />
-            <Kv label="IV pctl" value={pctl != null ? pctl.toFixed(0) : '—'} />
-            <Kv label="IV30" value={iv30 != null ? `${iv30.toFixed(1)}%` : '—'} />
+            <FaceKv label="IV rank" value={rank != null ? rank.toFixed(0) : '—'} cls={rank != null && rank >= 70 ? 'text-profit' : rank != null && rank <= 30 ? 'text-loss' : undefined} />
+            <FaceKv label="IV pctl" value={pctl != null ? pctl.toFixed(0) : '—'} />
+            <FaceKv label="IV30" value={iv30 != null ? `${iv30.toFixed(1)}%` : '—'} />
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className={cap}>60d rank path</span>
               <BarStrip bars={rankPath} title="Each session's IV30, ranked in the year's range." />
@@ -202,9 +194,9 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         </header>
         <LensVerdictBlock lensId="vrp" exhibit={exOf('vrp')} />
         <div className="grid grid-cols-2 gap-2.5 px-3 py-2.5 sm:grid-cols-4">
-          <Kv label="spread" value={vrp != null ? `${vrp >= 0 ? '+' : '−'}${Math.abs(vrp).toFixed(1)} pp` : '—'} cls={vrp != null ? (vrp >= 0 ? 'text-profit' : 'text-loss') : undefined} />
-          <Kv label="VRP pctl (252d)" value={last?.vrp_pct_252d != null ? last.vrp_pct_252d.toFixed(0) : '—'} />
-          <Kv label="RV20 · RV60" value={`${rv20 != null ? rv20.toFixed(1) : '—'} · ${last?.rv_60d != null ? (last.rv_60d * 100).toFixed(1) : '—'}`} />
+          <FaceKv label="spread" value={vrp != null ? `${vrp >= 0 ? '+' : '−'}${Math.abs(vrp).toFixed(1)} pp` : '—'} cls={vrp != null ? (vrp >= 0 ? 'text-profit' : 'text-loss') : undefined} />
+          <FaceKv label="VRP pctl (252d)" value={last?.vrp_pct_252d != null ? last.vrp_pct_252d.toFixed(0) : '—'} />
+          <FaceKv label="RV20 · RV60" value={`${rv20 != null ? rv20.toFixed(1) : '—'} · ${last?.rv_60d != null ? (last.rv_60d * 100).toFixed(1) : '—'}`} />
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className={cap}>days in decile</span>
             <BarStrip bars={vrpBins} title="252d distribution of the spread; the current decile is lit." />

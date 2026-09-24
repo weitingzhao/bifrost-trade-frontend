@@ -3,9 +3,13 @@
  *
  * `equipSurface.ts` holds the rules; this draws the window: a 2px hue line
  * across the top, a draggable title bar with the summoning glyph beside the
- * name, the two sizes, the three place buttons, and `×`. **No scrim**: the
- * page behind stays completely interactive, which is the whole claim of the
- * word float.
+ * name, one size toggle, the place control, and `×` — three controls where the
+ * bar used to carry six (design Rev 2026-09-23.25). **No scrim**: the page
+ * behind stays completely interactive, which is the whole claim of the word
+ * float.
+ *
+ * It springs out of the control that opened it and shrinks back into it on a
+ * close (`equipMotion.ts`).
  *
  * ## Two sizes, and why only two
  *
@@ -23,7 +27,7 @@
  * the drag, because a button that appeared to do nothing would be worse than
  * losing a position.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   PANEL_CARD_PX,
   loadGeometry,
@@ -34,39 +38,47 @@ import {
   type FloatSize,
 } from './equipSurface'
 import { EQUIP_HUE } from './equip'
+import { animateFloatIn, registerSurfaceElement } from './equipMotion'
 import { PlaceButtons } from './PlaceButtons'
 import { SurfaceBody } from './SurfaceBody'
 import { SurfaceGlyph } from './SurfaceGlyph'
 import { SHELL_TOP_BAR_PX } from './shellChrome'
 import css from './equipSurface.module.css'
 
-const SIZES: { size: FloatSize; glyph: string; title: string }[] = [
-  { size: 'phone', glyph: '▯', title: 'Phone — tall and narrow, at the right edge' },
-  { size: 'pad', glyph: '▭', title: 'Pad — tablet width, centred' },
-]
+/** One toggle: the glyph is the size it is, the title says what a click makes it. */
+const SIZE_TOGGLE: Record<FloatSize, { glyph: string; title: string; next: FloatSize }> = {
+  phone: { glyph: '▯', title: 'Size: Phone — switch to Pad (wider, centred)', next: 'pad' },
+  pad: { glyph: '▭', title: 'Size: Pad — switch to Phone (tall, right edge)', next: 'phone' },
+}
 
 const PHONE_W = 420
-/** The rail's own lane plus its 8px inset — a Phone must not sit under it. */
+/** The dock's own lane plus its inset — a float must not sit under it. */
 const RAIL_LANE = 52
+/** The dock's width where it floats beside an open panel (Rev .25). */
+const DOCK_PX = 44
 
 /**
  * The window's box: the size's own numbers unless you have dragged this
- * surface *at this size*, and clamped to the room the panel leaves.
+ * surface *at this size*, clamped to the room left of the dock — and of the
+ * panel and the dock when a panel is open.
+ *
+ * **One right limit for every path** (design Rev .25–.27): the default place,
+ * a restored drag and the size's own width all stop at the same edge. Since
+ * the dock floats beside the panel rather than over it, a float that stopped
+ * at the panel alone would sit on the dock.
  *
  * A position saved on a wide screen must not strand the window off-screen on
  * a narrow one, and a float must never bury the tab you opened beside it.
  */
 function boxFor(size: FloatSize, saved: FloatGeometry | null, panelOpen: boolean): CSSProperties {
-  const reserved = panelOpen ? PANEL_CARD_PX : 0
-  const room = window.innerWidth - reserved - 16
+  const limit = window.innerWidth - (panelOpen ? PANEL_CARD_PX + DOCK_PX : RAIL_LANE)
+  const room = limit - 8
   let geo: FloatGeometry = saved?.size === size ? { ...saved } : {}
-  if (geo.w) geo.w = Math.min(geo.w, size === 'phone' ? 520 : room)
+  if (geo.w) geo.w = Math.min(geo.w, size === 'phone' ? 520 : room, room)
   // Less room than the window's own minimum: the saved box cannot be honoured
   // at all, so fall back to the size's default rather than to a sliver.
   if (geo.w && geo.w < 380) geo = {}
-  if (geo.l != null) {
-    geo.l = Math.max(8, Math.min(geo.l, window.innerWidth - reserved - 8 - (geo.w ?? PHONE_W)))
-  }
+  if (geo.l != null) geo.l = Math.max(8, Math.min(geo.l, limit - (geo.w ?? PHONE_W)))
   return {
     top:
       geo.t != null
@@ -78,10 +90,10 @@ function boxFor(size: FloatSize, saved: FloatGeometry | null, panelOpen: boolean
       geo.l != null
         ? `${geo.l}px`
         : size === 'phone'
-          ? `calc(100vw - ${(panelOpen ? 8 + PANEL_CARD_PX : RAIL_LANE) + PHONE_W}px)`
-          : `calc((100vw - ${reserved}px) / 2)`,
+          ? `${limit - PHONE_W}px`
+          : `calc((100vw - ${window.innerWidth - limit}px) / 2)`,
     transform: geo.l != null || size === 'phone' ? 'none' : 'translateX(-50%)',
-    width: geo.w ? `${geo.w}px` : size === 'phone' ? `${PHONE_W}px` : `min(880px, ${room}px)`,
+    width: geo.w ? `${geo.w}px` : size === 'phone' ? `${PHONE_W}px` : `min(880px, ${limit - 24}px)`,
     height: geo.h
       ? `${Math.min(geo.h, window.innerHeight - SHELL_TOP_BAR_PX - 16)}px`
       : size === 'phone'
@@ -93,6 +105,7 @@ function boxFor(size: FloatSize, saved: FloatGeometry | null, panelOpen: boolean
 export function EquipFloat() {
   const { float, panel } = useSurfaces()
   const ref = useRef<HTMLDivElement | null>(null)
+  const shown = useRef<string | null>(null)
   const key = float?.key ?? null
   const size = float?.size ?? 'phone'
   const panelOpen = Boolean(panel)
@@ -112,6 +125,15 @@ export function EquipFloat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [key, size, panelOpen, viewport],
   )
+
+  // A surface arriving in the float — opened, or moved here from the panel —
+  // springs out of where it was summoned. Before paint, so the first frame is
+  // already the animation's first frame rather than the window at rest.
+  useLayoutEffect(() => {
+    registerSurfaceElement('float', ref.current)
+    if (key && key !== shown.current && ref.current) animateFloatIn(ref.current, key)
+    shown.current = key
+  }, [key])
 
   // Esc lives in `useCockpitKeybinds`, not here: an inspector and a float can
   // both be open, and two listeners racing would close both. The order is one
@@ -190,20 +212,16 @@ export function EquipFloat() {
         <span className={css.name}>{float.label}</span>
         <span className={css.route}>{float.to}</span>
         <span className="ml-auto" />
-        {SIZES.map((s) => (
-          <button
-            key={s.size}
-            type="button"
-            className={`${css.btn} ${size === s.size ? css.btnOn : ''}`}
-            title={s.title}
-            aria-pressed={size === s.size}
-            onClick={() => setFloatSize(s.size)}
-          >
-            {s.glyph}
-          </button>
-        ))}
-        {/* Size and place are two questions; the rule says so. */}
-        <span className={css.sep} aria-hidden />
+        {/* Size and place are two questions: the toggle is the float's alone. */}
+        <button
+          type="button"
+          className={css.size}
+          title={SIZE_TOGGLE[size].title}
+          aria-label={SIZE_TOGGLE[size].title}
+          onClick={() => setFloatSize(SIZE_TOGGLE[size].next)}
+        >
+          {SIZE_TOGGLE[size].glyph}
+        </button>
         <PlaceButtons surface={float} here="float" />
       </div>
       <div className={css.body}>

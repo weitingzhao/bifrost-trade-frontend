@@ -20,6 +20,7 @@ import { toggleThread, useThread } from '@/hooks/useCopilotThread'
 import { routeFor } from './routeRegistry'
 import { useCrumbLabel } from './useCrumbLabel'
 import { Lens } from './Lens'
+import { SliceCapsule } from './SliceCapsule'
 import { UserCenter } from './UserCenter'
 import {
   SHELL_TOP_BAR_CONTROL_CLASS,
@@ -85,6 +86,9 @@ export function AppHeader() {
           {label}
         </span>
       </nav>
+      {/* The slice, on the pages that stand on it (Rev .25): the StageRail the
+          design folded into the crumb. */}
+      <SliceCapsule />
       {/* The one control that takes the slack: `flex: 1 1 220px` between a
           180 floor and a 440 ceiling, so the bar breathes here and nowhere
           else. */}
@@ -124,7 +128,7 @@ export function AppHeader() {
           <TooltipTrigger asChild>
             <button
               type="button"
-              onClick={toggleThread}
+              onClick={(e) => toggleThread(e.currentTarget)}
               aria-pressed={thread.open}
               className={cn(
                 SHELL_TOP_BAR_CONTROL_CLASS,
@@ -135,7 +139,10 @@ export function AppHeader() {
               )}
             >
               <MessageSquare className="h-3 w-3" aria-hidden />
-              <span className="hidden lg:inline">Copilot</span>
+              {/* "Ask", a verb, since the framework pass (Rev .25): the rail's
+                  group is the Copilot Desk (a place), this opens a conversation
+                  (not a place). Two things named "Copilot" was the confusion. */}
+              <span className="hidden lg:inline">Ask</span>
               {/* The design prints the key on the button, as the Omnibar does:
                   a control whose shortcut is invisible is a shortcut only for
                   whoever already knew it. */}
@@ -147,8 +154,8 @@ export function AppHeader() {
                 behind another tab is open, and the click brings it forward
                 rather than opening a second one. */}
             {thread.open
-              ? `${thread.place === 'float' ? 'The Copilot — in a float' : 'The Copilot — in the side panel'}`
-              : 'Open the Research Copilot'}{' '}
+              ? `${thread.place === 'float' ? 'Ask — the conversation, in a float' : 'Ask — the conversation, in the side panel'}`
+              : 'Ask the Copilot — opens the conversation'}{' '}
             · ⌘J
           </TooltipContent>
         </Tooltip>

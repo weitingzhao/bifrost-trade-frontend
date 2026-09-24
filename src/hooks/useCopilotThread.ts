@@ -21,15 +21,8 @@
  * them has to know what a surface is.
  */
 import { writeJson } from '@/lib/localStore'
-import {
-  closeSurface,
-  isVisible,
-  openSurface,
-  placeOf,
-  threadSurface,
-  toggleSurface,
-  useSurfaces,
-} from '@/layout/equipSurface'
+import { isVisible, openSurface, placeOf, threadSurface, useSurfaces } from '@/layout/equipSurface'
+import { dismissSurface, toggleSurfaceFrom } from '@/layout/equipMotion'
 
 // The dock's own keys, cleared rather than left to rot — the same courtesy
 // the design pays `bifrost.drawer`. `bubble.*` is older still: the floating
@@ -51,18 +44,20 @@ export function openThread(): void {
 }
 
 /**
- * The top bar's button and ⌘J, which are the same gesture.
+ * The top bar's Ask button and ⌘J, which are the same gesture.
  *
  * Visible → close · open but behind another tab → bring it forward · not open
  * → open it. One click covers all three, and the button's lit state means
- * "open", with the tooltip saying where.
+ * "open", with the tooltip saying where. Given the button, the conversation
+ * opens out of it and closes back into it; ⌘J has no button and rises in place.
  */
-export function toggleThread(): void {
-  toggleSurface(threadSurface())
+export function toggleThread(from?: Element | null): void {
+  toggleSurfaceFrom(threadSurface(), from)
 }
 
+/** The conversation's own close — a close the reader asked for, so it animates. */
 export function closeThread(): void {
-  closeSurface('thread')
+  dismissSurface('thread')
 }
 
 /** Open anywhere, in front or behind — what lights the top bar's button. */

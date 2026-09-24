@@ -20,10 +20,29 @@
  * the Desk (a page), the top bar opens this (not a place).
  */
 import { Suspense, createElement, lazy } from 'react'
-import { PageRouteFallback } from '@/components/layout'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { surfacePageFor } from './surfacePages'
 import type { Surface } from './equipSurface'
+import css from './equipSurface.module.css'
+
+/** The five bars the design shows while a surface loads — widths from its own markup. */
+const SKELETON_BARS = ['38%', '92%', '84%', '88%', '60%']
+
+/**
+ * No white flash (design Rev .25): a surface that is still loading shows the
+ * shape of a page, not a blank card. The design's surfaces are iframes and
+ * wait on `onLoad`; this app renders the route itself, so the wait is the
+ * lazy chunk — the rhythm (skeleton, then a .22s fade) is what carries over.
+ */
+function SurfaceSkeleton() {
+  return (
+    <div className={css.skeleton} aria-busy="true" aria-label="Loading">
+      {SKELETON_BARS.map((w, i) => (
+        <i key={i} style={{ width: w, height: i === 0 ? 14 : undefined }} />
+      ))}
+    </div>
+  )
+}
 
 const LoopRunPipelineBody = lazy(() =>
   import('@/components/research/harness/LoopRunPipelineBody').then((m) => ({
@@ -51,7 +70,8 @@ export function SurfaceBody({ surface }: { surface: Surface }) {
 
   return (
     <ErrorBoundary key={surface.key}>
-      <Suspense fallback={<PageRouteFallback />}>
+      <Suspense fallback={<SurfaceSkeleton />}>
+        <div className={css.arrive}>
         {surface.thread ? (
           <CopilotThreadBody />
         ) : surface.run ? (
@@ -69,6 +89,7 @@ export function SurfaceBody({ surface }: { surface: Surface }) {
             No page is registered for {surface.to}.
           </p>
         )}
+        </div>
       </Suspense>
     </ErrorBoundary>
   )

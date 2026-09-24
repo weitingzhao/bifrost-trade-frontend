@@ -242,7 +242,7 @@ export function Omnibar() {
               value="cmd-copilot"
               onSelect={() => run(toggleThread)}
             >
-              <CommandIcon /> Toggle Copilot <CommandShortcut>⌘J</CommandShortcut>
+              <CommandIcon /> Ask — open or close the conversation <CommandShortcut>⌘J</CommandShortcut>
             </CommandItem>
             <CommandItem value="cmd-sidebar" onSelect={() => run(toggleSidebar)}>
               <PanelLeft /> Toggle sidebar

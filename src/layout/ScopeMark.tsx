@@ -46,7 +46,7 @@ export function ScopeMark({ path }: { path: string }) {
       {face ? (
         <span
           title="This page has a method face — the switch is on the page, not in the menu"
-          className="font-mono text-dense-micro text-muted-foreground opacity-75"
+          className="sk-quiet font-mono text-dense-micro text-muted-foreground"
         >
           ⧉
         </span>
@@ -54,7 +54,7 @@ export function ScopeMark({ path }: { path: string }) {
       {m ? (
         <span
           title={m.title}
-          className={cn('font-mono text-dense-micro tracking-wide opacity-75', m.className)}
+          className={cn('sk-quiet font-mono text-dense-micro tracking-wide', m.className)}
         >
           {m.text}
         </span>

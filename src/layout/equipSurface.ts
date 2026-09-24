@@ -112,7 +112,7 @@ export interface FloatGeometry {
   size?: FloatSize
 }
 
-interface SurfaceState {
+export interface SurfaceState {
   float: FloatState | null
   panel: PanelState | null
 }
@@ -373,6 +373,11 @@ export function stripFor(panel: PanelState): Strip {
 
 export function useSurfaces(): SurfaceState {
   return store.useStore()
+}
+
+/** The state outside React — for the close animation, which runs from a handler. */
+export function surfaceState(): SurfaceState {
+  return store.getState()
 }
 
 /** The active tab, or null — the panel's hue and its place buttons read it. */

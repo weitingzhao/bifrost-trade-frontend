@@ -29,10 +29,11 @@ describe('inspectorOverlayInsetRightPx', () => {
     // The column used to be the Copilot dock's. §5a.8 collapsed every
     // right-hand column into the one side panel — and the rule did not
     // change, which is the point: the inspector never had an opinion about
-    // what was in the column, only that something was holding it.
+    // what was in the column, only that something was holding it. The column
+    // pushes from 1256 since Rev .25 (its own floor, 560); it was 1456 on the inspector's 760.
     expect(inspectorOverlayInsetRightPx(true, 1560)).toBe(PANEL_CARD_PX)
-    expect(inspectorOverlayInsetRightPx(true, 1456)).toBe(PANEL_CARD_PX)
-    expect(inspectorOverlayInsetRightPx(true, 1455)).toBe(0)
+    expect(inspectorOverlayInsetRightPx(true, 1256)).toBe(PANEL_CARD_PX)
+    expect(inspectorOverlayInsetRightPx(true, 1255)).toBe(0)
     expect(inspectorOverlayInsetRightPx(false, 1920)).toBe(0)
   })
 

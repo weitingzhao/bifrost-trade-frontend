@@ -105,10 +105,6 @@
   display: flex;
   align-items: stretch;
   height: 34px;
-  /* The rail floats over this edge, so the place buttons keep out of its
-     way — the design's own 44px lane, paid here instead of as a permanent
-     gutter down the whole page. */
-  padding-right: 44px;
   border-bottom: 1px solid var(--sk-line);
   background: var(--sk-raised2);
   flex: none;
@@ -228,46 +224,68 @@
   border-left: 1px solid var(--sk-line);
 }
 
-.btn {
-  font-size: 11px;
-  width: 24px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--sk-line2);
-  border-radius: 5px;
-  background: transparent;
-  color: var(--sk-mute);
-  cursor: pointer;
+/* The place control (Rev .25): one segmented group with words, in every
+   header. The place it is in is lit and inert; Page is dimmed where the
+   surface has no page. */
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--sk-ink) 6%, transparent);
   flex: none;
-  font-family: inherit;
 }
 
-.btn:hover:not(:disabled) {
+.seg button {
+  flex: none;
+  height: 20px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--sk-mute2);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg button:hover {
   color: var(--sk-ink);
 }
 
-/* The place it is in now: lit, and inert — you cannot send it where it is. */
-.btnOn {
-  color: var(--rh);
-  border-color: color-mix(in oklab, var(--rh) 53%, transparent);
-  background: color-mix(in oklab, var(--rh) 14%, transparent);
+.seg button[data-on='1'] {
+  background: var(--sk-raised2);
+  color: var(--sk-ink);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px color-mix(in srgb, var(--sk-ink) 10%, transparent);
   cursor: default;
 }
 
-.btn:disabled {
-  color: color-mix(in oklab, var(--sk-mute) 55%, transparent);
-  border-color: var(--sk-line);
+.seg button[data-off='1'] {
+  opacity: 0.4;
   cursor: default;
 }
 
-.sep {
-  width: 1px;
-  height: 16px;
-  background: var(--sk-line2);
-  margin: 0 3px;
+/* The float's one size toggle: ▯ Phone ⇄ ▭ Pad. */
+.size {
+  height: 24px;
+  min-width: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--sk-line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sk-mute2);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
   flex: none;
+}
+
+.size:hover {
+  color: var(--sk-ink);
+  border-color: var(--sk-line2);
 }
 
 .close {
@@ -302,6 +320,62 @@
   min-height: 0;
   overflow: auto;
   background: var(--background);
+}
+
+/* Loading: five shimmering bars in the shape of a page, then the page fades
+   in (design Rev .25). A tab that is already loaded does not replay it — it
+   stays mounted, so it never suspends again. */
+@keyframes shim {
+  from {
+    background-position: -240px 0;
+  }
+  to {
+    background-position: 240px 0;
+  }
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 16px;
+}
+
+.skeleton i {
+  display: block;
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--sk-ink) 5%, transparent) 0%,
+    color-mix(in srgb, var(--sk-ink) 11%, transparent) 50%,
+    color-mix(in srgb, var(--sk-ink) 5%, transparent) 100%
+  );
+  background-size: 480px 100%;
+  animation: shim 1.3s linear infinite;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* A real box, as tall as the body: opacity needs a box to fade, and a page
+   that sizes itself `h-full` still gets the surface's height. */
+.arrive {
+  height: 100%;
+  animation: arrive 0.22s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton i,
+  .arrive {
+    animation: none;
+  }
 }
 
 /* Every tab stays mounted; the ones behind are hidden rather than unmounted,

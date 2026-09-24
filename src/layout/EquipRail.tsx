@@ -30,11 +30,21 @@
  * floating, from the address bar = a page*. `⤢` in the header is there for
  * when you want the real thing.
  */
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
-import { placeOf, surfaceForRoute, toggleSurface, useSurfaces } from './equipSurface'
+import { PANEL_CARD_PX, placeOf, surfaceForRoute, useSurfaces } from './equipSurface'
+import { toggleSurfaceFrom } from './equipMotion'
+import { SHELL_TOP_BAR_PX } from './shellChrome'
 import css from './equipRail.module.css'
+
+/**
+ * The column's natural height with every page icon showing (design Rev .25).
+ * Below it the rail keeps only the group heads: the pages stay one ⌘K away,
+ * and a rail that ran under the status bar would hide its own last icon.
+ */
+const FULL_RAIL_PX = 520
 
 /** What the tooltip adds once something is open — "on" alone is not a place. */
 function placeNote(to: string): string {
@@ -61,9 +71,10 @@ function RailButton({
   return (
     <button
       type="button"
-      onClick={() => {
+      onClick={(e) => {
         const surface = surfaceForRoute(page.to)
-        if (surface) toggleSurface(surface)
+        // The icon is where the float springs from and where it goes back to.
+        if (surface) toggleSurfaceFrom(surface, e.currentTarget)
       }}
       aria-label={page.label}
       aria-pressed={open}
@@ -104,11 +115,14 @@ function Group({
   activePath,
   lamp,
   count,
+  full,
 }: {
   group: EquipGroup
   activePath: string
   lamp?: boolean
   count?: number
+  /** Room for the page icons; without it the group is its head alone. */
+  full: boolean
 }) {
   // Subscribed so the lit states follow the surfaces; `placeOf` reads the same
   // store, and this is what tells React to look again.
@@ -139,6 +153,10 @@ function Group({
             changes without your hand. Green for a run in flight. */}
         {lamp ? <span className={css.dot} title="A loop run is in flight" /> : null}
       </RailButton>
+      {/* macOS's running dot: something of this module is open, in the float
+          or the panel. The box border says it too; the dot is what reads at a
+          glance, as it does under a Dock icon. */}
+      {anyOpen ? <span className={css.run} aria-hidden /> : null}
       {/* The count is its own line under the head, not a badge on it — the
           design's own placement, and it keeps the 28px button square. */}
       {(count ?? 0) > 0 ? (
@@ -146,10 +164,12 @@ function Group({
           {count}
         </span>
       ) : null}
-      {group.pages.length > 0 ? <span className={css.rule} aria-hidden /> : null}
-      {group.pages.map((p) => (
-        <RailButton key={p.to} page={p} open={openAt(p.to)} here={activePath === p.to} />
-      ))}
+      {full && group.pages.length > 0 ? <span className={css.rule} aria-hidden /> : null}
+      {full
+        ? group.pages.map((p) => (
+            <RailButton key={p.to} page={p} open={openAt(p.to)} here={activePath === p.to} />
+          ))
+        : null}
     </div>
   )
 }
@@ -157,6 +177,16 @@ function Group({
 export function EquipRail() {
   const { pathname } = useLocation()
   const standing = useAutopilotStanding().data
+  const { panel } = useSurfaces()
+  const [height, setHeight] = useState(() => window.innerHeight)
+
+  useEffect(() => {
+    const onResize = () => setHeight(window.innerHeight)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const full = height - SHELL_TOP_BAR_PX - 16 >= FULL_RAIL_PX
 
   // The two readings that earn Autopilot its indicator, read where the sidebar
   // used to read them — the badge moved with the row.
@@ -164,7 +194,18 @@ export function EquipRail() {
   const running = standing?.objectives.some((o) => o.last_run?.status === 'running') ?? false
 
   return (
-    <div className={css.rail} aria-label="Equipment">
+    <div
+      className={css.rail}
+      aria-label="Equipment"
+      style={
+        {
+          // Floating, never in a lane (Owner 2026-09-23): over the page, and
+          // with a panel open just left of it — never over the panel.
+          right: panel ? PANEL_CARD_PX : 6,
+          top: SHELL_TOP_BAR_PX + 8,
+        } as CSSProperties
+      }
+    >
       {EQUIP_GROUPS.map((g) => (
         <Group
           key={g.id}
@@ -172,6 +213,7 @@ export function EquipRail() {
           activePath={pathname}
           lamp={g.id === 'autopilot' && running}
           count={g.id === 'autopilot' ? waiting : 0}
+          full={full}
         />
       ))}
     </div>

@@ -820,6 +820,21 @@ tbody tr:hover > td {
   .sk-lift:hover {
     transform: translateY(-1px);
   }
+
+  /* The sidebar's signal diet (design Rev .25, framework pass 5): secondary
+     marks — ⧉ method face, stk / opt unit — rest at 28% and come up on hover,
+     keyboard focus or the row you stand on. Counts and breaches never use
+     this: they are live state, and live state does not whisper. */
+  .sk-quiet {
+    opacity: 0.28;
+    transition: opacity 0.15s ease;
+  }
+
+  li:hover .sk-quiet,
+  li:focus-within .sk-quiet,
+  li:has([data-active='true']) .sk-quiet {
+    opacity: 1;
+  }
 }
 
 /* Print goes through a hidden iframe (exportSerializer.printHtml).

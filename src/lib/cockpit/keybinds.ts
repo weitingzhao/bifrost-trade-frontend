@@ -20,7 +20,8 @@
  * Mount once via `useCockpitKeybinds()` from App layout.
  */
 import { useEffect } from 'react'
-import { closeSurface, useSurfaces } from '@/layout/equipSurface'
+import { useSurfaces } from '@/layout/equipSurface'
+import { dismissSurface } from '@/layout/equipMotion'
 import { toggleThread } from '@/hooks/useCopilotThread'
 import { omnibar } from '@/lib/omnibar'
 import { KEY_COPILOT, KEY_OMNIBAR } from './shortcuts'
@@ -60,7 +61,7 @@ export function useCockpitKeybinds() {
         }
         if (float) {
           e.preventDefault()
-          closeSurface(float.key)
+          dismissSurface(float.key)
         }
       }
     }

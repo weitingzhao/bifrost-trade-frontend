@@ -17,18 +17,18 @@
  *
  * ## Push or overlay
  *
- * The shared formula, not a threshold of its own (`panelDocks`): the page
- * keeps its 760px of columns or the panel floats over it. There is nothing to
+ * The shared formula, not a threshold of its own (`sidePanelPushes`): the page
+ * keeps its 560px of columns (Rev .25) or the panel floats over it. There is nothing to
  * coordinate with any more — the Copilot was the other column that pushed,
  * and it is a tab in here now, so one panel is the only thing the content
  * ever gives width to.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { EQUIP_HUE } from './equip'
+import { animatePanelIn, dismissSurface, registerSurfaceElement } from './equipMotion'
 import {
   PANEL_CARD_PX,
   activeTabOf,
-  closeSurface,
   focusTab,
   stripFor,
   useSurfaces,
@@ -38,7 +38,7 @@ import { PlaceButtons } from './PlaceButtons'
 import { SurfaceBody } from './SurfaceBody'
 import { SurfaceGlyph } from './SurfaceGlyph'
 import { SHELL_TOP_BAR_PX } from './shellChrome'
-import { panelDocks } from '@/lib/panelDocks'
+import { sidePanelPushes } from '@/components/layout/inspectorDock'
 import css from './equipSurface.module.css'
 
 function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact: boolean }) {
@@ -64,13 +64,13 @@ function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact
             title="Close tab"
             onClick={(e) => {
               e.stopPropagation()
-              closeSurface(tab.key)
+              dismissSurface(tab.key)
             }}
             onKeyDown={(e) => {
               if (e.key !== 'Enter' && e.key !== ' ') return
               e.preventDefault()
               e.stopPropagation()
-              closeSurface(tab.key)
+              dismissSurface(tab.key)
             }}
           >
             ×
@@ -89,6 +89,9 @@ export function EquipPanel() {
   // — all without an effect that fights the render it is reacting to.
   const [menuOver, setMenuOver] = useState<string | null>(null)
   const [viewport, setViewport] = useState(() => window.innerWidth)
+  const card = useRef<HTMLElement | null>(null)
+  const wasOpen = useRef(false)
+  const open = Boolean(panel)
 
   useEffect(() => {
     const onResize = () => setViewport(window.innerWidth)
@@ -96,12 +99,20 @@ export function EquipPanel() {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  // The panel slides in from the edge when it opens — not when a tab is added
+  // to one already open, which is the panel staying, not arriving.
+  useLayoutEffect(() => {
+    registerSurfaceElement('panel', card.current)
+    if (open && !wasOpen.current && card.current) animatePanelIn(card.current)
+    wasOpen.current = open
+  }, [open])
+
   const active = activeTabOf(panel)
   if (!panel || !active) return null
 
   const strip = stripFor(panel)
   const menuOpen = menuOver === panel.active && strip.over.length > 0
-  const pushes = panelDocks(PANEL_CARD_PX, viewport)
+  const pushes = sidePanelPushes(true, viewport)
 
   return (
     <>
@@ -111,6 +122,7 @@ export function EquipPanel() {
         <div className={css.spacer} style={{ width: PANEL_CARD_PX }} aria-hidden />
       ) : null}
       <aside
+        ref={card}
         className={`${css.card} ${css.panel}`}
         style={{
           ['--rh' as string]: EQUIP_HUE[active.group],
@@ -170,13 +182,13 @@ export function EquipPanel() {
                   aria-label={`Close ${t.label}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    closeSurface(t.key)
+                    dismissSurface(t.key)
                   }}
                   onKeyDown={(e) => {
                     if (e.key !== 'Enter' && e.key !== ' ') return
                     e.preventDefault()
                     e.stopPropagation()
-                    closeSurface(t.key)
+                    dismissSurface(t.key)
                   }}
                 >
                   ×

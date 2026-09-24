@@ -16,7 +16,7 @@
  * beside a page they would leave it a sliver that only pretends to be usable,
  * so they float and the page is whole again the moment they close.
  */
-import { panelDocks } from '@/lib/panelDocks'
+import { panelDocks, SIDE_PANEL_FLOOR_PX } from '@/lib/panelDocks'
 import { PANEL_CARD_PX } from '@/layout/equipSurface'
 
 /** The reading width — the default, and what `useInspectorWide` toggles away from. */
@@ -30,9 +30,12 @@ export function inspectorDocksAt(panelWidthPx: number, viewportWidthPx: number):
   return panelDocks(panelWidthPx, viewportWidthPx)
 }
 
-/** Does the shell's one side panel have the room to push the page aside? */
+/**
+ * Does the shell's one side panel have the room to push the page aside? On its
+ * own floor since Rev .25 — 1256, not the inspector's 1456.
+ */
 export function sidePanelPushes(panelOpen: boolean, viewportWidthPx: number): boolean {
-  return panelOpen && panelDocks(PANEL_CARD_PX, viewportWidthPx)
+  return panelOpen && panelDocks(PANEL_CARD_PX, viewportWidthPx, SIDE_PANEL_FLOOR_PX)
 }
 
 /**

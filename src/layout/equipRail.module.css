@@ -89,7 +89,9 @@
 .btn:hover {
   color: var(--rh);
   background: color-mix(in oklab, var(--rh) 24%, var(--sk-raised2));
-  transform: scale(1.38);
+  /* 1.12 since the framework pass (Rev .25): a dock that swells a third of
+     its size shouts; this is enough to say which one is under the pointer. */
+  transform: scale(1.12);
   box-shadow: 0 0 16px color-mix(in oklab, var(--rh) 38%, transparent);
   z-index: 2;
 }
@@ -138,7 +140,7 @@
 .btn:hover .label,
 .btn:focus-visible .label {
   opacity: 1;
-  transform: translate(0, -50%) scale(0.725);
+  transform: translate(0, -50%) scale(0.893);
   transform-origin: right center;
 }
 
@@ -179,23 +181,23 @@
   }
 }
 
-/* ── The strip itself: 6px off the right edge, vertically centred ───────── */
-/* It stays on top of everything, including the panel's right edge. The design
-   records that overlap as known debt — the rail covering the middle of a
-   column's content is the same occlusion problem as the rail covering the
-   middle of a page's, and it settles both in one round rather than inventing
-   a lane here. The panel header's own 44px of right padding is the part that
-   could not wait: controls you cannot click are not a style question. */
+/* ── The strip itself: floating, centred below the top bar ──────────────── */
+/* The framework pass (Rev .25) settled the overlap the eighteenth round left
+   as debt: with a panel open the rail floats just left of it (the component
+   sets `right`), so it never covers a column's controls, and the panel's head
+   no longer pays a 44px lane. It is centred in what is below the top bar —
+   `safe center`, so a short window starts it at the top rather than pushing
+   its head up under the bar — and slides when the panel comes and goes. */
 .rail {
   position: fixed;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 8px;
   z-index: 58;
   display: flex;
   flex-direction: column;
+  justify-content: safe center;
   gap: 10px;
   pointer-events: none;
+  transition: right 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* Below the tablet width the rail would sit on top of the page's own content
@@ -212,6 +214,16 @@
   font-size: 9px;
   line-height: 1;
   color: #ca8a04;
+}
+
+/* Something of this module is open somewhere — the Dock's running dot. */
+.run {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  margin: 1px 0 0;
+  flex: none;
+  background: var(--rh);
 }
 
 .rule {

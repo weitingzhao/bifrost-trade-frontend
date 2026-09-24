@@ -120,8 +120,9 @@ Data / Runtime / Configuration / Reference，脚部变 `Back to Trade`（`isSyst
 ### 右侧面板规范
 
 - **停靠公式**（唯一出处 `src/lib/panelDocks.ts`，Design 09-14 ③）：
-  `viewport ≥ sidebar 240 + content floor 760 + panel width`。
-  Inspector 读宽 560 → **1560 以上才停靠**；Copilot 读宽 440 → 1440 停靠。
+  `viewport ≥ sidebar 240 + content floor + panel width`。
+  Inspector 读宽 560、地板 760 → **1560 以上才停靠**；
+  壳的唯一侧面板（Copilot 已是其中一个 tab）自 Rev 2026-09-23.25 起地板 560 → 列宽 456 → **1256 起推开页面**（`sidePanelPushes`）。
   **宽档永远悬浮**（Copilot 760、Inspector 1040 及更宽）。侧栏按展开 240 计入，即使当时折成 icon rail。
   旧写法「视口 ≥ 面板宽 + 840px」（560+840=1400）已废，不要再写回代码或文档。
 - Copilot 停靠推页时，Inspector **一律悬浮**，浮层从视口右缘让出 440

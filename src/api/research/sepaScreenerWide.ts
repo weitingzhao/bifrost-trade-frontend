@@ -66,8 +66,13 @@ function boolOrNull(v: unknown): boolean | null {
   return typeof v === 'boolean' ? v : null
 }
 
-export async function fetchSepaScreenerWide(limit = 5000): Promise<SepaScreenerWideResponse> {
-  const res = await fetch(researchEngineUrl(`/analytics/sepa/screener-wide?limit=${limit}`))
+export async function fetchSepaScreenerWide(
+  limit = 5000,
+  symbols?: readonly string[],
+): Promise<SepaScreenerWideResponse> {
+  const q = new URLSearchParams({ limit: String(limit) })
+  if (symbols && symbols.length > 0) q.set('symbols', symbols.join(','))
+  const res = await fetch(researchEngineUrl(`/analytics/sepa/screener-wide?${q}`))
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)
     throw new Error(`sepa screener-wide ${res.status}: ${text.slice(0, 200)}`)

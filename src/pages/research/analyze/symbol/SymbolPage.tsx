@@ -51,9 +51,7 @@ import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSince
 import { SymbolVerdictPanel } from '@/pages/research/analyze/symbol/SymbolVerdictPanel'
 import { useSymbolFaces } from '@/pages/research/analyze/symbol/useSymbolFaces'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
-import { IvRankSection } from '@/pages/research/analyze/volRegime/IvRankSection'
-import { VrpSection } from '@/pages/research/analyze/volRegime/VrpSection'
-import { SkewSection } from '@/pages/research/analyze/volRegime/SkewSection'
+import { SymbolVolatilityFace } from '@/pages/research/analyze/symbol/SymbolVolatilityFace'
 import { GexSection } from '@/pages/research/analyze/dealerLevels/GexSection'
 import { OpexSection } from '@/pages/research/analyze/dealerLevels/OpexSection'
 import { ModelSection } from '@/pages/research/analyze/scenario/ModelSection'
@@ -237,13 +235,7 @@ export default function SymbolPage() {
             ) : null}
           </div>
         )}
-        {active === 'volatility' && (
-          <div className="space-y-4">
-            <Anchored id="iv-rank"><IvRankSection /></Anchored>
-            <Anchored id="vrp"><VrpSection /></Anchored>
-            <Anchored id="skew"><SkewSection /></Anchored>
-          </div>
-        )}
+        {active === 'volatility' && <SymbolVolatilityFace symbol={symbol} />}
         {active === 'dealer' && (
           <div className="space-y-4">
             <Anchored id="gex"><GexSection /></Anchored>

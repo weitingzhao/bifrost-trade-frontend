@@ -48,7 +48,10 @@ export function formatReadingDisplay(input: {
     if (typeof value === 'number' && Number.isFinite(value)) {
       const n = Math.abs(value) >= 10 ? value.toFixed(0) : value.toFixed(1)
       if (unit === '%' || unit === 'pct') return `${n}%`
-      if (unit) return `${n} ${unit}`
+      // The registry's unit strings are storage tokens (`pctile_of_abs_slope_252d`,
+      // `pct_of_1y_range`); printed raw they read as a leak, and the lens label
+      // beside the row already says what the number is. Keep only human units.
+      if (unit && unit.length <= 6 && !unit.includes('_')) return `${n} ${unit}`
       return n
     }
     if (typeof value === 'string' && value.trim()) return value.trim()

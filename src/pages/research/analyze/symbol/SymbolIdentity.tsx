@@ -13,12 +13,11 @@
  *
  * Measured, and each absence left visible rather than filled:
  *
- * - **price** is the quote this app already reads. The REST quote carries
- *   bid/ask/last/mid and no previous close, so there is no change to print —
- *   the figure says what it is and the line says the rest is not quoted,
- *   rather than computing a percentage against something that is not the close.
- * - **the company's name** is nowhere in this app's market payloads; the ticker
- *   stands alone rather than borrowing a name from a list that could be stale.
+ * - **price** is the quote this app already reads; the day change is the last
+ *   against the store's own previous close (2026-09-25 — the bars endpoint
+ *   served it all along; the earlier note said no change could be printed).
+ * - **the company's name** comes off the SEPA wide table's universe row —
+ *   measured the day the Screener face landed on the same read.
  * - **the verdict** is the decisive lenses' own words, in the order the faces
  *   below read them. The design writes one synthesised phrase per lens
  *   («Sell premium bias»); nothing here synthesises, and inventing the
@@ -47,6 +46,10 @@ import { Pin } from 'lucide-react'
 import { cockpitPinStore } from '@/store/cockpitPinStore'
 import { StatusLamp } from '@/components/StatusLamp'
 import { useQuotes } from '@/hooks/useQuotes'
+import { useQuery } from '@tanstack/react-query'
+import { fetchSepaScreenerWide } from '@/api/research/sepaScreenerWide'
+import { fetchDailyClosesMulti } from '@/api/marketData/dailyBars'
+import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtNum } from '@/lib/format'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
@@ -84,10 +87,31 @@ export function SymbolIdentity({
 }) {
   const sym = (symbol || '').trim().toUpperCase()
   const quotes = useQuotes(sym ? [sym] : [])
+  // The wide table's universe row carries the company's name; the closes give
+  // yesterday's close, the denominator of the day change.
+  const wideQ = useQuery({
+    queryKey: ['research', 'sepa-wide-one', sym],
+    queryFn: () => fetchSepaScreenerWide(5, [sym]),
+    enabled: Boolean(sym),
+    staleTime: 60 * 60_000,
+  })
+  const closesQ = useQuery({
+    queryKey: ['market', 'closes-multi', 'ident', sym],
+    queryFn: () => fetchDailyClosesMulti([sym], 8),
+    enabled: Boolean(sym),
+    staleTime: 10 * 60_000,
+  })
   if (!sym) return null
 
   const quote = quotes.data?.quotes?.find((q) => q.symbol === sym && q.sec_type === 'STK')
   const last = quote?.last ?? quote?.mid ?? null
+
+  const company = wideQ.data?.rows.find((r) => r.symbol === sym)?.company_name ?? null
+  const closes = (closesQ.data?.[sym] ?? []).map((b) => b.close).filter((c): c is number => c != null && c > 0)
+  // Against yesterday's close when the live last is in; else close-on-close.
+  const prevClose = closes.length > 1 ? closes[closes.length - 2] : null
+  const ref = last ?? (closes.length > 0 ? closes[closes.length - 1] : null)
+  const chg = prevClose != null && ref != null ? ref / prevClose - 1 : null
 
   // The decisive readings, in the order the faces read them.
   const decisive = faces.views
@@ -110,6 +134,11 @@ export function SymbolIdentity({
           >
             {sym}
           </Link>
+          {company ? (
+            <span className="max-w-[26ch] overflow-hidden text-ellipsis whitespace-nowrap text-dense-label text-muted-foreground">
+              {company}
+            </span>
+          ) : null}
           {last == null ? (
             <span
               className="text-dense-meta text-muted-foreground"
@@ -118,13 +147,19 @@ export function SymbolIdentity({
               no quote
             </span>
           ) : (
-            <span
-              className="font-mono text-dense-body tabular-nums"
-              title="Last traded price. The quote carries no previous close, so no change is printed rather than computed against the wrong number."
-            >
+            <span className="font-mono text-dense-body tabular-nums" title="Last traded price.">
               {fmtNum(last, 2)}
             </span>
           )}
+          {chg != null ? (
+            <span
+              className={cn('font-mono text-dense-body font-semibold tabular-nums', pnlColorClass(chg))}
+              title={last != null ? "Last against the store's previous close." : 'Close on close — no live quote right now.'}
+            >
+              {chg >= 0 ? '+' : '−'}
+              {Math.abs(chg * 100).toFixed(2)}%
+            </span>
+          ) : null}
           <PortfolioTag symbol={sym} variant="inline" />
         </div>
 

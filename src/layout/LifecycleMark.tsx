@@ -28,14 +28,20 @@ export function lifecycleMark(
         {/* Only the numeral for the layer you are standing in takes its hue
             (design Rev 2026-09-23.5). Colouring all six would make the column
             a palette; colouring none would waste the one place in the tree
-            that can say which layer a group belongs to. The rest stay a ring
-            and a digit in the neutral ramp. */}
+            that can say which layer a group belongs to. Since Rev .27 the
+            others also lose their disc: a half-weight hairline ring, no fill —
+            the digit still reads, and the ring stops competing with the one
+            layer you are in. */}
         <span
           className={cn(
-            'relative inline-flex size-3.5 items-center justify-center rounded-full border bg-secondary font-mono text-dense-micro font-bold leading-3',
-            here ? 'border-current' : 'border-border text-muted-foreground',
+            'relative inline-flex size-3.5 items-center justify-center rounded-full border font-mono text-dense-micro font-bold leading-3',
+            here ? 'border-current bg-secondary' : 'text-[var(--sk-mute2)]',
           )}
-          style={here ? { color: 'var(--sk-layer)' } : undefined}
+          style={
+            here
+              ? { color: 'var(--sk-layer)' }
+              : { borderColor: 'color-mix(in srgb, var(--sk-line2) 55%, transparent)' }
+          }
         >
           {glyph}
         </span>

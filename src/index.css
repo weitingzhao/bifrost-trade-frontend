@@ -730,6 +730,22 @@ tbody tr:hover > td {
   backdrop-filter: blur(22px) saturate(1.35);
 }
 
+/* The boxed caret, drawn as a soft chip rather than an outline (Rev .27):
+   boxed-vs-bare still carries the row grammar — a boxed caret is its own
+   control beside a label that goes somewhere else — at a lighter weight. A
+   container row's caret is bare (it rides aria-hidden) and stays bare. */
+[data-sidebar='sidebar'] button[aria-label^='Expand ']:not([aria-hidden]),
+[data-sidebar='sidebar'] button[aria-label^='Collapse ']:not([aria-hidden]) {
+  border-color: transparent;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--sk-ink) 6%, transparent);
+}
+
+[data-sidebar='sidebar'] button[aria-label^='Expand ']:not([aria-hidden]):hover,
+[data-sidebar='sidebar'] button[aria-label^='Collapse ']:not([aria-hidden]):hover {
+  background: color-mix(in srgb, var(--sk-ink) 12%, transparent);
+}
+
 @layer utilities {
   [data-slot="card"][data-variant="surface"]:focus-within {
     --tw-ring-color: var(--color-border-strong);

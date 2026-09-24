@@ -56,6 +56,15 @@ const PHONE_W = 420
 const RAIL_LANE = 52
 /** The dock's width where it floats beside an open panel (Rev .25). */
 const DOCK_PX = 44
+/** Within this of a boundary on release, the window settles flush against it. */
+const MAGNET_PX = 28
+/** The inset every edge keeps. */
+const GUTTER_PX = 8
+
+/** The one right limit every float path stops at (Rev .25–.27). */
+function rightLimit(panelOpen: boolean): number {
+  return window.innerWidth - (panelOpen ? PANEL_CARD_PX + DOCK_PX : RAIL_LANE)
+}
 
 /**
  * The window's box: the size's own numbers unless you have dragged this
@@ -71,7 +80,7 @@ const DOCK_PX = 44
  * a narrow one, and a float must never bury the tab you opened beside it.
  */
 function boxFor(size: FloatSize, saved: FloatGeometry | null, panelOpen: boolean): CSSProperties {
-  const limit = window.innerWidth - (panelOpen ? PANEL_CARD_PX + DOCK_PX : RAIL_LANE)
+  const limit = rightLimit(panelOpen)
   const room = limit - 8
   let geo: FloatGeometry = saved?.size === size ? { ...saved } : {}
   if (geo.w) geo.w = Math.min(geo.w, size === 'phone' ? 520 : room, room)
@@ -188,12 +197,70 @@ export function EquipFloat() {
         el.style.top = `${ev.clientY - dy}px`
         el.style.transform = 'none'
       }
-      const up = (ev: PointerEvent) => {
+      const up = () => {
         window.removeEventListener('pointermove', move)
         window.removeEventListener('pointerup', up)
+        // The edge magnet (Rev .27): within 28px of a boundary, settle flush
+        // against it — the screen's edges, the top bar's underside, and the
+        // dock (or the panel and the dock) on the right. A short ease, so the
+        // snap reads as intent, not a jump.
+        const r = el.getBoundingClientRect()
+        const limit = rightLimit(panelOpen)
+        let left = r.left
+        let top = r.top
+        if (left < GUTTER_PX + MAGNET_PX) left = GUTTER_PX
+        else if (r.right > limit - MAGNET_PX) left = limit - r.width
+        if (top < SHELL_TOP_BAR_PX + GUTTER_PX + MAGNET_PX) top = SHELL_TOP_BAR_PX + GUTTER_PX
+        else if (r.bottom > window.innerHeight - GUTTER_PX - MAGNET_PX)
+          top = window.innerHeight - GUTTER_PX - r.height
+        left = Math.round(left)
+        top = Math.round(top)
+        if (left !== Math.round(r.left) || top !== Math.round(r.top)) {
+          el.style.transition = 'left 0.18s cubic-bezier(0.2,0.8,0.2,1), top 0.18s cubic-bezier(0.2,0.8,0.2,1)'
+          el.style.left = `${left}px`
+          el.style.top = `${top}px`
+          window.setTimeout(() => {
+            el.style.transition = ''
+          }, 200)
+        }
+        saveGeometry(key, { l: left, t: top, size })
+      }
+      window.addEventListener('pointermove', move)
+      window.addEventListener('pointerup', up)
+    },
+    [key, size, panelOpen],
+  )
+
+  /**
+   * The grip's own drag — the corner follows the pointer 1:1 (Rev .27). The
+   * box is pinned where it stands first, because a Pad centres itself with a
+   * transform and growing a centred box moves both edges at once.
+   */
+  const onGrip = useCallback(
+    (e: React.PointerEvent) => {
+      const el = ref.current
+      if (!el || !key) return
+      e.preventDefault()
+      e.stopPropagation()
+      const start = el.getBoundingClientRect()
+      el.style.transform = 'none'
+      el.style.left = `${Math.round(start.left)}px`
+      el.style.top = `${Math.round(start.top)}px`
+      const sx = e.clientX
+      const sy = e.clientY
+      const move = (ev: PointerEvent) => {
+        el.style.width = `${Math.max(380, start.width + ev.clientX - sx)}px`
+        el.style.height = `${Math.max(300, start.height + ev.clientY - sy)}px`
+      }
+      const up = () => {
+        window.removeEventListener('pointermove', move)
+        window.removeEventListener('pointerup', up)
+        const r = el.getBoundingClientRect()
         saveGeometry(key, {
-          l: Math.round(ev.clientX - dx),
-          t: Math.round(ev.clientY - dy),
+          l: Math.round(r.left),
+          t: Math.round(r.top),
+          w: Math.round(r.width),
+          h: Math.round(r.height),
           size,
         })
       }
@@ -214,7 +281,16 @@ export function EquipFloat() {
       role="dialog"
       aria-label={`${float.label} — floating`}
     >
-      <div className={css.bar} onPointerDown={onDrag}>
+      <div
+        className={css.bar}
+        onPointerDown={onDrag}
+        onDoubleClick={(e) => {
+          // macOS's own gesture: double-click the title bar to switch size.
+          if ((e.target as HTMLElement).closest('button')) return
+          setFloatSize(SIZE_TOGGLE[size].next)
+        }}
+        title="Drag to move · double-click to switch Phone / Pad"
+      >
         <SurfaceGlyph surface={float} className={css.glyph} />
         <span className={css.name}>{float.label}</span>
         <span className={css.route}>{float.to}</span>
@@ -234,6 +310,7 @@ export function EquipFloat() {
       <div className={css.body}>
         <SurfaceBody surface={float} />
       </div>
+      <span className={css.grip} onPointerDown={onGrip} title="Drag to resize" aria-hidden />
     </div>
   )
 }

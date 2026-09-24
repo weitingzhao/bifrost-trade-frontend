@@ -7,6 +7,7 @@
  * expiry · The trade-off, in words.
  */
 import { useMemo, useState } from 'react'
+import { cn } from '@/lib/utils'
 import { Link, useSearchParams } from 'react-router-dom'
 import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
 import { EmptyState, SegmentControl } from '@/components/data-display'
@@ -261,21 +262,70 @@ function CompareBody({
         </SectionPanel>
 
         {/* ── Can you get filled (owed) ──────────────────────────────── */}
-        <SectionPanel cap="Can you get filled" title="spread · depth · where to sit" note="not on the plan">
-          <EmptyState title="not on the plan" description={FILLS_EMPTY} />
-          {placed.some((r) => r.thinnest) ? (
-            <ul className="space-y-0.5 border-t border-border/60 px-3 py-2">
-              {placed
-                .filter((r) => r.thinnest)
-                .map((r) => (
-                  <li key={r.id} className="text-dense-caption text-muted-foreground">
-                    <span className="font-semibold text-foreground">{r.name}</span> · What we can see today · OI{' '}
-                    {r.thinnest!.oi == null ? '—' : r.thinnest!.oi.toLocaleString('en-US')} · vol{' '}
-                    {r.thinnest!.volume == null ? '—' : r.thinnest!.volume.toLocaleString('en-US')} — a liquidity proxy, not a spread
-                  </li>
-                ))}
-            </ul>
-          ) : null}
+        <SectionPanel cap="Can you get filled" title="spread · depth · where to sit" note="NBBO not on the plan">
+          {/* The design's table, kept in its shape: the columns the store cannot
+              answer print a dash rather than vanish — mark, not drop. */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  {['Structure', 'Bid/Ask', 'Spread', 'of credit', 'OI', 'Vol', 'Limit', 'Fill'].map((h, i) => (
+                    <th
+                      key={h}
+                      className={cn(
+                        'whitespace-nowrap border-b border-border px-2 py-1 text-dense-caption font-semibold text-secondary-foreground',
+                        i === 0 ? 'text-left' : 'text-right'
+                      )}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {placed.map((r) => {
+                  const thinOi = r.thinnest?.oi != null && r.thinnest.oi < 500
+                  return (
+                    <tr key={r.id}>
+                      <td className={cn('border-b border-border/55 px-2 py-1.25 text-left text-dense-meta font-semibold', r.series.text)}>
+                        {r.name}
+                      </td>
+                      {['—', '—', '—'].map((v, i) => (
+                        <td
+                          key={i}
+                          className="border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground"
+                          title="Needs a quote — the snapshots carry the session's last trade, never bid/ask."
+                        >
+                          {v}
+                        </td>
+                      ))}
+                      <td
+                        className={cn(
+                          'border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums',
+                          thinOi ? 'text-warning' : 'text-secondary-foreground'
+                        )}
+                        title="The thinnest option leg's open interest — a liquidity proxy, not a spread."
+                      >
+                        {r.thinnest?.oi == null ? '—' : r.thinnest.oi.toLocaleString('en-US')}
+                      </td>
+                      <td className="border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                        {r.thinnest?.volume == null ? '—' : r.thinnest.volume.toLocaleString('en-US')}
+                      </td>
+                      <td className="border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground" title="Where to sit needs the combo book — not on the plan.">
+                        —
+                      </td>
+                      <td className="border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground" title="Fill likelihood needs an order-fill record — not on the plan.">
+                        —
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="border-t border-border/60 px-3 py-1.5 text-dense-caption leading-relaxed text-muted-foreground">
+            {FILLS_EMPTY}
+          </p>
         </SectionPanel>
 
         {/* ── Payoff at expiry ───────────────────────────────────────── */}

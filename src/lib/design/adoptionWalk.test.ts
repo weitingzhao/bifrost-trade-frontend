@@ -162,8 +162,10 @@ describe('the design walk, as it stands', () => {
     // went the same way. 55 when Live and Alerts — the last two in `stale`,
     // waiting on the rail move — were built into the rail's Market group and
     // left the same way. 54 when Symbol grew its seventh face (Payoff,
-    // 2026-09-24) and left for `reviewing` while the Owner looks.
-    expect(counts.aligned + counts.byState.stale).toBe(54)
+    // 2026-09-24) and left for `reviewing` while the Owner looks. 56 on
+    // 2026-09-25: the Owner signed the two method faces that read right side
+    // by side — Today's candidates and the Screener authoring face.
+    expect(counts.aligned + counts.byState.stale).toBe(56)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -173,7 +175,9 @@ describe('the design walk, as it stands', () => {
     // Research Overview's census carries the two rows this side's ask
     // corrected — Narrative `store owed`, Compare `3 inputs owed` (Rev .24).
     // 54 on 2026-09-24: Symbol left for `reviewing` with its new Payoff face.
-    expect(counts.aligned).toBe(54)
+    // 56 on 2026-09-25: the Owner signed Today's candidates and the Screener
+    // authoring face in the re-alignment round.
+    expect(counts.aligned).toBe(56)
     expect(
       rows
         .filter((r) => r.state === 'stale')
@@ -401,8 +405,9 @@ describe('the design walk, as it stands', () => {
     // Screener authoring face, the fourth and last — the filter vocabulary
     // over the SEPA wide table. 19 with Calibration, the document rendered
     // as a page with its own count disagreement on display. 20 with Backtest,
-    // the pending pool's last page, walked run-first onto the design.
-    expect(counts.byState.reviewing).toBe(20)
+    // the pending pool's last page, walked run-first onto the design. 18 on
+    // 2026-09-25: the Owner signed lab/today and lab/screener out of it.
+    expect(counts.byState.reviewing).toBe(18)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -427,6 +432,8 @@ describe('the design walk, as it stands', () => {
       '/research/daily-brief',
       '/research/greeks',
       '/research/journal',
+      '/research/lab/screener',
+      '/research/lab/today',
       '/research/loop/candidates',
       '/research/loop/decisions',
       '/research/loop/harness',
@@ -483,9 +490,7 @@ describe('the design walk, as it stands', () => {
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lab/history',
-      '/research/lab/screener',
       '/research/lab/symbol',
-      '/research/lab/today',
       '/research/lens-coverage',
       '/research/overview',
       '/research/signal-health',

@@ -17,7 +17,7 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { fetchStockDailyCloses } from '@/api/marketData/dailyBars'
-import { SegmentControl } from '@/components/data-display'
+import { DenseTag, SegmentControl } from '@/components/data-display'
 import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { VolCone, type ConeRow as VolConeRow } from '@/components/research/VolCone'
@@ -278,14 +278,10 @@ export default function LabHistoryPage() {
                   <span className="text-dense-meta text-muted-foreground">
                     IV30 = {iv.toFixed(1)} held fixed · only the denominator moves
                   </span>
-                  <span
-                    className={cn(
-                      mono,
-                      'ml-auto text-dense-meta',
-                      (spread ?? 0) >= 15 ? 'text-warning' : 'text-secondary-foreground'
-                    )}
-                  >
-                    spread {spread != null ? `${spread.toFixed(0)} pts` : '—'}
+                  <span className="ml-auto">
+                    <DenseTag size="cell" variant={(spread ?? 0) > 25 ? 'warning' : 'neutral'}>
+                      spread {spread != null ? `${spread.toFixed(0)} pts` : '—'}
+                    </DenseTag>
                   </span>
                 </header>
                 <table className="w-full border-collapse">
@@ -301,27 +297,68 @@ export default function LabHistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {table.map((r) => (
-                      <tr key={r.window}>
-                        <td className={cn(td, 'text-left font-sans text-secondary-foreground')}>
-                          {r.window}
-                        </td>
-                        <td className={td}>{r.rank != null ? r.rank.toFixed(0) : '—'}</td>
-                        <td className={cn(td, 'font-semibold text-foreground')}>
-                          {r.percentile != null ? r.percentile.toFixed(0) : '—'}
-                        </td>
-                        <td className={cn(td, 'text-muted-foreground')}>
-                          {r.min?.toFixed(1) ?? '—'}
-                        </td>
-                        <td className={cn(td, 'text-secondary-foreground')}>
-                          {r.median?.toFixed(1) ?? '—'}
-                        </td>
-                        <td className={cn(td, 'text-muted-foreground')}>
-                          {r.max?.toFixed(1) ?? '—'}
-                        </td>
-                        <td className={cn(td, 'text-muted-foreground')}>{r.effN}</td>
-                      </tr>
-                    ))}
+                    {table.map((r) => {
+                      // The design's rules: >=70 reads rich (profit), <=30 cheap
+                      // (loss); outside the sample is a mark in amber, not a
+                      // number pretending to be a percentile.
+                      const out =
+                        r.rank != null && (r.rank > 100 || r.rank < 0)
+                          ? r.rank > 100
+                            ? 'out ↑'
+                            : 'out ↓'
+                          : null
+                      const colOf = (v: number | null) =>
+                        v == null
+                          ? 'text-muted-foreground'
+                          : v >= 70
+                            ? 'text-profit'
+                            : v <= 30
+                              ? 'text-loss'
+                              : 'text-foreground'
+                      const committed = r.window === '6m'
+                      return (
+                        <tr
+                          key={r.window}
+                          className={committed ? 'bg-[color-mix(in_oklab,var(--primary)_6%,transparent)]' : undefined}
+                        >
+                          <td
+                            className={cn(
+                              td,
+                              'text-left font-sans',
+                              committed ? 'font-bold text-primary' : 'text-secondary-foreground'
+                            )}
+                            title={committed ? 'The committed window — the one the reading face quotes.' : undefined}
+                          >
+                            {r.window}
+                          </td>
+                          <td
+                            className={cn(td, 'text-dense-body font-semibold', out ? 'text-warning' : colOf(r.rank))}
+                          >
+                            {out ?? (r.rank != null ? r.rank.toFixed(0) : '—')}
+                          </td>
+                          <td
+                            className={cn(td, 'text-dense-body font-semibold', out ? 'text-warning' : colOf(r.percentile))}
+                          >
+                            {out ?? (r.percentile != null ? r.percentile.toFixed(0) : '—')}
+                          </td>
+                          <td className={cn(td, 'text-muted-foreground')}>
+                            {r.min?.toFixed(1) ?? '—'}
+                          </td>
+                          <td className={cn(td, 'text-muted-foreground')}>
+                            {r.median?.toFixed(1) ?? '—'}
+                          </td>
+                          <td className={cn(td, 'text-muted-foreground')}>
+                            {r.max?.toFixed(1) ?? '—'}
+                          </td>
+                          <td
+                            className={cn(td, r.effN < 20 ? 'text-warning' : 'text-muted-foreground')}
+                            title={r.effN < 20 ? 'Under 20 independent windows — thin.' : undefined}
+                          >
+                            {r.effN}
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
                 <p className="m-0 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">

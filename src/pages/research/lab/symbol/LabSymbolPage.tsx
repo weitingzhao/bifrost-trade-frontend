@@ -24,6 +24,7 @@ import type { ExhibitPayload } from '@/api/research/exhibit'
 import { SegmentControl } from '@/components/data-display'
 import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { CopilotDraftPanel } from '@/components/research/CopilotDraftPanel'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { useCreateHypothesis } from '@/hooks/useHypotheses'
@@ -391,6 +392,23 @@ export default function LabSymbolPage() {
                   </div>
                 ))}
                 <div className="flex flex-col gap-1.5 border-t border-border/60 pt-2.5">
+                  <span className={cap}>calibration window</span>
+                  <SegmentControl
+                    ariaLabel="Calibration window"
+                    size="xs"
+                    value={settings.win}
+                    onChange={(v) => setSettings((s) => ({ ...s, win: v }))}
+                    options={[
+                      { value: '60', label: '60d' },
+                      { value: '252', label: '252d' },
+                    ]}
+                  />
+                  <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>
+                    declared here · its effect is named in the ledger — cited percentiles never
+                    recompute on this page
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1.5 border-t border-border/60 pt-2.5">
                   <span className={cap}>expiry</span>
                   <SegmentControl
                     ariaLabel="Expiry"
@@ -610,6 +628,11 @@ export default function LabSymbolPage() {
                   </div>
                 ))}
               </div>
+              <CopilotDraftPanel>
+                No per-run draft store exists yet — the grid&rsquo;s corners are the story a
+                draft would tell. The panel keeps its seat; the ask below answers live with the
+                grid&rsquo;s snapshot.
+              </CopilotDraftPanel>
               <div className="flex">
                 <AskCopilotButton
                   originPage="lab-symbol"

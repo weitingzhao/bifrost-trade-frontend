@@ -20,6 +20,7 @@ import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { PageFaceSwitch, PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { HistoryCorrelation } from './HistoryCorrelation'
 import { SegmentControl } from '@/components/data-display'
 import { VrpTimeSeriesChart } from '@/components/charts/VrpTimeSeriesChart'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
@@ -263,21 +264,13 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
         <SectionPanel
           cap="Correlation over time"
           title="book pairs · 60d rolling ρ"
-          tone="warning"
           action={
             <Link to="/risk/portfolio" className={LINK}>
               Risk →
             </Link>
           }
         >
-          <div className="space-y-2 px-3 py-3 text-dense-meta leading-relaxed text-muted-foreground">
-            <p className="font-semibold text-foreground">Owed — the engine answers today&apos;s matrix, not its history.</p>
-            <p>
-              Research&apos;s correlation route returns one 60-day matrix as of today, which Risk · Portfolio Exposure
-              already prints. A line per pair over time needs the same route to answer as of a past date; computing it
-              here instead would give the book a second correlation that could disagree with Risk&apos;s.
-            </p>
-          </div>
+          <HistoryCorrelation />
         </SectionPanel>
       </div>
     </div>

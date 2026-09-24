@@ -6,6 +6,7 @@
 import { DenseTag } from '@bifrost/ui'
 import { SegmentControl } from '@/components/data-display'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { CopilotDraftPanel } from '@/components/research/CopilotDraftPanel'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { cn } from '@/lib/utils'
 import { cap, mono, panel, panelHead } from './labSymbolUi'
@@ -177,6 +178,11 @@ export function AssumptionLedger({
                 accepted, so the two sides never quietly disagree.
               </p>
             </div>
+            <CopilotDraftPanel>
+              No per-run draft store exists yet — the unmeasured assumptions are what a draft
+              would lead with. The panel keeps its seat; the ask below carries the ledger&rsquo;s
+              open contracts live.
+            </CopilotDraftPanel>
             <div className="flex">
               <AskCopilotButton
                 originPage="lab-symbol"

@@ -27,6 +27,7 @@ import { fetchUniverseReach } from '@/api/research/universeReach'
 import { DenseTag, EmptyState } from '@/components/data-display'
 import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { CopilotDraftPanel } from '@/components/research/CopilotDraftPanel'
 import { useExhibit } from '@/hooks/useLensRegistry'
 import { cn } from '@/lib/utils'
 import { withSymbolParam } from '@/lib/symbolLink'
@@ -364,16 +365,11 @@ export default function LabTodayPage() {
                 ))}
               </div>
               {/* The design's Copilot draft panel; the store behind it is owed. */}
-              <div className="rounded-lg border-l-[3px] border border-[var(--sk-line0)] border-l-primary bg-background px-3 py-2">
-                <div className={cn(mono, 'text-dense-micro tracking-[0.1em] text-primary')}>
-                  COPILOT DRAFT
-                </div>
-                <p className="m-0 mt-1 max-w-[70ch] text-dense-label leading-relaxed text-muted-foreground text-pretty">
-                  No per-candidate draft store exists yet — the drafts the engine writes today are
-                  hypothesis reviews, not candidate briefs. The panel keeps its seat rather than
-                  borrowing one of those.
-                </p>
-              </div>
+              <CopilotDraftPanel>
+                No per-candidate draft store exists yet — the drafts the engine writes today are
+                hypothesis reviews, not candidate briefs. The panel keeps its seat rather than
+                borrowing one of those.
+              </CopilotDraftPanel>
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"

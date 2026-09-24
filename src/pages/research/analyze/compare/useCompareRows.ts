@@ -32,11 +32,11 @@ import {
 
 /** The series each row draws in, in rulebook order — identity tokens, never literals. */
 export const SERIES = [
-  { stroke: 'stroke-entity-option', bg: 'bg-entity-option' },
-  { stroke: 'stroke-entity-strategy', bg: 'bg-entity-strategy' },
-  { stroke: 'stroke-entity-instance', bg: 'bg-entity-instance' },
-  { stroke: 'stroke-warning', bg: 'bg-warning' },
-  { stroke: 'stroke-foreground', bg: 'bg-foreground' },
+  { stroke: 'stroke-entity-option', bg: 'bg-entity-option', text: 'text-entity-option' },
+  { stroke: 'stroke-entity-strategy', bg: 'bg-entity-strategy', text: 'text-entity-strategy' },
+  { stroke: 'stroke-entity-instance', bg: 'bg-entity-instance', text: 'text-entity-instance' },
+  { stroke: 'stroke-warning', bg: 'bg-warning', text: 'text-warning' },
+  { stroke: 'stroke-foreground', bg: 'bg-foreground', text: 'text-foreground' },
 ] as const
 
 export interface CompareRow {

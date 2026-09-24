@@ -385,7 +385,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: "Today's candidates",
     crumbs: DISCOVER,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-22.6',
       note: DESIGN_NOTES['/research/lab/today'],
     },
@@ -399,7 +399,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Stock screen · method',
     crumbs: DISCOVER,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-20.4',
       note: DESIGN_NOTES['/research/lab/screener'],
     },

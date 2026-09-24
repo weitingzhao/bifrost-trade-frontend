@@ -6,6 +6,7 @@
 import { DenseTag } from '@bifrost/ui'
 import type { VolSurfaceFitRow } from '@/api/research/volSurface'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { CopilotDraftPanel } from '@/components/research/CopilotDraftPanel'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -219,6 +220,11 @@ export function SmileFitPanel({
                   leaves out — the store writes it as an IV fraction, converted once here.
                 </p>
               </div>
+              <CopilotDraftPanel>
+                No per-run draft store exists yet — the drafts the engine writes today are
+                hypothesis reviews, not surface narrations. The panel keeps its seat; the ask
+                below answers live with this tab&rsquo;s snapshot.
+              </CopilotDraftPanel>
               <div className="flex">
                 <AskCopilotButton
                   originPage="lab-symbol"

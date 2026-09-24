@@ -37,7 +37,12 @@ function Bar({
       ) : (
         <span className="relative block h-[7px] overflow-hidden rounded-sm bg-secondary">
           <span
-            className={cn('absolute inset-y-0 left-0', binding ? 'bg-primary' : 'bg-muted-foreground/40')}
+            className={cn(
+              'absolute inset-y-0 left-0',
+              // The binding cap wears the ticker's lime, the design's own rule;
+              // the others recede to the hairline grey.
+              binding ? 'bg-[var(--sk-ticker)]' : 'bg-[var(--sk-line2,var(--border))]'
+            )}
             style={{ width: `${n == null ? 0 : Math.min(100, (n / Math.max(1, max)) * 100)}%` }}
           />
         </span>
@@ -73,10 +78,19 @@ export function CompareHowBig({
         return (
           <div key={r.id} className="space-y-1">
             <div className="flex items-baseline gap-2 text-dense-meta">
-              <span className="font-semibold text-foreground">{r.name}</span>
+              <span className={cn('font-semibold', r.series.text)}>{r.name}</span>
               <span className="font-mono font-bold text-foreground">{n == null ? '—' : `× ${n}`}</span>
-              <span className="ml-auto text-dense-caption text-muted-foreground">
-                {c.binding == null ? 'no cap read' : `${c.binding} binds · ${c.computed} of 3 caps`}
+              <span
+                className={cn(
+                  'ml-auto text-dense-caption',
+                  n === 0 ? 'text-warning' : 'text-muted-foreground'
+                )}
+              >
+                {n === 0
+                  ? 'blocked'
+                  : c.binding == null
+                    ? 'no cap read'
+                    : `${c.binding} binds · ${c.computed} of 3 caps`}
               </span>
             </div>
             <Bar

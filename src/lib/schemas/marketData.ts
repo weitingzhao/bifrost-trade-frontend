@@ -34,6 +34,19 @@ export const OptionSnapshotsResponseSchema = z
   .passthrough()
 
 /**
+ * Listed expiries (and one expiry's strikes) from the plugin's own catalogue.
+ * Past expiries stay in the list — the catalogue keeps what it has seen — so a
+ * reader filters to the ones still ahead.
+ */
+export const ChainExpirationsResponseSchema = z
+  .object({
+    symbol: z.string(),
+    expirations: z.array(z.string()),
+    strikes: z.array(z.number()).optional(),
+  })
+  .passthrough()
+
+/**
  * Ticker search from the Market Data Plugin. Only `symbol` is guaranteed — the
  * vendor omits the descriptive fields for thinly-listed names, and the picker
  * has to render those rows anyway.

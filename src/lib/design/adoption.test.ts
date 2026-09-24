@@ -476,8 +476,9 @@ describe('design adoption', () => {
     // to 5 when that walk was signed. 6 with Events, built on the design's
     // four-state rule so an unfed pipeline reads as unfed. 7 with History,
     // two panels built and two owed with what each waits on. 8 with Research
-    // Overview, re-walked onto Rev .24's census rows.
-    expect(counts.byState.reviewing).toBe(8)
+    // Overview, re-walked onto Rev .24's census rows. 9 with Compare, built on
+    // Rev .24's table for its three owed inputs.
+    expect(counts.byState.reviewing).toBe(9)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -544,6 +545,7 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/docs/options-kit',
+      '/research/compare',
       '/research/events',
       '/research/history',
       '/research/lens-coverage',
@@ -625,8 +627,9 @@ describe('design adoption', () => {
     // and 21 with Settings, its other half. 20 on 2026-09-23: Options Kit was
     // the first of the four `/docs/*` the judgement recommended building. 19
     // with Events, whose four-state rule let it be built on an unfed pipeline.
-    // 18 with History (2026-09-23), the first Analyze page after Symbol.
-    expect(counts.byState.unbuilt).toBe(18)
+    // 18 with History (2026-09-23), the first Analyze page after Symbol, and
+    // 17 with Compare the same evening.
+    expect(counts.byState.unbuilt).toBe(17)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

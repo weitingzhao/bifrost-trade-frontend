@@ -36,7 +36,7 @@ import { fetchStructures } from '@/api/strategy'
 import { PlaybookRegimeGrid } from './PlaybookRegimeGrid'
 import { StructureFormulas, StructureTable } from './StructureTable'
 import { cutDisagreement, structureRows } from './structureCut'
-import { DECAY_PROFIT_FACTOR, sizeCapFor } from './sizeCap'
+import { DECAY_PROFIT_FACTOR, sizeCapFor } from '@/utils/sizeCap'
 
 const PAGE_LEAD =
   'What each play has actually done — closed trades from the ledger, fills-based and fees included. Under twenty trades the band is the reading, not the point.'

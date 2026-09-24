@@ -13,8 +13,9 @@
  * risk cap has no line written at all.
  *
  * The worksheet itself has no rows, and for a reason that is not "the book is
- * quiet": candidates reach this page from Compare, which is not built, and from
- * Plans, where nothing is intended. The page says which, rather than showing an
+ * quiet": candidates reach this page from Compare, which sizes its own
+ * structures and hands them on as a Plan rather than storing a candidate here
+ * (built 2026-09-23), and from Plans, where nothing is intended. The page says which, rather than showing an
  * empty table that reads as "nothing worth sizing".
  */
 import { useMemo, useState } from 'react'
@@ -311,8 +312,12 @@ export default function RiskSizingPage() {
                       <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')} colSpan={11}>
                         <span className="inline-flex items-start gap-1.5 text-dense-meta leading-normal text-muted-foreground">
                           <StatusLamp lamp="gray" variant="dot" title="No candidate" className="mt-1 shrink-0" />
-                          No candidate reaches this page. Compare, which the design feeds it from, is not built on this
-                          side; and{' '}
+                          No candidate reaches this page.{' '}
+                          <Link to="/research/compare" className={positionsUi.link}>
+                            Compare
+                          </Link>{' '}
+                          sizes its own structures and hands them on as a Plan, not as a row here — nothing stores a
+                          sized candidate for this worksheet to read; and{' '}
                           <Link to="/trade/plans" className={positionsUi.link}>
                             Plans
                           </Link>{' '}

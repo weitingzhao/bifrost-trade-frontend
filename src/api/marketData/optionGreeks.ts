@@ -14,7 +14,7 @@
  */
 import { marketDataPluginUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { OptionSnapshotsResponseSchema } from '@/lib/schemas/marketData'
+import { ChainExpirationsResponseSchema, OptionSnapshotsResponseSchema } from '@/lib/schemas/marketData'
 
 export interface VendorGreeksRow {
   option_ticker: string
@@ -27,6 +27,8 @@ export interface VendorGreeksRow {
   vega: number | null
   open_interest: number | null
   day_close: number | null
+  /** The session's traded contracts; on the row though not in the schema's required set. */
+  day_volume?: number | null
 }
 
 const validateSnapshots = withValidation<OptionSnapshotsResponse>(
@@ -69,4 +71,25 @@ export async function fetchOptionSnapshots(
     count: typeof j.count === 'number' ? j.count : 0,
     source: j.source ?? 'market.option_snapshot',
   }
+}
+
+const validateExpirations = withValidation<{ symbol: string; expirations: string[] }>(
+  ChainExpirationsResponseSchema,
+  'market-data/options/expirations',
+)
+
+/**
+ * The expiries the plugin's catalogue lists for one underlying, soonest first.
+ *
+ * Read from the plugin rather than through `/research/option-expirations`,
+ * which answers 404 on DEV (measured 2026-09-23). The catalogue keeps expiries
+ * it has seen, so the past is dropped here against `today`.
+ */
+export async function fetchChainExpirations(symbol: string, today: string): Promise<string[]> {
+  const qs = new URLSearchParams({ symbol })
+  const res = await fetch(marketDataPluginUrl(`/market/options/expirations?${qs}`))
+  if (!res.ok) throw new Error(`market-data /options/expirations: ${res.status}`)
+  const j = validateExpirations(await res.json()) as { expirations?: unknown }
+  const list = Array.isArray(j.expirations) ? j.expirations.filter((e): e is string => typeof e === 'string') : []
+  return [...new Set(list.map((e) => e.slice(0, 10)))].filter((e) => e >= today).sort()
 }

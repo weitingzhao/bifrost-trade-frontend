@@ -43,6 +43,25 @@ export function buildOptionTicker(p: OptionTickerParts): string | null {
   return `O:${root}${yymmdd}${right}${String(milli).padStart(8, '0')}`
 }
 
+/**
+ * The inverse of `buildOptionTicker`: `O:PLTR261016P00150000` → its parts.
+ *
+ * The root is matched non-greedily from the left and the fixed fifteen-character
+ * tail (date, right, strike) is anchored on the right, so a root carrying a
+ * digit after a corporate action (`O:WDC1250221C…`) still splits one way only —
+ * the same reasoning as the plugin's own parser.
+ */
+export function parseOptionTicker(ticker: string): OptionTickerParts | null {
+  const m = /^O:([A-Z0-9.]+?)(\d{2})(\d{2})(\d{2})([CP])(\d{8})$/.exec((ticker ?? '').trim().toUpperCase())
+  if (!m) return null
+  return {
+    underlying: m[1],
+    expiry: `20${m[2]}-${m[3]}-${m[4]}`,
+    right: m[5],
+    strike: Number(m[6]) / 1000,
+  }
+}
+
 /** Vendor Greeks are per share; a position holds `qty` contracts of 100. */
 export function positionGreek(perShare: number | null | undefined, qty: number): number | null {
   if (perShare == null || !Number.isFinite(perShare)) return null

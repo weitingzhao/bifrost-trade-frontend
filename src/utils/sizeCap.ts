@@ -12,19 +12,39 @@
  * store is what Risk Budget is missing. So the column says what the rule would
  * produce and the header says nothing acts on it. Computing it is honest;
  * letting it read as an allowance in force would not be.
+ *
+ * Two readers since 2026-09-23, which is why it moved here from Playbook
+ * stats: that page labels each play with the allowance, and Compare turns
+ * the same allowance on a structure's record into its conviction cap — the
+ * prototype's own words for the panel are "feeds the conviction cap on
+ * Compare". One rule, read twice (§14.2).
  */
-import { THIN_SAMPLE, type PlayStat } from '@/utils/reviewTrades'
+import { THIN_SAMPLE } from '@/utils/reviewTrades'
+
+/** What the rule reads off a record — a play's or a structure's. */
+export interface SizeCapRecord {
+  /** Trades that settled either way. */
+  n: number
+  /** Gross win over gross loss; null when the record has never lost. */
+  profitFactor: number | null
+  /** 95% band on the win rate. */
+  bandLow: number
+  bandHigh: number
+}
 
 /** Below this profit factor the design's rule withdraws the allowance entirely. */
 export const DECAY_PROFIT_FACTOR = 1.2
 
 export interface SizeCap {
   tone: 'success' | 'warning' | 'danger'
-  label: string
+  label: 'full' | 'half' | 'none'
   why: string
 }
 
-export function sizeCapFor(play: PlayStat): SizeCap {
+/** The share of the backing cap each allowance leaves — Compare's conviction cap. */
+export const ALLOWANCE_SHARE: Record<SizeCap['label'], number> = { full: 1, half: 0.5, none: 0 }
+
+export function sizeCapFor(play: SizeCapRecord): SizeCap {
   if (play.profitFactor != null && play.profitFactor < DECAY_PROFIT_FACTOR) {
     return {
       tone: 'danger',

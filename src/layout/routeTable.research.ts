@@ -265,6 +265,19 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // One view, the structures your rules allow. Three of its inputs are not
+    // on the data plan; Rev .24's table says how each owed block is drawn.
+    path: '/research/compare',
+    label: 'Compare',
+    crumbs: ANALYZE,
+    symbolScope: true,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-23.24',
+      note: DESIGN_NOTES['/research/compare'],
+    },
+  },
+  {
     // One name against its own past. Two of its four panels wait on stores
     // (print dates, a correlation series); the note says which.
     path: '/research/history',

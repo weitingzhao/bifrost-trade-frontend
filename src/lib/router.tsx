@@ -299,6 +299,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/analyze/symbol/SymbolPage')),
       },
       {
+        path: 'research/compare',
+        lazy: lazyPage(() => import('@/pages/research/analyze/compare/ComparePage')),
+      },
+      {
         path: 'research/history',
         lazy: lazyPage(() => import('@/pages/research/analyze/history/HistoryPage')),
       },

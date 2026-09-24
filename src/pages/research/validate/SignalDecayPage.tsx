@@ -27,8 +27,9 @@
  * trend bars are the engine's weekly **5-day** rolling rate, which is the only
  * series it keeps — the header says `5d` rather than letting a 20-day column
  * sit over a 5-day chart. And the design's alert *"zeroes the conviction cap
- * in Compare"*: Compare has no page on this side, so the panel names where the
- * credit would flow instead of linking into nothing.
+ * in Compare"*: Compare exists since 2026-09-23 but reads its conviction off the
+ * structure's closed record, not off a lens's decay, so nothing on this side
+ * acts on an alert yet and the panel says so instead of implying it does.
  */
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'

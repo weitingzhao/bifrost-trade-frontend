@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DECAY_PROFIT_FACTOR, sizeCapFor } from './sizeCap'
+import { ALLOWANCE_SHARE, DECAY_PROFIT_FACTOR, sizeCapFor } from './sizeCap'
 import type { PlayStat } from '@/utils/reviewTrades'
 
 function play(p: Partial<PlayStat>): PlayStat {
@@ -44,5 +44,11 @@ describe('sizeCapFor', () => {
 
   it('does not punish a play that has never lost for having no profit factor', () => {
     expect(sizeCapFor(play({ n: 40, profitFactor: null })).label).toBe('full')
+  })
+
+  it('leaves Compare the whole backing cap, half of it, or none', () => {
+    // The allowance as a share, which is how Compare reads it off a
+    // structure's record.
+    expect([ALLOWANCE_SHARE.full, ALLOWANCE_SHARE.half, ALLOWANCE_SHARE.none]).toEqual([1, 0.5, 0])
   })
 })

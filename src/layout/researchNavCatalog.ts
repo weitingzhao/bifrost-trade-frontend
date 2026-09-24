@@ -39,6 +39,7 @@ import {
   Users,
   Wrench,
   type LucideIcon,
+  Columns2,
 } from 'lucide-react'
 import type { IconComponent, ShellNavGroup, ShellNavItem, ShellNavSubGroup } from '@bifrost/ui'
 import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
@@ -252,9 +253,13 @@ export const BENCHES: Bench[] = [
     icon: foldGlyph('Analyze') ?? Radar,
     // Six rows became one page with six tabs. A row per tab would put the
     // reader back where the merge found them — leaving the name to read
-    // another of its faces. The design's History row joined 2026-09-23;
-    // Compare's joins when that page exists.
-    items: [route('Symbol', '/research/symbol', BookOpen), route('History', '/research/history', History)],
+    // another of its faces. The design's History and Compare rows joined
+    // 2026-09-23, in the design's order.
+    items: [
+      route('Symbol', '/research/symbol', BookOpen),
+      route('Compare', '/research/compare', Columns2),
+      route('History', '/research/history', History),
+    ],
   },
   {
     id: 'validate',

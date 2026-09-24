@@ -56,8 +56,9 @@ export function DecayRoster({
             </span>
             <span className="text-dense-body font-semibold">{alerts.length} active</span>
             {/* The design says an alert zeroes the conviction cap in Compare.
-                Compare has no page on this side, so the sentence names where
-                the credit *would* flow rather than linking into nothing. */}
+                Compare's conviction reads the structure's closed record, not a
+                lens's decay, so no page acts on an alert yet — and the
+                sentence says that rather than implying one does. */}
             <span className="ml-auto text-dense-caption text-muted-foreground">
               the design cuts the conviction cap while one of these is open — no page on this side
               reads it yet

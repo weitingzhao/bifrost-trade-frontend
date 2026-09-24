@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildOptionTicker, positionGreek } from './optionTicker'
+import { buildOptionTicker, parseOptionTicker, positionGreek } from './optionTicker'
 
 describe('buildOptionTicker', () => {
   it('reproduces a ticker the warehouse actually returned', () => {
@@ -51,5 +51,30 @@ describe('positionGreek', () => {
   it('returns null for a leg the vendor could not price', () => {
     expect(positionGreek(null, -1)).toBeNull()
     expect(positionGreek(Number.NaN, -1)).toBeNull()
+  })
+})
+
+describe('parseOptionTicker', () => {
+  it('reads a vendor ticker back into its parts', () => {
+    expect(parseOptionTicker('O:PLTR261016P00150000')).toEqual({
+      underlying: 'PLTR',
+      expiry: '2026-10-16',
+      right: 'P',
+      strike: 150,
+    })
+  })
+
+  it('is the inverse of buildOptionTicker, including half-dollar strikes', () => {
+    const parts = { underlying: 'NVDA', expiry: '2026-11-20', right: 'C', strike: 187.5 }
+    expect(parseOptionTicker(buildOptionTicker(parts)!)).toEqual(parts)
+  })
+
+  it('splits an adjusted root that carries a digit one way only', () => {
+    expect(parseOptionTicker('O:WDC1250221C00060000')?.underlying).toBe('WDC1')
+  })
+
+  it('answers null for anything that is not a vendor option ticker', () => {
+    expect(parseOptionTicker('PLTR')).toBeNull()
+    expect(parseOptionTicker('O:PLTR261016X00150000')).toBeNull()
   })
 })

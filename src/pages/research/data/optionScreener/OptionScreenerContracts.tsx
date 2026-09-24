@@ -37,8 +37,14 @@ import {
 
 const COLS = 11
 
-/** A dead end says why, rather than pointing somewhere approximate. */
-const COMPARE_ABSENT = 'Compare is not built yet — /research/compare has no page on this side'
+/**
+ * ⇄ Compare, with this contract's strike as the view's floor: the screen asks
+ * which puts fit a structure, Compare asks how else the same view could be
+ * expressed. Compare reads both `symbol` and `floor` (built 2026-09-23).
+ */
+function compareHref(symbol: string, strike: number): string {
+  return `${withSymbolParam('/research/compare', symbol)}&floor=${encodeURIComponent(String(strike))}`
+}
 
 function engineHover(r: ScreenerContractRow): string {
   return `engine score ${r.score} · rating ${r.rating} · risk ${r.risk}`
@@ -221,15 +227,14 @@ export function OptionScreenerContracts({
                       </DenseTableCell>
                       <DenseTableCell>
                         <div className="flex justify-end gap-0.5" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            type="button"
-                            disabled
-                            className={cn(ICON_BTN, 'cursor-not-allowed opacity-50')}
-                            title={COMPARE_ABSENT}
+                          <Link
+                            to={compareHref(g.symbol, r.strike)}
+                            className={ICON_BTN}
+                            title={`Compare the structures your rules allow on ${g.symbol}, floor at ${r.strike}`}
                             aria-label="Compare"
                           >
                             <ArrowLeftRight className="size-3.5" />
-                          </button>
+                          </Link>
                           <Link
                             to={symbolTabHref('chain', g.symbol)}
                             className={ICON_BTN}

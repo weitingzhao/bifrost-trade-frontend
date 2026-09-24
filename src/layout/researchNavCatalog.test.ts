@@ -94,9 +94,8 @@ describe('one tree, both homes', () => {
   it('stands the stations directly under the layer, one depth', () => {
     // §5a.9: the Pipeline fold merged into the Research layer, so the three
     // captions and their pages are the layer's own rows. Three captions and
-    // the eight pages they name. The design draws twelve because its Analyze
-    // carries three rows where this side carries two — Compare has no route
-    // here. History joined 2026-09-23.
+    // the nine pages they name — the design's twelve, since History and
+    // Compare joined Analyze on 2026-09-23.
     expect(researchItems().map((i) => [i.label, i.kind ?? 'row'])).toEqual([
       ['Discover', 'caption'],
       ['Stock ratings', 'row'],
@@ -105,11 +104,12 @@ describe('one tree, both homes', () => {
       ['Option screen', 'row'],
       ['Analyze', 'caption'],
       ['Symbol', 'row'],
+      ['Compare', 'row'],
       ['History', 'row'],
       ['Validate', 'caption'],
       ['Signal Decay', 'row'],
       ['Backtest', 'row'],
-      // The signpost, last: not a bench, and not one of the eight pages.
+      // The signpost, last: not a bench, and not one of the nine pages.
       ['The Book', 'row'],
     ])
   })

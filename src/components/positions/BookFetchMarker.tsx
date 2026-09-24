@@ -18,7 +18,8 @@ const TONE: Record<ClockTone, string> = {
   fault: 'border-lamp-red/45 text-lamp-red',
 }
 
-export function BookFetchMarker() {
+/** `quiet` (§16) keeps "judged by monitor" in the title instead of printing it. */
+export function BookFetchMarker({ quiet = false }: { quiet?: boolean } = {}) {
   const { data } = useMonitorStatus()
   if (!data) return null
   const reading = ibClockReading({
@@ -34,10 +35,10 @@ export function BookFetchMarker() {
         'font-mono text-dense-caption leading-normal tracking-[0.05em]',
         TONE[reading.pullTone],
       )}
-      title={reading.title.replace(' Rec is the newest TWS execution in the DB.', '')}
+      title={`${reading.title.replace(' Rec is the newest TWS execution in the DB.', '')}${quiet ? '\nJudged by monitor.' : ''}`}
     >
       {reading.pull}
-      <span className="font-sans tracking-normal text-muted-foreground">· judged by monitor</span>
+      {quiet ? null : <span className="font-sans tracking-normal text-muted-foreground">· judged by monitor</span>}
     </span>
   )
 }

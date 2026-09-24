@@ -248,7 +248,6 @@ export default function BackingPage() {
               <BookVsBaseCockpit
                 variant="backing"
                 book={book.alarm.book}
-                checks={book.alarm.checks}
                 cushionTightPct={cushionTightPct}
                 onOpenTarget={(t, s) => {
                   if (s) setSort(s)

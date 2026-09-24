@@ -11,6 +11,8 @@ import { copilotViewStore } from '@/store/copilotViewStore'
 
 interface AskCopilotButtonProps extends AskCopilotIntentPayload {
   size?: 'dense' | 'button'
+  /** What the control says on hover; a page can name the snapshot the question carries. */
+  title?: string
   className?: string
 }
 
@@ -23,6 +25,7 @@ export function AskCopilotButton({
   snapshot,
   suggestedPrompt,
   size = 'button',
+  title = 'Ask Copilot about this view',
   className,
 }: AskCopilotButtonProps) {
   const snapKey = JSON.stringify(snapshot ?? null)
@@ -59,7 +62,7 @@ export function AskCopilotButton({
   if (size === 'dense') {
     return (
       <IconActionButton
-        title="Ask Copilot about this view"
+        title={title}
         ariaLabel="Ask Copilot"
         onClick={openComposer}
         className={className}
@@ -75,6 +78,7 @@ export function AskCopilotButton({
       variant="outline"
       size="sm"
       onClick={openComposer}
+      title={title}
       className={cn('gap-1.5', className)}
       data-testid="ask-copilot-button"
     >

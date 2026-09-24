@@ -2,10 +2,14 @@
  * Positions — what is in the book and where it is tight.
  *
  * One screen, one question. The scope bar decides what the page is about;
- * the cockpit grades the book; the Backing pool ring pictures the base; the
- * grid ranks the lines by danger, in three views (strategies, contracts,
- * expiries). What the options need and what backs them is the next page —
- * Backing — reached from the gauges and the rings, with the same scope.
+ * the hero band grades the book in four readings; the cockpit sets demand
+ * beside supply and the Backing pool pictures the base; the grid ranks the
+ * lines by danger, in three views (strategies, contracts, expiries). What the
+ * options need and what backs them is the next page — Backing — reached from
+ * the readings and the pool, with the same scope.
+ *
+ * The §16 north-star page (design Rev 2026-09-23.21): explanations live in
+ * titles, honesty stays printed, and nothing the page could do before was cut.
  */
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -39,6 +43,7 @@ import { BookFetchMarker } from '@/components/positions/BookFetchMarker'
 import { BackingPoolCard } from '@/components/positions/charts/BackingPoolCard'
 import { PositionsOpenControls } from '@/components/positions/PositionsOpenControls'
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
+import { BookHeroBand } from './positions/BookHeroBand'
 import { MarginByAccountStrip } from '@/components/positions/MarginByAccountStrip'
 import { ShortLegsPanel } from '@/components/positions/ShortLegsPanel'
 import { RoomToAddSection } from '@/components/positions/RoomToAddSection'
@@ -374,43 +379,43 @@ export default function PositionsPage() {
       <section className={positionsUi.pageCard} aria-label="Positions">
         <PageHeader
           breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Positions</p>}
-          title="Positions"
+          title={
+            <span
+              className="type-page-title tracking-[-0.015em]"
+              title="What is in the book and where it is tight. What backs it is on the Backing page."
+            >
+              Positions
+            </span>
+          }
           titleSize="large"
-          description="What is in the book and where it is tight. What backs it is on the Backing page."
           actions={
             <span className="flex flex-wrap items-center gap-2.5">
-              <BookFetchMarker />
+              <BookFetchMarker quiet />
               {book.portfolioPositionCount > 0 ? (
                 <span className={cn(positionsUi.mono, 'text-xs text-secondary-foreground')}>
                   {scopedCount} position{scopedCount !== 1 ? 's' : ''}
                   {!book.hasAccountSelection ? ' (select account)' : ''}
                 </span>
               ) : null}
-              <span className="flex items-center gap-1.5">
-                {/* Program research-copilot-reach P1 — the Copilot already has
-                    trade.portfolio_snapshot / portfolio_risk_summary; this hands it
-                    the page's live context so the user need not retype it. */}
-                <AskCopilotButton
-                  originPage="positions"
-                  originLabel="Positions"
-                  symbol={filterSymbol || undefined}
-                  snapshot={compactSnapshot({
-                    lines_view: linesView,
-                    total_positions: scopedCount,
-                    portfolio_position_count: book.portfolioPositionCount,
-                    accounts: accountFilter,
-                    filter_symbol: filterSymbol || undefined,
-                    filter_expiry: filterExpiry || undefined,
-                  })}
-                  suggestedPrompt="分析我当前持仓的风险暴露：集中度、净 delta/vega、各标的 IV，以及任何需要减仓或对冲的头寸。"
-                />
-                <span
-                  className={cn(positionsUi.mono, 'text-dense-caption text-muted-foreground')}
-                  title="This is the page snapshot the question carries"
-                >
-                  carries {carries}
-                </span>
-              </span>
+              {/* Program research-copilot-reach P1 — the Copilot already has
+                  trade.portfolio_snapshot / portfolio_risk_summary; this hands it
+                  the page's live context so the user need not retype it. What
+                  it carries is named on hover (§16), not printed beside it. */}
+              <AskCopilotButton
+                originPage="positions"
+                title={`Carries this page snapshot: ${carries}`}
+                originLabel="Positions"
+                symbol={filterSymbol || undefined}
+                snapshot={compactSnapshot({
+                  lines_view: linesView,
+                  total_positions: scopedCount,
+                  portfolio_position_count: book.portfolioPositionCount,
+                  accounts: accountFilter,
+                  filter_symbol: filterSymbol || undefined,
+                  filter_expiry: filterExpiry || undefined,
+                })}
+                suggestedPrompt="分析我当前持仓的风险暴露：集中度、净 delta/vega、各标的 IV，以及任何需要减仓或对冲的头寸。"
+              />
             </span>
           }
         />
@@ -451,22 +456,36 @@ export default function PositionsPage() {
               />
             ) : (
               <>
-                <PositionsTier label="Book" note="how tight · how backed · how exposed · how much room — in that order" />
-                {/* The cockpit, and beside it the margin rows its Pressure gauge opens plus
-                    the Backing pool its Backing gauge grades. */}
-                <div className={positionsUi.bandGrid}>
-                  <BookVsBaseCockpit
-                    book={book.alarm.book}
-                    checks={book.alarm.checks}
-                    cushionTightPct={cushionTightPct}
-                    onOpenTarget={openTarget}
-                    headerLink={{ to: backingHref({ scopeSearch, anchor: 'model' }), label: 'Model →' }}
-                    spotMix={book.alarm.spotMix}
-                    explain={explain}
-                    room={room}
-                  />
-                  <div className="grid min-w-0 grid-cols-1 gap-3">
+                {/* The four readings first — how tight, how backed, how exposed, how much room —
+                    then the checks, then any How the reader opened. */}
+                <BookHeroBand
+                  book={book.alarm.book}
+                  checks={book.alarm.checks}
+                  tightPct={cushionTightPct}
+                  spotMix={book.alarm.spotMix}
+                  room={room}
+                  explain={explain}
+                  onOpenTarget={openTarget}
+                />
+
+                <PositionsTier heading label="Book" note="How tight · how backed · how exposed · how much room — in that order" />
+                {/* Demand against supply — what the readings grade — then the margin rows
+                    Pressure opens and the Backing pool Backing grades: three panels, one
+                    height (§16.5). */}
+                <div className={cn(positionsUi.band, 'sk-rise')}>
+                  <div className={positionsUi.bandItem}>
+                    <BookVsBaseCockpit
+                      book={book.alarm.book}
+                      cushionTightPct={cushionTightPct}
+                      onOpenTarget={openTarget}
+                      headerLink={{ to: backingHref({ scopeSearch, anchor: 'model' }), label: 'Model →' }}
+                      spotMix={book.alarm.spotMix}
+                      explain={explain}
+                    />
+                  </div>
+                  <div className={positionsUi.bandItem}>
                     <MarginByAccountStrip
+                      quiet
                       margin={book.marginAllAccounts}
                       hostId={book.hostAccountId}
                       secondaryId={book.secondaryAccountId}
@@ -474,6 +493,8 @@ export default function PositionsPage() {
                       positions={book.allPositions}
                       resolveSpot={book.alarm.resolveSpot}
                     />
+                  </div>
+                  <div className={positionsUi.bandItem}>
                     <BackingPoolCard
                       variant="summary"
                       book={book.alarm.book}
@@ -484,41 +505,44 @@ export default function PositionsPage() {
                 </div>
 
                 <PositionsTier
+                  heading
                   label="Pressure points"
-                  note="which leg is closest to being run over, and what is still sellable"
+                  note="Which leg is closest to being run over, and what is still sellable"
                   open={pressureOpen}
                   onToggle={() => setPressureOpen((v) => !v)}
                 />
                 {pressureOpen ? (
-                  <div className={positionsUi.bandGrid}>
-                    <ShortLegsPanel
-                      legs={book.riskLegs}
-                      tightPct={cushionTightPct}
-                      activeExpiry={activeExpiry}
-                      activeSymbol={filterSymbol}
-                      onExpiryClick={toggleExpiryScope}
-                      onUnpricedClick={() => openTarget('ladder')}
-                      onScopeSymbol={setFilterSymbol}
-                      onClearSymbol={() => setFilterSymbol('')}
-                      selected={selectedLeg}
-                      onSelect={setPickedLeg}
-                      onOpenContract={(leg) => {
-                        const pos = book.filteredOptions.find(
-                          (p) => p.contract_key === leg.contractKey && (!leg.accountId || p.account_id === leg.accountId),
-                        )
-                        if (pos) openContractFace(pos)
-                      }}
-                    />
-                    <div className="min-w-0">
-                      <RoomToAddSection room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
+                  <div className={cn(positionsUi.band, 'sk-rise')}>
+                    <div className={positionsUi.bandItemWide}>
+                      <ShortLegsPanel
+                        legs={book.riskLegs}
+                        tightPct={cushionTightPct}
+                        activeExpiry={activeExpiry}
+                        activeSymbol={filterSymbol}
+                        onExpiryClick={toggleExpiryScope}
+                        onUnpricedClick={() => openTarget('ladder')}
+                        onScopeSymbol={setFilterSymbol}
+                        onClearSymbol={() => setFilterSymbol('')}
+                        selected={selectedLeg}
+                        onSelect={setPickedLeg}
+                        onOpenContract={(leg) => {
+                          const pos = book.filteredOptions.find(
+                            (p) => p.contract_key === leg.contractKey && (!leg.accountId || p.account_id === leg.accountId),
+                          )
+                          if (pos) openContractFace(pos)
+                        }}
+                      />
+                    </div>
+                    <div className={positionsUi.bandItemWide}>
+                      <RoomToAddSection quiet room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
                     </div>
                   </div>
                 ) : null}
 
-                <PositionsTier label="Lines" note="the rows themselves, tightest first · one thing at a time opens on the right" />
+                <PositionsTier heading label="Lines" note="The rows themselves, tightest first · one thing at a time opens on the right" />
                 <div
                   className={cn(
-                    'grid min-w-0 items-start gap-3',
+                    'sk-rise grid min-w-0 items-start gap-3',
                     faceOpen ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,32.5rem),1fr))]' : 'grid-cols-1',
                   )}
                 >

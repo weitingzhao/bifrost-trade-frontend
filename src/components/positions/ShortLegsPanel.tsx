@@ -6,7 +6,8 @@
  * or open the leg on the right. Neither happens on the click itself; the first
  * version narrowed the page silently and left no obvious way back.
  */
-import type { KeyboardEvent } from 'react'
+import { useRef, type KeyboardEvent, type ReactNode } from 'react'
+import { useContainerHeight } from '@/hooks/useContainerWidth'
 import { cn } from '@/lib/utils'
 import { fmtIsoDateToken } from '@/lib/format'
 import { ShortLegRiskMap } from './charts/ShortLegRiskMap'
@@ -72,6 +73,24 @@ function LegFact({ k, v, ink = 'text-secondary-foreground' }: { k: string; v: st
   )
 }
 
+/** The prototype's plot height, and the floor under a stretched one. */
+const PLOT_MIN = 250
+
+/**
+ * The map at the height its row gives it (§16.5): beside an open Room to add it
+ * grows with it, and it never drops under PLOT_MIN. Its own component so the
+ * measurement starts when the map first appears, not when the panel did.
+ */
+function StretchedPlot({ children }: { children: (height: number) => ReactNode }) {
+  const host = useRef<HTMLDivElement>(null)
+  const height = useContainerHeight(host, PLOT_MIN)
+  return (
+    <div ref={host} className="relative min-h-62.5 flex-1">
+      <div className="absolute inset-0">{children(Math.max(PLOT_MIN, height))}</div>
+    </div>
+  )
+}
+
 export function ShortLegsPanel({
   legs,
   tightPct,
@@ -94,10 +113,23 @@ export function ShortLegsPanel({
   }
   const scopedToSelected = selected != null && activeSymbol === selected.symbol
   const unpriced = legs.filter((l) => !isPriced(l)).length
+  const map = (height: number) => (
+    <ShortLegRiskMap
+      legs={legs}
+      tightPct={tightPct}
+      activeExpiry={activeExpiry}
+      selectedKey={selected?.key ?? null}
+      onSelect={onSelect}
+      onExpiryClick={onExpiryClick}
+      onUnpricedClick={onUnpricedClick}
+      height={height}
+      caption={false}
+    />
+  )
 
   return (
     <section
-      className={positionsUi.panel}
+      className={cn(positionsUi.panel, 'flex flex-col')}
       aria-label="Short legs against the tightness line"
       tabIndex={-1}
       onKeyDown={onKeyDown}
@@ -123,18 +155,8 @@ export function ShortLegsPanel({
           </button>
         ) : null}
       </header>
-      <div className="px-3 pt-2.5 pb-3">
-        <ShortLegRiskMap
-          legs={legs}
-          tightPct={tightPct}
-          activeExpiry={activeExpiry}
-          selectedKey={selected?.key ?? null}
-          onSelect={onSelect}
-          onExpiryClick={onExpiryClick}
-          onUnpricedClick={onUnpricedClick}
-          height={250}
-          caption={false}
-        />
+      <div className="flex flex-1 flex-col px-3 pt-2.5 pb-3">
+        {legs.length > 0 ? <StretchedPlot>{map}</StretchedPlot> : map(PLOT_MIN)}
         {selected ? (
           <div
             className="mt-2 flex flex-col gap-1.25 rounded-[5px] border border-[var(--sk-line2)] bg-[var(--sk-raised2)] px-2.5 py-1.75 leading-normal"
@@ -208,8 +230,10 @@ export function ShortLegsPanel({
                 </button>{' '}
               </>
             ) : null}
-            Click a leg to select it — the grid below filters to it and the leg’s own numbers appear here. Unpriced legs are
-            grey and are <em>not</em> counted as safe.
+            <span title="Selecting a leg filters the grid below and shows the leg’s own numbers here, with a button that opens its contract.">
+              Click a leg to select it.
+            </span>{' '}
+            Grey = unpriced, <em>not</em> counted as safe.
           </p>
         )}
       </div>

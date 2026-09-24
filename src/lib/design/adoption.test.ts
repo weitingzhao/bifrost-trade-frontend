@@ -251,8 +251,10 @@ describe('design adoption', () => {
     // door was findable — 59. Back to 58 when Stock ratings was re-walked
     // again for the Leaders view and left for `reviewing`. 59 when the Owner
     // signed that walk too. 58 when Research Overview was re-walked against
-    // Rev .24 (its census rows) and left `stale` for `reviewing`.
-    expect(counts.aligned + counts.byState.stale).toBe(58)
+    // Rev .24 (its census rows) and left `stale` for `reviewing`. 57 when
+    // Positions was re-walked against Rev .21 as the §16 north-star page and
+    // went the same way.
+    expect(counts.aligned + counts.byState.stale).toBe(57)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -264,7 +266,6 @@ describe('design adoption', () => {
     expect(counts.aligned).toBe(55)
     expect(rows.filter((r) => r.state === 'stale').map((r) => r.path).sort()).toEqual([
       '/market/live',
-      '/portfolio/positions',
       '/research/event-radar',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
@@ -477,8 +478,9 @@ describe('design adoption', () => {
     // four-state rule so an unfed pipeline reads as unfed. 7 with History,
     // two panels built and two owed with what each waits on. 8 with Research
     // Overview, re-walked onto Rev .24's census rows. 9 with Compare, built on
-    // Rev .24's table for its three owed inputs.
-    expect(counts.byState.reviewing).toBe(9)
+    // Rev .24's table for its three owed inputs. 10 with Positions, redrawn
+    // at Rev .21 as the §16 north-star page and rebuilt the same day.
+    expect(counts.byState.reviewing).toBe(10)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -545,6 +547,7 @@ describe('design adoption', () => {
     // that shares its weights panel, tape and lens bar with Stock ratings.
     expect(rows.filter((r) => r.state === 'reviewing').map((r) => r.path).sort()).toEqual([
       '/docs/options-kit',
+      '/portfolio/positions',
       '/research/compare',
       '/research/events',
       '/research/history',
@@ -774,8 +777,9 @@ describe('design adoption', () => {
     // 2026-09-23.6: Positions redrawn as the §16 north star, and Research
     // Overview's census carrying the two rows this side's ask corrected. 4 → 3
     // the same evening: Overview's two rows took the design's words and it
-    // waits for a look in `reviewing`.
-    expect(counts.byState.stale).toBe(3)
+    // waits for a look in `reviewing`. 3 → 2 with Positions, rebuilt to its
+    // north-star rev and waiting the same way. Live and Alerts are what is left.
+    expect(counts.byState.stale).toBe(2)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

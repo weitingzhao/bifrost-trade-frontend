@@ -176,6 +176,11 @@ export function explainBook(topic: ExplainTopic, input: ExplainInputs): Explanat
           input.room
             ? `Room to add: +${input.room.calls} calls from the spare shares, ${input.room.puts == null ? 'no put size to extrapolate from' : `+${input.room.puts} cash-secured puts from the free cash-like`}, ${input.room.marginPuts == null ? 'margin puts not modelled' : `+${input.room.marginPuts} puts on margin before pressure reaches ${Math.round(input.room.ceiling * 100)}%`} — the Backing page walks each step and the premium it would bring.`
             : 'Room to add on the Backing page turns the free shares and cash-like into contracts and premium, with and without margin.',
+          ...(input.room?.income != null
+            ? [
+                `+${usd(input.room.income)} per cycle is what those added contracts would take in: the backed step at the premium each dollar of backing earned this cycle, the margin step at the average premium per short put held. A page estimate from the book's own numbers, not the broker what-if.`,
+              ]
+            : []),
           'Buying power is not the constraint for selling options; excess liquidity is.',
           p.thetaPerDay != null ? `θ ${usd(p.thetaPerDay)}/day is the vendor's theta summed over the legs in scope.` : 'θ/day: no vendor Greeks matched the legs in scope.',
         ],

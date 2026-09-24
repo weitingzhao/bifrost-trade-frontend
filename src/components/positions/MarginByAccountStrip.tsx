@@ -149,6 +149,8 @@ function AccountRow({
   )
 }
 
+const MARGIN_NOTE_TAIL = '? walks the broker fields behind a row'
+
 export function MarginByAccountStrip({
   margin,
   hostId,
@@ -156,6 +158,7 @@ export function MarginByAccountStrip({
   accountFilter,
   positions,
   resolveSpot,
+  quiet = false,
 }: {
   margin: MarginRollup
   hostId: string
@@ -164,6 +167,8 @@ export function MarginByAccountStrip({
   /** Every account's rows, repriced; the derivation values the open account's holdings from them. */
   positions?: readonly LivePositionRow[]
   resolveSpot?: SpotResolver | null
+  /** §16: the header note moves into the caption's title (Positions); Backing still prints it. */
+  quiet?: boolean
 }) {
   const rows = marginAccountRows(margin, hostId, secondaryId, accountFilter)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -177,8 +182,16 @@ export function MarginByAccountStrip({
       }}
     >
       <header className={positionsUi.panelHead}>
-        <span className={positionsUi.cap}>Margin by account</span>
-        <span className={positionsUi.panelNote}>cockpit pressure: accounts in scope · ? walks the broker fields behind a row</span>
+        {quiet ? (
+          <span className={positionsUi.cap} title={`Cockpit pressure covers the accounts in scope · ${MARGIN_NOTE_TAIL}`}>
+            Margin by account
+          </span>
+        ) : (
+          <>
+            <span className={positionsUi.cap}>Margin by account</span>
+            <span className={positionsUi.panelNote}>cockpit pressure: accounts in scope · {MARGIN_NOTE_TAIL}</span>
+          </>
+        )}
         <Link to="/risk/margin" className={cn(positionsUi.link, 'ml-auto')}>
           per-position margin · Risk Margin →
         </Link>

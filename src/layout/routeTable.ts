@@ -152,9 +152,11 @@ export const ROUTES: readonly RouteEntry[] = [
       // Package 2026-09-22.3 changed one thing here: Ask Copilot has a single
       // destination, the shell's Thread. Landed with the Ask bus. Rev
       // 2026-09-23.3 added one more: the contract face's third door into
-      // Contract Greeks. Built 2026-09-23.
-      state: 'aligned',
-      rev: '2026-09-23.3',
+      // Contract Greeks. Built 2026-09-23. Rev 2026-09-23.21 redrew it as the
+      // §16 north-star page (hero band, tooltips, type scale, motion); built
+      // the same day and waiting for the Owner's look.
+      state: 'reviewing',
+      rev: '2026-09-23.21',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },

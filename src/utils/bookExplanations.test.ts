@@ -77,11 +77,18 @@ describe('explainBook', () => {
 
 describe('potential', () => {
   it('names the three Room to add steps when the room is known', () => {
-    const e = explainBook('potential', { ...inputs(), room: { calls: 25, puts: 3, marginPuts: 65, ceiling: 0.5 } })
+    const e = explainBook('potential', { ...inputs(), room: { calls: 25, puts: 3, marginPuts: 65, ceiling: 0.5, income: null } })
     expect(e.lines[1]).toBe(
       'Room to add: +25 calls from the spare shares, +3 cash-secured puts from the free cash-like, +65 puts on margin before pressure reaches 50% — the Backing page walks each step and the premium it would bring.',
     )
     expect(e.lines[2]).toContain('excess liquidity is')
+  })
+
+  it('walks the per-cycle figure the hero prints, and says it is a page estimate', () => {
+    const e = explainBook('potential', { ...inputs(), room: { calls: 25, puts: 3, marginPuts: 65, ceiling: 0.5, income: 1234.5 } })
+    expect(e.lines[2]).toMatch(/^\+\$1,234\.50 per cycle/)
+    expect(e.lines[2]).toContain('not the broker what-if')
+    expect(e.lines[3]).toContain('excess liquidity is')
   })
 })
 

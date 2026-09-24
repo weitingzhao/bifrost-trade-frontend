@@ -594,6 +594,34 @@
 }
 
 
+/* §16 page scale (design Rev 2026-09-23.21, Positions first): page title 22,
+   section heading 15, hero reading 30, the line under a hero 11.5. Tables stay
+   on the dense scale.
+
+   `type-*`, not `text-*`, on purpose: the shared `cn` (tailwind-merge) knows
+   only the dense names as font sizes and reads any other `text-<word>` as a
+   colour — `cn('text-hero', 'text-warning')` would silently drop the size. A
+   name outside the text namespace cannot collide with a colour. */
+@utility type-page-title {
+  font-size: 1.375rem;
+  line-height: 1.3;
+}
+
+@utility type-section {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+@utility type-hero {
+  font-size: 1.875rem;
+  line-height: 1.1;
+}
+
+@utility type-hero-read {
+  font-size: 0.71875rem;
+  line-height: 1.45;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -762,6 +790,36 @@ tbody tr:hover > td {
   .animate-lamp-pulse-red {
     animation: lamp-pulse-red 1.5s ease-in-out infinite;
   }
+
+  /* §16 motion (design Rev 2026-09-23.21): a card or band rises 5px into place
+     as it mounts, and a card lifts 1px under the pointer. Stagger through
+     --sk-rise-delay (the hero band steps 40ms a card). Both switch off under
+     reduced motion — see the block below. */
+  @keyframes sk-rise {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .sk-rise {
+    animation: sk-rise 0.38s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: var(--sk-rise-delay, 0s);
+  }
+
+  .sk-lift {
+    transition:
+      transform 0.18s ease,
+      border-color 0.18s ease;
+  }
+
+  .sk-lift:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* Print goes through a hidden iframe (exportSerializer.printHtml).
@@ -795,5 +853,14 @@ tbody tr:hover > td {
 
   .animate-spin {
     animation: var(--animate-spin, spin 1s linear infinite) !important;
+  }
+
+  /* An entrance has nothing to settle on but its end state: no delay, no fade. */
+  .sk-rise {
+    animation: none !important;
+  }
+
+  .sk-lift:hover {
+    transform: none;
   }
 }

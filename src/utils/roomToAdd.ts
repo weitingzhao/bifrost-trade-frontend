@@ -141,16 +141,28 @@ export interface RoomToAdd {
   }
 }
 
-/** The three figures the cockpit's Potential line carries, with a link to the rest. */
+/** The figures the Potential reading carries, with a link to the rest. */
 export interface RoomSummary {
   calls: number
   puts: number | null
   marginPuts: number | null
   ceiling: number
+  /** Premium the two added steps would take in, per cycle — Potential's hero figure. */
+  income: number | null
+}
+
+/**
+ * What the backed and margin steps would take in together, per cycle. One sum
+ * for the Room panel's header and the Potential reading, so they cannot differ.
+ * Null only when neither step can be priced.
+ */
+export function roomIncome(r: RoomToAdd): number | null {
+  if (r.backed.income == null && r.margin.income == null) return null
+  return (r.backed.income ?? 0) + (r.margin.income ?? 0)
 }
 
 export function summarizeRoom(r: RoomToAdd): RoomSummary {
-  return { calls: r.backed.calls, puts: r.backed.puts, marginPuts: r.margin.puts, ceiling: r.ceiling }
+  return { calls: r.backed.calls, puts: r.backed.puts, marginPuts: r.margin.puts, ceiling: r.ceiling, income: roomIncome(r) }
 }
 
 /**

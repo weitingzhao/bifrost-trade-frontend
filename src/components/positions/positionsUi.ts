@@ -17,9 +17,22 @@ export const positionsUi = {
   ),
   tierRule: 'h-px min-w-8 flex-1 bg-[var(--sk-line2)]',
   tierNote: 'text-dense-meta text-muted-foreground',
+  /** §16 section heading (Rev 2026-09-23.21): a sentence-case h2, its note in the title, a quiet rule after. */
+  tierHeadingRow: 'flex items-baseline gap-2.5 pt-1.5',
+  tierHeading: 'm-0 type-section font-semibold tracking-[-0.005em] text-foreground',
+  tierHeadingRule: 'h-px min-w-8 flex-1 bg-[var(--sk-line0)]',
 
   /** Two panels side by side from 920px of content, one column below — the prototype's auto-fit 460. */
   bandGrid: 'grid grid-cols-[repeat(auto-fit,minmax(min(100%,28.75rem),1fr))] items-start gap-3',
+  /**
+   * §16.5 band (Rev 2026-09-23.21, Positions first): panels in one row share its
+   * height, and a panel that wraps takes the whole row rather than leaving a hole
+   * — which an auto-fit grid cannot promise once three panels meet two columns.
+   * Each item wraps one panel and stretches it both ways.
+   */
+  band: 'flex flex-wrap items-stretch gap-3',
+  bandItem: 'flex min-w-0 flex-[1_1_20rem] *:min-w-0 *:flex-1',
+  bandItemWide: 'flex min-w-0 flex-[1_1_28.75rem] *:min-w-0 *:flex-1',
 
   panel: 'min-w-0 rounded-md border border-border bg-[var(--sk-raised)]',
   panelHead: cn(

@@ -18,7 +18,7 @@ import { fmtUsd } from '@/utils/positions'
 import { SegmentControl } from '@/components/data-display'
 import { positionsUi } from './positionsUi'
 import { roomDerivation, type RoomView } from './roomDerivation'
-import type { RoomToAdd } from '@/utils/roomToAdd'
+import { roomIncome, type RoomToAdd } from '@/utils/roomToAdd'
 import { riskLevelFor, RISK_LEVELS, type RiskLevelId } from '@/hooks/usePressureCeiling'
 
 interface Props {
@@ -26,6 +26,8 @@ interface Props {
   coverRows: readonly CoverRow[]
   ceiling: number
   onLevelChange: (id: RiskLevelId) => void
+  /** §16 (Positions): the caveat shrinks to a label, its sentence in the title. Backing prints it whole. */
+  quiet?: boolean
 }
 
 type TierId = 'now' | 'backed' | 'margin'
@@ -127,7 +129,7 @@ function How({ view, label, open, onToggle }: { view: RoomView; label: string; o
   )
 }
 
-export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange }: Props) {
+export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange, quiet = false }: Props) {
   const [openView, setOpenView] = useState<RoomView | null>(null)
   const r = room
   const ceilingPct = Math.round(ceiling * 100)
@@ -160,7 +162,7 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange }: Pr
     },
   ]
   const max = tiers.reduce((n, t) => n + (t.premium ?? 0), 0)
-  const added = r.backed.income == null && r.margin.income == null ? null : (r.backed.income ?? 0) + (r.margin.income ?? 0)
+  const added = roomIncome(r)
 
   return (
     <section
@@ -198,11 +200,21 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange }: Pr
       </header>
 
       <div className="flex flex-col gap-2 px-3 pt-2 pb-3 leading-normal">
-        {/* The caveat stays: a panel about money says what kind of number it is without being asked. */}
-        <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
-          Page estimates from the book&rsquo;s own numbers, not the broker what-if. Each{' '}
-          <span className="font-mono">?</span> opens how the figure is built.
-        </span>
+        {/* The caveat stays: a panel about money says what kind of number it is without being asked.
+            Quiet, it is a label — still visible, because it is honesty, not explanation. */}
+        {quiet ? (
+          <span
+            className="inline-flex h-4.5 items-center self-start rounded-full border border-border px-1.75 text-dense-caption leading-none text-[var(--sk-mute2)]"
+            title="Page estimates from the book’s own numbers, not the broker what-if. Each ? opens how the figure is built."
+          >
+            page estimate · not broker what-if
+          </span>
+        ) : (
+          <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
+            Page estimates from the book&rsquo;s own numbers, not the broker what-if. Each{' '}
+            <span className="font-mono">?</span> opens how the figure is built.
+          </span>
+        )}
 
         <div className="flex flex-col" data-testid="room-tiers">
           {tiers.map((t, i) => (

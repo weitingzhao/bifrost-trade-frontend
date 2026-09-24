@@ -160,13 +160,10 @@ export function PositionsFaceSlot({
               <Link
                 to={`/research/greeks?sym=${encodeURIComponent(contract.position.symbol)}`}
                 className="text-dense-meta text-primary hover:underline"
-                title={`Every ${contract.position.symbol} leg in the book, greek by greek`}
+                title={`Every ${contract.position.symbol} leg in the book, greek by greek.\nVendor Greeks are authoritative — this page never derives a second set.`}
               >
                 every leg on {contract.position.symbol} · Contract Greeks →
               </Link>
-              <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">
-                Vendor Greeks are authoritative — this page never derives a second set.
-              </span>
             </div>
           </div>
         ) : (

@@ -137,6 +137,8 @@ function summaryNote(layer: BaseLayer): string {
  * way to Backing & Model. The ring and its table stay there, the canonical page;
  * this is a bridge, not a second computation — the same usage numbers.
  */
+const BRIDGE_NOTE = 'The capital axis is canonical on Backing & Model — this is a bridge, not a second computation.'
+
 function BackingPoolSummary({
   book,
   onSegmentClick,
@@ -163,7 +165,9 @@ function BackingPoolSummary({
           </span>
         ) : null}
         {backingLink ? (
-          <Link to={backingLink.to} className={cn(positionsUi.link, 'ml-auto')}>
+          // The bridge note rides on the link since §16 (Rev 2026-09-23.21): it
+          // says where the canonical reading is, which is what the link opens.
+          <Link to={backingLink.to} className={cn(positionsUi.link, 'ml-auto')} title={BRIDGE_NOTE}>
             {backingLink.label}
           </Link>
         ) : null}
@@ -209,9 +213,6 @@ function BackingPoolSummary({
               </button>
             )
           })}
-          <span className="text-dense-meta text-muted-foreground text-pretty leading-normal">
-            The capital axis is canonical on Backing &amp; Model — this is a bridge, not a second computation.
-          </span>
         </div>
       )}
     </section>

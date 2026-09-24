@@ -4,7 +4,11 @@ import { denseTable, denseTableEntityCell } from '@/components/data-display'
 /** Live page table shell + sticky header bridge to Dense UI tokens. */
 export const liveTable = {
   shell: cn('mt-2 dense-scroll-x rounded-lg border border-border overflow-x-auto'),
-  table: denseTable.table,
+  // The shared token's min-w-[320px] lets table-fixed crush eight nowrap
+  // columns into a 430px float until the cells overprint each other. The
+  // design's narrow rendering scrolls sideways instead — full column widths,
+  // the shell's own overflow-x — so the table declares the width it needs.
+  table: cn(denseTable.table, 'min-w-[880px]'),
   stickyThead: '[&_th]:sticky [&_th]:top-0 [&_th]:z-[1] [&_th]:bg-secondary/40',
   symbolCell: cn(denseTableEntityCell, 'font-semibold text-entity-symbol'),
   colGroupHead: cn(

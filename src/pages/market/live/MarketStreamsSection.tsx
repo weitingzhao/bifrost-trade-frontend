@@ -115,6 +115,13 @@ export function MarketStreamsSection({
         dailyDollar={summaryDailyDollar}
         dailyPct={summaryDailyPct}
         visible={showSummaryBar}
+        scopeLabel={`stocks · ${
+          accountViewMode === 'host'
+            ? 'Host'
+            : accountViewMode === 'secondary'
+              ? 'Secondary'
+              : 'Host + Secondary'
+        }`}
       />
       <div className={liveCardClass}>
       <div className={liveCardHeaderRowClass}>

@@ -124,36 +124,40 @@ export default function AlertsPage() {
 
         <ul>
           {rows.map((r) => (
-            <li
-              key={r.id}
-              className="grid grid-cols-[8px_minmax(140px,190px)_minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-border/50 px-3 py-2 last:border-b-0"
-            >
-              <StatusLamp lamp={r.lamp} variant="dot" className="h-2 w-2" />
-              <span className="min-w-0 truncate">
-                <span
-                  className={cn(
-                    'font-mono text-dense-meta font-bold',
-                    r.scopeIsSymbol ? 'text-foreground' : 'text-primary',
-                  )}
-                >
-                  {r.scope}
+            /* The design's row is two lines at every width — the scope and
+               its readings first, the condition sentence under it — so a
+               narrow surface wraps instead of clipping. */
+            <li key={r.id} className="border-b border-border/50 px-3 py-2 last:border-b-0">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                <StatusLamp lamp={r.lamp} variant="dot" className="h-2 w-2 shrink-0 self-center" />
+                <span className="min-w-0">
+                  <span
+                    className={cn(
+                      'font-mono text-dense-meta font-bold',
+                      r.scopeIsSymbol ? 'text-foreground' : 'text-primary',
+                    )}
+                  >
+                    {r.scope}
+                  </span>
+                  <span className="ml-2 font-mono text-dense-caption text-muted-foreground">
+                    {r.when}
+                  </span>
                 </span>
-                <span className="ml-2 font-mono text-dense-caption text-muted-foreground">
-                  {r.when}
+                <span className="ml-auto flex min-w-0 flex-wrap items-baseline justify-end gap-x-3 gap-y-0.5">
+                  <span
+                    className={cn('text-right text-dense-caption', SINCE_TONE[r.sinceTone])}
+                    title={r.since ?? 'this alert’s payload carries no before-and-after pair'}
+                  >
+                    {r.since ?? '—'}
+                  </span>
+                  <Link to={r.to} className="whitespace-nowrap text-dense-caption hover:underline">
+                    {r.dest}
+                  </Link>
                 </span>
-              </span>
-              <span className="min-w-0 truncate text-dense-caption" title={r.what}>
+              </div>
+              <p className="m-0 mt-0.5 pl-5 text-dense-caption leading-snug text-muted-foreground text-pretty">
                 {r.what}
-              </span>
-              <span
-                className={cn('whitespace-nowrap text-dense-caption', SINCE_TONE[r.sinceTone])}
-                title={r.since ?? 'this alert’s payload carries no before-and-after pair'}
-              >
-                {r.since ?? '—'}
-              </span>
-              <Link to={r.to} className="whitespace-nowrap text-dense-caption hover:underline">
-                {r.dest}
-              </Link>
+              </p>
             </li>
           ))}
         </ul>

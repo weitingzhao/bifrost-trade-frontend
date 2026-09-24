@@ -16,8 +16,9 @@ export const liveSummaryBarClass =
 export const liveSummaryLabelClass =
   'text-dense-meta font-bold uppercase tracking-wider text-muted-foreground mr-1'
 export const liveSummarySegClass = 'inline-flex items-baseline gap-1.5'
-export const liveSummaryKeyClass =
-  'text-dense-meta font-semibold uppercase tracking-wide text-muted-foreground'
+// The design writes the pair's key in sentence case — «Since +$4,671.00» —
+// only the bar's own STK STREAMS label stays capped.
+export const liveSummaryKeyClass = 'text-dense-meta font-semibold text-muted-foreground'
 export const liveSummaryValClass = 'font-mono font-bold tabular-nums text-dense-body'
 export const liveSummaryDividerClass = 'text-border-strong select-none'
 

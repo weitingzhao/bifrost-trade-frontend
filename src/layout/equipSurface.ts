@@ -52,7 +52,7 @@
  */
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 import { readJson, writeJson } from '@/lib/localStore'
-import { EQUIP_GROUPS, type EquipGroup } from './equip'
+import { EQUIP_GROUPS, EQUIP_HUE, type EquipGroup } from './equip'
 
 /** Where a surface can be. `page` is a destination, not a resting state. */
 export type Place = 'float' | 'panel' | 'page'
@@ -75,6 +75,15 @@ export interface Surface {
   run?: string
   /** Set when the surface is the Copilot conversation rather than a page. */
   thread?: boolean
+  /**
+   * Set when the surface is the Symbol page (design Rev .58): `follow` shows
+   * whatever is carried, `lock` keeps `symbol` whatever is carried.
+   */
+  subject?: 'follow' | 'lock'
+  /** The locked surface's own name. */
+  symbol?: string
+  /** Opened on a face — a contract row lands on Chain or Payoff. `n` makes each ask new. */
+  intent?: { tab: string; n: number }
 }
 
 /** A tab remembers when it was last looked at — the overflow orders by it. */
@@ -188,11 +197,57 @@ export function threadSurface(): Surface {
   }
 }
 
+/** The Symbol page's route — the one page that is also a surface of its own. */
+export const SYMBOL_SURFACE_ROUTE = '/research/symbol'
+
+/**
+ * The Symbol page as a surface (design Rev .58, Symbol Panel Options 1a–2e).
+ *
+ * **One** following tab, keyed `symbol`: it shows the carried name, so a row
+ * picked in the Symbol list or the omnibar changes it in place. ⇧ opens a
+ * second, **locked** one keyed by the name, for side by side — two locked
+ * names are two tabs, the same name twice is one.
+ *
+ * Its home is the panel; place memory applies from there on.
+ */
+export function symbolSurface(sym?: string | null, opts?: { lock?: boolean; tab?: string }): Surface {
+  const name = (sym ?? '').trim().toUpperCase()
+  const lock = Boolean(opts?.lock && name)
+  return {
+    key: lock ? `symbol:${name}` : 'symbol',
+    to: SYMBOL_SURFACE_ROUTE,
+    label: lock ? `Symbol · ${name}` : 'Symbol',
+    group: 'book',
+    canPage: true,
+    def: 'panel',
+    subject: lock ? 'lock' : 'follow',
+    ...(lock ? { symbol: name } : {}),
+    ...(opts?.tab ? { intent: { tab: opts.tab, n: Date.now() } } : {}),
+  }
+}
+
+/** What a tab or a float bar calls it — the following Symbol tab names what it is showing. */
+export function surfaceLabel(surf: Pick<Surface, 'label' | 'subject'>, carried: string): string {
+  if (surf.subject === 'follow') return `Symbol · ${carried || '—'}`
+  // Two tabs on one name — following it, and locked on it — must not read alike.
+  return surf.subject === 'lock' ? `${surf.label} (locked)` : surf.label
+}
+
+/** A surface's hue: its group's, except the Symbol page, which wears the ticker's. */
+export function surfaceHue(surf: Pick<Surface, 'group' | 'subject'>): string {
+  return surf.subject ? 'var(--sk-ticker)' : EQUIP_HUE[surf.group]
+}
+
 /* ── Place memory ────────────────────────────────────────────────────────── */
 
-/** Runs share one memory: where you put the last one is where the next goes. */
+/**
+ * Runs share one memory: where you put the last one is where the next goes.
+ * Locked Symbol tabs share one too — they open in the panel, beside the
+ * following one, which is what a comparison needs.
+ */
 function memoryKey(key: string): string {
-  return key.startsWith('run:') ? 'run' : key
+  if (key.startsWith('run:')) return 'run'
+  return key.startsWith('symbol:') ? 'symbol:lock' : key
 }
 
 function rememberedPlace(key: string): Place | null {

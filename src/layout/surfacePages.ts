@@ -31,6 +31,8 @@ export const SURFACE_PAGES: Record<string, PageComponent> = {
   '/research/copilot/trading': lazy(() => import('@/pages/research/seats/TradingCopilotPage')),
   '/market/live': lazy(() => import('@/pages/market/LivePage')),
   '/research/event-radar': lazy(() => import('@/pages/research/alerts/AlertsPage')),
+  // The one spine page that is also a surface (Rev .58): the Symbol panel.
+  '/research/symbol': lazy(() => import('@/pages/research/analyze/symbol/SymbolPage')),
 }
 
 export function surfacePageFor(to: string): PageComponent | null {

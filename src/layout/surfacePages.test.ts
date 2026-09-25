@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { SURFACE_PAGES } from './surfacePages'
 import { equipRoutes } from './equip'
+import { SYMBOL_SURFACE_ROUTE } from './equipSurface'
 
 /** `path: 'x', lazy: lazyPage(() => import('@/…'))` — the router's own shape. */
 function routerModules(): Map<string, string> {
@@ -46,7 +47,8 @@ describe('the surface page table', () => {
 
   it('offers nothing the rail cannot open', () => {
     // A page in here that no icon reaches is a chunk nobody loads and a claim
-    // nobody checks.
-    expect(Object.keys(SURFACE_PAGES).sort()).toEqual([...equipRoutes()].sort())
+    // nobody checks. The Symbol page is the one surface outside the equipment
+    // groups: the toolbar's own Symbol button opens it (Rev .58).
+    expect(Object.keys(SURFACE_PAGES).sort()).toEqual([...equipRoutes(), SYMBOL_SURFACE_ROUTE].sort())
   })
 })

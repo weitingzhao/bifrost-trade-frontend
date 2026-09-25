@@ -33,11 +33,13 @@ import {
   loadGeometry,
   saveGeometry,
   setFloatSize,
+  surfaceHue,
+  surfaceLabel,
   useSurfaces,
   type FloatGeometry,
   type FloatSize,
 } from './equipSurface'
-import { EQUIP_HUE } from './equip'
+import { useCarriedSymbol } from '@/lib/symbolContext'
 import { animateFloatIn, registerSurfaceElement } from './equipMotion'
 import { PlaceButtons } from './PlaceButtons'
 import { SurfaceBody } from './SurfaceBody'
@@ -122,6 +124,7 @@ export function EquipFloat() {
   const size = float?.size ?? 'phone'
   const panelOpen = Boolean(panel)
   const dockPx = useDockColumn().width
+  const carried = useCarriedSymbol()
   const [viewport, setViewport] = useState(() => window.innerWidth)
 
   useEffect(() => {
@@ -281,9 +284,9 @@ export function EquipFloat() {
       ref={ref}
       tabIndex={-1}
       className={`${css.card} ${css.float}`}
-      style={{ ...box, ['--rh' as string]: EQUIP_HUE[float.group] }}
+      style={{ ...box, ['--rh' as string]: surfaceHue(float) }}
       role="dialog"
-      aria-label={`${float.label} — floating`}
+      aria-label={`${surfaceLabel(float, carried)} — floating`}
     >
       <div
         className={css.bar}
@@ -296,7 +299,7 @@ export function EquipFloat() {
         title="Drag to move · double-click to switch Phone / Pad"
       >
         <SurfaceGlyph surface={float} className={css.glyph} />
-        <span className={css.name}>{float.label}</span>
+        <span className={css.name}>{surfaceLabel(float, carried)}</span>
         <span className={css.route}>{float.to}</span>
         <span className="ml-auto" />
         {/* Size and place are two questions: the toggle is the float's alone. */}

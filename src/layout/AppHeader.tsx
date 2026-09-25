@@ -26,6 +26,7 @@ import { usePageHeadVisibility } from './usePageHeadVisibility'
 import { useCrumbLabel } from './useCrumbLabel'
 import { useSymbolContext } from '@/lib/symbolContext'
 import { ObjectiveControl } from './ObjectiveControl'
+import { useSymbolGo } from './symbolGo'
 import {
   SHELL_TOP_BAR_CONTROL_CLASS,
   SHELL_TOP_BAR_HEIGHT_CLASS,
@@ -41,6 +42,7 @@ export function AppHeader() {
   const label = useCrumbLabel(location.pathname, registryLabel)
   const thread = useThread()
   const { symbol, isScoped, clearSymbol } = useSymbolContext()
+  const symbolGo = useSymbolGo()
   const trail = crumbLinks(crumbs ?? [], PAGE_ROUTES, CRUMB_GROUPS)
   // §16.12: while the page head shows the page's name, the leaf (and the `›`
   // before it) folds; it fades back once the head scrolls away. A page that
@@ -132,13 +134,27 @@ export function AppHeader() {
             page reads it, dim where it is only held for the next page; × lets
             it go. */}
         {symbol ? (
+          // Rev .58: the token is the name, so a click on it opens the name —
+          // the Symbol panel beside this page — rather than the omnibar.
           <span
-            title={
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation()
+              symbolGo.toggle()
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return
+              e.preventDefault()
+              e.stopPropagation()
+              symbolGo.toggle()
+            }}
+            title={`${
               isScoped
                 ? `${symbol} — this page reads it`
                 : `${symbol} — held for the next page that reads a symbol`
-            }
-            className="inline-flex h-4.5 flex-none items-center gap-1 rounded-[4px] bg-[var(--sk-raised2)] pr-0.5 pl-1.5 font-mono text-dense-meta font-bold"
+            } · click to open Symbol beside this page`}
+            className="inline-flex h-4.5 flex-none cursor-pointer items-center gap-1 rounded-[4px] bg-[var(--sk-raised2)] pr-0.5 pl-1.5 font-mono text-dense-meta font-bold"
             style={{ color: isScoped ? 'var(--sk-ticker)' : 'var(--sk-faint)' }}
           >
             {symbol}

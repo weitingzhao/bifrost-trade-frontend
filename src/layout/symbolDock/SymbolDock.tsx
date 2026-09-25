@@ -7,24 +7,20 @@
  * **float** (over the page, the right edge left empty). `dockModel.ts` holds
  * the arrangement; this holds what a click does and how a row is drawn.
  *
- * A row loads its name. On a page that reads `?symbol=` it swaps the symbol
- * in place; elsewhere, until the Symbol panel lands (frame batch F3), it
- * opens Research › Symbol — the design opens the panel beside the page there.
- * A contract row loads its underlying for the same reason: Strikes and Payoff
- * are the panel's.
+ * A row loads its name by the shell's one rule (`symbolGo.ts`): a page that
+ * reads `?symbol=` swaps in place, any other opens the Symbol panel beside
+ * it; ⇧ opens a locked tab to compare, ⌘ the Symbol page. A contract row
+ * carries its underlying and opens the panel on Chain (one leg) or Payoff.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type RefObject } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type RefObject } from 'react'
 import { ChevronRight, PanelRight, PictureInPicture2, Plus, X } from 'lucide-react'
 import { IconActionButton } from '@/components/data-display'
 import { stockWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { useWatchlistMutations } from '@/hooks/useStockWatchlist'
-import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { glyph } from '@/lib/design/glyphs'
-import { readStoredContext, useSymbolContext, writeStoredContext } from '@/lib/symbolContext'
-import { withSymbolParam } from '@/lib/symbolLink'
+import { useSymbolContext } from '@/lib/symbolContext'
 import { cn } from '@/lib/utils'
-import { routeFor } from '@/layout/routeRegistry'
+import { howFrom, useSymbolGo, type SymbolHow } from '@/layout/symbolGo'
 import { dockActions, useDockState, type ListKey } from './dockState'
 import {
   SORTS,
@@ -135,10 +131,8 @@ export function SymbolDock({
   const st = useDockState()
   const { lists, todayEt } = useDockLists(st.sel == null || st.sel.includes('watch'))
   const shown = st.sel ?? defaultSel(lists.source.rows.length > 0)
-  const { symbol: cur, setSymbol } = useSymbolContext()
-  const { pathname } = useLocation()
-  const navigate = useNavigate()
-  const scoped = Boolean(routeFor(pathname).symbolScope)
+  const { symbol: cur } = useSymbolContext()
+  const { go, verb } = useSymbolGo()
   const { addItem } = useWatchlistMutations()
 
   const allSyms = useMemo(() => shown.flatMap((k) => lists[k].rows.map((r) => r.symbol)), [shown, lists])
@@ -156,18 +150,9 @@ export function SymbolDock({
   const sm = Math.min(Math.max(1, st.sort), SORTS.length)
   const sort = SORTS[sm - 1]
 
-  const pick = useCallback(
-    (sym: string) => {
-      if (scoped) {
-        setSymbol(sym)
-        return
-      }
-      writeStoredContext(sym, readStoredContext().date ?? '')
-      navigate(withSymbolParam(SYMBOL_PATH, sym))
-    },
-    [scoped, setSymbol, navigate],
-  )
-  const loadTip = (sym: string, rest: string) => `${scoped ? `Load ${sym} here` : `Open ${sym} on Research › Symbol`}${rest}`
+  const pick = go
+  const loadTip = (sym: string, rest: string) =>
+    `${verb === 'swap' ? `Load ${sym} here` : `Open ${sym} beside this page`}${rest} · ⇧ compare · ⌘ page`
 
   const cycleSort = () => dockActions.setSort((sm % SORTS.length) + 1)
   const cycleSortBack = (e: MouseEvent) => {
@@ -221,7 +206,7 @@ export function SymbolDock({
                     type="button"
                     data-dock-sym={r.sym}
                     className={cn(css.stripRow, css.mono, r.sym === cur && css.cur)}
-                    onClick={() => pick(r.sym)}
+                    onClick={(e) => pick(r.sym, howFrom(e))}
                     title={loadTip(r.sym, ` · ${g.title}${r.note ? ` · ${r.note}` : ''}`)}
                   >
                     <span className={css.stripSym}>
@@ -342,7 +327,7 @@ function Group({
   cur: string
   quoteOf: (sym: string) => DockQuote
   flash: Flash
-  pick: (sym: string) => void
+  pick: (sym: string, how?: SymbolHow, contract?: { multi: boolean }) => void
   loadTip: (sym: string, rest: string) => string
 }) {
   const { folded } = useDockState()
@@ -383,7 +368,7 @@ function Row({
   cur: string
   q: DockQuote
   fl: 'up' | 'dn' | undefined
-  pick: (sym: string) => void
+  pick: (sym: string, how?: SymbolHow, contract?: { multi: boolean }) => void
   tip: string
 }) {
   const { optOpen } = useDockState()
@@ -398,7 +383,7 @@ function Row({
         type="button"
         data-dock-sym={r.sym}
         className={cn(css.grid, css.row, r.sym === cur && css.cur)}
-        onClick={() => pick(r.sym)}
+        onClick={(e) => pick(r.sym, howFrom(e))}
         title={tip}
       >
         <span className={css.name}>
@@ -442,8 +427,8 @@ function Row({
               key={c.id}
               type="button"
               className={cn(css.grid, css.contract)}
-              onClick={() => pick(r.sym)}
-              title={`${c.exp} ${c.label}${c.mark != null ? ` · Mark ${c.mark.toFixed(2)}` : ''}${c.inTitle ? ` · ${c.inTitle}` : ''} → ${r.sym}`}
+              onClick={(e) => pick(r.sym, e.shiftKey ? 'compare' : 'swap', { multi: Boolean(c.multi) })}
+              title={`${c.exp} ${c.label}${c.mark != null ? ` · Mark ${c.mark.toFixed(2)}` : ''}${c.inTitle ? ` · ${c.inTitle}` : ''} → ${r.sym} · ${c.multi ? 'Payoff' : 'Chain'}`}
             >
               <span className={css.contractName}>
                 <span className="text-[var(--sk-mute)]">{c.exp}</span>

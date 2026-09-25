@@ -6,11 +6,17 @@
  * nothing = symbols, pages and commands together; `/` = pages only; `>` =
  * commands only.
  *
- * Empty, it shows what you were just doing rather than an empty box.
+ * Empty, it shows what you were just doing rather than an empty box — the
+ * last three names first (design Rev .58), then the book and the pages.
+ *
+ * A name picked here follows the Symbol list's rule (`symbolGo.ts`): ↵
+ * carries it, swapping in place where the page reads it and opening the
+ * Symbol panel beside any other; ⇧↵ opens a locked tab to compare; ⌘↵ the
+ * Symbol page.
  */
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Command as CommandIcon, Clock, Hash, PanelLeft, Pin, Star, X } from 'lucide-react'
+import { Command as CommandIcon, Check, Clock, Hash, History, PanelLeft, Pin, Plus, Star, X } from 'lucide-react'
 import {
   CommandDialog,
   CommandEmpty,
@@ -28,15 +34,15 @@ import { useSymbolSearch } from '@/hooks/useSymbolSearch'
 import { omnibar, omnibarStore, parseQuery, readRecentPaths } from '@/lib/omnibar'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { useSymbolContext } from '@/lib/symbolContext'
+import { useRecentSymbols } from '@/lib/recentSymbols'
+import { useWatchlistMutations } from '@/hooks/useStockWatchlist'
+import { stockWatchlistContractKey } from '@/components/research/watchlistContractKey'
+import { howFrom, useSymbolGo } from './symbolGo'
 import { NAV_ORDERS, ORDER_LABEL, ORDER_WHY, setNavOrder, useNavOrder, type NavOrder } from './navOrder'
 import { PAGE_ROUTES, routeFor } from './routeRegistry'
 import { SHORTCUTS } from '@/lib/cockpit/shortcuts'
 import { matches, trail } from './omnibarMatch'
 import { symbolTabHref } from '@/lib/symbolTabs'
-import { SYMBOL_PATH } from '@/lib/analyzeHubs'
-
-/** Where a symbol goes when the page you are on has no use for one. */
-const SYMBOL_HOME = SYMBOL_PATH
 
 /**
  * The other places a symbol is worth opening, offered as rows rather than a
@@ -60,12 +66,48 @@ function tickerShaped(term: string): string | null {
   return /^[A-Za-z]{1,5}$/.test(term) ? term.toUpperCase() : null
 }
 
+/** ＋ Watch on a name row — adds it without choosing the row. */
+function WatchButton({ sym, on, onAdd }: { sym: string; on: boolean; onAdd: (sym: string) => void }) {
+  const stop = (e: MouseEvent | PointerEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+  }
+  return (
+    <button
+      type="button"
+      onPointerDown={stop}
+      onClick={(e) => {
+        stop(e)
+        if (!on) onAdd(sym)
+      }}
+      disabled={on}
+      title={on ? `${sym} is on the Watchlist` : `Add ${sym} to the Watchlist`}
+      className="ml-auto inline-flex items-center gap-0.5 rounded px-1.5 text-dense-micro text-muted-foreground hover:bg-secondary hover:text-foreground disabled:hover:bg-transparent"
+    >
+      {on ? <Check className="size-3" /> : <Plus className="size-3" />} Watch
+    </button>
+  )
+}
+
 export function Omnibar() {
   const { open } = omnibarStore.useStore()
   const [raw, setRaw] = useState('')
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const { symbol, setSymbol, clearSymbol } = useSymbolContext()
+  const { symbol, clearSymbol } = useSymbolContext()
+  const { go, verb } = useSymbolGo()
+  const recentSymbols = useRecentSymbols()
+  const { addItem } = useWatchlistMutations()
+  // cmdk's onSelect carries no event: the modifiers are read off the key or
+  // the pointer that made the choice, just before it lands.
+  const mods = useRef<{ shiftKey: boolean; metaKey: boolean }>({ shiftKey: false, metaKey: false })
+  const noteMods = (e: KeyboardEvent | PointerEvent) => {
+    mods.current = { shiftKey: e.shiftKey, metaKey: e.metaKey || e.ctrlKey }
+  }
+  const addToWatch = (sym: string) => {
+    if (!addItem.isPending)
+      addItem.mutate({ contract_key: stockWatchlistContractKey(sym), symbol: sym, sec_type: 'STK', source: 'omnibar' })
+  }
   const { toggleSidebar } = useSidebar()
   const pins = useCockpitPins()
   const universe = useSymbolPickerUniverse()
@@ -105,10 +147,14 @@ export function Omnibar() {
     action()
   }
 
-  /** Stay put when the page is reading a symbol; otherwise open the symbol's home. */
+  /**
+   * A named destination navigates; a bare pick follows the shell's rule —
+   * swap in place, or the Symbol panel beside this page.
+   */
   function goToSymbol(sym: string, destination?: string) {
-    const target = destination ?? (routeFor(pathname).symbolScope ? null : SYMBOL_HOME)
-    run(() => (target ? navigate(withSymbolParam(target, sym)) : setSymbol(sym)))
+    const how = howFrom(mods.current)
+    mods.current = { shiftKey: false, metaKey: false }
+    run(() => (destination ? navigate(withSymbolParam(destination, sym)) : go(sym, how)))
   }
 
   // Only where symbols are on offer at all, and only for a symbol something
@@ -136,16 +182,35 @@ export function Omnibar() {
       <CommandInput
         value={raw}
         onValueChange={setRaw}
+        onKeyDown={noteMods}
         placeholder="Symbol, page, or > for commands…"
       />
       <CommandList>
         <CommandEmpty>Nothing matches that.</CommandEmpty>
 
+        {suggestions && recentSymbols.length > 0 && (
+          <CommandGroup heading="Recent symbols">
+            {recentSymbols.slice(0, 3).map((r) => (
+              <CommandItem
+                key={`rec-${r.symbol}`}
+                value={`rec-${r.symbol}`}
+                onPointerDown={noteMods}
+                onSelect={() => goToSymbol(r.symbol)}
+              >
+                <History /> <span className="font-mono text-[var(--sk-ticker)]">{r.symbol}</span>
+                <span className="truncate text-muted-foreground">↵ {verb} · ⇧ compare · ⌘ page</span>
+                <WatchButton sym={r.symbol} on={universe.watchlistSet.has(r.symbol)} onAdd={addToWatch} />
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        )}
+
         {suggestions && suggestions.positionSymbols.length > 0 && (
           <CommandGroup heading="In the book">
             {suggestions.positionSymbols.slice(0, 6).map((s) => (
-              <CommandItem key={`book-${s}`} value={`book-${s}`} onSelect={() => goToSymbol(s)}>
+              <CommandItem key={`book-${s}`} value={`book-${s}`} onPointerDown={noteMods} onSelect={() => goToSymbol(s)}>
                 <Hash /> <span className="font-mono">{s}</span>
+                <WatchButton sym={s} on={universe.watchlistSet.has(s)} onAdd={addToWatch} />
               </CommandItem>
             ))}
           </CommandGroup>
@@ -154,7 +219,7 @@ export function Omnibar() {
         {suggestions && suggestions.watchlistOnlySymbols.length > 0 && (
           <CommandGroup heading="Watchlist">
             {suggestions.watchlistOnlySymbols.slice(0, 6).map((s) => (
-              <CommandItem key={`wl-${s}`} value={`wl-${s}`} onSelect={() => goToSymbol(s)}>
+              <CommandItem key={`wl-${s}`} value={`wl-${s}`} onPointerDown={noteMods} onSelect={() => goToSymbol(s)}>
                 <Star /> <span className="font-mono">{s}</span>
               </CommandItem>
             ))}
@@ -164,14 +229,17 @@ export function Omnibar() {
         {(search.data?.length ?? 0) > 0 && (
           <CommandGroup heading="Symbols">
             {search.data!.slice(0, 6).map((hit) => (
-              <CommandItem key={hit.symbol} value={`sym-${hit.symbol}`} onSelect={() => goToSymbol(hit.symbol)}>
+              <CommandItem
+                key={hit.symbol}
+                value={`sym-${hit.symbol}`}
+                onPointerDown={noteMods}
+                onSelect={() => goToSymbol(hit.symbol)}
+              >
                 <Hash />
                 <span className="font-mono">{hit.symbol}</span>
                 <span className="truncate text-muted-foreground">{hit.name ?? ''}</span>
                 {universe.holdingsSet.has(hit.symbol) && <CommandShortcut>in book</CommandShortcut>}
-                {!universe.holdingsSet.has(hit.symbol) && universe.watchlistSet.has(hit.symbol) && (
-                  <CommandShortcut>watchlist</CommandShortcut>
-                )}
+                <WatchButton sym={hit.symbol} on={universe.watchlistSet.has(hit.symbol)} onAdd={addToWatch} />
               </CommandItem>
             ))}
           </CommandGroup>
@@ -179,6 +247,15 @@ export function Omnibar() {
 
         {ticker && (
           <CommandGroup heading={`Open ${ticker} in`}>
+            {/* First, so ↵ on a typed ticker follows the rule: the named
+                destinations render before the search answers, and cmdk keeps
+                whichever row was selected first. */}
+            <CommandItem value={`go-${ticker}`} onPointerDown={noteMods} onSelect={() => goToSymbol(ticker)}>
+              <Hash /> <span className="font-mono text-[var(--sk-ticker)]">{ticker}</span>
+              <span className="truncate text-muted-foreground">
+                {verb === 'swap' ? 'swap it in here' : 'beside this page'} · ⇧ compare · ⌘ page
+              </span>
+            </CommandItem>
             {SYMBOL_DESTINATIONS.map((dest) => (
               <CommandItem
                 key={`dest-${dest.href}`}
@@ -276,6 +353,17 @@ export function Omnibar() {
           </CommandGroup>
         )}
       </CommandList>
+      {/* The keys a name answers, said where you choose one (design Rev .58). */}
+      <div className="flex items-center gap-2.5 border-t border-border px-3 py-1.5 text-dense-micro text-muted-foreground">
+        <kbd className="font-mono">↵</kbd>
+        <span>{verb === 'swap' ? 'swap the symbol here' : 'open beside this page'}</span>
+        <kbd className="font-mono">⇧↵</kbd>
+        <span>compare</span>
+        <kbd className="font-mono">⌘↵</kbd>
+        <span>Symbol page</span>
+        <kbd className="ml-auto font-mono">esc</kbd>
+        <span>close</span>
+      </div>
     </CommandDialog>
   )
 }

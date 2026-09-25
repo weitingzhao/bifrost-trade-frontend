@@ -24,16 +24,18 @@
  * ever gives width to.
  */
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { EQUIP_HUE } from './equip'
 import { animatePanelIn, dismissSurface, registerSurfaceElement } from './equipMotion'
 import {
   PANEL_CARD_PX,
   activeTabOf,
   focusTab,
   stripFor,
+  surfaceHue,
+  surfaceLabel,
   useSurfaces,
   type PanelTab,
 } from './equipSurface'
+import { useCarriedSymbol } from '@/lib/symbolContext'
 import { PlaceButtons } from './PlaceButtons'
 import { SurfaceBody } from './SurfaceBody'
 import { SurfaceGlyph } from './SurfaceGlyph'
@@ -45,24 +47,25 @@ import { useDockColumn } from './symbolDock/dockState'
 
 function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact: boolean }) {
   const full = active || !compact
+  const label = surfaceLabel(tab, useCarriedSymbol())
   return (
     <button
       type="button"
       className={`${css.tab} ${full ? css.tabFull : css.tabIcon} ${active ? css.tabOn : ''}`}
-      style={{ ['--rh' as string]: EQUIP_HUE[tab.group], maxWidth: full && compact ? 150 : 170 }}
-      title={`${tab.label} · ${tab.to}`}
+      style={{ ['--rh' as string]: surfaceHue(tab), maxWidth: full && compact ? 150 : 170 }}
+      title={`${label} · ${tab.to}${tab.subject === 'follow' ? ' — follows the carried symbol' : tab.subject === 'lock' ? ' — locked' : ''}`}
       aria-current={active ? 'true' : undefined}
       onClick={() => focusTab(tab.key)}
     >
       <SurfaceGlyph surface={tab} className={css.glyph} />
       {full ? (
         <>
-          <span className={css.tabName}>{tab.label}</span>
+          <span className={css.tabName}>{label}</span>
           <span
             role="button"
             tabIndex={0}
             className={css.tabClose}
-            aria-label={`Close ${tab.label}`}
+            aria-label={`Close ${label}`}
             title="Close tab"
             onClick={(e) => {
               e.stopPropagation()
@@ -130,7 +133,7 @@ export function EquipPanel() {
         ref={card}
         className={`${css.card} ${css.panel}`}
         style={{
-          ['--rh' as string]: EQUIP_HUE[active.group],
+          ['--rh' as string]: surfaceHue(active),
           // Pushed, the page has already stepped aside, so the card can take
           // the full height. Overlaying, it starts below the top bar — which
           // is one fixed row here and never wraps, so there is nothing to
@@ -178,7 +181,7 @@ export function EquipPanel() {
                 <SurfaceGlyph
                   surface={t}
                   className={css.glyph}
-                  style={{ ['--rh' as string]: EQUIP_HUE[t.group] }}
+                  style={{ ['--rh' as string]: surfaceHue(t) }}
                 />
                 <span className={`${css.tabName} flex-1 text-left`}>{t.label}</span>
                 <span

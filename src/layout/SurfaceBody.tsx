@@ -21,8 +21,10 @@
  */
 import { Suspense, createElement, lazy } from 'react'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { InSurfaceContext } from '@/lib/surfaceScope'
 import { surfacePageFor } from './surfacePages'
 import type { Surface } from './equipSurface'
+import { SurfaceLocation } from './SurfaceLocation'
 import css from './equipSurface.module.css'
 
 /** The five bars the design shows while a surface loads — widths from its own markup. */
@@ -67,30 +69,43 @@ const CopilotThreadBody = lazy(() =>
  */
 export function SurfaceBody({ surface }: { surface: Surface }) {
   const Page = surface.run || surface.thread ? null : surfacePageFor(surface.to)
+  // `createElement`, not `<Page />`: the lint rule reads a capitalised local
+  // as a component *defined* during render, which loses its state on every
+  // pass. These are `lazy()` objects created once at module scope, so the
+  // identity is stable and React reconciles them as the same type — the
+  // rule's concern does not apply, and this is the spelling that says so.
+  const page = Page ? createElement(Page) : null
 
   return (
     <ErrorBoundary key={surface.key}>
-      <Suspense fallback={<SurfaceSkeleton />}>
-        <div className={css.arrive}>
-        {surface.thread ? (
-          <CopilotThreadBody />
-        ) : surface.run ? (
-          <LoopRunPipelineBody runId={surface.run} live />
-        ) : Page ? (
-          // `createElement`, not `<Page />`: the lint rule reads a capitalised
-          // local as a component *defined* during render, which loses its
-          // state on every pass. These are `lazy()` objects created once at
-          // module scope, so the identity is stable and React reconciles them
-          // as the same type — the rule's concern does not apply, and this is
-          // the spelling that says so.
-          createElement(Page)
-        ) : (
-          <p className="p-4 text-dense-meta text-muted-foreground">
-            No page is registered for {surface.to}.
-          </p>
-        )}
-        </div>
-      </Suspense>
+      <InSurfaceContext.Provider value>
+        <Suspense fallback={<SurfaceSkeleton />}>
+          <div className={css.arrive}>
+            {surface.thread ? (
+              <CopilotThreadBody />
+            ) : surface.run ? (
+              <LoopRunPipelineBody runId={surface.run} live />
+            ) : page && surface.subject ? (
+              // The Symbol page reads its own address, not the frame's. Keyed
+              // on the ask, so a contract row re-opens it on the face it names.
+              <SurfaceLocation
+                key={surface.intent?.n ?? 0}
+                path={surface.to}
+                lockedSymbol={surface.subject === 'lock' ? surface.symbol : undefined}
+                initialSearch={surface.intent ? `?tab=${surface.intent.tab}` : ''}
+              >
+                {page}
+              </SurfaceLocation>
+            ) : page ? (
+              page
+            ) : (
+              <p className="p-4 text-dense-meta text-muted-foreground">
+                No page is registered for {surface.to}.
+              </p>
+            )}
+          </div>
+        </Suspense>
+      </InSurfaceContext.Provider>
     </ErrorBoundary>
   )
 }

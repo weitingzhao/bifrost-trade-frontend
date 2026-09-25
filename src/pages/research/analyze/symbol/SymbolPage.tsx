@@ -39,6 +39,7 @@ import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
 import { useResearchContext } from '@/hooks/useResearchContext'
+import { useInSurface } from '@/lib/surfaceScope'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
@@ -74,6 +75,9 @@ export default function SymbolPage() {
   const active = tabFor(params.get(TAB_PARAM), params.get('view'))
   const { symbol } = useResearchContext()
   const faces = useSymbolFaces(symbol)
+  // In the Symbol panel the frame keeps the keys: a Desk behind it, or a
+  // second Symbol page, would otherwise have its digits answered twice.
+  const inSurface = useInSurface()
 
   const setTab = (id: SymbolTabId) => {
     setParams((prev) => {
@@ -92,6 +96,7 @@ export default function SymbolPage() {
    * the Copilot composer, and a digit typed into either is a digit.
    */
   useEffect(() => {
+    if (inSurface) return
     function onKey(e: KeyboardEvent) {
       const el = e.target as HTMLElement | null
       if (el && (/INPUT|TEXTAREA|SELECT/.test(el.tagName) || el.isContentEditable)) return

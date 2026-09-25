@@ -24,6 +24,8 @@ import {
   setFloatSize,
   stripFor,
   surfaceForRoute,
+  surfaceLabel,
+  symbolSurface,
   toggleSurface,
   type Surface,
 } from './equipSurface'
@@ -83,6 +85,33 @@ describe('a run is a surface, not a page', () => {
     closeSurface('run:r-1')
     openSurface(runSurface('r-2'))
     expect(placeOf('run:r-2')).toBe('float')
+  })
+})
+
+describe('the Symbol page as a surface (Rev .58)', () => {
+  it('has one following tab, and a locked tab per name', () => {
+    expect(symbolSurface('NVDA').key).toBe('symbol')
+    expect(symbolSurface('nvda', { lock: true }).key).toBe('symbol:NVDA')
+    // Locking nothing is following.
+    expect(symbolSurface('', { lock: true }).key).toBe('symbol')
+    openSurface(symbolSurface())
+    openSurface(symbolSurface('AMD', { lock: true }), 'panel')
+    openSurface(symbolSurface('AMD', { lock: true }), 'panel')
+    expect(openSurfaceKeys()).toEqual(['symbol', 'symbol:AMD'])
+  })
+
+  it('opens in the panel, and names what it shows', () => {
+    openSurface(symbolSurface())
+    expect(placeOf('symbol')).toBe('panel')
+    expect(surfaceLabel(symbolSurface(), 'PLTR')).toBe('Symbol · PLTR')
+    expect(surfaceLabel(symbolSurface('AMD', { lock: true }), 'PLTR')).toBe('Symbol · AMD (locked)')
+  })
+
+  it('shares one place memory across locked tabs', () => {
+    openSurface(symbolSurface('AMD', { lock: true }), 'float')
+    closeSurface('symbol:AMD')
+    openSurface(symbolSurface('TSLA', { lock: true }))
+    expect(placeOf('symbol:TSLA')).toBe('float')
   })
 })
 

@@ -19,6 +19,8 @@
  * offering a door to nothing.
  */
 import { useNavigate } from 'react-router-dom'
+import { useCarriedSymbol } from '@/lib/symbolContext'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { openSurface, type Place, type Surface } from './equipSurface'
 import { dismissSurface } from './equipMotion'
 import css from './equipSurface.module.css'
@@ -31,6 +33,7 @@ const PLACES: { place: Place; label: string; title: string }[] = [
 
 export function PlaceButtons({ surface, here }: { surface: Surface; here: Place }) {
   const navigate = useNavigate()
+  const carried = useCarriedSymbol()
 
   return (
     <>
@@ -60,7 +63,13 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
                   // and the frame goes. `openSurface` records the choice so the
                   // next open remembers it; the navigating is ours.
                   openSurface(surface, 'page')
-                  navigate(surface.to)
+                  // The Symbol surface is a name, not just a route: the page
+                  // it becomes carries the name it was showing.
+                  navigate(
+                    surface.subject
+                      ? withSymbolParam(surface.to, surface.subject === 'lock' ? surface.symbol : carried)
+                      : surface.to,
+                  )
                   return
                 }
                 openSurface(surface, p.place)

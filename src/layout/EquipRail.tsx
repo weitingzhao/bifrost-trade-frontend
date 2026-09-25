@@ -1,6 +1,7 @@
 /**
  * The bottom toolbar — the equipment's own edge, present on every page.
- * It leads with the Symbol list's switch (Rev .58), then the groups.
+ * It leads with the Symbol list's switch and the Symbol surface (Rev .58),
+ * then the groups.
  *
  * Until design Rev .57 this was a column down the right edge. It lies down now
  * (Shell Spec §5a.11 "右栏下沉为底部工具栏"): the same groups, head then its
@@ -45,7 +46,9 @@ import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { firedTodayCount, useFiredAlerts } from '@/hooks/useFiredAlerts'
 import { computeLiveNavLamp } from '@/utils/livePageLamps'
 import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
-import { PANEL_CARD_PX, opensAsPage, placeOf, surfaceForRoute, useSurfaces } from './equipSurface'
+import { PANEL_CARD_PX, isVisible, opensAsPage, placeOf, surfaceForRoute, symbolSurface, useSurfaces } from './equipSurface'
+import { useSymbolGo } from './symbolGo'
+import { useCarriedSymbol } from '@/lib/symbolContext'
 import { toggleSurfaceFrom } from './equipMotion'
 import { useBottomLane, useToolbarShown } from './bottomLane'
 import { dockActions, useDockState } from './symbolDock/dockState'
@@ -208,6 +211,38 @@ function Group({
 }
 
 const LIST_GLYPH = glyph('symlist')
+const SUBJECT_GLYPH = glyph('subject')
+
+/**
+ * The carried name as a surface (Rev .58): the Symbol page beside this one,
+ * in the panel by default and wherever you last put it after that. Lit while
+ * it is on screen.
+ */
+function SymbolButton() {
+  useSurfaces()
+  const carried = useCarriedSymbol()
+  const { toggle } = useSymbolGo()
+  const shown = isVisible(symbolSurface().key)
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label="Symbol"
+      aria-pressed={shown}
+      title={`Symbol · ${carried || '—'} — ${shown ? 'put away' : 'open beside this page'}${placeNote(symbolSurface().key)}`}
+      className={`${css.btn} ${css.item}`}
+      style={{
+        ['--rh' as string]: 'var(--sk-ticker)',
+        marginLeft: 2,
+        background: shown ? 'color-mix(in srgb, var(--sk-ticker) 16%, var(--sk-surface))' : 'var(--sk-surface)',
+        color: 'var(--sk-ticker)',
+      }}
+    >
+      <SUBJECT_GLYPH className="size-4" aria-hidden />
+      <span className={css.label}>Symbol</span>
+    </button>
+  )
+}
 
 /**
  * The Symbol list's switch (design Rev .58): shows or hides the list. Its
@@ -311,12 +346,14 @@ export function EquipRail() {
         <>
           <div className={css.group}>
             <ListsButton />
+            <SymbolButton />
           </div>
           {groups}
         </>
       ) : (
         <div className={css.group}>
           <ListsButton />
+          <SymbolButton />
           <span className={css.rule} aria-hidden />
           {groups}
         </div>

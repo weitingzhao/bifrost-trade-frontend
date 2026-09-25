@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { routeFor } from '@/layout/routeRegistry'
+import { createExternalStore } from '@/lib/cockpit/externalStore'
 import { recordRecentSymbol } from '@/lib/recentSymbols'
 
 /** Historical name — the record predates the symbol being a shell-wide idea. */
@@ -38,18 +39,33 @@ export function readStoredContext(): StoredContext {
   }
 }
 
+export function normalizeSymbol(value: string | null | undefined): string {
+  return (value ?? '').trim().toUpperCase()
+}
+
+/**
+ * The held symbol, as something a component can subscribe to. Storage alone
+ * is not enough once a carry can happen without a navigation (design Rev .58:
+ * a Symbol-list row on a page that does not read the symbol carries it and
+ * opens the Symbol panel beside the page) — nothing would re-render.
+ */
+const carry = createExternalStore<{ symbol: string }>({ symbol: normalizeSymbol(readStoredContext().symbol) })
+
 export function writeStoredContext(symbol: string, date: string) {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ symbol, date }))
   } catch {
     // ignore quota / private mode
   }
+  const sym = normalizeSymbol(symbol)
+  if (carry.getState().symbol !== sym) carry.setState({ symbol: sym })
   // Every carry is a load, for the Symbol list's Recent.
   recordRecentSymbol(symbol)
 }
 
-export function normalizeSymbol(value: string | null | undefined): string {
-  return (value ?? '').trim().toUpperCase()
+/** The carried symbol — what the Symbol panel follows. */
+export function useCarriedSymbol(): string {
+  return carry.useStore().symbol
 }
 
 export interface SymbolContext {
@@ -67,7 +83,8 @@ export function useSymbolContext(): SymbolContext {
   const [searchParams, setSearchParams] = useSearchParams()
   const { pathname } = useLocation()
   const urlSymbol = normalizeSymbol(searchParams.get('symbol'))
-  const symbol = urlSymbol || normalizeSymbol(readStoredContext().symbol)
+  const held = useCarriedSymbol()
+  const symbol = urlSymbol || held
   // Scoped means the page is actually filtered by it, which takes both a route
   // that reads the parameter and a parameter to read. Clear the filter on
   // Positions and the symbol is still held -- but nothing on screen is narrowed

@@ -9,7 +9,7 @@ export const liveCardHeaderRowClass =
   'flex flex-wrap items-start justify-between gap-3 border-b border-border px-3 py-2'
 export const liveCardTitleRowClass = 'flex items-center gap-2 min-w-0'
 export const liveCardTitleClass = 'text-base font-semibold tracking-tight'
-export const liveHeaderActionsClass = 'flex flex-wrap items-center gap-2 shrink-0'
+export const liveHeaderActionsClass = 'flex max-w-full flex-wrap items-center gap-2 shrink-0'
 
 export const liveSummaryBarClass =
   'flex flex-wrap items-center gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-dense-label'
@@ -39,7 +39,7 @@ export const liveEmptyHintClass = 'text-sm text-muted-foreground py-2'
 export const liveSplitOuterCardClass = liveCardClass
 export const liveSplitBodyClass = 'px-3 pb-3 pt-3'
 export const liveSplitGridClass =
-  'grid gap-3 items-start min-w-0 lg:grid-cols-2'
+  'grid gap-3 items-start min-w-0 @4xl/page:grid-cols-2'
 export const liveSplitWatchingColClass = 'min-w-0'
 export const liveSplitRightColClass = 'min-w-0 flex flex-col gap-3'
 

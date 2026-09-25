@@ -80,10 +80,14 @@ export function AppLayout() {
         <SidebarInset className="h-svh overflow-hidden bg-card">
           <AppHeader />
           <GlobalMarketStatusBar enabled={showMarketStrip} />
+          {/* `@container/page`: the width a page is given, queried by name. A
+            float or panel body declares the same container, so a page that
+            lays out with `@…/page:` reads its own width in both places — the
+            design's surfaces are iframes, where the viewport *is* that width. */}
           <main
             id="main-content"
             tabIndex={-1}
-            className="flex-1 overflow-auto min-w-0 bg-card outline-none"
+            className="@container/page flex-1 overflow-auto min-w-0 bg-card outline-none"
           >
             <BoundedOutlet />
           </main>

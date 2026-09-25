@@ -7,7 +7,7 @@ export const HELP_ORDER_RISK_VERIFY =
   'Distance vs bid % = ROUND((Entry - Bid) / Bid, 2) shown as a percent. Positional drawdown = ROUND(Risk per share / Entry price, 2). ATR sheet uses ATR(14) from sizing compute. Order risk ($) uses |Risk per share| × Share amt.'
 
 export const sizingSheetOrderRowClass = cn(
-  'mb-4 grid grid-cols-1 items-start gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,9fr)]',
+  'mb-4 grid grid-cols-1 items-start gap-3 @4xl/page:grid-cols-[minmax(0,3fr)_minmax(0,9fr)]',
 )
 
 export const sizingDashClass = cn(
@@ -253,7 +253,7 @@ export const sizingPortfolioSummaryMetricEmphClass = cn(
 
 export const sizingPortfolioMaxDdRowClass = cn(
   'mb-2 grid items-start gap-3',
-  'grid-cols-1 lg:grid-cols-[minmax(11rem,2fr)_minmax(11rem,2fr)_minmax(0,8fr)]',
+  'grid-cols-1 @4xl/page:grid-cols-[minmax(11rem,2fr)_minmax(11rem,2fr)_minmax(0,8fr)]',
 )
 
 export const sizingRangeFieldClass = cn(

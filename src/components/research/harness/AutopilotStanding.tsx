@@ -31,9 +31,11 @@ export function AutopilotKpis({ standing }: { standing: AutopilotStanding }) {
   const folded = Math.max(0, (standing.pending_drafts ?? standing.pending_memos) - standing.pending_memos)
   // Five cells in the design's order (Research Autopilot Console.dc.html,
   // Rev 2026-09-18.2): the drafts stand beside the calls they fold into
-  // instead of inside their tooltip.
+  // instead of inside their tooltip. Columns answer the width the strip is
+  // given, not the viewport: in a 420px float the design's embed reads two
+  // per row, and a viewport breakpoint crushed all five into 65px columns.
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 @lg/page:grid-cols-3 @3xl/page:grid-cols-5">
       <Kpi label="Next run" title="The nearest scheduled objective. Run now on any objective does not move its schedule.">
         <span className="text-base">{fmtNext(standing.next_run_at)}</span>
       </Kpi>

@@ -79,7 +79,10 @@ export function WatchBookTable({
   onRemove: (item: WatchlistItem) => void
 }) {
   return (
-    <DenseDataTable>
+    // Nine columns and a thesis that wraps: below this width they crush into
+    // clipped numbers, so a narrow surface scrolls the table in its own frame
+    // (the Live table's rule) rather than squeezing it.
+    <DenseDataTable tableClassName="min-w-[840px]">
       <DenseTableHeader>
         <DenseTableHeadRow>
           <DenseTableHead>Symbol</DenseTableHead>

@@ -358,7 +358,7 @@ export default function HypothesisBoardPage() {
       {query.isError ? (
         <QueryErrorAlert error={query.error} />
       ) : query.isLoading ? (
-        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2.5 @xl/page:grid-cols-2 @4xl/page:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-32 w-full rounded-md" />
           ))}

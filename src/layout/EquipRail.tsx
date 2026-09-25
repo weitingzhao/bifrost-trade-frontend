@@ -107,19 +107,23 @@ function RailButton({
         // stylesheet, after the first build dimmed the whole group to 40% and
         // made them unreadable). Open is the loud state, standing here is the
         // quiet one — a surface you left open is news, a page you are on is not.
+        // The glyph is the group's hue at full ink in every state — the
+        // design's "every icon sits on its own opaque dark tile, glyph in the
+        // module hue" (_Shell TopBar, ink: g.hue). A grey glyph at rest read
+        // as a disabled strip; the tile's fill is what says open or here.
         background: open
-          ? 'color-mix(in oklab, var(--rh) 26%, var(--sk-raised2))'
+          ? 'color-mix(in oklab, var(--rh) 26%, var(--sk-surface))'
           : here
-            ? 'color-mix(in oklab, var(--rh) 16%, var(--sk-raised2))'
+            ? 'color-mix(in oklab, var(--rh) 16%, var(--sk-surface))'
             : 'var(--sk-surface)',
-        color: open || here ? 'var(--rh)' : 'var(--sk-mute)',
+        color: 'var(--rh)',
         ...(head
           ? {
               ['--rh-head-border' as string]: open
                 ? 'var(--rh)'
                 : here
                   ? 'color-mix(in oklab, var(--rh) 60%, transparent)'
-                  : 'var(--sk-line2)',
+                  : 'color-mix(in srgb, var(--sk-ink) 7%, transparent)',
             }
           : {}),
       }}
@@ -173,7 +177,10 @@ function Group({
         headOf={group.id}
         title={group.title}
         open={openAt(group.hub.to)}
-        here={activePath === group.hub.to}
+        // The head stands for the module: standing on any of its pages lights
+        // it (the design's `here = hereIn(module)`), the way the box border
+        // already did. The page icons below light for their own route only.
+        here={here}
       >
         {/* Only the two modules whose state changes without your hand carry
             one: Autopilot's run, Market's feed. */}

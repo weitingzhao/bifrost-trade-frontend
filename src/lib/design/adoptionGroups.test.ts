@@ -41,8 +41,9 @@ describe('adoptionByGroup', () => {
     // page (§16): the four gauges become a hero reading band, the notes move
     // into tooltips, capabilities unchanged. Nine of ten until it is re-walked.
     // Re-walked and built the same day; nine of ten until the Owner looks.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
-    expect(portfolio?.byState.reviewing).toBe(1)
+    // Signed 2026-10-02 — ten of ten again.
+    expect(portfolio).toMatchObject({ total: 10, aligned: 10, left: 0 })
+    expect(portfolio?.byState.reviewing).toBe(0)
     expect(portfolio?.byState.stale).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 

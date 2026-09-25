@@ -123,7 +123,11 @@ export function AppSidebar() {
         // (where no group matches, so the tree renders shut) and then save
         // that set over System's own. Two trees are two identities.
         key={inSystem ? 'system' : 'business'}
-        productName="Bifrost Trade"
+        // The design's lockup (every prototype passes these two): the badge
+        // carries the product, and index.css paints the gate mark, the
+        // Bifröst wordmark and the TRADE * OPTION line over the DS default.
+        productName="Bifröst Trade"
+        productBadge="Trade"
         navGroups={navGroups}
         // A pinned page lights its shelf row instead of its home row: two lit
         // rows for one page reads as a bug. Unpinned, it falls back to the

@@ -62,7 +62,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
         <div
           className={cn(
             'grid gap-x-6 gap-y-2',
-            v.invalidation.length > 0 && v.caveats.length > 0 ? 'md:grid-cols-2' : '',
+            v.invalidation.length > 0 && v.caveats.length > 0 ? '@2xl/page:grid-cols-2' : '',
           )}
         >
           {v.invalidation.length > 0 ? (

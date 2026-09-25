@@ -392,7 +392,7 @@ export default function DecisionInboxPage() {
       {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
       {/* The queue, and beside it the leash: what reaches this page is what the
           leash did not accept on its own, so the rule sits next to its result. */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">
+      <div className="grid gap-4 @4xl/page:grid-cols-[minmax(0,1fr)_18rem] @4xl/page:items-start">
       <div className="min-w-0">
       {query.isError ? (
         <ResearchAuthGap error={query.error} />

@@ -6,7 +6,7 @@ export const watchlistStepperShellClass = cn(
 )
 
 export const watchlistStepperStepClass = cn(
-  'flex flex-1 items-center gap-[0.65rem] border-none bg-transparent p-[0.65rem_1rem] text-left',
+  'flex min-w-0 flex-1 items-center gap-1.5 border-none bg-transparent p-[0.6rem_0.5rem] text-left @xl/page:gap-[0.65rem] @xl/page:p-[0.65rem_1rem]',
   'cursor-pointer text-muted-foreground transition-[background,color] duration-150 hover:bg-muted',
 )
 
@@ -15,17 +15,21 @@ export const watchlistStepperStepActiveClass =
 
 export const watchlistStepperStepDoneClass = 'text-foreground'
 
+// Hidden in a narrow surface: the connector already says the order, and the
+// title needs the room.
 export const watchlistStepperIndexClass = cn(
-  'inline-flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center rounded-full',
+  'hidden h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center rounded-full @xl/page:inline-flex',
   'border border-border text-dense-caption font-bold',
 )
 
 export const watchlistStepperIndexActiveClass =
   'border-primary bg-primary/20 text-primary'
 
-export const watchlistStepperTitleClass = 'block text-dense-body font-semibold'
+export const watchlistStepperTitleClass = 'block truncate text-dense-body font-semibold'
 
-export const watchlistStepperDescClass = 'block text-dense-caption text-muted-foreground'
+// The step's gloss is the first thing to go in a narrow surface: title and
+// count carry the step; the sentence is what a wide page has room for.
+export const watchlistStepperDescClass = 'hidden text-dense-caption text-muted-foreground @xl/page:block'
 
 export const watchlistStepperBadgeClass = cn(
   'ml-auto rounded-full bg-muted px-[0.45rem] py-[0.1rem]',

@@ -43,6 +43,7 @@ import { PlaceButtons } from './PlaceButtons'
 import { SurfaceBody } from './SurfaceBody'
 import { SurfaceGlyph } from './SurfaceGlyph'
 import { SHELL_TOP_BAR_PX } from './shellChrome'
+import { keepEquipmentLinksIn } from './surfaceLinks'
 import css from './equipSurface.module.css'
 
 /** One toggle: the glyph is the size it is, the title says what a click makes it. */
@@ -307,7 +308,7 @@ export function EquipFloat() {
         </button>
         <PlaceButtons surface={float} here="float" />
       </div>
-      <div className={css.body}>
+      <div className={css.body} onClickCapture={keepEquipmentLinksIn('float')}>
         <SurfaceBody surface={float} />
       </div>
       <span className={css.grip} onPointerDown={onGrip} title="Drag to resize" aria-hidden />

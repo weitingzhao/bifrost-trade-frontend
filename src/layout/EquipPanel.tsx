@@ -40,6 +40,7 @@ import { SurfaceGlyph } from './SurfaceGlyph'
 import { SHELL_TOP_BAR_PX } from './shellChrome'
 import { sidePanelPushes } from '@/components/layout/inspectorDock'
 import css from './equipSurface.module.css'
+import { keepEquipmentLinksIn } from './surfaceLinks'
 
 function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact: boolean }) {
   const full = active || !compact
@@ -202,6 +203,7 @@ export function EquipPanel() {
           <div
             key={t.key}
             className={`${css.body} ${t.key === panel.active ? '' : css.bodyHidden}`}
+            onClickCapture={keepEquipmentLinksIn('panel')}
           >
             <SurfaceBody surface={t} />
           </div>

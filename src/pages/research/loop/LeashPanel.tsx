@@ -48,8 +48,8 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
             all four must hold, and only while Trust grants L0 · accepting opens a hypothesis, never an order
           </span>
         </header>
-        <div className="grid grid-cols-1 lg:grid-cols-2">
-          <ol className="list-decimal space-y-1 border-b border-border/50 py-2.5 pl-9 pr-3 text-dense-label leading-relaxed text-foreground/85 lg:border-b-0 lg:border-r">
+        <div className="grid grid-cols-1 @2xl/page:grid-cols-2">
+          <ol className="list-decimal space-y-1 border-b border-border/50 py-2.5 pl-9 pr-3 text-dense-label leading-relaxed text-foreground/85 @2xl/page:border-b-0 @2xl/page:border-r">
             {LEASH_CONDITIONS.map((c) => (
               <li key={c.id}>{c.text}</li>
             ))}

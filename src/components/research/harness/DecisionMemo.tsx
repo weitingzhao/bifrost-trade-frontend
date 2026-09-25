@@ -126,7 +126,7 @@ function RatingCard({
     <button
       type="button"
       onClick={onToggle}
-      className="grid w-full grid-cols-[1.5rem_5.5rem_1fr] items-start gap-x-3 px-2.5 py-2 text-left hover:bg-muted/30 md:grid-cols-[1.5rem_5.5rem_1fr_17rem]"
+      className="grid w-full grid-cols-[1.5rem_5.5rem_1fr] items-start gap-x-3 px-2.5 py-2 text-left hover:bg-muted/30 @2xl/page:grid-cols-[1.5rem_5.5rem_1fr_17rem]"
       aria-expanded={open}
     >
       <span className="flex items-center gap-1 pt-0.5 font-mono text-dense-micro text-muted-foreground">
@@ -182,7 +182,7 @@ function RatingCard({
           </span>
         ) : null}
       </span>
-      <span className="col-span-3 mt-1.5 grid grid-cols-4 gap-1 md:col-span-1 md:mt-0">
+      <span className="col-span-3 mt-1.5 grid grid-cols-4 gap-1 @2xl/page:col-span-1 @2xl/page:mt-0">
         <Level label="Close" value={fmtPx(r.basis?.close)} sub={r.timing.pct_vs_pivot != null ? `${fmtPct(r.timing.pct_vs_pivot)} vs pivot` : undefined} />
         <Level label="Entry" value={r.levels ? `${fmtPx(r.levels.entry_lo)}–${fmtPx(r.levels.entry_hi)}` : '—'} sub={r.levels ? 'pivot to +5%' : 'not applicable'} tone={r.timing.zone === 'in_zone' ? 'success' : undefined} />
         <Level label="Stop" value={fmtPx(r.levels?.stop)} sub={r.levels ? `${r.levels.stop_source} · −${r.levels.risk_pct.toFixed(1)}%` : undefined} tone="danger" />
@@ -207,7 +207,7 @@ function RatingCase({ r, row }: { r: CandidateRating; row: PersonaRow | null }) 
   const b = r.basis
   const comps = b ? Object.entries(b.components).filter(([, v]) => v != null) : []
   return (
-    <div className="grid gap-2 border-t border-border/40 px-2.5 py-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+    <div className="grid gap-2 border-t border-border/40 px-2.5 py-2 @2xl/page:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
       <div className="space-y-2">
         <Box title="Why it was picked">
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-dense-caption">

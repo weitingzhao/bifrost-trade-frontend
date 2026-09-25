@@ -134,7 +134,7 @@ export default function CopilotDeskPage() {
           — the longest read — sits at the foot (Rev 2026-09-20.20). */}
       <WaitingOnYou />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-3 @3xl/page:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <SectionPanel cap="Ran today" title="scheduled agents" note="ET">
           <div className="px-3 py-2">
             <RanToday />
@@ -175,7 +175,7 @@ export default function CopilotDeskPage() {
         loading={standingQ.isLoading}
       />
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-3 @3xl/page:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           {/* Kept beyond the design, and the tab strip now repeats one of its
               three rows: it is the only place that says what the Copilot

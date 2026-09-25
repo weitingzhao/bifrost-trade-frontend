@@ -73,7 +73,7 @@ export function RuleProposalCard({
 
       {expanded ? (
         <>
-          <div className="grid gap-2.5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="grid gap-2.5 @2xl/page:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div className="flex min-w-0 flex-col gap-1 rounded-md border border-border bg-[var(--sk-ground)] px-2.5 py-2">
               <div className="flex items-baseline gap-2">
                 <span className={positionsUi.cap}>Diff</span>

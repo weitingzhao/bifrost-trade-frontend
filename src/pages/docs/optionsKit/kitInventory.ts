@@ -34,8 +34,12 @@ export const KIT_GROUP_LABEL: Record<KitGroup, string> = {
   layout: 'layout · the line under the header',
 }
 
-/** Measured against `node_modules/@bifrost/ui` — pinned by the test. */
-export const UI_VERSION_NOW = '0.4.11'
+/**
+ * Measured against `node_modules/@bifrost/ui` — pinned by the test. 0.4.12
+ * (2026-10-02) is a PageHeader layout patch; the kit's directories are still
+ * absent, so the standing above holds.
+ */
+export const UI_VERSION_NOW = '0.4.12'
 export const UI_VERSION_TARGET = '0.5.0'
 
 export interface KitPrimitive {

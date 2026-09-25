@@ -77,7 +77,7 @@ export function ObjectiveRows({
           an instrument panel: one headline you can read in a breath, three
           facts under it, and the runs behind a fold. The workbench keeps its
           dense tokens; this page is the other posture. */}
-      <div className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1.6fr)_auto]">
+      <div className="grid gap-3 px-4 py-3 @2xl/page:grid-cols-[minmax(0,1.15fr)_minmax(0,1.6fr)_auto]">
         <div className="min-w-0">
           <h3 className="text-base font-semibold leading-snug">
             <Link to={objectivePath(row.id)} className="hover:underline" title="Open the objective — configure and manage it">
@@ -170,7 +170,7 @@ export function ObjectiveRows({
           </dl>
         </div>
 
-        <div className="flex flex-row flex-wrap items-start gap-1 md:flex-col">
+        <div className="flex flex-row flex-wrap items-start gap-1 @2xl/page:flex-col">
           {archived ? null : (
             <Button
               type="button"

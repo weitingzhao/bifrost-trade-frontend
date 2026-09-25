@@ -213,7 +213,7 @@ export default function JournalPage() {
         ))}
       </div>
 
-      <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-3 @4xl/page:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-3">
           {isLoading ? <Skeleton className="h-64 w-full" /> : null}
           {!isLoading && trees.length === 0 ? (
@@ -281,7 +281,7 @@ export default function JournalPage() {
               'Pick an artifact'
             )
           }
-          className="lg:sticky lg:top-2"
+          className="@4xl/page:sticky @4xl/page:top-2"
         >
           <SelectedArtifact
             node={selected}

@@ -184,7 +184,7 @@
     /* Module hues are tool identity, not data: the same in both themes. */
     --equip-autopilot: #a3e635;
     --equip-book: #60a5fa;
-    --equip-copilot: #a78bfa;
+    --equip-copilot: #c084fc;
     --equip-market: #2dd4bf;
 
     /* The DS tokens read the ramp, exactly as the dark block does. */
@@ -414,7 +414,7 @@
      */
     --equip-autopilot: #a3e635;
     --equip-book: #60a5fa;
-    --equip-copilot: #a78bfa;
+    --equip-copilot: #c084fc;
     --equip-market: #2dd4bf;
 
     /* Backgrounds — Legacy 3-layer blue-gray */
@@ -955,4 +955,43 @@ html[data-theme='light'] [data-radix-popper-content-wrapper] > * {
   .sk-lift:hover {
     transform: none;
   }
+}
+
+/*
+ * Brand (design shell-registry.js, `sr-brand-css`): the gate mark and the
+ * Bifröst wordmark, painted over the shared @bifrost/ui lockup in one place so
+ * the Trade shell brands the way every prototype does. The shared library
+ * keeps its own mark for the Ops console — this is Trade's identity, not a
+ * change to the DS. The mark stays lime on both themes: brand identity is not
+ * a mode skin. Same drawing as public/favicon.svg. Unlayered on purpose: it
+ * outranks the lockup's Tailwind utilities without !important.
+ */
+[data-sidebar='header'] svg[aria-label$='logo'] {
+  display: none;
+}
+[data-sidebar='header'] div:has(> svg[aria-label$='logo'])::before {
+  content: '';
+  flex: none;
+  width: 26px;
+  height: 26px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M16 2.8l11.4 6.6v13.2L16 29.2 4.6 22.6V9.4z' stroke='%23566270' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cpath d='M8.4 20.8L23.6 11.2' stroke='%23a3e635' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23a3e635'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+[data-sidebar='header'] svg[aria-label$='logo'] ~ div > div > span:first-child {
+  font-size: 0;
+}
+[data-sidebar='header'] svg[aria-label$='logo'] ~ div > div > span:first-child::after {
+  content: 'Bifr\00f6st';
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+[data-sidebar='header'] svg[aria-label$='logo'] ~ div::after {
+  content: 'TRADE * OPTION';
+  margin-top: -2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--sk-mute);
 }

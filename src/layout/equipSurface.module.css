@@ -23,10 +23,15 @@
   /* The hue sits on the top edge, where the eye lands when a surface appears. */
   border-top: 2px solid var(--rh);
   border-radius: 10px;
-  background: var(--sk-raised);
+  /* Glass, like every other thing that floats over the frame: what is behind
+     the card reads through its edges. The body underneath is opaque (it
+     paints --background), so only the chrome is frosted. */
+  background: color-mix(in srgb, var(--sk-raised) 80%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
   box-shadow:
     0 24px 80px rgba(0, 0, 0, 0.6),
-    0 0 24px color-mix(in oklab, var(--rh) 18%, transparent);
+    0 0 24px color-mix(in oklab, var(--rh) 12%, transparent);
   container-type: inline-size;
 }
 
@@ -79,7 +84,7 @@
   gap: 6px;
   padding: 6px 8px 6px 10px;
   border-bottom: 1px solid var(--sk-line);
-  background: var(--sk-raised2);
+  background: var(--sk-surface);
   cursor: grab;
   user-select: none;
   flex: none;
@@ -137,7 +142,7 @@
   align-items: stretch;
   height: 34px;
   border-bottom: 1px solid var(--sk-line);
-  background: var(--sk-raised2);
+  background: var(--sk-surface);
   flex: none;
 }
 
@@ -160,7 +165,7 @@
   border: 0;
   border-right: 1px solid var(--sk-line);
   background: transparent;
-  color: var(--sk-mute);
+  color: var(--sk-mute2);
   cursor: pointer;
   font: inherit;
 }
@@ -223,7 +228,7 @@
   gap: 1px;
   border: 1px solid var(--sk-line2);
   border-radius: 8px;
-  background: var(--sk-raised2);
+  background: var(--sk-surface);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
 }
 
@@ -351,6 +356,11 @@
   min-height: 0;
   overflow: auto;
   background: var(--background);
+  /* The same named container the frame's <main> declares: a page's
+     `@…/page:` classes read the surface's width here, the way the design's
+     iframe-hosted pages read a 420px viewport (§5a.8, fifteenth round —
+     the surface's width decides the layout grammar, not the screen's). */
+  container: page / inline-size;
 }
 
 /* Loading: five shimmering bars in the shape of a page, then the page fades

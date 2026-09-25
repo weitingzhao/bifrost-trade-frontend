@@ -101,8 +101,12 @@ describe('the design walk, by revision', () => {
     // moved to Home (.55). Packages .17 (full) @ Rev .57 and .18 @ Rev .58
     // rebuild the frame — the right rail becomes a bottom toolbar, the Symbol
     // list stays on every page, the status bar becomes a pill — and move one
-    // page stamp: Research Symbol (.56, its four-layer head).
-    expect(DESIGN_REV).toBe('2026-09-25.58')
+    // page stamp: Research Symbol (.56, its four-layer head). Package .19
+    // (full) @ Rev .72 — the "Apple" round, the Owner's final design — moves
+    // materials, the frame (the pill retires into a top menu bar) and
+    // interactions, and no page stamp: the page files changed only in look,
+    // so nothing walked reads stale for it.
+    expect(DESIGN_REV).toBe('2026-09-25.72')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

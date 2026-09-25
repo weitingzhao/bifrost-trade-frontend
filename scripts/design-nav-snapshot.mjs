@@ -158,14 +158,42 @@ export function roundsByFile(dir) {
   }
 }
 
+/**
+ * A DOM element that answers anything. The registry reads nothing from it —
+ * but since Rev .59 its load-time code mounts chrome (the tip engine, Quick
+ * Look, the What's New card) and walks the element to do it. Every unknown
+ * member is a no-op that hands back another stub, so a method the design
+ * starts calling next round does not fail the sync again.
+ */
 function stubEl() {
-  return {
-    style: { setProperty() {} },
+  const base = {
+    style: { setProperty() {}, removeProperty() {} },
     dataset: {},
-    setAttribute() {},
-    appendChild() {},
+    classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
     textContent: '',
+    innerHTML: '',
+    children: [],
+    childNodes: [],
+    hasAttribute: () => false,
+    getAttribute: () => null,
+    contains: () => false,
+    closest: () => null,
+    matches: () => false,
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    getBoundingClientRect: () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 }),
   }
+  return new Proxy(base, {
+    get(target, key) {
+      if (key in target) return target[key]
+      if (typeof key === 'symbol') return undefined
+      return () => stubEl()
+    },
+    set(target, key, value) {
+      target[key] = value
+      return true
+    },
+  })
 }
 
 function revOf(dir) {
@@ -219,7 +247,33 @@ function generate(pkg) {
   // written — the sync hung until killed. The timers are shadowed for the
   // registry alone: reading a route table schedules nothing.
   const noTimer = () => 0
-  new Function('setInterval', 'setTimeout', src)(noTimer, noTimer)
+  // Rev 2026-09-25.59–.72 (the "Apple" round) wires observers, frames and
+  // media queries at load time — the look pilot, the tip engine, reduced
+  // transparency. None of it bears on the route table; they are no-ops here.
+  class NoObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return []
+    }
+  }
+  const noMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })
+  const browserStubs = {
+    setInterval: noTimer,
+    setTimeout: noTimer,
+    clearTimeout: noTimer,
+    clearInterval: noTimer,
+    requestAnimationFrame: noTimer,
+    cancelAnimationFrame: noTimer,
+    MutationObserver: NoObserver,
+    ResizeObserver: NoObserver,
+    IntersectionObserver: NoObserver,
+    matchMedia: noMedia,
+    getComputedStyle: () => ({ getPropertyValue: () => '' }),
+  }
+  Object.assign(window, browserStubs)
+  new Function(...Object.keys(browserStubs), src)(...Object.values(browserStubs))
   const R = window.ShellRegistry
 
   /** The design's Research seats — the keys of `SEAT_HOME` in `shell-registry.js`. Copilot left the rail 2026-09-14 (§11.0). */

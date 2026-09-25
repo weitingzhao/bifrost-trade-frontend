@@ -2,7 +2,7 @@
  * GENERATED — do not edit. `node scripts/design-nav-snapshot.mjs`.
  *
  * The design registry's colour mirror (`DIRECTION` + `ACCENT` in
- * `design/trade/shell-registry.js`, Rev 2026-09-25.58). The values belong to
+ * `design/trade/shell-registry.js`, Rev 2026-09-25.72). The values belong to
  * `@bifrost/ui` since Rev .31; the registry keeps this copy as a ratchet mirror,
  * and `identityColour.test.ts` holds it to the package.
  */

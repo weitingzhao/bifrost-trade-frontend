@@ -20,10 +20,9 @@
  * `kitInventory.confidenceReading`, is under test, and drives the sample-size
  * control below out of real `DenseTag`s.
  */
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { PageHeader, PageShell } from '@/components/layout'
-import { Badge } from '@/components/ui/badge'
+import { PageHead, PageShell } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -46,10 +45,8 @@ import { fmtPctSigned } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import {
   CodeRef,
-  DocsQuickNav,
   PlannedTokenSwatch,
   SampleBox,
-  SectionCard,
   TokenSwatch,
   type DocsSection,
 } from '@/components/docs/docsUi'
@@ -76,6 +73,43 @@ const SECTIONS: readonly DocsSection[] = [
   { id: 'layout', label: 'layout' },
   { id: 'code-map', label: 'Code map' },
 ]
+
+/** The design's head facts, from the kit inventory rather than retyped. */
+const HEAD_FACTS: readonly [string, ReactNode][] = [
+  ['Base', <span className="font-mono tabular-nums">@bifrost/ui {UI_VERSION_NOW}</span>],
+  ['Proposed', <span className="font-mono tabular-nums">{UI_VERSION_TARGET} · src/finance · src/quant · src/trading</span>],
+  ['Boundary', 'D10 — the system advises and records; it never sends an order. The order vocabulary below has no “working” or “submitted” state.'],
+  ['Spec', <span className="font-mono">Dense UI Options Kit Spec.md</span>],
+]
+
+/**
+ * One section in the design's editorial layout: the number, the title and
+ * what it answers on the left; the section's content beside it.
+ */
+function KitSection({
+  id,
+  n,
+  title,
+  description,
+  children,
+}: {
+  id: string
+  n: string
+  title: string
+  description: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <section id={id} className="flex scroll-mt-24 flex-wrap gap-x-8 gap-y-6 border-t border-[var(--sk-line)] pt-6 pb-6.5">
+      <aside className="min-w-[200px] flex-[0_1_220px]">
+        <div className="font-mono text-dense-meta text-muted-foreground">{n}</div>
+        <h2 className="mt-0.5 mb-2 text-base font-semibold">{title}</h2>
+        <p className="m-0 text-dense-label leading-normal text-[var(--sk-mute2)] text-pretty">{description}</p>
+      </aside>
+      <div className="min-w-0 flex-[1_1_560px] space-y-4 text-sm leading-relaxed text-muted-foreground">{children}</div>
+    </section>
+  )
+}
 
 const OWED = (
   <DenseTag variant="neutral" size="cell">
@@ -142,23 +176,40 @@ export default function OptionsKitPage() {
     !conf.colours ? 'text-muted-foreground' : v > 0 ? 'text-[var(--color-profit)]' : v < 0 ? 'text-[var(--color-loss)]' : ''
 
   return (
-    <PageShell className="w-full min-w-0 space-y-4 pb-10">
-      <PageHeader
-        breadcrumb={<p className="text-xs font-medium text-primary/90">System / Reference</p>}
-        title="Options Kit"
-        description="The options and quant extension to Dense UI — six colour channels and 21 primitives destined for @bifrost/ui. This page says, for each one, what this app renders today and what is still only specified."
-        actions={
-          <Badge variant="secondary" className="font-mono text-dense-caption uppercase tracking-wide">
-            Spec · not scheduled
-          </Badge>
-        }
-      />
+    <PageShell padding="compact">
+      <div className="mx-auto flex w-full max-w-[1240px] flex-col">
+      {/* The design's head: the page head, and beside it the four lines that
+          say what this kit is built on, where it goes, and what it may not do. */}
+      <div className="flex flex-wrap items-start gap-x-6 gap-y-3 pb-4">
+        <div className="min-w-0 flex-[1_1_520px]">
+          <PageHead
+            title="Options Kit"
+            info="The options and quant extension to Dense UI — six colour channels and 21 primitives destined for @bifrost/ui. This page says, for each one, what this app renders today and what is still only specified."
+            meta="spec · not scheduled"
+          />
+        </div>
+        <dl className="m-0 flex flex-[0_1_320px] flex-col gap-1.5 pt-1.5 text-dense-label text-[var(--sk-mute2)]">
+          {HEAD_FACTS.map(([k, v]) => (
+            <div key={k} className="flex items-start gap-2">
+              <dt className="w-[82px] flex-none text-dense-meta font-semibold uppercase tracking-[0.06em] text-muted-foreground">{k}</dt>
+              <dd className="m-0 text-pretty">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
 
-      <DocsQuickNav sections={SECTIONS} ariaLabel="Options kit sections" />
+      <nav aria-label="Options kit sections" className="flex flex-wrap gap-x-3 gap-y-1.5 border-t border-[var(--sk-line)] pt-2.5 pb-3 text-dense-label">
+        {SECTIONS.map((sec, i) => (
+          <a key={sec.id} href={`#${sec.id}`} className="text-[var(--sk-accent)] no-underline hover:text-[var(--sk-accent2)]">
+            {String(i).padStart(2, '0')} {sec.label}
+          </a>
+        ))}
+      </nav>
 
-      <SectionCard
+      <KitSection
         id="standing"
-        title="0 · Where the kit actually stands"
+        n="00"
+        title="Where the kit actually stands"
         description="The spec's own status line, checked rather than quoted."
       >
         <p>
@@ -197,11 +248,12 @@ export default function OptionsKitPage() {
             </div>
           ))}
         </div>
-      </SectionCard>
+      </KitSection>
 
-      <SectionCard
+      <KitSection
         id="channels"
-        title="1 · Six colour channels"
+        n="01"
+        title="Six colour channels"
         description="What each hue is allowed to mean, and the thing it is never allowed to mean."
       >
         <p>
@@ -242,11 +294,12 @@ export default function OptionsKitPage() {
             </div>
           ))}
         </div>
-      </SectionCard>
+      </KitSection>
 
-      <SectionCard
+      <KitSection
         id="finance"
-        title="2 · finance — the numbers on an option"
+        n="02"
+        title="finance — the numbers on an option"
         description={KIT_GROUP_LABEL.finance}
       >
         <p className="text-xs">
@@ -346,11 +399,12 @@ export default function OptionsKitPage() {
             <PrimitiveRow key={p.name} p={p} />
           ))}
         </div>
-      </SectionCard>
+      </KitSection>
 
-      <SectionCard
+      <KitSection
         id="quant"
-        title="3 · quant — reading a sample"
+        n="03"
+        title="quant — reading a sample"
         description="Rule 1 of the spec, shown working: a rate without its sample size is not a reading."
       >
         <div className="flex flex-wrap items-center gap-3">
@@ -420,11 +474,12 @@ export default function OptionsKitPage() {
             <PrimitiveRow key={p.name} p={p} />
           ))}
         </div>
-      </SectionCard>
+      </KitSection>
 
-      <SectionCard
+      <KitSection
         id="trading"
-        title="4 · trading — intent, never execution"
+        n="04"
+        title="trading — intent, never execution"
         description="The spec's §0 boundary: the order vocabulary stops at intended."
       >
         <p className="text-xs">
@@ -468,11 +523,12 @@ export default function OptionsKitPage() {
             <PrimitiveRow key={p.name} p={p} />
           ))}
         </div>
-      </SectionCard>
+      </KitSection>
 
-      <SectionCard
+      <KitSection
         id="layout"
-        title="5 · layout — the line under the header"
+        n="05"
+        title="layout — the line under the header"
         description={KIT_GROUP_LABEL.layout}
       >
         <p className="text-xs">
@@ -486,11 +542,12 @@ export default function OptionsKitPage() {
             <PrimitiveRow key={p.name} p={p} />
           ))}
         </div>
-      </SectionCard>
+      </KitSection>
 
-      <SectionCard
+      <KitSection
         id="code-map"
-        title="6 · Code map"
+        n="06"
+        title="Code map"
         description="Every primitive, its home in @bifrost/ui, and what answers it here today."
       >
         <DenseDataTable tableClassName="min-w-[860px]">
@@ -532,7 +589,8 @@ export default function OptionsKitPage() {
           from this side. Every path in it exists — the test says so — which means the migration is
           a set of moves with known origins, not a greenfield build.
         </p>
-      </SectionCard>
+      </KitSection>
+      </div>
     </PageShell>
   )
 }

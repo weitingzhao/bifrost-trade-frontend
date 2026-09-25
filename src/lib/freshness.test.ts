@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fmtAge, freshReading, inRTH, snapshotStale, tradingCalendar } from './freshness'
+import { etStamp, fmtAge, freshReading, inRTH, snapshotStale, tradingCalendar } from './freshness'
 
 // September is EDT (UTC−4): 14:00 ET is 18:00Z.
 const THU_1400 = Date.UTC(2026, 8, 24, 18, 0, 0)
@@ -69,5 +69,15 @@ describe('freshReading · stream and run', () => {
 describe('fmtAge', () => {
   it('prints the largest unit that fits', () => {
     expect([fmtAge(4_000), fmtAge(120_000), fmtAge(3 * 3600_000), fmtAge(50 * 3600_000)]).toEqual(['4s', '2m', '3h', '2d'])
+  })
+})
+
+describe('etStamp', () => {
+  // 2031-03-11 is a Tuesday; 10:32 UTC is 06:32 EDT.
+  const now = Date.parse('2031-03-11T18:00:00Z')
+  it('says today, the weekday within the week, and the date beyond it', () => {
+    expect(etStamp(Date.parse('2031-03-11T10:32:00Z'), now)).toBe('today 06:32 ET')
+    expect(etStamp(Date.parse('2031-03-09T10:29:00Z'), now)).toBe('Sun 06:29 ET')
+    expect(etStamp(Date.parse('2031-02-20T11:29:00Z'), now)).toBe('02-20 06:29 ET')
   })
 })

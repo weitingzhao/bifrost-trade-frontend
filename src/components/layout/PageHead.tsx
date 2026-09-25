@@ -8,8 +8,9 @@
  * does; a page still on the old `PageHeader` reports nothing, so its leaf
  * stays, and no page is ever left without its name during the move.
  */
-import { useCallback, useEffect } from 'react'
-import { PageHead as UiPageHead, type PageHeadProps as UiPageHeadProps } from '@bifrost/ui'
+import { useCallback, useEffect, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { PageHead as UiPageHead, buttonVariants, type PageHeadProps as UiPageHeadProps } from '@bifrost/ui'
 
 export { PageHeadAction, type PageHeadActionProps, type PageHeadTab } from '@bifrost/ui'
 
@@ -30,4 +31,36 @@ export function PageHead(props: PageHeadProps) {
   useEffect(() => () => broadcast(null), [])
   const onTitleVisible = useCallback((visible: boolean) => broadcast(visible ? 'in' : 'out'), [])
   return <UiPageHead {...props} onTitleVisible={onTitleVisible} />
+}
+
+/**
+ * A head action that goes somewhere rather than doing something: the same
+ * outline register as `PageHeadAction`, but a real link, so it can be opened
+ * in a new tab and read by a screen reader as one. `href` is an external
+ * console and opens in a new tab; `to` is a route here.
+ */
+export function PageHeadLink({
+  to,
+  href,
+  title,
+  children,
+}: {
+  to?: string
+  href?: string
+  title?: string
+  children: ReactNode
+}) {
+  const cls = buttonVariants({ variant: 'outline', size: 'sm' })
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer" title={title} className={cls}>
+        {children}
+      </a>
+    )
+  }
+  return (
+    <Link to={to ?? '/'} title={title} className={cls}>
+      {children}
+    </Link>
+  )
 }

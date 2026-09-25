@@ -35,7 +35,8 @@
  * the design does not price, so it is named rather than made here.
  */
 import { Link } from 'react-router-dom'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
+import { RAISED_PANEL } from '@/components/layout/raisedPanel'
 import { StatusLamp } from '@/components/StatusLamp'
 import { cn } from '@/lib/utils'
 import { OPS_CONSOLE_URL, opsConsoleHref } from '@/lib/opsConsole'
@@ -59,32 +60,33 @@ const OPS_VIEW: Record<DomainStanding['key'], { view: string; label: string }> =
   nightly: { view: 'research-engine', label: 'Research Engine' },
 }
 
+/** A panel that needs attention says so with its edge; a calm one keeps the hairline. */
 const EDGE: Record<string, string> = {
-  green: 'border-border',
+  green: '',
   yellow: 'border-warning/45',
   red: 'border-danger/45',
-  gray: 'border-border',
+  gray: '',
 }
 
 function DomainPanel({ d }: { d: DomainStanding }) {
   return (
-    <section className={cn('overflow-hidden rounded-lg border', EDGE[d.lamp])}>
-      <div className="grid grid-cols-[14px_minmax(0,200px)_minmax(0,1fr)_auto] items-center gap-3.5 px-4 py-3">
-        <StatusLamp lamp={d.lamp} variant="dot" className="h-3 w-3" />
+    <section className={cn(RAISED_PANEL, 'overflow-hidden', EDGE[d.lamp])}>
+      <div className="grid grid-cols-[14px_minmax(0,220px)_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+        <StatusLamp lamp={d.lamp} variant="dot" />
         <div className="flex flex-col gap-0.5">
-          <span className="text-dense-body font-bold">{d.name}</span>
-          <span className={cn('font-mono text-dense-caption', STATE_INK[d.lamp])}>{d.state}</span>
+          <span className="text-sm font-bold text-foreground">{d.name}</span>
+          <span className={cn('font-mono text-dense-meta tabular-nums', STATE_INK[d.lamp])}>{d.state}</span>
         </div>
-        <p className="text-dense-meta leading-relaxed text-secondary-foreground">{d.why}</p>
+        <p className="m-0 text-dense-label leading-[1.55] text-[var(--sk-soft)]">{d.why}</p>
         <span className="flex flex-col items-end gap-1">
-          <Link to={d.to} className="whitespace-nowrap text-dense-caption hover:underline">
+          <Link to={d.to} className="whitespace-nowrap text-dense-meta text-[var(--sk-accent)] hover:underline">
             {d.toLabel}
           </Link>
           <a
             href={opsConsoleHref(OPS_VIEW[d.key].view)}
             target="_blank"
             rel="noreferrer"
-            className="whitespace-nowrap text-dense-caption text-muted-foreground hover:underline"
+            className="whitespace-nowrap text-dense-meta text-muted-foreground hover:underline"
             title={`Diagnosis and repair live in the Ops Console — opens ${OPS_VIEW[d.key].label} in a new tab.`}
           >
             in Ops ↗
@@ -92,7 +94,7 @@ function DomainPanel({ d }: { d: DomainStanding }) {
         </span>
       </div>
       {d.detail.length > 0 ? (
-        <div className="flex flex-col gap-1.5 border-t border-border/60 py-2 pl-11 pr-4">
+        <div className="flex flex-col gap-1.5 border-t border-[color-mix(in_srgb,var(--sk-line)_60%,transparent)] py-2 pl-11 pr-4">
           {d.detail.map((x) => (
             <div key={x.text} className="grid grid-cols-[10px_minmax(0,1fr)] items-baseline gap-2.5">
               <span
@@ -101,7 +103,7 @@ function DomainPanel({ d }: { d: DomainStanding }) {
                   x.tone === 'warn' ? 'bg-warning' : 'bg-muted-foreground',
                 )}
               />
-              <span className="text-dense-caption leading-relaxed text-muted-foreground">
+              <span className="text-dense-meta leading-normal text-[var(--sk-mute2)]">
                 {x.text}
                 {x.ops ? (
                   <>
@@ -133,20 +135,16 @@ export default function SystemStatusPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
+      <PageHead
         title="System Status"
-        description="The trader's three questions — can I trade, can I see, did the data land. Diagnosis and repair live in Ops."
+        info="The trader's three questions — can I trade, can I see, did the data land. Diagnosis and repair live in Ops."
         actions={
-          <a
+          <PageHeadLink
             href={OPS_CONSOLE_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground hover:underline"
             title={`Opens the Ops Console in a new tab. The worst of the three here is ${worstLamp(domains)}.`}
           >
-            <StatusLamp lamp={worstLamp(domains)} variant="dot" className="h-2 w-2" />
-            <span>Open Bifröst Ops ↗</span>
-          </a>
+            Open Bifröst Ops ↗
+          </PageHeadLink>
         }
       />
 
@@ -154,7 +152,7 @@ export default function SystemStatusPage() {
         <DomainPanel key={d.key} d={d} />
       ))}
 
-      <p className="text-dense-caption leading-relaxed text-muted-foreground">
+      <p className="text-dense-meta leading-[1.6] text-muted-foreground">
         Owner ruling 2026-09-15: System collapses to this page and{' '}
         <Link to="/settings" className="text-foreground/80 hover:underline">
           Settings

@@ -7,6 +7,7 @@ export {
 export {
   PageHead,
   PageHeadAction,
+  PageHeadLink,
   PAGEHEAD_EVENT,
   type PageHeadProps,
   type PageHeadActionProps,

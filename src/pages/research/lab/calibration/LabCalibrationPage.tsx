@@ -15,7 +15,7 @@ import { DenseTag, EmptyState, HealthLamp } from '@bifrost/ui'
 import { fetchResearchDoc } from '@/api/research/docs'
 import { SegmentControl } from '@/components/data-display'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
@@ -119,18 +119,25 @@ export default function LabCalibrationPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
-        breadcrumb={<p className="text-xs font-medium text-primary/90">System / Alignment</p>}
+      <PageHead
         title="Calibration"
-        titleSize="large"
-        description="The blueprint says what Research should be; the calibration says what it is — contract by contract, each with the evidence behind its state, read live from both documents."
+        info="The blueprint says what Research should be; the calibration says what it is — contract by contract, each with the evidence behind its state, read live from both documents."
+        stamp={
+          doc?.version ? (
+            <span
+              className="inline-flex h-6 items-center rounded-md border border-border px-2 font-mono text-dense-micro tracking-wide text-muted-foreground"
+              title={`The calibration document's own round${doc.updated ? ` · updated ${doc.updated}` : ''}`}
+            >
+              ROUND {doc.version}
+            </span>
+          ) : undefined
+        }
       />
 
       {/* Rev .52: the view switch leads the toolbar (§16.10 — a page's face
           switch is the toolbar's first item), then where both documents are
-          read from, then the way to the blueprint. The round stays here until
-          System's pages move to PageHead, whose stamp is where the design
-          puts it. */}
+          read from, then the way to the blueprint. The document's round is
+          the page head's stamp, where the design puts it. */}
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
         <SegmentControl
           ariaLabel="View"
@@ -149,7 +156,6 @@ export default function LabCalibrationPage() {
         />
         <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
           read live · GET /research/docs/calibration · /research/docs/blueprint
-          {doc?.version ? ` · round ${doc.version}` : ''}
           {doc?.updated ? ` · updated ${doc.updated}` : ''}
         </span>
         {doc?.status ? (

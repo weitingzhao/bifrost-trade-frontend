@@ -41,7 +41,10 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { Activity } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
+import { useState, type ReactNode } from 'react'
+import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
+import { RAISED_PANEL } from '@/components/layout/raisedPanel'
+import { etStamp } from '@/lib/freshness'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -52,10 +55,7 @@ import {
   DenseTableRow,
   DenseTag,
   EmptyState,
-  denseTable,
-  denseTableNumCell,
 } from '@/components/data-display'
-import { Card, CardContent } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fetchSignalHealth } from '@/api/research/similarRegime'
@@ -114,6 +114,43 @@ function Composition({ rows, note }: { rows: readonly CompositionRow[]; note: st
   )
 }
 
+const CAP = 'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+const PANEL_HEAD = 'flex flex-wrap items-baseline gap-2.5 border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3 py-2'
+
+/** One of the readings beside the table: a cap, then its body. */
+function SidePanel({
+  cap,
+  aside,
+  row,
+  children,
+}: {
+  cap: string
+  aside?: string
+  /** Lay the body out as a wrapping row (the hypothesis counts) rather than a column. */
+  row?: boolean
+  children: ReactNode
+}) {
+  return (
+    <section className={cn(RAISED_PANEL, 'overflow-hidden')}>
+      <header className={PANEL_HEAD}>
+        <span className={CAP}>{cap}</span>
+        {aside ? <span className="ml-auto text-dense-meta text-muted-foreground">{aside}</span> : null}
+      </header>
+      <div className={cn('px-3 py-2.5', row ? 'flex flex-wrap gap-1.5' : 'flex flex-col gap-1.5')}>{children}</div>
+    </section>
+  )
+}
+
+/** The panel's one big figure, as the design sets it. */
+function Headline({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex items-baseline gap-2.5">
+      <span className="font-mono text-lg font-bold tabular-nums">{value}</span>
+      <span className="text-dense-meta text-muted-foreground">{label}</span>
+    </div>
+  )
+}
+
 function fmtAge(h: number | null | undefined): string {
   if (h == null || !Number.isFinite(h)) return '—'
   if (h < 1) return `${Math.round(h * 60)}m`
@@ -142,71 +179,67 @@ export default function SignalHealthPage() {
   const data = q.data
   const rule = overallRule(data)
   const lenses = healthLenses(data?.freshness ?? [])
+  // Read once: "today" must not move under the reader mid-render.
+  const [nowMs] = useState(() => Date.now())
   const pnlMix = composition(data?.canonical_pnl?.by_quality)
   const ivMix = composition(data?.iv_reconstruction?.by_status)
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
+    <PageShell padding="compact" className="space-y-3">
+      <PageHead
         title="Signal Health"
-        description="Ground truth for every asof in the console — every freshness stamp elsewhere reads this page's, never its own clock. Observe-only."
-        actions={
-          <Link
-            to="/research/lens-coverage"
-            className="text-dense-caption text-primary hover:underline"
-          >
-            Lens Coverage →
-          </Link>
-        }
+        info="Ground truth for every asof in the console (§17) — every freshness stamp elsewhere reads this page's asof, never its own clock. Observe-only."
+        actions={<PageHeadLink to="/research/lens-coverage">Lens Coverage →</PageHeadLink>}
       />
 
       {q.isError ? (
         <QueryErrorAlert error={q.error} onRetry={() => void q.refetch()} />
       ) : null}
 
-      <Card variant="elevated">
-        <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
-          <span className="text-dense-label font-medium">Overall</span>
-          {q.isLoading ? (
-            <Skeleton className="h-5 w-16" />
-          ) : (
-            <DenseTag variant={statusVariant(data?.overall ?? 'missing')}>
-              {(data?.overall ?? '—').toUpperCase()}
-            </DenseTag>
-          )}
-          {data?.as_of ? (
-            <span className="font-mono text-dense-meta text-muted-foreground">
-              asof {data.as_of}
-            </span>
-          ) : null}
-          <span className="text-dense-caption text-muted-foreground">
-            judged by the research engine&rsquo;s signal-health service
+      {/* The verdict strip: its edge takes the verdict's colour when it is not ok. */}
+      <div
+        className={cn(
+          RAISED_PANEL,
+          'flex flex-wrap items-center gap-x-6 gap-y-2.5 rounded-md px-3 py-2.5',
+          rule.tone === 'warn' && 'border-warning/45',
+        )}
+      >
+        <span className={CAP}>Overall</span>
+        {q.isLoading ? (
+          <Skeleton className="h-5 w-16" />
+        ) : (
+          <DenseTag variant={statusVariant(data?.overall ?? 'missing')} size="cell">
+            {(data?.overall ?? '—').toUpperCase()}
+          </DenseTag>
+        )}
+        {data?.as_of ? (
+          <span className="font-mono text-dense-body tabular-nums" title={`asof ${data.as_of} — as the service states it`}>
+            asof {data.as_of.replace('T', ' ').slice(0, 16)}
           </span>
-          {/* The design's line, and why this page is ground truth rather than
-              a status board: "degraded" is a colour, and *which* lens is late
-              is the only version a reader can act on. */}
-          <span
-            className={cn(
-              'ml-auto text-dense-caption',
-              rule.tone === 'warn' ? 'text-warning' : 'text-muted-foreground',
-            )}
-          >
-            {rule.text}
-          </span>
-        </CardContent>
-      </Card>
+        ) : null}
+        <span className="text-dense-meta text-muted-foreground">
+          judged by Research · the engine&rsquo;s signal-health service
+        </span>
+        {/* The design's line, and why this page is ground truth rather than
+            a status board: "degraded" is a colour, and *which* lens is late
+            is the only version a reader can act on. */}
+        <span className={cn('ml-auto text-dense-meta', rule.tone === 'warn' ? 'text-warning' : 'text-muted-foreground')}>
+          {rule.text}
+        </span>
+      </div>
 
-      <Card variant="elevated">
-        <CardContent className="space-y-2 px-3 py-2">
-          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="text-dense-label font-medium">Lens freshness</span>
-            <span className="text-dense-caption text-muted-foreground">
-              {lenses.length} tables · amber = old, red = wrong, grey = not probed — an unprobed
-              lens is not a down lens
+      {/* The design's two columns: the lens table, and the readings beside it. */}
+      <div className="grid grid-cols-1 items-start gap-3 @4xl/page:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
+        <section className={cn(RAISED_PANEL, 'overflow-hidden')}>
+          <header className={PANEL_HEAD}>
+            <span className={CAP}>Lens freshness</span>
+            <span className="text-dense-body font-semibold">{lenses.length} tables</span>
+            <span className="text-dense-meta text-muted-foreground">
+              amber = old, red = wrong, grey = not probed — an unprobed lens is not a down lens
             </span>
-          </p>
+          </header>
           {q.isLoading ? (
-            <Skeleton className="h-24 w-full" />
+            <Skeleton className="m-3 h-24" />
           ) : !data?.freshness?.length ? (
             <EmptyState
               icon={<Activity />}
@@ -214,140 +247,123 @@ export default function SignalHealthPage() {
               description="Feature tables may be empty or unreachable."
             />
           ) : (
-            <DenseDataTable tableClassName="min-w-[760px]">
+            <DenseDataTable standard>
               <DenseTableHeader>
                 <DenseTableHeadRow>
-                  <DenseTableHead>Signal</DenseTableHead>
-                  <DenseTableHead>Status</DenseTableHead>
-                  <DenseTableHead className="text-right">Rows</DenseTableHead>
-                  <DenseTableHead className="text-right">Age</DenseTableHead>
-                  <DenseTableHead>Last computed</DenseTableHead>
-                  <DenseTableHead>Expected</DenseTableHead>
-                  <DenseTableHead>Downstream</DenseTableHead>
+                  <DenseTableHead col="entity">Lens</DenseTableHead>
+                  <DenseTableHead col="tag">Status</DenseTableHead>
+                  <DenseTableHead col="num">Rows</DenseTableHead>
+                  <DenseTableHead col="num">Age</DenseTableHead>
+                  <DenseTableHead col="tag">Last computed</DenseTableHead>
+                  <DenseTableHead col="tag">Expected</DenseTableHead>
+                  <DenseTableHead col="tag">Downstream</DenseTableHead>
                 </DenseTableHeadRow>
               </DenseTableHeader>
               <DenseTableBody>
-                {lenses.map((f) => (
-                  <DenseTableRow key={f.label}>
-                    <DenseTableCell>
-                      <div className="flex flex-col">
-                        <span className="text-dense-label">{f.label}</span>
-                        <span className="text-dense-micro text-muted-foreground font-mono">
-                          {f.table}
-                        </span>
-                      </div>
-                    </DenseTableCell>
-                    <DenseTableCell>
-                      <DenseTag variant={statusVariant(f.status)}>{f.status}</DenseTag>
-                    </DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>{f.row_count}</DenseTableCell>
-                    <DenseTableCell className={denseTableNumCell}>{fmtAge(f.age_hours)}</DenseTableCell>
-                    <DenseTableCell className={denseTable.mutedMeta}>
-                      {f.max_computed_at ?? '—'}
-                    </DenseTableCell>
-                    <DenseTableCell className={denseTable.mutedMeta}>{f.expected}</DenseTableCell>
-                    <DenseTableCell>
-                      {/* Only where this side has the page. A link to an
-                          approximate destination answers "where does this
-                          land" with a guess. */}
-                      {f.downstream ? (
-                        <Link
-                          to={f.downstream.to}
-                          className="text-dense-caption text-primary hover:underline"
-                        >
-                          {f.downstream.label} →
-                        </Link>
-                      ) : (
-                        <span
-                          className="text-dense-caption text-muted-foreground/60"
-                          title="No page on this side reads this table directly."
-                        >
-                          —
-                        </span>
-                      )}
-                    </DenseTableCell>
-                  </DenseTableRow>
-                ))}
+                {lenses.map((f) => {
+                  const at = f.max_computed_at ? Date.parse(f.max_computed_at) : NaN
+                  return (
+                    <DenseTableRow key={f.label}>
+                      <DenseTableCell col="entity">
+                        <div className="flex flex-col">
+                          <span className="text-dense-label font-medium text-foreground">{f.label}</span>
+                          <span className="font-mono text-dense-caption text-muted-foreground">{f.table}</span>
+                        </div>
+                      </DenseTableCell>
+                      <DenseTableCell col="tag">
+                        <DenseTag variant={statusVariant(f.status)} size="cell">
+                          {f.status}
+                        </DenseTag>
+                      </DenseTableCell>
+                      <DenseTableCell col="num" className="text-[var(--sk-mute2)]">
+                        {f.row_count.toLocaleString()}
+                      </DenseTableCell>
+                      <DenseTableCell col="num" className={cn('font-semibold', f.status === 'stale' && 'text-warning')}>
+                        {fmtAge(f.age_hours)}
+                      </DenseTableCell>
+                      <DenseTableCell col="tag" className="text-dense-meta text-[var(--sk-mute2)]">
+                        <span title={f.max_computed_at ?? undefined}>{Number.isFinite(at) ? etStamp(at, nowMs) : '—'}</span>
+                      </DenseTableCell>
+                      <DenseTableCell col="tag" className="text-dense-meta text-muted-foreground">
+                        {f.expected}
+                      </DenseTableCell>
+                      <DenseTableCell col="tag" className="text-dense-meta">
+                        {/* Only where this side has the page. A link to an
+                            approximate destination answers "where does this
+                            land" with a guess. */}
+                        {f.downstream ? (
+                          <Link to={f.downstream.to} className="text-[var(--sk-accent)] hover:underline">
+                            {f.downstream.label} →
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground/60" title="No page on this side reads this table directly.">
+                            —
+                          </span>
+                        )}
+                      </DenseTableCell>
+                    </DenseTableRow>
+                  )
+                })}
               </DenseTableBody>
             </DenseDataTable>
           )}
-        </CardContent>
-      </Card>
+        </section>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        <Card variant="elevated">
-          <CardContent className="space-y-2 px-3 py-2">
-            <p className="text-dense-label font-medium">Hypotheses</p>
-            {q.isLoading ? (
-              <Skeleton className="h-16 w-full" />
-            ) : (
-              <div className="flex flex-wrap gap-2 text-dense-meta">
-                <DenseTag variant="neutral">total {data?.hypotheses.total ?? 0}</DenseTag>
-                {/* The per-status counts, which already include `active` —
-                    printing `total_active` beside them said 32 twice. */}
-                {Object.entries(data?.hypotheses.counts ?? {}).map(([k, v]) => (
-                  <DenseTag key={k} variant={k === 'active' ? 'info' : 'neutral'}>
-                    {k} {v}
-                  </DenseTag>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card variant="elevated">
-          <CardContent className="space-y-2 px-3 py-2">
-            <p className="text-dense-label font-medium">Canonical P&amp;L coverage</p>
+        <div className="flex min-w-0 flex-col gap-3">
+          <SidePanel cap="Canonical P&L coverage">
             {q.isLoading ? (
               <Skeleton className="h-16 w-full" />
             ) : blockError(data?.canonical_pnl) ? (
               <BlockFailed why={blockError(data?.canonical_pnl) as string} />
             ) : (
-              <div className="space-y-1.5 text-dense-meta">
-                <p>
-                  Insufficient chain:{' '}
-                  <span className="font-mono text-foreground">
-                    {fmtPctFromFraction(data?.canonical_pnl.insufficient_pct)}
-                  </span>
-                </p>
-                <p className="text-muted-foreground">
-                  {(data?.canonical_pnl.rows ?? 0).toLocaleString()} rows ·{' '}
-                  {data?.canonical_pnl.symbols ?? '—'} symbols
+              <>
+                <Headline value={fmtPctFromFraction(data?.canonical_pnl.insufficient_pct)} label="insufficient chain" />
+                <p className="m-0 text-dense-meta leading-normal text-[var(--sk-mute2)]">
+                  {(data?.canonical_pnl.rows ?? 0).toLocaleString()} rows · {data?.canonical_pnl.symbols ?? '—'} symbols
                 </p>
                 <Composition
                   rows={pnlMix}
                   note="The design reads this as the share pricing off a full chain. Every row here is interpolated, so 0% insufficient means every leg got a price — not that any priced off a chain."
                 />
-              </div>
+              </>
             )}
-          </CardContent>
-        </Card>
+          </SidePanel>
 
-        <Card variant="elevated">
-          <CardContent className="space-y-2 px-3 py-2">
-            <p className="flex flex-wrap items-baseline gap-x-2">
-              <span className="text-dense-label font-medium">Universe readiness</span>
-              <span className="text-dense-caption text-muted-foreground">
-                from the SEPA criteria stats
-              </span>
-            </p>
+          {data?.iv_reconstruction ? (
+            <SidePanel cap="IV reconstruction">
+              {blockError(data.iv_reconstruction) ? (
+                <BlockFailed why={blockError(data.iv_reconstruction) as string} />
+              ) : (
+                <>
+                  <Headline value={fmtPctFromFraction(data.iv_reconstruction.solver_ok_pct)} label="solver OK" />
+                  <p className="m-0 text-dense-meta leading-normal text-[var(--sk-mute2)]">
+                    {(data.iv_reconstruction.rows ?? 0).toLocaleString()} rows · {data.iv_reconstruction.symbols ?? '—'}{' '}
+                    symbols · {data.iv_reconstruction.distinct_dates ?? '—'} dates
+                  </p>
+                  <Composition
+                    rows={ivMix}
+                    note="Most rows are vendor snapshots and never reach the solver. The percentage above is its success on what it was asked, not on the data."
+                  />
+                </>
+              )}
+            </SidePanel>
+          ) : null}
+
+          <SidePanel cap="Universe readiness" aside="from the SEPA criteria stats">
             {readinessQ.isLoading ? (
               <Skeleton className="h-24 w-full" />
             ) : readinessQ.isError ? (
-              <p className="text-dense-caption text-muted-foreground">
+              <p className="m-0 text-dense-meta text-muted-foreground">
                 The criteria stats did not answer — the rows are absent rather than zero.
               </p>
             ) : (
-              <div className="space-y-1">
+              <>
                 {readinessRows(readinessQ.data ?? {}).map((r) => (
-                  <div
-                    key={r.label}
-                    className="flex items-baseline justify-between gap-2 text-dense-meta"
-                  >
-                    <span className="min-w-0 text-muted-foreground">{r.label}</span>
+                  <div key={r.label} className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2.5">
+                    <span className="text-dense-label text-[var(--sk-soft)]">{r.label}</span>
                     <span
                       className={cn(
-                        'shrink-0 font-mono tabular-nums',
+                        'font-mono text-dense-label font-semibold tabular-nums',
                         r.warn ? 'text-warning' : r.owed ? 'text-muted-foreground/60' : '',
                       )}
                       title={r.owed}
@@ -357,48 +373,37 @@ export default function SignalHealthPage() {
                   </div>
                 ))}
                 {/* The design's own sentence, and the half that matters. */}
-                <p className="border-t border-border/60 pt-1.5 text-dense-caption leading-relaxed text-muted-foreground">
-                  Readiness is a coverage fact, not a stock pick: a symbol short of bars or
-                  statements is excluded from ratings and screens until a backfill lands.
-                  Per-symbol detail is on{' '}
-                  <Link to="/research/lens-coverage" className="text-primary hover:underline">
+                <p className="m-0 border-t border-[var(--sk-line)] pt-2 text-dense-meta leading-normal text-muted-foreground">
+                  Readiness is a coverage fact, not a stock pick: a symbol short of bars or statements is
+                  excluded from ratings and screens until a backfill lands. Per-symbol detail lives in{' '}
+                  <Link to="/research/lens-coverage" className="text-[var(--sk-accent)] hover:underline">
                     Lens Coverage
                   </Link>
                   .
                 </p>
-              </div>
+              </>
             )}
-          </CardContent>
-        </Card>
+          </SidePanel>
 
-        {data?.iv_reconstruction ? (
-          <Card variant="elevated">
-            <CardContent className="space-y-2 px-3 py-2">
-              <p className="text-dense-label font-medium">IV reconstruction</p>
-              {blockError(data.iv_reconstruction) ? (
-                <BlockFailed why={blockError(data.iv_reconstruction) as string} />
-              ) : (
-              <div className="space-y-1.5 text-dense-meta">
-                <p>
-                  Solver OK:{' '}
-                  <span className="font-mono text-foreground">
-                    {fmtPctFromFraction(data.iv_reconstruction.solver_ok_pct)}
-                  </span>
-                </p>
-                <p className="text-muted-foreground">
-                  {(data.iv_reconstruction.rows ?? 0).toLocaleString()} rows ·{' '}
-                  {data.iv_reconstruction.symbols ?? '—'} symbols ·{' '}
-                  {data.iv_reconstruction.distinct_dates ?? '—'} dates
-                </p>
-                <Composition
-                  rows={ivMix}
-                  note="Most rows are vendor snapshots and never reach the solver. The percentage above is its success on what it was asked, not on the data."
-                />
-              </div>
-              )}
-            </CardContent>
-          </Card>
-        ) : null}
+          <SidePanel cap="Hypotheses store" row>
+            {q.isLoading ? (
+              <Skeleton className="h-5 w-full" />
+            ) : (
+              <>
+                {/* The per-status counts, which already include `active` —
+                    printing `total_active` beside them said 32 twice. */}
+                {Object.entries(data?.hypotheses.counts ?? {}).map(([k, v]) => (
+                  <DenseTag key={k} variant={k === 'active' ? 'info' : 'neutral'} size="cell">
+                    {k} {v}
+                  </DenseTag>
+                ))}
+                <DenseTag variant="neutral" size="cell">
+                  total {data?.hypotheses.total ?? 0}
+                </DenseTag>
+              </>
+            )}
+          </SidePanel>
+        </div>
       </div>
     </PageShell>
   )

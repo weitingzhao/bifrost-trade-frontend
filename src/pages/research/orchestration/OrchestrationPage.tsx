@@ -15,8 +15,8 @@
  */
 import { useMemo, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
-import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { useNavigate } from 'react-router-dom'
+import { PageHead, PageHeadLink, PageShell, SectionPanel } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { AgentOrchestrationDiagram } from '@/components/copilot/AgentOrchestrationDiagram'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
@@ -40,9 +40,10 @@ import { fetchResearchHealth } from '@/api/research/health'
 import { cn } from '@/lib/utils'
 
 const LEAD =
-  'How the agents are wired to each other. A question you type takes the chat path and is routed ' +
-  'once; an objective takes the batch path and is graded by a fixed chain. Who each one is, and ' +
-  'how well it has judged, is on Personas.'
+  'Two entry paths · one roster · nothing on either path can place an order. How the agents are ' +
+  'wired to each other: a question you type takes the chat path and is routed once; an objective ' +
+  'takes the batch path and is graded by a fixed chain. Who each one is, and how well it has ' +
+  'judged, is on Personas.'
 
 interface Stage {
   n: string
@@ -107,22 +108,22 @@ function Path({ stages, cap, title, note }: { stages: Stage[]; cap: string; titl
       <ol className="m-0 flex list-none flex-col gap-0 px-3 py-2.5">
         {stages.map((s, i) => (
           <li key={s.n}>
-            <div className="flex items-start gap-2.5">
-              <span className="pt-0.5 font-mono text-dense-micro text-muted-foreground">{s.n}</span>
-              <div className="min-w-0 space-y-0.5">
+            {/* Each stage is its own box on the ground, joined by a short
+                rule — the design's `.or-stage`. */}
+            <div className="flex items-start gap-2 rounded-md border border-[var(--sk-line)] bg-background px-2.5 py-2">
+              <span className="pt-0.5 font-mono text-dense-caption text-muted-foreground">{s.n}</span>
+              <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-dense-label font-semibold">{s.name}</span>
+                  <span className="text-dense-body font-semibold text-foreground">{s.name}</span>
                   <DenseTag variant="category" size="cell">
                     {s.tag}
                   </DenseTag>
                 </span>
-                <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                  {s.sub}
-                </p>
+                <p className="m-0 text-dense-meta leading-normal text-[var(--sk-mute2)] text-pretty">{s.sub}</p>
               </div>
             </div>
             {i < stages.length - 1 ? (
-              <span className="ml-[0.3rem] block h-3 w-px bg-border" aria-hidden />
+              <span className="ml-5 block h-3 w-px bg-[var(--sk-line2)]" aria-hidden />
             ) : null}
           </li>
         ))}
@@ -181,25 +182,21 @@ export default function OrchestrationPage() {
     navigate(`/research/agent-personas?agent=${encodeURIComponent(name)}`)
 
   return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
+    <PageShell padding="compact" className="space-y-3">
+      <PageHead
         title="Orchestration"
-        description={LEAD}
-        actions={
-          <span className="flex flex-wrap items-center gap-2">
-            <DenseTag
-              variant="warning"
-              size="cell"
-              title="D10 (Shell Spec §11.0): no agent on either path places, modifies or cancels an order. Writes land as cards you approve."
-            >
-              D10 · observe-only
-            </DenseTag>
-            <Link to="/research/agent-personas" className="text-dense-meta hover:underline">
-              Personas →
-            </Link>
-          </span>
-        }
+        info={LEAD}
+        actions={<PageHeadLink to="/research/agent-personas">Personas →</PageHeadLink>}
       />
+      <div data-sr-toolbar="">
+        <span
+          className="inline-flex h-5 items-center gap-1.5 whitespace-nowrap rounded border border-[var(--sk-line)] px-2 text-dense-meta"
+          title="D10 (Shell Spec §11.0): no agent on either path places, modifies or cancels an order. Writes land as cards you approve."
+        >
+          <span className="text-muted-foreground">D10</span>
+          <span className="text-warning">observe-only</span>
+        </span>
+      </div>
 
       {isError ? <ResearchAuthGap error={error} /> : null}
       {isLoading ? <Skeleton className="h-48 w-full rounded-lg" /> : null}

@@ -39,7 +39,7 @@
  */
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageHeadAction, PageHeadLink, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { fetchLensCoverage } from '@/api/research/lensCoverage'
 import { CoverageMatrix } from './CoverageMatrix'
@@ -92,29 +92,22 @@ export default function LensCoveragePage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
+      <PageHead
         title="Lens Coverage"
-        description="What the analysis can actually see, lens by lens, tier by tier. The Dossier asks this of one symbol; this asks it of all of them."
+        info="What the analysis can actually see, lens by lens, tier by tier. The Dossier asks this of one symbol; this asks it of all of them — and then names the symbols it cannot see."
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/research/lab/calibration"
-              className="text-dense-meta text-muted-foreground hover:text-foreground"
-            >
-              Calibration →
-            </Link>
-            <button
-              type="button"
+          <>
+            <PageHeadLink to="/research/lab/calibration">Calibration →</PageHeadLink>
+            <PageHeadAction
               onClick={() => {
                 void q.refetch()
                 tierQs.forEach((t) => void t.refetch())
               }}
               disabled={reading}
-              className="rounded-md border border-border px-2 py-1 text-dense-meta hover:bg-secondary disabled:opacity-50"
             >
               {reading ? 'Reading…' : '↻ Re-read universe'}
-            </button>
-          </div>
+            </PageHeadAction>
+          </>
         }
       />
 

@@ -177,8 +177,9 @@ describe('the design walk, as it stands', () => {
     // waiting in `reviewing`, where a signed page goes back when it is rebuilt.
     // 60 on 2026-09-25 (Rev .55): the five page-head / §17 sample pages were
     // rebuilt and wait for a look, and Objectives moved to Home. 59 when
-    // Objectives was rebuilt to that rev and joined them.
-    expect(counts.aligned + counts.byState.stale).toBe(59)
+    // Objectives was rebuilt to that rev and joined them. 57 the same day:
+    // the System pass rebuilt Orchestration and Personas onto the page head.
+    expect(counts.aligned + counts.byState.stale).toBe(57)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -201,8 +202,9 @@ describe('the design walk, as it stands', () => {
     // 59 on 2026-09-25 (Rev .55): Backtest, Positions, Risk, Limits and Margin
     // are the page-head and §17 samples, rebuilt and back in `reviewing`; and
     // Objectives went stale when the design moved it to Home with a mode tag,
-    // and left for `reviewing` the same day with the tag built.
-    expect(counts.aligned).toBe(59)
+    // and left for `reviewing` the same day with the tag built. 57 with the
+    // System pass: Orchestration and Personas, rebuilt, wait for a look.
+    expect(counts.aligned).toBe(57)
     expect(
       rows
         .filter((r) => r.state === 'stale')
@@ -440,8 +442,9 @@ describe('the design walk, as it stands', () => {
     // 10 the same day: Stock screen and Symbol, re-walked at Rev .43.
     // 15 on 2026-09-25 (Rev .55): the five sample pages join the ten. 16
     // with Objectives, rebuilt at .55 with its mode tag. 19 with the three
-    // System pages Rev .53 drew: Tech Stack, Blueprint, UI Design System.
-    expect(counts.byState.reviewing).toBe(19)
+    // System pages Rev .53 drew: Tech Stack, Blueprint, UI Design System. 21
+    // with Orchestration and Personas, rebuilt in the System pass.
+    expect(counts.byState.reviewing).toBe(21)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -459,7 +462,6 @@ describe('the design walk, as it stands', () => {
       '/portfolio/performance',
       '/portfolio/pnl-explain',
       '/portfolio/transfer',
-      '/research/agent-personas',
       '/research/book',
       '/research/compare',
       '/research/contract-screener',
@@ -484,7 +486,6 @@ describe('the design walk, as it stands', () => {
       '/research/loop/objectives/obj-smallcap-sepa',
       '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
-      '/research/orchestration',
       '/research/overview',
       '/research/ratings/stocks',
       '/research/scan',
@@ -521,11 +522,13 @@ describe('the design walk, as it stands', () => {
       '/docs/tech-stack',
       '/docs/ui-design-system',
       '/portfolio/positions',
+      '/research/agent-personas',
       '/research/backtest',
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lens-coverage',
       '/research/narrative',
+      '/research/orchestration',
       '/research/screener',
       '/research/signal-health',
       '/research/symbol',

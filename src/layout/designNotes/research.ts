@@ -157,7 +157,8 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'One divergence, and the gate found it: the design\u2019s runtime fold points at **System '
     + 'Status**, a page this side has not collapsed into one \u2014 the link goes to System \u203a Daemon, '
     + 'which holds that reading here. Owner signed off 2026-09-21.'
-    + ' Rev 2026-09-25.48 (Q1, option B) moved the persona-path reading here and off System Status: **Persona eval path** under How it is wired now reads research `/health · persona_eval_agents` (0.112.0+) live — `agents` on DEV, where research-api sets the flag. An older API is said to not report it rather than read as the heuristic. Diverged, named: the prototype’s note ends `never a prod default`, and DEV’s research-api sets the flag, so the line says only that the code’s default is the heuristic. The design did not move this page’s rev, so it stays signed.',
+    + ' Rev 2026-09-25.48 (Q1, option B) moved the persona-path reading here and off System Status: **Persona eval path** under How it is wired now reads research `/health · persona_eval_agents` (0.112.0+) live — `agents` on DEV, where research-api sets the flag. An older API is said to not report it rather than read as the heuristic. Diverged, named: the prototype’s note ends `never a prod default`, and DEV’s research-api sets the flag, so the line says only that the code’s default is the heuristic. The design did not move this page’s rev, so it stays signed.'
+    + ' 2026-09-25 System pass (Owner: roughly align the System pages): back in reviewing. PageHead with Personas → as the head action and the design’s LEAD behind ⓘ; the D10 observe-only chip sits in the toolbar under the head; every stage of both paths is its own bordered box joined by a short rule (`.or-stage`). Wiring and the diagram unchanged.',
   '/research/agent-personas':
     'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 adds the Track record table — you · hand verdicts beside the four judges, same 20d rule, n<10 amber — so the sign-off reads stale until W2 builds the verdict store and the table over it.'
     + ' '
@@ -188,7 +189,8 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'instead, which is a fact about the role and not a gap. The source-attributed table stays below '
     + 'the bench rather than being folded into it: it answers the question this side can answer. '
     + 'Untouched, as the brief says: the persona markdown editor, the preference slots, the Cannot '
-    + 'lines and the D10 lock. Owner signed off 2026-09-21.',
+    + 'lines and the D10 lock. Owner signed off 2026-09-21.'
+    + ' 2026-09-25 System pass (Owner: roughly align the System pages): back in reviewing. PageHead (the description behind ⓘ, the user switcher as the head action). The Today · Threads · Personas strip stays the shared CopilotTabs rather than moving into the head’s tabs, because the Copilot desk reads the same strip and is not a System page.',
   '/research/daily-brief':
     'Walked 2026-09-22 against Research Daily Brief.dc.html (Rev 2026-09-17.1), and it is the '
     + 'largest mismatch this programme has found \u2014 not a shape, a **question**. The design\u2019s '

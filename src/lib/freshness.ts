@@ -75,6 +75,21 @@ export function etClock(ms: number, seconds = false): string {
   })
 }
 
+/**
+ * When something last ran, in the words a reader uses: `today 06:32 ET`,
+ * `Sun 06:29 ET` within the week, the date beyond it (design Signal Health's
+ * Last computed column).
+ */
+export function etStamp(ms: number, nowMs: number): string {
+  const at = etParts(ms)
+  const now = etParts(nowMs)
+  const clock = etClock(ms)
+  if (at.date === now.date) return `today ${clock} ET`
+  const days = (nowMs - ms) / 86_400_000
+  if (days >= 0 && days < 6) return `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][at.weekday]} ${clock} ET`
+  return `${at.date.slice(5)} ${clock} ET`
+}
+
 const OPEN_MIN = 9 * 60 + 30
 const CLOSE_MIN = 16 * 60
 

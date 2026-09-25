@@ -9,6 +9,7 @@ import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
 import { ShellStatusBar } from './ShellStatusBar'
 import { initialSidebarOpen, SHELL_SIDEBAR_WIDTH } from './shellChrome'
+import { isSystemRoute } from './routeRegistry'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { useAlerts } from '@/hooks/useAlerts'
@@ -51,7 +52,10 @@ export function AppLayout() {
   // After the held-symbol sync: the page context reads the URL the sync just settled.
   useAmbientPageContext()
   useRecentPagesTrail()
-  const showMarketStrip = shouldShowGlobalMarketStrip(pathname)
+  // System pages that live under /research (Signal Health, Calibration, the
+  // agents…) are the machine room, not a market page: the design draws no
+  // market strip anywhere in System.
+  const showMarketStrip = shouldShowGlobalMarketStrip(pathname) && !isSystemRoute(pathname)
   // One SSE subscription, two readers: Alerts groups it by source, the toast
   // stack decides which of it is allowed to interrupt.
   const stream = useSystemMessages()

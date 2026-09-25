@@ -219,7 +219,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Personas',
     crumbs: AGENTS,
     design: {
-      state: 'aligned',
+      state: 'reviewing',
       rev: '2026-09-21.1',
       note: DESIGN_NOTES['/research/agent-personas'],
     },
@@ -231,7 +231,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Orchestration',
     crumbs: AGENTS,
     design: {
-      state: 'aligned',
+      state: 'reviewing',
       rev: '2026-09-21.1',
       note: DESIGN_NOTES['/research/orchestration'],
     },

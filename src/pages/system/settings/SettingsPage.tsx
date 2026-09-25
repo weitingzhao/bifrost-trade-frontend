@@ -37,7 +37,8 @@
  */
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageShell } from '@/components/layout'
+import { RAISED_PANEL } from '@/components/layout/raisedPanel'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useFlexConfigSummary, useInvalidateFlexConfigSummary } from '@/hooks/useFlexConfigSummary'
@@ -74,16 +75,16 @@ function Panel({
   children: React.ReactNode
 }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border">
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.1em] text-muted-foreground">
+    <section className={cn(RAISED_PANEL, 'overflow-hidden')}>
+      <header className="flex flex-wrap items-center gap-2.5 border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3 py-2">
+        <span className="whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground">
           {cap}
         </span>
         <span className="text-dense-body font-semibold">{title}</span>
         {aside ? (
           <span
             className={cn(
-              'ml-auto text-dense-caption',
+              'ml-auto text-dense-meta',
               asideTone === 'warn' ? 'text-warning' : 'text-muted-foreground',
             )}
           >
@@ -96,13 +97,21 @@ function Panel({
   )
 }
 
+/**
+ * A form row, measured (§5a.3): the description takes a reading measure and
+ * the control tracks it, so Edit stays beside the field it edits rather than
+ * at the far edge of a wide pane. The panel still fills the pane.
+ */
+const ROW =
+  'grid grid-cols-[170px_minmax(0,72ch)_auto] items-baseline justify-start gap-3 border-b border-[color-mix(in_srgb,var(--sk-line)_60%,transparent)] px-3 py-2 last:border-b-0'
+
 function Row({ row, action }: { row: SettingRow; action?: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_auto] items-baseline gap-3 border-b border-border/50 px-3 py-2 last:border-b-0">
-      <span className="text-dense-meta text-secondary-foreground">{row.label}</span>
-      <span className="min-w-0 text-dense-caption leading-relaxed text-muted-foreground">
+    <div className={ROW}>
+      <span className="text-dense-label text-[var(--sk-soft)]">{row.label}</span>
+      <span className="min-w-0 text-dense-label leading-normal text-[var(--sk-mute2)]">
         {row.what}
-        <span className="ml-2 font-mono text-foreground/80">{row.reading}</span>
+        <span className="ml-2 font-mono tabular-nums text-foreground/80">{row.reading}</span>
       </span>
       {action}
     </div>
@@ -140,7 +149,7 @@ export default function SettingsPage() {
       type="button"
       onClick={() => setOpen(open === row.id ? null : row.id)}
       aria-expanded={open === row.id}
-      className="whitespace-nowrap text-dense-caption text-primary hover:underline"
+      className="whitespace-nowrap text-dense-meta text-[var(--sk-accent)] hover:underline"
       title={YAML_ROWS.has(row.id) ? YAML_WHY : undefined}
     >
       {open === row.id ? 'Close' : YAML_ROWS.has(row.id) ? 'View' : 'Edit'}
@@ -168,9 +177,9 @@ export default function SettingsPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
+      <PageHead
         title="Settings"
-        description="The trader's own configuration — connection, data pulls, keys. Infra config lives in Ops."
+        info="The trader's own configuration — connection, data pulls, keys. Infra config lives in Ops."
       />
 
       <Panel cap="IB Connection" title={ibSlotStanding(status)} aside="edits apply on next reconnect">
@@ -206,7 +215,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => fetchNow.mutate()}
               disabled={fetchNow.isPending}
-              className="whitespace-nowrap text-dense-caption hover:underline disabled:opacity-50"
+              className="whitespace-nowrap text-dense-meta text-[var(--sk-accent)] hover:underline disabled:opacity-50"
             >
               {fetchNow.isPending ? 'pulling…' : 'Fetch now'}
             </button>
@@ -216,20 +225,22 @@ export default function SettingsPage() {
 
       <Panel cap="Keyboard" title="fixed set · reference" aside="the Omnibar answers ? with this list">
         {SHORTCUTS.map((s) => (
-          <div
-            key={s.keys}
-            className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)_auto] items-baseline gap-3 border-b border-border/50 px-3 py-2 last:border-b-0"
-          >
-            <span className="text-dense-meta text-secondary-foreground">{s.what}</span>
-            <span className="text-dense-caption text-muted-foreground">{s.scope}</span>
-            <kbd className="rounded border border-border bg-secondary px-1.5 py-0.5 font-mono text-dense-caption">
+          <div key={s.keys} className={ROW}>
+            <span className="text-dense-label text-[var(--sk-soft)]">{s.name}</span>
+            <span className="text-dense-label text-[var(--sk-mute2)]">
+              {s.what}
+              {s.scope === 'Anywhere' ? null : (
+                <span className="ml-2 font-mono text-dense-caption text-muted-foreground">{s.scope}</span>
+              )}
+            </span>
+            <kbd className="rounded border border-[var(--sk-line)] px-1 font-mono text-dense-caption leading-[15px] text-[var(--sk-mute2)]">
               {s.keys}
             </kbd>
           </div>
         ))}
       </Panel>
 
-      <p className="text-dense-caption leading-relaxed text-muted-foreground">
+      <p className="text-dense-meta leading-[1.6] text-muted-foreground">
         Owner ruling 2026-09-15: the old System › Configuration › IB Connection merges here, and
         cluster, pipeline and market-data infrastructure config belongs to the Ops Console. Each
         row edits in place and saves only its own part; the two YAML rows are read here and

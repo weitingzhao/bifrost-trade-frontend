@@ -24,7 +24,7 @@ import {
   denseEntityFilterChipClass,
   SegmentControl,
 } from '@/components/data-display'
-import { PageHeader } from '@/components/layout/PageHeader'
+import { PageHead } from '@/components/layout/PageHead'
 import { JudgeTrackRecord } from '@/pages/copilot/personas/JudgeTrackRecord'
 import { TheBench } from '@/pages/copilot/personas/TheBench'
 import { PageShell } from '@/components/layout/PageShell'
@@ -560,12 +560,8 @@ export function AgentPersonaPage() {
   const copy = PAGE_COPY.en
 
   return (
-    <PageShell padding="default">
-      <PageHeader
-        title={copy.title}
-        description={copy.description}
-        actions={<ResearchUserSwitcher />}
-      />
+    <PageShell padding="compact">
+      <PageHead title={copy.title} info={copy.description} actions={<ResearchUserSwitcher />} />
 
       {/* The same strip the desk carries: Personas is the Copilot's third
           face, and its own route — §5a.5 then reads this page's h1 off that

@@ -102,6 +102,8 @@ export interface SignalFreshnessItem {
   max_computed_at: string | null
   /** Null when the probe did not answer (research 0.114.0) — a count nobody took is not zero. */
   row_count: number | null
+  /** The planner's estimate rather than a COUNT(*) (research 0.115.0) — the probe no longer scans. */
+  row_count_estimated?: boolean
   /**
    * `fresh` · `stale` · `empty` · `missing` (the table is not there) ·
    * `unknown` (no computed_at to judge) · `unprobed` (the probe did not

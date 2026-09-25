@@ -281,9 +281,13 @@ export default function SignalHealthPage() {
                           {f.status}
                         </DenseTag>
                       </DenseTableCell>
-                      <DenseTableCell col="num" className="text-[var(--sk-mute2)]">
+                      <DenseTableCell
+                        col="num"
+                        className="text-[var(--sk-mute2)]"
+                        title={f.row_count_estimated ? 'The planner’s estimate from table statistics — the probe reads the age off an index and does not scan.' : undefined}
+                      >
                         {/* A count nobody took is not zero. */}
-                        {f.row_count == null ? '—' : f.row_count.toLocaleString()}
+                        {f.row_count == null ? '—' : `${f.row_count_estimated ? '≈' : ''}${f.row_count.toLocaleString()}`}
                       </DenseTableCell>
                       <DenseTableCell col="num" className={cn('font-semibold', f.status === 'stale' && 'text-warning')}>
                         {fmtAge(f.age_hours)}

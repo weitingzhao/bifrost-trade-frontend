@@ -1,7 +1,7 @@
 # Tech Stack — Bifrost Trade Frontend
 
 Authoritative reference for technology choices, UI standards, and governance.  
-In-app view: **Settings → Configuration → Tech Stack** (`/settings/tech-stack`).
+In-app view: **System › Reference › Tech Stack** (`/docs/tech-stack`) — the page renders this file, so edit it here; there is no second copy.
 
 ---
 
@@ -11,7 +11,7 @@ Bifrost Trade Frontend is an **internal monitoring console** for a single operat
 
 - Data-dense tables, collapsible groups, right-hand inspectors, SSE streams
 - Strong domain semantics: PnL coloring, multi-account (Host / Secondary), options / instances
-- **Phase 1**: New Frontend + Legacy API — business parity validated against Legacy Frontend
+- The Legacy frontend and its API are retired (spine **D8**, 2026-06-29); the app runs against the Trade API domains, the Research API and the platform plugins
 - No SEO, no SSR — pure SPA
 
 ---
@@ -20,7 +20,7 @@ Bifrost Trade Frontend is an **internal monitoring console** for a single operat
 
 | Layer | Choice | Role |
 |-------|--------|------|
-| Framework | React 18 + TypeScript + Vite | SPA, fast dev/build |
+| Framework | React 19 + TypeScript + Vite | SPA, fast dev/build |
 | Routing | React Router v7 (data router) | URL state, lazy routes |
 | Server state | TanStack Query v5 | API cache, polling, SSE cache updates |
 | Generic UI | **shadcn/ui** on **Radix UI** (`radix-ui` package, style `radix-nova`) | Dialog, Tabs, Select, Sidebar, forms |
@@ -47,7 +47,7 @@ Radix covers **interactive shells** (modals, tabs, popovers). It does **not** pr
 
 ## 4. Dense UI — Data-Display Design System
 
-**Dense UI** is the project’s **internal** standard for data-heavy pages (Positions, Trade Ledger, Performance, Live). It is documented in `docs/DENSE_UI.md` and enforced by `.cursor/rules/dense-ui-system.mdc`.
+**Dense UI** is the project’s **internal** standard for data-heavy pages (Positions, Trade Ledger, Performance, Live). It is documented in `docs/DENSE_UI.md` and enforced by `.cursor/rules/dense-ui-system.mdc` / `.claude/skills/dense-ui/` and `npm run check:legacy-css`.
 
 ### Layer stack
 
@@ -98,7 +98,7 @@ Shared across Stock / Option / Instance detail sidebars:
 | Piece | Location |
 |-------|----------|
 | Shell | `RightInspectorShell`, `rightInspectorShell.module.css` |
-| Line tabs | `InspectorSectionNav` + `InspectorNavItem` (icon + tone) |
+| Line tabs | `InspectorSectionNav` + `InspectorNavItem` (icon + label; the active underline is the layer accent) |
 | Collapsible sections | `RightInspectorCollapsibleSection` — **same `navItem` as tabs** |
 | Tones | `inspectorNavTones.ts` |
 | Config per domain | `stockInspectorSections.ts`, `optionInspectorSections.ts`, `instanceInspectorSections.ts` |
@@ -133,9 +133,9 @@ Borrow **patterns** from Carbon / Atlassian compact tables; do not import their 
 
 ## 8. Migration & API phase
 
-- **Phase 1 (current):** New Frontend → Legacy API (`VITE_API_*`)
-- Do not migrate `bifrost-trade-api` domains until frontend business parity is proven
-- Legacy Frontend is read-only reference; no `App.css` imports
+- **Done.** Phase 1 (new frontend on the Legacy API) and Phase 2 (domain by domain onto `bifrost-trade-api`) are complete; the Legacy frontend and API were archived under spine **D8** (2026-06-29)
+- API targets come from `.env.development.local` / `.env.development.k3s` (`VITE_API_*`); daily acceptance is local Vite `:5173` against DEV (D-IL1)
+- No `App.css` imports; Legacy CSS is guarded by `npm run check:legacy-css`
 
 ---
 
@@ -160,5 +160,6 @@ Borrow **patterns** from Carbon / Atlassian compact tables; do not import their 
 | 2026-05 | Dense UI layer introduced; Legacy CSS paydown + `check:legacy-css` |
 | 2026-05 | Inspector nav: shared icon + tone for tabs and collapsible section headers |
 | 2026-05 | Tech Stack page added under Settings → Configuration |
+| 2026-09-25 | The page moved to System › Reference and renders this file; the hand-written copy it replaced had drifted from it |
 
-When changing locked choices, update this file, the in-app Tech Stack page, and note in PR / `MIGRATION_TRACKING.md` if migration impact exists.
+When changing locked choices, update this file (the in-app page renders it) and note in PR / `MIGRATION_TRACKING.md` if migration impact exists.

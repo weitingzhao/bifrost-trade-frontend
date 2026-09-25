@@ -30,7 +30,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { fmtDollar, unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { cn } from '@/lib/utils'
 import { Pencil, Trash2, Inbox } from 'lucide-react'
-import { PromptCopyDialog } from './uiDesignSystem/PromptCopyDialog'
 import {
   CodeRef,
   DocsQuickNav,
@@ -126,7 +125,7 @@ export default function UiDesignSystemPage() {
     <PageShell className="w-full min-w-0 space-y-4 pb-10">
       <PageHeader
         breadcrumb={
-          <p className="text-xs font-medium text-primary/90">Settings / Configuration</p>
+          <p className="text-xs font-medium text-primary/90">System / Reference</p>
         }
         title="UI Design System"
         description="Site-wide business semantics — PnL colors, entity asset classes, option category, position category, status tags, density. Same token everywhere; primitive varies by placement. Use this page to validate compliance."
@@ -143,7 +142,6 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="pnl-semantics"
         title="1 · PnL Semantics — profit green / loss red / unrealized orange"
-        action={<PromptCopyDialog specId="pnl" />}
         description="Realized PnL uses classic green (profit) and red (loss), brighter than the lamp green / red so a number and a status dot never share a value (§14.7). Unrealized PnL is always orange, whatever its sign — never green/red. Zero or missing values are muted. Pages never pick these colors directly; they call the accessor functions."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -195,7 +193,6 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="entity-asset-class"
         title="2 · Entity — Stock / Option / Fixed Income / Cash-like"
-        action={<PromptCopyDialog specId="entity" />}
         description="Four asset-class entities share distinct token colors site-wide. Strategy / Instance / Opportunity / Structure are Option Category (§3), not Entity. Table identity columns use link/text — never Tag pills."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -306,7 +303,6 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="option-category"
         title="3 · Option Category — Instance / Strategy / Opportunity / Structure"
-        action={<PromptCopyDialog specId="option-category" />}
         description="Four strategy-domain concepts for options workflows. Distinct from Entity (§2) and Position Category (§4). Contract strings remain Option Entity — never render as Option Category tags."
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -411,7 +407,6 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="position-category"
         title="4 · Position Category — watchlist / portfolio"
-        action={<PromptCopyDialog specId="position-category" />}
         description="watchlist and portfolio are two fixed Position Category labels. User-defined names (Fix Income, Tech, Watching…) share the same purple outline pill. Not tradable entities — never mix with Entity (§2) or Option Category (§3)."
       >
         <TokenSwatch label="Position Category" varName="--color-entity-category" />
@@ -519,7 +514,6 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="status-tags"
         title="5 · Status & Source Tags"
-        action={<PromptCopyDialog specId="status" />}
         description="Generic state (success / warning / danger / info / neutral) and execution source badges share one outline-pill language."
       >
         <SampleBox>
@@ -549,7 +543,6 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="density"
         title="6 · Density & Typography"
-        action={<PromptCopyDialog specId="density" />}
         description="Dense tables: 13px body, 11px meta, fixed layout. Entity identity columns (Stock, Option) and Option Category columns must show full text — wrap inside the cell, never ellipsis (...)."
       >
         <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
@@ -696,7 +689,6 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="surfaces"
         title="7 · Surface Layers"
-        action={<PromptCopyDialog specId="surface" />}
         description="Three-level canvas: page root bg-card → elevated panels bg-secondary → inset wells bg-background."
       >
         <div className="rounded-lg border border-border bg-card p-3">
@@ -838,13 +830,12 @@ export default function UiDesignSystemPage() {
       <SectionCard
         id="compliance"
         title="11 · Compliance Checklist — validate any page against this contract"
-        action={<PromptCopyDialog specId="full" label="Copy Full Prompt" />}
         description="Walk a page against these checks. Mechanical guards run in npm run check:legacy-css; the rest is reviewed against the samples above."
       >
         <ul className="list-disc space-y-1.5 pl-5 text-foreground/85">
           <li>
             Realized PnL via <CodeRef>pnlColorClass</CodeRef> / <CodeRef>PnlCell</CodeRef>; unrealized
-            via <CodeRef>unrealizedPnlColorClass</CodeRef> (yellow) — no raw green/red classes (§1)
+            via <CodeRef>unrealizedPnlColorClass</CodeRef> (orange, whole column — §14.7) — no raw green/red classes (§1)
           </li>
           <li>
             Entity (§2): Stock / Option identity columns use <CodeRef>DenseLinkButton</CodeRef> or{' '}

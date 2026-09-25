@@ -79,6 +79,29 @@ export function earningsStory(m: EarningsMoves): string {
   return parts.join(' ')
 }
 
+/**
+ * The Item 2.02 filings the route did not count as prints, over the span the
+ * table shows — a quarterly delivery report is the usual one. Null when none.
+ */
+export function setAsideLine(m: EarningsMoves): string | null {
+  const oldest = m.prints[m.prints.length - 1]?.filed
+  const shown = (m.set_aside ?? [])
+    // One belongs to the table when the release it preceded is a row in it.
+    .filter((a) => !oldest || (a.release ?? a.filed) >= oldest)
+    .sort((a, b) => b.filed.localeCompare(a.filed))
+  if (shown.length === 0) return null
+  const n = shown.length
+  const parts = [
+    `${n === 1 ? 'One Item 2.02 filing is' : `${n} Item 2.02 filings are`} not counted as prints: ${shown.map((a) => printLabel(a.filed)).join(', ')}. ` +
+      `${n === 1 ? 'It says' : 'They say'} nothing about results and the results release followed within weeks — a delivery report or business update, not the print.`,
+  ]
+  const pending = shown.filter((a) => a.release == null)
+  if (pending.length > 0) {
+    parts.push(`${pending.map((a) => printLabel(a.filed)).join(', ')} has no release after it yet; this name has filed that way before.`)
+  }
+  return parts.join(' ')
+}
+
 /** Dashed marks for the IV chart, one per print, on its filing date. */
 export function printMarks(m: EarningsMoves | null | undefined): { date: string; label: string; title: string }[] {
   return (m?.prints ?? []).map((p) => ({

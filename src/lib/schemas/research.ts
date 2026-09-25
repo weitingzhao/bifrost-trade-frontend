@@ -666,6 +666,10 @@ export const EarningsMovesSchema = z
     n: z.number(),
     median_ratio: z.number().nullable(),
     rich: z.number(),
+    // research 0.123.0: Item 2.02 filings that are not results releases.
+    set_aside: z
+      .array(z.object({ filed: z.string(), release: z.string().nullable(), reason: z.string() }).passthrough())
+      .optional(),
   })
   .passthrough()
 

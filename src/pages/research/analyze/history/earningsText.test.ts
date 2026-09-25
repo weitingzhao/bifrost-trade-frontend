@@ -8,6 +8,7 @@ import {
   pricedPct,
   ratioBarWidth,
   ratioText,
+  setAsideLine,
 } from './earningsText'
 
 // Invented numbers, shaped like the route's rows.
@@ -38,6 +39,7 @@ function moves(prints: EarningsPrint[], over: Partial<EarningsMoves> = {}): Earn
     n: ratios.length,
     median_ratio: mid,
     rich: ratios.filter((r) => r < 1).length,
+    set_aside: [],
     ...over,
   }
 }
@@ -84,6 +86,31 @@ describe('earnings moves text', () => {
   it('says a name outside the 8-K feed is outside it, not quiet', () => {
     expect(earningsStory(moves([], { filing_days: 0 }))).toMatch(/No 8-K on file for ZZZ/)
     expect(earningsStory(moves([], { filing_days: 5 }))).toMatch(/none carries Item 2\.02/)
+  })
+
+  it('names the filings set aside over the span the table shows', () => {
+    const m = moves([row('2031-07-22', 0.1, 0.05), row('2031-04-22', 0.1, 0.05)], {
+      set_aside: [
+        { filed: '2031-07-02', release: '2031-07-22', reason: '' },
+        { filed: '2031-04-02', release: '2031-04-22', reason: '' },
+        { filed: '2031-01-02', release: '2031-01-28', reason: '' },
+      ],
+    })
+    const s = setAsideLine(m)
+    expect(s).toContain('2 Item 2.02 filings are not counted as prints: 2 Jul 31, 2 Apr 31.')
+    expect(s).not.toContain('Jan')
+    expect(setAsideLine(moves([row('2031-07-22', 0.1, 0.05)]))).toBeNull()
+  })
+
+  it('says when a set-aside filing has no release after it yet', () => {
+    const m = moves([row('2031-07-22', 0.1, 0.05)], { set_aside: [{ filed: '2031-10-02', release: null, reason: '' }] })
+    expect(setAsideLine(m)).toContain('2 Oct 31 has no release after it yet')
+  })
+
+  it('reads a route older than 0.123.0 as nothing set aside', () => {
+    const m = moves([row('2031-07-22', 0.1, 0.05)])
+    delete m.set_aside
+    expect(setAsideLine(m)).toBeNull()
   })
 
   it('marks each print on its filing date', () => {

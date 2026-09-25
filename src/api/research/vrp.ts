@@ -188,6 +188,14 @@ export interface EarningsPrint {
   missing: string | null
 }
 
+/** An Item 2.02 filing that says nothing about results, set aside (research 0.123.0). */
+export interface EarningsSetAside {
+  filed: string
+  /** The results release that followed; null when none has yet and the name has the habit. */
+  release: string | null
+  reason: string
+}
+
 export interface EarningsMoves {
   symbol: string
   /** Days with any 8-K on file — zero means the name is outside what the plugin collects. */
@@ -199,6 +207,8 @@ export interface EarningsMoves {
   median_ratio: number | null
   /** Prints where the move came in under what the straddle charged. */
   rich: number
+  /** Absent before research 0.123.0. */
+  set_aside?: EarningsSetAside[]
 }
 
 const validateEarningsMoves = withValidation<EarningsMoves>(EarningsMovesSchema, 'research/analytics/vol/earnings-moves')

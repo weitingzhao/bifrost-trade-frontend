@@ -6,6 +6,8 @@
  * date and not a time, so the route reads the session before the filing to the
  * session after it and takes the larger single-session move — the page prints
  * that convention under the table rather than leaving it to be guessed.
+ * Item 2.02 filings that are not results releases (Tesla's delivery reports)
+ * are set aside by the route and named under the table (research 0.123.0).
  */
 import type { EarningsMoves } from '@/api/research/vrp'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
@@ -17,6 +19,7 @@ import {
   movePct,
   pricedPct,
   printLabel,
+  setAsideLine,
   ratioBarWidth,
   ratioText,
   underPriced,
@@ -39,6 +42,7 @@ export function HistoryEarnings({ data, isLoading, error, onRetry }: Props) {
     )
   }
   if (!data) return null
+  const aside = setAsideLine(data)
 
   return (
     <div className="space-y-2 px-3 py-3">
@@ -121,13 +125,14 @@ export function HistoryEarnings({ data, isLoading, error, onRetry }: Props) {
       >
         {earningsStory(data)}
       </p>
+      {aside ? <p className="max-w-[90ch] text-dense-meta leading-relaxed text-muted-foreground">{aside}</p> : null}
       {data.prints.length > 0 ? (
         <p className="max-w-[90ch] text-dense-caption text-muted-foreground/70">
           A filing carries a date, not a time: each row reads the last session before it to the first after it, and
           Actual is the larger single-session move in that window. Priced is the at-the-money straddle for the first
           expiry covering the window, at its implied vol the session before. IV crush is the ATM IV change across the
-          window, on the first expiry both sessions price. Item 2.02 is the results release; a few companies also file
-          quarterly delivery or production numbers under it, and those read as prints here.
+          window, on the first expiry both sessions price. Prints are the 8-K Item 2.02 filings — the results release;
+          one whose words say nothing about results, with the release following within 45 days, is set aside.
         </p>
       ) : null}
     </div>

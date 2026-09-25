@@ -146,12 +146,14 @@ describe('the equipment rail', () => {
       '/research/loop/harness',
       '/research/book',
       '/research/journal',
-      '/research/watchlist',
       '/research/copilot',
     ]) {
       expect(DESIGN_ROUTE_GLYPH[path], path).toBeUndefined()
       expect(DESIGN_EQUIP_ROUTE_GLYPH[path], path).toBeTruthy()
     }
+    // Watchlist left the rail in Rev .56: it has neither a tree row nor a rail cell.
+    expect(DESIGN_ROUTE_GLYPH['/research/watchlist']).toBeUndefined()
+    expect(DESIGN_EQUIP_ROUTE_GLYPH['/research/watchlist']).toBeUndefined()
   })
 
   it('draws the design shape on every rail row it declares one for', () => {

@@ -98,8 +98,11 @@ describe('the design walk, by revision', () => {
     // stamp moved. Package .16 @ Rev .55 answers this side's receipt: the three
     // .52 stamps corrected, the app's three §17 additions drawn into Limits,
     // Positions and Margin (.55), four System stubs drawn (.53), and Objectives
-    // moved to Home (.55).
-    expect(DESIGN_REV).toBe('2026-09-25.55')
+    // moved to Home (.55). Packages .17 (full) @ Rev .57 and .18 @ Rev .58
+    // rebuild the frame — the right rail becomes a bottom toolbar, the Symbol
+    // list stays on every page, the status bar becomes a pill — and move one
+    // page stamp: Research Symbol (.56, its four-layer head).
+    expect(DESIGN_REV).toBe('2026-09-25.58')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

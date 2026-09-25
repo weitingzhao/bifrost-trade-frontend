@@ -58,6 +58,12 @@ export interface EquipPage {
   label: string
   icon: GlyphComponent | LucideIcon
   /**
+   * `false` for a page that belongs to the surface (opens in its float, lights
+   * its head) but no longer has a cell on the rail — Watchlist since design
+   * Rev .56, whose glance moved to the Symbol list's Watchlist.
+   */
+  rail?: false
+  /**
    * Where this page opens the first time, before place memory has an opinion.
    *
    * Nothing sets it today and the default is right: §5a.8's fourteenth round
@@ -174,7 +180,9 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
         label: 'Candidate Pool',
         icon: railIcon('/research/loop/candidates', ListFilter),
       },
-      { to: '/research/watchlist', label: 'Watchlist', icon: railIcon('/research/watchlist', Star) },
+      // Off the rail (design Rev .56): glancing at it is the Symbol list's
+      // Watchlist; the page stays in the Book for managing it.
+      { to: '/research/watchlist', label: 'Watchlist', icon: railIcon('/research/watchlist', Star), rail: false },
       { to: '/research/journal', label: 'Journal', icon: railIcon('/research/journal', History) },
     ],
   },

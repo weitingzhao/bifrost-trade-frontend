@@ -31,7 +31,8 @@ import {
   Users,
 } from 'lucide-react'
 import { getAllNavItems, type ShellNavGroup, type ShellNavItem } from '@bifrost/ui'
-import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
+import { foldGlyph, glyph, routeGlyph } from '@/lib/design/glyphs'
+import { DESIGN_GROUP_GLYPH } from '@/lib/design/designRoutes.generated'
 import {
   AUTOPILOT_PAGES,
   COPILOT_PAGES,
@@ -78,10 +79,12 @@ function fold(
   to: string,
   icon: LucideIcon,
   children: ShellNavItem[],
+  /** The design opens every fold but Reference (`sys:ref`, Rev .58). */
+  open = true,
 ): ShellNavItem {
   // Keyed by label, because a heading borrows a child's route to be clickable
   // — the path would fetch the child's shape, not the heading's.
-  return { id, label, to, icon: foldGlyph(label) ?? icon, children, defaultOpen: true }
+  return { id, label, to, icon: foldGlyph(label) ?? icon, children, defaultOpen: open }
 }
 
 /**
@@ -240,12 +243,14 @@ export const NAV_GROUPS: ShellNavGroup[] = [
 export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'System',
-    icon: Settings,
+    // The design's heading shape (`chip`), not the gear the footer's door uses.
+    icon: DESIGN_GROUP_GLYPH.System ? glyph(DESIGN_GROUP_GLYPH.System) : Settings,
     defaultOpen: true,
     items: [
       // The design's System landing (Owner ruling 2026-09-15): the three
-      // questions a trader asks, above the folds that answer how.
-      route('Status', '/system/status', Gauge),
+      // questions a trader asks, above the folds that answer how. Named as
+      // the design's row names it.
+      route('System Status', '/system/status', Gauge),
       route('Settings', '/settings', Settings),
       // Signal Health and Lens Coverage arrived from Research (design package
       // 2026-09-20.1). The design's rule is about what a page takes: one that
@@ -281,11 +286,19 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
         COPILOT_PAGES.personas,
         COPILOT_PAGES.orchestration,
       ]),
-      fold('system:reference', 'Reference', '/docs/tech-stack', Layers2, [
-        route('Tech Stack', '/docs/tech-stack', Layers2),
-        route('UI Design System', '/docs/ui-design-system', Palette),
-        route('Options Kit', '/docs/options-kit', Sigma),
-      ]),
+      // Closed until opened, as the design draws it: how-to, read rarely.
+      fold(
+        'system:reference',
+        'Reference',
+        '/docs/tech-stack',
+        Layers2,
+        [
+          route('Tech Stack', '/docs/tech-stack', Layers2),
+          route('UI Design System', '/docs/ui-design-system', Palette),
+          route('Options Kit', '/docs/options-kit', Sigma),
+        ],
+        false,
+      ),
     ],
   },
 ]

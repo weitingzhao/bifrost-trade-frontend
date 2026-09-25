@@ -156,7 +156,7 @@ describe('System nav', () => {
     // inside one: the three questions come before the machinery that answers
     // how.
     expect(system.items!.map((i) => i.label)).toEqual([
-      'Status',
+      'System Status',
       'Settings',
       'Data',
       'Alignment',

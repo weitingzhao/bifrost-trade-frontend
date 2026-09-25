@@ -22,12 +22,13 @@
  */
 import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { ExternalLink, Settings, SlidersHorizontal, Scale, Undo2 } from 'lucide-react'
+import { ExternalLink, SlidersHorizontal, Scale } from 'lucide-react'
 import { HealthLamp, useSidebar } from '@bifrost/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useSystemDomains } from '@/hooks/useSystemDomains'
 import { DESIGN_REV } from '@/lib/design/designRoutes.generated'
+import { glyph } from '@/lib/design/glyphs'
 import { OPS_CONSOLE_URL } from '@/lib/opsConsole'
 import { useThemeMode, type ThemeMode } from '@/lib/theme'
 import { cn } from '@/lib/utils'
@@ -52,12 +53,20 @@ const LAMP_BG: Record<string, string> = {
   gray: 'bg-lamp-gray',
 }
 
-/** Enter System, or the way back out of it — the tree swaps, so the foot carries the door. */
+const GEAR = glyph('gear')
+const LANES = glyph('lanes')
+
+/**
+ * Enter System, or the way back out of it — the tree swaps, so the foot
+ * carries the door. The design's shapes and targets: the gear into System
+ * Status, and lanes back to the Trade Desk.
+ */
 function useDoor() {
   const { pathname } = useLocation()
-  return isSystemRoute(pathname)
-    ? { to: '/', label: 'Back to Trade', Icon: Undo2 }
-    : { to: '/system/status', label: 'Enter System', Icon: Settings }
+  const inSystem = isSystemRoute(pathname)
+  return inSystem
+    ? { to: '/trade/desk', label: 'Back to Trade', Icon: LANES, inSystem }
+    : { to: '/system/status', label: 'Enter System', Icon: GEAR, inSystem }
 }
 
 /** The card: mounted only while open, so the live quote reading lives only as long as it does. */
@@ -175,12 +184,15 @@ export function SidebarUserCenter() {
   // grey, never a fault (§11.3.1).
   const degraded = summary.filter((d) => d.lamp === 'yellow' || d.lamp === 'red').length
   const door = useDoor()
+  const footLine = [door.inSystem ? 'in System' : null, degraded > 0 ? `${degraded} degraded` : null]
+    .filter(Boolean)
+    .join(' · ')
 
   const avatar = (
     <PopoverTrigger asChild>
       <button
         type="button"
-        className={cn(AVATAR, 'size-7 cursor-pointer text-[10.5px] hover:border-[color-mix(in_srgb,var(--sk-accent)_55%,transparent)]')}
+        className={cn(AVATAR, 'size-[26px] cursor-pointer text-[10.5px] hover:border-[color-mix(in_srgb,var(--sk-accent)_55%,transparent)]')}
         title={`Account, appearance & system — can I trade: ${summary.map((d) => `${d.name} ${d.state}`).join(' · ')}. Market data is read when you open this.`}
         aria-label="User menu"
       >
@@ -198,20 +210,31 @@ export function SidebarUserCenter() {
       {collapsed ? (
         <div className="flex justify-center py-1.5">{avatar}</div>
       ) : (
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          {avatar}
-          <span className="text-dense-meta font-semibold text-sidebar-foreground">Operator</span>
-          {degraded > 0 ? (
-            <span className="font-mono text-dense-micro text-[var(--color-lamp-yellow)]">{degraded} degraded</span>
-          ) : null}
-          <span className="flex-1" />
+        <div className="flex items-center gap-1 px-1.5 pt-0.5 pb-2">
+          <span className="flex h-[38px] min-w-0 flex-1 items-center gap-2 px-1.5">
+            {avatar}
+            {/* Two lines, as the design sets them: who, then where and what is degraded. */}
+            <span className="flex min-w-0 flex-col leading-tight">
+              <span className="text-dense-label font-semibold whitespace-nowrap text-foreground">Operator</span>
+              {footLine ? (
+                <span
+                  className={cn(
+                    'font-mono text-dense-caption whitespace-nowrap',
+                    degraded > 0 ? 'text-[var(--color-lamp-yellow)]' : 'text-muted-foreground',
+                  )}
+                >
+                  {footLine}
+                </span>
+              ) : null}
+            </span>
+          </span>
           <NavLink
             to={door.to}
             title={door.label}
             aria-label={door.label}
-            className="flex size-7 items-center justify-center rounded-md border border-[var(--sk-line)] text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="flex size-[30px] flex-none items-center justify-center rounded-md border border-sidebar-border text-[var(--sk-mute2)] hover:bg-sidebar-accent hover:text-sidebar-foreground"
           >
-            <door.Icon className="h-3.5 w-3.5" aria-hidden />
+            <door.Icon className="h-4 w-4" aria-hidden />
           </NavLink>
         </div>
       )}

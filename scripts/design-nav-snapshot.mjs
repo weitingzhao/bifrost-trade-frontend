@@ -333,6 +333,18 @@ function generate(pkg) {
   function glyphs(table) {
     const byRoute = new Map()
     const byFold = new Map()
+    // A group heading's shape too (System's is \`chip\`): the heading is the
+    // one row left when the sidebar folds to its icon rail.
+    const byGroup = new Map()
+    // A business layer's heading carries its lifecycle numeral rather than a
+    // glyph (§13), so only a heading that renders one is recorded.
+    const head = (g) => {
+      if (typeof g.icon !== 'function') return
+      const node = g.icon({ className: '' })
+      if (!node || node.__el !== 'svg') return
+      const name = table.get(glyphPath(node, g.label))
+      if (name) byGroup.set(g.label, name)
+    }
     const walk = (items) => {
       for (const it of items ?? []) {
         // A caption is a heading, not a row (§5a.7): the design builds it with
@@ -349,9 +361,9 @@ function generate(pkg) {
         walk(it.children)
       }
     }
-    for (const seat of SEATS) for (const g of R.navGroups({ route: '/home', seat })) walk(g.items)
-    for (const g of R.systemGroups()) walk(g.items)
-    return { byRoute, byFold }
+    for (const seat of SEATS) for (const g of R.navGroups({ route: '/home', seat })) { head(g); walk(g.items) }
+    for (const g of R.systemGroups()) { head(g); walk(g.items) }
+    return { byRoute, byFold, byGroup }
   }
 
   /**
@@ -383,12 +395,23 @@ function generate(pkg) {
   }
 
   const GLYPH_NAMES = glyphTable(src)
+  const GLYPH_NAMES_BY_NAME = new Set(GLYPH_NAMES.values())
+  const SHELL_GLYPHS = ['gear', 'lanes', 'toolbar', 'symlist', 'subject']
   const glyph = glyphs(GLYPH_NAMES)
   const equipGlyph = equipGlyphs()
   const equipNames = [...equipGlyph.byGroup.values(), ...equipGlyph.byRoute.values()]
   /** name -> path data, only for the shapes the tree and the rail actually use. */
   const glyphUsed = [
-    ...new Set([...glyph.byRoute.values(), ...glyph.byFold.values(), ...equipNames]),
+    ...new Set([
+      ...glyph.byRoute.values(),
+      ...glyph.byFold.values(),
+      ...glyph.byGroup.values(),
+      ...equipNames,
+      // The chrome's own controls, which no nav row carries: the sidebar
+      // foot's doors (gear · lanes), the bottom toolbar's square and its
+      // Lists / Symbol buttons (Rev .57).
+      ...SHELL_GLYPHS.filter((n) => GLYPH_NAMES_BY_NAME.has(n)),
+    ]),
   ].sort()
   const dByName = new Map([...GLYPH_NAMES].map(([d, name]) => [name, d]))
 
@@ -581,6 +604,11 @@ ${[...glyph.byRoute].sort(([a], [b]) => (a < b ? -1 : 1)).map(([path, name]) => 
  */
 export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
 ${[...glyph.byFold].sort(([a], [b]) => (a < b ? -1 : 1)).map(([label, name]) => '  ' + JSON.stringify(label) + ': ' + JSON.stringify(name) + ',').join('\n')}
+}
+
+/** And each group heading's, by its label (System's is \`chip\`). */
+export const DESIGN_GROUP_GLYPH: Readonly<Record<string, string>> = {
+${[...glyph.byGroup].sort(([a], [b]) => (a < b ? -1 : 1)).map(([label, name]) => '  ' + JSON.stringify(label) + ': ' + JSON.stringify(name) + ',').join('\n')}
 }
 
 /**

@@ -197,9 +197,9 @@ function Group({
           {count}
         </span>
       ) : null}
-      {full && group.pages.length > 0 ? <span className={css.rule} aria-hidden /> : null}
+      {full && group.pages.some((p) => p.rail !== false) ? <span className={css.rule} aria-hidden /> : null}
       {full
-        ? group.pages.map((p) => (
+        ? group.pages.filter((p) => p.rail !== false).map((p) => (
             <RailButton key={p.to} page={p} open={openAt(p.to)} here={activePath === p.to} />
           ))
         : null}

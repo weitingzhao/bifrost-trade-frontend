@@ -133,6 +133,7 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "card": "M4 5h16v14H4zM8 15l2.5-3 2 2 3.5-4",
   "ceiling": "M3 5h18M7 20v-8M12 20v-11M17 20v-5M9.5 11.5L12 9l2.5 2.5",
   "checklist": "M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9",
+  "chip": "M8 8h8v8H8zM10 4v4M14 4v4M10 16v4M14 16v4M4 10h4M4 14h4M16 10h4M16 14h4",
   "clockback": "M3 12a9 9 0 109-9 9 9 0 00-7 3M3 3v5h5M12 7v5l3 2",
   "coverbar": "M3 10h18v4H3zM3 10h11v4H3z",
   "curve": "M4 4v16h16M7 15l4-5 3 3 5-7",
@@ -142,7 +143,6 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "deliver": "M12 3v8M8.5 7.5L12 11l3.5-3.5M4 14h16v6H4z",
   "doc": "M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h3",
   "excerpt": "M5 3h14v18H5zM8 7.5h2.5v3H8zM12.5 7.5H15v3h-2.5zM8 14h8M8 17.5h5",
-  "eye": "M2.5 12C5 8 8.2 6 12 6s7 2 9.5 6c-2.5 4-5.7 6-9.5 6s-7-2-9.5-6zM12 9.2a2.8 2.8 0 100 5.6 2.8 2.8 0 000-5.6z",
   "flows": "M3 12h18M8 8V3M5 6l3-3 3 3M16 16v5M13 18l3 3 3-3",
   "fork": "M12 3v5M12 8l-5 4M12 8l5 4M7 12v4M17 12v4M4 16h6M14 16h6",
   "gates": "M3 6l4 6-4 6M10 6l4 6-4 6M19 4v16",
@@ -153,6 +153,7 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "kit": "M4 4h7v7H4zM17.5 5a4 4 0 100 8 4 4 0 000-8M4 15h7M4 19h5M15 17h6",
   "ladder": "M6 5h12M6 9h12M6 13h12M6 17h12M3 13h2M19 13h2",
   "lamprows": "M5 7h.01M5 12h.01M5 17h.01M9 7h10M9 12h10M9 17h6",
+  "lanes": "M4 5h16v14H4zM9.3 5v14M14.6 5v14M5.6 8.5h2.2M10.9 12h2.2M16.2 15.5h2.2",
   "layers": "M12 3l9 5-9 5-9-5 9-5zM3 14l9 5 9-5",
   "matched": "M3 9h13l-3.5-3.5M21 15H8l3.5 3.5",
   "matrix": "M4 5h16v14H4zM4 10h16M4 15h16M9.3 5v14M14.6 5v14M14.6 15h5.4v4h-5.4z",
@@ -176,7 +177,10 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "slip": "M6 3h8l4 4v14H6zM14 3v4h4M9 16h5M13 13l3 3-3 3",
   "smile": "M3 19h18M4 8C7 16 17 16 20 8",
   "streak": "M3 8h4v4H3zM9 8h4v4H9zM15 8h4v4h-4zM3 15h4v4H3zM9 15h4v4H9z",
+  "subject": "M4 18l5-6 4 3 7-9M15 6h5v5",
   "swatch": "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM16.5 13a3.5 3.5 0 100 7 3.5 3.5 0 000-7z",
+  "symlist": "M4 6h3M4 12h3M4 18h3M10 6h10M10 12h10M10 18h6M18.5 16v4M16.5 18h4",
+  "toolbar": "M4 5h16v14H4zM8 15.5h8",
   "tree": "M6 3v18M6 8h5M6 16h5M13 5h7v6h-7zM13 13h7v6h-7z",
   "valve": "M4 12h5M15 12h5M9 8h6v8H9zM12 4v4",
   "vs": "M11 3v18M4 17V9M7.5 17v-5M14.5 17v-8M18 17v-3",
@@ -252,6 +256,11 @@ export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
   "Reference": "doc",
 }
 
+/** And each group heading's, by its label (System's is `chip`). */
+export const DESIGN_GROUP_GLYPH: Readonly<Record<string, string>> = {
+  "System": "chip",
+}
+
 /**
  * The equipment rail's shapes — the nine surfaces that left the tree (§5a.8)
  * and so carry no nav row. By group id for a rail head, by route for a tab.
@@ -275,7 +284,6 @@ export const DESIGN_EQUIP_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/research/loop/harness": "rotor",
   "/research/loop/hypotheses": "fork",
   "/research/loop/runs": "replay",
-  "/research/watchlist": "eye",
 }
 
 /**
@@ -305,7 +313,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-25.55"
+export const DESIGN_REV = "2026-09-25.58"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home","designOnly":false},
@@ -325,7 +333,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/explorer","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/contract-screener","label":"Option screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Option Screen.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/event-radar","label":"Alerts","crumbs":["Market"],"designed":true,"file":"Market Alerts.dc.html","round":null,"rev":"2026-09-23.7","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-25.43","inNav":true,"group":"Research","designOnly":false},
+  {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-25.56","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/vol-regime","label":"Vol Regime","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/dealer-levels","label":"Dealer Levels","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/scenario","label":"Scenario","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},

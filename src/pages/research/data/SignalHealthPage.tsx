@@ -116,6 +116,10 @@ function Composition({ rows, note }: { rows: readonly CompositionRow[]; note: st
   )
 }
 
+/** Why a coverage total carries ≈ (research 0.116.0). */
+const ESTIMATE_WHY =
+  'The planner’s row estimate, refreshed after each nightly write — the page reads indexes and statistics rather than counting every row. Symbols, dates and the minority counts are exact.'
+
 const CAP = 'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
 const PANEL_HEAD = 'flex flex-wrap items-baseline gap-2.5 border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3 py-2'
 
@@ -330,7 +334,11 @@ export default function SignalHealthPage() {
               <>
                 <Headline value={fmtPctFromFraction(data?.canonical_pnl.insufficient_pct)} label="insufficient chain" />
                 <p className="m-0 text-dense-meta leading-normal text-[var(--sk-mute2)]">
-                  {(data?.canonical_pnl.rows ?? 0).toLocaleString()} rows · {data?.canonical_pnl.symbols ?? '—'} symbols
+                  <span title={data?.canonical_pnl.rows_estimated ? ESTIMATE_WHY : undefined}>
+                    {data?.canonical_pnl.rows_estimated ? '≈' : ''}
+                    {(data?.canonical_pnl.rows ?? 0).toLocaleString()} rows
+                  </span>{' '}
+                  · {data?.canonical_pnl.symbols ?? '—'} symbols
                 </p>
                 <Composition
                   rows={pnlMix}
@@ -348,7 +356,11 @@ export default function SignalHealthPage() {
                 <>
                   <Headline value={fmtPctFromFraction(data.iv_reconstruction.solver_ok_pct)} label="solver OK" />
                   <p className="m-0 text-dense-meta leading-normal text-[var(--sk-mute2)]">
-                    {(data.iv_reconstruction.rows ?? 0).toLocaleString()} rows · {data.iv_reconstruction.symbols ?? '—'}{' '}
+                    <span title={data.iv_reconstruction.rows_estimated ? ESTIMATE_WHY : undefined}>
+                      {data.iv_reconstruction.rows_estimated ? '≈' : ''}
+                      {(data.iv_reconstruction.rows ?? 0).toLocaleString()} rows
+                    </span>{' '}
+                    · {data.iv_reconstruction.symbols ?? '—'}{' '}
                     symbols · {data.iv_reconstruction.distinct_dates ?? '—'} dates
                   </p>
                   <Composition

@@ -135,12 +135,16 @@ export interface SignalHealthResponse {
   canonical_pnl: {
     insufficient_pct: number | null
     rows?: number
+    /** Research 0.116.0: the planner's estimate; the dominant quality's count is derived from it. */
+    rows_estimated?: boolean
     symbols?: number
     by_quality?: Record<string, number>
     error?: string
   }
   iv_reconstruction?: {
     rows?: number
+    /** Research 0.116.0: the planner's estimate; the dominant status's count is derived from it. */
+    rows_estimated?: boolean
     symbols?: number
     distinct_dates?: number
     with_iv?: number

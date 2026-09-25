@@ -293,6 +293,19 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/history'],
     },
   },
+  {
+    // The narrative lens: the deterministic half (SEC items, vendor labels) is
+    // read from research `/research/narrative`; the model half is owed. Not a
+    // menu row in the design (inNav false) — reached by its path and links.
+    path: '/research/narrative',
+    label: 'Narrative',
+    crumbs: ANALYZE,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-23.24',
+      note: DESIGN_NOTES['/research/narrative'],
+    },
+  },
 
   // ── Research · Workbench · Validate ────────────────────────────────────
   {
@@ -531,7 +544,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Events',
     crumbs: MARKET,
     design: {
-      // Signed by the Owner 2026-10-02, after the fed rounds (macro lane,
+      // Signed by the Owner 2026-09-24, after the fed rounds (macro lane,
       // themes stack, forward calendar).
       state: 'aligned',
       rev: '2026-09-23.8',
@@ -542,7 +555,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // The design's `bell` glyph and its own label. The events board this route
     // used to hold is on the Stock Explorer's `events` tab, unchanged. Rev .7
     // moved the row with Live — Home to the rail's Market group; built
-    // 2026-09-23; the Owner signed it 2026-10-02, the same round that fixed
+    // 2026-09-23; the Owner signed it 2026-09-24, the same round that fixed
     // the rail entry (a surface remembered as a page navigated nowhere).
     path: '/research/event-radar',
     label: 'Alerts',

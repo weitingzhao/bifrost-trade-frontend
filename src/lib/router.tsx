@@ -307,6 +307,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/analyze/history/HistoryPage')),
       },
       {
+        path: 'research/narrative',
+        lazy: lazyPage(() => import('@/pages/research/analyze/narrative/NarrativePage')),
+      },
+      {
         path: 'research/lens-coverage',
         lazy: lazyPage(() => import('@/pages/research/data/lensCoverage/LensCoveragePage')),
       },

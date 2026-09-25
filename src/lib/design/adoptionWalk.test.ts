@@ -166,10 +166,10 @@ describe('the design walk, as it stands', () => {
     // 2026-09-25: the Owner signed the two method faces that read right side
     // by side — Today's candidates and the Screener authoring face. 59 the
     // same day, round two: Compare, History and History's method face.
-    // 62 on 2026-09-30: the Owner signed Symbol (after the five tab-by-tab
+    // 62 on 2026-09-24: the Owner signed Symbol (after the five tab-by-tab
     // re-alignment rounds), the Symbol lab method face, and Backtest.
-    // 63 on 2026-10-01: Research Overview, after the dial and Today-feed rounds.
-    // 64 on 2026-10-02: Live, after the narrow-surface round. 67 later the
+    // 63 on 2026-09-24: Research Overview, after the dial and Today-feed rounds.
+    // 64 on 2026-09-24: Live, after the narrow-surface round. 67 later the
     // same day: the Owner signed Events (after the fed rounds), Positions
     // (the §16 north-star page) and Alerts — whose rail entry navigated
     // nowhere until the same round fixed it.
@@ -185,9 +185,9 @@ describe('the design walk, as it stands', () => {
     // 54 on 2026-09-24: Symbol left for `reviewing` with its new Payoff face.
     // 56 on 2026-09-25: the Owner signed Today's candidates and the Screener
     // authoring face in the re-alignment round; 59 the same day with Compare,
-    // History and History's method face. 62 on 2026-09-30: Symbol, the
+    // History and History's method face. 62 on 2026-09-24: Symbol, the
     // Symbol lab and Backtest, signed together after the tab-by-tab rounds.
-    // 63 on 2026-10-01 with Research Overview; 64 on 2026-10-02 with Live;
+    // 63 on 2026-09-24 with Research Overview; 64 on 2026-09-24 with Live;
     // 67 later that day with Events, Positions and Alerts.
     expect(counts.aligned).toBe(67)
     expect(
@@ -419,11 +419,12 @@ describe('the design walk, as it stands', () => {
     // as a page with its own count disagreement on display. 20 with Backtest,
     // the pending pool's last page, walked run-first onto the design. 18 on
     // 2026-09-25: the Owner signed lab/today and lab/screener out of it, then
-    // 15 with Compare, History and History's method face. 12 on 2026-09-30,
+    // 15 with Compare, History and History's method face. 12 on 2026-09-24,
     // the Owner signing Symbol, the Symbol lab and Backtest out of it; 11 on
-    // 2026-10-01 with Research Overview; 10 on 2026-10-02 with Live; 7 later
-    // that day, the Owner signing Events, Positions and Alerts out of it.
-    expect(counts.byState.reviewing).toBe(7)
+    // 2026-09-24 with Research Overview; 10 on 2026-09-24 with Live; 7 later
+    // that day, the Owner signing Events, Positions and Alerts out of it. 8 on
+    // 2026-09-25 with Narrative, built once its store (the 8-K text) existed.
+    expect(counts.byState.reviewing).toBe(8)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -510,6 +511,7 @@ describe('the design walk, as it stands', () => {
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lens-coverage',
+      '/research/narrative',
       '/research/signal-health',
       '/settings',
       '/system/status',
@@ -601,8 +603,9 @@ describe('the design walk, as it stands', () => {
     // been measured on DEV. 13 with History's method face the same day, and
     // 12 with the Symbol lab — the third method face, measured the same way,
     // and 11 with the Screener authoring face, the last of the four. 10 with
-    // Calibration — the last page of the approved batch.
-    expect(counts.byState.unbuilt).toBe(10)
+    // Calibration — the last page of the approved batch. 9 on 2026-09-25 with
+    // Narrative, the last business page; the nine left are the design's docs.
+    expect(counts.byState.unbuilt).toBe(9)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

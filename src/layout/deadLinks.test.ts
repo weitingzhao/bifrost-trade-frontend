@@ -104,9 +104,8 @@ describe('every internal link reaches a route', () => {
    * below checks the first half; the census's own `pageBuilt` check is the
    * second.
    */
-  const PATHS_USED_AS_DATA: Record<string, string> = {
-    '/research/narrative': 'a Pipeline census row — the design has this page; its store is owed (filings ingest, plugin 0.37.0)',
-  }
+  // Empty since 2026-09-25: `/research/narrative`, the last entry, was built.
+  const PATHS_USED_AS_DATA: Record<string, string> = {}
 
   it('finds no link pointing at a path the router cannot match', () => {
     const dead = [...linkTargets()]
@@ -136,7 +135,7 @@ describe('every internal link reaches a route', () => {
 
   it('still catches a path nobody routed', () => {
     expect(reaches('/research/hypothesis/abc')).toBe(false)
-    expect(reaches('/research/narrative')).toBe(false)
+    expect(reaches('/docs/progress')).toBe(false)
     // …while the dynamic segments it must not flag still resolve.
     expect(reaches('/research/loop/objectives/obj-1')).toBe(true)
     expect(reaches('/risk/margin')).toBe(true)

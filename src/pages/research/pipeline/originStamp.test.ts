@@ -47,7 +47,8 @@ describe('LANE_ORIGIN', () => {
       else expect(originDest(path), lane).toBeNull()
     }
     expect(LANES.filter(([, p]) => !built.has(p)).map(([l]) => l)).toEqual([])
-    expect(originDest('/research/narrative')).toBeNull()
+    // Narrative was the unbuilt example until 2026-09-25; built, it resolves.
+    expect(originDest('/research/narrative')).toMatchObject({ to: '/research/narrative' })
   })
 })
 

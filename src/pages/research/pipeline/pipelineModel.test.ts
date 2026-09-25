@@ -64,23 +64,25 @@ describe('the four classes', () => {
     expect(stationReadings(rows).map((s) => s.station)).not.toContain('off-bench')
   })
 
-  it('marks a page the design has and this side has not built', () => {
-    // Decided against the app's own route table, because "not built" is a
-    // fact about this side — Design's ruling on our question 3.1.
-    expect(by('/research/narrative').pageBuilt).toBe(false)
-    expect(by('/research/narrative').note).toMatch(/page not built/)
-    expect(by('/research/ratings/stocks').pageBuilt).toBe(true)
+  it('decides "built" against the app\'s own route table', () => {
+    // "Not built" is a fact about this side — Design's ruling on our question
+    // 3.1. Narrative was the last census row without a page; it was built on
+    // 2026-09-25, and the mark followed the route table without being told.
+    expect(by('/research/narrative').pageBuilt).toBe(true)
+    expect(by('/research/narrative').note).not.toMatch(/page not built/)
+    expect(rows.every((r) => r.pageBuilt)).toBe(true)
   })
 
   it('does not count order flow as Narrative', () => {
     // Until 2026-09-23 this row read `/research/flow/sentiment` — options
     // order flow, no text — and called Narrative the one Analyze page with a
-    // store. It owes one; the filings it would read are entitled and not yet
-    // ingested, and the note says which of those it is.
+    // store. It still owes one: since 2026-09-25 the filings are ingested and
+    // the page reads them live, but no tag is kept as an object to cite.
     const narrative = by('/research/narrative')
     expect(narrative.made).toBeNull()
     expect(narrative.store).toBe('narrative_tag')
-    expect(narrative.note).toMatch(/8-K \/ 10-K ingest pending release/)
+    expect(narrative.storeState).toBe('store-owed')
+    expect(narrative.note).toMatch(/8-K \/ 10-K text is in/)
   })
 })
 

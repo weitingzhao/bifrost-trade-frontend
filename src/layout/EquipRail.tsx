@@ -87,7 +87,7 @@ function RailButton({
         // "Open where you last put it" includes the page: `openSurface`'s
         // page branch records the choice and leaves the navigating to the
         // caller, so a closed surface remembered as a page navigates here —
-        // without this the click is a silent no-op (found 2026-10-02, the
+        // without this the click is a silent no-op (found 2026-09-24, the
         // rail's Alerts after the Owner had used ⤢ on it).
         if (surface.canPage && placeOf(surface.key) == null && opensAsPage(surface.key)) {
           navigate(surface.to)

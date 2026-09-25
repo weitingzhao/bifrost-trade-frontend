@@ -137,7 +137,7 @@ export default function EventsPage() {
           ))}
         </div>
       ) : standing.state === 'live' ? (
-        /* The design's own restructure, built 2026-10-02 on the Owner's ask:
+        /* The design's own restructure, built 2026-09-24 on the Owner's ask:
            Importance / Direction / theme filters, the themes panel with its
            bull-neutral-bear stack, the forward calendar and the ingest rows.
            `EventRadarBody` stays the Explorer tab's body — nothing deleted. */

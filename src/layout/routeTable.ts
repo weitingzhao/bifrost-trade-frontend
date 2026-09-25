@@ -154,7 +154,7 @@ export const ROUTES: readonly RouteEntry[] = [
       // 2026-09-23.3 added one more: the contract face's third door into
       // Contract Greeks. Built 2026-09-23. Rev 2026-09-23.21 redrew it as the
       // §16 north-star page (hero band, tooltips, type scale, motion); built
-      // the same day; the Owner signed it 2026-10-02.
+      // the same day; the Owner signed it 2026-09-24.
       state: 'aligned',
       rev: '2026-09-23.21',
       note: DESIGN_NOTES['/portfolio/positions'],

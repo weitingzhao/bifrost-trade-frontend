@@ -123,8 +123,11 @@ const SPECS: readonly Spec[] = [
   { to: '/research/event-radar', label: 'Alerts', station: 'off-bench', store: null, storeState: 'off-bench', note: 'off this bench — Home › Alerts' },
   { to: '/research/symbol', label: 'Symbol', station: 'analyze', store: 'symbol_verdict', storeState: 'store-owed', note: 'store owed — a verdict is cited as a hypothesis’s origin' },
   // The two rows the design redrew at Rev 2026-09-23.24, answering this side's
-  // ask: their notes are the design's own words.
-  { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: 'narrative_tag', storeState: 'store-owed', note: 'store owed · 8-K / 10-K ingest pending release' },
+  // ask: their notes are the design's own words — except Narrative's reason,
+  // which was "8-K / 10-K ingest pending release" and stopped being true when
+  // the ingest shipped and the page was built on it (2026-09-25). The store is
+  // still owed: the page reads the filings live and keeps no tag as an object.
+  { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: 'narrative_tag', storeState: 'store-owed', note: 'store owed · the 8-K / 10-K text is in; tags are read live, not kept' },
   { to: '/research/compare', label: 'Compare', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed · 3 inputs owed: quotes · 20d distribution · regime record' },
   { to: '/research/history', label: 'History', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed — it recomputes a denominator nobody names again' },
   { to: '/research/signal-decay', label: 'Signal decay', station: 'validate', store: 'decay_check', storeState: 'store-owed', note: 'store owed — a page that declares a signal dead should hold the certificate' },

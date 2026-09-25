@@ -70,9 +70,10 @@ describe('scopeRouteLabel', () => {
     // `/review/objectives` was the example until it was built on 2026-09-20,
     // and `/research/journal` until 2026-09-21; any design route this side has
     // no page for exercises the same fall-back, so the test moves to one that
-    // is still unbuilt rather than being dropped. It will move again.
-    expect(scopeRouteLabel('/research/narrative')).toBe('Narrative')
-    expect(scopeRouteLabel('/research/narrative')).not.toBe(routeFor('/research/narrative').label)
+    // is still unbuilt rather than being dropped. It will move again — it did
+    // on 2026-09-25, when `/research/narrative` was built.
+    expect(scopeRouteLabel('/docs/progress')).toBe('Progress')
+    expect(scopeRouteLabel('/docs/progress')).not.toBe(routeFor('/docs/progress').label)
     // And the built one now answers with this side's own label, which is the
     // other half of the same rule.
     expect(scopeRouteLabel('/review/objectives')).toBe(routeFor('/review/objectives').label)

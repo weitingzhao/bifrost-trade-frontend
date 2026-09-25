@@ -11,7 +11,7 @@ Reusable styling for data-heavy monitoring pages (Positions, Trade Ledger, Perfo
 | Layer | Location | Role |
 |-------|----------|------|
 | Tokens | `src/index.css` (typography: `text-dense-body/label/meta/caption/micro`; spacing: `--table-cell-*`; colors: `--color-entity-*`, the `-rgb` tint triplets). The seven colour values — `--sk-accent`, `--sk-ticker/contract/instance`, `--color-profit/loss/unrealized` — come from `@bifrost/ui/styles/semantic` and are not declared here | Typography, cell spacing, business semantics |
-| Layout | `src/components/layout/` | `PageShell`, `PageHeader`, `PageSection` |
+| Layout | `src/components/layout/` | `PageShell`, `PageHead` (§16.10 — `PageHeader` on pages not yet moved), `PageSection` |
 | Data display | `src/components/data-display/` | Tables, PnL, segments, icon actions |
 | Domain | `src/components/positions/`, etc. | Business columns and interactions |
 

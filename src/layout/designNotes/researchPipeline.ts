@@ -51,7 +51,8 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + 'slice coloured by sign) now draws beside the table from the real window dates, big dollar '
     + 'figures format as locale integers, the run rows carry their time, and the card\u2019s confidence '
     + 'tag rides the SUMMARY cap while the duplicate id line yields to the page\u2019s own header '
-    + '(headerless). Owner to look before aligned.',
+    + '(headerless). Owner to look before aligned.'
+    + ' PAGE HEAD (2026-09-25, §16.10 sample, Rev .32): moved to `PageHead`. Capability ledger (§16.1), none dropped: title Backtest; the description sentence, unchanged, behind ⓘ; the Event backtest / Settlement switch became the head’s own tabs (still `?tab=`); Ask Copilot with its snapshot and ＋ New run (primary, Event tab only) are head actions; the page-level `Research / Validate` line went to the top bar, whose ancestors now link (§16.12) and whose leaf folds while the head shows the name. The LAB · NO ORDERS / held / fills / source strip stays as the toolbar under the head. Stamp: `ASOF` is the newest session the engine has settled (the one session reading on this page — a run’s date is when it ran), flagged by signal health and judged by Research, as the Symbol page does. Diverged, named: the prototype writes `ASOF 2026-09-10 · EOD` with a THIN-CHAIN flag; nothing here measures chain thinness for backtests, so the flag is signal health’s own verdict or none.',
   '/research/lab/screener':
     'Built 2026-09-24 against Research Stock Screen Method.dc.html at route rev 2026-09-20.4, on '
     + 'local DEV (:5173). Measured first: /analytics/sepa/screener-wide serves the whole mart \u2014 '

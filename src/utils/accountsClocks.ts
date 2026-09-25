@@ -14,6 +14,7 @@
  * the three the data lets us tell apart.
  */
 import { fmtEtClock } from '@/lib/format'
+import { snapshotStale, type TradingCalendar } from '@/lib/freshness'
 import { clockLabel } from '@/utils/accountsFreshness'
 
 export type ClockTone = 'ok' | 'warn' | 'muted' | 'fault'
@@ -28,8 +29,6 @@ export interface ClockReading {
   title: string
 }
 
-/** Snapshot older than this while connected is amber: connected and not advancing. */
-export const SNAPSHOT_STALE_SEC = 120
 /** The daily Flex ingest has missed a run past this. */
 export const FLEX_PULL_STALE_SEC = 36 * 3600
 /** TWS executions older than this are amber — not broken, but not the live path either. */
@@ -73,12 +72,15 @@ export function ibClockReading({
   fetchedAt,
   twsRecDays,
   nowSec = Date.now() / 1000,
+  calendar,
 }: {
   daemonAlive: boolean
   ibConnected: boolean
   fetchedAt: number | null | undefined
   twsRecDays: number | null | undefined
   nowSec?: number
+  /** NYSE holidays and early closes, for the regular-hours test (§16.13). */
+  calendar?: TradingCalendar
 }): ClockReading {
   const rec = recLabel(twsRecDays)
   const recTone: ClockTone =
@@ -114,16 +116,20 @@ export function ibClockReading({
     }
   }
 
-  const lagSec = fetchedAt == null ? null : nowSec - fetchedAt
-  if (lagSec != null && lagSec > SNAPSHOT_STALE_SEC) {
-    const mins = Math.round(lagSec / 60)
+  // One staleness rule for the broker snapshot wherever it is shown (§16.13):
+  // over five minutes old while regular hours are running. Outside them a
+  // frozen snapshot is the close, not a fault. Until 2026-09-25 this was a
+  // flat 120s at any hour, which disagreed with the page heads.
+  const fetchedMs = fetchedAt == null ? null : fetchedAt * 1000
+  if (snapshotStale(fetchedMs, nowSec * 1000, calendar)) {
+    const mins = Math.round((nowSec - (fetchedAt ?? nowSec)) / 60)
     return {
       name: 'IB Client',
       pull: `STALE ${mins}m`,
       pullTone: 'warn',
       rec,
       recTone,
-      title: `Connected, but the snapshot has not advanced for ${mins} minutes while the poll interval is seconds. Connected and not advancing is the one case worth amber.${recWhy}`,
+      title: `Connected, but the snapshot has not advanced for ${mins} minutes in regular hours while the poll interval is seconds. Connected and not advancing is the one case worth amber.${recWhy}`,
     }
   }
 

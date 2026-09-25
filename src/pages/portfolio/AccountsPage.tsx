@@ -31,6 +31,7 @@ import { AccountsClockBadge } from './accounts/AccountsClockBadge'
 import { AccountsFreshnessBand } from './accounts/AccountsFreshnessBand'
 import { AccountsBrokerBand } from './accounts/AccountsBrokerBand'
 import { AccountsComposedBand } from './accounts/AccountsComposedBand'
+import { useTradingCalendar } from '@/hooks/useTradingCalendar'
 import { AccountsHoldingsBand } from './accounts/AccountsHoldingsBand'
 import { AccountsInspector, type AccountsInspectorState } from './accounts/AccountsInspector'
 import { accountsPageCardClass, accountsUi } from './accounts/accountsUi'
@@ -73,6 +74,7 @@ export default function AccountsPage() {
   const { data: freshnessData } = useExecutionsFreshness()
   const { data: flexCoverage } = useFlexCoverageFreshness()
   const execItems = useMemo(() => freshnessData?.items ?? [], [freshnessData])
+  const tradingCal = useTradingCalendar()
   const daemonAlive = data?.account_sync_daemon?.heartbeat.daemon_alive === true
   const ibConnected = data?.daemon.heartbeat?.ib_connected === true
   const flexPullTs = flexPullTsFromCoverage(flexCoverage?.dimensions ?? [])
@@ -84,6 +86,7 @@ export default function AccountsPage() {
     ibConnected,
     fetchedAt: accountsFetchedAt,
     twsRecDays: latestClientExecFreshness(execItems)?.days_since_latest ?? null,
+    calendar: tradingCal,
   })
   const flexClock = flexClockReading({
     pullTs: flexPullTs,

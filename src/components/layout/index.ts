@@ -4,6 +4,15 @@ export {
   type PageHeaderProps,
   type PageHeaderTitleSize,
 } from './PageHeader'
+export {
+  PageHead,
+  PageHeadAction,
+  PAGEHEAD_EVENT,
+  type PageHeadProps,
+  type PageHeadActionProps,
+  type PageHeadTab,
+  type PageHeadVisibility,
+} from './PageHead'
 export { PageRouteFallback } from './PageRouteFallback'
 export { PageSection, type PageSectionProps } from './PageSection'
 export { PageFaceSwitch } from './PageFaceSwitch'

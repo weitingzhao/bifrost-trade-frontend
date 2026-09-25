@@ -18,7 +18,22 @@ describe('the IB clock', () => {
     expect(c.title).toContain('a fetch time, not an as-of date')
   })
 
-  it('calls a connected-but-frozen snapshot stale, in amber', () => {
+  it('calls a connected-but-frozen snapshot stale, in amber, in regular hours', () => {
+    // Thursday 2026-09-24 14:00 ET.
+    const rth = Date.UTC(2026, 8, 24, 18, 0, 0) / 1000
+    const c = ibClockReading({
+      daemonAlive: true,
+      ibConnected: true,
+      fetchedAt: rth - 18 * 60,
+      twsRecDays: 123.8,
+      nowSec: rth,
+    })
+    expect(c.pull).toBe('STALE 18m')
+    expect(c.pullTone).toBe('warn')
+  })
+
+  it('does not call a snapshot stale outside regular hours (§16.13)', () => {
+    // NOW is after the close: five hours frozen is the session ending.
     const c = ibClockReading({
       daemonAlive: true,
       ibConnected: true,
@@ -26,8 +41,8 @@ describe('the IB clock', () => {
       twsRecDays: 123.8,
       nowSec: NOW,
     })
-    expect(c.pull).toBe('STALE 300m')
-    expect(c.pullTone).toBe('warn')
+    expect(c.pull).toMatch(/^FETCHED /)
+    expect(c.pullTone).toBe('ok')
   })
 
   // The judgment ruling F5 turns on: a five-second poll interval and a snapshot

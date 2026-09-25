@@ -16,7 +16,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { Button } from '@bifrost/ui'
+import { PageHead, PageShell } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -76,31 +77,35 @@ export default function RiskLimitsPage() {
   return (
     <PageShell padding="compact" className="space-y-3">
       <section className={positionsUi.pageCard} aria-label="Limits and Breaches">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Risk / Limits &amp; Breaches</p>}
+        {/* §16.10 sample page (Rev .32): the lead is behind ⓘ, the rule count
+            is meta, the Rules engine is a head action, and the account switch
+            — a filter — moved to the toolbar under the head. No stamp: the
+            prototype passes none here (§16.14 will give it the book's). */}
+        <PageHead
           title="Limits & Breaches"
-          titleSize="large"
-          description={PAGE_LEAD}
+          info={PAGE_LEAD}
+          meta={`${rows.length} rules · ${withLine} with a line`}
           actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              {accountIds.length > 1 ? (
-                <SegmentControl
-                  size="xs"
-                  ariaLabel="Account"
-                  value={accountFilter}
-                  onChange={setAccountFilter}
-                  options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-                />
-              ) : null}
-              <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                {rows.length} rules · {withLine} with a line
-              </span>
-              <Link to="/strategy/gates" className={positionsUi.link}>
+            <Button asChild variant="outline" size="sm">
+              {/* Straight to the destination: /strategy/gates is a redirect
+                  here since the Strategy pages retired (2026-09-18). */}
+              <Link to="/trade/rules" title="Trade › Rules — where gates are defined">
                 Rules engine →
               </Link>
-            </span>
+            </Button>
           }
         />
+        {accountIds.length > 1 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentControl
+              size="xs"
+              ariaLabel="Account"
+              value={accountFilter}
+              onChange={setAccountFilter}
+              options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+            />
+          </div>
+        ) : null}
 
         {error ? (
           <QueryErrorAlert error={error} onRetry={() => modelQueries.forEach((q) => void q.refetch())} />

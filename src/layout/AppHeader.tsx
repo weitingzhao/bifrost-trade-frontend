@@ -11,13 +11,16 @@
  * else on screen.
  */
 import { MessageSquare, Search } from 'lucide-react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { omnibar } from '@/lib/omnibar'
 import { toggleThread, useThread } from '@/hooks/useCopilotThread'
-import { routeFor } from './routeRegistry'
+import { PAGE_ROUTES, routeFor } from './routeRegistry'
+import { crumbLinks } from './crumbLinks'
+import { NAV_GROUPS, SYSTEM_ITEM } from './navConfig'
+import { usePageHeadVisibility } from './usePageHeadVisibility'
 import { useCrumbLabel } from './useCrumbLabel'
 import { Lens } from './Lens'
 import { SliceCapsule } from './SliceCapsule'
@@ -28,11 +31,19 @@ import {
   SHELL_TOP_BAR_KBD_CLASS,
 } from './shellChrome'
 
+/** Top-level headings a first crumb can fall back to; System's is its first page. */
+const CRUMB_GROUPS = [...NAV_GROUPS, { label: 'System', to: SYSTEM_ITEM.to }]
+
 export function AppHeader() {
   const location = useLocation()
   const { label: registryLabel, crumbs } = routeFor(location.pathname)
   const label = useCrumbLabel(location.pathname, registryLabel)
   const thread = useThread()
+  const trail = crumbLinks(crumbs ?? [], PAGE_ROUTES, CRUMB_GROUPS)
+  // §16.12: while the page head shows the page's name, the leaf (and the `›`
+  // before it) folds; it fades back once the head scrolls away. A page that
+  // has not moved to PageHead reports nothing, and keeps its leaf.
+  const leafFolded = usePageHeadVisibility() === 'in'
 
   return (
     <header
@@ -71,20 +82,35 @@ export function AppHeader() {
         aria-label="Breadcrumb"
         className="flex min-w-0 shrink items-center gap-1.5 text-dense-body"
       >
-        {crumbs?.map((crumb) => (
-          <span key={crumb} className="hidden shrink-0 items-center gap-1.5 text-muted-foreground sm:flex">
-            {crumb}
+        {trail.map((crumb, i) => (
+          <span key={crumb.label} className="hidden shrink-0 items-center gap-1.5 text-muted-foreground sm:flex">
+            {/* Ancestors are links where they resolve (§16.12); a fold with
+                no page of its own stays a word. */}
+            {crumb.to != null ? (
+              <Link to={crumb.to} className="text-muted-foreground no-underline hover:text-foreground hover:underline">
+                {crumb.label}
+              </Link>
+            ) : (
+              crumb.label
+            )}
             {/* `›`, the design's own separator. A slash reads as a path; the
                 trail is a place inside a place. */}
-            <span aria-hidden="true" className="text-border">›</span>
+            {leafFolded && i === trail.length - 1 ? null : (
+              <span aria-hidden="true" className="text-border">›</span>
+            )}
           </span>
         ))}
         {/* The leaf carries full ink and 600, the trail behind it does not:
             that weight step is the whole reason a breadcrumb reads as "here,
             and how you got here" rather than as a row of equal words. */}
-        <span aria-current="page" className="min-w-0 truncate font-semibold text-foreground">
-          {label}
-        </span>
+        {leafFolded ? null : (
+          <span
+            aria-current="page"
+            className="min-w-0 truncate font-semibold text-foreground animate-in fade-in-0 duration-200"
+          >
+            {label}
+          </span>
+        )}
       </nav>
       {/* The slice, on the pages that stand on it (Rev .25): the StageRail the
           design folded into the crumb. */}

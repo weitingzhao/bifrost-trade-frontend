@@ -14,12 +14,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { History } from 'lucide-react'
-import { Button } from '@bifrost/ui'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageHeadAction, PageShell } from '@/components/layout'
+import { AsofTag } from '@/components/AsofTag'
+import { useSignalHealthSummary } from '@/hooks/useCopilotStanding'
+import { healthFlag } from '@/lib/asofTag'
 import {
   DenseTag,
   EmptyState,
-  SegmentControl,
   SettlementBadges,
 } from '@/components/data-display'
 import { fmtNumLocale } from '@/lib/format'
@@ -130,48 +131,43 @@ export default function BacktestPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 max-w-[84ch] flex-[1_1_26rem]">
-          <PageHeader
-            breadcrumb={<p className="text-xs font-medium text-primary/90">Research / Validate</p>}
-            title="Backtest"
-            titleSize="large"
-            description="Event-driven replays of the strategy templates, and the settlement record of every forecast the engine made. Historical only — nothing on this page places an order."
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <SegmentControl
-            ariaLabel="Backtest tab"
-            size="sm"
-            options={TAB_OPTIONS}
-            value={tab}
-            onChange={(v) => setTab(v as TabKey)}
-          />
-          <AskCopilotButton
-            originPage="backtest"
-            originLabel="Backtest"
-            symbol={heldSymbol}
-            snapshot={compactSnapshot({
-              tab,
-              run_id: selectedId,
-              runs: rows.length,
-            })}
-            suggestedPrompt="Interpret these backtest results and suggest the next validation step."
-          />
-          {tab === 'event' ? (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => {
-                setBuilderSeed({ hyp: null, symbols: undefined })
-                setShowBuilder((v) => !v)
-              }}
-            >
-              ＋ New run
-            </Button>
-          ) : null}
-        </div>
-      </div>
+      {/* §16.10 sample page (Rev .32): the description is behind ⓘ, the two
+          tabs are the head's own, and the breadcrumb is the top bar's. */}
+      <PageHead
+        title="Backtest"
+        info="Event-driven replays of the strategy templates, and the settlement record of every forecast the engine made. Historical only — nothing on this page places an order."
+        stamp={<BacktestAsofTag />}
+        tabs={TAB_OPTIONS}
+        tab={tab}
+        onTab={(v) => setTab(v as TabKey)}
+        actions={
+          <>
+            <AskCopilotButton
+              originPage="backtest"
+              originLabel="Backtest"
+              symbol={heldSymbol}
+              snapshot={compactSnapshot({
+                tab,
+                run_id: selectedId,
+                runs: rows.length,
+              })}
+              suggestedPrompt="Interpret these backtest results and suggest the next validation step."
+            />
+            {tab === 'event' ? (
+              <PageHeadAction
+                primary
+                title="Build an event query; a run that produces events is kept here"
+                onClick={() => {
+                  setBuilderSeed({ hyp: null, symbols: undefined })
+                  setShowBuilder((v) => !v)
+                }}
+              >
+                ＋ New run
+              </PageHeadAction>
+            ) : null}
+          </>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
         <span
@@ -453,16 +449,45 @@ export default function BacktestPage() {
   )
 }
 
-function SettlementTab() {
-  const [start, setStart] = useState('')
-  const [end, setEnd] = useState('')
-
-  // Cross-symbol on purpose: forecasts settle per session per symbol, and the
-  // question this tab answers is the engine's record, not one name's.
-  const settlementsQ = useQuery({
+/**
+ * The settlement record, newest 200 sessions — the tab and the head's ASOF
+ * read the one query. Cross-symbol on purpose: forecasts settle per session
+ * per symbol, and the question this tab answers is the engine's record.
+ */
+function useSettlementRecord() {
+  return useQuery({
     queryKey: ['backtest-settlements', 'all'],
     queryFn: () => fetchSettlements(undefined, undefined, 200),
   })
+}
+
+/**
+ * The head's stamp: the newest session the engine has settled — this page's
+ * one session reading (a persisted run's date is when it ran, not a session)
+ * — with signal health's verdict as the flag, judged by Research, the same
+ * pair the Symbol page wears.
+ */
+function BacktestAsofTag() {
+  const settlementsQ = useSettlementRecord()
+  const health = useSignalHealthSummary()
+  const newest = (settlementsQ.data?.rows ?? []).reduce<string | null>(
+    (m, r) => (m == null || r.trade_date > m ? r.trade_date : m),
+    null,
+  )
+  return (
+    <AsofTag
+      asof={newest}
+      flag={healthFlag(health.data, { loading: health.isLoading, error: health.isError })}
+      judgedBy="Research"
+      href="/research/signal-health"
+    />
+  )
+}
+
+function SettlementTab() {
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
+  const settlementsQ = useSettlementRecord()
 
   const rows = (settlementsQ.data?.rows ?? []).filter((r) => {
     if (start && r.trade_date < start) return false

@@ -80,6 +80,9 @@ export interface MarketHolidayRow {
   label: string | null
   name?: string | null
   status?: string | null
+  /** Set on an `early-close` row: the session's own hours, as UTC instants. */
+  open_time?: string | null
+  close_time?: string | null
   source?: string | null
 }
 

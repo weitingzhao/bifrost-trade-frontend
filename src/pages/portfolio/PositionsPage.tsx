@@ -20,7 +20,7 @@ import { usePositionsScope } from '@/hooks/usePositionsScope'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { deleteExecution } from '@/api/trading'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { cn } from '@/lib/utils'
@@ -377,46 +377,38 @@ export default function PositionsPage() {
   return (
     <PageShell padding="compact" className="space-y-3">
       <section className={positionsUi.pageCard} aria-label="Positions">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Positions</p>}
-          title={
-            <span
-              className="type-page-title tracking-[-0.015em]"
-              title="What is in the book and where it is tight. What backs it is on the Backing page."
-            >
-              Positions
-            </span>
+        {/* §16.10 sample page (Rev .32): description behind ⓘ, the fetch
+            instant in the stamp slot, the count as meta; the breadcrumb is
+            the top bar's. */}
+        <PageHead
+          title="Positions"
+          info="What is in the book and where it is tight. What backs it is on the Backing page."
+          stamp={<BookFetchMarker quiet />}
+          meta={
+            book.portfolioPositionCount > 0
+              ? `${scopedCount} position${scopedCount !== 1 ? 's' : ''}${!book.hasAccountSelection ? ' (select account)' : ''}`
+              : undefined
           }
-          titleSize="large"
           actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              <BookFetchMarker quiet />
-              {book.portfolioPositionCount > 0 ? (
-                <span className={cn(positionsUi.mono, 'text-xs text-secondary-foreground')}>
-                  {scopedCount} position{scopedCount !== 1 ? 's' : ''}
-                  {!book.hasAccountSelection ? ' (select account)' : ''}
-                </span>
-              ) : null}
-              {/* Program research-copilot-reach P1 — the Copilot already has
-                  trade.portfolio_snapshot / portfolio_risk_summary; this hands it
-                  the page's live context so the user need not retype it. What
-                  it carries is named on hover (§16), not printed beside it. */}
-              <AskCopilotButton
-                originPage="positions"
-                title={`Carries this page snapshot: ${carries}`}
-                originLabel="Positions"
-                symbol={filterSymbol || undefined}
-                snapshot={compactSnapshot({
-                  lines_view: linesView,
-                  total_positions: scopedCount,
-                  portfolio_position_count: book.portfolioPositionCount,
-                  accounts: accountFilter,
-                  filter_symbol: filterSymbol || undefined,
-                  filter_expiry: filterExpiry || undefined,
-                })}
-                suggestedPrompt="分析我当前持仓的风险暴露：集中度、净 delta/vega、各标的 IV，以及任何需要减仓或对冲的头寸。"
-              />
-            </span>
+            /* Program research-copilot-reach P1 — the Copilot already has
+               trade.portfolio_snapshot / portfolio_risk_summary; this hands it
+               the page's live context so the user need not retype it. What
+               it carries is named on hover (§16), not printed beside it. */
+            <AskCopilotButton
+              originPage="positions"
+              title={`Carries this page snapshot: ${carries}`}
+              originLabel="Positions"
+              symbol={filterSymbol || undefined}
+              snapshot={compactSnapshot({
+                lines_view: linesView,
+                total_positions: scopedCount,
+                portfolio_position_count: book.portfolioPositionCount,
+                accounts: accountFilter,
+                filter_symbol: filterSymbol || undefined,
+                filter_expiry: filterExpiry || undefined,
+              })}
+              suggestedPrompt="分析我当前持仓的风险暴露：集中度、净 delta/vega、各标的 IV，以及任何需要减仓或对冲的头寸。"
+            />
           }
         />
 

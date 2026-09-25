@@ -218,7 +218,7 @@ UI 改动后运行 `npm run check:legacy-css`。
 | Inset | `bg-background` | 刻意凹进的图表/深坑区域 |
 
 - 每个页面根必须使用 [`PageShell`](src/components/layout/PageShell.tsx)（`padding`: `default` / `compact` / `none`）
-- 每个 `PageShell` 业务页必须使用 [`PageHeader`](src/components/layout/PageHeader.tsx)（`titleSize`: `default` | `large`）；禁止手写页面级 `<h1>`
+- 每个 `PageShell` 业务页的页头只用一个共用件；禁止手写页面级 `<h1>`。**新页与改版页用 [`PageHead`](src/components/layout/PageHead.tsx)**（设计 §16.10：说明进 ⓘ、时间戳位、meta、下划线 Tab、筛选放页头下方工具条；§16.13 新鲜度用 `useFreshReading` / `lib/freshness.ts`）。旧页仍用 [`PageHeader`](src/components/layout/PageHeader.tsx)，按组迁移中（样板：Backtest · Positions · Limits）
 - 铺在 canvas 上的 KPI/图表面板使用 `Card variant="elevated"` 或 `bg-secondary`，禁止与画布同色的 `bg-card` 块
 - **禁止**在新页面使用 Legacy 全局类 `.card`、`.process-section`、`.legacy-monitoring-shell` 作为页面外壳
 - Option Discovery 样式仅限页面 import：`discoveryCharts.css`（SVG/IV-term 表）+ Tailwind（`option-discovery-root`）；**不得**在新页面 import 或复用全局 Legacy shell
@@ -271,7 +271,7 @@ src/
 │   ├── market.ts
 │   └── ...
 ├── components/           ← 可复用 UI 组件
-│   └── layout/           ← PageShell, PageHeader, PageSection
+│   └── layout/           ← PageShell, PageHead (PageHeader 迁移中), PageSection
 ├── lib/
 │   ├── queryClient.ts    ← TanStack Query 全局配置
 │   └── router.tsx        ← React Router 路由定义

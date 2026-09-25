@@ -188,14 +188,17 @@ describe('the design walk, as it stands', () => {
     // History and History's method face. 62 on 2026-09-24: Symbol, the
     // Symbol lab and Backtest, signed together after the tab-by-tab rounds.
     // 63 on 2026-09-24 with Research Overview; 64 on 2026-09-24 with Live;
-    // 67 later that day with Events, Positions and Alerts.
-    expect(counts.aligned).toBe(67)
+    // 67 later that day with Events, Positions and Alerts. 65 on 2026-09-25:
+    // Package .11 @ Rev .43 moved two signed pages' own revs — the Stock
+    // screen's Catalyst stage gained four narrative conditions and Symbol's
+    // Overview a Narrative panel — so both read stale until they are re-walked.
+    expect(counts.aligned).toBe(65)
     expect(
       rows
         .filter((r) => r.state === 'stale')
         .map((r) => r.path)
         .sort()
-    ).toEqual([])
+    ).toEqual(['/research/screener', '/research/symbol'])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -473,9 +476,7 @@ describe('the design walk, as it stands', () => {
       '/research/overview',
       '/research/ratings/stocks',
       '/research/scan',
-      '/research/screener',
       '/research/signal-decay',
-      '/research/symbol',
       '/research/watchlist',
       '/research/workbench',
       '/review',
@@ -713,7 +714,12 @@ describe('the design walk, as it stands', () => {
     // global Rev and nothing else, so no page stamp and no state moves.
     // Packages .9 and .10 @ Rev .30–.31 move the colour tokens into
     // `@bifrost/ui` 0.4.13 and leave every page alone: global Rev only.
-    expect(DESIGN_REV).toBe('2026-09-25.31')
+    // Package .11 (full) + .13 (incremental) @ Rev .49: eighteen revs, most of
+    // them the unified page head rolled across the prototypes (.32–.42) and
+    // freshness / data confidence (.44–.47) — shell and prototype work that
+    // stamps no page. Three stamps did move, all at .43: Stock screen, Symbol
+    // and Narrative.
+    expect(DESIGN_REV).toBe('2026-09-25.49')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -750,8 +756,10 @@ describe('the design walk, as it stands', () => {
     // waits for a look in `reviewing`. 3 → 2 with Positions, rebuilt to its
     // north-star rev and waiting the same way. 2 → 0 with Live and Alerts,
     // built into the rail's Market group (Rev .7): for the first time since
-    // Package 2026-09-23.2 nothing walked is behind its rev.
-    expect(counts.byState.stale).toBe(0)
+    // Package 2026-09-23.2 nothing walked is behind its rev. 0 → 2 with
+    // Package .11 @ Rev .43: Stock screen and Symbol, each re-walked in the
+    // round that builds the narrative pieces the design added to them.
+    expect(counts.byState.stale).toBe(2)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

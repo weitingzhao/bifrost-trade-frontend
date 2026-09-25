@@ -39,6 +39,7 @@ import {
   Wrench,
   type LucideIcon,
   Columns2,
+  FileText,
 } from 'lucide-react'
 import type { IconComponent, ShellNavGroup, ShellNavItem, ShellNavSubGroup } from '@bifrost/ui'
 import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
@@ -237,11 +238,14 @@ export const BENCHES: Bench[] = [
     // Six rows became one page with six tabs. A row per tab would put the
     // reader back where the merge found them — leaving the name to read
     // another of its faces. The design's History and Compare rows joined
-    // 2026-09-23, in the design's order.
+    // 2026-09-23, in the design's order. Narrative came back as the fourth
+    // row at Rev .35/.43: Symbol has no Narrative tab, so the census row on
+    // Overview was its only door, and its subject is one name's text evidence.
     items: [
       route('Symbol', '/research/symbol', BookOpen),
       route('Compare', '/research/compare', Columns2),
       route('History', '/research/history', History),
+      route('Narrative', '/research/narrative', FileText),
     ],
   },
   {

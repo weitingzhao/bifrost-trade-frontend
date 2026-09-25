@@ -146,8 +146,12 @@ const PARAM_PICKER: Record<string, { to: string; why: string }> = {
  *
  * Until 2026-09-25 this was a table of recommendations — six "not this app",
  * four "build". Options Kit was built; the Owner ruled the other nine.
+ *
+ * Which pages are design-only is the registry's call since Rev .48
+ * (`DESIGN_ONLY`, frozen as `DesignRoute.designOnly`); this table only says
+ * why, one line per page, and a test holds its keys to the registry's set.
  */
-export const DESIGN_ONLY: Record<string, string> = {
+export const DESIGN_ONLY_WHY: Record<string, string> = {
   '/docs/index': 'an index of the design package — this tracker answers the same question from both registries',
   '/docs/progress': 'the design package\u2019s own changelog',
   '/docs/gaps': 'the prototypes\u2019 coverage gaps — this tracker\u2019s \u201cto ask\u201d list answers it from live data',
@@ -160,7 +164,7 @@ export const DESIGN_ONLY: Record<string, string> = {
 }
 
 function designOnlyNote(path: string): string {
-  return `Owner 2026-09-25: kept in the design package, not built in this app \u2014 ${DESIGN_ONLY[path]}.`
+  return `Owner 2026-09-25: kept in the design package, not built in this app \u2014 ${DESIGN_ONLY_WHY[path]}.`
 }
 
 /**
@@ -266,9 +270,9 @@ export function adoptionRows(): AdoptionRow[] {
       path: d.path,
       label: d.label,
       crumbs: d.crumbs,
-      state: DESIGN_ONLY[d.path] ? 'designOnly' : d.designed ? 'unbuilt' : 'backlog',
+      state: d.designOnly ? 'designOnly' : d.designed ? 'unbuilt' : 'backlog',
       design: d,
-      note: DESIGN_ONLY[d.path] ? designOnlyNote(d.path) : undefined,
+      note: d.designOnly ? designOnlyNote(d.path) : undefined,
       inApp: false,
     })
   }
@@ -306,7 +310,7 @@ export function adoptionCounts(rows: readonly AdoptionRow[]): AdoptionCounts {
     designOnly: 0,
   } as Record<AdoptionState, number>
   for (const r of rows) byState[r.state] += 1
-  const designed = DESIGN_ROUTES.filter((d) => d.designed && !DESIGN_ONLY[d.path]).length
+  const designed = DESIGN_ROUTES.filter((d) => d.designed && !d.designOnly).length
   return {
     designed,
     stubs: DESIGN_ROUTES.filter((d) => !d.designed).length,

@@ -296,8 +296,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   },
   {
     // The narrative lens: the deterministic half (SEC items, vendor labels) is
-    // read from research `/research/narrative`; the model half is owed. Not a
-    // menu row in the design (inNav false) — reached by its path and links.
+    // read from research `/research/narrative`; the model half is owed. The
+    // fourth row of Research › Analyze since Rev .43 (Q6), after History.
     path: '/research/narrative',
     label: 'Narrative',
     crumbs: ANALYZE,

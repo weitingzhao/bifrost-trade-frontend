@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adoptionCounts, adoptionRows, DESIGN_ONLY } from './adoption'
+import { adoptionCounts, adoptionRows, DESIGN_ONLY_WHY } from './adoption'
 import { DESIGN_ROUTES } from './designRoutes.generated'
 
 const rows = adoptionRows()
@@ -24,8 +24,10 @@ describe('design adoption', () => {
     // the app would read near complete while most of the design is unbuilt.
     // Less the design documents the Owner kept in the design (2026-09-25):
     // they were never this app's to build.
-    expect(counts.designed).toBe(DESIGN_ROUTES.filter((d) => d.designed && !DESIGN_ONLY[d.path]).length)
-    expect(counts.byState.designOnly).toBe(Object.keys(DESIGN_ONLY).length)
+    expect(counts.designed).toBe(DESIGN_ROUTES.filter((d) => d.designed && !d.designOnly).length)
+    expect(counts.byState.designOnly).toBe(DESIGN_ROUTES.filter((d) => d.designOnly).length)
+    // Rev .48: the registry decides which; the app only says why, for each and no other.
+    expect(Object.keys(DESIGN_ONLY_WHY).sort()).toEqual(DESIGN_ROUTES.filter((d) => d.designOnly).map((d) => d.path).sort())
     // The app's own page count is no guide to it: its extra pages retire
     // (System › Runtime, 2026-09-25) and some design routes are answered by a
     // forward rather than a page of their own, so the only denominator this
@@ -66,8 +68,10 @@ describe('design adoption', () => {
     // ruled on 2026-09-20 that this side's SEPA-conditions page *is* that
     // screen, so it holds the path itself now and answers for itself.
     const home = rows.find((r) => r.path === '/research/screener')
-    expect(home?.state).toBe('aligned')
     expect(home?.inApp).toBe(true)
+    // Explorer's redirect lands here and is the same prototype (an alias row
+    // in the registry), so it is the one forward this page may answer for.
+    expect(home?.aliasOf).toEqual(['/research/explorer'])
     const contracts = rows.find((r) => r.path === '/research/contract-screener')
     // Walked 2026-09-22 on its own path, signed 2026-09-23; what this line
     // pins is the `aliasOf`, not the state — the rule is that the forward

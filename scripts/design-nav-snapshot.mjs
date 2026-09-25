@@ -52,6 +52,35 @@ export function inksOf(R) {
 }
 
 /**
+ * The registry's neutral ramp, per theme, by the `--sk-*` name each step lands on.
+ *
+ * `RAMP` is a bare array; the names are `SK_VARS`, private to the registry, so
+ * they are read from its source text (the same move as the glyph table). The
+ * light ramp is Trade's own and stays out of `@bifrost/ui` (Rev .43 Q5), so this
+ * mirror is the only thing that holds the app's copy to the design's. A hole, a
+ * length mismatch or a non-hex fails the sync rather than freezing a mirror
+ * that compares nothing.
+ */
+export function rampOf(R, registrySource) {
+  const m = /const SK_VARS = \[([^\]]+)\]/.exec(registrySource)
+  if (!m) throw new Error('shell-registry.js: `const SK_VARS = [...]` not found — the ramp names moved.')
+  const names = [...m[1].matchAll(/'(--sk-[\w-]+)'/g)].map((x) => x[1])
+  const ramp = {}
+  for (const th of ['dark', 'light']) {
+    const steps = R.RAMP?.[th]
+    if (!Array.isArray(steps) || steps.length === 0) throw new Error(`shell-registry.js: RAMP.${th} is missing.`)
+    if (steps.length > names.length) throw new Error(`shell-registry.js: RAMP.${th} has ${steps.length} steps and SK_VARS names ${names.length}.`)
+    const row = {}
+    steps.forEach((v, i) => {
+      if (!/^#[0-9a-f]{6}$/i.test(String(v))) throw new Error(`shell-registry.js: RAMP.${th}[${i}] (${names[i]}) is ${JSON.stringify(v)}, not a hex.`)
+      row[names[i]] = v
+    })
+    ramp[th] = row
+  }
+  return ramp
+}
+
+/**
  * Docs Index round constants the app can store. `round` on DesignRoute stays
  * this set — the tracker still paints OLD.
  */
@@ -390,6 +419,12 @@ function generate(pkg) {
 
   const inNav = new Map(rows().map((r) => [r.path, r]))
   const all = R.routes ?? R.ROUTES ?? []
+  // Rev .48 Q2: the registry names the design-process pages the app does not
+  // build. Read, not typed — the app's copy of this list is what drifted.
+  if (!(R.DESIGN_ONLY instanceof Set)) throw new Error('shell-registry.js: `DESIGN_ONLY` is not exported as a Set.')
+  for (const p of R.DESIGN_ONLY) {
+    if (!all.some((r) => r.path === p)) throw new Error(`shell-registry.js: DESIGN_ONLY names ${p}, which is not a route.`)
+  }
 
   const entries = all.map((r) => {
     const nav = inNav.get(r.path)
@@ -409,6 +444,7 @@ function generate(pkg) {
       rev: typeof r.rev === 'string' && r.rev ? r.rev : null,
       inNav: nav != null,
       group: nav?.group ?? null,
+      designOnly: R.DESIGN_ONLY.has(r.path),
     }
   })
 
@@ -451,6 +487,11 @@ export interface DesignRoute {
   inNav: boolean
   /** Top-level group in the design's tree, when it has a row. */
   group: string | null
+  /**
+   * The registry's \`DESIGN_ONLY\` (Rev .48): a design-process document kept in
+   * the package and not built in the app, so out of the denominator.
+   */
+  designOnly: boolean
 }
 
 /**
@@ -552,6 +593,8 @@ ${entries.map((e) => '  ' + JSON.stringify(e) + ',').join('\n')}
   writeFileSync(out, body)
 
   const inks = inksOf(R)
+  const ramp = rampOf(R, src)
+  const rampRows = (th) => Object.entries(ramp[th]).map(([k, v]) => `    ${JSON.stringify(k)}: ${JSON.stringify(v)},`).join('\n')
   const inkRows = (th) => Object.entries(inks[th]).map(([k, v]) => `    ${k}: ${JSON.stringify(v)},`).join('\n')
   writeFileSync(
     inksOut,
@@ -570,6 +613,20 @@ ${inkRows('dark')}
   },
   light: {
 ${inkRows('light')}
+  },
+} as const
+
+/**
+ * The neutral ramp (\`RAMP\`, named by \`SK_VARS\`). Trade-only — the package does
+ * not carry it (Rev .43 Q5) — so \`identityColour.test.ts\` holds the app's
+ * \`--sk-*\` declarations to this mirror instead.
+ */
+export const DESIGN_RAMP = {
+  dark: {
+${rampRows('dark')}
+  },
+  light: {
+${rampRows('light')}
   },
 } as const
 `,

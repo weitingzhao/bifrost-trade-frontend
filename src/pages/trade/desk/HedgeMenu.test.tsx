@@ -66,6 +66,17 @@ describe('HedgeMenu · opening it writes nothing', () => {
     expect(suspend).not.toHaveBeenCalled()
   })
 
+  it('sends the daemon\u2019s detail to Ops \u203a Bus Status, and keeps numbers off the chip', async () => {
+    renderMenu()
+    const chip = screen.getByRole('button', { name: /Hedge/ })
+    // Rev .48 Q3: the book Δ is the StatusBar's; a second copy here would be §14.2's second value.
+    expect(chip.textContent).not.toMatch(/\d/)
+    await userEvent.click(chip)
+    const row = screen.getByRole('menuitem', { name: /Daemon detail/ })
+    expect(row.getAttribute('href')).toMatch(/#satellite-bus$/)
+    expect(row.getAttribute('target')).toBe('_blank')
+  })
+
   it('will not suspend a daemon that is not running', async () => {
     renderMenu(status({ alive: false }))
     await userEvent.click(screen.getByRole('button', { name: /Hedge not running/ }))

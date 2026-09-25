@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { canonicalRound, inksOf, parseRoundsFromIndex } from './design-nav-snapshot.mjs'
+import { canonicalRound, inksOf, parseRoundsFromIndex, rampOf } from './design-nav-snapshot.mjs'
 
 describe('canonicalRound', () => {
   it('maps OLDC to OLD (early round, partly overtaken by contract)', () => {
@@ -55,5 +55,22 @@ describe('inksOf', () => {
   it('fails on a hole rather than freezing a mirror that compares nothing', () => {
     const holed = { ...R, DIRECTION: { dark: { ...dir, ticker: undefined }, light: dir } }
     assert.throws(() => inksOf(holed), /dark\.ticker/)
+  })
+})
+
+describe('rampOf', () => {
+  const src = "const SK_VARS = ['--sk-ground', '--sk-surface', '--sk-accent'];"
+  const R = { RAMP: { dark: ['#0a0b11', '#191d29'], light: ['#e9ebef', '#f4f5f8'] } }
+
+  it('names each step by the SK_VARS entry it lands on', () => {
+    const ramp = rampOf(R, src)
+    assert.equal(ramp.dark['--sk-ground'], '#0a0b11')
+    assert.equal(ramp.light['--sk-surface'], '#f4f5f8')
+    assert.equal(Object.keys(ramp.dark).length, 2)
+  })
+
+  it('fails when the names cannot be found or a step is not a hex', () => {
+    assert.throws(() => rampOf(R, 'const OTHER = []'), /SK_VARS/)
+    assert.throws(() => rampOf({ RAMP: { dark: ['#0a0b11', 'transparent'], light: ['#e9ebef'] } }, src), /RAMP\.dark\[1\]/)
   })
 })

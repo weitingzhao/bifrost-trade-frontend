@@ -24,7 +24,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { DESIGN_INKS } from './designInks.generated'
+import { DESIGN_INKS, DESIGN_RAMP } from './designInks.generated'
 
 const SRC = join(__dirname, '..', '..')
 
@@ -166,6 +166,18 @@ describe('§14.8 inks: one set of values, held to @bifrost/ui', () => {
         const hex = PKG[th].get(TOKEN[k]) ?? ''
         expect(APP[th].get(`${TOKEN[k]}-rgb`), `${th} ${TOKEN[k]}-rgb`).toBe(channels(hex))
       }
+    }
+  })
+})
+
+describe('the neutral ramp: Trade\u2019s own copy, held to the registry', () => {
+  // Rev .43 Q5: the light core palette stays out of the package, so the app and
+  // the registry each keep one. This is the rope between them (the DIRECTION move).
+  it('declares every step of the registry\u2019s ramp at the registry\u2019s value, in both themes', () => {
+    for (const th of THEMES) {
+      const steps = Object.entries(DESIGN_RAMP[th])
+      expect(steps.length, th).toBeGreaterThanOrEqual(12)
+      for (const [name, hex] of steps) expect(APP[th].get(name), `${th} ${name}`).toBe(hex.toLowerCase())
     }
   })
 })

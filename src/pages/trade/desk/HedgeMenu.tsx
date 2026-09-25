@@ -20,7 +20,6 @@
  * Owner the control they may actually need.
  */
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { postFlatten, postResume, postSuspend } from '@/api/monitor'
 import { StatusLamp } from '@/components/StatusLamp'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -28,6 +27,7 @@ import { useCtrlAction } from './useCtrlAction'
 import { hedgeFacts, hedgeReading } from './hedgeModel'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
+import { opsConsoleHref } from '@/lib/opsConsole'
 import type { StatusResponse } from '@/types/monitor'
 
 export function HedgeMenu({
@@ -139,13 +139,18 @@ export function HedgeMenu({
               {r.alive ? 'takes effect next heartbeat' : 'daemon is not running'}
             </span>
           </button>
-          <Link
-            to="/system/status"
+          {/* Rev .48 Q3: the daemon's detail is Ops' Bus Status — the same page
+              System › Status's daemon row links to, so the two doors agree. */}
+          <a
+            href={opsConsoleHref('satellite-bus')}
+            target="_blank"
+            rel="noreferrer"
             role="menuitem"
+            title="Opens Bifröst Ops › Bus Status in a new tab"
             className="flex h-8 w-full items-center gap-2 px-3 text-dense-meta text-secondary-foreground no-underline hover:bg-[var(--sk-surface)] hover:text-foreground"
           >
-            Daemon status →<span className="ml-auto text-dense-caption text-muted-foreground">System › Status</span>
-          </Link>
+            Daemon detail ↗<span className="ml-auto text-dense-caption text-muted-foreground">Ops · Bus Status</span>
+          </a>
           <div className="border-t border-border" />
           <button
             type="button"

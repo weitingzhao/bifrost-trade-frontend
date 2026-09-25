@@ -566,8 +566,11 @@ describe('the design walk, as it stands', () => {
     // `/risk`, `/portfolio` and `/research/book` — which exist because a
     // layer that is only a container cannot be its own first child (§5a.1).
     // 92 with Package 2026-09-21.4: `/research/orchestration`, split out of
-    // the Personas page.
-    expect(counts.designed).toBe(92)
+    // the Personas page. 83 on 2026-09-25, with nothing removed from the
+    // design: the Owner kept nine `/docs/*` documents in the design package,
+    // and a page that was never this app's to build is not in its denominator.
+    expect(counts.designed).toBe(83)
+    expect(counts.byState.designOnly).toBe(9)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three
     // designed with no app page yet (Journal and Narrative are Vision batches
@@ -599,7 +602,8 @@ describe('the design walk, as it stands', () => {
     // and 11 with the Screener authoring face, the last of the four. 10 with
     // Calibration — the last page of the approved batch. 9 on 2026-09-25 with
     // Narrative, the last business page; the nine left are the design's docs.
-    expect(counts.byState.unbuilt).toBe(9)
+    // 0 the same day: the Owner kept those nine in the design package.
+    expect(counts.byState.unbuilt).toBe(0)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

@@ -17,6 +17,7 @@
  *   staging    no home found in the design, and nobody has decided yet
  *   unbuilt    the design has a prototype, the app has no page
  *   backlog    the design lists the route but has no prototype behind it yet
+ *   designOnly a design-package document the Owner ruled stays in the design
  *
  * Only `aligned`, `reviewing`, `moving` and `staging` are written down
  * (`RouteEntry.design`). `pending`, `unbuilt` and `backlog` are derived from the
@@ -42,6 +43,7 @@ export type AdoptionState =
   | 'staging'
   | 'unbuilt'
   | 'backlog'
+  | 'designOnly'
 
 /** What a route's own entry may declare — one definition, in `tag.ts`. */
 export type { DesignTag } from './tag'
@@ -132,42 +134,33 @@ const PARAM_PICKER: Record<string, { to: string; why: string }> = {
 
 
 /**
- * What this side recommends for a design page it has not built.
+ * Design pages that stay in the design package (Owner ruling 2026-09-25).
  *
- * `unbuilt` says the app has no page; it does not say whether it should. Ten
- * `/docs/*` prototypes went into the build list undifferentiated, and six of
- * them document the *design process* rather than this app — a changelog of the
- * package, an index of its own prototypes, the layout spec the app was built
- * to. Building those here would put a second, hand-written copy of something
- * the app already answers from live data, or a specification inside the thing
- * it specifies.
+ * The ten `/docs/*` prototypes document the design and its process: an index
+ * of the package, its changelog, its coverage gaps, the layout and menu specs,
+ * a one-time ROI analysis, the capability map, the drill-down join and the
+ * Research Vision. The Owner's call: the design keeps one copy, and the Trade
+ * console does not carry a second. A hand-written document copied here drifts
+ * from its source; this app's Reference keeps only pages it renders from a
+ * live source (the research docs, the component galleries, this tracker).
  *
- * These are **recommendations, not rulings** (Owner's rule, 2026-09-18:
- * absence from the design is not deletion, and the Agent reports rather than
- * decides). The state is untouched and the counts do not move; the note is
- * what changes, so the list stops presenting ten rows as one kind of work.
+ * Until 2026-09-25 this was a table of recommendations — six "not this app",
+ * four "build". Options Kit was built; the Owner ruled the other nine.
  */
-const UNBUILT_JUDGEMENT: Record<string, string> = {
-  '/docs/index':
-    'Recommend: not this app. 「设计产出索引」 is a one-line summary per prototype — an index of the design package. Design Adoption already lists all of the design\'s routes with their state, generated from both registries so it cannot drift from either; a hand-written index is a second list that can. Owner to rule.',
-  '/docs/progress':
-    'Recommend: not this app. 「设计进展报告」 is dated notes on the design\'s own revisions (2026-09-16 重做, 09-18 …) — a changelog of the package, which belongs with the package. Owner to rule.',
-  '/docs/gaps':
-    'Recommend: not this app. 「原型覆盖缺口」 lists the app pages the prototypes do not cover — which is exactly what this tracker\'s "to ask" answers, from live data rather than by hand. Two answers to one question, one of them stale by construction. Owner to rule.',
-  '/docs/layout':
-    'Recommend: not this app. 「布局重构 · 修订版」 is the Shell Spec\'s layout map — the specification the shell was built to. A specification rendered inside the thing it specifies cannot be checked against it; `shellChrome.ts` and the layout tests are where it is enforced. Owner to rule.',
-  '/docs/research-menu':
-    'Recommend: not this app. 「Research 菜单 · 四棵树」 is the nav specification. `routeRegistry.ts` and `researchNavCatalog.ts` are this side\'s authority for the menu and `navConfig.test.ts` enforces it, so a page describing the menu would be a third copy that can disagree with the menu itself. Owner to rule.',
-  '/docs/audit':
-    'Recommend: not this app. 「UI 能力盘点与 ROI 判断」 is a one-time analysis made to decide what to build — a planning artifact, not a reference a reader returns to. Its conclusions are already in the design\'s own revisions. Owner to rule.',
-  '/docs/options-kit':
-    'Recommend: build. "Dense UI · Options & Quant extension — each block shows the rendered primitive and where it lands in bifrost-ui/src" is the same kind of page as `/docs/ui-design-system`, which this app already carries and which runs to a thousand lines. This is its options half, and a component gallery is only useful beside the code it documents. The most valuable of the ten.',
-  '/docs/capability':
-    'Recommend: build. 「业务能力地图 · 量化交易员视角」 says what the system can do, in the six stages a trader works through. It is about this app rather than about the design, and the Reference fold already carries that kind.',
-  '/docs/drilldown':
-    'Recommend: build. "Drill-down · one join across the app" is an interactive statement of how one entity drills across pages — a contract the app\'s links must honour. The 2026-09-22 walks found four pages carrying no destination at all, so a page that states the join has teeth here.',
-  '/docs/research-vision':
-    'Recommend: build. Research Vision §8 (the artifact-anchored Copilot and the dial over the three operators) is the sibling of Research Blueprint and Research Calibration, both of which this app already carries under Reference.',
+export const DESIGN_ONLY: Record<string, string> = {
+  '/docs/index': 'an index of the design package — this tracker answers the same question from both registries',
+  '/docs/progress': 'the design package\u2019s own changelog',
+  '/docs/gaps': 'the prototypes\u2019 coverage gaps — this tracker\u2019s \u201cto ask\u201d list answers it from live data',
+  '/docs/layout': 'the Shell Spec\u2019s layout map — enforced here by shellChrome.ts and the layout tests',
+  '/docs/research-menu': 'the nav specification — routeRegistry.ts and navConfig.test.ts are its authority here',
+  '/docs/audit': 'a one-time UI ROI analysis made to decide what to build',
+  '/docs/capability': 'the business capability map — a hand-written document about the app',
+  '/docs/drilldown': 'the drill-down join — the contract the app\u2019s links honour, checked by the dead-link and interaction sweeps',
+  '/docs/research-vision': 'Research Vision \u00a78 — a design document; Blueprint and Calibration are carried because the research API serves them live',
+}
+
+function designOnlyNote(path: string): string {
+  return `Owner 2026-09-25: kept in the design package, not built in this app \u2014 ${DESIGN_ONLY[path]}.`
 }
 
 /**
@@ -273,9 +266,9 @@ export function adoptionRows(): AdoptionRow[] {
       path: d.path,
       label: d.label,
       crumbs: d.crumbs,
-      state: d.designed ? 'unbuilt' : 'backlog',
+      state: DESIGN_ONLY[d.path] ? 'designOnly' : d.designed ? 'unbuilt' : 'backlog',
       design: d,
-      note: UNBUILT_JUDGEMENT[d.path],
+      note: DESIGN_ONLY[d.path] ? designOnlyNote(d.path) : undefined,
       inApp: false,
     })
   }
@@ -290,7 +283,8 @@ export interface AdoptionCounts {
    * page at all (the `unbuilt` list), so counting against the app would read
    * near 100% with much of the design unbuilt. And not every design route
    * either: a route the design resolves to `_Shell Stub` has nothing to adopt
-   * (the `backlog` list).
+   * (the `backlog` list), and a design document the Owner kept in the design
+   * (`designOnly`) was never this app's to build.
    */
   designed: number
   /** Design routes that fall to `_Shell Stub` — the design's own backlog. */
@@ -309,12 +303,13 @@ export function adoptionCounts(rows: readonly AdoptionRow[]): AdoptionCounts {
     staging: 0,
     unbuilt: 0,
     backlog: 0,
+    designOnly: 0,
   } as Record<AdoptionState, number>
   for (const r of rows) byState[r.state] += 1
-  const designed = DESIGN_ROUTES.filter((d) => d.designed).length
+  const designed = DESIGN_ROUTES.filter((d) => d.designed && !DESIGN_ONLY[d.path]).length
   return {
     designed,
-    stubs: DESIGN_ROUTES.length - designed,
+    stubs: DESIGN_ROUTES.filter((d) => !d.designed).length,
     aligned: byState.aligned,
     byState,
   }
@@ -388,10 +383,11 @@ export function adoptionByGroup(rows: readonly AdoptionRow[]): AdoptionGroup[] {
           staging: 0,
           unbuilt: 0,
           backlog: 0,
+          designOnly: 0,
         },
       } as AdoptionGroup)
     g.byState[r.state] += 1
-    if (r.state !== 'backlog') {
+    if (r.state !== 'backlog' && r.state !== 'designOnly') {
       g.total += 1
       if (r.state === 'aligned') g.aligned += 1
       else g.left += 1
@@ -440,6 +436,12 @@ export const ADOPTION_SECTIONS: { state: AdoptionState; title: string; blurb: st
     title: 'The design’s backlog',
     blurb:
       'In the design’s menu with no prototype behind it yet. Nothing to walk or build against — the design’s work, not a “to” list here.',
+  },
+  {
+    state: 'designOnly',
+    title: 'Kept in the design',
+    blurb:
+      'Design-package documents the Owner ruled stay there (2026-09-25). The design keeps the one copy; not built here, and not counted.',
   },
 ]
 

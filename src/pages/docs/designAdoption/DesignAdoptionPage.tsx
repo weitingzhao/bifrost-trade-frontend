@@ -68,6 +68,7 @@ const TAG: Record<AdoptionState, DenseTagVariant> = {
   moving: 'info',
   staging: 'warning',
   backlog: 'neutral',
+  designOnly: 'neutral',
 }
 
 /** The bar's inks, in the order the sections are listed. */
@@ -80,6 +81,7 @@ const BAR: Record<AdoptionState, string> = {
   moving: 'bg-info/45',
   staging: 'bg-warning/45',
   backlog: 'bg-[var(--sk-raised2)]',
+  designOnly: 'bg-[var(--sk-raised2)]',
 }
 
 function trail(row: AdoptionRow): string {
@@ -107,7 +109,9 @@ function ShapeBar({ byState, total }: { byState: Record<AdoptionState, number>; 
 
 /** What is left in a group, named rather than summed into one number. */
 function leftLabel(byState: Record<AdoptionState, number>): string {
-  const parts = ADOPTION_SECTIONS.filter((s) => s.state !== 'aligned' && s.state !== 'backlog')
+  const parts = ADOPTION_SECTIONS.filter(
+    (s) => s.state !== 'aligned' && s.state !== 'backlog' && s.state !== 'designOnly',
+  )
     .filter((s) => byState[s.state] > 0)
     .map((s) => `${byState[s.state]} ${s.title.toLowerCase()}`)
   return parts.length === 0 ? 'nothing left' : parts.join(' · ')
@@ -151,7 +155,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
   // is no walk. It can still carry a recommendation about whether this app
   // should have the page at all, and when it does, that is the thing to read —
   // the file name is in the page label already.
-  const isUnbuilt = state === 'unbuilt'
+  const isUnbuilt = state === 'unbuilt' || state === 'designOnly'
   const hasNotes = state !== 'backlog'
   const showsApp = state === 'backlog'
   /** `unbuilt` has no walk and therefore no rev to stamp. */
@@ -341,7 +345,7 @@ export default function DesignAdoptionPage() {
     for (const list of m.values()) list.sort((a, b) => trail(a).localeCompare(trail(b)))
     return m
   }, [rows])
-  const adoptable = rows.filter((r) => r.state !== 'backlog').length
+  const adoptable = rows.filter((r) => r.state !== 'backlog' && r.state !== 'designOnly').length
 
   return (
     <PageShell>
@@ -382,9 +386,11 @@ export default function DesignAdoptionPage() {
             The denominator in the header is the {counts.designed} design routes that have a
             prototype, not the app’s page count: {counts.byState.unbuilt} of them have no page here
             at all, so counting against the app would read near complete with much of the design
-            unbuilt. The bar is wider than that — it counts every row on this page except the
-            design’s own {counts.stubs} stubs, so the {counts.byState.staging} app pages the design
-            has no home for are visible as work rather than invisible.
+            unbuilt. It leaves out the {counts.byState.designOnly} design documents the Owner kept in
+            the design. The bar is wider than that — it counts every row on this page except the
+            design’s own {counts.stubs} stubs and those documents, so the{' '}
+            {counts.byState.staging} app pages the design has no home for are visible as work rather
+            than invisible.
           </p>
         </CardContent>
       </Card>

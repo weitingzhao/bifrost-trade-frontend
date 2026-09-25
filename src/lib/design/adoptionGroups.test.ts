@@ -48,13 +48,17 @@ describe('adoptionByGroup', () => {
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the
-    // denominator: System's four `/docs/*` stubs do not make it read worse.
+    // denominator: System's four `/docs/*` stubs do not make it read worse —
+    // and neither do the nine design documents the Owner kept in the design.
     const system = groups.find((g) => g.group === 'System')
     expect(system?.byState.backlog).toBe(4)
-    expect(system?.total).toBe(rows.filter((r) => r.crumbs[0] === 'System' && r.state !== 'backlog').length)
+    expect(system?.byState.designOnly).toBe(9)
+    expect(system?.total).toBe(
+      rows.filter((r) => r.crumbs[0] === 'System' && r.state !== 'backlog' && r.state !== 'designOnly').length,
+    )
 
     // Every row lands in exactly one group, and the totals reconcile.
-    expect(groups.reduce((n, g) => n + g.total + g.byState.backlog, 0)).toBe(rows.length)
+    expect(groups.reduce((n, g) => n + g.total + g.byState.backlog + g.byState.designOnly, 0)).toBe(rows.length)
     expect(groups.reduce((n, g) => n + g.aligned, 0)).toBe(counts.aligned)
     // Closest to done first, so the group being walked sits at the top.
     expect(groups.map((g) => g.left)).toEqual([...groups.map((g) => g.left)].sort((a, b) => a - b))
@@ -73,7 +77,7 @@ describe('adoptionGroupOf', () => {
       counted.set(g, (counted.get(g) ?? 0) + 1)
     }
     for (const g of byGroup) {
-      const all = g.total + g.byState.backlog
+      const all = g.total + g.byState.backlog + g.byState.designOnly
       expect(counted.get(g.group), `group ${g.group}`).toBe(all)
     }
     expect([...counted.keys()].sort()).toEqual(byGroup.map((g) => g.group).sort())
@@ -88,33 +92,28 @@ describe('adoptionGroupOf', () => {
   })
 })
 
-describe('the build list is not one kind of work', () => {
-  it('carries a recommendation on each `/docs/*` prototype, and rules on none', () => {
-    // Ten of them went in undifferentiated. Six document the design process
-    // rather than this app; four are references about the app and belong
-    // beside the ones the Reference fold already carries. The note was the
-    // whole change — no state and no count moved, because absence from the
-    // design is not deletion and this side reports rather than rules (Owner,
-    // 2026-09-18). Nine since 2026-09-23: Options Kit, the first of the four
-    // recommended builds, was built and left the list the way a build does.
-    const docs = adoptionRows().filter(
-      (r) => r.state === 'unbuilt' && r.path.startsWith('/docs/'),
-    )
-    expect(docs).toHaveLength(9)
-    expect(docs.every((r) => (r.note ?? '').startsWith('Recommend:'))).toBe(true)
-    // A built page leaves the recommendation list rather than keeping a stale
-    // one — the judgement is about what is not built yet.
-    expect(docs.map((r) => r.path)).not.toContain('/docs/options-kit')
-    const build = docs.filter((r) => r.note!.startsWith('Recommend: build'))
-    expect(build.map((r) => r.path).sort()).toEqual([
+describe('the design documents stay in the design', () => {
+  it('rules on all nine, and none of them is work left here', () => {
+    // Ten `/docs/*` prototypes went in undifferentiated; 2026-09-18 this side
+    // recommended six "not this app" and four "build". Options Kit was built.
+    // On 2026-09-25 the Owner ruled the other nine: the design keeps its one
+    // copy and the Trade console does not carry a second.
+    const rows = adoptionRows()
+    const docs = rows.filter((r) => r.path.startsWith('/docs/') && r.state === 'designOnly')
+    expect(docs.map((r) => r.path).sort()).toEqual([
+      '/docs/audit',
       '/docs/capability',
       '/docs/drilldown',
+      '/docs/gaps',
+      '/docs/index',
+      '/docs/layout',
+      '/docs/progress',
+      '/docs/research-menu',
       '/docs/research-vision',
     ])
-    // Every "not this app" says which instrument already answers it, so the
-    // recommendation can be argued with rather than just read.
-    for (const r of docs.filter((x) => x.note!.startsWith('Recommend: not'))) {
-      expect(r.note, r.path).toMatch(/Owner to rule\.$/)
-    }
+    expect(docs.every((r) => (r.note ?? '').startsWith('Owner 2026-09-25: kept in the design package'))).toBe(true)
+    // Nothing is left to build, and a built page never reads as design-only.
+    expect(rows.filter((r) => r.state === 'unbuilt')).toEqual([])
+    expect(docs.map((r) => r.path)).not.toContain('/docs/options-kit')
   })
 })

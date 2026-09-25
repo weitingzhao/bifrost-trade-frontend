@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adoptionCounts, adoptionRows } from './adoption'
+import { adoptionCounts, adoptionRows, DESIGN_ONLY } from './adoption'
 import { DESIGN_ROUTES } from './designRoutes.generated'
 
 const rows = adoptionRows()
@@ -22,7 +22,10 @@ describe('design adoption', () => {
   it('counts against the design, not against itself', () => {
     // Dozens of design prototypes have no page here. A denominator taken from
     // the app would read near complete while most of the design is unbuilt.
-    expect(counts.designed).toBe(DESIGN_ROUTES.filter((d) => d.designed).length)
+    // Less the design documents the Owner kept in the design (2026-09-25):
+    // they were never this app's to build.
+    expect(counts.designed).toBe(DESIGN_ROUTES.filter((d) => d.designed && !DESIGN_ONLY[d.path]).length)
+    expect(counts.byState.designOnly).toBe(Object.keys(DESIGN_ONLY).length)
     // The app's own page count is no guide to it: its extra pages retire
     // (System › Runtime, 2026-09-25) and some design routes are answered by a
     // forward rather than a page of their own, so the only denominator this
@@ -100,7 +103,7 @@ describe('design adoption', () => {
       }
       if (r.state === 'backlog') expect(r.design?.designed, r.path).toBe(false)
     }
-    expect(counts.stubs).toBe(DESIGN_ROUTES.length - counts.designed)
+    expect(counts.stubs).toBe(DESIGN_ROUTES.length - counts.designed - counts.byState.designOnly)
     expect(counts.byState.backlog).toBeLessThanOrEqual(counts.stubs)
   })
 

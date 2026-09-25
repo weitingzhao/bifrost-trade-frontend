@@ -31,13 +31,13 @@
  * when you want the real thing.
  */
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { firedTodayCount, useFiredAlerts } from '@/hooks/useFiredAlerts'
 import { computeLiveNavLamp } from '@/utils/livePageLamps'
 import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
-import { PANEL_CARD_PX, placeOf, surfaceForRoute, useSurfaces } from './equipSurface'
+import { PANEL_CARD_PX, opensAsPage, placeOf, surfaceForRoute, useSurfaces } from './equipSurface'
 import { toggleSurfaceFrom } from './equipMotion'
 import { SHELL_TOP_BAR_PX } from './shellChrome'
 import css from './equipRail.module.css'
@@ -77,13 +77,24 @@ function RailButton({
   children?: ReactNode
 }) {
   const Icon = page.icon
+  const navigate = useNavigate()
   return (
     <button
       type="button"
       onClick={(e) => {
         const surface = surfaceForRoute(page.to)
+        if (!surface) return
+        // "Open where you last put it" includes the page: `openSurface`'s
+        // page branch records the choice and leaves the navigating to the
+        // caller, so a closed surface remembered as a page navigates here —
+        // without this the click is a silent no-op (found 2026-10-02, the
+        // rail's Alerts after the Owner had used ⤢ on it).
+        if (surface.canPage && placeOf(surface.key) == null && opensAsPage(surface.key)) {
+          navigate(surface.to)
+          return
+        }
         // The icon is where the float springs from and where it goes back to.
-        if (surface) toggleSurfaceFrom(surface, e.currentTarget)
+        toggleSurfaceFrom(surface, e.currentTarget)
       }}
       aria-label={page.label}
       aria-pressed={open}

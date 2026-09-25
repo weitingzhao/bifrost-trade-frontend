@@ -169,8 +169,11 @@ describe('the design walk, as it stands', () => {
     // 62 on 2026-09-30: the Owner signed Symbol (after the five tab-by-tab
     // re-alignment rounds), the Symbol lab method face, and Backtest.
     // 63 on 2026-10-01: Research Overview, after the dial and Today-feed rounds.
-    // 64 on 2026-10-02: Live, after the narrow-surface round.
-    expect(counts.aligned + counts.byState.stale).toBe(64)
+    // 64 on 2026-10-02: Live, after the narrow-surface round. 67 later the
+    // same day: the Owner signed Events (after the fed rounds), Positions
+    // (the §16 north-star page) and Alerts — whose rail entry navigated
+    // nowhere until the same round fixed it.
+    expect(counts.aligned + counts.byState.stale).toBe(67)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -184,8 +187,9 @@ describe('the design walk, as it stands', () => {
     // authoring face in the re-alignment round; 59 the same day with Compare,
     // History and History's method face. 62 on 2026-09-30: Symbol, the
     // Symbol lab and Backtest, signed together after the tab-by-tab rounds.
-    // 63 on 2026-10-01 with Research Overview; 64 on 2026-10-02 with Live.
-    expect(counts.aligned).toBe(64)
+    // 63 on 2026-10-01 with Research Overview; 64 on 2026-10-02 with Live;
+    // 67 later that day with Events, Positions and Alerts.
+    expect(counts.aligned).toBe(67)
     expect(
       rows
         .filter((r) => r.state === 'stale')
@@ -417,8 +421,9 @@ describe('the design walk, as it stands', () => {
     // 2026-09-25: the Owner signed lab/today and lab/screener out of it, then
     // 15 with Compare, History and History's method face. 12 on 2026-09-30,
     // the Owner signing Symbol, the Symbol lab and Backtest out of it; 11 on
-    // 2026-10-01 with Research Overview; 10 on 2026-10-02 with Live.
-    expect(counts.byState.reviewing).toBe(10)
+    // 2026-10-01 with Research Overview; 10 on 2026-10-02 with Live; 7 later
+    // that day, the Owner signing Events, Positions and Alerts out of it.
+    expect(counts.byState.reviewing).toBe(7)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -435,6 +440,7 @@ describe('the design walk, as it stands', () => {
       '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
+      '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
       '/research/backtest',
@@ -444,6 +450,8 @@ describe('the design walk, as it stands', () => {
       '/research/copilot',
       '/research/copilot/trading',
       '/research/daily-brief',
+      '/research/event-radar',
+      '/research/events',
       '/research/greeks',
       '/research/history',
       '/research/journal',
@@ -499,9 +507,6 @@ describe('the design walk, as it stands', () => {
         .sort()
     ).toEqual([
       '/docs/options-kit',
-      '/portfolio/positions',
-      '/research/event-radar',
-      '/research/events',
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lens-coverage',

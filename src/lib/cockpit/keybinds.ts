@@ -22,8 +22,9 @@
  * Mount once via `useCockpitKeybinds()` from App layout.
  */
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { EQUIP_GROUPS } from '@/layout/equip'
-import { surfaceForRoute, useSurfaces } from '@/layout/equipSurface'
+import { opensAsPage, placeOf, surfaceForRoute, useSurfaces } from '@/layout/equipSurface'
 import { dismissSurface, toggleSurfaceFrom } from '@/layout/equipMotion'
 import { toggleThread } from '@/hooks/useCopilotThread'
 import { omnibar } from '@/lib/omnibar'
@@ -40,6 +41,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export function useCockpitKeybinds() {
   const { float } = useSurfaces()
+  const navigate = useNavigate()
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const meta = e.metaKey || e.ctrlKey
@@ -61,6 +63,12 @@ export function useCockpitKeybinds() {
         const surface = group ? surfaceForRoute(group.hub.to) : null
         if (!surface) return
         e.preventDefault()
+        // Same blind spot as the rail's click: a closed surface remembered
+        // as a page needs the caller to navigate (openSurface's own rule).
+        if (surface.canPage && placeOf(surface.key) == null && opensAsPage(surface.key)) {
+          navigate(surface.to)
+          return
+        }
         toggleSurfaceFrom(surface, document.querySelector(`[data-equip-head="${group.id}"]`))
         return
       }
@@ -81,5 +89,5 @@ export function useCockpitKeybinds() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [float])
+  }, [float, navigate])
 }

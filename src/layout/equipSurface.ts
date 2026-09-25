@@ -208,6 +208,17 @@ function rememberPlace(key: string, place: Place): void {
 
 /* ── Reading the state ───────────────────────────────────────────────────── */
 
+/**
+ * Where a closed surface would open — `openSurface`'s own resolution, without
+ * opening it. The rail and the ⌥-springs need it because the `page` place is
+ * the one this module cannot enter: it records the choice and the CALLER
+ * navigates (see PlaceButtons). A caller that toggles without checking this
+ * turns the click into a silent no-op once the reader has used ⤢.
+ */
+export function opensAsPage(key: string): boolean {
+  return rememberedPlace(key) === 'page'
+}
+
 export function placeOf(key: string): Exclude<Place, 'page'> | null {
   const s = store.getState()
   if (s.float?.key === key) return 'float'

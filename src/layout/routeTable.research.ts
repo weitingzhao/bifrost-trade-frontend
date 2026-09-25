@@ -531,7 +531,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Events',
     crumbs: MARKET,
     design: {
-      state: 'reviewing',
+      // Signed by the Owner 2026-10-02, after the fed rounds (macro lane,
+      // themes stack, forward calendar).
+      state: 'aligned',
       rev: '2026-09-23.8',
       note: DESIGN_NOTES['/research/events'],
     },
@@ -540,12 +542,13 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // The design's `bell` glyph and its own label. The events board this route
     // used to hold is on the Stock Explorer's `events` tab, unchanged. Rev .7
     // moved the row with Live — Home to the rail's Market group; built
-    // 2026-09-23, waiting for the Owner's look.
+    // 2026-09-23; the Owner signed it 2026-10-02, the same round that fixed
+    // the rail entry (a surface remembered as a page navigated nowhere).
     path: '/research/event-radar',
     label: 'Alerts',
     crumbs: MARKET_RAIL,
     design: {
-      state: 'reviewing',
+      state: 'aligned',
       rev: '2026-09-23.7',
       note: DESIGN_NOTES['/research/event-radar'],
     },

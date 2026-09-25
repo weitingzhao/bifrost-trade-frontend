@@ -12,9 +12,9 @@
  * Autopilot lamp went to the companion rail with its home.
  */
 import { useMemo, type ReactNode } from 'react'
-import { DenseTag } from '@/components/data-display'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import type { ShellNavGroup, ShellNavItem } from '@bifrost/ui'
+import { NavBadge } from './NavBadge'
 import { AUTOPILOT_PAGES, buildResearchNavGroup } from './researchNavCatalog'
 
 export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: ShellNavItem) => ReactNode } {
@@ -37,9 +37,9 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
       if (inbox > 0) {
         byPath.set(
           AUTOPILOT_PAGES.inbox.to!,
-          <DenseTag variant="warning" size="cell" title="Drafts waiting on a call">
+          <NavBadge tone="var(--color-lamp-yellow)" title="Drafts waiting on a call">
             {inbox}
-          </DenseTag>,
+          </NavBadge>,
         )
       }
       // The `running` chip retired with its row (§5a.8, 2026-09-22): the

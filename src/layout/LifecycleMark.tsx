@@ -31,7 +31,8 @@ export function lifecycleMark(
             that can say which layer a group belongs to. Since Rev .27 the
             others also lose their disc: a half-weight hairline ring, no fill —
             the digit still reads, and the ring stops competing with the one
-            layer you are in. */}
+            layer you are in. Rev .61 draws that ring in the digit's own muted
+            ink at 45%, so the others read as outlines of one grey. */}
         <span
           className={cn(
             'relative inline-flex size-3.5 items-center justify-center rounded-full border font-mono text-dense-micro font-bold leading-3',
@@ -40,7 +41,7 @@ export function lifecycleMark(
           style={
             here
               ? { color: 'var(--sk-layer)' }
-              : { borderColor: 'color-mix(in srgb, var(--sk-line2) 55%, transparent)' }
+              : { borderColor: 'color-mix(in srgb, var(--sk-mute2) 45%, transparent)' }
           }
         >
           {glyph}

@@ -10,6 +10,9 @@
 /* §17 interaction patterns (@bifrost/ui 0.4.17): opt-in by data attribute —
    a page that marks nothing is untouched, so pages move one at a time. */
 @import "@bifrost/ui/styles/patterns";
+/* The floating sidebar (@bifrost/ui 0.4.18, design Rev .61): opt-in by
+   `ShellNavSidebar chrome="floating"`, which AppSidebar passes. */
+@import "@bifrost/ui/styles/shell";
 /* Built output, not source: the class strings survive tsc verbatim. */
 @source "../../bifrost-ui/dist/**/*.js";
 @custom-variant dark (&:is(.dark *));
@@ -699,37 +702,16 @@
  * glass. The prototype reaches the same result with `!important`; an
  * unlayered rule is the stylesheet's own way of saying the same thing.
  */
-/* The row you are standing on in the sidebar, as a soft accent pill. */
-[data-sidebar='menu-button'][data-active='true'] {
-  background: rgb(var(--sk-accent-rgb) / 0.13);
-  box-shadow: inset 0 0 0 1px rgb(var(--sk-accent-rgb) / 0.22);
-  border-radius: 8px;
-}
 tbody tr:hover > td {
   background-color: rgb(var(--sk-accent-rgb) / 0.03);
 }
-/* Glass is for floating things only (Rev .20): the sidebar floats over the
-   ambient ground, so it is translucent; panels and table bodies never are. */
-[data-sidebar='sidebar'] {
-  background: color-mix(in srgb, var(--sk-ground) 68%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.35);
-  backdrop-filter: blur(22px) saturate(1.35);
-}
-
-/* The boxed caret, drawn as a soft chip rather than an outline (Rev .27):
-   boxed-vs-bare still carries the row grammar — a boxed caret is its own
-   control beside a label that goes somewhere else — at a lighter weight. A
-   container row's caret is bare (it rides aria-hidden) and stays bare. */
-[data-sidebar='sidebar'] button[aria-label^='Expand ']:not([aria-hidden]),
-[data-sidebar='sidebar'] button[aria-label^='Collapse ']:not([aria-hidden]) {
-  border-color: transparent;
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--sk-ink) 6%, transparent);
-}
-
-[data-sidebar='sidebar'] button[aria-label^='Expand ']:not([aria-hidden]):hover,
-[data-sidebar='sidebar'] button[aria-label^='Collapse ']:not([aria-hidden]):hover {
-  background: color-mix(in srgb, var(--sk-ink) 12%, transparent);
+/* The sidebar's glass, capsules and frameless carets moved to
+   @bifrost/ui/styles/shell (Rev .61). The window is one ground: the lane
+   and the page shell no longer paint --card over it, so the floating
+   sidebar, the top bar and the page all sit on the body's ambient ground;
+   the cards on a page keep their own fill. */
+[data-slot='sidebar-inset'] .page-shell {
+  background-color: transparent;
 }
 
 @layer utilities {

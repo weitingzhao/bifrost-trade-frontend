@@ -80,8 +80,10 @@ export function AppLayout() {
           this exists to skip. */}
         <SkipToContent />
         <AppSidebar />
-        {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport */}
-        <SidebarInset className="h-svh overflow-hidden bg-card">
+        {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport.
+          Transparent, with the lane below: one window ground (Rev .61) — the
+          floating sidebar, the top bar and the page share the body's. */}
+        <SidebarInset className="h-svh overflow-hidden bg-transparent">
           {/* The menu bar (Rev .60): the status pill retired into the top
               bar's right end, and the Alerts panel hangs off its clock. */}
           <AppHeader alertGroups={groups} alerts={summary} onDismissAllAlerts={stream.dismissAll} />
@@ -93,7 +95,7 @@ export function AppLayout() {
           <main
             id="main-content"
             tabIndex={-1}
-            className="@container/page flex-1 overflow-auto min-w-0 bg-card outline-none"
+            className="@container/page flex-1 overflow-auto min-w-0 outline-none"
           >
             <BoundedOutlet />
           </main>

@@ -141,9 +141,14 @@ export function AppSidebar() {
       // parent "expands first, navigates second" — which the design itself
       // then overturned: one row doing two things by a state the reader
       // cannot see is what made the tree feel split. Now a container row
-      // only opens, a page-with-children splits label from caret, and the
-      // caret's frame says which you are looking at.
+      // only opens, a page-with-children splits label from caret. Since Rev
+      // .61 the caret has no frame: which kind you are looking at is read
+      // from behaviour (the label goes, the caret opens), not drawn.
       navRowSyntax
+      // Rev .61 (Sidebar Chrome 1a): the sidebar lifts off the window as a
+      // glass panel, rows become capsules. Opt-in in @bifrost/ui, so the Ops
+      // Console keeps its flat column until its own design adopts it.
+      chrome="floating"
       onSelect={(item: ShellNavItem) => {
         navigate(item.to ?? item.id)
       }}

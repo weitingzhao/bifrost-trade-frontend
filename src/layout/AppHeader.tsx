@@ -12,6 +12,7 @@
  * its prefix token, the objective has its own control, and (Rev .58) the
  * account has one beside it — a shell scope the wired pages follow.
  */
+import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
@@ -52,6 +53,22 @@ export function AppHeader({
   const thread = useThread()
   const { symbol, isScoped, clearSymbol } = useSymbolContext()
   const symbolGo = useSymbolGo()
+  // The bar has no standing edge (Rev .61): a layer-hue hairline fades in only
+  // once the page has scrolled off the top. Written to the element, not to
+  // state — the bar need not re-render because the page moved.
+  const headerRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const hd = headerRef.current
+    const lane = document.getElementById('main-content')
+    if (hd == null || lane == null) return
+    const mark = () => {
+      const v = lane.scrollTop > 2 ? '1' : '0'
+      if (hd.dataset.scrolled !== v) hd.dataset.scrolled = v
+    }
+    lane.addEventListener('scroll', mark, { passive: true })
+    mark()
+    return () => lane.removeEventListener('scroll', mark)
+  }, [])
   const trail = crumbLinks(crumbs ?? [], PAGE_ROUTES, CRUMB_GROUPS)
   // §16.12: while the page head shows the page's name, the leaf (and the `›`
   // before it) folds; it fades back once the head scrolls away. A page that
@@ -61,30 +78,21 @@ export function AppHeader({
 
   return (
     <header
+      ref={headerRef}
+      data-scrolled="0"
       className={cn(
         SHELL_TOP_BAR_HEIGHT_CLASS,
         // The right cluster collapses by this bar's own width (Rev .60 §7).
         mb.bar,
+        // Borderless on the window ground (Rev .61). The layer's line is still
+        // this bar's bottom edge and still reads `--sk-layer`, not the accent —
+        // but it only appears while the page is scrolled, as the edge a
+        // toolbar grows when content slides under it. The 6% wash retired.
+        mb.hd,
         // 10px between controls, 12px from the edge — the design's own
         // `gap: 6px 10px; padding: 5px 12px`.
-        'flex items-center gap-x-2.5 border-b px-3',
-        // The layer's one line, on the top bar's bottom edge — the design puts
-        // it here rather than on the page header, which renders as an
-        // unclassed div with nothing stable to hook.
-        //
-        // It reads `--sk-layer`, not the accent. Until Package 2026-09-23.3
-        // the accent *was* the layer's hue, so `border-primary` said where you
-        // were standing by accident; now the accent is one violet everywhere
-        // and this line would have said nothing at all.
-        //
-        // Since Rev .14 it is a 1px hairline at 62% plus a 6% wash of the same
-        // hue down the bar, rather than a 2px solid edge: the place is still
-        // there, and still below the data.
+        'relative z-30 flex items-center gap-x-2.5 px-3',
       )}
-      style={{
-        borderBottomColor: 'color-mix(in srgb, var(--sk-layer) 62%, transparent)',
-        background: 'linear-gradient(180deg, color-mix(in srgb, var(--sk-layer) 6%, var(--card)), var(--card))',
-      }}
     >
       {/* A borderless menu-bar item like every other on the bar (Rev .60 §8).
           The glyph stays chevrons rather than the design's panel rect: it

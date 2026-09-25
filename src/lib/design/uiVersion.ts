@@ -7,6 +7,7 @@
  * the semantic colour tokens and 0.4.14 ships them as their own stylesheet;
  * 0.4.15 moves the severity lamps in beside them and drops the up/down
  * aliases; 0.4.16 adds `PageHead` (§16.10); 0.4.17 the §17 patterns layer,
- * `ViewState` and table column types.
+ * `ViewState` and table column types; 0.4.18 the floating sidebar skin
+ * (`ShellNavSidebar chrome="floating"`, `styles/shell`, Rev .61).
  */
-export const UI_VERSION_NOW = '0.4.17'
+export const UI_VERSION_NOW = '0.4.18'

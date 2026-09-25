@@ -12,6 +12,30 @@
   container: tbhead / inline-size;
 }
 
+/* ── On the window ground: no wash, no standing edge (Rev .61) ────────── */
+.hd {
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hd[data-scrolled='1'] {
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--sk-layer) 40%,
+    color-mix(in srgb, var(--sk-ink) 8%, transparent)
+  );
+  box-shadow: 0 8px 18px -14px rgba(0, 0, 0, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hd {
+    transition: none;
+  }
+}
+
 /* ── One item shape: borderless 28px, radius 6, hover 8% · open 13% ink ── */
 .item {
   display: inline-flex;

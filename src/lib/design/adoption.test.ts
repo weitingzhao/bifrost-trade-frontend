@@ -24,7 +24,10 @@ describe('design adoption', () => {
     // the app would read near complete while most of the design is unbuilt.
     // Less the design documents the Owner kept in the design (2026-09-25):
     // they were never this app's to build.
-    expect(counts.designed).toBe(DESIGN_ROUTES.filter((d) => d.designed && !d.designOnly).length)
+    // And less the tracker itself, which has a prototype since Rev .53.
+    expect(counts.designed).toBe(
+      DESIGN_ROUTES.filter((d) => d.designed && !d.designOnly && d.path !== '/docs/design-adoption').length,
+    )
     expect(counts.byState.designOnly).toBe(DESIGN_ROUTES.filter((d) => d.designOnly).length)
     // Rev .48: the registry decides which; the app only says why, for each and no other.
     expect(Object.keys(DESIGN_ONLY_WHY).sort()).toEqual(DESIGN_ROUTES.filter((d) => d.designOnly).map((d) => d.path).sort())
@@ -111,7 +114,8 @@ describe('design adoption', () => {
       }
       if (r.state === 'backlog') expect(r.design?.designed, r.path).toBe(false)
     }
-    expect(counts.stubs).toBe(DESIGN_ROUTES.length - counts.designed - counts.byState.designOnly)
+    // The tracker is designed but in neither the denominator nor the stubs.
+    expect(counts.stubs).toBe(DESIGN_ROUTES.length - counts.designed - counts.byState.designOnly - 1)
     expect(counts.byState.backlog).toBeLessThanOrEqual(counts.stubs)
   })
 

@@ -41,9 +41,10 @@ describe('adoptionByGroup', () => {
     // page (§16): the four gauges become a hero reading band, the notes move
     // into tooltips, capabilities unchanged. Nine of ten until it is re-walked.
     // Re-walked and built the same day; nine of ten until the Owner looks.
-    // Signed 2026-09-24 — ten of ten again.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 10, left: 0 })
-    expect(portfolio?.byState.reviewing).toBe(0)
+    // Signed 2026-09-24 — ten of ten again. Nine of ten on 2026-09-25:
+    // Positions is a page-head and §17 sample, rebuilt and waiting for a look.
+    expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
+    expect(portfolio?.byState.reviewing).toBe(1)
     expect(portfolio?.byState.stale).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
@@ -51,9 +52,10 @@ describe('adoptionByGroup', () => {
     // denominator: System's four `/docs/*` stubs do not make it read worse —
     // and neither do the nine design documents the Owner kept in the design.
     // Four until Rev .52: Research Calibration then resolved to the Calibration
-    // prototype (an alias here), and the one new stub is the tracker itself.
+    // prototype (an alias here). None since Rev .53, which drew the last of
+    // System's stubs.
     const system = groups.find((g) => g.group === 'System')
-    expect(system?.byState.backlog).toBe(3)
+    expect(system?.byState.backlog).toBe(0)
     expect(system?.byState.designOnly).toBe(9)
     expect(system?.total).toBe(
       rows.filter((r) => r.crumbs[0] === 'System' && r.state !== 'backlog' && r.state !== 'designOnly').length,

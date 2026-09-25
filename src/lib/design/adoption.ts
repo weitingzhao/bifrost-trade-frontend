@@ -312,7 +312,9 @@ export function adoptionCounts(rows: readonly AdoptionRow[]): AdoptionCounts {
     designOnly: 0,
   } as Record<AdoptionState, number>
   for (const r of rows) byState[r.state] += 1
-  const designed = DESIGN_ROUTES.filter((d) => d.designed && !d.designOnly).length
+  // The tracker has a prototype since Rev .53 — drawn from this page — but it
+  // is not one of the pages it counts, so it stays out of its own denominator.
+  const designed = DESIGN_ROUTES.filter((d) => d.designed && !d.designOnly && d.path !== TRACKER_PATH).length
   return {
     designed,
     stubs: DESIGN_ROUTES.filter((d) => !d.designed).length,

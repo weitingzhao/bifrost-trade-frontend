@@ -5,8 +5,8 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 97 routes, 93 with a designed page,
- * 4 resolving to the stub. One route per line, so a
+ * Derived, not typed: 97 routes, 97 with a designed page,
+ * 0 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
 
@@ -305,7 +305,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-25.52"
+export const DESIGN_REV = "2026-09-25.55"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home","designOnly":false},
@@ -338,10 +338,10 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/lab/screener","label":"Stock screen · method","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen Method.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/lab/symbol","label":"Symbol · method","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol Method.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/lab/history","label":"History · method","crumbs":["Research","Analyze"],"designed":true,"file":"Research History Method.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/lab/calibration","label":"Calibration","crumbs":["System","Alignment"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":"2026-09-25.1","inNav":true,"group":"System","designOnly":false},
-  {"path":"/research/lab/discover-model","label":"Discover model","crumbs":["System","Data"],"designed":true,"file":"System Data Discover Model.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":true,"group":"System","designOnly":false},
+  {"path":"/research/lab/calibration","label":"Calibration","crumbs":["System","Alignment"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":"2026-09-25.52","inNav":true,"group":"System","designOnly":false},
+  {"path":"/research/lab/discover-model","label":"Discover model","crumbs":["System","Data"],"designed":true,"file":"System Data Discover Model.dc.html","round":"LAB","rev":"2026-09-25.52","inNav":true,"group":"System","designOnly":false},
   {"path":"/review/playbook-stats","label":"Playbook stats","crumbs":["Review"],"designed":true,"file":"Review Playbook Stats.dc.html","round":"NEW","rev":"2026-09-18.1","inNav":true,"group":"Review","designOnly":false},
-  {"path":"/review/objectives","label":"Objectives","crumbs":["Review"],"designed":true,"file":"Review Objectives.dc.html","round":null,"rev":"2026-09-20.5","inNav":true,"group":"Review","designOnly":false},
+  {"path":"/review/objectives","label":"Objectives","crumbs":["Home"],"designed":true,"file":"Home Objectives.dc.html","round":null,"rev":"2026-09-25.55","inNav":true,"group":"Home","designOnly":false},
   {"path":"/research/book","label":"The Book","crumbs":[],"designed":true,"file":"Book.dc.html","round":null,"rev":"2026-09-20.24","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/journal","label":"Journal","crumbs":["The Book"],"designed":true,"file":"Book Journal.dc.html","round":null,"rev":"2026-09-19.2","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/signal-decay","label":"Signal Decay","crumbs":["Research","Validate"],"designed":true,"file":"Research Signal Decay.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Research","designOnly":false},
@@ -375,7 +375,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/review/habits","label":"Habits","crumbs":["Review"],"designed":true,"file":"Review Habits.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/proposals","label":"Rule proposals","crumbs":["Review"],"designed":true,"file":"Autopilot Decision Inbox.dc.html","round":"OLD","rev":"2026-09-23.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Performance.dc.html","round":null,"rev":"2026-09-17.2","inNav":true,"group":"Portfolio","designOnly":false},
-  {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-23.21","inNav":true,"group":"Portfolio","designOnly":false},
+  {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-25.55","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Backing.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/outcome","label":"Outcome","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Outcome.dc.html","round":"OLD","rev":"2026-09-17.1","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/accounts","label":"Accounts","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Accounts.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Portfolio","designOnly":false},
@@ -385,16 +385,16 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/trade/assignment","label":"Assignment","crumbs":["Trade"],"designed":true,"file":"Trade Assignment.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/risk/sizing","label":"Sizing","crumbs":["Risk"],"designed":true,"file":"Risk Sizing.dc.html","round":null,"rev":"2026-09-18.1","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/risk/budget","label":"Risk Budget","crumbs":["Risk"],"designed":true,"file":"Risk Budget.dc.html","round":null,"rev":"2026-09-18.1","inNav":true,"group":"Risk","designOnly":false},
-  {"path":"/risk/limits","label":"Limits & Breaches","crumbs":["Risk"],"designed":true,"file":"Risk Limits.dc.html","round":null,"rev":"2026-09-18.1","inNav":true,"group":"Risk","designOnly":false},
-  {"path":"/risk/margin","label":"Margin & Buying Power","crumbs":["Risk"],"designed":true,"file":"Risk Margin.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Risk","designOnly":false},
+  {"path":"/risk/limits","label":"Limits & Breaches","crumbs":["Risk"],"designed":true,"file":"Risk Limits.dc.html","round":null,"rev":"2026-09-25.55","inNav":true,"group":"Risk","designOnly":false},
+  {"path":"/risk/margin","label":"Margin & Buying Power","crumbs":["Risk"],"designed":true,"file":"Risk Margin.dc.html","round":null,"rev":"2026-09-25.55","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/risk/stress","label":"Stress & Scenario","crumbs":["Risk"],"designed":true,"file":"Risk Stress.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/system/status","label":"System Status","crumbs":["System"],"designed":true,"file":"System Status.dc.html","round":null,"rev":"2026-09-15.13","inNav":true,"group":"System","designOnly":false},
-  {"path":"/settings","label":"Settings","crumbs":["System"],"designed":true,"file":"Settings.dc.html","round":null,"rev":"2026-09-15.13","inNav":true,"group":"System","designOnly":false},
-  {"path":"/docs/design-adoption","label":"Design Adoption","crumbs":["System","Alignment"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
-  {"path":"/docs/research-blueprint","label":"Blueprint","crumbs":["System","Alignment"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
+  {"path":"/settings","label":"Settings","crumbs":["System"],"designed":true,"file":"Settings.dc.html","round":null,"rev":"2026-09-25.52","inNav":true,"group":"System","designOnly":false},
+  {"path":"/docs/design-adoption","label":"Design Adoption","crumbs":["System","Alignment"],"designed":true,"file":"System Alignment Design Adoption.dc.html","round":null,"rev":"2026-09-25.53","inNav":true,"group":"System","designOnly":false},
+  {"path":"/docs/research-blueprint","label":"Blueprint","crumbs":["System","Alignment"],"designed":true,"file":"System Alignment Blueprint.dc.html","round":null,"rev":"2026-09-25.53","inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/research-calibration","label":"Research Calibration","crumbs":["System","Alignment"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":null,"inNav":false,"group":null,"designOnly":false},
-  {"path":"/docs/tech-stack","label":"Tech Stack","crumbs":["System","Reference"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
-  {"path":"/docs/ui-design-system","label":"UI Design System","crumbs":["System","Reference"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
+  {"path":"/docs/tech-stack","label":"Tech Stack","crumbs":["System","Reference"],"designed":true,"file":"System Reference Tech Stack.dc.html","round":null,"rev":"2026-09-25.53","inNav":true,"group":"System","designOnly":false},
+  {"path":"/docs/ui-design-system","label":"UI Design System","crumbs":["System","Reference"],"designed":true,"file":"System Reference UI Design System.dc.html","round":null,"rev":"2026-09-25.53","inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/index","label":"Index","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Index.dc.html","round":null,"rev":"2026-09-15.5","inNav":false,"group":null,"designOnly":true},
   {"path":"/docs/progress","label":"Progress","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Progress.dc.html","round":null,"rev":"2026-09-15.6","inNav":false,"group":null,"designOnly":true},
   {"path":"/docs/layout","label":"Layout Map","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Layout Map.dc.html","round":null,"rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":true},

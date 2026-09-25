@@ -335,7 +335,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: VALIDATE,
     symbolScope: true,
     design: {
-      state: 'aligned',
+      state: 'reviewing',
       rev: '2026-09-22.6',
       note: DESIGN_NOTES['/research/backtest'],
     },
@@ -441,7 +441,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: SYSTEM_ALIGNMENT,
     design: {
       state: 'reviewing',
-      rev: '2026-09-25.1',
+      rev: '2026-09-25.52',
       note: DESIGN_NOTES['/research/lab/calibration'],
     },
   },

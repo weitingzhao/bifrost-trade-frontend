@@ -115,7 +115,11 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // Daily Brief joined them on 2026-09-22 (design Rev 2026-09-22.2, §5a.8):
     // it left Copilot with the fold, and it is the 9am read — the same class
     // as Live, Event Radar and Events, which is what is true right now.
-    items: [...Object.values(MARKET_PAGES), COPILOT_PAGES.brief],
+    //
+    // Objectives came here from Review at Rev .55: an objective is a working
+    // object for the whole desk, not one layer's post-mortem, so its roll-up
+    // opens Home. Its path (`/review/objectives`) did not move.
+    items: [route('Objectives', '/review/objectives', Target), ...Object.values(MARKET_PAGES), COPILOT_PAGES.brief],
   },
   {
     label: 'Trade',
@@ -192,12 +196,11 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       route('Single trade', '/review/fit', Target),
       route('Habits', '/review/habits', Activity),
       route('Playbook stats', '/review/playbook-stats', BarChart2),
-      route('Objectives', '/review/objectives', Target),
       // One inbox, not two (design Rev 2026-09-22.2, §5a.8). Decision Inbox
       // sat under Autopilot and Rule proposals sat here: the same act — a
       // machine proposes, I approve — with a row each, because the engine
-      // touches both ends of the loop. It seats here for the reason Objectives
-      // does: the subject of judging the machine I built is myself.
+      // touches both ends of the loop. It seats here because the subject of
+      // judging the machine I built is myself.
       //
       // A `Rule proposals` child sat under it while the rows were still a page
       // of their own, so the route the Owner was asked to review could be

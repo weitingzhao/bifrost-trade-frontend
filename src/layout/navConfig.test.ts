@@ -257,21 +257,27 @@ describe('the old names', () => {
 const review = NAV_GROUPS.find((g) => g.label === 'Review')!
 
 describe('Review nav', () => {
-  it('is the Queue as its heading, with the other five beneath it', () => {
+  it('is the Queue as its heading, with the other four beneath it', () => {
     // §5a.1: the heading is the page. The Queue row retired into it.
-    // Objectives joined 2026-09-20 in the design's own position — fourth, so
-    // the closing page sits after what it reads and before what it argues for.
+    // Objectives joined 2026-09-20 and left for Home at Rev .55 — an
+    // objective is the whole desk's working object, not this layer's.
     expect(review.to).toBe('/review')
     expect(review.items!.map((c) => c.to)).toEqual([
       '/review/fit',
       '/review/habits',
       '/review/playbook-stats',
-      '/review/objectives',
       // One inbox, not two (§5a.8): Decision Inbox replaced Rule proposals
       // here — the same act with a row each, because the engine touches both
       // ends of the loop. `/review/proposals` stays a route and a deep link
       // until its rows fold into the Inbox page.
       '/research/loop/decisions',
     ])
+  })
+})
+
+describe('Home nav', () => {
+  it('opens with Objectives, then the market clock (Rev .55)', () => {
+    const home = NAV_GROUPS.find((g) => g.label === 'Home')!
+    expect(home.items!.map((c) => c.to)).toEqual(['/review/objectives', '/research/events', '/research/daily-brief'])
   })
 })

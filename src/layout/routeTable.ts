@@ -93,6 +93,7 @@ export interface RouteEntry {
 // Market is a fold inside Research, not a group of its own — see `navConfig.ts`.
 import {
   DOCS,
+  MARKET,
   PORTFOLIO,
   REVIEW,
   RISK,
@@ -153,8 +154,8 @@ export const ROUTES: readonly RouteEntry[] = [
       // Contract Greeks. Built 2026-09-23. Rev 2026-09-23.21 redrew it as the
       // §16 north-star page (hero band, tooltips, type scale, motion); built
       // the same day; the Owner signed it 2026-09-24.
-      state: 'aligned',
-      rev: '2026-09-23.21',
+      state: 'reviewing',
+      rev: '2026-09-25.55',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },
@@ -230,7 +231,8 @@ export const ROUTES: readonly RouteEntry[] = [
   {
     path: '/review/objectives',
     label: 'Objectives',
-    crumbs: REVIEW,
+    // Home since Rev .55 (the path stays for every link written to it).
+    crumbs: MARKET,
     design: {
       state: 'aligned',
       rev: '2026-09-20.5',
@@ -279,7 +281,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Risk',
     crumbs: [],
     design: {
-      state: 'aligned',
+      state: 'reviewing',
       rev: '2026-09-20.19',
       note: DESIGN_NOTES['/risk'],
     },
@@ -299,8 +301,8 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Limits & Breaches',
     crumbs: RISK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.1',
+      state: 'reviewing',
+      rev: '2026-09-25.55',
       note: DESIGN_NOTES['/risk/limits'],
     },
   },
@@ -309,8 +311,8 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Margin & Buying Power',
     crumbs: RISK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      state: 'reviewing',
+      rev: '2026-09-25.55',
       note: DESIGN_NOTES['/risk/margin'],
     },
   },
@@ -467,7 +469,7 @@ export const ROUTES: readonly RouteEntry[] = [
   // Target against actual (Owner 2026-09-25): the UI against the design, and
   // Research against its blueprint. Calibration itself is a Research route.
   { path: '/docs/design-adoption', label: 'Design Adoption', crumbs: SYSTEM_ALIGNMENT },
-  { path: '/docs/research-blueprint', label: 'Research Blueprint', crumbs: SYSTEM_ALIGNMENT },
+  { path: '/docs/research-blueprint', label: 'Blueprint', crumbs: SYSTEM_ALIGNMENT },
 
   // ── System · Reference ─────────────────────────────────────────────────
   { path: '/docs/tech-stack', label: 'Tech Stack', crumbs: DOCS },

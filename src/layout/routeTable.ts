@@ -492,15 +492,6 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
-    path: '/system/topology',
-    label: 'Topology',
-    crumbs: SYSTEM_RUNTIME,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/topology'],
-    },
-  },
-  {
     path: '/system/daemon',
     label: 'Daemon',
     crumbs: SYSTEM_RUNTIME,
@@ -510,30 +501,12 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
-    path: '/system/api',
-    label: 'API Health',
-    crumbs: SYSTEM_RUNTIME,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/api'],
-    },
-  },
-  {
     path: '/system/socket',
     label: 'Socket',
     crumbs: SYSTEM_RUNTIME,
     design: {
       state: 'staging',
       note: DESIGN_NOTES['/system/socket'],
-    },
-  },
-  {
-    path: '/system/platform',
-    label: 'Platform',
-    crumbs: SYSTEM_RUNTIME,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/platform'],
     },
   },
 

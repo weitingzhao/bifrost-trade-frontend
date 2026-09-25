@@ -9,8 +9,11 @@
  *
  * Rows are derived, never listed. The topology registry already knows every
  * service and which zone it belongs to, and `usePlatformPlugins` knows the Ops
- * plugins; a hand-written list here would be a second inventory to keep in
- * step with the map on `/system/topology`.
+ * plugins; a hand-written list here would be a second inventory.
+ *
+ * Since the Runtime pages retired (Owner 2026-09-25), a row opens the Ops
+ * Console view that can say more — diagnosis is the control plane's — and the
+ * foot of the panel opens System Status, the trader's own reading.
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -18,6 +21,7 @@ import { ArrowRight } from 'lucide-react'
 import { HealthLamp } from '@bifrost/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { opsConsoleHref } from '@/lib/opsConsole'
 import { useSystemTopologyHealth } from '@/hooks/useSystemTopologyHealth'
 import { usePlatformPlugins } from '@/hooks/usePlatformPlugins'
 import {
@@ -26,12 +30,13 @@ import {
 } from '@/components/topology/topologyLayouts'
 import type { TopologyNodeHealth, TopologyZoneId } from '@/components/topology/topologyRegistry'
 
-/** Where a row goes when you click it — the page that can say more than a lamp. */
-const PAGE_FOR_KIND: Record<TopologyNodeHealth['kind'], string> = {
-  api: '/system/api',
-  socket: '/system/socket',
-  daemon: '/system/daemon',
+/** Where a row goes when you click it — the Ops view that can say more than a lamp. */
+const OPS_FOR_KIND: Record<TopologyNodeHealth['kind'], { view: string; label: string }> = {
+  api: { view: 'satellite-health', label: 'Satellite Health' },
+  socket: { view: 'satellite-bus', label: 'Bus Status' },
+  daemon: { view: 'satellite-bus', label: 'Bus Status' },
 }
+const OPS_PLUGINS = { view: 'plugin-gallery', label: 'Plugin Gallery' }
 
 /** Zone order and labels come from the map, so the panel groups the way it draws. */
 const ZONES = getTopologyLayout(DEFAULT_TOPOLOGY_LAYOUT_MODE).zones.map((z) => ({
@@ -44,8 +49,8 @@ const rowClass =
 const headClass =
   'px-2 pb-0.5 pt-2 text-dense-micro font-semibold uppercase tracking-[0.12em] text-muted-foreground/60'
 
-function ServiceRow({ to, lamp, name, sub, meta, onNavigate }: {
-  to: string
+function ServiceRow({ ops, lamp, name, sub, meta, onNavigate }: {
+  ops: { view: string; label: string }
   lamp: string
   name: string
   sub?: string
@@ -53,7 +58,14 @@ function ServiceRow({ to, lamp, name, sub, meta, onNavigate }: {
   onNavigate: () => void
 }) {
   return (
-    <Link to={to} onClick={onNavigate} className={rowClass}>
+    <a
+      href={opsConsoleHref(ops.view)}
+      target="_blank"
+      rel="noreferrer"
+      onClick={onNavigate}
+      className={rowClass}
+      title={`Opens ${ops.label} in the Ops Console`}
+    >
       <HealthLamp lamp={lamp} variant="dot" />
       <span className="min-w-0 flex-1 truncate text-dense-label">
         <span className="text-foreground">{name}</span>
@@ -64,7 +76,7 @@ function ServiceRow({ to, lamp, name, sub, meta, onNavigate }: {
           {meta}
         </span>
       ) : null}
-    </Link>
+    </a>
   )
 }
 
@@ -114,7 +126,7 @@ export function SystemPopover({ children }: SystemPopoverProps) {
               {zoneNodes.map((node) => (
                 <ServiceRow
                   key={node.key}
-                  to={PAGE_FOR_KIND[node.kind]}
+                  ops={OPS_FOR_KIND[node.kind]}
                   lamp={node.lamp}
                   name={node.name}
                   sub={node.subtitle}
@@ -132,7 +144,7 @@ export function SystemPopover({ children }: SystemPopoverProps) {
             {plugins.map((row) => (
               <ServiceRow
                 key={row.def.key}
-                to="/system/platform"
+                ops={OPS_PLUGINS}
                 lamp={row.fetchError ? 'unknown' : row.lamp}
                 name={row.def.label}
                 meta={row.fetchError ? 'unreachable' : row.isLoading ? 'checking' : row.lamp}
@@ -143,11 +155,11 @@ export function SystemPopover({ children }: SystemPopoverProps) {
         )}
 
         <Link
-          to="/system/topology"
+          to="/system/status"
           onClick={close}
           className={cn(rowClass, 'mt-1 border-t border-border pt-1.5 text-dense-label')}
         >
-          <span className="flex-1">Topology</span>
+          <span className="flex-1">System Status</span>
           <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
         </Link>
       </PopoverContent>

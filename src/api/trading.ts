@@ -1,4 +1,3 @@
-import { postControlShutdown } from '@/api/apiControl'
 import type {
   ExecutionsFreshnessResponse,
   TwsFetchResponse,
@@ -19,7 +18,6 @@ import type {
 import { withValidation } from '@/lib/apiValidation'
 import { ExecutionsResponseSchema } from '@/lib/schemas/positions'
 import { tradingUrl } from '@/lib/devApiUrl'
-
 
 const validateExecutions = withValidation<ExecutionsResponse>(ExecutionsResponseSchema, 'trading/executions')
 
@@ -282,9 +280,3 @@ export async function deleteOptionStockLink(
   return { ok: Boolean(j.ok) && res.ok, error: j.error }
 }
 
-export async function postTradingShutdown(
-  serviceOrigin?: string,
-): Promise<{ ok: boolean; error?: string }> {
-  if (serviceOrigin) return postControlShutdown(`${serviceOrigin.replace(/\/$/, '')}/trading/shutdown`)
-  return postControlShutdown(tradingUrl('/trading/shutdown'))
-}

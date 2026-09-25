@@ -1,4 +1,3 @@
-import { postControlShutdown } from '@/api/apiControl'
 import { withValidation } from '@/lib/apiValidation'
 import { OpsCapabilitiesSchema } from '@/lib/schemas/platform'
 import { opsUrl } from '@/lib/devApiUrl'
@@ -173,7 +172,3 @@ export async function fetchOpsCapabilities(explicitToken?: string): Promise<OpsC
   return validateCapabilities(await parseJson(r))
 }
 
-/** Terminate the Ops FastAPI process. Requires operator role. */
-export async function postOpsShutdown(): Promise<{ ok: boolean; error?: string }> {
-  return postControlShutdown(opsUrl('/ops/shutdown'))
-}

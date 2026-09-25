@@ -250,7 +250,24 @@ export const REDIRECTS: readonly RouteEntry[] = [
   // Settings, the page the design merged it into on 2026-09-15.
   { path: '/system/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/settings' },
   { path: '/settings/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/settings' },
-  { path: '/settings/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: '/system/api' },
+  // Runtime, retired 2026-09-25 (Owner, on the 2026-09-15 ruling): diagnosis
+  // and repair are the Ops Console's, and the trader's question is answered
+  // on System Status, whose rows open the matching Ops view. Where each
+  // capability went (§15.2):
+  //   Topology — the 14-node service map → Ops Control Room · Runtime Map
+  //     (/topology + /matrix, every env): stronger. The status bar's System
+  //     panel still lists every service and opens its Ops view.
+  //   API Health — per-service /health, dev/prod probe grid → Ops Satellite
+  //     Health · Probes (HTTP + auth per target per env) plus Runtime (rate,
+  //     p99, errors): stronger. The eight Shut down buttons are dropped, not
+  //     moved (Owner): Ops has restart / scale per workload. The OpenAPI docs
+  //     table is dropped (Owner): each service serves its own /docs.
+  //   Platform — the three plugins' status → Ops Plugin Gallery and each
+  //     plugin's manage page: stronger. Plugin alerts now open System Status.
+  { path: '/system/topology', label: 'Topology', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
+  { path: '/system/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
+  { path: '/system/platform', label: 'Platform', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
+  { path: '/settings/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
   { path: '/settings/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: '/system/socket' },
   { path: '/settings/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
   {
@@ -263,7 +280,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/operations/platform',
     label: 'Platform',
     crumbs: SYSTEM_RUNTIME,
-    redirect: '/system/platform',
+    redirect: '/system/status',
   },
   { path: '/settings/subscribe', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
   { path: '/settings/feed/ib', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },

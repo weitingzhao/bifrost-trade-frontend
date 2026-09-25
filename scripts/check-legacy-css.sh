@@ -487,23 +487,6 @@ if [[ -n "$stk_tag_legacy" ]]; then
   report "stkPill/stkCell Category/Symbol class strings in TSX (use DenseTag from data-display)"
 fi
 
-# Settings API Health: Dense migration (Phase 4.16)
-if [[ -f src/pages/system/apiHealth/apiHealthSections.tsx ]]; then
-  report "apiHealthSections.tsx must be deleted (split into apiHealth/* components)"
-fi
-if api_health_raw_table=$(grep -rE '<table' src/pages/system/apiHealth --include='*.tsx' 2>/dev/null || true); then
-  if [[ -n "$api_health_raw_table" ]]; then
-    echo "$api_health_raw_table" >&2
-    report "raw <table under src/pages/system/apiHealth (use DenseDataTable; ServiceTopologyOverview SVG exempt)"
-  fi
-fi
-if api_health_ui_table=$(grep -rl '@/components/ui/table' src/pages/system/apiHealth --include='*.tsx' 2>/dev/null || true); then
-  if [[ -n "$api_health_ui_table" ]]; then
-    echo "$api_health_ui_table" >&2
-    report "shadcn Table under src/pages/system/apiHealth (use DenseDataTable)"
-  fi
-fi
-
 # Settings Socket: Dense migration (Phase 4.18)
 if socket_ui_table=$(grep -rl '@/components/ui/table' src/pages/system/socket --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$socket_ui_table" ]]; then
@@ -553,7 +536,7 @@ fi
 
 # Dense typography ratchet: hardcoded text-[Npx] / text-[0.NNrem] should only go DOWN.
 # Allowed exceptions: text-[7px], text-[8px], and sizing/winRate responsive gradations.
-HARDCODED_TYPO_BASELINE=16
+HARDCODED_TYPO_BASELINE=8
 hardcoded_typo_count=$(grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$hardcoded_typo_count" -gt "$HARDCODED_TYPO_BASELINE" ]]; then
   grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null >&2

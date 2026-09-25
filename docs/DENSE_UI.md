@@ -333,31 +333,9 @@ In use Switch calls `setActiveAllocation` with companion structure/gate ids from
 
 No `@/components/ui/table` or `dangerTextBtnClass` under option category guarded paths.
 
-## Settings API Health
+## Settings API Health — retired
 
-| Pattern | Reference |
-|---------|-----------|
-| Page + table tokens | [apiHealthUi.ts](../src/pages/settings/apiHealth/apiHealthUi.ts) |
-| Detail KV tokens | [apiHealthDetailUi.ts](../src/pages/settings/apiHealth/apiHealthDetailUi.ts) |
-| Topology schematic tokens | [serviceTopologyUi.ts](../src/components/topology/serviceTopologyUi.ts) |
-| List page shell | [ApiHealthPage.tsx](../src/pages/settings/ApiHealthPage.tsx) — `PageShell padding="default"`, `InfoTooltip`, Services Overview + elevated tab `Card` |
-| Docs links table | [ApiDocsTable.tsx](../src/pages/settings/apiHealth/ApiDocsTable.tsx) — `DenseDataTable` + `API_DOCS_COL_WIDTHS` |
-| Service probe cards | [ApiServiceHealthCard.tsx](../src/pages/settings/apiHealth/ApiServiceHealthCard.tsx) — `Card variant="elevated"` |
-| Detail sub-nav | `SegmentControl size="sm"` in `panels/*DetailsPanel.tsx` |
-| Reactor Map (global) | [ReactorMapPanel.tsx](../src/components/topology/ReactorMapPanel.tsx) + [ServiceTopologyOverview.tsx](../src/components/topology/ServiceTopologyOverview.tsx) — sidebar footer / TopNav toggle; grouped bays (Edge · Control/Account/Research/Data APIs · Daemons); schematic CSS **allowed exception** |
-
-No raw `<table` under `src/pages/settings/apiHealth/`. Legacy five Settings API pages merged into this single tabbed route.
-
-### API Health follow-up (Phase 4.17)
-
-| Pattern | Reference |
-|---------|-----------|
-| Env overview tokens | [apiHealthEnvUi.ts](../src/pages/settings/apiHealth/apiHealthEnvUi.ts) |
-| Configured routes strip | [ApiConfiguredRoutesStrip.tsx](../src/pages/settings/apiHealth/ApiConfiguredRoutesStrip.tsx) |
-| Dev/Prod health columns | [ApiEnvHealthGrid.tsx](../src/pages/settings/apiHealth/ApiEnvHealthGrid.tsx), [ApiEnvHealthColumn.tsx](../src/pages/settings/apiHealth/ApiEnvHealthColumn.tsx) |
-| Utilized services util | [utilizedServices.ts](../src/utils/utilizedServices.ts) |
-| Shutdown + confirm | [apiHealthShutdown.ts](../src/pages/settings/apiHealth/apiHealthShutdown.ts), `ConfirmDialog` on [ApiHealthPage.tsx](../src/pages/settings/ApiHealthPage.tsx) |
-| Architecture logs | Global **LogPanel** (sidebar footer) — Monitor / Ops / Docs sources; no in-page console on API Health |
+Retired 2026-09-25 with the rest of System › Runtime (Owner, on the 2026-09-15 ruling): service health and probes live in the Ops Console (Satellite Health). Its reference files are gone; see `src/layout/redirectRoutes.ts` for where each capability went.
 
 ## Settings Socket Services
 

@@ -1,4 +1,3 @@
-import { postControlShutdown } from '@/api/apiControl'
 import type {
   PositionCategoriesResponse,
   TagPositionRequest,
@@ -8,7 +7,6 @@ import { withValidation } from '@/lib/apiValidation'
 import { PositionCategoriesResponseSchema } from '@/lib/schemas/portfolio'
 import { ModelAnalysisResponseSchema } from '@/lib/schemas/modelAnalysis'
 import { portfolioUrl } from '@/lib/devApiUrl'
-
 
 const validateCategories = withValidation<PositionCategoriesResponse>(
   PositionCategoriesResponseSchema, 'portfolio/position-categories'
@@ -113,9 +111,3 @@ export async function tagPosition(
   return res.json()
 }
 
-export async function postPortfolioShutdown(
-  serviceOrigin?: string,
-): Promise<{ ok: boolean; error?: string }> {
-  if (serviceOrigin) return postControlShutdown(`${serviceOrigin.replace(/\/$/, '')}/portfolio/shutdown`)
-  return postControlShutdown(portfolioUrl('/portfolio/shutdown'))
-}

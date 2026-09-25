@@ -1,5 +1,4 @@
-import { postControlShutdown } from '@/api/apiControl'
-import { marketUrl, researchUrl, strategyUrl } from '@/lib/devApiUrl'
+import { researchUrl } from '@/lib/devApiUrl'
 import type {
   ScreenerFilters,
   ScreenerResponse,
@@ -210,23 +209,3 @@ export async function fetchSymbolOptionPcr(
   }
 }
 
-export async function postResearchShutdown(
-  serviceOrigin?: string,
-): Promise<{ ok: boolean; error?: string }> {
-  if (serviceOrigin) return postControlShutdown(`${serviceOrigin.replace(/\/$/, '')}/shutdown`)
-  return postControlShutdown(researchUrl('/shutdown'))
-}
-
-export async function postStrategyShutdown(
-  serviceOrigin?: string,
-): Promise<{ ok: boolean; error?: string }> {
-  if (serviceOrigin) return postControlShutdown(`${serviceOrigin.replace(/\/$/, '')}/strategy/shutdown`)
-  return postControlShutdown(strategyUrl('/strategy/shutdown'))
-}
-
-export async function postMarketShutdown(
-  serviceOrigin?: string,
-): Promise<{ ok: boolean; error?: string }> {
-  if (serviceOrigin) return postControlShutdown(`${serviceOrigin.replace(/\/$/, '')}/market/shutdown`)
-  return postControlShutdown(marketUrl('/market/shutdown'))
-}

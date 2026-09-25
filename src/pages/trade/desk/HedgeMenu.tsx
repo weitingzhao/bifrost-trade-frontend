@@ -148,7 +148,7 @@ export function HedgeMenu({
             </span>
           </button>
           <Link
-            to="/system/daemon"
+            to="/system/status"
             role="menuitem"
             className="flex h-8 w-full items-center gap-2 px-3 text-dense-meta text-secondary-foreground no-underline hover:bg-[var(--sk-surface)] hover:text-foreground"
           >

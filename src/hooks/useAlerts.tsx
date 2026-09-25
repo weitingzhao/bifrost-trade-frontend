@@ -142,7 +142,7 @@ export function alertsSummary(groups: readonly AlertGroup[]): AlertsSummary {
 
 /** Where a message goes. Both topics have one obvious page; anything new has none. */
 function messageHref(msg: SystemMessage): string | undefined {
-  if (msg.topic === 'ib.connection') return '/settings'
+  if (msg.topic === 'ib.connection') return '/system/status'
   if (msg.topic === 'portfolio.tws_executions') return '/portfolio/ledger'
   return undefined
 }
@@ -228,7 +228,7 @@ export function useAlerts({ messages, dismissedIds, dismissMessage }: AlertsMess
             : (row.status?.summary ?? row.status?.error ?? 'no detail reported'),
           when: row.status?.generated_at?.slice(11, 16) ?? '—',
           lamp: row.fetchError ? 'gray' : row.lamp === 'down' ? 'red' : row.lamp === 'degraded' ? 'yellow' : 'gray',
-          to: '/system/platform',
+          to: '/system/status',
         })),
     [plugins.rows],
   )

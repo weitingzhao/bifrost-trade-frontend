@@ -3,7 +3,6 @@ import {
   Activity,
   ArrowLeftRight,
   BarChart2,
-  Blocks,
   Sigma,
   BookOpen,
   CalendarClock,
@@ -19,7 +18,6 @@ import {
   ListTodo,
   LayoutDashboard,
   LineChart,
-  Network,
   Palette,
   PieChart,
   Radar,
@@ -276,12 +274,9 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
         COPILOT_PAGES.personas,
         COPILOT_PAGES.orchestration,
       ]),
-      fold('system:runtime', 'Runtime', '/system/topology', Cpu, [
-        route('Topology', '/system/topology', Network),
+      fold('system:runtime', 'Runtime', '/system/daemon', Cpu, [
         route('Daemon', '/system/daemon', Cpu),
-        route('API Health', '/system/api', Activity),
         route('Socket', '/system/socket', Radio),
-        route('Platform', '/system/platform', Blocks),
       ]),
       fold('system:reference', 'Reference', '/docs/design-adoption', BookOpen, [
         route('Design Adoption', '/docs/design-adoption', ListChecks),

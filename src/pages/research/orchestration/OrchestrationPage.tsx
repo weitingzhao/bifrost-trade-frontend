@@ -360,14 +360,16 @@ export default function OrchestrationPage() {
               <dd className="m-0">
                 <span className="font-mono">BIFROST_PERSONA_EVAL_AGENTS=1</span> turns the agent
                 path on; without it a persona is evaluated by the heuristic. Which one is running is
-                a deployment reading, and it lives on{' '}
-                {/* The design says «System Status»; this side's page for the
-                    same reading is System › Daemon — `/system/status` is the
-                    design's name for a page this app has not collapsed into
-                    one, and the dead-link gate caught the difference. */}
-                <Link to="/system/daemon" className="hover:underline">
-                  System › Daemon
-                </Link>
+                a deployment reading — the research harness&rsquo;s environment — and{' '}
+                {/* The design puts it on System Status, whose three rows do not
+                    carry it, and System › Daemon never did: it is plain text
+                    until a page reads it, rather than a link to one that does not. */}
+                <span
+                  className="text-foreground/80"
+                  title="The design places this reading on System Status; its three rows do not carry it yet."
+                >
+                  no page reads it yet
+                </span>
                 .
               </dd>
               <dt className="text-muted-foreground">Orders</dt>

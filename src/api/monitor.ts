@@ -1,4 +1,3 @@
-import { postControlShutdown } from '@/api/apiControl'
 import type { StatusResponse, Operation, RiskSummaryResponse } from '@/types/monitor'
 import type { ActiveStrategyPayload } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
@@ -22,11 +21,6 @@ export async function fetchMonitorHealth(): Promise<Record<string, unknown>> {
   if (!res.ok) throw new Error(`Monitor /health: ${res.status}`)
   const j = await res.json()
   return j != null && typeof j === 'object' && !Array.isArray(j) ? (j as Record<string, unknown>) : {}
-}
-
-/** Terminate the Monitor (bifrost-server) process. Requires operator role. */
-export async function postMonitorShutdown(): Promise<{ ok: boolean; error?: string }> {
-  return postControlShutdown(monitorUrl('/api/server/shutdown'))
 }
 
 export async function postRefreshAccounts(signal?: AbortSignal): Promise<{ ok: boolean; message?: string; error?: string }> {

@@ -24,7 +24,10 @@ describe('design adoption', () => {
     // Dozens of design prototypes have no page here. A denominator taken from
     // the app would read near complete while most of the design is unbuilt.
     expect(counts.designed).toBe(DESIGN_ROUTES.filter((d) => d.designed).length)
-    expect(counts.designed).toBeLessThan(PAGE_ROUTES.length + counts.byState.unbuilt)
+    // Every designed route is a page here or unbuilt, so this is at most
+    // equal — and it reaches equal as the app's own extra pages retire
+    // (Runtime, 2026-09-25), which is the collapse doing its job.
+    expect(counts.designed).toBeLessThanOrEqual(PAGE_ROUTES.length + counts.byState.unbuilt)
   })
 
   it('accounts for every design route exactly once', () => {

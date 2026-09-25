@@ -68,6 +68,8 @@ export const positionsUi = {
     'font-mono text-xs text-foreground outline-none focus-visible:border-ring',
   ),
 
-  th: 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold leading-normal text-secondary-foreground',
+  // §17.2 (Rev .51, Owner 2026-09-25): the header is the DS one — uppercase,
+  // 11px, mute — not the sentence-case soft header this family used to wear.
+  th: 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-meta font-semibold uppercase leading-[1.3] tracking-[0.05em] text-[var(--sk-mute)]',
   td: 'whitespace-nowrap border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs leading-normal tabular-nums',
 } as const

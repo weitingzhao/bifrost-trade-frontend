@@ -9,6 +9,7 @@
  */
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { ToolbarClear } from '@bifrost/ui'
 import { DenseTagButton } from '@/components/data-display'
 import type { AccountFilter } from '@/utils/positionsGrouping'
 import { positionsUi } from './positionsUi'
@@ -31,6 +32,9 @@ interface Props {
   scopedCount: number
   /** Holdings on no strategy — Positions shows the way to them when both accounts are in scope. */
   offTrack?: { count: number; onOpen: () => void } | null
+  /** The axes narrowing the book right now (accounts · symbol · expiry), for Clear N (§17.3). */
+  scopeOn?: readonly string[]
+  onClearScope?: () => void
 }
 
 function AccountToggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
@@ -63,6 +67,8 @@ export function PositionsOpenControls({
   onCushionTightPctChange,
   scopedCount,
   offTrack,
+  scopeOn = [],
+  onClearScope,
 }: Props) {
   const showAccountToggles = !!(hostAccountId || secondaryAccountId)
   const symbolChip = filterSymbol.trim().toUpperCase()
@@ -75,15 +81,9 @@ export function PositionsOpenControls({
   }, [copied])
 
   return (
-    <div
-      className={cn(
-        'flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border',
-        'bg-[var(--sk-raised2)] px-2.5 py-1.75 leading-normal',
-      )}
-      role="toolbar"
-      aria-label="Page scope"
-    >
-      <span className={positionsUi.cap}>Scope</span>
+    // §17.3: the toolbar container and its words come from `styles/patterns`.
+    <div data-sr-toolbar="" className="leading-normal" role="toolbar" aria-label="Page scope">
+      <span data-sr-tb="label">Scope</span>
       {showAccountToggles && (
         <span
           className="inline-flex overflow-hidden rounded-[5px] border border-border"
@@ -179,6 +179,7 @@ export function PositionsOpenControls({
           </button>
         ) : null}
         <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{scopedCount} in scope</span>
+        {onClearScope ? <ToolbarClear resets={scopeOn} onClear={onClearScope} /> : null}
       </span>
     </div>
   )

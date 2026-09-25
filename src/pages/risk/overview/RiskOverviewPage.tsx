@@ -24,8 +24,9 @@
  * six pages drawn at the foot.
  */
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
+import { Link, useNavigate } from 'react-router-dom'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -35,15 +36,14 @@ import {
   DenseTableHeader,
   DenseTableRow,
   DenseTag,
-  EmptyState,
   SegmentControl,
-  denseTableNumCell,
 } from '@/components/data-display'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
 import { fmtPct0 } from '@/utils/positions'
 import { useLimitBook } from '@/hooks/useLimitBook'
+import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useRowLink } from '@/hooks/useRowLink'
 import { fmtReading, openBreaches, type LimitKind, type LimitRow } from '@/utils/limitsModel'
 import {
@@ -132,7 +132,20 @@ function UnrankedName({ row }: { row: LimitRow }) {
 export default function RiskOverviewPage() {
   const [accountFilter, setAccountFilter] = useState('all')
   const rowLink = useRowLink()
-  const { rows, accountIds, statusLoading, error } = useLimitBook(accountFilter)
+  const navigate = useNavigate()
+  const { rows, accountIds, modelQueries, error: modelError } = useLimitBook(accountFilter)
+
+  // §17.1. The book's one critical source is the monitor's status read (the
+  // positions every limit is held against) — the same query the book already
+  // made, so this costs nothing. Its failure is reported once, in the
+  // Headroom panel; the two verdict panels above yield rather than repeat it.
+  const statusQ = useMonitorStatus()
+  const preview = usePreviewState()
+  const source = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(statusQ)
+  const bookState = preview === 'empty' || (source === 'ready' && rows.length === 0) ? 'empty' : source
+  const noData = bookState === 'loading' || bookState === 'failed' || bookState === 'empty'
+  const retry = () => void statusQ.refetch()
+  const retryModel = () => modelQueries.forEach((q) => void q.refetch())
 
   const lines = spentLines(rows)
   const breaches = openBreaches(rows)
@@ -142,36 +155,48 @@ export default function RiskOverviewPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      {/* The design's own header row: the lead keeps a measure and the scope
-          takes the right edge, instead of the scope wrapping under the prose. */}
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 max-w-[78ch] flex-[1_1_420px]">
-          <PageHeader
-            breadcrumb={<p className="text-xs font-medium text-primary/90">Risk</p>}
-            title="Risk"
-            titleSize="large"
-            description={LEAD}
+      {/* §16.10 with §17 (Owner 2026-09-25: one pass per page): the lead is
+          behind ⓘ, the scope is meta, and the account switch — a filter —
+          sits in the toolbar under the head. */}
+      <PageHead
+        title="Risk"
+        info={LEAD}
+        meta={accountIds.length > 1 ? (accountFilter === 'all' ? 'All accounts' : accountFilter) : undefined}
+      />
+      {accountIds.length > 1 ? (
+        <div data-sr-toolbar="">
+          <span data-sr-tb="label">Scope</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Account"
+            value={accountFilter}
+            onChange={setAccountFilter}
+            options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
           />
         </div>
-        {accountIds.length > 1 ? (
-          <div className="ml-auto flex flex-none items-center gap-2 pt-1">
-            <span className={SECTION_CAP_CLASS}>scope</span>
-            {/* The design reads this from a shell-wide account scope; this side
-                has none, so the page owns the control the way its six children
-                already do. */}
-            <SegmentControl
-              size="xs"
-              ariaLabel="Account"
-              value={accountFilter}
-              onChange={setAccountFilter}
-              options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-            />
-          </div>
-        ) : null}
-      </div>
+      ) : null}
 
-      {error ? <QueryErrorAlert error={error} /> : null}
+      {bookState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the limit book"
+          detail={staleDetail(statusQ, 'breaches since then are not shown.')}
+          onAction={retry}
+        />
+      ) : null}
 
+      {bookState === 'loading' ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <section className="overflow-hidden rounded-[var(--radius)] border border-border bg-card">
+            <ViewState kind="loading" title="Loading breaches" rows={3} cols={2} />
+          </section>
+          <section className="overflow-hidden rounded-[var(--radius)] border border-border bg-card">
+            <ViewState kind="loading" title="Loading the next binding limit" rows={3} cols={2} />
+          </section>
+        </div>
+      ) : null}
+
+      {noData ? null : (
       <div className="grid gap-3 lg:grid-cols-2">
         {/* Over the line — the count is the headline, because how many is the
             first thing the reader wants and each one is a sentence, not a row. */}
@@ -183,12 +208,11 @@ export default function RiskOverviewPage() {
             tone == null && 'border-border',
           )}
         >
-          {statusLoading ? (
-            <Skeleton className="m-3 h-14 rounded-md" />
-          ) : breaches.length === 0 ? (
-            <EmptyState
+          {breaches.length === 0 ? (
+            <ViewState
+              kind="empty"
               title="Nothing is over the line"
-              description={`Every constraint the book can read is inside its own limit. The ${noLine.length} rules nobody has written a number for are listed below — they cannot be crossed because they were never drawn.`}
+              detail={`Every constraint the book can read is inside its own limit. The ${noLine.length} rules nobody has written a number for are listed below — they cannot be crossed because they were never drawn.`}
             />
           ) : (
             <div className="flex flex-col gap-2 px-3 py-2.5">
@@ -196,12 +220,7 @@ export default function RiskOverviewPage() {
                 <span className={cn(SECTION_CAP_CLASS, TONE_INK[tone ?? 'plain'])}>
                   Over the line
                 </span>
-                <span
-                  className={cn(
-                    'font-mono text-xl font-bold tabular-nums',
-                    TONE_INK[tone ?? 'plain'],
-                  )}
-                >
+                <span data-sr-kpi-v="panel" className={TONE_INK[tone ?? 'plain']}>
                   {breaches.length}
                 </span>
                 <span className="text-dense-label">
@@ -237,12 +256,11 @@ export default function RiskOverviewPage() {
 
         {/* Binds next — one line, and the two things you would do about it. */}
         <section className="overflow-hidden rounded-lg border border-border bg-card">
-          {statusLoading ? (
-            <Skeleton className="m-3 h-14 rounded-md" />
-          ) : next == null ? (
-            <EmptyState
+          {next == null ? (
+            <ViewState
+              kind="empty"
               title="Nothing is holding"
-              description={
+              detail={
                 lines.length === 0
                   ? 'No constraint carries both a reading and a line yet, so none of them can be ranked.'
                   : 'Every line with both halves is already crossed — the next thing to stop you is in the panel beside this one.'
@@ -252,7 +270,7 @@ export default function RiskOverviewPage() {
             <div className="flex flex-col gap-2 px-3 py-2.5">
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className={SECTION_CAP_CLASS}>Binds next</span>
-                <span className="font-mono text-xl font-bold tabular-nums text-warning">
+                <span data-sr-kpi-v="panel" className="text-warning">
                   {fmtPct0(next.use)}
                 </span>
                 <span className="text-dense-label font-semibold">{next.name}</span>
@@ -282,6 +300,7 @@ export default function RiskOverviewPage() {
           )}
         </section>
       </div>
+      )}
 
       <SectionPanel
         cap="Headroom"
@@ -293,19 +312,54 @@ export default function RiskOverviewPage() {
           </Link>
         }
       >
-        {statusLoading ? (
-          <Skeleton className="m-3 h-40 rounded-md" />
+        {/* A model failure is narrower news than a book failure: it only
+            leaves the greek lines unranked, so it is a strip over the table,
+            not a block in place of it (§17.1-1). */}
+        {!noData && modelError != null ? (
+          <ViewState
+            kind="failed"
+            layout="strip"
+            className="m-2"
+            title="Couldn’t load the Greeks model"
+            detail={failedDetail(
+              { data: null, isPending: false, isError: true, error: modelError },
+              'The greek lines are unranked, not inside their limits.',
+            )}
+            onAction={retryModel}
+          />
+        ) : null}
+        {bookState === 'loading' ? (
+          <ViewState kind="loading" title="Loading the limit book" rows={8} cols={6} />
+        ) : bookState === 'failed' ? (
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the limit book"
+            detail={failedDetail(
+              statusQ,
+              'Nothing on this page was evaluated — this is not the same as nothing being over the line.',
+            )}
+            onAction={retry}
+          />
+        ) : bookState === 'empty' ? (
+          <ViewState
+            kind="empty"
+            title="No limits in the book"
+            detail="Nothing constrains the next trade because nothing has been defined — that is different from every limit having headroom."
+            actionLabel="Define limits"
+            actionTitle="Trade › Rules — where limits and gates are defined"
+            onAction={() => navigate('/trade/rules')}
+          />
         ) : (
-          <DenseDataTable wrapClassName="rounded-none border-0" scrollX={false}>
+          <DenseDataTable standard wrapClassName="rounded-none border-0" scrollX={false}>
             <DenseTableHeader>
               <DenseTableHeadRow>
                 <DenseTableHead className="w-3 max-w-none pr-0" />
-                <DenseTableHead>Limit</DenseTableHead>
-                <DenseTableHead className="w-20 max-w-none text-right">Now</DenseTableHead>
-                <DenseTableHead className="w-24 max-w-none text-right">Cap</DenseTableHead>
-                <DenseTableHead className="w-[22%] max-w-none">Consumed</DenseTableHead>
-                <DenseTableHead className="w-14 max-w-none text-right">%</DenseTableHead>
-                <DenseTableHead className="w-16 max-w-none">Kind</DenseTableHead>
+                <DenseTableHead col="entity">Limit</DenseTableHead>
+                <DenseTableHead col="num" className="w-20">Now</DenseTableHead>
+                <DenseTableHead col="num" className="w-24">Cap</DenseTableHead>
+                <DenseTableHead col="tag" className="w-[22%]">Consumed</DenseTableHead>
+                <DenseTableHead col="num" className="w-14">%</DenseTableHead>
+                <DenseTableHead col="tag" className="w-16">Kind</DenseTableHead>
               </DenseTableHeadRow>
             </DenseTableHeader>
             <DenseTableBody>
@@ -326,25 +380,25 @@ export default function RiskOverviewPage() {
                         className={cn('block h-5 w-1 rounded-xs', LIMIT_GROUP_STRIPE[r.group])}
                       />
                     </DenseTableCell>
-                    <DenseTableCell className="max-w-none whitespace-nowrap">
+                    <DenseTableCell col="entity">
                       <span className="block text-dense-label">{r.name}</span>
                       <span className="block font-mono text-dense-caption text-muted-foreground">
                         {r.group} · {r.scope}
                       </span>
                     </DenseTableCell>
-                    <DenseTableCell className={cn(denseTableNumCell, 'max-w-none', TONE_INK[t])}>
+                    <DenseTableCell col="num" className={TONE_INK[t]}>
                       {fmtReading(r, r.current)}
                     </DenseTableCell>
-                    <DenseTableCell className={cn(denseTableNumCell, 'max-w-none text-muted-foreground')}>
+                    <DenseTableCell col="num" className="text-muted-foreground">
                       {capLabel(r)}
                     </DenseTableCell>
-                    <DenseTableCell className="max-w-none">
+                    <DenseTableCell col="tag">
                       <SpentBar row={r} />
                     </DenseTableCell>
-                    <DenseTableCell className={cn(denseTableNumCell, 'max-w-none', TONE_INK[t])}>
+                    <DenseTableCell col="num" className={TONE_INK[t]}>
                       {fmtPct0(r.use)}
                     </DenseTableCell>
-                    <DenseTableCell className="max-w-none">
+                    <DenseTableCell col="tag">
                       <DenseTag variant={KIND_VARIANT[r.kind]} size="cell">
                         {r.kind}
                       </DenseTag>
@@ -374,6 +428,7 @@ export default function RiskOverviewPage() {
           ranked, and which half each is missing. A page that claims a complete
           ordering has to say what it left out of it. It sits here, under the
           table it qualifies, rather than at the foot of the page. */}
+      {noData ? null : (
       <SectionPanel
         cap="Not on the ruler"
         title="What could not be ranked"
@@ -413,6 +468,7 @@ export default function RiskOverviewPage() {
           ) : null}
         </div>
       </SectionPanel>
+      )}
 
       <SectionPanel
         cap="The six"

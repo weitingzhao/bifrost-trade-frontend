@@ -39,10 +39,11 @@ export const KIT_GROUP_LABEL: Record<KitGroup, string> = {
  * (2026-09-24) is a PageHeader layout patch, 0.4.13 (2026-09-25) adds the
  * semantic colour tokens and 0.4.14 ships them as their own stylesheet;
  * 0.4.15 moves the severity lamps in beside them and drops the up/down
- * aliases; 0.4.16 adds `PageHead` (§16.10). The kit's directories are still
- * absent, so the standing above holds.
+ * aliases; 0.4.16 adds `PageHead` (§16.10); 0.4.17 the §17 patterns layer,
+ * `ViewState` and table column types. The kit's directories are still absent,
+ * so the standing above holds.
  */
-export const UI_VERSION_NOW = '0.4.16'
+export const UI_VERSION_NOW = '0.4.17'
 export const UI_VERSION_TARGET = '0.5.0'
 
 export interface KitPrimitive {

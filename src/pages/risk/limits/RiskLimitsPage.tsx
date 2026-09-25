@@ -16,17 +16,18 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { Button } from '@bifrost/ui'
+import { Button, ViewState } from '@bifrost/ui'
 import { PageHead, PageShell } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { fmtPct0 } from '@/utils/positions'
 
 import { useLimitBook } from '@/hooks/useLimitBook'
+import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import {
   LIMITS_UNRECORDED,
   LIMIT_GROUPS,
@@ -64,8 +65,13 @@ export default function RiskLimitsPage() {
   const [accountFilter, setAccountFilter] = useState('all')
   // The book is assembled once, in `useLimitBook`, because Risk (the layer
   // page) and Today read the same one. This page draws it in full.
-  const { rows, accountIds, statusLoading, modelQueries, error, gateReadings } =
-    useLimitBook(accountFilter)
+  const { rows, accountIds, modelQueries, error, gateReadings } = useLimitBook(accountFilter)
+  // The same status query the book already made — reading it again costs nothing.
+  const statusQ = useMonitorStatus()
+  const preview = usePreviewState()
+  const bookState = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(statusQ)
+  const noData = bookState === 'loading' || bookState === 'failed'
+  const retry = () => void statusQ.refetch()
 
   const breaches = openBreaches(rows)
   const near = watching(rows)
@@ -96,7 +102,8 @@ export default function RiskLimitsPage() {
           }
         />
         {accountIds.length > 1 ? (
-          <div className="flex flex-wrap items-center gap-2">
+          <div data-sr-toolbar="">
+            <span data-sr-tb="label">Account</span>
             <SegmentControl
               size="xs"
               ariaLabel="Account"
@@ -107,14 +114,45 @@ export default function RiskLimitsPage() {
           </div>
         ) : null}
 
-        {error ? (
-          <QueryErrorAlert error={error} onRetry={() => modelQueries.forEach((q) => void q.refetch())} />
+        {/* §17.1: the book's critical source is the monitor's status read;
+            a model failure only leaves the greek lines unread, so it is a
+            strip, not a block. */}
+        {bookState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh the limit book"
+            detail={staleDetail(statusQ, 'breaches since then are not shown.')}
+            onAction={retry}
+          />
         ) : null}
-        {statusLoading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-20 w-full rounded-md" />
-            <Skeleton className="h-64 w-full rounded-md" />
-          </div>
+        {!noData && error != null ? (
+          <ViewState
+            kind="failed"
+            layout="strip"
+            title="Couldn’t load the Greeks model"
+            detail={failedDetail(
+              { data: null, isPending: false, isError: true, error },
+              'The greek lines read no value — unmeasured, not inside their limits.',
+            )}
+            onAction={() => modelQueries.forEach((q) => void q.refetch())}
+          />
+        ) : null}
+        {bookState === 'loading' ? (
+          <section className={positionsUi.panel}>
+            <ViewState kind="loading" title="Loading the limit book" rows={8} cols={6} />
+          </section>
+        ) : bookState === 'failed' ? (
+          <section className={positionsUi.panel}>
+            <ViewState
+              kind="failed"
+              title="Couldn’t load the limit book"
+              detail={failedDetail(
+                statusQ,
+                'No limit was evaluated — this is not the same as nothing being over the line.',
+              )}
+              onAction={retry}
+            />
+          </section>
         ) : (
           <>
             <section
@@ -212,7 +250,7 @@ export default function RiskLimitsPage() {
               </header>
               <div className="overflow-x-auto">
                 {/* §14.6: seven columns, the design's 1040 floor. */}
-                <table className="w-full min-w-[1040px] table-fixed border-collapse">
+                <table data-sr-table="" className="min-w-[1040px]">
                   <colgroup>
                     <col style={{ width: '21%' }} />
                     <col style={{ width: '6%' }} />
@@ -224,13 +262,13 @@ export default function RiskLimitsPage() {
                   </colgroup>
                   <thead>
                     <tr>
-                      <th className={cn(positionsUi.th, 'text-left')}>Limit</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Kind</th>
-                      <th className={positionsUi.th}>Current</th>
-                      <th className={positionsUi.th}>Limit</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Headroom</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>On breach</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Scope</th>
+                      <th data-sr-col="entity">Limit</th>
+                      <th data-sr-col="tag">Kind</th>
+                      <th data-sr-col="num">Current</th>
+                      <th data-sr-col="num">Limit</th>
+                      <th>Headroom</th>
+                      <th data-sr-col="text">On breach</th>
+                      <th data-sr-col="tag">Scope</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -240,10 +278,7 @@ export default function RiskLimitsPage() {
                       return [
                         <tr key={group} className="bg-[var(--sk-raised2)]">
                           <td
-                            className={cn(
-                              positionsUi.td,
-                              'pl-2 text-left font-sans text-dense-caption font-bold uppercase tracking-[0.12em] text-primary/90',
-                            )}
+                            className="text-dense-caption font-bold uppercase tracking-[0.12em] text-primary/90"
                             colSpan={7}
                           >
                             {group}
@@ -251,12 +286,7 @@ export default function RiskLimitsPage() {
                         </tr>,
                         ...inGroup.map((r) => (
                           <tr key={r.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                            <td
-                              className={cn(
-                                positionsUi.td,
-                                'pl-2 text-left font-sans whitespace-normal leading-normal text-foreground',
-                              )}
-                            >
+                            <td data-sr-col="entity" className="text-foreground">
                               {r.name}
                               {r.breached ? (
                                 <span
@@ -273,7 +303,7 @@ export default function RiskLimitsPage() {
                                 </span>
                               ) : null}
                             </td>
-                            <td className={cn(positionsUi.td, 'text-left font-sans')}>
+                            <td data-sr-col="tag">
                               <span
                                 className={cn(
                                   'inline-flex h-4 items-center rounded-[3px] border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em]',
@@ -288,8 +318,8 @@ export default function RiskLimitsPage() {
                               </span>
                             </td>
                             <td
+                              data-sr-col="num"
                               className={cn(
-                                positionsUi.td,
                                 r.current == null
                                   ? 'text-muted-foreground'
                                   : r.breached
@@ -300,14 +330,12 @@ export default function RiskLimitsPage() {
                               {fmtReading(r, r.current)}
                             </td>
                             <td
-                              className={cn(
-                                positionsUi.td,
-                                r.limit == null ? 'text-muted-foreground' : 'text-secondary-foreground',
-                              )}
+                              data-sr-col="num"
+                              className={r.limit == null ? 'text-muted-foreground' : 'text-secondary-foreground'}
                             >
                               {r.limit == null ? 'unwritten' : fmtReading(r, r.limit)}
                             </td>
-                            <td className={cn(positionsUi.td, 'text-left')}>
+                            <td>
                               {r.use == null || r.headroom == null ? (
                                 <span className="inline-flex items-start gap-1.5 whitespace-normal text-dense-meta leading-normal text-muted-foreground">
                                   <StatusLamp
@@ -341,20 +369,10 @@ export default function RiskLimitsPage() {
                                 </span>
                               )}
                             </td>
-                            <td
-                              className={cn(
-                                positionsUi.td,
-                                'text-left font-sans whitespace-normal leading-normal text-muted-foreground',
-                              )}
-                            >
+                            <td data-sr-col="text" title={r.onBreach} className="text-muted-foreground">
                               {r.onBreach}
                             </td>
-                            <td
-                              className={cn(
-                                positionsUi.td,
-                                'text-left font-sans whitespace-normal leading-normal text-muted-foreground',
-                              )}
-                            >
+                            <td data-sr-col="tag" className="text-muted-foreground">
                               {r.scope}
                               {r.citedFrom ? (
                                 <>
@@ -410,7 +428,7 @@ export default function RiskLimitsPage() {
                 {/* The design's four columns, kept: a band that drops its shape
                     stops teaching what the store would have to hold. */}
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[26rem] table-fixed border-collapse">
+                  <table data-sr-table="" className="min-w-[26rem]">
                     <colgroup>
                       <col style={{ width: '22%' }} />
                       <col style={{ width: '34%' }} />
@@ -419,15 +437,15 @@ export default function RiskLimitsPage() {
                     </colgroup>
                     <thead>
                       <tr>
-                        <th className={cn(positionsUi.th, 'text-left')}>When</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Limit</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Resolution</th>
-                        <th className={positionsUi.th}>Open for</th>
+                        <th data-sr-col="num">When</th>
+                        <th data-sr-col="entity">Limit</th>
+                        <th data-sr-col="wrap">Resolution</th>
+                        <th data-sr-col="num">Open for</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
-                        <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')} colSpan={4}>
+                        <td className="whitespace-normal" colSpan={4}>
                           <span className="inline-flex items-start gap-1.5 text-dense-meta leading-normal text-muted-foreground">
                             <StatusLamp lamp="gray" variant="dot" title="No row" className="mt-1 shrink-0" />
                             No row, for the last fourteen days or any other window — an empty table here would read as a

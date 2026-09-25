@@ -24,9 +24,10 @@ import { PageHead, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { cn } from '@/lib/utils'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { EmptyState } from '@/components/data-display'
+import { ViewState } from '@bifrost/ui'
+import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import {
   LinesToolbar,
   CLEAR_FILTERS,
@@ -79,10 +80,12 @@ export default function PositionsPage() {
   const queryClient = useQueryClient()
 
   // Scope: the one set of choices the whole page is about, kept in the URL.
-  const { scope, setAccountFilter, setFilterSymbol, setFilterExpiry, scopeSearch } = usePositionsScope()
+  const { scope, setAccountFilter, setFilterSymbol, setFilterExpiry, resetScope, scopeSearch } = usePositionsScope()
   const { accountFilter, filterSymbol, filterExpiry } = scope
   const { pct: cushionTightPct, setPct: setCushionTightPct } = useCushionThreshold()
   const book = usePositionsBook(scope, cushionTightPct)
+  const statusQ = useMonitorStatus()
+  const preview = usePreviewState()
 
   // Grid-only state: changes what the grid shows, never what the cockpit grades.
   // The view and the expand mode are remembered; the filters are not.
@@ -325,28 +328,20 @@ export default function PositionsPage() {
     })
   }
 
-  if (book.isLoading) {
-    return (
-      <PageShell className="space-y-3">
-        <Skeleton className="h-6 w-40" />
-        <div className="grid grid-cols-3 gap-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-48 rounded-lg" />
-          ))}
-        </div>
-        <Skeleton className="h-64 rounded-lg" />
-      </PageShell>
-    )
-  }
-  if (book.isError) {
-    return (
-      <PageShell>
-        <Alert variant="destructive">
-          <AlertDescription>{(book.error as Error).message}</AlertDescription>
-        </Alert>
-      </PageShell>
-    )
-  }
+  // §17.1: the head and the toolbar never wait for data — only the data
+  // region yields. The book's one source is the monitor's status read
+  // (accounts and positions); `usePositionsBook` already made it.
+  const bookSource =
+    preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(statusQ)
+  const retryBook = () => void statusQ.refetch()
+  // §17.3 / §17.1-7: Clear resets every axis that can empty the book here, not
+  // only the one that did — both accounts back, any symbol, any expiry.
+  const scopeOn = [
+    !(accountFilter.host && accountFilter.secondary) && 'accounts',
+    filterSymbol.trim() && 'symbol',
+    filterExpiry.trim() && 'expiry',
+  ].filter((x): x is string => typeof x === 'string' && x !== '')
+  const clearScope = resetScope
 
   const scopedCount = book.hasAccountSelection ? book.totalPositions : 0
   const rowsInView =
@@ -373,6 +368,25 @@ export default function PositionsPage() {
     setInstanceFilters({ ...CLEAR_FILTERS, attributionType: 'unassigned' })
     scrollTo('positions-lines')
   }
+
+  const controls = (
+    <PositionsOpenControls
+      filterSymbol={filterSymbol}
+      onFilterSymbolChange={setFilterSymbol}
+      filterExpiry={filterExpiry}
+      onFilterExpiryChange={setFilterExpiry}
+      hostAccountId={book.hostAccountId}
+      secondaryAccountId={book.secondaryAccountId}
+      accountFilter={accountFilter}
+      onAccountFilterChange={setAccountFilter}
+      cushionTightPct={cushionTightPct}
+      onCushionTightPctChange={setCushionTightPct}
+      scopedCount={scopedCount}
+      offTrack={accountFilter.host && accountFilter.secondary ? { count: book.offTrackCount, onOpen: openOffTrack } : null}
+      scopeOn={scopeOn}
+      onClearScope={clearScope}
+    />
+  )
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -412,39 +426,59 @@ export default function PositionsPage() {
           }
         />
 
-        {!book.showOpenPositionsPanel ? (
-          <EmptyState
+        {bookSource === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh positions"
+            detail={staleDetail(statusQ, 'fills since then are not reflected.')}
+            onAction={retryBook}
+          />
+        ) : null}
+
+        {bookSource === 'loading' || bookSource === 'failed' ? (
+          <>
+            {controls}
+            <section className={positionsUi.panel}>
+              {bookSource === 'loading' ? (
+                <ViewState kind="loading" title="Loading positions" rows={8} cols={6} />
+              ) : (
+                <ViewState
+                  kind="failed"
+                  title="Couldn’t load positions"
+                  detail={failedDetail(
+                    statusQ,
+                    'The book was not read — an empty list here would not mean no positions.',
+                  )}
+                  onAction={retryBook}
+                />
+              )}
+            </section>
+          </>
+        ) : !book.showOpenPositionsPanel || preview === 'empty' ? (
+          <ViewState
+            kind="empty"
             title="No open positions"
-            description="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
+            detail="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
           />
         ) : (
           <>
-            <PositionsOpenControls
-              filterSymbol={filterSymbol}
-              onFilterSymbolChange={setFilterSymbol}
-              filterExpiry={filterExpiry}
-              onFilterExpiryChange={setFilterExpiry}
-              hostAccountId={book.hostAccountId}
-              secondaryAccountId={book.secondaryAccountId}
-              accountFilter={accountFilter}
-              onAccountFilterChange={setAccountFilter}
-              cushionTightPct={cushionTightPct}
-              onCushionTightPctChange={setCushionTightPct}
-              scopedCount={scopedCount}
-              offTrack={
-                accountFilter.host && accountFilter.secondary ? { count: book.offTrackCount, onOpen: openOffTrack } : null
-              }
-            />
+            {controls}
 
             {!book.hasAccountSelection ? (
-              <EmptyState
+              <ViewState
+                kind="filtered"
                 title="Select an account"
-                description="Turn on Host and/or Secondary above to show open positions for those accounts."
+                detail="Both accounts are out of scope, so nothing is shown — the book itself is not empty."
+                actionTitle={`Resets ${scopeOn.join(' · ')}`}
+                onAction={clearScope}
               />
-            ) : book.totalPositions === 0 ? (
-              <EmptyState
-                title="No positions match filters"
-                description="No open positions under the current symbol, expiry, or account filters. Off-track options appear when both Host and Secondary are enabled."
+            ) : book.totalPositions === 0 || preview === 'filtered' ? (
+              <ViewState
+                kind="filtered"
+                title="No positions match these filters"
+                detail={`The book has positions, but none pass the current ${scopeOn.join(', ') || 'scope'}. Off-track options appear when both accounts are in scope.`}
+                actionTitle={`Resets ${scopeOn.join(' · ')}`}
+                onAction={clearScope}
               />
             ) : (
               <>

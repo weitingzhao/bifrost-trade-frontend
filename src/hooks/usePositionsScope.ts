@@ -70,6 +70,15 @@ export function usePositionsScope() {
     setAccountFilter: useCallback((accountFilter: AccountFilter) => update({ accountFilter }), [update]),
     setFilterSymbol: useCallback((filterSymbol: string) => update({ filterSymbol }), [update]),
     setFilterExpiry: useCallback((filterExpiry: string) => update({ filterExpiry }), [update]),
+    /**
+     * Every axis back to the whole book in one write (§17.3 Clear). Three
+     * setters in a row would each serialise from the same stale params, and
+     * the last would put the other two back.
+     */
+    resetScope: useCallback(
+      () => update({ accountFilter: { host: true, secondary: true }, filterSymbol: '', filterExpiry: '' }),
+      [update],
+    ),
     /** The scope alone, for a link to the other page. */
     scopeSearch: serializePositionsScope(scope).toString(),
   }

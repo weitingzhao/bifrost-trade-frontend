@@ -85,15 +85,18 @@ function HeroCard({
   const { name, lit, meter, warn } = gauge
   const litClass = meter || !warn ? 'bg-profit' : 'bg-warning'
   return (
+    // §17.4: the hero card's box and its 30px reading come from
+    // `styles/patterns` (data-sr-kpi="hero"); the page gives colour only —
+    // so the warning edge is a style, which the shared layer cannot override.
     <div
-      className={cn(
-        'sk-rise sk-lift flex min-w-0 flex-col gap-1.5 rounded-xl border bg-[var(--sk-raised)] px-3.5 pt-3 pb-3.25',
-        'shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_5%,transparent)]',
-        warn
-          ? 'border-[color-mix(in_srgb,var(--color-warning)_40%,transparent)]'
-          : 'border-[var(--sk-line0)]'
-      )}
-      style={{ '--sk-rise-delay': `${index * 40}ms` } as CSSProperties}
+      data-sr-kpi="hero"
+      className="sk-rise sk-lift"
+      style={
+        {
+          '--sk-rise-delay': `${index * 40}ms`,
+          ...(warn ? { borderColor: 'color-mix(in srgb, var(--color-warning) 40%, transparent)' } : {}),
+        } as CSSProperties
+      }
       data-testid={`hero-${gauge.id}`}
     >
       <div className="flex items-center gap-2">
@@ -133,13 +136,7 @@ function HeroCard({
           ?
         </button>
       </div>
-      <div
-        className={cn(
-          positionsUi.mono,
-          'type-hero font-semibold tracking-[-0.02em]',
-          warn ? 'text-warning' : 'text-foreground'
-        )}
-      >
+      <div data-sr-kpi-v="" className={warn ? 'text-warning' : 'text-foreground'}>
         {gauge.hero}
       </div>
       <div

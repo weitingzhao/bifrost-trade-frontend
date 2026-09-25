@@ -7,6 +7,9 @@
    @bifrost/ui owns them (design Rev .31 / .43, DESIGN_CONTRACTS §1 · §8), so
    this file declares none of them; only the -rgb tint triplets live here. */
 @import "@bifrost/ui/styles/semantic";
+/* §17 interaction patterns (@bifrost/ui 0.4.17): opt-in by data attribute —
+   a page that marks nothing is untouched, so pages move one at a time. */
+@import "@bifrost/ui/styles/patterns";
 /* Built output, not source: the class strings survive tsc verbatim. */
 @source "../../bifrost-ui/dist/**/*.js";
 @custom-variant dark (&:is(.dark *));

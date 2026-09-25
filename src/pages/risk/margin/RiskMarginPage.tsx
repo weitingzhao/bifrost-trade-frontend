@@ -15,11 +15,10 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { Button, ViewState } from '@bifrost/ui'
+import { PageHead, PageShell } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { PositionsStat } from '@/components/positions/PositionsStat'
@@ -33,6 +32,8 @@ import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment
 import { fetchModelAnalysis } from '@/api/portfolio'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { MARGIN_UNRECORDED, marginUsers, marginUsersTotal } from './marginModel'
 
 const PAGE_LEAD =
@@ -45,7 +46,9 @@ const FOOT =
 const PRESSURE_WARN = 0.5
 
 export default function RiskMarginPage() {
-  const { data: status, isLoading: statusLoading } = useMonitorStatus()
+  const statusQ = useMonitorStatus()
+  const status = statusQ.data
+  const preview = usePreviewState()
   const [accountFilter, setAccountFilter] = useState('all')
 
   const accounts = useMemo(() => status?.portfolio?.accounts ?? [], [status])
@@ -121,7 +124,10 @@ export default function RiskMarginPage() {
     [book.alarm],
   )
 
-  const loading = statusLoading
+  // §17.1: the broker's account summary (the monitor's status read) is the
+  // page's one critical source; the model's stress read failing is narrower.
+  const pageState = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(statusQ)
+  const retry = () => void statusQ.refetch()
   const error = modelQueries.find((q) => q.error)?.error ?? null
   const maxCommitted = Math.max(1, ...users.map((u) => u.committed))
   const buyingPower = margin.accounts.reduce((a, f) => a + (f.buyingPower ?? 0), 0)
@@ -129,39 +135,73 @@ export default function RiskMarginPage() {
   return (
     <PageShell padding="compact" className="space-y-3">
       <section className={positionsUi.pageCard} aria-label="Margin and Buying Power">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Risk / Margin &amp; Buying Power</p>}
+        {/* §16.10 with §17 (one pass per page): the lead behind ⓘ, the way to
+            the backing model a head action, the account switch in the toolbar. */}
+        <PageHead
           title="Margin & Buying Power"
-          titleSize="large"
-          description={PAGE_LEAD}
+          info={PAGE_LEAD}
           actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              {accountIds.length > 1 ? (
-                <SegmentControl
-                  size="xs"
-                  ariaLabel="Account"
-                  value={accountFilter}
-                  onChange={setAccountFilter}
-                  options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-                />
-              ) : null}
-              <Link to="/portfolio/backing" className={positionsUi.link}>
-                what backs it → Backing &amp; Model
+            <Button asChild variant="outline" size="sm">
+              <Link to="/portfolio/backing" title="What backs it — Backing & Model">
+                Backing model →
               </Link>
-            </span>
+            </Button>
           }
         />
-
-        {error ? <QueryErrorAlert error={error} onRetry={() => modelQueries.forEach((q) => void q.refetch())} /> : null}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-20 w-full rounded-md" />
-            <Skeleton className="h-56 w-full rounded-md" />
+        {accountIds.length > 1 ? (
+          <div data-sr-toolbar="">
+            <span data-sr-tb="label">Account</span>
+            <SegmentControl
+              size="xs"
+              ariaLabel="Account"
+              value={accountFilter}
+              onChange={setAccountFilter}
+              options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+            />
           </div>
+        ) : null}
+
+        {pageState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh margin"
+            detail={staleDetail(statusQ, 'requirements since then are not reflected.')}
+            onAction={retry}
+          />
+        ) : null}
+        {pageState !== 'loading' && pageState !== 'failed' && error != null ? (
+          <ViewState
+            kind="failed"
+            layout="strip"
+            title="Couldn’t load the stress model"
+            detail={failedDetail(
+              { data: null, isPending: false, isError: true, error },
+              'Under stress reads nothing — unmeasured, not unaffected.',
+            )}
+            onAction={() => modelQueries.forEach((q) => void q.refetch())}
+          />
+        ) : null}
+        {pageState === 'loading' ? (
+          <section className={positionsUi.panel}>
+            <ViewState kind="loading" title="Loading margin" rows={8} cols={6} />
+          </section>
+        ) : pageState === 'failed' ? (
+          <section className={positionsUi.panel}>
+            <ViewState
+              kind="failed"
+              title="Couldn’t load margin"
+              detail={failedDetail(
+                statusQ,
+                'Margin was not read — no requirement shown does not mean none is due.',
+              )}
+              onAction={retry}
+            />
+          </section>
         ) : (
           <>
             <section className={positionsUi.panel} aria-label="What the broker says">
-              <div className="flex flex-wrap items-start gap-x-7 gap-y-3 px-3.5 py-2.5">
+              {/* §17.4: a reading strip inside the panel — the panel is the frame. */}
+              <div data-sr-kpi="strip-inset">
                 <PositionsStat
                   cap="Net liq"
                   value={margin.netLiquidation > 0 ? fmtMvAbbrev(margin.netLiquidation) : '—'}
@@ -225,7 +265,7 @@ export default function RiskMarginPage() {
             <section className={positionsUi.panel} aria-label="By account">
               <div className="overflow-x-auto">
                 {/* §14.6: seven columns, the design's 860 floor. */}
-                <table className="w-full min-w-[860px] table-fixed border-collapse">
+                <table data-sr-table="" className="min-w-[860px]">
                   <colgroup>
                     <col style={{ width: '16%' }} />
                     <col style={{ width: '14%' }} />
@@ -237,13 +277,13 @@ export default function RiskMarginPage() {
                   </colgroup>
                   <thead>
                     <tr>
-                      <th className={cn(positionsUi.th, 'text-left')}>Account</th>
-                      <th className={positionsUi.th}>Net liq</th>
-                      <th className={positionsUi.th}>Maintenance</th>
-                      <th className={positionsUi.th}>Excess</th>
-                      <th className={positionsUi.th}>Pressure</th>
-                      <th className={positionsUi.th}>Buying power</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Reading</th>
+                      <th data-sr-col="entity">Account</th>
+                      <th data-sr-col="num">Net liq</th>
+                      <th data-sr-col="num">Maintenance</th>
+                      <th data-sr-col="num">Excess</th>
+                      <th data-sr-col="num">Pressure</th>
+                      <th data-sr-col="num">Buying power</th>
+                      <th data-sr-col="tag">Reading</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -251,25 +291,25 @@ export default function RiskMarginPage() {
                       const hot = (a.pressure ?? 0) > PRESSURE_WARN
                       return (
                         <tr key={a.accountId} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                          <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-secondary-foreground')}>
+                          <td data-sr-col="entity" className="font-mono font-bold text-secondary-foreground">
                             {a.accountId}
                           </td>
-                          <td className={cn(positionsUi.td, 'text-foreground')}>
+                          <td data-sr-col="num" className="text-foreground">
                             {a.netLiquidation == null ? '—' : fmtMvAbbrev(a.netLiquidation)}
                           </td>
-                          <td className={cn(positionsUi.td, 'text-secondary-foreground')}>
+                          <td data-sr-col="num" className="text-secondary-foreground">
                             {a.maintMarginReq == null ? '—' : fmtMvAbbrev(a.maintMarginReq)}
                           </td>
-                          <td className={cn(positionsUi.td, 'text-secondary-foreground')}>
+                          <td data-sr-col="num" className="text-secondary-foreground">
                             {a.excessLiquidity == null ? '—' : fmtMvAbbrev(a.excessLiquidity)}
                           </td>
-                          <td className={cn(positionsUi.td, hot ? 'text-warning' : 'text-secondary-foreground')}>
+                          <td data-sr-col="num" className={hot ? 'text-warning' : 'text-secondary-foreground'}>
                             {fmtPct0(a.pressure)}
                           </td>
-                          <td className={cn(positionsUi.td, 'text-muted-foreground')}>
+                          <td data-sr-col="num" className="text-muted-foreground">
                             {a.buyingPower == null ? '—' : fmtMvAbbrev(a.buyingPower)}
                           </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans')}>
+                          <td data-sr-col="tag">
                             <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
                               <StatusLamp lamp={hot ? 'yellow' : 'green'} variant="dot" title={hot ? 'Tight' : 'Room'} />
                               {a.netLiquidation ? (hot ? 'tight' : 'room') : 'not funded'}
@@ -313,7 +353,7 @@ export default function RiskMarginPage() {
               ) : (
                 <div className="overflow-x-auto">
                   {/* §14.6: five columns, the design's 700 floor. */}
-                  <table className="w-full min-w-[700px] table-fixed border-collapse">
+                  <table data-sr-table="" className="min-w-[700px]">
                     <colgroup>
                       <col style={{ width: '14%' }} />
                       <col style={{ width: '18%' }} />
@@ -323,27 +363,27 @@ export default function RiskMarginPage() {
                     </colgroup>
                     <thead>
                       <tr>
-                        <th className={cn(positionsUi.th, 'text-left')}>Symbol</th>
-                        <th className={positionsUi.th}>Committed</th>
-                        <th className={positionsUi.th}>At risk</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Risk</th>
-                        <th className={cn(positionsUi.th, 'text-left')}>Share of committed</th>
+                        <th data-sr-col="entity">Symbol</th>
+                        <th data-sr-col="num">Committed</th>
+                        <th data-sr-col="num">At risk</th>
+                        <th data-sr-col="tag">Risk</th>
+                        <th>Share of committed</th>
                       </tr>
                     </thead>
                     <tbody>
                       {users.map((u) => (
                         <tr key={u.symbol} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                          <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
+                          <td data-sr-col="entity" className="font-mono font-bold text-[var(--color-entity-option)]">
                             {u.symbol}
                           </td>
-                          <td className={cn(positionsUi.td, 'font-bold text-foreground')}>{fmtMvAbbrev(u.committed)}</td>
-                          <td className={cn(positionsUi.td, u.atRisk == null ? 'text-warning' : 'text-secondary-foreground')}>
+                          <td data-sr-col="num" className="font-bold text-foreground">{fmtMvAbbrev(u.committed)}</td>
+                          <td data-sr-col="num" className={u.atRisk == null ? 'text-warning' : 'text-secondary-foreground'}>
                             {u.atRisk == null ? 'unbounded' : fmtMvAbbrev(u.atRisk)}
                           </td>
-                          <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
+                          <td data-sr-col="tag" className="text-muted-foreground">
                             {u.riskType || '—'}
                           </td>
-                          <td className={cn(positionsUi.td, 'text-left')}>
+                          <td>
                             <span className="inline-flex items-center gap-2">
                               <span className="inline-block h-1.25 w-24 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
                                 <span

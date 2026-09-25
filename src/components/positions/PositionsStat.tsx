@@ -12,8 +12,6 @@
  * `text-warning`, and nothing here decides which of those a figure deserves.
  */
 import type { ReactNode } from 'react'
-import { cn } from '@/lib/utils'
-import { positionsUi } from './positionsUi'
 
 export function PositionsStat({
   cap,
@@ -28,23 +26,24 @@ export function PositionsStat({
   sub?: ReactNode
   /** The caller's ink class for the figure; muted when it has no reading. */
   ink?: string
-  /** `lg` for a page's headline figures, `base` inside a band. */
+  /** `lg` for a page's headline figures (§17.4's panel reading, 20), `base` inside a band (16). */
   size?: 'base' | 'lg'
 }) {
+  // §17.4: a stat in a reading strip — label, figure, sub-line — whose type
+  // comes from `styles/patterns`; the caller gives colour only. The panel
+  // size is a style: the stat rule outranks the panel rule on a stat's own
+  // figure.
   return (
-    <span className="flex min-w-0 flex-col gap-0.5">
-      <span className={positionsUi.cap}>{cap}</span>
+    <span data-sr-kpi="stat">
+      <span data-sr-kpi-l="">{cap}</span>
       <span
-        className={cn(
-          positionsUi.mono,
-          'leading-normal font-bold',
-          size === 'lg' ? 'text-lg' : 'text-base',
-          ink ?? 'text-foreground',
-        )}
+        data-sr-kpi-v={size === 'lg' ? 'panel' : ''}
+        className={ink ?? 'text-foreground'}
+        style={size === 'lg' ? { fontSize: 20 } : undefined}
       >
         {value}
       </span>
-      {sub ? <span className="text-dense-caption leading-normal text-muted-foreground">{sub}</span> : null}
+      {sub ? <span data-sr-kpi-s="">{sub}</span> : null}
     </span>
   )
 }

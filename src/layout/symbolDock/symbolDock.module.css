@@ -1,0 +1,405 @@
+/*
+ * The Symbol list's material — transcribed from `_Part SymbolDock.dc.html`.
+ * CSS rather than utility classes because the rows are a four-column grid
+ * shared by three row kinds (group head, name, contract) and the design's
+ * widths are the point: 62 · 54 · 58 for last · change · the list's column.
+ */
+
+.aside {
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--sk-raised);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overflow: hidden;
+}
+
+.edge {
+  border-left: 1px solid var(--sk-line0);
+}
+
+.float {
+  border-radius: 10px;
+  box-shadow:
+    0 12px 32px rgb(0 0 0 / 0.45),
+    0 0 0 1px var(--sk-line);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Strip: 56px, a long-lived mode ────────────────────────────────────── */
+
+/* 42, not the design's 44: the column runs the full height here, so its
+   header lines up with the top bar's rule instead of sitting 2px under it. */
+.stripHead {
+  height: 42px;
+  flex: none;
+  border: 0;
+  border-bottom: 1px solid var(--sk-line0);
+  background: transparent;
+  color: var(--sk-mute2);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.stripSort {
+  height: 20px;
+  flex: none;
+  border: 0;
+  border-bottom: 1px solid var(--sk-line0);
+  background: transparent;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.stripScroll {
+  padding: 4px 0;
+}
+
+.sep {
+  height: 1px;
+  margin: 4px 10px;
+  background: var(--sk-line);
+}
+
+.stripRow {
+  width: 100%;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  padding: 0 4px 0 3px;
+  border: 0;
+  border-left: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: right;
+  line-height: 12px;
+}
+
+.stripSym {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--sk-ticker);
+  text-align: left;
+}
+
+.stripN {
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--sk-contract);
+}
+
+.stripLine {
+  font-size: 9px;
+}
+
+/* The last price flashes on a tick — green up, red down, a signed move — and
+   fades over 700ms. Off for readers who asked for less motion. */
+.flash {
+  border-radius: 2px;
+  color: var(--sk-soft);
+  transition:
+    background 0.7s ease,
+    color 0.7s ease;
+}
+
+.up {
+  background: color-mix(in srgb, var(--color-profit) 28%, transparent);
+  color: var(--sk-ink);
+}
+
+.dn {
+  background: color-mix(in srgb, var(--color-loss) 28%, transparent);
+  color: var(--sk-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    transition: none;
+  }
+}
+
+/* ── Full: tags, sort line, groups, foot ───────────────────────────────── */
+
+.head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--sk-line0);
+}
+
+.tags {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  border: 1px solid var(--sk-line);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sk-mute2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tagOn {
+  border-color: var(--sk-accent);
+  background: color-mix(in srgb, var(--sk-accent) 14%, transparent);
+  color: var(--sk-ink);
+}
+
+.tagN {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--sk-mute);
+}
+
+.ctl {
+  display: inline-flex;
+  gap: 2px;
+  flex: none;
+}
+
+.sortLine {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--sk-line0);
+  background: transparent;
+  font: inherit;
+  font-size: 10.5px;
+  color: var(--sk-mute);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62px 54px 58px;
+  gap: 6px;
+  align-items: center;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--foreground);
+}
+
+.groupHead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 5px 10px 5px 8px;
+  border-bottom: 1px solid var(--sk-line0);
+  background: var(--sk-raised2);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sk-mute);
+}
+
+.right {
+  text-align: right;
+}
+
+.caret {
+  font-size: 8px;
+}
+
+.row {
+  min-height: 30px;
+  padding: 3px 10px 3px 8px;
+  border-left: 2px solid transparent;
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-line) 45%, transparent);
+  background: transparent;
+}
+
+/* The name you are on: a violet rule and a 9% wash (the design's `on`). */
+.row.cur,
+.stripRow.cur {
+  border-left-color: var(--sk-accent);
+  background: color-mix(in srgb, var(--sk-accent) 9%, transparent);
+}
+
+.row:hover,
+.stripRow:hover,
+.contract:hover {
+  background: color-mix(in srgb, var(--sk-ink) 5%, transparent);
+}
+
+.row.cur:hover,
+.stripRow.cur:hover {
+  background: color-mix(in srgb, var(--sk-accent) 14%, transparent);
+}
+
+.name {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* A monogram until the logo proxy lands (Owner 2026-09-25). */
+.mono14 {
+  flex: none;
+  align-self: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sk-raised2);
+  box-shadow: inset 0 0 0 1px var(--sk-line);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--sk-mute2);
+}
+
+.sym {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sk-ticker);
+}
+
+.held {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--sk-soft);
+  flex: none;
+  align-self: center;
+}
+
+.markFlag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-lamp-yellow);
+}
+
+.note {
+  font-size: 10px;
+  color: var(--sk-mute);
+}
+
+.optToggle {
+  flex: none;
+  margin-left: auto;
+  padding: 0 3px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--sk-contract);
+  cursor: pointer;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  text-align: right;
+}
+
+.contract {
+  min-height: 26px;
+  padding: 2px 10px 2px 20px;
+  border-left: 2px solid transparent;
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-line) 30%, transparent);
+  background: color-mix(in srgb, var(--sk-contract) 3%, transparent);
+}
+
+.contractName {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.contractLabel {
+  color: var(--sk-contract);
+}
+
+.contract .num {
+  font-size: 11px;
+}
+
+.empty {
+  padding: 8px 10px 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--sk-mute);
+}
+
+.foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--sk-line0);
+  font-size: 10px;
+  color: var(--sk-mute);
+}

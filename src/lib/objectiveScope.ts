@@ -19,6 +19,7 @@
  * hides rows.
  */
 import { useCallback, useEffect, useState } from 'react'
+import type { ResearchCandidate } from '@/api/research/candidates'
 
 const STORAGE_KEY = 'bifrost.objective'
 const EVENT = 'bifrost:objective'
@@ -73,4 +74,15 @@ export function useObjectiveScope(): { objective: string; isAll: boolean; select
   }, [])
 
   return { objective, isAll: objective === ALL_OBJECTIVES, select }
+}
+
+/**
+ * A candidate row's objective, when the harness stamped one. Read by the
+ * objective's own pages, the review chain and the shell's Symbol list.
+ */
+export function candidateObjectiveId(row: Pick<ResearchCandidate, 'source_ref'>): string | null {
+  const ref = row.source_ref
+  if (!ref || typeof ref !== 'object') return null
+  const id = (ref as Record<string, unknown>).objective_id
+  return typeof id === 'string' && id ? id : null
 }

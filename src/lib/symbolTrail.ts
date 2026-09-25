@@ -141,3 +141,8 @@ export function useSymbolTrail(symbol: string): SymbolTrailPosition | null {
   const { trail } = store.useStore()
   return trailPositionFor(trail, symbol)
 }
+
+/** The whole list the last ranked page published — the Symbol list's `Source`. */
+export function useSymbolTrailList(): SymbolTrail | null {
+  return store.useStore().trail
+}

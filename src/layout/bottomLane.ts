@@ -9,7 +9,8 @@
  *   choice is kept as `bifrost.toolbar` = `hidden` | `shown`, shown by default,
  *   and the design's `bifrost:toolbar` event is honoured as a toggle too.
  * - **The lane.** Left edge = the content's left (the sidebar's right) + 12;
- *   right edge = what the content leaves on the right (a pushed panel) + 12,
+ *   right edge = what the content leaves on the right (a pushed panel, the
+ *   Symbol list's column) + 12,
  *   or the overlaying panel's width when that still leaves room beside it.
  *   Measured, not computed from sidebar constants: the sidebar animates, and a
  *   pushed panel narrows the content without telling anyone.
@@ -80,8 +81,13 @@ function measure(overlayRight: number): BottomLane {
   const contentLeft = rect ? Math.max(0, Math.round(rect.left)) : 0
   const pushed = rect ? Math.max(0, Math.round(vw - rect.right)) : 0
   // An overlaying panel takes the lane's right end only when that still
-  // leaves a lane worth centring in (the design's 300px).
-  const overlay = overlayRight > 0 && vw - contentLeft - pushed - overlayRight - 2 * LANE_GAP_PX >= 300 ? overlayRight : 0
+  // leaves a lane worth centring in (the design's 300px). A pushing one has
+  // already narrowed the content — `pushed` is at least its width then (the
+  // Symbol list's column, at most 300, never is) — so it is not counted twice.
+  const overlay =
+    overlayRight > 0 && pushed < overlayRight && vw - contentLeft - pushed - overlayRight - 2 * LANE_GAP_PX >= 300
+      ? overlayRight
+      : 0
   const left = contentLeft + LANE_GAP_PX
   const right = pushed + overlay + LANE_GAP_PX
   const pillEl = document.querySelector<HTMLElement>('[data-sb-pill] [data-sb-capsule]')

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { ObjectiveRun } from '@/api/research/harness'
+import { candidateObjectiveId } from '@/lib/objectiveScope'
 import {
-  candidateObjectiveId,
   draftObjectiveId,
   hypothesisRunId,
   objectiveLap,

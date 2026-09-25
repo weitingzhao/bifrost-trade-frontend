@@ -30,7 +30,7 @@ import type { ResearchObjective } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { ReviewTrade } from '@/utils/reviewTrades'
-import { candidateObjectiveId } from '@/pages/research/loop/objectiveLapModel'
+import { candidateObjectiveId } from '@/lib/objectiveScope'
 
 /**
  * Settled trades an objective needs before a hit rate is a claim.

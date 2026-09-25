@@ -1,5 +1,6 @@
 /**
  * The bottom toolbar — the equipment's own edge, present on every page.
+ * It leads with the Symbol list's switch (Rev .58), then the groups.
  *
  * Until design Rev .57 this was a column down the right edge. It lies down now
  * (Shell Spec §5a.11 "右栏下沉为底部工具栏"): the same groups, head then its
@@ -47,6 +48,8 @@ import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage 
 import { PANEL_CARD_PX, opensAsPage, placeOf, surfaceForRoute, useSurfaces } from './equipSurface'
 import { toggleSurfaceFrom } from './equipMotion'
 import { useBottomLane, useToolbarShown } from './bottomLane'
+import { dockActions, useDockState } from './symbolDock/dockState'
+import { glyph } from '@/lib/design/glyphs'
 import css from './equipRail.module.css'
 
 /** What the tooltip adds once something is open — "on" alone is not a place. */
@@ -204,6 +207,36 @@ function Group({
   )
 }
 
+const LIST_GLYPH = glyph('symlist')
+
+/**
+ * The Symbol list's switch (design Rev .58): shows or hides the list. Its
+ * mode — strip, docked, float — is switched in the list's own header, so
+ * this button only ever means "on the screen or not".
+ */
+function ListsButton() {
+  const { hidden } = useDockState()
+  return (
+    <button
+      type="button"
+      onClick={() => dockActions.setHidden(!hidden)}
+      aria-label="Symbol lists"
+      aria-pressed={!hidden}
+      title={hidden ? 'Symbol lists — show' : 'Symbol lists — hide (the mode is switched in the list header)'}
+      className={`${css.btn} ${css.head}`}
+      style={{
+        ['--rh' as string]: 'var(--sk-soft)',
+        ['--rh-head-border' as string]: hidden ? 'var(--sk-line)' : 'var(--sk-accent)',
+        background: 'var(--sk-surface)',
+        color: 'var(--sk-soft)',
+      }}
+    >
+      <LIST_GLYPH className="size-4" aria-hidden />
+      <span className={css.label}>Lists</span>
+    </button>
+  )
+}
+
 /** The feed's dot on the Market head — the sidebar Live lamp, moved with its row. */
 function MarketFeedDot() {
   const { data: status } = useMonitorStatus()
@@ -272,8 +305,22 @@ export function EquipRail() {
       }
     >
       {/* Heads only, one capsule holds them all: a one-icon group in its own
-          capsule reads as a ring in a ring. With the pages, a capsule each. */}
-      {full ? groups : <div className={css.group}>{groups}</div>}
+          capsule reads as a ring in a ring. With the pages, a capsule each.
+          The Symbol list's switch leads either way. */}
+      {full ? (
+        <>
+          <div className={css.group}>
+            <ListsButton />
+          </div>
+          {groups}
+        </>
+      ) : (
+        <div className={css.group}>
+          <ListsButton />
+          <span className={css.rule} aria-hidden />
+          {groups}
+        </div>
+      )}
     </div>
   )
 }

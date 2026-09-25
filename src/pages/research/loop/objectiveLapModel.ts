@@ -31,6 +31,7 @@ import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { AiDraft } from '@/api/researchDrafts'
 import { fmtPct0 } from '@/utils/positions'
+import { candidateObjectiveId } from '@/lib/objectiveScope'
 
 export type StationId = 'scan' | 'nominate' | 'judge' | 'decide' | 'settle' | 'feedback'
 
@@ -50,14 +51,6 @@ export interface Station {
    * other rewrites the policy the machine runs on.
    */
   crossesOuterLoop?: boolean
-}
-
-/** A candidate row's objective, when the harness stamped one. */
-export function candidateObjectiveId(row: Pick<ResearchCandidate, 'source_ref'>): string | null {
-  const ref = row.source_ref
-  if (!ref || typeof ref !== 'object') return null
-  const id = (ref as Record<string, unknown>).objective_id
-  return typeof id === 'string' && id ? id : null
 }
 
 /** A hypothesis's birth run, when it was born in one. */

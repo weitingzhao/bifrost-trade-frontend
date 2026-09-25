@@ -44,6 +44,7 @@ import { SurfaceBody } from './SurfaceBody'
 import { SurfaceGlyph } from './SurfaceGlyph'
 import { SHELL_TOP_BAR_PX } from './shellChrome'
 import { keepEquipmentLinksIn } from './surfaceLinks'
+import { useDockColumn } from './symbolDock/dockState'
 import css from './equipSurface.module.css'
 
 /** One toggle: the glyph is the size it is, the title says what a click makes it. */
@@ -53,18 +54,19 @@ const SIZE_TOGGLE: Record<FloatSize, { glyph: string; title: string; next: Float
 }
 
 const PHONE_W = 420
-/** The dock's own lane plus its inset — a float must not sit under it. */
-const RAIL_LANE = 52
-/** The dock's width where it floats beside an open panel (Rev .25). */
-const DOCK_PX = 44
 /** Within this of a boundary on release, the window settles flush against it. */
 const MAGNET_PX = 28
 /** The inset every edge keeps. */
 const GUTTER_PX = 8
 
-/** The one right limit every float path stops at (Rev .25–.27). */
-function rightLimit(panelOpen: boolean): number {
-  return window.innerWidth - (panelOpen ? PANEL_CARD_PX + DOCK_PX : RAIL_LANE)
+/**
+ * The one right limit every float path stops at (Rev .25–.27): left of the
+ * Symbol list's column and of the panel when one is open. The column used to
+ * be the rail's, which lay down into the bottom toolbar in Rev .57; the
+ * right edge is the list's now (Rev .58), and 0 when it floats or is hidden.
+ */
+function rightLimit(panelOpen: boolean, dockPx: number): number {
+  return window.innerWidth - dockPx - (panelOpen ? PANEL_CARD_PX : GUTTER_PX)
 }
 
 /**
@@ -80,8 +82,8 @@ function rightLimit(panelOpen: boolean): number {
  * A position saved on a wide screen must not strand the window off-screen on
  * a narrow one, and a float must never bury the tab you opened beside it.
  */
-function boxFor(size: FloatSize, saved: FloatGeometry | null, panelOpen: boolean): CSSProperties {
-  const limit = rightLimit(panelOpen)
+function boxFor(size: FloatSize, saved: FloatGeometry | null, panelOpen: boolean, dockPx: number): CSSProperties {
+  const limit = rightLimit(panelOpen, dockPx)
   const room = limit - 8
   let geo: FloatGeometry = saved?.size === size ? { ...saved } : {}
   if (geo.w) geo.w = Math.min(geo.w, size === 'phone' ? 520 : room, room)
@@ -119,6 +121,7 @@ export function EquipFloat() {
   const key = float?.key ?? null
   const size = float?.size ?? 'phone'
   const panelOpen = Boolean(panel)
+  const dockPx = useDockColumn().width
   const [viewport, setViewport] = useState(() => window.innerWidth)
 
   useEffect(() => {
@@ -130,10 +133,10 @@ export function EquipFloat() {
   // Derived rather than held in state: an effect that sets state on mount
   // renders the window twice and the first frame is at the wrong size.
   const box = useMemo(
-    () => (key ? boxFor(size, loadGeometry(key), panelOpen) : null),
+    () => (key ? boxFor(size, loadGeometry(key), panelOpen, dockPx) : null),
     // `viewport` is read inside, so a resize has to recompute the clamp.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [key, size, panelOpen, viewport],
+    [key, size, panelOpen, dockPx, viewport],
   )
 
   // A surface arriving in the float — opened, or moved here from the panel —
@@ -206,7 +209,7 @@ export function EquipFloat() {
         // dock (or the panel and the dock) on the right. A short ease, so the
         // snap reads as intent, not a jump.
         const r = el.getBoundingClientRect()
-        const limit = rightLimit(panelOpen)
+        const limit = rightLimit(panelOpen, dockPx)
         let left = r.left
         let top = r.top
         if (left < GUTTER_PX + MAGNET_PX) left = GUTTER_PX
@@ -229,7 +232,7 @@ export function EquipFloat() {
       window.addEventListener('pointermove', move)
       window.addEventListener('pointerup', up)
     },
-    [key, size, panelOpen],
+    [key, size, panelOpen, dockPx],
   )
 
   /**

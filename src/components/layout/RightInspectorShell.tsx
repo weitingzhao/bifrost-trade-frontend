@@ -6,6 +6,7 @@ import { inspectorShell } from './rightInspectorUi'
 import { inspectorDocksAt, inspectorOverlayInsetRightPx, sidePanelPushes, INSPECTOR_WIDTH_READ_PX, INSPECTOR_WIDTH_WIDE_PX } from './inspectorDock'
 import { registerInspectorEscape } from '@/lib/cockpit/inspectorEscape'
 import { useSurfaces } from '@/layout/equipSurface'
+import { useDockColumn } from '@/layout/symbolDock/dockState'
 import { useInspectorWide } from '@/hooks/useInspectorWide'
 import { useInspectorSlot } from './inspectorSlot'
 
@@ -39,6 +40,9 @@ export function RightInspectorShell({
   const viewport = useWindowWidth()
   const { wide } = useInspectorWide()
   const surfaces = useSurfaces()
+  // The Symbol list's column is the outermost one; the inspector measures its
+  // room without it and, floating, stands off it.
+  const dock = useDockColumn()
 
   useEffect(() => {
     if (!open || !onClose) return
@@ -51,8 +55,8 @@ export function RightInspectorShell({
   // While the side panel is pushing the page, the inspector always floats —
   // the page never pays for two docked columns at once (Design 09-14 ③).
   const panelOpen = surfaces.panel != null
-  const docked =
-    slot != null && !sidePanelPushes(panelOpen, viewport) && inspectorDocksAt(width, viewport)
+  const room = viewport - dock.width
+  const docked = slot != null && !sidePanelPushes(panelOpen, room) && inspectorDocksAt(width, room)
 
   const panel = (
     <aside
@@ -73,7 +77,7 @@ export function RightInspectorShell({
 
   if (docked) return createPortal(panel, slot)
 
-  const overlayRight = inspectorOverlayInsetRightPx(panelOpen, viewport)
+  const overlayRight = inspectorOverlayInsetRightPx(panelOpen, room) + dock.width
   return (
     <div
       className="pointer-events-none fixed inset-y-0 left-0 z-[200] flex justify-end"

@@ -41,6 +41,7 @@ import { SHELL_TOP_BAR_PX } from './shellChrome'
 import { sidePanelPushes } from '@/components/layout/inspectorDock'
 import css from './equipSurface.module.css'
 import { keepEquipmentLinksIn } from './surfaceLinks'
+import { useDockColumn } from './symbolDock/dockState'
 
 function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact: boolean }) {
   const full = active || !compact
@@ -108,12 +109,15 @@ export function EquipPanel() {
     wasOpen.current = open
   }, [open])
 
+  // The Symbol list's column sits right of the panel: the panel measures its
+  // room without it and stands off it (`right = column + 8`).
+  const dock = useDockColumn()
   const active = activeTabOf(panel)
   if (!panel || !active) return null
 
   const strip = stripFor(panel)
   const menuOpen = menuOver === panel.active && strip.over.length > 0
-  const pushes = sidePanelPushes(true, viewport)
+  const pushes = sidePanelPushes(true, viewport - dock.width)
 
   return (
     <>
@@ -132,6 +136,7 @@ export function EquipPanel() {
           // is one fixed row here and never wraps, so there is nothing to
           // measure, unlike the design's own.
           top: pushes ? 8 : SHELL_TOP_BAR_PX + 8,
+          right: dock.width + 8,
         }}
         aria-label="Side panel"
       >

@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { routeFor } from '@/layout/routeRegistry'
+import { recordRecentSymbol } from '@/lib/recentSymbols'
 
 /** Historical name — the record predates the symbol being a shell-wide idea. */
 const STORAGE_KEY = 'bifrost-research-context'
@@ -43,6 +44,8 @@ export function writeStoredContext(symbol: string, date: string) {
   } catch {
     // ignore quota / private mode
   }
+  // Every carry is a load, for the Symbol list's Recent.
+  recordRecentSymbol(symbol)
 }
 
 export function normalizeSymbol(value: string | null | undefined): string {
@@ -122,6 +125,9 @@ export function useHeldSymbolSync() {
       const stored = readStoredContext()
       if (normalizeSymbol(stored.symbol) !== urlSymbol) {
         writeStoredContext(urlSymbol, stored.date ?? '')
+      } else if (arrived) {
+        // The same name on a new page is loaded again: it moves to the top of Recent.
+        recordRecentSymbol(urlSymbol)
       }
       return
     }

@@ -19,6 +19,7 @@ import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
 import { EquipRail } from './EquipRail'
 import { EquipFloat } from './EquipFloat'
 import { EquipPanel } from './EquipPanel'
+import { SymbolDockHost } from './symbolDock/SymbolDockHost'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
 import { useRecentPagesTrail } from '@/lib/omnibar'
@@ -113,6 +114,10 @@ export function AppLayout() {
             there is room it takes its column out of the page instead of
             covering it. */}
         <EquipPanel />
+        {/* The Symbol list (design Rev .56–.58): the outermost column, right of
+            the panel — docked or a strip it takes its width from the page,
+            floating it sits over it. */}
+        <SymbolDockHost />
         {/* The equipment's edge. After the panel and the dock, so it floats
             over both — the rail is shell furniture, not page furniture, and
             it keeps the screen edge for Fitts. */}

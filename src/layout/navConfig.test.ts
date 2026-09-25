@@ -159,6 +159,7 @@ describe('System nav', () => {
       'Status',
       'Settings',
       'Data',
+      'Alignment',
       'Agents',
       'Reference',
     ])
@@ -174,6 +175,7 @@ describe('System nav', () => {
       '/system/status',
       '/settings',
       'system:data',
+      'system:alignment',
       'system:agents',
       'system:reference',
     ])

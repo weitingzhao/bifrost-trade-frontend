@@ -10,7 +10,7 @@
  * `routeRegistry.test.ts`.
  */
 import type { RouteEntry } from './routeRegistry'
-import { ANALYZE, COPILOT, DATA, DISCOVER, DOCS, PORTFOLIO, STRATEGY, SYSTEM_CONFIG, SYSTEM_DATA, SYSTEM_RUNTIME } from './routeCrumbs'
+import { ANALYZE, COPILOT, DATA, DISCOVER, DOCS, PORTFOLIO, STRATEGY, SYSTEM_ALIGNMENT, SYSTEM_CONFIG, SYSTEM_DATA, SYSTEM_RUNTIME } from './routeCrumbs'
 
 export const REDIRECTS: readonly RouteEntry[] = [
   // ── Strategy, retired 2026-09-18 ───────────────────────────────────────
@@ -354,6 +354,14 @@ export const REDIRECTS: readonly RouteEntry[] = [
     redirect: '/system/status',
   },
   { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS, redirect: '/docs/tech-stack' },
+  // The calibration document's text became the Calibration page's Source view
+  // when System › Alignment was made (Owner 2026-09-25): one document, one row.
+  {
+    path: '/docs/research-calibration',
+    label: 'Research Calibration',
+    crumbs: SYSTEM_ALIGNMENT,
+    redirect: '/research/lab/calibration?view=source',
+  },
   {
     path: '/settings/ui-design-system',
     label: 'UI Design System',

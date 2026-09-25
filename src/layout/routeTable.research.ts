@@ -25,6 +25,7 @@ import {
   MARKET_RAIL,
   RESEARCH,
   REVIEW,
+  SYSTEM_ALIGNMENT,
   SYSTEM_DATA,
   THE_BOOK,
   VALIDATE,
@@ -436,7 +437,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // the document and probes its live version stamp, it does not judge.
     path: '/research/lab/calibration',
     label: 'Calibration',
-    crumbs: SYSTEM_DATA,
+    crumbs: SYSTEM_ALIGNMENT,
     design: {
       state: 'reviewing',
       rev: '2026-09-20.4',

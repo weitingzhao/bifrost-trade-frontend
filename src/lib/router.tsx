@@ -447,10 +447,6 @@ export const router = createBrowserRouter([
         path: 'docs/research-blueprint',
         lazy: lazyPage(() => import('@/pages/docs/researchBlueprint/ResearchBlueprintPage')),
       },
-      {
-        path: 'docs/research-calibration',
-        lazy: lazyPage(() => import('@/pages/docs/researchBlueprint/ResearchBlueprintPage')),
-      },
       // The old names, kept working. `/settings/*` and `/operations/*` were
       // two words for the same machine; bookmarks and old links predate the
       // rename and must not 404.

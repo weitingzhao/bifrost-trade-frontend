@@ -22,7 +22,7 @@ export const SYSTEM_NOTES: Record<string, string> = {
     + 'round. Diverged, named: the design routed blueprint \u2197 and calibration \u2197 through its shell '
     + 'stub; here both /docs pages exist and the links are real; the AsofTag part becomes the '
     + 'strip\u2019s own round line (the round is the asof); the Copilot draft panel lands as AskCopilot '
-    + 'with the open contracts in its snapshot (no draft store). Owner to look before aligned.',
+    + 'with the open contracts in its snapshot (no draft store). Owner to look before aligned. 2026-09-25 (Owner): READ LIVE, NOT TRANSCRIBED. The rows came from a transcription of round 2026-09-08.9 that had already drifted from its source (condensed evidence; two smallest-change lines reworded), so the page now reads GET /research/docs/calibration and /research/docs/blueprint and parses them: the blueprint\u2019s `| C-xx | contract |` rows, the calibration\u2019s \u00a72 `| C-xx | state | evidence |` tables, \u00a73\u2019s fix table and the \u00a72 \u8ba1\u6570 roll-up; a row whose state symbol it cannot read is left out and named. On DEV it reads 28 contracts, 8 fixes and the roll-up of 27, so the COUNT-DISAGREES panel still draws. The document\u2019s own text is a Source view here, and /docs/research-calibration forwards to it. MOVED to System \u203a Alignment with Design Adoption and the Blueprint: target against actual, in one fold; the path is unchanged.',
   '/research/lab/discover-model':
     'Built 2026-09-24 against System Data Discover Model.dc.html at Rev 2026-09-20.4, transcribed '
     + 'whole rather than summarised: the page is the design\u2019s own document \u2014 the Rank \u00b7 Screen \u00b7 '

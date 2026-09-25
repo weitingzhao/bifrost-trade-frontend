@@ -97,6 +97,7 @@ import {
   REVIEW,
   RISK,
   SYSTEM,
+  SYSTEM_ALIGNMENT,
   TRADE_DESK,
 } from './routeCrumbs'
 
@@ -462,10 +463,13 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
 
+  // ── System · Alignment ─────────────────────────────────────────────────
+  // Target against actual (Owner 2026-09-25): the UI against the design, and
+  // Research against its blueprint. Calibration itself is a Research route.
+  { path: '/docs/design-adoption', label: 'Design Adoption', crumbs: SYSTEM_ALIGNMENT },
+  { path: '/docs/research-blueprint', label: 'Research Blueprint', crumbs: SYSTEM_ALIGNMENT },
+
   // ── System · Reference ─────────────────────────────────────────────────
-  { path: '/docs/design-adoption', label: 'Design Adoption', crumbs: DOCS },
-  { path: '/docs/research-blueprint', label: 'Research Blueprint', crumbs: DOCS },
-  { path: '/docs/research-calibration', label: 'Research Calibration', crumbs: DOCS },
   { path: '/docs/tech-stack', label: 'Tech Stack', crumbs: DOCS },
   { path: '/docs/ui-design-system', label: 'UI Design System', crumbs: DOCS },
   {

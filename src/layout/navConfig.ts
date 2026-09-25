@@ -3,6 +3,7 @@ import {
   Activity,
   ArrowLeftRight,
   BarChart2,
+  Scale,
   Sigma,
   BookOpen,
   CalendarClock,
@@ -257,7 +258,15 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
         // (sys:data, Rev 2026-09-20.4). Calibration joined 2026-09-24, when
         // its page landed — a nav row must navigate.
         route('Discover model', '/research/lab/discover-model', BookOpen),
+      ]),
+      // Target against actual (Owner 2026-09-25): the UI against the design
+      // package, and Research against its blueprint, contract by contract —
+      // the instruments for keeping the three aligned. Calibration left Data
+      // and the two documents left Reference; every path is unchanged.
+      fold('system:alignment', 'Alignment', '/docs/design-adoption', Scale, [
+        route('Design Adoption', '/docs/design-adoption', ListChecks),
         route('Calibration', '/research/lab/calibration', Gauge),
+        route('Blueprint', '/docs/research-blueprint', BookOpen),
       ]),
       // Personas and Orchestration arrived from Copilot (design Rev
       // 2026-09-22.2, §5a.8 · `SYS_ROUTES`). Neither is a trader's page: the
@@ -269,10 +278,7 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
         COPILOT_PAGES.personas,
         COPILOT_PAGES.orchestration,
       ]),
-      fold('system:reference', 'Reference', '/docs/design-adoption', BookOpen, [
-        route('Design Adoption', '/docs/design-adoption', ListChecks),
-        route('Research Blueprint', '/docs/research-blueprint', BookOpen),
-        route('Research Calibration', '/docs/research-calibration', BookOpen),
+      fold('system:reference', 'Reference', '/docs/tech-stack', Layers2, [
         route('Tech Stack', '/docs/tech-stack', Layers2),
         route('UI Design System', '/docs/ui-design-system', Palette),
         route('Options Kit', '/docs/options-kit', Sigma),

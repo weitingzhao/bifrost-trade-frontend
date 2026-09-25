@@ -3,34 +3,34 @@
  * `System Data Calibration.dc.html`, route rev 2026-09-20.4).
  *
  * The blueprint says what Research should be; the calibration says what it
- * is. Twenty-eight numbered contracts, each with the evidence behind its
- * state. This page renders the document; it does not judge — and it probes
- * the live document's version stamp so a transcription of a stale round
- * says so instead of impersonating the current one.
+ * is, contract by contract, with the evidence behind each state. Both are read
+ * live from the research API and parsed (`labCalibrationModel.ts`); the
+ * document's own text is the Source view, which `/docs/research-calibration`
+ * now opens. This page renders the documents; it does not judge.
  */
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { DenseTag, EmptyState, HealthLamp } from '@bifrost/ui'
 import { fetchResearchDoc } from '@/api/research/docs'
 import { SegmentControl } from '@/components/data-display'
+import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { PageHeader, PageShell } from '@/components/layout'
+import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { Skeleton } from '@/components/ui/skeleton'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { cap, mono, panel, panelHead } from '@/components/research/labFaceUi'
 import { cn } from '@/lib/utils'
 import {
   countNote,
-  DOC_TALLY,
-  FIXES,
   LAYERS,
-  ROWS,
+  parseBlueprintContracts,
+  parseCalibration,
   rowTally,
   STATE,
   STATE_ORDER,
   talliesDisagree,
-  TRANSCRIBED_ASOF,
-  TRANSCRIBED_ROUND,
   type ContractState,
 } from './labCalibrationModel'
 
@@ -41,27 +41,60 @@ const lampColor: Record<ContractState, string> = {
   ramp: 'var(--color-lamp-gray)',
 }
 
+/** The evidence cells carry inline markdown — bold and code — and nothing else. */
+function inline(text: string): ReactNode[] {
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') ? (
+      <strong key={i} className="font-semibold text-foreground/85">
+        {part.slice(2, -2)}
+      </strong>
+    ) : part.startsWith('`') && part.endsWith('`') ? (
+      <code key={i} className="font-mono text-[0.95em]">
+        {part.slice(1, -1)}
+      </code>
+    ) : (
+      <Fragment key={i}>{part}</Fragment>
+    ),
+  )
+}
+
 export default function LabCalibrationPage() {
   const [layer, setLayer] = useState('all')
   const [pick, setPick] = useState<ContractState | 'all'>('all')
+  const [params, setParams] = useSearchParams()
+  const view = params.get('view') === 'source' ? 'source' : 'contracts'
 
-  // The live document, for its version stamp alone — the rows below are the
-  // transcription and stay put; the probe only says whether the document has
-  // moved past the round they render.
-  const docQ = useQuery({
-    queryKey: ['research', 'doc', 'calibration'],
+  // Both documents, live: the calibration carries the states and evidence,
+  // the blueprint the contracts' own wording.
+  const calQ = useQuery({
+    queryKey: ['research', 'docs', 'calibration'],
     queryFn: () => fetchResearchDoc('calibration'),
-    staleTime: 10 * 60_000,
+    staleTime: 5 * 60_000,
   })
-  const liveRound = docQ.data?.version ?? null
+  const blueQ = useQuery({
+    queryKey: ['research', 'docs', 'blueprint'],
+    queryFn: () => fetchResearchDoc('blueprint'),
+    staleTime: 5 * 60_000,
+  })
+  const doc = calQ.data
+  const parsed = useMemo(
+    () =>
+      doc && blueQ.data
+        ? parseCalibration(doc.markdown, parseBlueprintContracts(blueQ.data.markdown))
+        : null,
+    [doc, blueQ.data]
+  )
+  const ROWS = useMemo(() => parsed?.rows ?? [], [parsed])
+  const FIXES = parsed?.fixes ?? []
+  const docTally = parsed?.docTally ?? null
 
-  const counts = useMemo(() => rowTally(ROWS), [])
+  const counts = useMemo(() => rowTally(ROWS), [ROWS])
   const shown = useMemo(
     () =>
       ROWS.filter(
         (r) => (layer === 'all' || r.layer === layer) && (pick === 'all' || r.state === pick)
       ),
-    [layer, pick]
+    [ROWS, layer, pick]
   )
   const groups = useMemo(
     () =>
@@ -74,51 +107,69 @@ export default function LabCalibrationPage() {
       }).filter((g) => g.rows.length > 0),
     [shown]
   )
-  const disagrees = talliesDisagree(DOC_TALLY, counts)
+  const disagrees = docTally != null && talliesDisagree(docTally, counts)
 
   return (
     <PageShell padding="compact" className="space-y-3">
       <PageHeader
-        breadcrumb={<p className="text-xs font-medium text-primary/90">System / Data</p>}
+        breadcrumb={<p className="text-xs font-medium text-primary/90">System / Alignment</p>}
         title="Calibration"
         titleSize="large"
-        description="The blueprint says what Research should be; the calibration says what it is. Twenty-eight numbered contracts, each with the evidence behind its state."
+        description="The blueprint says what Research should be; the calibration says what it is — contract by contract, each with the evidence behind its state, read live from both documents."
       />
 
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
         <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
-          RESEARCH_CALIBRATION.md · round {TRANSCRIBED_ROUND} · asof {TRANSCRIBED_ASOF}
+          RESEARCH_CALIBRATION.md
+          {doc?.version ? ` · round ${doc.version}` : ''}
+          {doc?.updated ? ` · updated ${doc.updated}` : ''} · read live
         </span>
-        {docQ.isLoading ? null : liveRound == null ? (
-          <span
-            className={cn(mono, 'text-dense-micro text-muted-foreground')}
-            title="GET /research/docs/calibration did not answer — the live round cannot be checked."
-          >
-            live check unreachable
-          </span>
-        ) : liveRound === TRANSCRIBED_ROUND ? (
-          <span
-            className={cn(mono, 'text-dense-micro text-muted-foreground')}
-            title="The live document's version stamp equals the round these rows transcribe."
-          >
-            matches the live document
-          </span>
-        ) : (
-          <span className={cn(mono, 'text-dense-micro font-semibold text-warning')}>
-            the document has moved to round {liveRound} — these rows render {TRANSCRIBED_ROUND}
-          </span>
-        )}
-        <span className={cn(mono, 'ml-auto flex items-center gap-2 text-dense-caption')}>
-          <Link to="/docs/research-blueprint" className="text-primary hover:underline">
-            blueprint ↗
-          </Link>
-          <span className="text-muted-foreground">·</span>
-          <Link to="/docs/research-calibration" className="text-primary hover:underline">
-            calibration ↗
+        {doc?.status ? (
+          <DenseTag size="cell" variant="neutral">
+            {doc.status}
+          </DenseTag>
+        ) : null}
+        <span className="ml-auto flex items-center gap-3">
+          <SegmentControl
+            ariaLabel="View"
+            size="xs"
+            value={view}
+            onChange={(v) => {
+              const next = new URLSearchParams(params)
+              if (v === 'source') next.set('view', 'source')
+              else next.delete('view')
+              setParams(next, { replace: true })
+            }}
+            options={[
+              { value: 'contracts', label: 'Contracts' },
+              { value: 'source', label: 'Source' },
+            ]}
+          />
+          <Link to="/docs/research-blueprint" className={cn(mono, 'text-dense-caption text-primary hover:underline')}>
+            Blueprint →
           </Link>
         </span>
       </div>
 
+      {calQ.isError || blueQ.isError ? (
+        <QueryErrorAlert
+          error={calQ.error ?? blueQ.error}
+          onRetry={() => {
+            void calQ.refetch()
+            void blueQ.refetch()
+          }}
+        />
+      ) : !doc || (view === 'contracts' && !parsed) ? (
+        <Skeleton className="h-96 w-full rounded-md" />
+      ) : view === 'source' ? (
+        // The document itself, centred as prose (§5a.3).
+        <article className="mx-auto max-w-4xl">
+          <MarkdownContent className="prose prose-sm prose-invert max-w-none [&_table]:text-dense-meta [&_pre]:text-dense-micro">
+            {doc.markdown}
+          </MarkdownContent>
+        </article>
+      ) : (
+        <>
       <div className="flex flex-wrap gap-2">
         {STATE_ORDER.map((k) => {
           const st = STATE[k]
@@ -202,14 +253,16 @@ export default function LabCalibrationPage() {
                     />
                   </span>
                   <div className="flex min-w-0 flex-col gap-0.75">
-                    <span className="text-dense-body leading-normal text-pretty">{r.contract}</span>
+                    <span className="text-dense-body leading-normal text-pretty">
+                      {r.contract || '— not in the blueprint'}
+                    </span>
                     <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>
                       blueprint · stable anchor
                     </span>
                   </div>
                   <div className="flex min-w-0 flex-col gap-1">
                     <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
-                      {r.evidence}
+                      {inline(r.evidence)}
                     </p>
                     <span className="flex flex-wrap items-center gap-1.5">
                       <DenseTag size="cell" variant={st.variant}>
@@ -252,7 +305,7 @@ export default function LabCalibrationPage() {
             <span className={cn(mono, 'text-dense-caption text-primary')}>{f.ids}</span>
             <span className="text-dense-body text-pretty">{f.gap}</span>
             <span className="text-dense-caption leading-normal text-muted-foreground text-pretty">
-              {f.fix}
+              {inline(f.fix)}
             </span>
           </div>
         ))}
@@ -265,19 +318,27 @@ export default function LabCalibrationPage() {
               COUNT DISAGREES WITH ITS OWN ROWS
             </div>
             <p className="m-0 max-w-[78ch] text-dense-body leading-relaxed text-pretty">
-              {countNote(DOC_TALLY, counts)}
+              {countNote(docTally!, counts)}
             </p>
           </div>
         </div>
       ) : null}
+
+          {parsed && parsed.unread.length > 0 ? (
+            <p className={cn(mono, 'm-0 text-dense-caption text-warning')}>
+              {parsed.unread.length} row{parsed.unread.length === 1 ? '' : 's'} in §2 carried a state this
+              page cannot read ({parsed.unread.join(', ')}) — left out rather than guessed.
+            </p>
+          ) : null}
+        </>
+      )}
 
       <div className="flex">
         <AskCopilotButton
           originPage="lab-calibration"
           originLabel="Calibration"
           snapshot={compactSnapshot({
-            round: TRANSCRIBED_ROUND,
-            live_round: liveRound,
+            round: doc?.version ?? null,
             tally: counts,
             open: ROWS.filter((r) => r.state !== 'ok').map((r) => r.id),
           })}

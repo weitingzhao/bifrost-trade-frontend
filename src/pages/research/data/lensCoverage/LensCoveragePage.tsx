@@ -98,7 +98,7 @@ export default function LensCoveragePage() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              to="/docs/research-calibration"
+              to="/research/lab/calibration"
               className="text-dense-meta text-muted-foreground hover:text-foreground"
             >
               Calibration →

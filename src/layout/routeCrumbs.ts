@@ -83,3 +83,5 @@ export const SYSTEM_DATA = ['System', 'Data'] as const
 export const SYSTEM_RUNTIME = ['System', 'Runtime'] as const
 export const SYSTEM_CONFIG = ['System', 'Configuration'] as const
 export const DOCS = ['System', 'Reference'] as const
+/** Target against actual — UI against the design, Research against its blueprint (2026-09-25). */
+export const SYSTEM_ALIGNMENT = ['System', 'Alignment'] as const

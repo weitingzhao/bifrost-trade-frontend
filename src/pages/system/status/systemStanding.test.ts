@@ -10,6 +10,7 @@ import {
   blockText,
   marketStanding,
   nightlyStanding,
+  watchlistDataLine,
   tradingStanding,
   worstLamp,
 } from './systemStanding'
@@ -125,5 +126,48 @@ describe('worstLamp', () => {
     expect(worstLamp([d('red'), d('green'), d('green')])).toBe('red')
     expect(worstLamp([d('green'), d('green'), d('green')])).toBe('green')
     expect(worstLamp([d('green'), d('gray'), d('green')])).toBe('gray')
+  })
+})
+
+describe('watchlistDataLine', () => {
+  const pass = {
+    ok: true,
+    summary: 'PASS',
+    watchlist_source_count: 18,
+    checks: [
+      { check: 'stock_daily_coverage', ok: true },
+      { check: 'option_snapshot_coverage', ok: true },
+      { check: 'option_oi_coverage', ok: true },
+      { check: 'freshness', ok: true },
+    ],
+  }
+
+  it('reads the plugin’s own PASS as a grey note, with its Ops page', () => {
+    // The shape DEV answered on 2026-09-25.
+    const line = watchlistDataLine(pass, false)
+    expect(line).toMatchObject({ tone: 'note', ops: { view: 'market-data-manage' } })
+    expect(line?.text).toContain('all 4 of the plugin’s checks pass over 18 watchlist names')
+  })
+
+  it('names the failing check in the plugin’s words, and it turns the row amber', () => {
+    const fail = { ...pass, summary: 'FAIL', checks: [...pass.checks.slice(1), { check: 'stock_daily_coverage', ok: false, detail: 'gaps=3 over 30 trading days' }] }
+    const line = watchlistDataLine(fail, false)
+    expect(line?.tone).toBe('warn')
+    expect(line?.text).toContain('gaps=3 over 30 trading days')
+    const health = {
+      overall: 'ok',
+      as_of: '',
+      freshness: [{ label: 'scan', table: 'f.y', max_computed_at: null, row_count: 1, status: 'fresh', age_hours: 4, sla_hours: 36 }],
+      extra_tables: [],
+      hypotheses: { counts: {}, total_active: 0, total: 0 },
+      canonical_pnl: { insufficient_pct: null },
+    } as unknown as SignalHealthResponse
+    expect(nightlyStanding(health, false, line).lamp).toBe('yellow')
+    expect(nightlyStanding(health, false, watchlistDataLine(pass, false)).lamp).toBe('green')
+  })
+
+  it('tells silence from a pass, and says nothing before the plugin answers', () => {
+    expect(watchlistDataLine(undefined, true)?.text).toContain('did not answer')
+    expect(watchlistDataLine(undefined, false)).toBeNull()
   })
 })

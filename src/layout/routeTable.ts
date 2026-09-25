@@ -97,7 +97,6 @@ import {
   REVIEW,
   RISK,
   SYSTEM,
-  SYSTEM_DATA,
   TRADE_DESK,
 } from './routeCrumbs'
 
@@ -433,40 +432,12 @@ export const ROUTES: readonly RouteEntry[] = [
   },
 
   // ── System ─────────────────────────────────────────────────────────────
-  // Design Rev 2026-09-15.13 collapsed these nine into `/system/status` plus
-  // `/settings` (the Owner's OLTP/OLAP/Ops ruling): this console answers the
-  // trader's three questions — can I trade, can I see, did the data land —
-  // while diagnosis and operation belong to the Ops Console the sidebar footer
-  // already links. The pages stay until that split is built here; each says
-  // where the design sends it, so none of them sits in "to ask" without an
-  // answer.
-  {
-    path: '/system/coverage',
-    label: 'Coverage',
-    crumbs: SYSTEM_DATA,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/coverage'],
-    },
-  },
-  {
-    path: '/system/feed',
-    label: 'Feed',
-    crumbs: SYSTEM_DATA,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/feed'],
-    },
-  },
-  {
-    path: '/system/data-readiness',
-    label: 'Data Readiness',
-    crumbs: SYSTEM_DATA,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/data-readiness'],
-    },
-  },
+  // Design Rev 2026-09-15.13 collapsed nine `/system/*` pages into
+  // `/system/status` plus `/settings` (the Owner's OLTP/OLAP/Ops ruling): this
+  // console answers the trader's three questions — can I trade, can I see, did
+  // the data land — while diagnosis and operation belong to the Ops Console.
+  // Carried out 2026-09-25: the nine forward (redirectRoutes.ts, with where
+  // each capability went).
   {
     path: '/settings',
     label: 'Settings',

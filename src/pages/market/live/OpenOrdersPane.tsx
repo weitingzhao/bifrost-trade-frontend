@@ -1,5 +1,6 @@
 import { Activity, Clock } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { opsConsoleHref } from '@/lib/opsConsole'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { ANALYZE_HUB } from '@/lib/analyzeHubs'
 import { StatusLamp } from '@/components/StatusLamp'
@@ -67,7 +68,6 @@ export function OpenOrdersPane({
   openOrdersUpdatedAt,
   status,
 }: Props) {
-  const navigate = useNavigate()
   const hb = status?.account_sync_daemon?.heartbeat
   const lampTitle = `Open orders lamp: green when Account Sync Daemon is healthy and heartbeat is fresh.${
     hb?.last_ts != null ? ` Last heartbeat ${fmtSince(hb.last_ts)} ago.` : ''
@@ -95,9 +95,9 @@ export function OpenOrdersPane({
           <button
             type="button"
             className={liveIconBtnClass}
-            onClick={() => navigate('/system/feed')}
-            title="Open Subscribe page (IB Event Subscribe — account agent stream)"
-            aria-label="Open Subscribe page"
+            onClick={() => window.open(opsConsoleHref('satellite-bus'), '_blank', 'noopener,noreferrer')}
+            title="The account-agent stream, in the Ops Console · Bus Status"
+            aria-label="Open Bus Status in the Ops Console"
           >
             <Activity className="h-4 w-4" />
           </button>

@@ -19,8 +19,6 @@ export const QUERY_KEYS = {
     status: ['monitor', 'status'] as const,
     openOrders: ['monitor', 'open-orders'] as const,
     heartbeat: ['monitor', 'heartbeat'] as const,
-    subscribeExecutions: (statusTick: number | undefined) =>
-      ['monitor', 'subscribe', 'executions', statusTick] as const,
   },
   portfolio: {
     accounts: ['portfolio', 'accounts'] as const,
@@ -43,10 +41,6 @@ export const QUERY_KEYS = {
     candidateOutcome: {
       summary: ['research', 'candidate-outcome', 'summary'] as const,
       rows: ['research', 'candidate-outcome', 'rows'] as const,
-    },
-    stockDataReadiness: {
-      summary: ['research', 'stock-data-readiness', 'summary'] as const,
-      criteriaStats: ['research', 'stock-data-readiness', 'criteria-stats'] as const,
     },
     stockScreener: {
       criteriaStats: ['research', 'stock-screener', 'criteria-stats'] as const,

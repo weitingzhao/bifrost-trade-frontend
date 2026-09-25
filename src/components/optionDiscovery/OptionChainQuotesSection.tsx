@@ -161,8 +161,14 @@ export function OptionChainQuotesSection({
                 Pull now
               </Button>
               {openPolygonFeed && (
-                <Button type="button" variant="ghost" size="sm" onClick={openPolygonFeed}>
-                  Open Market Data Option
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={openPolygonFeed}
+                  title="Option coverage is in the Ops Console · Massive"
+                >
+                  Option coverage in Ops ↗
                 </Button>
               )}
             </div>

@@ -536,18 +536,11 @@ describe('the design walk, as it stands', () => {
     // nine pages, so each one asks where it goes — that is nine rows in "to
     // ask". `/research/stock-screener` used to be the tenth; the Owner's
     // 2026-09-20 ruling answered it, so the page holds the design's own path
-    // and nothing here is waiting on Design any more.
-    expect(counts.byState.staging).toBe(3)
-    expect(
-      rows
-        .filter((r) => r.state === 'staging')
-        .map((r) => r.path)
-        .sort()
-    ).toEqual([
-      '/system/coverage',
-      '/system/data-readiness',
-      '/system/feed',
-    ])
+    // and nothing here is waiting on Design any more. 0 on 2026-09-25: the
+    // Owner carried the collapse out and all nine forward (redirectRoutes.ts
+    // names where each capability went), so "to ask" is empty.
+    expect(counts.byState.staging).toBe(0)
+    expect(rows.filter((r) => r.state === 'staging').map((r) => r.path)).toEqual([])
     // Rev 2026-09-15.13: the design filled almost all of its own backlog — the
     // Risk layer, the Portfolio accounts cluster, the market and workbench data
     // pages, Copilot/Autopilot, Assignment. 82 routes, 78 with a prototype, and

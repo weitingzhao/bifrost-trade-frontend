@@ -104,9 +104,9 @@ import {
 
 Trade background job sheets were retired with **api-massive (P7)** and Wave 5. Polygon ingest is owned by the **Market Data Plugin**.
 
-### Stock Data Readiness runbook steps
+### Stock Data Readiness runbook steps — retired
 
-Unified snapshot (Step 2) and related actions use lime primary buttons (`bg-sidebar-primary`), mono success logs, and the instrument-type breakdown table in [SnapshotByTypeBreakdown.tsx](../src/pages/research/data/stockDataReadiness/SnapshotByTypeBreakdown.tsx) with tokens in [stockDataReadinessStepUi.ts](../src/pages/research/data/stockDataReadiness/stockDataReadinessStepUi.ts) (Legacy `sdp-btn-primary` / `sdp-snap-by-type-*` parity). Runbook step tabs use `runbookTabIndexClass` for Legacy `sdp-runbook-tab--{status}` index coloring; after any ingest, `refreshReadinessBoard()` awaits summary refetch so all stages update together.
+The readiness run book retired 2026-09-25 with System › Data's Coverage and Feed pages (Owner, on the 2026-09-15 ruling); readiness, gaps and backfills live in the Ops Console (Massive), and universe readiness stays on Signal Health.
 
 ### Fixed columns (expand / collapse)
 

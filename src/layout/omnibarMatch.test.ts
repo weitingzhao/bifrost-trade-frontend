@@ -18,14 +18,14 @@ describe('omnibar page search', () => {
 
   it('finds every System page under the name they all used to share', () => {
     const settings = found('settings')
-    expect(settings).toContain('/system/coverage')
+    expect(settings).toContain('/research/signal-health')
     expect(settings).toContain('/settings')
     expect(settings).toContain('/docs/tech-stack')
     expect(settings).not.toContain('/portfolio/positions')
   })
 
   it('reads a hyphen as a space, in the path as well as the name', () => {
-    expect(found('data readiness')).toContain('/system/data-readiness')
+    expect(found('signal health')).toContain('/research/signal-health')
     expect(found('option scan')).toContain('/research/scan')
   })
 

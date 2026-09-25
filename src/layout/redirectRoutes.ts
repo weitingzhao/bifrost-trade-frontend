@@ -98,7 +98,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/research/stock-data',
     label: 'Data Readiness',
     crumbs: SYSTEM_DATA,
-    redirect: '/system/data-readiness',
+    redirect: '/research/signal-health',
   },
   {
     path: '/research/option-scan',
@@ -237,15 +237,38 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/settings/coverage',
     label: 'Coverage',
     crumbs: SYSTEM_DATA,
-    redirect: '/system/coverage',
+    redirect: '/system/status',
   },
-  { path: '/settings/feed', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
+  { path: '/settings/feed', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/status' },
   {
     path: '/settings/data-readiness',
     label: 'Data Readiness',
     crumbs: SYSTEM_DATA,
-    redirect: '/system/data-readiness',
+    redirect: '/research/signal-health',
   },
+  // System › Data, three pages retired 2026-09-25 (Owner, on the 2026-09-15
+  // ruling). The fold keeps the design's four. Where each capability went
+  // (§15.2):
+  //   Coverage — the plugin's watchlist verdict → a line under System Status ·
+  //     Nightly data, linking Ops · Massive: equal. Inventory, per-symbol
+  //     option rows, table census, bar depth → Ops Massive › Coverage: equal
+  //     or stronger, except reference indices, which Ops does not show (asked
+  //     of Ops). Pull / Pull EOD → Ops Massive › Ingest (enqueue, Doctor ·
+  //     Fix all): equal, less purpose-built. Refresh Index (trade-core pulling
+  //     Polygon straight into stock_day, past the plugin) and Reset (deletes
+  //     stored bars) are dropped (Owner).
+  //   Feed — stream liveness → System Status · Market data and Ops IB Client /
+  //     Bus Status: equal. Orders, fills, positions, subscribed tickers → Live,
+  //     Orders & Fills, Positions: equal. Release ticker subscriptions (a
+  //     /control write that unsubscribes every ticker) is dropped (Owner).
+  //   Data Readiness — the SEPA run book, readiness, gap sheets, backfills →
+  //     Ops Massive › Coverage (Readiness, Financials) and Ingest; universe
+  //     readiness stays on Signal Health, where the old addresses land: equal,
+  //     backfills less purpose-built. Mark source void (plugin state) is
+  //     unplaced (Owner) — asked of Ops.
+  { path: '/system/coverage', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/status' },
+  { path: '/system/feed', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/status' },
+  { path: '/system/data-readiness', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: '/research/signal-health' },
   // IB Connection retired 2026-09-25 (Owner): its writes open in place on
   // Settings, the page the design merged it into on 2026-09-15.
   { path: '/system/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/settings' },
@@ -298,31 +321,31 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: SYSTEM_RUNTIME,
     redirect: '/system/status',
   },
-  { path: '/settings/subscribe', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
-  { path: '/settings/feed/ib', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/feed' },
+  { path: '/settings/subscribe', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/status' },
+  { path: '/settings/feed/ib', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/status' },
   {
     path: '/settings/coverage/overview',
     label: 'Coverage',
     crumbs: SYSTEM_DATA,
-    redirect: '/system/coverage?view=watchlist',
+    redirect: '/system/status',
   },
   {
     path: '/settings/coverage/overview-detail',
     label: 'Coverage',
     crumbs: SYSTEM_DATA,
-    redirect: '/system/coverage?view=watchlist',
+    redirect: '/system/status',
   },
   {
     path: '/settings/coverage/option',
     label: 'Coverage',
     crumbs: SYSTEM_DATA,
-    redirect: '/system/coverage?view=option',
+    redirect: '/system/status',
   },
   {
     path: '/settings/coverage/stock-ib',
     label: 'Coverage',
     crumbs: SYSTEM_DATA,
-    redirect: '/system/coverage?view=stock',
+    redirect: '/system/status',
   },
   {
     path: '/settings/daemon-app',

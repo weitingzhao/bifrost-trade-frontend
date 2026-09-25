@@ -25,6 +25,7 @@
 import type { StatusResponse } from '@/types/monitor'
 import type { QuoteItem } from '@/types/market'
 import type { SignalHealthResponse } from '@/api/research/similarRegime'
+import type { CoverageQuality } from '@/api/marketDataCoverage'
 import { computeMarketStreamsLamp, countFreshQuotes } from '@/utils/livePageLamps'
 import { overallRule } from '@/pages/research/data/signalHealthModel'
 
@@ -34,6 +35,8 @@ export interface DomainDetail {
   /** Grey is a caveat that does not stop anything; amber is one that shapes a reading. */
   tone: 'warn' | 'note'
   text: string
+  /** The Ops Console view that owns this line, when it is not the row's own. */
+  ops?: { view: string; label: string }
 }
 
 export interface DomainStanding {
@@ -173,10 +176,53 @@ export function marketStanding(
   }
 }
 
-/** Did the data land — Signal Health's own rule, not a second opinion of it. */
+const MASSIVE = { view: 'market-data-manage', label: 'Massive' }
+
+/**
+ * The market-data plugin's own verdict over the watchlist — did last night's
+ * raw data land for the names you hold and watch.
+ *
+ * It is the one conclusion the retired Coverage page carried that a trader
+ * needs (Owner 2026-09-25); the rest of that page was ingest diagnosis and
+ * lives in Ops · Massive. Read as the plugin gives it: `summary` PASS / FAIL
+ * over its own checks. Nothing here re-judges a check.
+ */
+export function watchlistDataLine(
+  quality: CoverageQuality | undefined,
+  isError: boolean,
+): DomainDetail | null {
+  if (isError) {
+    return { tone: 'note', text: 'The market-data plugin’s watchlist check did not answer — silence, not a pass.', ops: MASSIVE }
+  }
+  if (!quality?.summary) return null
+  const checks = quality.checks ?? []
+  const failed = checks.filter((c) => !c.ok)
+  const names = quality.watchlist_source_count
+  const over = names != null ? ` over ${names} watchlist names` : ''
+  if (quality.summary === 'PASS' && failed.length === 0) {
+    return {
+      tone: 'note',
+      text: `Watchlist market data landed: all ${checks.length} of the plugin’s checks pass${over} (EOD bars, option snapshots, open interest, freshness).`,
+      ops: MASSIVE,
+    }
+  }
+  const which = failed.map((c) => String(c.detail ?? c.check)).join('; ')
+  return {
+    tone: 'warn',
+    text: `Watchlist market data did not fully land: ${failed.length || 'the'} plugin check${failed.length === 1 ? '' : 's'} fail${over}${which ? ` — ${which}` : ''}.`,
+    ops: MASSIVE,
+  }
+}
+
+/**
+ * Did the data land — Signal Health's own rule for the research readings, and
+ * the market-data plugin's own verdict for the raw data under them. Neither is
+ * a second opinion; a failing plugin check can only add a caveat (amber).
+ */
 export function nightlyStanding(
   health: SignalHealthResponse | undefined,
   isError: boolean,
+  watchlist: DomainDetail | null = null,
 ): DomainStanding {
   const base = {
     key: 'nightly' as const,
@@ -184,32 +230,37 @@ export function nightlyStanding(
     to: '/research/signal-health',
     toLabel: 'Signal Health →',
   }
+  const extra = watchlist ? [watchlist] : []
   if (isError) {
     return {
       ...base,
       lamp: 'gray',
       state: 'not probed',
       why: 'Signal Health did not answer. This is silence about last night, not an all-clear.',
-      detail: [],
+      detail: extra,
     }
   }
   if (!health) {
-    return { ...base, lamp: 'gray', state: 'reading…', why: 'Asking Signal Health what landed.', detail: [] }
+    return { ...base, lamp: 'gray', state: 'reading…', why: 'Asking Signal Health what landed.', detail: extra }
   }
   const rule = overallRule(health)
   const late = (health.freshness ?? []).filter((f) => f.status !== 'fresh' && f.status !== 'ok')
+  const rawCaveat = watchlist?.tone === 'warn'
   return {
     ...base,
-    lamp: rule.tone === 'ok' ? 'green' : 'yellow',
+    lamp: rule.tone === 'ok' && !rawCaveat ? 'green' : 'yellow',
     state: late.length === 0 ? 'ready' : `ready · ${late.length} ${late.length === 1 ? 'lens' : 'lenses'} old`,
     why:
       late.length === 0
         ? `Last night landed clean — ${rule.text}.`
         : `Last night landed, with an exception: ${rule.text}.`,
-    detail: late.map((f) => ({
-      tone: 'warn' as const,
-      text: `${f.label} is ${(f.age_hours ?? 0).toFixed(1)}h old — readings grounded in it carry the amber asof (§17).`,
-    })),
+    detail: [
+      ...late.map((f) => ({
+        tone: 'warn' as const,
+        text: `${f.label} is ${(f.age_hours ?? 0).toFixed(1)}h old — readings grounded in it carry the amber asof (§17).`,
+      })),
+      ...extra,
+    ],
   }
 }
 

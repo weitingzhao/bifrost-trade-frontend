@@ -87,7 +87,6 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/research/watchlist', label: 'Watchlist', domain: 'research', pathGlobs: ['pages/research/data/StockWatchlistPage.tsx', 'pages/research/data/watchlist/**'] },
   { route: '/research/screener', label: 'Stock screen', domain: 'research', pathGlobs: ['pages/research/data/StockScreenerPage.tsx', 'pages/research/data/stockScreener/**'] },
   { route: '/research/contract-screener', label: 'Option screen', domain: 'research', pathGlobs: ['pages/research/data/ScreenerPage.tsx', 'pages/research/data/optionScreener/**'] },
-  { route: '/system/data-readiness', label: 'Data Readiness', domain: 'system', pathGlobs: ['pages/research/data/StockDataPage.tsx', 'pages/research/data/stockDataReadiness/**'] },
   { route: '/research/discovery', label: 'Option Discovery', domain: 'research', pathGlobs: ['pages/research/analyze/DiscoveryPage.tsx'] },
   { route: '/research/vol-regime', label: 'Vol Regime', domain: 'research', pathGlobs: ['pages/research/analyze/volRegime/**', 'pages/research/analyze/hub/**', 'utils/ivRadar/**', 'hooks/useIvRadarData.ts', 'hooks/useHoldingSymbols.ts', 'api/research/ivRadar.ts'] },
   { route: '/research/dealer-levels', label: 'Dealer Levels', domain: 'research', pathGlobs: ['pages/research/analyze/dealerLevels/**'] },
@@ -100,8 +99,6 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   // follow their code: the chain and its sheets, and the shared instance sheet.
   { route: '/trade/rules', label: 'Rules', domain: 'strategy', pathGlobs: ['pages/trade/rules/**', 'components/strategy/**', 'components/strategy/templates/**'] },
 
-  { route: '/system/coverage', label: 'Coverage', domain: 'system', pathGlobs: ['pages/system/CoveragePage.tsx', 'pages/system/coverage/**'] },
-  { route: '/system/feed', label: 'Feed', domain: 'system', pathGlobs: ['pages/system/FeedPage.tsx', 'pages/system/subscribe/**'] },
 
   { route: '/docs/ui-design-system', label: 'UI Design System', domain: 'system', pathGlobs: ['pages/docs/UiDesignSystemPage.tsx', 'pages/docs/uiDesignSystem/**'] },
   { route: '/docs/tech-stack', label: 'Tech Stack', domain: 'system', pathGlobs: ['pages/docs/TechStackPage.tsx'] },

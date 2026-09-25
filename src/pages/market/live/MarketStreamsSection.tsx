@@ -1,5 +1,5 @@
 import { Activity, RefreshCw } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { opsConsoleHref } from '@/lib/opsConsole'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
@@ -101,7 +101,6 @@ export function MarketStreamsSection({
   summaryDailyPct,
   showSummaryBar,
 }: Props) {
-  const navigate = useNavigate()
 
   const infoText = marketStreamsOk
     ? `Live quotes: IB ingestor writes Redis; Market API SSE + polling. STK symbols: Watchlist ∪ Host & Secondary positions; Watchlist category "Watching" STK are shown in Watching Stocks. ${watchlistSymbolCount} stream symbol(s). Account filter controls merged Qty/Cost/Since $ columns. Opt unit scales option Cost/Last (Contract = ×100, Share = $/sh). Since $ for options is always (mid−avg)×contracts×100. Refresh reloads quotes and daily benchmarks.`
@@ -148,9 +147,9 @@ export function MarketStreamsSection({
           <button
             type="button"
             className={liveIconBtnClass}
-            onClick={() => navigate('/system/feed')}
-            title="Open Subscribe page"
-            aria-label="Open Subscribe page"
+            onClick={() => window.open(opsConsoleHref('ib-gateway-manage'), '_blank', 'noopener,noreferrer')}
+            title="The streams' source, in the Ops Console · IB Client"
+            aria-label="Open IB Client in the Ops Console"
           >
             <Activity className="h-4 w-4" />
           </button>

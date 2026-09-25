@@ -56,17 +56,6 @@ export async function postFlatten(): Promise<{ ok?: boolean; error?: string }> {
   return res.json()
 }
 
-/** Release: daemon unsubscribes all real-time ticker subscriptions. */
-export async function postReleaseTickerSubscriptions(): Promise<{
-  ok: boolean
-  error?: string
-  message?: string
-}> {
-  const res = await fetch(monitorUrl('/control/release_ticker_subscriptions'), { method: 'POST' })
-  const j = await res.json().catch(() => ({}))
-  return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }
-}
-
 // ─── Configuration API ────────────────────────────────────────────────────────
 
 export async function postIbConfig(accounts: {

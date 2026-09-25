@@ -88,9 +88,7 @@ describe('route registry', () => {
     expect(symbol).toContain('/research/dossier')
     expect(symbol).toContain('/research/iv-radar')
     // Query and hash do not split one destination into several.
-    expect(aliasesFor('/system/coverage').map((a) => a.path)).toContain(
-      '/settings/coverage/option',
-    )
+    expect(aliasesFor('/trade/rules').map((a) => a.path)).toContain('/strategy/instances')
     expect(aliasesFor('/portfolio/backing').map((a) => a.path)).toContain(
       '/portfolio/model-analysis',
     )

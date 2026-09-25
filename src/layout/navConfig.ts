@@ -20,7 +20,6 @@ import {
   Palette,
   PieChart,
   Radar,
-  Radio,
   Settings,
   ShieldAlert,
   Split,
@@ -251,10 +250,7 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
       // the machinery is filling up — System's question. Data Readiness was
       // already here and had a second row under Research pointing at this same
       // `/system/*` path; that duplicate is gone with the move.
-      fold('system:data', 'Data', '/system/coverage', Database, [
-        route('Coverage', '/system/coverage', BarChart2),
-        route('Feed', '/system/feed', Radio),
-        route('Data Readiness', '/system/data-readiness', Database),
+      fold('system:data', 'Data', '/research/signal-health', Database, [
         route('Signal Health', '/research/signal-health', Activity),
         route('Lens Coverage', '/research/lens-coverage', Radar),
         // The design's two `/research/lab/*` System pages sit after them

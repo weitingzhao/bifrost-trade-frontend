@@ -422,20 +422,6 @@ export const router = createBrowserRouter([
         path: 'system/status',
         lazy: lazyPage(() => import('@/pages/system/status/SystemStatusPage')),
       },
-      {
-        path: 'system/coverage',
-        lazy: lazyPage(() => import('@/pages/system/CoveragePage')),
-      },
-      {
-        path: 'system/feed',
-        lazy: lazyPage(() => import('@/pages/system/FeedPage')),
-      },
-      // Data Readiness is a Research page. System lists it because "is the
-      // data there" gets asked from here too; Research keeps its own entry.
-      {
-        path: 'system/data-readiness',
-        lazy: lazyPage(() => import('@/pages/research/data/StockDataPage')),
-      },
 
       {
         path: 'docs/design-adoption',

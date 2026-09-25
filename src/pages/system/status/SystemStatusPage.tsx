@@ -44,10 +44,12 @@ import { OPS_CONSOLE_URL, opsConsoleHref } from '@/lib/opsConsole'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuoteStream } from '@/hooks/useQuoteStream'
 import { fetchSignalHealth } from '@/api/research/similarRegime'
+import { useCoverageQuality } from '@/hooks/useMarketDataCoverage'
 import {
   marketStanding,
   nightlyStanding,
   tradingStanding,
+  watchlistDataLine,
   worstLamp,
   type DomainStanding,
 } from './systemStanding'
@@ -113,6 +115,20 @@ function DomainPanel({ d }: { d: DomainStanding }) {
               />
               <span className="text-dense-caption leading-relaxed text-muted-foreground">
                 {x.text}
+                {x.ops ? (
+                  <>
+                    {' '}
+                    <a
+                      href={opsConsoleHref(x.ops.view)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="whitespace-nowrap hover:underline"
+                      title={`Opens ${x.ops.label} in the Ops Console`}
+                    >
+                      {x.ops.label} in Ops ↗
+                    </a>
+                  </>
+                ) : null}
               </span>
             </div>
           ))}
@@ -131,6 +147,9 @@ export default function SystemStatusPage() {
   })
   // The streams the monitor says are subscribed — the same list Live asks for,
   // without this page opening a second subscription of its own.
+  // The plugin's own verdict over the watchlist: the one trader-facing line
+  // the retired Coverage page carried (Owner 2026-09-25).
+  const quality = useCoverageQuality()
   const streamKeys = status?.live_ui?.subscribed_tickers ?? []
   const { quotesMap } = useQuoteStream(streamKeys, [])
   // Read once: the freshness window must not move under the reader mid-render.
@@ -139,7 +158,7 @@ export default function SystemStatusPage() {
   const domains = [
     tradingStanding(status),
     marketStanding(status, quotesMap, streamKeys, nowSec),
-    nightlyStanding(health.data, health.isError),
+    nightlyStanding(health.data, health.isError, watchlistDataLine(quality.data, quality.isError)),
   ]
 
   return (

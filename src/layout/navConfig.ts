@@ -296,7 +296,7 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
 ]
 
 /** The way in, from the sidebar footer. */
-export const SYSTEM_ITEM: ShellNavItem = route('System', '/system/topology', Settings)
+export const SYSTEM_ITEM: ShellNavItem = route('System', '/system/status', Settings)
 
 export { Settings as SYSTEM_ICON }
 

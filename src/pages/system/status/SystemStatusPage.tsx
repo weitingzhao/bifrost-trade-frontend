@@ -40,6 +40,7 @@ import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { cn } from '@/lib/utils'
+import { OPS_CONSOLE_URL, opsConsoleHref } from '@/lib/opsConsole'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuoteStream } from '@/hooks/useQuoteStream'
 import { fetchSignalHealth } from '@/api/research/similarRegime'
@@ -57,6 +58,17 @@ const STATE_INK: Record<string, string> = {
   red: 'text-danger',
   gray: 'text-muted-foreground',
 }
+/**
+ * Where each question's diagnosis lives in the Ops Console: the daemon and the
+ * IB link on Bus Status, the quote streams' source on IB Client, and the
+ * nightly pipeline on Research Engine.
+ */
+const OPS_VIEW: Record<DomainStanding['key'], { view: string; label: string }> = {
+  trading: { view: 'satellite-bus', label: 'Bus Status' },
+  market: { view: 'ib-gateway-manage', label: 'IB Client' },
+  nightly: { view: 'research-engine', label: 'Research Engine' },
+}
+
 const EDGE: Record<string, string> = {
   green: 'border-border',
   yellow: 'border-warning/45',
@@ -78,12 +90,15 @@ function DomainPanel({ d }: { d: DomainStanding }) {
           <Link to={d.to} className="whitespace-nowrap text-dense-caption hover:underline">
             {d.toLabel}
           </Link>
-          <span
-            className="whitespace-nowrap text-dense-caption text-muted-foreground"
-            title="Diagnosis and repair are the Ops Console's, which is a separate app on the control plane."
+          <a
+            href={opsConsoleHref(OPS_VIEW[d.key].view)}
+            target="_blank"
+            rel="noreferrer"
+            className="whitespace-nowrap text-dense-caption text-muted-foreground hover:underline"
+            title={`Diagnosis and repair live in the Ops Console — opens ${OPS_VIEW[d.key].label} in a new tab.`}
           >
             in Ops ↗
-          </span>
+          </a>
         </span>
       </div>
       {d.detail.length > 0 ? (
@@ -133,13 +148,16 @@ export default function SystemStatusPage() {
         title="System Status"
         description="The trader's three questions — can I trade, can I see, did the data land. Diagnosis and repair live in Ops."
         actions={
-          <span
-            className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground"
-            title={`The worst of the three is ${worstLamp(domains)}.`}
+          <a
+            href={OPS_CONSOLE_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground hover:underline"
+            title={`Opens the Ops Console in a new tab. The worst of the three here is ${worstLamp(domains)}.`}
           >
             <StatusLamp lamp={worstLamp(domains)} variant="dot" className="h-2 w-2" />
-            <span>Bifröst Ops ↗</span>
-          </span>
+            <span>Open Bifröst Ops ↗</span>
+          </a>
         }
       />
 
@@ -149,13 +167,10 @@ export default function SystemStatusPage() {
 
       <p className="text-dense-caption leading-relaxed text-muted-foreground">
         Owner ruling 2026-09-15: System collapses to this page and{' '}
-        <span
-          className="text-foreground/80"
-          title="The design's Settings page is not built yet — /settings redirects to the old Coverage page, so linking it here would send you somewhere the ruling has already retired."
-        >
+        <Link to="/settings" className="text-foreground/80 hover:underline">
           Settings
-        </span>
-        , which is not built yet. Green means trade; amber means trade with the stated caveat; red means stop — anything
+        </Link>
+        . Green means trade; amber means trade with the stated caveat; red means stop — anything
         needing a graph, a log or a rerun button is the Ops Console&rsquo;s job. Each panel sends
         you to the page that owns its detail, and every reading on it is that page&rsquo;s own, not
         a second opinion of it.

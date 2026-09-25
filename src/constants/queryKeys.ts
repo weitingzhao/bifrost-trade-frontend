@@ -19,8 +19,6 @@ export const QUERY_KEYS = {
     status: ['monitor', 'status'] as const,
     openOrders: ['monitor', 'open-orders'] as const,
     heartbeat: ['monitor', 'heartbeat'] as const,
-    operations: ['monitor', 'operations'] as const,
-    riskSummary: ['monitor', 'risk-summary'] as const,
     subscribeExecutions: (statusTick: number | undefined) =>
       ['monitor', 'subscribe', 'executions', statusTick] as const,
   },
@@ -144,13 +142,6 @@ export const QUERY_KEYS = {
   },
   settings: {
     apiHealth: ['settings', 'api-health'] as const,
-    apiHealthMarketData: ['settings', 'api-health', 'market-data-status'] as const,
-  },
-  ops: {
-    // Socket / market ingest services
-    ingestServices: ['ops', 'ingest-services'] as const,
-    opsHealth: ['ops', 'ops-health'] as const,
-    capabilities: ['ops', 'capabilities'] as const,
   },
   plugin: {
     flexConfigSummary: ['plugin', 'flex-query', 'config-summary'] as const,

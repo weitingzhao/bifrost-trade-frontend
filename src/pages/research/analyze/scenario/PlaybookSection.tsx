@@ -643,11 +643,9 @@ export function PlaybookSection() {
           <CardContent className="px-4 py-6">
             <EmptyHint
               title="No intraday data"
-              hint={`No terrain intraday rows for ${symbol}. Check that the terrain intraday CronJob has run.`}
+              hint={`No terrain intraday rows for ${symbol}. The intraday terrain job runs on Research's schedule; its runs, and a rerun, are in the Ops Console.`}
               to="/research/scenario?view=playbook"
-              triggerId="terrain-intraday"
-              triggerLabel="Trigger terrain intraday"
-              invalidateKeys={[['terrain-intraday', symbol, apiDate ?? '']]}
+              ops={{ view: 'research-engine', label: 'Research Engine' }}
             />
           </CardContent>
         </Card>

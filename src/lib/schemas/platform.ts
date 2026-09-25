@@ -37,24 +37,6 @@ export const PluginStatusSchema = z.object({
   workers: z.array(WorkerSchema).optional(),
 }).passthrough()
 
-/**
- * Triggering a Research CronJob answers with the Job it created. The UI shows
- * `job_name` back to the operator as the receipt, so the field has to be there.
- */
-export const ResearchCronJobTriggerResponseSchema = z
-  .object({
-    ok: z.boolean(),
-    job_name: z.string(),
-    cronjob: z.string(),
-    namespace: z.string(),
-    started_at: z.string(),
-    trigger_id: z.string(),
-  })
-  .passthrough()
-
-/** Ops identity and grants — what the console is allowed to offer this seat. */
-export const OpsCapabilitiesSchema = z.object({ ok: z.boolean() }).passthrough()
-
 export const SystemMessagesResponseSchema = z
   .object({ messages: z.array(z.unknown()) })
   .passthrough()

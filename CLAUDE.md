@@ -110,7 +110,8 @@ Home · Trade · Portfolio · Risk · Review · Research（Market 是 Research �
 （Strategy 七页 2026-09-18 已溶解进 Trade › Rules，旧地址都是 redirect。）
 
 **System 不进业务组**：`/system/*` 与 `/docs/*` 走侧栏脚的 `System` 入口（落在 `/system/status`），进入后整棵树切换为
-Status · Settings · Data · Agents · Reference，脚部变 `Back to Trade`（`isSystemRoute`）。
+Status · Settings · Data · Alignment · Agents · Reference，脚部变 `Back to Trade`（`isSystemRoute`）。
+Alignment（2026-09-25）放「目标 vs 现状」的三件对齐工具：Design Adoption（UI ↔ 设计包）、Calibration（Research ↔ 蓝图，实时读两份文档）、Blueprint。
 Runtime 与 Configuration 已于 2026-09-25 退役（Owner）：诊断与运维归 Ops Console，IB 配置并入 Settings；
 System 只回答交易者的三个问题（能否交易 / 能否看到 / 数据是否落地）。
 `/settings/*`、`/operations/*` 及退役页的旧地址全部登记为 redirect，去向表写在 `src/layout/redirectRoutes.ts`。

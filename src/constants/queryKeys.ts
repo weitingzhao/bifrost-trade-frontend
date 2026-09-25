@@ -77,6 +77,8 @@ export const QUERY_KEYS = {
       extremes: (bucket: 'high' | 'low', limit: number) =>
         ['research', 'vrp', 'extremes', bucket, limit] as const,
       rvCone: (symbol: string, years: number) => ['research', 'vrp', 'rv-cone', symbol, years] as const,
+      earningsMoves: (symbol: string, limit: number) =>
+        ['research', 'vrp', 'earnings-moves', symbol, limit] as const,
     },
     volSurface: {
       fit: (symbol: string, tradeDate: string) =>

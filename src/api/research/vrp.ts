@@ -6,6 +6,7 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import {
+  EarningsMovesSchema,
   ResearchEnvelopeSchema,
   RvConeSchema,
 } from '@/lib/schemas/research'
@@ -164,4 +165,50 @@ export async function fetchRvCone(symbol: string, years = 2): Promise<RvCone | n
   const res = await fetch(`${researchEngineUrl('/analytics/vol/rv-cone')}?${q.toString()}`)
   const env = await jsonOrThrow<unknown>(res)
   return validateRvCone(env.data) as RvCone
+}
+
+/** One print. Moves are fractions of the close; ``crush_pts`` is in vol points. */
+export interface EarningsPrint {
+  /** The 8-K's filing date — a date, not a time: before the open or after the close. */
+  filed: string
+  /** Last session before the filing and first session after it: the window read. */
+  before: string | null
+  after: string | null
+  /** The larger single-session move in the window, unsigned; the sign is ``direction``. */
+  actual: number | null
+  direction: 'up' | 'down' | 'flat' | null
+  /** The ATM straddle for ``expiry`` as of ``before``, over that close. */
+  priced: number | null
+  ratio: number | null
+  crush_pts: number | null
+  expiry: string | null
+  /** The first expiry both sessions price — often not the front weekly. */
+  crush_expiry: string | null
+  /** Why a row could not be priced or measured. */
+  missing: string | null
+}
+
+export interface EarningsMoves {
+  symbol: string
+  /** Days with any 8-K on file — zero means the name is outside what the plugin collects. */
+  filing_days: number
+  /** Newest first. */
+  prints: EarningsPrint[]
+  /** Prints holding both sides. */
+  n: number
+  median_ratio: number | null
+  /** Prints where the move came in under what the straddle charged. */
+  rich: number
+}
+
+const validateEarningsMoves = withValidation<EarningsMoves>(EarningsMovesSchema, 'research/analytics/vol/earnings-moves')
+
+/** What the straddle priced before each of the name's last ``limit`` prints, and what came. */
+export async function fetchEarningsMoves(symbol: string, limit = 8): Promise<EarningsMoves | null> {
+  const sym = (symbol || '').trim().toUpperCase()
+  if (!sym) return null
+  const q = new URLSearchParams({ symbol: sym, limit: String(limit) })
+  const res = await fetch(`${researchEngineUrl('/analytics/vol/earnings-moves')}?${q.toString()}`)
+  const env = await jsonOrThrow<unknown>(res)
+  return validateEarningsMoves(env.data) as EarningsMoves
 }

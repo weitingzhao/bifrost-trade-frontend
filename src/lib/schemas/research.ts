@@ -641,6 +641,34 @@ export const RiskCorrelationSchema = z
   })
   .passthrough()
 
+/** GET /analytics/vol/earnings-moves — the straddle before each 8-K Item 2.02 print against the move (research 0.122.0). */
+export const EarningsMovesSchema = z
+  .object({
+    symbol: z.string(),
+    filing_days: z.number(),
+    prints: z.array(
+      z
+        .object({
+          filed: z.string(),
+          before: z.string().nullable(),
+          after: z.string().nullable(),
+          actual: z.number().nullable(),
+          direction: z.enum(['up', 'down', 'flat']).nullable(),
+          priced: z.number().nullable(),
+          ratio: z.number().nullable(),
+          crush_pts: z.number().nullable(),
+          expiry: z.string().nullable(),
+          crush_expiry: z.string().nullable(),
+          missing: z.string().nullable(),
+        })
+        .passthrough(),
+    ),
+    n: z.number(),
+    median_ratio: z.number().nullable(),
+    rich: z.number(),
+  })
+  .passthrough()
+
 /** GET /analytics/vol/rv-cone — realised-vol percentiles per tenor plus today's reading (R9 F4). */
 export const RvConeSchema = z
   .object({

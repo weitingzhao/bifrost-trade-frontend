@@ -15,7 +15,8 @@
  * has (RV60, fixed width). History draws the design's "IV vs realized": RV20,
  * a band for where IV has sat, and the width of its panel — so those are
  * props with the old behaviour as their defaults, rather than a second chart
- * of the same two lines (§14.2).
+ * of the same two lines (§14.2). History also dashes each earnings print
+ * (`marks`), as the design does.
  */
 import { fmtPctFromFraction } from '@/lib/format'
 import { useMemo, useState } from 'react'
@@ -40,6 +41,17 @@ interface VrpTimeSeriesChartProps {
   band?: { lo: number; hi: number; label: string } | null
   /** Scale to the container instead of a fixed pixel width. */
   fluid?: boolean
+  /**
+   * Dashed verticals at dates — History's earnings prints. Each sits on the
+   * first row on or after its date; a date outside the rows is left off.
+   */
+  marks?: ChartMark[]
+}
+
+export interface ChartMark {
+  date: string
+  label: string
+  title?: string
 }
 
 function sparseLabelIndices(count: number, target = 6): Set<number> {
@@ -60,6 +72,7 @@ export function VrpTimeSeriesChart({
   realized = 'rv_60d',
   band = null,
   fluid = false,
+  marks = [],
 }: VrpTimeSeriesChartProps) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
 
@@ -126,6 +139,12 @@ export function VrpTimeSeriesChart({
   }
 
   const labelIndices = sparseLabelIndices(chart.n)
+  const first = rows[0]?.trade_date ?? ''
+  const last = rows[rows.length - 1]?.trade_date ?? ''
+  const drawnMarks = marks
+    .filter((m) => m.date >= first && m.date <= last)
+    .map((m) => ({ ...m, i: rows.findIndex((r) => (r.trade_date ?? '') >= m.date) }))
+    .filter((m) => m.i >= 0)
   const tooltipRow = hoverIdx != null ? rows[hoverIdx] : null
   return (
     <div className={cn('relative', className)}>
@@ -170,6 +189,29 @@ export function VrpTimeSeriesChart({
           className="stroke-primary"
           strokeWidth={2}
         />
+
+        {drawnMarks.map((m) => (
+          <g key={`mark-${m.date}`}>
+            <line
+              x1={chart.xScale(m.i)}
+              x2={chart.xScale(m.i)}
+              y1={chart.pad.top}
+              y2={chart.pad.top + chart.chartH}
+              className="stroke-muted-foreground/50"
+              strokeWidth={1}
+              strokeDasharray="2 3"
+            />
+            <text
+              x={chart.xScale(m.i)}
+              y={chart.pad.top - 5}
+              textAnchor="middle"
+              className="fill-muted-foreground text-dense-micro font-mono"
+            >
+              {m.title ? <title>{m.title}</title> : null}
+              {m.label}
+            </text>
+          </g>
+        ))}
 
         {rows.map((r, i) => (
           <rect
@@ -225,6 +267,12 @@ export function VrpTimeSeriesChart({
           <span className="flex items-center gap-1">
             <span className="inline-block h-2.5 w-4 rounded-sm bg-primary/10" />
             <span className="text-muted-foreground">{band.label}</span>
+          </span>
+        ) : null}
+        {drawnMarks.length > 0 ? (
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-3 w-0 border-l border-dashed border-muted-foreground" />
+            <span className="text-muted-foreground">Earnings (E)</span>
           </span>
         ) : null}
       </div>

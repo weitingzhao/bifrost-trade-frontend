@@ -3,10 +3,12 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import {
+  fetchEarningsMoves,
   fetchRvCone,
   fetchVrpExtremes,
   fetchVrpHistory,
   fetchVrpLatest,
+  type EarningsMoves,
   type RvCone,
   type VrpExtremesResponse,
   type VrpRow,
@@ -47,5 +49,15 @@ export function useRvCone(symbol: string, years = 2) {
     queryFn: () => fetchRvCone(symbol, years),
     enabled: Boolean(symbol),
     staleTime: DEFAULT_STALE_MS,
+  })
+}
+
+export function useEarningsMoves(symbol: string, limit = 8) {
+  return useQuery<EarningsMoves | null>({
+    queryKey: QUERY_KEYS.research.vrp.earningsMoves(symbol, limit),
+    queryFn: () => fetchEarningsMoves(symbol, limit),
+    enabled: Boolean(symbol),
+    // Prints land a few times a year; the rows move only when a close or an IV revises.
+    staleTime: 30 * 60_000,
   })
 }

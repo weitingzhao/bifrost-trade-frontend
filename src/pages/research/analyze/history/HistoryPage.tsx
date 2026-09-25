@@ -5,22 +5,18 @@
  * in the prototype's order: IV vs realized across the page, then the vol
  * cone, earnings moves and correlation over time side by side.
  *
- * Two of the four panels are built and two are owed, and the owed two keep
- * their places and say what they wait on — measured, not assumed:
- *
- *   Earnings moves   print dates. The engine holds none; the SEC 8-K text the
- *                    plugin collects from 0.37.0 names every Item 2.02 filing
- *                    (eight or nine quarters a name, sampled), and that
- *                    release is written but not deployed. The priced side is
- *                    measurable today: option daily bars reach back two years.
- *   Correlation      a series. `/analytics/risk/correlation` answers today's
- *   over time        matrix only; the rolling line needs an as-of on that route.
+ * Earnings moves (2026-09-25) read `/analytics/vol/earnings-moves`: the
+ * name's 8-K Item 2.02 filings are the print dates, the straddle the session
+ * before is what was priced, and the same prints dash the IV chart. A name
+ * outside the plugin's 8-K list says so in the panel instead of drawing nothing.
  */
 import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { PageFaceSwitch, PageHeader, PageShell, SectionPanel } from '@/components/layout'
 import { HistoryCorrelation } from './HistoryCorrelation'
+import { HistoryEarnings } from './HistoryEarnings'
+import { printMarks } from './earningsText'
 import { SegmentControl } from '@/components/data-display'
 import { VrpTimeSeriesChart } from '@/components/charts/VrpTimeSeriesChart'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
@@ -29,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { fetchIvVolatilityCone } from '@/api/research/optionDiscovery'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useEarningsDates } from '@/hooks/useNarrative'
-import { useRvCone, useVrpHistory } from '@/hooks/useVrpData'
+import { useEarningsMoves, useRvCone, useVrpHistory } from '@/hooks/useVrpData'
 import { ordinal } from '@/lib/analyzeDepth'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
@@ -58,6 +54,8 @@ const PATH = '/research/history'
 /** The vrp store answers 251 sessions today; asking for the design's 2y keeps the page honest the day it holds more. */
 const FETCH_DAYS = 504
 const CONE_YEARS = 2
+/** The design's count; eight prints is about the 2y window. */
+const PRINTS = 8
 
 const WINDOW_OPTIONS = HISTORY_WINDOWS.map((w) => ({ value: w, label: w }))
 
@@ -135,6 +133,8 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
   // fault; until they arrive the rule judges without them, which only withholds more.
   const market = useVrpHistory(sym === MARKET_IV_SYMBOL ? '' : MARKET_IV_SYMBOL, FETCH_DAYS)
   const earnings = useEarningsDates(sym)
+  const moves = useEarningsMoves(sym, PRINTS)
+  const marks = useMemo(() => printMarks(moves.data), [moves.data])
   const ctx = useMemo<IvEventContext>(
     () => ({ market: sym === MARKET_IV_SYMBOL ? undefined : market.data, earnings: earnings.data?.dates }),
     [sym, market.data, earnings.data]
@@ -209,6 +209,7 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
                 height={230}
                 fluid
                 band={reading.band ? { ...reading.band, label: 'IV30 20th–80th pct of window' } : null}
+                marks={marks}
               />
               <p className="flex flex-wrap gap-x-4 gap-y-1 text-dense-meta text-muted-foreground">
                 <span>
@@ -218,9 +219,6 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
                       ? 'IV over RV share withheld — see the suspect readings above.'
                       : 'No day in this window holds both IV30 and RV20.'}
                 </span>
-                {/* The prototype dashes each earnings print. There are no
-                    print dates on this side yet — see the Earnings panel. */}
-                <span className="text-muted-foreground/70">earnings marks owed — no print dates yet</span>
               </p>
             </>
           )}
@@ -260,22 +258,18 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
           </div>
         </SectionPanel>
 
-        {/* ── Earnings moves (owed) ────────────────────────────────── */}
-        <SectionPanel cap="Earnings moves" title="actual vs what was priced" note="last 8 prints" tone="warning">
-          <div className="space-y-2 px-3 py-3 text-dense-meta leading-relaxed text-muted-foreground">
-            <p className="font-semibold text-foreground">Owed — no print dates on this side yet.</p>
-            <p>
-              Each row needs the date of the print, the move the straddle priced the night before, and the move that
-              came. Two of the three are measurable today: option daily bars reach back two years, so the at-the-money
-              straddle before each print can be read, and the actual move comes from daily closes.
-            </p>
-            <p>
-              The dates come from the company&apos;s own 8-K: an Item 2.02 filing is the results release. The market-data
-              plugin collects those filings from 0.37.0 — written and tested, not yet released — and sampled names carry
-              eight or nine quarters each. The panel fills from that store, and it is also the number behind Events&apos;{' '}
-              <span className="text-foreground">priced vs model</span> column.
-            </p>
-          </div>
+        {/* ── Earnings moves ───────────────────────────────────────── */}
+        <SectionPanel
+          cap="Earnings moves"
+          title="actual vs what was priced"
+          note={moves.data && moves.data.prints.length > 0 ? `last ${moves.data.prints.length} prints` : `last ${PRINTS} prints`}
+        >
+          <HistoryEarnings
+            data={moves.data}
+            isLoading={moves.isLoading}
+            error={moves.isError ? moves.error : null}
+            onRetry={() => void moves.refetch()}
+          />
         </SectionPanel>
 
         {/* ── Correlation over time (owed) ─────────────────────────── */}

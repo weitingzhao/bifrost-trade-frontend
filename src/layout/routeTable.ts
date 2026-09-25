@@ -469,11 +469,26 @@ export const ROUTES: readonly RouteEntry[] = [
   // Target against actual (Owner 2026-09-25): the UI against the design, and
   // Research against its blueprint. Calibration itself is a Research route.
   { path: '/docs/design-adoption', label: 'Design Adoption', crumbs: SYSTEM_ALIGNMENT },
-  { path: '/docs/research-blueprint', label: 'Blueprint', crumbs: SYSTEM_ALIGNMENT },
+  {
+    path: '/docs/research-blueprint',
+    label: 'Blueprint',
+    crumbs: SYSTEM_ALIGNMENT,
+    design: { state: 'reviewing', rev: '2026-09-25.53', note: DESIGN_NOTES['/docs/research-blueprint'] },
+  },
 
   // ── System · Reference ─────────────────────────────────────────────────
-  { path: '/docs/tech-stack', label: 'Tech Stack', crumbs: DOCS },
-  { path: '/docs/ui-design-system', label: 'UI Design System', crumbs: DOCS },
+  {
+    path: '/docs/tech-stack',
+    label: 'Tech Stack',
+    crumbs: DOCS,
+    design: { state: 'reviewing', rev: '2026-09-25.53', note: DESIGN_NOTES['/docs/tech-stack'] },
+  },
+  {
+    path: '/docs/ui-design-system',
+    label: 'UI Design System',
+    crumbs: DOCS,
+    design: { state: 'reviewing', rev: '2026-09-25.53', note: DESIGN_NOTES['/docs/ui-design-system'] },
+  },
   {
     // The options half of the gallery `/docs/ui-design-system` already is. The
     // design files it under a third crumb, `Design`; this side keeps the two

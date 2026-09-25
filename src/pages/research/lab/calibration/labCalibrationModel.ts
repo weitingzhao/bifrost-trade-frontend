@@ -20,6 +20,16 @@
  * read is left out and counted, never guessed.
  */
 
+import {
+  CONTRACT_LAYERS,
+  contractLayer,
+  mdSection,
+  mdTableCells,
+  parseBlueprintContracts,
+} from '@/utils/researchDocs'
+
+export { parseBlueprintContracts }
+
 export type ContractState = 'ok' | 'warn' | 'fail' | 'ramp'
 
 /**
@@ -45,13 +55,8 @@ export const STATE: Record<
 
 export const STATE_ORDER: readonly ContractState[] = ['ok', 'warn', 'fail', 'ramp']
 
-export const LAYERS: readonly [string, string, string][] = [
-  ['F', '基础层 · Foundation', 'lenses, registry, universe'],
-  ['R', '实绩层 · Record', 'what happened next'],
-  ['A', '智囊 · Autopilot', 'judgement layer'],
-  ['C', '操作面 · Copilot', 'the desk'],
-  ['U', 'UI', 'seat and navigation'],
-]
+/** The five layers — the blueprint's own, shared with the Blueprint page. */
+export const LAYERS = CONTRACT_LAYERS
 
 export interface ContractRow {
   id: string
@@ -83,37 +88,6 @@ export function talliesDisagree(
 
 const SYMBOL: Record<string, ContractState> = { '✅': 'ok', '⚠️': 'warn', '⚠': 'warn', '❌': 'fail', '⏳': 'ramp' }
 
-/** A markdown table row's cells, honouring `\|` as a literal pipe. */
-function cells(line: string): string[] | null {
-  const t = line.trim()
-  if (!t.startsWith('|') || !t.endsWith('|')) return null
-  return t
-    .slice(1, -1)
-    .split(/(?<!\\)\|/)
-    .map((c) => c.trim().replace(/\\\|/g, '|'))
-}
-
-/** The text between a `## n.` heading and the next `## ` heading. */
-function section(md: string, number: string): string {
-  const start = md.search(new RegExp(`^## ${number}\\.`, 'm'))
-  if (start < 0) return ''
-  const rest = md.slice(start + 3)
-  const next = rest.search(/^## /m)
-  return next < 0 ? md.slice(start) : md.slice(start, start + 3 + next)
-}
-
-/** The blueprint's contracts, by id: `| C-F1 | wording |`. */
-export function parseBlueprintContracts(md: string): Map<string, string> {
-  const out = new Map<string, string>()
-  for (const line of md.split('\n')) {
-    const c = cells(line)
-    if (!c || c.length < 2) continue
-    const id = c[0].replace(/\*/g, '')
-    if (/^C-[A-Z]\d+$/.test(id) && !out.has(id)) out.set(id, c[1])
-  }
-  return out
-}
-
 export interface ParsedCalibration {
   rows: ContractRow[]
   fixes: FixRow[]
@@ -126,9 +100,9 @@ export interface ParsedCalibration {
 export function parseCalibration(md: string, contracts: ReadonlyMap<string, string>): ParsedCalibration {
   const rows: ContractRow[] = []
   const unread: string[] = []
-  const states = section(md, '2')
+  const states = mdSection(md, '2')
   for (const line of states.split('\n')) {
-    const c = cells(line)
+    const c = mdTableCells(line)
     if (!c || c.length < 3 || !/^C-[A-Z]\d+$/.test(c[0])) continue
     const sym = Object.keys(SYMBOL).find((k) => c[1].startsWith(k))
     if (!sym) {
@@ -140,13 +114,13 @@ export function parseCalibration(md: string, contracts: ReadonlyMap<string, stri
       state: SYMBOL[sym],
       contract: contracts.get(c[0]) ?? '',
       evidence: c.slice(2).join(' | '),
-      layer: c[0][2],
+      layer: contractLayer(c[0]),
     })
   }
 
   const fixes: FixRow[] = []
-  for (const line of section(md, '3').split('\n')) {
-    const c = cells(line)
+  for (const line of mdSection(md, '3').split('\n')) {
+    const c = mdTableCells(line)
     if (!c || c.length < 3 || !/C-[A-Z]\d+/.test(c[0])) continue
     fixes.push({ ids: c[0], gap: c[1], fix: c.slice(2).join(' | ') })
   }

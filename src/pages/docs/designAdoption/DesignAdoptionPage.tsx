@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageShell } from '@/components/layout'
 import {
   CollapsibleChevron,
   CollapsibleGroupBody,
@@ -18,7 +18,6 @@ import {
   ExpandToggleCell,
   type DenseTagVariant,
 } from '@/components/data-display'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   ADOPTION_SECTIONS,
   adoptionByGroup,
@@ -84,15 +83,35 @@ const BAR: Record<AdoptionState, string> = {
   designOnly: 'bg-[var(--sk-raised2)]',
 }
 
+/** A raised panel on the canvas, as the design draws each block of this page. */
+const PANEL = 'rounded-[var(--radius)] border border-[var(--sk-line0)] bg-[var(--sk-raised)]'
+
+/**
+ * The five lists that are this side's work. `stale` is not one of them here —
+ * a moved rev is worth a second look, not a rebuild — and `staging` is,
+ * because a page with no home in the design is a question to ask before
+ * anything moves (§15).
+ */
+const TO_LISTS: readonly AdoptionState[] = ['reviewing', 'pending', 'unbuilt', 'moving', 'staging']
+
 function trail(row: AdoptionRow): string {
   return [...row.crumbs, row.label].join(' / ')
 }
 
 /** One stacked bar over the eight states — the whole readout at a glance. */
-function ShapeBar({ byState, total }: { byState: Record<AdoptionState, number>; total: number }) {
+function ShapeBar({
+  byState,
+  total,
+  tall,
+}: {
+  byState: Record<AdoptionState, number>
+  total: number
+  /** The page's own bar reads a size up from a group's. */
+  tall?: boolean
+}) {
   if (total <= 0) return null
   return (
-    <span className="flex h-1.5 w-full overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+    <span className={cn('flex w-full overflow-hidden rounded-sm bg-background', tall ? 'h-2' : 'h-1.5')}>
       {ADOPTION_SECTIONS.map((s) =>
         byState[s.state] > 0 ? (
           <span
@@ -207,7 +226,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
                        name, because it is no longer one fixture. */
                     <Link
                       to={r.openAt ?? r.path}
-                      className="text-link hover:underline"
+                      className="text-[var(--sk-accent)] hover:underline"
                       title={r.openWhy}
                     >
                       {standsFor > 1 ? [...r.crumbs, r.viaLabel ?? r.label].join(' / ') : trail(r)}
@@ -281,7 +300,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
             expanded && r.note ? (
               <DenseTableRow key={`${r.path}:note`}>
                 <DenseTableCell colSpan={showsRev ? 5 : 4} className="bg-[var(--sk-raised2)]">
-                  <p className="m-0 max-w-[110ch] py-1 text-dense-caption leading-normal text-secondary-foreground text-pretty">
+                  <p className="m-0 max-w-[110ch] py-1 text-dense-label leading-[1.6] text-[var(--sk-soft)] text-pretty">
                     {r.note}
                   </p>
                 </DenseTableCell>
@@ -299,7 +318,8 @@ const OPEN_KEY = 'bifrost.design-adoption.open'
 function readOpen(): Set<AdoptionState> {
   try {
     const raw = localStorage.getItem(OPEN_KEY)
-    return new Set(raw ? (JSON.parse(raw) as AdoptionState[]) : [])
+    // Nothing kept yet: open on the list waiting for the Owner, as the design does.
+    return new Set(raw ? (JSON.parse(raw) as AdoptionState[]) : ['reviewing'])
   } catch {
     // Private mode, blocked storage, or something else wrote nonsense here.
     return new Set()
@@ -347,125 +367,115 @@ export default function DesignAdoptionPage() {
   }, [rows])
   const adoptable = rows.filter((r) => r.state !== 'backlog' && r.state !== 'designOnly').length
 
+  // The app's five "to" lists: everything that is work here and not yet done.
+  const toCount = TO_LISTS.reduce((n, st) => n + counts.byState[st], 0)
+
   return (
-    <PageShell>
-      <PageHeader
-        breadcrumb={<p className="text-xs font-medium text-primary/90">System / Reference</p>}
+    <PageShell padding="compact">
+      <PageHead
         title="Design Adoption"
-        description="Every page of design/trade and where the app stands on it. The work is done when the five “to” lists are empty."
-        actions={
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-dense-caption uppercase tracking-wide text-muted-foreground">
-              design rev {DESIGN_REV}
-            </span>
-            <span className="text-sm tabular-nums">
-              <span className="font-semibold text-foreground">{counts.aligned}</span>
-              <span className="text-muted-foreground"> / {counts.designed} in place</span>
-              <span className="text-muted-foreground">
-                {' · '}
-                {counts.byState.reviewing} to confirm
-              </span>
-            </span>
-          </div>
-        }
+        info="Every page of the design package and where the app stands on it. Both sides are generated — the design's route table from shell-registry.js, the app's from routeRegistry.ts. The work is done when the five “to” lists are empty."
+        meta={`design Rev ${DESIGN_REV}`}
       />
 
-      <Card variant="elevated">
-        <CardContent className="space-y-2 py-3">
-          <ShapeBar byState={counts.byState} total={adoptable} />
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {ADOPTION_SECTIONS.map((s) => (
-              <span key={s.state} className="inline-flex items-center gap-1.5 text-dense-caption">
-                <span className={cn('inline-block h-2 w-2 rounded-[2px]', BAR[s.state])} aria-hidden />
-                <span className="text-muted-foreground">{s.title}</span>
-                <span className="font-mono tabular-nums text-foreground">{counts.byState[s.state]}</span>
-              </span>
-            ))}
-          </div>
-          <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
-            The denominator in the header is the {counts.designed} design routes that have a
-            prototype, not the app’s page count: {counts.byState.unbuilt} of them have no page here
-            at all, so counting against the app would read near complete with much of the design
-            unbuilt. It leaves out the {counts.byState.designOnly} design documents the Owner kept in
-            the design. The bar is wider than that — it counts every row on this page except the
-            design’s own {counts.stubs} stubs and those documents, so the{' '}
-            {counts.byState.staging} app pages the design has no home for are visible as work rather
-            than invisible.
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card variant="elevated">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <span>By group</span>
-            <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
-              {groups.filter((g) => g.left === 0).length} of {groups.length} done
+      <div className="mt-3 flex flex-col gap-3">
+      <section className={cn(PANEL, 'flex flex-col gap-2.5 px-3.5 py-3')}>
+        <div className="flex flex-wrap items-baseline gap-3.5">
+          <span className="flex-none whitespace-nowrap font-mono type-page-title font-semibold tabular-nums">
+            {counts.aligned}
+            <span className="text-sm text-muted-foreground"> / {counts.designed}</span>
+          </span>
+          <span className="text-dense-label text-[var(--sk-mute2)]">design pages in place</span>
+          <span className="text-dense-label text-[var(--sk-mute2)]">·</span>
+          <span className="font-mono text-dense-body tabular-nums">{toCount}</span>
+          <span className="text-dense-label text-[var(--sk-mute2)]">left in the five “to” lists</span>
+        </div>
+        <ShapeBar byState={counts.byState} total={adoptable} tall />
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+          {ADOPTION_SECTIONS.map((s) => (
+            <span key={s.state} className="inline-flex items-center gap-1.5 text-dense-meta">
+              <span className={cn('inline-block h-2 w-2 rounded-[2px]', BAR[s.state])} aria-hidden />
+              <span className="text-[var(--sk-mute2)]">{s.title}</span>
+              <span className="font-mono tabular-nums text-foreground">{counts.byState[s.state]}</span>
             </span>
-          </CardTitle>
-          <p className="text-dense-caption text-muted-foreground">
+          ))}
+        </div>
+        <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
+          The denominator is the {counts.designed} design routes that have a prototype, not the
+          app’s page count: {counts.byState.unbuilt} of them have no page here at all, so counting
+          against the app would read near complete with much of the design unbuilt. It leaves out
+          the {counts.byState.designOnly} design documents the Owner kept in the design. The bar is
+          wider than that — it counts every row on this page except the design’s own {counts.stubs}{' '}
+          stubs and those documents, so the {counts.byState.staging} app pages the design has no
+          home for are visible as work rather than invisible.
+        </p>
+      </section>
+
+      <section className={cn(PANEL, 'overflow-hidden')}>
+        <header className="flex flex-wrap items-baseline gap-2.5 border-b border-[var(--sk-line0)] px-3.5 py-2.5">
+          <span className="text-dense-body font-semibold">By group</span>
+          <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">
+            {groups.filter((g) => g.left === 0).length} of {groups.length} done
+          </span>
+          <span className="text-dense-label text-[var(--sk-mute2)]">
             Closest to done first. A group reads finished only when nothing is left in it — not when
             the pages someone happens to have walked are all aligned.
-          </p>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div role="table" className="w-full">
-            <div
-              role="row"
-              className="grid grid-cols-[minmax(7rem,12rem)_5rem_9rem_minmax(0,1fr)] gap-3 border-b border-border px-1 pb-1 text-dense-caption uppercase tracking-wide text-muted-foreground"
-            >
-              <span role="columnheader">Group</span>
-              <span role="columnheader">In place</span>
-              <span role="columnheader">Progress</span>
-              <span role="columnheader">What is left</span>
-            </div>
-            {groups.map((g) => (
-              <div
-                key={g.group}
-                role="row"
-                className="grid grid-cols-[minmax(7rem,12rem)_5rem_9rem_minmax(0,1fr)] items-center gap-3 border-b border-border/55 px-1 py-1.5 last:border-b-0"
-              >
-                <span role="cell" className="truncate text-sm font-semibold text-foreground">
-                  {g.group}
-                </span>
-                <span role="cell" className="font-mono text-dense-caption tabular-nums">
-                  <span className={g.left === 0 ? 'text-lamp-green' : 'text-foreground'}>{g.aligned}</span>
-                  <span className="text-muted-foreground"> / {g.total}</span>
-                </span>
-                <span role="cell">
-                  <ShapeBar byState={g.byState} total={g.total} />
-                </span>
-                <span role="cell" className="min-w-0 text-dense-caption text-muted-foreground">
-                  {leftLabel(g.byState)}
-                  {g.byState.backlog > 0 ? (
-                    <span className="text-muted-foreground">
-                      {' · '}
-                      {g.byState.backlog} in the design’s own backlog
-                    </span>
-                  ) : null}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          </span>
+        </header>
+        <div data-sr-hscroll="" className="overflow-x-auto">
+          <table data-sr-table="" className="min-w-[720px]">
+            <thead>
+              <tr>
+                <th data-sr-col="text">Group</th>
+                <th data-sr-col="num">In place</th>
+                <th data-sr-col="text" className="w-[180px]">
+                  Progress
+                </th>
+                <th data-sr-col="text">What is left</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groups.map((g) => (
+                <tr key={g.group}>
+                  <td data-sr-col="text" className="font-semibold">
+                    {g.group}
+                  </td>
+                  <td data-sr-col="num">
+                    <span className={g.left === 0 ? 'text-lamp-green' : 'text-foreground'}>{g.aligned}</span>
+                    <span className="text-muted-foreground"> / {g.total}</span>
+                  </td>
+                  <td data-sr-col="text">
+                    <ShapeBar byState={g.byState} total={g.total} />
+                  </td>
+                  <td data-sr-col="wrap" className="text-[var(--sk-mute2)]">
+                    {leftLabel(g.byState)}
+                    {g.byState.backlog > 0 ? ` · ${g.byState.backlog} in the design’s own backlog` : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {ADOPTION_SECTIONS.map((s) => {
         const list = byState.get(s.state) ?? []
         const expanded = open.has(s.state)
         const perGroup = byPageGroup(list)
         return (
-          <Card key={s.state} variant="elevated" className="overflow-hidden">
+          <section key={s.state} className={cn(PANEL, 'overflow-hidden')}>
             <CollapsibleGroupHeader
               expanded={expanded}
               onToggle={() => toggle(s.state)}
-              className="w-full px-4 py-3"
+              className="w-full px-3.5 py-2.5"
               aria-label={`${s.title} — ${list.length} pages`}
             >
               <CollapsibleChevron expanded={expanded} />
-              <DenseTag variant={TAG[s.state]}>{s.state}</DenseTag>
-              <span className="text-base font-semibold">{s.title}</span>
-              <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
+              <DenseTag variant={TAG[s.state]} size="cell">
+                {s.state}
+              </DenseTag>
+              <span className="text-dense-body font-semibold">{s.title}</span>
+              <span className="font-mono text-dense-label tabular-nums text-muted-foreground">
                 {list.length}
               </span>
               {/* The split, on the closed header. "What is left in Research" is
@@ -474,18 +484,18 @@ export default function DesignAdoptionPage() {
                   every time. */}
               <span className="ml-auto flex min-w-0 flex-wrap justify-end gap-x-3 gap-y-0.5">
                 {perGroup.map((g) => (
-                  <span key={g.group} className="text-dense-caption whitespace-nowrap">
-                    <span className="text-muted-foreground">{g.group}</span>{' '}
+                  <span key={g.group} className="text-dense-meta whitespace-nowrap">
+                    <span className="text-[var(--sk-mute2)]">{g.group}</span>{' '}
                     <span className="font-mono tabular-nums text-foreground/80">{g.rows.length}</span>
                   </span>
                 ))}
               </span>
             </CollapsibleGroupHeader>
             {expanded ? (
-              <CollapsibleGroupBody className="px-4 pb-3">
-                <p className="mb-2 text-dense-caption text-muted-foreground">{s.blurb}</p>
+              <CollapsibleGroupBody className="px-3.5 pb-3">
+                <p className="mb-2.5 text-dense-label text-[var(--sk-mute2)]">{s.blurb}</p>
                 {list.length === 0 ? (
-                  <EmptyState title="Nothing here" description="This list is empty." />
+                  <EmptyState title="Nothing in this list" description="Every page has left this state." />
                 ) : (
                   <div className="space-y-3">
                     {perGroup.map((g) => (
@@ -503,9 +513,10 @@ export default function DesignAdoptionPage() {
                 )}
               </CollapsibleGroupBody>
             ) : null}
-          </Card>
+          </section>
         )
       })}
+      </div>
     </PageShell>
   )
 }

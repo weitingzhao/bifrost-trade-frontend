@@ -8,9 +8,9 @@
  * document's own text is the Source view, which `/docs/research-calibration`
  * now opens. This page renders the documents; it does not judge.
  */
-import { Fragment, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { DenseTag, EmptyState, HealthLamp } from '@bifrost/ui'
 import { fetchResearchDoc } from '@/api/research/docs'
 import { SegmentControl } from '@/components/data-display'
@@ -108,6 +108,14 @@ export default function LabCalibrationPage() {
     [shown]
   )
   const disagrees = docTally != null && talliesDisagree(docTally, counts)
+
+  // The Blueprint's `state →` lands on its contract's row (`#C-F1`): scrolled
+  // to once the rows exist, and marked while it is the target.
+  const target = useLocation().hash.slice(1)
+  useEffect(() => {
+    if (!target || ROWS.length === 0) return
+    document.getElementById(target)?.scrollIntoView({ block: 'center' })
+  }, [target, ROWS.length])
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -259,7 +267,11 @@ export default function LabCalibrationPage() {
               return (
                 <div
                   key={r.id}
-                  className="grid grid-cols-1 items-start gap-x-3.5 gap-y-2 border-b border-border/60 px-3 py-2.75 md:grid-cols-[56px_20px_minmax(0,1.05fr)_minmax(0,1.35fr)]"
+                  id={r.id}
+                  className={cn(
+                    'grid grid-cols-1 items-start gap-x-3.5 gap-y-2 border-b border-border/60 px-3 py-2.75 md:grid-cols-[56px_20px_minmax(0,1.05fr)_minmax(0,1.35fr)]',
+                    r.id === target && 'bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)]',
+                  )}
                 >
                   <span className={cn(mono, 'text-dense-caption font-semibold text-primary')}>
                     {r.id}

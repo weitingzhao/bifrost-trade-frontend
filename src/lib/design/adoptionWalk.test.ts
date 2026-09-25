@@ -439,8 +439,9 @@ describe('the design walk, as it stands', () => {
     // 2026-09-25 with Narrative, built once its store (the 8-K text) existed.
     // 10 the same day: Stock screen and Symbol, re-walked at Rev .43.
     // 15 on 2026-09-25 (Rev .55): the five sample pages join the ten. 16
-    // with Objectives, rebuilt at .55 with its mode tag.
-    expect(counts.byState.reviewing).toBe(16)
+    // with Objectives, rebuilt at .55 with its mode tag. 19 with the three
+    // System pages Rev .53 drew: Tech Stack, Blueprint, UI Design System.
+    expect(counts.byState.reviewing).toBe(19)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -516,6 +517,9 @@ describe('the design walk, as it stands', () => {
         .sort()
     ).toEqual([
       '/docs/options-kit',
+      '/docs/research-blueprint',
+      '/docs/tech-stack',
+      '/docs/ui-design-system',
       '/portfolio/positions',
       '/research/backtest',
       '/research/lab/calibration',
@@ -640,12 +644,9 @@ describe('the design walk, as it stands', () => {
     // 2026-09-25: the walk happened, and the pool is empty again.
     // 0 → 3 with Rev .53: Tech Stack, Blueprint and UI Design System have
     // prototypes now, and this side has pages that were never walked against them.
-    expect(counts.byState.pending).toBe(3)
-    expect(rows.filter((r) => r.state === 'pending').map((r) => r.path).sort()).toEqual([
-      '/docs/research-blueprint',
-      '/docs/tech-stack',
-      '/docs/ui-design-system',
-    ])
+    // 3 → 0 the same day: all three walked and waiting in `reviewing`.
+    expect(counts.byState.pending).toBe(0)
+    expect(rows.filter((r) => r.state === 'pending').map((r) => r.path)).toEqual([])
     expect(
       rows
         .filter((r) => r.via)

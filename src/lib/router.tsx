@@ -433,7 +433,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'docs/ui-design-system',
-        lazy: lazyPage(() => import('@/pages/docs/UiDesignSystemPage')),
+        lazy: lazyPage(() => import('@/pages/docs/uiDesignSystem/UiDesignSystemPage')),
       },
       {
         path: 'research/events',

@@ -206,6 +206,8 @@ export default function ScanPage() {
       if (at < 0) return
       const step = e.key === 'j' ? 1 : -1
       const next = scored[(at + step + scored.length) % scored.length]
+      // Taken: the Symbol list's own j / k stands down (it checks this).
+      e.preventDefault()
       setParam('sym', next.row.symbol, '')
     }
     window.addEventListener('keydown', onKey)

@@ -86,6 +86,8 @@ function portRows(rows: readonly BookLiveRow[], held: ReadonlySet<string>, tagOf
         chgPct: base != null && base > 0 && o.dayPts != null ? (o.dayPts / base) * 100 : null,
         third: fmtSignedUsd(o.pnl),
         thirdTone: 'unrl',
+        strike: Number(seg[4]) || undefined,
+        right: seg[5] === 'C' || seg[5] === 'P' ? seg[5] : undefined,
       }
     })
     const note = [shares ? `${fmtShares(shares)} sh` : '', opts.length ? `${opts.length} leg${opts.length === 1 ? '' : 's'}` : '']
@@ -178,6 +180,8 @@ export function useDockLists(watchShown: boolean): DockLists {
           mark: null,
           chgPct: null,
           third: '',
+          strike: i.strike ?? undefined,
+          right: i.option_right === 'C' || i.option_right === 'P' ? i.option_right : undefined,
         },
       ])
     }

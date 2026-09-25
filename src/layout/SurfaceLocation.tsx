@@ -17,8 +17,9 @@
  *   (`equipSurface.ts`): a Compare link from the panel opens Compare as the page.
  *
  * The symbol is not stored here. A following surface shows the carry, so a
- * new name anywhere in the shell reaches it; a locked one keeps its own. A
- * write that changes the symbol carries it (following) or re-locks (locked).
+ * new name anywhere in the shell reaches it; a locked one keeps the name the
+ * surface holds. A write that changes the symbol carries it (following) or
+ * re-locks the surface (locked).
  */
 import { useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 import {
@@ -32,6 +33,7 @@ import {
   type To,
 } from 'react-router-dom'
 import { readStoredContext, useCarriedSymbol, writeStoredContext } from '@/lib/symbolContext'
+import { FrameNavigateContext } from '@/lib/surfaceScope'
 
 function withoutSymbol(search: string): string {
   const p = new URLSearchParams(search)
@@ -43,6 +45,7 @@ function withoutSymbol(search: string): string {
 export function SurfaceLocation({
   path,
   lockedSymbol,
+  onRelock,
   initialSearch = '',
   children,
 }: {
@@ -50,15 +53,18 @@ export function SurfaceLocation({
   path: string
   /** Set for a locked surface: the symbol it keeps whatever is carried. */
   lockedSymbol?: string
+  /** A locked surface's page moved to another name (its own walk, a link). */
+  onRelock?: (sym: string) => void
   /** The params it opens with, besides the symbol — `?tab=chain` from a contract row. */
   initialSearch?: string
   children: ReactNode
 }) {
   const outer = useContext(NavigationContext)
   const carried = useCarriedSymbol()
-  const [lock, setLock] = useState(lockedSymbol ?? '')
   const [rest, setRest] = useState(() => withoutSymbol(initialSearch))
-  const symbol = lockedSymbol ? lock : carried
+  // The lock lives with the surface (`setSubjectLock`), so the tab's label
+  // and this address cannot disagree about which name is held.
+  const symbol = lockedSymbol || carried
 
   const location = useMemo<Location>(() => {
     const p = new URLSearchParams(rest)
@@ -79,13 +85,14 @@ export function SurfaceLocation({
       const params = new URLSearchParams(target.search ?? '')
       const next = (params.get('symbol') ?? '').trim().toUpperCase()
       if (next && next !== symbol) {
-        if (lockedSymbol) setLock(next)
+        if (lockedSymbol) onRelock?.(next)
         else writeStoredContext(next, readStoredContext().date ?? '')
       }
       setRest(withoutSymbol(target.search ?? ''))
     },
-    [outer.navigator, path, symbol, lockedSymbol],
+    [outer.navigator, path, symbol, lockedSymbol, onRelock],
   )
+  const frameNavigate = useCallback((to: string) => outer.navigator.push(to), [outer.navigator])
 
   const navigation = useMemo(
     () => ({
@@ -105,7 +112,7 @@ export function SurfaceLocation({
         {/* Not a data route: `useNavigate` then resolves against the location
             above and calls the navigator above, instead of the frame router. */}
         <RouteContext.Provider value={{ outlet: null, matches: [], isDataRoute: false }}>
-          {children}
+          <FrameNavigateContext.Provider value={frameNavigate}>{children}</FrameNavigateContext.Provider>
         </RouteContext.Provider>
       </LocationContext.Provider>
     </NavigationContext.Provider>

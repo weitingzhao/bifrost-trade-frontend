@@ -186,6 +186,27 @@ export interface DossierFaceView {
   href: string
 }
 
+/**
+ * The 3px rail the design paints beside a verdict, in the verdict's tone —
+ * read by the face cards and by the Symbol page's 440 rows.
+ */
+export const TONE_BAR: Record<string, string> = {
+  success: 'bg-success',
+  danger: 'bg-destructive',
+  warning: 'bg-warning',
+  info: 'bg-primary',
+  neutral: 'bg-border',
+}
+
+/** The verdict wears the bar's colour — the design paints both from one value. */
+export const TONE_TEXT: Record<string, string> = {
+  success: 'text-success',
+  danger: 'text-destructive',
+  warning: 'text-warning',
+  info: 'text-primary',
+  neutral: 'text-foreground',
+}
+
 export const NOT_MEASURED = 'Not measured — no lens in the registry covers this face yet'
 
 type SpecOf = (canonical: string) => { label: string; page_route: string } | undefined

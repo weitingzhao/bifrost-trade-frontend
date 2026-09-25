@@ -82,8 +82,12 @@ export interface Surface {
   subject?: 'follow' | 'lock'
   /** The locked surface's own name. */
   symbol?: string
-  /** Opened on a face — a contract row lands on Chain or Payoff. `n` makes each ask new. */
-  intent?: { tab: string; n: number }
+  /**
+   * Opened on a face — a contract row lands on Chain or Payoff, with the
+   * contract as the face's own seed (`expiration`, `strike`, `right`). `n`
+   * makes each ask new.
+   */
+  intent?: { tab: string; n: number; params?: Record<string, string> }
 }
 
 /** A tab remembers when it was last looked at — the overflow orders by it. */
@@ -210,7 +214,10 @@ export const SYMBOL_SURFACE_ROUTE = '/research/symbol'
  *
  * Its home is the panel; place memory applies from there on.
  */
-export function symbolSurface(sym?: string | null, opts?: { lock?: boolean; tab?: string }): Surface {
+export function symbolSurface(
+  sym?: string | null,
+  opts?: { lock?: boolean; tab?: string; params?: Record<string, string> },
+): Surface {
   const name = (sym ?? '').trim().toUpperCase()
   const lock = Boolean(opts?.lock && name)
   return {
@@ -222,8 +229,25 @@ export function symbolSurface(sym?: string | null, opts?: { lock?: boolean; tab?
     def: 'panel',
     subject: lock ? 'lock' : 'follow',
     ...(lock ? { symbol: name } : {}),
-    ...(opts?.tab ? { intent: { tab: opts.tab, n: Date.now() } } : {}),
+    ...(opts?.tab ? { intent: { tab: opts.tab, n: Date.now(), ...(opts.params ? { params: opts.params } : {}) } } : {}),
   }
+}
+
+/**
+ * Lock a Symbol surface on a name, or set it following again (null) — the 440
+ * head's Follow / Lock. The surface keeps its key and its place; what changes
+ * is whether a carry reaches it, and its label says so.
+ */
+export function setSubjectLock(key: string, sym: string | null): void {
+  const name = (sym ?? '').trim().toUpperCase()
+  const patch = <T extends Surface>(s: T): T =>
+    s.key !== key || !s.subject
+      ? s
+      : name
+        ? { ...s, subject: 'lock', symbol: name, label: `Symbol · ${name}` }
+        : { ...s, subject: 'follow', symbol: undefined, label: 'Symbol' }
+  const st = store.getState()
+  commit(st.float ? patch(st.float) : null, st.panel ? { ...st.panel, tabs: st.panel.tabs.map(patch) } : null)
 }
 
 /** What a tab or a float bar calls it — the following Symbol tab names what it is showing. */

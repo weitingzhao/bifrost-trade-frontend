@@ -157,6 +157,8 @@ export function PerformanceCalendarSection({
         onSelectedDay(null)
         setRightTab('summary')
       } else if (e.key === 'j' || e.key === 'k') {
+        // Taken: the Symbol list's own j / k stands down (it checks this).
+        e.preventDefault()
         const i = selectedDay ? activeDays.indexOf(selectedDay) : -1
         const next = activeDays[Math.max(0, Math.min(activeDays.length - 1, i + (e.key === 'j' ? 1 : -1)))]
         if (next) onSelectedDay(next)

@@ -262,10 +262,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // for the 2026-09-13 and 2026-09-14 rounds. Built 2026-09-24: the seventh
     // face, Payoff — the one tab this side had deliberately withheld until
     // there was data behind it. Signed, then Rev .43 added the Narrative
-    // panel to the Overview rail; built 2026-09-25, waiting for a look.
+    // panel to the Overview rail; Rev .56–.58 the four-layer head, the 440
+    // face and the contract seed (frame batch F4) — waiting for a look.
     design: {
       state: 'reviewing',
-      rev: '2026-09-25.43',
+      rev: '2026-09-25.58',
       note: DESIGN_NOTES['/research/symbol'],
     },
   },

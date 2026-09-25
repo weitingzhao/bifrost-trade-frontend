@@ -35,8 +35,30 @@ export function howFrom(e: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: bo
   return e?.metaKey || e?.ctrlKey ? 'page' : 'swap'
 }
 
+/** A contract row's pick: the face it opens on, and the row to light there. */
+export interface ContractPick {
+  multi: boolean
+  /** `YYYYMMDD`. */
+  expiry?: string
+  strike?: number
+  right?: 'C' | 'P'
+}
+
+/**
+ * The Chain face's own seed — the Dealer face already hands a strike over
+ * this way (`?expiration=&strike=&right=`), so a contract row speaks it too.
+ */
+export function contractParams(c: ContractPick): Record<string, string> {
+  const out: Record<string, string> = {}
+  const d = (c.expiry ?? '').replace(/\D/g, '')
+  if (d.length === 8) out.expiration = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
+  if (c.strike != null && Number.isFinite(c.strike)) out.strike = String(c.strike)
+  if (c.right) out.right = c.right
+  return out
+}
+
 export interface SymbolGo {
-  go: (sym: string, how?: SymbolHow, contract?: { multi: boolean }) => void
+  go: (sym: string, how?: SymbolHow, contract?: ContractPick) => void
   /** The toolbar button and the top bar's token: the Symbol surface, shown or put away. */
   toggle: () => void
   /** What ↵ does on this page — the omnibar and the rows say it. */
@@ -64,7 +86,7 @@ export function useSymbolGo(): SymbolGo {
   }, [navigate])
 
   const go = useCallback(
-    (raw: string, how: SymbolHow = 'swap', contract?: { multi: boolean }) => {
+    (raw: string, how: SymbolHow = 'swap', contract?: ContractPick) => {
       const sym = raw.trim().toUpperCase()
       if (!sym) return
       if (how === 'compare') {
@@ -79,7 +101,10 @@ export function useSymbolGo(): SymbolGo {
       if (scoped) setSymbol(sym)
       else writeStoredContext(sym, readStoredContext().date ?? '')
       if (contract) {
-        openSurface(symbolSurface(null, { tab: contract.multi ? 'payoff' : 'chain' }), 'panel')
+        openSurface(
+          symbolSurface(null, { tab: contract.multi ? 'payoff' : 'chain', params: contractParams(contract) }),
+          'panel',
+        )
         return
       }
       if (!scoped) showPanel()

@@ -18,12 +18,26 @@ import { faceOf } from '@/lib/design/faces'
 const BTN =
   'h-6 border-0 bg-transparent px-2.75 text-dense-label font-semibold leading-none whitespace-nowrap'
 
-export function PageFaceSwitch({ path, className }: { path: string; className?: string }) {
+export function PageFaceSwitch({
+  path,
+  className,
+  methodTo,
+  methodTitle,
+}: {
+  path: string
+  className?: string
+  /**
+   * Where Method opens, when the page carries its own context there — the
+   * design's `_Part Face` `method-to` (Rev .56): Symbol passes the tab it is on.
+   */
+  methodTo?: string
+  methodTitle?: string
+}) {
   const face = faceOf(path)
   if (!face) return null
 
   const onMethod = face.side === 'method'
-  const flipTo = face.other
+  const flipTo = onMethod ? face.other : (methodTo ?? face.other)
   const flipTitle = onMethod
     ? 'You are on the Method face — how the number is made. Flip back to the Reading.'
     : 'This page has a Method face. Flip it over.'
@@ -103,7 +117,12 @@ export function PageFaceSwitch({ path, className }: { path: string; className?: 
         </span>
       )}
       {tab('reading', face.reading, 'Reading', 'What the market says.')}
-      {tab('method', face.method, 'Method', 'How the number is made — same subject, same endpoint, shown open.')}
+      {tab(
+        'method',
+        methodTo ?? face.method,
+        'Method',
+        methodTitle ?? 'How the number is made — same subject, same endpoint, shown open.',
+      )}
     </span>
   )
 }

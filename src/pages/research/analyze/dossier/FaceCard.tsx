@@ -20,25 +20,8 @@ import { DenseTag } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Card, CardContent } from '@/components/ui/card'
-import type { DossierFaceView } from '@/lib/dossier'
+import { TONE_BAR, TONE_TEXT, type DossierFaceView } from '@/lib/dossier'
 
-/** The 3px rail the design paints beside a verdict, in the verdict's tone. */
-const TONE_BAR: Record<string, string> = {
-  success: 'bg-success',
-  danger: 'bg-destructive',
-  warning: 'bg-warning',
-  info: 'bg-primary',
-  neutral: 'bg-border',
-}
-
-/** The verdict wears the bar's colour — the design paints both from one value. */
-const TONE_TEXT: Record<string, string> = {
-  success: 'text-success',
-  danger: 'text-destructive',
-  warning: 'text-warning',
-  info: 'text-primary',
-  neutral: 'text-foreground',
-}
 
 export function FaceCard({
   view,

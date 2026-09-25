@@ -20,7 +20,7 @@ import { useWatchlistMutations } from '@/hooks/useStockWatchlist'
 import { glyph } from '@/lib/design/glyphs'
 import { useSymbolContext } from '@/lib/symbolContext'
 import { cn } from '@/lib/utils'
-import { howFrom, useSymbolGo, type SymbolHow } from '@/layout/symbolGo'
+import { howFrom, useSymbolGo, type ContractPick, type SymbolHow } from '@/layout/symbolGo'
 import { dockActions, useDockState, type ListKey } from './dockState'
 import {
   SORTS,
@@ -147,6 +147,29 @@ export function SymbolDock({
     [lists, shown, st.sort, quoteOf, todayEt],
   )
   const walk = useMemo(() => walkOrder(groups), [groups])
+
+  /**
+   * j / k walk the list in the order it shows (Shell Spec §5a.11), wrapping,
+   * each step a pick like a click. A page with a j / k of its own — Scan's
+   * ranked drawer, Performance's calendar — keeps it: it calls
+   * `preventDefault`, and this looks after every listener has had its turn.
+   */
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'j' && e.key !== 'k') return
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return
+      const el = e.target as HTMLElement | null
+      if (el && (/INPUT|TEXTAREA|SELECT/.test(el.tagName) || el.isContentEditable)) return
+      if (walk.length === 0) return
+      window.setTimeout(() => {
+        if (e.defaultPrevented) return
+        const i = walk.indexOf(cur)
+        go(e.key === 'j' ? walk[(i + 1) % walk.length] : walk[i <= 0 ? walk.length - 1 : i - 1])
+      }, 0)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [walk, cur, go])
   const sm = Math.min(Math.max(1, st.sort), SORTS.length)
   const sort = SORTS[sm - 1]
 
@@ -307,7 +330,7 @@ export function SymbolDock({
       </div>
       <footer className={css.foot}>
         <span className={css.mono}>{posLine(walk, cur)}</span>
-        <span className="ml-auto">tags pick · Sort arranges</span>
+        <span className="ml-auto">tags pick · Sort arranges · j / k</span>
       </footer>
     </aside>
   )
@@ -327,7 +350,7 @@ function Group({
   cur: string
   quoteOf: (sym: string) => DockQuote
   flash: Flash
-  pick: (sym: string, how?: SymbolHow, contract?: { multi: boolean }) => void
+  pick: (sym: string, how?: SymbolHow, contract?: ContractPick) => void
   loadTip: (sym: string, rest: string) => string
 }) {
   const { folded } = useDockState()
@@ -368,7 +391,7 @@ function Row({
   cur: string
   q: DockQuote
   fl: 'up' | 'dn' | undefined
-  pick: (sym: string, how?: SymbolHow, contract?: { multi: boolean }) => void
+  pick: (sym: string, how?: SymbolHow, contract?: ContractPick) => void
   tip: string
 }) {
   const { optOpen } = useDockState()
@@ -427,7 +450,14 @@ function Row({
               key={c.id}
               type="button"
               className={cn(css.grid, css.contract)}
-              onClick={(e) => pick(r.sym, e.shiftKey ? 'compare' : 'swap', { multi: Boolean(c.multi) })}
+              onClick={(e) =>
+                pick(r.sym, e.shiftKey ? 'compare' : 'swap', {
+                  multi: Boolean(c.multi),
+                  expiry: c.expiry,
+                  strike: c.strike,
+                  right: c.right,
+                })
+              }
               title={`${c.exp} ${c.label}${c.mark != null ? ` · Mark ${c.mark.toFixed(2)}` : ''}${c.inTitle ? ` · ${c.inTitle}` : ''} → ${r.sym} · ${c.multi ? 'Payoff' : 'Chain'}`}
             >
               <span className={css.contractName}>

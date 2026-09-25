@@ -38,7 +38,12 @@ export const SHORTCUTS: readonly Shortcut[] = [
     what: 'Close the top inspector, else the open float — never while you are typing',
     scope: 'Anywhere',
   },
-  { keys: 'j / k', name: 'Symbol walk', what: 'Next / previous symbol on the list you arrived from', scope: 'Symbol' },
+  {
+    keys: 'j / k',
+    name: 'Symbol walk',
+    what: 'Next / previous name in the Symbol list, in the order it shows them (a page with its own j / k keeps it)',
+    scope: 'Anywhere the list is shown',
+  },
   // The Omnibar's own prefixes: not keys, but the same question — "what can I
   // type here" — and the only place a reader would look for the answer.
   { keys: '/', name: 'Pages only', what: 'Omnibar: pages only', scope: 'Omnibar' },

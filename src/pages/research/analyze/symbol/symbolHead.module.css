@@ -1,0 +1,210 @@
+/*
+ * The Symbol page's head — the design's four layers (Rev .56, contract
+ * §16.10a) and its 440 form. A module because the design sets this head in
+ * its own sizes (26 / 16 / 15 / 13 at full width, 20 / 14 / 13.5 in the
+ * panel) and the page head is the one place on the page that does.
+ */
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+/* A monogram until the logo proxy lands (Owner 2026-09-25). */
+.logo {
+  flex: none;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sk-raised2);
+  box-shadow: inset 0 0 0 1px var(--sk-line);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--sk-mute2);
+}
+
+.sym {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: var(--sk-ticker);
+}
+
+.name {
+  font-size: 14px;
+  color: var(--sk-soft);
+}
+
+.spot {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+}
+
+.chg {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--sk-line);
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--sk-mute2);
+}
+
+.cap {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sk-mute);
+  white-space: nowrap;
+}
+
+.headline {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sk-ink);
+  text-wrap: pretty;
+  min-width: 0;
+}
+
+.send {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.why {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 12px;
+  color: var(--sk-mute);
+  min-width: 0;
+}
+
+.rule {
+  width: 1px;
+  height: 12px;
+  background: var(--sk-line);
+}
+
+.whyChip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--sk-line0);
+  font-size: 11px;
+  color: var(--sk-mute);
+  min-width: 0;
+}
+
+.verbs {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ── The 440 form ─────────────────────────────────────────────────────── */
+
+.compact .logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.compact .sym {
+  font-size: 20px;
+}
+
+.compact .spot {
+  font-size: 14px;
+}
+
+.compact .chg {
+  font-size: 12px;
+}
+
+.compact .name {
+  font-size: 11.5px;
+  color: var(--sk-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.compact .headline {
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+.compact .why {
+  font-size: 10.5px;
+  gap: 4px 10px;
+}
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--sk-line);
+  border-radius: 6px;
+  font-size: 10.5px;
+}
+
+.segBtn {
+  padding: 1px 8px;
+  border: 0;
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+  background: transparent;
+  color: var(--sk-mute2);
+}
+
+.segOn {
+  background: color-mix(in srgb, var(--sk-accent) 22%, transparent);
+  color: var(--sk-ink);
+}

@@ -33,19 +33,20 @@
  * `?tab=` still drives the tabs, so every link and bookmark written against
  * them is unchanged, and every retired `?view=` still lands on its anchor.
  */
-import { Fragment, useEffect, useMemo } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useInSurface } from '@/lib/surfaceScope'
+import { useContainerWidth } from '@/hooks/useContainerWidth'
+import { SymbolCompact } from '@/pages/research/analyze/symbol/SymbolCompact'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
 import { SymbolIdentity } from '@/pages/research/analyze/symbol/SymbolIdentity'
 import { SymbolMyLegs } from '@/pages/research/analyze/symbol/SymbolMyLegs'
-import { SymbolOriginRail } from '@/pages/research/analyze/symbol/SymbolOriginRail'
 import { SymbolRecordRail } from '@/pages/research/analyze/symbol/SymbolRecordRail'
 import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
 import { SymbolVerdictPanel } from '@/pages/research/analyze/symbol/SymbolVerdictPanel'
@@ -60,6 +61,9 @@ import { SymbolChainFace } from '@/pages/research/analyze/symbol/SymbolChainFace
 import { PayoffBody } from '@/pages/research/analyze/payoff/PayoffBody'
 
 /** The design's line at the right of the tab strip — what this face is for. */
+/** The design's line: an embedded surface this narrow gets the 440 page. */
+const COMPACT_MAX_PX = 640
+
 const TAB_HINT: Record<SymbolTabId, string> = {
   overview: 'six faces · open a face to read it in full · 1–6 switch tabs',
   volatility: 'one name only — the universe tables stay in Discover',
@@ -78,6 +82,8 @@ export default function SymbolPage() {
   // In the Symbol panel the frame keeps the keys: a Desk behind it, or a
   // second Symbol page, would otherwise have its digits answered twice.
   const inSurface = useInSurface()
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const width = useContainerWidth(rootRef, 1200)
 
   const setTab = (id: SymbolTabId) => {
     setParams((prev) => {
@@ -124,24 +130,36 @@ export default function SymbolPage() {
       ? decisive.map((r) => r.verdict).join(' · ')
       : 'No lens is decisive on this name today'
 
-  return (
-    <PageShell padding="compact" className="space-y-2.5">
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Reading | Method: this page's back is the Symbol method face
-            (design 2026-09-20.4). A face is a view of the page, not a place. */}
-        <PageFaceSwitch path={SYMBOL_PATH} />
-        {!symbol ? (
-          <PageHeader title="Symbol" description="One symbol, every face. Observe-only (D10)." />
-        ) : null}
+  // The 440 page (Rev .57): in a surface no wider than 640, the same page
+  // re-authored for a panel — chosen by its own width, not a second route.
+  if (inSurface && width <= COMPACT_MAX_PX && symbol) {
+    return (
+      <div ref={rootRef}>
+        <SymbolCompact
+          symbol={symbol}
+          faces={faces}
+          thesis={thesis}
+          active={active}
+          setTab={setTab}
+          lampFor={lampFor}
+        />
       </div>
+    )
+  }
 
-      {/* Where this name came from, and the way through that list — stepping it
-          keeps the tab you are reading. */}
-      <SymbolOriginRail symbol={symbol} tabQuery={`${SYMBOL_PATH}?${TAB_PARAM}=${active}`} />
-
-      {symbol ? (
-        <SymbolIdentity symbol={symbol} faces={faces} asof={<SymbolAsofTag symbol={symbol} />} />
-      ) : null}
+  return (
+    <div ref={rootRef}>
+    <PageShell padding="compact" className="space-y-2.5">
+      {/* No name yet: the page says what it is and keeps its Method switch.
+          With one, the four-layer head below carries both (Rev .56). */}
+      {!symbol ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <PageFaceSwitch path={SYMBOL_PATH} />
+          <PageHeader title="Symbol" description="One symbol, every face. Observe-only (D10)." />
+        </div>
+      ) : (
+        <SymbolIdentity symbol={symbol} faces={faces} tab={active} asof={<SymbolAsofTag symbol={symbol} />} />
+      )}
 
       <div className="sticky top-0 z-10 -mx-3 flex items-end overflow-x-auto border-b border-border bg-card px-3">
         {SYMBOL_TABS.map((t, i) => {
@@ -236,5 +254,6 @@ export default function SymbolPage() {
         {active === 'payoff' && <PayoffBody />}
       </div>
     </PageShell>
+    </div>
   )
 }

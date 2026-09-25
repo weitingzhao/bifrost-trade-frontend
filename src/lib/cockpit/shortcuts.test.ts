@@ -43,10 +43,11 @@ describe('the shortcut list', () => {
   })
 
   it('says where a page-scoped key fires', () => {
-    // `j / k` only works on Symbol. A list that offered it everywhere would be
-    // wrong on every other page.
+    // `j / k` walks the Symbol list (Shell Spec §5a.11, Rev .56), so it fires
+    // wherever the list is shown — not everywhere: hide the list and the keys
+    // go with it, and a page with its own j / k keeps it. The scope says so.
     const jk = SHORTCUTS.find((s) => s.keys === 'j / k')
-    expect(jk?.scope).toBe('Symbol')
+    expect(jk?.scope).toBe('Anywhere the list is shown')
     expect(SHORTCUTS.every((s) => s.scope.length > 0)).toBe(true)
   })
 })

@@ -19,11 +19,12 @@
  * its own at the same edge. It is the Copilot's second avatar: the rail opens
  * the Desk (a page), the top bar opens this (not a place).
  */
-import { Suspense, createElement, lazy } from 'react'
+import { Suspense, createElement, lazy, useMemo } from 'react'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { InSurfaceContext } from '@/lib/surfaceScope'
+import { InSurfaceContext, SurfaceSubjectContext, type SurfaceSubject } from '@/lib/surfaceScope'
+import { useCarriedSymbol } from '@/lib/symbolContext'
 import { surfacePageFor } from './surfacePages'
-import type { Surface } from './equipSurface'
+import { setSubjectLock, type Surface } from './equipSurface'
 import { SurfaceLocation } from './SurfaceLocation'
 import css from './equipSurface.module.css'
 
@@ -75,6 +76,19 @@ export function SurfaceBody({ surface }: { surface: Surface }) {
   // identity is stable and React reconciles them as the same type — the
   // rule's concern does not apply, and this is the spelling that says so.
   const page = Page ? createElement(Page) : null
+  const carried = useCarriedSymbol()
+  const locked = surface.subject === 'lock'
+  const subject: SurfaceSubject | null = useMemo(
+    () =>
+      surface.subject
+        ? {
+            locked,
+            follow: () => setSubjectLock(surface.key, null),
+            lock: () => setSubjectLock(surface.key, carried),
+          }
+        : null,
+    [surface.subject, surface.key, locked, carried],
+  )
 
   return (
     <ErrorBoundary key={surface.key}>
@@ -91,10 +105,15 @@ export function SurfaceBody({ surface }: { surface: Surface }) {
               <SurfaceLocation
                 key={surface.intent?.n ?? 0}
                 path={surface.to}
-                lockedSymbol={surface.subject === 'lock' ? surface.symbol : undefined}
-                initialSearch={surface.intent ? `?tab=${surface.intent.tab}` : ''}
+                lockedSymbol={locked ? surface.symbol : undefined}
+                onRelock={(sym) => setSubjectLock(surface.key, sym)}
+                initialSearch={
+                  surface.intent
+                    ? `?${new URLSearchParams({ tab: surface.intent.tab, ...surface.intent.params }).toString()}`
+                    : ''
+                }
               >
-                {page}
+                <SurfaceSubjectContext.Provider value={subject}>{page}</SurfaceSubjectContext.Provider>
               </SurfaceLocation>
             ) : page ? (
               page

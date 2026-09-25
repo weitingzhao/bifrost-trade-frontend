@@ -36,6 +36,9 @@ export interface DockContractIn {
   thirdTone?: ThirdTone
   /** Part of a multi-leg structure (opens Payoff rather than Strikes). */
   multi?: boolean
+  /** The strike and side, so the Symbol panel can land on the row lit. */
+  strike?: number
+  right?: 'C' | 'P'
 }
 
 export interface DockRowIn {

@@ -31,6 +31,7 @@ import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { ContractCandles, OiMini, SmileMini } from './symbolChainCharts'
 import {
   LADDER_COLUMNS,
+  cardExpiries,
   ladderRows,
   maxPain,
   oiTotals,
@@ -125,7 +126,8 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,
   })
-  const expiries = (expQ.data ?? []).slice(0, 5)
+  const handed = urlParams.get('expiration')
+  const { expiries, handedMissing } = cardExpiries(expQ.data, handed)
   const fitQ = useVolSurfaceFit(sym)
   const fitByExpiry = new Map((fitQ.data ?? []).map((r) => [r.expiry, r]))
 
@@ -226,6 +228,12 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
             {atmIv != null ? ` · ATM IV ${(atmIv * 100).toFixed(1)}` : ''}
           </span>
         </header>
+        {handedMissing ? (
+          <p className="m-0 border-b border-border px-3 py-1.5 text-dense-meta text-warning">
+            {handed} is not a listed expiry in the snapshot store for {sym} — showing the nearest instead, so the
+            strike lit below is not the contract you picked.
+          </p>
+        ) : null}
         {loading ? (
           <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">Reading the listed expiries…</p>
         ) : expiries.length === 0 ? (

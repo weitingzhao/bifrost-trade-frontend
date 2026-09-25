@@ -152,3 +152,19 @@ export function richToSvi(
   }
   return best && best.pts > 0 ? best : null
 }
+
+/**
+ * The expiry cards: the five nearest listed, plus the one a link handed over
+ * (a Symbol-list contract row, the Dealer face's ⇢) when it is listed further
+ * out — landing on the nearest instead would light the same strike on a
+ * different contract. `handedMissing` when the store does not list it at all.
+ */
+export function cardExpiries(
+  listed: readonly string[] | undefined,
+  handed: string | null,
+): { expiries: string[]; handedMissing: boolean } {
+  const all = listed ?? []
+  const expiries = all.slice(0, 5)
+  if (handed && all.includes(handed) && !expiries.includes(handed)) expiries.push(handed)
+  return { expiries, handedMissing: Boolean(handed && listed && !all.includes(handed)) }
+}

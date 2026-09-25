@@ -16,7 +16,7 @@
  */
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Button, HealthLamp } from '@bifrost/ui'
 import { fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
 import { fetchSepaScreenerWide } from '@/api/research/sepaScreenerWide'
@@ -84,7 +84,13 @@ export default function LabSymbolPage() {
   const { symbol } = useResearchContext()
   const sym = symbol.trim().toUpperCase()
   const today = todayIso()
-  const [tab, setTab] = useState<LabTab>('surface')
+  // The Symbol page's Method switch carries the face you were reading
+  // (design `_Part Face` `method-to`, Rev .56): `?tab=whatif` lands on What-if.
+  const [params] = useSearchParams()
+  const [tab, setTab] = useState<LabTab>(() => {
+    const t = params.get('tab')
+    return t === 'whatif' || t === 'method' ? t : 'surface'
+  })
   const [userExpiry, setUserExpiry] = useState<string | null>(null)
   const [override, setOverride] = useState<SviParams | null>(null)
   const [struct, setStruct] = useState<WhatIfStructure>('strangle')

@@ -41,13 +41,34 @@ export interface NarrativeSources {
   tenk: { section: string; filings: number; names: number; latest_period: string | null }[]
 }
 
+/**
+ * One name's 8-K rows on file, all time (research 0.112.0+, only when the read
+ * was narrowed with `symbol`). Zero means the feed has never carried the name —
+ * which is not the same fact as "nothing filed this week".
+ */
+export interface NarrativeSymbolCoverage {
+  symbol: string
+  filings: number
+  first_filed: string | null
+  last_filed: string | null
+}
+
 export interface NarrativeReading {
   as_of: string | null
   window_days: number
   truncated: boolean
   sources: NarrativeSources
+  /** Absent before research 0.112.0; null on a read of every name. */
+  symbol_coverage?: NarrativeSymbolCoverage | null
   tags: NarrativeTag[]
   count: number
+}
+
+export interface NarrativeQuery {
+  /** One name only (research 0.112.0+). */
+  symbol?: string
+  /** Rows the server may return before it says `truncated`; its default is 400, its cap 2000. */
+  limit?: number
 }
 
 interface Envelope<T> {
@@ -57,8 +78,11 @@ interface Envelope<T> {
 
 const validateNarrative = withValidation<Envelope<unknown>>(ResearchEnvelopeSchema, 'research/narrative')
 
-export async function fetchNarrative(days: number): Promise<NarrativeReading> {
-  const res = await fetch(researchEngineUrl(`/research/narrative?days=${days}`))
+export async function fetchNarrative(days: number, q: NarrativeQuery = {}): Promise<NarrativeReading> {
+  const params = new URLSearchParams({ days: String(days) })
+  if (q.symbol) params.set('symbol', q.symbol)
+  if (q.limit != null) params.set('limit', String(q.limit))
+  const res = await fetch(researchEngineUrl(`/research/narrative?${params.toString()}`))
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText)
     throw new Error(`narrative: ${res.status} ${text.slice(0, 200)}`)

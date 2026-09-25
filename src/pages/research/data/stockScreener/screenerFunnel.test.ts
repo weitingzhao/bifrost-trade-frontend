@@ -68,6 +68,26 @@ describe('FUNNEL_STAGES', () => {
       'trend',
       'growth',
       'momentum',
+      'catalyst',
+    ])
+  })
+
+  it('keeps a live stage’s dead chips in place, each with its reason', () => {
+    // Catalyst went half live at Rev .43: the four SEC 8-K chips count, the
+    // five Event Radar chips still have no source and say why.
+    const catalyst = FUNNEL_STAGES.find((s) => s.id === 'catalyst')
+    const dead = catalyst?.chips.filter((c) => c.missing != null) ?? []
+    expect(dead.map((c) => c.id)).toEqual(['earn_gt_10d', 'earn_10_30d', 'earn_lt_10d', 'news_theme', 'no_event_30d'])
+    for (const c of dead) expect(c.missing?.length).toBeGreaterThan(40)
+  })
+
+  it('marks the design’s four 8-K conditions as the narrative column, and nothing else', () => {
+    const narrative = FUNNEL_STAGES.flatMap((s) => s.chips.filter((c) => c.narrative != null).map((c) => [s.id, c.id]))
+    expect(narrative).toEqual([
+      ['catalyst', 'n8k_202_7d'],
+      ['catalyst', 'n8k_101_7d'],
+      ['catalyst', 'n8k_502_7d'],
+      ['catalyst', 'n8k_any_7d'],
     ])
   })
 })

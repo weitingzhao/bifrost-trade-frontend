@@ -48,6 +48,7 @@ import { SymbolOriginRail } from '@/pages/research/analyze/symbol/SymbolOriginRa
 import { SymbolRecordRail } from '@/pages/research/analyze/symbol/SymbolRecordRail'
 import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
 import { SymbolVerdictPanel } from '@/pages/research/analyze/symbol/SymbolVerdictPanel'
+import { SymbolNarrativePanel } from '@/pages/research/analyze/symbol/SymbolNarrativePanel'
 import { useSymbolFaces } from '@/pages/research/analyze/symbol/useSymbolFaces'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
 import { SymbolVolatilityFace } from '@/pages/research/analyze/symbol/SymbolVolatilityFace'
@@ -208,6 +209,8 @@ export default function SymbolPage() {
             {symbol ? (
               <aside className="flex min-w-0 flex-[1_1_18rem] flex-col gap-3 lg:max-w-[22rem]">
                 <SymbolVerdictPanel symbol={symbol} thesis={thesis} />
+                {/* Rev .43: under the verdict, dashed — beside it, never in it. */}
+                <SymbolNarrativePanel symbol={symbol} />
                 <SymbolSinceSnapshot symbol={symbol} />
                 <SymbolRecordRail
                   symbol={symbol}

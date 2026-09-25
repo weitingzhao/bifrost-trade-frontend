@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { edgeCount, filterByPath, wiringRows } from './wiringRows'
+import { edgeCount, filterByPath, personaPathReading, wiringRows } from './wiringRows'
 
 const AGENTS = ['discovery', 'analyze', 'verdict', 'loop_curator', 'explain']
 
@@ -29,5 +29,24 @@ describe('filterByPath', () => {
     // `chain`, so a chat filter must not show it.
     expect(filterByPath(rows, 'chat').map((r) => r.agent)).not.toContain('loop_curator')
     expect(edgeCount(filterByPath(rows, 'all'))).toBeGreaterThan(edgeCount(filterByPath(rows, 'batch')))
+  })
+})
+
+describe('personaPathReading', () => {
+  it('names the path the API reports, and where the reading came from', () => {
+    expect(personaPathReading({ version: '0.112.0', persona_eval_agents: true }, false).value).toBe('agents')
+    const h = personaPathReading({ version: '0.112.0', persona_eval_agents: false }, false)
+    expect(h.value).toBe('heuristic')
+    expect(h.note).toMatch(/^live · research \/health/)
+  })
+
+  it('says an older API does not report it, rather than assuming the default', () => {
+    const r = personaPathReading({ version: '0.111.0' }, false)
+    expect(r.value).toBe('—')
+    expect(r.note).toContain('0.111.0')
+  })
+
+  it('reads nothing when /health fails', () => {
+    expect(personaPathReading(undefined, true).value).toBe('—')
   })
 })

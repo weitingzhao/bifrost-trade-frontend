@@ -38,7 +38,7 @@ describe('the four classes', () => {
   it('names the store a page owes instead of showing a zero', () => {
     // Owing a store is not having none: a screen is an object you fork and
     // cite, so something should be keeping it.
-    for (const to of ['/research/screener', '/research/contract-screener', '/research/symbol', '/research/narrative', '/research/signal-decay']) {
+    for (const to of ['/research/screener', '/research/contract-screener', '/research/symbol', '/research/signal-decay']) {
       expect(by(to).storeState, to).toBe('store-owed')
       expect(by(to).made, to).toBeNull()
       expect(by(to).store, to).toBeTruthy()
@@ -49,7 +49,7 @@ describe('the four classes', () => {
   it('tells a page that owes nothing from one that owes a store', () => {
     // Compare assembles; History recomputes a denominator. Nobody names one
     // run of either again, so neither owes a record of it.
-    for (const to of ['/research/compare', '/research/history']) {
+    for (const to of ['/research/compare', '/research/history', '/research/narrative']) {
       expect(by(to).storeState, to).toBe('no-store-owed')
       expect(by(to).note, to).toMatch(/no store owed/)
     }
@@ -76,13 +76,13 @@ describe('the four classes', () => {
   it('does not count order flow as Narrative', () => {
     // Until 2026-09-23 this row read `/research/flow/sentiment` — options
     // order flow, no text — and called Narrative the one Analyze page with a
-    // store. It still owes one: since 2026-09-25 the filings are ingested and
-    // the page reads them live, but no tag is kept as an object to cite.
+    // store. Since Rev .43 (Q8) it owes none: the filings are ingested and
+    // the page reads its tags live, keeping no tag as an object to cite.
     const narrative = by('/research/narrative')
     expect(narrative.made).toBeNull()
-    expect(narrative.store).toBe('narrative_tag')
-    expect(narrative.storeState).toBe('store-owed')
-    expect(narrative.note).toMatch(/8-K \/ 10-K text is in/)
+    expect(narrative.store).toBeNull()
+    expect(narrative.storeState).toBe('no-store-owed')
+    expect(narrative.note).toBe('no store owed · 8-K / 10-K text is in · tags read live, not kept')
   })
 })
 

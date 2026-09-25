@@ -19,10 +19,11 @@
  * later* — one you fork, compare, or cite as another product's origin.
  *
  *   has-store      Stock ratings · Vol ratings · Backtest
- *   store-owed     Stock screen · Option screen · Symbol · Narrative ·
- *                  Signal decay
+ *   store-owed     Stock screen · Option screen · Symbol · Signal decay
  *   no-store-owed  Compare (assembles only) · History (recomputes a
- *                  denominator; nobody names one run of it again)
+ *                  denominator; nobody names one run of it again) ·
+ *                  Narrative (tags are read live off the filings, not kept —
+ *                  Owner via design Rev .43 Q8)
  *   off-bench      Alerts — it belongs to Home › Alerts, so it keeps a row
  *                  and stays out of every denominator
  *
@@ -123,11 +124,10 @@ const SPECS: readonly Spec[] = [
   { to: '/research/event-radar', label: 'Alerts', station: 'off-bench', store: null, storeState: 'off-bench', note: 'off this bench — Home › Alerts' },
   { to: '/research/symbol', label: 'Symbol', station: 'analyze', store: 'symbol_verdict', storeState: 'store-owed', note: 'store owed — a verdict is cited as a hypothesis’s origin' },
   // The two rows the design redrew at Rev 2026-09-23.24, answering this side's
-  // ask: their notes are the design's own words — except Narrative's reason,
-  // which was "8-K / 10-K ingest pending release" and stopped being true when
-  // the ingest shipped and the page was built on it (2026-09-25). The store is
-  // still owed: the page reads the filings live and keeps no tag as an object.
-  { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: 'narrative_tag', storeState: 'store-owed', note: 'store owed · the 8-K / 10-K text is in; tags are read live, not kept' },
+  // ask: their notes are the design's own words. Narrative's changed class at
+  // Rev .43 (Q8, Owner): its tags are read live off the filings and never kept,
+  // so like Compare and History it owes no store — the words are the design's.
+  { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed · 8-K / 10-K text is in · tags read live, not kept' },
   { to: '/research/compare', label: 'Compare', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed · 3 inputs owed: quotes · 20d distribution · regime record' },
   { to: '/research/history', label: 'History', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed — it recomputes a denominator nobody names again' },
   { to: '/research/signal-decay', label: 'Signal decay', station: 'validate', store: 'decay_check', storeState: 'store-owed', note: 'store owed — a page that declares a signal dead should hold the certificate' },
@@ -149,8 +149,8 @@ const APP_ROUTES: ReadonlySet<string> = new Set(ROUTES.map((r) => r.path))
  * Nine of these tokens are the Symbol page's own faces — `/research/symbol`
  * absorbed six pages, so a hypothesis saved from its volatility, dealer,
  * scenario or flow face came out of Symbol. Narrative has no token because
- * its page is not built: nothing can stamp it yet, which is what its row
- * already says.
+ * nothing on its page saves a hypothesis or asks the Copilot, so nothing
+ * stamps it.
  */
 const STAMP_ROW: Record<string, string> = {
   'analysis-model': '/research/symbol',

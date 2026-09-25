@@ -32,19 +32,36 @@
  *              ids. So this is no data for these conditions, not a broken
  *              endpoint. That distinction cost a cross-check to establish and
  *              is the only reason the row can say which.
- *   Catalyst   no condition ids on this side and no endpoint. The earnings
- *              window would come from the event feeds.
+ *   Catalyst   half live since Rev .43. The five Event Radar conditions have
+ *              no condition ids on this side and no endpoint (the earnings
+ *              window would come from the event feeds); the four SEC 8-K
+ *              conditions the design added are counted from
+ *              `/research/narrative?days=7`, which returns the whole window in
+ *              one read (216 rows on 2026-09-25, cap 2000). Those four are the
+ *              narrative column: they cut like any condition and never enter a
+ *              composite, and the 8-K text covers the plugin's names (606),
+ *              not the universe — a name outside it never passes one.
  *   Options    the same: IV rank, VRP and OI liquidity have no screen ids here.
  *
  * A stage with no data keeps its place and names what is missing. Dropping it
  * would make the funnel read as if seven stages had been applied.
  */
 
+import { NARRATIVE_CONDITIONS } from '@/lib/research/narrativeItems'
+
 export type StageMode = 'min' | 'any' | 'all'
 
 export interface FunnelChip {
   id: string
   label: string
+  /** Why nothing counts this one chip, when the rest of its stage is live. */
+  missing?: string
+  /**
+   * The design's own sentence for a narrative-column condition (an SEC 8-K
+   * item). Its presence is what marks the chip `narrative` — dashed, prefixed,
+   * and never enough on its own to start a screen (Narrative page, rule 4).
+   */
+  narrative?: string
 }
 
 export interface FunnelStage {
@@ -65,6 +82,9 @@ export interface FunnelStage {
    */
   missing: string | null
 }
+
+const EVENT_RADAR_MISSING =
+  'No screen condition on this side carries an earnings window or a theme — the event feeds are read per symbol, never across the universe.'
 
 /** The seven stages, in the prototype's order. Ids mirror the app's catalog. */
 export const FUNNEL_STAGES: readonly FunnelStage[] = [
@@ -158,16 +178,16 @@ export const FUNNEL_STAGES: readonly FunnelStage[] = [
   {
     id: 'catalyst',
     title: 'Catalyst window',
-    mode: 'any selected · Event Radar',
+    mode: 'any selected · Event Radar + SEC 8-K',
     kind: 'any',
-    missing:
-      'No screen condition on this side carries an earnings window or a theme — the event feeds are read per symbol, never across the universe.',
+    missing: null,
     chips: [
-      { id: 'earn_gt_10d', label: 'Earnings > 10 days out' },
-      { id: 'earn_10_30d', label: 'Earnings in 10–30 days' },
-      { id: 'earn_lt_10d', label: 'Earnings < 10 days' },
-      { id: 'news_theme', label: 'In a live theme' },
-      { id: 'no_event_30d', label: 'No event 30 days' },
+      { id: 'earn_gt_10d', label: 'Earnings > 10 days out', missing: EVENT_RADAR_MISSING },
+      { id: 'earn_10_30d', label: 'Earnings in 10–30 days', missing: EVENT_RADAR_MISSING },
+      { id: 'earn_lt_10d', label: 'Earnings < 10 days', missing: EVENT_RADAR_MISSING },
+      { id: 'news_theme', label: 'In a live theme', missing: EVENT_RADAR_MISSING },
+      { id: 'no_event_30d', label: 'No event 30 days', missing: EVENT_RADAR_MISSING },
+      ...NARRATIVE_CONDITIONS.map((c) => ({ id: c.id, label: c.label, narrative: c.desc })),
     ],
   },
   {

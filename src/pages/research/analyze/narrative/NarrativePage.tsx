@@ -11,12 +11,12 @@
  * owed rather than drawing them empty.
  */
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { PageHeader, PageShell } from '@/components/layout'
 import { AsofTag } from '@/components/AsofTag'
 import { SegmentControl } from '@/components/data-display'
-import { fetchNarrative, type NarrativeTag } from '@/api/research/narrative'
+import type { NarrativeTag } from '@/api/research/narrative'
+import { useNarrativeWindow } from '@/hooks/useNarrative'
 import { fmtIsoDateToken } from '@/lib/format'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
@@ -63,11 +63,7 @@ function measuredText(t: NarrativeTag): string {
 export default function NarrativePage() {
   const [kind, setKind] = useState<Kind>('all')
   const [days, setDays] = useState('7')
-  const q = useQuery({
-    queryKey: ['research', 'narrative', days],
-    queryFn: () => fetchNarrative(Number(days)),
-    staleTime: 5 * 60_000,
-  })
+  const q = useNarrativeWindow(Number(days))
   const data = q.data
   const src = data?.sources
   const riskSection = src?.tenk.find((s) => s.section === 'risk_factors')

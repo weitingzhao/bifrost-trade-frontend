@@ -156,7 +156,8 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'glance \u2014 and two renderings of one graph should not both be the first thing. '
     + 'One divergence, and the gate found it: the design\u2019s runtime fold points at **System '
     + 'Status**, a page this side has not collapsed into one \u2014 the link goes to System \u203a Daemon, '
-    + 'which holds that reading here. Owner signed off 2026-09-21.',
+    + 'which holds that reading here. Owner signed off 2026-09-21.'
+    + ' Rev 2026-09-25.48 (Q1, option B) moved the persona-path reading here and off System Status: **Persona eval path** under How it is wired now reads research `/health · persona_eval_agents` (0.112.0+) live — `agents` on DEV, where research-api sets the flag. An older API is said to not report it rather than read as the heuristic. Diverged, named: the prototype’s note ends `never a prod default`, and DEV’s research-api sets the flag, so the line says only that the code’s default is the heuristic. The design did not move this page’s rev, so it stays signed.',
   '/research/agent-personas':
     'Walked 2026-09-15 against Research Copilot.dc.html (Personas) plus C2-b Tools/Cannot. Origin sentence and default chip rewritten 2026-09-15 (G2): answers go through triage first; the chip is a page default until then; this page does not pick the live stream. Owner signed off on STG 2026-09-15 after L1/L2. Rev 2026-09-18.2 adds the Track record table — you · hand verdicts beside the four judges, same 20d rule, n<10 amber — so the sign-off reads stale until W2 builds the verdict store and the table over it.'
     + ' '

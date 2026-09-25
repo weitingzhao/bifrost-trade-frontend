@@ -261,10 +261,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // rev is the package's own label at the walk; the design did not bump it
     // for the 2026-09-13 and 2026-09-14 rounds. Built 2026-09-24: the seventh
     // face, Payoff — the one tab this side had deliberately withheld until
-    // there was data behind it. Waiting for the Owner's look.
+    // there was data behind it. Signed, then Rev .43 added the Narrative
+    // panel to the Overview rail; built 2026-09-25, waiting for a look.
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.2',
+      state: 'reviewing',
+      rev: '2026-09-25.43',
       note: DESIGN_NOTES['/research/symbol'],
     },
   },
@@ -303,7 +304,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     design: {
       state: 'reviewing',
-      rev: '2026-09-23.24',
+      rev: '2026-09-25.43',
       note: DESIGN_NOTES['/research/narrative'],
     },
   },
@@ -477,9 +478,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/screener',
     label: 'Stock screen',
     crumbs: DISCOVER,
+    // Signed at .20.10; Rev .43 added four narrative conditions to the
+    // Catalyst stage, built 2026-09-25 and waiting for a look.
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.10',
+      state: 'reviewing',
+      rev: '2026-09-25.43',
       note: DESIGN_NOTES['/research/screener'],
     },
   },

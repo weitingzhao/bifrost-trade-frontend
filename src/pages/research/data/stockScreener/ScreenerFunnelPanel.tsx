@@ -6,9 +6,13 @@
  * told you which condition is doing the work, and a list of checkboxes has
  * not.
  *
- * Two of the seven are live here; the other five keep their place and say what
- * is missing. See `screenerFunnel.ts` for what was measured and why each is
- * marked rather than dropped.
+ * Three of the seven are live here and Catalyst is half live; the rest keep
+ * their place and say what is missing. See `screenerFunnel.ts` for what was
+ * measured and why each is marked rather than dropped.
+ *
+ * Catalyst's four SEC 8-K chips are the narrative column (Rev .43): dashed and
+ * prefixed so they read as their own kind, counted like any chip, and never
+ * enough on their own to start a screen.
  */
 import { SECTION_CAP_CLASS } from '@/components/layout'
 import { cn } from '@/lib/utils'
@@ -17,6 +21,7 @@ import {
   chipCount,
   funnelReadings,
   type ConditionCount,
+  type FunnelChip,
   type StageReading,
 } from './screenerFunnel'
 
@@ -48,10 +53,34 @@ export interface FunnelPanelProps {
   runBusy?: boolean
   /** What the last run put in Results, when it has run. */
   ranCount?: number | null
+  /**
+   * Why Run is refused although something is picked — a screen of narrative
+   * conditions alone (a nomination needs one measured condition, Narrative
+   * page rule 4). Null when Run is allowed.
+   */
+  runBlocked?: string | null
+  /** Names the SEC 8-K feed carries, for the narrative chips' titles. */
+  narrativeCoverage?: number | null
 }
 
 function fmt(n: number | null): string {
   return n == null ? '—' : n.toLocaleString()
+}
+
+function chipTitle(
+  c: FunnelChip,
+  n: number | null,
+  universe: number | null,
+  coverage: number | null | undefined,
+  stageMissing: string | null,
+): string {
+  if (stageMissing != null) return `${c.label} — ${stageMissing}`
+  if (c.missing != null) return `${c.label} — ${c.missing}`
+  if (n == null) return `${c.label} — nothing counts this condition`
+  const pass = `${n.toLocaleString()} of ${fmt(universe)} in universe pass`
+  if (c.narrative == null) return `${c.label} — ${n.toLocaleString()} of the universe pass it`
+  const feed = coverage == null ? '' : ` · the 8-K feed carries ${coverage.toLocaleString()} names`
+  return `${c.narrative} · SEC 8-K, by item number — narrative column, never in a composite · ${pass}${feed}`
 }
 
 function StageRow({
@@ -61,6 +90,8 @@ function StageRow({
   onMinChange,
   active,
   onToggle,
+  universe,
+  narrativeCoverage,
 }: {
   reading: StageReading
   chips: readonly ConditionCount[] | null | undefined
@@ -68,10 +99,15 @@ function StageRow({
   onMinChange: FunnelPanelProps['onMinChange']
   active: ReadonlySet<string>
   onToggle: FunnelPanelProps['onToggle']
+  universe: number | null
+  narrativeCoverage?: number | null
 }) {
   const { stage } = reading
   const dead = stage.missing != null
   const min = mins[stage.id] ?? stage.min ?? 0
+  // A stage that is live can still carry chips nothing counts (Catalyst's
+  // Event Radar five); their shared reason is said once under the chips.
+  const chipReasons = dead ? [] : [...new Set(stage.chips.flatMap((c) => (c.missing != null ? [c.missing] : [])))]
   return (
     <div
       className={cn(
@@ -113,31 +149,30 @@ function StageRow({
         </div>
         <div className="mt-1.5 flex flex-wrap gap-1">
           {stage.chips.map((c) => {
-            const n = chipCount(chips, c.id)
+            const n = c.missing != null ? null : chipCount(chips, c.id)
             const capped = chips?.find((x) => x.id === c.id)?.capped === true
             const on = active.has(c.id)
+            const off = dead || c.missing != null
             return (
               <button
                 key={c.id}
                 type="button"
-                disabled={dead}
+                disabled={off}
                 aria-pressed={on}
-                title={
-                  dead
-                    ? `${c.label} — ${stage.missing}`
-                    : n == null
-                      ? `${c.label} — nothing counts this condition`
-                      : `${c.label} — ${n.toLocaleString()} of the universe pass it`
-                }
+                title={chipTitle(c, n, universe, narrativeCoverage, stage.missing)}
                 onClick={() => onToggle(stage.id, c.id)}
                 className={cn(
                   'inline-flex items-baseline gap-1.5 rounded-sm border px-1.5 py-0.5 text-dense-meta',
-                  dead
+                  off
                     ? 'cursor-default border-border/60 text-muted-foreground'
                     : 'cursor-pointer hover:border-foreground/30',
                   on ? 'border-primary/60 bg-primary/10 text-foreground' : 'border-border',
+                  c.narrative != null && 'border-dashed',
                 )}
               >
+                {c.narrative != null ? (
+                  <span className="text-dense-micro tracking-[0.06em] text-muted-foreground">narrative</span>
+                ) : null}
                 <span>{c.label}</span>
                 <span className="font-mono text-dense-caption text-muted-foreground">
                   {capped ? `${fmt(n)}+` : fmt(n)}
@@ -151,6 +186,11 @@ function StageRow({
             {stage.missing}
           </p>
         ) : null}
+        {chipReasons.map((why) => (
+          <p key={why} className="mt-1.5 text-dense-caption leading-relaxed text-muted-foreground">
+            Greyed chips: {why}
+          </p>
+        ))}
       </div>
       <div className="text-right">
         <div
@@ -191,6 +231,8 @@ export function ScreenerFunnelPanel({
   onRun,
   runBusy,
   ranCount,
+  runBlocked,
+  narrativeCoverage,
 }: FunnelPanelProps) {
   const readings = funnelReadings(universe, stageCounts)
   const counted = readings.map((r) => r.n).filter((n): n is number => n != null)
@@ -222,12 +264,14 @@ export function ScreenerFunnelPanel({
           {onRun != null ? (
             <button
               type="button"
-              disabled={active.size === 0 || runBusy}
+              disabled={active.size === 0 || runBlocked != null || runBusy}
               onClick={onRun}
               title={
                 active.size === 0
                   ? 'Pick a condition, or load a preset from the rail'
-                  : 'The counts here are read from one endpoint; the names come from another, so this runs the second'
+                  : runBlocked != null
+                    ? runBlocked
+                    : 'The counts here are read from one endpoint; the names come from another, so this runs the second'
               }
               className="inline-flex h-5 cursor-pointer items-center rounded-sm border border-primary/50 bg-primary/10 px-2 text-dense-meta text-foreground hover:bg-primary/20 disabled:cursor-default disabled:border-border disabled:bg-transparent disabled:text-muted-foreground"
             >
@@ -250,6 +294,8 @@ export function ScreenerFunnelPanel({
             onMinChange={onMinChange}
             active={active}
             onToggle={onToggle}
+            universe={universe}
+            narrativeCoverage={narrativeCoverage}
           />
         ))
       )}

@@ -38,6 +38,14 @@ import { TierFilterCard } from './stockScreener/TierFilterCard'
 import { screenerStackColClass } from './stockScreener/stockScreenerUi'
 import { ScreenerFunnelPanel } from './stockScreener/ScreenerFunnelPanel'
 import { FUNNEL_STAGES, atLeast } from './stockScreener/screenerFunnel'
+import { useNarrativeWindow } from '@/hooks/useNarrative'
+import {
+  NARRATIVE_CONDITIONS,
+  NARRATIVE_WINDOW_DAYS,
+  isNarrativeCondition,
+  namesByCondition,
+  namesPassing,
+} from '@/lib/research/narrativeItems'
 import { SCREENER_PRESETS, PRESET_PAGE_LIMIT } from './stockScreener/screenerPresets'
 import { fetchMomentumRadar } from '@/api/researchEngine'
 import { useQuery } from '@tanstack/react-query'
@@ -283,10 +291,19 @@ export default function StockScreenerPage() {
     [],
   )
 
+  // Catalyst's SEC 8-K chips (Rev .43): one read of the whole 7-day window,
+  // asked for in full so a chip never counts a truncated page.
+  const narrQ = useNarrativeWindow(NARRATIVE_WINDOW_DAYS, { limit: 2000 })
+  const narrByCondition = useMemo(
+    () => (narrQ.data ? namesByCondition(narrQ.data.tags) : null),
+    [narrQ.data],
+  )
+  const [narrActive, setNarrActive] = useState<ReadonlySet<string>>(() => new Set())
+
   const universe = criteriaStats?.universe_count ?? null
   const funnelActive = useMemo(
-    () => new Set<string>([...filters.techCondFilter, ...filters.condFilter]),
-    [filters.techCondFilter, filters.condFilter],
+    () => new Set<string>([...filters.techCondFilter, ...filters.condFilter, ...narrActive]),
+    [filters.techCondFilter, filters.condFilter, narrActive],
   )
   const stageCounts = useMemo(
     () => ({
@@ -295,17 +312,39 @@ export default function StockScreenerPage() {
       // Every graded name the radar can reach. Two of the four grades come
       // back at the route's cap, so this is a floor — the panel says so.
       momentum: momentumQ.data?.reduce((n, g) => n + g.pass, 0) ?? null,
+      // Nothing picked passes the whole universe through, as a `min` of 0
+      // does; otherwise the names passing any picked 8-K chip.
+      catalyst:
+        narrActive.size === 0
+          ? (criteriaStats?.universe_count ?? null)
+          : narrByCondition
+            ? namesPassing(narrByCondition, narrActive).size
+            : null,
     }),
-    [criteriaStats, mins, momentumQ.data],
+    [criteriaStats, mins, momentumQ.data, narrActive, narrByCondition],
   )
   const chipCounts = useMemo(
     () => ({
       trend: criteriaStats?.technical?.conditions ?? null,
       growth: criteriaStats?.fundamental?.conditions ?? null,
       momentum: momentumQ.data ?? null,
+      catalyst: narrByCondition
+        ? NARRATIVE_CONDITIONS.map((c) => ({
+            id: c.id,
+            pass: narrByCondition.get(c.id)?.size ?? 0,
+            capped: narrQ.data?.truncated === true,
+          }))
+        : null,
     }),
-    [criteriaStats, momentumQ.data],
+    [criteriaStats, momentumQ.data, narrByCondition, narrQ.data],
   )
+  // Narrative page rule 4: an 8-K condition cuts a screen but cannot start
+  // one. Picked alone, Run says so instead of running the universe.
+  const measuredPicked = filters.techCondFilter.size + filters.condFilter.size > 0
+  const runBlocked =
+    narrActive.size > 0 && !measuredPicked
+      ? 'Narrative conditions cut a screen; they cannot start one — pick a measured condition too'
+      : null
   // The design's "no Search step" cannot be honoured literally — the counts
   // and the names come from different endpoints — so the step moves into the
   // panel and does both halves in one press.
@@ -320,20 +359,41 @@ export default function StockScreenerPage() {
         techBucket.clearActive()
         fundCond.clearActive()
         techCond.clearActive()
-        setSymbolText(symbols.join(','))
+        // The 8-K chips are the last cut, applied here: the measured screen
+        // runs server-side and knows nothing of the narrative column.
+        const kept =
+          narrActive.size > 0 && narrByCondition
+            ? (() => {
+                const pass = namesPassing(narrByCondition, narrActive)
+                return symbols.filter((sym) => pass.has(sym.toUpperCase()))
+              })()
+            : symbols
+        setSymbolText(kept.join(','))
       }
     } finally {
       setRunBusy(false)
     }
-  }, [filters, fundBucket, techBucket, fundCond, techCond])
+  }, [filters, fundBucket, techBucket, fundCond, techCond, narrActive, narrByCondition])
 
   const toggleFunnelChip = useCallback(
     (stageId: string, conditionId: string) => {
       if (stageId === 'trend') filters.toggleTechCondFilter(conditionId)
       else if (stageId === 'growth') filters.toggleCondFilter(conditionId)
+      else if (stageId === 'catalyst' && isNarrativeCondition(conditionId)) {
+        setNarrActive((prev) => {
+          const next = new Set(prev)
+          if (next.has(conditionId)) next.delete(conditionId)
+          else next.add(conditionId)
+          return next
+        })
+      }
     },
     [filters],
   )
+  const clearFunnel = useCallback(() => {
+    filters.clearAllFilters()
+    setNarrActive(new Set())
+  }, [filters])
 
   return (
     <PageShell className="flex w-full min-w-0 flex-col gap-2">
@@ -435,11 +495,13 @@ export default function StockScreenerPage() {
             onMinChange={(id, next) => setMins((m) => ({ ...m, [id]: next }))}
             active={funnelActive}
             onToggle={toggleFunnelChip}
-            onClearAll={filters.clearAllFilters}
+            onClearAll={clearFunnel}
             loading={criteriaLoading}
             onRun={() => void runFunnel()}
             runBusy={runBusy || filters.filterLoading}
             ranCount={readiness.symbols.length > 0 ? readiness.symbols.length : null}
+            runBlocked={runBlocked}
+            narrativeCoverage={narrQ.data?.sources.filings_8k.names ?? null}
           />
         </div>
 

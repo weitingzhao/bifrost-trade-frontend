@@ -35,6 +35,19 @@ export const ResearchEnvelopeSchema = z
   })
   .passthrough()
 
+/**
+ * Research `/health` (not enveloped). `persona_eval_agents` is 0.112.0+ and
+ * optional here: an older API simply does not report it.
+ */
+export const ResearchHealthSchema = z
+  .object({
+    status: z.string(),
+    version: z.string(),
+    domain: z.string().optional(),
+    persona_eval_agents: z.boolean().optional(),
+  })
+  .passthrough()
+
 // ── Copilot ─────────────────────────────────────────────────────────────
 // Highest blast radius: the Copilot panel is mounted in AppLayout, so it is
 // live on every page of the app, Trade pages included.

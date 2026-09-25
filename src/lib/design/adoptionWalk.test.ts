@@ -172,8 +172,10 @@ describe('the design walk, as it stands', () => {
     // 64 on 2026-09-24: Live, after the narrow-surface round. 67 later the
     // same day: the Owner signed Events (after the fed rounds), Positions
     // (the §16 north-star page) and Alerts — whose rail entry navigated
-    // nowhere until the same round fixed it.
-    expect(counts.aligned + counts.byState.stale).toBe(67)
+    // nowhere until the same round fixed it. 65 on 2026-09-25: Package .11
+    // @ Rev .43 moved Stock screen and Symbol, both re-walked the same day and
+    // waiting in `reviewing`, where a signed page goes back when it is rebuilt.
+    expect(counts.aligned + counts.byState.stale).toBe(65)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -191,14 +193,15 @@ describe('the design walk, as it stands', () => {
     // 67 later that day with Events, Positions and Alerts. 65 on 2026-09-25:
     // Package .11 @ Rev .43 moved two signed pages' own revs — the Stock
     // screen's Catalyst stage gained four narrative conditions and Symbol's
-    // Overview a Narrative panel — so both read stale until they are re-walked.
+    // Overview a Narrative panel — so both read stale until they were
+    // re-walked the same day, and wait for a look in `reviewing`.
     expect(counts.aligned).toBe(65)
     expect(
       rows
         .filter((r) => r.state === 'stale')
         .map((r) => r.path)
         .sort()
-    ).toEqual(['/research/screener', '/research/symbol'])
+    ).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -427,7 +430,8 @@ describe('the design walk, as it stands', () => {
     // 2026-09-24 with Research Overview; 10 on 2026-09-24 with Live; 7 later
     // that day, the Owner signing Events, Positions and Alerts out of it. 8 on
     // 2026-09-25 with Narrative, built once its store (the 8-K text) existed.
-    expect(counts.byState.reviewing).toBe(8)
+    // 10 the same day: Stock screen and Symbol, re-walked at Rev .43.
+    expect(counts.byState.reviewing).toBe(10)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -513,7 +517,9 @@ describe('the design walk, as it stands', () => {
       '/research/lab/discover-model',
       '/research/lens-coverage',
       '/research/narrative',
+      '/research/screener',
       '/research/signal-health',
+      '/research/symbol',
       '/settings',
       '/system/status',
     ])
@@ -757,9 +763,9 @@ describe('the design walk, as it stands', () => {
     // north-star rev and waiting the same way. 2 → 0 with Live and Alerts,
     // built into the rail's Market group (Rev .7): for the first time since
     // Package 2026-09-23.2 nothing walked is behind its rev. 0 → 2 with
-    // Package .11 @ Rev .43: Stock screen and Symbol, each re-walked in the
-    // round that builds the narrative pieces the design added to them.
-    expect(counts.byState.stale).toBe(2)
+    // Package .11 @ Rev .43: Stock screen and Symbol; 2 → 0 the same day,
+    // both re-walked with the narrative pieces the design added to them.
+    expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

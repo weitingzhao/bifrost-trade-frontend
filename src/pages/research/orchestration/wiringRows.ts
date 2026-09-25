@@ -51,3 +51,33 @@ export function filterByPath(rows: readonly WiringRow[], path: PathFilter): Wiri
 export function edgeCount(rows: readonly WiringRow[]): number {
   return rows.reduce((n, r) => n + r.invokedBy.length + r.calls.length, 0)
 }
+
+export interface PersonaPathReading {
+  /** `agents` · `heuristic`, or `—` when nothing says which. */
+  value: string
+  /** Where the reading came from, or why there is none. */
+  note: string
+}
+
+/**
+ * "Persona eval path" under How it is wired (design Rev .48 Q1): read live
+ * from research `/health · persona_eval_agents`. A research API older than
+ * 0.112.0 does not report it, and that is said rather than guessed — the
+ * heuristic is the code's default, not a reading.
+ */
+export function personaPathReading(
+  health: { version: string; persona_eval_agents?: boolean } | undefined,
+  failed: boolean,
+): PersonaPathReading {
+  if (failed) return { value: '—', note: 'research /health did not answer' }
+  if (health == null) return { value: '—', note: 'reading research /health…' }
+  if (health.persona_eval_agents == null) {
+    return { value: '—', note: `research ${health.version} does not report it — 0.112.0 and later do` }
+  }
+  const src = `live · research /health · persona_eval_agents = ${String(health.persona_eval_agents)}`
+  return health.persona_eval_agents
+    ? { value: 'agents', note: `${src} — this API process; the harness CronJob sets its own copy` }
+    : // The design adds "never a prod default"; DEV's research-api sets the
+      // flag, so the line says only what holds everywhere.
+      { value: 'heuristic', note: `${src} — agents need BIFROST_PERSONA_EVAL_AGENTS=1; the code's default is the heuristic` }
+}

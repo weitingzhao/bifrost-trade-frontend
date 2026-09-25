@@ -31,9 +31,12 @@ import {
 import {
   edgeCount,
   filterByPath,
+  personaPathReading,
   wiringRows,
   type PathFilter,
 } from '@/pages/research/orchestration/wiringRows'
+import { useQuery } from '@tanstack/react-query'
+import { fetchResearchHealth } from '@/api/research/health'
 import { cn } from '@/lib/utils'
 
 const LEAD =
@@ -168,6 +171,12 @@ export default function OrchestrationPage() {
   const rows = useMemo(() => wiringRows(agents.map((a) => a.agent_name)), [agents])
   const shown = useMemo(() => filterByPath(rows, path), [rows, path])
   const edges = edgeCount(shown)
+  const healthQ = useQuery({
+    queryKey: ['research', 'health'],
+    queryFn: fetchResearchHealth,
+    staleTime: 60_000,
+  })
+  const personaPath = personaPathReading(healthQ.data, healthQ.isError)
   const toPersona = (name: string) =>
     navigate(`/research/agent-personas?agent=${encodeURIComponent(name)}`)
 
@@ -347,7 +356,7 @@ export default function OrchestrationPage() {
 
           <Fold
             title="How it is wired"
-            note="— runtime facts, mirrored from System Status, not operated here"
+            note="— runtime facts, read live, not operated here"
           >
             <dl className="m-0 grid grid-cols-1 gap-x-6 gap-y-1.5 px-3 py-2.5 text-dense-meta sm:grid-cols-[auto_minmax(0,1fr)]">
               <dt className="text-muted-foreground">SDK</dt>
@@ -356,21 +365,12 @@ export default function OrchestrationPage() {
               <dd className="m-0 font-mono">{ORCHESTRATION_RUNTIME.transport}</dd>
               <dt className="text-muted-foreground">Tool server</dt>
               <dd className="m-0 font-mono">{ORCHESTRATION_RUNTIME.mcpServer}</dd>
-              <dt className="text-muted-foreground">Persona eval</dt>
+              {/* Rev .48 Q1 (B): read live here, not on System Status — Status
+                  keeps its three questions, and changing the flag is Ops'. */}
+              <dt className="text-muted-foreground">Persona eval path</dt>
               <dd className="m-0">
-                <span className="font-mono">BIFROST_PERSONA_EVAL_AGENTS=1</span> turns the agent
-                path on; without it a persona is evaluated by the heuristic. Which one is running is
-                a deployment reading — the research harness&rsquo;s environment — and{' '}
-                {/* The design puts it on System Status, whose three rows do not
-                    carry it, and System › Daemon never did: it is plain text
-                    until a page reads it, rather than a link to one that does not. */}
-                <span
-                  className="text-foreground/80"
-                  title="The design places this reading on System Status; its three rows do not carry it yet."
-                >
-                  no page reads it yet
-                </span>
-                .
+                <span className="font-mono">{personaPath.value}</span>{' '}
+                <span className="text-muted-foreground">· {personaPath.note}</span>
               </dd>
               <dt className="text-muted-foreground">Orders</dt>
               <dd className="m-0">

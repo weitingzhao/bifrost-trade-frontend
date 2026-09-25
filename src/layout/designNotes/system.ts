@@ -51,8 +51,4 @@ export const SYSTEM_NOTES: Record<string, string> = {
     'Removed by design Rev 2026-09-15.13. Feed diagnosis moves to the Ops Console; the trade-facing half is the market-data row on /system/status.',
   '/system/data-readiness':
     'Removed by design Rev 2026-09-15.13. "Did the data land" is answered by Signal Health and the nightly-data row on /system/status.',
-  '/system/daemon':
-    'Removed by design Rev 2026-09-15.13. "Can I trade" survives as the trading row on /system/status; the daemon detail is Ops.',
-  '/system/socket':
-    'Removed by design Rev 2026-09-15.13 — socket state is Ops Console material; the trader sees the market-data lamp instead.',
 }

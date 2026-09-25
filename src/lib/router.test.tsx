@@ -32,8 +32,8 @@ describe('registry-derived redirects', () => {
   })
 
   it('no longer drops what the old link carried', async () => {
-    const probe = landOn('/research/risk?symbol=NVDA', '/system/daemon')
-    await waitFor(() => expect(probe.textContent).toBe('/system/daemon?symbol=NVDA'))
+    const probe = landOn('/research/risk?symbol=NVDA', '/trade/desk')
+    await waitFor(() => expect(probe.textContent).toBe('/trade/desk?symbol=NVDA'))
   })
 
   it('keeps the view the registry row names, and the hash', async () => {

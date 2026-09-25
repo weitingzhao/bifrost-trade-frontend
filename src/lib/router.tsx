@@ -436,14 +436,6 @@ export const router = createBrowserRouter([
         path: 'system/data-readiness',
         lazy: lazyPage(() => import('@/pages/research/data/StockDataPage')),
       },
-      {
-        path: 'system/daemon',
-        lazy: lazyPage(() => import('@/pages/system/DaemonStatusPage')),
-      },
-      {
-        path: 'system/socket',
-        lazy: lazyPage(() => import('@/pages/system/SocketPage')),
-      },
 
       {
         path: 'docs/design-adoption',

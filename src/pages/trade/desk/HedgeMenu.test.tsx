@@ -14,7 +14,8 @@ vi.mock('@/api/monitor', () => ({
 }))
 
 import { postFlatten, postResume, postSuspend } from '@/api/monitor'
-import { HedgeMenu, hedgeReading } from './HedgeMenu'
+import { HedgeMenu } from './HedgeMenu'
+import { hedgeFacts, hedgeReading } from './hedgeModel'
 import type { StatusResponse } from '@/types/monitor'
 
 const suspend = vi.mocked(postSuspend)
@@ -126,5 +127,40 @@ describe('hedgeReading', () => {
 
   it('does not claim paper or live when the daemon reported no summary', () => {
     expect(hedgeReading(undefined).paperTrade).toBeNull()
+  })
+})
+
+describe('the hedge daemon reading, moved from System › Daemon', () => {
+  const withAuto = (auto: Record<string, unknown>) =>
+    ({ daemon: { heartbeat: { daemon_alive: true }, trading: { auto_status: auto } } }) as unknown as StatusResponse
+
+  it("prints the daemon's own fields, and a dash where it reported nothing", () => {
+    // The shape DEV answered on 2026-09-25: booted, suspended, nothing held.
+    const facts = hedgeFacts(
+      withAuto({ trading_state: 'BOOT', symbol: null, spot: null, stock_position: null, net_delta: null, daily_hedge_count: 0, daily_pnl: 0, ts: 1790324303.14 }),
+    )
+    expect(Object.fromEntries(facts.map((f) => [f.label, f.value]))).toEqual({
+      'Trading state': 'BOOT',
+      'Symbol · spot': '—',
+      'Stock position': '—',
+      'Net Δ': '—',
+      'Hedges today': '0',
+      'Hedge P&L today': '$0.00',
+      'As of': '08:18:23Z',
+    })
+  })
+
+  it('reads a hedged name with its spot, and a loss with its sign', () => {
+    const facts = hedgeFacts(withAuto({ symbol: 'NVDA', spot: 181.5, daily_pnl: -42.1, daily_hedge_count: 3 }))
+    const v = Object.fromEntries(facts.map((f) => [f.label, f.value]))
+    expect(v['Symbol · spot']).toBe('NVDA · $181.50')
+    expect(v['Hedge P&L today']).toBe('−$42.10')
+    expect(v['Hedges today']).toBe('3')
+  })
+
+  it('shows the reading inside the menu, above the controls', async () => {
+    renderMenu()
+    await userEvent.click(screen.getByRole('button', { name: /Hedge/ }))
+    expect(screen.getByLabelText('Hedge daemon reading')).toBeTruthy()
   })
 })

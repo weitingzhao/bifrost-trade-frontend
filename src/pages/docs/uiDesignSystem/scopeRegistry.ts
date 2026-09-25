@@ -102,8 +102,6 @@ export const PROMPT_PAGES: PromptPageDef[] = [
 
   { route: '/system/coverage', label: 'Coverage', domain: 'system', pathGlobs: ['pages/system/CoveragePage.tsx', 'pages/system/coverage/**'] },
   { route: '/system/feed', label: 'Feed', domain: 'system', pathGlobs: ['pages/system/FeedPage.tsx', 'pages/system/subscribe/**'] },
-  { route: '/system/daemon', label: 'Daemon', domain: 'system', pathGlobs: ['pages/system/DaemonStatusPage.tsx', 'pages/system/daemon/**'] },
-  { route: '/system/socket', label: 'Socket', domain: 'system', pathGlobs: ['pages/system/SocketPage.tsx', 'pages/system/socket/**'] },
 
   { route: '/docs/ui-design-system', label: 'UI Design System', domain: 'system', pathGlobs: ['pages/docs/UiDesignSystemPage.tsx', 'pages/docs/uiDesignSystem/**'] },
   { route: '/docs/tech-stack', label: 'Tech Stack', domain: 'system', pathGlobs: ['pages/docs/TechStackPage.tsx'] },

@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsPanel, TabsPanelContent, TabsTrigger } from '@/components/ui/tabs'
-import { Link } from 'react-router-dom'
+import { opsConsoleHref } from '@/lib/opsConsole'
 import { PageShell } from '@/components/layout'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -54,19 +54,14 @@ export default function FeedPage() {
       <p className="text-dense-label text-muted-foreground">
         Reading only. Starting, stopping or reconnecting these services is the
         Ops platform's job —{' '}
-        <a
-          href={`${import.meta.env.VITE_OPS_CONSOLE_URL ?? 'http://127.0.0.1:5180'}/#ib-client`}
-          target="_blank"
-          rel="noreferrer"
-          className="hover:underline"
-        >
+        <a href={opsConsoleHref('ib-gateway-manage')} target="_blank" rel="noreferrer" className="hover:underline">
           Ops Console · IB Client
         </a>
-        , or the upstream block on{' '}
-        <Link to="/system/daemon" className="hover:underline">
-          Daemon
-        </Link>
-        .
+        , or{' '}
+        <a href={opsConsoleHref('satellite-bus')} target="_blank" rel="noreferrer" className="hover:underline">
+          Bus Status
+        </a>{' '}
+        for the daemon and the upstream ingest.
       </p>
 
       <Tabs defaultValue="snapshot">

@@ -130,7 +130,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     redirect: '/research/screener',
   },
-  { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
+  { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/trade/desk' },
   { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: '/research/symbol' },
   { path: '/research/vrp-lab', label: 'VRP Lab', crumbs: ANALYZE, redirect: '/research/symbol' },
   {
@@ -228,7 +228,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: PORTFOLIO,
     redirect: '/portfolio/backing#model',
   },
-  { path: '/portfolio/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
+  { path: '/portfolio/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/trade/desk' },
   // The `/settings/*` and `/operations/*` names, kept working. Bookmarks and
   // anything that linked them predate the rename and must not 404.
   // `/settings` is a page now (built 2026-09-22 against the design) — it was
@@ -264,17 +264,33 @@ export const REDIRECTS: readonly RouteEntry[] = [
   //     table is dropped (Owner): each service serves its own /docs.
   //   Platform — the three plugins' status → Ops Plugin Gallery and each
   //     plugin's manage page: stronger. Plugin alerts now open System Status.
+  //   Socket — ingest services and the IB link → Ops Bus Status (socket
+  //     matrix, IB Gateway → redis-ib → consumers) and IB Client (reconnect,
+  //     live/mock, maintenance): stronger. Its start / stop / reset of four
+  //     services — three of them the Platform IB Gateway's, which a Trade page
+  //     should not operate — and Clear leases are dropped (Owner).
+  //   Daemon — liveness, self-check, block reasons → System Status · Trading
+  //     link and Ops Bus Status: equal. The hedge daemon's own reading (trading
+  //     state, symbol · spot, position, net Δ, hedges and hedge P&L today) and
+  //     the Risk model tiles, which were the same auto status twice → the
+  //     Hedge menu on Trade Desk, beside the hedge controls: equal. Account
+  //     sync liveness → Ops Bus Status: equal. Start / stop / reset and the
+  //     heartbeat-interval /control writes are dropped (Owner); Ops keeps Stop /
+  //     Restart with Start locked by D10. Recent operations and the 24h count
+  //     are unplaced (Owner) — the monitor answers an empty list on DEV.
+  { path: '/system/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
+  { path: '/system/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
   { path: '/system/topology', label: 'Topology', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
   { path: '/system/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
   { path: '/system/platform', label: 'Platform', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
   { path: '/settings/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
-  { path: '/settings/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: '/system/socket' },
-  { path: '/settings/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },
+  { path: '/settings/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
+  { path: '/settings/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
   {
     path: '/operations/daemon',
     label: 'Daemon',
     crumbs: SYSTEM_RUNTIME,
-    redirect: '/system/daemon',
+    redirect: '/system/status',
   },
   {
     path: '/operations/platform',
@@ -312,7 +328,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/settings/daemon-app',
     label: 'Daemon',
     crumbs: SYSTEM_RUNTIME,
-    redirect: '/system/daemon',
+    redirect: '/system/status',
   },
   { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS, redirect: '/docs/tech-stack' },
   {

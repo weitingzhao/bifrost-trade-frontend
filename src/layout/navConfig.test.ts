@@ -160,7 +160,6 @@ describe('System nav', () => {
       'Settings',
       'Data',
       'Agents',
-      'Runtime',
       'Reference',
     ])
   })
@@ -176,7 +175,6 @@ describe('System nav', () => {
       '/settings',
       'system:data',
       'system:agents',
-      'system:runtime',
       'system:reference',
     ])
   })

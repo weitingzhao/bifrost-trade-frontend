@@ -98,7 +98,6 @@ import {
   RISK,
   SYSTEM,
   SYSTEM_DATA,
-  SYSTEM_RUNTIME,
   TRADE_DESK,
 } from './routeCrumbs'
 
@@ -489,24 +488,6 @@ export const ROUTES: readonly RouteEntry[] = [
       state: 'reviewing',
       rev: '2026-09-20.16',
       note: DESIGN_NOTES['/system/status'],
-    },
-  },
-  {
-    path: '/system/daemon',
-    label: 'Daemon',
-    crumbs: SYSTEM_RUNTIME,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/daemon'],
-    },
-  },
-  {
-    path: '/system/socket',
-    label: 'Socket',
-    crumbs: SYSTEM_RUNTIME,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/socket'],
     },
   },
 

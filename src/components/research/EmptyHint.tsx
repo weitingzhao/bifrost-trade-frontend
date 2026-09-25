@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { triggerResearchCronJob } from '@/api/platformResearch'
 import { getOpsToken } from '@/api/ops'
-import { useOpsCapabilities } from '@/hooks/useSocketServices'
+import { useOpsCapabilities } from '@/hooks/useOpsCapabilities'
 
 export interface EmptyHintProps {
   title: string

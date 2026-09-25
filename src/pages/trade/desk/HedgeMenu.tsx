@@ -24,30 +24,11 @@ import { Link } from 'react-router-dom'
 import { postFlatten, postResume, postSuspend } from '@/api/monitor'
 import { StatusLamp } from '@/components/StatusLamp'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { useCtrlAction } from '@/pages/system/daemon/daemonShared'
+import { useCtrlAction } from './useCtrlAction'
+import { hedgeFacts, hedgeReading } from './hedgeModel'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
 import type { StatusResponse } from '@/types/monitor'
-
-export interface HedgeReading {
-  suspended: boolean
-  alive: boolean
-  /** What the daemon calls itself — `running_suspended`, `BOOT`, … */
-  state: string | null
-  paperTrade: boolean | null
-}
-
-/** The daemon's own words, read once so the menu and the strip agree. */
-export function hedgeReading(status: StatusResponse | undefined): HedgeReading {
-  const auto = status?.daemon?.trading?.auto_status as Record<string, unknown> | undefined
-  const summary = typeof auto?.config_summary === 'string' ? auto.config_summary : null
-  return {
-    suspended: status?.daemon?.trading?.trading_suspended ?? false,
-    alive: status?.daemon?.heartbeat?.daemon_alive ?? false,
-    state: typeof auto?.daemon_state === 'string' ? auto.daemon_state : null,
-    paperTrade: summary == null ? null : /paper_trade\s*=\s*true/i.test(summary),
-  }
-}
 
 export function HedgeMenu({
   status,
@@ -128,6 +109,17 @@ export function HedgeMenu({
             <span className="font-semibold text-foreground">Hedging</span>{' '}
             <span className="text-muted-foreground">· daemon control channel · D10 governs</span>
           </div>
+          <dl
+            aria-label="Hedge daemon reading"
+            className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 border-b border-border px-3 py-2 text-dense-caption"
+          >
+            {hedgeFacts(status).map((f) => (
+              <div key={f.label} className="contents">
+                <dt className="text-muted-foreground">{f.label}</dt>
+                <dd className={cn('m-0 text-right', positionsUi.mono)}>{f.value}</dd>
+              </div>
+            ))}
+          </dl>
           <button
             type="button"
             role="menuitem"

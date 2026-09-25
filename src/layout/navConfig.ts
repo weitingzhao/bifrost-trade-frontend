@@ -9,7 +9,6 @@ import {
   Briefcase,
   ClipboardList,
   List,
-  Cpu,
   Database,
   Gauge,
   Layers,
@@ -273,10 +272,6 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
       fold('system:agents', 'Agents', '/research/agent-personas', Users, [
         COPILOT_PAGES.personas,
         COPILOT_PAGES.orchestration,
-      ]),
-      fold('system:runtime', 'Runtime', '/system/daemon', Cpu, [
-        route('Daemon', '/system/daemon', Cpu),
-        route('Socket', '/system/socket', Radio),
       ]),
       fold('system:reference', 'Reference', '/docs/design-adoption', BookOpen, [
         route('Design Adoption', '/docs/design-adoption', ListChecks),

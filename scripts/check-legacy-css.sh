@@ -487,45 +487,6 @@ if [[ -n "$stk_tag_legacy" ]]; then
   report "stkPill/stkCell Category/Symbol class strings in TSX (use DenseTag from data-display)"
 fi
 
-# Settings Socket: Dense migration (Phase 4.18)
-if socket_ui_table=$(grep -rl '@/components/ui/table' src/pages/system/socket --include='*.tsx' 2>/dev/null || true); then
-  if [[ -n "$socket_ui_table" ]]; then
-    echo "$socket_ui_table" >&2
-    report "shadcn Table under src/pages/system/socket (use DenseDataTable)"
-  fi
-fi
-
-# Settings Daemon: Dense migration (Phase 4.19)
-if daemon_ui_table=$(grep -rl '@/components/ui/table' \
-  src/pages/system/DaemonStatusPage.tsx \
-  src/pages/system/daemon \
-  --include='*.tsx' 2>/dev/null || true); then
-  if [[ -n "$daemon_ui_table" ]]; then
-    echo "$daemon_ui_table" >&2
-    report "shadcn Table under DaemonStatusPage or settings/daemon (use DenseDataTable)"
-  fi
-fi
-if daemon_pnl_class=$(grep -rE '\bpnlClass\b' src/pages/system/daemon --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
-  if [[ -n "$daemon_pnl_class" ]]; then
-    echo "$daemon_pnl_class" >&2
-    report "pnlClass under settings/daemon (use pnlColorClass / daemonLampTextClass)"
-  fi
-fi
-if daemon_inline_lamp=$(grep -rE "text-green-600|text-red-500|text-yellow-500" src/pages/system/daemon \
-  --include='*.tsx' 2>/dev/null | grep -v daemonUi.ts || true); then
-  if [[ -n "$daemon_inline_lamp" ]]; then
-    echo "$daemon_inline_lamp" >&2
-    report "inline lamp colors under settings/daemon (use daemonLampTextClass)"
-  fi
-fi
-if daemon_legacy_strings=$(grep -rE 'daemon-group-|table-operations|ib-connection-table' \
-  src/pages/system/daemon src/pages/system/DaemonStatusPage.tsx --include='*.tsx' 2>/dev/null || true); then
-  if [[ -n "$daemon_legacy_strings" ]]; then
-    echo "$daemon_legacy_strings" >&2
-    report "legacy daemon CSS class strings under settings/daemon paths"
-  fi
-fi
-
 # Deprecated BubbleSwitch / bubbleSwitchStyles imports (use SegmentControl from @/components/data-display)
 if bubble_imports=$(grep -rE "from.*BubbleSwitch|from.*bubbleSwitchStyles|from.*LedgerBubbleBtn" src --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$bubble_imports" ]]; then
@@ -554,7 +515,7 @@ fi
 # itself goes through `pnlColorClass` / `text-profit` / `text-loss`, which are
 # teal and orange now (DESIGN_CONTRACTS §11.9); putting one of these classes on
 # a signed number would re-create the collision that move exists to end.
-RAW_PALETTE_BASELINE=30
+RAW_PALETTE_BASELINE=26
 raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
   --include='*.tsx' --include='*.ts' 2>/dev/null \
   | grep -v 'src/components/data-display' | wc -l | tr -d ' ')

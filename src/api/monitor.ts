@@ -1,13 +1,10 @@
-import type { StatusResponse, Operation, RiskSummaryResponse } from '@/types/monitor'
+import type { StatusResponse } from '@/types/monitor'
 import type { ActiveStrategyPayload } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
-import { StatusResponseSchema, OperationsResponseSchema } from '@/lib/schemas/monitor'
+import { StatusResponseSchema } from '@/lib/schemas/monitor'
 import { monitorUrl, marketUrl } from '@/lib/devApiUrl'
 
 const validateStatus = withValidation<StatusResponse>(StatusResponseSchema, 'monitor/status')
-const validateOperations = withValidation<{ operations: Operation[] }>(
-  OperationsResponseSchema, 'monitor/operations'
-)
 
 export async function fetchMonitorStatus(): Promise<StatusResponse> {
   const res = await fetch(monitorUrl('/status'))
@@ -70,43 +67,7 @@ export async function postReleaseTickerSubscriptions(): Promise<{
   return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }
 }
 
-export async function fetchOperations(limit = 50): Promise<{ operations: Operation[] }> {
-  const res = await fetch(monitorUrl(`/operations?limit=${limit}`))
-  if (!res.ok) throw new Error(`Monitor /operations: ${res.status}`)
-  return validateOperations(await res.json())
-}
-
-export async function fetchRiskSummary(): Promise<RiskSummaryResponse> {
-  const res = await fetch(monitorUrl('/risk_summary'))
-  if (!res.ok) throw new Error(`Monitor /risk_summary: ${res.status}`)
-  return res.json()
-}
-
 // ─── Configuration API ────────────────────────────────────────────────────────
-
-export async function postSetHeartbeatInterval(
-  heartbeat_interval_sec: number,
-): Promise<{ ok: boolean; error?: string; heartbeat_interval_sec?: number }> {
-  const res = await fetch(monitorUrl('/control/set_heartbeat_interval'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ heartbeat_interval_sec }),
-  })
-  const j = await res.json().catch(() => ({}))
-  return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }
-}
-
-export async function postSetAccountSyncInterval(
-  heartbeat_interval_sec: number,
-): Promise<{ ok: boolean; error?: string; heartbeat_interval_sec?: number }> {
-  const res = await fetch(monitorUrl('/account-sync/control/set_heartbeat_interval'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ heartbeat_interval_sec }),
-  })
-  const j = await res.json().catch(() => ({}))
-  return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }
-}
 
 export async function postIbConfig(accounts: {
   ib_host_account_id?: string | null

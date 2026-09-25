@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { PAGE_ROUTES } from '@/layout/routeRegistry'
 import { adoptionCounts, adoptionRows } from './adoption'
 import { DESIGN_ROUTES } from './designRoutes.generated'
 
@@ -24,10 +23,10 @@ describe('design adoption', () => {
     // Dozens of design prototypes have no page here. A denominator taken from
     // the app would read near complete while most of the design is unbuilt.
     expect(counts.designed).toBe(DESIGN_ROUTES.filter((d) => d.designed).length)
-    // Every designed route is a page here or unbuilt, so this is at most
-    // equal — and it reaches equal as the app's own extra pages retire
-    // (Runtime, 2026-09-25), which is the collapse doing its job.
-    expect(counts.designed).toBeLessThanOrEqual(PAGE_ROUTES.length + counts.byState.unbuilt)
+    // The app's own page count is no guide to it: its extra pages retire
+    // (System › Runtime, 2026-09-25) and some design routes are answered by a
+    // forward rather than a page of their own, so the only denominator this
+    // tracker trusts is the design's, asserted above.
   })
 
   it('accounts for every design route exactly once', () => {

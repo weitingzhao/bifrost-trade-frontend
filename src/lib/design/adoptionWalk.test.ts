@@ -537,7 +537,7 @@ describe('the design walk, as it stands', () => {
     // ask". `/research/stock-screener` used to be the tenth; the Owner's
     // 2026-09-20 ruling answered it, so the page holds the design's own path
     // and nothing here is waiting on Design any more.
-    expect(counts.byState.staging).toBe(5)
+    expect(counts.byState.staging).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'staging')
@@ -545,10 +545,8 @@ describe('the design walk, as it stands', () => {
         .sort()
     ).toEqual([
       '/system/coverage',
-      '/system/daemon',
       '/system/data-readiness',
       '/system/feed',
-      '/system/socket',
     ])
     // Rev 2026-09-15.13: the design filled almost all of its own backlog — the
     // Risk layer, the Portfolio accounts cluster, the market and workbench data

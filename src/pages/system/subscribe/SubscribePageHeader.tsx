@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { opsConsoleHref } from '@/lib/opsConsole'
 import { useMutation } from '@tanstack/react-query'
 import { Activity, Unplug } from 'lucide-react'
 import { PageHeader } from '@/components/layout'
@@ -130,9 +130,14 @@ export function SubscribePageHeader({
         Redis stream health from Monitor GET /status (
         <code className={subscribeInlineCodeClass}>socket</code>). Ticker release is a daemon control
         action (requires engine running).{' '}
-        <Link to="/system/socket" className="text-primary underline-offset-4 hover:underline">
-          Open Socket services
-        </Link>
+        <a
+          href={opsConsoleHref('satellite-bus')}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary underline-offset-4 hover:underline"
+        >
+          Open Bus Status in Ops
+        </a>
       </p>
 
       {syncMsg.text ? (

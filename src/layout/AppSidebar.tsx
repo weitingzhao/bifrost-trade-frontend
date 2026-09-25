@@ -5,7 +5,6 @@ import {
   type ShellNavItem,
 } from '@bifrost/ui'
 import { NavSubItemIcon } from '@/components/layout/SystemNavIcon'
-import { SystemNavLampProvider } from '@/components/layout/SystemNavLampProvider'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { lifecycleMark } from './LifecycleMark'
 import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
@@ -114,60 +113,58 @@ export function AppSidebar() {
   }, [inSystem, research.group, order, pins, location.pathname])
 
   return (
-    <SystemNavLampProvider>
-      <ShellNavSidebar
-        // Remount on the swap. `ShellNavSidebar` reads its open-groups store
-        // once, in a `useState` initialiser, so handing it a different storage
-        // key mid-life changes where it *writes* without changing what it
-        // holds — it would carry the business tree's open set into System
-        // (where no group matches, so the tree renders shut) and then save
-        // that set over System's own. Two trees are two identities.
-        key={inSystem ? 'system' : 'business'}
-        // The design's lockup (every prototype passes these two): the badge
-        // carries the product, and index.css paints the gate mark, the
-        // Bifröst wordmark and the TRADE * OPTION line over the DS default.
-        productName="Bifröst Trade"
-        productBadge="Trade"
-        navGroups={navGroups}
-        // A pinned page lights its shelf row instead of its home row: two lit
-        // rows for one page reads as a bug. Unpinned, it falls back to the
-        // section that owns it (an objective lights Autopilot).
-        activeId={
-          pins.some((p) => p.to === location.pathname)
-            ? `pin:${location.pathname}`
-            : navRowFor(location.pathname)
-        }
-        matchActive={matchActiveRow}
-        // The three-kind row grammar (design §5a, 2026-09-20). It replaces
-        // the 2026-09-15 rule this side had adopted a day earlier — every
-        // parent "expands first, navigates second" — which the design itself
-        // then overturned: one row doing two things by a state the reader
-        // cannot see is what made the tree feel split. Now a container row
-        // only opens, a page-with-children splits label from caret, and the
-        // caret's frame says which you are looking at.
-        navRowSyntax
-        onSelect={(item: ShellNavItem) => {
-          navigate(item.to ?? item.id)
-        }}
-        renderItemIcon={(item) => <NavSubItemIcon item={item} />}
-        // `item.id`, not `item.to`: a fold row borrows its first child's `to`,
-        // so keying on `to` gives the heading its child's marks — the Analyze
-        // heading wore Dossier's unit, and the Market heading lit a second
-        // session lamp above Live's. A real page row has its own path as its
-        // id; a fold's is `fold:...` and matches no route, which is the answer
-        // a heading wants.
-        //
-        // A badge outranks the scope mark: a count is news, the unit of
-        // analysis is a standing fact about the page.
-        renderItemExtras={(item) => research.extras(item) ?? <ScopeMark path={item.id} />}
-        renderInAppLink={renderInAppLink}
-        footer={<TradeSidebarFooter />}
-        openGroupsStorageKey={
-          inSystem ? STORAGE_KEYS.sidebarSystemOpenGroups : STORAGE_KEYS.sidebarOpenGroups
-        }
-        captionsStorageKey={STORAGE_KEYS.sidebarCaptions}
-        accordionStorageKey={STORAGE_KEYS.sidebarAccordion}
-      />
-    </SystemNavLampProvider>
+    <ShellNavSidebar
+      // Remount on the swap. `ShellNavSidebar` reads its open-groups store
+      // once, in a `useState` initialiser, so handing it a different storage
+      // key mid-life changes where it *writes* without changing what it
+      // holds — it would carry the business tree's open set into System
+      // (where no group matches, so the tree renders shut) and then save
+      // that set over System's own. Two trees are two identities.
+      key={inSystem ? 'system' : 'business'}
+      // The design's lockup (every prototype passes these two): the badge
+      // carries the product, and index.css paints the gate mark, the
+      // Bifröst wordmark and the TRADE * OPTION line over the DS default.
+      productName="Bifröst Trade"
+      productBadge="Trade"
+      navGroups={navGroups}
+      // A pinned page lights its shelf row instead of its home row: two lit
+      // rows for one page reads as a bug. Unpinned, it falls back to the
+      // section that owns it (an objective lights Autopilot).
+      activeId={
+        pins.some((p) => p.to === location.pathname)
+          ? `pin:${location.pathname}`
+          : navRowFor(location.pathname)
+      }
+      matchActive={matchActiveRow}
+      // The three-kind row grammar (design §5a, 2026-09-20). It replaces
+      // the 2026-09-15 rule this side had adopted a day earlier — every
+      // parent "expands first, navigates second" — which the design itself
+      // then overturned: one row doing two things by a state the reader
+      // cannot see is what made the tree feel split. Now a container row
+      // only opens, a page-with-children splits label from caret, and the
+      // caret's frame says which you are looking at.
+      navRowSyntax
+      onSelect={(item: ShellNavItem) => {
+        navigate(item.to ?? item.id)
+      }}
+      renderItemIcon={(item) => <NavSubItemIcon item={item} />}
+      // `item.id`, not `item.to`: a fold row borrows its first child's `to`,
+      // so keying on `to` gives the heading its child's marks — the Analyze
+      // heading wore Dossier's unit, and the Market heading lit a second
+      // session lamp above Live's. A real page row has its own path as its
+      // id; a fold's is `fold:...` and matches no route, which is the answer
+      // a heading wants.
+      //
+      // A badge outranks the scope mark: a count is news, the unit of
+      // analysis is a standing fact about the page.
+      renderItemExtras={(item) => research.extras(item) ?? <ScopeMark path={item.id} />}
+      renderInAppLink={renderInAppLink}
+      footer={<TradeSidebarFooter />}
+      openGroupsStorageKey={
+        inSystem ? STORAGE_KEYS.sidebarSystemOpenGroups : STORAGE_KEYS.sidebarOpenGroups
+      }
+      captionsStorageKey={STORAGE_KEYS.sidebarCaptions}
+      accordionStorageKey={STORAGE_KEYS.sidebarAccordion}
+    />
   )
 }

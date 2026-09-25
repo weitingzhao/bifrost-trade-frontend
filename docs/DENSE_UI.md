@@ -333,40 +333,9 @@ In use Switch calls `setActiveAllocation` with companion structure/gate ids from
 
 No `@/components/ui/table` or `dangerTextBtnClass` under option category guarded paths.
 
-## Settings API Health — retired
+## System › Runtime — retired
 
-Retired 2026-09-25 with the rest of System › Runtime (Owner, on the 2026-09-15 ruling): service health and probes live in the Ops Console (Satellite Health). Its reference files are gone; see `src/layout/redirectRoutes.ts` for where each capability went.
-
-## Settings Socket Services
-
-| Pattern | Reference |
-|---------|-----------|
-| Page + table tokens | [socketIngestUi.ts](../src/pages/settings/socket/socketIngestUi.ts) |
-| Page shell | [SocketPage.tsx](../src/pages/settings/SocketPage.tsx) — `PageShell padding="default"`, `PageHeader titleSize="large"` + `InfoTooltip`, elevated `Card` sections |
-| Ingest services table | [IngestServicesTable.tsx](../src/pages/settings/socket/IngestServicesTable.tsx) — `DenseDataTable` + `DenseTableSubheadRow` (MASSIVE / IB groups) + dynamic `colgroup` |
-| Connection column | [IngestConnectionCell.tsx](../src/pages/settings/socket/IngestConnectionCell.tsx) — Polygon WS age / IB client id / probe badges |
-| Row actions | [socketIngestControls.tsx](../src/pages/settings/socket/socketIngestControls.tsx) — `IconActionButton` (Start/Stop/Restart/Reset) |
-| Ops auth / host pills | [OpsAuthBar.tsx](../src/pages/settings/socket/OpsAuthBar.tsx), [OpsHostEnvPill.tsx](../src/pages/settings/socket/OpsHostEnvPill.tsx) — shared tokens (Daemon reuses same paths) |
-| Daemon reuse | `IngestServicesTable variant="daemon"` in [DaemonEngineOpsSection.tsx](../src/pages/settings/daemon/DaemonEngineOpsSection.tsx) |
-| Socket / edge logs | Global **LogPanel** → **Socket Services** group (`IB INGESTOR`, `IB ACCT AGENT`, `IB OPERATOR`, `MASSIVE WS`); no in-page console on Socket |
-
-No `@/components/ui/table` under `src/pages/settings/socket/`.
-
-## Operations Daemon
-
-| Pattern | Reference |
-|---------|-----------|
-| Page + KV/table tokens | [daemonUi.ts](../src/pages/settings/daemon/daemonUi.ts) |
-| Heartbeat interval form tokens | [daemonFormUi.ts](../src/pages/settings/daemon/daemonFormUi.ts) |
-| Ops shared hook | [useDaemonEngineOps.ts](../src/pages/settings/daemon/useDaemonEngineOps.ts) — rollup lamp on `PageHeader` |
-| List page shell | [DaemonStatusPage.tsx](../src/pages/settings/DaemonStatusPage.tsx) — `PageShell padding="default"`, `InfoTooltip`, 4× elevated `Card` |
-| Recent ops table | [RecentOperationsTable.tsx](../src/pages/settings/daemon/RecentOperationsTable.tsx) — `DenseDataTable` + `DAEMON_OPS_COL_WIDTHS`; Side → `DenseTag` |
-| Strategy / Account Sync cards | [StrategyTradingDaemonCard.tsx](../src/pages/settings/daemon/StrategyTradingDaemonCard.tsx), [AccountSyncDaemonCard.tsx](../src/pages/settings/daemon/AccountSyncDaemonCard.tsx) — `daemonThreeColGridClass`, `DenseTag` Yes/No, `daemonLampTextClass` |
-| Process ingest table | [IngestServicesTable.tsx](../src/pages/settings/socket/IngestServicesTable.tsx) `variant="daemon"` in [DaemonEngineOpsSection.tsx](../src/pages/settings/daemon/DaemonEngineOpsSection.tsx) — Dense table owned by **Phase 4.18** Socket |
-
-**Logs:** Not in-page; use global footer **LogPanel → Daemon** (Strategy Trading + Account Sync). Legacy Celery ops card removed (Wave 5).
-
-No `@/components/ui/table` under `DaemonStatusPage.tsx` or `settings/daemon/**`.
+API Health, Socket, Daemon, Topology and Platform retired 2026-09-25 (Owner, on the 2026-09-15 ruling): service health, ingest and daemon liveness live in the Ops Console, the trader's reading is System Status, and the hedge daemon's own reading sits in the Trade Desk Hedge menu. Their reference files are gone; see `src/layout/redirectRoutes.ts` for where each capability went.
 
 ## PnL coloring
 

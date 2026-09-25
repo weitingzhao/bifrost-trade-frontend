@@ -254,7 +254,7 @@ export function SymbolDock({
   const canAdd = Boolean(cur) && !lists.watch.loading && !lists.watch.rows.some((r) => r.symbol === cur)
 
   return (
-    <aside aria-label="Symbol lists" className={cn(css.aside, isFloat ? css.float : css.edge)}>
+    <aside aria-label="Symbol lists" data-vt="dock" className={cn(css.aside, isFloat ? css.float : css.edge)}>
       {/* Lists as tags (Owner 2026-09-25): a click toggles one; several on
           stack as groups, each with its own third-column head, so the row
           grammar never has to average two meanings. ⌥-click = only this. */}

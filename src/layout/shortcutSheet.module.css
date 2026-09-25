@@ -1,0 +1,84 @@
+/* The hold-⌘ shortcut sheet (design Rev .71 §3, `.sr-keys`). */
+.sheet {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 9999;
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  translate: -50% -50%;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--sk-ink) 12%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--sk-surface) 74%, transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(1.7);
+  backdrop-filter: blur(26px) saturate(1.7);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 8%, transparent),
+    0 30px 80px -20px rgba(0, 0, 0, 0.75);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 28px;
+  color: var(--sk-ink);
+  pointer-events: none;
+  opacity: 0;
+  scale: 0.98;
+  transition:
+    opacity var(--mo-pop) var(--mo-ease-out),
+    scale var(--mo-pop) var(--mo-ease-out);
+}
+
+.sheet[data-on='1'] {
+  opacity: 1;
+  scale: 1;
+}
+
+.head {
+  margin: 0 0 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sk-mute);
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: 12.5px;
+}
+
+.row span {
+  flex: 1;
+  color: var(--sk-soft);
+}
+
+.row kbd {
+  font: 600 11px var(--font-mono);
+  color: var(--sk-ink);
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--sk-ink) 10%, transparent);
+  white-space: nowrap;
+}
+
+:global(html[data-theme='light']) .sheet {
+  box-shadow:
+    inset 0 1px 0 var(--sk-paper-glow),
+    0 20px 50px -18px rgba(15, 20, 30, 0.25);
+}
+
+@media (max-width: 640px) {
+  .sheet {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    transition: none;
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseContract, targetOf } from './shellContextTarget'
+import { parseContract, symbolIn, targetOf } from './shellContextTarget'
 
 /** Made-up names and strikes; nothing here is a real holding. */
 function hit(html: string, selector: string) {
@@ -46,6 +46,17 @@ describe('context-menu targets (design Rev .69 §1)', () => {
       label: 'Positions',
     })
     expect(hit('<div data-ctx-sym="XYZ"><input /></div>', 'input')).toBeNull()
+  })
+})
+
+describe('symbolIn — the row Quick Look opens on', () => {
+  it('finds the first name a row holds, marked or inked', () => {
+    document.body.innerHTML = '<table><tr id="r"><td>12</td><td><span class="text-entity-symbol">LMN</span></td></tr></table>'
+    expect(symbolIn(document.getElementById('r')!)).toEqual({ sym: 'LMN', contract: null })
+    document.body.innerHTML = '<ul><li id="r"><b>Note</b><button data-ctx-sym="OPQ">x</button></li></ul>'
+    expect(symbolIn(document.getElementById('r')!)).toEqual({ sym: 'OPQ', contract: null })
+    document.body.innerHTML = '<ul><li id="r">Nothing named here</li></ul>'
+    expect(symbolIn(document.getElementById('r')!)).toBeNull()
   })
 })
 

@@ -168,6 +168,7 @@ function Group({
   return (
     <div
       className={full ? css.group : css.bare}
+      data-glass-surface={full ? 'surface' : undefined}
       style={{
         ['--rh' as string]: EQUIP_HUE[group.id],
         ['--rh-box' as string]:
@@ -326,6 +327,7 @@ export function EquipRail() {
     <div
       // The dock keeps its own labels (Rev .68: the one tooltip skips it).
       data-no-tip=""
+      data-vt="rail"
       className={css.rail}
       aria-label="Equipment"
       style={
@@ -343,14 +345,14 @@ export function EquipRail() {
           The Symbol list's switch leads either way. */}
       {full ? (
         <>
-          <div className={css.group}>
+          <div className={css.group} data-glass-surface="surface">
             <ListsButton />
             <SymbolButton />
           </div>
           {groups}
         </>
       ) : (
-        <div className={css.group}>
+        <div className={css.group} data-glass-surface="surface">
           <ListsButton />
           <SymbolButton />
           <span className={css.rule} aria-hidden />

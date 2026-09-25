@@ -77,6 +77,7 @@ export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) 
         <div
           key={msg.message_id}
           role={msg.level === 'error' ? 'alert' : undefined}
+          data-glass-surface="raised"
           className={cn(
             'relative overflow-hidden flex gap-2.5 rounded-[14px] border border-white/[0.085] p-3 pointer-events-auto',
             'bg-[color-mix(in_srgb,var(--sk-raised)_91%,transparent)] backdrop-blur-[22px] backdrop-saturate-[160%]',

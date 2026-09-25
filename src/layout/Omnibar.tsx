@@ -264,6 +264,7 @@ export function Omnibar() {
     <Dialog open={open} onOpenChange={(next) => (next ? omnibar.open() : omnibar.close())}>
       <DialogContent
         showCloseButton={false}
+        data-glass-surface="raised"
         overlayClassName="bg-transparent supports-backdrop-filter:backdrop-blur-none"
         className={cn(
           mb.pop,

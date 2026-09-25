@@ -40,6 +40,64 @@ function hasClass(el: Element, names: string[]): boolean {
   return names.some((n) => el.classList.contains(n))
 }
 
+/** A name found on the page, and the contract it spells when it is one. */
+export interface SymbolHit {
+  sym: string
+  contract: string | null
+}
+
+/**
+ * The symbol an element *is* — for a right-click, a drag, a Quick Look.
+ * Marked, not read from a colour: `data-ctx-sym` (+ `data-ctx-contract`),
+ * the Symbol list's row key, the entity ink classes, or a link whose own
+ * text is the `?symbol=` it carries.
+ */
+export function symbolAt(t: Element): SymbolHit | null {
+  // Explicit marks: `data-ctx-sym`, and the Symbol list's own row key.
+  const marked = t.closest<HTMLElement>('[data-ctx-sym], [data-dock-sym]')
+  const sym = marked?.dataset.ctxSym ?? marked?.dataset.dockSym
+  if (marked && sym) return { sym, contract: marked.dataset.ctxContract ?? null }
+  // Up to two levels: the ink class sits on the text's own span or its cell.
+  for (let el: Element | null = t, i = 0; el != null && i < 3; el = el.parentElement, i++) {
+    const text = el.textContent?.trim() ?? ''
+    if (text.length === 0 || text.length > 40) break
+    // A bare name in either ink is the name: option tables print their
+    // underlying in the contract ink.
+    if (hasClass(el, [...SYM_CLASS, ...CONTRACT_CLASS]) && TICKER.test(text)) return { sym: text, contract: null }
+    if (hasClass(el, CONTRACT_CLASS) && /^[A-Z][A-Z.]{0,5}\s+\S/.test(text)) {
+      return { sym: text.split(/\s+/)[0], contract: text }
+    }
+  }
+  const link = t.closest<HTMLAnchorElement>('a[href*="symbol="]')
+  if (link) {
+    try {
+      const s = new URL(link.href).searchParams.get('symbol')?.toUpperCase() ?? ''
+      if (s && TICKER.test(s) && link.textContent?.trim().toUpperCase() === s) return { sym: s, contract: null }
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
+const CANDIDATES = [
+  '[data-ctx-sym]',
+  '[data-dock-sym]',
+  'a[href*="symbol="]',
+  ...[...SYM_CLASS, ...CONTRACT_CLASS].map((c) => `.${CSS.escape(c)}`),
+].join(', ')
+
+/** The first name a row holds — the row Quick Look opens on. */
+export function symbolIn(row: Element): SymbolHit | null {
+  const own = symbolAt(row)
+  if (own) return own
+  for (const el of row.querySelectorAll(CANDIDATES)) {
+    const hit = symbolAt(el)
+    if (hit) return hit
+  }
+  return null
+}
+
 /** What was right-clicked, if it is something this menu answers for. */
 export function targetOf(e: Pick<MouseEvent, 'target' | 'clientX' | 'clientY'>): ContextTarget | null {
   const t = e.target instanceof Element ? e.target : null
@@ -54,35 +112,6 @@ export function targetOf(e: Pick<MouseEvent, 'target' | 'clientX' | 'clientY'>):
       y: e.clientY,
     }
   }
-  // Explicit marks: `data-ctx-sym`, and the Symbol list's own row key.
-  const marked = t.closest<HTMLElement>('[data-ctx-sym], [data-dock-sym]')
-  const sym = marked?.dataset.ctxSym ?? marked?.dataset.dockSym
-  if (marked && sym) {
-    return { kind: 'sym', sym, contract: marked.dataset.ctxContract ?? null, x: e.clientX, y: e.clientY }
-  }
-  // Up to two levels: the ink class sits on the text's own span or its cell.
-  for (let el: Element | null = t, i = 0; el != null && i < 3; el = el.parentElement, i++) {
-    const text = el.textContent?.trim() ?? ''
-    if (text.length === 0 || text.length > 40) break
-    // A bare name in either ink is the name: option tables print their
-    // underlying in the contract ink.
-    if (hasClass(el, [...SYM_CLASS, ...CONTRACT_CLASS]) && TICKER.test(text)) {
-      return { kind: 'sym', sym: text, contract: null, x: e.clientX, y: e.clientY }
-    }
-    if (hasClass(el, CONTRACT_CLASS) && /^[A-Z][A-Z.]{0,5}\s+\S/.test(text)) {
-      return { kind: 'sym', sym: text.split(/\s+/)[0], contract: text, x: e.clientX, y: e.clientY }
-    }
-  }
-  const link = t.closest<HTMLAnchorElement>('a[href*="symbol="]')
-  if (link) {
-    try {
-      const sym = new URL(link.href).searchParams.get('symbol')?.toUpperCase() ?? ''
-      if (sym && TICKER.test(sym) && link.textContent?.trim().toUpperCase() === sym) {
-        return { kind: 'sym', sym, contract: null, x: e.clientX, y: e.clientY }
-      }
-    } catch {
-      return null
-    }
-  }
-  return null
+  const hit = symbolAt(t)
+  return hit ? { kind: 'sym', ...hit, x: e.clientX, y: e.clientY } : null
 }

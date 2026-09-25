@@ -9,6 +9,11 @@ import { ShellTip } from './ShellTip'
 import { ShellNotices } from './ShellNotices'
 import { ShellContextMenu } from './ShellContextMenu'
 import { useShellArrows } from './useShellArrows'
+import { usePageLane } from './usePageLane'
+import { useGlassSync } from '@/lib/glass'
+import { QuickLook } from './QuickLook'
+import { ShortcutSheet } from './ShortcutSheet'
+import { SymbolDrop } from './SymbolDrop'
 import { useAlertBanners } from '@/hooks/useAlertBanners'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
@@ -78,6 +83,10 @@ export function AppLayout() {
   // Analyze alerts announce themselves as banners.
   useShellArrows()
   useAlertBanners(groups)
+  // Rev .70–.71: table heads park under the page's sticky toolbar, and each
+  // route keeps its scroll for this tab's session.
+  usePageLane()
+  useGlassSync()
 
   return (
     <InspectorSlotContext.Provider value={inspectorSlot}>
@@ -93,6 +102,11 @@ export function AppLayout() {
         {/* Rev .69: the toast (with Undo), the banners, the right-click menu. */}
         <ShellNotices />
         <ShellContextMenu />
+        {/* Rev .70–.71: drag a symbol to the drop bar, Space for Quick Look,
+            hold ⌘ for the shortcut sheet. */}
+        <SymbolDrop />
+        <QuickLook />
+        <ShortcutSheet />
         <AppSidebar />
         {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport.
           Transparent, with the lane below: one window ground (Rev .61) — the

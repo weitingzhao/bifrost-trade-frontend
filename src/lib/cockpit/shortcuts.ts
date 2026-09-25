@@ -45,6 +45,10 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { keys: '⌘,', name: 'Settings', what: 'Open Settings', scope: 'Anywhere' },
   { keys: '← / →', name: 'Menu bar', what: 'Walk the top bar’s items; ↑ ↓ ← → walk the controls inside an open popover', scope: 'Top bar' },
   { keys: 'Right-click', name: 'Symbol menu', what: 'On a symbol or contract: open beside, locked tab, Symbol page, Watch, Copy. On a panel tab: page, float, close, close others', scope: 'Anywhere' },
+  // Rev .70–.71.
+  { keys: 'Space', name: 'Quick Look', what: 'On a row that names a symbol or contract: its Symbol face in a card — ↑ ↓ next row, ↵ open, Space or Esc close', scope: 'Anywhere a row names one' },
+  { keys: 'hold ⌘', name: 'Shortcut sheet', what: 'Hold ⌘ (or Ctrl) for a moment: every shortcut, until you let go', scope: 'Anywhere' },
+  { keys: 'Drag', name: 'Drag a symbol', what: 'Drop it on Open, Compare or Add to Watch; drag a panel tab down to float it; drag the float to an edge to tile it', scope: 'Anywhere' },
   {
     keys: 'j / k',
     name: 'Symbol walk',

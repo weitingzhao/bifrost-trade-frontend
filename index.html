@@ -17,6 +17,9 @@
           r.classList.toggle('dark', t === 'dark');
           r.dataset.theme = t;
           r.style.colorScheme = t;
+          // Reduce transparency (Rev .70): the user's switch, before first paint (src/lib/glass.ts).
+          var g = localStorage.getItem('bifrost.glass');
+          if (g === 'solid' || g === 'glass') r.dataset.glass = g;
         } catch (e) {}
       })();
     </script>

@@ -23,12 +23,13 @@
  * and it is a tab in here now, so one panel is the only thing the content
  * ever gives width to.
  */
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { animatePanelIn, dismissSurface, registerSurfaceElement } from './equipMotion'
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { animatePanelIn, dismissSurface, noteOriginPoint, registerSurfaceElement } from './equipMotion'
 import {
   PANEL_CARD_PX,
   activeTabOf,
   focusTab,
+  openSurface,
   stripFor,
   surfaceHue,
   surfaceLabel,
@@ -45,6 +46,30 @@ import css from './equipSurface.module.css'
 import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
 
+/**
+ * A tab pulled down 36px, or out past the panel's left edge, becomes the
+ * float (design Rev .70 §3) — opening from where the pointer is. The ×
+ * inside the tab is a click, not a grab.
+ */
+function dragOut(e: ReactPointerEvent<HTMLButtonElement>, tab: PanelTab): void {
+  if (e.button !== 0 || (e.target as HTMLElement).closest('[role="button"]')) return
+  const sy = e.clientY
+  const panelLeft = e.currentTarget.closest('aside')?.getBoundingClientRect().left ?? 0
+  const move = (ev: PointerEvent) => {
+    if (ev.clientY - sy > 36 || ev.clientX < panelLeft - 12) {
+      off()
+      noteOriginPoint(tab.key, { x: ev.clientX, y: ev.clientY })
+      openSurface(tab, 'float')
+    }
+  }
+  const off = () => {
+    window.removeEventListener('pointermove', move)
+    window.removeEventListener('pointerup', off)
+  }
+  window.addEventListener('pointermove', move)
+  window.addEventListener('pointerup', off)
+}
+
 function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact: boolean }) {
   const full = active || !compact
   const label = surfaceLabel(tab, useCarriedSymbol())
@@ -59,6 +84,7 @@ function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact
       data-ctx-tab={tab.key}
       data-ctx-label={label}
       onClick={() => focusTab(tab.key)}
+      onPointerDown={(e) => dragOut(e, tab)}
     >
       <SurfaceGlyph surface={tab} className={css.glyph} />
       {full ? (
@@ -135,6 +161,8 @@ export function EquipPanel() {
       <aside
         ref={card}
         className={`${css.card} ${css.panel}`}
+        data-glass-surface="surface"
+        data-vt="panel"
         style={{
           ['--rh' as string]: surfaceHue(active),
           // Pushed, the page has already stepped aside, so the card can take
@@ -169,7 +197,7 @@ export function EquipPanel() {
         </div>
 
         {menuOpen ? (
-          <div className={css.menu}>
+          <div className={css.menu} data-glass-surface="raised">
             {strip.over.map((t) => (
               <button
                 key={t.key}

@@ -518,3 +518,16 @@
     scale: none;
   }
 }
+
+/* Half tiling (design Rev .70 §2): the half the float will fill, shown while
+   the pointer rests at the lane's edge. */
+.tile {
+  position: fixed;
+  z-index: 58;
+  border: 1px solid color-mix(in srgb, var(--sk-accent) 45%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--sk-accent) 10%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}

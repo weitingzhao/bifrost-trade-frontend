@@ -826,8 +826,18 @@ tbody tr:hover > td {
   box-shadow: 0 0 0 3px var(--mat-focus);
 }
 
-[data-mat] thead th:not(.sticky, .sticky *) {
-  background-color: transparent;
+/* Table heads stick (design Rev .70 §5): every table's head parks under the
+   page's sticky toolbar (--sr-stick, measured by useStickyToolbar) on a
+   glass strip — 82% of the ground and a 10px blur. A table inside its own
+   scroll box sticks within that box. A head the page already made sticky
+   (thead or row with .sticky) keeps its own offset. */
+[data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
+  position: sticky;
+  top: var(--sr-stick, 0px);
+  z-index: 2;
+  background-color: color-mix(in srgb, var(--background) 82%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.4);
 }
 
 /* The §17.4 KPI boxes (@bifrost/ui patterns) wear the card material here;
@@ -1084,6 +1094,147 @@ html[data-theme='light'] [data-radix-popper-content-wrapper] > * {
 :is(button, a, [role='button'], [tabindex]):not(input, textarea, select):focus-visible {
   outline: 2px solid color-mix(in srgb, var(--sk-accent) 75%, transparent);
   outline-offset: 2px;
+}
+
+/* Reduce transparency (design Rev .70 §1): the user's switch
+   (html[data-glass="solid"]) or, unset, the system's. Every glass surface
+   carries data-glass-surface = surface | raised and turns that token, solid;
+   the Radix poppers, the floating sidebar and the table heads are named
+   here by their own attributes. */
+html[data-glass='solid'] :is([data-glass-surface], [data-radix-popper-content-wrapper] > *, [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html[data-glass='solid'] :is([data-glass-surface='surface'], [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
+  background: var(--sk-surface);
+}
+
+html[data-glass='solid'] :is([data-glass-surface='raised'], [data-radix-popper-content-wrapper] > *) {
+  background: var(--sk-raised);
+}
+
+html[data-glass='solid'] [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
+  background-color: var(--background);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html:not([data-glass='glass']) :is([data-glass-surface], [data-radix-popper-content-wrapper] > *, [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  html:not([data-glass='glass']) :is([data-glass-surface='surface'], [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
+    background: var(--sk-surface);
+  }
+
+  html:not([data-glass='glass']) :is([data-glass-surface='raised'], [data-radix-popper-content-wrapper] > *) {
+    background: var(--sk-raised);
+  }
+
+  html:not([data-glass='glass']) [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
+    background-color: var(--background);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Page transitions (design Rev .71 §1; lib/pageTransition): only the page
+   lane moves — the old page out in 180ms, the new one in over 240ms rising
+   6px. The chrome is named into its own groups and held still, and the root
+   shows the new state at once rather than cross-fading the whole window. */
+#main-content {
+  view-transition-name: page-lane;
+}
+
+[data-slot='sidebar-container'] {
+  view-transition-name: shell-sidebar;
+}
+
+header[data-menubar] {
+  view-transition-name: shell-bar;
+}
+
+[data-vt='rail'] {
+  view-transition-name: shell-rail;
+}
+
+[data-vt='panel'] {
+  view-transition-name: shell-panel;
+}
+
+[data-vt='float'] {
+  view-transition-name: shell-float;
+}
+
+[data-vt='dock'] {
+  view-transition-name: shell-dock;
+}
+
+@keyframes sk-page-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sk-page-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+::view-transition-old(root) {
+  animation: none;
+  opacity: 0;
+}
+
+::view-transition-new(root),
+::view-transition-group(shell-sidebar),
+::view-transition-group(shell-bar),
+::view-transition-group(shell-rail),
+::view-transition-group(shell-panel),
+::view-transition-group(shell-float),
+::view-transition-group(shell-dock),
+::view-transition-old(shell-sidebar),
+::view-transition-new(shell-sidebar),
+::view-transition-old(shell-bar),
+::view-transition-new(shell-bar),
+::view-transition-old(shell-rail),
+::view-transition-new(shell-rail),
+::view-transition-old(shell-panel),
+::view-transition-new(shell-panel),
+::view-transition-old(shell-float),
+::view-transition-new(shell-float),
+::view-transition-old(shell-dock),
+::view-transition-new(shell-dock) {
+  animation: none;
+}
+
+::view-transition-old(shell-sidebar),
+::view-transition-old(shell-bar),
+::view-transition-old(shell-rail),
+::view-transition-old(shell-panel),
+::view-transition-old(shell-float),
+::view-transition-old(shell-dock) {
+  opacity: 0;
+}
+
+::view-transition-old(page-lane) {
+  animation: sk-page-out var(--mo-out) var(--mo-ease-in) both;
+}
+
+::view-transition-new(page-lane) {
+  animation: sk-page-in var(--mo-in) var(--mo-ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(page-lane),
+  ::view-transition-new(page-lane) {
+    animation: none;
+  }
 }
 
 /* Press feedback (design Rev .68 §3): a control dips to .97 while held —

@@ -60,6 +60,7 @@ const PHONE_W = 420
 const MAGNET_PX = 28
 /** The inset every edge keeps. */
 const GUTTER_PX = 8
+const TILE_EASE = ['left', 'top', 'width', 'height'].map((p) => `${p} 0.2s cubic-bezier(0.2,0.8,0.2,1)`).join(', ')
 
 /**
  * The one right limit every float path stops at (Rev .25–.27): left of the
@@ -199,14 +200,55 @@ export function EquipFloat() {
       const start = el.getBoundingClientRect()
       const dx = e.clientX - start.left
       const dy = e.clientY - start.top
+      // Half tiling (Rev .70 §2): the pointer at the lane's left or right
+      // edge shows that half; letting go there fills it, as a Pad.
+      const bar = document.querySelector('[data-slot="sidebar-container"]')
+      const laneL = Math.round(bar?.getBoundingClientRect().right ?? 0) + GUTTER_PX
+      const laneR = rightLimit(panelOpen, dockPx)
+      const half = (z: 'L' | 'R') => {
+        const mid = Math.round((laneL + laneR) / 2)
+        const t = SHELL_TOP_BAR_PX + GUTTER_PX
+        const h = window.innerHeight - GUTTER_PX - t
+        return z === 'L' ? { l: laneL, t, w: mid - laneL - 4, h } : { l: mid + 4, t, w: laneR - mid - 4, h }
+      }
+      let zone: 'L' | 'R' | null = null
+      let preview: HTMLDivElement | null = null
+      const showZone = (z: 'L' | 'R' | null) => {
+        if (z === zone) return
+        zone = z
+        if (!z) {
+          preview?.remove()
+          preview = null
+          return
+        }
+        const q = half(z)
+        preview ??= document.body.appendChild(document.createElement('div'))
+        preview.className = css.tile
+        Object.assign(preview.style, { left: `${q.l}px`, top: `${q.t}px`, width: `${q.w}px`, height: `${q.h}px` })
+      }
       const move = (ev: PointerEvent) => {
         el.style.left = `${ev.clientX - dx}px`
         el.style.top = `${ev.clientY - dy}px`
         el.style.transform = 'none'
+        showZone(ev.clientX <= laneL + 6 ? 'L' : ev.clientX >= laneR - 6 ? 'R' : null)
       }
       const up = () => {
         window.removeEventListener('pointermove', move)
         window.removeEventListener('pointerup', up)
+        if (zone) {
+          const q = half(zone)
+          showZone(null)
+          el.style.transition = TILE_EASE
+          Object.assign(el.style, { left: `${q.l}px`, top: `${q.t}px`, width: `${q.w}px`, height: `${q.h}px` })
+          window.setTimeout(() => {
+            el.style.transition = ''
+          }, 220)
+          // Size first: choosing a size clears the saved drag, so the tile
+          // is written after it.
+          if (size !== 'pad') setFloatSize('pad')
+          saveGeometry(key, { l: q.l, t: q.t, w: q.w, h: q.h, size: 'pad' })
+          return
+        }
         // The edge magnet (Rev .27): within 28px of a boundary, settle flush
         // against it — the screen's edges, the top bar's underside, and the
         // dock (or the panel and the dock) on the right. A short ease, so the
@@ -284,6 +326,8 @@ export function EquipFloat() {
       ref={ref}
       tabIndex={-1}
       className={`${css.card} ${css.float}`}
+      data-glass-surface="surface"
+      data-vt="float"
       style={{ ...box, ['--rh' as string]: surfaceHue(float) }}
       role="dialog"
       aria-label={`${surfaceLabel(float, carried)} — floating`}

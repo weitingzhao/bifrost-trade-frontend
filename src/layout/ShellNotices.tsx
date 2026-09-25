@@ -45,6 +45,7 @@ function Toast() {
     <div
       role="status"
       className={css.toast}
+      data-glass-surface="raised"
       data-on={shown === toast.id ? '1' : '0'}
       style={{ left: lane.left + lane.width / 2 }}
     >
@@ -97,6 +98,7 @@ function Banner({ b }: { b: ShellBanner }) {
       role="alert"
       tabIndex={0}
       className={css.banner}
+      data-glass-surface="surface"
       data-on={on ? '1' : '0'}
       onMouseEnter={() => window.clearTimeout(timer.current)}
       onMouseLeave={arm}

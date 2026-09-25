@@ -120,5 +120,5 @@ export function ShellTip() {
     }
   }, [])
 
-  return <div ref={ref} role="tooltip" className={css.tip} data-on="0" />
+  return <div ref={ref} role="tooltip" className={css.tip} data-on="0" data-glass-surface="raised" />
 }

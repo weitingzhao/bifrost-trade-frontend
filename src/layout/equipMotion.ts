@@ -68,6 +68,14 @@ export function noteOrigin(key: string, el: Element | null | undefined): void {
   pending = { key, pt }
 }
 
+/**
+ * The float about to open springs from a point rather than a control — a
+ * panel tab dragged out opens where the pointer let go (Rev .70 §3).
+ */
+export function noteOriginPoint(key: string, pt: Point): void {
+  pending = { key, pt }
+}
+
 /** The float and the panel hand their card here so a close can move it. */
 export function registerSurfaceElement(place: 'float' | 'panel', el: HTMLElement | null): void {
   elements[place] = el

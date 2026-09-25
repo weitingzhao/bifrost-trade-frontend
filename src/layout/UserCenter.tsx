@@ -30,6 +30,7 @@ import { DESIGN_REV } from '@/lib/design/designRoutes.generated'
 import { glyph } from '@/lib/design/glyphs'
 import { OPS_CONSOLE_URL } from '@/lib/opsConsole'
 import { useThemeMode, type ThemeMode } from '@/lib/theme'
+import { useGlass } from '@/lib/glass'
 import { useShellPopover } from '@/lib/shellPopover'
 import { cn } from '@/lib/utils'
 import { worstLamp } from '@/utils/systemStanding'
@@ -74,6 +75,7 @@ function useDoor() {
 /** The card: mounted only while open, so the live quote reading lives only as long as it does. */
 function UserCard({ onClose }: { onClose: () => void }) {
   const { mode, theme, choose } = useThemeMode()
+  const glass = useGlass()
   const { data: status } = useMonitorStatus()
   const accounts = (status?.portfolio?.accounts ?? []).map((a) => (a.account_id ?? '').trim()).filter(Boolean)
   const domains = useSystemDomains({ live: true })
@@ -144,6 +146,27 @@ function UserCard({ onClose }: { onClose: () => void }) {
             )
           })}
         </div>
+        {/* Rev .70 §1 — macOS Accessibility › Display. Follows the system until set here. */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={glass.solid}
+          onClick={glass.toggle}
+          title="Glass surfaces (panel, toolbar, sidebar, popovers) become solid. Follows the system setting unless you set it here."
+          className="flex w-full items-center gap-2 border-0 bg-transparent py-1 text-left text-dense-label text-foreground"
+        >
+          <span className="flex-1">Reduce transparency</span>
+          <span
+            aria-hidden
+            className="relative h-[18px] w-[30px] flex-none rounded-full transition-colors"
+            style={{ background: glass.solid ? 'var(--sk-accent)' : 'color-mix(in srgb, var(--sk-ink) 16%, transparent)' }}
+          >
+            <span
+              className="absolute top-[2px] size-[14px] rounded-full bg-[var(--sk-ink)] shadow-[0_1px_3px_rgb(0_0_0/0.35)] transition-[left]"
+              style={{ left: glass.solid ? 14 : 2 }}
+            />
+          </span>
+        </button>
       </div>
 
       <nav className="border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] py-1.5" aria-label="Doors">

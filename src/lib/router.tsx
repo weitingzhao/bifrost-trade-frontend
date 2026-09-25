@@ -1,3 +1,4 @@
+import { withPageTransitions } from '@/lib/pageTransition'
 import type { ComponentType } from 'react'
 import type { RouteObject } from 'react-router-dom'
 import { createBrowserRouter, Navigate, useLocation, useParams } from 'react-router-dom'
@@ -106,7 +107,7 @@ export function redirectRoutes(): RouteObject[] {
   }))
 }
 
-export const router = createBrowserRouter([
+export const router = withPageTransitions(createBrowserRouter([
   {
     path: '/',
     element: <AppLayout />,
@@ -461,4 +462,4 @@ export const router = createBrowserRouter([
       { path: '*', element: <RouteErrorPage /> },
     ],
   },
-])
+]))

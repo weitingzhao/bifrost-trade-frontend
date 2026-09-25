@@ -44,6 +44,7 @@ import {
 } from '@/lib/harness/harnessDraftHelpers'
 import { actionTone, fmtPct, fmtPx, stars, type CandidateRating } from '@/lib/harness/rating'
 import { IconActionButton } from '@/components/data-display'
+import { accountTag } from '@/utils/accountTag'
 
 /** Above this a decision card turns into a spreadsheet; batches are policy-capped at 50. */
 const MAX_ROWS = 20
@@ -95,8 +96,7 @@ export function CandidateBatchBody({
     CUSHION_TIGHT_PCT_DEFAULT,
   )
   const coverRows = book.coverRows
-  const accountLabel = (id: string) =>
-    id === book.hostAccountId ? 'HOST' : id === book.secondaryAccountId ? 'SEC' : id.slice(-4)
+  const accountLabel = (id: string) => accountTag(id, book.hostAccountId, book.secondaryAccountId)
 
   const items = candidateBatchItems(payload)
   const warn = isHitRateWarnActive(payload)

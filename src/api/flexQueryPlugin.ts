@@ -83,7 +83,8 @@ export async function pluginFlexUploadXml(xml: string): Promise<FlexUploadRespon
 export async function pluginFlexWriteConfig(
   hostToken: string | null | undefined,
   secondaryToken: string | null | undefined,
-  accounts: FlexAccountItem[],
+  /** Omitted (undefined) leaves the stored query rows as they are. */
+  accounts: FlexAccountItem[] | undefined,
   flexDefaultRangeDays?: number | null,
   flexInitRangeDays?: number | null,
 ): Promise<{ ok: boolean; error?: string }> {

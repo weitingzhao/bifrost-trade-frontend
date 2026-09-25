@@ -22,7 +22,7 @@
  * here; a new helper that assembles a path from scratch is the gap, and the
  * interaction sweep in `.claude/skills/design-walk` is what closes it.
  */
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 import type { RouteObject } from 'react-router-dom'
@@ -47,6 +47,9 @@ const SOURCE_FILES = execSync("git ls-files 'src/**/*.tsx' 'src/**/*.ts'", { enc
   .split('\n')
   .filter(Boolean)
   .filter((f) => !f.includes('.test.'))
+  // The index still lists a file deleted in the working tree until the delete
+  // is committed — and in this shared checkout that can be another session's.
+  .filter((f) => existsSync(f))
 
 /**
  * Where a link target is written. Each of these is a place a path reaches the

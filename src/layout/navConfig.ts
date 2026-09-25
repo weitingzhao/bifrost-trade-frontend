@@ -22,7 +22,6 @@ import {
   Network,
   Palette,
   PieChart,
-  Plug,
   Radar,
   Radio,
   Settings,
@@ -283,9 +282,6 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
         route('API Health', '/system/api', Activity),
         route('Socket', '/system/socket', Radio),
         route('Platform', '/system/platform', Blocks),
-      ]),
-      fold('system:config', 'Configuration', '/system/ib', Plug, [
-        route('IB Connection', '/system/ib', Plug),
       ]),
       fold('system:reference', 'Reference', '/docs/design-adoption', BookOpen, [
         route('Design Adoption', '/docs/design-adoption', ListChecks),

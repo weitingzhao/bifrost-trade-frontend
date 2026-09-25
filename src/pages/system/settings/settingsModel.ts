@@ -8,12 +8,12 @@
  * cluster on any of them.
  *
  * The prototype is read-only and says so: *此页原型只读——编辑动作在实现侧接
- * YAML/配置存储*. This side already has that implementation, on the IB
- * Connection page, so each row reads the value and `Edit →` opens the page
- * that owns the write. Moving 545 lines of write paths is not a presentation
- * change and is not what a build does.
+ * YAML/配置存储*. The implementation side is this page since the Owner's
+ * 2026-09-25 call: each row edits in place through the same two writes the
+ * retired IB Connection page used, and the two YAML rows open their full
+ * reading, because config.yaml has no write route.
  */
-import type { StatusResponse } from '@/types/monitor'
+import type { FlexAccountItem, IbClientPort, StatusResponse } from '@/types/monitor'
 import type { FlexConfigSummary } from '@/api/flexQueryPlugin'
 import type { FlexCoverageFreshnessResponse } from '@/types/trading'
 /** Same shape as `fmtSince`, with the clock passed in so this stays pure. */
@@ -26,6 +26,8 @@ function ageWords(elapsedSec: number): string {
 }
 
 export interface SettingRow {
+  /** Which editor or reading the row opens. */
+  id: string
   label: string
   /** What it is, in the design's own words. */
   what: string
@@ -52,6 +54,7 @@ export function ibRows(status: StatusResponse | undefined): SettingRow[] {
   const ports = [client?.host_port_type, client?.secondary_port_type].filter(Boolean)
   return [
     {
+      id: 'ib-user',
       label: 'User (YAML)',
       what: 'Login mapping per slot — host · secondary',
       // The login names were purged from this app on 2026-09-16; a slot is
@@ -59,11 +62,13 @@ export function ibRows(status: StatusResponse | undefined): SettingRow[] {
       reading: client?.host_ip ? `host ${client.host_ip} · secondary ${client.secondary_host_ip ?? '—'}` : '—',
     },
     {
+      id: 'ib-client',
       label: 'Client ID (YAML)',
       what: 'Client IDs per agent · ib.host.client_id.* · secondary ingestor optional',
       reading: ports.length > 0 ? ports.join(' · ') : '—',
     },
     {
+      id: 'ib-account',
       label: 'Account',
       what: 'The IB account the daemon trades and writes positions for',
       reading: account?.trading
@@ -115,6 +120,7 @@ export function flexRows(summary: FlexConfigSummary | undefined): SettingRow[] {
   const named = rows.filter((r) => (r.query_host_id ?? '').trim().length > 0).length
   return [
     {
+      id: 'flex-query',
       label: 'Flex Query',
       what: 'Query id + token per account',
       // Never the token — only whether one is set, and its last four, which is
@@ -124,14 +130,76 @@ export function flexRows(summary: FlexConfigSummary | undefined): SettingRow[] {
         : 'no token set',
     },
     {
+      id: 'flex-preference',
       label: 'Flex Preference',
       what: 'Which Flex queries import, and how they map to Execution',
       reading: rows.length === 0 ? 'no query rows' : `${named} of ${rows.length} queries have an id`,
     },
     {
+      id: 'flex-range',
       label: 'Range',
       what: 'How far back a pull reaches — the default, and the first one',
       reading: summary ? `${summary.range_days.default}d · first run ${summary.range_days.init}d` : '—',
     },
+  ]
+}
+
+/** The two Flex queries the plugin runs, in the order the editor lists them. */
+export const FLEX_QUERY_TYPES: readonly { purpose: string; label: string }[] = [
+  { purpose: 'cash_transactions', label: 'Cash Transactions' },
+  { purpose: 'trades', label: 'Trades' },
+]
+
+/** One editable row per query the plugin runs, whatever the store holds. */
+export function initFlexRows(stored: FlexAccountItem[] | null | undefined): FlexAccountItem[] {
+  return FLEX_QUERY_TYPES.map(({ purpose, label }) => {
+    const row = (stored ?? []).find((r) => (r.purpose ?? 'cash_transactions') === purpose)
+    return {
+      purpose,
+      query_label: label,
+      query_host_id: row?.query_host_id ?? '',
+      query_secondary_id: row?.query_secondary_id ?? '',
+    }
+  })
+}
+
+const PORT_LABELS: Record<string, string> = {
+  tws_paper: 'TWS Paper (7497)',
+  tws_live: 'TWS Live (7496)',
+  gateway: 'Gateway (4002)',
+}
+
+/** A read-only line of the YAML: one value per slot. */
+export interface SlotLine {
+  label: string
+  /** Set when the line is the first of a group — the table prints a header row. */
+  group?: string
+  host: string
+  secondary: string
+}
+
+/** Where each slot connects — the `User (YAML)` row opened. */
+export function ibConnectionLines(status: StatusResponse | undefined): SlotLine[] {
+  const client = status?.config?.ib_client?.client
+  const secondaryOn = Boolean(client?.secondary_host_ip?.trim())
+  const port = (t: string | null | undefined) => (t ? (PORT_LABELS[t] ?? t) : '—')
+  return [
+    { label: 'IP / host', host: client?.host_ip || '—', secondary: secondaryOn ? String(client?.secondary_host_ip) : 'disabled' },
+    { label: 'Port type', host: port(client?.host_port_type), secondary: secondaryOn ? port(client?.secondary_port_type) : '—' },
+  ]
+}
+
+/** Every client id the YAML assigns — the `Client ID (YAML)` row opened. */
+export function ibClientIdLines(status: StatusResponse | undefined): SlotLine[] {
+  const p: IbClientPort = status?.config?.ib_client?.port ?? {}
+  const secondaryOn = Boolean(status?.config?.ib_client?.client?.secondary_host_ip?.trim())
+  const id = (v: number | string | null | undefined) => (v == null || v === '' ? '—' : String(v))
+  const second = (v: number | string | null | undefined) => (secondaryOn ? id(v) : '—')
+  return [
+    { group: 'Daemon', label: 'Trading', host: id(p.trading), secondary: '—' },
+    { label: 'Listener', host: id(p.listener_host), secondary: id(p.listener_secondary) },
+    { group: 'Socket services', label: 'Operator (cmd RPC)', host: id(p.operator_host), secondary: second(p.operator_secondary) },
+    { label: 'Ingestor', host: id(p.ingestor), secondary: '—' },
+    { label: 'Account agent', host: id(p.account_agent), secondary: second(p.account_agent_secondary) },
   ]
 }

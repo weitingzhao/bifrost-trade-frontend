@@ -19,7 +19,7 @@ describe('omnibar page search', () => {
   it('finds every System page under the name they all used to share', () => {
     const settings = found('settings')
     expect(settings).toContain('/system/coverage')
-    expect(settings).toContain('/system/ib')
+    expect(settings).toContain('/settings')
     expect(settings).toContain('/docs/tech-stack')
     expect(settings).not.toContain('/portfolio/positions')
   })

@@ -5,7 +5,15 @@ import { describe, expect, it } from 'vitest'
 import type { StatusResponse } from '@/types/monitor'
 import type { FlexConfigSummary } from '@/api/flexQueryPlugin'
 import type { FlexCoverageFreshnessResponse } from '@/types/trading'
-import { flexRows, flexStanding, ibRows, ibSlotStanding } from './settingsModel'
+import {
+  flexRows,
+  flexStanding,
+  ibClientIdLines,
+  ibConnectionLines,
+  ibRows,
+  ibSlotStanding,
+  initFlexRows,
+} from './settingsModel'
 
 const status = (over: Record<string, unknown> = {}): StatusResponse =>
   ({
@@ -97,5 +105,55 @@ describe('flexStanding', () => {
   it('says no pull recorded rather than reading as fresh', () => {
     expect(flexStanding(undefined, NOW)).toEqual({ text: 'no pull recorded', tone: 'gray' })
     expect(flexStanding(fresh([]), NOW).tone).toBe('gray')
+  })
+})
+
+describe('the YAML rows, opened', () => {
+  it('reads each slot where it connects, and names the port by what it is', () => {
+    const lines = ibConnectionLines(status())
+    expect(lines.map((l) => [l.label, l.host, l.secondary])).toEqual([
+      ['IP / host', '192.168.10.20', '192.168.10.21'],
+      ['Port type', 'TWS Live (7496)', 'TWS Paper (7497)'],
+    ])
+  })
+
+  it('says a secondary slot is off rather than printing its stale port', () => {
+    const off = status({
+      config: { ib_client: { client: { host_ip: '10.0.0.1', host_port_type: 'gateway', secondary_host_ip: '' } } },
+    })
+    expect(ibConnectionLines(off)[0].secondary).toBe('disabled')
+    expect(ibConnectionLines(off)[1].secondary).toBe('—')
+  })
+
+  it('lists every client id the YAML assigns, grouped as the old page grouped them', () => {
+    const withIds = status({
+      config: {
+        ib_client: {
+          client: { host_ip: '10.0.0.1', secondary_host_ip: '10.0.0.2' },
+          port: { trading: 10, listener_host: 1, listener_secondary: 1, operator_host: 20, operator_secondary: 21, ingestor: 50, account_agent: 60 },
+        },
+      },
+    })
+    const lines = ibClientIdLines(withIds)
+    expect(lines.filter((l) => l.group).map((l) => l.group)).toEqual(['Daemon', 'Socket services'])
+    expect(lines.map((l) => [l.label, l.host, l.secondary])).toEqual([
+      ['Trading', '10', '—'],
+      ['Listener', '1', '1'],
+      ['Operator (cmd RPC)', '20', '21'],
+      ['Ingestor', '50', '—'],
+      ['Account agent', '60', '—'],
+    ])
+  })
+})
+
+describe('initFlexRows', () => {
+  it('gives one editable row per query the plugin runs, whatever the store holds', () => {
+    expect(initFlexRows(undefined).map((r) => [r.purpose, r.query_host_id])).toEqual([
+      ['cash_transactions', ''],
+      ['trades', ''],
+    ])
+    const rows = initFlexRows([{ purpose: 'trades', query_host_id: '42', query_secondary_id: '43' }])
+    expect(rows[1]).toMatchObject({ purpose: 'trades', query_label: 'Trades', query_host_id: '42', query_secondary_id: '43' })
+    expect(rows[0].query_host_id).toBe('')
   })
 })

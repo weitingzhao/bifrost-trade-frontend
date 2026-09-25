@@ -246,7 +246,10 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: SYSTEM_DATA,
     redirect: '/system/data-readiness',
   },
-  { path: '/settings/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/system/ib' },
+  // IB Connection retired 2026-09-25 (Owner): its writes open in place on
+  // Settings, the page the design merged it into on 2026-09-15.
+  { path: '/system/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/settings' },
+  { path: '/settings/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/settings' },
   { path: '/settings/api', label: 'API Health', crumbs: SYSTEM_RUNTIME, redirect: '/system/api' },
   { path: '/settings/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: '/system/socket' },
   { path: '/settings/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/daemon' },

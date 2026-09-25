@@ -107,7 +107,6 @@ export const PROMPT_PAGES: PromptPageDef[] = [
   { route: '/system/api', label: 'API Health', domain: 'system', pathGlobs: ['pages/system/ApiHealthPage.tsx', 'pages/system/apiHealth/**'] },
   { route: '/system/socket', label: 'Socket', domain: 'system', pathGlobs: ['pages/system/SocketPage.tsx', 'pages/system/socket/**'] },
   { route: '/system/platform', label: 'Platform', domain: 'system', pathGlobs: ['pages/system/PlatformPluginsPage.tsx'] },
-  { route: '/system/ib', label: 'IB Connection', domain: 'system', pathGlobs: ['pages/system/IbConnectionPage.tsx'] },
 
   { route: '/docs/ui-design-system', label: 'UI Design System', domain: 'system', pathGlobs: ['pages/docs/UiDesignSystemPage.tsx', 'pages/docs/uiDesignSystem/**'] },
   { route: '/docs/tech-stack', label: 'Tech Stack', domain: 'system', pathGlobs: ['pages/docs/TechStackPage.tsx'] },

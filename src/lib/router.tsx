@@ -456,10 +456,6 @@ export const router = createBrowserRouter([
         path: 'system/platform',
         lazy: lazyPage(() => import('@/pages/system/PlatformPluginsPage')),
       },
-      {
-        path: 'system/ib',
-        lazy: lazyPage(() => import('@/pages/system/IbConnectionPage')),
-      },
 
       {
         path: 'docs/design-adoption',

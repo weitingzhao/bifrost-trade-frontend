@@ -96,7 +96,6 @@ import {
   PORTFOLIO,
   REVIEW,
   RISK,
-  SYSTEM_CONFIG,
   SYSTEM,
   SYSTEM_DATA,
   SYSTEM_RUNTIME,
@@ -535,15 +534,6 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       state: 'staging',
       note: DESIGN_NOTES['/system/platform'],
-    },
-  },
-  {
-    path: '/system/ib',
-    label: 'IB Connection',
-    crumbs: SYSTEM_CONFIG,
-    design: {
-      state: 'staging',
-      note: DESIGN_NOTES['/system/ib'],
     },
   },
 

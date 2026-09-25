@@ -9,13 +9,15 @@
  * market-data infrastructure config belongs to the Ops Console — so there are
  * three panels and nothing about the cluster on any of them.
  *
- * ## Read here, written where the write already lives
+ * ## Read here, and written here
  *
  * The prototype is read-only and says so: *此页原型只读——编辑动作在实现侧接
- * YAML/配置存储*. This side already has that implementation, on the IB
- * Connection page, so each row reads its value and `Edit →` opens the page
- * that owns the write. Moving 545 lines of write paths is not a presentation
- * change; the design's merge is recorded, and the move is the Owner's to call.
+ * YAML/配置存储*. The Owner called the move on 2026-09-25: the IB Connection
+ * page's writes now open in place under their rows (`SettingsEditors.tsx`),
+ * and `/system/ib` forwards here. The two YAML rows have no write route —
+ * config.yaml is read when a process starts — so their control is `View`,
+ * which opens the full reading the old page printed: every slot's host and
+ * port, and every client id the YAML assigns.
  *
  * ## Keyboard is the app's own table, not the design's four
  *
@@ -34,7 +36,6 @@
  * and when, which is the half that can be read.
  */
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
 import { cn } from '@/lib/utils'
@@ -43,9 +44,21 @@ import { useFlexConfigSummary, useInvalidateFlexConfigSummary } from '@/hooks/us
 import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
 import { pluginFlexTrigger } from '@/api/flexQueryPlugin'
 import { SHORTCUTS } from '@/lib/cockpit/shortcuts'
-import { flexRows, flexStanding, ibRows, ibSlotStanding, type SettingRow } from './settingsModel'
+import {
+  flexRows,
+  flexStanding,
+  ibClientIdLines,
+  ibConnectionLines,
+  ibRows,
+  ibSlotStanding,
+  type SettingRow,
+} from './settingsModel'
+import { AccountEditor, FlexQueryEditor, FlexRangeEditor, FlexTokenEditor, YamlReading } from './SettingsEditors'
 
-const IB_EDIT = '/system/ib'
+/** The two rows config.yaml owns: read in full, never written from here. */
+const YAML_ROWS = new Set(['ib-user', 'ib-client'])
+const YAML_WHY =
+  'Set in config.yaml and read when a process starts — edit the file and restart the process; there is no write route for it.'
 
 function Panel({
   cap,
@@ -116,12 +129,42 @@ export default function SettingsPage() {
   })
 
   const standing = flexStanding(freshness.data, nowMs)
+  const secondaryOn = Boolean(status?.config?.ib_client?.client?.secondary_host_ip?.trim())
 
-  const edit = (
-    <Link to={IB_EDIT} className="whitespace-nowrap text-dense-caption hover:underline">
-      Edit →
-    </Link>
+  // One row open at a time: an editor is a form, and two half-typed forms on
+  // one page is two saves waiting to disagree.
+  const [open, setOpen] = useState<string | null>(null)
+  const close = () => setOpen(null)
+  const toggle = (row: SettingRow) => (
+    <button
+      type="button"
+      onClick={() => setOpen(open === row.id ? null : row.id)}
+      aria-expanded={open === row.id}
+      className="whitespace-nowrap text-dense-caption text-primary hover:underline"
+      title={YAML_ROWS.has(row.id) ? YAML_WHY : undefined}
+    >
+      {open === row.id ? 'Close' : YAML_ROWS.has(row.id) ? 'View' : 'Edit'}
+    </button>
   )
+  const opened = (id: string) => {
+    if (open !== id) return null
+    switch (id) {
+      case 'ib-user':
+        return <YamlReading lines={ibConnectionLines(status)} why={YAML_WHY} />
+      case 'ib-client':
+        return <YamlReading lines={ibClientIdLines(status)} why={YAML_WHY} />
+      case 'ib-account':
+        return <AccountEditor status={status} onDone={close} />
+      case 'flex-query':
+        return <FlexTokenEditor summary={flexConfig.data} secondaryOn={secondaryOn} onDone={close} />
+      case 'flex-preference':
+        return <FlexQueryEditor summary={flexConfig.data} secondaryOn={secondaryOn} onDone={close} />
+      case 'flex-range':
+        return <FlexRangeEditor summary={flexConfig.data} onDone={close} />
+      default:
+        return null
+    }
+  }
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -132,7 +175,10 @@ export default function SettingsPage() {
 
       <Panel cap="IB Connection" title={ibSlotStanding(status)} aside="edits apply on next reconnect">
         {ibRows(status).map((r) => (
-          <Row key={r.label} row={r} action={edit} />
+          <div key={r.id}>
+            <Row row={r} action={toggle(r)} />
+            {opened(r.id)}
+          </div>
         ))}
       </Panel>
 
@@ -143,10 +189,14 @@ export default function SettingsPage() {
         aside="feeds Ledger + Transfer & Pay"
       >
         {flexRows(flexConfig.data).map((r) => (
-          <Row key={r.label} row={r} action={edit} />
+          <div key={r.id}>
+            <Row row={r} action={toggle(r)} />
+            {opened(r.id)}
+          </div>
         ))}
         <Row
           row={{
+            id: 'flex-fetch',
             label: 'Fetch now',
             what: 'Pull transactions for the default range — the same trigger Transfer & Pay’s toolbar fires',
             reading: fetched ?? '',
@@ -181,13 +231,9 @@ export default function SettingsPage() {
 
       <p className="text-dense-caption leading-relaxed text-muted-foreground">
         Owner ruling 2026-09-15: the old System › Configuration › IB Connection merges here, and
-        cluster, pipeline and market-data infrastructure config belongs to the Ops Console. The
-        readings above are this page&rsquo;s; the writes still live on{' '}
-        <Link to={IB_EDIT} className="text-foreground hover:underline">
-          IB Connection
-        </Link>
-        , which is where <span className="font-mono">Edit →</span> goes — moving a write path is
-        not a presentation change. The Flex schedule itself is Dagster&rsquo;s and no route reports
+        cluster, pipeline and market-data infrastructure config belongs to the Ops Console. Each
+        row edits in place and saves only its own part; the two YAML rows are read here and
+        changed in config.yaml. The Flex schedule itself is Dagster&rsquo;s and no route reports
         it, so the header says what landed rather than what was due.
       </p>
     </PageShell>

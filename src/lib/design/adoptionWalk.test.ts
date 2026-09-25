@@ -537,7 +537,7 @@ describe('the design walk, as it stands', () => {
     // ask". `/research/stock-screener` used to be the tenth; the Owner's
     // 2026-09-20 ruling answered it, so the page holds the design's own path
     // and nothing here is waiting on Design any more.
-    expect(counts.byState.staging).toBe(9)
+    expect(counts.byState.staging).toBe(8)
     expect(
       rows
         .filter((r) => r.state === 'staging')
@@ -549,7 +549,6 @@ describe('the design walk, as it stands', () => {
       '/system/daemon',
       '/system/data-readiness',
       '/system/feed',
-      '/system/ib',
       '/system/platform',
       '/system/socket',
       '/system/topology',

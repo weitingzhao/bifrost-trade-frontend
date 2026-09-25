@@ -9,7 +9,7 @@ Instructions for **Claude Code, Cursor Agent, Codex, GPT**, and other coding age
 
 ## Product context
 
-Internal trading monitoring SPA (React 18 + Vite + TanStack Query + shadcn/ui). Phase 1: New Frontend + Legacy API. See `CLAUDE.md` for architecture, hooks, and migration constraints.
+Internal trading monitoring SPA (React 19 + Vite + TanStack Query + shadcn/ui). The Legacy frontend and API are retired (spine D8). See `CLAUDE.md` for architecture, hooks, and migration constraints.
 
 ## DEV Inner Loop (D-IL1 — mandatory habit)
 

@@ -15,7 +15,7 @@ parity-ids: dense-ui-system-v1, ui-confirm-dialogs-v1, module-placement-v1
 
 | 项 | 值 |
 |---|---|
-| 域 / 载荷 | Trade (OLTP) · **两个 payload 共用的驾驶舱 SPA**（Portfolio / Strategy / Market + Research UI），随 Satellite 链发布 |
+| 域 / 载荷 | Trade (OLTP) · **两个 payload 共用的驾驶舱 SPA**（Home / Trade / Portfolio / Risk / Review + Research UI），随 Satellite 链发布 |
 | 验收位置 | 本机 Vite `:5173`（`npm run dev:k3s`）对 DEV API `192.168.10.73:30882`；Prod 刷新是 L2 发布闸门，不是日常回归 |
 | 发布链 | GitHub main → `bifrost-deliver-{stg,prod}`（含 `bifrost-ui` 的 mirror-sync）；`bifrost-ci-frontend` 由 Gitea push webhook 触发 |
 | 仓库可见性 | GitHub **PUBLIC**（12 个 repo 全部公开）—— `.env`、Secret YAML、dump、kubeconfig、账户内容永不入库 |
@@ -68,7 +68,7 @@ Legacy 前端（`bifrost-trader-engine/frontend`，已随 D8 归档，不可访�
 
 | 方向 | 选型 | 选用原因 |
 |------|------|---------|
-| 框架 | **React 18 + TypeScript + Vite** | 纯 SPA，无 SEO 需求，Vite 构建最快 |
+| 框架 | **React 19 + TypeScript + Vite** | 纯 SPA，无 SEO 需求，Vite 构建最快 |
 | 路由 | **React Router v7**（`react-router-dom@7.x`） | 替代旧代码的 hash + window.location 手工管理；使用 Data Router 模式（`createBrowserRouter` + `RouterProvider`），与 v6.4+ API 完全兼容 |
 | 服务端状态 | **TanStack Query v5** | 统一替代所有手写 useEffect+fetch+useState 模式 |
 | UI 组件库 | **shadcn/ui + Tailwind CSS** | 免费开源，组件质量高，样式可定制 |
@@ -77,7 +77,7 @@ Legacy 前端（`bifrost-trader-engine/frontend`，已随 D8 归档，不可访�
 
 **明确排除 Next.js**：本项目是内部交易监控台，无 SEO 需求，SSE 密集，无需 SSR/RSC。Next.js 的核心价值与本项目需求完全错位。
 
-**权威文档（技术选型 + Dense UI + 治理）**：`docs/TECH_STACK.md`；应用内 **Settings → Configuration → Tech Stack**（`/settings/tech-stack`）。Dense UI 细节见 `docs/DENSE_UI.md`。
+**权威文档（技术选型 + Dense UI + 治理）**：`docs/TECH_STACK.md`；应用内 **System › Reference › Tech Stack**（`/docs/tech-stack`，页面直接渲染这份 md，只改 md）。Dense UI 细节见 `docs/DENSE_UI.md`。
 
 ---
 
@@ -104,16 +104,16 @@ Legacy 前端（`bifrost-trader-engine/frontend`，已随 D8 归档，不可访�
 - 导航分组与 API 域对齐：
 
 ```
-Market       → Live
-Portfolio    → Performance › Positions / Backing & Model
-                Accounts › Trade Ledger / Transfer & Pay
-Research     → 按 seat 裁剪（Autopilot / Copilot / Workbench）+ Overview，rail 在组顶
-Strategy     → Instances › Win Rate · Allocations › Opportunity / Structure / Option Category / Gates
+Home · Trade · Portfolio · Risk · Review · Research（Market 是 Research 里的一个 fold）
 ```
 
-**System 不进业务组**：`/system/*` 与 `/docs/*` 走侧栏脚的 `System` 入口，进入后整棵树切换为
-Data / Runtime / Configuration / Reference，脚部变 `Back to Trade`（`isSystemRoute`）。
-`/settings/*`、`/operations/*` 是这套的旧名，全部登记为 redirect。
+（Strategy 七页 2026-09-18 已溶解进 Trade › Rules，旧地址都是 redirect。）
+
+**System 不进业务组**：`/system/*` 与 `/docs/*` 走侧栏脚的 `System` 入口（落在 `/system/status`），进入后整棵树切换为
+Status · Settings · Data · Agents · Reference，脚部变 `Back to Trade`（`isSystemRoute`）。
+Runtime 与 Configuration 已于 2026-09-25 退役（Owner）：诊断与运维归 Ops Console，IB 配置并入 Settings；
+System 只回答交易者的三个问题（能否交易 / 能否看到 / 数据是否落地）。
+`/settings/*`、`/operations/*` 及退役页的旧地址全部登记为 redirect，去向表写在 `src/layout/redirectRoutes.ts`。
 
 **组名与路由的权威是 `src/layout/routeRegistry.ts`**，不是本文件；改菜单先改它。
 
@@ -256,12 +256,10 @@ src/
 │   ├── AppHeader.tsx     ← 顶部 Header
 │   └── AppLayout.tsx     ← 组合 Sidebar + Header + Outlet
 ├── pages/
-│   ├── market/
-│   ├── portfolio/
-│   ├── research/
-│   ├── strategy/
-│   ├── operations/
-│   └── settings/
+│   ├── home/  trade/  portfolio/  risk/  review/
+│   ├── research/  market/  copilot/
+│   ├── system/           ← Status、Settings
+│   └── docs/             ← Reference
 ├── hooks/                ← 所有 custom hooks（按域分文件）
 │   ├── useQuoteStream.ts
 │   ├── useSystemMessages.ts

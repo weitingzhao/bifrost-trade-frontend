@@ -2,29 +2,24 @@
  * Correlation over time — book pairs' 60d rolling ρ, the line behind the
  * matrix cell Risk · Portfolio Exposure prints.
  *
- * The pairs come off Risk's own matrix (the committed reading); the line is
- * this page recomputing the same definition over the store's closes, and the
- * legend prints both ends — a drift between them is shown in amber, never
- * hidden, which is what earns the second implementation its place.
+ * The pairs come off Risk's own matrix; every point on the line is that same
+ * matrix read as of its session (`/analytics/risk/correlation?as_of=`, research
+ * 0.124.0), so the line ends where the matrix reads and the number has one
+ * implementation. Until then the page recomputed the definition over the
+ * plugin's closes and flagged the two disagreeing.
  */
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { fetchDailyClosesMulti } from '@/api/marketData/dailyBars'
+import { useQueries } from '@tanstack/react-query'
+import { fetchRiskCorrelation } from '@/api/research/riskStats'
 import { CORR_WINDOW, useRiskExposure } from '@/hooks/useRiskExposure'
 import { cn } from '@/lib/utils'
-import {
-  alignedLogReturns,
-  rollingPearson,
-  topPairs,
-  type RollingPoint,
-} from './historyCorr'
+import { seriesFromMatrices, topPairs, weekdaysBack, type RollingPoint } from './historyCorr'
 
 const STROKES = ['stroke-warning', 'stroke-entity-symbol', 'stroke-entity-option'] as const
 const SWATCH = ['bg-warning', 'bg-entity-symbol', 'bg-entity-option'] as const
 
+/** About six months of sessions, one matrix read per weekday. */
 const DRAWN = 126
-/** Past this the line's end and the matrix are two readings, said out loud. */
-const DRIFT_TOL = 0.05
 
 export function HistoryCorrelation() {
   const { matrix, corrSymbols, corrQuery } = useRiskExposure('all')
@@ -33,25 +28,27 @@ export function HistoryCorrelation() {
     () => [...new Set(pairs.flatMap((p) => [p.a, p.b]))].sort(),
     [pairs]
   )
-  const closesQ = useQuery({
-    queryKey: ['market', 'closes-multi', 'corr', syms.join(',')],
-    queryFn: () => fetchDailyClosesMulti(syms, 300),
-    enabled: syms.length > 0,
-    staleTime: 10 * 60_000,
+  // Walk back from the session today's matrix rests on; the server names the
+  // session each read answers for, so holidays fold into the day before.
+  const asOf = corrQuery.data?.as_of ?? null
+  const dates = useMemo(() => (asOf && syms.length >= 2 ? weekdaysBack(asOf, DRAWN) : []), [asOf, syms.length])
+  const readings = useQueries({
+    queries: dates.map((d) => ({
+      queryKey: ['research', 'risk', 'correlation', 'as-of', syms.join(','), CORR_WINDOW, d],
+      queryFn: () => fetchRiskCorrelation(syms, CORR_WINDOW, d),
+      staleTime: 30 * 60_000,
+    })),
   })
+  const pending = readings.filter((q) => q.isLoading).length
+  const failed = readings.filter((q) => q.isError)
+  const answers = readings.map((q) => q.data)
 
-  const lines = useMemo(() => {
-    const closes = closesQ.data
-    if (!closes) return []
-    return pairs.map((p, i) => {
-      const { l, r, dates } = alignedLogReturns(closes[p.a] ?? [], closes[p.b] ?? [])
-      const series = rollingPearson(l, r, dates, CORR_WINDOW).slice(-DRAWN)
-      return { ...p, series, stroke: STROKES[i % 3], swatch: SWATCH[i % 3] }
-    })
-  }, [closesQ.data, pairs])
-
-  if (corrQuery.isLoading || (syms.length > 0 && closesQ.isLoading)) {
-    return <p className="px-3 py-4 text-dense-meta text-muted-foreground">Reading the book&apos;s pairs…</p>
+  if (corrQuery.isLoading || pending > 0) {
+    return (
+      <p className="px-3 py-4 text-dense-meta text-muted-foreground">
+        Reading the book&apos;s pairs…{dates.length > 0 ? ` ${dates.length - pending} of ${dates.length} sessions` : ''}
+      </p>
+    )
   }
   if (pairs.length === 0) {
     return (
@@ -61,14 +58,27 @@ export function HistoryCorrelation() {
       </p>
     )
   }
+  if (dates.length > 0 && failed.length === dates.length) {
+    return (
+      <p className="px-3 py-4 text-dense-meta text-warning">
+        Research&apos;s matrix did not answer for any session: {String(failed[0].error)}
+      </p>
+    )
+  }
 
+  const lines = pairs.map((p, i) => ({
+    ...p,
+    series: seriesFromMatrices(p, answers),
+    stroke: STROKES[i % 3],
+    swatch: SWATCH[i % 3],
+  }))
   const drawn = lines.filter((l) => l.series.length > 1)
   const all: RollingPoint[] = drawn.flatMap((l) => l.series)
   if (all.length === 0) {
     return (
       <p className="px-3 py-4 text-dense-meta text-muted-foreground">
-        The closes reach fewer than {CORR_WINDOW} shared sessions for every pair — the rolling
-        window never fills.
+        Research&apos;s matrix fills no {CORR_WINDOW}-session window for these pairs over the drawn
+        sessions — the closes do not reach back far enough.
       </p>
     )
   }
@@ -108,32 +118,21 @@ export function HistoryCorrelation() {
         ))}
       </svg>
       <div className="mt-1 flex flex-wrap gap-x-3.5 gap-y-1 text-dense-caption">
-        {drawn.map((l) => {
-          const last = l.series[l.series.length - 1].rho
-          const drift = Math.abs(last - l.matrixRho)
-          return (
-            <span key={l.label} className="text-secondary-foreground">
-              <span className={cn('mr-1 inline-block h-0.5 w-3.5 align-[3px]', l.swatch)} />
-              {l.label}{' '}
-              <span className="font-mono font-semibold text-foreground">{last.toFixed(2)}</span>
-              {drift > DRIFT_TOL ? (
-                <span
-                  className="ml-1 font-mono text-warning"
-                  title="This line's endpoint and Risk's matrix disagree past 0.05 — two readings, and the matrix is the committed one."
-                >
-                  matrix {l.matrixRho.toFixed(2)}
-                </span>
-              ) : null}
-            </span>
-          )
-        })}
+        {drawn.map((l) => (
+          <span key={l.label} className="text-secondary-foreground">
+            <span className={cn('mr-1 inline-block h-0.5 w-3.5 align-[3px]', l.swatch)} />
+            {l.label}{' '}
+            <span className="font-mono font-semibold text-foreground">{l.series[l.series.length - 1].rho.toFixed(2)}</span>
+          </span>
+        ))}
       </div>
       <p className="m-0 mt-1.5 text-dense-caption leading-relaxed text-muted-foreground text-pretty">
         {top
           ? `${top.label} is the book's tightest pair at ${top.series[top.series.length - 1].rho.toFixed(2)}${
               rise > 0.02 ? ' and still climbing' : rise < -0.02 ? ' and easing' : ' and flat'
-            } over the drawn window. Pairs and the committed ρ come from Risk's matrix; the line is the same definition — shared dates, log returns, ${CORR_WINDOW}-session Pearson — walked back through the store's closes.`
+            } over the drawn window. Pairs come from Risk's matrix, and every point is that matrix read as of its session — shared dates, log returns, ${CORR_WINDOW}-session Pearson — so the line ends where Risk reads.`
           : ''}
+        {failed.length > 0 ? ` ${failed.length} of ${dates.length} sessions did not answer; the line skips them.` : ''}
       </p>
     </div>
   )

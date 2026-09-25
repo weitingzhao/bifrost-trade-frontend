@@ -1,80 +1,52 @@
 /**
- * Correlation over time — the rolling ρ behind Risk's matrix cell.
+ * Correlation over time — Risk's matrix cell, walked back one session at a time.
  *
- * The engine's definition, replicated exactly (analytics/risk/correlation:
- * date-intersection alignment, log returns, Pearson over the last `window`
- * returns) so the line's endpoint answers to the matrix. The page prints
- * both and flags a disagreement instead of hiding the second implementation
- * — the cross-check is the reason this panel may exist at all.
+ * Every point is Research's own `/analytics/risk/correlation` read `as_of` that
+ * session (research 0.124.0), so the line and the matrix are one
+ * implementation. Until then this file replicated the engine's definition over
+ * the plugin's closes and the panel flagged the two disagreeing.
  */
-import type { RiskCorrelationCell } from '@/api/research/riskStats'
-
-export interface CloseBar {
-  date: string
-  close: number | null
-}
-
-/** Log returns over the two series' shared dates, engine-style. */
-export function alignedLogReturns(
-  a: readonly CloseBar[],
-  b: readonly CloseBar[],
-): { l: number[]; r: number[]; dates: string[] } {
-  const bMap = new Map(b.filter((x) => x.close != null && x.close > 0).map((x) => [x.date, x.close as number]))
-  const shared = a.filter((x) => x.close != null && x.close > 0 && bMap.has(x.date))
-  const l: number[] = []
-  const r: number[] = []
-  const dates: string[] = []
-  for (let i = 1; i < shared.length; i++) {
-    l.push(Math.log((shared[i].close as number) / (shared[i - 1].close as number)))
-    r.push(Math.log(bMap.get(shared[i].date)! / bMap.get(shared[i - 1].date)!))
-    dates.push(shared[i].date)
-  }
-  return { l, r, dates }
-}
-
-function pearson(l: readonly number[], r: readonly number[]): number | null {
-  const n = l.length
-  if (n < 2) return null
-  let sl = 0
-  let sr = 0
-  for (let i = 0; i < n; i++) {
-    sl += l[i]
-    sr += r[i]
-  }
-  const ml = sl / n
-  const mr = sr / n
-  let cov = 0
-  let vl = 0
-  let vr = 0
-  for (let i = 0; i < n; i++) {
-    const dl = l[i] - ml
-    const dr = r[i] - mr
-    cov += dl * dr
-    vl += dl * dl
-    vr += dr * dr
-  }
-  const denom = Math.sqrt(vl * vr)
-  return denom > 0 ? cov / denom : null
-}
+import type { RiskCorrelationCell, RiskCorrelationResponse } from '@/api/research/riskStats'
 
 export interface RollingPoint {
   date: string
   rho: number
 }
 
-/** ρ over a sliding window of returns; one point per session once filled. */
-export function rollingPearson(
-  l: readonly number[],
-  r: readonly number[],
-  dates: readonly string[],
-  window: number,
-): RollingPoint[] {
-  const out: RollingPoint[] = []
-  for (let end = window; end <= l.length; end++) {
-    const rho = pearson(l.slice(end - window, end), r.slice(end - window, end))
-    if (rho != null) out.push({ date: dates[end - 1], rho })
+const DAY_MS = 86_400_000
+
+/**
+ * The last ``n`` weekdays up to and including ``asOf`` (YYYY-MM-DD), oldest
+ * first. The page asks the matrix for each; a holiday among them answers for
+ * the session before, and ``seriesFromMatrices`` drops the repeat — the
+ * server's ``as_of`` is the calendar, not this list.
+ */
+export function weekdaysBack(asOf: string, n: number): string[] {
+  const [y, m, d] = asOf.split('-').map(Number)
+  if (!y || !m || !d || n <= 0) return []
+  const out: string[] = []
+  for (let t = Date.UTC(y, m - 1, d); out.length < n; t -= DAY_MS) {
+    const dow = new Date(t).getUTCDay()
+    if (dow !== 0 && dow !== 6) out.push(new Date(t).toISOString().slice(0, 10))
   }
-  return out
+  return out.reverse()
+}
+
+/**
+ * One pair's line from the matrix read as of successive dates: a point per
+ * distinct session the answers name, oldest first, skipping a cell whose window
+ * did not fill (``rho`` null) and an answer that is missing.
+ */
+export function seriesFromMatrices(
+  pair: { a: string; b: string },
+  answers: readonly (RiskCorrelationResponse | null | undefined)[],
+): RollingPoint[] {
+  const byDate = new Map<string, number>()
+  for (const ans of answers) {
+    const rho = ans?.matrix?.[pair.a]?.[pair.b]?.rho
+    if (ans?.as_of && rho != null) byDate.set(ans.as_of, rho)
+  }
+  return [...byDate.entries()].sort(([x], [y]) => x.localeCompare(y)).map(([date, rho]) => ({ date, rho }))
 }
 
 export interface CorrPair {

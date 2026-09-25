@@ -9,6 +9,7 @@
  * name's 8-K Item 2.02 filings are the print dates, the straddle the session
  * before is what was priced, and the same prints dash the IV chart. A name
  * outside the plugin's 8-K list says so in the panel instead of drawing nothing.
+ * Correlation over time reads Research's matrix as of each session (0.124.0).
  */
 import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -272,7 +273,7 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
           />
         </SectionPanel>
 
-        {/* ── Correlation over time (owed) ─────────────────────────── */}
+        {/* ── Correlation over time ─────────────────────────────────── */}
         <SectionPanel
           cap="Correlation over time"
           title="book pairs · 60d rolling ρ"

@@ -75,14 +75,21 @@ export async function fetchRiskBeta(
   return validateBeta(data) as RiskBetaResponse
 }
 
+/**
+ * The pairwise correlation matrix. ``asOf`` (research 0.124.0) reads it as it
+ * stood at that date's close; the answer's ``as_of`` names the session it
+ * actually rests on, which on a holiday is the one before.
+ */
 export async function fetchRiskCorrelation(
   symbols: readonly string[],
   window = 60,
+  asOf?: string,
 ): Promise<RiskCorrelationResponse | null> {
   const list = [...new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean))]
   // A correlation matrix of one name is the number 1; not worth a request.
   if (list.length < 2) return null
   const q = new URLSearchParams({ symbols: list.join(','), window: String(window) })
+  if (asOf) q.set('as_of', asOf)
   const data = await readEnvelope(
     `${researchEngineUrl('/analytics/risk/correlation')}?${q}`,
     '/risk/correlation',

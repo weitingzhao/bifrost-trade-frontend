@@ -720,7 +720,9 @@ describe('the design walk, as it stands', () => {
     // and a pre-export sweep (.28), and Package .8 @ Rev .29 answers this
     // side's §14.4 ask in the contract alone — the snapshot moved by its
     // global Rev and nothing else, so no page stamp and no state moves.
-    expect(DESIGN_REV).toBe('2026-09-23.29')
+    // Packages .9 and .10 @ Rev .30–.31 move the colour tokens into
+    // `@bifrost/ui` 0.4.13 and leave every page alone: global Rev only.
+    expect(DESIGN_REV).toBe('2026-09-25.31')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

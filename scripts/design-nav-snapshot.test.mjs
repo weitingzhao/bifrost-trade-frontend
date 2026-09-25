@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { canonicalRound, parseRoundsFromIndex } from './design-nav-snapshot.mjs'
+import { canonicalRound, inksOf, parseRoundsFromIndex } from './design-nav-snapshot.mjs'
 
 describe('canonicalRound', () => {
   it('maps OLDC to OLD (early round, partly overtaken by contract)', () => {
@@ -39,5 +39,21 @@ const FILES = [
   it('does not swallow an unknown tag as null', () => {
     const bad = `['X', 'X.dc.html', '/x', WIP, 'no'],`
     assert.throws(() => parseRoundsFromIndex(bad), /Unknown Docs Index round tag 'WIP'/)
+  })
+})
+
+describe('inksOf', () => {
+  const dir = { profit: '#4ade80', loss: '#f87171', unrealized: '#fb923c', ticker: '#a3e635', contract: '#7dd3fc', instance: '#c084fc' }
+  const R = { DIRECTION: { dark: dir, light: dir }, ACCENT: { dark: ['#a78bfa'], light: ['#6d28d9'] } }
+
+  it('takes DIRECTION plus the accent for each theme', () => {
+    const inks = inksOf(R)
+    assert.equal(inks.dark.accent, '#a78bfa')
+    assert.equal(inks.light.contract, '#7dd3fc')
+  })
+
+  it('fails on a hole rather than freezing a mirror that compares nothing', () => {
+    const holed = { ...R, DIRECTION: { dark: { ...dir, ticker: undefined }, light: dir } }
+    assert.throws(() => inksOf(holed), /dark\.ticker/)
   })
 })

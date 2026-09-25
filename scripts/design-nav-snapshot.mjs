@@ -21,6 +21,35 @@ import { resolve, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const out = resolve('src/lib/design/designRoutes.generated.ts')
+const inksOut = resolve('src/lib/design/designInks.generated.ts')
+
+/** The six `DIRECTION` keys the registry mirrors from `@bifrost/ui` (§8, Rev .31). */
+const INK_KEYS = ['profit', 'loss', 'unrealized', 'ticker', 'contract', 'instance']
+
+/**
+ * The registry's colour mirror, per theme: `DIRECTION` plus the accent.
+ *
+ * Since Rev .31 the package owns these values and `DIRECTION` is only a
+ * mirror that must match it. Frozen here so the app's ratchet can hold the
+ * mirror to the package without the design package present. A key missing or
+ * a value that is not a hex fails the sync — a mirror with a hole in it would
+ * pass the comparison by comparing nothing.
+ */
+export function inksOf(R) {
+  const inks = {}
+  for (const th of ['dark', 'light']) {
+    const dir = R.DIRECTION?.[th]
+    const accent = R.ACCENT?.[th]?.[0]
+    if (!dir || !accent) throw new Error(`shell-registry.js: DIRECTION.${th} or ACCENT.${th} is missing.`)
+    const row = { accent }
+    for (const k of INK_KEYS) row[k] = dir[k]
+    for (const [k, v] of Object.entries(row)) {
+      if (!/^#[0-9a-f]{6}$/i.test(String(v))) throw new Error(`shell-registry.js: ${th}.${k} is ${JSON.stringify(v)}, not a hex.`)
+    }
+    inks[th] = row
+  }
+  return inks
+}
 
 /**
  * Docs Index round constants the app can store. `round` on DesignRoute stays
@@ -521,6 +550,31 @@ ${entries.map((e) => '  ' + JSON.stringify(e) + ',').join('\n')}
 ]
 `
   writeFileSync(out, body)
+
+  const inks = inksOf(R)
+  const inkRows = (th) => Object.entries(inks[th]).map(([k, v]) => `    ${k}: ${JSON.stringify(v)},`).join('\n')
+  writeFileSync(
+    inksOut,
+    `/**
+ * GENERATED — do not edit. \`node scripts/design-nav-snapshot.mjs\`.
+ *
+ * The design registry's colour mirror (\`DIRECTION\` + \`ACCENT\` in
+ * \`design/trade/shell-registry.js\`, Rev ${revOf(pkg)}). The values belong to
+ * \`@bifrost/ui\` since Rev .31; the registry keeps this copy as a ratchet mirror,
+ * and \`identityColour.test.ts\` holds it to the package.
+ */
+
+export const DESIGN_INKS = {
+  dark: {
+${inkRows('dark')}
+  },
+  light: {
+${inkRows('light')}
+  },
+} as const
+`,
+  )
+
   console.log(
     `${entries.length} routes (${designed} designed, ${faces.length} faces, ${objTarget.length} objective-scoped, ` +
       `${glyphUsed.length} glyphs over ${glyph.byRoute.size} rows + ${glyph.byFold.size} folds + ${equipGlyph.byRoute.size} rail surfaces, ${Object.keys(scope).length} scoped) -> ${out}`,

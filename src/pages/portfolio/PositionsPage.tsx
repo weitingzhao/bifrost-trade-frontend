@@ -80,7 +80,11 @@ export default function PositionsPage() {
   const queryClient = useQueryClient()
 
   // Scope: the one set of choices the whole page is about, kept in the URL.
-  const { scope, setAccountFilter, setFilterSymbol, setFilterExpiry, resetScope, scopeSearch } = usePositionsScope()
+  // Positions follows the shell's account scope (Rev .58); its own toggles
+  // write it.
+  const { scope, setAccountFilter, setFilterSymbol, setFilterExpiry, resetScope, scopeSearch } = usePositionsScope({
+    followAccount: true,
+  })
   const { accountFilter, filterSymbol, filterExpiry } = scope
   const { pct: cushionTightPct, setPct: setCushionTightPct } = useCushionThreshold()
   const book = usePositionsBook(scope, cushionTightPct)

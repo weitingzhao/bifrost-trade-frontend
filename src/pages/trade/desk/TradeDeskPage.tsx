@@ -32,6 +32,7 @@ import { fetchShortLegs } from '@/api/shortLegs'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { useExecutionsCanonical } from '@/hooks/useExecutions'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { inAccountScope, useAccountScope } from '@/lib/accountScope'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
 import { useRulesChain } from '@/hooks/useRulesChain'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
@@ -70,15 +71,22 @@ export default function TradeDeskPage() {
 
   const today = chicagoTodayDateStr()
 
+  // The shell's account scope (Rev .58): legs, plans, orders, fills and the
+  // margin read follow it. Research's intents carry no account — they are
+  // proposals, not positions — so the Decide lane reads them whole.
+  const acct = useAccountScope()
+  const hostId = status.data?.config?.ib_client?.account?.event_host ?? ''
+  const secondaryId = status.data?.config?.ib_client?.account?.event_secondary ?? ''
+
   const lanes = useMemo(
     () =>
       buildLanes({
         intents: intents.data?.items ?? [],
-        legs: legs.data?.legs ?? [],
+        legs: (legs.data?.legs ?? []).filter((l) => inAccountScope(l.account_id, acct, hostId, secondaryId)),
         tightPct,
-        plans: plans.data?.items ?? [],
-        orders: orders.data ?? [],
-        fills: execs.data?.items ?? [],
+        plans: (plans.data?.items ?? []).filter((p) => inAccountScope(p.account_id, acct, hostId, secondaryId)),
+        orders: (orders.data ?? []).filter((o) => inAccountScope(o.account_id, acct, hostId, secondaryId)),
+        fills: (execs.data?.items ?? []).filter((f) => inAccountScope(f.account_id, acct, hostId, secondaryId)),
         // One rule for "outside the rules", shared with Plans so the two pages
         // cannot disagree about which plans the daemon's book covers.
         outsideRules: (p) => {
@@ -97,6 +105,9 @@ export default function TradeDeskPage() {
       chain.data.opportunities,
       chain.data.allocations,
       today,
+      acct,
+      hostId,
+      secondaryId,
     ],
   )
 
@@ -118,8 +129,11 @@ export default function TradeDeskPage() {
   }, [chain.data])
 
   const margin = useMemo(
-    () => rollupMargin(status.data?.portfolio.accounts ?? []),
-    [status.data?.portfolio.accounts],
+    () =>
+      rollupMargin(
+        (status.data?.portfolio.accounts ?? []).filter((a) => inAccountScope(a.account_id, acct, hostId, secondaryId)),
+      ),
+    [status.data?.portfolio.accounts, acct, hostId, secondaryId],
   )
 
   const cells: StripCell[] = [

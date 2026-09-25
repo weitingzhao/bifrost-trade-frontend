@@ -6,12 +6,20 @@
  * that share one derivation.
  *
  *   ?acct=host            HOST only          (absent = both accounts)
+ *   ?acct=none            neither — the page's own empty state
+ *
+ * Positions follows the shell's account scope (`followAccount`, Rev .58):
+ * there, an absent `?acct=` means the scope, not both — see
+ * `useFollowedAccountPair`.
  *   ?symbol=NVDA          symbol scope
  *   ?expiry=20261120      YYYYMMDD prefix
  */
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { AccountFilter } from '@/utils/positionsGrouping'
+import type { AccountPair } from '@/lib/accountScope'
+import { useFollowedAccountPair } from '@/hooks/useFollowedAccountPair'
+import { keepHeldSymbol } from '@/lib/symbolContext'
 
 export interface PositionsScope {
   accountFilter: AccountFilter
@@ -42,7 +50,8 @@ export function serializePositionsScope(scope: PositionsScope, base?: URLSearchP
   const out = new URLSearchParams(base)
   const { host, secondary } = scope.accountFilter
   if (host && secondary) out.delete(SCOPE_KEYS.account)
-  else out.set(SCOPE_KEYS.account, [host ? 'host' : '', secondary ? 'secondary' : ''].filter(Boolean).join(','))
+  // Neither is a value too: an empty `acct=` would read back as both.
+  else out.set(SCOPE_KEYS.account, [host ? 'host' : '', secondary ? 'secondary' : ''].filter(Boolean).join(',') || 'none')
   if (scope.filterSymbol) out.set(SCOPE_KEYS.symbol, scope.filterSymbol)
   else out.delete(SCOPE_KEYS.symbol)
   if (scope.filterExpiry) out.set(SCOPE_KEYS.expiry, scope.filterExpiry)
@@ -50,9 +59,32 @@ export function serializePositionsScope(scope: PositionsScope, base?: URLSearchP
   return out
 }
 
-export function usePositionsScope() {
+export function usePositionsScope(opts?: { followAccount?: boolean }) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const scope = useMemo(() => parsePositionsScope(searchParams), [searchParams])
+  const parsed = useMemo(() => parsePositionsScope(searchParams), [searchParams])
+  const follow = Boolean(opts?.followAccount)
+
+  const writeAccount = useCallback(
+    (pair: AccountPair | null, arrival?: boolean) =>
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (pair == null) next.delete(SCOPE_KEYS.account)
+          else next.set(SCOPE_KEYS.account, serializePositionsScope({ ...parsePositionsScope(prev), accountFilter: pair }).get(SCOPE_KEYS.account) ?? '')
+          return arrival ? keepHeldSymbol(next) : next
+        },
+        { replace: true },
+      ),
+    [setSearchParams],
+  )
+  const { pair: followedPair, setPair: setFollowedPair } = useFollowedAccountPair(
+    follow && searchParams.has(SCOPE_KEYS.account) ? parsed.accountFilter : null,
+    writeAccount,
+  )
+  const scope = useMemo(
+    () => (follow ? { ...parsed, accountFilter: followedPair } : parsed),
+    [follow, parsed, followedPair],
+  )
 
   const update = useCallback(
     (patch: Partial<PositionsScope>) => {
@@ -67,7 +99,10 @@ export function usePositionsScope() {
 
   return {
     scope,
-    setAccountFilter: useCallback((accountFilter: AccountFilter) => update({ accountFilter }), [update]),
+    setAccountFilter: useCallback(
+      (accountFilter: AccountFilter) => (follow ? setFollowedPair(accountFilter) : update({ accountFilter })),
+      [follow, setFollowedPair, update],
+    ),
     setFilterSymbol: useCallback((filterSymbol: string) => update({ filterSymbol }), [update]),
     setFilterExpiry: useCallback((filterExpiry: string) => update({ filterExpiry }), [update]),
     /**

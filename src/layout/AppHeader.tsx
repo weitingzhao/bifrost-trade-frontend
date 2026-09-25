@@ -9,8 +9,8 @@
  * which collided with the Decision Inbox on the word). What is left is
  * breadcrumb · ⌘K · Lens · Copilot, and none of the four repeats anything
  * else on screen. Rev .55 split the Lens: the symbol rides in the ⌘K field as
- * its prefix token, the objective has its own control, and the account stays
- * each page's own.
+ * its prefix token, the objective has its own control, and (Rev .58) the
+ * account has one beside it — a shell scope the wired pages follow.
  */
 import { MessageSquare, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
@@ -26,6 +26,7 @@ import { usePageHeadVisibility } from './usePageHeadVisibility'
 import { useCrumbLabel } from './useCrumbLabel'
 import { useSymbolContext } from '@/lib/symbolContext'
 import { ObjectiveControl } from './ObjectiveControl'
+import { AccountControl } from './AccountControl'
 import { useSymbolGo } from './symbolGo'
 import {
   SHELL_TOP_BAR_CONTROL_CLASS,
@@ -196,6 +197,9 @@ export function AppHeader() {
         {/* The Objective control (Rev .55) — the objective half of the Lens it
             replaces; the symbol half is the omnibar's token above. */}
         <ObjectiveControl />
+        {/* The Account control (Rev .58) — beside the Objective: the scope
+            controls sit together on the right, the omnibar keeps the lead. */}
+        <AccountControl />
 
         {/* The fourth item, and the Copilot's second avatar: the rail opens
             its Desk (a page), this opens the conversation (§5a.8 sixteenth

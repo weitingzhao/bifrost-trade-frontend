@@ -50,6 +50,12 @@ export interface RouteEntry {
    */
   symbolScope?: boolean
   /**
+   * The page follows the shell's account scope (`lib/accountScope.ts`). The
+   * first round wires three (Owner 2026-09-25); the top bar's Account control
+   * tells every other page's reader that it shows the whole book.
+   */
+  accountScope?: boolean
+  /**
    * Unit of analysis, which is not the same question as where the data comes
    * from: `underlying` is one answer per symbol, `contract` is an answer per
    * strike x expiry. The sidebar marks the row `stk` or `opt` from it.
@@ -147,6 +153,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Positions',
     crumbs: PORTFOLIO,
     symbolScope: true,
+    accountScope: true,
     design: {
       // Package 2026-09-22.3 changed one thing here: Ask Copilot has a single
       // destination, the shell's Thread. Landed with the Ask bus. Rev
@@ -386,6 +393,7 @@ export const ROUTES: readonly RouteEntry[] = [
     // same level twice.
     label: 'Trade',
     crumbs: [],
+    accountScope: true,
     design: {
       state: 'aligned',
       rev: '2026-09-20.23',
@@ -427,6 +435,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Plans',
     crumbs: TRADE_DESK,
     symbolScope: true,
+    accountScope: true,
     design: {
       state: 'aligned',
       rev: '2026-09-18.1',

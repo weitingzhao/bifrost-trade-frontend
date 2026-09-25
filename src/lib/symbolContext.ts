@@ -63,6 +63,18 @@ export function writeStoredContext(symbol: string, date: string) {
   recordRecentSymbol(symbol)
 }
 
+/**
+ * `params` with the held symbol put back if it is missing — for a writer on a
+ * symbol-scoped page that runs in the same pass as `useHeldSymbolSync`. Both
+ * update from the render's params, so whichever lands second drops the
+ * other's change; carrying the symbol here makes the two converge.
+ */
+export function keepHeldSymbol(params: URLSearchParams): URLSearchParams {
+  const held = carry.getState().symbol
+  if (held && !params.get('symbol')) params.set('symbol', held)
+  return params
+}
+
 /** The carried symbol — what the Symbol panel follows. */
 export function useCarriedSymbol(): string {
   return carry.useStore().symbol

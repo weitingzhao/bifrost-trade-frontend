@@ -14,7 +14,7 @@
  * connected". `Cash / margin` / `Pressure after` are grey: nothing computes
  * what one plan would cost in margin, so the column says so.
  */
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { EmptyState, IncludeExcludeToggle, SegmentControl } from '@/components/data-display'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -29,6 +29,9 @@ import { PositionsStat } from '@/components/positions/PositionsStat'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { useFollowedAccountPair } from '@/hooks/useFollowedAccountPair'
+import type { AccountPair } from '@/lib/accountScope'
+import { keepHeldSymbol } from '@/lib/symbolContext'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { PlanCard } from './PlanCard'
 import { PlanForm } from './PlanForm'
@@ -52,7 +55,29 @@ export default function TradePlansPage() {
   const navigate = useNavigate()
   const symbol = (params.get('symbol') ?? '').trim().toUpperCase()
   const filter: PlanFilterValue = coercePlanFilter(params.get('status'))
-  const acctScope = { host: params.get('host') !== '0', secondary: params.get('sec') !== '0' }
+  // The account toggles follow the shell's account scope (Rev .58): a link
+  // that names one is honoured and becomes the scope; a toggle writes it.
+  const writeAcct = useCallback(
+    (pair: AccountPair | null, arrival?: boolean) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete('host')
+          next.delete('sec')
+          if (pair && !pair.host) next.set('host', '0')
+          if (pair && !pair.secondary) next.set('sec', '0')
+          return arrival ? keepHeldSymbol(next) : next
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
+  const { pair: acctScope, setPair: setAcctScope } = useFollowedAccountPair(
+    params.has('host') || params.has('sec')
+      ? { host: params.get('host') !== '0', secondary: params.get('sec') !== '0' }
+      : null,
+    writeAcct,
+  )
   const planParam = Number(params.get('plan'))
   const openId = Number.isFinite(planParam) && planParam > 0 ? planParam : null
   // `?new=1` opens the form on arrival — the Desk's "＋ Plan a trade" lands
@@ -79,7 +104,7 @@ export default function TradePlansPage() {
           .filter((plan) => planInAccountScope(plan, acctScope, hostAccountId, secondaryAccountId))
           .filter((plan) => !symbol || plan.symbol.startsWith(symbol)),
       ),
-    [plans, filter, acctScope.host, acctScope.secondary, hostAccountId, secondaryAccountId, symbol],
+    [plans, filter, acctScope, hostAccountId, secondaryAccountId, symbol],
   )
   const cardId = form?.kind === 'edit' ? form.id : openId
   const selected = useMemo(
@@ -164,7 +189,7 @@ export default function TradePlansPage() {
             label="HOST"
             size="sm"
             include={acctScope.host}
-            onChange={(on) => setParam('host', on ? null : '0')}
+            onChange={(on) => setAcctScope({ ...acctScope, host: on })}
           />
         ) : null}
         {secondaryAccountId ? (
@@ -172,7 +197,7 @@ export default function TradePlansPage() {
             label="Secondary"
             size="sm"
             include={acctScope.secondary}
-            onChange={(on) => setParam('sec', on ? null : '0')}
+            onChange={(on) => setAcctScope({ ...acctScope, secondary: on })}
           />
         ) : null}
         <input

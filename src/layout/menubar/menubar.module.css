@@ -68,6 +68,19 @@
   color: var(--sk-ink);
 }
 
+/* Press feedback (Rev .68 §3): the item and the search field dip to .97. */
+.item:active,
+.search:active {
+  scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item:active,
+  .search:active {
+    scale: none;
+  }
+}
+
 .item:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--sk-accent) 75%, transparent);
   outline-offset: 2px;
@@ -321,26 +334,6 @@ button.tile:active {
   .book {
     display: none;
   }
-}
-
-/* ── The hover tip: a small glass card under the item, right-aligned ──── */
-.tip {
-  max-width: 320px;
-  white-space: pre-line;
-  border: 1px solid color-mix(in srgb, var(--sk-ink) 14%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--sk-raised) 90%, transparent);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
-  backdrop-filter: blur(14px) saturate(1.4);
-  color: var(--sk-soft);
-  font-size: 11.5px;
-  line-height: 1.45;
-  padding: 6px 9px;
-  box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.55);
-}
-
-.tip > svg {
-  display: none;
 }
 
 /* The design's own sizes on the bar and in its centres (the dense scale has

@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { routeFor } from '../routeRegistry'
 import { MenubarTip } from './MenubarTip'
+import { useShellPopover } from '@/lib/shellPopover'
 import css from './menubar.module.css'
 
 /** Where plans go into one account: All is not a place to put one. */
@@ -85,7 +86,8 @@ interface ListRow {
 export function BookControl() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
+  // One shell popover at a time (Rev .68).
+  const [open, setOpen] = useShellPopover('book')
   const [list, setList] = useState<ListKind | null>(null)
   const scope = useAccountScope()
   const status = useMonitorStatus().data
@@ -191,7 +193,7 @@ export function BookControl() {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <MenubarTip tip={tip} suppressed={open}>
+      <MenubarTip tip={tip}>
         <PopoverTrigger asChild>
           <button type="button" className={cn(css.item, 'gap-1.5 pr-[7px] pl-[5px]')} aria-label={acctTitle}>
             <span

@@ -10,7 +10,8 @@ export default function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
+        {/* Rev .68 timing for the Radix tips that remain: 450ms first, then warm for 600. */}
+        <TooltipProvider delayDuration={450} skipDelayDuration={600}>
           <RouterProvider router={router} />
         </TooltipProvider>
         <ReactQueryDevtools initialIsOpen={false} />

@@ -89,7 +89,7 @@ export function SessionClock({
 
   return (
     <AlertsPopover groups={groups} count={n} onDismissAll={onDismissAll} contentClassName={css.pop} onOpenChange={setOpen}>
-      <MenubarTip tip={tip} suppressed={open}>
+      <MenubarTip tip={tip}>
         <button type="button" className={cn(css.item, 'gap-[7px]')} aria-label="Session and alerts">
           <span className="inline-flex" style={{ color: PHASE_INK[s.phase] }}>
             {PHASE_ICON[s.phase]}

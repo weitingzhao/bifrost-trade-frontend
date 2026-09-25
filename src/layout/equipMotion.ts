@@ -5,8 +5,9 @@
  *
  * - A **float** springs out of the control that summoned it — the rail icon,
  *   the Ask button — in 300ms (scale .3 → 1 and the offset back to zero), and
- *   shrinks back into it in 210ms when you close it.
- * - The **panel** slides in from the right edge (260ms) and out again (190ms)
+ *   shrinks back into it in 180ms when you close it.
+ * - Exits run on the motion tokens (Rev .68 §2): 180ms, ease-in.
+ * - The **panel** slides in from the right edge (240ms) and out again (180ms)
  *   when its last tab closes. Closing one tab of several is not the panel
  *   leaving, so it does not move.
  * - **Moving** a surface between places plays no exit: it is the same surface
@@ -87,16 +88,17 @@ export function animateFloatIn(el: HTMLElement, key: string): void {
 }
 
 /**
- * The panel has just opened: in from the edge — 14px, a fade and .985 → 1
- * over 240ms (design Rev .59, the panel's own entrance).
+ * The panel has just opened: in from the edge — 36px and a fade over 240ms
+ * (design Rev .68 §2: the panel's directional `_animateIn`; the 14px / .985
+ * entrance Rev .59 layered on top of it is gone).
  */
 export function animatePanelIn(el: HTMLElement): void {
   pending = null
   if (reduced() || typeof el.animate !== 'function') return
   el.animate(
     [
-      { opacity: 0, translate: '14px 0', scale: '.985' },
-      { opacity: 1, translate: '0 0', scale: '1' },
+      { opacity: 0, translate: '36px 0' },
+      { opacity: 1, translate: '0 0' },
     ],
     { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' }
   )
@@ -147,8 +149,8 @@ export function dismissSurface(key: string): void {
         { opacity: 0, translate: '36px 0' },
       ]
   const a = el.animate(keyframes, {
-    duration: isFloat ? 210 : 190,
-    easing: 'cubic-bezier(.4,0,.9,.6)',
+    duration: 180,
+    easing: 'cubic-bezier(.4,0,1,1)',
     fill: 'forwards',
   })
   a.onfinish = done

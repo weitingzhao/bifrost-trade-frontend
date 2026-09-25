@@ -5,6 +5,7 @@ import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
 import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
 import { GlobalMarketStatusBar, SkipToContent } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { ShellTip } from './ShellTip'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
 import { initialSidebarOpen, SHELL_SIDEBAR_WIDTH } from './shellChrome'
@@ -79,6 +80,8 @@ export function AppLayout() {
         {/* Before the sidebar, not after: the ~40 nav links are exactly what
           this exists to skip. */}
         <SkipToContent />
+        {/* The one tooltip (Rev .68): every data-tip and native title. */}
+        <ShellTip />
         <AppSidebar />
         {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport.
           Transparent, with the lane below: one window ground (Rev .61) — the

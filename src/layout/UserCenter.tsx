@@ -20,7 +20,6 @@
  *   shortcuts sheet nor a version it can state, and a row that opens nothing
  *   is a dead end. The design revision the shell was synced to is stated.
  */
-import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { ExternalLink, SlidersHorizontal, Scale } from 'lucide-react'
 import { HealthLamp, useSidebar } from '@bifrost/ui'
@@ -31,6 +30,7 @@ import { DESIGN_REV } from '@/lib/design/designRoutes.generated'
 import { glyph } from '@/lib/design/glyphs'
 import { OPS_CONSOLE_URL } from '@/lib/opsConsole'
 import { useThemeMode, type ThemeMode } from '@/lib/theme'
+import { useShellPopover } from '@/lib/shellPopover'
 import { cn } from '@/lib/utils'
 import { worstLamp } from '@/utils/systemStanding'
 import { toggleToolbar, useToolbarShown } from './bottomLane'
@@ -177,7 +177,8 @@ function UserCard({ onClose }: { onClose: () => void }) {
 
 export function SidebarUserCenter() {
   const { state } = useSidebar()
-  const [open, setOpen] = useState(false)
+  // One shell popover at a time (Rev .68).
+  const [open, setOpen] = useShellPopover('user')
   const collapsed = state === 'collapsed'
   // The two questions answered without the quote stream (see the header).
   const summary = useSystemDomains({ live: false })

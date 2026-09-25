@@ -13,13 +13,14 @@
  * Decision Inbox, and after the naming ruling that is the only thing in the
  * app allowed to be called an inbox.
  */
-import { useReducer, useEffect, useState } from 'react'
+import { useReducer, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { HealthLamp } from '@bifrost/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { formatLastUpdate } from '@/utils/positions'
+import { useShellPopover } from '@/lib/shellPopover'
 import { cn } from '@/lib/utils'
 import type { AlertGroup, AlertItem } from '@/hooks/useAlerts'
 
@@ -132,11 +133,12 @@ function GroupBody({ group }: { group: AlertGroup }) {
 }
 
 export function AlertsPopover({ groups, count, onDismissAll, children, contentClassName, onOpenChange }: Props) {
-  const [open, setOpenState] = useState(false)
-  const setOpen = (v: boolean) => {
-    setOpenState(v)
-    onOpenChange?.(v)
-  }
+  // One shell popover at a time (Rev .68). Another item opening closes this
+  // one from outside, so the owner hears about the open state, not the calls.
+  const [open, setOpen] = useShellPopover('alerts')
+  useEffect(() => {
+    onOpenChange?.(open)
+  }, [open, onOpenChange])
   const navigate = useNavigate()
   // Relative timestamps only need to move while someone is reading them.
   const [, tick] = useReducer(tickReducer, 0)

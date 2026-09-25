@@ -324,6 +324,8 @@ export function EquipRail() {
 
   return (
     <div
+      // The dock keeps its own labels (Rev .68: the one tooltip skips it).
+      data-no-tip=""
       className={css.rail}
       aria-label="Equipment"
       style={

@@ -502,3 +502,19 @@
   flex: none;
   height: 100svh;
 }
+
+/* Press feedback (design Rev .68 §3): tabs, the place control and the close
+   dip to .97 while held; the independent scale never fights a transform. */
+.tab:active,
+.seg button:active:not(:disabled),
+.close:active {
+  scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab:active,
+  .seg button:active,
+  .close:active {
+    scale: none;
+  }
+}

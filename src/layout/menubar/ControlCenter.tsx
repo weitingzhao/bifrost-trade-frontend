@@ -26,6 +26,7 @@ import { useSystemDomains } from '@/hooks/useSystemDomains'
 import { cn } from '@/lib/utils'
 import { worstLamp, type DomainLamp } from '@/utils/systemStanding'
 import { SystemServiceList } from '../SystemServiceList'
+import { useShellPopover } from '@/lib/shellPopover'
 import { MenubarTip } from './MenubarTip'
 import css from './menubar.module.css'
 
@@ -64,7 +65,9 @@ const SWITCHES = (
 type Tile = 'data' | 'system'
 
 export function ControlCenter() {
-  const [open, setOpen] = useState(false)
+  // One shell popover at a time (Rev .68): another item opening closes this
+  // one without a call here, so the picked tile resets on the way in instead.
+  const [open, setOpen] = useShellPopover('control')
   const [picked, setPicked] = useState<Tile | null>(null)
   // "Can I see" is judged stream by stream only while the centre is open —
   // it takes the quote stream, which a control on every page must not hold.
@@ -96,10 +99,10 @@ export function ControlCenter() {
       open={open}
       onOpenChange={(v) => {
         setOpen(v)
-        if (!v) setPicked(null)
+        if (v) setPicked(null)
       }}
     >
-      <MenubarTip tip={tip} suppressed={open}>
+      <MenubarTip tip={tip}>
         <PopoverTrigger asChild>
           <button type="button" className={cn(css.item, 'relative min-w-8 justify-center px-[7px]')} aria-label="Data and system health">
             <span className={css.ccGlyph}>{SWITCHES}</span>

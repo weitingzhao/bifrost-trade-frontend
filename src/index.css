@@ -177,6 +177,17 @@
     --mat-btn-fill-hover: color-mix(in srgb, var(--sk-ink) 13%, transparent);
     --mat-field-fill: color-mix(in srgb, var(--sk-ink) 7%, transparent);
     --mat-focus: color-mix(in srgb, var(--sk-accent) 35%, transparent);
+    /* Motion (design Rev .68 §3): one set of durations and curves for every
+       surface. The design names its curves --ease-*; Tailwind's theme owns
+       those names (every `ease-out` utility reads them), so here they are
+       --mo-ease-*, value for value. */
+    --mo-fast: 0.15s;
+    --mo-pop: 0.16s;
+    --mo-in: 0.24s;
+    --mo-out: 0.18s;
+    --mo-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --mo-ease-in: cubic-bezier(0.4, 0, 1, 1);
+    --mo-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     --sk-mute: #5b6572;
     --sk-faint: #959daa;
     --sk-accent2: #5b21b6;
@@ -962,20 +973,56 @@ tbody tr:hover > td {
   }
 }
 
-/* One popover material and motion (design Rev 2026-09-23.26): every Radix
-   popper — popovers, dropdown and select menus, tooltips, the sidebar's
-   collapsed flyout — wears the shell's glass and enters with the same 160ms
-   scale-fade. Unlayered on purpose: the components set their surfaces with
-   layered utilities (bg-popover, bg-foreground), and unlayered rules win.
-   Floats and panels are not poppers and keep their own opaque material. */
+/* One popover material and motion (design Rev 2026-09-23.26, paired in and
+   out since Rev .68 §2): every Radix popper — popovers, dropdown and select
+   menus, tooltips, the sidebar's collapsed flyout — wears the shell's glass,
+   opens in 160ms ease-out (down 4px → 0, .985 → 1) and closes in 180ms
+   ease-in the same way back; one that opens upward moves the other way.
+   Radix keeps the content mounted until the closing animation ends.
+   Unlayered on purpose: the components set their surfaces with layered
+   utilities (bg-popover, bg-foreground), and unlayered rules win. Floats and
+   panels are not poppers and keep their own opaque material. */
 @keyframes sk-pop-in {
   from {
     opacity: 0;
-    transform: translateY(-3px) scale(0.985);
+    transform: translateY(-4px) scale(0.985);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes sk-pop-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+}
+
+@keyframes sk-pop-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sk-pop-out-up {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
   }
 }
 
@@ -988,7 +1035,19 @@ tbody tr:hover > td {
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 7%, transparent),
     0 18px 48px -14px rgb(0 0 0 / 0.5);
-  animation: sk-pop-in 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: sk-pop-in var(--mo-pop) var(--mo-ease-out);
+}
+
+[data-radix-popper-content-wrapper] > [data-state='closed'] {
+  animation: sk-pop-out var(--mo-out) var(--mo-ease-in) forwards;
+}
+
+[data-radix-popper-content-wrapper] > [data-side='top'] {
+  animation-name: sk-pop-in-up;
+}
+
+[data-radix-popper-content-wrapper] > [data-side='top'][data-state='closed'] {
+  animation-name: sk-pop-out-up;
 }
 
 /* Black 50% shadows read as a smudge on grey paper: same lift, a fraction of
@@ -1012,8 +1071,24 @@ html[data-theme='light'] [data-radix-popper-content-wrapper] > * {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-radix-popper-content-wrapper] > * {
+  [data-radix-popper-content-wrapper] > *,
+  [data-radix-popper-content-wrapper] > [data-state],
+  [data-radix-popper-content-wrapper] > [data-side][data-state] {
     animation: none;
+  }
+}
+
+/* Press feedback (design Rev .68 §3): a control dips to .97 while held —
+   the independent `scale` property, so it never fights a transform. Page
+   buttons, the sidebar's rows; the menu bar and the panel chrome carry the
+   same rule in their own modules. Off under reduced motion. */
+:is([data-slot='button'], .mat-btn, [data-sidebar='menu-button'], [data-sidebar='menu-sub-button']):active:not(:disabled) {
+  scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is([data-slot='button'], .mat-btn, [data-sidebar='menu-button'], [data-sidebar='menu-sub-button']):active {
+    scale: none;
   }
 }
 

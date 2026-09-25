@@ -11,7 +11,7 @@
  * control that shows a scope it cannot set is the thing the Lens existed to
  * prevent — that question is with Design.
  */
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { HealthLamp } from '@bifrost/ui'
@@ -27,6 +27,7 @@ import { MODE_WHO, isObjectiveMode, type ObjectiveMode } from '@/lib/harness/obj
 import { planFilterCounts } from '@/utils/planStatusCounts'
 import { glyph } from '@/lib/design/glyphs'
 import { MenubarTip } from './menubar/MenubarTip'
+import { useShellPopover } from '@/lib/shellPopover'
 import mb from './menubar/menubar.module.css'
 import { handProgress, loopProgress, waitingStep, type ProgressStep } from './objectiveProgress'
 
@@ -74,7 +75,8 @@ function HandSteps({ subject, children }: { subject: string; children: (steps: P
 
 export function ObjectiveControl() {
   const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
+  // One shell popover at a time (Rev .68).
+  const [open, setOpen] = useShellPopover('objective')
   const { objective, isAll, select } = useObjectiveScope()
   const objQuery = useQuery({
     queryKey: ['research', 'objectives', 'lens'],
@@ -108,7 +110,7 @@ export function ObjectiveControl() {
       <Popover open={open} onOpenChange={setOpen}>
         {/* Rev .60: the sidebar's own Objectives glyph + the short name + the
             waiting count; the mode and the stages move to the tip. */}
-        <MenubarTip tip={chipTitle} suppressed={open}>
+        <MenubarTip tip={chipTitle}>
           <PopoverTrigger asChild>
             <button type="button" aria-label={chipTitle} className={cn(mb.item, 'hidden gap-[5px] px-1.5 sm:inline-flex')}>
               <OBJECTIVE_GLYPH

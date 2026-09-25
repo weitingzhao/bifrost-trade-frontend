@@ -7,6 +7,9 @@
  */
 import type { PlanEffectiveStatus, PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
 
+// Moved to the shared layer when the shell's Objective control became its second reader (§14.2).
+export { planFilterCounts } from '@/utils/planStatusCounts'
+
 /**
  * The design's five segments. `Open` is draft + intended — the book you are
  * still working — and the default. Draft-only and cancelled-only views retired
@@ -33,24 +36,6 @@ export function coercePlanFilter(value: string | null | undefined): PlanFilterVa
   if (value === 'draft') return 'open'
   if (value === 'cancelled') return 'all'
   return 'open'
-}
-
-/** Counts by `effective_status` — so `expired` counts intents past their window, not a stored state. */
-export function planFilterCounts(
-  plans: readonly StrategyPlan[],
-): Record<PlanEffectiveStatus | 'all' | 'open', number> {
-  const counts: Record<PlanEffectiveStatus | 'all' | 'open', number> = {
-    all: plans.length,
-    open: 0,
-    draft: 0,
-    intended: 0,
-    expired: 0,
-    filled: 0,
-    cancelled: 0,
-  }
-  for (const plan of plans) counts[plan.effective_status] += 1
-  counts.open = counts.draft + counts.intended
-  return counts
 }
 
 export function filterPlans(

@@ -70,7 +70,7 @@ import {
   overallRule,
   readinessRows,
   type CompositionRow,
-} from './signalHealthModel'
+} from '@/utils/signalHealthModel'
 
 function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' | 'info' {
   if (status === 'fresh' || status === 'ok') return 'success'

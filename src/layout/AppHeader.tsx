@@ -8,7 +8,9 @@
  * carried, and an alert bell whose count the status bar already carried (and
  * which collided with the Decision Inbox on the word). What is left is
  * breadcrumb · ⌘K · Lens · Copilot, and none of the four repeats anything
- * else on screen.
+ * else on screen. Rev .55 split the Lens: the symbol rides in the ⌘K field as
+ * its prefix token, the objective has its own control, and the account stays
+ * each page's own.
  */
 import { MessageSquare, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
@@ -22,9 +24,8 @@ import { crumbLinks } from './crumbLinks'
 import { NAV_GROUPS, SYSTEM_ITEM } from './navConfig'
 import { usePageHeadVisibility } from './usePageHeadVisibility'
 import { useCrumbLabel } from './useCrumbLabel'
-import { Lens } from './Lens'
-import { SliceCapsule } from './SliceCapsule'
-import { UserCenter } from './UserCenter'
+import { useSymbolContext } from '@/lib/symbolContext'
+import { ObjectiveControl } from './ObjectiveControl'
 import {
   SHELL_TOP_BAR_CONTROL_CLASS,
   SHELL_TOP_BAR_HEIGHT_CLASS,
@@ -39,6 +40,7 @@ export function AppHeader() {
   const { label: registryLabel, crumbs } = routeFor(location.pathname)
   const label = useCrumbLabel(location.pathname, registryLabel)
   const thread = useThread()
+  const { symbol, isScoped, clearSymbol } = useSymbolContext()
   const trail = crumbLinks(crumbs ?? [], PAGE_ROUTES, CRUMB_GROUPS)
   // §16.12: while the page head shows the page's name, the leaf (and the `›`
   // before it) folds; it fades back once the head scrolls away. A page that
@@ -112,9 +114,6 @@ export function AppHeader() {
           </span>
         )}
       </nav>
-      {/* The slice, on the pages that stand on it (Rev .25): the StageRail the
-          design folded into the crumb. */}
-      <SliceCapsule />
       {/* The one control that takes the slack: `flex: 1 1 220px` between a
           180 floor and a 440 ceiling, so the bar breathes here and nowhere
           else. */}
@@ -128,7 +127,44 @@ export function AppHeader() {
         aria-label="Open the Omnibar"
       >
         <Search className="h-3 w-3 shrink-0" aria-hidden />
-        <span className="flex-1 truncate text-left">Symbol, page, or command</span>
+        {/* The framework's current symbol is the omnibar's prefix token (Rev
+            .55): load a security, then pick a function. Ticker ink where this
+            page reads it, dim where it is only held for the next page; × lets
+            it go. */}
+        {symbol ? (
+          <span
+            title={
+              isScoped
+                ? `${symbol} — this page reads it`
+                : `${symbol} — held for the next page that reads a symbol`
+            }
+            className="inline-flex h-4.5 flex-none items-center gap-1 rounded-[4px] bg-[var(--sk-raised2)] pr-0.5 pl-1.5 font-mono text-dense-meta font-bold"
+            style={{ color: isScoped ? 'var(--sk-ticker)' : 'var(--sk-faint)' }}
+          >
+            {symbol}
+            <span
+              role="button"
+              tabIndex={0}
+              aria-label="Clear symbol"
+              title="Clear the carried symbol"
+              onClick={(e) => {
+                e.stopPropagation()
+                clearSymbol()
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  clearSymbol()
+                }
+              }}
+              className="cursor-pointer px-0.5 font-normal text-muted-foreground hover:text-foreground"
+            >
+              ×
+            </span>
+          </span>
+        ) : null}
+        <span className="flex-1 truncate text-left">{symbol ? 'page or command' : 'Symbol, page, or command'}</span>
         <kbd className={SHELL_TOP_BAR_KBD_CLASS}>⌘K</kbd>
       </button>
 
@@ -141,7 +177,9 @@ export function AppHeader() {
             chip rather than sitting beside it — two controls for one idea is
             the duplication that ruling removed. The alert bell that used to
             sit to its right is gone with it. */}
-        <Lens />
+        {/* The Objective control (Rev .55) — the objective half of the Lens it
+            replaces; the symbol half is the omnibar's token above. */}
+        <ObjectiveControl />
 
         {/* The fourth item, and the Copilot's second avatar: the rail opens
             its Desk (a page), this opens the conversation (§5a.8 sixteenth
@@ -186,10 +224,7 @@ export function AppHeader() {
           </TooltipContent>
         </Tooltip>
 
-        {/* The user centre (design Rev 2026-09-23.13): identity, the three
-            theme modes, and the System doors. Last on the bar, the only round
-            control. */}
-        <UserCenter />
+        {/* The user centre left the bar for the sidebar foot at Rev .54. */}
       </div>
     </header>
   )

@@ -42,6 +42,14 @@ export interface ResearchObjective {
   status: ObjectiveStatus
   owner_id: string
   created_at: string | null
+  /**
+   * Who works it (research 0.113.0+; design Rev .55): the operator by hand, the
+   * loop with you deciding, or the loop with the leash deciding. Absent from an
+   * older API.
+   */
+  mode?: 'hand' | 'assisted' | 'auto'
+  /** The symbol a hand objective works on. */
+  subject?: string | null
 }
 
 export interface ObjectiveRun {

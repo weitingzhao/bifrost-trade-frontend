@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import type { SignalFreshnessItem, SignalHealthResponse } from '@/api/research/similarRegime'
-import { blockError, composition, healthLenses, overallRule, readinessRows } from './signalHealthModel'
+import { blockError, composition, healthLenses, overallRule, readinessRows } from '@/utils/signalHealthModel'
 
 function lens(over: Partial<SignalFreshnessItem>): SignalFreshnessItem {
   return {

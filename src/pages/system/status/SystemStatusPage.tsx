@@ -34,25 +34,13 @@
  * would read; changing what the bar watches is a shell decision with a cost
  * the design does not price, so it is named rather than made here.
  */
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { PageHeader, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { cn } from '@/lib/utils'
 import { OPS_CONSOLE_URL, opsConsoleHref } from '@/lib/opsConsole'
-import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { useQuoteStream } from '@/hooks/useQuoteStream'
-import { fetchSignalHealth } from '@/api/research/similarRegime'
-import { useCoverageQuality } from '@/hooks/useMarketDataCoverage'
-import {
-  marketStanding,
-  nightlyStanding,
-  tradingStanding,
-  watchlistDataLine,
-  worstLamp,
-  type DomainStanding,
-} from './systemStanding'
+import { useSystemDomains } from '@/hooks/useSystemDomains'
+import { worstLamp, type DomainStanding } from '@/utils/systemStanding'
 
 const STATE_INK: Record<string, string> = {
   green: 'text-success',
@@ -139,27 +127,9 @@ function DomainPanel({ d }: { d: DomainStanding }) {
 }
 
 export default function SystemStatusPage() {
-  const { data: status } = useMonitorStatus()
-  const health = useQuery({
-    queryKey: ['research', 'signal-health'],
-    queryFn: fetchSignalHealth,
-    staleTime: 60_000,
-  })
-  // The streams the monitor says are subscribed — the same list Live asks for,
-  // without this page opening a second subscription of its own.
-  // The plugin's own verdict over the watchlist: the one trader-facing line
-  // the retired Coverage page carried (Owner 2026-09-25).
-  const quality = useCoverageQuality()
-  const streamKeys = status?.live_ui?.subscribed_tickers ?? []
-  const { quotesMap } = useQuoteStream(streamKeys, [])
-  // Read once: the freshness window must not move under the reader mid-render.
-  const [nowSec] = useState(() => Date.now() / 1000)
-
-  const domains = [
-    tradingStanding(status),
-    marketStanding(status, quotesMap, streamKeys, nowSec),
-    nightlyStanding(health.data, health.isError, watchlistDataLine(quality.data, quality.isError)),
-  ]
+  // The three questions, read by the one hook the sidebar's user centre also
+  // reads (Rev .54) — the same aggregate in both places, never a second count.
+  const domains = useSystemDomains({ live: true })
 
   return (
     <PageShell padding="compact" className="space-y-3">

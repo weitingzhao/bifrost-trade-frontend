@@ -27,7 +27,7 @@ import type { QuoteItem } from '@/types/market'
 import type { SignalHealthResponse } from '@/api/research/similarRegime'
 import type { CoverageQuality } from '@/api/marketDataCoverage'
 import { computeMarketStreamsLamp, countFreshQuotes } from '@/utils/livePageLamps'
-import { overallRule } from '@/pages/research/data/signalHealthModel'
+import { overallRule } from '@/utils/signalHealthModel'
 
 export type DomainLamp = 'green' | 'yellow' | 'red' | 'gray'
 

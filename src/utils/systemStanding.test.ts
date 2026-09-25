@@ -13,7 +13,7 @@ import {
   watchlistDataLine,
   tradingStanding,
   worstLamp,
-} from './systemStanding'
+} from '@/utils/systemStanding'
 
 const status = (over: Record<string, unknown> = {}): StatusResponse =>
   ({

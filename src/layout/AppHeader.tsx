@@ -80,6 +80,8 @@ export function AppHeader({
     <header
       ref={headerRef}
       data-scrolled="0"
+      // ← → walk the items (Rev .69 §2, useShellArrows).
+      data-menubar=""
       className={cn(
         SHELL_TOP_BAR_HEIGHT_CLASS,
         // The right cluster collapses by this bar's own width (Rev .60 §7).

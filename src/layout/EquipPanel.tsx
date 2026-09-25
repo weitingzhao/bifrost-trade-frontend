@@ -55,6 +55,9 @@ function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact
       style={{ ['--rh' as string]: surfaceHue(tab), maxWidth: full && compact ? 150 : 170 }}
       title={`${label} · ${tab.to}${tab.subject === 'follow' ? ' — follows the carried symbol' : tab.subject === 'lock' ? ' — locked' : ''}`}
       aria-current={active ? 'true' : undefined}
+      // The tab's own right-click menu (Rev .69 §1, ShellContextMenu).
+      data-ctx-tab={tab.key}
+      data-ctx-label={label}
       onClick={() => focusTab(tab.key)}
     >
       <SurfaceGlyph surface={tab} className={css.glyph} />

@@ -6,6 +6,10 @@ import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
 import { GlobalMarketStatusBar, SkipToContent } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { ShellTip } from './ShellTip'
+import { ShellNotices } from './ShellNotices'
+import { ShellContextMenu } from './ShellContextMenu'
+import { useShellArrows } from './useShellArrows'
+import { useAlertBanners } from '@/hooks/useAlertBanners'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
 import { initialSidebarOpen, SHELL_SIDEBAR_WIDTH } from './shellChrome'
@@ -70,6 +74,10 @@ export function AppLayout() {
     document.documentElement.dataset.layer = layerForPath(pathname)
   }, [pathname])
   useCockpitKeybinds()
+  // Rev .69: arrows through the menu bar and open popovers; new Risk and
+  // Analyze alerts announce themselves as banners.
+  useShellArrows()
+  useAlertBanners(groups)
 
   return (
     <InspectorSlotContext.Provider value={inspectorSlot}>
@@ -82,6 +90,9 @@ export function AppLayout() {
         <SkipToContent />
         {/* The one tooltip (Rev .68): every data-tip and native title. */}
         <ShellTip />
+        {/* Rev .69: the toast (with Undo), the banners, the right-click menu. */}
+        <ShellNotices />
+        <ShellContextMenu />
         <AppSidebar />
         {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport.
           Transparent, with the lane below: one window ground (Rev .61) — the

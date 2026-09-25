@@ -1078,6 +1078,14 @@ html[data-theme='light'] [data-radix-popper-content-wrapper] > * {
   }
 }
 
+/* One focus ring (design Rev .69 §2), keyboard only: 2px of accent at 75%,
+   2px off the control, following its own radius. Text fields keep their
+   own ring (the field material's 3px glow). */
+:is(button, a, [role='button'], [tabindex]):not(input, textarea, select):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sk-accent) 75%, transparent);
+  outline-offset: 2px;
+}
+
 /* Press feedback (design Rev .68 §3): a control dips to .97 while held —
    the independent `scale` property, so it never fights a transform. Page
    buttons, the sidebar's rows; the menu bar and the panel chrome carry the

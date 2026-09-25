@@ -23,7 +23,8 @@
  * Focus follows the same path: when a surface closes, focus goes back to the
  * button that opened it, if that button is still on the page.
  */
-import { closeSurface, isVisible, surfaceState, toggleSurface, type Surface } from './equipSurface'
+import { notify } from '@/lib/shellNotify'
+import { closeSurface, isVisible, restoreSurfaces, surfaceState, toggleSurface, type Surface } from './equipSurface'
 
 type Point = { x: number; y: number }
 
@@ -120,18 +121,27 @@ function returnFocus(key: string): void {
  * the origin, then removes; everything else about closing is `closeSurface`.
  */
 export function dismissSurface(key: string): void {
-  const { float, panel } = surfaceState()
+  const snap = surfaceState()
+  const { float, panel } = snap
   const isFloat = float?.key === key
   const lastTab = panel?.tabs.length === 1 && panel.tabs[0].key === key
   const el = isFloat ? elements.float : lastTab ? elements.panel : null
+  const gone = isFloat ? float : panel?.tabs.find((t) => t.key === key)
+  // Every close the reader asked for can be taken back (Rev .69 §3): the
+  // toast's Undo puts the float and the panel back as they were.
+  const offerUndo = () => {
+    if (gone) notify(`Closed ${gone.label}`, { undo: () => restoreSurfaces(snap) })
+  }
   const done = () => {
     exiting.delete(key)
     closeSurface(key)
     returnFocus(key)
+    offerUndo()
   }
   if (!el || typeof el.animate !== 'function' || reduced()) {
     closeSurface(key)
     returnFocus(key)
+    offerUndo()
     return
   }
   if (exiting.has(key)) return

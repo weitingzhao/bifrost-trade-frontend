@@ -5,6 +5,9 @@
  *   ⌘J / Ctrl+J — toggle the Copilot conversation
  *   ⌥1–⌥4     — the dock's four modules, from their rail icons (Rev .26);
  *                ⌘W and ⌘1–9 stay the browser's
+ *   ⌥W         — close the panel's current tab, with Undo (Rev .69 §2)
+ *   ⌥[ / ⌥]   — the panel's previous / next tab
+ *   ⌘,         — Settings, as in every Mac app
  *   Esc        — close the topmost inspector, else the open float
  *                (either way, not while focus is inside an editable field)
  *
@@ -24,11 +27,11 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { EQUIP_GROUPS } from '@/layout/equip'
-import { opensAsPage, placeOf, surfaceForRoute, useSurfaces } from '@/layout/equipSurface'
+import { focusTab, opensAsPage, placeOf, surfaceForRoute, surfaceState, useSurfaces } from '@/layout/equipSurface'
 import { dismissSurface, toggleSurfaceFrom } from '@/layout/equipMotion'
 import { toggleThread } from '@/hooks/useCopilotThread'
 import { omnibar } from '@/lib/omnibar'
-import { KEY_COPILOT, KEY_OMNIBAR } from './shortcuts'
+import { KEY_COPILOT, KEY_OMNIBAR, KEY_SETTINGS } from './shortcuts'
 import { closeTopInspector } from './inspectorEscape'
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -70,6 +73,27 @@ export function useCockpitKeybinds() {
           return
         }
         toggleSurfaceFrom(surface, document.querySelector(`[data-equip-head="${group.id}"]`))
+        return
+      }
+      if (meta && e.key === KEY_SETTINGS) {
+        e.preventDefault()
+        navigate('/settings')
+        return
+      }
+      // The panel's tabs (Rev .69 §2). Matched on the physical key: ⌥ types a
+      // glyph on macOS, so `e.key` would read "∑" or "“".
+      if (e.altKey && !meta && (e.code === 'KeyW' || e.code === 'BracketLeft' || e.code === 'BracketRight')) {
+        if (isEditableTarget(e.target)) return
+        const { panel } = surfaceState()
+        if (!panel) return
+        e.preventDefault()
+        if (e.code === 'KeyW') {
+          dismissSurface(panel.active)
+          return
+        }
+        const i = panel.tabs.findIndex((t) => t.key === panel.active)
+        const n = panel.tabs.length
+        focusTab(panel.tabs[(i + (e.code === 'BracketRight' ? 1 : -1) + n) % n].key)
         return
       }
       if (e.key === 'Escape') {

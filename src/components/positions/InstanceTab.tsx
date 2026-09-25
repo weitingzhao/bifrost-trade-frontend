@@ -391,6 +391,7 @@ export function InstanceTab({
                               type="button"
                               className="cursor-pointer border-0 bg-transparent p-0 font-mono text-xs font-bold text-[var(--color-entity-option)] hover:underline"
                               aria-label={`Open ${sym}`}
+                              data-ctx-sym={sym}
                               onClick={() => onOpenStock(sym, defaultStockAcct)}
                             >
                               {sym}

@@ -1,0 +1,147 @@
+/*
+ * Spotlight (design Rev .69 §5, preview Rev .72 §8): the omnibar as a
+ * floating field. The glass is the menu bar's popover glass (`.pop`); this
+ * file lays out the field, the list and the preview column.
+ */
+.spot {
+  max-height: 64vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 8%, transparent);
+}
+
+.glass {
+  flex: none;
+  color: var(--sk-mute2);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--sk-ink);
+  font: inherit;
+  font-size: 17px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--sk-mute);
+}
+
+.close {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sk-ink) 7%, transparent);
+  color: var(--sk-mute2);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  background: color-mix(in srgb, var(--sk-ink) 16%, transparent);
+  color: var(--sk-ink);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  flex: 1;
+}
+
+.list {
+  max-height: calc(64vh - 96px);
+  padding: 4px 0;
+}
+
+/* Rows as the design draws them: a capsule inset 6px, the accent at 14%. */
+.list :global([cmdk-item]) {
+  border-radius: 7px;
+}
+
+.list :global([cmdk-item][data-selected='true']) {
+  background: color-mix(in srgb, var(--sk-accent) 14%, transparent);
+}
+
+.prev {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr) 220px;
+  }
+
+  .prev {
+    min-width: 0;
+    padding: 14px;
+    border-left: 1px solid color-mix(in srgb, var(--sk-ink) 8%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+.prevKind {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.prevTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--sk-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prevSub {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--sk-mute2);
+  text-wrap: pretty;
+}
+
+.prevKeys {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.prevKey {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--sk-soft);
+}
+
+.prevKey kbd {
+  min-width: 22px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--sk-ink) 8%, transparent);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-align: center;
+}

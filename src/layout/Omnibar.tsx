@@ -1,5 +1,10 @@
 /**
- * ⌘K — one input for "get me somewhere".
+ * ⌘K — one input for "get me somewhere", as Spotlight (design Rev .69 §5,
+ * preview Rev .72 §8): a floating field 16vh from the top, 640 wide, the
+ * page left undimmed; a click outside closes it. At 720 and wider a 220px
+ * column explains the row under the cursor — a name (in Watch or not, what
+ * ↵ / ⇧↵ / ⌘↵ do), a page (its crumbs and path), a command (what it does).
+ * ↑ ↓ move, hovering moves too, ↵ runs the row in view.
  *
  * The sidebar's job is to make the structure visible; this is the job of
  * actually going. Three kinds of result share the input, narrowed by prefix:
@@ -15,17 +20,21 @@
  * Symbol page.
  */
 import { useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react'
+import { Command as CommandPrimitive } from 'cmdk'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Command as CommandIcon, Check, Clock, Hash, History, PanelLeft, Pin, Plus, Star, X } from 'lucide-react'
 import {
-  CommandDialog,
+  Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
   CommandShortcut,
 } from '@/components/ui/command'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
+import mb from './menubar/menubar.module.css'
+import css from './spotlight.module.css'
 import { useSidebar } from '@/components/ui/sidebar'
 import { toggleThread } from '@/hooks/useCopilotThread'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
@@ -66,6 +75,42 @@ function tickerShaped(term: string): string | null {
   return /^[A-Za-z]{1,5}$/.test(term) ? term.toUpperCase() : null
 }
 
+/** What the preview column says about the row under the cursor (Rev .72 §8). */
+interface Preview {
+  kind: string
+  kindInk: string
+  title: string
+  ink?: string
+  mono?: boolean
+  sub: string
+  keys: { k: string; l: string }[]
+}
+
+function SpotlightPreview({ p }: { p: Preview | undefined }) {
+  if (!p) return <div className={css.prev} />
+  return (
+    <div className={css.prev}>
+      <span className={css.prevKind} style={{ color: p.kindInk }}>
+        {p.kind}
+      </span>
+      <span className={cn(css.prevTitle, p.mono && 'font-mono')} style={{ color: p.ink }}>
+        {p.title}
+      </span>
+      {p.sub ? <span className={css.prevSub}>{p.sub}</span> : null}
+      {p.keys.length > 0 ? (
+        <div className={css.prevKeys}>
+          {p.keys.map((k) => (
+            <div key={k.k} className={css.prevKey}>
+              <kbd>{k.k}</kbd>
+              <span>{k.l}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 /** ＋ Watch on a name row — adds it without choosing the row. */
 function WatchButton({ sym, on, onAdd }: { sym: string; on: boolean; onAdd: (sym: string) => void }) {
   const stop = (e: MouseEvent | PointerEvent) => {
@@ -92,6 +137,8 @@ function WatchButton({ sym, on, onAdd }: { sym: string; on: boolean; onAdd: (sym
 export function Omnibar() {
   const { open } = omnibarStore.useStore()
   const [raw, setRaw] = useState('')
+  // The row in view — cmdk's own selection, read back for the preview.
+  const [sel, setSel] = useState('')
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { symbol, clearSymbol } = useSymbolContext()
@@ -170,22 +217,86 @@ export function Omnibar() {
       : null
   const suggestions = mode === 'all' && !term ? universe : null
 
+  // Every row registers what the preview says about it, by its cmdk value.
+  const previews = new Map<string, Preview>()
+  const reg = (value: string, p: Preview) => {
+    previews.set(value, p)
+    return value
+  }
+  const symPrev = (sym: string, extra?: string): Preview => ({
+    kind: 'Symbol',
+    kindInk: 'var(--sk-ticker)',
+    title: sym,
+    ink: 'var(--sk-ticker)',
+    mono: true,
+    sub: [
+      extra,
+      universe.holdingsSet.has(sym) ? 'In the book.' : null,
+      universe.watchlistSet.has(sym) ? 'In your Watch list.' : 'Not in Watch yet.',
+    ]
+      .filter(Boolean)
+      .join(' '),
+    keys: [
+      { k: '↵', l: verb === 'swap' ? 'swap this page to it' : 'open beside this page' },
+      { k: '⇧↵', l: 'locked tab to compare' },
+      { k: '⌘↵', l: 'Symbol page' },
+    ],
+  })
+  const pagePrev = (path: string, label?: string): Preview => {
+    const r = routeFor(path.split('?')[0])
+    return {
+      kind: 'Page',
+      kindInk: 'var(--sk-mute2)',
+      title: label ?? r.label,
+      sub: [[...(r.crumbs ?? [])].join(' › '), path].filter(Boolean).join(' · '),
+      keys: [{ k: '↵', l: 'go to page' }],
+    }
+  }
+  const cmdPrev = (title: string, sub = ''): Preview => ({
+    kind: 'Command',
+    kindInk: 'var(--sk-contract)',
+    title,
+    sub,
+    keys: [{ k: '↵', l: 'run' }],
+  })
+
   return (
-    <CommandDialog
-      open={open}
-      onOpenChange={(next) => (next ? omnibar.open() : omnibar.close())}
-      shouldFilter={false}
-      contentClassName="sm:max-w-2xl"
-      title="Omnibar"
-      description="Jump to a symbol, a page or a command"
-    >
-      <CommandInput
-        value={raw}
-        onValueChange={setRaw}
-        onKeyDown={noteMods}
-        placeholder="Symbol, page, or > for commands…"
-      />
-      <CommandList>
+    <Dialog open={open} onOpenChange={(next) => (next ? omnibar.open() : omnibar.close())}>
+      <DialogContent
+        showCloseButton={false}
+        overlayClassName="bg-transparent supports-backdrop-filter:backdrop-blur-none"
+        className={cn(
+          mb.pop,
+          css.spot,
+          'top-[16vh] w-[min(640px,calc(100vw-32px))] max-w-none translate-y-0 gap-0 rounded-[14px] p-0 sm:max-w-none',
+        )}
+      >
+        <DialogTitle className="sr-only">Spotlight</DialogTitle>
+        <DialogDescription className="sr-only">Jump to a symbol, a page or a command</DialogDescription>
+        <Command
+          shouldFilter={false}
+          value={sel}
+          onValueChange={setSel}
+          className="bg-transparent [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-2 [&_[cmdk-item]_svg]:size-4"
+        >
+      <div className={css.field}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden className={css.glass}>
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="m16 16 4.5 4.5" />
+        </svg>
+        <CommandPrimitive.Input
+          value={raw}
+          onValueChange={setRaw}
+          onKeyDown={noteMods}
+          placeholder="Symbol, page or command"
+          className={css.input}
+        />
+        <button type="button" className={css.close} aria-label="Close" onClick={() => omnibar.close()}>
+          ✕
+        </button>
+      </div>
+      <div className={css.body}>
+      <CommandList className={css.list}>
         <CommandEmpty>Nothing matches that.</CommandEmpty>
 
         {suggestions && recentSymbols.length > 0 && (
@@ -193,12 +304,13 @@ export function Omnibar() {
             {recentSymbols.slice(0, 3).map((r) => (
               <CommandItem
                 key={`rec-${r.symbol}`}
-                value={`rec-${r.symbol}`}
+                value={reg(`rec-${r.symbol}`, symPrev(r.symbol, 'A name you opened recently.'))}
                 onPointerDown={noteMods}
                 onSelect={() => goToSymbol(r.symbol)}
               >
                 <History /> <span className="font-mono text-[var(--sk-ticker)]">{r.symbol}</span>
-                <span className="truncate text-muted-foreground">↵ {verb} · ⇧ compare · ⌘ page</span>
+                {/* Said in the preview column where there is room for one (≥720). */}
+                <span className="truncate text-muted-foreground min-[720px]:hidden">↵ {verb} · ⇧ compare · ⌘ page</span>
                 <WatchButton sym={r.symbol} on={universe.watchlistSet.has(r.symbol)} onAdd={addToWatch} />
               </CommandItem>
             ))}
@@ -208,7 +320,7 @@ export function Omnibar() {
         {suggestions && suggestions.positionSymbols.length > 0 && (
           <CommandGroup heading="In the book">
             {suggestions.positionSymbols.slice(0, 6).map((s) => (
-              <CommandItem key={`book-${s}`} value={`book-${s}`} onPointerDown={noteMods} onSelect={() => goToSymbol(s)}>
+              <CommandItem key={`book-${s}`} value={reg(`book-${s}`, symPrev(s))} onPointerDown={noteMods} onSelect={() => goToSymbol(s)}>
                 <Hash /> <span className="font-mono">{s}</span>
                 <WatchButton sym={s} on={universe.watchlistSet.has(s)} onAdd={addToWatch} />
               </CommandItem>
@@ -219,7 +331,7 @@ export function Omnibar() {
         {suggestions && suggestions.watchlistOnlySymbols.length > 0 && (
           <CommandGroup heading="Watchlist">
             {suggestions.watchlistOnlySymbols.slice(0, 6).map((s) => (
-              <CommandItem key={`wl-${s}`} value={`wl-${s}`} onPointerDown={noteMods} onSelect={() => goToSymbol(s)}>
+              <CommandItem key={`wl-${s}`} value={reg(`wl-${s}`, symPrev(s))} onPointerDown={noteMods} onSelect={() => goToSymbol(s)}>
                 <Star /> <span className="font-mono">{s}</span>
               </CommandItem>
             ))}
@@ -231,7 +343,7 @@ export function Omnibar() {
             {search.data!.slice(0, 6).map((hit) => (
               <CommandItem
                 key={hit.symbol}
-                value={`sym-${hit.symbol}`}
+                value={reg(`sym-${hit.symbol}`, symPrev(hit.symbol, hit.name ?? undefined))}
                 onPointerDown={noteMods}
                 onSelect={() => goToSymbol(hit.symbol)}
               >
@@ -250,16 +362,16 @@ export function Omnibar() {
             {/* First, so ↵ on a typed ticker follows the rule: the named
                 destinations render before the search answers, and cmdk keeps
                 whichever row was selected first. */}
-            <CommandItem value={`go-${ticker}`} onPointerDown={noteMods} onSelect={() => goToSymbol(ticker)}>
+            <CommandItem value={reg(`go-${ticker}`, symPrev(ticker))} onPointerDown={noteMods} onSelect={() => goToSymbol(ticker)}>
               <Hash /> <span className="font-mono text-[var(--sk-ticker)]">{ticker}</span>
-              <span className="truncate text-muted-foreground">
+              <span className="truncate text-muted-foreground min-[720px]:hidden">
                 {verb === 'swap' ? 'swap it in here' : 'beside this page'} · ⇧ compare · ⌘ page
               </span>
             </CommandItem>
             {SYMBOL_DESTINATIONS.map((dest) => (
               <CommandItem
                 key={`dest-${dest.href}`}
-                value={`dest-${dest.href}`}
+                value={reg(`dest-${dest.href}`, pagePrev(dest.href, `${ticker} · ${dest.label}`))}
                 onSelect={() => goToSymbol(ticker, dest.href)}
               >
                 <Hash /> {dest.label}
@@ -275,7 +387,7 @@ export function Omnibar() {
                 !term ||
                 `${s.keys} ${s.what} ${s.scope}`.toLowerCase().includes(term.toLowerCase()),
             ).map((s) => (
-              <CommandItem key={s.keys} value={`key-${s.keys}`}>
+              <CommandItem key={s.keys} value={reg(`key-${s.keys}`, { kind: 'Shortcut', kindInk: 'var(--sk-accent)', title: s.keys, mono: true, sub: `${s.what} · ${s.scope}`, keys: [] })}>
                 <CommandIcon />
                 <span className="font-mono text-dense-caption">{s.keys}</span>
                 <span className="truncate">{s.what}</span>
@@ -290,7 +402,7 @@ export function Omnibar() {
             {pages.map((entry) => (
               <CommandItem
                 key={entry.path}
-                value={`page-${entry.path}`}
+                value={reg(`page-${entry.path}`, pagePrev(entry.path))}
                 onSelect={() => run(() => navigate(entry.path))}
               >
                 <CommandIcon /> {trail(entry)}
@@ -304,7 +416,7 @@ export function Omnibar() {
             {recents.map((entry) => (
               <CommandItem
                 key={`recent-${entry.path}`}
-                value={`recent-${entry.path}`}
+                value={reg(`recent-${entry.path}`, pagePrev(entry.path))}
                 onSelect={() => run(() => navigate(entry.path))}
               >
                 <Clock /> {trail(entry)}
@@ -316,17 +428,17 @@ export function Omnibar() {
         {mode !== 'pages' && mode !== 'shortcuts' && (
           <CommandGroup heading="Commands">
             <CommandItem
-              value="cmd-copilot"
+              value={reg('cmd-copilot', cmdPrev('Ask', 'Open or close the conversation with the Copilot · ⌘J'))}
               onSelect={() => run(toggleThread)}
             >
               <CommandIcon /> Ask — open or close the conversation <CommandShortcut>⌘J</CommandShortcut>
             </CommandItem>
-            <CommandItem value="cmd-sidebar" onSelect={() => run(toggleSidebar)}>
+            <CommandItem value={reg('cmd-sidebar', cmdPrev('Toggle sidebar', 'Show or hide the sidebar · ⌘B'))} onSelect={() => run(toggleSidebar)}>
               <PanelLeft /> Toggle sidebar
             </CommandItem>
             {symbol && (
               <CommandItem
-                value="cmd-pin"
+                value={reg('cmd-pin', cmdPrev(pins.isSymbolPinned(symbol) ? `Unpin ${symbol}` : `Pin ${symbol}`, 'Keep the carried name on the pin shelf'))}
                 onSelect={() =>
                   run(() => (pins.isSymbolPinned(symbol) ? pins.unpinSymbol(symbol) : pins.pinSymbol(symbol)))
                 }
@@ -335,7 +447,7 @@ export function Omnibar() {
               </CommandItem>
             )}
             {symbol && (
-              <CommandItem value="cmd-clear" onSelect={() => run(clearSymbol)}>
+              <CommandItem value={reg('cmd-clear', cmdPrev(`Clear symbol ${symbol}`, 'Stop carrying the name from page to page'))} onSelect={() => run(clearSymbol)}>
                 <X /> Clear symbol {symbol}
               </CommandItem>
             )}
@@ -344,7 +456,7 @@ export function Omnibar() {
                 row that reorders the rows it sits in is a preference dressed
                 as a destination. */}
             {(Object.keys(NAV_ORDERS) as NavOrder[]).map((k) => (
-              <CommandItem key={`cmd-navorder-${k}`} value={`cmd-navorder-${k}`} title={ORDER_WHY[k]} onSelect={() => run(() => setNavOrder(k))}>
+              <CommandItem key={`cmd-navorder-${k}`} value={reg(`cmd-navorder-${k}`, cmdPrev(`Menu order · ${ORDER_LABEL[k]}`, ORDER_WHY[k]))} title={ORDER_WHY[k]} onSelect={() => run(() => setNavOrder(k))}>
                 <PanelLeft /> Menu order · {ORDER_LABEL[k]}
                 <span className="truncate text-muted-foreground">{ORDER_WHY[k]}</span>
                 <CommandShortcut>{k === currentOrder ? 'current' : 'set'}</CommandShortcut>
@@ -353,6 +465,8 @@ export function Omnibar() {
           </CommandGroup>
         )}
       </CommandList>
+      <SpotlightPreview p={previews.get(sel)} />
+      </div>
       {/* The keys a name answers, said where you choose one (design Rev .58). */}
       <div className="flex items-center gap-2.5 border-t border-border px-3 py-1.5 text-dense-micro text-muted-foreground">
         <kbd className="font-mono">↵</kbd>
@@ -364,6 +478,8 @@ export function Omnibar() {
         <kbd className="ml-auto font-mono">esc</kbd>
         <span>close</span>
       </div>
-    </CommandDialog>
+        </Command>
+      </DialogContent>
+    </Dialog>
   )
 }

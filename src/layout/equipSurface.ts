@@ -369,6 +369,19 @@ export function openSurface(surf: Surface, place?: Place): void {
   commit(s.float?.key === surf.key ? null : s.float, { tabs, active: surf.key })
 }
 
+/** Put the float and the panel back exactly as a snapshot had them — Undo (Rev .69 §3). */
+export function restoreSurfaces(snap: SurfaceState): void {
+  commit(snap.float, snap.panel)
+}
+
+/** The panel down to one tab — its tab menu's "Close other tabs". */
+export function closeOtherTabs(key: string): void {
+  const s = store.getState()
+  const keep = s.panel?.tabs.find((t) => t.key === key)
+  if (!s.panel || !keep) return
+  commit(s.float, { tabs: [keep], active: key })
+}
+
 export function closeSurface(key: string): void {
   const s = store.getState()
   commit(s.float?.key === key ? null : s.float, withoutTab(s.panel, key))

@@ -13,6 +13,7 @@ export const KEY_OMNIBAR = 'k'
 export const KEY_COPILOT = 'j'
 /** Owned by `@bifrost/ui`'s sidebar, listed here so the help is complete. */
 export const KEY_SIDEBAR = 'b'
+export const KEY_SETTINGS = ','
 
 export interface Shortcut {
   /** As the reader would press it. */
@@ -38,6 +39,12 @@ export const SHORTCUTS: readonly Shortcut[] = [
     what: 'Close the top inspector, else the open float — never while you are typing',
     scope: 'Anywhere',
   },
+  // Rev .69 §2: the panel's tabs, Settings, and the menu bar by arrows.
+  { keys: '⌥W', name: 'Close tab', what: 'Close the panel’s current tab — the toast offers Undo', scope: 'Anywhere the panel is open' },
+  { keys: '⌥[ / ⌥]', name: 'Switch tab', what: 'Previous / next tab in the panel', scope: 'Anywhere the panel is open' },
+  { keys: '⌘,', name: 'Settings', what: 'Open Settings', scope: 'Anywhere' },
+  { keys: '← / →', name: 'Menu bar', what: 'Walk the top bar’s items; ↑ ↓ ← → walk the controls inside an open popover', scope: 'Top bar' },
+  { keys: 'Right-click', name: 'Symbol menu', what: 'On a symbol or contract: open beside, locked tab, Symbol page, Watch, Copy. On a panel tab: page, float, close, close others', scope: 'Anywhere' },
   {
     keys: 'j / k',
     name: 'Symbol walk',

@@ -27,6 +27,8 @@ interface Props {
   onDismissAll: () => void
   /** The status-bar chip. The panel hangs off it and nothing else. */
   children: React.ReactNode
+  /** The chip's offset in the status pill, so the panel rises from the pill's left edge. */
+  alignOffset?: number
 }
 
 function tickReducer(n: number): number { return n + 1 }
@@ -125,7 +127,7 @@ function GroupBody({ group }: { group: AlertGroup }) {
   )
 }
 
-export function AlertsPopover({ groups, count, onDismissAll, children }: Props) {
+export function AlertsPopover({ groups, count, onDismissAll, children, alignOffset = 0 }: Props) {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   // Relative timestamps only need to move while someone is reading them.
@@ -147,9 +149,15 @@ export function AlertsPopover({ groups, count, onDismissAll, children }: Props) 
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
         side="top"
-        align="end"
-        sideOffset={6}
-        className="w-[400px] p-0"
+        align="start"
+        alignOffset={-alignOffset}
+        // Anchored to the pill's left edge on purpose: collision handling
+        // would pull the panel back under its own chip (limitShift keeps a
+        // popper touching its trigger), and the pill sits bottom-left, where
+        // an upward, left-aligned panel has nothing to collide with.
+        avoidCollisions={alignOffset === 0}
+        sideOffset={8}
+        className="w-[380px] p-0"
         aria-label="Alerts"
       >
         <div className="flex shrink-0 items-center gap-2 border-b px-3 py-2">

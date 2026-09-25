@@ -38,7 +38,7 @@ export function BookLiveDrawer({ book }: { book: BookLive }) {
   const age = book.quoteAgeSec
 
   return (
-    <div className="h-[236px] overflow-auto border-b border-[var(--sk-surface)]" aria-label="Positions live">
+    <div className="h-full overflow-auto" aria-label="Positions live">
       <table className="w-full min-w-[760px] border-collapse">
         <thead className="sticky top-0 bg-[color-mix(in_srgb,var(--sk-ground)_78%,transparent)] backdrop-blur-[8px]">
           <tr>

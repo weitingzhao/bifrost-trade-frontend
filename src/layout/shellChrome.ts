@@ -24,9 +24,6 @@ export const SHELL_TOP_BAR_HEIGHT_CLASS = 'h-[42px] shrink-0'
  */
 export const SHELL_TOP_BAR_PX = 42
 
-/** Bottom bar: always present, never scrolls away, never grows. */
-export const SHELL_STATUS_BAR_HEIGHT_CLASS = 'h-6 shrink-0'
-
 /** The expanded sidebar. Collapsed, it keeps the design system's icon-rail width. */
 export const SHELL_SIDEBAR_WIDTH = '240px'
 

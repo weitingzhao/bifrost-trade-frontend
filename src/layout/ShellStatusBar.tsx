@@ -1,33 +1,30 @@
 /**
- * The 24px bar along the bottom of every page.
+ * The status pill, bottom-left of every page (design Rev .57–.58,
+ * `_Shell StatusBar.dc.html`, Shell Spec §5a.11 "状态条 → 左下状态胶囊").
  *
  * It answers the questions you should never have to navigate to ask: what time
  * is it in the market, how is the book doing today, is anything degraded, is
- * anyone waiting on me. The bar is fixed height; the full version of any
- * reading on it lives on a page, and the segment is the way there.
+ * anyone waiting on me. The full version of any reading lives on a page, and
+ * the segment is the way there.
  *
- * Design: `design/trade/_Shell StatusBar.dc.html` (Shell Spec §12.3), six
- * segments in its order — session and clock, the book, short legs, limits,
- * the business event ticker, the system lamp, Alerts. The book segment opens
- * Book Live upward: a fixed 236px strip of the held book, the glance the
- * design places here, with Positions as the full table.
+ * The full-width 24px strip retired into one glass capsule that floats over the
+ * content — sidebar's right edge + 12, 12 off the bottom — and takes no height
+ * from the page. Its panels (Book Live, System, Alerts) rise from the pill and
+ * start at its left edge. The event ticker retired with the strip: its items
+ * already live under Alerts. The pill narrows in three steps with the lane it
+ * sits in: at 720 and up everything shows; from 440 the book's Δ goes; below
+ * that only the session lamp, the book, the lamps and the Alerts count remain.
  *
- * Two segments were left out once, each for a reason that has since gone:
- * the book's day P&L (an option contract had no prior close on this side —
- * the vendor's dated close now supplies it, and a row it cannot price says so
- * and the total says it is a floor) and the event ticker (no source was named
- * — it is the newest item in the same alerts stream the bell groups).
+ * The design's `data` segment (every source judged against its own cycle,
+ * §16.14) is not here: §16.14 is still to be measured, and a lamp with nothing
+ * behind it would claim a judgement this side does not make.
  *
  * The book's Δ is the model service's, the number Backing & Model and Risk ›
  * Portfolio hold — not a second, cheaper delta that could disagree with them.
- *
- * Since 2026-09-20 this bar owns both panels the top bar used to duplicate:
- * the system lamp opens the service table, and the count chip — now named
- * **Alerts** — opens the four groups upward. The division the design settled
- * is TopBar = position and focus, StatusBar = health and alerts, sidebar foot
- * = where to go.
+ * The division the design settled is TopBar = position and focus, this pill =
+ * health and alerts, sidebar foot = where to go.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -41,8 +38,8 @@ import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { SystemPopover } from './SystemPopover'
 import { BookLiveDrawer } from './BookLiveDrawer'
 import { AlertsPopover } from '@/components/MessageCenter/AlertsPopover'
-import type { AlertGroup, AlertItem, AlertsSummary } from '@/hooks/useAlerts'
-import { SHELL_STATUS_BAR_HEIGHT_CLASS } from './shellChrome'
+import type { AlertGroup, AlertsSummary } from '@/hooks/useAlerts'
+import { useBottomLane } from './bottomLane'
 
 /**
  * New York wall clock to the minute — the anchor every other reading on the
@@ -64,39 +61,24 @@ function useMarketClock(): string {
 
 /** The design's `.sb-seg`: full height, a hairline to its right, quiet until hovered. */
 const segmentClass =
-  'inline-flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-[var(--sk-surface)] px-[9px] text-dense-micro text-[var(--sk-mute2)] transition-colors hover:bg-[var(--sk-raised2)] hover:text-foreground'
+  'inline-flex h-full shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-[9px] text-dense-meta text-[var(--sk-mute2)] transition-colors last:border-r-0 hover:bg-[var(--sk-raised2)] hover:text-foreground'
 
-/**
- * When an alert happened, as a sortable instant and as the ticker prints it.
- * System messages carry unix seconds (printed as an ET clock); Research's
- * lens alerts carry a trade date (printed as that date). A label that is
- * neither — a checked-at clock string — cannot be ordered and is skipped.
- */
-function eventTime(when: string | number): { at: number; label: string } | null {
-  if (typeof when === 'number' && Number.isFinite(when)) {
-    const label = new Date(when * 1000).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'America/New_York',
-    })
-    return { at: when, label }
-  }
-  const m = typeof when === 'string' ? /^(\d{4})-(\d{2})-(\d{2})/.exec(when) : null
-  if (!m) return null
-  return { at: Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 20) / 1000, label: `${m[2]}-${m[3]}` }
-}
+/** The design's `.sb-pill`: a 28px glass capsule. */
+const PILL =
+  'flex h-7 items-stretch overflow-hidden rounded-full border border-[color-mix(in_srgb,var(--sk-ink)_10%,transparent)] ' +
+  'bg-[color-mix(in_srgb,var(--sk-raised)_72%,transparent)] backdrop-blur-[14px] backdrop-saturate-[1.3] ' +
+  'shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_6%,transparent),0_10px_28px_rgba(0,0,0,0.45)]'
 
-/** The newest alert that carries a time — the ticker's one line. */
-function newestEvent(groups: readonly AlertGroup[]): { item: AlertItem; label: string } | null {
-  let best: { item: AlertItem; at: number; label: string } | null = null
-  for (const g of groups) {
-    for (const it of g.items) {
-      const t = eventTime(it.when)
-      if (t && (best == null || t.at > best.at)) best = { item: it, ...t }
-    }
-  }
-  return best ? { item: best.item, label: best.label } : null
+/** The design's `.sb-pop`: the panels that rise from the pill. */
+const POP =
+  'absolute bottom-9 left-0 z-[55] overflow-auto rounded-[var(--radius)] border border-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] ' +
+  'bg-[color-mix(in_srgb,var(--sk-raised)_82%,transparent)] backdrop-blur-[16px] backdrop-saturate-[1.4]'
+
+type Tier = 'full' | 'mid' | 'min'
+
+/** The design's three widths: all · without Δ · lamps and counts only. */
+function tierFor(width: number): Tier {
+  return width >= 720 ? 'full' : width >= 440 ? 'mid' : 'min'
 }
 
 function signedInt(v: number): string {
@@ -123,8 +105,15 @@ export function ShellStatusBar({ groups, alerts, onDismissAll }: ShellStatusBarP
   const cushion = useBookCushion(true)
   const book = useBookLive(drawerOpen)
   const limits = useRiskLimitWatch()
-  const event = useMemo(() => newestEvent(groups), [groups])
+  const lane = useBottomLane()
+  const tier = tierFor(lane.width)
   const toggleDrawer = () => setDrawerOpen((v) => !v)
+
+  // Where the two right-hand segments sit in the capsule, so their panels can
+  // start at the pill's left edge rather than under themselves.
+  const systemRef = useRef<HTMLButtonElement>(null)
+  const alertsRef = useRef<HTMLButtonElement>(null)
+  const [offsets, setOffsets] = useState({ system: 0, alerts: 0 })
 
   // Grey is "not probed", not "broken" — the same HealthLamp semantics the rest
   // of the app uses. A plugin whose probe we could not run is an unknown, and
@@ -188,20 +177,41 @@ export function ShellStatusBar({ groups, alerts, onDismissAll }: ShellStatusBarP
     (breaches.length > 0 ? breaches.map((b) => b.name).join(' · ') : 'The lines the bar watches are within range') +
     `\nWatching: ${limits.watching.join(', ') || 'nothing yet'} — the rest live on Limits & Breaches`
 
+  // Re-measured whenever something that sets a segment's width changes.
+  const widthKey = [tier, clock, totals.dayUsd, book.modelDelta, risk.text, breach.text, system.text, alerts.count].join('|')
+  useLayoutEffect(() => {
+    const system = systemRef.current?.offsetLeft ?? 0
+    const alerts = alertsRef.current?.offsetLeft ?? 0
+    setOffsets((o) => (o.system === system && o.alerts === alerts ? o : { system, alerts }))
+  }, [widthKey])
+
   return (
-    <footer className="flex shrink-0 flex-col border-t border-border bg-[var(--sk-ground)]" aria-label="Status bar">
-      {drawerOpen ? <BookLiveDrawer book={book} /> : null}
-      <div className={cn(SHELL_STATUS_BAR_HEIGHT_CLASS, 'flex items-stretch overflow-hidden')}>
+    <footer
+      data-sb-pill=""
+      aria-label="Status"
+      className="fixed bottom-3 z-[57] flex flex-col items-start transition-[left] duration-200 ease-out"
+      style={{ left: lane.left }}
+    >
+      {drawerOpen ? (
+        <div className={POP} style={{ width: `min(760px, calc(100vw - ${lane.left + 12}px))`, height: 260 }}>
+          <BookLiveDrawer book={book} />
+        </div>
+      ) : null}
+      <div data-sb-capsule="" className={PILL} style={{ maxWidth: Math.max(lane.width, 160) }}>
         <span
           className={cn(segmentClass, 'cursor-default text-foreground hover:bg-transparent')}
-          title={`${session} — the session in New York`}
+          title={`${session} — the session in New York, ${clock} ET`}
         >
           <span
             aria-hidden
             className={cn('h-[7px] w-[7px] rounded-full', session === 'RTH' ? 'bg-success' : 'bg-muted-foreground/50')}
           />
-          <span className="font-semibold">{session}</span>
-          <span className="font-mono tabular-nums text-muted-foreground">{clock} ET</span>
+          {tier !== 'min' ? (
+            <>
+              <span className="font-semibold">{session}</span>
+              <span className="font-mono tabular-nums text-muted-foreground">{clock} ET</span>
+            </>
+          ) : null}
         </span>
 
         <button
@@ -216,63 +226,36 @@ export function ShellStatusBar({ groups, alerts, onDismissAll }: ShellStatusBarP
             {book.rows.length === 0 ? '—' : fmtSignedUsd0(totals.dayUsd)}
             {totals.dayUnknown > 0 ? <span className="text-muted-foreground">+?</span> : null}
           </span>
-          <span className="font-mono tabular-nums text-muted-foreground">
-            Δ {book.modelDelta == null ? '—' : signedInt(book.modelDelta)}
-            {book.modelDegraded > 0 ? '+?' : ''}
-          </span>
+          {tier === 'full' ? (
+            <span className="font-mono tabular-nums text-muted-foreground">
+              Δ {book.modelDelta == null ? '—' : signedInt(book.modelDelta)}
+              {book.modelDegraded > 0 ? '+?' : ''}
+            </span>
+          ) : null}
           <span className="text-dense-micro text-muted-foreground" aria-hidden>
             {drawerOpen ? '▾' : '▴'}
           </span>
         </button>
 
-        <button type="button" className={cn(segmentClass, risk.cls)} onClick={toggleDrawer} title={riskTitle}>
-          <span className="font-mono tabular-nums">{risk.text}</span>
-        </button>
+        {tier !== 'min' ? (
+          <button type="button" className={cn(segmentClass, risk.cls)} onClick={toggleDrawer} title={riskTitle}>
+            <span className="font-mono tabular-nums">{risk.text}</span>
+          </button>
+        ) : null}
 
-        <Link
-          to="/risk/limits"
-          className={cn(segmentClass, breach.cls)}
-          title={breachTitle}
-        >
+        <Link to="/risk/limits" className={cn(segmentClass, breach.cls)} title={breachTitle}>
           <span aria-hidden className={cn('h-[7px] w-[7px] rounded-full', breach.lamp)} />
-          <span className="font-mono tabular-nums">{breach.text}</span>
+          {tier !== 'min' ? <span className="font-mono tabular-nums">{breach.text}</span> : null}
         </Link>
-
-        {/* The business event ticker: the newest item in the alerts stream the
-            bell groups — the one line of news the bar can afford. */}
-        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden px-2.5 text-dense-micro">
-          {event ? (
-            <>
-              <span className="shrink-0 font-mono tabular-nums text-muted-foreground">{event.label}</span>
-              {event.item.to ? (
-                <Link to={event.item.to} className="min-w-0 truncate text-muted-foreground hover:text-foreground" title={event.item.sub}>
-                  {event.item.title}
-                  {event.item.sub ? <span className="text-muted-foreground/70"> · {event.item.sub}</span> : null}
-                </Link>
-              ) : (
-                <span className="min-w-0 truncate text-muted-foreground" title={event.item.sub}>
-                  {event.item.title}
-                  {event.item.sub ? <span className="text-muted-foreground/70"> · {event.item.sub}</span> : null}
-                </span>
-              )}
-            </>
-          ) : (
-            <span className="text-muted-foreground/70">{alerts.checking ? 'reading the event stream…' : 'no dated events in the stream'}</span>
-          )}
-        </div>
 
         {/* The lamp summarises the plugins, which is what it can afford to
             watch all day; the panel probes every service, but only while it
             is open. Thirteen /health calls every 20s from every page is a
             different load profile from one page that asked for them. */}
-        <SystemPopover>
-          <button
-            type="button"
-            className={cn(segmentClass, 'border-l border-r-0 border-[var(--sk-surface)]')}
-            title={system.title}
-          >
+        <SystemPopover alignOffset={offsets.system}>
+          <button ref={systemRef} type="button" className={segmentClass} title={system.title}>
             <span aria-hidden className={cn('h-[7px] w-[7px] rounded-full', system.dot)} />
-            <span className="font-mono tabular-nums">{system.text}</span>
+            {tier !== 'min' ? <span className="font-mono tabular-nums">{system.text}</span> : null}
           </button>
         </SystemPopover>
 
@@ -280,10 +263,11 @@ export function ShellStatusBar({ groups, alerts, onDismissAll }: ShellStatusBarP
             signifier, one icon language. The `+?` is the load-bearing part:
             a source that could not be reached must not come out looking like
             an all-clear, so the count says it is a floor. */}
-        <AlertsPopover groups={groups} count={alerts.count} onDismissAll={onDismissAll}>
+        <AlertsPopover groups={groups} count={alerts.count} onDismissAll={onDismissAll} alignOffset={offsets.alerts}>
           <button
+            ref={alertsRef}
             type="button"
-            className={cn(segmentClass, 'border-l border-r-0 border-[var(--sk-surface)]')}
+            className={segmentClass}
             title={
               alerts.incomplete
                 ? `Alerts — ${alerts.unreachable.join(', ')} unreachable, the count may be short`
@@ -291,7 +275,7 @@ export function ShellStatusBar({ groups, alerts, onDismissAll }: ShellStatusBarP
             }
           >
             <Bell className="h-3 w-3" aria-hidden />
-            <span>Alerts</span>
+            {tier !== 'min' ? <span>Alerts</span> : null}
             <span className="font-mono tabular-nums">
               {alerts.count}
               {alerts.incomplete ? '+?' : ''}

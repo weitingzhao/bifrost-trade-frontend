@@ -26,12 +26,12 @@
    content or sits beside an open panel, it is the same floating object. */
 .group {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 2px;
-  padding: 5px 4px;
+  padding: 4px 6px;
   border: 1px solid var(--rh-box, color-mix(in srgb, var(--sk-ink) 10%, transparent));
-  border-radius: 12px;
+  border-radius: 999px;
   pointer-events: auto;
   background: color-mix(in srgb, var(--sk-surface) 30%, transparent);
   -webkit-backdrop-filter: blur(5px) saturate(1.15);
@@ -111,11 +111,12 @@
 }
 
 /* ── The name pill: slides out of the left edge, counter-scaled ─────────── */
+/* The bottom toolbar's tooltip rises above the icon (design Rev .57). */
 .label {
   position: absolute;
-  right: 38px;
-  top: 50%;
-  transform: translate(8px, -50%);
+  bottom: 38px;
+  left: 50%;
+  transform: translate(-50%, 6px);
   opacity: 0;
   pointer-events: none;
   white-space: nowrap;
@@ -140,8 +141,8 @@
 .btn:hover .label,
 .btn:focus-visible .label {
   opacity: 1;
-  transform: translate(0, -50%) scale(0.893);
-  transform-origin: right center;
+  transform: translate(-50%, 0) scale(0.893);
+  transform-origin: bottom center;
 }
 
 /* ── The running lamp: a ring that breathes, not an opacity blink ───────── */
@@ -157,8 +158,8 @@
 
 .dot {
   position: absolute;
-  top: -3px;
-  right: -3px;
+  bottom: -2px;
+  right: -2px;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -198,14 +199,22 @@
    its head up under the bar — and slides when the panel comes and goes. */
 .rail {
   position: fixed;
-  bottom: 8px;
   z-index: 58;
   display: flex;
-  flex-direction: column;
-  justify-content: safe center;
-  gap: 10px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
   pointer-events: none;
-  transition: right 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    left 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+    right 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* A group without its own capsule — heads only, all in one (design Rev .57). */
+.bare {
+  display: contents;
 }
 
 /* Below the tablet width the rail would sit on top of the page's own content
@@ -216,27 +225,44 @@
   }
 }
 
+/* The waiting count: an app badge on the head's top-right corner. */
 .count {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  background: var(--color-lamp-yellow);
+  color: var(--sk-ground);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-size: 9px;
-  line-height: 1;
-  color: #ca8a04;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  box-shadow: 0 0 0 1.5px var(--sk-raised);
 }
 
 /* Something of this module is open somewhere — the Dock's running dot. */
+/* macOS's running dot, under the head: something of this module is open. */
 .run {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  margin: 1px 0 0;
-  flex: none;
+  transform: translateX(-50%);
   background: var(--rh);
 }
 
 .rule {
-  width: 16px;
-  height: 1px;
+  width: 1px;
+  height: 16px;
   background: var(--sk-line);
-  margin: 3px 0;
+  margin: 0 3px;
+  flex: none;
 }

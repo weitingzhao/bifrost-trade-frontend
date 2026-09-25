@@ -1,5 +1,12 @@
 /**
- * The companion rail — the equipment's own edge, present on every page.
+ * The bottom toolbar — the equipment's own edge, present on every page.
+ *
+ * Until design Rev .57 this was a column down the right edge. It lies down now
+ * (Shell Spec §5a.11 "右栏下沉为底部工具栏"): the same groups, head then its
+ * pages, as glass capsules centred in the lane right of the status pill,
+ * floating over the page. Below 820 of lane only the heads show, in one
+ * capsule; below 340 beside the pill it rises a row above it. The sidebar
+ * foot's square hides and shows it (`bottomLane.ts`).
  *
  * `equip.ts` holds why the three modules are not in the business tree;
  * `equipRail.module.css` holds the material and the motion, transcribed from
@@ -30,7 +37,7 @@
  * floating, from the address bar = a page*. `⤢` in the header is there for
  * when you want the real thing.
  */
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { type CSSProperties, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -39,15 +46,8 @@ import { computeLiveNavLamp } from '@/utils/livePageLamps'
 import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
 import { PANEL_CARD_PX, opensAsPage, placeOf, surfaceForRoute, useSurfaces } from './equipSurface'
 import { toggleSurfaceFrom } from './equipMotion'
-import { SHELL_TOP_BAR_PX } from './shellChrome'
+import { useBottomLane, useToolbarShown } from './bottomLane'
 import css from './equipRail.module.css'
-
-/**
- * The column's natural height with every page icon showing (design Rev .25).
- * Below it the rail keeps only the group heads: the pages stay one ⌘K away,
- * and a rail that ran under the status bar would hide its own last icon.
- */
-const FULL_RAIL_PX = 520
 
 /** What the tooltip adds once something is open — "on" alone is not a place. */
 function placeNote(to: string): string {
@@ -161,7 +161,7 @@ function Group({
 
   return (
     <div
-      className={css.group}
+      className={full ? css.group : css.bare}
       style={{
         ['--rh' as string]: EQUIP_HUE[group.id],
         ['--rh-box' as string]:
@@ -179,24 +179,21 @@ function Group({
         open={openAt(group.hub.to)}
         // The head stands for the module: standing on any of its pages lights
         // it (the design's `here = hereIn(module)`), the way the box border
-        // already did. The page icons below light for their own route only.
+        // already did. The page icons light for their own route only.
         here={here}
       >
-        {/* Only the two modules whose state changes without your hand carry
-            one: Autopilot's run, Market's feed. */}
+        {/* Everything about the module sits on its icon (design Rev .57):
+            the waiting count is the badge top-right, the status lamp the
+            corner dot bottom-right, an open surface the running dot under
+            it. Only Autopilot and Market carry a lamp or a count. */}
         {lamp}
+        {(count ?? 0) > 0 ? (
+          <span className={css.count} title={countTitle}>
+            {count}
+          </span>
+        ) : null}
+        {anyOpen ? <span className={css.run} aria-hidden /> : null}
       </RailButton>
-      {/* macOS's running dot: something of this module is open, in the float
-          or the panel. The box border says it too; the dot is what reads at a
-          glance, as it does under a Dock icon. */}
-      {anyOpen ? <span className={css.run} aria-hidden /> : null}
-      {/* The count is its own line under the head, not a badge on it — the
-          design's own placement, and it keeps the 28px button square. */}
-      {(count ?? 0) > 0 ? (
-        <span className={css.count} title={countTitle}>
-          {count}
-        </span>
-      ) : null}
       {full && group.pages.some((p) => p.rail !== false) ? <span className={css.rule} aria-hidden /> : null}
       {full
         ? group.pages.filter((p) => p.rail !== false).map((p) => (
@@ -222,20 +219,43 @@ export function EquipRail() {
   const alerts = useFiredAlerts().data
   const firedToday = firedTodayCount(alerts, new Date().toISOString().slice(0, 10))
   const { panel } = useSurfaces()
-  const [height, setHeight] = useState(() => window.innerHeight)
+  const visible = useToolbarShown()
+  // An overlaying panel takes the lane's right end; a pushing one already
+  // narrowed the content, which the lane measures.
+  const lane = useBottomLane(panel ? PANEL_CARD_PX : 0)
 
-  useEffect(() => {
-    const onResize = () => setHeight(window.innerHeight)
-    window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
-  }, [])
-
-  const full = height - SHELL_TOP_BAR_PX - 16 >= FULL_RAIL_PX
+  // Beside the pill when there is room for the heads (340); otherwise one row
+  // above it, across the whole lane. The page icons need 820 of whichever.
+  const side = lane.width - lane.pill
+  const stacked = side < 340
+  const full = (stacked ? lane.width : side) >= 820
 
   // The two readings that earn Autopilot its indicator, read where the sidebar
   // used to read them — the badge moved with the row.
   const waiting = standing ? (standing.pending_decisions?.calls ?? standing.pending_memos) : 0
   const running = standing?.objectives.some((o) => o.last_run?.status === 'running') ?? false
+
+  if (!visible) return null
+
+  const groups = EQUIP_GROUPS.map((g) => (
+    <Group
+      key={g.id}
+      group={g}
+      activePath={pathname}
+      lamp={
+        g.id === 'autopilot' && running ? (
+          <span className={css.dot} title="A loop run is in flight" />
+        ) : g.id === 'market' ? (
+          <MarketFeedDot />
+        ) : null
+      }
+      count={g.id === 'autopilot' ? waiting : g.id === 'market' ? firedToday : 0}
+      countTitle={
+        g.id === 'autopilot' ? `${waiting} waiting on a call` : `${firedToday} alert${firedToday === 1 ? '' : 's'} fired today`
+      }
+      full={full}
+    />
+  ))
 
   return (
     <div
@@ -243,32 +263,17 @@ export function EquipRail() {
       aria-label="Equipment"
       style={
         {
-          // Floating, never in a lane (Owner 2026-09-23): over the page, and
-          // with a panel open just left of it — never over the panel.
-          right: panel ? PANEL_CARD_PX : 6,
-          top: SHELL_TOP_BAR_PX + 8,
+          // The bottom toolbar (design Rev .57–.58): floating over the page,
+          // centred in the lane right of the status pill, 12 off the bottom.
+          left: lane.left + (stacked ? 0 : lane.pill),
+          right: lane.right,
+          bottom: stacked ? 50 : 12,
         } as CSSProperties
       }
     >
-      {EQUIP_GROUPS.map((g) => (
-        <Group
-          key={g.id}
-          group={g}
-          activePath={pathname}
-          lamp={
-            g.id === 'autopilot' && running ? (
-              <span className={css.dot} title="A loop run is in flight" />
-            ) : g.id === 'market' ? (
-              <MarketFeedDot />
-            ) : null
-          }
-          count={g.id === 'autopilot' ? waiting : g.id === 'market' ? firedToday : 0}
-          countTitle={
-            g.id === 'autopilot' ? `${waiting} waiting on a call` : `${firedToday} alert${firedToday === 1 ? '' : 's'} fired today`
-          }
-          full={full}
-        />
-      ))}
+      {/* Heads only, one capsule holds them all: a one-icon group in its own
+          capsule reads as a ring in a ring. With the pages, a capsule each. */}
+      {full ? groups : <div className={css.group}>{groups}</div>}
     </div>
   )
 }

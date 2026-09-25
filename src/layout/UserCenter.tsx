@@ -33,6 +33,7 @@ import { OPS_CONSOLE_URL } from '@/lib/opsConsole'
 import { useThemeMode, type ThemeMode } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 import { worstLamp } from '@/utils/systemStanding'
+import { toggleToolbar, useToolbarShown } from './bottomLane'
 import { isSystemRoute } from './routeRegistry'
 
 const MODES: readonly { mode: ThemeMode; label: string; title: string }[] = [
@@ -55,6 +56,7 @@ const LAMP_BG: Record<string, string> = {
 
 const GEAR = glyph('gear')
 const LANES = glyph('lanes')
+const TOOLBAR = glyph('toolbar')
 
 /**
  * Enter System, or the way back out of it — the tree swaps, so the foot
@@ -184,6 +186,7 @@ export function SidebarUserCenter() {
   // grey, never a fault (§11.3.1).
   const degraded = summary.filter((d) => d.lamp === 'yellow' || d.lamp === 'red').length
   const door = useDoor()
+  const toolbarShown = useToolbarShown()
   const footLine = [door.inSystem ? 'in System' : null, degraded > 0 ? `${degraded} degraded` : null]
     .filter(Boolean)
     .join(' · ')
@@ -236,6 +239,21 @@ export function SidebarUserCenter() {
           >
             <door.Icon className="h-4 w-4" aria-hidden />
           </NavLink>
+          {/* The bottom toolbar floats over the page, so it can cover the last
+              rows — this square hides and shows it (design Rev .57). */}
+          <button
+            type="button"
+            onClick={toggleToolbar}
+            aria-pressed={toolbarShown}
+            title={toolbarShown ? 'Hide the bottom toolbar' : 'Show the bottom toolbar'}
+            aria-label="Show or hide the bottom toolbar"
+            className={cn(
+              'flex size-[30px] flex-none items-center justify-center rounded-md border border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
+              toolbarShown ? 'text-[var(--sk-mute2)]' : 'text-muted-foreground/50',
+            )}
+          >
+            <TOOLBAR className="h-4 w-4" aria-hidden />
+          </button>
         </div>
       )}
       <PopoverContent

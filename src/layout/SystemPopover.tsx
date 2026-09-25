@@ -83,9 +83,15 @@ function ServiceRow({ ops, lamp, name, sub, meta, onNavigate }: {
 interface SystemPopoverProps {
   /** The status-bar segment that opens this — rendered as the trigger. */
   children: React.ReactNode
+  /**
+   * How far left of the trigger the panel starts: the status pill passes the
+   * segment's offset in the capsule, so every panel rises from the pill's left
+   * edge (design Rev .58).
+   */
+  alignOffset?: number
 }
 
-export function SystemPopover({ children }: SystemPopoverProps) {
+export function SystemPopover({ children, alignOffset = 0 }: SystemPopoverProps) {
   const [open, setOpen] = useState(false)
   // Both hooks share their query keys with the pages and the status bar, so
   // opening this costs no extra request; it only stops polling when closed.
@@ -106,8 +112,14 @@ export function SystemPopover({ children }: SystemPopoverProps) {
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
         side="top"
-        align="end"
-        sideOffset={6}
+        align="start"
+        alignOffset={-alignOffset}
+        // Anchored to the pill's left edge on purpose: collision handling
+        // would pull the panel back under its own chip (limitShift keeps a
+        // popper touching its trigger), and the pill sits bottom-left, where
+        // an upward, left-aligned panel has nothing to collide with.
+        avoidCollisions={alignOffset === 0}
+        sideOffset={8}
         className="w-[340px] max-h-[min(70vh,560px)] overflow-y-auto p-1"
       >
         <div className="flex items-center gap-2 border-b border-border px-2 pb-1.5 pt-1">

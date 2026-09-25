@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 96 routes, 92 with a designed page,
+ * Derived, not typed: 97 routes, 93 with a designed page,
  * 4 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -132,6 +132,7 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "caliper": "M4 6v12M20 6v12M4 12h16M9 9l-3 3 3 3M15 9l3 3-3 3",
   "card": "M4 5h16v14H4zM8 15l2.5-3 2 2 3.5-4",
   "ceiling": "M3 5h18M7 20v-8M12 20v-11M17 20v-5M9.5 11.5L12 9l2.5 2.5",
+  "checklist": "M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17M11 6h9M11 12h9M11 18h9",
   "clockback": "M3 12a9 9 0 109-9 9 9 0 00-7 3M3 3v5h5M12 7v5l3 2",
   "coverbar": "M3 10h18v4H3zM3 10h11v4H3z",
   "curve": "M4 4v16h16M7 15l4-5 3 3 5-7",
@@ -166,11 +167,10 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "planactual": "M3 6h18v4H3zM9 6v4M15 6v4M3 14h11v4H3zM14 12v8",
   "promote": "M4 6h10M4 11h10M4 16h10M18 17V6M18 6l-2.5 2.5M18 6l2.5 2.5",
   "pulse": "M3 12h4l3 7 4-14 3 7h4",
-  "reliability": "M4 20V4M4 20h16M5 19L19 5M5 19c3 0 5-2.5 7-6s4-6.5 7-8",
   "replay": "M3 20h18M11 6L4 11l7 5zM20 6l-7 5 7 5z",
   "restrike": "M3 7h6v10H3zM15 7h6v10h-6M10 12h4M12.5 9.5L15 12l-2.5 2.5",
   "rotor": "M12 7a5 5 0 100 10 5 5 0 000-10M12 3v4M12 17v4M3 12h4M17 12h4",
-  "scale": "M12 4v16M8 20h8M4 8h16M4 8l-2 5h4zM20 8l2 5h-4z",
+  "scale": "M12 4v16M8 20h8M5 8h14M5 8l-2.5 6a2.5 2.5 0 005 0zM19 8l-2.5 6a2.5 2.5 0 005 0z",
   "sieve": "M3 6h10M3 11h6M3 16h4M15 8.5a4 4 0 100 8 4 4 0 000-8M18.5 16.5L21 19",
   "sliders": "M4 8h16M9 6v4M4 16h16M15 14v4",
   "slip": "M6 3h8l4 4v14H6zM14 3v4h4M9 16h5M13 13l3 3-3 3",
@@ -187,9 +187,9 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
 
 /** Which glyph each row carries, by route. */
 export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
+  "/docs/design-adoption": "checklist",
   "/docs/options-kit": "kit",
   "/docs/research-blueprint": "blueprint",
-  "/docs/research-calibration": "reliability",
   "/docs/tech-stack": "layers",
   "/docs/ui-design-system": "swatch",
   "/portfolio/accounts": "wallet",
@@ -247,6 +247,7 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
  */
 export const DESIGN_FOLD_GLYPH: Readonly<Record<string, string>> = {
   "Agents": "panel3",
+  "Alignment": "scale",
   "Data": "db",
   "Reference": "doc",
 }
@@ -304,7 +305,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-25.49"
+export const DESIGN_REV = "2026-09-25.52"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-17.1","inNav":true,"group":"Home","designOnly":false},
@@ -337,7 +338,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/lab/screener","label":"Stock screen · method","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen Method.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/lab/symbol","label":"Symbol · method","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol Method.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/lab/history","label":"History · method","crumbs":["Research","Analyze"],"designed":true,"file":"Research History Method.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/lab/calibration","label":"Calibration","crumbs":["System","Data"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":true,"group":"System","designOnly":false},
+  {"path":"/research/lab/calibration","label":"Calibration","crumbs":["System","Alignment"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":"2026-09-25.1","inNav":true,"group":"System","designOnly":false},
   {"path":"/research/lab/discover-model","label":"Discover model","crumbs":["System","Data"],"designed":true,"file":"System Data Discover Model.dc.html","round":"LAB","rev":"2026-09-20.4","inNav":true,"group":"System","designOnly":false},
   {"path":"/review/playbook-stats","label":"Playbook stats","crumbs":["Review"],"designed":true,"file":"Review Playbook Stats.dc.html","round":"NEW","rev":"2026-09-18.1","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/objectives","label":"Objectives","crumbs":["Review"],"designed":true,"file":"Review Objectives.dc.html","round":null,"rev":"2026-09-20.5","inNav":true,"group":"Review","designOnly":false},
@@ -389,8 +390,9 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/risk/stress","label":"Stress & Scenario","crumbs":["Risk"],"designed":true,"file":"Risk Stress.dc.html","round":null,"rev":"2026-09-17.1","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/system/status","label":"System Status","crumbs":["System"],"designed":true,"file":"System Status.dc.html","round":null,"rev":"2026-09-15.13","inNav":true,"group":"System","designOnly":false},
   {"path":"/settings","label":"Settings","crumbs":["System"],"designed":true,"file":"Settings.dc.html","round":null,"rev":"2026-09-15.13","inNav":true,"group":"System","designOnly":false},
-  {"path":"/docs/research-blueprint","label":"Research Blueprint","crumbs":["System","Reference"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
-  {"path":"/docs/research-calibration","label":"Research Calibration","crumbs":["System","Reference"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
+  {"path":"/docs/design-adoption","label":"Design Adoption","crumbs":["System","Alignment"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
+  {"path":"/docs/research-blueprint","label":"Blueprint","crumbs":["System","Alignment"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
+  {"path":"/docs/research-calibration","label":"Research Calibration","crumbs":["System","Alignment"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":null,"inNav":false,"group":null,"designOnly":false},
   {"path":"/docs/tech-stack","label":"Tech Stack","crumbs":["System","Reference"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/ui-design-system","label":"UI Design System","crumbs":["System","Reference"],"designed":false,"file":"_Shell Stub.dc.html","round":null,"rev":null,"inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/index","label":"Index","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Index.dc.html","round":null,"rev":"2026-09-15.5","inNav":false,"group":null,"designOnly":true},

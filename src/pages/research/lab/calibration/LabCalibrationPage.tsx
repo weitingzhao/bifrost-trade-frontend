@@ -118,37 +118,44 @@ export default function LabCalibrationPage() {
         description="The blueprint says what Research should be; the calibration says what it is — contract by contract, each with the evidence behind its state, read live from both documents."
       />
 
+      {/* Rev .52: the view switch leads the toolbar (§16.10 — a page's face
+          switch is the toolbar's first item), then where both documents are
+          read from, then the way to the blueprint. The round stays here until
+          System's pages move to PageHead, whose stamp is where the design
+          puts it. */}
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+        <SegmentControl
+          ariaLabel="View"
+          size="xs"
+          value={view}
+          onChange={(v) => {
+            const next = new URLSearchParams(params)
+            if (v === 'source') next.set('view', 'source')
+            else next.delete('view')
+            setParams(next, { replace: true })
+          }}
+          options={[
+            { value: 'contracts', label: 'Contracts' },
+            { value: 'source', label: 'Source' },
+          ]}
+        />
         <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
-          RESEARCH_CALIBRATION.md
+          read live · GET /research/docs/calibration · /research/docs/blueprint
           {doc?.version ? ` · round ${doc.version}` : ''}
-          {doc?.updated ? ` · updated ${doc.updated}` : ''} · read live
+          {doc?.updated ? ` · updated ${doc.updated}` : ''}
         </span>
         {doc?.status ? (
           <DenseTag size="cell" variant="neutral">
             {doc.status}
           </DenseTag>
         ) : null}
-        <span className="ml-auto flex items-center gap-3">
-          <SegmentControl
-            ariaLabel="View"
-            size="xs"
-            value={view}
-            onChange={(v) => {
-              const next = new URLSearchParams(params)
-              if (v === 'source') next.set('view', 'source')
-              else next.delete('view')
-              setParams(next, { replace: true })
-            }}
-            options={[
-              { value: 'contracts', label: 'Contracts' },
-              { value: 'source', label: 'Source' },
-            ]}
-          />
-          <Link to="/docs/research-blueprint" className={cn(mono, 'text-dense-caption text-primary hover:underline')}>
-            Blueprint →
-          </Link>
-        </span>
+        <Link
+          to="/docs/research-blueprint"
+          className={cn(mono, 'ml-auto text-dense-caption text-primary hover:underline')}
+          title="/docs/research-blueprint — System › Alignment"
+        >
+          Blueprint →
+        </Link>
       </div>
 
       {calQ.isError || blueQ.isError ? (
@@ -162,12 +169,24 @@ export default function LabCalibrationPage() {
       ) : !doc || (view === 'contracts' && !parsed) ? (
         <Skeleton className="h-96 w-full rounded-md" />
       ) : view === 'source' ? (
-        // The document itself, centred as prose (§5a.3).
-        <article className="mx-auto max-w-4xl">
-          <MarkdownContent className="prose prose-sm prose-invert max-w-none [&_table]:text-dense-meta [&_pre]:text-dense-micro">
-            {doc.markdown}
-          </MarkdownContent>
-        </article>
+        // The document itself, in a panel that names it (Rev .52). The whole
+        // document rather than the prototype's §2 excerpt: the text is read
+        // live, and cutting it here would be a second copy of its structure.
+        <section className={cn(panel, 'overflow-hidden')}>
+          <header className={panelHead}>
+            <span className="font-semibold">RESEARCH_CALIBRATION.md</span>
+            <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>
+              {doc.version ? `round ${doc.version} · ` : ''}the document’s own text · /docs/research-calibration forwards
+              here
+            </span>
+          </header>
+          {/* Prose keeps its measure (§5a.3). */}
+          <article className="mx-auto max-w-4xl px-3 py-2">
+            <MarkdownContent className="prose prose-sm prose-invert max-w-none [&_table]:text-dense-meta [&_pre]:text-dense-micro">
+              {doc.markdown}
+            </MarkdownContent>
+          </article>
+        </section>
       ) : (
         <>
       <div className="flex flex-wrap gap-2">

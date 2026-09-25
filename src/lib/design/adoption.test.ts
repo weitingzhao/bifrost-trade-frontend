@@ -42,7 +42,11 @@ describe('design adoption', () => {
       if (r.design) owned.add(r.design.path)
       for (const a of r.aliasOf ?? []) owned.add(a)
     }
-    const missing = DESIGN_ROUTES.filter((d) => !owned.has(d.path)).map((d) => d.path)
+    // The one exception is the tracker itself, which the design lists since
+    // Rev .52 and this list leaves out on purpose (see the test below).
+    const missing = DESIGN_ROUTES.filter((d) => !owned.has(d.path) && d.path !== '/docs/design-adoption').map(
+      (d) => d.path,
+    )
     expect(missing).toEqual([])
   })
 

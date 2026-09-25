@@ -50,8 +50,10 @@ describe('adoptionByGroup', () => {
     // The design's own backlog is nobody's work here, so it stays out of the
     // denominator: System's four `/docs/*` stubs do not make it read worse —
     // and neither do the nine design documents the Owner kept in the design.
+    // Four until Rev .52: Research Calibration then resolved to the Calibration
+    // prototype (an alias here), and the one new stub is the tracker itself.
     const system = groups.find((g) => g.group === 'System')
-    expect(system?.byState.backlog).toBe(4)
+    expect(system?.byState.backlog).toBe(3)
     expect(system?.byState.designOnly).toBe(9)
     expect(system?.total).toBe(
       rows.filter((r) => r.crumbs[0] === 'System' && r.state !== 'backlog' && r.state !== 'designOnly').length,

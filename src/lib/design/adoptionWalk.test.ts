@@ -569,7 +569,9 @@ describe('the design walk, as it stands', () => {
     // the Personas page. 83 on 2026-09-25, with nothing removed from the
     // design: the Owner kept nine `/docs/*` documents in the design package,
     // and a page that was never this app's to build is not in its denominator.
-    expect(counts.designed).toBe(83)
+    // 84 with Rev .52: `/docs/research-calibration` now resolves to the
+    // Calibration prototype, and here it is that page's forward (an alias).
+    expect(counts.designed).toBe(84)
     expect(counts.byState.designOnly).toBe(9)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three
@@ -640,7 +642,8 @@ describe('the design walk, as it stands', () => {
       '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
     ])
-    expect(counts.byState.backlog).toBe(4)
+    // 4 → 3 with Rev .52: Research Calibration resolves to a prototype now.
+    expect(counts.byState.backlog).toBe(3)
   })
 
   it('does not call a walked page stale because some other page moved', () => {
@@ -724,8 +727,11 @@ describe('the design walk, as it stands', () => {
     // them the unified page head rolled across the prototypes (.32–.42) and
     // freshness / data confidence (.44–.47) — shell and prototype work that
     // stamps no page. Three stamps did move, all at .43: Stock screen, Symbol
-    // and Narrative.
-    expect(DESIGN_REV).toBe('2026-09-25.49')
+    // and Narrative. Package .14 (full) @ Rev .51 is the §17 interaction
+    // standard — shell and prototype markup, no page stamp — and .15 @ Rev .52
+    // takes the app's System tree; of its three pages only Calibration's
+    // stamp moved.
+    expect(DESIGN_REV).toBe('2026-09-25.52')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

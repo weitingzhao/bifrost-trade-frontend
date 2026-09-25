@@ -217,7 +217,9 @@ function stateOf(entry: RouteEntry, design: DesignRoute | null): AdoptionState {
  *
  * It is this side's instrument for running the walk, not a page the design was
  * ever going to have. Left in, it would sit in "to ask" forever as a question
- * with no answer — a permanent row in a worklist.
+ * with no answer — a permanent row in a worklist. Since Rev .52 the design
+ * lists it too (System › Alignment, a stub: "app 自建、自动生成"), so it is
+ * skipped on the design side as well, or it would come back as backlog.
  */
 const TRACKER_PATH = '/docs/design-adoption'
 
@@ -241,7 +243,7 @@ export function adoptionRows(): AdoptionRow[] {
       inApp: true,
     }
   })
-  const covered = new Set([...rows.map((r) => r.path), ...[...byTarget.values()].flat()])
+  const covered = new Set([TRACKER_PATH, ...rows.map((r) => r.path), ...[...byTarget.values()].flat()])
   for (const d of DESIGN_ROUTES) {
     if (covered.has(d.path)) continue
     const via = PARAM_COVERED[d.path]

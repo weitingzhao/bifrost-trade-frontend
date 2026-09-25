@@ -427,7 +427,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: SYSTEM_DATA,
     design: {
       state: 'reviewing',
-      rev: '2026-09-20.4',
+      rev: '2026-09-25.52',
       note: DESIGN_NOTES['/research/lab/discover-model'],
     },
   },
@@ -441,7 +441,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: SYSTEM_ALIGNMENT,
     design: {
       state: 'reviewing',
-      rev: '2026-09-20.4',
+      rev: '2026-09-25.1',
       note: DESIGN_NOTES['/research/lab/calibration'],
     },
   },

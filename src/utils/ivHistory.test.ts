@@ -5,9 +5,11 @@ import {
   coneRows,
   coneStory,
   coverageLine,
+  eventLine,
   ivAtTenor,
   ivReading,
   signedVolPts,
+  judgeIvReadings,
   suspectIvDates,
   suspectLine,
   volPts,
@@ -214,5 +216,52 @@ describe('the cone, counted', () => {
 
   it('says when nothing can be placed rather than drawing an empty cone as calm', () => {
     expect(coneStory(coneRows(tenors, []))).toMatch(/not placed on the cone/)
+  })
+})
+
+describe('a sharp move on the market or an earnings print is an event, not a fault', () => {
+  // Invented: a name that spikes on day 20 and dips on day 40, and a market
+  // series that moves with it or not.
+  const name = () => rows(63, { iv: (i) => (i === 20 ? 1.2 : i === 40 ? 0.2 : 0.45) })
+  const flatMarket = () => rows(63, { iv: () => 0.2 })
+  const movingMarket = () => rows(63, { iv: (i) => (i === 20 ? 0.3 : i === 40 ? 0.15 : 0.2) })
+
+  it('without context the rule calls both faults', () => {
+    const r = name()
+    expect(suspectIvDates(r)).toEqual([r[20].trade_date, r[40].trade_date])
+  })
+
+  it('a session when the market moved the same way by more than 15% is an event', () => {
+    const r = name()
+    const judged = judgeIvReadings(r, { market: movingMarket() })
+    expect(judged.suspects).toEqual([])
+    expect(judged.events).toEqual([
+      { date: r[20].trade_date, why: 'market' },
+      { date: r[40].trade_date, why: 'market' },
+    ])
+    // A flat market leaves them faults.
+    expect(judgeIvReadings(r, { market: flatMarket() }).suspects).toEqual([r[20].trade_date, r[40].trade_date])
+  })
+
+  it('a spike within four days of an earnings filing is the print', () => {
+    const r = name()
+    const filed = new Date(Date.parse(`${r[20].trade_date}T00:00:00Z`) - 3 * 86_400_000).toISOString().slice(0, 10)
+    const judged = judgeIvReadings(r, { earnings: [filed] })
+    expect(judged.events).toEqual([{ date: r[20].trade_date, why: 'earnings' }])
+    expect(judged.suspects).toEqual([r[40].trade_date])
+  })
+
+  it('a reading under five vol is a fault whatever the market did', () => {
+    const r = rows(30, { iv: (i) => (i === 10 ? 0.03 : 0.4) })
+    const market = rows(30, { iv: (i) => (i === 10 ? 0.1 : 0.2) })
+    expect(judgeIvReadings(r, { market }).suspects).toEqual([r[10].trade_date])
+  })
+
+  it('events stay in the percentile and are named in one line', () => {
+    const reading = ivReading(name(), '3m', { market: movingMarket() })
+    expect(reading.suspects).toEqual([])
+    expect(reading.percentile).not.toBeNull()
+    expect(eventLine(reading)).toMatch(/^2 sharp IV30 moves in this window sit on an earnings print/)
+    expect(eventLine(ivReading(rows(63), '3m'))).toBeNull()
   })
 })

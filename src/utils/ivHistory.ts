@@ -33,6 +33,16 @@
  * Moved from `pages/research/analyze/history/historyModel.ts` when the Method
  * face became its second reader (§14.2, module-placement): two features, one
  * model.
+ *
+ * ## After the store was repaired (research 0.106–0.118, 2026-09-25)
+ *
+ * The June–July readings were fossil snapshot rows; the store now carries IV30
+ * back to 2024-09 for the universe, and 81 of 255,237 readings still break the
+ * rule above. Sixteen of those are the market, not the store: eleven sit on a
+ * session when SPY's own IV30 moved the same way by more than 15% (2025-04-09,
+ * the tariff pause, is ten of them) and five within four days of the name's
+ * earnings filing. `judgeIvReadings` calls those events — kept in the window and
+ * in the percentile — and only the rest suspects.
  */
 import type { VrpRow } from '@/api/research/vrp'
 import { quantile } from '@/utils/reviewHabits'
@@ -64,30 +74,86 @@ export const MIN_IV_POINTS = 20
 export const IV_FLOOR = 0.05
 /** A reading this many times above (or below) both neighbours is a spike, not a move. */
 export const SPIKE_RATIO = 1.8
+/** The name whose IV30 stands for the market's. */
+export const MARKET_IV_SYMBOL = 'SPY'
+/** The market's own IV30 moving this much the same way that session makes a spike an event. */
+export const MARKET_MOVE = 0.15
+/** A spike within this many calendar days of an earnings filing (8-K Item 2.02) is the print. */
+export const EARNINGS_DAYS = 4
+
+/** What the page knows besides the name's own series; either part may be absent. */
+export interface IvEventContext {
+  /** The market's IV30 series (SPY). Leave it out for SPY itself — its moves are the market. */
+  market?: readonly VrpRow[]
+  /** The name's earnings filing dates (8-K Item 2.02), ISO. */
+  earnings?: readonly string[]
+}
+
+export interface IvEvent {
+  date: string
+  why: 'market' | 'earnings'
+}
+
+const DAY_MS = 86_400_000
+
+function marketMoves(market: readonly VrpRow[]): Map<string, number> {
+  const pts = market.filter((r) => r.trade_date != null && r.atm_iv_30d != null && Number.isFinite(r.atm_iv_30d))
+  const out = new Map<string, number>()
+  for (let i = 1; i < pts.length; i++) {
+    const prev = pts[i - 1].atm_iv_30d as number
+    if (prev > 0) out.set(pts[i].trade_date as string, (pts[i].atm_iv_30d as number) / prev - 1)
+  }
+  return out
+}
 
 /**
- * IV30 readings that are faults in the store rather than the market: below
- * `IV_FLOOR`, or `SPIKE_RATIO` away from both IV-bearing neighbours in the same
- * direction. An edge reading has one neighbour and is judged on the floor only
- * — today's value cannot be called a spike until tomorrow says so.
+ * IV30 readings the rule flags, split into faults in the store (`suspects`) and
+ * moves of the market (`events`). The rule: below `IV_FLOOR`, or `SPIKE_RATIO`
+ * away from both IV-bearing neighbours in the same direction. An edge reading
+ * has one neighbour and is judged on the floor only — today's value cannot be
+ * called a spike until tomorrow says so. A spike is an event when the market's
+ * IV30 moved `MARKET_MOVE` the same way that session, or when it sits within
+ * `EARNINGS_DAYS` of an earnings filing; a reading under the floor never is.
  */
-export function suspectIvDates(rows: readonly VrpRow[]): string[] {
+export function judgeIvReadings(
+  rows: readonly VrpRow[],
+  ctx: IvEventContext = {}
+): { suspects: string[]; events: IvEvent[] } {
   const pts = rows.filter(
     (r) => r.trade_date != null && r.atm_iv_30d != null && Number.isFinite(r.atm_iv_30d)
   )
-  const out: string[] = []
+  const moves = ctx.market ? marketMoves(ctx.market) : null
+  const prints = (ctx.earnings ?? []).map((d) => Date.parse(`${d}T00:00:00Z`)).filter(Number.isFinite)
+  const suspects: string[] = []
+  const events: IvEvent[] = []
   pts.forEach((r, i) => {
+    const d = r.trade_date as string
     const v = r.atm_iv_30d as number
     const prev = i > 0 ? (pts[i - 1].atm_iv_30d as number) : null
     const next = i < pts.length - 1 ? (pts[i + 1].atm_iv_30d as number) : null
-    const spike =
-      prev != null &&
-      next != null &&
-      ((v > SPIKE_RATIO * prev && v > SPIKE_RATIO * next) ||
-        (v * SPIKE_RATIO < prev && v * SPIKE_RATIO < next))
-    if (v < IV_FLOOR || spike) out.push(r.trade_date as string)
+    const up = prev != null && next != null && v > SPIKE_RATIO * prev && v > SPIKE_RATIO * next
+    const down = prev != null && next != null && v * SPIKE_RATIO < prev && v * SPIKE_RATIO < next
+    if (v < IV_FLOOR) {
+      suspects.push(d)
+      return
+    }
+    if (!up && !down) return
+    const move = moves?.get(d)
+    const t = Date.parse(`${d}T00:00:00Z`)
+    if (move != null && ((up && move > MARKET_MOVE) || (down && move < -MARKET_MOVE))) {
+      events.push({ date: d, why: 'market' })
+    } else if (prints.some((p) => Math.abs(t - p) <= EARNINGS_DAYS * DAY_MS)) {
+      events.push({ date: d, why: 'earnings' })
+    } else {
+      suspects.push(d)
+    }
   })
-  return out
+  return { suspects, events }
+}
+
+/** The dates `judgeIvReadings` calls faults in the store. */
+export function suspectIvDates(rows: readonly VrpRow[], ctx: IvEventContext = {}): string[] {
+  return judgeIvReadings(rows, ctx).suspects
 }
 
 /** The newest `win` sessions, oldest first. The store answers newest-last. */
@@ -125,9 +191,11 @@ export interface IvReading {
   bothPoints: number
   /** IV30 readings in the window that look like store faults — see `suspectIvDates`. */
   suspects: string[]
+  /** Readings the rule flags that sit on a market-wide move or an earnings print — kept. */
+  events: IvEvent[]
 }
 
-export function ivReading(rows: readonly VrpRow[], win: HistoryWindow): IvReading {
+export function ivReading(rows: readonly VrpRow[], win: HistoryWindow, ctx: IvEventContext = {}): IvReading {
   const w = windowRows(rows, win)
   const last = w.length > 0 ? w[w.length - 1] : null
   const ivs = w.map((r) => r.atm_iv_30d).filter((v): v is number => v != null && Number.isFinite(v))
@@ -141,7 +209,9 @@ export function ivReading(rows: readonly VrpRow[], win: HistoryWindow): IvReadin
   // Judged over the whole series so a window's first reading still has the
   // neighbour before it; reported for the window only.
   const inWindow = new Set(w.map((r) => r.trade_date))
-  const suspects = suspectIvDates(rows).filter((d) => inWindow.has(d))
+  const judged = judgeIvReadings(rows, ctx)
+  const suspects = judged.suspects.filter((d) => inWindow.has(d))
+  const events = judged.events.filter((e) => inWindow.has(e.date))
 
   const enough = ivs.length >= MIN_IV_POINTS && suspects.length === 0
   // The shared interpolated quantile, not the prototype's floor index: the
@@ -167,7 +237,24 @@ export function ivReading(rows: readonly VrpRow[], win: HistoryWindow): IvReadin
     ivAboveRv: both.length > 0 && suspects.length === 0 ? above / both.length : null,
     bothPoints: both.length,
     suspects,
+    events,
   }
+}
+
+/** The flagged readings kept as market moves, in one sentence — or null when there are none. */
+export function eventLine(r: IvReading): string | null {
+  const n = r.events.length
+  if (n === 0) return null
+  const shown = r.events
+    .slice(0, 6)
+    .map((e) => `${e.date.slice(5)} ${e.why === 'market' ? 'market-wide' : 'earnings'}`)
+    .join(', ')
+  const more = n > 6 ? ` and ${n - 6} more` : ''
+  return (
+    `${n} sharp IV30 move${n === 1 ? '' : 's'} in this window ${n === 1 ? 'sits' : 'sit'} on an earnings print ` +
+    `or a session when SPY's IV30 moved ${Math.round(MARKET_MOVE * 100)}% the same way (${shown}${more}) — ` +
+    `counted as the market's, not withheld.`
+  )
 }
 
 /** The suspect readings in one sentence, or null when there are none. */

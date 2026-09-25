@@ -28,6 +28,7 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fetchIvVolatilityCone } from '@/api/research/optionDiscovery'
 import { useResearchContext } from '@/hooks/useResearchContext'
+import { useEarningsDates } from '@/hooks/useNarrative'
 import { useRvCone, useVrpHistory } from '@/hooks/useVrpData'
 import { ordinal } from '@/lib/analyzeDepth'
 import { withSymbolParam } from '@/lib/symbolLink'
@@ -40,7 +41,10 @@ import {
   coverageLine,
   isHistoryWindow,
   suspectLine,
+  eventLine,
   ivReading,
+  MARKET_IV_SYMBOL,
+  type IvEventContext,
   signedVolPts,
   volPts,
   windowRows,
@@ -127,10 +131,19 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
     staleTime: 5 * 60_000,
   })
 
-  const reading = useMemo(() => ivReading(vrp.data ?? [], win), [vrp.data, win])
+  // The market's IV30 and the name's earnings dates tell a sharp move from a store
+  // fault; until they arrive the rule judges without them, which only withholds more.
+  const market = useVrpHistory(sym === MARKET_IV_SYMBOL ? '' : MARKET_IV_SYMBOL, FETCH_DAYS)
+  const earnings = useEarningsDates(sym)
+  const ctx = useMemo<IvEventContext>(
+    () => ({ market: sym === MARKET_IV_SYMBOL ? undefined : market.data, earnings: earnings.data?.dates }),
+    [sym, market.data, earnings.data]
+  )
+  const reading = useMemo(() => ivReading(vrp.data ?? [], win, ctx), [vrp.data, win, ctx])
   const chartRows = useMemo(() => windowRows(vrp.data ?? [], win), [vrp.data, win])
   const coverage = coverageLine(reading)
   const suspect = suspectLine(reading)
+  const event = eventLine(reading)
 
   const termPoints = useMemo<TermPoint[]>(
     () =>
@@ -180,6 +193,11 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
               {suspect ? (
                 <p className="max-w-[110ch] text-dense-meta text-warning" role="note">
                   {suspect}
+                </p>
+              ) : null}
+              {event ? (
+                <p className="max-w-[110ch] text-dense-meta text-muted-foreground" role="note">
+                  {event}
                 </p>
               ) : null}
               <VrpTimeSeriesChart

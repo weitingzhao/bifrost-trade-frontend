@@ -9,7 +9,7 @@
  * every name.
  */
 import { useQuery } from '@tanstack/react-query'
-import { fetchNarrative } from '@/api/research/narrative'
+import { fetchEarningsDates, fetchNarrative } from '@/api/research/narrative'
 
 const STALE_MS = 5 * 60_000
 
@@ -31,6 +31,20 @@ export function useSymbolNarrative(symbol: string | null | undefined, days: numb
     queryKey: ['research', 'narrative', days, 'symbol', sym],
     queryFn: () => fetchNarrative(days, { symbol: sym ?? undefined }),
     staleTime: STALE_MS,
+    enabled: sym != null,
+  })
+}
+
+/**
+ * One name's earnings filing dates (research 0.119.0+). The History pages read
+ * them so an IV30 spike on the print is an event, not a store fault.
+ */
+export function useEarningsDates(symbol: string | null | undefined) {
+  const sym = symbol?.trim().toUpperCase() || null
+  return useQuery({
+    queryKey: ['research', 'narrative', 'earnings', sym],
+    queryFn: () => fetchEarningsDates(sym as string),
+    staleTime: 60 * 60_000,
     enabled: sym != null,
   })
 }

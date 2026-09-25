@@ -21,11 +21,12 @@ import { DenseTag, SegmentControl } from '@/components/data-display'
 import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { VolCone, type ConeRow as VolConeRow } from '@/components/research/VolCone'
+import { useEarningsDates } from '@/hooks/useNarrative'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { daysBack, todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
-import { ivReading } from '@/utils/ivHistory'
+import { ivReading, MARKET_IV_SYMBOL } from '@/utils/ivHistory'
 import {
   coneRows,
   methodTable,
@@ -76,7 +77,18 @@ export default function LabHistoryPage() {
     staleTime: 10 * 60_000,
   })
   const vrpQ = useVrpHistory(sym, 252)
-  const committed = useMemo(() => (vrpQ.data ? ivReading(vrpQ.data, '6m') : null), [vrpQ.data])
+  const marketQ = useVrpHistory(sym === MARKET_IV_SYMBOL ? '' : MARKET_IV_SYMBOL, 252)
+  const earningsQ = useEarningsDates(sym)
+  const committed = useMemo(
+    () =>
+      vrpQ.data
+        ? ivReading(vrpQ.data, '6m', {
+            market: sym === MARKET_IV_SYMBOL ? undefined : marketQ.data,
+            earnings: earningsQ.data?.dates,
+          })
+        : null,
+    [vrpQ.data, sym, marketQ.data, earningsQ.data]
+  )
 
   const rets = useMemo(() => returnsFrom(barsQ.data ?? []), [barsQ.data])
   const ohlcDays = useMemo(

@@ -89,3 +89,26 @@ export async function fetchNarrative(days: number, q: NarrativeQuery = {}): Prom
   }
   return (validateNarrative(await res.json()) as Envelope<NarrativeReading>).data
 }
+
+/** A name's earnings filing dates (research `GET /research/narrative/earnings`, 0.119.0+). */
+export interface EarningsDates {
+  symbol: string
+  /** Dates of every 8-K carrying Item 2.02, oldest first, ISO. */
+  dates: string[]
+  /** This name's 8-Ks on file at all — 0 means the feed never carried it, not "no earnings". */
+  filings: number
+  first_filed: string | null
+  last_filed: string | null
+}
+
+const validateEarnings = withValidation<Envelope<unknown>>(ResearchEnvelopeSchema, 'research/narrative/earnings')
+
+export async function fetchEarningsDates(symbol: string): Promise<EarningsDates> {
+  const params = new URLSearchParams({ symbol })
+  const res = await fetch(researchEngineUrl(`/research/narrative/earnings?${params.toString()}`))
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText)
+    throw new Error(`narrative/earnings: ${res.status} ${text.slice(0, 200)}`)
+  }
+  return (validateEarnings(await res.json()) as Envelope<EarningsDates>).data
+}

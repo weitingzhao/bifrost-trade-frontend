@@ -33,6 +33,14 @@ export const DESIGN_INKS = {
  * not carry it (Rev .43 Q5) — so `identityColour.test.ts` holds the app's
  * `--sk-*` declarations to this mirror instead.
  */
+/** The four severity lamps (`LAMP`), the same in both themes (Rev .43 Q4). */
+export const DESIGN_LAMPS = {
+  red: "#dc2626",
+  yellow: "#ca8a04",
+  gray: "#64748b",
+  green: "#16a34a",
+} as const
+
 export const DESIGN_RAMP = {
   dark: {
     "--sk-ground": "#0a0b11",

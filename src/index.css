@@ -3,8 +3,9 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 /* The seven colour values — accent, entity identity, direction — in both
-   themes. @bifrost/ui owns them (design Rev .31, DESIGN_CONTRACTS §8), so this
-   file declares none of them; only their -rgb tint triplets live here. */
+   themes, and the four severity lamps (same in both, @bifrost/ui 0.4.15).
+   @bifrost/ui owns them (design Rev .31 / .43, DESIGN_CONTRACTS §1 · §8), so
+   this file declares none of them; only the -rgb tint triplets live here. */
 @import "@bifrost/ui/styles/semantic";
 /* Built output, not source: the class strings survive tsc verbatim. */
 @source "../../bifrost-ui/dist/**/*.js";
@@ -234,11 +235,6 @@
 
     --color-link: #0284c7;
     --color-link-hover: #0369a1;
-
-    --color-lamp-green: #16a34a;
-    --color-lamp-yellow: #ca8a04;
-    --color-lamp-red: #dc2626;
-    --color-lamp-gray: #64748b;
 
     --color-surface-elevated: #f8f9fa;
     --color-border-strong: #d1d5db;
@@ -477,14 +473,6 @@
 
     --color-link: #7dd3fc;
     --color-link-hover: #bae6fd;
-
-    /* §14.7: lamps keep the design system's saturated values on dark too. The
-       bright #4ade80 / #f87171 they used to take here are now the P&L colours,
-       and a lamp and a P&L number must never share a value. */
-    --color-lamp-green: #16a34a;
-    --color-lamp-yellow: #facc15;
-    --color-lamp-red: #dc2626;
-    --color-lamp-gray: #94a3b8;
 
     --color-surface-elevated: #1a1f26;
     --color-border-strong: #3d4754;

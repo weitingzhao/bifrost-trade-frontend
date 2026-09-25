@@ -81,6 +81,25 @@ export function rampOf(R, registrySource) {
 }
 
 /**
+ * The registry's four severity lamps, read from its `LAMP` severity map.
+ *
+ * `LAMP` is a private arrow function (`sev >= 2 ? red : sev >= 1 ? yellow :
+ * sev > 0 ? gray : green`), so its four literals are read from the source
+ * text in that order. The package owns the values since 0.4.15 and the
+ * contract (§1) states them; this is the registry's copy, frozen so the app's
+ * ratchet can hold the package to it. A shape it cannot read fails the sync.
+ */
+export function lampsOf(registrySource) {
+  const hex = "'(#[0-9a-fA-F]{6})'"
+  const re = new RegExp(
+    `const LAMP = \\(sev\\) => \\(sev >= 2 \\? ${hex} : sev >= 1 \\? ${hex} : sev > 0 \\? ${hex} : ${hex}\\)`,
+  )
+  const m = re.exec(registrySource)
+  if (!m) throw new Error('shell-registry.js: `const LAMP = (sev) => …` not found in its known shape — the lamp map moved.')
+  return { red: m[1], yellow: m[2], gray: m[3], green: m[4] }
+}
+
+/**
  * Docs Index round constants the app can store. `round` on DesignRoute stays
  * this set — the tracker still paints OLD.
  */
@@ -594,6 +613,7 @@ ${entries.map((e) => '  ' + JSON.stringify(e) + ',').join('\n')}
 
   const inks = inksOf(R)
   const ramp = rampOf(R, src)
+  const lamps = lampsOf(src)
   const rampRows = (th) => Object.entries(ramp[th]).map(([k, v]) => `    ${JSON.stringify(k)}: ${JSON.stringify(v)},`).join('\n')
   const inkRows = (th) => Object.entries(inks[th]).map(([k, v]) => `    ${k}: ${JSON.stringify(v)},`).join('\n')
   writeFileSync(
@@ -621,6 +641,11 @@ ${inkRows('light')}
  * not carry it (Rev .43 Q5) — so \`identityColour.test.ts\` holds the app's
  * \`--sk-*\` declarations to this mirror instead.
  */
+/** The four severity lamps (\`LAMP\`), the same in both themes (Rev .43 Q4). */
+export const DESIGN_LAMPS = {
+${Object.entries(lamps).map(([k, v]) => `  ${k}: ${JSON.stringify(v)},`).join('\n')}
+} as const
+
 export const DESIGN_RAMP = {
   dark: {
 ${rampRows('dark')}

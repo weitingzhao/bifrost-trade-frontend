@@ -24,7 +24,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { DESIGN_INKS, DESIGN_RAMP } from './designInks.generated'
+import { DESIGN_INKS, DESIGN_LAMPS, DESIGN_RAMP } from './designInks.generated'
 
 const SRC = join(__dirname, '..', '..')
 
@@ -179,5 +179,35 @@ describe('the neutral ramp: Trade\u2019s own copy, held to the registry', () => 
       expect(steps.length, th).toBeGreaterThanOrEqual(12)
       for (const [name, hex] of steps) expect(APP[th].get(name), `${th} ${name}`).toBe(hex.toLowerCase())
     }
+  })
+})
+
+describe('§1 severity lamps: one set, the same in both themes, held to the registry', () => {
+  // Rev .43 Q4: the contract's values on dark and light alike. Trade's dark
+  // copy had drifted to #facc15 / #94a3b8; since @bifrost/ui 0.4.15 the lamps
+  // live beside the inks in `semantic`, and the app keeps no copy to drift.
+  const LAMP_TOKEN = {
+    green: '--color-lamp-green',
+    yellow: '--color-lamp-yellow',
+    red: '--color-lamp-red',
+    gray: '--color-lamp-gray',
+  } as const
+  const lamps = Object.keys(LAMP_TOKEN) as (keyof typeof LAMP_TOKEN)[]
+
+  it('the package declares all four at the registry\u2019s values, once, with no light override', () => {
+    for (const k of lamps) {
+      expect(PKG.dark.get(LAMP_TOKEN[k]), LAMP_TOKEN[k]).toBe(DESIGN_LAMPS[k])
+      expect(PKG.light.get(LAMP_TOKEN[k]), `light ${LAMP_TOKEN[k]}`).toBeUndefined()
+    }
+  })
+
+  it('the app declares none of them, in either theme', () => {
+    for (const th of THEMES) for (const k of lamps) expect(APP[th].get(LAMP_TOKEN[k]), `${th} ${LAMP_TOKEN[k]}`).toBeUndefined()
+  })
+
+  it('keeps a lamp and a P&L number on different values', () => {
+    // §14.7: the bright #4ade80 / #f87171 lamps once shared with P&L.
+    const pnl = new Set(THEMES.flatMap((th) => [PKG[th].get('--color-profit'), PKG[th].get('--color-loss')]))
+    for (const k of lamps) expect(pnl.has(DESIGN_LAMPS[k]), k).toBe(false)
   })
 })

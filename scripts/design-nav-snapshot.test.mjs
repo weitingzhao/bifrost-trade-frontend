@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { canonicalRound, inksOf, parseRoundsFromIndex, rampOf } from './design-nav-snapshot.mjs'
+import { canonicalRound, inksOf, lampsOf, parseRoundsFromIndex, rampOf } from './design-nav-snapshot.mjs'
 
 describe('canonicalRound', () => {
   it('maps OLDC to OLD (early round, partly overtaken by contract)', () => {
@@ -72,5 +72,16 @@ describe('rampOf', () => {
   it('fails when the names cannot be found or a step is not a hex', () => {
     assert.throws(() => rampOf(R, 'const OTHER = []'), /SK_VARS/)
     assert.throws(() => rampOf({ RAMP: { dark: ['#0a0b11', 'transparent'], light: ['#e9ebef'] } }, src), /RAMP\.dark\[1\]/)
+  })
+})
+
+describe('lampsOf', () => {
+  it('reads the four literals in severity order', () => {
+    const src = "const LAMP = (sev) => (sev >= 2 ? '#dc2626' : sev >= 1 ? '#ca8a04' : sev > 0 ? '#64748b' : '#16a34a');"
+    assert.deepEqual(lampsOf(src), { red: '#dc2626', yellow: '#ca8a04', gray: '#64748b', green: '#16a34a' })
+  })
+
+  it('fails when the map is not in the shape it knows', () => {
+    assert.throws(() => lampsOf("const LAMP = (s) => pick(s);"), /LAMP/)
   })
 })

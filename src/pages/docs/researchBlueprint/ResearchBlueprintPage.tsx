@@ -142,7 +142,7 @@ export default function ResearchBlueprintPage() {
           }
         >
           {/* The document's own front matter: version, date, status. */}
-          <div className="flex flex-wrap items-center gap-2 rounded-md border border-[var(--sk-line0)] bg-[var(--sk-raised)] px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2 border px-3 py-2 mat-card">
             {doc.version ? (
               <DenseTag variant="neutral" size="cell">
                 v{doc.version}

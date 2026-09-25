@@ -182,7 +182,7 @@ export function LedgerLinksFace({
       {isLoading ? (
         <p className="text-dense-meta text-muted-foreground">Loading…</p>
       ) : has ? (
-        <div className="overflow-x-auto rounded-md border border-border">
+        <div className="overflow-x-auto border mat-card">
           <DenseDataTable tableClassName="min-w-[360px]">
             <DenseTableHeader>
               <DenseTableHeadRow>
@@ -249,7 +249,7 @@ export function LedgerLinksFace({
             return (
               <label
                 key={sid}
-                className="flex cursor-pointer items-center gap-2 rounded-md border border-border px-2 py-1.5"
+                className="flex cursor-pointer items-center gap-2 border px-2 py-1.5 mat-card"
               >
                 <Checkbox checked={on} onCheckedChange={() => {
                   setSelected(prev => {
@@ -272,7 +272,7 @@ export function LedgerLinksFace({
       <label className="flex flex-wrap items-center gap-2 text-dense-meta">
         <span className="text-muted-foreground">Role for new links</span>
         <select
-          className="h-7 rounded-md border border-border bg-background px-1.5 text-dense-meta"
+          className="h-7 border px-1.5 text-dense-meta mat-field"
           value={linkRole}
           onChange={e => setLinkRole(e.target.value as LinkRole)}
         >

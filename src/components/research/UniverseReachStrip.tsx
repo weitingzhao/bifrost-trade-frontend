@@ -55,7 +55,7 @@ export function UniverseReachStrip() {
   const unmeasured = data.layers.length - measured.length
 
   return (
-    <div className="rounded-md border border-border/60 bg-secondary/50 px-3 py-2">
+    <div className="border px-3 py-2 mat-card">
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <button
         type="button"

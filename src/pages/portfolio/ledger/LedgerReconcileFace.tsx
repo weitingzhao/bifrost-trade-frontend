@@ -22,7 +22,7 @@ export function LedgerReconcileFace({
         ].map(s => (
           <span
             key={s.k}
-            className="flex flex-col rounded-md border border-border px-2.5 py-1.5"
+            className="flex flex-col border px-2.5 py-1.5 mat-card"
           >
             <span className="text-dense-micro font-bold uppercase tracking-wide text-muted-foreground">{s.k}</span>
             <span
@@ -46,7 +46,7 @@ export function LedgerReconcileFace({
         structure and expiry filters apply.
       </p>
       {model.groups.map(g => (
-        <div key={g.id} className="rounded-md border border-border" data-reconcile-group={g.id}>
+        <div key={g.id} className="border mat-card" data-reconcile-group={g.id}>
           <div className="flex flex-wrap items-baseline gap-2 border-b border-border bg-muted/30 px-2.5 py-1.5">
             <span className="inline-flex items-center gap-1.5 text-dense-label font-semibold">
               <span
@@ -86,7 +86,7 @@ export function LedgerReconcileFace({
       <div
         id="ledger-reconcile-undated"
         className={cn(
-          'rounded-md border border-border',
+          'border mat-card',
           focus === 'undated' && 'ring-1 ring-[var(--color-warning)]',
         )}
       >

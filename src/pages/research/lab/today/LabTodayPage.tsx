@@ -45,12 +45,12 @@ import {
 const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
 const panel =
-  'min-w-0 rounded-[10px] border border-[var(--sk-line0)] bg-[var(--sk-raised)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+  'min-w-0 border mat-card'
 const mono = 'font-mono tabular-nums'
 
 function Tile({ t }: { t: CandidateTile }) {
   return (
-    <div className="min-w-0 rounded-lg border border-[var(--sk-line0)] bg-background px-2.75 py-2">
+    <div className="min-w-0 border px-2.75 py-2 mat-card">
       <div className={cap}>{t.label}</div>
       <div
         className={cn(
@@ -212,11 +212,10 @@ export default function LabTodayPage() {
       </div>
 
       {/* The batch strip: what session this page is, judged by the orchestrator. */}
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border px-3 py-1.75 mat-card">
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[5px] border px-2 py-0.5 font-mono text-dense-caption tracking-[0.05em]',
-            'border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.08)] text-[var(--sk-accent)]'
+            'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
           )}
           title="Method face — how the number is made. Analysis only; no order can be placed from here (D10)."
         >
@@ -285,7 +284,7 @@ export default function LabTodayPage() {
               {funnel.map((f) => (
                 <div
                   key={f.label}
-                  className="rounded-lg border border-[var(--sk-line0)] bg-background px-2.75 py-2"
+                  className="border px-2.75 py-2 mat-card"
                 >
                   <div className={cap}>{f.label}</div>
                   <div
@@ -312,7 +311,7 @@ export default function LabTodayPage() {
       {hero && state !== 'empty' && state !== 'loading' ? (
         <>
           <div className={panel}>
-            <header className="flex flex-wrap items-center gap-2.5 rounded-t-[9px] border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3.5 py-2">
+            <header className="flex flex-wrap items-center gap-2.5 border-b px-3.5 py-2">
               <span className={cn(mono, 'text-dense-meta text-muted-foreground')}>
                 #{hero.rank}
               </span>
@@ -381,14 +380,14 @@ export default function LabTodayPage() {
                 </button>
                 <Link
                   to={withSymbolParam(SYMBOL_PATH, hero.symbol)}
-                  className="rounded-[6px] border border-border px-3 py-1.5 text-dense-label text-foreground no-underline hover:bg-[var(--sk-surface)]"
+                  className="border px-3 py-1.5 text-dense-label text-foreground no-underline mat-btn"
                   title="The reading face — what the market says. Same subject, same stores."
                 >
                   Open in Symbol →
                 </Link>
                 <Link
                   to="/research/ratings/stocks"
-                  className="rounded-[6px] border border-border px-3 py-1.5 text-dense-label text-muted-foreground no-underline hover:bg-[var(--sk-surface)]"
+                  className="border px-3 py-1.5 text-dense-label text-muted-foreground no-underline mat-btn"
                   title="The model this queue came out of — weights, tape and the ranked table."
                 >
                   Ratings · Stocks →

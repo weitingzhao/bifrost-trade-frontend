@@ -209,17 +209,24 @@ function useQuoteStream(symbols: string[]) {
 
 UI 改动后运行 `npm run check:legacy-css`。
 
-### 页面画布（三层 surface，与 Sidebar 对齐）
+### 页面材质（设计 Rev .61–.67：统一窗口底 + 平铺分组）
 
-| 层级 | Tailwind | 用途 |
-|------|----------|------|
-| Canvas | `bg-card` | 页面根、`PageShell`、与侧栏同色 |
-| Elevated | `bg-secondary` 或 `Card variant="elevated"` | KPI、筛选条、嵌套面板 |
-| Inset | `bg-background` | 刻意凹进的图表/深坑区域 |
+页面落在**窗口底**上：`#main-content` 与 `PageShell` 透明，浮起侧栏、顶栏、页面共用 body 的环境底。
+页面里只有四种材质角色，token 与工具类在 `src/index.css`（`--mat-*` · `@utility mat-*`）：
+
+| 角色 | 用法 | 样子 |
+|------|------|------|
+| 分组（容器） | `Card` / `mat-card` | 无框、ink 4%、圆角 12、无阴影；嵌套一层读作 8% |
+| 标签 | `DenseTag` / `mat-tag` | 无框、`currentColor` 15% 填充、全圆、左右 8px |
+| 次按钮 | DS `Button` outline/secondary（自动）/ `mat-btn` | 无框、ink 8%、圆角 8，hover 13% |
+| 输入框 | DS `Input` / select（自动）/ `mat-field` | 无框、ink 7%、圆角 8，focus 3px 强调色光环 |
+
+- 页面作用域 `[data-mat]`（主区与面板/浮窗正文）里 `--border` 就是 ink 6% 的规则线：分隔线、表格线直接写 `border-b` 即可；表头无底色（sticky 表头保留）。**图表网格与数据轨道用 `--sk-line`**，不跟随规则线变淡。
+- 不要再画中性色实线框（`border border-border rounded-*`）；带状态色的边框（warning / destructive 等）是读数，保留。
 
 - 每个页面根必须使用 [`PageShell`](src/components/layout/PageShell.tsx)（`padding`: `default` / `compact` / `none`）
 - 每个 `PageShell` 业务页的页头只用一个共用件；禁止手写页面级 `<h1>`。**新页与改版页用 [`PageHead`](src/components/layout/PageHead.tsx)**（设计 §16.10：说明进 ⓘ、时间戳位、meta、下划线 Tab、筛选放页头下方工具条；§16.13 新鲜度用 `useFreshReading` / `lib/freshness.ts`）。旧页仍用 [`PageHeader`](src/components/layout/PageHeader.tsx)，按组迁移中（样板：Backtest · Positions · Limits）。**同一遍过 §17 交互标准**（Owner 2026-09-25）：非就绪态用 `@bifrost/ui` `ViewState`（七种；失败只报一次、刷新失败是条带、`filtered` 的动作复位全部轴；DEV 可用 `?preview=` 预览）+ `lib/viewState.ts`；表格 `data-sr-table` / DS `standard` + 列型 `data-sr-col` / `col`；工具条 `data-sr-toolbar` + `ToolbarClear`；读数 `data-sr-kpi`。样式层是 `@bifrost/ui/styles/patterns`（按属性启用，不在 Tailwind 层里——同名属性会压过 Tailwind 类）
-- 铺在 canvas 上的 KPI/图表面板使用 `Card variant="elevated"` 或 `bg-secondary`，禁止与画布同色的 `bg-card` 块
+- 铺在窗口底上的 KPI / 图表面板用 `Card` 或 `mat-card`；不要用 `bg-card` / `bg-secondary` 自己拼一个带框的块
 - **禁止**在新页面使用 Legacy 全局类 `.card`、`.process-section`、`.legacy-monitoring-shell` 作为页面外壳
 - Option Discovery 样式仅限页面 import：`discoveryCharts.css`（SVG/IV-term 表）+ Tailwind（`option-discovery-root`）；**不得**在新页面 import 或复用全局 Legacy shell
 

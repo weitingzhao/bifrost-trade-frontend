@@ -58,9 +58,9 @@ function Kv({ label, value, tone }: { label: string; value: string; tone?: strin
 }
 
 const panel =
-  'min-w-0 rounded-[10px] border border-[var(--sk-line0)] bg-[var(--sk-raised)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+  'min-w-0 border mat-card'
 const panelHead =
-  'flex flex-wrap items-center gap-2.5 rounded-t-[9px] border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3 py-1.75 text-dense-body leading-normal'
+  'flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal'
 const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase leading-normal tracking-[0.1em] text-muted-foreground'
 const th =
@@ -217,7 +217,7 @@ export function PayoffBody() {
   return (
     <div className="space-y-3">
       {/* The structure bar — what is on the bench, and where it came from. */}
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-md border border-border bg-background px-3 py-1.5">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border px-3 py-1.5 mat-card">
         <span className={cap}>Structure</span>
         <SegmentControl
           ariaLabel="Structure"
@@ -246,7 +246,7 @@ export function PayoffBody() {
         <span className={cap}>Expiry</span>
         <select
           aria-label="Expiry"
-          className="h-5.5 rounded-[5px] border border-border bg-[var(--sk-raised)] px-1.5 font-mono text-xs text-foreground"
+          className="h-5.5 border px-1.5 font-mono text-xs text-foreground mat-field"
           value={expiry}
           onChange={(e) =>
             setParams((prev) => {
@@ -268,7 +268,7 @@ export function PayoffBody() {
         {legChips.map((c, i) => (
           <span
             key={i}
-            className="inline-flex items-center gap-1 rounded-[4px] border border-border px-1.5 py-0.5 font-mono text-dense-meta tabular-nums"
+            className="inline-flex items-center gap-1 border px-1.5 py-0.5 font-mono text-dense-meta tabular-nums mat-tag"
           >
             <span className={c.pos ? 'text-profit' : 'text-loss'}>{c.sign}</span>
             <span className="text-foreground">{c.name}</span>

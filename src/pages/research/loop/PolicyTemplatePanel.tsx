@@ -155,10 +155,10 @@ export function PolicyTemplatePanel() {
       )}
 
       {draft ? (
-        <div className="space-y-2 rounded-md border border-border/60 bg-secondary/30 p-2">
+        <div className="space-y-2 border p-2 mat-card">
           <div className="flex flex-wrap items-center gap-2">
             <input
-              className="h-7 min-w-48 flex-1 rounded border border-border bg-background px-2 text-dense-label"
+              className="h-7 min-w-48 flex-1 border px-2 text-dense-label mat-field"
               placeholder="Template name"
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
@@ -173,13 +173,13 @@ export function PolicyTemplatePanel() {
             </label>
           </div>
           <input
-            className="h-7 w-full rounded border border-border bg-background px-2 text-dense-meta"
+            className="h-7 w-full border px-2 text-dense-meta mat-field"
             placeholder="What this template is for"
             value={draft.description}
             onChange={(e) => setDraft({ ...draft, description: e.target.value })}
           />
           <textarea
-            className="h-64 w-full rounded border border-border bg-background p-2 font-mono text-dense-micro"
+            className="h-64 w-full border p-2 font-mono text-dense-micro mat-field"
             spellCheck={false}
             value={draft.body}
             onChange={(e) => {
@@ -212,7 +212,7 @@ export function PolicyTemplatePanel() {
               setParseError(null)
             }
             return (
-              <div className="space-y-1.5 rounded-md border border-border/50 bg-background px-2 py-1.5">
+              <div className="space-y-1.5 border px-2 py-1.5 mat-card">
                 <p className="text-dense-meta font-medium">Discovery assist (funnel exit)</p>
                 <p className="text-dense-micro text-muted-foreground">
                   Optional nominate/veto after Policy — never replaces resolve_universe. Syncs into
@@ -233,7 +233,7 @@ export function PolicyTemplatePanel() {
                     min={0}
                     max={0.9}
                     step={0.05}
-                    className="h-7 w-20 rounded border border-border bg-background px-1.5 font-mono text-dense-micro"
+                    className="h-7 w-20 border px-1.5 font-mono text-dense-micro mat-field"
                     value={maxVeto}
                     disabled={!enabled}
                     onChange={(e) => {

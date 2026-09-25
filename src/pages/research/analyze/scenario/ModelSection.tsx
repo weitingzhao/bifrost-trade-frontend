@@ -270,7 +270,7 @@ function CloseExpectationCard({ terrain }: { terrain: TerrainData }) {
             ) : null}
           </div>
         </div>
-        <div className="rounded-md border border-border bg-muted/40 px-3 py-2">
+        <div className="border px-3 py-2 mat-card">
           <GammaZoneBar
             spot={terrain.spot}
             low={terrain.gamma_zone_low}

@@ -86,7 +86,7 @@ export function InstanceAdminRow({ instance }: { instance: InstanceAdminReading 
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 rounded-[5px] border border-border bg-[var(--sk-raised2)] px-2 py-1.5">
+    <div className="flex flex-wrap items-center gap-1.5 border px-2 py-1.5 mat-card">
       <span className={positionsUi.cap}>Instance</span>
       <input
         className={cn(positionsUi.input, 'w-42.5')}

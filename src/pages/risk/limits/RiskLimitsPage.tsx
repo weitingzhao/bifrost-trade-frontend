@@ -291,7 +291,7 @@ export default function RiskLimitsPage() {
                               {r.breached ? (
                                 <span
                                   className={cn(
-                                    'ml-1.5 inline-flex h-4 items-center rounded-[3px] border px-1 font-mono text-dense-micro font-bold',
+                                    'ml-1.5 inline-flex h-4 items-center border mat-tag font-mono text-dense-micro font-bold',
                                     // The design's gate violet is the Strategy
                                     // entity hue it already had: violet-400 in dark.
                                     r.kind === 'gate'
@@ -306,7 +306,7 @@ export default function RiskLimitsPage() {
                             <td data-sr-col="tag">
                               <span
                                 className={cn(
-                                  'inline-flex h-4 items-center rounded-[3px] border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em]',
+                                  'inline-flex h-4 items-center border mat-tag font-mono text-dense-micro font-bold tracking-[0.04em]',
                                   r.kind === 'hard'
                                     ? 'border-lamp-red/45 text-lamp-red'
                                     : r.kind === 'gate'
@@ -501,7 +501,7 @@ export default function RiskLimitsPage() {
               </p>
             </section>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page holds readings
               against lines. Each reading is computed on the page named beside it, and the lines belong to a Rules
               engine that does not exist yet — which is why {noLine.length} of the {rows.length} rules have a reading

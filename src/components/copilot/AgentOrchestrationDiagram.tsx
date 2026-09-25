@@ -253,7 +253,7 @@ export function AgentOrchestrationDiagram({
   return (
     <section
       aria-label={copy.orchestrationTitle}
-      className="flex flex-col gap-3 rounded-lg border border-border/60 bg-secondary/40 p-3"
+      className="flex flex-col gap-3 border p-3 mat-card"
     >
       {/* Header — orchestration title + runtime facts */}
       <div className="flex flex-wrap items-start justify-between gap-2">

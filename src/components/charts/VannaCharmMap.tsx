@@ -134,7 +134,7 @@ export function VannaCharmMap({
           x2={chart.pad.left + chart.chartW}
           y1={chart.yMid}
           y2={chart.yMid}
-          className="stroke-border"
+          className="stroke-[var(--sk-line)]"
           strokeWidth={1}
         />
 
@@ -258,7 +258,7 @@ export function VannaCharmMap({
       </div>
 
       {hovered ? (
-        <div className="mt-1 rounded-md border border-border bg-secondary/80 px-3 py-1.5 text-dense-meta">
+        <div className="mt-1 border px-3 py-1.5 text-dense-meta mat-card">
           <span className="font-mono tabular-nums">K {hovered.strike.toFixed(2)}</span>
           <span className="mx-2 text-muted-foreground">·</span>
           <span className="font-mono tabular-nums">

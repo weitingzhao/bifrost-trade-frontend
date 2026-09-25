@@ -9,8 +9,8 @@ export const linkExecSectionLabelClass = cn(
 export const linkExecPillsClass = cn('flex flex-wrap gap-2')
 
 export const linkExecPillClass = cn(
-  'inline-flex max-w-full cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-left text-xs',
-  'transition-colors select-none hover:border-border hover:bg-secondary hover:text-foreground',
+  'inline-flex max-w-full cursor-pointer items-center gap-1 border px-3 py-1.5 text-left text-xs mat-tag',
+  'transition-colors select-none hover:text-foreground',
 )
 
 export const linkExecPillSelectedClass = cn(
@@ -18,11 +18,11 @@ export const linkExecPillSelectedClass = cn(
 )
 
 export const linkExecSymbolBadgeClass = cn(
-  'ml-1.5 inline-flex rounded border border-border bg-secondary px-1.5 py-0 font-mono text-dense-caption font-semibold text-foreground',
+  'ml-1.5 inline-flex border px-1.5 py-0 font-mono text-dense-caption font-semibold text-foreground mat-tag',
 )
 
 export const linkExecInstancePanelClass = cn(
-  'space-y-3 rounded-lg border border-border bg-secondary/30 p-3',
+  'space-y-3 border p-3 mat-card',
 )
 
 export const linkExecSummaryClass = cn(

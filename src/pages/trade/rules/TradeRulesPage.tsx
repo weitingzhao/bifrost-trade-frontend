@@ -333,7 +333,7 @@ export default function TradeRulesPage() {
           }
         />
 
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border px-3 py-2 mat-card">
           <span className={positionsUi.cap}>Show</span>
           <SegmentControl
             size="xs"
@@ -387,7 +387,7 @@ export default function TradeRulesPage() {
             ) : null}
 
             {looseGates.length > 0 ? (
-              <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+              <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
                 <span className="font-semibold text-secondary-foreground">
                   {looseGates.length} {looseGates.length === 1 ? 'gate is' : 'gates are'} carried by no allocation.
                 </span>
@@ -503,7 +503,7 @@ export default function TradeRulesPage() {
               onClose={() => setSetActiveFor(undefined)}
             />
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing writes from a card
               click. Editing opens the Strategy pages&rsquo; own forms, so a rule changed here and one changed there
               are the same write with the same validation. Activating an allocation is what the daemon reads on its

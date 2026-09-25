@@ -84,7 +84,7 @@ export function TimelinePanel({ stages }: { stages: readonly TimelineStage[] }) 
       </header>
       <div className="flex flex-col gap-1.5 px-3 py-2.5">
         {stages.map((s) => (
-          <div key={s.key} className={cn('min-w-0 rounded-md border bg-[var(--sk-raised2)] px-2.5 py-1.75', TONE_BORDER[s.tone])}>
+          <div key={s.key} className={cn('min-w-0 border px-2.5 py-1.75 mat-card', TONE_BORDER[s.tone])}>
             <div className="flex items-baseline gap-2">
               <span className={cn(positionsUi.cap, 'tracking-[0.07em]', TONE_TEXT[s.tone])}>{s.stage}</span>
               <span className="min-w-0 truncate text-dense-body font-semibold text-foreground">{s.title}</span>

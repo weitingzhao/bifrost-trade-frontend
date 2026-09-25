@@ -94,7 +94,7 @@ export function LoopBanner({ className }: { className?: string }) {
               return (
                 <div
                   key={run.id}
-                  className="space-y-1.5 rounded border border-border/60 bg-card px-2 py-1.5"
+                  className="space-y-1.5 border px-2 py-1.5 mat-card"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-dense-label font-medium">{title}</p>

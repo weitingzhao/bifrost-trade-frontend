@@ -37,7 +37,7 @@ export function SviSmileChart({ rows }: { rows: SmileRow[] }) {
         role="img"
         aria-label="Implied vol smile with SVI fit and residual bars"
       >
-        <line x1="0" x2="620" y1="168" y2="168" stroke="var(--border)" strokeWidth="1" />
+        <line x1="0" x2="620" y1="168" y2="168" stroke="var(--sk-line)" strokeWidth="1" />
         <line
           x1={X(0)}
           x2={X(0)}

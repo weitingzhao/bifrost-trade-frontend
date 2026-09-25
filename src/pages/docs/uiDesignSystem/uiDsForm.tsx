@@ -146,15 +146,21 @@ export function SurfacesSection() {
     <DsSection
       n={7}
       title="Surfaces"
-      lede="Three levels: the page canvas, a raised panel on it, an inset well inside the panel. A panel you draw sets its own ground; near-white ink never sits on an unpainted container."
+      lede="One window ground, then grouped content on it (Rev .61–.62). The page is transparent — the floating sidebar, the top bar and the page share the body's ground — and a group is a fill, not a frame. Four roles; none draws a neutral outline."
     >
-      <div className={cn('flex flex-col gap-2 rounded-md border bg-card p-3', LINE0)}>
-        <span className={label}>canvas · bg-card — PageShell, the same ground as the sidebar</span>
-        <div className={cn('flex flex-col gap-2 rounded-md border bg-secondary p-3', LINE0)}>
-          <span className={label}>elevated · bg-secondary — KPI bands, filter bars, chart panels</span>
-          <div className="rounded bg-background p-3">
-            <span className={label}>inset · bg-background — chart wells</span>
+      <div className="flex flex-col gap-2 p-1">
+        <span className={label}>ground · the window — PageShell is transparent</span>
+        <div className="flex flex-col gap-2 border p-3 mat-card">
+          <span className={label}>group · Card / mat-card — ink 4%, radius 12, no frame</span>
+          <div className="flex flex-col gap-2 border p-3 mat-card">
+            <span className={label}>nested group · reads a step up (8%)</span>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="border text-dense-meta text-[var(--sk-ticker)] mat-tag">mat-tag</span>
+            <button type="button" className="h-6 border px-2.5 text-dense-meta mat-btn">mat-btn</button>
+            <input aria-label="mat-field sample" className="h-6 w-28 border px-2 text-dense-meta mat-field" placeholder="mat-field" />
+          </div>
+          <span className={cn(label, 'border-t pt-2')}>rule · ink 6% — dividers and table lines inside a page</span>
         </div>
       </div>
     </DsSection>

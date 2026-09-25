@@ -7,10 +7,11 @@
   gap: 0.35rem 0.5rem;
   margin-bottom: 0.75rem;
   padding: 0.5rem 0.65rem;
-  border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--sk-ink) 8%, transparent);
-  background: color-mix(in srgb, var(--sk-ground) 60%, transparent);
+  border-radius: var(--mat-card-radius);
+  border: 1px solid transparent;
+  background: var(--mat-card-fill);
   font-size: 0.8125rem;
+  box-shadow: none;
 }
 
 .topSegment {
@@ -287,12 +288,13 @@
 .explain {
   margin-top: 0.75rem;
   padding: 0.75rem 0.85rem;
-  border-radius: 6px;
-  border: 1px solid hsl(var(--border) / 0.6);
-  background: hsl(var(--card));
+  border-radius: var(--mat-card-radius);
+  border: 1px solid transparent;
+  background: var(--mat-card-fill);
   font-size: 0.78rem;
   line-height: 1.45;
   color: hsl(var(--foreground) / 0.85);
+  box-shadow: none;
 }
 
 .explainHead {

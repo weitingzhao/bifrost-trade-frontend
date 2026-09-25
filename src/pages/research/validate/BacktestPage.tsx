@@ -169,11 +169,10 @@ export default function BacktestPage() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border px-3 py-1.75 mat-card">
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[5px] border px-2 py-0.5 font-mono text-dense-caption tracking-[0.05em]',
-            'border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.08)] text-[var(--sk-accent)]'
+            'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
           )}
           title="Lab mode — method and parameters only. No order can be placed from here (D10)."
         >
@@ -181,7 +180,7 @@ export default function BacktestPage() {
         </span>
         {heldSymbol ? (
           <span
-            className="inline-flex items-center gap-1.5 rounded-[5px] border border-border px-2 py-0.5 opacity-55"
+            className="inline-flex items-center gap-1.5 border px-2 py-0.5 opacity-55 mat-tag"
             title="Held — runs carry their own symbol set"
           >
             <span className={cn(mono, 'text-dense-caption font-bold')}>{heldSymbol}</span>
@@ -364,7 +363,7 @@ export default function BacktestPage() {
 
             <section className="min-w-0 flex-[999_1_34rem] space-y-3">
               {selectedRow ? (
-                <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+                <div className="flex flex-wrap items-center gap-2 border px-3 py-1.75 mat-card">
                   <span className={cn(mono, 'text-dense-body font-bold')}>
                     {selectedRow.id.slice(0, 11)}
                   </span>
@@ -389,7 +388,7 @@ export default function BacktestPage() {
                         to={withSymbolParam(SYMBOL_PATH, s)}
                         className={cn(
                           mono,
-                          'rounded-[3px] border border-border px-1.25 text-dense-caption font-bold leading-4 text-[var(--sk-ticker)] hover:underline'
+                          'border px-1.25 text-dense-caption font-bold leading-4 text-[var(--sk-ticker)] hover:underline mat-btn'
                         )}
                       >
                         {s}
@@ -400,7 +399,7 @@ export default function BacktestPage() {
                     {selectedRow.hypothesis_id ? (
                       <Link
                         to="/research/loop/hypotheses"
-                        className="rounded border border-border px-1.75 py-0.5 text-dense-caption text-primary hover:bg-secondary"
+                        className="border px-1.75 py-0.5 text-dense-caption text-primary mat-btn"
                         title={`This run settles ${selectedRow.hypothesis_id} — the board holds the thesis; no per-id focus yet.`}
                       >
                         Hypothesis →

@@ -456,7 +456,7 @@ function PersonaToolsCannot({
             {tools.map((t) => (
               <span
                 key={t}
-                className="rounded-md border border-border/60 bg-secondary/60 px-1.5 py-0.5 font-mono text-dense-caption"
+                className="border px-1.5 py-0.5 font-mono text-dense-caption mat-tag"
               >
                 {t}
               </span>

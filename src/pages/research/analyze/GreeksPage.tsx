@@ -96,7 +96,7 @@ function BookFace() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-start gap-x-7 gap-y-3 rounded-md border border-border px-3.5 py-2.5">
+      <div className="flex flex-wrap items-start gap-x-7 gap-y-3 border px-3.5 py-2.5 mat-card">
         <Stat
           cap="Contracts"
           value={String(contracts)}
@@ -156,7 +156,7 @@ function BookFace() {
           <button
             type="button"
             onClick={clearSym}
-            className="rounded border border-border px-1.5 py-0.5 text-dense-meta text-muted-foreground hover:text-foreground"
+            className="border px-1.5 py-0.5 text-dense-meta text-muted-foreground hover:text-foreground mat-btn"
           >
             whole book ✕
           </button>
@@ -167,7 +167,7 @@ function BookFace() {
       ) : null}
 
       {b.filtered && !b.isLoading && b.rows.length === 0 ? (
-        <p className="flex flex-wrap items-baseline gap-3 rounded-md border border-border px-3 py-3 text-dense-meta text-muted-foreground">
+        <p className="flex flex-wrap items-baseline gap-3 border px-3 py-3 text-dense-meta text-muted-foreground mat-card">
           <span>
             No option legs on <span className="font-mono text-foreground">{filterSym}</span> in the
             book — the position is stock only, or the legs have closed.

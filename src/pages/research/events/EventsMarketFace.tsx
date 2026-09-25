@@ -167,7 +167,7 @@ export function EventsMarketFace({
 
       <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
         {/* ── Themes ── */}
-        <section className="overflow-hidden rounded-lg border border-border bg-background">
+        <section className="overflow-hidden border mat-card">
           <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
             <span className={cap}>Themes</span>
             <span className="text-dense-body font-semibold">
@@ -235,7 +235,7 @@ export function EventsMarketFace({
         </section>
 
         {/* ── Forward ── */}
-        <section className="overflow-hidden rounded-lg border border-border bg-background">
+        <section className="overflow-hidden border mat-card">
           <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
             <span className={cap}>Forward</span>
             <span className="text-dense-body font-semibold">
@@ -290,7 +290,7 @@ export function EventsMarketFace({
       </div>
 
       {/* ── Events ── */}
-      <section className="overflow-hidden rounded-lg border border-border bg-background">
+      <section className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
           <span className={cap}>Events</span>
           <span className="text-dense-body font-semibold">what the ingest read</span>

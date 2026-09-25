@@ -56,7 +56,7 @@ export function ComparePayoff({
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" className={cn('block', className)} role="img" aria-label="Payoff at expiry">
-      <line x1={PAD.left} x2={W - PAD.right} y1={y(0)} y2={y(0)} className="stroke-border" strokeWidth={1} />
+      <line x1={PAD.left} x2={W - PAD.right} y1={y(0)} y2={y(0)} className="stroke-[var(--sk-line)]" strokeWidth={1} />
       <text x={4} y={y(0) + 3} className="fill-muted-foreground font-mono text-dense-micro">
         $0
       </text>

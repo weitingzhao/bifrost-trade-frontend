@@ -94,6 +94,8 @@ export function AppLayout() {
             design's surfaces are iframes, where the viewport *is* that width. */}
           <main
             id="main-content"
+            // The page-material scope (Rev .62): index.css reads it.
+            data-mat=""
             tabIndex={-1}
             className="@container/page flex-1 overflow-auto min-w-0 outline-none"
           >

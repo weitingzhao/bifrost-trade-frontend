@@ -78,7 +78,7 @@ export function PolicySuggestionBody({
           alone cannot say whether a later shift in a rule's reach was the market
           moving or this decision landing. */}
       {rationale ? (
-        <p className="rounded-md border border-border/50 bg-secondary/40 px-2.5 py-1.5 text-dense-meta">
+        <p className="border px-2.5 py-1.5 text-dense-meta mat-card">
           {rationale}
         </p>
       ) : null}
@@ -89,7 +89,7 @@ export function PolicySuggestionBody({
           a number, and stacked they were a screen apart. One column under
           `lg`, where two would be two narrow ones. */}
       <div className={cn('grid gap-2 items-start', evidence ? '@3xl/page:grid-cols-2' : '')}>
-        <section className="rounded-md border border-border/60 bg-secondary/25 px-2.5 py-2" aria-label="What Approve changes">
+        <section className="border px-2.5 py-2 mat-card" aria-label="What Approve changes">
           <h4 className="mb-1.5 text-dense-micro font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Diff{objectiveId ? <span className="font-mono normal-case"> → {objectiveId}</span> : null}
           </h4>
@@ -144,7 +144,7 @@ export function PolicySuggestionBody({
         </section>
 
         {evidence ? (
-          <section className="rounded-md border border-border/60 bg-secondary/25 px-2.5 py-2" aria-label="What the suggestion rests on">
+          <section className="border px-2.5 py-2 mat-card" aria-label="What the suggestion rests on">
             <h4 className="mb-1.5 text-dense-micro font-semibold uppercase tracking-[0.08em] text-muted-foreground">Evidence · what this rests on</h4>
             <PolicyEvidence evidence={evidence} />
           </section>

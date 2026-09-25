@@ -62,7 +62,7 @@ export default function AssignmentPage() {
             <Skeleton className="h-56 w-full rounded-md" />
           </div>
         ) : legs.length === 0 ? (
-          <p className="m-0 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-3 text-dense-meta text-muted-foreground">
+          <p className="m-0 border px-3 py-3 text-dense-meta text-muted-foreground mat-card">
             No short option leg is open, so nothing can be assigned against you.
           </p>
         ) : (
@@ -296,7 +296,7 @@ export default function AssignmentPage() {
               </section>
             </div>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page says what could be
               exercised against the book and what it would become. When those legs expire is{' '}
               <Link to="/trade/expiration" className={positionsUi.link}>

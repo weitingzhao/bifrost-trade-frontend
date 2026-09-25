@@ -110,7 +110,7 @@ function Path({ stages, cap, title, note }: { stages: Stage[]; cap: string; titl
           <li key={s.n}>
             {/* Each stage is its own box on the ground, joined by a short
                 rule — the design's `.or-stage`. */}
-            <div className="flex items-start gap-2 rounded-md border border-[var(--sk-line)] bg-background px-2.5 py-2">
+            <div className="flex items-start gap-2 border px-2.5 py-2 mat-card">
               <span className="pt-0.5 font-mono text-dense-caption text-muted-foreground">{s.n}</span>
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-1.5">
@@ -144,7 +144,7 @@ function Fold({
 }) {
   const [open, setOpen] = useState(false)
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-background">
+    <section className="overflow-hidden border mat-card">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -190,7 +190,7 @@ export default function OrchestrationPage() {
       />
       <div data-sr-toolbar="">
         <span
-          className="inline-flex h-5 items-center gap-1.5 whitespace-nowrap rounded border border-[var(--sk-line)] px-2 text-dense-meta"
+          className="inline-flex h-5 items-center gap-1.5 whitespace-nowrap border px-2 text-dense-meta mat-tag"
           title="D10 (Shell Spec §11.0): no agent on either path places, modifies or cancels an order. Writes land as cards you approve."
         >
           <span className="text-muted-foreground">D10</span>
@@ -238,7 +238,7 @@ export default function OrchestrationPage() {
               <span className="text-muted-foreground" aria-hidden>
                 →
               </span>
-              <span className="inline-flex items-baseline gap-1.5 rounded border border-border bg-secondary px-2 py-0.5 text-dense-meta font-semibold">
+              <span className="inline-flex items-baseline gap-1.5 border px-2 py-0.5 text-dense-meta font-semibold mat-tag">
                 Verdict
                 <span className="font-mono text-dense-micro text-muted-foreground">verdict</span>
               </span>

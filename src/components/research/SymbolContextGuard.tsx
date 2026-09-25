@@ -38,21 +38,21 @@ export function SymbolContextGuard({
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Link
             to="/research/scan"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2.5 py-1 text-dense-meta font-medium text-foreground hover:bg-accent"
+            className="inline-flex items-center gap-1.5 border px-2.5 py-1 text-dense-meta font-medium text-foreground mat-btn"
           >
             <ListFilter className="size-3.5" aria-hidden />
             Open Scan
           </Link>
           <Link
             to="/research/watchlist"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2.5 py-1 text-dense-meta font-medium text-foreground hover:bg-accent"
+            className="inline-flex items-center gap-1.5 border px-2.5 py-1 text-dense-meta font-medium text-foreground mat-btn"
           >
             <Star className="size-3.5" aria-hidden />
             Watchlist
           </Link>
           <Link
             to="/research/loop/candidates"
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2.5 py-1 text-dense-meta font-medium text-foreground hover:bg-accent"
+            className="inline-flex items-center gap-1.5 border px-2.5 py-1 text-dense-meta font-medium text-foreground mat-btn"
           >
             Candidate Pool
           </Link>

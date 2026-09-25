@@ -80,7 +80,7 @@ export function OptionScreenerContracts({
 }) {
   return (
     <section
-      className="min-w-0 flex-[999_1_600px] overflow-hidden rounded-lg border border-border bg-card"
+      className="min-w-0 flex-[999_1_600px] overflow-hidden border mat-card"
       aria-label="Contracts"
     >
       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-[var(--sk-raised2)] px-3 py-2">

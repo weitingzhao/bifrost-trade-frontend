@@ -181,7 +181,7 @@ export default function CopilotDeskPage() {
               three rows: it is the only place that says what the Copilot
               reads *from*, which the strip does not. Its fate is the Owner's
               to call. */}
-          <section className="rounded-lg border border-border bg-secondary/40 px-4 py-3">
+          <section className="border px-4 py-3 mat-card">
             <h2 className="text-dense-body font-semibold">What it works from</h2>
             <ul className="mt-2 space-y-1.5 text-dense-label">
               <li>

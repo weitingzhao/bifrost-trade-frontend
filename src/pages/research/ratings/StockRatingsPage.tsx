@@ -327,7 +327,7 @@ export default function StockRatingsPage() {
 
       {/* The design's filter bar. Without it this page is five hundred rows
           in one list, which is a database dump with a headline on it. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-background px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border px-3 py-2 mat-card">
         <span className="flex items-center gap-2">
           <span className={SECTION_CAP_CLASS}>View</span>
           <SegmentControl
@@ -410,7 +410,7 @@ export default function StockRatingsPage() {
           weights, so a server filter would change the pool the average is
           taken over and the same slider would read differently under each
           filter. One fetch, one pool, filters on top. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-background px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border px-3 py-2 mat-card">
         <span className="flex items-center gap-2">
           <span className={SECTION_CAP_CLASS}>Stage</span>
           <SegmentControl

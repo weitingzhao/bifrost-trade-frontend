@@ -12,7 +12,7 @@ export function BenchDirectory() {
       {BENCHES.map((bench) => {
         const Icon = bench.icon
         return (
-          <section key={bench.id} className="rounded-lg border border-border bg-secondary/40 px-4 py-3">
+          <section key={bench.id} className="border px-4 py-3 mat-card">
             <h2 className="flex items-center gap-2 text-dense-body font-semibold">
               <Icon className="size-4 text-muted-foreground" />
               {bench.label}

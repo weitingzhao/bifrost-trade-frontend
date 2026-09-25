@@ -73,7 +73,7 @@ export function VolSurfaceResidualScatter({
           x2={width - chart.pad.right}
           y1={chart.zeroY}
           y2={chart.zeroY}
-          className="stroke-border"
+          className="stroke-[var(--sk-line)]"
           strokeWidth={1}
           strokeDasharray="3 3"
         />

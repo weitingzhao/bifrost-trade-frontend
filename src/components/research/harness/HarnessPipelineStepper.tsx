@@ -90,7 +90,7 @@ export function PipelineStageRow({
           <span
             className={cn(
               'w-px flex-1',
-              state === 'done' ? 'bg-success/30' : 'bg-border/60',
+              state === 'done' ? 'bg-success/30' : 'bg-[var(--sk-line)]',
             )}
           />
         ) : null}
@@ -148,7 +148,7 @@ export function PipelineStageRow({
           {accessory}
         </div>
         {expanded && children ? (
-          <div className="mt-1 rounded-md border border-border/50 bg-background px-2.5 py-2">
+          <div className="mt-1 border px-2.5 py-2 mat-card">
             {children}
           </div>
         ) : null}
@@ -487,7 +487,7 @@ export function HarnessPersonaFold({ trace }: { trace: HarnessTrace }) {
       </div>
 
       {groups.map((g) => (
-        <div key={g.shape} className="space-y-1 rounded-md border border-border/50 px-2 py-1.5">
+        <div key={g.shape} className="space-y-1 border px-2 py-1.5 mat-card">
           <p className="text-dense-caption">
             {g.members.length === rows.length && rows.length > 1 ? (
               <>

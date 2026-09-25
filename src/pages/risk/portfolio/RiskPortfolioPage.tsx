@@ -534,7 +534,7 @@ export default function RiskPortfolioPage() {
               </p>
             </section>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page asks how much of the
               book is one bet. What a position is worth, what backs it, and its own payoff and stress are{' '}
               <Link to="/portfolio/backing" className={positionsUi.link}>

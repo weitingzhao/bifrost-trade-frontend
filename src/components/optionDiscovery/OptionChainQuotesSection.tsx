@@ -214,7 +214,7 @@ export function OptionChainQuotesSection({
           {chainColumnList.length === 0 ? (
             <DiscoveryHint role="status">Select at least one column in Columns filter.</DiscoveryHint>
           ) : (
-            <DiscoveryScrollArea maxHeightClass="max-h-[min(70vh,32rem)]" className="rounded-md border border-border">
+            <DiscoveryScrollArea maxHeightClass="max-h-[min(70vh,32rem)]" className="border mat-card">
               <DiscoveryChainQuotesTable
                 chainColumnList={chainColumnList}
                 strikeSideMode={strikeSideMode}

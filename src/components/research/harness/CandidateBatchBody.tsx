@@ -193,7 +193,7 @@ export function CandidateBatchBody({
       {holdingsGap ? (
         <div
           role="status"
-          className="flex items-start gap-1.5 rounded-sm border border-border/60 bg-secondary/40 px-2 py-1.5"
+          className="flex items-start gap-1.5 border px-2 py-1.5 mat-card"
         >
           <AlertTriangle className="size-3.5 mt-0.5 text-muted-foreground shrink-0" />
           <div className="min-w-0 space-y-0.5">

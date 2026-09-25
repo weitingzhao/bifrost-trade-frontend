@@ -40,7 +40,7 @@ export function DigestReadings({ rows, defaultOpen = false }: { rows: readonly D
   const labels = regimeItems(lenses.map((lens) => ({ lens, freshness: '' })), '', specOf).map((i) => i.label)
 
   return (
-    <div className="rounded-sm border border-border/60">
+    <div className="border mat-card">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

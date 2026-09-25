@@ -444,7 +444,7 @@ export default function PortfolioOverviewPage() {
                   key={to}
                   to={to}
                   title={tip}
-                  className="inline-flex h-6 items-center rounded-sm border border-border px-2.5 text-dense-meta hover:border-foreground/30 hover:bg-secondary/40 hover:text-foreground"
+                  className="inline-flex h-6 items-center border px-2.5 text-dense-meta hover:text-foreground mat-btn"
                 >
                   {label}
                 </Link>

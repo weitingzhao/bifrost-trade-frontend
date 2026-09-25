@@ -38,7 +38,7 @@ export function ToolResultView({
           <span className="text-dense-body font-semibold text-foreground">
             {meta.title}
           </span>
-          <span className="rounded-full border border-border/60 bg-secondary px-1.5 py-0 text-dense-caption text-muted-foreground">
+          <span className="border px-1.5 py-0 text-dense-caption text-muted-foreground mat-tag">
             {categoryLabel(meta.category)}
           </span>
         </div>
@@ -54,7 +54,7 @@ export function ToolResultView({
       ) : null}
 
       {summary ? (
-        <div className="rounded border border-border/40 bg-secondary/30 px-2 py-1.5 space-y-1">
+        <div className="border px-2 py-1.5 space-y-1 mat-card">
           {summary.headline ? (
             <div className="text-dense-label font-medium text-foreground">
               {summary.headline}
@@ -124,7 +124,7 @@ export function ToolResultView({
         <span>{rawOpen ? '隐藏原始 JSON' : '查看原始 JSON'}</span>
       </button>
       {rawOpen ? (
-        <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all rounded border border-border/40 bg-background/60 px-2 py-1 text-dense-caption font-mono text-foreground/80">
+        <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all border px-2 py-1 text-dense-caption font-mono text-foreground/80 mat-card">
           {safeStringify(result)}
         </pre>
       ) : null}

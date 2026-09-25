@@ -221,7 +221,7 @@ export function LoopRunPipelineBody({
       {run ? (
         <>
           {/* What this run is, in one line. */}
-          <div className="space-y-1 rounded-md border border-border/60 bg-secondary/50 px-2.5 py-2">
+          <div className="space-y-1 border px-2.5 py-2 mat-card">
             <div className="flex flex-wrap items-center gap-1.5">
               <DenseTag variant={statusVariant(run.status)} size="cell">
                 {terminal?.label ?? run.status}

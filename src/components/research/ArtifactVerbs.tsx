@@ -50,14 +50,15 @@ export function ArtifactVerbs({
             }}
             title={v.tip + (isOff ? ' — not available on this artifact yet' : '')}
             className={cn(
-              'h-[22px] rounded border px-2 text-dense-meta font-semibold whitespace-nowrap transition-colors',
+              // Rev .62: a secondary control, no frame — the state is the fill.
+              'h-[22px] border px-2 text-dense-meta font-semibold whitespace-nowrap transition-colors mat-btn',
               isOff
-                ? 'cursor-not-allowed border-border text-muted-foreground opacity-45'
+                ? 'cursor-not-allowed text-muted-foreground opacity-45'
                 : v.write
-                  ? 'border-warning/45 text-warning hover:bg-warning/10'
+                  ? 'bg-warning/15 text-warning hover:bg-warning/25'
                   : isOn
-                    ? 'border-success text-foreground'
-                    : 'border-border text-muted-foreground hover:border-border hover:bg-secondary hover:text-foreground',
+                    ? 'bg-success/20 text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {v.label}

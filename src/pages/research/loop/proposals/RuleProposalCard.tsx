@@ -74,7 +74,7 @@ export function RuleProposalCard({
       {expanded ? (
         <>
           <div className="grid gap-2.5 @2xl/page:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-            <div className="flex min-w-0 flex-col gap-1 rounded-md border border-border bg-[var(--sk-ground)] px-2.5 py-2">
+            <div className="flex min-w-0 flex-col gap-1 border px-2.5 py-2 mat-card">
               <div className="flex items-baseline gap-2">
                 <span className={positionsUi.cap}>Diff</span>
                 <span className={cn(positionsUi.mono, 'text-dense-caption text-[var(--sk-layer-analysis)]')}>
@@ -103,7 +103,7 @@ export function RuleProposalCard({
               </span>
             </div>
 
-            <div className="flex min-w-0 flex-col gap-1.5 rounded-md border border-border bg-[var(--sk-ground)] px-2.5 py-2">
+            <div className="flex min-w-0 flex-col gap-1.5 border px-2.5 py-2 mat-card">
               <span className={positionsUi.cap}>Evidence · the trades that argue it</span>
               <p className="m-0 text-dense-body leading-normal text-secondary-foreground text-pretty">
                 {p.evidence}

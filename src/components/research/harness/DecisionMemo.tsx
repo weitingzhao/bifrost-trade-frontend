@@ -45,7 +45,7 @@ export function DecisionMemo({
 
   if (ratings.length === 0) {
     return (
-      <div className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 bg-secondary/40 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-3 border px-3 py-2 mat-card">
         <div className="min-w-0 flex-1">
           <p className="text-dense-meta">No rating on this run.</p>
           <p className="text-dense-caption text-muted-foreground">
@@ -66,7 +66,7 @@ export function DecisionMemo({
 
   return (
     <div className="space-y-2">
-      <div className="rounded-md border border-border/60 bg-secondary/40 px-3 py-2">
+      <div className="border px-3 py-2 mat-card">
         <p className="text-dense-body font-medium text-balance">{memoHeadline(ratings, considered)}</p>
         <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-dense-caption text-muted-foreground">
           <span>
@@ -90,7 +90,7 @@ export function DecisionMemo({
         </div>
       </div>
 
-      <ol className="divide-y divide-border/50 rounded-md border border-border/60">
+      <ol className="divide-y divide-border/50 border mat-card">
         {ratings.map((r, i) => {
           const isOpen = open === r.symbol
           const row = bySymbol.get(r.symbol) ?? null
@@ -290,7 +290,7 @@ function RatingCase({ r, row }: { r: CandidateRating; row: PersonaRow | null }) 
 
 function Box({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-md border border-border/50 bg-background px-2.5 py-2">
+    <div className="border px-2.5 py-2 mat-card">
       <h4 className="mb-1 text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">{title}</h4>
       {children}
     </div>

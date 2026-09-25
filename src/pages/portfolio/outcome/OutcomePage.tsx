@@ -164,7 +164,7 @@ export default function OutcomePage() {
                   Source
                 </span>
                 <span
-                  className="inline-flex h-5.5 cursor-default items-center rounded-[5px] border border-border px-2 text-dense-meta font-semibold text-muted-foreground/70"
+                  className="inline-flex h-5.5 cursor-default items-center border px-2 text-dense-meta font-semibold text-muted-foreground/70 mat-tag"
                   title={OUTCOME_UNRECORDED.lens}
                 >
                   Lens · not recorded
@@ -400,7 +400,7 @@ export default function OutcomePage() {
                         <td className={cn(positionsUi.td, 'text-left')}>
                           <span
                             className={cn(
-                              'inline-flex h-4 items-center rounded-[3px] border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em]',
+                              'inline-flex h-4 items-center border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] mat-tag',
                               EXIT_TONE[r.exit],
                             )}
                           >
@@ -526,7 +526,7 @@ export default function OutcomePage() {
               </section>
             </div>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> Outcome answers where an idea came
               from and how much of the plan happened. How a play performs, and how the trader behaves, are Review&rsquo;s —
               one win rate, computed once.

@@ -51,7 +51,7 @@ export function PromoteToSizing({
         <div className={inline ? 'relative min-w-0 max-w-[12rem] flex-1' : 'relative flex-1 max-w-xs'}>
           <button
             type="button"
-            className="flex h-9 w-full items-center justify-between rounded-lg border border-input bg-secondary px-3 text-sm shadow-sm transition-colors hover:border-primary/45 hover:bg-secondary/80"
+            className="flex h-9 w-full items-center justify-between border px-3 text-sm transition-colors mat-field"
             onClick={() => setOpen(o => !o)}
             aria-expanded={open}
             aria-label="Pick new symbol — choose a watchlist row to move to Sizing"

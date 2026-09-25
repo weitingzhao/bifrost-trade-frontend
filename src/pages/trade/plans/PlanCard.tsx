@@ -316,7 +316,7 @@ export function PlanCard({
                   ? t.label === 'Expired'
                     ? 'bg-warning'
                     : 'bg-success'
-                  : 'bg-border',
+                  : 'bg-[var(--sk-line)]',
               )}
             />
             <span className="font-semibold">{t.label}</span>
@@ -520,7 +520,7 @@ export function PlanCard({
           title="Intent"
           meta={`advisory · D10 · strategy_plan #${plan.strategy_plan_id}`}
         >
-          <pre className="overflow-x-auto rounded-md border border-border bg-background px-2.5 py-2 font-mono text-dense-micro leading-relaxed text-secondary-foreground">
+          <pre className="overflow-x-auto border px-2.5 py-2 font-mono text-dense-micro leading-relaxed text-secondary-foreground mat-card">
             {planIntentJson(plan)}
           </pre>
           {mutationError ? (
@@ -589,13 +589,13 @@ export function PlanCard({
               <>
                 <Link
                   to={`/portfolio/positions?symbol=${plan.symbol}`}
-                  className="inline-flex h-7 items-center rounded-md border border-border px-2.5 text-dense-meta hover:bg-secondary"
+                  className="inline-flex h-7 items-center border px-2.5 text-dense-meta mat-btn"
                 >
                   Open in Positions
                 </Link>
                 <Link
                   to="/portfolio/ledger"
-                  className="inline-flex h-7 items-center rounded-md border border-border px-2.5 text-dense-meta hover:bg-secondary"
+                  className="inline-flex h-7 items-center border px-2.5 text-dense-meta mat-btn"
                 >
                   Open in Ledger
                 </Link>

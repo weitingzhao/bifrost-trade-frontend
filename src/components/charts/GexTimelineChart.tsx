@@ -119,7 +119,7 @@ export function GexTimelineChart({
         width={chartW}
         height={chartH}
         fill="transparent"
-        stroke="var(--border)"
+        stroke="var(--sk-line)"
         strokeWidth={1}
       />
 
@@ -132,7 +132,7 @@ export function GexTimelineChart({
               y1={y}
               x2={pad.left + chartW}
               y2={y}
-              stroke="var(--border)"
+              stroke="var(--sk-line)"
               strokeWidth={0.5}
               opacity={0.6}
             />

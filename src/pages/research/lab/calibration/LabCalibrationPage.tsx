@@ -11,7 +11,8 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { DenseTag, EmptyState, HealthLamp } from '@bifrost/ui'
+import { EmptyState, HealthLamp } from '@bifrost/ui'
+import { DenseTag } from '@/components/data-display'
 import { fetchResearchDoc } from '@/api/research/docs'
 import { SegmentControl } from '@/components/data-display'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
@@ -125,7 +126,7 @@ export default function LabCalibrationPage() {
         stamp={
           doc?.version ? (
             <span
-              className="inline-flex h-6 items-center rounded-md border border-border px-2 font-mono text-dense-micro tracking-wide text-muted-foreground"
+              className="inline-flex h-6 items-center border px-2 font-mono text-dense-micro tracking-wide text-muted-foreground mat-tag"
               title={`The calibration document's own round${doc.updated ? ` · updated ${doc.updated}` : ''}`}
             >
               ROUND {doc.version}
@@ -138,7 +139,7 @@ export default function LabCalibrationPage() {
           switch is the toolbar's first item), then where both documents are
           read from, then the way to the blueprint. The document's round is
           the page head's stamp, where the design puts it. */}
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border px-3 py-1.75 mat-card">
         <SegmentControl
           ariaLabel="View"
           size="xs"

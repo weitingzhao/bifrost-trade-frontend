@@ -119,7 +119,7 @@ export function RanToday() {
     )
   } else {
     body = (
-      <ul className="divide-y divide-border rounded-lg border border-border bg-secondary/40">
+      <ul className="divide-y divide-border border mat-card">
         {rows.map((r) => {
           const { lamp, why } = rowLamp(r.runIds, statusByRun)
           return (

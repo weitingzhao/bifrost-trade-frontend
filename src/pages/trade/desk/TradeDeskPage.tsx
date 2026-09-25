@@ -326,7 +326,7 @@ export default function TradeDeskPage() {
             </div>
           </section>
 
-          <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+          <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
             <span className="font-semibold text-secondary-foreground">Boundary.</span> Everything on this page reads
             except the hedge menu, which is the daemon’s own control channel and has been in the app since the Daemon
             page — moved here, not armed here. No order is sent from Bifrost: plans are copied and placed in TWS, and

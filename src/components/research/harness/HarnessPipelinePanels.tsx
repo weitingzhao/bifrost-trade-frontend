@@ -82,7 +82,7 @@ export function HarnessTraceEventCard({ traceJson }: { traceJson: unknown }) {
   return (
     <div className="space-y-2 max-h-96 overflow-y-auto">
       {trace.events.map((ev, i) => (
-        <details key={`${ev.step}-${i}`} className="rounded border border-border/40 px-2 py-1">
+        <details key={`${ev.step}-${i}`} className="border px-2 py-1 mat-card">
           <summary className="cursor-pointer text-dense-label font-mono">{ev.step}</summary>
           <pre className="mt-1 whitespace-pre-wrap break-words text-dense-micro font-mono text-muted-foreground">
             {JSON.stringify(ev, null, 2)}

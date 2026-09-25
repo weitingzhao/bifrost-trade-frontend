@@ -166,7 +166,7 @@ const components: Components = {
   pre: ({ children, ...props }) => (
     <pre
       {...props}
-      className="my-1.5 overflow-x-auto rounded border border-border/50 bg-background/80 px-2 py-1.5"
+      className="my-1.5 overflow-x-auto border px-2 py-1.5 mat-card"
     >
       {children}
     </pre>

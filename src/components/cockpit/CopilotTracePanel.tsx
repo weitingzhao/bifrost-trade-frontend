@@ -44,12 +44,12 @@ export function CopilotTracePanel({
 
   return (
     <Collapsible open={!collapsed} onOpenChange={(open) => onCollapsedChange(!open)}>
-      <CollapsibleTrigger className="flex w-full items-center gap-1 rounded border border-border/50 px-2 py-1 text-dense-caption text-muted-foreground hover:bg-secondary/50">
+      <CollapsibleTrigger className="flex w-full items-center gap-1 border px-2 py-1 text-dense-caption text-muted-foreground hover:bg-[var(--mat-card-fill-hover)] mat-card">
         <ChevronDown className={cn('size-3 transition-transform', !collapsed && 'rotate-180')} />
         {summarizeTrace(events)}
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ul className="mt-1 max-h-40 space-y-0.5 overflow-y-auto rounded border border-border/40 bg-background/80 p-1.5">
+        <ul className="mt-1 max-h-40 space-y-0.5 overflow-y-auto border p-1.5 mat-card">
           {events.map((ev) => (
             <li
               key={ev.id}

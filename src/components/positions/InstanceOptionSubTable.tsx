@@ -227,7 +227,7 @@ export function InstanceOptionSubTable({
           Pool = which backing pool the leg draws on · Attr = attribution result
         </span>
       </div>
-      <div className="overflow-x-auto rounded-[5px] border border-border bg-[var(--sk-raised)]">
+      <div className="overflow-x-auto border mat-card">
         {/* §14.6: fourteen columns plus expand and actions — above the design's 1160 floor. */}
         <NestedDenseTable tableClassName="min-w-[1240px] table-fixed">
           <colgroup>

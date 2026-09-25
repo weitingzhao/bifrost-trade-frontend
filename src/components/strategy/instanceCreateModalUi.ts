@@ -22,7 +22,7 @@ export const instanceCreateFormRowLabelClass =
   'min-w-[96px] shrink-0 text-sm font-medium text-foreground'
 
 export const instanceCreateInputClass =
-  'h-9 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-sm shadow-none'
+  'h-9 w-full min-w-0 border px-3 text-sm shadow-none mat-field'
 
 /** Legacy date field — high-contrast calendar control on dark modal. */
 export const instanceCreateDateInputClass = cn(

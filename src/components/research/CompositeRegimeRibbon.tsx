@@ -46,7 +46,7 @@ export function CompositeRegimeRibbon({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border bg-secondary/40 px-2.5 py-1.5',
+        'flex flex-wrap items-center gap-x-2 gap-y-1 border px-2.5 py-1.5 mat-card',
         className
       )}
       data-testid="composite-regime-ribbon"

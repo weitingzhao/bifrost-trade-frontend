@@ -84,7 +84,7 @@ export function DialStrip({
   }, [confirm])
   const c = confirm ? dialConfirm(confirm, current, earn) : null
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-background">
+    <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Dial</span>
         <span className="text-dense-body font-semibold">How much passes without you</span>
@@ -228,9 +228,9 @@ export function OperatorCards({ cards }: { cards: OpCardData[] }) {
   return (
     <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-3">
       {cards.map((c) => (
-        <section key={c.op} className="flex min-w-0 flex-col gap-2 rounded-lg border border-border bg-secondary/30 px-3.5 py-3">
+        <section key={c.op} className="flex min-w-0 flex-col gap-2 border px-3.5 py-3 mat-card">
           <div className="flex flex-wrap items-baseline gap-2">
-            <span className={cn('rounded border px-1.5 font-mono text-dense-meta font-bold', OPERATOR_CHIP[c.op])}>
+            <span className={cn('border px-1.5 font-mono text-dense-meta font-bold mat-tag', OPERATOR_CHIP[c.op])}>
               {c.op}
             </span>
             <span className="text-dense-body font-semibold">{c.label}</span>
@@ -286,7 +286,7 @@ function StationCell({ v, tip }: { v: string; tip?: string }) {
 
 export function StationsTable({ rows, footnote }: { rows: StationRow[]; footnote: string }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-background">
+    <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
           Pipeline · today
@@ -330,7 +330,7 @@ export interface BookPanelRow extends BookRow {
 
 export function BookPanel({ rows }: { rows: BookPanelRow[] }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-background">
+    <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">The Book</span>
         <span className="text-dense-body font-semibold">State — whoever wrote it</span>
@@ -401,7 +401,7 @@ const TODAY_OP_INK: Record<ResearchOperator, string> = {
 
 export function TodayFeed({ items, asOf }: { items: TodayItem[]; asOf: string }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-background">
+    <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Today</span>
         <span className="text-dense-body font-semibold">What each operator produced</span>
@@ -433,7 +433,7 @@ export function TodayFeed({ items, asOf }: { items: TodayItem[]; asOf: string })
                     <Link
                       key={a.label}
                       to={a.to}
-                      className="rounded border border-border px-1.5 py-0.5 text-dense-meta text-foreground/80 hover:border-primary/40 hover:text-foreground"
+                      className="border px-1.5 py-0.5 text-dense-meta text-foreground/80 hover:text-foreground mat-btn"
                     >
                       {a.label}
                     </Link>
@@ -459,7 +459,7 @@ export interface HealthCell {
 
 export function HealthPanel({ cells }: { cells: HealthCell[] }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-background">
+    <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Health</span>
         <span className="text-dense-body font-semibold">Engines behind the pages</span>

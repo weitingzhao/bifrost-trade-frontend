@@ -3,7 +3,7 @@ import { denseTable, denseTableEntityCell } from '@/components/data-display'
 
 /** Live page table shell + sticky header bridge to Dense UI tokens. */
 export const liveTable = {
-  shell: cn('mt-2 dense-scroll-x rounded-lg border border-border overflow-x-auto'),
+  shell: cn('mt-2 dense-scroll-x border overflow-x-auto mat-card'),
   // The shared token's min-w-[320px] lets table-fixed crush eight nowrap
   // columns into a 430px float until the cells overprint each other. The
   // design's narrow rendering scrolls sideways instead — full column widths,

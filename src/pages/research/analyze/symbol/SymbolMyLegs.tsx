@@ -50,7 +50,7 @@ export function SymbolMyLegs({ symbol }: { symbol: string }) {
   const totalPnl = legs.reduce((a, l) => a + (l.unrealized ?? 0), 0)
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-border/60 bg-muted/20 px-2 py-1 text-dense-meta">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border px-2 py-1 text-dense-meta mat-card">
       <span className="shrink-0 text-muted-foreground">My legs</span>
       {legs.map((leg) => (
         <span key={leg.key} className="inline-flex items-center gap-1 font-mono tabular-nums">

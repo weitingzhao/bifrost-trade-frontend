@@ -5,7 +5,7 @@
  * the class rather than spelling it out, so a change to the recipe lands once.
  */
 export const RAISED_PANEL =
-  'min-w-0 rounded-[var(--radius)] border border-[var(--sk-line0)] bg-[var(--sk-raised)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+  'min-w-0 border mat-card'
 
 /** A raised panel's header row: the cap, the title and an aside on one line. */
 export const RAISED_PANEL_HEAD = 'flex flex-wrap items-baseline gap-2.5 border-b border-[var(--sk-line0)] px-3.5 py-2.5'

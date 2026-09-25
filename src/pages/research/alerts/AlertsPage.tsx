@@ -106,7 +106,7 @@ export default function AlertsPage() {
         }
       />
 
-      <section className="overflow-hidden rounded-lg border border-border">
+      <section className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
           <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
             Fired
@@ -178,7 +178,7 @@ export default function AlertsPage() {
           truly holds armed conditions: the risk limit book. Each row names
           the page that owns its reading; per-symbol arming from Symbol,
           Dealer and Watchlist has no store yet and the header says so. */}
-      <section className="overflow-hidden rounded-lg border border-border">
+      <section className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
           <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
             Armed

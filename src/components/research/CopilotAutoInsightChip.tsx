@@ -45,7 +45,7 @@ export function CopilotAutoInsightChip({
   return (
     <div
       className={cn(
-        'flex items-start gap-2 rounded-md border px-2.5 py-1.5 text-dense-meta',
+        'flex items-start gap-2 border px-2.5 py-1.5 text-dense-meta mat-card',
         TONE_CLASS[tone],
         className,
       )}

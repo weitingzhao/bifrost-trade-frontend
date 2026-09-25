@@ -4,7 +4,7 @@ import { ledgerFilterLabelClass } from '@/lib/ledgerUi'
 
 /** Transfer & Pay page inner surface (elevated card on PageShell canvas). */
 export const transferPayPageCardClass = cn(
-  'flex flex-col gap-3 rounded-lg border border-border bg-card p-4',
+  'flex flex-col gap-3 border p-4 mat-card',
 )
 
 export const transferPayUi = {
@@ -15,7 +15,7 @@ export const transferPayUi = {
   rangeField: 'inline-flex items-center gap-2 border-0 m-0 p-0',
   rangeLegend: ledgerFilterLabelClass,
   feedbackRow: cn(
-    'flex flex-wrap items-center gap-2 rounded-md border px-2.5 py-1.5',
+    'flex flex-wrap items-center gap-2 border px-2.5 py-1.5 mat-card',
     'text-dense-body',
   ),
   // A status row with a dot: lamp green, not the P&L green (§14.7).
@@ -32,12 +32,12 @@ export const transferPayUi = {
   tierRule: 'h-px flex-1 bg-border',
   tierNote: 'text-dense-meta text-muted-foreground',
 
-  panel: 'rounded-md border border-border bg-secondary/25',
+  panel: 'border mat-card',
   chipRow: 'flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2',
   chipRowLabel: ledgerFilterLabelClass,
   chipGroup: 'flex flex-wrap gap-1',
   chip: cn(
-    'inline-flex h-6 items-center gap-1.5 rounded-md border px-2',
+    'inline-flex h-6 items-center gap-1.5 border px-2 mat-tag',
     'text-xs font-semibold transition-colors',
   ),
   chipOn: 'border-primary/55 bg-primary/[0.12] text-primary',
@@ -80,7 +80,7 @@ export const transferPayUi = {
   viewLabel: 'text-xs text-muted-foreground',
   changeHint: 'block text-dense-meta leading-snug text-muted-foreground',
 
-  downstreamPanel: 'rounded-md border border-border bg-secondary/25',
+  downstreamPanel: 'border mat-card',
   downstreamHead: cn(
     'flex flex-wrap items-baseline gap-2 border-b border-border',
     'bg-secondary/40 px-3 py-1.5',
@@ -95,11 +95,11 @@ export const transferPayUi = {
   downstreamStrong: 'font-semibold text-foreground',
   downstreamFoot: 'flex flex-wrap items-center gap-2 px-3 pb-2.5 text-dense-meta',
 
-  whatPanel: 'rounded-md border border-border bg-secondary/40',
+  whatPanel: 'border mat-card',
   whatHead: 'flex flex-wrap items-baseline gap-2 px-3 pt-2 pb-1',
   whatCap: ledgerFilterLabelClass,
   whatClose: cn(
-    'ml-auto inline-flex h-5 items-center rounded-md border border-border px-1.5',
+    'ml-auto inline-flex h-5 items-center border px-1.5 mat-btn',
     'text-dense-meta text-muted-foreground hover:text-foreground',
   ),
   whatBody: 'flex flex-col gap-1.5 px-3 pb-2.5',
@@ -108,9 +108,9 @@ export const transferPayUi = {
 
   paginationBar: 'inline-flex items-center gap-1.5',
   pageBtn: cn(
-    'h-7 rounded-md border border-border bg-secondary px-2.5',
+    'h-7 border px-2.5 mat-btn',
     'text-xs font-medium text-foreground',
-    'hover:bg-muted disabled:cursor-not-allowed disabled:opacity-45',
+    'disabled:cursor-not-allowed disabled:opacity-45',
   ),
   pageInfo: 'whitespace-nowrap text-xs',
 } as const

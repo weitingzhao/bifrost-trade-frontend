@@ -162,12 +162,14 @@ function StageRow({
                 title={chipTitle(c, n, universe, narrativeCoverage, stage.missing)}
                 onClick={() => onToggle(stage.id, c.id)}
                 className={cn(
-                  'inline-flex items-baseline gap-1.5 rounded-sm border px-1.5 py-0.5 text-dense-meta',
-                  off
-                    ? 'cursor-default border-border/60 text-muted-foreground'
-                    : 'cursor-pointer hover:border-foreground/30',
-                  on ? 'border-primary/60 bg-primary/10 text-foreground' : 'border-border',
-                  c.narrative != null && 'border-dashed',
+                  // Rev .62: no frame — on is the accent fill, off the ink one. A
+                  // narrative chip keeps its dashed edge: it says where the filter reads.
+                  'inline-flex items-baseline gap-1.5 rounded-[8px] border border-transparent px-1.5 py-0.5 text-dense-meta',
+                  off ? 'cursor-default text-muted-foreground' : 'cursor-pointer',
+                  on
+                    ? 'bg-primary/15 text-foreground'
+                    : 'bg-[var(--mat-btn-fill)] hover:bg-[var(--mat-btn-fill-hover)]',
+                  c.narrative != null && 'border-dashed border-foreground/30',
                 )}
               >
                 {c.narrative != null ? (
@@ -238,7 +240,7 @@ export function ScreenerFunnelPanel({
   const counted = readings.map((r) => r.n).filter((n): n is number => n != null)
   const narrowest = counted.length > 0 ? Math.min(...counted) : null
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-border bg-card">
+    <section className="flex min-w-0 flex-col overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
         <span className={SECTION_CAP_CLASS}>Criteria</span>
         <h2 className="text-dense-body font-semibold">Funnel</h2>

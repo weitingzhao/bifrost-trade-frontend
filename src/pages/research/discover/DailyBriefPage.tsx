@@ -127,7 +127,7 @@ export default function DailyBriefPage() {
           conversation that was kept, not a dashboard that was computed. */}
       <p
         role="note"
-        className="max-w-[92ch] rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-relaxed text-muted-foreground"
+        className="max-w-[92ch] border px-3 py-2 text-dense-meta leading-relaxed text-muted-foreground mat-card"
       >
         The brief is a <span className="font-semibold text-foreground">sedimented conversation</span>{' '}
         — the morning run&rsquo;s output kept as a page. Every claim cites the page it read; nothing

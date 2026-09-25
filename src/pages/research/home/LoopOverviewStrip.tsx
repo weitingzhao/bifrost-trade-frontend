@@ -99,7 +99,7 @@ export function LoopOverviewStrip() {
         {/* The edge that closes the circuit. It is drawn separately because it
             runs backwards — results are supposed to change the rules — and
             because it is the one most likely to be carrying nothing. */}
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/50 px-2.5 py-1.5">
+        <div className="flex flex-wrap items-center gap-2 border px-2.5 py-1.5 mat-card">
           <RotateCcw className="size-3 shrink-0 text-muted-foreground/60" aria-hidden />
           <Link
             to="/research/loop/decisions"

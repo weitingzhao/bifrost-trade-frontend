@@ -227,7 +227,7 @@ export default function ReviewObjectivesPage() {
           </span>
           <Link
             to="/research/loop/harness"
-            className="inline-flex h-[22px] items-center rounded-sm border border-border px-2 text-dense-meta hover:border-foreground/30 hover:text-foreground"
+            className="inline-flex h-[22px] items-center border px-2 text-dense-meta hover:text-foreground mat-btn"
           >
             Autopilot Console →
           </Link>
@@ -302,7 +302,7 @@ export default function ReviewObjectivesPage() {
           <div
             key={k.label}
             title={k.tip}
-            className="flex flex-col gap-0.5 rounded-md border border-border bg-card px-3 py-2"
+            className="flex flex-col gap-0.5 border px-3 py-2 mat-card"
           >
             <span className={SECTION_CAP_CLASS}>{k.label}</span>
             <span className="flex items-baseline gap-1.5">

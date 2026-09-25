@@ -95,7 +95,7 @@ export function RunLoopDialog({
               return (
                 <label
                   key={choice.model}
-                  className="flex cursor-pointer items-start gap-2 rounded-md border border-border/60 px-2 py-1.5 hover:bg-muted/40"
+                  className="flex cursor-pointer items-start gap-2 border px-2 py-1.5 hover:bg-[var(--mat-card-fill-hover)] mat-card"
                 >
                   <input
                     type="checkbox"
@@ -148,7 +148,7 @@ export function RunLoopDialog({
             </div>
           </div>
 
-          <div className="rounded-md border border-border/60 bg-secondary/40 px-2.5 py-2">
+          <div className="border px-2.5 py-2 mat-card">
             <p className="text-dense-meta">
               <span className="font-mono tabular-nums">
                 {est ? fmtUsd(est.total_usd) : '—'}

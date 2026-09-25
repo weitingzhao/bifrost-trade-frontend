@@ -395,7 +395,7 @@ export default function ReviewQueuePage() {
                 {selected ? (
                   <ReviewSelectedPanel trade={selected} />
                 ) : (
-                  <p className="m-0 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                  <p className="m-0 border px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
                     No trade picked. Click a row in the queue to read it here.
                   </p>
                 )}
@@ -455,7 +455,7 @@ export default function ReviewQueuePage() {
               </div>
             </div>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> Closed trades only,
               fills-based, fees included. An open position never counts toward a win rate — that is how a book talks
               itself into holding losers. Nothing on this page writes.

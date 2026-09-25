@@ -131,7 +131,7 @@ function CashPiePanel({
                 background: `conic-gradient(
                   color-mix(in srgb, var(--primary) 88%, #050a10) 0turn ${pie.cashTurnEnd}turn,
                   color-mix(in srgb, #a855f7 74%, var(--background)) ${pie.cashTurnEnd}turn ${pie.stkTurnEnd}turn,
-                  color-mix(in srgb, var(--border) 72%, var(--secondary)) ${pie.stkTurnEnd}turn 1turn
+                  color-mix(in srgb, var(--sk-line) 72%, var(--secondary)) ${pie.stkTurnEnd}turn 1turn
                 )`,
               }}
             />

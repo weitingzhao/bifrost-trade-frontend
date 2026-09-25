@@ -72,7 +72,7 @@ function sentimentBar(score: number) {
   const pct = ((clamped + 10) / 20) * 100
   return (
     <svg width={60} height={12} viewBox="0 0 60 12" role="img" aria-label={`Sentiment ${score}`}>
-      <rect x={0} y={2} width={60} height={8} rx={2} fill="var(--border)" />
+      <rect x={0} y={2} width={60} height={8} rx={2} fill="var(--sk-line)" />
       <rect x={0} y={2} width={(pct / 100) * 60} height={8} rx={2} fill={score >= 0 ? 'var(--color-profit, #4ade80)' : 'var(--color-loss, #f87171)'} />
     </svg>
   )

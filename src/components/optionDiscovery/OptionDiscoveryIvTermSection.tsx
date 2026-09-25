@@ -467,7 +467,7 @@ export function OptionDiscoveryIvTermSection({
               </div>
 
               <details className="group mt-3 w-full min-w-0">
-                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/25 [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center gap-2 border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors [&::-webkit-details-marker]:hidden mat-card">
                   <span className="min-w-0 flex-1">IV term &amp; cone — combined values</span>
                   <span className="text-muted-foreground group-open:rotate-90" aria-hidden>
                     ›

@@ -58,7 +58,7 @@ export function TermCurveChart({
         className="block h-auto w-full"
         aria-label="ATM IV today by horizon, with realised vol at roughly the matching horizon"
       >
-        <line x1="0" x2={W} y1={H - PAD_Y + 6} y2={H - PAD_Y + 6} stroke="var(--border)" strokeWidth="1" />
+        <line x1="0" x2={W} y1={H - PAD_Y + 6} y2={H - PAD_Y + 6} stroke="var(--sk-line)" strokeWidth="1" />
         {rv.length >= 2 ? (
           <path
             d={line(rv.map((r) => ({ dte: r.dte, v: r.rv })))}
@@ -168,7 +168,7 @@ export function SkewSurfaceChart({
         className="block h-auto w-full"
         aria-label="Market IV by strike, puts and calls, against the raw-SVI fit"
       >
-        <line x1="0" x2={W} y1={H - PAD_Y + 6} y2={H - PAD_Y + 6} stroke="var(--border)" strokeWidth="1" />
+        <line x1="0" x2={W} y1={H - PAD_Y + 6} y2={H - PAD_Y + 6} stroke="var(--sk-line)" strokeWidth="1" />
         {nextFit && nextT ? (
           <path d={curve(nextFit, nextT)} fill="none" stroke="var(--sk-line2, #3d4754)" strokeWidth="1.2" />
         ) : null}

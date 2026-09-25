@@ -409,7 +409,7 @@ export default function ResearchOverviewPage() {
             />
             <Link
               to="/docs/research-blueprint"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1 text-dense-meta text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              className="inline-flex items-center gap-1.5 border px-2.5 py-1 text-dense-meta text-muted-foreground hover:text-foreground mat-btn"
               title="What Research should be — the target the code is calibrated against. The design's own strategic text (Research Vision) ships in the design package."
             >
               <BookOpen className="size-3.5" aria-hidden />

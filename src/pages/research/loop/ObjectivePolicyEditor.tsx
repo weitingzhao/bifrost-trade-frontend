@@ -108,7 +108,7 @@ export function ObjectivePolicyEditor({
         const fields = section.fields.filter((f) => !f.when || f.when(preview))
         if (fields.length === 0) return null
         return (
-          <section key={section.id} className="rounded-lg border border-border bg-secondary/40">
+          <section key={section.id} className="border mat-card">
             <header className="border-b border-border/60 px-4 py-2">
               <h3 className="text-dense-body font-semibold">{section.title}</h3>
               <p className="text-dense-label text-muted-foreground">{section.lead}</p>
@@ -177,7 +177,7 @@ export function ObjectivePolicyEditor({
       </div>
 
       {showRaw ? (
-        <pre className="max-h-96 overflow-auto rounded-md border border-border bg-background p-3 font-mono text-dense-micro leading-relaxed">
+        <pre className="max-h-96 overflow-auto border p-3 font-mono text-dense-micro leading-relaxed mat-card">
           {JSON.stringify(policy, null, 2)}
         </pre>
       ) : null}

@@ -72,7 +72,7 @@ export function ObjectiveLap({
   return (
     <section
       aria-label="Its lap around the loop"
-      className="rounded-lg border border-border bg-background px-3 py-2"
+      className="border px-3 py-2 mat-card"
     >
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pb-1.5">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">

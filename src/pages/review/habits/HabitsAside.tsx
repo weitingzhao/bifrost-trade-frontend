@@ -36,7 +36,7 @@ export function PlanAdherenceQuadrants({ closed }: { closed: number }) {
       </header>
       <div className="grid grid-cols-2 gap-2 px-3 py-2.5">
         {QUADRANTS.map((q) => (
-          <div key={q.key} className="min-w-0 rounded-md border border-border bg-[var(--sk-raised2)] px-2.5 py-2">
+          <div key={q.key} className="min-w-0 border px-2.5 py-2 mat-card">
             <div className="flex items-baseline gap-1.5">
               <span className="min-w-0 text-dense-meta leading-tight font-semibold text-muted-foreground">
                 {q.name}

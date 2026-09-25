@@ -108,7 +108,7 @@ export default function TradingCopilotPage() {
 
       <section className="grid gap-3 md:grid-cols-2">
         {TRADE_QUESTION_GROUPS.map((group) => (
-          <div key={group.id} className="rounded-lg border border-border bg-secondary/40 px-4 py-3">
+          <div key={group.id} className="border px-4 py-3 mat-card">
             <h2 className="text-dense-body font-semibold">{group.label.en}</h2>
             <p className="text-dense-label text-muted-foreground">{group.lead.en}</p>
             <ul className="mt-2 space-y-2">
@@ -151,7 +151,7 @@ export default function TradingCopilotPage() {
         ))}
       </section>
 
-      <section className="rounded-lg border border-border bg-secondary/40 px-4 py-3">
+      <section className="border px-4 py-3 mat-card">
         <h2 className="flex flex-wrap items-center gap-2 text-dense-body font-semibold">
           <ShieldCheck className="size-4 text-success" />
           What it can read
@@ -219,7 +219,7 @@ function BookFact({
   return (
     <Link
       to={to}
-      className="rounded-lg border border-border bg-secondary/40 px-4 py-3 transition-colors hover:border-primary/40"
+      className="border px-4 py-3 transition-colors mat-card"
     >
       <div className="text-dense-meta uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="mt-1 flex flex-wrap items-baseline gap-2">

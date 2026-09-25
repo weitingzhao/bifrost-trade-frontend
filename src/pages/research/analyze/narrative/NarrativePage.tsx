@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils'
 
 const cap =
   'whitespace-nowrap text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground'
-const panel = 'min-w-0 overflow-hidden rounded-lg border border-border bg-background'
+const panel = 'min-w-0 overflow-hidden border mat-card'
 const panelHead =
   'flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2'
 const th =

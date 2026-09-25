@@ -36,7 +36,7 @@ export function PolicyEvidence({ evidence }: { evidence: Record<string, unknown>
   const zh = readCopilotPromptLang() === 'zh'
 
   return (
-    <div className="space-y-2 rounded-md border border-border/50 bg-secondary/30 px-2.5 py-2 text-dense-meta">
+    <div className="space-y-2 border px-2.5 py-2 text-dense-meta mat-card">
       {outcomes ? (
         <p>
           <span className="text-muted-foreground">

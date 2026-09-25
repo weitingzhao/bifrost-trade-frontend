@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
 
 export const optionDiscoveryChartWrapClass = cn(
-  'min-w-0 rounded-lg border border-border bg-secondary/30 p-2',
+  'min-w-0 border p-2 mat-card',
   '[&_.od-chart-svg]:block [&_.od-chart-svg]:h-auto [&_.od-chart-svg]:w-full [&_.od-chart-svg]:max-w-full [&_.od-chart-svg]:aspect-[640/260]',
 )
 
@@ -80,7 +80,7 @@ export const optionDiscoveryTradabilityFactorClass =
   'flex items-baseline justify-between gap-2 text-xs'
 
 export const optionDiscoveryExecGuidanceClass = cn(
-  'mt-3 flex flex-wrap items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-dense-meta',
+  'mt-3 flex flex-wrap items-center gap-1 border px-2 py-1 text-dense-meta mat-card',
 )
 
 export const optionDiscoveryExecGuidanceTitleClass = cn(

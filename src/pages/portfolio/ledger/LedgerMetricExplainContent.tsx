@@ -23,7 +23,7 @@ function ExplainSteps({ children }: { children: ReactNode }) {
 
 function FormulaBlock({ children }: { children: ReactNode }) {
   return (
-    <pre className="mt-1.5 overflow-x-auto rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 font-mono text-dense-caption leading-relaxed whitespace-pre-wrap text-foreground">
+    <pre className="mt-1.5 overflow-x-auto border px-2.5 py-2 font-mono text-dense-caption leading-relaxed whitespace-pre-wrap text-foreground mat-card">
       {children}
     </pre>
   )

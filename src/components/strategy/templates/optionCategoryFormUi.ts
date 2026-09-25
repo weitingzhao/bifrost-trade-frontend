@@ -7,11 +7,11 @@ export const optionCategoryCompactInputMonoClass = cn(
 )
 
 export const optionCategoryCompactSelectClass = cn(
-  'h-7 rounded border border-input bg-background px-2 text-xs focus:outline-none',
+  'h-7 border px-2 text-xs focus:outline-none mat-field',
 )
 
 export const optionCategoryDimFilterSelectClass = cn(
-  'h-6 flex-1 rounded border border-input bg-background px-1 text-dense-caption focus:outline-none',
+  'h-6 flex-1 border px-1 text-dense-caption focus:outline-none mat-field',
 )
 
 export const optionCategoryFormGridClass = cn('grid grid-cols-2 gap-3 sm:grid-cols-4')
@@ -60,7 +60,7 @@ export const optionCategoryInlineInputDefaultClass = cn(optionCategoryCompactInp
 export const optionCategoryInlineInputQtyClass = cn(optionCategoryCompactInputClass, 'ml-auto w-16')
 
 export const optionCategoryTextareaClass = cn(
-  'w-full resize-none rounded border border-input bg-background px-3 py-2 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-ring',
+  'w-full resize-none border px-3 py-2 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-ring mat-field',
 )
 
 export const optionCategoryMonoCodeClass = cn(

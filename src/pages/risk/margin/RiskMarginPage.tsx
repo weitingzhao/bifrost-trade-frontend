@@ -479,7 +479,7 @@ export default function RiskMarginPage() {
               </section>
             </div>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page reads the
               broker&rsquo;s margin. What backs the book and where the house gate sits are{' '}
               <Link to="/portfolio/backing" className={positionsUi.link}>

@@ -72,7 +72,7 @@ function EquityChart({ runs }: { runs: EventRun[] }) {
   const Y = (v: number) => 90 - ((v - lo) / span) * 84
   const ddSpan = -eq.maxDd || 1
   return (
-    <div className="min-w-0 rounded-md border border-border bg-background px-3 py-2.5">
+    <div className="min-w-0 border px-3 py-2.5 mat-card">
       <div className="mb-1.5 flex items-baseline justify-between">
         <span className="text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground">
           Equity · cum P&L
@@ -82,7 +82,7 @@ function EquityChart({ runs }: { runs: EventRun[] }) {
         </span>
       </div>
       <svg viewBox="0 0 320 96" preserveAspectRatio="none" className="block h-24 w-full">
-        <line x1="0" y1={Y(0)} x2="320" y2={Y(0)} stroke="var(--border)" strokeWidth="1" />
+        <line x1="0" y1={Y(0)} x2="320" y2={Y(0)} stroke="var(--sk-line)" strokeWidth="1" />
         <polyline
           points={eq.cums.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}
           fill="none"
@@ -102,7 +102,7 @@ function EquityChart({ runs }: { runs: EventRun[] }) {
           fill="var(--color-loss)"
           opacity="0.55"
         />
-        <line x1="0" y1="0.5" x2="320" y2="0.5" stroke="var(--border)" strokeWidth="1" />
+        <line x1="0" y1="0.5" x2="320" y2="0.5" stroke="var(--sk-line)" strokeWidth="1" />
       </svg>
       <div className="mt-1 flex justify-between text-dense-caption text-muted-foreground">
         <span>
@@ -119,7 +119,7 @@ function PnlHistogram({ runs }: { runs: EventRun[] }) {
   const h = histogramFrom(runs)
   if (!h) return null
   return (
-    <div className="min-w-0 rounded-md border border-border bg-background px-3 py-2.5">
+    <div className="min-w-0 border px-3 py-2.5 mat-card">
       <div className="mb-1.5 flex items-baseline justify-between">
         <span className="text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground">
           P&L per event
@@ -256,7 +256,7 @@ export function BacktestRunResultCard({ response, headerless }: BacktestRunResul
         </Alert>
       ) : null}
 
-      <div className="grid grid-cols-2 overflow-hidden rounded-md border border-border md:grid-cols-6">
+      <div className="grid grid-cols-2 overflow-hidden border md:grid-cols-6 mat-card">
         <SummaryTile
           label="Events"
           value={fmtNumLocale(summary.n_events, 0)}
@@ -418,7 +418,7 @@ export function BacktestRunResultCard({ response, headerless }: BacktestRunResul
         </header>
         {walkForward ? (
           <div className="space-y-3 px-3 py-2.5">
-            <div className="grid grid-cols-2 overflow-hidden rounded-md border border-border md:grid-cols-4">
+            <div className="grid grid-cols-2 overflow-hidden border md:grid-cols-4 mat-card">
               <SummaryTile
                 label="OOS windows"
                 value={fmtNumLocale(walkForward.nWindows, 0)}

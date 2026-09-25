@@ -112,7 +112,7 @@ export function InstanceCoverageSubTable({
           What backs the short side of this strategy
         </span>
       </div>
-      <div className="overflow-x-auto rounded-[5px] border border-border bg-[var(--sk-raised)]">
+      <div className="overflow-x-auto border mat-card">
         <NestedDenseTable tableClassName="min-w-[1240px]">
           <DenseTableHeader>
             <DenseTableHeadRow>

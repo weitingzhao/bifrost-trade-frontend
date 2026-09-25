@@ -166,7 +166,7 @@ export function DerivationBlock({
 
   return (
     <div
-      className={cn('mt-2 rounded-md border border-border/60 bg-background/60 px-2.5 py-2 text-dense-caption', className)}
+      className={cn('mt-2 border px-2.5 py-2 text-dense-caption mat-card', className)}
       role="region"
       aria-label={`How ${d.title} is computed`}
       data-testid="explanation"
@@ -241,7 +241,7 @@ export function DerivationBlock({
 
       {open ? (
         <div
-          className="mt-1.5 rounded-md border border-border/60 bg-secondary/60 px-2.5 py-1.5"
+          className="mt-1.5 border px-2.5 py-1.5 mat-card"
           role="region"
           aria-label={`${open.name} explained`}
           data-testid="variable-card"

@@ -122,7 +122,7 @@ export default function LensCoveragePage() {
 
       {data ? (
         <>
-          <div className="flex flex-wrap overflow-hidden rounded-lg border border-border">
+          <div className="flex flex-wrap overflow-hidden border mat-card">
             {strip.map((s) => (
               <div
                 key={s.k}
@@ -187,7 +187,7 @@ export default function LensCoveragePage() {
                 </p>
               </section>
 
-              <section className="overflow-hidden rounded-lg border border-border">
+              <section className="overflow-hidden border mat-card">
                 <header className="flex items-baseline gap-2 border-b border-border bg-secondary/40 px-3 py-2">
                   <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     Unscreenable
@@ -218,7 +218,7 @@ export default function LensCoveragePage() {
                 )}
               </section>
 
-              <section className="overflow-hidden rounded-lg border border-border">
+              <section className="overflow-hidden border mat-card">
                 <header className="flex items-baseline gap-2 border-b border-border bg-secondary/40 px-3 py-2">
                   <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     Reach

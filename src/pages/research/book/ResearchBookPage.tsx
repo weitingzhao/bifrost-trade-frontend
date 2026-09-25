@@ -169,7 +169,7 @@ export default function ResearchBookPage() {
           <div className="ml-auto flex flex-none items-center gap-2 pt-1">
             <span className={SECTION_CAP_CLASS}>as of</span>
             <span
-              className="inline-flex h-6 items-center rounded-sm border border-border px-2 font-mono text-dense-meta text-muted-foreground"
+              className="inline-flex h-6 items-center border px-2 font-mono text-dense-meta text-muted-foreground mat-tag"
               title="When the stalest of the three tables answered. The census is a claim across all three, so it is only as current as the oldest of them."
             >
               {asOf}

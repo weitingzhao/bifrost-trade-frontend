@@ -15,8 +15,8 @@ export const ledgerSummary = {
   ),
   periodCell: cn(
     'flex min-h-[3.25rem] min-w-0 flex-col items-start gap-0.5',
-    'rounded-lg border border-border bg-secondary/40 px-3 py-2',
-    'shadow-sm',
+    'border px-3 py-2 mat-card',
+    '',
   ),
   periodCellLabel: cn(
     'font-mono text-dense-meta font-semibold tabular-nums',
@@ -39,8 +39,8 @@ export const ledgerSummary = {
   notionalValue: 'font-mono font-medium text-foreground underline decoration-dotted underline-offset-2',
   summaryTotal: cn(
     'ml-auto flex min-w-[min(100%,11rem)] flex-[0_1_auto] flex-col items-start justify-center gap-0.5',
-    'self-stretch rounded-lg border border-border/90 px-3 py-2',
-    'bg-gradient-to-br from-muted/40 to-muted/15',
+    'self-stretch border px-3 py-2 mat-card',
+    '',
   ),
   summaryTotalLabel: cn(
     'text-dense-meta font-bold uppercase tracking-wider text-muted-foreground',

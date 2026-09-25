@@ -84,7 +84,7 @@ import { useResearchDrafts } from '@/hooks/useResearchDrafts'
 import { nextRun } from '@/lib/harness/objectiveSchedule'
 
 const TEXTAREA_CLASS =
-  'w-full text-dense-body min-h-[60px] resize-y rounded-md border border-input bg-background px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+  'w-full text-dense-body min-h-[60px] resize-y border px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mat-field'
 
 export default function ObjectivePage() {
   const { objectiveId = '' } = useParams<{ objectiveId: string }>()
@@ -373,7 +373,7 @@ function Standing({
   const memo = brief.last_memo
   const rec = brief.track_record
   return (
-    <div className="grid gap-3 rounded-lg border border-border bg-secondary/40 px-4 py-3 md:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]">
+    <div className="grid gap-3 border px-4 py-3 md:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))] mat-card">
       <div className="min-w-0">
         <div className="text-dense-meta uppercase tracking-wide text-muted-foreground">Last memo</div>
         {memo ? (
@@ -513,7 +513,7 @@ function IdentityCard({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-secondary/40 px-4 py-3">
+    <div className="space-y-3 border px-4 py-3 mat-card">
       <h2 className="text-dense-body font-semibold">Identity</h2>
       <label className="block">
         <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">Title</span>

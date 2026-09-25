@@ -198,7 +198,7 @@ export function CompareTable({
                     </Link>
                   ) : (
                     <span
-                      className="inline-flex h-6 items-center rounded-md border border-border/50 px-2 text-dense-meta text-muted-foreground/60"
+                      className="inline-flex h-6 items-center border px-2 text-dense-meta text-muted-foreground/60 mat-tag"
                       title={placed ? 'Size is zero — nothing to plan.' : 'Not placed — nothing to plan.'}
                       aria-disabled
                     >

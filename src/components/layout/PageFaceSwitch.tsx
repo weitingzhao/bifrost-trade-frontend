@@ -83,10 +83,12 @@ export function PageFaceSwitch({
   return (
     <span
       className={cn(
-        'inline-flex min-w-0 items-center overflow-hidden rounded-md border',
+        // Rev .67: no frame — the face you are on is the fill (Method violet
+        // 12%, at rest ink 6%), radius 8.
+        'inline-flex min-w-0 items-center overflow-hidden rounded-[8px] border border-transparent',
         onMethod
-          ? 'border-[var(--color-entity-strategy)]/50 bg-[var(--color-entity-strategy)]/[0.07]'
-          : 'border-border',
+          ? 'bg-[var(--color-entity-strategy)]/[0.12]'
+          : 'bg-[var(--mat-card-fill-hover)]',
         className,
       )}
       role="group"

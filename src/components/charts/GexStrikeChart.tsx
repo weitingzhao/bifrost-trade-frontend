@@ -81,7 +81,7 @@ export function GexStrikeChart({
       aria-label="GEX by strike"
     >
       {/* Center line */}
-      <line x1={midX} y1={pad.top} x2={midX} y2={height - pad.bottom} stroke="var(--border)" strokeWidth={1} />
+      <line x1={midX} y1={pad.top} x2={midX} y2={height - pad.bottom} stroke="var(--sk-line)" strokeWidth={1} />
 
       {sorted.map((bar, i) => {
         const y = yOf(i)

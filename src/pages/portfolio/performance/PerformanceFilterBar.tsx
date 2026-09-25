@@ -54,7 +54,7 @@ export function PerformanceFilterBar({
 }: PerformanceFilterBarProps) {
   return (
     <div
-      className="flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-md border border-border bg-secondary/40 px-2.5 py-1.75"
+      className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border px-2.5 py-1.75 mat-card"
       aria-label="Time range and strategy scope"
     >
       <span className="inline-flex items-center gap-2">
@@ -107,7 +107,7 @@ export function PerformanceFilterBar({
       </label>
 
       <span
-        className={cn(perfUi.mono, 'whitespace-nowrap rounded-sm border border-border px-1.75 py-0.5 text-dense-meta text-muted-foreground')}
+        className={cn(perfUi.mono, 'whitespace-nowrap border px-1.75 py-0.5 text-dense-meta text-muted-foreground mat-tag')}
         aria-label="Trade range"
       >
         RANGE {formatRangeDate(sinceStr)} ~ {formatRangeDate(untilStr)}

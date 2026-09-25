@@ -56,11 +56,21 @@ Option contract strings remain **Option Entity** — never render as Option Cate
 
 Pages must use the accessor column — never raw palette classes (`text-emerald-*`, `text-red-*`, `text-sky-*`) or inline hex. Guarded by a ratchet rule in `scripts/check-legacy-css.sh` (`RAW_PNL_PALETTE_BASELINE`).
 
-### Page canvas (three surfaces)
+### Page materials (design Rev .61–.67)
 
-1. **Canvas** — `PageShell` with `bg-card` (same as sidebar)
-2. **Elevated** — `Card variant="elevated"` or `bg-secondary` for KPI bars, filters, chart panels
-3. **Inset** — `bg-background` for nested chart wells
+The page sits on the **window ground**: `#main-content` and `PageShell` are
+transparent, so the floating sidebar, the top bar and the page share one
+ground. Inside a page there are four material roles (tokens `--mat-*` and
+utilities `mat-*` in `src/index.css`):
+
+1. **Group** — `Card` or `mat-card`: no frame, ink 4%, radius 12, no shadow
+2. **Tag** — `DenseTag` or `mat-tag`: no frame, `currentColor` 15%, fully round
+3. **Secondary button** — DS `Button` outline / secondary (automatic) or `mat-btn`: ink 8%, radius 8
+4. **Field** — DS `Input` / select (automatic) or `mat-field`: ink 7%, radius 8, 3px accent focus ring
+
+Inside the page scope (`[data-mat]`) `--border` is the ink-6% rule, so dividers
+and table lines need no colour. Chart grids and data tracks use `--sk-line`.
+Never draw a neutral solid frame; a tinted (state) border is a reading and stays.
 
 ## Dense table usage
 

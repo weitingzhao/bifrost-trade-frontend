@@ -26,7 +26,7 @@ function Spark({ bars }: { bars: DecayRow['bars'] }) {
           title={b.label}
           className={cn(
             'inline-block w-[5px] rounded-t-[1px]',
-            b.value == null ? 'bg-secondary' : b.weak ? 'bg-warning' : 'bg-border',
+            b.value == null ? 'bg-secondary' : b.weak ? 'bg-warning' : 'bg-[var(--sk-line)]',
           )}
           style={{ height: b.value == null ? 4 : Math.max(3, Math.round(b.value * 18)) }}
         />
@@ -83,7 +83,7 @@ export function DecayRoster({
         </section>
       ) : null}
 
-      <section className="overflow-hidden rounded-lg border border-border">
+      <section className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
           <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
             Signals

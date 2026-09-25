@@ -41,7 +41,7 @@ export function ResearchAuthGap({
       return (
         <div
           className={cn(
-            'flex items-center gap-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5',
+            'flex items-center gap-2 border px-2 py-1.5 mat-card',
             className,
           )}
         >

@@ -84,7 +84,7 @@ const BAR: Record<AdoptionState, string> = {
 }
 
 /** A raised panel on the canvas, as the design draws each block of this page. */
-const PANEL = 'rounded-[var(--radius)] border border-[var(--sk-line0)] bg-[var(--sk-raised)]'
+const PANEL = 'border mat-card'
 
 /**
  * The five lists that are this side's work. `stale` is not one of them here —

@@ -10,7 +10,7 @@ export function PlanReservesSection() {
   return (
     <section
       id="backing-reserves"
-      className="min-w-0 rounded-md border border-border bg-secondary/40 px-3 py-2"
+      className="min-w-0 border px-3 py-2 mat-card"
       aria-label="Plan reserves"
       data-testid="plan-reserves"
     >

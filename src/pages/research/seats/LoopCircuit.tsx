@@ -61,7 +61,7 @@ function PageChip({ page }: { page: LoopPage }) {
     <Link
       to={page.to}
       title={tip}
-      className="inline-flex h-5 items-center rounded border border-border px-1.5 text-dense-caption text-muted-foreground hover:border-border/80 hover:text-foreground"
+      className="inline-flex h-5 items-center border px-1.5 text-dense-caption text-muted-foreground hover:text-foreground mat-btn"
     >
       {label}
     </Link>
@@ -113,7 +113,7 @@ export function LoopCircuit({ cards, machines }: { cards: LoopCard[]; machines: 
   const top = cards.filter((c) => c.row === 'top')
   const bottom = cards.filter((c) => c.row === 'bottom')
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-background">
+    <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
           The loop
@@ -147,7 +147,7 @@ export function LoopCircuit({ cards, machines }: { cards: LoopCard[]; machines: 
           </span>
           <span aria-hidden>↑</span>
         </div>
-        <div className="flex min-w-0 flex-col gap-1.5 rounded-md border border-border bg-secondary/60 px-3 py-2 md:col-span-3">
+        <div className="flex min-w-0 flex-col gap-1.5 border px-3 py-2 md:col-span-3 mat-card">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
               The machines
@@ -180,7 +180,7 @@ export function LoopCircuit({ cards, machines }: { cards: LoopCard[]; machines: 
                   key={m.id}
                   to={`/research/loop/objectives/${m.id}`}
                   title={m.tip}
-                  className="inline-flex min-w-0 items-baseline gap-1.5 rounded border border-border bg-background px-2 py-1 hover:border-border/80"
+                  className="inline-flex min-w-0 items-baseline gap-1.5 border px-2 py-1 mat-btn"
                 >
                   <span
                     className={cn('size-1.5 shrink-0 self-center rounded-full', m.tone)}

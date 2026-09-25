@@ -65,7 +65,7 @@ export function AgentInteractionsCard({
   const roleLabel = role ? ROLE_LABELS[lang][role] : agentName
 
   return (
-    <div className="rounded-md border border-border/60 bg-background/60 p-3 space-y-2.5">
+    <div className="border p-3 space-y-2.5 mat-card">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
         <div className="flex items-center gap-2">
           <p className="text-dense-label font-semibold">{copy.interactions}</p>

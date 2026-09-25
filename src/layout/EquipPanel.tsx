@@ -211,6 +211,7 @@ export function EquipPanel() {
           <div
             key={t.key}
             className={`${css.body} ${t.key === panel.active ? '' : css.bodyHidden}`}
+            data-mat=""
             onClickCapture={keepEquipmentLinksIn('panel')}
           >
             <SurfaceBody surface={t} />

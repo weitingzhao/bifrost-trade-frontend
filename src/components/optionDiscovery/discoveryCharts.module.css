@@ -2,8 +2,8 @@
 
 .discoveryRoot {
   --od-max-pain-axis-fill: var(--muted-foreground);
-  --od-max-pain-grid-stroke: var(--border);
-  --od-max-pain-axis-line: var(--border);
+  --od-max-pain-grid-stroke: var(--sk-line);
+  --od-max-pain-axis-line: var(--sk-line);
 }
 
 .discoveryRoot :global(.od-chart-expand-trigger) {
@@ -124,12 +124,12 @@
     135deg,
     transparent 0%,
     transparent 45%,
-    color-mix(in srgb, var(--border) 70%, transparent) 45%,
-    color-mix(in srgb, var(--border) 70%, transparent) 50%,
+    color-mix(in srgb, var(--sk-line) 70%, transparent) 45%,
+    color-mix(in srgb, var(--sk-line) 70%, transparent) 50%,
     transparent 50%,
     transparent 58%,
-    color-mix(in srgb, var(--border) 70%, transparent) 58%,
-    color-mix(in srgb, var(--border) 70%, transparent) 64%,
+    color-mix(in srgb, var(--sk-line) 70%, transparent) 58%,
+    color-mix(in srgb, var(--sk-line) 70%, transparent) 64%,
     transparent 64%
   );
 }
@@ -139,12 +139,12 @@
     135deg,
     transparent 0%,
     transparent 45%,
-    color-mix(in srgb, var(--primary) 55%, var(--border)) 45%,
-    color-mix(in srgb, var(--primary) 55%, var(--border)) 50%,
+    color-mix(in srgb, var(--primary) 55%, var(--sk-line)) 45%,
+    color-mix(in srgb, var(--primary) 55%, var(--sk-line)) 50%,
     transparent 50%,
     transparent 58%,
-    color-mix(in srgb, var(--primary) 55%, var(--border)) 58%,
-    color-mix(in srgb, var(--primary) 55%, var(--border)) 64%,
+    color-mix(in srgb, var(--primary) 55%, var(--sk-line)) 58%,
+    color-mix(in srgb, var(--primary) 55%, var(--sk-line)) 64%,
     transparent 64%
   );
 }
@@ -170,9 +170,11 @@
 /* ---------- Option Discovery: Strike window + strike ladder (Legacy parity) ---------- */
 
 .discoveryRoot :global(.option-discovery-strike-window) {
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--mat-card-radius);
   margin-bottom: 1rem;
+  background: var(--mat-card-fill);
+  box-shadow: none;
 }
 
 .discoveryRoot :global(.option-discovery-strike-window-summary) {
@@ -235,9 +237,10 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--secondary);
+  border: 1px solid transparent;
+  border-radius: var(--mat-card-radius);
+  background: var(--mat-card-fill);
+  box-shadow: none;
 }
 
 .discoveryRoot :global(.strike-ladder-controls-row) {
@@ -255,9 +258,9 @@
 
 .discoveryRoot :global(.strike-ladder-controls-row select) {
   min-width: 4rem;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--background);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--mat-field-fill);
   color: var(--foreground);
   font-size: 0.75rem;
   padding: 0.15rem 0.35rem;
@@ -265,9 +268,9 @@
 
 .discoveryRoot :global(.strike-ladder-controls-row input[type='number']) {
   width: 3.5rem;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--background);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--mat-field-fill);
   color: var(--foreground);
   font-size: 0.75rem;
   padding: 0.15rem 0.35rem;
@@ -304,9 +307,10 @@
   max-height: 14rem;
   overflow-x: hidden;
   overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--secondary);
+  border: 1px solid transparent;
+  border-radius: var(--mat-card-radius);
+  background: var(--mat-card-fill);
+  box-shadow: none;
 }
 
 .discoveryRoot :global(.strike-ladder-two-cols) {

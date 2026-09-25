@@ -185,7 +185,7 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
   return (
     <div className="space-y-3">
       {/* ── The calendar: 30 days, four lanes ── */}
-      <section className="overflow-hidden rounded-lg border border-border bg-background">
+      <section className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
           <span className={cap}>next {WINDOW_DAYS} days</span>
           <span className="text-dense-meta text-muted-foreground">
@@ -288,7 +288,7 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
       </section>
 
       {/* ── BOOK × EVENTS ── */}
-      <section className="overflow-hidden rounded-lg border border-border bg-background">
+      <section className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
           <span className={cap}>Book × events</span>
           <span className="text-dense-body font-semibold">

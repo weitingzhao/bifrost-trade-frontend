@@ -117,7 +117,7 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
         </span>
         <span
           className={cn(
-            'rounded border px-1 font-mono text-dense-micro font-bold',
+            'border px-1 font-mono text-dense-micro font-bold mat-tag',
             OPERATOR_CHIP[operatorOf(hypothesis.origin_page)],
           )}
           title="Who wrote this hypothesis — the Book keeps every operator's, side by side. Read off the birthplace until provenance is stored (W2)."

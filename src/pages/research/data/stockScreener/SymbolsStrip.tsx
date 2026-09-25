@@ -27,7 +27,7 @@ export function SymbolsStrip({
   summary,
 }: Props) {
   return (
-    <div className="rounded-md border border-border bg-secondary px-3 py-2 space-y-1.5">
+    <div className="border px-3 py-2 space-y-1.5 mat-card">
       <div className="flex items-center gap-2 text-dense-meta">
         <span className="font-medium text-foreground">Symbols</span>
         {asOf && <span className="font-mono text-dense-caption text-muted-foreground">as-of {asOf}</span>}

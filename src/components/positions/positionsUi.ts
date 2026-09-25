@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
  * bar, uppercase captions, and the prototype's 1.5 line height.
  */
 export const positionsUi = {
-  pageCard: 'flex flex-col gap-3 rounded-lg border border-border bg-card p-4',
+  pageCard: 'flex flex-col gap-3 border p-4 mat-card',
 
   tierRow: 'flex flex-wrap items-center gap-x-2.5 gap-y-1',
   tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
@@ -35,19 +35,13 @@ export const positionsUi = {
   bandItemWide: 'flex min-w-0 flex-[1_1_28.75rem] *:min-w-0 *:flex-1',
 
   /**
-   * §16.6 material (design Rev .19–.21): a solid data card — 10px corners, the
-   * faintest line step for its frame, a 4% highlight along the top edge. Layers
-   * read by ground and light rather than by drawn lines; rows inside tables keep
-   * their dividers, which are for scanning, not decoration.
+   * The data card (design Rev .62, Page Look 1a — was §16.6's framed raised
+   * card): no frame, ink 4%, radius 12. Rows inside tables keep their
+   * dividers, which are for scanning, not decoration.
    */
-  panel: cn(
-    'min-w-0 rounded-[10px] border border-[var(--sk-line0)] bg-[var(--sk-raised)]',
-    'shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-  ),
-  panelHead: cn(
-    'flex flex-wrap items-center gap-2.5 rounded-t-[9px] border-b border-[var(--sk-line0)]',
-    'bg-[var(--sk-raised2)] px-3 py-1.75 text-dense-body leading-normal',
-  ),
+  panel: 'min-w-0 border mat-card',
+  // Rev .62: the head is a rule, not a band — no fill, the ink-6% line.
+  panelHead: 'flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal',
   panelTitle: 'text-dense-body font-semibold leading-normal text-foreground',
   panelNote: 'text-dense-meta leading-normal text-muted-foreground',
 
@@ -55,17 +49,17 @@ export const positionsUi = {
   mono: 'font-mono tabular-nums',
   link: 'cursor-pointer whitespace-nowrap border-0 bg-transparent p-0 text-dense-meta leading-normal text-primary hover:underline',
   btn: cn(
-    'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-[5px] border border-border',
-    'bg-transparent px-1.75 text-dense-meta text-secondary-foreground hover:bg-[var(--sk-surface)] hover:text-foreground',
+    'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap border mat-btn',
+    'px-1.75 text-dense-meta text-secondary-foreground hover:text-foreground',
   ),
   /** The `?` that opens how a figure is built. */
   q: cn(
-    'inline-flex h-4 w-4 flex-none cursor-pointer items-center justify-center rounded-full border border-[var(--sk-line2)]',
-    'bg-transparent p-0 text-dense-caption leading-none text-muted-foreground hover:border-primary hover:text-primary',
+    'inline-flex h-4 w-4 flex-none cursor-pointer items-center justify-center border rounded-full bg-[var(--mat-btn-fill)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] border-transparent',
+    'p-0 text-dense-caption leading-none text-muted-foreground hover:text-primary',
   ),
   input: cn(
-    'h-5.5 min-w-0 rounded-[5px] border border-border bg-[var(--sk-raised)] px-1.75',
-    'font-mono text-xs text-foreground outline-none focus-visible:border-ring',
+    'h-5.5 min-w-0 border px-1.75 mat-field',
+    'font-mono text-xs text-foreground outline-none',
   ),
 
   // §17.2 (Rev .51, Owner 2026-09-25): the header is the DS one — uppercase,

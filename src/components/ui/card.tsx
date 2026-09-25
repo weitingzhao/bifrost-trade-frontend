@@ -4,16 +4,19 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const cardVariants = cva(
-  "group/card flex flex-col gap-3 overflow-hidden rounded-xl py-3 text-sm text-card-foreground has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-2 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+  "group/card flex flex-col gap-3 overflow-hidden py-3 text-sm text-card-foreground has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:gap-2 data-[size=sm]:py-2 data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
   {
     variants: {
       variant: {
-        /** Default panel on page canvas — subtle lift like Legacy .process-section. */
-        surface:
-          "bg-card ring-1 ring-foreground/[0.12] shadow-[0_1px_3px_rgba(0,0,0,0.12)]",
-        /** Raised panel on bg-card canvas (KPI tiles, nested blocks). */
-        elevated:
-          "border border-border bg-secondary text-secondary-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15)]",
+        /**
+         * A group on the window ground (design Rev .62, Page Look 1a): no
+         * frame, no shadow, ink 4%, radius 12 — System Settings' grouped
+         * inset. The lift that read against a --card canvas went with the
+         * canvas (Rev .61).
+         */
+        surface: "mat-card",
+        /** The same material; nested in a surface it reads a step up (8%). */
+        elevated: "mat-card text-secondary-foreground",
       },
       size: {
         default: "",

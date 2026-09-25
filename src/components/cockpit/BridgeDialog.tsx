@@ -208,7 +208,7 @@ export function BridgeDialog({
           {error ? <p className="text-dense-meta text-destructive">{error}</p> : null}
 
           {previewMd ? (
-            <div className="space-y-2 rounded border border-border/60 bg-secondary/30 p-2">
+            <div className="space-y-2 border p-2 mat-card">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-dense-label font-medium">Memory brief</p>
                 <div className="flex flex-wrap items-center gap-1">
@@ -254,14 +254,14 @@ export function BridgeDialog({
                   </Button>
                 </div>
               </div>
-              <div className="max-h-48 overflow-y-auto rounded border border-border/40 bg-background p-2">
+              <div className="max-h-48 overflow-y-auto border p-2 mat-card">
                 <MarkdownContent>{previewMd}</MarkdownContent>
               </div>
             </div>
           ) : null}
 
           {previewMd && eventId ? (
-            <div className="space-y-2 rounded border border-border/60 p-2">
+            <div className="space-y-2 border p-2 mat-card">
               <p className="text-dense-label font-medium">Paste external reply</p>
               <p className="text-dense-caption text-muted-foreground">
                 After the external assistant responds, paste the reply here to save as a Playbook
@@ -274,7 +274,7 @@ export function BridgeDialog({
                 onChange={(e) => setOutcome(e.target.value)}
               />
               <textarea
-                className="min-h-[100px] w-full rounded border border-border bg-background p-2 text-dense-label"
+                className="min-h-[100px] w-full border p-2 text-dense-label mat-field"
                 placeholder="Paste ChatGPT / Claude / DeepSeek reply…"
                 value={pasteReply}
                 onChange={(e) => setPasteReply(e.target.value)}

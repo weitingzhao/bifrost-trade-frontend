@@ -13,11 +13,11 @@ export const instanceMutedClass = 'text-muted-foreground'
 export const instanceErrorClass = 'text-destructive text-xs'
 
 export const instanceStatusOpenClass =
-  'inline-flex rounded-full border border-success/40 bg-success-soft px-2 py-0.5 text-dense-caption font-semibold uppercase text-success'
+  'inline-flex border border-success/40 bg-success-soft px-2 py-0.5 text-dense-caption font-semibold uppercase text-success mat-tag'
 export const instanceStatusClosedClass =
-  'inline-flex rounded-full border border-border px-2 py-0.5 text-dense-caption font-semibold uppercase text-muted-foreground'
+  'inline-flex border px-2 py-0.5 text-dense-caption font-semibold uppercase text-muted-foreground mat-tag'
 export const instanceStatusUnknownClass =
-  'inline-flex rounded-full border border-warning/40 bg-warning-soft px-2 py-0.5 text-dense-caption font-semibold uppercase text-warning'
+  'inline-flex border border-warning/40 bg-warning-soft px-2 py-0.5 text-dense-caption font-semibold uppercase text-warning mat-tag'
 
 export const instancePnlColumnClass = 'min-w-0'
 export const instancePnlSectionHeadClass = 'flex items-center gap-2 mb-2'
@@ -50,7 +50,7 @@ export const instanceKlineHintClass = 'text-xs text-muted-foreground'
 
 /** Executions match tables (Phase 4.9 — no module CSS) */
 export const instanceExecMatchWrapClass =
-  'mb-3 overflow-x-auto rounded-lg border border-border bg-card/90'
+  'mb-3 overflow-x-auto border mat-card'
 export const instanceExecMatchTableClass = 'w-full border-collapse text-dense-body'
 export const instanceExecMatchThClass =
   'border-b border-border bg-muted/25 px-2 py-1.5 text-left align-top text-dense-label font-semibold tracking-wide'
@@ -80,4 +80,4 @@ export const instanceExecFillsRowClass =
   'grid grid-cols-4 gap-1 border-t border-border/50 px-2.5 py-1 font-mono text-xs tabular-nums'
 export const instanceExecFillsColSellClass = 'border-l border-border'
 export const instanceExecTotalsRowClass =
-  'flex flex-wrap justify-end gap-x-5 gap-y-2 rounded-lg border border-border bg-muted/20 px-2.5 py-2 text-dense-body'
+  'flex flex-wrap justify-end gap-x-5 gap-y-2 border px-2.5 py-2 text-dense-body mat-card'

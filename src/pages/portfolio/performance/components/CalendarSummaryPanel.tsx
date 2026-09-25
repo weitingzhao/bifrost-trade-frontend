@@ -78,7 +78,7 @@ function SummaryColumn({
   empty?: boolean
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 rounded-sm border border-border px-2.25 py-1.75">
+    <div className="flex min-w-0 flex-col gap-1 border px-2.25 py-1.75 mat-card">
       <span className="text-dense-body font-semibold text-foreground">{title}</span>
       {empty ? (
         <span className="text-dense-meta italic text-muted-foreground text-pretty">No data in the selected range.</span>
@@ -103,7 +103,7 @@ function MonthStats({ monthKey, metrics }: { monthKey: string; metrics: MetricDe
         <span className="text-dense-meta text-muted-foreground">month stats</span>
       </span>
       {metrics.map((m) => (
-        <span key={m.label} className="flex min-w-0 flex-col gap-px rounded-sm border border-border px-2 py-1.25">
+        <span key={m.label} className="flex min-w-0 flex-col gap-px border px-2 py-1.25 mat-card">
           <span className={cn(perfUi.cap, 'text-dense-micro')}>{m.label}</span>
           <span className={cn(perfUi.mono, 'text-dense-body font-semibold', toneFor(m))}>{m.value}</span>
         </span>

@@ -195,7 +195,7 @@ export const TONE_BAR: Record<string, string> = {
   danger: 'bg-destructive',
   warning: 'bg-warning',
   info: 'bg-primary',
-  neutral: 'bg-border',
+  neutral: 'bg-[var(--sk-line)]',
 }
 
 /** The verdict wears the bar's colour — the design paints both from one value. */

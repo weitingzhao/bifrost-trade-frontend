@@ -182,7 +182,7 @@ export function HedgeMenu({
         message="Requests the hedge process to flatten all hedge positions on both accounts. This is the one button in Bifrost that asks the daemon to trade."
         bodyExtra={
           <div className="flex flex-col gap-2">
-            <div className="flex flex-col gap-1 rounded-md border border-border bg-[var(--sk-raised2)] px-2.5 py-2 text-dense-meta leading-normal">
+            <div className="flex flex-col gap-1 border px-2.5 py-2 text-dense-meta leading-normal mat-card">
               <span className="flex justify-between gap-2">
                 <span className="text-muted-foreground">Sends</span>
                 <span className={positionsUi.mono}>POST /control/flatten</span>

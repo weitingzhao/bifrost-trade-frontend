@@ -59,7 +59,7 @@ export function IvGauge({ value, label, size = 120, className }: IvGaugeProps) {
       aria-label={`IV Rank gauge: ${clamped.toFixed(0)}`}
     >
       {/* Background arc */}
-      <path d={bgPath} fill="none" stroke="var(--border)" strokeWidth={strokeW} strokeLinecap="round" />
+      <path d={bgPath} fill="none" stroke="var(--sk-line)" strokeWidth={strokeW} strokeLinecap="round" />
 
       {/* Value arc */}
       {clamped > 0 && (

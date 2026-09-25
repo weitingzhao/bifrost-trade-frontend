@@ -22,7 +22,7 @@ export function ExplanationBlock({
   return (
     <div
       className={cn(
-        'mx-2.5 mt-0.5 mb-2.25 rounded-[5px] border border-[var(--sk-line2)] bg-[var(--sk-raised2)] leading-normal',
+        'mx-2.5 mt-0.5 mb-2.25 border leading-normal mat-card',
         className,
       )}
       role="region"

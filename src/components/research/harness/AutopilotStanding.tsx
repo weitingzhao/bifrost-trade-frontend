@@ -85,7 +85,7 @@ export function AutopilotKpis({ standing }: { standing: AutopilotStanding }) {
 
 function Kpi({ label, title, children }: { label: string; title?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3" title={title}>
+    <div className="border px-4 py-3 mat-card" title={title}>
       <div className="text-dense-meta uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className="mt-1 flex flex-wrap items-center gap-2">{children}</div>
     </div>

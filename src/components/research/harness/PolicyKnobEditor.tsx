@@ -142,7 +142,7 @@ export function PolicyKnobEditor({
   }
 
   return (
-    <span className="inline-flex w-full min-w-0 flex-col gap-1 rounded-md border border-border/60 bg-background p-1.5">
+    <span className="inline-flex w-full min-w-0 flex-col gap-1 border p-1.5 mat-card">
       <input
         autoFocus
         value={draft}

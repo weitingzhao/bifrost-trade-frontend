@@ -35,7 +35,7 @@ import { usePolicyTemplates } from '@/hooks/useLoopHarness'
 import { PERSONAS, SCHEDULES, objectivePath } from '@/lib/harness/objectivePolicy'
 
 const TEXTAREA_CLASS =
-  'w-full text-dense-body min-h-[70px] resize-y rounded-md border border-input bg-background px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+  'w-full text-dense-body min-h-[70px] resize-y border px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mat-field'
 
 export interface NewObjectiveDialogProps {
   triggerLabel?: string

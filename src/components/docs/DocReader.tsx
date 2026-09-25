@@ -139,7 +139,7 @@ const PROSE_COMPONENTS: Components = {
     <code className="rounded-[3px] bg-[var(--sk-raised2)] px-1 font-mono text-[0.9em] text-foreground">{children}</code>
   ),
   pre: ({ children }) => (
-    <pre className="m-0 overflow-x-auto rounded-md border border-[var(--sk-line0)] bg-[var(--sk-raised)] p-3 text-dense-meta">
+    <pre className="m-0 overflow-x-auto border p-3 text-dense-meta mat-card">
       {children}
     </pre>
   ),
@@ -149,7 +149,7 @@ const PROSE_COMPONENTS: Components = {
     </a>
   ),
   table: ({ children }) => (
-    <div data-sr-hscroll="1" className="overflow-x-auto rounded-md border border-[var(--sk-line0)] bg-[var(--sk-raised)]">
+    <div data-sr-hscroll="1" className="overflow-x-auto border mat-card">
       <table data-sr-table="1" className="w-full">
         {children}
       </table>

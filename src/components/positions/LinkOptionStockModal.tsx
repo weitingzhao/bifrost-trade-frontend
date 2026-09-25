@@ -208,7 +208,7 @@ export function LinkOptionStockModal({
           ) : links.length === 0 ? (
             <p className="text-xs text-muted-foreground">No stock legs linked yet.</p>
           ) : (
-            <div className="max-h-[200px] overflow-auto rounded-md border">
+            <div className="max-h-[200px] overflow-auto border mat-card">
               <DenseDataTable tableClassName="min-w-[560px]">
                 <DenseTableHeader>
                   <DenseTableHeadRow>
@@ -279,7 +279,7 @@ export function LinkOptionStockModal({
           {isLoading ? null : candidates.length === 0 ? (
             <p className="text-xs text-muted-foreground">No matching STK rows in this window (check Flex sync).</p>
           ) : (
-            <div className="max-h-[240px] overflow-auto rounded-md border">
+            <div className="max-h-[240px] overflow-auto border mat-card">
               <DenseDataTable tableClassName="min-w-[520px]">
                 <DenseTableHeader>
                   <DenseTableHeadRow>

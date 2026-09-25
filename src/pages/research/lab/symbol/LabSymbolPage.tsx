@@ -299,11 +299,10 @@ export default function LabSymbolPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border px-3 py-1.75 mat-card">
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[5px] border px-2 py-0.5 font-mono text-dense-caption tracking-[0.05em]',
-            'border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.08)] text-[var(--sk-accent)]'
+            'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
           )}
           title="Method face — how the number is made. Analysis only; no order can be placed from here (D10)."
         >
@@ -339,7 +338,7 @@ export default function LabSymbolPage() {
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.5">
+      <div className="flex flex-wrap items-center gap-x-4.5 gap-y-1.5 border px-3 py-1.5 mat-card">
         <span className={cap}>verdict · same source as trade</span>
         {verdicts.map((v) => (
           <span key={v.label} className="flex flex-col gap-px whitespace-nowrap">

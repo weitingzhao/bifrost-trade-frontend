@@ -12,13 +12,11 @@
 
 .formPanel {
   margin-bottom: 1rem;
-  border-radius: 10px;
-  background: var(--secondary);
-  border: 1px solid var(--border);
+  border-radius: var(--mat-card-radius);
+  background: var(--mat-card-fill);
+  border: 1px solid transparent;
   overflow: hidden;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.18),
-    0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   animation: formSlideIn 0.25s ease-out;
 }
 
@@ -253,11 +251,11 @@
 .detailsCard {
   min-width: 0;
   padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: var(--mat-card-radius);
+  border: 1px solid transparent;
   border-left: 3px solid var(--primary);
-  background: var(--card);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  background: var(--mat-card-fill);
+  box-shadow: none;
   transition: box-shadow 0.2s ease;
 }
 
@@ -323,9 +321,9 @@
 
 .detailsInput {
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--card);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--mat-field-fill);
   color: var(--foreground);
   font: inherit;
   font-size: 0.875rem;
@@ -390,9 +388,10 @@
 
 .detailsTableWrap {
   overflow-x: auto;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: var(--card);
+  border-radius: var(--mat-card-radius);
+  border: 1px solid transparent;
+  background: var(--mat-card-fill);
+  box-shadow: none;
 }
 
 .detailsTable {
@@ -481,9 +480,10 @@
 .templateFilters {
   margin-bottom: 0.75rem;
   padding: 0.75rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--sk-ink) 2%, transparent);
+  border-radius: var(--mat-card-radius);
+  border: 1px solid transparent;
+  background: var(--mat-card-fill);
+  box-shadow: none;
 }
 
 .templateFiltersCompact {
@@ -567,12 +567,13 @@
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1.5px solid var(--border);
-  background: var(--card);
+  border-radius: var(--mat-card-radius);
+  border: 1px solid transparent;
+  background: var(--mat-card-fill);
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
+  box-shadow: none;
 }
 
 .templateCard:hover {
@@ -693,10 +694,11 @@
 
 .paramCard {
   padding: 0.75rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: var(--mat-card-radius);
+  border: 1px solid transparent;
   border-left: 3px solid var(--primary);
-  background: var(--card);
+  background: var(--mat-card-fill);
+  box-shadow: none;
 }
 
 .paramRow {

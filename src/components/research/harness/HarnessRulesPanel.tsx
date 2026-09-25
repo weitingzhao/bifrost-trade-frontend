@@ -158,7 +158,7 @@ export function RulesImpactPanel({
   const comparableDays = Math.max(0, ...[...drifts.values()].map((d) => d.days.length))
 
   return (
-    <div className="mx-1.5 mb-1 space-y-1 rounded-md border border-border/50 bg-background px-2.5 py-2">
+    <div className="mx-1.5 mb-1 space-y-1 border px-2.5 py-2 mat-card">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-dense-label font-medium">Your rules, and what they did</span>
         <span className="text-dense-caption text-muted-foreground">

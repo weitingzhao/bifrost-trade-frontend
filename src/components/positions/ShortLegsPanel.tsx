@@ -159,7 +159,7 @@ export function ShortLegsPanel({
         {legs.length > 0 ? <StretchedPlot>{map}</StretchedPlot> : map(PLOT_MIN)}
         {selected ? (
           <div
-            className="mt-2 flex flex-col gap-1.25 rounded-[5px] border border-[var(--sk-line2)] bg-[var(--sk-raised2)] px-2.5 py-1.75 leading-normal"
+            className="mt-2 flex flex-col gap-1.25 border px-2.5 py-1.75 leading-normal mat-card"
             data-testid="selected-leg"
           >
             <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.75">

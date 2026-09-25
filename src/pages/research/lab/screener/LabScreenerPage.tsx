@@ -15,7 +15,8 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Button, DenseTag, EmptyState, Input } from '@bifrost/ui'
+import { Button, EmptyState, Input } from '@bifrost/ui'
+import { DenseTag } from '@/components/data-display'
 import { fetchSepaScreenerWide, type SepaWideRow } from '@/api/research/sepaScreenerWide'
 import { createSavedScreen, fetchSavedScreens } from '@/api/research/savedScreens'
 import { fetchSepaDaily } from '@/api/researchEngine'
@@ -130,7 +131,7 @@ function condDots(r: SepaWideRow, conds: readonly [string, string][]) {
         title={`${label} · ${v === true ? 'pass' : v === false ? 'fail' : 'not evaluated'}`}
         className={cn(
           'h-[5px] w-[5px] rounded-[1px]',
-          v === true ? 'bg-[var(--sk-accent)]' : 'bg-border',
+          v === true ? 'bg-[var(--sk-accent)]' : 'bg-[var(--sk-line)]',
           v == null && 'opacity-40'
         )}
       />
@@ -298,11 +299,10 @@ export default function LabScreenerPage() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.75">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border px-3 py-1.75 mat-card">
         <span
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-[5px] border px-2 py-0.5 font-mono text-dense-caption tracking-[0.05em]',
-            'border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.08)] text-[var(--sk-accent)]'
+            'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
           )}
           title="Method face — how the number is made. Analysis only; no order can be placed from here (D10)."
         >

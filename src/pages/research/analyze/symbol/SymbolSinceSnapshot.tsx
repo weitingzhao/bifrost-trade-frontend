@@ -101,7 +101,7 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
     const firstLook = current != null && loadSymbolSnapshot(sym) == null
     return (
       <section
-        className="rounded border border-border/60 bg-muted/20 px-2 py-1.5"
+        className="border px-2 py-1.5 mat-card"
         aria-label="Since you last looked"
         title="Prior readings come from this browser, not Research's last snapshot."
       >
@@ -123,7 +123,7 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
 
   return (
     <section
-      className="rounded border border-border/60 bg-muted/20 px-2 py-1.5"
+      className="border px-2 py-1.5 mat-card"
       aria-label="Since you last looked"
       title="Prior readings come from this browser, not Research's last snapshot."
     >

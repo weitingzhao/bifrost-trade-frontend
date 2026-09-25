@@ -73,7 +73,7 @@ export function StanceBar({ verdicts }: { verdicts: PersonaVerdict[] }) {
       className="inline-flex items-center gap-1.5"
       title={`Mean stance ${score.toFixed(2)} across ${counted} verdict${counted === 1 ? '' : 's'} (−1 opposed … +1 supportive)${abstained > 0 ? `; ${abstained} abstained, left out` : ''}`}
     >
-      <span className="relative h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-border">
+      <span className="relative h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--sk-line)]">
         <span className="absolute inset-y-0 left-1/2 w-px bg-muted-foreground/50" />
         <span
           className={cn('absolute inset-y-0 w-1.5 rounded-full', tone)}
@@ -178,7 +178,7 @@ export function CopyCandidates({ rows }: { rows: PersonaRow[] }) {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-1 rounded border border-border/60 px-1.5 py-[0.05rem] text-dense-micro text-muted-foreground hover:bg-muted hover:text-foreground"
+      className="inline-flex items-center gap-1 border px-1.5 py-[0.05rem] text-dense-micro text-muted-foreground hover:text-foreground mat-btn"
       title={`Copy ${label} and every judge’s reasoning as Markdown, to paste into another model or a note`}
       onClick={() => {
         void copyText(rows.map((r) => candidateMarkdown(r)).join('\n')).then((ok) => {
@@ -257,7 +257,7 @@ export function TriageFold({ triage }: { triage: TriageView | null }) {
           >
             <span className="w-16 shrink-0 font-mono font-medium">{r.symbol}</span>
             <span
-              className="relative h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-border"
+              className="relative h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--sk-line)]"
               title={`worth ${r.worth.toFixed(2)}`}
             >
               <span

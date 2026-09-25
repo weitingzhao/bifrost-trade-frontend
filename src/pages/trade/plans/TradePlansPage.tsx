@@ -219,7 +219,7 @@ export default function TradePlansPage() {
           gap Risk › Sizing marks on its own strip, said once here rather than
           guessed at per cell. */}
       {query.isLoading ? null : (
-        <div className="flex flex-wrap items-start gap-x-7 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2.5">
+        <div className="flex flex-wrap items-start gap-x-7 gap-y-2 border px-3 py-2.5 mat-card">
           <PositionsStat
             cap="Open plans"
             value={String(counts.draft + counts.intended)}

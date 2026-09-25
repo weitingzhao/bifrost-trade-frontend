@@ -31,8 +31,8 @@ const LOSS_DAY_THRESHOLD = -500
 
 /** Prototype `.pf-btn`. */
 const btn = cn(
-  'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-sm border border-border bg-transparent px-1.75',
-  'text-dense-meta text-secondary-foreground hover:bg-[var(--sk-surface)] hover:text-foreground disabled:cursor-default disabled:opacity-50',
+  'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap border px-1.75 mat-btn',
+  'text-dense-meta text-secondary-foreground hover:text-foreground disabled:cursor-default disabled:opacity-50',
 )
 
 function tabBtn(active: boolean, enabled = true): string {
@@ -326,7 +326,7 @@ export function PerformanceCalendarSection({
           <div>
             <div className="flex flex-wrap gap-1.5 border-b border-border/55 px-3 py-2.25">
               {dayStats.map((stat) => (
-                <span key={stat.label} className="flex min-w-0 flex-col gap-px rounded-sm border border-border px-2 py-1.25" title={stat.title}>
+                <span key={stat.label} className="flex min-w-0 flex-col gap-px border px-2 py-1.25 mat-card" title={stat.title}>
                   <span className={cn(perfUi.cap, 'text-dense-micro')}>{stat.label}</span>
                   <span className={cn(perfUi.mono, 'text-xs font-semibold', statTone(stat))}>{stat.value}</span>
                 </span>

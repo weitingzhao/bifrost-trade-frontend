@@ -98,7 +98,7 @@ export function OptionScreenerSources({
           {symbols.map((sym) => (
             <span
               key={sym}
-              className="inline-flex h-5 items-center gap-1 rounded border border-border px-1.5 font-mono text-dense-caption"
+              className="inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-dense-caption mat-tag"
             >
               {sym}
               <button

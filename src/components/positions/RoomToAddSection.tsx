@@ -204,7 +204,7 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange, quie
             Quiet, it is a label — still visible, because it is honesty, not explanation. */}
         {quiet ? (
           <span
-            className="inline-flex h-4.5 items-center self-start rounded-full border border-border px-1.75 text-dense-caption leading-none text-[var(--sk-mute2)]"
+            className="inline-flex h-4.5 items-center self-start border px-1.75 text-dense-caption leading-none text-[var(--sk-mute2)] mat-tag"
             title="Page estimates from the book’s own numbers, not the broker what-if. Each ? opens how the figure is built."
           >
             page estimate · not broker what-if

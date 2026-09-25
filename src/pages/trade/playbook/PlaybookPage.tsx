@@ -161,7 +161,7 @@ export function PlaybookPage() {
           impression that saving a rule arms it. */}
       <div
         role="note"
-        className="rounded-md border border-border/60 bg-secondary px-3 py-2 text-dense-meta leading-snug text-muted-foreground"
+        className="border px-3 py-2 text-dense-meta leading-snug text-muted-foreground mat-card"
       >
         <span className="font-medium text-foreground">Advisory only.</span> Rules and notes
         inform Copilot reasoning and your own review. They are{' '}
@@ -206,10 +206,10 @@ export function PlaybookPage() {
                   aria-checked={newRuleCategory === c}
                   onClick={() => setNewRuleCategory(c)}
                   className={cn(
-                    'rounded border px-2 py-0.5 font-mono text-dense-micro font-semibold',
+                    'rounded-[8px] border border-transparent px-2 py-0.5 font-mono text-dense-micro font-semibold',
                     newRuleCategory === c
-                      ? 'border-primary text-primary'
-                      : 'border-border text-muted-foreground hover:text-foreground',
+                      ? 'bg-primary/15 text-primary'
+                      : 'bg-[var(--mat-btn-fill)] text-muted-foreground hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
                   )}
                 >
                   {c}
@@ -217,7 +217,7 @@ export function PlaybookPage() {
               ))}
             </div>
             <textarea
-              className="min-h-[100px] w-full rounded border border-border bg-background p-2 text-dense-label"
+              className="min-h-[100px] w-full border p-2 text-dense-label mat-field"
               placeholder="Markdown body — the rule, the reason, the tell that you are about to break it"
               value={newRuleBody}
               onChange={(e) => setNewRuleBody(e.target.value)}
@@ -284,7 +284,7 @@ export function PlaybookPage() {
               Quick note
             </p>
             <textarea
-              className="min-h-[64px] w-full rounded border border-border bg-background p-2 text-dense-label"
+              className="min-h-[64px] w-full border p-2 text-dense-label mat-field"
               placeholder="Markdown — observations that are not yet rules"
               value={newNoteBody}
               onChange={(e) => setNewNoteBody(e.target.value)}

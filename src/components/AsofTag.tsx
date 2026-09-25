@@ -28,8 +28,10 @@ export interface AsofTagProps {
   className?: string
 }
 
+// Rev .67: no frame — the state is the fill (neutral ink 8%, holding amber
+// 20%), radius 8.
 const CHIP =
-  'inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border px-2 font-mono text-dense-micro tracking-wide hover:brightness-125'
+  'inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-transparent px-2 font-mono text-dense-micro tracking-wide hover:brightness-125'
 
 export function AsofTag({ asof, expected, sessions, flag, judgedBy, href, className }: AsofTagProps) {
   const behind = asofHolding(asof, expected, sessions)
@@ -56,7 +58,7 @@ export function AsofTag({ asof, expected, sessions, flag, judgedBy, href, classN
         title={asofTitle}
         className={cn(
           CHIP,
-          holding ? 'border-warning/40 bg-warning/10 text-warning' : 'border-border text-muted-foreground',
+          holding ? 'bg-warning/20 text-warning' : 'bg-[var(--mat-btn-fill)] text-muted-foreground',
         )}
       >
         ASOF {asof ?? '—'}
@@ -66,7 +68,7 @@ export function AsofTag({ asof, expected, sessions, flag, judgedBy, href, classN
         <Link
           to={href}
           title={`${flag.detail} · judged by ${judgedBy} · click to open where it was judged`}
-          className={cn(CHIP, 'border-border', flag.tone === 'warning' ? 'text-warning' : 'text-muted-foreground')}
+          className={cn(CHIP, 'bg-[var(--mat-btn-fill)]', flag.tone === 'warning' ? 'text-warning' : 'text-muted-foreground')}
         >
           ⚑ {flag.flag}
           <span className="font-sans tracking-normal text-muted-foreground">· judged by {judgedBy}</span>

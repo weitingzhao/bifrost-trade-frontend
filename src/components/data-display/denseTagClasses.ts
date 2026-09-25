@@ -1,6 +1,10 @@
 import { cn } from '@/lib/utils'
 
-/** Dense UI tag variants — outline pills (border + text only, no fill). */
+/**
+ * Dense UI tag variants — filled capsules since design Rev .62: no frame, the
+ * variant's own ink at 15% behind it (`mat-tag`), fully round, 8px sides.
+ * The variant sets only the ink; the fill follows it through currentColor.
+ */
 export type DenseTagVariant =
   | 'category'
   | 'symbol'
@@ -20,66 +24,66 @@ export type DenseTagVariant =
 export type DenseTagSize = 'cell' | 'pill'
 
 const shellBySize: Record<DenseTagSize, string> = {
-  cell: 'inline-block rounded-full border text-dense-meta font-medium px-[0.45rem] py-[0.1rem]',
-  pill: 'inline-block rounded-full border text-xs font-semibold px-2 py-0.5',
+  cell: 'inline-block border mat-tag text-dense-meta font-medium py-[0.1rem]',
+  pill: 'inline-block border mat-tag text-xs font-semibold py-0.5',
 }
 
 const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
   category: {
-    cell: 'border-entity-category/45 text-entity-category font-medium',
-    pill: 'border-entity-category/50 text-entity-category font-semibold',
+    cell: 'text-entity-category font-medium',
+    pill: 'text-entity-category font-semibold',
   },
   symbol: {
-    cell: 'border-entity-symbol/40 text-entity-symbol font-semibold',
-    pill: 'border-entity-symbol/45 text-entity-symbol font-bold tracking-wide',
+    cell: 'text-entity-symbol font-semibold',
+    pill: 'text-entity-symbol font-bold tracking-wide',
   },
   strategy: {
-    cell: 'border-entity-strategy/45 text-entity-strategy font-semibold',
-    pill: 'border-entity-strategy/45 text-entity-strategy font-semibold',
+    cell: 'text-entity-strategy font-semibold',
+    pill: 'text-entity-strategy font-semibold',
   },
   instance: {
-    cell: 'border-entity-instance/45 text-entity-instance font-mono font-semibold',
-    pill: 'border-entity-instance/45 text-entity-instance font-mono font-semibold',
+    cell: 'text-entity-instance font-mono font-semibold',
+    pill: 'text-entity-instance font-mono font-semibold',
   },
   success: {
-    cell: 'border-emerald-500/45 text-emerald-600 dark:text-emerald-400',
-    pill: 'border-emerald-500/45 text-emerald-600 dark:text-emerald-400',
+    cell: 'text-emerald-600 dark:text-emerald-400',
+    pill: 'text-emerald-600 dark:text-emerald-400',
   },
   warning: {
-    cell: 'border-amber-500/45 text-amber-700 dark:text-amber-400',
-    pill: 'border-amber-500/45 text-amber-700 dark:text-amber-400',
+    cell: 'text-amber-700 dark:text-amber-400',
+    pill: 'text-amber-700 dark:text-amber-400',
   },
   danger: {
-    cell: 'border-red-500/45 text-red-600 dark:text-red-400',
-    pill: 'border-red-500/45 text-red-600 dark:text-red-400',
+    cell: 'text-red-600 dark:text-red-400',
+    pill: 'text-red-600 dark:text-red-400',
   },
   neutral: {
-    cell: 'border-border text-muted-foreground',
-    pill: 'border-border text-muted-foreground',
+    cell: 'text-muted-foreground',
+    pill: 'text-muted-foreground',
   },
   info: {
-    cell: 'border-sky-500/45 text-sky-700 dark:text-sky-400',
-    pill: 'border-sky-500/45 text-sky-700 dark:text-sky-400',
+    cell: 'text-sky-700 dark:text-sky-400',
+    pill: 'text-sky-700 dark:text-sky-400',
   },
   'source-flex': {
-    cell: 'border-emerald-500/45 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold',
-    pill: 'border-emerald-500/45 text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold',
+    cell: 'text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold',
+    pill: 'text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold',
   },
   'source-tws': {
-    cell: 'border-sky-500/45 text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
-    pill: 'border-sky-500/45 text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
+    cell: 'text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
+    pill: 'text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
   },
   'source-journal': {
-    cell: 'border-amber-500/45 text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
-    pill: 'border-amber-500/45 text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
+    cell: 'text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
+    pill: 'text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
   },
   'source-manual': {
-    cell: 'border-violet-500/45 text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',
-    pill: 'border-violet-500/45 text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',
+    cell: 'text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',
+    pill: 'text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',
   },
   'source-muted': {
-    cell: 'border-border text-muted-foreground font-mono text-xs font-semibold',
-    pill: 'border-border text-muted-foreground font-mono text-xs font-semibold',
+    cell: 'text-muted-foreground font-mono text-xs font-semibold',
+    pill: 'text-muted-foreground font-mono text-xs font-semibold',
   },
 }
 

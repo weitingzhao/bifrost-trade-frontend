@@ -2,7 +2,7 @@
  * ATM Vol vs DTE line chart — Wave RS-B-Surface2.
  *
  * Simple SVG line with markers per expiry. Uses tokens (text-dense-*,
- * stroke-primary, stroke-border) — no raw font-size and no PnL palette.
+ * stroke-primary, stroke-[var(--sk-line)]) — no raw font-size and no PnL palette.
  */
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -77,7 +77,7 @@ export function TermStructureChart({
           x2={chart.pad.left + chart.chartW}
           y1={chart.yScale(chart.minVol)}
           y2={chart.yScale(chart.minVol)}
-          className="stroke-border"
+          className="stroke-[var(--sk-line)]"
           strokeWidth={1}
         />
 
@@ -128,7 +128,7 @@ export function TermStructureChart({
       </svg>
 
       {hovered ? (
-        <div className="mt-1 rounded-md border border-border bg-secondary/80 px-3 py-1.5 text-dense-meta">
+        <div className="mt-1 border px-3 py-1.5 text-dense-meta mat-card">
           <span className="font-mono">{hovered.expiry ?? '—'}</span>
           <span className="mx-2 text-muted-foreground">·</span>
           <span className="font-mono tabular-nums">DTE {hovered.dte}</span>

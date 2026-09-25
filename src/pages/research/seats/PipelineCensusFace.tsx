@@ -32,11 +32,11 @@ export function PipelineCensusFace() {
           homes, Rev 2026-09-18.2): the seat as a tag on the page rather than a
           rail state. The prototype's own ruling is that this home is not
           redesigned — what changed is around it. */}
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 rounded-md border border-border bg-background px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border px-3 py-2 mat-card">
         <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Context
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded border border-border px-2 py-0.5 text-dense-meta">
+        <span className="inline-flex items-center gap-1.5 border px-2 py-0.5 text-dense-meta mat-tag">
           <span className="font-mono font-bold text-foreground">hand</span>
           <span className="text-muted-foreground">operator</span>
         </span>

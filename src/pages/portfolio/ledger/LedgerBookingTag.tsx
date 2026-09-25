@@ -30,7 +30,7 @@ export function LedgerBookingTag({
       className={cn(
         // Wraps inside a narrow column: `not reported by this source` is the
         // ruling's wording (F-L3) and a clipped tag would hide half of it.
-        'inline-flex max-w-full items-center rounded-sm border px-1 py-px',
+        'inline-flex max-w-full items-center border px-1 py-px mat-tag',
         'whitespace-normal text-left font-mono text-dense-meta leading-tight',
         TONE[kind],
         className,

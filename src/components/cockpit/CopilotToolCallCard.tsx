@@ -34,7 +34,7 @@ export function CopilotToolCallCard({ call }: { call: CopilotToolCall }) {
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="rounded border border-border/50 bg-background/80"
+      className="border mat-card"
     >
       <CollapsibleTrigger className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left hover:bg-secondary/40">
         {open ? (
@@ -48,7 +48,7 @@ export function CopilotToolCallCard({ call }: { call: CopilotToolCall }) {
             <span className="truncate text-dense-meta font-medium text-foreground">
               {meta.title}
             </span>
-            <span className="shrink-0 rounded-full border border-border/60 bg-secondary px-1.5 py-0 text-dense-caption text-muted-foreground">
+            <span className="shrink-0 border px-1.5 py-0 text-dense-caption text-muted-foreground mat-tag">
               {categoryLabel(meta.category)}
             </span>
           </div>
@@ -72,7 +72,7 @@ export function CopilotToolCallCard({ call }: { call: CopilotToolCall }) {
           <CopilotSourceLink toolName={call.name} symbol={symbol} />
         </div>
         {hasArgs ? (
-          <details className="rounded border border-border/30 bg-secondary/20 px-2 py-1">
+          <details className="border px-2 py-1 mat-card">
             <summary className="cursor-pointer text-dense-caption text-muted-foreground hover:text-foreground">
               调用参数
             </summary>

@@ -19,7 +19,7 @@ export const screenerStackColClass = 'flex min-w-0 flex-col gap-1.5'
 
 /** Elevated filter card — compact padding (filters should not dominate the page). */
 export const screenerCardClass = cn(
-  'h-auto rounded-md border border-border bg-secondary px-2.5 py-1.5 shadow-none',
+  'h-auto border px-2.5 py-1.5 mat-card',
 )
 
 export const screenerCardStackedClass = 'px-2 py-1.5'
@@ -37,10 +37,10 @@ export const screenerChipRowClass = 'flex flex-wrap gap-0.5'
 
 /** Condition chips — caption size, lighter than page results. */
 export const screenerChipClass = cn(
-  'inline-flex cursor-pointer items-center gap-1 rounded border border-border/70',
-  'whitespace-nowrap bg-background/40 px-1.5 py-0.5 text-dense-caption font-sans font-normal',
+  'inline-flex cursor-pointer items-center gap-1 border mat-tag',
+  'whitespace-nowrap px-1.5 py-0.5 text-dense-caption font-sans font-normal',
   'text-muted-foreground/90 transition-[background,border-color,color] duration-150',
-  'hover:bg-muted/40 hover:text-foreground',
+  'hover:text-foreground',
 )
 
 export const screenerChipActiveClass = cn(

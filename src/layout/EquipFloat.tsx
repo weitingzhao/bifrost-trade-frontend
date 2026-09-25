@@ -314,7 +314,7 @@ export function EquipFloat() {
         </button>
         <PlaceButtons surface={float} here="float" />
       </div>
-      <div className={css.body} onClickCapture={keepEquipmentLinksIn('float')}>
+      <div className={css.body} data-mat="" onClickCapture={keepEquipmentLinksIn('float')}>
         <SurfaceBody surface={float} />
       </div>
       <span className={css.grip} onPointerDown={onGrip} title="Drag to resize" aria-hidden />

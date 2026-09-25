@@ -3,7 +3,7 @@
  * near-money table with chain-OI weights, the honesty note about the store's
  * own RMSE) and the grounded Copilot ask.
  */
-import { DenseTag } from '@bifrost/ui'
+import { DenseTag } from '@/components/data-display'
 import type { VolSurfaceFitRow } from '@/api/research/volSurface'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { CopilotDraftPanel } from '@/components/research/CopilotDraftPanel'

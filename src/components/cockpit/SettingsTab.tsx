@@ -90,7 +90,7 @@ export function SettingsTab() {
 
       <AiUsageTile />
 
-      <div className="rounded border border-border/50 px-2 py-2 space-y-2">
+      <div className="border px-2 py-2 space-y-2 mat-card">
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
             <p className="text-dense-label font-medium">Model</p>
@@ -161,7 +161,7 @@ export function SettingsTab() {
                             {m.id}
                           </span>
                           {disabled ? (
-                            <span className="rounded border border-border/60 px-1 text-dense-caption text-muted-foreground/70">
+                            <span className="border px-1 text-dense-caption text-muted-foreground/70 mat-tag">
                               未配置
                             </span>
                           ) : null}

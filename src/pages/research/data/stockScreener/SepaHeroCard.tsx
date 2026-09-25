@@ -308,7 +308,7 @@ export function SepaHeroCard({
 
   return (
     <div className={cn(
-      'flex flex-col rounded-md border border-border bg-secondary overflow-hidden',
+      'flex flex-col border overflow-hidden mat-card',
     )}>
       {/* Header — colored top edge + title */}
       <div className={cn(

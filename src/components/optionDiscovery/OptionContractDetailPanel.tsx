@@ -130,7 +130,7 @@ export function OptionContractDetailPanel({
             {selectedRow.right === 'C' ? 'Call' : 'Put'} {selectedRow.strike.toFixed(2)}
             <span
               className={cn(
-                'rounded-full border px-1.5 py-0.5 text-xs font-semibold uppercase',
+                'border px-1.5 py-0.5 text-xs font-semibold uppercase mat-tag',
                 // Discovery shows a contract you might buy, so moneyness reads
                 // from the long side. The same label on a short leg is the
                 // opposite signal — see moneynessTone.

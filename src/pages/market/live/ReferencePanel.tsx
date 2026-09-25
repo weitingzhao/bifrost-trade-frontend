@@ -21,7 +21,7 @@ export function ReferencePanel({
 }) {
   const tiles = referenceTiles(benchmarks, quotes, declared)
   return (
-    <section className="overflow-hidden rounded-md border border-border">
+    <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.1em] text-muted-foreground">
           Reference

@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 
 /** Trade Ledger page inner surface (elevated card on PageShell canvas). */
 export const ledgerPageCardClass = cn(
-  'flex flex-col gap-3 rounded-lg border border-border bg-card p-4',
+  'flex flex-col gap-3 border p-4 mat-card',
 )
 
 export const ledgerShell = {
@@ -13,7 +13,7 @@ export const ledgerShell = {
   tierNote: 'text-dense-meta text-muted-foreground',
 
   /** One bordered surface for the view selector and for each view's list. */
-  panel: 'min-w-0 rounded-md border border-border bg-background/40',
+  panel: 'min-w-0 border mat-card',
   panelFoot: 'px-3 py-1.5 text-dense-meta text-muted-foreground text-pretty',
 
   selectorTop: 'flex flex-wrap items-start gap-x-4.5 gap-y-2.5 px-3 py-2',
@@ -32,7 +32,7 @@ export const ledgerShell = {
 
   symbolCombobox: 'relative min-w-28',
   symbolInput: cn(
-    'h-[1.875rem] w-full min-w-28 rounded-sm border border-border bg-background',
+    'h-[1.875rem] w-full min-w-28 border mat-field',
     'px-2 text-dense-body text-foreground',
   ),
   symbolList: cn(
@@ -47,12 +47,13 @@ export const ledgerShell = {
 /** A view or sub-view chip: lime when on, dim when it would show nothing. */
 export function ledgerChipClass(active: boolean, empty: boolean, filled = true): string {
   return cn(
-    'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-sm border px-2',
+    // Rev .62: no frame — on is the accent fill, off the ink one.
+    'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-[8px] border border-transparent px-2',
     'text-dense-meta font-semibold transition-colors',
     active
-      ? cn('border-primary text-primary', filled && 'bg-primary/[0.08]')
+      ? cn('text-primary', filled ? 'bg-primary/15' : 'bg-[var(--mat-btn-fill)]')
       : cn(
-        'border-border bg-transparent hover:border-[var(--color-border-strong)] hover:text-foreground',
+        'bg-[var(--mat-btn-fill)] hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
         empty ? 'text-[var(--color-text-dim)]' : 'text-muted-foreground',
       ),
   )

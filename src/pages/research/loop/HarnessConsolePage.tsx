@@ -367,7 +367,7 @@ export default function HarnessConsolePage() {
               D10 BLOCKED
             </span>
             <div
-              className="flex items-center gap-1.5 rounded-md border border-border/60 bg-secondary/40 px-2 py-1"
+              className="flex items-center gap-1.5 border px-2 py-1 mat-card"
               title={trust?.reason ?? 'Loading Trust…'}
             >
               <StatusLamp
@@ -398,11 +398,11 @@ export default function HarnessConsolePage() {
           retired (Owner 2026-09-19) — what the tag is actually for is naming
           which operator writes here, so it reads "the engine" now, the same
           words the Decision Inbox uses over the queue this page fills. */}
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 rounded-md border border-border bg-background px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border px-3 py-2 mat-card">
         <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Context
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded border border-border px-2 py-0.5 text-dense-meta">
+        <span className="inline-flex items-center gap-1.5 border px-2 py-0.5 text-dense-meta mat-tag">
           <span className="font-mono font-bold text-primary">L3</span>
           {/* "the engine", not "autopilot seat": the seat model was retired
               on 2026-09-19 and the design's chip was reworded with it. */}

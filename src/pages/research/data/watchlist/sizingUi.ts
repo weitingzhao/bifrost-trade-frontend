@@ -92,8 +92,8 @@ export const sizingOrderFieldLabelClass = cn(
 export const sizingOrderFieldHintClass = cn('ml-1 font-normal normal-case text-muted-foreground')
 
 export const sizingOrderFieldInputClass = cn(
-  'h-8 rounded-md border border-input bg-secondary px-2 font-mono text-sm tabular-nums text-foreground',
-  'outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30',
+  'h-8 border px-2 font-mono text-sm tabular-nums text-foreground mat-field',
+  'outline-none focus-visible:ring-2 focus-visible:ring-ring/30',
   'placeholder:text-muted-foreground/70',
 )
 
@@ -106,7 +106,7 @@ export const sizingDashCardsTightClass = cn(
 )
 
 export const sizingDashCardClass = cn(
-  'flex flex-col rounded-lg border border-border/85 bg-secondary px-3 py-2',
+  'flex flex-col border px-3 py-2 mat-card',
 )
 
 export const sizingDashCardHighlightClass = cn(
@@ -159,7 +159,7 @@ export const sizingOrderMetricSuffixClass = cn(
 )
 
 export const sizingKellyRangeBlockClass = cn(
-  'w-full min-w-0 flex-1 rounded-[10px] border border-border/80 bg-secondary/40 p-2',
+  'w-full min-w-0 flex-1 border p-2 mat-card',
 )
 
 export const sizingKellyRangeHeadClass = cn('mb-1 flex items-center justify-between gap-2')
@@ -177,7 +177,7 @@ export const sizingKellyExactRowClass = cn('mt-1 flex items-center justify-end g
 export const sizingKellyExactLabelClass = cn('text-dense-caption font-semibold text-muted-foreground')
 
 export const sizingKellyExactInputClass = cn(
-  'h-7 w-[4.25rem] rounded-md border border-input bg-background px-2 font-mono text-xs tabular-nums',
+  'h-7 w-[4.25rem] border px-2 font-mono text-xs tabular-nums mat-field',
 )
 
 export const sizingRangeElegantClass = cn('h-2 w-full cursor-pointer accent-primary')
@@ -414,5 +414,5 @@ export const sizingCashPieDotStkClass = cn(sizingCashPieDotClass, 'bg-violet-400
 
 export const sizingCashPieDotRestClass = cn(
   sizingCashPieDotClass,
-  'bg-[color-mix(in_srgb,var(--border)_72%,var(--secondary))]',
+  'bg-[color-mix(in_srgb,var(--sk-line)_72%,var(--secondary))]',
 )

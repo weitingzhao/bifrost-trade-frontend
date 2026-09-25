@@ -94,7 +94,7 @@ export function LeadersFace({
   )
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border" aria-label="Leaders">
+    <section className="overflow-hidden border mat-card" aria-label="Leaders">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
           Leaders

@@ -208,7 +208,7 @@ export default function CandidatePoolPage() {
 
       {/* The design's strip over the pool. `Above promote line` keeps its
           sentence and no number — no fit line exists to be above. */}
-      <div className="flex flex-wrap items-start gap-x-7 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2.5">
+      <div className="flex flex-wrap items-start gap-x-7 gap-y-2 border px-3 py-2.5 mat-card">
         <div className="flex flex-col gap-0.5">
           <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
             In pool

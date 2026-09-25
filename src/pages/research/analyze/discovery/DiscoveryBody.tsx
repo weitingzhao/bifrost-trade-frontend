@@ -336,7 +336,7 @@ export function DiscoveryBody() {
                    and P(profit). This strip is the hand-off — the face opens
                    on this contract, and everything the inline panel could do
                    is there, with more. */
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-border/60 bg-muted/15 px-3 py-1.5">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border px-3 py-1.5 mat-card">
                   <span className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
                     Structure
                   </span>

@@ -35,7 +35,7 @@ export interface StripCell {
 
 export function DeskStrip({ cells }: { cells: StripCell[] }) {
   return (
-    <div className="flex flex-wrap items-stretch overflow-visible rounded-md border border-border bg-[var(--sk-raised)]">
+    <div className="flex flex-wrap items-stretch overflow-visible border mat-card">
       {cells.map((c) => (
         <div
           key={c.label}

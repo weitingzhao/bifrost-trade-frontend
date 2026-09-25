@@ -8,7 +8,7 @@ import { fmtUsd } from '@/lib/harness/runSpend'
 import { cn } from '@/lib/utils'
 import { newThreadProvider, spendAgainstCap } from '@/pages/research/seats/deskHeader'
 
-const CHIP = 'inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2 text-dense-meta'
+const CHIP = 'inline-flex h-7 items-center gap-1.5 border px-2 text-dense-meta mat-tag'
 
 /** "spent $x / $cap" with a bar — the figure the Desk's "Spent today" tile used to show. */
 export function SpendChip({ usage }: { usage: CopilotUsage | undefined }) {

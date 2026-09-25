@@ -24,7 +24,7 @@ export function RailPanel({
   children: ReactNode
 }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label={title}>
+    <section className="overflow-hidden border mat-card" aria-label={title}>
       <header className="flex items-baseline gap-2 border-b border-border bg-[var(--sk-raised2)] px-3 py-2">
         <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
           {step} · {title}

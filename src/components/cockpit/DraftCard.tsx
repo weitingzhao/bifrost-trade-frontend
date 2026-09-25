@@ -342,7 +342,7 @@ export function DraftCard({
         </span>
       </div>
       {verb ? (
-        <p className="m-0 rounded-md border border-border/50 bg-secondary/30 px-2.5 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
+        <p className="m-0 border px-2.5 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
           {verb === 'explain'
             ? `Explain — this draft is about ${parentId ?? 'nothing recorded'}, written by ${draftAskedBy(draft.generated_by)}, and it opens in the Journal under what it came from. Beyond that, ${EXPLAIN_UNHELD}`
             : verbNote(draft.kind, verb)}

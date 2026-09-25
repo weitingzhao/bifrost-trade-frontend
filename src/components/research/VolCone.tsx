@@ -76,7 +76,7 @@ export function VolCone({ rows, className }: { rows: readonly ConeRow[]; classNa
             x2={W - PAD.right}
             y1={y(v)}
             y2={y(v)}
-            className="stroke-border"
+            className="stroke-[var(--sk-line)]"
             strokeWidth={1}
           />
           <text x={0} y={y(v) + 3} className="fill-muted-foreground font-mono text-dense-micro">

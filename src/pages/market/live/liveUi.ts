@@ -4,7 +4,7 @@ export const livePageStackClass = 'flex flex-col gap-3 min-w-0'
 
 export const liveStreamsBlockClass = 'flex flex-col gap-3 min-w-0'
 
-export const liveCardClass = 'rounded-lg border border-border bg-card min-w-0'
+export const liveCardClass = 'border min-w-0 mat-card'
 export const liveCardHeaderRowClass =
   'flex flex-wrap items-start justify-between gap-3 border-b border-border px-3 py-2'
 export const liveCardTitleRowClass = 'flex items-center gap-2 min-w-0'
@@ -12,7 +12,7 @@ export const liveCardTitleClass = 'text-base font-semibold tracking-tight'
 export const liveHeaderActionsClass = 'flex max-w-full flex-wrap items-center gap-2 shrink-0'
 
 export const liveSummaryBarClass =
-  'flex flex-wrap items-center gap-3 rounded-lg border border-border bg-secondary/50 px-3 py-2 text-dense-label'
+  'flex flex-wrap items-center gap-3 border px-3 py-2 text-dense-label mat-card'
 export const liveSummaryLabelClass =
   'text-dense-meta font-bold uppercase tracking-wider text-muted-foreground mr-1'
 export const liveSummarySegClass = 'inline-flex items-baseline gap-1.5'
@@ -49,7 +49,7 @@ export const livePaneTitleRowClass = 'flex items-center gap-2 min-w-0'
 export const livePaneTitleClass = 'text-sm font-semibold tracking-tight'
 export const livePaneHeaderActionsClass = 'flex items-center gap-2 shrink-0'
 export const liveFreshnessBadgeClass =
-  'inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-dense-caption text-muted-foreground'
+  'inline-flex items-center gap-1 border px-1.5 py-0.5 text-dense-caption text-muted-foreground mat-tag'
 export const liveSourceHintClass = 'text-dense-meta text-muted-foreground mb-2'
 
 export const liveOpenOrdersWrapClass = 'space-y-3'

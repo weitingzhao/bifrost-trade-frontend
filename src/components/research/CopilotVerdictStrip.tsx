@@ -58,7 +58,7 @@ export function CopilotVerdictStrip({
   const digest = q.data?.digest
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-2.5 py-1.5"
+      className="flex flex-wrap items-center gap-1.5 border px-2.5 py-1.5 mat-card"
       role="status"
       data-testid="copilot-verdict-strip"
     >

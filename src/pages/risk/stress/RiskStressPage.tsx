@@ -378,7 +378,7 @@ export default function RiskStressPage() {
               </p>
             </section>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page attributes a shock
               across the book. How much of the book is one bet is{' '}
               <Link to="/risk/portfolio" className={positionsUi.link}>

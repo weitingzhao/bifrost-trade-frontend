@@ -72,7 +72,7 @@ export function ObjectiveRows({
   const foldedHere = Math.max(0, (brief?.pending_drafts ?? brief?.pending_memos ?? 0) - (brief?.pending_memos ?? 0))
   const rec = brief?.track_record ?? null
   return (
-    <li className="rounded-lg border border-border bg-secondary/40 shadow-[0_2px_6px_rgba(0,0,0,0.15)]">
+    <li className="border mat-card">
       {/* Reading density, on purpose. This is a memo about an autopilot, not
           an instrument panel: one headline you can read in a breath, three
           facts under it, and the runs behind a fold. The workbench keeps its

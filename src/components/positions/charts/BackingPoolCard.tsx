@@ -81,7 +81,7 @@ function LayerRole({
       onClick={onOpen}
       title={onOpen ? `${layer.note} — click for its rows below` : layer.note}
       className={cn(
-        'flex flex-col gap-0.75 rounded-[5px] border border-border bg-transparent px-2 py-1.5 text-left',
+        'flex flex-col gap-0.75 border px-2 py-1.5 text-left mat-card',
         onOpen ? 'cursor-pointer hover:border-[var(--sk-line2)] hover:bg-[var(--sk-raised2)]' : 'cursor-default',
       )}
       data-role={layer.role}

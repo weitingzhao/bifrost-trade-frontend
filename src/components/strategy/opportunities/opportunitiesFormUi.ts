@@ -2,8 +2,8 @@ import { cn } from '@/lib/utils'
 
 /** Opportunity create/edit panel — elevated card below opportunity table (Legacy visual parity) */
 export const opportunitiesFormPanelClass = cn(
-  'mt-3 overflow-hidden rounded-[10px] border border-border bg-card shadow-lg',
-  'shadow-black/20 dark:shadow-black/40',
+  'mt-3 overflow-hidden border mat-card',
+  '',
 )
 
 export const opportunitiesFormHeaderClass = cn(
@@ -63,9 +63,9 @@ export const opportunitiesStructureGridClass = cn(
 )
 
 export const opportunitiesStructureCardClass = cn(
-  'relative flex min-h-16 cursor-pointer flex-col rounded-lg border border-border bg-card px-3 py-2.5 text-left shadow-sm',
+  'relative flex min-h-16 cursor-pointer flex-col border px-3 py-2.5 text-left mat-card',
   'transition-[border-color,box-shadow,background-color,color] duration-150',
-  'hover:border-border/80 hover:bg-secondary/60 hover:shadow-md',
+  'hover:bg-[var(--mat-card-fill-hover)] hover:shadow-md',
 )
 
 export const opportunitiesStructureCardSelectedClass = cn(
@@ -84,8 +84,8 @@ export const opportunitiesStructureCardMetaSelectedClass = cn('text-primary/90')
 export const opportunitiesGatePillsClass = cn('flex flex-wrap gap-2')
 
 export const opportunitiesGatePillClass = cn(
-  'inline-flex cursor-pointer items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs text-muted-foreground',
-  'transition-colors select-none hover:border-border hover:bg-secondary hover:text-foreground',
+  'inline-flex cursor-pointer items-center gap-1 border px-3 py-1.5 text-xs text-muted-foreground mat-tag',
+  'transition-colors select-none hover:text-foreground',
 )
 
 export const opportunitiesGatePillSelectedClass = cn(
@@ -100,7 +100,7 @@ export const opportunitiesFormColumnsClass = cn(
 )
 
 export const opportunitiesFormColClass = cn(
-  'overflow-hidden rounded-lg border border-border bg-card',
+  'overflow-hidden border mat-card',
 )
 
 export const opportunitiesColHeaderClass = cn(
@@ -121,8 +121,8 @@ export const opportunitiesAddBtnClass = cn(
 export const opportunitiesSymbolTagsClass = cn('flex flex-wrap gap-2')
 
 export const opportunitiesSymbolTagClass = cn(
-  'inline-flex overflow-hidden rounded-md border border-border bg-background transition-[border-color,box-shadow]',
-  'focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20',
+  'inline-flex overflow-hidden border transition-[border-color,box-shadow] mat-tag',
+  'focus-within:ring-2 focus-within:ring-primary/20',
 )
 
 export const opportunitiesSymbolTagInputClass = cn(
@@ -139,7 +139,7 @@ export const opportunitiesWatchlistActionsClass = cn(
 )
 
 export const opportunitiesWatchlistGridClass = cn(
-  'm-0 max-h-56 list-none overflow-y-auto rounded-lg border border-border bg-secondary/40 p-2',
+  'm-0 max-h-56 list-none overflow-y-auto border p-2 mat-card',
   'columns-2 gap-x-4 sm:columns-3 lg:columns-4',
   '[&_li]:mb-1 [&_li]:break-inside-avoid',
 )
@@ -157,16 +157,16 @@ export const opportunitiesWatchlistCheckboxClass = cn(
 export const opportunitiesConditionsListClass = cn('flex flex-col gap-2')
 
 export const opportunitiesConditionRowClass = cn(
-  'flex items-center gap-2 rounded-md border border-border bg-background p-2',
-  'focus-within:border-primary',
+  'flex items-center gap-2 border p-2 mat-card',
+  '',
 )
 
 export const opportunitiesConditionSelectClass = cn(
-  'h-8 min-w-[7rem] shrink-0 rounded border border-input bg-card px-2 text-xs',
+  'h-8 min-w-[7rem] shrink-0 border px-2 text-xs mat-field',
 )
 
 export const opportunitiesConditionInputClass = cn(
-  'h-8 min-w-0 flex-1 rounded border border-input bg-card px-2 text-xs',
+  'h-8 min-w-0 flex-1 border px-2 text-xs mat-field',
 )
 
 export const opportunitiesConditionInputNumClass = cn(

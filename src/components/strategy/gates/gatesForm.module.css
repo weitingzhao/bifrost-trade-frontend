@@ -14,10 +14,11 @@
   margin-top: 1rem;
   margin-bottom: 1rem;
   padding: 1rem 1.25rem;
-  border-radius: 8px;
-  background: var(--secondary);
-  border: 1px solid var(--border);
+  border-radius: var(--mat-card-radius);
+  background: var(--mat-card-fill);
+  border: 1px solid transparent;
   animation: formSlideIn 0.25s ease-out;
+  box-shadow: none;
 }
 
 .stickyHeader {
@@ -66,10 +67,11 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
   padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
+  border: 1px solid transparent;
+  border-radius: var(--mat-card-radius);
+  background: var(--mat-card-fill);
   align-content: start;
+  box-shadow: none;
 }
 
 @media (min-width: 960px) {
@@ -145,9 +147,9 @@
   width: 100%;
   box-sizing: border-box;
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  background: var(--card);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--mat-field-fill);
   color: var(--foreground);
   font: inherit;
   font-size: 0.875rem;

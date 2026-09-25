@@ -40,7 +40,7 @@ function HealthCopy({
         <p className="text-dense-meta text-muted-foreground leading-relaxed">{what}</p>
       </Section>
       <Section n={2} title="Formula">
-        <pre className="overflow-x-auto rounded-md border border-border/60 bg-muted/40 px-2.5 py-2 font-mono text-dense-caption whitespace-pre-wrap">
+        <pre className="overflow-x-auto border px-2.5 py-2 font-mono text-dense-caption whitespace-pre-wrap mat-card">
           {formula}
         </pre>
       </Section>

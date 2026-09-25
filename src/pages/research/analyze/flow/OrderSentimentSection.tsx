@@ -425,7 +425,7 @@ function SentimentGradientBar({ score }: { score: number }) {
         <defs>
           <linearGradient id="sentiment-grad" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="var(--color-loss, #f87171)" />
-            <stop offset="50%" stopColor="var(--border)" />
+            <stop offset="50%" stopColor="var(--sk-line)" />
             <stop offset="100%" stopColor="var(--color-profit, #4ade80)" />
           </linearGradient>
         </defs>

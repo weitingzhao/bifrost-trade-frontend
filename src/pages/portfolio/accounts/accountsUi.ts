@@ -7,7 +7,7 @@ import type { StockBucket } from '@/utils/positionsGrouping'
 
 /** Inner surface — same card the Transfer page sits on. */
 export const accountsPageCardClass = cn(
-  'flex flex-col gap-3 rounded-lg border border-border bg-card p-4',
+  'flex flex-col gap-3 border p-4 mat-card',
 )
 
 const CLOCK_LAMP: Record<ClockTone, LampTone> = {
@@ -70,7 +70,7 @@ export const accountsUi = {
   headerLead: 'm-0 max-w-[62rem] text-dense-body text-muted-foreground',
 
   clockChip: cn(
-    'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5',
+    'inline-flex items-center gap-1.5 border px-2 py-0.5 mat-tag',
     'text-dense-meta font-medium',
   ),
   clockSep: 'text-border',
@@ -80,7 +80,7 @@ export const accountsUi = {
   tierRule: 'h-px flex-1 bg-border',
   tierNote: 'font-mono text-dense-meta text-muted-foreground',
 
-  panel: 'rounded-md border border-border bg-secondary/25',
+  panel: 'border mat-card',
   panelHead: cn(
     'flex flex-wrap items-center gap-2 border-b border-border',
     'bg-secondary/40 px-3 py-1.5',
@@ -96,11 +96,11 @@ export const accountsUi = {
   queryRow: 'flex flex-wrap items-baseline gap-x-3 gap-y-0.5',
   queryAcct: 'inline-block min-w-[104px] font-mono text-dense-meta text-foreground/85',
 
-  helpPanel: 'rounded-md border border-border bg-secondary/40',
+  helpPanel: 'border mat-card',
   helpHead: 'flex flex-wrap items-baseline gap-2 px-3 pt-2 pb-1',
   helpCap: 'text-dense-caption font-semibold uppercase tracking-wide text-foreground/85',
   helpClose: cn(
-    'ml-auto inline-flex h-5 items-center rounded-md border border-border px-1.5',
+    'ml-auto inline-flex h-5 items-center border px-1.5 mat-btn',
     'text-dense-meta text-muted-foreground hover:text-foreground',
   ),
   helpBody: 'grid gap-2 px-3 pb-2.5 sm:grid-cols-3',

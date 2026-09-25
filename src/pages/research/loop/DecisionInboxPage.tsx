@@ -295,7 +295,7 @@ export default function DecisionInboxPage() {
         {/* The design's chip. It reads "the engine", not "autopilot seat": the
             seat model was retired on 2026-09-19, and what the tag is for is
             saying which operator wrote the queue you are looking at. */}
-        <span className="inline-flex h-5.5 shrink-0 items-center gap-1.5 rounded border border-border px-2 text-dense-micro">
+        <span className="inline-flex h-5.5 shrink-0 items-center gap-1.5 border px-2 text-dense-micro mat-tag">
           <span className="font-mono font-bold text-primary">L3</span>
           <span className="text-muted-foreground">the engine</span>
         </span>
@@ -356,7 +356,7 @@ export default function DecisionInboxPage() {
           Named on one strip so it is visible as measured-but-not-yet-arguing
           rather than absent. */}
       {thin.length > 0 && view !== 'briefings' && (dest === 'any' || dest === 'rules') ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-1.5 text-dense-meta">
+        <div className="flex flex-wrap items-center gap-2 border px-3 py-1.5 text-dense-meta mat-card">
           <StatusLamp lamp="gray" variant="dot" title="Measured, not yet arguing" />
           <span className={cn(positionsUi.mono, 'font-semibold')}>
             {thin.map((p) => `${p.title} · n ${p.n}`).join(' · ')}
@@ -373,7 +373,7 @@ export default function DecisionInboxPage() {
       {/* Until it is read: the strip exists to say the digest is waiting, and a read digest is not.
           Neutral, not a hue: classification is not colour (§7 / Design 09-13 ④). */}
       {digest && !read.has(digest.id) && view !== 'briefings' && dest === 'any' ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 bg-secondary/40 px-3 py-1.5 text-dense-meta">
+        <div className="flex flex-wrap items-center gap-2 border px-3 py-1.5 text-dense-meta mat-card">
           <span className="font-medium">
             {typeof digest.payload.title === 'string' ? digest.payload.title : 'Daily digest'}
           </span>

@@ -320,7 +320,7 @@ export default function ScanPage() {
               a standing objective is a product call — owed with the same
               question the Stocks page carries. */}
           <span
-            className="rounded border border-border px-2 py-1 text-dense-caption text-muted-foreground/70"
+            className="border px-2 py-1 text-dense-caption text-muted-foreground/70 mat-tag"
             title="The design offers “→ Autopilot objective” here: this universe × these weights, composite ≥ 70, daily, into a candidate batch. It writes a standing schedule, and what this page stamps as its source is not a layout question. Owed."
           >
             → Autopilot objective
@@ -330,7 +330,7 @@ export default function ScanPage() {
 
       {isError ? <QueryErrorAlert error={error} /> : null}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-background px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border px-3 py-2 mat-card">
         <span className="flex items-center gap-2">
           <span className={SECTION_CAP_CLASS}>Universe</span>
           <SegmentControl

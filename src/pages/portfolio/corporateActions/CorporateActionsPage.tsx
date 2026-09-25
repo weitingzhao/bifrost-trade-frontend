@@ -570,7 +570,7 @@ export default function CorporateActionsPage() {
                     {ahead.length === 0 ? (
                       <tr>
                         <td className={cn(positionsUi.td, 'pl-2 text-left')}>
-                          <span className="inline-flex h-4 items-center rounded-[3px] border border-border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground">
+                          <span className="inline-flex h-4 items-center border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground mat-tag">
                             NO FUTURE-DATED EVENT
                           </span>
                         </td>
@@ -715,7 +715,7 @@ export default function CorporateActionsPage() {
               </section>
             </div>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing here reaches the
               broker. A roll in response to an event is a plan, not an order, and the design opens it in Trade Plans
               with the dates filled in — which this page does not do yet, because no event ahead of today exists to fill

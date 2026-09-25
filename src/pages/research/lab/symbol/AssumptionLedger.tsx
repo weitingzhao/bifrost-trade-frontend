@@ -3,7 +3,7 @@
  * Each choice carries what it drives, where it comes from, and whether
  * anything was ever measured behind it.
  */
-import { DenseTag } from '@bifrost/ui'
+import { DenseTag } from '@/components/data-display'
 import { SegmentControl } from '@/components/data-display'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { CopilotDraftPanel } from '@/components/research/CopilotDraftPanel'

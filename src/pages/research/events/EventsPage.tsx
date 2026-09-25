@@ -170,7 +170,7 @@ function StoreStanding({
 }) {
   const failed = standing.state === 'failed'
   return (
-    <section className="overflow-hidden rounded-lg border border-border" aria-label="Event pipeline">
+    <section className="overflow-hidden border mat-card" aria-label="Event pipeline">
       <div className="space-y-2 border-b border-border bg-secondary px-3 py-3">
         <p className="flex flex-wrap items-center gap-2">
           <StatusLamp lamp={failed ? 'fail' : 'gray'} variant="dot" />

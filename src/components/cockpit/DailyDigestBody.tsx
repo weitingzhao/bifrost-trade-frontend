@@ -101,7 +101,7 @@ export function DailyDigestBody({
       <DigestReadings rows={digestExhibits(payload)} defaultOpen={readingsOpen} />
 
       {batches.length > 0 ? (
-        <div className="rounded-sm border border-border/60">
+        <div className="border mat-card">
           <button
             type="button"
             onClick={() => setBatchesOpen((o) => !o)}

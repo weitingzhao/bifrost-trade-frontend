@@ -42,7 +42,7 @@ export function ContextSnapshot({
     ivRank != null && Number.isFinite(ivRank) ? `${ivRank.toFixed(1)}%ile` : '—'
 
   return (
-    <dl className={cn('rounded-md border border-border/60 bg-background/50 px-3 py-1', className)}>
+    <dl className={cn('border px-3 py-1 mat-card', className)}>
       <Row label="Symbol">
         <span className="font-mono font-semibold text-entity-symbol">{symbol}</span>
       </Row>

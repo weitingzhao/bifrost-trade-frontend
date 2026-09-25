@@ -187,10 +187,10 @@ export default function RiskOverviewPage() {
 
       {bookState === 'loading' ? (
         <div className="grid gap-3 lg:grid-cols-2">
-          <section className="overflow-hidden rounded-[var(--radius)] border border-border bg-card">
+          <section className="overflow-hidden border mat-card">
             <ViewState kind="loading" title="Loading breaches" rows={3} cols={2} />
           </section>
-          <section className="overflow-hidden rounded-[var(--radius)] border border-border bg-card">
+          <section className="overflow-hidden border mat-card">
             <ViewState kind="loading" title="Loading the next binding limit" rows={3} cols={2} />
           </section>
         </div>
@@ -255,7 +255,7 @@ export default function RiskOverviewPage() {
         </section>
 
         {/* Binds next — one line, and the two things you would do about it. */}
-        <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <section className="overflow-hidden border mat-card">
           {next == null ? (
             <ViewState
               kind="empty"
@@ -285,13 +285,13 @@ export default function RiskOverviewPage() {
               <div className="flex flex-wrap gap-1.5 pt-0.5">
                 <Link
                   to="/risk/limits"
-                  className="inline-flex h-[22px] items-center rounded-sm border border-border px-2 text-dense-meta hover:border-foreground/30 hover:text-foreground"
+                  className="inline-flex h-[22px] items-center border px-2 text-dense-meta hover:text-foreground mat-btn"
                 >
                   Limits &amp; Breaches →
                 </Link>
                 <Link
                   to="/risk/sizing"
-                  className="inline-flex h-[22px] items-center rounded-sm border border-border px-2 text-dense-meta hover:border-foreground/30 hover:text-foreground"
+                  className="inline-flex h-[22px] items-center border px-2 text-dense-meta hover:text-foreground mat-btn"
                 >
                   Size the next one →
                 </Link>

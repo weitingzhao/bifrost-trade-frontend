@@ -61,7 +61,7 @@ export function MomentumFactorsPanel({
 
   return (
     <section
-      className="rounded-lg border border-border bg-secondary"
+      className="border mat-card"
       aria-label="Momentum factors"
     >
       <header className="border-b border-border px-3 py-2">
@@ -107,7 +107,7 @@ export function MomentumFactorsPanel({
                   sits. The page colours no unsigned score (§14.7 keeps the
                   direction hues for signed numbers), so weight carries the
                   reading and the track carries the scale. */}
-              <div className="mt-1 h-1 w-full rounded-full bg-border/70" aria-hidden>
+              <div className="mt-1 h-1 w-full rounded-full bg-[var(--sk-line)]" aria-hidden>
                 {f.tone !== 'unread' ? (
                   <div
                     className={cn(

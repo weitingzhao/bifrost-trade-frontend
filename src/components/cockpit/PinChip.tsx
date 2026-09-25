@@ -14,7 +14,7 @@ export function PinChip({ label, meta, onJump, onRemove, className }: PinChipPro
   return (
     <div
       className={cn(
-        'group flex items-center gap-1 rounded-md border border-border/60 bg-background/70 px-1.5 py-1',
+        'group flex items-center gap-1 border px-1.5 py-1 mat-card',
         className,
       )}
     >

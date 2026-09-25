@@ -81,7 +81,7 @@ export function VolSurface2DChart({
           x2={width - chart.pad.right}
           y1={chart.yScale(0)}
           y2={chart.yScale(0)}
-          className="stroke-border"
+          className="stroke-[var(--sk-line)]"
           strokeWidth={1}
         />
         <path d={chart.fitPath} fill="none" className="stroke-primary" strokeWidth={1.5} />

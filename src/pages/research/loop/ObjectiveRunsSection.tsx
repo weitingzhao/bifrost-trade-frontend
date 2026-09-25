@@ -137,7 +137,7 @@ export function ObjectiveRunsSection({
           both would tell the reader the history is gone when it is one click
           away. */}
       {filteredEmpty ? (
-        <div className="rounded-lg border border-border px-3 py-6 text-center">
+        <div className="border px-3 py-6 text-center mat-card">
           <p className="text-dense-body font-semibold">No run in this state</p>
           <p className="mt-1 text-dense-meta text-muted-foreground">
             The filter is narrower than the history.{' '}

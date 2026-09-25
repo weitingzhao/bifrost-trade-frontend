@@ -92,7 +92,7 @@ export function CodeRef({ children }: { children: ReactNode }) {
 /** A token that is live: the swatch reads the running stylesheet, not a literal. */
 export function TokenSwatch({ label, varName }: { label: string; varName: string }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-md border border-border bg-background px-2.5 py-2">
+    <div className="flex items-center gap-2.5 border px-2.5 py-2 mat-card">
       <span
         className="h-5 w-5 shrink-0 rounded-full border border-border/60"
         style={{ background: `var(${varName})` }}
@@ -136,7 +136,7 @@ export function SampleBox({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-3 rounded-md border border-border bg-background px-3 py-2.5',
+        'flex flex-wrap items-center gap-3 border px-3 py-2.5 mat-card',
         className,
       )}
     >

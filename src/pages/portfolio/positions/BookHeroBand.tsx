@@ -43,11 +43,12 @@ const QUALITY_CHECKS = new Set(['feed', 'unpriced'])
 
 function CheckChip({ check, onOpen }: { check: AlarmCheck; onOpen: (t: AlarmTarget) => void }) {
   const firing = check.tone !== 'ok'
+  // Rev .62: no frame — the tone is the ink, and the capsule fills with it.
   const tone = !firing
-    ? 'border-border text-muted-foreground/80'
+    ? 'text-muted-foreground/80'
     : QUALITY_CHECKS.has(check.id)
-      ? 'border-[var(--sk-line2)] text-muted-foreground'
-      : 'border-warning/40 bg-warning/10 text-warning'
+      ? 'text-muted-foreground'
+      : 'text-warning'
   return (
     <button
       type="button"
@@ -55,7 +56,7 @@ function CheckChip({ check, onOpen }: { check: AlarmCheck; onOpen: (t: AlarmTarg
       title={check.target ? `${check.detail}\nClick to open the detail.` : check.detail}
       onClick={() => check.target && onOpen(check.target)}
       className={cn(
-        'inline-flex h-5 items-center gap-1.25 whitespace-nowrap rounded-[4px] border px-1.75',
+        'inline-flex h-5 items-center gap-1.25 whitespace-nowrap border mat-tag',
         'text-dense-caption font-semibold uppercase leading-none tracking-[0.04em]',
         check.target ? 'cursor-pointer hover:brightness-125' : 'cursor-default',
         tone

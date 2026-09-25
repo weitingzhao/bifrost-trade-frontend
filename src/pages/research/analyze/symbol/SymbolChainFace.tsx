@@ -47,9 +47,9 @@ const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
 const mono = 'font-mono tabular-nums'
 const panel =
-  'min-w-0 rounded-[10px] border border-[var(--sk-line0)] bg-[var(--sk-raised)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+  'min-w-0 border mat-card'
 const panelHead =
-  'flex flex-wrap items-center gap-2.5 rounded-t-[9px] border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3 py-1.75 text-dense-body leading-normal'
+  'flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal'
 const note =
   'm-0 border-t border-border/60 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty'
 const th =
@@ -326,7 +326,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
             {levelChips.map((c) => (
               <span
                 key={c.label}
-                className="inline-flex items-center gap-1.5 rounded border border-border px-1.5 py-0.5 text-dense-micro"
+                className="inline-flex items-center gap-1.5 border px-1.5 py-0.5 text-dense-micro mat-tag"
                 title="Ruled by the face that owns the reading — Dealer for the walls, the lab for the fit."
               >
                 <span className="text-muted-foreground">{c.label}</span>
@@ -670,7 +670,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                       `${SYMBOL_PATH}?${TAB_PARAM}=payoff&expiration=${expiry ?? ''}&strike=${selected.strike}&right=${selected.right}`,
                       sym
                     )}
-                    className="rounded-[6px] border border-border px-2.5 py-1 text-dense-label text-foreground no-underline hover:bg-[var(--sk-surface)]"
+                    className="border px-2.5 py-1 text-dense-label text-foreground no-underline mat-btn"
                   >
                     Payoff →
                   </Link>

@@ -28,7 +28,7 @@ export function FilterActionBar({
   onClear,
 }: Props) {
   return (
-    <div className="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/20 text-xs">
+    <div className="flex flex-wrap items-center gap-2 px-3 py-2 border text-xs mat-card">
       <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
         {condCount > 0 && (
           <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono">

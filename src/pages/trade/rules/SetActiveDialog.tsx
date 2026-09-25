@@ -119,7 +119,7 @@ export function SetActiveDialog({
       confirming={busy}
       bodyExtra={
         <div className="flex flex-col gap-2">
-          <div className="flex flex-col gap-1 rounded-md border border-border bg-[var(--sk-raised2)] px-2.5 py-2 text-dense-meta leading-normal">
+          <div className="flex flex-col gap-1 border px-2.5 py-2 text-dense-meta leading-normal mat-card">
             {[
               { k: 'Allocation', v: plan.allocationName },
               { k: 'Gate', v: plan.gateLabel },

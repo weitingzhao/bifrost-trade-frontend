@@ -96,7 +96,7 @@ export default function ReviewFitPage() {
             <Skeleton className="h-48 w-full rounded-md" />
           </div>
         ) : trade == null || derived == null ? (
-          <p className="m-0 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-3 text-dense-meta text-muted-foreground">
+          <p className="m-0 border px-3 py-3 text-dense-meta text-muted-foreground mat-card">
             No closed trade to read. A trade reaches this page once its own fills have taken the contract flat.
           </p>
         ) : (
@@ -127,7 +127,7 @@ export default function ReviewFitPage() {
               </aside>
             </div>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing here writes: no
               confirmation, no tag, no note. {REVIEW_UNRECORDED.reviewed}
             </p>

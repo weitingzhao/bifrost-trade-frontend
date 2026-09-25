@@ -204,7 +204,7 @@ function JournalFaceForContract({
         <Field label="Side · qty">
           <span className="flex gap-1">
             <select
-              className="h-7 rounded-md border border-border bg-background px-1.5 text-dense-meta"
+              className="h-7 border px-1.5 text-dense-meta mat-field"
               value={draft.side}
               disabled={priceLocked || assignedLocked}
               onChange={e => patch({ side: e.target.value as 'BUY' | 'SELL' })}

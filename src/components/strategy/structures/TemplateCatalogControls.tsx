@@ -128,13 +128,13 @@ export function TemplateCatalogControls({
       </div>
 
       {editOpen && editableTemplateId != null ? (
-        <div className="rounded-md border border-border bg-[var(--sk-raised2)] p-2.5">
+        <div className="border p-2.5 mat-card">
           <TemplateEditor templateId={editableTemplateId} onDeleted={() => setEditOpen(false)} />
         </div>
       ) : null}
 
       {dimsOpen ? (
-        <div className="flex flex-col gap-2 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2">
+        <div className="flex flex-col gap-2 border px-3 py-2 mat-card">
           <div className="flex flex-wrap items-baseline gap-2">
             <span className={positionsUi.cap}>Dimensions dictionary</span>
             <span className="text-dense-meta text-muted-foreground text-pretty">
@@ -239,7 +239,7 @@ function DimRow({ dimType, rows }: { dimType: CatalogDimType; rows: { strategy_d
           rows.map((r) => (
             <span
               key={r.strategy_dim_id}
-              className={cn(positionsUi.mono, 'rounded-[3px] border border-border px-1.25 text-dense-caption text-secondary-foreground')}
+              className={cn(positionsUi.mono, 'border px-1.25 text-dense-caption text-secondary-foreground mat-tag')}
             >
               {r.code}
             </span>

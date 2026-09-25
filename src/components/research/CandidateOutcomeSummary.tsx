@@ -22,7 +22,7 @@ export function CandidateOutcomeSummary({ source }: { source?: string }) {
   const anySettled = data.horizons.some((h) => h.judged > 0)
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-border/60 bg-secondary/50 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border px-3 py-2 mat-card">
       <span className="text-dense-label font-medium">Outcomes</span>
       <span className="text-dense-meta text-muted-foreground">vs SPY, same window</span>
 

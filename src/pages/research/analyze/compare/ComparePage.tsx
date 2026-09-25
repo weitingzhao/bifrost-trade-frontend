@@ -27,7 +27,7 @@ import { CompareTable } from './CompareTable'
 import { useCompareRows, useSessionClose, type CompareRow } from './useCompareRows'
 
 const FIELD =
-  'h-6 w-[4.5rem] rounded-md border border-border bg-background px-1.5 text-right font-mono text-dense-meta tabular-nums text-foreground'
+  'h-6 w-[4.5rem] border px-1.5 text-right font-mono text-dense-meta tabular-nums text-foreground mat-field'
 
 const FILLS_EMPTY =
   'Bid/ask is not in the Options Starter snapshot — the spread, the limit and the fill odds need quotes. Upgrading is the Owner’s call.'
@@ -138,7 +138,7 @@ function CompareBody({
     <div className="space-y-3">
       {/* ── the view ─────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="inline-flex flex-wrap items-center gap-2 rounded-md border border-border bg-secondary px-2.5 py-1 text-dense-meta text-muted-foreground">
+        <span className="inline-flex flex-wrap items-center gap-2 border px-2.5 py-1 text-dense-meta text-muted-foreground mat-tag">
           view
           <SegmentControl
             size="xs"

@@ -526,7 +526,7 @@ function ContractGroup({
   const outsideDays = earliestOpen && earliestOpen < rangeStart ? (daysBetween(earliestOpen, rangeStart) ?? 0) : 0
 
   return (
-    <div className="overflow-hidden rounded-sm border border-border">
+    <div className="overflow-hidden border mat-card">
       <div className="flex flex-wrap items-baseline gap-2 bg-[var(--sk-raised2)] px-2.25 py-1.5">
         <span className="font-mono text-xs text-foreground" title={occ}>{token}</span>
         <span className="text-dense-meta text-muted-foreground">{isRealized ? 'matched FIFO' : 'unmatched quantity'}</span>
@@ -773,7 +773,7 @@ function StkDayDetail({
             : ' Notional is signed trade size: sell +, buy −.'}
       </p>
       <div className="overflow-x-auto px-3 py-2.5">
-        <table className="w-full min-w-[560px] border-collapse rounded-sm border border-border">
+        <table className="w-full min-w-[560px] border-collapse border mat-card">
           <thead>
             <tr>
               <th className={thLeft}>Account</th>
@@ -847,7 +847,7 @@ function OptionStockLinkDialog({
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">No link rows.</p>
         ) : (
-          <div className="max-h-[360px] overflow-auto rounded-md border">
+          <div className="max-h-[360px] overflow-auto border mat-card">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">

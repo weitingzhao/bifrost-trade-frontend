@@ -121,7 +121,7 @@ export function ScenarioFanChart({
             y1={yScale(t)}
             x2={width - pad.right}
             y2={yScale(t)}
-            stroke="var(--border)"
+            stroke="var(--sk-line)"
             strokeWidth={0.5}
             strokeDasharray="3,3"
           />

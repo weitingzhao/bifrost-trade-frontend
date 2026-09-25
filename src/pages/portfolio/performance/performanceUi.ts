@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
  * and uppercase captions.
  */
 export const perfUi = {
-  pageCard: 'flex flex-col gap-3.5 rounded-lg border border-border bg-card p-4',
+  pageCard: 'flex flex-col gap-3.5 border p-4 mat-card',
 
   tierRow: 'flex flex-wrap items-center gap-x-2.5 gap-y-1',
   tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
@@ -18,7 +18,7 @@ export const perfUi = {
    * No `self-start`: the prototype's page is a grid, where it aligns vertically; in this
    * page's flex column it would shrink the panel to its content's width.
    */
-  panel: 'min-w-0 rounded-md border border-border bg-[var(--sk-raised)]',
+  panel: 'min-w-0 border mat-card',
   panelHead: cn(
     'flex flex-wrap items-center gap-2.5 rounded-t-md border-b border-border',
     'bg-[var(--sk-raised2)] px-3 py-2',

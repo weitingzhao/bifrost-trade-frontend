@@ -22,7 +22,7 @@ import {
 import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { NOT_COMPUTED_HINT } from './PlansTable'
 
-const FIELD = 'h-6 w-full rounded border border-border bg-background px-1.5 text-dense-label'
+const FIELD = 'h-6 w-full border px-1.5 text-dense-label mat-field'
 const LABEL = 'text-dense-micro uppercase tracking-wide text-muted-foreground'
 const CHOOSE_SIDE = 'Choose buy or sell'
 
@@ -571,7 +571,7 @@ export function PlanForm({
 
         <Field label="Rationale">
           <textarea
-            className="min-h-16 w-full rounded border border-border bg-background px-1.5 py-1 text-dense-label"
+            className="min-h-16 w-full border px-1.5 py-1 text-dense-label mat-field"
             value={rationale}
             onChange={(e) => setRationale(e.target.value)}
             placeholder="Why this, why now, what makes you close it early."
@@ -581,7 +581,7 @@ export function PlanForm({
         {/* The design's live right-hand check, kept in its shape: the two
             readings the drafted legs themselves pin down, and the cells that
             need a spot mark or the account book marked, not guessed. */}
-        <section className="space-y-1 rounded border border-border/60 bg-muted/15 px-2 py-1.5">
+        <section className="space-y-1 border px-2 py-1.5 mat-card">
           <span className={LABEL}>Backing check</span>
           <div className="space-y-0.5 pt-0.5">
             <PreviewRow label="Cash secured" value={draftCash == null ? '—' : previewUsd(draftCash)} note={draftCash == null ? 'no short put pins cash' : 'strike × 100 × qty'} />

@@ -620,7 +620,7 @@ export default function FillsPage() {
               </aside>
             </div>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page is the desk&rsquo;s
               window on the last few sessions. The record, its reconciliation and every write that fixes a fill are{' '}
               <Link to="/portfolio/ledger" className={positionsUi.link}>

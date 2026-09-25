@@ -86,18 +86,19 @@ export function SectionPanel({
   return (
     <section
       className={cn(
-        // Panel material (design Rev 2026-09-23.19): the faintest line for the
-        // frame and a 4% ink highlight along the top edge, so a panel reads as
-        // one lifted object rather than a box drawn around a region.
-        'overflow-hidden rounded-lg border bg-background shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-        tone == null ? 'border-[var(--sk-line0)]' : TONE_PANEL[tone],
+        // Panel material (design Rev .62, Page Look 1a): a grouped inset — no
+        // frame, ink 4%, radius 12. A toned panel keeps its tinted edge: that
+        // edge is the reading, not decoration.
+        'overflow-hidden border mat-card',
+        tone == null ? null : TONE_PANEL[tone],
         className,
       )}
     >
       <header
         className={cn(
-          'flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-[var(--sk-line0)] px-3 py-2',
-          tone == null ? 'bg-secondary' : TONE_HEADER[tone],
+          // The card head is a rule, not a band (Rev .62): no fill, the ink-6% line.
+          'flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-3 py-2',
+          tone == null ? null : TONE_HEADER[tone],
         )}
       >
         {cap != null ? (

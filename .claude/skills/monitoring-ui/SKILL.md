@@ -3,7 +3,7 @@ name: monitoring-ui
 description: >-
   监控页面 UI 修改规则与视觉参考（Skote reference atlas、traffic lights、IB 账户布局）。
   Use when changing monitoring/daemon/IB-account pages, status lamps, or layout in bifrost-trade-frontend.
-parity-id: monitoring-ui-v1
+parity-id: monitoring-ui-v2
 ---
 
 # 监控页面 UI 修改规则与参考资源
@@ -14,7 +14,7 @@ parity-id: monitoring-ui-v1
 - **Skote 模板**：仅作**视觉与布局参考**，不照搬多页面/侧栏结构；可选借鉴卡片阴影与圆角、表格样式、仪表盘小部件排版、按钮/标签细节。
 - **需求优先**：监控页面向局域网内操作者提供红绿灯、自检、状态摘要、操作列表与控制（R-M5/R-M3）；功能满足前提下再做视觉微调。
 - **布局约定**：守护程序、对冲程序、近期操作为**功能向**，集中在一块显示（监控与控制）；**IB 账户**为业务向，单独分区。
-- **Surface 层级**：页面画布 `PageShell`（`bg-card`，与侧栏同色）→ 抬高层 `Card variant="elevated"` / `bg-secondary` → 凹进 `bg-background`。禁止页面根直接落在最深 `bg-background` 上。
+- **Surface 层级**（设计 Rev .61–.62）：页面落在**窗口底**上（`PageShell` 透明，与浮起侧栏、顶栏共用 body 的环境底）→ 分组用 `Card` / `mat-card`（无框、ink 4%、圆角 12）→ 分隔线与表格线是 ink 6% 的规则线。容器、标签、次按钮、输入框分别用 `mat-card` / `mat-tag` / `mat-btn` / `mat-field`，不要再画中性色实线框。
 - **Dense UI**：数据表、PnL、segment、折叠面板、行内操作必须遵循 `.cursor/rules/dense-ui-system.mdc` 与 `docs/DENSE_UI.md`；不得新建 page 级 table module CSS。
 - **Skill 协同**：若进行监控前端的大改版或新页面设计，应先阅读 `.cursor/skills/frontend-design/SKILL.md`，结合其中的「Bifrost Trader + Skote Theme」小节和本规则一起使用。表格/迁移任务读 `.cursor/skills/dense-ui/SKILL.md`。
 

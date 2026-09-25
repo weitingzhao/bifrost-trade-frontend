@@ -116,7 +116,7 @@ export function WatchingTab({
   return (
     <div className="space-y-3">
       {showPositionPicker && positionsNotInWatchlist.length > 0 && (
-        <div className="flex flex-wrap gap-2 rounded-lg border bg-muted/30 p-3">
+        <div className="flex flex-wrap gap-2 border p-3 mat-card">
           {positionsNotInWatchlist.map((p, idx) => {
             const ck = positionToContractKey(p)
             return (

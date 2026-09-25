@@ -24,7 +24,7 @@ export function QuickActionButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'flex w-full items-start gap-2.5 rounded-md border border-border/50 bg-background/60 px-2.5 py-2 text-left transition-colors',
+        'flex w-full items-start gap-2.5 border px-2.5 py-2 text-left transition-colors mat-card',
         'hover:border-border hover:bg-secondary/60',
         'disabled:pointer-events-none disabled:opacity-50',
         className,

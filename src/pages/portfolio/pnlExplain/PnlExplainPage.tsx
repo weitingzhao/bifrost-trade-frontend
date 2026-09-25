@@ -384,7 +384,7 @@ export default function PnlExplainPage() {
                           </td>
                         ))}
                         <td className={cn(positionsUi.td, 'text-left')}>
-                          <span className="inline-flex h-4 items-center rounded-[3px] border border-border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground">
+                          <span className="inline-flex h-4 items-center border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground mat-tag">
                             NO SNAPSHOT
                           </span>
                         </td>
@@ -442,7 +442,7 @@ export default function PnlExplainPage() {
                   <tbody>
                     <tr>
                       <td className={cn(positionsUi.td, 'pl-2 text-left')}>
-                        <span className="inline-flex h-4 items-center rounded-[3px] border border-border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground">
+                        <span className="inline-flex h-4 items-center border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground mat-tag">
                           NO HYPOTHESIS STORE
                         </span>
                       </td>

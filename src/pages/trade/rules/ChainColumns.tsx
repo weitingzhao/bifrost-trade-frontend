@@ -64,7 +64,7 @@ export function ChainColumnList({
       </header>
       <div className="flex max-h-[60vh] min-w-0 flex-col gap-2 overflow-y-auto pr-0.5">
         {shown.length === 0 ? (
-          <p className="m-0 rounded-md border border-border bg-[var(--sk-raised)] px-2.5 py-2 text-dense-meta text-muted-foreground">
+          <p className="m-0 border px-2.5 py-2 text-dense-meta text-muted-foreground mat-card">
             Nothing here.
           </p>
         ) : null}

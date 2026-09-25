@@ -38,7 +38,7 @@ export function reachToday(runs: readonly ObjectiveRun[], pendingDrafts: number 
 
 export function ReachTodayStrip({ reach }: { reach: ReachToday | null }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-md border border-border/60 bg-secondary/50 px-3 py-2">
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border px-3 py-2 mat-card">
       <span className="mr-1.5 text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
         Universe reach
       </span>

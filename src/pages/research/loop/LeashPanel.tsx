@@ -40,7 +40,7 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
 
   if (home === 'console') {
     return (
-      <section className="overflow-hidden rounded-lg border border-border bg-background">
+      <section className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
           <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Leash</span>
           <span className="text-dense-body font-semibold">what a run accepts without you</span>
@@ -86,7 +86,7 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
   }
 
   return (
-    <aside className="space-y-3 rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-dense-meta">
+    <aside className="space-y-3 border px-3 py-2.5 text-dense-meta mat-card">
       <div>
         <h2 className="text-dense-body font-semibold">Leash</h2>
         <p className="text-muted-foreground">What Autopilot accepts without you</p>

@@ -125,7 +125,7 @@ export default function ReviewHabitsPage() {
           }
         />
 
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border px-3 py-2 mat-card">
           <span className={positionsUi.cap}>Window</span>
           <SegmentControl
             size="xs"
@@ -207,7 +207,7 @@ export default function ReviewHabitsPage() {
               </aside>
             </div>
 
-            <p className="m-0 rounded-md border border-border bg-[var(--sk-raised2)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
               <span className="font-semibold text-secondary-foreground">Boundary.</span> A habit here is a reading, not
               a verdict. What it argues for is{' '}
               <Link to="/review/proposals" className={positionsUi.link}>

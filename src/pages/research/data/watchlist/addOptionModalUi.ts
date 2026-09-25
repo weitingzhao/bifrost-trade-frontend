@@ -5,7 +5,7 @@ export const addOptionDialogFooterClass = cn(
 )
 
 export const addOptionFormPanelClass = cn(
-  'space-y-3 rounded-lg border border-border bg-secondary/30 p-3',
+  'space-y-3 border p-3 mat-card',
 )
 
 export const addOptionFieldLabelClass = cn(
@@ -13,11 +13,11 @@ export const addOptionFieldLabelClass = cn(
 )
 
 export const addOptionSymbolBadgeClass = cn(
-  'inline-flex rounded-md border border-border bg-secondary px-2 py-0.5 font-mono text-sm font-semibold text-entity-symbol',
+  'inline-flex border px-2 py-0.5 font-mono text-sm font-semibold text-entity-symbol mat-tag',
 )
 
 export const addOptionPreviewClass = cn(
-  'rounded-md border border-border/60 bg-background/60 px-3 py-2 font-mono text-dense-meta text-muted-foreground',
+  'border px-3 py-2 font-mono text-dense-meta text-muted-foreground mat-card',
 )
 
 export const addOptionHintClass = cn('text-dense-meta text-muted-foreground')

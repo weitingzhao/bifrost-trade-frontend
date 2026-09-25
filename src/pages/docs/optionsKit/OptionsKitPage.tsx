@@ -132,7 +132,7 @@ function HereOrOwed({ p }: { p: KitPrimitive }) {
 
 function PrimitiveRow({ p }: { p: KitPrimitive }) {
   return (
-    <div className="rounded-md border border-border bg-background px-3 py-2.5">
+    <div className="border px-3 py-2.5 mat-card">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-xs font-semibold text-foreground">{p.name}</p>
         <HereOrOwed p={p} />
@@ -237,7 +237,7 @@ export default function OptionsKitPage() {
         </p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {standing.byGroup.map(g => (
-            <div key={g.group} className="rounded-md border border-border bg-background px-3 py-2">
+            <div key={g.group} className="border px-3 py-2 mat-card">
               <p className="font-mono text-xs font-semibold text-foreground">{g.group}/</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 <span className="font-mono tabular-nums text-foreground">
@@ -265,7 +265,7 @@ export default function OptionsKitPage() {
         </p>
         <div className="space-y-3">
           {COLOUR_CHANNELS.map(c => (
-            <div key={c.id} className="rounded-md border border-border bg-background px-3 py-2.5">
+            <div key={c.id} className="border px-3 py-2.5 mat-card">
               <p className="text-xs font-semibold text-foreground">{c.name}</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {c.swatches.map(sw =>
@@ -350,7 +350,7 @@ export default function OptionsKitPage() {
           </div>
         </SampleBox>
 
-        <div className="rounded-md border border-border bg-background px-3 py-2.5">
+        <div className="border px-3 py-2.5 mat-card">
           <p className="mb-2 text-dense-caption uppercase tracking-wide">
             IvRankStrip — as it renders today
           </p>
@@ -434,7 +434,7 @@ export default function OptionsKitPage() {
             },
             { label: 'Max drawdown', value: fmtDollar(s.dd), note: 'peak to trough', cls: tone(-1) },
           ].map(st => (
-            <div key={st.label} className="rounded-md border border-border bg-background px-2.5 py-2">
+            <div key={st.label} className="border px-2.5 py-2 mat-card">
               <p className="text-dense-caption uppercase tracking-wide">{st.label}</p>
               <p className={cn('font-mono text-sm tabular-nums text-foreground', st.cls)}>{st.value}</p>
               <p className="text-dense-caption text-muted-foreground">{st.note}</p>

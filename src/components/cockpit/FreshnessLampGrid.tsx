@@ -26,7 +26,7 @@ function LampRow({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-2 rounded-md border border-border/40 bg-background/50 px-2.5 py-2">
+        <div className="flex items-center gap-2 border px-2.5 py-2 mat-card">
           <StatusLamp lamp={isLoading ? 'gray' : lamp} className="h-2.5 w-2.5 shrink-0" />
           <div className="min-w-0 flex-1">
             <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">

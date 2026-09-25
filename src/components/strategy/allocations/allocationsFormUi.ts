@@ -5,7 +5,7 @@ export const allocationsFormFieldClass = cn('space-y-1.5')
 export const allocationsFormHintClass = cn('text-xs text-muted-foreground')
 
 export const allocationsFormChecklistClass = cn(
-  'max-h-40 overflow-y-auto rounded-md border border-border p-2 space-y-1.5',
+  'max-h-40 overflow-y-auto border p-2 space-y-1.5 mat-card',
 )
 
 export const allocationsFormChecklistItemClass = cn('flex items-center gap-2')

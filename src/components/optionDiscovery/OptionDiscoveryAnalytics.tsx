@@ -1109,7 +1109,7 @@ export function OptionDiscoveryAnalyticsPanel({
           data-chart-count={chartCount}
         >
         {hasIv && (
-          <div className="od-analytics-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
+          <div className="od-analytics-chart-cell flex min-w-0 flex-col border p-2 mat-card">
             <div className="mb-1 flex items-center justify-between gap-2">
               <h4 className="m-0 text-xs font-semibold text-muted-foreground">IV Smile</h4>
               <DiscoveryIconButton
@@ -1137,7 +1137,7 @@ export function OptionDiscoveryAnalyticsPanel({
         )}
 
         {hasOi && (
-          <div className="od-analytics-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
+          <div className="od-analytics-chart-cell flex min-w-0 flex-col border p-2 mat-card">
             <div className="mb-1 flex items-center justify-between gap-2">
               <h4 className="m-0 text-xs font-semibold text-muted-foreground">Open Interest Profile</h4>
               <DiscoveryIconButton
@@ -1164,7 +1164,7 @@ export function OptionDiscoveryAnalyticsPanel({
         )}
 
         {hasGex && (
-          <div className="od-analytics-chart-cell flex min-w-0 flex-col rounded-lg border border-border/80 bg-secondary/30 p-2">
+          <div className="od-analytics-chart-cell flex min-w-0 flex-col border p-2 mat-card">
             <div className="mb-1 flex items-center justify-between gap-2">
               <h4 className="m-0 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
                 Gamma exposure (dealer-style)

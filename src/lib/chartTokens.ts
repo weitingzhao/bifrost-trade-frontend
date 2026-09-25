@@ -6,7 +6,7 @@ export const chartTokens = {
   profitFill: 'var(--color-success-soft)',
   lossFill: 'var(--color-danger-soft)',
   line: 'var(--foreground)',
-  grid: 'var(--border)',
+  grid: 'var(--sk-line)',
   axis: 'var(--color-border-strong)',
   accent: 'var(--primary)',
 } as const

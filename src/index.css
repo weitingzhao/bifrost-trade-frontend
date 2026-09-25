@@ -166,6 +166,17 @@
        ground (Rev .26). A token so component CSS never writes white raw —
        the §14.8 ratchet reads a bare 255,255,255 as an invisible-on-dark bug. */
     --sk-paper-glow: rgba(255, 255, 255, 0.7);
+    /* Page materials (design Rev .62, Page Look 1a — grouped inset, like
+       macOS System Settings). Mixed from the ink, so each theme's --sk-ink
+       carries them; the page scope below and the mat-* utilities read them. */
+    --mat-card-radius: 12px;
+    --mat-card-fill: color-mix(in srgb, var(--sk-ink) 4%, transparent);
+    --mat-card-fill-hover: color-mix(in srgb, var(--sk-ink) 6%, transparent);
+    --mat-rule: color-mix(in srgb, var(--sk-ink) 6%, transparent);
+    --mat-btn-fill: color-mix(in srgb, var(--sk-ink) 8%, transparent);
+    --mat-btn-fill-hover: color-mix(in srgb, var(--sk-ink) 13%, transparent);
+    --mat-field-fill: color-mix(in srgb, var(--sk-ink) 7%, transparent);
+    --mat-focus: color-mix(in srgb, var(--sk-accent) 35%, transparent);
     --sk-mute: #5b6572;
     --sk-faint: #959daa;
     --sk-accent2: #5b21b6;
@@ -617,6 +628,47 @@
   line-height: 1.45;
 }
 
+/* Page materials (design Rev .62–.67): four roles, no frames. A page marks
+   what an element *is*; the tokens say what that looks like. Each keeps the
+   element's border width and only clears its colour, so nothing moves.
+   - mat-card   a container: ink 4%, radius 12, no shadow
+   - mat-tag    a chip: currentColor 15%, fully round, 8px sides
+   - mat-btn    a secondary control: ink 8%, radius 8, 13% on hover
+   - mat-field  an input: ink 7%, radius 8, a 3px accent ring on focus */
+@utility mat-card {
+  border-color: transparent;
+  border-radius: var(--mat-card-radius);
+  background-color: var(--mat-card-fill);
+  box-shadow: none;
+}
+
+@utility mat-tag {
+  border-color: transparent;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, currentColor 15%, transparent);
+  padding-inline: 8px;
+}
+
+@utility mat-btn {
+  border-color: transparent;
+  border-radius: 8px;
+  background-color: var(--mat-btn-fill);
+  &:hover {
+    background-color: var(--mat-btn-fill-hover);
+  }
+}
+
+@utility mat-field {
+  border-color: transparent;
+  border-radius: 8px;
+  background-color: var(--mat-field-fill);
+  &:focus-visible {
+    border-color: transparent;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--mat-focus);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -714,13 +766,96 @@ tbody tr:hover > td {
   background-color: transparent;
 }
 
-@layer utilities {
-  [data-slot="card"][data-variant="surface"]:focus-within {
-    --tw-ring-color: var(--color-border-strong);
-    box-shadow: 0 4px 12px var(--color-dashboard-shadow);
-    transition: box-shadow var(--transition-fast);
-  }
+/* Page materials, the parts a page does not mark (design Rev .62). `data-mat`
+   is on the frame's lane and on every panel / float body, so a page reads
+   the same wherever it is hosted; chrome and portalled overlays are outside.
+   - Rules: what is left drawing `--border` inside a page is a divider or a
+     table line once cards and tags have gone frameless, so the token itself
+     drops to ink 6%. Charts draw their grid with --sk-line, not --border.
+   - Buttons: every DS Button stamps data-variant — outline and secondary
+     become ink-filled, frameless, radius 8; the solid ones only round to 8.
+     Ghost and link were never framed.
+   - Fields: DS input / textarea / select trigger, ink 7%, radius 8.
+   - Table heads lose their fill; a sticky head keeps its own, or the rows
+     scrolling under it would show through. */
+[data-mat] {
+  --border: var(--mat-rule);
+}
 
+/* A marked element never keeps a frame, whatever tone map or caller class
+   also names a border colour — state reads from the fill (Rev .67). Only
+   the colour is unlayered; radius and fill stay utilities, so a page's own
+   hover or tone fill still applies. */
+:is(.mat-card, .mat-tag, .mat-btn, .mat-field) {
+  border-color: transparent;
+}
+
+[data-mat] [data-slot='button']:is([data-variant='outline'], [data-variant='secondary']) {
+  border-color: transparent;
+  border-radius: 8px;
+  background-color: var(--mat-btn-fill);
+}
+
+[data-mat] [data-slot='button']:is([data-variant='outline'], [data-variant='secondary']):hover:not(:disabled) {
+  background-color: var(--mat-btn-fill-hover);
+}
+
+[data-mat] [data-slot='button']:is([data-variant='default'], [data-variant='destructive']) {
+  border-radius: 8px;
+}
+
+[data-mat] :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']) {
+  border-color: transparent;
+  border-radius: 8px;
+  background-color: var(--mat-field-fill);
+}
+
+[data-mat] :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):focus-visible {
+  border-color: transparent;
+  box-shadow: 0 0 0 3px var(--mat-focus);
+}
+
+[data-mat] thead th:not(.sticky, .sticky *) {
+  background-color: transparent;
+}
+
+/* The §17.4 KPI boxes (@bifrost/ui patterns) wear the card material here;
+   the toolbar keeps its own frame — it is a control strip, not a group. A
+   hero's warning edge is an inline style, so it stays: it is the reading. */
+/* A table's own frame — DS DenseDataTable wraps every table in a rounded,
+   bordered box — is a group like any other: the fill, not the outline. */
+[data-mat] div.border:has(> table) {
+  border-color: transparent;
+  border-radius: var(--mat-card-radius);
+  background-color: var(--mat-card-fill);
+}
+
+/* A segmented control (DS SegmentControl, role=group on a pill) keeps its
+   pill as a track: no outline, ink 6% (the Control Center's .seg). */
+[data-mat] [role='group'].rounded-full {
+  border-color: transparent;
+  background-color: var(--mat-card-fill-hover);
+}
+
+/* The page head's ⓘ (DS PageHead) is the design's help circle: round, no
+   frame, ink 8%, 14% on hover or while open (Rev .64). */
+[data-mat] button[aria-label='About this page'] {
+  border-color: transparent;
+  background-color: var(--mat-btn-fill);
+}
+
+[data-mat] button[aria-label='About this page']:is(:hover, [aria-expanded='true']) {
+  background-color: color-mix(in srgb, var(--sk-ink) 14%, transparent);
+}
+
+[data-mat] :is([data-sr-kpi='hero'], [data-sr-kpi='strip']) {
+  border-color: transparent;
+  border-radius: var(--mat-card-radius);
+  background: var(--mat-card-fill);
+  box-shadow: none;
+}
+
+@layer utilities {
   .dense-scroll-x {
     overflow-x: auto;
     overscroll-behavior-x: contain;

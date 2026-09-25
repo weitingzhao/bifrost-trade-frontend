@@ -172,7 +172,7 @@ export function VrpTimeSeriesChart({
           x2={chart.pad.left + chart.chartW}
           y1={chart.yScale(0)}
           y2={chart.yScale(0)}
-          className="stroke-border"
+          className="stroke-[var(--sk-line)]"
           strokeWidth={1}
         />
 
@@ -278,7 +278,7 @@ export function VrpTimeSeriesChart({
       </div>
 
       {tooltipRow ? (
-        <div className="mt-2 rounded-md border border-border bg-secondary/80 px-3 py-2 text-dense-meta">
+        <div className="mt-2 border px-3 py-2 text-dense-meta mat-card">
           <span className="font-mono">{tooltipRow.trade_date ?? '—'}</span>
           <span className="mx-2 text-muted-foreground">·</span>
           <span className="font-mono tabular-nums">

@@ -140,7 +140,7 @@ export function NestedDenseTable({
   tableClassName?: string
 }) {
   return (
-    <div className={cn('rounded-md border border-border bg-secondary/20 p-2', className)}>
+    <div className={cn('border p-2 mat-card', className)}>
       <DenseDataTable wrapClassName="border-0 rounded-none" tableClassName={tableClassName}>
         {children}
       </DenseDataTable>

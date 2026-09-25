@@ -16,7 +16,7 @@ export function CopilotAlreadyKnows() {
         {chips.map((c) => (
           <span
             key={`${c.k}:${c.v}`}
-            className="inline-flex max-w-full items-center gap-1 rounded-md border border-border/60 bg-secondary/70 px-1.5 py-0.5 text-dense-caption"
+            className="inline-flex max-w-full items-center gap-1 border px-1.5 py-0.5 text-dense-caption mat-tag"
           >
             <span className="text-muted-foreground">{c.k}</span>
             <span className="truncate text-foreground">{c.v}</span>

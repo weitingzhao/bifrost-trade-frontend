@@ -28,7 +28,7 @@ export function SymbolHandoff({
             key={stop.id}
             to={stop.to}
             title={stop.why}
-            className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-secondary/60 px-2 py-0.5 text-dense-caption transition-colors hover:border-primary/40 hover:bg-primary/10"
+            className="inline-flex items-center gap-1 border px-2 py-0.5 text-dense-caption transition-colors hover:bg-primary/10 mat-tag"
           >
             <ExternalLink className="size-3 text-muted-foreground" aria-hidden />
             {stop.label}

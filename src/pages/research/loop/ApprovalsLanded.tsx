@@ -32,7 +32,7 @@ export function landedApproval(result: ApprovedDraftResult): LandedApproval {
 
 export function ApprovalsLanded({ landed }: { landed: readonly LandedApproval[] }) {
   return (
-    <aside className="space-y-2 rounded-lg border border-border bg-secondary/40 px-3 py-2.5 text-dense-meta">
+    <aside className="space-y-2 border px-3 py-2.5 text-dense-meta mat-card">
       <div className="flex items-baseline gap-2">
         <h2 className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
           Where approvals land

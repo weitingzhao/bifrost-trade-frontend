@@ -98,7 +98,7 @@ function ComposerForm({
     >
       <div
         className={cn(
-          'rounded-lg border border-border/60 bg-secondary/25',
+          'border mat-card',
           'focus-within:border-primary/35 focus-within:ring-1 focus-within:ring-primary/15',
         )}
       >
@@ -106,7 +106,7 @@ function ComposerForm({
           {showChip && view ? (
             <span
               data-testid="copilot-context-chip"
-              className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-md border border-border/60 bg-secondary/70 pl-1.5 pr-1 py-0.5 text-dense-caption text-foreground"
+              className="inline-flex min-w-0 max-w-full items-center gap-1 border pl-1.5 pr-1 py-0.5 text-dense-caption text-foreground mat-tag"
             >
               <CopilotContextPopover>
                 <button

@@ -17,7 +17,7 @@ export function AiUsageTile() {
 
   if (q.isError || !q.data) {
     return (
-      <div className="rounded border border-border/50 bg-secondary/40 px-2 py-2">
+      <div className="border px-2 py-2 mat-card">
         <p className="text-dense-label font-medium">AI Usage</p>
         <p className="text-dense-meta text-muted-foreground">Usage unavailable</p>
       </div>
@@ -30,7 +30,7 @@ export function AiUsageTile() {
   const breached = remaining_usd <= 0
 
   return (
-    <div className="rounded border border-border/50 bg-secondary/40 px-2 py-2 space-y-1.5">
+    <div className="border px-2 py-2 space-y-1.5 mat-card">
       <div className="flex items-center justify-between gap-2">
         <p className="text-dense-label font-medium">AI Usage</p>
         <DenseTag variant={breached ? 'danger' : 'success'}>

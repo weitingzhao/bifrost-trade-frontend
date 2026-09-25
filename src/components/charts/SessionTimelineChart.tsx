@@ -200,7 +200,7 @@ export function SessionTimelineChart({
 
       {tooltipRow ? (
         <div
-          className="mt-2 rounded-md border border-border bg-secondary/80 px-3 py-2 text-dense-meta"
+          className="mt-2 border px-3 py-2 text-dense-meta mat-card"
         >
           <span className="font-mono">{formatTime(tooltipRow.asof_ts)}</span>
           <span className="mx-2 text-muted-foreground">·</span>

@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
 
 export const watchlistStepperShellClass = cn(
-  'mb-4 flex items-stretch gap-0 overflow-hidden rounded-lg border border-border bg-card',
+  'mb-4 flex items-stretch gap-0 overflow-hidden border mat-card',
 )
 
 export const watchlistStepperStepClass = cn(
@@ -113,7 +113,7 @@ export const watchlistSectionHintClass = 'text-sm text-muted-foreground'
 
 export const watchlistStepLeadClass = 'text-foreground'
 
-export const watchlistKpiCellClass = 'rounded-md border bg-muted/20 p-2 text-xs'
+export const watchlistKpiCellClass = 'border p-2 text-xs mat-card'
 
 export const watchlistOrderZoneClass = cn(
   'space-y-3 rounded-md border border-destructive/20 bg-destructive/5 p-3',
@@ -123,7 +123,7 @@ export const watchlistWarnLineClass = 'text-xs text-amber-700 dark:text-amber-40
 
 export const watchlistWarnBoxClass = watchlistWarnLineClass
 
-export const watchlistPiePanelClass = 'space-y-2 rounded-lg border p-3'
+export const watchlistPiePanelClass = 'space-y-2 border p-3 mat-card'
 
 export const watchlistCollapsedSummaryClass = cn(
   'flex flex-wrap gap-3 px-3 pb-3 pt-0 text-xs text-muted-foreground',

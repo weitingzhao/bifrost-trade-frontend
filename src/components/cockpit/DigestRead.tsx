@@ -43,7 +43,7 @@ function Lines({ title, note, lines }: { title: string; note?: string; lines: Di
               {l.cite ? (
                 <Link
                   to={l.cite.to}
-                  className="ml-0.5 inline-flex items-baseline whitespace-nowrap rounded border border-border bg-background px-1 font-mono text-dense-micro text-primary hover:border-border/80"
+                  className="ml-0.5 inline-flex items-baseline whitespace-nowrap border px-1 font-mono text-dense-micro text-primary mat-btn"
                   title={`The page this reading came from — ${l.cite.label}`}
                 >
                   {l.cite.label}

@@ -4,7 +4,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 
 /** Model Analysis table shell + sticky header bridge to Dense UI tokens. */
 export const modelAnalysisTable = {
-  shell: cn('dense-scroll-x rounded-lg border border-border overflow-x-auto'),
+  shell: cn('dense-scroll-x border overflow-x-auto mat-card'),
   table: denseTable.table,
   stickyThead: '[&_th]:sticky [&_th]:top-0 [&_th]:z-[1] [&_th]:bg-secondary/40',
   symbolCell: 'font-semibold',
@@ -28,7 +28,7 @@ export const modelBandScopeLineClass = cn(positionsUi.mono, 'text-dense-meta lea
 export const modelBandBodyClass = 'flex min-w-0 flex-col gap-2.5 px-3 pt-2.5 pb-3'
 
 export const modelAnalysisHypotheticalBadgeClass =
-  'inline-flex items-center gap-1 rounded-md border border-warning/40 bg-warning-soft px-2 py-0.5 text-dense-meta font-semibold tracking-wide text-warning whitespace-nowrap'
+  'inline-flex items-center gap-1 border border-warning/40 bg-warning-soft px-2 py-0.5 text-dense-meta font-semibold tracking-wide text-warning whitespace-nowrap mat-tag'
 
 export const modelAnalysisDisclaimerClass =
   'rounded-md border border-warning/35 bg-warning-soft/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground'
@@ -56,7 +56,7 @@ export const modelAnalysisMetaRowClass = 'flex flex-wrap gap-x-6 gap-y-2 text-de
 export const modelAnalysisMetaMutedClass = 'text-muted-foreground'
 
 export const modelAnalysisCarBlockClass =
-  'mt-2 rounded-md border border-border bg-background p-3'
+  'mt-2 border p-3 mat-card'
 
 export const modelAnalysisCarTitleClass = 'text-dense-body font-semibold mb-1'
 

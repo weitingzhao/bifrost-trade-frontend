@@ -65,7 +65,7 @@ export function ViewOptionStockLinksModal({
         {rows.length === 0 ? (
           <p className="text-xs text-muted-foreground py-2">No link rows.</p>
         ) : (
-          <div className="max-h-[360px] overflow-y-auto overflow-x-hidden rounded-md border">
+          <div className="max-h-[360px] overflow-y-auto overflow-x-hidden border mat-card">
             <DenseDataTable tableClassName="w-full table-fixed">
               <colgroup>
                 <col style={{ width: '4.5rem' }} />

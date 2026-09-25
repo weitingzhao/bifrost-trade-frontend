@@ -128,7 +128,7 @@ export default function DiscoverModelPage() {
         <header className="flex flex-col gap-2.5 border-b border-border pb-5">
           <div className="flex flex-wrap items-center gap-2 font-mono text-dense-caption tracking-[0.05em]">
             <span
-              className="inline-flex items-center gap-1.5 rounded-[5px] border border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.08)] px-2 py-0.5 text-[var(--sk-accent)]"
+              className="inline-flex items-center gap-1.5 border py-0.5 text-[var(--sk-accent)] mat-tag"
               title="Method face — vocabulary and structure only. No order can be placed from here (D10)."
             >
               ◆ METHOD · NO ORDERS
@@ -147,7 +147,7 @@ export default function DiscoverModelPage() {
 
         <section>
           <h2 className={h2}>01 · 行业怎么分</h2>
-          <div className="overflow-x-auto rounded-lg border border-border">
+          <div className="overflow-x-auto border mat-card">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
@@ -189,7 +189,7 @@ export default function DiscoverModelPage() {
             {RULES.map((r) => (
               <div
                 key={r.cap}
-                className="rounded-lg border border-[var(--sk-line0)] bg-[var(--sk-raised)] px-3 py-2.5"
+                className="border px-3 py-2.5 mat-card"
               >
                 <div className="text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   {r.cap}
@@ -202,7 +202,7 @@ export default function DiscoverModelPage() {
 
         <section>
           <h2 className={h2}>03 · Bifrost 的映射</h2>
-          <div className="overflow-x-auto rounded-lg border border-border">
+          <div className="overflow-x-auto border mat-card">
             <table className="w-full border-collapse">
               <thead>
                 <tr>

@@ -49,6 +49,30 @@ describe('overallRule', () => {
   it('says nothing was probed rather than calling an empty board healthy', () => {
     expect(overallRule(resp([]))).toEqual({ text: 'no lens was probed', tone: 'warn' })
   })
+
+  it('names a probe that did not finish without calling it late', () => {
+    // 2026-09-25: a 2s statement timeout on a 900 MB table read as
+    // "canonical_pnl (0.0h → …)" and turned the console amber.
+    const r = overallRule(
+      resp([
+        lens({ label: 'vrp', age_hours: 4 }),
+        lens({ label: 'canonical_pnl', status: 'unprobed', row_count: null, age_hours: null, error: 'canceling statement due to statement timeout' }),
+      ]),
+    )
+    expect(r.tone).toBe('ok')
+    expect(r.text).toContain('canonical_pnl not judged this read')
+    expect(r.text).not.toContain('0.0h')
+  })
+
+  it('reads a board nobody could judge as silence, not green and not amber', () => {
+    const r = overallRule(resp([lens({ status: 'unprobed', age_hours: null }), lens({ label: 'scan', status: 'unprobed', age_hours: null })]))
+    expect(r.tone).toBe('unknown')
+  })
+
+  it('says which way a late row with no age is late', () => {
+    const r = overallRule(resp([lens({ label: 'scan', status: 'empty', age_hours: null }), lens({})]))
+    expect(r.text).toContain('scan (empty → Vol ratings)')
+  })
 })
 
 describe('healthLenses', () => {

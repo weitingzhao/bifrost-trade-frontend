@@ -68,7 +68,9 @@ import {
   composition,
   healthLenses,
   overallRule,
+  isUnjudged,
   readinessRows,
+  unjudgedReason,
   type CompositionRow,
 } from '@/utils/signalHealthModel'
 
@@ -271,12 +273,17 @@ export default function SignalHealthPage() {
                         </div>
                       </DenseTableCell>
                       <DenseTableCell col="tag">
-                        <DenseTag variant={statusVariant(f.status)} size="cell">
+                        <DenseTag
+                          variant={statusVariant(f.status)}
+                          size="cell"
+                          title={isUnjudged(f) ? `Not judged this read — ${unjudgedReason(f)}. Grey, not late.` : undefined}
+                        >
                           {f.status}
                         </DenseTag>
                       </DenseTableCell>
                       <DenseTableCell col="num" className="text-[var(--sk-mute2)]">
-                        {f.row_count.toLocaleString()}
+                        {/* A count nobody took is not zero. */}
+                        {f.row_count == null ? '—' : f.row_count.toLocaleString()}
                       </DenseTableCell>
                       <DenseTableCell col="num" className={cn('font-semibold', f.status === 'stale' && 'text-warning')}>
                         {fmtAge(f.age_hours)}

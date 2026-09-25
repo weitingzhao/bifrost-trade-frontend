@@ -100,7 +100,13 @@ export interface SignalFreshnessItem {
   label: string
   table: string
   max_computed_at: string | null
-  row_count: number
+  /** Null when the probe did not answer (research 0.114.0) — a count nobody took is not zero. */
+  row_count: number | null
+  /**
+   * `fresh` · `stale` · `empty` · `missing` (the table is not there) ·
+   * `unknown` (no computed_at to judge) · `unprobed` (the probe did not
+   * finish — a statement timeout, not a verdict on the table).
+   */
   status: string
   age_hours: number | null
   /**

@@ -69,35 +69,74 @@ export function healthLenses(rows: readonly SignalFreshnessItem[]): HealthLens[]
 }
 
 /**
+ * A row this read could not judge: the probe did not finish (`unprobed`,
+ * research 0.114.0 — before it, the same timeout arrived as `missing` with 0
+ * rows), or the table carries no computed_at (`unknown`). It says nothing
+ * about the table, so it is grey — never late, and never an all-clear (§11.3.1).
+ */
+export function isUnjudged(f: Pick<SignalFreshnessItem, 'status'>): boolean {
+  return f.status === 'unprobed' || f.status === 'unknown'
+}
+
+/** A table that answered and is behind, empty or gone. */
+export function isLate(f: Pick<SignalFreshnessItem, 'status'>): boolean {
+  return !isUnjudged(f) && f.status !== 'fresh' && f.status !== 'ok'
+}
+
+/** Why a row was not judged, in one line. */
+export function unjudgedReason(f: Pick<SignalFreshnessItem, 'status' | 'error'>): string {
+  if (f.status === 'unknown') return 'no computed_at to judge its age by'
+  const first = (f.error ?? '').split('\n')[0].trim()
+  return first ? `the probe did not finish (${first})` : 'the probe did not finish'
+}
+
+export type RuleTone = 'ok' | 'warn' | 'unknown'
+
+/**
  * The line beside the Overall tag — the design's, and the reason the page is
  * called ground truth rather than a status board.
  *
  * "Degraded" tells a reader to distrust the console. Naming the late table
  * and its consumers tells them *which* readings to distrust, which is the
- * only version of this sentence that is actionable.
+ * only version of this sentence that is actionable. A row this read could not
+ * judge is named as such and does not change the tone.
  */
 export function overallRule(data: SignalHealthResponse | undefined): {
   text: string
-  tone: 'ok' | 'warn'
+  tone: RuleTone
 } {
   const rows = data?.freshness ?? []
   if (rows.length === 0) return { text: 'no lens was probed', tone: 'warn' }
-  const late = rows.filter((f) => f.status !== 'fresh' && f.status !== 'ok')
-  if (late.length === 0) {
-    const oldest = rows.reduce((a, b) => ((a.age_hours ?? 0) > (b.age_hours ?? 0) ? a : b))
+  const unjudged = rows.filter(isUnjudged)
+  const judged = rows.filter((f) => !isUnjudged(f))
+  if (judged.length === 0) {
     return {
-      text: `all ${rows.length} lenses within cadence — the oldest is ${oldest.label} at ${(oldest.age_hours ?? 0).toFixed(1)}h against a ${Math.round(oldest.sla_hours ?? 0)}h SLA`,
+      text: `no lens could be judged this read — ${unjudged.map((f) => f.label).join(', ')}: silence, not an all-clear`,
+      tone: 'unknown',
+    }
+  }
+  const aside =
+    unjudged.length === 0
+      ? ''
+      : ` · ${unjudged.map((f) => f.label).join(', ')} not judged this read (grey, not late)`
+  const late = judged.filter(isLate)
+  if (late.length === 0) {
+    const oldest = judged.reduce((a, b) => ((a.age_hours ?? 0) > (b.age_hours ?? 0) ? a : b))
+    return {
+      text: `all ${judged.length} judged lenses within cadence — the oldest is ${oldest.label} at ${(oldest.age_hours ?? 0).toFixed(1)}h against a ${Math.round(oldest.sla_hours ?? 0)}h SLA${aside}`,
       tone: 'ok',
     }
   }
   const named = late
     .map((f) => {
       const where = DOWNSTREAM[f.label]
-      return `${f.label} (${(f.age_hours ?? 0).toFixed(1)}h${where ? ` → ${where.label}` : ''})`
+      // A late row with no age is empty or gone: say which, not "0.0h".
+      const age = f.age_hours == null ? f.status : `${f.age_hours.toFixed(1)}h`
+      return `${f.label} (${age}${where ? ` → ${where.label}` : ''})`
     })
     .join(' · ')
   return {
-    text: `${named} — readings grounded in ${late.length === 1 ? 'it' : 'them'} carry the amber asof; everything else is current`,
+    text: `${named} — readings grounded in ${late.length === 1 ? 'it' : 'them'} carry the amber asof; everything else is current${aside}`,
     tone: 'warn',
   }
 }

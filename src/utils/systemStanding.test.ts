@@ -117,6 +117,28 @@ describe('nightlyStanding', () => {
   it('tells silence from an all-clear', () => {
     expect(nightlyStanding(undefined, true)).toMatchObject({ lamp: 'gray', state: 'not probed' })
   })
+
+  it('keeps a probe that did not finish grey and named, never amber', () => {
+    const s = nightlyStanding(
+      health([
+        { label: 'vrp', table: 'f.x', max_computed_at: null, row_count: 1, status: 'fresh', age_hours: 4, sla_hours: 36 },
+        { label: 'canonical_pnl', table: 'f.y', max_computed_at: null, row_count: null, status: 'unprobed', age_hours: null, sla_hours: 36, error: 'canceling statement due to statement timeout' },
+      ]),
+      false,
+    )
+    expect(s).toMatchObject({ lamp: 'green', state: 'ready' })
+    expect(s.detail).toEqual([
+      expect.objectContaining({ tone: 'note', text: expect.stringContaining('canonical_pnl was not judged this read') }),
+    ])
+  })
+
+  it('reads a board nobody could judge as grey', () => {
+    const s = nightlyStanding(
+      health([{ label: 'vrp', table: 'f.x', max_computed_at: null, row_count: null, status: 'unprobed', age_hours: null, sla_hours: 36 }]),
+      false,
+    )
+    expect(s).toMatchObject({ lamp: 'gray', state: 'not judged' })
+  })
 })
 
 describe('worstLamp', () => {

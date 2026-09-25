@@ -27,7 +27,7 @@ import type { QuoteItem } from '@/types/market'
 import type { SignalHealthResponse } from '@/api/research/similarRegime'
 import type { CoverageQuality } from '@/api/marketDataCoverage'
 import { computeMarketStreamsLamp, countFreshQuotes } from '@/utils/livePageLamps'
-import { overallRule } from '@/utils/signalHealthModel'
+import { isLate, isUnjudged, overallRule, unjudgedReason } from '@/utils/signalHealthModel'
 
 export type DomainLamp = 'green' | 'yellow' | 'red' | 'gray'
 
@@ -244,7 +244,21 @@ export function nightlyStanding(
     return { ...base, lamp: 'gray', state: 'reading…', why: 'Asking Signal Health what landed.', detail: extra }
   }
   const rule = overallRule(health)
-  const late = (health.freshness ?? []).filter((f) => f.status !== 'fresh' && f.status !== 'ok')
+  const late = (health.freshness ?? []).filter(isLate)
+  // A probe that did not finish says nothing about last night: grey, and named.
+  const unjudged = (health.freshness ?? []).filter(isUnjudged).map((f) => ({
+    tone: 'note' as const,
+    text: `${f.label} was not judged this read — ${unjudgedReason(f)}. Grey, not late.`,
+  }))
+  if (rule.tone === 'unknown') {
+    return {
+      ...base,
+      lamp: 'gray',
+      state: 'not judged',
+      why: `No lens could be judged this read. This is silence about last night, not an all-clear.`,
+      detail: [...unjudged, ...extra],
+    }
+  }
   const rawCaveat = watchlist?.tone === 'warn'
   return {
     ...base,
@@ -257,8 +271,12 @@ export function nightlyStanding(
     detail: [
       ...late.map((f) => ({
         tone: 'warn' as const,
-        text: `${f.label} is ${(f.age_hours ?? 0).toFixed(1)}h old — readings grounded in it carry the amber asof (§17).`,
+        text:
+          f.age_hours == null
+            ? `${f.label} is ${f.status} — readings grounded in it carry the amber asof (§17).`
+            : `${f.label} is ${f.age_hours.toFixed(1)}h old — readings grounded in it carry the amber asof (§17).`,
       })),
+      ...unjudged,
       ...extra,
     ],
   }

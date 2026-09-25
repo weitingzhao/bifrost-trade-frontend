@@ -129,7 +129,10 @@ describe('the six colour channels', () => {
   })
 
   it('reads a live variable wherever one exists, and spells a literal only when it does not', () => {
-    const css = readFileSync('src/index.css', 'utf8')
+    // The app's own tokens, plus the colour values it takes from @bifrost/ui.
+    const css =
+      readFileSync('src/index.css', 'utf8') +
+      readFileSync('node_modules/@bifrost/ui/src/styles/semantic.css', 'utf8')
     for (const c of COLOUR_CHANNELS) {
       for (const s of c.swatches) {
         if (s.varName) expect(css, `${c.name} → ${s.varName}`).toContain(`${s.varName}:`)

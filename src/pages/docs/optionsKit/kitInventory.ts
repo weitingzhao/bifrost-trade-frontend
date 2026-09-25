@@ -36,11 +36,11 @@ export const KIT_GROUP_LABEL: Record<KitGroup, string> = {
 
 /**
  * Measured against `node_modules/@bifrost/ui` — pinned by the test. 0.4.12
- * (2026-09-24) is a PageHeader layout patch and 0.4.13 (2026-09-25) adds the
- * semantic colour tokens; the kit's directories are still absent, so the
- * standing above holds.
+ * (2026-09-24) is a PageHeader layout patch, 0.4.13 (2026-09-25) adds the
+ * semantic colour tokens and 0.4.14 ships them as their own stylesheet; the
+ * kit's directories are still absent, so the standing above holds.
  */
-export const UI_VERSION_NOW = '0.4.13'
+export const UI_VERSION_NOW = '0.4.14'
 export const UI_VERSION_TARGET = '0.5.0'
 
 export interface KitPrimitive {

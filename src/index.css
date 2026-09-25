@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+/* The seven colour values — accent, entity identity, direction — in both
+   themes. @bifrost/ui owns them (design Rev .31, DESIGN_CONTRACTS §8), so this
+   file declares none of them; only their -rgb tint triplets live here. */
+@import "@bifrost/ui/styles/semantic";
 /* Built output, not source: the class strings survive tsc verbatim. */
 @source "../../bifrost-ui/dist/**/*.js";
 @custom-variant dark (&:is(.dark *));
@@ -157,14 +161,11 @@
     --sk-paper-glow: rgba(255, 255, 255, 0.7);
     --sk-mute: #5b6572;
     --sk-faint: #959daa;
-    --sk-accent: #6d28d9;
     --sk-accent2: #5b21b6;
     --sk-accent-rgb: 109 40 217;
 
-    /* The data inks, one step deeper than dark so they clear 4.5:1 on paper. */
-    --sk-ticker: #3f6212;
-    --sk-contract: #075985;
-    --sk-instance: #6b21a8;
+    /* The data inks, one step deeper than dark so they clear 4.5:1 on paper.
+       The hexes come from @bifrost/ui; these are their channels. */
     --sk-ticker-rgb: 63 98 18;
     --sk-contract-rgb: 7 89 133;
     --sk-instance-rgb: 107 33 168;
@@ -258,10 +259,8 @@
        share a hex (lamp #16a34a / #dc2626 against P&L #4ade80 / #f87171).
 
        Light takes the design's own paper values (Rev 2026-09-23.18), still a
-       different hex from every lamp. */
-    --color-profit: #15803d; /* green-700 */
-    --color-loss: #b91c1c; /* red-700 */
-    --color-unrealized: #9a3412; /* orange-800 — the design's paper step */
+       different hex from every lamp: #15803d / #b91c1c / #9a3412, declared by
+       @bifrost/ui under [data-theme='light']. */
 
     /* Business semantics — entity identity (light) */
     /* §14.8: the three entity inks are the ramp's own (--sk-ticker ·
@@ -365,8 +364,8 @@
     --sk-mute: #99a1b3;
     /* One accent for the whole product (design Package 2026-09-23.3). The
        layer used to own it, so every page's primary was its layer's hue —
-       and a place should not outrank the data drawn on it. */
-    --sk-accent: #a78bfa;
+       and a place should not outrank the data drawn on it. The accent itself
+       (#a78bfa) comes from @bifrost/ui; its lighter step and channels stay. */
     --sk-accent2: #c4b5fd;
     --sk-accent-rgb: 167 139 250;
     /* The three the app had only ever read through `var()` fallbacks. */
@@ -376,10 +375,8 @@
 
     /* Entity inks and tint triplets (Rev 2026-09-23.15–.17, §14.8). A tint
        fill writes rgb(var(--color-profit-rgb) / .12), so a 12% wash is the
-       right green on either ground once the light values land. */
-    --sk-ticker: #a3e635;
-    --sk-contract: #7dd3fc;
-    --sk-instance: #c084fc;
+       right green on either ground once the light values land. The inks
+       themselves come from @bifrost/ui. */
     --sk-ticker-rgb: 163 230 53;
     --sk-contract-rgb: 125 211 252;
     --sk-instance-rgb: 192 132 252;
@@ -498,10 +495,8 @@
     --color-dashboard-tile: rgba(255, 255, 255, 0.05);
     --color-dashboard-shadow: rgba(0, 0, 0, 0.25);
 
-    /* Business semantics — PnL (dark). The contract's own three values (§14.7). */
-    --color-profit: #4ade80; /* green-400 */
-    --color-loss: #f87171; /* red-400 */
-    --color-unrealized: #fb923c; /* orange-400 */
+    /* Business semantics — PnL (dark): the contract's own three values
+       (§14.7), #4ade80 / #f87171 / #fb923c, declared by @bifrost/ui. */
 
     /* Business semantics — entity identity (dark) */
     --color-entity-symbol: var(--sk-ticker);

@@ -14,11 +14,12 @@
  * and scrims, lamps, module hues and category chart palettes are exempt, as
  * they are in the design.
  *
- * Since Rev .31 the values themselves belong to `@bifrost/ui` (0.4.13), and
- * the registry's `DIRECTION` is a mirror that must match it. The second half
- * holds three copies to the package: that mirror (frozen by
- * `scripts/design-nav-snapshot.mjs`), and the app's own declarations with
- * their tint triplets.
+ * Since Rev .31 the values themselves belong to `@bifrost/ui`, and the
+ * registry's `DIRECTION` is a mirror that must match it. The second half
+ * holds that mirror (frozen by `scripts/design-nav-snapshot.mjs`) to the
+ * package, keeps the app from declaring a copy of its own (it imports
+ * `@bifrost/ui/styles/semantic`, 0.4.14), and holds the -rgb tint triplets
+ * the app does keep to the channels of the package's hexes.
  */
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
@@ -124,7 +125,7 @@ function declared(css: string, selectors: string[]): Map<string, string> {
   return new Map()
 }
 
-const PKG_CSS = readFileSync(join(SRC, '..', 'node_modules/@bifrost/ui/src/styles/bifrost-ui.css'), 'utf8')
+const PKG_CSS = readFileSync(join(SRC, '..', 'node_modules/@bifrost/ui/src/styles/semantic.css'), 'utf8')
 const APP_CSS = readFileSync(join(SRC, 'index.css'), 'utf8')
 
 /** The package: dark on `:root, .dark`, light under `[data-theme='light']`. */
@@ -152,9 +153,10 @@ describe('§14.8 inks: one set of values, held to @bifrost/ui', () => {
     }
   })
 
-  it("keeps the app's own declarations equal to the package", () => {
+  it('takes them from the package and declares no copy of its own', () => {
+    expect(APP_CSS).toMatch(/^@import "@bifrost\/ui\/styles\/semantic";$/m)
     for (const th of THEMES) {
-      for (const k of INKS) expect(APP[th].get(TOKEN[k]), `${th} ${TOKEN[k]}`).toBe(PKG[th].get(TOKEN[k]))
+      for (const k of INKS) expect(APP[th].get(TOKEN[k]), `${th} ${TOKEN[k]}`).toBeUndefined()
     }
   })
 

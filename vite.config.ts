@@ -138,6 +138,11 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: [
         { find: '@', replacement: resolve(__dirname, 'src') },
+        // Before `@bifrost/ui/styles`, whose prefix would swallow it.
+        {
+          find: '@bifrost/ui/styles/semantic',
+          replacement: resolve(uiRoot, 'dist/styles/semantic.css'),
+        },
         {
           find: '@bifrost/ui/styles',
           replacement: resolve(uiRoot, 'dist/styles/bifrost-ui.css'),

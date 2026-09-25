@@ -7,7 +7,6 @@ import { GlobalMarketStatusBar, SkipToContent } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
-import { ShellStatusBar } from './ShellStatusBar'
 import { initialSidebarOpen, SHELL_SIDEBAR_WIDTH } from './shellChrome'
 import { isSystemRoute } from './routeRegistry'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
@@ -83,7 +82,9 @@ export function AppLayout() {
         <AppSidebar />
         {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport */}
         <SidebarInset className="h-svh overflow-hidden bg-card">
-          <AppHeader />
+          {/* The menu bar (Rev .60): the status pill retired into the top
+              bar's right end, and the Alerts panel hangs off its clock. */}
+          <AppHeader alertGroups={groups} alerts={summary} onDismissAllAlerts={stream.dismissAll} />
           <GlobalMarketStatusBar enabled={showMarketStrip} />
           {/* `@container/page`: the width a page is given, queried by name. A
             float or panel body declares the same container, so a page that
@@ -96,9 +97,6 @@ export function AppLayout() {
           >
             <BoundedOutlet />
           </main>
-          {/* The alerts panel hangs off this bar's own chip — one trigger, so
-            it can be a popover instead of the drawer two triggers forced. */}
-          <ShellStatusBar groups={groups} alerts={summary} onDismissAll={stream.dismissAll} />
         </SidebarInset>
         {/* A docked inspector portals in here — a page opens it, but a panel that
           takes width from the content has to be the content's sibling, not its

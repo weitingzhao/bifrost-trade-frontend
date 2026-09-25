@@ -61,10 +61,13 @@ export function RightInspectorShell({
   const panel = (
     <aside
       className={cn(
-        'flex min-h-0 max-w-full flex-col border-l border-border bg-card',
+        'flex min-h-0 max-w-full flex-col',
         docked
-          ? 'h-svh shrink-0'
-          : 'pointer-events-auto h-svh shadow-[-4px_0_24px_rgba(0,0,0,0.15)]',
+          ? 'h-svh shrink-0 border-l border-border bg-card'
+          : // The floating sheet (design Rev .59, `[data-sr-sheet]`): off the
+            // edge by 8, radius 12, a hairline and a top highlight, sliding in
+            // over 240ms. Opaque — a sheet holds rows, not glass.
+            'pointer-events-auto my-2 mr-2 h-[calc(100svh-16px)] overflow-hidden rounded-[12px] border border-[color-mix(in_srgb,var(--sk-ink)_10%,transparent)] bg-[var(--sk-raised)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_8%,transparent),0_24px_60px_-12px_rgba(0,0,0,0.6)] animate-in fade-in-0 slide-in-from-right-4 duration-[240ms] motion-reduce:animate-none',
       )}
       style={{ width: docked ? `${width}px` : `min(${width}px, 96vw)` }}
       role="dialog"

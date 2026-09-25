@@ -86,16 +86,19 @@ export function animateFloatIn(el: HTMLElement, key: string): void {
   )
 }
 
-/** The panel has just opened: slide it in from the edge. */
+/**
+ * The panel has just opened: in from the edge — 14px, a fade and .985 → 1
+ * over 240ms (design Rev .59, the panel's own entrance).
+ */
 export function animatePanelIn(el: HTMLElement): void {
   pending = null
   if (reduced() || typeof el.animate !== 'function') return
   el.animate(
     [
-      { opacity: 0, translate: '36px 0' },
-      { opacity: 1, translate: '0 0' },
+      { opacity: 0, translate: '14px 0', scale: '.985' },
+      { opacity: 1, translate: '0 0', scale: '1' },
     ],
-    { duration: 260, easing: 'cubic-bezier(.2,.8,.2,1)' }
+    { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' }
   )
 }
 

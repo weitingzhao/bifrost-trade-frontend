@@ -1,9 +1,10 @@
 /**
- * The bottom line of the frame (design Rev .57–.58, Shell Spec §5a.11): the
- * status pill at its left, the toolbar right of it, both floating over the
- * page rather than taking a lane from it.
+ * The bottom line of the frame (design Rev .57–.60, Shell Spec §5a.11): the
+ * toolbar, floating over the page rather than taking a lane from it. The
+ * status pill that sat at its left retired into the top bar's menu bar in
+ * Rev .60, so the lane is the content's width now.
  *
- * Two things live here because both the pill and the toolbar read them:
+ * Two things live here:
  *
  * - **Whether the toolbar shows.** The sidebar foot's square toggles it; the
  *   choice is kept as `bifrost.toolbar` = `hidden` | `shown`, shown by default,
@@ -70,8 +71,6 @@ export interface BottomLane {
   right: number
   /** The lane's width. */
   width: number
-  /** The status pill's width plus the gap after it; 0 before it has drawn. */
-  pill: number
 }
 
 function measure(overlayRight: number): BottomLane {
@@ -90,19 +89,17 @@ function measure(overlayRight: number): BottomLane {
       : 0
   const left = contentLeft + LANE_GAP_PX
   const right = pushed + overlay + LANE_GAP_PX
-  const pillEl = document.querySelector<HTMLElement>('[data-sb-pill] [data-sb-capsule]')
-  const pill = pillEl ? Math.round(pillEl.offsetWidth) + LANE_GAP_PX : 0
-  return { left, right, width: Math.max(0, vw - left - right), pill }
+  return { left, right, width: Math.max(0, vw - left - right) }
 }
 
 /**
- * The lane, kept current: on resize, when the content box changes size (the
- * sidebar folding, a panel pushing), and when the pill changes width.
+ * The lane, kept current: on resize, and when the content box changes size
+ * (the sidebar folding, a panel pushing, the Symbol list's column).
  * `overlayRight` is an overlaying panel's width, 0 when none.
  */
 export function useBottomLane(overlayRight = 0): BottomLane {
   const [lane, setLane] = useState<BottomLane>(() =>
-    typeof window === 'undefined' ? { left: 0, right: 0, width: 0, pill: 0 } : measure(overlayRight),
+    typeof window === 'undefined' ? { left: 0, right: 0, width: 0 } : measure(overlayRight),
   )
   useEffect(() => {
     let frame = 0
@@ -111,9 +108,7 @@ export function useBottomLane(overlayRight = 0): BottomLane {
       frame = requestAnimationFrame(() => {
         const next = measure(overlayRight)
         setLane((prev) =>
-          prev.left === next.left && prev.right === next.right && prev.width === next.width && prev.pill === next.pill
-            ? prev
-            : next,
+          prev.left === next.left && prev.right === next.right && prev.width === next.width ? prev : next,
         )
       })
     }
@@ -121,16 +116,9 @@ export function useBottomLane(overlayRight = 0): BottomLane {
     const ro = new ResizeObserver(update)
     const main = document.getElementById('main-content')
     if (main) ro.observe(main)
-    // The pill mounts beside the content; look again once it has drawn.
-    const late = window.setTimeout(() => {
-      const pillEl = document.querySelector<HTMLElement>('[data-sb-pill] [data-sb-capsule]')
-      if (pillEl) ro.observe(pillEl)
-      update()
-    }, 400)
     window.addEventListener('resize', update)
     return () => {
       cancelAnimationFrame(frame)
-      window.clearTimeout(late)
       ro.disconnect()
       window.removeEventListener('resize', update)
     }

@@ -5,9 +5,9 @@
  *
  * Until design Rev .57 this was a column down the right edge. It lies down now
  * (Shell Spec §5a.11 "右栏下沉为底部工具栏"): the same groups, head then its
- * pages, as glass capsules centred in the lane right of the status pill,
- * floating over the page. Below 820 of lane only the heads show, in one
- * capsule; below 340 beside the pill it rises a row above it. The sidebar
+ * pages, as glass capsules centred in the content's lane, floating over the
+ * page. Below 820 of lane only the heads show, in one capsule. (The status
+ * pill it once shared the line with retired into the menu bar, Rev .60.) The sidebar
  * foot's square hides and shows it (`bottomLane.ts`).
  *
  * `equip.ts` holds why the three modules are not in the business tree;
@@ -292,11 +292,8 @@ export function EquipRail() {
   // narrowed the content, which the lane measures.
   const lane = useBottomLane(panel ? PANEL_CARD_PX : 0)
 
-  // Beside the pill when there is room for the heads (340); otherwise one row
-  // above it, across the whole lane. The page icons need 820 of whichever.
-  const side = lane.width - lane.pill
-  const stacked = side < 340
-  const full = (stacked ? lane.width : side) >= 820
+  // The page icons need 820 of lane; below that, the heads alone.
+  const full = lane.width >= 820
 
   // The two readings that earn Autopilot its indicator, read where the sidebar
   // used to read them — the badge moved with the row.
@@ -331,11 +328,11 @@ export function EquipRail() {
       aria-label="Equipment"
       style={
         {
-          // The bottom toolbar (design Rev .57–.58): floating over the page,
-          // centred in the lane right of the status pill, 12 off the bottom.
-          left: lane.left + (stacked ? 0 : lane.pill),
+          // The bottom toolbar (design Rev .57–.60): floating over the page,
+          // centred in the content's lane, 12 off the bottom.
+          left: lane.left,
           right: lane.right,
-          bottom: stacked ? 50 : 12,
+          bottom: 12,
         } as CSSProperties
       }
     >

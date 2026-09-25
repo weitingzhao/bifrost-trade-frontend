@@ -53,28 +53,3 @@ export function initialSidebarOpen(cookie: string, viewportWidth: number): boole
   return viewportWidth >= SHELL_SIDEBAR_EXPAND_MIN_VIEWPORT
 }
 
-/**
- * The top bar's controls, as one family.
- *
- * `design/trade/_Shell TopBar.dc.html` gives every control on this bar the
- * same frame — `.tb-btn`: **28px tall, 6px radius, 1px border, 12px text** —
- * and lays them out on a 10px gap. They had drifted to 24px with a 4px radius,
- * 9px text and assorted paddings, which is why the Omnibar, the Lens and the
- * Copilot button read as three things that happened to land on the same row
- * rather than as one row of controls. (`rounded-sm` is this theme's 6px;
- * `text-dense-label` is its 12px.)
- *
- * Exported because the Lens is its own component: a second copy of these
- * numbers is exactly how they drifted the first time.
- */
-export const SHELL_TOP_BAR_CONTROL_CLASS =
-  'inline-flex h-7 items-center gap-2 rounded-sm border border-border px-2.25 text-dense-label transition-colors'
-
-/**
- * A key printed on a control, as the design draws it: bordered, mono, quiet.
- * Every shortcut on the bar wears the same chip — `⌘K` and `⌘J` disagreeing
- * about whether a key gets a border is the kind of small thing that makes a
- * bar look assembled rather than designed.
- */
-export const SHELL_TOP_BAR_KBD_CLASS =
-  'rounded-xs border border-border px-1 font-mono text-dense-caption leading-[15px] text-muted-foreground'

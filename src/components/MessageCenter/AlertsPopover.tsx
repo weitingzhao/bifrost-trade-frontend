@@ -1,12 +1,13 @@
 /**
- * Everything wanting a look, in one panel, grouped by who said it.
+ * Everything wanting a look, in one panel, grouped by who said it — the menu
+ * bar's notification centre (design Rev .60 §4, `_Shell StatusBar`).
  *
- * Design: `design/trade/_Shell StatusBar.dc.html`. It opens **upward** off the
- * status bar's count chip, which is now the only way in — until 2026-09-20
- * this was a right-hand drawer, because two bars reached it (a top-bar bell
- * and this segment) and one popover cannot anchor to two triggers without
- * becoming two popovers with two open states. The bell is gone, so the
- * compromise is gone with it and the shape is the design's again.
+ * It hangs off the session clock at the right end of the top bar and opens
+ * downward, right-aligned, since the status pill it used to rise from retired
+ * into the bar. Each source is one rounded card. A source with nothing in it
+ * is left out (the design's rule), but one that is still checking or could
+ * not be reached stays: that is a fact about us, not a quiet world. When
+ * every source is empty the panel says so in one line.
  *
  * The header says what the panel is *not*: news, never work. Work waits in the
  * Decision Inbox, and after the naming ruling that is the only thing in the
@@ -19,16 +20,19 @@ import { HealthLamp } from '@bifrost/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { formatLastUpdate } from '@/utils/positions'
+import { cn } from '@/lib/utils'
 import type { AlertGroup, AlertItem } from '@/hooks/useAlerts'
 
 interface Props {
   groups: AlertGroup[]
   count: number
   onDismissAll: () => void
-  /** The status-bar chip. The panel hangs off it and nothing else. */
+  /** The menu-bar item. The panel hangs off it and nothing else. */
   children: React.ReactNode
-  /** The chip's offset in the status pill, so the panel rises from the pill's left edge. */
-  alignOffset?: number
+  /** The menu bar's glass, from the caller that owns it. */
+  contentClassName?: string
+  /** Told when the panel opens or closes — the item's tip stays down meanwhile. */
+  onOpenChange?: (open: boolean) => void
 }
 
 function tickReducer(n: number): number { return n + 1 }
@@ -127,8 +131,12 @@ function GroupBody({ group }: { group: AlertGroup }) {
   )
 }
 
-export function AlertsPopover({ groups, count, onDismissAll, children, alignOffset = 0 }: Props) {
-  const [open, setOpen] = useState(false)
+export function AlertsPopover({ groups, count, onDismissAll, children, contentClassName, onOpenChange }: Props) {
+  const [open, setOpenState] = useState(false)
+  const setOpen = (v: boolean) => {
+    setOpenState(v)
+    onOpenChange?.(v)
+  }
   const navigate = useNavigate()
   // Relative timestamps only need to move while someone is reading them.
   const [, tick] = useReducer(tickReducer, 0)
@@ -139,6 +147,9 @@ export function AlertsPopover({ groups, count, onDismissAll, children, alignOffs
   }, [open])
 
   const dismissable = groups.some((g) => g.items.some((i) => i.onDismiss != null))
+  // An empty, answered source is left out; one still checking or unreachable
+  // is not empty — it is unknown — and stays.
+  const shown = groups.filter((g) => g.items.length > 0 || g.state !== 'ready')
   const go = (to: string) => {
     setOpen(false)
     navigate(to)
@@ -148,16 +159,9 @@ export function AlertsPopover({ groups, count, onDismissAll, children, alignOffs
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
-        side="top"
-        align="start"
-        alignOffset={-alignOffset}
-        // Anchored to the pill's left edge on purpose: collision handling
-        // would pull the panel back under its own chip (limitShift keeps a
-        // popper touching its trigger), and the pill sits bottom-left, where
-        // an upward, left-aligned panel has nothing to collide with.
-        avoidCollisions={alignOffset === 0}
-        sideOffset={8}
-        className="w-[380px] p-0"
+        align="end"
+        sideOffset={6}
+        className={cn('w-[380px] max-w-[calc(100vw-24px)] p-0', contentClassName)}
         aria-label="Alerts"
       >
         <div className="flex shrink-0 items-center gap-2 border-b px-3 py-2">
@@ -178,13 +182,14 @@ export function AlertsPopover({ groups, count, onDismissAll, children, alignOffs
           Grouped by source · news, never work — work waits in the Decision Inbox.
         </p>
 
-        {/* Always the four groups, never a single "nothing waiting" panel. An
-            empty group still has something to say — which source answered,
-            what it checked, what it does not cover — and collapsing all four
-            into one cheerful line throws exactly that away. */}
-        <div className="max-h-[420px] overflow-y-auto pb-2">
-          {groups.map((group) => (
-            <div key={group.id}>
+        <div className="flex max-h-[min(70vh,520px)] flex-col gap-2 overflow-y-auto p-2.5">
+          {shown.length === 0 ? (
+            <p className="m-0 px-2 py-4 text-center text-dense-meta text-muted-foreground">
+              No new alerts. Cleared items stay in each source's own page.
+            </p>
+          ) : null}
+          {shown.map((group) => (
+            <div key={group.id} className="overflow-hidden rounded-[10px] bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)] pb-1">
               <GroupHeading group={group} />
               {group.items.length > 0 ? (
                 group.items.map((item) => <AlertRow key={item.id} item={item} onGo={go} />)

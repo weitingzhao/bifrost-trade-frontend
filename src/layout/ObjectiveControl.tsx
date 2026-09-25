@@ -14,7 +14,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown } from 'lucide-react'
 import { HealthLamp } from '@bifrost/ui'
 import { DenseTag } from '@/components/data-display'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -26,7 +25,9 @@ import { readStoredContext, writeStoredContext } from '@/lib/symbolContext'
 import { cn } from '@/lib/utils'
 import { MODE_WHO, isObjectiveMode, type ObjectiveMode } from '@/lib/harness/objectivePolicy'
 import { planFilterCounts } from '@/utils/planStatusCounts'
-import { SHELL_TOP_BAR_CONTROL_CLASS } from './shellChrome'
+import { glyph } from '@/lib/design/glyphs'
+import { MenubarTip } from './menubar/MenubarTip'
+import mb from './menubar/menubar.module.css'
 import { handProgress, loopProgress, waitingStep, type ProgressStep } from './objectiveProgress'
 
 const INK: Record<ProgressStep['lamp'], string> = {
@@ -37,6 +38,10 @@ const INK: Record<ProgressStep['lamp'], string> = {
 }
 
 /** Where a stage opens: Symbol and Plans carry a hand objective's subject. */
+
+/** The sidebar's Objectives glyph — the bar item and the menu row read as one thing. */
+const OBJECTIVE_GLYPH = glyph('bullseye')
+
 function stageHref(step: ProgressStep, subject: string | null): string {
   return subject && (step.to === '/research/symbol' || step.to === '/trade/plans')
     ? `${step.to}?symbol=${encodeURIComponent(subject)}`
@@ -101,29 +106,25 @@ export function ObjectiveControl() {
       : 'No objective — pick one to scope lineage'
     return (
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            title={chipTitle}
-            aria-label={chipTitle}
-            className={cn(
-              SHELL_TOP_BAR_CONTROL_CLASS,
-              'hidden max-w-[16rem] gap-1.5 whitespace-nowrap sm:inline-flex',
-              current ? 'border-[var(--sk-line2)] bg-[var(--sk-raised)]' : 'border-[var(--sk-line0)] hover:bg-secondary',
-              open && 'border-[var(--sk-accent)]',
-            )}
-          >
-            {mode ? (
-              <span className="font-mono text-dense-micro uppercase tracking-[0.1em] text-muted-foreground">{mode}</span>
-            ) : null}
-            <span className={cn('truncate font-semibold', current ? 'text-foreground' : 'text-muted-foreground')}>
-              {current ? current.title : 'No objective'}
-            </span>
-            {wait ? <span className="font-mono text-dense-micro text-[var(--color-lamp-yellow)]">{wait.v}</span> : null}
-            <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-[420px] p-0">
+        {/* Rev .60: the sidebar's own Objectives glyph + the short name + the
+            waiting count; the mode and the stages move to the tip. */}
+        <MenubarTip tip={chipTitle} suppressed={open}>
+          <PopoverTrigger asChild>
+            <button type="button" aria-label={chipTitle} className={cn(mb.item, 'hidden gap-[5px] px-1.5 sm:inline-flex')}>
+              <OBJECTIVE_GLYPH
+                className="size-[15px] shrink-0"
+                style={{ color: current ? 'var(--sk-accent)' : 'var(--sk-mute2)' }}
+              />
+              <span
+                className={cn(mb.objName, mb.fs12, 'max-w-[11rem] truncate font-semibold', current ? 'text-foreground' : 'text-muted-foreground')}
+              >
+                {current ? current.title : 'No objective'}
+              </span>
+              {wait ? <span className={cn(mb.mono, mb.fs105, 'text-[var(--color-lamp-yellow)]')}>{wait.v}</span> : null}
+            </button>
+          </PopoverTrigger>
+        </MenubarTip>
+        <PopoverContent align="end" sideOffset={6} className={cn(mb.pop, 'w-[420px] max-w-[calc(100vw-24px)]')}>
           {current ? (
             <>
               <div className="flex flex-wrap items-baseline gap-2 border-b border-border px-3 py-2.5">

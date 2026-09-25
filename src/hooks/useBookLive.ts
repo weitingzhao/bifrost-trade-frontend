@@ -49,6 +49,8 @@ export interface BookLive {
   modelDelta: number | null
   /** Underlyings the model could not fully price — its Δ is short of them. */
   modelDegraded: number
+  /** The same Δ per account, for a view narrowed to one (the menu bar's Book). */
+  modelDeltaByAccount: Record<string, number>
   /** Newest quote in the book, seconds ago. */
   quoteAgeSec: number | null
   tagOf: (accountId: string) => string
@@ -140,17 +142,21 @@ export function useBookLive(open: boolean): BookLive {
     })),
   })
   const modelStamp = models.map((m) => m.dataUpdatedAt).join(',')
-  const { modelDelta, modelDegraded } = useMemo(() => {
+  const { modelDelta, modelDegraded, modelDeltaByAccount } = useMemo(() => {
     let sum: number | null = null
     let degraded = 0
-    for (const m of models) {
+    const byAccount: Record<string, number> = {}
+    models.forEach((m, i) => {
       for (const u of m.data?.per_underlying ?? []) {
         if (u.greeks?.degraded) degraded += 1
         const d = u.greeks?.delta
-        if (d != null && Number.isFinite(d)) sum = (sum ?? 0) + d
+        if (d != null && Number.isFinite(d)) {
+          sum = (sum ?? 0) + d
+          byAccount[accountIds[i]] = (byAccount[accountIds[i]] ?? 0) + d
+        }
       }
-    }
-    return { modelDelta: sum, modelDegraded: degraded }
+    })
+    return { modelDelta: sum, modelDegraded: degraded, modelDeltaByAccount: byAccount }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelStamp])
 
@@ -213,6 +219,7 @@ export function useBookLive(open: boolean): BookLive {
     totals,
     modelDelta,
     modelDegraded,
+    modelDeltaByAccount,
     quoteAgeSec,
     tagOf,
     isLoading: statusLoading || (!onLive && snapshot.isLoading),

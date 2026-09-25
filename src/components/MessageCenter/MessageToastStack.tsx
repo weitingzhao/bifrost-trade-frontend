@@ -1,6 +1,7 @@
 import { useReducer, useEffect } from 'react'
 import { X, Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useDockColumn } from '@/layout/symbolDock/dockState'
 import { formatLastUpdate } from '@/utils/positions'
 import type { SystemMessage, SystemMessageLevel } from '@/types/messages'
 import { IbConnectionMessageTitle } from '@/components/MessageCenter/IbConnectionSlotBadge'
@@ -39,6 +40,7 @@ const LEVEL_ACCENT: Record<SystemMessageLevel, string> = {
 function tickReducer(n: number): number { return n + 1 }
 
 export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) {
+  const dockWidth = useDockColumn().width
   const [, tick] = useReducer(tickReducer, 0)
 
   // Periodic re-render to expire toasts by time
@@ -66,7 +68,10 @@ export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) 
       aria-live="polite"
       aria-atomic="false"
       aria-relevant="additions"
-      className="fixed top-14 right-4 z-50 flex flex-col gap-2 w-[284px] pointer-events-none"
+      className="fixed top-14 z-50 flex flex-col gap-2 w-[284px] pointer-events-none"
+      // Left of the Symbol list's column, which owns the right edge (Rev .57);
+      // over it, the stack hid the strip's names.
+      style={{ right: dockWidth + 16 }}
     >
       {toasts.map(msg => (
         <div

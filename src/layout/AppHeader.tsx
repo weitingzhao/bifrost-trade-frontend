@@ -12,12 +12,10 @@
  * its prefix token, the objective has its own control, and (Rev .58) the
  * account has one beside it — a shell scope the wired pages follow.
  */
-import { MessageSquare, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { omnibar } from '@/lib/omnibar'
+import { omnibar, omnibarStore } from '@/lib/omnibar'
 import { toggleThread, useThread } from '@/hooks/useCopilotThread'
 import { PAGE_ROUTES, routeFor } from './routeRegistry'
 import { crumbLinks } from './crumbLinks'
@@ -26,18 +24,28 @@ import { usePageHeadVisibility } from './usePageHeadVisibility'
 import { useCrumbLabel } from './useCrumbLabel'
 import { useSymbolContext } from '@/lib/symbolContext'
 import { ObjectiveControl } from './ObjectiveControl'
-import { AccountControl } from './AccountControl'
+import { BookControl } from './menubar/BookControl'
+import { ControlCenter } from './menubar/ControlCenter'
+import { SessionClock } from './menubar/SessionClock'
+import { MenubarTip } from './menubar/MenubarTip'
+import mb from './menubar/menubar.module.css'
+import type { AlertGroup, AlertsSummary } from '@/hooks/useAlerts'
 import { useSymbolGo } from './symbolGo'
-import {
-  SHELL_TOP_BAR_CONTROL_CLASS,
-  SHELL_TOP_BAR_HEIGHT_CLASS,
-  SHELL_TOP_BAR_KBD_CLASS,
-} from './shellChrome'
+import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
 
 /** Top-level headings a first crumb can fall back to; System's is its first page. */
 const CRUMB_GROUPS = [...NAV_GROUPS, { label: 'System', to: SYSTEM_ITEM.to }]
 
-export function AppHeader() {
+export function AppHeader({
+  alertGroups,
+  alerts,
+  onDismissAllAlerts,
+}: {
+  /** The Alerts stream, for the clock's notification centre (Rev .60). */
+  alertGroups: AlertGroup[]
+  alerts: AlertsSummary
+  onDismissAllAlerts: () => void
+}) {
   const location = useLocation()
   const { label: registryLabel, crumbs } = routeFor(location.pathname)
   const label = useCrumbLabel(location.pathname, registryLabel)
@@ -49,11 +57,14 @@ export function AppHeader() {
   // before it) folds; it fades back once the head scrolls away. A page that
   // has not moved to PageHead reports nothing, and keeps its leaf.
   const leafFolded = usePageHeadVisibility() === 'in'
+  const omniOpen = omnibarStore.useStore().open
 
   return (
     <header
       className={cn(
         SHELL_TOP_BAR_HEIGHT_CLASS,
+        // The right cluster collapses by this bar's own width (Rev .60 §7).
+        mb.bar,
         // 10px between controls, 12px from the edge — the design's own
         // `gap: 6px 10px; padding: 5px 12px`.
         'flex items-center gap-x-2.5 border-b px-3',
@@ -75,14 +86,11 @@ export function AppHeader() {
         background: 'linear-gradient(180deg, color-mix(in srgb, var(--sk-layer) 6%, var(--card)), var(--card))',
       }}
     >
-      {/* Sized and framed like every other control on the bar. The glyph
-          stays chevrons rather than the design's panel rect: it comes from
-          `@bifrost/ui`, and which way they point is a reading the Ops Console
-          gets too. */}
-      <SidebarTrigger
-        className="size-7 shrink-0 rounded-sm border border-border"
-        aria-label="Toggle sidebar"
-      />
+      {/* A borderless menu-bar item like every other on the bar (Rev .60 §8).
+          The glyph stays chevrons rather than the design's panel rect: it
+          comes from `@bifrost/ui`, and which way they point is a reading the
+          Ops Console gets too. */}
+      <SidebarTrigger className={cn(mb.item, 'size-7 justify-center p-0')} aria-label="Toggle sidebar" />
       <nav
         aria-label="Breadcrumb"
         className="flex min-w-0 shrink items-center gap-1.5 text-dense-body"
@@ -117,26 +125,30 @@ export function AppHeader() {
           </span>
         )}
       </nav>
-      {/* The one control that takes the slack: `flex: 1 1 220px` between a
-          180 floor and a 440 ceiling, so the bar breathes here and nowhere
-          else. */}
+      {/* The one control that takes the slack, as a macOS toolbar search
+          field (Rev .60 §8): filled, borderless, radius 8, an accent ring
+          only while the omnibar is open. Under 980 of header it folds to
+          the glass and the carried symbol. */}
       <button
         type="button"
         onClick={omnibar.open}
+        data-on={omniOpen ? '1' : '0'}
         className={cn(
-          SHELL_TOP_BAR_CONTROL_CLASS,
-          'ml-1.5 hidden min-w-[180px] max-w-[440px] flex-1 bg-background text-muted-foreground hover:bg-secondary md:inline-flex',
+          mb.search,
+          mb.omni,
+          'ml-3 hidden h-7 min-w-[88px] max-w-[440px] flex-[1_1_0] items-center gap-[7px] pr-2 pl-[9px] text-left md:inline-flex',
         )}
         aria-label="Open the Omnibar"
       >
-        <Search className="h-3 w-3 shrink-0" aria-hidden />
-        {/* The framework's current symbol is the omnibar's prefix token (Rev
-            .55): load a security, then pick a function. Ticker ink where this
-            page reads it, dim where it is only held for the next page; × lets
-            it go. */}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden className="flex-none">
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="m16 16 4.5 4.5" />
+        </svg>
+        {/* The framework's current symbol is the field's prefix token (Rev
+            .55), a capsule in its ticker ink (Rev .60): bright where this page
+            reads it, dim where it is only held. A click opens it beside the
+            page; × lets it go. */}
         {symbol ? (
-          // Rev .58: the token is the name, so a click on it opens the name —
-          // the Symbol panel beside this page — rather than the omnibar.
           <span
             role="button"
             tabIndex={0}
@@ -151,12 +163,13 @@ export function AppHeader() {
               symbolGo.toggle()
             }}
             title={`${
-              isScoped
-                ? `${symbol} — this page reads it`
-                : `${symbol} — held for the next page that reads a symbol`
+              isScoped ? `${symbol} — this page reads it` : `${symbol} — held for the next page that reads a symbol`
             } · click to open Symbol beside this page`}
-            className="inline-flex h-4.5 flex-none cursor-pointer items-center gap-1 rounded-[4px] bg-[var(--sk-raised2)] pr-0.5 pl-1.5 font-mono text-dense-meta font-bold"
-            style={{ color: isScoped ? 'var(--sk-ticker)' : 'var(--sk-faint)' }}
+            className={mb.token}
+            style={{
+              color: isScoped ? 'var(--sk-ticker)' : 'var(--sk-faint)',
+              background: `color-mix(in srgb, ${isScoped ? 'var(--sk-ticker)' : 'var(--sk-faint)'} 16%, transparent)`,
+            }}
           >
             {symbol}
             <span
@@ -181,70 +194,56 @@ export function AppHeader() {
             </span>
           </span>
         ) : null}
-        <span className="flex-1 truncate text-left">{symbol ? 'page or command' : 'Symbol, page, or command'}</span>
-        <kbd className={SHELL_TOP_BAR_KBD_CLASS}>⌘K</kbd>
+        <span className={cn(mb.omniText, mb.fs12, 'min-w-0 flex-1 truncate')}>
+          {symbol ? 'page or command' : 'Symbol, page, or command'}
+        </span>
+        <span className={cn(mb.omniText, mb.mono, mb.fs10, 'text-[var(--sk-mute)]')}>⌘K</span>
       </button>
 
-      {/* The right cluster: `margin-left: auto`, 8px between. Two controls,
-          one edge — before this they were loose flex children and the gap
-          between them was whatever the bar had left over. */}
-      <div className="ml-auto flex shrink-0 items-center gap-2">
-        {/* One control for every scope the shell carries (design 2026-09-20.8:
-            TopBar = position and focus). It replaces the standalone symbol
-            chip rather than sitting beside it — two controls for one idea is
-            the duplication that ruling removed. The alert bell that used to
-            sit to its right is gone with it. */}
-        {/* The Objective control (Rev .55) — the objective half of the Lens it
-            replaces; the symbol half is the omnibar's token above. */}
+      {/* The right cluster as a macOS menu bar (Rev .60 §1), in its order:
+          the Objective, the Account and its Book, the Copilot, the Control
+          Center, and the clock that opens Alerts. Every item is an icon and
+          a number; the words are in the tips. They collapse by this bar's own
+          width — chrome first, readings after, the clock never. */}
+      <div className="ml-auto flex shrink-0 flex-nowrap items-center gap-1">
         <ObjectiveControl />
-        {/* The Account control (Rev .58) — beside the Objective: the scope
-            controls sit together on the right, the omnibar keeps the lead. */}
-        <AccountControl />
-
-        {/* The fourth item, and the Copilot's second avatar: the rail opens
-            its Desk (a page), this opens the conversation (§5a.8 sixteenth
-            round). Autopilot has no conversation avatar, so it has no button
-            here — the asymmetry is real, not an omission. ⌘J was the only way
-            to it, which made the Copilot discoverable to whoever already knew
-            about it; the design puts it on the bar for the same reason the
-            Omnibar shows its own key. */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={(e) => toggleThread(e.currentTarget)}
-              aria-pressed={thread.open}
-              className={cn(
-                SHELL_TOP_BAR_CONTROL_CLASS,
-                'shrink-0',
-                thread.open
-                  ? 'border-primary/45 bg-primary/[0.08] text-primary'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
-              )}
-            >
-              <MessageSquare className="h-3 w-3" aria-hidden />
-              {/* "Ask", a verb, since the framework pass (Rev .25): the rail's
-                  group is the Copilot Desk (a place), this opens a conversation
-                  (not a place). Two things named "Copilot" was the confusion. */}
-              <span className="hidden lg:inline">Ask</span>
-              {/* The design prints the key on the button, as the Omnibar does:
-                  a control whose shortcut is invisible is a shortcut only for
-                  whoever already knew it. */}
-              <kbd className={cn(SHELL_TOP_BAR_KBD_CLASS, 'hidden lg:inline')}>⌘J</kbd>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {/* One lit state, and the tooltip says where — a conversation
-                behind another tab is open, and the click brings it forward
-                rather than opening a second one. */}
-            {thread.open
-              ? `${thread.place === 'float' ? 'Ask — the conversation, in a float' : 'Ask — the conversation, in the side panel'}`
-              : 'Ask the Copilot — opens the conversation'}{' '}
-            · ⌘J
-          </TooltipContent>
-        </Tooltip>
-
-        {/* The user centre left the bar for the sidebar foot at Rev .54. */}
+        <BookControl />
+        <MenubarTip
+          tip={
+            thread.open
+              ? `${thread.place === 'float' ? 'Ask — the conversation, in a float' : 'Ask — the conversation, in the side panel'} · ⌘J`
+              : 'Ask Copilot — a thread beside this page · ⌘J'
+          }
+        >
+          <button
+            type="button"
+            onClick={(e) => toggleThread(e.currentTarget)}
+            aria-pressed={thread.open}
+            aria-label="Ask Copilot"
+            data-state={thread.open ? 'open' : 'closed'}
+            className={cn(mb.item, 'relative px-[3px]')}
+          >
+            <span className="inline-flex size-[22px] flex-none items-center justify-center text-[var(--sk-soft)]">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 3v3" />
+                <circle cx="12" cy="2.6" r="1" fill="currentColor" stroke="none" />
+                <rect x="4.5" y="6.5" width="15" height="12" rx="3.5" />
+                <path d="M2.5 11.5v3M21.5 11.5v3" />
+                <circle className={mb.eye} cx="9.3" cy="12.3" r="1.35" fill="currentColor" stroke="none" />
+                <circle className={mb.eye} cx="14.7" cy="12.3" r="1.35" fill="currentColor" stroke="none" />
+                <path d="M9.8 15.7h4.4" />
+              </svg>
+            </span>
+            {thread.open ? (
+              <span
+                aria-hidden
+                className="absolute -top-[3px] -right-[3px] size-[7px] rounded-full bg-[var(--sk-accent)] shadow-[0_0_0_2px_var(--background)]"
+              />
+            ) : null}
+          </button>
+        </MenubarTip>
+        <ControlCenter />
+        <SessionClock groups={alertGroups} alerts={alerts} onDismissAll={onDismissAllAlerts} />
       </div>
     </header>
   )

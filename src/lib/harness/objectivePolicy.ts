@@ -70,6 +70,25 @@ export const PERSONAS = [
   { value: 'discovery', label: 'Discovery' },
 ]
 
+/** Who works an objective (design Rev .55); stored since research 0.113.0. */
+export type ObjectiveMode = 'hand' | 'assisted' | 'auto'
+
+export const OBJECTIVE_MODES: readonly ObjectiveMode[] = ['hand', 'assisted', 'auto']
+
+/** The design's own sentences for who does what, per mode. */
+export const MODE_WHO: Record<ObjectiveMode, string> = {
+  hand: 'You find it, write the plan and place it. The objective carries its subject from page to page.',
+  assisted: 'Autopilot runs and proposes; you approve each one; orders go through you.',
+  auto: 'Autopilot runs and accepts inside the leash; only the order waits for you.',
+}
+
+/** The tag each mode wears — the design's registry `OBJ_MODE` variants. */
+export const MODE_TAG = { hand: 'neutral', assisted: 'info', auto: 'success' } as const satisfies Record<ObjectiveMode, string>
+
+export function isObjectiveMode(v: unknown): v is ObjectiveMode {
+  return v === 'hand' || v === 'assisted' || v === 'auto'
+}
+
 const isStockMode = (p: Record<string, unknown>) =>
   ['stock_composite', 'sepa', 'momentum', 'events'].includes(String(p.universe_mode ?? 'scan_legacy'))
 const isComposite = (p: Record<string, unknown>) => String(p.universe_mode ?? '') === 'stock_composite'

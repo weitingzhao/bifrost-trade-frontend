@@ -57,7 +57,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { RunLoopDialog } from '@/components/research/harness/RunLoopDialog'
-import { batchRunObjective, type AutopilotObjective, type BatchRunOverrides, type ResearchObjective } from '@/api/research/harness'
+import {
+  batchRunObjective,
+  type AutopilotObjective,
+  type BatchRunOverrides,
+  type ObjectivePatchBody,
+  type ResearchObjective,
+} from '@/api/research/harness'
 import {
   useAutopilotStanding,
   useChangePolicy,
@@ -68,7 +74,7 @@ import { fmtIsoTs } from '@/lib/format'
 import { fmtUsd } from '@/lib/harness/runSpend'
 import { stars } from '@/lib/harness/rating'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
-import { PERSONAS, SCHEDULES } from '@/lib/harness/objectivePolicy'
+import { MODE_TAG, MODE_WHO, OBJECTIVE_MODES, PERSONAS, SCHEDULES, isObjectiveMode } from '@/lib/harness/objectivePolicy'
 import { ObjectivePolicyEditor } from '@/pages/research/loop/ObjectivePolicyEditor'
 import { ObjectiveLap } from '@/pages/research/loop/ObjectiveLap'
 import { ObjectiveRunsSection } from '@/pages/research/loop/ObjectiveRunsSection'
@@ -225,6 +231,13 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
         <DenseTag variant="neutral" size="cell">
           {SCHEDULES.find((s) => s.value === obj.schedule)?.label.split(' — ')[0] ?? obj.schedule}
         </DenseTag>
+        {/* Who works it — the word the top-bar Objective control wears (Rev .55). */}
+        {isObjectiveMode(obj.mode) ? (
+          <DenseTag variant={MODE_TAG[obj.mode]} size="cell" title={MODE_WHO[obj.mode]}>
+            {obj.mode}
+            {obj.subject ? ` · ${obj.subject}` : ''}
+          </DenseTag>
+        ) : null}
         <span className="text-muted-foreground">{brief?.hunts || obj.description}</span>
         {batchMut.isError ? (
           <span className="text-destructive">{batchMut.error instanceof Error ? batchMut.error.message : String(batchMut.error)}</span>
@@ -472,14 +485,32 @@ function IdentityCard({
   obj: ResearchObjective
   saving: boolean
   error: string | null
-  onSave: (body: { title?: string; description?: string; schedule?: string; persona?: string }) => void
+  onSave: (body: ObjectivePatchBody) => void
 }) {
+  const storedMode = isObjectiveMode(obj.mode) ? obj.mode : 'assisted'
+  const storedSubject = obj.subject ?? ''
   const [title, setTitle] = useState(obj.title)
   const [description, setDescription] = useState(obj.description)
   const [schedule, setSchedule] = useState(obj.schedule)
   const [persona, setPersona] = useState(obj.persona)
+  const [mode, setMode] = useState(storedMode)
+  const [subject, setSubject] = useState(storedSubject)
+  const subjectNext = subject.trim().toUpperCase()
   const dirty =
-    title.trim() !== obj.title || description.trim() !== obj.description || schedule !== obj.schedule || persona !== obj.persona
+    title.trim() !== obj.title ||
+    description.trim() !== obj.description ||
+    schedule !== obj.schedule ||
+    persona !== obj.persona ||
+    mode !== storedMode ||
+    subjectNext !== storedSubject
+  const reset = () => {
+    setTitle(obj.title)
+    setDescription(obj.description)
+    setSchedule(obj.schedule)
+    setPersona(obj.persona)
+    setMode(storedMode)
+    setSubject(storedSubject)
+  }
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-secondary/40 px-4 py-3">
@@ -525,6 +556,37 @@ function IdentityCard({
           </SelectContent>
         </Select>
       </label>
+      {/* Rev .55: who works it, and — for a hand objective — on what. The
+          subject is what the top bar loads into the carried symbol. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_8rem] gap-3">
+        <label className="block">
+          <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">Mode</span>
+          <Select value={mode} onValueChange={(v) => isObjectiveMode(v) && setMode(v)}>
+            <SelectTrigger className="mt-1 h-7 text-dense-body">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OBJECTIVE_MODES.map((m) => (
+                <SelectItem key={m} value={m} className="text-dense-body">
+                  {m}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-dense-label text-muted-foreground">{MODE_WHO[mode]}</span>
+        </label>
+        <label className="block">
+          <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">Subject</span>
+          <Input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder={mode === 'hand' ? 'Symbol' : 'none'}
+            maxLength={16}
+            className="mt-1 h-7 font-mono text-dense-body uppercase"
+            title="The symbol a hand objective carries from page to page. Leave empty to clear it."
+          />
+        </label>
+      </div>
       <div className="flex items-center gap-2">
         <Button
           type="button"
@@ -537,13 +599,16 @@ function IdentityCard({
               ...(description.trim() !== obj.description ? { description: description.trim() } : {}),
               ...(schedule !== obj.schedule ? { schedule } : {}),
               ...(persona !== obj.persona ? { persona } : {}),
+              ...(mode !== storedMode ? { mode } : {}),
+              // The store clears the subject on an empty string.
+              ...(subjectNext !== storedSubject ? { subject: subjectNext } : {}),
             })
           }
         >
           {saving ? 'Saving…' : 'Save'}
         </Button>
         {dirty ? (
-          <Button type="button" size="sm" variant="ghost" className="h-7" onClick={() => { setTitle(obj.title); setDescription(obj.description); setSchedule(obj.schedule); setPersona(obj.persona) }}>
+          <Button type="button" size="sm" variant="ghost" className="h-7" onClick={reset}>
             Reset
           </Button>
         ) : null}

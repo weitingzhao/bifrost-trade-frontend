@@ -140,8 +140,9 @@ describe('the design walk, by revision', () => {
     // Package .11 @ Rev .43: Stock screen and Symbol; 2 → 0 the same day,
     // both re-walked with the narrative pieces the design added to them.
     // 0 → 1 with Rev .55: Objectives, moved to Home with a mode tag, is built
-    // in the round that brings objective modes to this side.
-    expect(counts.byState.stale).toBe(1)
+    // in the round that brings objective modes to this side. 1 → 0 the same
+    // day, once research 0.113.0 stored the mode and the tag had one to read.
+    expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

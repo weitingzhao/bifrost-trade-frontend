@@ -13,8 +13,6 @@
 import type { AutopilotObjective } from '@/api/research/harness'
 import { etClock } from '@/lib/freshness'
 
-export type ObjectiveMode = 'hand' | 'assisted' | 'auto'
-
 export interface ProgressStep {
   stage: string
   lamp: 'green' | 'yellow' | 'gray' | 'red'
@@ -22,17 +20,6 @@ export interface ProgressStep {
   note: string
   to: string
   hot?: boolean
-}
-
-/** The design's own sentences for who does what, per mode. */
-export const MODE_WHO: Record<ObjectiveMode, string> = {
-  hand: 'You find it, write the plan and place it. The objective carries its subject from page to page.',
-  assisted: 'Autopilot runs and proposes; you approve each one; orders go through you.',
-  auto: 'Autopilot runs and accepts inside the leash; only the order waits for you.',
-}
-
-export function isObjectiveMode(v: unknown): v is ObjectiveMode {
-  return v === 'hand' || v === 'assisted' || v === 'auto'
 }
 
 const NOT_LINKED = 'no order or position carries its objective yet'

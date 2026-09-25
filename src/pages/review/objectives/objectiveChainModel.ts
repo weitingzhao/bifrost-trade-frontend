@@ -50,6 +50,8 @@ export interface ChainRow {
   id: string
   title: string
   state: string
+  /** Who works it — the tag the top-bar Objective control wears (Rev .55); null for Unattributed. */
+  mode: 'hand' | 'assisted' | 'auto' | null
   /**
    * The hit rate this objective set itself, when it set one.
    *
@@ -145,6 +147,7 @@ export function objectiveChain(input: ChainInput): {
       id: o.id,
       title: o.title ?? o.id,
       state: o.status ?? '—',
+      mode: o.mode ?? null,
       hitFloor: null,
       proposed,
       accepted,
@@ -166,6 +169,7 @@ export function objectiveChain(input: ChainInput): {
     id: 'unattributed',
     title: 'Unattributed',
     state: '—',
+    mode: null,
     hitFloor: null,
     proposed: null,
     accepted: null,

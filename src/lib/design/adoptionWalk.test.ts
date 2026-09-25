@@ -176,8 +176,9 @@ describe('the design walk, as it stands', () => {
     // @ Rev .43 moved Stock screen and Symbol, both re-walked the same day and
     // waiting in `reviewing`, where a signed page goes back when it is rebuilt.
     // 60 on 2026-09-25 (Rev .55): the five page-head / §17 sample pages were
-    // rebuilt and wait for a look, and Objectives moved to Home.
-    expect(counts.aligned + counts.byState.stale).toBe(60)
+    // rebuilt and wait for a look, and Objectives moved to Home. 59 when
+    // Objectives was rebuilt to that rev and joined them.
+    expect(counts.aligned + counts.byState.stale).toBe(59)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -199,14 +200,15 @@ describe('the design walk, as it stands', () => {
     // re-walked the same day, and wait for a look in `reviewing`.
     // 59 on 2026-09-25 (Rev .55): Backtest, Positions, Risk, Limits and Margin
     // are the page-head and §17 samples, rebuilt and back in `reviewing`; and
-    // Objectives went stale when the design moved it to Home with a mode tag.
+    // Objectives went stale when the design moved it to Home with a mode tag,
+    // and left for `reviewing` the same day with the tag built.
     expect(counts.aligned).toBe(59)
     expect(
       rows
         .filter((r) => r.state === 'stale')
         .map((r) => r.path)
         .sort()
-    ).toEqual(['/review/objectives'])
+    ).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -436,8 +438,9 @@ describe('the design walk, as it stands', () => {
     // that day, the Owner signing Events, Positions and Alerts out of it. 8 on
     // 2026-09-25 with Narrative, built once its store (the 8-K text) existed.
     // 10 the same day: Stock screen and Symbol, re-walked at Rev .43.
-    // 15 on 2026-09-25 (Rev .55): the five sample pages join the ten.
-    expect(counts.byState.reviewing).toBe(15)
+    // 15 on 2026-09-25 (Rev .55): the five sample pages join the ten. 16
+    // with Objectives, rebuilt at .55 with its mode tag.
+    expect(counts.byState.reviewing).toBe(16)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -522,6 +525,7 @@ describe('the design walk, as it stands', () => {
       '/research/screener',
       '/research/signal-health',
       '/research/symbol',
+      '/review/objectives',
       '/risk',
       '/risk/limits',
       '/risk/margin',

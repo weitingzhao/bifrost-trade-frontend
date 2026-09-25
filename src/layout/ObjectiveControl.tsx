@@ -24,17 +24,10 @@ import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import { objectiveWiredPages, scopeRouteLabel } from '@/lib/design/scopes'
 import { readStoredContext, writeStoredContext } from '@/lib/symbolContext'
 import { cn } from '@/lib/utils'
+import { MODE_WHO, isObjectiveMode, type ObjectiveMode } from '@/lib/harness/objectivePolicy'
 import { planFilterCounts } from '@/utils/planStatusCounts'
 import { SHELL_TOP_BAR_CONTROL_CLASS } from './shellChrome'
-import {
-  MODE_WHO,
-  handProgress,
-  isObjectiveMode,
-  loopProgress,
-  waitingStep,
-  type ObjectiveMode,
-  type ProgressStep,
-} from './objectiveProgress'
+import { handProgress, loopProgress, waitingStep, type ProgressStep } from './objectiveProgress'
 
 const INK: Record<ProgressStep['lamp'], string> = {
   green: 'text-foreground',
@@ -146,7 +139,7 @@ export function ObjectiveControl() {
                 <span className="ml-auto font-mono text-dense-micro text-muted-foreground">{current.schedule}</span>
               </div>
               <p className="m-0 px-3 pt-2 pb-0.5 text-dense-meta leading-normal text-[var(--sk-mute2)]">
-                {mode ? MODE_WHO[mode] : 'This research API does not say who works it — mode arrives with research 0.113.0.'}
+                {mode ? MODE_WHO[mode] : 'This objective states no mode — set one on its page.'}
               </p>
               <div className="py-1">
                 {steps.map((st) => (

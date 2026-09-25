@@ -491,6 +491,10 @@ export interface ObjectivePatchBody {
   description?: string
   schedule?: string
   persona?: string
+  /** Who works it (research 0.113.0). */
+  mode?: 'hand' | 'assisted' | 'auto'
+  /** A hand objective's symbol; the store upper-cases it, and an empty string clears it. */
+  subject?: string
 }
 
 export async function patchObjective(

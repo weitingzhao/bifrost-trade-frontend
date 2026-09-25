@@ -71,6 +71,19 @@ describe('objectiveChain with the link missing', () => {
   })
 })
 
+describe('objectiveChain mode tag', () => {
+  it('carries the stored mode, and the Unattributed row wears none', () => {
+    const built = objectiveChain({
+      objectives: [{ ...obj('o1'), mode: 'hand' }, obj('o2')],
+      candidates: [],
+      hypotheses: [],
+      trades: [],
+    })
+    expect(built.rows.map((r) => r.mode)).toEqual(['hand', null])
+    expect(built.unattributed.mode).toBeNull()
+  })
+})
+
 describe('objectiveChain once the link exists', () => {
   it('stops saying the chain is broken', () => {
     const wired = objectiveChain({

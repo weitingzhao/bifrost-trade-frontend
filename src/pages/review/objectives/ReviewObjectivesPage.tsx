@@ -60,6 +60,7 @@ import {
   type ChainRow,
   type Verdict,
 } from '@/pages/review/objectives/objectiveChainModel'
+import { MODE_TAG } from '@/lib/harness/objectivePolicy'
 
 /**
  * §5a.5 split the second half out of the h1 and into the grey subtitle, so
@@ -141,6 +142,12 @@ function ChainTable({ rows, scoped }: { rows: ChainRow[]; scoped: string }) {
               <DenseTag variant="neutral" size="cell" className="ml-2">
                 {r.state}
               </DenseTag>
+              {/* Rev .55: who works it — the same tag the top-bar Objective control wears. */}
+              {r.mode ? (
+                <DenseTag variant={MODE_TAG[r.mode]} size="cell" className="ml-1" title={`Mode · ${r.mode}`}>
+                  {r.mode}
+                </DenseTag>
+              ) : null}
             </DenseTableCell>
             <DenseTableCell className={denseTableNumCell}><Num v={r.proposed} /></DenseTableCell>
             <DenseTableCell className={denseTableNumCell}><Num v={r.accepted} /></DenseTableCell>

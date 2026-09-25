@@ -140,5 +140,12 @@ export const REVIEW_NOTES: Record<string, string> = {
     + 'Why open Outcome, and Clear empties the shell scope — each verified by clicking. The '
     + 'nine-column table keeps its shape and scrolls sideways at a narrow pane rather than '
     + 'crushing its headers, which is the design’s own min-width. '
-    + 'Owner signed off 2026-09-20 on local DEV (:5173) at this rev.',
+    + 'Owner signed off 2026-09-20 on local DEV (:5173) at this rev. '
+    + 'Rev 2026-09-25.55 moved the page to Home, above the market pages, and gave each chain '
+    + 'row a mode tag after its state — hand neutral, assisted info, auto success, the design’s '
+    + 'own OBJ_MODE variants and the same word the top-bar Objective control wears. The figures '
+    + 'are unchanged, as the design asks. The mode is stored: research 0.113.0 added '
+    + '`research.objective.mode` (default assisted) and `subject`, so the tag reads the store '
+    + 'rather than a guess, and the one objective on DEV reads `assisted`. The Unattributed row '
+    + 'carries no tag, because nobody works it — it is what no objective claims.',
 }

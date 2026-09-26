@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest'
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import {
   earningsHeadMeta,
+  eventMove,
   expiryEarnings,
   firstExpiryAfter,
   shortDate,
   termEarningsLegend,
   termEarningsMark,
   termEarningsNote,
-} from './symbolEarnings'
+} from './earningsEstimate'
 
 // Invented estimate and expiries.
 const est = (days_away: number, over: Partial<ExpectedEarnings> = {}): ExpectedEarnings => ({
@@ -102,5 +103,35 @@ describe('term-structure earnings', () => {
     expect(earningsHeadMeta(est(38))).toBe('earnings ~38d (est.)')
     expect(earningsHeadMeta(est(-2))).toBe('earnings late')
     expect(earningsHeadMeta(null)).toBeNull()
+  })
+
+  it('reads the print’s move off the two expiries around it', () => {
+    // Invented term: 45% into the print, 58% on the expiry that holds it.
+    const term = [
+      { expiry: '2031-10-24', dte: 28, iv: 0.47 },
+      { expiry: '2031-10-31', dte: 35, iv: 0.45 },
+      { expiry: '2031-11-07', dte: 42, iv: 0.58 },
+    ]
+    const ev = eventMove(term, 38)!
+    expect(ev.before.expiry).toBe('2031-10-31')
+    expect(ev.after.expiry).toBe('2031-11-07')
+    const sigma = Math.sqrt((0.58 ** 2 - 0.45 ** 2) * (42 / 365))
+    expect(ev.sigma).toBeCloseTo(sigma, 10)
+    expect(ev.move).toBeCloseTo(sigma * Math.sqrt(2 / Math.PI), 10)
+    expect(ev.move).toBeCloseTo(0.099, 3)
+  })
+
+  it('reads no move without an expiry each side, or without a premium', () => {
+    expect(eventMove([{ expiry: '2031-11-07', dte: 42, iv: 0.58 }], 38)).toBeNull()
+    expect(eventMove([{ expiry: '2031-10-31', dte: 35, iv: 0.45 }], 38)).toBeNull()
+    expect(
+      eventMove(
+        [
+          { expiry: '2031-10-31', dte: 35, iv: 0.5 },
+          { expiry: '2031-11-07', dte: 42, iv: 0.48 },
+        ],
+        38
+      )
+    ).toBeNull()
   })
 })

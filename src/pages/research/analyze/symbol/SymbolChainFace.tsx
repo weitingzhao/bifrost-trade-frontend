@@ -12,7 +12,7 @@
  * with the reason instead of dressing a close as a market.
  *
  * The expiry cards carry the design's earnings E from Research's estimate of
- * the next print (research 0.125.0); `symbolEarnings` holds the rule.
+ * the next print (research 0.125.0); `utils/earningsEstimate` holds the rule.
  */
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils'
 import { bsComputeDetail, normalCDF } from '@/utils/blackScholes'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
-import { earningsHeadMeta, expiryEarnings, termEarningsNote } from '@/pages/research/analyze/symbol/symbolEarnings'
+import { earningsHeadMeta, expiryEarnings, termEarningsNote } from '@/utils/earningsEstimate'
 import { SymbolExpiryCard } from '@/pages/research/analyze/symbol/SymbolExpiryCard'
 import { ContractCandles, OiMini, SmileMini } from './symbolChainCharts'
 import {

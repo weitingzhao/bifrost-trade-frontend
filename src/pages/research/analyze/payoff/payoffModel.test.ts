@@ -128,6 +128,17 @@ describe('the tables beside the chart', () => {
     for (const r of rows) expect(r.prob).toBeLessThan(0.6)
   })
 
+  it('adds the earnings-gap rows at spot × (1 ∓ gap), after the σ rows', () => {
+    const s = buildPayoffStructure('single', 'short', legFromParams(chain(), 90, 'P')!, chain(), SPOT)
+    const c = payoffCurves(s, SPOT, 30, 0.4)!
+    const rows = scenarioRows(s, SPOT, 30, c.sigma, 0.1)
+    expect(rows.map((r) => r.label).slice(-2)).toEqual(['earnings −gap', 'earnings +gap'])
+    expect(rows[5].spot).toBeCloseTo(90, 10)
+    expect(rows[6].spot).toBeCloseTo(110, 10)
+    expect(rows.filter((r) => r.earnings)).toHaveLength(2)
+    expect(scenarioRows(s, SPOT, 30, c.sigma, null)).toHaveLength(5)
+  })
+
   it('sums greeks per contract, stock leg included as delta', () => {
     const s = buildPayoffStructure(
       'covered',

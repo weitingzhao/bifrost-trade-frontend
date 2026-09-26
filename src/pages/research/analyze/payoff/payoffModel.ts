@@ -177,18 +177,22 @@ export interface ScenarioRow {
   /** P of ending at or beyond this spot, toward its own side. */
   prob: number
   flat: boolean
+  /** One of the design's earnings-gap rows. */
+  earnings?: boolean
 }
 
 /**
  * Where it lands, at the marks the band draws. The design adds two earnings
- * rows when an earnings date sits inside the expiry — this side has no forward
- * earnings date on the plan, and the face says that instead of guessing.
+ * rows when the next print sits inside the expiry: ``gap`` is the move the
+ * term structure prices for it (`utils/earningsEstimate.eventMove`, a fraction
+ * of spot), so the rows sit at spot × (1 ∓ gap) — not at a σ multiple.
  */
 export function scenarioRows(
   s: PayoffStructure,
   spot: number,
   dte: number,
-  sigma: number
+  sigma: number,
+  gap: number | null = null
 ): ScenarioRow[] {
   const T = Math.max(dte, 0.5) / 365
   const marks: Array<[string, number]> = [
@@ -198,6 +202,9 @@ export function scenarioRows(
     ['+1σ', spot * Math.exp(sigma)],
     ['+2σ', spot * Math.exp(2 * sigma)],
   ]
+  if (gap != null && gap > 0) {
+    marks.push(['earnings −gap', spot * (1 - gap)], ['earnings +gap', spot * (1 + gap)])
+  }
   return marks.map(([label, S]) => ({
     label,
     spot: S,
@@ -205,6 +212,7 @@ export function scenarioRows(
     atExpiry: structureValueAt(s, spot, S, 0),
     prob: S >= spot ? 1 - probBelow(spot, S, sigma) : probBelow(spot, S, sigma),
     flat: label === 'flat',
+    earnings: label.startsWith('earnings'),
   }))
 }
 

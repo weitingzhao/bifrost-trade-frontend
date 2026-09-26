@@ -673,6 +673,18 @@ export const EarningsMovesSchema = z
   })
   .passthrough()
 
+/** GET /analytics/options/atm-iv/term — the repaired ATM IV store's term for its latest session (not enveloped). */
+export const AtmIvTermSchema = z
+  .object({
+    symbol: z.string(),
+    trade_date: z.string().nullable(),
+    term: z.array(
+      z.object({ expiry: z.string().nullable(), atm_iv: z.number().nullable() }).passthrough(),
+    ),
+    source: z.string().optional(),
+  })
+  .passthrough()
+
 /** GET /analytics/vol/rv-cone — realised-vol percentiles per tenor plus today's reading (R9 F4). */
 export const RvConeSchema = z
   .object({

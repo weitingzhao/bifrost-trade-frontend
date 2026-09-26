@@ -1,7 +1,8 @@
 /**
  * The next earnings print on the Symbol page — the Volatility face's amber
- * line and kink note, and the Chain face's expiry-card E — from Research's
- * estimate (`/research/narrative/earnings` · `expected_next`, research 0.125.0).
+ * line and kink note, the Chain face's expiry-card E, and the Payoff face's
+ * earnings-gap scenario rows — from Research's estimate
+ * (`/research/narrative/earnings` · `expected_next`, research 0.125.0).
  *
  * The date is an estimate, and every sentence that uses it says so: the feed
  * holds no forward calendar, so Research takes last year's same-quarter 8-K
@@ -123,4 +124,39 @@ export function earningsHeadMeta(e: ExpectedEarnings | null | undefined): string
 export function termEarningsLegend(e: ExpectedEarnings | null | undefined, mark: TermEvent | null): string | null {
   if (mark && e) return `next earnings ~${shortDate(e.date)} (estimated)`
   return null
+}
+
+export interface TermVol {
+  expiry: string
+  dte: number
+  /** ATM vol, a fraction. */
+  iv: number
+}
+
+export interface EventMove {
+  /** Expected absolute move on the print, a fraction of spot: σ_event × √(2/π). */
+  move: number
+  /** One standard deviation of the print's own move, a fraction of spot. */
+  sigma: number
+  before: TermVol
+  after: TermVol
+}
+
+/**
+ * The move the term structure prices for the print — the design's "event
+ * premium as the gap size". The expiry just after the print holds its
+ * variance, the one just before does not; with the before-expiry's vol as the
+ * run rate, the print's own variance is (σ_after² − σ_before²) × T_after. Null
+ * without an expiry on each side of the print, or when the after-expiry's vol
+ * is not above the before-expiry's (no premium to read).
+ */
+export function eventMove(term: readonly TermVol[], daysAway: number): EventMove | null {
+  const pts = [...term].filter((t) => t.dte > 0 && t.iv > 0).sort((a, b) => a.dte - b.dte)
+  const before = [...pts].reverse().find((t) => t.dte <= daysAway)
+  const after = pts.find((t) => t.dte > daysAway)
+  if (!before || !after) return null
+  const variance = (after.iv ** 2 - before.iv ** 2) * (after.dte / 365)
+  if (variance <= 0) return null
+  const sigma = Math.sqrt(variance)
+  return { move: sigma * Math.sqrt(2 / Math.PI), sigma, before, after }
 }

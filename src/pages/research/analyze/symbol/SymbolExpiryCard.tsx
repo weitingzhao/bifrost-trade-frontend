@@ -2,12 +2,12 @@
  * One expiry card on the Chain face (design `Research Symbol.dc.html`,
  * §isOptions step 1): the date and days out, the fit's ATM IV, the chain's
  * ±1σ, straddle and open interest, and the earnings E when the next print —
- * Research's estimate — falls inside it (`symbolEarnings.expiryEarnings`).
+ * Research's estimate — falls inside it (`utils/earningsEstimate` · `expiryEarnings`).
  */
 import { cn } from '@/lib/utils'
 import type { ChainContract } from '@/utils/optionChain'
 import { oiTotals, sigmaMove, straddleMid } from './symbolChainModel'
-import type { ExpiryEarnings } from './symbolEarnings'
+import type { ExpiryEarnings } from '@/utils/earningsEstimate'
 
 const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'

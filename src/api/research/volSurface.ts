@@ -4,6 +4,7 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import {
+  AtmIvTermSchema,
   ResearchEnvelopeSchema,
 } from '@/lib/schemas/research'
 import { numOrNull } from '@/lib/researchParseHelpers'
@@ -204,5 +205,47 @@ export async function fetchSkewExtremes(limit = 20): Promise<SkewExtremesRespons
     count: rows.length,
     limit: env.data?.limit ?? limit,
     as_of: env.data?.as_of ?? null,
+  }
+}
+
+/** One expiry of the repaired ATM IV store (``features.option_metric_atm_iv_daily``). */
+export interface AtmIvTermPoint {
+  expiry: string
+  /** ATM IV, a fraction. */
+  atm_iv: number
+}
+
+export interface AtmIvTerm {
+  symbol: string
+  trade_date: string | null
+  term: AtmIvTermPoint[]
+}
+
+const validateAtmIvTerm = withValidation<unknown>(AtmIvTermSchema, 'research/analytics/options/atm-iv/term')
+
+/**
+ * The ATM IV per expiry for the name's latest session, from the store the IV
+ * history repairs rest on (±10% of spot, two contracts an expiry). Smoother
+ * than the SVI fit's `atm_vol`, whose near expiries a deep-wing fit can pull
+ * off (AAPL 10-16 read 17.4 between 40.8 and 31.7 on 2026-09-25); the Payoff
+ * face sizes the earnings gap from it. A name with no rows answers null.
+ */
+export async function fetchAtmIvTerm(symbol: string): Promise<AtmIvTerm | null> {
+  const sym = (symbol || '').trim().toUpperCase()
+  if (!sym) return null
+  const res = await fetch(`${researchEngineUrl('/analytics/options/atm-iv/term')}?symbol=${encodeURIComponent(sym)}`)
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(`research /analytics/options/atm-iv/term: ${res.status}`)
+  const j = validateAtmIvTerm(await res.json()) as {
+    symbol: string
+    trade_date: string | null
+    term: { expiry: string | null; atm_iv: number | null }[]
+  }
+  return {
+    symbol: j.symbol,
+    trade_date: j.trade_date,
+    term: j.term
+      .filter((p) => p.expiry && p.atm_iv != null && p.atm_iv > 0)
+      .map((p) => ({ expiry: String(p.expiry).slice(0, 10), atm_iv: p.atm_iv as number })),
   }
 }

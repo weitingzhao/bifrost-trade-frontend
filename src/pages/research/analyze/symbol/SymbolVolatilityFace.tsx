@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { SkewSurfaceChart, TermCurveChart } from '@/pages/research/analyze/symbol/symbolVolCharts'
-import { termEarningsLegend, termEarningsMark, termEarningsNote } from '@/pages/research/analyze/symbol/symbolEarnings'
+import { termEarningsLegend, termEarningsMark, termEarningsNote } from '@/utils/earningsEstimate'
 
 const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'

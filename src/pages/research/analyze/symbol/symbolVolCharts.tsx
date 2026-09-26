@@ -9,7 +9,7 @@
  * 0.125.0) and the panel says it is one.
  */
 import { sviIvPts, type SviParams } from '@/utils/sviSmile'
-import type { TermEvent } from './symbolEarnings'
+import type { TermEvent } from '@/utils/earningsEstimate'
 
 export interface TermCurvePoint {
   dte: number

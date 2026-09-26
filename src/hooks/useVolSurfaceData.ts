@@ -3,6 +3,8 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import {
+  fetchAtmIvTerm,
+  type AtmIvTerm,
   fetchResiduals,
   fetchSkewExtremes,
   fetchTermStructure,
@@ -51,6 +53,16 @@ export function useSkewExtremes(limit = 20) {
   return useQuery<SkewExtremesResponse>({
     queryKey: QUERY_KEYS.research.volSurface.skewExtremes(limit),
     queryFn: () => fetchSkewExtremes(limit),
+    staleTime: STALE_MS,
+  })
+}
+
+/** The repaired ATM IV store's term for the name's latest session (research). */
+export function useAtmIvTerm(symbol: string) {
+  return useQuery<AtmIvTerm | null>({
+    queryKey: QUERY_KEYS.research.volSurface.atmIvTerm(symbol),
+    queryFn: () => fetchAtmIvTerm(symbol),
+    enabled: Boolean(symbol),
     staleTime: STALE_MS,
   })
 }

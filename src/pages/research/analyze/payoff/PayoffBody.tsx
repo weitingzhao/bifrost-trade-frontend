@@ -11,6 +11,10 @@
  *
  * The marks are the vendor's EOD closes; there is no bid/ask on the data plan
  * and the header says at close rather than dressing a close as a market.
+ *
+ * The Scenarios table adds the design's earnings-gap rows when the next print —
+ * Research's estimate — falls inside the expiry, sized by the move the term
+ * structure prices for it (`payoffEarnings`).
  */
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -22,6 +26,8 @@ import { EmptyState } from '@/components/data-display'
 import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { Button } from '@/components/ui/button'
 import { useCreateHypothesis } from '@/hooks/useHypotheses'
+import { useEarningsDates } from '@/hooks/useNarrative'
+import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { daysBack, todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
@@ -31,6 +37,7 @@ import type { StructureKind, StructureSide } from '@/utils/optionDiscovery/disco
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { Link } from 'react-router-dom'
 import { PayoffChart } from './PayoffChart'
+import { payoffEarnings } from './payoffEarnings'
 import {
   buildPayoffStructure,
   greeksBySpot,
@@ -130,10 +137,28 @@ export function PayoffBody() {
       structure && spot != null ? payoffCurves(structure, spot, dte, anchor?.iv ?? null) : null,
     [structure, spot, dte, anchor]
   )
+  // The next print (Research's estimate) and the move the ATM term prices for it.
+  // Days count from today, like the estimate's; the IV is the store's last
+  // session, a day's difference against a month out.
+  const earnQ = useEarningsDates(sym)
+  const termQ = useAtmIvTerm(sym)
+  const earnings = useMemo(
+    () =>
+      payoffEarnings(
+        earnQ.data?.expected_next ?? null,
+        (termQ.data?.term ?? []).map((p) => ({ expiry: p.expiry, dte: daysTo(p.expiry, today) ?? 0, iv: p.atm_iv })),
+        dte,
+        earnQ.data?.filings,
+        Math.round(dte / 2)
+      ),
+    [earnQ.data, termQ.data, dte, today]
+  )
   const scen = useMemo(
     () =>
-      structure && spot != null && curves ? scenarioRows(structure, spot, dte, curves.sigma) : [],
-    [structure, spot, dte, curves]
+      structure && spot != null && curves
+        ? scenarioRows(structure, spot, dte, curves.sigma, earnings.gap)
+        : [],
+    [structure, spot, dte, curves, earnings.gap]
   )
   const greekRows = useMemo(
     () => (structure && spot != null ? greeksBySpot(structure, spot, dte) : []),
@@ -402,7 +427,13 @@ export function PayoffBody() {
                     key={r.label}
                     className={r.flat ? 'bg-[rgb(var(--sk-accent-rgb)/0.04)]' : undefined}
                   >
-                    <td className={cn(td, 'text-left font-sans')}>{r.label}</td>
+                    <td
+                      className={cn(td, 'text-left font-sans', r.earnings && 'text-warning')}
+                      title={r.earnings ? earnings.tag?.title : undefined}
+                    >
+                      {r.label}
+                      {r.earnings && earnings.tag?.tag === 'E?' ? ' ?' : ''}
+                    </td>
                     <td className={cn(td, 'text-secondary-foreground')}>{r.spot.toFixed(0)}</td>
                     <td
                       className={cn(
@@ -427,9 +458,8 @@ export function PayoffBody() {
             </table>
             <p className="m-0 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
               P = probability of ending at or beyond that spot under the lognormal the contract’s IV
-              implies. The design adds earnings-gap rows when an earnings date sits inside the
-              expiry; no forward earnings date is on the data plan, so none is drawn rather than
-              guessed.
+              implies.{' '}
+              {earnQ.isLoading || termQ.isLoading ? '' : earnings.note}
             </p>
           </section>
 

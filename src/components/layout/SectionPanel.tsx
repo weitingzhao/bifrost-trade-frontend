@@ -67,6 +67,7 @@ const TONE_CAP: Record<SectionPanelTone, string> = {
 
 export function SectionPanel({
   cap,
+  capTitle,
   title,
   note,
   action,
@@ -75,6 +76,8 @@ export function SectionPanel({
   children,
 }: {
   cap?: string
+  /** The section's explanation, on the cap's hover (§16.3: moved off the screen, not deleted). */
+  capTitle?: string
   title: ReactNode
   note?: ReactNode
   action?: ReactNode
@@ -102,7 +105,9 @@ export function SectionPanel({
         }
       >
         {cap != null ? (
-          <span className={cn(SECTION_CAP_CLASS, tone != null && TONE_CAP[tone])}>{cap}</span>
+          <span className={cn(SECTION_CAP_CLASS, tone != null && TONE_CAP[tone])} title={capTitle}>
+            {cap}
+          </span>
         ) : null}
         <h2 className="text-dense-body font-semibold">{title}</h2>
         {note != null ? (

@@ -8,18 +8,23 @@
  * day the cluster showed L1, and the loop obeys the cluster.
  */
 import { DenseTag } from '@/components/data-display'
-import { StatusLamp } from '@/components/StatusLamp'
+import { HeroCard, HeroRow } from '@/components/layout'
 import { fmtUsd } from '@/lib/harness/runSpend'
 import { stars } from '@/lib/harness/rating'
 import type { AutopilotStanding } from '@/api/research/harness'
 
-function fmtNext(iso: string): string {
+/**
+ * The next run as a hero reads it: the clock time as the reading, the day and
+ * how far off it is as the line under it (the design's `13:30Z` · `in 2h`).
+ */
+function fmtNext(iso: string): { time: string; when: string } {
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  const now = new Date()
-  const hours = Math.round((d.getTime() - now.getTime()) / 3_600_000)
-  const when = d.toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })
-  return hours <= 0 ? when : hours < 48 ? `${when} · in ${hours}h` : when
+  if (Number.isNaN(d.getTime())) return { time: iso, when: '' }
+  const hours = Math.round((d.getTime() - Date.now()) / 3_600_000)
+  const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const day = d.toLocaleDateString('en-US', { weekday: 'short' })
+  const zone = d.toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop() ?? ''
+  return { time, when: [day, zone, hours > 0 && hours < 48 ? `in ${hours}h` : null].filter(Boolean).join(' · ') }
 }
 
 export function AutopilotKpis({ standing }: { standing: AutopilotStanding }) {
@@ -29,65 +34,56 @@ export function AutopilotKpis({ standing }: { standing: AutopilotStanding }) {
   // Re-running an objective proposes the same names again; the Inbox has folded
   // those into one call for a while, and this counted the rows.
   const folded = Math.max(0, (standing.pending_drafts ?? standing.pending_memos) - standing.pending_memos)
-  // Five cells in the design's order (Research Autopilot Console.dc.html,
-  // Rev 2026-09-18.2): the drafts stand beside the calls they fold into
-  // instead of inside their tooltip. Columns answer the width the strip is
-  // given, not the viewport: in a 420px float the design's embed reads two
-  // per row, and a viewport breakpoint crushed all five into 65px columns.
+  // Five hero cards in the design's order (Research Autopilot Console.dc.html,
+  // Rev .83): the drafts stand beside the calls they fold into instead of
+  // inside their tooltip. Trust at L0 reads in ink — a level is a state, not
+  // a gain (§14.7); below L0 it is amber. The row wraps by its own width, so a
+  // 420px float reads two to a line (the Phone grammar).
   return (
-    <div className="grid grid-cols-2 gap-3 @lg/page:grid-cols-3 @3xl/page:grid-cols-5">
-      <Kpi label="Next run" title="The nearest scheduled objective. Run now on any objective does not move its schedule.">
-        <span className="text-base">{fmtNext(standing.next_run_at)}</span>
-      </Kpi>
-      <Kpi label="Trust" title={t.note}>
-        <span className="flex items-center gap-1.5">
-          <StatusLamp lamp={t.matrix_l0 ? 'green' : 'yellow'} variant="dot" title={t.note} />
-          <span className="font-mono text-lg font-semibold">{t.matrix_level ?? '—'}</span>
-          <span className="text-dense-label text-muted-foreground">
-            {t.matrix_l0 ? 'leash may accept' : 'nothing auto-approved'}
-          </span>
-        </span>
-      </Kpi>
-      <Kpi label="Awaiting you" title="Rated memos with no decision yet. The Decision Inbox reads the same queue.">
-        <span className="font-mono text-lg font-semibold tabular-nums text-warning">{standing.pending_memos}</span>
-        <span className="text-dense-label text-muted-foreground">
-          {standing.pending_memos === 1 ? 'call' : 'calls'}
-          {standing.best_conviction > 0 ? ` · best ${stars(standing.best_conviction).replace(/☆+$/, '')}` : ''}
-        </span>
-      </Kpi>
-      <Kpi
+    <HeroRow basis={200} label="Autopilot standing">
+      <HeroCard
+        label="Next run"
+        value={fmtNext(standing.next_run_at).time}
+        sub={fmtNext(standing.next_run_at).when || 'the nearest scheduled objective'}
+        title="The nearest scheduled objective. Run now on any objective does not move its schedule."
+      />
+      <HeroCard
+        label="Trust"
+        value={t.matrix_level ?? '—'}
+        valueClassName={t.matrix_l0 ? 'text-foreground' : 'text-warning'}
+        sub={t.matrix_l0 ? 'leash may accept' : 'nothing auto-approved'}
+        title={t.note}
+      />
+      <HeroCard
+        label="Awaiting you"
+        value={standing.pending_memos}
+        valueClassName="text-warning"
+        sub={`${standing.pending_memos === 1 ? 'call' : 'calls'}${
+          standing.best_conviction > 0 ? ` · best ${stars(standing.best_conviction).replace(/☆+$/, '')}` : ''
+        }`}
+        title="Rated memos with no decision yet. The Decision Inbox reads the same queue."
+      />
+      <HeroCard
         label="Drafts"
+        value={standing.pending_drafts ?? standing.pending_memos}
+        sub={folded > 0 ? `${folded} fold into the calls above` : 'in the Inbox'}
         title="Draft rows in the Inbox; repeats of the same objective proposing the same names fold into the call above them."
-      >
-        <span className="font-mono text-lg font-semibold tabular-nums">
-          {standing.pending_drafts ?? standing.pending_memos}
-        </span>
-        <span className="text-dense-label text-muted-foreground">
-          {folded > 0 ? `${folded} fold into the calls` : 'in the Inbox'}
-        </span>
-      </Kpi>
-      <Kpi
+      />
+      <HeroCard
         label="Spend today"
+        value={fmtUsd(p.spent_usd)}
+        sub={`of ${fmtUsd(p.cap_usd)} · judge models · all runs`}
         title={p.providers.map((x) => `${x.provider} ${fmtUsd(x.spent_usd)} of ${fmtUsd(x.cap_usd)}`).join(' · ')}
       >
-        <span className="font-mono text-lg font-semibold tabular-nums">
-          {fmtUsd(p.spent_usd)} <span className="text-dense-label font-normal text-muted-foreground">/ {fmtUsd(p.cap_usd)}</span>
-        </span>
         {exhausted.length ? (
-          <DenseTag variant="danger" size="cell">
-            {exhausted.join(', ')} spent
-          </DenseTag>
+          <span className="flex">
+            <DenseTag variant="danger" size="cell">
+              {exhausted.join(', ')} spent
+            </DenseTag>
+          </span>
         ) : null}
-      </Kpi>
-    </div>
+      </HeroCard>
+    </HeroRow>
   )
 }
 
-function Kpi({ label, title, children }: { label: string; title?: string; children: React.ReactNode }) {
-  return (
-    <div className="border px-4 py-3 mat-card" title={title}>
-      <div className="text-dense-meta uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-1 flex flex-wrap items-center gap-2">{children}</div>
-    </div>
-  )
-}

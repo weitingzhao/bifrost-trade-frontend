@@ -19,10 +19,9 @@
  * an order.
  */
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
@@ -293,20 +292,17 @@ export default function TradeRulesPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Rules">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Trade / Rules</p>}
+        <PageHead
           title="Rules"
-          titleSize="large"
-          description={PAGE_LEAD}
+          info={PAGE_LEAD}
           actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              <Link to="/risk/limits" className={positionsUi.link}>
+            <>
+              <PageHeadLink to="/risk/limits" title="Where a gate's hits land">
                 Breaches · Risk Limits →
-              </Link>
-              <Link to="/review/playbook-stats" className={positionsUi.link}>
-                Does it pay? Playbook stats →
-              </Link>
+              </PageHeadLink>
+              <PageHeadLink to="/review/playbook-stats" title="Does it pay?">
+                Playbook stats →
+              </PageHeadLink>
               {/* The snapshot is what the reader is looking at, not the whole
                   rulebook: the chain plus whatever the selection narrows it to,
                   so the chat starts where the eye is. */}
@@ -329,12 +325,12 @@ export default function TradeRulesPage() {
                 })}
                 suggestedPrompt="这条规则链目前的结构合理吗？哪些机会没有被配置覆盖，哪些闸门形同虚设？"
               />
-            </span>
+            </>
           }
         />
 
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border px-3 py-2 mat-card">
-          <span className={positionsUi.cap}>Show</span>
+        <div data-sr-toolbar="" role="toolbar" aria-label="Show">
+          <span data-sr-tb="label">Show</span>
           <SegmentControl
             size="xs"
             ariaLabel="Show"
@@ -345,13 +341,15 @@ export default function TradeRulesPage() {
               { value: 'all', label: 'All' },
             ]}
           />
-          <span className="text-dense-meta text-muted-foreground">
+          <span className="text-dense-label text-muted-foreground">
             {sel ? 'Lineage lit; everything else dimmed. Click it again to release.' : 'Click any card to light its lineage across the four columns.'}
           </span>
           {sel ? (
-            <button type="button" className={cn(positionsUi.link, 'ml-auto')} onClick={() => setParams({}, { replace: true })}>
-              Clear selection
-            </button>
+            <span data-sr-tb="meta">
+              <button type="button" className={positionsUi.link} onClick={() => setParams({}, { replace: true })}>
+                Clear selection
+              </button>
+            </span>
           ) : null}
         </div>
 
@@ -513,7 +511,6 @@ export default function TradeRulesPage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 import { SETTLEMENT_WITHHELD_REASON, type SessionDay } from './useSymbolForecastSessions'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
 const td = 'whitespace-nowrap border-b border-border/40 px-2 py-1 text-right font-mono text-dense-meta tabular-nums'

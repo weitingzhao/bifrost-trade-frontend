@@ -180,8 +180,10 @@ describe('the design walk, as it stands', () => {
     // Objectives was rebuilt to that rev and joined them. 57 the same day:
     // the System pass rebuilt Orchestration and Personas onto the page head.
     // 56 with batch H2: Performance, stale at Rev .81, rebuilt to its .77
-    // layer inks and waiting for a look.
-    expect(counts.aligned + counts.byState.stale).toBe(56)
+    // layer inks and waiting for a look. 49 with batch J1 (Rev .82–.83):
+    // Today, Portfolio, the Trade Desk, Rules, Stock ratings, Autopilot and
+    // The Book rebuilt to the §16 refinement and waiting for a look.
+    expect(counts.aligned + counts.byState.stale).toBe(49)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -211,7 +213,7 @@ describe('the design walk, as it stands', () => {
     // 4 with Package .23 @ Rev .95: the §16 page-refinement round (Rev .82–.94)
     // re-stamped 73 routes — hero rows, section h2s, selection in the accent,
     // counts out of the direction inks. 52 signed pages read stale until
-    // batches J1–J5 re-walk them; the sum above holds at 56.
+    // batches J1–J5 re-walk them; the sum above held at 56 until J1.
     expect(counts.aligned).toBe(4)
     expect(
       rows
@@ -220,9 +222,7 @@ describe('the design walk, as it stands', () => {
         .sort()
       // Rev .95: every signed page the §16 refinement round re-stamped, until its batch re-walks it.
     ).toEqual([
-      '/home',
       '/market/live',
-      '/portfolio',
       '/portfolio/accounts',
       '/portfolio/backing',
       '/portfolio/corporate-actions',
@@ -230,7 +230,6 @@ describe('the design walk, as it stands', () => {
       '/portfolio/outcome',
       '/portfolio/pnl-explain',
       '/portfolio/transfer',
-      '/research/book',
       '/research/compare',
       '/research/contract-screener',
       '/research/copilot',
@@ -246,14 +245,12 @@ describe('the design walk, as it stands', () => {
       '/research/lab/today',
       '/research/loop/candidates',
       '/research/loop/decisions',
-      '/research/loop/harness',
       '/research/loop/hypotheses',
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
       '/research/loop/objectives/obj-smallcap-sepa',
       '/research/loop/objectives/obj-vol-crush',
       '/research/overview',
-      '/research/ratings/stocks',
       '/research/scan',
       '/research/signal-decay',
       '/research/watchlist',
@@ -266,12 +263,10 @@ describe('the design walk, as it stands', () => {
       '/risk/sizing',
       '/risk/stress',
       '/trade/assignment',
-      '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
       '/trade/plans',
       '/trade/playbook',
-      '/trade/rules',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
@@ -506,8 +501,10 @@ describe('the design walk, as it stands', () => {
     // with Objectives, rebuilt at .55 with its mode tag. 19 with the three
     // System pages Rev .53 drew: Tech Stack, Blueprint, UI Design System. 21
     // with Orchestration and Personas, rebuilt in the System pass. 22 with
-    // Performance, rebuilt to its Rev .77 layer inks in batch H2.
-    expect(counts.byState.reviewing).toBe(22)
+    // Performance, rebuilt to its Rev .77 layer inks in batch H2. 29 with
+    // batch J1 (Rev .82–.83): seven signed pages rebuilt to the §16
+    // refinement join Risk, Performance and Symbol, which were already here.
+    expect(counts.byState.reviewing).toBe(29)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -532,15 +529,20 @@ describe('the design walk, as it stands', () => {
       '/docs/research-blueprint',
       '/docs/tech-stack',
       '/docs/ui-design-system',
+      '/home',
+      '/portfolio',
       '/portfolio/performance',
       '/portfolio/positions',
       '/research/agent-personas',
       '/research/backtest',
+      '/research/book',
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lens-coverage',
+      '/research/loop/harness',
       '/research/narrative',
       '/research/orchestration',
+      '/research/ratings/stocks',
       '/research/screener',
       '/research/signal-health',
       '/research/symbol',
@@ -550,6 +552,8 @@ describe('the design walk, as it stands', () => {
       '/risk/margin',
       '/settings',
       '/system/status',
+      '/trade/desk',
+      '/trade/rules',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
     // and Backtest. The seven retired on 2026-09-18 once every capability they

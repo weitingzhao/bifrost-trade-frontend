@@ -157,7 +157,9 @@ describe('the design walk, by revision', () => {
     // 0 → 52 with Package .23 @ Rev .95: the §16 refinement round re-stamped
     // 73 routes, 52 of them signed. Every one is honestly behind — each page
     // gained a hero row, section h2s or new inks — and batches J1–J5 walk them.
-    expect(counts.byState.stale).toBe(52)
+    // 52 → 45 with J1 (Rev .82–.83): seven signed pages rebuilt and waiting
+    // for a look; Risk, Performance and Symbol were already in `reviewing`.
+    expect(counts.byState.stale).toBe(45)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

@@ -19,10 +19,16 @@ export const STALE_DAYS = 30
 /** Two days: inside the trading day, plus the night the broker files. */
 export const CURRENT_DAYS = 2
 
+/**
+ * Freshness is quiet when fine and amber when late (§16.13, Rev .82): red is
+ * never a freshness colour — it is kept for a fault, and a source that is a
+ * month behind is late, not broken. The lamp still says "fine" in green; the
+ * words and the number stay neutral.
+ */
 export const STATE_LAMP: Record<FreshnessState, 'green' | 'yellow' | 'red' | 'gray'> = {
   current: 'green',
   behind: 'yellow',
-  dry: 'red',
+  dry: 'yellow',
   noReading: 'gray',
 }
 
@@ -30,10 +36,18 @@ export const STATE_TAG: Record<
   FreshnessState,
   { label: string; variant: 'success' | 'warning' | 'danger' | 'neutral' }
 > = {
-  current: { label: 'current', variant: 'success' },
+  current: { label: 'current', variant: 'neutral' },
   behind: { label: 'lagging', variant: 'warning' },
-  dry: { label: 'stale', variant: 'danger' },
+  dry: { label: 'stale', variant: 'warning' },
   noReading: { label: 'no reading', variant: 'neutral' },
+}
+
+/** The Days column: soft when current, amber when late, quiet when unmeasured. */
+export const STATE_INK: Record<FreshnessState, string> = {
+  current: 'text-[var(--sk-soft)]',
+  behind: 'text-warning',
+  dry: 'text-warning',
+  noReading: 'text-muted-foreground',
 }
 
 export interface TrustRow extends FreshnessRow {
@@ -67,11 +81,11 @@ export function trustBoard(rows: readonly FreshnessRow[]): TrustRow[] {
   }))
 }
 
-/** The bar takes the lamp's colour, so a row cannot read two ways at once. */
+/** The bar takes the Days column's ink, so a row cannot read two ways at once. */
 export const STATE_BAR: Record<FreshnessState, string> = {
-  current: 'bg-lamp-green',
+  current: 'bg-[var(--sk-soft)]',
   behind: 'bg-warning',
-  dry: 'bg-destructive',
+  dry: 'bg-warning',
   noReading: 'bg-lamp-gray',
 }
 
@@ -81,6 +95,9 @@ export const STATE_BAR: Record<FreshnessState, string> = {
  * A source that has never written is counted apart from one that has gone
  * quiet: the first is a gap in the setup, the second is a gap in the record,
  * and a verdict that adds them says neither.
+ *
+ * Staleness is amber, however old (§16.13): only a board with nothing on it
+ * at all is a failure, and that is the one red.
  */
 export function trustVerdict(rows: readonly FreshnessRow[]): {
   headline: string
@@ -96,7 +113,7 @@ export function trustVerdict(rows: readonly FreshnessRow[]): {
     const tail = silent > 0 ? `, and ${silent} never wrote at all` : ''
     return {
       headline: `${stale} of ${rows.length} sources are over a month old${tail}`,
-      tone: 'danger',
+      tone: 'warning',
     }
   }
   if (behind > 0) {

@@ -53,10 +53,13 @@ export function PerformanceLayerChips({
             aria-pressed={on}
             onClick={() => onLayerToggle(layer.key)}
             title={`${on ? 'On the curve — click to drop' : 'Off the curve — click to add'} ${layer.label}`}
+            // A card, not a capsule (Rev .82): radius 12. On / off rides the
+            // swatch and the edge — line2 on the raised ground when the layer
+            // is on the curve, the quiet line when it is off.
             className={cn(
-              'flex min-w-0 cursor-pointer flex-col items-stretch gap-0.75 rounded-md border px-2.75 py-1.75 text-left',
-              'hover:border-[var(--color-border-strong)] hover:bg-secondary/40',
-              on ? 'border-border bg-background/60' : 'border-border bg-transparent',
+              'flex min-w-0 cursor-pointer flex-col items-stretch gap-0.75 rounded-[var(--card-radius)] border px-3 py-2 text-left',
+              'hover:border-[var(--sk-line2)] hover:bg-[var(--sk-raised2)]',
+              on ? 'border-[var(--sk-line2)] bg-[var(--sk-raised)]' : 'border-[var(--sk-line)] bg-transparent',
             )}
           >
             <span className="flex items-center gap-1.25">
@@ -87,7 +90,7 @@ export function PerformanceLayerChips({
         )
       })}
 
-      <div className="flex min-w-0 flex-col gap-0.75 rounded-md border border-dashed border-border px-2.75 py-1.75">
+      <div className="flex min-w-0 flex-col gap-0.75 rounded-[var(--card-radius)] border border-transparent bg-[var(--card-fill)] px-3 py-2">
         <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
           <span className={cn(perfUi.cap, 'text-dense-micro')}>Net cash flow</span>
           <Link to="/portfolio/transfer" className={cn(perfUi.link, 'ml-auto text-dense-micro')}>

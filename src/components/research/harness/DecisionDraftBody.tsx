@@ -50,7 +50,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
         // about this call — the design's rule for a field a kind *sometimes*
         // has.
         <div>
-          <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Wrong if</div>
+          <div className="text-dense-meta font-semibold text-muted-foreground">Wrong if</div>
           <p className="text-muted-foreground">not stated · owed by the curator</p>
         </div>
       ) : (
@@ -67,7 +67,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
         >
           {v.invalidation.length > 0 ? (
             <div>
-              <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Wrong if</div>
+              <div className="text-dense-meta font-semibold text-muted-foreground">Wrong if</div>
               <ul className="list-disc space-y-0.5 pl-4">
                 {v.invalidation.map((x) => (
                   <li key={x}>{x}</li>
@@ -77,7 +77,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
           ) : null}
           {v.caveats.length > 0 ? (
             <div>
-              <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Caveats</div>
+              <div className="text-dense-meta font-semibold text-muted-foreground">Caveats</div>
               <ul className="list-disc space-y-0.5 pl-4 text-foreground/85">
                 {v.caveats.map((x) => (
                   <li key={x}>{x}</li>
@@ -91,7 +91,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
       {/* Key risk and the walls, in the design's order: what breaks it, then
           the numbers it is read against. */}
       <p>
-        <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">Key risk</span>{' '}
+        <span className="text-dense-meta font-semibold text-muted-foreground">Key risk</span>{' '}
         <span className={v.keyRisk === 'not stated' ? 'text-muted-foreground' : ''}>{v.keyRisk}</span>
       </p>
       <p className="font-mono text-dense-meta tabular-nums">
@@ -105,7 +105,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
 
       {v.sizingHeadline || v.sizing.length > 0 ? (
         <div className="space-y-0.5">
-          <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Sizing, if it were taken</div>
+          <div className="text-dense-meta font-semibold text-muted-foreground">Sizing, if it were taken</div>
           {v.sizingHeadline ? <p className="font-medium">{v.sizingHeadline}</p> : null}
           {v.sizing.map((l) => (
             <p key={l.label}>

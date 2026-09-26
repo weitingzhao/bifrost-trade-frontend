@@ -34,7 +34,7 @@ export function ApprovalsLanded({ landed }: { landed: readonly LandedApproval[] 
   return (
     <aside className="space-y-2 border px-3 py-2.5 text-dense-meta mat-card">
       <div className="flex items-baseline gap-2">
-        <h2 className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <h2 className="text-dense-meta font-semibold text-muted-foreground">
           Where approvals land
         </h2>
         <span className="text-dense-body font-semibold">The Book</span>

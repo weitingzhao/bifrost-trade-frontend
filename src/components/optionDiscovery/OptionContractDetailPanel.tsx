@@ -1,7 +1,6 @@
 import { bsComputeDetail } from '@/utils/optionDiscovery/bsCalc'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 import { DiscoveryIconButton } from '@/components/optionDiscovery/DiscoveryIconButton'
-/* eslint-disable react-hooks/purity -- relative timestamps use Date.now() during render */
 import { useCallback, useState } from 'react'
 import type { GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueResponse, OptionSnapshotRow } from '@/types/optionDiscovery'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'

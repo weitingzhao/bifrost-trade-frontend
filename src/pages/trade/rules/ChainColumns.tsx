@@ -39,9 +39,7 @@ export function ChainColumnList({
   return (
     <section className="flex min-w-0 flex-col gap-2" aria-label={column.title}>
       <header className="flex flex-wrap items-baseline gap-2 px-0.5">
-        <span className="text-dense-caption font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          {column.step}
-        </span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">{column.step}</span>
         <span className="text-dense-body font-semibold text-foreground">{column.title}</span>
         {onPickAll ? (
           // The count is the way into the whole column — every instance in the
@@ -87,9 +85,13 @@ function Card({ card, onPick }: { card: ChainCard; onPick: (sel: ChainSelection)
       type="button"
       aria-pressed={card.selected}
       onClick={() => onPick({ kind: card.kind, id: card.id })}
+      // The card material (1a); the picked card is the one active thing on
+      // the page, so its edge and ground are the accent (Rev .82 §1).
       className={cn(
-        'min-w-0 cursor-pointer rounded-md border px-2.5 py-2 text-left transition-opacity',
-        card.selected ? 'border-primary bg-primary/5' : 'border-border bg-[var(--sk-raised)]',
+        'min-w-0 cursor-pointer rounded-[var(--card-radius)] border px-2.5 py-2 text-left transition-[opacity,background-color]',
+        card.selected
+          ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
+          : 'border-transparent bg-[var(--card-fill)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
         card.lit ? 'opacity-100' : 'opacity-40',
       )}
     >
@@ -101,8 +103,8 @@ function Card({ card, onPick }: { card: ChainCard; onPick: (sel: ChainSelection)
           </DenseTag>
         </span>
       </span>
-      <span className="block pt-0.5 text-dense-meta leading-normal text-muted-foreground text-pretty">{card.sub}</span>
-      <span className={cn(positionsUi.mono, 'flex flex-wrap gap-x-2.5 pt-1 text-dense-caption text-muted-foreground')}>
+      <span className="block pt-0.5 text-dense-label leading-[1.4] text-[var(--sk-mute2)] text-pretty">{card.sub}</span>
+      <span className={cn(positionsUi.mono, 'flex flex-wrap gap-x-2.5 pt-1 text-dense-meta text-muted-foreground')}>
         {card.facts.map((f) => (
           <span key={f}>{f}</span>
         ))}

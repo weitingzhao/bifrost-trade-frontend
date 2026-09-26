@@ -15,6 +15,9 @@
  * 0.5.1 the last framed pieces (SegmentControl track, CollapsibleGroup, the
  * sidebar's rules and peer card); 0.5.2 the Rev .84/.85/.93 site-wide rules
  * (sentence-case toolbar labels, four heroes 2 × 2, nowrap segments, a DS
- * table head sticking at the top of its own scroller).
+ * table head sticking at the top of its own scroller); 0.5.3 the package's
+ * last neutral borders (standard table rules, PageHead's rule and ⓘ,
+ * ViewState's strip, the sidebar's leftovers); 0.5.4 drops the subhead and
+ * detail rows' `bg-secondary` bands.
  */
-export const UI_VERSION_NOW = '0.5.2'
+export const UI_VERSION_NOW = '0.5.4'

@@ -94,8 +94,11 @@ export function PayoffChart({ curves, spot }: { curves: PayoffCurves; spot: numb
             fill="color-mix(in srgb, var(--sk-ink) 4%, transparent)"
           />
           <g clipPath={`url(#${clip})`}>
-            <path d={winPath} fill="rgb(var(--sk-accent-rgb) / 0.16)" />
-            <path d={losePath} fill="rgb(var(--color-loss-rgb) / 0.16)" />
+            {/* The zone above zero is profit's own ink, not the accent (Rev .83):
+                it is signed P&L, split at the zero axis like Positions and
+                Performance (§14.7 #5). */}
+            <path d={winPath} fill="color-mix(in srgb, var(--color-profit) 18%, transparent)" />
+            <path d={losePath} fill="color-mix(in srgb, var(--color-loss) 18%, transparent)" />
           </g>
           <line x1="0" x2={W} y1={zeroY} y2={zeroY} stroke="var(--sk-line2)" strokeWidth="1" />
           <g clipPath={`url(#${clip})`}>

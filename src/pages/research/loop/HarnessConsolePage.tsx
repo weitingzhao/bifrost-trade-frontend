@@ -19,7 +19,7 @@ import {
   ShieldAlert,
   Terminal,
 } from 'lucide-react'
-import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
+import { ObjectiveScopeBanner, PageHead, PageShell } from '@/components/layout'
 import { closeSurface, openSurface, runSurface } from '@/layout/equipSurface'
 import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import {
@@ -354,63 +354,65 @@ export default function HarnessConsolePage() {
 
   return (
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
-      <PageHeader
+      <PageHead
         title="Autopilot"
-        description="Standing research objectives that run without you, judged by two models, rated, and held on a leash until you approve."
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className="inline-flex items-center gap-1 rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-dense-caption text-warning"
-              title={D10_DETAIL}
-            >
-              <ShieldAlert className="size-3" />
-              D10 BLOCKED
-            </span>
-            <div
-              className="flex items-center gap-1.5 border px-2 py-1 mat-card"
-              title={trust?.reason ?? 'Loading Trust…'}
-            >
-              <StatusLamp
-                lamp={(trust?.matrix_l0 ?? trust?.l0) ? 'green' : 'yellow'}
-                variant="dot"
-                title={trust?.reason ?? ((trust?.matrix_l0 ?? trust?.l0) ? 'Trust L0' : 'Trust not L0')}
-              />
-              <span className="text-dense-caption text-muted-foreground">
-                Trust {trust?.matrix_level ?? (trust?.l0 ? 'L0' : 'not L0')}
-              </span>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-dense-meta"
-              onClick={() => openResearchCopilot()}
-            >
-              <MessageCircle className="mr-1 size-3" />
-              Copilot
-            </Button>
-            <NewObjectiveDialog />
-          </div>
-        }
+        info="Standing research objectives that run without you, judged by two models, rated, and held on a leash until you approve."
       />
+
+      {/* §17.3: the standing chips and the page's one main action sit in the
+          toolbar under the head, the action at its right (Rev .83). */}
+      <div data-sr-toolbar="" role="toolbar" aria-label="Autopilot standing and actions">
+        <span
+          className="inline-flex h-[22px] items-center gap-1.5 rounded-md border border-[color-mix(in_srgb,var(--color-lamp-yellow)_45%,transparent)] bg-[color-mix(in_srgb,var(--color-lamp-yellow)_10%,transparent)] px-2 font-mono text-dense-caption font-bold text-warning"
+          title={D10_DETAIL}
+        >
+          <ShieldAlert className="size-3" />
+          D10 BLOCKED
+        </span>
+        <span
+          className="inline-flex h-[22px] items-center gap-1.5 border px-2 text-dense-meta text-[var(--sk-mute2)] mat-tag"
+          title={trust?.reason ?? 'Loading Trust…'}
+        >
+          <StatusLamp
+            lamp={(trust?.matrix_l0 ?? trust?.l0) ? 'green' : 'yellow'}
+            variant="dot"
+            title={trust?.reason ?? ((trust?.matrix_l0 ?? trust?.l0) ? 'Trust L0' : 'Trust not L0')}
+          />
+          Trust {trust?.matrix_level ?? (trust?.l0 ? 'L0' : 'not L0')}
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="h-[22px] px-2 text-dense-meta"
+          onClick={() => openResearchCopilot()}
+        >
+          <MessageCircle className="mr-1 size-3" />
+          Copilot
+        </Button>
+        <span data-sr-tb="meta">
+          <NewObjectiveDialog triggerLabel="New objective" />
+        </span>
+      </div>
 
       {/* The design's context strip. It said "seat" until the seat model was
           retired (Owner 2026-09-19) — what the tag is actually for is naming
           which operator writes here, so it reads "the engine" now, the same
-          words the Decision Inbox uses over the queue this page fills. */}
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border px-3 py-2 mat-card">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          words the Decision Inbox uses over the queue this page fills. The
+          sentence is the cap's title (Rev .83), and the tag is soft: it names
+          an operator, not the one active thing (Rev .85). */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border px-3 py-1.5 mat-card">
+        <span
+          className="text-dense-meta font-semibold text-muted-foreground"
+          title="It runs, judges and rates; you approve — every call it cannot make on its own waits in the Decision Inbox"
+        >
           Context
         </span>
-        <span className="inline-flex items-center gap-1.5 border px-2 py-0.5 text-dense-meta mat-tag">
-          <span className="font-mono font-bold text-primary">L3</span>
+        <span className="inline-flex items-center gap-1.5 border px-2 py-px text-dense-meta mat-tag">
+          <span className="font-mono font-bold text-[var(--sk-soft)]">L3</span>
           {/* "the engine", not "autopilot seat": the seat model was retired
               on 2026-09-19 and the design's chip was reworded with it. */}
-          <span className="text-muted-foreground">the engine</span>
-        </span>
-        <span className="text-dense-meta text-muted-foreground">
-          it runs, judges and rates; you approve — every call it cannot make on its own waits in the
-          Decision Inbox
+          <span className="text-[var(--sk-mute2)]">the engine</span>
         </span>
       </div>
 
@@ -469,7 +471,7 @@ export default function HarnessConsolePage() {
 
       <section className="min-w-0 space-y-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="shrink-0 text-base font-semibold">Objectives</h2>
+          <h2 className="m-0 shrink-0 type-section font-semibold">Objectives</h2>
           {/* The design draws five states here — "a draft and a retired one are
               not the same absence". The backend has exactly two and refuses the
               rest with a 422 (`OBJECTIVE_STATUSES`), so the filter is the pair

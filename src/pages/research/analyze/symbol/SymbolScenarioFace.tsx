@@ -24,7 +24,7 @@ import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { cn } from '@/lib/utils'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const mono = 'font-mono tabular-nums'
 const panel =
   'min-w-0 border mat-card'
@@ -47,7 +47,7 @@ function BarKv({
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <span className={cap}>{label}</span>
-      <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+      <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
         {pct != null ? (
           <span className={cn('absolute inset-y-0 left-0', barCls)} style={{ width: `${Math.min(100, pct)}%` }} />
         ) : null}
@@ -203,7 +203,7 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
         <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5 px-3 py-2.5">
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className={cap}>terrain</span>
-            <b className={cn(mono, 'text-dense-body font-semibold uppercase', regime === 'crash-risk' ? 'text-destructive' : regime === 'trending' ? 'text-warning' : 'text-success')}>
+            <b className={cn(mono, 'text-dense-body font-semibold', regime === 'crash-risk' ? 'text-destructive' : regime === 'trending' ? 'text-warning' : 'text-success')}>
               {regime ?? '—'}
             </b>
           </div>

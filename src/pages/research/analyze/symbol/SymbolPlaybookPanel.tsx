@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils'
 import { useSymbolForecastSessions } from './useSymbolForecastSessions'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const mono = 'font-mono tabular-nums'
 const panel =
   'min-w-0 border mat-card'
@@ -182,7 +182,7 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
               className="grid grid-cols-[64px_minmax(0,1fr)_40px_96px] items-center gap-2 text-dense-meta"
             >
               <span className={cn(b.text, lead ? 'font-semibold' : 'font-normal')}>{b.label}</span>
-              <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+              <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                 {pct != null ? (
                   <span className={cn('absolute inset-y-0 left-0', b.bar)} style={{ width: `${pct}%` }} />
                 ) : null}
@@ -219,7 +219,7 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
               return (
                 <div key={b.key} className="contents">
                   <span className={b.text}>{b.label}</span>
-                  <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+                  <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                     {rate != null ? (
                       <span className={cn('absolute inset-y-0 left-0', b.bar)} style={{ width: `${rate * 100}%` }} />
                     ) : null}

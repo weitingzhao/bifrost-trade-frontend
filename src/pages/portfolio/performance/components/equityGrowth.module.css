@@ -165,17 +165,19 @@
   stroke: none;
 }
 
-/* Prototype: the FI hue at 72% with a solid cap. A stream out is the same hue, fainter — it is not a loss. */
+/* The FI layer's own ink, soft (Rev .82): amber was the lamp's degraded value,
+   and a stream of cash received is neither a warning nor P&L. 38% with a solid
+   cap; a stream out is the same ink, fainter — it is not a loss. */
 .fiBarPos {
-  fill: color-mix(in oklch, rgb(251, 191, 36) 72%, transparent);
+  fill: color-mix(in srgb, var(--sk-soft) 38%, transparent);
 }
 
 .fiBarNeg {
-  fill: color-mix(in oklch, rgb(251, 191, 36) 35%, transparent);
+  fill: color-mix(in srgb, var(--sk-soft) 18%, transparent);
 }
 
 .fiBarCap {
-  stroke: var(--sk-warn);
+  stroke: var(--sk-soft);
   stroke-width: 2;
 }
 

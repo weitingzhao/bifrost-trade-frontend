@@ -32,7 +32,7 @@ import { cn } from '@/lib/utils'
 import { bsComputeDetail, normalCDF } from '@/utils/blackScholes'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
-import { earningsHeadMeta, expiryEarnings, termEarningsNote } from '@/utils/earningsEstimate'
+import { earningsHeadMeta, expiryEarnings, lateLead, termEarningsNote } from '@/utils/earningsEstimate'
 import { SymbolExpiryCard } from '@/pages/research/analyze/symbol/SymbolExpiryCard'
 import { ContractCandles, OiMini, SmileMini } from './symbolChainCharts'
 import {
@@ -49,7 +49,7 @@ import { useQuery } from '@tanstack/react-query'
 import { SegmentControl } from '@/components/data-display'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const mono = 'font-mono tabular-nums'
 const panel =
   'min-w-0 border mat-card'
@@ -253,6 +253,16 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
             strike lit below is not the contract you picked.
           </p>
         ) : null}
+        {nextEarnings && nextEarnings.days_away < 0 ? (
+          <p
+            className="m-0 border-b border-warning/30 bg-warning/10 px-3 py-1.5 text-dense-meta leading-normal text-warning text-pretty"
+            role="note"
+            aria-label="Earnings late"
+          >
+            {lateLead(nextEarnings)} It can land before any of these expiries any day — or has, and the feed has not
+            caught up — so every card is marked E?.
+          </p>
+        ) : null}
         {loading ? (
           <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">Reading the listed expiries…</p>
         ) : expiries.length === 0 ? (
@@ -282,7 +292,8 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
           ATM IV is the fit&rsquo;s own per expiry; the straddle and open interest are the
           chain&rsquo;s. E marks an expiry the next print falls inside; amber bars are those expiries.
         </p>
-        {!earnQ.isLoading && !loading && expiries.length > 0 ? (
+        {/* A late print has its strip above the cards; this line is for a dated one. */}
+        {!earnQ.isLoading && !loading && expiries.length > 0 && !(nextEarnings && nextEarnings.days_away < 0) ? (
           <p className={note}>
             {termEarningsNote(nextEarnings, expiries.map((e) => ({ label: e.slice(5), dte: cardDte(e) })), earnQ.data?.filings)}
           </p>
@@ -387,7 +398,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                 title="Carried in from Screener › Contracts — the screen’s live rule at click time. Toggles the ladder’s highlight."
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-dense-micro',
-                  bandOn ? 'border-[var(--sk-ticker)]' : 'border-border',
+                  bandOn ? 'border-primary' : 'border-border',
                 )}
               >
                 <span className="text-[var(--sk-mute2)]">screen band</span>
@@ -456,10 +467,12 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                               td,
                               'cursor-pointer',
                               isSel('P') ? 'bg-[rgb(var(--sk-accent-rgb)/0.08)]' : 'hover:bg-[var(--sk-surface)]',
+                              // In the band reads ink, outside it soft (Rev .92) — the
+                              // band is a rule, not a name, so never the ticker's lime.
                               i === 3
                                 ? putInB
-                                  ? 'text-[var(--sk-ticker)]'
-                                  : 'text-foreground'
+                                  ? 'text-foreground'
+                                  : 'text-[var(--sk-soft)]'
                                 : 'text-secondary-foreground'
                             )}
                           >
@@ -499,8 +512,8 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                               isSel('C') ? 'bg-[rgb(var(--sk-accent-rgb)/0.08)]' : 'hover:bg-[var(--sk-surface)]',
                               i === 0
                                 ? callInB
-                                  ? 'text-[var(--sk-ticker)]'
-                                  : 'text-foreground'
+                                  ? 'text-foreground'
+                                  : 'text-[var(--sk-soft)]'
                                 : 'text-secondary-foreground'
                             )}
                           >

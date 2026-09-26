@@ -467,7 +467,7 @@ export function CandidateBatchBody({
                         </summary>
                         <div className="mt-1 flex flex-wrap items-start gap-x-6 gap-y-2">
                           <span>
-                            <span className="mr-1 text-dense-micro uppercase tracking-wide text-muted-foreground">Selection</span>
+                            <span className="mr-1 text-dense-meta font-semibold text-muted-foreground">Selection</span>
                             {sel?.path ? (
                               <DenseTag variant="category" size="cell">
                                 {sel.path}
@@ -478,7 +478,7 @@ export function CandidateBatchBody({
                             )}
                           </span>
                           <span>
-                            <span className="mr-1 text-dense-micro uppercase tracking-wide text-muted-foreground">Track record</span>
+                            <span className="mr-1 text-dense-meta font-semibold text-muted-foreground">Track record</span>
                             <DenseTag variant={settled ? 'success' : 'neutral'} size="cell">
                         {settled
                           ? `T+${settled.horizon_days} ${Math.round((settled.hit_rate ?? 0) * 100)}% beat`
@@ -486,7 +486,7 @@ export function CandidateBatchBody({
                       </DenseTag>
                     </span>
                           <span>
-                            <span className="mr-1 text-dense-micro uppercase tracking-wide text-muted-foreground">Personas</span>
+                            <span className="mr-1 text-dense-meta font-semibold text-muted-foreground">Personas</span>
                             {verdicts.length > 0 ? (
                         <div className="space-y-0.5">
                           <p className="text-dense-micro text-muted-foreground">

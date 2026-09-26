@@ -37,7 +37,7 @@ export function OrderIntentBody({ payload }: { payload: Record<string, unknown> 
     <div className="space-y-2">
       <div className="flex min-w-0 flex-col gap-1.5 rounded-md border border-dashed border-border px-2.5 py-2">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-          <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">Structure</span>
+          <span className="text-dense-meta font-semibold text-muted-foreground">Structure</span>
           <span className="font-mono text-dense-label">{v.template ?? '—'}</span>
           {v.mismatch ? (
             <DenseTag variant="warning" size="cell">

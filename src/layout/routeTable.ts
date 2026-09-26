@@ -120,8 +120,9 @@ export const ROUTES: readonly RouteEntry[] = [
     // day, so it carries no breadcrumb trail of its own.
     crumbs: [],
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.82',
       note: DESIGN_NOTES['/home'],
     },
   },
@@ -133,8 +134,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Portfolio',
     crumbs: [],
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.19',
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.82',
       note: DESIGN_NOTES['/portfolio'],
     },
   },
@@ -145,8 +147,9 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .77 moved the page's own stamp for its layer inks; re-walked and
       // built in batch H2, waiting for a look.
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.77',
+      rev: '2026-09-25.82',
       note: DESIGN_NOTES['/portfolio/performance'],
     },
   },
@@ -290,8 +293,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Risk',
     crumbs: [],
     design: {
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-20.19',
+      rev: '2026-09-25.82',
       note: DESIGN_NOTES['/risk'],
     },
   },
@@ -397,8 +401,9 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: [],
     accountScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.23',
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.82',
       note: DESIGN_NOTES['/trade/desk'],
     },
   },
@@ -407,8 +412,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Rules',
     crumbs: TRADE_DESK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.1',
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.82',
       note: DESIGN_NOTES['/trade/rules'],
     },
   },

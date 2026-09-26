@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 import { chainFromSnapshots } from '@/utils/optionChain'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const panel =
   'min-w-0 border mat-card'
 const panelHead =
@@ -152,7 +152,7 @@ export function SymbolFlowFace({ symbol }: { symbol: string }) {
                         <td className={td}>{fmtN(c.notional)}</td>
                         <td className={cn(td, 'text-left')}>
                           <span className="flex items-center gap-1.5">
-                            <span className="relative block h-[5px] w-[60px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+                            <span className="relative block h-[5px] w-[60px] overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                               <span
                                 className="absolute inset-y-0 left-0 bg-[var(--sk-accent)]"
                                 style={{ width: `${(c.notional / (top.sum || 1)) * 100}%` }}

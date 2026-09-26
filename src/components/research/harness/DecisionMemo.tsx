@@ -195,7 +195,7 @@ function RatingCard({
 function Level({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'success' | 'danger' }) {
   return (
     <span className="rounded border border-border/60 bg-background px-1.5 py-1">
-      <span className="block text-dense-micro uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="block text-dense-meta font-semibold text-muted-foreground">{label}</span>
       <span className={cn('block font-mono text-dense-meta tabular-nums', tone === 'success' && 'text-success', tone === 'danger' && 'text-destructive')}>{value}</span>
       {sub ? <span className="block truncate text-dense-micro text-muted-foreground/80">{sub}</span> : null}
     </span>

@@ -68,8 +68,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Package 2026-09-22.3 retired this page's own run drawer and pointed
       // its Copilot button at the one Thread. Both are landed; the Owner has
       // not looked since, and only the Owner marks a page aligned.
-      state: 'aligned',
-      rev: '2026-09-22.6',
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.85',
       note: DESIGN_NOTES['/research/loop/harness'],
     },
   },
@@ -94,8 +95,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // the equipment is not inside a layer, it is worn while working in one.
     crumbs: [],
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.24',
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.93',
       note: DESIGN_NOTES['/research/book'],
     },
   },
@@ -153,8 +155,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // are this side's, and only the Owner's look puts a page in place.
       // Rev .9 adds the Leaders view — the design answering this side's own
       // ask about Momentum Radar's ranking. Re-walked 2026-09-23.
-      state: 'aligned',
-      rev: '2026-09-23.9',
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.83',
       note: DESIGN_NOTES['/research/ratings/stocks'],
     },
   },
@@ -265,8 +268,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // panel to the Overview rail; Rev .56–.58 the four-layer head, the 440
     // face and the contract seed (frame batch F4) — waiting for a look.
     design: {
+      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.58',
+      rev: '2026-09-25.83',
       note: DESIGN_NOTES['/research/symbol'],
     },
   },

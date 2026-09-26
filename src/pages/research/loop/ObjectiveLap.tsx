@@ -75,7 +75,7 @@ export function ObjectiveLap({
       className="border px-3 py-2 mat-card"
     >
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pb-1.5">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Its lap around the loop
         </span>
         <span className="text-dense-meta text-muted-foreground">

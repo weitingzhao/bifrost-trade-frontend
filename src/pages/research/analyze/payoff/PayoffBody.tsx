@@ -54,7 +54,7 @@ const fmtSigned = (v: number) =>
 function Kv({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      <span className="whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+      <span className="whitespace-nowrap text-dense-meta font-semibold text-muted-foreground">
         {label}
       </span>
       <b className={cn('font-mono text-dense-body tabular-nums', tone ?? 'text-foreground')}>
@@ -69,7 +69,7 @@ const panel =
 const panelHead =
   'flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal'
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase leading-normal tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold leading-normal text-muted-foreground'
 const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
 const td =
@@ -435,7 +435,7 @@ export function PayoffBody() {
                 {scen.map((r) => (
                   <tr
                     key={r.label}
-                    className={r.flat ? 'bg-[rgb(var(--sk-accent-rgb)/0.04)]' : undefined}
+                    className={r.flat ? 'bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]' : undefined}
                   >
                     <td
                       className={cn(td, 'text-left font-sans', r.earnings && 'text-warning')}

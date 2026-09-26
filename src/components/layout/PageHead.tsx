@@ -43,14 +43,17 @@ export function PageHeadLink({
   to,
   href,
   title,
+  primary = false,
   children,
 }: {
   to?: string
   href?: string
   title?: string
+  /** The page's one main action (§16.10): the accent, solid. At most one. */
+  primary?: boolean
   children: ReactNode
 }) {
-  const cls = buttonVariants({ variant: 'outline', size: 'sm' })
+  const cls = buttonVariants({ variant: primary ? 'default' : 'outline', size: 'sm' })
   if (href) {
     return (
       <a href={href} target="_blank" rel="noreferrer" title={title} className={cls}>

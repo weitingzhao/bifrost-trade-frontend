@@ -49,10 +49,11 @@ describe('adoptionByGroup', () => {
     // `reviewing` beside Positions.
     // None of ten with Package .23 @ Rev .95: the §16 refinement round
     // re-stamped every Portfolio page; the eight signed ones read stale until
-    // their batch re-walks them.
+    // their batch re-walks them. Batch J1 re-walked Portfolio's own page:
+    // three wait for a look, seven are still behind.
     expect(portfolio).toMatchObject({ total: 10, aligned: 0, left: 10 })
-    expect(portfolio?.byState.reviewing).toBe(2)
-    expect(portfolio?.byState.stale).toBe(8)
+    expect(portfolio?.byState.reviewing).toBe(3)
+    expect(portfolio?.byState.stale).toBe(7)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

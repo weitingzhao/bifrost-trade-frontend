@@ -9,7 +9,7 @@ import { daysBack } from '@/lib/researchFreshness'
 import { type ChainContract } from '@/utils/optionChain'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 
 /** The 600×110 smile: call IVs, put IVs, the fit dashed, σ band shaded. */
 export function SmileMini({

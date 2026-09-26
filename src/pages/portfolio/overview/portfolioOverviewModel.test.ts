@@ -53,7 +53,8 @@ describe('trustVerdict', () => {
       row({ state: 'current' }),
     ])
     expect(v.headline).toBe('2 of 5 sources are over a month old, and 1 never wrote at all')
-    expect(v.tone).toBe('danger')
+    // Late is amber, however late (§16.13): red is kept for a fault.
+    expect(v.tone).toBe('warning')
   })
 
   it('drops to a warning when nothing is stale but something is behind', () => {
@@ -76,6 +77,11 @@ describe('the lamp and the bar', () => {
   it('agree on every state, so a row cannot read two ways at once', () => {
     expect(Object.keys(STATE_LAMP).sort()).toEqual(Object.keys(STATE_BAR).sort())
     expect(STATE_BAR.noReading).toContain('gray')
+  })
+
+  it('never uses red for freshness (§16.13)', () => {
+    expect(Object.values(STATE_LAMP)).not.toContain('red')
+    expect(Object.values(STATE_BAR).join(' ')).not.toContain('destructive')
   })
 })
 

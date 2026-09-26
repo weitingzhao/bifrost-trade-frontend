@@ -30,7 +30,10 @@
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { HeroCard, HeroRow, PageHead, PageShell, SectionHead } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
+import { readingToneClass, splitReading } from '@/utils/performanceHeroes'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -40,11 +43,9 @@ import {
   DenseTableHeader,
   DenseTableRow,
   DenseTag,
-  EmptyState,
   denseTableNumCell,
 } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -60,6 +61,7 @@ import { GROWTH_LAYERS } from '@/utils/ledger/equityGrowthChart'
 import { pnlColorClass } from '@/utils/dailyChange'
 import {
   STATE_BAR,
+  STATE_INK,
   STATE_LAMP,
   STATE_TAG,
   totalsStrip,
@@ -213,37 +215,91 @@ export default function PortfolioOverviewPage() {
       ]
     : []
 
+  // §16.2: the hero row leads with the oldest source — the one that decides
+  // how much of this layer may be believed — then Performance's four P&L
+  // totals, quoted. Commissions and the cash flow stay as the strip under the
+  // earners. Nothing is recomputed: `splitReading` is Performance's own split.
+  const { heroes } = splitReading(buildReadingMetrics(perf.data), 'this quarter')
+  const totalsLine = strip.filter((m) => m.label === 'Commissions' || m.label === 'Net cash flow')
+  const worst = rows.find((r) => r.days != null) ?? null
+  const freshState = sourceState(freshness)
+
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className="max-w-[78ch]">
-        <PageHeader
-          breadcrumb={<p className="text-xs font-medium text-primary/90">Portfolio</p>}
-          title="Portfolio"
-          titleSize="large"
-          description={LEAD}
-        />
-      </div>
+      <PageHead title="Portfolio" info={LEAD} />
 
       {status.isError ? <QueryErrorAlert error={status.error} /> : null}
-      {freshness.isError ? <QueryErrorAlert error={freshness.error} /> : null}
 
-      <SectionPanel
-        cap="Trust"
-        title={verdict.headline}
-        note="age of the newest record each source has produced"
-        tone={verdict.tone}
-        action={
-          <Link to="/portfolio/accounts" className="text-primary hover:underline">
-            Accounts →
-          </Link>
+      {freshState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh source freshness"
+          detail={staleDetail(freshness, 'a source that went quiet since then is not shown.')}
+          onAction={() => void freshness.refetch()}
+        />
+      ) : null}
+
+      <HeroRow basis={200} label="The layer at a glance">
+        <HeroCard
+          label="Oldest source"
+          value={worst == null ? '—' : `${worst.days?.toFixed(1)}d`}
+          valueClassName={worst == null ? 'text-muted-foreground' : STATE_INK[worst.state]}
+          sub={freshness.isLoading ? 'Loading…' : verdict.headline}
+          state={verdict.tone === 'danger' ? 'danger' : verdict.tone === 'warning' ? 'warn' : null}
+          title={
+            worst == null
+              ? undefined
+              : `${worst.source} on ${worst.role || 'this account'} (${worst.accountId}) — newest record is ${worst.days?.toFixed(1)} days old`
+          }
+        />
+        {heroes.map((h) => (
+          <HeroCard
+            key={h.label}
+            label={h.label}
+            value={h.value}
+            valueClassName={readingToneClass(h.tone, h.raw)}
+            sub={h.sub}
+            title={h.title}
+          />
+        ))}
+      </HeroRow>
+
+      {/* §16.4 with its explanation in the title, not a sentence of it lost:
+          what the three sources are for, and that Accounts computes it. */}
+      <SectionHead
+        note="Age of the newest record each source has produced. The three sources answer different questions: flex_trades is authoritative but late, tws_client is fast but not authoritative, journal_closed closes what neither covers. Computed in Accounts; this page only ranks it."
+        meta={
+          <span className="flex items-baseline gap-2.5">
+            <Link
+              to="/portfolio/ledger"
+              title="Where the sources disagree is Trade Ledger’s question"
+              className="text-dense-label text-primary no-underline hover:underline"
+            >
+              Trade Ledger →
+            </Link>
+            <Link to="/portfolio/accounts" className="text-dense-label text-primary no-underline hover:underline">
+              Accounts →
+            </Link>
+          </span>
         }
       >
-        {freshness.isLoading ? (
-          <Skeleton className="m-3 h-40 rounded-md" />
+        Trust
+      </SectionHead>
+      <section className="overflow-hidden border mat-card">
+        {freshState === 'loading' ? (
+          <ViewState kind="loading" title="Loading source freshness" rows={5} cols={6} />
+        ) : freshState === 'failed' ? (
+          <ViewState
+            kind="failed"
+            title="Couldn’t load source freshness"
+            detail={failedDetail(freshness, 'No source was judged — this is not the same as every source being current.')}
+            onAction={() => void freshness.refetch()}
+          />
         ) : rows.length === 0 ? (
-          <EmptyState
+          <ViewState
+            kind="empty"
             title="No source has reported"
-            description="The freshness endpoint returned no account-and-source pairs. That is not an all-clear — it means nothing said when it last wrote."
+            detail="The freshness endpoint returned no account-and-source pairs. That is not an all-clear — it means nothing said when it last wrote."
           />
         ) : (
           <DenseDataTable wrapClassName="rounded-none border-0" scrollX={false}>
@@ -270,12 +326,12 @@ export default function PortfolioOverviewPage() {
                   <DenseTableCell className="max-w-none pr-0">
                     <StatusLamp lamp={STATE_LAMP[r.state]} variant="dot" className="h-2.5 w-2.5" />
                   </DenseTableCell>
-                  <DenseTableCell className="max-w-none whitespace-nowrap font-mono">
+                  <DenseTableCell className="max-w-none whitespace-nowrap font-mono text-dense-body text-foreground">
                     {r.source}
                   </DenseTableCell>
                   <DenseTableCell className="max-w-none whitespace-nowrap">
                     <span className="block text-dense-label">{r.role || '—'}</span>
-                    <span className="block font-mono text-dense-micro text-muted-foreground">
+                    <span className="block font-mono text-dense-caption text-muted-foreground">
                       {r.accountId}
                     </span>
                   </DenseTableCell>
@@ -288,24 +344,16 @@ export default function PortfolioOverviewPage() {
                     {/* Measured against the oldest row on the board, not against
                         a ceiling in days — the only ceiling that never lies is
                         the worst row already here. */}
-                    <span className="block h-[5px] min-w-10 overflow-hidden rounded-sm bg-muted">
+                    <span className="block h-1.5 min-w-10 overflow-hidden rounded bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                       {r.bar != null ? (
                         <span
-                          className={cn('block h-full rounded-sm', STATE_BAR[r.state])}
+                          className={cn('block h-full', STATE_BAR[r.state])}
                           style={{ width: `${Math.max(2, r.bar * 100)}%` }}
                         />
                       ) : null}
                     </span>
                   </DenseTableCell>
-                  <DenseTableCell
-                    className={cn(
-                      denseTableNumCell,
-                      'max-w-none',
-                      r.state === 'dry' && 'text-destructive',
-                      r.state === 'behind' && 'text-warning',
-                      r.state === 'noReading' && 'text-muted-foreground',
-                    )}
-                  >
+                  <DenseTableCell className={cn(denseTableNumCell, 'max-w-none text-dense-body', STATE_INK[r.state])}>
                     {r.age}
                   </DenseTableCell>
                 </DenseTableRow>
@@ -313,130 +361,107 @@ export default function PortfolioOverviewPage() {
             </DenseTableBody>
           </DenseDataTable>
         )}
-        <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-          The three sources answer different questions:{' '}
-          <span className="font-mono">flex_trades</span> is authoritative but late,{' '}
-          <span className="font-mono">tws_client</span> is fast but not authoritative,{' '}
-          <span className="font-mono">journal_closed</span> closes what neither covers. Where they
-          disagree is{' '}
-          <Link to="/portfolio/ledger" className="text-primary hover:underline">
-            Trade Ledger
-          </Link>
-          's question. Computed in{' '}
-          <Link to="/portfolio/accounts" className="text-primary hover:underline">
-            Accounts
-          </Link>
-          ; this page only ranks it.
-        </p>
-      </SectionPanel>
+      </section>
 
-      <SectionPanel
-        cap="Where it came from"
-        title="This quarter, by what earned it"
-        note={
-          <span className="font-mono">
-            {[bulk.data?.optAsOf?.asOfDateStr ? `ASOF ${bulk.data.optAsOf.asOfDateStr}` : null, scopeNote]
-              .filter(Boolean)
-              .join(' · ')}
+      <SectionHead
+        note="This quarter, by what earned it. The four cells are realised inside the range; the open figure beside Options is unmatched premium as of today, not a sum over it. Unrealized above is every open position now rather than this quarter’s, and Net cash flow is money that crossed the account boundary — shown to say it is not P&L. Performance computes all of it and owns the basis behind each one."
+        meta={
+          <span className="flex items-baseline gap-2.5">
+            <span className="font-mono tabular-nums">
+              {[bulk.data?.optAsOf?.asOfDateStr ? `ASOF ${bulk.data.optAsOf.asOfDateStr}` : null, scopeNote]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+            <Link to="/portfolio/performance" className="text-dense-label text-primary no-underline hover:underline">
+              Performance →
+            </Link>
           </span>
         }
-        action={
-          <Link to="/portfolio/performance" className="text-primary hover:underline">
-            Performance →
-          </Link>
-        }
       >
-        {bulk.isLoading ? (
-          <Skeleton className="m-3 h-28 rounded-md" />
-        ) : totals == null ? (
-          <EmptyState
+        Where it came from
+      </SectionHead>
+      {bulk.isLoading ? (
+        <section className="overflow-hidden border mat-card">
+          <ViewState kind="loading" title="Loading the quarter" rows={2} cols={4} />
+        </section>
+      ) : totals == null ? (
+        <section className="overflow-hidden border mat-card">
+          <ViewState
+            kind="empty"
             title="No range answered"
-            description="Performance's by-day range returned nothing for this quarter, so there is no split to quote. An empty quarter would show four zeroes instead."
+            detail="Performance's by-day range returned nothing for this quarter, so there is no split to quote. An empty quarter would show four zeroes instead."
           />
-        ) : (
-          <>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))]">
-              {earners.map((e) => (
-                <Link
-                  key={e.key}
-                  to={e.to}
-                  className="flex min-w-0 flex-col gap-1 border-r border-border/60 px-3 py-2.5 last:border-r-0 hover:bg-secondary/40"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span
-                      aria-hidden
-                      className="size-[7px] rounded-xs"
-                      style={{ background: LAYER_COLOR[e.key] }}
-                    />
-                    <span className="text-dense-micro font-bold uppercase tracking-[0.12em]">
-                      {e.label}
-                    </span>
-                  </span>
+        </section>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-stretch gap-2">
+            {earners.map((e) => (
+              <Link
+                key={e.key}
+                to={e.to}
+                className="flex min-w-0 flex-[1_1_180px] flex-col gap-1 rounded-[var(--card-radius)] border border-transparent bg-[var(--card-fill)] px-3 py-2.5 text-foreground no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] hover:text-foreground motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              >
+                <span className="flex items-center gap-1.5">
+                  <span aria-hidden className="size-2 rounded-xs" style={{ background: LAYER_COLOR[e.key] }} />
+                  <span className="text-dense-label font-semibold text-[var(--sk-soft)]">{e.label}</span>
+                </span>
+                <span className={cn('font-mono text-xl font-bold tabular-nums', pnlColorClass(e.value))}>
+                  {fmtSignedUsd0(e.value)}
+                </span>
+                <span className="font-mono text-dense-meta text-muted-foreground">{e.sub}</span>
+              </Link>
+            ))}
+          </div>
+          {/* Performance's own reading of the same range, quoted: the two
+              figures the hero row did not take. */}
+          {totalsLine.length > 0 ? (
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 px-0.5">
+              {totalsLine.map((m) => (
+                <span key={m.label} className="inline-flex items-baseline gap-1.5" title={m.title}>
+                  <span className="text-dense-meta font-semibold text-muted-foreground">{m.label}</span>
                   <span
                     className={cn(
-                      'font-mono text-lg font-bold tabular-nums',
-                      pnlColorClass(e.value),
+                      'font-mono text-dense-label tabular-nums',
+                      m.tone === 'pnl' ? pnlColorClass(m.raw ?? 0) : TONE_INK[m.tone] ?? '',
                     )}
                   >
-                    {fmtSignedUsd0(e.value)}
+                    {m.label === 'Net cash flow' ? `${m.value} · excluded from return` : m.value}
                   </span>
-                  <span className="font-mono text-dense-caption text-muted-foreground">{e.sub}</span>
-                </Link>
+                </span>
               ))}
             </div>
-            {/* Performance's own reading of the same range, quoted. The split
-                above is by-day and these are the summary endpoint's; naming
-                both is what keeps them from being read as one sum. */}
-            {strip.length > 0 ? (
-              <div className="flex flex-wrap gap-x-5 gap-y-1.5 border-t border-border/60 bg-background px-3 py-2">
-                {strip.map((m) => (
-                  <span key={m.label} className="inline-flex items-baseline gap-1.5" title={m.title}>
-                    <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                      {m.label}
-                    </span>
-                    <span
-                      className={cn(
-                        'font-mono text-dense-label tabular-nums',
-                        m.tone === 'pnl' ? pnlColorClass(m.raw ?? 0) : TONE_INK[m.tone] ?? '',
-                      )}
-                    >
-                      {m.value}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            {/* The open half, named rather than folded into the total: a
-                quarter's realised and its open marks are different claims, and
-                adding them would make this figure disagree with Performance. */}
-            <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-              The four cells are realised inside the range; the open figure beside Options is
-              unmatched premium as of today, not a sum over it. In the strip below them, Unrealized
-              is every open position now rather than this quarter's, and Net cash flow is money that
-              crossed the account boundary — shown to say it is not P&amp;L.{' '}
-              <Link to="/portfolio/performance" className="text-primary hover:underline">
-                Performance
-              </Link>{' '}
-              computes all of it and owns the basis behind each one.
-            </p>
-          </>
-        )}
-      </SectionPanel>
+          ) : null}
+        </>
+      )}
 
-      <SectionPanel
-        cap="Three areas"
-        title="Each owns its own numbers"
+      <SectionHead
         note="Research is the input · Trade is the process · Portfolio is the result"
+        meta={
+          <span className="flex items-baseline gap-2.5">
+            <Link
+              to="/review/fit"
+              title="How a play performs is Review’s question, not this layer’s"
+              className="text-dense-label text-primary no-underline hover:underline"
+            >
+              Review →
+            </Link>
+            <Link
+              to="/risk"
+              title="How much risk it may carry is Risk’s question"
+              className="text-dense-label text-primary no-underline hover:underline"
+            >
+              Risk →
+            </Link>
+          </span>
+        }
       >
+        Each area owns its own numbers
+      </SectionHead>
+      <section className="overflow-hidden border mat-card">
         {AREAS.map((a) => (
-          <div
-            key={a.cap}
-            className="flex flex-wrap items-baseline gap-3 border-b border-border/60 px-3 py-2.5"
-          >
-            <span className="w-24 flex-none text-dense-micro font-bold uppercase tracking-[0.12em]">
-              {a.cap}
-            </span>
-            <span className="min-w-0 flex-[1_1_260px] text-pretty text-dense-meta leading-relaxed text-muted-foreground">
+          <div key={a.cap} className="flex flex-wrap items-baseline gap-3 border-b px-3 py-2.5 last:border-b-0">
+            <span className="w-24 flex-none text-dense-body font-semibold text-foreground">{a.cap}</span>
+            <span className="min-w-0 flex-[1_1_260px] text-pretty text-dense-label leading-relaxed text-[var(--sk-mute2)]">
               {a.q}
             </span>
             <span className="flex flex-[1_1_320px] flex-wrap gap-1.5">
@@ -445,7 +470,7 @@ export default function PortfolioOverviewPage() {
                   key={to}
                   to={to}
                   title={tip}
-                  className="inline-flex h-6 items-center border px-2.5 text-dense-meta hover:text-foreground mat-btn"
+                  className="inline-flex h-[26px] items-center rounded-[var(--control-radius)] bg-[var(--control-fill)] px-2.5 text-dense-label text-[var(--sk-soft)] no-underline hover:bg-[var(--control-fill-hover)] hover:text-foreground"
                 >
                   {label}
                 </Link>
@@ -453,18 +478,7 @@ export default function PortfolioOverviewPage() {
             </span>
           </div>
         ))}
-        <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-          How a play performs is{' '}
-          <Link to="/review/fit" className="text-primary hover:underline">
-            Review
-          </Link>
-          's question, not this layer's; how much risk it may carry is{' '}
-          <Link to="/risk" className="text-primary hover:underline">
-            Risk
-          </Link>
-          's.
-        </p>
-      </SectionPanel>
+      </section>
     </PageShell>
   )
 }

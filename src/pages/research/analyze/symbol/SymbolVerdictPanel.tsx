@@ -106,7 +106,7 @@ export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string
           className="h-7 rounded-[5px] border border-border bg-background px-2 text-dense-meta text-foreground outline-none placeholder:text-muted-foreground/70"
         />
         <div className="flex flex-wrap items-center gap-1">
-          <span className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-dense-meta font-semibold text-muted-foreground">
             cites
           </span>
           {CITES.map((c) => (
@@ -161,7 +161,7 @@ export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string
               >
                 <span
                   className={cn(
-                    'font-mono text-dense-micro font-bold uppercase',
+                    'font-mono text-dense-meta font-bold',
                     st === 'support'
                       ? 'text-success'
                       : st === 'oppose'
@@ -193,7 +193,7 @@ export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string
                 .filter(Boolean)
                 .join(' · ')}
             >
-              <span className="font-mono text-dense-micro uppercase text-muted-foreground">
+              <span className="font-mono text-dense-meta text-muted-foreground">
                 {p.kind}
               </span>
               <span className="min-w-0 truncate text-dense-meta">{p.title ?? p.id ?? '—'}</span>

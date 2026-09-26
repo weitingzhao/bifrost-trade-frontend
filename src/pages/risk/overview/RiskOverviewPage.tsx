@@ -26,7 +26,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
-import { PageHead, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
+import { HeroCard, HeroRow, PageHead, PageShell, SectionHead } from '@/components/layout'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -92,23 +92,29 @@ const AREAS = [
 ] as const
 
 const TONE_INK = { over: 'text-destructive', near: 'text-warning', plain: '' } as const
-const TONE_BAR = { over: 'bg-destructive', near: 'bg-warning', plain: 'bg-foreground/55' } as const
+/** A row inside its line reads in the soft ink, not full (Rev .82). */
+const ROW_INK = { over: 'text-destructive', near: 'text-warning', plain: 'text-[var(--sk-soft)]' } as const
+const TONE_BAR = { over: 'bg-destructive', near: 'bg-warning', plain: 'bg-[var(--sk-soft)]' } as const
+
+/** The ways out of a hero: capsules, the tag material (Rev .82). */
+const CHIP =
+  'inline-flex h-[22px] items-center border px-2 text-dense-meta text-[var(--sk-soft)] no-underline mat-tag hover:text-foreground'
 
 /** The consumption bar. No number inside it — the % is its own column. */
 function SpentBar({ row }: { row: SpentLine }) {
   return (
-    <span className="relative block h-[5px] w-full min-w-16 rounded-sm bg-muted">
+    <span className="relative block h-1.5 w-full min-w-16 rounded bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
       {/* The track runs to 1.3x the line so a breach shows how far past it
           went. A bar that stops at the line makes "just over" and "a third
           over" the same picture. */}
       <span
-        className={cn('absolute inset-y-0 left-0 rounded-sm', TONE_BAR[lineTone(row.use)])}
+        className={cn('absolute inset-y-0 left-0 rounded', TONE_BAR[lineTone(row.use)])}
         style={{ width: `${Math.max(2, row.fill * 100)}%` }}
       />
       {/* The tick is the line itself. Everything right of it is over. */}
       <span
         aria-hidden
-        className="absolute -inset-y-[3px] w-px bg-border"
+        className="absolute -inset-y-[3px] w-px bg-[var(--sk-mute)]"
         style={{ left: `${(1 / RISK_BAR_CEILING) * 100}%` }}
       />
     </span>
@@ -153,6 +159,10 @@ export default function RiskOverviewPage() {
   const next = bindsNext(lines)
   const { noLine, noReading } = unranked(rows)
 
+  // The clear state is a reading too: 0 in the quiet ink, and what it does
+  // and does not promise (the design's hero, Rev .82).
+  const clearDesc = `No limit is over its cap under ${accountFilter === 'all' ? 'either account' : accountFilter}. Every constraint the book can read is inside its own limit; the ${noLine.length} rules nobody has written a number for are listed below — they cannot be crossed because they were never drawn.`
+
   return (
     <PageShell padding="compact" className="space-y-3">
       {/* §16.10 with §17 (Owner 2026-09-25: one pass per page): the lead is
@@ -186,132 +196,145 @@ export default function RiskOverviewPage() {
       ) : null}
 
       {bookState === 'loading' ? (
-        <div className="grid gap-3 lg:grid-cols-2">
-          <section className="overflow-hidden border mat-card">
+        <HeroRow basis={340}>
+          <section data-sr-kpi="hero">
             <ViewState kind="loading" title="Loading breaches" rows={3} cols={2} />
           </section>
-          <section className="overflow-hidden border mat-card">
+          <section data-sr-kpi="hero">
             <ViewState kind="loading" title="Loading the next binding limit" rows={3} cols={2} />
           </section>
-        </div>
+        </HeroRow>
       ) : null}
 
+      {/* §16.2: the two verdicts are the page's hero row. A severity tints the
+          frame only, never the fill. */}
       {noData ? null : (
-      <div className="grid gap-3 lg:grid-cols-2">
-        {/* Over the line — the count is the headline, because how many is the
-            first thing the reader wants and each one is a sentence, not a row. */}
-        <section
-          className={cn(
-            'overflow-hidden rounded-lg border bg-card',
-            tone === 'over' && 'border-destructive/40 bg-destructive/5',
-            tone === 'near' && 'border-warning/40 bg-warning/5',
-            tone == null && 'border-border',
-          )}
-        >
-          {breaches.length === 0 ? (
-            <ViewState
-              kind="empty"
-              title="Nothing is over the line"
-              detail={`Every constraint the book can read is inside its own limit. The ${noLine.length} rules nobody has written a number for are listed below — they cannot be crossed because they were never drawn.`}
-            />
-          ) : (
-            <div className="flex flex-col gap-2 px-3 py-2.5">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className={cn(SECTION_CAP_CLASS, TONE_INK[tone ?? 'plain'])}>
-                  Over the line
+        <HeroRow basis={340}>
+          <HeroCard
+            label="Over the line"
+            ariaLabel="Over the line"
+            state={tone === 'over' ? 'danger' : tone === 'near' ? 'warn' : null}
+            value={breaches.length}
+            valueClassName={tone == null ? 'text-muted-foreground' : TONE_INK[tone]}
+            aside={
+              breaches.length > 0 ? (
+                <span className="text-dense-label text-[var(--sk-soft)]">
+                  {breaches.length === 1 ? 'limit is over its cap right now' : 'limits are over their caps right now'}
                 </span>
-                <span data-sr-kpi-v="panel" className={TONE_INK[tone ?? 'plain']}>
-                  {breaches.length}
-                </span>
-                <span className="text-dense-label">
-                  {breaches.length === 1
-                    ? 'limit is over its cap right now'
-                    : 'limits are over their caps right now'}
-                </span>
+              ) : null
+            }
+          >
+            {breaches.length > 0 ? (
+              <div className="flex flex-col gap-1.5 pt-0.5">
+                {breaches.map((r) => {
+                  const owner = r.citedFrom ?? OWNER_FALLBACK
+                  return (
+                    <Link
+                      key={r.key}
+                      to={owner.to}
+                      title={`Open ${owner.label}`}
+                      className="grid min-w-0 grid-cols-[6px_minmax(0,1fr)_auto] items-baseline gap-2 text-foreground no-underline hover:text-foreground"
+                    >
+                      <span
+                        aria-hidden
+                        className={cn(
+                          '-translate-y-px size-1.5 rounded-full',
+                          r.kind === 'hard' ? 'bg-destructive' : 'bg-warning',
+                        )}
+                      />
+                      <span className="min-w-0">
+                        <span className="text-dense-body font-semibold">{r.name}</span>{' '}
+                        <span className="font-mono text-dense-label tabular-nums text-[var(--sk-mute2)]">
+                          {breachDetail(r)}
+                        </span>
+                      </span>
+                      <span aria-hidden className="text-dense-label text-primary">
+                        →
+                      </span>
+                    </Link>
+                  )
+                })}
               </div>
-              {breaches.map((r) => (
-                <Link
-                  key={r.key}
-                  to={(r.citedFrom ?? OWNER_FALLBACK).to}
-                  className="grid grid-cols-[6px_minmax(0,1fr)] items-baseline gap-2 hover:underline"
-                >
-                  <span
-                    aria-hidden
-                    className={cn(
-                      '-translate-y-px size-1.5 rounded-full',
-                      r.kind === 'hard' ? 'bg-destructive' : 'bg-warning',
-                    )}
-                  />
-                  <span className="min-w-0">
-                    <span className="text-dense-label font-semibold">{r.name}</span>{' '}
-                    <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">
-                      {breachDetail(r)}
-                    </span>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+            ) : (
+              <p className="text-dense-label leading-normal text-pretty text-[var(--sk-mute2)]">{clearDesc}</p>
+            )}
+          </HeroCard>
 
-        {/* Binds next — one line, and the two things you would do about it. */}
-        <section className="overflow-hidden border mat-card">
           {next == null ? (
-            <ViewState
-              kind="empty"
-              title="Nothing is holding"
-              detail={
-                lines.length === 0
-                  ? 'No constraint carries both a reading and a line yet, so none of them can be ranked.'
-                  : 'Every line with both halves is already crossed — the next thing to stop you is in the panel beside this one.'
-              }
-            />
+            <section data-sr-kpi="hero" aria-label="Binds next">
+              <ViewState
+                kind="empty"
+                title="Nothing is holding"
+                detail={
+                  lines.length === 0
+                    ? 'No constraint carries both a reading and a line yet, so none of them can be ranked.'
+                    : 'Every line with both halves is already crossed — the next thing to stop you is in the card beside this one.'
+                }
+              />
+            </section>
           ) : (
-            <div className="flex flex-col gap-2 px-3 py-2.5">
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className={SECTION_CAP_CLASS}>Binds next</span>
-                <span data-sr-kpi-v="panel" className="text-warning">
-                  {fmtPct0(next.use)}
-                </span>
-                <span className="text-dense-label font-semibold">{next.name}</span>
-                <DenseTag variant={KIND_VARIANT[next.kind]} size="cell">
-                  {next.kind}
-                </DenseTag>
-              </div>
-              <p className="text-dense-meta text-muted-foreground">
-                {fmtReading(next, next.current)} against {capLabel(next)} · on breach:{' '}
-                {next.onBreach}
+            <HeroCard
+              label="Binds next"
+              ariaLabel="Binds next"
+              value={fmtPct0(next.use)}
+              valueClassName="text-warning"
+              aside={
+                <>
+                  <span className="text-dense-body font-semibold">{next.name}</span>
+                  <DenseTag variant={KIND_VARIANT[next.kind]} size="cell">
+                    {next.kind}
+                  </DenseTag>
+                </>
+              }
+            >
+              <p className="text-dense-label leading-normal text-[var(--sk-mute2)]">
+                <span className="font-mono tabular-nums">{fmtReading(next, next.current)}</span> against{' '}
+                <span className="font-mono tabular-nums">{capLabel(next)}</span> · on breach: {next.onBreach}
               </p>
-              <div className="flex flex-wrap gap-1.5 pt-0.5">
-                <Link
-                  to="/risk/limits"
-                  className="inline-flex h-[22px] items-center border px-2 text-dense-meta hover:text-foreground mat-btn"
-                >
+              <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
+                <Link to="/risk/limits" className={CHIP}>
                   Limits &amp; Breaches →
                 </Link>
-                <Link
-                  to="/risk/sizing"
-                  className="inline-flex h-[22px] items-center border px-2 text-dense-meta hover:text-foreground mat-btn"
-                >
+                <Link to="/risk/sizing" className={CHIP}>
                   Size the next one →
                 </Link>
               </div>
-            </div>
+            </HeroCard>
           )}
-        </section>
-      </div>
+        </HeroRow>
       )}
 
-      <SectionPanel
-        cap="Headroom"
-        title="Every constraint on one scale · most consumed first"
-        note={`${lines.length} limits · hard blocks, soft asks, a gate is the daemon's own`}
-        action={
-          <Link to="/risk/limits" className="text-primary hover:underline">
-            the book →
-          </Link>
+      {/* §16.4: the section is an h2 with its explanation in the title — the
+          footnote that used to close the table (one limit model, the tick is
+          the cap, this page only sorts) is in the h2's and the columns'
+          titles now, not a sentence of it lost. */}
+      <SectionHead
+        note="Every constraint on one scale · most consumed first. Hard blocks, soft asks, a gate is the daemon's own. The book is computed once, in Limits — this page only sorts it."
+        meta={
+          <span className="flex items-baseline gap-2.5">
+            <span className="font-mono tabular-nums">
+              {bookState === 'loading' || bookState === 'failed' ? '—' : lines.length} limits
+            </span>
+            <Link
+              to="/trade/rules"
+              title="Trade › Rules — where limits and gates are defined"
+              className="text-dense-label text-primary no-underline hover:underline"
+            >
+              Rules →
+            </Link>
+            <Link
+              to="/risk/limits"
+              title="Limits & Breaches — the whole book"
+              className="text-dense-label text-primary no-underline hover:underline"
+            >
+              The book →
+            </Link>
+          </span>
         }
       >
+        Headroom
+      </SectionHead>
+      <section className="overflow-hidden border mat-card">
         {/* A model failure is narrower news than a book failure: it only
             leaves the greek lines unranked, so it is a strip over the table,
             not a block in place of it (§17.1-1). */}
@@ -357,9 +380,21 @@ export default function RiskOverviewPage() {
                 <DenseTableHead col="entity">Limit</DenseTableHead>
                 <DenseTableHead col="num" className="w-20">Now</DenseTableHead>
                 <DenseTableHead col="num" className="w-24">Cap</DenseTableHead>
-                <DenseTableHead col="tag" className="w-[22%]">Consumed</DenseTableHead>
+                <DenseTableHead
+                  col="tag"
+                  className="w-[22%]"
+                  title="The tick on each bar is the cap; the scale runs past it so an over-the-line row shows how far over."
+                >
+                  Consumed
+                </DenseTableHead>
                 <DenseTableHead col="num" className="w-14">%</DenseTableHead>
-                <DenseTableHead col="tag" className="w-16">Kind</DenseTableHead>
+                <DenseTableHead
+                  col="tag"
+                  className="w-16"
+                  title="One limit model: a gate is a limit at scope = allocation, defined in Trade › Rules and enforced by the daemon before the action happens."
+                >
+                  Kind
+                </DenseTableHead>
               </DenseTableHeadRow>
             </DenseTableHeader>
             <DenseTableBody>
@@ -381,21 +416,21 @@ export default function RiskOverviewPage() {
                       />
                     </DenseTableCell>
                     <DenseTableCell col="entity">
-                      <span className="block text-dense-label">{r.name}</span>
-                      <span className="block font-mono text-dense-caption text-muted-foreground">
+                      <span className="block text-dense-body">{r.name}</span>
+                      <span className="block text-dense-meta text-muted-foreground">
                         {r.group} · {r.scope}
                       </span>
                     </DenseTableCell>
-                    <DenseTableCell col="num" className={TONE_INK[t]}>
+                    <DenseTableCell col="num" className={cn('text-dense-body', ROW_INK[t])}>
                       {fmtReading(r, r.current)}
                     </DenseTableCell>
-                    <DenseTableCell col="num" className="text-muted-foreground">
+                    <DenseTableCell col="num" className="text-dense-label text-[var(--sk-mute2)]">
                       {capLabel(r)}
                     </DenseTableCell>
                     <DenseTableCell col="tag">
                       <SpentBar row={r} />
                     </DenseTableCell>
-                    <DenseTableCell col="num" className={TONE_INK[t]}>
+                    <DenseTableCell col="num" className={cn('text-dense-label', ROW_INK[t])}>
                       {fmtPct0(r.use)}
                     </DenseTableCell>
                     <DenseTableCell col="tag">
@@ -409,88 +444,74 @@ export default function RiskOverviewPage() {
             </DenseTableBody>
           </DenseDataTable>
         )}
-        <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-          One limit model: a <span className="font-mono">gate</span> is a limit at{' '}
-          <span className="font-mono">scope = allocation</span>, defined in{' '}
-          <Link to="/trade/rules" className="text-primary hover:underline">
-            Trade › Rules
-          </Link>{' '}
-          and enforced by the daemon before the action happens. The book is computed once, in{' '}
-          <Link to="/risk/limits" className="text-primary hover:underline">
-            Limits
-          </Link>{' '}
-          — this page only sorts it. The tick on each bar is the cap; the scale runs past it so an
-          over-the-line row shows how far over.
-        </p>
-      </SectionPanel>
+      </section>
 
       {/* The honest half of "every constraint": the ones that could not be
           ranked, and which half each is missing. A page that claims a complete
           ordering has to say what it left out of it. It sits here, under the
-          table it qualifies, rather than at the foot of the page. */}
+          table it qualifies, rather than at the foot of the page. Not in the
+          prototype; kept (§16.0), in the page's own section grammar. */}
       {noData ? null : (
-      <SectionPanel
-        cap="Not on the ruler"
-        title="What could not be ranked"
-        note={`${noLine.length + noReading.length} of ${rows.length}`}
-      >
-        <div className="space-y-2 px-3 py-2 text-dense-meta">
-          <p className="max-w-[78ch] text-muted-foreground">
-            A rule with no line cannot be spent and a rule with no reading cannot be measured.
-            Neither is the same as being inside its limit, so neither sits in the table above.
-          </p>
-          {/* Each name opens the page that owns it. A rule that cannot be
-              ranked here is still a rule you can go and look at, and thirteen
-              of them as flat text was thirteen dead ends. */}
-          {noLine.length > 0 ? (
-            <p className="flex flex-wrap items-baseline gap-x-1.5">
-              <span className="text-foreground/80">No line written</span>
-              <span className="text-muted-foreground">({noLine.length}) —</span>
-              {noLine.map((r, i) => (
-                <span key={r.key} className="text-muted-foreground">
-                  <UnrankedName row={r} />
-                  {i < noLine.length - 1 ? ' ·' : ''}
-                </span>
-              ))}
+        <>
+          <SectionHead meta={`${noLine.length + noReading.length} of ${rows.length}`}>
+            What could not be ranked
+          </SectionHead>
+          <section className="space-y-2 border px-3 py-2.5 text-dense-meta mat-card">
+            {/* Stays on screen (§16.3): an unmeasured rule is not a safe one. */}
+            <p className="max-w-[78ch] text-muted-foreground">
+              A rule with no line cannot be spent and a rule with no reading cannot be measured.
+              Neither is the same as being inside its limit, so neither sits in the table above.
             </p>
-          ) : null}
-          {noReading.length > 0 ? (
-            <p className="flex flex-wrap items-baseline gap-x-1.5">
-              <span className="text-foreground/80">Nothing to read</span>
-              <span className="text-muted-foreground">({noReading.length}) —</span>
-              {noReading.map((r, i) => (
-                <span key={r.key} className="text-muted-foreground">
-                  <UnrankedName row={r} /> ({r.noReading ?? 'no reading'})
-                  {i < noReading.length - 1 ? ' ·' : ''}
-                </span>
-              ))}
-            </p>
-          ) : null}
-        </div>
-      </SectionPanel>
+            {/* Each name opens the page that owns it. A rule that cannot be
+                ranked here is still a rule you can go and look at, and thirteen
+                of them as flat text was thirteen dead ends. */}
+            {noLine.length > 0 ? (
+              <p className="flex flex-wrap items-baseline gap-x-1.5">
+                <span className="text-foreground/80">No line written</span>
+                <span className="text-muted-foreground">({noLine.length}) —</span>
+                {noLine.map((r, i) => (
+                  <span key={r.key} className="text-muted-foreground">
+                    <UnrankedName row={r} />
+                    {i < noLine.length - 1 ? ' ·' : ''}
+                  </span>
+                ))}
+              </p>
+            ) : null}
+            {noReading.length > 0 ? (
+              <p className="flex flex-wrap items-baseline gap-x-1.5">
+                <span className="text-foreground/80">Nothing to read</span>
+                <span className="text-muted-foreground">({noReading.length}) —</span>
+                {noReading.map((r, i) => (
+                  <span key={r.key} className="text-muted-foreground">
+                    <UnrankedName row={r} /> ({r.noReading ?? 'no reading'})
+                    {i < noReading.length - 1 ? ' ·' : ''}
+                  </span>
+                ))}
+              </p>
+            ) : null}
+          </section>
+        </>
       )}
 
-      <SectionPanel
-        cap="The six"
-        title="In the order a trade meets them"
-        note="Risk reads the market and the account at once — which is why it hangs off neither Research nor Trade"
-      >
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,176px),1fr))]">
-          {AREAS.map(([n, name, to, q]) => (
-            <Link
-              key={to}
-              to={to}
-              className="flex min-w-0 flex-col gap-0.5 border-r border-border/60 px-3 py-2.5 last:border-r-0 hover:bg-secondary/40"
-            >
-              <span className="flex items-baseline gap-1.5">
-                <span className="font-mono text-dense-micro text-muted-foreground">{n}</span>
-                <span className="text-dense-label font-semibold">{name}</span>
-              </span>
-              <span className="text-dense-meta text-muted-foreground">{q}</span>
-            </Link>
-          ))}
-        </div>
-      </SectionPanel>
+      <SectionHead note="Risk reads the market and the account at once — which is why it hangs off neither Research nor Trade">
+        In the order a trade meets them
+      </SectionHead>
+      <nav aria-label="Risk pages" className="flex flex-wrap items-stretch gap-2">
+        {AREAS.map(([n, name, to, q]) => (
+          <Link
+            key={to}
+            to={to}
+            title={`${name} — ${q}`}
+            className="flex min-w-0 flex-[1_1_170px] flex-col gap-1 rounded-[var(--card-radius)] border border-transparent bg-[var(--card-fill)] px-3 py-2.5 text-foreground no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] hover:text-foreground motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          >
+            <span className="flex items-baseline gap-2">
+              <span className="font-mono text-dense-caption text-muted-foreground">{n}</span>
+              <span className="text-dense-body font-semibold">{name}</span>
+            </span>
+            <span className="text-dense-label text-[var(--sk-mute2)]">{q}</span>
+          </Link>
+        ))}
+      </nav>
     </PageShell>
   )
 }

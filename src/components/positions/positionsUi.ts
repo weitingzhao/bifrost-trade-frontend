@@ -46,7 +46,8 @@ export const positionsUi = {
   panelTitle: 'text-dense-body font-semibold leading-normal text-foreground',
   panelNote: 'text-dense-meta leading-normal text-muted-foreground',
 
-  cap: 'whitespace-nowrap text-dense-caption font-semibold uppercase leading-normal tracking-[0.1em] text-muted-foreground',
+  /** 11/600 sentence case, like every small label since design Rev .85–.92. */
+  cap: 'whitespace-nowrap text-dense-meta font-semibold leading-normal text-muted-foreground',
   mono: 'font-mono tabular-nums',
   link: 'cursor-pointer whitespace-nowrap border-0 bg-transparent p-0 text-dense-meta leading-normal text-primary hover:underline',
   btn: cn(

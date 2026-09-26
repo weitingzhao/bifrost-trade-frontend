@@ -20,7 +20,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -136,7 +136,17 @@ export default function TradeDeskPage() {
     [status.data?.portfolio.accounts, acct, hostId, secondaryId],
   )
 
+  // The design's order (Rev .82): what needs you leads, as a count; the three
+  // readings in words follow at the panel step.
   const cells: StripCell[] = [
+    {
+      label: 'Needs you',
+      value: String(need.n),
+      note: need.note,
+      lamp: need.n === 0 ? 'green' : 'yellow',
+      flex: 'flex-[0_1_220px]',
+      ink: need.n === 0 ? 'text-muted-foreground' : 'text-warning',
+    },
     {
       label: 'Session',
       value: '—',
@@ -155,6 +165,8 @@ export default function TradeDeskPage() {
       ),
       lamp: 'gray',
       marker: 'no market clock',
+      flex: 'flex-[1_1_200px]',
+      words: true,
     },
     {
       label: 'Daemon · allocation',
@@ -164,6 +176,8 @@ export default function TradeDeskPage() {
       } · ${active.unread ? 'instances unread' : `${active.open} instance${active.open === 1 ? '' : 's'} open`}`,
       lamp: !hedge.alive ? 'gray' : active.alloc == null ? 'yellow' : 'green',
       slot: <HedgeMenu status={status.data} onChanged={() => void status.refetch()} />,
+      flex: 'flex-[1_1_260px]',
+      words: true,
     },
     {
       label: 'Pressure now → if all fill',
@@ -180,12 +194,8 @@ export default function TradeDeskPage() {
         'Excess liquidity against net liquidation, per account, as the broker reports it. What the intents would add is not taken — no plan field carries an intent’s collateral.',
       lamp: margin.tightest?.pressure == null ? 'gray' : margin.tightest.pressure > 0.5 ? 'yellow' : 'green',
       marker: 'if all fill not computed',
-    },
-    {
-      label: 'Needs you',
-      value: `${need.n} item${need.n === 1 ? '' : 's'}`,
-      note: need.note,
-      lamp: need.n === 0 ? 'green' : 'yellow',
+      flex: 'flex-[1_1_260px]',
+      words: true,
     },
   ]
 
@@ -218,23 +228,21 @@ export default function TradeDeskPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
+      <PageHead
         title="Trade Desk"
-        description="The process between Research and the book: what was handed to you, what is out for a fill, what settled. Every item ends in a plan, a fill, or a dismissal. Orders are worked in TWS — the desk copies."
+        info="The process between Research and the book: what was handed to you, what is out for a fill, what settled. Every item ends in a plan, a fill, or a dismissal. Orders are worked in TWS — the desk copies."
         actions={
-          <span className="flex flex-wrap items-center gap-2">
+          <>
             {copied ? (
               <DenseTag variant="success" size="cell">
                 payload copied
               </DenseTag>
             ) : null}
-            <Link to="/trade/plans" className={cn(positionsUi.btn, 'no-underline')}>
-              All plans →
-            </Link>
-            <Link to="/trade/plans?new=1" className={cn(positionsUi.btn, 'no-underline border-primary text-primary')}>
+            <PageHeadLink to="/trade/plans">All plans →</PageHeadLink>
+            <PageHeadLink to="/trade/plans?new=1" primary>
               ＋ Plan a trade
-            </Link>
-          </span>
+            </PageHeadLink>
+          </>
         }
       />
 
@@ -260,7 +268,8 @@ export default function TradeDeskPage() {
             </p>
           ) : null}
 
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,21.25rem),1fr))] items-start gap-3">
+          {/* §16.5: lanes share the row and grow from 340, never an auto-fit grid. */}
+          <div className="flex flex-wrap items-stretch gap-3">
             {lanes.map((lane) => (
               <DeskLaneList key={lane.key} lane={lane} onAction={runAction} />
             ))}
@@ -268,9 +277,11 @@ export default function TradeDeskPage() {
 
           <section className={positionsUi.panel} aria-label="Rules in force">
             <header className={positionsUi.panelHead}>
-              <span className={positionsUi.panelTitle}>Rules in force</span>
-              <span className={positionsUi.panelNote}>
-                what the daemon is running and what it may do — every plan above is checked against these
+              <span
+                className={positionsUi.panelTitle}
+                title="What the daemon is running and what it is allowed to do — every plan above is checked against these"
+              >
+                Rules in force
               </span>
               <Link to="/trade/rules" className={cn(positionsUi.link, 'ml-auto')}>
                 Open the chain →

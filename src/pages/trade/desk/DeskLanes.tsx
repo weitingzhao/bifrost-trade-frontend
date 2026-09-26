@@ -29,41 +29,55 @@ export interface StripCell {
   lamp: 'green' | 'yellow' | 'red' | 'gray'
   /** Marked rather than dropped: the reading does not exist on this side. */
   marker?: string
-  /** The hedge menu, on the cell the design puts it on. */
+  /** The hedge menu, on the card the design puts it on. */
   slot?: ReactNode
+  /** The card's basis in the row, as a class (the design's per-card flex). */
+  flex: string
+  /** A reading in words reads at the panel step, 20px; a count at 30. */
+  words?: boolean
+  /** The reading's ink. */
+  ink?: string
 }
 
+/**
+ * The desk's four readings as the hero row (§16.2, Rev .82): each a card on
+ * the card material with its lamp beside the label. The hedge menu rides the
+ * daemon's card, at its right, as the design places it.
+ */
 export function DeskStrip({ cells }: { cells: StripCell[] }) {
   return (
-    <div className="flex flex-wrap items-stretch overflow-visible border mat-card">
+    <div className="flex flex-wrap items-stretch gap-2.5" role="group" aria-label="Desk readings">
       {cells.map((c) => (
         <div
           key={c.label}
-          className="relative flex min-w-0 flex-[1_1_13.75rem] flex-wrap items-start gap-x-2.5 gap-y-1.5 border-r border-border/60 px-3 py-2.25 last:border-r-0"
+          data-sr-kpi="hero"
+          className={cn('relative', c.flex)}
+          // A row, not the pattern's column: the reading on the left, the
+          // hedge control on the right when the card carries it.
+          style={{ flexDirection: 'row', flexWrap: 'wrap', gap: '6px 10px', alignItems: 'flex-start' }}
         >
-          <span className="flex-none pt-1">
-            <StatusLamp lamp={c.lamp} variant="dot" />
-          </span>
-          <span className="flex min-w-0 flex-[1_1_10rem] flex-col">
-            <span className={positionsUi.cap}>{c.label}</span>
+          <div className="flex min-w-0 flex-[1_1_160px] flex-col gap-1">
+            <span className="flex items-center gap-1.5">
+              <StatusLamp lamp={c.lamp} variant="dot" />
+              <span data-sr-kpi-l="" className="text-[var(--sk-soft)]">
+                {c.label}
+              </span>
+            </span>
             <span
-              className={cn(
-                positionsUi.mono,
-                'mt-0.5 truncate text-base font-semibold leading-tight',
-                c.marker ? 'text-muted-foreground' : 'text-foreground',
-              )}
+              data-sr-kpi-v={c.words ? 'panel' : ''}
+              className={cn('truncate', c.marker ? 'text-muted-foreground' : c.ink ?? 'text-foreground')}
             >
               {c.value}
             </span>
-            <span className="mt-px text-dense-meta leading-normal text-muted-foreground text-pretty">{c.note}</span>
+            <span data-sr-kpi-s="">{c.note}</span>
             {c.marker ? (
-              <span className="mt-1 flex">
+              <span className="mt-0.5 flex">
                 <DenseTag variant="warning" size="cell">
                   {c.marker}
                 </DenseTag>
               </span>
             ) : null}
-          </span>
+          </div>
           {c.slot ? <span className="ml-auto flex-none self-start">{c.slot}</span> : null}
         </div>
       ))}
@@ -102,13 +116,11 @@ export function DeskLaneList({
   onAction: (item: DeskItem, index: number) => void
 }) {
   return (
-    <section className={cn(positionsUi.panel, 'min-w-0')} aria-label={lane.title}>
+    <section className={cn(positionsUi.panel, 'min-w-0 flex-[1_1_340px]')} aria-label={lane.title}>
       <header className={positionsUi.panelHead}>
-        <span className="text-dense-caption font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          {lane.step}
-        </span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">{lane.step}</span>
         <span className={positionsUi.panelTitle}>{lane.title}</span>
-        <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{lane.items.length}</span>
+        <span className={cn(positionsUi.mono, 'text-dense-label text-muted-foreground')}>{lane.items.length}</span>
         <span className="ml-auto whitespace-nowrap text-dense-meta text-muted-foreground">{lane.from}</span>
       </header>
       {lane.items.length === 0 ? (
@@ -119,7 +131,7 @@ export function DeskLaneList({
       ) : (
         <ul className="m-0 flex list-none flex-col p-0">
           {lane.items.map((it) => (
-            <li key={it.key} className="flex gap-2 border-b border-border/55 px-3 py-2 last:border-b-0">
+            <li key={it.key} className="flex gap-2.5 border-b px-3 py-2 last:border-b-0">
               <span className={cn('mt-1.5 h-2 w-2 flex-none rounded-full', DOT[it.tone])} aria-hidden />
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 items-baseline gap-2">
@@ -146,14 +158,14 @@ export function DeskLaneList({
                       {it.symbol}
                     </span>
                   )}
-                  <span className="min-w-0 flex-1 truncate text-dense-body leading-normal text-secondary-foreground">
+                  <span className="min-w-0 flex-1 truncate text-dense-body leading-[1.35] text-foreground">
                     {it.title}
                   </span>
                   <span className={cn(positionsUi.mono, 'ml-auto flex-none text-dense-meta text-muted-foreground')}>
                     {it.when}
                   </span>
                 </div>
-                <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">{it.sub}</p>
+                <p className="m-0 mt-0.5 text-dense-label leading-[1.4] text-[var(--sk-mute2)] text-pretty">{it.sub}</p>
                 <ItemActions item={it} onAction={onAction} />
               </div>
             </li>

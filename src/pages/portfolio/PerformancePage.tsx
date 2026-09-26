@@ -11,22 +11,22 @@ import { sumStkPositionMarketValueForBucket } from '@/utils/ledger/stkBuckets'
 import { buildEquityGrowthChart, DEFAULT_LAYERS_VISIBLE, type GrowthLayer, type OptionsPnLMode } from '@/utils/ledger/equityGrowthChart'
 import { buildFiBarChart } from '@/utils/ledger/fiBarChart'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { PageHeader, PageShell } from '@/components/layout'
+import { HeroCard, HeroRow, PageHead, PageShell, SectionHead } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { AsofTag } from '@/components/AsofTag'
 import { EquityGrowthCard } from '@/pages/portfolio/performance/components/EquityGrowthCard'
 import MonthlyPnLTable from '@/pages/portfolio/performance/components/MonthlyPnLTable'
 import OptionsModeBridgePanel from '@/pages/portfolio/performance/components/OptionsModeBridgePanel'
 import { buildPositionCategoryByAccountContract, serializePositionCategoryKey } from '@/utils/ledger/stkBuckets'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { PerformanceFilterBar } from '@/pages/portfolio/performance/PerformanceFilterBar'
 import { PerformanceCalendarSection } from '@/pages/portfolio/performance/PerformanceCalendarSection'
 import { PerformanceOnTheFlySection } from '@/pages/portfolio/performance/PerformanceOnTheFlySection'
-import { PerformanceTier } from '@/pages/portfolio/performance/PerformanceTier'
 import { PerformanceLayerChips, type LayerChipValues } from '@/pages/portfolio/performance/PerformanceLayerChips'
 import { PerformanceReadingPanel } from '@/pages/portfolio/performance/PerformanceReadingPanel'
 import { PerformanceReturnBasis } from '@/pages/portfolio/performance/PerformanceReturnBasis'
 import { buildReadingMetrics, buildScopeNote } from '@/utils/performanceReading'
-import { perfUi } from '@/pages/portfolio/performance/performanceUi'
+import { readingToneClass, splitReading } from '@/utils/performanceHeroes'
 import {
   PERFORMANCE_TREES,
   dayCellDerivation,
@@ -37,7 +37,6 @@ import {
 } from '@/pages/portfolio/performance/performanceDerivations'
 import { DerivationBlock } from '@/components/positions/DerivationBlock'
 import { buildOptionsModeBridgeSummary } from '@/utils/ledger/optionsModeBridge'
-import { cn } from '@/lib/utils'
 import {
   buildCalendarGrid,
   buildDayMapFromApi,
@@ -268,158 +267,178 @@ export default function PerformancePage() {
 
   const filtersLoading = perfQuery.isLoading || bulkQuery.isLoading
 
+  // §17.1: the performance read is the page's critical source. A failed read
+  // with nothing to show is one failure; a failed refresh is a strip over the
+  // last copy. The sections below that read the daily bulk keep their own states.
+  const view = sourceState(perfQuery)
+  const retry = () => void perfQuery.refetch()
+  const { heroes, strip } = splitReading(readingMetrics, RANGE_WORD[timeRange])
+
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={perfUi.pageCard} aria-label="Performance">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Performance</p>}
-          title={
-            <span className="inline-flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-              Performance
-              {/* Grey, and it will stay grey until something reports a session. The page's own
-                  `optAsOf.asOfDateStr` is `chicagoTodayDateStr()` — the browser's clock, not a
-                  reading — and printing a clock as a session is the mistake this badge exists
-                  to prevent. Accounts is where the book's freshness is actually judged. */}
-              <AsofTag asof={null} judgedBy="Account Sync" href="/portfolio/accounts" />
-            </span>
-          }
-          titleSize="large"
-          description={PAGE_LEAD}
-          actions={
-            <span className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Derivations">
-              <span className={perfUi.cap}>Derivations</span>
-              {PERFORMANCE_TREES.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  aria-pressed={tree === t.id}
-                  onClick={() => setTree((cur) => (cur === t.id ? null : t.id))}
-                  className={cn(
-                    'inline-flex h-5.5 cursor-pointer items-center whitespace-nowrap rounded-sm border bg-transparent px-1.75 text-dense-meta',
-                    tree === t.id
-                      ? 'border-primary text-primary'
-                      : 'border-border text-foreground/80 hover:bg-secondary hover:text-foreground',
-                  )}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </span>
-          }
-        />
+      <PageHead
+        title="Performance"
+        info={PAGE_LEAD}
+        // Grey, and it will stay grey until something reports a session. The
+        // page's own `optAsOf.asOfDateStr` is `chicagoTodayDateStr()` — the
+        // browser's clock, not a reading — and printing a clock as a session
+        // is the mistake this badge exists to prevent. Accounts is where the
+        // book's freshness is actually judged.
+        stamp={<AsofTag asof={null} judgedBy="Account Sync" href="/portfolio/accounts" />}
+      />
 
-        {perfQuery.isError && (
-          <QueryErrorAlert
-            error={perfQuery.error}
-            onRetry={() => void perfQuery.refetch()}
+      {/* One toolbar, above the data (§17.3, Rev .82): the range and scope, and
+          the four derivations after the rule — so they stay while it loads. */}
+      <PerformanceFilterBar
+        timeRange={timeRange}
+        onTimeRange={setTimeRange}
+        sinceStr={sinceStr}
+        untilStr={untilStr}
+        selectedOppId={selectedOppId}
+        selectedInstId={selectedInstId}
+        onOppChange={handleOppChange}
+        onInstChange={handleInstChange}
+        oppQuery={oppQuery}
+        instQuery={instQuery}
+        scopeNote={scopeNote}
+        isLoading={filtersLoading}
+        trees={PERFORMANCE_TREES}
+        openTree={tree}
+        onTree={(id) => setTree((cur) => (cur === id ? null : (id as PerformanceTree)))}
+      />
+
+      {view === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh performance history"
+          detail={staleDetail(perfQuery, 'today’s P&L may be incomplete.')}
+          onAction={retry}
+        />
+      ) : null}
+      {view === 'loading' ? (
+        <section className="overflow-hidden border mat-card">
+          <ViewState kind="loading" title="Loading performance history" rows={8} cols={6} />
+        </section>
+      ) : null}
+      {view === 'failed' ? (
+        <section className="overflow-hidden border mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load performance history"
+            detail={failedDetail(perfQuery, 'Returns were not computed — a blank chart here is not a flat period.')}
+            onAction={retry}
           />
-        )}
+        </section>
+      ) : null}
 
-        <PerformanceFilterBar
-          timeRange={timeRange}
-          onTimeRange={setTimeRange}
-          sinceStr={sinceStr}
-          untilStr={untilStr}
-          selectedOppId={selectedOppId}
-          selectedInstId={selectedInstId}
-          onOppChange={handleOppChange}
-          onInstChange={handleInstChange}
-          oppQuery={oppQuery}
-          instQuery={instQuery}
-          scopeNote={scopeNote}
-          isLoading={filtersLoading}
-        />
+      {/* §16.2: the Profitability group is the hero row; the strip below keeps
+          Consistency and Risk only, so nothing is printed twice. */}
+      {heroes.length > 0 ? (
+        <HeroRow label="Profitability">
+          {heroes.map((h) => (
+            <HeroCard
+              key={h.label}
+              label={h.label}
+              value={h.value}
+              valueClassName={readingToneClass(h.tone, h.raw)}
+              sub={h.sub}
+              title={h.title}
+            />
+          ))}
+        </HeroRow>
+      ) : null}
 
-        <PerformanceTier
-          label="Reading"
-          note="each chip carries what the layer made and switches that layer on the curve below"
-        />
-        <PerformanceLayerChips
-          values={chipValues}
+      <SectionHead
+        note="Each card carries realized and unrealized, and switches its layer on the curve below"
+        meta={RANGE_WORD[timeRange]}
+      >
+        By layer
+      </SectionHead>
+      <PerformanceLayerChips
+        values={chipValues}
+        layersVisible={growthLayersVisible}
+        onLayerToggle={handleLayerToggle}
+        optionsPnLMode={optionsPnLMode}
+        netCashFlow={perf?.transaction?.net_cash_flow ?? null}
+      />
+      {derivation && (
+        <div id="performance-derivation">
+          <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" />
+        </div>
+      )}
+      {view === 'loading' || view === 'failed' ? null : (
+        <>
+          <PerformanceReadingPanel rangeLabel={RANGE_WORD[timeRange]} metrics={strip} />
+          <PerformanceReturnBasis perf={perf} rangeEndsToday={rangeEndsToday} />
+        </>
+      )}
+
+      <SectionHead note="How it got here">Shape</SectionHead>
+      <div className="flex flex-col gap-3.5">
+        <EquityGrowthCard
+          chartData={equityGrowthChart}
+          fiBarData={fiBarData}
+          growthUnit={growthUnit}
+          onGrowthUnitChange={setGrowthUnit}
           layersVisible={growthLayersVisible}
           onLayerToggle={handleLayerToggle}
           optionsPnLMode={optionsPnLMode}
-          netCashFlow={perf?.transaction?.net_cash_flow ?? null}
-        />
-        {derivation && (
-          <div id="performance-derivation">
-            <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" />
-          </div>
-        )}
-        <PerformanceReadingPanel rangeLabel={RANGE_WORD[timeRange]} metrics={readingMetrics} />
-        <PerformanceReturnBasis perf={perf} rangeEndsToday={rangeEndsToday} />
-
-        <PerformanceTier
-          label="Shape"
-          note="how it got here · the switches on the curve reach the curve only"
-        />
-        <div className="flex flex-col gap-3.5">
-          <EquityGrowthCard
-            chartData={equityGrowthChart}
-            fiBarData={fiBarData}
-            growthUnit={growthUnit}
-            onGrowthUnitChange={setGrowthUnit}
-            layersVisible={growthLayersVisible}
-            onLayerToggle={handleLayerToggle}
-            optionsPnLMode={optionsPnLMode}
-            onOptionsPnLModeChange={setOptionsPnLMode}
-          />
-
-          <OptionsModeBridgePanel
-            byDayRangeData={bulk?.byDayRangeData ?? null}
-            openUnrealized={bulk?.optAsOf?.openUnrealized ?? 0}
-            sameDayRolls={bulk?.sameDayRolls ?? []}
-            asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
-            optionsPnLMode={optionsPnLMode}
-          />
-        </div>
-
-        <PerformanceCalendarSection
-          calendarMonth={calendarMonth}
-          calendarAssetTab={calendarAssetTab}
-          onCalendarAssetTab={setCalendarAssetTab}
-          onShiftMonth={shiftMonth}
-          calendarGrid={calendarGrid}
-          selectedDay={selectedDay}
-          onSelectedDay={setSelectedDay}
-          summary={summary}
-          perf={perf}
-          bulk={bulk}
-          isLoading={filtersLoading}
-          positionCategoryByAccountContract={positionCategoryByAccountContract}
-          rightTab={dayPanel}
-          onRightTab={setDayPanel}
-          slotRef={daySlotRef}
-          rangeStart={sinceStr}
-          rangeLabel={RANGE_WORD[timeRange]}
-          onExplainCell={() => explain('calendar')}
+          onOptionsPnLModeChange={setOptionsPnLMode}
         />
 
-        <PerformanceTier
-          label="Audit"
-          note="above looks at trend — below reconciles. Month rows open into days; a day opens its records beside the calendar, in the Summary slot."
-        />
-        <MonthlyPnLTable
+        <OptionsModeBridgePanel
           byDayRangeData={bulk?.byDayRangeData ?? null}
-          optOpenByOpenMonth={bulk?.byDayRangeData?.optOpenByOpenMonth ?? null}
-          optOpenLegs={bulk?.optOpenLegs ?? null}
+          openUnrealized={bulk?.optAsOf?.openUnrealized ?? 0}
+          sameDayRolls={bulk?.sameDayRolls ?? []}
           asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
-          isLoading={bulkQuery.isLoading}
-          isError={bulkQuery.isError}
-          onRetry={() => void bulkQuery.refetch()}
-          onOpenDay={openDayFromAudit}
-          selectedDay={dayPanel === 'records' ? selectedDay : null}
-          onGlossary={() => explain('calendar')}
+          optionsPnLMode={optionsPnLMode}
         />
+      </div>
 
-        <PerformanceOnTheFlySection
-          timeRange={timeRange}
-          calendarMonth={calendarMonth}
-          strategyOpportunityId={selectedOppId}
-          strategyInstanceId={selectedInstId}
-          onExplain={() => explain('otf')}
-        />
-      </section>
+      <PerformanceCalendarSection
+        calendarMonth={calendarMonth}
+        calendarAssetTab={calendarAssetTab}
+        onCalendarAssetTab={setCalendarAssetTab}
+        onShiftMonth={shiftMonth}
+        calendarGrid={calendarGrid}
+        selectedDay={selectedDay}
+        onSelectedDay={setSelectedDay}
+        summary={summary}
+        perf={perf}
+        bulk={bulk}
+        isLoading={filtersLoading}
+        positionCategoryByAccountContract={positionCategoryByAccountContract}
+        rightTab={dayPanel}
+        onRightTab={setDayPanel}
+        slotRef={daySlotRef}
+        rangeStart={sinceStr}
+        rangeLabel={RANGE_WORD[timeRange]}
+        onExplainCell={() => explain('calendar')}
+      />
+
+      <SectionHead note="Above looks at trend — below reconciles. Month rows open into days; a day opens its records beside the calendar, in the Summary slot.">
+        Audit
+      </SectionHead>
+      <MonthlyPnLTable
+        byDayRangeData={bulk?.byDayRangeData ?? null}
+        optOpenByOpenMonth={bulk?.byDayRangeData?.optOpenByOpenMonth ?? null}
+        optOpenLegs={bulk?.optOpenLegs ?? null}
+        asOfDateStr={bulk?.optAsOf?.asOfDateStr ?? null}
+        isLoading={bulkQuery.isLoading}
+        isError={bulkQuery.isError}
+        onRetry={() => void bulkQuery.refetch()}
+        onOpenDay={openDayFromAudit}
+        selectedDay={dayPanel === 'records' ? selectedDay : null}
+        onGlossary={() => explain('calendar')}
+      />
+
+      <PerformanceOnTheFlySection
+        timeRange={timeRange}
+        calendarMonth={calendarMonth}
+        strategyOpportunityId={selectedOppId}
+        strategyInstanceId={selectedInstId}
+        onExplain={() => explain('otf')}
+      />
     </PageShell>
   )
 }

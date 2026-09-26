@@ -21,10 +21,12 @@ import { MomentumFactorsPanel } from './MomentumFactorsPanel'
 import { LeadersFace } from './LeadersFace'
 import type { LeaderSortKey } from './leadersModel'
 import {
+  HeroCard,
+  HeroRow,
   PageFaceSwitch,
-  PageHeader,
+  PageHead,
+  PageHeadAction,
   PageShell,
-  SECTION_CAP_CLASS,
 } from '@/components/layout'
 import {
   SegmentControl,
@@ -300,104 +302,95 @@ export default function StockRatingsPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      {/* The prototype carries `_Part Face` here: this page has a Method face,
-          and the switch belongs to the page rather than to the tree. It renders
-          disabled while `/research/lab/today` is unbuilt, and lights up by
-          itself the day that page lands. */}
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 max-w-[84ch] flex-[1_1_28rem]">
-          <PageHeader
-            breadcrumb={<p className="text-xs font-medium text-primary/90">Research</p>}
-            title="Ratings · Stocks"
-            titleSize="large"
-            description={LEAD}
-          />
-        </div>
-        <PageFaceSwitch path="/research/ratings/stocks" className="ml-auto mt-1 flex-none" />
-        {/* The design's two header buttons. Both write: one drafts a
-            hypothesis out of this view, the other turns the universe × these
-            weights into a scheduled objective. What either should stamp as
-            its source is the same open product question as the row verbs, so
-            they say what they would do rather than doing a guess. */}
-        <span
-          className="mt-1 flex flex-none items-center gap-2 text-dense-caption text-muted-foreground/70"
-          title="The design offers “Save as hypothesis” and “→ Autopilot objective” here. Both write — into the Book and into the loop's schedule — and what this page stamps as the source of either is a product call. Owed with the row verbs."
-        >
-          <span className="rounded border border-border px-2 py-1">≋ Save as hypothesis</span>
-          <span className="rounded border border-border px-2 py-1">→ Autopilot objective</span>
-        </span>
-      </div>
+      {/* §16.10: one head. The design's two head buttons both write — a
+          hypothesis into the Book, an objective into the loop's schedule — and
+          what either stamps as its source is an open product question, so
+          they are drawn and held, with the reason in their title. */}
+      <PageHead
+        title="Stock ratings"
+        info={LEAD}
+        actions={
+          <>
+            <PageHeadAction
+              disabled
+              title="The design offers “Save as hypothesis” here. It writes into the Book, and what this page stamps as its source is a product call. Owed with the row verbs."
+            >
+              ≋ Save as hypothesis
+            </PageHeadAction>
+            <PageHeadAction
+              disabled
+              title="The design offers “→ Autopilot objective” here. It writes into the loop's schedule, and what this page stamps as its source is a product call. Owed with the row verbs."
+            >
+              → Autopilot objective
+            </PageHeadAction>
+          </>
+        }
+      />
 
       {q.isError ? <QueryErrorAlert error={q.error} /> : null}
 
-      {/* The design's filter bar. Without it this page is five hundred rows
-          in one list, which is a database dump with a headline on it. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border px-3 py-2 mat-card">
-        <span className="flex items-center gap-2">
-          <span className={SECTION_CAP_CLASS}>View</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="View"
-            value={view}
-            onChange={(v) => {
-              // Leaders is a reading of the whole market, so it opens at All
-              // — the book filter belongs to today's ranking. Narrowing it
-              // again afterwards is the reader's to do.
-              const next = new URLSearchParams(params)
-              if (v === 'leaders') {
-                next.set('view', 'leaders')
-                next.set('universe', 'all')
-              } else {
-                next.delete('view')
-                next.delete('universe')
-              }
-              next.delete('sym')
-              next.delete('lsym')
-              next.delete('lsess')
-              setParams(next, { replace: true })
-            }}
-            options={VIEW_OPTIONS}
-          />
-        </span>
-        <span className="h-4 w-px bg-border" aria-hidden />
-        <span className="flex items-center gap-2">
-          <span className={SECTION_CAP_CLASS}>Universe</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Universe"
-            value={universe}
-            onChange={(v) => setParam('universe', v, 'both')}
-            options={PORTFOLIO_UNIVERSE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-          />
-        </span>
-        <span className="h-4 w-px bg-border" aria-hidden />
-        <span className="flex items-center gap-2">
-          <span className={SECTION_CAP_CLASS}>Show</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Show"
-            value={show}
-            onChange={(v) => setParam('show', v, 'all')}
-            options={SHOW_OPTIONS}
-          />
-        </span>
-        <span className="h-4 w-px bg-border" aria-hidden />
+      {/* The design's filter bar (§17.3). The face switch leads it (§16.10);
+          without the filters this page is five hundred rows in one list. */}
+      <div data-sr-toolbar="" role="toolbar" aria-label="View, universe and filters">
+        <PageFaceSwitch path="/research/ratings/stocks" />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">View</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="View"
+          value={view}
+          onChange={(v) => {
+            // Leaders is a reading of the whole market, so it opens at All
+            // — the book filter belongs to today's ranking. Narrowing it
+            // again afterwards is the reader's to do.
+            const next = new URLSearchParams(params)
+            if (v === 'leaders') {
+              next.set('view', 'leaders')
+              next.set('universe', 'all')
+            } else {
+              next.delete('view')
+              next.delete('universe')
+            }
+            next.delete('sym')
+            next.delete('lsym')
+            next.delete('lsess')
+            setParams(next, { replace: true })
+          }}
+          options={VIEW_OPTIONS}
+        />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Universe</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Universe"
+          value={universe}
+          onChange={(v) => setParam('universe', v, 'both')}
+          options={PORTFOLIO_UNIVERSE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        />
+        <span data-sr-tb="sep" />
         {/* Marked, not dropped: the design's third filter is a saved screen,
             and the Screener's own walk settled that nothing saves one yet. */}
         <span
-          className="flex items-center gap-2 text-dense-caption text-muted-foreground"
+          className="inline-flex items-center gap-2 text-dense-label text-muted-foreground"
           title="The design filters this list by a saved screen. Nothing on this side saves a screen yet — the same gap the Stock screen page names."
         >
-          <span className={SECTION_CAP_CLASS}>Screen</span>
+          <span data-sr-tb="label">Screen</span>
           <span>— nothing saves a screen yet</span>
         </span>
-        <span className="ml-auto flex items-center gap-1.5 whitespace-nowrap text-dense-meta text-muted-foreground">
-          <span className="font-mono tabular-nums text-foreground">{counts.hot}</span> hot ·{' '}
-          <span className="font-mono tabular-nums text-foreground">{counts.cold}</span> cold ·{' '}
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Show</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Show"
+          value={show}
+          onChange={(v) => setParam('show', v, 'all')}
+          options={SHOW_OPTIONS}
+        />
+        <span data-sr-tb="meta">
           <span className="font-mono tabular-nums">{counts.total}</span> scored
           {asOf ? (
             <>
-              {' '}· as of <span className="font-mono tabular-nums text-foreground">{asOf}</span>
+              {' '}· as of <span className="font-mono tabular-nums">{asOf}</span>
             </>
           ) : null}
         </span>
@@ -415,56 +408,67 @@ export default function StockRatingsPage() {
           weights, so a server filter would change the pool the average is
           taken over and the same slider would read differently under each
           filter. One fetch, one pool, filters on top. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border px-3 py-2 mat-card">
-        <span className="flex items-center gap-2">
-          <span className={SECTION_CAP_CLASS}>Stage</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Stage"
-            value={stage}
-            onChange={(v) => setParam('stage', v, 'all')}
-            options={STAGE_OPTIONS}
-          />
-        </span>
-        <span className="h-4 w-px bg-border" aria-hidden />
-        <span className="flex items-center gap-2">
-          <span className={SECTION_CAP_CLASS}>Path</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Path"
-            value={path}
-            onChange={(v) => setParam('path', v, 'all')}
-            options={PATH_OPTIONS}
-          />
-        </span>
-        <span className="h-4 w-px bg-border" aria-hidden />
-        <span className="flex items-center gap-2">
-          <span className={SECTION_CAP_CLASS}>Grade</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Grade"
-            value={grade}
-            onChange={(v) => setParam('grade', v, 'all')}
-            options={GRADE_OPTIONS}
-          />
-        </span>
-        {/* The design puts three figures here. Each says the window it is
-            taken over, because this page ranks: the store holds Stage 4,
-            Avoid and grade D rows — asked for directly the endpoint returns
-            them — and none of them is inside the top {PAGE_LIMIT} by score.
-            A bare "0 in stage 4" would read as "none exist". */}
-        <span
-          className="ml-auto flex items-center gap-1.5 whitespace-nowrap text-dense-meta text-muted-foreground"
-          title={`Taken over the ${standing.scored} scored names in this ranking — the top ${PAGE_LIMIT} by SEPA score — not over the whole universe. Stage 4, Avoid and grade D rows exist in the store and do not reach this window.`}
-        >
-          <span className="font-mono tabular-nums text-foreground">{standing.setupPivot}</span>{' '}
-          setup+pivot ·{' '}
-          <span className="font-mono tabular-nums text-foreground">{standing.stage4}</span> stage 4
-          ·{' '}
-          <span className="font-mono tabular-nums text-foreground">{standing.avgComposite}</span>{' '}
-          avg · of {standing.scored} ranked
-        </span>
+      <div data-sr-toolbar="" role="toolbar" aria-label="SEPA filters">
+        <span data-sr-tb="label">Stage</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Stage"
+          value={stage}
+          onChange={(v) => setParam('stage', v, 'all')}
+          options={STAGE_OPTIONS}
+        />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Path</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Path"
+          value={path}
+          onChange={(v) => setParam('path', v, 'all')}
+          options={PATH_OPTIONS}
+        />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Grade</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Grade"
+          value={grade}
+          onChange={(v) => setParam('grade', v, 'all')}
+          options={GRADE_OPTIONS}
+        />
       </div>
+
+      {/* §16.2: the four counts are the hero row, all in ink — they are
+          counts, not signed P&L (§14.7). Each says the window it is taken
+          over, because this page ranks: the store holds Stage 4, Avoid and
+          grade D rows — asked for directly the endpoint returns them — and
+          none of them is inside the top {PAGE_LIMIT} by score. A bare
+          "0 in stage 4" would read as "none exist". */}
+      <HeroRow basis={200} label="Today’s reading">
+        <HeroCard
+          label="Setup / pivot"
+          value={standing.setupPivot}
+          sub={`of ${standing.scored} ranked`}
+          title={`Stage 2 names at a setup or pivot — the ones to look at tonight. Taken over the ${standing.scored} scored names in this ranking — the top ${PAGE_LIMIT} by SEPA score — not the whole universe.`}
+        />
+        <HeroCard
+          label="Stage 4 · avoid"
+          value={standing.stage4}
+          sub="declining trend · inside this ranking"
+          title={`Stage 4 — declining; avoid as a long. Stage 4, Avoid and grade D rows exist in the store and do not reach the top ${PAGE_LIMIT} this page ranks.`}
+        />
+        <HeroCard
+          label="Avg composite"
+          value={standing.avgComposite}
+          sub="names ranked"
+          title="Mean composite score across the names in this ranking"
+        />
+        <HeroCard
+          label="Hot · cold"
+          value={`${counts.hot} · ${counts.cold}`}
+          sub={asOf ? `as of ${asOf}` : 'no session reported'}
+          title={`Hot is a composite of ${HOT_AT} and over, cold ${COLD_AT} and under, read off the whole universe`}
+        />
+      </HeroRow>
       </>
       )}
 

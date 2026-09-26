@@ -19,7 +19,7 @@ import { SymbolSessionInspector } from './SymbolSessionInspector'
 import { SETTLEMENT_WITHHELD_REASON, useSymbolForecastSessions } from './useSymbolForecastSessions'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const mono = 'font-mono tabular-nums'
 const panel =
   'min-w-0 border mat-card'

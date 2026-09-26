@@ -29,11 +29,13 @@ import { ROUTES } from './routeTable'
  * disagreement until the design side settles it.
  */
 const TITLE_MAY_DIFFER: Record<string, string> = {
-  '/research/ratings/stocks': 'design ROUTES says Stock ratings, its own prototype heads it Ratings · Stocks',
   '/research/screener': 'design ROUTES says Stock screen, its own prototype heads it Screener · Stocks',
   '/research/lab/screener':
     'design ROUTES says Stock screen · method, its own prototype heads it Symbol Screener · authoring',
   '/trade/desk': 'design ROUTES says Trade (a layer head, no crumbs), its own prototype heads it Trade Desk',
+  // Surfaced 2026-09-26 when the gate learned to read `PageHead`: this page
+  // had moved to the new head and so had silently left the check.
+  '/docs/research-blueprint': 'design ROUTES says Blueprint, its own prototype heads it Research Blueprint',
   // §5a.9: the alias names a *face*, and the page it lands on is the Research
   // layer page — whose h1 is the layer's name, as §5a.5 requires of the row
   // above it. One page, two routes, one title.
@@ -68,17 +70,20 @@ function resolve(importPath: string): string | null {
 }
 
 /**
- * The literal title the file's first `<PageHeader` is given, or null.
+ * The literal title the file's first page head is given, or null — the
+ * unified `<PageHead` (§16.10) or the older `<PageHeader` it is replacing.
+ * Reading only the old one dropped every page moved to the new head out of
+ * this gate, which is how the count fell under its floor (2026-09-26, J1).
  *
  * Bounded to that one element: an earlier version searched a fixed window and
  * ran past a JSX title into a later literal two panels down, which reported
  * drift on a page that had none.
  */
 function literalPageTitle(src: string): string[] | null {
-  const start = src.indexOf('<PageHeader')
-  if (start < 0) return null
+  const head = /<PageHead(?:er)?(?=[\s>])/.exec(src)
+  if (head == null) return null
   let depth = 0
-  for (let i = start + '<PageHeader'.length; i < src.length; i += 1) {
+  for (let i = head.index + head[0].length; i < src.length; i += 1) {
     const ch = src[i]
     if (ch === '{') {
       depth += 1

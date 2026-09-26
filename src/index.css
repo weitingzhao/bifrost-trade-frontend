@@ -858,6 +858,13 @@ tbody tr:hover > td {
   max-width: none;
 }
 
+/* A hero whose reading is words rather than a count (the Desk's session,
+   allocation and pressure, Rev .82) reads at the panel step, 20px — the
+   pattern's hero rule would otherwise hold it at 30. */
+[data-sr-kpi='hero'] [data-sr-kpi-v='panel'] {
+  font-size: 20px;
+}
+
 /* Phone grammar (Rev .93): a surface under 600px of page (the Phone float, a
    440 side panel) keeps its hero row two to a line at 22px, the sub line cut
    to one — four heroes used to stack one per line and fill the first screen. */

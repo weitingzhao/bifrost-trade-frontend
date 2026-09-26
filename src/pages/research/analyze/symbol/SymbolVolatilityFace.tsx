@@ -34,7 +34,7 @@ import {
 } from './SymbolVolatilityDepth'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 /** The term panel's window, in calendar days to expiry. */
 const TERM_MIN_DTE = 5
 const TERM_MAX_DTE = 100
@@ -57,7 +57,8 @@ function BarStrip({ bars, title }: { bars: { h: number; on?: boolean }[]; title:
       {bars.map((b, i) => (
         <span
           key={i}
-          className={cn('w-full min-w-[2px] flex-1 rounded-[1px]', b.on ? 'bg-[var(--sk-ticker)]' : 'bg-[var(--sk-line2)]')}
+          // The current bar is ink, not the ticker's lime (Rev .92): it marks now, not the name.
+          className={cn('w-full min-w-[2px] flex-1 rounded-[1px]', b.on ? 'bg-foreground' : 'bg-[var(--sk-line2)]')}
           style={{ height: `${Math.max(6, b.h)}%` }}
         />
       ))}
@@ -425,13 +426,13 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                     key={t.expiry}
                     className="grid grid-cols-[56px_34px_minmax(0,1fr)_52px_56px] items-center gap-2 text-dense-meta"
                   >
-                    <span className={cn(mono, sel ? 'font-semibold text-[var(--sk-ticker)]' : 'text-secondary-foreground')}>
+                    <span className={cn(mono, sel ? 'font-semibold text-primary' : 'text-secondary-foreground')}>
                       {t.label}
                     </span>
                     <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>{t.dte}d</span>
-                    <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+                    <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                       <span
-                        className={cn('absolute inset-y-0 left-0', sel ? 'bg-[var(--sk-ticker)]' : 'bg-[var(--sk-line2)]')}
+                        className={cn('absolute inset-y-0 left-0', sel ? 'bg-primary' : 'bg-[var(--sk-line2)]')}
                         style={{ width: `${(t.iv / termMax) * 100}%` }}
                       />
                     </span>
@@ -542,7 +543,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                 <tbody>
                   {strikeRows.map((r) => (
                     <tr key={r.strike}>
-                      <td className={cn(tdCls, 'text-left', r.atm ? 'font-semibold text-[var(--sk-ticker)]' : 'text-secondary-foreground')}>
+                      <td className={cn(tdCls, 'text-left', r.atm ? 'font-semibold text-foreground' : 'text-secondary-foreground')}>
                         {r.strike}
                       </td>
                       <td className={cn(tdCls, 'text-muted-foreground')}>{r.delta != null ? r.delta.toFixed(2) : '—'}</td>
@@ -552,7 +553,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                         {`${r.residBp >= 0 ? '+' : '−'}${Math.abs(r.residBp).toFixed(0)} bp`}
                       </td>
                       <td className={cn(tdCls, 'text-left')}>
-                        <span className="relative block h-[5px] w-full overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+                        <span className="relative block h-[5px] w-full overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                           <span
                             className={cn('absolute inset-y-0 left-0', !fitDegraded && Math.abs(r.residBp) > 30 ? 'bg-destructive' : 'bg-[var(--sk-mute2)]')}
                             style={{ width: `${Math.min(100, (Math.abs(r.residBp) / worstBp) * 100)}%` }}

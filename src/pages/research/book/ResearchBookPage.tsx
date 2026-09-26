@@ -23,7 +23,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
+import { HeroRow, PageHead, PageShell, SectionPanel } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -36,7 +37,6 @@ import {
   EmptyState,
   denseTableNumCell,
 } from '@/components/data-display'
-import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
@@ -64,27 +64,31 @@ const KIND_TAG: Record<StuckKind, { label: string; variant: 'warning' | 'danger'
   'thin record': { label: 'thin record', variant: 'neutral' },
 }
 
-const AGE_INK = { old: 'text-destructive', aging: 'text-warning', plain: 'text-muted-foreground' }
+/** Age is lateness: amber, never red (§16.13, Rev .83). */
+const AGE_INK = { old: 'text-warning', aging: 'text-warning', plain: 'text-muted-foreground' }
 
-/** One state of the book: how many, what it is, and how that number breaks down. */
-function CensusCell({ band }: { band: CensusBand }) {
+/**
+ * One state of the book as a hero card (§16.2, Rev .83): how many, what it
+ * is, and how that number breaks down — the whole card is the door to its
+ * table. The count is a count, so it reads in ink whatever the state (§14.8);
+ * the sentence goes under 600px of page, where the tags stay (Rev .93).
+ */
+function CensusCard({ band }: { band: CensusBand }) {
   const body = (
     <>
-      <span className="flex items-baseline gap-2">
-        <span className={cn('font-mono text-2xl font-bold tabular-nums', band.ink)}>
-          {band.parts == null ? '—' : band.n}
-        </span>
-        <span className="text-dense-body font-semibold">{band.label}</span>
+      <span data-sr-kpi-l="" className="text-[var(--sk-soft)]">
+        {band.label}
       </span>
-      <span className="text-dense-meta leading-relaxed text-muted-foreground">{band.what}</span>
+      <span data-sr-kpi-v="" className="text-foreground">
+        {band.parts == null ? '—' : band.n}
+      </span>
+      <span className="text-dense-meta leading-normal text-[var(--sk-mute2)] @max-[600px]/page:hidden">{band.what}</span>
       {band.parts == null ? (
         // A dash and a reason, not a zero: a zero is a count, and "nothing
         // counts this" is not one.
-        <span className="text-dense-caption leading-snug text-muted-foreground">
-          {band.missing}
-        </span>
+        <span className="text-dense-caption leading-snug text-muted-foreground">{band.missing}</span>
       ) : (
-        <span className="flex flex-wrap gap-1">
+        <span className="flex flex-wrap gap-1.5">
           {band.parts.map((p) => (
             <DenseTag key={p.label} variant={p.variant} size="cell">
               {p.label}
@@ -94,16 +98,19 @@ function CensusCell({ band }: { band: CensusBand }) {
       )}
     </>
   )
-  const cls =
-    'flex min-w-0 flex-col gap-1.5 border-r border-border/60 px-3 py-2.5 text-left last:border-r-0'
   return band.to == null ? (
     // Not a link, and it says so on hover rather than looking like one that
     // silently does nothing.
-    <div className={cls} title={`${band.label} has no page on this side yet — ${band.missing ?? ''}`}>
+    <div data-sr-kpi="hero" title={`${band.label} has no page on this side yet — ${band.missing ?? ''}`}>
       {body}
     </div>
   ) : (
-    <Link to={band.to} className={cn(cls, 'hover:bg-secondary/40')}>
+    <Link
+      to={band.to}
+      data-sr-kpi="hero"
+      title={band.what}
+      className="text-inherit no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] hover:text-inherit motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+    >
       {body}
     </Link>
   )
@@ -157,46 +164,47 @@ export default function ResearchBookPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 max-w-[78ch] flex-[1_1_420px]">
-          <PageHeader
-            title="The Book"
-            titleSize="large"
-            description={LEAD}
-          />
-        </div>
-        {asOf != null ? (
-          <div className="ml-auto flex flex-none items-center gap-2 pt-1">
-            <span className={SECTION_CAP_CLASS}>as of</span>
+      <PageHead
+        title="The Book"
+        info={LEAD}
+        // The census is recomputed when the page loads — its instant is the
+        // stalest of the three reads, a fetch, not a session (§16.13).
+        stamp={
+          asOf != null ? (
             <span
-              className="inline-flex h-6 items-center border px-2 font-mono text-dense-meta text-muted-foreground mat-tag"
+              className="inline-flex h-5 items-center border px-2 font-mono text-dense-meta text-muted-foreground mat-tag"
               title="When the stalest of the three tables answered. The census is a claim across all three, so it is only as current as the oldest of them."
             >
-              {asOf}
+              FETCHED {asOf}
             </span>
-          </div>
-        ) : null}
-      </div>
+          ) : null
+        }
+      />
 
       {watch.isError ? <QueryErrorAlert error={watch.error} /> : null}
       {hypotheses.isError ? <QueryErrorAlert error={hypotheses.error} /> : null}
       {candidates.isError ? <QueryErrorAlert error={candidates.error} /> : null}
 
-      <SectionPanel
-        cap="Census"
-        title="Where every idea in the book currently stands"
-        note="an idea moves left to right; nothing is deleted, only settled"
-      >
-        {loading ? (
-          <Skeleton className="m-3 h-24 rounded-md" />
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))]">
-            {bands.map((b) => (
-              <CensusCell key={b.label} band={b} />
-            ))}
-          </div>
-        )}
-      </SectionPanel>
+      {loading ? (
+        <HeroRow basis={200}>
+          {[0, 1, 2, 3].map((i) => (
+            <section key={i} data-sr-kpi="hero">
+              <ViewState kind="loading" title="Loading the census" rows={2} cols={1} />
+            </section>
+          ))}
+        </HeroRow>
+      ) : (
+        <div
+          className="flex flex-wrap items-stretch gap-2.5 [&>[data-sr-kpi=hero]]:flex-[1_1_210px]"
+          role="group"
+          aria-label="Census"
+          title="Where every idea in the book currently stands — an idea moves left to right; nothing is deleted, only settled"
+        >
+          {bands.map((b) => (
+            <CensusCard key={b.label} band={b} />
+          ))}
+        </div>
+      )}
 
       <SectionPanel
         cap="Waiting on you"
@@ -205,7 +213,7 @@ export default function ResearchBookPage() {
             ? 'Clear'
             : `${stuck.length} ${stuck.length === 1 ? 'row needs' : 'rows need'} a decision`
         }
-        note="rows that cannot move to the next state without a decision"
+        capTitle="Rows that cannot move to the next state without a decision"
         tone={stuck.length === 0 ? undefined : 'warning'}
       >
         {/* One cause, named before its rows. The list is true and complete;
@@ -224,7 +232,7 @@ export default function ResearchBookPage() {
           </p>
         ) : null}
         {loading ? (
-          <Skeleton className="m-3 h-40 rounded-md" />
+          <ViewState kind="loading" title="Loading what is waiting" rows={4} cols={5} />
         ) : stuck.length === 0 ? (
           <EmptyState
             title="Nothing is waiting on you"
@@ -294,7 +302,7 @@ export default function ResearchBookPage() {
       <SectionPanel
         cap="Four views"
         title="The same ledger, read from four angles"
-        note="belongs to every operator — hand, loop and Copilot write into the same book"
+        capTitle="Belongs to every operator — hand, loop and Copilot write into the same book"
       >
         {views.map((v) => (
           <div

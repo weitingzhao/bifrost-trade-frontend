@@ -1,36 +1,28 @@
 import { cn } from '@/lib/utils'
 
 /**
- * Performance page surfaces, the same vocabulary Accounts, Transfer & Pay and the
- * Trade Ledger use: a section heading (tier), bordered panels with a header bar,
- * and uppercase captions.
+ * Performance page surfaces (design Rev .82): panels on the card material, a
+ * head that is a rule rather than a band, and 11/600 sentence-case captions.
+ * Section headings are the shared `SectionHead`.
  */
 export const perfUi = {
-  pageCard: 'flex flex-col gap-3.5 border p-4 mat-card',
-
-  tierRow: 'flex flex-wrap items-center gap-x-2.5 gap-y-1',
-  tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
-  tierRule: 'h-px min-w-8 flex-1 bg-border',
-  tierNote: 'text-dense-meta text-muted-foreground',
-
   /**
    * Prototype `.pf-panel`: the layer's raised surface, solid; the header one step up (raised2).
    * No `self-start`: the prototype's page is a grid, where it aligns vertically; in this
    * page's flex column it would shrink the panel to its content's width.
    */
   panel: 'min-w-0 border mat-card',
-  panelHead: cn(
-    'flex flex-wrap items-center gap-2.5 rounded-t-md border-b border-border',
-    'bg-[var(--sk-raised2)] px-3 py-2',
-  ),
+  /** Prototype `.pf-panel-h`: no fill, the ink-6% rule under it. */
+  panelHead: 'flex flex-wrap items-center gap-2.5 border-b px-3 py-2',
   panelToggle: cn(
-    'flex w-full cursor-pointer flex-wrap items-center gap-2.5 border-0 bg-[var(--sk-raised2)] px-3 py-2',
-    'text-left text-foreground hover:bg-secondary',
+    'flex w-full cursor-pointer flex-wrap items-center gap-2.5 border-0 bg-transparent px-3 py-2',
+    'text-left text-foreground hover:bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
   ),
   panelTitle: 'text-dense-body font-semibold text-foreground',
   panelFoot: 'border-t border-border px-3 py-1.5 text-dense-meta text-muted-foreground text-pretty',
 
-  cap: 'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground',
+  /** Prototype `.pf-cap`: 11/600, sentence case. */
+  cap: 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground',
   note: 'text-dense-meta text-muted-foreground',
   /** Prototype ink steps on this page: soft for figures, mute for labels and prose. */
   soft: 'text-secondary-foreground',

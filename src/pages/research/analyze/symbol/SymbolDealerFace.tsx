@@ -25,7 +25,7 @@ import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { cn } from '@/lib/utils'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const panel =
   'min-w-0 border mat-card'
 const panelHead =

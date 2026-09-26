@@ -42,7 +42,7 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
     return (
       <section className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-          <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Leash</span>
+          <span className="text-dense-meta font-semibold text-muted-foreground">Leash</span>
           <span className="text-dense-body font-semibold">what a run accepts without you</span>
           <span className="ml-auto text-dense-meta text-muted-foreground">
             all four must hold, and only while Trust grants L0 · accepting opens a hypothesis, never an order
@@ -113,7 +113,7 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
       </div>
 
       <div>
-        <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Accepts a candidate only when</div>
+        <div className="text-dense-meta font-semibold text-muted-foreground">Accepts a candidate only when</div>
         <ol className="mt-0.5 list-decimal space-y-0.5 pl-4">
           {LEASH_CONDITIONS.map((c) => (
             <li key={c.id}>{c.text}</li>
@@ -123,7 +123,7 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
 
       {rows.length > 0 ? (
         <div className="space-y-1.5">
-          <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Per objective</div>
+          <div className="text-dense-meta font-semibold text-muted-foreground">Per objective</div>
           {rows.map((o) => (
             <div key={o.id}>
               <Link to={objectivePath(o.id)} className="font-medium hover:underline">
@@ -149,11 +149,11 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
       ) : null}
 
       <div>
-        <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Asks you</div>
+        <div className="text-dense-meta font-semibold text-muted-foreground">Asks you</div>
         <p>Everything else: split or blocked names, policy changes, playbook entries, and every briefing.</p>
       </div>
       <div>
-        <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">Never</div>
+        <div className="text-dense-meta font-semibold text-muted-foreground">Never</div>
         <p>Plans, intents, orders — D10. Accepting a candidate opens a hypothesis, nothing more.</p>
       </div>
 

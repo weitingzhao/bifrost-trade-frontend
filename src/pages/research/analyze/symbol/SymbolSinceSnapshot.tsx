@@ -133,7 +133,7 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
         title="Prior readings come from this browser, not Research's last snapshot."
       >
         <header className="mb-0.5 flex flex-wrap items-baseline gap-x-2">
-          <span className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-dense-meta font-semibold text-muted-foreground">
             Since you last looked
           </span>
         </header>
@@ -156,7 +156,7 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
     >
       <header className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
         <span
-          className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground"
+          className="text-dense-meta font-semibold text-muted-foreground"
           title="Prior readings come from this browser, not Research's last snapshot."
         >
           Since you last looked

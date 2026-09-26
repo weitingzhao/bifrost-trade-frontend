@@ -10,7 +10,7 @@ import { oiTotals, sigmaMove, straddleMid } from './symbolChainModel'
 import type { ExpiryEarnings } from '@/utils/earningsEstimate'
 
 const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const mono = 'font-mono tabular-nums'
 
 export function SymbolExpiryCard({
@@ -44,11 +44,13 @@ export function SymbolExpiryCard({
       onClick={onPick}
       className={cn(
         'flex cursor-pointer flex-col gap-1.5 border-r border-border/60 px-3 py-2.5 text-left last:border-r-0 hover:bg-[var(--sk-surface)]',
-        on && 'bg-[rgb(var(--sk-accent-rgb)/0.06)] shadow-[inset_0_-2px_0_var(--sk-ticker)]'
+        // The picked expiry is the active thing: its label and ground are the accent
+        // (Rev .92); the ring stays the name's, as the design draws it.
+        on && 'bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)] shadow-[inset_0_0_0_1px_var(--sk-ticker)]'
       )}
     >
       <span className="flex items-baseline gap-1.5">
-        <span className={cn(mono, 'text-dense-body font-bold', on ? 'text-[var(--sk-ticker)]' : 'text-foreground')}>
+        <span className={cn(mono, 'text-dense-body font-bold', on ? 'text-primary' : 'text-foreground')}>
           {expiry.slice(5)}
         </span>
         <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>{dte}d</span>
@@ -65,7 +67,7 @@ export function SymbolExpiryCard({
         <span className={cn(mono, 'text-lg font-semibold')}>{iv != null ? (iv * 100).toFixed(1) : '—'}</span>
         <span className={cap}>atm iv</span>
       </span>
-      <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+      <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
         {iv != null ? (
           <span
             className={cn(

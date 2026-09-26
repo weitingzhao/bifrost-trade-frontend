@@ -35,9 +35,18 @@ interface PerformanceFilterBarProps {
   /** `N active days · N trades · capital base $X`. */
   scopeNote: string
   isLoading?: boolean
+  /** The four derivation trees (Explain); one open at a time. */
+  trees: readonly { id: string; label: string; title?: string }[]
+  openTree: string | null
+  onTree: (id: string) => void
 }
 
-/** What the page is reading: the range, the strategy and instance it is narrowed to, and how much that holds. */
+/**
+ * The page's one toolbar (§17.3, Rev .82): what it is reading — the range,
+ * the strategy and instance it is narrowed to — and, after the rule, how each
+ * number is built (Explain). One bar, above the data, so the filters stay
+ * while the data loads or fails; the count of what the scope holds ends it.
+ */
 export function PerformanceFilterBar({
   timeRange,
   onTimeRange,
@@ -51,14 +60,14 @@ export function PerformanceFilterBar({
   instQuery,
   scopeNote,
   isLoading,
+  trees,
+  openTree,
+  onTree,
 }: PerformanceFilterBarProps) {
   return (
-    <div
-      className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border px-2.5 py-1.75 mat-card"
-      aria-label="Time range and strategy scope"
-    >
+    <div data-sr-toolbar="" role="toolbar" aria-label="Range, strategy scope and derivations">
       <span className="inline-flex items-center gap-2">
-        <span className={perfUi.cap}>Time range</span>
+        <span data-sr-tb="label">Range</span>
         <SegmentControl
           size="xs"
           options={TIME_RANGE_SEGMENT_OPTIONS}
@@ -113,7 +122,37 @@ export function PerformanceFilterBar({
         RANGE {formatRangeDate(sinceStr)} ~ {formatRangeDate(untilStr)}
       </span>
 
-      <span className={cn(perfUi.mono, 'ml-auto whitespace-nowrap text-dense-meta text-muted-foreground')}>
+      <span data-sr-tb="sep" />
+      <span
+        className="inline-flex flex-wrap items-center gap-1.5"
+        role="group"
+        aria-label="Derivations"
+      >
+        <span data-sr-tb="label" title="Derivations — how each number on this page is built">
+          Explain
+        </span>
+        {trees.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            aria-pressed={openTree === t.id}
+            title={t.title}
+            onClick={() => onTree(t.id)}
+            className={cn(
+              // The control material with its edge kept: the open tree's edge and ink
+              // are the accent (one active thing), the others a quiet line.
+              'inline-flex h-[22px] cursor-pointer items-center whitespace-nowrap rounded-[var(--control-radius)] border bg-[var(--control-fill)] px-2 text-dense-meta hover:bg-[var(--control-fill-hover)]',
+              openTree === t.id
+                ? 'border-primary text-primary'
+                : 'border-[var(--sk-line)] text-[var(--sk-soft)] hover:text-foreground',
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </span>
+
+      <span data-sr-tb="meta" className={perfUi.mono}>
         {isLoading ? 'Loading…' : scopeNote}
       </span>
     </div>

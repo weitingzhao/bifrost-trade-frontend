@@ -310,7 +310,9 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + '(`/research/narrative/earnings` \u00b7 `expected_next`) \u2014 the feed has no forward calendar, so the date is last year\u2019s same-quarter 8-K plus 52 weeks (backtested over 2,107 prints: median miss 0 days, 90% within 7). '
     + 'The label reads `E ~2 Nov`, the legend says estimated, and the note names the first expiry after the print and the rule\u2019s record on the name. A late print (estimate past, no results 8-K) is said and not marked; '
     + 'a name with no cadence or no 8-K says which. Measured on DEV for PLTR: 38 days out, and the curve itself kinks there \u2014 the 10-30 expiry reads 45.1, the 11-06 one after the print 58.0. '
-    + 'The Chain face\u2019s expiry-card E tags and earnings-gap scenario rows could read the same estimate and are not done yet.',
+    + 'CHAIN FACE, same day: the expiry cards carry the design\u2019s E and amber bar from the same estimate \u2014 E when the print falls before the expiry, a faint E? when the expiry sits within the estimate\u2019s own miss on that name (either side), grey bars otherwise (they were all amber before, which read as every expiry carrying an event); '
+    + 'the header adds `earnings ~25d (est.)` and the kink note is the term panel\u2019s. DIVERGED: the design\u2019s five cards are two weeklies and three monthlies, this side\u2019s are the five nearest listed, which for a name with weeklies spans ten days and would never reach a print \u2014 '
+    + 'so the first listed expiry after the print joins the cards the way a handed-over expiry does (TSLA 10-23 E, PLTR 11-06 E, NVDA 11-20 E? three days after an estimate that has missed NVDA by up to seven). The earnings-gap scenario rows still wait.',
   '/research/scan':
     'Walked 2026-09-21 against Research Scan.dc.html (Rev 2026-09-20.10) — the option side of '
     + 'Stock ratings, and deliberately the same page twice. What stood here printed the weights '

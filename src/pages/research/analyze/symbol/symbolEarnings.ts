@@ -1,7 +1,7 @@
 /**
- * The next earnings print on the Volatility face's term structure — the
- * design's amber line and its kink note — from Research's estimate
- * (`/research/narrative/earnings` · `expected_next`, research 0.125.0).
+ * The next earnings print on the Symbol page — the Volatility face's amber
+ * line and kink note, and the Chain face's expiry-card E — from Research's
+ * estimate (`/research/narrative/earnings` · `expected_next`, research 0.125.0).
  *
  * The date is an estimate, and every sentence that uses it says so: the feed
  * holds no forward calendar, so Research takes last year's same-quarter 8-K
@@ -38,10 +38,13 @@ export function termEarningsMark(e: ExpectedEarnings | null | undefined, dtes: r
   }
 }
 
-/** The first listed expiry on or after the estimate — the one carrying the event premium. */
+/**
+ * The first listed expiry after the estimate — the one carrying the event
+ * premium. Strictly after: an expiry on the print's own day may expire first.
+ */
 export function firstExpiryAfter<T extends { dte: number }>(e: ExpectedEarnings | null | undefined, term: readonly T[]): T | null {
   if (!e || e.days_away < 0) return null
-  return [...term].sort((a, b) => a.dte - b.dte).find((t) => t.dte >= e.days_away) ?? null
+  return [...term].sort((a, b) => a.dte - b.dte).find((t) => t.dte > e.days_away) ?? null
 }
 
 function caveat(e: ExpectedEarnings): string {
@@ -78,11 +81,42 @@ export function termEarningsNote(
   }
   const after = firstExpiryAfter(e, term)
   const lastDte = term.length > 0 ? Math.max(...term.map((t) => t.dte)) : null
-  const offChart = lastDte != null && e.days_away > lastDte ? ', past the last fitted expiry, so it is not on the chart' : ''
+  const offChart = lastDte != null && e.days_away > lastDte ? ', past the last expiry shown' : ''
   const kink = after
     ? ` — the ${after.label} expiry is the first after it and carries the event premium. Selling across it is what every CSP rule refuses; a calendar that sells the front and owns the back is the structure the slope pays for.`
     : '.'
   return `Earnings expected ${when}${offChart}${kink} ${caveat(e)}`
+}
+
+/** When a name has no record, the rule's 90th-percentile miss across the feed. */
+export const DEFAULT_SLACK_DAYS = 7
+
+export type ExpiryEarnings = { tag: 'E' | 'E?'; title: string }
+
+/**
+ * The Chain face's card tag. `E` when the estimated print falls before the
+ * expiry (the design's rule); `E?` when the expiry sits within the estimate's
+ * own error on this name, either side, so the print may land in or out of it.
+ */
+export function expiryEarnings(e: ExpectedEarnings | null | undefined, dte: number): ExpiryEarnings | null {
+  if (!e || e.days_away < 0) return null
+  const slack = e.track.max_miss_days ?? DEFAULT_SLACK_DAYS
+  const gap = dte - e.days_away
+  const when = `Earnings expected ~${shortDate(e.date)} (estimated)`
+  if (Math.abs(gap) <= slack && slack > 0) {
+    return {
+      tag: 'E?',
+      title: `${when}, ${Math.abs(gap)}d ${gap >= 0 ? 'before' : 'after'} this expiry — the estimate has missed this name by up to ${slack}d, so it may land either side`,
+    }
+  }
+  if (gap > 0) return { tag: 'E', title: `${when} — inside this expiry` }
+  return null
+}
+
+/** The Chain face header's earnings reading. */
+export function earningsHeadMeta(e: ExpectedEarnings | null | undefined): string | null {
+  if (!e) return null
+  return e.days_away >= 0 ? `earnings ~${e.days_away}d (est.)` : 'earnings late'
 }
 
 /** The legend's entry for the mark. */

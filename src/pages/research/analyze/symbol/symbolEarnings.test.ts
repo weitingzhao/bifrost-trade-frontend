@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { ExpectedEarnings } from '@/api/research/narrative'
-import { firstExpiryAfter, shortDate, termEarningsLegend, termEarningsMark, termEarningsNote } from './symbolEarnings'
+import {
+  earningsHeadMeta,
+  expiryEarnings,
+  firstExpiryAfter,
+  shortDate,
+  termEarningsLegend,
+  termEarningsMark,
+  termEarningsNote,
+} from './symbolEarnings'
 
 // Invented estimate and expiries.
 const est = (days_away: number, over: Partial<ExpectedEarnings> = {}): ExpectedEarnings => ({
@@ -67,5 +75,32 @@ describe('term-structure earnings', () => {
   it('adds a legend entry only when the mark is drawn', () => {
     expect(termEarningsLegend(est(38), termEarningsMark(est(38), [21, 84]))).toBe('next earnings ~3 Nov (estimated)')
     expect(termEarningsLegend(est(90), null)).toBeNull()
+  })
+
+  it('tags an expiry the estimated print falls inside, as the design does', () => {
+    const exact = est(38, { track: { n: 4, median_miss_days: 0, max_miss_days: 0 } })
+    expect(expiryEarnings(exact, 42)).toEqual({ tag: 'E', title: 'Earnings expected ~3 Nov (estimated) — inside this expiry' })
+    expect(expiryEarnings(exact, 35)).toBeNull()
+    expect(expiryEarnings(exact, 38)).toBeNull()
+  })
+
+  it('marks an expiry within the estimate’s own miss as either side', () => {
+    const loose = est(38, { track: { n: 4, median_miss_days: 0, max_miss_days: 7 } })
+    expect(expiryEarnings(loose, 42)?.tag).toBe('E?')
+    expect(expiryEarnings(loose, 42)?.title).toContain('4d before this expiry — the estimate has missed this name by up to 7d')
+    expect(expiryEarnings(loose, 33)?.title).toContain('5d after this expiry')
+    expect(expiryEarnings(loose, 60)?.tag).toBe('E')
+    expect(expiryEarnings(loose, 21)).toBeNull()
+  })
+
+  it('tags nothing for a late print or no estimate', () => {
+    expect(expiryEarnings(est(-2), 42)).toBeNull()
+    expect(expiryEarnings(null, 42)).toBeNull()
+  })
+
+  it('reads the header meta', () => {
+    expect(earningsHeadMeta(est(38))).toBe('earnings ~38d (est.)')
+    expect(earningsHeadMeta(est(-2))).toBe('earnings late')
+    expect(earningsHeadMeta(null)).toBeNull()
   })
 })

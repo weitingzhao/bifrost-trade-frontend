@@ -158,13 +158,21 @@ export function richToSvi(
  * (a Symbol-list contract row, the Dealer face's ⇢) when it is listed further
  * out — landing on the nearest instead would light the same strike on a
  * different contract. `handedMissing` when the store does not list it at all.
+ *
+ * ``eventDate`` is the next earnings print (Research's estimate): the first
+ * listed expiry after it carries the event premium, and joins the cards when
+ * it is further out than the five, so the earnings E has a card to sit on.
  */
 export function cardExpiries(
   listed: readonly string[] | undefined,
   handed: string | null,
+  eventDate: string | null = null,
 ): { expiries: string[]; handedMissing: boolean } {
   const all = listed ?? []
   const expiries = all.slice(0, 5)
   if (handed && all.includes(handed) && !expiries.includes(handed)) expiries.push(handed)
+  const afterEvent = eventDate ? all.find((e) => e > eventDate) : undefined
+  if (afterEvent && !expiries.includes(afterEvent)) expiries.push(afterEvent)
+  expiries.sort()
   return { expiries, handedMissing: Boolean(handed && listed && !all.includes(handed)) }
 }

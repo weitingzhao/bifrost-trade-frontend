@@ -10,6 +10,9 @@
  * The snapshots carry the session's last trade and no bid/ask, so every
  * quote-shaped column says mark and the contract card dashes the NBBO row
  * with the reason instead of dressing a close as a market.
+ *
+ * The expiry cards carry the design's earnings E from Research's estimate of
+ * the next print (research 0.125.0); `symbolEarnings` holds the rule.
  */
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -19,6 +22,7 @@ import { fetchChainExpirations, fetchOptionSnapshots } from '@/api/marketData/op
 import { FaceKv } from '@/components/research/FaceKv'
 import { PlanThisButton } from '@/components/research'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
+import { useEarningsDates } from '@/hooks/useNarrative'
 import { useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { todayIso } from '@/lib/researchFreshness'
 import { SCREEN_BAND_PARAM, legInScreenBand, parseScreenBand, screenBandLabel } from '@/lib/screenBand'
@@ -28,6 +32,8 @@ import { cn } from '@/lib/utils'
 import { bsComputeDetail, normalCDF } from '@/utils/blackScholes'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
+import { earningsHeadMeta, expiryEarnings, termEarningsNote } from '@/pages/research/analyze/symbol/symbolEarnings'
+import { SymbolExpiryCard } from '@/pages/research/analyze/symbol/SymbolExpiryCard'
 import { ContractCandles, OiMini, SmileMini } from './symbolChainCharts'
 import {
   LADDER_COLUMNS,
@@ -37,7 +43,6 @@ import {
   oiTotals,
   richToSvi,
   sigmaMove,
-  straddleMid,
   type LadderColumnSet,
 } from './symbolChainModel'
 import { useQuery } from '@tanstack/react-query'
@@ -120,6 +125,10 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
   const zeroG = numOf(g.zero_gamma)
   const pinStrike = numOf(p.max_pain_strike)
 
+  // The next print, estimated by Research (no forward calendar reaches this side).
+  const earnQ = useEarningsDates(sym)
+  const nextEarnings = earnQ.data?.expected_next ?? null
+
   const expQ = useQuery({
     queryKey: ['market', 'chain-expirations', sym, today],
     queryFn: () => fetchChainExpirations(sym, today),
@@ -127,7 +136,11 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
     staleTime: 10 * 60_000,
   })
   const handed = urlParams.get('expiration')
-  const { expiries, handedMissing } = cardExpiries(expQ.data, handed)
+  const { expiries, handedMissing } = cardExpiries(
+    expQ.data,
+    handed,
+    nextEarnings && nextEarnings.days_away >= 0 ? nextEarnings.date : null
+  )
   const fitQ = useVolSurfaceFit(sym)
   const fitByExpiry = new Map((fitQ.data ?? []).map((r) => [r.expiry, r]))
 
@@ -217,6 +230,11 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
 
   const loading = expQ.isLoading || (expiries.length > 0 && snapQs.every((q) => q.isLoading))
 
+  const cardDte = (e: string) =>
+    fitByExpiry.get(e)?.dte ?? Math.max(1, Math.round((Date.parse(e) - Date.parse(today)) / 86_400_000))
+  const earnHead = earningsHeadMeta(nextEarnings)
+  const ivMax = Math.max(1e-6, ...expiries.map((x) => fitByExpiry.get(x)?.atm_vol ?? 0))
+
   return (
     <div className="space-y-3">
       <section className={panel}>
@@ -226,6 +244,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
           <span className={cn(mono, 'ml-auto text-dense-caption text-muted-foreground')}>
             spot {spot != null ? spot.toFixed(2) : '—'}
             {atmIv != null ? ` · ATM IV ${(atmIv * 100).toFixed(1)}` : ''}
+            {earnHead ? <span className="text-warning"> · {earnHead}</span> : null}
           </span>
         </header>
         {handedMissing ? (
@@ -240,68 +259,34 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
           <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No listed expiries in the snapshot store for this name.</p>
         ) : (
           <div className="grid [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
-            {expiries.map((e) => {
-              const f = fitByExpiry.get(e)
-              const c = chains.get(e) ?? []
-              const cd = f?.dte ?? Math.max(1, Math.round((Date.parse(e) - Date.parse(today)) / 86_400_000))
-              const iv = f?.atm_vol ?? null
-              const st = spot != null ? straddleMid(c, spot) : null
-              const mv = spot != null && iv != null ? sigmaMove(spot, iv, cd) : null
-              const t = oiTotals(c)
-              const on = e === expiry
-              const ivMax = Math.max(1e-6, ...expiries.map((x) => fitByExpiry.get(x)?.atm_vol ?? 0))
-              return (
-                <button
-                  key={e}
-                  type="button"
-                  onClick={() => {
-                    setUserExpiry(e)
-                    setSel(null)
-                  }}
-                  className={cn(
-                    'flex cursor-pointer flex-col gap-1.5 border-r border-border/60 px-3 py-2.5 text-left last:border-r-0 hover:bg-[var(--sk-surface)]',
-                    on && 'bg-[rgb(var(--sk-accent-rgb)/0.06)] shadow-[inset_0_-2px_0_var(--sk-ticker)]'
-                  )}
-                >
-                  <span className="flex items-baseline gap-1.5">
-                    <span className={cn(mono, 'text-dense-body font-bold', on ? 'text-[var(--sk-ticker)]' : 'text-foreground')}>
-                      {e.slice(5)}
-                    </span>
-                    <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>{cd}d</span>
-                  </span>
-                  <span className="flex items-baseline gap-1.5">
-                    <span className={cn(mono, 'text-lg font-semibold')}>{iv != null ? (iv * 100).toFixed(1) : '—'}</span>
-                    <span className={cap}>atm iv</span>
-                  </span>
-                  <span className="relative block h-[5px] overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
-                    {iv != null ? (
-                      <span className="absolute inset-y-0 left-0 bg-warning" style={{ width: `${(iv / ivMax) * 100}%` }} />
-                    ) : null}
-                  </span>
-                  <span className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 text-dense-caption">
-                    <span className={cap}>±1σ</span>
-                    <span className={cn(mono, 'text-right text-secondary-foreground')}>
-                      {mv != null && spot != null ? `${(spot - mv).toFixed(0)}–${(spot + mv).toFixed(0)}` : '—'}
-                    </span>
-                    <span className={cap}>straddle</span>
-                    <span className={cn(mono, 'text-right text-secondary-foreground')}>
-                      {st != null ? st.toFixed(2) : '—'}
-                    </span>
-                    <span className={cap}>oi · p/c</span>
-                    <span className={cn(mono, 'text-right text-secondary-foreground')}>
-                      {t.total > 0 ? `${(t.total / 1000).toFixed(0)}k · ${t.pc != null ? t.pc.toFixed(2) : '—'}` : '—'}
-                    </span>
-                  </span>
-                </button>
-              )
-            })}
+            {expiries.map((e) => (
+              <SymbolExpiryCard
+                key={e}
+                expiry={e}
+                dte={cardDte(e)}
+                iv={fitByExpiry.get(e)?.atm_vol ?? null}
+                ivMax={ivMax}
+                chain={chains.get(e) ?? []}
+                spot={spot}
+                on={e === expiry}
+                earn={expiryEarnings(nextEarnings, cardDte(e))}
+                onPick={() => {
+                  setUserExpiry(e)
+                  setSel(null)
+                }}
+              />
+            ))}
           </div>
         )}
         <p className={note}>
           ATM IV is the fit&rsquo;s own per expiry; the straddle and open interest are the
-          chain&rsquo;s. An earnings badge needs the forward date no store carries — unmeasured,
-          not omitted.
+          chain&rsquo;s. E marks an expiry the next print falls inside; amber bars are those expiries.
         </p>
+        {!earnQ.isLoading && !loading && expiries.length > 0 ? (
+          <p className={note}>
+            {termEarningsNote(nextEarnings, expiries.map((e) => ({ label: e.slice(5), dte: cardDte(e) })), earnQ.data?.filings)}
+          </p>
+        ) : null}
       </section>
 
       <section className={panel}>

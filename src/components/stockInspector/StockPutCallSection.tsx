@@ -124,7 +124,7 @@ export function StockPutCallSection({
                   </div>
                   <div className={styles.pcrKpi}>
                     <span className={styles.pcrKpiLabel}>5D Avg OI</span>
-                    <span className={cn(styles.pcrKpiVal, 'text-foreground')}>
+                    <span className={cn(styles.pcrKpiVal, styles.pcrKpiValBaseline)}>
                       {fmtRatio(data.avg_oi_5d)}
                     </span>
                   </div>

@@ -572,6 +572,10 @@
   color: var(--color-link, var(--primary));
 }
 
+.pcrKpiValBaseline {
+  color: var(--foreground);
+}
+
 .kvGrid {
   display: grid;
   grid-template-columns: auto 1fr;

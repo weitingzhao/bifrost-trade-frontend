@@ -16,16 +16,20 @@ import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useVrpHistory } from '@/hooks/useVrpData'
-import { useResiduals, useTermStructure, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
+import { useAtmIvTerm, useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
+import { daysTo } from '@/utils/optionTicker'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { SkewSurfaceChart, TermCurveChart } from '@/pages/research/analyze/symbol/symbolVolCharts'
 import { termEarningsLegend, termEarningsMark, termEarningsNote } from '@/utils/earningsEstimate'
 
 const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+/** The term panel's window, in calendar days to expiry. */
+const TERM_MIN_DTE = 5
+const TERM_MAX_DTE = 100
 const mono = 'font-mono tabular-nums'
 const panel =
   'min-w-0 border mat-card'
@@ -90,7 +94,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   const exQ = useExhibitComposite(['iv_rank', 'vrp', 'term_slope', 'skew'], sym)
   const exOf = (id: string) => exQ.data?.find((e) => e.lens === id || e.lens_id === id)
   const vrpQ = useVrpHistory(sym, 252)
-  const termQ = useTermStructure(sym)
+  const termQ = useAtmIvTerm(sym)
   const fitQ = useVolSurfaceFit(sym)
 
   // ── IV rank readings, off the vrp store's own year ──
@@ -143,20 +147,17 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
     return bins.map((n, i) => ({ h: (n / maxN) * 100, on: i === curIdx }))
   }, [year, last?.vrp_60d])
 
-  // ── Term structure: the fitted ATM IV per expiry ──
-  const term = useMemo(
-    () =>
-      (termQ.data ?? [])
-        .filter((p) => p.dte != null && p.atm_vol != null && p.expiry != null)
-        .slice(0, 6)
-        .map((p) => ({
-          expiry: p.expiry as string,
-          label: (p.expiry as string).slice(5),
-          dte: p.dte as number,
-          iv: (p.atm_vol as number) * 100,
-        })),
-    [termQ.data]
-  )
+  // ── Term structure: the repaired ATM IV store per expiry ──
+  // Not the SVI fit's atm_vol: a deep-wing fit pulls the near expiries off
+  // (AAPL 10-16 read 17.4 between 40.8 and 31.7 on 2026-09-25). Days count
+  // from today, as the earnings estimate's do; the window is the design's
+  // 9–100 days, widened to 5 so the first weekly past a few days shows.
+  const term = useMemo(() => {
+    const asOf = todayIso()
+    return (termQ.data?.term ?? [])
+      .map((p) => ({ expiry: p.expiry, label: p.expiry.slice(5), dte: daysTo(p.expiry, asOf) ?? 0, iv: p.atm_iv * 100 }))
+      .filter((p) => p.dte >= TERM_MIN_DTE && p.dte <= TERM_MAX_DTE)
+  }, [termQ.data])
   const termMax = Math.max(1, ...term.map((t) => t.iv))
 
   // ── Earnings on the term curve: Research's estimate of the next print ──
@@ -361,18 +362,25 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         <header className={panelHead}>
           <span className={cap}>Term structure</span>
           <span className="text-dense-body font-semibold">ATM IV by expiry</span>
-          <span className="ml-auto text-dense-caption text-muted-foreground">source · vol-surface fit</span>
+          <span
+            className="ml-auto text-dense-caption text-muted-foreground"
+            title="features.option_metric_atm_iv_daily — strikes within ±10% of spot, two contracts an expiry, the store the IV history rests on"
+          >
+            source · ATM IV store · {termQ.data?.trade_date ?? '—'}
+          </span>
         </header>
         <LensVerdictBlock lensId="term_slope" exhibit={exOf('term_slope')} />
         {term.length === 0 ? (
-          <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No fitted expiries for this name.</p>
+          <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
+            The ATM IV store holds no expiry {TERM_MIN_DTE}–{TERM_MAX_DTE} days out for this name.
+          </p>
         ) : (
           <>
             <div className="pt-2.5">
               <TermCurveChart
                 points={term.map((t) => ({ dte: t.dte, iv: t.iv }))}
                 rv={rvLine}
-                selDte={fitRow?.dte ?? null}
+                selDte={term.find((t) => t.expiry === fitRow?.expiry)?.dte ?? null}
                 event={earnMark}
               />
             </div>
@@ -435,8 +443,9 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         )}
         <p className={note}>
           Front expiries carry more IV than the back in backwardation — an event or a squeeze is
-          priced in. The lime row is the tenor the Skew panel is reading. The design&rsquo;s 1y
-          cone needs a per-horizon history no store keeps yet — owed, not faked.
+          priced in. ATM IV is the repaired store&rsquo;s per expiry, not the SVI fit&rsquo;s, whose
+          near expiries the wings can pull off. The lime row is the tenor the Skew panel is reading.
+          The design&rsquo;s 1y cone needs a per-horizon history no store keeps yet — owed, not faked.
         </p>
         {!earnQ.isLoading && term.length > 0 ? (
           <p className={note}>{termEarningsNote(nextEarnings, term, earnQ.data?.filings)}</p>

@@ -319,7 +319,10 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + 'The gap is the design\u2019s \u201cterm structure\u2019s event premium\u201d: the variance the expiry after the print holds over the one before, (\u03c3_after\u00b2 \u2212 \u03c3_before\u00b2) \u00d7 T_after, as an expected absolute move (\u00d7 \u221a(2/\u03c0)); the prototype\u2019s 8% was a placeholder. '
     + 'It reads the repaired ATM IV store (`/analytics/options/atm-iv/term`), not the SVI fit\u2019s atm_vol \u2014 the fit\u2019s near expiries are pulled off by the deep wings (AAPL 10-16 read 17.4 between 40.8 and 31.7), and on the store every name checked kinks exactly at its estimate '
     + '(PLTR 46.5\u219257.5 across 2 Nov, TSLA 39.2\u219243.7 across 21 Oct, AAPL 21.0\u219224.9, AMD 53.1\u219259.0, NVDA 31.6\u219236.2). Measured gaps: PLTR \u00b19.0%, NVDA \u00b15.5%, TSLA \u00b14.2%, AAPL \u00b13.2%. '
-    + 'The note says the marks hold IV, so the crush after the print is not in the T+ column; a print past the chosen expiry says so and points to the Chain face. The term chart on the Volatility face still draws the fit\u2019s atm_vol.',
+    + 'The note says the marks hold IV, so the crush after the print is not in the T+ column; a print past the chosen expiry says so and points to the Chain face.'
+    + ' VOLATILITY FACE TERM CHART, same day (Owner): now the same ATM IV store, expiries 5\u2013100 days out (the design\u2019s 9\u2013100, widened so the first weekly shows; the fit\u2019s first six covered two weeks for a name with weeklies), '
+    + 'days counted from today as the estimate\u2019s are, and the lime row matched by expiry date rather than the fit\u2019s day count. On 2026-09-25 the curves step at the estimated print instead of zig-zagging \u2014 AAPL 21.0\u219224.9 across 29 Oct, where the fit read 44.4, 27.9, 29.3, 40.8, 17.4 over the first five weeklies. '
+    + 'The Skew panel and the Vol Regime page\u2019s skew section still read the fit, as they should: the smile is the fit\u2019s job.',
   '/research/scan':
     'Walked 2026-09-21 against Research Scan.dc.html (Rev 2026-09-20.10) — the option side of '
     + 'Stock ratings, and deliberately the same page twice. What stood here printed the weights '

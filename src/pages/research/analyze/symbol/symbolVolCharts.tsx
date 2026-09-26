@@ -1,7 +1,8 @@
 /**
  * The Volatility face's two drawings (design `Research Symbol.dc.html`,
- * §isVol): the ATM term curve with realised vol at each horizon, and the
- * skew smile with both sides drawn against the raw-SVI fit.
+ * §isVol): the ATM term curve (the repaired ATM IV store, not the fit) with
+ * realised vol at each horizon, and the skew smile with both sides drawn
+ * against the raw-SVI fit.
  *
  * Only what a store answers is drawn. The term panel's 1y cone needs a
  * per-horizon history no store keeps, and stays in the panel's footer as owed.

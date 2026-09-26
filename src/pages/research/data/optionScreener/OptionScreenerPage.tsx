@@ -26,8 +26,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Download } from 'lucide-react'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
-import { PageHeader, PageShell } from '@/components/layout'
-import { Button } from '@/components/ui/button'
+import { PageHead, PageHeadAction, PageShell } from '@/components/layout'
 import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
 import { STORAGE_KEYS } from '@/constants/storage'
 import { usePageViewState } from '@/lib/pageView'
@@ -184,35 +183,28 @@ export default function OptionScreenerPage() {
   const structureLabel = STRUCTURE_LABEL[structure] ?? structure
 
   return (
-    <PageShell className="space-y-3">
-      <PageHeader
+    <PageShell padding="compact" className="space-y-3">
+      {/* §16.10: the lead behind ⓘ; export, save-as-rule and Ask Copilot as
+          the head's actions. */}
+      <PageHead
         title="Option screen"
-        description={LEDE}
+        info={LEDE}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 text-dense-meta"
+          <>
+            <PageHeadAction
               disabled={pass === 0}
               title={pass === 0 ? 'Nothing passes, so there is nothing to export' : `Export the ${pass} passing rows`}
               onClick={() => exportScreenerCsv(groups, structure)}
             >
-              <Download className="size-3.5" />
-              Export CSV
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 text-dense-meta"
+              <Download className="size-3.5" aria-hidden /> Export CSV
+            </PageHeadAction>
+            <PageHeadAction
               disabled={symbols.length === 0}
               title="Turns these names and this structure into an Opportunity in Trade › Rules — the daemon then screens daily"
               onClick={() => setSaveOpen(true)}
             >
               Save as rule →
-            </Button>
+            </PageHeadAction>
             <AskCopilotButton
               originPage="screener"
               originLabel="Option screen"
@@ -220,14 +212,16 @@ export default function OptionScreenerPage() {
               snapshot={compactSnapshot({ structure_type: structure, names: symbols.length, pass })}
               suggestedPrompt="Interpret these option screener results and flag contracts worth a closer look."
             />
-          </div>
+          </>
         }
       />
 
       <OptionScreenerFunnel cells={funnel} />
 
       <div className="flex flex-wrap items-start gap-3">
-        <aside className="flex min-w-[280px] flex-[0_1_320px] flex-col gap-2.5">
+        {/* Rev .93: the rail grows to the whole row once it wraps; beside the
+            contracts (flex 999) it keeps its width. */}
+        <aside className="flex min-w-[280px] flex-[1_1_320px] flex-col gap-2.5">
           <OptionScreenerSources
             sources={sources}
             activeId={sourceId}

@@ -15,13 +15,13 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
@@ -49,16 +49,17 @@ const SINCE: { value: string; label: string; days: number | null }[] = [
   { value: 'all', label: 'All', days: null },
 ]
 
-/** The footnote bar under a panel — the same raised2 strip Backing's basis row sits on. */
+/** The footnote under a panel — a rule, not a band (Rev .62). */
 const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+  'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 // The tag is a state, not a direction: it takes the lamp four-state, never the
 // P&L green (§14.7 — the same hex on both would make one read as the other).
 const EXIT_TONE: Record<string, string> = {
   expired: 'border-lamp-green/45 text-lamp-green',
-  closed_early: 'border-[var(--color-entity-option)]/45 text-[var(--color-entity-option)]',
-  assigned: 'border-[var(--color-entity-instance)]/45 text-[var(--color-entity-instance)]',
+  // §14.8 (Rev .88): an exit is a state, so it never borrows an entity's hue.
+  closed_early: 'text-[var(--sk-soft)]',
+  assigned: 'text-[var(--sk-soft)]',
   unknown: 'border-border text-muted-foreground',
 }
 
@@ -81,6 +82,7 @@ export default function OutcomePage() {
   const [since, setSince] = useState('q')
   const [account, setAccount] = useState('all')
   const [picked, setPicked] = useState<number | null>(null)
+  const preview = usePreviewState()
 
   const executions = useMemo(() => execQuery.data?.items ?? [], [execQuery.data?.items])
   const closed = useMemo(
@@ -109,58 +111,79 @@ export default function OutcomePage() {
   const pick: OutcomeInstance | null = rows.find((r) => r.instanceId === picked) ?? rows[0] ?? null
   const maxExit = Math.max(1, ...exits.map((e) => Math.abs(e.realised)))
 
-  const loading = execQuery.isLoading || oppQuery.isLoading
-  const error = execQuery.error ?? oppQuery.error
+  // §17.1: the executions are what an outcome is read from.
+  const pageState = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(execQuery)
+  const retry = () => {
+    void execQuery.refetch()
+    void oppQuery.refetch()
+  }
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Outcome">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Outcome</p>}
+        {/* §16.10: the lead behind ⓘ, the closed count and its total as meta,
+            the window and the account in the toolbar. */}
+        <PageHead
           title="Outcome"
-          titleSize="large"
-          description={PAGE_LEAD}
-          actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              <SegmentControl
-                size="xs"
-                ariaLabel="Closed since"
-                value={since}
-                onChange={setSince}
-                options={SINCE.map((s) => ({ value: s.value, label: s.label }))}
-              />
-              {accounts.length > 1 ? (
-                <SegmentControl
-                  size="xs"
-                  ariaLabel="Account"
-                  value={account}
-                  onChange={setAccount}
-                  options={[{ value: 'all', label: 'All' }, ...accounts.map((a) => ({ value: a, label: a }))]}
-                />
-              ) : null}
-              <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                {rows.length} closed · <Money v={total} />
-              </span>
+          info={PAGE_LEAD}
+          meta={
+            <span className={positionsUi.mono}>
+              {rows.length} closed · <Money v={total} />
             </span>
           }
         />
+        <div data-sr-toolbar="">
+          <span data-sr-tb="label">Closed since</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Closed since"
+            value={since}
+            onChange={setSince}
+            options={SINCE.map((s) => ({ value: s.value, label: s.label }))}
+          />
+          {accounts.length > 1 ? (
+            <>
+              <span data-sr-tb="sep" />
+              <span data-sr-tb="label">Account</span>
+              <SegmentControl
+                size="xs"
+                ariaLabel="Account"
+                value={account}
+                onChange={setAccount}
+                options={[{ value: 'all', label: 'All' }, ...accounts.map((a) => ({ value: a, label: a }))]}
+              />
+            </>
+          ) : null}
+        </div>
 
-        {error ? <QueryErrorAlert error={error} onRetry={() => void execQuery.refetch()} /> : null}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-32 w-full rounded-md" />
-            <Skeleton className="h-48 w-full rounded-md" />
-          </div>
+        {pageState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh executions"
+            detail={staleDetail(execQuery, 'closes since then are not shown.')}
+            onAction={retry}
+          />
+        ) : null}
+        {pageState === 'loading' || (pageState === 'ready' && oppQuery.isLoading) ? (
+          <section className={positionsUi.panel}>
+            <ViewState kind="loading" title="Loading outcomes" rows={6} cols={6} />
+          </section>
+        ) : pageState === 'failed' ? (
+          <section className={positionsUi.panel}>
+            <ViewState
+              kind="failed"
+              title="Couldn’t load executions"
+              detail={failedDetail(execQuery, 'No idea was traced — this is not an empty record.')}
+              onAction={retry}
+            />
+          </section>
         ) : (
           <>
-            <PositionsTier
-              label="Where the ideas came from"
-              note="two cuts only — the play and the structure are Review’s"
-            />
+            <SectionHead note="Two cuts only — the play and the structure are Review’s.">Where the ideas came from</SectionHead>
             <section className={positionsUi.panel} aria-label="Where the ideas came from">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>Cut by</span>
-                <span className="inline-flex h-5.5 items-center rounded-[5px] border border-primary px-2 text-dense-meta font-semibold text-primary">
+                {/* The cut in force is the accent (Rev .86). */}
+                <span className="inline-flex h-5.5 items-center rounded-[8px] bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] px-2 text-dense-meta font-semibold text-primary">
                   Source
                 </span>
                 <span
@@ -212,7 +235,7 @@ export default function OutcomePage() {
                     </thead>
                     <tbody>
                       {groups.map((g) => (
-                        <tr key={g.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                        <tr key={g.key} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
                           <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')}>
                             <span className="flex flex-col gap-px">
                               <span className="text-xs leading-normal font-semibold text-foreground">{g.name}</span>
@@ -253,7 +276,7 @@ export default function OutcomePage() {
               </div>
             </section>
 
-            <PositionsTier label="Plan vs actual" note="how they ended is the book’s; what the plan said is not stored yet" />
+            <SectionHead note="How they ended is the book’s; what the plan said is not stored yet.">Plan vs actual</SectionHead>
             <div className={positionsUi.bandGrid}>
               <section className={positionsUi.panel} aria-label="How they ended">
                 <header className={positionsUi.panelHead}>
@@ -271,7 +294,7 @@ export default function OutcomePage() {
                     <span className={cn(positionsUi.mono, 'w-8.5 text-dense-meta text-muted-foreground')}>
                       {e.n > 0 ? e.n : '—'}
                     </span>
-                    <span className="h-1.75 min-w-15 flex-[1_1_6rem] overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+                    <span className="h-1.75 min-w-15 flex-[1_1_6rem] overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                       <span
                         className={cn('block h-full', e.realised < 0 ? 'bg-loss/60' : 'bg-profit/60')}
                         style={{ width: `${Math.round((Math.abs(e.realised) / maxExit) * 100)}%` }}
@@ -337,7 +360,7 @@ export default function OutcomePage() {
               </section>
             </div>
 
-            <PositionsTier label="The chain" note="idea → plan → fills → close · click a row to trace it" />
+            <SectionHead note="Idea → plan → fills → close · click a row to trace it.">The chain</SectionHead>
             <section className={positionsUi.panel} aria-label="The chain">
               <div className="overflow-x-auto">
                 {/* §14.6: eight columns, the design's 1000 floor. */}
@@ -371,8 +394,8 @@ export default function OutcomePage() {
                         className={cn(
                           'cursor-pointer',
                           pick?.instanceId === r.instanceId
-                            ? '[&>td]:bg-[var(--sk-surface)]'
-                            : 'hover:[&>td]:bg-[var(--sk-raised2)]',
+                            ? '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
+                            : 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
                         )}
                         onClick={() => setPicked(r.instanceId)}
                         title="Trace this one below"
@@ -380,7 +403,7 @@ export default function OutcomePage() {
                         <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-instance)]')}>
                           #{r.instanceId}
                         </td>
-                        <td className={cn(positionsUi.td, 'text-left font-bold text-[var(--color-entity-option)]')}>
+                        <td className={cn(positionsUi.td, 'text-left font-bold text-entity-symbol')}>
                           {r.symbols.join(' ') || '—'}
                         </td>
                         <td
@@ -423,7 +446,7 @@ export default function OutcomePage() {
                       <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-[var(--color-entity-instance)]')}>
                         #{pick.instanceId}
                       </span>
-                      <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-[var(--color-entity-option)]')}>
+                      <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-entity-symbol')}>
                         {pick.symbols.join(' ')}
                       </span>
                       <span className="ml-auto">
@@ -533,7 +556,6 @@ export default function OutcomePage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

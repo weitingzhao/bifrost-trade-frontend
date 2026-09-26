@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import type { SummaryTypeKey } from '@/utils/transferPay'
 import { KIND_BLURB, KIND_NAMES, KIND_RULE, type TransactionKind } from '@/utils/transactionKind'
 import { transferPayUi } from './transferPayUi'
+import { SectionHead } from '@/components/layout'
 
 const ALL_TYPES: SummaryTypeKey[] = ['deposit', 'withdrawal', 'dividend', 'other']
 
@@ -112,13 +113,7 @@ export function TransferPayLookingAt({
 
   return (
     <>
-      <div className={transferPayUi.tierRow}>
-        <span className={transferPayUi.tierLabel}>What I am looking at</span>
-        <span className={transferPayUi.tierRule} />
-        <span className={transferPayUi.tierNote}>
-          every chip carries its count — the distribution is the finding
-        </span>
-      </div>
+      <SectionHead note="Every chip carries its count — the distribution is the finding.">What I am looking at</SectionHead>
 
       <div className={transferPayUi.panel}>
         <div className={transferPayUi.chipRow}>

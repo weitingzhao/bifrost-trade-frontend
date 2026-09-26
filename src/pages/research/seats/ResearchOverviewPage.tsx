@@ -19,12 +19,12 @@
  * 2026-09-14, so a chooser chose nothing). What the stores cannot say yet
  * stays grey and says why — see `OverviewPanels`.
  */
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { useQuery } from '@tanstack/react-query'
 import { BookOpen, Inbox } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { fetchObjectiveRuns } from '@/api/research/harness'
 import { fetchOrchestrationStatus } from '@/api/research/orchestration'
 import { useCandidates } from '@/hooks/useCandidates'
@@ -40,7 +40,6 @@ import { operatorOf, sourceOperatorOf } from '@/lib/research/operatorOf'
 import { objectiveLeash } from '@/pages/research/loop/leash'
 import { LoopOverviewStrip } from '@/pages/research/home/LoopOverviewStrip'
 import { PipelineCensusFace } from '@/pages/research/seats/PipelineCensusFace'
-import { SegmentControl } from '@/components/data-display'
 import {
   BookPanel,
   DialStrip,
@@ -388,41 +387,35 @@ export default function ResearchOverviewPage() {
   const face = pathname === CENSUS_PATH ? 'census' : 'loop'
 
   return (
-    <PageShell padding="default" className="min-w-0 space-y-3">
-      <PageHeader
+    <PageShell padding="compact" className="min-w-0 space-y-3">
+      {/* §16.10: the lead behind ⓘ; the design's two faces are the head's
+          tabs — the face is the route, so it is bookmarkable and the sidebar's
+          alias lights it; the Blueprint and the Inbox are the doors. */}
+      <PageHead
         title="Research"
-        description={DESCRIPTION}
+        info={DESCRIPTION}
+        tabs={[
+          { value: 'loop', label: 'The loop', title: 'What this layer is: the circuit, the dial, today.' },
+          { value: 'census', label: 'Pipeline census', title: 'What its stations produced — every store on one scale.' },
+        ]}
+        tab={face}
+        onTab={(v) => navigate(v === 'census' ? CENSUS_PATH : OVERVIEW_PATH)}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {/* The design's two-segment switch. The face is the route, so it
-                is bookmarkable, it is what the sidebar's alias lights, and a
-                link written to the census still lands on the census. */}
-            <SegmentControl
-              size="xs"
-              ariaLabel="Research face"
-              value={face}
-              onChange={(v) => navigate(v === 'census' ? CENSUS_PATH : OVERVIEW_PATH)}
-              options={[
-                { value: 'loop', label: 'The loop', title: 'What this layer is: the circuit, the dial, today.' },
-                { value: 'census', label: 'Pipeline census', title: 'What its stations produced — every store on one scale.' },
-              ]}
-            />
-            <Link
+          <>
+            <PageHeadLink
               to="/docs/research-blueprint"
-              className="inline-flex items-center gap-1.5 border px-2.5 py-1 text-dense-meta text-muted-foreground hover:text-foreground mat-btn"
               title="What Research should be — the target the code is calibrated against. The design's own strategic text (Research Vision) ships in the design package."
             >
-              <BookOpen className="size-3.5" aria-hidden />
-              Blueprint
-            </Link>
-            <Link
+              <BookOpen className="size-3.5" aria-hidden /> Blueprint
+            </PageHeadLink>
+            <PageHeadLink
               to="/research/loop/decisions"
-              className="inline-flex items-center gap-1.5 rounded-md border border-warning/40 px-2.5 py-1 text-dense-meta text-warning hover:bg-warning/10"
+              title="Calls the loop could not make on its own"
+              ink={inboxN > 0 ? 'var(--sk-warn)' : undefined}
             >
-              <Inbox className="size-3.5" aria-hidden />
-              Inbox · {inboxN} waiting
-            </Link>
-          </div>
+              <Inbox className="size-3.5" aria-hidden /> Inbox · {inboxN} waiting
+            </PageHeadLink>
+          </>
         }
       />
 

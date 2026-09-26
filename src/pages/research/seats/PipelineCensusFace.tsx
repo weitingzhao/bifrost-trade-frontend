@@ -33,7 +33,7 @@ export function PipelineCensusFace() {
           rail state. The prototype's own ruling is that this home is not
           redesigned — what changed is around it. */}
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border px-3 py-2 mat-card">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Context
         </span>
         <span className="inline-flex items-center gap-1.5 border px-2 py-0.5 text-dense-meta mat-tag">

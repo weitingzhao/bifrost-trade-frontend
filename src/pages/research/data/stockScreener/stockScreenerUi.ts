@@ -28,10 +28,10 @@ export const screenerCardStackedClass = 'px-2 py-1.5'
 export const screenerCardStackedChipRowClass = 'max-h-[72px] overflow-y-auto'
 
 export const screenerCardTitleClass =
-  'm-0 text-dense-caption font-medium uppercase tracking-[0.04em] text-muted-foreground'
+  'm-0 text-dense-meta font-semibold text-muted-foreground'
 
 export const screenerGroupHeaderClass =
-  'mb-0.5 border-b border-border/70 pb-0.5 text-dense-micro font-medium uppercase tracking-[0.04em] text-muted-foreground'
+  'mb-0.5 border-b border-border/70 pb-0.5 text-dense-meta font-semibold text-muted-foreground'
 
 export const screenerChipRowClass = 'flex flex-wrap gap-0.5'
 

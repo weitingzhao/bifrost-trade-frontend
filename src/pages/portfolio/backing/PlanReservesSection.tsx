@@ -15,7 +15,7 @@ export function PlanReservesSection() {
       data-testid="plan-reserves"
     >
       <header className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Reserved, not yet used
         </span>
         <span className="text-dense-body font-semibold">plans holding space</span>

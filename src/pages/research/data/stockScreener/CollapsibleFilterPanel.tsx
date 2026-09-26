@@ -52,7 +52,7 @@ export function CollapsibleFilterPanel({
           <SlidersHorizontal className="h-3 w-3 shrink-0 text-muted-foreground/50" />
 
           <span className={cn(
-            'text-dense-caption font-medium uppercase tracking-wider',
+            'text-dense-meta font-semibold',
             isTech ? 'text-violet-700/80 dark:text-violet-300/80' : 'text-emerald-700/80 dark:text-emerald-300/80',
           )}>
             {label}

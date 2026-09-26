@@ -1,35 +1,34 @@
 /**
- * The funnel strip — four cells above everything, as the design places it.
+ * The funnel — four heroes above everything, as the design places it (§16.2;
+ * four go 2 × 2 under 860px of row, Rev .93).
  *
- * `screenerModel.ts` decides what they say; this draws them. Tone is
- * the whole visual argument: a stage that emptied is the one the reader is
- * looking for, so it is the one that is loud.
+ * `screenerModel.ts` decides what they say; this draws them. Tone is the
+ * whole visual argument: a stage that emptied is the one the reader is looking
+ * for, so it is the loud one — amber on the edge and the figure, not red:
+ * nothing failed, the filters left nothing (Rev .93).
  */
-import { cn } from '@/lib/utils'
+import { HeroCard, HeroRow } from '@/components/layout'
 import type { FunnelCell } from './screenerModel'
 
 const TONE: Record<FunnelCell['tone'], string> = {
   ok: 'text-foreground',
   warn: 'text-warning',
-  dead: 'text-danger',
+  dead: 'text-warning',
 }
 
 export function OptionScreenerFunnel({ cells }: { cells: readonly FunnelCell[] }) {
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-4">
+    <HeroRow label="The funnel">
       {cells.map((c) => (
-        <div key={c.label} className="bg-secondary/40 px-3 py-2">
-          <div className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            {c.label}
-          </div>
-          <div
-            className={cn('mt-0.5 font-mono text-lg font-semibold tabular-nums', TONE[c.tone])}
-          >
-            {c.value}
-          </div>
-          <div className="text-dense-caption leading-relaxed text-muted-foreground">{c.note}</div>
-        </div>
+        <HeroCard
+          key={c.label}
+          label={c.label}
+          value={c.value}
+          valueClassName={TONE[c.tone]}
+          state={c.tone === 'ok' ? null : 'warn'}
+          sub={c.note}
+        />
       ))}
-    </div>
+    </HeroRow>
   )
 }

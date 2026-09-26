@@ -13,6 +13,8 @@ export interface PayoffCurve {
   key: string
   /** Tailwind stroke class — one of the page's series tokens. */
   stroke: string
+  /** The series' dash, so the curves read apart without colour. */
+  dash?: string
   /** P&L at expiry for the whole chosen size, or null where a leg is unpriced. */
   at: (price: number) => number | null
 }
@@ -80,6 +82,7 @@ export function ComparePayoff({
           fill="none"
           className={c.stroke}
           strokeWidth={1.8}
+          strokeDasharray={c.dash}
         />
       ))}
       {ticks.map((t) => (

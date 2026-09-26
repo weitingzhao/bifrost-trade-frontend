@@ -14,7 +14,7 @@
 import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PageFaceSwitch, PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { PageFaceSwitch, PageHead, PageShell, SectionPanel } from '@/components/layout'
 import { HistoryCorrelation } from './HistoryCorrelation'
 import { HistoryEarnings } from './HistoryEarnings'
 import { printMarks } from './earningsText'
@@ -77,35 +77,28 @@ export default function HistoryPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 max-w-[84ch] flex-[1_1_28rem]">
-          <PageHeader
-            breadcrumb={<p className="text-xs font-medium text-primary/90">Research · Analyze</p>}
-            title={
-              <span className="inline-flex items-baseline gap-3">
-                History
-                {sym ? (
-                  // The name is its own destination: its Symbol page.
-                  <Link
-                    to={withSymbolParam(SYMBOL_PATH, sym)}
-                    className="font-mono text-dense-body font-bold text-entity-symbol hover:underline"
-                  >
-                    {sym}
-                  </Link>
-                ) : null}
-              </span>
-            }
-            description="What today's numbers look like against their own past."
-          />
-        </div>
-        <span className="ml-auto mt-1 flex flex-none flex-wrap items-center gap-2.5">
-          <PageFaceSwitch path={PATH} />
-          <SegmentControl size="xs" ariaLabel="Window" value={win} onChange={setWin} options={WINDOW_OPTIONS} />
-          {/* The design's second way to the method face, live since it was
-              built (2026-09-24) — the ⧉ switch beside the header is the first. */}
+      {/* §16.10: the lead behind ⓘ; the name, the face switch and the window
+          are the toolbar, the method face its meta door. */}
+      <PageHead title="History" info="What today's numbers look like against their own past." />
+      <div data-sr-toolbar="">
+        {sym ? (
+          // The name is its own destination: its Symbol page.
+          <Link
+            to={withSymbolParam(SYMBOL_PATH, sym)}
+            className="font-mono text-dense-body font-bold text-entity-symbol hover:underline"
+          >
+            {sym}
+          </Link>
+        ) : null}
+        <PageFaceSwitch path={PATH} />
+        <span data-sr-tb="label">Window</span>
+        <SegmentControl size="xs" ariaLabel="Window" value={win} onChange={setWin} options={WINDOW_OPTIONS} />
+        {/* The design's second way to the method face, live since it was
+            built (2026-09-24) — the ⧉ switch is the first. */}
+        <span data-sr-tb="meta">
           <Link
             to="/research/lab/history"
-            className="whitespace-nowrap font-mono text-dense-meta text-primary hover:underline"
+            className="font-mono text-primary hover:underline"
             title="The Method face — window, estimator, percentile definition — with this reading held fixed."
           >
             Method → window · estimator
@@ -163,7 +156,9 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
         title={
           <span className="font-mono tabular-nums">
             IV30 {volPts(reading.iv30)} · RV20 {volPts(reading.rv20)} · VRP{' '}
-            <span className={cn(reading.vrp20 != null && reading.vrp20 > 0 ? 'text-success' : reading.vrp20 != null && reading.vrp20 < 0 ? 'text-danger' : '')}>
+            {/* A spread between two vols is not a gain (Rev .93): ink when IV
+                sits over RV, amber when it sits under — the unusual side. */}
+            <span className={cn(reading.vrp20 != null && reading.vrp20 < 0 ? 'text-warning' : '')}>
               {signedVolPts(reading.vrp20)}
             </span>
           </span>

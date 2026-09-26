@@ -33,8 +33,7 @@
  */
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { PageHeader, PageShell } from '@/components/layout'
-import { SegmentControl } from '@/components/data-display'
+import { HeroCard, HeroRow, PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { cn } from '@/lib/utils'
 import { fmtUsd } from '@/utils/positions'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -48,28 +47,6 @@ const FACES = [
   { value: 'book', label: 'Book legs' },
   { value: 'chain', label: 'Chain calculator' },
 ]
-
-function Stat({
-  cap,
-  value,
-  ink,
-  sub,
-}: {
-  cap: string
-  value: string
-  ink?: string
-  sub?: string
-}) {
-  return (
-    <div className="flex min-w-[96px] flex-col gap-0.5">
-      <span className="text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-        {cap}
-      </span>
-      <span className={cn('font-mono text-base font-bold tabular-nums', ink)}>{value}</span>
-      {sub ? <span className="text-dense-caption text-muted-foreground">{sub}</span> : null}
-    </div>
-  )
-}
 
 function BookFace() {
   // Read once: DTE must not change under the reader between renders.
@@ -96,51 +73,60 @@ function BookFace() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-start gap-x-7 gap-y-3 border px-3.5 py-2.5 mat-card">
-        <Stat
-          cap="Contracts"
-          value={String(contracts)}
-          sub={
-            b.filtered
-              ? `${priced} priced · netted from ${b.rawLegCount} book ${b.rawLegCount === 1 ? 'leg' : 'legs'}`
-              : `${priced} priced · ${holdings} holdings`
-          }
-        />
-        <Stat
-          cap="Δ · options only"
+      {/* §16.2 (Rev .86): the four greeks as heroes; Contracts and Marks —
+          what the figures rest on — stay in the strip under them. Δ is an
+          exposure, so it reads in ink; Θ is carry, in the direction inks. */}
+      <HeroRow label="The book's greeks">
+        <HeroCard
+          label="Δ · options only"
           value={priced > 0 ? fmtUsd(t.delta, true) : '—'}
-          ink={pnlColorClass(t.delta)}
+          valueClassName={priced > 0 ? 'text-foreground' : 'text-muted-foreground'}
           sub="shares-equivalent, not β-weighted"
         />
-        <Stat
-          cap="Γ · per point"
+        <HeroCard
+          label="Γ · per point"
           value={priced > 0 ? fmtUsd(t.gamma, true) : '—'}
-          ink={t.gamma < 0 ? 'text-warning' : undefined}
+          valueClassName={priced > 0 && t.gamma < 0 ? 'text-warning' : priced > 0 ? 'text-foreground' : 'text-muted-foreground'}
           sub={t.gamma < 0 ? 'short gamma' : 'long gamma'}
         />
-        <Stat cap="Vega · per vol pt" value={priced > 0 ? fmtUsd(t.vega, true) : '—'} />
-        <Stat
-          cap="Θ · per day"
-          value={priced > 0 ? fmtUsd(t.theta, true) : '—'}
-          ink={pnlColorClass(t.theta)}
+        <HeroCard
+          label="Vega · per vol pt"
+          value={priced > 0 ? fmtUsd(t.vega, true) : '—'}
+          valueClassName={priced > 0 ? 'text-foreground' : 'text-muted-foreground'}
         />
-        <div className="ml-auto flex min-w-[180px] flex-col gap-0.5">
-          <span className="text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            Marks
+        <HeroCard
+          label="Θ · per day"
+          value={priced > 0 ? fmtUsd(t.theta, true) : '—'}
+          valueClassName={priced > 0 ? pnlColorClass(t.theta) : 'text-muted-foreground'}
+        />
+      </HeroRow>
+      <div data-sr-kpi="strip">
+        <span data-sr-kpi="stat">
+          <span data-sr-kpi-l="">Contracts</span>
+          <span data-sr-kpi-v="" className="text-foreground">
+            {contracts}
           </span>
+          <span data-sr-kpi-s="">
+            {b.filtered
+              ? `${priced} priced · netted from ${b.rawLegCount} book ${b.rawLegCount === 1 ? 'leg' : 'legs'}`
+              : `${priced} priced · ${holdings} holdings`}
+          </span>
+        </span>
+        <span data-sr-kpi="stat" className="min-w-[180px]">
+          <span data-sr-kpi-l="">Marks</span>
           <span
             className={cn(
-              'text-dense-caption leading-relaxed',
+              'text-dense-meta leading-relaxed',
               b.marks.tone === 'warn' ? 'text-warning' : 'text-muted-foreground',
             )}
           >
             {b.isLoading ? 'reading the chains…' : b.marks.text}
           </span>
-          <span className="text-dense-caption text-muted-foreground">
+          <span data-sr-kpi-s="">
             spot {b.spotMix.live} live · {b.spotMix.close} close · {b.spotMix.mark} broker mark
             {b.spotMix.none > 0 ? ` · ${b.spotMix.none} unpriced` : ''}
           </span>
-        </div>
+        </span>
       </div>
 
       {b.isError ? (
@@ -206,19 +192,16 @@ export default function GreeksPage() {
   const [face, setFace] = useState<Face>('book')
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
+      {/* §16.10: the lead behind ⓘ, the two faces as the head's tabs, the
+          aggregates in Risk as its door. */}
+      <PageHead
         title="Contract Greeks"
-        description="Every option leg in the book, greek by greek — the per-leg detail behind Risk › Exposure's aggregates."
-        actions={
-          <Link
-            to="/risk/portfolio"
-            className="text-dense-meta text-muted-foreground hover:text-foreground"
-          >
-            Aggregates in Risk →
-          </Link>
-        }
+        info="Every option leg in the book, greek by greek — the per-leg detail behind Risk › Exposure's aggregates."
+        tabs={FACES}
+        tab={face}
+        onTab={(v) => setFace(v as Face)}
+        actions={<PageHeadLink to="/risk/portfolio">Aggregates in Risk →</PageHeadLink>}
       />
-      <SegmentControl value={face} onChange={(v) => setFace(v as Face)} options={FACES} />
       {face === 'book' ? <BookFace /> : <ChainCalculatorFace />}
     </PageShell>
   )

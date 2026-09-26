@@ -35,13 +35,13 @@ function Bar({
       {owed ? (
         <span className="truncate text-dense-micro text-muted-foreground/70">{owed}</span>
       ) : (
-        <span className="relative block h-[7px] overflow-hidden rounded-sm bg-secondary">
+        <span className="relative block h-[7px] overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
           <span
             className={cn(
               'absolute inset-y-0 left-0',
-              // The binding cap wears the ticker's lime, the design's own rule;
-              // the others recede to the hairline grey.
-              binding ? 'bg-[var(--sk-ticker)]' : 'bg-[var(--sk-line2,var(--border))]'
+              // The binding cap is a threshold mark — amber (Rev .87), never the
+              // ticker's lime; the others recede to the hairline grey.
+              binding ? 'bg-warning' : 'bg-[var(--sk-line2,var(--border))]'
             )}
             style={{ width: `${n == null ? 0 : Math.min(100, (n / Math.max(1, max)) * 100)}%` }}
           />

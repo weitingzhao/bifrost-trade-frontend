@@ -11,8 +11,8 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
+import { HeroCard, HeroRow } from '@/components/layout'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsStat } from '@/components/positions/PositionsStat'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { backingAssumptionRows } from '@/utils/backingAssumptions'
 import type { BackingJudgment } from '@/utils/backingJudgment'
@@ -35,40 +35,46 @@ export function BackingVerdictPanel({
   const unknown = rows.filter((r) => r.unknown)
 
   return (
-    <section className={positionsUi.panel} aria-label="Backing verdict" data-testid="backing-judgment-strip">
-      <div className="flex flex-wrap items-end gap-x-7.5 gap-y-3 px-3.5 py-2.5">
-        <PositionsStat
-          cap="Backing pool"
+    <div className="space-y-2.5" data-testid="backing-judgment-strip">
+      {/* §16.2 (Rev .86): the four figures leave the panel for a hero row
+          above it. Space under gate is a figure, not the active thing — ink,
+          not the accent. */}
+      <HeroRow label="Backing verdict">
+        <HeroCard
+          label="Backing pool"
           value={empty ? '—' : fmtMvAbbrev(judgment.pool)}
           sub="priced stocks + cash/SGOV + income ETFs"
         />
-        <PositionsStat
-          cap="Used"
+        <HeroCard
+          label="Used"
           value={empty ? '—' : fmtMvAbbrev(judgment.used)}
+          valueClassName={judgment.overGate ? 'text-warning' : undefined}
+          state={judgment.overGate ? 'warn' : null}
           sub={`${sharePct(judgment.usedPct)} of pool · calls and puts`}
-          ink={judgment.overGate ? 'text-warning' : undefined}
         />
-        <PositionsStat
-          cap="Gate · 85%"
+        <HeroCard
+          label="Gate · 85%"
           value={empty ? '—' : fmtMvAbbrev(judgment.gate)}
           sub="House auto-derisk line · Rules does not read it yet"
         />
-        <PositionsStat
-          cap="Space under gate"
+        <HeroCard
+          label="Space under gate"
           value={empty ? '—' : fmtMvAbbrev(judgment.spendable)}
           sub="headroom under the 85% house line"
-          ink="text-primary"
         />
-        <p className="m-0 ml-auto max-w-75 text-dense-meta leading-normal text-muted-foreground text-pretty">
-          Two different house lines. The 85% gate is pool usage; the pressure ceiling on{' '}
-          <a href="#room" className={positionsUi.link}>
-            Room to add
-          </a>{' '}
-          (default 50% of 1 − Cushion) is the broker&rsquo;s Cushion. Neither is the other.
-        </p>
-      </div>
+      </HeroRow>
+    <section className={positionsUi.panel} aria-label="Backing verdict">
+      {/* The two house lines stay on screen (§16.3's exception): read without
+          it, the 85% and the pressure ceiling look like one number. */}
+      <p className="m-0 px-3.5 py-2 text-xs leading-normal text-muted-foreground text-pretty">
+        Two different house lines. The 85% gate is pool usage; the pressure ceiling on{' '}
+        <a href="#room" className={positionsUi.link}>
+          Room to add
+        </a>{' '}
+        (default 50% of 1 − Cushion) is the broker&rsquo;s Cushion. Neither is the other.
+      </p>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-3 py-1.5">
         <button
           type="button"
           className={positionsUi.btn}
@@ -110,5 +116,6 @@ export function BackingVerdictPanel({
         </div>
       ) : null}
     </section>
+    </div>
   )
 }

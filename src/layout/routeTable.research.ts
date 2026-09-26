@@ -40,8 +40,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Research',
     crumbs: [],
     design: {
-      state: 'aligned',
-      rev: '2026-09-23.24',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.87',
       note: DESIGN_NOTES['/research/overview'],
     },
   },
@@ -249,8 +250,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Vol ratings',
     crumbs: DISCOVER,
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.10',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.87',
       note: DESIGN_NOTES['/research/scan'],
     },
   },
@@ -283,8 +285,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-23.24',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.87',
       note: DESIGN_NOTES['/research/compare'],
     },
   },
@@ -296,8 +299,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.87',
       note: DESIGN_NOTES['/research/history'],
     },
   },
@@ -487,8 +491,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // Signed at .20.10; Rev .43 added four narrative conditions to the
     // Catalyst stage, built 2026-09-25 and waiting for a look.
     design: {
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.43',
+      rev: '2026-09-25.87',
       note: DESIGN_NOTES['/research/screener'],
     },
   },
@@ -504,8 +509,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Option screen',
     crumbs: DISCOVER,
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.10',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.93',
       note: DESIGN_NOTES['/research/contract-screener'],
     },
   },
@@ -525,8 +531,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Contract Greeks',
     crumbs: RISK_EXPOSURE,
     design: {
-      state: 'aligned',
-      rev: '2026-09-23.3',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.86',
       note: DESIGN_NOTES['/research/greeks'],
     },
   },

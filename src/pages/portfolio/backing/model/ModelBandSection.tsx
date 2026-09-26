@@ -69,10 +69,11 @@ export function ModelBandSection({
   return (
     <section className={modelBandSectionClass} aria-label="Model" data-testid="model-band">
       <header className={modelBandHeaderClass}>
-        <h2 className={modelBandTitleClass}>
-          Model
+        {/* The section's h2 above says "Model" (Rev .86); the band keeps only
+            the ⓘ that explains how it is modelled, not a second title. */}
+        <span className={modelBandTitleClass}>
           <InfoTooltip text={MODEL_ANALYSIS_INFO} />
-        </h2>
+        </span>
         <span className={modelAnalysisHypotheticalBadgeClass} title="Hypothetical — not actual performance">
           ⚠ Hypothetical
         </span>

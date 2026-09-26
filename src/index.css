@@ -194,6 +194,11 @@
     --sk-warn: #a16207;
     --sk-on-accent: #ffffff;
     --sk-pastel: 55%;
+    /* The series violet (Compare's third structure, Performance 1b's pastel):
+       the design's #c4b5fd, deepened toward the ink on paper by --sk-pastel.
+       Defined once — .dark sits on the same element, so it resolves with the
+       dark ink and a 0% pastel there. */
+    --sk-series-violet: color-mix(in oklch, #c4b5fd, var(--sk-ink) var(--sk-pastel));
     --sk-accent2: #5b21b6;
     --sk-accent-rgb: 109 40 217;
 

@@ -17,6 +17,7 @@ import { fmtUsdRound } from '@/lib/format'
 import type { PctChange, SummaryMode, SummaryTypeKey } from '@/utils/transferPay'
 import { TransferPayChangeVsPrev } from './TransferPayChangeVsPrev'
 import { transferPayUi } from './transferPayUi'
+import { SectionHead } from '@/components/layout'
 
 type Props = {
   summaryMode: SummaryMode
@@ -66,13 +67,7 @@ export function TransferPaySummaryTable({
 }: Props) {
   return (
     <div className={denseTable.sectionBlock}>
-      <div className={transferPayUi.tierRow}>
-        <span className={transferPayUi.tierLabel}>Summary by period</span>
-        <span className={transferPayUi.tierRule} />
-        <span className={transferPayUi.tierNote}>
-          the whole range, deliberately ignoring the type filter above
-        </span>
-      </div>
+      <SectionHead note="The whole range, deliberately ignoring the type filter above.">Summary by period</SectionHead>
       <div className={transferPayUi.summaryHead}>
         <h3 className={transferPayUi.summaryTitle}>
           Cash by period and account

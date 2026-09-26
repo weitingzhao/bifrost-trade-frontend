@@ -26,11 +26,7 @@ export const transferPayUi = {
   section: 'mt-1',
   sectionHint: denseTable.emptyHint,
 
-  /** Section band: a label, a rule to the horizon, and one line of intent. */
-  tierRow: 'mt-2 flex items-center gap-2.5',
-  tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
-  tierRule: 'h-px flex-1 bg-border',
-  tierNote: 'text-dense-meta text-muted-foreground',
+  // Section headings are `SectionHead` h2s since Rev .86 (the tier caps retired).
 
   panel: 'border mat-card',
   chipRow: 'flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2',
@@ -41,7 +37,7 @@ export const transferPayUi = {
     'text-xs font-semibold transition-colors',
   ),
   chipOn: 'border-primary/55 bg-primary/[0.12] text-primary',
-  chipOff: 'border-border bg-secondary/60 text-muted-foreground hover:text-foreground',
+  chipOff: 'bg-[var(--mat-btn-fill)] text-muted-foreground hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
   chipCount: 'font-mono text-dense-meta font-normal opacity-80',
   iconToggle: cn(
     'inline-flex h-5 w-5 items-center justify-center rounded-full border border-border',
@@ -50,10 +46,8 @@ export const transferPayUi = {
   kindPanel: 'flex flex-col gap-1.5 px-0 pb-2',
   kindProse: 'm-0 px-3 text-dense-meta text-muted-foreground',
   kindRule: 'm-0 px-3 font-mono text-dense-meta text-muted-foreground/80',
-  panelFoot: cn(
-    'flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border',
-    'bg-secondary/40 px-3 py-1.5 text-dense-body text-muted-foreground',
-  ),
+  // Rev .62: a foot is a rule, not a band.
+  panelFoot: 'flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-border px-3 py-1.5 text-dense-body text-muted-foreground',
   netBlock: 'ml-auto inline-flex items-baseline gap-1.5',
   netValue: 'font-mono text-sm font-bold',
   netDash: 'font-mono text-sm font-bold text-muted-foreground',
@@ -81,10 +75,7 @@ export const transferPayUi = {
   changeHint: 'block text-dense-meta leading-snug text-muted-foreground',
 
   downstreamPanel: 'border mat-card',
-  downstreamHead: cn(
-    'flex flex-wrap items-baseline gap-2 border-b border-border',
-    'bg-secondary/40 px-3 py-1.5',
-  ),
+  downstreamHead: 'flex flex-wrap items-baseline gap-2 border-b border-border px-3 py-1.5',
   downstreamCap: ledgerFilterLabelClass,
   downstreamTitle: 'text-sm font-semibold text-foreground',
   downstreamBody: 'flex flex-col gap-2 px-3 py-2.5',

@@ -36,7 +36,7 @@ function Kpi({ label, value, accent }: { label: string; value: string | number; 
       <span className={cn('font-mono text-dense-label font-semibold tabular-nums leading-tight', accent ?? 'text-foreground')}>
         {value}
       </span>
-      <span className="text-dense-micro text-muted-foreground uppercase tracking-wider leading-tight">
+      <span className="text-dense-meta font-semibold text-muted-foreground leading-tight">
         {label}
       </span>
     </div>
@@ -321,7 +321,7 @@ export function SepaHeroCard({
             isTech ? 'bg-violet-400' : 'bg-emerald-400',
           )} />
           <span className={cn(
-            'text-dense-caption font-medium uppercase tracking-wider',
+            'text-dense-meta font-semibold',
             isTech ? 'text-screener-tech' : 'text-screener-fund',
           )}>
             {isTech ? 'Technical' : 'Fundamental'}
@@ -353,15 +353,15 @@ export function SepaHeroCard({
               <div className="h-5 w-px bg-border/30" />
               <Kpi label={`All ${suffix}`} value={kpis.allPass.toLocaleString()} accent="text-screener-tech" />
               <div className="h-5 w-px bg-border/30" />
-              <Kpi label="≥ 8" value={kpis.strong.toLocaleString()} accent="text-violet-700 dark:text-violet-300" />
+              <Kpi label="≥ 8" value={kpis.strong.toLocaleString()} accent="text-foreground" />
               <div className="h-5 w-px bg-border/30" />
               <Kpi
                 label="Breadth"
                 value={kpis.breadthPct != null ? `${kpis.breadthPct}%` : '—'}
                 accent={
                   kpis.breadthPct != null
-                    ? kpis.breadthPct >= 60 ? 'text-emerald-700 dark:text-emerald-400'
-                      : kpis.breadthPct >= 40 ? 'text-[var(--sk-warn)]' : 'text-red-700 dark:text-red-400'
+                    ? // A share of the universe is a state: ink when broad, amber when thin (never red — nothing failed).
+                      kpis.breadthPct >= 40 ? 'text-foreground' : 'text-[var(--sk-warn)]'
                     : undefined
                 }
               />
@@ -374,12 +374,12 @@ export function SepaHeroCard({
               <Kpi
                 label="With data"
                 value={fkpis.withData.toLocaleString()}
-                accent={fkpis.coverage >= 50 ? 'text-emerald-700 dark:text-emerald-400' : 'text-[var(--sk-warn)]'}
+                accent={fkpis.coverage >= 50 ? 'text-foreground' : 'text-[var(--sk-warn)]'}
               />
               <div className="h-5 w-px bg-border/30" />
               <Kpi label={`All ${suffix}`} value={fkpis.allPass.toLocaleString()} accent="text-screener-fund" />
               <div className="h-5 w-px bg-border/30" />
-              <Kpi label="≥ 6" value={fkpis.strong.toLocaleString()} accent="text-emerald-700 dark:text-emerald-300" />
+              <Kpi label="≥ 6" value={fkpis.strong.toLocaleString()} accent="text-foreground" />
             </>
           )}
         </div>
@@ -389,7 +389,7 @@ export function SepaHeroCard({
       <div className="flex-1 grid grid-cols-[minmax(0,180px)_1fr] divide-x divide-border/20 min-h-0">
         {/* Left: Funnel */}
         <div className="px-2.5 py-2 flex flex-col min-h-0">
-          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground mb-1 shrink-0">
+          <span className="text-dense-meta font-semibold text-muted-foreground mb-1 shrink-0">
             Distribution
           </span>
           {!isTech && fkpis && fkpis.withData > 0 && fkpis.withData < fkpis.universe && (
@@ -428,7 +428,7 @@ export function SepaHeroCard({
         {/* Right: Condition pass rates */}
         <div className="px-2.5 py-2 flex flex-col min-h-0">
           <div className="flex items-baseline justify-between mb-1 shrink-0">
-            <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="text-dense-meta font-semibold text-muted-foreground">
               Pass Rate
             </span>
             <span className="text-dense-micro text-muted-foreground/50">

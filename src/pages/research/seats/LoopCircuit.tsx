@@ -115,7 +115,7 @@ export function LoopCircuit({ cards, machines }: { cards: LoopCard[]; machines: 
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           The loop
         </span>
         <span className="text-dense-body font-semibold">
@@ -149,7 +149,7 @@ export function LoopCircuit({ cards, machines }: { cards: LoopCard[]; machines: 
         </div>
         <div className="flex min-w-0 flex-col gap-1.5 border px-3 py-2 md:col-span-3 mat-card">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="text-dense-meta font-semibold text-muted-foreground">
               The machines
             </span>
             <span className="text-dense-meta text-muted-foreground">

@@ -3,12 +3,12 @@ import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import {
   PageFaceSwitch,
-  PageHeader,
+  PageHead,
   PageShell,
   SectionPanel,
   SECTION_CAP_CLASS,
 } from '@/components/layout'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ViewState } from '@bifrost/ui'
 import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
 import {
   EXT_COND_CATALOG,
@@ -419,9 +419,12 @@ export default function StockScreenerPage() {
 
   return (
     <PageShell className="flex w-full min-w-0 flex-col gap-2">
-      <PageHeader
+      {/* §16.10: the lead behind ⓘ; the face switch and Ask Copilot as the
+          head's actions. The title keeps the prototype's name (an exemption
+          pageTitles.test carries: its ROUTES says Stock screen). */}
+      <PageHead
         title="Screener · Stocks"
-        description="Conditions in, a set out — deterministic and saveable. Pick a universe, stack criteria, watch the count fall. Ranking the survivors is the model’s job."
+        info="Conditions in, a set out — deterministic and saveable. Pick a universe, stack criteria, watch the count fall. Ranking the survivors is the model’s job."
         actions={
           <>
             <PageFaceSwitch path="/research/screener" />
@@ -447,7 +450,13 @@ export default function StockScreenerPage() {
       />
 
       {criteriaError && (
-        <QueryErrorAlert error={criteriaError} onRetry={() => void refetch()} />
+        <ViewState
+          kind="failed"
+          layout="strip"
+          title="Couldn’t load the screen’s criteria"
+          detail={`${criteriaError}. The funnel below counts nothing — not an empty screen.`}
+          onAction={() => void refetch()}
+        />
       )}
 
       {/* ── The design's three columns: universe rail · funnel · results ── */}

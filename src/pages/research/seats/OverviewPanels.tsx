@@ -86,7 +86,7 @@ export function DialStrip({
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Dial</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">Dial</span>
         <span className="text-dense-body font-semibold">How much passes without you</span>
         <span className="text-dense-meta text-muted-foreground">
           one setting for all three operators, by what is being written · earned by record, never set
@@ -140,7 +140,7 @@ export function DialStrip({
       </div>
       {confirm && c ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-warning/40 bg-warning/5 px-3 py-2">
-          <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-warning">
+          <span className="text-dense-meta font-semibold text-warning">
             {c.title}
           </span>
           <span className="min-w-0 flex-1 basis-64 text-dense-meta leading-relaxed text-foreground/85 text-pretty">
@@ -173,7 +173,7 @@ export function DialStrip({
         </div>
       ) : null}
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-border/60 bg-secondary/20 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">to L2</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">to L2</span>
         {earn ? (
           <>
             <span className="text-dense-meta">
@@ -242,7 +242,7 @@ export function OperatorCards({ cards }: { cards: OpCardData[] }) {
           <div className="grid grid-cols-3 gap-2.5">
             {c.cells.map((k) => (
               <div key={k.k} className="min-w-0" title={k.tip}>
-                <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">{k.k}</div>
+                <div className="text-dense-meta font-semibold text-muted-foreground">{k.k}</div>
                 <div className={cn('font-mono text-sm font-semibold tabular-nums', CELL_TONE[k.tone ?? 'default'])}>
                   {k.v}
                 </div>
@@ -288,7 +288,7 @@ export function StationsTable({ rows, footnote }: { rows: StationRow[]; footnote
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Pipeline · today
         </span>
         <span className="text-dense-body font-semibold">Six stations, shared</span>
@@ -332,7 +332,7 @@ export function BookPanel({ rows }: { rows: BookPanelRow[] }) {
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">The Book</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">The Book</span>
         <span className="text-dense-body font-semibold">State — whoever wrote it</span>
         <span className="ml-auto text-dense-meta text-muted-foreground">seat-free · the object layer belongs to all three</span>
       </header>
@@ -403,7 +403,7 @@ export function TodayFeed({ items, asOf }: { items: TodayItem[]; asOf: string })
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Today</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">Today</span>
         <span className="text-dense-body font-semibold">What each operator produced</span>
         <span className="ml-auto text-dense-meta text-muted-foreground">{asOf}</span>
       </header>
@@ -461,7 +461,7 @@ export function HealthPanel({ cells }: { cells: HealthCell[] }) {
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Health</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">Health</span>
         <span className="text-dense-body font-semibold">Engines behind the pages</span>
         <Link to="/research/signal-health" className="ml-auto text-dense-meta text-primary hover:underline">
           Signal Health →

@@ -46,7 +46,10 @@ function AccountToggle({ label, on, onClick }: { label: string; on: boolean; onC
       title={`${on ? 'In scope — click to drop' : 'Out of scope — click to add'} ${label}. Margin follows scope; the two are never mixed.`}
       className={cn(
         'h-5.5 cursor-pointer border-0 px-2.5 text-dense-meta font-semibold',
-        on ? 'bg-[var(--sk-surface)] text-primary' : 'bg-transparent text-muted-foreground hover:text-foreground',
+        // Rev .86: an account in scope is the accent, mixed — not the surface token.
+        on
+          ? 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] text-primary'
+          : 'bg-transparent text-muted-foreground hover:text-foreground',
       )}
     >
       {label}

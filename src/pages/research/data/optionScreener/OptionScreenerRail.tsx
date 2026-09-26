@@ -25,8 +25,8 @@ export function RailPanel({
 }) {
   return (
     <section className="overflow-hidden border mat-card" aria-label={title}>
-      <header className="flex items-baseline gap-2 border-b border-border bg-[var(--sk-raised2)] px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+      <header className="flex items-baseline gap-2 border-b border-border px-3 py-2">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           {step} · {title}
         </span>
         {aside}

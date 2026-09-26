@@ -83,8 +83,8 @@ export function OptionScreenerContracts({
       className="min-w-0 flex-[999_1_600px] overflow-hidden border mat-card"
       aria-label="Contracts"
     >
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-[var(--sk-raised2)] px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-3 py-2">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Contracts
         </span>
         <span className="text-dense-body font-semibold">{pass} pass</span>
@@ -193,7 +193,9 @@ export function OptionScreenerContracts({
                       <DenseTableCell className="pl-6 font-mono">{token}</DenseTableCell>
                       <DenseTableCell className={denseTableNumCell}>{r.dte}</DenseTableCell>
                       <DenseTableCell
-                        className={cn(denseTableNumCell, deltaInBand(r.delta) && 'text-[var(--sk-accent)]')}
+                        // Rev .87: inside the band reads in ink, outside it recedes — a band
+                        // is a rule, never the ticker's lime nor the accent.
+                        className={cn(denseTableNumCell, deltaInBand(r.delta) ? 'text-foreground' : 'text-[var(--sk-mute2)]')}
                       >
                         {r.delta == null ? '—' : r.delta.toFixed(2)}
                       </DenseTableCell>
@@ -269,8 +271,8 @@ export function OptionScreenerContracts({
       )}
 
       <p className="m-0 border-t border-border/60 px-3 py-1.75 text-dense-caption leading-normal text-muted-foreground text-pretty">
-        Ann. ret = premium ÷ cash secured × 365 ÷ DTE. Red spread = wider than your max. Δ lime = inside the
-        structure&rsquo;s target band. &ldquo;Rule&rdquo; is the Opportunity in Trade › Rules that names this
+        Ann. ret = premium ÷ cash secured × 365 ÷ DTE. Red spread = wider than your max. Δ in ink = inside the
+        structure&rsquo;s target band; greyed = outside it. &ldquo;Rule&rdquo; is the Opportunity in Trade › Rules that names this
         underlying; Save as rule → creates one from these filters instead of typing it.
       </p>
     </section>

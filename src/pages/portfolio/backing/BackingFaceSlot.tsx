@@ -96,7 +96,7 @@ export function BackingFaceSlot({
         entry ? (
           <div className="flex min-w-0 flex-col gap-2.5 px-3 pt-2.5 pb-4">
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className={cn(positionsUi.mono, 'text-dense-label font-bold text-[var(--color-entity-option)]')}>
+              <span className={cn(positionsUi.mono, 'text-dense-label font-bold text-entity-symbol')}>
                 {entry.symbol}
               </span>
               <DenseTag variant="warning" size="cell">
@@ -119,7 +119,7 @@ export function BackingFaceSlot({
         symbol ? (
           <div className="flex min-w-0 flex-col gap-2.5 px-3 pt-2.5 pb-4">
             <div className="flex flex-wrap items-baseline gap-2">
-              <span className={cn(positionsUi.mono, 'text-dense-label font-bold text-[var(--color-entity-option)]')}>
+              <span className={cn(positionsUi.mono, 'text-dense-label font-bold text-entity-symbol')}>
                 {symbol.symbol}
               </span>
               {symbol.role ? (

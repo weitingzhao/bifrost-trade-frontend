@@ -11,14 +11,11 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { HeroCard, HeroRow, PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
-import { PositionsStat } from '@/components/positions/PositionsStat'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
@@ -30,6 +27,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getTransactions } from '@/api/trading'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, staleDetail } from '@/lib/viewState'
 import {
   ATTRIBUTION_LINES,
   PNL_UNEXPLAINED_THRESHOLD,
@@ -60,10 +59,11 @@ const READING_LAMP: Record<string, 'yellow' | 'green' | 'gray'> = {
 const HYPOTHESIS_BOARD_PATH = '/research/loop/hypotheses'
 
 const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+  'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 export default function PnlExplainPage() {
   const [timeRange, setTimeRange] = useState<PerformanceTimeRange>('quarter')
+  const preview = usePreviewState()
   // The range ends in the month the reader is in — the same anchor Performance
   // uses, so the two pages ask for the same window.
   const [calendarMonth] = useState(() => {
@@ -129,69 +129,110 @@ export default function PnlExplainPage() {
 
   const loading = bulk.isLoading || canonicalQuery.isLoading
   const error = bulk.error ?? canonicalQuery.error ?? bookQuery.error
+  const hasData = bulk.data != null || canonicalQuery.data != null
+  // §17.1: Performance's bulk read is the figure this page takes apart.
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : loading && !hasData
+        ? 'loading'
+        : error != null
+          ? hasData
+            ? 'stale'
+            : 'failed'
+          : 'ready'
+  const failedQ = { data: null, isPending: false, isError: true, error }
+  const retry = () => {
+    void bulk.refetch()
+    void canonicalQuery.refetch()
+  }
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="P&L Explain">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / P&amp;L Explain</p>}
+        {/* §16.10: the lead behind ⓘ, Performance — which owns the amount — as
+            the head's door, the window in the toolbar. */}
+        <PageHead
           title="P&L Explain"
-          titleSize="large"
-          description={PAGE_LEAD}
+          info={PAGE_LEAD}
           actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              <SegmentControl
-                size="xs"
-                ariaLabel="Window"
-                value={timeRange}
-                onChange={(v) => setTimeRange(v as PerformanceTimeRange)}
-                options={TIME_RANGE_OPTIONS.map((o) => ({ value: o.id, label: o.label }))}
-              />
-              <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                {fmtIsoDateToken(sinceStr)} → {fmtIsoDateToken(untilStr)}
-              </span>
-              <Link to="/portfolio/performance" className={positionsUi.link}>
-                the amount → Performance
-              </Link>
-            </span>
+            <PageHeadLink to="/portfolio/performance" title="The amount itself belongs to Performance">
+              The amount → Performance
+            </PageHeadLink>
           }
         />
+        <div data-sr-toolbar="">
+          <span data-sr-tb="label">Window</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Window"
+            value={timeRange}
+            onChange={(v) => setTimeRange(v as PerformanceTimeRange)}
+            options={TIME_RANGE_OPTIONS.map((o) => ({ value: o.id, label: o.label }))}
+          />
+          <span data-sr-tb="meta">
+            {fmtIsoDateToken(sinceStr)} → {fmtIsoDateToken(untilStr)}
+          </span>
+        </div>
 
-        {error ? <QueryErrorAlert error={error} onRetry={() => void bulk.refetch()} /> : null}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-24 w-full rounded-md" />
-            <Skeleton className="h-48 w-full rounded-md" />
-          </div>
+        {pageState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh performance"
+            detail={staleDetail(failedQ, 'the window reads the last copy.')}
+            onAction={retry}
+          />
+        ) : null}
+        {pageState === 'loading' ? (
+          <section className={positionsUi.panel}>
+            <ViewState kind="loading" title="Loading the window" rows={6} cols={6} />
+          </section>
+        ) : pageState === 'failed' ? (
+          <section className={positionsUi.panel}>
+            <ViewState
+              kind="failed"
+              title="Couldn’t load performance"
+              detail={failedDetail(failedQ, 'Nothing was taken apart — this is not a window that ties out.')}
+              onAction={retry}
+            />
+          </section>
         ) : (
           <>
-            <PositionsTier
-              label="Does it tie out"
-              note="one number, one source — Performance is the source"
-            />
-            <section className={positionsUi.panel} aria-label="Does it tie out">
-              <div className="flex flex-wrap items-stretch gap-x-0 gap-y-2.5 px-3.5 py-2.5">
-                <PositionsStat
-                  cap="Window P&L · book"
+            <SectionHead note="One number, one source — Performance is the source.">Does it tie out</SectionHead>
+            {/* §16.2 (Rev .86): the four figures as heroes; the Ties / Off
+                reading stays beside them. */}
+            <div className="flex flex-wrap items-start gap-2.5">
+              <HeroRow label="Does it tie out" className="min-w-0 flex-1">
+                <HeroCard
+                  label="Window P&L · book"
                   value={fmtSignedUsd0(windowPnl)}
+                  valueClassName={pnlColorClass(windowPnl)}
                   sub="Performance’s own figure, taken apart here"
-                  ink={pnlColorClass(windowPnl)}
                 />
-                <span className="pl-4">
-                  <PositionsStat cap="Explained · Δ Γ vega θ" value="—" sub="the four attributions, summed" />
-                </span>
-                <span className="pl-4">
-                  <PositionsStat cap="Unexplained" value="—" sub="defined as the difference — so it needs the four" />
-                </span>
-                <span className="pl-4">
-                  <PositionsStat cap="Leads that carry an amount" value={fmtSignedUsd0(total.amount)} sub={`${total.withAmount} with a figure · ${total.countOnly} a count only`} />
-                </span>
-                <span className="ml-auto flex items-center pl-4">
-                  <DenseTag variant="warning" size="cell">
-                    ⚠ the difference is not taken
-                  </DenseTag>
-                </span>
-              </div>
+                <HeroCard
+                  label="Explained · Δ Γ vega θ"
+                  value="—"
+                  valueClassName="text-muted-foreground"
+                  sub="the four attributions, summed"
+                  title={PNL_UNRECORDED.snapshot}
+                />
+                <HeroCard
+                  label="Unexplained"
+                  value="—"
+                  valueClassName="text-muted-foreground"
+                  sub="defined as the difference — so it needs the four"
+                />
+                <HeroCard
+                  label="Leads that carry an amount"
+                  value={fmtSignedUsd0(total.amount)}
+                  valueClassName={pnlColorClass(total.amount)}
+                  sub={`${total.withAmount} with a figure · ${total.countOnly} a count only`}
+                />
+              </HeroRow>
+              <DenseTag variant="warning" size="cell" className="mt-3">
+                ⚠ the difference is not taken
+              </DenseTag>
+            </div>
+            <section className={positionsUi.panel} aria-label="Does it tie out">
               <p className={cn(FOOT, 'm-0')}>
                 <span className={positionsUi.mono}>Window P&amp;L = Δ + Γ + vega + θ + Unexplained.</span> Performance
                 owns the amount — FIFO realized plus unrealized — and this page only takes it apart; Performance is the
@@ -200,10 +241,7 @@ export default function PnlExplainPage() {
               </p>
             </section>
 
-            <PositionsTier
-              label="Unexplained"
-              note="available today — this half needs no Greeks, only the daily marks"
-            />
+            <SectionHead note="Available today — this half needs no Greeks, only the daily marks.">Unexplained</SectionHead>
             <section className={positionsUi.panel} aria-label="What nothing accounts for">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>What nothing accounts for</span>
@@ -246,7 +284,7 @@ export default function PnlExplainPage() {
                     </thead>
                     <tbody>
                       {leads.map((l) => (
-                        <tr key={l.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                        <tr key={l.key} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
                           <td
                             className={cn(
                               positionsUi.td,
@@ -302,7 +340,7 @@ export default function PnlExplainPage() {
               </div>
             </section>
 
-            <PositionsTier label="Attribution" note={PNL_UNRECORDED.snapshot} />
+            <SectionHead note={PNL_UNRECORDED.snapshot}>Attribution</SectionHead>
             <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Attribution">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>{TIME_RANGE_OPTIONS.find((o) => o.id === timeRange)?.label}</span>
@@ -467,7 +505,6 @@ export default function PnlExplainPage() {
             </section>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

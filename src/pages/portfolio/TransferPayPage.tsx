@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { HelpCircle, RefreshCw } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageHeadAction, PageShell } from '@/components/layout'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import {
   Select,
   SelectContent,
@@ -44,10 +44,7 @@ import {
   rangeLabelOf,
   selectRows,
 } from '@/pages/portfolio/transferPay/transferPaySelection'
-import {
-  transferPayPageCardClass,
-  transferPayUi,
-} from '@/pages/portfolio/transferPay/transferPayUi'
+import { transferPayUi } from '@/pages/portfolio/transferPay/transferPayUi'
 
 const PAGE_LEAD =
   'Cash that crossed the account boundary. A record of what already happened — this page starts nothing.'
@@ -71,11 +68,13 @@ export default function TransferPayPage() {
   const { sinceTs, untilTs } = getRangeForPreset(rangePreset)
   const rangeLabel = rangeLabelOf(rangePreset, RANGE_PRESET_OPTIONS)
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const preview = usePreviewState()
+  const txQuery = useQuery({
     queryKey: [...QUERY_KEYS.trading.transactions, rangePreset],
     queryFn: () => getTransactions({ since_ts: sinceTs, until_ts: untilTs, limit: 500 }),
   })
 
+  const { data, isLoading, refetch } = txQuery
   const transactions = useMemo<AccountTransaction[]>(() => data?.transactions ?? [], [data])
 
   const fetchMutation = useMutation({
@@ -218,6 +217,9 @@ export default function TransferPayPage() {
     setPage(1)
   }
 
+  // §17.1: the transactions read is the page's one source.
+  const pageState = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(txQuery)
+
   const fetchOk =
     fetchMsg != null && (fetchMsg.startsWith('Fetched') || fetchMsg.includes('Upserted'))
 
@@ -230,68 +232,53 @@ export default function TransferPayPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className={transferPayPageCardClass}>
-        <div className={transferPayUi.headerRow}>
-          <PageHeader
-            breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Transfer & Pay</p>}
-            title={
-              <span className="inline-flex items-center gap-1.5">
-                Transfer & Pay
-                <button
-                  type="button"
-                  className={transferPayUi.iconToggle}
-                  aria-expanded={whatOpen}
-                  title="What this page is for"
-                  aria-label="What this page is for"
-                  onClick={() => setWhatOpen(o => !o)}
-                >
-                  <HelpCircle className="h-3.5 w-3.5" />
-                </button>
-              </span>
-            }
-            titleSize="large"
-          />
-          <div className={transferPayUi.headerActions}>
-            <fieldset className={transferPayUi.rangeField} aria-label="IB Flex fetch range">
-              <span className={transferPayUi.rangeLegend}>Range</span>
-              <Select
-                value={rangePreset}
-                onValueChange={v => {
-                  setRangePreset(v as RangePreset)
-                  setPage(1)
+        {/* §16.10: the lead behind ⓘ, the page's own "what is this for" and
+            the IB Flex fetch as head actions; the fetch range is the toolbar. */}
+        <PageHead
+          title="Transfer & Pay"
+          info={PAGE_LEAD}
+          actions={
+            <>
+              <PageHeadAction onClick={() => setWhatOpen((o) => !o)} title="What this page is for">
+                <HelpCircle className="size-3.5" aria-label="What this page is for" />
+              </PageHeadAction>
+              <PageHeadAction
+                onClick={() => {
+                  setFetchMsg(null)
+                  setFetchWhen(null)
+                  fetchMutation.mutate()
                 }}
+                disabled={fetchMutation.isPending}
+                title={`Pulls cash transactions from IB Flex for ${rangeLabel.toLowerCase()} and writes them to account_transactions. It fetches; it never moves money.`}
               >
-                <SelectTrigger className="h-8 min-w-[12.5rem] text-xs" aria-label="IB Flex date range for fetch">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {RANGE_PRESET_OPTIONS.map(o => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </fieldset>
-            <Button
-              size="sm"
-              className="h-8 gap-1.5"
-              disabled={fetchMutation.isPending}
-              onClick={() => {
-                setFetchMsg(null)
-                setFetchWhen(null)
-                fetchMutation.mutate()
-              }}
-              aria-busy={fetchMutation.isPending}
-              title={`Pulls cash transactions from IB Flex for ${rangeLabel.toLowerCase()} and writes them to account_transactions. It fetches; it never moves money.`}
-            >
-              <RefreshCw className={cn('h-3.5 w-3.5', fetchMutation.isPending && 'animate-spin')} />
-              {fetchMutation.isPending ? 'Fetching…' : 'Fetch from IB'}
-            </Button>
-          </div>
+                <RefreshCw className={cn('size-3.5', fetchMutation.isPending && 'animate-spin')} aria-hidden />
+                {fetchMutation.isPending ? ' Fetching…' : ' Fetch from IB'}
+              </PageHeadAction>
+            </>
+          }
+        />
+        <div data-sr-toolbar="">
+          <span data-sr-tb="label">Range</span>
+          <Select
+            value={rangePreset}
+            onValueChange={(v) => {
+              setRangePreset(v as RangePreset)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="h-7 min-w-[12.5rem] text-xs" aria-label="IB Flex date range for fetch">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RANGE_PRESET_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span data-sr-tb="meta">{rangeLabel} · reads account_transactions</span>
         </div>
-
-        <p className={transferPayUi.headerLead}>{PAGE_LEAD}</p>
 
         {whatOpen && <TransferPayWhatPanel onClose={() => setWhatOpen(false)} />}
 
@@ -310,13 +297,28 @@ export default function TransferPayPage() {
           </div>
         )}
 
-        {error != null && <QueryErrorAlert error={error} onRetry={() => void refetch()} />}
+        {pageState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh transactions"
+            detail={staleDetail(txQuery, 'transfers since then are not shown.')}
+            onAction={() => void refetch()}
+          />
+        ) : null}
 
         <section className={transferPayUi.section} aria-label="Cash transactions">
-          {isLoading ? (
-            <div className="space-y-2 py-4">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-48 w-full rounded-lg" />
+          {pageState === 'loading' ? (
+            <div className={transferPayUi.panel}>
+              <ViewState kind="loading" title="Loading transactions" rows={6} cols={6} />
+            </div>
+          ) : pageState === 'failed' ? (
+            <div className={transferPayUi.panel}>
+              <ViewState
+                kind="failed"
+                title="Couldn’t load transactions"
+                detail={failedDetail(txQuery, 'No transfer was read — this is not a quiet account.')}
+                onAction={() => void refetch()}
+              />
             </div>
           ) : (
             <div className="space-y-2">
@@ -375,7 +377,6 @@ export default function TransferPayPage() {
         <section className={transferPayUi.section} aria-label="Downstream readers">
           <TransferPayDownstream />
         </section>
-      </div>
     </PageShell>
   )
 }

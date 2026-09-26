@@ -176,8 +176,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'P&L Explain',
     crumbs: PORTFOLIO,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.86',
       note: DESIGN_NOTES['/portfolio/pnl-explain'],
     },
   },
@@ -187,8 +188,9 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: PORTFOLIO,
     symbolScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.86',
       note: DESIGN_NOTES['/portfolio/backing'],
     },
   },
@@ -197,8 +199,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Outcome',
     crumbs: PORTFOLIO,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.86',
       note: DESIGN_NOTES['/portfolio/outcome'],
     },
   },
@@ -339,8 +342,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Stress & Scenario',
     crumbs: RISK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.86',
       note: DESIGN_NOTES['/risk/stress'],
     },
   },
@@ -372,8 +376,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Transfer & Pay',
     crumbs: PORTFOLIO,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.86',
       note: DESIGN_NOTES['/portfolio/transfer'],
     },
   },

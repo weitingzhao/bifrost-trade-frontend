@@ -160,8 +160,9 @@ describe('the design walk, by revision', () => {
     // 52 → 45 with J1 (Rev .82–.83): seven signed pages rebuilt and waiting
     // for a look; Risk, Performance and Symbol were already in `reviewing`.
     // 45 → 35 with J2 (Rev .84–.85): ten more; Limits and Margin were
-    // already there.
-    expect(counts.byState.stale).toBe(35)
+    // already there. 35 → 24 with J3 (Rev .86–.87): eleven more; Stock screen
+    // was already in `reviewing`.
+    expect(counts.byState.stale).toBe(24)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

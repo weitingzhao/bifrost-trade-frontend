@@ -79,7 +79,7 @@ function PremiumLadder({ tiers, upTo, max }: { tiers: Tier[]; upTo: number; max:
       aria-valuemin={0}
       aria-valuemax={Math.round(max)}
       aria-valuenow={Math.round(cumulative)}
-      className="flex h-2 w-full overflow-hidden rounded-sm bg-[var(--sk-surface)]"
+      className="flex h-2 w-full overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]"
       data-testid={`ladder-${tiers[upTo].id}`}
     >
       {shown.map((t) =>
@@ -102,7 +102,7 @@ function PressureAfter({ label, pressure }: { label: string; pressure: number | 
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={pct}
-      className="relative block h-1 w-full rounded-sm bg-[var(--sk-surface)]"
+      className="relative block h-1 w-full rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]"
     >
       {pressure != null ? (
         <span

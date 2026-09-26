@@ -75,7 +75,7 @@ export function BookLegsPanel({
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Legs
         </span>
         <span className="text-dense-body font-semibold">grouped by expiry · nearest first</span>
@@ -105,7 +105,7 @@ export function BookLegsPanel({
                   colSpan={COLS}
                   label={
                     <span className="inline-flex items-baseline gap-2">
-                      <span className="uppercase tracking-[0.08em]">{g.label}</span>
+                      <span>{g.label}</span>
                       <span className="font-mono font-normal text-muted-foreground">
                         · {g.rows.length} {g.rows.length === 1 ? 'contract' : 'contracts'}
                       </span>

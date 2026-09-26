@@ -9,7 +9,7 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Link, useSearchParams } from 'react-router-dom'
-import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { PageHead, PageShell, SectionPanel } from '@/components/layout'
 import { EmptyState, SegmentControl } from '@/components/data-display'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
@@ -52,19 +52,17 @@ export default function ComparePage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
-        breadcrumb={<p className="text-xs font-medium text-primary/90">Research · Analyze</p>}
-        title={
-          <span className="inline-flex items-baseline gap-3">
-            Compare
-            {sym ? (
-              <Link to={withSymbolParam(SYMBOL_PATH, sym)} className="font-mono text-dense-body font-bold text-entity-symbol hover:underline">
-                {sym}
-              </Link>
-            ) : null}
-          </span>
+      {/* §16.10: the lead behind ⓘ, the name — its own destination — as meta. */}
+      <PageHead
+        title="Compare"
+        info="One view, the structures your rules allow — sized by the smallest cap that could be computed. Everything lands as a Plan."
+        meta={
+          sym ? (
+            <Link to={withSymbolParam(SYMBOL_PATH, sym)} className="font-mono font-bold text-entity-symbol hover:underline">
+              {sym}
+            </Link>
+          ) : undefined
         }
-        description="One view, the structures your rules allow — sized by the smallest cap that could be computed. Everything lands as a Plan."
       />
       <SymbolContextGuard symbol={sym} description="Compare expresses one view on one name. Pick a symbol, then come back here.">
         <CompareBody sym={sym} typed={typed} set={set} />
@@ -125,6 +123,7 @@ function CompareBody({
     .map((r) => ({
       key: String(r.id),
       stroke: r.series.stroke,
+      dash: r.series.dash,
       at: (price: number) => {
         const v = r.placement?.ok && data.spot != null ? payoffAt(r.placement, data.spot, price) : null
         return v == null ? null : v * (sizeOf(r) ?? 0)

@@ -170,7 +170,9 @@ export function VrpTimeSeriesChart({
             width={chart.chartW}
             y={chart.yScale(band.hi)}
             height={Math.max(0, chart.yScale(band.lo) - chart.yScale(band.hi))}
-            className="fill-primary/10"
+            // Rev .87: a range band is ink, not the accent — the accent went
+            // violet and turned every band purple.
+            className="fill-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]"
           >
             <title>{band.label}</title>
           </rect>

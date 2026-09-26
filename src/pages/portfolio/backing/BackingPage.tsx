@@ -19,10 +19,9 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { usePositionsScope } from '@/hooks/usePositionsScope'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { cn } from '@/lib/utils'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EmptyState } from '@/components/data-display'
 import { PositionsOpenControls } from '@/components/positions/PositionsOpenControls'
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
@@ -44,7 +43,6 @@ import { ModelBandSection } from './model/ModelBandSection'
 import { useModelBand } from './model/useModelBand'
 import { BackingVerdictPanel } from './BackingVerdictPanel'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
 import { BookFetchMarker } from '@/components/positions/BookFetchMarker'
 import { PlanReservesSection } from './PlanReservesSection'
 import { BackingFaceSlot, type BackingFace, type SymbolFace } from './BackingFaceSlot'
@@ -200,14 +198,17 @@ export default function BackingPage() {
   // The header and the model band render whatever the book is doing: the band
   // reads none of it, and #model has to exist while the book loads or fails.
   const backingBody = book.isLoading ? (
-    <div className="space-y-3">
-      <Skeleton className="h-48 rounded-lg" />
-      <Skeleton className="h-64 rounded-lg" />
-    </div>
+    <section className={positionsUi.panel}>
+      <ViewState kind="loading" title="Loading the book" rows={8} cols={6} />
+    </section>
   ) : book.isError ? (
-    <Alert variant="destructive">
-      <AlertDescription>{(book.error as Error).message}</AlertDescription>
-    </Alert>
+    <section className={positionsUi.panel}>
+      <ViewState
+        kind="failed"
+        title="Couldn’t load the book"
+        detail={`${(book.error as Error)?.message ?? 'The monitor did not answer'}. Nothing below was evaluated — not an empty book.`}
+      />
+    </section>
   ) : !book.showOpenPositionsPanel ? (
     <EmptyState
       title="No open positions"
@@ -236,13 +237,10 @@ export default function BackingPage() {
         />
       ) : (
         <>
-          <PositionsTier label="Verdict" note="one glance, then the model that produced it" />
+          <SectionHead note="One glance, then the model that produced it.">Verdict</SectionHead>
           <BackingVerdictPanel judgment={judgment} pressureCeiling={ceiling} />
 
-          <PositionsTier
-            label="Book against the base"
-            note="same two gauges as the Positions cockpit — one computation, read twice"
-          />
+          <SectionHead note="Same two gauges as the Positions cockpit — one computation, read twice.">Book against the base</SectionHead>
           <div className={positionsUi.bandGrid}>
             <div className="grid min-w-0 grid-cols-1 gap-3">
               <BookVsBaseCockpit
@@ -292,10 +290,7 @@ export default function BackingPage() {
             </section>
           </div>
 
-          <PositionsTier
-            label="Room to add"
-            note="page estimates from the book’s own numbers, not the broker’s what-if"
-          />
+          <SectionHead note="Page estimates from the book’s own numbers, not the broker’s what-if.">Room to add</SectionHead>
           <div id={BACKING_ANCHOR_ID.room}>
             <RoomToAddSection
               room={room}
@@ -304,16 +299,13 @@ export default function BackingPage() {
               onLevelChange={setLevel}
             />
           </div>
-          <PositionsTier
-            label="Obligations and base"
-            note="two sides of the same symbols — what the options can force, and what is standing behind it"
-          />
+          <SectionHead note="Two sides of the same symbols — what the options can force, and what is standing behind it.">Obligations and base</SectionHead>
           <section className={positionsUi.panel} aria-label="Obligations and base">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border bg-[var(--sk-raised2)] px-3 py-1.5">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-border px-3 py-1.5">
               <span className={positionsUi.cap}>Focus</span>
               {focusSymbol ? (
                 <>
-                  <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-[var(--color-entity-option)]')}>
+                  <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-entity-symbol')}>
                     {focusSymbol}
                   </span>
                   <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
@@ -375,24 +367,20 @@ export default function BackingPage() {
           slotOpen ? 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_min(26.25rem,38%)]' : 'grid-cols-1',
         )}
       >
-      <section className={positionsUi.pageCard} aria-label="Backing and model">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Backing &amp; Model</p>}
+      <section className="flex min-w-0 flex-col gap-3" aria-label="Backing and model">
+        {/* §16.10: the lead behind ⓘ, the snapshot's age as the stamp, the
+            position count as meta, the way back to Positions as the door. */}
+        <PageHead
           title="Backing & Model"
-          titleSize="large"
-          description="What the options need, what backs them, what is left to sell against — and what the market can do to the book."
+          info="What the options need, what backs them, what is left to sell against — and what the market can do to the book."
+          stamp={<BookFetchMarker quiet />}
+          meta={
+            book.portfolioPositionCount > 0 ? `${scopedCount} position${scopedCount !== 1 ? 's' : ''}` : undefined
+          }
           actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              <BookFetchMarker />
-              {book.portfolioPositionCount > 0 ? (
-                <span className={cn(positionsUi.mono, 'text-xs text-secondary-foreground')}>
-                  {scopedCount} position{scopedCount !== 1 ? 's' : ''}
-                </span>
-              ) : null}
-              <Link to={positionsHref} className={positionsUi.link}>
-                ← Positions
-              </Link>
-            </span>
+            <PageHeadLink to={positionsHref} title="Back to Positions">
+              ← Positions
+            </PageHeadLink>
           }
         />
 
@@ -422,7 +410,7 @@ export default function BackingPage() {
           ))}
         </section>
 
-        <PositionsTier label="Model" note="hypothetical · one account at a time, never summed" />
+        <SectionHead note="Hypothetical · one account at a time, never summed.">Model</SectionHead>
         <div id={BACKING_ANCHOR_ID.model}>
           <ModelBandSection
             {...model}

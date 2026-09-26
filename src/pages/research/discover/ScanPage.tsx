@@ -26,11 +26,14 @@
 import { useEffect, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePageViewParams, usePageViewState } from '@/lib/pageView'
+import { ViewState } from '@bifrost/ui'
 import {
-  PageHeader,
+  HeroCard,
+  HeroRow,
+  PageHead,
+  PageHeadAction,
   PageShell,
   SectionPanel,
-  SECTION_CAP_CLASS,
 } from '@/components/layout'
 import {
   DenseDataTable,
@@ -45,7 +48,6 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import {
@@ -285,93 +287,88 @@ export default function ScanPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 max-w-[84ch] flex-[1_1_28rem]">
-          <PageHeader
-            breadcrumb={<p className="text-xs font-medium text-primary/90">Research</p>}
-            title="Vol ratings"
-            titleSize="large"
-            description={LEAD}
-          />
-        </div>
-        <div className="ml-auto mt-1 flex flex-none flex-wrap items-center gap-2">
-          <AskCopilotButton
-            originPage="analyze-scan"
-            originLabel="Vol ratings"
-            snapshot={compactSnapshot({
-              as_of: asOf,
-              hot: counts.hot,
-              cold: counts.cold,
-              total: counts.total,
-              weights,
-              top: scored.slice(0, 8).map(({ row, score }) => ({
-                symbol: row.symbol,
-                composite: score,
-                flags: row.flags,
-              })),
-            })}
-            suggestedPrompt={`Summarize today's vol ratings: ${counts.hot} rich / ${counts.cold} cheap of ${counts.total} at my weights. Which underlyings deserve follow-up?`}
-          />
-          <SaveAsHypothesisButton
-            originPage="analyze-scan"
-            defaultTitle={`Vol ratings ${asOf ?? 'today'} — ${counts.hot} rich`}
-            defaultThesis={tape.sentence}
-            defaultSymbols={scored.slice(0, 12).map((r) => r.row.symbol)}
-            defaultTags={['scan', 'vol-ratings']}
-            originRef={{ source: 'vol-ratings', as_of: asOf, weights }}
-          />
-          {/* Marked, not drawn: the design's second header button turns this
-              universe × these weights into a scheduled objective. It writes
-              into the loop's schedule, and what a page stamps as the source of
-              a standing objective is a product call — owed with the same
-              question the Stocks page carries. */}
-          <span
-            className="border px-2 py-1 text-dense-caption text-muted-foreground/70 mat-tag"
-            title="The design offers “→ Autopilot objective” here: this universe × these weights, composite ≥ 70, daily, into a candidate batch. It writes a standing schedule, and what this page stamps as its source is not a layout question. Owed."
-          >
-            → Autopilot objective
-          </span>
-        </div>
-      </div>
+      {/* §16.10: the lead behind ⓘ; Ask Copilot, Save as hypothesis and the
+          owed Autopilot objective as the head's actions. */}
+      <PageHead
+        title="Vol ratings"
+        info={LEAD}
+        actions={
+          <>
+            <AskCopilotButton
+              originPage="analyze-scan"
+              originLabel="Vol ratings"
+              snapshot={compactSnapshot({
+                as_of: asOf,
+                hot: counts.hot,
+                cold: counts.cold,
+                total: counts.total,
+                weights,
+                top: scored.slice(0, 8).map(({ row, score }) => ({
+                  symbol: row.symbol,
+                  composite: score,
+                  flags: row.flags,
+                })),
+              })}
+              suggestedPrompt={`Summarize today's vol ratings: ${counts.hot} rich / ${counts.cold} cheap of ${counts.total} at my weights. Which underlyings deserve follow-up?`}
+            />
+            <SaveAsHypothesisButton
+              originPage="analyze-scan"
+              defaultTitle={`Vol ratings ${asOf ?? 'today'} — ${counts.hot} rich`}
+              defaultThesis={tape.sentence}
+              defaultSymbols={scored.slice(0, 12).map((r) => r.row.symbol)}
+              defaultTags={['scan', 'vol-ratings']}
+              originRef={{ source: 'vol-ratings', as_of: asOf, weights }}
+            />
+            {/* Marked, not drawn: the design's second header button turns this
+                universe × these weights into a scheduled objective. It writes
+                into the loop's schedule, and what a page stamps as the source
+                of a standing objective is a product call — owed with the same
+                question the Stocks page carries. */}
+            <PageHeadAction
+              disabled
+              title="The design offers “→ Autopilot objective” here: this universe × these weights, composite ≥ 70, daily, into a candidate batch. It writes a standing schedule, and what this page stamps as its source is not a layout question. Owed."
+            >
+              → Autopilot objective
+            </PageHeadAction>
+          </>
+        }
+      />
 
-      {isError ? <QueryErrorAlert error={error} /> : null}
+      {isError ? (
+        <ViewState
+          kind="failed"
+          layout="strip"
+          title="Couldn’t load vol ratings"
+          detail={`${error instanceof Error ? error.message : 'The research engine did not answer'}. Nothing below was scored — not a quiet tape.`}
+        />
+      ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border px-3 py-2 mat-card">
-        <span className="flex items-center gap-2">
-          <span className={SECTION_CAP_CLASS}>Universe</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Universe"
-            value={universe}
-            onChange={(v) => setParam('universe', v, 'both')}
-            options={PORTFOLIO_UNIVERSE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-          />
-        </span>
-        <span className="h-4 w-px bg-border" aria-hidden />
-        <span className="flex items-center gap-2">
-          <span className={SECTION_CAP_CLASS}>Show</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Show"
-            value={show}
-            onChange={(v) => setParam('show', v, 'all')}
-            options={SHOW_OPTIONS}
-          />
-        </span>
-        <span className="h-4 w-px bg-border" aria-hidden />
+      {/* The filter bar (§17.3): sentence-case labels, separators, and the
+          scored count with its date as meta. */}
+      <div data-sr-toolbar="" role="toolbar" aria-label="Universe and filters">
+        <span data-sr-tb="label">Universe</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Universe"
+          value={universe}
+          onChange={(v) => setParam('universe', v, 'both')}
+          options={PORTFOLIO_UNIVERSE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+        />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Show</span>
+        <SegmentControl size="xs" ariaLabel="Show" value={show} onChange={(v) => setParam('show', v, 'all')} options={SHOW_OPTIONS} />
+        <span data-sr-tb="sep" />
         {/* Marked, not dropped: the design narrows the universe by a saved
             Screener set first, and nothing on this side saves a screen yet —
             the same gap the Stock screen page names. */}
         <span
-          className="flex items-center gap-2 text-dense-caption text-muted-foreground"
+          className="inline-flex items-center gap-2 text-dense-label text-muted-foreground"
           title="The design feeds this page a saved Screener set to narrow the universe first. Nothing on this side saves a screen yet."
         >
-          <span className={SECTION_CAP_CLASS}>Screen</span>
+          <span data-sr-tb="label">Screen</span>
           <span>— nothing saves a screen yet</span>
         </span>
-        <span className="ml-auto flex items-center gap-1.5 whitespace-nowrap text-dense-meta text-muted-foreground">
-          <span className="font-mono tabular-nums text-foreground">{counts.hot}</span> rich ·{' '}
-          <span className="font-mono tabular-nums text-foreground">{counts.cold}</span> cheap ·{' '}
+        <span data-sr-tb="meta">
           <span className="font-mono tabular-nums">{counts.total}</span> scored
           {capped && universeSize > counts.total ? (
             <span title={`The route answers with at most 500 rows of ${universeSize} in the scan's universe.`}>
@@ -380,11 +377,28 @@ export default function ScanPage() {
           ) : null}
           {asOf ? (
             <>
-              {' '}· as of <span className="font-mono tabular-nums text-foreground">{asOf}</span>
+              {' '}· as of <span className="font-mono tabular-nums">{asOf}</span>
             </>
           ) : null}
         </span>
       </div>
+
+      {/* §16.2 (Rev .87): the count sentence as two heroes, in ink — they are
+          counts, not a gain or a loss. */}
+      <HeroRow label="Today’s tape">
+        <HeroCard
+          label="Hot"
+          title="Names whose vol lenses agree the premium is rich"
+          value={isLoading ? '—' : String(counts.hot)}
+          sub={`of ${counts.total} scored · composite ${HOT_AT} and over`}
+        />
+        <HeroCard
+          label="Cold"
+          title="Names whose vol lenses agree the premium is thin"
+          value={isLoading ? '—' : String(counts.cold)}
+          sub={`composite ${COLD_AT} and under${asOf ? ` · as of ${asOf}` : ''}`}
+        />
+      </HeroRow>
 
       <div className="flex flex-wrap items-start gap-3">
         <div className="min-w-0 flex-[1_1_20rem] space-y-3">

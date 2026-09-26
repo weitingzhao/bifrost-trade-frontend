@@ -184,8 +184,10 @@ describe('the design walk, as it stands', () => {
     // Today, Portfolio, the Trade Desk, Rules, Stock ratings, Autopilot and
     // The Book rebuilt to the §16 refinement and waiting for a look. 39 with
     // J2 (Rev .84–.85): Plans, Fills, Expiration, Accounts, the Ledger, the
-    // four Risk readings pages but Margin, Live and the Decision Inbox.
-    expect(counts.aligned + counts.byState.stale).toBe(39)
+    // four Risk readings pages but Margin, Live and the Decision Inbox. 28
+    // with J3 (Rev .86–.87): Stress, Contract Greeks, Backing, Transfer, P&L
+    // Explain, Outcome, Research, Option screen, Vol ratings, History, Compare.
+    expect(counts.aligned + counts.byState.stale).toBe(28)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -224,19 +226,11 @@ describe('the design walk, as it stands', () => {
         .sort()
       // Rev .95: every signed page the §16 refinement round re-stamped, until its batch re-walks it.
     ).toEqual([
-      '/portfolio/backing',
       '/portfolio/corporate-actions',
-      '/portfolio/outcome',
-      '/portfolio/pnl-explain',
-      '/portfolio/transfer',
-      '/research/compare',
-      '/research/contract-screener',
       '/research/copilot',
       '/research/daily-brief',
       '/research/event-radar',
       '/research/events',
-      '/research/greeks',
-      '/research/history',
       '/research/journal',
       '/research/lab/history',
       '/research/lab/screener',
@@ -248,15 +242,12 @@ describe('the design walk, as it stands', () => {
       '/research/loop/objectives/obj-earnings-iv',
       '/research/loop/objectives/obj-smallcap-sepa',
       '/research/loop/objectives/obj-vol-crush',
-      '/research/overview',
-      '/research/scan',
       '/research/signal-decay',
       '/research/watchlist',
       '/review',
       '/review/fit',
       '/review/habits',
       '/review/playbook-stats',
-      '/risk/stress',
       '/trade/assignment',
       '/trade/playbook',
     ])
@@ -496,8 +487,9 @@ describe('the design walk, as it stands', () => {
     // Performance, rebuilt to its Rev .77 layer inks in batch H2. 29 with
     // batch J1 (Rev .82–.83): seven signed pages rebuilt to the §16
     // refinement join Risk, Performance and Symbol, which were already here.
-    // 39 with J2 (Rev .84–.85): ten more join Limits and Margin.
-    expect(counts.byState.reviewing).toBe(39)
+    // 39 with J2 (Rev .84–.85): ten more join Limits and Margin. 50 with J3
+    // (Rev .86–.87): eleven more join Stock screen.
+    expect(counts.byState.reviewing).toBe(50)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -526,12 +518,20 @@ describe('the design walk, as it stands', () => {
       '/market/live',
       '/portfolio',
       '/portfolio/accounts',
+      '/portfolio/backing',
       '/portfolio/ledger',
+      '/portfolio/outcome',
       '/portfolio/performance',
+      '/portfolio/pnl-explain',
       '/portfolio/positions',
+      '/portfolio/transfer',
       '/research/agent-personas',
       '/research/backtest',
       '/research/book',
+      '/research/compare',
+      '/research/contract-screener',
+      '/research/greeks',
+      '/research/history',
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lens-coverage',
@@ -539,7 +539,9 @@ describe('the design walk, as it stands', () => {
       '/research/loop/harness',
       '/research/narrative',
       '/research/orchestration',
+      '/research/overview',
       '/research/ratings/stocks',
+      '/research/scan',
       '/research/screener',
       '/research/signal-health',
       '/research/symbol',
@@ -550,6 +552,7 @@ describe('the design walk, as it stands', () => {
       '/risk/margin',
       '/risk/portfolio',
       '/risk/sizing',
+      '/risk/stress',
       '/settings',
       '/system/status',
       '/trade/desk',

@@ -44,6 +44,7 @@ export function PageHeadLink({
   href,
   title,
   primary = false,
+  ink,
   children,
 }: {
   to?: string
@@ -51,6 +52,8 @@ export function PageHeadLink({
   title?: string
   /** The page's one main action (§16.10): the accent, solid. At most one. */
   primary?: boolean
+  /** A state ink for the label (an Inbox with calls waiting reads amber). */
+  ink?: string
   children: ReactNode
 }) {
   const cls = buttonVariants({ variant: primary ? 'default' : 'outline', size: 'sm' })
@@ -62,7 +65,7 @@ export function PageHeadLink({
     )
   }
   return (
-    <Link to={to ?? '/'} title={title} className={cls}>
+    <Link to={to ?? '/'} title={title} className={cls} style={ink ? { color: ink } : undefined}>
       {children}
     </Link>
   )

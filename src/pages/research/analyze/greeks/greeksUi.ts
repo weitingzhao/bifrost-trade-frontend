@@ -6,7 +6,7 @@ export const greeksControlsInnerClass = cn(
 )
 
 export const greeksFieldLabelClass = cn(
-  'text-dense-meta font-semibold uppercase tracking-wide text-muted-foreground',
+  'text-dense-meta font-semibold text-muted-foreground',
 )
 
 export const greeksInfoBarClass = cn(

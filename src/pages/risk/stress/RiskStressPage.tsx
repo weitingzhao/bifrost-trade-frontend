@@ -16,13 +16,13 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
@@ -42,14 +42,16 @@ const PAGE_LEAD =
   'The full surface behind Exposure’s summary — pick a column to see who pays for it. What each position is worth at that price is Backing & Model’s; this page only attributes the shock.'
 
 const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+  'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 function shockPct(shock: number): string {
   return `${shock > 0 ? '+' : ''}${Math.round(shock * 100)}%`
 }
 
 export default function RiskStressPage() {
-  const { data: status, isLoading: statusLoading } = useMonitorStatus()
+  const statusQ = useMonitorStatus()
+  const { data: status, isLoading: statusLoading } = statusQ
+  const preview = usePreviewState()
   const [accountFilter, setAccountFilter] = useState('all')
   const [picked, setPicked] = useState<number | null>(null)
 
@@ -112,47 +114,74 @@ export default function RiskStressPage() {
   }, [entries])
   const maxAbs = Math.max(1, ...columns.map((c) => Math.abs(c.pnlChange)))
 
-  const loading = statusLoading || modelQueries.some((q) => q.isLoading)
+  // §17.1: the stress is the model service's; the account list (the monitor
+  // read) is what scopes it. Either failing with nothing to show fails the page.
   const error = modelQueries.find((q) => q.error)?.error ?? null
+  const hasModel = modelQueries.some((q) => q.data != null)
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : statusLoading || (status != null && !hasModel && modelQueries.some((q) => q.isLoading))
+        ? 'loading'
+        : status == null
+          ? sourceState(statusQ)
+          : error != null
+            ? hasModel
+              ? 'stale'
+              : 'failed'
+            : 'ready'
+  const retry = () => {
+    void statusQ.refetch()
+    modelQueries.forEach((q) => void q.refetch())
+  }
+  const failedQ = status == null ? statusQ : { data: null, isPending: false, isError: true, error }
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Stress and Scenario">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Risk / Stress &amp; Scenario</p>}
+        {/* §16.10: the lead behind ⓘ, Exposure — the summary this page
+            opens up — as the head's door, the account switch in the toolbar. */}
+        <PageHead
           title="Stress & Scenario"
-          titleSize="large"
-          description={PAGE_LEAD}
-          actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              {accountIds.length > 1 ? (
-                <SegmentControl
-                  size="xs"
-                  ariaLabel="Account"
-                  value={accountFilter}
-                  onChange={setAccountFilter}
-                  options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-                />
-              ) : null}
-              <Link to="/risk/portfolio" className={positionsUi.link}>
-                the summary → Exposure
-              </Link>
-            </span>
-          }
+          info={PAGE_LEAD}
+          actions={<PageHeadLink to="/risk/portfolio">Risk exposure →</PageHeadLink>}
         />
-
-        {error ? <QueryErrorAlert error={error} onRetry={() => modelQueries.forEach((q) => void q.refetch())} /> : null}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-28 w-full rounded-md" />
-            <Skeleton className="h-64 w-full rounded-md" />
+        {accountIds.length > 1 ? (
+          <div data-sr-toolbar="">
+            <span data-sr-tb="label">Account</span>
+            <SegmentControl
+              size="xs"
+              ariaLabel="Account"
+              value={accountFilter}
+              onChange={setAccountFilter}
+              options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+            />
           </div>
+        ) : null}
+
+        {pageState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh the stress model"
+            detail={staleDetail(failedQ, 'the columns read the last copy.')}
+            onAction={retry}
+          />
+        ) : null}
+        {pageState === 'loading' ? (
+          <section className={positionsUi.panel}>
+            <ViewState kind="loading" title="Loading the stress" rows={6} cols={8} />
+          </section>
+        ) : pageState === 'failed' ? (
+          <section className={positionsUi.panel}>
+            <ViewState
+              kind="failed"
+              title="Couldn’t load the stress model"
+              detail={failedDetail(failedQ, 'No column was evaluated — this is not a book that nothing moves.')}
+              onAction={retry}
+            />
+          </section>
         ) : (
           <>
-            <PositionsTier
-              label="Stress matrix"
-              note="what the shock itself costs — not the payoff at that price"
-            />
+            <SectionHead note="What the shock itself costs — not the payoff at that price.">Stress matrix</SectionHead>
             <section className={cn(positionsUi.panel, !ivAvailable && 'border-warning/40')} aria-label="Stress matrix">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>Spot × vol</span>
@@ -283,8 +312,8 @@ export default function RiskStressPage() {
                       </thead>
                       <tbody>
                         {payers.map((p) => (
-                          <tr key={p.symbol} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                            <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
+                          <tr key={p.symbol} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+                            <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-entity-symbol')}>
                               {p.symbol}
                             </td>
                             <td className={cn(positionsUi.td, 'text-muted-foreground')}>
@@ -298,7 +327,7 @@ export default function RiskStressPage() {
                             </td>
                             <td className={cn(positionsUi.td, 'text-left')}>
                               <span className="inline-flex items-center gap-2">
-                                <span className="inline-block h-1.25 w-16 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+                                <span className="inline-block h-1.25 w-16 overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                                   <span
                                     className={cn('block h-full', p.pnlChange < 0 ? 'bg-loss/60' : 'bg-profit/60')}
                                     style={{ width: `${Math.round((p.share ?? 0) * 100)}%` }}
@@ -392,7 +421,6 @@ export default function RiskStressPage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

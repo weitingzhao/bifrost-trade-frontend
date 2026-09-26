@@ -30,13 +30,26 @@ import {
   type View,
 } from './compareModel'
 
-/** The series each row draws in, in rulebook order — identity tokens, never literals. */
+/**
+ * The series each row draws in, in rulebook order — Performance's 1b scheme
+ * (Owner 2026-09-26, design Rev .87): ink solid, contract sky solid, pastel
+ * violet dashed, mute2 dotted. All four rows are option structures, so none
+ * wears an entity's identity (the ticker's lime was the first) and none the
+ * degraded lamp's yellow (the fourth was). The dash repeats the distinction,
+ * so the chart still reads without colour. A fifth row gets the soft ink on a
+ * finer dot.
+ */
 export const SERIES = [
-  { stroke: 'stroke-entity-option', bg: 'bg-entity-option', text: 'text-entity-option' },
-  { stroke: 'stroke-entity-strategy', bg: 'bg-entity-strategy', text: 'text-entity-strategy' },
-  { stroke: 'stroke-entity-instance', bg: 'bg-entity-instance', text: 'text-entity-instance' },
-  { stroke: 'stroke-warning', bg: 'bg-warning', text: 'text-warning' },
-  { stroke: 'stroke-foreground', bg: 'bg-foreground', text: 'text-foreground' },
+  { stroke: 'stroke-foreground', bg: 'bg-foreground', text: 'text-foreground', dash: undefined },
+  { stroke: 'stroke-entity-option', bg: 'bg-entity-option', text: 'text-entity-option', dash: undefined },
+  {
+    stroke: 'stroke-[var(--sk-series-violet)]',
+    bg: 'bg-[var(--sk-series-violet)]',
+    text: 'text-[var(--sk-series-violet)]',
+    dash: '5 3',
+  },
+  { stroke: 'stroke-[var(--sk-mute2)]', bg: 'bg-[var(--sk-mute2)]', text: 'text-[var(--sk-mute2)]', dash: '2 3' },
+  { stroke: 'stroke-[var(--sk-soft)]', bg: 'bg-[var(--sk-soft)]', text: 'text-[var(--sk-soft)]', dash: '1 3' },
 ] as const
 
 export interface CompareRow {

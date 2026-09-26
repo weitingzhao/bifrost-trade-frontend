@@ -326,7 +326,10 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + ' OVERVIEW, same day: the Events card\u2019s Earnings row reads the estimate (`~37 days \u00b7 2 Nov (est.)`, the caveat under it) where it printed a dash, and the card takes the design\u2019s gate as its verdict \u2014 red `Earnings in ~3d (estimated) \u2014 every CSP rule refuses` inside 10 days, '
     + 'grey `No earnings inside 10 days` outside (the design says \u201cno event\u201d, but OpEx can sit inside that window, so the verdict names what it measured), yellow `Earnings late` past the estimate; a name with no 8-K keeps `A gate, not a lens`. '
     + 'The gate is the card\u2019s lamp, so the Chain tab\u2019s dot goes red with it, as the design\u2019s lamps do; the head\u2019s decisive line adds `earnings in ~3d (est.) gates every short-premium rule` inside the window. '
-    + 'On 2026-09-26 four names sit inside it (CCL 2d, NKE 3d, AEHR 9d, STZ 9d); NKE\u2019s estimate has missed by up to 12 days, which the caveat says. The since-you-looked Earnings row waits: the snapshot store keeps no earnings reading to diff.',
+    + 'On 2026-09-26 four names sit inside it (CCL 2d, NKE 3d, AEHR 9d, STZ 9d); NKE\u2019s estimate has missed by up to 12 days, which the caveat says.'
+    + ' SINCE YOU LAST LOOKED, same day: the browser\u2019s per-symbol snapshot now keeps the estimate (date and days out) beside the lens readings, and the rail adds the design\u2019s Earnings row \u2014 the days counting down grey (`38d \u2192 37d`), '
+    + 'red inside the 10-day gate, and a flip when it crosses the gate, goes late, or the date itself moves (the print landed and the estimate rolled on: `1d \u00b7 3 Nov \u2192 89d \u00b7 2 Feb`). '
+    + 'Snapshots saved before today carry no estimate, so the row starts one session after a name is first opened; a failed estimate request records nothing rather than a move it cannot see. The rail waits for the estimate so no snapshot is saved without it.',
   '/research/scan':
     'Walked 2026-09-21 against Research Scan.dc.html (Rev 2026-09-20.10) — the option side of '
     + 'Stock ratings, and deliberately the same page twice. What stood here printed the weights '

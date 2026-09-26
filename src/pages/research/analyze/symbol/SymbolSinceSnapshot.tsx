@@ -10,13 +10,19 @@
  * Rows are derived during render (session gate → else localStorage prior).
  * Persistence runs in an effect so Strict Mode cannot wipe the rail by
  * comparing a reading against the copy it just saved.
+ *
+ * The next earnings print (Research's estimate) rides the same snapshot and
+ * gets the design's Earnings row (`earningsChange`); the rail waits for it so a
+ * snapshot is never saved without it.
  */
 import { useEffect, useMemo } from 'react'
 import type { ExhibitPayload } from '@/api/research/exhibit'
 import type { LensBand } from '@/api/research/lenses'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
+import { useEarningsDates } from '@/hooks/useNarrative'
 import {
   bandChanges,
+  earningsChange,
   formatReadingDisplay,
   type BandChangeRow,
   type SymbolExhibitSnapshot,
@@ -24,7 +30,10 @@ import {
 import { RIBBON_LENSES } from '@/lib/regimeRibbon'
 import { loadSymbolSnapshot, saveSymbolSnapshot } from './symbolSnapshotStore'
 
-function snapshotFromExhibits(exhibits: ExhibitPayload[]): SymbolExhibitSnapshot {
+function snapshotFromExhibits(
+  exhibits: ExhibitPayload[],
+  earnings: SymbolExhibitSnapshot['earnings'],
+): SymbolExhibitSnapshot {
   const asOf =
     exhibits
       .map((ex) => ex.as_of)
@@ -42,7 +51,16 @@ function snapshotFromExhibits(exhibits: ExhibitPayload[]): SymbolExhibitSnapshot
         unit: ex.verdict?.unit,
       }),
     })),
+    earnings,
   }
+}
+
+/** Flips first, as bandChanges sorts them; the earnings row joins its own kind. */
+function withEarningsRow(rows: BandChangeRow[], row: BandChangeRow | null): BandChangeRow[] {
+  if (!row) return rows
+  if (row.kind === 'within') return [...rows, row]
+  const at = rows.findIndex((r) => r.kind === 'within')
+  return at < 0 ? [...rows, row] : [...rows.slice(0, at), row, ...rows.slice(at)]
 }
 
 function sessionGateKey(symbol: string, asOf: string | null): string {
@@ -70,19 +88,28 @@ function writeSessionRows(key: string, rows: BandChangeRow[]): void {
 export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const q = useExhibitComposite(RIBBON_LENSES, sym)
+  const earnQ = useEarningsDates(sym)
 
-  const current = useMemo(
-    () => (q.data && q.data.length > 0 ? snapshotFromExhibits(q.data) : null),
-    [q.data],
-  )
+  const current = useMemo(() => {
+    if (!q.data || q.data.length === 0) return null
+    const next = earnQ.data?.expected_next ?? null
+    // Unknown (the request failed) stays undefined, so no row claims a move it cannot see.
+    const earnings: SymbolExhibitSnapshot['earnings'] = earnQ.isSuccess
+      ? next
+        ? { date: next.date, daysAway: next.days_away }
+        : null
+      : undefined
+    return snapshotFromExhibits(q.data, earnings)
+  }, [q.data, earnQ.data, earnQ.isSuccess])
 
   const rows = useMemo(() => {
-    if (!sym || !current || q.isLoading) return null
+    if (!sym || !current || q.isLoading || earnQ.isLoading) return null
     const gate = sessionGateKey(sym, current.asOf)
     const cached = readSessionRows(gate)
     if (cached != null) return cached
-    return bandChanges(loadSymbolSnapshot(sym), current)
-  }, [sym, current, q.isLoading])
+    const prior = loadSymbolSnapshot(sym)
+    return withEarningsRow(bandChanges(prior, current), earningsChange(prior, current))
+  }, [sym, current, q.isLoading, earnQ.isLoading])
 
   useEffect(() => {
     if (!sym || !current || rows == null) return
@@ -151,7 +178,11 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
               <span className="text-muted-foreground/60"> → </span>
               <span
                 className={
-                  r.kind === 'flip' ? 'font-semibold text-foreground' : 'text-muted-foreground'
+                  r.tone === 'danger'
+                    ? `text-destructive${r.kind === 'flip' ? ' font-semibold' : ''}`
+                    : r.kind === 'flip'
+                      ? 'font-semibold text-foreground'
+                      : 'text-muted-foreground'
                 }
               >
                 {r.to}

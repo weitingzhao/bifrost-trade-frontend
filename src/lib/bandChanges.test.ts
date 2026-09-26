@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bandChanges, formatReadingDisplay, type SymbolExhibitSnapshot } from './bandChanges'
+import { bandChanges, earningsChange, formatReadingDisplay, type SymbolExhibitSnapshot } from './bandChanges'
 
 function snap(
   asOf: string | null,
@@ -55,3 +55,44 @@ describe('bandChanges', () => {
     ])
   })
 })
+
+describe('earningsChange', () => {
+  const at = (asOf: string, earnings: SymbolExhibitSnapshot['earnings']): SymbolExhibitSnapshot => ({
+    asOf,
+    lenses: [],
+    earnings,
+  })
+
+  it('counts the days down, grey, outside the gate', () => {
+    const row = earningsChange(at('2031-09-24', { date: '2031-11-03', daysAway: 40 }), at('2031-09-25', { date: '2031-11-03', daysAway: 39 }))
+    expect(row).toEqual({ lens: 'earnings', label: 'Earnings (est.)', from: '40d', to: '39d', kind: 'within' })
+  })
+
+  it('flips, red, on crossing into the 10-day gate', () => {
+    const row = earningsChange(at('2031-10-23', { date: '2031-11-03', daysAway: 11 }), at('2031-10-24', { date: '2031-11-03', daysAway: 10 }))
+    expect(row).toMatchObject({ from: '11d', to: '10d', kind: 'flip', tone: 'danger' })
+  })
+
+  it('flips with both dates when the estimate rolled on after the print', () => {
+    const row = earningsChange(at('2031-11-02', { date: '2031-11-03', daysAway: 1 }), at('2031-11-05', { date: '2032-02-02', daysAway: 89 }))
+    expect(row).toMatchObject({ from: '1d · 3 Nov', to: '89d · 2 Feb', kind: 'flip' })
+    expect(row?.tone).toBeUndefined()
+  })
+
+  it('flips when the print goes late', () => {
+    expect(earningsChange(at('2031-11-03', { date: '2031-11-03', daysAway: 0 }), at('2031-11-04', { date: '2031-11-03', daysAway: -1 }))).toMatchObject({
+      from: '0d',
+      to: 'late · ~3 Nov',
+      kind: 'flip',
+    })
+  })
+
+  it('says nothing before both halves exist, or inside one session', () => {
+    const cur = at('2031-09-25', { date: '2031-11-03', daysAway: 39 })
+    expect(earningsChange(null, cur)).toBeNull()
+    expect(earningsChange({ asOf: '2031-09-24', lenses: [] }, cur)).toBeNull()
+    expect(earningsChange(at('2031-09-25', { date: '2031-11-03', daysAway: 40 }), cur)).toBeNull()
+    expect(earningsChange(at('2031-09-24', null), at('2031-09-25', null))).toBeNull()
+  })
+})
+

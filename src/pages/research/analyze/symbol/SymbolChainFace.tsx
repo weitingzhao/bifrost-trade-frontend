@@ -33,6 +33,7 @@ import { bsComputeDetail, normalCDF } from '@/utils/blackScholes'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { earningsHeadMeta, expiryEarnings, lateLead, termEarningsNote } from '@/utils/earningsEstimate'
+import { useChainEarningsGap } from '@/pages/research/analyze/symbol/useChainEarningsGap'
 import { SymbolExpiryCard } from '@/pages/research/analyze/symbol/SymbolExpiryCard'
 import { ContractCandles, OiMini, SmileMini } from './symbolChainCharts'
 import {
@@ -216,13 +217,16 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
         })()
       : null
 
+  // The print inside this expiry, sized as the Payoff face sizes it (a late one has no date to split at).
+  const gap = useChainEarningsGap(sym, nextEarnings, spot, dte, today, rows.map((r) => r.strike))
   const levelChips = [
     { label: 'Call wall', k: callWall, cls: 'text-profit' },
     { label: 'Zero γ', k: zeroG, cls: 'text-warning' },
     { label: 'Put wall', k: putWall, cls: 'text-loss' },
     ...(rich ? [{ label: 'Rich to SVI', k: rich.strike, cls: 'text-warning', extra: `+${rich.pts.toFixed(0)} pts` }] : []),
     { label: 'OpEx pin', k: pinStrike, cls: 'text-secondary-foreground' },
-  ].filter((c) => c.k != null) as { label: string; k: number; cls: string; extra?: string }[]
+    ...gap.chips,
+  ].filter((c) => c.k != null) as { label: string; k: number; cls: string; extra?: string; title?: string }[]
 
   const loading = expQ.isLoading || (expiries.length > 0 && snapQs.every((q) => q.isLoading))
 
@@ -310,6 +314,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
             <span className="text-foreground">
               {move != null && spot != null ? `${(spot - move).toFixed(0)}–${(spot + move).toFixed(0)}` : '—'}
             </span>
+            {gap.move != null ? <span className="text-warning" title={gap.title}> · E ±{(gap.move * 100).toFixed(1)}%</span> : null}
           </span>
           <span className={cn(mono, 'text-dense-caption text-secondary-foreground')}>
             max pain <span className="text-foreground">{mp ?? '—'}</span>
@@ -324,7 +329,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
               <span
                 key={c.label}
                 className="inline-flex items-center gap-1.5 border px-1.5 py-0.5 text-dense-micro mat-tag"
-                title="Ruled by the face that owns the reading — Dealer for the walls, the lab for the fit."
+                title={c.title ?? 'Ruled by the face that owns the reading — Dealer for the walls, the lab for the fit.'}
               >
                 <span className="text-muted-foreground">{c.label}</span>
                 <span className={cn(mono, c.cls)}>
@@ -436,7 +441,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                         ? 'put wall'
                         : r.strike === mp
                           ? 'max pain'
-                          : null
+                          : gap.ruled(r.strike)
                   const isSel = (right: 'C' | 'P') => sel?.strike === r.strike && sel.right === right
                   const putInB = r.put != null && inBand('P', r.strike, r.put.contract.delta)
                   const callInB = r.call != null && inBand('C', r.strike, r.call.contract.delta)

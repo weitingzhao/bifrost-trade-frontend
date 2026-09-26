@@ -3,13 +3,18 @@
  * §isDealer). Gamma levels with the walls on a ruler and the strike GEX
  * distribution under them, then the OpEx cycle with the pin's own record.
  * Everything drawn is the store's: the gex_regime and opex_pin exhibits,
- * and `/research/gex/distribution`'s per-strike rows at the exhibit's own
- * expiry. What no store keeps — vanna/charm, the 12-session regime
- * timeline, the pin history — keeps its seat and says so.
+ * `/research/gex/distribution`'s per-strike rows at the exhibit's own
+ * expiry, the opex store's daily row and cycle history, and — since
+ * 2026-09-26 — the two histories this face had seated as unmeasured: the
+ * levels store answers any past trade date (the regime timeline), and the
+ * market-data plugin keeps max pain per session (SymbolDealerHistory). What
+ * no store keeps — a pin score, per-strike vanna/charm — keeps its seat.
  */
 import { useQuery } from '@tanstack/react-query'
 import { fetchGexDistribution } from '@/api/researchEngine'
-import { fetchOpexCurrent, fetchOpexPinAnalysis } from '@/api/research/opexCycle'
+import { fetchOpexCurrent, fetchOpexHistory, fetchOpexPinAnalysis } from '@/api/research/opexCycle'
+import { classifyExpiration } from '@/utils/optionDiscovery/expirationMeta'
+import { DealerMaxPainTrend, DealerRegimeTimeline, useDealerTimeline } from './SymbolDealerHistory'
 import { Link } from 'react-router-dom'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
@@ -98,6 +103,12 @@ function nearMoneyRows(raw: unknown[], expiry: string | null, spot: number | nul
 const fmtM = (v: number) =>
   `${v < 0 ? '−' : ''}${Math.abs(v) >= 1e6 ? `${(Math.abs(v) / 1e6).toFixed(1)}M` : `${(Math.abs(v) / 1e3).toFixed(0)}k`}`
 
+/** Σ vanna / Σ charm in the store's own units, signed, k past a thousand. */
+const fmtSignedK = (v: number | null) =>
+  v == null
+    ? '—'
+    : `${v >= 0 ? '+' : '−'}${Math.abs(v) >= 1000 ? `${(Math.abs(v) / 1000).toFixed(1)}k` : Math.abs(v).toFixed(0)}`
+
 export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const exQ = useExhibitComposite(['gex_regime', 'opex_pin'], sym)
@@ -129,16 +140,30 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,
   })
+  // The store's whole pin record (the route's own cap, 24 cycles) — the
+  // retired OpEx section read 24 where this face had read 8.
   const pinsQ = useQuery({
-    queryKey: ['research', 'opex-pins', sym],
-    queryFn: () => fetchOpexPinAnalysis(sym, 8),
+    queryKey: ['research', 'opex-pins', sym, 24],
+    queryFn: () => fetchOpexPinAnalysis(sym, 24),
+    enabled: Boolean(sym),
+    staleTime: 10 * 60_000,
+  })
+  // Σ vanna / Σ charm as each cycle closed, joined to its pin row by date.
+  const cyclesQ = useQuery({
+    queryKey: ['research', 'opex-history', sym, 24],
+    queryFn: () => fetchOpexHistory(sym, 24),
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,
   })
   const vanna = opexQ.data?.row?.total_vanna ?? null
   const charm = opexQ.data?.row?.total_charm ?? null
+  const vannaZero = opexQ.data?.row?.vanna_zero_strike ?? null
+  const charmZero = opexQ.data?.row?.charm_zero_strike ?? null
   const pins = pinsQ.data?.rows ?? []
   const pinRate = pinsQ.data?.pin_rate ?? null
+  const cycleOn = new Map((cyclesQ.data ?? []).map((c) => [c.opex_date ?? '', c]))
+  const timeline = useDealerTimeline(sym, expiry)
+  const pinExpiry = typeof p.expiry === 'string' ? p.expiry : expiry
 
   // The exhibit's own expiry, near-the-money — the chart the regime was read from.
   const rows = nearMoneyRows(distQ.data?.rows ?? [], expiry, spot)
@@ -335,9 +360,13 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
             <FaceKv label="net GEX" value={netGex != null ? fmtM(netGex) : '—'} />
             <FaceKv
               label="sessions in regime"
-              value="—"
-              cls="text-muted-foreground"
-              title="The levels store keeps only the current session — no streak to count. Unmeasured, not omitted."
+              value={
+                timeline.streak != null
+                  ? `${timeline.streak} · ${timeline.longGamma ? 'long γ' : 'short γ'}`
+                  : '—'
+              }
+              cls={timeline.streak == null ? 'text-muted-foreground' : timeline.longGamma ? undefined : 'text-warning'}
+              title={`Sessions on today's side of zero γ without a break, from the regime timeline (levels at ${expiry ?? 'the exhibit expiry'}).`}
             />
           </div>
         </div>
@@ -448,11 +477,11 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           <span className="text-dense-body font-semibold">last 12 sessions</span>
           <span className="ml-auto text-dense-caption text-muted-foreground">spot vs zero γ</span>
         </header>
-        <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
-          A flip that held two sessions is a regime; a one-day cross is noise. The table needs a
-          per-session levels history, and the store keeps only the current session
-          (gex/levels answers one trade date) — unmeasured, not omitted. The panel keeps its
-          seat for the day the history lands.
+        <DealerRegimeTimeline rows={timeline.rows} loading={timeline.loading} expiry={expiry} />
+        <p className={note}>
+          A flip that held two sessions is a regime; a one-day cross is noise. Next-day move is the
+          realised check of damp vs chase. Each session is read at {expiry ?? 'the exhibit’s'} expiry,
+          so its walls are the panel above&rsquo;s.
         </p>
       </section>
 
@@ -460,7 +489,10 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
         <header className={panelHead}>
           <span className={cap}>OpEx cycle</span>
           <span className="text-dense-body font-semibold">
-            third Friday · {expiry ?? '—'}{dte != null ? ` · ${dte} days` : ''}
+            {/* Only a monthly is a third Friday; the pin exhibit's expiry is often a weekly (PLTR 09-25: 10-23). */}
+            {pinExpiry && classifyExpiration(pinExpiry) !== 'weeklies' ? 'third Friday · ' : ''}
+            {pinExpiry ?? '—'}
+            {dte != null ? ` · ${dte} days` : ''}
           </span>
           <span className="ml-auto text-dense-caption text-muted-foreground">source · opex_pin exhibit</span>
         </header>
@@ -492,8 +524,13 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
             cls={charm != null ? (charm >= 0 ? 'text-success' : 'text-destructive') : 'text-muted-foreground'}
             title="Delta decaying off per day — charm accelerates in the last three sessions, when a pin either takes or fails."
           />
+          <FaceKv
+            label="vanna₀ · charm₀"
+            value={`${vannaZero != null ? vannaZero.toFixed(1) : '—'} · ${charmZero != null ? charmZero.toFixed(1) : '—'}`}
+            title="The strikes where the store's net vanna and net charm cross zero."
+          />
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="flex items-baseline gap-2 px-3 pt-2">
             <span className={cap}>past cycles</span>
             <span className="ml-auto font-mono text-dense-micro tabular-nums text-muted-foreground">
@@ -505,13 +542,18 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
               No settled cycles in the store yet for this name.
             </p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
                   <th className={cn(th, 'text-left')}>Cycle</th>
                   <th className={th}>Pin strike</th>
                   <th className={th}>Close</th>
-                  <th className={th}>|dist|</th>
+                  <th className={th} title="Settle against max pain, signed: + closed above it.">Dist</th>
+                  <th className={th}>OI</th>
+                  <th className={th} title="Σ vanna · Σ charm as the cycle closed, from the opex store's cycle history.">
+                    Σ vanna · Σ charm
+                  </th>
                   <th className={th} title="The design scores each cycle at T-6; no store keeps a per-cycle pin score history — unmeasured, not omitted.">
                     Score at T−6
                   </th>
@@ -524,12 +566,22 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
                   const tier = pct == null ? null : pct < 0.5 ? 'pinned' : pct < 1.25 ? 'near' : 'no'
                   const tierCls =
                     tier === 'pinned' ? 'text-success' : tier === 'near' ? 'text-warning' : 'text-muted-foreground'
+                  const signed = r.pct_distance != null ? r.pct_distance * 100 : null
+                  const cyc = cycleOn.get(r.opex_date ?? '')
                   return (
                     <tr key={r.opex_date ?? r.expiry ?? ''}>
                       <td className={cn(td, 'text-left text-muted-foreground')}>{r.opex_date?.slice(5) ?? '—'}</td>
                       <td className={td}>{r.max_pain_strike ?? '—'}</td>
                       <td className={td}>{r.settle_close != null ? r.settle_close.toFixed(2) : '—'}</td>
-                      <td className={cn(td, tierCls)}>{pct != null ? `${pct.toFixed(1)}%` : '—'}</td>
+                      <td className={cn(td, tierCls)}>
+                        {signed != null ? `${signed >= 0 ? '+' : '−'}${Math.abs(signed).toFixed(1)}%` : '—'}
+                      </td>
+                      <td className={cn(td, 'text-muted-foreground')}>
+                        {r.total_oi != null ? Math.round(r.total_oi).toLocaleString() : '—'}
+                      </td>
+                      <td className={cn(td, 'text-muted-foreground')}>
+                        {cyc ? `${fmtSignedK(cyc.total_vanna)} · ${fmtSignedK(cyc.total_charm)}` : '—'}
+                      </td>
                       <td className={cn(td, 'text-muted-foreground/60')}>—</td>
                       <td className={cn(td, 'text-left font-sans', tierCls)}>{tier ?? '—'}</td>
                     </tr>
@@ -537,6 +589,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
         </div>
@@ -582,13 +635,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           </div>
         ) : null}
         <div className="border-l border-border/60 px-3 pb-1 pt-0 md:pt-0">
-          <div className={cn(cap, 'mb-1 pt-0')}>max pain vs spot · 30 sessions</div>
-          <p className="m-0 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-            The design tracks the close against the cycle&rsquo;s max pain for 30 sessions. The
-            store keeps max pain only for the current session (the strike map is recomputed, not
-            archived) — unmeasured, not omitted. The chart keeps its seat for the day a max-pain
-            history lands.
-          </p>
+          <DealerMaxPainTrend sym={sym} expiry={pinExpiry} />
         </div>
         </div>
         <p className={note}>

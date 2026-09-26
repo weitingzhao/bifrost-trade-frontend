@@ -260,9 +260,15 @@ export async function fetchGexIntraday(symbol: string, date?: string) {
   }>
 }
 
-export function fetchGexLevels(symbol: string, date?: string) {
+/**
+ * One trade date's levels, every listed expiry unless one is named. The route
+ * answers any past trade date (the store is daily, not today-only), one date
+ * per call.
+ */
+export function fetchGexLevels(symbol: string, date?: string, expiry?: string) {
   const params = new URLSearchParams({ symbol })
   if (date) params.set('trade_date', date)
+  if (expiry) params.set('expiry', expiry)
   return get<{ rows: unknown[]; count: number }>(`/research/gex/levels?${params}`)
 }
 

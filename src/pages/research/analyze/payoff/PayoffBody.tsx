@@ -37,6 +37,7 @@ import type { StructureKind, StructureSide } from '@/utils/optionDiscovery/disco
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { Link } from 'react-router-dom'
 import { PayoffChart } from './PayoffChart'
+import { gapLevels } from '@/utils/earningsEstimate'
 import { payoffEarnings } from './payoffEarnings'
 import {
   buildPayoffStructure,
@@ -220,6 +221,14 @@ export function PayoffBody() {
       : []),
   ]
   const sigma1 = curves ? [spot * Math.exp(-curves.sigma), spot * Math.exp(curves.sigma)] : null
+  // The Chain face's gap levels, drawn on the P/L as they are ruled there.
+  const gapLv =
+    earnings.gap != null && earnings.ev
+      ? {
+          ...gapLevels(spot, earnings.gap),
+          title: `Earnings gap ±${(earnings.gap * 100).toFixed(1)}% — the move the ATM term prices for the estimated print: ${(earnings.ev.before.iv * 100).toFixed(1)}% on ${earnings.ev.before.expiry.slice(5)} before it against ${(earnings.ev.after.iv * 100).toFixed(1)}% on ${earnings.ev.after.expiry.slice(5)} after.`,
+        }
+      : null
   const margin = marginEstimate(kind, side, structure, spot)
   const marginLabel =
     kind === 'covered'
@@ -328,6 +337,7 @@ export function PayoffBody() {
             <span className="whitespace-nowrap text-dense-meta text-muted-foreground">
               {dte} DTE · IV {anchor.iv != null ? `${(anchor.iv * 100).toFixed(1)}%` : '—'}
               {sigma1 ? ` · ±1σ ${sigma1[0].toFixed(0)}–${sigma1[1].toFixed(0)}` : ''}
+              {gapLv ? <span className="text-warning" title={gapLv.title}>{` · E ±${((earnings.gap ?? 0) * 100).toFixed(1)}%`}</span> : null}
             </span>
             <span
               className="ml-auto whitespace-nowrap font-mono text-dense-caption text-muted-foreground"
@@ -344,7 +354,7 @@ export function PayoffBody() {
           ) : (
             <>
               <div className="px-3 pb-0.5 pt-2.5">
-                <PayoffChart curves={curves} spot={spot} />
+                <PayoffChart curves={curves} spot={spot} gap={gapLv} />
               </div>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(6.875rem,1fr))] gap-2.5 border-t border-border px-3 py-2.5">
                 <Kv

@@ -7,7 +7,7 @@
  */
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
-import { eventMove, expiryEarnings, type TermVol } from '@/utils/earningsEstimate'
+import { eventMove, expiryEarnings, gapLevels, type TermVol } from '@/utils/earningsEstimate'
 import { daysTo } from '@/utils/optionTicker'
 
 export interface ChainGapLevel {
@@ -28,8 +28,6 @@ export interface ChainEarningsGap {
   ruled: (strike: number) => string | null
 }
 
-const gapPx = (x: number) => Number(x.toFixed(x < 50 ? 2 : 0))
-
 /** The gap for one expiry from an ATM term already in hand (dte from today). */
 export function chainEarningsGap(
   next: ExpectedEarnings | null,
@@ -41,8 +39,7 @@ export function chainEarningsGap(
   const tag = dte != null && dte > 0 ? expiryEarnings(next, dte) : null
   const gap = tag && next && next.days_away >= 0 ? eventMove(term, next.days_away) : null
   if (!gap || spot == null) return { move: null, title: undefined, chips: [], loStrike: null, hiStrike: null, ruled: () => null }
-  const lo = gapPx(spot * (1 - gap.move))
-  const hi = gapPx(spot * (1 + gap.move))
+  const { lo, hi } = gapLevels(spot, gap.move)
   const nearest = (x: number) =>
     strikes.length === 0 ? null : strikes.reduce((b, k) => (Math.abs(k - x) < Math.abs(b - x) ? k : b))
   const unsure = tag?.tag === 'E?' ? '?' : ''

@@ -235,3 +235,12 @@ export function earningsGate(e: ExpectedEarnings | null | undefined): EarningsGa
   }
   return { headline: `No earnings inside ${EARNINGS_GATE_DAYS} days`, tone: 'neutral', lamp: 'gray' }
 }
+
+/**
+ * The two earnings-gap levels, spot × (1 ∓ move), as the Chain and Payoff faces
+ * print them: whole dollars at 50 and above, cents below.
+ */
+export function gapLevels(spot: number, move: number): { lo: number; hi: number } {
+  const px = (x: number) => Number(x.toFixed(x < 50 ? 2 : 0))
+  return { lo: px(spot * (1 - move)), hi: px(spot * (1 + move)) }
+}

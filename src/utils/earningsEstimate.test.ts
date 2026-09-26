@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import {
   earningsGate,
+  gapLevels,
   lateLead,
   earningsHeadMeta,
   earningsRow,
@@ -170,4 +171,10 @@ describe('term-structure earnings', () => {
     expect(earningsGate(est(-1))?.lamp).toBe('yellow')
     expect(earningsGate(null)).toBeNull()
   })
+
+  it('prints the gap levels in whole dollars at 50 and above, cents below', () => {
+    expect(gapLevels(372.11, 0.042)).toEqual({ lo: 356, hi: 388 })
+    expect(gapLevels(17.5, 0.1)).toEqual({ lo: 15.75, hi: 19.25 })
+  })
 })
+

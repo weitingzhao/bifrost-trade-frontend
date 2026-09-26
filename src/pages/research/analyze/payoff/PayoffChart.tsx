@@ -6,7 +6,9 @@
  * same `payoffOptionsAtPrice` Positions charts); the dashed line is today's
  * mark under Black–Scholes with IV unchanged. The ±1σ / ±2σ bands come from
  * the anchor contract's own IV, the spot line wears the ticker's colour, and
- * the break-even is a dotted vertical the eye can carry down to the axis.
+ * the break-even is a dotted vertical the eye can carry down to the axis. When
+ * the expiry holds the estimated earnings print, the two gap levels the Chain
+ * face rules are amber dashed verticals (`gap`).
  */
 import { useId } from 'react'
 import { cn } from '@/lib/utils'
@@ -27,7 +29,21 @@ function path(
     .join('')
 }
 
-export function PayoffChart({ curves, spot }: { curves: PayoffCurves; spot: number }) {
+export interface PayoffGapLevels {
+  lo: number
+  hi: number
+  title?: string
+}
+
+export function PayoffChart({
+  curves,
+  spot,
+  gap = null,
+}: {
+  curves: PayoffCurves
+  spot: number
+  gap?: PayoffGapLevels | null
+}) {
   const clip = useId().replace(/:/g, '_')
   const { xs, atExpiry, today, sigma, breakeven } = curves
   const lo = xs[0]
@@ -65,6 +81,12 @@ export function PayoffChart({ curves, spot }: { curves: PayoffCurves; spot: numb
   const s2 = band(2)
 
   const axis = [0, 0.25, 0.5, 0.75, 1].map((t) => (lo + (hi - lo) * t).toFixed(0))
+  const gapMarks = gap
+    ? [
+        { k: gap.lo, label: `E −gap ${gap.lo}` },
+        { k: gap.hi, label: `E +gap ${gap.hi}` },
+      ].filter((m) => m.k > lo && m.k < hi)
+    : []
 
   return (
     <div className="min-w-0">
@@ -119,6 +141,20 @@ export function PayoffChart({ curves, spot }: { curves: PayoffCurves; spot: numb
             stroke="var(--sk-ticker)"
             strokeWidth="1"
           />
+          {gapMarks.map((m) => (
+            <line
+              key={m.label}
+              x1={x(m.k)}
+              x2={x(m.k)}
+              y1="0"
+              y2={PLOT_H}
+              className="stroke-warning"
+              strokeWidth="1.25"
+              strokeDasharray="3 2"
+            >
+              {gap?.title ? <title>{gap.title}</title> : null}
+            </line>
+          ))}
           {breakeven != null ? (
             <line
               x1={x(breakeven)}
@@ -143,6 +179,15 @@ export function PayoffChart({ curves, spot }: { curves: PayoffCurves; spot: numb
         >
           spot
         </span>
+        {gapMarks.map((m) => (
+          <span
+            key={m.label}
+            className="pointer-events-none absolute top-3.5 -translate-x-1/2 whitespace-nowrap font-mono text-dense-micro text-warning"
+            style={{ left: `${((m.k - lo) / (hi - lo)) * 100}%` }}
+          >
+            {m.label}
+          </span>
+        ))}
       </div>
       <div className="flex justify-between pt-0.5 font-mono text-dense-caption text-muted-foreground">
         {axis.map((a, i) => (
@@ -169,6 +214,12 @@ export function PayoffChart({ curves, spot }: { curves: PayoffCurves; spot: numb
           <Legend
             swatch={<i className="h-2.5 w-px border-l border-dashed border-[var(--sk-ink)]" />}
             label="break-even"
+          />
+        ) : null}
+        {gapMarks.length > 0 ? (
+          <Legend
+            swatch={<i className="h-2.5 w-0 border-l-2 border-dashed border-warning" />}
+            label="earnings ±gap (estimated print)"
           />
         ) : null}
       </div>

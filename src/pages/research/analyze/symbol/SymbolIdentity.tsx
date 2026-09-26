@@ -49,6 +49,7 @@ import { useSymbolTrail, type TrailChip } from '@/lib/symbolTrail'
 import type { SymbolTabId } from '@/lib/symbolTabs'
 import { TONE_TEXT } from '@/lib/dossier'
 import { cn } from '@/lib/utils'
+import { EARNINGS_GATE_DAYS, estimateCaveat } from '@/utils/earningsEstimate'
 import type { SymbolFaces } from './useSymbolFaces'
 import css from './symbolHead.module.css'
 
@@ -224,6 +225,11 @@ export function SymbolIdentity({
     >
       {faces.decisive.n} of {faces.decisive.of} lenses decisive
       {drove ? ` · ${drove.face.title.toLowerCase()} drove the ${faces.drove === 'trend' ? 'screen' : 'rating'}` : ''}
+      {faces.earnings && faces.earnings.days_away >= 0 && faces.earnings.days_away <= EARNINGS_GATE_DAYS ? (
+        <span className="text-destructive" title={estimateCaveat(faces.earnings)}>
+          {` · earnings in ~${faces.earnings.days_away}d (est.) gates every short-premium rule`}
+        </span>
+      ) : null}
     </span>
   )
 

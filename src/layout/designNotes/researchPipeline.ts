@@ -322,7 +322,11 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + 'The note says the marks hold IV, so the crush after the print is not in the T+ column; a print past the chosen expiry says so and points to the Chain face.'
     + ' VOLATILITY FACE TERM CHART, same day (Owner): now the same ATM IV store, expiries 5\u2013100 days out (the design\u2019s 9\u2013100, widened so the first weekly shows; the fit\u2019s first six covered two weeks for a name with weeklies), '
     + 'days counted from today as the estimate\u2019s are, and the lime row matched by expiry date rather than the fit\u2019s day count. On 2026-09-25 the curves step at the estimated print instead of zig-zagging \u2014 AAPL 21.0\u219224.9 across 29 Oct, where the fit read 44.4, 27.9, 29.3, 40.8, 17.4 over the first five weeklies. '
-    + 'The Skew panel and the Vol Regime page\u2019s skew section still read the fit, as they should: the smile is the fit\u2019s job.',
+    + 'The Skew panel and the Vol Regime page\u2019s skew section still read the fit, as they should: the smile is the fit\u2019s job.'
+    + ' OVERVIEW, same day: the Events card\u2019s Earnings row reads the estimate (`~37 days \u00b7 2 Nov (est.)`, the caveat under it) where it printed a dash, and the card takes the design\u2019s gate as its verdict \u2014 red `Earnings in ~3d (estimated) \u2014 every CSP rule refuses` inside 10 days, '
+    + 'grey `No earnings inside 10 days` outside (the design says \u201cno event\u201d, but OpEx can sit inside that window, so the verdict names what it measured), yellow `Earnings late` past the estimate; a name with no 8-K keeps `A gate, not a lens`. '
+    + 'The gate is the card\u2019s lamp, so the Chain tab\u2019s dot goes red with it, as the design\u2019s lamps do; the head\u2019s decisive line adds `earnings in ~3d (est.) gates every short-premium rule` inside the window. '
+    + 'On 2026-09-26 four names sit inside it (CCL 2d, NKE 3d, AEHR 9d, STZ 9d); NKE\u2019s estimate has missed by up to 12 days, which the caveat says. The since-you-looked Earnings row waits: the snapshot store keeps no earnings reading to diff.',
   '/research/scan':
     'Walked 2026-09-21 against Research Scan.dc.html (Rev 2026-09-20.10) — the option side of '
     + 'Stock ratings, and deliberately the same page twice. What stood here printed the weights '

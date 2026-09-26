@@ -158,6 +158,21 @@ describe('the dossier faces', () => {
     expect(v.coverage).toBeNull()
   })
 
+  it('lets a date decide a lensless face — the Events card’s earnings gate', () => {
+    const v = faceView(face('events'), [], 'NVDA', noSpec, {
+      rows: [{ id: 'earnings', label: 'Earnings', value: '~6 days · 2 Nov (est.)' }],
+      gate: { headline: 'Earnings in ~6d (estimated) — every CSP rule refuses', tone: 'danger', lamp: 'red' },
+    })
+    expect(v).toMatchObject({
+      headline: 'Earnings in ~6d (estimated) — every CSP rule refuses',
+      tone: 'danger',
+      lamp: 'red',
+      coverage: null,
+    })
+    // Still not a lens: the row is uncoloured and unscored.
+    expect(v.rows[0]).toMatchObject({ band: null, lamp: 'gray', rates: null })
+  })
+
   it('prints a lens value in the form the page asked for, and counts it read all the same', () => {
     const exhibits = [
       exhibit('sepa', {

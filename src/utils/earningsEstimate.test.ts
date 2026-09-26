@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import {
+  earningsGate,
   earningsHeadMeta,
+  earningsRow,
   eventMove,
   expiryEarnings,
   firstExpiryAfter,
@@ -133,5 +135,28 @@ describe('term-structure earnings', () => {
         38
       )
     ).toBeNull()
+  })
+
+  it('prints the Overview’s earnings row', () => {
+    expect(earningsRow(est(38), 20)).toEqual({
+      value: '~38 days · 3 Nov (est.)',
+      means: "The date is an estimate: last year's same-quarter print (4 Nov 30) plus 52 weeks. On this name the rule missed its last 4 prints by a median of 0 days (at most 2).",
+    })
+    expect(earningsRow(est(1), 20).value).toBe('~1 day · 3 Nov (est.)')
+    expect(earningsRow(est(-3), 20).value).toBe('late · expected ~3 Nov')
+    expect(earningsRow(null, 0).value).toBe('no 8-K on file')
+    expect(earningsRow(null, 12).value).toBe('—')
+  })
+
+  it('gates the Events card on earnings inside 10 days', () => {
+    expect(earningsGate(est(6))).toEqual({
+      headline: 'Earnings in ~6d (estimated) — every CSP rule refuses',
+      tone: 'danger',
+      lamp: 'red',
+    })
+    expect(earningsGate(est(10))?.lamp).toBe('red')
+    expect(earningsGate(est(11))).toEqual({ headline: 'No earnings inside 10 days', tone: 'neutral', lamp: 'gray' })
+    expect(earningsGate(est(-1))?.lamp).toBe('yellow')
+    expect(earningsGate(null)).toBeNull()
   })
 })

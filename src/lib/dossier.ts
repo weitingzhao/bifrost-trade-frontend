@@ -228,6 +228,12 @@ export interface FaceExtras {
   values?: Readonly<Record<string, string>>
   /** Rows that are readings but not lenses: no band, no record, no lamp. */
   rows?: readonly { id: string; label: string; value: string; means?: string | null }[]
+  /**
+   * A lensless face's verdict when a date decides it — the Events card's
+   * "earnings inside 10 days" gate. Still no band and no record: the lamp is
+   * the gate's, the coverage stays null.
+   */
+  gate?: { headline: string; tone: AnalyzeVerdictTone; lamp: LampColor } | null
 }
 
 function ownExhibits(face: DossierFace, exhibits: readonly ExhibitPayload[]): ExhibitPayload[] {
@@ -286,14 +292,14 @@ export function faceView(
     return {
       face,
       rows,
-      headline: plainRows.length > 0 ? 'A gate, not a lens' : NOT_MEASURED,
+      headline: extras?.gate?.headline ?? (plainRows.length > 0 ? 'A gate, not a lens' : NOT_MEASURED),
       means:
         plainRows.length > 0
           ? 'A calendar has no band and no track record, so nothing here is scored — these are the dates themselves.'
           : null,
-      tone: 'neutral',
+      tone: extras?.gate?.tone ?? 'neutral',
       // Not measured is a coverage fact, not a fault: grey (DESIGN_CONTRACTS 2026-09-13.1).
-      lamp: 'gray',
+      lamp: extras?.gate?.lamp ?? 'gray',
       coverage: null,
       href,
     }

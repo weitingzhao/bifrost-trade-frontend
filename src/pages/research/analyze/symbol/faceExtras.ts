@@ -21,6 +21,7 @@
  * | `Momentum grade`          | `momentum.readings.grade`                         |
  * | `OpEx` days               | `opex_pin.readings.dte`                           |
  * | `Held`                    | the book this app already reads                   |
+ * | `Earnings` days           | Research's estimate (`/research/narrative/earnings` · `expected_next`, 0.125.0) |
  *
  * One needs a second request and gets it: **`SEPA trend template 9 / 11`**. The
  * exhibit carries `trend_template_score` (a percentage), and the repo has
@@ -41,6 +42,8 @@ import type { DossierFaceId, FaceExtras } from '@/lib/dossier'
 import { canonicalLens } from '@/lib/regimeRibbon'
 import { finiteOrNull } from '@/utils/finite'
 import { fmtNum } from '@/lib/format'
+import type { ExpectedEarnings } from '@/api/research/narrative'
+import { earningsGate, earningsRow } from '@/utils/earningsEstimate'
 
 export interface SepaCounts {
   techPass: number | null
@@ -81,7 +84,13 @@ function readStr(r: Record<string, unknown> | null, key: string): string | null 
  */
 export function faceExtras(
   exhibits: readonly ExhibitPayload[],
-  opts: { held: boolean; watched: boolean; sepa?: SepaCounts | null },
+  opts: {
+    held: boolean
+    watched: boolean
+    sepa?: SepaCounts | null
+    /** The next print, estimated; its 8-K count tells a name outside the feed from one without a cadence. */
+    earnings?: { next: ExpectedEarnings | null; filings: number | null } | null
+  },
 ): Partial<Record<DossierFaceId, FaceExtras>> {
   const gex = readingsOf(exhibits, 'gex_regime')
   const opex = readingsOf(exhibits, 'opex_pin')
@@ -104,6 +113,7 @@ export function faceExtras(
   const pcrVol = readNum(flow, 'pcr_volume')
   const pcrOi = readNum(flow, 'pcr_oi')
   const techPass = opts.sepa?.techPass ?? null
+  const earn = earningsRow(opts.earnings?.next ?? null, opts.earnings?.filings ?? null)
 
   return {
     trend: {
@@ -180,13 +190,13 @@ export function faceExtras(
       ],
     },
     events: {
+      gate: earningsGate(opts.earnings?.next ?? null),
       rows: [
         {
           id: 'earnings',
           label: 'Earnings',
-          value: '—',
-          means:
-            'No forward earnings date reaches this side: the events calendar answers with nothing, and the gap behind it is a vendor subscription. The design gates every short-premium rule on this date.',
+          value: opts.earnings ? earn.value : '—',
+          means: opts.earnings ? earn.means : 'Reading the next print…',
         },
         {
           id: 'opex',

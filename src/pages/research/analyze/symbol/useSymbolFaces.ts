@@ -15,8 +15,10 @@
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import type { ExpectedEarnings } from '@/api/research/narrative'
 import { fetchSepaDaily } from '@/api/researchEngine'
 import { useDossier } from '@/hooks/useDossier'
+import { useEarningsDates } from '@/hooks/useNarrative'
 import { useLensRegistry } from '@/hooks/useLensRegistry'
 import { usePortfolioSymbols } from '@/hooks/usePortfolioSymbols'
 import { useSymbolTrail } from '@/lib/symbolTrail'
@@ -40,6 +42,8 @@ export interface SymbolFaces {
   decisive: { n: number; of: number }
   held: boolean
   watched: boolean
+  /** The next print, estimated by Research; null without one (or before it answers). */
+  earnings: ExpectedEarnings | null
   loading: boolean
   failed: string[]
 }
@@ -49,6 +53,7 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
   const { exhibits, loading, failed } = useDossier(symbol)
   const portfolio = usePortfolioSymbols()
   const trail = useSymbolTrail(symbol)
+  const earnQ = useEarningsDates(symbol)
 
   /* The one reading the exhibits cannot give: the trend template as a count of
      checks passed rather than a percentage of them. */
@@ -73,7 +78,10 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
           fundOf: GROWTH_CHECKS,
         }
       : null
-    const extras = faceExtras(exhibits, { held, watched, sepa: counts })
+    const earnings = earnQ.data
+      ? { next: earnQ.data.expected_next ?? null, filings: earnQ.data.filings }
+      : null
+    const extras = faceExtras(exhibits, { held, watched, sepa: counts, earnings })
     const views = DOSSIER_FACES.map((face) =>
       faceView(face, exhibits, symbol, specOf, extras[face.id]),
     )
@@ -89,6 +97,7 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
       },
       held,
       watched,
+      earnings: earnQ.data?.expected_next ?? null,
       loading: loading || registry.isLoading,
       failed,
     }
@@ -100,6 +109,7 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
     registry.data,
     registry.isLoading,
     sepa.data,
+    earnQ.data,
     symbol,
     trail,
   ])

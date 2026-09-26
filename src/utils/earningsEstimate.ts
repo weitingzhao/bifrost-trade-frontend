@@ -48,13 +48,14 @@ export function firstExpiryAfter<T extends { dte: number }>(e: ExpectedEarnings 
   return [...term].sort((a, b) => a.dte - b.dte).find((t) => t.dte > e.days_away) ?? null
 }
 
-function caveat(e: ExpectedEarnings): string {
+/** The estimate's own disclaimer: how it was made and how it has done on the name. */
+export function estimateCaveat(e: ExpectedEarnings): string {
   const t = e.track
   const record =
     t.n > 0 && t.median_miss_days != null && t.max_miss_days != null
       ? t.max_miss_days === 0
         ? ` On this name it landed on the day for each of the last ${t.n} prints.`
-        : ` On this name the rule missed its last ${t.n} prints by a median of ${t.median_miss_days} days (at most ${t.max_miss_days}).`
+        : ` On this name the rule missed its last ${t.n} prints by a median of ${t.median_miss_days} day${t.median_miss_days === 1 ? '' : 's'} (at most ${t.max_miss_days}).`
       : ''
   return `The date is an estimate: last year's same-quarter print (${shortDate(e.from, true)}) plus 52 weeks.${record}`
 }
@@ -74,11 +75,11 @@ export function termEarningsNote(
       : 'No next earnings date to mark: the name has fewer than four quarterly results 8-Ks on file to estimate from, or the last estimate passed two weeks ago with none.'
   }
   if (e.days_away < 0) {
-    return `Earnings were expected about ${shortDate(e.date)} and no results 8-K has arrived — the print is late or the feed has not caught up, so nothing is marked. ${caveat(e)}`
+    return `Earnings were expected about ${shortDate(e.date)} and no results 8-K has arrived — the print is late or the feed has not caught up, so nothing is marked. ${estimateCaveat(e)}`
   }
   const when = `~${shortDate(e.date)} (${e.days_away}d)`
   if (e.days_away > EVENT_WINDOW_DAYS) {
-    return `No earnings expected inside ${EVENT_WINDOW_DAYS} days — the next is ${when}. ${caveat(e)}`
+    return `No earnings expected inside ${EVENT_WINDOW_DAYS} days — the next is ${when}. ${estimateCaveat(e)}`
   }
   const after = firstExpiryAfter(e, term)
   const lastDte = term.length > 0 ? Math.max(...term.map((t) => t.dte)) : null
@@ -86,7 +87,7 @@ export function termEarningsNote(
   const kink = after
     ? ` — the ${after.label} expiry is the first after it and carries the event premium. Selling across it is what every CSP rule refuses; a calendar that sells the front and owns the back is the structure the slope pays for.`
     : '.'
-  return `Earnings expected ${when}${offChart}${kink} ${caveat(e)}`
+  return `Earnings expected ${when}${offChart}${kink} ${estimateCaveat(e)}`
 }
 
 /** When a name has no record, the rule's 90th-percentile miss across the feed. */
@@ -159,4 +160,50 @@ export function eventMove(term: readonly TermVol[], daysAway: number): EventMove
   if (variance <= 0) return null
   const sigma = Math.sqrt(variance)
   return { move: sigma * Math.sqrt(2 / Math.PI), sigma, before, after }
+}
+
+/** The design's gate: earnings this close refuse every short-premium rule. */
+export const EARNINGS_GATE_DAYS = 10
+
+/** The Overview's Events row for the next print. */
+export function earningsRow(
+  e: ExpectedEarnings | null | undefined,
+  filings: number | null | undefined
+): { value: string; means: string } {
+  if (!e) {
+    return filings === 0
+      ? { value: 'no 8-K on file', means: 'A fund files none, and the SEC feed covers only the market-data plugin’s list.' }
+      : {
+          value: '—',
+          means: 'Fewer than four quarterly results 8-Ks on file to estimate from, or the last estimate passed two weeks ago with none.',
+        }
+  }
+  if (e.days_away < 0) {
+    return {
+      value: `late · expected ~${shortDate(e.date)}`,
+      means: `No results 8-K has arrived — the print is late or the feed has not caught up. ${estimateCaveat(e)}`,
+    }
+  }
+  return {
+    value: `~${e.days_away} ${e.days_away === 1 ? 'day' : 'days'} · ${shortDate(e.date)} (est.)`,
+    means: estimateCaveat(e),
+  }
+}
+
+export interface EarningsGate {
+  headline: string
+  tone: 'danger' | 'warning' | 'neutral'
+  lamp: 'red' | 'yellow' | 'gray'
+}
+
+/** The Events card's verdict and lamp from the next print; null without an estimate. */
+export function earningsGate(e: ExpectedEarnings | null | undefined): EarningsGate | null {
+  if (!e) return null
+  if (e.days_away < 0) {
+    return { headline: 'Earnings late — the estimate passed with no results 8-K', tone: 'warning', lamp: 'yellow' }
+  }
+  if (e.days_away <= EARNINGS_GATE_DAYS) {
+    return { headline: `Earnings in ~${e.days_away}d (estimated) — every CSP rule refuses`, tone: 'danger', lamp: 'red' }
+  }
+  return { headline: `No earnings inside ${EARNINGS_GATE_DAYS} days`, tone: 'neutral', lamp: 'gray' }
 }

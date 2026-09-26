@@ -32,6 +32,7 @@ import { OPS_CONSOLE_URL } from '@/lib/opsConsole'
 import { useThemeMode, type ThemeMode } from '@/lib/theme'
 import { useGlass } from '@/lib/glass'
 import { useDisplay, type TextSize } from '@/lib/display'
+import { SwitchTrack } from '@/components/ui/SwitchTrack'
 import { useShellPopover } from '@/lib/shellPopover'
 import { cn } from '@/lib/utils'
 import { worstLamp } from '@/utils/systemStanding'
@@ -57,16 +58,7 @@ function SwitchRow({ label, on, onToggle, title }: { label: string; on: boolean;
       className="flex w-full items-center gap-2 border-0 bg-transparent py-1 text-left text-dense-label text-foreground"
     >
       <span className="flex-1">{label}</span>
-      <span
-        aria-hidden
-        className="relative h-[18px] w-[30px] flex-none rounded-full transition-colors"
-        style={{ background: on ? 'var(--sk-accent)' : 'color-mix(in srgb, var(--sk-ink) 16%, transparent)' }}
-      >
-        <span
-          className="absolute top-[2px] size-[14px] rounded-full bg-[var(--sk-ink)] shadow-[0_1px_3px_rgb(0_0_0/0.35)] transition-[left]"
-          style={{ left: on ? 14 : 2 }}
-        />
-      </span>
+      <SwitchTrack on={on} />
     </button>
   )
 }

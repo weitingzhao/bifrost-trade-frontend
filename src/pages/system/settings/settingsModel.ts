@@ -2,10 +2,11 @@
  * The trader's own configuration, read rather than restated.
  *
  * `Settings.dc.html` is the other half of the Owner's 2026-09-15 collapse:
- * System becomes Status and this. Its footer sets the boundary — *原 System ›
- * Configuration › IB Connection 并入本页；集群、pipeline、市场数据基础设施的
- * 配置属于 Ops Console* — so there are three panels and nothing about the
- * cluster on any of them.
+ * System becomes Status and this. Its boundary: the old System ›
+ * Configuration › IB Connection merges in here, and cluster, pipeline and
+ * market-data infrastructure config belongs to the Ops Console — so nothing
+ * about the cluster is on any pane. Since Rev .80 the page is macOS System
+ * Settings: a category list and one pane of grouped rows.
  *
  * The prototype is read-only and says so: *此页原型只读——编辑动作在实现侧接
  * YAML/配置存储*. The implementation side is this page since the Owner's
@@ -25,6 +26,39 @@ function ageWords(elapsedSec: number): string {
   return `${Math.floor(e / 86400)}d`
 }
 
+// ── Categories (Rev .80) ─────────────────────────────────────────────────────
+
+export type SettingsPane = 'ib' | 'flex' | 'look' | 'keys'
+
+/** The four categories, with the words a search matches beyond the label. */
+export const SETTINGS_CATEGORIES: readonly { id: SettingsPane; label: string; keys: string }[] = [
+  { id: 'ib', label: 'IB Connection', keys: 'ib tws login user client id account u-number slot yaml host port agent' },
+  { id: 'flex', label: 'Flex', keys: 'flex query token preference columns range pull fetch transactions ledger transfer' },
+  { id: 'look', label: 'Appearance', keys: 'appearance theme dark light auto contrast transparency glass text size display' },
+  { id: 'keys', label: 'Keyboard', keys: 'keyboard shortcut omnibar copilot sidebar inspector keys' },
+]
+
+export function isSettingsPane(v: string | null | undefined): v is SettingsPane {
+  return SETTINGS_CATEGORIES.some((c) => c.id === v)
+}
+
+/**
+ * The categories a search leaves, and the pane shown: the chosen one while it
+ * is among them, else the first that matched. With nothing matched the pane
+ * stays where it was and the list says so.
+ */
+export function settingsSearch(
+  q: string,
+  pane: SettingsPane,
+): { shown: (typeof SETTINGS_CATEGORIES)[number][]; pane: SettingsPane } {
+  const t = q.trim().toLowerCase()
+  const shown = SETTINGS_CATEGORIES.filter((c) => !t || c.label.toLowerCase().includes(t) || c.keys.includes(t))
+  const pick = shown.length === 0 || shown.some((c) => c.id === pane) ? pane : shown[0].id
+  return { shown, pane: pick }
+}
+
+// ── Rows ─────────────────────────────────────────────────────────────────────
+
 export interface SettingRow {
   /** Which editor or reading the row opens. */
   id: string
@@ -35,18 +69,37 @@ export interface SettingRow {
   reading: string
 }
 
-/** The IB slots that answered, out of the ones configured. */
-export function ibSlotStanding(status: StatusResponse | undefined): string {
-  if (!status) return 'not probed'
-  const slots = ['ib_ingestor', 'ib_account_agent', 'ib_operator'] as const
+const IB_AGENTS = ['ib_ingestor', 'ib_account_agent', 'ib_operator'] as const
+
+/** How many of the three IB agents answered — null when the monitor has not. */
+function ibAgentCount(status: StatusResponse | undefined): { connected: number; total: number } | null {
+  if (!status) return null
   const socket = (status.socket ?? {}) as Record<string, { connected?: boolean } | undefined>
-  const connected = slots.filter((k) => socket[k]?.connected === true).length
-  return connected === slots.length
-    ? `${connected} agents connected`
-    : `${connected} of ${slots.length} agents connected`
+  return { connected: IB_AGENTS.filter((k) => socket[k]?.connected === true).length, total: IB_AGENTS.length }
 }
 
-export function ibRows(status: StatusResponse | undefined): SettingRow[] {
+/** The IB slots that answered, out of the ones configured. */
+export function ibSlotStanding(status: StatusResponse | undefined): string {
+  const n = ibAgentCount(status)
+  if (!n) return 'not probed'
+  return n.connected === n.total ? `${n.connected} agents connected` : `${n.connected} of ${n.total} agents connected`
+}
+
+/** The same count, short enough for the category list. */
+export function ibSlotMeta(status: StatusResponse | undefined): string {
+  const n = ibAgentCount(status)
+  if (!n) return '—'
+  return n.connected === n.total ? `${n.total} agents` : `${n.connected} of ${n.total}`
+}
+
+/** The lamp beside the pane's status line: all up, some up, none, or unknown. */
+export function ibSlotLamp(status: StatusResponse | undefined): 'green' | 'yellow' | 'red' | 'gray' {
+  const n = ibAgentCount(status)
+  if (!n) return 'gray'
+  return n.connected === n.total ? 'green' : n.connected > 0 ? 'yellow' : 'red'
+}
+
+export function ibRows(status: StatusResponse | undefined): [SettingRow, SettingRow, SettingRow] {
   const c = status?.config?.ib_client
   const client = c?.client
   const account = c?.account
@@ -55,7 +108,7 @@ export function ibRows(status: StatusResponse | undefined): SettingRow[] {
   return [
     {
       id: 'ib-user',
-      label: 'User (YAML)',
+      label: 'User',
       what: 'Login mapping per slot — host · secondary',
       // The login names were purged from this app on 2026-09-16; a slot is
       // identified by where it connects, which is what the YAML actually maps.
@@ -63,14 +116,14 @@ export function ibRows(status: StatusResponse | undefined): SettingRow[] {
     },
     {
       id: 'ib-client',
-      label: 'Client ID (YAML)',
+      label: 'Client ID',
       what: 'Client IDs per agent · ib.host.client_id.* · secondary ingestor optional',
       reading: ports.length > 0 ? ports.join(' · ') : '—',
     },
     {
       id: 'ib-account',
       label: 'Account',
-      what: 'The IB account the daemon trades and writes positions for',
+      what: 'Single IB account (U-number) the daemon trades and writes positions for',
       reading: account?.trading
         ? `${account.trading}${account.event_secondary && account.event_secondary !== account.trading ? ` · events ${account.event_host ?? '—'} / ${account.event_secondary}` : ''}`
         : '—',
@@ -82,6 +135,20 @@ export interface FlexStanding {
   /** The header line: when each kind last landed. */
   text: string
   tone: 'ok' | 'warn' | 'gray'
+}
+
+/**
+ * When the oldest kind last landed, short enough for the category list: the
+ * clock time when it landed today, the age otherwise — yesterday's 23:00
+ * printed bare would read as a time still to come.
+ */
+export function flexLandedMeta(freshness: FlexCoverageFreshnessResponse | undefined, nowMs: number): string {
+  const ts = (freshness?.dimensions ?? []).map((d) => (d.latest_ts ? Date.parse(d.latest_ts) : NaN))
+  if (ts.length === 0 || ts.some((t) => !Number.isFinite(t))) return '—'
+  const oldest = Math.min(...ts)
+  const d = new Date(oldest)
+  if (d.toDateString() !== new Date(nowMs).toDateString()) return `${ageWords((nowMs - oldest) / 1000)} ago`
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 /**
@@ -114,7 +181,7 @@ export function flexStanding(
   }
 }
 
-export function flexRows(summary: FlexConfigSummary | undefined): SettingRow[] {
+export function flexRows(summary: FlexConfigSummary | undefined): [SettingRow, SettingRow, SettingRow] {
   const t = summary?.tokens
   const rows = summary?.query_rows ?? []
   const named = rows.filter((r) => (r.query_host_id ?? '').trim().length > 0).length
@@ -122,11 +189,11 @@ export function flexRows(summary: FlexConfigSummary | undefined): SettingRow[] {
     {
       id: 'flex-query',
       label: 'Flex Query',
-      what: 'Query id + token per account',
+      what: 'Query id + token · the token shows as set, never the value',
       // Never the token — only whether one is set, and its last four, which is
       // what the plugin itself reports.
       reading: t?.host_token_set
-        ? `token set (…${t.host_token_last4 ?? '????'})${t.secondary_token_set ? ` · secondary …${t.secondary_token_last4 ?? '????'}` : ''}`
+        ? `…${t.host_token_last4 ?? '????'}${t.secondary_token_set ? ` · secondary …${t.secondary_token_last4 ?? '????'}` : ''}`
         : 'no token set',
     },
     {
@@ -138,8 +205,8 @@ export function flexRows(summary: FlexConfigSummary | undefined): SettingRow[] {
     {
       id: 'flex-range',
       label: 'Range',
-      what: 'How far back a pull reaches — the default, and the first one',
-      reading: summary ? `${summary.range_days.default}d · first run ${summary.range_days.init}d` : '—',
+      what: 'Default pull · first run',
+      reading: summary ? `${summary.range_days.default}d · ${summary.range_days.init}d` : '—',
     },
   ]
 }

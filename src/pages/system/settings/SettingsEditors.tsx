@@ -35,6 +35,9 @@ import { FLEX_QUERY_TYPES, initFlexRows, type SlotLine } from './settingsModel'
 
 type Result = { ok: boolean; error?: string }
 
+/** Where an opened row's form or reading sits: under its row, inside the group's card. */
+const EDITOR_WELL = 'border-t border-border bg-[color-mix(in_srgb,var(--sk-ink)_3%,transparent)] px-3 py-3'
+
 /** Save / Cancel and the outcome, under every form. */
 function useSave(onSaved: () => void) {
   const [saving, setSaving] = useState(false)
@@ -73,7 +76,7 @@ function EditorFrame({
   note?: string
 }) {
   return (
-    <div className="space-y-3 border-b border-border/50 bg-secondary/30 px-3 py-3">
+    <div className={cn(EDITOR_WELL, 'space-y-3')}>
       {children}
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" onClick={onSave} disabled={saving || !canSave}>
@@ -109,7 +112,7 @@ function EditorField({ label, children, hint }: { label: string; children: React
 
 export function YamlReading({ lines, why }: { lines: SlotLine[]; why: string }) {
   return (
-    <div className="space-y-2 border-b border-border/50 bg-secondary/30 px-3 py-3">
+    <div className={cn(EDITOR_WELL, 'space-y-2')}>
       <DenseDataTable wrapClassName="max-w-xl">
         <DenseTableHeader>
           <DenseTableHeadRow>

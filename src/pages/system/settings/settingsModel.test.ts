@@ -6,13 +6,17 @@ import type { StatusResponse } from '@/types/monitor'
 import type { FlexConfigSummary } from '@/api/flexQueryPlugin'
 import type { FlexCoverageFreshnessResponse } from '@/types/trading'
 import {
+  flexLandedMeta,
   flexRows,
   flexStanding,
   ibClientIdLines,
   ibConnectionLines,
   ibRows,
+  ibSlotLamp,
+  ibSlotMeta,
   ibSlotStanding,
   initFlexRows,
+  settingsSearch,
 } from './settingsModel'
 
 const status = (over: Record<string, unknown> = {}): StatusResponse =>
@@ -49,7 +53,7 @@ describe('ibSlotStanding', () => {
 describe('ibRows', () => {
   it('reads the three the design names, in its order', () => {
     const rows = ibRows(status())
-    expect(rows.map((r) => r.label)).toEqual(['User (YAML)', 'Client ID (YAML)', 'Account'])
+    expect(rows.map((r) => r.label)).toEqual(['User', 'Client ID', 'Account'])
     expect(rows[0].reading).toBe('host 192.168.10.20 · secondary 192.168.10.21')
     expect(rows[2].reading).toContain('U1234567')
   })
@@ -71,9 +75,9 @@ describe('flexRows', () => {
       ],
     } as FlexConfigSummary
     const rows = flexRows(summary)
-    expect(rows[0].reading).toBe('token set (…1441) · secondary …6139')
+    expect(rows[0].reading).toBe('…1441 · secondary …6139')
     expect(rows[1].reading).toBe('1 of 2 queries have an id')
-    expect(rows[2].reading).toBe('30d · first run 270d')
+    expect(rows[2].reading).toBe('30d · 270d')
   })
 
   it('says no token rather than leaving the row blank', () => {
@@ -105,6 +109,66 @@ describe('flexStanding', () => {
   it('says no pull recorded rather than reading as fresh', () => {
     expect(flexStanding(undefined, NOW)).toEqual({ text: 'no pull recorded', tone: 'gray' })
     expect(flexStanding(fresh([]), NOW).tone).toBe('gray')
+  })
+})
+
+describe('flexLandedMeta', () => {
+  const NOW = Date.parse('2026-09-22T12:00:00Z')
+  const fresh = (dims: { dimension: string; latest_ts: string | null }[]) =>
+    ({ dimensions: dims }) as FlexCoverageFreshnessResponse
+
+  it('reads the oldest kind as a clock time inside a day', () => {
+    const at = new Date(2026, 8, 22, 6, 2)
+    const later = new Date(2026, 8, 22, 6, 30)
+    const now = new Date(2026, 8, 22, 12, 0).getTime()
+    const m = flexLandedMeta(
+      fresh([
+        { dimension: 'flex-trades', latest_ts: later.toISOString() },
+        { dimension: 'flex-transactions', latest_ts: at.toISOString() },
+      ]),
+      now,
+    )
+    expect(m).toBe('06:02')
+  })
+
+  it('reads an age once it landed before today, since a bare time would pass for today', () => {
+    expect(flexLandedMeta(fresh([{ dimension: 'flex-trades', latest_ts: '2026-09-20T10:00:00Z' }]), NOW)).toBe('2d ago')
+    const lateYesterday = new Date(2026, 8, 21, 23, 0)
+    const early = new Date(2026, 8, 22, 7, 0).getTime()
+    expect(flexLandedMeta(fresh([{ dimension: 'flex-trades', latest_ts: lateYesterday.toISOString() }]), early)).toBe('8h ago')
+  })
+
+  it('dashes when any kind has never landed, or nothing reports', () => {
+    expect(flexLandedMeta(fresh([{ dimension: 'flex-trades', latest_ts: null }]), NOW)).toBe('—')
+    expect(flexLandedMeta(undefined, NOW)).toBe('—')
+  })
+})
+
+describe('ibSlotMeta / ibSlotLamp', () => {
+  it('reads all, some, none and unknown apart', () => {
+    expect([ibSlotMeta(status()), ibSlotLamp(status())]).toEqual(['3 agents', 'green'])
+    const some = status({ socket: { ib_ingestor: { connected: true } } })
+    expect([ibSlotMeta(some), ibSlotLamp(some)]).toEqual(['1 of 3', 'yellow'])
+    const none = status({ socket: {} })
+    expect([ibSlotMeta(none), ibSlotLamp(none)]).toEqual(['0 of 3', 'red'])
+    expect([ibSlotMeta(undefined), ibSlotLamp(undefined)]).toEqual(['—', 'gray'])
+  })
+})
+
+describe('settingsSearch', () => {
+  it('matches a category by its name or by the words of what it holds', () => {
+    expect(settingsSearch('', 'ib').shown.map((c) => c.id)).toEqual(['ib', 'flex', 'look', 'keys'])
+    expect(settingsSearch('token', 'ib').shown.map((c) => c.id)).toEqual(['flex'])
+    expect(settingsSearch('Appear', 'ib').shown.map((c) => c.id)).toEqual(['look'])
+  })
+
+  it('moves to the first match only when the chosen pane was filtered out', () => {
+    expect(settingsSearch('token', 'ib').pane).toBe('flex')
+    expect(settingsSearch('a', 'keys').pane).toBe('keys')
+  })
+
+  it('keeps the pane when nothing matches, so the list can say so', () => {
+    expect(settingsSearch('zzz', 'flex')).toEqual({ shown: [], pane: 'flex' })
   })
 })
 

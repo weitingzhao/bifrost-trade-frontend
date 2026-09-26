@@ -82,8 +82,9 @@ describe('design adoption', () => {
     const contracts = rows.find((r) => r.path === '/research/contract-screener')
     // Walked 2026-09-22 on its own path, signed 2026-09-23; what this line
     // pins is the `aliasOf`, not the state — the rule is that the forward
-    // never counted as adoption.
-    expect(contracts?.state).toBe('aligned')
+    // never counted as adoption. (The state moves with design rounds: stale
+    // from Rev .93 until its re-walk.)
+    expect(contracts?.inApp).toBe(true)
     expect(contracts?.aliasOf).toBeUndefined()
     // The Analyze hubs are the case the rule has to keep: all of them resolve
     // to the prototype the Symbol page was built from.

@@ -106,22 +106,32 @@ export function AppHeader({
         className="flex min-w-0 shrink items-center gap-1.5 text-dense-body"
       >
         {trail.map((crumb) => (
-          <span key={crumb.label} className="hidden shrink-0 items-center gap-1.5 text-muted-foreground sm:flex">
+          // Ancestors give way first (Rev .95): at ≤1024 an unshrinkable trail
+          // pushed the readings off the bar. They shrink six to the leaf's one,
+          // each to an ellipsis; the page's own name is the last to be cut.
+          <span
+            key={crumb.label}
+            className="hidden min-w-0 shrink-[6] items-center gap-1.5 text-muted-foreground sm:flex"
+            title={crumb.label}
+          >
             {/* Ancestors are links where they resolve (§16.12); a fold with
                 no page of its own stays a word. */}
             {crumb.to != null ? (
-              <Link to={crumb.to} className="text-muted-foreground no-underline hover:text-foreground hover:underline">
+              <Link
+                to={crumb.to}
+                className="min-w-0 truncate text-muted-foreground no-underline hover:text-foreground hover:underline"
+              >
                 {crumb.label}
               </Link>
             ) : (
-              crumb.label
+              <span className="min-w-0 truncate">{crumb.label}</span>
             )}
             {/* `›`, the design's own separator. A slash reads as a path; the
                 trail is a place inside a place. It stays after the last
                 parent even while the leaf is folded (Rev .73 §2): without it
                 "Portfolio › Performance" read as though you were on
                 Performance; "Portfolio › Performance ›" says you are in it. */}
-            <span aria-hidden="true" className="text-border">›</span>
+            <span aria-hidden="true" className="shrink-0 text-border">›</span>
           </span>
         ))}
         {/* The leaf carries full ink and 600, the trail behind it does not:
@@ -130,7 +140,8 @@ export function AppHeader({
         {leafFolded ? null : (
           <span
             aria-current="page"
-            className="min-w-0 truncate font-semibold text-foreground animate-in fade-in-0 duration-200"
+            className="min-w-0 shrink truncate font-semibold text-foreground animate-in fade-in-0 duration-200"
+            title={label}
           >
             {label}
           </span>

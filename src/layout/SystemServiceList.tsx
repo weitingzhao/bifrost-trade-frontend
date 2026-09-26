@@ -41,7 +41,7 @@ const ZONES = getTopologyLayout(DEFAULT_TOPOLOGY_LAYOUT_MODE).zones.map((z) => (
 const rowClass =
   'flex w-full items-center gap-2 rounded px-2 py-1 text-left transition-colors hover:bg-muted/60'
 const headClass =
-  'px-2 pb-0.5 pt-2 text-dense-micro font-semibold uppercase tracking-[0.12em] text-muted-foreground/60'
+  'px-2 pb-0.5 pt-2 text-dense-meta font-semibold text-muted-foreground'
 
 function ServiceRow({ ops, lamp, name, sub, meta, onNavigate }: {
   ops: { view: string; label: string }

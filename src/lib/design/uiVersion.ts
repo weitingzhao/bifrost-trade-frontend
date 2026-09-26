@@ -11,6 +11,10 @@
  * (`ShellNavSidebar chrome="floating"`, `styles/shell`, Rev .61); 0.5.0 the
  * "Apple" round promoted (design Rev .59–.74): `styles/materials`, 1a as the
  * default look (tag capsule, frameless secondary button, field, table,
- * floating sidebar), sheets, NumberField, ContextMenu, KpiCard / FilterBar.
+ * floating sidebar), sheets, NumberField, ContextMenu, KpiCard / FilterBar;
+ * 0.5.1 the last framed pieces (SegmentControl track, CollapsibleGroup, the
+ * sidebar's rules and peer card); 0.5.2 the Rev .84/.85/.93 site-wide rules
+ * (sentence-case toolbar labels, four heroes 2 × 2, nowrap segments, a DS
+ * table head sticking at the top of its own scroller).
  */
-export const UI_VERSION_NOW = '0.5.0'
+export const UI_VERSION_NOW = '0.5.2'

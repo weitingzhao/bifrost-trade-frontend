@@ -2,7 +2,7 @@
  * GENERATED — do not edit. `node scripts/design-nav-snapshot.mjs`.
  *
  * The design registry's colour mirror (`DIRECTION` + `ACCENT` in
- * `design/trade/shell-registry.js`, Rev 2026-09-25.81). The values belong to
+ * `design/trade/shell-registry.js`, Rev 2026-09-25.95). The values belong to
  * `@bifrost/ui` since Rev .31; the registry keeps this copy as a ratchet mirror,
  * and `identityColour.test.ts` holds it to the package.
  */
@@ -68,6 +68,6 @@ export const DESIGN_RAMP = {
     "--sk-soft": "#3a4250",
     "--sk-mute2": "#5b6572",
     "--sk-mute": "#5b6572",
-    "--sk-faint": "#959daa",
+    "--sk-faint": "#7a8390",
   },
 } as const

@@ -47,19 +47,18 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
-/** The caption grammar, for the panels the design draws without a header bar. */
-export const SECTION_CAP_CLASS =
-  'text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground'
+/**
+ * The caption grammar, for the panels the design draws without a header bar:
+ * 11/600 sentence case, like every small label since design Rev .85–.92 — the
+ * tracked caps were the last uppercase tier on a page.
+ */
+export const SECTION_CAP_CLASS = 'text-dense-meta font-semibold text-muted-foreground'
 
 export type SectionPanelTone = 'warning' | 'danger'
 
 const TONE_PANEL: Record<SectionPanelTone, string> = {
   warning: 'border-warning/40',
   danger: 'border-destructive/40',
-}
-const TONE_HEADER: Record<SectionPanelTone, string> = {
-  warning: 'bg-warning/[0.07]',
-  danger: 'bg-destructive/[0.07]',
 }
 const TONE_CAP: Record<SectionPanelTone, string> = {
   warning: 'text-warning',
@@ -95,11 +94,12 @@ export function SectionPanel({
       )}
     >
       <header
-        className={cn(
+        className={
           // The card head is a rule, not a band (Rev .62): no fill, the ink-6% line.
-          'flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-3 py-2',
-          tone == null ? null : TONE_HEADER[tone],
-        )}
+          // A toned panel colours its edge and its cap only — a severity never
+          // fills the head (§16.2, Rev .82–.83).
+          'flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b px-3 py-2'
+        }
       >
         {cap != null ? (
           <span className={cn(SECTION_CAP_CLASS, tone != null && TONE_CAP[tone])}>{cap}</span>

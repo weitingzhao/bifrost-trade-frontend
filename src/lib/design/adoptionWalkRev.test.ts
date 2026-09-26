@@ -108,7 +108,8 @@ describe('the design walk, by revision', () => {
     // so nothing walked reads stale for it. Package .22 @ Rev .81 moves two
     // page stamps: Performance (.77, layer colours) and Settings (.80, System
     // Settings); only Performance was signed, so it alone reads stale.
-    expect(DESIGN_REV).toBe('2026-09-25.81')
+    // Package .23 @ Rev .95 is the §16 refinement round: 73 page stamps move.
+    expect(DESIGN_REV).toBe('2026-09-25.95')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -153,7 +154,10 @@ describe('the design walk, by revision', () => {
     // day, once research 0.113.0 stored the mode and the tag had one to read.
     // 0 → 1 with Rev .81: Performance; 1 → 0 the same day, re-walked in
     // batch H2 and waiting for a look.
-    expect(counts.byState.stale).toBe(0)
+    // 0 → 52 with Package .23 @ Rev .95: the §16 refinement round re-stamped
+    // 73 routes, 52 of them signed. Every one is honestly behind — each page
+    // gained a hero row, section h2s or new inks — and batches J1–J5 walk them.
+    expect(counts.byState.stale).toBe(52)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

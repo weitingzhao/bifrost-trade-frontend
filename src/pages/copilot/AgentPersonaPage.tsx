@@ -282,7 +282,7 @@ function PreviewPanel({
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <CollapsibleGroup className="border border-border/60 bg-background/50">
+    <CollapsibleGroup>
       <CollapsibleGroupHeader expanded={open} onToggle={() => setOpen((v) => !v)}>
         <CollapsibleChevron expanded={open} />
         <CollapsibleGroupTitle>{title}</CollapsibleGroupTitle>

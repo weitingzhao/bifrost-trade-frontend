@@ -1,14 +1,21 @@
 /**
- * What's New (design Rev .72 §13): once per design Rev, 1.4s after the app
- * is up, a centred glass card names the gestures this round added. ↵, Esc,
- * the button or a click outside closes it, and it does not come back until
- * the next Rev (`bifrost.whatsnew`).
+ * What's New (design Rev .72 §13): 1.4s after the app is up, a centred glass
+ * card names the gestures a round added. ↵, Esc, the button or a click outside
+ * closes it (`bifrost.whatsnew`).
+ *
+ * It is keyed to the round its items announce, not to the package Rev — the
+ * design pins its own (`NEW_REV`). Keyed to `DESIGN_REV`, the same six items
+ * came back every time a design snapshot landed. A reader who closed it at any
+ * later Rev has seen these items.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DESIGN_REV } from '@/lib/design/designRoutes.generated'
+import { revIsNewer } from '@/lib/design/rev'
 import css from './whatsNew.module.css'
 
 const KEY = 'bifrost.whatsnew'
+
+/** The round these items came from (design Rev .72 B/C). Move it when they change. */
+const ITEMS_REV = '2026-09-25.72'
 
 const ITEMS: readonly (readonly [string, string, string])[] = [
   ['⌘', 'Hold ⌘ for every shortcut', 'Keep ⌘ pressed for a second to see what the keyboard can do here.'],
@@ -21,7 +28,8 @@ const ITEMS: readonly (readonly [string, string, string])[] = [
 
 function seen(): boolean {
   try {
-    return localStorage.getItem(KEY) === DESIGN_REV
+    const closed = localStorage.getItem(KEY)
+    return closed != null && !revIsNewer(ITEMS_REV, closed)
   } catch {
     return true
   }
@@ -46,7 +54,7 @@ export function WhatsNew() {
 
   const close = useCallback(() => {
     try {
-      localStorage.setItem(KEY, DESIGN_REV)
+      localStorage.setItem(KEY, ITEMS_REV)
     } catch {
       // Storage refused: it will say hello again next load.
     }

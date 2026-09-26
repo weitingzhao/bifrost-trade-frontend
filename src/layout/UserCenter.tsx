@@ -133,7 +133,7 @@ function UserCard({ onClose }: { onClose: () => void }) {
         title="/system/status — the same three readings"
         className="block border-y border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-3.5 py-2 no-underline hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]"
       >
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Can I trade</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">Can I trade</span>
         {domains.map((d) => (
           <span key={d.key} className="mt-1 grid grid-cols-[10px_88px_minmax(0,1fr)] items-baseline gap-2">
             <HealthLamp lamp={d.lamp} variant="dot" title={d.name} />
@@ -147,7 +147,7 @@ function UserCard({ onClose }: { onClose: () => void }) {
 
       <div className="flex flex-col gap-1.5 px-3.5 pt-2.5 pb-3">
         <div className="flex items-baseline justify-between">
-          <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">Appearance</span>
+          <span className="text-dense-meta font-semibold text-muted-foreground">Appearance</span>
           {mode === 'auto' ? <span className="font-mono text-dense-micro text-muted-foreground">now → {theme}</span> : null}
         </div>
         <div className="flex gap-0.5 rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-0.5" role="radiogroup" aria-label="Theme">

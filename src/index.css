@@ -184,7 +184,8 @@
     --mat-field-fill: var(--field-fill);
     --mat-focus: var(--focus-glow);
     --sk-mute: #5b6572;
-    --sk-faint: #959daa;
+    /* Rev .94: timestamps and ids sit in faint — #959daa read 2.3:1 on the light ground, this reads 3.4:1. */
+    --sk-faint: #7a8390;
     /* Design Rev .78, the light pass. Warning text is its own ink: amber-400
        reads about 1.6:1 on paper, so paper takes yellow-700. Text laid on the
        accent fill takes white here and a near-black violet in dark. Pastel
@@ -228,7 +229,7 @@
     --popover: var(--sk-raised2);
     --popover-foreground: var(--sk-ink);
     --primary: var(--sk-accent);
-    --primary-foreground: var(--sk-ground);
+    --primary-foreground: var(--sk-on-accent);
     --secondary: var(--sk-surface);
     --secondary-foreground: var(--sk-soft);
     --muted: var(--sk-surface);
@@ -462,7 +463,7 @@
 
     /* Primary — the layer's accent, the one emphasis per screen */
     --primary: var(--sk-accent);
-    --primary-foreground: var(--sk-ground);
+    --primary-foreground: var(--sk-on-accent);
 
     /* Secondary / Muted / Accent — surface-elevated */
     --secondary: var(--sk-surface);
@@ -821,9 +822,8 @@ tbody tr:hover > td {
 
 /* Table heads stick (design Rev .70 §5): every table's head parks under the
    page's sticky toolbar (--sr-stick, measured by useStickyToolbar) on a
-   glass strip — 82% of the ground and a 10px blur. A table inside its own
-   scroll box sticks within that box. A head the page already made sticky
-   (thead or row with .sticky) keeps its own offset. */
+   glass strip — 82% of the ground and a 10px blur. A head the page already
+   made sticky (thead or row with .sticky) keeps its own offset. */
 [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
   position: sticky;
   top: var(--sr-stick, 0px);
@@ -831,6 +831,59 @@ tbody tr:hover > td {
   background-color: color-mix(in srgb, var(--background) 82%, transparent);
   -webkit-backdrop-filter: blur(10px) saturate(1.4);
   backdrop-filter: blur(10px) saturate(1.4);
+}
+
+/* A table inside its own sideways scroller: that box is the head's sticky
+   parent, so the toolbar offset would push the head below its first row
+   (Rev .84, 63px on Plans). There it sticks at the box's top. */
+[data-mat]
+  :is(.dense-scroll-x, .overflow-x-auto, .overflow-auto, [data-sr-hscroll])
+  table
+  > thead:not(.sticky)
+  > tr:not(.sticky)
+  > th:not(.sticky) {
+  top: 0;
+}
+
+/* DS tables lay out by content (Rev .93): table-fixed let a column with no
+   declared width collapse to ~0 at narrow widths and its nowrap text ran over
+   the next column (Contract on Orders & Fills). Declared widths stay as
+   preferences, no column goes below its content, and a table that no longer
+   fits scrolls inside its frame (§16.11). */
+[data-mat] .dense-scroll-x > table {
+  table-layout: auto;
+}
+
+[data-mat] .dense-scroll-x > table > * > tr > :is(th, td) {
+  max-width: none;
+}
+
+/* Phone grammar (Rev .93): a surface under 600px of page (the Phone float, a
+   440 side panel) keeps its hero row two to a line at 22px, the sub line cut
+   to one — four heroes used to stack one per line and fill the first screen. */
+@container page (max-width: 600px) {
+  [data-sr-kpi='hero'] {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+    padding: 9px 11px 10px;
+    gap: 3px;
+  }
+
+  [data-sr-kpi='hero'] [data-sr-kpi-v] {
+    font-size: 22px;
+  }
+
+  [data-sr-kpi='hero'] [data-sr-kpi-s] {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  [data-sr-kpi='hero'] [data-sr-kpi-l] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* A table's own frame — DS DenseDataTable wraps every table in a rounded,

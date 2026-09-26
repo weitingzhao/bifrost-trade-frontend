@@ -208,13 +208,71 @@ describe('the design walk, as it stands', () => {
     // System pass: Orchestration and Personas, rebuilt, wait for a look.
     // 56 with Package .22 @ Rev .81: Performance's own stamp moved to .77, so
     // it read stale until batch H2 re-walked it into `reviewing`.
-    expect(counts.aligned).toBe(56)
+    // 4 with Package .23 @ Rev .95: the §16 page-refinement round (Rev .82–.94)
+    // re-stamped 73 routes — hero rows, section h2s, selection in the accent,
+    // counts out of the direction inks. 52 signed pages read stale until
+    // batches J1–J5 re-walk them; the sum above holds at 56.
+    expect(counts.aligned).toBe(4)
     expect(
       rows
         .filter((r) => r.state === 'stale')
         .map((r) => r.path)
         .sort()
-    ).toEqual([])
+      // Rev .95: every signed page the §16 refinement round re-stamped, until its batch re-walks it.
+    ).toEqual([
+      '/home',
+      '/market/live',
+      '/portfolio',
+      '/portfolio/accounts',
+      '/portfolio/backing',
+      '/portfolio/corporate-actions',
+      '/portfolio/ledger',
+      '/portfolio/outcome',
+      '/portfolio/pnl-explain',
+      '/portfolio/transfer',
+      '/research/book',
+      '/research/compare',
+      '/research/contract-screener',
+      '/research/copilot',
+      '/research/daily-brief',
+      '/research/event-radar',
+      '/research/events',
+      '/research/greeks',
+      '/research/history',
+      '/research/journal',
+      '/research/lab/history',
+      '/research/lab/screener',
+      '/research/lab/symbol',
+      '/research/lab/today',
+      '/research/loop/candidates',
+      '/research/loop/decisions',
+      '/research/loop/harness',
+      '/research/loop/hypotheses',
+      '/research/loop/objectives/obj-daily-stock',
+      '/research/loop/objectives/obj-earnings-iv',
+      '/research/loop/objectives/obj-smallcap-sepa',
+      '/research/loop/objectives/obj-vol-crush',
+      '/research/overview',
+      '/research/ratings/stocks',
+      '/research/scan',
+      '/research/signal-decay',
+      '/research/watchlist',
+      '/review',
+      '/review/fit',
+      '/review/habits',
+      '/review/playbook-stats',
+      '/risk/budget',
+      '/risk/portfolio',
+      '/risk/sizing',
+      '/risk/stress',
+      '/trade/assignment',
+      '/trade/desk',
+      '/trade/expiration',
+      '/trade/fills',
+      '/trade/plans',
+      '/trade/playbook',
+      '/trade/rules',
+    ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -456,62 +514,11 @@ describe('the design walk, as it stands', () => {
         .map((r) => r.path)
         .sort()
     ).toEqual([
-      '/home',
-      '/market/live',
-      '/portfolio',
-      '/portfolio/accounts',
-      '/portfolio/backing',
-      '/portfolio/corporate-actions',
-      '/portfolio/ledger',
-      '/portfolio/outcome',
-      '/portfolio/pnl-explain',
-      '/portfolio/transfer',
-      '/research/book',
-      '/research/compare',
-      '/research/contract-screener',
-      '/research/copilot',
+      // Rev .95: the four signed pages the §16 refinement round did not re-stamp.
       '/research/copilot/trading',
-      '/research/daily-brief',
-      '/research/event-radar',
-      '/research/events',
-      '/research/greeks',
-      '/research/history',
-      '/research/journal',
-      '/research/lab/history',
-      '/research/lab/screener',
-      '/research/lab/symbol',
-      '/research/lab/today',
-      '/research/loop/candidates',
-      '/research/loop/decisions',
-      '/research/loop/harness',
-      '/research/loop/hypotheses',
-      '/research/loop/objectives/obj-daily-stock',
-      '/research/loop/objectives/obj-earnings-iv',
-      '/research/loop/objectives/obj-smallcap-sepa',
-      '/research/loop/objectives/obj-vol-crush',
       '/research/loop/runs',
-      '/research/overview',
-      '/research/ratings/stocks',
-      '/research/scan',
-      '/research/signal-decay',
-      '/research/watchlist',
       '/research/workbench',
-      '/review',
-      '/review/fit',
-      '/review/habits',
-      '/review/playbook-stats',
       '/review/proposals',
-      '/risk/budget',
-      '/risk/portfolio',
-      '/risk/sizing',
-      '/risk/stress',
-      '/trade/assignment',
-      '/trade/desk',
-      '/trade/expiration',
-      '/trade/fills',
-      '/trade/plans',
-      '/trade/playbook',
-      '/trade/rules',
     ])
     // The two ratings pages' own siblings: Symbol, and the Vol ratings rebuild
     // that shares its weights panel, tape and lens bar with Stock ratings.

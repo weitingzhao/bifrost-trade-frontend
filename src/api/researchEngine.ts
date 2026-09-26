@@ -193,10 +193,13 @@ export interface ForecastHourly {
   computed_at: string
 }
 
-export function fetchForecastSessions(symbol?: string, date?: string) {
+export function fetchForecastSessions(symbol?: string, date?: string, limit?: number) {
   const params = new URLSearchParams()
   if (symbol) params.set('symbol', symbol)
   if (date) params.set('trade_date', date)
+  // The route answers 50 rows unless asked (le=200), newest first — a month
+  // of one name is ~45 sessions, so a caller reading a window asks for 200.
+  if (limit) params.set('limit', String(Math.min(limit, 200)))
   return get<{ rows: ForecastSession[]; count: number }>(
     `/research/forecast/sessions?${params}`,
   )
@@ -656,10 +659,24 @@ export interface PlaybookTriggerRow {
   computed_at: string | null
 }
 
+/**
+ * The playbook routes answer `{ ok, data }` where the forecast routes answer
+ * the payload bare. Reading the envelope as the payload made both readers
+ * see nothing from the day they were written (2026-08-29 → 09-26: DEV had 42
+ * PLTR triggers in the window while the page read zero).
+ */
+async function getEnveloped<T>(path: string): Promise<T> {
+  const j = await get<unknown>(path)
+  if (j && typeof j === 'object' && 'ok' in j && 'data' in j) {
+    return (j as { data: T }).data
+  }
+  return j as T
+}
+
 export function fetchPlaybookTriggers(symbol: string, date?: string) {
   const params = new URLSearchParams({ symbol: symbol.trim().toUpperCase() })
   if (date) params.set('date', date)
-  return get<{ symbol: string; rows: PlaybookTriggerRow[]; count: number }>(
+  return getEnveloped<{ symbol: string; rows: PlaybookTriggerRow[]; count: number }>(
     `/research/playbook/triggers?${params}`,
   )
 }
@@ -688,7 +705,7 @@ export function fetchPlaybookHitRate(symbol: string, windowDays = 30, horizon = 
     window_days: String(windowDays),
     horizon: String(horizon),
   })
-  return get<PlaybookHitRateSummary>(`/research/playbook/hit-rate?${params}`)
+  return getEnveloped<PlaybookHitRateSummary>(`/research/playbook/hit-rate?${params}`)
 }
 
 export function fetchBacktestResults(symbol: string, start?: string, end?: string) {

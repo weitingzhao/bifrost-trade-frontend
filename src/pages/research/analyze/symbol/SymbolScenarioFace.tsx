@@ -3,10 +3,20 @@
  * §isScenario). The analysis model's own verdict with the close expectation
  * on a ruler and the gamma zone behind it, then the design's own two panels:
  * Forecast sessions (how the paths settled) and the Intraday playbook
- * (scenario fan · LIVE bias). The universe-wide SessionsSection/
- * PlaybookSection left this tab with them — their per-session drilldown has
- * no seat in the design; where it lands is the Owner's call.
+ * (scenario fan · LIVE bias). The retired SessionsSection's per-session
+ * drilldown opens from the Forecast sessions table (Owner 2026-09-26: what
+ * the stores answer goes on the page, DESIGN_CONTRACTS §15.6).
+ *
+ * The terrain's own history (`/research/forecast/terrain/history`, 30
+ * sessions on DEV) feeds the recent-regimes strip, each score's path and the
+ * regime changes; its newest row carries the terrain's own gamma zone, which
+ * the ruler draws — the store widens the dealer walls into it, so it keeps a
+ * width when both walls sit on one strike (PLTR 09-25: walls 190/190, zone
+ * 189.05–190.95).
  */
+import { useQuery } from '@tanstack/react-query'
+import { fetchTerrainHistory, type TerrainData } from '@/api/researchEngine'
+import { DenseSparkline } from '@/components/charts/DenseSparkline'
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
 import { SymbolForecastSessions } from '@/pages/research/analyze/symbol/SymbolForecastSessions'
 import { SymbolPlaybookPanel } from '@/pages/research/analyze/symbol/SymbolPlaybookPanel'
@@ -21,7 +31,19 @@ const panel =
 const panelHead =
   'flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal'
 
-function BarKv({ label, value, barCls, pct }: { label: string; value: string; barCls: string; pct: number | null }) {
+function BarKv({
+  label,
+  value,
+  barCls,
+  pct,
+  path,
+}: {
+  label: string
+  value: string
+  barCls: string
+  pct: number | null
+  path?: number[]
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <span className={cap}>{label}</span>
@@ -30,9 +52,45 @@ function BarKv({ label, value, barCls, pct }: { label: string; value: string; ba
           <span className={cn('absolute inset-y-0 left-0', barCls)} style={{ width: `${Math.min(100, pct)}%` }} />
         ) : null}
       </span>
-      <b className={cn(mono, 'text-dense-meta font-semibold')}>{value}</b>
+      <span className="flex items-center gap-2">
+        <b className={cn(mono, 'text-dense-meta font-semibold')}>{value}</b>
+        {path && path.length >= 2 ? (
+          <DenseSparkline values={path} width={64} height={14} strokeClassName="stroke-muted-foreground" />
+        ) : null}
+      </span>
     </div>
   )
+}
+
+/** The design's regime inks: range green, trending amber, crash-risk red. */
+function terrainRegimeBg(regime: string): string {
+  if (regime === 'crash-risk') return 'bg-destructive'
+  if (regime === 'trending') return 'bg-warning'
+  return 'bg-success'
+}
+
+/** One reading per trade date, oldest first — the route can hold more than one a day. */
+function terrainDays(rows: readonly TerrainData[]): TerrainData[] {
+  const byDate = new Map<string, TerrainData>()
+  for (const r of rows) {
+    const d = String(r.trade_date).slice(0, 10)
+    const cur = byDate.get(d)
+    if (!cur || String(r.computed_at) > String(cur.computed_at)) byDate.set(d, r)
+  }
+  return [...byDate.values()].sort((a, b) => String(a.trade_date).localeCompare(String(b.trade_date)))
+}
+
+/** Regime changes across the window, most frequent first: `range → trending 3×`. */
+function terrainTransitions(days: readonly TerrainData[]): { label: string; n: number }[] {
+  const counts = new Map<string, number>()
+  for (let i = 1; i < days.length; i++) {
+    const from = days[i - 1].regime
+    const to = days[i].regime
+    if (!from || !to || from === to) continue
+    const k = `${from} → ${to}`
+    counts.set(k, (counts.get(k) ?? 0) + 1)
+  }
+  return [...counts.entries()].map(([label, n]) => ({ label, n })).sort((a, b) => b.n - a.n)
 }
 
 export function SymbolScenarioFace({ symbol }: { symbol: string }) {
@@ -45,11 +103,21 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
   const g = (exOf('gex_regime')?.readings ?? {}) as Record<string, unknown>
   const num = (val: unknown) => (typeof val === 'number' && Number.isFinite(val) ? val : null)
 
+  const histQ = useQuery({
+    queryKey: ['research', 'terrain-history', sym, 30],
+    queryFn: () => fetchTerrainHistory(sym, 30),
+    enabled: Boolean(sym),
+    staleTime: 10 * 60_000,
+  })
+  const days = terrainDays(histQ.data?.rows ?? [])
+  const newest = days.length > 0 ? days[days.length - 1] : null
+  const transitions = terrainTransitions(days)
+
   const spot = num(t.spot) ?? num(g.spot)
   const expected = num(t.expected_close)
   const iv30 = num(v.atm_iv_30d)
-  const callWall = num(g.major_call_wall)
-  const putWall = num(g.major_put_wall)
+  const gzLo = num(newest?.gamma_zone_low)
+  const gzHi = num(newest?.gamma_zone_high)
   const regime = typeof t.regime === 'string' ? t.regime : null
   const pinScore = num(t.pin_score)
   const tailRisk = num(t.tail_risk)
@@ -63,7 +131,7 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
   const lo = expected != null && sigma != null ? expected - sigma : null
   const hi = expected != null && sigma != null ? expected + sigma : null
   const marks = (() => {
-    const vals = [lo, hi, spot, expected, callWall, putWall].filter((x): x is number => x != null)
+    const vals = [lo, hi, spot, expected, gzLo, gzHi].filter((x): x is number => x != null)
     if (vals.length < 2) return null
     const mn = Math.min(...vals)
     const mx = Math.max(...vals)
@@ -90,11 +158,11 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
                 style={{ left: `${marks.posOf(lo)}%`, right: `${100 - marks.posOf(hi)}%` }}
                 title="1σ close band — expected ± expected × IV30 × √(20/252), the stores' own numbers"
               />
-              {putWall != null && callWall != null ? (
+              {gzLo != null && gzHi != null ? (
                 <span
                   className="absolute -inset-y-0.5 rounded-[3px] bg-warning/35"
-                  style={{ left: `${marks.posOf(putWall)}%`, right: `${100 - marks.posOf(callWall)}%` }}
-                  title={`gamma zone ${putWall}–${callWall} — the dealer walls`}
+                  style={{ left: `${marks.posOf(gzLo)}%`, right: `${100 - marks.posOf(gzHi)}%` }}
+                  title={`gamma zone ${gzLo.toFixed(2)}–${gzHi.toFixed(2)} — the terrain's own, the dealer walls widened (${newest?.trade_date ?? ''})`}
                 />
               ) : null}
               <span className="absolute -bottom-5 -translate-x-1/2 font-mono text-dense-micro text-secondary-foreground" style={{ left: `${marks.posOf(lo)}%` }}>
@@ -124,10 +192,10 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
               <i className="mr-1 inline-block h-2 w-2.5 rounded-[2px] bg-[rgb(var(--sk-accent-rgb)/0.18)] align-middle" />
               1σ close band
             </span>
-            {putWall != null && callWall != null ? (
+            {gzLo != null && gzHi != null ? (
               <span>
                 <i className="mr-1 inline-block h-2 w-2.5 rounded-[2px] bg-warning/35 align-middle" />
-                gamma zone {putWall}–{callWall}
+                gamma zone {gzLo.toFixed(2)}–{gzHi.toFixed(2)}
               </span>
             ) : null}
           </div>
@@ -140,13 +208,32 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
             </b>
           </div>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className={cap}>trend release · vol squeeze</span>
+            {/* The longest caption on the face; at 1024 it is wider than its column. */}
+            <span className={cn(cap, 'whitespace-normal')}>trend release · vol squeeze</span>
             <b className={cn(mono, 'text-dense-body font-semibold')}>
               {trendRelease != null ? trendRelease.toFixed(0) : '—'} · {volSqueeze != null ? volSqueeze.toFixed(0) : '—'}
             </b>
+            {days.length >= 2 ? (
+              <span className="flex items-center gap-1.5" title={`${days.length}-session paths: trend release, then vol squeeze`}>
+                <DenseSparkline values={days.map((d) => d.trend_release)} width={56} height={14} strokeClassName="stroke-muted-foreground" />
+                <DenseSparkline values={days.map((d) => d.vol_squeeze)} width={56} height={14} strokeClassName="stroke-muted-foreground" />
+              </span>
+            ) : null}
           </div>
-          <BarKv label="pin score" value={pinScore != null ? pinScore.toFixed(0) : '—'} barCls="bg-warning" pct={pinScore} />
-          <BarKv label="tail risk" value={tailRisk != null ? tailRisk.toFixed(1) : '—'} barCls="bg-loss" pct={tailRisk} />
+          <BarKv
+            label="pin score"
+            value={pinScore != null ? pinScore.toFixed(0) : '—'}
+            barCls="bg-warning"
+            pct={pinScore}
+            path={days.map((d) => d.pin_score)}
+          />
+          <BarKv
+            label="tail risk"
+            value={tailRisk != null ? tailRisk.toFixed(1) : '—'}
+            barCls="bg-loss"
+            pct={tailRisk}
+            path={days.map((d) => d.tail_risk)}
+          />
           <div className="col-span-2 flex min-w-0 flex-col gap-0.5">
             <span className={cap}>similar regimes on {sym}</span>
             <span className="text-dense-meta leading-normal text-secondary-foreground text-pretty">
@@ -155,9 +242,35 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
                 : 'no settled neighbours yet'}
             </span>
           </div>
-          <div className="col-span-2 flex min-w-0 flex-col gap-0.5" title="A per-session regime history is not served — the exhibit answers today only. Unmeasured, not omitted.">
-            <span className={cap}>recent regimes</span>
-            <span className="text-dense-micro text-muted-foreground">no history served — today only</span>
+          <div className="col-span-2 flex min-w-0 flex-col gap-1">
+            <span className="flex items-baseline gap-2">
+              <span className={cap}>recent regimes</span>
+              <span className="ml-auto text-dense-micro text-muted-foreground">
+                {days.length > 0 ? `${days.length} sessions · ${days[0].trade_date.slice(5)} → ${days[days.length - 1].trade_date.slice(5)}` : ''}
+              </span>
+            </span>
+            {days.length > 0 ? (
+              <div className="flex h-3.5 gap-0.5">
+                {days.map((d) => (
+                  <span
+                    key={d.trade_date}
+                    className={cn('flex-1 rounded-[2px]', terrainRegimeBg(d.regime))}
+                    title={`${d.trade_date} · ${d.regime}`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <span className="text-dense-micro text-muted-foreground">
+                {histQ.isLoading ? 'Loading the terrain history…' : 'The terrain history holds no session for this name.'}
+              </span>
+            )}
+            {days.length > 1 ? (
+              <span className="text-dense-micro text-muted-foreground">
+                {transitions.length === 0
+                  ? `No regime change in ${days.length} sessions.`
+                  : `Changes: ${transitions.map((x) => `${x.label} ${x.n}×`).join(' · ')}`}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>

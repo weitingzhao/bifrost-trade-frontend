@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import {
   earningsGate,
+  lateLead,
   earningsHeadMeta,
   earningsRow,
   eventMove,
@@ -96,9 +97,19 @@ describe('term-structure earnings', () => {
     expect(expiryEarnings(loose, 21)).toBeNull()
   })
 
-  it('tags nothing for a late print or no estimate', () => {
-    expect(expiryEarnings(est(-2), 42)).toBeNull()
+  it('marks every expiry E? for a late print, and nothing without an estimate', () => {
+    expect(expiryEarnings(est(-2), 42)).toEqual({
+      tag: 'E?',
+      title: 'Earnings late — expected ~3 Nov, no results 8-K yet; it can land before this expiry any day, or has and the feed has not caught up',
+    })
+    expect(expiryEarnings(est(-2), 3)?.tag).toBe('E?')
     expect(expiryEarnings(null, 42)).toBeNull()
+  })
+
+  it('leads a late warning with its date, its lateness and the estimate’s record', () => {
+    expect(lateLead(est(-4, { track: { n: 4, median_miss_days: 0, max_miss_days: 1 } }))).toBe(
+      "Earnings late: expected ~3 Nov (last year's 4 Nov 30 plus 52 weeks) and no results 8-K has arrived, 4 days on. That is later than this estimate has missed this name before (at most 1 day over 4 prints)."
+    )
   })
 
   it('reads the header meta', () => {

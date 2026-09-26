@@ -7,6 +7,7 @@ import type { ExpectedEarnings } from '@/api/research/narrative'
 import {
   eventMove,
   expiryEarnings,
+  lateLead,
   shortDate,
   type EventMove,
   type ExpiryEarnings,
@@ -25,23 +26,10 @@ export interface PayoffEarnings {
 
 const asPct = (x: number) => `${(x * 100).toFixed(1)}%`
 
-/**
- * The strip a late print puts at the top of the face: when it was expected, on
- * what, how late it is — and whether that is later than the estimate has ever
- * missed on this name, which makes the lateness itself the reading.
- */
+/** The strip a late print puts at the top of the face (the shared lead, then what it means here). */
 export function lateNotice(e: ExpectedEarnings): string {
-  const late = -e.days_away
-  const max = e.track.max_miss_days
-  const record =
-    max != null && e.track.n > 0
-      ? late > max
-        ? ` That is later than this estimate has missed this name before (at most ${max} ${max === 1 ? 'day' : 'days'} over ${e.track.n} prints).`
-        : ` The estimate has missed this name by up to ${max} ${max === 1 ? 'day' : 'days'}, so this may still be the usual slack.`
-      : ''
   return (
-    `Earnings late: expected ~${shortDate(e.date)} (last year's ${shortDate(e.from, true)} plus 52 weeks) and no results 8-K has arrived, ${late} ${late === 1 ? 'day' : 'days'} on.` +
-    record +
+    lateLead(e) +
     ' The print can land inside this expiry any day — or has, and the feed has not caught up — so the scenario table, which cannot place it, carries no earnings rows.'
   )
 }

@@ -101,7 +101,14 @@ export type ExpiryEarnings = { tag: 'E' | 'E?'; title: string }
  * own error on this name, either side, so the print may land in or out of it.
  */
 export function expiryEarnings(e: ExpectedEarnings | null | undefined, dte: number): ExpiryEarnings | null {
-  if (!e || e.days_away < 0) return null
+  if (!e) return null
+  if (e.days_away < 0) {
+    // A late print can land before any expiry still listed — or already has.
+    return {
+      tag: 'E?',
+      title: `Earnings late — expected ~${shortDate(e.date)}, no results 8-K yet; it can land before this expiry any day, or has and the feed has not caught up`,
+    }
+  }
   const slack = e.track.max_miss_days ?? DEFAULT_SLACK_DAYS
   const gap = dte - e.days_away
   const when = `Earnings expected ~${shortDate(e.date)} (estimated)`
@@ -113,6 +120,27 @@ export function expiryEarnings(e: ExpectedEarnings | null | undefined, dte: numb
   }
   if (gap > 0) return { tag: 'E', title: `${when} — inside this expiry` }
   return null
+}
+
+/**
+ * The first half of a late print's warning, shared by the faces that raise it:
+ * when it was expected and on what, how late it is, and whether that is later
+ * than the estimate has ever missed on this name — then the lateness itself is
+ * the reading. Each face adds what it means for its own view.
+ */
+export function lateLead(e: ExpectedEarnings): string {
+  const late = -e.days_away
+  const max = e.track.max_miss_days
+  const record =
+    max != null && e.track.n > 0
+      ? late > max
+        ? ` That is later than this estimate has missed this name before (at most ${max} ${max === 1 ? 'day' : 'days'} over ${e.track.n} prints).`
+        : ` The estimate has missed this name by up to ${max} ${max === 1 ? 'day' : 'days'}, so this may still be the usual slack.`
+      : ''
+  return (
+    `Earnings late: expected ~${shortDate(e.date)} (last year's ${shortDate(e.from, true)} plus 52 weeks) and no results 8-K has arrived, ${late} ${late === 1 ? 'day' : 'days'} on.` +
+    record
+  )
 }
 
 /** The Chain face header's earnings reading. */

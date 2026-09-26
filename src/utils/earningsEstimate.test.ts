@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import {
   earningsGate,
+  gapRow,
   gapLevels,
   lateLead,
   earningsHeadMeta,
@@ -175,6 +176,21 @@ describe('term-structure earnings', () => {
   it('prints the gap levels in whole dollars at 50 and above, cents below', () => {
     expect(gapLevels(372.11, 0.042)).toEqual({ lo: 356, hi: 388 })
     expect(gapLevels(17.5, 0.1)).toEqual({ lo: 15.75, hi: 19.25 })
+  })
+
+  it('prints the Overview’s gap row from the priced move', () => {
+    const ev = eventMove(
+      [
+        { expiry: '2031-10-31', dte: 35, iv: 0.45 },
+        { expiry: '2031-11-07', dte: 42, iv: 0.58 },
+      ],
+      38
+    )!
+    expect(gapRow(ev)).toEqual({
+      value: '±9.9% priced',
+      means:
+        'The move the ATM term prices for the estimated print — 45.0% on 10-31 before it against 58.0% on 11-07 after — as the Chain and Payoff faces size the gap.',
+    })
   })
 })
 

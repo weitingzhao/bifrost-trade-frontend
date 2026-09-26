@@ -43,7 +43,7 @@ import { canonicalLens } from '@/lib/regimeRibbon'
 import { finiteOrNull } from '@/utils/finite'
 import { fmtNum } from '@/lib/format'
 import type { ExpectedEarnings } from '@/api/research/narrative'
-import { earningsGate, earningsRow } from '@/utils/earningsEstimate'
+import { earningsGate, earningsRow, gapRow, type EventMove } from '@/utils/earningsEstimate'
 
 export interface SepaCounts {
   techPass: number | null
@@ -89,7 +89,7 @@ export function faceExtras(
     watched: boolean
     sepa?: SepaCounts | null
     /** The next print, estimated; its 8-K count tells a name outside the feed from one without a cadence. */
-    earnings?: { next: ExpectedEarnings | null; filings: number | null } | null
+    earnings?: { next: ExpectedEarnings | null; filings: number | null; gap?: EventMove | null } | null
   },
 ): Partial<Record<DossierFaceId, FaceExtras>> {
   const gex = readingsOf(exhibits, 'gex_regime')
@@ -114,6 +114,7 @@ export function faceExtras(
   const pcrOi = readNum(flow, 'pcr_oi')
   const techPass = opts.sepa?.techPass ?? null
   const earn = earningsRow(opts.earnings?.next ?? null, opts.earnings?.filings ?? null)
+  const gap = opts.earnings?.gap ? gapRow(opts.earnings.gap) : null
 
   return {
     trend: {
@@ -198,6 +199,7 @@ export function faceExtras(
           value: opts.earnings ? earn.value : '—',
           means: opts.earnings ? earn.means : 'Reading the next print…',
         },
+        ...(gap ? [{ id: 'earnings-gap', label: 'Earnings gap', value: gap.value, means: gap.means }] : []),
         {
           id: 'opex',
           label: 'OpEx',

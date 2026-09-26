@@ -19,6 +19,10 @@ import type { ExpectedEarnings } from '@/api/research/narrative'
 import { fetchSepaDaily } from '@/api/researchEngine'
 import { useDossier } from '@/hooks/useDossier'
 import { useEarningsDates } from '@/hooks/useNarrative'
+import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
+import { todayIso } from '@/lib/researchFreshness'
+import { eventMove } from '@/utils/earningsEstimate'
+import { daysTo } from '@/utils/optionTicker'
 import { useLensRegistry } from '@/hooks/useLensRegistry'
 import { usePortfolioSymbols } from '@/hooks/usePortfolioSymbols'
 import { useSymbolTrail } from '@/lib/symbolTrail'
@@ -54,6 +58,8 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
   const portfolio = usePortfolioSymbols()
   const trail = useSymbolTrail(symbol)
   const earnQ = useEarningsDates(symbol)
+  // The print's priced move, read off the ATM term around it (a late print has no date to split at).
+  const termQ = useAtmIvTerm(symbol)
 
   /* The one reading the exhibits cannot give: the trend template as a count of
      checks passed rather than a percentage of them. */
@@ -78,9 +84,16 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
           fundOf: GROWTH_CHECKS,
         }
       : null
-    const earnings = earnQ.data
-      ? { next: earnQ.data.expected_next ?? null, filings: earnQ.data.filings }
-      : null
+    const next = earnQ.data?.expected_next ?? null
+    const today = todayIso()
+    const gap =
+      next && next.days_away >= 0
+        ? eventMove(
+            (termQ.data?.term ?? []).map((p) => ({ expiry: p.expiry, dte: daysTo(p.expiry, today) ?? 0, iv: p.atm_iv })),
+            next.days_away
+          )
+        : null
+    const earnings = earnQ.data ? { next, filings: earnQ.data.filings, gap } : null
     const extras = faceExtras(exhibits, { held, watched, sepa: counts, earnings })
     const views = DOSSIER_FACES.map((face) =>
       faceView(face, exhibits, symbol, specOf, extras[face.id]),
@@ -110,6 +123,7 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
     registry.isLoading,
     sepa.data,
     earnQ.data,
+    termQ.data,
     symbol,
     trail,
   ])

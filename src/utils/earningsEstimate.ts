@@ -244,3 +244,11 @@ export function gapLevels(spot: number, move: number): { lo: number; hi: number 
   const px = (x: number) => Number(x.toFixed(x < 50 ? 2 : 0))
   return { lo: px(spot * (1 - move)), hi: px(spot * (1 + move)) }
 }
+
+/** The Overview's gap row: the move the ATM term prices for the print, and where it is read. */
+export function gapRow(ev: EventMove): { value: string; means: string } {
+  return {
+    value: `±${(ev.move * 100).toFixed(1)}% priced`,
+    means: `The move the ATM term prices for the estimated print — ${(ev.before.iv * 100).toFixed(1)}% on ${ev.before.expiry.slice(5)} before it against ${(ev.after.iv * 100).toFixed(1)}% on ${ev.after.expiry.slice(5)} after — as the Chain and Payoff faces size the gap.`,
+  }
+}

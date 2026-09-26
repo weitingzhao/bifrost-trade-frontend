@@ -13,7 +13,7 @@
  * The top bar, popovers, Spotlight and the sidebar are left alone.
  */
 import { useEffect, useRef, useState } from 'react'
-import { NUMERIC, stepValue } from './numberStep'
+import { NUMERIC, stepValue } from '@bifrost/ui'
 import css from './numberStepper.module.css'
 
 const SKIP = 'header[data-menubar], [data-radix-popper-content-wrapper], [data-spotlight], [data-sidebar], [cmdk-root]'

@@ -1,9 +1,12 @@
+import { DENSE_TAG_SHELL } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
 
 /**
- * Dense UI tag variants — filled capsules since design Rev .62: no frame, the
- * variant's own ink at 15% behind it (`mat-tag`), fully round, 8px sides.
- * The variant sets only the ink; the fill follows it through currentColor.
+ * Dense UI tag variants. The capsule — no frame, the variant's own ink at 15%
+ * behind it, fully round, 8px sides — is @bifrost/ui's since 0.5.0
+ * (`DENSE_TAG_SHELL`); this app adds the variants the package has no word for
+ * (entity inks, fill sources). The variant sets only the ink; the fill
+ * follows it through currentColor.
  */
 export type DenseTagVariant =
   | 'category'
@@ -23,10 +26,7 @@ export type DenseTagVariant =
 
 export type DenseTagSize = 'cell' | 'pill'
 
-const shellBySize: Record<DenseTagSize, string> = {
-  cell: 'inline-block border mat-tag text-dense-meta font-medium py-[0.1rem]',
-  pill: 'inline-block border mat-tag text-xs font-semibold py-0.5',
-}
+const shellBySize: Record<DenseTagSize, string> = DENSE_TAG_SHELL
 
 const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
   category: {

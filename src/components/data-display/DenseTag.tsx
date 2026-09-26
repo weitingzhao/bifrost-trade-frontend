@@ -21,7 +21,7 @@ export function DenseTag({
   className?: string
 } & Omit<ComponentProps<'span'>, 'children' | 'className'>) {
   return (
-    <span className={cn(denseTagClass(variant, size), className)} {...rest}>
+    <span data-slot="dense-tag" className={cn(denseTagClass(variant, size), className)} {...rest}>
       {children}
     </span>
   )
@@ -41,6 +41,7 @@ export function DenseTagButton({
 } & Omit<ComponentProps<'button'>, 'children' | 'className'>) {
   return (
     <button
+      data-slot="dense-tag"
       type="button"
       className={cn(
         denseTagClass(variant, size),

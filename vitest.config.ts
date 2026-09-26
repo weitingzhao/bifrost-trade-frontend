@@ -11,7 +11,9 @@ export default defineConfig({
     // @bifrost/ui is linked from ../bifrost-ui, which carries its own react and
     // lucide-react; without dedupe a component rendering one of its icons runs
     // hooks against a second React copy and dies on a null dispatcher.
-    dedupe: ['react', 'react-dom', 'lucide-react'],
+    // radix-ui too: the package's Dialog (this app's since 0.5.0) pulls in
+    // react-remove-scroll, whose CJS build would otherwise take bifrost-ui's React.
+    dedupe: ['react', 'react-dom', 'lucide-react', 'radix-ui'],
   },
   test: {
     globals: true,

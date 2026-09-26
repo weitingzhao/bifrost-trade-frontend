@@ -1,170 +1,51 @@
-import * as React from "react"
-import { Dialog as DialogPrimitive } from "radix-ui"
+/**
+ * @bifrost/ui's Dialog, with the two things this app adds (0.5.0 took the
+ * rest: this file was a copy of it).
+ *
+ * - Every dialog is a macOS sheet (design Rev .72 §5): DialogContent defaults
+ *   to `presentation="sheet"` — under the top bar, sliding down, Enter runs
+ *   the footer's primary. Spotlight passes `presentation="centered"`.
+ * - `stackLayer`: a dialog opened over the Copilot float (z-[190]) and its
+ *   dropdowns (z-[220]) has to sit above them.
+ */
+import * as React from 'react'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent as UiDialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from '@bifrost/ui'
+import { cn } from '@/lib/utils'
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { XIcon } from "lucide-react"
-
-function Dialog({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
-}
-
-function DialogTrigger({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
-}
-
-function DialogPortal({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
-}
-
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
-}
-
-function DialogOverlay({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
-  return (
-    <DialogPrimitive.Overlay
-      data-slot="dialog-overlay"
-      className={cn(
-        "fixed inset-0 isolate z-50 bg-black/25 duration-100 supports-backdrop-filter:backdrop-blur-[3px] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-type DialogStackLayer = "default" | "elevated"
+type DialogStackLayer = 'default' | 'elevated'
 
 const DIALOG_STACK: Record<DialogStackLayer, { overlay: string; content: string }> = {
-  default: { overlay: "z-50", content: "z-50" },
-  // Above Copilot floating panel (z-[190]) and its dropdowns (z-[220])
-  elevated: { overlay: "z-[230]", content: "z-[231]" },
+  default: { overlay: 'z-50', content: 'z-50' },
+  elevated: { overlay: 'z-[230]', content: 'z-[231]' },
 }
 
-function DialogContent({
-  className,
-  children,
-  showCloseButton = true,
-  stackLayer = "default",
-  overlayClassName,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
-  showCloseButton?: boolean
-  stackLayer?: DialogStackLayer
-  overlayClassName?: string
-}) {
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof UiDialogContent>,
+  React.ComponentPropsWithoutRef<typeof UiDialogContent> & { stackLayer?: DialogStackLayer }
+>(({ className, overlayClassName, stackLayer = 'default', presentation = 'sheet', ...props }, ref) => {
   const stack = DIALOG_STACK[stackLayer]
   return (
-    <DialogPortal>
-      <DialogOverlay className={cn(stack.overlay, overlayClassName)} />
-      <DialogPrimitive.Content
-        data-slot="dialog-content"
-        className={cn(
-          "fixed top-1/2 left-1/2 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/[0.12] shadow-[0_10px_28px_rgba(0,0,0,0.25)] duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          stack.content,
-          className
-        )}
-        {...props}
-      >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <Button
-              variant="ghost"
-              className="absolute top-2 right-2"
-              size="icon-sm"
-            >
-              <XIcon
-              />
-              <span className="sr-only">Close</span>
-            </Button>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Content>
-    </DialogPortal>
-  )
-}
-
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="dialog-header"
-      className={cn("flex flex-col gap-2", className)}
+    <UiDialogContent
+      ref={ref}
+      presentation={presentation}
+      overlayClassName={cn(stack.overlay, overlayClassName)}
+      className={cn(stack.content, className)}
       {...props}
     />
   )
-}
-
-function DialogFooter({
-  className,
-  showCloseButton = false,
-  children,
-  ...props
-}: React.ComponentProps<"div"> & {
-  showCloseButton?: boolean
-}) {
-  return (
-    <div
-      data-slot="dialog-footer"
-      className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      {showCloseButton && (
-        <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
-        </DialogPrimitive.Close>
-      )}
-    </div>
-  )
-}
-
-function DialogTitle({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Title>) {
-  return (
-    <DialogPrimitive.Title
-      data-slot="dialog-title"
-      className={cn(
-        "font-heading text-base leading-none font-bold",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function DialogDescription({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Description>) {
-  return (
-    <DialogPrimitive.Description
-      data-slot="dialog-description"
-      className={cn(
-        "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
-        className
-      )}
-      {...props}
-    />
-  )
-}
+})
+DialogContent.displayName = 'DialogContent'
 
 export {
   Dialog,

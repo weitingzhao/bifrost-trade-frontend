@@ -145,10 +145,6 @@ export function AppSidebar() {
       // .61 the caret has no frame: which kind you are looking at is read
       // from behaviour (the label goes, the caret opens), not drawn.
       navRowSyntax
-      // Rev .61 (Sidebar Chrome 1a): the sidebar lifts off the window as a
-      // glass panel, rows become capsules. Opt-in in @bifrost/ui, so the Ops
-      // Console keeps its flat column until its own design adopts it.
-      chrome="floating"
       onSelect={(item: ShellNavItem) => {
         navigate(item.to ?? item.id)
       }}

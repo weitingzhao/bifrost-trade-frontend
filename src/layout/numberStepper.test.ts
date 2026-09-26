@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { stepValue } from './numberStep'
+import { stepValue } from '@bifrost/ui'
 
 describe('numeric step (design Rev .72 §7)', () => {
   it('steps by the last decimal place and keeps the writing', () => {

@@ -265,7 +265,8 @@ export function Omnibar() {
       <DialogContent
         showCloseButton={false}
         data-glass-surface="raised"
-        // Not a sheet: the dialog-as-sheet rules (Rev .72 §5) skip it.
+        // Not a sheet (Rev .72 §5): Spotlight keeps its own place.
+        presentation="centered"
         data-spotlight=""
         overlayClassName="bg-transparent supports-backdrop-filter:backdrop-blur-none"
         className={cn(

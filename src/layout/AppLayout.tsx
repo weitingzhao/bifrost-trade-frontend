@@ -14,7 +14,6 @@ import { useShellArrows } from './useShellArrows'
 import { usePageLane } from './usePageLane'
 import { useGlassSync } from '@/lib/glass'
 import { useDisplaySync } from '@/lib/display'
-import { useSheetEnter } from './useSheetEnter'
 import { NumberStepper } from './NumberStepper'
 import { WhatsNew } from './WhatsNew'
 import { QuickLook } from './QuickLook'
@@ -102,7 +101,6 @@ export function AppLayout() {
   const toolbarShown = useToolbarShown()
   // Rev .72: display options on <html>, and Enter confirms a sheet.
   useDisplaySync()
-  useSheetEnter()
 
   return (
     <InspectorSlotContext.Provider value={inspectorSlot}>

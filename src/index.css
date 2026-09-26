@@ -10,9 +10,13 @@
 /* §17 interaction patterns (@bifrost/ui 0.4.17): opt-in by data attribute —
    a page that marks nothing is untouched, so pages move one at a time. */
 @import "@bifrost/ui/styles/patterns";
-/* The floating sidebar (@bifrost/ui 0.4.18, design Rev .61): opt-in by
-   `ShellNavSidebar chrome="floating"`, which AppSidebar passes. */
+/* The floating sidebar (@bifrost/ui, design Rev .61; the only chrome since
+   0.5.0). */
 @import "@bifrost/ui/styles/shell";
+/* Materials, motion and display hooks (@bifrost/ui 0.5.0, design Rev
+   .59–.74): the card / rule / control / glass tokens, popper glass and its
+   paired motion, sheets, press, reduce transparency, increase contrast. */
+@import "@bifrost/ui/styles/materials";
 /* Built output, not source: the class strings survive tsc verbatim. */
 @source "../../bifrost-ui/dist/**/*.js";
 @custom-variant dark (&:is(.dark *));
@@ -167,27 +171,18 @@
        the §14.8 ratchet reads a bare 255,255,255 as an invisible-on-dark bug. */
     --sk-paper-glow: rgba(255, 255, 255, 0.7);
     /* Page materials (design Rev .62, Page Look 1a — grouped inset, like
-       macOS System Settings). Mixed from the ink, so each theme's --sk-ink
-       carries them; the page scope below and the mat-* utilities read them. */
-    --mat-card-radius: 12px;
-    --mat-card-fill: color-mix(in srgb, var(--sk-ink) 4%, transparent);
-    --mat-card-fill-hover: color-mix(in srgb, var(--sk-ink) 6%, transparent);
-    --mat-rule: color-mix(in srgb, var(--sk-ink) 6%, transparent);
-    --mat-btn-fill: color-mix(in srgb, var(--sk-ink) 8%, transparent);
-    --mat-btn-fill-hover: color-mix(in srgb, var(--sk-ink) 13%, transparent);
-    --mat-field-fill: color-mix(in srgb, var(--sk-ink) 7%, transparent);
-    --mat-focus: color-mix(in srgb, var(--sk-accent) 35%, transparent);
-    /* Motion (design Rev .68 §3): one set of durations and curves for every
-       surface. The design names its curves --ease-*; Tailwind's theme owns
-       those names (every `ease-out` utility reads them), so here they are
-       --mo-ease-*, value for value. */
-    --mo-fast: 0.15s;
-    --mo-pop: 0.16s;
-    --mo-in: 0.24s;
-    --mo-out: 0.18s;
-    --mo-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-    --mo-ease-in: cubic-bezier(0.4, 0, 1, 1);
-    --mo-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+       macOS System Settings). The values are @bifrost/ui's since 0.5.0
+       (styles/materials: --card-*, --table-rule, --control-*, --field-fill,
+       --focus-glow, and the --mo-* motion set); the mat-* names stay because
+       the utilities and the page scope below read them. */
+    --mat-card-radius: var(--card-radius);
+    --mat-card-fill: var(--card-fill);
+    --mat-card-fill-hover: var(--card-fill-hover);
+    --mat-rule: var(--table-rule);
+    --mat-btn-fill: var(--control-fill);
+    --mat-btn-fill-hover: var(--control-fill-hover);
+    --mat-field-fill: var(--field-fill);
+    --mat-focus: var(--focus-glow);
     --sk-mute: #5b6572;
     --sk-faint: #959daa;
     /* Design Rev .78, the light pass. Warning text is its own ink: amber-400
@@ -795,14 +790,14 @@ tbody tr:hover > td {
    - Rules: what is left drawing `--border` inside a page is a divider or a
      table line once cards and tags have gone frameless, so the token itself
      drops to ink 6%. Charts draw their grid with --sk-line, not --border.
-   - Buttons: every DS Button stamps data-variant — outline and secondary
-     become ink-filled, frameless, radius 8; the solid ones only round to 8.
-     Ghost and link were never framed.
-   - Fields: DS input / textarea / select trigger, ink 7%, radius 8.
+   - Buttons and DS inputs wear 1a by default since @bifrost/ui 0.5.0; the
+     fields left here are this app's own textarea and select trigger.
    - Table heads lose their fill; a sticky head keeps its own, or the rows
-     scrolling under it would show through. */
+     scrolling under it would show through. DS table heads park under the
+     page's sticky toolbar through --sticky-offset. */
 [data-mat] {
   --border: var(--mat-rule);
+  --sticky-offset: var(--sr-stick, 0px);
 }
 
 /* A marked element never keeps a frame, whatever tone map or caller class
@@ -813,27 +808,13 @@ tbody tr:hover > td {
   border-color: transparent;
 }
 
-[data-mat] [data-slot='button']:is([data-variant='outline'], [data-variant='secondary']) {
-  border-color: transparent;
-  border-radius: 8px;
-  background-color: var(--mat-btn-fill);
-}
-
-[data-mat] [data-slot='button']:is([data-variant='outline'], [data-variant='secondary']):hover:not(:disabled) {
-  background-color: var(--mat-btn-fill-hover);
-}
-
-[data-mat] [data-slot='button']:is([data-variant='default'], [data-variant='destructive']) {
-  border-radius: 8px;
-}
-
-[data-mat] :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']) {
+[data-mat] :is([data-slot='textarea'], [data-slot='select-trigger']) {
   border-color: transparent;
   border-radius: 8px;
   background-color: var(--mat-field-fill);
 }
 
-[data-mat] :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):focus-visible {
+[data-mat] :is([data-slot='textarea'], [data-slot='select-trigger']):focus-visible {
   border-color: transparent;
   box-shadow: 0 0 0 3px var(--mat-focus);
 }
@@ -852,9 +833,6 @@ tbody tr:hover > td {
   backdrop-filter: blur(10px) saturate(1.4);
 }
 
-/* The §17.4 KPI boxes (@bifrost/ui patterns) wear the card material here;
-   the toolbar keeps its own frame — it is a control strip, not a group. A
-   hero's warning edge is an inline style, so it stays: it is the reading. */
 /* A table's own frame — DS DenseDataTable wraps every table in a rounded,
    bordered box — is a group like any other: the fill, not the outline. */
 [data-mat] div.border:has(> table) {
@@ -881,28 +859,9 @@ tbody tr:hover > td {
   background-color: color-mix(in srgb, var(--sk-ink) 14%, transparent);
 }
 
-/* The page toolbar (§17.3, Rev .73 §5): 1a without the frame — radius 12 —
-   but a solid raised base, because it sticks over content. */
-[data-mat] [data-sr-toolbar] {
-  border-color: transparent;
-  border-radius: 12px;
-  background: var(--sk-raised2);
-}
-
-/* KPI labels are the contract's 11/600 sentence case (§17.4, Rev .74 §5),
-   not the 10px uppercase the patterns layer still draws. */
-[data-mat] [data-sr-kpi-l] {
-  font-size: 11px;
-  text-transform: none;
-  letter-spacing: normal;
-}
-
-[data-mat] :is([data-sr-kpi='hero'], [data-sr-kpi='strip']) {
-  border-color: transparent;
-  border-radius: var(--mat-card-radius);
-  background: var(--mat-card-fill);
-  box-shadow: none;
-}
+/* The page toolbar and the KPI boxes wear 1a in @bifrost/ui's patterns layer
+   since 0.5.0 (frameless toolbar on raised2, card-material KPIs, 11/600
+   sentence-case labels). */
 
 @layer utilities {
   .dense-scroll-x {
@@ -1011,110 +970,8 @@ tbody tr:hover > td {
   }
 }
 
-/* One popover material and motion (design Rev 2026-09-23.26, paired in and
-   out since Rev .68 §2): every Radix popper — popovers, dropdown and select
-   menus, tooltips, the sidebar's collapsed flyout — wears the shell's glass,
-   opens in 160ms ease-out (down 4px → 0, .985 → 1) and closes in 180ms
-   ease-in the same way back; one that opens upward moves the other way.
-   Radix keeps the content mounted until the closing animation ends.
-   Unlayered on purpose: the components set their surfaces with layered
-   utilities (bg-popover, bg-foreground), and unlayered rules win. Floats and
-   panels are not poppers and keep their own opaque material. */
-@keyframes sk-pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes sk-pop-out {
-  from {
-    opacity: 1;
-    transform: none;
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.985);
-  }
-}
-
-@keyframes sk-pop-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(4px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes sk-pop-out-up {
-  from {
-    opacity: 1;
-    transform: none;
-  }
-  to {
-    opacity: 0;
-    transform: translateY(4px) scale(0.985);
-  }
-}
-
-[data-radix-popper-content-wrapper] > * {
-  background: color-mix(in srgb, var(--sk-raised) 86%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
-  backdrop-filter: blur(16px) saturate(1.4);
-  border-color: color-mix(in srgb, var(--sk-ink) 14%, transparent);
-  border-radius: 10px;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 7%, transparent),
-    0 18px 48px -14px rgb(0 0 0 / 0.5);
-  animation: sk-pop-in var(--mo-pop) var(--mo-ease-out);
-}
-
-[data-radix-popper-content-wrapper] > [data-state='closed'] {
-  animation: sk-pop-out var(--mo-out) var(--mo-ease-in) forwards;
-}
-
-[data-radix-popper-content-wrapper] > [data-side='top'] {
-  animation-name: sk-pop-in-up;
-}
-
-[data-radix-popper-content-wrapper] > [data-side='top'][data-state='closed'] {
-  animation-name: sk-pop-out-up;
-}
-
-/* Black 50% shadows read as a smudge on grey paper: same lift, a fraction of
-   the ink (Rev .26). */
-html[data-theme='light'] [data-radix-popper-content-wrapper] > * {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    0 12px 32px -12px rgba(15, 20, 30, 0.18);
-}
-
-/* The DS tooltip is an inverted chip (bg-foreground / text-background); on
-   glass that ink disappears, so it flips to the page's own, and the chip's
-   diamond arrow — a solid inverted corner poking out of a translucent card —
-   goes with it. */
-[data-radix-popper-content-wrapper] > [data-slot='tooltip-content'] {
-  color: var(--foreground);
-}
-
-[data-radix-popper-content-wrapper] > [data-slot='tooltip-content'] [class~='bg-foreground'] {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  [data-radix-popper-content-wrapper] > *,
-  [data-radix-popper-content-wrapper] > [data-state],
-  [data-radix-popper-content-wrapper] > [data-side][data-state] {
-    animation: none;
-  }
-}
+/* Poppers — popovers, menus, selects, tooltips — wear @bifrost/ui's glass and
+   paired in / out motion since 0.5.0 (styles/materials). */
 
 /* One focus ring (design Rev .69 §2), keyboard only: 2px of accent at 75%,
    2px off the control, following its own radius. Text fields keep their
@@ -1124,24 +981,10 @@ html[data-theme='light'] [data-radix-popper-content-wrapper] > * {
   outline-offset: 2px;
 }
 
-/* Reduce transparency (design Rev .70 §1): the user's switch
-   (html[data-glass="solid"]) or, unset, the system's. Every glass surface
-   carries data-glass-surface = surface | raised and turns that token, solid;
-   the Radix poppers, the floating sidebar and the table heads are named
-   here by their own attributes. */
-html[data-glass='solid'] :is([data-glass-surface], [data-radix-popper-content-wrapper] > *, [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-html[data-glass='solid'] :is([data-glass-surface='surface'], [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
-  background: var(--sk-surface);
-}
-
-html[data-glass='solid'] :is([data-glass-surface='raised'], [data-radix-popper-content-wrapper] > *) {
-  background: var(--sk-raised);
-}
-
+/* Reduce transparency (design Rev .70 §1): the switch, the system's setting,
+   the glass surfaces, poppers and the floating sidebar are @bifrost/ui's
+   hooks since 0.5.0 (styles/materials; --glass-solid-* read this skin). What
+   stays here is this app's own table heads, which the page scope makes sticky. */
 html[data-glass='solid'] [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
   background-color: var(--background);
   -webkit-backdrop-filter: none;
@@ -1149,19 +992,6 @@ html[data-glass='solid'] [data-mat] table > thead:not(.sticky) > tr:not(.sticky)
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  html:not([data-glass='glass']) :is([data-glass-surface], [data-radix-popper-content-wrapper] > *, [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-
-  html:not([data-glass='glass']) :is([data-glass-surface='surface'], [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
-    background: var(--sk-surface);
-  }
-
-  html:not([data-glass='glass']) :is([data-glass-surface='raised'], [data-radix-popper-content-wrapper] > *) {
-    background: var(--sk-raised);
-  }
-
   html:not([data-glass='glass']) [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
     background-color: var(--background);
     -webkit-backdrop-filter: none;
@@ -1265,61 +1095,9 @@ header[data-menubar] {
   }
 }
 
-/* Dialogs as macOS sheets (design Rev .72 §5): attached under the top bar
-   (64px from the top), sliding down 240ms and back up 180ms, radius 14; the
-   scrim lighter (38%, a 2px blur); the footer one row, right-aligned, the
-   primary action rightmost. Enter confirms (useSheetEnter), Esc cancels
-   (Radix). Spotlight is a dialog but not a sheet and keeps its own place. */
-/* margin-top, not translate: the sheet is centred with translate. */
-@keyframes sk-sheet-down {
-  from {
-    opacity: 0;
-    margin-top: -14px;
-  }
-}
-
-@keyframes sk-sheet-up {
-  to {
-    opacity: 0;
-    margin-top: -14px;
-  }
-}
-
-[data-slot='dialog-content']:not([data-spotlight]) {
-  top: 64px;
-  --tw-translate-y: 0;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--sk-ink) 12%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 8%, transparent),
-    0 30px 80px -20px rgb(0 0 0 / 0.75);
-}
-
-[data-slot='dialog-content']:not([data-spotlight])[data-state='open'] {
-  animation: sk-sheet-down var(--mo-in) var(--mo-ease-out) both;
-}
-
-[data-slot='dialog-content']:not([data-spotlight])[data-state='closed'] {
-  animation: sk-sheet-up var(--mo-out) var(--mo-ease-in) both;
-}
-
-[data-slot='dialog-overlay']:not(:has(+ [data-spotlight])) {
-  background: rgb(4 6 9 / 0.38);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
-}
-
-[data-slot='dialog-footer'] {
-  flex-direction: row;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  [data-slot='dialog-content']:not([data-spotlight])[data-state] {
-    animation: none;
-  }
-}
+/* Dialogs are macOS sheets (design Rev .72 §5): @bifrost/ui's
+   presentation="sheet" since 0.5.0, the default of this app's DialogContent
+   (components/ui/dialog). Spotlight is a dialog but not a sheet. */
 
 /* Display options (design Rev .72 §11; lib/display). Text size scales the
    page lane alone. Increase contrast brings frames back — an inset line on
@@ -1345,7 +1123,9 @@ html[data-contrast='more'] .mat-tag {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 45%, transparent);
 }
 
-html[data-contrast='more'] :is([data-glass-surface], [data-radix-popper-content-wrapper] > *, [data-shell-chrome='floating'] > [data-slot='sidebar-inner']) {
+/* Poppers and the floating sidebar take their frame from @bifrost/ui's
+   contrast hook; this app's own glass surfaces from here. */
+html[data-contrast='more'] [data-glass-surface] {
   border-color: color-mix(in srgb, var(--sk-ink) 28%, transparent);
 }
 
@@ -1366,16 +1146,15 @@ html[data-contrast='more'][data-theme='light'] {
   overflow-x: hidden;
 }
 
-/* Press feedback (design Rev .68 §3): a control dips to .97 while held —
-   the independent `scale` property, so it never fights a transform. Page
-   buttons, the sidebar's rows; the menu bar and the panel chrome carry the
-   same rule in their own modules. Off under reduced motion. */
-:is([data-slot='button'], .mat-btn, [data-sidebar='menu-button'], [data-sidebar='menu-sub-button']):active:not(:disabled) {
+/* Press feedback (design Rev .68 §3): DS buttons and the sidebar's rows dip
+   in @bifrost/ui since 0.5.0; this app's own mat-btn controls dip the same
+   way here. The menu bar and the panel chrome carry it in their modules. */
+.mat-btn:active:not(:disabled) {
   scale: 0.97;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :is([data-slot='button'], .mat-btn, [data-sidebar='menu-button'], [data-sidebar='menu-sub-button']):active {
+  .mat-btn:active {
     scale: none;
   }
 }

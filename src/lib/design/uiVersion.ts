@@ -8,6 +8,9 @@
  * 0.4.15 moves the severity lamps in beside them and drops the up/down
  * aliases; 0.4.16 adds `PageHead` (§16.10); 0.4.17 the §17 patterns layer,
  * `ViewState` and table column types; 0.4.18 the floating sidebar skin
- * (`ShellNavSidebar chrome="floating"`, `styles/shell`, Rev .61).
+ * (`ShellNavSidebar chrome="floating"`, `styles/shell`, Rev .61); 0.5.0 the
+ * "Apple" round promoted (design Rev .59–.74): `styles/materials`, 1a as the
+ * default look (tag capsule, frameless secondary button, field, table,
+ * floating sidebar), sheets, NumberField, ContextMenu, KpiCard / FilterBar.
  */
-export const UI_VERSION_NOW = '0.4.18'
+export const UI_VERSION_NOW = '0.5.0'

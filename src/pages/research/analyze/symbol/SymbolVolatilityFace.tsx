@@ -23,7 +23,7 @@ import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { daysTo } from '@/utils/optionTicker'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { SkewSurfaceChart, TermCurveChart } from '@/pages/research/analyze/symbol/symbolVolCharts'
-import { termEarningsLegend, termEarningsMark, termEarningsNote } from '@/utils/earningsEstimate'
+import { lateLead, termEarningsLegend, termEarningsMark, termEarningsNote } from '@/utils/earningsEstimate'
 import {
   LensOwnRecord,
   ResidualHeatmap,
@@ -383,6 +383,16 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
           </span>
         </header>
         <LensVerdictBlock lensId="term_slope" exhibit={exOf('term_slope')} />
+        {nextEarnings && nextEarnings.days_away < 0 ? (
+          <p
+            className="m-0 border-y border-warning/30 bg-warning/10 px-3 py-1.5 text-dense-meta leading-normal text-warning text-pretty"
+            role="note"
+            aria-label="Earnings late"
+          >
+            {lateLead(nextEarnings)} Its date is unknown, so the curve carries no earnings line — and until it prints,
+            any expiry here may still hold its premium.
+          </p>
+        ) : null}
         {term.length === 0 ? (
           <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
             The ATM IV store holds no expiry {TERM_MIN_DTE}–{TERM_MAX_DTE} days out for this name.
@@ -460,7 +470,8 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
           near expiries the wings can pull off. The lime row is the tenor the Skew panel is reading.
           The design&rsquo;s 1y cone needs a per-horizon history no store keeps yet — owed, not faked.
         </p>
-        {!earnQ.isLoading && term.length > 0 ? (
+        {/* A late print has its strip above the curve; this line is for a dated one. */}
+        {!earnQ.isLoading && term.length > 0 && !(nextEarnings && nextEarnings.days_away < 0) ? (
           <p className={note}>{termEarningsNote(nextEarnings, term, earnQ.data?.filings)}</p>
         ) : null}
       </section>

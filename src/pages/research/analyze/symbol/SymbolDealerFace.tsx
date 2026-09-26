@@ -164,9 +164,11 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const pinRate = pinsQ.data?.pin_rate ?? null
   const cycleOn = new Map((cyclesQ.data ?? []).map((c) => [c.opex_date ?? '', c]))
   const timeline = useDealerTimeline(sym, expiry)
-  // The opex strike map is `ORDER BY strike LIMIT 60` on the server — for a
-  // name above its 60th strike (PLTR: 5…145 against spot 190) it misses the
-  // money entirely, and the map says so rather than passing for a near-money read.
+  // The opex strike map is the 60 strikes nearest spot (research 0.129.0; it
+  // had been the lowest 60, PLTR 5…145 against spot 190). It can still miss
+  // the money when the name's chain never reaches the price — CUE 09-25 lists
+  // 0.5…5 against 31.41 — and the map says so rather than passing for a
+  // near-money read.
   const mapStrikes = (opexQ.data?.strike_map ?? []).map((r) => r.strike).filter((k): k is number => k != null)
   const mapSpot = opexQ.data?.row?.spot ?? spot
   const mapMax = mapStrikes.length > 0 ? Math.max(...mapStrikes) : null
@@ -673,8 +675,9 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           </div>
           {mapOutOfRange ? (
             <p className="m-0 pb-1 text-dense-micro text-warning">
-              The strike map stops at {mapMax} — the route returns the lowest 60 strikes, so spot{' '}
-              {mapSpot?.toFixed(2)} and the book around it are not in it. A Research fix is pending.
+              The strike map runs {mapMin}–{mapMax} and never reaches spot {mapSpot?.toFixed(2)}: the
+              chain the GEX store holds for this name does not span the price, so the map shows that chain,
+              not the book around spot.
             </p>
           ) : null}
           <div className="overflow-x-auto">

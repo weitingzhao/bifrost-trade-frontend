@@ -26,14 +26,46 @@ export interface SessionDay {
 }
 
 /**
- * Why no settlement figure is printed: the settlement scores a session
- * against its own trade date's close, and the session is computed after that
- * close — its spot *is* that close (PLTR 24 of 29 settlements, SPY 21/29,
- * AAPL 23/27 on DEV). Hit, miss and calibration therefore measure hindsight,
- * not forecasting, until Research settles against the session that follows.
+ * A session is computed after its trade date's close, so it forecasts the
+ * session that follows. Until research 0.126.0 the settlement scored it
+ * against its own date's close — the price it already knew (PLTR 24 of 29
+ * settlements had actual == spot) — and this panel withheld every figure.
+ * 0.126.0 settles against the next session and stamps `stats_json.target_date`;
+ * a row without it was written under the old rule and is not a forecast result.
  */
-export const SETTLEMENT_WITHHELD_REASON =
-  'Withheld: the settlement scores each forecast against the close that was already known when it was computed (the session’s own spot), so hit, miss and calibration measure hindsight, not forecasting. Research fix pending.'
+export function isForecastSettlement(s: ForecastSettlement | null | undefined): s is ForecastSettlement {
+  return Boolean(s && typeof s.stats_json?.target_date === 'string')
+}
+
+/** The session a settlement scored the forecast against (the next trading day). */
+export function settlementTarget(s: ForecastSettlement): string | null {
+  const t = s.stats_json?.target_date
+  return typeof t === 'string' ? t : null
+}
+
+/** Whether the path was judged on hourly prints or, lacking them, the close alone. */
+export function settlementBasis(s: ForecastSettlement): 'hourly' | 'close' | null {
+  const b = s.stats_json?.path_basis
+  return b === 'hourly' || b === 'close' ? b : null
+}
+
+/**
+ * research 0.127.0 stamps a settlement whose forecast was drawn from GEX walls
+ * nowhere near the price (`walls_off_spot`): the July–August 2026 terrain was
+ * backfilled from chains of a handful of contracts, and PLTR's walls sat on 20
+ * against a 131.53 close. Such a row measures that input, so every rate leaves
+ * it out; the list still shows it.
+ */
+export function settlementInputFault(s: ForecastSettlement | null | undefined): string | null {
+  const f = s?.stats_json?.input_fault
+  return typeof f === 'string' && f ? f : null
+}
+
+export const INPUT_FAULT_NOTE =
+  'The target was drawn from GEX walls nowhere near the price — the option chain behind them held a handful of contracts — so its miss measures that input, not the forecast. Left out of every rate.'
+
+export const LEGACY_SETTLEMENT_NOTE =
+  'Settled under the rule before research 0.126.0 — against the close already known when the session was computed — so it is not a forecast result.'
 
 export function foldSessionDays(
   sessions: readonly ForecastSession[],

@@ -1,18 +1,42 @@
 /**
  * One forecast session, opened from the Forecast sessions table — what the
  * model said that night: the regime and its probability split, the hourly
- * path it drew, the structures it ranked and its own words. The settlement
- * keeps its seat and says why its figures are withheld (see
- * `SETTLEMENT_WITHHELD_REASON`).
+ * path it drew, the structures it ranked and its own words — and how it
+ * settled: against the session it forecast (research 0.126.0), each hour's
+ * print beside the band it drew where the plugin keeps 1-hour bars for the
+ * name, the close alone where it does not.
  */
 import { useQuery } from '@tanstack/react-query'
 import { fetchForecastSessionDetail } from '@/api/researchEngine'
-import { DenseTag, type DenseTagVariant } from '@/components/data-display'
+import { DenseTag, SettlementBadges, type DenseTagVariant } from '@/components/data-display'
 import { ProbabilityBar } from '@/components/charts/ProbabilityBar'
 import { ForecastStructureCards } from '@/components/research/ForecastStructureCards'
 import { FaceKv } from '@/components/research/FaceKv'
+import { settlementFineGrain } from '@/lib/researchSettlement'
 import { cn } from '@/lib/utils'
-import { SETTLEMENT_WITHHELD_REASON, type SessionDay } from './useSymbolForecastSessions'
+import {
+  INPUT_FAULT_NOTE,
+  LEGACY_SETTLEMENT_NOTE,
+  isForecastSettlement,
+  settlementBasis,
+  settlementInputFault,
+  settlementTarget,
+  type SessionDay,
+} from './useSymbolForecastSessions'
+
+/** The settlement's own per-hour record: the print and whether the band held. */
+function hourPrints(hourlyJson: unknown): Map<number, { price: number; hit: boolean }> {
+  const out = new Map<number, { price: number; hit: boolean }>()
+  if (!Array.isArray(hourlyJson)) return out
+  for (const h of hourlyJson) {
+    if (!h || typeof h !== 'object') continue
+    const r = h as Record<string, unknown>
+    if (typeof r.hour_et === 'number' && typeof r.actual_price === 'number') {
+      out.set(r.hour_et, { price: r.actual_price, hit: r.hit === true })
+    }
+  }
+  return out
+}
 
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
@@ -48,6 +72,10 @@ export function SymbolSessionInspector({ day, onClose }: { day: SessionDay; onCl
   const hourly = [...(detailQ.data?.hourly ?? [])].sort((a, b) => a.hour_et - b.hour_et)
   const cost = sessionCostUsd(detailQ.data?.session.terrain_json)
   const move = s.spot > 0 ? ((s.expected_close - s.spot) / s.spot) * 100 : null
+  const stl = day.settlement
+  const current = isForecastSettlement(stl)
+  const prints = current ? hourPrints(stl.hourly_json) : new Map<number, { price: number; hit: boolean }>()
+  const came = current && s.spot > 0 ? (stl.actual_close - s.spot) / s.spot : null
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -126,6 +154,7 @@ export function SymbolSessionInspector({ day, onClose }: { day: SessionDay; onCl
                   <th className={th}>High</th>
                   <th className={th}>Target</th>
                   <th className={th}>Conf</th>
+                  {prints.size > 0 ? <th className={th} title="The 1-hour bar's close at that hour, against the band.">Actual</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -143,6 +172,11 @@ export function SymbolSessionInspector({ day, onClose }: { day: SessionDay; onCl
                     <td className={td}>{h.level_high.toFixed(2)}</td>
                     <td className={td}>{h.level_target.toFixed(2)}</td>
                     <td className={td}>{Math.round(h.confidence * 100)}%</td>
+                    {prints.size > 0 ? (
+                      <td className={cn(td, prints.get(h.hour_et) == null ? 'text-muted-foreground' : prints.get(h.hour_et)!.hit ? 'text-success' : 'text-destructive')}>
+                        {prints.get(h.hour_et)?.price.toFixed(2) ?? '—'}
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -157,18 +191,47 @@ export function SymbolSessionInspector({ day, onClose }: { day: SessionDay; onCl
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-1 border-t border-border/60 pt-2">
+        <div className="flex flex-col gap-1.5 border-t border-border/60 pt-2">
           <span className={cap}>settlement</span>
-          <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
-            {day.settlement
-              ? `Settled ${day.settlement.computed_at.slice(0, 10)} against ${day.settlement.actual_close.toFixed(2)}${
-                  Math.abs(day.settlement.actual_close - s.spot) < 1e-6
-                    ? ' — the session’s own spot'
-                    : ` (spot at compute ${s.spot.toFixed(2)})`
-                }. `
-              : 'Not settled. '}
-            {SETTLEMENT_WITHHELD_REASON}
-          </p>
+          {current ? (
+            <>
+              {settlementInputFault(stl) ? (
+                <p className="m-0 text-dense-meta leading-normal text-warning text-pretty">{INPUT_FAULT_NOTE}</p>
+              ) : null}
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                <FaceKv label="for" value={settlementTarget(stl) ?? '—'} title="The session the forecast was for — the next trading day." />
+                <FaceKv
+                  label="close · move"
+                  value={`${stl.actual_close.toFixed(2)} · ${came == null ? '—' : `${came >= 0 ? '+' : '−'}${Math.abs(came * 100).toFixed(2)}%`}`}
+                  cls={came == null ? undefined : came >= 0 ? 'text-profit' : 'text-loss'}
+                />
+                <FaceKv
+                  label="miss vs target"
+                  value={`${stl.close_miss_pct >= 0 ? '+' : '−'}${Math.abs(stl.close_miss_pct * 100).toFixed(2)}%`}
+                />
+                <FaceKv
+                  label="path"
+                  value={settlementBasis(stl) === 'hourly' ? `${stl.path_hit_count}/${stl.path_total} hours` : 'close only'}
+                  title={
+                    settlementBasis(stl) === 'hourly'
+                      ? 'Hours whose print held the band (or moved the called way), of the hours that printed.'
+                      : 'No 1-hour bars for this name that day: the path is judged on the close alone.'
+                  }
+                />
+              </div>
+              <SettlementBadges
+                pathHit={stl.path_hit}
+                pathHitCount={stl.path_hit_count}
+                pathTotal={stl.path_total}
+                closeMissPct={stl.close_miss_pct}
+                {...settlementFineGrain(stl)}
+              />
+            </>
+          ) : (
+            <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
+              {stl ? LEGACY_SETTLEMENT_NOTE : 'Not settled yet — it settles after the session it forecast closes.'}
+            </p>
+          )}
         </div>
       </div>
     </div>

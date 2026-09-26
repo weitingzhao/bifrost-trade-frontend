@@ -525,7 +525,15 @@ function SettlementTab() {
       )}
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-        <AggTile label="Sessions" value={String(agg.sessions)} note="newest 200 the API serves" />
+        <AggTile
+          label="Sessions"
+          value={String(agg.sessions)}
+          note={
+            agg.inputFaults > 0
+              ? `newest 200 the API serves · ${agg.inputFaults} left out (drawn from GEX walls nowhere near the price)`
+              : 'newest 200 the API serves'
+          }
+        />
         <AggTile
           label="Within ±3%"
           value={agg.within3Pct != null ? `${agg.within3Pct.toFixed(0)}%` : '—'}

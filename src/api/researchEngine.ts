@@ -601,6 +601,8 @@ export interface ForecastHitRateSummary {
   path_hit_rate: number | null
   avg_close_miss_pct: number | null
   direction_hit_rate: number | null
+  /** Settlements left out of the rates: drawn from an input fault (research 0.127.0). */
+  input_faults?: number
   rows: ForecastSettlement[]
 }
 
@@ -629,7 +631,13 @@ export interface ForecastCalibrationResponse {
   symbol: string
   days: number
   rows: ForecastCalibrationRow[]
-  overall: { n: number; hits: number; hit_rate: number | null }
+  overall: {
+    n: number
+    hits: number
+    hit_rate: number | null
+    /** Settlements left out of every row: drawn from an input fault (research 0.127.0). */
+    input_faults?: number
+  }
 }
 
 const validateCalibration = withValidation<ForecastCalibrationResponse>(

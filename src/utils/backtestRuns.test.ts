@@ -140,6 +140,17 @@ describe('settleAgg', () => {
     expect(agg.pathHitPct).toBeCloseTo((2 / 3) * 100, 6)
     expect(settleAgg([]).within3Pct).toBeNull()
   })
+
+  it('leaves out rows research stamped with an input fault', () => {
+    // PLTR 2026-07-27: target 20.5 from walls on 20 against a 131.53 close.
+    const faulty = { ...settle(502, false), settlement_id: 'fault', stats_json: { input_fault: 'walls_off_spot' } }
+    const agg = settleAgg([settle(0.5, true), faulty])
+    expect(agg.sessions).toBe(1)
+    expect(agg.inputFaults).toBe(1)
+    expect(agg.meanAbsMissPct).toBeCloseTo(0.5, 6)
+    expect(settleAgg([faulty]).inputFaults).toBe(1)
+    expect(settleAgg([faulty]).meanAbsMissPct).toBeNull()
+  })
 })
 
 describe('runScope', () => {

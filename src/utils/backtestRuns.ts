@@ -223,12 +223,18 @@ export interface SettleAgg {
   meanAbsMissPct: number | null
   pathHits: number
   pathHitPct: number | null
+  /** Rows left out: research stamped them `stats_json.input_fault` (0.127.0). */
+  inputFaults: number
 }
 
-export function settleAgg(rows: readonly ForecastSettlement[]): SettleAgg {
+export function settleAgg(all: readonly ForecastSettlement[]): SettleAgg {
+  // A settlement drawn from an input fault measures that input, not the
+  // forecast; research leaves it out of its own rates, and so does this.
+  const rows = all.filter((r) => !r.stats_json?.input_fault)
+  const inputFaults = all.length - rows.length
   const n = rows.length
   if (n === 0)
-    return { sessions: 0, within3: 0, within3Pct: null, meanAbsMissPct: null, pathHits: 0, pathHitPct: null }
+    return { sessions: 0, within3: 0, within3Pct: null, meanAbsMissPct: null, pathHits: 0, pathHitPct: null, inputFaults }
   const misses = rows.map((r) => Math.abs(r.close_miss_pct) * 100)
   const within3 = misses.filter((m) => m < 3).length
   const pathHits = rows.filter((r) => r.path_hit).length
@@ -239,6 +245,7 @@ export function settleAgg(rows: readonly ForecastSettlement[]): SettleAgg {
     meanAbsMissPct: misses.reduce((a, b) => a + b, 0) / n,
     pathHits,
     pathHitPct: (pathHits / n) * 100,
+    inputFaults,
   }
 }
 

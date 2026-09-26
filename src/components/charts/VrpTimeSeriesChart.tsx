@@ -15,8 +15,10 @@
  * has (RV60, fixed width). History draws the design's "IV vs realized": RV20,
  * a band for where IV has sat, and the width of its panel — so those are
  * props with the old behaviour as their defaults, rather than a second chart
- * of the same two lines (§14.2). History also dashes each earnings print
- * (`marks`), as the design does.
+ * of the same two lines (§14.2). History also marks each earnings print
+ * (`marks`): amber and dated rather than the design's grey "E", so a print is
+ * not read as a second realised line, and hovering the print's session adds
+ * what it priced and what came.
  */
 import { fmtPctFromFraction } from '@/lib/format'
 import { useMemo, useState } from 'react'
@@ -52,7 +54,12 @@ export interface ChartMark {
   date: string
   label: string
   title?: string
+  /** Shown in the hover readout when the pointer is on the mark's session. */
+  detail?: string
 }
+
+/** Past this many px from an edge a centred label would clip; anchor it inward. */
+const LABEL_EDGE = 28
 
 function sparseLabelIndices(count: number, target = 6): Set<number> {
   if (count <= target) return new Set(Array.from({ length: count }, (_, i) => i))
@@ -145,6 +152,7 @@ export function VrpTimeSeriesChart({
     .filter((m) => m.date >= first && m.date <= last)
     .map((m) => ({ ...m, i: rows.findIndex((r) => (r.trade_date ?? '') >= m.date) }))
     .filter((m) => m.i >= 0)
+  const hoverMark = hoverIdx != null ? drawnMarks.find((m) => m.i === hoverIdx) : undefined
   const tooltipRow = hoverIdx != null ? rows[hoverIdx] : null
   return (
     <div className={cn('relative', className)}>
@@ -190,28 +198,33 @@ export function VrpTimeSeriesChart({
           strokeWidth={2}
         />
 
-        {drawnMarks.map((m) => (
-          <g key={`mark-${m.date}`}>
-            <line
-              x1={chart.xScale(m.i)}
-              x2={chart.xScale(m.i)}
-              y1={chart.pad.top}
-              y2={chart.pad.top + chart.chartH}
-              className="stroke-muted-foreground/50"
-              strokeWidth={1}
-              strokeDasharray="2 3"
-            />
-            <text
-              x={chart.xScale(m.i)}
-              y={chart.pad.top - 5}
-              textAnchor="middle"
-              className="fill-muted-foreground text-dense-micro font-mono"
-            >
-              {m.title ? <title>{m.title}</title> : null}
-              {m.label}
-            </text>
-          </g>
-        ))}
+        {drawnMarks.map((m) => {
+          const x = chart.xScale(m.i)
+          const anchor = x < chart.pad.left + LABEL_EDGE ? 'start' : x > width - chart.pad.right - LABEL_EDGE ? 'end' : 'middle'
+          return (
+            <g key={`mark-${m.date}`} data-chart-mark={m.date}>
+              <line
+                x1={x}
+                x2={x}
+                y1={chart.pad.top}
+                y2={chart.pad.top + chart.chartH}
+                className="stroke-warning"
+                strokeOpacity={hoverIdx === m.i ? 1 : 0.7}
+                strokeWidth={hoverIdx === m.i ? 2 : 1.25}
+                strokeDasharray="3 2"
+              />
+              <text
+                x={x}
+                y={chart.pad.top - 5}
+                textAnchor={anchor}
+                className="fill-warning text-dense-micro font-mono"
+              >
+                {m.title ? <title>{m.title}</title> : null}
+                {m.label}
+              </text>
+            </g>
+          )
+        })}
 
         {rows.map((r, i) => (
           <rect
@@ -271,8 +284,8 @@ export function VrpTimeSeriesChart({
         ) : null}
         {drawnMarks.length > 0 ? (
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-0 border-l border-dashed border-muted-foreground" />
-            <span className="text-muted-foreground">Earnings (E)</span>
+            <span className="inline-block h-3 w-0 border-l-2 border-dashed border-warning" />
+            <span className="text-muted-foreground">Earnings — hover the day for the move</span>
           </span>
         ) : null}
       </div>
@@ -296,6 +309,7 @@ export function VrpTimeSeriesChart({
               </span>
             </>
           ) : null}
+          {hoverMark?.detail ? <div className="mt-1 font-mono tabular-nums text-warning">{hoverMark.detail}</div> : null}
         </div>
       ) : null}
     </div>

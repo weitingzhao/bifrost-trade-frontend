@@ -102,11 +102,27 @@ export function setAsideLine(m: EarningsMoves): string | null {
   return parts.join(' ')
 }
 
-/** Dashed marks for the IV chart, one per print, on its filing date. */
-export function printMarks(m: EarningsMoves | null | undefined): { date: string; label: string; title: string }[] {
+/** The IV chart's hover line for a print: what it priced, what came, the crush. */
+export function markDetail(p: EarningsPrint): string {
+  const parts = [`Earnings ${printLabel(p.filed)}`]
+  if (p.priced != null) parts.push(`priced ${pricedPct(p.priced)}`)
+  if (p.actual != null) {
+    const sign = p.direction === 'down' ? MINUS : p.direction === 'up' ? '+' : ''
+    parts.push(`moved ${sign}${movePct(p.actual)}${p.ratio != null ? ` (${ratioText(p.ratio)})` : ''}`)
+  }
+  if (p.crush_pts != null) parts.push(`IV crush ${crushText(p.crush_pts)}`)
+  if (p.missing) parts.push(p.missing)
+  return parts.join(' · ')
+}
+
+/** Marks for the IV chart, one per print, on its filing date, labelled with it. */
+export function printMarks(
+  m: EarningsMoves | null | undefined
+): { date: string; label: string; title: string; detail: string }[] {
   return (m?.prints ?? []).map((p) => ({
     date: p.filed,
-    label: 'E',
+    label: printLabel(p.filed),
     title: `Earnings — 8-K Item 2.02 filed ${p.filed}`,
+    detail: markDetail(p),
   }))
 }

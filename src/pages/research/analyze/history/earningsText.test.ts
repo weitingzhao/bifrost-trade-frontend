@@ -113,10 +113,20 @@ describe('earnings moves text', () => {
     expect(setAsideLine(m)).toBeNull()
   })
 
-  it('marks each print on its filing date', () => {
-    expect(printMarks(moves([row('2031-08-03', 0.1, 0.3)]))).toEqual([
-      { date: '2031-08-03', label: 'E', title: 'Earnings — 8-K Item 2.02 filed 2031-08-03' },
+  it('marks each print on its filing date, dated, with the move for the hover', () => {
+    expect(printMarks(moves([row('2031-08-03', 0.114, 0.295)]))).toEqual([
+      {
+        date: '2031-08-03',
+        label: '3 Aug 31',
+        title: 'Earnings — 8-K Item 2.02 filed 2031-08-03',
+        detail: 'Earnings 3 Aug 31 · priced ±11.4% · moved +29.5% (2.59×) · IV crush \u221210 pts',
+      },
     ])
     expect(printMarks(null)).toEqual([])
+  })
+
+  it('says why a mark has no move to show', () => {
+    const [mark] = printMarks(moves([row('2031-08-03', null, 0.05, 'down')]))
+    expect(mark.detail).toBe('Earnings 3 Aug 31 · moved \u22125.0% · IV crush \u221210 pts · no ATM IV for an expiry covering the print')
   })
 })

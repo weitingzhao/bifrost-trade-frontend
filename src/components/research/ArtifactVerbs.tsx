@@ -31,7 +31,7 @@ export function ArtifactVerbs({
   return (
     <span
       className={cn('inline-flex min-w-0 flex-wrap items-center gap-1', className)}
-      title="Research Vision §6 — the six verbs every artifact carries. Four read and never write, Settle records a fact, Distill is the one write and it goes through the Inbox."
+      title="The six verbs every artifact carries. Four read and never write, Settle records a fact, Distill is the one write and it goes through the Inbox."
     >
       {artifact ? (
         <span className="mr-1 font-mono text-dense-micro text-muted-foreground">{artifact}</span>

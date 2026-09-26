@@ -187,7 +187,7 @@ export default function AlertsPage() {
             {armedRows.length} rule{armedRows.length === 1 ? '' : 's'}
           </span>
           <span className="ml-auto text-dense-caption text-muted-foreground">
-            alerts notify — they never trade (D10) · the limit book’s lines; per-symbol arming has no
+            alerts notify — they never trade · the limit book’s lines; per-symbol arming has no
             store yet
           </span>
         </header>

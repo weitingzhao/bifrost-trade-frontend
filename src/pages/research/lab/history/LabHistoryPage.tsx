@@ -199,7 +199,7 @@ export default function LabHistoryPage() {
           className={cn(
             'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
           )}
-          title="Method face — how the number is made. Analysis only; no order can be placed from here (D10)."
+          title="Method face — how the number is made. Analysis only; no order can be placed from here."
         >
           ◆ METHOD · NO ORDERS
         </span>

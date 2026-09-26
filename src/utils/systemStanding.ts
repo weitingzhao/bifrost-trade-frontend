@@ -273,8 +273,8 @@ export function nightlyStanding(
         tone: 'warn' as const,
         text:
           f.age_hours == null
-            ? `${f.label} is ${f.status} — readings grounded in it carry the amber asof (§17).`
-            : `${f.label} is ${f.age_hours.toFixed(1)}h old — readings grounded in it carry the amber asof (§17).`,
+            ? `${f.label} is ${f.status} — readings grounded in it carry the amber asof.`
+            : `${f.label} is ${f.age_hours.toFixed(1)}h old — readings grounded in it carry the amber asof.`,
       })),
       ...unjudged,
       ...extra,

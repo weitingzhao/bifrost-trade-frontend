@@ -170,7 +170,7 @@ function SuggestionQueue() {
           {rows.length} draft{rows.length > 1 ? 's' : ''} awaiting your call
         </span>
         <span className="ml-auto text-dense-caption text-muted-foreground">
-          the hypothesis queue · the same card as every other write (§11.3)
+          the hypothesis queue · the same card as every other write
         </span>
       </header>
       <div className="space-y-2.5 px-3 py-2.5">

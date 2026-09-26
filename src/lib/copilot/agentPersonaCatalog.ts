@@ -281,7 +281,7 @@ export const ORCHESTRATION_RUNTIME = {
 } as const
 
 export const PERSONA_CANNOT_LINES = [
-  'Place, modify, or cancel orders (D10)',
+  'Place, modify, or cancel orders',
   'Write without a card you approve',
   "Read someone else's accounts",
 ] as const
@@ -446,7 +446,7 @@ export const PAGE_COPY: Record<
     personaLabel: 'Persona (markdown)',
     personaHint: 'Trading style, boundaries, frameworks. Chinese or English.',
     personaPlaceholder:
-      '# Title\n\n- Growth / event-driven bias\n- Candidates first, then depth\n- Observe-only (D10)',
+      '# Title\n\n- Growth / event-driven bias\n- Candidates first, then depth\n- Observe-only',
     preferences: 'Structured preferences',
     baseInstruction: 'Base instruction (read-only)',
     assembledPreview: 'Assembled preview',

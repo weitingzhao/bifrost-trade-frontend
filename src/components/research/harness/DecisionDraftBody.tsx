@@ -40,7 +40,7 @@ export function DecisionDraftBody({ payload }: { payload: Record<string, unknown
           </span>
         ) : null}
         <span className="ml-auto text-dense-micro text-muted-foreground">
-          Advisory — Approve records your call; nothing is written or placed (D10)
+          Advisory — Approve records your call; nothing is written or placed
         </span>
       </div>
 

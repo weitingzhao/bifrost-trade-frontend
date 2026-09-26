@@ -374,7 +374,7 @@ export function EquityGrowthCard({
             <span className="text-xs text-muted-foreground">Net PnL</span>
             <span className={cn(perfUi.mono, 'text-xs text-muted-foreground')}>{fmtPnl(last.totalRaw)}</span>
           </span>
-          <span className="basis-full text-dense-micro text-muted-foreground text-pretty">
+          <span className="basis-full text-dense-caption text-muted-foreground text-pretty">
             Weight and dash repeat the asset-class hues. Unrealized is dashed and orange in the curve, calendar and table alike.
           </span>
         </div>

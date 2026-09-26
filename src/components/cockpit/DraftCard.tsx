@@ -440,7 +440,7 @@ export function DraftCard({
                     because a playbook entry does land under Trade — it is a
                     note, not an order, and the looser wording would be
                     false on exactly that kind. */}
-                {' · never an order (D10)'}
+                {' · never an order'}
               </>
             ) : (
               'Approve only records your answer — nothing is written'

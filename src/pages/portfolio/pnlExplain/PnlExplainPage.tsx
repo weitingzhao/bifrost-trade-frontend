@@ -167,7 +167,7 @@ export default function PnlExplainPage() {
           <>
             <PositionsTier
               label="Does it tie out"
-              note="one number, one source — if these disagree, this page is wrong first"
+              note="one number, one source — Performance is the source"
             />
             <section className={positionsUi.panel} aria-label="Does it tie out">
               <div className="flex flex-wrap items-stretch gap-x-0 gap-y-2.5 px-3.5 py-2.5">
@@ -194,8 +194,8 @@ export default function PnlExplainPage() {
               </div>
               <p className={cn(FOOT, 'm-0')}>
                 <span className={positionsUi.mono}>Window P&amp;L = Δ + Γ + vega + θ + Unexplained.</span> Performance
-                owns the amount — FIFO realized plus unrealized — and this page only takes it apart; if the two disagree
-                this page is wrong first. {PNL_UNRECORDED.snapshot} What is below is not that difference: it is the
+                owns the amount — FIFO realized plus unrealized — and this page only takes it apart; Performance is the
+                source. {PNL_UNRECORDED.snapshot} What is below is not that difference: it is the
                 leaks the book can name on its own.
               </p>
             </section>

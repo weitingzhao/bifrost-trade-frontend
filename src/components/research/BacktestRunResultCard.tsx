@@ -610,7 +610,7 @@ function WalkForwardBars({
           </span>
         </div>
       ))}
-      <div className="flex justify-between text-dense-micro text-muted-foreground">
+      <div className="flex justify-between text-dense-caption text-muted-foreground">
         <span className="font-mono">{dates[0]} → {dates[dates.length - 1]}</span>
         <span>grey = in-sample · coloured = OOS return</span>
       </div>

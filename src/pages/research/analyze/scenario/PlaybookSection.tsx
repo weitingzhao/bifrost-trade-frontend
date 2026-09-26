@@ -363,7 +363,7 @@ export function PlaybookSection() {
         }
         narrative={
           selected
-            ? `${intradayVerdict.headline}. ${intradayVerdict.invalidate}${calibration ? ` ${calibration}.` : ''} Observe only — do not arm live orders (D10).`
+            ? `${intradayVerdict.headline}. ${intradayVerdict.invalidate}${calibration ? ` ${calibration}.` : ''} Observe only — do not arm live orders.`
             : 'Load intraday terrain to pick a LIVE scenario bias before the open.'
         }
         signals={
@@ -652,7 +652,7 @@ export function PlaybookSection() {
       )}
 
       <p className="text-dense-caption text-muted-foreground">
-        Intraday playbook — observe only (D10). Not investment advice.
+        Intraday playbook — observe only. Not investment advice.
       </p>
       </SymbolContextGuard>
     </div>

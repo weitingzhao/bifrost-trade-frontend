@@ -194,7 +194,7 @@ export default function SignalHealthPage() {
     <PageShell padding="compact" className="space-y-3">
       <PageHead
         title="Signal Health"
-        info="Ground truth for every asof in the console (§17) — every freshness stamp elsewhere reads this page's asof, never its own clock. Observe-only."
+        info="Ground truth for every asof in the console — every freshness stamp elsewhere reads this page's asof, never its own clock. Observe-only."
         actions={<PageHeadLink to="/research/lens-coverage">Lens Coverage →</PageHeadLink>}
       />
 

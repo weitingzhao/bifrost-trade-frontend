@@ -86,7 +86,7 @@ export function BackingVerdictPanel({
         ) : null}
         <span className="min-w-0 flex-[1_1_16rem] text-dense-meta leading-normal text-muted-foreground text-pretty">
           This page computes pool, used, share and the house gate; everything else cites them. If two pages disagree, this
-          one is wrong first.
+          page is the source.
         </span>
       </div>
 

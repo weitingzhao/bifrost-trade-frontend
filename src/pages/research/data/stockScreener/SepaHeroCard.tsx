@@ -393,7 +393,7 @@ export function SepaHeroCard({
             Distribution
           </span>
           {!isTech && fkpis && fkpis.withData > 0 && fkpis.withData < fkpis.universe && (
-            <p className="text-dense-micro text-[var(--sk-warn)]/90 leading-snug mb-1 shrink-0">
+            <p className="text-dense-caption text-[var(--sk-warn)]/90 leading-snug mb-1 shrink-0">
               {fkpis.withData.toLocaleString()} names with income statements
               (watchlist ingest) — not the {fkpis.universe.toLocaleString()} universe.
             </p>

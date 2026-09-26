@@ -77,7 +77,7 @@ export function AccountsComposedBand({
       <div className={accountsUi.tierRow}>
         <span className={accountsUi.tierLabel}>How it is composed</span>
         <span className={accountsUi.tierRule} />
-        <span className={accountsUi.tierNote}>three cuts of one number — one at a time, not three rings in a row</span>
+        <span className={accountsUi.tierNote}>three cuts of one number · one at a time</span>
       </div>
 
       <div className={accountsUi.composedGrid}>

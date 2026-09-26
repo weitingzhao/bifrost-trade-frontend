@@ -4,7 +4,7 @@ import { AGENT_MCP_SCOPES, PERSONA_CANNOT_LINES } from './agentPersonaCatalog'
 describe('persona editor Tools / Cannot', () => {
   it('names D10 cannots without inventing extra powers', () => {
     expect([...PERSONA_CANNOT_LINES]).toEqual([
-      'Place, modify, or cancel orders (D10)',
+      'Place, modify, or cancel orders',
       'Write without a card you approve',
       "Read someone else's accounts",
     ])

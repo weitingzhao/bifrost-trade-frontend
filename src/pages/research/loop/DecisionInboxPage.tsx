@@ -68,7 +68,7 @@ type View = 'decisions' | 'briefings' | 'all'
 const PROPOSALS_PATH = '/review/proposals'
 
 const INBOX_LEDE =
-  'Drafts that need a call. Approving accepts the draft into The Book — a candidate enters the pool, a hypothesis opens, a patch merges into its policy, a rule change edits Rules. Nothing is handed to Trade: an order is yours to originate, always (D10). Posts that only need reading live under Briefings and have no Approve button.'
+  'Drafts that need a call. Approving accepts the draft into The Book — a candidate enters the pool, a hypothesis opens, a patch merges into its policy, a rule change edits Rules. Nothing is handed to Trade: an order is yours to originate, always. Posts that only need reading live under Briefings and have no Approve button.'
 
 /** `any` plus the design's five places. */
 type Dest = 'any' | WritesTo

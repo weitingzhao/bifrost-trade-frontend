@@ -78,7 +78,8 @@ export const accountsUi = {
   tierRow: 'mt-1 flex items-center gap-2.5',
   tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
   tierRule: 'h-px flex-1 bg-border',
-  tierNote: 'font-mono text-dense-meta text-muted-foreground',
+  // A sentence, so the body face (§17.7: mono is for numbers, contracts, ids, formulas).
+  tierNote: 'text-dense-meta text-muted-foreground',
 
   panel: 'border mat-card',
   panelHead: cn(

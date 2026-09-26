@@ -199,7 +199,7 @@ export function AgentInteractionsCard({
         </DenseTag>
       </SectionRow>
 
-      <p className="pt-1 text-dense-micro text-muted-foreground">
+      <p className="pt-1 text-dense-caption text-muted-foreground">
         {lang === 'zh' ? (
           <>
             {agentLabel(agentName, lang, apiLabel)} 使用{' '}

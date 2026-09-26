@@ -23,7 +23,8 @@ export const modelBandHeaderClass = positionsUi.panelHead
 
 export const modelBandTitleClass = cn(positionsUi.cap, 'flex items-center gap-1.5')
 
-export const modelBandScopeLineClass = cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')
+/** The band's scope is said in a sentence, so it takes the body face (§17.7). */
+export const modelBandScopeLineClass = 'text-dense-meta leading-normal text-muted-foreground'
 
 export const modelBandBodyClass = 'flex min-w-0 flex-col gap-2.5 px-3 pt-2.5 pb-3'
 

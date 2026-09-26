@@ -304,7 +304,7 @@ export default function LabSymbolPage() {
           className={cn(
             'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
           )}
-          title="Method face — how the number is made. Analysis only; no order can be placed from here (D10)."
+          title="Method face — how the number is made. Analysis only; no order can be placed from here."
         >
           ◆ METHOD · NO ORDERS
         </span>
@@ -346,8 +346,8 @@ export default function LabSymbolPage() {
             <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>{v.label}</span>
           </span>
         ))}
-        <span className={cn(mono, 'ml-auto whitespace-nowrap text-dense-micro text-muted-foreground')}>
-          one place computes, both faces cite — never recalculated here
+        <span className="ml-auto whitespace-nowrap text-dense-caption text-muted-foreground">
+          same number as the Reading face
         </span>
       </div>
 
@@ -677,7 +677,7 @@ export default function LabSymbolPage() {
         )}
       </SymbolContextGuard>
 
-      <p className={cn(mono, 'm-0 text-dense-micro text-muted-foreground text-pretty')}>
+      <p className="m-0 text-dense-caption text-muted-foreground text-pretty">
         Direction is teal/orange in every domain; red is reserved for a real fault.
       </p>
     </PageShell>

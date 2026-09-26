@@ -129,7 +129,7 @@ export default function DiscoverModelPage() {
           <div className="flex flex-wrap items-center gap-2 font-mono text-dense-caption tracking-[0.05em]">
             <span
               className="inline-flex items-center gap-1.5 border py-0.5 text-[var(--sk-accent)] mat-tag"
-              title="Method face — vocabulary and structure only. No order can be placed from here (D10)."
+              title="Method face — vocabulary and structure only. No order can be placed from here."
             >
               ◆ METHOD · NO ORDERS
             </span>

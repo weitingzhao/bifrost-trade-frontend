@@ -29,7 +29,7 @@ export function DossierBody({ faces }: { faces: SymbolFaces }) {
           to="/docs/research-blueprint"
           className="ml-auto text-dense-meta text-muted-foreground hover:underline"
         >
-          Blueprint §3.2
+          Blueprint
         </Link>
       </div>
       {failed.length > 0 ? (

@@ -115,7 +115,7 @@ function CopilotEmptyIntro({
       <QuickPromptChips onPick={onPickPrompt} disabled={disabled} />
       <PersonaMiniCard className="text-left" />
       <p className="text-dense-micro text-muted-foreground/70">
-        Research engines — observe only (D10). Not investment advice.
+        Research engines — observe only. Not investment advice.
       </p>
     </div>
   )

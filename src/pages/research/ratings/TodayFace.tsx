@@ -334,7 +334,7 @@ export function TodayFace({
               52-week low and high, which is the one range it does carry. A{' '}
               <span className="font-mono">*</span> marks a composite scored on fewer than four
               lenses. The design draws a fifth lens, relative strength; no RS field reaches this
-              row, so there are four. Observe-only: nothing here sizes or trades (D10).
+              row, so there are four. Observe-only: nothing here sizes or trades.
               {scored.length > ROW_CAP
                 ? ` The list stops at ${ROW_CAP} rows; ${scored.length} are in view. Narrow the universe rather than scrolling — that is what the filter bar is for.`
                 : ''}

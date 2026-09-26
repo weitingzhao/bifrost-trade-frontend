@@ -170,7 +170,7 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
         )}
       </div>
       <p className="m-0 border-t border-[var(--sk-line0)] px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground text-pretty">
-        Observe-only (D10). The fan is the model&rsquo;s own probability split for the session; LIVE
+        Observe-only. The fan is the model&rsquo;s own probability split for the session; LIVE
         is which branch the tape is currently confirming. Nothing here places orders.
       </p>
     </section>

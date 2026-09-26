@@ -170,7 +170,7 @@ export const CORPORATE_ACTIONS_UNRECORDED = {
   contract:
     'A split rewrites a strike and a multiplier overnight, and the ticker does not change, so a leg can be a different contract on the same name the next morning. With no split dated ahead on any of these names, nothing here can say a leg will be reshaped — or that it will not. A merger or a spin-off would reshape one too, and neither is a thing this feed reports at all: the vendor sells dividends and splits, and what an event turns a contract into is the broker’s record, not the market’s.',
   assignment:
-    'The extrinsic-versus-dividend test lives on Assignment. This panel reads it rather than recomputing it: if the two ever disagree, this page is wrong first. The test needs a dividend dated before the leg’s expiry, and none of these names has declared one yet.',
+    'The extrinsic-versus-dividend test lives on Assignment. This panel reads it without recomputing; Assignment is the source. The test needs a dividend dated before the leg’s expiry, and none of these names has declared one yet.',
   cash: 'A dividend already booked as cash is on Transfer & Pay. What is here is the event, not the payment — and the amount against the book is computed on today’s share count, not the count on the ex-date.',
   watchlist:
     'The calendar covers the watchlist as well as the book, because a split distorts a name\u2019s chain and its backtest whether or not the book holds it. Held or watched, the rows are drawn from the same feed \u2014 which will carry an ex-date for either as soon as its issuer declares one.',

@@ -138,7 +138,7 @@ function PersonaPreferencesForm({
         {PAGE_COPY[lang].preferences}
       </p>
       {LOOP_EVAL_PERSONAS.has(agentName) ? (
-        <p className="text-dense-micro text-muted-foreground">
+        <p className="text-dense-caption text-muted-foreground">
           {lang === 'zh'
             ? '这些偏好会影响 Loop 评议链（Harness Persona eval / Decision Inbox）。'
             : 'These slots affect Loop evaluation (Harness Persona eval / Decision Inbox).'}
@@ -357,7 +357,7 @@ function AgentPersonaEditor({
             {AGENT_DESCRIPTIONS[lang][persona.agent_name]}
           </p>
           {persona.updated_at ? (
-            <p className="text-dense-micro text-muted-foreground">
+            <p className="text-dense-caption text-muted-foreground">
               {copy.updated} {new Date(persona.updated_at).toLocaleString()}
             </p>
           ) : null}
@@ -396,7 +396,7 @@ function AgentPersonaEditor({
         <div className="space-y-2 min-w-0">
           <div className="space-y-1">
             <Label className="text-dense-meta">{copy.personaLabel}</Label>
-            <p className="text-dense-micro text-muted-foreground">{copy.personaHint}</p>
+            <p className="text-dense-caption text-muted-foreground">{copy.personaHint}</p>
           </div>
           <textarea
             className="min-h-[14rem] w-full rounded-md border border-input bg-background px-3 py-2 text-dense-meta leading-relaxed"
@@ -420,12 +420,12 @@ function AgentPersonaEditor({
 
         <div className="space-y-3 min-w-0">
           <PreviewPanel title={copy.baseInstruction} defaultOpen={false}>
-            <pre className="max-h-44 overflow-y-auto whitespace-pre-wrap text-dense-micro text-muted-foreground">
+            <pre className="max-h-44 overflow-y-auto whitespace-pre-wrap text-dense-caption text-muted-foreground">
               {persona.base_instruction_preview ?? '—'}
             </pre>
           </PreviewPanel>
           <PreviewPanel title={copy.assembledPreview} defaultOpen={true}>
-            <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap text-dense-micro">
+            <pre className="max-h-80 overflow-y-auto whitespace-pre-wrap text-dense-caption">
               {persona.assembled_preview ?? '—'}
             </pre>
           </PreviewPanel>
@@ -517,7 +517,7 @@ function AgentPersonaNav({
                     )}
                   >
                     <span className="block text-dense-label font-medium leading-tight">{label}</span>
-                    <span className="mt-0.5 block text-dense-micro text-muted-foreground line-clamp-2">
+                    <span className="mt-0.5 block text-dense-caption text-muted-foreground line-clamp-2">
                       {personaSnippet(persona.persona_md)}
                     </span>
                   </button>

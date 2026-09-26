@@ -68,7 +68,7 @@ const TAB_HINT: Record<SymbolTabId, string> = {
   overview: 'six faces · open a face to read it in full · 1–6 switch tabs',
   volatility: 'one name only — the universe tables stay in Discover',
   dealer: 'where the dealers sit: gamma levels and the OpEx cycle',
-  scenario: 'what the model expects · observe-only (D10)',
+  scenario: 'what the model expects · observe-only',
   flow: 'a proxy until the options tape is on the data plan',
   chain: 'expiries, strikes and structures for this name',
   payoff: 'a structure priced before it exists · at close, not a quote',
@@ -155,7 +155,7 @@ export default function SymbolPage() {
       {!symbol ? (
         <div className="flex flex-wrap items-center gap-2">
           <PageFaceSwitch path={SYMBOL_PATH} />
-          <PageHeader title="Symbol" description="One symbol, every face. Observe-only (D10)." />
+          <PageHeader title="Symbol" description="One symbol, every face. Observe-only." />
         </div>
       ) : (
         <SymbolIdentity symbol={symbol} faces={faces} tab={active} asof={<SymbolAsofTag symbol={symbol} />} />

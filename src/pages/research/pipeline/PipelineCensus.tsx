@@ -314,7 +314,7 @@ function CensusRowView({
           {row.note ? (
             <span
               className={cn(
-                'block font-mono text-dense-caption',
+                'block text-dense-caption',
                 row.storeState === 'store-owed' ? 'text-warning/80' : 'text-muted-foreground/70',
               )}
             >

@@ -108,9 +108,6 @@ export const HOME_LAYERS: Record<HomeLayer, { label: string; ink: string }> = {
   review: { label: 'Review', ink: 'text-[var(--color-entity-strategy)]' },
 }
 
-export const HOME_NOT_HERE =
-  'Not an overview dashboard. Every row above is something to do, with a deep link into the layer that owns it — marks, greeks, P&L and candidate scores live in those layers and are not mirrored here. A row that is only a number would make this a board, and a board does not answer the 15:45 question.'
-
 /**
  * The session rule lives in `lib/marketSession` now that Live reads it too
  * (§14.2); re-exported here so this page's own vocabulary is unchanged.

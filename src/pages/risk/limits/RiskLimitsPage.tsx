@@ -57,7 +57,7 @@ const ESCALATION: { kind: string; tone: string; what: string }[] = [
   {
     kind: 'AUTO',
     tone: 'text-loss',
-    what: 'The backing gate only: Rules would trim the largest margin user without asking. Nothing trims anything today — the trading daemon is frozen (D10) and configured for paper trading.',
+    what: 'The backing gate only: Rules would trim the largest margin user without asking. Nothing trims anything today — the trading daemon is frozen and configured for paper trading.',
   },
 ]
 
@@ -495,7 +495,7 @@ export default function RiskLimitsPage() {
               </p>
               <p className={cn(FOOT, 'm-0')}>
                 These are the only limits in this book anybody has written down — and they bound a daemon that is
-                frozen (D10)
+                frozen
                 {gateReadings.paperTrade ? ' and configured for paper trading' : ''}. Every other group&rsquo;s line
                 is missing because the store the design edits them in does not exist yet.
               </p>

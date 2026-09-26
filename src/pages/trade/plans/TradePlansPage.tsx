@@ -155,7 +155,7 @@ export default function TradePlansPage() {
     <PageShell padding="compact" className="space-y-3">
       <PageHeader
         title="Plans"
-        description="Every trade you mean to make, from idea to fill: what I intend, how I exit, what filled, and which rule covers it. Advisory only — nothing here places an order today, and the Send to IB action reserved on each intent is not wired (D10)."
+        description="Every trade you mean to make, from idea to fill: what I intend, how I exit, what filled, and which rule covers it. Advisory only — nothing here places an order today, and the Send to IB action reserved on each intent is not wired."
         actions={
           <div className="flex items-center gap-2">
             <Button

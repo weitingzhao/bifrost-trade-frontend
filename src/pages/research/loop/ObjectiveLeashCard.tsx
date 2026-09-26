@@ -89,7 +89,7 @@ export function ObjectiveLeashCard({ objectiveId }: { objectiveId: string }) {
         {armed ? (
           <>
             All four must hold, and only while Trust grants L0. Accepting a candidate opens a
-            hypothesis — never an order (D10).
+            hypothesis — never an order.
           </>
         ) : (
           <>

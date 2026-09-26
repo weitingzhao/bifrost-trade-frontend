@@ -255,7 +255,7 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                 <tr key={lane.key}>
                   <th className={cn(cap, 'py-1.5 pr-2 text-left align-middle')}>{lane.label}</th>
                   {lane.owed && lane.marks.size === 0 ? (
-                    <td colSpan={WINDOW_DAYS} className="border-t border-border/30 px-2 py-1.5 text-left font-sans text-dense-micro text-muted-foreground/70">
+                    <td colSpan={WINDOW_DAYS} className="border-t border-border/30 px-2 py-1.5 text-left font-sans text-dense-caption text-muted-foreground/70">
                       {lane.owed}
                     </td>
                   ) : (
@@ -281,7 +281,7 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
               ))}
             </tbody>
           </table>
-          <p className="m-0 pt-1 text-dense-micro text-muted-foreground">
+          <p className="m-0 pt-1 text-dense-caption text-muted-foreground">
             lime column = today · dim columns = weekend
           </p>
         </div>

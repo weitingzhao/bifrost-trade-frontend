@@ -62,7 +62,7 @@ function Tile({ t }: { t: CandidateTile }) {
         {t.value}
       </div>
       <div
-        className={cn(mono, 'truncate text-dense-micro text-muted-foreground')}
+        className="truncate text-dense-caption text-muted-foreground"
         title={t.src}
       >
         {t.src}
@@ -217,7 +217,7 @@ export default function LabTodayPage() {
           className={cn(
             'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
           )}
-          title="Method face — how the number is made. Analysis only; no order can be placed from here (D10)."
+          title="Method face — how the number is made. Analysis only; no order can be placed from here."
         >
           ◆ METHOD · NO ORDERS
         </span>
@@ -462,7 +462,7 @@ export default function LabTodayPage() {
               ))}
           </div>
 
-          <p className={cn(mono, 'm-0 text-dense-caption text-muted-foreground text-pretty')}>
+          <p className="m-0 text-dense-caption text-muted-foreground text-pretty">
             {state === 'failed'
               ? `Every number on this page is as of ${session ?? 'the held session'}. The batch state lives in the strip above, judged by the orchestrator.`
               : 'Direction is teal/orange everywhere — Trade, Workbench, Ops alike. Red is reserved for a real fault, so a falling number is never red.'}

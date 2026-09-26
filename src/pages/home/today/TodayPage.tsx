@@ -28,7 +28,6 @@ import { PAGE_ROUTES } from '@/layout/routeRegistry'
 import { useTodayChecks } from './useTodayChecks'
 import {
   HOME_LAYERS,
-  HOME_NOT_HERE,
   allRows,
   countByUrgency,
   segmentViews,
@@ -165,10 +164,10 @@ export default function TodayPage() {
             <section className={positionsUi.panel} aria-label="Tape">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>Tape</span>
-                <span className={positionsUi.panelTitle}>ambient, not a destination</span>
-                <span className="ml-auto text-dense-meta text-muted-foreground">
-                  the benchmark β is measured against, and the names carrying the most exposure
-                </span>
+                <span className={positionsUi.panelTitle}>Index proxies · largest open risk</span>
+                <Link to="/market/live" className="ml-auto whitespace-nowrap text-dense-meta text-[var(--sk-accent)] hover:underline">
+                  Live · the full tape →
+                </Link>
               </header>
               <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1.5 px-3 py-2">
                 {tape.map((t) => (
@@ -339,15 +338,6 @@ export default function TodayPage() {
               </p>
             </section>
 
-            <section className={positionsUi.panel} aria-label="Not here">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>Not here</span>
-                <span className={positionsUi.panelTitle}>what this page deliberately is not</span>
-              </header>
-              <p className="m-0 px-3 py-2.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                {HOME_NOT_HERE}
-              </p>
-            </section>
           </>
         )}
       </section>

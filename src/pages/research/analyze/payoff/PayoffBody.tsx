@@ -304,7 +304,7 @@ export function PayoffBody() {
           {structure.unquotedWing || !curves ? (
             <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
               Wing unquoted — the adjacent strike has no close on this chain, so Vertical has no
-              payoff. Not estimated (§2.1).
+              payoff. Not estimated.
             </p>
           ) : (
             <>

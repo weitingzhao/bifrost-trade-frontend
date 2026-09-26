@@ -500,7 +500,7 @@ export default function ExpirationPage() {
                 )}
                 <p className={cn(FOOT, 'm-0')}>
                   Numbers move with the decisions above. Nothing here places an order — Create plans writes draft Trade
-                  Plans with the leg and the dated mark filled in, and the desk copies them into TWS (D10).
+                  Plans with the leg and the dated mark filled in, and the desk copies them into TWS.
                 </p>
               </section>
 

@@ -367,7 +367,7 @@ export default function ScanPage() {
           title="The design feeds this page a saved Screener set to narrow the universe first. Nothing on this side saves a screen yet."
         >
           <span className={SECTION_CAP_CLASS}>Screen</span>
-          <span className="font-mono">— nothing saves a screen yet</span>
+          <span>— nothing saves a screen yet</span>
         </span>
         <span className="ml-auto flex items-center gap-1.5 whitespace-nowrap text-dense-meta text-muted-foreground">
           <span className="font-mono tabular-nums text-foreground">{counts.hot}</span> rich ·{' '}
@@ -568,7 +568,7 @@ export default function ScanPage() {
               bar is not the design’s 252-session band — the row carries today’s reading and none of
               the lens’s history. A <span className="font-mono">*</span> marks a composite scored on
               fewer than five lenses. Colour is the engine’s hot / cold call, not this page’s.
-              Observe-only: nothing here sizes or trades (D10).
+              Observe-only: nothing here sizes or trades.
               {scored.length > ROW_CAP
                 ? ` The list stops at ${ROW_CAP} rows; ${scored.length} are in view. Narrow the universe rather than scrolling — that is what the filter bar is for.`
                 : ''}

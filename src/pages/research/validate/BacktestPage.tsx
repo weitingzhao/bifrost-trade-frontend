@@ -174,7 +174,7 @@ export default function BacktestPage() {
           className={cn(
             'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
           )}
-          title="Lab mode — method and parameters only. No order can be placed from here (D10)."
+          title="Lab mode — method and parameters only. No order can be placed from here."
         >
           ◆ LAB · NO ORDERS
         </span>
@@ -294,7 +294,7 @@ export default function BacktestPage() {
                               <div className={cn(mono, 'text-dense-caption')}>
                                 {r.strategy_template}
                               </div>
-                              <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap font-sans text-dense-micro text-muted-foreground">
+                              <div className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap font-sans text-dense-caption text-muted-foreground">
                                 {r.event_def.kind} · {runScope(r.event_def.params)}
                               </div>
                             </td>

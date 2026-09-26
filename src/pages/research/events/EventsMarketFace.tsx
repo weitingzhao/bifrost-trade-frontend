@@ -297,7 +297,7 @@ export function EventsMarketFace({
           <span className={cap}>Events</span>
           <span className="text-dense-body font-semibold">what the ingest read</span>
           <span className="text-dense-meta text-muted-foreground">
-            newest first · advisory only, nothing here places or arms anything (D10)
+            newest first · advisory only, nothing here places or arms anything
           </span>
           <span className={cn('ml-auto text-dense-caption text-muted-foreground', mono)}>
             {batches.length} batch{batches.length === 1 ? '' : 'es'}

@@ -192,7 +192,7 @@ export function WatchlistHypothesisDetail({ symbol }: { symbol: string }) {
             <MiniPnlSpark values={pnls} />
           )}
           <p className="text-dense-caption text-muted-foreground">
-            Entry anchor {entryDate} · observe-only (D10). Empty until cohort backfill.
+            Entry anchor {entryDate} · observe-only. Empty until cohort backfill.
           </p>
         </CardContent>
       </Card>

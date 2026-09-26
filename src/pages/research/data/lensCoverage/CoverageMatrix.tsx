@@ -117,9 +117,7 @@ export function CoverageMatrix({
         <span className="text-foreground/80">
           grey = unscreenable for this tier — the reason is in Blocked by, not a failure
         </span>
-        . This page used to show one bar per lens across the whole universe; it splits by tier
-        because IV Rank reading 99% of core and 71% of the edge are different problems — one
-        number over everything says 97% and hides both.{' '}
+        . Split by tier: IV Rank at 99% of core and 71% of the edge are different problems.{' '}
         <span className="font-mono">Δ 7d</span> is owed — nothing stores yesterday&rsquo;s coverage.
       </p>
     </section>

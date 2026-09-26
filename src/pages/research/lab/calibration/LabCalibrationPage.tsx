@@ -233,7 +233,7 @@ export default function LabCalibrationPage() {
               >
                 {counts[k]}
               </span>
-              <span className={cn(mono, 'block text-dense-micro text-muted-foreground')}>
+              <span className="block text-dense-caption text-muted-foreground">
                 {st.note}
               </span>
             </button>
@@ -307,7 +307,7 @@ export default function LabCalibrationPage() {
                         {st.label}
                       </DenseTag>
                       {fix ? (
-                        <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>
+                        <span className="text-dense-caption text-muted-foreground">
                           smallest change listed below
                         </span>
                       ) : null}
@@ -352,8 +352,8 @@ export default function LabCalibrationPage() {
       {disagrees ? (
         <div className={cn(panel, 'border-[color-mix(in_srgb,var(--color-lamp-yellow)_60%,transparent)]')}>
           <div className="flex flex-col gap-1.25 px-3 py-2.75">
-            <div className={cn(mono, 'text-dense-micro tracking-[0.1em] text-warning')}>
-              COUNT DISAGREES WITH ITS OWN ROWS
+            <div className="text-dense-caption font-semibold uppercase tracking-[0.1em] text-warning">
+              Count disagrees with its own rows
             </div>
             <p className="m-0 max-w-[78ch] text-dense-body leading-relaxed text-pretty">
               {countNote(docTally!, counts)}
@@ -384,7 +384,7 @@ export default function LabCalibrationPage() {
         />
       </div>
 
-      <p className={cn(mono, 'm-0 text-dense-micro leading-normal text-muted-foreground text-pretty')}>
+      <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
         State symbols belong to the calibration document only — the blueprint never carries one,
         and a test holds that line. This page renders the document; it does not judge. Contracts
         are referenced by number because the numbers are the stable anchor and the wording is not.

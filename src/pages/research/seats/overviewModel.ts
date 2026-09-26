@@ -274,7 +274,7 @@ export const LOOP_STATIONS: readonly LoopStation[] = [
       {
         label: 'Decision Inbox',
         to: '/research/loop/decisions',
-        tip: 'Accept opens a hypothesis — never an order (D10).',
+        tip: 'Accept opens a hypothesis — never an order.',
       },
       {
         label: 'Hypothesis Board',

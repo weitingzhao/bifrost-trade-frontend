@@ -86,7 +86,7 @@ function StationCard({ card }: { card: LoopCard }) {
           {card.counts}
         </span>
       </div>
-      <div className="text-dense-micro text-muted-foreground">
+      <div className="text-dense-caption text-muted-foreground">
         writes <span className="font-mono text-foreground/70">{card.produces}</span>
         {card.crossNote ? (
           <span className={CROSS_INK}> · crosses the outer loop: {card.crossNote}</span>

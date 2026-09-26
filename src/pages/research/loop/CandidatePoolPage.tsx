@@ -190,7 +190,7 @@ export default function CandidatePoolPage() {
     <PageShell padding="default" className="space-y-3">
       <PageHeader
         title="Candidate Pool"
-        description="What the loop is considering — the Curator screens in, ttl expiry screens out, you promote (Add to Pool from Scan and the discovery pages). Observe-only (D10)."
+        description="What the loop is considering — the Curator screens in, ttl expiry screens out, you promote (Add to Pool from Scan and the discovery pages). Observe-only."
         actions={
           <Link
             to="/research/loop/decisions"
@@ -550,7 +550,7 @@ export default function CandidatePoolPage() {
 
       <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-normal text-muted-foreground">
         Score is the loop's composite at ingest — it ranks attention, it does not size or trade
-        anything (D10); its bar is drawn against the best score in view, because nothing documents
+        anything; its bar is drawn against the best score in view, because nothing documents
         the composite's own ceiling. <span className="text-foreground/80">Why</span> is the lens
         snapshot the run attached when it proposed the name — this side's version of the design's
         thesis sketch, which is a record of what fired rather than prose anybody wrote. Promote

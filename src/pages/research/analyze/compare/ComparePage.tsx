@@ -64,7 +64,7 @@ export default function ComparePage() {
             ) : null}
           </span>
         }
-        description="One view, the structures your rules allow — sized by the smallest cap that could be computed. Everything lands as a Plan (D10)."
+        description="One view, the structures your rules allow — sized by the smallest cap that could be computed. Everything lands as a Plan."
       />
       <SymbolContextGuard symbol={sym} description="Compare expresses one view on one name. Pick a symbol, then come back here.">
         <CompareBody sym={sym} typed={typed} set={set} />

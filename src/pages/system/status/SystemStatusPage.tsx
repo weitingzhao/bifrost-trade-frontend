@@ -153,11 +153,7 @@ export default function SystemStatusPage() {
       ))}
 
       <p className="text-dense-meta leading-[1.6] text-muted-foreground">
-        Owner ruling 2026-09-15: System collapses to this page and{' '}
-        <Link to="/settings" className="text-foreground/80 hover:underline">
-          Settings
-        </Link>
-        . Green means trade; amber means trade with the stated caveat; red means stop — anything
+        Green means trade; amber means trade with the stated caveat; red means stop — anything
         needing a graph, a log or a rerun button is the Ops Console&rsquo;s job. Each panel sends
         you to the page that owns its detail, and every reading on it is that page&rsquo;s own, not
         a second opinion of it.

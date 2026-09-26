@@ -413,7 +413,7 @@ export default function ReviewObjectivesPage() {
         </SectionPanel>
       </div>
 
-      <p className="max-w-[96ch] text-dense-micro leading-relaxed text-muted-foreground/70">
+      <p className="max-w-[96ch] text-dense-caption leading-relaxed text-muted-foreground/70">
         A verdict needs enough settled outcomes to be one. Below the floor this page says so rather
         than showing a number that looks like an answer — an objective with three settled trades has
         a record of three settled trades, not a hit rate.

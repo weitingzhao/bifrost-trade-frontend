@@ -106,7 +106,7 @@ export function OpenOrdersPane({
       <p className={liveSourceHintClass}>
         Source: DB table daemon_open_orders ·{' '}
         <span className="text-foreground/70">
-          orders are placed in TWS — this view is read-only (D10)
+          orders are placed in TWS — this view is read-only
         </span>
       </p>
 

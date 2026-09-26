@@ -39,7 +39,7 @@ function dialConfirm(
   if (target.level === 'L3')
     return {
       title: `Cannot move → L3`,
-      text: `L3 stays locked until L2-era patches are themselves settled and verified. The dial is earned, not set — and orders never pass at any level (D10).`,
+      text: `L3 stays locked until L2-era patches are themselves settled and verified. The dial is earned, not set — and orders never pass at any level.`,
       why: 'L3 is locked.',
     }
   if (target.level === 'L2') {
@@ -53,7 +53,7 @@ function dialConfirm(
       }
     return {
       title: `Move the dial → L2`,
-      text: `The record clears the gate${earn ? ` (${earn.settled} settled · ${earn.hit != null ? Math.round(earn.hit * 100) : '—'}%)` : ''}. From now ${target.passes} passes without you. Orders never do (D10) — but no mechanism grants L2 yet: the dial store lands with W4.`,
+      text: `The record clears the gate${earn ? ` (${earn.settled} settled · ${earn.hit != null ? Math.round(earn.hit * 100) : '—'}%)` : ''}. From now ${target.passes} passes without you. Orders never do — but no mechanism grants L2 yet: the dial store lands with W4.`,
       why: 'No dial store exists to write — the L2 grant arrives with W4.',
     }
   }
@@ -91,7 +91,7 @@ export function DialStrip({
         <span className="text-dense-meta text-muted-foreground">
           one setting for all three operators, by what is being written · earned by record, never set
         </span>
-        <span className="ml-auto font-mono text-dense-micro text-muted-foreground">
+        <span className="ml-auto text-dense-caption text-muted-foreground">
           D10 does not move with the dial
         </span>
       </header>
@@ -246,7 +246,7 @@ export function OperatorCards({ cards }: { cards: OpCardData[] }) {
                 <div className={cn('font-mono text-sm font-semibold tabular-nums', CELL_TONE[k.tone ?? 'default'])}>
                   {k.v}
                 </div>
-                {k.sub ? <div className="text-dense-micro text-muted-foreground">{k.sub}</div> : null}
+                {k.sub ? <div className="text-dense-caption text-muted-foreground">{k.sub}</div> : null}
               </div>
             ))}
           </div>

@@ -220,7 +220,7 @@ export default function TradeDeskPage() {
     <PageShell padding="compact" className="space-y-3">
       <PageHeader
         title="Trade Desk"
-        description="The process between Research and the book: what was handed to you, what is out for a fill, what settled. Every item ends in a plan, a fill, or a dismissal. Orders are worked in TWS — the desk copies (D10)."
+        description="The process between Research and the book: what was handed to you, what is out for a fill, what settled. Every item ends in a plan, a fill, or a dismissal. Orders are worked in TWS — the desk copies."
         actions={
           <span className="flex flex-wrap items-center gap-2">
             {copied ? (

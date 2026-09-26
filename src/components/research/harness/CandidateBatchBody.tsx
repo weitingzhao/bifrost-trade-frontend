@@ -559,7 +559,7 @@ export function CandidateBatchBody({
 
       <p className="text-dense-micro text-muted-foreground">
         Approve promotes these candidates and creates hypotheses. Next hop:
-        Hypothesis Board / Candidate Pool. Auto-approve never places orders (D10).
+        Hypothesis Board / Candidate Pool. Auto-approve never places orders.
       </p>
     </div>
   )

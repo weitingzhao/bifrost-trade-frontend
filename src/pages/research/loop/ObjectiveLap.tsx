@@ -122,9 +122,9 @@ export function ObjectiveLap({
                     {s.value == null ? '—' : s.value.toLocaleString()}
                   </span>
                 </span>
-                <span className="text-dense-micro leading-snug text-muted-foreground">{s.detail}</span>
+                <span className="text-dense-caption leading-snug text-muted-foreground">{s.detail}</span>
                 {s.crossesOuterLoop ? (
-                  <span className="text-dense-micro text-[var(--color-entity-strategy)]">
+                  <span className="text-dense-caption text-[var(--color-entity-strategy)]">
                     crosses the outer loop
                   </span>
                 ) : null}

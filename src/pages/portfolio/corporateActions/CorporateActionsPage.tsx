@@ -428,7 +428,7 @@ export default function CorporateActionsPage() {
                                     </span>
                                   </>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
+                                  <span className="inline-flex items-center gap-1.5 font-sans text-dense-meta text-muted-foreground">
                                     <StatusLamp lamp="gray" variant="dot" title="No event known" />
                                     no event known ahead of today
                                   </span>

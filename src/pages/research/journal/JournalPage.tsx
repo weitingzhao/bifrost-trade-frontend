@@ -207,7 +207,7 @@ export default function JournalPage() {
               >
                 {k.value ?? '—'}
               </span>
-              <span className="text-dense-micro text-muted-foreground">{k.detail}</span>
+              <span className="text-dense-caption text-muted-foreground">{k.detail}</span>
             </span>
           </div>
         ))}
@@ -375,7 +375,7 @@ function SettledPanel({
                 <td className="px-2.5 py-1.5 text-dense-meta text-muted-foreground">
                   {citedBy(r)}
                 </td>
-                <td className="px-2.5 py-1.5 text-right text-dense-micro text-muted-foreground/70">
+                <td className="px-2.5 py-1.5 text-right text-dense-caption text-muted-foreground/70">
                   attribution not recorded
                 </td>
               </tr>
@@ -383,7 +383,7 @@ function SettledPanel({
           </tbody>
         </table>
       )}
-      <p className="px-3 py-2 text-dense-micro leading-relaxed text-muted-foreground">
+      <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
         An outcome that attributes to nothing is marked unattributed, never forced onto a lens.
         Here every one of them is: the store settles a candidate against a benchmark and keeps no
         record of which evidence earned it. Until it does, the count of unattributed outcomes is

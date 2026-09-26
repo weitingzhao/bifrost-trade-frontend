@@ -55,7 +55,7 @@ export function ReachTodayStrip({ reach }: { reach: ReachToday | null }) {
       ) : (
         <span className="text-dense-meta text-muted-foreground">no run today yet — the last funnels are in the runs below</span>
       )}
-      <span className="ml-auto text-dense-micro text-muted-foreground">
+      <span className="ml-auto text-dense-caption text-muted-foreground">
         today's widest run · the funnel behind any run is in its pipeline
       </span>
     </div>

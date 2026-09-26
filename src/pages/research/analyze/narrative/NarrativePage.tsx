@@ -120,7 +120,7 @@ export default function NarrativePage() {
     {
       name: 'News',
       n: 'off',
-      note: 'awaiting the Owner’s ruling (Vision §15 Q5) — provenance is weaker, confidence would have to say so',
+      note: 'not enabled — provenance is weaker, confidence would have to say so',
       live: false,
     },
     { name: 'Social', n: 'off', note: 'not a source: no author record to score, no falsifier', live: false },
@@ -168,7 +168,7 @@ export default function NarrativePage() {
     <PageShell className="space-y-3">
       <PageHeader
         title="Narrative"
-        description="What the text says, structured — its own column, never mixed into a measured score (Vision §9.2)."
+        description="What the text says, structured — its own column, never mixed into a measured score."
         actions={
           <span className="flex flex-wrap items-center gap-2">
             <span
@@ -188,7 +188,7 @@ export default function NarrativePage() {
           <span className={cap}>Sources</span>
           <span className="text-dense-body font-semibold">what is read, and what is not</span>
           <span className="ml-auto text-dense-meta text-muted-foreground">
-            filings are in · calls not on the plan · guidance not subscribed · news and social wait for a ruling
+            filings are in · calls not on the plan · guidance not subscribed · news and social not enabled
           </span>
         </header>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))]">
@@ -202,7 +202,7 @@ export default function NarrativePage() {
                 <span className="text-dense-meta font-semibold">{s.name}</span>
                 <span className="ml-auto font-mono text-dense-micro tabular-nums text-muted-foreground">{s.n}</span>
               </div>
-              <div className="text-dense-micro leading-relaxed text-muted-foreground">{s.note}</div>
+              <div className="text-dense-caption leading-relaxed text-muted-foreground">{s.note}</div>
             </div>
           ))}
         </div>
@@ -269,7 +269,7 @@ export default function NarrativePage() {
                       <span className="block text-dense-micro">{t.basis === 'sec' ? `SEC item ${t.item}` : 'vendor'}</span>
                     </td>
                     <td className={cn(td, 'min-w-[280px]')}>
-                      <div className="border-l-2 border-border pl-2 text-dense-micro italic leading-relaxed text-muted-foreground">
+                      <div className="border-l-2 border-border pl-2 text-dense-caption italic leading-relaxed text-muted-foreground">
                         {t.quote || '—'}
                       </div>
                     </td>
@@ -284,7 +284,7 @@ export default function NarrativePage() {
                       <span className="block">filed {fmtIsoDateToken(t.filing_date)}</span>
                     </td>
                     <td
-                      className={cn(td, 'min-w-[150px] text-dense-micro text-muted-foreground')}
+                      className={cn(td, 'min-w-[150px] text-dense-caption text-muted-foreground')}
                       title={
                         t.measured?.trade_date
                           ? `Scan of ${t.measured.trade_date}. A deterministic tag has no direction, so there is no agree or disagree to draw — the reading sits beside the measured one, never blended.`
@@ -295,7 +295,7 @@ export default function NarrativePage() {
                     </td>
                     <td className={cn(td, 'whitespace-nowrap')}>
                       <span
-                        className="cursor-default text-dense-micro text-muted-foreground/60"
+                        className="cursor-default text-dense-caption text-muted-foreground/60"
                         title="The six verbs (explain · challenge · fork · extend · distill · settle) are deferred until their semantics are settled (Owner option B) — owed, not a gap."
                       >
                         verbs
@@ -307,7 +307,7 @@ export default function NarrativePage() {
             </tbody>
           </table>
         </div>
-        <div className="border-t border-border px-3 py-2 text-dense-micro leading-relaxed text-muted-foreground">
+        <div className="border-t border-border px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
           A tag that contradicts the measured column is the useful row — it is a question, not an answer. Model confidence below
           0.6 is amber; the model saying so is worth more than it guessing well. SEC-item and vendor tags are not judgments: no
           confidence, and they do not enter the 20-day record. Item 9.01 (exhibits), filed beside nearly every 8-K, is not a
@@ -336,7 +336,7 @@ export default function NarrativePage() {
                       {e.standing === 'owed' ? 'owed here' : 'holds'}
                     </span>
                   </div>
-                  <div className="text-dense-micro leading-relaxed text-muted-foreground">{e.text}</div>
+                  <div className="text-dense-caption leading-relaxed text-muted-foreground">{e.text}</div>
                 </div>
               </div>
             ))}
@@ -369,7 +369,7 @@ export default function NarrativePage() {
                 <span className="text-right font-mono tabular-nums text-muted-foreground">{r.v}</span>
               </div>
             ))}
-            <div className="mt-1 text-dense-micro leading-relaxed text-muted-foreground">
+            <div className="mt-1 text-dense-caption leading-relaxed text-muted-foreground">
               No tag kind has a record yet: the deterministic ones never enter it, and the model kinds have no readings. Until a
               model kind clears the floor on a real sample, narrative can trigger attention and nothing else — it does not enter
               the composite and cannot nominate alone.

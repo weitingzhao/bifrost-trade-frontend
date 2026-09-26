@@ -74,9 +74,9 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
                 </div>
               ))
             )}
-            <span className="text-dense-micro text-muted-foreground">
+            <span className="text-dense-caption text-muted-foreground">
               {armed
-                ? `Floor default ${leashPct(DEFAULT_MIN_SOURCE_HIT_RATE)} when an objective sets none. Accepting a candidate opens a hypothesis — never an order (D10).`
+                ? `Floor default ${leashPct(DEFAULT_MIN_SOURCE_HIT_RATE)} when an objective sets none. Accepting a candidate opens a hypothesis — never an order.`
                 : 'Trust is not L0 — the four conditions are moot until it is; every batch waits in the Inbox.'}
             </span>
           </div>

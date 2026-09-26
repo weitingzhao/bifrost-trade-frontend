@@ -128,7 +128,7 @@ export function AgentActionsMenu({ disabled }: { disabled?: boolean }) {
 
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-dense-caption font-normal text-muted-foreground">
-          Loop harness — observe only (D10)
+          Loop harness — observe only
         </DropdownMenuLabel>
         {objectives.length === 0 ? (
           <DropdownMenuItem disabled>

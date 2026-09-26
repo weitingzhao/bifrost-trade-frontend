@@ -7,7 +7,7 @@ export const LEDGER_WRITE_FOOTER_LINKS =
   'Ledger write · not an order. D10 execution freeze is untouched by this page.'
 
 export const LEDGER_WRITE_FOOTER_JOURNAL =
-  'A journal row is an accounting entry with source journal_closed. It carries the JOURNAL badge everywhere it appears and never pretends to be a fill. Nothing is sent to the broker (D10).'
+  'A journal row is an accounting entry with source journal_closed. It carries the JOURNAL badge everywhere it appears and never pretends to be a fill. Nothing is sent to the broker.'
 
 export const LEDGER_CONFIRM_LINKS = {
   title: 'Pair these two fills?',

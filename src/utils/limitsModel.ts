@@ -70,7 +70,7 @@ export const LIMITS_UNRECORDED = {
     'Nothing records when a line was crossed. A breach is computable right now — the readings are live — but there is no store behind it, so there is no yesterday, no acknowledgement and no duration. An empty history table would read as a clean record rather than as no record.',
   ack: 'Acknowledging a soft breach would be a write into that missing store. The row names what to do instead, and on which page.',
   rules:
-    'The Rules engine the design escalates to is not built, and the trading daemon it would act through is frozen (D10) and configured for paper trading. Nothing on this page acts; it reads.',
+    'The Rules engine the design escalates to is not built, and the trading daemon it would act through is frozen and configured for paper trading. Nothing on this page acts; it reads.',
 } as const
 
 /** Over this share of a limit, a line is worth seeing before it is crossed. */
@@ -461,7 +461,7 @@ export function gateLimitRules(r: GateReadings): LimitRule[] {
       bound: 'ceiling',
       onBreach: 'the daemon stops hedging for the day',
       citedFrom: inRules,
-      noReading: 'the daemon does not hedge — execution is frozen (D10) and the gate is set to paper',
+      noReading: 'the daemon does not hedge — D10 freezes execution and the gate is set to paper',
     })
   }
 

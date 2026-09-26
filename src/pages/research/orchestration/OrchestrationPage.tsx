@@ -98,7 +98,7 @@ const BATCH: Stage[] = [
     n: '4',
     name: 'Decision Inbox',
     tag: 'you',
-    sub: 'Where it waits. Auto-approve reaches research drafts only — never a policy suggestion, never an order intent (D10).',
+    sub: 'Where it waits. Auto-approve reaches research drafts only — never a policy suggestion, never an order intent.',
   },
 ]
 
@@ -191,7 +191,7 @@ export default function OrchestrationPage() {
       <div data-sr-toolbar="">
         <span
           className="inline-flex h-5 items-center gap-1.5 whitespace-nowrap border px-2 text-dense-meta mat-tag"
-          title="D10 (Shell Spec §11.0): no agent on either path places, modifies or cancels an order. Writes land as cards you approve."
+          title="D10: no agent on either path places, modifies or cancels an order. Writes land as cards you approve."
         >
           <span className="text-muted-foreground">D10</span>
           <span className="text-warning">observe-only</span>

@@ -166,7 +166,7 @@ export function RuleProposalCard({
             <Link to="/review/habits" className="text-dense-micro text-primary hover:underline">
               Habits →
             </Link>
-            <span className="min-w-0 text-dense-micro text-muted-foreground">
+            <span className="min-w-0 text-dense-caption text-muted-foreground">
               Approve would write the + line into Rules › {p.target} — {NO_STORE}.
             </span>
           </div>

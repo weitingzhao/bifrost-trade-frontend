@@ -146,7 +146,7 @@ export default function ResearchOverviewPage() {
         tip: 'Earned by record, never set: a settled hit rate over the floor on enough outcomes under L1. No mechanism grants it yet — the gate arrives with the dial store (W4).',
       }
     }
-    return { ...d, state: 'locked', tone: 'quiet', tip: 'L3 stays locked until L2-era patches are themselves settled and verified. Orders never pass at any level (D10).' }
+    return { ...d, state: 'locked', tone: 'quiet', tip: 'L3 stays locked until L2-era patches are themselves settled and verified. Orders never pass at any level.' }
   })
 
   // ── Operator cards ─────────────────────────────────────────────────────

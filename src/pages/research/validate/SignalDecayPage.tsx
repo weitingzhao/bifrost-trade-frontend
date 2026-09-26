@@ -550,7 +550,7 @@ export default function SignalDecayPage() {
             <PortfolioTag symbol={symbol} variant="inline" />
           </div>
         ) : (
-          <p className="text-dense-micro text-muted-foreground px-1">
+          <p className="text-dense-caption text-muted-foreground px-1">
             Open{' '}
             <Link
               to="/research/signal-decay/SPY"

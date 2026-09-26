@@ -389,7 +389,7 @@ export default function StockRatingsPage() {
           title="The design filters this list by a saved screen. Nothing on this side saves a screen yet — the same gap the Stock screen page names."
         >
           <span className={SECTION_CAP_CLASS}>Screen</span>
-          <span className="font-mono">— nothing saves a screen yet</span>
+          <span>— nothing saves a screen yet</span>
         </span>
         <span className="ml-auto flex items-center gap-1.5 whitespace-nowrap text-dense-meta text-muted-foreground">
           <span className="font-mono tabular-nums text-foreground">{counts.hot}</span> hot ·{' '}

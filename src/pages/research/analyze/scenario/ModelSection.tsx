@@ -669,7 +669,7 @@ export function ModelSection() {
       )}
 
       <p className="text-dense-caption text-muted-foreground">
-        Terrain model output — observe only (D10). Not investment advice.
+        Terrain model output — observe only. Not investment advice.
       </p>
       </SymbolContextGuard>
     </div>

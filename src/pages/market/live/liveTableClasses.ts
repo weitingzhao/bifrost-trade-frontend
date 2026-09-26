@@ -11,11 +11,6 @@ export const liveTable = {
   table: cn(denseTable.table, 'min-w-[880px]'),
   stickyThead: '[&_th]:sticky [&_th]:top-0 [&_th]:z-[1] [&_th]:bg-secondary/40',
   symbolCell: cn(denseTableEntityCell, 'font-semibold text-entity-symbol'),
-  colGroupHead: cn(
-    'text-center font-semibold',
-    'bg-[color-mix(in_oklch,var(--foreground)_3%,color-mix(in_srgb,var(--secondary)_40%,transparent))]',
-    'border-b-2 border-border',
-  ),
   stackedPnlHead: 'whitespace-normal leading-snug normal-case',
   stackedPnlHeadSub: 'block font-medium text-dense-meta opacity-85',
   stackedPnlLines: 'text-right leading-snug',

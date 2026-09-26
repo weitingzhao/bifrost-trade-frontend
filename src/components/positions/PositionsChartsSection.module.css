@@ -70,10 +70,6 @@
   min-width: 0;
 }
 
-.panel > .toolbar {
-  flex-shrink: 0;
-}
-
 .chartSectionHeader {
   display: flex;
   flex-wrap: wrap;
@@ -86,25 +82,6 @@
 }
 
 .chartSectionTitle {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted-foreground);
-}
-
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem 0.75rem;
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.15rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.toolbarLabel {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -135,14 +112,6 @@
 
 .donutRowStart {
   align-items: start;
-}
-
-.chartBlockTitle {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  margin: 0 0 0.2rem;
-  line-height: 1.25;
 }
 
 /* Legacy coverage-asset-pie-body: chart block + legend side by side */
@@ -185,13 +154,6 @@
   align-items: flex-start;
   gap: 0.2rem;
   width: 100%;
-}
-
-.mixFilterLabel {
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  line-height: 1.25;
 }
 
 .mixLegend {
@@ -242,38 +204,9 @@
   white-space: nowrap;
 }
 
-.mixLegendSum {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.35rem 0.5rem;
-  padding-top: 0.35rem;
-  margin-top: 0.15rem;
-  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
 .optionHeader {
   flex-wrap: nowrap;
   align-items: baseline;
-}
-
-.optionHeaderSummary {
-  margin-left: auto;
-  min-width: 0;
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: 0.3rem;
-  font-size: 0.68rem;
-  line-height: 1.2;
-  color: var(--muted-foreground);
-  text-align: right;
 }
 
 .optionHeaderSummaryLabel {
@@ -282,14 +215,6 @@
   white-space: nowrap;
   flex: 0 1 auto;
   min-width: 0;
-}
-
-.optionHeaderSummaryValues {
-  font-family: ui-monospace, monospace;
-  color: var(--foreground);
-  font-weight: 600;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .stack {

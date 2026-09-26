@@ -63,9 +63,6 @@
   align-self: stretch;
 }
 
-
-
-
 @media (max-width: 640px) {
   .payoffCol {
     flex: 1 1 100%;
@@ -165,18 +162,6 @@
   font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   fill: var(--risk-payoff-tick);
-}
-
-.payoffChartCaption {
-  margin: 0.35rem 0 0;
-  font-size: 0.65rem;
-  line-height: 1.35;
-  color: var(--muted-foreground);
-}
-
-.payoffChartCompact .payoffChartCaption {
-  margin-top: 0.25rem;
-  font-size: 0.62rem;
 }
 
 .scenarioMatrix {

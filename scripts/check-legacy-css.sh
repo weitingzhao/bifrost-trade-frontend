@@ -529,7 +529,7 @@ fi
 # itself goes through `pnlColorClass` / `text-profit` / `text-loss`, which are
 # teal and orange now (DESIGN_CONTRACTS §11.9); putting one of these classes on
 # a signed number would re-create the collision that move exists to end.
-RAW_PALETTE_BASELINE=21
+RAW_PALETTE_BASELINE=17
 raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
   --include='*.tsx' --include='*.ts' 2>/dev/null \
   | grep -v 'src/components/data-display' | wc -l | tr -d ' ')

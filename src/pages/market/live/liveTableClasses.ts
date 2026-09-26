@@ -13,7 +13,7 @@ export const liveTable = {
   symbolCell: cn(denseTableEntityCell, 'font-semibold text-entity-symbol'),
   colGroupHead: cn(
     'text-center font-semibold',
-    'bg-[color-mix(in_oklch,var(--foreground)_3%,hsl(var(--secondary)/0.4))]',
+    'bg-[color-mix(in_oklch,var(--foreground)_3%,color-mix(in_srgb,var(--secondary)_40%,transparent))]',
     'border-b-2 border-border',
   ),
   stackedPnlHead: 'whitespace-normal leading-snug normal-case',

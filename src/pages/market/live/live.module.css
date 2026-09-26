@@ -34,7 +34,7 @@
 .dragHandle {
   display: inline-block;
   flex-shrink: 0;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   opacity: 0.55;
   cursor: grab;
   font-size: 0.7rem;

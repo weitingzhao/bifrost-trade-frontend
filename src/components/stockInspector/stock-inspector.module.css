@@ -292,7 +292,7 @@
 .chipExch {
   background: rgb(var(--sk-contract-rgb) / 0.08);
   border-color: rgb(var(--sk-contract-rgb) / 0.2);
-  color: var(--color-link, hsl(var(--primary)));
+  color: var(--color-link, var(--primary));
   font-family: var(--font-mono);
 }
 
@@ -305,7 +305,7 @@
 }
 
 .chipLink {
-  color: var(--color-link, hsl(var(--primary)));
+  color: var(--color-link, var(--primary));
   text-decoration: none;
 }
 
@@ -569,7 +569,7 @@
   font-size: 1.1rem;
   font-weight: 700;
   font-family: var(--font-mono);
-  color: var(--color-link, hsl(var(--primary)));
+  color: var(--color-link, var(--primary));
 }
 
 .kvGrid {

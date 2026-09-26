@@ -69,7 +69,7 @@ export const opportunitiesStructureCardClass = cn(
 )
 
 export const opportunitiesStructureCardSelectedClass = cn(
-  'border-primary bg-primary/10 text-primary shadow-[0_0_0_2px_hsl(var(--primary))]',
+  'border-primary bg-primary/10 text-primary shadow-[0_0_0_2px_var(--primary)]',
   'hover:border-primary hover:bg-primary/10',
 )
 

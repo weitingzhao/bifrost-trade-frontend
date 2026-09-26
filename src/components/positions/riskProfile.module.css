@@ -22,7 +22,7 @@
 }
 
 .topLabel {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -46,7 +46,7 @@
   gap: 0.85rem 1.15rem;
   margin-bottom: 0.85rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
 }
 
 /* The scenarios are a table, the payoff a picture: below ~34rem they stack
@@ -97,7 +97,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 .scenarioSummaryHint {
@@ -108,7 +108,7 @@
 .scenarioNote {
   margin: 0 0 0.45rem;
   font-size: 0.75rem;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   line-height: 1.35;
 }
 
@@ -130,7 +130,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 .payoffChartData {
@@ -141,7 +141,7 @@
 
 .payoffChartSub {
   font-size: 0.65rem;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
 
@@ -171,7 +171,7 @@
   margin: 0.35rem 0 0;
   font-size: 0.65rem;
   line-height: 1.35;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 .payoffChartCompact .payoffChartCaption {
@@ -192,7 +192,7 @@
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   padding: 0.35rem 0.5rem 0.35rem 0;
   border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 12%, transparent);
 }
@@ -200,7 +200,7 @@
 .scenarioMatrix tbody th {
   text-align: left;
   font-weight: 600;
-  color: hsl(var(--foreground));
+  color: var(--foreground);
   padding: 0.4rem 0.75rem 0.4rem 0;
   vertical-align: middle;
   white-space: nowrap;
@@ -232,7 +232,7 @@
 }
 
 .matrixNa {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
   font-size: 0.75rem;
 }
 
@@ -251,7 +251,7 @@
 
 .scenarioMatrix tbody tr:not(:last-child) td,
 .scenarioMatrix tbody tr:not(:last-child) th[scope='row'] {
-  border-bottom: 1px solid hsl(var(--border) / 0.35);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 35%, transparent);
 }
 
 .clickWrap {
@@ -266,7 +266,7 @@
   padding: 0.25rem 0.35rem;
   border: 1px solid transparent;
   border-radius: 4px;
-  background: hsl(var(--muted) / 0.25);
+  background: color-mix(in srgb, var(--muted) 25%, transparent);
   font: inherit;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
@@ -275,8 +275,8 @@
 }
 
 .cellBtn:hover {
-  background: hsl(var(--muted) / 0.5);
-  border-color: hsl(var(--border));
+  background: color-mix(in srgb, var(--muted) 50%, transparent);
+  border-color: var(--border);
 }
 
 .cellBtnActive {
@@ -293,7 +293,7 @@
   background: var(--mat-card-fill);
   font-size: 0.78rem;
   line-height: 1.45;
-  color: hsl(var(--foreground) / 0.85);
+  color: color-mix(in srgb, var(--foreground) 85%, transparent);
   box-shadow: none;
 }
 
@@ -310,14 +310,14 @@
   padding: 0.15rem 0.45rem;
   border: none;
   border-radius: 4px;
-  background: hsl(var(--muted));
-  color: hsl(var(--foreground));
+  background: var(--muted);
+  color: var(--foreground);
   font-size: 1rem;
   line-height: 1;
 }
 
 .explainClose:hover {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
 }
 
 .explainPrinciple {
@@ -328,7 +328,7 @@
   margin: 0.5rem 0;
   padding: 0.5rem 0.6rem;
   border-radius: 4px;
-  background: hsl(var(--muted) / 0.4);
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.72rem;
   white-space: pre-wrap;
@@ -361,19 +361,19 @@
   cursor: help;
   margin-left: 0.25rem;
   padding: 0 0.35rem;
-  border: 1px solid hsl(var(--border));
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: hsl(var(--muted) / 0.35);
+  background: color-mix(in srgb, var(--muted) 35%, transparent);
   font-size: 0.65rem;
   font-weight: 700;
   line-height: 1.4;
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 .helpTriggerActive {
   border-color: rgba(59, 130, 246, 0.55);
   background: rgba(59, 130, 246, 0.12);
-  color: hsl(var(--foreground));
+  color: var(--foreground);
 }
 
 .helpPanel {
@@ -385,12 +385,12 @@
   max-width: 22rem;
   padding: 0.55rem 0.65rem;
   border-radius: 6px;
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--popover));
+  border: 1px solid var(--border);
+  background: var(--popover);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   font-size: 0.72rem;
   line-height: 1.4;
-  color: hsl(var(--popover-foreground));
+  color: var(--popover-foreground);
 }
 
 .helpPanelP {

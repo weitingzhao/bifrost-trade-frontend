@@ -15,7 +15,8 @@
  * Every figure is `bookGauges`; every derivation is `explainBook`. The band
  * adds layout, not arithmetic.
  */
-import { useState, type CSSProperties } from 'react'
+import type { CSSProperties } from 'react'
+import { usePageViewSet, usePageViewState } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import { ExplanationBlock } from '@/components/positions/ExplanationBlock'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -163,8 +164,9 @@ export function BookHeroBand({
   explain: Omit<ExplainInputs, 'book' | 'tightPct' | 'spotMix'>
   onOpenTarget: (t: AlarmTarget, sort?: ObligationsSort) => void
 }) {
-  const [open, setOpen] = useState<ReadonlySet<GaugeId>>(new Set())
-  const [showQuiet, setShowQuiet] = useState(false)
+  // Folded gauges and the quiet rows are the page's view (Rev .75): kept for the session.
+  const [open, setOpen] = usePageViewSet<GaugeId>('exp')
+  const [showQuiet, setShowQuiet] = usePageViewState('quiet', false)
   const gauges = bookGauges(book, { tightPct, spotMix, room })
   const toggle = (id: GaugeId) =>
     setOpen((cur) => {

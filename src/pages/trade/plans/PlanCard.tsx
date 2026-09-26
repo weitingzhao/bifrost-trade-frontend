@@ -13,7 +13,6 @@ import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { useAllocations, useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
 import {
-  useCancelStrategyPlan,
   useIntendStrategyPlan,
   useLinkStrategyPlanFill,
   useUpdateStrategyPlan,
@@ -22,8 +21,11 @@ import { instancesTradingSymbol } from '@/lib/plans/planLinkFill'
 import { planEstCredit, planExitSummary, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
+import { cancelStrategyPlan } from '@/api/strategyPlans'
+import { QUERY_KEYS } from '@/constants/queryKeys'
+import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 import { NOT_COMPUTED_HINT } from './PlansTable'
-import { planActions, planStatusVariant } from './planRows'
+import { HELD_PLAN_SCOPE, planActions, planStatusVariant } from './planRows'
 import { SEND_TO_IB, planLineage } from './planLineage'
 import {
   creditOnCash,
@@ -216,7 +218,10 @@ export function PlanCard({
   const [picking, setPicking] = useState(false)
   const [copied, setCopied] = useState(false)
   const intend = useIntendStrategyPlan()
-  const cancel = useCancelStrategyPlan()
+  // Cancel with Undo (design Rev .79 names it Archive): the plan reads
+  // cancelled at once and the write goes when the toast leaves — the server
+  // has no way to uncancel.
+  const { hold } = useHeldRemoval(HELD_PLAN_SCOPE)
   const update = useUpdateStrategyPlan()
   const actions = planActions(plan.effective_status)
   const status = plan.effective_status
@@ -259,7 +264,7 @@ export function PlanCard({
     })
   }
 
-  const mutationError = (intend.error ?? cancel.error ?? update.error) as Error | null
+  const mutationError = (intend.error ?? update.error) as Error | null
 
   return (
     <div className="flex min-h-0 flex-col">
@@ -619,8 +624,14 @@ export function PlanCard({
                 size="sm"
                 variant="ghost"
                 className="h-7 text-dense-meta text-muted-foreground"
-                disabled={cancel.isPending}
-                onClick={() => cancel.mutate(plan.strategy_plan_id)}
+                onClick={() =>
+                  hold(plan.strategy_plan_id, {
+                    msg: `${plan.symbol} plan cancelled`,
+                    commit: () => cancelStrategyPlan(plan.strategy_plan_id),
+                    invalidate: [QUERY_KEYS.strategyPlans.root],
+                    failed: `${plan.symbol} plan was not cancelled`,
+                  })
+                }
               >
                 Cancel
               </Button>

@@ -3,6 +3,7 @@
  * External store (no Zustand dep).
  */
 import { useCallback } from 'react'
+import { notifyHeld } from '@/lib/shellNotify'
 import {
   approveCopilotWrite,
   dismissCopilotWrite,
@@ -479,7 +480,13 @@ export const copilotSessionStore = {
     }
   },
 
-  async rejectWrite(toolCallId: string) {
+  /**
+   * Reject with Undo (design Rev .79). The card resolves and the note lands at
+   * once; the decline is recorded server-side only when the toast leaves
+   * without Undo. Undo reopens the card and takes the note back, and then no
+   * decline was ever recorded.
+   */
+  rejectWrite(toolCallId: string) {
     const state = store.getState()
     let target: CopilotToolCall | undefined
     for (const m of state.messages) {
@@ -490,13 +497,12 @@ export const copilotSessionStore = {
       }
     }
     if (!target) throw new Error('tool call not found')
-
-    await dismissCopilotWrite({
+    const decline = {
       tool_name: target.name,
       arguments: stripMetaArgs(target.arguments),
       session_id: state.sessionId,
       reason: 'user_rejected',
-    })
+    }
 
     patchToolCall(toolCallId, { writeDecision: 'rejected' })
 
@@ -508,6 +514,15 @@ export const copilotSessionStore = {
       origin: 'app',
     }
     store.setState({ messages: [...store.getState().messages, note] })
+
+    notifyHeld('Proposal rejected', {
+      // Best-effort, as before: the decline is telemetry, the state is here.
+      commit: () => void dismissCopilotWrite(decline).catch(() => undefined),
+      undo: () => {
+        patchToolCall(toolCallId, { writeDecision: undefined })
+        store.setState({ messages: store.getState().messages.filter((m) => m.id !== note.id) })
+      },
+    })
   },
 }
 

@@ -12,6 +12,7 @@
  * titles, honesty stays printed, and nothing the page could do before was cut.
  */
 import { useState, useMemo, useCallback } from 'react'
+import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
@@ -75,6 +76,9 @@ import type { Execution, OpenOptionPosition } from '@/types/positions'
 import type { RiskProfile } from '@/utils/riskProfile'
 import { BACKING_TARGET_ANCHOR, backingHref, isBackingTarget } from '@/utils/backingAnchors'
 
+/** The page's own URL view (Rev .75): the expiry. Account and symbol are the shell's. */
+const POSITIONS_VIEW_PARAMS = ['expiry'] as const
+
 export default function PositionsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -92,7 +96,9 @@ export default function PositionsPage() {
   const preview = usePreviewState()
 
   // Grid-only state: changes what the grid shows, never what the cockpit grades.
-  // The view and the expand mode are remembered; the filters are not.
+  // The view and the expand mode are remembered across sessions; the filters,
+  // the pressure fold, the face and the expiry for this tab's session (design
+  // Rev .75 view state, the page it was drawn on).
   const [linesView, setLinesView] = usePersistedChoice<LinesView>(STORAGE_KEYS.positionsLinesView, 'strategy', [
     'strategy',
     'contract',
@@ -103,7 +109,8 @@ export default function PositionsPage() {
     'accordion',
     ['accordion', 'multi'],
   )
-  const [instanceFilters, setInstanceFilters] = useState<InstanceFilterValues>(CLEAR_FILTERS)
+  const [instanceFilters, setInstanceFilters] = usePageViewState<InstanceFilterValues>('filters', CLEAR_FILTERS)
+  usePageViewParams(POSITIONS_VIEW_PARAMS)
   // A leg picked on the risk map. It narrows the grid's views to that leg —
   // grid-only, like the toolbar filters, so the cockpit is untouched — and it
   // lives only as long as the leg is in scope.
@@ -137,9 +144,11 @@ export default function PositionsPage() {
       ? { type: null }
       : { type: 'strategy', id: urlInstanceId, compareId: urlCompareId },
   )
-  const [pressureOpen, setPressureOpen] = useState(true)
+  const [pressureOpen, setPressureOpen] = usePageViewState('pressure', true)
   // The one slot beside the grid: one thing at a time, on the face that answers it.
-  const [face, setFace] = useState<PositionsFace>('risk')
+  // Which face is kept; the open slot is not — it holds a picked contract,
+  // leg or fill, which is data, and reopens on the next pick.
+  const [face, setFace] = usePageViewState<PositionsFace>('face', 'risk')
   const [faceOpen, setFaceOpen] = useState(false)
   const [faceContract, setFaceContract] = useState<OpenOptionPosition | null>(null)
   const [faceRisk, setFaceRisk] = useState<FaceRisk | null>(null)
@@ -225,7 +234,7 @@ export default function PositionsPage() {
         navigate(backingHref({ scopeSearch, sort, anchor: BACKING_TARGET_ANCHOR[t] }))
       }
     },
-    [navigate, scopeSearch, setLinesView],
+    [navigate, scopeSearch, setLinesView, setPressureOpen],
   )
   const openFromBackingSegment = useCallback(
     (target: 'calls' | 'puts' | 'free' | 'income') => {
@@ -245,7 +254,7 @@ export default function PositionsPage() {
     setFaceContract(pos)
     setFace('contract')
     setFaceOpen(true)
-  }, [])
+  }, [setFace])
   const instanceById = useMemo(
     () => new Map(book.instances.map((i) => [i.strategy_instance_id, i])),
     [book.instances],
@@ -268,7 +277,7 @@ export default function PositionsPage() {
       setFace('risk')
       setFaceOpen(true)
     },
-    [instanceById, book.executionsFinal],
+    [instanceById, book.executionsFinal, setFace],
   )
   /** A face button runs the write it names, on the fill the face is about. */
   const openLedgerMode = useCallback(
@@ -287,7 +296,7 @@ export default function PositionsPage() {
     setFaceExec(exec)
     setFace('ledger')
     setFaceOpen(true)
-  }, [])
+  }, [setFace])
 
   const openOptionPosition = faceContract
   const openOptionUnderlyingHint = useMemo(() => {

@@ -12,8 +12,9 @@
  * not; every column the model cannot carry is marked on the page rather than
  * drawn empty.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { TodayFace } from './TodayFace'
 import { useQuery } from '@tanstack/react-query'
 import { MomentumFactorsPanel } from './MomentumFactorsPanel'
@@ -124,9 +125,13 @@ const SHOW_OPTIONS = [
 ]
 
 type SortKey = 'composite' | RatingLensKey
+const RATINGS_VIEW_PARAMS = ['view', 'universe', 'lsort', 'lsym', 'lsess', 'show', 'stage', 'path', 'grade', 'sym'] as const
+
 export default function StockRatingsPage() {
-  const [weights, setWeights] = useState<RatingWeights>(SERVER_WEIGHTS)
-  const [sort, setSort] = useState<SortKey>('composite')
+  // The page's view (Rev .79): the weights and sort here, the rest in the URL.
+  const [weights, setWeights] = usePageViewState<RatingWeights>('w', SERVER_WEIGHTS)
+  const [sort, setSort] = usePageViewState<SortKey>('sort', 'composite')
+  usePageViewParams(RATINGS_VIEW_PARAMS)
   // Universe and Show live in the URL: this page is a working set, and a
   // working set you cannot send to someone is half a page.
   const [params, setParams] = useSearchParams()

@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, type ReactNode } from 'react'
+import { usePageViewState } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import { updateExecution } from '@/api/trading'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
@@ -114,7 +115,8 @@ export function OptionsTab({
   onRefreshExecs,
   canonicalOptContractKeys = new Set(),
 }: Props) {
-  const [expandedKeys, setExpandedKeys] = useState<string[]>([])
+  // The open rows are the page's view (Rev .75 `openRow`), kept for the session.
+  const [expandedKeys, setExpandedKeys] = usePageViewState<string[]>('openRows.options', [])
   const [syncingExecId, setSyncingExecId] = useState<number | null>(null)
   const [openOptSort, setOpenOptSort] = useState<{ column: OpenOptSortCol; dir: 'asc' | 'desc' }>({
     column: 'expiry',

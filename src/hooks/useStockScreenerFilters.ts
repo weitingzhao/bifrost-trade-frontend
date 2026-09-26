@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import {
   fetchFundamentalFilter,
@@ -9,6 +9,7 @@ import {
 import type { TierKey } from '@/constants/stockScreenerCatalog'
 import type { FilterPreview, TierFilterState } from '@/types/stockScreener'
 import { intersectSymbolLists } from '@/utils/stockScreener'
+import { readPageView, usePageViewKey, writePageView } from '@/lib/pageView'
 
 function emptyTierFilters(): Record<TierKey, TierFilterState> {
   return {
@@ -18,10 +19,44 @@ function emptyTierFilters(): Record<TierKey, TierFilterState> {
   }
 }
 
+/**
+ * The criteria as plain data: what the page keeps as its view (Rev .79, the
+ * design's `on`) and what Clear all's Undo puts back (Rev .75).
+ */
+export interface ScreenerCriteria {
+  cond: string[]
+  tech: string[]
+  tiers: Partial<Record<TierKey, { indicators: string[]; minScore: number }>>
+}
+
+function tiersFrom(c: ScreenerCriteria['tiers'] | undefined): Record<TierKey, TierFilterState> {
+  const out = emptyTierFilters()
+  for (const [k, v] of Object.entries(c ?? {})) {
+    if (v && k in out) out[k as TierKey] = { indicators: new Set(v.indicators), minScore: v.minScore }
+  }
+  return out
+}
+
 export function useStockScreenerFilters() {
-  const [condFilter, setCondFilter] = useState<Set<string>>(new Set())
-  const [techCondFilter, setTechCondFilter] = useState<Set<string>>(new Set())
-  const [tierFilters, setTierFilters] = useState<Record<TierKey, TierFilterState>>(emptyTierFilters)
+  const viewKey = usePageViewKey()
+  const [saved] = useState(() => readPageView(viewKey).criteria as ScreenerCriteria | undefined)
+  const [condFilter, setCondFilter] = useState<Set<string>>(() => new Set(saved?.cond))
+  const [techCondFilter, setTechCondFilter] = useState<Set<string>>(() => new Set(saved?.tech))
+  const [tierFilters, setTierFilters] = useState<Record<TierKey, TierFilterState>>(() => tiersFrom(saved?.tiers))
+
+  const criteria = useMemo<ScreenerCriteria>(
+    () => ({
+      cond: [...condFilter],
+      tech: [...techCondFilter],
+      tiers: Object.fromEntries(
+        Object.entries(tierFilters).map(([k, v]) => [k, { indicators: [...v.indicators], minScore: v.minScore }]),
+      ),
+    }),
+    [condFilter, techCondFilter, tierFilters],
+  )
+  useEffect(() => {
+    writePageView(viewKey, 'criteria', criteria)
+  }, [viewKey, criteria])
   const [filterPreview, setFilterPreview] = useState<FilterPreview | null>(null)
   const [filterError, setFilterError] = useState<string | null>(null)
 
@@ -110,6 +145,15 @@ export function useStockScreenerFilters() {
     setFilterPreview(null)
     setFilterError(null)
   }, [clearCondFilter, clearTechCondFilter, clearAllTierFilters])
+
+  /** Puts a set of criteria back — Clear all's Undo. */
+  const restoreCriteria = useCallback((c: ScreenerCriteria) => {
+    setCondFilter(new Set(c.cond))
+    setTechCondFilter(new Set(c.tech))
+    setTierFilters(tiersFrom(c.tiers))
+    setFilterPreview(null)
+    setFilterError(null)
+  }, [])
 
   const tierActiveCount = useMemo(() => {
     let count = 0
@@ -230,6 +274,8 @@ export function useStockScreenerFilters() {
     clearExtGroupFilter,
     clearSepaGroupFilter,
     clearAllFilters,
+    criteria,
+    restoreCriteria,
     previewFilter,
     runFilter,
     clearFilterPreview,

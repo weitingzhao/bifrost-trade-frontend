@@ -27,6 +27,8 @@ import {
   validatePolicy,
 } from '@/api/research/policyTemplate'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { queryClient as appQueryClient } from '@/lib/queryClient'
+import { notify } from '@/lib/shellNotify'
 
 export function useActiveObjectives() {
   return useQuery({
@@ -52,6 +54,24 @@ export function useObjective(objectiveId: string | null) {
     queryKey: ['research', 'objective', objectiveId],
     queryFn: () => fetchObjective(objectiveId!),
     enabled: Boolean(objectiveId),
+  })
+}
+
+/**
+ * Archive with Undo (design Rev .79, Autopilot Objective). Archiving is a
+ * status the server can set back, so the toast's Undo is the reverse write —
+ * outside any component, since the page may be gone before it is pressed.
+ */
+export function notifyArchivedObjective(objectiveId: string, title: string): void {
+  notify(`Archived “${title}”`, {
+    undo: () =>
+      void patchObjective(objectiveId, { status: 'active' })
+        .then(() => {
+          void appQueryClient.invalidateQueries({ queryKey: ['research', 'objective', objectiveId] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+        })
+        .catch((e: unknown) => notify(`Restore did not save — ${e instanceof Error ? e.message : String(e)}`)),
   })
 }
 

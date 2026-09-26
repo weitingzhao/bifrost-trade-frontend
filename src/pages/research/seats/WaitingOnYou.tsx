@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   DRAFTS_PAGE_MAX,
   useApproveDraft,
-  useDismissDraft,
+  useHeldDraftDismiss,
   useResearchDrafts,
 } from '@/hooks/useResearchDrafts'
 import {
@@ -60,13 +60,15 @@ const DESK_ROWS = 8
 export function WaitingOnYou() {
   const query = useResearchDrafts({ status: 'pending', limit: DRAFTS_PAGE_MAX })
   const approve = useApproveDraft()
-  const dismiss = useDismissDraft()
+  // Dismiss with Undo (Rev .79), held until the toast leaves.
+  const { isHeld, dismiss } = useHeldDraftDismiss()
   // Same confirmation as the Inbox's: the row leaves, the strip says what was written.
   const approvedStrip = useApprovedStripState(approve.data)
 
   const groups = useMemo(
-    () => groupIdenticalDrafts((query.data?.rows ?? []).filter((d) => isDecisionKind(d.kind))),
-    [query.data?.rows],
+    () =>
+      groupIdenticalDrafts((query.data?.rows ?? []).filter((d) => isDecisionKind(d.kind) && !isHeld(d.id))),
+    [query.data?.rows, isHeld],
   )
   const shown = groups.slice(0, DESK_ROWS)
   const more = groups.length - shown.length
@@ -88,7 +90,6 @@ export function WaitingOnYou() {
       }
     >
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
-      {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
       <ApprovedStrip state={approvedStrip} />
 
       {query.isLoading ? (
@@ -122,8 +123,7 @@ export function WaitingOnYou() {
                 const lands = approveEffect(draft)
                 const actionable = isActionableDraft(draft)
                 const approving = approve.isPending && approve.variables === draft.id
-                const dismissing = dismiss.isPending && dismiss.variables === draft.id
-                const busy = approving || dismissing
+                const busy = approving
                 const createdSec = Date.parse(draft.created_at) / 1000
                 return (
                   <DenseTableRow key={draft.id} className={actionable ? undefined : 'opacity-75'}>
@@ -193,9 +193,9 @@ export function WaitingOnYou() {
                           size="sm"
                           variant="ghost"
                           disabled={busy}
-                          onClick={() => dismiss.mutate(draft.id)}
+                          onClick={() => dismiss(draft.id, 'Dismissed')}
                         >
-                          {dismissing ? 'Dismissing…' : 'Dismiss'}
+                          Dismiss
                         </Button>
                       </div>
                     </DenseTableCell>

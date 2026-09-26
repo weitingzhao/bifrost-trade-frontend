@@ -25,11 +25,8 @@ import { Card } from '@/components/ui/card'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHypothesisList } from '@/hooks/useHypotheses'
-import {
-  approveResearchDraft,
-  dismissResearchDraft,
-  listResearchDrafts,
-} from '@/api/researchDrafts'
+import { approveResearchDraft, listResearchDrafts } from '@/api/researchDrafts'
+import { useHeldDraftDismiss } from '@/hooks/useResearchDrafts'
 import { draftTitle } from '@/lib/harness/draftText'
 import { resolutionLine } from '@/lib/hypothesisResolution'
 import { cardEvidence, splitTitleRef } from '@/lib/hypothesisCardModel'
@@ -155,12 +152,13 @@ function SuggestionQueue() {
     },
   })
   const act = useMutation({
-    mutationFn: ({ id, verb }: { id: string; verb: 'approve' | 'dismiss' }) =>
-      verb === 'approve' ? approveResearchDraft(id) : dismissResearchDraft(id),
+    mutationFn: (id: string) => approveResearchDraft(id),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: ['research', 'drafts', 'hypothesis-queue'] }),
   })
-  const rows = drafts.data?.rows ?? []
+  // Dismiss with Undo (Rev .75): the draft leaves at once, the write goes with the toast.
+  const { isHeld, dismiss } = useHeldDraftDismiss()
+  const rows = (drafts.data?.rows ?? []).filter((d) => !isHeld(d.id))
   if (rows.length === 0) return null
   return (
     <section className="overflow-hidden rounded-md border border-warning/45">
@@ -196,15 +194,14 @@ function SuggestionQueue() {
                 className="text-dense-meta text-primary hover:underline disabled:opacity-50"
                 disabled={act.isPending}
                 title="Records your call on the draft — no hypothesis is written; create one from its evidence page"
-                onClick={() => act.mutate({ id: d.id, verb: 'approve' })}
+                onClick={() => act.mutate(d.id)}
               >
                 Approve
               </button>
               <button
                 type="button"
                 className="text-dense-meta text-muted-foreground hover:text-foreground disabled:opacity-50"
-                disabled={act.isPending}
-                onClick={() => act.mutate({ id: d.id, verb: 'dismiss' })}
+                onClick={() => dismiss(d.id)}
               >
                 Dismiss
               </button>

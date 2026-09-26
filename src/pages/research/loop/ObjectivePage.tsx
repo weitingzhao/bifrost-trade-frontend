@@ -68,6 +68,7 @@ import {
   useAutopilotStanding,
   useChangePolicy,
   useObjective,
+  notifyArchivedObjective,
   usePatchObjective,
 } from '@/hooks/useLoopHarness'
 import { fmtIsoTs } from '@/lib/format'
@@ -208,7 +209,11 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
               className="h-7"
               disabled={patchMut.isPending}
               onClick={() =>
-                patchMut.mutate({ objectiveId: obj.id, body: { status: archived ? 'active' : 'archived' } })
+                patchMut.mutate(
+                  { objectiveId: obj.id, body: { status: archived ? 'active' : 'archived' } },
+                  // Archive answers with Undo (Rev .79); Restore is its own undo.
+                  archived ? undefined : { onSuccess: () => notifyArchivedObjective(obj.id, obj.title) },
+                )
               }
             >
               {archived ? (

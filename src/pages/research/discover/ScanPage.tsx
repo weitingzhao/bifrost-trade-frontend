@@ -23,8 +23,9 @@
  *
  * What the composite is and why it is computed on this side: `volRatingsModel.ts`.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import {
   PageHeader,
   PageShell,
@@ -114,9 +115,14 @@ function lensInk(flag: string | undefined): string {
   return ''
 }
 
+const SCAN_VIEW_PARAMS = ['universe', 'show', 'sym'] as const
+
 export default function ScanPage() {
-  const [weights, setWeights] = useState<VolWeights>(SERVER_WEIGHTS)
-  const [sort, setSort] = useState<'composite' | VolLensKey>('composite')
+  // The page's view (Rev .79): weights and sort here; universe, show and the
+  // selected name in the URL, kept the same way.
+  const [weights, setWeights] = usePageViewState<VolWeights>('w', SERVER_WEIGHTS)
+  const [sort, setSort] = usePageViewState<'composite' | VolLensKey>('sort', 'composite')
+  usePageViewParams(SCAN_VIEW_PARAMS)
   // Universe, Show and the selected name live in the URL: a working set you
   // cannot send to someone is half a page.
   const [params, setParams] = useSearchParams()

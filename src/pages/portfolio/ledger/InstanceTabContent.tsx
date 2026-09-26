@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { usePageViewSet } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
@@ -117,7 +118,8 @@ export function InstanceTabContent({
   onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void
   stockFills?: Execution[]
 }) {
-  const [innerExpanded, setInnerExpanded] = useState<Set<string>>(new Set())
+  // Open instances are part of the Ledger's view (Rev .79 `openInst`).
+  const [innerExpanded, setInnerExpanded] = usePageViewSet<string>('openInst.inner')
   const [rawPage, setRawPage] = useState(1)
   function toggleInner(key: string) {
     setInnerExpanded(prev => {

@@ -64,7 +64,7 @@ import { AutopilotKpis } from '@/components/research/harness/AutopilotStanding'
 import { ObjectiveRows } from '@/pages/research/loop/ObjectiveBriefRow'
 import type { BatchRunOverrides } from '@/api/research/harness'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
-import { useLoopTrust,
+import { notifyArchivedObjective, useLoopTrust,
   useAutopilotStanding,
 } from '@/hooks/useLoopHarness'
 
@@ -664,7 +664,10 @@ export default function HarnessConsolePage() {
         onConfirm={() => {
           if (!retiring) return
           if (retiring.mode === 'delete') deleteMut.mutate(retiring.objective.id)
-          else archiveMut.mutate({ id: retiring.objective.id, status: 'archived' })
+          else {
+            const { id, title } = retiring.objective
+            archiveMut.mutate({ id, status: 'archived' }, { onSuccess: () => notifyArchivedObjective(id, title) })
+          }
         }}
       />
 

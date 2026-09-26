@@ -30,6 +30,8 @@ import { PageHeader, PageShell } from '@/components/layout'
 import { Button } from '@/components/ui/button'
 import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal'
 import { STORAGE_KEYS } from '@/constants/storage'
+import { usePageViewState } from '@/lib/pageView'
+import { notify } from '@/lib/shellNotify'
 import { useOpportunities } from '@/hooks/useStrategies'
 import { OptionScreenerContracts } from './OptionScreenerContracts'
 import { OptionScreenerFunnel } from './OptionScreenerFunnel'
@@ -86,9 +88,11 @@ export default function OptionScreenerPage() {
   const [structure, setStructure] = useState(saved.structure)
   const [filters, setFilters] = useState<LiveFilters>(saved.filters)
   const [includeEarnings, setIncludeEarnings] = useState(saved.includeEarnings)
-  const [view, setView] = useState<ScreenView>('grouped')
-  const [selected, setSelected] = useState<string | null>(null)
-  const [sourceId, setSourceId] = useState<string | null>(null)
+  // View state (Rev .79 `source · view · sel`); struct, f and earnOk are
+  // already kept across sessions above.
+  const [view, setView] = usePageViewState<ScreenView>('view', 'grouped')
+  const [selected, setSelected] = usePageViewState<string | null>('sel', null)
+  const [sourceId, setSourceId] = usePageViewState<string | null>('source', null)
   const [saveOpen, setSaveOpen] = useState(false)
 
   useEffect(() => {
@@ -230,8 +234,16 @@ export default function OptionScreenerPage() {
             symbols={symbols}
             onPickSource={pickSource}
             onDrop={(sym) => {
-              setSymbols((prev) => prev.filter((s) => s !== sym))
+              // With Undo (Rev .79): the list and the source come back as they were.
+              const prev = { symbols, sourceId }
+              setSymbols(symbols.filter((s) => s !== sym))
               setSourceId(null)
+              notify(`${sym} removed from the source`, {
+                undo: () => {
+                  setSymbols(prev.symbols)
+                  setSourceId(prev.sourceId)
+                },
+              })
             }}
             onAdd={(add) => {
               setSymbols((prev) => [...new Set([...prev, ...add])])

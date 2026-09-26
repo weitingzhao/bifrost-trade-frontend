@@ -10,7 +10,15 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { bannerStore, dismissBanner, dismissToast, toastStore, type ShellBanner, type BannerTone } from '@/lib/shellNotify'
+import {
+  bannerStore,
+  dismissBanner,
+  dismissToast,
+  toastStore,
+  undoToast,
+  type ShellBanner,
+  type BannerTone,
+} from '@/lib/shellNotify'
 import { useDockColumn } from './symbolDock/dockState'
 import { useBottomLane } from './bottomLane'
 import css from './shellNotices.module.css'
@@ -58,8 +66,7 @@ function Toast() {
             if (undoRan.current) return
             undoRan.current = true
             setShown(null)
-            dismissToast(toast.id)
-            toast.undo?.()
+            undoToast(toast)
           }}
         >
           {toast.label ?? 'Undo'}

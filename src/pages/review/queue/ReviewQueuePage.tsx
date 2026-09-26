@@ -13,6 +13,7 @@
  * list wearing Review's name.
  */
 import { useMemo, useState } from 'react'
+import { usePageViewState } from '@/lib/pageView'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { PageHeader, PageShell } from '@/components/layout'
@@ -151,9 +152,10 @@ function QueueRow({
 
 export default function ReviewQueuePage() {
   const [accountFilter, setAccountFilter] = useState('all')
-  const [since, setSince] = useState('all')
-  const [picked, setPicked] = useState<string | null>(null)
-  const [cell, setCell] = useState<string | null>(null)
+  // The page's view (Rev .79 `since · quad · sel`), kept for the session.
+  const [since, setSince] = usePageViewState('since', 'all')
+  const [picked, setPicked] = usePageViewState<string | null>('sel', null)
+  const [cell, setCell] = usePageViewState<string | null>('quad', null)
   const { trades, expiredUnbooked, accountIds, loading, error, refetch } = useReviewTrades(accountFilter)
 
   // The window first, so every figure on the page is about the same set of trades.

@@ -44,14 +44,13 @@ import {
 } from '@/components/data-display'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   useCandidates,
-  useDismissCandidate,
   usePromoteCandidate,
 } from '@/hooks/useCandidates'
-import type { CandidateStatus, ResearchCandidate } from '@/api/research/candidates'
+import { dismissCandidate, type CandidateStatus, type ResearchCandidate } from '@/api/research/candidates'
+import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 
 type StatusFilter = CandidateStatus | 'all'
 
@@ -109,13 +108,22 @@ function candidateAge(
 export default function CandidatePoolPage() {
   const nowIso = new Date().toISOString()
   const [status, setStatus] = useState<StatusFilter>('open')
-  const [dismissTarget, setDismissTarget] = useState<ResearchCandidate | null>(null)
 
   const query = useCandidates({ status })
   const promote = usePromoteCandidate()
-  const dismiss = useDismissCandidate()
+  // Drop with Undo (Rev .79) rather than a confirm: the row leaves at once and
+  // the dismissal is written when the toast leaves, since none can be undone
+  // on the server.
+  const { isHeld, hold } = useHeldRemoval('research-candidate')
+  const drop = (row: ResearchCandidate) =>
+    hold(row.id, {
+      msg: `${row.symbol} dropped`,
+      commit: () => dismissCandidate(row.id),
+      invalidate: [['research', 'candidates']],
+      failed: `${row.symbol} was not dropped`,
+    })
 
-  const all = useMemo(() => query.data?.items ?? [], [query.data?.items])
+  const all = useMemo(() => (query.data?.items ?? []).filter((c) => !isHeld(c.id)), [query.data?.items, isHeld])
 
   // The shell's objective scope, applied. Every row here carries the objective
   // that proposed it on `source_ref.objective_id` — 55 of 62 on DEV — so the
@@ -131,11 +139,7 @@ export default function CandidatePoolPage() {
   const items = split ? split.kept : all
   const scopeName =
     objectivesQ.data?.items?.find((o) => o.id === objective)?.title ?? objective
-  const busyId = promote.isPending
-    ? promote.variables?.id
-    : dismiss.isPending
-      ? dismiss.variables
-      : null
+  const busyId = promote.isPending ? promote.variables?.id : null
 
   // The bar's ceiling: the best score on screen. Nothing documents the
   // composite's own ceiling, so this is the only one that cannot lie.
@@ -177,15 +181,6 @@ export default function CandidatePoolPage() {
       await promote.mutateAsync({ id: row.id })
     } catch {
       /* silent — table refetch / QueryErrorAlert covers load errors */
-    }
-  }
-
-  async function confirmDismiss() {
-    if (!dismissTarget) return
-    try {
-      await dismiss.mutateAsync(dismissTarget.id)
-    } finally {
-      setDismissTarget(null)
     }
   }
 
@@ -483,7 +478,7 @@ export default function CandidatePoolPage() {
                       <button
                         type="button"
                         disabled={!canAct || rowBusy}
-                        onClick={() => setDismissTarget(row)}
+                        onClick={() => drop(row)}
                         title="Drop from the open pool — status becomes dismissed, history is kept"
                         className="whitespace-nowrap rounded px-1 text-dense-meta text-muted-foreground hover:text-destructive hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground/40 disabled:no-underline"
                       >
@@ -568,20 +563,6 @@ export default function CandidatePoolPage() {
         Until one of those fills, a Fit percentage would be a number with nothing behind it.
       </p>
       </SectionPanel>
-
-      <ConfirmDialog
-        open={dismissTarget != null}
-        title="Dismiss candidate"
-        message={
-          dismissTarget
-            ? `Remove ${dismissTarget.symbol} from the open pool? This does not delete history — status becomes dismissed.`
-            : ''
-        }
-        confirmLabel="Dismiss"
-        confirming={dismiss.isPending}
-        onConfirm={() => void confirmDismiss()}
-        onCancel={() => setDismissTarget(null)}
-      />
     </PageShell>
   )
 }

@@ -12,6 +12,7 @@
  * way (design DECISIONS 2026-09-18).
  */
 import { useMemo, useState } from 'react'
+import { usePageViewState } from '@/lib/pageView'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
@@ -69,7 +70,8 @@ function contractToken(row: { secType: string; contractKey: string; symbol: stri
 }
 
 export default function FillsPage() {
-  const [windowKey, setWindowKey] = useState('week')
+  // The window, the Show filter and the open fill are the page's view (Rev .79 `day · execFilter · sel`).
+  const [windowKey, setWindowKey] = usePageViewState('day', 'week')
   const [today] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
@@ -81,7 +83,7 @@ export default function FillsPage() {
    * click away, and the empty state names the filter so a filtered-quiet table
    * never reads as a quiet book.
    */
-  const [show, setShow] = useState('needs')
+  const [show, setShow] = usePageViewState('execFilter', 'needs')
   const execQuery = useExecutionsCanonical()
   const ordersQuery = useOpenOrders()
   const freshnessQuery = useExecutionsFreshness()
@@ -90,7 +92,7 @@ export default function FillsPage() {
   const oppsQuery = useOpportunities()
   const queryClient = useQueryClient()
   /** The fill the belong panel is about — a row click, cleared on Esc or Leave. */
-  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [selectedKey, setSelectedKey] = usePageViewState<string | null>('sel', null)
   const [pickedCandidate, setPickedCandidate] = useState<number | null>(null)
   const [linking, setLinking] = useState(false)
   const [linkError, setLinkError] = useState<string | null>(null)

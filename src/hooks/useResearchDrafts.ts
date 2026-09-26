@@ -1,7 +1,9 @@
 /**
  * TanStack Query hooks for Research Cockpit draft inbox (Wave RS-E3).
  */
+import { useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 import {
   approveResearchDraft,
   createResearchDraft,
@@ -75,6 +77,31 @@ export function useDismissDraft() {
       void qc.invalidateQueries({ queryKey: researchDraftsQueryKey })
     },
   })
+}
+
+/**
+ * Dismiss with Undo (design Rev .75/.79). The server has no way to take a
+ * dismissal back — it also marks the linked action rejected — so the draft
+ * leaves every list at once and the write goes out when the toast does. One
+ * scope for the store, so a draft held on the Inbox is gone from the Copilot
+ * queue and the Hypothesis board too.
+ */
+export function useHeldDraftDismiss() {
+  const { isHeld, hold } = useHeldRemoval('research-draft')
+  const dismiss = useCallback(
+    (ids: string | readonly string[], msg = 'Draft dismissed') => {
+      const list: readonly string[] = typeof ids === 'string' ? [ids] : ids
+      if (list.length === 0) return
+      hold(list, {
+        msg,
+        commit: () => Promise.all(list.map((id) => dismissResearchDraft(id))),
+        invalidate: [researchDraftsQueryKey],
+        failed: 'Dismiss did not save',
+      })
+    },
+    [hold],
+  )
+  return { isHeld, dismiss }
 }
 
 export function useCreateResearchDraft() {

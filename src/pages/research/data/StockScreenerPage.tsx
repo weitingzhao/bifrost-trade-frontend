@@ -26,6 +26,8 @@ import {
   useStockScreenerCriteria,
 } from '@/hooks/useStockScreenerCriteria'
 import { useStockScreenerFilters } from '@/hooks/useStockScreenerFilters'
+import { usePageViewSet, usePageViewState } from '@/lib/pageView'
+import { notify } from '@/lib/shellNotify'
 import { useReadinessSort, useSymbolsReadinessSnapshot } from '@/hooks/useSymbolsReadinessSnapshot'
 import { CollapsibleFilterPanel } from './stockScreener/CollapsibleFilterPanel'
 import { ConditionChipGroup } from './stockScreener/ConditionChipGroup'
@@ -53,22 +55,24 @@ import type { ReadinessSnapshotRow } from '@/types/stockScreener'
 import { formatCriteriaAsOf, prepareDistBuckets } from '@/utils/stockScreener'
 
 export default function StockScreenerPage() {
-  const [symbolText, setSymbolText] = useState('')
+  // View state (Rev .79 `q · mins · sel`; `on` lives in the filters hook):
+  // leave and come back to the same list, stages and open name.
+  const [symbolText, setSymbolText] = usePageViewState('q', '')
   // The design's `min` stepper, per stage that has one. Its defaults are the
   // prototype's: eight of the eleven trend conditions, none of the growth.
-  const [mins, setMins] = useState<Record<string, number>>(() =>
+  const [mins, setMins] = usePageViewState<Record<string, number>>('mins', () =>
     Object.fromEntries(FUNNEL_STAGES.filter((st) => st.min != null).map((st) => [st.id, st.min!])),
   )
-  const [inspector, setInspector] = useState<{
+  const [inspector, setInspector] = usePageViewState<{
     symbol: string
     seed?: { passCount: number; passedConditions?: string[]; insufficientData?: boolean }
-  } | null>(null)
+  } | null>('sel', null)
 
   const { data: criteriaStats, isLoading: criteriaLoading, error: criteriaQueryError, refetch } = useStockScreenerCriteria()
 
   const setSymbolsFromBucket = useCallback((syms: string[]) => {
     setSymbolText(syms.join(','))
-  }, [])
+  }, [setSymbolText])
 
   const fundBucket = useDistributionBucketLoader('fund', setSymbolsFromBucket)
   const techBucket = useDistributionBucketLoader('tech', setSymbolsFromBucket)
@@ -140,7 +144,7 @@ export default function StockScreenerPage() {
   const handleSymbolTextChange = useCallback((text: string) => {
     clearHeroSelection()
     setSymbolText(text)
-  }, [clearHeroSelection])
+  }, [clearHeroSelection, setSymbolText])
 
   const handleApplyFilter = useCallback(() => {
     if (!filters.filterPreview) return
@@ -149,7 +153,7 @@ export default function StockScreenerPage() {
     fundCond.clearActive()
     techCond.clearActive()
     setSymbolText(filters.filterPreview.symbols.join(','))
-  }, [filters.filterPreview, fundBucket, techBucket, fundCond, techCond])
+  }, [filters.filterPreview, fundBucket, techBucket, fundCond, techCond, setSymbolText])
 
   const toggleInspector = useCallback((symbol: string, row?: ReadinessSnapshotRow) => {
     const sym = symbol.trim().toUpperCase()
@@ -165,7 +169,7 @@ export default function StockScreenerPage() {
         },
       }
     })
-  }, [])
+  }, [setInspector])
 
   // ── Condition group memos ──
 
@@ -288,7 +292,7 @@ export default function StockScreenerPage() {
         setPresetBusy(null)
       }
     },
-    [],
+    [setSymbolText],
   )
 
   // Catalyst's SEC 8-K chips (Rev .43): one read of the whole 7-day window,
@@ -298,7 +302,7 @@ export default function StockScreenerPage() {
     () => (narrQ.data ? namesByCondition(narrQ.data.tags) : null),
     [narrQ.data],
   )
-  const [narrActive, setNarrActive] = useState<ReadonlySet<string>>(() => new Set())
+  const [narrActive, setNarrActive] = usePageViewSet<string>('narr')
 
   const universe = criteriaStats?.universe_count ?? null
   const funnelActive = useMemo(
@@ -373,7 +377,7 @@ export default function StockScreenerPage() {
     } finally {
       setRunBusy(false)
     }
-  }, [filters, fundBucket, techBucket, fundCond, techCond, narrActive, narrByCondition])
+  }, [filters, fundBucket, techBucket, fundCond, techCond, narrActive, narrByCondition, setSymbolText])
 
   const toggleFunnelChip = useCallback(
     (stageId: string, conditionId: string) => {
@@ -388,12 +392,30 @@ export default function StockScreenerPage() {
         })
       }
     },
-    [filters],
+    [filters, setNarrActive],
   )
-  const clearFunnel = useCallback(() => {
-    filters.clearAllFilters()
-    setNarrActive(new Set())
-  }, [filters])
+  // Clear all with Undo (Rev .75): the criteria as they were come back.
+  const clearCriteria = useCallback(
+    (withNarr: boolean) => {
+      const prev = { criteria: filters.criteria, narr: [...narrActive] }
+      const had =
+        prev.criteria.cond.length > 0 ||
+        prev.criteria.tech.length > 0 ||
+        Object.values(prev.criteria.tiers).some((t) => t && (t.indicators.length > 0 || t.minScore > 0)) ||
+        (withNarr && prev.narr.length > 0)
+      filters.clearAllFilters()
+      if (withNarr) setNarrActive(new Set())
+      if (!had) return
+      notify('Criteria cleared', {
+        undo: () => {
+          filters.restoreCriteria(prev.criteria)
+          if (withNarr) setNarrActive(new Set(prev.narr))
+        },
+      })
+    },
+    [filters, narrActive, setNarrActive],
+  )
+  const clearFunnel = useCallback(() => clearCriteria(true), [clearCriteria])
 
   return (
     <PageShell className="flex w-full min-w-0 flex-col gap-2">
@@ -716,7 +738,7 @@ export default function StockScreenerPage() {
           onSearch={filters.previewFilter}
           onApply={handleApplyFilter}
           onRetry={filters.previewFilter}
-          onClear={filters.clearAllFilters}
+          onClear={() => clearCriteria(false)}
         />
       )}
 

@@ -49,13 +49,19 @@ export function useLedgerUiSync(params: {
     setActiveTab,
   } = params
 
+  // Both of these judge the view against the data, so neither may run before
+  // the data is there: a category restored from the page's view (Rev .79) is
+  // not "missing" while the options are still empty, and folds are not stale
+  // while the buckets are.
   useEffect(() => {
+    if (isLoading || stkCategoryOptions.length === 0) return
     if (stkCategoryTab !== 'All' && stkCategoryTab !== 'Uncategorized' && !stkCategoryOptions.includes(stkCategoryTab)) {
       setStkCategoryTab('All')
     }
-  }, [stkCategoryOptions, stkCategoryTab, setStkCategoryTab])
+  }, [isLoading, stkCategoryOptions, stkCategoryTab, setStkCategoryTab])
 
   useEffect(() => {
+    if (isLoading) return
     const opp = groupBy === 'opportunity'
     setOuterStrategyExpanded(prev =>
       pruneExpandedKeys(prev, strategyDisplayBuckets.map(b => b.key), opp),
@@ -64,6 +70,7 @@ export function useLedgerUiSync(params: {
       pruneExpandedKeys(prev, instanceDisplayBuckets.map(b => b.key), opp),
     )
   }, [
+    isLoading,
     groupBy,
     strategyDisplayBuckets,
     instanceDisplayBuckets,

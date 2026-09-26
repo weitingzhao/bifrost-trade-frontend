@@ -32,7 +32,7 @@ import { draftParentId } from '@/lib/research/draftProvenance'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
 import {
   useApproveDraft,
-  useDismissDraft,
+  useHeldDraftDismiss,
   useResearchDrafts,
   DRAFTS_PAGE_MAX,
 } from '@/hooks/useResearchDrafts'
@@ -143,18 +143,23 @@ export default function DecisionInboxPage() {
   // from what comes back, and the cards are the work itself.
   const query = useResearchDrafts({ status: 'pending', kind: apiKind, limit: DRAFTS_PAGE_MAX })
   const approve = useApproveDraft()
-  const dismiss = useDismissDraft()
+  // Dismiss with Undo (Rev .75): the card leaves at once and the write goes
+  // when the toast does, since the server cannot take a dismissal back.
+  const { isHeld, dismiss } = useHeldDraftDismiss()
   // The card leaves on approval and the server cannot take one back, so what
   // was accepted is only ever recorded here. The rail keeps the session's
   // list; the six-second strip belongs to the two surfaces that have no rail.
   const [landed, setLanded] = useState<LandedApproval[]>([])
 
-  const digest = (query.data?.rows ?? []).find(isDailyDigest)
+  const rawRows = query.data?.rows
+  const liveRows = useMemo(() => (rawRows ?? []).filter((d) => !isHeld(d.id)), [rawRows, isHeld])
+  const heldCount = (rawRows?.length ?? 0) - liveRows.length
+  const digest = liveRows.find(isDailyDigest)
 
   // Read state for briefings, kept in this browser (see inboxRead.ts). It is
   // pruned only against the whole queue: a narrowed list, or a page that could
   // not hold every pending draft, would un-read everything it did not contain.
-  const allRows = query.data?.rows ?? []
+  const allRows = rawRows ?? []
   const wholeQueue =
     query.data != null && (query.data.pending_count ?? 0) <= allRows.length
   const { read, setRead } = useReadDrafts(wholeQueue ? allRows.map((d) => d.id) : null)
@@ -190,7 +195,7 @@ export default function DecisionInboxPage() {
   const thin = useMemo(() => proposals.filter((p) => p.thin), [proposals])
 
   const rows = useMemo(() => {
-    const all = query.data?.rows ?? []
+    const all = liveRows
     const place = (d: { kind: string }) => writesTo(d.kind)
     const narrowed = dest === 'any' ? all : all.filter((d) => place(d) === dest)
     if (view === 'decisions') {
@@ -200,7 +205,7 @@ export default function DecisionInboxPage() {
       return digestFirst(all.filter((d) => BRIEFING_KINDS.has(d.kind)))
     }
     return narrowed
-  }, [query.data?.rows, view, dest])
+  }, [liveRows, view, dest])
 
   // Rule cards ride the same two filters as everything else: they write to
   // Rules, and they are decisions rather than posts to read.
@@ -221,13 +226,13 @@ export default function DecisionInboxPage() {
   // read "25 to decide" when thirteen were the same eight symbols and eight more
   // were policy suggestions that would write nothing.
   const counts = useMemo(() => {
-    const all = query.data?.rows ?? []
+    const all = liveRows
     const decisionGroups = groupIdenticalDrafts(all.filter((d) => isDecisionKind(d.kind)))
     // `pending_count` is the whole queue's, whatever `kind` the query asked for:
     // narrowed to EOD verdicts on DEV it still said 182 beside 118 rows, and the
     // line read "182 pending of this kind · 64 not shown". On a narrowed query the
     // rows are the count, and only a full page can be hiding more.
-    const total = apiKind ? all.length : (query.data?.pending_count ?? all.length)
+    const total = apiKind ? all.length : (query.data?.pending_count ?? all.length) - heldCount
     return {
       decisions: decisionGroups.filter((g) => isActionableDraft(g.draft)).length,
       inert: decisionGroups.filter((g) => !isActionableDraft(g.draft)).length,
@@ -246,11 +251,11 @@ export default function DecisionInboxPage() {
         read,
       ),
     }
-  }, [query.data?.rows, query.data?.pending_count, apiKind, read])
+  }, [liveRows, heldCount, query.data?.pending_count, apiKind, read])
 
   /** Pending per place, for the segment's own labels. */
   const pendingByDest = useMemo(() => {
-    const all = query.data?.rows ?? []
+    const all = liveRows
     const n: Record<WritesTo, number> = { rules: 0, policy: 0, book: 0, pool: 0, nothing: 0 }
     for (const d of all) {
       const place = writesTo(d.kind)
@@ -258,7 +263,7 @@ export default function DecisionInboxPage() {
     }
     n.rules += ruleCards.length
     return n
-  }, [query.data?.rows, ruleCards.length])
+  }, [liveRows, ruleCards.length])
 
   /**
    * Which card is open when nothing has been picked: the first pending one, in
@@ -389,7 +394,6 @@ export default function DecisionInboxPage() {
       ) : null}
 
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
-      {dismiss.isError ? <QueryErrorAlert error={dismiss.error} /> : null}
       {/* The queue, and beside it the leash: what reaches this page is what the
           leash did not accept on its own, so the rule sits next to its result. */}
       <div className="grid gap-4 @4xl/page:grid-cols-[minmax(0,1fr)_18rem] @4xl/page:items-start">
@@ -456,7 +460,7 @@ export default function DecisionInboxPage() {
                   hypothesisTitle={titleById.get(draftParentId(draft) ?? '') ?? null}
                   muted={!actionable}
                   approving={approve.isPending && approve.variables === draft.id}
-                  dismissing={dismiss.isPending && dismiss.variables === draft.id}
+                  dismissing={false}
                   onApprove={() =>
                     approve.mutate(draft.id, {
                       // The rail lists this session's approvals, so what the
@@ -467,7 +471,7 @@ export default function DecisionInboxPage() {
                         setLanded((prev) => [landedApproval(result), ...prev].slice(0, LANDED_MAX)),
                     })
                   }
-                  onDismiss={() => dismiss.mutate(draft.id)}
+                  onDismiss={() => dismiss(draft.id)}
                   // Briefings are read, decisions are answered: only a briefing can be marked read.
                   read={BRIEFING_KINDS.has(draft.kind) ? read.has(draft.id) : undefined}
                   onToggleRead={
@@ -487,10 +491,12 @@ export default function DecisionInboxPage() {
                       size="sm"
                       variant="ghost"
                       className="h-6 px-2"
-                      disabled={dismiss.isPending}
-                      onClick={() => {
-                        for (const stale of superseded) dismiss.mutate(stale.id)
-                      }}
+                      onClick={() =>
+                        dismiss(
+                          superseded.map((stale) => stale.id),
+                          `${superseded.length} earlier run${superseded.length === 1 ? '' : 's'} dismissed`,
+                        )
+                      }
                     >
                       Dismiss {superseded.length}
                     </Button>

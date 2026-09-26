@@ -14,7 +14,7 @@ import { useCockpitDrawer } from '@/hooks/useCockpitDrawer'
 import {
   DRAFTS_PAGE_MAX,
   useApproveDraft,
-  useDismissDraft,
+  useHeldDraftDismiss,
   useResearchDrafts,
 } from '@/hooks/useResearchDrafts'
 import { useActiveObjectives, useAutopilotStanding, useAwaitingRuns } from '@/hooks/useLoopHarness'
@@ -41,7 +41,8 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
     refetchIntervalMs: 15_000,
   })
   const approve = useApproveDraft()
-  const dismiss = useDismissDraft()
+  // ✕ is a Dismiss with Undo (Rev .79): held until the toast leaves.
+  const { isHeld, dismiss } = useHeldDraftDismiss()
   const approvedStrip = useApprovedStripState(approve.data)
   const awaitingQ = useAwaitingRuns()
   const objectivesQ = useActiveObjectives()
@@ -53,7 +54,8 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
     return map
   }, [objectivesQ.data?.items])
 
-  const draftRows = draftsQ.data?.rows
+  const rawDraftRows = draftsQ.data?.rows
+  const draftRows = useMemo(() => rawDraftRows?.filter((d) => !isHeld(d.id)), [rawDraftRows, isHeld])
   const runRows = awaitingQ.data?.items
   const listedCallCount = waitingQueueCallCount(draftRows ?? [])
   const callCount =
@@ -189,8 +191,8 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
                   <button
                     type="button"
                     className="h-5 px-1 text-dense-caption hover:bg-secondary"
-                    disabled={dismiss.isPending}
-                    onClick={() => dismiss.mutate(row.draft!.id)}
+                    title="Dismiss — Undo for five seconds"
+                    onClick={() => dismiss(row.draft!.id, 'Dismissed')}
                   >
                     ✕
                   </button>

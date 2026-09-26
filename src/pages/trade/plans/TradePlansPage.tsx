@@ -33,10 +33,13 @@ import { useFollowedAccountPair } from '@/hooks/useFollowedAccountPair'
 import type { AccountPair } from '@/lib/accountScope'
 import { keepHeldSymbol } from '@/lib/symbolContext'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
+import { useHeldRemoval } from '@/hooks/useHeldRemoval'
+import { usePageViewParams } from '@/lib/pageView'
 import { PlanCard } from './PlanCard'
 import { PlanForm } from './PlanForm'
 import { PlansTable } from './PlansTable'
 import {
+  HELD_PLAN_SCOPE,
   PLAN_FILTERS,
   PLAN_FILTER_LABELS,
   coercePlanFilter,
@@ -49,6 +52,8 @@ import {
 
 /** The form is a local mode; which card is open is the URL's business. */
 type Form = { kind: 'new' } | { kind: 'edit'; id: number } | null
+
+const PLANS_VIEW_PARAMS = ['status', 'plan'] as const
 
 export default function TradePlansPage() {
   const [params, setParams] = useSearchParams()
@@ -87,8 +92,20 @@ export default function TradePlansPage() {
 
   // The whole book, filtered client-side, so `N of M plans` can name the true
   // denominator and the Symbol box answers as you type.
+  // The filter and the open plan are the page's view (Rev .79): reached again
+  // without them, the page comes back as it was left. Account and symbol are
+  // the shell's and are not kept twice.
+  usePageViewParams(PLANS_VIEW_PARAMS)
   const query = useStrategyPlans()
-  const plans = useMemo(() => query.data?.items ?? [], [query.data])
+  // A plan whose Cancel is still behind its toast's Undo reads cancelled here.
+  const { isHeld } = useHeldRemoval(HELD_PLAN_SCOPE)
+  const plans = useMemo(
+    () =>
+      (query.data?.items ?? []).map((p) =>
+        isHeld(p.strategy_plan_id) ? { ...p, status: 'cancelled' as const } : p,
+      ),
+    [query.data, isHeld],
+  )
   const monitor = useMonitorStatus()
   const hostAccountId = monitor.data?.config?.ib_client?.account?.event_host ?? ''
   const secondaryAccountId = monitor.data?.config?.ib_client?.account?.event_secondary ?? ''

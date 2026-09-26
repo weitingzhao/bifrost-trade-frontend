@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { usePageViewParams, usePageViewSet, usePageViewState } from '@/lib/pageView'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { fmtIsoDateToken } from '@/lib/format'
@@ -79,6 +80,8 @@ const PAGE_LEAD =
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
+const LEDGER_VIEW_PARAMS = ['acct', 'date'] as const
+
 export default function TradeLedgerPage() {
   const { data: status } = useMonitorStatus()
   const { data: oppData } = useOpportunities()
@@ -89,8 +92,13 @@ export default function TradeLedgerPage() {
   const isLoading = canonLoading || bookLoading
 
   // ── Core filters ────────────────────────────────────────────────────────
+  // The page's view (design Rev .79): the filters, the tab and its sub-view,
+  // the sort, the folds and the open groups are kept for this tab's session,
+  // and the account and day in the URL come back with them. The inspector is
+  // not — it holds a picked fill, which is data — nor the journal draft.
+  usePageViewParams(LEDGER_VIEW_PARAMS)
   const { scope, setAccountFilter: setScopeAccount, setFilterSymbol } = usePositionsScope()
-  const [sincePreset, setSincePresetState] = useState<LedgerSincePreset>('month')
+  const [sincePreset, setSincePresetState] = usePageViewState<LedgerSincePreset>('since', 'month')
   // `?date=YYYY-MM-DD` (Performance → a day's records → Ledger · this day) narrows to one
   // trade date. Picking a Since window, or clearing the chip, drops it.
   const [searchParams, setSearchParams] = useSearchParams()
@@ -105,48 +113,48 @@ export default function TradeLedgerPage() {
   const setSincePreset = useCallback((preset: LedgerSincePreset) => {
     setSincePresetState(preset)
     clearTradeDay()
-  }, [clearTradeDay])
-  const [activeTab, setActiveTab] = useState<MainTab>('strategy')
-  const [summaryPeriod, setSummaryPeriod] = useState<LedgerSummaryPeriod>('month')
-  const [rowType, setRowType] = useState<LedgerRowType>('all')
-  const [unlinkBasis, setUnlinkBasis] = useState<LedgerUnlinkBasis>('options')
+  }, [clearTradeDay, setSincePresetState])
+  const [activeTab, setActiveTab] = usePageViewState<MainTab>('view', 'strategy')
+  const [summaryPeriod, setSummaryPeriod] = usePageViewState<LedgerSummaryPeriod>('period', 'month')
+  const [rowType, setRowType] = usePageViewState<LedgerRowType>('rowType', 'all')
+  const [unlinkBasis, setUnlinkBasis] = usePageViewState<LedgerUnlinkBasis>('unlinkBasis', 'options')
   const [inspector, setInspector] = useState<LedgerInspectorState>({ type: null })
   const accountFilter = ledgerAccountIdFromScope(scope.accountFilter, status)
   const symbolFilter = scope.filterSymbol
 
   // Expiry filter (OPT only, mutually exclusive with sincePreset)
-  const [expiryFilterYear, setExpiryFilterYear] = useState('')
-  const [expiryFilterMonth, setExpiryFilterMonth] = useState('')
+  const [expiryFilterYear, setExpiryFilterYear] = usePageViewState('expYear', '')
+  const [expiryFilterMonth, setExpiryFilterMonth] = usePageViewState('expMonth', '')
 
   // Structure / Wishlist symbol filter
-  const [filterStructure, setFilterStructure] = useState('')
-  const [filterWishlistSymbol, setFilterWishlistSymbol] = useState('')
+  const [filterStructure, setFilterStructure] = usePageViewState('structure', '')
+  const [filterWishlistSymbol, setFilterWishlistSymbol] = usePageViewState('watch', '')
 
   // ── Display mode state ──────────────────────────────────────────────────
-  const [accordionMode, setAccordionMode] = useState(false)
-  const [groupBy, setGroupBy] = useState<GroupBy>('opportunity')
-  const [optSubTab, setOptSubTab] = useState<OptSubTab>('contracts')
-  const [instanceSubTab, setInstanceSubTab] = useState<InstanceSubTab>('with_instance')
-  const [strategyScope, setStrategyScope] = useState<StrategyScope>('all')
+  const [accordionMode, setAccordionMode] = usePageViewState('accordion', false)
+  const [groupBy, setGroupBy] = usePageViewState<GroupBy>('groupBy', 'opportunity')
+  const [optSubTab, setOptSubTab] = usePageViewState<OptSubTab>('sub.options', 'contracts')
+  const [instanceSubTab, setInstanceSubTab] = usePageViewState<InstanceSubTab>('sub.instance', 'with_instance')
+  const [strategyScope, setStrategyScope] = usePageViewState<StrategyScope>('sub.strategy', 'all')
   const [optInstanceFilter, setOptInstanceFilter] = useState<OptInstanceFilter>('all')
-  const [stkCategoryTab, setStkCategoryTab] = useState('All')
+  const [stkCategoryTab, setStkCategoryTab] = usePageViewState('layoutSub.category', 'All')
 
   // Options display
   const [optRightFilter, setOptRightFilter] = useState<'' | 'C' | 'P'>('')
-  const [optSort, setOptSort] = useState<{ col: OptSortCol; dir: 'asc' | 'desc' }>({ col: 'expiry', dir: 'desc' })
+  const [optSort, setOptSort] = usePageViewState<{ col: OptSortCol; dir: 'asc' | 'desc' }>('sort.options', { col: 'expiry', dir: 'desc' })
 
   // STK display
-  const [stkSort, setStkSort] = useState<{ col: StkSortCol; dir: 'asc' | 'desc' }>({ col: 'trade_date', dir: 'desc' })
-  const [groupByPosition, setGroupByPosition] = useState(true)
+  const [stkSort, setStkSort] = usePageViewState<{ col: StkSortCol; dir: 'asc' | 'desc' }>('sort.shares', { col: 'trade_date', dir: 'desc' })
+  const [groupByPosition, setGroupByPosition] = usePageViewState('layoutSub.byPosition', true)
 
   // Expansion state — shared across opt groups
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [expandedGroups, setExpandedGroups] = usePageViewSet<string>('optRow')
   // Strategy outer buckets (when groupBy !== 'opportunity')
   const [outerStrategyExpanded, setOuterStrategyExpanded] = useState<Set<string>>(new Set())
   // Strategy Opportunity expand
-  const [strategyOppExpanded, setStrategyOppExpanded] = useState<Set<string>>(new Set())
+  const [strategyOppExpanded, setStrategyOppExpanded] = usePageViewSet<string>('openOpp')
   // Instance outer buckets
-  const [outerInstanceExpanded, setOuterInstanceExpanded] = useState<Set<string>>(new Set())
+  const [outerInstanceExpanded, setOuterInstanceExpanded] = usePageViewSet<string>('openInst.outer')
 
   // Pagination + modals
   const [stkPageState, setStkPageState] = useState({ scope: '', page: 0 })

@@ -161,3 +161,6 @@ export function planActions(status: PlanEffectiveStatus): {
     canCancel: status === 'draft' || status === 'intended' || status === 'expired',
   }
 }
+
+/** The held-removal scope for a plan's Cancel — the card holds, the page reads. */
+export const HELD_PLAN_SCOPE = 'strategy-plan'

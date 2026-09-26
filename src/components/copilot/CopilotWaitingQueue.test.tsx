@@ -66,11 +66,7 @@ vi.mock('@/hooks/useResearchDrafts', () => ({
     data: undefined,
     variables: undefined,
   }),
-  useDismissDraft: () => ({
-    mutate: vi.fn(),
-    isPending: false,
-    variables: undefined,
-  }),
+  useHeldDraftDismiss: () => ({ isHeld: () => false, dismiss: vi.fn() }),
 }))
 
 vi.mock('@/hooks/useLoopHarness', () => ({

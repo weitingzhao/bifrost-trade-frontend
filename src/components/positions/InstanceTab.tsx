@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { usePageViewSet } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { positionsUi } from './positionsUi'
@@ -157,7 +158,8 @@ export function InstanceTab({
   onOpenOption,
   canonicalOptContractKeys,
 }: Props) {
-  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set())
+  // The open rows are the page's view (Rev .75 `openRow`), kept for the session.
+  const [expandedKeys, setExpandedKeys] = usePageViewSet<string>('openRows.instances')
   const { pct: cushionTightPct } = useCushionThreshold()
 
   const finalMap = useMemo(() => buildLiveOptExecutionMap(executionsFinal), [executionsFinal])

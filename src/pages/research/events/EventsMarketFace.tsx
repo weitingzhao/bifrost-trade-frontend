@@ -11,7 +11,8 @@
  * Nothing here places or arms anything (D10); the one write is the design's
  * own ⊞ — a candidate into the pool, source event_radar.
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { usePageViewState } from '@/lib/pageView'
 import { Link } from 'react-router-dom'
 import { SegmentControl, DenseTag } from '@/components/data-display'
 import { AddToPoolButton } from '@/components/research/AddToPoolButton'
@@ -96,9 +97,10 @@ export function EventsMarketFace({
    *  floods it, so FORWARD reads the store that keeps them. */
   calendar: EventRadarRow[]
 }) {
-  const [imp, setImp] = useState<'all' | 'high' | 'med' | 'low'>('all')
-  const [dir, setDir] = useState<'all' | 'bull' | 'neutral' | 'bear'>('all')
-  const [theme, setTheme] = useState<string | null>(null)
+  // The face's view (Rev .79 `imp · dir · theme`); the face itself is the URL's.
+  const [imp, setImp] = usePageViewState<'all' | 'high' | 'med' | 'low'>('imp', 'all')
+  const [dir, setDir] = usePageViewState<'all' | 'bull' | 'neutral' | 'bear'>('dir', 'all')
+  const [theme, setTheme] = usePageViewState<string | null>('theme', null)
   const holdings = useHoldingSymbols()
   const inBook = (s: string) => holdings.symbols.includes(s)
 

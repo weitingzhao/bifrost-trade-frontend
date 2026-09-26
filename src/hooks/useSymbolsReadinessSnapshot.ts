@@ -4,6 +4,7 @@ import { fetchSymbolsReadinessSnapshot } from '@/api/research/dataReadiness'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { ReadinessSnapshotRow, SortColumn, SortDirection } from '@/types/stockScreener'
 import { computeReadinessSummary, parseSymbols, sortReadinessRows } from '@/utils/stockScreener'
+import { usePageViewState } from '@/lib/pageView'
 
 export function useSymbolsReadinessSnapshot(symbolText: string) {
   const symbols = useMemo(() => parseSymbols(symbolText), [symbolText])
@@ -44,8 +45,9 @@ export function useSymbolsReadinessSnapshot(symbolText: string) {
 }
 
 export function useReadinessSort(rows: ReadinessSnapshotRow[]) {
-  const [sortCol, setSortCol] = useState<SortColumn>(null)
-  const [sortDir, setSortDir] = useState<SortDirection>('desc')
+  // Kept with the page's view (Rev .79 `sort`).
+  const [sortCol, setSortCol] = usePageViewState<SortColumn>('sortCol', null)
+  const [sortDir, setSortDir] = usePageViewState<SortDirection>('sortDir', 'desc')
 
   const toggleSort = (col: 'tech' | 'fund') => {
     setSortCol((prev) => {

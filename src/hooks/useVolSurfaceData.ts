@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import {
   fetchAtmIvTerm,
   type AtmIvTerm,
+  fetchIvCone,
+  type IvCone,
   fetchResiduals,
   fetchSkewExtremes,
   fetchTermStructure,
@@ -62,6 +64,16 @@ export function useAtmIvTerm(symbol: string) {
   return useQuery<AtmIvTerm | null>({
     queryKey: QUERY_KEYS.research.volSurface.atmIvTerm(symbol),
     queryFn: () => fetchAtmIvTerm(symbol),
+    enabled: Boolean(symbol),
+    staleTime: STALE_MS,
+  })
+}
+
+/** The name's 1y IV cone at 30 / 60 / 90 days (`/research/volatility/iv-cone`). */
+export function useIvCone(symbol: string) {
+  return useQuery<IvCone | null>({
+    queryKey: QUERY_KEYS.research.volSurface.ivCone(symbol),
+    queryFn: () => fetchIvCone(symbol),
     enabled: Boolean(symbol),
     staleTime: STALE_MS,
   })

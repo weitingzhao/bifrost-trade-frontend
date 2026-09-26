@@ -16,7 +16,7 @@ import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useVrpHistory } from '@/hooks/useVrpData'
-import { useAtmIvTerm, useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
+import { useAtmIvTerm, useIvCone, useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
@@ -104,6 +104,13 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   const exOf = (id: string) => exQ.data?.find((e) => e.lens === id || e.lens_id === id)
   const vrpQ = useVrpHistory(sym, 252)
   const termQ = useAtmIvTerm(sym)
+  const coneQ = useIvCone(sym)
+  const coneTenors = coneQ.data?.tenors ?? []
+  const conePts = coneTenors.flatMap((c) =>
+    c.p10 != null && c.p50 != null && c.p90 != null
+      ? [{ dte: c.tenor_days, p10: c.p10 * 100, p50: c.p50 * 100, p90: c.p90 * 100 }]
+      : [],
+  )
   const fitQ = useVolSurfaceFit(sym)
 
   // ── IV rank readings, off the vrp store's own year ──
@@ -405,6 +412,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                 rv={rvLine}
                 selDte={term.find((t) => t.expiry === fitRow?.expiry)?.dte ?? null}
                 event={earnMark}
+                cone={conePts}
               />
             </div>
             <div className="flex flex-wrap gap-x-3.5 gap-y-1 px-3 pb-1.5 text-dense-micro text-muted-foreground">
@@ -420,12 +428,19 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                   {earnLegend}
                 </span>
               ) : null}
-              <span
-                className="text-muted-foreground/60"
-                title="The 1y cone per horizon needs a term-structure history no store keeps — unmeasured, not omitted."
-              >
-                1y cone — owed
-              </span>
+              {conePts.length > 0 ? (
+                <span
+                  className="inline-flex items-center gap-1.5"
+                  title="Each horizon's ATM IV over the last 252 sessions: the band is its 10th–90th percentile, the tick its median."
+                >
+                  <i className="h-2.5 w-3.5 bg-[color-mix(in_srgb,var(--sk-ink)_12%,transparent)]" />
+                  1y cone p10–p90 · median
+                </span>
+              ) : (
+                <span className="text-muted-foreground/60">
+                  {coneQ.isLoading ? '1y cone — loading' : '1y cone — no horizon read on enough sessions'}
+                </span>
+              )}
             </div>
             <div className="flex flex-col gap-1.5 border-t border-border/40 px-3 py-2">
               {term.map((t) => {
@@ -462,13 +477,69 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                 <span className="text-right">25Δ RR</span>
               </div>
             </div>
+            {coneTenors.length > 0 ? (
+              <div className="border-t border-border/40 px-3 py-2">
+                <div className="mb-1 flex flex-wrap items-baseline gap-2">
+                  <span className={cap}>1y cone · constant maturity</span>
+                  <span className="ml-auto text-dense-micro text-muted-foreground">
+                    {coneQ.data?.sessions_in_window ?? 0} sessions to {coneQ.data?.as_of ?? '—'}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  {coneTenors.map((c) => {
+                    const pct = (v: number | null) => (v == null ? '—' : (v * 100).toFixed(1))
+                    const ptl = c.today_pctile
+                    return (
+                      <div
+                        key={c.tenor_days}
+                        className="grid grid-cols-[40px_repeat(4,minmax(0,1fr))_minmax(0,1.4fr)] items-baseline gap-2 text-dense-meta"
+                        title={c.rule}
+                      >
+                        <span className={cn(mono, 'text-secondary-foreground')}>{c.tenor_days}d</span>
+                        <span className={cn(mono, 'text-right font-semibold')}>{pct(c.today)}</span>
+                        {c.withheld ? (
+                          <span className="col-span-4 text-dense-caption text-muted-foreground text-pretty">
+                            {c.withheld}
+                          </span>
+                        ) : (
+                          <>
+                            <span className={cn(mono, 'text-right text-muted-foreground')}>{pct(c.p10)}</span>
+                            <span className={cn(mono, 'text-right text-muted-foreground')}>{pct(c.p50)}</span>
+                            <span className={cn(mono, 'text-right text-muted-foreground')}>{pct(c.p90)}</span>
+                            <span
+                              className={cn(
+                                mono,
+                                'text-right',
+                                ptl == null ? 'text-muted-foreground' : ptl >= 0.8 ? 'text-warning' : ptl <= 0.2 ? 'text-[var(--sk-soft)]' : undefined,
+                              )}
+                            >
+                              {ptl == null ? '—' : `${Math.round(ptl * 100)}th pctl · n ${c.n}`}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <div className="grid grid-cols-[40px_repeat(4,minmax(0,1fr))_minmax(0,1.4fr)] gap-2 text-dense-micro text-muted-foreground">
+                    <span />
+                    <span className="text-right">today</span>
+                    <span className="text-right">p10</span>
+                    <span className="text-right">p50</span>
+                    <span className="text-right">p90</span>
+                    <span className="text-right">where today sits</span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </>
         )}
         <p className={note}>
           Front expiries carry more IV than the back in backwardation — an event or a squeeze is
           priced in. ATM IV is the repaired store&rsquo;s per expiry, not the SVI fit&rsquo;s, whose
           near expiries the wings can pull off. The lime row is the tenor the Skew panel is reading.
-          The design&rsquo;s 1y cone needs a per-horizon history no store keeps yet — owed, not faked.
+          The 1y cone is each horizon&rsquo;s ATM IV read back over the last 252 sessions from the same
+          store: 30 days is IV30 as the VRP store keeps it, 60 and 90 need an expiry on each side, and a
+          horizon read on fewer than {coneQ.data?.min_sessions ?? 60} sessions shows today without percentiles.
         </p>
         {/* A late print has its strip above the curve; this line is for a dated one. */}
         {!earnQ.isLoading && term.length > 0 && !(nextEarnings && nextEarnings.days_away < 0) ? (

@@ -89,6 +89,7 @@ export const QUERY_KEYS = {
         ['research', 'vol-surface', 'residuals', symbol, tradeDate, expiry] as const,
       skewExtremes: (limit: number) => ['research', 'vol-surface', 'skew-extremes', limit] as const,
       atmIvTerm: (symbol: string) => ['research', 'vol-surface', 'atm-iv-term', symbol] as const,
+      ivCone: (symbol: string) => ['research', 'vol-surface', 'iv-cone', symbol] as const,
     },
     opexCycle: {
       current: (symbol: string, tradeDate: string) =>

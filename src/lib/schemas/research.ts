@@ -685,6 +685,31 @@ export const AtmIvTermSchema = z
   })
   .passthrough()
 
+const IvConeTenorSchema = z
+  .object({
+    tenor_days: z.number(),
+    n: z.number(),
+    today: z.number().nullable(),
+    p10: z.number().nullable(),
+    p50: z.number().nullable(),
+    p90: z.number().nullable(),
+    today_pctile: z.number().nullable(),
+    withheld: z.string().nullable(),
+  })
+  .passthrough()
+
+/** GET /research/volatility/iv-cone — constant-maturity ATM IV per horizon against its own year. */
+export const IvConeSchema = z
+  .object({
+    symbol: z.string(),
+    as_of: z.string().nullable(),
+    window_sessions: z.number(),
+    sessions_in_window: z.number(),
+    min_sessions: z.number(),
+    tenors: z.array(IvConeTenorSchema),
+  })
+  .passthrough()
+
 /** GET /analytics/vol/rv-cone — realised-vol percentiles per tenor plus today's reading (R9 F4). */
 export const RvConeSchema = z
   .object({

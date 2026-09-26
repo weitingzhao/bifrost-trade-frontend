@@ -4,8 +4,9 @@
  * realised vol at each horizon, and the skew smile with both sides drawn
  * against the raw-SVI fit.
  *
- * Only what a store answers is drawn. The term panel's 1y cone needs a
- * per-horizon history no store keeps, and stays in the panel's footer as owed.
+ * Only what a store answers is drawn. The term panel's 1y cone is each
+ * horizon's ATM IV over the last 252 sessions (`/research/volatility/iv-cone`),
+ * drawn where the store could read that horizon on enough sessions.
  * The earnings line is Research's estimate of the next print (research
  * 0.125.0) and the panel says it is one.
  */
@@ -21,6 +22,14 @@ export interface TermCurvePoint {
 export interface TermRvPoint {
   dte: number
   rv: number
+}
+
+/** One horizon of the 1y IV cone, in vol points. */
+export interface TermConePoint {
+  dte: number
+  p10: number
+  p50: number
+  p90: number
 }
 
 const W = 620
@@ -40,16 +49,19 @@ export function TermCurveChart({
   rv,
   selDte,
   event = null,
+  cone = [],
 }: {
   points: readonly TermCurvePoint[]
   rv: readonly TermRvPoint[]
   selDte: number | null
   /** The design's amber line at the next earnings print, in days to expiry. */
   event?: TermEvent | null
+  /** The 1y cone's measured horizons: a p10–p90 band, its median dashed. */
+  cone?: readonly TermConePoint[]
 }) {
   if (points.length < 2) return null
-  const dtes = [...points.map((p) => p.dte), ...rv.map((r) => r.dte)]
-  const ivs = [...points.map((p) => p.iv), ...rv.map((r) => r.rv)]
+  const dtes = [...points.map((p) => p.dte), ...rv.map((r) => r.dte), ...cone.map((c) => c.dte)]
+  const ivs = [...points.map((p) => p.iv), ...rv.map((r) => r.rv), ...cone.flatMap((c) => [c.p10, c.p90])]
   const X = scaler(dtes, PAD_X, W - PAD_X)
   const Y = scaler(ivs, H - PAD_Y, PAD_Y)
   const line = (ps: readonly { dte: number; v: number }[]) =>
@@ -62,7 +74,7 @@ export function TermCurveChart({
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full"
-        aria-label="ATM IV today by horizon, with realised vol at roughly the matching horizon"
+        aria-label="ATM IV today by horizon, with realised vol at roughly the matching horizon and the 1y IV cone"
       >
         <line x1="0" x2={W} y1={H - PAD_Y + 6} y2={H - PAD_Y + 6} stroke="var(--sk-line)" strokeWidth="1" />
         {event && ex != null ? (
@@ -79,6 +91,35 @@ export function TermCurveChart({
             </text>
           </g>
         ) : null}
+        {cone.length >= 2 ? (
+          <path
+            data-term-cone="band"
+            d={`${line(cone.map((c) => ({ dte: c.dte, v: c.p90 })))} ${[...cone]
+              .reverse()
+              .map((c) => `L${X(c.dte).toFixed(1)},${Y(c.p10).toFixed(1)}`)
+              .join(' ')} Z`}
+            fill="var(--sk-ink)"
+            fillOpacity="0.07"
+            stroke="none"
+          />
+        ) : null}
+        {cone.length >= 2 ? (
+          <path
+            d={line(cone.map((c) => ({ dte: c.dte, v: c.p50 })))}
+            fill="none"
+            stroke="var(--sk-mute2, #98a2b0)"
+            strokeWidth="1"
+            strokeDasharray="3 3"
+          />
+        ) : null}
+        {cone.map((c) => (
+          <g key={`c${c.dte}`} data-term-cone={c.dte} stroke="var(--sk-mute2, #98a2b0)" strokeWidth="1">
+            <line x1={X(c.dte)} x2={X(c.dte)} y1={Y(c.p10)} y2={Y(c.p90)} />
+            <line x1={X(c.dte) - 4} x2={X(c.dte) + 4} y1={Y(c.p10)} y2={Y(c.p10)} />
+            <line x1={X(c.dte) - 4} x2={X(c.dte) + 4} y1={Y(c.p90)} y2={Y(c.p90)} />
+            <line x1={X(c.dte) - 3} x2={X(c.dte) + 3} y1={Y(c.p50)} y2={Y(c.p50)} strokeWidth="2" />
+          </g>
+        ))}
         {rv.length >= 2 ? (
           <path
             d={line(rv.map((r) => ({ dte: r.dte, v: r.rv })))}

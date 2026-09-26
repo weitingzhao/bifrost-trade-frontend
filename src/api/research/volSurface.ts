@@ -5,6 +5,7 @@ import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import {
   AtmIvTermSchema,
+  IvConeSchema,
   ResearchEnvelopeSchema,
 } from '@/lib/schemas/research'
 import { numOrNull } from '@/lib/researchParseHelpers'
@@ -248,4 +249,51 @@ export async function fetchAtmIvTerm(symbol: string): Promise<AtmIvTerm | null> 
       .filter((p) => p.expiry && p.atm_iv != null && p.atm_iv > 0)
       .map((p) => ({ expiry: String(p.expiry).slice(0, 10), atm_iv: p.atm_iv as number })),
   }
+}
+
+
+export interface IvConeTenor {
+  tenor_days: number
+  /** Sessions in the window on which this horizon could be read. */
+  n: number
+  first: string | null
+  today: number | null
+  p10: number | null
+  p25: number | null
+  p50: number | null
+  p75: number | null
+  p90: number | null
+  min: number | null
+  max: number | null
+  /** Share of the window at or below today. */
+  today_pctile: number | null
+  rule: string
+  /** Why the percentiles are withheld (too few sessions), or null. */
+  withheld: string | null
+}
+
+export interface IvCone {
+  symbol: string
+  as_of: string | null
+  window_sessions: number
+  sessions_in_window: number
+  min_sessions: number
+  tenors: IvConeTenor[]
+}
+
+const validateIvCone = withValidation<IvCone>(IvConeSchema, 'research/volatility/iv-cone')
+
+/**
+ * One name's ATM IV at 30 / 60 / 90 days against its own last 252 sessions
+ * (fractions, as the store keeps them). A horizon read on too few sessions
+ * carries today and `withheld` instead of percentiles; a name with no rows
+ * answers null.
+ */
+export async function fetchIvCone(symbol: string): Promise<IvCone | null> {
+  const sym = (symbol || '').trim().toUpperCase()
+  if (!sym) return null
+  const res = await fetch(`${researchEngineUrl('/research/volatility/iv-cone')}?symbol=${encodeURIComponent(sym)}`)
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(`research /research/volatility/iv-cone: ${res.status}`)
+  return validateIvCone(await res.json())
 }

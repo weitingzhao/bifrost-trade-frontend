@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchGexDistribution } from '@/api/researchEngine'
 import { fetchOpexCurrent, fetchOpexHistory, fetchOpexPinAnalysis } from '@/api/research/opexCycle'
 import { classifyExpiration } from '@/utils/optionDiscovery/expirationMeta'
-import { DealerMaxPainTrend, DealerRegimeTimeline, useDealerTimeline } from './SymbolDealerHistory'
+import { DealerIntraday, DealerMaxPainTrend, DealerRegimeTimeline, useDealerTimeline } from './SymbolDealerHistory'
 import { Link } from 'react-router-dom'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
@@ -491,6 +491,17 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           A flip that held two sessions is a regime; a one-day cross is noise. Next-day move is the
           realised check of damp vs chase. Each session is read at {expiry ?? 'the exhibit’s'} expiry,
           so its walls are the panel above&rsquo;s.
+        </p>
+      </section>
+
+      <section className={cn(panel, 'col-[1/-1]')}>
+        <DealerIntraday sym={sym} />
+        <p className={note}>
+          Spot is the prior close until the session&rsquo;s own close lands — the store keeps no intraday
+          price; an index, which has no close in any store, is priced by put–call parity on its nearest
+          expiry — so what moves through the day is the session&rsquo;s gamma and volume from the plugin&rsquo;s
+          intraday chain (10:30 · 13:00 · 15:30 New York). Zero γ is green below spot (dealers long γ) and red
+          above it.
         </p>
       </section>
 

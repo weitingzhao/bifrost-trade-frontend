@@ -151,9 +151,9 @@ export function GexTimelineChart({
       })}
 
       {/* Call / Zero-γ / Put step lines */}
-      <path d={stepPath('major_call_wall')} fill="none" stroke="var(--color-profit, #4ade80)" strokeWidth={1.5} />
-      <path d={stepPath('zero_gamma')} fill="none" stroke="var(--color-warning, #f59e0b)" strokeWidth={1.5} />
-      <path d={stepPath('major_put_wall')} fill="none" stroke="var(--color-loss, #f87171)" strokeWidth={1.5} />
+      <path d={stepPath('major_call_wall')} fill="none" stroke="var(--color-success)" strokeWidth={1.5} />
+      <path d={stepPath('zero_gamma')} fill="none" stroke="var(--color-warning)" strokeWidth={1.5} />
+      <path d={stepPath('major_put_wall')} fill="none" stroke="var(--color-destructive)" strokeWidth={1.5} />
 
       {/* Spot polyline */}
       <polyline
@@ -191,9 +191,9 @@ export function GexTimelineChart({
       {/* Legend */}
       <g transform={`translate(${pad.left + 4}, ${pad.top + 10})`}>
         <LegendDot color="var(--foreground)" label="Spot" x={0} />
-        <LegendDot color="var(--color-profit, #4ade80)" label="Call" x={55} />
-        <LegendDot color="var(--color-warning, #f59e0b)" label="Zero-γ" x={105} />
-        <LegendDot color="var(--color-loss, #f87171)" label="Put" x={170} />
+        <LegendDot color="var(--color-success)" label="Call" x={55} />
+        <LegendDot color="var(--color-warning)" label="Zero-γ" x={105} />
+        <LegendDot color="var(--color-destructive)" label="Put" x={170} />
       </g>
     </svg>
   )

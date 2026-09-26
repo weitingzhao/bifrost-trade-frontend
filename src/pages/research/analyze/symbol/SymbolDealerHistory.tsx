@@ -11,9 +11,15 @@
  * - Max pain vs spot — the market-data plugin's
  *   `/market/analytics/max-pain/compute/history` (PLTR 10-23: 55 sessions)
  *   against the name's own daily closes.
+ * - Intraday — `/research/gex/intraday`, the session's snapshots over every
+ *   expiry. Until research 0.128.0 the job found no spot during the session
+ *   and wrote only SPX from 09-03; it now runs on the names the plugin's
+ *   intraday chain observes, standing on the prior close.
  */
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { fetchGexLevels } from '@/api/researchEngine'
+import { fetchGexIntraday, fetchGexLevels } from '@/api/researchEngine'
+import { GexTimelineChart } from '@/components/charts/GexTimelineChart'
+import { fmtEtClock } from '@/lib/format'
 import { fetchStockDailyCloses, type DailyBar } from '@/api/marketData/dailyBars'
 import { fetchMaxPainComputeHistory } from '@/api/research/optionDiscovery'
 import { todayIso } from '@/lib/researchFreshness'
@@ -260,5 +266,106 @@ export function DealerMaxPainTrend({ sym, expiry }: { sym: string; expiry: strin
         </span>
       </div>
     </div>
+  )
+}
+
+
+const etClock = (ts: string) => fmtEtClock(new Date(ts)).slice(0, 5)
+const fmtGex = (v: number | null) => {
+  if (v == null) return '—'
+  const a = Math.abs(v)
+  const body = a >= 1e9 ? `${(a / 1e9).toFixed(2)}B` : `${(a / 1e6).toFixed(1)}M`
+  return `${v >= 0 ? '+' : '−'}${body}`
+}
+
+/**
+ * The session's intraday GEX: every snapshot the intraday job wrote for the
+ * newest date it holds, over all expiries (the panels above read one expiry).
+ * Spot is the prior close until the session's own close lands — the store keeps
+ * no intraday price; an index is priced by put–call parity — so what moves
+ * through the day is the session's gamma and volume from the plugin's intraday
+ * chain (10:30 · 13:00 · 15:30 New York).
+ */
+export function DealerIntraday({ sym }: { sym: string }) {
+  const q = useQuery({
+    queryKey: ['research', 'gex-intraday', sym],
+    queryFn: () => fetchGexIntraday(sym),
+    enabled: Boolean(sym),
+    staleTime: 5 * 60_000,
+  })
+  const closesQ = useSymbolCloses(sym)
+  const rows = [...(q.data?.rows ?? [])].sort((a, b) => a.asof_ts.localeCompare(b.asof_ts))
+  const day = q.data?.trade_date || rows[0]?.trade_date || ''
+  const closes = closesQ.data ?? []
+  const lastSession = closes[closes.length - 1]?.date ?? ''
+  const stale = Boolean(day && lastSession && day < lastSession)
+  const last = rows[rows.length - 1]
+
+  return (
+    <>
+      <header className="flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal">
+        <span className={cap}>Intraday</span>
+        <span className="text-dense-body font-semibold">session gamma{day ? ` · ${day}` : ''}</span>
+        <span className="ml-auto text-dense-caption text-muted-foreground">
+          {rows.length > 0
+            ? `${rows.length} snapshot${rows.length === 1 ? '' : 's'} · last ${etClock(last!.asof_ts)} ET · all expiries`
+            : 'all expiries'}
+        </span>
+      </header>
+      {q.isLoading ? (
+        <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">Loading the session’s snapshots…</p>
+      ) : q.isError ? (
+        <p className="m-0 px-3 py-3 text-dense-meta text-destructive">
+          {q.error instanceof Error ? q.error.message : 'The intraday route failed.'}
+        </p>
+      ) : rows.length === 0 ? (
+        <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
+          No intraday snapshot for {sym}. The intraday job reads the names the plugin&rsquo;s intraday chain
+          observes — the watchlist and benchmarks, 26 on DEV — at a quarter past each hour, 10:45–16:45 New York.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 items-start gap-3 px-3 py-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          <div className="min-w-0">
+            {stale ? (
+              <p className="m-0 pb-1 text-dense-meta leading-normal text-warning text-pretty">
+                Last computed {day}; the newest session is {lastSession}. Until research 0.128.0 the intraday job
+                found no spot during the session and wrote only SPX, so this name&rsquo;s timeline stops there.
+              </p>
+            ) : null}
+            <GexTimelineChart rows={rows} height={220} />
+          </div>
+          <div className="min-w-0 overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className={cn(th, 'text-left')}>ET</th>
+                  <th className={th}>Spot</th>
+                  <th className={th}>Zero γ</th>
+                  <th className={th}>Call wall</th>
+                  <th className={th}>Put wall</th>
+                  <th className={th}>Net GEX</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.asof_ts}>
+                    <td className={cn(td, 'text-left text-muted-foreground')}>{etClock(r.asof_ts)}</td>
+                    <td className={td}>{r.spot?.toFixed(2) ?? '—'}</td>
+                    <td className={cn(td, r.spot != null && r.zero_gamma != null && r.spot > r.zero_gamma ? 'text-success' : 'text-destructive')}>
+                      {r.zero_gamma?.toFixed(2) ?? '—'}
+                    </td>
+                    <td className={td}>{r.major_call_wall ?? '—'}</td>
+                    <td className={td}>{r.major_put_wall ?? '—'}</td>
+                    <td className={cn(td, (r.total_net_gex ?? 0) >= 0 ? 'text-success' : 'text-destructive')}>
+                      {fmtGex(r.total_net_gex)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

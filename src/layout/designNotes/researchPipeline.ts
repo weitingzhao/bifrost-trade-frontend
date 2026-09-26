@@ -305,7 +305,12 @@ export const RESEARCH_PIPELINE_NOTES: Record<string, string> = {
     + 'handed-over expiry beyond the five nearest is added as a card (it used to fall back to the nearest and light the same strike '
     + 'on a different contract), and one the store does not list says so. Measured on DEV: a Portfolio contract two months out lands on its own '
     + 'expiry card; the snapshot store has no rows that far out, so nothing is lit and the ladder says 0 in window. Also fixed: the head\u2019s '
-    + 'verdict words were never coloured \u2014 the tone went in as a class name; the face cards\u2019 tone map is shared now.',
+    + 'verdict words were never coloured \u2014 the tone went in as a class name; the face cards\u2019 tone map is shared now.'
+    + ' EARNINGS ON THE TERM CURVE, 2026-09-25 (Owner\u2019s choice): the Volatility face\u2019s term structure draws the design\u2019s amber line at the next print and its kink note, from research 0.125.0\u2019s estimate '
+    + '(`/research/narrative/earnings` \u00b7 `expected_next`) \u2014 the feed has no forward calendar, so the date is last year\u2019s same-quarter 8-K plus 52 weeks (backtested over 2,107 prints: median miss 0 days, 90% within 7). '
+    + 'The label reads `E ~2 Nov`, the legend says estimated, and the note names the first expiry after the print and the rule\u2019s record on the name. A late print (estimate past, no results 8-K) is said and not marked; '
+    + 'a name with no cadence or no 8-K says which. Measured on DEV for PLTR: 38 days out, and the curve itself kinks there \u2014 the 10-30 expiry reads 45.1, the 11-06 one after the print 58.0. '
+    + 'The Chain face\u2019s expiry-card E tags and earnings-gap scenario rows could read the same estimate and are not done yet.',
   '/research/scan':
     'Walked 2026-09-21 against Research Scan.dc.html (Rev 2026-09-20.10) — the option side of '
     + 'Stock ratings, and deliberately the same page twice. What stood here printed the weights '

@@ -14,6 +14,7 @@ import { SegmentControl } from '@/components/data-display'
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
 import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
+import { useEarningsDates } from '@/hooks/useNarrative'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useResiduals, useTermStructure, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { todayIso } from '@/lib/researchFreshness'
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { SkewSurfaceChart, TermCurveChart } from '@/pages/research/analyze/symbol/symbolVolCharts'
+import { termEarningsLegend, termEarningsMark, termEarningsNote } from '@/pages/research/analyze/symbol/symbolEarnings'
 
 const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
@@ -156,6 +158,12 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
     [termQ.data]
   )
   const termMax = Math.max(1, ...term.map((t) => t.iv))
+
+  // ── Earnings on the term curve: Research's estimate of the next print ──
+  const earnQ = useEarningsDates(sym)
+  const nextEarnings = earnQ.data?.expected_next ?? null
+  const earnMark = termEarningsMark(nextEarnings, term.map((t) => t.dte))
+  const earnLegend = termEarningsLegend(nextEarnings, earnMark)
 
   // Realised vol at roughly each expiry's horizon, from the name's own closes
   // — the design's grey companion line. Calendar days → trading days.
@@ -365,6 +373,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                 points={term.map((t) => ({ dte: t.dte, iv: t.iv }))}
                 rv={rvLine}
                 selDte={fitRow?.dte ?? null}
+                event={earnMark}
               />
             </div>
             <div className="flex flex-wrap gap-x-3.5 gap-y-1 px-3 pb-1.5 text-dense-micro text-muted-foreground">
@@ -374,11 +383,17 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
               <span className="inline-flex items-center gap-1.5">
                 <i className="h-0 w-3.5 border-t-2 border-[var(--sk-mute2)]" />realised (RV) at matching horizon
               </span>
+              {earnLegend ? (
+                <span className="inline-flex items-center gap-1.5" title={earnMark?.title}>
+                  <i className="h-3 w-0 border-l-2 border-dashed border-warning" />
+                  {earnLegend}
+                </span>
+              ) : null}
               <span
                 className="text-muted-foreground/60"
-                title="The 1y cone per horizon needs a term-structure history no store keeps, and the earnings kink a forward earnings date not on the data plan — unmeasured, not omitted."
+                title="The 1y cone per horizon needs a term-structure history no store keeps — unmeasured, not omitted."
               >
-                1y cone · earnings marker — owed
+                1y cone — owed
               </span>
             </div>
             <div className="flex flex-col gap-1.5 border-t border-border/40 px-3 py-2">
@@ -421,9 +436,11 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         <p className={note}>
           Front expiries carry more IV than the back in backwardation — an event or a squeeze is
           priced in. The lime row is the tenor the Skew panel is reading. The design&rsquo;s 1y
-          cone needs a per-horizon history no store keeps yet, and its earnings kink a forward
-          earnings date not on the data plan — both owed, neither faked.
+          cone needs a per-horizon history no store keeps yet — owed, not faked.
         </p>
+        {!earnQ.isLoading && term.length > 0 ? (
+          <p className={note}>{termEarningsNote(nextEarnings, term, earnQ.data?.filings)}</p>
+        ) : null}
       </section>
 
       <section className={panel}>

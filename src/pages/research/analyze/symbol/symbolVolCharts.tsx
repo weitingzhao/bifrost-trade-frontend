@@ -4,11 +4,12 @@
  * skew smile with both sides drawn against the raw-SVI fit.
  *
  * Only what a store answers is drawn. The term panel's 1y cone needs a
- * per-horizon history no store keeps, and the earnings kink needs a forward
- * earnings date that is not on the data plan — both stay in the panel's
- * footer as owed, and neither is faked here.
+ * per-horizon history no store keeps, and stays in the panel's footer as owed.
+ * The earnings line is Research's estimate of the next print (research
+ * 0.125.0) and the panel says it is one.
  */
 import { sviIvPts, type SviParams } from '@/utils/sviSmile'
+import type { TermEvent } from './symbolEarnings'
 
 export interface TermCurvePoint {
   dte: number
@@ -37,10 +38,13 @@ export function TermCurveChart({
   points,
   rv,
   selDte,
+  event = null,
 }: {
   points: readonly TermCurvePoint[]
   rv: readonly TermRvPoint[]
   selDte: number | null
+  /** The design's amber line at the next earnings print, in days to expiry. */
+  event?: TermEvent | null
 }) {
   if (points.length < 2) return null
   const dtes = [...points.map((p) => p.dte), ...rv.map((r) => r.dte)]
@@ -51,6 +55,7 @@ export function TermCurveChart({
     ps.map((p, i) => `${i === 0 ? 'M' : 'L'}${X(p.dte).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ')
   const hi = Math.max(...ivs)
   const lo = Math.min(...ivs)
+  const ex = event && event.dte >= Math.min(...dtes) && event.dte <= Math.max(...dtes) ? X(event.dte) : null
   return (
     <div className="relative px-3">
       <svg
@@ -59,6 +64,20 @@ export function TermCurveChart({
         aria-label="ATM IV today by horizon, with realised vol at roughly the matching horizon"
       >
         <line x1="0" x2={W} y1={H - PAD_Y + 6} y2={H - PAD_Y + 6} stroke="var(--sk-line)" strokeWidth="1" />
+        {event && ex != null ? (
+          <g data-term-event={event.dte}>
+            <line x1={ex} x2={ex} y1={8} y2={H - PAD_Y + 6} className="stroke-warning" strokeWidth="1.25" strokeDasharray="2 3" />
+            <text
+              x={ex > W - 90 ? ex - 4 : ex + 4}
+              y={24}
+              textAnchor={ex > W - 90 ? 'end' : 'start'}
+              className="fill-warning font-mono text-dense-micro"
+            >
+              <title>{event.title}</title>
+              {event.label}
+            </text>
+          </g>
+        ) : null}
         {rv.length >= 2 ? (
           <path
             d={line(rv.map((r) => ({ dte: r.dte, v: r.rv })))}

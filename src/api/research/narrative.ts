@@ -90,11 +90,30 @@ export async function fetchNarrative(days: number, q: NarrativeQuery = {}): Prom
   return (validateNarrative(await res.json()) as Envelope<NarrativeReading>).data
 }
 
+/**
+ * The next print, estimated (research 0.125.0): the feed has no forward
+ * calendar, so it is the same quarter's print a year earlier plus 52 weeks.
+ */
+export interface ExpectedEarnings {
+  date: string
+  basis: string
+  /** The print a year earlier the estimate stands on. */
+  from: string
+  /** Calendar days from today (New York); below zero, the print is late. */
+  days_away: number
+  /** The rule's record on this name's own prints. */
+  track: { n: number; median_miss_days: number | null; max_miss_days: number | null }
+}
+
 /** A name's earnings filing dates (research `GET /research/narrative/earnings`, 0.119.0+). */
 export interface EarningsDates {
   symbol: string
-  /** Dates of every 8-K carrying Item 2.02, oldest first, ISO. */
+  /** Dates of the 8-Ks carrying Item 2.02 that are results releases, oldest first, ISO. */
   dates: string[]
+  /** Item 2.02 filings that are not results releases (0.123.0). */
+  set_aside?: { filed: string; release: string | null; reason: string }[]
+  /** Null when the name has no quarterly cadence to estimate from (0.125.0). */
+  expected_next?: ExpectedEarnings | null
   /** This name's 8-Ks on file at all — 0 means the feed never carried it, not "no earnings". */
   filings: number
   first_filed: string | null

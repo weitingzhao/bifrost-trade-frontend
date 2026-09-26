@@ -113,7 +113,7 @@ function QueueRow({
           underlying, the way §14.4 draws one. The name is its own destination —
           and it sits inside a row that picks, so its click must stop there or
           both fire and the row wins. */}
-      <td className={cn(positionsUi.td, 'text-left font-bold text-sky-300')}>
+      <td className={cn(positionsUi.td, 'text-left font-bold text-entity-option')}>
         <Link
           to={withSymbolParam(SYMBOL_PATH, extractUnderlyingRootSymbol(t.symbol))}
           onClick={(e) => e.stopPropagation()}

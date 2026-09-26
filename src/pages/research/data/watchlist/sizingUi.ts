@@ -131,7 +131,7 @@ export const sizingDashValueHighlightClass = cn(
   'text-[color-mix(in_srgb,var(--primary)_92%,#f5ffef)]',
 )
 
-export const sizingDashValueWarnClass = cn('text-amber-600 dark:text-amber-400')
+export const sizingDashValueWarnClass = cn('text-[var(--sk-warn)]')
 
 export const sizingOrderAtrSheetClass = cn(
   'mt-2 rounded-[7px] border border-border/85 p-[0.45rem_0.6rem]',
@@ -373,7 +373,7 @@ export const sizingCashPiePctClass = cn(
 )
 
 export const sizingCashPiePctStkClass = cn(
-  'mt-0.5 text-sm font-bold tabular-nums tracking-tight text-violet-400',
+  'mt-0.5 text-sm font-bold tabular-nums tracking-tight text-violet-700 dark:text-violet-400',
 )
 
 export const sizingCashPieHoleLabelClass = cn(

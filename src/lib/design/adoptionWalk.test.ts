@@ -179,7 +179,9 @@ describe('the design walk, as it stands', () => {
     // rebuilt and wait for a look, and Objectives moved to Home. 59 when
     // Objectives was rebuilt to that rev and joined them. 57 the same day:
     // the System pass rebuilt Orchestration and Personas onto the page head.
-    expect(counts.aligned + counts.byState.stale).toBe(57)
+    // 56 with batch H2: Performance, stale at Rev .81, rebuilt to its .77
+    // layer inks and waiting for a look.
+    expect(counts.aligned + counts.byState.stale).toBe(56)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -205,14 +207,14 @@ describe('the design walk, as it stands', () => {
     // and left for `reviewing` the same day with the tag built. 57 with the
     // System pass: Orchestration and Personas, rebuilt, wait for a look.
     // 56 with Package .22 @ Rev .81: Performance's own stamp moved to .77, so
-    // it reads stale until batch H2 re-walks it.
+    // it read stale until batch H2 re-walked it into `reviewing`.
     expect(counts.aligned).toBe(56)
     expect(
       rows
         .filter((r) => r.state === 'stale')
         .map((r) => r.path)
         .sort()
-    ).toEqual(['/portfolio/performance'])
+    ).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -445,8 +447,9 @@ describe('the design walk, as it stands', () => {
     // 15 on 2026-09-25 (Rev .55): the five sample pages join the ten. 16
     // with Objectives, rebuilt at .55 with its mode tag. 19 with the three
     // System pages Rev .53 drew: Tech Stack, Blueprint, UI Design System. 21
-    // with Orchestration and Personas, rebuilt in the System pass.
-    expect(counts.byState.reviewing).toBe(21)
+    // with Orchestration and Personas, rebuilt in the System pass. 22 with
+    // Performance, rebuilt to its Rev .77 layer inks in batch H2.
+    expect(counts.byState.reviewing).toBe(22)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -522,6 +525,7 @@ describe('the design walk, as it stands', () => {
       '/docs/research-blueprint',
       '/docs/tech-stack',
       '/docs/ui-design-system',
+      '/portfolio/performance',
       '/portfolio/positions',
       '/research/agent-personas',
       '/research/backtest',

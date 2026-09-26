@@ -119,12 +119,12 @@ export interface SortMode {
 
 export const SORTS: readonly SortMode[] = [
   { name: 'By list', short: 'List', order: '· tag order · repeats shown per list', accent: 'text-foreground' },
-  { name: 'A → Z', short: 'A→Z', order: '· merged · one row per name', accent: 'text-blue-300' },
-  { name: 'Z → A', short: 'Z→A', order: '· merged · one row per name', accent: 'text-blue-300' },
-  { name: 'Movers ↓', short: 'Up', order: '· merged · biggest gain first', accent: 'text-fuchsia-300' },
-  { name: 'Movers ↑', short: 'Down', order: '· merged · biggest loss first', accent: 'text-fuchsia-300' },
-  { name: 'Held first', short: 'Held', order: '· merged · held · not held', accent: 'text-violet-300' },
-  { name: 'By expiry', short: 'Exp', order: '· contracts only · nearest first', accent: 'text-fuchsia-300' },
+  { name: 'A → Z', short: 'A→Z', order: '· merged · one row per name', accent: 'text-blue-700 dark:text-blue-300' },
+  { name: 'Z → A', short: 'Z→A', order: '· merged · one row per name', accent: 'text-blue-700 dark:text-blue-300' },
+  { name: 'Movers ↓', short: 'Up', order: '· merged · biggest gain first', accent: 'text-fuchsia-700 dark:text-fuchsia-300' },
+  { name: 'Movers ↑', short: 'Down', order: '· merged · biggest loss first', accent: 'text-fuchsia-700 dark:text-fuchsia-300' },
+  { name: 'Held first', short: 'Held', order: '· merged · held · not held', accent: 'text-violet-700 dark:text-violet-300' },
+  { name: 'By expiry', short: 'Exp', order: '· contracts only · nearest first', accent: 'text-fuchsia-700 dark:text-fuchsia-300' },
 ]
 
 export const LIST_INITIAL: Record<ListKey, string> = {

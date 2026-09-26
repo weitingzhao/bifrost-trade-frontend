@@ -257,18 +257,18 @@ export function techBarColorClass(n: number): string {
 export function fundCellClass(passCount: number, insufficient: boolean): string {
   if (insufficient) return 'text-yellow-600 dark:text-yellow-400'
   if (passCount === 8) return 'text-emerald-500 font-semibold'
-  if (passCount >= 5) return 'text-emerald-400'
+  if (passCount >= 5) return 'text-emerald-700 dark:text-emerald-400'
   if (passCount >= 2) return 'text-yellow-500'
-  return 'text-red-400'
+  return 'text-red-700 dark:text-red-400'
 }
 
 export function techCellClass(passCount: number, insufficient: boolean, evalPresent: boolean): string {
   if (!evalPresent) return 'text-muted-foreground'
   if (insufficient) return 'text-yellow-600 dark:text-yellow-400'
-  if (passCount === 11) return 'text-violet-400 font-semibold'
-  if (passCount >= 8) return 'text-violet-400'
+  if (passCount === 11) return 'text-violet-700 dark:text-violet-400 font-semibold'
+  if (passCount >= 8) return 'text-violet-700 dark:text-violet-400'
   if (passCount >= 5) return 'text-yellow-500'
-  return 'text-red-400'
+  return 'text-red-700 dark:text-red-400'
 }
 
 export function sortReadinessRows(

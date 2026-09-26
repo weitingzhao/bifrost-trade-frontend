@@ -47,7 +47,7 @@ import {
 } from '@/components/data-display'
 
 /** A bare symbol (§14.4): mono 700 sky, the same whether or not it can be clicked. */
-const LEDGER_SYMBOL_MARK = 'font-mono font-bold text-sky-400'
+const LEDGER_SYMBOL_MARK = 'font-mono font-bold text-entity-option'
 
 function sortPositionGroups(
   groups: StkPositionGroup[],

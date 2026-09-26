@@ -416,7 +416,7 @@ export default function CorporateActionsPage() {
                           <tr key={sl.symbol} className="bg-[var(--sk-raised2)]">
                             <td className={cn(positionsUi.td, 'pl-2 text-left')} colSpan={6}>
                               <span className="inline-flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                                <span className="font-mono text-xs font-bold text-sky-300">{sl.symbol}</span>
+                                <span className="font-mono text-xs font-bold text-entity-option">{sl.symbol}</span>
                                 {ev ? (
                                   <>
                                     <DenseTag variant="info" size="cell">
@@ -588,7 +588,7 @@ export default function CorporateActionsPage() {
                     ) : null}
                     {calendarRows.map((e) => (
                       <tr key={e.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                        <td className={cn(positionsUi.td, 'pl-2 text-left font-mono font-bold text-sky-300')}>
+                        <td className={cn(positionsUi.td, 'pl-2 text-left font-mono font-bold text-entity-option')}>
                           {e.symbol}
                           {bookSymbols.has(e.symbol) ? null : (
                             <span className="ml-1.5 font-sans text-dense-meta font-normal text-muted-foreground">
@@ -687,7 +687,7 @@ export default function CorporateActionsPage() {
                       <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
                         {fmtIsoDateToken(e.exDate ?? '')}
                       </span>
-                      <span className={cn(positionsUi.mono, 'text-xs font-bold text-sky-300')}>{e.symbol}</span>
+                      <span className={cn(positionsUi.mono, 'text-xs font-bold text-entity-option')}>{e.symbol}</span>
                       <DenseTag variant={e.kind === 'split' ? 'category' : 'neutral'} size="cell">
                         {e.kind === 'split' ? 'SPLIT' : 'DIV'}
                       </DenseTag>

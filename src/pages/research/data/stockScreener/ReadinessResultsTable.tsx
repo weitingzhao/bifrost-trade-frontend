@@ -35,7 +35,7 @@ function BoolMark({ value }: { value: boolean | undefined | null }) {
     return <span className="text-muted-foreground">—</span>
   }
   return (
-    <span className={cn('font-mono text-dense-caption', value ? 'text-emerald-400' : 'text-red-400')}>
+    <span className={cn('font-mono text-dense-caption', value ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400')}>
       {value ? '✓' : '✗'}
     </span>
   )
@@ -48,7 +48,7 @@ function StmtChip({ label, ok, title }: { label: string; ok?: boolean; title?: s
       className={cn(
         'inline-block rounded border px-1 py-0 font-mono text-dense-micro',
         ok
-          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
           : 'border-border text-muted-foreground',
       )}
     >
@@ -89,7 +89,7 @@ function CondDots({
             className={cn(
               'inline-flex h-4 w-4 items-center justify-center rounded border text-[8px]',
               groupBorder[group] ?? 'border-border',
-              pass ? 'text-emerald-400' : 'text-muted-foreground/50',
+              pass ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground/50',
               insufficient && 'opacity-40',
             )}
           >

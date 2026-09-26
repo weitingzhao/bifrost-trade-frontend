@@ -175,7 +175,7 @@
 }
 
 .fiBarCap {
-  stroke: rgb(251, 191, 36);
+  stroke: var(--sk-warn);
   stroke-width: 2;
 }
 

@@ -807,11 +807,11 @@
 }
 
 .ratioHigh {
-  color: #f87171;
+  color: var(--color-loss);
 }
 
 .ratioLow {
-  color: #4ade80;
+  color: var(--color-profit);
 }
 
 .chainSection {
@@ -888,11 +888,11 @@
 }
 
 .chainThPut {
-  color: #f87171;
+  color: var(--color-loss);
 }
 
 .chainThCall {
-  color: #4ade80;
+  color: var(--color-profit);
 }
 
 .chainTable tbody tr {
@@ -924,12 +924,12 @@
 }
 
 .chainCellPut {
-  background: color-mix(in srgb, #f87171 6%, transparent);
+  background: color-mix(in srgb, var(--color-loss) 6%, transparent);
   border-right: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
 }
 
 .chainCellCall {
-  background: color-mix(in srgb, #4ade80 6%, transparent);
+  background: color-mix(in srgb, var(--color-profit) 6%, transparent);
   border-left: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
 }
 
@@ -988,11 +988,11 @@
 }
 
 .chainNumPut {
-  color: #fda4af;
+  color: color-mix(in oklch, #fda4af, var(--sk-ink) var(--sk-pastel));
 }
 
 .chainNumCall {
-  color: #86efac;
+  color: color-mix(in oklch, #86efac, var(--sk-ink) var(--sk-pastel));
 }
 
 .chainTotalVol {

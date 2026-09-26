@@ -116,7 +116,7 @@ export function census(
       label: 'Watchlist',
       n: names.length,
       what: 'Names with a thesis attached — the widest end of the book.',
-      ink: 'text-sky-300',
+      ink: 'text-sky-700 dark:text-sky-300',
       parts: [
         { label: `${onWatch} with thesis`, n: onWatch, variant: 'info' },
         { label: `${noThesis} without`, n: noThesis, variant: noThesis > 0 ? 'danger' : 'neutral' },
@@ -127,7 +127,7 @@ export function census(
       label: 'Candidates',
       n: candidates.filter((c) => c.status === 'open').length,
       what: 'What the loop is considering. The Curator screens in, expiry screens out, you promote.',
-      ink: 'text-violet-300',
+      ink: 'text-violet-700 dark:text-violet-300',
       parts: ['you', 'curator', 'screen'].map((k) => ({
         label: `${k} ${bySource.get(k) ?? 0}`,
         n: bySource.get(k) ?? 0,
@@ -139,7 +139,7 @@ export function census(
       label: 'Hypotheses',
       n: hypotheses.length,
       what: 'Tradable beliefs, each with its evidence and its settled record.',
-      ink: 'text-lime-300',
+      ink: 'text-lime-700 dark:text-lime-300',
       // The store's own four, not the design's. The design's lanes are
       // active / testing / parked / retired; this side settles a belief into
       // validated or rejected and archives it, which is a different sentence

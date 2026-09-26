@@ -354,7 +354,7 @@ export default function ReviewObjectivesPage() {
                             : g.share > 0.8
                               ? 'text-warning'
                               : g.share > 0.5
-                                ? 'text-sky-300'
+                                ? 'text-sky-700 dark:text-sky-300'
                                 : 'text-muted-foreground',
                         )}
                       >

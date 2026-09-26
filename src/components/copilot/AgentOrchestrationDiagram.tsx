@@ -339,7 +339,7 @@ export function AgentOrchestrationDiagram({
 
       {/* Harness batch strip — separate from Chat Triage */}
       <div className="flex items-start gap-2 rounded-md border border-amber-500/35 bg-amber-500/5 p-2">
-        <Layers className="mt-0.5 size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <Layers className="mt-0.5 size-3.5 shrink-0 text-[var(--sk-warn)]" />
         <div className="min-w-0 space-y-0.5">
           <p className="text-dense-label font-semibold text-foreground">
             {copy.harnessStripTitle}

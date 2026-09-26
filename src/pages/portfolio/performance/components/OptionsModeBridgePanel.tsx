@@ -334,7 +334,7 @@ export default function OptionsModeBridgePanel({
                         indent={0}
                         tail={`Book close ${fmtUsd(g.bookClose)} · Cash ${fmtUsd(g.cashRoll)}`}
                       >
-                        <span className="font-mono font-bold text-sky-400">{g.underlying}</span>
+                        <span className="font-mono font-bold text-entity-option">{g.underlying}</span>
                         <span className="text-dense-meta text-muted-foreground">
                           {g.chains.length} chain{g.chains.length === 1 ? '' : 's'} · {g.rolls} roll{g.rolls === 1 ? '' : 's'}
                         </span>
@@ -346,7 +346,7 @@ export default function OptionsModeBridgePanel({
                             return (
                               <div key={c.id} className="min-w-0">
                                 <BridgeNode open={chainOpen} onToggle={() => toggleSet(setExpandedChain, c.id)} indent={1}>
-                                  <span className="font-mono text-sky-400">
+                                  <span className="font-mono text-entity-option">
                                     {c.optionRight} · {c.pathLabel}
                                   </span>
                                   <span className="text-dense-meta text-muted-foreground">

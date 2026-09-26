@@ -1,10 +1,10 @@
-import { useState, useCallback, useRef, Fragment } from 'react'
+import { useState, useCallback, useId, useRef, Fragment } from 'react'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { SegmentControl } from '@/components/data-display'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import type { EquityGrowthChartData, GrowthLayer, GrowthPoint, OptionsPnLMode } from '@/utils/ledger/equityGrowthChart'
-import { GROWTH_LAYERS, GROWTH_TOTAL_AREA_FILL } from '@/utils/ledger/equityGrowthChart'
+import { GROWTH_AREA_ABOVE_FILL, GROWTH_AREA_BELOW_FILL, GROWTH_LAYERS } from '@/utils/ledger/equityGrowthChart'
 import type { FiBarChartData } from '@/utils/ledger/fiBarChart'
 import { EQUITY_GROWTH_INFO } from '@/pages/portfolio/performance/performanceConstants'
 import { fmtPnl, fmtUsd } from '@/pages/portfolio/performance/performanceFormatters'
@@ -66,6 +66,8 @@ export function EquityGrowthCard({
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
   const [tipPos, setTipPos] = useState<TipPos | null>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
+  // useId's characters are not all safe inside url(#…), so keep the word characters only.
+  const clipId = `eg${useId().replace(/\W/g, '')}`
 
   const clearHover = useCallback(() => {
     setHoverIdx(null)
@@ -218,8 +220,25 @@ export function EquityGrowthCard({
                 />
               )}
 
-              {/* The one fill: under the Total line. Layers are lines told apart by hue, weight and dash. */}
-              <path d={chartData.totalArea} fill={GROWTH_TOTAL_AREA_FILL} stroke="none" />
+              {/* The one fill: under the Total line, split at zero — profit above the water, loss
+                  below (Rev .77). Layers are lines told apart by hue, weight and dash. */}
+              {(() => {
+                const waterY = Math.min(chartData.H, Math.max(0, chartData.zeroY ?? chartData.H))
+                return (
+                  <>
+                    <defs>
+                      <clipPath id={`${clipId}-above`}>
+                        <rect x="0" y="0" width={chartData.W} height={waterY} />
+                      </clipPath>
+                      <clipPath id={`${clipId}-below`}>
+                        <rect x="0" y={waterY} width={chartData.W} height={chartData.H - waterY} />
+                      </clipPath>
+                    </defs>
+                    <path d={chartData.totalArea} fill={GROWTH_AREA_ABOVE_FILL} stroke="none" clipPath={`url(#${clipId}-above)`} />
+                    <path d={chartData.totalArea} fill={GROWTH_AREA_BELOW_FILL} stroke="none" clipPath={`url(#${clipId}-below)`} />
+                  </>
+                )
+              })()}
 
               {chartData.layerAreas
                 .filter((l) => layersVisible[l.key])
@@ -354,6 +373,9 @@ export function EquityGrowthCard({
             </svg>
             <span className="text-xs text-muted-foreground">Net PnL</span>
             <span className={cn(perfUi.mono, 'text-xs text-muted-foreground')}>{fmtPnl(last.totalRaw)}</span>
+          </span>
+          <span className="basis-full text-dense-micro text-muted-foreground text-pretty">
+            Weight and dash repeat the asset-class hues. Unrealized is dashed and orange in the curve, calendar and table alike.
           </span>
         </div>
       </div>

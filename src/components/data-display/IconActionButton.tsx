@@ -33,7 +33,7 @@ export function IconActionButton({
       className={cn(
         size === 'dense' && 'h-7 w-7',
         tone === 'danger' && 'text-destructive hover:text-destructive',
-        tone === 'warn' && 'text-amber-600 dark:text-amber-400 hover:text-amber-600',
+        tone === 'warn' && 'text-[var(--sk-warn)]',
         className,
       )}
     >

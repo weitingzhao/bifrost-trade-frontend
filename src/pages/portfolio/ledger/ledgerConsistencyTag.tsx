@@ -10,7 +10,7 @@ const MARK: Record<InstanceConsistencyState, string> = {
 
 const TONE: Record<InstanceConsistencyState, string> = {
   same: 'text-[var(--color-success)] border-[var(--color-success)]/40',
-  multiple: 'text-sky-400 border-sky-400/40',
+  multiple: 'text-sky-700 dark:text-sky-400 border-sky-400/40',
   mixed: 'text-[var(--color-warning)] border-[var(--color-warning)]/40',
   none: 'text-muted-foreground border-border',
 }

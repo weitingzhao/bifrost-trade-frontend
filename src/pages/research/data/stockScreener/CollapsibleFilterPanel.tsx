@@ -53,7 +53,7 @@ export function CollapsibleFilterPanel({
 
           <span className={cn(
             'text-dense-caption font-medium uppercase tracking-wider',
-            isTech ? 'text-violet-300/80' : 'text-emerald-300/80',
+            isTech ? 'text-violet-700/80 dark:text-violet-300/80' : 'text-emerald-700/80 dark:text-emerald-300/80',
           )}>
             {label}
           </span>
@@ -62,7 +62,7 @@ export function CollapsibleFilterPanel({
           {totalActive > 0 && (
             <span className={cn(
               'rounded px-1.5 py-px text-dense-micro font-semibold tabular-nums',
-              isTech ? 'bg-violet-400/12 text-violet-300' : 'bg-emerald-400/12 text-emerald-300',
+              isTech ? 'bg-violet-400/12 text-violet-700 dark:text-violet-300' : 'bg-emerald-400/12 text-emerald-700 dark:text-emerald-300',
             )}>
               {totalActive}
             </span>

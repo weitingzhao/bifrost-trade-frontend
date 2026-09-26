@@ -37,7 +37,7 @@ export function ReviewSelectedPanel({ trade }: { trade: ReviewTrade }) {
     <section className={positionsUi.panel} aria-label="Review">
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Review</span>
-        <span className={cn(positionsUi.mono, 'font-bold text-sky-300')}>
+        <span className={cn(positionsUi.mono, 'font-bold text-entity-option')}>
           {trade.underlying}
         </span>
         <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>· {trade.label}</span>

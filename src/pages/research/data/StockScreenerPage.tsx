@@ -230,17 +230,17 @@ export default function StockScreenerPage() {
   const techTotalActive = techFilterActive + techMomActive + techStrActive + techSenActive
 
   const techTags = [
-    techFilterActive > 0 && { label: 'SEPA', count: techFilterActive, colorClass: 'bg-violet-400/15 text-violet-300' },
-    techMomActive > 0 && { label: 'Mom', count: techMomActive, colorClass: 'bg-amber-500/15 text-amber-400' },
-    techStrActive > 0 && { label: 'Str', count: techStrActive, colorClass: 'bg-emerald-400/15 text-emerald-300' },
-    techSenActive > 0 && { label: 'Sen', count: techSenActive, colorClass: 'bg-pink-400/15 text-pink-300' },
+    techFilterActive > 0 && { label: 'SEPA', count: techFilterActive, colorClass: 'bg-violet-400/15 text-violet-700 dark:text-violet-300' },
+    techMomActive > 0 && { label: 'Mom', count: techMomActive, colorClass: 'bg-amber-500/15 text-[var(--sk-warn)]' },
+    techStrActive > 0 && { label: 'Str', count: techStrActive, colorClass: 'bg-emerald-400/15 text-emerald-700 dark:text-emerald-300' },
+    techSenActive > 0 && { label: 'Sen', count: techSenActive, colorClass: 'bg-pink-400/15 text-pink-700 dark:text-pink-300' },
   ].filter(Boolean) as { label: string; count: number; colorClass: string }[]
 
   const fundFilterActive = filters.condFilter.size
   const fundTotalActive = fundFilterActive
 
   const fundTags = [
-    fundFilterActive > 0 && { label: 'Conditions', count: fundFilterActive, colorClass: 'bg-emerald-400/15 text-emerald-300' },
+    fundFilterActive > 0 && { label: 'Conditions', count: fundFilterActive, colorClass: 'bg-emerald-400/15 text-emerald-700 dark:text-emerald-300' },
   ].filter(Boolean) as { label: string; count: number; colorClass: string }[]
 
   // ── The funnel (design Criteria · Funnel) ──
@@ -598,7 +598,7 @@ export default function StockScreenerPage() {
           onConditionClick={handleFundConditionClick}
           activeConditionId={fundCond.activeConditionId}
           activeHint={fundBucket.activeBucket != null ? (
-            <div className="text-dense-caption text-emerald-400 mb-0.5">
+            <div className="text-dense-caption text-emerald-700 dark:text-emerald-400 mb-0.5">
               {fundBucket.loading && <span>Loading…</span>}
               {fundBucket.error && <span className="text-destructive">{fundBucket.error}</span>}
               {!fundBucket.loading && !fundBucket.error && fundBucket.loadedCount != null && (

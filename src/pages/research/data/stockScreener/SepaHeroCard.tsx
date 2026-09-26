@@ -73,9 +73,9 @@ function ConditionBar({
       ? accentClass
       : 'bg-muted-foreground/30'
   const pctColor = rank === 'weak'
-    ? 'text-orange-400'
+    ? 'text-orange-700 dark:text-orange-400'
     : rank === 'strong'
-      ? 'text-emerald-400'
+      ? 'text-emerald-700 dark:text-emerald-400'
       : 'text-muted-foreground/70'
   return (
     <div
@@ -353,15 +353,15 @@ export function SepaHeroCard({
               <div className="h-5 w-px bg-border/30" />
               <Kpi label={`All ${suffix}`} value={kpis.allPass.toLocaleString()} accent="text-screener-tech" />
               <div className="h-5 w-px bg-border/30" />
-              <Kpi label="≥ 8" value={kpis.strong.toLocaleString()} accent="text-violet-300" />
+              <Kpi label="≥ 8" value={kpis.strong.toLocaleString()} accent="text-violet-700 dark:text-violet-300" />
               <div className="h-5 w-px bg-border/30" />
               <Kpi
                 label="Breadth"
                 value={kpis.breadthPct != null ? `${kpis.breadthPct}%` : '—'}
                 accent={
                   kpis.breadthPct != null
-                    ? kpis.breadthPct >= 60 ? 'text-emerald-400'
-                      : kpis.breadthPct >= 40 ? 'text-amber-400' : 'text-red-400'
+                    ? kpis.breadthPct >= 60 ? 'text-emerald-700 dark:text-emerald-400'
+                      : kpis.breadthPct >= 40 ? 'text-[var(--sk-warn)]' : 'text-red-700 dark:text-red-400'
                     : undefined
                 }
               />
@@ -374,12 +374,12 @@ export function SepaHeroCard({
               <Kpi
                 label="With data"
                 value={fkpis.withData.toLocaleString()}
-                accent={fkpis.coverage >= 50 ? 'text-emerald-400' : 'text-amber-400'}
+                accent={fkpis.coverage >= 50 ? 'text-emerald-700 dark:text-emerald-400' : 'text-[var(--sk-warn)]'}
               />
               <div className="h-5 w-px bg-border/30" />
               <Kpi label={`All ${suffix}`} value={fkpis.allPass.toLocaleString()} accent="text-screener-fund" />
               <div className="h-5 w-px bg-border/30" />
-              <Kpi label="≥ 6" value={fkpis.strong.toLocaleString()} accent="text-emerald-300" />
+              <Kpi label="≥ 6" value={fkpis.strong.toLocaleString()} accent="text-emerald-700 dark:text-emerald-300" />
             </>
           )}
         </div>
@@ -393,7 +393,7 @@ export function SepaHeroCard({
             Distribution
           </span>
           {!isTech && fkpis && fkpis.withData > 0 && fkpis.withData < fkpis.universe && (
-            <p className="text-dense-micro text-amber-400/90 leading-snug mb-1 shrink-0">
+            <p className="text-dense-micro text-[var(--sk-warn)]/90 leading-snug mb-1 shrink-0">
               {fkpis.withData.toLocaleString()} names with income statements
               (watchlist ingest) — not the {fkpis.universe.toLocaleString()} universe.
             </p>

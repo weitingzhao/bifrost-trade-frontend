@@ -173,7 +173,7 @@ export default function TodayPage() {
               <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1.5 px-3 py-2">
                 {tape.map((t) => (
                   <span key={t.symbol} className="inline-flex items-baseline gap-1.5">
-                    <span className={cn(positionsUi.mono, 'font-bold text-sky-300')}>{t.symbol}</span>
+                    <span className={cn(positionsUi.mono, 'font-bold text-entity-option')}>{t.symbol}</span>
                     <span className={cn(positionsUi.mono, 'text-sm text-foreground')}>{fmtPrice(t.last)}</span>
                     <span className={cn(positionsUi.mono, 'text-dense-meta', pnlColorClass(t.changePct))}>
                       {fmtChangePct(t.changePct)}

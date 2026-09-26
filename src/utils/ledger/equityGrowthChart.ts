@@ -5,9 +5,14 @@ export type GrowthLayer = 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 export interface GrowthLayerDef {
   key: GrowthLayer
   label: string
-  /** The asset-class hue (Portfolio Performance prototype, Owner ruling 2026-09-15). */
+  /**
+   * The layer's ink (design Rev .77, Performance Layer Colour 1b, §14.8 #5).
+   * A layer that sums one kind of entity takes that entity's ink — Options the
+   * contract ink, Stocks the ticker ink; FI and Cash-like are not entities and
+   * stay neutral, each on its own grey step and told apart by dash. No layer
+   * takes a direction, lamp or accent hue: red and green are P&L here.
+   */
   color: string
-  colorFill: string
   /** Stroke weight and dash repeat the distinction, so the chart still reads without colour. */
   strokeWidth: number
   dash?: string
@@ -16,14 +21,19 @@ export interface GrowthLayerDef {
 }
 
 export const GROWTH_LAYERS: GrowthLayerDef[] = [
-  { key: 'options', label: 'Options', color: 'var(--color-profit)', colorFill: 'rgb(var(--color-profit-rgb) / 0.14)', strokeWidth: 2.5, mark: 'options' },
-  { key: 'stocks', label: 'Stocks', color: 'rgb(96,165,250)', colorFill: 'rgba(96,165,250,0.14)', strokeWidth: 1.75, mark: 'stocks' },
-  { key: 'fixed_income', label: 'FI Stream', color: 'rgb(251,191,36)', colorFill: 'rgba(251,191,36,0.14)', strokeWidth: 1.5, mark: 'fi' },
-  { key: 'cash_like', label: 'Cash-like', color: 'rgb(167,139,250)', colorFill: 'rgba(167,139,250,0.14)', strokeWidth: 1.25, dash: '1 3', mark: 'cash' },
+  { key: 'options', label: 'Options', color: 'var(--sk-contract)', strokeWidth: 2.5, mark: 'options' },
+  { key: 'stocks', label: 'Stocks', color: 'var(--sk-ticker)', strokeWidth: 1.75, mark: 'stocks' },
+  { key: 'fixed_income', label: 'FI Stream', color: 'var(--sk-soft)', strokeWidth: 1.5, dash: '2 3', mark: 'fi' },
+  { key: 'cash_like', label: 'Cash-like', color: 'var(--sk-faint)', strokeWidth: 1.25, dash: '1 3', mark: 'cash' },
 ]
 
-/** The one fill on the chart: the area under the Total line. */
-export const GROWTH_TOTAL_AREA_FILL = 'rgb(var(--color-profit-rgb) / 0.14)'
+/**
+ * The one fill on the chart, the area under the Total line, split at zero:
+ * profit above the water, loss below (§14.7 #5, as on the Positions payoff).
+ * The lines themselves never take red or green.
+ */
+export const GROWTH_AREA_ABOVE_FILL = 'color-mix(in srgb, var(--color-profit) 16%, transparent)'
+export const GROWTH_AREA_BELOW_FILL = 'color-mix(in srgb, var(--color-loss) 16%, transparent)'
 
 export const DEFAULT_LAYERS_VISIBLE: Record<GrowthLayer, boolean> = {
   options: true,
@@ -57,7 +67,6 @@ export interface LayerArea {
   key: GrowthLayer
   label: string
   color: string
-  colorFill: string
   area: string
   path: string
 }

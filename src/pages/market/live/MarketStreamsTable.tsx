@@ -126,10 +126,10 @@ interface Props {
  */
 const SORT_ACCENT: Record<MarketStreamsSortFamily, string> = {
   def: 'text-foreground',
-  alpha: 'text-blue-300',
-  type: 'text-amber-400',
-  side: 'text-violet-300',
-  exp: 'text-fuchsia-300',
+  alpha: 'text-blue-700 dark:text-blue-300',
+  type: 'text-[var(--sk-warn)]',
+  side: 'text-violet-700 dark:text-violet-300',
+  exp: 'text-fuchsia-700 dark:text-fuchsia-300',
 }
 
 /** Which sort is standing and what order it produces, in the design's words. */

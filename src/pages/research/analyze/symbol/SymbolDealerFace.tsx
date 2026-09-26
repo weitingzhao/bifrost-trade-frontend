@@ -306,7 +306,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
                   <line x1={spotX} x2={spotX} y1="0" y2={plotH} stroke="var(--sk-ticker)" strokeWidth="1" />
                 ) : null}
                 {zeroG != null && strikeX(zeroG) != null ? (
-                  <line x1={strikeX(zeroG)!} x2={strikeX(zeroG)!} y1="0" y2={plotH} stroke="var(--color-amber-400,var(--color-warning))" strokeWidth="1" strokeDasharray="3 3" />
+                  <line x1={strikeX(zeroG)!} x2={strikeX(zeroG)!} y1="0" y2={plotH} stroke="var(--sk-warn)" strokeWidth="1" strokeDasharray="3 3" />
                 ) : null}
               </svg>
               <div className="flex justify-between pt-0.5 font-mono text-dense-micro text-muted-foreground">

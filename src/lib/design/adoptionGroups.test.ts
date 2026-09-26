@@ -45,10 +45,11 @@ describe('adoptionByGroup', () => {
     // Positions is a page-head and §17 sample, rebuilt and waiting for a look.
     // Eight of ten with Package .22 @ Rev .81: Performance's own stamp moved
     // to .77 (layer colours, the Total area split at zero) and it reads stale
-    // until batch H2 re-walks it.
+    // until batch H2 re-walks it — done the same day, so it waits in
+    // `reviewing` beside Positions.
     expect(portfolio).toMatchObject({ total: 10, aligned: 8, left: 2 })
-    expect(portfolio?.byState.reviewing).toBe(1)
-    expect(portfolio?.byState.stale).toBe(1)
+    expect(portfolio?.byState.reviewing).toBe(2)
+    expect(portfolio?.byState.stale).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

@@ -50,8 +50,8 @@ const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
     pill: 'text-emerald-600 dark:text-emerald-400',
   },
   warning: {
-    cell: 'text-amber-700 dark:text-amber-400',
-    pill: 'text-amber-700 dark:text-amber-400',
+    cell: 'text-[var(--sk-warn)]',
+    pill: 'text-[var(--sk-warn)]',
   },
   danger: {
     cell: 'text-red-600 dark:text-red-400',
@@ -74,8 +74,8 @@ const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
     pill: 'text-sky-700 dark:text-sky-400 font-mono text-xs font-semibold',
   },
   'source-journal': {
-    cell: 'text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
-    pill: 'text-amber-700 dark:text-amber-400 font-mono text-xs font-semibold',
+    cell: 'text-[var(--sk-warn)] font-mono text-xs font-semibold',
+    pill: 'text-[var(--sk-warn)] font-mono text-xs font-semibold',
   },
   'source-manual': {
     cell: 'text-violet-700 dark:text-violet-400 font-mono text-xs font-semibold',

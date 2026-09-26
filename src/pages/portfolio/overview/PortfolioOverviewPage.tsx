@@ -110,10 +110,11 @@ const AREAS = [
 /**
  * The layer colours are the equity curve's, not the design's.
  *
- * The prototype picks its own four, but Performance is one click away and has
- * drawn Options green and FI amber on its curve for as long as the page has
- * existed. A reader who learns a colour there and meets a different one here
- * has learned nothing, so the curve's palette wins.
+ * The prototype picks its own four, but Performance is one click away and a
+ * reader who learns a colour there and meets a different one here has learned
+ * nothing, so the curve's palette wins. Since design Rev .77 that palette is
+ * the entity inks for Options and Stocks and two neutral greys for FI and
+ * Cash-like; this page follows it by reading the same definitions.
  */
 const LAYER_COLOR: Record<string, string> = Object.fromEntries(
   GROWTH_LAYERS.map((l) => [l.key, l.color]),

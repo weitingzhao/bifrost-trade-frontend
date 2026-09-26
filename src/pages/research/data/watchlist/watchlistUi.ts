@@ -119,7 +119,7 @@ export const watchlistOrderZoneClass = cn(
   'space-y-3 rounded-md border border-destructive/20 bg-destructive/5 p-3',
 )
 
-export const watchlistWarnLineClass = 'text-xs text-amber-700 dark:text-amber-400'
+export const watchlistWarnLineClass = 'text-xs text-[var(--sk-warn)]'
 
 export const watchlistWarnBoxClass = watchlistWarnLineClass
 

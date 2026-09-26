@@ -34,13 +34,13 @@ function IvSheetHoverCell({
     <span
       className={cn(
         'group relative inline-flex max-w-full cursor-help align-middle',
-        warn && 'font-semibold text-amber-600 dark:text-amber-400',
+        warn && 'font-semibold text-[var(--sk-warn)]',
       )}
     >
       <span
         className={cn(
           'border-b border-dotted',
-          warn ? 'border-amber-600 dark:border-amber-400' : 'border-muted-foreground',
+          warn ? 'border-[var(--sk-warn)]' : 'border-muted-foreground',
         )}
       >
         {children}
@@ -131,7 +131,7 @@ export function DiscoveryIvTermSheetTable({ mergedIvRows, coneError, termRows, f
                   {term?.strike != null && Number.isFinite(term.strike) ? term.strike.toFixed(2) : '—'}
                 </DenseTableCell>
                 <DenseTableCell
-                  className={cn(denseTableNumCell, rowWarn && 'text-amber-600 dark:text-amber-400')}
+                  className={cn(denseTableNumCell, rowWarn && 'text-[var(--sk-warn)]')}
                 >
                   {cone == null ? (
                     '—'
@@ -146,7 +146,7 @@ export function DiscoveryIvTermSheetTable({ mergedIvRows, coneError, termRows, f
                   )}
                 </DenseTableCell>
                 <DenseTableCell
-                  className={cn(denseTableNumCell, rowWarn && 'text-amber-600 dark:text-amber-400')}
+                  className={cn(denseTableNumCell, rowWarn && 'text-[var(--sk-warn)]')}
                 >
                   {cone == null ? (
                     '—'

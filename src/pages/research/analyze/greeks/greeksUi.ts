@@ -58,7 +58,7 @@ export const greeksTooltipKvKeyClass = 'text-muted-foreground'
 
 export const greeksTooltipMonoClass = 'leading-relaxed'
 
-export const greeksTooltipWarnClass = 'text-amber-600 dark:text-amber-400'
+export const greeksTooltipWarnClass = 'text-[var(--sk-warn)]'
 
 export const greeksTooltipCompareGridClass = cn(
   'grid grid-cols-[auto_1fr_1fr] gap-x-3 gap-y-0.5 tabular-nums',

@@ -143,8 +143,10 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Performance',
     crumbs: PORTFOLIO,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.2',
+      // Rev .77 moved the page's own stamp for its layer inks; re-walked and
+      // built in batch H2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.77',
       note: DESIGN_NOTES['/portfolio/performance'],
     },
   },

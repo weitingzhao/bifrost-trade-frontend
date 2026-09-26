@@ -12,7 +12,7 @@ const TONE: Record<LedgerBookingKind, string> = {
   book: 'text-[var(--color-warning)] border-[var(--color-warning)]/40',
   book_expired: 'text-[var(--color-warning)] border-[var(--color-warning)]/40',
   book_assigned: 'text-[var(--color-warning)] border-[var(--color-warning)]/40',
-  mixed: 'text-sky-400 border-sky-400/40',
+  mixed: 'text-sky-700 dark:text-sky-400 border-sky-400/40',
   unreported: 'text-muted-foreground/80 border-border',
 }
 

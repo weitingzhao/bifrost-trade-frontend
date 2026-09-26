@@ -95,7 +95,7 @@ export function WatchBookContracts({
           return (
             <DenseTableRow key={item.contract_key}>
               <DenseTableCell>
-                <span className="font-mono font-bold text-sky-300">
+                <span className="font-mono font-bold text-entity-option">
                   {item.display_label || watchlistItemLabel(item)}
                 </span>
               </DenseTableCell>

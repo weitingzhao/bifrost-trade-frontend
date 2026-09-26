@@ -661,7 +661,7 @@ function ExecutionRow({
                       slippageTotal,
                     )
                   }}
-                  className="inline-block cursor-pointer rounded bg-amber-500/20 px-1 py-px font-mono text-dense-micro text-amber-600 transition-colors hover:bg-amber-500/30 dark:text-amber-400"
+                  className="inline-block cursor-pointer rounded bg-amber-500/20 px-1 py-px font-mono text-dense-micro text-[var(--sk-warn)] transition-colors hover:bg-amber-500/30"
                 >
                   #{lid}
                 </button>
@@ -794,7 +794,7 @@ function StkDayDetail({
               return (
                 <tr key={ex.account_executions_id ?? `${ex.time}-${ex.symbol}`}>
                   <td className={cn(tdLeft, 'text-muted-foreground')}>{ex.account_id ?? '—'}</td>
-                  <td className={cn(tdLeft, 'font-bold text-sky-400')}>{ex.symbol ?? '—'}</td>
+                  <td className={cn(tdLeft, 'font-bold text-entity-option')}>{ex.symbol ?? '—'}</td>
                   <td className={cn(tdLeft, 'text-secondary-foreground')}>{ex.side ?? '—'}</td>
                   <td className={cn(td, 'text-secondary-foreground')}>
                     {ex.quantity != null ? Number(ex.quantity) : (ex.qty ?? '—')}

@@ -1,10 +1,10 @@
 /** Maps group / segment keys to Tailwind classes (Legacy ssp-* parity). */
 export const SEGMENT = {
   techGroupHeader: {
-    vol: 'text-violet-400 border-b-violet-400/35',
-    price52: 'text-emerald-400 border-b-emerald-400/35',
-    sma: 'text-sky-400 border-b-sky-400/35',
-    price: 'text-amber-400 border-b-amber-400/35',
+    vol: 'text-violet-700 dark:text-violet-400 border-b-violet-400/35',
+    price52: 'text-emerald-700 dark:text-emerald-400 border-b-emerald-400/35',
+    sma: 'text-sky-700 dark:text-sky-400 border-b-sky-400/35',
+    price: 'text-[var(--sk-warn)] border-b-amber-400/35',
   } as Record<string, string>,
   techChip: {
     vol: 'border-l-2 border-l-violet-400/60',
@@ -13,7 +13,7 @@ export const SEGMENT = {
     price: 'border-l-2 border-l-amber-400/60',
   } as Record<string, string>,
   fundGroupHeader: {
-    eps: 'text-sky-300 border-b-sky-300/35',
+    eps: 'text-sky-700 dark:text-sky-300 border-b-sky-300/35',
     rev: 'text-lime-500 border-b-lime-500/35',
   } as Record<string, string>,
   fundChip: {
@@ -30,13 +30,13 @@ export const SEGMENT = {
     sentiment: 'border-l-[3px] border-l-pink-400/55',
   } as Record<string, string>,
   extTitle: {
-    quality: 'text-sky-300/90 font-medium',
+    quality: 'text-sky-700/90 dark:text-sky-300/90 font-medium',
     balance: 'text-lime-500/90 font-medium',
-    cashflow: 'text-emerald-400/90 font-medium',
-    valuation: 'text-amber-400/90 font-medium',
-    profitability: 'text-violet-400/90 font-medium',
-    efficiency: 'text-orange-400/90 font-medium',
-    sentiment: 'text-pink-400/90 font-medium',
+    cashflow: 'text-emerald-700/90 dark:text-emerald-400/90 font-medium',
+    valuation: 'text-[var(--sk-warn)]/90 font-medium',
+    profitability: 'text-violet-700/90 dark:text-violet-400/90 font-medium',
+    efficiency: 'text-orange-700/90 dark:text-orange-400/90 font-medium',
+    sentiment: 'text-pink-700/90 dark:text-pink-400/90 font-medium',
   } as Record<string, string>,
   extChip: {
     quality: 'border-l-2 border-l-sky-300/50',
@@ -54,8 +54,8 @@ export const SEGMENT = {
   } as Record<string, string>,
   tierTitle: {
     momentum: 'text-amber-500/90 font-medium',
-    structure: 'text-emerald-400/90 font-medium',
-    sentiment: 'text-pink-400/90 font-medium',
+    structure: 'text-emerald-700/90 dark:text-emerald-400/90 font-medium',
+    sentiment: 'text-pink-700/90 dark:text-pink-400/90 font-medium',
   } as Record<string, string>,
   tierChip: {
     momentum: 'border-l-2 border-l-amber-500/60',
@@ -64,18 +64,18 @@ export const SEGMENT = {
   } as Record<string, string>,
   tierScoreVal: {
     momentum: 'text-amber-500',
-    structure: 'text-emerald-400',
-    sentiment: 'text-pink-400',
+    structure: 'text-emerald-700 dark:text-emerald-400',
+    sentiment: 'text-pink-700 dark:text-pink-400',
   } as Record<string, string>,
   tierCountBadge: {
     momentum: 'bg-amber-500/20 text-amber-500',
-    structure: 'bg-emerald-400/20 text-emerald-400',
-    sentiment: 'bg-pink-400/20 text-pink-400',
+    structure: 'bg-emerald-400/20 text-emerald-700 dark:text-emerald-400',
+    sentiment: 'bg-pink-400/20 text-pink-700 dark:text-pink-400',
   } as Record<string, string>,
   momGroupHeader: {
     oscillator: 'text-amber-500 border-b-amber-500/35',
-    roc: 'text-orange-400 border-b-orange-400/35',
-    rs: 'text-amber-400 border-b-amber-400/35',
-    trend: 'text-emerald-400 border-b-emerald-400/35',
+    roc: 'text-orange-700 dark:text-orange-400 border-b-orange-400/35',
+    rs: 'text-[var(--sk-warn)] border-b-amber-400/35',
+    trend: 'text-emerald-700 dark:text-emerald-400 border-b-emerald-400/35',
   } as Record<string, string>,
 }

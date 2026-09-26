@@ -30,11 +30,11 @@
 .topValue {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: #e5e7eb;
+  color: var(--sk-ink);
 }
 
 .topDivider {
-  color: #4b5563;
+  color: var(--sk-faint);
   user-select: none;
   padding: 0 0.15rem;
 }
@@ -102,7 +102,7 @@
 
 .scenarioSummaryHint {
   font-size: 0.72rem;
-  color: #5c6572;
+  color: var(--sk-mute);
 }
 
 .scenarioNote {
@@ -135,7 +135,7 @@
 
 .payoffChartData {
   font-size: 0.65rem;
-  color: #5c6572;
+  color: var(--sk-mute);
   font-variant-numeric: tabular-nums;
 }
 
@@ -237,15 +237,15 @@
 }
 
 .rowGain th[scope='row'] {
-  color: #86efac;
+  color: var(--color-profit);
 }
 
 .rowLoss th[scope='row'] {
-  color: #fca5a5;
+  color: var(--color-loss);
 }
 
 .rowHedged th[scope='row'] {
-  color: #fdba74;
+  color: color-mix(in oklch, #fdba74, var(--sk-ink) var(--sk-pastel));
   font-weight: 500;
 }
 
@@ -346,7 +346,7 @@
 }
 
 .unlimitedWarning {
-  color: #f87171;
+  color: var(--color-loss);
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0 0 0.35rem;

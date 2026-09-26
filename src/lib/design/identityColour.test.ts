@@ -44,6 +44,17 @@ const RULES: { name: string; re: RegExp }[] = [
   { name: 'dark tint triplet', re: /rgba?\(\s*(?:74,\s*222,\s*128|248,\s*113,\s*113|163,\s*230,\s*53|56,\s*189,\s*248|192,\s*132,\s*252)\b/g },
   // White hairlines and highlights: invisible on paper.
   { name: 'white hairline', re: /rgba?\(\s*255,\s*255,\s*255\b/g },
+  // Rev .78: a palette text class at its dark step with no paper step beside
+  // it (`text-sky-300` alone) reads about 2:1 on paper. Pair it
+  // (`text-sky-700 dark:text-sky-300`) or use the ink's token.
+  {
+    name: 'dark-only palette text',
+    re: /(?<![\w:\-[])text-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-(?:200|300|400)(?:\/\d+)?(?![\w-])/g,
+  },
+  // Rev .78: warning and loss text written as the dark hex. They are
+  // --sk-warn and --color-loss, which flip; fills (swatches, chart palettes)
+  // are not text and stay out of this rule.
+  { name: 'bare warn/loss ink', re: /\b(?:color|stroke)\s*[:=]\s*["'{]?\s*#(?:fbbf24|f87171)\b/gi },
 ]
 
 function sourceFiles(dir: string): string[] {
@@ -79,7 +90,7 @@ describe('§14.8 identity-colour ratchet', () => {
   }
 
   it('still catches what it is for', () => {
-    const [hex, tint, white] = RULES.map((r) => r.re)
+    const [hex, tint, white, palette, warn] = RULES.map((r) => r.re)
     const hit = (re: RegExp, s: string) => {
       re.lastIndex = 0
       return re.test(s)
@@ -88,6 +99,13 @@ describe('§14.8 identity-colour ratchet', () => {
     expect(hit(hex, 'stroke="var(--color-link, #7dd3fc)"')).toBe(false)
     expect(hit(tint, "'rgba(74,222,128,0.14)'")).toBe(true)
     expect(hit(white, 'border: 1px solid rgba(255, 255, 255, 0.08);')).toBe(true)
+    expect(hit(palette, "accent: 'text-sky-300'")).toBe(true)
+    expect(hit(palette, "'text-amber-400/90 font-medium'")).toBe(true)
+    expect(hit(palette, "'text-sky-700 dark:text-sky-300'")).toBe(false)
+    expect(hit(palette, "'hover:text-violet-300'")).toBe(false)
+    expect(hit(warn, '  color: #f87171;')).toBe(true)
+    expect(hit(warn, 'stroke="#fbbf24"')).toBe(true)
+    expect(hit(warn, '  background: #fbbf24;')).toBe(false)
   })
 })
 

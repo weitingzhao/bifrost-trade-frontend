@@ -195,7 +195,7 @@ function JournalFaceForContract({
         </Field>
         <Field label="Contract" note="the row this face was opened from">
           <Input
-            className="h-7 font-mono text-dense-meta text-sky-400"
+            className="h-7 font-mono text-dense-meta text-entity-option"
             value={draft.symbol}
             title={draft.contractKey}
             readOnly

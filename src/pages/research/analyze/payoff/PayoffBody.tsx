@@ -310,6 +310,16 @@ export function PayoffBody() {
         </Link>
       </div>
 
+      {earnings.late ? (
+        <p
+          className="m-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-1.5 text-dense-meta leading-normal text-warning text-pretty"
+          role="note"
+          aria-label="Earnings late"
+        >
+          {earnings.late}
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap items-start gap-3">
         <section className={cn(panel, 'flex-[999_1_38.75rem]')} aria-label="P/L">
           <header className={panelHead}>

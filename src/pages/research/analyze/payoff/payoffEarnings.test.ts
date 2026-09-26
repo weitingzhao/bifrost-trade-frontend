@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ExpectedEarnings } from '@/api/research/narrative'
-import { payoffEarnings } from './payoffEarnings'
+import { lateNotice, payoffEarnings } from './payoffEarnings'
 
 // Invented estimate and term.
 const est = (days_away: number, max = 0): ExpectedEarnings => ({
@@ -46,4 +46,17 @@ describe('payoff earnings rows', () => {
     expect(payoffEarnings(null, TERM, 42, 0, 21).note).toMatch(/^No 8-K on file/)
     expect(payoffEarnings(null, TERM, 42, 30, 21).gap).toBeNull()
   })
+
+  it('raises a late notice, and says when the lateness beats the estimate’s record', () => {
+    const late = payoffEarnings(est(-4, 1), TERM, 42, 20, 21)
+    expect(late.late).toBe(
+      "Earnings late: expected ~3 Nov (last year's 4 Nov 30 plus 52 weeks) and no results 8-K has arrived, 4 days on. " +
+        'That is later than this estimate has missed this name before (at most 1 day over 4 prints). ' +
+        'The print can land inside this expiry any day — or has, and the feed has not caught up — so the scenario table, which cannot place it, carries no earnings rows.'
+    )
+    expect(lateNotice(est(-1, 7))).toContain('1 day on. The estimate has missed this name by up to 7 days, so this may still be the usual slack.')
+    expect(payoffEarnings(est(38), TERM, 42, 20, 21).late).toBeNull()
+    expect(payoffEarnings(null, TERM, 42, 20, 21).late).toBeNull()
+  })
 })
+

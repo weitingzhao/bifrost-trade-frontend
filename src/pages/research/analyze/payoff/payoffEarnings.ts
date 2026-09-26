@@ -19,9 +19,32 @@ export interface PayoffEarnings {
   /** The gap the rows use, a fraction of spot; null draws no earnings rows. */
   gap: number | null
   note: string
+  /** The face's warning strip when the estimated print has passed with no results 8-K. */
+  late: string | null
 }
 
 const asPct = (x: number) => `${(x * 100).toFixed(1)}%`
+
+/**
+ * The strip a late print puts at the top of the face: when it was expected, on
+ * what, how late it is — and whether that is later than the estimate has ever
+ * missed on this name, which makes the lateness itself the reading.
+ */
+export function lateNotice(e: ExpectedEarnings): string {
+  const late = -e.days_away
+  const max = e.track.max_miss_days
+  const record =
+    max != null && e.track.n > 0
+      ? late > max
+        ? ` That is later than this estimate has missed this name before (at most ${max} ${max === 1 ? 'day' : 'days'} over ${e.track.n} prints).`
+        : ` The estimate has missed this name by up to ${max} ${max === 1 ? 'day' : 'days'}, so this may still be the usual slack.`
+      : ''
+  return (
+    `Earnings late: expected ~${shortDate(e.date)} (last year's ${shortDate(e.from, true)} plus 52 weeks) and no results 8-K has arrived, ${late} ${late === 1 ? 'day' : 'days'} on.` +
+    record +
+    ' The print can land inside this expiry any day — or has, and the feed has not caught up — so the scenario table, which cannot place it, carries no earnings rows.'
+  )
+}
 
 export function payoffEarnings(
   e: ExpectedEarnings | null | undefined,
@@ -30,7 +53,7 @@ export function payoffEarnings(
   filings: number | null | undefined,
   midD: number
 ): PayoffEarnings {
-  const none = (note: string): PayoffEarnings => ({ tag: null, ev: null, gap: null, note })
+  const none = (note: string, late: string | null = null): PayoffEarnings => ({ tag: null, ev: null, gap: null, note, late })
   if (!e) {
     return none(
       filings === 0
@@ -39,7 +62,10 @@ export function payoffEarnings(
     )
   }
   if (e.days_away < 0) {
-    return none(`Earnings were expected about ${shortDate(e.date)} and no results 8-K has arrived — the print is late and its date unknown, so no earnings rows.`)
+    return none(
+      `Earnings were expected about ${shortDate(e.date)} and no results 8-K has arrived — the print is late and its date unknown, so no earnings rows.`,
+      lateNotice(e)
+    )
   }
   const when = `~${shortDate(e.date)}, estimated`
   const tag = expiryEarnings(e, dte)
@@ -55,7 +81,7 @@ export function payoffEarnings(
       : !pts.some((t) => t.dte > e.days_away)
         ? 'no priced expiry after the print'
         : 'the expiry after it is not priced above the one before'
-    return { tag, ev: null, gap: null, note: `The next print (${when}) falls inside this expiry, but the term structure gives no premium to size it — ${why} — so no earnings rows.` }
+    return { tag, ev: null, gap: null, late: null, note: `The next print (${when}) falls inside this expiry, but the term structure gives no premium to size it — ${why} — so no earnings rows.` }
   }
   const unsure =
     tag.tag === 'E?' ? ` The estimate sits ${Math.abs(dte - e.days_away)} days from this expiry and has missed this name by up to ${e.track.max_miss_days ?? 7}, so the print may fall outside it.` : ''
@@ -63,6 +89,7 @@ export function payoffEarnings(
     tag,
     ev,
     gap: ev.move,
+    late: null,
     note:
       `Earnings rows: the next print (${when}) falls inside this expiry, and the gap is the move the term structure prices for it — ATM IV ${asPct(ev.before.iv)} on ${ev.before.expiry.slice(5)} before it against ${asPct(ev.after.iv)} on ${ev.after.expiry.slice(5)} after, ±${asPct(ev.move)}, not σ. ` +
       `The marks hold IV unchanged, so the crush after a print is not in T+${midD}.${unsure}`,

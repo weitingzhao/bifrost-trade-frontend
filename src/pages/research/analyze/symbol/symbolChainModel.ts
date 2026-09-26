@@ -153,26 +153,49 @@ export function richToSvi(
   return best && best.pts > 0 ? best : null
 }
 
+/** The design's card set: the two nearest listed, then three standard monthlies. */
+export const CARD_NEAREST = 2
+export const CARD_MONTHLIES = 3
+
 /**
- * The expiry cards: the five nearest listed, plus the one a link handed over
- * (a Symbol-list contract row, the Dealer face's ⇢) when it is listed further
- * out — landing on the nearest instead would light the same strike on a
- * different contract. `handedMissing` when the store does not list it at all.
- *
- * ``eventDate`` is the next earnings print (Research's estimate): the first
- * listed expiry after it carries the event premium, and joins the cards when
- * it is further out than the five, so the earnings E has a card to sit on.
+ * A standard monthly expiry: the third Friday of its month, or the Thursday
+ * before it when that Friday is a market holiday and the Thursday is listed in
+ * its place (2027-06-17, before Juneteenth observed).
+ */
+export function isMonthlyExpiry(iso: string, listed: ReadonlySet<string>): boolean {
+  const [y, m, d] = iso.split('-').map(Number)
+  if (!y || !m || !d) return false
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay()
+  if (dow === 5) return d >= 15 && d <= 21
+  if (dow === 4 && d >= 14 && d <= 20) {
+    const friday = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10)
+    return !listed.has(friday)
+  }
+  return false
+}
+
+/**
+ * The expiry cards, as the design draws them (`EXP`: two weeklies, then three
+ * monthlies — 9, 16, 37, 72, 100 days): the two nearest listed, then the next
+ * three standard monthlies, so the cards span months rather than the ten days
+ * a name with weeklies fills with its five nearest. A name whose store lists
+ * fewer monthlies fills the set with its nearest others. The one a link handed
+ * over (a Symbol-list contract row, the Dealer face's ⇢) joins when it is not
+ * among them — landing elsewhere would light the same strike on a different
+ * contract. `handedMissing` when the store does not list it at all.
  */
 export function cardExpiries(
   listed: readonly string[] | undefined,
   handed: string | null,
-  eventDate: string | null = null,
 ): { expiries: string[]; handedMissing: boolean } {
   const all = listed ?? []
-  const expiries = all.slice(0, 5)
+  const set = new Set(all)
+  const near = all.slice(0, CARD_NEAREST)
+  const rest = all.slice(CARD_NEAREST)
+  const monthlies = rest.filter((e) => isMonthlyExpiry(e, set)).slice(0, CARD_MONTHLIES)
+  const fill = rest.filter((e) => !monthlies.includes(e)).slice(0, CARD_MONTHLIES - monthlies.length)
+  const expiries = [...near, ...monthlies, ...fill]
   if (handed && all.includes(handed) && !expiries.includes(handed)) expiries.push(handed)
-  const afterEvent = eventDate ? all.find((e) => e > eventDate) : undefined
-  if (afterEvent && !expiries.includes(afterEvent)) expiries.push(afterEvent)
   expiries.sort()
   return { expiries, handedMissing: Boolean(handed && listed && !all.includes(handed)) }
 }

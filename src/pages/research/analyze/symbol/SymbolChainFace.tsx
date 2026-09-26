@@ -136,11 +136,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
     staleTime: 10 * 60_000,
   })
   const handed = urlParams.get('expiration')
-  const { expiries, handedMissing } = cardExpiries(
-    expQ.data,
-    handed,
-    nextEarnings && nextEarnings.days_away >= 0 ? nextEarnings.date : null
-  )
+  const { expiries, handedMissing } = cardExpiries(expQ.data, handed)
   const fitQ = useVolSurfaceFit(sym)
   const fitByExpiry = new Map((fitQ.data ?? []).map((r) => [r.expiry, r]))
 
@@ -295,7 +291,12 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
         {/* A late print has its strip above the cards; this line is for a dated one. */}
         {!earnQ.isLoading && !loading && expiries.length > 0 && !(nextEarnings && nextEarnings.days_away < 0) ? (
           <p className={note}>
-            {termEarningsNote(nextEarnings, expiries.map((e) => ({ label: e.slice(5), dte: cardDte(e) })), earnQ.data?.filings)}
+            {termEarningsNote(
+              nextEarnings,
+              // Every listed expiry, not only the cards: the first after the print may sit between two of them.
+              (expQ.data ?? []).map((e) => ({ label: e.slice(5), dte: cardDte(e) })),
+              earnQ.data?.filings
+            )}
           </p>
         ) : null}
       </section>

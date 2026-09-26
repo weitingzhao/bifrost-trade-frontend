@@ -6,6 +6,8 @@ import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
 import { GlobalMarketStatusBar, SkipToContent } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { ShellTip } from './ShellTip'
+import { cn } from '@/lib/utils'
+import { useToolbarShown } from './bottomLane'
 import { ShellNotices } from './ShellNotices'
 import { ShellContextMenu } from './ShellContextMenu'
 import { useShellArrows } from './useShellArrows'
@@ -97,6 +99,7 @@ export function AppLayout() {
   // route keeps its scroll for this tab's session.
   usePageLane()
   useGlassSync()
+  const toolbarShown = useToolbarShown()
   // Rev .72: display options on <html>, and Enter confirms a sheet.
   useDisplaySync()
   useSheetEnter()
@@ -141,7 +144,9 @@ export function AppLayout() {
             // The page-material scope (Rev .62): index.css reads it.
             data-mat=""
             tabIndex={-1}
-            className="@container/page flex-1 overflow-auto min-w-0 outline-none"
+            // The last row scrolls clear of the floating toolbar (Rev .73 §3):
+            // its height plus the gap, while the toolbar is shown.
+            className={cn('@container/page flex-1 overflow-auto min-w-0 outline-none', toolbarShown && 'pb-[72px]')}
           >
             <BoundedOutlet />
           </main>

@@ -37,7 +37,7 @@
   padding: 10px 12px;
   border: 1px dashed color-mix(in srgb, var(--sk-ink) 18%, transparent);
   border-radius: 11px;
-  font: 600 11.5px var(--font-sans);
+  font: 600 12px var(--font-sans);
   color: var(--sk-soft);
   transition:
     background var(--mo-fast) ease,
@@ -46,7 +46,7 @@
 }
 
 .zone span {
-  font: 10.5px var(--font-mono);
+  font: 11px var(--font-mono);
   color: var(--sk-mute);
 }
 

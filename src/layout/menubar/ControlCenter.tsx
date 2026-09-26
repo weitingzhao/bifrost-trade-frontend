@@ -149,8 +149,8 @@ export function ControlCenter() {
                 <span className="size-[9px] rounded-full" style={{ background: LAMP_VAR[lamp] }} />
               </span>
               <span className="flex min-w-0 flex-col gap-px">
-                <span className={cn(css.fs125, 'font-semibold')}>{label}</span>
-                <span className={cn(css.mono, css.fs105, 'truncate text-[var(--sk-mute2)]')}>{text}</span>
+                <span className={cn(css.fs13, 'font-semibold')}>{label}</span>
+                <span className={cn(css.mono, css.fs11, 'truncate text-[var(--sk-mute2)]')}>{text}</span>
               </span>
             </button>
           ))}
@@ -165,7 +165,7 @@ export function ControlCenter() {
                     <span className={cn(css.fs12, 'text-[var(--sk-ink)]')}>{d.name}</span>
                     <span className={cn(css.fs11, 'text-[var(--sk-mute2)]')}>{d.why}</span>
                     {d.detail.map((x) => (
-                      <span key={x.text} className={cn(css.fs105, x.tone === 'warn' ? 'text-[var(--color-lamp-yellow)]' : 'text-[var(--sk-mute)]')}>
+                      <span key={x.text} className={cn(css.fs11, x.tone === 'warn' ? 'text-[var(--color-lamp-yellow)]' : 'text-[var(--sk-mute)]')}>
                         {x.text}
                       </span>
                     ))}

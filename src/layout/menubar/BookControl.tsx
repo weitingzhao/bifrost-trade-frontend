@@ -204,23 +204,23 @@ export function BookControl() {
               {scope === 'all' ? STACK : scope.charAt(0)}
             </span>
             <span className={cn(css.book, 'inline-flex items-center gap-1.5 border-l border-[color-mix(in_srgb,var(--sk-ink)_12%,transparent)] pl-[7px]')}>
-              <span className={cn(css.mono, 'font-semibold', css.fs115)} style={{ color: dirInk(hasBook ? day : null) }}>
+              <span className={cn(css.mono, 'font-semibold', css.fs12)} style={{ color: dirInk(hasBook ? day : null) }}>
                 {dayText}
               </span>
-              <span className={cn(css.mono, css.bookDelta, 'text-[var(--sk-mute2)]', css.fs105)}>
+              <span className={cn(css.mono, css.bookDelta, 'text-[var(--sk-mute2)]', css.fs11)}>
                 Δ{delta == null ? '—' : signedInt(delta)}
               </span>
             </span>
             {legs.length > 0 ? (
               <span className={cn(css.bookLegs, 'inline-flex items-center gap-[3px] text-[var(--color-lamp-yellow)]')}>
                 {TRIANGLE}
-                <span className={cn(css.mono, css.fs105)}>{legs.length}</span>
+                <span className={cn(css.mono, css.fs11)}>{legs.length}</span>
               </span>
             ) : null}
             {breaches.length > 0 ? (
               <span className="inline-flex flex-none items-center gap-[3px]" style={{ color: breachInk }}>
                 {OCTAGON}
-                <span className={cn(css.mono, css.fs105)}>{breaches.length}</span>
+                <span className={cn(css.mono, css.fs11)}>{breaches.length}</span>
               </span>
             ) : null}
           </button>
@@ -246,8 +246,8 @@ export function BookControl() {
                 title={off ? 'Plans go into one account — pick HOST or SEC' : `Scope → ${LABEL[s]}`}
                 onClick={() => setAccountScope(s)}
               >
-                <span className={cn(css.fs115)}>{LABEL[s]}</span>
-                <span className={cn(css.mono, 'font-medium', css.fs105)} style={{ color: dirInk(hasBook ? pl : null) }}>
+                <span className={cn(css.fs12)}>{LABEL[s]}</span>
+                <span className={cn(css.mono, 'font-medium', css.fs11)} style={{ color: dirInk(hasBook ? pl : null) }}>
                   {hasBook ? fmtSignedUsd0(pl) : '—'}
                 </span>
               </button>
@@ -264,7 +264,7 @@ export function BookControl() {
           >
             <span className="flex items-center gap-1.5 text-[var(--sk-mute2)]">
               {TREND}
-              <span className={cn(css.mono, css.fs105)}>{scoped.length}</span>
+              <span className={cn(css.mono, css.fs11)}>{scoped.length}</span>
             </span>
             <span className={cn(css.mono, 'font-semibold tracking-[-0.01em]', css.fs24)} style={{ color: dirInk(hasBook ? day : null) }}>
               {dayText}
@@ -306,7 +306,7 @@ export function BookControl() {
                     <span className={cn(css.mono, 'truncate text-[var(--sk-ink)]', css.fs12)}>{r.name}</span>
                     <span className={cn('truncate text-[var(--sk-mute2)]', css.fs11)}>{r.sub}</span>
                   </span>
-                  <span className={cn(css.mono, 'text-right', css.fs115)} style={{ color: r.rightInk }}>
+                  <span className={cn(css.mono, 'text-right', css.fs12)} style={{ color: r.rightInk }}>
                     {r.right}
                   </span>
                 </div>
@@ -328,7 +328,7 @@ export function BookControl() {
 function Foot({ text, children }: { text: string; children: ReactNode }) {
   return (
     <div className="flex items-center gap-2.5 px-1">
-      <span title={text} className={cn('min-w-0 flex-1 truncate text-[var(--sk-mute)]', css.fs105)}>
+      <span title={text} className={cn('min-w-0 flex-1 truncate text-[var(--sk-mute)]', css.fs11)}>
         {text}
       </span>
       {children}

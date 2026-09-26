@@ -94,7 +94,7 @@ export function SessionClock({
           <span className="inline-flex" style={{ color: PHASE_INK[s.phase] }}>
             {PHASE_ICON[s.phase]}
           </span>
-          <span className={cn(css.mono, css.fs115)} style={{ color: s.closing ? 'var(--color-lamp-yellow)' : 'var(--sk-soft)' }}>
+          <span className={cn(css.mono, css.fs12)} style={{ color: s.closing ? 'var(--color-lamp-yellow)' : 'var(--sk-soft)' }}>
             {s.left}
           </span>
           <span

@@ -105,10 +105,9 @@ function HeroCard({
           type="button"
           onClick={onOpen}
           title={`${gauge.title}\nClick to open the detail.`}
-          className={cn(
-            positionsUi.cap,
-            'cursor-pointer border-0 bg-transparent p-0 text-secondary-foreground hover:text-foreground hover:underline'
-          )}
+          // The KPI label (Rev .74 §5): 11/600 sentence case, as every hero's.
+          data-sr-kpi-l=""
+          className="cursor-pointer border-0 bg-transparent p-0 hover:text-foreground hover:underline"
         >
           {name}
         </button>
@@ -140,14 +139,8 @@ function HeroCard({
       <div data-sr-kpi-v="" className={warn ? 'text-warning' : 'text-foreground'}>
         {gauge.hero}
       </div>
-      <div
-        className={cn(
-          positionsUi.mono,
-          'type-hero-read text-pretty text-[var(--sk-mute2)]'
-        )}
-      >
-        {gauge.read}
-      </div>
+      {/* A sentence, so the body face (Rev .74 §3: mono is for figures). */}
+      <div className="type-hero-read text-pretty tabular-nums text-[var(--sk-mute2)]">{gauge.read}</div>
     </div>
   )
 }

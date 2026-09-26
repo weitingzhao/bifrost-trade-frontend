@@ -122,7 +122,7 @@ export function ObjectiveControl() {
               >
                 {current ? current.title : 'No objective'}
               </span>
-              {wait ? <span className={cn(mb.mono, mb.fs105, 'text-[var(--color-lamp-yellow)]')}>{wait.v}</span> : null}
+              {wait ? <span className={cn(mb.mono, mb.fs11, 'text-[var(--color-lamp-yellow)]')}>{wait.v}</span> : null}
             </button>
           </PopoverTrigger>
         </MenubarTip>

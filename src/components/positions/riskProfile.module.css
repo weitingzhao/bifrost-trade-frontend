@@ -154,7 +154,7 @@
 }
 
 .payoffChartAxisLabel {
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 600;
   font-family: var(--font-sans), system-ui, sans-serif;
   fill: var(--risk-payoff-axis);

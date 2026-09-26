@@ -105,8 +105,10 @@ describe('the design walk, by revision', () => {
     // (full) @ Rev .72 — the "Apple" round, the Owner's final design — moves
     // materials, the frame (the pill retires into a top menu bar) and
     // interactions, and no page stamp: the page files changed only in look,
-    // so nothing walked reads stale for it.
-    expect(DESIGN_REV).toBe('2026-09-25.72')
+    // so nothing walked reads stale for it. Package .22 @ Rev .81 moves two
+    // page stamps: Performance (.77, layer colours) and Settings (.80, System
+    // Settings); only Performance was signed, so it alone reads stale.
+    expect(DESIGN_REV).toBe('2026-09-25.81')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -149,7 +151,8 @@ describe('the design walk, by revision', () => {
     // 0 → 1 with Rev .55: Objectives, moved to Home with a mode tag, is built
     // in the round that brings objective modes to this side. 1 → 0 the same
     // day, once research 0.113.0 stored the mode and the tag had one to read.
-    expect(counts.byState.stale).toBe(0)
+    // 0 → 1 with Rev .81: Performance, re-walked in batch H2.
+    expect(counts.byState.stale).toBe(1)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

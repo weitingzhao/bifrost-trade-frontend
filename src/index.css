@@ -634,8 +634,9 @@
   line-height: 1.1;
 }
 
+/* Whole pixels since design Rev .74 (the line under a hero was 11.5). */
 @utility type-hero-read {
-  font-size: 0.71875rem;
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
@@ -867,6 +868,22 @@ tbody tr:hover > td {
 
 [data-mat] button[aria-label='About this page']:is(:hover, [aria-expanded='true']) {
   background-color: color-mix(in srgb, var(--sk-ink) 14%, transparent);
+}
+
+/* The page toolbar (§17.3, Rev .73 §5): 1a without the frame — radius 12 —
+   but a solid raised base, because it sticks over content. */
+[data-mat] [data-sr-toolbar] {
+  border-color: transparent;
+  border-radius: 12px;
+  background: var(--sk-raised2);
+}
+
+/* KPI labels are the contract's 11/600 sentence case (§17.4, Rev .74 §5),
+   not the 10px uppercase the patterns layer still draws. */
+[data-mat] [data-sr-kpi-l] {
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 [data-mat] :is([data-sr-kpi='hero'], [data-sr-kpi='strip']) {
@@ -1331,6 +1348,11 @@ html[data-contrast='more'][data-theme='light'] {
   --sk-mute: #4b5563;
   --sk-mute2: #374151;
   --sk-faint: #6b7280;
+}
+
+/* The sidebar never scrolls sideways (Rev .73 §4). */
+[data-sidebar='content'] {
+  overflow-x: hidden;
 }
 
 /* Press feedback (design Rev .68 §3): a control dips to .97 while held —

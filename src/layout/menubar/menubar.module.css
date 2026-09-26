@@ -336,15 +336,12 @@ button.tile:active {
   }
 }
 
-/* The design's own sizes on the bar and in its centres (the dense scale has
-   no 10.5 / 11.5 / 24, and a bracketed px is what the typography ratchet
-   counts). */
+/* The design's own sizes on the bar and in its centres — whole pixels since
+   Rev .74 (the dense scale has no 11 / 12 / 24 at these weights, and a
+   bracketed px is what the typography ratchet counts). */
 .fs10 { font-size: 10px; }
-.fs105 { font-size: 10.5px; }
 .fs11 { font-size: 11px; }
-.fs115 { font-size: 11.5px; }
 .fs12 { font-size: 12px; }
-.fs125 { font-size: 12.5px; }
 .fs13 { font-size: 13px; }
 .fs14 { font-size: 14px; }
 .fs16 { font-size: 16px; }

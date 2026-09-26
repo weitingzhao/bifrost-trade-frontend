@@ -204,13 +204,15 @@ describe('the design walk, as it stands', () => {
     // Objectives went stale when the design moved it to Home with a mode tag,
     // and left for `reviewing` the same day with the tag built. 57 with the
     // System pass: Orchestration and Personas, rebuilt, wait for a look.
-    expect(counts.aligned).toBe(57)
+    // 56 with Package .22 @ Rev .81: Performance's own stamp moved to .77, so
+    // it reads stale until batch H2 re-walks it.
+    expect(counts.aligned).toBe(56)
     expect(
       rows
         .filter((r) => r.state === 'stale')
         .map((r) => r.path)
         .sort()
-    ).toEqual([])
+    ).toEqual(['/portfolio/performance'])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -459,7 +461,6 @@ describe('the design walk, as it stands', () => {
       '/portfolio/corporate-actions',
       '/portfolio/ledger',
       '/portfolio/outcome',
-      '/portfolio/performance',
       '/portfolio/pnl-explain',
       '/portfolio/transfer',
       '/research/book',

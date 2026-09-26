@@ -105,7 +105,7 @@ export function AppHeader({
         aria-label="Breadcrumb"
         className="flex min-w-0 shrink items-center gap-1.5 text-dense-body"
       >
-        {trail.map((crumb, i) => (
+        {trail.map((crumb) => (
           <span key={crumb.label} className="hidden shrink-0 items-center gap-1.5 text-muted-foreground sm:flex">
             {/* Ancestors are links where they resolve (§16.12); a fold with
                 no page of its own stays a word. */}
@@ -117,10 +117,11 @@ export function AppHeader({
               crumb.label
             )}
             {/* `›`, the design's own separator. A slash reads as a path; the
-                trail is a place inside a place. */}
-            {leafFolded && i === trail.length - 1 ? null : (
-              <span aria-hidden="true" className="text-border">›</span>
-            )}
+                trail is a place inside a place. It stays after the last
+                parent even while the leaf is folded (Rev .73 §2): without it
+                "Portfolio › Performance" read as though you were on
+                Performance; "Portfolio › Performance ›" says you are in it. */}
+            <span aria-hidden="true" className="text-border">›</span>
           </span>
         ))}
         {/* The leaf carries full ink and 600, the trail behind it does not:

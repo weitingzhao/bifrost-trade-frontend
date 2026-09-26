@@ -43,9 +43,12 @@ describe('adoptionByGroup', () => {
     // Re-walked and built the same day; nine of ten until the Owner looks.
     // Signed 2026-09-24 — ten of ten again. Nine of ten on 2026-09-25:
     // Positions is a page-head and §17 sample, rebuilt and waiting for a look.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 9, left: 1 })
+    // Eight of ten with Package .22 @ Rev .81: Performance's own stamp moved
+    // to .77 (layer colours, the Total area split at zero) and it reads stale
+    // until batch H2 re-walks it.
+    expect(portfolio).toMatchObject({ total: 10, aligned: 8, left: 2 })
     expect(portfolio?.byState.reviewing).toBe(1)
-    expect(portfolio?.byState.stale).toBe(0)
+    expect(portfolio?.byState.stale).toBe(1)
     expect(portfolio?.byState.unbuilt).toBe(0)
 
     // The design's own backlog is nobody's work here, so it stays out of the

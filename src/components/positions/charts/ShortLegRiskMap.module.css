@@ -190,7 +190,7 @@
 /* Every point wears its name; the selected one is the one the panel is talking about. */
 .pointLabel {
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 8.5px;
+  font-size: 9px;
   fill: var(--muted-foreground);
   cursor: pointer;
 }

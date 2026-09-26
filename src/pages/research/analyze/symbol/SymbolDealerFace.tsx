@@ -18,6 +18,7 @@ import { DealerMaxPainTrend, DealerRegimeTimeline, useDealerTimeline } from './S
 import { Link } from 'react-router-dom'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
+import { VannaCharmMap } from '@/components/charts/VannaCharmMap'
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
 import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
@@ -163,6 +164,14 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const pinRate = pinsQ.data?.pin_rate ?? null
   const cycleOn = new Map((cyclesQ.data ?? []).map((c) => [c.opex_date ?? '', c]))
   const timeline = useDealerTimeline(sym, expiry)
+  // The opex strike map is `ORDER BY strike LIMIT 60` on the server — for a
+  // name above its 60th strike (PLTR: 5…145 against spot 190) it misses the
+  // money entirely, and the map says so rather than passing for a near-money read.
+  const mapStrikes = (opexQ.data?.strike_map ?? []).map((r) => r.strike).filter((k): k is number => k != null)
+  const mapSpot = opexQ.data?.row?.spot ?? spot
+  const mapMax = mapStrikes.length > 0 ? Math.max(...mapStrikes) : null
+  const mapMin = mapStrikes.length > 0 ? Math.min(...mapStrikes) : null
+  const mapOutOfRange = mapSpot != null && mapMax != null && mapMin != null && (mapSpot > mapMax || mapSpot < mapMin)
   const pinExpiry = typeof p.expiry === 'string' ? p.expiry : expiry
 
   // The exhibit's own expiry, near-the-money — the chart the regime was read from.
@@ -637,6 +646,34 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
         <div className="border-l border-border/60 px-3 pb-1 pt-0 md:pt-0">
           <DealerMaxPainTrend sym={sym} expiry={pinExpiry} />
         </div>
+        </div>
+        {/* Owner 2026-09-26: keep the retired OpEx section's map, named for
+            what it is — the strike map carries OI and GEX, not vanna, so the
+            bars are OI-weighted shapes, not the store's exposure. */}
+        <div className="border-t border-border/60 px-3 pb-1 pt-2">
+          <div className="mb-1 flex flex-wrap items-baseline gap-2">
+            <span className={cap}>Vanna / charm by strike · OI-weighted proxy</span>
+            <span
+              className="ml-auto text-dense-micro text-muted-foreground"
+              title="The store keeps vanna and charm as totals and zero strikes only; per strike it keeps OI and GEX. These bars are the OI shapes a dealer book would carry — direction and relative size, not dollars."
+            >
+              a proxy, not the store&rsquo;s vanna
+            </span>
+          </div>
+          {mapOutOfRange ? (
+            <p className="m-0 pb-1 text-dense-micro text-warning">
+              The strike map stops at {mapMax} — the route returns the lowest 60 strikes, so spot{' '}
+              {mapSpot?.toFixed(2)} and the book around it are not in it. A Research fix is pending.
+            </p>
+          ) : null}
+          <div className="overflow-x-auto">
+            <VannaCharmMap
+              rows={opexQ.data?.strike_map ?? []}
+              spot={mapSpot}
+              vannaZeroStrike={vannaZero}
+              charmZeroStrike={charmZero}
+            />
+          </div>
         </div>
         <p className={note}>
           Charm accelerates in the last three sessions; that is when a pin either takes or fails.

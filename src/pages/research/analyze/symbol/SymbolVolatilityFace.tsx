@@ -24,6 +24,14 @@ import { daysTo } from '@/utils/optionTicker'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { SkewSurfaceChart, TermCurveChart } from '@/pages/research/analyze/symbol/symbolVolCharts'
 import { termEarningsLegend, termEarningsMark, termEarningsNote } from '@/utils/earningsEstimate'
+import {
+  LensOwnRecord,
+  ResidualHeatmap,
+  SkewFitNumbers,
+  SmileSecondFit,
+  VrpDistributions,
+  VrpForwardRecord,
+} from './SymbolVolatilityDepth'
 
 const cap =
   'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
@@ -329,6 +337,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
             </div>
           </div>
         </div>
+        <LensOwnRecord sym={sym} lens="iv_rank" />
         <p className={note}>
           Rank is where IV30 sits between its 1y low and high; percentile is the share of days
           below it. The universe table stays in Ratings › Underlyings — this page is one name.
@@ -351,6 +360,9 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
             <BarStrip bars={vrpBins} title="252d distribution of the spread; the current decile is lit." />
           </div>
         </div>
+        <LensOwnRecord sym={sym} lens="vrp" />
+        <VrpForwardRecord exhibit={exOf('vrp')} />
+        <VrpDistributions rows={year} />
         <p className={note}>
           Sell-vol edge when the spread is high in its own history, buy-vol when low. Edge is
           about the spread&rsquo;s percentile, not its sign — a positive spread in its 20th
@@ -558,6 +570,13 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
             No chain snapshot with greeks for this expiry yet.
           </p>
         )}
+        <SkewFitNumbers row={fitRow} />
+        <SmileSecondFit sym={sym} expiry={fitRow?.expiry ?? null} />
+        <ResidualHeatmap
+          sym={sym}
+          expiries={fitRows.slice(0, 6).map((r) => r.expiry as string)}
+          spot={spot}
+        />
         <p className={note}>
           Residual = market minus Gatheral raw-SVI fit; strikes rich to the fit are candidates
           to sell, cheap ones to own. Cross-symbol skew extremes live in Vol ratings. The hand

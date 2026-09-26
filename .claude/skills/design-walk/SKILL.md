@@ -1,7 +1,7 @@
 ---
 name: design-walk
 description: Land a design/trade prototype into this frontend, one page at a time — read the prototype whole, measure the data, build section by section, sweep the interactions, then write the note. Use when a page is being walked, re-walked or built against design/trade/*.dc.html. Not a visual-design skill; frontend-design owns taste and dense-ui owns density.
-parity-id: design-walk-v1
+parity-id: design-walk-v2
 ---
 
 # Design Walk
@@ -47,6 +47,21 @@ Three ways a measurement lies, all of which have cost a re-walk:
 - **`count` is not always names.** Check whether a route returns one row per
   entity or one per entity per date, and whether a full page is the count or
   the cap. Two figures side by side must count the same thing.
+- **History is a different endpoint.** A store that answers "today only" on
+  its current route may keep the past behind another one. Before writing
+  "no history is served", try the `…/history` sibling and the date or
+  lookback argument, on Research **and** the market-data plugin. On 2026-09-26
+  two faces said "unmeasured" about readings DEV answered in full:
+  `/research/forecast/terrain/history` (30 sessions) and the plugin's
+  `/market/analytics/max-pain/compute/history` (55 sessions).
+
+The prototype is not the inventory. The design draws what it knows about, and
+it does not know what the stores hold. A reading DEV answers that serves this
+page's business question goes on the page even if the prototype has no seat
+for it: place it in the page's own panel language and tell Design in the note
+(DESIGN_CONTRACTS §15.6). Missing data is classified before it is seated
+empty: an entitlement gap is accepted and named, a bug or a stopped job is
+fixed (§15.8).
 
 ## 3. Extract before you duplicate (§14.2)
 

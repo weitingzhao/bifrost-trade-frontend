@@ -3,6 +3,7 @@ import type { QuoteItem, WatchlistItem } from '@/types/market'
 import {
   buildMarketStreamsRowForSymbol,
   buildWatchlistSymbols,
+  computeStreamsSummary,
   hasPosition,
   isObserveOnly,
   resolveSymbolSource,
@@ -224,5 +225,35 @@ describe('buildMarketStreamsRowForSymbol symbolSource', () => {
     })
     expect(built.symbolSource).toBe('on-demand')
     expect(isObserveOnly(built)).toBe(true)
+  })
+})
+
+describe('computeStreamsSummary', () => {
+  const noDaily = { totalDailyDollar: 0, totalDailyPct: null }
+
+  it('reports nothing priced when no row has a mark — unread, not a zero', () => {
+    // Invented rows: held, costed, never marked (a closed tape, a cold cache).
+    const rows = [
+      row({ symbol: 'AAA', qty: 10, avgCost: 50 }),
+      row({ symbol: 'BBB', qty: 5, avgCost: 20 }),
+    ]
+    const s = computeStreamsSummary(rows, noDaily)
+    expect(s.priced).toBe(0)
+    expect(s.dailyPriced).toBe(0)
+    expect(s.totalCostPnl).toBe(0)
+    expect(s.sincePct).toBeNull()
+  })
+
+  it('takes the percentage over the marked rows only', () => {
+    const rows = [
+      row({ symbol: 'AAA', qty: 10, avgCost: 50, pnlCost: 50, pnlVsBench: 5 }),
+      row({ symbol: 'BBB', qty: 5, avgCost: 20 }),
+    ]
+    const s = computeStreamsSummary(rows, noDaily)
+    expect(s.priced).toBe(1)
+    expect(s.dailyPriced).toBe(1)
+    expect(s.totalCostPnl).toBe(50)
+    // 50 over AAA's 500 of cost — BBB's unmarked 100 is not in the base.
+    expect(s.sincePct).toBeCloseTo(10)
   })
 })

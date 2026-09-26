@@ -123,7 +123,7 @@ export function CategoriesFace({ accounts, onClose, onRefreshed }: Props) {
         ) : null}
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <p className="text-dense-meta font-semibold text-muted-foreground">
             Manage Categories
           </p>
           <div className="space-y-1">
@@ -197,7 +197,7 @@ export function CategoriesFace({ accounts, onClose, onRefreshed }: Props) {
         <Separator className="my-3" />
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <p className="text-dense-meta font-semibold text-muted-foreground">
             Assign Category to Positions
           </p>
 

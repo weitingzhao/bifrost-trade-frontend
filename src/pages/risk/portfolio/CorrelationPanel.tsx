@@ -12,8 +12,8 @@ import { cn } from '@/lib/utils'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { RISK_CLUSTER_RHO, RISK_UNRECORDED, type RiskCluster } from '@/utils/riskExposure'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a panel's foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 import type { RiskCorrelationCell } from '@/api/research/riskStats'
 
 /** A correlation cell's ink: amber deepens with ρ, and the diagonal is not a reading. */
@@ -78,7 +78,7 @@ export function CorrelationPanel({
                     <tbody>
                       {symbols.map((a) => (
                         <tr key={a}>
-                          <td className={cn(positionsUi.td, 'border-b-0 pr-2 text-left font-bold text-[var(--color-entity-option)]')}>
+                          <td className={cn(positionsUi.td, 'border-b-0 pr-2 text-left font-bold text-entity-symbol')}>
                             {a}
                           </td>
                           {symbols.map((b) => {
@@ -124,7 +124,7 @@ export function CorrelationPanel({
                           <span className="font-semibold">
                             {c.members.length} names linked at ρ ≥ {RISK_CLUSTER_RHO.toFixed(2)}
                           </span>{' '}
-                          <span className={cn(positionsUi.mono, 'text-dense-meta text-[var(--color-entity-option)]')}>
+                          <span className={cn(positionsUi.mono, 'text-dense-meta text-entity-symbol')}>
                             {c.members.join(' · ')}
                           </span>
                           {c.oneWay ? (

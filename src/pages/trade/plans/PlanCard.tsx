@@ -60,7 +60,7 @@ function Section({
 }) {
   return (
     <section id={id} className="space-y-1 border-t border-border/60 px-3 py-2 first:border-t-0">
-      <h3 className="text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+      <h3 className="text-dense-meta font-semibold text-muted-foreground">
         {title}
         {meta ? <span className="ml-2 font-normal normal-case tracking-normal">{meta}</span> : null}
       </h3>
@@ -92,7 +92,7 @@ function BackingCell({
 }) {
   return (
     <div className="min-w-0">
-      <div className="text-dense-micro uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-dense-meta font-semibold text-muted-foreground">{label}</div>
       <div className={cn('font-mono text-dense-label font-semibold', muted && 'text-muted-foreground')}>
         {value}
       </div>
@@ -111,7 +111,7 @@ function LegsTable({ plan }: { plan: StrategyPlan }) {
   }
   return (
     <table className="w-full text-dense-meta">
-      <thead className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+      <thead className="text-dense-meta font-semibold text-muted-foreground">
         <tr>
           <th className="px-2 text-left font-medium">Side</th>
           <th className="px-2 text-left font-medium">Right</th>
@@ -125,7 +125,7 @@ function LegsTable({ plan }: { plan: StrategyPlan }) {
       <tbody className="font-mono">
         {plan.legs_json.map((leg, i) => (
           <tr key={`${leg.contract_key ?? 'leg'}-${i}`}>
-            <td className={cn('px-2 text-left', leg.side === 'sell' ? 'text-loss' : 'text-profit')}>
+            <td className="px-2 text-left text-[var(--sk-soft)]">
               {leg.side === 'sell' ? 'Sell' : 'Buy'}
             </td>
             <td className="px-2 text-left">{leg.right ?? (leg.sec_type === 'STK' ? 'STK' : '—')}</td>
@@ -398,7 +398,7 @@ export function PlanCard({
         <Section id="plan-source" title="Where it came from">
           <div className="space-y-1 pt-0.5">
             <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2 text-dense-meta">
-              <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+              <span className="text-dense-meta font-semibold text-muted-foreground">
                 {plan.source_kind}
               </span>
               <span>{plan.source_ref ?? '—'}</span>
@@ -408,7 +408,7 @@ export function PlanCard({
                 key={i}
                 className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2 text-dense-meta"
               >
-                <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+                <span className="text-dense-meta font-semibold text-muted-foreground">
                   {entry.kind ?? '·'}
                 </span>
                 {entry.to ? (
@@ -421,7 +421,7 @@ export function PlanCard({
               </div>
             ))}
             <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-2 text-dense-meta">
-              <span className="text-dense-micro uppercase tracking-wide text-muted-foreground">
+              <span className="text-dense-meta font-semibold text-muted-foreground">
                 rules
               </span>
               <span

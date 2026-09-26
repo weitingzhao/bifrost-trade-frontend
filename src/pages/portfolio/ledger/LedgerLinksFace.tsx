@@ -236,7 +236,7 @@ export function LedgerLinksFace({
       )}
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Candidates <span className="font-normal normal-case tracking-normal">{windowLabel}</span>
         </span>
         {candidates.length === 0 && !isLoading ? (

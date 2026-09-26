@@ -16,6 +16,7 @@ import { clockLabel } from '@/utils/accountsFreshness'
 import { fetchedStamp } from '@/utils/accountsClocks'
 import type { FreshnessRow } from '@/utils/accountsFreshnessRows'
 import { accountsUi, freshnessToneDot, freshnessToneText } from './accountsUi'
+import { SectionHead } from '@/components/layout'
 
 const COLS = 5
 
@@ -37,11 +38,7 @@ export function AccountsFreshnessBand({
 
   return (
     <section aria-label="Freshness">
-      <div className={accountsUi.tierRow}>
-        <span className={accountsUi.tierLabel}>Freshness</span>
-        <span className={accountsUi.tierRule} />
-        <span className={accountsUi.tierNote}>{from}</span>
-      </div>
+      <SectionHead meta={from}>Freshness</SectionHead>
 
       <div className={accountsUi.panel}>
         <div className={accountsUi.panelHead}>

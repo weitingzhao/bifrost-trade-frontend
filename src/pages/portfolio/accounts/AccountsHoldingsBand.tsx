@@ -6,6 +6,7 @@ import { fmtUsd } from '@/lib/format'
 import type { IbPositionRow } from '@/types/monitor'
 import type { DailyBenchmark, QuoteItem } from '@/types/market'
 import { accountsUi } from './accountsUi'
+import { SectionHead } from '@/components/layout'
 
 export function AccountsHoldingsBand({
   accountId,
@@ -34,13 +35,9 @@ export function AccountsHoldingsBand({
 
   return (
     <section aria-label={`Holdings ${accountId}`}>
-      <div className={accountsUi.tierRow}>
-        <span className={accountsUi.tierLabel}>Holdings · {accountId} · {roleLabel}</span>
-        <span className={accountsUi.tierRule} />
-        <span className={accountsUi.tierNote}>
-          as the broker reports them · click a row in the table above to switch account
-        </span>
-      </div>
+      <SectionHead note="As the broker reports them · click a row in the table above to switch account.">
+        Holdings · {accountId} · {roleLabel}
+      </SectionHead>
 
       {empty ? (
         <div className={accountsUi.panel}>

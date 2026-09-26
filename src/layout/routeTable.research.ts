@@ -80,8 +80,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // One inbox, and it seats in Review (§5a.8). The trail follows the row.
     crumbs: REVIEW,
     design: {
-      state: 'aligned',
-      rev: '2026-09-23.1',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.85',
       note: DESIGN_NOTES['/research/loop/decisions'],
     },
   },
@@ -539,8 +540,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Live',
     crumbs: MARKET_RAIL,
     design: {
-      state: 'aligned',
-      rev: '2026-09-23.7',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.85',
       note: DESIGN_NOTES['/market/live'],
     },
   },

@@ -1,20 +1,17 @@
-import { InlinePnl } from '@/components/data-display'
-import {
-  liveSummaryBarClass,
-  liveSummaryDividerClass,
-  liveSummaryKeyClass,
-  liveSummaryLabelClass,
-  liveSummarySegClass,
-  liveSummaryValClass,
-} from './liveUi'
+import { HeroCard, HeroRow } from '@/components/layout'
+import { pnlColorClass } from '@/utils/dailyChange'
 
 interface Props {
   sinceDollar: number
   sincePct: number | null
   dailyDollar: number
   dailyPct: number | null
+  /** Rows with a Since $ / a Daily $, over all rows. None priced is unread, never `$0`. */
+  priced: number
+  dailyPriced: number
+  rows: number
   visible: boolean
-  /** The design's right edge: what the bar sums — `stocks · Host + Secondary`. */
+  /** What the readings sum — `stocks · Host + Secondary`. */
   scopeLabel: string
 }
 
@@ -22,41 +19,53 @@ function fmtUsdCompact(n: number): string {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
 }
 
-export function LiveStreamsSummaryBar({ sinceDollar, sincePct, dailyDollar, dailyPct, visible, scopeLabel }: Props) {
+const signedPct2 = (v: number | null) => (v != null && Number.isFinite(v) ? `${v >= 0 ? '+' : ''}${v.toFixed(2)}%` : '— %')
+
+/**
+ * The STK streams summary as two heroes (design Rev .85): stocks since each
+ * position opened, and stocks today. Both are signed P&L, so they keep the
+ * direction inks; the scope they sum is the sub-line.
+ */
+export function LiveStreamsSummaryBar({
+  sinceDollar,
+  sincePct,
+  dailyDollar,
+  dailyPct,
+  priced,
+  dailyPriced,
+  rows,
+  visible,
+  scopeLabel,
+}: Props) {
   if (!visible) return null
-
-  const showDaily = dailyPct != null || dailyDollar !== 0
-  const pct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`
-
+  const showSince = priced > 0
+  const showDaily = dailyPriced > 0
+  // A partial sum says how much of the tape it covers.
+  const cover = (n: number) => (n < rows ? ` · ${n} of ${rows} marked` : '')
   return (
-    <div className={liveSummaryBarClass} role="status" aria-label="STK streams summary">
-      <span className={liveSummaryLabelClass}>STK Streams</span>
-      {/* The design pairs each reading’s $ and % in one segment — «Since
-          +$4,671.00 +6.94%» — and names the sum’s scope at the right edge. */}
-      <span className={liveSummarySegClass}>
-        <span className={liveSummaryKeyClass}>Since</span>
-        <span className={liveSummaryValClass}>
-          <InlinePnl value={sinceDollar}>{fmtUsdCompact(sinceDollar)}</InlinePnl>{' '}
-          {sincePct != null && Number.isFinite(sincePct) ? (
-            <InlinePnl value={sincePct}>{pct(sincePct)}</InlinePnl>
-          ) : null}
-        </span>
-      </span>
-      {showDaily && (
-        <>
-          <span className={liveSummaryDividerClass} aria-hidden>|</span>
-          <span className={liveSummarySegClass}>
-            <span className={liveSummaryKeyClass}>Daily</span>
-            <span className={liveSummaryValClass}>
-              <InlinePnl value={dailyDollar}>{fmtUsdCompact(dailyDollar)}</InlinePnl>{' '}
-              {dailyPct != null && Number.isFinite(dailyPct) ? (
-                <InlinePnl value={dailyPct}>{pct(dailyPct)}</InlinePnl>
-              ) : null}
-            </span>
-          </span>
-        </>
-      )}
-      <span className="ml-auto whitespace-nowrap text-dense-meta text-muted-foreground">{scopeLabel}</span>
-    </div>
+    <HeroRow label="STK streams summary">
+      <HeroCard
+        label="Stocks · since open"
+        title={`Stocks P&L since each position opened · ${scopeLabel}`}
+        value={showSince ? fmtUsdCompact(sinceDollar) : '—'}
+        valueClassName={showSince ? pnlColorClass(sinceDollar) : 'text-muted-foreground'}
+        sub={
+          showSince
+            ? `${signedPct2(sincePct)} · ${scopeLabel}${cover(priced)}`
+            : `no row has a mark yet — unread, not flat · ${scopeLabel}`
+        }
+      />
+      <HeroCard
+        label="Stocks · today"
+        title={`Stocks P&L today · ${scopeLabel}`}
+        value={showDaily ? fmtUsdCompact(dailyDollar) : '—'}
+        valueClassName={showDaily ? pnlColorClass(dailyDollar) : 'text-muted-foreground'}
+        sub={
+          showDaily
+            ? `${signedPct2(dailyPct)} · ${scopeLabel}${cover(dailyPriced)}`
+            : `no row has a daily reference yet · ${scopeLabel}`
+        }
+      />
+    </HeroRow>
   )
 }

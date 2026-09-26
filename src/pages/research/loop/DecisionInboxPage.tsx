@@ -18,7 +18,7 @@
 import { useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Inbox } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
+import { HeroCard, HeroRow, PageHead, PageShell } from '@/components/layout'
 import { EmptyState, SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
@@ -288,73 +288,97 @@ export default function DecisionInboxPage() {
     [pendingByDest],
   )
 
-  return (
-    <PageShell padding="default" className="space-y-3">
-      <PageHeader
-        title="Decision Inbox"
-        description={INBOX_LEDE}
-        actions={<NewDraftDialog />}
-      />
+  // The toolbar's old sentence, whole — the heroes' shared title.
+  const countsLine = `${counts.decisions + shownRules.length} to decide${
+    shownRules.length > 0 ? ` (${shownRules.length} rule change${shownRules.length === 1 ? '' : 's'})` : ''
+  }${counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''} · ${counts.unreadBriefings} of ${
+    counts.briefings
+  } briefing${counts.briefings === 1 ? '' : 's'} unread · ${counts.total} pending${
+    counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''
+  }`
 
-      <div className="flex flex-wrap items-center gap-2">
+  return (
+    <PageShell padding="compact" className="space-y-3">
+      <PageHead title="Decision Inbox" info={INBOX_LEDE} actions={<NewDraftDialog />} />
+
+      <div data-sr-toolbar="">
         {/* The design's chip. It reads "the engine", not "autopilot seat": the
             seat model was retired on 2026-09-19, and what the tag is for is
-            saying which operator wrote the queue you are looking at. */}
-        <span className="inline-flex h-5.5 shrink-0 items-center gap-1.5 border px-2 text-dense-micro mat-tag">
-          <span className="font-mono font-bold text-primary">L3</span>
+            saying which operator wrote the queue you are looking at. The level
+            is soft ink (Rev .85) — a level, not a name and not a selection. */}
+        <span className="inline-flex h-5.5 shrink-0 items-center gap-1.5 border px-2 text-dense-meta mat-tag">
+          <span className="font-mono font-bold text-[var(--sk-soft)]">L3</span>
           <span className="text-muted-foreground">the engine</span>
         </span>
-        <span className="text-dense-meta font-medium text-muted-foreground shrink-0">View:</span>
-        <SegmentControl value={view} onChange={(v) => setView(v as View)} options={VIEW_OPTIONS} />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">View</span>
+        <SegmentControl size="xs" value={view} onChange={(v) => setView(v as View)} options={VIEW_OPTIONS} ariaLabel="View" />
         {/* Not a second row of views: the kind tag's colour already says where
             Approve writes, and this narrows along that same axis. Hidden under
             Briefings, which are read rather than written anywhere. */}
         {view === 'briefings' ? null : (
           <>
+            <span data-sr-tb="sep" />
             <span
-              className="text-dense-meta font-medium text-muted-foreground shrink-0"
+              data-sr-tb="label"
               title="Kind, read as where Approve writes. The tag colour on each card says the same thing."
             >
-              Writes to:
+              Writes to
             </span>
             <SegmentControl
+              size="xs"
               value={dest}
               onChange={(v) => setDest(v as Dest)}
               options={destOptions}
-              aria-label="Writes to"
+              ariaLabel="Writes to"
             />
           </>
         )}
-        <span className="text-dense-meta text-muted-foreground ml-auto">
-          {dest !== 'any' ? (
-            // Counted over one place, the decisions and briefings split says
-            // nothing: the list itself is narrowed. Say what the list is.
-            `${groups.length + shownRules.length} shown · ${counts.total} pending`
-          ) : (
-            <>
-              {counts.decisions + shownRules.length} to decide
-              {/* The design's own line: rule changes are named inside the
-                  count rather than beside it, because they are decisions of
-                  the same kind and not a second queue. */}
-              {shownRules.length > 0
-                ? ` (${shownRules.length} rule change${shownRules.length === 1 ? '' : 's'})`
-                : ''}
-              {/* Not "nothing to merge": since the kinds the server passes through
-                  joined this bucket, most of it is not a merge at all. */}
-              {counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''} ·{' '}
-              {counts.unreadBriefings} of {counts.briefings} briefing{counts.briefings === 1 ? '' : 's'} unread ·{' '}
-              {counts.total} pending
-              {counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}
-            </>
-          )}
-          {counts.unseen > 0 ? (
-            <span className="text-warning" title={`Showing the newest ${DRAFTS_PAGE_MAX}.`}>
-              {' '}
-              · {counts.unseen} not shown
-            </span>
-          ) : null}
-        </span>
+        {dest !== 'any' || counts.unseen > 0 ? (
+          <span data-sr-tb="meta">
+            {/* Counted over one place, the heroes' split says nothing: the list
+                itself is narrowed. Say what the list is. */}
+            {dest !== 'any' ? `${groups.length + shownRules.length} shown · ${counts.total} pending` : null}
+            {counts.unseen > 0 ? (
+              <span className="text-warning" title={`Showing the newest ${DRAFTS_PAGE_MAX}.`}>
+                {dest !== 'any' ? ' · ' : ''}
+                {counts.unseen} not shown
+              </span>
+            ) : null}
+          </span>
+        ) : null}
       </div>
+
+      {/* §16.2 (Rev .85): the toolbar's count sentence as three heroes; the
+          whole sentence stays in the row's title. Rule changes are named
+          inside To decide, because they are decisions of the same kind and
+          not a second queue. */}
+      <HeroRow label="The queue">
+        <HeroCard
+          label="To decide"
+          value={String(counts.decisions + shownRules.length)}
+          valueClassName={counts.decisions + shownRules.length > 0 ? 'text-foreground' : 'text-muted-foreground'}
+          state={counts.decisions + shownRules.length > 0 ? 'warn' : null}
+          title={countsLine}
+          sub={`${shownRules.length} rule change${shownRules.length === 1 ? '' : 's'} among them${
+            counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''
+          }`}
+        />
+        <HeroCard
+          label="Unread briefings"
+          value={String(counts.unreadBriefings)}
+          valueClassName={counts.unreadBriefings > 0 ? 'text-foreground' : 'text-muted-foreground'}
+          title={countsLine}
+          sub={`of ${counts.briefings} · need reading, not a decision`}
+        />
+        <HeroCard
+          label="Pending"
+          value={String(counts.total)}
+          valueClassName="text-[var(--sk-soft)]"
+          title={countsLine}
+          sub={`drafts and briefings${counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}`}
+        />
+      </HeroRow>
 
       {/* A thin proposal is not a card: it has not argued anything yet, and
           asking about it would be asking a question the sample cannot answer.

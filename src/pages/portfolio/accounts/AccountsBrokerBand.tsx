@@ -19,6 +19,7 @@ import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { TWS_REC_WARN_DAYS } from '@/utils/accountsClocks'
 import type { BrokerAccountRow, BrokerTotals } from './accountsBrokerRows'
 import { accountsUi, formatAgeDays } from './accountsUi'
+import { SectionHead } from '@/components/layout'
 
 function recClass(days: number | null, warnAt: number, dormant: boolean): string {
   if (dormant || days == null) return 'text-muted-foreground'
@@ -43,11 +44,7 @@ export function AccountsBrokerBand({
 
   return (
     <section aria-label="What the broker says">
-      <div className={accountsUi.tierRow}>
-        <span className={accountsUi.tierLabel}>What the broker says</span>
-        <span className={accountsUi.tierRule} />
-        <span className={accountsUi.tierNote}>all accounts, then each one — one table, no tab hopping</span>
-      </div>
+      <SectionHead note="All accounts, then each one — one table, no tab hopping.">What the broker says</SectionHead>
 
       <div className={accountsUi.panel}>
         <div className={accountsUi.tileRow}>

@@ -442,20 +442,28 @@ export function filterByCategory(rows: MarketStreamsRow[], filters: Set<string>)
   return rows.filter(row => filters.has(row.category))
 }
 
+/**
+ * The STK streams summary. `priced` is how many rows carry a Since $ at all: a
+ * row with no mark adds nothing to the sum, and when *no* row has one the sum
+ * is not zero — it is unread, and the caller says so rather than printing
+ * `$0 · +0.00%` (found on Live's hero, 2026-09-26, with 42 rows and no marks).
+ * The percentage is taken over the priced rows' cost only, for the same reason.
+ */
 export function computeStreamsSummary(
   filteredRows: MarketStreamsRow[],
   dailyTotals: { totalDailyDollar: number; totalDailyPct: number | null },
 ): {
   totalCostPnl: number
   sincePct: number | null
+  priced: number
+  /** Rows with a Daily $ — the day's sum is unread when this is 0. */
+  dailyPriced: number
   totalDailyDollar: number
   totalDailyPct: number | null
 } {
-  const totalCostPnl = filteredRows.reduce(
-    (a, r) => a + (r.pnlCost != null && Number.isFinite(r.pnlCost) ? r.pnlCost : 0),
-    0,
-  )
-  const totalCost = filteredRows.reduce((a, r) => {
+  const pricedRows = filteredRows.filter((r) => r.pnlCost != null && Number.isFinite(r.pnlCost))
+  const totalCostPnl = pricedRows.reduce((a, r) => a + (r.pnlCost as number), 0)
+  const totalCost = pricedRows.reduce((a, r) => {
     const q = r.qty != null && Number.isFinite(r.qty) ? r.qty : 0
     const c = r.avgCost != null && Number.isFinite(r.avgCost) ? r.avgCost : 0
     return a + q * c
@@ -464,6 +472,8 @@ export function computeStreamsSummary(
   return {
     totalCostPnl,
     sincePct,
+    priced: pricedRows.length,
+    dailyPriced: filteredRows.filter((r) => r.pnlVsBench != null && Number.isFinite(r.pnlVsBench)).length,
     totalDailyDollar: dailyTotals.totalDailyDollar,
     totalDailyPct: dailyTotals.totalDailyPct,
   }

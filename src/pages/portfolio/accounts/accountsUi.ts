@@ -75,17 +75,10 @@ export const accountsUi = {
   ),
   clockSep: 'text-border',
 
-  tierRow: 'mt-1 flex items-center gap-2.5',
-  tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
-  tierRule: 'h-px flex-1 bg-border',
-  // A sentence, so the body face (§17.7: mono is for numbers, contracts, ids, formulas).
-  tierNote: 'text-dense-meta text-muted-foreground',
 
   panel: 'border mat-card',
-  panelHead: cn(
-    'flex flex-wrap items-center gap-2 border-b border-border',
-    'bg-secondary/40 px-3 py-1.5',
-  ),
+  // Rev .62: a panel head is a rule, not a band.
+  panelHead: 'flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5',
   panelFoot: cn(
     'flex flex-wrap items-start gap-x-3 gap-y-1.5 border-t border-border',
     'px-3 py-1.5 text-dense-meta text-muted-foreground',
@@ -99,7 +92,7 @@ export const accountsUi = {
 
   helpPanel: 'border mat-card',
   helpHead: 'flex flex-wrap items-baseline gap-2 px-3 pt-2 pb-1',
-  helpCap: 'text-dense-caption font-semibold uppercase tracking-wide text-foreground/85',
+  helpCap: 'text-dense-meta font-semibold text-foreground/85',
   helpClose: cn(
     'ml-auto inline-flex h-5 items-center border px-1.5 mat-btn',
     'text-dense-meta text-muted-foreground hover:text-foreground',
@@ -109,7 +102,8 @@ export const accountsUi = {
 
   tileRow: 'flex flex-wrap gap-x-7 gap-y-3 px-3 py-2.5 border-b border-border',
   tile: 'flex min-w-0 flex-col gap-0.5',
-  tileCap: 'text-dense-caption uppercase tracking-wide text-muted-foreground',
+  // 11/600 sentence case (Rev .84).
+  tileCap: 'text-dense-meta font-semibold text-muted-foreground',
   tileValue: 'font-mono text-base font-bold tabular-nums',
   tileSub: 'text-dense-meta text-muted-foreground',
   tileLink: 'text-dense-meta text-primary hover:underline',

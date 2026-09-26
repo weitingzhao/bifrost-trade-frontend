@@ -1,12 +1,10 @@
-import { cn } from '@/lib/utils'
 import { SegmentControl } from '@/components/data-display'
+import { HeroCard, HeroRow, SectionHead } from '@/components/layout'
 import { pnlClass } from '@/pages/portfolio/ledger/ledgerFormat'
-import { ledgerFilterPanelClass } from '@/lib/ledgerUi'
 import {
   type LedgerHealthModel,
   type LedgerHealthTile,
 } from '@/pages/portfolio/ledger/ledgerHealth'
-import { ledgerShell } from '@/pages/portfolio/ledger/ledgerShellUi'
 import { LEDGER_UNLINK_BASIS_TABS, type LedgerUnlinkBasis } from '@/pages/portfolio/ledger/ledgerReconcile'
 
 function tileValueClass(tile: LedgerHealthTile): string {
@@ -32,61 +30,48 @@ export function LedgerHealthBand({
   const unlinkOptions = LEDGER_UNLINK_BASIS_TABS.map(({ id, label }) => ({ value: id, label }))
 
   return (
-    <section className="space-y-1.5" aria-label="Is this book healthy">
-      <div className={ledgerShell.tierRow}>
-        <span className={ledgerShell.tierLabel}>Is this book healthy</span>
-        <span className={ledgerShell.tierRule} />
-        <span className={ledgerShell.tierNote}>
-          every figure opens its own derivation · unlinked and unreconciled are amber, never red
-        </span>
-      </div>
-      <div className={ledgerFilterPanelClass}>
-        <div className="flex flex-wrap gap-x-6 gap-y-3 px-1 py-1">
-          {model.tiles.map(tile => (
-            <button
-              key={tile.id}
-              type="button"
-              title={tile.title}
-              onClick={() => onTile(tile)}
-              className="flex min-w-0 flex-col items-start gap-px border-0 bg-transparent p-0 text-left"
-            >
-              <span className="text-dense-meta font-bold uppercase tracking-wide text-muted-foreground">
-                {tile.label}
-              </span>
-              <span
-                className={cn(
-                  'font-mono text-base font-bold tabular-nums underline decoration-dotted underline-offset-2',
-                  tileValueClass(tile),
-                )}
-              >
-                {tile.value}
-              </span>
-              <span className="text-dense-caption text-muted-foreground">{tile.sub}</span>
-            </button>
-          ))}
-        </div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-2 border-t border-border bg-muted/30 px-3 py-1.5 -mx-2 -mb-2 rounded-b-lg">
-          <span className="text-dense-meta font-bold uppercase tracking-wide text-muted-foreground">
-            Unlinked counts
-          </span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Unlinked basis"
-            value={unlinkBasis}
-            onChange={v => onUnlinkBasis(v as LedgerUnlinkBasis)}
-            options={unlinkOptions}
+    <section className="space-y-2.5" aria-label="Is this book healthy">
+      {/* §16.4 · Rev .84: an h2; the section's rule — every figure opens its
+          own derivation, unlinked and unreconciled are amber, never red — is
+          its title. */}
+      <SectionHead note="Every figure opens its own derivation · unlinked and unreconciled are amber, never red.">
+        Is this book healthy
+      </SectionHead>
+      {/* The five readings as heroes (Rev .84), each still a button onto its
+          derivation. */}
+      <HeroRow label="Is this book healthy">
+        {model.tiles.map(tile => (
+          <HeroCard
+            key={tile.id}
+            label={tile.label}
+            value={tile.value}
+            valueClassName={tileValueClass(tile)}
+            sub={tile.sub}
+            title={tile.title}
+            onClick={() => onTile(tile)}
           />
-          <span className="min-w-0 flex-[1_1_16rem] text-dense-meta text-muted-foreground text-pretty">
-            {model.unlink.note}
-          </span>
-          <button
-            type="button"
-            className="text-dense-meta text-link underline underline-offset-2 bg-transparent border-0 p-0 cursor-pointer"
-            onClick={onOpenReconcile}
-          >
-            open the diff →
-          </button>
-        </div>
+        ))}
+      </HeroRow>
+      {/* Its own card now, no raised band (Rev .84). */}
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border px-3 py-1.5 mat-card">
+        <span className="text-dense-meta font-semibold text-muted-foreground">Unlinked counts</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Unlinked basis"
+          value={unlinkBasis}
+          onChange={v => onUnlinkBasis(v as LedgerUnlinkBasis)}
+          options={unlinkOptions}
+        />
+        <span className="min-w-0 flex-[1_1_16rem] text-dense-meta text-muted-foreground text-pretty">
+          {model.unlink.note}
+        </span>
+        <button
+          type="button"
+          className="text-dense-meta text-link underline underline-offset-2 bg-transparent border-0 p-0 cursor-pointer"
+          onClick={onOpenReconcile}
+        >
+          open the diff →
+        </button>
       </div>
     </section>
   )

@@ -5,6 +5,7 @@ import { LedgerTabFilterRow, type LedgerTabFilterProps } from './LedgerTabFilter
 import type { LedgerViewChip } from './ledgerViewChips'
 import type { MainTab } from './ledgerTypes'
 import { ledgerChipClass, ledgerShell } from './ledgerShellUi'
+import { SectionHead } from '@/components/layout'
 
 const DETAIL_VIEW_TOOLTIP =
   'Accordion keeps one expandable panel open (strategy group, instance card, option detail rows, or other sections on this tab). Multi allows several.'
@@ -72,13 +73,9 @@ export function LedgerTabToolbar({
 }: Props) {
   return (
     <section className="space-y-1.5" aria-label="Which question">
-      <div className={ledgerShell.tierRow}>
-        <span className={ledgerShell.tierLabel}>Which question</span>
-        <span className={ledgerShell.tierRule} />
-        <span className={ledgerShell.tierNote}>
-          two lenses, four views — the share buckets are one view with a bucket filter, not separate tabs
-        </span>
-      </div>
+      <SectionHead note="Two lenses, four views — the share buckets are one view with a bucket filter, not separate tabs.">
+        Which question
+      </SectionHead>
 
       <div className={ledgerShell.panel}>
         <div className={ledgerShell.selectorTop}>

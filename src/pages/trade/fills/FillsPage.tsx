@@ -16,13 +16,13 @@ import { usePageViewState } from '@/lib/pageView'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
@@ -54,8 +54,8 @@ const WINDOWS: { value: string; label: string; days: number | null }[] = [
   { value: 'all', label: 'All', days: null },
 ]
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a panel's foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 /** The source's own word, kept verbatim — it is how a reader tells the paths apart. */
 const SOURCE_LABEL: Record<string, string> = {
@@ -84,6 +84,7 @@ export default function FillsPage() {
    * never reads as a quiet book.
    */
   const [show, setShow] = usePageViewState('execFilter', 'needs')
+  const preview = usePreviewState()
   const execQuery = useExecutionsCanonical()
   const ordersQuery = useOpenOrders()
   const freshnessQuery = useExecutionsFreshness()
@@ -176,49 +177,73 @@ export default function FillsPage() {
     }
   }
 
-  const loading = execQuery.isLoading
-  const error = execQuery.error ?? null
+  // §17.1: the execution feed is the page's critical source.
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(execQuery)
+  const retry = () => void execQuery.refetch()
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Orders and Fills">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Trade / Orders &amp; Fills</p>}
+        {/* §16.10: the lead behind ⓘ; the design's two head actions are doors
+            here — the imports live on Accounts' freshness band, and a manual
+            execution is a ledger write, so both open the page that owns them. */}
+        <PageHead
           title="Orders & Fills"
-          titleSize="large"
-          description={PAGE_LEAD}
+          info={PAGE_LEAD}
           actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              <SegmentControl
-                size="xs"
-                ariaLabel="Window"
-                value={windowKey}
-                onChange={setWindowKey}
-                options={WINDOWS.map((w) => ({ value: w.value, label: w.label }))}
-              />
-              {summary.newestTradeDate ? (
-                <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                  newest fill {fmtIsoDateToken(summary.newestTradeDate)}
-                </span>
-              ) : null}
-              <Link to="/portfolio/ledger" className={positionsUi.link}>
-                the record → Trade Ledger
-              </Link>
-            </span>
+            <>
+              <PageHeadLink to="/portfolio/accounts" title="The TWS and Flex imports live on Accounts' freshness band">
+                ↻ Import from IB →
+              </PageHeadLink>
+              <PageHeadLink to="/portfolio/ledger" title="A manual execution is a ledger write — it lives on Trade Ledger">
+                ＋ Manual execution →
+              </PageHeadLink>
+            </>
           }
         />
+        <div data-sr-toolbar="">
+          <span data-sr-tb="label">Window</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Window"
+            value={windowKey}
+            onChange={setWindowKey}
+            options={WINDOWS.map((w) => ({ value: w.value, label: w.label }))}
+          />
+          <span data-sr-tb="meta">
+            {summary.newestTradeDate ? `newest fill ${fmtIsoDateToken(summary.newestTradeDate)} · ` : ''}
+            <Link to="/portfolio/ledger" className={positionsUi.link}>
+              the record → Trade Ledger
+            </Link>
+          </span>
+        </div>
 
-        {error ? <QueryErrorAlert error={error} onRetry={() => void execQuery.refetch()} /> : null}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-20 w-full rounded-md" />
-            <Skeleton className="h-56 w-full rounded-md" />
-          </div>
+        {pageState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh orders and fills"
+            detail={staleDetail(execQuery, 'fills since then are not shown.')}
+            onAction={retry}
+          />
+        ) : null}
+        {pageState === 'loading' ? (
+          <section className={positionsUi.panel}>
+            <ViewState kind="loading" title="Loading orders and fills" rows={8} cols={6} />
+          </section>
+        ) : pageState === 'failed' ? (
+          <section className={positionsUi.panel}>
+            <ViewState
+              kind="failed"
+              title="Couldn’t load orders and fills"
+              detail={failedDetail(execQuery, 'No fill was read — an empty list here would not mean a quiet book.')}
+              onAction={retry}
+            />
+          </section>
         ) : (
           <>
             <div className="flex flex-wrap items-start gap-3">
               <div className="flex min-w-0 flex-[999_1_40rem] flex-col gap-3">
-            <PositionsTier label="Open orders in IB" note="what the broker is working right now · TWS sends, this reads" />
+            <SectionHead note="What the broker is working right now · TWS sends, this reads.">Open orders in IB</SectionHead>
             <section className={positionsUi.panel} aria-label="Open orders in IB">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>
@@ -268,7 +293,7 @@ export default function FillsPage() {
                     <tbody>
                       {orders.map((o, i) => (
                         <tr key={`${o.order_id ?? i}`}>
-                          <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
+                          <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-entity-symbol')}>
                             {o.symbol ?? '—'}
                           </td>
                           <td className={cn(positionsUi.td, 'text-secondary-foreground')}>{o.action ?? '—'}</td>
@@ -290,7 +315,7 @@ export default function FillsPage() {
               <p className={cn(FOOT, 'm-0')}>{FILLS_UNRECORDED.order}</p>
             </section>
 
-            <PositionsTier label="Executions" note="what came back, and what claims it" />
+            <SectionHead note="What came back, and what claims it.">Executions</SectionHead>
             <section className={positionsUi.panel} aria-label="Executions">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>
@@ -367,8 +392,8 @@ export default function FillsPage() {
                           key={r.key}
                           onClick={() => selectRow(r.key)}
                           className={cn(
-                            'cursor-pointer hover:[&>td]:bg-[var(--sk-raised2)]',
-                            r.key === selectedKey && '[&>td]:bg-primary/10',
+                            'cursor-pointer hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                            r.key === selectedKey && '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]',
                           )}
                         >
                           <td className={cn(positionsUi.td, 'text-secondary-foreground')}>
@@ -494,8 +519,9 @@ export default function FillsPage() {
                           onClick={() => setPickedCandidate((prev) => (prev === c.instanceId ? null : c.instanceId))}
                           className={cn(
                             'grid cursor-pointer grid-cols-[0.875rem_minmax(0,1fr)] items-start gap-2.5 rounded-md border bg-[var(--sk-raised)] px-2.5 py-2 text-left',
+                            // Rev .84: the picked candidate is the accent — edge and a 12% ground.
                             pickedCandidate === c.instanceId
-                              ? 'border-primary bg-primary/5'
+                              ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
                               : 'border-border hover:border-[var(--sk-line2)]',
                           )}
                         >
@@ -566,12 +592,11 @@ export default function FillsPage() {
                 planRows.map((p) => (
                   <div key={p.id} className="flex flex-col gap-0.5 border-b border-border/55 px-3 py-2 last:border-b-0">
                     <span className="flex flex-wrap items-baseline gap-x-2">
-                      <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-instance)]')}>
+                      {/* Rev .84: a plan number is an id, not a name — soft ink. */}
+                      <span className={cn(positionsUi.mono, 'font-bold text-[var(--sk-soft)]')}>
                         TP-{String(p.id).padStart(4, '0')}
                       </span>
-                      <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>
-                        {p.symbol || '—'}
-                      </span>
+                      <span className={cn(positionsUi.mono, 'font-bold text-entity-symbol')}>{p.symbol || '—'}</span>
                       <span className="min-w-0 text-dense-meta text-secondary-foreground">{p.structure ?? '—'}</span>
                       <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>
                         {p.limit == null ? 'no limit' : fmtUsd(p.limit)}
@@ -632,7 +657,6 @@ export default function FillsPage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

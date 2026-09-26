@@ -90,7 +90,7 @@ export function PolicySuggestionBody({
           `lg`, where two would be two narrow ones. */}
       <div className={cn('grid gap-2 items-start', evidence ? '@3xl/page:grid-cols-2' : '')}>
         <section className="border px-2.5 py-2 mat-card" aria-label="What Approve changes">
-          <h4 className="mb-1.5 text-dense-micro font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <h4 className="mb-1.5 text-dense-meta font-semibold text-muted-foreground">
             Diff{objectiveId ? <span className="font-mono normal-case"> → {objectiveId}</span> : null}
           </h4>
         {diff.changes.length > 0 ? (
@@ -145,7 +145,7 @@ export function PolicySuggestionBody({
 
         {evidence ? (
           <section className="border px-2.5 py-2 mat-card" aria-label="What the suggestion rests on">
-            <h4 className="mb-1.5 text-dense-micro font-semibold uppercase tracking-[0.08em] text-muted-foreground">Evidence · what this rests on</h4>
+            <h4 className="mb-1.5 text-dense-meta font-semibold text-muted-foreground">Evidence · what this rests on</h4>
             <PolicyEvidence evidence={evidence} />
           </section>
         ) : null}

@@ -6,11 +6,7 @@ export const ledgerPageCardClass = cn(
 )
 
 export const ledgerShell = {
-  /** Section heading above a panel ("Is this book healthy", "Which question"). Accounts and Transfer use the same. */
-  tierRow: 'flex flex-wrap items-center gap-x-2.5 gap-y-1',
-  tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
-  tierRule: 'h-px min-w-8 flex-1 bg-border',
-  tierNote: 'text-dense-meta text-muted-foreground',
+  // Section headings are `SectionHead` h2s since Rev .84 (the lg-tier caps retired).
 
   /** One bordered surface for the view selector and for each view's list. */
   panel: 'min-w-0 border mat-card',
@@ -26,7 +22,8 @@ export const ledgerShell = {
   viewHint: 'ml-auto text-dense-meta text-muted-foreground',
   filterMetaInline: 'text-dense-meta text-muted-foreground',
 
-  cap: 'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground',
+  // 11/600 sentence case (Rev .84).
+  cap: 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground',
   capAttribution: 'text-[var(--color-link)]',
   capInstruments: 'text-[var(--color-entity-category)]',
 

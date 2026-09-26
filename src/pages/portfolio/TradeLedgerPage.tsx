@@ -10,9 +10,8 @@ import { useLedgerExecutions, useLedgerExecutionsBook } from '@/hooks/useLedgerE
 import { usePositionsScope } from '@/hooks/usePositionsScope'
 import { useLedgerUiSync } from '@/pages/portfolio/ledger/useLedgerUiSync'
 import { useTradeLedgerModel } from '@/pages/portfolio/ledger/useTradeLedgerModel'
-import { PageHeader, PageShell } from '@/components/layout'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Button } from '@/components/ui/button'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageHeadAction, PageShell } from '@/components/layout'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RefreshCw, Plus } from 'lucide-react'
 import type { LinkExecutionContext } from '@/components/positions/LinkExecutionModal'
@@ -27,7 +26,6 @@ import { LedgerFilterBar } from '@/pages/portfolio/ledger/LedgerFilterBar'
 import { LedgerSummarySection } from '@/pages/portfolio/ledger/LedgerSummarySection'
 import { LedgerHealthBand } from '@/pages/portfolio/ledger/LedgerHealthBand'
 import { LedgerInspector } from '@/pages/portfolio/ledger/LedgerInspector'
-import { ledgerPageCardClass } from '@/pages/portfolio/ledger/ledgerShellUi'
 import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter, StrategyScope } from '@/pages/portfolio/ledger/ledgerTypes'
 import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { buildAttributionChips, buildInstrumentChips } from '@/pages/portfolio/ledger/ledgerViewChips'
@@ -465,42 +463,33 @@ export default function TradeLedgerPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className={ledgerPageCardClass}>
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Trade ledger</p>}
+        {/* §16.10: the lead behind ⓘ, "history · no polling" as meta, Add
+            journal — the page's one write the other sources cannot make — as
+            the primary action. The title keeps the menu's name (§5a.5); the
+            prototype writes "Trade ledger". */}
+        <PageHead
           title="Trade Ledger"
-          titleSize="large"
-          description={PAGE_LEAD}
+          info={PAGE_LEAD}
+          meta="history · no polling"
           actions={
             <>
-              <span className="font-mono text-dense-caption text-muted-foreground">history · no polling</span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 gap-1.5 text-xs"
-                onClick={handleHeaderAddJournal}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add journal
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 gap-1.5 text-xs text-muted-foreground"
-                onClick={refreshAll}
-                disabled={isLoading}
-              >
-                <RefreshCw className={cn('h-3.5 w-3.5', isLoading && 'animate-spin')} />
-                Refresh
-              </Button>
+              <PageHeadAction primary onClick={handleHeaderAddJournal} title="Close what neither TWS nor Flex covers">
+                <Plus className="size-3.5" aria-hidden /> Add journal
+              </PageHeadAction>
+              <PageHeadAction onClick={refreshAll} disabled={isLoading}>
+                <RefreshCw className={cn('size-3.5', isLoading && 'animate-spin')} aria-hidden /> Refresh
+              </PageHeadAction>
             </>
           }
         />
 
         {(canonError || bookError) && (
-          <QueryErrorAlert
-            error="Failed to load executions — check Trading API connection."
-            onRetry={refreshAll}
+          <ViewState
+            kind="failed"
+            layout="strip"
+            title="Couldn’t load executions"
+            detail="The Trading API did not answer — the tables below may be missing fills, not quiet."
+            onAction={refreshAll}
           />
         )}
 
@@ -719,7 +708,6 @@ export default function TradeLedgerPage() {
             stockFills={stockFills}
           />
         )}
-      </div>
 
       <TradeLedgerModals
         accounts={accounts}

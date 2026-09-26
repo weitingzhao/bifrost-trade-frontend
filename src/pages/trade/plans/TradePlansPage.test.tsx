@@ -109,16 +109,21 @@ describe('Trade › Plans', () => {
     // Import from Inbox is a signpost to the Decision Inbox, not a write —
     // the prototype's own button navigates there.
     expect(
-      screen.getByRole('button', { name: /Import from Inbox/ }).getAttribute('title'),
+      screen.getByRole('link', { name: /Import from Inbox/ }).getAttribute('title'),
     ).toContain('opens the Decision Inbox')
     expect(screen.getByRole('button', { name: /Plan a trade/ })).toBeTruthy()
   })
 
-  it('says the margin columns are not computed instead of showing a number', async () => {
+  it('shows the cash a secured put reserves, and says pressure is not computed', async () => {
     fetchStrategyPlans.mockResolvedValue({ items: [plan()], count: 1 })
     renderPage()
+    // Cash / margin is read off the plan's own legs (Rev .84, business first):
+    // strike 180 × 100 × ratio 1 × qty 2 — not a margin estimate, and titled so.
+    const cash = await screen.findByTitle('Cash secured: strike × 100 × ratio × qty')
+    expect(cash.textContent).toBe('$36,000')
+    // Pressure after needs a per-plan margin, which nothing estimates.
     const cells = await screen.findAllByText('Not computed')
-    expect(cells).toHaveLength(2)
+    expect(cells).toHaveLength(1)
     for (const cell of cells) {
       expect(cell.getAttribute('title')).toBe(
         'Needs a per-plan margin estimate; no service computes it yet.',

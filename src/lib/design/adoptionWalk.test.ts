@@ -182,8 +182,10 @@ describe('the design walk, as it stands', () => {
     // 56 with batch H2: Performance, stale at Rev .81, rebuilt to its .77
     // layer inks and waiting for a look. 49 with batch J1 (Rev .82–.83):
     // Today, Portfolio, the Trade Desk, Rules, Stock ratings, Autopilot and
-    // The Book rebuilt to the §16 refinement and waiting for a look.
-    expect(counts.aligned + counts.byState.stale).toBe(49)
+    // The Book rebuilt to the §16 refinement and waiting for a look. 39 with
+    // J2 (Rev .84–.85): Plans, Fills, Expiration, Accounts, the Ledger, the
+    // four Risk readings pages but Margin, Live and the Decision Inbox.
+    expect(counts.aligned + counts.byState.stale).toBe(39)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -222,11 +224,8 @@ describe('the design walk, as it stands', () => {
         .sort()
       // Rev .95: every signed page the §16 refinement round re-stamped, until its batch re-walks it.
     ).toEqual([
-      '/market/live',
-      '/portfolio/accounts',
       '/portfolio/backing',
       '/portfolio/corporate-actions',
-      '/portfolio/ledger',
       '/portfolio/outcome',
       '/portfolio/pnl-explain',
       '/portfolio/transfer',
@@ -244,7 +243,6 @@ describe('the design walk, as it stands', () => {
       '/research/lab/symbol',
       '/research/lab/today',
       '/research/loop/candidates',
-      '/research/loop/decisions',
       '/research/loop/hypotheses',
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
@@ -258,14 +256,8 @@ describe('the design walk, as it stands', () => {
       '/review/fit',
       '/review/habits',
       '/review/playbook-stats',
-      '/risk/budget',
-      '/risk/portfolio',
-      '/risk/sizing',
       '/risk/stress',
       '/trade/assignment',
-      '/trade/expiration',
-      '/trade/fills',
-      '/trade/plans',
       '/trade/playbook',
     ])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
@@ -504,7 +496,8 @@ describe('the design walk, as it stands', () => {
     // Performance, rebuilt to its Rev .77 layer inks in batch H2. 29 with
     // batch J1 (Rev .82–.83): seven signed pages rebuilt to the §16
     // refinement join Risk, Performance and Symbol, which were already here.
-    expect(counts.byState.reviewing).toBe(29)
+    // 39 with J2 (Rev .84–.85): ten more join Limits and Margin.
+    expect(counts.byState.reviewing).toBe(39)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -530,7 +523,10 @@ describe('the design walk, as it stands', () => {
       '/docs/tech-stack',
       '/docs/ui-design-system',
       '/home',
+      '/market/live',
       '/portfolio',
+      '/portfolio/accounts',
+      '/portfolio/ledger',
       '/portfolio/performance',
       '/portfolio/positions',
       '/research/agent-personas',
@@ -539,6 +535,7 @@ describe('the design walk, as it stands', () => {
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lens-coverage',
+      '/research/loop/decisions',
       '/research/loop/harness',
       '/research/narrative',
       '/research/orchestration',
@@ -548,11 +545,17 @@ describe('the design walk, as it stands', () => {
       '/research/symbol',
       '/review/objectives',
       '/risk',
+      '/risk/budget',
       '/risk/limits',
       '/risk/margin',
+      '/risk/portfolio',
+      '/risk/sizing',
       '/settings',
       '/system/status',
       '/trade/desk',
+      '/trade/expiration',
+      '/trade/fills',
+      '/trade/plans',
       '/trade/rules',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

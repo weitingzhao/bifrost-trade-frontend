@@ -24,7 +24,7 @@ export function LedgerReconcileFace({
             key={s.k}
             className="flex flex-col border px-2.5 py-1.5 mat-card"
           >
-            <span className="text-dense-micro font-bold uppercase tracking-wide text-muted-foreground">{s.k}</span>
+            <span className="text-dense-meta font-semibold text-muted-foreground">{s.k}</span>
             <span
               className={cn(
                 'font-mono text-dense-body font-bold tabular-nums',

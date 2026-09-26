@@ -1,12 +1,12 @@
 /**
  * The plan table.
  *
- * Two columns the design asks for are grey: no service estimates the margin a
- * single plan would add, so `Cash / margin` and `Pressure after` say
- * `Not computed` with the reason in the tooltip rather than showing a number
- * the desk would trade on. The prototype's "Ceiling 70%" footnote is not here:
- * the Owner's pressure ceiling is 50% and adjustable, and neither column is
- * computed this round anyway.
+ * `Cash / margin` is the cash a secured put reserves — strike × 100 × ratio ×
+ * qty, off the plan's own legs (the figure the plan card shows). A plan with
+ * no short put reserves no cash; its margin is what no service estimates, so
+ * it reads `—` with that reason. `Pressure after` needs that margin and stays
+ * `Not computed`. The prototype's "Ceiling 70%" footnote is not here: the
+ * Owner's pressure ceiling is 50% and adjustable.
  */
 import {
   DenseDataTable,
@@ -22,6 +22,7 @@ import { planEstCredit, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
 import { planLegsText, planSourceText, planStatusVariant, planWhenText, planWhenTone } from './planRows'
+import { planCashSecured } from './planCardModel'
 
 export const NOT_COMPUTED = 'Not computed'
 export const NOT_COMPUTED_HINT =
@@ -35,6 +36,23 @@ function CreditCell({ plan }: { plan: StrategyPlan }) {
   return (
     <span className={cn('font-mono', credit < 0 ? 'text-loss' : 'text-profit')}>
       {credit < 0 ? '-' : '+'}${Math.abs(credit).toLocaleString('en-US')}
+    </span>
+  )
+}
+
+/** The cash a secured put reserves; `—` with the reason for anything else. */
+function CashCell({ plan }: { plan: StrategyPlan }) {
+  const cash = planCashSecured(plan)
+  if (cash == null) {
+    return (
+      <span className="text-muted-foreground" title="No short put — no cash reserved. A plan's margin is not estimated.">
+        —
+      </span>
+    )
+  }
+  return (
+    <span className="font-mono text-foreground" title="Cash secured: strike × 100 × ratio × qty">
+      ${Math.round(cash).toLocaleString('en-US')}
     </span>
   )
 }
@@ -67,7 +85,7 @@ export function PlansTable({
           <DenseTableHead className="text-right">Qty</DenseTableHead>
           <DenseTableHead>Acct</DenseTableHead>
           <DenseTableHead className="text-right">Est. credit</DenseTableHead>
-          <DenseTableHead>Cash / margin</DenseTableHead>
+          <DenseTableHead className="text-right">Cash / margin</DenseTableHead>
           <DenseTableHead>Pressure after</DenseTableHead>
           <DenseTableHead>Source</DenseTableHead>
           <DenseTableHead>Expires / filled</DenseTableHead>
@@ -80,7 +98,8 @@ export function PlansTable({
             onClick={() => onSelect(plan)}
             className={cn(
               'cursor-pointer',
-              plan.strategy_plan_id === selectedId && 'bg-primary/5',
+              // Rev .84: the picked row is the accent, mixed — never a lime fallback.
+              plan.strategy_plan_id === selectedId && 'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
             )}
           >
             <DenseTableCell>
@@ -98,8 +117,8 @@ export function PlansTable({
             <DenseTableCell className="text-right">
               <CreditCell plan={plan} />
             </DenseTableCell>
-            <DenseTableCell>
-              <NotComputedCell />
+            <DenseTableCell className="text-right">
+              <CashCell plan={plan} />
             </DenseTableCell>
             <DenseTableCell>
               <NotComputedCell />

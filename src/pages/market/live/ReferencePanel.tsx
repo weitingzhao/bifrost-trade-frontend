@@ -23,7 +23,7 @@ export function ReferencePanel({
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.1em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Reference
         </span>
         <span className="text-dense-body font-semibold">indices &amp; vol</span>
@@ -34,7 +34,7 @@ export function ReferencePanel({
       <div className="flex flex-wrap gap-x-6 gap-y-2 px-3 py-2.5">
         {tiles.map((t) => (
           <div key={t.symbol} className="flex min-w-[86px] flex-col gap-0.5">
-            <span className="text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            <span className="text-dense-meta font-semibold text-muted-foreground">
               {t.unavailable ? (
                 t.symbol
               ) : (

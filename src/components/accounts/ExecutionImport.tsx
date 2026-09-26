@@ -65,8 +65,8 @@ function buildFlexSuccessMessage(r: {
   return parts.join(' ')
 }
 
-const pillGroupClass =
-  'inline-flex flex-nowrap items-center gap-2 rounded-lg border border-border/60 bg-secondary/40 px-2.5 py-1.5 min-h-[30px] shrink-0'
+// The 1a material (Rev .62): a group is a card fill, not a framed pill.
+const pillGroupClass = 'inline-flex flex-wrap items-center gap-2 border px-2.5 py-1.5 min-h-[30px] mat-card'
 
 export function ExecutionImport({
   accountsFetchedAt,
@@ -171,9 +171,9 @@ export function ExecutionImport({
       <div
         className={cn(
           'flex w-full min-w-0 items-center gap-3',
-          hasAccounts
-            ? 'flex-col sm:flex-row sm:flex-nowrap sm:justify-between'
-            : 'flex-row flex-nowrap',
+          // Wraps by its own width, not the screen's (sm:): on Accounts beside
+          // the sidebar at 1024 the two groups overran the panel by 188px.
+          hasAccounts ? 'flex-row flex-wrap justify-between' : 'flex-row flex-wrap',
         )}
       >
         <div
@@ -210,8 +210,7 @@ export function ExecutionImport({
         {hasAccounts && (
           <div
             className={cn(
-              'flex w-full min-w-0 items-center gap-3 sm:w-auto sm:shrink-0',
-              'max-sm:justify-between',
+              'flex min-w-0 flex-wrap items-center gap-3',
             )}
           >
             <Separator orientation="vertical" className="hidden sm:block h-7 shrink-0" />

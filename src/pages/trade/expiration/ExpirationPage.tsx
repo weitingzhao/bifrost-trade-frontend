@@ -18,13 +18,13 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
@@ -56,7 +56,7 @@ const PAGE_LEAD =
   'What expires next, what each leg is worth if it does, and what closing it would cost. A decision is written in Trade Plans; this page carries the leg there.'
 
 const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+  'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 function ImpactRow({ k, v, tone, note }: { k: string; v: string; tone: 'up' | 'down' | 'warn' | 'muted'; note: string | null }) {
   return (
@@ -88,6 +88,7 @@ function isoDay(expiry: string): string {
 export default function ExpirationPage() {
   const { data: status, isLoading: statusLoading } = useMonitorStatus()
   const attrQuery = usePositionAttribution()
+  const preview = usePreviewState()
   const [pickedExpiry, setPickedExpiry] = useState<string | null>(null)
 
   const [today] = useState(() => {
@@ -247,56 +248,86 @@ export default function ExpirationPage() {
   const impact = useMemo(() => settleImpact(selected?.legs ?? [], decisionMap), [selected?.legs, decisionMap])
   const markAsOf = legs.find((l) => l.markAsOf)?.markAsOf ?? null
 
-  const loading = statusLoading || attrQuery.isLoading
-  const error = attrQuery.error ?? modelQueries.find((q) => q.error)?.error ?? null
+  // §17.1: the book's legs (the attribution read) are the critical source; the
+  // model's marks failing leaves costs unread, so it is a strip.
+  const modelError = modelQueries.find((q) => q.error)?.error ?? null
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : statusLoading
+        ? 'loading'
+        : sourceState(attrQuery)
+  const retry = () => void attrQuery.refetch()
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Expiration Desk">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Trade / Expiration</p>}
+        {/* §16.10: the lead behind ⓘ, the next expiry and the marks' date as
+            meta, Plans — where a decision is written — as the head's door. */}
+        <PageHead
           title="Expiration"
-          titleSize="large"
-          description={PAGE_LEAD}
-          actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              {nearest ? (
-                <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                  next {fmtIsoDateToken(isoDay(nearest.expiry))} ·{' '}
-                  <span className={nearest.dte != null && nearest.dte <= EXPIRATION_NEAR_DAYS ? 'text-warning' : ''}>
-                    {nearest.dte}d
-                  </span>{' '}
-                  away
-                </span>
-              ) : null}
-              {markAsOf ? (
-                <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                  marks {fmtIsoDateToken(markAsOf.slice(0, 10))} close
-                </span>
-              ) : null}
-              <Link to="/trade/plans" className={positionsUi.link}>
-                Trade Plans →
-              </Link>
-            </span>
+          info={PAGE_LEAD}
+          meta={
+            nearest || markAsOf ? (
+              <span className={positionsUi.mono}>
+                {nearest ? (
+                  <>
+                    next {fmtIsoDateToken(isoDay(nearest.expiry))} ·{' '}
+                    <span className={nearest.dte != null && nearest.dte <= EXPIRATION_NEAR_DAYS ? 'text-warning' : ''}>
+                      {nearest.dte}d
+                    </span>{' '}
+                    away
+                  </>
+                ) : null}
+                {nearest && markAsOf ? ' · ' : ''}
+                {markAsOf ? `marks ${fmtIsoDateToken(markAsOf.slice(0, 10))} close` : ''}
+              </span>
+            ) : undefined
           }
+          actions={<PageHeadLink to="/trade/plans">Trade Plans →</PageHeadLink>}
         />
 
-        {error ? <QueryErrorAlert error={error} onRetry={() => void attrQuery.refetch()} /> : null}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-20 w-full rounded-md" />
-            <Skeleton className="h-56 w-full rounded-md" />
-          </div>
+        {pageState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh the book’s legs"
+            detail={staleDetail(attrQuery, 'legs opened or closed since then are not shown.')}
+            onAction={retry}
+          />
+        ) : null}
+        {pageState !== 'loading' && pageState !== 'failed' && modelError != null ? (
+          <ViewState
+            kind="failed"
+            layout="strip"
+            title="Couldn’t load the marks"
+            detail={failedDetail(
+              { data: null, isPending: false, isError: true, error: modelError },
+              'Costs to close read nothing — unpriced, not free.',
+            )}
+            onAction={() => modelQueries.forEach((q) => void q.refetch())}
+          />
+        ) : null}
+        {pageState === 'loading' ? (
+          <section className={positionsUi.panel}>
+            <ViewState kind="loading" title="Loading what expires" rows={6} cols={6} />
+          </section>
+        ) : pageState === 'failed' ? (
+          <section className={positionsUi.panel}>
+            <ViewState
+              kind="failed"
+              title="Couldn’t load the book’s legs"
+              detail={failedDetail(attrQuery, 'Nothing was evaluated — this is not an empty expiry.')}
+              onAction={retry}
+            />
+          </section>
         ) : groups.length === 0 ? (
           <p className="m-0 border px-3 py-3 text-dense-meta text-muted-foreground mat-card">
             No option leg is open, so nothing expires.
           </p>
         ) : (
           <>
-            <PositionsTier
-              label={selected ? `Legs expiring ${fmtIsoDateToken(isoDay(selected.expiry))}` : 'Legs'}
-              note="tightest first — the one nearest its strike is the one to decide"
-            />
+            <SectionHead note="Tightest first — the one nearest its strike is the one to decide.">
+              {selected ? `Legs expiring ${fmtIsoDateToken(isoDay(selected.expiry))}` : 'Legs'}
+            </SectionHead>
             <section className={positionsUi.panel} aria-label="Legs expiring">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>
@@ -364,7 +395,7 @@ export default function ExpirationPage() {
                   </thead>
                   <tbody>
                     {(selected?.legs ?? []).map((l) => (
-                      <tr key={l.contractKey} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                      <tr key={l.contractKey} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
                         <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
                           {shortOptContractKey(l.contractKey)}
                           {l.accounts.length > 1 ? (
@@ -545,14 +576,15 @@ export default function ExpirationPage() {
 
             {/* Last, where the design files it: after Friday is what the
                 desk reads once today is decided. */}
-            <PositionsTier
-              label="Next expiries"
+            <SectionHead
               note={
                 nearest?.dte != null && nearest.dte > EXPIRATION_NEAR_DAYS
-                  ? `nothing inside ${EXPIRATION_NEAR_DAYS} days — the desk has nothing to decide today`
-                  : 'a leg inside the week is the desk’s business'
+                  ? `Nothing inside ${EXPIRATION_NEAR_DAYS} days — the desk has nothing to decide today.`
+                  : 'A leg inside the week is the desk’s business.'
               }
-            />
+            >
+              Next expiries
+            </SectionHead>
             <section className={positionsUi.panel} aria-label="Next expiries">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>Ladder</span>
@@ -604,7 +636,13 @@ export default function ExpirationPage() {
                       return (
                         <tr
                           key={g.expiry}
-                          className={cn('cursor-pointer', on ? '[&>td]:bg-[var(--sk-surface)]' : 'hover:[&>td]:bg-[var(--sk-raised2)]')}
+                          // Rev .84: the picked expiry is the accent, mixed; hover is ink 4%.
+                          className={cn(
+                            'cursor-pointer',
+                            on
+                              ? '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
+                              : 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                          )}
                           onClick={() => setPickedExpiry(g.expiry)}
                         >
                           <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
@@ -654,7 +692,6 @@ export default function ExpirationPage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

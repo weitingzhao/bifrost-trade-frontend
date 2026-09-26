@@ -13,15 +13,14 @@
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { HeroCard, HeroRow, PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
 import { PositionsStat } from '@/components/positions/PositionsStat'
+import { BookFetchMarker } from '@/components/positions/BookFetchMarker'
 import { BackingHeadroomPanel } from '@/components/positions/BackingHeadroomPanel'
 import { CorrelationPanel } from './CorrelationPanel'
 import { STRESS_VOL_ROWS } from '@/pages/risk/stress/stressModel'
@@ -31,17 +30,30 @@ import { fmtUsd } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { BETA_WINDOWS, CORR_WINDOW, useRiskExposure } from '@/hooks/useRiskExposure'
+import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { useRowLink } from '@/hooks/useRowLink'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
 import { RISK_CONCENTRATION_FLOOR, RISK_UNRECORDED } from '@/utils/riskExposure'
 
 const PAGE_LEAD =
   'Net book exposure, β-weighted to SPY. What each position is worth and what backs it is Backing & Model’s; this page asks how much of the book is one bet.'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a panel's foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+
+/** Row hover and the share track, in ink (Rev .84): the accent's lime fallback is gone. */
+const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
 
 
 export default function RiskPortfolioPage() {
   const [accountFilter, setAccountFilter] = useState('all')
+  const statusQ = useMonitorStatus()
+  const preview = usePreviewState()
+  const rowLink = useRowLink()
   const {
     status,
     statusLoading,
@@ -97,109 +109,150 @@ export default function RiskPortfolioPage() {
   const concentrated = topShare != null && topShare > RISK_CONCENTRATION_FLOOR
   const maxStress = Math.max(1, ...stress.cells.map((c) => Math.abs(c.pnl)))
 
-  const loading = statusLoading || modelQueries.some((q) => q.isLoading)
+  // §17.1: the broker snapshot (the monitor's status read) is the page's one
+  // critical source; the model service failing is narrower — a strip.
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : statusLoading || (status != null && modelQueries.some((q) => q.isLoading))
+        ? 'loading'
+        : sourceState(statusQ)
+  const retry = () => void statusQ.refetch()
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Portfolio Exposure">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Risk / Portfolio Exposure</p>}
-          title="Portfolio Exposure"
-          titleSize="large"
-          description={PAGE_LEAD}
-          actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              {accountIds.length > 1 ? (
-                <SegmentControl
-                  size="xs"
-                  ariaLabel="Account"
-                  value={accountFilter}
-                  onChange={setAccountFilter}
-                  options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-                />
-              ) : null}
-              <Link to="/portfolio/positions" className={positionsUi.link}>
-                Positions →
-              </Link>
-              {/* The reverse of Contract Greeks' own `Aggregates in Risk →`.
-                  The design asked for the pair and this side put its half in
-                  the table header instead, where the Owner could not find it:
-                  a muted note, third of four things in a row that ends with an
-                  amber concentration warning. A page's counterpart belongs
-                  beside the page's other counterpart. */}
-              <Link to="/research/greeks" className={positionsUi.link}>
-                Contract Greeks →
-              </Link>
-            </span>
-          }
-        />
-
-        {error ? <QueryErrorAlert error={error} onRetry={() => modelQueries.forEach((q) => void q.refetch())} /> : null}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-20 w-full rounded-md" />
-            <Skeleton className="h-64 w-full rounded-md" />
-          </div>
-        ) : (
+      {/* §16.10 with §17: the lead behind ⓘ, the snapshot's age as the stamp,
+          the two counterpart pages as head links, the account switch in the
+          toolbar. */}
+      <PageHead
+        title="Portfolio Exposure"
+        info={PAGE_LEAD}
+        stamp={<BookFetchMarker quiet />}
+        actions={
           <>
-            <section className={positionsUi.panel} aria-label="Book totals">
-              <div className="flex flex-wrap items-start gap-x-7 gap-y-3 px-3.5 py-2.5">
-                <PositionsStat cap="Net liq" value={netLiq > 0 ? fmtMvAbbrev(netLiq) : '—'} sub="broker, this scope" />
-                <PositionsStat
-                  cap="β-wtd Δ$ · SPY-eq"
-                  value={totals.withBetaDelta > 0 ? fmtSignedUsd0(totals.betaDeltaDollars) : '—'}
-                  ink={pnlColorClass(totals.betaDeltaDollars)}
-                  sub={
-                    totals.withBetaDelta > 0
-                      ? `${fmtSignedUsd0(totals.betaDeltaDollars / 100)} per +1% SPY · ${totals.withBetaDelta} of ${rows.length} names`
-                      : 'no name carries both a Δ$ and a β'
-                  }
-                />
-                <PositionsStat
-                  cap="Γ · per point"
-                  value={legs.length > 0 ? fmtSignedUsd0(totals.gamma) : '—'}
-                  ink={totals.gamma < 0 ? 'text-warning' : undefined}
-                  sub={totals.gamma < 0 ? 'short gamma — the move works against the book' : 'long gamma'}
-                />
-                <PositionsStat cap="Vega · per vol pt" value={legs.length > 0 ? fmtSignedUsd0(totals.vega) : '—'} />
-                <PositionsStat
-                  cap="Θ · per day"
-                  value={legs.length > 0 ? fmtSignedUsd0(totals.theta) : '—'}
-                  ink={pnlColorClass(totals.theta)}
-                />
-                <span className="ml-auto">
-                  <PositionsStat
-                    cap="Backing used"
-                    value={judgment?.usedPct != null ? `${Math.round(judgment.usedPct * 100)}%` : '—'}
-                    ink={judgment?.overGate ? 'text-warning' : undefined}
-                    sub={
-                      <>
-                        gate 85% ·{' '}
-                        <Link to="/portfolio/backing" className={positionsUi.link}>
-                          Backing →
-                        </Link>
-                      </>
-                    }
-                  />
-                </span>
-              </div>
-              <p className={cn(FOOT, 'm-0')}>
-                β and the correlation matrix are Research&rsquo;s, over {CORR_WINDOW}-day daily returns against{' '}
-                {betaQuery.data?.benchmark ?? 'SPY'}
-                {betaQuery.data?.as_of ? ` · last bar ${fmtIsoDateToken(betaQuery.data.as_of)}` : ''}. Δ$ is the model
-                service&rsquo;s; Γ, vega and Θ are the vendor legs Positions prices. This page re-derives none of the
-                four — what a position is worth and what backs it is{' '}
-                <Link to="/portfolio/backing" className={positionsUi.link}>
-                  Backing &amp; Model&rsquo;s
-                </Link>
-                .
-              </p>
-            </section>
+            <PageHeadLink to="/portfolio/positions">Positions →</PageHeadLink>
+            {/* The reverse of Contract Greeks' own `Aggregates in Risk →`: a
+                page's counterpart belongs beside its other counterpart, where
+                the Owner looked for it (it once hid in the table header). */}
+            <PageHeadLink to="/research/greeks" title="Every option leg in the book, greek by greek">
+              Contract Greeks →
+            </PageHeadLink>
+          </>
+        }
+      />
+      {accountIds.length > 1 ? (
+        <div data-sr-toolbar="">
+          <span data-sr-tb="label">Account</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Account"
+            value={accountFilter}
+            onChange={setAccountFilter}
+            options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+          />
+        </div>
+      ) : null}
 
-            <PositionsTier
-              label="Net Greeks by underlying"
-              note="β-wtd Δ$ = Δ$ × β against SPY · share is of the book’s risk, so a short name is a slice too"
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the broker snapshot"
+          detail={staleDetail(statusQ, 'trades since then are not reflected.')}
+          onAction={retry}
+        />
+      ) : null}
+      {pageState !== 'loading' && pageState !== 'failed' && error != null ? (
+        <ViewState
+          kind="failed"
+          layout="strip"
+          title="Couldn’t load the model"
+          detail={failedDetail(
+            { data: null, isPending: false, isError: true, error },
+            'Δ$ and the stress read nothing — unmeasured, not flat.',
+          )}
+          onAction={() => modelQueries.forEach((q) => void q.refetch())}
+        />
+      ) : null}
+      {pageState === 'loading' ? (
+        <section className={positionsUi.panel}>
+          <ViewState kind="loading" title="Loading exposure" rows={8} cols={6} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className={positionsUi.panel}>
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the broker snapshot"
+            detail={failedDetail(statusQ, 'No exposure below was computed — this is not a flat book.')}
+            onAction={retry}
+          />
+        </section>
+      ) : (
+        <>
+          {/* §16.2 (Rev .85): four heroes; Net liq and Vega stay in the strip
+              under them. Each keeps its sub-line, link and state ink. */}
+          <HeroRow label="The book's exposure">
+            <HeroCard
+              label="β-wtd Δ$ · SPY-eq"
+              value={totals.withBetaDelta > 0 ? fmtSignedUsd0(totals.betaDeltaDollars) : '—'}
+              // An exposure, not a gain: ink when long, the loss ink only when
+              // the book is net short (the design's bdColor).
+              valueClassName={totals.betaDeltaDollars < 0 ? 'text-loss' : 'text-foreground'}
+              sub={
+                totals.withBetaDelta > 0
+                  ? `${fmtSignedUsd0(totals.betaDeltaDollars / 100)} per +1% SPY · ${totals.withBetaDelta} of ${rows.length} names`
+                  : 'no name carries both a Δ$ and a β'
+              }
             />
+            <HeroCard
+              label="Γ · per point"
+              value={legs.length > 0 ? fmtSignedUsd0(totals.gamma) : '—'}
+              valueClassName={totals.gamma < 0 ? 'text-warning' : 'text-foreground'}
+              sub={totals.gamma < 0 ? 'short gamma — the move works against the book' : 'long gamma'}
+            />
+            <HeroCard
+              label="Θ · per day"
+              value={legs.length > 0 ? fmtSignedUsd0(totals.theta) : '—'}
+              valueClassName={pnlColorClass(totals.theta)}
+              sub="carry, summed over the priced legs"
+            />
+            <HeroCard
+              label="Backing used"
+              value={judgment?.usedPct != null ? `${Math.round(judgment.usedPct * 100)}%` : '—'}
+              valueClassName={judgment?.overGate ? 'text-warning' : 'text-foreground'}
+              state={judgment?.overGate ? 'warn' : null}
+              sub={
+                <>
+                  gate 85% ·{' '}
+                  <Link to="/portfolio/backing" className={positionsUi.link}>
+                    Backing →
+                  </Link>
+                </>
+              }
+            />
+          </HeroRow>
+          <section className={positionsUi.panel} aria-label="Book totals">
+            <div data-sr-kpi="strip-inset">
+              <PositionsStat cap="Net liq" value={netLiq > 0 ? fmtMvAbbrev(netLiq) : '—'} sub="broker, this scope" />
+              <PositionsStat cap="Vega · per vol pt" value={legs.length > 0 ? fmtSignedUsd0(totals.vega) : '—'} />
+            </div>
+            <p className={cn(FOOT, 'm-0')}>
+              β and the correlation matrix are Research&rsquo;s, over {CORR_WINDOW}-day daily returns against{' '}
+              {betaQuery.data?.benchmark ?? 'SPY'}
+              {betaQuery.data?.as_of ? ` · last bar ${fmtIsoDateToken(betaQuery.data.as_of)}` : ''}. Δ$ is the model
+              service&rsquo;s; Γ, vega and Θ are the vendor legs Positions prices. This page re-derives none of the
+              four — what a position is worth and what backs it is{' '}
+              <Link to="/portfolio/backing" className={positionsUi.link}>
+                Backing &amp; Model&rsquo;s
+              </Link>
+              .
+            </p>
+          </section>
+
+          <SectionHead
+            note="β-wtd Δ$ = Δ$ × β against SPY · share is of the book’s risk, so a short name is a slice too. Click a row for the Symbol page, its legs for them one by one."
+          >
+            Net Greeks by underlying
+          </SectionHead>
             <section className={positionsUi.panel} aria-label="Net Greeks by underlying">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>{rows.length} names</span>
@@ -263,8 +316,14 @@ export default function RiskPortfolioPage() {
                     {rows.map((r) => {
                       const hot = (r.share ?? 0) > RISK_CONCENTRATION_FLOOR
                       return (
-                        <tr key={r.symbol} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                          <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
+                        // The design's row opens the name (`r.go` → Symbol); the
+                        // legs link inside stops the click from reaching it.
+                        <tr
+                          key={r.symbol}
+                          title={`${r.symbol} — open the Symbol page`}
+                          {...rowLink(withSymbolParam(SYMBOL_PATH, r.symbol), ROW_HOVER)}
+                        >
+                          <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-entity-symbol')}>
                             {r.symbol}
                           </td>
                           <td className={cn(positionsUi.td, r.beta == null ? 'text-muted-foreground' : 'text-secondary-foreground')}>
@@ -296,7 +355,7 @@ export default function RiskPortfolioPage() {
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-2">
-                                <span className="inline-block h-1.25 w-18 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+                                <span className={cn('inline-block h-1.25 w-18 overflow-hidden rounded-sm', TRACK)}>
                                   <span
                                     className={cn('block h-full', hot ? 'bg-warning' : 'bg-[var(--sk-line2)]')}
                                     style={{ width: `${Math.round(r.share * 100)}%` }}
@@ -483,6 +542,10 @@ export default function RiskPortfolioPage() {
                   {legs.length} priced {legs.length === 1 ? 'leg' : 'legs'}
                   {book.greeks.unmatched > 0 ? ` · ${book.greeks.unmatched} the vendor could not price` : ''}
                 </span>
+                {/* The design's door to what sits on each expiry. */}
+                <Link to="/research/events" className={positionsUi.link} title="Which expiry carries an event — Events">
+                  Events →
+                </Link>
               </header>
               {expiries.length === 0 ? (
                 <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No option legs in this scope.</p>
@@ -544,7 +607,6 @@ export default function RiskPortfolioPage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

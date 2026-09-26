@@ -16,12 +16,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { Button, ViewState } from '@bifrost/ui'
-import { PageHead, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
 import { fmtPct0 } from '@/utils/positions'
 
 import { useLimitBook } from '@/hooks/useLimitBook'
@@ -40,8 +39,22 @@ import {
 const PAGE_LEAD =
   'A hard limit is one something would act on; a soft limit asks to be acknowledged. Every reading belongs to the page that computes it — this one only holds each against a line, and writes nothing.'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a panel's foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+
+/** Row hover and tracks in ink (Rev .84). */
+const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
+
+/**
+ * A breach's ink (Rev .84): red only for a hard line — the one that blocks;
+ * a soft breach and a gate hit are amber. The gate's old Strategy violet
+ * went with §14.8 (a state is not an entity).
+ */
+const breachInk = (kind: string) => (kind === 'hard' ? 'text-loss' : 'text-warning')
+
+/** The Open breaches edge at 55% of the lamp, as on Risk Overview (§16.2). */
+const BREACH_EDGE = 'color-mix(in srgb, var(--color-lamp-red) 55%, transparent)'
 
 const ESCALATION: { kind: string; tone: string; what: string }[] = [
   {
@@ -58,6 +71,13 @@ const ESCALATION: { kind: string; tone: string; what: string }[] = [
     kind: 'AUTO',
     tone: 'text-loss',
     what: 'The backing gate only: Rules would trim the largest margin user without asking. Nothing trims anything today — the trading daemon is frozen and configured for paper trading.',
+  },
+  // The design's fourth stage (Rev .84 keeps it): a gate is a limit at scope =
+  // allocation, so its hit is logged by the daemon rather than acknowledged.
+  {
+    kind: 'GATE',
+    tone: 'text-primary',
+    what: 'Scope = allocation, enforced by the daemon before the action happens — nothing to acknowledge. The blocked attempt is logged in the Gate group above; the definition lives in Trade › Rules.',
   },
 ]
 
@@ -82,7 +102,6 @@ export default function RiskLimitsPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Limits and Breaches">
         {/* §16.10 sample page (Rev .32): the lead is behind ⓘ, the rule count
             is meta, the Rules engine is a head action, and the account switch
             — a filter — moved to the toolbar under the head. No stamp: the
@@ -92,13 +111,11 @@ export default function RiskLimitsPage() {
           info={PAGE_LEAD}
           meta={`${rows.length} rules · ${withLine} with a line`}
           actions={
-            <Button asChild variant="outline" size="sm">
-              {/* Straight to the destination: /strategy/gates is a redirect
-                  here since the Strategy pages retired (2026-09-18). */}
-              <Link to="/trade/rules" title="Trade › Rules — where gates are defined">
-                Rules engine →
-              </Link>
-            </Button>
+            // Straight to the destination: /strategy/gates is a redirect here
+            // since the Strategy pages retired (2026-09-18).
+            <PageHeadLink to="/trade/rules" title="Trade › Rules — where gates are defined">
+              Rules engine →
+            </PageHeadLink>
           }
         />
         {accountIds.length > 1 ? (
@@ -156,11 +173,14 @@ export default function RiskLimitsPage() {
         ) : (
           <>
             <section
-              className={cn(positionsUi.panel, breaches.length > 0 && 'border-lamp-red/45')}
+              className={positionsUi.panel}
+              // The edge is the severity (Rev .84: 45% → 55%). Inline, because
+              // the material's unlayered rule clears any border-colour class.
+              style={breaches.length > 0 ? { borderColor: BREACH_EDGE } : undefined}
               aria-label="Open breaches"
             >
               <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>Open breaches</span>
+                <span className={cn(positionsUi.cap, breaches.length > 0 && 'text-loss')}>Open breaches</span>
                 <span className={positionsUi.panelTitle}>
                   {breaches.length === 0 ? 'nothing is over a line' : `${breaches.length} open`}
                 </span>
@@ -193,7 +213,7 @@ export default function RiskLimitsPage() {
                       />
                       {r.name}
                     </span>
-                    <span className={cn(positionsUi.mono, 'text-xs text-warning')}>
+                    <span className={cn(positionsUi.mono, 'text-xs', breachInk(r.kind))}>
                       {fmtReading(r, r.current)} against {fmtReading(r, r.limit)}
                     </span>
                     <span className="min-w-0 flex-[1_1_10rem] text-dense-meta leading-normal text-muted-foreground text-pretty">
@@ -233,10 +253,9 @@ export default function RiskLimitsPage() {
               <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.ack}</p>
             </section>
 
-            <PositionsTier
-              label="All limits"
-              note="headroom is the distance to the line at today’s book — a rule with no line keeps its reading and says so"
-            />
+            <SectionHead note="Headroom is the distance to the line at today’s book — a rule with no line keeps its reading and says so.">
+              All limits
+            </SectionHead>
             <section className={positionsUi.panel} aria-label="All limits">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>{rows.length} rules · 5 groups</span>
@@ -276,54 +295,37 @@ export default function RiskLimitsPage() {
                       const inGroup = rows.filter((r) => r.group === group)
                       if (inGroup.length === 0) return []
                       return [
+                        // Rev .84: the group heads lose their caps — 11/600 sentence case.
                         <tr key={group} className="bg-[var(--sk-raised2)]">
-                          <td
-                            className="text-dense-caption font-bold uppercase tracking-[0.12em] text-primary/90"
-                            colSpan={7}
-                          >
+                          <td className="text-dense-meta font-semibold text-secondary-foreground" colSpan={7}>
                             {group}
                           </td>
                         </tr>,
                         ...inGroup.map((r) => (
-                          <tr key={r.key} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                          <tr key={r.key} className={ROW_HOVER}>
                             <td data-sr-col="entity" className="text-foreground">
                               {r.name}
                               {r.breached ? (
-                                <span
-                                  className={cn(
-                                    'ml-1.5 inline-flex h-4 items-center border mat-tag font-mono text-dense-micro font-bold',
-                                    // The design's gate violet is the Strategy
-                                    // entity hue it already had: violet-400 in dark.
-                                    r.kind === 'gate'
-                                      ? 'border-[var(--color-entity-strategy)]/45 text-[var(--color-entity-strategy)]'
-                                      : 'border-lamp-red/45 text-lamp-red',
-                                  )}
-                                >
-                                  {r.kind === 'gate' ? 'GATE HIT' : 'BREACH'}
+                                <span className={cn('ml-2 font-mono text-dense-caption font-bold', breachInk(r.kind))}>
+                                  {r.kind === 'gate' ? 'GATE HIT' : r.kind === 'hard' ? 'BREACH' : 'OVER'}
                                 </span>
                               ) : null}
                             </td>
-                            <td data-sr-col="tag">
-                              <span
-                                className={cn(
-                                  'inline-flex h-4 items-center border mat-tag font-mono text-dense-micro font-bold tracking-[0.04em]',
-                                  r.kind === 'hard'
-                                    ? 'border-lamp-red/45 text-lamp-red'
-                                    : r.kind === 'gate'
-                                      ? 'border-[var(--color-entity-strategy)]/45 text-[var(--color-entity-strategy)]'
-                                      : 'border-border text-muted-foreground',
-                                )}
-                              >
-                                {r.kind.toUpperCase()}
-                              </span>
+                            {/* A kind is a state, read in ink (the design's plain word), not a tag in an entity hue. */}
+                            <td
+                              data-sr-col="tag"
+                              className={cn('text-dense-meta', r.kind === 'soft' ? 'text-muted-foreground' : 'text-secondary-foreground')}
+                            >
+                              {r.kind}
                             </td>
                             <td
                               data-sr-col="num"
                               className={cn(
+                                'font-semibold',
                                 r.current == null
                                   ? 'text-muted-foreground'
                                   : r.breached
-                                    ? 'text-lamp-red'
+                                    ? breachInk(r.kind)
                                     : 'text-foreground',
                               )}
                             >
@@ -348,11 +350,17 @@ export default function RiskLimitsPage() {
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-2">
-                                  <span className="inline-block h-1.5 w-20 shrink-0 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+                                  <span className={cn('inline-block h-1.5 w-20 shrink-0 overflow-hidden rounded-sm', TRACK)}>
                                     <span
                                       className={cn(
                                         'block h-full',
-                                        r.breached ? 'bg-lamp-red' : r.use > 0.8 ? 'bg-warning' : 'bg-[var(--sk-line2)]',
+                                        r.breached
+                                          ? r.kind === 'hard'
+                                            ? 'bg-lamp-red'
+                                            : 'bg-warning'
+                                          : r.use > 0.8
+                                            ? 'bg-warning'
+                                            : 'bg-[var(--sk-line2)]',
                                       )}
                                       style={{ width: `${Math.min(100, Math.round(r.use * 100))}%` }}
                                     />
@@ -361,7 +369,7 @@ export default function RiskLimitsPage() {
                                     className={cn(
                                       positionsUi.mono,
                                       'text-dense-meta',
-                                      r.breached ? 'text-lamp-red' : r.use > 0.8 ? 'text-warning' : 'text-muted-foreground',
+                                      r.breached ? breachInk(r.kind) : r.use > 0.8 ? 'text-warning' : 'text-muted-foreground',
                                     )}
                                   >
                                     {r.breached ? `over by ${fmtPct0(r.use - 1)}` : `${fmtPct0(r.headroom)} left`}
@@ -460,10 +468,9 @@ export default function RiskLimitsPage() {
               </section>
             </div>
 
-            <PositionsTier
-              label="The daemon’s gate"
-              note="not one of the twelve — stored parameters the trading engine would read, edited on Gates"
-            />
+            <SectionHead note="Not one of the twelve — stored parameters the trading engine would read, defined in Trade › Rules.">
+              The daemon&rsquo;s gate
+            </SectionHead>
             <section className={positionsUi.panel} aria-label="The daemon's gate">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>The gate</span>
@@ -509,7 +516,6 @@ export default function RiskLimitsPage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

@@ -59,6 +59,10 @@ interface Props {
   summarySincePct: number | null
   summaryDailyDollar: number
   summaryDailyPct: number | null
+  /** Rows carrying a Since $ / a Daily $, and all rows: none priced is unread, not zero. */
+  summaryPriced: number
+  summaryDailyPriced: number
+  summaryRows: number
   showSummaryBar: boolean
 }
 
@@ -99,6 +103,9 @@ export function MarketStreamsSection({
   summarySincePct,
   summaryDailyDollar,
   summaryDailyPct,
+  summaryPriced,
+  summaryDailyPriced,
+  summaryRows,
   showSummaryBar,
 }: Props) {
 
@@ -113,6 +120,9 @@ export function MarketStreamsSection({
         sincePct={summarySincePct}
         dailyDollar={summaryDailyDollar}
         dailyPct={summaryDailyPct}
+        priced={summaryPriced}
+        dailyPriced={summaryDailyPriced}
+        rows={summaryRows}
         visible={showSummaryBar}
         scopeLabel={`stocks · ${
           accountViewMode === 'host'

@@ -15,12 +15,11 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { Button, ViewState } from '@bifrost/ui'
-import { PageHead, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { HeroCard, HeroRow, PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
 import { PositionsStat } from '@/components/positions/PositionsStat'
 import { BackingHeadroomPanel } from '@/components/positions/BackingHeadroomPanel'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
@@ -39,8 +38,12 @@ import { MARGIN_UNRECORDED, marginUsers, marginUsersTotal } from './marginModel'
 const PAGE_LEAD =
   'Who is using the margin, what a shock does to it, and what closing something buys back. The broker reports margin per account and never per position — the page says which figures are its and which are the model’s.'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a panel's foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+
+/** Row hover and tracks in ink (Rev .84–.85): the accent's lime fallback is gone. */
+const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
 
 /** Past this pressure, the broker is closer to closing positions than the house gate is. */
 const PRESSURE_WARN = 0.5
@@ -134,18 +137,15 @@ export default function RiskMarginPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Margin and Buying Power">
         {/* §16.10 with §17 (one pass per page): the lead behind ⓘ, the way to
             the backing model a head action, the account switch in the toolbar. */}
         <PageHead
           title="Margin & Buying Power"
           info={PAGE_LEAD}
           actions={
-            <Button asChild variant="outline" size="sm">
-              <Link to="/portfolio/backing" title="What backs it — Backing & Model">
-                Backing model →
-              </Link>
-            </Button>
+            <PageHeadLink to="/portfolio/backing" title="What backs it — Backing & Model">
+              Backing model →
+            </PageHeadLink>
           }
         />
         {accountIds.length > 1 ? (
@@ -199,6 +199,50 @@ export default function RiskMarginPage() {
           </section>
         ) : (
           <>
+            {/* §16.2 (Rev .85): four heroes — the house's two lines and the
+                broker's two — with Net liq and buying power in the strip under
+                them. Sub-lines, links and state inks as they were. */}
+            <HeroRow label="Margin at a glance">
+              <HeroCard
+                label="Backing used"
+                value={judgment?.usedPct != null ? fmtPct0(judgment.usedPct) : '—'}
+                valueClassName={judgment?.overGate ? 'text-warning' : 'text-foreground'}
+                state={judgment?.overGate ? 'warn' : null}
+                sub={
+                  <>
+                    of the pool · gate 85% ·{' '}
+                    <Link to="/portfolio/backing" className={positionsUi.link}>
+                      Backing →
+                    </Link>
+                  </>
+                }
+              />
+              <HeroCard
+                label="Headroom to gate"
+                value={judgment && judgment.spendable > 0 ? fmtMvAbbrev(judgment.spendable) : '—'}
+                sub="under the 85% house line · what Sizing spends from"
+              />
+              <HeroCard
+                label="Maintenance"
+                value={margin.maintMarginReq > 0 ? fmtMvAbbrev(margin.maintMarginReq) : '—'}
+                sub={
+                  margin.netLiquidation > 0
+                    ? `${fmtPct0(margin.maintMarginReq / margin.netLiquidation)} of net liq`
+                    : 'the broker’s own requirement'
+                }
+              />
+              <HeroCard
+                label="Pressure · 1 − Cushion"
+                value={fmtPct0(margin.pressure)}
+                valueClassName={(margin.pressure ?? 0) > PRESSURE_WARN ? 'text-warning' : 'text-foreground'}
+                state={(margin.pressure ?? 0) > PRESSURE_WARN ? 'warn' : null}
+                sub={
+                  margin.excessLiquidity > 0
+                    ? `${fmtMvAbbrev(margin.excessLiquidity)} excess left${margin.tightest ? ` · tightest ${margin.tightest.accountId}` : ''}`
+                    : 'the broker’s Cushion, inverted'
+                }
+              />
+            </HeroRow>
             <section className={positionsUi.panel} aria-label="What the broker says">
               {/* §17.4: a reading strip inside the panel — the panel is the frame. */}
               <div data-sr-kpi="strip-inset">
@@ -206,44 +250,6 @@ export default function RiskMarginPage() {
                   cap="Net liq"
                   value={margin.netLiquidation > 0 ? fmtMvAbbrev(margin.netLiquidation) : '—'}
                   sub={`${margin.accounts.length} funded ${margin.accounts.length === 1 ? 'account' : 'accounts'}`}
-                />
-                <PositionsStat
-                  cap="Maintenance"
-                  value={margin.maintMarginReq > 0 ? fmtMvAbbrev(margin.maintMarginReq) : '—'}
-                  sub={
-                    margin.netLiquidation > 0
-                      ? `${fmtPct0(margin.maintMarginReq / margin.netLiquidation)} of net liq`
-                      : 'the broker’s own requirement'
-                  }
-                />
-                <PositionsStat
-                  cap="Pressure · 1 − Cushion"
-                  value={fmtPct0(margin.pressure)}
-                  ink={(margin.pressure ?? 0) > PRESSURE_WARN ? 'text-warning' : undefined}
-                  sub={
-                    margin.excessLiquidity > 0
-                      ? `${fmtMvAbbrev(margin.excessLiquidity)} excess left${margin.tightest ? ` · tightest ${margin.tightest.accountId}` : ''}`
-                      : 'the broker’s Cushion, inverted'
-                  }
-                />
-                <PositionsStat
-                  cap="Backing used"
-                  value={judgment?.usedPct != null ? fmtPct0(judgment.usedPct) : '—'}
-                  ink={judgment?.overGate ? 'text-warning' : undefined}
-                  sub={
-                    <>
-                      of the pool ·{' '}
-                      <Link to="/portfolio/backing" className={positionsUi.link}>
-                        Backing →
-                      </Link>
-                    </>
-                  }
-                />
-                <PositionsStat
-                  cap="Headroom to gate"
-                  value={judgment && judgment.spendable > 0 ? fmtMvAbbrev(judgment.spendable) : '—'}
-                  ink="text-primary"
-                  sub="under the 85% house line"
                 />
                 <PositionsStat
                   cap="Options buying power"
@@ -261,7 +267,9 @@ export default function RiskMarginPage() {
               </p>
             </section>
 
-            <PositionsTier label="By account" note="the broker reports each one separately — a blend would hide the tight one" />
+            <SectionHead note="The broker reports each account separately — a blend would hide the tight one.">
+              By account
+            </SectionHead>
             <section className={positionsUi.panel} aria-label="By account">
               <div className="overflow-x-auto">
                 {/* §14.6: seven columns, the design's 860 floor. */}
@@ -290,7 +298,7 @@ export default function RiskMarginPage() {
                     {margin.accounts.map((a) => {
                       const hot = (a.pressure ?? 0) > PRESSURE_WARN
                       return (
-                        <tr key={a.accountId} className="hover:[&>td]:bg-[var(--sk-raised2)]">
+                        <tr key={a.accountId} className={ROW_HOVER}>
                           <td data-sr-col="entity" className="font-mono font-bold text-secondary-foreground">
                             {a.accountId}
                           </td>
@@ -327,7 +335,7 @@ export default function RiskMarginPage() {
               </p>
             </section>
 
-            <PositionsTier label="Margin users" note="what each name ties up — committed capital, not maintenance margin" />
+            <SectionHead note="What each name ties up — committed capital, not maintenance margin.">Margin users</SectionHead>
             <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Margin users">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>
@@ -372,8 +380,8 @@ export default function RiskMarginPage() {
                     </thead>
                     <tbody>
                       {users.map((u) => (
-                        <tr key={u.symbol} className="hover:[&>td]:bg-[var(--sk-raised2)]">
-                          <td data-sr-col="entity" className="font-mono font-bold text-[var(--color-entity-option)]">
+                        <tr key={u.symbol} className={ROW_HOVER}>
+                          <td data-sr-col="entity" className="font-mono font-bold text-entity-symbol">
                             {u.symbol}
                           </td>
                           <td data-sr-col="num" className="font-bold text-foreground">{fmtMvAbbrev(u.committed)}</td>
@@ -385,7 +393,7 @@ export default function RiskMarginPage() {
                           </td>
                           <td>
                             <span className="inline-flex items-center gap-2">
-                              <span className="inline-block h-1.25 w-24 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+                              <span className={cn('inline-block h-1.25 w-24 overflow-hidden rounded-sm', TRACK)}>
                                 <span
                                   className="block h-full bg-[var(--sk-line2)]"
                                   style={{ width: `${Math.round((u.committed / maxCommitted) * 100)}%` }}
@@ -493,7 +501,6 @@ export default function RiskMarginPage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

@@ -10,7 +10,9 @@
  * - `state` is the card's edge only, at 55% of the lamp (§16.2: a severity
  *   never fills). The reading keeps its own ink through `valueClassName`.
  * - `to` makes the whole card a link, the way the design's clickable heroes
- *   are (The Book's census, the Ledger's five readings).
+ *   are (The Book's census); `onClick` makes it a button, for a card that
+ *   opens something on the page rather than another page (the Ledger's five
+ *   readings open their own derivations).
  * - Sits in a `HeroRow`, which gives it its basis.
  */
 import type { ReactNode } from 'react'
@@ -33,6 +35,7 @@ export function HeroCard({
   state,
   title,
   to,
+  onClick,
   ariaLabel,
   className,
   children,
@@ -49,6 +52,8 @@ export function HeroCard({
   title?: string
   /** The card is a door to this route. */
   to?: string
+  /** The card opens something on this page (a derivation, a panel). */
+  onClick?: () => void
   ariaLabel?: string
   className?: string
   /** Whatever the design puts under the reading (a list, the ways out). */
@@ -76,6 +81,23 @@ export function HeroCard({
     </>
   )
   const style = state ? { borderColor: EDGE[state] } : undefined
+  const lift =
+    'text-inherit no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[var(--card-fill-hover)] motion-reduce:transition-none motion-reduce:hover:translate-y-0'
+  if (onClick != null) {
+    return (
+      <button
+        type="button"
+        data-sr-kpi="hero"
+        title={title}
+        aria-label={ariaLabel}
+        style={style}
+        onClick={onClick}
+        className={cn('cursor-pointer text-left', lift, className)}
+      >
+        {body}
+      </button>
+    )
+  }
   if (to != null) {
     return (
       <Link
@@ -84,10 +106,7 @@ export function HeroCard({
         title={title}
         aria-label={ariaLabel}
         style={style}
-        className={cn(
-          'text-inherit no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[var(--card-fill-hover)] motion-reduce:transition-none motion-reduce:hover:translate-y-0',
-          className,
-        )}
+        className={cn(lift, className)}
       >
         {body}
       </Link>

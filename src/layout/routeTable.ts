@@ -270,8 +270,9 @@ export const ROUTES: readonly RouteEntry[] = [
       // Rev 2026-09-23.3 added the two doors into Contract Greeks, which the
       // design re-homed here: the Legs cell per row (carrying `?sym=`) and the
       // header's unfiltered one. Built 2026-09-23.
-      state: 'aligned',
-      rev: '2026-09-23.3',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.85',
       note: DESIGN_NOTES['/risk/portfolio'],
     },
   },
@@ -280,8 +281,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Risk Budget',
     crumbs: RISK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.1',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.85',
       note: DESIGN_NOTES['/risk/budget'],
     },
   },
@@ -304,8 +306,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Sizing',
     crumbs: RISK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.1',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.85',
       note: DESIGN_NOTES['/risk/sizing'],
     },
   },
@@ -314,8 +317,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Limits & Breaches',
     crumbs: RISK,
     design: {
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.55',
+      rev: '2026-09-25.84',
       note: DESIGN_NOTES['/risk/limits'],
     },
   },
@@ -324,8 +328,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Margin & Buying Power',
     crumbs: RISK,
     design: {
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.55',
+      rev: '2026-09-25.85',
       note: DESIGN_NOTES['/risk/margin'],
     },
   },
@@ -344,8 +349,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Accounts',
     crumbs: PORTFOLIO,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.84',
       note: DESIGN_NOTES['/portfolio/accounts'],
     },
   },
@@ -355,8 +361,9 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: PORTFOLIO,
     symbolScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.84',
       note: DESIGN_NOTES['/portfolio/ledger'],
     },
   },
@@ -377,8 +384,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Orders & Fills',
     crumbs: TRADE_DESK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.1',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.93',
       note: DESIGN_NOTES['/trade/fills'],
     },
   },
@@ -423,8 +431,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Expiration',
     crumbs: TRADE_DESK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.84',
       note: DESIGN_NOTES['/trade/expiration'],
     },
   },
@@ -445,8 +454,9 @@ export const ROUTES: readonly RouteEntry[] = [
     symbolScope: true,
     accountScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.1',
+      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.94',
       note: DESIGN_NOTES['/trade/plans'],
     },
   },

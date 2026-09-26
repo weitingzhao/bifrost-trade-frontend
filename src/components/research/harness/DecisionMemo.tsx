@@ -291,7 +291,7 @@ function RatingCase({ r, row }: { r: CandidateRating; row: PersonaRow | null }) 
 function Box({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border px-2.5 py-2 mat-card">
-      <h4 className="mb-1 text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">{title}</h4>
+      <h4 className="mb-1 text-dense-meta font-semibold text-muted-foreground">{title}</h4>
       {children}
     </div>
   )

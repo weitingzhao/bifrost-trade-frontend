@@ -55,7 +55,7 @@ export function BackingHeadroomPanel({
         {headroomRows(usedPct).map((h) => (
           <div key={h.label} className="grid grid-cols-[5.75rem_minmax(0,1fr)_3.25rem] items-center gap-2.5">
             <span className="text-dense-meta leading-normal text-muted-foreground">{h.label}</span>
-            <span className="relative block h-2 overflow-hidden rounded-sm bg-[var(--sk-surface)]">
+            <span className="relative block h-2 overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
               {h.pct == null ? null : (
                 <span
                   className={cn('absolute inset-y-0 left-0', h.pct > HOUSE_GATE ? 'bg-lamp-red' : 'bg-warning')}
@@ -83,7 +83,7 @@ export function BackingHeadroomPanel({
           </div>
         ))}
       </div>
-      <p className="m-0 border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
+      <p className="m-0 border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
         {foot}
       </p>
     </section>

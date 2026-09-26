@@ -21,14 +21,15 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { HeroCard, HeroRow, PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
-import { PositionsStat } from '@/components/positions/PositionsStat'
+import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { fmtPct0 } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
@@ -42,8 +43,8 @@ import { RISK_BUDGET_UNRECORDED } from '@/utils/riskBudget'
 const PAGE_LEAD =
   'How big — four caps per candidate, and the smallest wins. Candidates arrive from Compare and from Plans; nothing is sized here without one. The gate cap reads the active allocation in Trade › Rules, and does not apply to a hand plan, which is under no allocation.'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a panel's foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 const CAPS = [
   {
@@ -70,7 +71,9 @@ const CAPS = [
 
 export default function RiskSizingPage() {
   const [accountFilter, setAccountFilter] = useState('all')
-  const { status, statusLoading, accountIds, judgment, rows: exposure } = useRiskExposure(accountFilter)
+  const { status, accountIds, judgment, rows: exposure } = useRiskExposure(accountFilter)
+  const statusQ = useMonitorStatus()
+  const preview = usePreviewState()
 
   /**
    * The fourth cap (design DECISIONS 2026-09-18): room under the active
@@ -146,125 +149,130 @@ export default function RiskSizingPage() {
     },
   }
 
+  // §17.1: the broker snapshot every cap divides is the one critical source.
+  const pageState = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(statusQ)
+  const retry = () => void statusQ.refetch()
+
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Sizing">
-        <PageHeader
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Risk / Sizing</p>}
-          title="Sizing"
-          titleSize="large"
-          description={PAGE_LEAD}
-          actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              {accountIds.length > 1 ? (
-                <SegmentControl
-                  size="xs"
-                  ariaLabel="Account"
-                  value={accountFilter}
-                  onChange={setAccountFilter}
-                  options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-                />
-              ) : null}
-              <DenseTag variant="warning" size="cell">
-                ⚠ no candidate reaches this page
-              </DenseTag>
-              <Link to="/risk/budget" className={positionsUi.link}>
-                Risk Budget →
-              </Link>
-            </span>
-          }
-        />
-
-        {statusLoading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-24 w-full rounded-md" />
-            <Skeleton className="h-48 w-full rounded-md" />
-          </div>
-        ) : (
+      <PageHead
+        title="Sizing"
+        info={PAGE_LEAD}
+        meta={
+          <DenseTag variant="warning" size="cell">
+            ⚠ no candidate reaches this page
+          </DenseTag>
+        }
+        actions={
           <>
-            <section className={positionsUi.panel} aria-label="The four caps">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>The four caps</span>
-                <span className={positionsUi.panelTitle}>
-                  {judgment?.spendable == null ? 'one is readable, three have no line' : 'two are readable, two have no line'}
-                </span>
-                <span className="ml-auto text-dense-meta text-muted-foreground">
-                  the smallest of the four is the size
-                </span>
-              </header>
-              {/* The design's four cells, in its order: what one trade may
-                  lose, what is left of today, what the broker leaves room for,
-                  and the ceiling one name may not pass. Backing used is a
-                  sub-line of the margin cell rather than a cell of its own, and
-                  gate room lives in Why this size, which is where the design
-                  reads it. */}
-              <div className="flex flex-wrap items-start gap-x-6 gap-y-2 px-3 py-2.5">
-                <PositionsStat
-                  cap="Risk budget / trade"
-                  value="unwritten"
-                  ink="text-muted-foreground"
-                  sub={`no line written · net liq ${netLiquidation > 0 ? fmtMvAbbrev(netLiquidation) : 'unread'}`}
-                />
-                <PositionsStat
-                  cap="Budget left today"
-                  value="—"
-                  ink="text-muted-foreground"
-                  sub="no daily cap written, and nothing records a sizing decision"
-                />
-                <PositionsStat
-                  cap="Margin headroom"
-                  value={judgment?.spendable == null ? '—' : fmtMvAbbrev(judgment.spendable)}
-                  ink={judgment?.overGate ? 'text-warning' : undefined}
-                  sub={
-                    judgment?.usedPct == null
-                      ? `to the ${fmtPct0(HOUSE_GATE_PCT)} backing gate`
-                      : `to the ${fmtPct0(HOUSE_GATE_PCT)} backing gate · ${fmtPct0(judgment.usedPct)} of the pool used`
-                  }
-                />
-                <span className="ml-auto flex">
-                  <PositionsStat
-                    cap="Concentration ceiling"
-                    value={fmtPct0(RISK_CONCENTRATION_FLOOR)}
-                    sub={
-                      topName?.share == null
-                        ? 'no name carries a β-weighted Δ$'
-                        : `single-name β-Δ share · ${topName.symbol} at ${fmtPct0(topName.share)}${overCeiling ? ' — already over' : ''}`
-                    }
-                    ink={overCeiling ? 'text-lamp-red' : undefined}
-                  />
-                </span>
-              </div>
-              <p className={cn(FOOT, 'm-0')}>
-                {overCeiling ? (
-                  <>
-                    The concentration cap allows nothing in {topName?.symbol} today: the name is past its share of the
-                    book&rsquo;s β-weighted Δ$, so any contract that adds to it takes the share further over. That is
-                    the same reading{' '}
-                    <Link to="/risk/limits" className={positionsUi.link}>
-                      Limits &amp; Breaches
-                    </Link>{' '}
-                    holds against the line — one computation, cited twice.
-                  </>
+            <PageHeadLink to="/research/compare" title="Where candidates are sized as structures">
+              Compare →
+            </PageHeadLink>
+            <PageHeadLink to="/risk/budget">Risk Budget →</PageHeadLink>
+          </>
+        }
+      />
+      {accountIds.length > 1 ? (
+        <div data-sr-toolbar="">
+          <span data-sr-tb="label">Account</span>
+          <SegmentControl
+            size="xs"
+            ariaLabel="Account"
+            value={accountFilter}
+            onChange={setAccountFilter}
+            options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+          />
+        </div>
+      ) : null}
+
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the broker snapshot"
+          detail={staleDetail(statusQ, 'the caps read the last copy.')}
+          onAction={retry}
+        />
+      ) : null}
+      {pageState === 'loading' ? (
+        <section className={positionsUi.panel}>
+          <ViewState kind="loading" title="Loading the caps" rows={6} cols={6} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className={positionsUi.panel}>
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the broker snapshot"
+            detail={failedDetail(statusQ, 'No cap was evaluated — a cap that cannot be read is never unlimited.')}
+            onAction={retry}
+          />
+        </section>
+      ) : (
+        <>
+          {/* §16.2 (Rev .85): the design's four cells as heroes, in its order —
+              what one trade may lose, what is left of today, what the broker
+              leaves room for, and the ceiling one name may not pass. Backing
+              used is the margin card's sub-line; gate room lives in Why this
+              size, where the design reads it. */}
+          <HeroRow label="The four caps">
+            <HeroCard
+              label="Risk budget / trade"
+              value="unwritten"
+              valueClassName="text-muted-foreground"
+              title={RISK_BUDGET_UNRECORDED.policy}
+              sub={`no line written · net liq ${netLiquidation > 0 ? fmtMvAbbrev(netLiquidation) : 'unread'}`}
+            />
+            <HeroCard
+              label="Budget left today"
+              value="—"
+              valueClassName="text-muted-foreground"
+              sub="no daily cap written, and nothing records a sizing decision"
+            />
+            <HeroCard
+              label="Margin headroom"
+              value={judgment?.spendable == null ? '—' : fmtMvAbbrev(judgment.spendable)}
+              valueClassName={judgment?.overGate ? 'text-warning' : 'text-foreground'}
+              state={judgment?.overGate ? 'warn' : null}
+              sub={
+                <>
+                  {judgment?.usedPct == null
+                    ? `to the ${fmtPct0(HOUSE_GATE_PCT)} backing gate · `
+                    : `to the ${fmtPct0(HOUSE_GATE_PCT)} backing gate · ${fmtPct0(judgment.usedPct)} of the pool used · `}
+                  <Link to="/portfolio/backing" className={positionsUi.link}>
+                    Backing →
+                  </Link>
+                </>
+              }
+            />
+            {/* The ceiling is a setting, so it reads in ink; the name already
+                over it is the news, on the edge (§16.2) and in the sub-line. */}
+            <HeroCard
+              label="Concentration ceiling"
+              value={fmtPct0(RISK_CONCENTRATION_FLOOR)}
+              state={overCeiling ? 'danger' : null}
+              title={
+                overCeiling
+                  ? `The concentration cap allows nothing in ${topName?.symbol} today: the name is past its share of the book’s β-weighted Δ$, so any contract that adds to it takes the share further over. Limits & Breaches holds the same reading against the line — one computation, cited twice.`
+                  : 'Read from the page that computes it — Exposure — never recomputed here.'
+              }
+              sub={
+                topName?.share == null ? (
+                  'no name carries a β-weighted Δ$'
                 ) : (
                   <>
-                    The ceiling and the backing gate are read from the pages that compute them —{' '}
-                    <Link to="/risk/portfolio" className={positionsUi.link}>
-                      Exposure
-                    </Link>{' '}
-                    and{' '}
-                    <Link to="/portfolio/backing" className={positionsUi.link}>
-                      Backing &amp; Model
-                    </Link>{' '}
-                    — never recomputed here.
+                    single-name β-Δ share · {topName.symbol} at {fmtPct0(topName.share)}
+                    {overCeiling ? ' — already over · ' : ' · '}
+                    <Link to="/risk/limits" className={positionsUi.link}>
+                      Limits →
+                    </Link>
                   </>
-                )}
-              </p>
-            </section>
-
-            <PositionsTier
-              label="Sizing worksheet"
-              note="n = min(four caps) · an override may size down only — sizing up means changing the cap in Rules"
+                )
+              }
             />
+          </HeroRow>
+
+            <SectionHead note="n = min(four caps) · an override may size down only — sizing up means changing the cap in Rules.">
+              Sizing worksheet
+            </SectionHead>
             <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Sizing worksheet">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>0 candidates</span>
@@ -352,9 +360,7 @@ export default function RiskSizingPage() {
                         c.key === 'gate' && 'border-l-2 border-l-warning/60',
                       )}
                     >
-                      <span className="text-dense-caption font-semibold uppercase tracking-[0.08em] text-secondary-foreground">
-                        {c.label}
-                      </span>
+                      <span className="text-dense-meta font-semibold text-secondary-foreground">{c.label}</span>
                       <span className="flex min-w-0 flex-col">
                         <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>
                           {c.math}
@@ -405,7 +411,6 @@ export default function RiskSizingPage() {
             </p>
           </>
         )}
-      </section>
     </PageShell>
   )
 }

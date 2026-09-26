@@ -159,7 +159,9 @@ describe('the design walk, by revision', () => {
     // gained a hero row, section h2s or new inks — and batches J1–J5 walk them.
     // 52 → 45 with J1 (Rev .82–.83): seven signed pages rebuilt and waiting
     // for a look; Risk, Performance and Symbol were already in `reviewing`.
-    expect(counts.byState.stale).toBe(45)
+    // 45 → 35 with J2 (Rev .84–.85): ten more; Limits and Margin were
+    // already there.
+    expect(counts.byState.stale).toBe(35)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

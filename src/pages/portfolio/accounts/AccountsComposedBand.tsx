@@ -27,6 +27,7 @@ import type { LivePositionRow } from '@/types/positions'
 import type { DailyBenchmark, QuoteItem } from '@/types/market'
 import { buildBySymbolRows, unrepresentedNote } from './accountsBySymbol'
 import { accountsUi, BUCKET_LABEL } from './accountsUi'
+import { SectionHead } from '@/components/layout'
 
 type Cut = 'category' | 'mix' | 'symbols'
 
@@ -74,11 +75,7 @@ export function AccountsComposedBand({
 
   return (
     <section aria-label="How it is composed">
-      <div className={accountsUi.tierRow}>
-        <span className={accountsUi.tierLabel}>How it is composed</span>
-        <span className={accountsUi.tierRule} />
-        <span className={accountsUi.tierNote}>three cuts of one number · one at a time</span>
-      </div>
+      <SectionHead note="Three cuts of one number · one at a time.">How it is composed</SectionHead>
 
       <div className={accountsUi.composedGrid}>
         <div className={accountsUi.panel}>

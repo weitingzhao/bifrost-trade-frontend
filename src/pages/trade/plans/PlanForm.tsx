@@ -23,7 +23,7 @@ import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { NOT_COMPUTED_HINT } from './PlansTable'
 
 const FIELD = 'h-6 w-full border px-1.5 text-dense-label mat-field'
-const LABEL = 'text-dense-micro uppercase tracking-wide text-muted-foreground'
+const LABEL = 'text-dense-meta font-semibold text-muted-foreground'
 const CHOOSE_SIDE = 'Choose buy or sell'
 
 /** The server's own enum — not the prototype's list, which names kinds no row can store. */

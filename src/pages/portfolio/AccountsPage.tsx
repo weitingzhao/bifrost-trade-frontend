@@ -8,10 +8,10 @@ import { useLatestBars } from '@/hooks/useLatestBars'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
 import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
 import { useAccountsRefresh } from '@/hooks/useAccountsRefresh'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { PageHeader, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { PageHead, PageHeadAction, PageShell } from '@/components/layout'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { OverviewCompact } from '@/components/accounts/OverviewCompact'
 import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
@@ -34,14 +34,16 @@ import { AccountsComposedBand } from './accounts/AccountsComposedBand'
 import { useTradingCalendar } from '@/hooks/useTradingCalendar'
 import { AccountsHoldingsBand } from './accounts/AccountsHoldingsBand'
 import { AccountsInspector, type AccountsInspectorState } from './accounts/AccountsInspector'
-import { accountsPageCardClass, accountsUi } from './accounts/accountsUi'
+import { accountsUi } from './accounts/accountsUi'
 
 const PAGE_LEAD =
   'What the broker says, account by account. Freshness first — stale account data poisons every page downstream.'
 
 export default function AccountsPage() {
   const queryClient = useQueryClient()
-  const { data, isLoading, isError, error } = useMonitorStatus()
+  const statusQ = useMonitorStatus()
+  const { data } = statusQ
+  const preview = usePreviewState()
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
   const [clockHelp, setClockHelp] = useState(false)
   const [inspector, setInspector] = useState<AccountsInspectorState>({ type: null })
@@ -119,79 +121,67 @@ export default function AccountsPage() {
     setInspector({ type: null })
   }
 
-  if (isLoading) {
-    return (
-      <PageShell className="space-y-3">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-8 w-48" />
-        </div>
-        <Skeleton className="h-48 rounded-lg" />
-      </PageShell>
-    )
-  }
-
-  if (isError) {
-    return (
-      <PageShell>
-        <Alert variant="destructive">
-          <AlertDescription>{(error as Error).message}</AlertDescription>
-        </Alert>
-      </PageShell>
-    )
-  }
+  // §17.1: the monitor's account read is the page's one source.
+  const pageState = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(statusQ)
+  const retry = () => void statusQ.refetch()
 
   return (
-    <PageShell className="space-y-3">
-      <div className={accountsPageCardClass}>
-        <div className={accountsUi.headerRow}>
-          <PageHeader
-            breadcrumb={<p className="text-xs text-primary/90 font-medium">Portfolio / Accounts</p>}
-            title="Accounts"
-            titleSize="large"
+    <PageShell padding="compact" className="space-y-3">
+        {/* §16.10: the lead behind ⓘ; the two clocks — never one — are the
+            stamp (IB pull/rec and Flex); the help, Categories and the IB
+            refresh are the head's actions. */}
+        <PageHead
+          title="Accounts"
+          info={PAGE_LEAD}
+          stamp={
+            <span className="inline-flex flex-wrap items-center gap-1.5">
+              <AccountsClockBadge reading={ibClock} />
+              <AccountsClockBadge reading={flexClock} />
+            </span>
+          }
+          actions={
+            <>
+              <PageHeadAction onClick={() => setClockHelp((v) => !v)} title="What Pull and Rec mean — two clocks, never one">
+                <HelpCircle className="size-3.5" aria-label="What Pull and Rec mean" />
+              </PageHeadAction>
+              <PageHeadAction onClick={() => setInspector({ type: 'categories' })} title="Manage the Owner’s position categories">
+                <Tag className="size-3.5" aria-hidden /> Categories
+              </PageHeadAction>
+              <PageHeadAction
+                onClick={() => void refresh()}
+                disabled={isRefreshing}
+                title="Fetches accounts & positions from IB, writes to DB, then updates display"
+              >
+                <RefreshCw className={cn('size-3.5', isRefreshing && 'animate-spin')} aria-hidden />
+                {isRefreshing ? ' Refreshing…' : ' Refresh'}
+              </PageHeadAction>
+            </>
+          }
+        />
+
+        {pageState === 'stale' ? (
+          <ViewState
+            kind="stale"
+            title="Couldn’t refresh the accounts"
+            detail={staleDetail(statusQ, 'balances and positions since then are not shown.')}
+            onAction={retry}
           />
-          <div className={accountsUi.headerActions}>
-            <AccountsClockBadge reading={ibClock} />
-            <AccountsClockBadge reading={flexClock} />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setClockHelp((v) => !v)}
-              aria-expanded={clockHelp}
-              aria-label="What Pull and Rec mean"
-              title="What Pull and Rec mean"
-            >
-              <HelpCircle className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5"
-              onClick={() => setInspector({ type: 'categories' })}
-              aria-label="Manage position categories"
-            >
-              <Tag className="h-3.5 w-3.5" />
-              Categories
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5"
-              onClick={() => void refresh()}
-              disabled={isRefreshing}
-              aria-label="Refresh accounts and positions from IB"
-              aria-busy={isRefreshing}
-              title="Fetches accounts & positions from IB, writes to DB, then updates display"
-            >
-              <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
-              {isRefreshing ? 'Refreshing…' : 'Refresh'}
-            </Button>
-          </div>
-        </div>
-
-        <p className={accountsUi.headerLead}>{PAGE_LEAD}</p>
-
+        ) : null}
+        {pageState === 'loading' ? (
+          <section className={accountsUi.panel}>
+            <ViewState kind="loading" title="Loading accounts" rows={6} cols={6} />
+          </section>
+        ) : pageState === 'failed' ? (
+          <section className={accountsUi.panel}>
+            <ViewState
+              kind="failed"
+              title="Couldn’t load the accounts"
+              detail={failedDetail(statusQ, 'Nothing below was read — not an empty account.')}
+              onAction={retry}
+            />
+          </section>
+        ) : (
+        <>
         {clockHelp ? (
           <div className={accountsUi.helpPanel}>
             <div className={accountsUi.helpHead}>
@@ -303,7 +293,8 @@ export default function AccountsPage() {
             ) : null}
           </>
         )}
-      </div>
+        </>
+        )}
 
       <AccountsInspector
         state={inspector}

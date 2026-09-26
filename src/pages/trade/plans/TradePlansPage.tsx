@@ -15,18 +15,18 @@
  * what one plan would cost in margin, so the column says so.
  */
 import { useCallback, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { EmptyState, IncludeExcludeToggle, SegmentControl } from '@/components/data-display'
-import { PageHeader, PageShell } from '@/components/layout'
+import { useSearchParams } from 'react-router-dom'
+import { ToolbarClear, ViewState } from '@bifrost/ui'
+import { IncludeExcludeToggle, SegmentControl } from '@/components/data-display'
+import { HeroCard, HeroRow, PageHead, PageHeadAction, PageHeadLink, PageShell } from '@/components/layout'
+import { StatusLamp } from '@/components/StatusLamp'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import {
   INSPECTOR_WIDTH_READ_PX,
   INSPECTOR_WIDTH_WIDE_PX,
 } from '@/components/layout/inspectorDock'
-import { Button } from '@/components/ui/button'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { PositionsStat } from '@/components/positions/PositionsStat'
-import { Skeleton } from '@/components/ui/skeleton'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useFollowedAccountPair } from '@/hooks/useFollowedAccountPair'
@@ -38,6 +38,7 @@ import { usePageViewParams } from '@/lib/pageView'
 import { PlanCard } from './PlanCard'
 import { PlanForm } from './PlanForm'
 import { PlansTable } from './PlansTable'
+import { planCashSecured } from './planCardModel'
 import {
   HELD_PLAN_SCOPE,
   PLAN_FILTERS,
@@ -57,7 +58,7 @@ const PLANS_VIEW_PARAMS = ['status', 'plan'] as const
 
 export default function TradePlansPage() {
   const [params, setParams] = useSearchParams()
-  const navigate = useNavigate()
+  const preview = usePreviewState()
   const symbol = (params.get('symbol') ?? '').trim().toUpperCase()
   const filter: PlanFilterValue = coercePlanFilter(params.get('status'))
   // The account toggles follow the shell's account scope (Rev .58): a link
@@ -129,6 +130,49 @@ export default function TradePlansPage() {
     [cardId, plans],
   )
 
+  /**
+   * What the intended plans would tie up if they all filled (design Rev .84's
+   * third hero): the cash each secured put reserves, strike × 100 × ratio ×
+   * qty — read off the plan's own legs, the figure the plan card already
+   * shows one plan at a time. Calls are covered by shares, as the design
+   * counts them; drafts are not out yet.
+   */
+  const intended = useMemo(() => plans.filter((p) => p.effective_status === 'intended'), [plans])
+  const cashIfAllFill = useMemo(
+    () => intended.reduce((sum, p) => sum + (planCashSecured(p) ?? 0), 0),
+    [intended],
+  )
+  const nearestExpiry = useMemo(
+    () =>
+      intended
+        .map((p) => p.expires_at)
+        .filter((d): d is string => Boolean(d))
+        .sort()[0] ?? null,
+    [intended],
+  )
+
+  // §17.3: what the toolbar's Clear N resets — status back to Open, both
+  // accounts in, the symbol box empty.
+  const resets = [
+    ...(filter !== 'open' ? ['status'] : []),
+    ...(!acctScope.host || !acctScope.secondary ? ['accounts'] : []),
+    ...(symbol ? ['symbol'] : []),
+  ]
+  function clearScope() {
+    setAcctScope({ host: true, secondary: true })
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('status')
+        next.delete('symbol')
+        return next
+      },
+      { replace: true },
+    )
+  }
+
+  const pageState = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(query)
+
   function setParam(key: string, value: string | null) {
     setParams(
       (prev) => {
@@ -153,58 +197,50 @@ export default function TradePlansPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
+      {/* §16.10: the lead behind ⓘ; the Inbox import and the one primary
+          action — ＋ Plan a trade — in the head. */}
+      <PageHead
+        // The menu's name (§5a.5); the prototype heads it "Trade Plans".
         title="Plans"
-        description="Every trade you mean to make, from idea to fill: what I intend, how I exit, what filled, and which rule covers it. Advisory only — nothing here places an order today, and the Send to IB action reserved on each intent is not wired."
+        info="Every trade you mean to make, from idea to fill: what I intend, how I exit, what filled, and which rule covers it. Advisory only — D10: nothing here places an order today, and the Send to IB action reserved on each intent is not wired."
         actions={
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 text-dense-meta"
+          <>
+            <PageHeadLink
+              to="/research/loop/decisions"
               title="Import intents the Copilot or Autopilot drafted — opens the Decision Inbox"
-              onClick={() => void navigate('/research/loop/decisions')}
             >
-              Import from Inbox
-              {inboxCount > 0 ? (
-                <span className="ml-1.5 font-mono text-dense-micro font-semibold text-warning">
-                  {inboxCount}
-                </span>
-              ) : null}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              className="h-7 text-dense-meta"
+              Import from Inbox{inboxCount > 0 ? ` · ${inboxCount}` : ''}
+            </PageHeadLink>
+            <PageHeadAction
+              primary
               onClick={() => {
                 setForm({ kind: 'new' })
                 setParam('plan', null)
               }}
             >
               ＋ Plan a trade
-            </Button>
-          </div>
+            </PageHeadAction>
+          </>
         }
       />
 
-      {/* The design's Scope bar: status, one Include/Exclude per account, the
-          symbol box, and the shown-of-total count on the right. */}
-      <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3.5 gap-y-2 rounded-md border border-border bg-[var(--sk-raised)] px-2.5 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.16em] text-muted-foreground">
-          Scope
-        </span>
+      {/* The design's Scope bar (§17.3): status, one Include/Exclude per
+          account, the symbol box, Clear N, and the shown-of-total count. It
+          parks at the top of the scroller as glass. */}
+      <div data-sr-toolbar="" data-sticky="">
+        <span data-sr-tb="label">Scope</span>
         <SegmentControl
           ariaLabel="Plan status"
-          size="sm"
+          size="xs"
           value={filter}
           onChange={(v) => setParam('status', v === 'open' ? null : v)}
           options={PLAN_FILTERS.map((value) => ({ value, label: PLAN_FILTER_LABELS[value] }))}
         />
+        {hostAccountId || secondaryAccountId ? <span data-sr-tb="sep" /> : null}
         {hostAccountId ? (
           <IncludeExcludeToggle
             label="HOST"
-            size="sm"
+            size="xs"
             include={acctScope.host}
             onChange={(on) => setAcctScope({ ...acctScope, host: on })}
           />
@@ -212,97 +248,143 @@ export default function TradePlansPage() {
         {secondaryAccountId ? (
           <IncludeExcludeToggle
             label="Secondary"
-            size="sm"
+            size="xs"
             include={acctScope.secondary}
             onChange={(on) => setAcctScope({ ...acctScope, secondary: on })}
           />
         ) : null}
+        <span data-sr-tb="sep" />
         <input
           value={symbol}
           onChange={(e) => setParam('symbol', e.target.value.trim() ? e.target.value.trim().toUpperCase() : null)}
           placeholder="Symbol"
           aria-label="Symbol"
-          className="h-6 w-24 rounded border border-border bg-background px-1.5 font-mono text-dense-meta uppercase outline-none focus:border-ring"
+          className="h-6 w-24 border px-1.5 font-mono text-dense-meta uppercase outline-none mat-field"
         />
-        <span className="ml-auto whitespace-nowrap text-dense-meta text-muted-foreground">
-          <span className="font-mono font-semibold text-foreground">{rows.length}</span> of{' '}
-          {plans.length} plans
+        <ToolbarClear resets={resets} onClear={clearScope} />
+        <span data-sr-tb="meta">
+          <span className="font-mono font-semibold text-foreground">{rows.length}</span> of {plans.length} plans
         </span>
       </div>
 
-      {/* The design's four-cell strip. Two of them count plans, which this
-          side has; two ask what the open intents would consume if they all
-          filled, and no plan field carries an intent's collateral — the same
-          gap Risk › Sizing marks on its own strip, said once here rather than
-          guessed at per cell. */}
-      {query.isLoading ? null : (
-        <div className="flex flex-wrap items-start gap-x-7 gap-y-2 border px-3 py-2.5 mat-card">
-          <PositionsStat
-            cap="Open plans"
-            value={String(counts.draft + counts.intended)}
-            sub={`${counts.draft} draft · ${counts.intended} intended`}
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh plans"
+          detail={staleDetail(query, 'plans written since then are not shown.')}
+          onAction={() => void query.refetch()}
+        />
+      ) : null}
+      {pageState === 'loading' ? (
+        <section className="border mat-card">
+          <ViewState kind="loading" title="Loading plans" rows={6} cols={8} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className="border mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load plans"
+            detail={failedDetail(query, 'No plan was read — this is not an empty book.')}
+            onAction={() => void query.refetch()}
           />
-          <PositionsStat
-            cap="Awaiting fill"
-            value={String(counts.intended)}
-            ink={counts.intended > 0 ? 'text-warning' : undefined}
-            sub={
-              counts.intended === 0
-                ? 'nothing is out — the desk copies, TWS places'
-                : 'copy each into TWS, or let it lapse'
-            }
-          />
-          <PositionsStat
-            cap="Cash if all fill"
-            value="—"
-            ink="text-muted-foreground"
-            sub="a plan stores its target, stop and limit — never its collateral"
-          />
-          <PositionsStat
-            cap="Pressure if all fill"
-            value="—"
-            ink="text-muted-foreground"
-            sub="needs the cash above before it can be added to today’s"
-          />
-        </div>
+        </section>
+      ) : (
+        <>
+          {/* §16.2 (Rev .84): the four cells as heroes, lamp and sub-line kept.
+              Pressure if all fill needs a per-plan margin, which no service
+              estimates; it says so rather than borrowing the cash figure. */}
+          <HeroRow label="The plans at a glance">
+            <HeroCard
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <StatusLamp lamp="green" variant="dot" title="Counted" />
+                  Open plans
+                </span>
+              }
+              value={String(counts.draft + counts.intended)}
+              sub={`${counts.draft} draft · ${counts.intended} intended`}
+            />
+            <HeroCard
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <StatusLamp
+                    lamp={counts.intended > 0 ? 'yellow' : 'green'}
+                    variant="dot"
+                    title={counts.intended > 0 ? 'Waiting on TWS' : 'Nothing out'}
+                  />
+                  Awaiting fill
+                </span>
+              }
+              value={String(counts.intended)}
+              sub={
+                counts.intended === 0
+                  ? 'nothing is out — the desk copies, TWS places'
+                  : `${nearestExpiry ? `nearest expiry ${nearestExpiry.slice(0, 10)} · ` : ''}copy into TWS, or let it lapse`
+              }
+            />
+            <HeroCard
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <StatusLamp lamp="green" variant="dot" title="Read off the legs" />
+                  Cash if all fill
+                </span>
+              }
+              value={`$${Math.round(cashIfAllFill).toLocaleString('en-US')}`}
+              title="Σ over intended plans of each short put's strike × 100 × ratio × qty — the cash a secured put reserves."
+              sub="secured puts only · calls are covered by shares"
+            />
+            <HeroCard
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  <StatusLamp lamp="gray" variant="dot" title="Not computed" />
+                  Pressure if all fill
+                </span>
+              }
+              value="—"
+              valueClassName="text-muted-foreground"
+              sub="needs each plan's margin; the book's maintenance is read, a plan's is not"
+            />
+          </HeroRow>
+
+          {rows.length === 0 ? (
+            <section className="border mat-card">
+              {plans.length === 0 ? (
+                <ViewState
+                  kind="empty"
+                  title="No plans yet"
+                  detail="Press ＋ Plan a trade, or send one over from Symbol with ＋ Plan this."
+                />
+              ) : (
+                <ViewState
+                  kind="filtered"
+                  title="No plans in this scope"
+                  detail={`${plans.length} plans exist · 0 match ${symbol ? `symbol ${symbol} ` : ''}in ${PLAN_FILTER_LABELS[filter]}.`}
+                  actionTitle="Status back to Open, both accounts included, symbol cleared"
+                  onAction={clearScope}
+                />
+              )}
+            </section>
+          ) : (
+            <PlansTable
+              plans={rows}
+              selectedId={selected?.strategy_plan_id ?? null}
+              onSelect={(plan) => openPlan(plan.strategy_plan_id)}
+            />
+          )}
+        </>
       )}
 
-      {query.isError ? (
-        <QueryErrorAlert error={query.error} onRetry={() => void query.refetch()} />
-      ) : null}
-      {query.isLoading ? <Skeleton className="h-32 w-full" /> : null}
-
-      {!query.isLoading && rows.length === 0 ? (
-        <EmptyState
-          title="No plans in this scope"
-          description={
-            plans.length === 0
-              ? 'Press ＋ Plan a trade, or send one over from Symbol with ＋ Plan this.'
-              : `${plans.length} plans exist · 0 match ${symbol ? `symbol ${symbol} ` : ''}in ${PLAN_FILTER_LABELS[filter]}. Widen the scope or plan a trade.`
-          }
-        />
-      ) : null}
-
-      {rows.length > 0 ? (
-        <PlansTable
-          plans={rows}
-          selectedId={selected?.strategy_plan_id ?? null}
-          onSelect={(plan) => openPlan(plan.strategy_plan_id)}
-        />
-      ) : null}
-
       {/* The design's two footnotes, said the way they are true here: the
-          pressure formula names columns this side does not compute (and no
+          pressure formula names a column this side does not compute (and no
           ceiling is quoted — the desk's is set in Risk, not fixed at a number),
           and matching is manual, not a rule that links by itself. */}
       <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-dense-meta text-muted-foreground">
         <span>
-          Pressure after = (maintenance now + this plan's margin) / net liq, per account — not
-          computed yet; the column says so.
+          Pressure after = (maintenance now + this plan's margin) / net liq, per account — not computed yet; the
+          column says so. Cash / margin is the cash a secured put reserves.
         </span>
         <span>
-          Matching is manual today: link a fill from the plan or from Orders &amp; Fills; nothing
-          links itself.
+          Matching is manual today: link a fill from the plan or from Orders &amp; Fills; nothing links itself.
         </span>
       </div>
 

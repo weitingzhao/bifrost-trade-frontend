@@ -342,6 +342,9 @@ export default function LivePage() {
           summarySincePct={streams.streamsSummary.sincePct}
           summaryDailyDollar={streams.streamsSummary.totalDailyDollar}
           summaryDailyPct={streams.streamsSummary.totalDailyPct}
+          summaryPriced={streams.streamsSummary.priced}
+          summaryDailyPriced={streams.streamsSummary.dailyPriced}
+          summaryRows={streams.filteredRows.length}
           showSummaryBar={streams.filteredRows.length > 0 || streams.marketStreamsRows.length > 0}
         />
 

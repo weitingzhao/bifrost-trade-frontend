@@ -45,6 +45,20 @@ if retired_dir=$(grep -rnE -- '--color-(up|dn)\b' src --include='*.ts' --include
   fi
 fi
 
+# No hsl()/hsla() around a token. Since the shadcn v4 / skin migration every DS
+# token is a colour (hex via --sk-*), not an HSL triplet, so hsl(var(--x)) is
+# invalid at computed-value time. The declaration still wins the cascade and
+# then computes to inherit/initial — no error, no warning, just a muted label in
+# the parent's ink or a divider that is not there. 44 of these hid for months
+# (c55d226a). Use var(--x), or color-mix(in srgb, var(--x) N%, transparent) for
+# the alpha form; in a Tailwind arbitrary value, underscores for the spaces.
+if hsl_wrapped=$(grep -rnE 'hsla?\([[:space:]]*var\(--' src --include='*.ts' --include='*.tsx' --include='*.css' 2>/dev/null || true); then
+  if [[ -n "$hsl_wrapped" ]]; then
+    echo "$hsl_wrapped" >&2
+    report "hsl(var(--…)) around a hex token — invalid at computed-value time (use var(--x) / color-mix(in srgb, var(--x) N%, transparent))"
+  fi
+fi
+
 # §14.7 ②: P&L colours go on signed numbers only — a bordered badge or tag takes
 # a lamp colour. Two badges predate the rule (option moneyness, socket ingest);
 # the count may fall, never rise.

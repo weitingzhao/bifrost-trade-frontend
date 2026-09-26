@@ -31,11 +31,45 @@ import { glyph } from '@/lib/design/glyphs'
 import { OPS_CONSOLE_URL } from '@/lib/opsConsole'
 import { useThemeMode, type ThemeMode } from '@/lib/theme'
 import { useGlass } from '@/lib/glass'
+import { useDisplay, type TextSize } from '@/lib/display'
 import { useShellPopover } from '@/lib/shellPopover'
 import { cn } from '@/lib/utils'
 import { worstLamp } from '@/utils/systemStanding'
 import { toggleToolbar, useToolbarShown } from './bottomLane'
 import { isSystemRoute } from './routeRegistry'
+
+/** The three text sizes, drawn as A in three sizes (Rev .72 §11). */
+const TEXT_SIZES: readonly { size: TextSize; label: string; className: string }[] = [
+  { size: 's', label: 'Smaller text', className: 'text-dense-caption' },
+  { size: 'm', label: 'Default text', className: 'text-dense-label' },
+  { size: 'l', label: 'Larger text', className: 'text-dense-body' },
+]
+
+/** A macOS switch row: the words, then the track. */
+function SwitchRow({ label, on, onToggle, title }: { label: string; on: boolean; onToggle: () => void; title: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={onToggle}
+      title={title}
+      className="flex w-full items-center gap-2 border-0 bg-transparent py-1 text-left text-dense-label text-foreground"
+    >
+      <span className="flex-1">{label}</span>
+      <span
+        aria-hidden
+        className="relative h-[18px] w-[30px] flex-none rounded-full transition-colors"
+        style={{ background: on ? 'var(--sk-accent)' : 'color-mix(in srgb, var(--sk-ink) 16%, transparent)' }}
+      >
+        <span
+          className="absolute top-[2px] size-[14px] rounded-full bg-[var(--sk-ink)] shadow-[0_1px_3px_rgb(0_0_0/0.35)] transition-[left]"
+          style={{ left: on ? 14 : 2 }}
+        />
+      </span>
+    </button>
+  )
+}
 
 const MODES: readonly { mode: ThemeMode; label: string; title: string }[] = [
   { mode: 'dark', label: 'Dark', title: 'Near-black ground with an indigo cast' },
@@ -76,6 +110,7 @@ function useDoor() {
 function UserCard({ onClose }: { onClose: () => void }) {
   const { mode, theme, choose } = useThemeMode()
   const glass = useGlass()
+  const display = useDisplay()
   const { data: status } = useMonitorStatus()
   const accounts = (status?.portfolio?.accounts ?? []).map((a) => (a.account_id ?? '').trim()).filter(Boolean)
   const domains = useSystemDomains({ live: true })
@@ -147,26 +182,51 @@ function UserCard({ onClose }: { onClose: () => void }) {
           })}
         </div>
         {/* Rev .70 §1 — macOS Accessibility › Display. Follows the system until set here. */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={glass.solid}
-          onClick={glass.toggle}
+        <SwitchRow
+          label="Reduce transparency"
+          on={glass.solid}
+          onToggle={glass.toggle}
           title="Glass surfaces (panel, toolbar, sidebar, popovers) become solid. Follows the system setting unless you set it here."
-          className="flex w-full items-center gap-2 border-0 bg-transparent py-1 text-left text-dense-label text-foreground"
-        >
-          <span className="flex-1">Reduce transparency</span>
-          <span
-            aria-hidden
-            className="relative h-[18px] w-[30px] flex-none rounded-full transition-colors"
-            style={{ background: glass.solid ? 'var(--sk-accent)' : 'color-mix(in srgb, var(--sk-ink) 16%, transparent)' }}
+        />
+        {/* Rev .72 §11 — display options. */}
+        <SwitchRow
+          label="Increase contrast"
+          on={display.contrast}
+          onToggle={() => display.set({ contrast: !display.contrast })}
+          title="Frames return on cards, tags and surfaces; muted text gets brighter (dark) or darker (light)."
+        />
+        <div className="flex items-center gap-2 py-0.5">
+          <span className="flex-1 text-dense-label text-foreground">Text size</span>
+          <div
+            className="flex gap-0.5 rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-0.5"
+            role="radiogroup"
+            aria-label="Text size"
+            title="Scales page content only — the toolbar, sidebar and panels keep their size."
           >
-            <span
-              className="absolute top-[2px] size-[14px] rounded-full bg-[var(--sk-ink)] shadow-[0_1px_3px_rgb(0_0_0/0.35)] transition-[left]"
-              style={{ left: glass.solid ? 14 : 2 }}
-            />
-          </span>
-        </button>
+            {TEXT_SIZES.map((z) => {
+              const on = display.textSize === z.size
+              return (
+                <button
+                  key={z.size}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  aria-label={z.label}
+                  onClick={() => display.set({ textSize: z.size })}
+                  className={cn(
+                    'h-6 w-7 rounded-md font-semibold leading-none transition-colors',
+                    z.className,
+                    on
+                      ? 'bg-[var(--sk-raised2)] text-foreground shadow-[0_1px_3px_rgb(0_0_0/0.4),inset_0_0_0_1px_color-mix(in_srgb,var(--sk-ink)_10%,transparent)]'
+                      : 'text-[var(--sk-mute2)] hover:text-foreground',
+                  )}
+                >
+                  A
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
 
       <nav className="border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] py-1.5" aria-label="Doors">

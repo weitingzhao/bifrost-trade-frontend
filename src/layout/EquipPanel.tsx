@@ -26,13 +26,18 @@
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { animatePanelIn, dismissSurface, noteOriginPoint, registerSurfaceElement } from './equipMotion'
 import {
-  PANEL_CARD_PX,
+  PANEL_MAX_PX,
+  PANEL_MIN_PX,
+  PANEL_WIDTH_PX,
   activeTabOf,
   focusTab,
   openSurface,
+  panelCardPx,
+  setPanelWidth,
   stripFor,
   surfaceHue,
   surfaceLabel,
+  usePanelWidth,
   useSurfaces,
   type PanelTab,
 } from './equipSurface'
@@ -45,6 +50,30 @@ import { sidePanelPushes } from '@/components/layout/inspectorDock'
 import css from './equipSurface.module.css'
 import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
+
+/** The width grip's drag: the column follows the pointer, and is kept on release. */
+function resizeFrom(e: ReactPointerEvent<HTMLDivElement>): void {
+  if (e.button !== 0) return
+  e.preventDefault()
+  const grip = e.currentTarget
+  grip.setPointerCapture(e.pointerId)
+  grip.dataset.drag = '1'
+  const sx = e.clientX
+  const w0 = panelCardPx() - 16
+  let w = w0
+  const move = (ev: PointerEvent) => {
+    w = Math.min(window.innerWidth - 120, w0 + (sx - ev.clientX))
+    setPanelWidth(w, false)
+  }
+  const up = () => {
+    grip.removeEventListener('pointermove', move)
+    grip.removeEventListener('pointerup', up)
+    delete grip.dataset.drag
+    setPanelWidth(w)
+  }
+  grip.addEventListener('pointermove', move)
+  grip.addEventListener('pointerup', up)
+}
 
 /**
  * A tab pulled down 36px, or out past the panel's left edge, becomes the
@@ -144,6 +173,7 @@ export function EquipPanel() {
   // The Symbol list's column sits right of the panel: the panel measures its
   // room without it and stands off it (`right = column + 8`).
   const dock = useDockColumn()
+  const panelW = usePanelWidth()
   const active = activeTabOf(panel)
   if (!panel || !active) return null
 
@@ -156,7 +186,7 @@ export function EquipPanel() {
       {/* Takes the column out of the content rather than letting a fixed card
           sit on top of it. A sibling of the page, as the Copilot dock is. */}
       {pushes ? (
-        <div className={css.spacer} style={{ width: PANEL_CARD_PX }} aria-hidden />
+        <div className={css.spacer} style={{ width: panelW + 16 }} aria-hidden />
       ) : null}
       <aside
         ref={card}
@@ -171,9 +201,23 @@ export function EquipPanel() {
           // measure, unlike the design's own.
           top: pushes ? 8 : SHELL_TOP_BAR_PX + 8,
           right: dock.width + 8,
+          ['--panel-w' as string]: `${panelW}px`,
         }}
         aria-label="Side panel"
       >
+        {/* Rev .72 §6: drag the left edge, 360–640; a double-click puts it back at 440. */}
+        <div
+          className={css.widthGrip}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Panel width"
+          aria-valuemin={PANEL_MIN_PX}
+          aria-valuemax={PANEL_MAX_PX}
+          aria-valuenow={panelW}
+          title="Drag to resize · double-click for 440"
+          onPointerDown={resizeFrom}
+          onDoubleClick={() => setPanelWidth(PANEL_WIDTH_PX)}
+        />
         <div className={css.head}>
           <div className={css.strip} role="tablist" aria-label="Open surfaces">
             {strip.shown.map((t) => (

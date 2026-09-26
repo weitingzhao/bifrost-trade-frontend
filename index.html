@@ -20,6 +20,10 @@
           // Reduce transparency (Rev .70): the user's switch, before first paint (src/lib/glass.ts).
           var g = localStorage.getItem('bifrost.glass');
           if (g === 'solid' || g === 'glass') r.dataset.glass = g;
+          // Display options (Rev .72 §11, src/lib/display.ts).
+          if (localStorage.getItem('bifrost.contrast') === 'more') r.dataset.contrast = 'more';
+          var ts = localStorage.getItem('bifrost.textsize');
+          if (ts === 's' || ts === 'l') r.dataset.textsize = ts;
         } catch (e) {}
       })();
     </script>

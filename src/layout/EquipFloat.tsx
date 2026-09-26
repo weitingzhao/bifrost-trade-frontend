@@ -29,7 +29,8 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
-  PANEL_CARD_PX,
+  panelCardPx,
+  usePanelWidth,
   loadGeometry,
   saveGeometry,
   setFloatSize,
@@ -69,7 +70,7 @@ const TILE_EASE = ['left', 'top', 'width', 'height'].map((p) => `${p} 0.2s cubic
  * right edge is the list's now (Rev .58), and 0 when it floats or is hidden.
  */
 function rightLimit(panelOpen: boolean, dockPx: number): number {
-  return window.innerWidth - dockPx - (panelOpen ? PANEL_CARD_PX : GUTTER_PX)
+  return window.innerWidth - dockPx - (panelOpen ? panelCardPx() : GUTTER_PX)
 }
 
 /**
@@ -125,6 +126,8 @@ export function EquipFloat() {
   const size = float?.size ?? 'phone'
   const panelOpen = Boolean(panel)
   const dockPx = useDockColumn().width
+  // A panel width drag moves the right limit: re-render on it (Rev .72 §6).
+  usePanelWidth()
   const carried = useCarriedSymbol()
   const [viewport, setViewport] = useState(() => window.innerWidth)
 

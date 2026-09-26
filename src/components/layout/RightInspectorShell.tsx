@@ -1,3 +1,4 @@
+import { usePanelWidth } from '@/layout/equipSurface'
 import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
@@ -43,6 +44,8 @@ export function RightInspectorShell({
   // The Symbol list's column is the outermost one; the inspector measures its
   // room without it and, floating, stands off it.
   const dock = useDockColumn()
+  // The panel's column moves with its width (Rev .72 §6): re-read it.
+  usePanelWidth()
 
   useEffect(() => {
     if (!open || !onClose) return

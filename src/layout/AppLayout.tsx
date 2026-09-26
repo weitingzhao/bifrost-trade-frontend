@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState, type CSSProperties } from 'react'
+import { Suspense, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useAmbientPageContext } from '@/hooks/useAmbientPageContext'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
@@ -11,6 +11,10 @@ import { ShellContextMenu } from './ShellContextMenu'
 import { useShellArrows } from './useShellArrows'
 import { usePageLane } from './usePageLane'
 import { useGlassSync } from '@/lib/glass'
+import { useDisplaySync } from '@/lib/display'
+import { useSheetEnter } from './useSheetEnter'
+import { NumberStepper } from './NumberStepper'
+import { WhatsNew } from './WhatsNew'
 import { QuickLook } from './QuickLook'
 import { ShortcutSheet } from './ShortcutSheet'
 import { SymbolDrop } from './SymbolDrop'
@@ -21,7 +25,8 @@ import { initialSidebarOpen, SHELL_SIDEBAR_WIDTH } from './shellChrome'
 import { isSystemRoute } from './routeRegistry'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
-import { useAlerts } from '@/hooks/useAlerts'
+import { alertsSummary, useAlerts } from '@/hooks/useAlerts'
+import { useClearedAlerts, withoutCleared } from '@/lib/alertsCleared'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { PageRouteFallback } from '@/components/layout'
 import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
@@ -69,7 +74,12 @@ export function AppLayout() {
   // One SSE subscription, two readers: Alerts groups it by source, the toast
   // stack decides which of it is allowed to interrupt.
   const stream = useSystemMessages()
-  const { groups, summary } = useAlerts(stream)
+  const { groups: streamed } = useAlerts(stream)
+  // What this session cleared in the notification centre (Rev .72 §10) leaves
+  // the centre, the count and the banners together.
+  const cleared = useClearedAlerts()
+  const groups = useMemo(() => withoutCleared(streamed, cleared), [streamed, cleared])
+  const summary = useMemo(() => alertsSummary(groups), [groups])
   const [inspectorSlot, setInspectorSlot] = useState<HTMLElement | null>(null)
 
   // The layer the current group belongs to, stamped on the root so the ramp in
@@ -87,6 +97,9 @@ export function AppLayout() {
   // route keeps its scroll for this tab's session.
   usePageLane()
   useGlassSync()
+  // Rev .72: display options on <html>, and Enter confirms a sheet.
+  useDisplaySync()
+  useSheetEnter()
 
   return (
     <InspectorSlotContext.Provider value={inspectorSlot}>
@@ -107,6 +120,9 @@ export function AppLayout() {
         <SymbolDrop />
         <QuickLook />
         <ShortcutSheet />
+        {/* Rev .72: numeric fields step; What's New once per design Rev. */}
+        <NumberStepper />
+        <WhatsNew />
         <AppSidebar />
         {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport.
           Transparent, with the lane below: one window ground (Rev .61) — the

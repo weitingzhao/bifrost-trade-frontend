@@ -152,7 +152,8 @@
   position: fixed;
   right: 8px;
   bottom: 8px;
-  width: 440px;
+  /* Rev .72 §6: the width the reader dragged (360–640), 440 by default. */
+  width: var(--panel-w, 440px);
   max-width: calc(100vw - 16px);
   z-index: 57;
 }
@@ -530,4 +531,41 @@
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   pointer-events: none;
+}
+
+/* The panel's width grip (Rev .72 §6): its left edge, shown on hover, the
+   accent while dragging. */
+.widthGrip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  width: 6px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.widthGrip::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  width: 3px;
+  height: 36px;
+  translate: 0 -50%;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--sk-ink) 28%, transparent);
+  opacity: 0;
+  transition: opacity var(--mo-fast) ease, background var(--mo-fast) ease;
+}
+
+.widthGrip:hover::after {
+  opacity: 1;
+}
+
+.widthGrip[data-drag='1']::after {
+  opacity: 1;
+  height: 72px;
+  background: var(--sk-accent);
 }

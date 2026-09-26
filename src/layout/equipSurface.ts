@@ -116,6 +116,54 @@ const KEY = {
 export const PANEL_WIDTH_PX = 440
 export const PANEL_CARD_PX = PANEL_WIDTH_PX + 16
 
+/* ── The panel's width (design Rev .72 §6) ───────────────────────────────── */
+
+/** Dragged from its left edge, 360–640; a double-click puts it back at 440. */
+export const PANEL_MIN_PX = 360
+export const PANEL_MAX_PX = 640
+const PANEL_W_KEY = 'bifrost.panelw'
+
+export function clampPanelWidth(w: number): number {
+  return Math.max(PANEL_MIN_PX, Math.min(PANEL_MAX_PX, Math.round(w)))
+}
+
+function readPanelWidth(): number {
+  try {
+    const v = Number(localStorage.getItem(PANEL_W_KEY))
+    return clampPanelWidth(Number.isFinite(v) && v > 0 ? v : PANEL_WIDTH_PX)
+  } catch {
+    return PANEL_WIDTH_PX
+  }
+}
+
+const widthStore = createExternalStore<{ w: number }>({ w: readPanelWidth() })
+
+/** Set the width — while dragging without `persist`, once more with it on release. */
+export function setPanelWidth(w: number, persist = true): void {
+  const next = clampPanelWidth(w)
+  widthStore.setState({ w: next })
+  if (!persist) return
+  try {
+    localStorage.setItem(PANEL_W_KEY, String(next))
+  } catch {
+    // Storage refused: the width holds for this tab.
+  }
+}
+
+/**
+ * The column the panel takes: its width plus the 8px inset each side. Every
+ * reader — the push, the float's right limit, the toolbar's lane, the
+ * inspector's inset — reads this, so a drag moves them all together.
+ */
+export function panelCardPx(): number {
+  return widthStore.getState().w + 16
+}
+
+/** For a component that must re-render when the width moves. */
+export function usePanelWidth(): number {
+  return widthStore.useStore().w
+}
+
 export interface FloatGeometry {
   t?: number
   l?: number

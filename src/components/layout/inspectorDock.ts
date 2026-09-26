@@ -17,7 +17,7 @@
  * so they float and the page is whole again the moment they close.
  */
 import { panelDocks, SIDE_PANEL_FLOOR_PX } from '@/lib/panelDocks'
-import { PANEL_CARD_PX } from '@/layout/equipSurface'
+import { panelCardPx } from '@/layout/equipSurface'
 
 /** The reading width — the default, and what `useInspectorWide` toggles away from. */
 export const INSPECTOR_WIDTH_READ_PX = 560
@@ -35,7 +35,7 @@ export function inspectorDocksAt(panelWidthPx: number, viewportWidthPx: number):
  * own floor since Rev .25 — 1256, not the inspector's 1456.
  */
 export function sidePanelPushes(panelOpen: boolean, viewportWidthPx: number): boolean {
-  return panelOpen && panelDocks(PANEL_CARD_PX, viewportWidthPx, SIDE_PANEL_FLOOR_PX)
+  return panelOpen && panelDocks(panelCardPx(), viewportWidthPx, SIDE_PANEL_FLOOR_PX)
 }
 
 /**
@@ -57,5 +57,5 @@ export function inspectorOverlayInsetRightPx(
   panelOpen: boolean,
   viewportWidthPx: number,
 ): number {
-  return sidePanelPushes(panelOpen, viewportWidthPx) ? PANEL_CARD_PX : 0
+  return sidePanelPushes(panelOpen, viewportWidthPx) ? panelCardPx() : 0
 }

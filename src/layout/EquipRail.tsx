@@ -46,7 +46,7 @@ import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { firedTodayCount, useFiredAlerts } from '@/hooks/useFiredAlerts'
 import { computeLiveNavLamp } from '@/utils/livePageLamps'
 import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
-import { PANEL_CARD_PX, isVisible, opensAsPage, placeOf, surfaceForRoute, symbolSurface, useSurfaces } from './equipSurface'
+import { isVisible, opensAsPage, placeOf, surfaceForRoute, symbolSurface, usePanelWidth, useSurfaces } from './equipSurface'
 import { useSymbolGo } from './symbolGo'
 import { useCarriedSymbol } from '@/lib/symbolContext'
 import { toggleSurfaceFrom } from './equipMotion'
@@ -291,7 +291,9 @@ export function EquipRail() {
   const visible = useToolbarShown()
   // An overlaying panel takes the lane's right end; a pushing one already
   // narrowed the content, which the lane measures.
-  const lane = useBottomLane(panel ? PANEL_CARD_PX : 0)
+  // The panel's column follows its width (Rev .72 §6).
+  const panelW = usePanelWidth()
+  const lane = useBottomLane(panel ? panelW + 16 : 0)
 
   // The page icons need 820 of lane; below that, the heads alone.
   const full = lane.width >= 820

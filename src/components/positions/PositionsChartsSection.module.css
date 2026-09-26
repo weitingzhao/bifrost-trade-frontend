@@ -1,35 +1,3 @@
-/* Legacy: pos-comp-charts-row--12 — three separate panels (not one outer box). */
-
-.section {
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 1.25rem;
-  min-width: 0;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 1rem;
-  /* Legacy pos-comp-charts-row--12: equal-height columns */
-  align-items: stretch;
-  width: 100%;
-}
-
-.col {
-  grid-column: span 12;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-@media (min-width: 960px) {
-  .col {
-    grid-column: span 4;
-  }
-}
-
 /*
  * Each column = Legacy coverage-charts-section / coverage-asset-pie-section:
  * own border, elevated surface, inset highlight — separated by row gap only.
@@ -49,16 +17,6 @@
   background: var(--mat-card-fill);
   box-shadow: none;
   isolation: isolate;
-}
-
-.chartInner {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-  height: 100%;
-  gap: 0.65rem;
 }
 
 /* Account column: grow to match tallest panel; asset mix stays top-aligned */
@@ -87,18 +45,6 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted-foreground);
-}
-
-.accountToolbar {
-  justify-content: flex-start;
-}
-
-.accountFilter {
-  margin-left: auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
-  justify-content: flex-end;
 }
 
 .donutRow {
@@ -148,23 +94,6 @@
   flex-shrink: 0;
 }
 
-.mixFilterRow {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.2rem;
-  width: 100%;
-}
-
-.mixLegend {
-  flex: 1 1 12rem;
-  min-width: min(100%, 10rem);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.2rem 0.65rem;
-  align-content: start;
-}
-
 .mixLegendCol {
   display: flex;
   flex-direction: column;
@@ -202,28 +131,4 @@
   font-size: 0.75rem;
   text-align: right;
   white-space: nowrap;
-}
-
-.optionHeader {
-  flex-wrap: nowrap;
-  align-items: baseline;
-}
-
-.optionHeaderSummaryLabel {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.stack {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  min-width: 0;
-  gap: 0.65rem;
-  /* Spread Category Detail / Category / Option blocks within the equal-height panel */
-  justify-content: space-between;
 }

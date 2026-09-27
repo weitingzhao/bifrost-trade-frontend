@@ -68,10 +68,10 @@ function FollowLock({ symbol }: { symbol: string }) {
   )
 }
 
-/** The lead reading and its record, for a face row's right-hand column. */
+/** The lead reading and its record, for a face row's right-hand column (its compact form when it has one). */
 function lead(view: DossierFaceView) {
   const row = view.rows.find((r) => r.value != null) ?? view.rows[0]
-  return { value: row?.value ?? '', rec: row?.rates?.split(' · ')[0] ?? '' }
+  return { value: row?.compact ?? row?.value ?? '', rec: row?.rates?.split(' · ')[0] ?? '' }
 }
 
 function FaceRows({
@@ -107,7 +107,7 @@ function FaceRows({
                 {v.rows
                   .filter((r) => r.value != null)
                   .slice(0, 2)
-                  .map((r) => `${r.label} ${r.value}`)
+                  .map((r) => `${r.label} ${r.compact ?? r.value}`)
                   .join(' · ') || (v.means ?? '')}
               </span>
             </span>

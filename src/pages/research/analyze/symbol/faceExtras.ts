@@ -199,13 +199,14 @@ export function faceExtras(
           id: 'earnings',
           label: 'Earnings',
           value: opts.earnings ? earn.value : '—',
+          compact: opts.earnings ? (earn.compact ?? null) : null,
           means: opts.earnings
             ? earn.means
             : opts.earningsFailed
               ? 'Research did not answer for the next print — the estimate is unavailable, not absent.'
               : 'Reading the next print…',
         },
-        ...(gap ? [{ id: 'earnings-gap', label: 'Earnings gap', value: gap.value, means: gap.means }] : []),
+        ...(gap ? [{ id: 'earnings-gap', label: 'Earnings gap', value: gap.value, compact: gap.compact, means: gap.means }] : []),
         {
           id: 'opex',
           label: 'OpEx',

@@ -170,6 +170,8 @@ export interface DossierRow extends RegimeLensItem {
   sample: string | null
   /** The same record with its pipeline state, for the hover — never the only home of a fact. */
   recordDetail: string | null
+  /** The reading as the 440 page prints it, when the full one would not fit its row. */
+  compact?: string | null
 }
 
 export interface DossierFaceView {
@@ -227,7 +229,7 @@ export interface FaceExtras {
   /** Printed value overrides, keyed by canonical lens id. */
   values?: Readonly<Record<string, string>>
   /** Rows that are readings but not lenses: no band, no record, no lamp. */
-  rows?: readonly { id: string; label: string; value: string; means?: string | null }[]
+  rows?: readonly { id: string; label: string; value: string; means?: string | null; compact?: string | null }[]
   /**
    * A lensless face's verdict when a date decides it — the Events card's
    * "earnings inside 10 days" gate. Still no band and no record: the lamp is
@@ -273,6 +275,7 @@ export function faceView(
     id: r.id,
     label: r.label,
     value: r.value,
+    compact: r.compact ?? null,
     verdict: r.value,
     means: r.means ?? null,
     band: null,

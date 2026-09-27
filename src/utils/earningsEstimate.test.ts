@@ -153,10 +153,12 @@ describe('term-structure earnings', () => {
   it('prints the Overview’s earnings row', () => {
     expect(earningsRow(est(38), 20)).toEqual({
       value: '~38 days · 3 Nov (est.)',
+      compact: '~38d · 3 Nov',
       means: "The date is an estimate: last year's same-quarter print (4 Nov 30) plus 52 weeks. On this name the rule missed its last 4 prints by a median of 0 days (at most 2).",
     })
     expect(earningsRow(est(1), 20).value).toBe('~1 day · 3 Nov (est.)')
     expect(earningsRow(est(-3), 20).value).toBe('late · expected ~3 Nov')
+    expect(earningsRow(est(-3), 20).compact).toBe('late · ~3 Nov')
     expect(earningsRow(null, 0).value).toBe('no 8-K on file')
     expect(earningsRow(null, 12).value).toBe('—')
   })
@@ -188,6 +190,7 @@ describe('term-structure earnings', () => {
     )!
     expect(gapRow(ev)).toEqual({
       value: '±9.9% priced',
+      compact: '±9.9%',
       means:
         'The move the ATM term prices for the estimated print — 45.0% on 10-31 before it against 58.0% on 11-07 after — as the Chain and Payoff faces size the gap.',
     })

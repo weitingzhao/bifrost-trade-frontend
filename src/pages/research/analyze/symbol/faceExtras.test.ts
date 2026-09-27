@@ -42,4 +42,10 @@ describe('the Events card’s earnings rows', () => {
     const rows = earningsRows({ held: false, watched: false, earnings: { next: { ...next, days_away: -3 }, filings: 20, gap: null } })
     expect(rows.map((r) => r.id)).toEqual(['earnings'])
   })
+
+  it('gives the 440 page short forms of the date and the gap', () => {
+    const rows = earningsRows({ held: false, watched: false, earnings: { next, filings: 20, gap } })
+    expect(rows.map((r) => r.compact)).toEqual(['~38d · 3 Nov', '±9.9%'])
+  })
 })
+

@@ -16,17 +16,20 @@
  *   own legs. Filling them in is still the Option Category page's job until it
  *   retires.
  * - **Dimensions** — the six `dim_type` dictionaries every template picks from,
- *   **add-only**. A code is referenced by templates, so renaming one is a data
- *   migration and deleting one can orphan a template; the design's own note
- *   says so, and neither belongs behind a button in an edit sheet.
+ *   **read-only**. The design draws a `＋ code` on each row (add-only), but
+ *   since Wave 9 a code is a label of a Postgres enum (`dim_*_t`) mirrored by
+ *   core's `strategy_dim_catalog`: adding one is `ALTER TYPE … ADD VALUE` in
+ *   every env plus a core release, and the server answers every create,
+ *   rename and delete with 400 "catalog-defined". The button stays, disabled,
+ *   with that reason under it — where the capability went is the Owner's call.
  */
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { createDim, createTemplate } from '@/api/strategy'
-import { useOptionCategoryDims, DIMS_KEY } from '@/hooks/useOptionCategory'
+import { createTemplate } from '@/api/strategy'
+import { useOptionCategoryDims } from '@/hooks/useOptionCategory'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { TemplateEditor } from '@/components/strategy/templates/TemplateEditor'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -63,6 +66,7 @@ export function TemplateCatalogControls({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const dims = useOptionCategoryDims()
+  const dimsNoteId = useId()
 
   async function create() {
     const c = toTemplateCode(code)
@@ -142,11 +146,12 @@ export function TemplateCatalogControls({
             </span>
           </div>
           {CATALOG_DIM_TYPES.map((dt) => (
-            <DimRow key={dt} dimType={dt} rows={dims.data?.by_type[dt] ?? []} />
+            <DimRow key={dt} dimType={dt} rows={dims.data?.by_type[dt] ?? []} noteId={dimsNoteId} />
           ))}
-          <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
-            Add-only here. A code is referenced by templates, so renaming one is a data migration and deleting one can
-            orphan a template — both stay on the Option Category page.
+          <p id={dimsNoteId} className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
+            Read-only. Each code is a label of the Postgres enum dim_*_t, so adding one is ALTER TYPE … ADD VALUE in
+            every env plus a core release — the server refuses create, rename and delete. A template’s own six
+            dimensions are set with “Edit this template…”.
           </p>
         </div>
       ) : null}
@@ -190,8 +195,8 @@ export function TemplateCatalogControls({
               />
             </label>
             <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
-              It starts with no legs and no dimensions — set them in the dictionary above and on the Option Category
-              page. Pick it below and this structure’s dimensions follow it.
+              It starts with no legs and no dimensions — once it is picked, set them with “Edit this template…”.
+              This structure’s dimensions follow it.
             </p>
             {error ? <p className="m-0 text-dense-meta text-danger text-pretty">{error}</p> : null}
           </div>
@@ -209,26 +214,16 @@ export function TemplateCatalogControls({
   )
 }
 
-function DimRow({ dimType, rows }: { dimType: CatalogDimType; rows: { strategy_dim_id: number; code: string }[] }) {
-  const qc = useQueryClient()
-  const [adding, setAdding] = useState(false)
-  const [code, setCode] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  async function add() {
-    const c = code.trim().toLowerCase()
-    if (!c || busy) return
-    setBusy(true)
-    try {
-      await createDim(dimType, { code: c, display_label: c, sort_order: 0 })
-      await qc.invalidateQueries({ queryKey: DIMS_KEY })
-      setCode('')
-      setAdding(false)
-    } finally {
-      setBusy(false)
-    }
-  }
-
+function DimRow({
+  dimType,
+  rows,
+  noteId,
+}: {
+  dimType: CatalogDimType
+  rows: { strategy_dim_id: number; code: string }[]
+  /** The dictionary's footnote, which says why `＋ code` cannot be pressed. */
+  noteId: string
+}) {
   return (
     <div className="grid grid-cols-[5.75rem_minmax(0,1fr)_auto] items-center gap-2.5">
       <span className={positionsUi.cap}>dim_{dimType}</span>
@@ -245,23 +240,18 @@ function DimRow({ dimType, rows }: { dimType: CatalogDimType; rows: { strategy_d
             </span>
           ))
         )}
-        {adding ? (
-          <Input
-            className="h-5.5 w-28 font-mono text-xs"
-            value={code}
-            autoFocus
-            placeholder="code"
-            aria-label={`New dim_${dimType} code`}
-            onChange={(e) => setCode(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void add()
-              if (e.key === 'Escape') setAdding(false)
-            }}
-            onBlur={() => void add()}
-          />
-        ) : null}
       </span>
-      <button type="button" className={positionsUi.link} onClick={() => setAdding(true)} disabled={busy}>
+      <button
+        type="button"
+        className={cn(
+          positionsUi.link,
+          'disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline',
+        )}
+        disabled
+        aria-label={`Add a dim_${dimType} code`}
+        aria-describedby={noteId}
+        title="Catalog-defined: a new code is ALTER TYPE … ADD VALUE plus a core release"
+      >
         ＋ code
       </button>
     </div>

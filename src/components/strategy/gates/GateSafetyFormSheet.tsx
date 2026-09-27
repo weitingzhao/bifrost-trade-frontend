@@ -11,7 +11,7 @@ import {
   useStrategyDims,
   useUpdateGateSafety,
 } from '@/hooks/useGateSafety'
-import { DEFAULT_GATES, DIM_TYPES, DIM_LABELS, type DimFieldName } from '@/utils/gateDefaults'
+import { DEFAULT_GATES, DIM_TYPES, DIM_LABELS, dimCatalogType, type DimFieldName } from '@/utils/gateDefaults'
 import type { GateSafetyPayload } from '@/types/positions'
 
 export type GateSheetMode =
@@ -279,7 +279,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="__any__">— Any</SelectItem>
-                    {(dimsData?.by_type[dim] ?? []).map((d) => (
+                    {(dimsData?.by_type[dimCatalogType(dim)] ?? []).map((d) => (
                       <SelectItem key={d.strategy_dim_id} value={d.code}>
                         {d.display_label}
                       </SelectItem>

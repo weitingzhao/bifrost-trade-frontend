@@ -338,25 +338,6 @@ export async function replaceTemplateCharacteristics(
   return res.json()
 }
 
-export async function createDim(
-  dimType: string,
-  body: { code: string; display_label: string; sort_order: number },
-): Promise<{ strategy_dim_id: number }> {
-  const res = await fetch(strategyUrl('/strategies/dims'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ dim_type: dimType, ...body }),
-  })
-  if (!res.ok) throw new Error(`POST /strategies/dims: ${res.status}`)
-  return res.json()
-}
-
-export async function deleteDim(id: number): Promise<{ ok: boolean }> {
-  const res = await fetch(strategyUrl(`/strategies/dims/${id}`), { method: 'DELETE' })
-  if (!res.ok) throw new Error(`DELETE /strategies/dims/${id}: ${res.status}`)
-  return res.json()
-}
-
 async function fetchConfigOptions(path: string): Promise<{ options: StructureTypeConfigOption[] }> {
   const res = await fetch(strategyUrl(`/strategies/templates/options/${path}`))
   if (!res.ok) throw new Error(`Strategy /templates/options/${path}: ${res.status}`)

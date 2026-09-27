@@ -199,6 +199,13 @@
        Defined once — .dark sits on the same element, so it resolves with the
        dark ink and a 0% pastel there. */
     --sk-series-violet: color-mix(in oklch, #c4b5fd, var(--sk-ink) var(--sk-pastel));
+    /* The Copilot's own hue as an operator mark (Rev .89): the module colour,
+       pastel-deepened on paper the same way. Also the state pastels the
+       design uses for artifact types and stages (blue) and a decided or
+       approved state (green) — never the ticker lime or the contract sky. */
+    --sk-copilot-ink: color-mix(in oklch, #c084fc, var(--sk-ink) var(--sk-pastel));
+    --sk-state-blue: color-mix(in oklch, #60a5fa, var(--sk-ink) var(--sk-pastel));
+    --sk-state-green: color-mix(in oklch, #22c55e, var(--sk-ink) var(--sk-pastel));
     --sk-accent2: #5b21b6;
     --sk-accent-rgb: 109 40 217;
 

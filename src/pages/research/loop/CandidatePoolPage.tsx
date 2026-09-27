@@ -4,8 +4,19 @@
  */
 import { Fragment, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, ListFilter } from 'lucide-react'
-import { ObjectiveScopeBanner, PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { ArrowUpRight } from 'lucide-react'
+import {
+  HeroCard,
+  HeroRow,
+  ObjectiveScopeBanner,
+  PageHead,
+  PageHeadLink,
+  PageShell,
+  SectionPanel,
+} from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { ALL_OBJECTIVES, useObjectiveScope } from '@/lib/objectiveScope'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import {
@@ -37,14 +48,11 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
-  EmptyState,
   SegmentControl,
   denseTableEntityCell,
   denseTableNumCell,
 } from '@/components/data-display'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   useCandidates,
   usePromoteCandidate,
@@ -67,6 +75,22 @@ function fmtScore(n: number | null | undefined): string {
 }
 
 /**
+ * The Source tag's ink (Rev .88): a source is provenance, so it never borrows
+ * an entity ink. Your hand is ink, a screen is the state blue, the loop's
+ * Curator a muted grey, the Copilot its own module hue. The word is the
+ * store's (`harness`, `scan` …), not the design's YOU / CURATOR / SCREEN.
+ */
+const SCREEN_SOURCES = ['scan', 'screen', 'screener', 'sepa', 'momentum']
+function sourceInk(source: string | null | undefined): string {
+  const s = (source ?? '').toLowerCase()
+  if (SCREEN_SOURCES.some((t) => s.includes(t))) return 'text-[var(--sk-state-blue)]'
+  const op = sourceOperatorOf(source)
+  if (op === 'loop') return 'text-muted-foreground'
+  if (op === 'copilot') return 'text-[var(--sk-copilot-ink)]'
+  return 'text-foreground'
+}
+
+/**
  * Excess return over SPY for one candidate, five sessions on.
  *
  * A candidate whose window has not elapsed shows "pending", not a dash and not a
@@ -82,7 +106,8 @@ function CandidateOutcomeCell({ outcome }: { outcome?: CandidateOutcomeRow }) {
     return <span className="text-dense-micro text-muted-foreground">no benchmark</span>
   }
   return (
-    <span className={excess > 0 ? 'text-success' : 'text-danger'}>
+    // A signed return — direction inks are right here (Rev .93 #7).
+    <span className={excess > 0 ? 'text-profit' : excess < 0 ? 'text-loss' : 'text-foreground'}>
       {fmtPctSigned(excess * 100)}
     </span>
   )
@@ -185,71 +210,69 @@ export default function CandidatePoolPage() {
   }
 
   const { data: outcomeByCandidate } = useCandidateOutcomeByCandidate(5)
+  const preview = usePreviewState()
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(query)
 
   return (
     <PageShell padding="default" className="space-y-3">
-      <PageHeader
+      {/* §16.10: the lead behind ⓘ, the Inbox as the head's door. */}
+      <PageHead
         title="Candidate Pool"
-        description="What the loop is considering — the Curator screens in, ttl expiry screens out, you promote (Add to Pool from Scan and the discovery pages). Observe-only."
+        info="What the loop is considering — the Curator screens in, ttl expiry screens out, you promote (Add to Pool from Scan and the discovery pages). Observe-only."
         actions={
-          <Link
-            to="/research/loop/decisions"
-            className="whitespace-nowrap text-dense-label text-primary hover:underline"
-          >
+          <PageHeadLink to="/research/loop/decisions" title="Where the loop's proposals wait for your call">
             Decision Inbox →
-          </Link>
+          </PageHeadLink>
         }
       />
 
-      {/* The design's strip over the pool. `Above promote line` keeps its
-          sentence and no number — no fit line exists to be above. */}
-      <div className="flex flex-wrap items-start gap-x-7 gap-y-2 border px-3 py-2.5 mat-card">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
-            In pool
-          </span>
-          <span className="font-mono text-base font-bold">{openCount}</span>
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
-            Curator run
-          </span>
+      {/* Rev .88: In pool and Above promote line are the heroes; the Curator
+          run and the pool policy stay on the strip. `Above promote line`
+          keeps its sentence and no number — no fit line exists to be above. */}
+      <HeroRow label="The pool">
+        <HeroCard label="In pool" value={pageState === 'ready' ? String(openCount) : '—'} />
+        <HeroCard
+          label="Above promote line"
+          value="—"
+          valueClassName="text-muted-foreground"
+          sub="no promote line exists — promotion is always yours; the loop only proposes"
+        />
+      </HeroRow>
+      <div data-sr-kpi="strip">
+        <span data-sr-kpi="stat">
+          <span data-sr-kpi-l="">Curator run</span>
           <span
-            className="font-mono text-dense-label font-semibold text-secondary-foreground"
+            data-sr-kpi-v=""
+            className="font-mono text-dense-label font-semibold text-[var(--sk-soft)]"
             title="When the loop last ran for any objective. The pool's newest trade_date is a fact about the rows; this is a fact about the machine, and they part company the moment a run proposes nothing."
           >
             {curator?.startedAt ? curator.startedAt.slice(0, 16).replace('T', ' ') : '—'}
           </span>
-          <span className="text-dense-caption text-muted-foreground">
+          <span data-sr-kpi-s="">
             {curator == null
               ? 'no run recorded'
               : `+${curator.proposed} in · ${curator.expired} expired · ${fmtUsd(curator.usd)}`}
+            {latestBatch ? ` · newest batch ${latestBatch.date} · ${latestBatch.n}` : ''}
           </span>
-          {latestBatch ? (
-            <span className="text-dense-caption text-muted-foreground">
-              newest batch {latestBatch.date} · {latestBatch.n}
-            </span>
-          ) : null}
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
-            Above promote line
-          </span>
-          <span className="font-mono text-base font-bold text-muted-foreground">—</span>
-          <span className="text-dense-caption text-muted-foreground">
-            no promote line exists — promotion is always yours; the loop only proposes
-          </span>
-        </div>
-        <div className="ml-auto flex max-w-[22rem] flex-col gap-0.5">
-          <span className="text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground">
-            Pool policy
-          </span>
-          <span className="text-dense-caption leading-normal text-muted-foreground">
+        </span>
+        <span data-sr-kpi="stat" className="ml-auto max-w-[22rem]">
+          <span data-sr-kpi-l="">Pool policy</span>
+          <span className="text-dense-caption leading-normal whitespace-normal text-muted-foreground">
             a candidate carries a ttl_at and expiry screens it out as expired; Promote writes a
             Hypothesis and the row keeps the link
           </span>
-        </div>
+        </span>
       </div>
+
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the pool"
+          detail={staleDetail(query, 'a candidate proposed since may be missing.')}
+          onAction={() => void query.refetch()}
+        />
+      ) : null}
 
       {/* Applied, not just reported: the rows this hides were proposed by
           another machine or by nobody's, and both are part of the answer to
@@ -295,15 +318,20 @@ export default function CandidatePoolPage() {
           />
         }
       >
-      {query.isError ? (
-        <QueryErrorAlert error={query.error} />
-      ) : query.isLoading ? (
-        <Skeleton className="m-3 h-64 rounded-md" />
+      {pageState === 'failed' ? (
+        <ViewState
+          kind="failed"
+          title="Couldn’t load the pool"
+          detail={failedDetail(query, 'No candidate was read — an empty pool here would not mean the loop proposed nothing.')}
+          onAction={() => void query.refetch()}
+        />
+      ) : pageState === 'loading' ? (
+        <ViewState kind="loading" title="Loading the pool" rows={6} cols={8} />
       ) : items.length === 0 ? (
-        <EmptyState
-          icon={<ListFilter />}
+        <ViewState
+          kind="empty"
           title="No candidates"
-          description="Add symbols from Scan (Add to Pool) or other discovery pages."
+          detail="Add symbols from Scan (Add to Pool) or the other discovery pages."
         />
       ) : (
         <DenseDataTable wrapClassName="rounded-none border-0 overflow-x-auto" tableClassName="min-w-[900px]">
@@ -357,14 +385,21 @@ export default function CandidatePoolPage() {
                       provenance line under the row now, which is where the
                       design puts it. */}
                   <DenseTableCell>
-                    <DenseTag variant="neutral">{row.source}</DenseTag>
+                    <span
+                      className={cn(
+                        'inline-flex h-4 items-center px-1.5 mat-tag font-mono text-dense-micro font-bold',
+                        sourceInk(row.source),
+                      )}
+                    >
+                      {row.source}
+                    </span>
                   </DenseTableCell>
                   <DenseTableCell className={cn(denseTableNumCell, 'max-w-none')}>
                     <span className="block">{fmtScore(row.score)}</span>
                     {/* Against the best in view, not against 100: the composite
                         has no documented ceiling, and a bar drawn to one would
                         invent a scale. */}
-                    <span className="mt-0.5 block h-[3px] overflow-hidden rounded-sm bg-muted">
+                    <span className="mt-0.5 block h-[3px] overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                       {scoreShare(row.score, bestScore) != null ? (
                         <span
                           className="block h-full rounded-sm bg-foreground/45"
@@ -379,8 +414,9 @@ export default function CandidatePoolPage() {
                   <DenseTableCell
                     className={cn(
                       'font-mono text-dense-micro',
+                      // Rev .88: 'new' is ink, not a colour — it marks age, not a state.
                       candidateAge(row, nowIso).tone === 'fresh'
-                        ? 'text-success'
+                        ? 'text-foreground'
                         : candidateAge(row, nowIso).tone === 'expiring'
                           ? 'text-warning'
                           : 'text-muted-foreground',
@@ -446,9 +482,7 @@ export default function CandidatePoolPage() {
                             ? 'info'
                             : row.status === 'promoted'
                               ? 'success'
-                              : row.status === 'dismissed'
-                                ? 'danger'
-                                : 'neutral'
+                              : 'neutral'
                         }
                       >
                         {row.status}
@@ -500,7 +534,7 @@ export default function CandidatePoolPage() {
                     each verb writes and where it lands is a product decision,
                     so the line says they are owed where they would sit. */}
                 <tr>
-                  <td colSpan={colCount} className="border-b border-border/55 px-2.5 pb-1.5 pt-0">
+                  <td colSpan={colCount} className="border-b border-border px-2.5 pb-1.5 pt-0">
                     <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-dense-caption text-muted-foreground">
                       <span
                         className="font-mono text-muted-foreground/70"
@@ -548,7 +582,7 @@ export default function CandidatePoolPage() {
         </DenseDataTable>
       )}
 
-      <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-normal text-muted-foreground">
+      <p className="border-t border-border px-3 py-2 text-dense-caption leading-normal text-muted-foreground">
         Score is the loop's composite at ingest — it ranks attention, it does not size or trade
         anything; its bar is drawn against the best score in view, because nothing documents
         the composite's own ceiling. <span className="text-foreground/80">Why</span> is the lens
@@ -557,9 +591,10 @@ export default function CandidatePoolPage() {
         writes a Hypothesis directly and the row keeps the link; Dismiss and ttl expiry keep
         history. The design ranks this list by <span className="text-foreground/80">Fit</span> —
         how many of the active hypotheses’ entry conditions a name satisfies, weighted by each
-        hypothesis’s settled record. Both halves are empty on this side, not merely unbuilt: none
-        of the 29 active hypotheses links an opportunity, so no entry condition is attached to
-        any of them, and none carries a resolution, so there is no settled record to weight by.
+        hypothesis’s settled record. Both halves are empty on this side, not merely unbuilt: not
+        one active hypothesis links an opportunity, so no entry condition is attached to any of
+        them, and not one carries a resolution, so there is no settled record to weight by
+        (re-measured 2026-09-26).
         Until one of those fills, a Fit percentage would be a number with nothing behind it.
       </p>
       </SectionPanel>

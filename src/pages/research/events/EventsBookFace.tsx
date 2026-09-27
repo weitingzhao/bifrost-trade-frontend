@@ -25,42 +25,13 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { symbolTabHref } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots } from '@/utils/optionChain'
+import { expiryIso, isoDaysFrom, opexDatesAround } from '@/utils/bookCalendar'
 import { straddleMid } from '@/pages/research/analyze/symbol/symbolChainModel'
-import type { IbPositionRow } from '@/types/monitor'
 
 const WINDOW_DAYS = 30
 
-/** Third Friday of a month, as an ISO date. */
-function thirdFriday(year: number, month0: number): string {
-  const first = new Date(Date.UTC(year, month0, 1)).getUTCDay()
-  const day = 1 + ((5 - first + 7) % 7) + 14
-  return new Date(Date.UTC(year, month0, day)).toISOString().slice(0, 10)
-}
-
-function opexDatesAround(todayIso: string, months = 3): string[] {
-  const y = Number(todayIso.slice(0, 4))
-  const m = Number(todayIso.slice(5, 7)) - 1
-  return Array.from({ length: months }, (_, i) => thirdFriday(y + Math.floor((m + i) / 12), (m + i) % 12))
-}
-
-function isoDaysFrom(todayIso: string, n: number): string {
-  return new Date(Date.parse(`${todayIso}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10)
-}
-
 function daysUntil(todayIso: string, dateIso: string): number {
   return Math.round((Date.parse(dateIso) - Date.parse(todayIso)) / 86_400_000)
-}
-
-/** `20261016` / `2026-10-16` → `2026-10-16`; anything shorter is unusable. */
-function expiryIso(row: IbPositionRow): string | null {
-  const raw = String(row.expiry ?? row.lastTradeDateOrContractMonth ?? '')
-  const d = raw.replace(/\D/g, '')
-  if (d.length < 8) {
-    const seg = (row.contract_key ?? '').split('|').find((s) => /^\d{8}$/.test(s))
-    if (!seg) return null
-    return `${seg.slice(0, 4)}-${seg.slice(4, 6)}-${seg.slice(6, 8)}`
-  }
-  return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
 }
 
 interface ExposureRow {
@@ -73,9 +44,9 @@ interface ExposureRow {
 
 const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
-const td = 'border-b border-border/40 px-2 py-1.5 text-right font-mono text-dense-meta tabular-nums'
-const cap =
-  'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+const td = 'border-b border-border px-2 py-1.5 text-right font-mono text-dense-meta tabular-nums'
+// 11/600 sentence case (Rev .89).
+const cap = 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 
 function laneDot(kind: 'macro' | 'opex' | 'book' | 'watch') {
   return kind === 'macro'
@@ -84,7 +55,21 @@ function laneDot(kind: 'macro' | 'opex' | 'book' | 'watch') {
       ? 'bg-[var(--sk-contract,#7dd3fc)]'
       : kind === 'book'
         ? 'bg-[var(--sk-ticker)] rounded-full'
-        : 'bg-warning rounded-full'
+        : // The watchlist's earnings are the ticker ring, as the design keys
+          // them — a name you watch, not a warning.
+          'rounded-full border border-[var(--sk-ticker)] bg-transparent'
+}
+
+/** The calendar's key — the page toolbar carries it on the Book face (Rev .89). */
+export function EventsBookLegend() {
+  return (
+    <span className="flex flex-wrap items-center gap-x-3 text-dense-caption text-muted-foreground">
+      <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2', laneDot('macro'))} />macro</span>
+      <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2 rounded-[2px]', laneDot('opex'))} />OPEX</span>
+      <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2', laneDot('book'))} />earnings · book</span>
+      <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2', laneDot('watch'))} />earnings · watchlist</span>
+    </span>
+  )
 }
 
 export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
@@ -186,16 +171,10 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
     <div className="space-y-3">
       {/* ── The calendar: 30 days, four lanes ── */}
       <section className="overflow-hidden border mat-card">
-        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-          <span className={cap}>next {WINDOW_DAYS} days</span>
+        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
+          <span className={cap}>Next {WINDOW_DAYS} days</span>
           <span className="text-dense-meta text-muted-foreground">
             book + watchlist · macro and OPEX from event_radar
-          </span>
-          <span className="ml-auto flex flex-wrap items-center gap-x-3 text-dense-micro text-muted-foreground">
-            <span className="inline-flex items-center gap-1"><i className="h-1.5 w-1.5 rounded-full bg-foreground" />macro</span>
-            <span className="inline-flex items-center gap-1"><i className="h-1.5 w-1.5 bg-[var(--sk-contract,#7dd3fc)]" />OPEX</span>
-            <span className="inline-flex items-center gap-1"><i className="h-1.5 w-1.5 rounded-full bg-[var(--sk-ticker)]" />earnings · book</span>
-            <span className="inline-flex items-center gap-1"><i className="h-1.5 w-1.5 rounded-full bg-warning" />earnings · watchlist</span>
           </span>
         </header>
         <div className="overflow-x-auto px-3 py-2">
@@ -255,14 +234,14 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                 <tr key={lane.key}>
                   <th className={cn(cap, 'py-1.5 pr-2 text-left align-middle')}>{lane.label}</th>
                   {lane.owed && lane.marks.size === 0 ? (
-                    <td colSpan={WINDOW_DAYS} className="border-t border-border/30 px-2 py-1.5 text-left font-sans text-dense-caption text-muted-foreground/70">
+                    <td colSpan={WINDOW_DAYS} className="border-t border-border px-2 py-1.5 text-left font-sans text-dense-caption text-muted-foreground/70">
                       {lane.owed}
                     </td>
                   ) : (
                     days.map((d) => (
                       <td
                         key={d.iso}
-                        className={cn('border-t border-border/30 py-1.5 text-center', d.today && 'bg-[rgb(var(--sk-accent-rgb,163_230_53)/0.06)]', d.weekend && 'opacity-40')}
+                        className={cn('border-t border-border py-1.5 text-center', d.today && 'bg-[color-mix(in_srgb,var(--sk-accent)_6%,transparent)]', d.weekend && 'opacity-40')}
                         title={
                           !lane.marks.has(d.iso)
                             ? undefined
@@ -289,7 +268,7 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
 
       {/* ── BOOK × EVENTS ── */}
       <section className="overflow-hidden border mat-card">
-        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
+        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
           <span className={cap}>Book × events</span>
           <span className="text-dense-body font-semibold">
             {inWindow.length} exposure{inWindow.length === 1 ? '' : 's'} crossing a dated event

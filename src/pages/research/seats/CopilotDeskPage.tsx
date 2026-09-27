@@ -8,15 +8,21 @@
  * page opens it with the thread you pick.
  */
 import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Plus, Users } from 'lucide-react'
-import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
-import { CopilotTabs, useCopilotTab } from '@/components/research/CopilotTabs'
-import { EmptyState } from '@/components/data-display'
+import { ArrowRight, BookOpen, ClipboardList, MessageCircle, Users } from 'lucide-react'
+import {
+  PageHead,
+  PageHeadAction,
+  PageHeadLink,
+  PageShell,
+  SectionHead,
+  SectionPanel,
+} from '@/components/layout'
+import { COPILOT_TAB_HINT, useCopilotHeadTabs, useCopilotTab } from '@/components/research/CopilotTabs'
+import { ViewState } from '@bifrost/ui'
 import { Button } from '@/components/ui/button'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
-import { Skeleton } from '@/components/ui/skeleton'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
@@ -40,15 +46,21 @@ export default function CopilotDeskPage() {
   const a = s?.approvals ?? {}
   const spent = s ? spendAgainstCap(s.usage).spent : 0
 
+  const head = useCopilotHeadTabs(tab)
+
   return (
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
-      <PageHeader
+      {/* §16.10 · Rev .89: the three faces are the head's tabs; the spend and
+          the provider are the toolbar's, right-aligned, with the face's hint
+          in its title — on one line, so nothing sits on the panel below. */}
+      <PageHead
         title="Copilot"
-        description="Level 2 · on request · reads every page · writes only with your approval · D10 advisory. Open it from any page with ⌘J or an Ask on a panel; this page is what it did today and what it is waiting on."
+        info="Level 2 · on request · reads every page · writes only with your approval · D10 advisory. Open it from any page with ⌘J or an Ask on a panel; this page is what it did today and what it is waiting on."
+        tabs={head.tabs}
+        tab={head.tab}
+        onTab={head.onTab}
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <SpendChip usage={s?.usage} />
-            <ProviderChip />
+          <>
             <AskCopilotButton
               originPage="research-copilot-desk"
               originLabel="Copilot Desk"
@@ -59,44 +71,37 @@ export default function CopilotDeskPage() {
               })}
               suggestedPrompt="What should I look at first today? Use the digest and the memos waiting in the Inbox."
             />
-            <Button asChild variant="outline" size="sm">
-              <Link to="/research/daily-brief">
-                <ClipboardList className="mr-1 size-3.5" /> Daily Brief
-              </Link>
-            </Button>
+            <PageHeadLink to="/research/daily-brief" title="The morning's reading of the book">
+              <ClipboardList className="mr-1 inline size-3.5" /> Daily Brief
+            </PageHeadLink>
             {/* The catalogue's only door used to be the dock's empty state —
                 the «all starters →» link on its book group — which appears on
                 a blank thread and nowhere else, so a reader with a thread
                 open could not reach it at all (Owner, 2026-09-21). It is not
                 a menu row on either side; this is the fixed entry instead. */}
-            <Button asChild variant="outline" size="sm">
-              <Link to="/research/copilot/trading">
-                <BookOpen className="mr-1 size-3.5" /> Book starters
-              </Link>
-            </Button>
+            <PageHeadLink to="/research/copilot/trading" title="The book's starter catalogue">
+              <BookOpen className="mr-1 inline size-3.5" /> Book starters
+            </PageHeadLink>
             {/* The design's primary action on this page: a thread with
                 nothing attached, as ⌘J opens one from anywhere. `Ask Copilot`
                 beside it is the other kind — this page's own context. */}
-            <Button
-              size="sm"
+            <PageHeadAction
+              primary
+              title="Start a thread with nothing attached — the same panel ⌘J opens"
               onClick={() => {
                 copilotSessionStore.clearSession()
                 openResearchCopilot()
               }}
-              title="Start a thread with nothing attached — the same panel ⌘J opens"
             >
-              <Plus className="mr-1 size-3.5" /> New thread
-              <span className="ml-1.5 rounded border border-primary-foreground/30 px-1 font-mono text-dense-micro">
-                ⌘J
-              </span>
-            </Button>
-          </div>
+              ＋ New thread <span className="ml-1 font-mono text-dense-micro opacity-80">⌘J</span>
+            </PageHeadAction>
+          </>
         }
       />
-
-      {/* The design's three faces under one header (Rev 2026-09-20.20): Today
-          and Threads are views of this route, Personas is its own. */}
-      <CopilotTabs active={tab} />
+      <div data-sr-toolbar="" className="justify-end" title={COPILOT_TAB_HINT[tab]}>
+        <SpendChip usage={s?.usage} />
+        <ProviderChip />
+      </div>
 
       {standingQ.isError ? (
         <ResearchAuthGap error={standingQ.error} onRetry={() => void standingQ.refetch()} />
@@ -106,23 +111,18 @@ export default function CopilotDeskPage() {
           response ⑫): the digest's status lives on the digest panel, today's
           conversations on the Threads heading. This one's home is the design's
           Writes table — kind · change · thread · result — and that table needs
-          a row-level read of the chat's write ledger. Measured 2026-09-20 on
-          DEV: `/research/copilot/standing` returns the three counts and
-          nothing else, and `/research/drafts` distinguishes `generated_by`
-          (owner · harness · morning_agent · eod_agent) but carries no chat
-          origin, so the rows cannot be reconstructed from it. The tile stays
+          a row-level read of the chat's write ledger. The ledger keeps the
+          thread (research.ai_action_log.session_id, re-measured 2026-09-26);
+          what is missing is a route that lists its rows. The count stays
           until that read exists. */}
       {tab === 'threads' ? (
         <section className="min-w-0 space-y-2">
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-dense-body font-semibold">Threads</h2>
-            <span
-              className="font-mono text-dense-meta tabular-nums text-muted-foreground"
-              title="Conversations that moved today — the table below lists every thread, not only today's"
-            >
-              {s ? `${s.sessions.today} today` : '—'}
-            </span>
-          </div>
+          <SectionHead
+            note="Conversations that moved today — the table below lists every thread, not only today's"
+            meta={s ? `${s.sessions.today} today` : '—'}
+          >
+            Threads
+          </SectionHead>
           {/* The design gives the threads a face of their own, and the table
               is wide: eight columns, one of them the thread's own title. */}
           <Threads />
@@ -154,16 +154,17 @@ export default function CopilotDeskPage() {
               </span>
             </p>
             {/* The design's table is kind · change · thread · result, one row
-                per write. Measured 2026-09-20 on DEV: the standing returns
-                these three counts and nothing else, and `/research/drafts`
-                distinguishes `generated_by` (owner · harness · morning_agent
-                · eod_agent) but carries no chat origin — so the rows cannot
-                be reconstructed. The count stands in for the table until that
-                read exists, rather than a table of invented rows. */}
+                per write. Re-measured 2026-09-26: the ledger exists —
+                research.ai_action_log keeps every chat write with its
+                session_id, kind and status, and these three counts are read
+                from it — but no route lists the rows; `/standing` returns
+                the counts only. The read is filed as its own piece of work,
+                so the count stands in for the table rather than a table of
+                invented rows. */}
             <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
-              Row by row — which thread asked, and what became of it — needs a write ledger that carries
-              the chat’s own origin. Nothing on this side records one yet, so this panel counts what it
-              can and names what it cannot.
+              Row by row — which thread asked, and what became of it — is in the write ledger (each
+              write keeps its thread), but no read lists those rows yet: the standing returns the
+              counts only. This panel counts what it can and names what it cannot.
             </p>
           </div>
         </SectionPanel>
@@ -181,9 +182,9 @@ export default function CopilotDeskPage() {
               three rows: it is the only place that says what the Copilot
               reads *from*, which the strip does not. Its fate is the Owner's
               to call. */}
-          <section className="border px-4 py-3 mat-card">
-            <h2 className="text-dense-body font-semibold">What it works from</h2>
-            <ul className="mt-2 space-y-1.5 text-dense-label">
+          <SectionHead>What it works from</SectionHead>
+          <section className="mt-2 border px-4 py-3 mat-card">
+            <ul className="space-y-1.5 text-dense-label">
               <li>
                 <Link to="/research/agent-personas" className="inline-flex items-center gap-2 hover:underline">
                   <Users className="size-3.5 text-muted-foreground" /> Personas
@@ -222,19 +223,25 @@ function DigestPanel({ draftId, status, loading }: { draftId: string | null; sta
   })
   const draft = useMemo(() => q.data?.rows.find((r) => r.id === draftId) ?? null, [q.data, draftId])
 
-  if (loading || (draftId && q.isLoading)) return <Skeleton className="h-40 w-full" />
+  const navigate = useNavigate()
+  if (loading || (draftId && q.isLoading)) {
+    return (
+      <section className="overflow-hidden mat-card">
+        <ViewState kind="loading" title="Loading the digest" rows={4} cols={3} />
+      </section>
+    )
+  }
   if (!draftId) {
     return (
-      <EmptyState
-        icon={<ClipboardList />}
-        title="No digest yet today"
-        description="The daily digest runs at 11:30 UTC on trading days and lands in the Decision Inbox. Yesterday’s is still there."
-        action={
-          <Button asChild size="sm" variant="outline">
-            <Link to="/research/loop/decisions">Open Decision Inbox</Link>
-          </Button>
-        }
-      />
+      <section className="overflow-hidden mat-card">
+        <ViewState
+          kind="empty"
+          title="No digest yet today"
+          detail="The daily digest runs at 11:30 UTC on trading days and lands in the Decision Inbox. Yesterday’s is still there."
+          actionLabel="Open Decision Inbox"
+          onAction={() => navigate('/research/loop/decisions')}
+        />
+      </section>
     )
   }
   if (q.isError) return <ResearchAuthGap error={q.error} onRetry={() => void q.refetch()} />

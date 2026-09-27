@@ -13,23 +13,26 @@ import type { JournalNodeType, JournalOperator, JournalStation } from './journal
  * policy; a settlement is a verdict from the market and wears the outcome's.
  */
 export const TYPE_TAG: Record<JournalNodeType, DenseTagVariant> = {
-  run: 'instance',
-  candidate: 'symbol',
+  // Rev .89: a run's memo, a nomination and a screen batch are artifact
+  // types, not instruments — the state blue, never the ticker or contract ink.
+  run: 'state-blue',
+  candidate: 'state-blue',
   hypothesis: 'category',
   verdict: 'warning',
   decision: 'warning',
   patch: 'strategy',
-  batch: 'info',
+  batch: 'state-blue',
   digest: 'neutral',
   note: 'neutral',
   intent: 'danger',
   settlement: 'success',
 }
 
+/** Who wrote it (Rev .89): the hand is ink, the loop muted, the Copilot its module hue. */
 export const OPERATOR_TAG: Record<JournalOperator, DenseTagVariant> = {
-  hand: 'source-manual',
+  hand: 'ink',
   loop: 'source-muted',
-  copilot: 'info',
+  copilot: 'copilot',
 }
 
 export const OPERATOR_LABEL: Record<JournalOperator, string> = {

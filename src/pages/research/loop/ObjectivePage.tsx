@@ -43,12 +43,12 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Archive, ArchiveRestore, ArrowLeft, Play, ShieldAlert } from 'lucide-react'
-import { PageHeader, PageShell, PinButton } from '@/components/layout'
-import { DenseTag, EmptyState } from '@/components/data-display'
+import { PageHead, PageShell, PinButton, SectionHead } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { failedDetail } from '@/lib/viewState'
+import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -69,6 +69,7 @@ import {
   useChangePolicy,
   useObjective,
   notifyArchivedObjective,
+  notifyRestoredObjective,
   usePatchObjective,
 } from '@/hooks/useLoopHarness'
 import { fmtIsoTs } from '@/lib/format'
@@ -92,35 +93,47 @@ export default function ObjectivePage() {
   const objQ = useObjective(objectiveId || null)
   const standingQ = useAutopilotStanding()
   const brief = standingQ.data?.objectives.find((o) => o.id === objectiveId) ?? null
+  const navigate = useNavigate()
 
   if (objQ.isLoading) {
     return (
       <PageShell padding="default" className="space-y-3">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-40 w-full" />
+        <PageHead title="Objective" />
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the objective" rows={6} cols={4} />
+        </section>
       </PageShell>
     )
   }
   if (objQ.isError) {
     return (
-      <PageShell padding="default">
-        <QueryErrorAlert error={objQ.error} onRetry={() => void objQ.refetch()} />
+      <PageShell padding="default" className="space-y-3">
+        <PageHead title="Objective" />
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the objective"
+            detail={failedDetail(objQ, 'Nothing about this objective was read — its runs and policy are not shown.')}
+            onAction={() => void objQ.refetch()}
+          />
+        </section>
       </PageShell>
     )
   }
   const obj = objQ.data
   if (!obj) {
     return (
-      <PageShell padding="default">
-        <EmptyState
-          title="No such objective"
-          description={`${objectiveId} is not in the active or archived list.`}
-          action={
-            <Button asChild size="sm" variant="outline">
-              <Link to="/research/loop/harness">Back to Autopilot</Link>
-            </Button>
-          }
-        />
+      <PageShell padding="default" className="space-y-3">
+        <PageHead title="Objective" />
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="empty"
+            title="No such objective"
+            detail={`${objectiveId} is not in the active or archived list.`}
+            actionLabel="Back to Autopilot"
+            onAction={() => navigate('/research/loop/harness')}
+          />
+        </section>
       </PageShell>
     )
   }
@@ -146,91 +159,19 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
 
   return (
     <PageShell padding="default" className="min-w-0 space-y-4 overflow-x-hidden">
-      <PageHeader
-        title={obj.title}
-        breadcrumb={
-          <Link to="/research/loop/harness" className="inline-flex items-center gap-1 text-dense-label text-muted-foreground hover:underline">
-            <ArrowLeft className="size-3" /> Autopilot
-          </Link>
-        }
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            {/* The page's own constraint, where the design puts it: this
-                objective opens hypotheses and never orders. */}
-            <span
-              className="inline-flex h-[22px] items-center gap-1 rounded-md border border-warning/45 bg-warning/10 px-2 font-mono text-dense-caption font-bold text-warning"
-              title="D10 BLOCKED — advisory only. This objective opens hypotheses, never orders."
-            >
-              <ShieldAlert className="size-3" /> D10 BLOCKED
-            </span>
-            {/* The shelf's entry point (design 2026-09-20.2): going straight
-                to the same machine every day is a shortcut, and a shortcut is
-                something you put there — not a shape the tree claims to have. */}
-            <PinButton to={`/research/loop/objectives/${obj.id}`} label={obj.title} />
-            {/* The design links this objective's patches and runs as Journal
-                nodes. The Journal answers `?sel=<node id>` and an objective is
-                not one of its five stores, so this opens the Journal rather
-                than carrying a parameter it would drop. */}
-            <Link
-              to="/research/journal"
-              className="text-dense-caption text-primary hover:underline"
-              title="The Journal has no node for an objective on this side — it opens on the day, not on this machine."
-            >
-              Journal →
-            </Link>
-            {/* Two of the design's header actions have no store, and say so
-                rather than being drawn dead. */}
-            <span
-              className="rounded border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
-              title="Pause is the reversible retirement in the design. This schema has two statuses — active and archived — and the backend answers 422 to anything else, so pausing would have to mean archiving, which is the other thing."
-            >
-              ⏸ pause · no status for it
-            </span>
-            <span
-              className="rounded border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
-              title="Fork copies an objective into a draft and records the lineage. No endpoint copies one and no column records a parent, so neither half can be written or read."
-            >
-              ⑂ fork · no lineage stored
-            </span>
-            <Button
-              type="button"
-              size="sm"
-              className="h-7"
-              disabled={archived || batchMut.isPending}
-              title={archived ? 'Restore the objective to run it' : 'Start a run now with this policy'}
-              onClick={() => setRunOpen(true)}
-            >
-              <Play className="mr-1 size-3" /> {batchMut.isPending ? 'Starting…' : 'Run now'}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7"
-              disabled={patchMut.isPending}
-              onClick={() =>
-                patchMut.mutate(
-                  { objectiveId: obj.id, body: { status: archived ? 'active' : 'archived' } },
-                  // Archive answers with Undo (Rev .79); Restore is its own undo.
-                  archived ? undefined : { onSuccess: () => notifyArchivedObjective(obj.id, obj.title) },
-                )
-              }
-            >
-              {archived ? (
-                <>
-                  <ArchiveRestore className="mr-1 size-3" /> Restore
-                </>
-              ) : (
-                <>
-                  <Archive className="mr-1 size-3" /> Archive
-                </>
-              )}
-            </Button>
-          </div>
-        }
-      />
-      <p className="flex flex-wrap items-center gap-2 text-dense-label">
-        <DenseTag variant={archived ? 'neutral' : 'success'} size="cell">
+      <Link
+        to="/research/loop/harness"
+        className="inline-flex items-center gap-1 text-dense-caption text-muted-foreground hover:underline"
+      >
+        <ArrowLeft className="size-3" /> Autopilot
+      </Link>
+      {/* §16.10: what it hunts behind ⓘ, as the design writes it; the facts,
+          the constraint and every action are the toolbar's. */}
+      <PageHead title={obj.title} info={brief?.hunts || obj.description || undefined} />
+      <div data-sr-toolbar="">
+        {/* Rev .89: an active objective reads in the state blue — a stage,
+            not the contract sky. */}
+        <DenseTag variant={archived ? 'neutral' : 'state-blue'} size="cell">
           {obj.status}
         </DenseTag>
         <DenseTag variant="neutral" size="cell">
@@ -243,11 +184,94 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
             {obj.subject ? ` · ${obj.subject}` : ''}
           </DenseTag>
         ) : null}
-        <span className="text-muted-foreground">{brief?.hunts || obj.description}</span>
-        {batchMut.isError ? (
-          <span className="text-destructive">{batchMut.error instanceof Error ? batchMut.error.message : String(batchMut.error)}</span>
-        ) : null}
-      </p>
+        <span className="flex-auto" />
+        {/* The page's own constraint, where the design puts it: this
+            objective opens hypotheses and never orders. */}
+        <span
+          className="inline-flex h-[22px] items-center gap-1 px-2 mat-tag font-mono text-dense-caption font-bold text-warning"
+          title="D10 BLOCKED — advisory only. This objective opens hypotheses, never orders."
+        >
+          <ShieldAlert className="size-3" /> D10 BLOCKED
+        </span>
+        {/* The shelf's entry point (design 2026-09-20.2): going straight
+            to the same machine every day is a shortcut, and a shortcut is
+            something you put there — not a shape the tree claims to have. */}
+        <PinButton to={`/research/loop/objectives/${obj.id}`} label={obj.title} />
+        {/* The design links this objective's patches and runs as Journal
+            nodes. The Journal answers `?sel=<node id>` and an objective is
+            not one of its five stores, so this opens the Journal rather
+            than carrying a parameter it would drop. */}
+        <Link
+          to="/research/journal"
+          className="text-dense-caption text-primary hover:underline"
+          title="The Journal has no node for an objective on this side — it opens on the day, not on this machine."
+        >
+          Journal →
+        </Link>
+        {/* Two of the design's header actions have no store, and say so
+            rather than being drawn dead. */}
+        <span
+          className="rounded border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
+          title="Pause is the reversible retirement in the design. This schema has two statuses — active and archived — and the backend answers 422 to anything else, so pausing would have to mean archiving, which is the other thing."
+        >
+          ⏸ pause · no status for it
+        </span>
+        <span
+          className="rounded border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
+          title="Fork copies an objective into a draft and records the lineage. No endpoint copies one and no column records a parent, so neither half can be written or read."
+        >
+          ⑂ fork · no lineage stored
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-7"
+          disabled={patchMut.isPending}
+          onClick={() =>
+            patchMut.mutate(
+              { objectiveId: obj.id, body: { status: archived ? 'active' : 'archived' } },
+              // Both directions answer with Undo (Rev .79 · .94).
+              {
+                onSuccess: () =>
+                  archived
+                    ? notifyRestoredObjective(obj.id, obj.title)
+                    : notifyArchivedObjective(obj.id, obj.title),
+              },
+            )
+          }
+        >
+          {archived ? (
+            <>
+              <ArchiveRestore className="mr-1 size-3" /> Restore
+            </>
+          ) : (
+            <>
+              <Archive className="mr-1 size-3" /> Archive
+            </>
+          )}
+        </Button>
+        {/* Rev .89: the accent's solid ground with its own ink — the retired
+            layer blue is gone. */}
+        <Button
+          type="button"
+          size="sm"
+          className="h-7"
+          disabled={archived || batchMut.isPending}
+          title={archived ? 'Restore the objective to run it' : 'Start a run now with this policy'}
+          onClick={() => setRunOpen(true)}
+        >
+          <Play className="mr-1 size-3" /> {batchMut.isPending ? 'Starting…' : 'Run now'}
+        </Button>
+      </div>
+      {batchMut.isError ? (
+        <ViewState
+          kind="failed"
+          layout="strip"
+          title="The run did not start"
+          detail={batchMut.error instanceof Error ? batchMut.error.message : String(batchMut.error)}
+        />
+      ) : null}
 
       <Standing
         obj={obj}
@@ -274,9 +298,11 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
         <ObjectiveLeashCard objectiveId={obj.id} />
       </section>
 
-      <section>
-        <div className="min-w-0">
-          <h2 className="mb-2 text-dense-body font-semibold">Policy</h2>
+      <section className="space-y-2">
+        <div className="min-w-0 space-y-2">
+          <SectionHead note="What to pick; Personas judge how — every change is a patch with a reason.">
+            Policy
+          </SectionHead>
           <ObjectivePolicyEditor
             policy={obj.policy_json ?? {}}
             submitting={policyMut.isPending}
@@ -293,8 +319,8 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-2 text-dense-body font-semibold">Runs</h2>
+      <section className="space-y-2">
+        <SectionHead>Runs</SectionHead>
         {/* The raw count belongs beside the folded one or not at all: 27 runs
             and 12 rows are both true and mean different things, and printed
             next to each other without that sentence they read as a
@@ -380,7 +406,7 @@ function Standing({
   return (
     <div className="grid gap-3 border px-4 py-3 md:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))] mat-card">
       <div className="min-w-0">
-        <div className="text-dense-meta uppercase tracking-wide text-muted-foreground">Last memo</div>
+        <div className="text-dense-meta font-semibold text-muted-foreground">Last memo</div>
         {memo ? (
           <>
             <button type="button" className="mt-0.5 text-left text-base leading-relaxed hover:underline" onClick={() => onOpenMemo(memo.run_id)}>
@@ -475,7 +501,7 @@ function PatchPending({ objectiveId }: { objectiveId: string }) {
 function Fact({ label, tip, children }: { label: string; tip?: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0" title={tip}>
-      <div className="text-dense-meta uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-dense-meta font-semibold text-muted-foreground">{label}</div>
       <div className="mt-0.5 leading-relaxed">{children}</div>
     </div>
   )
@@ -521,15 +547,15 @@ function IdentityCard({
     <div className="space-y-3 border px-4 py-3 mat-card">
       <h2 className="text-dense-body font-semibold">Identity</h2>
       <label className="block">
-        <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">Title</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">Title</span>
         <Input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-1 h-7 text-dense-body" />
       </label>
       <label className="block">
-        <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">What it is for</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">What it is for</span>
         <textarea value={description} onChange={(e) => setDescription(e.target.value)} className={`mt-1 ${TEXTAREA_CLASS}`} />
       </label>
       <label className="block">
-        <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">Schedule</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">Schedule</span>
         <Select value={schedule} onValueChange={setSchedule}>
           <SelectTrigger className="mt-1 h-7 text-dense-body">
             <SelectValue />
@@ -547,7 +573,7 @@ function IdentityCard({
         </span>
       </label>
       <label className="block">
-        <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">Persona</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">Persona</span>
         <Select value={persona} onValueChange={setPersona}>
           <SelectTrigger className="mt-1 h-7 text-dense-body">
             <SelectValue />
@@ -565,7 +591,7 @@ function IdentityCard({
           subject is what the top bar loads into the carried symbol. */}
       <div className="grid grid-cols-[minmax(0,1fr)_8rem] gap-3">
         <label className="block">
-          <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">Mode</span>
+          <span className="text-dense-meta font-semibold text-muted-foreground">Mode</span>
           <Select value={mode} onValueChange={(v) => isObjectiveMode(v) && setMode(v)}>
             <SelectTrigger className="mt-1 h-7 text-dense-body">
               <SelectValue />
@@ -581,7 +607,7 @@ function IdentityCard({
           <span className="text-dense-label text-muted-foreground">{MODE_WHO[mode]}</span>
         </label>
         <label className="block">
-          <span className="text-dense-meta uppercase tracking-wide text-muted-foreground">Subject</span>
+          <span className="text-dense-meta font-semibold text-muted-foreground">Subject</span>
           <Input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}

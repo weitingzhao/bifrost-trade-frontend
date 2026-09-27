@@ -249,8 +249,9 @@ export const ROUTES: readonly RouteEntry[] = [
     // Home since Rev .55 (the path stays for every link written to it).
     crumbs: MARKET,
     design: {
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.55',
+      rev: '2026-09-25.89',
       note: DESIGN_NOTES['/review/objectives'],
     },
   },

@@ -75,6 +75,20 @@ export function notifyArchivedObjective(objectiveId: string, title: string): voi
   })
 }
 
+/** Restore answers with Undo too (Rev .94): undoing it archives the objective again. */
+export function notifyRestoredObjective(objectiveId: string, title: string): void {
+  notify(`Restored “${title}”`, {
+    undo: () =>
+      void patchObjective(objectiveId, { status: 'archived' })
+        .then(() => {
+          void appQueryClient.invalidateQueries({ queryKey: ['research', 'objective', objectiveId] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+        })
+        .catch((e: unknown) => notify(`Archive did not save — ${e instanceof Error ? e.message : String(e)}`)),
+  })
+}
+
 export function usePatchObjective() {
   const queryClient = useQueryClient()
   return useMutation({

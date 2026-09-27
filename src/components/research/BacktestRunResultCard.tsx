@@ -74,7 +74,7 @@ function EquityChart({ runs }: { runs: EventRun[] }) {
   return (
     <div className="min-w-0 border px-3 py-2.5 mat-card">
       <div className="mb-1.5 flex items-baseline justify-between">
-        <span className="text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           Equity · cum P&L
         </span>
         <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
@@ -121,7 +121,7 @@ function PnlHistogram({ runs }: { runs: EventRun[] }) {
   return (
     <div className="min-w-0 border px-3 py-2.5 mat-card">
       <div className="mb-1.5 flex items-baseline justify-between">
-        <span className="text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           P&L per event
         </span>
         <span className="font-mono text-dense-caption tabular-nums text-muted-foreground">
@@ -304,7 +304,7 @@ export function BacktestRunResultCard({ response, headerless }: BacktestRunResul
 
       {summary.n_events > 0 ? (
         <div>
-          <div className="flex h-1.5 overflow-hidden rounded-[3px] bg-muted">
+          <div className="flex h-1.5 overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
             <span
               style={{ width: `${((wins / summary.n_events) * 100).toFixed(1)}%` }}
               className={noise ? 'bg-[var(--sk-line2)]' : 'bg-profit'}
@@ -633,7 +633,7 @@ function SummaryTile({
     tone === 'profit' ? 'text-profit' : tone === 'loss' ? 'text-loss' : 'text-foreground'
   return (
     <div className="border-b border-r border-border/60 bg-background px-3 py-2 last:border-r-0 md:border-b-0">
-      <span className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+      <span className="text-dense-meta font-semibold text-muted-foreground">
         {label}
       </span>
       <p className={`m-0 mt-0.5 whitespace-nowrap font-mono text-lg font-semibold tabular-nums ${toneClass}`}>

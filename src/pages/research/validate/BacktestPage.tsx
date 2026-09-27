@@ -13,21 +13,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
-import { History } from 'lucide-react'
 import { PageHead, PageHeadAction, PageShell } from '@/components/layout'
 import { AsofTag } from '@/components/AsofTag'
 import { useSignalHealthSummary } from '@/hooks/useCopilotStanding'
 import { healthFlag } from '@/lib/asofTag'
 import {
   DenseTag,
-  EmptyState,
   SettlementBadges,
 } from '@/components/data-display'
 import { fmtNumLocale } from '@/lib/format'
-import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ViewState } from '@bifrost/ui'
+import { failedDetail, staleDetail } from '@/lib/viewState'
 import { fetchSettlements, type ForecastSettlement } from '@/api/researchEngine'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
@@ -169,18 +166,17 @@ export default function BacktestPage() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border px-3 py-1.75 mat-card">
+      <div data-sr-toolbar="">
+        {/* The lab mark in the series violet — the prototype's own pastel. */}
         <span
-          className={cn(
-            'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
-          )}
-          title="Lab mode — method and parameters only. No order can be placed from here."
+          className="inline-flex items-center gap-1.5 px-2 py-0.5 mat-tag font-mono text-dense-micro font-semibold tracking-[0.05em] text-[var(--sk-series-violet)]"
+          title="Lab mode — method and parameters only. No order can be placed from here; cross back to Trade to act."
         >
           ◆ LAB · NO ORDERS
         </span>
         {heldSymbol ? (
           <span
-            className="inline-flex items-center gap-1.5 border px-2 py-0.5 opacity-55 mat-tag"
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 opacity-55 mat-tag"
             title="Held — runs carry their own symbol set"
           >
             <span className={cn(mono, 'text-dense-caption font-bold')}>{heldSymbol}</span>
@@ -189,13 +185,13 @@ export default function BacktestPage() {
         ) : null}
         {tab === 'event' && fills ? (
           <span className="inline-flex items-center gap-1.5">
-            <span className={cap}>fills</span>
+            <span data-sr-tb="label">Fills</span>
             <span className={cn(mono, 'text-dense-caption')}>
               {fills.slippage_pct_of_spread} × spread · ${fills.commission_per_contract} / contract
             </span>
           </span>
         ) : null}
-        <span className={cn(mono, 'ml-auto text-dense-micro text-muted-foreground')}>
+        <span data-sr-tb="meta" className={mono}>
           {tab === 'event'
             ? newestRun
               ? `research.backtest_run · newest ${newestRun.slice(0, 10)}`
@@ -218,8 +214,13 @@ export default function BacktestPage() {
               }}
             />
           ) : null}
-          {runsQ.isError ? (
-            <QueryErrorAlert error={runsQ.error} onRetry={() => void runsQ.refetch()} />
+          {runsQ.isError && runsQ.data ? (
+            <ViewState
+              kind="stale"
+              title="Couldn’t refresh the runs"
+              detail={staleDetail(runsQ, 'a run kept since may be missing.')}
+              onAction={() => void runsQ.refetch()}
+            />
           ) : null}
           <div className="flex flex-wrap items-start gap-3">
             <section className={cn(panel, 'max-w-[36rem] flex-[1_1_24rem]')}>
@@ -233,19 +234,20 @@ export default function BacktestPage() {
                 </span>
               </header>
               {runsQ.isLoading ? (
-                <div className="space-y-1.5 p-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className="h-8 w-full" />
-                  ))}
-                </div>
+                <ViewState kind="loading" title="Loading the runs" rows={6} cols={5} />
+              ) : runsQ.isError && !runsQ.data ? (
+                <ViewState
+                  kind="failed"
+                  title="Couldn’t load the runs"
+                  detail={failedDetail(runsQ, 'No run was read — an empty list here would not mean nothing ran.')}
+                  onAction={() => void runsQ.refetch()}
+                />
               ) : rows.length === 0 ? (
-                <div className="p-3.5">
-                  <EmptyState
-                    icon={<History />}
-                    title="No persisted runs"
-                    description="＋ New run builds an event query; a run that produces events is persisted here."
-                  />
-                </div>
+                <ViewState
+                  kind="empty"
+                  title="No persisted runs"
+                  detail="＋ New run builds an event query; a run that produces events is kept here."
+                />
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[460px] border-collapse">
@@ -277,9 +279,10 @@ export default function BacktestPage() {
                               }
                             }}
                             className={cn(
-                              'cursor-pointer hover:bg-[color-mix(in_oklab,var(--sk-accent)_5%,transparent)]',
+                              'cursor-pointer hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                              // Selection is the accent (Rev .84) — edge included.
                               on &&
-                                'bg-[rgb(var(--sk-accent-rgb)/0.06)] shadow-[inset_2px_0_0_var(--sk-ticker)]'
+                                'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)] shadow-[inset_2px_0_0_var(--sk-accent)]'
                             )}
                           >
                             <td className={cn(td, 'text-left')}>
@@ -388,7 +391,7 @@ export default function BacktestPage() {
                         to={withSymbolParam(SYMBOL_PATH, s)}
                         className={cn(
                           mono,
-                          'border px-1.25 text-dense-caption font-bold leading-4 text-[var(--sk-ticker)] hover:underline mat-btn'
+                          'px-1.5 text-dense-caption font-bold leading-4 text-entity-symbol hover:underline mat-tag'
                         )}
                       >
                         {s}
@@ -414,7 +417,7 @@ export default function BacktestPage() {
                         })
                         setShowBuilder(true)
                       }}
-                      className="cursor-pointer rounded border border-border px-1.75 py-0.5 text-dense-caption text-primary hover:bg-secondary"
+                      className="cursor-pointer border px-1.75 py-0.5 text-dense-caption text-primary mat-btn"
                       title="Opens the builder seeded with this run's symbols and thesis; template and window are picked there."
                     >
                       Rerun
@@ -423,20 +426,24 @@ export default function BacktestPage() {
                 </div>
               ) : null}
               {byIdQ.isError && selectedId && !listedRun ? (
-                <QueryErrorAlert error={byIdQ.error} onRetry={() => void byIdQ.refetch()} />
+                <ViewState
+                  kind="failed"
+                  layout="strip"
+                  title="Couldn’t load that run"
+                  detail={failedDetail(byIdQ, 'The run past the first 100 was not read.')}
+                  onAction={() => void byIdQ.refetch()}
+                />
               ) : null}
               {activeResult ? (
                 <BacktestRunResultCard response={activeResult} headerless />
               ) : (
-                <Card variant="elevated">
-                  <CardContent className="px-3 py-6">
-                    <EmptyState
-                      icon={<History />}
-                      title="No run selected"
-                      description="Pick a run on the left, or ＋ New run to build an event query."
-                    />
-                  </CardContent>
-                </Card>
+                <section className={panel}>
+                  <ViewState
+                    kind="empty"
+                    title="No run selected"
+                    detail="Pick a run on the left, or ＋ New run to build an event query."
+                  />
+                </section>
               )}
             </section>
           </div>
@@ -495,85 +502,132 @@ function SettlementTab() {
   })
   const agg = settleAgg(rows)
 
+  const failedQ = settlementsQ
   return (
     <div className="space-y-3">
-      <Card variant="elevated">
-        <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
-          <span className="shrink-0 text-xs font-medium text-muted-foreground">Range:</span>
-          <Input
-            type="date"
-            className="h-7 w-36 text-dense-label"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            title="Start date"
-          />
-          <Input
-            type="date"
-            className="h-7 w-36 text-dense-label"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-            title="End date"
-          />
-          <span className="ml-auto text-dense-caption text-muted-foreground">
-            Every forecast session, marked against the realised close at its horizon.
-          </span>
-        </CardContent>
-      </Card>
-
-      {settlementsQ.isError && (
-        <QueryErrorAlert error={settlementsQ.error} onRetry={() => void settlementsQ.refetch()} />
-      )}
-
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-        <AggTile
-          label="Sessions"
-          value={String(agg.sessions)}
-          note={
-            agg.inputFaults > 0
-              ? `newest 200 the API serves · ${agg.inputFaults} left out (drawn from GEX walls nowhere near the price)`
-              : 'newest 200 the API serves'
-          }
+      {/* §17.3: the range is the tab's filter, so it is a toolbar, not a card. */}
+      <div data-sr-toolbar="">
+        <span data-sr-tb="label">Range</span>
+        <Input
+          type="date"
+          className="h-7 w-36 text-dense-label"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+          title="Start date"
+          aria-label="Start date"
         />
-        <AggTile
-          label="Within ±3%"
-          value={agg.within3Pct != null ? `${agg.within3Pct.toFixed(0)}%` : '—'}
-          note={`${agg.within3} of ${agg.sessions}`}
-          cls={agg.within3Pct != null && agg.within3Pct >= 60 ? 'text-profit' : undefined}
+        <Input
+          type="date"
+          className="h-7 w-36 text-dense-label"
+          value={end}
+          onChange={(e) => setEnd(e.target.value)}
+          title="End date"
+          aria-label="End date"
         />
-        <AggTile
-          label="Mean abs miss"
-          value={agg.meanAbsMissPct != null ? `${agg.meanAbsMissPct.toFixed(2)}%` : '—'}
-          note="realised vs forecast"
-        />
-        <AggTile
-          label="Path hit"
-          value={agg.pathHitPct != null ? `${agg.pathHitPct.toFixed(0)}%` : '—'}
-          note={`${agg.pathHits} of ${agg.sessions} sessions`}
-          cls={agg.pathHitPct != null && agg.pathHitPct >= 60 ? 'text-profit' : undefined}
-        />
-        {/* The design's calibration tile needs the forecast's own claimed
-            probability, which the settlement store does not record. */}
-        <AggTile
-          label="Realised − claimed"
-          value="—"
-          note="no claimed p in the store — calibration unmeasured"
-        />
+        {start || end ? (
+          <button
+            type="button"
+            className="cursor-pointer border-0 bg-transparent p-0 text-dense-caption text-primary hover:underline"
+            onClick={() => {
+              setStart('')
+              setEnd('')
+            }}
+          >
+            Clear
+          </button>
+        ) : null}
       </div>
 
-      {settlementsQ.isLoading ? (
-        <div className="space-y-1.5">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-8 w-full" />
-          ))}
-        </div>
-      ) : rows.length === 0 ? (
-        <EmptyState
-          icon={<History />}
-          title="No settlement rows"
-          description="Run intraday settlement Cron or settle sessions via Research API."
+      {settlementsQ.isError && settlementsQ.data ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the settlement record"
+          detail={staleDetail(settlementsQ, 'the newest sessions may be missing.')}
+          onAction={() => void settlementsQ.refetch()}
         />
+      ) : null}
+
+      {settlementsQ.isLoading ? (
+        <section className={panel}>
+          <ViewState kind="loading" title="Loading the settlement record" rows={8} cols={6} />
+        </section>
+      ) : settlementsQ.isError && !settlementsQ.data ? (
+        <section className={panel}>
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the settlement record"
+            detail={failedDetail(failedQ, 'No session was marked — this is not a record with no misses.')}
+            onAction={() => void settlementsQ.refetch()}
+          />
+        </section>
+      ) : rows.length === 0 ? (
+        <section className={panel}>
+          {start || end ? (
+            <ViewState
+              kind="filtered"
+              detail="No settled session falls in this range."
+              onAction={() => {
+                setStart('')
+                setEnd('')
+              }}
+            />
+          ) : (
+            <ViewState
+              kind="empty"
+              title="No settlement rows"
+              detail="The intraday settlement job marks each forecast session against its realised close."
+            />
+          )}
+        </section>
       ) : (
-        <div className={panel}>
+        <section className={cn(panel, 'overflow-hidden')}>
+          <header className={panelHead}>
+            <span className="text-dense-body font-semibold">Settlement</span>
+            <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>{rows.length}</span>
+            <span className="text-dense-caption text-muted-foreground">
+              Every forecast session, marked against the realised close at its horizon.
+            </span>
+          </header>
+          {/* The record's readings sit inside the panel, as the prototype
+              draws them — they describe these rows, not the page. */}
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] border-b border-border">
+            <AggTile
+              label="Sessions"
+              value={String(agg.sessions)}
+              note={
+                agg.inputFaults > 0
+                  ? `newest 200 the API serves · ${agg.inputFaults} left out (drawn from GEX walls nowhere near the price)`
+                  : 'newest 200 the API serves'
+              }
+            />
+            <AggTile
+              label="Within ±3%"
+              value={agg.within3Pct != null ? `${agg.within3Pct.toFixed(0)}%` : '—'}
+              note={`${agg.within3} of ${agg.sessions}`}
+              cls={agg.within3Pct != null && agg.within3Pct >= 60 ? 'text-success' : undefined}
+            />
+            <AggTile
+              label="Mean abs miss"
+              value={agg.meanAbsMissPct != null ? `${agg.meanAbsMissPct.toFixed(2)}%` : '—'}
+              note="realised vs forecast"
+            />
+            <AggTile
+              label="Path hit"
+              value={agg.pathHitPct != null ? `${agg.pathHitPct.toFixed(0)}%` : '—'}
+              note={`${agg.pathHits} of ${agg.sessions} sessions`}
+              cls={agg.pathHitPct != null && agg.pathHitPct >= 60 ? 'text-success' : undefined}
+            />
+            {/* The design's calibration tile needs the forecast's own claimed
+                probability for its close band. Measured 2026-09-26: the
+                settlement row has none, and the forecast engine records only
+                scenario probabilities (rangy · bull · bear · squeeze), which
+                are not a probability for the band. */}
+            <AggTile
+              label="Realised − claimed"
+              value="—"
+              note="the forecast claims scenario odds, not a close band — calibration unmeasured"
+            />
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse">
               <thead>
@@ -592,12 +646,15 @@ function SettlementTab() {
                   const missPct = r.close_miss_pct * 100
                   const absMiss = Math.abs(missPct)
                   return (
-                    <tr key={r.settlement_id} className="hover:bg-[color-mix(in_oklab,var(--sk-accent)_5%,transparent)]">
+                    <tr
+                      key={r.settlement_id}
+                      className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
+                    >
                       <td className={cn(td, 'text-left text-muted-foreground')}>{r.trade_date}</td>
                       <td className={cn(td, 'text-left')}>
                         <Link
                           to={withSymbolParam(SYMBOL_PATH, r.symbol)}
-                          className={cn(mono, 'font-bold text-[var(--sk-ticker)] hover:underline')}
+                          className={cn(mono, 'font-bold text-entity-symbol hover:underline')}
                         >
                           {r.symbol}
                         </Link>
@@ -607,11 +664,12 @@ function SettlementTab() {
                       <td
                         className={cn(
                           td,
+                          // A miss's size is a state, not a direction (§14.7 · Rev .87).
                           absMiss < 1
-                            ? 'text-profit'
+                            ? 'text-success'
                             : absMiss < 3
                               ? 'text-foreground'
-                              : 'text-loss'
+                              : 'text-warning'
                         )}
                       >
                         {missPct >= 0 ? '+' : '−'}
@@ -635,7 +693,7 @@ function SettlementTab() {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       )}
     </div>
   )
@@ -643,16 +701,14 @@ function SettlementTab() {
 
 function AggTile({ label, value, note, cls }: { label: string; value: string; note: string; cls?: string }) {
   return (
-    <Card variant="elevated">
-      <CardContent className="px-3 py-2">
-        <span className="text-dense-caption uppercase tracking-wide text-muted-foreground">
-          {label}
-        </span>
-        <p className={cn('font-mono text-lg font-semibold tabular-nums', cls ?? 'text-foreground')}>
-          {value}
-        </p>
-        <p className="m-0 text-dense-caption text-muted-foreground">{note}</p>
-      </CardContent>
-    </Card>
+    <div className="min-w-0 border-r border-border px-3 py-2 last:border-r-0">
+      <span className={cap}>{label}</span>
+      <p className={cn('m-0 font-mono text-lg font-semibold tabular-nums', cls ?? 'text-foreground')}>
+        {value}
+      </p>
+      <p className="m-0 truncate text-dense-caption text-muted-foreground" title={note}>
+        {note}
+      </p>
+    </div>
   )
 }

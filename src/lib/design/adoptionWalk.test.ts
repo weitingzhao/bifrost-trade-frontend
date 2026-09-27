@@ -187,7 +187,10 @@ describe('the design walk, as it stands', () => {
     // four Risk readings pages but Margin, Live and the Decision Inbox. 28
     // with J3 (Rev .86–.87): Stress, Contract Greeks, Backing, Transfer, P&L
     // Explain, Outcome, Research, Option screen, Vol ratings, History, Compare.
-    expect(counts.aligned + counts.byState.stale).toBe(28)
+    // 16 with J4 (Rev .88–.89): Signal Decay, Candidates, Watchlist,
+    // Hypotheses, Journal, Copilot, the Daily Brief, Events and the four
+    // design rows of the Objective page.
+    expect(counts.aligned + counts.byState.stale).toBe(16)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -227,23 +230,11 @@ describe('the design walk, as it stands', () => {
       // Rev .95: every signed page the §16 refinement round re-stamped, until its batch re-walks it.
     ).toEqual([
       '/portfolio/corporate-actions',
-      '/research/copilot',
-      '/research/daily-brief',
       '/research/event-radar',
-      '/research/events',
-      '/research/journal',
       '/research/lab/history',
       '/research/lab/screener',
       '/research/lab/symbol',
       '/research/lab/today',
-      '/research/loop/candidates',
-      '/research/loop/hypotheses',
-      '/research/loop/objectives/obj-daily-stock',
-      '/research/loop/objectives/obj-earnings-iv',
-      '/research/loop/objectives/obj-smallcap-sepa',
-      '/research/loop/objectives/obj-vol-crush',
-      '/research/signal-decay',
-      '/research/watchlist',
       '/review',
       '/review/fit',
       '/review/habits',
@@ -488,8 +479,9 @@ describe('the design walk, as it stands', () => {
     // batch J1 (Rev .82–.83): seven signed pages rebuilt to the §16
     // refinement join Risk, Performance and Symbol, which were already here.
     // 39 with J2 (Rev .84–.85): ten more join Limits and Margin. 50 with J3
-    // (Rev .86–.87): eleven more join Stock screen.
-    expect(counts.byState.reviewing).toBe(50)
+    // (Rev .86–.87): eleven more join Stock screen. 62 with J4 (Rev .88–.89):
+    // twelve more join Narrative, Backtest and Objectives.
+    expect(counts.byState.reviewing).toBe(62)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -530,21 +522,33 @@ describe('the design walk, as it stands', () => {
       '/research/book',
       '/research/compare',
       '/research/contract-screener',
+      '/research/copilot',
+      '/research/daily-brief',
+      '/research/events',
       '/research/greeks',
       '/research/history',
+      '/research/journal',
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lens-coverage',
+      '/research/loop/candidates',
       '/research/loop/decisions',
       '/research/loop/harness',
+      '/research/loop/hypotheses',
+      '/research/loop/objectives/obj-daily-stock',
+      '/research/loop/objectives/obj-earnings-iv',
+      '/research/loop/objectives/obj-smallcap-sepa',
+      '/research/loop/objectives/obj-vol-crush',
       '/research/narrative',
       '/research/orchestration',
       '/research/overview',
       '/research/ratings/stocks',
       '/research/scan',
       '/research/screener',
+      '/research/signal-decay',
       '/research/signal-health',
       '/research/symbol',
+      '/research/watchlist',
       '/review/objectives',
       '/risk',
       '/risk/budget',

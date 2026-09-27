@@ -228,7 +228,7 @@ function FieldRow({
 
   return (
     <div className={`min-w-0 rounded-md px-2 py-1.5 ${edited ? 'bg-primary/10 ring-1 ring-primary/40' : ''}`}>
-      <dt className="flex items-center gap-1 text-dense-meta uppercase tracking-wide text-muted-foreground">
+      <dt className="flex items-center gap-1 text-dense-meta font-semibold text-muted-foreground">
         {field.label}
         <InfoTooltip text={field.help} />
         {isDefault && !edited ? (

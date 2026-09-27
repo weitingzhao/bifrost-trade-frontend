@@ -104,7 +104,7 @@ export function ObjectiveLap({
                 }
                 className={cn(
                   'flex w-full flex-col items-start gap-0.5 rounded border px-2 py-1.5 text-left transition-colors',
-                  'border-border hover:bg-secondary',
+                  'border-border hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
                   empty && 'opacity-55',
                 )}
               >

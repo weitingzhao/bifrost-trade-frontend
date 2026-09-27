@@ -264,7 +264,7 @@ export function Threads() {
                         title="Open this thread in the Copilot panel"
                       >
                         {row.pinned ? (
-                          <Pin className="mt-0.5 size-3 shrink-0 text-primary" aria-label="Pinned" />
+                          <Pin className="mt-0.5 size-3 shrink-0 text-muted-foreground" aria-label="Pinned" />
                         ) : null}
                         <span className="min-w-0">
                           <span className="block truncate">{title}</span>

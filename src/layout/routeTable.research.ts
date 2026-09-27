@@ -108,8 +108,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Hypothesis Board',
     crumbs: THE_BOOK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.2',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.89',
       note: DESIGN_NOTES['/research/loop/hypotheses'],
     },
   },
@@ -118,8 +119,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Candidate Pool',
     crumbs: THE_BOOK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.2',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.88',
       note: DESIGN_NOTES['/research/loop/candidates'],
     },
   },
@@ -128,8 +130,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Objective',
     crumbs: AUTOPILOT,
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.3',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.94',
       note: DESIGN_NOTES['/research/loop/objectives/:objectiveId'],
     },
   },
@@ -182,8 +185,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // own conversation aside — which this side never grew: the Desk is a
       // page and the Thread is the shell's surface, which is exactly the two
       // avatars the design arrived at.
-      state: 'aligned',
-      rev: '2026-09-22.6',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.89',
       note: DESIGN_NOTES['/research/copilot'],
     },
   },
@@ -199,8 +203,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // morning's reading of the book, and the per-symbol dashboard it used to
     // be is the Symbol page's six faces.
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.89',
       note: DESIGN_NOTES['/research/daily-brief'],
     },
   },
@@ -313,8 +318,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Narrative',
     crumbs: ANALYZE,
     design: {
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.43',
+      rev: '2026-09-25.88',
       note: DESIGN_NOTES['/research/narrative'],
     },
   },
@@ -325,8 +331,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Signal Decay',
     crumbs: VALIDATE,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.88',
       note: DESIGN_NOTES['/research/signal-decay'],
     },
   },
@@ -345,8 +352,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: VALIDATE,
     symbolScope: true,
     design: {
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-22.6',
+      rev: '2026-09-25.88',
       note: DESIGN_NOTES['/research/backtest'],
     },
   },
@@ -460,8 +468,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Watchlist',
     crumbs: THE_BOOK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.2',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.88',
       note: DESIGN_NOTES['/research/watchlist'],
     },
   },
@@ -473,8 +482,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Journal',
     crumbs: THE_BOOK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-19.2',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.89',
       note: DESIGN_NOTES['/research/journal'],
     },
   },
@@ -564,8 +574,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       // Signed by the Owner 2026-09-24, after the fed rounds (macro lane,
       // themes stack, forward calendar).
-      state: 'aligned',
-      rev: '2026-09-23.8',
+      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.89',
       note: DESIGN_NOTES['/research/events'],
     },
   },

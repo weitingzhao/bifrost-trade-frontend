@@ -20,9 +20,9 @@ import { cn } from '@/lib/utils'
 function Lines({ title, note, lines }: { title: string; note?: string; lines: DigestLine[] }) {
   if (lines.length === 0) return null
   return (
-    <div className="min-w-0 border-border/60 px-3 py-2.5 [&:not(:last-child)]:border-b md:[&:not(:last-child)]:border-b-0 md:[&:not(:last-child)]:border-r">
+    <div className="min-w-0 border-border px-3 py-2.5 [&:not(:last-child)]:border-b md:[&:not(:last-child)]:border-b-0 md:[&:not(:last-child)]:border-r">
       <p className="m-0 flex flex-wrap items-baseline gap-x-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="text-dense-meta font-semibold text-muted-foreground">
           {title}
         </span>
         {note ? <span className="text-dense-micro text-muted-foreground/70">{note}</span> : null}
@@ -103,7 +103,7 @@ export function DigestRead({
             type="button"
             onClick={() => setProseOpen((o) => !o)}
             aria-expanded={proseOpen}
-            className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-dense-meta text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+            className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-dense-meta text-muted-foreground hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] hover:text-foreground"
           >
             <span aria-hidden>{proseOpen ? '▾' : '▸'}</span>
             The draft’s own words

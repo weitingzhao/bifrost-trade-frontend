@@ -19,10 +19,11 @@
  */
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { PageHeader, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
+import { PageHead, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail } from '@/lib/viewState'
 import { SegmentControl } from '@/components/data-display'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
 import { candidateSketch } from '@/pages/research/loop/objectiveLapModel'
@@ -40,7 +41,7 @@ import {
 } from './journalModel'
 import { JournalNodeRow } from './JournalTree'
 import { SelectedArtifact } from './SelectedArtifact'
-import { OPERATOR_LABEL, STATION_LABEL, TYPE_TAG } from './journalUi'
+import { OPERATOR_LABEL, OPERATOR_TAG, STATION_LABEL } from './journalUi'
 import { DenseTag } from '@/components/data-display'
 import {
   useJournalCandidates,
@@ -73,6 +74,19 @@ export default function JournalPage() {
 
   const error =
     runs.error ?? candidates.error ?? hypotheses.error ?? drafts.error ?? outcomes.error ?? null
+  // The Journal is a join of five stores (§17.1): one that fails is named on
+  // a strip — its artifacts are absent, not zero — and only all five failing
+  // with nothing to show is a failed page.
+  const failedStores = [
+    runs.isError ? 'runs' : null,
+    candidates.isError ? 'candidates' : null,
+    hypotheses.isError ? 'hypotheses' : null,
+    drafts.isError ? 'drafts' : null,
+    outcomes.isError ? 'outcomes' : null,
+  ].filter((x): x is string => x != null)
+  const retryAll = () => {
+    for (const q of [runs, candidates, hypotheses, drafts, outcomes]) if (q.isError) void q.refetch()
+  }
   const isLoading =
     runs.isLoading ||
     candidates.isLoading ||
@@ -156,140 +170,172 @@ export default function JournalPage() {
     setParams(next, { replace: true })
   }
 
+  const preview = usePreviewState()
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : isLoading && nodes.length === 0
+        ? 'loading'
+        : failedStores.length === 5 && nodes.length === 0
+          ? 'failed'
+          : 'ready'
+
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHeader
-        breadcrumb={<p className="text-xs font-medium text-primary/90">Research · The Book</p>}
-        title="Journal"
-        description={LEAD}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={SECTION_CAP_CLASS}>operator</span>
-            <SegmentControl
-              size="xs"
-              ariaLabel="Operator"
-              value={operator}
-              onChange={(v) => setParam('op', v === 'all' ? '' : v)}
-              options={OPERATOR_SEGMENTS}
-            />
-            <span className={cn(SECTION_CAP_CLASS, 'ml-2')}>day</span>
-            <select
-              aria-label="Day"
-              className={cn(positionsUi.input, 'h-6')}
-              value={day}
-              onChange={(e) => setParam('day', e.target.value)}
-            >
-              {days.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </div>
-        }
-      />
-
-      {error ? <QueryErrorAlert error={error} /> : null}
-
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2">
-        {counts.map((k) => (
-          <div
-            key={k.label}
-            className="flex flex-col gap-0.5 border px-3 py-2 mat-card"
-          >
-            <span className={SECTION_CAP_CLASS}>{k.label}</span>
-            <span className="flex items-baseline gap-1.5">
-              <span
-                className={cn(
-                  'font-mono text-base font-semibold tabular-nums',
-                  k.value == null && 'text-muted-foreground',
-                )}
-              >
-                {k.value ?? '—'}
-              </span>
-              <span className="text-dense-caption text-muted-foreground">{k.detail}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid items-start gap-3 @4xl/page:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <div className="flex min-w-0 flex-col gap-3">
-          {isLoading ? <Skeleton className="h-64 w-full" /> : null}
-          {!isLoading && trees.length === 0 ? (
-            <SectionPanel cap="Trees" title="Nothing on this day">
-              <p className="px-3 py-3 text-dense-meta text-muted-foreground">
-                {dayNodes.length === 0
-                  ? 'No artifact carries this date. The picker lists only the days the window reaches.'
-                  : `${dayNodes.length} artifact${dayNodes.length === 1 ? '' : 's'} on this day, none written by ${OPERATOR_LABEL[operator as JournalOperator] ?? operator}.`}
-              </p>
-            </SectionPanel>
-          ) : null}
-          {trees.map((tree) => (
-            <SectionPanel
-              key={tree.root.id}
-              // The design caps a tree with the station, not the kind at its
-              // root. A digest and a playbook note belong to no station — they
-              // are written about a day rather than at a point in its lap — so
-              // those fall back to the kind and the title says why.
-              cap={
-                journalStation(tree.root.type)
-                  ? STATION_LABEL[journalStation(tree.root.type)!]
-                  : journalTypeLabel(tree.root.type)
-              }
-              title={
-                <span className="flex flex-wrap items-baseline gap-2">
-                  {tree.root.title}
-                  <span className="font-mono text-dense-micro font-normal text-muted-foreground">
-                    {tree.root.id}
-                  </span>
-                </span>
-              }
-              note={
-                tree.contextIds.size
-                  ? `${tree.nodes.length - tree.contextIds.size} on this day · ${tree.contextIds.size} earlier, for the lineage`
-                  : `${tree.nodes.length} artifact${tree.nodes.length === 1 ? '' : 's'} · ${tree.root.operatorRaw}`
-              }
-            >
-              <div className="flex flex-col px-2 py-1.5">
-                {tree.nodes.map((n) => (
-                  <JournalNodeRow
-                    key={n.id}
-                    node={n}
-                    selected={n.id === selectedId}
-                    context={tree.contextIds.has(n.id)}
-                    onSelect={(id) => setParam('sel', id)}
-                  />
-                ))}
-              </div>
-            </SectionPanel>
-          ))}
-
-          <SettledPanel
-            rows={settled}
-            citedBy={citedBy}
-            onSelect={(id) => setParam('sel', id)}
-          />
-        </div>
-
-        <SectionPanel
-          cap="Selected"
-          title={
-            selected ? (
-              <span className="break-all font-mono text-dense-meta">{selected.id}</span>
-            ) : (
-              'Pick an artifact'
-            )
-          }
-          className="@4xl/page:sticky @4xl/page:top-2"
+      {/* §16.10: the lead behind ⓘ; the operator and the day are the
+          toolbar's (§17.3), not the head's. */}
+      <PageHead title="Journal" info={LEAD} />
+      <div data-sr-toolbar="">
+        <span data-sr-tb="label">Operator</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Operator"
+          value={operator}
+          onChange={(v) => setParam('op', v === 'all' ? '' : v)}
+          options={OPERATOR_SEGMENTS}
+        />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Day</span>
+        <select
+          aria-label="Day"
+          className={cn(positionsUi.input, 'h-6')}
+          value={day}
+          onChange={(e) => setParam('day', e.target.value)}
         >
-          <SelectedArtifact
-            node={selected}
-            known={knownIds}
-            onSelect={walkTo}
-          />
-        </SectionPanel>
+          {days.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {pageState === 'stale' || (pageState === 'ready' && failedStores.length > 0) ? (
+        <ViewState
+          kind="stale"
+          title={`Couldn’t read ${failedStores.length > 0 ? failedStores.join(', ') : 'one of the stores'}`}
+          detail="Those artifacts are absent from the trees, not zero — the rest of the day is as read."
+          onAction={retryAll}
+        />
+      ) : null}
+      {pageState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the Journal" rows={8} cols={5} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the Journal"
+            detail={failedDetail(
+              { data: null, isPending: false, isError: true, error },
+              'None of the five stores answered — an empty day here would not mean nothing happened.',
+            )}
+            onAction={retryAll}
+          />
+        </section>
+      ) : (
+        <>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2">
+            {counts.map((k) => (
+              <div
+                key={k.label}
+                className="flex flex-col gap-0.5 border px-3 py-2 mat-card"
+              >
+                <span className={SECTION_CAP_CLASS}>{k.label}</span>
+                <span className="flex items-baseline gap-1.5">
+                  <span
+                    className={cn(
+                      'font-mono text-base font-semibold tabular-nums',
+                      k.value == null && 'text-muted-foreground',
+                    )}
+                  >
+                    {k.value ?? '—'}
+                  </span>
+                  <span className="text-dense-caption text-muted-foreground">{k.detail}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid items-start gap-3 @4xl/page:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="flex min-w-0 flex-col gap-3">
+              {trees.length === 0 ? (
+                <SectionPanel cap="Trees" title="Nothing on this day">
+                  <p className="px-3 py-3 text-dense-meta text-muted-foreground">
+                    {dayNodes.length === 0
+                      ? 'No artifact carries this date. The picker lists only the days the window reaches.'
+                      : `${dayNodes.length} artifact${dayNodes.length === 1 ? '' : 's'} on this day, none written by ${OPERATOR_LABEL[operator as JournalOperator] ?? operator}.`}
+                  </p>
+                </SectionPanel>
+              ) : null}
+              {trees.map((tree) => (
+                <SectionPanel
+                  key={tree.root.id}
+                  // The design caps a tree with the station, not the kind at its
+                  // root. A digest and a playbook note belong to no station — they
+                  // are written about a day rather than at a point in its lap — so
+                  // those fall back to the kind and the title says why.
+                  cap={
+                    journalStation(tree.root.type)
+                      ? STATION_LABEL[journalStation(tree.root.type)!]
+                      : journalTypeLabel(tree.root.type)
+                  }
+                  title={
+                    <span className="flex flex-wrap items-baseline gap-2">
+                      {tree.root.title}
+                      <span className="font-mono text-dense-micro font-normal text-muted-foreground">
+                        {tree.root.id}
+                      </span>
+                    </span>
+                  }
+                  note={
+                    tree.contextIds.size
+                      ? `${tree.nodes.length - tree.contextIds.size} on this day · ${tree.contextIds.size} earlier, for the lineage`
+                      : `${tree.nodes.length} artifact${tree.nodes.length === 1 ? '' : 's'} · ${tree.root.operatorRaw}`
+                  }
+                >
+                  <div className="flex flex-col px-2 py-1.5">
+                    {tree.nodes.map((n) => (
+                      <JournalNodeRow
+                        key={n.id}
+                        node={n}
+                        selected={n.id === selectedId}
+                        context={tree.contextIds.has(n.id)}
+                        onSelect={(id) => setParam('sel', id)}
+                      />
+                    ))}
+                  </div>
+                </SectionPanel>
+              ))}
+
+              <SettledPanel
+                rows={settled}
+                citedBy={citedBy}
+                onSelect={(id) => setParam('sel', id)}
+              />
+            </div>
+
+            <SectionPanel
+              cap="Selected"
+              title={
+                selected ? (
+                  <span className="break-all font-mono text-dense-meta">{selected.id}</span>
+                ) : (
+                  'Pick an artifact'
+                )
+              }
+              className="@4xl/page:sticky @4xl/page:top-2"
+            >
+              <SelectedArtifact
+                node={selected}
+                known={knownIds}
+                onSelect={walkTo}
+              />
+            </SectionPanel>
+          </div>
+        </>
+      )}
     </PageShell>
   )
 }
@@ -345,7 +391,10 @@ function SettledPanel({
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-b border-border/55">
+              <tr
+                key={r.id}
+                className="border-b border-border hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
+              >
                 <td className="px-2.5 py-1.5">
                   <button
                     type="button"
@@ -356,7 +405,7 @@ function SettledPanel({
                   </button>
                 </td>
                 <td className="px-2.5 py-1.5">
-                  <DenseTag variant={TYPE_TAG.settlement} size="cell">
+                  <DenseTag variant={OPERATOR_TAG[r.operator]} size="cell">
                     {r.operatorRaw}
                   </DenseTag>
                 </td>

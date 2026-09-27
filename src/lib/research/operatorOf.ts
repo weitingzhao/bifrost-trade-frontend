@@ -35,9 +35,13 @@ export function sourceOperatorOf(source: string | null | undefined): ResearchOpe
   return 'hand'
 }
 
-/** The chip classes per operator — semantic tokens, no raw ink. */
+/**
+ * The chip classes per operator — semantic tokens, no raw ink. The copilot is
+ * the Copilot module's own hue (Rev .89), not the accent: the accent marks
+ * the active thing, and who wrote a card is not that.
+ */
 export const OPERATOR_CHIP: Record<ResearchOperator, string> = {
   hand: 'border-border text-foreground',
   loop: 'border-border text-muted-foreground',
-  copilot: 'border-primary/40 text-primary',
+  copilot: 'border-border text-[var(--sk-copilot-ink)]',
 }

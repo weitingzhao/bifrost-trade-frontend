@@ -162,7 +162,7 @@ export function EventQueryBuilder({
       <CardContent className="space-y-3 px-3 py-3">
         <div className="flex flex-col gap-3 md:grid md:grid-cols-2">
           <div className="space-y-1">
-            <Label className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+            <Label className="text-dense-meta font-semibold text-muted-foreground">
               Event kind
             </Label>
             <Select value={kind} onValueChange={(v) => setKind(v as Exclude<EventKind, 'sql'>)}>
@@ -183,7 +183,7 @@ export function EventQueryBuilder({
           </div>
 
           <div className="space-y-1">
-            <Label className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+            <Label className="text-dense-meta font-semibold text-muted-foreground">
               Strategy template
             </Label>
             <Select value={template} onValueChange={setTemplate}>
@@ -209,7 +209,7 @@ export function EventQueryBuilder({
         <div className="space-y-1">
           <Label
             htmlFor="event-query-symbols"
-            className="text-dense-caption uppercase tracking-wide text-muted-foreground"
+            className="text-dense-meta font-semibold text-muted-foreground"
           >
             Symbols (comma-separated)
           </Label>
@@ -229,7 +229,7 @@ export function EventQueryBuilder({
           <div className="space-y-1">
             <Label
               htmlFor="event-query-lookback"
-              className="text-dense-caption uppercase tracking-wide text-muted-foreground"
+              className="text-dense-meta font-semibold text-muted-foreground"
             >
               Lookback years
             </Label>
@@ -248,7 +248,7 @@ export function EventQueryBuilder({
           <div className="space-y-1">
             <Label
               htmlFor="event-query-entry-offset"
-              className="text-dense-caption uppercase tracking-wide text-muted-foreground"
+              className="text-dense-meta font-semibold text-muted-foreground"
             >
               Entry offset (days)
             </Label>
@@ -265,7 +265,7 @@ export function EventQueryBuilder({
           <div className="space-y-1">
             <Label
               htmlFor="event-query-exit-offset"
-              className="text-dense-caption uppercase tracking-wide text-muted-foreground"
+              className="text-dense-meta font-semibold text-muted-foreground"
             >
               Exit offset (days)
             </Label>
@@ -285,7 +285,7 @@ export function EventQueryBuilder({
           <div className="space-y-1">
             <Label
               htmlFor="event-query-sepa-score"
-              className="text-dense-caption uppercase tracking-wide text-muted-foreground"
+              className="text-dense-meta font-semibold text-muted-foreground"
             >
               SEPA min total score
             </Label>
@@ -306,7 +306,7 @@ export function EventQueryBuilder({
             <div className="space-y-1">
               <Label
                 htmlFor="event-query-iv-threshold"
-                className="text-dense-caption uppercase tracking-wide text-muted-foreground"
+                className="text-dense-meta font-semibold text-muted-foreground"
               >
                 IV percentile threshold
               </Label>
@@ -322,7 +322,7 @@ export function EventQueryBuilder({
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+              <Label className="text-dense-meta font-semibold text-muted-foreground">
                 Direction
               </Label>
               <SegmentControl
@@ -360,7 +360,7 @@ export function EventQueryBuilder({
               <div className="space-y-1">
                 <Label
                   htmlFor="event-query-slippage"
-                  className="text-dense-caption uppercase tracking-wide text-muted-foreground"
+                  className="text-dense-meta font-semibold text-muted-foreground"
                 >
                   Slippage (× spread)
                 </Label>
@@ -383,7 +383,7 @@ export function EventQueryBuilder({
               <div className="space-y-1">
                 <Label
                   htmlFor="event-query-commission"
-                  className="text-dense-caption uppercase tracking-wide text-muted-foreground"
+                  className="text-dense-meta font-semibold text-muted-foreground"
                 >
                   Commission $/contract
                 </Label>
@@ -403,7 +403,7 @@ export function EventQueryBuilder({
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+                <Label className="text-dense-meta font-semibold text-muted-foreground">
                   Multiplier
                 </Label>
                 <Input
@@ -435,7 +435,7 @@ export function EventQueryBuilder({
         </div>
 
         <div className="space-y-1">
-          <Label className="text-dense-caption uppercase tracking-wide text-muted-foreground">
+          <Label className="text-dense-meta font-semibold text-muted-foreground">
             Attach to hypothesis
           </Label>
           <Select value={hypothesisId || '__none__'} onValueChange={handleHypothesisChange}>

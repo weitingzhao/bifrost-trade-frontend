@@ -9,10 +9,13 @@
  */
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ViewState } from '@bifrost/ui'
 import { fmtPctFromFraction } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { THIN_N, type DecayAlert, type DecayRow } from './decayRosterModel'
+import { THIN_N, type DecayAlert, type DecayRow } from '@/utils/decayRosterModel'
+
+/** Rev .88: the alerts panel's edge — amber at 45%, as the prototype draws it. */
+const ALERT_EDGE = 'color-mix(in srgb, var(--color-warning) 45%, transparent)'
 
 function Spark({ bars }: { bars: DecayRow['bars'] }) {
   if (bars.length === 0) {
@@ -26,7 +29,11 @@ function Spark({ bars }: { bars: DecayRow['bars'] }) {
           title={b.label}
           className={cn(
             'inline-block w-[5px] rounded-t-[1px]',
-            b.value == null ? 'bg-secondary' : b.weak ? 'bg-warning' : 'bg-[var(--sk-line)]',
+            b.value == null
+              ? 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
+              : b.weak
+                ? 'bg-warning'
+                : 'bg-[var(--sk-line2)]',
           )}
           style={{ height: b.value == null ? 4 : Math.max(3, Math.round(b.value * 18)) }}
         />
@@ -44,16 +51,22 @@ export function DecayRoster({
   alerts: readonly DecayAlert[]
   loading: boolean
 }) {
-  if (loading && rows.length === 0) return <Skeleton className="h-48 rounded-lg" />
+  if (loading && rows.length === 0) {
+    return (
+      <section className="overflow-hidden mat-card">
+        <ViewState kind="loading" title="Loading signal decay" rows={8} cols={6} />
+      </section>
+    )
+  }
 
   return (
     <div className="space-y-3">
       {alerts.length > 0 ? (
-        <section className="overflow-hidden rounded-lg border border-warning/45">
-          <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-warning/30 bg-warning/[0.06] px-3 py-2">
-            <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-warning">
-              Decay alerts
-            </span>
+        // The severity is the edge (Rev .88) — inline, because `mat-card`
+        // clears any border-colour class.
+        <section className="overflow-hidden border mat-card" style={{ borderColor: ALERT_EDGE }}>
+          <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
+            <span className="text-dense-meta font-semibold text-warning">Decay alerts</span>
             <span className="text-dense-body font-semibold">{alerts.length} active</span>
             {/* The design says an alert zeroes the conviction cap in Compare.
                 Compare's conviction reads the structure's closed record, not a
@@ -67,7 +80,7 @@ export function DecayRoster({
           {alerts.map((a) => (
             <div
               key={a.key}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/50 px-3 py-2 last:border-b-0"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-3 py-2 last:border-b-0"
             >
               <span className="size-2 shrink-0 rounded-full bg-warning" aria-hidden />
               <span className="text-dense-body font-semibold">{a.name}</span>
@@ -83,11 +96,9 @@ export function DecayRoster({
         </section>
       ) : null}
 
-      <section className="overflow-hidden border mat-card">
-        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-          <span className="text-dense-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            Signals
-          </span>
+      <section className="overflow-hidden mat-card">
+        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
+          <span className="text-dense-meta font-semibold text-muted-foreground">Signals</span>
           <span className="text-dense-body font-semibold">
             {rows.length} tracked · 20d hit rate, 90 days against its own year
           </span>
@@ -96,47 +107,42 @@ export function DecayRoster({
           </span>
         </header>
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table data-sr-table="" className="w-full">
             <thead>
-              <tr className="border-b border-border">
-                {['Signal', 'Lens', 'Hit 20d', 'vs its year', '6-month trend', 'n settled', 'Read'].map(
-                  (h, i) => (
-                    <th
-                      key={h}
-                      className={cn(
-                        'whitespace-nowrap px-2.5 py-1.5 text-dense-micro font-semibold uppercase tracking-[0.06em] text-muted-foreground',
-                        i === 2 || i === 3 || i === 5 ? 'text-right' : 'text-left',
-                      )}
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
+              <tr>
+                <th data-sr-col="entity">Signal</th>
+                <th data-sr-col="tag">Lens</th>
+                <th data-sr-col="num">Hit 20d</th>
+                <th data-sr-col="num">vs its year</th>
+                <th data-sr-col="tag">6-month trend</th>
+                <th data-sr-col="num">n settled</th>
+                <th data-sr-col="wrap">Read</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr
                   key={r.key}
-                  className={cn('border-b border-border/50', r.decaying && 'bg-warning/[0.04]')}
+                  className={cn(
+                    'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                    r.decaying && 'bg-[color-mix(in_srgb,var(--color-warning)_4%,transparent)]',
+                  )}
                 >
-                  <td className="whitespace-nowrap px-2.5 py-1.5 text-dense-meta font-medium">
+                  <td data-sr-col="entity" className="text-dense-meta font-medium">
                     {r.name}
                   </td>
-                  <td className="whitespace-nowrap px-2.5 py-1.5 text-dense-caption text-muted-foreground">
+                  <td data-sr-col="tag" className="text-dense-caption text-muted-foreground">
                     {r.lensLabel}
                   </td>
                   <td
-                    className={cn(
-                      'whitespace-nowrap px-2.5 py-1.5 text-right font-mono text-dense-meta font-semibold tabular-nums',
-                      r.decaying && 'text-warning',
-                    )}
+                    data-sr-col="num"
+                    className={cn('font-semibold', r.decaying && 'text-warning')}
                   >
                     {fmtPctFromFraction(r.hit, 0)}
                   </td>
                   <td
+                    data-sr-col="num"
                     className={cn(
-                      'whitespace-nowrap px-2.5 py-1.5 text-right font-mono text-dense-meta tabular-nums',
                       r.driftPts == null
                         ? 'text-muted-foreground'
                         : r.driftPts <= -5
@@ -151,18 +157,19 @@ export function DecayRoster({
                       ? '—'
                       : `${r.driftPts >= 0 ? '+' : '−'}${Math.abs(r.driftPts)} pts`}
                   </td>
-                  <td className="px-2.5 py-1.5">
+                  <td data-sr-col="tag">
                     <Spark bars={r.bars} />
                   </td>
                   <td
-                    className={cn(
-                      'whitespace-nowrap px-2.5 py-1.5 text-right font-mono text-dense-meta tabular-nums',
-                      r.n < THIN_N ? 'text-warning' : 'text-muted-foreground',
-                    )}
+                    data-sr-col="num"
+                    className={r.n < THIN_N ? 'text-warning' : 'text-muted-foreground'}
                   >
                     {r.n}
                   </td>
-                  <td className="min-w-[24ch] px-2.5 py-1.5 text-dense-caption leading-relaxed text-muted-foreground">
+                  <td
+                    data-sr-col="wrap"
+                    className="min-w-[24ch] whitespace-normal text-dense-caption leading-relaxed text-muted-foreground"
+                  >
                     {r.read}
                   </td>
                 </tr>
@@ -178,10 +185,11 @@ export function DecayRoster({
           </span>{' '}
           — a 55% signal drifting to 40% is decaying; a 45% signal holding 45% is not. The trend
           bars are the engine&rsquo;s weekly <span className="font-mono">5d</span> rolling rate,
-          which is the only series it keeps; <span className="font-mono">Profit factor</span> is
-          owed — the response carries hit rates and no payoff.{' '}
+          which is the only series it keeps. <span className="font-mono">Profit factor</span> is
+          not summed yet: every settled row carries its forward return and each lens&rsquo;s hit
+          rule has a direction, but the endpoint returns hit rates only.{' '}
           <DenseTag variant="neutral" size="cell">
-            owed
+            not built
           </DenseTag>
         </p>
       </section>

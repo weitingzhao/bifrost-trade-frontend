@@ -28,9 +28,14 @@ export function SpendChip({ usage }: { usage: CopilotUsage | undefined }) {
       {/* The cap is a budget, not a run cost: cents, not fmtUsd's third decimal. */}
       <span className="text-muted-foreground">/ ${cap.toFixed(2)}</span>
       {share != null ? (
-        <span className="relative h-1 w-11 overflow-hidden rounded-full bg-background" aria-hidden>
+        // Rev .89: the spend is a quantity, not the active thing — soft on an
+        // ink-8% track; red only past the cap.
+        <span
+          className="relative h-1 w-11 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]"
+          aria-hidden
+        >
           <span
-            className={cn('absolute inset-y-0 left-0', over ? 'bg-destructive' : 'bg-primary')}
+            className={cn('absolute inset-y-0 left-0', over ? 'bg-destructive' : 'bg-[var(--sk-soft)]')}
             style={{ width: `${share * 100}%` }}
           />
         </span>
@@ -57,7 +62,7 @@ export function ProviderChip() {
   return (
     <button
       type="button"
-      className={cn(CHIP, 'hover:bg-secondary')}
+      className={cn(CHIP, 'cursor-pointer hover:text-foreground')}
       title={title}
       onClick={() => {
         openThread()

@@ -34,8 +34,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { Activity } from 'lucide-react'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -44,7 +44,6 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
-  EmptyState,
   SegmentControl,
   denseTableNumCell,
 } from '@/components/data-display'
@@ -61,8 +60,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail } from '@/lib/viewState'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { AnalyzeVerdictStrip } from '@/components/research/AnalyzeVerdictStrip'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
@@ -80,7 +81,7 @@ import {
 } from '@/api/research/signalDecay'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { DecayRoster } from './DecayRoster'
-import { useDecayRoster } from './useDecayRoster'
+import { useDecayRoster } from '@/hooks/useDecayRoster'
 
 /**
  * The page's selector, and what `?lens=` may name — one list, in the module
@@ -246,11 +247,11 @@ function CombinedLensesMatrix({
 
   return (
     <>
+      <SectionHead note="Two lenses firing on the same name and day, against each lens alone.">
+        Combined lenses
+      </SectionHead>
       <Card variant="elevated">
         <CardContent className="space-y-2 px-3 py-2">
-          <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
-            Combined lenses
-          </p>
           <DenseDataTable>
             <DenseTableHeader>
               <DenseTableHeadRow>
@@ -321,7 +322,7 @@ function CombinedLensesMatrix({
                   (n={detail.data.n})
                 </p>
                 <div className="space-y-1">
-                  <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-dense-meta font-semibold text-muted-foreground">
                     Single-lens baseline
                   </p>
                   <DenseDataTable>
@@ -345,7 +346,7 @@ function CombinedLensesMatrix({
                 </div>
                 {detail.data.sample.length > 0 ? (
                   <div className="space-y-1">
-                    <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
+                    <p className="text-dense-meta font-semibold text-muted-foreground">
                       Sample
                     </p>
                     <DenseDataTable>
@@ -489,20 +490,31 @@ export default function SignalDecayPage() {
   const err = q30.error || q90.error || q252.error
   const roster = useDecayRoster()
 
+  const preview = usePreviewState()
+  // §17.1: the roster is the page's reading; the instrument below keeps its
+  // own states, because it is one lens asked on purpose.
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : roster.loading && roster.rows.length === 0
+        ? 'loading'
+        : roster.allFailed
+          ? 'failed'
+          : 'ready'
+  const rosterFailedQ = { data: null, isPending: false, isError: true, error: roster.error }
+  const instrumentState = err ? 'failed' : loading ? 'loading' : !data || data.trigger_count === 0 ? 'empty' : 'ready'
+
   return (
-    <PageShell padding="compact">
-      <PageHeader
+    <PageShell padding="compact" className="space-y-3">
+      {/* §16.10 · Rev .88: the lead behind ⓘ, Playbook stats as the head's door. */}
+      <PageHead
         title="Signal Decay"
-        titleSize="default"
-        description="Is each signal still earning its keep — rolling hit rates, drift against its own year, and the alerts that cut conviction credit."
+        info="Is each signal still earning its keep — rolling hit rates, drift against its own year, and the alerts that cut conviction credit."
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/review/playbook-stats"
-              className="text-dense-caption text-primary hover:underline"
-            >
+          <>
+            <PageHeadLink to="/review/playbook-stats" title="The settled evidence behind each signal">
               Playbook stats →
-            </Link>
+            </PageHeadLink>
             <AskCopilotButton
               originPage="analyze-signal-decay"
               originLabel="Signal Decay"
@@ -532,179 +544,234 @@ export default function SignalDecayPage() {
               defaultSymbols={symbol ? [symbol] : undefined}
               defaultTags={['signal-decay', lens, regime].filter((t) => t !== 'any')}
             />
-          </div>
+          </>
         }
       />
 
-      <div className="space-y-3">
-        {symbol ? (
-          <div className="flex flex-wrap items-center gap-2 px-1">
-            <Link
-              to={`/research/signal-decay${regime !== 'any' ? `?regime=${regime}` : ''}`}
-              className="text-dense-meta text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-            >
-              Signal Decay
-            </Link>
-            <span className="text-dense-meta text-muted-foreground">/</span>
-            <span className="text-dense-label font-semibold text-entity-symbol">{symbol}</span>
-            <PortfolioTag symbol={symbol} variant="inline" />
-          </div>
-        ) : (
-          <p className="text-dense-caption text-muted-foreground px-1">
-            Open{' '}
-            <Link
-              to="/research/signal-decay/SPY"
-              className="underline-offset-2 hover:underline text-foreground"
-            >
-              /research/signal-decay/SPY
-            </Link>{' '}
-            for per-symbol recent triggers.
-          </p>
-        )}
-
-        {/* The design's lead, and the question the picker below cannot ask:
-            which of the twelve is slipping. */}
-        <DecayRoster rows={roster.rows} alerts={roster.alerts} loading={roster.loading} />
-        {roster.failed.length > 0 ? (
-          <p className="text-dense-caption text-muted-foreground">
-            No reading arrived for {roster.failed.join(', ')} — those rows are absent rather than
-            zero.
-          </p>
-        ) : null}
-
-        {/* Below the roster: the per-lens instrument this page already was. */}
-        <h2 className="pt-1 text-dense-body font-semibold">One lens, up close</h2>
-
-        <AnalyzeVerdictStrip
-          tone={verdict.tone}
-          verdictLabel={verdict.label}
-          narrative={verdict.narrative}
-          signals={[
-            { label: 'Lens', value: lens },
-            { label: 'Window', value: `${windowDays}d` },
-            { label: 'Regime', value: regime },
-            { label: 'Triggers', value: String(data?.trigger_count ?? 0) },
-            { label: '5d hit', value: pct(data?.hit_rate_5d) },
-          ]}
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh signal decay"
+          detail="Showing the last copy — decay may be a session old."
+          onAction={roster.retry}
         />
-
-        <Card variant="elevated">
-          <CardContent className="flex flex-wrap items-center gap-2 px-3 py-2">
-            <span className="text-dense-meta font-medium text-muted-foreground">Lens:</span>
-            <SegmentControl
-              value={lens}
-              onChange={(v) => setLens(v as SignalDecayLens)}
-              options={LENS_OPTIONS}
-            />
-            <span className="text-dense-meta font-medium text-muted-foreground ml-2">Window:</span>
-            <SegmentControl
-              value={String(windowDays)}
-              onChange={(v) => setWindowDays(Number(v))}
-              options={WINDOW_OPTIONS}
-            />
-            <span className="text-dense-meta font-medium text-muted-foreground ml-2">Regime:</span>
-            <SegmentControl
-              value={regime}
-              onChange={(v) => setRegime(v as SignalDecayRegime)}
-              options={REGIME_OPTIONS}
-            />
-          </CardContent>
-        </Card>
-
-        {err ? (
-          <QueryErrorAlert error={err} />
-        ) : loading ? (
-          <Skeleton className="h-48 w-full rounded-md" />
-        ) : !data || data.trigger_count === 0 ? (
-          <EmptyState
-            icon={<Activity />}
-            title="No lens hits yet"
-            description="Run research-signal-hit Cron / backfill to populate stock_signal_lens_hit_daily."
+      ) : null}
+      {pageState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading signal decay" rows={8} cols={6} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load signal decay"
+            detail={failedDetail(
+              rosterFailedQ,
+              'No decay curve was read — no alert shown is not the same as healthy signals.',
+            )}
+            onAction={roster.retry}
           />
-        ) : (
-          <>
-            <div className="grid gap-3 md:grid-cols-2">
-              <Card variant="elevated">
-                <CardContent className="space-y-1 px-3 py-2">
-                  <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
-                    Hot rolling 5d hit-rate
-                  </p>
-                  <MiniSpark points={data.trend_hot ?? []} />
-                </CardContent>
-              </Card>
-              <Card variant="elevated">
-                <CardContent className="space-y-1 px-3 py-2">
-                  <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
-                    Cold rolling 5d hit-rate
-                  </p>
-                  <MiniSpark points={data.trend_cold ?? []} />
-                </CardContent>
-              </Card>
-            </div>
+        </section>
+      ) : (
+        <>
+          {/* The design's lead, and the question the picker below cannot ask:
+              which of the signals is slipping. */}
+          <DecayRoster rows={roster.rows} alerts={roster.alerts} loading={roster.loading} />
+          {roster.failed.length > 0 ? (
+            <ViewState
+              kind="stale"
+              layout="strip"
+              title={`No reading arrived for ${roster.failed.join(', ')}`}
+              detail="Those rows are absent rather than zero."
+              onAction={roster.retry}
+            />
+          ) : null}
+        </>
+      )}
 
-            <DenseDataTable>
-              <DenseTableHeader>
-                <DenseTableHeadRow>
-                  <DenseTableHead>Side</DenseTableHead>
-                  <DenseTableHead className="text-right">30d 5d/20d</DenseTableHead>
-                  <DenseTableHead className="text-right">90d 5d/20d</DenseTableHead>
-                  <DenseTableHead className="text-right">252d 5d/20d</DenseTableHead>
-                </DenseTableHeadRow>
-              </DenseTableHeader>
-              <DenseTableBody>
-                <SideRow side="hot" stats={hotStats} windows={[30, 90, 252]} />
-                <SideRow side="cold" stats={coldStats} windows={[30, 90, 252]} />
-              </DenseTableBody>
-            </DenseDataTable>
+      {/* Below the roster: the per-lens instrument this page already was. */}
+      <SectionHead
+        note="The per-lens instrument: hot against cold, three windows, one regime."
+        meta={
+          symbol ? (
+            <span className="inline-flex items-center gap-2">
+              <Link
+                to={withSymbolParam(SYMBOL_PATH, symbol)}
+                className="font-semibold text-entity-symbol hover:underline"
+              >
+                {symbol}
+              </Link>
+              <PortfolioTag symbol={symbol} variant="inline" />
+              <Link
+                to={`/research/signal-decay${regime !== 'any' ? `?regime=${regime}` : ''}`}
+                className="text-primary hover:underline"
+              >
+                All symbols
+              </Link>
+            </span>
+          ) : (
+            <Link
+              to={`/research/signal-decay/SPY${regime !== 'any' ? `?regime=${regime}` : ''}`}
+              className="text-primary hover:underline"
+              title="A symbol's page adds its recent triggers"
+            >
+              One symbol&rsquo;s triggers →
+            </Link>
+          )
+        }
+      >
+        One lens, up close
+      </SectionHead>
 
-            {symbol && recentTriggers.length > 0 ? (
-              <Card variant="elevated">
-                <CardContent className="space-y-2 px-3 py-2">
-                  <p className="text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground">
-                    Recent triggers (last {recentTriggers.length})
-                  </p>
-                  <DenseDataTable>
-                    <DenseTableHeader>
-                      <DenseTableHeadRow>
-                        <DenseTableHead>Date</DenseTableHead>
-                        <DenseTableHead>Side</DenseTableHead>
-                        <DenseTableHead className="text-right">Trigger</DenseTableHead>
-                        <DenseTableHead className="text-right">Hit 5d</DenseTableHead>
-                        <DenseTableHead className="text-right">Fwd 5d</DenseTableHead>
-                        <DenseTableHead className="text-right">Hit 20d</DenseTableHead>
-                        <DenseTableHead className="text-right">Fwd 20d</DenseTableHead>
-                      </DenseTableHeadRow>
-                    </DenseTableHeader>
-                    <DenseTableBody>
-                      {recentTriggers.map((row, i) => (
-                        <DenseTableRow key={`${row.trade_date}-${row.trigger_side}-${i}`}>
-                          <DenseTableCell className="font-mono text-dense-meta">
-                            {row.trade_date}
-                          </DenseTableCell>
-                          <DenseTableCell className="capitalize">{row.trigger_side}</DenseTableCell>
-                          <DenseTableCell className={denseTableNumCell}>
-                            {fmtNum(row.trigger_value)}
-                          </DenseTableCell>
-                          <DenseTableCell className={denseTableNumCell}>{fmtHit(row.hit_5d)}</DenseTableCell>
-                          <DenseTableCell className={denseTableNumCell}>
-                            {fmtNum(row.fwd_return_5d, 3)}
-                          </DenseTableCell>
-                          <DenseTableCell className={denseTableNumCell}>{fmtHit(row.hit_20d)}</DenseTableCell>
-                          <DenseTableCell className={denseTableNumCell}>
-                            {fmtNum(row.fwd_return_20d, 3)}
-                          </DenseTableCell>
-                        </DenseTableRow>
-                      ))}
-                    </DenseTableBody>
-                  </DenseDataTable>
-                </CardContent>
-              </Card>
-            ) : null}
-          </>
-        )}
-
-        <CombinedLensesMatrix windowDays={windowDays} symbol={symbol} regime={regime} />
+      <div data-sr-toolbar="">
+        <span data-sr-tb="label">Lens</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Lens"
+          value={lens}
+          onChange={(v) => setLens(v as SignalDecayLens)}
+          options={LENS_OPTIONS}
+        />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Window</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Window"
+          value={String(windowDays)}
+          onChange={(v) => setWindowDays(Number(v))}
+          options={WINDOW_OPTIONS}
+        />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Regime</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Regime"
+          value={regime}
+          onChange={(v) => setRegime(v as SignalDecayRegime)}
+          options={REGIME_OPTIONS}
+        />
       </div>
+
+      <AnalyzeVerdictStrip
+        tone={verdict.tone}
+        verdictLabel={verdict.label}
+        narrative={verdict.narrative}
+        signals={[
+          { label: 'Lens', value: lens },
+          { label: 'Window', value: `${windowDays}d` },
+          { label: 'Regime', value: regime },
+          { label: 'Triggers', value: String(data?.trigger_count ?? 0) },
+          { label: '5d hit', value: pct(data?.hit_rate_5d) },
+        ]}
+      />
+
+      {instrumentState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title={`Couldn’t load ${lens}`}
+            detail={failedDetail(
+              { data: null, isPending: false, isError: true, error: err },
+              'This lens was not evaluated — the roster above is unaffected.',
+            )}
+            onAction={() => void active.refetch()}
+          />
+        </section>
+      ) : instrumentState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title={`Loading ${lens}`} rows={4} cols={4} />
+        </section>
+      ) : instrumentState === 'empty' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="empty"
+            title="No lens hits yet"
+            detail="Nothing settled in this window and regime — the research-signal-hit job fills stock_signal_lens_hit_daily."
+          />
+        </section>
+      ) : data ? (
+        <>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Card variant="elevated">
+              <CardContent className="space-y-1 px-3 py-2">
+                <p className="text-dense-meta font-semibold text-muted-foreground">
+                  Hot rolling 5d hit-rate
+                </p>
+                <MiniSpark points={data.trend_hot ?? []} />
+              </CardContent>
+            </Card>
+            <Card variant="elevated">
+              <CardContent className="space-y-1 px-3 py-2">
+                <p className="text-dense-meta font-semibold text-muted-foreground">
+                  Cold rolling 5d hit-rate
+                </p>
+                <MiniSpark points={data.trend_cold ?? []} />
+              </CardContent>
+            </Card>
+          </div>
+
+          <DenseDataTable>
+            <DenseTableHeader>
+              <DenseTableHeadRow>
+                <DenseTableHead>Side</DenseTableHead>
+                <DenseTableHead className="text-right">30d 5d/20d</DenseTableHead>
+                <DenseTableHead className="text-right">90d 5d/20d</DenseTableHead>
+                <DenseTableHead className="text-right">252d 5d/20d</DenseTableHead>
+              </DenseTableHeadRow>
+            </DenseTableHeader>
+            <DenseTableBody>
+              <SideRow side="hot" stats={hotStats} windows={[30, 90, 252]} />
+              <SideRow side="cold" stats={coldStats} windows={[30, 90, 252]} />
+            </DenseTableBody>
+          </DenseDataTable>
+
+          {symbol && recentTriggers.length > 0 ? (
+            <Card variant="elevated">
+              <CardContent className="space-y-2 px-3 py-2">
+                <p className="text-dense-meta font-semibold text-muted-foreground">
+                  Recent triggers (last {recentTriggers.length})
+                </p>
+                <DenseDataTable>
+                  <DenseTableHeader>
+                    <DenseTableHeadRow>
+                      <DenseTableHead>Date</DenseTableHead>
+                      <DenseTableHead>Side</DenseTableHead>
+                      <DenseTableHead className="text-right">Trigger</DenseTableHead>
+                      <DenseTableHead className="text-right">Hit 5d</DenseTableHead>
+                      <DenseTableHead className="text-right">Fwd 5d</DenseTableHead>
+                      <DenseTableHead className="text-right">Hit 20d</DenseTableHead>
+                      <DenseTableHead className="text-right">Fwd 20d</DenseTableHead>
+                    </DenseTableHeadRow>
+                  </DenseTableHeader>
+                  <DenseTableBody>
+                    {recentTriggers.map((row, i) => (
+                      <DenseTableRow key={`${row.trade_date}-${row.trigger_side}-${i}`}>
+                        <DenseTableCell className="font-mono text-dense-meta">
+                          {row.trade_date}
+                        </DenseTableCell>
+                        <DenseTableCell className="capitalize">{row.trigger_side}</DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {fmtNum(row.trigger_value)}
+                        </DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>{fmtHit(row.hit_5d)}</DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {fmtNum(row.fwd_return_5d, 3)}
+                        </DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>{fmtHit(row.hit_20d)}</DenseTableCell>
+                        <DenseTableCell className={denseTableNumCell}>
+                          {fmtNum(row.fwd_return_20d, 3)}
+                        </DenseTableCell>
+                      </DenseTableRow>
+                    ))}
+                  </DenseTableBody>
+                </DenseDataTable>
+              </CardContent>
+            </Card>
+          ) : null}
+        </>
+      ) : null}
+
+      <CombinedLensesMatrix windowDays={windowDays} symbol={symbol} regime={regime} />
     </PageShell>
   )
 }

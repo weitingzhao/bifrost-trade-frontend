@@ -24,11 +24,15 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   ObjectiveScopeBanner,
-  PageHeader,
+  PageHead,
+  PageHeadLink,
   PageShell,
   SectionPanel,
   SECTION_CAP_CLASS,
 } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, staleDetail } from '@/lib/viewState'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -40,8 +44,6 @@ import {
   DenseTag,
   denseTableNumCell,
 } from '@/components/data-display'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { cn } from '@/lib/utils'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -153,7 +155,14 @@ function ChainTable({ rows, scoped }: { rows: ChainRow[]; scoped: string }) {
             <DenseTableCell className={denseTableNumCell}><Num v={r.accepted} /></DenseTableCell>
             <DenseTableCell className={denseTableNumCell}><Num v={r.traded} /></DenseTableCell>
             <DenseTableCell className={denseTableNumCell}><Num v={r.settled} /></DenseTableCell>
-            <DenseTableCell className={denseTableNumCell}>
+            <DenseTableCell
+              className={cn(
+                denseTableNumCell,
+                // Rev .93: a hit rate against its floor is a state — ink when it
+                // clears, amber when it does not; never the direction inks.
+                r.hit != null && r.hitFloor != null && r.hit < r.hitFloor && 'text-warning',
+              )}
+            >
               {r.hit == null ? <span className="text-muted-foreground">—</span> : fmtPct0(r.hit)}
               {/* The design prints each objective's own hit floor here. This
                   side stores none, and the settled-count floor is a different
@@ -205,34 +214,32 @@ export default function ReviewObjectivesPage() {
   const loading = objectivesQ.isLoading || candidatesQ.isLoading || review.loading
   const rows = [...chain.rows, chain.unattributed]
   const earning = chain.rows.filter((r) => r.verdict === 'EARNING').length
+  const preview = usePreviewState()
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : objectivesQ.isError
+        ? objectivesQ.data
+          ? 'stale'
+          : 'failed'
+        : 'ready'
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 max-w-[84ch] flex-[1_1_420px]">
-          <PageHeader
-            breadcrumb={<p className="text-xs font-medium text-primary/90">Review</p>}
-            title="Objectives"
-            titleSize="large"
-            description={LEAD}
-          />
-        </div>
-        <div className="ml-auto flex flex-none items-center gap-2 pt-1">
-          {/* What the figures below are true of. Derived, not the design's
-              `trailing 90d`: this side reads every canonical execution with no
-              window, and a caption that lies about its own numbers is worse
-              than a longer one. */}
-          <span className="font-mono text-dense-meta text-muted-foreground">
-            {chainWindow(review.trades)}
-          </span>
-          <Link
-            to="/research/loop/harness"
-            className="inline-flex h-[22px] items-center border px-2 text-dense-meta hover:text-foreground mat-btn"
-          >
+      {/* §16.10: the lead behind ⓘ; the window the figures are true of as the
+          head's meta (derived, not the design's `trailing 90d` — this side
+          reads every canonical execution with no window, and a caption that
+          lies about its own numbers is worse than a longer one). */}
+      <PageHead
+        title="Objectives"
+        info={LEAD}
+        meta={chainWindow(review.trades)}
+        actions={
+          <PageHeadLink to="/research/loop/harness" title="The machines themselves">
             Autopilot Console →
-          </Link>
-        </div>
-      </div>
+          </PageHeadLink>
+        }
+      />
 
       {/* The scope is the shell's, set in the Lens — this page reflects it and
           offers the way out, rather than growing a second control that can
@@ -246,13 +253,40 @@ export default function ReviewObjectivesPage() {
         </ObjectiveScopeBanner>
       ) : null}
 
-      {objectivesQ.isError ? <QueryErrorAlert error={objectivesQ.error} /> : null}
-      {review.error ? <QueryErrorAlert error={review.error} /> : null}
+      {pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the objectives"
+            detail={failedDetail(objectivesQ, 'No objective was read — an empty chain here would not mean no machine ran.')}
+            onAction={() => void objectivesQ.refetch()}
+          />
+        </section>
+      ) : null}
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the objectives"
+          detail={staleDetail(objectivesQ, 'an objective written since may be missing.')}
+          onAction={() => void objectivesQ.refetch()}
+        />
+      ) : null}
+      {review.error ? (
+        <ViewState
+          kind="stale"
+          layout="strip"
+          title="The trades did not load"
+          detail="Traded, settled, hit and net below are unread — a dash there is not a zero."
+        />
+      ) : null}
 
       {/* The page's own headline while the chain is broken. It sits above the
           table rather than under it, because every number below inherits it. */}
       {!chain.wired ? (
-        <section className="rounded-lg border border-warning/40 bg-warning-soft px-3 py-2 text-dense-meta">
+        <section
+          className="border px-3 py-2 text-dense-meta mat-card"
+          style={{ borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }}
+        >
           <p className="font-medium text-foreground">
             The chain is broken at <span className="font-mono">traded</span>.
           </p>
@@ -274,7 +308,8 @@ export default function ReviewObjectivesPage() {
             label: 'Machines earning',
             value: `${earning} of ${chain.rows.length}`,
             sub: 'by settled money',
-            ink: earning > 0 ? 'text-[var(--color-profit)]' : '',
+            // A count of machines, not money — ink, never the direction inks.
+            ink: earning > 0 ? 'text-foreground' : 'text-muted-foreground',
             tip: `An objective earns when it clears the floor it set itself AND is net positive on settled trades. Both, because either alone can lie. ${VERDICT_FLOOR} settled trades are needed before a hit rate is a claim at all.`,
           },
           {
@@ -319,8 +354,12 @@ export default function ReviewObjectivesPage() {
         title="The chain, per objective"
         note="each column is the previous one after a gate — the shape of the fall is the finding"
       >
-        {loading ? <Skeleton className="m-3 h-32 rounded-md" /> : <ChainTable rows={rows} scoped={objective} />}
-        <p className="border-t border-border/60 px-3 py-1.5 text-dense-meta leading-snug text-muted-foreground">
+        {loading ? (
+          <ViewState kind="loading" title="Loading the chain" rows={5} cols={8} />
+        ) : (
+          <ChainTable rows={rows} scoped={objective} />
+        )}
+        <p className="border-t border-border px-3 py-1.5 text-dense-meta leading-snug text-muted-foreground">
           Net is realised on settled positions only, per objective, never summed across accounts —
           margin and buying power do not add. A position whose lineage broke is not silently
           attributed: it lands in the unattributed row, because{' '}
@@ -337,9 +376,9 @@ export default function ReviewObjectivesPage() {
           note="the widest gate this side records, per objective"
         >
           {loading ? (
-            <Skeleton className="m-3 h-20 rounded-md" />
+            <ViewState kind="loading" title="Loading the gates" rows={3} cols={2} />
           ) : (
-            <div className="divide-y divide-border/60">
+            <div className="divide-y divide-border">
               {chain.rows.map((r) => {
                 const g = widestGate(r)
                 return (
@@ -354,7 +393,7 @@ export default function ReviewObjectivesPage() {
                             : g.share > 0.8
                               ? 'text-warning'
                               : g.share > 0.5
-                                ? 'text-sky-700 dark:text-sky-300'
+                                ? 'text-foreground'
                                 : 'text-muted-foreground',
                         )}
                       >
@@ -365,7 +404,7 @@ export default function ReviewObjectivesPage() {
                     {/* How wide the gate is, drawn. A share stated only in
                         words makes two objectives incomparable at a glance,
                         which is the whole job of this panel. */}
-                    <span className="block h-1.5 overflow-hidden rounded-sm bg-muted">
+                    <span className="block h-1.5 overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                       {g.share != null ? (
                         <span
                           className={cn(
@@ -373,7 +412,7 @@ export default function ReviewObjectivesPage() {
                             g.share > 0.8
                               ? 'bg-warning'
                               : g.share > 0.5
-                                ? 'bg-sky-300'
+                                ? 'bg-foreground/75'
                                 : 'bg-foreground/45',
                           )}
                           style={{ width: `${Math.max(2, g.share * 100)}%` }}

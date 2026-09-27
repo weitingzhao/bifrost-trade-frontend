@@ -148,5 +148,6 @@ export const REVIEW_NOTES: Record<string, string> = {
     + 'are unchanged, as the design asks. The mode is stored: research 0.113.0 added '
     + '`research.objective.mode` (default assisted) and `subject`, so the tag reads the store '
     + 'rather than a guess, and the one objective on DEV reads `assisted`. The Unattributed row '
-    + 'carries no tag, because nobody works it — it is what no objective claims.',
+    + 'carries no tag, because nobody works it — it is what no objective claims.'
+    + ' §16 REFINEMENT J4 (2026-09-26, Package .23 @ Rev .95, walked on local DEV :5173): page rev .89. `PageHead` with the window the figures are true of as meta and Autopilot Console → as its door. The broken-chain headline is a card with its amber edge inline at 45%. Rev .93: a hit rate under its floor is amber, never the direction inks; Machines earning is a count, so ink. Where they die: the mid-width gate was the contract sky and a raw palette class — now ink, with the bar ink 75% on an ink-8% track (over 80% stays amber). Loading reads as a ViewState in each panel; a failed objectives read is a failed page, a failed trades read a strip saying the chain columns are unread, not zero.',
 }

@@ -8,7 +8,7 @@
  */
 import { useQueries } from '@tanstack/react-query'
 import { fetchSignalDecay, SIGNAL_DECAY_LENSES } from '@/api/research/signalDecay'
-import { decayAlerts, decayRoster, type LensPair } from './decayRosterModel'
+import { decayAlerts, decayRoster, type LensPair } from '@/utils/decayRosterModel'
 
 /** The page's own six, from the module that owns the vocabulary. */
 export const DECAY_LENSES = SIGNAL_DECAY_LENSES
@@ -46,5 +46,11 @@ export function useDecayRoster() {
     loading: queries.some((q) => q.isLoading),
     /** Lenses whose reading did not arrive — named rather than shown as zero. */
     failed: DECAY_LENSES.filter((_, i) => queries[i * 2]?.isError).map((l) => l.label),
+    /** Every "now" reading failed: nothing was read, which is not a quiet roster. */
+    allFailed: DECAY_LENSES.every((_, i) => queries[i * 2]?.isError),
+    error: queries.find((q) => q.isError)?.error ?? null,
+    retry: () => {
+      for (const q of queries) if (q.isError) void q.refetch()
+    },
   }
 }

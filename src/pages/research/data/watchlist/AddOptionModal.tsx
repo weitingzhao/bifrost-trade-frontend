@@ -82,7 +82,7 @@ function AddOptionModalBody({
 
   return (
     <DialogContent className="max-w-md gap-0 overflow-hidden p-0 sm:max-w-md">
-      <DialogHeader className="space-y-1.5 border-b border-border bg-secondary/40 px-5 py-4">
+      <DialogHeader className="space-y-1.5 border-b border-border px-5 py-4">
         <DialogTitle className="flex flex-wrap items-center gap-2">
           <span>Add option contract</span>
           <span className={addOptionSymbolBadgeClass}>{symbol}</span>

@@ -26,23 +26,26 @@
  * |---|---|---|
  * | run · persona · cost | `generated_by`, `prose.{provider,model,cost_usd}` | real |
  * | The one thing | the agent's `### What changed / needs a decision` | real |
- * | Overnight — book + pipeline | nowhere: P&L, fills and pipeline health are three other stores | owed |
- * | Today & next — events | `/research/events/calendar` answers `count 0` | blocked |
+ * | Overnight — book + pipeline | fills · signal health · decay alerts, read from their own stores | real (book row owed) |
+ * | Today & next — events | `/research/events/calendar` + OPEX arithmetic | real (re-measured 2026-09-26) |
  * | Loop — what Autopilot left | `loop.{pending,runs,objectives,trust}` | real |
  *
- * So two of the design's four blocks are drawn from the artifact, one is owed
- * and one is blocked — and each says which it is rather than being left out.
+ * Two of the design's four blocks are drawn from the artifact and two from
+ * the stores that own them (`DailyBriefReadings.tsx`); the one row still owed —
+ * the book's overnight move — says so where it sits.
  *
  * The artifact carries three sections the design does not draw (the holdings'
  * readings, the dissents, the resolutions). They are not dropped: the design's
  * page is a summary of a run and this *is* that run, so they render below
  * under the run's own heading, by the same component the dock uses.
  */
-import { Link } from 'react-router-dom'
-import { PageHeader, PageShell, SectionPanel } from '@/components/layout'
+import { Link, useNavigate } from 'react-router-dom'
+import { PageHead, PageHeadLink, PageShell, SectionPanel } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ViewState } from '@bifrost/ui'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail } from '@/lib/viewState'
+import { BriefCalendar, BriefOvernight } from './DailyBriefReadings'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
@@ -75,34 +78,49 @@ export default function DailyBriefPage() {
     : null
   const loop = payload ? loopLines(payload) : []
   const advisory = typeof payload?.advisory === 'string' ? payload.advisory : null
+  const navigate = useNavigate()
+  const preview = usePreviewState()
+  // §17.1 on the digest read: the other blocks keep their own states.
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : isError
+        ? digest
+          ? 'stale'
+          : 'failed'
+        : isLoading && !digest
+          ? 'loading'
+          : 'ready'
 
   return (
     <PageShell padding="default" className="space-y-3">
-      <PageHeader
+      {/* §16.10: the run behind ⓘ and as the head's meta; the Desk and the
+          Inbox as its doors. */}
+      <PageHead
         title="Daily Brief"
-        description={
+        info="Morning Prep run · the brief is a Copilot post: read it here, discuss it in the Desk thread."
+        meta={
           digest
             ? `${digest.generated_by ?? 'the morning run'} · ${fmtIsoTs(digest.created_at)}${
                 runCost(payload) ? ` · ${runCost(payload)}` : ''
               }`
-            : 'The morning run, kept as a page.'
+            : undefined
         }
         actions={
-          <div className="flex flex-wrap items-center gap-2">
+          <>
             {/* The design's `Thread in Desk →`. The digest carries no thread or
                 session id — `generated_by: digest_agent` is all it says about
                 where it came from — so this opens the Desk rather than a
                 conversation it cannot name. */}
-            <Link
+            <PageHeadLink
               to="/research/copilot"
-              className="text-dense-meta text-primary hover:underline"
               title="The digest carries no thread id, so this opens the Desk rather than a conversation it cannot name."
             >
               Desk →
-            </Link>
-            <Link to="/research/loop/decisions" className="text-dense-meta text-primary hover:underline">
+            </PageHeadLink>
+            <PageHeadLink to="/research/loop/decisions" title="Approve or leave the digest">
               Inbox →
-            </Link>
+            </PageHeadLink>
             {/* The design's `⟳ Re-run` queues the Morning Prep run. Nothing on
                 this side triggers a digest: the agent runs on its own schedule
                 and there is no route that asks for another. Marked rather than
@@ -119,7 +137,7 @@ export default function DailyBriefPage() {
               snapshot={compactSnapshot({ day, one_thing: oneThing?.slice(0, 400) })}
               suggestedPrompt="From this morning's digest: what is the one thing I should decide before the open?"
             />
-          </div>
+          </>
         }
       />
 
@@ -135,22 +153,46 @@ export default function DailyBriefPage() {
         {advisory ? <span className="ml-1 text-warning">{advisory}</span> : null}
       </p>
 
-      {isError ? <QueryErrorAlert error={error} onRetry={() => void refetch()} /> : null}
-
-      {isLoading ? (
-        <Skeleton className="h-64 rounded-xl" />
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the digest"
+          detail="Showing the last copy — a newer post may be waiting in the Inbox."
+          onAction={() => void refetch()}
+        />
+      ) : null}
+      {pageState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the brief" rows={6} cols={3} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the brief"
+            detail={failedDetail(
+              { data: null, isPending: false, isError: true, error },
+              'No post was read — an empty page here would not mean the morning run wrote nothing.',
+            )}
+            onAction={() => void refetch()}
+          />
+        </section>
       ) : !digest || !payload ? (
-        <SectionPanel cap="The one thing" title="No digest for today">
-          <p className="px-3 py-3 text-dense-meta leading-relaxed text-muted-foreground">
-            The digest agent writes one post per trading day and none is waiting. It is a draft in
-            the queue like any other, so it appears here the moment it is written — and it is
-            approved, or left, in{' '}
-            <Link to="/research/loop/decisions" className="text-primary hover:underline">
-              the Inbox
-            </Link>
-            .
-          </p>
-        </SectionPanel>
+        <>
+          <section className="overflow-hidden mat-card">
+            <ViewState
+              kind="empty"
+              title="No digest for today"
+              detail="The digest agent writes one post per trading day and none is waiting. It appears here the moment it is written, and is approved or left in the Inbox."
+              actionLabel="Open the Inbox"
+              onAction={() => navigate('/research/loop/decisions')}
+            />
+          </section>
+          {/* These two read their own stores, not the digest — a morning with
+              no post still has fills, a pipeline and a calendar. */}
+          <BriefOvernight />
+          <BriefCalendar />
+        </>
       ) : (
         <>
           <SectionPanel cap="The one thing" title={day ? `for ${day}` : 'this morning'}>
@@ -168,44 +210,11 @@ export default function DailyBriefPage() {
             </div>
           </SectionPanel>
 
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {/* Owed, not forgotten. The design's Overnight reads four stores
-                this page does not: the book's overnight mark, the night's
-                fills, the pipeline's own run and the decay alerts. Each is a
-                page of its own here, and the brief would be quoting them. */}
-            <SectionPanel cap="Overnight" title="book + pipeline" note="owed">
-              <p className="px-3 py-2.5 text-dense-meta leading-relaxed text-muted-foreground">
-                The design opens with what moved while you were away — the book&rsquo;s overnight
-                mark, the fills, whether the pipeline ran, and any decay alert that fired. The
-                digest does not carry them: they are four other stores, and quoting them here means
-                the brief agrees with{' '}
-                <Link to="/risk/portfolio" className="text-primary hover:underline">
-                  Risk
-                </Link>
-                ,{' '}
-                <Link to="/portfolio/ledger" className="text-primary hover:underline">
-                  the Ledger
-                </Link>{' '}
-                and{' '}
-                <Link to="/research/signal-health" className="text-primary hover:underline">
-                  Signal Health
-                </Link>{' '}
-                on every number. Until it does, they are one click away rather than quoted wrong.
-              </p>
-            </SectionPanel>
-
-            {/* Blocked, and by the same gap three other pages name. */}
-            <SectionPanel cap="Today &amp; next" title="events touching the book" note="no calendar">
-              <p className="px-3 py-2.5 text-dense-meta leading-relaxed text-muted-foreground">
-                The design lists what is on the calendar and what it does to the book — a print
-                today, an ex-date on a covered call, Friday&rsquo;s OPEX.{' '}
-                <span className="text-foreground/80">No forward calendar reaches this side</span>:{' '}
-                <span className="font-mono">/research/events/calendar</span> answers with nothing,
-                and the gap behind it is a vendor subscription. It is the same absence the Symbol
-                page&rsquo;s Events card and both ratings pages carry.
-              </p>
-            </SectionPanel>
-          </div>
+          {/* Read from the stores that own them (§15.6) — the digest carries
+              neither. Full width, one after the other, as the design stacks
+              them: what moved, then what is coming. */}
+          <BriefOvernight />
+          <BriefCalendar />
 
           <SectionPanel
             cap="Loop"
@@ -220,7 +229,7 @@ export default function DailyBriefPage() {
               loop.map((row) => (
                 <div
                   key={row.text}
-                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border/50 px-3 py-2 last:border-b-0"
+                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2 last:border-b-0"
                 >
                   <DenseTag variant={row.tag === 'AWAITING' ? 'warning' : 'neutral'} size="cell">
                     {row.tag ?? row.sym}
@@ -256,8 +265,9 @@ export default function DailyBriefPage() {
             queue and its objectives. Window:{' '}
             <span className="font-mono">{fmtIsoTs(String(payload.since ?? ''))}</span> →{' '}
             <span className="font-mono">{fmtIsoTs(String(payload.generated_at ?? ''))}</span>. The
-            design&rsquo;s footer also names Positions, Risk Exposure, Events and the Playbook; this
-            run reads none of them, which is the same gap Overnight names above.
+            design&rsquo;s footer also names Positions, Risk Exposure, Events and the Playbook; the
+            run itself reads none of them — Overnight and Today &amp; next above read their stores
+            directly.
           </p>
         </>
       )}

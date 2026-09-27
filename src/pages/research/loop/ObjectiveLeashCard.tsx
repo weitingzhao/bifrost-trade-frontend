@@ -58,7 +58,7 @@ export function ObjectiveLeashCard({ objectiveId }: { objectiveId: string }) {
 
   return (
     <section className="overflow-hidden border mat-card">
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
         <span className="text-dense-body font-semibold">Leash standing</span>
         <DenseTag variant={tag.variant} size="cell">
           {tag.label}

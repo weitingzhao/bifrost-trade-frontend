@@ -1,14 +1,7 @@
 import { Plus } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { PageHeader } from '@/components/layout'
+import { PageHead, PageHeadLink } from '@/components/layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { Info } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { PrimaryWorkflowTab } from '@/utils/watchlistHelpers'
 
@@ -44,35 +37,18 @@ export function WatchlistPageHeader({
     (primaryTab === 'watching' || primaryTab === 'positions') && positionsNotInWatchlistCount > 0
 
   return (
-    <PageHeader
+    // §16.10: the design's line and the workflow note together behind ⓘ, the
+    // count as the head's meta, the Screener as its door.
+    <PageHead
       title="Watchlist"
-      // The design's own line. What the page *is* belongs here; how it is
-      // worked — Watching → Sizing → Positions — is the tab strip's job and
-      // the info tip's, and was saying it twice.
-      description="Names with a thesis attached — pinned from the Screener, from Scan, from a Symbol page or from an Inspector."
-      className="max-w-none [&>div:last-child]:items-start"
+      info={`Names with a thesis attached — pinned from the Screener, from Scan, from a Symbol page or from an Inspector. ${INFO_TEXT}`}
+      meta={`${itemCount} ${itemCount === 1 ? 'name' : 'names'}`}
       actions={
         <>
-          <span className="text-xs font-mono text-muted-foreground px-2 py-0.5 rounded-md bg-muted">
-            {itemCount}
-          </span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button type="button" className="text-muted-foreground hover:text-foreground" aria-label="Page info">
-                <Info className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-sm text-xs">
-              {INFO_TEXT}
-            </TooltipContent>
-          </Tooltip>
           {/* The design's one header link: this list is fed from the screen. */}
-          <Link
-            to="/research/screener"
-            className="text-dense-caption text-primary hover:underline"
-          >
+          <PageHeadLink to="/research/screener" title="This list is fed from the screen">
             Screener →
-          </Link>
+          </PageHeadLink>
           {extraActions}
           {showPosBtn && (
             <Button type="button" variant="outline" size="sm" onClick={onTogglePositionPicker}>
@@ -96,6 +72,7 @@ export function WatchlistPageHeader({
                 size="sm"
                 disabled={isAdding || !addInput.trim()}
                 onClick={onAdd}
+                aria-label="Add to Watching"
               >
                 <Plus className="h-4 w-4" />
               </Button>

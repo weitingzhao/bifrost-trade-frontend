@@ -11,19 +11,19 @@
  * hypothesis, and the panel says so.
  */
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { fetchObjectiveRuns } from '@/api/research/harness'
 import { fetchCandidates } from '@/api/research/candidates'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { ALL_OBJECTIVES, candidateObjectiveId, useObjectiveScope } from '@/lib/objectiveScope'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookOpen } from 'lucide-react'
-import { ObjectiveScopeBanner, PageHeader, PageShell } from '@/components/layout'
-import { DenseTag, EmptyState, type DenseTagVariant } from '@/components/data-display'
+import { ObjectiveScopeBanner, PageHead, PageHeadLink, PageShell } from '@/components/layout'
+import { DenseTag, type DenseTagVariant } from '@/components/data-display'
+import { ViewState } from '@bifrost/ui'
 import { Card } from '@/components/ui/card'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { approveResearchDraft, listResearchDrafts } from '@/api/researchDrafts'
 import { useHeldDraftDismiss } from '@/hooks/useResearchDrafts'
@@ -92,7 +92,7 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
       {/* The design's own order: what it is worth, what is riding on it, who
           wrote it, where it lives. The record leads because that is the
           column a reader scans down. */}
-      <div className="flex items-baseline gap-2 border-t border-border/60 pt-1.5">
+      <div className="flex items-baseline gap-2 border-t border-border pt-1.5">
         <span
           className={cn(
             'min-w-0 shrink truncate font-mono text-dense-caption',
@@ -161,11 +161,14 @@ function SuggestionQueue() {
   const rows = (drafts.data?.rows ?? []).filter((d) => !isHeld(d.id))
   if (rows.length === 0) return null
   return (
-    <section className="overflow-hidden rounded-md border border-warning/45">
-      <header className="flex flex-wrap items-center gap-2.5 border-b border-border/60 bg-secondary px-3 py-2">
-        <span className="text-dense-micro font-semibold uppercase tracking-wider text-warning">
-          Proposed by Copilot
-        </span>
+    // The severity is the edge — inline, because `mat-card` clears any
+    // border-colour class; the head is a rule, not a band.
+    <section
+      className="overflow-hidden border mat-card"
+      style={{ borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }}
+    >
+      <header className="flex flex-wrap items-center gap-2.5 border-b border-border px-3 py-2">
+        <span className="text-dense-meta font-semibold text-warning">Proposed by Copilot</span>
         <span className="text-dense-label font-medium">
           {rows.length} draft{rows.length > 1 ? 's' : ''} awaiting your call
         </span>
@@ -289,19 +292,21 @@ export default function HypothesisBoardPage() {
   const shown = laneRows(inScope, lane)
   const scopeName =
     objectivesQ.data?.items?.find((o) => o.id === objective)?.title ?? objective
+  const navigate = useNavigate()
+  const preview = usePreviewState()
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(query)
 
   return (
     <PageShell padding="default" className="space-y-3">
-      <PageHeader
+      {/* §16.10: the lead behind ⓘ, the settled record's page as the door. */}
+      <PageHead
         title="Hypothesis Board"
-        description="Every tradable belief, with its evidence and its record — hypotheses are born next to evidence (D2), never typed in here."
+        info="Every tradable belief, with its evidence and its record — hypotheses are born next to evidence (D2), never typed in here."
         actions={
-          <Link
-            to="/review/playbook-stats"
-            className="whitespace-nowrap text-dense-label text-primary hover:underline"
-          >
-            Settled record → Playbook stats
-          </Link>
+          <PageHeadLink to="/review/playbook-stats" title="Settled record → Playbook stats">
+            Playbook stats →
+          </PageHeadLink>
         }
       />
 
@@ -330,17 +335,22 @@ export default function HypothesisBoardPage() {
         </ObjectiveScopeBanner>
       ) : null}
 
-      <div className="flex flex-wrap gap-1.5">
+      {/* Rev .88: the lanes are the toolbar's pills (§17.3) — the picked one
+          on an accent 20% ground with ink text, as the sidebar marks its row. */}
+      <div data-sr-toolbar="" role="tablist" aria-label="Lane">
+        <span data-sr-tb="label">Lane</span>
         {BOARD_LANES.map((k) => (
           <button
             key={k}
             type="button"
+            role="tab"
+            aria-selected={lane === k}
             onClick={() => setLane(k)}
             className={cn(
-              'inline-flex h-6 items-center gap-1.5 rounded-md border px-2.5 text-dense-meta',
+              'inline-flex h-6 cursor-pointer items-center gap-1.5 rounded-full border-0 px-2.5 text-dense-meta',
               lane === k
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border text-muted-foreground hover:text-foreground',
+                ? 'bg-[color-mix(in_srgb,var(--sk-accent)_20%,transparent)] text-foreground'
+                : 'bg-transparent text-muted-foreground hover:text-foreground',
             )}
           >
             {k === 'all' ? 'All' : k}
@@ -351,28 +361,37 @@ export default function HypothesisBoardPage() {
 
       <SuggestionQueue />
 
-      {query.isError ? (
-        <QueryErrorAlert error={query.error} />
-      ) : query.isLoading ? (
-        <div className="grid grid-cols-1 gap-2.5 @xl/page:grid-cols-2 @4xl/page:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full rounded-md" />
-          ))}
-        </div>
-      ) : shown.length === 0 ? (
-        <EmptyState
-          icon={<BookOpen />}
-          title="No hypotheses in this lane"
-          description="Promote a candidate from the Pool, or Save as Hypothesis from Scan and the other evidence pages — the board itself writes nothing."
-          action={
-            <Link
-              to="/research/loop/candidates"
-              className="text-dense-meta text-primary underline-offset-2 hover:underline"
-            >
-              Open Candidate Pool
-            </Link>
-          }
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the board"
+          detail={staleDetail(query, 'a hypothesis written since may be missing.')}
+          onAction={() => void query.refetch()}
         />
+      ) : null}
+      {pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the board"
+            detail={failedDetail(query, 'No hypothesis was read — an empty board here would not mean there are none.')}
+            onAction={() => void query.refetch()}
+          />
+        </section>
+      ) : pageState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the board" rows={6} cols={3} />
+        </section>
+      ) : shown.length === 0 ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="empty"
+            title="No hypotheses in this lane"
+            detail="Promote a candidate from the Pool, or Save as Hypothesis from Scan and the other evidence pages — the board itself writes nothing."
+            actionLabel="Open Candidate Pool"
+            onAction={() => navigate('/research/loop/candidates')}
+          />
+        </section>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,21.25rem),1fr))] items-start gap-2.5">
           {shown.map((h) => (

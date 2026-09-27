@@ -28,7 +28,7 @@ export const sizingDashRiskVerifyClass = cn(
 export const sizingDashWorkflowColClass = cn(sizingDashClass, 'mb-0')
 
 export const sizingDashSubtitleClass = cn(
-  'mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground',
+  'mb-2 text-dense-meta font-semibold text-muted-foreground',
 )
 
 export const sizingDashSubtitleSmClass = cn(sizingDashSubtitleClass, 'text-dense-caption')
@@ -74,7 +74,7 @@ export const sizingOrderBidRowClass = cn(
 )
 
 export const sizingOrderBidLabelClass = cn(
-  'text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
+  'text-dense-meta font-semibold text-muted-foreground',
 )
 
 export const sizingOrderBidValueClass = cn('font-mono text-sm font-semibold tabular-nums')
@@ -86,7 +86,7 @@ export const sizingOrderCompactGridClass = cn('grid grid-cols-3 gap-2')
 export const sizingOrderFieldClass = cn('flex min-w-0 flex-col gap-1')
 
 export const sizingOrderFieldLabelClass = cn(
-  'text-dense-caption font-semibold uppercase tracking-wide text-muted-foreground',
+  'text-dense-meta font-semibold text-muted-foreground',
 )
 
 export const sizingOrderFieldHintClass = cn('ml-1 font-normal normal-case text-muted-foreground')
@@ -114,11 +114,11 @@ export const sizingDashCardHighlightClass = cn(
 )
 
 export const sizingDashLabelClass = cn(
-  'mb-0.5 block text-dense-meta font-semibold uppercase tracking-wide text-muted-foreground',
+  'mb-0.5 block text-dense-meta font-semibold text-muted-foreground',
 )
 
 export const sizingDashLabelHighlightClass = cn(
-  'mb-[0.22rem] block text-dense-micro font-semibold uppercase tracking-[0.06em]',
+  'mb-[0.22rem] block text-dense-meta font-semibold',
   'text-[color-mix(in_srgb,var(--primary)_35%,var(--muted-foreground))] opacity-90',
 )
 
@@ -151,7 +151,7 @@ export const sizingOrderTwoColCardsClass = cn(
 )
 
 export const sizingOrderAtrSheetTitleClass = cn(
-  'mb-[0.35rem] text-dense-meta font-semibold uppercase tracking-[0.04em] text-muted-foreground',
+  'mb-[0.35rem] text-dense-meta font-semibold text-muted-foreground',
 )
 
 export const sizingOrderMetricSuffixClass = cn(
@@ -197,7 +197,7 @@ export const watchlistStepperSizingHubActiveClass = cn(
 )
 
 export const watchlistStepperSizingHubTitleClass = cn(
-  'text-dense-body font-extrabold uppercase tracking-wider',
+  'text-dense-body font-semibold',
 )
 
 export const HELP_PORTFOLIO_TABLE =

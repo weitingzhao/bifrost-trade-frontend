@@ -106,7 +106,7 @@ export function DailyDigestBody({
             type="button"
             onClick={() => setBatchesOpen((o) => !o)}
             aria-expanded={batchesOpen}
-            className="flex w-full items-center gap-1.5 px-2 py-1 text-left text-dense-meta text-foreground hover:bg-secondary/60"
+            className="flex w-full items-center gap-1.5 px-2 py-1 text-left text-dense-meta text-foreground hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
           >
             {batchesOpen ? <ChevronDown className="size-3 shrink-0" aria-hidden /> : <ChevronRight className="size-3 shrink-0" aria-hidden />}
             Candidate batches since yesterday ({batches.length}) — each is its own decision below

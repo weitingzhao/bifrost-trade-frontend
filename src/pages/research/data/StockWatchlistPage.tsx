@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { PageShell } from '@/components/layout'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ViewState } from '@bifrost/ui'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, staleDetail } from '@/lib/viewState'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useWatchlistMutations } from '@/hooks/useStockWatchlist'
@@ -42,7 +43,9 @@ import { AddOptionModal } from './watchlist/AddOptionModal'
 
 export default function StockWatchlistPage() {
   const { data: status } = useMonitorStatus()
-  const { data: watchlistData, isLoading, isError, error } = useWatchlist()
+  const watchlistQ = useWatchlist()
+  const { data: watchlistData, isLoading, isError } = watchlistQ
+  const preview = usePreviewState()
   const { data: perfSummary } = useWatchlistPerformance()
   const { categories, watchingId, sizingId } = useEnsureWatchlistCategories()
   const { addItem, removeItem, upsertFromItem } = useWatchlistMutations()
@@ -315,15 +318,19 @@ export default function StockWatchlistPage() {
     [addOptionSymbol, addItem],
   )
 
-  if (isLoading) {
-    return (
-      <PageShell className="w-full min-w-0 space-y-3">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </PageShell>
-    )
-  }
+  // §17.1: the head and the stepper stay; the list steps aside for a
+  // loading or failed read, and a failed refresh is a strip over the copy.
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale'
+      ? preview
+      : isError
+        ? watchlistData
+          ? 'stale'
+          : 'failed'
+        : isLoading && !watchlistData
+          ? 'loading'
+          : 'ready'
+  const showList = pageState === 'ready' || pageState === 'stale'
 
   return (
     <PageShell className="flex w-full min-w-0 flex-col gap-3">
@@ -351,7 +358,28 @@ export default function StockWatchlistPage() {
         }
       />
 
-      {isError && <QueryErrorAlert error={error} />}
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the watchlist"
+          detail={staleDetail(watchlistQ, 'a name pinned since may be missing.')}
+          onAction={() => void watchlistQ.refetch()}
+        />
+      ) : null}
+      {pageState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the watchlist" rows={6} cols={6} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the watchlist"
+            detail={failedDetail(watchlistQ, 'No name was read — an empty list here would not mean nothing is watched.')}
+            onAction={() => void watchlistQ.refetch()}
+          />
+        </section>
+      ) : null}
 
       <WorkflowStepper
         active={primaryTab}
@@ -361,7 +389,7 @@ export default function StockWatchlistPage() {
         onChange={handlePrimaryTabChange}
       />
 
-      {primaryTab === 'watching' && (
+      {showList && primaryTab === 'watching' && (
         <WatchingTab
           workflow={workflow}
           categories={categories}
@@ -381,7 +409,7 @@ export default function StockWatchlistPage() {
         />
       )}
 
-      {primaryTab === 'sizing' && (
+      {showList && primaryTab === 'sizing' && (
         <SizingTab
           status={status}
           workflow={workflow}
@@ -432,7 +460,7 @@ export default function StockWatchlistPage() {
         />
       )}
 
-      {primaryTab === 'positions' && (
+      {showList && primaryTab === 'positions' && (
         <PositionsTab
           workflow={workflow}
           categories={categories}

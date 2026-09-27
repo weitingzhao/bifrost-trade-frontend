@@ -8,7 +8,7 @@ import {
   type PersonaPreferences,
 } from '@/api/agentPersona'
 import { useAgentPersonas } from '@/hooks/useAgentPersonas'
-import { CopilotTabs } from '@/components/research/CopilotTabs'
+import { useCopilotHeadTabs } from '@/components/research/CopilotTabs'
 import { useSearchParams } from 'react-router-dom'
 import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
@@ -558,15 +558,21 @@ export function AgentPersonaPage() {
   }
 
   const copy = PAGE_COPY.en
+  const head = useCopilotHeadTabs('personas')
 
   return (
     <PageShell padding="compact">
-      <PageHead title={copy.title} info={copy.description} actions={<ResearchUserSwitcher />} />
-
-      {/* The same strip the desk carries: Personas is the Copilot's third
-          face, and its own route — §5a.5 then reads this page's h1 off that
-          route's label rather than the file's first title. */}
-      <CopilotTabs active="personas" />
+      {/* The same tabs the desk's head carries (Rev .89): Personas is the
+          Copilot's third face, and its own route — §5a.5 then reads this
+          page's h1 off that route's label rather than the file's first title. */}
+      <PageHead
+        title={copy.title}
+        info={copy.description}
+        tabs={head.tabs}
+        tab={head.tab}
+        onTab={head.onTab}
+        actions={<ResearchUserSwitcher />}
+      />
 
       <p className="text-dense-caption text-muted-foreground">{copy.originPick}</p>
 

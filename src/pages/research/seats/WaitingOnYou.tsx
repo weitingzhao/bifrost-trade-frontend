@@ -51,8 +51,10 @@ const DESK_ROWS = 8
  * which makes it the same cache entry, filtered and folded by the same helpers.
  * An answer given here is gone from the Inbox, and the counts agree.
  *
- * Two places it does not follow the prototype. Kinds are not coloured: §7
- * cancelled category hue, and the accent belongs to the layer. And "Lands in"
+ * Kinds wear the state blue (Rev .89): a kind is an artifact type, not an
+ * instrument, so it borrows neither the contract sky nor a category hue.
+ *
+ * One place it does not follow the prototype: "Lands in"
  * is what the server's approve writes, not the mock's destination — several
  * kinds write nothing, and those rows say so. Their Approve is demoted the way
  * the Inbox demotes it.
@@ -128,7 +130,7 @@ export function WaitingOnYou() {
                 return (
                   <DenseTableRow key={draft.id} className={actionable ? undefined : 'opacity-75'}>
                     <DenseTableCell>
-                      <DenseTag variant="category">{draftKindLabel(draft.kind)}</DenseTag>
+                      <DenseTag variant="state-blue">{draftKindLabel(draft.kind)}</DenseTag>
                     </DenseTableCell>
                     <DenseTableCell className="max-w-[28rem]">
                       <span className="block truncate" title={title}>

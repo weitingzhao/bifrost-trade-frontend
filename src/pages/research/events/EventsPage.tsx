@@ -27,10 +27,9 @@
  */
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { PageHeader, PageShell } from '@/components/layout'
-import { SegmentControl } from '@/components/data-display'
+import { PageHead, PageShell } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
   fetchEventBatches,
   fetchEventCalendar,
@@ -40,7 +39,7 @@ import {
 import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { eventsStanding, type StoreReading } from './eventsStanding'
-import { EventsBookFace } from './EventsBookFace'
+import { EventsBookFace, EventsBookLegend } from './EventsBookFace'
 import { EventsMarketFace } from './EventsMarketFace'
 
 const BATCHES = '/research/events/batches'
@@ -103,39 +102,42 @@ export default function EventsPage() {
 
   return (
     <PageShell className="space-y-3">
-      <PageHeader
-        breadcrumb={<p className="text-xs font-medium text-primary/90">Home</p>}
+      {/* §16.10 · Rev .89: the two faces are the head's tabs, each with its
+          own line behind ⓘ; the toolbar carries the Book face's key and the
+          Market face's feed standing. */}
+      <PageHead
         title="Events"
-        description="What the market has said and what it is about to say — the events the radar collected, the themes they fall into, and the dated ones still ahead."
-        actions={
-          <span className="flex flex-wrap items-center gap-2.5">
-            <SegmentControl
-              size="xs"
-              ariaLabel="Face"
-              value={face}
-              onChange={setFace}
-              options={FACE_OPTIONS}
-            />
-            {standing.state !== 'live' || standing.loading ? null : (
-              <span className="flex items-center gap-1.5 text-dense-meta text-muted-foreground">
-                <StatusLamp lamp="ok" variant="dot" />
-                {batches.data?.rows?.length ?? 0} batches · last{' '}
-                {last ? fmtIsoDateToken(last.collected_at) : '—'} ·{' '}
-                {events.data?.rows?.length ?? 0} events
-              </span>
-            )}
-          </span>
+        info={
+          face === 'book'
+            ? 'Next 30 days · book + watchlist · macro and OPEX from event_radar.'
+            : 'What the market is saying · whole-market event_radar ingest · not filtered to the book.'
         }
+        tabs={FACE_OPTIONS}
+        tab={face}
+        onTab={setFace}
       />
+      <div data-sr-toolbar="">
+        {face === 'book' ? (
+          <EventsBookLegend />
+        ) : standing.state !== 'live' || standing.loading ? (
+          <span data-sr-tb="meta">{standing.loading ? 'reading the four stores…' : standing.title}</span>
+        ) : (
+          <span className="flex items-center gap-1.5 text-dense-meta text-muted-foreground">
+            <StatusLamp lamp="ok" variant="dot" />
+            <span className="font-mono">
+              {batches.data?.rows?.length ?? 0} batches · last {last ? fmtIsoDateToken(last.collected_at) : '—'} ·{' '}
+              {events.data?.rows?.length ?? 0} events
+            </span>
+          </span>
+        )}
+      </div>
 
       {face === 'book' ? (
         <EventsBookFace radarUnfed={standing.state === 'unfed'} />
       ) : standing.loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-8 rounded" />
-          ))}
-        </div>
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the event stores" rows={6} cols={5} />
+        </section>
       ) : standing.state === 'live' ? (
         /* The design's own restructure, built 2026-09-24 on the Owner's ask:
            Importance / Direction / theme filters, the themes panel with its
@@ -171,7 +173,7 @@ function StoreStanding({
   const failed = standing.state === 'failed'
   return (
     <section className="overflow-hidden border mat-card" aria-label="Event pipeline">
-      <div className="space-y-2 border-b border-border bg-secondary px-3 py-3">
+      <div className="space-y-2 border-b border-border px-3 py-3">
         <p className="flex flex-wrap items-center gap-2">
           <StatusLamp lamp={failed ? 'fail' : 'gray'} variant="dot" />
           <span className="text-dense-body font-semibold text-foreground">{standing.title}</span>
@@ -197,7 +199,7 @@ function StoreStanding({
       <table className="w-full border-collapse">
         <tbody>
           {standing.stores.map((s) => (
-            <tr key={s.path} className="border-b border-border/60 last:border-b-0">
+            <tr key={s.path} className="border-b border-border last:border-b-0">
               <td className="px-3 py-1.5">
                 <StatusLamp lamp={s.isError ? 'fail' : 'gray'} variant="dot" />
               </td>

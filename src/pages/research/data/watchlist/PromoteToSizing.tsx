@@ -85,7 +85,7 @@ export function PromoteToSizing({
                   <li key={item.contract_key}>
                     <button
                       type="button"
-                      className="w-full text-left px-3 py-1.5 hover:bg-muted font-mono text-xs"
+                      className="w-full text-left px-3 py-1.5 hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] font-mono text-xs"
                       onClick={() => {
                         setContractKey(item.contract_key)
                         setOpen(false)

@@ -34,10 +34,10 @@ export interface EventThemeRow {
 }
 
 const cap =
-  'whitespace-nowrap text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground'
+  'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-left align-bottom text-dense-caption font-semibold text-secondary-foreground'
-const td = 'border-b border-border/40 px-2 py-1.5 align-top text-dense-meta'
+const td = 'border-b border-border px-2 py-1.5 align-top text-dense-meta'
 const mono = 'font-mono tabular-nums'
 
 /** The tagger's own scale: 3 = high, 2 = med, 1 = low. */
@@ -170,7 +170,7 @@ export function EventsMarketFace({
       <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
         {/* ── Themes ── */}
         <section className="overflow-hidden border mat-card">
-          <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
+          <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
             <span className={cap}>Themes</span>
             <span className="text-dense-body font-semibold">
               {themes.length} theme{themes.length === 1 ? '' : 's'} in the window
@@ -202,7 +202,10 @@ export function EventsMarketFace({
                     <tr
                       key={t.theme}
                       onClick={() => setTheme(on ? null : t.theme)}
-                      className={cn('cursor-pointer hover:bg-secondary/40', on && 'bg-[rgb(var(--sk-accent-rgb,163_230_53)/0.07)]')}
+                      className={cn(
+                        'cursor-pointer hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                        on && 'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
+                      )}
                       title={on ? 'Clear the theme filter' : `Filter the events to ${t.theme}`}
                     >
                       <td className={cn(td, on ? 'font-semibold text-foreground' : 'text-secondary-foreground')}>{t.theme}</td>
@@ -231,14 +234,14 @@ export function EventsMarketFace({
               </tbody>
             </table>
           )}
-          <p className="m-0 border-t border-border/60 px-3 py-1.5 text-dense-caption text-muted-foreground">
+          <p className="m-0 border-t border-border px-3 py-1.5 text-dense-caption text-muted-foreground">
             from events/themes · counts are the whole window, not the filters above
           </p>
         </section>
 
         {/* ── Forward ── */}
         <section className="overflow-hidden border mat-card">
-          <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
+          <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
             <span className={cap}>Forward</span>
             <span className="text-dense-body font-semibold">
               {forward.length} dated event{forward.length === 1 ? '' : 's'} ahead
@@ -282,7 +285,7 @@ export function EventsMarketFace({
               </tbody>
             </table>
           )}
-          <p className="m-0 border-t border-border/60 px-3 py-1.5 text-dense-caption text-muted-foreground">
+          <p className="m-0 border-t border-border px-3 py-1.5 text-dense-caption text-muted-foreground">
             lime symbol = held in the book · the book&rsquo;s own dates are on the{' '}
             <Link to="/research/events" className="text-primary hover:underline">
               Book face →
@@ -293,7 +296,7 @@ export function EventsMarketFace({
 
       {/* ── Events ── */}
       <section className="overflow-hidden border mat-card">
-        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
+        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
           <span className={cap}>Events</span>
           <span className="text-dense-body font-semibold">what the ingest read</span>
           <span className="text-dense-meta text-muted-foreground">
@@ -385,7 +388,7 @@ export function EventsMarketFace({
             </table>
           </div>
         )}
-        <p className="m-0 border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground text-pretty">
+        <p className="m-0 border-t border-border px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground text-pretty">
           ingest: .txt / .md / .json dropped into 事件雷达工作流/input/ · the cron upserts
           research.event_radar · a symbol opens its own name · ⊞ → Candidate Pool (source
           event_radar)

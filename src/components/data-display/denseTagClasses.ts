@@ -23,6 +23,10 @@ export type DenseTagVariant =
   | 'source-journal'
   | 'source-manual'
   | 'source-muted'
+  | 'state-blue'
+  | 'state-green'
+  | 'copilot'
+  | 'ink'
 
 export type DenseTagSize = 'cell' | 'pill'
 
@@ -84,6 +88,28 @@ const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
   'source-muted': {
     cell: 'text-muted-foreground font-mono text-xs font-semibold',
     pill: 'text-muted-foreground font-mono text-xs font-semibold',
+  },
+  /**
+   * The design's state pastels (Rev .88–.89): a type, a stage or a status is
+   * blue or green, deepened toward the ink on paper — never the contract sky
+   * or the ticker lime, which name instruments. The Copilot writes in its own
+   * module hue, and a hand-written artifact is plain ink.
+   */
+  'state-blue': {
+    cell: 'text-[var(--sk-state-blue)]',
+    pill: 'text-[var(--sk-state-blue)] font-semibold',
+  },
+  'state-green': {
+    cell: 'text-[var(--sk-state-green)]',
+    pill: 'text-[var(--sk-state-green)] font-semibold',
+  },
+  copilot: {
+    cell: 'text-[var(--sk-copilot-ink)]',
+    pill: 'text-[var(--sk-copilot-ink)] font-semibold',
+  },
+  ink: {
+    cell: 'text-foreground',
+    pill: 'text-foreground font-semibold',
   },
 }
 

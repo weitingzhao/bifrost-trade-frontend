@@ -7,7 +7,7 @@ export const watchlistStepperShellClass = cn(
 
 export const watchlistStepperStepClass = cn(
   'flex min-w-0 flex-1 items-center gap-1.5 border-none bg-transparent p-[0.6rem_0.5rem] text-left @xl/page:gap-[0.65rem] @xl/page:p-[0.65rem_1rem]',
-  'cursor-pointer text-muted-foreground transition-[background,color] duration-150 hover:bg-muted',
+  'cursor-pointer text-muted-foreground transition-[background,color] duration-150 hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
 )
 
 export const watchlistStepperStepActiveClass =

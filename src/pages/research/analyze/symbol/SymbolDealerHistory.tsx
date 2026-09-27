@@ -15,6 +15,10 @@
  *   expiry. Until research 0.128.0 the job found no spot during the session
  *   and wrote only SPX from 09-03; it now runs on the names the plugin's
  *   intraday chain observes, standing on the prior close.
+ *
+ * The two dated panels mark earnings as the IV charts do: a results 8-K's
+ * session is marked E (a late estimate E?), and the max-pain chart points
+ * to the next estimated print past its last session.
  */
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchGexIntraday, fetchGexLevels } from '@/api/researchEngine'
@@ -22,8 +26,10 @@ import { GexTimelineChart } from '@/components/charts/GexTimelineChart'
 import { fmtEtClock } from '@/lib/format'
 import { fetchStockDailyCloses, type DailyBar } from '@/api/marketData/dailyBars'
 import { fetchMaxPainComputeHistory } from '@/api/research/optionDiscovery'
+import { useEarningsDates } from '@/hooks/useNarrative'
 import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
+import { rankPathEarnings, type RankPathMark } from './rankPathEarnings'
 
 const cap = 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const th =
@@ -53,6 +59,8 @@ export interface TimelineRow {
   longGamma: boolean | null
   /** Close-to-close change into the next session; null on the newest. */
   nextMove: number | null
+  /** A results 8-K's session (or where a late print was expected). */
+  earnings?: RankPathMark | null
 }
 
 const numOf = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
@@ -63,6 +71,7 @@ const numOf = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v :
  */
 export function useDealerTimeline(sym: string, expiry: string | null) {
   const closesQ = useSymbolCloses(sym)
+  const earnQ = useEarningsDates(sym)
   const closes: DailyBar[] = closesQ.data ?? []
   const tail = closes.slice(-TIMELINE_SESSIONS)
   const levelQs = useQueries({
@@ -73,6 +82,11 @@ export function useDealerTimeline(sym: string, expiry: string | null) {
       staleTime: 30 * 60_000,
     })),
   })
+  const marks = rankPathEarnings(
+    tail.map((b) => b.date),
+    earnQ.data?.dates ?? [],
+    earnQ.data?.expected_next ?? null
+  ).marks
   const rows: TimelineRow[] = tail.map((b, i) => {
     const raw = (levelQs[i]?.data?.rows ?? [])[0] as Record<string, unknown> | undefined
     const spot = numOf(raw?.spot)
@@ -88,6 +102,7 @@ export function useDealerTimeline(sym: string, expiry: string | null) {
       putWall: numOf(raw?.major_put_wall),
       longGamma: spot != null && zeroGamma != null ? spot > zeroGamma : null,
       nextMove: next != null && cur != null && cur > 0 ? (next / cur - 1) * 100 : null,
+      earnings: marks[i],
     }
   })
   // Sessions on the newest row's side of zero γ, counted back without a break.
@@ -144,7 +159,14 @@ export function DealerRegimeTimeline({
         <tbody>
           {shown.map((r) => (
             <tr key={r.date}>
-              <td className={cn(td, 'text-left text-muted-foreground')}>{r.date.slice(5)}</td>
+              <td className={cn(td, 'text-left text-muted-foreground')}>
+                {r.date.slice(5)}
+                {r.earnings ? (
+                  <span className={cn('ml-1.5 text-warning', r.earnings.kind === 'late' && 'opacity-60')} title={r.earnings.title} data-timeline-earnings={r.earnings.kind}>
+                    {r.earnings.kind === 'late' ? 'E?' : 'E'}
+                  </span>
+                ) : null}
+              </td>
               <td className={td}>{r.spot?.toFixed(2)}</td>
               <td className={cn(td, 'text-warning')}>{r.zeroGamma != null ? r.zeroGamma.toFixed(1) : '—'}</td>
               <td className={cn(td, 'text-muted-foreground')}>{r.callWall ?? '—'}</td>
@@ -170,6 +192,7 @@ export function DealerRegimeTimeline({
 
 export function DealerMaxPainTrend({ sym, expiry }: { sym: string; expiry: string | null }) {
   const closesQ = useSymbolCloses(sym)
+  const earnQ = useEarningsDates(sym)
   const mpQ = useQuery({
     queryKey: ['market', 'max-pain-history', sym, expiry],
     queryFn: () => fetchMaxPainComputeHistory({ symbol: sym, expiry: expiry as string, lookbackDays: 60 }),
@@ -215,6 +238,11 @@ export function DealerMaxPainTrend({ sym, expiry }: { sym: string; expiry: strin
   const gap = ((last.close - last.mp) / last.mp) * 100
   const held = pts.slice(-10).filter((p) => Math.abs(p.close - p.mp) / p.mp < 0.01).length
   const n = pts.length
+  const earn = rankPathEarnings(
+    pts.map((p) => p.date),
+    earnQ.data?.dates ?? [],
+    earnQ.data?.expected_next ?? null
+  )
 
   return (
     <div>
@@ -238,6 +266,26 @@ export function DealerMaxPainTrend({ sym, expiry }: { sym: string; expiry: strin
           <path d={band} fill="color-mix(in srgb, var(--sk-ink) 6%, transparent)" />
           <path d={line(pts.map((p) => p.mp))} fill="none" stroke="var(--sk-mute2)" strokeWidth="1.4" strokeDasharray="4 3" />
           <path d={line(pts.map((p) => p.close))} fill="none" stroke="var(--sk-ticker)" strokeWidth="1.6" />
+          {earn.marks.map((m, i) =>
+            m ? (
+              <g key={pts[i].date} data-trend-earnings={m.kind}>
+                <title>{m.title}</title>
+                <line
+                  x1={x(i)}
+                  x2={x(i)}
+                  y1={4}
+                  y2={H - 10}
+                  className="stroke-warning"
+                  strokeWidth="1.2"
+                  strokeDasharray="3 3"
+                  opacity={m.kind === 'late' ? 0.5 : 1}
+                />
+                <text x={x(i) + 3} y={12} className="fill-warning text-dense-micro font-mono">
+                  {m.kind === 'late' ? 'E?' : 'E'}
+                </text>
+              </g>
+            ) : null,
+          )}
         </svg>
         <span className="pointer-events-none absolute right-1 top-0.5 font-mono text-dense-micro text-muted-foreground">
           {hi.toFixed(0)}
@@ -264,6 +312,17 @@ export function DealerMaxPainTrend({ sym, expiry }: { sym: string; expiry: strin
           <i className="h-2 w-3.5 bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]" />
           ±1% of max pain
         </span>
+        {earn.printed.length > 0 || earn.marks.some((m) => m?.kind === 'late') ? (
+          <span className="inline-flex items-center gap-1.5">
+            <i className="h-3 w-0 border-l-2 border-dashed border-warning" />
+            earnings
+          </span>
+        ) : null}
+        {earn.pending ? (
+          <span className="ml-auto font-mono text-warning" title={earn.pending.title} data-trend-pending={earn.pending.late ? 'late' : 'next'}>
+            {earn.pending.label}
+          </span>
+        ) : null}
       </div>
     </div>
   )

@@ -25,6 +25,8 @@ import { vrpLinkLine } from '@/lib/analyzeDepth'
 import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { cn } from '@/lib/utils'
+import { cyclePrints, opexEarnings, useDealerEarnings } from './dealerEarnings'
+import { CycleEarningsMark, OpexEarningsNote, OpexEarningsTag } from './SymbolDealerEarnings'
 
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
@@ -177,6 +179,8 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const pinRate = pinsQ.data?.pin_rate ?? null
   const cycleOn = new Map((cyclesQ.data ?? []).map((c) => [c.opex_date ?? '', c]))
   const timeline = useDealerTimeline(sym, expiry)
+  const earn = useDealerEarnings(sym)
+  const printsIn = cyclePrints(pins.map((r) => r.opex_date), earn.filings)
   // The opex strike map is the 60 strikes nearest spot (research 0.129.0; it
   // had been the lowest 60, PLTR 5…145 against spot 190). It can still miss
   // the money when the name's chain never reaches the price — CUE 09-25 lists
@@ -258,6 +262,9 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const close = num(p.close)
   const dte = num(p.dte)
   const totalOi = num(p.total_oi)
+  // Where the estimated print falls against the pin's expiry, and the levels'.
+  const opexEarn = opexEarnings({ next: earn.next, expiry: pinExpiry, gap: earn.gap, pinDist })
+  const levelsEarn = opexEarnings({ next: earn.next, expiry, gap: earn.gap, about: 'levels' })
   const oiMax = Math.max(1, ...rows.map((r) => r.call_oi + r.put_oi))
   /* What option sellers pay out if the cycle closes at each strike — the
      max-pain payout function on the same book, ×100 shares a contract. The
@@ -294,11 +301,13 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           <span className="text-dense-caption text-muted-foreground">
             OI-GEX · {expiry ?? '—'}
           </span>
+          <OpexEarningsTag reading={levelsEarn} />
           <span className="ml-auto text-dense-caption text-muted-foreground">
             source · gex_regime exhibit
           </span>
         </header>
         <LensVerdictBlock lensId="gex_regime" exhibit={gexEx} />
+        <OpexEarningsNote reading={levelsEarn} />
         {vrpLink ? (
           <p className="m-0 border-b border-border/60 px-3 py-1.5 text-dense-meta leading-normal text-secondary-foreground text-pretty">
             {vrpLink}
@@ -543,9 +552,11 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
               {opexCalendarPhrase(opexQ.data.dte_to_opex_today, opexQ.data.is_opex_week_today)}
             </DenseTag>
           ) : null}
+          <OpexEarningsTag reading={opexEarn} />
           <span className="ml-auto text-dense-caption text-muted-foreground">source · opex_pin exhibit</span>
         </header>
         <LensVerdictBlock lensId="opex_pin" exhibit={pinEx} />
+        <OpexEarningsNote reading={opexEarn} />
         <div className="grid grid-cols-1 items-start border-b border-border/60 md:grid-cols-[250px_minmax(0,1fr)]">
         <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5 px-3 py-2.5 md:border-r md:border-border/60">
           <FaceKv label="pin strike" value={maxPain != null ? String(maxPain) : '—'} title="The strike the current cycle would pin to — today's max pain." />
@@ -619,7 +630,10 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
                   const cyc = cycleOn.get(r.opex_date ?? '')
                   return (
                     <tr key={r.opex_date ?? r.expiry ?? ''}>
-                      <td className={cn(td, 'text-left text-muted-foreground')}>{r.opex_date?.slice(5) ?? '—'}</td>
+                      <td className={cn(td, 'text-left text-muted-foreground')}>
+                        {r.opex_date?.slice(5) ?? '—'}
+                        <CycleEarningsMark prints={printsIn.get(r.opex_date?.slice(0, 10) ?? '')} />
+                      </td>
                       <td className={td}>{r.max_pain_strike ?? '—'}</td>
                       <td className={td}>{r.settle_close != null ? r.settle_close.toFixed(2) : '—'}</td>
                       <td className={cn(td, tierCls)}>

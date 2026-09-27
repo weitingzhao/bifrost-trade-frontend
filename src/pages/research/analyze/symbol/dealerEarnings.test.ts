@@ -73,6 +73,18 @@ describe('opexEarnings', () => {
     expect(r?.note).toMatch(/^Earnings late — expected ~22 Sep, no results 8-K yet\. Until it prints, any session before the 10-16 expiry may carry it;/)
   })
 
+  it('speaks of the walls and zero γ for the gamma levels panel, without the pin distance', () => {
+    const r = opexEarnings({ next: est('2026-10-21', 25), expiry: '2026-10-23', gap, pinDist: 0.013, about: 'levels' })
+    expect(r?.tag).toMatchObject({ label: 'E ~21 Oct · before expiry', tone: 'warning' })
+    expect(r?.note).toBe(
+      "Earnings ~21 Oct (25d, est.) land before the 10-23 expiry — the ATM term prices ±4.2% for it. The walls and zero γ are read off today's open interest at that expiry; the print moves spot through them and the open interest is rebuilt after it."
+    )
+    const after = opexEarnings({ next: est('2026-11-02', 37), expiry: '2026-10-23', about: 'levels' })
+    expect(after?.tag.title).toContain('these levels expire before the print')
+    const late = opexEarnings({ next: est('2026-09-22', -4), expiry: '2026-10-23', about: 'levels' })
+    expect(late?.note).toContain('moves spot through the walls and the open interest they are read from')
+  })
+
   it('says nothing without an estimate', () => {
     expect(opexEarnings({ next: null, expiry: '2026-10-23' })).toBeNull()
   })

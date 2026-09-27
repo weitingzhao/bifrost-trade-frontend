@@ -1,7 +1,8 @@
 /**
  * The Dealer face's earnings pieces (`dealerEarnings.ts` holds the reading):
- * the OpEx header's tag, the panel's warning when the print can land inside
- * the cycle, and the past cycles' marks.
+ * the header tag and the warning when the print can land before the panel's
+ * expiry — on the OpEx cycle (the pin) and on Gamma levels (the walls and
+ * zero γ) — and the past cycles' marks.
  */
 import { DenseTag } from '@/components/data-display'
 import { shortDate } from '@/utils/earningsEstimate'
@@ -22,7 +23,7 @@ export function OpexEarningsNote({ reading }: { reading: OpexEarnings | null }) 
     <p
       className="m-0 border-y border-warning/30 bg-warning/10 px-3 py-1.5 text-dense-meta leading-normal text-warning text-pretty"
       role="note"
-      aria-label="Earnings inside the cycle"
+      aria-label="Earnings before this expiry"
       title={reading.tag.title}
     >
       {reading.note}

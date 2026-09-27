@@ -289,19 +289,20 @@ export default function PersonasYouPage() {
                     {week?.range ?? ''}
                   </span>
                 </header>
-                {/* The design's fourth cell (forgotten by you) waits for the
-                    store to expose tombstone counts — absent, not zero. */}
-                <div className="grid grid-cols-3 gap-px bg-border">
+                <div className="grid grid-cols-4 gap-px bg-border">
                   {(
                     [
                       ['new', counts.new, 'new'],
                       ['stronger', counts.stronger, 'stronger'],
                       ['fading', counts.fading, 'fading'],
+                      // K7: the store now counts this week's tombstones.
+                      ['forgot', week?.forgot ?? 0, 'forgotten by you'],
                     ] as const
                   ).map(([key, n, label]) => (
                     <button
                       key={key}
                       type="button"
+                      disabled={key === 'forgot'}
                       onClick={() => setFilter('change')}
                       className="flex flex-col gap-0.5 bg-card px-3 py-2 text-left hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,var(--card))]"
                     >

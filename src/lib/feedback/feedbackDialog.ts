@@ -11,20 +11,64 @@
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 import type { FeedbackKind } from '@/api/research/feedback'
 
-const store = createExternalStore<{ open: boolean; kind: FeedbackKind }>({
+/** What the wrong-number pick captured (design Rev .96's cell card). */
+export interface PickedCell {
+  value: string
+  column: string
+  row: string
+  panel: string
+}
+
+interface FeedbackDialogState {
+  open: boolean
+  kind: FeedbackKind
+  /** Seeded once on the next open (a ViewState failure reporting itself). */
+  prefill: { title?: string; body?: string } | null
+  /** The cell-picking mode: dialog closed, page under a crosshair. */
+  picking: boolean
+  cell: PickedCell | null
+}
+
+const store = createExternalStore<FeedbackDialogState>({
   open: false,
   kind: 'bug',
+  prefill: null,
+  picking: false,
+  cell: null,
 })
 
-export function openFeedbackDialog(kind: FeedbackKind = 'bug'): void {
-  store.setState({ open: true, kind })
+export function openFeedbackDialog(
+  kind: FeedbackKind = 'bug',
+  prefill?: { title?: string; body?: string },
+): void {
+  store.setState((prev) => ({ ...prev, open: true, picking: false, kind, prefill: prefill ?? null }))
 }
 
 export function closeFeedbackDialog(): void {
   store.setState((prev) => ({ ...prev, open: false }))
 }
 
-export function useFeedbackDialog(): { open: boolean; kind: FeedbackKind } {
+/** Rev .96: point at the number — the dialog steps aside, the page takes a crosshair. */
+export function startCellPick(): void {
+  store.setState((prev) => ({ ...prev, open: false, picking: true }))
+}
+
+export function finishCellPick(cell: PickedCell | null): void {
+  // Null = cancelled (esc, or a click that hit nothing readable).
+  store.setState((prev) => ({
+    ...prev,
+    picking: false,
+    open: true,
+    kind: 'data',
+    cell: cell ?? prev.cell,
+  }))
+}
+
+export function clearPickedCell(): void {
+  store.setState((prev) => ({ ...prev, cell: null }))
+}
+
+export function useFeedbackDialog(): FeedbackDialogState {
   return store.useStore()
 }
 

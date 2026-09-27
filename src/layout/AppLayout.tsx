@@ -37,6 +37,9 @@ import { EquipPanel } from './EquipPanel'
 import { FeedbackDialog } from './FeedbackDialog'
 import { NoteComposer } from './NoteComposer'
 import { VisitBeaconHost } from '@/hooks/useVisitBeacon'
+import { CellPickOverlay } from './CellPickOverlay'
+import { setViewStateReportHandler } from '@bifrost/ui'
+import { openFeedbackDialog } from '@/lib/feedback/feedbackDialog'
 import { SymbolDockHost } from './symbolDock/SymbolDockHost'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
@@ -71,6 +74,14 @@ export function AppLayout() {
   // After the held-symbol sync: the page context reads the URL the sync just settled.
   useAmbientPageContext()
   useRecentPagesTrail()
+  // K7: every failed ViewState grows a Report-this link — the handler is the
+  // shell's, registered once, so pages never have to remember to offer it.
+  useEffect(() => {
+    setViewStateReportHandler(({ title, detail }) =>
+      openFeedbackDialog('bug', { title, body: detail ?? '' }),
+    )
+    return () => setViewStateReportHandler(null)
+  }, [])
   // System pages that live under /research (Signal Health, Calibration, the
   // agents…) are the machine room, not a market page: the design draws no
   // market strip anywhere in System.
@@ -174,6 +185,7 @@ export function AppLayout() {
         {/* K6: the visits beacon — a journal.visit row per page dwell. */}
         <VisitBeaconHost />
         <FeedbackDialog />
+        <CellPickOverlay />
         {/* The equipment's edge. After the panel and the dock, so it floats
             over both — the rail is shell furniture, not page furniture, and
             it keeps the screen edge for Fitts. */}

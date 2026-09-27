@@ -20,4 +20,6 @@
  * ViewState's strip, the sidebar's leftovers); 0.5.4 drops the subhead and
  * detail rows' `bg-secondary` bands.
  */
-export const UI_VERSION_NOW = '0.5.4'
+// 0.6.0 (K7): every failed ViewState grows a Report-this link when the shell
+// registers a handler (setViewStateReportHandler) — the feedback loop's entry.
+export const UI_VERSION_NOW = '0.6.0'

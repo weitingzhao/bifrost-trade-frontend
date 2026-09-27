@@ -137,7 +137,7 @@ export interface MemoryPayload {
   axes: MemoryAxis[]
   sources: { source: string; enabled: boolean }[]
   hints: Record<string, number>
-  week: { range: string; moved: number }
+  week: { range: string; moved: number; forgot: number }
 }
 
 export function fetchMemory(): Promise<MemoryPayload> {

@@ -22,7 +22,8 @@
 import { useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react'
 import { Command as CommandPrimitive } from 'cmdk'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Command as CommandIcon, Check, Clock, Hash, History, PanelLeft, Pin, Plus, Star, X } from 'lucide-react'
+import { Command as CommandIcon, Check, Clock, Flag, Hash, History, PanelLeft, Pin, Plus, Star, X } from 'lucide-react'
+import { openFeedbackDialog } from '@/lib/feedback/feedbackDialog'
 import {
   Command,
   CommandEmpty,
@@ -439,6 +440,14 @@ export function Omnibar() {
             </CommandItem>
             <CommandItem value={reg('cmd-sidebar', cmdPrev('Toggle sidebar', 'Show or hide the sidebar · ⌘B'))} onSelect={() => run(toggleSidebar)}>
               <PanelLeft /> Toggle sidebar
+            </CommandItem>
+            {/* K7 (design Rev .96): the two feedback verbs the prototype's ⌘K
+                carries — the loop's entry from anywhere, not only the top bar. */}
+            <CommandItem value={reg('cmd-feedback', cmdPrev('Send feedback', 'Broken · idea · how do I — files from this page'))} onSelect={() => run(() => openFeedbackDialog('bug'))}>
+              <Flag /> Send feedback
+            </CommandItem>
+            <CommandItem value={reg('cmd-feedback-data', cmdPrev('Report wrong data', 'Then point at the number — column, row and panel ride along'))} onSelect={() => run(() => openFeedbackDialog('data'))}>
+              <Flag /> Report wrong data
             </CommandItem>
             {symbol && (
               <CommandItem

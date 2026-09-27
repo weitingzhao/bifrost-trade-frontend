@@ -11,7 +11,7 @@
  * states, and the screenshot toggle (a renderer is a new dependency — the
  * Owner's call).
  */
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -25,8 +25,10 @@ import { useThemeMode } from '@/lib/theme'
 import { useCarriedSymbol } from '@/lib/symbolContext'
 import { ALL_OBJECTIVES, readObjective } from '@/lib/objectiveScope'
 import {
+  clearPickedCell,
   closeFeedbackDialog,
   collectFeedbackContext,
+  startCellPick,
   useFeedbackDialog,
 } from '@/lib/feedback/feedbackDialog'
 import { routeFor } from '@/layout/routeRegistry'
@@ -56,7 +58,7 @@ async function fileToImg(file: File): Promise<Img | null> {
 }
 
 export function FeedbackDialog() {
-  const { open, kind: openedKind } = useFeedbackDialog()
+  const { open, kind: openedKind, prefill, cell } = useFeedbackDialog()
   const { pathname } = useLocation()
   const { mode } = useThemeMode()
   const carried = useCarriedSymbol()
@@ -70,18 +72,20 @@ export function FeedbackDialog() {
   const [sent, setSent] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
-  const wasOpen = useRef(false)
-  useEffect(() => {
-    // Opening transition: adopt the requested kind and clear the last send's
-    // receipt. The draft text survives a close on purpose. (Effect, not
-    // render — the lint rule is right that refs are for after render.)
-    if (open && !wasOpen.current) {
+  // Opening transition, the docs' derive-during-render shape: adopt the
+  // requested kind, clear the last receipt, take a seed when one rode along
+  // (ViewState's Report-this). The draft text survives a close on purpose.
+  const [lastOpen, setLastOpen] = useState(false)
+  if (open !== lastOpen) {
+    setLastOpen(open)
+    if (open) {
       setKind(openedKind)
       setSent(null)
       setError(null)
+      if (prefill?.title != null) setTitle(prefill.title)
+      if (prefill?.body != null) setBody(prefill.body)
     }
-    wasOpen.current = open
-  }, [open, openedKind])
+  }
 
   const route = routeFor(pathname)
   const obj = readObjective()
@@ -93,17 +97,22 @@ export function FeedbackDialog() {
     symbol: (carried ?? '').trim().toUpperCase() || null,
     objective: obj !== ALL_OBJECTIVES ? obj : null,
   })
+  const contextWithCell = cell ? { ...context, picked: cell } : context
 
+  const autoTitle =
+    kind === 'data' && cell
+      ? ['Wrong value: ' + cell.value, cell.column, cell.row].filter(Boolean).join(' · ').slice(0, 120)
+      : ''
   const send = useMutation({
     mutationFn: () =>
       submitFeedback({
         kind,
-        title: title.trim(),
+        title: title.trim() || autoTitle,
         body_md: body.trim(),
         page_route: pathname,
         page_label: route.label,
         blocks_trading: blocks === 'yes',
-        context,
+        context: contextWithCell,
         images: images.map(({ mime, data_b64 }) => ({ mime, data_b64 })),
       }),
     onSuccess: (r) => {
@@ -112,6 +121,7 @@ export function FeedbackDialog() {
       setBody('')
       setImages([])
       setBlocks('no')
+      clearPickedCell()
       void qc.invalidateQueries({ queryKey: ['research', 'feedback'] })
     },
     onError: (e: Error) => setError(e.message),
@@ -170,10 +180,52 @@ export function FeedbackDialog() {
         />
       </div>
       {kind === 'data' ? (
-        <p className="mb-1.5 text-dense-micro text-muted-foreground">
-          Name the number and where it sits — the design's cell-picking mode is owed and will
-          replace this line.
-        </p>
+        cell ? (
+          <div className="mb-1.5 flex flex-col gap-1 rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)] px-2.5 py-2">
+            <span className="flex items-baseline gap-2">
+              <span className="min-w-0 font-mono text-base font-semibold tabular-nums [overflow-wrap:anywhere]">
+                {cell.value}
+              </span>
+              <button
+                type="button"
+                onClick={clearPickedCell}
+                aria-label="Remove the picked cell"
+                className="ml-auto text-dense-meta text-muted-foreground hover:text-foreground"
+              >
+                ×
+              </button>
+            </span>
+            <dl className="grid grid-cols-[52px_minmax(0,1fr)] gap-x-2.5 gap-y-0.5 text-dense-micro">
+              {(
+                [
+                  ['Column', cell.column],
+                  ['Row', cell.row],
+                  ['Panel', cell.panel],
+                ] as const
+              )
+                .filter(([, v]) => v)
+                .map(([k, v]) => (
+                  <span key={k} className="contents">
+                    <dt className="text-muted-foreground">{k}</dt>
+                    <dd className="m-0 font-mono text-[var(--sk-soft)] [overflow-wrap:anywhere]">{v}</dd>
+                  </span>
+                ))}
+            </dl>
+          </div>
+        ) : (
+          <div className="mb-1.5 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={startCellPick}
+              className="mat-btn px-2 py-1 text-dense-meta text-foreground"
+            >
+              Point at the number
+            </button>
+            <span className="min-w-0 text-dense-micro text-muted-foreground">
+              its column, row and panel come with it — or describe it below
+            </span>
+          </div>
+        )
       ) : null}
 
       <input
@@ -249,7 +301,7 @@ export function FeedbackDialog() {
       </button>
       {ctxOpen ? (
         <pre className="mt-1 max-h-28 overflow-auto rounded bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-2 font-mono text-dense-micro text-muted-foreground">
-          {JSON.stringify(context, null, 1)}
+          {JSON.stringify(contextWithCell, null, 1)}
         </pre>
       ) : null}
 
@@ -259,7 +311,7 @@ export function FeedbackDialog() {
         <Button
           size="sm"
           className={cn('ml-auto h-6')}
-          disabled={!title.trim() || send.isPending}
+          disabled={(!title.trim() && !autoTitle) || send.isPending}
           onClick={() => send.mutate()}
         >
           {send.isPending ? 'Sending…' : 'Send'}

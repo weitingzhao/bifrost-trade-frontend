@@ -414,6 +414,37 @@ export const CopilotStandingSchema = z
   })
   .passthrough()
 
+/** `GET /research/copilot/writes` (research 0.133.0) — the chat's write-tool rows. */
+export const CopilotWriteRowSchema = z
+  .object({
+    id: z.string(),
+    tool: z.string(),
+    kind: z.string(),
+    change: z.string(),
+    symbol: z.string().nullable(),
+    session_id: z.string().nullable(),
+    thread_title: z.string().nullable(),
+    thread_archived: z.boolean().nullable(),
+    status: z.string(),
+    ok: z.boolean().nullable(),
+    error: z.string().nullable(),
+    created_at: z.string().nullable(),
+    executed_at: z.string().nullable(),
+  })
+  .passthrough()
+
+export const CopilotWritesSchema = z
+  .object({
+    days: z.number(),
+    since_day_utc: z.string(),
+    rows: z.array(CopilotWriteRowSchema),
+    total: z.number(),
+    truncated: z.boolean(),
+    last_write_at: z.string().nullable(),
+    db_ok: z.boolean(),
+  })
+  .passthrough()
+
 // ── Loop policy templates (P0-2) ────────────────────────────────────────
 // The Loop's strategy is data now, not a constant compiled into two codebases.
 // `.passthrough()` throughout: policy_json is the runtime's LoopPolicy dump and

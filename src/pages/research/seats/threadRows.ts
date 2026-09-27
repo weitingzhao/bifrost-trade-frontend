@@ -9,8 +9,8 @@
  *
  * - Origin and Symbol: first-turn `client_context` → `origin_page` /
  *   `origin_label` / `origin_symbol` on the session (D1). Old threads stay `—`.
- * - Writes: `ai_action_log` carries `session_id`, but no read endpoint lists it
- *   until D2.
+ * - Writes: per-thread counts come with the session summary; the rows
+ *   themselves are `/research/copilot/writes` (the Desk's Writes panel).
  * - Cost: ``chat_turn`` rows on ``ai_action_log`` → ``cost_usd`` (D3).
  * - Persona: assistant frames name the `agent` that spoke.
  *

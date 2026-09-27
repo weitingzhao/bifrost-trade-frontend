@@ -36,6 +36,7 @@ import { digestExhibits } from '@/lib/harness/dailyDigest'
 import { WaitingOnYou } from '@/pages/research/seats/WaitingOnYou'
 import { RanToday } from '@/pages/research/seats/RanToday'
 import { Threads } from '@/pages/research/seats/Threads'
+import { Writes } from '@/pages/research/seats/Writes'
 import { ProviderChip, SpendChip } from '@/pages/research/seats/DeskHeaderChips'
 import { spendAgainstCap } from '@/pages/research/seats/deskHeader'
 
@@ -43,7 +44,6 @@ export default function CopilotDeskPage() {
   const standingQ = useCopilotStanding()
   const s = standingQ.data
   const tab = useCopilotTab()
-  const a = s?.approvals ?? {}
   const spent = s ? spendAgainstCap(s.usage).spent : 0
 
   const head = useCopilotHeadTabs(tab)
@@ -109,12 +109,9 @@ export default function CopilotDeskPage() {
 
       {/* Design dissolved the three tiles into what each counts (Copilot Desk
           response ⑫): the digest's status lives on the digest panel, today's
-          conversations on the Threads heading. This one's home is the design's
-          Writes table — kind · change · thread · result — and that table needs
-          a row-level read of the chat's write ledger. The ledger keeps the
-          thread (research.ai_action_log.session_id, re-measured 2026-09-26);
-          what is missing is a route that lists its rows. The count stays
-          until that read exists. */}
+          conversations on the Threads heading, and the writes in the design's
+          Writes table — kind · change · thread · result — which reads the
+          chat's write ledger row by row since research 0.133.0. */}
       {tab === 'threads' ? (
         <section className="min-w-0 space-y-2">
           <SectionHead
@@ -141,33 +138,7 @@ export default function CopilotDeskPage() {
           </div>
         </SectionPanel>
 
-        <SectionPanel
-          cap="Writes"
-          title="what the chat asked to change"
-          note="every write goes through a card · nothing silent"
-        >
-          <div className="space-y-1.5 px-3 py-2.5">
-            <p className="m-0 flex flex-wrap items-baseline gap-2">
-              <span className="font-mono text-lg font-semibold tabular-nums">{a.proposed ?? 0}</span>
-              <span className="text-dense-label text-muted-foreground">
-                proposed · {a.executed ?? 0} ran · {a.rejected ?? 0} refused
-              </span>
-            </p>
-            {/* The design's table is kind · change · thread · result, one row
-                per write. Re-measured 2026-09-26: the ledger exists —
-                research.ai_action_log keeps every chat write with its
-                session_id, kind and status, and these three counts are read
-                from it — but no route lists the rows; `/standing` returns
-                the counts only. The read is filed as its own piece of work,
-                so the count stands in for the table rather than a table of
-                invented rows. */}
-            <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
-              Row by row — which thread asked, and what became of it — is in the write ledger (each
-              write keeps its thread), but no read lists those rows yet: the standing returns the
-              counts only. This panel counts what it can and names what it cannot.
-            </p>
-          </div>
-        </SectionPanel>
+        <Writes approvals={s?.approvals} />
       </div>
 
       <DigestPanel

@@ -37,7 +37,9 @@ import { usePreviewState } from '@/hooks/usePreviewState'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useVolSurfaceFit, useResiduals } from '@/hooks/useVolSurfaceData'
 import { healthFlag } from '@/lib/asofTag'
-import { daysBack, todayIso } from '@/lib/researchFreshness'
+import { daysBack } from '@/lib/researchFreshness'
+import { etTodayIso } from '@/lib/freshness'
+import { daysTo } from '@/utils/optionTicker'
 import { toneForBand } from '@/lib/lensVerdict'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
@@ -101,7 +103,7 @@ function toneClass(tone: string): string {
 export default function LabSymbolPage() {
   const { symbol } = useResearchContext()
   const sym = symbol.trim().toUpperCase()
-  const today = todayIso()
+  const today = etTodayIso()
   const preview = usePreviewState()
   // The Symbol page's Method switch carries the face you were reading
   // (design `_Part Face` `method-to`, Rev .56): `?tab=whatif` lands on What-if.
@@ -143,19 +145,22 @@ export default function LabSymbolPage() {
     let best: string | null = null
     let bestGap = Infinity
     for (const r of fits) {
-      const gap = Math.abs((r.dte ?? 0) - 30)
+      // Days from New York's today, the days the label prints — not the fit's own dte.
+      const gap = Math.abs((daysTo(r.expiry as string, today) ?? 0) - 30)
       if (gap < bestGap) {
         bestGap = gap
         best = r.expiry
       }
     }
     return best
-  }, [fits, userExpiry])
+  }, [fits, userExpiry, today])
   const fitRow = useMemo(() => fits.find((r) => r.expiry === expiry) ?? null, [fits, expiry])
   const storeParams = useMemo(() => (fitRow ? sviFromRow(fitRow) : null), [fitRow])
   const p = override ?? storeParams
-  const dte = fitRow?.dte ?? null
-  const T = dte != null && dte > 0 ? dte / 365 : null
+  // The smile is evaluated at the fit's own T (√(w(k)/T)); the label reads New York's DTE.
+  const fitDte = fitRow?.dte ?? null
+  const T = fitDte != null && fitDte > 0 ? fitDte / 365 : null
+  const dte = fitRow?.expiry ? daysTo(fitRow.expiry, today) : null
 
   const residQ = useResiduals(sym, expiry ?? '')
   const chainQ = useQuery({

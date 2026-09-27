@@ -18,7 +18,7 @@ import { useEarningsDates } from '@/hooks/useNarrative'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useAtmIvTerm, useIvCone, useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { ordinal } from '@/lib/analyzeDepth'
-import { todayIso } from '@/lib/researchFreshness'
+import { etTodayIso } from '@/lib/freshness'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { daysTo } from '@/utils/optionTicker'
@@ -193,10 +193,10 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   // ── Term structure: the repaired ATM IV store per expiry ──
   // Not the SVI fit's atm_vol: a deep-wing fit pulls the near expiries off
   // (AAPL 10-16 read 17.4 between 40.8 and 31.7 on 2026-09-25). Days count
-  // from today, as the earnings estimate's do; the window is the design's
+  // from New York's today, as every DTE does; the window is the design's
   // 9–100 days, widened to 5 so the first weekly past a few days shows.
   const term = useMemo(() => {
-    const asOf = todayIso()
+    const asOf = etTodayIso()
     return (termQ.data?.term ?? [])
       .map((p) => ({ expiry: p.expiry, label: p.expiry.slice(5), dte: daysTo(p.expiry, asOf) ?? 0, iv: p.atm_iv * 100 }))
       .filter((p) => p.dte >= TERM_MIN_DTE && p.dte <= TERM_MAX_DTE)
@@ -209,7 +209,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
 
   // Realised vol at roughly each expiry's horizon, from the name's own closes
   // — the design's grey companion line. Calendar days → trading days.
-  const today = todayIso()
+  const today = etTodayIso()
   const closesQ = useQuery({
     queryKey: ['market', 'stock-daily-closes-1y', sym],
     queryFn: () =>
@@ -253,9 +253,11 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
     const picked = skewExpiry ? fitRows.find((r) => r.expiry === skewExpiry) : null
     if (picked) return picked
     let best = null as (typeof fitRows)[number] | null
-    for (const r of fitRows) if (best == null || Math.abs((r.dte ?? 0) - 30) < Math.abs((best.dte ?? 0) - 30)) best = r
+    // Nearest 30 days from New York's today — the days the tenor switch prints.
+    const gap = (r: (typeof fitRows)[number]) => Math.abs((daysTo(r.expiry as string, today) ?? 0) - 30)
+    for (const r of fitRows) if (best == null || gap(r) < gap(best)) best = r
     return best
-  }, [fitRows, skewExpiry])
+  }, [fitRows, skewExpiry, today])
   const nextFitRow = useMemo(() => {
     if (!fitRow) return null
     return fitRows.find((r) => (r.dte ?? 0) > (fitRow.dte ?? 0)) ?? null
@@ -277,6 +279,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   const spot = spotVals.length > 0 ? spotVals[Math.floor(spotVals.length / 2)] : null
   const svi = fitRow ? sviFromRow(fitRow) : null
   const nextSvi = nextFitRow ? sviFromRow(nextFitRow) : null
+  // The smile keeps each fit's own T (its IVs are √(w(k)/T) at that T).
   const fitT = fitRow?.dte != null && fitRow.dte > 0 ? fitRow.dte / 365 : null
   const nextT = nextFitRow?.dte != null && nextFitRow.dte > 0 ? nextFitRow.dte / 365 : null
   const inWindow = (K: number) => spot != null && Math.abs(K / spot - 1) <= 0.2
@@ -597,7 +600,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
               size="xs"
               value={fitRow?.expiry ?? ''}
               onChange={(v) => setSkewExpiry(v)}
-              options={fitRows.slice(0, 6).map((r) => ({ value: r.expiry as string, label: `${r.dte}d` }))}
+              options={fitRows.slice(0, 6).map((r) => ({ value: r.expiry as string, label: `${daysTo(r.expiry as string, today) ?? '?'}d` }))}
             />
           ) : null}
           <span className="ml-auto text-dense-caption text-muted-foreground">

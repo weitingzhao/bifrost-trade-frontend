@@ -14,6 +14,12 @@ export interface VolSurfaceFitRow {
   symbol: string
   trade_date: string | null
   expiry: string | null
+  /**
+   * The fit's T in days, counted from `trade_date` (the session it was fitted
+   * on). Evaluate the fit with it — its IVs are √(w(k)/T) at this T — but never
+   * print it as the contract's DTE: every face counts that from New York's
+   * today, `daysTo(expiry, etTodayIso())` (Owner 2026-09-27).
+   */
   dte: number | null
   svi_a: number | null
   svi_b: number | null

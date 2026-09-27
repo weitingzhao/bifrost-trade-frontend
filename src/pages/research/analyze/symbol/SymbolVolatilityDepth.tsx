@@ -24,8 +24,10 @@ import { SegmentControl } from '@/components/data-display'
 import { VolSurfaceHeatmap } from '@/components/charts/VolSurface3DChart'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { fwd20Line, type LensHitBySymbol } from '@/lib/analyzeDepth'
+import { etTodayIso } from '@/lib/freshness'
 import { cn } from '@/lib/utils'
 import { suspectIvDates } from '@/utils/ivHistory'
+import { daysTo } from '@/utils/optionTicker'
 
 const cap = 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const mono = 'font-mono tabular-nums'
@@ -151,6 +153,8 @@ export function VrpDistributions({ rows }: { rows: readonly VrpRow[] }) {
 export function SkewFitNumbers({ row }: { row: VolSurfaceFitRow | null }) {
   if (!row) return null
   const slope = row.atm_slope
+  // Days from New York's today, not the fit's own dte (counted from its session).
+  const dte = row.expiry ? daysTo(row.expiry, etTodayIso()) : null
   return (
     <p className={line}>
       <span className="font-semibold text-secondary-foreground">SVI at {row.expiry?.slice(5) ?? '—'}</span>
@@ -162,7 +166,7 @@ export function SkewFitNumbers({ row }: { row: VolSurfaceFitRow | null }) {
       <b className={cn(mono, 'text-foreground')} title="fit_rmse is an IV fraction: 0.20 is 20 vol points.">
         {row.fit_rmse != null ? `${(row.fit_rmse * 100).toFixed(1)} pts` : '—'}
       </b>{' '}
-      · {row.n_points ?? '—'} points · {row.dte ?? '—'}d
+      · {row.n_points ?? '—'} points · {dte ?? '—'}d
     </p>
   )
 }

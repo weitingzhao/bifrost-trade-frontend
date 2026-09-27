@@ -44,10 +44,12 @@ import { useVrpExtremes } from '@/hooks/useVrpData'
 import { bandFromScore, hitCellText, ordinal } from '@/lib/analyzeDepth'
 import { fmtPctFromFraction } from '@/lib/format'
 import { withSymbolParam } from '@/lib/symbolLink'
+import { etTodayIso } from '@/lib/freshness'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import type { IvRadarRow, IvRadarUniverseFilter } from '@/types/ivRadar'
 import { IV_RADAR_BUCKET_HINTS, formatIvRadarSource, ivRankDistanceFrom50 } from '@/utils/ivRadar/universe'
+import { daysTo } from '@/utils/optionTicker'
 
 type LensTab = 'iv_rank' | 'vrp' | 'skew'
 type RankSort = 'rank' | 'extremes' | 'symbol'
@@ -347,6 +349,8 @@ function SkewSteepTable() {
   // shows so the good-fit filter still has twenty to show.
   const q = useSkewExtremes(100)
   const [goodOnly, setGoodOnly] = useState(false)
+  // DTE from New York's today, not the fit's own dte (counted from its session).
+  const today = etTodayIso()
   const all = q.data?.rows ?? []
   const rows = (goodOnly ? all.filter((r) => r.fit_rmse != null && r.fit_rmse * 100 <= GOOD_FIT_PTS) : all).slice(0, SKEW_ROWS)
   return (
@@ -406,7 +410,7 @@ function SkewSteepTable() {
                     }
                   />
                 </DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{r.dte ?? '—'}</DenseTableCell>
+                <DenseTableCell className={denseTableNumCell}>{(r.expiry ? daysTo(r.expiry, today) : null) ?? '—'}</DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>{r.atm_slope != null ? r.atm_slope.toFixed(4) : '—'}</DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>{fmtPctFromFraction(r.atm_vol)}</DenseTableCell>
                 <DenseTableCell className={cn(denseTableNumCell, r.fit_rmse != null && r.fit_rmse * 100 > GOOD_FIT_PTS ? 'text-warning' : undefined)}>

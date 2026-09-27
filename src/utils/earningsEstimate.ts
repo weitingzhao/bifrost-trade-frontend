@@ -48,6 +48,16 @@ export function firstExpiryAfter<T extends { dte: number }>(e: ExpectedEarnings 
   return [...term].sort((a, b) => a.dte - b.dte).find((t) => t.dte > e.days_away) ?? null
 }
 
+/**
+ * The first listed expiry after the estimated print, by date — the one that
+ * carries its premium, which the Chain cards add and the Payoff select names.
+ * Null for a late print (no date to be after) or when none is listed past it.
+ */
+export function firstListedAfter(e: ExpectedEarnings | null | undefined, listed: readonly string[]): string | null {
+  if (!e || e.days_away < 0) return null
+  return [...listed].sort().find((x) => x > e.date) ?? null
+}
+
 /** The estimate's own disclaimer: how it was made and how it has done on the name. */
 export function estimateCaveat(e: ExpectedEarnings): string {
   const t = e.track

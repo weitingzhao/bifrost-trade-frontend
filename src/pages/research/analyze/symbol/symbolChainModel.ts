@@ -6,7 +6,7 @@
  * the strike.
  */
 import type { ExpectedEarnings } from '@/api/research/narrative'
-import { expiryEarnings, shortDate, type ExpiryEarnings } from '@/utils/earningsEstimate'
+import { expiryEarnings, firstListedAfter, shortDate, type ExpiryEarnings } from '@/utils/earningsEstimate'
 import type { ChainContract } from '@/utils/optionChain'
 
 /**
@@ -240,7 +240,7 @@ export function cardExpiries(
   const fill = rest.filter((e) => !monthlies.includes(e)).slice(0, CARD_MONTHLIES - monthlies.length)
   const expiries = [...near, ...monthlies, ...fill]
   if (handed && all.includes(handed) && !expiries.includes(handed)) expiries.push(handed)
-  const event = print && print.days_away >= 0 ? (all.find((e) => e > print.date) ?? null) : null
+  const event = firstListedAfter(print, all)
   if (event && !expiries.includes(event)) expiries.push(event)
   expiries.sort()
   return { expiries, handedMissing: Boolean(handed && listed && !all.includes(handed)), event }

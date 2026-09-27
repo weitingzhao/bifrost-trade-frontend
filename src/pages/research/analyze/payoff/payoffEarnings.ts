@@ -2,11 +2,15 @@
  * The Payoff face's earnings-gap rows (design `isPayoff` · Scenarios): whether
  * the next print — Research's estimate — sits inside the chosen expiry, the
  * move the term structure prices for it, and the sentence under the table.
+ * Also where the print falls against the table's T+ column (its mark holds
+ * today's IV, so past the print it keeps a premium the crush takes away) and
+ * the Expiry select's labels.
  */
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import {
   eventMove,
   expiryEarnings,
+  firstListedAfter,
   lateLead,
   shortDate,
   type EventMove,
@@ -22,6 +26,8 @@ export interface PayoffEarnings {
   note: string
   /** The face's warning strip when the estimated print has passed with no results 8-K. */
   late: string | null
+  /** Whether the T+ column's day is on or past the print; null when the print is not inside the expiry. */
+  midAfter: boolean | null
 }
 
 const asPct = (x: number) => `${(x * 100).toFixed(1)}%`
@@ -41,7 +47,7 @@ export function payoffEarnings(
   filings: number | null | undefined,
   midD: number
 ): PayoffEarnings {
-  const none = (note: string, late: string | null = null): PayoffEarnings => ({ tag: null, ev: null, gap: null, note, late })
+  const none = (note: string, late: string | null = null): PayoffEarnings => ({ tag: null, ev: null, gap: null, note, late, midAfter: null })
   if (!e) {
     return none(
       filings === 0
@@ -61,6 +67,10 @@ export function payoffEarnings(
     // expiryEarnings tags every expiry the print falls before, so this one ends first.
     return none(`The next print (${when}) falls after this expiry, so it adds no earnings rows — pick an expiry past it on the Chain face to see them.`)
   }
+  const midAfter = midD >= e.days_away
+  const mid = midAfter
+    ? ` T+${midD} falls on or after the print, and the marks hold IV unchanged — so its column keeps the event premium the crush takes away, and overstates what long premium is worth there.`
+    : ` T+${midD} falls before the print, so its mark still carries the event premium.`
   const ev = eventMove(term, e.days_away)
   if (!ev) {
     const pts = term.filter((t) => t.dte > 0 && t.iv > 0)
@@ -69,7 +79,14 @@ export function payoffEarnings(
       : !pts.some((t) => t.dte > e.days_away)
         ? 'no priced expiry after the print'
         : 'the expiry after it is not priced above the one before'
-    return { tag, ev: null, gap: null, late: null, note: `The next print (${when}) falls inside this expiry, but the term structure gives no premium to size it — ${why} — so no earnings rows.` }
+    return {
+      tag,
+      ev: null,
+      gap: null,
+      late: null,
+      midAfter,
+      note: `The next print (${when}) falls inside this expiry, but the term structure gives no premium to size it — ${why} — so no earnings rows.${mid}`,
+    }
   }
   const unsure =
     tag.tag === 'E?' ? ` The estimate sits ${Math.abs(dte - e.days_away)} days from this expiry and has missed this name by up to ${e.track.max_miss_days ?? 7}, so the print may fall outside it.` : ''
@@ -78,8 +95,26 @@ export function payoffEarnings(
     ev,
     gap: ev.move,
     late: null,
+    midAfter,
     note:
-      `Earnings rows: the next print (${when}) falls inside this expiry, and the gap is the move the term structure prices for it — ATM IV ${asPct(ev.before.iv)} on ${ev.before.expiry.slice(5)} before it against ${asPct(ev.after.iv)} on ${ev.after.expiry.slice(5)} after, ±${asPct(ev.move)}, not σ. ` +
-      `The marks hold IV unchanged, so the crush after a print is not in T+${midD}.${unsure}`,
+      `Earnings rows: the next print (${when}) falls inside this expiry, and the gap is the move the term structure prices for it — ATM IV ${asPct(ev.before.iv)} on ${ev.before.expiry.slice(5)} before it against ${asPct(ev.after.iv)} on ${ev.after.expiry.slice(5)} after, ±${asPct(ev.move)}, not σ.` +
+      `${mid}${unsure}`,
   }
+}
+
+/**
+ * The Expiry select's label: the date, and E / E? when the estimated print
+ * falls inside it; the first listed expiry after the print says so. A late
+ * print marks none — its strip above the face says it can land anywhere.
+ */
+export function expiryOptionLabel(
+  expiry: string,
+  dte: number,
+  e: ExpectedEarnings | null | undefined,
+  listed: readonly string[]
+): string {
+  if (!e || e.days_away < 0) return expiry
+  const tag = expiryEarnings(e, dte)
+  if (!tag) return expiry
+  return `${expiry} · ${tag.tag}${expiry === firstListedAfter(e, listed) ? ` · first after ~${shortDate(e.date)}` : ''}`
 }

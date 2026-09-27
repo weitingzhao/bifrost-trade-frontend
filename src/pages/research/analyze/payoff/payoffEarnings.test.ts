@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ExpectedEarnings } from '@/api/research/narrative'
-import { lateNotice, payoffEarnings } from './payoffEarnings'
+import { expiryOptionLabel, lateNotice, payoffEarnings } from './payoffEarnings'
 
 // Invented estimate and term.
 const est = (days_away: number, max = 0): ExpectedEarnings => ({
@@ -20,7 +20,24 @@ describe('payoff earnings rows', () => {
     const out = payoffEarnings(est(38), TERM, 42, 20, 21)
     expect(out.gap).toBeCloseTo(0.099, 3)
     expect(out.note).toContain('ATM IV 45.0% on 10-31 before it against 58.0% on 11-07 after, ±9.9%, not σ.')
-    expect(out.note).toContain('not in T+21')
+    expect(out.note).toContain('T+21 falls before the print, so its mark still carries the event premium.')
+    expect(out.midAfter).toBe(false)
+  })
+
+  it('says the T+ column past the print keeps a premium the crush takes away', () => {
+    const out = payoffEarnings(est(20), [{ ...TERM[0], dte: 17 }, { ...TERM[1], dte: 24 }], 42, 20, 21)
+    expect(out.midAfter).toBe(true)
+    expect(out.note).toContain('T+21 falls on or after the print, and the marks hold IV unchanged — so its column keeps the event premium the crush takes away')
+    expect(payoffEarnings(est(38), TERM, 21, 20, 10).midAfter).toBeNull()
+  })
+
+  it('labels the Expiry select: E inside, the first after the print named, none when late', () => {
+    const listed = ['2031-10-31', '2031-11-07', '2031-11-21']
+    expect(expiryOptionLabel('2031-10-31', 35, est(38), listed)).toBe('2031-10-31')
+    expect(expiryOptionLabel('2031-11-07', 42, est(38), listed)).toBe('2031-11-07 · E · first after ~3 Nov')
+    expect(expiryOptionLabel('2031-11-21', 56, est(38), listed)).toBe('2031-11-21 · E')
+    expect(expiryOptionLabel('2031-11-07', 42, est(38, 7), listed)).toBe('2031-11-07 · E? · first after ~3 Nov')
+    expect(expiryOptionLabel('2031-11-07', 42, est(-3), listed)).toBe('2031-11-07')
   })
 
   it('says the print is past this expiry and where to see the rows', () => {

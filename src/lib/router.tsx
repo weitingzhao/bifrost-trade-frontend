@@ -292,6 +292,10 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/copilot/AgentPersonaPage')),
       },
       {
+        path: 'research/agent-personas/you',
+        lazy: lazyPage(() => import('@/pages/copilot/you/PersonasYouPage')),
+      },
+      {
         path: 'research/orchestration',
         lazy: lazyPage(() => import('@/pages/research/orchestration/OrchestrationPage')),
       },

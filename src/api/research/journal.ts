@@ -94,3 +94,111 @@ export function updateNote(
 export function deleteNote(id: string): Promise<{ deleted: string }> {
   return call(`/research/journal/notes/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
+
+// ── K6 — memory, visits, hints, the Day view (Spec §20) ─────────────────────
+
+export interface MemoryEvidence {
+  source: string
+  date: string
+  text: string
+  route: string
+}
+
+export type MemoryChange = 'new' | 'stronger' | 'fading' | 'steady'
+
+export interface JournalMemory {
+  id: string
+  topic: string
+  kind: 'did' | 'said' | 'tension'
+  axis: string | null
+  value: string
+  sub: string
+  text: string
+  evidence: MemoryEvidence[]
+  strength: number
+  change: MemoryChange
+  archived: boolean
+  first_seen: string | null
+  last_seen: string | null
+}
+
+export interface MemoryAxis {
+  id: string
+  label: string
+  value: string
+  sub: string
+  backs: string[]
+  warn: boolean
+}
+
+export interface MemoryPayload {
+  memories: JournalMemory[]
+  archived_count: number
+  axes: MemoryAxis[]
+  sources: { source: string; enabled: boolean }[]
+  hints: Record<string, number>
+  week: { range: string; moved: number }
+}
+
+export function fetchMemory(): Promise<MemoryPayload> {
+  return call('/research/journal/memory')
+}
+
+export function forgetMemory(id: string): Promise<{ forgotten: string; topic: string }> {
+  return call(`/research/journal/memory/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+export function setMemorySource(
+  source: string,
+  enabled: boolean,
+): Promise<{ sources: { source: string; enabled: boolean }[] }> {
+  return call(`/research/journal/memory/sources/${encodeURIComponent(source)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ enabled }),
+  })
+}
+
+/** The shell's beacon — fire-and-forget; a failed beacon is nobody's error. */
+export function postVisit(route: string, symbol: string): Promise<{ recorded: boolean }> {
+  return call('/research/journal/visits', {
+    method: 'POST',
+    body: JSON.stringify({ route, symbol }),
+  })
+}
+
+export interface DayTrace {
+  at: string
+  kind: 'note' | 'visit' | 'fill' | 'decision' | 'thread'
+  text: string
+  where: string
+  to: string
+}
+
+export interface DayPayload {
+  date: string
+  traces: DayTrace[]
+  /** [memory id, change, topic] — the day's distill deltas. */
+  changes: [string, string, string][]
+}
+
+export function fetchJournalDay(date?: string): Promise<DayPayload> {
+  const suffix = date ? `?date=${encodeURIComponent(date)}` : ''
+  return call(`/research/journal/day${suffix}`)
+}
+
+export interface MemoryHint extends JournalMemory {
+  dismissals: number
+  quiet: boolean
+}
+
+export function fetchMemoryHint(symbol: string): Promise<{ hint: MemoryHint | null }> {
+  return call(`/research/journal/memory/hint?symbol=${encodeURIComponent(symbol)}`)
+}
+
+export function dismissMemoryHint(
+  topic: string,
+): Promise<{ topic: string; count: number; quiet: boolean }> {
+  return call(`/research/journal/memory/hint/${encodeURIComponent(topic)}/dismiss`, {
+    method: 'POST',
+  })
+}

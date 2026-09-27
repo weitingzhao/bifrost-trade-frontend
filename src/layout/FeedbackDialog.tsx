@@ -11,7 +11,7 @@
  * states, and the screenshot toggle (a renderer is a new dependency — the
  * Owner's call).
  */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -70,17 +70,18 @@ export function FeedbackDialog() {
   const [sent, setSent] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
-  const openedRef = useRef(false)
-  if (open && !openedRef.current) {
-    // Opening transition, during render: adopt the requested kind and clear
-    // the last send's receipt. The draft text survives a close on purpose.
-    openedRef.current = true
-    setKind(openedKind)
-    setSent(null)
-    setError(null)
-  } else if (!open && openedRef.current) {
-    openedRef.current = false
-  }
+  const wasOpen = useRef(false)
+  useEffect(() => {
+    // Opening transition: adopt the requested kind and clear the last send's
+    // receipt. The draft text survives a close on purpose. (Effect, not
+    // render — the lint rule is right that refs are for after render.)
+    if (open && !wasOpen.current) {
+      setKind(openedKind)
+      setSent(null)
+      setError(null)
+    }
+    wasOpen.current = open
+  }, [open, openedKind])
 
   const route = routeFor(pathname)
   const obj = readObjective()

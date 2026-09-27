@@ -108,9 +108,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Hypothesis Board',
     crumbs: THE_BOOK,
     design: {
-      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
+      // Rev .88–.89 §16 refinement built in J4; K6 added the Day view
+      // (trail + memory changes; the cited prose summary is owed) and the
+      // §20.1 note lock the .99 head describes.
       state: 'reviewing',
-      rev: '2026-09-25.89',
+      rev: '2026-09-27.99',
       note: DESIGN_NOTES['/research/loop/hypotheses'],
     },
   },
@@ -236,6 +238,20 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       state: 'reviewing',
       rev: '2026-09-26.1',
       note: DESIGN_NOTES['/research/agent-personas'],
+    },
+  },
+  {
+    // Rev .96's portrait page, built in batch K6 over journal.memory
+    // (D-Journal-Stores): axes, memories with evidence, Forget (topic
+    // tombstone, 5s local undo), sources, the week. Not a menu row — the
+    // bench's You card and the Journal's Day view link here.
+    path: '/research/agent-personas/you',
+    label: 'You',
+    crumbs: AGENTS,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-26.1',
+      note: DESIGN_NOTES['/research/agent-personas/you'],
     },
   },
   {

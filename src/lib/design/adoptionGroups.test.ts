@@ -135,9 +135,9 @@ describe('the design documents stay in the design', () => {
         .filter((r) => r.state === 'unbuilt')
         .map((r) => r.path)
         .sort()
-      // /system/feedback left this list when K5 built it (2026-09-27); the
-      // You page remains — it ships with K6's memory store.
-    ).toEqual(['/research/agent-personas/you'])
+      // /system/feedback left this list when K5 built it (2026-09-27), and
+      // the You page when K6 shipped the memory store — nothing is left.
+    ).toEqual([])
     expect(docs.map((r) => r.path)).not.toContain('/docs/options-kit')
   })
 })

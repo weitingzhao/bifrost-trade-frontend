@@ -22,6 +22,7 @@ import { useSearchParams } from 'react-router-dom'
 import { PageHead, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
 import { ViewState } from '@bifrost/ui'
 import { NotesView } from './NotesView'
+import { DayView } from './DayView'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail } from '@/lib/viewState'
 import { SegmentControl } from '@/components/data-display'
@@ -112,7 +113,8 @@ export default function JournalPage() {
 
   const days = useMemo(() => journalDays(nodes), [nodes])
   const operator = params.get('op') ?? 'all'
-  const view = params.get('view') === 'notes' ? 'notes' : 'tree'
+  const raw = params.get('view')
+  const view = raw === 'notes' ? 'notes' : raw === 'day' ? 'day' : 'tree'
   const selectedId = params.get('sel')
   // An explicit `?day=` wins — that is the picker.
   const day = params.get('day') ?? journalDefaultDay(nodes, selectedId)
@@ -193,6 +195,7 @@ export default function JournalPage() {
         info={LEAD}
         tabs={[
           { value: 'tree', label: 'Trees' },
+          { value: 'day', label: 'Day', title: 'The raw trail of one day, and what the distill made of it' },
           { value: 'notes', label: 'Notes', title: 'Every ⌥N, by day — search, and filter by linked object' },
         ]}
         tab={view}
@@ -200,6 +203,8 @@ export default function JournalPage() {
       />
       {view === 'notes' ? (
         <NotesView />
+      ) : view === 'day' ? (
+        <DayView />
       ) : (
         <>
       <div data-sr-toolbar="">

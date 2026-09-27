@@ -11,6 +11,7 @@ import { useAgentPersonas } from '@/hooks/useAgentPersonas'
 import { useCopilotHeadTabs } from '@/components/research/CopilotTabs'
 import { useSearchParams } from 'react-router-dom'
 import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
+import { YouBenchCard } from './you/YouBenchCard'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { AgentInteractionsCard } from '@/components/copilot/AgentInteractionsCard'
 import {
@@ -29,7 +30,6 @@ import { JudgeTrackRecord } from '@/pages/copilot/personas/JudgeTrackRecord'
 import { TheBench } from '@/pages/copilot/personas/TheBench'
 import { PageShell } from '@/components/layout/PageShell'
 import { SectionPanel } from '@/components/layout'
-import { ViewState } from '@bifrost/ui'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -598,10 +598,9 @@ export function AgentPersonaPage() {
             title="You"
             note="distilled every night from your notes, fills, decisions, threads and visits · written without asking, forget any of it"
           >
-            <ViewState
-              kind="notwired"
-              detail="The portrait's four axes and the week's changes read the nightly memory distillation (Rev .96); its store is an open Owner decision, and the You page ships with it."
-            />
+            {/* K6 shipped the store (journal.memory, D-Journal-Stores): the
+                card reads the live portrait; the You page holds the rest. */}
+            <YouBenchCard />
           </SectionPanel>
 
           {/* Rev 2026-09-21.6 merged the roster and the Track record into one

@@ -21,6 +21,7 @@ import {
 } from '@/lib/plans/planLegFromContract'
 import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { NOT_COMPUTED_HINT } from './PlansTable'
+import { MemoryHintLine } from './MemoryHintLine'
 
 const FIELD = 'h-6 w-full border px-1.5 text-dense-label mat-field'
 const LABEL = 'text-dense-meta font-semibold text-muted-foreground'
@@ -577,6 +578,10 @@ export function PlanForm({
             placeholder="Why this, why now, what makes you close it early."
           />
         </Field>
+
+        {/* §20.6 — the sheet's one quiet line from your memory, when a
+            memory names this symbol. Dismissals count in the store. */}
+        <MemoryHintLine symbol={symbol} />
 
         {/* The design's live right-hand check, kept in its shape: the two
             readings the drafted legs themselves pin down, and the cells that

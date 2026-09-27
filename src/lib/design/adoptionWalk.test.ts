@@ -474,7 +474,9 @@ describe('the design walk, as it stands', () => {
     // were already here and were re-walked to .91 / .92. 75 with K5
     // (2026-09-27): /system/feedback is built against the Rev .96 prototype
     // (unbuilt 2→1 — only Agents You remains, waiting on the memory store).
-    expect(counts.byState.reviewing).toBe(75)
+    // 76 with K6 (2026-09-27): the You page is built over journal.memory
+    // (unbuilt 1→0 — the design has nothing left the app lacks a page for).
+    expect(counts.byState.reviewing).toBe(76)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -512,6 +514,7 @@ describe('the design walk, as it stands', () => {
       '/portfolio/positions',
       '/portfolio/transfer',
       '/research/agent-personas',
+      '/research/agent-personas/you',
       '/research/backtest',
       '/research/book',
       '/research/compare',
@@ -661,7 +664,9 @@ describe('the design walk, as it stands', () => {
     // memory store have to exist before either has something to read.
     // 1 since K5 built /system/feedback (2026-09-27): only Agents You waits,
     // and it waits on the K6 memory store, not on a walk.
-    expect(counts.byState.unbuilt).toBe(1)
+    // 0 since K6 built /research/agent-personas/you over journal.memory
+    // (2026-09-27): the design has nothing left the app lacks a page for.
+    expect(counts.byState.unbuilt).toBe(0)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

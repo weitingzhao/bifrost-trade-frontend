@@ -158,6 +158,8 @@ describe('System nav', () => {
     expect(system.items!.map((i) => i.label)).toEqual([
       'System Status',
       'Settings',
+      // Rev .96 (K5): the feedback triage face — a row, not a fold.
+      'Feedback',
       'Data',
       'Alignment',
       'Agents',
@@ -174,6 +176,7 @@ describe('System nav', () => {
     expect(system.items!.map((i) => i.id)).toEqual([
       '/system/status',
       '/settings',
+      '/system/feedback',
       'system:data',
       'system:alignment',
       'system:agents',

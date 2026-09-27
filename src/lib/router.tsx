@@ -423,6 +423,10 @@ export const router = withPageTransitions(createBrowserRouter([
         path: 'system/status',
         lazy: lazyPage(() => import('@/pages/system/status/SystemStatusPage')),
       },
+      {
+        path: 'system/feedback',
+        lazy: lazyPage(() => import('@/pages/system/feedback/SystemFeedbackPage')),
+      },
 
       {
         path: 'docs/design-adoption',

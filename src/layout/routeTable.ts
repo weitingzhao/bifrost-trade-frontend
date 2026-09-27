@@ -509,6 +509,19 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
 
+  {
+    // The triage face of the in-system feedback loop (Rev .96) — built with
+    // the K5 store; the reporter's side is Settings › My reports.
+    path: '/system/feedback',
+    label: 'Feedback',
+    crumbs: SYSTEM,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-26.1',
+      note: 'Rev .96 System Feedback — blocking first; a status move or reply lands on the reporter\u2019s row.',
+    },
+  },
+
   // ── System · Alignment ─────────────────────────────────────────────────
   // Target against actual (Owner 2026-09-25): the UI against the design, and
   // Research against its blueprint. Calibration itself is a Research route.

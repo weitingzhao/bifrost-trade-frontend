@@ -9,6 +9,15 @@ import { useState, type ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { SegmentControl } from '@/components/data-display'
 import { ViewState } from '@bifrost/ui'
+import { useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  OPEN_STATUSES,
+  fetchFeedbackReports,
+  markFeedbackRead,
+  type FeedbackReport,
+} from '@/api/research/feedback'
+import { openFeedbackDialog } from '@/lib/feedback/feedbackDialog'
 import { Button } from '@/components/ui/button'
 import { SwitchTrack } from '@/components/ui/SwitchTrack'
 import { pluginFlexTrigger } from '@/api/flexQueryPlugin'
@@ -326,22 +335,97 @@ export function KeyboardPane() {
 
 /**
  * Rev .96 — the feedback loop closes in-system: reports here, triage on
- * `/system/feedback`, a reply lands on the row and reading it clears the dot.
- * Every part of that reads a feedback service that does not exist yet, and
- * where it lives (store & API) is an architecture decision the Owner has not
- * made — so the pane is named owed rather than drawn as an empty zero.
+ * `/system/feedback`, a reply or a status move lands on the row and having
+ * the pane on screen clears the dot a moment later (seen = read, the
+ * prototype's own delay). The store is ops_feedback.* (D-Journal-Stores).
  */
 export function ReportsPane() {
+  const qc = useQueryClient()
+  const reportsQ = useQuery({
+    queryKey: ['research', 'feedback', 'reports', 'all'],
+    queryFn: () => fetchFeedbackReports('all'),
+    refetchInterval: 60_000,
+    retry: 1,
+  })
+  const rows = reportsQ.data?.reports ?? []
+  const open = rows.filter((r) => OPEN_STATUSES.includes(r.status))
+  const closed = rows.filter((r) => !OPEN_STATUSES.includes(r.status))
+
+  // Seen = read: unread rows clear 1.5s after the pane is on screen.
+  const unreadIds = rows.filter((r) => r.unread_reply).map((r) => r.id).join(',')
+  useEffect(() => {
+    if (!unreadIds) return
+    const t = setTimeout(() => {
+      void Promise.all(unreadIds.split(',').map((id) => markFeedbackRead(id))).then(() =>
+        qc.invalidateQueries({ queryKey: ['research', 'feedback'] }),
+      )
+    }, 1500)
+    return () => clearTimeout(t)
+  }, [unreadIds, qc])
+
+  const row = (r: FeedbackReport) => (
+    <SettingLine
+      key={r.id}
+      label={`${r.unread_reply ? '● ' : ''}${r.title}`}
+      sub={[
+        r.id,
+        r.kind,
+        r.page_label || r.page_route,
+        r.blocks_trading ? 'blocks trading' : '',
+        `sent ${(r.created_at ?? '').slice(5, 10)}`,
+        r.reply_md ? `— Reply ${(r.replied_at ?? '').slice(5, 10)}: ${r.reply_md}` : '',
+      ]
+        .filter(Boolean)
+        .join(' · ')}
+    >
+      <SettingValue>{r.status}</SettingValue>
+    </SettingLine>
+  )
+
   return (
     <>
       <SettingPaneHead
         title="My reports"
-        lead="Your feedback with engineering's replies on the row — seen here is read"
+        lead={
+          reportsQ.data
+            ? `${open.length} open · ${closed.length} closed · replies from engineering appear on the row`
+            : 'Your feedback with replies on the row — seen here is read'
+        }
       />
-      <ViewState
-        kind="notwired"
-        detail="Designed at Rev 2026-09-26.96: Send feedback opens beside the page with its context attached; replies land here; /system/feedback is the triage face. All of it awaits the feedback service — store and API are an open Owner decision."
-      />
+      <SettingGroup>
+        <SettingLine
+          label="Send feedback"
+          sub="Opens beside the page you are on, with that page attached."
+        >
+          <Button size="sm" className="h-6" onClick={() => openFeedbackDialog('bug')}>
+            New report
+          </Button>
+        </SettingLine>
+      </SettingGroup>
+      {reportsQ.isError ? (
+        <ViewState
+          kind="failed"
+          title="Couldn’t read your reports"
+          detail={String((reportsQ.error as Error)?.message ?? 'the feedback store did not answer')}
+          onAction={() => void reportsQ.refetch()}
+        />
+      ) : null}
+      {open.length > 0 ? <SettingGroup title="Open">{open.map(row)}</SettingGroup> : null}
+      {closed.length > 0 ? (
+        <SettingGroup
+          title="Closed"
+          foot="One stream across environments — the store is the system's, not a device's."
+        >
+          {closed.map(row)}
+        </SettingGroup>
+      ) : null}
+      {reportsQ.isSuccess && rows.length === 0 ? (
+        <ViewState
+          kind="empty"
+          title="No reports yet"
+          detail="The top bar's Feedback button files one from any page."
+        />
+      ) : null}
     </>
   )
 }

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import {
+import { Flag,
   Activity,
   ArrowLeftRight,
   BarChart2,
@@ -252,6 +252,9 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
       // the design's row names it.
       route('System Status', '/system/status', Gauge),
       route('Settings', '/settings', Settings),
+      // Rev .96: the feedback triage face — the reporter's own list lives in
+      // Settings › My reports; this row is the engineering side.
+      route('Feedback', '/system/feedback', Flag),
       // Signal Health and Lens Coverage arrived from Research (design package
       // 2026-09-20.1). The design's rule is about what a page takes: one that
       // takes a symbol is a read and stays in Research › Analyze; one that

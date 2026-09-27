@@ -15,6 +15,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { FeedbackButton } from './FeedbackButton'
 import { openNoteComposer } from '@/lib/notes/noteComposer'
 import { cn } from '@/lib/utils'
 import { omnibar, omnibarStore } from '@/lib/omnibar'
@@ -231,6 +232,7 @@ export function AppHeader({
       <div className="ml-auto flex shrink-0 flex-nowrap items-center gap-1">
         <ObjectiveControl />
         <BookControl />
+        <FeedbackButton />
         {/* Rev .97 #5: the note button — a Journal note with this page and the
             carried symbol attached; ⌥N does the same from anywhere. */}
         <MenubarTip tip="New note — this page and symbol attached · ⌥N">

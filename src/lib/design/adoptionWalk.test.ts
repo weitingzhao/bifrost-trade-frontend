@@ -471,8 +471,10 @@ describe('the design walk, as it stands', () => {
     // (Rev .86–.87): eleven more join Stock screen. 62 with J4 (Rev .88–.89):
     // twelve more join Narrative, Backtest and Objectives. 74 with J5
     // (Rev .90–.92): twelve more join the System pages and Positions, which
-    // were already here and were re-walked to .91 / .92.
-    expect(counts.byState.reviewing).toBe(74)
+    // were already here and were re-walked to .91 / .92. 75 with K5
+    // (2026-09-27): /system/feedback is built against the Rev .96 prototype
+    // (unbuilt 2→1 — only Agents You remains, waiting on the memory store).
+    expect(counts.byState.reviewing).toBe(75)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -559,6 +561,7 @@ describe('the design walk, as it stands', () => {
       '/risk/sizing',
       '/risk/stress',
       '/settings',
+      '/system/feedback',
       '/system/status',
       '/trade/assignment',
       '/trade/desk',
@@ -656,7 +659,9 @@ describe('the design walk, as it stands', () => {
     // 2 with Package .26 @ Rev .98: Agents You and System Feedback are new
     // designed pages with no app page yet — Rev .96's feedback service and
     // memory store have to exist before either has something to read.
-    expect(counts.byState.unbuilt).toBe(2)
+    // 1 since K5 built /system/feedback (2026-09-27): only Agents You waits,
+    // and it waits on the K6 memory store, not on a walk.
+    expect(counts.byState.unbuilt).toBe(1)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

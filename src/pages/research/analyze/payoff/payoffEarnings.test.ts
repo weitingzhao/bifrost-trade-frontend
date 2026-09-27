@@ -27,7 +27,9 @@ describe('payoff earnings rows', () => {
   it('says the T+ column past the print keeps a premium the crush takes away', () => {
     const out = payoffEarnings(est(20), [{ ...TERM[0], dte: 17 }, { ...TERM[1], dte: 24 }], 42, 20, 21)
     expect(out.midAfter).toBe(true)
-    expect(out.note).toContain('T+21 falls on or after the print, and the marks hold IV unchanged — so its column keeps the event premium the crush takes away')
+    expect(out.note).toContain(
+      "T+21 falls on or after the print, and the marks hold IV unchanged — so its column still prices the event premium the crush takes away, to a buyer's cost and a seller's gain."
+    )
     expect(payoffEarnings(est(38), TERM, 21, 20, 10).midAfter).toBeNull()
   })
 

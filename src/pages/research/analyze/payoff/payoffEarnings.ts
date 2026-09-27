@@ -69,7 +69,7 @@ export function payoffEarnings(
   }
   const midAfter = midD >= e.days_away
   const mid = midAfter
-    ? ` T+${midD} falls on or after the print, and the marks hold IV unchanged — so its column keeps the event premium the crush takes away, and overstates what long premium is worth there.`
+    ? ` T+${midD} falls on or after the print, and the marks hold IV unchanged — so its column still prices the event premium the crush takes away, to a buyer's cost and a seller's gain.`
     : ` T+${midD} falls before the print, so its mark still carries the event premium.`
   const ev = eventMove(term, e.days_away)
   if (!ev) {

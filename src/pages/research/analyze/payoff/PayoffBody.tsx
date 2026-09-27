@@ -14,7 +14,9 @@
  *
  * The Scenarios table adds the design's earnings-gap rows when the next print —
  * Research's estimate — falls inside the expiry, sized by the move the term
- * structure prices for it (`payoffEarnings`).
+ * structure prices for it (`payoffEarnings`); the T+ column says when its day
+ * is past the print, the P/L header dates the print, and the Expiry select
+ * marks the expiries it falls inside.
  */
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -37,8 +39,8 @@ import type { StructureKind, StructureSide } from '@/utils/optionDiscovery/disco
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { Link } from 'react-router-dom'
 import { PayoffChart } from './PayoffChart'
-import { gapLevels } from '@/utils/earningsEstimate'
-import { payoffEarnings } from './payoffEarnings'
+import { gapLevels, shortDate } from '@/utils/earningsEstimate'
+import { expiryOptionLabel, payoffEarnings } from './payoffEarnings'
 import {
   buildPayoffStructure,
   greeksBySpot,
@@ -142,6 +144,7 @@ export function PayoffBody() {
   // Days count from today, like the estimate's; the IV is the store's last
   // session, a day's difference against a month out.
   const earnQ = useEarningsDates(sym)
+  const nextEarnings = earnQ.data?.expected_next ?? null
   const termQ = useAtmIvTerm(sym)
   const earnings = useMemo(
     () =>
@@ -294,7 +297,7 @@ export function PayoffBody() {
         >
           {(expQ.data ?? []).map((e) => (
             <option key={e} value={e}>
-              {e}
+              {expiryOptionLabel(e, daysTo(e, today) ?? 0, nextEarnings, expQ.data ?? [])}
             </option>
           ))}
         </select>
@@ -337,7 +340,11 @@ export function PayoffBody() {
             <span className="whitespace-nowrap text-dense-meta text-muted-foreground">
               {dte} DTE · IV {anchor.iv != null ? `${(anchor.iv * 100).toFixed(1)}%` : '—'}
               {sigma1 ? ` · ±1σ ${sigma1[0].toFixed(0)}–${sigma1[1].toFixed(0)}` : ''}
-              {gapLv ? <span className="text-warning" title={gapLv.title}>{` · E ±${((earnings.gap ?? 0) * 100).toFixed(1)}%`}</span> : null}
+              {gapLv ? (
+                <span className="text-warning" title={gapLv.title}>
+                  {` · E ${nextEarnings ? `~${shortDate(nextEarnings.date)} ` : ''}±${((earnings.gap ?? 0) * 100).toFixed(1)}%`}
+                </span>
+              ) : null}
             </span>
             <span
               className="ml-auto whitespace-nowrap font-mono text-dense-caption text-muted-foreground"
@@ -436,7 +443,20 @@ export function PayoffBody() {
                 <tr>
                   <th className={cn(th, 'text-left')}>Scenario</th>
                   <th className={th}>Spot</th>
-                  <th className={th}>T+{midD}</th>
+                  <th
+                    className={cn(th, earnings.midAfter && 'text-warning')}
+                    title={
+                      earnings.midAfter == null
+                        ? undefined
+                        : earnings.midAfter
+                          ? `T+${midD} is on or after the estimated print${nextEarnings ? ` (~${shortDate(nextEarnings.date)})` : ''} — its mark keeps today's IV, the event premium included, which the crush takes away (a buyer's cost, a seller's gain).`
+                          : `T+${midD} is before the estimated print${nextEarnings ? ` (~${shortDate(nextEarnings.date)})` : ''} — its mark still carries the event premium.`
+                    }
+                    data-mid-earnings={earnings.midAfter == null ? undefined : earnings.midAfter ? 'after' : 'before'}
+                  >
+                    T+{midD}
+                    {earnings.midAfter ? ' E' : ''}
+                  </th>
                   <th className={th}>Expiry</th>
                   <th className={th}>P</th>
                 </tr>

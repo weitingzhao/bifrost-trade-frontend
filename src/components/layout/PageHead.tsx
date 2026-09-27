@@ -10,7 +10,14 @@
  */
 import { useCallback, useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { MoreHorizontal } from 'lucide-react'
 import { PageHead as UiPageHead, buttonVariants, type PageHeadProps as UiPageHeadProps } from '@bifrost/ui'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export { PageHeadAction, type PageHeadActionProps, type PageHeadTab } from '@bifrost/ui'
 
@@ -27,10 +34,44 @@ function broadcast(v: PageHeadVisibility | null): void {
 
 export type PageHeadProps = Omit<UiPageHeadProps, 'onTitleVisible'>
 
+/**
+ * The head's overflow — the shell's own verbs on every page, after the page's
+ * actions. One item so far (Rev .97 §8, drawn app-side by the design's own
+ * instruction): "Open in new window", for two wide pages side by side. The
+ * new window is a plain browser window — no side-panel state rides along, and
+ * the held symbol is per-window (sessionStorage) on purpose: two windows
+ * looking at two names is what this door is for.
+ */
+function HeadOverflow() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={buttonVariants({ variant: 'outline', size: 'sm' })}
+        style={{ paddingInline: 6 }}
+        aria-label="Page menu"
+        title="Page menu"
+      >
+        <MoreHorizontal className="size-4" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={() => window.open(window.location.href, '_blank', 'noopener')}>
+          Open in new window
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 export function PageHead(props: PageHeadProps) {
   useEffect(() => () => broadcast(null), [])
   const onTitleVisible = useCallback((visible: boolean) => broadcast(visible ? 'in' : 'out'), [])
-  return <UiPageHead {...props} onTitleVisible={onTitleVisible} />
+  const actions = (
+    <>
+      {props.actions}
+      <HeadOverflow />
+    </>
+  )
+  return <UiPageHead {...props} actions={actions} onTitleVisible={onTitleVisible} />
 }
 
 /**

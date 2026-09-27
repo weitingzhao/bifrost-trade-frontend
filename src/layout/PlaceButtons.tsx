@@ -25,11 +25,28 @@ import { openSurface, type Place, type Surface } from './equipSurface'
 import { dismissSurface } from './equipMotion'
 import css from './equipSurface.module.css'
 
-const PLACES: { place: Place; label: string; title: string }[] = [
-  { place: 'float', label: 'Float', title: 'Float over the page' },
-  { place: 'panel', label: 'Side', title: 'A tab in the side panel' },
-  { place: 'page', label: 'Page', title: 'Open as the full page' },
+/**
+ * Icons, not words (Owner 2026-09-26, Rev .97): the words cost the tab strip
+ * about 100px. Float = a window lifted off the page, Side = a window with its
+ * right column filled, Page = the full-page corners — the design's own three
+ * shapes; the names stay in the tooltip and the aria-label.
+ */
+const PLACES: { place: Place; label: string; title: string; d: string[]; fill?: string }[] = [
+  { place: 'float', label: 'Float', title: 'Float over the page', d: ['M8 8h12v11H8z', 'M4 15V5h12'] },
+  { place: 'panel', label: 'Side', title: 'A tab in the side panel', d: ['M3 5h18v14H3z', 'M14 5v14'], fill: 'M14 5h7v14h-7z' },
+  { place: 'page', label: 'Page', title: 'Open as the full page', d: ['M4 9V4h5', 'M20 9V4h-5', 'M4 15v5h5', 'M20 15v5h-5'] },
 ]
+
+function PlaceIcon({ p }: { p: (typeof PLACES)[number] }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {p.fill ? <path d={p.fill} fill="currentColor" stroke="none" opacity="0.45" /> : null}
+      {p.d.map((d) => (
+        <path key={d} d={d} />
+      ))}
+    </svg>
+  )
+}
 
 export function PlaceButtons({ surface, here }: { surface: Surface; here: Place }) {
   const navigate = useNavigate()
@@ -49,6 +66,7 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
               data-off={off ? '1' : '0'}
               aria-pressed={current}
               aria-disabled={off || undefined}
+              aria-label={p.label}
               title={
                 off
                   ? 'No full-page form — this is a reading, not a place'
@@ -56,6 +74,7 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
                     ? `${p.title} (here now)`
                     : p.title
               }
+              style={{ width: 26, paddingInline: 0 }}
               onClick={() => {
                 if (current || off) return
                 if (p.place === 'page') {
@@ -75,7 +94,7 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
                 openSurface(surface, p.place)
               }}
             >
-              {p.label}
+              <PlaceIcon p={p} />
             </button>
           )
         })}

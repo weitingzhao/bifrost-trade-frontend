@@ -212,8 +212,11 @@
   flex: 0 1 auto;
 }
 
+/* Icon-only, the design's 32×28 tile (Rev .97). */
 .tabIcon {
-  padding: 0 11px;
+  width: 32px;
+  padding: 0;
+  justify-content: center;
   flex: none;
 }
 

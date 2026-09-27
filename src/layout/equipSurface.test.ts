@@ -184,28 +184,30 @@ describe('the tab strip', () => {
     for (const to of routes) openSurface(surf(to), 'panel')
   }
 
-  it('shows every tab in full while there are three or fewer', () => {
+  it('shows every tab while there are nine or fewer (icon tabs, Rev .97)', () => {
     const strip = stripFor({
-      tabs: [CONSOLE, WATCHLIST, INBOX].map((to, i) => ({ ...surf(to), t: i })),
+      tabs: [CONSOLE, WATCHLIST, INBOX, JOURNAL].map((to, i) => ({ ...surf(to), t: i })),
       active: INBOX,
     })
     expect(strip.compact).toBe(false)
     expect(strip.over).toEqual([])
-    expect(strip.shown).toHaveLength(3)
+    expect(strip.shown).toHaveLength(4)
   })
 
-  it('keeps the active tab and the two most recent, and menus the rest', () => {
+  it('past nine, keeps the active tab and the two most recent, and menus the rest', () => {
+    const many = Array.from({ length: 6 }, (_, i) => ({ ...surf(CONSOLE), key: `x${i}`, to: `/x${i}`, t: 50 + i }))
     const tabs = [
       { ...surf(CONSOLE), t: 10 },
       { ...surf(WATCHLIST), t: 40 },
       { ...surf(INBOX), t: 30 },
       { ...surf(JOURNAL), t: 20 },
+      ...many,
     ]
     const strip = stripFor({ tabs, active: CONSOLE })
     expect(strip.compact).toBe(true)
-    expect(strip.shown.map((x) => x.key)).toEqual([CONSOLE, WATCHLIST, INBOX])
-    // Nothing is evicted: the fourth is a click away, not gone.
-    expect(strip.over.map((x) => x.key)).toEqual([JOURNAL])
+    expect(strip.shown.map((x) => x.key)).toEqual([CONSOLE, 'x4', 'x5'])
+    // Nothing is evicted: the rest are a click away, not gone.
+    expect(strip.over).toHaveLength(7)
   })
 
   it('never drops a tab, however many are open', () => {
@@ -241,9 +243,21 @@ describe('the tab strip', () => {
       focusTab(CONSOLE)
       const panel = JSON.parse(localStorage.getItem('bifrost.panel') ?? 'null')
       expect(activeTabOf(panel)?.key).toBe(CONSOLE)
-      // Journal and the Inbox were the last two looked at; the Watchlist, the
-      // oldest look, is the one that moves into the menu.
-      expect(stripFor(panel).over.map((x) => x.key)).toEqual([WATCHLIST])
+      // Four icon tabs all fit now (the fold starts past nine, Rev .97), but
+      // recency still picks who stays out of it: stuff the strip past nine
+      // with old tabs, and the two most recent looks — Journal and the Inbox
+      // — hold their place beside the active Console while the Watchlist,
+      // the oldest look, folds.
+      const stuffed = {
+        ...panel,
+        tabs: [
+          ...panel.tabs,
+          ...Array.from({ length: 6 }, (_, i) => ({ ...panel.tabs[0], key: `x${i}`, to: `/x${i}`, t: 1 + i })),
+        ],
+      }
+      const strip = stripFor(stuffed)
+      expect(strip.shown.map((x) => x.key)).toEqual([CONSOLE, INBOX, JOURNAL])
+      expect(strip.over.map((x) => x.key)).toContain(WATCHLIST)
     } finally {
       vi.useRealTimers()
     }

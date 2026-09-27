@@ -4,9 +4,9 @@
  * One row: the avatar with a summary lamp in its corner · Operator · how many
  * of the trader's questions are degraded — and a square door on the right,
  * Enter System (or Back to Trade inside it). The avatar opens a glass card
- * upward: who is operating over which accounts, Can I trade (the three
- * readings System Status gives, from the same hook), Appearance, and the
- * shell's doors. Collapsed, the rail keeps only the avatar and its lamp.
+ * upward: who is operating over which accounts, Appearance, and the shell's
+ * doors. The "Can I trade" card retired to the Control Center's first row
+ * (Rev .97 — one business fact in one place); the corner lamp stays. Collapsed, the rail keeps only the avatar and its lamp.
  *
  * Where this side reads the design differently, and why:
  *
@@ -22,7 +22,7 @@
  */
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { ExternalLink, SlidersHorizontal, Scale } from 'lucide-react'
-import { HealthLamp, useSidebar } from '@bifrost/ui'
+import { useSidebar } from '@bifrost/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useSystemDomains } from '@/hooks/useSystemDomains'
@@ -105,7 +105,6 @@ function UserCard({ onClose }: { onClose: () => void }) {
   const display = useDisplay()
   const { data: status } = useMonitorStatus()
   const accounts = (status?.portfolio?.accounts ?? []).map((a) => (a.account_id ?? '').trim()).filter(Boolean)
-  const domains = useSystemDomains({ live: true })
   const door = useDoor()
   const items = [
     { label: door.label, to: door.to, Icon: door.Icon },
@@ -127,25 +126,11 @@ function UserCard({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <Link
-        to="/system/status"
-        onClick={onClose}
-        title="/system/status — the same three readings"
-        className="block border-y border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-3.5 py-2 no-underline hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]"
-      >
-        <span className="text-dense-meta font-semibold text-muted-foreground">Can I trade</span>
-        {domains.map((d) => (
-          <span key={d.key} className="mt-1 grid grid-cols-[10px_88px_minmax(0,1fr)] items-baseline gap-2">
-            <HealthLamp lamp={d.lamp} variant="dot" title={d.name} />
-            <span className="text-dense-meta text-foreground">{d.name}</span>
-            <span className="truncate text-dense-meta text-[var(--sk-mute2)]" title={d.why}>
-              {d.state}
-            </span>
-          </span>
-        ))}
-      </Link>
-
-      <div className="flex flex-col gap-1.5 px-3.5 pt-2.5 pb-3">
+      {/* The "Can I trade" card left this menu (Owner 2026-09-26, Rev .97):
+          three rows written here could contradict the top bar's own live
+          readings. One business fact shows in one place — the verdict is the
+          Control Center's first row now, derived from the same rows it draws. */}
+      <div className="flex flex-col gap-1.5 border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-3.5 pt-2.5 pb-3">
         <div className="flex items-baseline justify-between">
           <span className="text-dense-meta font-semibold text-muted-foreground">Appearance</span>
           {mode === 'auto' ? <span className="font-mono text-dense-micro text-muted-foreground">now → {theme}</span> : null}

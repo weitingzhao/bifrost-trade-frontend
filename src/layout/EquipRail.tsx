@@ -22,8 +22,11 @@
  *   takes the hue on its border and the page's icon takes it on its ink.
  * - **`open`** — this surface is open, in the float or in the panel. Dock
  *   semantics: an open surface rides across navigation until you close it,
- *   and its icon stays filled the whole time. That is the whole of what the
- *   retired pin button did.
+ *   and it carries a running dot the whole time. **Lit is only the one you
+ *   are looking at** (Owner 2026-09-26, Rev .97): two filled tiles for one
+ *   visible tab read as "which is open?", so a surface behind another panel
+ *   tab keeps the dot and loses the fill, like a Dock app that isn't
+ *   frontmost.
  *
  * Both can be true, neither can be, and they are drawn differently on purpose:
  * standing somewhere is a fact about the page, having something open is a fact
@@ -55,10 +58,16 @@ import { dockActions, useDockState } from './symbolDock/dockState'
 import { glyph } from '@/lib/design/glyphs'
 import css from './equipRail.module.css'
 
-/** What the tooltip adds once something is open — "on" alone is not a place. */
-function placeNote(to: string): string {
-  const at = placeOf(to)
-  return at === 'float' ? ' · in a float' : at === 'panel' ? ' · in the side panel' : ''
+/**
+ * What the tooltip adds once something is open — "on" alone is not a place,
+ * and since Rev .97 it also says what the click will do: the visible one
+ * closes, one behind another tab comes forward.
+ */
+function placeNote(key: string): string {
+  const at = placeOf(key)
+  if (at == null) return ''
+  if (isVisible(key)) return ' · showing — click closes'
+  return at === 'panel' ? ' · behind another tab — click brings it forward' : ' · in a float'
 }
 
 function RailButton({
@@ -67,6 +76,7 @@ function RailButton({
   headOf,
   title,
   open,
+  vis,
   here,
   children,
 }: {
@@ -76,8 +86,10 @@ function RailButton({
   headOf?: string
   /** The head's tooltip — the group's own words, with its key (Rev .26). */
   title?: string
-  /** This surface is open, wherever it is. */
+  /** This surface is open, wherever it is — the running dot. */
   open: boolean
+  /** This surface is what you are looking at — the lit fill (Rev .97). */
+  vis: boolean
   /** The frame page is this route. */
   here: boolean
   children?: ReactNode
@@ -117,7 +129,7 @@ function RailButton({
         // design's "every icon sits on its own opaque dark tile, glyph in the
         // module hue" (_Shell TopBar, ink: g.hue). A grey glyph at rest read
         // as a disabled strip; the tile's fill is what says open or here.
-        background: open
+        background: vis
           ? 'color-mix(in oklab, var(--rh) 26%, var(--sk-surface))'
           : here
             ? 'color-mix(in oklab, var(--rh) 16%, var(--sk-surface))'
@@ -128,7 +140,7 @@ function RailButton({
         color: 'var(--rhi, var(--rh))',
         ...(head
           ? {
-              ['--rh-head-border' as string]: open
+              ['--rh-head-border' as string]: vis
                 ? 'var(--rh)'
                 : here
                   ? 'color-mix(in oklab, var(--rh) 60%, transparent)'
@@ -139,6 +151,8 @@ function RailButton({
     >
       <Icon className={head ? 'size-[17px]' : 'size-4'} aria-hidden />
       <span className={css.label}>{page.label}</span>
+      {/* Open rides across pages: the dot says so even when another tab hides it. */}
+      {!head && open ? <span className={css.run} aria-hidden /> : null}
       {children}
     </button>
   )
@@ -167,6 +181,7 @@ function Group({
   const openAt = (to: string) => placeOf(to) != null
   const here = equipGroupOf(activePath)?.id === group.id
   const anyOpen = openAt(group.hub.to) || group.pages.some((p) => openAt(p.to))
+  const visAt = (to: string) => isVisible(to)
 
   return (
     <div
@@ -188,6 +203,7 @@ function Group({
         headOf={group.id}
         title={group.title}
         open={openAt(group.hub.to)}
+        vis={visAt(group.hub.to)}
         // The head stands for the module: standing on any of its pages lights
         // it (the design's `here = hereIn(module)`), the way the box border
         // already did. The page icons light for their own route only.
@@ -208,7 +224,7 @@ function Group({
       {full && group.pages.some((p) => p.rail !== false) ? <span className={css.rule} aria-hidden /> : null}
       {full
         ? group.pages.filter((p) => p.rail !== false).map((p) => (
-            <RailButton key={p.to} page={p} open={openAt(p.to)} here={activePath === p.to} />
+            <RailButton key={p.to} page={p} open={openAt(p.to)} vis={visAt(p.to)} here={activePath === p.to} />
           ))
         : null}
     </div>

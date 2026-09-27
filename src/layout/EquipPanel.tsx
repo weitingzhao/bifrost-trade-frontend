@@ -99,47 +99,34 @@ function dragOut(e: ReactPointerEvent<HTMLButtonElement>, tab: PanelTab): void {
   window.addEventListener('pointerup', off)
 }
 
-function Tab({ tab, active, compact }: { tab: PanelTab; active: boolean; compact: boolean }) {
-  const full = active || !compact
+/**
+ * Icon-only (Owner 2026-09-26, Rev .97): a 440 strip cannot hold names —
+ * "J." / "S…" named nothing. The name is the hover label; the lit tab is the
+ * one on screen; close is the header × or a middle-click, so the strip holds
+ * nine before anything folds.
+ */
+function Tab({ tab, active }: { tab: PanelTab; active: boolean }) {
   const label = surfaceLabel(tab, useCarriedSymbol())
   return (
     <button
       type="button"
-      className={`${css.tab} ${full ? css.tabFull : css.tabIcon} ${active ? css.tabOn : ''}`}
-      style={{ ['--rh' as string]: surfaceHue(tab), maxWidth: full && compact ? 150 : 170 }}
+      className={`${css.tab} ${css.tabIcon} ${active ? css.tabOn : ''}`}
+      style={{ ['--rh' as string]: surfaceHue(tab) }}
       title={`${label} · ${tab.to}${tab.subject === 'follow' ? ' — follows the carried symbol' : tab.subject === 'lock' ? ' — locked' : ''}`}
+      aria-label={label}
       aria-current={active ? 'true' : undefined}
       // The tab's own right-click menu (Rev .69 §1, ShellContextMenu).
       data-ctx-tab={tab.key}
       data-ctx-label={label}
       onClick={() => focusTab(tab.key)}
+      onAuxClick={(e) => {
+        if (e.button !== 1) return
+        e.preventDefault()
+        dismissSurface(tab.key)
+      }}
       onPointerDown={(e) => dragOut(e, tab)}
     >
       <SurfaceGlyph surface={tab} className={css.glyph} />
-      {full ? (
-        <>
-          <span className={css.tabName}>{label}</span>
-          <span
-            role="button"
-            tabIndex={0}
-            className={css.tabClose}
-            aria-label={`Close ${label}`}
-            title="Close tab"
-            onClick={(e) => {
-              e.stopPropagation()
-              dismissSurface(tab.key)
-            }}
-            onKeyDown={(e) => {
-              if (e.key !== 'Enter' && e.key !== ' ') return
-              e.preventDefault()
-              e.stopPropagation()
-              dismissSurface(tab.key)
-            }}
-          >
-            ×
-          </span>
-        </>
-      ) : null}
     </button>
   )
 }
@@ -221,7 +208,7 @@ export function EquipPanel() {
         <div className={css.head}>
           <div className={css.strip} role="tablist" aria-label="Open surfaces">
             {strip.shown.map((t) => (
-              <Tab key={t.key} tab={t} active={t.key === panel.active} compact={strip.compact} />
+              <Tab key={t.key} tab={t} active={t.key === panel.active} />
             ))}
             {strip.over.length > 0 ? (
               <button

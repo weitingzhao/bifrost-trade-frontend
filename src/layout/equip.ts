@@ -139,29 +139,22 @@ const railIcon = (path: string, fallback: LucideIcon): GlyphComponent | LucideIc
 const railHead = (id: string, fallback: LucideIcon): GlyphComponent | LucideIcon =>
   equipGroupGlyph(id) ?? fallback
 
+// Bar order (Owner 2026-09-26, Rev .96): Lists · Live · Book · Autopilot ·
+// Copilot, and ⌥1–4 follow the positions — the keybinds read this array.
 export const EQUIP_GROUPS: readonly EquipGroup[] = [
   {
-    id: 'autopilot',
-    label: 'Autopilot',
-    title: 'Autopilot Console (⌥1). Green: running. Amber: decisions waiting.',
-    icon: railHead('autopilot', Terminal),
-    hub: {
-      to: '/research/loop/harness',
-      label: 'Autopilot Console',
-      icon: railIcon('/research/loop/harness', Terminal),
-    },
-    // The Inbox seats in Review as a menu row (§5a.8) *and* rides here: the
-    // rail is not a second tree, it is the equipment's own reach, and the one
-    // page that accumulates work without me is the one I most want one click
-    // from wherever I am standing.
-    pages: [
-      {
-        to: '/research/loop/decisions',
-        label: 'Decision Inbox',
-        icon: railIcon('/research/loop/decisions', ClipboardList),
-      },
-    ],
-    owns: ['/research/loop/objectives/', '/research/loop/runs'],
+    // The market's live instruments (design §5a.10, Owner option B, Rev
+    // 2026-09-23.7): the tape and the rules you armed. They left Home — which
+    // is where you stand, organised by the clock — for the rail, which is what
+    // you glance at beside the page. Both change without your hand, which is
+    // what earns them a resident indicator: the feed lamp on the head, and
+    // today's fired alerts under it. Events and the Daily Brief stay in Home.
+    id: 'market',
+    label: 'Market',
+    title: 'Market Live (⌥1) — the tape. Lamp: the feed. Amber: alerts fired today.',
+    icon: railHead('market', Activity),
+    hub: { to: '/market/live', label: 'Live', icon: railIcon('/market/live', Activity) },
+    pages: [{ to: '/research/event-radar', label: 'Alerts', icon: railIcon('/research/event-radar', Bell) }],
   },
   {
     id: 'book',
@@ -187,9 +180,32 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
     ],
   },
   {
+    id: 'autopilot',
+    label: 'Autopilot',
+    title: 'Autopilot Console (⌥3). Green: running. Amber: decisions waiting.',
+    icon: railHead('autopilot', Terminal),
+    hub: {
+      to: '/research/loop/harness',
+      label: 'Autopilot Console',
+      icon: railIcon('/research/loop/harness', Terminal),
+    },
+    // The Inbox seats in Review as a menu row (§5a.8) *and* rides here: the
+    // rail is not a second tree, it is the equipment's own reach, and the one
+    // page that accumulates work without me is the one I most want one click
+    // from wherever I am standing.
+    pages: [
+      {
+        to: '/research/loop/decisions',
+        label: 'Decision Inbox',
+        icon: railIcon('/research/loop/decisions', ClipboardList),
+      },
+    ],
+    owns: ['/research/loop/objectives/', '/research/loop/runs'],
+  },
+  {
     id: 'copilot',
     label: 'Copilot',
-    title: 'Copilot Desk (⌥3) — personas, schedules, book starters. To ask a question, use Ask in the top bar (⌘J).',
+    title: 'Copilot Desk (⌥4) — personas, schedules, book starters. To ask a question, use Ask in the top bar (⌘J).',
     icon: railHead('copilot', MessageCircle),
     hub: {
       to: '/research/copilot',
@@ -203,20 +219,6 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
         icon: railIcon('/research/copilot/trading', NotebookPen),
       },
     ],
-  },
-  {
-    // The market's live instruments (design §5a.10, Owner option B, Rev
-    // 2026-09-23.7): the tape and the rules you armed. They left Home — which
-    // is where you stand, organised by the clock — for the rail, which is what
-    // you glance at beside the page. Both change without your hand, which is
-    // what earns them a resident indicator: the feed lamp on the head, and
-    // today's fired alerts under it. Events and the Daily Brief stay in Home.
-    id: 'market',
-    label: 'Market',
-    title: 'Market Live (⌥4) — the tape. Lamp: the feed. Amber: alerts fired today.',
-    icon: railHead('market', Activity),
-    hub: { to: '/market/live', label: 'Live', icon: railIcon('/market/live', Activity) },
-    pages: [{ to: '/research/event-radar', label: 'Alerts', icon: railIcon('/research/event-radar', Bell) }],
   },
 ]
 

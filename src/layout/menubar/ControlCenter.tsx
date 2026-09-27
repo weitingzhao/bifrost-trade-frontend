@@ -82,6 +82,23 @@ export function ControlCenter() {
   const worse = RANK[dataLamp] >= RANK[sysLamp] ? dataLamp : sysLamp
   const tile: Tile = picked ?? (RANK[sysLamp] > RANK[dataLamp] ? 'system' : 'data')
 
+  // The verdict (Owner 2026-09-26, Rev .97): "Can I trade" left the user menu
+  // for this popup's first row — one business fact in one place, derived from
+  // the same rows drawn below by taking the worst. Grey is unprobed and never
+  // changes the answer (§11.3.1).
+  const probedWorst: DomainLamp = (() => {
+    const lamps = [...domains.map((d) => d.lamp), sysLamp].filter((l) => l !== 'gray')
+    return lamps.length === 0 ? 'gray' : lamps.reduce((a, b) => (RANK[b] > RANK[a] ? b : a), 'green' as DomainLamp)
+  })()
+  const verdict =
+    probedWorst === 'red'
+      ? { word: 'No', why: 'a red reading below' }
+      : probedWorst === 'yellow'
+        ? { word: 'With caveat', why: 'an amber reading below' }
+        : probedWorst === 'gray'
+          ? { word: '—', why: 'nothing probed yet' }
+          : { word: 'Yes', why: 'every probed reading below is green' }
+
   const dataText = domains.map((d) => `${d.name}: ${d.state}`).join(' · ') || 'reading…'
   const sysText = isLoading
     ? 'probing'
@@ -131,6 +148,21 @@ export function ControlCenter() {
         className={cn(css.pop, 'flex max-h-[calc(100vh-64px)] w-[400px] max-w-[calc(100vw-24px)] flex-col overflow-hidden')}
         aria-label="Control Center"
       >
+        <Link
+          to="/system/status"
+          onClick={close}
+          title={`Worst of the rows below — grey does not change the answer. /system/status says why.`}
+          className="flex flex-none items-baseline gap-2 border-b border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-3 py-2 no-underline hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]"
+        >
+          <span className={cn(css.fs12, 'font-semibold text-[var(--sk-ink)]')}>Can I trade</span>
+          <span
+            className={cn(css.fs12, 'font-semibold')}
+            style={{ color: probedWorst === 'gray' ? 'var(--sk-mute2)' : LAMP_VAR[probedWorst] }}
+          >
+            {verdict.word}
+          </span>
+          <span className={cn(css.fs11, 'min-w-0 truncate text-[var(--sk-mute2)]')}>{verdict.why}</span>
+        </Link>
         <div className="grid flex-none grid-cols-2 gap-2 p-2.5">
           {(
             [

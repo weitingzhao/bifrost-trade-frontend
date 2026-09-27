@@ -506,7 +506,8 @@ export interface Strip {
  * asks for a click.
  */
 export function stripFor(panel: PanelState): Strip {
-  const compact = panel.tabs.length > 3
+  // Rev .97: tabs are icon-only, so nine fit before anything folds (was 3).
+  const compact = panel.tabs.length > 9
   if (!compact) return { shown: panel.tabs, over: [], compact }
   const keep = new Set(
     panel.tabs

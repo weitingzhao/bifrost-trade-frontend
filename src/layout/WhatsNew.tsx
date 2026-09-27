@@ -14,16 +14,15 @@ import css from './whatsNew.module.css'
 
 const KEY = 'bifrost.whatsnew'
 
-/** The round these items came from (design Rev .72 B/C). Move it when they change. */
-const ITEMS_REV = '2026-09-25.72'
+/** The round these items came from (design Rev .96–.97, batch K1). Move it when they change. */
+const ITEMS_REV = '2026-09-26.97'
 
 const ITEMS: readonly (readonly [string, string, string])[] = [
-  ['⌘', 'Hold ⌘ for every shortcut', 'Keep ⌘ pressed for a second to see what the keyboard can do here.'],
-  ['␣', 'Quick Look', 'Hover a row with a symbol or contract and press Space — ↑ ↓ to walk, ↵ to open.'],
-  ['⋯', 'Right-click a symbol', 'Open it, compare in a locked tab, add to Watch or copy — from any ticker on any page.'],
-  ['⇲', 'Drag to act', 'Drag a symbol to the bar above the toolbar; drag a panel tab down to float it; drag the float to an edge to tile it.'],
-  ['↶', 'Undo closes', 'Closed a tab by mistake? The toast offers Undo for five seconds.'],
-  ['◐', 'Transparency · contrast · text size', 'In the user menu, under Appearance.'],
+  ['⌥', 'The toolbar reordered', 'Lists · Live · Book · Autopilot · Copilot — and ⌥1–4 follow the positions.'],
+  ['◉', 'Lit means showing', 'A toolbar tile fills only for the surface you are looking at; one that is open behind another tab keeps its running dot.'],
+  ['⊞', 'Icon tabs', 'Side-panel tabs are icons now — hover for the name, middle-click to close. Nine fit before anything folds.'],
+  ['⧉', 'Open in new window', 'The page menu (⋯ in the head) opens this page in its own browser window; ⌘-click on any nav row or breadcrumb does too.'],
+  ['✓', 'Can I trade, in one place', 'The verdict tops the Control Center, taken as the worst of the rows below it. It left the user menu.'],
 ]
 
 function seen(): boolean {

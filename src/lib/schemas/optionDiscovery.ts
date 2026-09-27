@@ -27,15 +27,6 @@ export const OptionSnapshotsPgResponseSchema = z.object({
   warning: z.string().optional(),
 }).passthrough()
 
-export const OptionExpirationsResponseSchema = z.object({
-  symbol: z.string(),
-  expirations: z.array(z.string()),
-  strikes: z.array(z.number()).optional(),
-  last_price: z.number().optional(),
-  error: z.string().optional(),
-  provider: z.string().optional(),
-}).passthrough()
-
 export const MarketDataPluginStatusSchema = z.object({
   configured: z.boolean(),
   tier: z.string(),

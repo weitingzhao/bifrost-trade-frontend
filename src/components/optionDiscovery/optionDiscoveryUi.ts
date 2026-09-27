@@ -1,34 +1,6 @@
 import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
 
-export const optionDiscoveryChartWrapClass = cn(
-  'min-w-0 border p-2 mat-card',
-  '[&_.od-chart-svg]:block [&_.od-chart-svg]:h-auto [&_.od-chart-svg]:w-full [&_.od-chart-svg]:max-w-full [&_.od-chart-svg]:aspect-[640/260]',
-)
-
-export const optionDiscoveryMaxPainSectionClass = 'space-y-3'
-
-export const optionDiscoveryMaxPainHeaderRowClass =
-  'flex flex-wrap items-start justify-between gap-2'
-
-export const optionDiscoveryMaxPainTitleClass =
-  'm-0 inline-flex flex-wrap items-center gap-1.5 text-base font-medium'
-
-export const optionDiscoveryMaxPainTitleExpClass = 'font-normal text-muted-foreground'
-
-export const optionDiscoveryMaxPainHeaderActionsClass = 'flex shrink-0 items-center gap-1'
-
-export const optionDiscoveryMaxPainChartCellClass = optionDiscoveryChartWrapClass
-
-export const optionDiscoveryMaxPainCorpWarnClass = 'mt-0'
-
-export const optionDiscoveryMaxPainDisclaimerDetailsClass = 'rounded-md border border-border/60 px-3 py-2'
-
-export const optionDiscoveryMaxPainDisclaimerSummaryClass =
-  'cursor-pointer text-xs font-semibold text-muted-foreground'
-
-export const optionDiscoveryMaxPainDisclaimerBodyClass = 'mt-2 text-xs leading-snug text-muted-foreground'
-
 export const optionDiscoveryExpiryBubbleBaseClass = cn(
   'inline-flex flex-col items-center gap-0.5 rounded-full border px-2.5 py-1',
   'border-border/80 bg-secondary text-foreground transition-colors',

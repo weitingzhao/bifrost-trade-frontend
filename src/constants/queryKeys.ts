@@ -57,13 +57,9 @@ export const QUERY_KEYS = {
     optionPcr: (symbol: string) => ['research', 'option-pcr', symbol] as const,
     barStats: (symbol: string) => ['market', 'bar-stats', symbol] as const,
     discovery: {
-      expirations: ['research', 'discovery', 'expirations'] as const,
       snapshots: ['research', 'discovery', 'snapshots'] as const,
       ivTerm: ['research', 'discovery', 'iv-term'] as const,
       maxPain: ['research', 'discovery', 'max-pain'] as const,
-      greeksCoverage: ['research', 'discovery', 'greeks-coverage'] as const,
-      pluginStatus: ['research', 'discovery', 'plugin-status'] as const,
-      dailyChecklist: ['research', 'discovery', 'daily-checklist'] as const,
     },
     ivRadar: ['research', 'iv-radar'] as const,
     scan: ['research', 'scan'] as const,
@@ -90,14 +86,6 @@ export const QUERY_KEYS = {
       skewExtremes: (limit: number) => ['research', 'vol-surface', 'skew-extremes', limit] as const,
       atmIvTerm: (symbol: string) => ['research', 'vol-surface', 'atm-iv-term', symbol] as const,
       ivCone: (symbol: string) => ['research', 'vol-surface', 'iv-cone', symbol] as const,
-    },
-    opexCycle: {
-      current: (symbol: string, tradeDate: string) =>
-        ['research', 'opex-cycle', 'current', symbol, tradeDate] as const,
-      history: (symbol: string, cycles: number) =>
-        ['research', 'opex-cycle', 'history', symbol, cycles] as const,
-      pinAnalysis: (symbol: string, cycles: number) =>
-        ['research', 'opex-cycle', 'pin-analysis', symbol, cycles] as const,
     },
     hypothesis: {
       list: ['research', 'hypothesis', 'list'] as const,

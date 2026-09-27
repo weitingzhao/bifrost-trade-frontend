@@ -218,20 +218,15 @@ No raw `<table>` — re-export entry: [ScreenerPage.tsx](../src/pages/research/d
 
 No `watchlist.module.css` — quote cells use `watchlistQuoteLastClass` / `watchlistQuoteBaClass`; pie rings keep inline `conic-gradient`.
 
-## Option Discovery
+## Option contract detail
+
+The Option Discovery page is retired (its chain is Symbol › Chain, `SymbolChainFace.tsx`); what remains of
+`components/optionDiscovery/` is the contract detail the Positions inspector opens.
 
 | Pattern | Reference |
 |---------|-----------|
-| Page root + scope tokens | [discoveryUi.ts](../src/components/optionDiscovery/discoveryUi.ts) — re-exports `discoveryRootClass` from [discoveryCharts.module.css](../src/components/optionDiscovery/discoveryCharts.module.css) |
 | Component tokens (KV, tradability, exec chips) | [optionDiscoveryUi.ts](../src/components/optionDiscovery/optionDiscoveryUi.ts) |
-| Chain quotes (sticky hybrid) | [DiscoveryChainQuotesTable.tsx](../src/components/optionDiscovery/DiscoveryChainQuotesTable.tsx) |
-| Strike ladder | [DiscoveryStrikeLadderTable.tsx](../src/components/optionDiscovery/DiscoveryStrikeLadderTable.tsx) |
-| IV term sheet | [DiscoveryIvTermSheetTable.tsx](../src/components/optionDiscovery/DiscoveryIvTermSheetTable.tsx) |
-| Compare drawer | [DiscoveryCompareTable.tsx](../src/components/optionDiscovery/DiscoveryCompareTable.tsx) |
 | Contract Greeks / scenario | [DiscoveryContractGreeksTable.tsx](../src/components/optionDiscovery/DiscoveryContractGreeksTable.tsx), [DiscoveryScenarioTable.tsx](../src/components/optionDiscovery/DiscoveryScenarioTable.tsx) |
-| Side / Greeks / period segments | `SegmentControl` in [DiscoverySideToggle.tsx](../src/components/optionDiscovery/DiscoverySideToggle.tsx), quotes, IV term, contract detail, chart panel |
-
-**Chart geometry exception:** keep [discoveryCharts.module.css](../src/components/optionDiscovery/discoveryCharts.module.css) for `od-chart-expand-*`, SVG sizing, and `--od-max-pain-*` tokens only. No `optionContractDetail.module.css`.
 
 ## IV & Greeks (Research)
 

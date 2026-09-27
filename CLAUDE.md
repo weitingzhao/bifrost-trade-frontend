@@ -228,7 +228,7 @@ UI 改动后运行 `npm run check:legacy-css`。
 - 每个 `PageShell` 业务页的页头只用一个共用件；禁止手写页面级 `<h1>`。**新页与改版页用 [`PageHead`](src/components/layout/PageHead.tsx)**（设计 §16.10：说明进 ⓘ、时间戳位、meta、下划线 Tab、筛选放页头下方工具条；§16.13 新鲜度用 `useFreshReading` / `lib/freshness.ts`）。旧页仍用 [`PageHeader`](src/components/layout/PageHeader.tsx)，按组迁移中（样板：Backtest · Positions · Limits）。**同一遍过 §17 交互标准**（Owner 2026-09-25）：非就绪态用 `@bifrost/ui` `ViewState`（七种；失败只报一次、刷新失败是条带、`filtered` 的动作复位全部轴；DEV 可用 `?preview=` 预览）+ `lib/viewState.ts`；表格 `data-sr-table` / DS `standard` + 列型 `data-sr-col` / `col`；工具条 `data-sr-toolbar` + `ToolbarClear`；读数 `data-sr-kpi`。样式层是 `@bifrost/ui/styles/patterns`（按属性启用，不在 Tailwind 层里——同名属性会压过 Tailwind 类）
 - 铺在窗口底上的 KPI / 图表面板用 `Card` 或 `mat-card`；不要用 `bg-card` / `bg-secondary` 自己拼一个带框的块
 - **禁止**在新页面使用 Legacy 全局类 `.card`、`.process-section`、`.legacy-monitoring-shell` 作为页面外壳
-- Option Discovery 样式仅限页面 import：`discoveryCharts.css`（SVG/IV-term 表）+ Tailwind（`option-discovery-root`）；**不得**在新页面 import 或复用全局 Legacy shell
+- Option Discovery 页已退役（期权链在 Symbol › Chain）；`components/optionDiscovery/` 只剩 Positions 用的合约详情，样式走 Tailwind + `optionDiscoveryUi.ts`，**不得**在新页面复用全局 Legacy shell
 
 ### 模块归属与依赖方向（`module-placement-v1`）
 

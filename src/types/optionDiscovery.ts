@@ -38,23 +38,6 @@ export interface OptionSnapshotsPgResult {
   warning?: string
 }
 
-export interface OptionExpirationsResult {
-  symbol: string
-  expirations: string[]
-  strikes?: number[]
-  last_price?: number
-  error?: string
-  provider?: string
-}
-
-export interface MarketDataPluginStatus {
-  configured: boolean
-  tier: string
-  delay_notice: string
-  trades_enabled: boolean
-  daily_full_backfill_years: number
-}
-
 export interface MarketDataPluginDailyDimBlock {
   status?: string
   rows?: number
@@ -66,61 +49,11 @@ export interface MarketDataPluginDailyDimBlock {
   last_msg_age_s?: number | null
 }
 
-export type MarketDataPluginDailyChecklistDims = {
-  'daily-snapshot'?: MarketDataPluginDailyDimBlock
-  'daily-oi'?: MarketDataPluginDailyDimBlock
-  'daily-max-pain'?: MarketDataPluginDailyDimBlock
-  'daily-corporate'?: MarketDataPluginDailyDimBlock
-  'daily-ws-alive'?: MarketDataPluginDailyDimBlock
-}
-
-export interface MaxPainStrikePoint {
-  strike: number
-  pain: number
-  pain_call: number
-  pain_put: number
-  call_oi: number
-  put_oi: number
-}
-
-export interface MaxPainComputeResponse {
-  ok: boolean
-  error?: string
-  symbol?: string
-  expiry?: string
-  trade_date?: string
-  max_pain_strike?: number
-  min_pain_value?: number
-  total_oi?: number
-  underlying_close?: number | null
-  distance_to_max_pain_pct?: number | null
-  pain_by_strike?: MaxPainStrikePoint[]
-  recent_corporate_action?: boolean
-  oi_basis?: string
-}
-
 export interface MaxPainHistoryPoint {
   trade_date: string
   max_pain_strike: number
   total_oi: number
   underlying_close?: number | null
-}
-
-export interface IvTermStructurePoint {
-  expiration: string
-  dte_days: number
-  atm_iv: number | null
-  iv_call?: number | null
-  iv_put?: number | null
-  strike?: number
-}
-
-export interface IvTermStructureResponse {
-  ok: boolean
-  symbol: string
-  underlying_price?: number
-  points: IvTermStructurePoint[]
-  error?: string
 }
 
 export interface IvVolatilityConePoint {

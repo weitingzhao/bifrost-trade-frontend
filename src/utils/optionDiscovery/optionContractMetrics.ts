@@ -8,48 +8,6 @@ export function normalizeOptionRight(r: string): 'C' | 'P' | null {
   return null
 }
 
-export function optionContractKey(row: OptionSnapshotRow): string | null {
-  const nr = normalizeOptionRight(row.right)
-  if (nr == null || !Number.isFinite(row.strike)) return null
-  return `${row.strike}|${nr}`
-}
-
-export function defaultSnapshotContractKey(
-  rows: OptionSnapshotRow[],
-  underlyingFromResponse: number | null,
-  fallbackSpot: number | null,
-): string | null {
-  if (rows.length === 0) return null
-  const spot =
-    underlyingFromResponse != null && Number.isFinite(underlyingFromResponse) && underlyingFromResponse > 0
-      ? underlyingFromResponse
-      : fallbackSpot != null && Number.isFinite(fallbackSpot) && fallbackSpot > 0
-        ? fallbackSpot
-        : null
-  if (spot == null) {
-    const first = rows[0]
-    return first ? optionContractKey(first) : null
-  }
-  const strikes = [...new Set(rows.map(r => r.strike).filter(s => Number.isFinite(s)))] as number[]
-  if (strikes.length === 0) return optionContractKey(rows[0]!) ?? null
-  strikes.sort((a, b) => a - b)
-  let bestK = strikes[0]!
-  let bestD = Math.abs(bestK - spot)
-  for (const k of strikes) {
-    const d = Math.abs(k - spot)
-    if (d < bestD || (d === bestD && k < bestK)) {
-      bestD = d
-      bestK = k
-    }
-  }
-  const callRow = rows.find(r => r.strike === bestK && normalizeOptionRight(r.right) === 'C')
-  if (callRow) return optionContractKey(callRow)
-  const putRow = rows.find(r => r.strike === bestK && normalizeOptionRight(r.right) === 'P')
-  if (putRow) return optionContractKey(putRow)
-  const anyRow = rows.find(r => r.strike === bestK)
-  return anyRow ? optionContractKey(anyRow) : optionContractKey(rows[0]!) ?? null
-}
-
 export interface DerivedMetrics {
   spread: number | null
   spreadPct: number | null

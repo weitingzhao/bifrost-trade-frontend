@@ -79,7 +79,9 @@ describe('the stamps the app writes', () => {
   it('finds the Save buttons at all, so a silent zero is not a pass', () => {
     // Without this the sweep below passes on an empty list — which is exactly
     // the shape of the bug it exists to catch.
-    expect(savedStamps().length).toBeGreaterThan(10)
+    // The floor was 10 while the retired Symbol lab sections (never mounted since
+    // 2026-09-24) still carried eight Save buttons; they went with the orphans.
+    expect(savedStamps().length).toBeGreaterThan(5)
   })
 
   it('leaves no stamp the census cannot place or excuse', () => {

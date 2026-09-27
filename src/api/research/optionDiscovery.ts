@@ -1,54 +1,8 @@
-import type {
-  OptionExpirationsResult,
-  OptionSnapshotRow,
-  OptionSnapshotsPgResult,
-  MaxPainComputeResponse,
-  MaxPainHistoryPoint,
-  IvTermStructureResponse,
-  IvTermStructurePoint,
-  IvVolatilityConeResponse,
-  IvVolatilityConePoint,
-  GreeksCoverageResponse,
-  LiquiditySummaryResponse,
-  RelativeValueResponse,
-  MarketDataPluginStatus,
-} from '@/types/optionDiscovery'
+import type { OptionSnapshotRow, OptionSnapshotsPgResult, MaxPainHistoryPoint, IvVolatilityConeResponse, IvVolatilityConePoint, GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueResponse } from '@/types/optionDiscovery'
 import { withValidation } from '@/lib/apiValidation'
-import {
-  OptionExpirationsResponseSchema,
-  OptionSnapshotsPgResponseSchema,
-} from '@/lib/schemas/optionDiscovery'
+import { OptionSnapshotsPgResponseSchema } from '@/lib/schemas/optionDiscovery'
 
 import { marketDataPluginUrl, researchUrl } from '@/lib/devApiUrl'
-
-const MARKET_DATA_PLUGIN_UNAVAILABLE =
-  'Market Data Plugin unavailable — check platform-api / Plugin health'
-
-/** Plugin health as Discovery "status" stand-in (configured when reachable). */
-export async function fetchMarketDataPluginStatus(): Promise<MarketDataPluginStatus> {
-  try {
-    const r = await fetch(marketDataPluginUrl('/health'))
-    const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
-    const ok = r.ok && (j.status === 'ok' || j.status === 'degraded')
-    return {
-      configured: ok,
-      tier: typeof j.service === 'string' ? String(j.service) : 'market-data-plugin',
-      delay_notice: ok
-        ? 'Market Data Plugin (Polygon ingest via platform proxy)'
-        : MARKET_DATA_PLUGIN_UNAVAILABLE,
-      trades_enabled: ok,
-      daily_full_backfill_years: 0,
-    }
-  } catch {
-    return {
-      configured: false,
-      tier: 'unavailable',
-      delay_notice: MARKET_DATA_PLUGIN_UNAVAILABLE,
-      trades_enabled: false,
-      daily_full_backfill_years: 0,
-    }
-  }
-}
 
 function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
   return {
@@ -102,34 +56,6 @@ function dteFromExpiry(expiry: string, asOf?: string | null): number {
   return Math.max(0, Math.round(ms / 86_400_000))
 }
 
-export async function fetchOptionExpirations(
-  symbol: string,
-  provider: 'auto' | 'ib' | 'massive' = 'massive',
-  options?: { expiration?: string },
-): Promise<OptionExpirationsResult> {
-  const s = (symbol || '').trim()
-  if (!s) return { symbol: '', expirations: [], error: 'symbol is required' }
-  const exp = options?.expiration ? `&expiration=${encodeURIComponent(options.expiration)}` : ''
-  const r = await fetch(
-    `${researchUrl('/research/option-expirations')}?symbol=${encodeURIComponent(s)}&provider=${encodeURIComponent(provider)}${exp}`,
-  )
-  const j = await r.json().catch(() => ({}))
-  withValidation(OptionExpirationsResponseSchema, 'fetchOptionExpirations')(j)
-  const strikes: number[] | undefined = Array.isArray(j.strikes)
-    ? (j.strikes.filter((x: unknown) => typeof x === 'number' && Number.isFinite(x)) as number[])
-    : undefined
-  const last_price =
-    j.last_price != null && Number.isFinite(Number(j.last_price)) ? Number(j.last_price) : undefined
-  return {
-    symbol: j.symbol ?? s,
-    expirations: Array.isArray(j.expirations) ? j.expirations : [],
-    ...(strikes !== undefined ? { strikes } : {}),
-    ...(last_price !== undefined ? { last_price } : {}),
-    error: j.error,
-    provider: typeof j.provider === 'string' ? j.provider : undefined,
-  }
-}
-
 export async function fetchOptionSnapshotsPg(
   symbol: string,
   expiration: string,
@@ -155,66 +81,6 @@ export async function fetchOptionSnapshotsPg(
     rows,
     error: typeof j.error === 'string' ? j.error : undefined,
     warning: typeof j.warning === 'string' ? j.warning : undefined,
-  }
-}
-
-export async function fetchMaxPainCompute(params: {
-  symbol: string
-  expiry: string
-  tradeDate?: string
-}): Promise<MaxPainComputeResponse> {
-  const sym = (params.symbol || '').trim().toUpperCase()
-  const exp = (params.expiry || '').trim()
-  if (!sym || !exp) return { ok: false, error: 'symbol and expiry are required' }
-  const q = new URLSearchParams({ symbol: sym, expiry: exp })
-  if (params.tradeDate?.trim()) q.set('trade_date', params.tradeDate.trim())
-  const r = await fetch(`${marketDataPluginUrl('/market/analytics/max-pain/compute')}?${q.toString()}`)
-  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
-  if (!r.ok || j.ok === false) {
-    const detail =
-      typeof j.detail === 'string'
-        ? j.detail
-        : typeof j.error === 'string'
-          ? j.error
-          : `HTTP ${r.status}`
-    return { ok: false, error: detail }
-  }
-  const pts = Array.isArray(j.points)
-    ? j.points
-    : Array.isArray(j.pain_by_strike)
-      ? j.pain_by_strike
-      : []
-  return {
-    ok: true,
-    symbol: typeof j.symbol === 'string' ? j.symbol : sym,
-    expiry: typeof j.expiry === 'string' ? j.expiry : undefined,
-    trade_date: typeof j.trade_date === 'string' ? j.trade_date : undefined,
-    max_pain_strike: typeof j.max_pain_strike === 'number' ? j.max_pain_strike : undefined,
-    min_pain_value:
-      typeof j.total_pain_at_strike === 'number'
-        ? j.total_pain_at_strike
-        : typeof j.min_pain_value === 'number'
-          ? j.min_pain_value
-          : undefined,
-    total_oi: typeof j.total_oi === 'number' ? j.total_oi : undefined,
-    underlying_close:
-      j.underlying_close != null && Number.isFinite(Number(j.underlying_close))
-        ? Number(j.underlying_close)
-        : null,
-    distance_to_max_pain_pct:
-      j.distance_to_max_pain_pct != null && Number.isFinite(Number(j.distance_to_max_pain_pct))
-        ? Number(j.distance_to_max_pain_pct)
-        : null,
-    pain_by_strike: pts.map((p: Record<string, unknown>) => ({
-      strike: Number(p.strike),
-      pain: Number(p.pain),
-      pain_call: Number(p.pain_call ?? 0),
-      pain_put: Number(p.pain_put ?? 0),
-      call_oi: Number(p.call_oi ?? 0),
-      put_oi: Number(p.put_oi ?? 0),
-    })),
-    recent_corporate_action: Boolean(j.recent_corporate_action),
-    oi_basis: typeof j.oi_basis === 'string' ? j.oi_basis : typeof j.source === 'string' ? j.source : undefined,
   }
 }
 
@@ -254,42 +120,6 @@ export async function fetchMaxPainComputeHistory(params: {
           ? Number(row.underlying_close)
           : null,
     })),
-  }
-}
-
-export async function fetchIvTermStructure(
-  symbol: string,
-  expirations: string[],
-  source = 'massive',
-): Promise<IvTermStructureResponse> {
-  const params = new URLSearchParams({
-    symbol,
-    expirations: expirations.join(','),
-    source,
-  })
-  const r = await fetch(`${researchUrl('/research/iv-term-structure')}?${params}`)
-  const j = await r.json().catch(() => ({}))
-  const pts: IvTermStructurePoint[] = Array.isArray(j.points)
-    ? j.points.map((p: Record<string, unknown>) => ({
-        expiration: String(p.expiration ?? ''),
-        dte_days: Number(p.dte_days ?? 0),
-        atm_iv: p.atm_iv != null ? Number(p.atm_iv) : null,
-        iv_call: p.iv_call != null ? Number(p.iv_call) : null,
-        iv_put: p.iv_put != null ? Number(p.iv_put) : null,
-        strike: p.strike != null ? Number(p.strike) : undefined,
-      }))
-    : []
-  const errMsg = (() => {
-    if (j.error != null && String(j.error).trim() !== '') return String(j.error)
-    if (!r.ok) return `HTTP ${r.status}`
-    return undefined
-  })()
-  return {
-    ok: Boolean(j.ok) && r.ok,
-    symbol: j.symbol ?? symbol,
-    underlying_price: j.underlying_price != null ? Number(j.underlying_price) : undefined,
-    points: pts,
-    error: errMsg,
   }
 }
 

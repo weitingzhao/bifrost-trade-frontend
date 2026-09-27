@@ -6,7 +6,6 @@
  * read the same sentence from the same numbers.
  */
 import type { ExhibitPayload } from '@/api/research/exhibit'
-import type { VolSurfaceResidualRow } from '@/api/research/volSurface'
 import type { LensBand } from '@/api/research/lenses'
 
 function finiteOrNull(v: unknown): number | null {
@@ -31,17 +30,6 @@ export function ordinal(n: number): string {
   return `${r}${mod10 === 1 ? 'st' : mod10 === 2 ? 'nd' : mod10 === 3 ? 'rd' : 'th'}`
 }
 
-/* ------------------------------------------------------------------ skew */
-
-/** "91st percentile of its own year (120 days)" — or null before there is a year. */
-export function skewPercentileText(readings: Record<string, unknown> | undefined): string | null {
-  const pctile = finiteOrNull(readings?.slope_pctile_252d)
-  if (pctile == null) return null
-  const days = finiteOrNull(readings?.history_days)
-  const where = pctile < 1 ? 'bottom of its own year' : pctile > 99 ? 'top of its own year' : `${ordinal(pctile)} percentile of its own year`
-  return `${where}${days != null ? ` (${days} days)` : ''}`
-}
-
 export interface TermStructureView {
   label: 'backwardation' | 'contango' | 'flat'
   /** near − far ATM vol, as a fraction. */
@@ -53,83 +41,8 @@ export interface TermStructureView {
   line: string
 }
 
-/** The term-structure reading of the term_slope exhibit, or null without two expiries. */
-export function termStructureView(exhibit: ExhibitPayload | undefined): TermStructureView | null {
-  const r = exhibit?.readings
-  const back = finiteOrNull(r?.backwardation)
-  const label = r?.term_structure
-  if (back == null || (label !== 'backwardation' && label !== 'contango' && label !== 'flat')) return null
-  const nearVol = finiteOrNull(r?.near_vol)
-  const farVol = finiteOrNull(r?.far_vol)
-  const nearDte = finiteOrNull(r?.near_dte)
-  const farDte = finiteOrNull(r?.far_dte)
-  const word = label === 'backwardation' ? 'Backwardation' : label === 'contango' ? 'Contango' : 'Flat term'
-  const legs =
-    nearVol != null && farVol != null
-      ? ` — near ${pctText(nearVol)}${nearDte != null ? ` (${nearDte}d)` : ''} vs far ${pctText(farVol)}${farDte != null ? ` (${farDte}d)` : ''}`
-      : ''
-  const pts = `${back >= 0 ? '+' : '−'}${(Math.abs(back) * 100).toFixed(1)} pts`
-  return { label, backwardation: back, nearVol, farVol, nearDte, farDte, line: `${word} ${pts}${legs}` }
-}
-
-export interface StrikeResidual {
-  strike: number
-  z: number
-  ivMarket: number | null
-  ivFitted: number | null
-}
-
 /** ±30% of spot — beyond that the fit has few quotes and its residuals are noise, not mispricing. */
 export const STRIKE_PICK_MAX_ABS_LOG_MONEYNESS = 0.35
-
-/**
- * The strikes priced furthest above (rich) and below (cheap) the SVI fit.
- *
- * A premium seller wants the rich ones; a buyer the cheap ones. Only rows a
- * full z away count — inside that the "mispricing" is the fit's own noise —
- * and only strikes near enough to spot to be tradeable wings.
- */
-export function richCheapStrikes(
-  rows: readonly VolSurfaceResidualRow[],
-  {
-    limit = 3,
-    minAbsZ = 1,
-    maxAbsLogMoneyness = STRIKE_PICK_MAX_ABS_LOG_MONEYNESS,
-  }: { limit?: number; minAbsZ?: number; maxAbsLogMoneyness?: number } = {},
-): { rich: StrikeResidual[]; cheap: StrikeResidual[] } {
-  const usable: StrikeResidual[] = []
-  for (const r of rows) {
-    if (r.strike == null || r.residual_z == null || !Number.isFinite(r.residual_z)) continue
-    if (r.log_moneyness != null && Math.abs(r.log_moneyness) > maxAbsLogMoneyness) continue
-    if (Math.abs(r.residual_z) < minAbsZ) continue
-    usable.push({ strike: r.strike, z: r.residual_z, ivMarket: r.iv_market, ivFitted: r.iv_fitted })
-  }
-  const rich = usable.filter((s) => s.z > 0).sort((a, b) => b.z - a.z).slice(0, limit)
-  const cheap = usable.filter((s) => s.z < 0).sort((a, b) => a.z - b.z).slice(0, limit)
-  return { rich, cheap }
-}
-
-/* ------------------------------------------------------------------ opex */
-
-/** "Pin magnet 230 (1.9% away) · pinned 4 of 24 cycles (17%)" — or null without a strike. */
-export function pinMagnetLine(exhibit: ExhibitPayload | undefined): string | null {
-  const r = exhibit?.readings
-  const strike = finiteOrNull(r?.max_pain_strike)
-  if (strike == null) return null
-  // pin_pct_distance is unsigned; the direction comes from strike vs close.
-  const distance = finiteOrNull(r?.pin_pct_distance)
-  const close = finiteOrNull(r?.close)
-  const side = close == null || close === strike ? 'from' : strike < close ? 'below' : 'above'
-  const away = distance == null ? '' : ` (${pctText(Math.abs(distance))} ${side} spot)`
-  const h = exhibit?.history_summary
-  const cycles = finiteOrNull(h?.cycles) ?? 0
-  const rate = finiteOrNull(h?.pin_rate)
-  const record =
-    cycles > 0 && rate != null
-      ? ` · pinned ${finiteOrNull(h?.pinned) ?? Math.round(rate * cycles)} of ${cycles} cycles (${pctText(rate, 0)})`
-      : ' · no settled cycles yet'
-  return `Pin magnet ${strike}${away}${record}`
-}
 
 /* ------------------------------------------------------------------- gex */
 

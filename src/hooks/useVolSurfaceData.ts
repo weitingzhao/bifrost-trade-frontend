@@ -2,20 +2,7 @@
  * TanStack Query hooks for Vol Surface (SVI) — Wave RS-B-Surface2.
  */
 import { useQuery } from '@tanstack/react-query'
-import {
-  fetchAtmIvTerm,
-  type AtmIvTerm,
-  fetchIvCone,
-  type IvCone,
-  fetchResiduals,
-  fetchSkewExtremes,
-  fetchTermStructure,
-  fetchVolSurfaceFit,
-  type SkewExtremesResponse,
-  type TermStructurePoint,
-  type VolSurfaceFitRow,
-  type VolSurfaceResidualRow,
-} from '@/api/research/volSurface'
+import { fetchAtmIvTerm, type AtmIvTerm, fetchIvCone, type IvCone, fetchResiduals, fetchSkewExtremes, fetchVolSurfaceFit, type SkewExtremesResponse, type VolSurfaceFitRow, type VolSurfaceResidualRow } from '@/api/research/volSurface'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
 const STALE_MS = 5 * 60_000
@@ -24,15 +11,6 @@ export function useVolSurfaceFit(symbol: string, tradeDate?: string) {
   return useQuery<VolSurfaceFitRow[]>({
     queryKey: QUERY_KEYS.research.volSurface.fit(symbol, tradeDate ?? 'latest'),
     queryFn: () => fetchVolSurfaceFit(symbol, tradeDate),
-    enabled: Boolean(symbol),
-    staleTime: STALE_MS,
-  })
-}
-
-export function useTermStructure(symbol: string, tradeDate?: string) {
-  return useQuery<TermStructurePoint[]>({
-    queryKey: QUERY_KEYS.research.volSurface.termStructure(symbol, tradeDate ?? 'latest'),
-    queryFn: () => fetchTermStructure(symbol, tradeDate),
     enabled: Boolean(symbol),
     staleTime: STALE_MS,
   })

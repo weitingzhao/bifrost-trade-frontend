@@ -98,43 +98,6 @@ export async function fetchTerrain(symbol: string, date?: string) {
   return res.json() as Promise<{ terrain: TerrainData; symbol: string; trade_date: string }>
 }
 
-/** Compact regime timeline point (no invented history — only real API rows). */
-export interface TerrainRegimePoint {
-  trade_date: string
-  regime: string
-}
-
-/**
- * The last `limit` regimes, newest last, from history rows already in hand.
- *
- * This used to be a fetcher, and it cost five requests to answer: one
- * `forecast/terrain` for the latest point, then one more per prior weekday,
- * walked back a day at a time. Two of those were pure waste — the caller
- * already ran a `['terrain', sym]` query hitting the identical URL, which
- * React Query could not dedupe because the keys differed, and the same page
- * already fetched `forecast/terrain/history?limit=30`, whose rows carry both
- * `trade_date` and `regime`.
- *
- * So it is not a fetch. It is a read of rows the page has.
- */
-export function recentTerrainRegimes(
-  rows: readonly TerrainData[] | null | undefined,
-  limit = 5,
-): TerrainRegimePoint[] {
-  if (!rows?.length) return []
-  const byDate = new Map<string, string>()
-  for (const t of rows) {
-    const d = String(t?.trade_date ?? '').slice(0, 10)
-    // Newest first from the API; keep the first reading for each day.
-    if (!d || !t?.regime || byDate.has(d)) continue
-    byDate.set(d, t.regime)
-  }
-  return [...byDate.entries()]
-    .map(([trade_date, regime]) => ({ trade_date, regime }))
-    .sort((a, b) => a.trade_date.localeCompare(b.trade_date))
-    .slice(-limit)
-}
-
 export async function fetchTerrainIntraday(symbol: string, date?: string) {
   const qs = date ? `?symbol=${symbol}&date=${date}` : `?symbol=${symbol}`
   const path = `/research/terrain/intraday${qs}`
@@ -331,17 +294,6 @@ export interface VolatilitySmileRow {
   computed_at: string
 }
 
-export interface AtmIvRow {
-  symbol: string
-  trade_date: string
-  expiry: string
-  atm_strike: number
-  atm_iv: number
-  underlying_price: number | null
-  iv_source: string | null
-  computed_at: string | null
-}
-
 export async function fetchVolatilitySmile(symbol: string, date?: string) {
   const params = new URLSearchParams({ symbol })
   if (date) params.set('trade_date', date)
@@ -363,32 +315,6 @@ export async function fetchVolatilitySmile(symbol: string, date?: string) {
     rows: VolatilitySmileRow[]
     count: number
     symbol: string
-    trade_date: string | null
-  }>
-}
-
-/** ATM IV from Research options analytics (`/analytics/options/atm-iv`). */
-export async function fetchAtmIv(symbol: string, date?: string) {
-  const params = new URLSearchParams({ symbol })
-  if (date) params.set('trade_date', date)
-  const path = `/analytics/options/atm-iv?${params}`
-  const res = await fetch(researchEngineUrl(path))
-  if (res.status === 404) {
-    return { rows: [] as AtmIvRow[], count: 0, symbol, trade_date: date ?? null }
-  }
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<{
-    rows: AtmIvRow[]
-    count: number
-    symbol: string | null
     trade_date: string | null
   }>
 }
@@ -440,12 +366,6 @@ export function fetchOrderSentiment(symbol?: string, date?: string) {
   if (symbol) params.set('symbol', symbol)
   if (date) params.set('trade_date', date)
   return get<{ rows: OrderSentiment[]; count: number }>(`/research/flow/sentiment?${params}`)
-}
-
-export function fetchMultiLegTrades(symbol: string, date?: string) {
-  const params = new URLSearchParams({ symbol })
-  if (date) params.set('trade_date', date)
-  return get<{ rows: MultiLegTrade[]; count: number }>(`/research/flow/multi-leg?${params}`)
 }
 
 // --- Event Radar ---
@@ -604,14 +524,6 @@ export interface ForecastHitRateSummary {
   /** Settlements left out of the rates: drawn from an input fault (research 0.127.0). */
   input_faults?: number
   rows: ForecastSettlement[]
-}
-
-export function fetchForecastHitRate(symbol: string, lookbackDays = 30) {
-  const params = new URLSearchParams({
-    symbol: symbol.trim().toUpperCase(),
-    lookback_days: String(lookbackDays),
-  })
-  return get<ForecastHitRateSummary>(`/research/forecast/hit-rate?${params}`)
 }
 
 /** One terrain regime's forecast reliability — C2 (research-loop-automation). */

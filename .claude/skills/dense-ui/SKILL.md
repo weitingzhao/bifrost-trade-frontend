@@ -90,9 +90,9 @@ Copy and track:
 | Option Screener symbol groups + contracts | `src/pages/research/data/optionScreener/OptionScreenerSymbolGroup.tsx`, `OptionScreenerContractsTable.tsx` |
 | Stock Watchlist stock/option tables | `src/pages/research/data/watchlist/WatchlistStockTable.tsx`, `WatchlistOptionTable.tsx` |
 | Stock Watchlist portfolio risk | `src/pages/research/data/watchlist/PortfolioRiskPower.tsx`, `WatchlistMetricTable.tsx` |
-| Option Discovery chain (sticky hybrid) | `src/components/optionDiscovery/DiscoveryChainQuotesTable.tsx` |
-| Option Discovery strike / IV / compare / contract tables | `DiscoveryStrikeLadderTable.tsx`, `DiscoveryIvTermSheetTable.tsx`, `DiscoveryCompareTable.tsx`, `DiscoveryContractGreeksTable.tsx`, `DiscoveryScenarioTable.tsx` |
-| Option Discovery tokens | `src/components/optionDiscovery/discoveryUi.ts`, `src/components/optionDiscovery/optionDiscoveryUi.ts` |
+| Option chain (Symbol › Chain; the Discovery page is retired) | `src/pages/research/analyze/symbol/SymbolChainFace.tsx` |
+| Option contract detail tables (Positions inspector) | `DiscoveryContractGreeksTable.tsx`, `DiscoveryScenarioTable.tsx` |
+| Option contract detail tokens | `src/components/optionDiscovery/optionDiscoveryUi.ts` |
 | IV & Greeks history table | `src/pages/research/analyze/greeks/GreeksHistoryTable.tsx` |
 | IV & Greeks BS tooltip + page tokens | `src/pages/research/analyze/greeks/GreeksCalcTooltip.tsx`, `src/pages/research/analyze/greeks/greeksUi.ts` |
 | Strategy Instances grouped list | `src/components/strategy/InstancesGroupedTable.tsx`, `src/components/strategy/instances/instancesUi.ts` |

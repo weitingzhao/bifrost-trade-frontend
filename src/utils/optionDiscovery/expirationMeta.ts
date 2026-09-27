@@ -1,4 +1,4 @@
-import { utcMsForNyWallClock } from '@/utils/nyWallClock'
+
 
 export type ExpirationKind = 'all' | 'standard' | 'weeklies' | 'quarterlies'
 
@@ -49,12 +49,6 @@ export function expirationBadge(kind: Exclude<ExpirationKind, 'all'>): string {
   return ''
 }
 
-export function expirationKindLabel(kind: Exclude<ExpirationKind, 'all'>): string {
-  if (kind === 'weeklies') return 'Weeklies'
-  if (kind === 'quarterlies') return 'Quarterlies'
-  return 'Standard'
-}
-
 export function expirationDaysFromToday(expiration: string): string {
   const parts = parseExpirationDateParts(expiration)
   if (!parts) return '—'
@@ -68,15 +62,6 @@ export function expirationDaysFromToday(expiration: string): string {
   const days = Math.round(diffMs / (24 * 60 * 60 * 1000))
   if (days < 0) return '—'
   return days === 1 ? '1 day' : `${days} days`
-}
-
-export function isOptionExpirationPastNyClose(expiration: string, nowMs: number = Date.now()): boolean {
-  const parts = parseExpirationDateParts(expiration)
-  if (!parts) return false
-  const ymd = `${parts.y}-${String(parts.m + 1).padStart(2, '0')}-${String(parts.d).padStart(2, '0')}`
-  const closeUtcMs = utcMsForNyWallClock(ymd, 16, 0)
-  if (closeUtcMs == null) return false
-  return nowMs > closeUtcMs
 }
 
 export function formatExpirationDisplay(expiration: string): string {

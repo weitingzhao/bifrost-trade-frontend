@@ -14,7 +14,7 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { RailPanel } from './OptionScreenerRail'
-import { SOURCE_CAP, type ScreenerSource } from './useScreenerSources'
+import type { ScreenerSource } from './useScreenerSources'
 
 const DOT: Record<string, string> = {
   scan: 'bg-warning',
@@ -70,12 +70,7 @@ export function OptionScreenerSources({
               key={s.id}
               type="button"
               disabled={dead}
-              title={
-                s.absent ??
-                (n > SOURCE_CAP
-                  ? `${s.label} holds ${n}; a click takes the first ${SOURCE_CAP}. The engine costs roughly ten seconds a name against a 60-second abort.`
-                  : `Screen the ${n} names this list holds`)
-              }
+              title={s.absent ?? `Screen the ${n} names this list holds`}
               onClick={() => onPickSource(s)}
               className={cn(
                 'flex items-center gap-2 rounded-md border px-2 py-1.5 text-left text-dense-meta',
@@ -89,7 +84,7 @@ export function OptionScreenerSources({
               <span className={cn('size-2 shrink-0 rounded-full', dead ? 'bg-muted' : DOT[s.id])} />
               <span className="min-w-0 flex-1 truncate">{s.label}</span>
               <span className="shrink-0 font-mono text-dense-caption tabular-nums text-muted-foreground">
-                {dead ? 'no store' : n > SOURCE_CAP ? `${SOURCE_CAP} of ${n}` : n}
+                {dead ? 'no store' : n}
               </span>
             </button>
           )
@@ -140,11 +135,6 @@ export function OptionScreenerSources({
             </button>
           )}
         </div>
-        {/* Stated once, not on every button: the cap is the engine's, and a
-            silent limit reads as a bug. */}
-        <p className="m-0 text-dense-caption leading-relaxed text-muted-foreground">
-          A source takes its first {SOURCE_CAP} — the engine costs about ten seconds a name.
-        </p>
       </div>
     </RailPanel>
   )

@@ -10,10 +10,9 @@
  * - **Live, no Run button.** The engine is asked once per name, structure and
  *   earnings choice, at the widest window a slider can reach; the six sliders
  *   filter that in the browser (`screenerModel.ts`). A drag never refetches.
- *   One request per name, because three in one request ran past the 60-second
- *   abort at that window (`useScreenerChain.ts`) — measured 2026-09-23. Since
- *   the engine fix of 2026-09-27 three names answer in 0.3 s and eleven in
- *   under 2 s, so that split no longer rests on a measurement.
+ *   One request per name (`useScreenerChain.ts`): names fill in as they
+ *   answer and one that fails costs only itself. A source hands over its
+ *   whole list — the three-name cap went with the engine fix of 2026-09-27.
  * - **The table is always drawn**, and when it has nothing in it the panel says
  *   which of the reasons it is — no names picked, screening, the engine
  *   returned no chain, or every contract fails a filter.
@@ -164,7 +163,7 @@ export default function OptionScreenerPage() {
         kind: 'empty',
         title: `Screening ${symbols.length} name${symbols.length === 1 ? '' : 's'}…`,
         detail:
-          'About ten seconds a name. Once it answers the sliders are live — moving one never re-screens; changing the names, the structure or earnings does.',
+          'Once it answers the sliders are live — moving one never re-screens; changing the names, the structure or earnings does.',
       }
     }
     if (groups.length === 0) {
@@ -193,7 +192,7 @@ export default function OptionScreenerPage() {
     // Replace, never accumulate: the design's source buttons are exclusive.
     if (!source.symbols) return
     setSourceId(source.id)
-    setSymbols(source.take)
+    setSymbols(source.symbols)
     setSelected(null)
   }
 

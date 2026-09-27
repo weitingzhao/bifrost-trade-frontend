@@ -19,15 +19,13 @@
  * rather than left out, because a picker that silently has three options where
  * the design has four reads as a smaller idea rather than a missing one.
  *
- * ## Why a source is capped
+ * ## A source hands over the whole list
  *
- * The screener is slow enough that the list size is a design constraint, not
- * a detail. Measured 2026-09-22: two names answer in 15s, three in 31s, and
- * five and eleven both exceed the client's own 60-second abort — the page
- * shows a timeout instead of a result. Roughly ten seconds a name. So a
- * source hands over the first few and says how many it left: a button that
- * fills the box with 121 names and then always times out is worse than one
- * that takes three and explains itself.
+ * Until 2026-09-27 a source took its first three: the engine cost about ten
+ * seconds a name (measured 2026-09-22) and five names ran past the 60-second
+ * abort. The engine fix of 2026-09-27 took that away — three names answer in
+ * 0.3 s, eleven in under 2 s — and the Owner lifted the cap the same day. A
+ * click now screens every name the list holds.
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -37,24 +35,14 @@ import { useWatchlist } from '@/hooks/useWatchlist'
 export interface ScreenerSource {
   id: string
   label: string
-  /** What the source holds. Null when this side has no store for it. */
+  /** What the source holds, and what a click screens. Null when this side has no store for it. */
   symbols: string[] | null
-  /** What a click actually takes — the first `SOURCE_CAP` of them. */
-  take: string[]
   /** Why there are no symbols, when there are none. */
   absent?: string
 }
 
 /** The scan's own page size — the ranking is a page, not a universe. */
 const SCAN_PAGE = 500
-
-/**
- * How many symbols a source hands over.
- *
- * Measured against the engine, not chosen: two names answer in 15s, three in
- * 31s, and five already exceeds the 60-second abort. Three is what fits.
- */
-export const SOURCE_CAP = 3
 
 export function useScreenerSources(): { sources: ScreenerSource[]; loading: boolean } {
   const watchlist = useWatchlist()
@@ -74,24 +62,16 @@ export function useScreenerSources(): { sources: ScreenerSource[]; loading: bool
       .filter((r) => r.lens_flags?.iv_rank === 'hot')
       .map((r) => r.symbol)
 
-    const capped = (id: string, label: string, symbols: string[]): ScreenerSource => ({
-      id,
-      label,
-      symbols,
-      take: symbols.slice(0, SOURCE_CAP),
-    })
-
     return [
-      capped('scan', 'Option Scan · IV-rich today', [...new Set(hot)]),
+      { id: 'scan', label: 'Option Scan · IV-rich today', symbols: [...new Set(hot)] },
       {
         id: 'explorer',
         label: 'Stock Explorer · a saved screen',
         symbols: null,
-        take: [],
         absent: 'nothing on this side saves a screen, so there is no list to pull',
       },
-      capped('book', 'In the book', names(stk.filter((i) => i.source === 'position'))),
-      capped('watch', 'Watchlist', names(stk)),
+      { id: 'book', label: 'In the book', symbols: names(stk.filter((i) => i.source === 'position')) },
+      { id: 'watch', label: 'Watchlist', symbols: names(stk) },
     ]
   }, [watchlist.data, scan.data])
 

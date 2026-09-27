@@ -2,16 +2,16 @@
  * The engine, asked once per name, at the widest window a slider can reach —
  * the sliders then filter in the browser (see `screenerModel.ts`).
  *
- * One request per name rather than one for the list. Measured 2026-09-23 on
- * DEV: a single name at the widest window answers in about 15 s, and three in
- * one request ran past the client's 60-second abort, so a list screened as a
- * whole could only ever come back as a timeout. Asked separately, each name
- * stays well inside the abort even if the engine serves them in turn; names
- * fill in as they answer, and one that times out costs only itself.
+ * One request per name rather than one for the list: names fill in as they
+ * answer, one that fails costs only itself, and a name already screened is
+ * cached when it turns up in another source. The split began as a latency
+ * workaround (2026-09-23: about 15 s a name, three past the 60-second abort);
+ * since the engine fix of 2026-09-27 a name answers in about 0.1 s, and the
+ * split stays for those three reasons.
  *
  * Keyed by the name, the structure and the earnings choice, and nothing else:
- * a slider never refetches. Cached for five minutes, because the call is slow
- * and going back to a list already screened should not be.
+ * a slider never refetches. Cached for five minutes, so going back to a list
+ * already screened does not ask again.
  */
 import { useQueries } from '@tanstack/react-query'
 import { fetchScreenerResults } from '@/api/research'
@@ -29,7 +29,7 @@ export interface ScreenerChain {
 
 function reasonFor(error: unknown): string {
   if (error instanceof Error && error.name === 'AbortError') {
-    return 'no answer inside 60 s — the engine costs about ten seconds a name'
+    return 'no answer inside 60 s'
   }
   return error instanceof Error ? error.message : 'the request failed'
 }
@@ -60,7 +60,7 @@ export function useScreenerChain(args: {
         }),
       enabled,
       staleTime: 5 * 60_000,
-      // A failed screen is a long wait; do not repeat it behind the reader's back.
+      // A failed screen is shown with its reason, not repeated behind the reader's back.
       retry: false,
     })),
     combine: (results) => {

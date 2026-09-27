@@ -360,11 +360,19 @@ export function nameIv(g: ScreenerSymbolGroup, warning: string | undefined): Nam
 export function nameIvLabel(iv: NameIv): { text: string; title: string; warn: boolean } {
   const iv30 = iv.iv30 == null ? '' : ` · IV30 ${(iv.iv30 * 100).toFixed(0)}%`
   if (iv.pct != null) {
+    // Said plainly (Owner, 2026-09-27): what share of the year sat at or below
+    // today, and what share above — the reader sees at once whether the name's
+    // vol is low or high for it, with no threshold invented here.
+    const at = Number(iv.pct.toFixed(1))
+    const above = Number((100 - iv.pct).toFixed(1))
+    const today = iv.iv30 == null ? 'today’s' : `today’s ${(iv.iv30 * 100).toFixed(0)}%`
+    const sessions = iv.sessions != null ? `the last ${iv.sessions} sessions` : 'the last year of sessions'
     return {
       text: `IV rank ${Math.round(iv.pct)}${iv30}`,
       title:
-        `IV rank: IV30 on ${fmtIsoDateToken(iv.asOf)} sits at or above ${iv.pct}% of its last ${iv.sessions ?? '—'} ` +
-        'sessions (Research). The engine scores it as 15% of every contract here, the same for each.',
+        `IV rank ${Math.round(iv.pct)}: IV30 was at or below ${today} on ${at}% of ${sessions}, and above it on the other ${above}%. ` +
+        `IV30 is the 30-day at-the-money implied volatility (Research, as of ${fmtIsoDateToken(iv.asOf)}). ` +
+        'The engine gives it 15% of every contract’s score here — the same for each, so it ranks this name against others, not one strike against another.',
       warn: false,
     }
   }
@@ -382,7 +390,7 @@ export function nameIvLabel(iv: NameIv): { text: string; title: string; warn: bo
   const said = iv.note ? `${iv.note.replace(/\.$/, '')}.` : 'The engine sent no IV percentile for this name.'
   return {
     text: `IV rank — (${why})${iv30}`,
-    title: `${said} Every contract scores it neutral (0.5).`,
+    title: `No IV rank for this name. ${said} Every contract here scores neutral (0.5) on it.`,
     warn: failed,
   }
 }

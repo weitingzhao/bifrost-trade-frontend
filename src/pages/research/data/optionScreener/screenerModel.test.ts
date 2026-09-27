@@ -300,7 +300,9 @@ describe('the name’s IV percentile, as the engine scored it', () => {
     expect(iv).toEqual({ iv30: 0.463, pct: 12.7, asOf: '2026-09-25', sessions: 252, note: '' })
     const label = nameIvLabel(iv!)
     expect(label.text).toBe('IV rank 13 · IV30 46%')
-    expect(label.title).toContain('IV rank: IV30 on 25SEP26 sits at or above 12.7% of its last 252 sessions')
+    expect(label.title).toContain('IV rank 13: IV30 was at or below today’s 46% on 12.7% of the last 252 sessions, and above it on the other 87.3%.')
+    expect(label.title).toContain('as of 25SEP26')
+    expect(label.title).toContain('15% of every contract’s score')
     expect(label.warn).toBe(false)
   })
 
@@ -310,7 +312,7 @@ describe('the name’s IV percentile, as the engine scored it', () => {
     expect(iv.note).toBe(note)
     expect(nameIvLabel(iv)).toEqual({
       text: 'IV rank — (4 sessions) · IV30 46%',
-      title: `${note}. Every contract scores it neutral (0.5).`,
+      title: `No IV rank for this name. ${note}. Every contract here scores neutral (0.5) on it.`,
       warn: false,
     })
   })

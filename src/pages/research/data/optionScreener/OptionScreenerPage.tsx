@@ -50,6 +50,7 @@ import {
   type ScreenView,
 } from './screenerModel'
 import { useScreenerChain } from './useScreenerChain'
+import { useScreenerEarnings } from './useScreenerEarnings'
 import { useScreenerSources, type ScreenerSource } from './useScreenerSources'
 
 interface Saved {
@@ -113,7 +114,8 @@ export default function OptionScreenerPage() {
   const opportunities = useOpportunities()
   const structures = useStructures()
   const structureOn = STRUCTURE_TYPES.some((s) => s.value === structure && s.enabled)
-  const chain = useScreenerChain({ symbols, structure, includeEarnings, enabled: structureOn })
+  const chain = useScreenerChain({ symbols, structure, enabled: structureOn })
+  const earnings = useScreenerEarnings(symbols)
   const data = chain.data
 
   const failed = useMemo(() => {
@@ -123,8 +125,12 @@ export default function OptionScreenerPage() {
   }, [data])
 
   const groups = useMemo(
-    () => buildScreenGroups(data?.groups ?? [], filters, view, failed, chain.pending, data?.warnings),
-    [data?.groups, data?.warnings, filters, view, failed, chain.pending],
+    () =>
+      buildScreenGroups(data?.groups ?? [], filters, view, failed, chain.pending, data?.warnings, {
+        earnings,
+        include: includeEarnings,
+      }),
+    [data?.groups, data?.warnings, filters, view, failed, chain.pending, earnings, includeEarnings],
   )
   const pass = groups.reduce((n, g) => n + g.rows.length, 0)
   const structureRules = useMemo(
@@ -163,7 +169,7 @@ export default function OptionScreenerPage() {
         kind: 'empty',
         title: `Screening ${symbols.length} name${symbols.length === 1 ? '' : 's'}…`,
         detail:
-          'Once it answers the sliders are live — moving one never re-screens; changing the names, the structure or earnings does.',
+          'Once it answers the sliders and the earnings toggle are live — moving one never re-screens; changing the names or the structure does.',
       }
     }
     if (groups.length === 0) {

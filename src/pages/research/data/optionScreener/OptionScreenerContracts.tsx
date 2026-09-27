@@ -44,6 +44,7 @@ import {
   type ScreenGroup,
   type ScreenView,
 } from './screenerModel'
+import { earningsLabel } from './screenerEarnings'
 
 const COLS = 11
 
@@ -228,6 +229,7 @@ export function OptionScreenerContracts({
             {groups.map((g) => {
               const fit = ruleCell(g.symbol, structureRules, opportunities, structureLabel)
               const iv = g.iv ? nameIvLabel(g.iv) : null
+              const earn = earningsLabel(g.earnings)
               return [
                 <tr key={`g:${g.symbol}`} className="border-y border-border bg-secondary/50">
                   <td colSpan={COLS} className="px-[var(--table-cell-px)] py-1.5 text-dense-meta">
@@ -249,6 +251,11 @@ export function OptionScreenerContracts({
                           </span>
                         </>
                       ) : null}
+                      {/* The design's `earnings Nd`, after IV rank: the expected print, an estimate. */}
+                      {' · '}
+                      <span title={earn.title} className={cn(earn.warn && 'text-warning')}>
+                        {earn.text}
+                      </span>
                       {g.avgIv != null ? ` · avg IV ${(g.avgIv * 100).toFixed(0)}%` : ''}
                     </span>
                     <span className="ml-2.5 font-mono text-dense-caption text-muted-foreground">

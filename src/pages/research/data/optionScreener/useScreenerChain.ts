@@ -9,9 +9,12 @@
  * since the engine fix of 2026-09-27 a name answers in about 0.1 s, and the
  * split stays for those three reasons.
  *
- * Keyed by the name, the structure and the earnings choice, and nothing else:
- * a slider never refetches. Cached for five minutes, so going back to a list
- * already screened does not ask again.
+ * Keyed by the name and the structure, and nothing else: a slider never
+ * refetches, and neither does the earnings toggle — the engine accepts
+ * `include_earnings_span` and never reads it, so earnings is filtered in the
+ * browser against each name's expected print (`screenerEarnings.ts`).
+ * Cached for five minutes, so going back to a list already screened does not
+ * ask again.
  */
 import { useQueries } from '@tanstack/react-query'
 import { fetchScreenerResults } from '@/api/research'
@@ -37,21 +40,19 @@ function reasonFor(error: unknown): string {
 export function useScreenerChain(args: {
   symbols: readonly string[]
   structure: string
-  includeEarnings: boolean
   /** False for a structure the engine does not screen. */
   enabled: boolean
 }): ScreenerChain {
-  const { symbols, structure, includeEarnings, enabled } = args
+  const { symbols, structure, enabled } = args
   const names = [...new Set(symbols)].sort()
 
   return useQueries({
     queries: names.map((sym) => ({
-      queryKey: [...QUERY_KEYS.research.screener, 'chain', sym, structure, includeEarnings],
+      queryKey: [...QUERY_KEYS.research.screener, 'chain', sym, structure],
       queryFn: () =>
         fetchScreenerResults({
           structure_type: structure,
           symbols: [sym],
-          include_earnings_span: includeEarnings,
           source: 'massive',
           min_annualized_return: null,
           max_spread_pct: null,

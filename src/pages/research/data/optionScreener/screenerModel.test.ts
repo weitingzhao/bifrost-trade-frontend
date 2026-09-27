@@ -18,6 +18,7 @@ import {
   spreadMeasured,
   TOP_PER_NAME,
 } from './screenerModel'
+import type { EarningsReading } from './screenerEarnings'
 
 // Invented contracts — none of these is a real quote.
 function row(p: Partial<ScreenerContractRow>): ScreenerContractRow {
@@ -371,5 +372,48 @@ describe('the name’s IV percentile, as the engine scored it', () => {
       groups: [],
     })
     expect(cells[1].note).toBe('No option contracts on file')
+  })
+})
+
+describe('earnings, filtered against the expected print', () => {
+  const f = DEFAULT_LIVE_FILTERS
+  // Invented print 24 days out; one contract expires before it, one after.
+  const print24: EarningsReading = {
+    kind: 'expected',
+    next: { daysAway: 24, date: '2026-10-20', track: { n: 4, medianMissDays: 1, maxMissDays: 2 }, lastResult: '2026-07-21' },
+  }
+  const before = row({ dte: 20, strike: 100 })
+  const after = row({ dte: 30, strike: 101 })
+
+  it('drops a contract that expires on or after the print while excluded, and keeps it when allowed', () => {
+    const [ex] = buildScreenGroups([group('ABC', [before, after])], f, 'grouped', {}, [], {}, {
+      earnings: { ABC: print24 },
+      include: false,
+    })
+    expect(ex.rows.map((r) => r.dte)).toEqual([20])
+    expect(ex.earnings).toBe(print24)
+    const [inc] = buildScreenGroups([group('ABC', [before, after])], f, 'grouped', {}, [], {}, {
+      earnings: { ABC: print24 },
+      include: true,
+    })
+    expect(inc.rows).toHaveLength(2)
+  })
+
+  it('says the print took everything when it is the only filter that emptied a name', () => {
+    const [g] = buildScreenGroups([group('ABC', [after])], f, 'grouped', {}, [], {}, {
+      earnings: { ABC: print24 },
+      include: false,
+    })
+    expect(g.rows).toHaveLength(0)
+    expect(g.warn).toBe('earnings inside the DTE window — excluded')
+  })
+
+  it('excludes nothing for a name with no date, and nothing while the read is in flight', () => {
+    const none: EarningsReading = { kind: 'none', reason: 'no 8-K on file' }
+    const [g1] = buildScreenGroups([group('ABC', [after])], f, 'grouped', {}, [], {}, { earnings: { ABC: none }, include: false })
+    const [g2] = buildScreenGroups([group('ABC', [after])], f, 'grouped', {}, [], {}, { earnings: {}, include: false })
+    expect(g1.rows).toHaveLength(1)
+    expect(g2.rows).toHaveLength(1)
+    expect(g2.earnings).toBeUndefined()
   })
 })

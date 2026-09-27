@@ -144,11 +144,12 @@ export function FiltersPanel({
             onChange={onIncludeEarnings}
             size="xs"
           />
-          {/* Earnings is the one filter the server applies: the response has
-              no earnings date per name, so toggling it re-screens. */}
+          {/* Applied in the browser against each name's expected print; the
+              engine accepts the flag and never read it. */}
           <span className="text-dense-caption text-muted-foreground">
-            {includeEarnings ? 'allowed — every CSP rule would still refuse' : 'excluded (rule default)'} ·
-            re-screens
+            {includeEarnings
+              ? 'allowed — every CSP rule would still refuse'
+              : 'excluded (rule default) — expiring on or after the expected print'}
           </span>
         </div>
       </div>

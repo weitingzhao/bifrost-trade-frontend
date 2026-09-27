@@ -7,7 +7,8 @@ export interface ScreenerFilters {
   min_annualized_return: number | null
   max_spread_pct: number | null
   min_premium: number | null
-  include_earnings_span: boolean
+  /** Accepted by the engine and never read (screener.py, 2026-09-27); the Option screen filters earnings itself. */
+  include_earnings_span?: boolean
   source: string
 }
 

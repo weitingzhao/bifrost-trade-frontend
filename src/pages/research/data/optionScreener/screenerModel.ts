@@ -12,9 +12,10 @@
  * filter what came back here, where a drag costs nothing. A slider never
  * refetches; changing what is being screened does.
  *
- * Earnings is the one filter that stays on the server: the response carries no
- * earnings date per name, so the browser cannot tell which contracts span one.
- * Toggling it refetches.
+ * Earnings is filtered here too, against each name's expected print
+ * (`screenerEarnings.ts`). It used to be sent to the engine, which accepts
+ * `include_earnings_span` and never reads it, so the toggle re-screened and
+ * excluded nothing (walk 2026-09-27).
  *
  * ## The formula is the design's
  *
@@ -28,6 +29,7 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { etDate, etStamp } from '@/lib/freshness'
 import { SCREEN_DELTA_BAND } from '@/lib/screenBand'
 import type { ScreenerContractRow, ScreenerResponse, ScreenerSymbolGroup } from '@/types/research'
+import { spansEarnings, type EarningsReading } from './screenerEarnings'
 
 /** The design's six sliders, in its units: days, percent, dollars. */
 export interface LiveFilters {
@@ -312,6 +314,8 @@ export interface ScreenGroup {
   warn: string
   /** The name's IV percentile as the engine scored it; null for a name not screened or an older engine. */
   iv: NameIv | null
+  /** The name's next print; undefined while the read is in flight. */
+  earnings: EarningsReading | undefined
 }
 
 /**
@@ -400,12 +404,23 @@ export function buildScreenGroups(
   pending: readonly string[] = [],
   /** The engine's per-name notes; a screened name's IV note rides on its row. */
   warnings: Readonly<Record<string, string>> = {},
+  /**
+   * Each name's next print, and whether a contract that spans it may pass
+   * (the rail's Earnings toggle; excluded is the rule default).
+   */
+  earningsFilter: { earnings: Readonly<Record<string, EarningsReading>>; include: boolean } = {
+    earnings: {},
+    include: true,
+  },
 ): ScreenGroup[] {
   const out: ScreenGroup[] = []
   for (const g of groups) {
     const inWindow = g.contracts.filter((r) => r.dte >= f.dteMin && r.dte <= f.dteMax).length
-    const rows = g.contracts
-      .filter((r) => rowPasses(r, f))
+    const reading = earningsFilter.earnings[g.symbol]
+    const clearOfEarnings = (r: ScreenerContractRow) => earningsFilter.include || !spansEarnings(r.dte, reading)
+    const passingElse = g.contracts.filter((r) => rowPasses(r, f))
+    const rows = passingElse
+      .filter(clearOfEarnings)
       .sort((a, b) => (annReturnPct(b) ?? 0) - (annReturnPct(a) ?? 0))
       .slice(0, TOP_PER_NAME)
     // `Passing only` drops the names that pass nothing; `Grouped` keeps them
@@ -418,20 +433,46 @@ export function buildScreenGroups(
       avgIv: Number.isFinite(g.avg_iv) ? g.avg_iv : null,
       inWindow,
       rows,
-      warn: rows.length === 0 ? bindingFilter(g.contracts, f) : '',
+      // Every other filter passed something, and the print took all of it: the
+      // prototype's own sentence.
+      warn:
+        rows.length > 0
+          ? ''
+          : passingElse.length > 0
+            ? 'earnings inside the DTE window — excluded'
+            : bindingFilter(g.contracts, f),
       iv: nameIv(g, warnings[g.symbol]),
+      earnings: reading,
     })
   }
   if (view === 'grouped') {
     const seen = new Set(out.map((g) => g.symbol))
     for (const [symbol, reason] of Object.entries(failed)) {
       if (seen.has(symbol)) continue
-      out.push({ symbol, spot: null, avgIv: null, inWindow: 0, rows: [], warn: `no chain — ${reason}`, iv: null })
+      out.push({
+        symbol,
+        spot: null,
+        avgIv: null,
+        inWindow: 0,
+        rows: [],
+        warn: `no chain — ${reason}`,
+        iv: null,
+        earnings: earningsFilter.earnings[symbol],
+      })
       seen.add(symbol)
     }
     for (const symbol of pending) {
       if (seen.has(symbol)) continue
-      out.push({ symbol, spot: null, avgIv: null, inWindow: 0, rows: [], warn: 'screening…', iv: null })
+      out.push({
+        symbol,
+        spot: null,
+        avgIv: null,
+        inWindow: 0,
+        rows: [],
+        warn: 'screening…',
+        iv: null,
+        earnings: earningsFilter.earnings[symbol],
+      })
     }
   }
   return out

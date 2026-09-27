@@ -43,7 +43,8 @@ function sessionOf(sessions: readonly (string | null)[], date: string): number {
   return dayGap(date, sessions[i] as string) <= SESSION_SLACK_DAYS ? i : -1
 }
 
-function foldFilings(filings: readonly string[]): string[] {
+/** Filing dates, oldest first, with a filing inside a week of the one before folded into it. */
+export function foldFilings(filings: readonly string[]): string[] {
   const out: string[] = []
   for (const d of [...filings].sort()) {
     const prev = out[out.length - 1]

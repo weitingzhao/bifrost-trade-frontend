@@ -86,28 +86,6 @@ export interface SocketIbSlot {
   ib_probe_stale?: boolean
 }
 
-/**
- * GET /status `socket.polygon_ws` — Polygon WS ingest Redis meta.
- */
-export interface StatusSocketPolygonWs {
-  ws_connected?: boolean
-  /** ``rest_only`` when Options Starter skips Polygon WS and uses REST aggregates. */
-  ws_mode?: string | null
-  /** Age of last Polygon quote (quiet market can be large while service is healthy). */
-  last_msg_age_s?: number | null
-  /** Age of last Redis health hash write (service liveness). */
-  health_updated_age_s?: number | null
-  service_heartbeat_interval_sec?: number | null
-  last_service_heartbeat_at?: number | null
-  next_service_heartbeat_in_s?: number | null
-  ws_reconnects?: number | null
-  /** Present on some monitor payloads (STG policy-off). */
-  configured?: boolean
-}
-
-/** @deprecated Prefer StatusSocketPolygonWs — same shape. */
-export type StatusSocketMassive = StatusSocketPolygonWs
-
 /** Unified IB Broker socket block (ingestor / account agent / operator). */
 export interface StatusSocketIbBroker {
   connected?: boolean
@@ -157,18 +135,10 @@ export type StatusSocketIbOperator = StatusSocketIbBroker
 export type StatusSocketIbAccountAgent = StatusSocketIbBroker
 
 export interface StatusSocket {
-  polygon_ws?: StatusSocketPolygonWs | null
   ib_ingestor?: StatusSocketIbIngestor | null
   ib_operator?: StatusSocketIbOperator | null
   ib_account_agent?: StatusSocketIbAccountAgent | null
   platform_ib_gateway?: StatusPlatformIbGateway | null
-}
-
-/** Read `socket.polygon_ws` only (no legacy massive fallback). */
-export function statusSocketPolygonWs(
-  status: { socket?: StatusSocket | null } | null | undefined,
-): StatusSocketPolygonWs | null | undefined {
-  return status?.socket?.polygon_ws
 }
 
 export interface Operation {

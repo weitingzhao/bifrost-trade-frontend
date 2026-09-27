@@ -24,7 +24,6 @@ const platformStatus = {
     ib_ingestor: { connected: true, transport: 'platform_gateway', health_source: 'platform_ib_gateway' },
     ib_account_agent: { connected: true, transport: 'platform_gateway' },
     ib_operator: { connected: true, transport: 'platform_gateway' },
-    polygon_ws: { ws_connected: true, health_updated_age_s: 5, service_heartbeat_interval_sec: 30 },
   },
 } as StatusResponse
 
@@ -56,7 +55,7 @@ describe('platformIbGateway', () => {
     expect(nav.title).toMatch(/Platform IB Gateway partial/)
   })
 
-  it('aggregate nav green when gateway + polygon_ws healthy', () => {
+  it('aggregate nav green when gateway healthy', () => {
     const nav = aggregateSocketNavHealthFromStatus(platformStatus)
     expect(nav.lamp).toBe('green')
     expect(nav.title).toMatch(/Platform IB Gateway/)

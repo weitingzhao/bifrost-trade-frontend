@@ -4,31 +4,21 @@ import {
   normalizeIbBrokerStatus,
   type IbBrokerServiceId,
 } from '@/utils/ibBrokerConnectionModel'
-import type { StatusResponse, StatusSocketPolygonWs } from '@/types/monitor'
-import { statusSocketPolygonWs } from '@/types/monitor'
+import type { StatusResponse } from '@/types/monitor'
 import { isPlatformIbGatewayActive, platformIbGatewayAggregateLamp } from '@/utils/platformIbGateway'
 
 export type IngestLamp = 'green' | 'yellow' | 'red' | 'gray'
 export type AggregateIngestLamp = IngestLamp | 'none'
 
-export type IngestCategory = 'Polygon' | 'IB' | 'Engine' | 'Other'
-
-/** Official Ops ingest id. */
-export const POLYGON_WS_SERVICE_ID = 'polygon_ws'
-
-export function isPolygonWsServiceId(id: string): boolean {
-  return id === POLYGON_WS_SERVICE_ID
-}
+export type IngestCategory = 'IB' | 'Engine' | 'Other'
 
 export const INGEST_CATEGORY_LABELS: Record<IngestCategory, string> = {
-  Polygon: 'Polygon Options WS (Plugin · redis-massive)',
   IB: 'Platform IB Gateway (redis-ib)',
   Engine: 'Strategy Trading',
   Other: 'Other',
 }
 
 export function categoryForServiceId(id: string): IngestCategory {
-  if (isPolygonWsServiceId(id)) return 'Polygon'
   if (id === 'ib_ingestor' || id === 'ib_market' || id === 'ib_operator' || id === 'ib_account_agent') {
     return 'IB'
   }
@@ -37,17 +27,11 @@ export function categoryForServiceId(id: string): IngestCategory {
   return 'Other'
 }
 
-/** Options Starter REST-only standby — process healthy without Polygon WS connected. */
-export function massiveWsRestOnly(m: StatusSocketPolygonWs | null | undefined): boolean {
-  return (m?.ws_mode ?? '').trim().toLowerCase() === 'rest_only'
-}
-
 export function buildUnifiedIngestRows(
   services: MarketIngestServiceRow[],
 ): { svc: MarketIngestServiceRow; category: IngestCategory }[] {
   const filtered = marketIngestServicesForSocketAggregate(services)
   const byCat: Record<IngestCategory, MarketIngestServiceRow[]> = {
-    Polygon: [],
     IB: [],
     Engine: [],
     Other: [],
@@ -56,7 +40,6 @@ export function buildUnifiedIngestRows(
     byCat[categoryForServiceId(s.id)].push(s)
   }
   const out: { svc: MarketIngestServiceRow; category: IngestCategory }[] = []
-  for (const s of byCat.Polygon) out.push({ svc: s, category: 'Polygon' })
   for (const s of byCat.IB) out.push({ svc: s, category: 'IB' })
   for (const s of byCat.Engine) out.push({ svc: s, category: 'Engine' })
   for (const s of byCat.Other) out.push({ svc: s, category: 'Other' })
@@ -68,59 +51,6 @@ function fmtAgeShort(s: number | null | undefined): string {
   if (s < 60) return `${Math.floor(s)}s`
   if (s < 3600) return `${Math.floor(s / 60)}m`
   return `${Math.floor(s / 3600)}h`
-}
-
-function ingestProcessRunning(processActive: string | undefined): boolean {
-  const a = (processActive || '').toLowerCase().trim()
-  return a === 'active' || a === 'activating'
-}
-
-const MASSIVE_SERVICE_HEARTBEAT_SLACK_SEC = 15
-
-/** Service liveness from Redis health hash (not Polygon quote age). */
-export function massiveServiceHeartbeatState(
-  massive: StatusSocketPolygonWs | null | undefined,
-  elapsed: number,
-): {
-  intervalSec: number
-  nextInS: number | null
-  overdue: boolean
-  critical: boolean
-  ok: boolean
-} {
-  const m = massive
-  const intervalSec = Number(m?.service_heartbeat_interval_sec) > 0
-    ? Number(m?.service_heartbeat_interval_sec)
-    : 30
-  const healthAge =
-    m?.health_updated_age_s != null && Number.isFinite(Number(m.health_updated_age_s))
-      ? Math.max(0, Number(m.health_updated_age_s) + elapsed)
-      : null
-  const nextRaw =
-    m?.next_service_heartbeat_in_s != null && Number.isFinite(Number(m.next_service_heartbeat_in_s))
-      ? Number(m.next_service_heartbeat_in_s)
-      : null
-  const nextInS = nextRaw != null ? Math.max(0, nextRaw - elapsed) : null
-  const overdue =
-    healthAge != null
-      ? healthAge > intervalSec + MASSIVE_SERVICE_HEARTBEAT_SLACK_SEC
-      : nextInS != null
-        ? nextInS <= 0 && (healthAge ?? intervalSec + 1) > intervalSec
-        : false
-  const critical = healthAge != null ? healthAge > intervalSec + 90 : false
-  const ok = !overdue && !critical
-  return { intervalSec, nextInS, overdue, critical, ok }
-}
-
-export function massiveHealthUpdatedAgeS(
-  massive: StatusSocketPolygonWs | null | undefined,
-  elapsed: number,
-): number | null {
-  const m = massive
-  if (m?.health_updated_age_s == null || !Number.isFinite(Number(m.health_updated_age_s))) {
-    return null
-  }
-  return Math.max(0, Number(m.health_updated_age_s) + elapsed)
 }
 
 export type IngestOpsPending = 'starting' | 'stopping' | null
@@ -164,32 +94,6 @@ export function buildIngestLogicalSummary(
     }
     const proc = (processActive || 'unknown').toLowerCase()
     return `Stopping… (process ${proc})`
-  }
-  const massive = statusSocketPolygonWs(status)
-  if (isPolygonWsServiceId(svc.id) && massive) {
-    if (massiveWsRestOnly(massive)) {
-      const hb = massive.next_service_heartbeat_in_s != null
-        ? `; svc HB ~${fmtAgeShort(massive.next_service_heartbeat_in_s)}`
-        : massive.health_updated_age_s != null
-          ? `; health ${fmtAgeShort(massive.health_updated_age_s)} ago`
-          : ''
-      return `REST-only standby (Options Starter); process active${hb}`
-    }
-    const wsUp = ingestRedisTruthyConnected(massive.ws_connected)
-    const ws = wsUp ? 'connected' : 'disconnected'
-    const rc = massive.ws_reconnects != null ? String(massive.ws_reconnects) : '—'
-    const proc = ingestProcessRunning(processActive)
-      ? (wsUp ? 'process active' : 'process active, WS down')
-      : 'process stopped'
-    const hb = massive.next_service_heartbeat_in_s != null
-      ? `; svc HB ~${fmtAgeShort(massive.next_service_heartbeat_in_s)}`
-      : massive.health_updated_age_s != null
-        ? `; health ${fmtAgeShort(massive.health_updated_age_s)} ago`
-        : ''
-    const quoteAge = massive.last_msg_age_s != null
-      ? `last quote ${fmtAgeShort(massive.last_msg_age_s)}`
-      : 'last quote —'
-    return `WS ${ws}; ${proc}; ${quoteAge}${hb}; reconnects ${rc}`
   }
   const ibSvcId: IbBrokerServiceId | null =
     svc.id === 'ib_market' || svc.id === 'ib_ingestor'
@@ -239,9 +143,8 @@ export function buildIngestLogicalSummary(
   return '—'
 }
 
-export function ingestRowUsesConnectionColumn(svc: MarketIngestServiceRow, category: IngestCategory): boolean {
-  if (category === 'IB') return true
-  return isPolygonWsServiceId(svc.id)
+export function ingestRowUsesConnectionColumn(_svc: MarketIngestServiceRow, category: IngestCategory): boolean {
+  return category === 'IB'
 }
 
 export interface MarketIngestServiceRow {
@@ -329,62 +232,6 @@ export function ingestRedisHealthLamp(
 
   if (!status) {
     return { lamp: 'gray', title: 'Monitor GET /status not loaded yet.' }
-  }
-
-  if (isPolygonWsServiceId(id)) {
-    const m = statusSocketPolygonWs(status)
-    if (m == null) {
-      return { lamp: 'gray', title: 'Polygon WS block missing from /status socket (Redis meta unavailable).' }
-    }
-    if (m.ws_connected === null || m.ws_connected === undefined) {
-      return { lamp: 'gray', title: 'Polygon WS not reported (no Redis URL or empty meta in /status).' }
-    }
-    const healthAge =
-      typeof m.health_updated_age_s === 'number' && Number.isFinite(m.health_updated_age_s)
-        ? m.health_updated_age_s
-        : typeof m.last_msg_age_s === 'number' && Number.isFinite(m.last_msg_age_s)
-          ? m.last_msg_age_s
-          : null
-    const hbIv = Number(m.service_heartbeat_interval_sec) > 0
-      ? Number(m.service_heartbeat_interval_sec)
-      : 30
-    if (healthAge !== null && healthAge > hbIv + 90) {
-      return {
-        lamp: 'red',
-        title: `Polygon WS service heartbeat stale (${Math.floor(healthAge)}s) — check polygon-ws-ingestor (Plugin) (bifrost:health:ws_massive_option).`,
-      }
-    }
-    if (healthAge !== null && healthAge > hbIv + MASSIVE_SERVICE_HEARTBEAT_SLACK_SEC) {
-      return {
-        lamp: 'yellow',
-        title: `Polygon WS service heartbeat overdue (${Math.floor(healthAge)}s) — Redis health write delayed.`,
-      }
-    }
-    if (massiveWsRestOnly(m)) {
-      return {
-        lamp: 'green',
-        title:
-          'Polygon WS ingest healthy (REST-only standby; Options Starter uses REST aggregates, not live WS).',
-      }
-    }
-    if (ingestRedisTruthyConnected(m.ws_connected)) {
-      return { lamp: 'green', title: 'Polygon WS ingest healthy (connected; service heartbeat OK).' }
-    }
-    const processRunning = ingestProcessRunning(processActive)
-    if (processRunning) {
-      if (healthAge !== null && healthAge > hbIv + 90) {
-        return {
-          lamp: 'red',
-          title: `Polygon WS process running but service heartbeat stale (${Math.floor(healthAge)}s) — check logs / Polygon auth.`,
-        }
-      }
-      return {
-        lamp: 'yellow',
-        title:
-          'Polygon WS ingest process running; Polygon WebSocket not connected (reconnecting, auth probe, or market closed).',
-      }
-    }
-    return { lamp: 'red', title: 'Polygon WS not connected (Redis bifrost:health:ws_massive_option).' }
   }
 
   if (id === 'ib_ingestor' || id === 'ib_account_agent' || id === 'ib_operator') {
@@ -549,7 +396,6 @@ export function buildDaemonIngestRows(
 
 /** Ingest rows used for Socket sidebar nav lamp (Monitor /status only). */
 export const SOCKET_NAV_INGEST_IDS = [
-  POLYGON_WS_SERVICE_ID,
   'ib_ingestor',
   'ib_operator',
   'ib_account_agent',
@@ -576,7 +422,6 @@ export function aggregateDaemonProcessesHealthFromStatus(
 }
 
 const SOCKET_NAV_SERVICE_LABELS: Record<(typeof SOCKET_NAV_INGEST_IDS)[number], string> = {
-  [POLYGON_WS_SERVICE_ID]: 'Polygon WS (Plugin)',
   ib_ingestor: 'Gateway · Market',
   ib_operator: 'Gateway · Operator',
   ib_account_agent: 'Gateway · Account',
@@ -616,7 +461,7 @@ export function aggregateSocketNavHealthFromStatus(
     if (base.lamp === 'green' && pg.lamp === 'green') {
       return {
         lamp: 'green',
-        title: 'Platform IB Gateway + Polygon WS healthy (Monitor GET /status @ redis-ib).',
+        title: 'Platform IB Gateway healthy (Monitor GET /status @ redis-ib).',
       }
     }
     if (pg.lamp !== 'green') {

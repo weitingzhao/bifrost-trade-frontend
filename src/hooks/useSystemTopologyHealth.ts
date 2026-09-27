@@ -18,10 +18,9 @@ import {
   type TopologyNodeHealth,
 } from '@/components/topology/topologyRegistry'
 
-type SocketIngestKey = 'ib_ingestor' | 'ib_account_agent' | 'ib_operator' | 'polygon_ws'
+type SocketIngestKey = 'ib_ingestor' | 'ib_account_agent' | 'ib_operator'
 
 function topologySocketToIngestKey(key: string): SocketIngestKey | null {
-  if (key === 'polygon_ws') return 'polygon_ws'
   if (key === 'ib_ingestor' || key === 'ib_account_agent' || key === 'ib_operator') {
     return key
   }

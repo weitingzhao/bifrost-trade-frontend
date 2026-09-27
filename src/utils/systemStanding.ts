@@ -61,7 +61,6 @@ export interface DomainStanding {
  */
 const BLOCK_TEXT: Record<string, string> = {
   ib_not_connected: 'the IB link is down',
-  socket_massive_disconnected: 'the market-data socket is disconnected',
   trading_suspended: 'trading is suspended by the operator',
   daemon_not_alive: 'the daemon is not running',
 }

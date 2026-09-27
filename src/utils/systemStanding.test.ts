@@ -34,16 +34,15 @@ describe('tradingStanding', () => {
   })
 
   it('names what the monitor says is blocking, in the reader’s words', () => {
-    // DEV 2026-09-22 answers exactly these two.
     const s = tradingStanding(
       status({
-        health: { status_lamp: 'yellow', block_reasons: ['ib_not_connected', 'socket_massive_disconnected'] },
+        health: { status_lamp: 'yellow', block_reasons: ['ib_not_connected', 'trading_suspended'] },
         daemon: { heartbeat: { daemon_alive: true, ib_connected: false }, lamp: 'yellow', block_reasons: [] },
       }),
     )
     expect(s.lamp).toBe('red')
     expect(s.state).toBe('stop')
-    expect(s.why).toContain('the IB link is down · the market-data socket is disconnected')
+    expect(s.why).toContain('the IB link is down · trading is suspended by the operator')
     expect(s.detail).toHaveLength(2)
   })
 

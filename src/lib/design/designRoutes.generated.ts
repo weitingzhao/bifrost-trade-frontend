@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 97 routes, 97 with a designed page,
+ * Derived, not typed: 99 routes, 99 with a designed page,
  * 0 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -143,6 +143,7 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "deliver": "M12 3v8M8.5 7.5L12 11l3.5-3.5M4 14h16v6H4z",
   "doc": "M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h3",
   "excerpt": "M5 3h14v18H5zM8 7.5h2.5v3H8zM12.5 7.5H15v3h-2.5zM8 14h8M8 17.5h5",
+  "flag": "M5 21V4M5 4h11l-2 4 2 4H5",
   "flows": "M3 12h18M8 8V3M5 6l3-3 3 3M16 16v5M13 18l3 3 3-3",
   "fork": "M12 3v5M12 8l-5 4M12 8l5 4M7 12v4M17 12v4M4 16h6M14 16h6",
   "gates": "M3 6l4 6-4 6M10 6l4 6-4 6M19 4v16",
@@ -235,6 +236,7 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/risk/sizing": "caliper",
   "/risk/stress": "matrix",
   "/settings": "gear",
+  "/system/feedback": "flag",
   "/system/status": "pulse",
   "/trade/assignment": "deliver",
   "/trade/expiration": "hourglass",
@@ -313,7 +315,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-25.95"
+export const DESIGN_REV = "2026-09-26.98"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
@@ -362,7 +364,8 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/copilot","label":"Copilot","crumbs":[],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-25.89","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/daily-brief","label":"Daily Brief","crumbs":["Home"],"designed":true,"file":"Home Daily Brief.dc.html","round":null,"rev":"2026-09-25.89","inNav":true,"group":"Home","designOnly":false},
   {"path":"/research/copilot/trading","label":"Book starters","crumbs":["Copilot"],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-21.1","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/agent-personas","label":"Personas","crumbs":["System","Agents"],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-21.1","inNav":true,"group":"System","designOnly":false},
+  {"path":"/research/agent-personas","label":"Personas","crumbs":["System","Agents"],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-26.1","inNav":true,"group":"System","designOnly":false},
+  {"path":"/research/agent-personas/you","label":"You","crumbs":["System","Agents","Personas"],"designed":true,"file":"System Agents You.dc.html","round":null,"rev":"2026-09-26.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/orchestration","label":"Orchestration","crumbs":["System","Agents"],"designed":true,"file":"System Agents Orchestration.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
   {"path":"/research/loop/harness","label":"Autopilot","crumbs":[],"designed":true,"file":"Autopilot Console.dc.html","round":null,"rev":"2026-09-25.85","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/loop/objectives/obj-daily-stock","label":"Daily Loop Stock Explorer","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-25.94","inNav":false,"group":null,"designOnly":false},
@@ -397,7 +400,8 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/risk/margin","label":"Margin & Buying Power","crumbs":["Risk"],"designed":true,"file":"Risk Margin.dc.html","round":null,"rev":"2026-09-25.85","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/risk/stress","label":"Stress & Scenario","crumbs":["Risk"],"designed":true,"file":"Risk Stress.dc.html","round":null,"rev":"2026-09-25.86","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/system/status","label":"System Status","crumbs":["System"],"designed":true,"file":"System Status.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
-  {"path":"/settings","label":"Settings","crumbs":["System"],"designed":true,"file":"Settings.dc.html","round":null,"rev":"2026-09-25.80","inNav":true,"group":"System","designOnly":false},
+  {"path":"/settings","label":"Settings","crumbs":["System"],"designed":true,"file":"Settings.dc.html","round":null,"rev":"2026-09-26.1","inNav":true,"group":"System","designOnly":false},
+  {"path":"/system/feedback","label":"Feedback","crumbs":["System"],"designed":true,"file":"System Feedback.dc.html","round":null,"rev":"2026-09-26.1","inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/design-adoption","label":"Design Adoption","crumbs":["System","Alignment"],"designed":true,"file":"System Alignment Design Adoption.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/research-blueprint","label":"Blueprint","crumbs":["System","Alignment"],"designed":true,"file":"System Alignment Blueprint.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/research-calibration","label":"Research Calibration","crumbs":["System","Alignment"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":null,"inNav":false,"group":null,"designOnly":false},

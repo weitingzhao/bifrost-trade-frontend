@@ -109,7 +109,13 @@ describe('the design walk, by revision', () => {
     // page stamps: Performance (.77, layer colours) and Settings (.80, System
     // Settings); only Performance was signed, so it alone reads stale.
     // Package .23 @ Rev .95 is the §16 refinement round: 73 page stamps move.
-    expect(DESIGN_REV).toBe('2026-09-25.95')
+    // Package .26 @ Rev .98 (2026-09-26, the new full baseline) moves two page
+    // stamps — Settings and Personas, both to Rev .96's memory-and-feedback
+    // work — and adds two designed pages (Agents You, System Feedback). The
+    // Symbol and Journal prototypes changed too (.97/.98) with their registry
+    // stamps left at .83/.89, so the tracker cannot see those two moves;
+    // named for the design side.
+    expect(DESIGN_REV).toBe('2026-09-26.98')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

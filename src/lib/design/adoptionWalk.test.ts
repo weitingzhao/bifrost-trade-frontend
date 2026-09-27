@@ -617,7 +617,9 @@ describe('the design walk, as it stands', () => {
     // 84 with Rev .52: `/docs/research-calibration` now resolves to the
     // Calibration prototype, and here it is that page's forward (an alias).
     // 87 with Rev .53: the four System stubs drew — less the tracker itself.
-    expect(counts.designed).toBe(87)
+    // 89 with Package .26 @ Rev .98: Agents You (the memory-and-personality
+    // page behind Personas) and System Feedback (the reports triage face).
+    expect(counts.designed).toBe(89)
     expect(counts.byState.designOnly).toBe(9)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three
@@ -651,7 +653,10 @@ describe('the design walk, as it stands', () => {
     // Calibration — the last page of the approved batch. 9 on 2026-09-25 with
     // Narrative, the last business page; the nine left are the design's docs.
     // 0 the same day: the Owner kept those nine in the design package.
-    expect(counts.byState.unbuilt).toBe(0)
+    // 2 with Package .26 @ Rev .98: Agents You and System Feedback are new
+    // designed pages with no app page yet — Rev .96's feedback service and
+    // memory store have to exist before either has something to read.
+    expect(counts.byState.unbuilt).toBe(2)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

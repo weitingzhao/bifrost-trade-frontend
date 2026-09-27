@@ -75,6 +75,7 @@ import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { cn } from '@/lib/utils'
 import { VolWhyInspector } from './scan/VolWhyInspector'
+import { LensUniverseTables } from './scan/LensUniverseTables'
 import { useVolRatings } from './scan/useVolRatings'
 import {
   ADAPTIVE_NOTE,
@@ -590,6 +591,8 @@ export default function ScanPage() {
           </SectionPanel>
         </div>
       </div>
+
+      <LensUniverseTables />
 
       <RightInspectorShell
         open={selectedRow != null}

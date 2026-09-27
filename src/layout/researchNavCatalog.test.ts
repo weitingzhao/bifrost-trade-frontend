@@ -180,7 +180,7 @@ describe('one tree, both homes', () => {
     // questions rather than the trader's, so they went to System › Agents.
     // What is left on the rail is the one page that is Copilot's own work.
     expect(copilot?.pages.map((p) => [p.label, p.to])).toEqual([
-      ['Book starters', '/research/copilot/trading'],
+      ['Starters', '/research/copilot/trading'],
     ])
     expect(homeItems().map((i) => i.to)).toContain('/research/daily-brief')
     expect(systemRoutes()).toEqual(

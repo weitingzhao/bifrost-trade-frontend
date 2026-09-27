@@ -315,7 +315,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-26.98"
+export const DESIGN_REV = "2026-09-27.99"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
@@ -363,7 +363,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/narrative","label":"Narrative","crumbs":["Research","Analyze"],"designed":true,"file":"Research Narrative Lens.dc.html","round":null,"rev":"2026-09-25.88","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/copilot","label":"Copilot","crumbs":[],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-25.89","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/daily-brief","label":"Daily Brief","crumbs":["Home"],"designed":true,"file":"Home Daily Brief.dc.html","round":null,"rev":"2026-09-25.89","inNav":true,"group":"Home","designOnly":false},
-  {"path":"/research/copilot/trading","label":"Book starters","crumbs":["Copilot"],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-21.1","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/copilot/trading","label":"Starters","crumbs":["Copilot"],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-27.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/agent-personas","label":"Personas","crumbs":["System","Agents"],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-26.1","inNav":true,"group":"System","designOnly":false},
   {"path":"/research/agent-personas/you","label":"You","crumbs":["System","Agents","Personas"],"designed":true,"file":"System Agents You.dc.html","round":null,"rev":"2026-09-26.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/orchestration","label":"Orchestration","crumbs":["System","Agents"],"designed":true,"file":"System Agents Orchestration.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},

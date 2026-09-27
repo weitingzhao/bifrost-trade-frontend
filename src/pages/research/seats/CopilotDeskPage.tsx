@@ -80,7 +80,7 @@ export default function CopilotDeskPage() {
                 open could not reach it at all (Owner, 2026-09-21). It is not
                 a menu row on either side; this is the fixed entry instead. */}
             <PageHeadLink to="/research/copilot/trading" title="The book's starter catalogue">
-              <BookOpen className="mr-1 inline size-3.5" /> Book starters
+              <BookOpen className="mr-1 inline size-3.5" /> Starters
             </PageHeadLink>
             {/* The design's primary action on this page: a thread with
                 nothing attached, as ⌘J opens one from anywhere. `Ask Copilot`

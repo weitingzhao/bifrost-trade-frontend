@@ -165,6 +165,7 @@ function Group({
   count,
   countTitle,
   full,
+  prefix,
 }: {
   group: EquipGroup
   activePath: string
@@ -174,6 +175,14 @@ function Group({
   countTitle?: string
   /** Room for the page icons; without it the group is its head alone. */
   full: boolean
+  /**
+   * Controls that share the capsule without being the module (Rev .99: Lists
+   * and Symbol ride in the Market capsule — the dock is my slice of the tape,
+   * Live the whole tape; same subject, two control kinds, so the container
+   * merges and the controls stay what they are). The capsule's outline keeps
+   * reading the module's own state, not theirs.
+   */
+  prefix?: ReactNode
 }) {
   // Subscribed so the lit states follow the surfaces; `placeOf` reads the same
   // store, and this is what tells React to look again.
@@ -197,6 +206,12 @@ function Group({
       }}
       aria-label={group.label}
     >
+      {prefix != null ? (
+        <>
+          {prefix}
+          <span className={css.rule} aria-hidden />
+        </>
+      ) : null}
       <RailButton
         page={group.hub}
         head
@@ -342,6 +357,14 @@ export function EquipRail() {
         g.id === 'autopilot' ? `${waiting} waiting on a call` : `${firedToday} alert${firedToday === 1 ? '' : 's'} fired today`
       }
       full={full}
+      prefix={
+        g.id === 'market' && full ? (
+          <>
+            <ListsButton />
+            <SymbolButton />
+          </>
+        ) : undefined
+      }
     />
   ))
 
@@ -362,17 +385,13 @@ export function EquipRail() {
         } as CSSProperties
       }
     >
-      {/* Heads only, one capsule holds them all: a one-icon group in its own
-          capsule reads as a ring in a ring. With the pages, a capsule each.
-          The Symbol list's switch leads either way. */}
+      {/* Full bar: a capsule per module, and Lists + Symbol ride inside the
+          first one (Rev .99's Market capsule — its outline follows the Live
+          module, not the dock's own state). Narrow: heads only, one capsule
+          holds them all — a one-icon group in its own capsule reads as a ring
+          in a ring. */}
       {full ? (
-        <>
-          <div className={css.group} data-glass-surface="surface">
-            <ListsButton />
-            <SymbolButton />
-          </div>
-          {groups}
-        </>
+        groups
       ) : (
         <div className={css.group} data-glass-surface="surface">
           <ListsButton />

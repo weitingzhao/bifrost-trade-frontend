@@ -223,6 +223,9 @@ UI 改动后运行 `npm run check:legacy-css`。
 
 - 页面作用域 `[data-mat]`（主区与面板/浮窗正文）里 `--border` 就是 ink 6% 的规则线：分隔线、表格线直接写 `border-b` 即可；表头无底色（sticky 表头保留）。**图表网格与数据轨道用 `--sk-line`**，不跟随规则线变淡。
 - 不要再画中性色实线框（`border border-border rounded-*`）；带状态色的边框（warning / destructive 等）是读数，保留。
+- **材质迁移永不碰浮层**（设计 Rev 2026-09-27.99，穿模事故裁定）：菜单、下拉、弹出层永远自带不透明底或玻璃
+  （半透明底 + backdrop-filter），不得被批量刷成 `mat-card` 的透明填充。app 现有自建浮层（menubar `.pop`、
+  quickLook、shellNotices）与 shadcn `bg-popover` 均已合规——改材质的批量脚本要显式跳过 fixed/absolute 高 z-index 元素。
 
 - 每个页面根必须使用 [`PageShell`](src/components/layout/PageShell.tsx)（`padding`: `default` / `compact` / `none`）
 - 每个 `PageShell` 业务页的页头只用一个共用件；禁止手写页面级 `<h1>`。**新页与改版页用 [`PageHead`](src/components/layout/PageHead.tsx)**（设计 §16.10：说明进 ⓘ、时间戳位、meta、下划线 Tab、筛选放页头下方工具条；§16.13 新鲜度用 `useFreshReading` / `lib/freshness.ts`）。旧页仍用 [`PageHeader`](src/components/layout/PageHeader.tsx)，按组迁移中（样板：Backtest · Positions · Limits）。**同一遍过 §17 交互标准**（Owner 2026-09-25）：非就绪态用 `@bifrost/ui` `ViewState`（七种；失败只报一次、刷新失败是条带、`filtered` 的动作复位全部轴；DEV 可用 `?preview=` 预览）+ `lib/viewState.ts`；表格 `data-sr-table` / DS `standard` + 列型 `data-sr-col` / `col`；工具条 `data-sr-toolbar` + `ToolbarClear`；读数 `data-sr-kpi`。样式层是 `@bifrost/ui/styles/patterns`（按属性启用，不在 Tailwind 层里——同名属性会压过 Tailwind 类）

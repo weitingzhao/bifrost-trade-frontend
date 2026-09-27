@@ -115,7 +115,11 @@ describe('the design walk, by revision', () => {
     // Symbol and Journal prototypes changed too (.97/.98) with their registry
     // stamps left at .83/.89, so the tracker cannot see those two moves;
     // named for the design side.
-    expect(DESIGN_REV).toBe('2026-09-26.98')
+    // Package .28 @ Rev .99 (2026-09-27, increment over .26) answers the app's
+    // Notes/Feedback/Memory ASK (Spec §20), merges Lists+Symbol+Live into the
+    // Market capsule, renames Book starters → Starters (label-only, walked with
+    // the rename) and fixes the prototype's floating-material marker.
+    expect(DESIGN_REV).toBe('2026-09-27.99')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

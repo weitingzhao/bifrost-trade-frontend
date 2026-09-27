@@ -214,11 +214,13 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // The design's own word since Rev 2026-09-21.1, and §5a.5 keeps the h1
     // equal to it: the page is the book's starter catalogue, not a second
     // Copilot.
-    label: 'Book starters',
+    label: 'Starters',
     crumbs: COPILOT,
     design: {
+      // Rev .99 renamed the page «Starters» — the old name read as a member of
+      // the toolbar's Book pod. Label-only; the walk carries over.
       state: 'aligned',
-      rev: '2026-09-21.1',
+      rev: '2026-09-27.1',
       note: DESIGN_NOTES['/research/copilot/trading'],
     },
   },

@@ -38,9 +38,10 @@ describe('TradingCopilotPage language', () => {
         </MemoryRouter>
       </QueryClientProvider>,
     )
-    // «Book starters» since Rev 2026-09-21.1 — the design's own ROUTES word,
+    // «Starters» since Rev 2026-09-27.99 (the old name collided with the
+    // toolbar's Book pod) — the design's own ROUTES word,
     // and §5a.5 ties the h1 to it.
-    expect(screen.getByRole('heading', { name: 'Book starters' })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Starters' })).toBeTruthy()
     expect(screen.getByText('The book')).toBeTruthy()
     expect(screen.getByText('Open orders')).toBeTruthy()
     expect(screen.getByText('Gates armed')).toBeTruthy()

@@ -71,7 +71,8 @@ export default function TradingCopilotPage() {
   return (
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
       <PageHeader
-        title="Book starters"
+        // Rev .99: «Starters» — the old name collided with the toolbar's Book pod.
+        title="Starters"
         description="Ask about the book — positions, risk, gates, executions, instances. It reads and explains; it never places, modifies or cancels. D10 BLOCKED."
         actions={<CopilotPromptLangToggle />}
       />

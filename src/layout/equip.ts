@@ -205,7 +205,7 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
   {
     id: 'copilot',
     label: 'Copilot',
-    title: 'Copilot Desk (⌥4) — personas, schedules, book starters. To ask a question, use Ask in the top bar (⌘J).',
+    title: 'Copilot Desk (⌥4) — personas, schedules, starters. To ask a question, use Ask in the top bar (⌘J).',
     icon: railHead('copilot', MessageCircle),
     hub: {
       to: '/research/copilot',
@@ -215,7 +215,9 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
     pages: [
       {
         to: '/research/copilot/trading',
-        label: 'Book starters',
+        // Rev .99: «Book starters» collided with the toolbar's Book pod —
+        // same word, different module. Route and origin=book behaviour unchanged.
+        label: 'Starters',
         icon: railIcon('/research/copilot/trading', NotebookPen),
       },
     ],

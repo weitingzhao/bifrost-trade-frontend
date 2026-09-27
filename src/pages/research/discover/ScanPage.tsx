@@ -112,9 +112,12 @@ const SHOW_OPTIONS = [
 /** The four lenses the table gives a bar. Terrain wears its regime tag instead. */
 const BAR_LENSES = VOL_LENSES.filter((l) => l.key !== 'terrain')
 
+// Hot reads red and cold green — the prototype's inks (Owner 2026-09-27): hot
+// premium is rich, a cost to the buyer, not a gain. Stock ratings keeps the
+// opposite pair; the two pages say opposite things with the same words.
 function lensInk(flag: string | undefined): string {
-  if (flag === 'hot') return 'text-[var(--color-profit)]'
-  if (flag === 'cold') return 'text-destructive'
+  if (flag === 'hot') return 'text-loss'
+  if (flag === 'cold') return 'text-profit'
   return ''
 }
 
@@ -415,6 +418,8 @@ export default function ScanPage() {
           <LensSpreadPanel
             label={tape.label}
             sentence={tape.sentence}
+            hotFill="bg-loss/70"
+            coldFill="bg-profit/70"
             note={`${counts.total} in view`}
             spreads={spreads}
             caption={
@@ -519,7 +524,7 @@ export default function ScanPage() {
                         <PortfolioTag symbol={row.symbol} variant="inline" />
                       </DenseTableCell>
                       <DenseTableCell
-                        className={cn(denseTableNumCell, 'max-w-none font-semibold')}
+                        className={cn(denseTableNumCell, 'max-w-none font-semibold', lensInk(flagOf(score)))}
                         title={
                           missing > 0
                             ? `${missing} of the lenses you weighted has no reading for this name — left out of the average rather than counted as zero.`

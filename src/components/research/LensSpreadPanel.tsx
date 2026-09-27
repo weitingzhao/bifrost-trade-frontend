@@ -44,6 +44,8 @@ export function LensSpreadPanel({
   note,
   spreads,
   caption,
+  hotFill = 'bg-[var(--color-profit)]/70',
+  coldFill = 'bg-destructive/70',
 }: {
   /** The verdict in two words — "Rich tape", "Mixed tape". */
   label: string
@@ -52,6 +54,13 @@ export function LensSpreadPanel({
   note?: string
   spreads: readonly LensSpread[]
   caption: React.ReactNode
+  /**
+   * The hot / cold segments' fills. The two ratings pages colour the same bar
+   * in opposite pairs (Owner 2026-09-27): Stocks reads hot as strength (green,
+   * the default); Vol ratings reads hot as rich premium (red).
+   */
+  hotFill?: string
+  coldFill?: string
 }) {
   return (
     <SectionPanel cap="Tape" title={label} note={note}>
@@ -64,7 +73,7 @@ export function LensSpreadPanel({
               <div className={cn(SECTION_CAP_CLASS, 'truncate')}>{sp.label}</div>
               <div className="mt-1 flex h-2.5 gap-px overflow-hidden rounded-sm">
                 <span
-                  className="block bg-[var(--color-profit)]/70"
+                  className={cn('block', hotFill)}
                   style={{ width: `${(sp.hot / total) * 100}%` }}
                   title={sp.titles?.[0]}
                 />
@@ -74,7 +83,7 @@ export function LensSpreadPanel({
                   title={sp.titles?.[1]}
                 />
                 <span
-                  className="block bg-destructive/70"
+                  className={cn('block', coldFill)}
                   style={{ width: `${(sp.cold / total) * 100}%` }}
                   title={sp.titles?.[2]}
                 />

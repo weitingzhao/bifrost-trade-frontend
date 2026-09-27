@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ChainContract } from '@/utils/optionChain'
-import { cardExpiries, contractChecks, isMonthlyExpiry, optionWatchlistKey } from './symbolChainModel'
+import { etTodayIso } from '@/lib/freshness'
+import { cardExpiries, contractChecks, daysToExpiry, isMonthlyExpiry, optionWatchlistKey } from './symbolChainModel'
 
 // Made-up expiries.
 const LISTED = ['2027-01-04', '2027-01-06', '2027-01-08', '2027-01-11', '2027-01-15', '2027-02-19', '2027-03-19']
@@ -81,5 +82,26 @@ describe('optionWatchlistKey', () => {
   it('matches the Trade API contract key', () => {
     expect(optionWatchlistKey('pltr', '2026-10-16', 175, 'C')).toBe('PLTR|OPT|20261016|175.0|C')
     expect(optionWatchlistKey('PLTR', '20261016', 172.5, 'P')).toBe('PLTR|OPT|20261016|172.5|P')
+  })
+})
+
+describe('DTE, counted from New York’s today', () => {
+  it('takes New York’s date when UTC has already turned the day', () => {
+    // 21:30 ET on Sat 2026-09-26 is 01:30 UTC on the 27th; 00:30 ET is the 27th in both.
+    expect(etTodayIso(Date.parse('2026-09-27T01:30:00Z'))).toBe('2026-09-26')
+    expect(etTodayIso(Date.parse('2026-09-27T04:30:00Z'))).toBe('2026-09-27')
+    // 19:30 EST in December, when the offset is five hours.
+    expect(etTodayIso(Date.parse('2026-12-05T00:30:00Z'))).toBe('2026-12-04')
+  })
+
+  it('counts calendar days to expiry, as the Option screen does', () => {
+    // The walk’s example: a 16 Oct expiry read on the evening of Sat 26 Sep.
+    expect(daysToExpiry('2026-10-16', etTodayIso(Date.parse('2026-09-27T01:30:00Z')))).toBe(20)
+    expect(daysToExpiry('2026-10-16', '2026-09-26')).toBe(20)
+  })
+
+  it('reads 0 on expiration day rather than rounding up to 1', () => {
+    expect(daysToExpiry('2026-10-16', '2026-10-16')).toBe(0)
+    expect(daysToExpiry('2026-10-16T00:00:00', '2026-10-15')).toBe(1)
   })
 })

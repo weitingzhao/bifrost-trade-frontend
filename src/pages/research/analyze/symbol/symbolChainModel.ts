@@ -7,6 +7,15 @@
  */
 import type { ChainContract } from '@/utils/optionChain'
 
+/**
+ * Calendar days from `today` to `expiry` (both `YYYY-MM-DD`; `today` the New
+ * York date), 0 on expiration day — the count the Option screen's engine uses
+ * (trade-api 86ebdf7), so the two faces read the same DTE for one contract.
+ */
+export function daysToExpiry(expiry: string, today: string): number {
+  return Math.round((Date.parse(expiry.slice(0, 10)) - Date.parse(today)) / 86_400_000)
+}
+
 export function sigmaMove(spot: number, ivFrac: number, dte: number): number {
   return spot * ivFrac * Math.sqrt(Math.max(1, dte) / 365)
 }

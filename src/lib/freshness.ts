@@ -69,6 +69,11 @@ export function etDate(ms: number): string {
   return etParts(ms).date
 }
 
+/** Today's `YYYY-MM-DD` in New York — the date expiries, and DTE, are counted from. */
+export function etTodayIso(nowMs: number = Date.now()): string {
+  return etDate(nowMs)
+}
+
 /** `HH:MM` (or `HH:MM:SS`) in New York. */
 export function etClock(ms: number, seconds = false): string {
   return new Date(ms).toLocaleTimeString('en-US', {

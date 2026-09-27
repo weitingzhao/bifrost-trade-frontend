@@ -24,7 +24,7 @@ import { PlanThisButton } from '@/components/research'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
-import { todayIso } from '@/lib/researchFreshness'
+import { etTodayIso } from '@/lib/freshness'
 import { SCREEN_BAND_PARAM, legInScreenBand, parseScreenBand, screenBandLabel } from '@/lib/screenBand'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
@@ -40,6 +40,7 @@ import { ContractChecksBlock, StrikeWindowControl, WatchlistAddButton } from './
 import {
   LADDER_COLUMNS,
   cardExpiries,
+  daysToExpiry,
   ladderRows,
   type StrikeWindow,
   maxPain,
@@ -97,7 +98,7 @@ function writeCompare(list: CompareEntry[]): void {
 
 export function SymbolChainFace({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
-  const today = todayIso()
+  const today = etTodayIso() // New York's date, not the browser's: expiries are dated there
   // The Dealer face's ⇢ hands a strike over as `?expiration=&strike=&right=`
   // (right optional — a wall is not a side). Read once as the seed: from
   // there the ladder's own clicks own the selection, same as Payoff's anchor.
@@ -167,14 +168,18 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
       : (expiries.find((e) => fitByExpiry.has(e)) ?? expiries[0] ?? null)
   const chain = expiry ? (chains.get(expiry) ?? []) : []
   const fitRow = expiry ? fitByExpiry.get(expiry) : null
-  const dte = fitRow?.dte ?? (expiry ? Math.max(1, Math.round((Date.parse(expiry) - Date.parse(today)) / 86_400_000)) : null)
+  // DTE from New York's today, as the Option screen counts it (Owner 2026-09-27) —
+  // not the fit's DTE, which counts from the session the surface was fitted on.
+  const dte = expiry ? daysToExpiry(expiry, today) : null
+  // Only the smile keeps the fit's T: its IVs are √(w(k)/T) at the T it fitted with.
+  const fitDte = fitRow?.dte ?? null
   const atmIv = fitRow?.atm_vol ?? null
 
   const residQ = useResiduals(sym, expiry ?? '')
   const rich = richToSvi(residQ.data ?? [])
   const params = fitRow ? sviFromRow(fitRow) : null
   const fitIvPts =
-    params && dte != null && dte > 0 ? (k: number) => sviIvPts(params, k, dte / 365) : null
+    params && fitDte != null && fitDte > 0 ? (k: number) => sviIvPts(params, k, fitDte / 365) : null
 
   const mp = maxPain(chain)
   const oi = oiTotals(chain)
@@ -233,8 +238,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
 
   const loading = expQ.isLoading || (expiries.length > 0 && snapQs.every((q) => q.isLoading))
 
-  const cardDte = (e: string) =>
-    fitByExpiry.get(e)?.dte ?? Math.max(1, Math.round((Date.parse(e) - Date.parse(today)) / 86_400_000))
+  const cardDte = (e: string) => daysToExpiry(e, today)
   const earnHead = earningsHeadMeta(nextEarnings)
   const ivMax = Math.max(1e-6, ...expiries.map((x) => fitByExpiry.get(x)?.atm_vol ?? 0))
 

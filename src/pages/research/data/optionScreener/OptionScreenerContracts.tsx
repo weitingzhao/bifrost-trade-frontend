@@ -33,6 +33,7 @@ import {
   cashPerContract,
   contractToken,
   deltaInBand,
+  nameIvLabel,
   premiumBasis,
   premiumTitle,
   quoteFromEarlierSession,
@@ -226,6 +227,7 @@ export function OptionScreenerContracts({
           <DenseTableBody>
             {groups.map((g) => {
               const fit = ruleCell(g.symbol, structureRules, opportunities, structureLabel)
+              const iv = g.iv ? nameIvLabel(g.iv) : null
               return [
                 <tr key={`g:${g.symbol}`} className="border-y border-border bg-secondary/50">
                   <td colSpan={COLS} className="px-[var(--table-cell-px)] py-1.5 text-dense-meta">
@@ -238,6 +240,15 @@ export function OptionScreenerContracts({
                     </Link>{' '}
                     <span className="text-muted-foreground">
                       {g.spot != null ? `spot ${g.spot.toFixed(2)}` : 'spot —'}
+                      {/* The design's `IV rank` seat, after spot: IV30's one-year percentile, which the engine scores on. */}
+                      {iv ? (
+                        <>
+                          {' · '}
+                          <span title={iv.title} className={cn(iv.warn && 'text-warning')}>
+                            {iv.text}
+                          </span>
+                        </>
+                      ) : null}
                       {g.avgIv != null ? ` · avg IV ${(g.avgIv * 100).toFixed(0)}%` : ''}
                     </span>
                     <span className="ml-2.5 font-mono text-dense-caption text-muted-foreground">

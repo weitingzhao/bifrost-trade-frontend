@@ -310,6 +310,77 @@ export interface ScreenGroup {
   rows: ScreenerContractRow[]
   /** Why a name passes nothing; empty when it passes something. */
   warn: string
+  /** The name's IV percentile as the engine scored it; null for a name not screened or an older engine. */
+  iv: NameIv | null
+}
+
+/**
+ * The name's IV30 and where it sits in its last 252 sessions, as the engine
+ * read it from Research and scored it: 15% of every contract's score, the same
+ * for each. Called IV rank, as the design's header and the rest of Research
+ * call a one-year IV percentile; it is the share of the year at or below today.
+ */
+export interface NameIv {
+  iv30: number | null
+  pct: number | null
+  /** `YYYY-MM-DD`. */
+  asOf: string | null
+  sessions: number | null
+  /** The engine's own sentence when it did not use the percentile; '' when it did. */
+  note: string
+}
+
+const IV_NOTE = 'IV percentile'
+
+/**
+ * Null for an engine older than trade-api db8b867, which sends no reading. The
+ * engine joins a name's notes with "; " (a spread note can come first).
+ */
+export function nameIv(g: ScreenerSymbolGroup, warning: string | undefined): NameIv | null {
+  if (g.iv_percentile === undefined) return null
+  const num = (v: number | null | undefined) => (v != null && Number.isFinite(v) ? v : null)
+  return {
+    iv30: num(g.iv30),
+    pct: num(g.iv_percentile),
+    asOf: g.iv_percentile_as_of ?? null,
+    sessions: num(g.iv_percentile_sessions),
+    note: (warning ?? '').split('; ').find((s) => s.startsWith(IV_NOTE)) ?? '',
+  }
+}
+
+/**
+ * The header's IV reading. A percentile the engine did not use says why in a
+ * word, with the engine's sentence on hover; only a failed read is a warning —
+ * a short history or a stale day is the store's state, not a fault.
+ */
+export function nameIvLabel(iv: NameIv): { text: string; title: string; warn: boolean } {
+  const iv30 = iv.iv30 == null ? '' : ` · IV30 ${(iv.iv30 * 100).toFixed(0)}%`
+  if (iv.pct != null) {
+    return {
+      text: `IV rank ${Math.round(iv.pct)}${iv30}`,
+      title:
+        `IV rank: IV30 on ${fmtIsoDateToken(iv.asOf)} sits at or above ${iv.pct}% of its last ${iv.sessions ?? '—'} ` +
+        'sessions (Research). The engine scores it as 15% of every contract here, the same for each.',
+      warn: false,
+    }
+  }
+  const failed = iv.note.startsWith(`${IV_NOTE} read failed`)
+  const why = failed
+    ? 'read failed'
+    : iv.asOf == null
+      ? 'no IV30'
+      : iv.note.includes('days old')
+        ? `as of ${fmtIsoDateToken(iv.asOf)}`
+        : iv.sessions != null
+          ? `${iv.sessions} sessions`
+          : 'withheld'
+  // The engine's sentences carry no full stop.
+  const said = iv.note ? `${iv.note.replace(/\.$/, '')}.` : 'The engine sent no IV percentile for this name.'
+  return {
+    text: `IV rank — (${why})${iv30}`,
+    title: `${said} Every contract scores it neutral (0.5).`,
+    warn: failed,
+  }
 }
 
 export type ScreenView = 'grouped' | 'flat'
@@ -327,6 +398,8 @@ export function buildScreenGroups(
   failed: Readonly<Record<string, string>> = {},
   /** Names still being screened; Grouped view holds their place. */
   pending: readonly string[] = [],
+  /** The engine's per-name notes; a screened name's IV note rides on its row. */
+  warnings: Readonly<Record<string, string>> = {},
 ): ScreenGroup[] {
   const out: ScreenGroup[] = []
   for (const g of groups) {
@@ -346,18 +419,19 @@ export function buildScreenGroups(
       inWindow,
       rows,
       warn: rows.length === 0 ? bindingFilter(g.contracts, f) : '',
+      iv: nameIv(g, warnings[g.symbol]),
     })
   }
   if (view === 'grouped') {
     const seen = new Set(out.map((g) => g.symbol))
     for (const [symbol, reason] of Object.entries(failed)) {
       if (seen.has(symbol)) continue
-      out.push({ symbol, spot: null, avgIv: null, inWindow: 0, rows: [], warn: `no chain — ${reason}` })
+      out.push({ symbol, spot: null, avgIv: null, inWindow: 0, rows: [], warn: `no chain — ${reason}`, iv: null })
       seen.add(symbol)
     }
     for (const symbol of pending) {
       if (seen.has(symbol)) continue
-      out.push({ symbol, spot: null, avgIv: null, inWindow: 0, rows: [], warn: 'screening…' })
+      out.push({ symbol, spot: null, avgIv: null, inWindow: 0, rows: [], warn: 'screening…', iv: null })
     }
   }
   return out
@@ -409,7 +483,15 @@ export function screenerFunnel(args: {
   const screenable = Math.max(0, scanned - failed)
   const inWindow = groups.reduce((n, g) => n + g.inWindow, 0)
   const pass = groups.reduce((n, g) => n + g.rows.length, 0)
-  const warning = leadWarning(data?.warnings)
+  // Only a name the engine could not screen has a reason for Screenable; a
+  // screened name's warning is a note about it (spread, IV percentile), and
+  // counted here it read as why other names returned no chain.
+  const failedWarnings: Record<string, string> = {}
+  for (const s of data?.symbols_failed ?? []) {
+    const w = data?.warnings?.[s]
+    if (w) failedWarnings[s] = w
+  }
+  const warning = leadWarning(failedWarnings)
 
   return [
     {

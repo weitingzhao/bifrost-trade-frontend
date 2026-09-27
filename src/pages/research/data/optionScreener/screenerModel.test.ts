@@ -6,6 +6,8 @@ import {
   contractToken,
   DEFAULT_LIVE_FILTERS,
   deltaInBand,
+  nameIv,
+  nameIvLabel,
   premiumBasis,
   premiumTitle,
   quoteFromEarlierSession,
@@ -273,5 +275,101 @@ describe('quote time and premium basis', () => {
     expect(q.newest).toBeNull()
     expect(q.title).toBe('The engine sent no quote time for these rows.')
     expect(premiumTitle(row({ snapshot_ts: undefined }), q, now)).toBe('Mid of bid and ask, quoted at a time the engine did not send.')
+  })
+})
+
+describe('the name’s IV percentile, as the engine scored it', () => {
+  // Invented readings — no real name's IV.
+  const measured: Partial<ScreenerSymbolGroup> = {
+    iv30: 0.463,
+    iv_percentile: 12.7,
+    iv_percentile_as_of: '2026-09-25',
+    iv_percentile_sessions: 252,
+  }
+  const withIv = (p: Partial<ScreenerSymbolGroup>) => ({ ...group('ABC', [row({})]), ...p })
+
+  it('reads nothing from an engine that sends no reading', () => {
+    expect(nameIv(group('ABC', [row({})]), undefined)).toBeNull()
+    const [g] = buildScreenGroups([group('ABC', [row({})])], DEFAULT_LIVE_FILTERS, 'grouped')
+    expect(g.iv).toBeNull()
+  })
+
+  it('puts the one-year percentile in the design’s IV rank seat, IV30 beside it', () => {
+    const iv = nameIv(withIv(measured), undefined)
+    expect(iv).toEqual({ iv30: 0.463, pct: 12.7, asOf: '2026-09-25', sessions: 252, note: '' })
+    const label = nameIvLabel(iv!)
+    expect(label.text).toBe('IV rank 13 · IV30 46%')
+    expect(label.title).toContain('IV rank: IV30 on 25SEP26 sits at or above 12.7% of its last 252 sessions')
+    expect(label.warn).toBe(false)
+  })
+
+  it('says in a word why a withheld percentile is not scored, the engine’s sentence on hover', () => {
+    const note = 'IV percentile unmeasured: Research withholds it on 4 sessions of IV30 history'
+    const iv = nameIv(withIv({ ...measured, iv_percentile: null, iv_percentile_sessions: 4 }), note)!
+    expect(iv.note).toBe(note)
+    expect(nameIvLabel(iv)).toEqual({
+      text: 'IV rank — (4 sessions) · IV30 46%',
+      title: `${note}. Every contract scores it neutral (0.5).`,
+      warn: false,
+    })
+  })
+
+  it('dates a stale reading, names a missing one, and warns only on a failed read', () => {
+    const stale = nameIv(
+      withIv({ ...measured, iv_percentile: null, iv_percentile_as_of: '2026-09-18' }),
+      "IV percentile unmeasured: Research's newest IV30 reading is 2026-09-18, 8 days old",
+    )!
+    expect(nameIvLabel(stale).text).toBe('IV rank — (as of 18SEP26) · IV30 46%')
+
+    const none = nameIv(
+      withIv({ iv30: null, iv_percentile: null, iv_percentile_as_of: null, iv_percentile_sessions: null }),
+      'IV percentile unmeasured: Research holds no IV30 for this name',
+    )!
+    expect(nameIvLabel(none)).toMatchObject({ text: 'IV rank — (no IV30)', warn: false })
+
+    const failed = nameIv(
+      withIv({ iv30: null, iv_percentile: null, iv_percentile_as_of: null, iv_percentile_sessions: null }),
+      'IV percentile read failed (Research /analytics/options/iv-percentile): ConnectError: refused',
+    )!
+    expect(nameIvLabel(failed)).toMatchObject({ text: 'IV rank — (read failed)', warn: true })
+  })
+
+  it('finds the IV note behind a spread note the engine joined to it', () => {
+    const iv = nameIv(
+      withIv({ ...measured, iv_percentile: null, iv_percentile_sessions: 4 }),
+      'max_spread_pct not applied to 1 of 1 contracts: no bid/ask on file; IV percentile unmeasured: Research withholds it on 4 sessions of IV30 history',
+    )!
+    expect(iv.note).toBe('IV percentile unmeasured: Research withholds it on 4 sessions of IV30 history')
+  })
+
+  it('rides on each screened name and on no name the engine could not screen', () => {
+    const gs = buildScreenGroups([withIv(measured)], DEFAULT_LIVE_FILTERS, 'grouped', { XYZ: 'No snapshot data' }, ['QRS'], {})
+    expect(gs.map((g) => [g.symbol, g.iv?.pct ?? null])).toEqual([
+      ['ABC', 12.7],
+      ['XYZ', null],
+      ['QRS', null],
+    ])
+  })
+
+  it('never lends a screened name’s IV note to the Screenable cell', () => {
+    const data: ScreenerResponse = {
+      ok: true,
+      groups: [withIv({ ...measured, iv_percentile: null })],
+      symbols_scanned: ['ABC', 'XYZ'],
+      symbols_failed: ['XYZ'],
+      warnings: {
+        ABC: 'IV percentile unmeasured: Research withholds it on 4 sessions of IV30 history',
+        XYZ: 'No option contracts on file',
+      },
+    }
+    const cells = screenerFunnel({
+      picked: ['ABC', 'XYZ'],
+      sourceLabel: null,
+      data,
+      loading: false,
+      f: DEFAULT_LIVE_FILTERS,
+      groups: [],
+    })
+    expect(cells[1].note).toBe('No option contracts on file')
   })
 })

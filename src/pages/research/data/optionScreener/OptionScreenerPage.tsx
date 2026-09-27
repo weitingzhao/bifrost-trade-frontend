@@ -123,8 +123,8 @@ export default function OptionScreenerPage() {
   }, [data])
 
   const groups = useMemo(
-    () => buildScreenGroups(data?.groups ?? [], filters, view, failed, chain.pending),
-    [data?.groups, filters, view, failed, chain.pending],
+    () => buildScreenGroups(data?.groups ?? [], filters, view, failed, chain.pending, data?.warnings),
+    [data?.groups, data?.warnings, filters, view, failed, chain.pending],
   )
   const pass = groups.reduce((n, g) => n + g.rows.length, 0)
   const structureRules = useMemo(

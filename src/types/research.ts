@@ -55,6 +55,19 @@ export interface ScreenerSymbolGroup {
   best_score: number
   avg_iv: number
   contract_count: number
+  /**
+   * The name's IV30 and where it sits in its last 252 sessions, read from
+   * Research by the engine (trade-api db8b867). The percentile is 15% of every
+   * contract's score, the same for each. Null when Research withholds it, when
+   * the reading is over five days old or when the read failed —
+   * `warnings[symbol]` says which. Absent from an older engine.
+   */
+  iv30?: number | null
+  iv_percentile?: number | null
+  /** The session the reading is from, `YYYY-MM-DD`. */
+  iv_percentile_as_of?: string | null
+  /** Sessions of IV30 the percentile was taken over. */
+  iv_percentile_sessions?: number | null
   contracts: ScreenerContractRow[]
 }
 

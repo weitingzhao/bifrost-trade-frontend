@@ -43,6 +43,7 @@ import {
   DenseTableRow,
   DenseTag,
   denseTableNumCell,
+  type DenseTagVariant,
 } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
@@ -72,8 +73,9 @@ import { MODE_TAG } from '@/lib/harness/objectivePolicy'
 const LEAD =
   'Did the machine earn its keep? Research builds machines, and only settled money says whether one was worth running — so this page reads the whole chain for each of them, proposed through settled, and it is the one place the loop closes: a verdict here is what sends a patch back to the objective.'
 
-const VERDICT_TAG: Record<Verdict, { variant: 'success' | 'danger' | 'warning' | 'neutral' }> = {
-  EARNING: { variant: 'success' },
+// Rev .92: EARNING is a state — the state green pastel, not a P&L ink.
+const VERDICT_TAG: Record<Verdict, { variant: DenseTagVariant }> = {
+  EARNING: { variant: 'state-green' },
   'DID NOT EARN': { variant: 'danger' },
   'BELOW FLOOR': { variant: 'warning' },
   'NO VERDICT': { variant: 'neutral' },

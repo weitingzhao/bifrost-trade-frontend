@@ -12,14 +12,14 @@
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
-import { PositionsTier } from '@/components/positions/PositionsTier'
+import { SectionHead } from '@/components/layout'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { buildProposals, proposalChain } from '@/pages/research/loop/proposals/proposalsModel'
 import type { HabitReading } from '@/utils/reviewHabits'
 import type { ReviewTrade } from '@/utils/reviewTrades'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 export function ProposalChainPanel({
   habits,
@@ -35,7 +35,7 @@ export function ProposalChainPanel({
   const chain = proposalChain(habits, buildProposals(habits, trades, paths))
   return (
     <>
-      <PositionsTier label="The chain" note="each link needs the one before it — and where it breaks" />
+      <SectionHead note="Each link needs the one before it — and where it breaks.">The chain</SectionHead>
       <section className={positionsUi.panel} aria-label="The chain">
         <header className={positionsUi.panelHead}>
           <span className={positionsUi.panelTitle}>
@@ -48,7 +48,7 @@ export function ProposalChainPanel({
         {chain.map((c) => (
           <div
             key={c.key}
-            className="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-x-3 gap-y-1 border-b border-border/55 px-3 py-2 last:border-b-0"
+            className="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-x-3 gap-y-1 border-b border-border px-3 py-2 last:border-b-0"
           >
             <span className="inline-flex items-start gap-1.5 text-xs leading-normal font-semibold text-foreground">
               <StatusLamp

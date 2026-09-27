@@ -87,7 +87,7 @@
 }
 
 .btn:hover {
-  color: var(--rh);
+  color: var(--rhi, var(--rh));
   background: color-mix(in oklab, var(--rh) 24%, var(--sk-raised2));
   /* 1.12 since the framework pass (Rev .25): a dock that swells a third of
      its size shouts; this is enough to say which one is under the pointer. */
@@ -127,7 +127,7 @@
   border-radius: 6px;
   background: var(--sk-raised);
   border: 1px solid color-mix(in oklab, var(--rh) 50%, transparent);
-  color: var(--rh);
+  color: var(--rhi, var(--rh));
   box-shadow:
     0 6px 18px rgba(0, 0, 0, 0.5),
     0 0 10px color-mix(in oklab, var(--rh) 20%, transparent);

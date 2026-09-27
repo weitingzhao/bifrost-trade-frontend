@@ -53,16 +53,18 @@ export function ruleMeta(rule: Pick<PlaybookRule, 'created_at' | 'updated_at'>):
 
 /**
  * The design's per-category inks, landed on the tag variants the system
- * already has: sky for entry/exit, amber for sizing, rose for risk, the
- * strategy purple for hedge/regime, muted for the rest.
+ * already has: amber for sizing, rose for risk, the strategy purple for
+ * hedge/regime, muted for the rest. Entry/exit wear the state blue, not the
+ * prototype's contract sky: a rule category is a type, and since Rev .89 a
+ * type never borrows the ink that names a contract.
  */
 export function categoryTagVariant(
   category: string,
-): 'info' | 'warning' | 'danger' | 'strategy' | 'neutral' {
+): 'state-blue' | 'warning' | 'danger' | 'strategy' | 'neutral' {
   switch (category) {
     case 'entry':
     case 'exit':
-      return 'info'
+      return 'state-blue'
     case 'sizing':
       return 'warning'
     case 'risk':
@@ -86,7 +88,9 @@ export function noteWhen(createdAt: string | null | undefined, nowIso: string): 
 
 /**
  * LOSS reads as a loss; anything else — win and scratch alike — is the book
- * working, which is the design's own two-tone reading.
+ * working, which is the design's own two-tone reading. The page draws the two
+ * as the state green and red pastels (Rev .90): an outcome is a state of the
+ * case, not a signed figure.
  */
 export function outcomeTone(outcome: string | null | undefined): 'loss' | 'win' {
   return /loss/i.test(outcome ?? '') ? 'loss' : 'win'

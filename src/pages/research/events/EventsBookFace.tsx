@@ -49,8 +49,9 @@ const td = 'border-b border-border px-2 py-1.5 text-right font-mono text-dense-m
 const cap = 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 
 function laneDot(kind: 'macro' | 'opex' | 'book' | 'watch') {
+  // Rev .92: an ordinary event dot is soft; only in-book names keep the ticker ink.
   return kind === 'macro'
-    ? 'bg-foreground rounded-full'
+    ? 'bg-[var(--sk-soft)] rounded-full'
     : kind === 'opex'
       ? 'bg-[var(--sk-contract,#7dd3fc)]'
       : kind === 'book'
@@ -187,7 +188,8 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                     key={d.iso}
                     className={cn(
                       'px-0 pb-1 text-center font-mono text-dense-micro',
-                      d.today ? 'font-bold text-[var(--sk-ticker)]' : d.weekend ? 'text-muted-foreground/40' : 'text-muted-foreground',
+                      // Rev .92: today is the accent, not the ticker lime.
+                      d.today ? 'font-bold text-[var(--sk-accent)]' : d.weekend ? 'text-muted-foreground/40' : 'text-muted-foreground',
                     )}
                   >
                     {d.dom}

@@ -191,10 +191,10 @@
   border: 1px solid var(--border);
 }
 
+/* 11/600 sentence case (Rev .92): the inspector's labels lose the tracked caps; table heads keep the DS case. */
 .summaryLabel {
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--text-dense-meta);
+  font-weight: 600;
   opacity: 0.85;
 }
 
@@ -339,9 +339,9 @@
 }
 
 .relatedLabel {
+  font-size: var(--text-dense-meta);
+  font-weight: 600;
   color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 .rawTable {
@@ -373,10 +373,8 @@
 }
 
 .rawTableLabel {
-  font-size: 0.7rem;
+  font-size: var(--text-dense-meta);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--muted-foreground);
   margin: 0.5rem 0 0.35rem;
 }
@@ -463,10 +461,8 @@
 }
 
 .barSectionTitle {
-  font-size: 0.65rem;
+  font-size: var(--text-dense-meta);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
@@ -558,9 +554,8 @@
 
 .pcrKpiLabel {
   display: block;
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  font-size: var(--text-dense-meta);
   color: var(--muted-foreground);
   margin-bottom: 0.25rem;
 }
@@ -625,10 +620,8 @@
 }
 
 .pcrWindowLabel {
-  font-size: 0.62rem;
+  font-size: var(--text-dense-meta);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
@@ -676,10 +669,8 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font-size: var(--text-dense-meta);
+  font-weight: 600;
   color: var(--foreground);
 }
 
@@ -836,10 +827,8 @@
   align-items: center;
   gap: 7px;
   margin: 0;
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
+  font-size: var(--text-dense-meta);
+  font-weight: 600;
   color: var(--foreground);
 }
 

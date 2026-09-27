@@ -168,7 +168,7 @@ function ExpiryRow({
   const past = row.dte != null && row.dte < 0
 
   return (
-    <DenseTableRow className={cn('[&_td]:whitespace-nowrap [&_td]:text-dense-body', active && 'bg-secondary/60')}>
+    <DenseTableRow className={cn('[&_td]:whitespace-nowrap [&_td]:text-dense-body', active && 'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]')}>
       <DenseTableCell>
         <button
           type="button"

@@ -11,14 +11,13 @@
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
-import { EmptyState, HealthLamp } from '@bifrost/ui'
+import { HealthLamp, ViewState } from '@bifrost/ui'
 import { DenseTag } from '@/components/data-display'
 import { fetchResearchDoc } from '@/api/research/docs'
 import { SegmentControl } from '@/components/data-display'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { PageHead, PageShell } from '@/components/layout'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
+import { failedDetail } from '@/lib/viewState'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { cap, mono, panel, panelHead } from '@/components/research/labFaceUi'
@@ -139,7 +138,7 @@ export default function LabCalibrationPage() {
           switch is the toolbar's first item), then where both documents are
           read from, then the way to the blueprint. The document's round is
           the page head's stamp, where the design puts it. */}
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border px-3 py-1.75 mat-card">
+      <div data-sr-toolbar="">
         <SegmentControl
           ariaLabel="View"
           size="xs"
@@ -173,16 +172,36 @@ export default function LabCalibrationPage() {
         </Link>
       </div>
 
-      {calQ.isError || blueQ.isError ? (
-        <QueryErrorAlert
-          error={calQ.error ?? blueQ.error}
-          onRetry={() => {
+      {(calQ.isError || blueQ.isError) && doc ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the documents"
+          detail="Showing the last copy read — the round above is the one on screen, not necessarily the latest."
+          onAction={() => {
             void calQ.refetch()
             void blueQ.refetch()
           }}
         />
+      ) : null}
+      {(calQ.isError || blueQ.isError) && !doc ? (
+        <section className={cn(panel, 'overflow-hidden')}>
+          <ViewState
+            kind="failed"
+            title="Couldn’t read the calibration"
+            detail={failedDetail(
+              { data: null, isPending: false, isError: true, error: calQ.error ?? blueQ.error },
+              'Neither document was read — no contract is judged here.',
+            )}
+            onAction={() => {
+              void calQ.refetch()
+              void blueQ.refetch()
+            }}
+          />
+        </section>
       ) : !doc || (view === 'contracts' && !parsed) ? (
-        <Skeleton className="h-96 w-full rounded-md" />
+        <section className={cn(panel, 'overflow-hidden')}>
+          <ViewState kind="loading" title="Reading both documents" rows={10} cols={4} />
+        </section>
       ) : view === 'source' ? (
         // The document itself, in a panel that names it (Rev .52). The whole
         // document rather than the prototype's §2 excerpt: the text is read
@@ -213,12 +232,15 @@ export default function LabCalibrationPage() {
               key={k}
               type="button"
               onClick={() => setPick(on ? 'all' : k)}
+              aria-pressed={on}
               className={cn(panel, 'flex-[1_1_150px] cursor-pointer px-3 py-2.25 text-left')}
+              // The picked filter is the accent (Rev .84 — selection is never a
+              // state colour); the count keeps its lamp.
               style={
                 on
                   ? {
-                      background: `color-mix(in oklab, ${lampColor[k]} 10%, var(--sk-raised))`,
-                      borderColor: lampColor[k],
+                      background: 'color-mix(in srgb, var(--sk-accent) 10%, transparent)',
+                      borderColor: 'var(--sk-accent)',
                     }
                   : undefined
               }
@@ -241,8 +263,8 @@ export default function LabCalibrationPage() {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        <span className={cap}>layer</span>
+      <div data-sr-toolbar="">
+        <span data-sr-tb="label">Layer</span>
         <SegmentControl
           ariaLabel="Layer"
           size="xs"
@@ -252,7 +274,7 @@ export default function LabCalibrationPage() {
             LAYERS.map(([key, title]) => ({ value: key, label: title.split(' · ')[1] ?? title }))
           )}
         />
-        <span className={cn(mono, 'ml-auto text-dense-caption text-muted-foreground')}>
+        <span data-sr-tb="meta" className={mono}>
           {shown.length} of {ROWS.length} contracts shown
           {pick === 'all' ? '' : ` · ${STATE[pick].label}`}
         </span>
@@ -276,11 +298,12 @@ export default function LabCalibrationPage() {
                   key={r.id}
                   id={r.id}
                   className={cn(
-                    'grid grid-cols-1 items-start gap-x-3.5 gap-y-2 border-b border-border/60 px-3 py-2.75 md:grid-cols-[56px_20px_minmax(0,1.05fr)_minmax(0,1.35fr)]',
+                    'grid grid-cols-1 items-start gap-x-3.5 gap-y-2 border-b border-border px-3 py-2.75 md:grid-cols-[56px_20px_minmax(0,1.05fr)_minmax(0,1.35fr)]',
                     r.id === target && 'bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)]',
                   )}
                 >
-                  <span className={cn(mono, 'text-dense-caption font-semibold text-primary')}>
+                  {/* An id names a row, it is not the active thing: soft, not the accent. */}
+                  <span className={cn(mono, 'text-dense-caption font-semibold text-[var(--sk-soft)]')}>
                     {r.id}
                   </span>
                   <span className="pt-0.75">
@@ -320,9 +343,13 @@ export default function LabCalibrationPage() {
         ))}
         {shown.length === 0 ? (
           <div className="p-3.5">
-            <EmptyState
-              title="No contract in this state at this layer"
-              description={`Filter: ${layer === 'all' ? 'all layers' : layer} · ${pick === 'all' ? 'all states' : STATE[pick].label}`}
+            <ViewState
+              kind="filtered"
+              detail={`No contract in this state at this layer — ${layer === 'all' ? 'all layers' : layer} · ${pick === 'all' ? 'all states' : STATE[pick].label}.`}
+              onAction={() => {
+                setPick('all')
+                setLayer('all')
+              }}
             />
           </div>
         ) : null}
@@ -338,9 +365,9 @@ export default function LabCalibrationPage() {
         {FIXES.map((f) => (
           <div
             key={f.ids}
-            className="grid grid-cols-1 items-start gap-x-3.5 gap-y-1.5 border-b border-border/60 px-3 py-2.5 md:grid-cols-[112px_minmax(0,1fr)_minmax(0,1.4fr)]"
+            className="grid grid-cols-1 items-start gap-x-3.5 gap-y-1.5 border-b border-border px-3 py-2.5 md:grid-cols-[112px_minmax(0,1fr)_minmax(0,1.4fr)]"
           >
-            <span className={cn(mono, 'text-dense-caption text-primary')}>{f.ids}</span>
+            <span className={cn(mono, 'text-dense-caption text-[var(--sk-soft)]')}>{f.ids}</span>
             <span className="text-dense-body text-pretty">{f.gap}</span>
             <span className="text-dense-caption leading-normal text-muted-foreground text-pretty">
               {inline(f.fix)}
@@ -350,9 +377,12 @@ export default function LabCalibrationPage() {
       </div>
 
       {disagrees ? (
-        <div className={cn(panel, 'border-[color-mix(in_srgb,var(--color-lamp-yellow)_60%,transparent)]')}>
+        <div
+          className={panel}
+          style={{ borderColor: 'color-mix(in srgb, var(--color-warning) 55%, transparent)' }}
+        >
           <div className="flex flex-col gap-1.25 px-3 py-2.75">
-            <div className="text-dense-caption font-semibold uppercase tracking-[0.1em] text-warning">
+            <div className="text-dense-meta font-semibold text-warning">
               Count disagrees with its own rows
             </div>
             <p className="m-0 max-w-[78ch] text-dense-body leading-relaxed text-pretty">

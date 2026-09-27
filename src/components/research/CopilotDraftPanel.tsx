@@ -18,13 +18,14 @@ export function CopilotDraftPanel({
   className?: string
 }) {
   return (
+    // A grouped card (mat-card) with the Copilot's own violet as its left
+    // edge — an inset shadow, because mat-card clears border colours. The
+    // title is a mono label in the same hue (Rev .89: what the Copilot wrote
+    // wears the Copilot module colour, not the accent).
     <div
-      className={cn(
-        'rounded-lg border border-l-[3px] border-[var(--sk-line0)] border-l-primary bg-background px-3 py-2',
-        className
-      )}
+      className={cn('px-3 py-2 mat-card shadow-[inset_3px_0_0_var(--sk-copilot-ink)]', className)}
     >
-      <div className="font-mono text-dense-micro tracking-[0.1em] text-primary">{title}</div>
+      <div className="font-mono text-dense-micro font-semibold text-[var(--sk-copilot-ink)]">{title}</div>
       <p className="m-0 mt-1 max-w-[72ch] text-dense-label leading-relaxed text-muted-foreground text-pretty">
         {children}
       </p>

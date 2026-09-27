@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { ViewState } from '@bifrost/ui'
 import {
   createPlaybookNote,
   createPlaybookRule,
@@ -10,19 +11,20 @@ import {
   retirePlaybookRule,
   searchPlaybook,
 } from '@/api/playbook'
-import { PageHeader } from '@/components/layout/PageHeader'
-import { PageShell } from '@/components/layout/PageShell'
+import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { ExportSessionMenu } from '@/components/cockpit/ExportSessionMenu'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
-import { ResearchUserSwitcher } from '@/components/auth/ResearchUserSwitcher'
+import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/components/auth/ResearchUserSwitcher'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import type { CopilotUiMessage } from '@/hooks/useCopilotSession'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { classifyResearchAuthError } from '@/lib/auth/researchAuthGap'
+import { useResearchAuth } from '@/lib/auth/researchUser'
 import { cn } from '@/lib/utils'
+import { failedDetail, sourceState, staleDetail, type QueryLike } from '@/lib/viewState'
 import {
   CATEGORIES,
   caseHeadline,
@@ -62,11 +64,85 @@ function MutationError({ error }: { error: unknown }) {
   )
 }
 
+/** 11/600 sentence caps (Rev .84) — the tracked uppercase tier is gone. */
+const CAP = 'text-dense-meta font-semibold text-muted-foreground'
+
+/**
+ * One tab's read, in §17 terms. The playbook is scoped to a Research user, so
+ * a 401 with no user set is not a failure — it is the page waiting for one
+ * (design 2026-09-15 Q2=A); a 401 with a user set is a rejected token.
+ */
+function TabState({
+  q,
+  what,
+  rows,
+  cols,
+  onSetUser,
+}: {
+  q: QueryLike & { refetch: () => unknown }
+  what: string
+  rows?: number
+  cols?: number
+  onSetUser: () => void
+}) {
+  const { token } = useResearchAuth()
+  const preview = usePreviewState()
+  const state = preview === 'loading' || preview === 'failed' ? preview : sourceState(q)
+  const gap = state === 'failed' && preview == null ? classifyResearchAuthError(q.error, token) : null
+  if (state === 'loading') {
+    return (
+      <section className="overflow-hidden mat-card">
+        <ViewState kind="loading" title={`Loading ${what}`} rows={rows ?? 4} cols={cols ?? 3} />
+      </section>
+    )
+  }
+  if (gap === 'not_set') {
+    return (
+      <section className="overflow-hidden mat-card">
+        <ViewState
+          kind="empty"
+          title="Research user not set"
+          detail={`The playbook is kept per Research user — set one to read its ${what}.`}
+          actionLabel="Set user"
+          onAction={onSetUser}
+        />
+      </section>
+    )
+  }
+  if (state === 'failed') {
+    return (
+      <section className="overflow-hidden mat-card">
+        <ViewState
+          kind="failed"
+          title={gap === 'expired' ? 'The Research user’s token was rejected' : `Couldn’t load the ${what}`}
+          detail={failedDetail(q, `Nothing was read — this is not an empty list of ${what}.`)}
+          actionLabel={gap === 'expired' ? 'Set user again' : undefined}
+          onAction={gap === 'expired' ? onSetUser : () => void q.refetch()}
+        />
+      </section>
+    )
+  }
+  if (state === 'stale') {
+    return (
+      <ViewState
+        kind="stale"
+        title={`Couldn’t refresh the ${what}`}
+        detail={staleDetail(q, `anything written since may be missing.`)}
+        onAction={() => void q.refetch()}
+      />
+    )
+  }
+  return null
+}
+
 export function PlaybookPage() {
   const [tab, setTab] = useState<PlaybookTab>('rules')
   const [searchQ, setSearchQ] = useState('')
   const [openCase, setOpenCase] = useState<string | null>(null)
   const qc = useQueryClient()
+  const userDialog = useRef<ResearchUserSwitcherHandle>(null)
+  const setUser = () => userDialog.current?.openDialog()
+  const preview = usePreviewState()
 
   const rulesQ = useQuery({
     queryKey: ['playbook', 'rules'],
@@ -134,22 +210,24 @@ export function PlaybookPage() {
     searchQry.data != null &&
     (searchQry.data.rules ?? []).length === 0 &&
     (searchQry.data.notes ?? []).length === 0
+  const rules = preview === 'empty' ? [] : (rulesQ.data ?? [])
+  const notes = preview === 'empty' ? [] : (notesQ.data ?? [])
+  const cases = preview === 'empty' ? [] : (casesQ.data ?? [])
 
   return (
-    <PageShell padding="default">
-      <PageHeader
+    <PageShell padding="default" className="space-y-3">
+      {/* §16.10: the lead behind ⓘ, Playbook stats as the head's door, the
+          Research user beside it — every read here is scoped to one. */}
+      <PageHead
         title="Playbook"
-        description="Rules, notes and case studies — the trading system in writing."
+        info="Rules, notes and case studies — the trading system in writing."
         actions={
-          <div className="flex items-center gap-3">
-            <Link
-              to="/review/playbook-stats"
-              className="whitespace-nowrap text-dense-label text-primary hover:underline"
-            >
-              Does it pay? Playbook stats →
-            </Link>
-            <ResearchUserSwitcher />
-          </div>
+          <>
+            <PageHeadLink to="/review/playbook-stats" title="Does it pay? Playbook stats">
+              Playbook stats →
+            </PageHeadLink>
+            <ResearchUserSwitcher ref={userDialog} />
+          </>
         }
       />
 
@@ -161,17 +239,22 @@ export function PlaybookPage() {
           impression that saving a rule arms it. */}
       <div
         role="note"
-        className="border px-3 py-2 text-dense-meta leading-snug text-muted-foreground mat-card"
+        className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 border px-3 py-2 text-dense-meta leading-snug text-muted-foreground mat-card"
       >
-        <span className="font-medium text-foreground">Advisory only.</span> Rules and notes
-        inform Copilot reasoning and your own review. They are{' '}
-        <span className="font-medium text-foreground">not</span> read by the trading daemon or
-        gate configuration and do not arm or block any order — spine{' '}
-        <span className="font-mono">D10</span> (trade execution frozen).
+        <span className="whitespace-nowrap font-semibold text-foreground">Advisory only.</span>
+        <span>
+          Rules and notes inform Copilot reasoning and your own review. They are{' '}
+          <span className="font-semibold text-foreground">not</span> read by the trading daemon or gate
+          configuration and do not arm or block any order — spine <span className="font-mono">D10</span> (trade
+          execution frozen).
+        </span>
       </div>
 
-      <div className="mb-3 flex items-center gap-2.5">
+      {/* §17.3: the section switch sits in the toolbar under the head, its
+          count sentence as the toolbar's meta. */}
+      <div data-sr-toolbar="">
         <SegmentControl
+          size="xs"
           ariaLabel="Playbook section"
           value={tab}
           onChange={(v) => setTab(v as PlaybookTab)}
@@ -182,15 +265,13 @@ export function PlaybookPage() {
             { value: 'search', label: 'Search' },
           ]}
         />
-        {hint ? <span className="text-dense-meta text-muted-foreground">{hint}</span> : null}
+        {hint ? <span data-sr-tb="meta">{hint}</span> : null}
       </div>
 
       {tab === 'rules' ? (
         <div className="flex flex-col gap-3">
           <Card variant="elevated" className="space-y-2 p-3">
-            <p className="text-dense-caption font-semibold uppercase tracking-wider text-muted-foreground">
-              New rule
-            </p>
+            <p className={cn(CAP, 'm-0')}>New rule</p>
             <Input
               placeholder="Title — one sentence, imperative"
               value={newRuleTitle}
@@ -206,10 +287,11 @@ export function PlaybookPage() {
                   aria-checked={newRuleCategory === c}
                   onClick={() => setNewRuleCategory(c)}
                   className={cn(
-                    'rounded-[8px] border border-transparent px-2 py-0.5 font-mono text-dense-micro font-semibold',
+                    // The picked category is a selection, so it wears the accent (Rev .90).
+                    'rounded-[8px] border px-2 py-0.5 font-mono text-dense-micro font-semibold',
                     newRuleCategory === c
-                      ? 'bg-primary/15 text-primary'
-                      : 'bg-[var(--mat-btn-fill)] text-muted-foreground hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
+                      ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_20%,transparent)] text-primary'
+                      : 'border-transparent bg-[var(--mat-btn-fill)] text-muted-foreground hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
                   )}
                 >
                   {c}
@@ -233,24 +315,26 @@ export function PlaybookPage() {
             </div>
             <MutationError error={createRule.error} />
           </Card>
-          {rulesQ.isError ? (
-            <QueryErrorAlert error={rulesQ.error} onRetry={() => void rulesQ.refetch()} />
-          ) : null}
-          {rulesQ.isLoading ? <Skeleton className="h-24 w-full" /> : null}
+          <TabState q={rulesQ} what="rules" rows={4} cols={3} onSetUser={setUser} />
           <MutationError error={retireRule.error} />
+          {rulesQ.isSuccess && rules.length === 0 ? (
+            <section className="overflow-hidden mat-card">
+              <ViewState
+                kind="empty"
+                title="No rules yet"
+                detail="A rule is written above, or proposed by the Copilot and saved here. Retired rules stay listed, dimmed."
+              />
+            </section>
+          ) : null}
           <div className="space-y-2">
-            {(rulesQ.data ?? []).map((rule) => {
+            {rules.map((rule) => {
               const retired = rule.active === false
               const meta = ruleMeta(rule)
               return (
-                <Card
-                  key={rule.id}
-                  variant="elevated"
-                  className={cn('p-3', retired && 'opacity-45')}
-                >
+                <Card key={rule.id} variant="elevated" className={cn('p-3', retired && 'opacity-45')}>
                   <div className="flex items-baseline gap-2.5">
                     <DenseTag variant={categoryTagVariant(rule.category)}>{rule.category}</DenseTag>
-                    <span className="text-dense-label font-medium">{rule.title}</span>
+                    <span className="text-dense-label font-semibold text-foreground">{rule.title}</span>
                     <span className="ml-auto">
                       {retired ? (
                         <span className="text-dense-meta text-muted-foreground">retired</span>
@@ -267,9 +351,7 @@ export function PlaybookPage() {
                     </span>
                   </div>
                   <MarkdownContent className="mt-1">{rule.body_md}</MarkdownContent>
-                  {meta ? (
-                    <p className="mt-1 text-dense-caption text-muted-foreground">{meta}</p>
-                  ) : null}
+                  {meta ? <p className="mt-1 text-dense-caption text-muted-foreground">{meta}</p> : null}
                 </Card>
               )
             })}
@@ -280,9 +362,7 @@ export function PlaybookPage() {
       {tab === 'notes' ? (
         <div className="flex flex-col gap-3">
           <Card variant="elevated" className="space-y-2 p-3">
-            <p className="text-dense-caption font-semibold uppercase tracking-wider text-muted-foreground">
-              Quick note
-            </p>
+            <p className={cn(CAP, 'm-0')}>Quick note</p>
             <textarea
               className="min-h-[64px] w-full border p-2 text-dense-label mat-field"
               placeholder="Markdown — observations that are not yet rules"
@@ -300,18 +380,22 @@ export function PlaybookPage() {
             </div>
             <MutationError error={createNote.error} />
           </Card>
-          {notesQ.isError ? (
-            <QueryErrorAlert error={notesQ.error} onRetry={() => void notesQ.refetch()} />
+          <TabState q={notesQ} what="notes" rows={3} cols={2} onSetUser={setUser} />
+          {notesQ.isSuccess && notes.length === 0 ? (
+            <section className="overflow-hidden mat-card">
+              <ViewState
+                kind="empty"
+                title="No notes yet"
+                detail="A note is an observation that is not yet a rule — write one above."
+              />
+            </section>
           ) : null}
-          {notesQ.isLoading ? <Skeleton className="h-24 w-full" /> : null}
-          {(notesQ.data ?? []).map((n) => {
+          {notes.map((n) => {
             const when = noteWhen(n.created_at, nowIso)
             return (
               <Card key={n.id} variant="elevated" className="p-3">
                 <MarkdownContent>{n.note_md}</MarkdownContent>
-                {when ? (
-                  <p className="mt-1 text-dense-caption text-muted-foreground">{when}</p>
-                ) : null}
+                {when ? <p className="mt-1 text-dense-caption text-muted-foreground">{when}</p> : null}
               </Card>
             )
           })}
@@ -320,17 +404,17 @@ export function PlaybookPage() {
 
       {tab === 'cases' ? (
         <div className="space-y-2">
-          {casesQ.isError ? (
-            <QueryErrorAlert error={casesQ.error} onRetry={() => void casesQ.refetch()} />
+          <TabState q={casesQ} what="case studies" rows={3} cols={2} onSetUser={setUser} />
+          {casesQ.isSuccess && cases.length === 0 ? (
+            <section className="overflow-hidden mat-card">
+              <ViewState
+                kind="empty"
+                title="No case studies yet"
+                detail="Cases are filed from Copilot bridge replies, not written here."
+              />
+            </section>
           ) : null}
-          {casesQ.isLoading ? <Skeleton className="h-24 w-full" /> : null}
-          {casesQ.data?.length === 0 ? (
-            <p className="text-dense-meta text-muted-foreground">
-              No case studies yet — cases are filed from Copilot bridge replies, not written
-              here.
-            </p>
-          ) : null}
-          {(casesQ.data ?? []).map((c) => {
+          {cases.map((c) => {
             const open = openCase === c.id
             const { title, lede } = caseHeadline(c.lessons_md)
             const meta = caseMeta(c)
@@ -338,43 +422,38 @@ export function PlaybookPage() {
               <Card key={c.id} variant="elevated" className="overflow-hidden p-0">
                 <button
                   type="button"
-                  className="w-full p-3 text-left transition-colors hover:bg-secondary/40"
+                  aria-expanded={open}
+                  className="w-full p-3 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
                   onClick={() => setOpenCase(open ? null : c.id)}
                 >
                   <div className="flex items-baseline gap-2.5">
                     {c.outcome ? (
-                      <DenseTag
-                        variant={outcomeTone(c.outcome) === 'loss' ? 'danger' : 'success'}
-                      >
+                      // Rev .90: an outcome is a state of the case — the green /
+                      // red pastels, never the ticker lime or the loss red.
+                      <DenseTag variant={outcomeTone(c.outcome) === 'loss' ? 'danger' : 'state-green'}>
                         {c.outcome}
                       </DenseTag>
                     ) : null}
-                    <span className="text-dense-label font-medium">{title}</span>
+                    <span className="text-dense-label font-semibold text-foreground">{title}</span>
                     {meta ? (
-                      <span className="ml-auto whitespace-nowrap text-dense-caption text-muted-foreground">
-                        {meta}
-                      </span>
+                      <span className="ml-auto whitespace-nowrap text-dense-caption text-muted-foreground">{meta}</span>
                     ) : null}
                   </div>
-                  {lede ? (
-                    <p className="mt-1 line-clamp-2 text-dense-meta text-muted-foreground">
-                      {lede}
-                    </p>
-                  ) : null}
+                  {lede ? <p className="mt-1 line-clamp-2 text-dense-meta text-muted-foreground">{lede}</p> : null}
                 </button>
                 {open ? (
-                  <div className="space-y-2 border-t border-border/60 bg-background p-3">
+                  <div className="space-y-2 border-t border-border p-3">
                     <MarkdownContent>{c.lessons_md}</MarkdownContent>
                     <div className="flex items-center justify-between gap-2">
                       {hasTradeRef(c) ? (
-                        <Link
-                          to="/review"
-                          className="text-dense-meta text-primary hover:underline"
-                        >
+                        <Link to="/review" className="text-dense-meta text-primary hover:underline">
                           Open the trade in Review →
                         </Link>
                       ) : (
-                        <span className="text-dense-meta text-muted-foreground">
+                        <span
+                          className="text-dense-meta text-muted-foreground"
+                          title="The case was filed without a trade reference, so there is no trade to open"
+                        >
                           Open the trade in Review · no trade reference on this case
                         </span>
                       )}
@@ -400,17 +479,16 @@ export function PlaybookPage() {
             onChange={(e) => setSearchQ(e.target.value)}
             className="h-8 max-w-[420px]"
           />
-          {searchQry.isError ? (
-            <QueryErrorAlert error={searchQry.error} onRetry={() => void searchQry.refetch()} />
+          {searchTerm.length >= 2 ? (
+            <TabState q={searchQry} what="search results" rows={3} cols={2} onSetUser={setUser} />
           ) : null}
-          {searchQry.isFetching ? <Skeleton className="h-16 w-full" /> : null}
           {searchQry.data ? (
             <div className="space-y-2">
               {(searchQry.data.rules ?? []).map((r) => (
                 <Card key={r.id} variant="elevated" className="p-3">
                   <div className="flex items-baseline gap-2.5">
                     <DenseTag variant={categoryTagVariant(r.category)}>{r.category}</DenseTag>
-                    <span className="text-dense-label font-medium">{r.title}</span>
+                    <span className="text-dense-label font-semibold text-foreground">{r.title}</span>
                   </div>
                   <MarkdownContent className="mt-1">{r.body_md}</MarkdownContent>
                 </Card>
@@ -426,9 +504,15 @@ export function PlaybookPage() {
             </div>
           ) : null}
           {noResults ? (
-            <div className="py-6 text-center text-dense-meta text-muted-foreground">
-              No rule or note matches “{searchTerm}” — an empty result, not a failed search.
-            </div>
+            <section className="overflow-hidden mat-card">
+              <ViewState
+                kind="filtered"
+                title="No match"
+                detail={`No rule or note matches “${searchTerm}” — an empty result, not a failed search.`}
+                actionLabel="Clear search"
+                onAction={() => setSearchQ('')}
+              />
+            </section>
           ) : null}
         </div>
       ) : null}

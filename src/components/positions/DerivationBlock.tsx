@@ -70,7 +70,7 @@ function SourceBadge({ source, strong = false }: { source: Variable['source']; s
   return (
     <span
       className={cn(
-        'text-dense-label uppercase tracking-wide text-muted-foreground/70',
+        'text-dense-meta font-semibold text-muted-foreground/70',
         strong && 'rounded-sm border border-border/60 px-1 text-muted-foreground',
       )}
       title={b.title}
@@ -173,7 +173,7 @@ export function DerivationBlock({
       onKeyDown={onKeyDown}
     >
       <div className="mb-1 flex items-baseline justify-between gap-2">
-        <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground">How · {d.title}</span>
+        <span className="text-dense-meta font-semibold text-muted-foreground">How · {d.title}</span>
         <button
           type="button"
           onClick={onClose}
@@ -226,7 +226,7 @@ export function DerivationBlock({
 
       {fields.length > 0 ? (
         <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5" data-testid="derivation-fields">
-          <span className="text-dense-label font-semibold uppercase tracking-wide text-muted-foreground/70">{fieldsLabel}</span>
+          <span className="text-dense-meta font-semibold text-muted-foreground/70">{fieldsLabel}</span>
           {fields.map((name) => (
             <VarLink
               key={name}

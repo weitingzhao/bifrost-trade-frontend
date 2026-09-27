@@ -43,8 +43,10 @@ import { OPS_CONSOLE_URL, opsConsoleHref } from '@/lib/opsConsole'
 import { useSystemDomains } from '@/hooks/useSystemDomains'
 import { worstLamp, type DomainStanding } from '@/utils/systemStanding'
 
+// Rev .91: a calm reading is quiet — ink, not a colour (§16.13); only the
+// caveat and the stop are coloured.
 const STATE_INK: Record<string, string> = {
-  green: 'text-success',
+  green: 'text-foreground',
   yellow: 'text-warning',
   red: 'text-danger',
   gray: 'text-muted-foreground',
@@ -60,17 +62,23 @@ const OPS_VIEW: Record<DomainStanding['key'], { view: string; label: string }> =
   nightly: { view: 'research-engine', label: 'Research Engine' },
 }
 
-/** A panel that needs attention says so with its edge; a calm one keeps the hairline. */
-const EDGE: Record<string, string> = {
-  green: '',
-  yellow: 'border-warning/45',
-  red: 'border-danger/45',
-  gray: '',
+/**
+ * A panel that needs attention says so with its edge at 55% (Rev .91); a calm
+ * one has none. Inline, because `mat-card` clears any border-colour class.
+ */
+const EDGE: Record<string, string | undefined> = {
+  green: undefined,
+  yellow: 'color-mix(in srgb, var(--color-warning) 55%, transparent)',
+  red: 'color-mix(in srgb, var(--color-danger) 55%, transparent)',
+  gray: undefined,
 }
 
 function DomainPanel({ d }: { d: DomainStanding }) {
   return (
-    <section className={cn(RAISED_PANEL, 'overflow-hidden', EDGE[d.lamp])}>
+    <section
+      className={cn(RAISED_PANEL, 'overflow-hidden')}
+      style={EDGE[d.lamp] ? { borderColor: EDGE[d.lamp] } : undefined}
+    >
       <div className="grid grid-cols-[14px_minmax(0,220px)_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
         <StatusLamp lamp={d.lamp} variant="dot" />
         <div className="flex flex-col gap-0.5">
@@ -94,7 +102,7 @@ function DomainPanel({ d }: { d: DomainStanding }) {
         </span>
       </div>
       {d.detail.length > 0 ? (
-        <div className="flex flex-col gap-1.5 border-t border-[color-mix(in_srgb,var(--sk-line)_60%,transparent)] py-2 pl-11 pr-4">
+        <div className="flex flex-col gap-1.5 border-t border-border py-2 pl-11 pr-4">
           {d.detail.map((x) => (
             <div key={x.text} className="grid grid-cols-[10px_minmax(0,1fr)] items-baseline gap-2.5">
               <span

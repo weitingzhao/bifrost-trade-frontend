@@ -49,8 +49,8 @@ describe('rule and note stamps', () => {
   it('lands each category on the design\u2019s ink via an existing tag variant', () => {
     expect(categoryTagVariant('risk')).toBe('danger')
     expect(categoryTagVariant('sizing')).toBe('warning')
-    expect(categoryTagVariant('entry')).toBe('info')
-    expect(categoryTagVariant('exit')).toBe('info')
+    expect(categoryTagVariant('entry')).toBe('state-blue')
+    expect(categoryTagVariant('exit')).toBe('state-blue')
     expect(categoryTagVariant('hedge')).toBe('strategy')
     expect(categoryTagVariant('regime')).toBe('strategy')
     expect(categoryTagVariant('general')).toBe('neutral')

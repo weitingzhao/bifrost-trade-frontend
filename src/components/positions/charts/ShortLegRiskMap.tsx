@@ -420,7 +420,7 @@ export function ShortLegRiskMap({
                 key={leg.key}
                 variant="neutral"
                 size="cell"
-                className={cn('font-mono tabular-nums', selected && 'ring-1 ring-foreground')}
+                className={cn('font-mono tabular-nums', selected && 'ring-1 ring-[var(--sk-accent)]')}
                 aria-pressed={selected}
                 title={riskMapLegTitle(leg)}
                 onClick={() => onSelect?.(selected ? null : leg)}

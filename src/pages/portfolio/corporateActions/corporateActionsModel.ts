@@ -7,12 +7,15 @@
  * rewrites a strike overnight, and a dividend before expiry is what makes an
  * early assignment on a short call rational. This page is the second question.
  *
- * Measured on DEV 2026-09-17: the feed carries deep history (back to 1980 on
- * one name) and not one row dated ahead of today, on any of the 28 symbols
- * checked including the largest payers. So the forward half of this page has no
- * data — not because the vendor has none, but because what is stored is a
- * backfill of what happened. The page says that rather than drawing an empty
- * calendar, which would read as "nothing is coming".
+ * Measured on DEV 2026-09-17: the feed carried deep history (back to 1980 on
+ * one name) and not one row dated ahead of today on the 28 symbols checked.
+ * Re-measured 2026-09-26 on the 26 names the book and watchlist touch: 321
+ * rows, one of them dated ahead (a dividend 34 days out, past the 30-day
+ * window) — the nightly −7 / +60 day pull does bring declared events in, as
+ * soon as an issuer declares. So nothing on this page may assert that no name
+ * has declared one: the counts decide, and an event declared beyond the window
+ * is listed rather than dropped. An empty calendar still says "nothing declared
+ * yet", never "nothing is coming".
  */
 import { daysBetween } from '@/lib/isoDate'
 
@@ -166,11 +169,11 @@ export const HISTORY_DAYS = 90
 
 export const CORPORATE_ACTIONS_UNRECORDED = {
   forward:
-    'The feed does reach ahead: the plugin pulls the whole market every night over a −7 / +60 day window, and names whose issuers declare early come back with an ex-date in the future. None of these names carries one today, because a dividend exists only once it is declared — a monthly ETF declares a day or two before its ex-date, a quarterly payer two to four weeks. An empty Next 30 days therefore reads as “nothing is coming”, and means “nothing has been declared yet”.',
+    'The feed does reach ahead: the plugin pulls the whole market every night over a −7 / +60 day window, and names whose issuers declare early come back with an ex-date in the future. A dividend exists only once it is declared — a monthly ETF declares a day or two before its ex-date, a quarterly payer two to four weeks. An empty Next 30 days therefore reads as “nothing is coming”, and means “nothing has been declared yet”.',
   contract:
-    'A split rewrites a strike and a multiplier overnight, and the ticker does not change, so a leg can be a different contract on the same name the next morning. With no split dated ahead on any of these names, nothing here can say a leg will be reshaped — or that it will not. A merger or a spin-off would reshape one too, and neither is a thing this feed reports at all: the vendor sells dividends and splits, and what an event turns a contract into is the broker’s record, not the market’s.',
+    'A split rewrites a strike and a multiplier overnight, and the ticker does not change, so a leg can be a different contract on the same name the next morning. Only a declared split can be shown here, so a leg with nothing against it means none declared, not none coming. A merger or a spin-off would reshape one too, and neither is a thing this feed reports at all: the vendor sells dividends and splits, and what an event turns a contract into is the broker’s record, not the market’s.',
   assignment:
-    'The extrinsic-versus-dividend test lives on Assignment. This panel reads it without recomputing; Assignment is the source. The test needs a dividend dated before the leg’s expiry, and none of these names has declared one yet.',
+    'The extrinsic-versus-dividend test lives on Assignment. This panel reads it without recomputing; Assignment is the source. The test needs a dividend declared before the leg’s expiry — a leg with none against it has nothing to weigh yet.',
   cash: 'A dividend already booked as cash is on Transfer & Pay. What is here is the event, not the payment — and the amount against the book is computed on today’s share count, not the count on the ex-date.',
   watchlist:
     'The calendar covers the watchlist as well as the book, because a split distorts a name\u2019s chain and its backtest whether or not the book holds it. Held or watched, the rows are drawn from the same feed \u2014 which will carry an ex-date for either as soon as its issuer declares one.',
@@ -239,6 +242,43 @@ export function upcoming(events: readonly BookEvent[], days: number = CALENDAR_D
   return events
     .filter((e) => e.daysAway != null && e.daysAway > 0 && e.daysAway <= days)
     .sort((a, b) => (a.exDate ?? '').localeCompare(b.exDate ?? ''))
+}
+
+/**
+ * Events declared past the calendar window — a declared ex-date 34 days out
+ * is still the feed reaching ahead, and it is listed rather than dropped.
+ */
+export function declaredBeyond(events: readonly BookEvent[], days: number = CALENDAR_DAYS): BookEvent[] {
+  return events
+    .filter((e) => e.daysAway != null && e.daysAway > days)
+    .sort((a, b) => (a.exDate ?? '').localeCompare(b.exDate ?? ''))
+}
+
+/**
+ * The nearest dividend declared on a name with an ex-date after today and on
+ * or before a leg's expiry — what the early-exercise test would weigh the
+ * leg's extrinsic against. Null when none is declared.
+ */
+export function dividendBefore(
+  events: readonly BookEvent[],
+  symbol: string,
+  expiry: string,
+): BookEvent | null {
+  const sym = symbol.trim().toUpperCase()
+  const exp = expiry.slice(0, 10)
+  return (
+    events
+      .filter(
+        (e) =>
+          e.kind === 'dividend' &&
+          e.symbol === sym &&
+          e.daysAway != null &&
+          e.daysAway > 0 &&
+          e.exDate != null &&
+          e.exDate <= exp,
+      )
+      .sort((a, b) => (a.exDate ?? '').localeCompare(b.exDate ?? ''))[0] ?? null
+  )
 }
 
 /** Events dated today or before it, inside the history window. */

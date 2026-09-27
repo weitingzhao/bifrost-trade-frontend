@@ -96,6 +96,13 @@ describe('timeline', () => {
     expect(timeline(TRADE, null).map((s) => s.key)).not.toContain('drawdown')
   })
 
+  it('writes the entry session’s IV rank and spot onto the entry stage when they are read', () => {
+    const entry = timeline(TRADE, PATH, { ivRank: 36.2, spot: 42.3 }).find((s) => s.key === 'entry')!
+    expect(entry.sub).toContain('IV rank 36')
+    expect(entry.sub).toContain('underlying 42.30')
+    expect(timeline(TRADE, PATH).find((s) => s.key === 'entry')!.sub).not.toContain('IV rank')
+  })
+
   it('leaves out the peak when the best mark is the exit', () => {
     const atPeak: MarkPath = { ...PATH, bestDate: '2026-08-18', best: 989.36 }
     expect(timeline(TRADE, atPeak).map((s) => s.key)).not.toContain('peak')
@@ -136,6 +143,11 @@ describe('sources', () => {
     const thin: MarkPath = { ...PATH, bars: 20 }
     expect(sources(TRADE, thin, 60, 'O:X').find((r) => r.key === 'marks')!.lamp).toBe('yellow')
     expect(sources(TRADE, null, 0, 'O:X').find((r) => r.key === 'marks')!.lamp).toBe('gray')
+  })
+
+  it('lamps the IV rank green when the entry session has one', () => {
+    expect(sources(TRADE, PATH, 60, 'O:X', 41).find((r) => r.key === 'ivr')!.lamp).toBe('green')
+    expect(sources(TRADE, PATH, 60, 'O:X', null).find((r) => r.key === 'ivr')!.lamp).toBe('gray')
   })
 
   it('always says the plan and the mid at submit are absent', () => {

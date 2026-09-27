@@ -1,3 +1,4 @@
+import { ViewState } from '@bifrost/ui'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -14,7 +15,6 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
-  EmptyState,
   ExpandToggleCell,
   type DenseTagVariant,
 } from '@/components/data-display'
@@ -57,14 +57,17 @@ import {
  * every section closed and the page still works.
  */
 
-/** Reserve the lamp colours for state; a count is not a fault. */
+/**
+ * Reserve the lamp colours for state; a count is not a fault. A state in
+ * progress is the state blue (Rev .91), never the contract sky.
+ */
 const TAG: Record<AdoptionState, DenseTagVariant> = {
   aligned: 'success',
-  reviewing: 'info',
+  reviewing: 'state-blue',
   stale: 'warning',
   pending: 'neutral',
   unbuilt: 'neutral',
-  moving: 'info',
+  moving: 'state-blue',
   staging: 'warning',
   backlog: 'neutral',
   designOnly: 'neutral',
@@ -73,14 +76,14 @@ const TAG: Record<AdoptionState, DenseTagVariant> = {
 /** The bar's inks, in the order the sections are listed. */
 const BAR: Record<AdoptionState, string> = {
   aligned: 'bg-lamp-green',
-  reviewing: 'bg-info',
+  reviewing: 'bg-[var(--sk-state-blue)]',
   stale: 'bg-warning',
   pending: 'bg-[var(--sk-line2)]',
-  unbuilt: 'bg-[var(--sk-surface)]',
-  moving: 'bg-info/45',
-  staging: 'bg-warning/45',
-  backlog: 'bg-[var(--sk-raised2)]',
-  designOnly: 'bg-[var(--sk-raised2)]',
+  unbuilt: 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]',
+  moving: 'bg-[color-mix(in_srgb,var(--sk-state-blue)_45%,transparent)]',
+  staging: 'bg-[color-mix(in_srgb,var(--color-warning)_45%,transparent)]',
+  backlog: 'bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
+  designOnly: 'bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
 }
 
 /** A raised panel on the canvas, as the design draws each block of this page. */
@@ -244,7 +247,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
                     contract may have overtaken, so aligning to it can align to
                     something already superseded. */}
                 {r.design?.round ? (
-                  <DenseTag variant={r.design.round === 'NEW' ? 'info' : 'neutral'}>
+                  <DenseTag variant={r.design.round === 'NEW' ? 'state-blue' : 'neutral'}>
                     {r.design.round}
                   </DenseTag>
                 ) : null}
@@ -299,7 +302,7 @@ function Rows({ rows, state }: { rows: AdoptionRow[]; state: AdoptionState }) {
             </DenseTableRow>,
             expanded && r.note ? (
               <DenseTableRow key={`${r.path}:note`}>
-                <DenseTableCell colSpan={showsRev ? 5 : 4} className="bg-[var(--sk-raised2)]">
+                <DenseTableCell colSpan={showsRev ? 5 : 4} className="bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
                   <p className="m-0 max-w-[110ch] py-1 text-dense-label leading-[1.6] text-[var(--sk-soft)] text-pretty">
                     {r.note}
                   </p>
@@ -495,7 +498,7 @@ export default function DesignAdoptionPage() {
               <CollapsibleGroupBody className="px-3.5 pb-3">
                 <p className="mb-2.5 text-dense-label text-[var(--sk-mute2)]">{s.blurb}</p>
                 {list.length === 0 ? (
-                  <EmptyState title="Nothing in this list" description="Every page has left this state." />
+                  <ViewState kind="empty" title="Nothing in this list" detail="Every page has left this state." />
                 ) : (
                   <div className="space-y-3">
                     {perGroup.map((g) => (

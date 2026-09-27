@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { daysBetween } from '@/lib/isoDate'
 import {
   buildBookEvents,
+  declaredBeyond,
+  dividendBefore,
   feedReach,
   recentHistory,
   splitAdjustedQty,
@@ -209,5 +211,31 @@ describe('sliceByUnderlying', () => {
     })
     expect(slices.find((s) => s.symbol === 'ZEBR')?.event?.exDate).toBe('2026-09-25')
     expect(slices.find((s) => s.symbol === 'QUOK')?.event).toBeNull()
+  })
+})
+
+describe('the forward edges', () => {
+  const far: FeedRow = {
+    symbol: 'QUOK',
+    action_type: 'dividend',
+    ex_date: '2026-10-30',
+    record_date: null,
+    payment_date: null,
+    ratio_from: null,
+    ratio_to: null,
+    amount: 0.25,
+  }
+  const events = buildBookEvents({ rows: [...rows, far], sharesBySymbol: shares, legSymbols: legs, today: TODAY })
+
+  it('lists a declared event past the window instead of dropping it', () => {
+    expect(upcoming(events).map((e) => e.symbol)).toEqual(['ZEBR'])
+    expect(declaredBeyond(events).map((e) => e.exDate)).toEqual(['2026-10-30'])
+  })
+
+  it('finds the dividend a short call would be weighed against, and only one before expiry', () => {
+    expect(dividendBefore(events, 'quok', '2026-11-20')?.amount).toBe(0.25)
+    expect(dividendBefore(events, 'QUOK', '2026-10-16')).toBeNull()
+    // A split is not a dividend, and a past dividend is history.
+    expect(dividendBefore(events, 'ZEBR', '2026-12-18')).toBeNull()
   })
 })

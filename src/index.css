@@ -870,6 +870,14 @@ tbody tr:hover > td {
   max-width: none;
 }
 
+/* The DS loading skeleton (§17.1) draws fixed-width cells (`flex-none`), so a
+   wide table's skeleton in a card without `overflow-hidden` pushed the whole
+   page sideways at 1280 (Assignment, 9 columns, measured 2026-09-26). Clip it
+   where it is drawn; a candidate for @bifrost/ui's own ViewState. */
+[data-sr-state='loading'] {
+  overflow: hidden;
+}
+
 /* A hero whose reading is words rather than a count (the Desk's session,
    allocation and pressure, Rev .82) reads at the panel step, 20px — the
    pattern's hero rule would otherwise hold it at 30. */

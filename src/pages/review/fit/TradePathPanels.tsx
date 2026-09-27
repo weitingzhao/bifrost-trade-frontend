@@ -14,6 +14,9 @@ import { cn } from '@/lib/utils'
 import { linearScale } from '@/lib/chartScale'
 import { chartAxisTickFill, chartTokens } from '@/lib/chartTokens'
 import { positionsUi } from '@/components/positions/positionsUi'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { Link } from 'react-router-dom'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import type { DailyBar } from '@/api/marketData/dailyBars'
@@ -31,6 +34,14 @@ const MUTE = 'var(--muted-foreground)'
 const GREEN = 'var(--color-profit)'
 const RED = 'var(--color-loss)'
 const AMBER = 'var(--color-warning)'
+/**
+ * Rev .90: the exit is ink 70%, solid — it was the accent, which is for what
+ * is selected, and the prototype's plan line is the mute, dashed (no plan is
+ * linked here, so that one is never drawn).
+ */
+const EXIT = 'color-mix(in srgb, var(--sk-ink) 70%, transparent)'
+/** Rev .90: the give-back area is an amber colour-mix, not a fill with an opacity. */
+const GAP_FILL = 'color-mix(in srgb, var(--color-warning) 13%, transparent)'
 
 function path(points: readonly { x: number; y: number }[]): string {
   return points.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
@@ -81,7 +92,14 @@ export function TradePathPanels({ trade, markPath, expiryBranch, underlying }: P
         <header className={positionsUi.panelHead}>
           <span className={positionsUi.cap}>Underlying</span>
           <span className={positionsUi.panelTitle}>
-            {trade.underlying} through the days it was held
+            <Link
+              to={withSymbolParam(SYMBOL_PATH, trade.underlying)}
+              className="font-mono font-bold text-entity-symbol hover:underline"
+              title={`Open ${trade.underlying} on Symbol`}
+            >
+              {trade.underlying}
+            </Link>{' '}
+            through the days it was held
           </span>
           <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>
             strike {trade.strike} · {trade.right === 'P' ? 'put' : 'call'}
@@ -133,6 +151,7 @@ export function TradePathPanels({ trade, markPath, expiryBranch, underlying }: P
               <Key color={AMBER} dashed>
                 best mark available by then
               </Key>
+              <Key color={EXIT}>my exit</Key>
               <span>
                 {markPath.bars} of {markPath.businessDays} sessions have a bar
               </span>
@@ -199,7 +218,7 @@ function UnderlyingChart({
           K {strike}
         </text>
         {exitX == null ? null : (
-          <line x1={exitX} y1={PT} x2={exitX} y2={H - 18} stroke={chartTokens.accent} strokeWidth={1.2} />
+          <line x1={exitX} y1={PT} x2={exitX} y2={H - 18} stroke={EXIT} strokeWidth={1.2} />
         )}
         <path d={line} fill="none" stroke={chartTokens.line} strokeWidth={1.8} />
         {last?.close == null ? null : (
@@ -254,7 +273,7 @@ function PnlChart({
   const marks = [
     { key: 'best', x: xAt(markPath.bestDate), v: markPath.best, fill: GREEN, label: `best ${fmtUsd(markPath.best, true)}` },
     { key: 'worst', x: xAt(markPath.worstDate), v: markPath.worst, fill: RED, label: `worst ${fmtUsd(markPath.worst, true)}` },
-    { key: 'exit', x: exitX, v: markPath.realised, fill: chartTokens.accent, label: `out ${fmtUsd(markPath.realised, true)}` },
+    { key: 'exit', x: exitX, v: markPath.realised, fill: INK, label: `out ${fmtUsd(markPath.realised, true)}` },
   ]
   if (expiryBranch && markPath.ifHeld.length > 1) {
     marks.push({
@@ -286,9 +305,9 @@ function PnlChart({
         role="img"
         aria-label="Position P and L through the holding period against the best mark available by each session"
       >
-        <path d={gap} fill={AMBER} opacity={0.14} stroke="none" />
+        <path d={gap} fill={GAP_FILL} stroke="none" />
         <line x1={PL} y1={zeroY} x2={PLOT_RIGHT} y2={zeroY} stroke={chartTokens.axis} strokeWidth={1} />
-        <line x1={exitX} y1={PT} x2={exitX} y2={H - 18} stroke={chartTokens.accent} strokeWidth={1.2} />
+        <line x1={exitX} y1={PT} x2={exitX} y2={H - 18} stroke={EXIT} strokeWidth={1.2} />
         <path d={path(maxPts)} fill="none" stroke={AMBER} strokeWidth={1.2} strokeDasharray="3 3" />
         {ifHeldPts.length > 1 ? (
           <path d={path(ifHeldPts)} fill="none" stroke={MUTE} strokeWidth={1.4} strokeDasharray="4 3" />
@@ -313,7 +332,7 @@ function PnlChart({
         <text x={PL} y={H - 4} fontSize={10} fill={chartAxisTickFill}>
           {fmtIsoDateToken(markPath.held[0].date)}
         </text>
-        <text x={exitX} y={H - 4} textAnchor="middle" fontSize={10} fill={chartTokens.accent}>
+        <text x={exitX} y={H - 4} textAnchor="middle" fontSize={10} fill={INK}>
           {fmtIsoDateToken(markPath.held[markPath.held.length - 1].date)}
         </text>
       </svg>

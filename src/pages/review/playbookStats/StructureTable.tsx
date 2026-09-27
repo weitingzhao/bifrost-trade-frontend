@@ -15,9 +15,10 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import type { StructureRow } from './structureCut'
+import { winRateInk } from './playbookInk'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
 /**
  * The service hands percentages back already in percent units, so these are
@@ -86,8 +87,8 @@ export function StructureTable({
             <tr
               key={r.key}
               className={cn(
-                'hover:[&>td]:bg-[var(--sk-raised2)]',
-                r.totals && 'bg-[var(--sk-raised2)] [&>td]:font-semibold',
+                'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                r.totals && '[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] [&>td]:font-semibold',
               )}
             >
               <td className={cn(positionsUi.td, 'pl-2 whitespace-normal text-left font-sans text-foreground')}>
@@ -107,13 +108,13 @@ export function StructureTable({
               <td className={cn(positionsUi.td, 'text-secondary-foreground')}>
                 {r.n === 0 ? '—' : `${r.wins}–${r.losses}`}
               </td>
-              <td className={cn(positionsUi.td, r.winRate == null ? 'text-muted-foreground' : 'text-foreground')}>
+              <td className={cn(positionsUi.td, 'font-semibold', winRateInk(r.winRate))}>
                 {r.winRate == null ? '—' : fmtPct0(r.winRate)}
               </td>
-              <td className={cn(positionsUi.td, r.totalProfit == null ? 'text-muted-foreground' : 'text-success')}>
+              <td className={cn(positionsUi.td, r.totalProfit == null ? 'text-muted-foreground' : 'text-profit')}>
                 {serviceUsd(r.totalProfit)}
               </td>
-              <td className={cn(positionsUi.td, r.totalLoss == null ? 'text-muted-foreground' : 'text-danger')}>
+              <td className={cn(positionsUi.td, r.totalLoss == null ? 'text-muted-foreground' : 'text-loss')}>
                 {serviceUsd(r.totalLoss)}
               </td>
               <td className={cn(positionsUi.td, 'text-left text-secondary-foreground')}>
@@ -139,7 +140,7 @@ export function StructureTable({
               >
                 {servicePct(r.returnPct)}
               </td>
-              <td className={cn(positionsUi.td, r.worstPct == null ? 'text-muted-foreground' : 'text-danger')}>
+              <td className={cn(positionsUi.td, r.worstPct == null ? 'text-muted-foreground' : 'text-loss')}>
                 {servicePct(r.worstPct)}
               </td>
             </tr>

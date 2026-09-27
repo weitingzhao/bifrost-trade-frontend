@@ -3,6 +3,7 @@
  * near-money table with chain-OI weights, the honesty note about the store's
  * own RMSE) and the grounded Copilot ask.
  */
+import { ViewState } from '@bifrost/ui'
 import { DenseTag } from '@/components/data-display'
 import type { VolSurfaceFitRow } from '@/api/research/volSurface'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
@@ -37,28 +38,31 @@ export function SmileFitPanel({
               <div className={panel}>
                 <header className={panelHead}>
                   <span className="text-dense-body font-semibold">Fit residuals</span>
-                  <span className="text-dense-caption text-muted-foreground">
+                  <span className="text-dense-meta text-muted-foreground">
                     market minus raw-SVI, vol points
                   </span>
                   <span className="ml-auto inline-flex flex-wrap items-center gap-1.5">
                     {quality.rmse != null ? (
                       <DenseTag
                         size="cell"
-                        variant={quality.rmse < 0.6 ? 'success' : quality.rmse < 1.2 ? 'warning' : 'danger'}
+                        // Fit quality is a state, not a gain (§14.7): good reads
+                        // the state green; a fit past 1.2 vol points is a fault.
+                        variant={quality.rmse < 0.6 ? 'state-green' : quality.rmse < 1.2 ? 'warning' : 'danger'}
                       >
                         RMSE {quality.rmse.toFixed(3)}
                       </DenseTag>
                     ) : null}
-                    <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
+                    <span className={cn(mono, 'text-dense-meta text-muted-foreground')}>
                       max |resid| {quality.maxResid?.toFixed(2) ?? '—'}
                     </span>
                   </span>
                 </header>
                 {rows.length === 0 ? (
-                  <p className="p-3 text-dense-meta text-muted-foreground">
-                    The residual store holds no near-money rows for this expiry — the smile below
-                    ±0.20 of log-moneyness is what the table would show.
-                  </p>
+                  <ViewState
+                    kind="empty"
+                    title="No near-money residual rows"
+                    detail="The residual store holds no rows inside ±0.20 of log-moneyness for this expiry — that window is what the table shows."
+                  />
                 ) : (
                   <>
                     <SviSmileChart rows={rows} />
@@ -77,14 +81,14 @@ export function SmileFitPanel({
                         </thead>
                         <tbody>
                           {rows.map((r) => (
-                            <tr key={r.strike}>
+                            <tr key={r.strike} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+                              {/* The at-the-money strike is ink bold (Rev .92 #3): lime is
+                                  the ticker's, and a strike is not a ticker. */}
                               <td
                                 className={cn(
                                   td,
                                   'text-left',
-                                  Math.abs(r.k) < 0.005
-                                    ? 'font-bold text-[var(--sk-ticker)]'
-                                    : 'text-foreground'
+                                  Math.abs(r.k) < 0.005 ? 'font-bold text-foreground' : 'text-foreground'
                                 )}
                               >
                                 {r.strike}
@@ -107,7 +111,7 @@ export function SmileFitPanel({
                               <td className={cn(td, 'text-left')}>
                                 {r.weightPct != null ? (
                                   <span className="flex items-center gap-1.75">
-                                    <span className="h-[5px] max-w-[90px] flex-1 overflow-hidden rounded-[3px] bg-[var(--sk-line0)]">
+                                    <span className="h-[5px] max-w-[90px] flex-1 overflow-hidden rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
                                       <span
                                         className={cn(
                                           'block h-[5px]',
@@ -133,7 +137,7 @@ export function SmileFitPanel({
                     </div>
                   </>
                 )}
-                <p className="m-0 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                <p className="m-0 border-t border-border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
                   Residual is market minus fit in vol points, so a positive row is rich to the
                   surface. Weight is the strike&rsquo;s share of chain OI — rows under{' '}
                   {THIN_OI.toLocaleString()} OI are flagged because their mid is mostly modelled,
@@ -145,9 +149,9 @@ export function SmileFitPanel({
                 </p>
               </div>
               <CopilotDraftPanel>
-                No per-run draft store exists yet — the drafts the engine writes today are
-                hypothesis reviews, not surface narrations. The panel keeps its seat; the ask
-                below answers live with this tab&rsquo;s snapshot.
+                The draft store holds hypothesis reviews, digests and candidate batches; none
+                narrates a surface fit. The panel keeps its seat; the ask below answers live with
+                this tab&rsquo;s snapshot.
               </CopilotDraftPanel>
               <div className="flex">
                 <AskCopilotButton

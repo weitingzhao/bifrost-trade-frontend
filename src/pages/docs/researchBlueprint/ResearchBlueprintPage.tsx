@@ -21,8 +21,8 @@ import { fetchResearchDoc } from '@/api/research/docs'
 import { DocProse, DocReader, DocSectionHead } from '@/components/docs/DocReader'
 import { DenseTag } from '@/components/data-display'
 import { PageHead, PageShell } from '@/components/layout'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ViewState } from '@bifrost/ui'
+import { failedDetail } from '@/lib/viewState'
 import {
   CONTRACT_LAYERS,
   contractLayer,
@@ -124,9 +124,18 @@ export default function ResearchBlueprintPage() {
         meta={doc ? `bifrost-research · ${doc.path.split('/').pop()}` : 'bifrost-research'}
       />
       {q.isError ? (
-        <QueryErrorAlert error={q.error} />
+        <section className="mt-3 overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t read the blueprint"
+            detail={failedDetail(q, 'The document was not read — no contract is shown.')}
+            onAction={() => void q.refetch()}
+          />
+        </section>
       ) : q.isLoading || !doc || !split ? (
-        <Skeleton className="mt-4 h-96 w-full rounded-md" />
+        <section className="mt-3 overflow-hidden mat-card">
+          <ViewState kind="loading" title="Reading the blueprint" rows={10} cols={2} />
+        </section>
       ) : (
         <DocReader
           toc={toc}

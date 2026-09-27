@@ -230,7 +230,10 @@ export function LeadersFace({
                               }
                               className={cn(
                                 'h-3.5 w-1.5 rounded-[1px]',
-                                hit ? 'cursor-pointer bg-[var(--color-profit)]' : 'bg-secondary',
+                                // The score heat is the state green (Rev .92), the empty cell an ink-8% track.
+                                hit
+                                  ? 'cursor-pointer bg-[var(--sk-state-green)]'
+                                  : 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]',
                                 on && selected?.date === c.date && 'ring-1 ring-primary',
                               )}
                               style={

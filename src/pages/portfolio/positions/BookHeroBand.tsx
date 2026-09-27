@@ -58,7 +58,8 @@ function CheckChip({ check, onOpen }: { check: AlarmCheck; onOpen: (t: AlarmTarg
       onClick={() => check.target && onOpen(check.target)}
       className={cn(
         'inline-flex h-5 items-center gap-1.25 whitespace-nowrap border mat-tag',
-        'text-dense-caption font-semibold uppercase leading-none tracking-[0.04em]',
+        // Rev .92: the check chips lose the caps — sentence case, 11/600.
+        'text-dense-meta font-semibold leading-none',
         check.target ? 'cursor-pointer hover:brightness-125' : 'cursor-default',
         tone
       )}

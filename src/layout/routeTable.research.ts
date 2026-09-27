@@ -241,8 +241,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Orchestration',
     crumbs: AGENTS,
     design: {
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-21.1',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/orchestration'],
     },
   },
@@ -367,8 +368,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Lens Coverage',
     crumbs: SYSTEM_DATA,
     design: {
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-19.2',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/lens-coverage'],
     },
   },
@@ -377,8 +379,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Signal Health',
     crumbs: SYSTEM_DATA,
     design: {
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-19.2',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/signal-health'],
     },
   },
@@ -391,8 +394,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.4',
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/lab/history'],
     },
   },
@@ -405,8 +409,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: ANALYZE,
     symbolScope: true,
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.4',
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/lab/symbol'],
     },
   },
@@ -418,8 +423,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: "Today's candidates",
     crumbs: DISCOVER,
     design: {
-      state: 'aligned',
-      rev: '2026-09-22.6',
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/lab/today'],
     },
   },
@@ -427,13 +433,14 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // The Method face of Stock screen — the authoring face where the filter
     // vocabulary is defined against the SEPA wide table. Built 2026-09-24;
     // the ⧉ switch on both faces lights by itself. The saved-screen store
-    // (6A) waits on the Owner's schema sign-off.
+    // (6A) is live since (`/research/screens` answers; measured 2026-09-26).
     path: '/research/lab/screener',
     label: 'Stock screen · method',
     crumbs: DISCOVER,
     design: {
-      state: 'aligned',
-      rev: '2026-09-20.4',
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/lab/screener'],
     },
   },
@@ -444,8 +451,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Discover model',
     crumbs: SYSTEM_DATA,
     design: {
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.52',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/lab/discover-model'],
     },
   },
@@ -458,8 +466,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Calibration',
     crumbs: SYSTEM_ALIGNMENT,
     design: {
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.52',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/research/lab/calibration'],
     },
   },
@@ -590,8 +599,9 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Alerts',
     crumbs: MARKET_RAIL,
     design: {
-      state: 'aligned',
-      rev: '2026-09-23.7',
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.90',
       note: DESIGN_NOTES['/research/event-radar'],
     },
   },

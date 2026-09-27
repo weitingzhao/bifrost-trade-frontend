@@ -40,12 +40,20 @@ export function CounterfactualsTable({ rows }: { rows: readonly Counterfactual[]
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.key} className={r.self ? 'bg-primary/5' : undefined}>
+              <tr
+                key={r.key}
+                className={cn(
+                  'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                  // The realised row is marked by its ground, the accent at 8%;
+                  // its name stays ink (Rev .90 — it was the accent twice over).
+                  r.self && '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)]',
+                )}
+              >
                 <td
                   className={cn(
                     positionsUi.td,
-                    'text-left font-sans',
-                    r.self ? 'font-bold text-primary' : 'font-semibold text-foreground',
+                    'text-left font-sans text-foreground',
+                    r.self ? 'font-bold' : 'font-semibold',
                   )}
                 >
                   {r.name}
@@ -89,7 +97,7 @@ export function CounterfactualsTable({ rows }: { rows: readonly Counterfactual[]
  */
 function deltaClass(delta: number): string {
   if (Math.abs(delta) < 50) return 'text-muted-foreground'
-  return delta > 0 ? 'text-warning' : 'text-[var(--color-profit)]'
+  return delta > 0 ? 'text-warning' : 'text-profit'
 }
 
 export function ExecutionTable({ trade }: { trade: ReviewTrade }) {
@@ -99,7 +107,7 @@ export function ExecutionTable({ trade }: { trade: ReviewTrade }) {
         <span className={positionsUi.cap}>Execution</span>
         <span className={positionsUi.panelTitle}>The fills themselves</span>
         <DenseTag variant="warning" size="cell">
-          ⚠ NO MID AT SUBMIT
+          no mid at submit
         </DenseTag>
       </header>
       <div className="overflow-x-auto">
@@ -122,13 +130,8 @@ export function ExecutionTable({ trade }: { trade: ReviewTrade }) {
                 <td className={cn(positionsUi.td, 'text-left text-muted-foreground')}>
                   {f.date ? fmtIsoDateToken(f.date) : '—'}
                 </td>
-                <td
-                  className={cn(
-                    positionsUi.td,
-                    'text-left font-sans',
-                    f.side === 'sell' ? 'text-[var(--color-profit)]' : 'text-foreground',
-                  )}
-                >
+                {/* A side is not money (Rev .93 #7): both read soft, never the profit green. */}
+                <td className={cn(positionsUi.td, 'text-left font-sans text-[var(--sk-soft)]')}>
                   {f.side === 'sell' ? 'Sell' : 'Buy'}
                 </td>
                 <td className={positionsUi.td}>{f.qty}</td>
@@ -153,7 +156,7 @@ export function ExecutionTable({ trade }: { trade: ReviewTrade }) {
           </tbody>
         </table>
       </div>
-      <p className="m-0 border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
+      <p className="m-0 border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
         Slippage is the fill against the mid standing when the order was submitted, and nothing on this side records
         that mid — not the broker&rsquo;s Flex report, not the executions table. It is a separate question from either
         gap above, and the only one of the three a better limit price would fix.

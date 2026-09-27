@@ -1,6 +1,7 @@
 /**
  * Symbol Screener · authoring — the Method face of Stock screen (design
- * `Research Stock Screen Method.dc.html`, route rev 2026-09-20.4).
+ * `Research Stock Screen Method.dc.html`, route rev 2026-09-20.4; §16
+ * refinement at Rev .91).
  *
  * Build and tune a screen against the SEPA wide table. The filter vocabulary
  * is defined here and nowhere else: the 19 condition columns of
@@ -9,24 +10,27 @@
  * path are the dbt case rules re-applied at read — verified on DEV against
  * the model store before this page was built.
  *
- * Saved screens (one object, one id, read-only in Trade) wait on the
- * Research-side store — the save button says so rather than pretending.
+ * Save as screen writes `research.saved_screen` (research 0.107.0): one
+ * object, one id, which Trade's result face renders read-only.
  */
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Button, EmptyState, Input } from '@bifrost/ui'
+import { Input, ViewState } from '@bifrost/ui'
 import { DenseTag } from '@/components/data-display'
 import { fetchSepaScreenerWide, type SepaWideRow } from '@/api/research/sepaScreenerWide'
 import { createSavedScreen, fetchSavedScreens } from '@/api/research/savedScreens'
 import { fetchSepaDaily } from '@/api/researchEngine'
-import { PageFaceSwitch, PageHeader, PageShell } from '@/components/layout'
+import { AsofTag } from '@/components/AsofTag'
+import { PageFaceSwitch, PageHead, PageHeadAction, PageShell } from '@/components/layout'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { cap, mono, panel, panelHead, td, th } from '@/components/research/labFaceUi'
+import { usePreviewState } from '@/hooks/usePreviewState'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { pnlColorClass } from '@/utils/dailyChange'
 import {
   activeFilterCount,
@@ -48,18 +52,23 @@ import {
   type SortKey,
 } from './labScreenerModel'
 
+const LEAD =
+  "Build and tune a screen against the SEPA wide table. Saved screens are one object with one id — Trade's result face renders the same screen read-only, so the filter vocabulary is defined here and nowhere else."
+
 /** The universe is thousands of rows; the table draws this many under the sort. */
 const RENDER_CAP = 200
 
+// A chip is a toggle: off on the ink fill, on in the accent (Rev .84 — the
+// selection is the accent, never a framed box).
 const chipBase =
-  'cursor-pointer rounded border px-1.75 py-0.75 font-mono text-dense-micro transition-colors'
-const chipOff = 'border-border bg-transparent text-muted-foreground hover:text-foreground'
-const chipOn =
-  'border-[color-mix(in_oklab,var(--sk-accent)_40%,transparent)] bg-[color-mix(in_oklab,var(--sk-accent)_12%,transparent)] text-[var(--sk-accent)]'
+  'cursor-pointer rounded-[6px] border border-transparent px-1.75 py-0.75 font-mono text-dense-caption transition-colors'
+const chipOff =
+  'bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] text-muted-foreground hover:text-foreground'
+const chipOn = 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] font-semibold text-primary'
 
 function FilterChip({ label, on, onToggle }: { label: string; on: boolean; onToggle: () => void }) {
   return (
-    <button type="button" onClick={onToggle} className={cn(chipBase, on ? chipOn : chipOff)}>
+    <button type="button" aria-pressed={on} onClick={onToggle} className={cn(chipBase, on ? chipOn : chipOff)}>
       {label}
     </button>
   )
@@ -109,7 +118,7 @@ function SortTh({
   num?: boolean
 }) {
   return (
-    <th className={cn(th, !num && 'text-left')}>
+    <th className={cn(th, !num && 'text-left')} aria-sort={sort.key === k ? (sort.dir === 'desc' ? 'descending' : 'ascending') : undefined}>
       <button
         type="button"
         onClick={() => onSort(k)}
@@ -140,6 +149,7 @@ function condDots(r: SepaWideRow, conds: readonly [string, string][]) {
 }
 
 export default function LabScreenerPage() {
+  const preview = usePreviewState()
   const [filter, setFilter] = useState<ScreenFilter>(EMPTY_FILTER)
   // ── Saved screens (6A · research 0.107.0): one object, one id ──
   const qc = useQueryClient()
@@ -181,7 +191,8 @@ export default function LabScreenerPage() {
     staleTime: 5 * 60_000,
   })
   // The committed IV percentile lives in the model store, which serves its
-  // top 1000 by score — joined by symbol, '—' below the cut.
+  // top 1000 by score and carries one only where the option chain is
+  // collected (204 of the 1000 on DEV, 2026-09-26) — joined by symbol.
   const modelQ = useQuery({
     queryKey: ['research', 'sepa-model-daily', 'iv-join'],
     queryFn: () => fetchSepaDaily({ limit: 1000 }),
@@ -223,92 +234,95 @@ export default function LabScreenerPage() {
 
   const nActive = activeFilterCount(filter)
   const sortLabel = `${sort.key.replace(/_/g, ' ')} ${sort.dir === 'desc' ? '↓' : '↑'}`
+  const reset = () => setFilter(EMPTY_FILTER)
+
+  // §17.1: the wide table is the page; the model store only adds a column.
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(wideQ)
+  const ivMissing = modelQ.isError && !modelQ.data
+  const saved = screensQ.data
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div className="flex flex-wrap items-start gap-3">
-        <div className="min-w-0 max-w-[84ch] flex-[1_1_26rem]">
-          <PageHeader
-            breadcrumb={<p className="text-xs font-medium text-primary/90">Research / Discover</p>}
-            title="Symbol Screener · authoring"
-            titleSize="large"
-            description="Build and tune a screen against the SEPA wide table. Saved screens are one object with one id — Trade's result face renders the same screen read-only, so the filter vocabulary is defined here and nowhere else."
+      {/* §16.10: the lead behind ⓘ, the mart's eval date as the stamp, the
+          saved count as meta, Save and Reset as the head's two actions. */}
+      <PageHead
+        title="Symbol Screener · authoring"
+        info={LEAD}
+        stamp={
+          <AsofTag
+            asof={wideQ.data?.evalDate ?? null}
+            judgedBy="Research"
+            href="/research/signal-health"
           />
-        </div>
-        <div className="pt-1.5">
-          <PageFaceSwitch path="/research/lab/screener" />
-        </div>
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          {saveOpen ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Input
-                autoFocus
-                value={screenName}
-                onChange={(e) => setScreenName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && screenName.trim() && !saveScreen.isPending) saveScreen.mutate()
-                  if (e.key === 'Escape') setSaveOpen(false)
-                }}
-                placeholder="Screen name"
-                className="h-8 w-44"
-              />
-              <Button
-                type="button"
-                size="sm"
-                disabled={!screenName.trim() || saveScreen.isPending}
-                onClick={() => saveScreen.mutate()}
-                title="Writes research.saved_screen — Trade's result face renders the same object read-only."
+        }
+        meta={
+          saved && saved.count > 0 ? (
+            <span title={saved.screens.map((sc) => sc.name).join(' · ')}>
+              {saved.count} saved · latest {saved.screens[0]?.name}
+            </span>
+          ) : undefined
+        }
+        actions={
+          <>
+            {saveScreen.isError ? (
+              <span className="max-w-[18rem] truncate text-dense-meta text-destructive" title={(saveScreen.error as Error).message}>
+                {(saveScreen.error as Error).message.slice(0, 120)}
+              </span>
+            ) : null}
+            {saveOpen ? (
+              <>
+                <Input
+                  autoFocus
+                  value={screenName}
+                  onChange={(e) => setScreenName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && screenName.trim() && !saveScreen.isPending) saveScreen.mutate()
+                    if (e.key === 'Escape') setSaveOpen(false)
+                  }}
+                  placeholder="Screen name"
+                  aria-label="Screen name"
+                  className="h-7 w-44"
+                />
+                <PageHeadAction
+                  primary
+                  disabled={!screenName.trim() || saveScreen.isPending}
+                  onClick={() => saveScreen.mutate()}
+                  title="Writes research.saved_screen — Trade's result face renders the same object read-only."
+                >
+                  {saveScreen.isPending ? 'Saving…' : 'Save'}
+                </PageHeadAction>
+                <PageHeadAction onClick={() => setSaveOpen(false)} title="Close without saving">
+                  Cancel
+                </PageHeadAction>
+              </>
+            ) : (
+              <PageHeadAction
+                primary
+                onClick={() => setSaveOpen(true)}
+                title="Save the current filters as one screen with one id (research.saved_screen, 0.107.0)."
               >
-                {saveScreen.isPending ? 'Saving…' : 'Save'}
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={() => setSaveOpen(false)}>
-                Cancel
-              </Button>
-            </span>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => setSaveOpen(true)}
-              title="Save the current filters as one screen with one id (research.saved_screen, 0.107.0)."
-            >
-              Save as screen
-            </Button>
-          )}
-          {saveScreen.isError ? (
-            <span className="text-dense-caption text-destructive">
-              {(saveScreen.error as Error).message.slice(0, 120)}
-            </span>
-          ) : screensQ.data && screensQ.data.count > 0 ? (
-            <span
-              className="text-dense-caption text-muted-foreground"
-              title={screensQ.data.screens.map((sc) => sc.name).join(' · ')}
-            >
-              {screensQ.data.count} saved · latest {screensQ.data.screens[0]?.name}
-            </span>
-          ) : null}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={nActive === 0}
-            onClick={() => setFilter(EMPTY_FILTER)}
-          >
-            Reset filters
-          </Button>
-        </div>
-      </div>
+                Save as screen
+              </PageHeadAction>
+            )}
+            <PageHeadAction disabled={nActive === 0} onClick={reset} title="Clear every filter in the vocabulary">
+              Reset filters
+            </PageHeadAction>
+          </>
+        }
+      />
 
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border px-3 py-1.75 mat-card">
+      <div data-sr-toolbar="">
+        <PageFaceSwitch path="/research/lab/screener" />
+        <span data-sr-tb="sep" />
+        {/* The prototype's own pastel violet, as Backtest's lab mark. */}
         <span
-          className={cn(
-            'inline-flex items-center gap-1.5 border py-0.5 font-mono text-dense-caption tracking-[0.05em] text-[var(--sk-accent)] mat-tag'
-          )}
+          className="inline-flex items-center gap-1.5 px-2 py-0.5 mat-tag font-mono text-dense-micro font-semibold tracking-[0.05em] text-[var(--sk-series-violet)]"
           title="Method face — how the number is made. Analysis only; no order can be placed from here."
         >
           ◆ METHOD · NO ORDERS
         </span>
-        <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
+        <span data-sr-tb="meta" className={mono}>
           dw_stock.mart_sepa_screener_wide
           {wideQ.data?.evalDate ? ` · eval ${wideQ.data.evalDate}` : ''}
           {wideQ.data ? ` · ${wideQ.data.count.toLocaleString()} evaluated` : ''}
@@ -322,18 +336,43 @@ export default function LabScreenerPage() {
         </Link>
       </div>
 
-      {wideQ.isLoading ? (
-        <p className="p-3 text-dense-meta text-muted-foreground">Reading the universe…</p>
-      ) : wideQ.isError ? (
-        <p className="p-3 text-dense-meta text-destructive">
-          The wide table did not answer: {(wideQ.error as Error).message}
-        </p>
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the wide table"
+          detail={staleDetail(wideQ, 'a newer evaluation may be missing.')}
+          onAction={() => void wideQ.refetch()}
+        />
+      ) : null}
+      {pageState !== 'loading' && pageState !== 'failed' && ivMissing ? (
+        <ViewState
+          kind="stale"
+          layout="strip"
+          title="Couldn’t read the IV percentiles"
+          detail="The IV pct column is unread — a dash there is not a name without one."
+          onAction={() => void modelQ.refetch()}
+        />
+      ) : null}
+
+      {pageState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the universe" rows={10} cols={8} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the wide table"
+            detail={failedDetail(wideQ, 'No name was screened — this is not a screen nothing passes.')}
+            onAction={() => void wideQ.refetch()}
+          />
+        </section>
       ) : (
         <div className="flex flex-wrap items-start gap-3">
-          <aside className={cn(panel, 'flex max-w-[24rem] flex-[1_1_15rem] flex-col')}>
+          <aside className={cn(panel, 'flex max-w-[24rem] flex-[1_1_15rem] flex-col')} aria-label="Filter vocabulary">
             <header className={panelHead}>
-              <span className={cap}>filter vocabulary</span>
-              <span className={cn(mono, 'ml-auto text-dense-micro text-muted-foreground')}>
+              <span className={cap}>Filter vocabulary</span>
+              <span className={cn(mono, 'ml-auto text-dense-caption text-muted-foreground')}>
                 {nActive ? `${nActive} active` : 'none active'}
               </span>
             </header>
@@ -346,7 +385,7 @@ export default function LabScreenerPage() {
                 className="h-7"
               />
               <div className="flex flex-col gap-1.5">
-                <span className={cap}>path</span>
+                <span className={cap}>Path</span>
                 <div className="flex flex-wrap gap-1">
                   {PATHS.map((p) => (
                     <FilterChip
@@ -359,7 +398,7 @@ export default function LabScreenerPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className={cap}>grade</span>
+                <span className={cap}>Grade</span>
                 <div className="flex flex-wrap gap-1">
                   {GRADES.map((g) => (
                     <FilterChip
@@ -373,7 +412,7 @@ export default function LabScreenerPage() {
               </div>
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline justify-between">
-                  <span className={cap}>min composite</span>
+                  <span className={cap}>Min composite</span>
                   <span className={cn(mono, 'text-dense-caption text-primary')}>
                     {filter.minScore}
                   </span>
@@ -391,8 +430,8 @@ export default function LabScreenerPage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between">
-                  <span className={cap}>trend template · 11</span>
-                  <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>
+                  <span className={cap}>Trend template · 11</span>
+                  <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
                     {filter.tech.length} required
                   </span>
                 </div>
@@ -408,8 +447,8 @@ export default function LabScreenerPage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-baseline justify-between">
-                  <span className={cap}>fundamentals · 8</span>
-                  <span className={cn(mono, 'text-dense-micro text-muted-foreground')}>
+                  <span className={cap}>Fundamentals · 8</span>
+                  <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
                     {filter.fund.length} required
                   </span>
                 </div>
@@ -432,7 +471,7 @@ export default function LabScreenerPage() {
                 <span className="text-dense-body font-semibold">
                   {passing.length.toLocaleString()} pass
                 </span>
-                <span className="text-dense-caption text-muted-foreground">
+                <span className="text-dense-meta text-muted-foreground">
                   of {all.length.toLocaleString()} evaluated · sorted by {sortLabel}
                   {passing.length > RENDER_CAP ? ` · top ${RENDER_CAP} drawn` : ''}
                 </span>
@@ -443,12 +482,21 @@ export default function LabScreenerPage() {
                 </span>
               </header>
               {rows.length === 0 ? (
-                <div className="p-3.5">
-                  <EmptyState
+                nActive > 0 ? (
+                  <ViewState
+                    kind="filtered"
                     title="Nothing passes this combination"
-                    description={`Active filters: ${filterSummary(filter)}`}
+                    detail={`Active filters: ${filterSummary(filter)}`}
+                    actionTitle="Search · path · grade · composite · trend and fundamental conditions all cleared"
+                    onAction={reset}
                   />
-                </div>
+                ) : (
+                  <ViewState
+                    kind="empty"
+                    title="The wide table holds no evaluated name"
+                    detail="dw_stock.mart_sepa_screener_wide answered with no rows — the nightly dbt run writes it."
+                  />
+                )
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[900px] border-collapse">
@@ -475,18 +523,20 @@ export default function LabScreenerPage() {
                         const vs = vsSma50(r)
                         const iv = ivOf(r.symbol)
                         return (
-                          <tr key={r.symbol} className="hover:bg-[color-mix(in_oklab,var(--sk-accent)_5%,transparent)]">
+                          <tr key={r.symbol} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
                             <td className={cn(td, 'text-left text-muted-foreground')}>
                               {r.overall_rank}
                             </td>
                             <td className={cn(td, 'text-left')}>
                               <span className="flex min-w-0 flex-col">
                                 <span className="flex items-baseline gap-2">
+                                  {/* §14.4: a bare ticker wears the ticker ink — the
+                                      prototype's accent here is its link colour. */}
                                   <Link
                                     to={withSymbolParam(SYMBOL_PATH, r.symbol)}
                                     className={cn(
                                       mono,
-                                      'text-dense-body font-bold text-[var(--sk-ticker)] hover:underline'
+                                      'text-dense-body font-bold text-entity-symbol hover:underline'
                                     )}
                                   >
                                     {r.symbol}
@@ -503,11 +553,13 @@ export default function LabScreenerPage() {
                               </span>
                             </td>
                             <td className={cn(td, 'text-left')}>
+                              {/* A grade is a state (§14.7): the top two read the
+                                  state green, D amber — not the contract sky. */}
                               <DenseTag
                                 size="cell"
                                 variant={
                                   grade === 'A+' || grade === 'A'
-                                    ? 'info'
+                                    ? 'state-green'
                                     : grade === 'D'
                                       ? 'warning'
                                       : 'neutral'
@@ -519,7 +571,7 @@ export default function LabScreenerPage() {
                             <td
                               className={cn(
                                 td,
-                                'text-left text-dense-micro tracking-[0.06em]',
+                                'text-left text-dense-caption',
                                 path === 'PIVOT'
                                   ? 'text-primary'
                                   : path === 'AVOID'
@@ -529,12 +581,7 @@ export default function LabScreenerPage() {
                             >
                               {path}
                             </td>
-                            <td
-                              className={cn(
-                                td,
-                                'text-left text-dense-micro tracking-[0.06em] text-muted-foreground'
-                              )}
-                            >
+                            <td className={cn(td, 'text-left text-dense-caption text-muted-foreground')}>
                               {stageOf(r.composite_score, r.tech_pass_count)}
                             </td>
                             <td className={cn(td, 'text-dense-body font-semibold')}>
@@ -573,7 +620,9 @@ export default function LabScreenerPage() {
                               className={cn(td, 'text-muted-foreground')}
                               title={
                                 iv == null
-                                  ? 'The committed IV percentile lives in the model store, which serves its top 1000 by score — below the cut no store carries one.'
+                                  ? ivMissing
+                                    ? 'The model store did not answer — this column is unread.'
+                                    : 'The model store carries a committed IV percentile only for names whose option chain is collected, and serves its top 1000 by score — this name is outside one or the other.'
                                   : undefined
                               }
                             >
@@ -586,7 +635,7 @@ export default function LabScreenerPage() {
                   </table>
                 </div>
               )}
-              <p className="m-0 border-t border-border/60 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+              <p className="m-0 border-t border-border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
                 Grade · stage · path are the dbt case rules in mart_sepa_feature_daily (composite ≥
                 .85 A+ · ≥ .75 A · ≥ .60 B · ≥ .45 C), re-applied at read over the wide table and
                 verified against the model store. Pass dots: trend template left, fundamentals

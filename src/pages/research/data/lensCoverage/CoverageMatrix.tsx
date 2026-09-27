@@ -27,10 +27,8 @@ export function CoverageMatrix({
 }) {
   return (
     <section className="overflow-hidden border mat-card">
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
-        <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          Matrix
-        </span>
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
+        <span className="text-dense-meta font-semibold text-muted-foreground">Matrix</span>
         <span className="text-dense-body font-semibold">Lenses × tiers</span>
         <span className="text-dense-caption text-muted-foreground">
           cell = share of the tier the lens can read
@@ -62,19 +60,23 @@ export function CoverageMatrix({
           <tbody>
             {faces.map((f) => (
               <Fragment key={f.face}>
-                <tr className="border-b border-border/50 bg-secondary/30">
+                {/* A face is a group row: a rule and a sentence-case label, no band (Rev .91). */}
+                <tr className="border-b border-border">
                   <td
                     colSpan={columns.length + 2}
-                    className="px-2.5 py-1 text-dense-caption font-semibold uppercase tracking-[0.08em]"
+                    className="px-2.5 pb-1 pt-2 text-dense-meta font-semibold"
                   >
                     {f.label}{' '}
-                    <span className="font-mono font-normal normal-case tracking-normal text-muted-foreground">
+                    <span className="font-mono font-normal text-muted-foreground">
                       · {f.summary}
                     </span>
                   </td>
                 </tr>
                 {f.rows.map((r) => (
-                  <tr key={r.lens} className="border-b border-border/40">
+                  <tr
+                    key={r.lens}
+                    className="border-b border-border hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
+                  >
                     <td
                       className="max-w-[24ch] truncate px-2.5 py-1.5 text-dense-meta"
                       title={`${r.label} · ${r.lens}`}

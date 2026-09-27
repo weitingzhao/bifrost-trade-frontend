@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import type { SepaScoreRow } from '@/api/researchEngine'
-import { batchState, candidateCard, funnelTiles, stageLabel } from './labTodayModel'
+import {
+  batchState,
+  candidateCard,
+  forecastCall,
+  forecastTile,
+  funnelTiles,
+  ivTile,
+  IV_UNRANKED,
+  loopBriefFor,
+  pinTile,
+  sameSetupTile,
+  stageLabel,
+} from './labTodayModel'
 
 // Invented rows throughout.
 const row = (over: Partial<SepaScoreRow> = {}): SepaScoreRow =>
@@ -82,9 +94,116 @@ describe('a candidate’s card', () => {
     const iv = c.tiles.find((t) => t.label === 'IV percentile')!
     expect(iv.value).toBe('—')
     expect(iv.measured).toBe(false)
-    expect(iv.src).toContain('chain not collected')
-    // The stores that do not exist say so instead of pretending to be zero.
-    expect(c.tiles.find((t) => t.label === 'Forecast')!.src).toContain('not on the plan')
+    expect(c.chips.map((x) => x.label)).toContain(IV_UNRANKED)
+    // A tile read per hero says so until the reading lands — never a zero.
+    const fc = c.tiles.find((t) => t.label === 'Forecast')!
+    expect(fc.value).toBe('—')
+    expect(fc.src).toContain('read for the hero')
+    expect(c.tiles.find((t) => t.label === 'Max pain · PCR')!.src).toBe('chain not collected')
+  })
+
+  it('wears the state inks, not the contract sky', () => {
+    const c = candidateCard(row({ grade: 'D' }), 3, { rs: 88 })
+    expect(c.chips.map((x) => x.variant)).toEqual(['state-blue', 'warning', 'neutral', 'neutral'])
+  })
+})
+
+describe('the hero’s evidence', () => {
+  const session = {
+    session_id: 's',
+    symbol: 'TEST',
+    trade_date: '2026-09-25',
+    regime: 'trending',
+    spot: 100,
+    prob_rangy: 0.2,
+    prob_bull: 0.55,
+    prob_bear: 0.1,
+    prob_squeeze: 0.15,
+    expected_close: 101,
+    structures_json: [],
+    narrative: '',
+    llm_provider: 'heuristic',
+    advisory: '',
+    computed_at: '2026-09-26T03:00:00Z',
+  }
+
+  it('reads the forecast’s own call and its provider', () => {
+    const call = forecastCall(session)!
+    expect(call.path).toBe('bull')
+    const t = forecastTile(call, { loading: false, error: false })
+    expect(t.value).toBe('55%')
+    expect(t.src).toBe('bull · heuristic · session 09-25')
+    expect(forecastTile(null, { loading: false, error: true }).src).toBe('forecast session unread')
+  })
+
+  it('matches the setup to the forecast’s scenario and ambers a thin record', () => {
+    const hr = {
+      symbol: 'TEST',
+      window_days: 90,
+      horizon: 5,
+      trigger_count: 20,
+      evaluated_count: 14,
+      hit_count: 9,
+      hit_rate: 0.64,
+      by_scenario: { bull: { n: 6, hits: 5, rate: 0.8333 }, rangy: { n: 8, hits: 4, rate: 0.5 } },
+      rows: [],
+    }
+    const t = sameSetupTile(hr, 'bull', { loading: false, error: false })
+    expect(t.value).toBe('83%')
+    expect(t.src).toBe('playbook · bull · 6 triggers · 5d')
+    expect(t.warn).toBe(true)
+    expect(sameSetupTile(hr, 'bear', { loading: false, error: false }).src).toBe('no bear trigger settled in 90d')
+  })
+
+  it('puts max pain beside the PCR once the pin lens answers', () => {
+    const t = pinTile({ max_pain_strike: 45, expiry: '2026-10-16', pin_pct_distance: 0.047 }, 0.76, {
+      loading: false,
+      error: false,
+    })
+    expect(t.value).toBe('45 · 0.76')
+    expect(t.src).toBe('opex_pin · 10-16 expiry · 4.7% from close')
+  })
+
+  it('says why an IV is unranked: no row, or too little history', () => {
+    const read = { loading: false, error: false }
+    expect(ivTile(null, null, read).src).toBe('no IV row — chain not collected')
+    const short = { symbol: 'TEST', trade_date: '2026-09-25', iv_current: 0.39, iv_percentile_1y: null, iv_rank_1y: null, lookback_days: 11 }
+    expect(ivTile(null, short, read).src).toBe('IV 39 now · 11d of history — too short to rank')
+    expect(ivTile(42.4, short, read).value).toBe('42')
+  })
+
+  it('finds the newest batch that carries the name, and reads its verdict', () => {
+    const drafts = [
+      {
+        kind: 'candidate_batch',
+        created_at: '2026-09-24T13:00:00Z',
+        payload: { candidates: [{ symbol: 'TEST', net_stance: 'support', agent_verdicts: { verdict: { summary: 'old' } } }] },
+      },
+      {
+        kind: 'candidate_batch',
+        created_at: '2026-09-25T13:00:00Z',
+        payload: {
+          run_id: 'run_x',
+          persona_eval: { models: [{ model: 'model-a' }, { model: 'model-b' }] },
+          candidates: [
+            {
+              symbol: 'TEST',
+              net_stance: 'dissent',
+              blocked_by_validate: true,
+              agent_verdicts: { verdict: { summary: 'newer' } },
+              wrong_if: ['score falls below 70'],
+            },
+          ],
+        },
+      },
+    ]
+    const b = loopBriefFor(drafts, 'test')!
+    expect(b.day).toBe('2026-09-25')
+    expect(b.verdict).toBe('newer')
+    expect(b.stance).toBe('dissent')
+    expect(b.blocked).toBe(true)
+    expect(b.models).toEqual(['model-a', 'model-b'])
+    expect(loopBriefFor(drafts, 'OTHER')).toBeNull()
   })
 })
 

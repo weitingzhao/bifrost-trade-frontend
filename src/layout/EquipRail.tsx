@@ -122,7 +122,10 @@ function RailButton({
           : here
             ? 'color-mix(in oklab, var(--rh) 16%, var(--sk-surface))'
             : 'var(--sk-surface)',
-        color: 'var(--rh)',
+        // Rev .94: the glyph and label ink is the hue deepened toward the
+        // ink on paper (`--rhi`, by --sk-pastel) — 1.3–2.3:1 on the light
+        // ground otherwise; dark is unchanged and the fills keep `--rh`.
+        color: 'var(--rhi, var(--rh))',
         ...(head
           ? {
               ['--rh-head-border' as string]: open
@@ -171,6 +174,7 @@ function Group({
       data-glass-surface={full ? 'surface' : undefined}
       style={{
         ['--rh' as string]: EQUIP_HUE[group.id],
+        ['--rhi' as string]: `color-mix(in oklch, ${EQUIP_HUE[group.id]}, var(--sk-ink) var(--sk-pastel))`,
         ['--rh-box' as string]:
           anyOpen || here
             ? 'color-mix(in oklab, var(--rh) 40%, transparent)'

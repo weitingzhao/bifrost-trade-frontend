@@ -43,9 +43,10 @@ import {
 const ROW_CAP = 200
 
 
+// A score is a state, not a P&L (Rev .92): high reads in the state green.
 function lensInk(v: number | null): string {
   if (v == null) return 'text-muted-foreground'
-  if (v >= 70) return 'text-[var(--color-profit)]'
+  if (v >= 70) return 'text-[var(--sk-state-green)]'
   return v < 40 ? 'text-destructive' : ''
 }
 

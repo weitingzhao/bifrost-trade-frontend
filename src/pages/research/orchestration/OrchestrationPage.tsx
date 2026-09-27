@@ -17,10 +17,10 @@ import { useMemo, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { PageHead, PageHeadLink, PageShell, SectionPanel } from '@/components/layout'
-import { DenseTag, SegmentControl } from '@/components/data-display'
+import { DenseTag, SegmentControl, type DenseTagVariant } from '@/components/data-display'
 import { AgentOrchestrationDiagram } from '@/components/copilot/AgentOrchestrationDiagram'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ViewState } from '@bifrost/ui'
 import { useAgentPersonas } from '@/hooks/useAgentPersonas'
 import { rowSelectProps } from '@/hooks/useRowLink'
 import {
@@ -102,6 +102,25 @@ const BATCH: Stage[] = [
   },
 ]
 
+/**
+ * Stage and role tags (Rev .91): a stage or a role is not an entity, so it
+ * borrows no entity ink. The two the round names are coloured — the handoff
+ * and a specialist in the state blue — the router is plain ink, the stage
+ * that waits on you amber; the rest are neutral. DIVERGED, named: the
+ * prototype gives the other five roles a hue each (indigo, orange, emerald,
+ * teal, amber); this side has no token for them and keeps them neutral.
+ */
+const STAGE_TAG: Record<string, DenseTagVariant> = {
+  entry: 'ink',
+  router: 'neutral',
+  handoff: 'state-blue',
+  you: 'warning',
+}
+const ROLE_TAG: Record<string, DenseTagVariant> = {
+  router: 'ink',
+  specialist: 'state-blue',
+}
+
 function Path({ stages, cap, title, note }: { stages: Stage[]; cap: string; title: string; note: string }) {
   return (
     <SectionPanel cap={cap} title={title} note={note}>
@@ -115,7 +134,7 @@ function Path({ stages, cap, title, note }: { stages: Stage[]; cap: string; titl
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex flex-wrap items-center gap-1.5">
                   <span className="text-dense-body font-semibold text-foreground">{s.name}</span>
-                  <DenseTag variant="category" size="cell">
+                  <DenseTag variant={STAGE_TAG[s.tag] ?? 'neutral'} size="cell">
                     {s.tag}
                   </DenseTag>
                 </span>
@@ -149,13 +168,13 @@ function Fold({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-1.5 bg-secondary px-3 py-2 text-left text-dense-label font-semibold hover:bg-secondary/80"
+        className="flex w-full items-center gap-1.5 bg-transparent px-3 py-2 text-left text-dense-label font-semibold hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
       >
         <ChevronRight className={cn('size-3.5 transition-transform', open && 'rotate-90')} />
         {title}
         <span className="text-dense-meta font-normal text-muted-foreground">{note}</span>
       </button>
-      {open ? <div className="border-t border-border/60">{children}</div> : null}
+      {open ? <div className="border-t border-border">{children}</div> : null}
     </section>
   )
 }
@@ -199,7 +218,11 @@ export default function OrchestrationPage() {
       </div>
 
       {isError ? <ResearchAuthGap error={error} /> : null}
-      {isLoading ? <Skeleton className="h-48 w-full rounded-lg" /> : null}
+      {isLoading ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the roster" rows={6} cols={6} />
+        </section>
+      ) : null}
 
       {!isLoading && !isError ? (
         <>
@@ -229,7 +252,7 @@ export default function OrchestrationPage() {
                   key={sub}
                   type="button"
                   onClick={() => toPersona(sub)}
-                  className="inline-flex items-baseline gap-1.5 rounded border border-border bg-background px-2 py-0.5 text-dense-meta hover:border-border/80"
+                  className="inline-flex cursor-pointer items-baseline gap-1.5 border px-2 py-0.5 text-dense-meta mat-btn"
                 >
                   <span className="font-mono text-dense-micro text-muted-foreground">{sub}</span>
                   {agentLabel(sub, 'en', labels[sub])}
@@ -288,7 +311,7 @@ export default function OrchestrationPage() {
                     <tr
                       key={r.agent}
                       {...rowSelectProps(false, () => toPersona(r.agent))}
-                      className="border-b border-border/50 last:border-b-0 hover:bg-secondary/40"
+                      className="border-b border-border last:border-b-0 hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
                       title={`Open ${agentLabel(r.agent, 'en', labels[r.agent])}’s persona`}
                     >
                       <td className="px-3 py-1.5">
@@ -302,7 +325,7 @@ export default function OrchestrationPage() {
                         </span>
                       </td>
                       <td className="px-3 py-1.5">
-                        <DenseTag variant="category" size="cell">
+                        <DenseTag variant={ROLE_TAG[r.role] ?? 'neutral'} size="cell">
                           {ROLE_LABELS.en[r.role]}
                         </DenseTag>
                       </td>
@@ -324,7 +347,7 @@ export default function OrchestrationPage() {
                 </tbody>
               </table>
             </div>
-            <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
+            <p className="border-t border-border px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
               A <span className="font-mono text-foreground/80">handoff</span> passes the whole
               conversation over — the receiving agent answers you directly. An{' '}
               <span className="font-mono text-foreground/80">as tool</span> call keeps the caller in

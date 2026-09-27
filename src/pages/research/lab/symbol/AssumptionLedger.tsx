@@ -120,10 +120,10 @@ export function AssumptionLedger({
             <div className={panel}>
               <header className={panelHead}>
                 <span className="text-dense-body font-semibold">Assumption ledger</span>
-                <span className="text-dense-caption text-muted-foreground">
+                <span className="text-dense-meta text-muted-foreground">
                   every reading Trade shows rests on one of these
                 </span>
-                <span className={cn(mono, 'ml-auto text-dense-caption text-muted-foreground')}>
+                <span className={cn(mono, 'ml-auto text-dense-meta text-muted-foreground')}>
                   {ASSUMPTIONS.length} assumptions · {unmeasured.length} with nothing measured
                   behind them
                 </span>
@@ -131,7 +131,7 @@ export function AssumptionLedger({
               {ASSUMPTIONS.map((a) => (
                 <div
                   key={a.key}
-                  className="grid grid-cols-1 items-start gap-x-4 gap-y-2.5 border-b border-border/60 px-3 py-2.75 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]"
+                  className="grid grid-cols-1 items-start gap-x-4 gap-y-2.5 border-b border-border px-3 py-2.75 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]"
                 >
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="flex flex-wrap items-center gap-1.75">
@@ -145,7 +145,7 @@ export function AssumptionLedger({
                     </p>
                   </div>
                   <div className="flex min-w-0 flex-col gap-1.5">
-                    <span className={cap}>setting</span>
+                    <span className={cap}>Setting</span>
                     <SegmentControl
                       ariaLabel={a.title}
                       size="xs"
@@ -158,7 +158,7 @@ export function AssumptionLedger({
                     </span>
                   </div>
                   <div className="flex min-w-0 flex-col gap-1">
-                    <span className={cap}>drives · provenance</span>
+                    <span className={cap}>Drives · provenance</span>
                     <span className="text-dense-caption">{a.drives}</span>
                     <span
                       className={cn(
@@ -179,9 +179,9 @@ export function AssumptionLedger({
               </p>
             </div>
             <CopilotDraftPanel>
-              No per-run draft store exists yet — the unmeasured assumptions are what a draft
-              would lead with. The panel keeps its seat; the ask below carries the ledger&rsquo;s
-              open contracts live.
+              The draft store holds hypothesis reviews, digests and candidate batches; none reads
+              this ledger. The unmeasured assumptions are what a draft would lead with — the ask
+              below carries the ledger&rsquo;s open contracts live.
             </CopilotDraftPanel>
             <div className="flex">
               <AskCopilotButton

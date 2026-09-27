@@ -37,6 +37,9 @@
  *   names, so the panel would have nothing to put in it. It keeps its place
  *   and says so.
  */
+import { ViewState } from '@bifrost/ui'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { PageHead, PageHeadAction, PageHeadLink, PageShell } from '@/components/layout'
@@ -89,6 +92,9 @@ export default function LensCoveragePage() {
   const unscreenable = unscreenableRows(data)
   const reach = reachBars(byTier, columns)
   const reading = q.isFetching || tierQs.some((t) => t.isFetching)
+  const preview = usePreviewState()
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(q)
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -111,26 +117,40 @@ export default function LensCoveragePage() {
         }
       />
 
-      {q.isPending ? (
-        <p className="text-dense-meta text-muted-foreground">Reading the universe…</p>
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh coverage"
+          detail={staleDetail(q, 'a lens that filled since may read low.')}
+          onAction={() => void q.refetch()}
+        />
       ) : null}
-      {q.isError ? (
-        <p role="status" className="text-dense-meta text-danger">
-          Coverage unavailable — the screen could not read the lens layer.
-        </p>
+      {pageState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Reading the universe" rows={8} cols={5} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t read coverage"
+            detail={failedDetail(q, 'The screen could not read the lens layer — no lens was counted.')}
+            onAction={() => void q.refetch()}
+          />
+        </section>
       ) : null}
 
-      {data ? (
+      {data && pageState !== 'failed' && pageState !== 'loading' ? (
         <>
           <div className="flex flex-wrap overflow-hidden border mat-card">
             {strip.map((s) => (
               <div
                 key={s.k}
-                className="flex min-w-0 flex-[1_1_200px] items-start gap-2.5 border-r border-border/60 px-3 py-2 last:border-r-0"
+                className="flex min-w-0 flex-[1_1_200px] items-start gap-2.5 border-r border-border px-3 py-2 last:border-r-0"
               >
                 <StatusLamp lamp={s.lamp} variant="dot" className="mt-1.5 h-2.5 w-2.5" />
                 <div className="min-w-0">
-                  <p className="text-dense-micro font-semibold uppercase tracking-[0.07em] text-muted-foreground">
+                  <p className="text-dense-meta font-semibold text-muted-foreground">
                     {s.k}
                   </p>
                   <p
@@ -150,7 +170,8 @@ export default function LensCoveragePage() {
           {blocker ? (
             <p
               role="status"
-              className="rounded-md border border-warning/40 bg-warning-soft/20 px-2.5 py-1.5 text-dense-meta text-warning"
+              className="border px-2.5 py-1.5 text-dense-meta text-warning mat-card"
+              style={{ borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }}
             >
               Nothing reads every face: {blocker}. The other lenses are not the problem.
             </p>
@@ -163,7 +184,7 @@ export default function LensCoveragePage() {
 
             <aside className="flex min-w-0 max-w-[420px] flex-[1_1_320px] flex-col gap-3">
               <section className="rounded-lg border border-dashed border-border px-3 py-3">
-                <p className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                <p className="text-dense-meta font-semibold text-muted-foreground">
                   Missing
                 </p>
                 <p className="mt-1 text-dense-caption leading-relaxed text-muted-foreground">
@@ -188,8 +209,8 @@ export default function LensCoveragePage() {
               </section>
 
               <section className="overflow-hidden border mat-card">
-                <header className="flex items-baseline gap-2 border-b border-border bg-secondary/40 px-3 py-2">
-                  <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                <header className="flex items-baseline gap-2 border-b border-border px-3 py-2">
+                  <span className="text-dense-meta font-semibold text-muted-foreground">
                     Unscreenable
                   </span>
                   <span className="text-dense-body font-semibold">By design, not by failure</span>
@@ -203,7 +224,7 @@ export default function LensCoveragePage() {
                     {unscreenable.map((u) => (
                       <li
                         key={u.lens}
-                        className="flex items-start gap-2.5 border-b border-border/50 px-3 py-2 last:border-b-0"
+                        className="flex items-start gap-2.5 border-b border-border px-3 py-2 last:border-b-0"
                       >
                         <StatusLamp lamp="gray" variant="dot" className="mt-1 h-2.5 w-2.5" />
                         <div className="min-w-0">
@@ -219,8 +240,8 @@ export default function LensCoveragePage() {
               </section>
 
               <section className="overflow-hidden border mat-card">
-                <header className="flex items-baseline gap-2 border-b border-border bg-secondary/40 px-3 py-2">
-                  <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                <header className="flex items-baseline gap-2 border-b border-border px-3 py-2">
+                  <span className="text-dense-meta font-semibold text-muted-foreground">
                     Reach
                   </span>
                   <span className="text-dense-body font-semibold">
@@ -240,7 +261,7 @@ export default function LensCoveragePage() {
                           </span>
                         </p>
                         <div
-                          className="mt-1 flex h-1.5 overflow-hidden rounded-full bg-secondary"
+                          className="mt-1 flex h-1.5 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]"
                           title={`${r.tier}: ${r.everyFace} every face · ${r.partial} some · ${r.noOptionFace} stock-side only`}
                         >
                           <span className="bg-success" style={{ width: `${full}%` }} />

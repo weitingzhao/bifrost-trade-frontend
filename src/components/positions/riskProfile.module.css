@@ -260,10 +260,11 @@
   border-color: var(--border);
 }
 
+/* Selection is the accent (Rev .92), mixed from the token — no raw blue. */
 .cellBtnActive {
-  border-color: rgba(59, 130, 246, 0.55);
-  background: rgba(59, 130, 246, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
+  border-color: color-mix(in srgb, var(--sk-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--sk-accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sk-accent) 20%, transparent);
 }
 
 .explain {
@@ -352,8 +353,8 @@
 }
 
 .helpTriggerActive {
-  border-color: rgba(59, 130, 246, 0.55);
-  background: rgba(59, 130, 246, 0.12);
+  border-color: color-mix(in srgb, var(--sk-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--sk-accent) 12%, transparent);
   color: var(--foreground);
 }
 

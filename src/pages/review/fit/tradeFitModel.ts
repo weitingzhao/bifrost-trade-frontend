@@ -154,7 +154,24 @@ export function counterfactuals(
   return rows
 }
 
-export function timeline(trade: ReviewTrade, path: MarkPath | null): TimelineStage[] {
+/**
+ * What the entry session looked like around the trade — the design's
+ * "IV rank 71, underlying 42.30" on the entry stage. Both are reads of their
+ * own stores (Research's IV rank history, the underlying's daily closes);
+ * either may be absent and the stage says so.
+ */
+export interface EntryContext {
+  /** IV rank of its own year on the entry session, 0–100. */
+  ivRank: number | null
+  /** The underlying's close on the entry session. */
+  spot: number | null
+}
+
+export function timeline(trade: ReviewTrade, path: MarkPath | null, entry?: EntryContext): TimelineStage[] {
+  const context = [
+    entry?.ivRank == null ? null : `IV rank ${entry.ivRank.toFixed(0)}`,
+    entry?.spot == null ? null : `underlying ${entry.spot.toFixed(2)}`,
+  ].filter(Boolean)
   const stages: TimelineStage[] = [
     {
       key: 'plan',
@@ -168,7 +185,7 @@ export function timeline(trade: ReviewTrade, path: MarkPath | null): TimelineSta
       key: 'entry',
       stage: 'entry',
       title: `${trade.contracts} × ${trade.right === 'P' ? 'put' : 'call'} · K ${trade.strike}`,
-      sub: `${trade.dteAtEntry ?? '—'} days to expiry at entry, ${trade.shortPremium ? 'credit' : 'debit'} of ${fmtUsd(Math.abs(trade.entryPremium), true)}.`,
+      sub: `${trade.dteAtEntry ?? '—'} days to expiry at entry${context.length ? `, ${context.join(', ')}` : ''}; ${trade.shortPremium ? 'credit' : 'debit'} of ${fmtUsd(Math.abs(trade.entryPremium), true)}.`,
       when: trade.openedOn,
       tone: 'success',
     },
@@ -275,6 +292,8 @@ export function sources(
   path: MarkPath | null,
   underlyingBars: number,
   optionTicker: string | null,
+  /** The entry session's IV rank: a number, null when the store has none, undefined while it is read. */
+  ivRank?: number | null,
 ): SourceRow[] {
   const partial = path != null && path.businessDays > 0 && path.bars < path.businessDays * 0.8
   return [
@@ -314,9 +333,23 @@ export function sources(
           : 'Not on hand for this name, so the price panel and the expiry branch are withheld.',
     },
     {
+      key: 'ivr',
+      lamp: ivRank == null ? 'gray' : 'green',
+      title:
+        ivRank === undefined
+          ? 'IV rank at entry · reading'
+          : ivRank == null
+            ? 'IV rank at entry · none'
+            : `IV rank at entry · ${ivRank.toFixed(0)}`,
+      sub:
+        ivRank == null
+          ? 'Research’s IV-rank history answers the trailing year; an entry outside it, or on a name it does not cover, has no rank.'
+          : 'Research’s IV-rank history: the underlying’s IV30 on the entry session against its own trailing year.',
+    },
+    {
       key: 'mid',
       lamp: 'gray',
-      title: 'Mid at submit, and IV at fill',
+      title: 'Mid at submit, and the contract’s IV at fill',
       sub: 'Neither is recorded, so slippage against the standing mid cannot be computed — the one question of the three that a better limit price would answer.',
     },
   ]

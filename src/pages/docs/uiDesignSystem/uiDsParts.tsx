@@ -9,7 +9,8 @@ import { type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 export const LINE0 = 'border-[var(--sk-line0)]'
-export const EYEBROW = 'text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+// 11/600 sentence case (Rev .91 #6); the page's own swatches and samples are untouched.
+export const EYEBROW = 'text-dense-meta font-semibold text-muted-foreground'
 export const MUTE_MONO = 'font-mono text-dense-caption text-muted-foreground'
 
 export function DsSection({
@@ -75,7 +76,7 @@ export function Code({ children }: { children: ReactNode }) {
 export function DsRules({ use, never }: { use: ReactNode[]; never?: ReactNode[] }) {
   const row = (label: string, ink: string, items: ReactNode[]) => (
     <div className="grid grid-cols-[48px_minmax(0,1fr)] items-baseline gap-2">
-      <span className={cn('font-mono text-dense-caption font-semibold uppercase tracking-[0.08em]', ink)}>{label}</span>
+      <span className={cn('text-dense-meta font-semibold', ink)}>{label}</span>
       <span className="flex flex-col gap-1 text-dense-label leading-normal text-[var(--sk-mute2)]">
         {items.map((it, i) => (
           <span key={i}>{it}</span>

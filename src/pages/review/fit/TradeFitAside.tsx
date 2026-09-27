@@ -18,29 +18,37 @@ import type { MarkPath } from '@/utils/reviewMarkPath'
 import type { ReviewTrade } from '@/utils/reviewTrades'
 import type { DerivedTag, SourceRow, TimelineStage, Tone } from './tradeFitModel'
 
+/**
+ * A stage or a tag is a state, not a signed figure (§14.8, Rev .90): good is
+ * the state green, a caution amber, a bad state the red — never the profit /
+ * loss inks, which belong to the dollars beside them.
+ */
 const TONE_TEXT: Record<Tone, string> = {
-  success: 'text-[var(--color-profit)]',
+  success: 'text-[var(--sk-state-green)]',
   warning: 'text-warning',
-  danger: 'text-[var(--color-loss)]',
+  danger: 'text-destructive',
   neutral: 'text-muted-foreground',
 }
 
-/** §14.7 ②: P&L colours go on signed numbers; a bordered box takes a lamp colour. */
-const TONE_BORDER: Record<Tone, string> = {
-  success: 'border-success/40',
-  warning: 'border-warning/40',
-  danger: 'border-danger/40',
-  neutral: 'border-border',
+/**
+ * The same tones as an edge. Inline, because `mat-card` clears border-colour
+ * classes (unlayered rule) — the class version drew no edge at all.
+ */
+const TONE_EDGE: Record<Tone, { borderColor: string } | undefined> = {
+  success: { borderColor: 'color-mix(in srgb, var(--sk-state-green) 40%, transparent)' },
+  warning: { borderColor: 'color-mix(in srgb, var(--color-warning) 40%, transparent)' },
+  danger: { borderColor: 'color-mix(in srgb, var(--destructive) 40%, transparent)' },
+  neutral: undefined,
 }
 
 export function VerdictPanel({ trade, markPath }: { trade: ReviewTrade; markPath: MarkPath | null }) {
   return (
-    <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Verdict">
+    <section className={positionsUi.panel} style={TONE_EDGE.warning} aria-label="Verdict">
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Verdict</span>
         <span className="ml-auto">
           <DenseTag variant="warning" size="cell">
-            ⚠ NO PLAN TO JUDGE
+            no plan to judge
           </DenseTag>
         </span>
       </header>
@@ -58,7 +66,7 @@ export function VerdictPanel({ trade, markPath }: { trade: ReviewTrade; markPath
           {markPath.everUnderwater ? (
             <>
               , and it marked{' '}
-              <span className="font-semibold text-[var(--color-loss)]">{fmtUsd(markPath.worst, true)}</span> against me
+              <span className="font-semibold text-loss">{fmtUsd(markPath.worst, true)}</span> against me
               on {fmtIsoDateToken(markPath.worstDate)} on the way
             </>
           ) : (
@@ -71,8 +79,9 @@ export function VerdictPanel({ trade, markPath }: { trade: ReviewTrade; markPath
   )
 }
 
+/** The realised figure is signed money — the direction inks are right here. */
 function pnlText(v: number): string {
-  return v >= 0 ? 'text-[var(--color-profit)]' : 'text-[var(--color-loss)]'
+  return v >= 0 ? 'text-profit' : 'text-loss'
 }
 
 export function TimelinePanel({ stages }: { stages: readonly TimelineStage[] }) {
@@ -84,9 +93,9 @@ export function TimelinePanel({ stages }: { stages: readonly TimelineStage[] }) 
       </header>
       <div className="flex flex-col gap-1.5 px-3 py-2.5">
         {stages.map((s) => (
-          <div key={s.key} className={cn('min-w-0 border px-2.5 py-1.75 mat-card', TONE_BORDER[s.tone])}>
+          <div key={s.key} className="min-w-0 border px-2.5 py-1.75 mat-card" style={TONE_EDGE[s.tone]}>
             <div className="flex items-baseline gap-2">
-              <span className={cn(positionsUi.cap, 'tracking-[0.07em]', TONE_TEXT[s.tone])}>{s.stage}</span>
+              <span className={cn(positionsUi.cap, TONE_TEXT[s.tone])}>{s.stage}</span>
               <span className="min-w-0 truncate text-dense-body font-semibold text-foreground">{s.title}</span>
               <span className={cn(positionsUi.mono, 'ml-auto whitespace-nowrap text-dense-meta text-muted-foreground')}>
                 {s.when ? fmtIsoDateToken(s.when) : '—'}
@@ -116,13 +125,16 @@ export function TagsPanel({ tags }: { tags: readonly DerivedTag[] }) {
           <div
             key={t.key}
             className={cn(
-              'min-w-0 rounded-md border px-2.5 py-1.75',
-              t.unreadable ? 'border-border bg-transparent' : cn(TONE_BORDER[t.tone], 'bg-[var(--sk-raised2)]'),
+              'min-w-0 px-2.5 py-1.75',
+              // An unreadable tag keeps its place on a dashed outline — the
+              // absence marker — rather than on the card material.
+              t.unreadable ? 'rounded-xl border border-dashed border-border' : 'border mat-card',
             )}
+            style={t.unreadable ? undefined : TONE_EDGE[t.tone]}
           >
             <div className="flex items-baseline gap-2">
               <span className={cn('text-dense-body font-semibold', TONE_TEXT[t.tone])}>{t.label}</span>
-              <span className={cn(positionsUi.mono, 'ml-auto text-dense-caption uppercase text-muted-foreground')}>
+              <span className={cn(positionsUi.mono, 'ml-auto text-dense-caption text-muted-foreground')}>
                 {t.unreadable ? 'n/c' : 'auto'}
               </span>
             </div>
@@ -145,7 +157,7 @@ export function SourcesPanel({ rows }: { rows: readonly SourceRow[] }) {
         {rows.map((r) => (
           <div
             key={r.key}
-            className="grid grid-cols-[0.75rem_minmax(0,1fr)] items-start gap-2.5 border-b border-border/55 px-3 py-1.75 last:border-b-0"
+            className="grid grid-cols-[0.75rem_minmax(0,1fr)] items-start gap-2.5 border-b border-border px-3 py-1.75 last:border-b-0"
           >
             <span className="pt-1">
               <StatusLamp lamp={r.lamp} variant="dot" title={r.title} />

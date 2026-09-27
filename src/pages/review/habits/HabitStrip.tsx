@@ -59,7 +59,8 @@ export function HabitStrip({ habit, fmt }: { habit: HabitReading; fmt: (v: numbe
             strokeDasharray="2 3"
           />
         )}
-        <line x1={at(habit.value)} y1={5} x2={at(habit.value)} y2={31} stroke={chartTokens.accent} strokeWidth={1.6} />
+        {/* The mean is a reading, not a selection: ink, not the accent or the ticker lime (Rev .90). */}
+        <line x1={at(habit.value)} y1={5} x2={at(habit.value)} y2={31} stroke="var(--foreground)" strokeWidth={1.6} />
         {habit.dots.map((d) => {
           const seen = byValue.get(d.value) ?? 0
           byValue.set(d.value, seen + 1)

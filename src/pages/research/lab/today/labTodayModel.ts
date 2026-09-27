@@ -5,15 +5,30 @@
  * candidate carries as evidence.
  *
  * Everything is a mapping over stores that answered on DEV before this was
- * built; a tile whose store does not exist renders the design's own `—` with
- * the reason in its source line, never a guess.
+ * built; a tile whose store does not answer for a name renders the design's
+ * own `—` with the reason in its source line, never a guess.
+ *
+ * Measured 2026-09-26 (§15.6): the three evidence stores the first build
+ * called missing all answer per name — the forecast session
+ * (`/research/forecast/sessions`), the playbook trigger record by scenario
+ * (`/research/playbook/hit-rate`) and max pain on the opex expiry (the
+ * `opex_pin` exhibit) — and the loop's candidate batches carry a written
+ * verdict per candidate (`ai_draft` kind `candidate_batch`). The hero reads
+ * all four; the tiles below are their shapes.
  */
-import type { SepaScoreRow } from '@/api/researchEngine'
+import type { ForecastSession, PlaybookHitRateSummary, SepaScoreRow } from '@/api/researchEngine'
 import type { OrchestrationStatus } from '@/api/research/orchestration'
 import type { CandidateOutcomeSummary } from '@/api/research/candidateOutcome'
 import type { UniverseReach } from '@/api/research/universeReach'
+import type { IvPercentileRow } from '@/types/ivRadar'
 
 export type BatchState = 'loading' | 'live' | 'empty' | 'failed'
+
+/** The chip a queue row wears when its IV percentile is missing. */
+export const IV_UNRANKED = 'IV UNRANKED'
+
+/** Sessions a 1y percentile needs before the store will rank today's IV. */
+const RANK_WINDOW = 252
 
 /**
  * The batch's own standing, judged from the orchestrator: a failed or overdue
@@ -42,15 +57,20 @@ export function stageLabel(stage: string): string {
 
 export interface CandidateChip {
   label: string
-  variant: 'info' | 'neutral' | 'warning'
+  /** Stages are the state blue, a good grade the state green (§14.7) — not the contract sky. */
+  variant: 'state-blue' | 'state-green' | 'neutral' | 'warning'
 }
 
 export interface CandidateTile {
   label: string
   value: string
   src: string
-  /** Grey when the store behind it does not measure this name — or exist. */
+  /** Grey when the store behind it does not measure this name. */
   measured: boolean
+  /** Amber: measured, but thin or under the line a reader should trust. */
+  warn?: boolean
+  /** The reading's own caveat, on hover. */
+  title?: string
 }
 
 export interface CandidateCard {
@@ -80,6 +100,11 @@ export interface CandidateExtras {
   hit?: { hits: number; n: number } | null
 }
 
+/** A grade is a state: the top two are good, D is under the line, the rest plain. */
+export function gradeVariant(grade: string): 'state-green' | 'warning' | 'neutral' {
+  return grade === 'A+' || grade === 'A' ? 'state-green' : grade === 'D' ? 'warning' : 'neutral'
+}
+
 export function candidateCard(row: SepaScoreRow, rank: number, x: CandidateExtras = {}): CandidateCard {
   const stage = stageLabel(row.stage)
   return {
@@ -93,39 +118,39 @@ export function candidateCard(row: SepaScoreRow, rank: number, x: CandidateExtra
     hit: x.hit ?? null,
     sepaLine: `STAGE ${stage} · ${row.path} · ${x.rs != null ? `RS ${Math.round(x.rs)}` : `MOM ${Math.round(row.momentum_score)}`}`,
     chips: [
-      { label: `SEPA STAGE ${stage} · ${row.path}`, variant: 'info' },
-      { label: `GRADE ${row.grade}`, variant: 'info' },
-      ...(x.rs != null ? [{ label: `RS ${Math.round(x.rs)}`, variant: 'info' as const }] : []),
+      { label: `SEPA STAGE ${stage} · ${row.path}`, variant: 'state-blue' },
+      { label: `GRADE ${row.grade}`, variant: gradeVariant(row.grade) },
+      ...(x.rs != null ? [{ label: `RS ${Math.round(x.rs)}`, variant: 'neutral' as const }] : []),
       {
         label: `TECH ${row.tech_pass_count}/11 · FUND ${row.fund_pass_count}/8`,
         variant: 'neutral',
       },
-      // The option face was never measured for this name; the design's own
-      // HALO row prints the miss instead of hiding it.
-      ...(row.iv_percentile == null
-        ? [{ label: 'THIN CHAIN', variant: 'warning' as const }]
-        : []),
+      // No committed IV percentile — the design's own HALO row prints the
+      // miss instead of hiding it. Measured 2026-09-26: 8 of the queue's 10
+      // unranked names have a collected chain and a current IV, with 9–46
+      // days of history — too short to rank, not a thin chain. So the chip
+      // says what is known (unranked) and the hero's tile says why.
+      ...(row.iv_percentile == null ? [{ label: IV_UNRANKED, variant: 'warning' as const }] : []),
     ],
     tiles: [
+      // The next four are read for the hero only (one request each per
+      // name); these are their shapes before the reading lands.
       {
         label: 'Forecast',
         value: '—',
-        src: 'no forecast store — LLM prior not on the plan',
+        src: 'forecast session · read for the hero',
         measured: false,
       },
       {
         label: 'Same-setup hit',
         value: '—',
-        src: 'no per-setup backtest store — source-level record is in the funnel',
+        src: 'playbook record · read for the hero',
         measured: false,
       },
       {
         label: 'IV percentile',
         value: fmt0(row.iv_percentile),
-        src:
-          row.iv_percentile == null
-            ? 'not measured — edge tier, chain not collected'
-            : 'features · 1y window',
+        src: row.iv_percentile == null ? 'unranked · the reason is read for the hero' : 'features · 1y window',
         measured: row.iv_percentile != null,
       },
       {
@@ -135,15 +160,9 @@ export function candidateCard(row: SepaScoreRow, rank: number, x: CandidateExtra
         src: 'gex_regime exhibit · hero only',
         measured: false,
       },
-      {
-        label: 'PCR (OI)',
-        value: row.pcr_oi == null ? '—' : row.pcr_oi.toFixed(2),
-        src:
-          row.pcr_oi == null
-            ? 'chain not collected'
-            : 'max pain not computed — PCR is what the store holds',
-        measured: row.pcr_oi != null,
-      },
+      // Max pain is computed (the opex_pin exhibit); the hero swaps it in
+      // beside the PCR the queue row already carries.
+      pinTile(undefined, row.pcr_oi),
     ],
   }
 }
@@ -221,4 +240,230 @@ export function perSymbolHits(
     out.set(r.symbol, cur)
   }
   return out
+}
+
+/* ── the hero's evidence, read per name ─────────────────────────────────── */
+
+export type ForecastPath = 'bull' | 'bear' | 'rangy' | 'squeeze'
+
+export interface ForecastCall {
+  path: ForecastPath
+  prob: number
+  provider: string
+  session: string
+  regime: string
+}
+
+/** The session's own call: the scenario it put the most probability on. */
+export function forecastCall(s: ForecastSession | null | undefined): ForecastCall | null {
+  if (!s) return null
+  const probs: [ForecastPath, number][] = [
+    ['bull', s.prob_bull],
+    ['bear', s.prob_bear],
+    ['rangy', s.prob_rangy],
+    ['squeeze', s.prob_squeeze],
+  ]
+  const top = probs
+    .filter(([, p]) => typeof p === 'number' && Number.isFinite(p))
+    .sort((a, b) => b[1] - a[1])[0]
+  if (!top) return null
+  return {
+    path: top[0],
+    prob: top[1],
+    provider: s.llm_provider || 'unknown',
+    session: s.trade_date,
+    regime: s.regime,
+  }
+}
+
+interface ReadState {
+  loading: boolean
+  error: boolean
+}
+
+function unreadSrc(read: ReadState, store: string, none: string): string {
+  if (read.error) return `${store} unread`
+  if (read.loading) return `reading the ${store}`
+  return none
+}
+
+export function forecastTile(call: ForecastCall | null, read: ReadState): CandidateTile {
+  if (!call) {
+    return {
+      label: 'Forecast',
+      value: '—',
+      src: unreadSrc(read, 'forecast session', 'no forecast session for this name'),
+      measured: false,
+    }
+  }
+  return {
+    label: 'Forecast',
+    value: `${Math.round(call.prob * 100)}%`,
+    src: `${call.path} · ${call.provider} · session ${call.session.slice(5)}`,
+    measured: true,
+    title: `The newest forecast session (${call.session}, ${call.regime} regime) puts ${Math.round(call.prob * 100)}% on the ${call.path} path — the most it puts on any. Provider: ${call.provider}.`,
+  }
+}
+
+/** Under this, a same-setup record is thin — the design's own small-sample line. */
+export const SAME_SETUP_MIN_N = 10
+/** The leash the funnel's hit-rate step ambers at. */
+export const HIT_RATE_LINE = 0.45
+
+/**
+ * The name's playbook triggers that fired in the same scenario the forecast
+ * calls today, settled at the record's horizon — the nearest store to the
+ * design's "same-setup backtest" (a per-setup replay store does not exist;
+ * this is the name's own settled trigger record, split by scenario).
+ */
+export function sameSetupTile(
+  hr: PlaybookHitRateSummary | null | undefined,
+  path: ForecastPath | null,
+  read: ReadState,
+): CandidateTile {
+  const cell = hr && path ? hr.by_scenario?.[path] : undefined
+  if (!hr || !path || !cell || cell.n === 0 || cell.rate == null) {
+    return {
+      label: 'Same-setup hit',
+      value: '—',
+      src: hr
+        ? path
+          ? `no ${path} trigger settled in ${hr.window_days}d`
+          : 'no forecast call to match a setup to'
+        : unreadSrc(read, 'playbook record', 'no playbook trigger on this name'),
+      measured: false,
+    }
+  }
+  return {
+    label: 'Same-setup hit',
+    value: `${Math.round(cell.rate * 100)}%`,
+    src: `playbook · ${path} · ${cell.n} triggers · ${hr.horizon}d`,
+    measured: true,
+    warn: cell.n < SAME_SETUP_MIN_N || cell.rate < HIT_RATE_LINE,
+    title: `${cell.hits} of ${cell.n} ${path} triggers on this name hit at ${hr.horizon} days over ${hr.window_days} days (all scenarios: ${hr.hit_count} of ${hr.evaluated_count}).`,
+  }
+}
+
+/**
+ * Max pain beside the PCR. Max pain comes from the `opex_pin` exhibit (the
+ * pin lens's own expiry, the monthly opex); PCR is the queue row's.
+ */
+export function pinTile(
+  readings: Record<string, unknown> | null | undefined,
+  pcr: number | null,
+  /** Absent while the exhibit has not been asked for (a queue row, not the hero). */
+  read?: ReadState,
+): CandidateTile {
+  const pain = typeof readings?.max_pain_strike === 'number' ? readings.max_pain_strike : null
+  const pcrText = pcr == null ? '—' : pcr.toFixed(2)
+  if (pain == null) {
+    return {
+      label: 'Max pain · PCR',
+      value: pcr == null ? '—' : `— · ${pcrText}`,
+      src:
+        read == null
+          ? pcr == null
+            ? 'chain not collected'
+            : 'max pain · read for the hero'
+          : unreadSrc(read, 'opex_pin exhibit', 'no max pain for this name'),
+      measured: pcr != null,
+    }
+  }
+  const expiry = typeof readings?.expiry === 'string' ? readings.expiry : null
+  const dist = typeof readings?.pin_pct_distance === 'number' ? readings.pin_pct_distance : null
+  return {
+    label: 'Max pain · PCR',
+    value: `${Number.isInteger(pain) ? pain : pain.toFixed(1)} · ${pcrText}`,
+    src: `opex_pin${expiry ? ` · ${expiry.slice(5)} expiry` : ''}${dist != null ? ` · ${(dist * 100).toFixed(1)}% from close` : ''}`,
+    measured: true,
+  }
+}
+
+/** What the loop's personas wrote about one candidate, in its newest batch. */
+export interface LoopBrief {
+  day: string
+  runId: string | null
+  /** The personas' net stance: support · caution · dissent. */
+  stance: string | null
+  blocked: boolean
+  /** The verdict persona's own sentence. */
+  verdict: string | null
+  wrongIf: string[]
+  models: string[]
+}
+
+function asRecord(v: unknown): Record<string, unknown> | null {
+  return v != null && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null
+}
+
+function asString(v: unknown): string | null {
+  return typeof v === 'string' && v.trim() ? v : null
+}
+
+/**
+ * The newest `candidate_batch` draft that carries this symbol, read
+ * defensively — the payload is the harness's report and has no schema here.
+ */
+export function loopBriefFor(
+  drafts: readonly { kind: string; created_at: string; payload: Record<string, unknown> }[],
+  symbol: string,
+): LoopBrief | null {
+  const sym = symbol.trim().toUpperCase()
+  const batches = drafts
+    .filter((d) => d.kind === 'candidate_batch')
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+  for (const d of batches) {
+    const list = Array.isArray(d.payload.candidates) ? d.payload.candidates : []
+    const hit = list.map(asRecord).find((c) => asString(c?.symbol)?.toUpperCase() === sym)
+    if (!hit) continue
+    const verdicts = asRecord(hit.agent_verdicts)
+    const verdict = asRecord(verdicts?.verdict)
+    const wrong = Array.isArray(hit.wrong_if) ? hit.wrong_if : Array.isArray(hit.falsify) ? hit.falsify : []
+    const persona = asRecord(d.payload.persona_eval)
+    const models = (Array.isArray(persona?.models) ? persona.models : [])
+      .map((m) => asString(asRecord(m)?.model))
+      .filter((m): m is string => m != null)
+    return {
+      day: d.created_at.slice(0, 10),
+      runId: asString(d.payload.run_id),
+      stance: asString(hit.net_stance),
+      blocked: hit.blocked_by_validate === true,
+      verdict: asString(verdict?.summary),
+      wrongIf: wrong.map(asString).filter((w): w is string => w != null),
+      models,
+    }
+  }
+  return null
+}
+
+/**
+ * Why a queue row has no IV percentile, from the IV store itself: no row at
+ * all (no chain collected), or a current IV with too little history to rank.
+ * A ranked row keeps the queue's own committed number.
+ */
+export function ivTile(
+  committed: number | null,
+  store: IvPercentileRow | null | undefined,
+  read: ReadState,
+): CandidateTile {
+  if (committed != null) {
+    return { label: 'IV percentile', value: String(Math.round(committed)), src: 'features · 1y window', measured: true }
+  }
+  if (store === undefined) {
+    return { label: 'IV percentile', value: '—', src: unreadSrc(read, 'IV store', 'unranked'), measured: false }
+  }
+  if (store == null || store.iv_current == null) {
+    return { label: 'IV percentile', value: '—', src: 'no IV row — chain not collected', measured: false }
+  }
+  const days = store.lookback_days
+  return {
+    label: 'IV percentile',
+    value: '—',
+    src:
+      days != null && days < RANK_WINDOW
+        ? `IV ${(store.iv_current * 100).toFixed(0)} now · ${days}d of history — too short to rank`
+        : `IV ${(store.iv_current * 100).toFixed(0)} now · not ranked by the store`,
+    measured: false,
+    title: 'The chain is collected and today\'s IV is read; a 1y percentile needs a year of it.',
+  }
 }

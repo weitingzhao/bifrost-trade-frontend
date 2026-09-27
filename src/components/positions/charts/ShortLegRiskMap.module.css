@@ -169,8 +169,9 @@
 
 /* The selected point: a solid foreground ring, and the dash of a stale price
    dropped, so selection is never confused with how the leg was priced. */
+/* The picked leg is the accent (Rev .92) — selection is never ink or a state colour. */
 .pointSelected {
-  stroke: var(--foreground);
+  stroke: var(--sk-accent);
   stroke-width: 2;
   stroke-dasharray: none;
   stroke-opacity: 1;

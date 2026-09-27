@@ -6,39 +6,46 @@
  * adherence, because the fix differs in every cell; then the queue and, beside
  * it, the trade being reviewed and what the sample can support.
  *
- * Both halves of the method need something this side has not got — a plan
- * linked to the position, and a mark through the holding period — so every
- * figure that turns on either is marked rather than dropped or invented. The
- * shape is the page's argument; a queue with the argument removed is a P&L
- * list wearing Review's name.
+ * One half of the method needs something this side has not got — a plan
+ * linked to the position (DEV 2026-09-26: three plans on file, all
+ * cancelled, none filled) — so every figure that turns on it is marked rather
+ * than dropped or invented. The other half, the mark through the holding
+ * period, is read: the tags, in the queue and on the picked trade, come off
+ * the contract's own daily bars. The shape is the page's argument; a queue
+ * with the argument removed is a P&L list wearing Review's name.
  */
 import { useMemo, useState } from 'react'
 import { usePageViewState } from '@/lib/pageView'
 import { Link } from 'react-router-dom'
+import { ToolbarClear, ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
-import { PageHeader, PageShell } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { rowSelectProps } from '@/hooks/useRowLink'
+import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { usePreviewState } from '@/hooks/usePreviewState'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
-import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
+import { useBookMarkPaths } from '@/hooks/useBookMarkPaths'
 import { useReviewTrades } from '@/hooks/useReviewTrades'
 import { REVIEW_UNRECORDED, type ReviewTrade } from '@/utils/reviewTrades'
+import { derivedTags } from '@/pages/review/fit/tradeFitModel'
 import { ReviewSelectedPanel } from './ReviewSelectedPanel'
 
 const PAGE_LEAD =
   'Closed trades, newest first, each row carrying the gap between what the plan said and what I did. Reviewing here is what produces the labels — Habits is empty arithmetic without it.'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+/** A severity edge on a card is inline: `mat-card` clears border-colour classes. */
+const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
 /** The design's window on the queue. `all` is every closed trade the ledger has. */
 const SINCE_MONTHS: Record<string, number | null> = { m: 1, q: 3, half: 6, all: null }
@@ -60,25 +67,21 @@ const QUADRANTS = [
     key: 'good-kept',
     name: 'Good plan, followed',
     action: 'This is the edge. Size it up, change nothing.',
-    tone: 'text-profit',
   },
   {
     key: 'good-broken',
     name: 'Good plan, broke it',
     action: 'Breaking good plans costs money here. The fix is a resting exit order, not a new plan.',
-    tone: 'text-warning',
   },
   {
     key: 'weak-kept',
     name: 'Weak plan, followed',
     action: 'I did what I said; what I said was the problem. Re-run the backtest and move the target.',
-    tone: 'text-warning',
   },
   {
     key: 'weak-broken',
     name: 'Weak plan, broke it',
     action: 'Weak plan and broken too. Whatever the P&L, these teach nothing.',
-    tone: 'text-warning',
   },
 ] as const
 
@@ -86,19 +89,24 @@ function QueueRow({
   t,
   picked,
   onPick,
+  tags,
 }: {
   t: ReviewTrade
   picked: boolean
   onPick: () => void
+  /** The path-derived tags, summarised; null while the book's bars are read. */
+  tags: { text: string; title: string } | null
 }) {
+  const sym = extractUnderlyingRootSymbol(t.symbol)
   return (
     <tr
       {...rowSelectProps(
         picked,
         onPick,
         cn(
-          'hover:[&>td]:bg-[var(--sk-raised2)]',
-          picked && '[&>td]:bg-[var(--sk-raised2)]',
+          'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+          // Selection is the accent (Rev .84 · .90), never the ticker lime.
+          picked && '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)]',
         ),
       )}
     >
@@ -111,30 +119,30 @@ function QueueRow({
         </span>
       </td>
       {/* `symbol` on a closed option trade is the raw OCC string; the column wants the
-          underlying, the way §14.4 draws one. The name is its own destination —
+          underlying — a ticker, in the ticker's ink. The name is its own destination —
           and it sits inside a row that picks, so its click must stop there or
           both fire and the row wins. */}
-      <td className={cn(positionsUi.td, 'text-left font-bold text-entity-option')}>
+      <td className={cn(positionsUi.td, 'text-left font-bold')}>
         <Link
-          to={withSymbolParam(SYMBOL_PATH, extractUnderlyingRootSymbol(t.symbol))}
+          to={withSymbolParam(SYMBOL_PATH, sym)}
           onClick={(e) => e.stopPropagation()}
-          className="hover:underline"
-          title={`Open ${extractUnderlyingRootSymbol(t.symbol)} on Symbol`}
+          className="text-entity-symbol hover:underline"
+          title={`Open ${sym} on Symbol`}
         >
-          {extractUnderlyingRootSymbol(t.symbol)}
+          {sym}
         </Link>
       </td>
-      <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}>
+      <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-[var(--sk-soft)]')}>
         {t.play ?? 'no play recorded'}
-        <span className="text-muted-foreground/70"> → no rule</span>
+        <span className="text-muted-foreground"> → no rule</span>
       </td>
       <td className={cn(positionsUi.td, 'text-muted-foreground')}>
         {t.closedOn ? fmtIsoDateToken(t.closedOn) : '—'}
       </td>
-      <td className={cn(positionsUi.td, 'text-foreground')}>
+      <td className={cn(positionsUi.td, 'text-muted-foreground')}>
         {t.daysHeld == null ? '—' : `${t.daysHeld}/${t.dteAtEntry ?? '—'}d`}
       </td>
-      <td className={cn(positionsUi.td, pnlColorClass(t.realised))}>{fmtUsd(t.realised)}</td>
+      <td className={cn(positionsUi.td, 'font-semibold', pnlColorClass(t.realised))}>{fmtUsd(t.realised)}</td>
       <td className={cn(positionsUi.td, 'text-muted-foreground')}>n/c</td>
       <td className={cn(positionsUi.td, 'text-muted-foreground')}>n/c</td>
       <td className={cn(positionsUi.td, 'text-muted-foreground')}>n/c</td>
@@ -145,7 +153,9 @@ function QueueRow({
           {t.exitKind}
         </DenseTag>
       </td>
-      <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>none derivable</td>
+      <td className={cn(positionsUi.td, 'truncate text-left font-sans text-dense-meta text-muted-foreground')} title={tags?.title}>
+        {tags == null ? '…' : tags.text}
+      </td>
     </tr>
   )
 }
@@ -156,7 +166,27 @@ export default function ReviewQueuePage() {
   const [since, setSince] = usePageViewState('since', 'all')
   const [picked, setPicked] = usePageViewState<string | null>('sel', null)
   const [cell, setCell] = usePageViewState<string | null>('quad', null)
-  const { trades, expiredUnbooked, accountIds, loading, error, refetch } = useReviewTrades(accountFilter)
+  const { trades, expiredUnbooked, accountIds } = useReviewTrades(accountFilter)
+  // The Auto tags column reads each contract's own daily bars — the same
+  // book-wide read (and cache entry) Habits and Playbook stats use. The two
+  // plan tags (held past plan · exited early) stay out: no plan is linked.
+  const marks = useBookMarkPaths(trades)
+  const tagsByKey = useMemo(() => {
+    const by = new Map<string, { text: string; title: string }>()
+    for (const t of trades) {
+      const path = marks.paths.get(t.contractKey) ?? null
+      const read = derivedTags(t, path).filter((g) => !g.unreadable)
+      by.set(
+        t.contractKey,
+        path == null
+          ? { text: 'no path', title: 'No daily bar covers this contract’s holding period, so nothing is derived.' }
+          : { text: read.map((g) => g.label).join(' · ') || 'none', title: read.map((g) => g.why).join('\n') },
+      )
+    }
+    return by
+  }, [trades, marks.paths])
+  // The same cache entry useReviewTrades reads — held here for its §17 state.
+  const execQuery = useExecutionsCanonical()
 
   // The window first, so every figure on the page is about the same set of trades.
   const rows = useMemo(() => {
@@ -164,8 +194,9 @@ export default function ReviewQueuePage() {
     return cut == null ? trades : trades.filter((t) => (t.closedOn ?? '') >= cut)
   }, [trades, since])
 
-  // A cell is a claim about the plan and the path. Neither reaches this side, so no
-  // trade can be placed in one — the filter works, and answers with nothing every time.
+  // A cell is a claim about the plan and the path. The plan never reaches this
+  // side, so no trade can be placed in one — the filter works, and answers
+  // with nothing every time.
   const queueRows = useMemo(() => (cell == null ? rows : rows.filter(() => false)), [rows, cell])
   const cellName = QUADRANTS.find((q) => q.key === cell)?.name ?? null
 
@@ -173,157 +204,204 @@ export default function ReviewQueuePage() {
   const realised = useMemo(() => rows.reduce((a, t) => a + t.realised, 0), [rows])
   const shortOfFloor = Math.max(0, SAMPLE_FLOOR - rows.length)
 
+  const preview = usePreviewState()
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(execQuery)
+  const shown = preview === 'empty' || preview === 'filtered' ? [] : queueRows
+  // §17.3: Clear resets every filter axis — the window and the cell. The
+  // account is scope, not a filter.
+  const resets = [since !== 'all' ? 'range' : null, cell != null ? 'cell' : null].filter(
+    (r): r is string => r != null,
+  )
+  const clearAll = () => {
+    setSince('all')
+    setCell(null)
+  }
+
   return (
     <PageShell padding="compact" className="space-y-3">
-      <section className={positionsUi.pageCard} aria-label="Review Queue">
-        <PageHeader
-          // One level: the Queue is the Review layer's own page (§5a.1), so
-          // naming Review twice would name the same place twice.
-          breadcrumb={<p className="text-xs text-primary/90 font-medium">Review</p>}
-          title="Review"
-          titleSize="large"
-          description={PAGE_LEAD}
-          actions={
-            <span className="flex flex-wrap items-center gap-2.5">
-              <Link to="/review/habits" className={positionsUi.link}>
-                Habits →
-              </Link>
-              <Link to="/review/proposals" className={positionsUi.link}>
-                Proposals →
-              </Link>
-            </span>
-          }
-        />
-
-        {error ? <QueryErrorAlert error={error} onRetry={refetch} /> : null}
-        {loading ? (
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-16 w-full rounded-md" />
-            <Skeleton className="h-40 w-full rounded-md" />
-            <Skeleton className="h-64 w-full rounded-md" />
-          </div>
-        ) : (
+      {/* §16.10: the lead behind ⓘ, Habits and the proposals as the head's doors. */}
+      <PageHead
+        title="Review"
+        info={PAGE_LEAD}
+        actions={
           <>
-            {/* The design's one filter bar: the window, the accounts, the review state. */}
-            <section className={positionsUi.panel} aria-label="Which closed trades">
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-3 py-2">
-                <span className="flex items-center gap-2">
-                  <span className={positionsUi.cap}>Closed since</span>
-                  <SegmentControl
-                    size="xs"
-                    ariaLabel="Closed since"
-                    value={since}
-                    onChange={setSince}
-                    options={[
-                      { value: 'm', label: '1M' },
-                      { value: 'q', label: '3M' },
-                      { value: 'half', label: '6M' },
-                      { value: 'all', label: 'All' },
-                    ]}
-                  />
-                </span>
-                {accountIds.length > 1 ? (
-                  <span className="flex items-center gap-2">
-                    <span className={positionsUi.cap}>Account</span>
-                    <SegmentControl
-                      size="xs"
-                      ariaLabel="Account"
-                      value={accountFilter}
-                      onChange={setAccountFilter}
-                      options={[{ value: 'all', label: 'Both' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-                    />
-                  </span>
-                ) : null}
-                <span className="flex items-center gap-2">
-                  <span className={positionsUi.cap}>State</span>
-                  <SegmentControl
-                    size="xs"
-                    ariaLabel="Review state"
-                    value="all"
-                    onChange={() => {}}
-                    options={[
-                      { value: 'all', label: 'All' },
-                      { value: 'todo', label: 'To review', disabled: true },
-                      { value: 'done', label: 'Reviewed', disabled: true },
-                    ]}
-                  />
-                  <DenseTag variant="warning" size="cell">
-                    ⚠ no review is recorded
-                  </DenseTag>
-                </span>
-                <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>
-                  <span className="text-muted-foreground">n/c awaiting</span> ·{' '}
-                  <span className="text-foreground">{rows.length} in range</span> · realised{' '}
-                  <span className={pnlColorClass(realised)}>{fmtUsd(realised)}</span> · discipline n/c · plan n/c
-                </span>
-              </div>
-              <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.reviewed}</p>
-            </section>
+            <PageHeadLink to="/review/habits" title="What the closed trades add up to">
+              Habits →
+            </PageHeadLink>
+            <PageHeadLink to="/review/proposals" title="Rule proposals are decided in the Decision Inbox">
+              Rule proposals →
+            </PageHeadLink>
+          </>
+        }
+      />
 
-            <PositionsTier
-              label="Plan quality × adherence"
-              note="four cells, four different fixes — and neither axis can be read yet"
+      {/* The design's one filter bar: the window, the accounts, the review state. */}
+      <div data-sr-toolbar="">
+        <span data-sr-tb="label">Closed since</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Closed since"
+          value={since}
+          onChange={setSince}
+          options={[
+            { value: 'm', label: '1M' },
+            { value: 'q', label: '3M' },
+            { value: 'half', label: '6M' },
+            { value: 'all', label: 'All' },
+          ]}
+        />
+        {accountIds.length > 1 ? (
+          <>
+            <span data-sr-tb="sep" />
+            <span data-sr-tb="label">Account</span>
+            <SegmentControl
+              size="xs"
+              ariaLabel="Account"
+              value={accountFilter}
+              onChange={setAccountFilter}
+              options={[{ value: 'all', label: 'Both' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
             />
-            <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Plan quality and adherence">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>Four cells, four different fixes</span>
-                <DenseTag variant="warning" size="cell">
-                  ⚠ both axes are missing
-                </DenseTag>
-                <span className="ml-auto text-dense-meta text-muted-foreground">click a cell to filter the queue</span>
-              </header>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] gap-2 px-3 py-2.5">
-                {QUADRANTS.map((q) => (
+          </>
+        ) : null}
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">State</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Review state"
+          value="all"
+          onChange={() => {}}
+          options={[
+            { value: 'all', label: 'All' },
+            { value: 'todo', label: 'To review', disabled: true },
+            { value: 'done', label: 'Reviewed', disabled: true },
+          ]}
+        />
+        <span title={REVIEW_UNRECORDED.reviewed}>
+          <DenseTag variant="warning" size="cell">
+            no review is recorded
+          </DenseTag>
+        </span>
+        <ToolbarClear resets={resets} onClear={clearAll} />
+        <span data-sr-tb="meta" className={positionsUi.mono}>
+          <span className="text-muted-foreground">n/c awaiting</span> ·{' '}
+          <span className="text-foreground">{rows.length} in range</span> · realised{' '}
+          <span className={pnlColorClass(realised)}>{fmtUsd(realised)}</span> · discipline n/c · plan n/c
+        </span>
+      </div>
+
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh the closed book"
+          detail={staleDetail(execQuery, 'a trade closed since then is not in the queue.')}
+          onAction={() => void execQuery.refetch()}
+        />
+      ) : null}
+
+      {pageState === 'loading' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState kind="loading" title="Loading the closed trades" rows={8} cols={8} />
+        </section>
+      ) : pageState === 'failed' ? (
+        <section className="overflow-hidden mat-card">
+          <ViewState
+            kind="failed"
+            title="Couldn’t load the closed trades"
+            detail={failedDetail(execQuery, 'Nothing was evaluated — this is not an empty queue.')}
+            onAction={() => void execQuery.refetch()}
+          />
+        </section>
+      ) : (
+        <>
+          <section className={positionsUi.panel} style={WARN_EDGE} aria-label="Plan quality and adherence">
+            <header className={positionsUi.panelHead}>
+              <span className={positionsUi.cap}>Plan quality × adherence</span>
+              <span className={positionsUi.panelTitle}>Four cells, four different fixes</span>
+              <DenseTag variant="warning" size="cell">
+                both axes need a plan
+              </DenseTag>
+              <span className="ml-auto text-dense-meta text-muted-foreground">click a cell to filter the queue</span>
+            </header>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] gap-2 px-3 py-2.5">
+              {QUADRANTS.map((q) => {
+                const on = cell === q.key
+                return (
                   <button
                     key={q.key}
                     type="button"
-                    aria-pressed={cell === q.key}
+                    aria-pressed={on}
                     onClick={() => setCell((cur) => (cur === q.key ? null : q.key))}
                     className={cn(
-                      'min-w-0 cursor-pointer rounded-md border bg-transparent px-3 py-2 text-left font-[inherit]',
-                      cell === q.key ? 'border-primary' : 'border-border hover:border-border/80',
+                      'flex min-w-0 cursor-pointer flex-col gap-1 rounded-xl border px-3 py-2 text-left font-[inherit]',
+                      // The picked cell is a selection: the accent edge and a 10% ground.
+                      on
+                        ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]'
+                        : 'border-transparent bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
                     )}
                   >
                     <span className="flex flex-wrap items-baseline gap-x-2">
-                      <span className="text-dense-body font-semibold text-foreground">{q.name}</span>
+                      {/* n 0 in every cell, so the names read muted, as the design draws an empty cell. */}
+                      <span className="text-dense-body font-semibold text-muted-foreground">{q.name}</span>
                       <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>n 0</span>
                     </span>
-                    <span className={cn(positionsUi.mono, 'block pt-0.5 text-dense-meta text-muted-foreground')}>
+                    <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
                       discipline n/c · plan cost n/c
                     </span>
-                    <span className={cn('block pt-1 text-dense-meta leading-normal text-pretty', q.tone)}>
-                      {q.action}
-                    </span>
+                    <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">{q.action}</span>
                   </button>
-                ))}
-              </div>
-              <p className={cn(FOOT, 'm-0')}>
-                Plan quality is the plan&rsquo;s target against the best mark the trade printed; adherence is the exit
-                landing within three bars of the planned one. The design leaves a plan-less trade out of the grid
-                entirely — adherence needs a plan to adhere to — and on this side that is every one of them, which is
-                why each cell reads n 0 and picking one empties the queue. {REVIEW_UNRECORDED.plan}
-              </p>
-            </section>
+                )
+              })}
+            </div>
+            <p className={cn(FOOT, 'm-0')}>
+              Plan quality is the plan&rsquo;s target against the best mark the trade printed; adherence is the exit
+              landing within three bars of the planned one. The design leaves a plan-less trade out of the grid
+              entirely — adherence needs a plan to adhere to — and on this side that is every one of them, which is
+              why each cell reads n 0 and picking one empties the queue. {REVIEW_UNRECORDED.plan}
+            </p>
+          </section>
 
-            {/* Queue and, beside it, the trade being reviewed — the design's own split,
-                640px of queue against 360px of review before they stack. */}
-            <div className="flex min-w-0 flex-wrap items-start gap-3">
-              <section className={cn(positionsUi.panel, 'flex-[999_1_40rem]')} aria-label="Queue">
-                <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>Queue</span>
-                  <span className={positionsUi.panelTitle}>
-                    {cellName ?? (since === 'all' ? 'All closed' : `Closed in the last ${SINCE_LABEL[since]}`)}
-                  </span>
-                  <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
-                    {queueRows.length}
-                  </span>
-                  {cellName ? (
-                    <button type="button" className={positionsUi.link} onClick={() => setCell(null)}>
-                      clear cell filter
-                    </button>
-                  ) : null}
-                  <span className="ml-auto text-dense-meta text-muted-foreground">click a row to review it</span>
-                </header>
+          {/* Queue and, beside it, the trade being reviewed — the design's own split,
+              640px of queue against 360px of review before they stack. */}
+          <div className="flex min-w-0 flex-wrap items-start gap-3">
+            <section className={cn(positionsUi.panel, 'flex-[999_1_40rem]')} aria-label="Queue">
+              <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>Queue</span>
+                <span className={positionsUi.panelTitle}>
+                  {cellName ?? (since === 'all' ? 'All closed' : `Closed in the last ${SINCE_LABEL[since]}`)}
+                </span>
+                <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{shown.length}</span>
+                {cellName ? (
+                  <button type="button" className={positionsUi.link} onClick={() => setCell(null)}>
+                    clear cell filter
+                  </button>
+                ) : null}
+                <span className="ml-auto text-dense-meta text-muted-foreground">click a row to review it</span>
+              </header>
+              {shown.length === 0 ? (
+                cellName || preview === 'filtered' ? (
+                  <ViewState
+                    kind="filtered"
+                    title={cellName ? `No trades in “${cellName}”` : undefined}
+                    detail={`Both axes need the plan a trade was opened under, and none of these ${rows.length} has one.`}
+                    actionLabel="Clear cell"
+                    onAction={() => setCell(null)}
+                  />
+                ) : since !== 'all' ? (
+                  <ViewState
+                    kind="filtered"
+                    title="Nothing closed in this window"
+                    detail="Widen the range to see every closed trade."
+                    onAction={clearAll}
+                  />
+                ) : (
+                  <ViewState
+                    kind="empty"
+                    title="No closed trades yet"
+                    detail="A trade reaches the queue once its own fills have taken the contract flat."
+                  />
+                )
+              ) : (
                 <div className="overflow-x-auto">
                   {/* §14.6: eleven columns. The design's floor is 1180, where its Trade column
                       is an id; ours is a whole contract token, so the table holds 1460 to keep
@@ -331,8 +409,8 @@ export default function ReviewQueuePage() {
                   <table className="w-full min-w-[1460px] table-fixed border-collapse">
                     <colgroup>
                       <col style={{ width: '15%' }} />
-                      <col style={{ width: '9%' }} />
-                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '8%' }} />
+                      <col style={{ width: '15%' }} />
                       <col style={{ width: '8%' }} />
                       <col style={{ width: '7%' }} />
                       <col style={{ width: '9%' }} />
@@ -360,111 +438,109 @@ export default function ReviewQueuePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {queueRows.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={11}
-                            className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}
-                          >
-                            {cellName
-                              ? `No trade can be placed in “${cellName}”. Both axes need the plan a trade was opened under, and none of these ${rows.length} has one — clear the cell filter to see them again.`
-                              : 'Nothing closed in this window.'}
-                          </td>
-                        </tr>
-                      ) : (
-                        queueRows.map((t) => (
-                          <QueueRow
-                            key={t.contractKey}
-                            t={t}
-                            picked={t.contractKey === picked}
-                            onPick={() => setPicked((cur) => (cur === t.contractKey ? null : t.contractKey))}
-                          />
-                        ))
-                      )}
+                      {shown.map((t) => (
+                        <QueueRow
+                          key={t.contractKey}
+                          t={t}
+                          picked={t.contractKey === picked}
+                          onPick={() => setPicked((cur) => (cur === t.contractKey ? null : t.contractKey))}
+                          tags={marks.loading ? null : (tagsByKey.get(t.contractKey) ?? null)}
+                        />
+                      ))}
                     </tbody>
                   </table>
                 </div>
-                <p className={cn(FOOT, 'm-0')}>
-                  Discipline is realised minus what the plan&rsquo;s own exit would have produced; plan cost is that
-                  planned exit minus the best mark the trade printed. A row can be green on realised and still carry a
-                  cost in both — which is why they are separate columns, and why leaving them out rather than marking
-                  them would hide the page&rsquo;s subject.
+              )}
+              <p className={cn(FOOT, 'm-0')}>
+                Discipline is realised minus what the plan&rsquo;s own exit would have produced; plan cost is that
+                planned exit minus the best mark the trade printed. A row can be green on realised and still carry a
+                cost in both — which is why they are separate columns, and why leaving them out rather than marking
+                them would hide the page&rsquo;s subject.
+              </p>
+            </section>
+
+            <aside className="flex min-w-0 max-w-[28.75rem] flex-[1_1_22.5rem] flex-col gap-3">
+              {selected ? (
+                <ReviewSelectedPanel
+                  trade={selected}
+                  path={marks.paths.get(selected.contractKey) ?? null}
+                  pathLoading={marks.loading}
+                />
+              ) : (
+                <p className="m-0 rounded-xl border border-dashed border-border px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                  Pick a row to see its plan-vs-actual diff, its two gaps, and the tags derived from its series.
                 </p>
+              )}
+
+              <section className={positionsUi.panel} aria-label="Sample">
+                <header className={positionsUi.panelHead}>
+                  <span className={positionsUi.cap}>Sample</span>
+                  <span className={positionsUi.panelTitle}>What this book can and cannot say</span>
+                </header>
+                <div className="flex flex-col">
+                  {[
+                    {
+                      key: 'floor',
+                      lamp: shortOfFloor > 0 ? ('yellow' as const) : ('green' as const),
+                      title: `n ${rows.length} in range · floor ${SAMPLE_FLOOR}`,
+                      sub:
+                        shortOfFloor > 0
+                          ? `Below the floor. Habits shows the counts and withholds the conclusions — ${shortOfFloor} more closed ${shortOfFloor === 1 ? 'trade' : 'trades'} to go.`
+                          : 'At or above the floor, so a rate read here is worth quoting.',
+                    },
+                    {
+                      key: 'reviewed',
+                      lamp: 'gray' as const,
+                      title: `n/c of ${rows.length} reviewed`,
+                      sub: 'The design separates a confirmed review from an auto-tag, and counts only the confirmed. Nothing here records either, so every label would be provisional.',
+                    },
+                    {
+                      key: 'plan',
+                      lamp: rows.length > 0 ? ('yellow' as const) : ('green' as const),
+                      title: `${rows.length} of ${rows.length} with no linked plan`,
+                      sub: 'Adherence needs a plan to measure against. These count toward P&L and toward nothing else — the same hole Outcome reports as unattributed.',
+                    },
+                    {
+                      key: 'unbooked',
+                      lamp: expiredUnbooked > 0 ? ('yellow' as const) : ('green' as const),
+                      title: `${expiredUnbooked} over but unbooked`,
+                      sub: 'Past expiry with no closing fill, in the whole ledger. Economically over, but with no realised figure to read, so they are counted apart rather than folded in.',
+                    },
+                    {
+                      key: 'execution',
+                      lamp: 'gray' as const,
+                      title: 'Execution quality not in this view',
+                      sub: 'Fill against the mid at submit is per fill, not per trade, and the mid is not recorded — Single trade shows the fills and says so.',
+                    },
+                  ].map((cv) => (
+                    <div
+                      key={cv.key}
+                      className="grid grid-cols-[0.75rem_minmax(0,1fr)] items-start gap-2.5 border-b border-border px-3 py-2 last:border-b-0"
+                    >
+                      <span className="pt-1">
+                        <StatusLamp lamp={cv.lamp} variant="dot" title={cv.title} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-dense-body text-foreground">{cv.title}</span>
+                        <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
+                          {cv.sub}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.path}</p>
               </section>
+            </aside>
+          </div>
 
-              <div className="flex min-w-0 flex-[1_1_22.5rem] flex-col gap-3">
-                <PositionsTier label="Review" note={selected ? 'the trade picked in the queue' : 'pick a row'} />
-                {selected ? (
-                  <ReviewSelectedPanel trade={selected} />
-                ) : (
-                  <p className="m-0 border px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-                    No trade picked. Click a row in the queue to read it here.
-                  </p>
-                )}
-
-                <section className={positionsUi.panel} aria-label="Sample">
-                  <header className={positionsUi.panelHead}>
-                    <span className={positionsUi.cap}>Sample</span>
-                    <span className={positionsUi.panelTitle}>What this book can and cannot say</span>
-                  </header>
-                  <div className="flex flex-col gap-2 px-3 py-2.5">
-                    <div className="flex min-w-0 gap-2.5">
-                      <StatusLamp
-                        lamp={shortOfFloor > 0 ? 'amber' : 'green'}
-                        variant="dot"
-                        title={shortOfFloor > 0 ? 'Below the floor' : 'At the floor'}
-                      />
-                      <span className="min-w-0">
-                        <span className="block text-dense-body text-foreground">
-                          n {rows.length} in range · floor {SAMPLE_FLOOR}
-                        </span>
-                        <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
-                          {shortOfFloor > 0
-                            ? `Below the floor. Habits shows the counts and withholds the conclusions — ${shortOfFloor} more closed ${shortOfFloor === 1 ? 'trade' : 'trades'} to go.`
-                            : 'At or above the floor, so a rate read here is worth quoting.'}
-                        </span>
-                      </span>
-                    </div>
-                    <div className="flex min-w-0 gap-2.5">
-                      <StatusLamp lamp="gray" variant="dot" title="No reading" />
-                      <span className="min-w-0">
-                        <span className="block text-dense-body text-foreground">n/c of {rows.length} reviewed</span>
-                        <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
-                          The design separates a confirmed review from an auto-tag, and counts only the confirmed.
-                          Nothing here records either, so every label would be provisional.
-                        </span>
-                      </span>
-                    </div>
-                    <div className="flex min-w-0 gap-2.5">
-                      <StatusLamp
-                        lamp={expiredUnbooked > 0 ? 'amber' : 'green'}
-                        variant="dot"
-                        title="Over but unbooked"
-                      />
-                      <span className="min-w-0">
-                        <span className="block text-dense-body text-foreground">
-                          {expiredUnbooked} over but unbooked
-                        </span>
-                        <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
-                          Past expiry with no closing fill, in the whole ledger. Economically over, but with no
-                          realised figure to read, so they are counted apart rather than folded in.
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                  <p className={cn(FOOT, 'm-0')}>{REVIEW_UNRECORDED.path}</p>
-                </section>
-              </div>
-            </div>
-
-            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-              <span className="font-semibold text-secondary-foreground">Boundary.</span> Closed trades only,
-              fills-based, fees included. An open position never counts toward a win rate — that is how a book talks
-              itself into holding losers. Nothing on this page writes.
-            </p>
-          </>
-        )}
-      </section>
+          <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
+            <span className="font-semibold text-secondary-foreground">Boundary.</span> Closed trades only,
+            fills-based, fees included. An open position never counts toward a win rate — that is how a book talks
+            itself into holding losers. Nothing on this page writes.
+          </p>
+        </>
+      )}
     </PageShell>
   )
 }

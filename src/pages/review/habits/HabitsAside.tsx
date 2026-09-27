@@ -15,6 +15,9 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
 
+/** A severity edge on a card is inline: `mat-card` clears border-colour classes. */
+const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
+
 const QUADRANTS = [
   { key: 'good-followed', name: 'Good plan · followed' },
   { key: 'good-broke', name: 'Good plan · broke it' },
@@ -24,13 +27,13 @@ const QUADRANTS = [
 
 export function PlanAdherenceQuadrants({ closed }: { closed: number }) {
   return (
-    <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Plan × adherence">
+    <section className={positionsUi.panel} style={WARN_EDGE} aria-label="Plan × adherence">
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Plan × adherence</span>
         <span className={positionsUi.panelTitle}>Where the book sits</span>
         <span className="ml-auto">
           <DenseTag variant="warning" size="cell">
-            ⚠ NO PLAN
+            no plan linked
           </DenseTag>
         </span>
       </header>
@@ -58,13 +61,13 @@ export function PlanAdherenceQuadrants({ closed }: { closed: number }) {
 
 export function CostSplit() {
   return (
-    <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Split">
+    <section className={positionsUi.panel} style={WARN_EDGE} aria-label="Split">
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Split</span>
         <span className={positionsUi.panelTitle}>Discipline vs plan, for the book</span>
         <span className="ml-auto">
           <DenseTag variant="warning" size="cell">
-            ⚠ NO PLAN
+            no plan linked
           </DenseTag>
         </span>
       </header>
@@ -75,7 +78,7 @@ export function CostSplit() {
               <span className="text-dense-body text-secondary-foreground">{label}</span>
               <span className={cn(positionsUi.mono, 'ml-auto text-sm font-semibold text-muted-foreground')}>n/c</span>
             </div>
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--sk-surface)]" />
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]" />
           </div>
         ))}
         <p className="m-0 inline-flex items-start gap-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
@@ -148,7 +151,7 @@ export function NotClaimed({
         {rows.map((r) => (
           <div
             key={r.key}
-            className="grid grid-cols-[0.75rem_minmax(0,1fr)] items-start gap-2.5 border-b border-border/55 px-3 py-1.75 last:border-b-0"
+            className="grid grid-cols-[0.75rem_minmax(0,1fr)] items-start gap-2.5 border-b border-border px-3 py-1.75 last:border-b-0"
           >
             <span className="pt-1">
               <StatusLamp lamp={r.lamp} variant="dot" title={r.title} />

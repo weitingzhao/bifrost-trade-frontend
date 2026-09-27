@@ -207,8 +207,10 @@ export function readinessRows(stats: {
       label: 'Both · enters ratings',
       value: '—',
       // The two blocks are counted independently and the payload carries no
-      // intersection, so a number here would be an assumption about overlap.
-      owed: 'the payload counts the two sides separately and carries no intersection',
+      // intersection. Re-measured 2026-09-26: its `technical.both_ready` is
+      // `min(fund, tech)` on the trade-api side — an upper bound named like
+      // a count — so printing it would be an assumption about overlap too.
+      owed: 'the payload counts the two sides separately and carries no intersection — its both_ready is the smaller side, an upper bound, not the overlap',
     },
     {
       label: 'No fundamentals · excluded',

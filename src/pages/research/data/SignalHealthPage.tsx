@@ -40,7 +40,6 @@
  * not a row that has to exist to be worth stating.
  */
 import { useQuery } from '@tanstack/react-query'
-import { Activity } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { RAISED_PANEL } from '@/components/layout/raisedPanel'
@@ -54,10 +53,11 @@ import {
   DenseTableHeadRow,
   DenseTableRow,
   DenseTag,
-  EmptyState,
+  type DenseTagVariant,
 } from '@/components/data-display'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import { Skeleton } from '@/components/ui/skeleton'
+import { ViewState } from '@bifrost/ui'
+import { usePreviewState } from '@/hooks/usePreviewState'
+import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { fetchSignalHealth } from '@/api/research/similarRegime'
 import { fetchSepaCriteriaStats } from '@/api/research/dataReadiness'
 import { fmtPctFromFraction } from '@/lib/format'
@@ -74,8 +74,10 @@ import {
   type CompositionRow,
 } from '@/utils/signalHealthModel'
 
-function statusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' | 'info' {
-  if (status === 'fresh' || status === 'ok') return 'success'
+// Rev .91: fresh / ok in the state green, missing / empty in the red pastel —
+// never the ticker lime, never the unrealised orange.
+function statusVariant(status: string): DenseTagVariant {
+  if (status === 'fresh' || status === 'ok') return 'state-green'
   if (status === 'stale' || status === 'degraded') return 'warning'
   if (status === 'missing' || status === 'empty') return 'danger'
   // `unprobed` / `unknown` is the design's grey: not probed is not down.
@@ -120,8 +122,9 @@ function Composition({ rows, note }: { rows: readonly CompositionRow[]; note: st
 const ESTIMATE_WHY =
   'The planner’s row estimate, refreshed after each nightly write — the page reads indexes and statistics rather than counting every row. Symbols, dates and the minority counts are exact.'
 
-const CAP = 'whitespace-nowrap text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
-const PANEL_HEAD = 'flex flex-wrap items-baseline gap-2.5 border-b border-[var(--sk-line0)] bg-[var(--sk-raised2)] px-3 py-2'
+// 11/600 sentence caps; a panel head is a rule, not a band (Rev .91 · .84).
+const CAP = 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
+const PANEL_HEAD = 'flex flex-wrap items-baseline gap-2.5 border-b border-border px-3 py-2'
 
 /** One of the readings beside the table: a cap, then its body. */
 function SidePanel({
@@ -182,6 +185,9 @@ export default function SignalHealthPage() {
     retry: 0,
   })
 
+  const preview = usePreviewState()
+  const pageState =
+    preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(q)
   const data = q.data
   const rule = overallRule(data)
   const lenses = healthLenses(data?.freshness ?? [])
@@ -198,21 +204,39 @@ export default function SignalHealthPage() {
         actions={<PageHeadLink to="/research/lens-coverage">Lens Coverage →</PageHeadLink>}
       />
 
-      {q.isError ? (
-        <QueryErrorAlert error={q.error} onRetry={() => void q.refetch()} />
+      {pageState === 'stale' ? (
+        <ViewState
+          kind="stale"
+          title="Couldn’t refresh signal health"
+          detail={staleDetail(q, 'every asof in the console reads this copy until it refreshes.')}
+          onAction={() => void q.refetch()}
+        />
+      ) : null}
+      {pageState === 'failed' ? (
+        <section className={cn(RAISED_PANEL, 'overflow-hidden')}>
+          <ViewState
+            kind="failed"
+            title="Couldn’t load signal health"
+            detail={failedDetail(q, 'No lens was probed — this is not a healthy pipeline, it is an unread one.')}
+            onAction={() => void q.refetch()}
+          />
+        </section>
       ) : null}
 
-      {/* The verdict strip: its edge takes the verdict's colour when it is not ok. */}
+      {/* The verdict strip: radius 12 and no frame while it is ok; its edge
+          takes the verdict's colour at 55% when it is not (Rev .91) — inline,
+          because mat-card clears border classes. */}
       <div
-        className={cn(
-          RAISED_PANEL,
-          'flex flex-wrap items-center gap-x-6 gap-y-2.5 rounded-md px-3 py-2.5',
-          rule.tone === 'warn' && 'border-warning/45',
-        )}
+        className={cn(RAISED_PANEL, 'flex flex-wrap items-center gap-x-6 gap-y-2.5 px-3 py-2.5')}
+        style={
+          rule.tone === 'warn'
+            ? { borderColor: 'color-mix(in srgb, var(--color-warning) 55%, transparent)' }
+            : undefined
+        }
       >
         <span className={CAP}>Overall</span>
-        {q.isLoading ? (
-          <Skeleton className="h-5 w-16" />
+        {pageState === 'loading' ? (
+          <span className="text-dense-meta text-muted-foreground">reading…</span>
         ) : (
           <DenseTag variant={statusVariant(data?.overall ?? 'missing')} size="cell">
             {(data?.overall ?? '—').toUpperCase()}
@@ -244,13 +268,13 @@ export default function SignalHealthPage() {
               amber = old, red = wrong, grey = not probed — an unprobed lens is not a down lens
             </span>
           </header>
-          {q.isLoading ? (
-            <Skeleton className="m-3 h-24" />
+          {pageState === 'loading' ? (
+            <ViewState kind="loading" title="Probing the lenses" rows={8} cols={7} />
           ) : !data?.freshness?.length ? (
-            <EmptyState
-              icon={<Activity />}
+            <ViewState
+              kind="empty"
               title="No freshness signals"
-              description="Feature tables may be empty or unreachable."
+              detail="The service answered with no lens table — the feature tables may be empty or unreachable."
             />
           ) : (
             <DenseDataTable standard>
@@ -326,8 +350,8 @@ export default function SignalHealthPage() {
 
         <div className="flex min-w-0 flex-col gap-3">
           <SidePanel cap="Canonical P&L coverage">
-            {q.isLoading ? (
-              <Skeleton className="h-16 w-full" />
+            {pageState === 'loading' ? (
+              <span className="text-dense-meta text-muted-foreground">reading…</span>
             ) : blockError(data?.canonical_pnl) ? (
               <BlockFailed why={blockError(data?.canonical_pnl) as string} />
             ) : (
@@ -374,7 +398,7 @@ export default function SignalHealthPage() {
 
           <SidePanel cap="Universe readiness" aside="from the SEPA criteria stats">
             {readinessQ.isLoading ? (
-              <Skeleton className="h-24 w-full" />
+              <span className="text-dense-meta text-muted-foreground">reading the criteria stats…</span>
             ) : readinessQ.isError ? (
               <p className="m-0 text-dense-meta text-muted-foreground">
                 The criteria stats did not answer — the rows are absent rather than zero.
@@ -396,7 +420,7 @@ export default function SignalHealthPage() {
                   </div>
                 ))}
                 {/* The design's own sentence, and the half that matters. */}
-                <p className="m-0 border-t border-[var(--sk-line)] pt-2 text-dense-meta leading-normal text-muted-foreground">
+                <p className="m-0 border-t border-border pt-2 text-dense-meta leading-normal text-muted-foreground">
                   Readiness is a coverage fact, not a stock pick: a symbol short of bars or statements is
                   excluded from ratings and screens until a backfill lands. Per-symbol detail lives in{' '}
                   <Link to="/research/lens-coverage" className="text-[var(--sk-accent)] hover:underline">
@@ -409,14 +433,14 @@ export default function SignalHealthPage() {
           </SidePanel>
 
           <SidePanel cap="Hypotheses store" row>
-            {q.isLoading ? (
-              <Skeleton className="h-5 w-full" />
+            {pageState === 'loading' ? (
+              <span className="text-dense-meta text-muted-foreground">reading…</span>
             ) : (
               <>
                 {/* The per-status counts, which already include `active` —
                     printing `total_active` beside them said 32 twice. */}
                 {Object.entries(data?.hypotheses.counts ?? {}).map(([k, v]) => (
-                  <DenseTag key={k} variant={k === 'active' ? 'info' : 'neutral'} size="cell">
+                  <DenseTag key={k} variant={k === 'active' ? 'state-blue' : 'neutral'} size="cell">
                     {k} {v}
                   </DenseTag>
                 ))}

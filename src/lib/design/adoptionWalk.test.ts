@@ -189,8 +189,10 @@ describe('the design walk, as it stands', () => {
     // Explain, Outcome, Research, Option screen, Vol ratings, History, Compare.
     // 16 with J4 (Rev .88–.89): Signal Decay, Candidates, Watchlist,
     // Hypotheses, Journal, Copilot, the Daily Brief, Events and the four
-    // design rows of the Objective page.
-    expect(counts.aligned + counts.byState.stale).toBe(16)
+    // design rows of the Objective page. 4 with J5 (Rev .90–.92): the Review
+    // four, Playbook, Assignment, Alerts, Corporate Actions and the four
+    // Method faces — nothing signed is behind its rev any more.
+    expect(counts.aligned + counts.byState.stale).toBe(4)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -228,20 +230,7 @@ describe('the design walk, as it stands', () => {
         .map((r) => r.path)
         .sort()
       // Rev .95: every signed page the §16 refinement round re-stamped, until its batch re-walks it.
-    ).toEqual([
-      '/portfolio/corporate-actions',
-      '/research/event-radar',
-      '/research/lab/history',
-      '/research/lab/screener',
-      '/research/lab/symbol',
-      '/research/lab/today',
-      '/review',
-      '/review/fit',
-      '/review/habits',
-      '/review/playbook-stats',
-      '/trade/assignment',
-      '/trade/playbook',
-    ])
+    ).toEqual([])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -480,8 +469,10 @@ describe('the design walk, as it stands', () => {
     // refinement join Risk, Performance and Symbol, which were already here.
     // 39 with J2 (Rev .84–.85): ten more join Limits and Margin. 50 with J3
     // (Rev .86–.87): eleven more join Stock screen. 62 with J4 (Rev .88–.89):
-    // twelve more join Narrative, Backtest and Objectives.
-    expect(counts.byState.reviewing).toBe(62)
+    // twelve more join Narrative, Backtest and Objectives. 74 with J5
+    // (Rev .90–.92): twelve more join the System pages and Positions, which
+    // were already here and were re-walked to .91 / .92.
+    expect(counts.byState.reviewing).toBe(74)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -511,6 +502,7 @@ describe('the design walk, as it stands', () => {
       '/portfolio',
       '/portfolio/accounts',
       '/portfolio/backing',
+      '/portfolio/corporate-actions',
       '/portfolio/ledger',
       '/portfolio/outcome',
       '/portfolio/performance',
@@ -524,12 +516,17 @@ describe('the design walk, as it stands', () => {
       '/research/contract-screener',
       '/research/copilot',
       '/research/daily-brief',
+      '/research/event-radar',
       '/research/events',
       '/research/greeks',
       '/research/history',
       '/research/journal',
       '/research/lab/calibration',
       '/research/lab/discover-model',
+      '/research/lab/history',
+      '/research/lab/screener',
+      '/research/lab/symbol',
+      '/research/lab/today',
       '/research/lens-coverage',
       '/research/loop/candidates',
       '/research/loop/decisions',
@@ -549,7 +546,11 @@ describe('the design walk, as it stands', () => {
       '/research/signal-health',
       '/research/symbol',
       '/research/watchlist',
+      '/review',
+      '/review/fit',
+      '/review/habits',
       '/review/objectives',
+      '/review/playbook-stats',
       '/risk',
       '/risk/budget',
       '/risk/limits',
@@ -559,10 +560,12 @@ describe('the design walk, as it stands', () => {
       '/risk/stress',
       '/settings',
       '/system/status',
+      '/trade/assignment',
       '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
       '/trade/plans',
+      '/trade/playbook',
       '/trade/rules',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core

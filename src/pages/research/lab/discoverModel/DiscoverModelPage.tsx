@@ -15,10 +15,12 @@ import { cn } from '@/lib/utils'
 
 const h2 = 'mb-2.5 mt-0 type-section font-semibold tracking-[-0.005em] text-foreground'
 const p = 'm-0 text-dense-body leading-[1.65] text-secondary-foreground text-pretty'
+// Table heads keep the DS uppercase but lose the raised band; rules are the
+// page's own hairline (Rev .91 · .84).
 const th =
-  'border-b border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-left text-dense-caption font-semibold uppercase tracking-[0.08em] text-muted-foreground'
+  'border-b border-border px-3 py-1.5 text-left text-dense-caption font-semibold uppercase tracking-[0.08em] text-muted-foreground'
 const td =
-  'border-b border-border/55 px-3 py-2 align-top text-dense-body leading-[1.55] text-secondary-foreground'
+  'border-b border-border px-3 py-2 align-top text-dense-body leading-[1.55] text-secondary-foreground'
 const strong = 'font-semibold text-foreground'
 
 const VERBS = [
@@ -191,7 +193,7 @@ export default function DiscoverModelPage() {
                 key={r.cap}
                 className="border px-3 py-2.5 mat-card"
               >
-                <div className="text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                <div className="text-dense-meta font-semibold text-muted-foreground">
                   {r.cap}
                 </div>
                 <p className={cn(p, 'mt-1 text-dense-label')}>{r.body}</p>
@@ -233,7 +235,7 @@ export default function DiscoverModelPage() {
           </p>
         </section>
 
-        <section className="rounded-lg border border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.05)] px-5 py-4">
+        <section className="rounded-[12px] border border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[color-mix(in_srgb,var(--sk-accent)_5%,transparent)] px-5 py-4">
           <h2 className={h2}>04 · 下一步</h2>
           <p className={cn(p, 'type-section text-foreground')}>
             <span className={strong}>Ratings › Stocks</span> 已建（与 Underlyings

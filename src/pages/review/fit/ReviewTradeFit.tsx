@@ -15,17 +15,22 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
+import { SectionHead } from '@/components/layout'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { PositionsTier } from '@/components/positions/PositionsTier'
 import { PositionsStat } from '@/components/positions/PositionsStat'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { shortOptLegLabel } from '@/utils/ledger/optionsModeBridge'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
 import { REVIEW_GAPS, type ReviewTrade } from '@/utils/reviewTrades'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 
-const FOOT =
-  'border-t border-border bg-[var(--sk-raised2)] px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+// Rev .62: a foot is a rule, not a band.
+const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+/** A severity edge on a card is inline: `mat-card` clears border-colour classes. */
+const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
 export function ReviewTradeFit({
   trade,
@@ -45,7 +50,16 @@ export function ReviewTradeFit({
     <>
       <section className={positionsUi.panel} aria-label="What the trade did">
         <header className={positionsUi.panelHead}>
-          <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>{trade.label}</span>
+          <Link
+            to={withSymbolParam(SYMBOL_PATH, trade.underlying)}
+            className={cn(positionsUi.mono, 'font-bold text-entity-symbol hover:underline')}
+            title={`Open ${trade.underlying} on Symbol`}
+          >
+            {trade.underlying}
+          </Link>
+          <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>
+            {shortOptLegLabel(trade.contractKey)}
+          </span>
           <span className={positionsUi.panelTitle}>{trade.play ?? 'no play recorded'}</span>
           <span className={cn(positionsUi.mono, 'text-sm', pnlColorClass(trade.realised))}>
             {fmtUsd(trade.realised)}
@@ -105,15 +119,15 @@ export function ReviewTradeFit({
         </p>
       </section>
 
-      {tier ? <PositionsTier label="The two gaps" note="what a P&L number cannot separate on its own" /> : null}
+      {tier ? <SectionHead note="What a P&L number cannot separate on its own.">The two gaps</SectionHead> : null}
       <div className={positionsUi.bandGrid}>
         {REVIEW_GAPS.map((g) => (
-          <section key={g.key} className={cn(positionsUi.panel, 'border-warning/40')} aria-label={g.label}>
+          <section key={g.key} className={positionsUi.panel} style={WARN_EDGE} aria-label={g.label}>
             <header className={positionsUi.panelHead}>
               <span className={positionsUi.cap}>{g.label}</span>
               <span className={positionsUi.panelTitle}>n/c</span>
               <DenseTag variant="warning" size="cell">
-                ⚠ NO PLAN
+                no plan linked
               </DenseTag>
             </header>
             <p className="m-0 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">{g.sub}</p>

@@ -8,7 +8,9 @@
  * quiet period, not the feed's reach — the plugin's nightly whole-market pull
  * asks for a −7 / +60 day window (3,736 dividend rows that night), and names
  * that declare early do come back dated ahead. A dividend simply does not exist
- * until its issuer declares it.
+ * until its issuer declares it. Re-measured 2026-09-26 over the 26 names the
+ * book and watchlist touch: one row dated ahead (a dividend 34 days out), so
+ * "nothing declared" is a reading the page makes from the rows, never a given.
  *
  * Nothing here writes.
  */

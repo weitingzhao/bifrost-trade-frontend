@@ -166,8 +166,9 @@ export const ROUTES: readonly RouteEntry[] = [
       // Contract Greeks. Built 2026-09-23. Rev 2026-09-23.21 redrew it as the
       // §16 north-star page (hero band, tooltips, type scale, motion); built
       // the same day; the Owner signed it 2026-09-24.
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.55',
+      rev: '2026-09-25.92',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },
@@ -210,8 +211,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Corporate Actions',
     crumbs: PORTFOLIO,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/portfolio/corporate-actions'],
     },
   },
@@ -223,25 +225,29 @@ export const ROUTES: readonly RouteEntry[] = [
     // same level twice.
     label: 'Review',
     crumbs: [],
-    design: { state: 'aligned', rev: '2026-09-20.23', note: DESIGN_NOTES['/review'] },
+    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-09-25.90', note: DESIGN_NOTES['/review'] },
   },
   {
     path: '/review/fit',
     label: 'Single trade',
     crumbs: REVIEW,
-    design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/fit'] },
+    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-09-25.90', note: DESIGN_NOTES['/review/fit'] },
   },
   {
     path: '/review/habits',
     label: 'Habits',
     crumbs: REVIEW,
-    design: { state: 'aligned', rev: '2026-09-17.1', note: DESIGN_NOTES['/review/habits'] },
+    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-09-25.90', note: DESIGN_NOTES['/review/habits'] },
   },
   {
     path: '/review/playbook-stats',
     label: 'Playbook stats',
     crumbs: REVIEW,
-    design: { state: 'aligned', rev: '2026-09-18.1', note: DESIGN_NOTES['/review/playbook-stats'] },
+    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-09-25.90', note: DESIGN_NOTES['/review/playbook-stats'] },
   },
   {
     path: '/review/objectives',
@@ -401,8 +407,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Assignment',
     crumbs: TRADE_DESK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.90',
       note: DESIGN_NOTES['/trade/assignment'],
     },
   },
@@ -448,8 +455,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Playbook',
     crumbs: TRADE_DESK,
     design: {
-      state: 'aligned',
-      rev: '2026-09-17.1',
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      state: 'reviewing',
+      rev: '2026-09-25.90',
       note: DESIGN_NOTES['/trade/playbook'],
     },
   },
@@ -492,8 +500,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'System Status',
     crumbs: SYSTEM,
     design: {
+      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-20.16',
+      rev: '2026-09-25.91',
       note: DESIGN_NOTES['/system/status'],
     },
   },
@@ -506,7 +515,8 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/docs/research-blueprint',
     label: 'Blueprint',
     crumbs: SYSTEM_ALIGNMENT,
-    design: { state: 'reviewing', rev: '2026-09-25.53', note: DESIGN_NOTES['/docs/research-blueprint'] },
+    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-09-25.91', note: DESIGN_NOTES['/docs/research-blueprint'] },
   },
 
   // ── System · Reference ─────────────────────────────────────────────────
@@ -514,13 +524,15 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/docs/tech-stack',
     label: 'Tech Stack',
     crumbs: DOCS,
-    design: { state: 'reviewing', rev: '2026-09-25.53', note: DESIGN_NOTES['/docs/tech-stack'] },
+    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-09-25.91', note: DESIGN_NOTES['/docs/tech-stack'] },
   },
   {
     path: '/docs/ui-design-system',
     label: 'UI Design System',
     crumbs: DOCS,
-    design: { state: 'reviewing', rev: '2026-09-25.53', note: DESIGN_NOTES['/docs/ui-design-system'] },
+    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-09-25.91', note: DESIGN_NOTES['/docs/ui-design-system'] },
   },
   {
     // The options half of the gallery `/docs/ui-design-system` already is. The

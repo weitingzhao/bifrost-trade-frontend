@@ -31,7 +31,7 @@ export interface DocTocGroup {
   items: readonly DocTocItem[]
 }
 
-const EYEBROW = 'px-2 pb-1.5 text-dense-caption font-semibold uppercase tracking-[0.1em] text-muted-foreground'
+const EYEBROW = 'px-2 pb-1.5 text-dense-meta font-semibold text-muted-foreground'
 
 export function DocReader({
   toc,
@@ -136,7 +136,7 @@ const PROSE_COMPONENTS: Components = {
   ),
   strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
   code: ({ children }) => (
-    <code className="rounded-[3px] bg-[var(--sk-raised2)] px-1 font-mono text-[0.9em] text-foreground">{children}</code>
+    <code className="rounded-[3px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-1 font-mono text-[0.9em] text-foreground">{children}</code>
   ),
   pre: ({ children }) => (
     <pre className="m-0 overflow-x-auto border p-3 text-dense-meta mat-card">

@@ -85,6 +85,19 @@ describe('opexEarnings', () => {
     expect(late?.note).toContain('moves spot through the walls and the open interest they are read from')
   })
 
+  it("speaks of the flow's book for the concentration panel", () => {
+    const r = opexEarnings({ next: est('2026-10-21', 25), expiry: '2026-10-23', gap, pinDist: 0.013, about: 'book' })
+    expect(r?.note).toBe(
+      'Earnings ~21 Oct (25d, est.) land before the 10-23 expiry — the ATM term prices ±4.2% for it. The notional at this expiry carries positioning for the print — new contracts here (vol / OI above 1) may be the event rather than a view.'
+    )
+    expect(opexEarnings({ next: est('2026-11-02', 37), expiry: '2026-10-23', about: 'book' })?.tag.title).toContain(
+      'this expiry settles before the print'
+    )
+    expect(opexEarnings({ next: est('2026-09-22', -4), expiry: '2026-10-23', about: 'book' })?.note).toMatch(
+      /may carry it; the notional at this expiry may be positioning for it\.$/
+    )
+  })
+
   it('says nothing without an estimate', () => {
     expect(opexEarnings({ next: null, expiry: '2026-10-23' })).toBeNull()
   })

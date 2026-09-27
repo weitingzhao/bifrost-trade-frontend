@@ -44,10 +44,30 @@ export interface OpexEarnings {
   note: string | null
 }
 
+/** What each panel reads at its expiry, and so what a print does to it. */
+const EXPIRY_WORDS = {
+  pin: {
+    reads: `The pin is read off today's open interest; the print moves spot off it and the open interest is rebuilt after it.`,
+    late: 'a print moves spot off the pin and the open interest the pin is read from is rebuilt after it.',
+    settles: 'this cycle settles',
+  },
+  levels: {
+    reads: `The walls and zero γ are read off today's open interest at that expiry; the print moves spot through them and the open interest is rebuilt after it.`,
+    late: 'a print moves spot through the walls and the open interest they are read from is rebuilt after it.',
+    settles: 'these levels expire',
+  },
+  book: {
+    reads: 'The notional at this expiry carries positioning for the print — new contracts here (vol / OI above 1) may be the event rather than a view.',
+    late: 'the notional at this expiry may be positioning for it.',
+    settles: 'this expiry settles',
+  },
+} as const
+
 /**
- * Where the estimated print falls against the pin's expiry. On the expiry day
+ * Where the estimated print falls against a panel's expiry. On the expiry day
  * counts as before: the release's hour is unknown, and a morning print lands
- * inside the settling session.
+ * inside the settling session. Read by the Dealer face (the pin, the levels)
+ * and the Flow face (the concentration's book).
  */
 export function opexEarnings(opts: {
   next: ExpectedEarnings | null | undefined
@@ -57,14 +77,12 @@ export function opexEarnings(opts: {
   gap?: EventMove | null
   /** Spot to the pin strike, a fraction. */
   pinDist?: number | null
-  /** What the panel reads at that expiry: the OpEx pin, or the gamma walls and zero γ. */
-  about?: 'pin' | 'levels'
+  /** What the panel reads at that expiry: the OpEx pin, the gamma walls and zero γ, or the flow's book. */
+  about?: keyof typeof EXPIRY_WORDS
 }): OpexEarnings | null {
   const { next, expiry } = opts
-  const levels = opts.about === 'levels'
-  const reads = levels
-    ? `The walls and zero γ are read off today's open interest at that expiry; the print moves spot through them and the open interest is rebuilt after it.`
-    : `The pin is read off today's open interest; the print moves spot off it and the open interest is rebuilt after it.`
+  const about = opts.about ?? 'pin'
+  const words = EXPIRY_WORDS[about]
   if (!next) return null
   const exp = expiry ? expiry.slice(5) : null
   if (next.days_away < 0) {
@@ -72,7 +90,7 @@ export function opexEarnings(opts: {
       tag: { label: `E ~${shortDate(next.date)}? late`, title: lateLead(next), tone: 'warning' },
       note:
         `Earnings late — expected ~${shortDate(next.date)}, no results 8-K yet. Until it prints, any session` +
-        `${exp ? ` before the ${exp} expiry` : ''} may carry it; a print moves spot ${levels ? 'through the walls' : 'off the pin'} and the open interest ${levels ? 'they are' : 'the pin is'} read from is rebuilt after it.`,
+        `${exp ? ` before the ${exp} expiry` : ''} may carry it; ${words.late}`,
     }
   }
   const when = `~${shortDate(next.date)} (${next.days_away}d, est.)`
@@ -83,7 +101,7 @@ export function opexEarnings(opts: {
     return {
       tag: {
         label: `E ~${shortDate(next.date)} · after expiry`,
-        title: `Next earnings estimated ${next.date}, after the ${exp} expiry — ${levels ? 'these levels expire' : 'this cycle settles'} before the print. ${estimateCaveat(next)}`,
+        title: `Next earnings estimated ${next.date}, after the ${exp} expiry — ${words.settles} before the print. ${estimateCaveat(next)}`,
         tone: 'neutral',
       },
       note: null,
@@ -92,11 +110,11 @@ export function opexEarnings(opts: {
   const against =
     opts.gap != null
       ? ` — the ATM term prices ±${(opts.gap.move * 100).toFixed(1)}% for it${
-          !levels && opts.pinDist != null ? `, against ${(opts.pinDist * 100).toFixed(1)}% from spot to the pin strike` : ''
+          about === 'pin' && opts.pinDist != null ? `, against ${(opts.pinDist * 100).toFixed(1)}% from spot to the pin strike` : ''
         }`
       : ''
   return {
     tag: { label: `E ~${shortDate(next.date)} · before expiry`, title: estimateCaveat(next), tone: 'warning' },
-    note: `Earnings ${when} land${next.date === expiry ? ' on' : ' before'} the ${exp} expiry${against}. ${reads}`,
+    note: `Earnings ${when} land${next.date === expiry ? ' on' : ' before'} the ${exp} expiry${against}. ${words.reads}`,
   }
 }

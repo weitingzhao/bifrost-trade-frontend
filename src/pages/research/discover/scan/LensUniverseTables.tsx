@@ -14,6 +14,10 @@
  *   against the name's own year on the Symbol face, not against one absolute
  *   cut here.
  *
+ * VRP and Skew rank one session, the latest (research 0.137.0): a name whose
+ * last reading is older is not ranked against today's. It is listed under the
+ * table instead, with the session it was last read and the reason.
+ *
  * Every row opens the name's Symbol page on its Volatility face.
  */
 import { useMemo, useState, type ReactNode } from 'react'
@@ -42,7 +46,8 @@ import { PORTFOLIO_UNIVERSE_OPTIONS, usePortfolioSymbols, type PortfolioUniverse
 import { useSkewExtremes } from '@/hooks/useVolSurfaceData'
 import { useVrpExtremes } from '@/hooks/useVrpData'
 import { bandFromScore, hitCellText, ordinal } from '@/lib/analyzeDepth'
-import { fmtPctFromFraction } from '@/lib/format'
+import { fmtIsoDateToken, fmtPctFromFraction } from '@/lib/format'
+import type { SessionLeftOut } from '@/lib/researchParseHelpers'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { etTodayIso } from '@/lib/freshness'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
@@ -89,6 +94,80 @@ function SymbolCell({ symbol, tag }: { symbol: string; tag?: ReactNode }) {
       {tag}
     </span>
   )
+}
+
+/** More than this per reason is a job that did not run, not a list to read. */
+const LEFT_OUT_SHOWN = 40
+
+/** `593 names on 25SEP26 · 14 left out ▸` — the session ranked, and the toggle for who it left out. */
+function SessionTally({
+  asOf,
+  ranked,
+  leftOut,
+  open,
+  onToggle,
+}: {
+  asOf: string | null | undefined
+  ranked: number | null | undefined
+  leftOut: SessionLeftOut[]
+  open: boolean
+  onToggle: () => void
+}) {
+  const day = fmtIsoDateToken(asOf)
+  return (
+    <span className="flex items-center gap-1 whitespace-nowrap text-dense-micro text-muted-foreground tabular-nums">
+      <span>{ranked != null ? `${ranked} names on ${day}` : day}</span>
+      {leftOut.length > 0 ? (
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={onToggle}
+          title={`Read before ${day} but not on it, so not ranked against ${day}'s readings`}
+          className="hover:text-foreground hover:underline"
+        >
+          · {leftOut.length} left out {open ? '▾' : '▸'}
+        </button>
+      ) : null}
+    </span>
+  )
+}
+
+/** The names a session left out, grouped by the endpoint's reason, each with the session it was last read. */
+function LeftOutList({ leftOut, reasons }: { leftOut: SessionLeftOut[]; reasons: Record<string, string> }) {
+  const groups = new Map<string, SessionLeftOut[]>()
+  for (const key of Object.keys(reasons)) groups.set(key, [])
+  for (const n of leftOut) groups.set(n.reason, [...(groups.get(n.reason) ?? []), n])
+  return (
+    <div className="space-y-1 border-b border-border/60 px-3 py-2 text-dense-micro text-muted-foreground">
+      {[...groups].filter(([, names]) => names.length > 0).map(([reason, names]) => (
+        <p key={reason} className="m-0 text-pretty">
+          <span className={cap}>
+            {reasons[reason] ?? reason} · {names.length}
+          </span>{' '}
+          {names.slice(0, LEFT_OUT_SHOWN).map((n, i) => (
+            <span key={n.symbol} className="whitespace-nowrap">
+              {i > 0 ? ' · ' : ''}
+              <Link to={volFace(n.symbol)} className="font-mono font-semibold text-entity-symbol hover:underline">
+                {n.symbol}
+              </Link>{' '}
+              <span className="tabular-nums">{fmtIsoDateToken(n.trade_date)}</span>
+            </span>
+          ))}
+          {names.length > LEFT_OUT_SHOWN ? ` · and ${names.length - LEFT_OUT_SHOWN} more` : null}
+        </p>
+      ))}
+    </div>
+  )
+}
+
+const VRP_LEFT_OUT: Record<string, string> = {
+  not_computed: 'No VRP row that session',
+  no_percentile: 'No 252-day percentile that session',
+}
+
+const SKEW_LEFT_OUT: Record<string, string> = {
+  not_fit: 'No surface fit that session',
+  no_30d_fit: 'Fit, but no 20–45 DTE expiry fit',
 }
 
 function IvRankTable() {
@@ -277,6 +356,8 @@ function VrpEndsTable() {
   const [end, setEnd] = useState<'high' | 'low'>('high')
   const q = useVrpExtremes(end, 20)
   const rows = q.data?.rows ?? []
+  const leftOut = q.data?.excluded ?? []
+  const [leftOutOpen, setLeftOutOpen] = useState(false)
   return (
     <>
       <div className="flex flex-wrap items-center gap-3 border-b border-border/60 px-3 py-2">
@@ -292,9 +373,17 @@ function VrpEndsTable() {
           ]}
         />
         <span className="ml-auto text-dense-micro text-muted-foreground">
-          the spread&rsquo;s percentile in each name&rsquo;s own year · {q.data?.as_of ?? '—'}
+          the spread&rsquo;s percentile in each name&rsquo;s own year
         </span>
+        <SessionTally
+          asOf={q.data?.as_of}
+          ranked={q.data?.ranked}
+          leftOut={leftOut}
+          open={leftOutOpen}
+          onToggle={() => setLeftOutOpen((o) => !o)}
+        />
       </div>
+      {leftOutOpen && leftOut.length > 0 ? <LeftOutList leftOut={leftOut} reasons={VRP_LEFT_OUT} /> : null}
       {q.isLoading ? (
         <p className="m-0 px-3 py-4 text-dense-meta text-muted-foreground">Loading the VRP ends…</p>
       ) : rows.length === 0 ? (
@@ -310,7 +399,6 @@ function VrpEndsTable() {
               <DenseTableHead className="text-right" title="IV30 − RV60, in vol points.">
                 Spread
               </DenseTableHead>
-              <DenseTableHead>As of</DenseTableHead>
             </DenseTableHeadRow>
           </DenseTableHeader>
           <DenseTableBody>
@@ -330,7 +418,6 @@ function VrpEndsTable() {
                 <DenseTableCell className={cn(denseTableNumCell, r.vrp_60d != null && r.vrp_60d < 0 ? 'text-loss' : undefined)}>
                   {r.vrp_60d != null ? `${r.vrp_60d >= 0 ? '+' : '−'}${Math.abs(r.vrp_60d * 100).toFixed(1)} pp` : '—'}
                 </DenseTableCell>
-                <DenseTableCell className="text-dense-meta text-muted-foreground">{r.trade_date ?? '—'}</DenseTableCell>
               </DenseTableRow>
             ))}
           </DenseTableBody>
@@ -353,6 +440,8 @@ function SkewSteepTable() {
   const today = etTodayIso()
   const all = q.data?.rows ?? []
   const rows = (goodOnly ? all.filter((r) => r.fit_rmse != null && r.fit_rmse * 100 <= GOOD_FIT_PTS) : all).slice(0, SKEW_ROWS)
+  const leftOut = q.data?.excluded ?? []
+  const [leftOutOpen, setLeftOutOpen] = useState(false)
   return (
     <>
       <div className="flex flex-wrap items-center gap-3 border-b border-border/60 px-3 py-2">
@@ -370,13 +459,24 @@ function SkewSteepTable() {
           The steepest ATM slopes of the SVI fits at each name&rsquo;s ~30-day expiry, ungraded: a slope is judged
           against the name&rsquo;s own year on its Volatility face, not against one cut across names.
         </span>
-        <span className="ml-auto text-dense-micro text-muted-foreground">{q.data?.as_of ?? '—'}</span>
+        <span className="ml-auto">
+          <SessionTally
+            asOf={q.data?.as_of}
+            ranked={q.data?.ranked}
+            leftOut={leftOut}
+            open={leftOutOpen}
+            onToggle={() => setLeftOutOpen((o) => !o)}
+          />
+        </span>
       </div>
+      {leftOutOpen && leftOut.length > 0 ? <LeftOutList leftOut={leftOut} reasons={SKEW_LEFT_OUT} /> : null}
       {q.isLoading ? (
         <p className="m-0 px-3 py-4 text-dense-meta text-muted-foreground">Loading the slopes…</p>
       ) : rows.length === 0 ? (
         <p className="m-0 px-3 py-4 text-dense-meta text-muted-foreground">
-          {goodOnly ? `None of the ${all.length} steepest fits is within ${GOOD_FIT_PTS} IV points.` : 'No SVI fits with a slope today.'}
+          {goodOnly
+            ? `None of the ${all.length} steepest fits is within ${GOOD_FIT_PTS} IV points.`
+            : `No ~30-day SVI fit with a slope on ${fmtIsoDateToken(q.data?.as_of)}.`}
         </p>
       ) : (
         <DenseDataTable wrapClassName="rounded-none border-0 overflow-x-auto" tableClassName="min-w-[36rem]">
@@ -390,7 +490,6 @@ function SkewSteepTable() {
                 RMSE
               </DenseTableHead>
               <DenseTableHead className="text-right">Points</DenseTableHead>
-              <DenseTableHead>As of</DenseTableHead>
             </DenseTableHeadRow>
           </DenseTableHeader>
           <DenseTableBody>
@@ -417,7 +516,6 @@ function SkewSteepTable() {
                   {r.fit_rmse != null ? `${(r.fit_rmse * 100).toFixed(1)} pts` : '—'}
                 </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>{r.n_points ?? '—'}</DenseTableCell>
-                <DenseTableCell className="text-dense-meta text-muted-foreground">{r.trade_date ?? '—'}</DenseTableCell>
               </DenseTableRow>
             ))}
           </DenseTableBody>

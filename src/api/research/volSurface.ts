@@ -8,7 +8,7 @@ import {
   IvConeSchema,
   ResearchEnvelopeSchema,
 } from '@/lib/schemas/research'
-import { numOrNull } from '@/lib/researchParseHelpers'
+import { numOrNull, parseLeftOut, type SessionLeftOut } from '@/lib/researchParseHelpers'
 
 export interface VolSurfaceFitRow {
   symbol: string
@@ -150,10 +150,15 @@ export async function fetchResiduals(
 }
 
 export interface SkewExtremesResponse {
+  /** The `as_of` session only, steepest |slope| first. */
   rows: SkewExtremeRow[]
   count: number
   limit: number
   as_of: string | null
+  /** Names with a ~30-day fit on `as_of`; null from a research API before 0.137.0. */
+  ranked: number | null
+  /** Names whose last ~30-day fit predates `as_of`: `not_fit` · `no_30d_fit`. */
+  excluded: SessionLeftOut[]
 }
 
 export async function fetchSkewExtremes(limit = 20): Promise<SkewExtremesResponse> {
@@ -166,6 +171,8 @@ export async function fetchSkewExtremes(limit = 20): Promise<SkewExtremesRespons
     count: number
     limit: number
     as_of: string | null
+    ranked?: unknown
+    excluded?: unknown
   }>(res)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   const rows = raw.map(parseFit).filter((r): r is SkewExtremeRow => r !== null)
@@ -174,6 +181,8 @@ export async function fetchSkewExtremes(limit = 20): Promise<SkewExtremesRespons
     count: rows.length,
     limit: env.data?.limit ?? limit,
     as_of: env.data?.as_of ?? null,
+    ranked: numOrNull(env.data?.ranked),
+    excluded: parseLeftOut(env.data?.excluded),
   }
 }
 

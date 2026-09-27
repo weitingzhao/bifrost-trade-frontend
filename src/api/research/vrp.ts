@@ -10,7 +10,7 @@ import {
   ResearchEnvelopeSchema,
   RvConeSchema,
 } from '@/lib/schemas/research'
-import { numOrNull } from '@/lib/researchParseHelpers'
+import { numOrNull, parseLeftOut, type SessionLeftOut } from '@/lib/researchParseHelpers'
 
 export interface VrpRow {
   symbol: string
@@ -27,11 +27,16 @@ export interface VrpRow {
 }
 
 export interface VrpExtremesResponse {
+  /** The `as_of` session only, ranked by the 252-day percentile. */
   rows: VrpRow[]
   count: number
   bucket: 'high' | 'low'
   limit: number
   as_of: string | null
+  /** Names with a percentile on `as_of`; null from a research API before 0.137.0. */
+  ranked: number | null
+  /** Names whose last percentile predates `as_of`: `not_computed` · `no_percentile`. */
+  excluded: SessionLeftOut[]
 }
 
 interface Envelope<T> {
@@ -115,6 +120,8 @@ export async function fetchVrpExtremes(
     bucket: 'high' | 'low'
     limit: number
     as_of: string | null
+    ranked?: unknown
+    excluded?: unknown
   }>(res)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   const rows = raw.map(parseRow).filter((r): r is VrpRow => r !== null)
@@ -124,6 +131,8 @@ export async function fetchVrpExtremes(
     bucket: env.data?.bucket ?? bucket,
     limit: env.data?.limit ?? limit,
     as_of: env.data?.as_of ?? null,
+    ranked: numOrNull(env.data?.ranked),
+    excluded: parseLeftOut(env.data?.excluded),
   }
 }
 

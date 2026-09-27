@@ -22,6 +22,8 @@ export interface ChainEarningsGap {
   move: number | null
   title: string | undefined
   chips: ChainGapLevel[]
+  /** The two gap levels in price, for the smile and open-interest drawings. */
+  levels: { lo: number; hi: number } | null
   loStrike: number | null
   hiStrike: number | null
   /** The ladder's label for a strike nearest a gap level, else null. */
@@ -38,7 +40,9 @@ export function chainEarningsGap(
 ): ChainEarningsGap {
   const tag = dte != null && dte > 0 ? expiryEarnings(next, dte) : null
   const gap = tag && next && next.days_away >= 0 ? eventMove(term, next.days_away) : null
-  if (!gap || spot == null) return { move: null, title: undefined, chips: [], loStrike: null, hiStrike: null, ruled: () => null }
+  if (!gap || spot == null) {
+    return { move: null, title: undefined, chips: [], levels: null, loStrike: null, hiStrike: null, ruled: () => null }
+  }
   const { lo, hi } = gapLevels(spot, gap.move)
   const nearest = (x: number) =>
     strikes.length === 0 ? null : strikes.reduce((b, k) => (Math.abs(k - x) < Math.abs(b - x) ? k : b))
@@ -53,6 +57,7 @@ export function chainEarningsGap(
       { label: `E −gap${unsure}`, k: lo, cls: 'text-warning', title },
       { label: `E +gap${unsure}`, k: hi, cls: 'text-warning', title },
     ],
+    levels: { lo, hi },
     loStrike,
     hiStrike,
     ruled: (k) => (k === loStrike ? 'E −gap' : k === hiStrike ? 'E +gap' : null),

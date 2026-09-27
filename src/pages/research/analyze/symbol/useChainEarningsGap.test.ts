@@ -25,6 +25,7 @@ describe('the Chain face’s earnings gap', () => {
       ['E +gap', 209],
     ])
     expect([g.loStrike, g.hiStrike]).toEqual([170, 210])
+    expect(g.levels).toEqual({ lo: g.chips[0].k, hi: g.chips[1].k })
     expect([g.ruled(170), g.ruled(210), g.ruled(190)]).toEqual(['E −gap', 'E +gap', null])
     expect(g.title).toContain('45.0% on 10-31 before it against 58.0% on 11-07 after')
   })
@@ -38,6 +39,7 @@ describe('the Chain face’s earnings gap', () => {
   it('draws nothing past the expiry, for a late print, or without a premium', () => {
     expect(chainEarningsGap(est(38), TERM, 190, 21, STRIKES).move).toBeNull()
     expect(chainEarningsGap(est(-3), TERM, 190, 42, STRIKES).chips).toEqual([])
+    expect(chainEarningsGap(est(-3), TERM, 190, 42, STRIKES).levels).toBeNull()
     expect(chainEarningsGap(est(38), [TERM[0], { ...TERM[1], iv: 0.4 }], 190, 42, STRIKES).ruled(170)).toBeNull()
   })
 })

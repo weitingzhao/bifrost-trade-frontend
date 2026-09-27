@@ -5,6 +5,8 @@
  * and the strike ladder that puts puts left, calls right, Δ always beside
  * the strike.
  */
+import type { ExpectedEarnings } from '@/api/research/narrative'
+import { expiryEarnings, shortDate, type ExpiryEarnings } from '@/utils/earningsEstimate'
 import type { ChainContract } from '@/utils/optionChain'
 
 /**
@@ -219,11 +221,17 @@ export function isMonthlyExpiry(iso: string, listed: ReadonlySet<string>): boole
  * over (a Symbol-list contract row, the Dealer face's ⇢) joins when it is not
  * among them — landing elsewhere would light the same strike on a different
  * contract. `handedMissing` when the store does not list it at all.
+ *
+ * The first listed expiry after the estimated print carries its premium — the
+ * term note names it — and the weekly + monthly pick can pass it by (PLTR
+ * 2026-09-26: print ~2 Nov, 11-06 between the 10-16 and 11-20 cards), so it
+ * joins too, as `event`. A late print has no date to be after.
  */
 export function cardExpiries(
   listed: readonly string[] | undefined,
   handed: string | null,
-): { expiries: string[]; handedMissing: boolean } {
+  print?: ExpectedEarnings | null,
+): { expiries: string[]; handedMissing: boolean; event: string | null } {
   const all = listed ?? []
   const set = new Set(all)
   const near = all.slice(0, CARD_NEAREST)
@@ -232,8 +240,24 @@ export function cardExpiries(
   const fill = rest.filter((e) => !monthlies.includes(e)).slice(0, CARD_MONTHLIES - monthlies.length)
   const expiries = [...near, ...monthlies, ...fill]
   if (handed && all.includes(handed) && !expiries.includes(handed)) expiries.push(handed)
+  const event = print && print.days_away >= 0 ? (all.find((e) => e > print.date) ?? null) : null
+  if (event && !expiries.includes(event)) expiries.push(event)
   expiries.sort()
-  return { expiries, handedMissing: Boolean(handed && listed && !all.includes(handed)) }
+  return { expiries, handedMissing: Boolean(handed && listed && !all.includes(handed)), event }
+}
+
+/** A card's earnings mark; the event expiry's says why it is among the cards. */
+export function cardEarnings(
+  next: ExpectedEarnings | null | undefined,
+  dte: number,
+  isEvent: boolean
+): ExpiryEarnings | null {
+  const earn = expiryEarnings(next, dte)
+  if (!earn || !isEvent || !next) return earn
+  return {
+    ...earn,
+    title: `First expiry after the estimated print (~${shortDate(next.date)}) — it carries the event premium, as the term note says. ${earn.title}`,
+  }
 }
 
 /**

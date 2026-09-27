@@ -32,13 +32,14 @@ import { cn } from '@/lib/utils'
 import { bsComputeDetail, normalCDF } from '@/utils/blackScholes'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
-import { earningsHeadMeta, expiryEarnings, lateLead, termEarningsNote } from '@/utils/earningsEstimate'
+import { earningsHeadMeta, lateLead, termEarningsNote } from '@/utils/earningsEstimate'
 import { useChainEarningsGap } from '@/pages/research/analyze/symbol/useChainEarningsGap'
 import { SymbolExpiryCard } from '@/pages/research/analyze/symbol/SymbolExpiryCard'
 import { ContractCandles, OiMini, SmileMini } from './symbolChainCharts'
 import { ContractChecksBlock, StrikeWindowControl, WatchlistAddButton } from './SymbolChainParts'
 import {
   LADDER_COLUMNS,
+  cardEarnings,
   cardExpiries,
   daysToExpiry,
   ladderRows,
@@ -140,7 +141,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
     staleTime: 10 * 60_000,
   })
   const handed = urlParams.get('expiration')
-  const { expiries, handedMissing } = cardExpiries(expQ.data, handed)
+  const { expiries, handedMissing, event } = cardExpiries(expQ.data, handed, nextEarnings)
   const fitQ = useVolSurfaceFit(sym)
   const fitByExpiry = new Map((fitQ.data ?? []).map((r) => [r.expiry, r]))
 
@@ -286,7 +287,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                 chain={chains.get(e) ?? []}
                 spot={spot}
                 on={e === expiry}
-                earn={expiryEarnings(nextEarnings, cardDte(e))}
+                earn={cardEarnings(nextEarnings, cardDte(e), e === event)}
                 onPick={() => {
                   setUserExpiry(e)
                   setSel(null)
@@ -356,14 +357,14 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                 <i className="mx-0.5 inline-block h-0.5 w-3 bg-loss align-[3px]" /> · fit dashed
               </span>
             </div>
-            <SmileMini chain={chain} spot={spot} move={move} fitIvPts={fitIvPts} selStrike={sel?.strike ?? null} />
+            <SmileMini chain={chain} spot={spot} move={move} fitIvPts={fitIvPts} selStrike={sel?.strike ?? null} gap={gap.levels} />
           </div>
           <div className="px-3 py-2">
             <div className="mb-1 flex gap-2 text-dense-micro text-muted-foreground">
               <span className={cap}>open interest · this expiry</span>
               <span className="ml-auto font-mono">max pain {mp ?? '—'}</span>
             </div>
-            <OiMini chain={chain} spot={spot} mp={mp} />
+            <OiMini chain={chain} spot={spot} mp={mp} gap={gap.levels} />
           </div>
         </div>
       </section>

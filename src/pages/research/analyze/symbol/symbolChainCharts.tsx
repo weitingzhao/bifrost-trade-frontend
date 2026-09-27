@@ -11,19 +11,37 @@ import { type ChainContract } from '@/utils/optionChain'
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 
-/** The 600×110 smile: call IVs, put IVs, the fit dashed, σ band shaded. */
+/** Where the estimated print's priced gap lands, when it falls inside the expiry — amber, dashed. */
+function GapLines({ gap, X, lo, hi }: { gap: { lo: number; hi: number } | null | undefined; X: (k: number) => number; lo: number; hi: number }) {
+  if (!gap) return null
+  return (
+    <>
+      {[gap.lo, gap.hi]
+        .filter((v) => v >= lo && v <= hi)
+        .map((v) => (
+          <line key={v} x1={X(v)} x2={X(v)} y1="0" y2="104" className="stroke-warning" strokeWidth="1.2" strokeDasharray="4 3" data-chain-gap={v}>
+            <title>{`Earnings gap ${v} — the move the ATM term prices for the estimated print`}</title>
+          </line>
+        ))}
+    </>
+  )
+}
+
+/** The 600×110 smile: call IVs, put IVs, the fit dashed, σ band shaded, the earnings gap amber. */
 export function SmileMini({
   chain,
   spot,
   move,
   fitIvPts,
   selStrike,
+  gap,
 }: {
   chain: ChainContract[]
   spot: number | null
   move: number | null
   fitIvPts: ((k: number) => number) | null
   selStrike: number | null
+  gap?: { lo: number; hi: number } | null
 }) {
   const pts = chain.filter((c) => c.iv != null && c.iv > 0)
   if (pts.length === 0 || spot == null) {
@@ -60,6 +78,7 @@ export function SmileMini({
         {fit ? <path d={fit} fill="none" stroke="var(--sk-faint,var(--border))" strokeWidth="1" strokeDasharray="4 3" /> : null}
         <path d={line('P')} fill="none" stroke="var(--color-loss)" strokeWidth="1.5" />
         <path d={line('C')} fill="none" stroke="var(--color-profit)" strokeWidth="1.5" />
+        <GapLines gap={gap} X={X} lo={lo} hi={hi} />
         <line x1={X(spot)} x2={X(spot)} y1="0" y2="104" stroke="var(--sk-ticker)" strokeWidth="1" />
         {selStrike != null ? (
           <line x1={X(selStrike)} x2={X(selStrike)} y1="0" y2="104" stroke="var(--foreground)" strokeWidth="1" strokeDasharray="2 2" />
@@ -74,8 +93,18 @@ export function SmileMini({
   )
 }
 
-/** The 600×110 OI columns: calls above puts, max pain dashed, spot ruled. */
-export function OiMini({ chain, spot, mp }: { chain: ChainContract[]; spot: number | null; mp: number | null }) {
+/** The 600×110 OI columns: calls above puts, max pain dashed, spot ruled, the earnings gap amber. */
+export function OiMini({
+  chain,
+  spot,
+  mp,
+  gap,
+}: {
+  chain: ChainContract[]
+  spot: number | null
+  mp: number | null
+  gap?: { lo: number; hi: number } | null
+}) {
   const strikes = [...new Set(chain.map((c) => c.strike))].sort((a, b) => a - b)
   if (strikes.length === 0 || spot == null) {
     return <p className="m-0 py-3 text-dense-micro text-muted-foreground">No open interest on this expiry&rsquo;s rows.</p>
@@ -99,6 +128,7 @@ export function OiMini({ chain, spot, mp }: { chain: ChainContract[]; spot: numb
           )
         })}
         {mp != null ? <line x1={X(mp)} x2={X(mp)} y1="0" y2="104" stroke="var(--foreground)" strokeWidth="1" strokeDasharray="3 3" /> : null}
+        <GapLines gap={gap} X={X} lo={lo} hi={hi} />
         <line x1={X(spot)} x2={X(spot)} y1="0" y2="104" stroke="var(--sk-ticker)" strokeWidth="1" />
       </svg>
       <div className="flex justify-between pt-0.5 font-mono text-dense-micro text-muted-foreground">

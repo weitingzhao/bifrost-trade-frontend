@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ChainContract } from '@/utils/optionChain'
 import { etTodayIso } from '@/lib/freshness'
-import { cardExpiries, contractChecks, daysToExpiry, isMonthlyExpiry, optionWatchlistKey } from './symbolChainModel'
+import { cardEarnings, cardExpiries, contractChecks, daysToExpiry, isMonthlyExpiry, optionWatchlistKey } from './symbolChainModel'
 
 // Made-up expiries.
 const LISTED = ['2027-01-04', '2027-01-06', '2027-01-08', '2027-01-11', '2027-01-15', '2027-02-19', '2027-03-19']
@@ -11,6 +11,7 @@ describe('the expiry cards', () => {
     expect(cardExpiries(LISTED, null)).toEqual({
       expiries: ['2027-01-04', '2027-01-06', '2027-01-15', '2027-02-19', '2027-03-19'],
       handedMissing: false,
+      event: null,
     })
   })
 
@@ -31,6 +32,25 @@ describe('the expiry cards', () => {
   it('adds a handed-over expiry that is not among the cards, rather than lighting the strike elsewhere', () => {
     expect(cardExpiries(LISTED, '2027-01-11').expiries).toEqual(['2027-01-04', '2027-01-06', '2027-01-11', '2027-01-15', '2027-02-19', '2027-03-19'])
     expect(cardExpiries(LISTED, '2027-02-19').expiries).toHaveLength(5)
+  })
+
+  it('adds the first expiry after the estimated print when the pick passes it by', () => {
+    const print = { date: '2027-02-01', basis: 'b', from: '2026-02-02', days_away: 30, track: { n: 4, median_miss_days: 0, max_miss_days: 0 } }
+    const withEvent = [...LISTED.slice(0, 5), '2027-02-05', '2027-02-19', '2027-03-19']
+    const r = cardExpiries(withEvent, null, print)
+    expect(r.event).toBe('2027-02-05')
+    expect(r.expiries).toEqual(['2027-01-04', '2027-01-06', '2027-01-15', '2027-02-05', '2027-02-19', '2027-03-19'])
+    // Already a card: named, not added twice; a late print names none.
+    expect(cardExpiries(LISTED, null, { ...print, date: '2027-02-10' }).expiries).toHaveLength(5)
+    expect(cardExpiries(LISTED, null, { ...print, date: '2027-02-10' }).event).toBe('2027-02-19')
+    expect(cardExpiries(withEvent, null, { ...print, days_away: -3 }).event).toBeNull()
+  })
+
+  it("says why the event expiry's card is there, and leaves the other cards' marks alone", () => {
+    const print = { date: '2027-02-01', basis: 'b', from: '2026-02-02', days_away: 30, track: { n: 4, median_miss_days: 0, max_miss_days: 0 } }
+    expect(cardEarnings(print, 34, true)?.title).toMatch(/^First expiry after the estimated print \(~1 Feb\) — it carries the event premium/)
+    expect(cardEarnings(print, 48, false)?.title).toBe('Earnings expected ~1 Feb (estimated) — inside this expiry')
+    expect(cardEarnings(print, 10, true)).toBeNull()
   })
 
   it('says so when the store does not list it — and not before the list has answered', () => {

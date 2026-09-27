@@ -229,8 +229,10 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Personas',
     crumbs: AGENTS,
     design: {
+      // Rev .96 walked in batch K2: the You card leads the bench, named owed
+      // on the memory store; the You page below it ships with that store.
       state: 'reviewing',
-      rev: '2026-09-21.1',
+      rev: '2026-09-26.1',
       note: DESIGN_NOTES['/research/agent-personas'],
     },
   },

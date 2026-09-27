@@ -28,6 +28,8 @@ import { PageHead } from '@/components/layout/PageHead'
 import { JudgeTrackRecord } from '@/pages/copilot/personas/JudgeTrackRecord'
 import { TheBench } from '@/pages/copilot/personas/TheBench'
 import { PageShell } from '@/components/layout/PageShell'
+import { SectionPanel } from '@/components/layout'
+import { ViewState } from '@bifrost/ui'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -586,6 +588,22 @@ export function AgentPersonaPage() {
 
       {!isLoading && !isError && agents.length > 0 ? (
         <div className="flex flex-col gap-4">
+          {/* Rev .96, Owner: "你" is the first card on the bench — the
+              portrait the nightly distill has learned, and what moved this
+              week. Its four axes (holding period · exit · risk · weak spot)
+              and the You page all read the memory store, which is an open
+              architecture decision — named owed, not drawn as zeros. */}
+          <SectionPanel
+            cap="First on the bench"
+            title="You"
+            note="distilled every night from your notes, fills, decisions, threads and visits · written without asking, forget any of it"
+          >
+            <ViewState
+              kind="notwired"
+              detail="The portrait's four axes and the week's changes read the nightly memory distillation (Rev .96); its store is an open Owner decision, and the You page ships with it."
+            />
+          </SectionPanel>
+
           {/* Rev 2026-09-21.6 merged the roster and the Track record into one
               table, and moved the wiring diagram to its own page: who to
               trust is the trader's question, who hands off to whom is the

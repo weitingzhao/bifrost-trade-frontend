@@ -28,7 +28,7 @@ function ageWords(elapsedSec: number): string {
 
 // ── Categories (Rev .80) ─────────────────────────────────────────────────────
 
-export type SettingsPane = 'ib' | 'flex' | 'look' | 'keys'
+export type SettingsPane = 'ib' | 'flex' | 'look' | 'keys' | 'reports'
 
 /** The four categories, with the words a search matches beyond the label. */
 export const SETTINGS_CATEGORIES: readonly { id: SettingsPane; label: string; keys: string }[] = [
@@ -36,6 +36,9 @@ export const SETTINGS_CATEGORIES: readonly { id: SettingsPane; label: string; ke
   { id: 'flex', label: 'Flex', keys: 'flex query token preference columns range pull fetch transactions ledger transfer' },
   { id: 'look', label: 'Appearance', keys: 'appearance theme dark light auto contrast transparency glass text size display' },
   { id: 'keys', label: 'Keyboard', keys: 'keyboard shortcut omnibar copilot sidebar inspector keys' },
+  // Rev .96: replies from engineering land on the row here. The pane is named
+  // owed until the feedback service has a home (store & API — Owner's call).
+  { id: 'reports', label: 'My reports', keys: 'feedback report bug problem wrong data idea question reply status' },
 ]
 
 export function isSettingsPane(v: string | null | undefined): v is SettingsPane {

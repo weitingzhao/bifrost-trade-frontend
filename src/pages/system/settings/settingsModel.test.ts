@@ -157,9 +157,18 @@ describe('ibSlotMeta / ibSlotLamp', () => {
 
 describe('settingsSearch', () => {
   it('matches a category by its name or by the words of what it holds', () => {
-    expect(settingsSearch('', 'ib').shown.map((c) => c.id)).toEqual(['ib', 'flex', 'look', 'keys'])
+    expect(settingsSearch('', 'ib').shown.map((c) => c.id)).toEqual([
+      'ib',
+      'flex',
+      'look',
+      'keys',
+      'reports',
+    ])
     expect(settingsSearch('token', 'ib').shown.map((c) => c.id)).toEqual(['flex'])
     expect(settingsSearch('Appear', 'ib').shown.map((c) => c.id)).toEqual(['look'])
+    // Rev .96: feedback words land on My reports.
+    expect(settingsSearch('feedback', 'ib').shown.map((c) => c.id)).toEqual(['reports'])
+    expect(settingsSearch('wrong data', 'ib').shown.map((c) => c.id)).toEqual(['reports'])
   })
 
   it('moves to the first match only when the chosen pane was filtered out', () => {

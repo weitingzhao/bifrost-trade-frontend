@@ -8,6 +8,7 @@
 import { useState, type ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { SegmentControl } from '@/components/data-display'
+import { ViewState } from '@bifrost/ui'
 import { Button } from '@/components/ui/button'
 import { SwitchTrack } from '@/components/ui/SwitchTrack'
 import { pluginFlexTrigger } from '@/api/flexQueryPlugin'
@@ -319,6 +320,28 @@ export function KeyboardPane() {
           </SettingLine>
         ))}
       </SettingGroup>
+    </>
+  )
+}
+
+/**
+ * Rev .96 — the feedback loop closes in-system: reports here, triage on
+ * `/system/feedback`, a reply lands on the row and reading it clears the dot.
+ * Every part of that reads a feedback service that does not exist yet, and
+ * where it lives (store & API) is an architecture decision the Owner has not
+ * made — so the pane is named owed rather than drawn as an empty zero.
+ */
+export function ReportsPane() {
+  return (
+    <>
+      <SettingPaneHead
+        title="My reports"
+        lead="Your feedback with engineering's replies on the row — seen here is read"
+      />
+      <ViewState
+        kind="notwired"
+        detail="Designed at Rev 2026-09-26.96: Send feedback opens beside the page with its context attached; replies land here; /system/feedback is the triage face. All of it awaits the feedback service — store and API are an open Owner decision."
+      />
     </>
   )
 }

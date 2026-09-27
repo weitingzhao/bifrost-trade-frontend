@@ -50,13 +50,14 @@ import {
   settingsSearch,
   type SettingsPane,
 } from './settingsModel'
-import { AppearancePane, FlexPane, IbPane, KeyboardPane } from './SettingsPanes'
+import { AppearancePane, FlexPane, IbPane, KeyboardPane, ReportsPane } from './SettingsPanes'
 
 const PANES: Record<SettingsPane, () => React.ReactNode> = {
   ib: IbPane,
   flex: FlexPane,
   look: AppearancePane,
   keys: KeyboardPane,
+  reports: ReportsPane,
 }
 
 function useCategoryMeta(): Record<SettingsPane, string> {
@@ -69,6 +70,8 @@ function useCategoryMeta(): Record<SettingsPane, string> {
     flex: flexLandedMeta(freshness.data, nowMs),
     look: mode === 'auto' ? 'Auto' : mode === 'light' ? 'Light' : 'Dark',
     keys: '',
+    // The design's meta is the unread count; it reads the feedback service.
+    reports: '',
   }
 }
 

@@ -487,8 +487,10 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Settings',
     crumbs: SYSTEM,
     design: {
+      // Rev .96 walked in batch K2: the My reports category is on the page,
+      // its pane named owed on the feedback service (an open Owner decision).
       state: 'reviewing',
-      rev: '2026-09-25.80',
+      rev: '2026-09-26.1',
       note: DESIGN_NOTES['/settings'],
     },
   },

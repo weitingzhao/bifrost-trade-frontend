@@ -131,7 +131,7 @@ export function TermCurveChart({
         <path
           d={line(points.map((p) => ({ dte: p.dte, v: p.iv })))}
           fill="none"
-          stroke="var(--sk-ticker)"
+          stroke="var(--sk-ink)"
           strokeWidth="1.8"
         />
         {points.map((p) => (
@@ -140,7 +140,7 @@ export function TermCurveChart({
             cx={X(p.dte)}
             cy={Y(p.iv)}
             r={selDte != null && p.dte === selDte ? 3.6 : 2.6}
-            fill="var(--sk-ticker)"
+            fill="var(--sk-ink)"
           />
         ))}
         {points.map((p) => (

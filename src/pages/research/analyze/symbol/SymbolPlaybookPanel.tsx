@@ -37,11 +37,11 @@ const panel =
 const panelHead =
   'flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal'
 
-// The design's own palette: Rangy green, Bull the ticker lime, Bear red,
-// Squeeze amber — the leading branch is bolded, never recoloured.
+// Rangy green, Bull state blue, Bear red, Squeeze amber — the leading branch is
+// bolded, never recoloured. Bull was the ticker lime; §14.4.6 keeps lime for the name (Owner 2026-09-27).
 const BRANCHES = [
   { key: 'rangy', label: 'Rangy', text: 'text-success', bar: 'bg-success' },
-  { key: 'bull', label: 'Bull', text: 'text-[var(--sk-ticker)]', bar: 'bg-[var(--sk-ticker)]' },
+  { key: 'bull', label: 'Bull', text: 'text-[var(--sk-state-blue)]', bar: 'bg-[var(--sk-state-blue)]' },
   { key: 'bear', label: 'Bear', text: 'text-destructive', bar: 'bg-destructive' },
   { key: 'squeeze', label: 'Squeeze', text: 'text-warning', bar: 'bg-warning' },
 ] as const

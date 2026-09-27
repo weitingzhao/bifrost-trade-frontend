@@ -214,7 +214,7 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
                 {lo.toFixed(0)}
               </span>
               {expected != null ? (
-                <span className="absolute -top-5 -translate-x-1/2 whitespace-nowrap font-mono text-dense-micro font-semibold text-[var(--sk-ticker)]" style={{ left: `${marks.posOf(expected)}%` }}>
+                <span className="absolute -top-5 -translate-x-1/2 whitespace-nowrap font-mono text-dense-micro font-semibold text-foreground" style={{ left: `${marks.posOf(expected)}%` }}>
                   expected {expected.toFixed(1)}
                 </span>
               ) : null}

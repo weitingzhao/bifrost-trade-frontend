@@ -446,7 +446,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                   return (
                     <tr
                       key={r.strike}
-                      className={cn(r.atm && 'shadow-[inset_2px_0_0_var(--sk-ticker)]')}
+                      className={cn(r.atm && 'shadow-[inset_2px_0_0_var(--sk-ink)]')}
                     >
                       {screenBand ? (
                         <td className={cn(td, 'text-left')}>
@@ -491,7 +491,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                       <td
                         className={cn(
                           td,
-                          // Every strike reads ink, ATM too (Rev .92 baseline row); the row's edge marks spot.
+                          // Every strike reads ink, ATM too (Rev .92); its ink edge marks spot — lime is the name's only (§14.4).
                           'bg-[color-mix(in_srgb,var(--sk-surface)_60%,transparent)] text-center font-bold text-foreground'
                         )}
                       >
@@ -617,7 +617,6 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                           ).toFixed(1)}%`
                         : '—'
                     }
-                    cls="text-[var(--sk-ticker)]"
                     title="The short side's premium against the cash it ties up, annualised — a rate, not a forecast."
                   />
                 </div>

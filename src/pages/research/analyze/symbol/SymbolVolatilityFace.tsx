@@ -352,13 +352,13 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                   </span>
                 ) : null}
                 {iv30 != null && pos(iv30) != null ? (
-                  <span className="absolute -bottom-5 -translate-x-1/2 whitespace-nowrap font-mono text-dense-micro font-semibold text-[var(--sk-ticker)]" style={{ left: `${pos(iv30)}%` }}>
+                  <span className="absolute -bottom-5 -translate-x-1/2 whitespace-nowrap font-mono text-dense-micro font-semibold text-foreground" style={{ left: `${pos(iv30)}%` }}>
                     IV30 {iv30.toFixed(1)}
                   </span>
                 ) : null}
                 <span className="absolute -bottom-5 right-0 text-dense-micro text-muted-foreground">1y high {high.toFixed(0)}</span>
                 {pos(iv30) != null ? (
-                  <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-[var(--sk-ticker)]" style={{ left: `${pos(iv30)}%` }} />
+                  <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-foreground" style={{ left: `${pos(iv30)}%` }} />
                 ) : null}
               </>
             ) : null}
@@ -458,7 +458,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
             </div>
             <div className="flex flex-wrap gap-x-3.5 gap-y-1 px-3 pb-1.5 text-dense-micro text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
-                <i className="h-0 w-3.5 border-t-2 border-[var(--sk-ticker)]" />ATM IV today
+                <i className="h-0 w-3.5 border-t-2 border-foreground" />ATM IV today
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <i className="h-0 w-3.5 border-t-2 border-[var(--sk-mute2)]" />realised (RV) at matching horizon

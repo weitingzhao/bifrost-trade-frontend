@@ -217,7 +217,7 @@ export function ContractCandles({
           )
         })}
         {vwClose != null ? (
-          <line x1="10" x2="310" y1={Y(vwClose)} y2={Y(vwClose)} stroke="var(--sk-ticker)" strokeWidth="1" strokeDasharray="3 2" />
+          <line x1="10" x2="310" y1={Y(vwClose)} y2={Y(vwClose)} stroke="var(--sk-ink)" strokeWidth="1" strokeDasharray="3 2" />
         ) : null}
       </svg>
       <div className="mt-0.5 flex h-3.5 items-end gap-px">

@@ -20,7 +20,10 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots } from '@/utils/optionChain'
+import { opexEarnings } from './dealerEarnings'
+import { OpexEarningsNote, OpexEarningsTag } from './SymbolDealerEarnings'
 import { SymbolFlowPcr } from './SymbolFlowPcr'
+import { useSymbolEarnings } from './useSymbolEarnings'
 
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
@@ -52,6 +55,10 @@ export function SymbolFlowFace({ symbol }: { symbol: string }) {
   const expiry = typeof (gexEx?.readings as Record<string, unknown> | undefined)?.expiry === 'string'
     ? ((gexEx!.readings as Record<string, unknown>).expiry as string)
     : null
+
+  // Where the estimated print falls against the concentration's expiry.
+  const earn = useSymbolEarnings(sym)
+  const bookEarn = opexEarnings({ next: earn.next, expiry, gap: earn.gap, about: 'book' })
 
   const chainQ = useQuery({
     queryKey: ['market', 'option-snapshots', sym, expiry, 'flow'],
@@ -120,8 +127,10 @@ export function SymbolFlowFace({ symbol }: { symbol: string }) {
           <header className={panelHead}>
             <span className={cap}>Concentration</span>
             <span className="text-dense-body font-semibold">where the proxy notional sits</span>
+            <OpexEarningsTag reading={bookEarn} />
             <span className="ml-auto text-dense-caption text-muted-foreground">{expiry ?? '—'}</span>
           </header>
+          <OpexEarningsNote reading={bookEarn} />
           {top.contracts.length === 0 ? (
             <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
               No traded contracts in the snapshot at the anchor expiry.

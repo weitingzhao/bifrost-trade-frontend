@@ -25,8 +25,9 @@ import { vrpLinkLine } from '@/lib/analyzeDepth'
 import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { cn } from '@/lib/utils'
-import { cyclePrints, opexEarnings, useDealerEarnings } from './dealerEarnings'
+import { cyclePrints, opexEarnings } from './dealerEarnings'
 import { CycleEarningsMark, OpexEarningsNote, OpexEarningsTag } from './SymbolDealerEarnings'
+import { useSymbolEarnings } from './useSymbolEarnings'
 
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
@@ -179,7 +180,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const pinRate = pinsQ.data?.pin_rate ?? null
   const cycleOn = new Map((cyclesQ.data ?? []).map((c) => [c.opex_date ?? '', c]))
   const timeline = useDealerTimeline(sym, expiry)
-  const earn = useDealerEarnings(sym)
+  const earn = useSymbolEarnings(sym)
   const printsIn = cyclePrints(pins.map((r) => r.opex_date), earn.filings)
   // The opex strike map is the 60 strikes nearest spot (research 0.129.0; it
   // had been the lowest 60, PLTR 5…145 against spot 190). It can still miss

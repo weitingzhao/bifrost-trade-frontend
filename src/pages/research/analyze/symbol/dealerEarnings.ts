@@ -10,12 +10,8 @@
  * the face marks the cycles and makes no claim about the rate.
  */
 import type { ExpectedEarnings } from '@/api/research/narrative'
-import { useEarningsDates } from '@/hooks/useNarrative'
-import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
-import { todayIso } from '@/lib/researchFreshness'
 import { thirdFriday } from '@/utils/bookCalendar'
-import { estimateCaveat, eventMove, lateLead, shortDate, type EventMove } from '@/utils/earningsEstimate'
-import { daysTo } from '@/utils/optionTicker'
+import { estimateCaveat, lateLead, shortDate, type EventMove } from '@/utils/earningsEstimate'
 import { foldFilings } from './rankPathEarnings'
 
 /** The monthly OpEx before a cycle's own, for the oldest cycle on record. */
@@ -103,27 +99,4 @@ export function opexEarnings(opts: {
     tag: { label: `E ~${shortDate(next.date)} · before expiry`, title: estimateCaveat(next), tone: 'warning' },
     note: `Earnings ${when} land${next.date === expiry ? ' on' : ' before'} the ${exp} expiry${against}. ${reads}`,
   }
-}
-
-/**
- * The Dealer face's earnings inputs: the filings, the estimate, and the move
- * the ATM term prices for it — the queries the page's faces already hold.
- */
-export function useDealerEarnings(symbol: string): {
-  filings: string[]
-  next: ExpectedEarnings | null
-  gap: EventMove | null
-} {
-  const earnQ = useEarningsDates(symbol)
-  const termQ = useAtmIvTerm(symbol)
-  const next = earnQ.data?.expected_next ?? null
-  const today = todayIso()
-  const gap =
-    next && next.days_away >= 0
-      ? eventMove(
-          (termQ.data?.term ?? []).map((p) => ({ expiry: p.expiry, dte: daysTo(p.expiry, today) ?? 0, iv: p.atm_iv })),
-          next.days_away
-        )
-      : null
-  return { filings: earnQ.data?.dates ?? [], next, gap }
 }

@@ -169,20 +169,31 @@ export function buildProposals(
       blockedBy: cut?.measuring ? null : 'a cost — the planned exit to measure the delay against',
     },
     {
+      // Since 2026-09-26 the habit is measured (each trade's IV rank on its
+      // entry session, the same reading Habits shows), so the card argues
+      // from it: `no-cost` — the tendency is on file, what an under-floor
+      // entry cost is not, because no rule states the floor to be under.
       key: 'ivr_floor',
       habitKey: 'ivr_entry',
       title: 'Enforce the IV-rank floor at entry',
       target: 'Playbook · IV-rich entries',
-      state: 'no-habit',
-      n: null,
+      state: ivr?.measuring ? 'measuring' : ivr?.value == null ? 'no-habit' : 'no-cost',
+      n: ivr?.value == null ? null : ivr.n,
       effect: null,
-      evidence:
-        ivr?.read ??
-        'Where in its own year’s volatility each trade was opened, against the floor the rule states.',
+      evidence: ivr?.measuring
+        ? 'Reading each name’s trailing year of IV rank to place every entry in it.'
+        : ivr?.value == null
+          ? (ivr?.read ??
+            'Where in its own year’s volatility each trade was opened, against the floor the rule states.')
+          : `${ivr.read} A floor turns that tendency into a rule — and no rule on this side states one yet, so no entry can be called below it.`,
       cites: [],
       after: 'entry: below the floor blocks the order; an override needs a written reason on the plan',
       beforeText: NO_RULE_TEXT,
-      blockedBy: 'the underlying’s IV rank on each entry date, and the floor itself',
+      blockedBy: ivr?.measuring
+        ? null
+        : ivr?.value == null
+          ? 'the underlying’s IV rank on each entry date, and the floor itself'
+          : 'the floor itself — no rule states one',
     },
     {
       key: 'retarget',

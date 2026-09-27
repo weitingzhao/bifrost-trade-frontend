@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { IvPercentileRow } from '@/types/ivRadar'
 import type { ReviewTrade } from '@/utils/reviewTrades'
-import { entryIvRankReading, rankOnEntry } from './entryIvRank'
+import { rankOnEntry } from './entryIvRank'
+import { entryIvRankReading, habitReadings } from './reviewHabits'
 
 // Invented fixtures — no book data.
 const row = (trade_date: string, iv_rank_1y: number | null): IvPercentileRow => ({
@@ -41,5 +42,19 @@ describe('entryIvRankReading', () => {
     const h = entryIvRankReading([trade('2026-03-05')], new Map([['XYZ', [row('2026-03-05', 40)]]]), true)
     expect(h.value).toBeNull()
     expect(h.measuring).toBe(true)
+  })
+})
+
+describe('habitReadings · IV rank at entry', () => {
+  it('reads the rank when the caller passes the history, so every reader agrees', () => {
+    const ivRanks = { rowsByName: new Map([['XYZ', [row('2026-03-05', 40)]]]), loading: false }
+    const h = habitReadings([trade('2026-03-05')], new Map(), false, ivRanks).find((x) => x.key === 'ivr_entry')!
+    expect(h.value).toBe(40)
+    expect(h.n).toBe(1)
+  })
+  it('says the history was not read rather than reporting an empty sample', () => {
+    const h = habitReadings([trade('2026-03-05')]).find((x) => x.key === 'ivr_entry')!
+    expect(h.value).toBeNull()
+    expect(h.unmeasured).toMatch(/not read/)
   })
 })

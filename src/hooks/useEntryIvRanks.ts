@@ -1,7 +1,9 @@
 /**
  * The trailing year of IV rank for every name the closed book traded — one
- * read per underlying, so `entryIvRank.ts` can look up each trade's entry
- * session. Sixteen names on DEV (2026-09-26), about 60 ms each.
+ * read per underlying, so `rankOnEntry` (`utils/entryIvRank.ts`) can look up
+ * each trade's entry session. Sixteen names on DEV (2026-09-26), about 60 ms
+ * each, cached an hour and shared by every page that asks (one query key per
+ * name).
  *
  * A name that fails reads as absent, not as a rank of zero: its trades drop
  * out of the sample and the reading's n says how many are left.

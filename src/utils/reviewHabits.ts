@@ -19,6 +19,7 @@
  * answerable ones would read as a short list of tendencies rather than a long
  * one partly unmeasured, and the second is the true state of the book.
  */
+import { rankOnEntry, type EntryIvRanks } from '@/utils/entryIvRank'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 import type { ReviewTrade } from '@/utils/reviewTrades'
 
@@ -191,6 +192,8 @@ export function habitReadings(
   trades: readonly ReviewTrade[],
   paths: Map<string, MarkPath> = new Map(),
   pathsLoading = false,
+  /** Each name's trailing year of IV rank (`useEntryIvRanks`); omitted → the reading says it was not read. */
+  ivRanks?: EntryIvRanks,
 ): HabitReading[] {
   const ctx = { trades, paths }
   const pathed = withPath(ctx)
@@ -199,7 +202,7 @@ export function habitReadings(
     holdTime(ctx),
     disposition(pathed),
     cutLatency(pathed),
-    ivRankAtEntry(trades),
+    ivRankAtEntry(trades, ivRanks),
     dteAtEntry(ctx),
     creditKept(ctx),
     planCapture(trades),
@@ -310,16 +313,72 @@ function cutLatency(pathed: { trade: ReviewTrade; path: MarkPath }[]): HabitRead
   }
 }
 
-function ivRankAtEntry(trades: readonly ReviewTrade[]): HabitReading {
-  return unmeasured(
-    'ivr_entry',
-    'IV rank at entry',
-    'IV rank',
-    trades.length,
-    'Where in its own year’s volatility each trade was opened — the design holds it against a rule floor of 40.',
-    'the underlying’s implied-volatility rank on the entry date, and the floor it is held against — neither reaches this side',
-    'count',
-  )
+/**
+ * IV rank at entry, read off each trade's entry session (`entryIvRank.ts`).
+ * The store answers the trailing year only, so a trade opened earlier drops
+ * out of the sample rather than being guessed, and the reading names how many
+ * it covers. What still does not exist is the *floor* the design holds it
+ * against — no rule on this side states one — so there is no reference line.
+ */
+export function entryIvRankReading(
+  trades: readonly ReviewTrade[],
+  rowsByName: EntryIvRanks['rowsByName'],
+  measuring: boolean,
+): HabitReading {
+  const ranked: { trade: ReviewTrade; rank: number }[] = []
+  for (const trade of trades) {
+    if (!trade.openedOn) continue
+    const rows = rowsByName.get(trade.underlying)
+    if (!rows) continue
+    const rank = rankOnEntry(rows, trade.openedOn)
+    if (rank != null) ranked.push({ trade, rank })
+  }
+  // A reading taken while names are still arriving would print a number that
+  // changes on its own; it waits, the way the path habits do.
+  if (measuring) ranked.length = 0
+  const values = ranked.map((r) => r.rank)
+  const avg = values.length === 0 ? null : values.reduce((a, b) => a + b, 0) / values.length
+  const low = values.filter((v) => v < 30).length
+  const high = values.filter((v) => v >= 50).length
+  return {
+    key: 'ivr_entry',
+    label: 'IV rank at entry',
+    unit: 'IV rank, of its own year',
+    value: avg,
+    n: values.length,
+    stat: 'mean',
+    ci: meanBand(values),
+    ciLabel: '95%',
+    read:
+      avg == null
+        ? 'No closed trade opened inside the trailing year the IV-rank store answers for.'
+        : `Opened at an IV rank of ${avg.toFixed(0)} on average across ${values.length} of ${trades.length} closed trades; ${high} at 50 or over, ${low} under 30.`,
+    consequence: null,
+    consequenceLabel: 'what a low-rank entry cost needs the plan it would have broken',
+    dots: ranked.map(({ trade, rank }) => ({ key: trade.contractKey, value: rank, realised: trade.realised })),
+    reference: null,
+    unmeasured:
+      'the floor it is held against — no rule on this side states one, so the strip has no line to be above or below',
+    kind: 'count',
+    measuring,
+  }
+}
+
+function ivRankAtEntry(trades: readonly ReviewTrade[], ivRanks: EntryIvRanks | undefined): HabitReading {
+  // A caller that did not read the IV-rank history gets the honest absence,
+  // never an empty sample dressed as "no trade qualified".
+  if (ivRanks == null) {
+    return unmeasured(
+      'ivr_entry',
+      'IV rank at entry',
+      'IV rank',
+      trades.length,
+      'Where in its own year’s volatility each trade was opened.',
+      'the IV-rank history was not read for this view',
+      'count',
+    )
+  }
+  return entryIvRankReading(trades, ivRanks.rowsByName, ivRanks.loading)
 }
 
 function dteAtEntry({ trades }: Ctx): HabitReading {

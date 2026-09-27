@@ -75,6 +75,24 @@ describe('buildProposals', () => {
     expect(ps.find((p) => p.key === 'retarget')!.state).toBe('no-habit')
   })
 
+  it('argues the IV floor from the measured entry rank, blocked only on the floor', () => {
+    const withIvr = MEASURED.map((h) =>
+      h.key === 'ivr_entry' ? { ...h, value: 42, n: 12, read: 'Opened at an IV rank of 42 on average.' } : h,
+    )
+    const p = buildProposals(withIvr, TRADES, PATHS).find((x) => x.key === 'ivr_floor')!
+    expect(p.state).toBe('no-cost')
+    expect(p.n).toBe(12)
+    expect(p.blockedBy).toMatch(/floor itself/)
+    expect(p.blockedBy).not.toMatch(/IV rank on each entry/)
+  })
+
+  it('does not call the IV floor unmeasurable while the ranks are still arriving', () => {
+    const inFlight = MEASURED.map((h) => (h.key === 'ivr_entry' ? { ...h, measuring: true } : h))
+    const p = buildProposals(inFlight, TRADES, PATHS).find((x) => x.key === 'ivr_floor')!
+    expect(p.state).toBe('measuring')
+    expect(p.blockedBy).toBeNull()
+  })
+
   it('never writes a before line, whatever the state', () => {
     for (const p of buildProposals(MEASURED, TRADES, PATHS)) {
       expect(p.beforeText).toBe('n/c — rule text not on file')

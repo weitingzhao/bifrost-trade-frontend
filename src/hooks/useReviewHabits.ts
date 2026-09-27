@@ -4,21 +4,29 @@
  * Kept apart from `useReviewTrades` because the paths are 46 requests: the
  * queue and Single trade have no use for them, and a page should not pay for a
  * read it does not make. Habits and Rule proposals both do, and they share one
- * cache entry.
+ * cache entry — and since 2026-09-26 the same holds for the IV-rank history.
  */
 import { useMemo } from 'react'
 import { useReviewTrades } from '@/hooks/useReviewTrades'
 import { useBookMarkPaths } from '@/hooks/useBookMarkPaths'
+import { useEntryIvRanks } from '@/hooks/useEntryIvRanks'
 import { habitReadings } from '@/utils/reviewHabits'
 import { playbookStats } from '@/utils/reviewTrades'
 
 export function useReviewHabits(accountFilter: string) {
   const book = useReviewTrades(accountFilter)
   const marks = useBookMarkPaths(book.trades)
+  // IV rank at entry is read here, once, so Habits and the Decision Inbox's
+  // IV-floor card argue from the same reading (§14.2).
+  const ranks = useEntryIvRanks(book.trades)
+  const ivRanks = useMemo(
+    () => ({ rowsByName: ranks.rowsByName, loading: ranks.loading }),
+    [ranks.rowsByName, ranks.loading],
+  )
 
   const habits = useMemo(
-    () => habitReadings(book.trades, marks.paths, marks.loading),
-    [book.trades, marks.paths, marks.loading],
+    () => habitReadings(book.trades, marks.paths, marks.loading, ivRanks),
+    [book.trades, marks.paths, marks.loading, ivRanks],
   )
   // Re-derived with the paths so a play's MAE column is not a second
   // computation of the same trades (§14.2).
@@ -34,5 +42,10 @@ export function useReviewHabits(accountFilter: string) {
     pathRequests: marks.requests,
     pathsLoading: marks.loading,
     pathsError: marks.error,
+    /** Each name's trailing year of IV rank — a page that narrows the trades re-reads the habits with it. */
+    ivRanks,
+    /** Names whose IV-rank read failed — their trades leave the sample. */
+    ivRankFailed: ranks.failed,
+    ivRankNames: ranks.names,
   }
 }

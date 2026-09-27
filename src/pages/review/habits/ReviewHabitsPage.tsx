@@ -6,7 +6,7 @@
  * far out they are written, what share of the best mark winners actually land,
  * how long a loser stays open past its worst mark — the last two only since
  * the contract's own daily bars turned out to be available — and, since
- * 2026-09-26, the IV rank each trade was opened at (`entryIvRank.ts`). A
+ * 2026-09-26, the IV rank each trade was opened at (`utils/entryIvRank.ts`). A
  * sixth, the share of the credit kept, the fills answer outright.
  *
  * The rest divide by the plan, and so does every cost figure on the page: a
@@ -36,8 +36,6 @@ import { THIN_SAMPLE } from '@/utils/reviewTrades'
 import { habitReadings, type HabitReading } from '@/utils/reviewHabits'
 import { HabitStrip } from './HabitStrip'
 import { CostSplit, NotClaimed, PlanAdherenceQuadrants } from './HabitsAside'
-import { entryIvRankReading } from './entryIvRank'
-import { useEntryIvRanks } from './useEntryIvRanks'
 
 const PAGE_LEAD =
   'Measured tendencies over the closed book — each one a distribution, a sample count, and what it cost or earned. No scores and no trader archetypes: a label you cannot falsify is not a finding.'
@@ -75,10 +73,12 @@ export default function ReviewHabitsPage() {
     pathRequests,
     pathsLoading,
     pathsError,
+    ivRanks,
+    ivRankFailed,
+    ivRankNames,
   } = useReviewHabits(accountFilter)
   // The same cache entry the hook reads — held here for its §17 state.
   const execQuery = useExecutionsCanonical()
-  const ivRanks = useEntryIvRanks(trades)
 
   const today = new Date().toISOString().slice(0, 10)
   const inWindow = useMemo(() => {
@@ -92,12 +92,12 @@ export default function ReviewHabitsPage() {
 
   // The window narrows the sample, so it has to narrow the readings too — a
   // gate that says "12 closed trades" above tendencies computed over 67 is the
-  // worst of both. IV rank at entry is read here rather than in the shared
-  // stub, which still says it cannot be (see entryIvRank.ts).
-  const habits = useMemo(() => {
-    const ivr = entryIvRankReading(inWindow, ivRanks.rowsByName, ivRanks.loading)
-    return habitReadings(inWindow, paths, pathsLoading).map((h) => (h.key === 'ivr_entry' ? ivr : h))
-  }, [inWindow, paths, pathsLoading, ivRanks.rowsByName, ivRanks.loading])
+  // worst of both. The IV-rank history is the shared hook's (one read, the
+  // same one the Decision Inbox's IV-floor card argues from).
+  const habits = useMemo(
+    () => habitReadings(inWindow, paths, pathsLoading, ivRanks),
+    [inWindow, paths, pathsLoading, ivRanks],
+  )
   const measured = habits.filter((h) => h.value != null)
   const pending = habits.some((h) => h.measuring)
   const n = inWindow.length
@@ -190,12 +190,12 @@ export default function ReviewHabitsPage() {
           detail="The path habits — winner trimming and cut-loss latency — cover only the trades whose bars arrived; the rest are unread, not unmoved."
         />
       ) : null}
-      {pageState === 'ready' && ivRanks.failed > 0 ? (
+      {pageState === 'ready' && ivRankFailed > 0 ? (
         <ViewState
           kind="stale"
           layout="strip"
           title="Couldn’t read some IV ranks"
-          detail={`${ivRanks.failed} of ${ivRanks.names} names did not answer; their trades are out of the IV-rank-at-entry sample.`}
+          detail={`${ivRankFailed} of ${ivRankNames} names did not answer; their trades are out of the IV-rank-at-entry sample.`}
         />
       ) : null}
 

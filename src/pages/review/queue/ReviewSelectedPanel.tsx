@@ -28,8 +28,8 @@ import { fmtUsd } from '@/utils/positions'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 import { REVIEW_GAPS, REVIEW_UNRECORDED, type ReviewTrade } from '@/utils/reviewTrades'
 import { derivedTags, type Tone } from '@/pages/review/fit/tradeFitModel'
-import { rankOnEntry } from '@/pages/review/habits/entryIvRank'
-import { useEntryIvRanks } from '@/pages/review/habits/useEntryIvRanks'
+import { rankOnEntry } from '@/utils/entryIvRank'
+import { useEntryIvRanks } from '@/hooks/useEntryIvRanks'
 
 /** The tags the design offers by hand. Each would write, and nothing stores one. */
 const HAND_TAGS = ['revenge entry', 'sized up on conviction', 'exited on news', 'good fill', 'thesis held']

@@ -46,6 +46,8 @@ import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@
 import { cn } from '@/lib/utils'
 import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
 import { SymbolIdentity } from '@/pages/research/analyze/symbol/SymbolIdentity'
+import { SymbolInsightChip } from '@/pages/research/analyze/symbol/SymbolInsightChip'
+import { useSectionAnchor } from '@/pages/research/analyze/symbol/useSectionAnchor'
 import { SymbolMyLegs } from '@/pages/research/analyze/symbol/SymbolMyLegs'
 import { SymbolRecordRail } from '@/pages/research/analyze/symbol/SymbolRecordRail'
 import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
@@ -79,6 +81,7 @@ export default function SymbolPage() {
   const active = tabFor(params.get(TAB_PARAM), params.get('view'))
   const { symbol } = useResearchContext()
   const faces = useSymbolFaces(symbol)
+  useSectionAnchor(active)
   // In the Symbol panel the frame keeps the keys: a Desk behind it, or a
   // second Symbol page, would otherwise have its digits answered twice.
   const inSurface = useInSurface()
@@ -210,6 +213,7 @@ export default function SymbolPage() {
           it was summarising, with their approval states. It stays on the five
           faces that have no rail. */}
       {/* Every face reads the shell's symbol now — no per-tab context bar. */}
+      {symbol ? <SymbolInsightChip symbol={symbol} faces={faces} /> : null}
       {active === 'overview' ? null : (
         <CopilotVerdictStrip originPage={`symbol:${active}`} originLabel={`Symbol · ${active}`} />
       )}

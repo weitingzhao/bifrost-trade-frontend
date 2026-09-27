@@ -182,11 +182,11 @@ export function SymbolFlowFace({ symbol }: { symbol: string }) {
           </p>
         </section>
 
-        <section className={cn(panel, 'col-[1/-1]')}>
+        <section id="pcr" className={cn(panel, 'col-[1/-1]', 'scroll-mt-12')}>
           <SymbolFlowPcr symbol={sym} />
         </section>
 
-        <section className={cn(panel, 'col-[1/-1]')}>
+        <section id="multi-leg" className={cn(panel, 'col-[1/-1]', 'scroll-mt-12')}>
           <header className={panelHead}>
             <span className={cap}>Multi-leg flow</span>
             <span className="text-dense-body font-semibold">spreads · sweeps · blocks</span>

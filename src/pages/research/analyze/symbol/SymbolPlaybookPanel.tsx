@@ -147,15 +147,23 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
   const trans = transitionsOf(intraRows)
 
   return (
-    <section className={panel}>
+    <section id="playbook" className={cn(panel, 'scroll-mt-12')}>
       <header className={panelHead}>
         <span className={cap}>Intraday playbook</span>
         <span className="text-dense-body font-semibold">scenario fan · LIVE bias</span>
         <span className="ml-auto inline-flex items-center gap-1.5 text-dense-caption text-muted-foreground">
           pivot{' '}
-          <b className={cn(mono, 'text-foreground')} title="No pivot level in the playbook store — unmeasured, not omitted.">
-            —
+          <b
+            className={cn(mono, gzLo != null && gzHi != null ? 'text-foreground' : 'text-muted-foreground')}
+            title={
+              gzLo != null && gzHi != null
+                ? `Derived: the midpoint of the terrain's gamma zone (${gzLo.toFixed(2)}–${gzHi.toFixed(2)}), the level the branches split around. The playbook store keeps no pivot of its own.`
+                : 'No gamma zone on the newest terrain row, and the playbook store keeps no pivot of its own.'
+            }
+          >
+            {gzLo != null && gzHi != null ? ((gzLo + gzHi) / 2).toFixed(2) : '—'}
           </b>
+          {gzLo != null && gzHi != null ? <span className="text-dense-micro">derived</span> : null}
           {live ? (
             <DenseTag variant={liveVariant(live.regime)} size="cell">
               LIVE · {live.regime}

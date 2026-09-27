@@ -20,6 +20,8 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { VannaCharmMap } from '@/components/charts/VannaCharmMap'
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
+import { DenseTag } from '@/components/data-display'
+import { vrpLinkLine } from '@/lib/analyzeDepth'
 import { FaceKv } from '@/components/research/FaceKv'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { cn } from '@/lib/utils'
@@ -105,6 +107,14 @@ const fmtM = (v: number) =>
   `${v < 0 ? '−' : ''}${Math.abs(v) >= 1e6 ? `${(Math.abs(v) / 1e6).toFixed(1)}M` : `${(Math.abs(v) / 1e3).toFixed(0)}k`}`
 
 /** Σ vanna / Σ charm in the store's own units, signed, k past a thousand. */
+/** Where the cycle stands, in the retired OpEx section's words. */
+function opexCalendarPhrase(dteToday: number, opexWeek: boolean): string {
+  if (dteToday <= 0) return 'OpEx day — reduce size'
+  if (dteToday <= 3) return 'OpEx imminent — hedge / roll'
+  if (opexWeek) return 'OpEx week — watch pin'
+  return 'pre-OpEx — plan rolls'
+}
+
 const fmtSignedK = (v: number | null) =>
   v == null
     ? '—'
@@ -116,6 +126,9 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const exOf = (id: string) => exQ.data?.find((e) => e.lens === id || e.lens_id === id)
   const gexEx = exOf('gex_regime')
   const pinEx = exOf('opex_pin')
+  // The realised-vol half of the gamma claim, and the OpEx calendar phrase —
+  // both carried by the retired GEX / OpEx sections and dropped here (S6).
+  const vrpLink = vrpLinkLine(gexEx)
   const g = (gexEx?.readings ?? {}) as Record<string, unknown>
   const p = (pinEx?.readings ?? {}) as Record<string, unknown>
   const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : null)
@@ -274,7 +287,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
 
   return (
     <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr))]">
-      <section className={cn(panel, 'col-[1/-1]')}>
+      <section id="gex" className={cn(panel, 'col-[1/-1]', 'scroll-mt-12')}>
         <header className={panelHead}>
           <span className={cap}>Gamma levels</span>
           <span className="text-dense-body font-semibold">where the dealers sit</span>
@@ -286,6 +299,11 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           </span>
         </header>
         <LensVerdictBlock lensId="gex_regime" exhibit={gexEx} />
+        {vrpLink ? (
+          <p className="m-0 border-b border-border/60 px-3 py-1.5 text-dense-meta leading-normal text-secondary-foreground text-pretty">
+            {vrpLink}
+          </p>
+        ) : null}
         <div className="px-4 pb-1 pt-8">
           {marks ? (
             <div className="relative mb-7 h-1.5 rounded-full bg-[var(--sk-line0)]">
@@ -507,7 +525,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
         </p>
       </section>
 
-      <section className={cn(panel, 'col-[1/-1]')}>
+      <section id="opex" className={cn(panel, 'col-[1/-1]', 'scroll-mt-12')}>
         <header className={panelHead}>
           <span className={cap}>OpEx cycle</span>
           <span className="text-dense-body font-semibold">
@@ -516,6 +534,15 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
             {pinExpiry ?? '—'}
             {dte != null ? ` · ${dte} days` : ''}
           </span>
+          {opexQ.data ? (
+            <DenseTag
+              variant={opexQ.data.dte_to_opex_today <= 3 ? 'warning' : opexQ.data.is_opex_week_today ? 'info' : 'neutral'}
+              size="cell"
+              title={`${opexQ.data.dte_to_opex_today} days to the monthly OpEx${opexQ.data.next_opex_date ? ` (${opexQ.data.next_opex_date})` : ''}.`}
+            >
+              {opexCalendarPhrase(opexQ.data.dte_to_opex_today, opexQ.data.is_opex_week_today)}
+            </DenseTag>
+          ) : null}
           <span className="ml-auto text-dense-caption text-muted-foreground">source · opex_pin exhibit</span>
         </header>
         <LensVerdictBlock lensId="opex_pin" exhibit={pinEx} />

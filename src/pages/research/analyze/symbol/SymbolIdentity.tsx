@@ -51,6 +51,7 @@ import { TONE_TEXT } from '@/lib/dossier'
 import { cn } from '@/lib/utils'
 import { EARNINGS_GATE_DAYS, estimateCaveat } from '@/utils/earningsEstimate'
 import type { SymbolFaces } from './useSymbolFaces'
+import { symbolHypothesisPrefill } from './symbolHypothesisPrefill'
 import css from './symbolHead.module.css'
 
 /**
@@ -124,6 +125,7 @@ export function SymbolIdentity({
   const drove = faces.drove ? faces.views.find((v) => v.face.id === faces.drove) : null
   const thesis = decisive.length > 0 ? decisive.map((r) => r.verdict).join(' · ') : 'No lens is decisive on this name today'
   const heldTag = faces.held ? 'in the book' : faces.watched ? 'watchlist' : 'not held'
+  const hyp = symbolHypothesisPrefill(sym, tab, faces.views, thesis)
   const lab = LAB_TAB[tab]
 
   const subject = (
@@ -208,12 +210,12 @@ export function SymbolIdentity({
       />
       <SaveAsHypothesisButton
         originPage="symbol"
-        defaultTitle={`${sym} — ${thesis}`}
-        defaultThesis={thesis}
+        defaultTitle={hyp.title}
+        defaultThesis={hyp.thesis}
         defaultSymbols={[sym]}
-        defaultTags={['symbol']}
+        defaultTags={hyp.tags}
         label={compact ? 'Hyp' : 'Hypothesis'}
-        originRef={{ source: 'symbol', symbol: sym }}
+        originRef={hyp.originRef}
       />
       <PlanThisButton symbol={sym} source="symbol" sourceLabel="Symbol" note={thesis} variant="primary" />
     </>

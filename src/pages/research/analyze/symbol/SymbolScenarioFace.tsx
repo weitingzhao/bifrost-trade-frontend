@@ -141,7 +141,7 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
 
   return (
     <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
-    <section className={cn(panel, 'xl:col-span-2')}>
+    <section id="model" className={cn(panel, 'xl:col-span-2', 'scroll-mt-12')}>
       <header className={panelHead}>
         <span className={cap}>Analysis model</span>
         <span className="text-dense-body font-semibold">terrain · close expectation · gamma zone</span>

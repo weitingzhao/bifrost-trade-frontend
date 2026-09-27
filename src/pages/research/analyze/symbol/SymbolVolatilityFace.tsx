@@ -331,7 +331,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
 
   return (
     <div className="grid items-start gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,560px),1fr))]">
-      <section className={panel}>
+      <section id="iv-rank" className={cn(panel, 'scroll-mt-12')}>
         <header className={panelHead}>
           <span className={cap}>IV rank</span>
           <span className="text-dense-body font-semibold">30d implied vs its own year</span>
@@ -390,7 +390,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         </p>
       </section>
 
-      <section className={panel}>
+      <section id="vrp" className={cn(panel, 'scroll-mt-12')}>
         <header className={panelHead}>
           <span className={cap}>IV − RV</span>
           <span className="text-dense-body font-semibold">Volatility risk premium</span>
@@ -416,7 +416,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         </p>
       </section>
 
-      <section className={panel}>
+      <section id="term" className={cn(panel, 'scroll-mt-12')}>
         <header className={panelHead}>
           <span className={cap}>Term structure</span>
           <span className="text-dense-body font-semibold">ATM IV by expiry</span>
@@ -585,7 +585,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         ) : null}
       </section>
 
-      <section className={panel}>
+      <section id="skew" className={cn(panel, 'scroll-mt-12')}>
         <header className={panelHead}>
           <span className={cap}>Skew &amp; surface</span>
           <span className="text-dense-body font-semibold">

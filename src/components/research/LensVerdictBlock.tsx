@@ -10,6 +10,8 @@
 import type { ExhibitPayload } from '@/api/research/exhibit'
 import { labelForBand, toneForBand } from '@/lib/lensVerdict'
 import { cn } from '@/lib/utils'
+import { AskCopilotButton } from './AskCopilotButton'
+import { compactSnapshot } from './compactSnapshot'
 
 const CAP = 'text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground'
 
@@ -40,6 +42,29 @@ function Evidence({ cap, value, sub, cls }: { cap: string; value: string; sub?: 
       {sub ? <small className="font-mono text-dense-micro text-muted-foreground">{sub}</small> : null}
     </span>
   )
+}
+
+/**
+ * The panel's numbers for Copilot — the retired sections' per-section Ask
+ * carried their own readings (S6, 2026-09-26). Scalars only, the first twelve.
+ */
+function lensSnapshot(lensId: string, exhibit: ExhibitPayload): Record<string, unknown> | undefined {
+  const readings = Object.entries(exhibit.readings ?? {})
+    .filter(([, v]) => typeof v === 'number' || typeof v === 'string' || typeof v === 'boolean')
+    .slice(0, 12)
+  return compactSnapshot({
+    lens: lensId,
+    band: exhibit.verdict?.band,
+    verdict: exhibit.verdict?.label,
+    as_of: exhibit.as_of,
+    hit_5d: exhibit.track_record?.hit_rate_5d,
+    hit_20d: exhibit.track_record?.hit_rate_20d,
+    record_n: exhibit.track_record?.n,
+    record_scope: exhibit.track_record ? (exhibit.track_record.symbol_scoped ? 'this symbol' : 'all symbols') : undefined,
+    similar_median_fwd: exhibit.similar?.median_fwd,
+    similar_n: exhibit.similar?.n,
+    ...Object.fromEntries(readings),
+  })
 }
 
 export function LensVerdictBlock({ lensId, exhibit }: { lensId: string; exhibit: ExhibitPayload | undefined }) {
@@ -92,6 +117,19 @@ export function LensVerdictBlock({ lensId, exhibit }: { lensId: string; exhibit:
           value={tr ? (tr.symbol_scoped ? 'this symbol' : 'all symbols') : '—'}
           cls="text-secondary-foreground text-dense-caption"
         />
+        {exhibit?.symbol ? (
+          <AskCopilotButton
+            size="dense"
+            originPage={`symbol:${lensId}`}
+            originLabel={`Symbol · ${lensId}`}
+            symbol={exhibit.symbol}
+            date={exhibit.as_of ?? undefined}
+            panel={lensId}
+            title={`Ask Copilot about ${exhibit.symbol}'s ${lensId} reading, with this panel's numbers`}
+            snapshot={lensSnapshot(lensId, exhibit)}
+            suggestedPrompt={`On ${exhibit.symbol}, the ${lensId} lens reads «${label ?? labelForBand(lensId, band)}». Given its record here (hit 20d ${pct(tr?.hit_rate_20d)}, n ${tr?.n ?? 0}) and the similar readings (${simMed} median), how much weight does this call deserve, and what would overturn it?`}
+          />
+        ) : null}
       </div>
     </div>
   )

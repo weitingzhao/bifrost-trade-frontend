@@ -95,7 +95,7 @@ export function SymbolForecastSessions({ symbol }: { symbol: string }) {
       : `Judged hour by hour on ${onHourly} of ${n} sessions (the plugin keeps 1-hour bars for this name on those days); the rest on the close alone — within 1% of the target.`
 
   return (
-    <section className={panel}>
+    <section id="sessions" className={cn(panel, 'scroll-mt-12')}>
       <header className={panelHead}>
         <span className={cap}>Forecast sessions</span>
         <span className="text-dense-body font-semibold">how the paths settled</span>

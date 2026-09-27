@@ -9,6 +9,11 @@
  * for the directional branches; squeeze is a volatility event, not a band.
  * Observe-only (D10): nothing here places orders.
  *
+ * The intraday terrain reads the nightly tables — the prior close's spot, GEX,
+ * momentum and IV — so every snapshot of a session is the same (measured on
+ * every name, 2026-09-10…09-25). When a session's snapshots do not differ, LIVE
+ * says it restates the prior close instead of claiming the tape confirms it.
+ *
  * Below the fan, the playbook's own record (`/research/playbook/hit-rate`,
  * 30 days, 5-session forward return) per branch, and the triggers the newest
  * session fired. The record counts each session × branch once: the store
@@ -65,6 +70,14 @@ function transitionsOf(rows: TerrainIntraday[]) {
     }
   }
   return out
+}
+
+/** Every snapshot of the session identical — spot, regime and the four probabilities. */
+function flatSession(rows: TerrainIntraday[]) {
+  if (rows.length < 2) return false
+  const key = (r: TerrainIntraday) =>
+    [r.spot, r.regime, r.prob_rangy, r.prob_bull, r.prob_bear, r.prob_squeeze].join('|')
+  return rows.every((r) => key(r) === key(rows[0]))
 }
 
 /** `dominant:bull` and `bull` are the same branch. */
@@ -145,6 +158,8 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
   const intraRows = intraQ.data?.rows ?? []
   const live = intraRows[intraRows.length - 1] ?? null
   const trans = transitionsOf(intraRows)
+  const flat = flatSession(intraRows)
+  const flatTitle = `All ${intraRows.length} intraday snapshots of ${live?.trade_date ?? 'the session'} are the same: the intraday terrain reads the nightly tables (the prior close's spot ${live ? live.spot.toFixed(2) : ''}, GEX, momentum, IV), so it restates the prior close — nothing here is the tape confirming a branch.`
 
   return (
     <section id="playbook" className={cn(panel, 'scroll-mt-12')}>
@@ -164,7 +179,11 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
             {gzLo != null && gzHi != null ? ((gzLo + gzHi) / 2).toFixed(2) : '—'}
           </b>
           {gzLo != null && gzHi != null ? <span className="text-dense-micro">derived</span> : null}
-          {live ? (
+          {live && flat ? (
+            <DenseTag variant="neutral" size="cell" title={flatTitle}>
+              prior close · {live.regime}
+            </DenseTag>
+          ) : live ? (
             <DenseTag variant={liveVariant(live.regime)} size="cell">
               LIVE · {live.regime}
             </DenseTag>
@@ -271,10 +290,16 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
         )}
       </div>
       <div className="border-t border-[var(--sk-line0)]">
-        <div className={cn(cap, 'px-3 pb-0.5 pt-1.5')}>path transitions today</div>
-        {trans.length === 0 ? (
+        <div className={cn(cap, 'px-3 pb-0.5 pt-1.5')}>
+          path transitions · {live ? live.trade_date.slice(5) : '—'}
+        </div>
+        {flat ? (
+          <p className="m-0 px-3 py-1.5 text-dense-meta text-muted-foreground text-pretty" title={flatTitle}>
+            No path to change: every snapshot of the session stood on the prior close.
+          </p>
+        ) : trans.length === 0 ? (
           <p className="m-0 px-3 py-1.5 text-dense-meta text-muted-foreground">
-            No path change today — the session has held one regime.
+            No path change — the session has held one regime.
           </p>
         ) : (
           trans.map((t) => (
@@ -290,7 +315,8 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
       </div>
       <p className="m-0 border-t border-[var(--sk-line0)] px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground text-pretty">
         Observe-only. The fan is the model&rsquo;s own probability split for the session; LIVE
-        is which branch the tape is currently confirming. Nothing here places orders.
+        is which branch the intraday terrain is confirming — while it reads the nightly tables it
+        restates the prior close, and says so. Nothing here places orders.
       </p>
     </section>
   )

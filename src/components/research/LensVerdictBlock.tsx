@@ -6,12 +6,23 @@
  *
  * The colour rules are the prototype's own: a thin sample (n < 10) is amber
  * whatever the rate; ≥55% reads green against the 50% base rate, ≤45% red.
+ *
+ * The similar cell opens the whole card — the neighbours, what followed each and
+ * what the hygiene dropped — that every retired lab section carried under its
+ * verdict (S7, 2026-09-26). It asks the same k-NN the cell summarises: the lens
+ * and value the exhibit matched on, at its k and horizon.
  */
+import { useState } from 'react'
 import type { ExhibitPayload } from '@/api/research/exhibit'
+import type { SimilarRegimeLens } from '@/api/research/similarRegime'
 import { labelForBand, toneForBand } from '@/lib/lensVerdict'
 import { cn } from '@/lib/utils'
 import { AskCopilotButton } from './AskCopilotButton'
 import { compactSnapshot } from './compactSnapshot'
+import { SimilarRegimeCard } from './SimilarRegimeCard'
+
+/** The exhibit's own k (`SIMILAR_K`), so the card and the cell count the same neighbours. */
+const SIMILAR_K = 8
 
 const CAP = 'text-dense-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground'
 
@@ -68,6 +79,7 @@ function lensSnapshot(lensId: string, exhibit: ExhibitPayload): Record<string, u
 }
 
 export function LensVerdictBlock({ lensId, exhibit }: { lensId: string; exhibit: ExhibitPayload | undefined }) {
+  const [open, setOpen] = useState(false)
   const band = exhibit?.verdict?.band ?? null
   const tone = toneClasses(toneForBand(lensId, band))
   const label = exhibit?.verdict?.label
@@ -85,7 +97,18 @@ export function LensVerdictBlock({ lensId, exhibit }: { lensId: string; exhibit:
           ? 'text-loss'
           : 'text-foreground'
 
+  const canOpen = Boolean(exhibit?.symbol && sim?.lens && sim.value != null && sim.value !== '')
+  const simCell = (
+    <Evidence
+      cap={`similar · ${sim?.horizon ?? 5}d${canOpen ? (open ? ' ▾' : ' ▸') : ''}`}
+      value={simMed}
+      sub={sim ? `${pct(sim.share_positive)} positive · n ${sim.n}` : 'no neighbours'}
+      cls={simCls}
+    />
+  )
+
   return (
+    <>
     <div className="flex flex-wrap items-start gap-3 border-b border-border/60 px-3 py-2.5">
       <span className={cn('mt-0.5 h-9 w-1 shrink-0 rounded-sm', tone.bar)} />
       <div className="min-w-0 flex-[1_1_14rem]">
@@ -106,12 +129,19 @@ export function LensVerdictBlock({ lensId, exhibit }: { lensId: string; exhibit:
       >
         <Evidence cap="hit 5d" value={pct(tr?.hit_rate_5d)} sub={tr ? `n ${tr.n}` : undefined} cls={rateClass(tr?.hit_rate_5d ?? null, tr?.n ?? 0)} />
         <Evidence cap="hit 20d" value={pct(tr?.hit_rate_20d)} sub={tr ? `n ${tr.n}` : undefined} cls={rateClass(tr?.hit_rate_20d ?? null, tr?.n ?? 0)} />
-        <Evidence
-          cap={`similar · ${sim?.horizon ?? 5}d`}
-          value={simMed}
-          sub={sim ? `${pct(sim.share_positive)} positive · n ${sim.n}` : 'no neighbours'}
-          cls={simCls}
-        />
+        {canOpen ? (
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="-m-1 cursor-pointer rounded-[6px] p-1 text-left hover:bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]"
+            title={`${open ? 'Close' : 'Open'} the similar readings — ${sim!.lens} near ${String(sim!.value)}, what followed each`}
+          >
+            {simCell}
+          </button>
+        ) : (
+          simCell
+        )}
         <Evidence
           cap="scope"
           value={tr ? (tr.symbol_scoped ? 'this symbol' : 'all symbols') : '—'}
@@ -132,5 +162,17 @@ export function LensVerdictBlock({ lensId, exhibit }: { lensId: string; exhibit:
         ) : null}
       </div>
     </div>
+    {open && canOpen ? (
+      <div className="border-b border-border/60 px-3 py-2">
+        <SimilarRegimeCard
+          lens={sim!.lens as SimilarRegimeLens}
+          symbol={exhibit!.symbol}
+          value={sim!.value}
+          horizon={sim!.horizon ?? 5}
+          k={SIMILAR_K}
+        />
+      </div>
+    ) : null}
+    </>
   )
 }

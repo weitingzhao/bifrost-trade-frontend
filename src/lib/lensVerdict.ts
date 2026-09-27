@@ -9,7 +9,7 @@
  * is a risk, calm skew frees structures.
  */
 import type { LensBand } from '@/api/research/lenses'
-import type { ExhibitPayload, ExhibitSimilar, ExhibitTrackRecord } from '@/api/research/exhibit'
+import type { ExhibitTrackRecord } from '@/api/research/exhibit'
 import type { AnalyzeVerdictTone } from '@/components/research/AnalyzeVerdictStrip'
 
 type ToneMap = Partial<Record<LensBand, AnalyzeVerdictTone>>
@@ -83,11 +83,6 @@ export function labelForBand(lensId: string, band: LensBand | null | undefined, 
   return LABELS[lensId]?.[band] ?? `${BAND_WORD[band][0].toUpperCase()}${BAND_WORD[band].slice(1)}`
 }
 
-/** The auto-insight chip has no neutral state; a neutral verdict reads as info. */
-export function chipTone(tone: AnalyzeVerdictTone): 'success' | 'danger' | 'warning' | 'info' {
-  return tone === 'neutral' ? 'info' : tone
-}
-
 export interface VerdictView {
   band: LensBand | null
   tone: AnalyzeVerdictTone
@@ -96,22 +91,6 @@ export interface VerdictView {
   means: string | null
   /** True when the band is a trigger side — the chip-worthy states. */
   decisive: boolean
-}
-
-/** The view of an exhibit's verdict a lab renders; safe to call with no data yet. */
-export function verdictView(
-  lensId: string,
-  exhibit: ExhibitPayload | undefined,
-  opts: { missing?: string } = {},
-): VerdictView {
-  const band = (exhibit?.verdict?.band ?? null) as LensBand | null
-  return {
-    band,
-    tone: toneForBand(lensId, band),
-    label: labelForBand(lensId, band, opts.missing),
-    means: exhibit?.verdict?.means ?? exhibit?.caveats?.[0] ?? null,
-    decisive: band === 'hot' || band === 'cold',
-  }
 }
 
 /** Severity band from the registry's own bands — for tables that grade many rows at once. */
@@ -127,11 +106,6 @@ export function bandForSeverity(
 
 function pctText(v: number | null | undefined): string {
   return v == null || !Number.isFinite(v) ? '—' : `${Math.round(v * 100)}%`
-}
-
-function signedPct(v: number | null | undefined): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  return `${v > 0 ? '+' : ''}${(v * 100).toFixed(1)}%`
 }
 
 /**
@@ -185,10 +159,4 @@ export function trackRecordDetail(
     `${side} side hit 5d ${pctText(s.hit_rate_5d)} (n=${s.evaluated_5d}) · ` +
     `20d ${pctText(s.hit_rate_20d)} (n=${s.evaluated_20d}) — ${s.n} triggers${tail}, ${scope}, ${tr.window_days}d window`
   )
-}
-
-/** "similar readings: median +2.6% over 5d, 60% positive (n=5)" — or null. */
-export function similarLine(sim: ExhibitSimilar | null | undefined): string | null {
-  if (!sim || sim.n_resolved === 0) return null
-  return `similar readings: median ${signedPct(sim.median_fwd)} over ${sim.horizon}d, ${pctText(sim.share_positive)} positive (n=${sim.n_resolved})`
 }

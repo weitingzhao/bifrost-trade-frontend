@@ -12,14 +12,17 @@
  *   `/market/analytics/max-pain/compute/history` (PLTR 10-23: 55 sessions)
  *   against the name's own daily closes.
  * - Intraday — `/research/gex/intraday`, the session's snapshots over every
- *   expiry. Until research 0.128.0 the job found no spot during the session
- *   and wrote only SPX from 09-03; it now runs on the names the plugin's
- *   intraday chain observes, standing on the prior close.
+ *   expiry, for the newest session or any past one (the route takes a date;
+ *   the retired GEX section read it off the shell's date). Until research
+ *   0.128.0 the job found no spot during the session and wrote only SPX from
+ *   09-08; it now runs on the names the plugin's intraday chain observes,
+ *   standing on the prior close.
  *
  * The two dated panels mark earnings as the IV charts do: a results 8-K's
  * session is marked E (a late estimate E?), and the max-pain chart points
  * to the next estimated print past its last session.
  */
+import { useState } from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchGexIntraday, fetchGexLevels } from '@/api/researchEngine'
 import { GexTimelineChart } from '@/components/charts/GexTimelineChart'
@@ -337,34 +340,69 @@ const fmtGex = (v: number | null) => {
   return `${v >= 0 ? '+' : '−'}${body}`
 }
 
+const stepBtn =
+  'mat-btn inline-flex h-5 min-w-5 cursor-pointer items-center justify-center px-1.5 text-dense-micro text-secondary-foreground disabled:cursor-default disabled:opacity-40'
+
 /**
  * The session's intraday GEX: every snapshot the intraday job wrote for the
- * newest date it holds, over all expiries (the panels above read one expiry).
+ * newest date it holds — or for a session stepped back to, one of the name's
+ * own trading days — over all expiries (the panels above read one expiry).
  * Spot is the prior close until the session's own close lands — the store keeps
  * no intraday price; an index is priced by put–call parity — so what moves
  * through the day is the session's gamma and volume from the plugin's intraday
  * chain (10:30 · 13:00 · 15:30 New York).
  */
 export function DealerIntraday({ sym }: { sym: string }) {
+  // No pick reads the newest session the store holds; a pick belongs to one name.
+  const [picked, setPicked] = useState<{ sym: string; date: string } | null>(null)
+  const pick = picked?.sym === sym ? picked.date : null
   const q = useQuery({
-    queryKey: ['research', 'gex-intraday', sym],
-    queryFn: () => fetchGexIntraday(sym),
+    queryKey: ['research', 'gex-intraday', sym, pick ?? 'newest'],
+    queryFn: () => fetchGexIntraday(sym, pick ?? undefined),
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,
   })
-  const closesQ = useSymbolCloses(sym)
+  // The market's sessions, read off SPY's closes: trading days are market-wide,
+  // and an index has no closes of its own (SPX), so the name's own would leave
+  // an index with nothing to step through.
+  const calendarQ = useSymbolCloses('SPY')
   const rows = [...(q.data?.rows ?? [])].sort((a, b) => a.asof_ts.localeCompare(b.asof_ts))
-  const day = q.data?.trade_date || rows[0]?.trade_date || ''
-  const closes = closesQ.data ?? []
-  const lastSession = closes[closes.length - 1]?.date ?? ''
-  const stale = Boolean(day && lastSession && day < lastSession)
+  const day = pick ?? (q.data?.trade_date || rows[0]?.trade_date || '')
+  const sessions = (calendarQ.data ?? []).map((c) => c.date)
+  const lastSession = sessions[sessions.length - 1] ?? ''
+  const prevDay = day ? ([...sessions].reverse().find((d) => d < day) ?? null) : null
+  const nextDay = day ? (sessions.find((d) => d > day) ?? null) : null
+  const stale = !pick && Boolean(day && lastSession && day < lastSession)
   const last = rows[rows.length - 1]
+  const go = (date: string | null) => setPicked(date ? { sym, date } : null)
 
   return (
     <>
       <header className="flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal">
         <span className={cap}>Intraday</span>
-        <span className="text-dense-body font-semibold">session gamma{day ? ` · ${day}` : ''}</span>
+        <span className="text-dense-body font-semibold">session gamma</span>
+        <span className="inline-flex items-center gap-1">
+          <button type="button" className={stepBtn} disabled={!prevDay} onClick={() => go(prevDay)} aria-label="Previous session" title={prevDay ? `Read ${prevDay}` : 'No earlier session in the year of market closes'}>
+            ‹
+          </button>
+          <input
+            type="date"
+            aria-label="Intraday session"
+            value={day}
+            min={sessions[0]}
+            max={lastSession || undefined}
+            onChange={(e) => go(e.target.value || null)}
+            className="mat-field h-5 w-[7.5rem] px-1 font-mono text-dense-micro tabular-nums"
+          />
+          <button type="button" className={stepBtn} disabled={!nextDay} onClick={() => go(nextDay)} aria-label="Next session" title={nextDay ? `Read ${nextDay}` : 'No later session'}>
+            ›
+          </button>
+          {pick ? (
+            <button type="button" className={stepBtn} onClick={() => go(null)} title="Back to the newest session the store holds">
+              Newest
+            </button>
+          ) : null}
+        </span>
         <span className="ml-auto text-dense-caption text-muted-foreground">
           {rows.length > 0
             ? `${rows.length} snapshot${rows.length === 1 ? '' : 's'} · last ${etClock(last!.asof_ts)} ET · all expiries`
@@ -379,8 +417,10 @@ export function DealerIntraday({ sym }: { sym: string }) {
         </p>
       ) : rows.length === 0 ? (
         <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
-          No intraday snapshot for {sym}. The intraday job reads the names the plugin&rsquo;s intraday chain
-          observes — the watchlist and benchmarks, 26 on DEV — at a quarter past each hour, 10:45–16:45 New York.
+          No intraday snapshot for {sym}{pick ? ` on ${pick}` : ''}. The intraday job reads the names the
+          plugin&rsquo;s intraday chain observes — the watchlist and benchmarks, 26 on DEV — at :45 past each
+          hour, 10:45–16:45 New York. Before 2026-09-28 the store holds SPX from 09-08 and one or two sessions
+          (08-20, 09-02) of the rest.
         </p>
       ) : (
         <div className="grid grid-cols-1 items-start gap-3 px-3 py-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">

@@ -1,24 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
   labelForBand,
-  similarLine,
   toneForBand,
   trackRecordDetail,
   trackRecordLine,
-  verdictView,
 } from './lensVerdict'
-import type { ExhibitPayload } from '@/api/research/exhibit'
-
-const exhibit = (over: Partial<ExhibitPayload>): ExhibitPayload => ({
-  lens: 'iv_rank',
-  symbol: 'NVDA',
-  as_of: '2026-09-04',
-  freshness: 'fresh',
-  readings: {},
-  history_summary: {},
-  caveats: [],
-  ...over,
-})
 
 describe('band → tone', () => {
   it('rich vol is the seller edge, a chasing gamma regime is the risk', () => {
@@ -39,19 +25,6 @@ describe('band → tone', () => {
     expect(labelForBand('term_slope', 'lean_cold')).toBe('Lean cold')
     expect(labelForBand('iv_rank', null)).toBe('No reading — wait')
     expect(labelForBand('iv_rank', null, 'No IV Rank — wait')).toBe('No IV Rank — wait')
-  })
-})
-
-describe('verdictView', () => {
-  it('reads the exhibit band and means, and marks trigger sides decisive', () => {
-    const v = verdictView(
-      'iv_rank',
-      exhibit({ verdict: { band: 'cold', label: 'Cold', value: 16, unit: 'pct', means: 'premium is cheap' } }),
-    )
-    expect(v).toMatchObject({ band: 'cold', tone: 'danger', label: 'Buy premium bias', means: 'premium is cheap', decisive: true })
-    const none = verdictView('order_sentiment', exhibit({ verdict: null, caveats: ['No options trades tape'] }))
-    expect(none).toMatchObject({ band: null, tone: 'neutral', means: 'No options trades tape', decisive: false })
-    expect(verdictView('vrp', undefined).label).toBe('No reading — wait')
   })
 })
 
@@ -92,10 +65,5 @@ describe('evidence lines', () => {
     expect(trackRecordLine(hotEmpty, 'neutral')).toBe('hot side: no triggers in 90d (all symbols)')
     expect(trackRecordDetail(hotEmpty, 'neutral')).toBe('hot side: no triggers in 90d (all symbols)')
     expect(trackRecordLine(null, 'hot')).toBeNull()
-  })
-  it('summarises resolved neighbours only', () => {
-    const sim = { lens: 'iv_rank', source: 't', horizon: 5, n: 8, n_resolved: 5, median_fwd: 0.026318, p25_fwd: -0.04, p75_fwd: 0.04, share_positive: 0.6 }
-    expect(similarLine(sim)).toBe('similar readings: median +2.6% over 5d, 60% positive (n=5)')
-    expect(similarLine({ ...sim, n_resolved: 0 })).toBeNull()
   })
 })

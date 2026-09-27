@@ -49,7 +49,10 @@ function fmtLens(v: number | string | null | undefined): string {
   if (v == null) return '—'
   if (typeof v === 'string') return v
   if (!Number.isFinite(v)) return '—'
-  return Math.abs(v) >= 1000 ? v.toExponential(2) : v.toFixed(2)
+  if (Math.abs(v) >= 1000) return v.toExponential(2)
+  // An ATM slope lives around 1e-5: two decimals read it, and its distances, as 0.00.
+  if (v !== 0 && Math.abs(v) < 0.1) return String(Number(v.toPrecision(2)))
+  return v.toFixed(2)
 }
 
 export interface SimilarRegimeCardProps {

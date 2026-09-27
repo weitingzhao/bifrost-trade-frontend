@@ -58,6 +58,8 @@ export interface ExhibitTrackRecord {
 
 export interface ExhibitSimilar {
   lens: string
+  /** The reading the k-NN matched on (research 0.136.0+) — a number, or a regime. */
+  value?: number | string | null
   source: string
   horizon: number
   n: number

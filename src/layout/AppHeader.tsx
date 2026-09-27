@@ -15,6 +15,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { openNoteComposer } from '@/lib/notes/noteComposer'
 import { cn } from '@/lib/utils'
 import { omnibar, omnibarStore } from '@/lib/omnibar'
 import { toggleThread, useThread } from '@/hooks/useCopilotThread'
@@ -230,6 +231,23 @@ export function AppHeader({
       <div className="ml-auto flex shrink-0 flex-nowrap items-center gap-1">
         <ObjectiveControl />
         <BookControl />
+        {/* Rev .97 #5: the note button — a Journal note with this page and the
+            carried symbol attached; ⌥N does the same from anywhere. */}
+        <MenubarTip tip="New note — this page and symbol attached · ⌥N">
+          <button
+            type="button"
+            onClick={() => openNoteComposer()}
+            aria-label="New note"
+            className={cn(mb.item, 'relative px-[3px]')}
+          >
+            <span className="inline-flex size-[22px] flex-none items-center justify-center text-[var(--sk-soft)]">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+            </span>
+          </button>
+        </MenubarTip>
         <MenubarTip
           tip={
             thread.open

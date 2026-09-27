@@ -34,6 +34,7 @@ import { AskCopilotIntentHost } from '@/components/cockpit/AskCopilotIntentHost'
 import { EquipRail } from './EquipRail'
 import { EquipFloat } from './EquipFloat'
 import { EquipPanel } from './EquipPanel'
+import { NoteComposer } from './NoteComposer'
 import { SymbolDockHost } from './symbolDock/SymbolDockHost'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
@@ -167,6 +168,7 @@ export function AppLayout() {
             the panel — docked or a strip it takes its width from the page,
             floating it sits over it. */}
         <SymbolDockHost />
+        <NoteComposer />
         {/* The equipment's edge. After the panel and the dock, so it floats
             over both — the rail is shell furniture, not page furniture, and
             it keeps the screen edge for Fitts. */}

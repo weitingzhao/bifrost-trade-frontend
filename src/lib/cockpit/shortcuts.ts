@@ -43,6 +43,7 @@ export const SHORTCUTS: readonly Shortcut[] = [
   { keys: '⌥W', name: 'Close tab', what: 'Close the panel’s current tab — the toast offers Undo', scope: 'Anywhere the panel is open' },
   { keys: '⌥[ / ⌥]', name: 'Switch tab', what: 'Previous / next tab in the panel', scope: 'Anywhere the panel is open' },
   { keys: '⌘,', name: 'Settings', what: 'Open Settings', scope: 'Anywhere' },
+  { keys: '⌥N', name: 'New note', what: 'A Journal note with this page and symbol attached', scope: 'Anywhere' },
   { keys: '← / →', name: 'Menu bar', what: 'Walk the top bar’s items; ↑ ↓ ← → walk the controls inside an open popover', scope: 'Top bar' },
   { keys: 'Right-click', name: 'Symbol menu', what: 'On a symbol or contract: open beside, locked tab, Symbol page, Watch, Copy. On a panel tab: page, float, close, close others', scope: 'Anywhere' },
   // Rev .70–.71.

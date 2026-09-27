@@ -21,6 +21,7 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PageHead, PageShell, SectionPanel, SECTION_CAP_CLASS } from '@/components/layout'
 import { ViewState } from '@bifrost/ui'
+import { NotesView } from './NotesView'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail } from '@/lib/viewState'
 import { SegmentControl } from '@/components/data-display'
@@ -111,6 +112,7 @@ export default function JournalPage() {
 
   const days = useMemo(() => journalDays(nodes), [nodes])
   const operator = params.get('op') ?? 'all'
+  const view = params.get('view') === 'notes' ? 'notes' : 'tree'
   const selectedId = params.get('sel')
   // An explicit `?day=` wins — that is the picker.
   const day = params.get('day') ?? journalDefaultDay(nodes, selectedId)
@@ -184,7 +186,22 @@ export default function JournalPage() {
     <PageShell padding="compact" className="space-y-3">
       {/* §16.10: the lead behind ⓘ; the operator and the day are the
           toolbar's (§17.3), not the head's. */}
-      <PageHead title="Journal" info={LEAD} />
+      {/* Rev .97: the Journal's second view — every ⌥N, by day. The Day view
+          (trace stream + distilled summary) ships with K6's memory store. */}
+      <PageHead
+        title="Journal"
+        info={LEAD}
+        tabs={[
+          { value: 'tree', label: 'Trees' },
+          { value: 'notes', label: 'Notes', title: 'Every ⌥N, by day — search, and filter by linked object' },
+        ]}
+        tab={view}
+        onTab={(id) => setParam('view', id === 'tree' ? '' : id)}
+      />
+      {view === 'notes' ? (
+        <NotesView />
+      ) : (
+        <>
       <div data-sr-toolbar="">
         <span data-sr-tb="label">Operator</span>
         <SegmentControl
@@ -334,6 +351,8 @@ export default function JournalPage() {
               />
             </SectionPanel>
           </div>
+        </>
+      )}
         </>
       )}
     </PageShell>

@@ -94,7 +94,7 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
           )
         : null
     const earnings = earnQ.data ? { next, filings: earnQ.data.filings, gap } : null
-    const extras = faceExtras(exhibits, { held, watched, sepa: counts, earnings })
+    const extras = faceExtras(exhibits, { held, watched, sepa: counts, earnings, earningsFailed: earnQ.isError })
     const views = DOSSIER_FACES.map((face) =>
       faceView(face, exhibits, symbol, specOf, extras[face.id]),
     )
@@ -123,6 +123,7 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
     registry.isLoading,
     sepa.data,
     earnQ.data,
+    earnQ.isError,
     termQ.data,
     symbol,
     trail,

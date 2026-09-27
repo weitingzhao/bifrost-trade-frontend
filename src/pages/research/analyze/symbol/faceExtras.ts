@@ -90,6 +90,8 @@ export function faceExtras(
     sepa?: SepaCounts | null
     /** The next print, estimated; its 8-K count tells a name outside the feed from one without a cadence. */
     earnings?: { next: ExpectedEarnings | null; filings: number | null; gap?: EventMove | null } | null
+    /** The estimate's request failed — unavailable, which is not the same as none. */
+    earningsFailed?: boolean
   },
 ): Partial<Record<DossierFaceId, FaceExtras>> {
   const gex = readingsOf(exhibits, 'gex_regime')
@@ -197,7 +199,11 @@ export function faceExtras(
           id: 'earnings',
           label: 'Earnings',
           value: opts.earnings ? earn.value : '—',
-          means: opts.earnings ? earn.means : 'Reading the next print…',
+          means: opts.earnings
+            ? earn.means
+            : opts.earningsFailed
+              ? 'Research did not answer for the next print — the estimate is unavailable, not absent.'
+              : 'Reading the next print…',
         },
         ...(gap ? [{ id: 'earnings-gap', label: 'Earnings gap', value: gap.value, means: gap.means }] : []),
         {

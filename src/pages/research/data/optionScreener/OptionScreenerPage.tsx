@@ -4,23 +4,26 @@
  * numbered rail beside the Contracts table.
  *
  * The walk of 2026-09-22 kept a Run button and left the table unbuilt, because
- * the engine answers nothing on DEV. The Owner chose to build the design's
+ * the engine answered nothing on DEV. The Owner chose to build the design's
  * page anyway and fix the engine separately, so this is the design's shape:
  *
  * - **Live, no Run button.** The engine is asked once per name, structure and
  *   earnings choice, at the widest window a slider can reach; the six sliders
  *   filter that in the browser (`screenerModel.ts`). A drag never refetches.
  *   One request per name, because three in one request ran past the 60-second
- *   abort at that window (`useScreenerChain.ts`).
+ *   abort at that window (`useScreenerChain.ts`) — measured 2026-09-23. Since
+ *   the engine fix of 2026-09-27 three names answer in 0.3 s and eleven in
+ *   under 2 s, so that split no longer rests on a measurement.
  * - **The table is always drawn**, and when it has nothing in it the panel says
  *   which of the reasons it is — no names picked, screening, the engine
  *   returned no chain, or every contract fails a filter.
  *
- * What DEV cannot show yet is any row: `POST /research/screener` returns no
- * chain for any name, because the market-data plugin's `/options/chain/latest`
- * answers empty (measured 2026-09-23, tracked as its own task). Everything
- * with a row in it is built from the response's own fields and checked by
- * the model's tests, not against a live row.
+ * Until 2026-09-27 `POST /research/screener` returned no chain for any name.
+ * The plugin held the snapshots; the Trade API's plugin client read `data`
+ * where the plugin answers `rows`, so every name read "No snapshot data"
+ * (bifrost-trade-api f1ae0fd). It answers on DEV now. Everything with a row
+ * in it is built from the response's own fields and checked by the model's
+ * tests; a walk against live rows is still owed.
  */
 import { useEffect, useMemo, useState } from 'react'
 import { Download } from 'lucide-react'

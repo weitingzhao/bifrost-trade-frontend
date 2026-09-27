@@ -13,15 +13,26 @@
  * the ruler draws — the store widens the dealer walls into it, so it keeps a
  * width when both walls sit on one strike (PLTR 09-25: walls 190/190, zone
  * 189.05–190.95).
+ *
+ * Earnings (`scenarioEarnings.ts`): the close expectation's caption says
+ * where the estimated print falls against its 20 sessions, and inside them
+ * the ruler carries the gap the ATM term prices; the recent-regimes strip
+ * marks the print's session and names the next one.
  */
 import { useQuery } from '@tanstack/react-query'
 import { fetchTerrainHistory, type TerrainData } from '@/api/researchEngine'
 import { DenseSparkline } from '@/components/charts/DenseSparkline'
+import { DenseTag } from '@/components/data-display'
 import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
 import { SymbolForecastSessions } from '@/pages/research/analyze/symbol/SymbolForecastSessions'
 import { SymbolPlaybookPanel } from '@/pages/research/analyze/symbol/SymbolPlaybookPanel'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
+import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
+import { shortDate } from '@/utils/earningsEstimate'
+import { rankPathEarnings } from './rankPathEarnings'
+import { horizonEarnings } from './scenarioEarnings'
+import { useSymbolEarnings } from './useSymbolEarnings'
 
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
@@ -125,13 +136,29 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
   const volSqueeze = num(t.vol_squeeze)
   const sim = terEx?.similar ?? null
 
+  // Earnings against the close expectation's horizon, and on the regime strip.
+  const earn = useSymbolEarnings(sym)
+  const horizon = horizonEarnings({
+    next: earn.next,
+    from: newest ? String(newest.trade_date).slice(0, 10) : todayIso(),
+    gap: earn.gap,
+    spot,
+  })
+  const stripEarn = rankPathEarnings(
+    days.map((d) => String(d.trade_date).slice(0, 10)),
+    earn.filings,
+    earn.next
+  )
+
   // The 1σ close band over 20 sessions, from the stores' own numbers:
   // expected_close ± expected × IV30 × √(20/252).
   const sigma = expected != null && iv30 != null ? expected * iv30 * Math.sqrt(20 / 252) : null
   const lo = expected != null && sigma != null ? expected - sigma : null
   const hi = expected != null && sigma != null ? expected + sigma : null
   const marks = (() => {
-    const vals = [lo, hi, spot, expected, gzLo, gzHi].filter((x): x is number => x != null)
+    const vals = [lo, hi, spot, expected, gzLo, gzHi, horizon?.gap?.lo, horizon?.gap?.hi].filter(
+      (x): x is number => x != null
+    )
     if (vals.length < 2) return null
     const mn = Math.min(...vals)
     const mx = Math.max(...vals)
@@ -150,7 +177,14 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
       <LensVerdictBlock lensId="terrain_regime" exhibit={terEx} />
       <div className="grid grid-cols-1 gap-0 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div className="border-b border-border/60 px-4 pb-2 pt-2.5 md:border-b-0 md:border-r">
-          <div className={cn(cap, 'mb-6')}>close expectation · 20 sessions</div>
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <span className={cap}>close expectation · 20 sessions</span>
+            {horizon ? (
+              <DenseTag variant={horizon.tag.tone} size="cell" title={horizon.tag.title} data-horizon-earnings={horizon.tag.tone}>
+                {horizon.tag.label}
+              </DenseTag>
+            ) : null}
+          </div>
           {marks && lo != null && hi != null ? (
             <div className="relative mb-7 h-1.5 rounded-full bg-[var(--sk-line0)]">
               <span
@@ -165,6 +199,17 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
                   title={`gamma zone ${gzLo.toFixed(2)}–${gzHi.toFixed(2)} — the terrain's own, the dealer walls widened (${newest?.trade_date ?? ''})`}
                 />
               ) : null}
+              {horizon?.gap
+                ? [horizon.gap.lo, horizon.gap.hi].map((lv) => (
+                    <span
+                      key={lv}
+                      className="absolute -inset-y-1.5 w-0 -translate-x-1/2 border-l-2 border-dashed border-warning"
+                      style={{ left: `${marks.posOf(lv)}%` }}
+                      title={`Earnings gap ${lv} — spot moved by the ±${((horizon.gap?.move ?? 0) * 100).toFixed(1)}% the ATM term prices for the print`}
+                      data-horizon-gap={lv}
+                    />
+                  ))
+                : null}
               <span className="absolute -bottom-5 -translate-x-1/2 font-mono text-dense-micro text-secondary-foreground" style={{ left: `${marks.posOf(lo)}%` }}>
                 {lo.toFixed(0)}
               </span>
@@ -198,7 +243,18 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
                 gamma zone {gzLo.toFixed(2)}–{gzHi.toFixed(2)}
               </span>
             ) : null}
+            {horizon?.gap ? (
+              <span>
+                <i className="mr-1 inline-block h-2.5 w-0 border-l-2 border-dashed border-warning align-middle" />
+                earnings gap {horizon.gap.lo} / {horizon.gap.hi}
+              </span>
+            ) : null}
           </div>
+          {horizon?.note ? (
+            <p className="m-0 pb-2 text-dense-micro leading-normal text-warning text-pretty" title={horizon.tag.title}>
+              {horizon.note}
+            </p>
+          ) : null}
         </div>
         <div className="grid grid-cols-2 gap-x-3.5 gap-y-2.5 px-3 py-2.5">
           <div className="flex min-w-0 flex-col gap-0.5">
@@ -264,6 +320,28 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
                 {histQ.isLoading ? 'Loading the terrain history…' : 'The terrain history holds no session for this name.'}
               </span>
             )}
+            {days.length > 0 && stripEarn.marks.some(Boolean) ? (
+              <div className="-mt-0.5 flex h-1 gap-0.5">
+                {stripEarn.marks.map((m, i) => (
+                  <span
+                    key={days[i].trade_date}
+                    className={cn('flex-1 rounded-[1px]', m?.kind === 'print' ? 'bg-warning' : m?.kind === 'late' ? 'bg-warning/35' : '')}
+                    title={m?.title}
+                    data-strip-earnings={m?.kind}
+                  />
+                ))}
+              </div>
+            ) : null}
+            {days.length > 0 && (stripEarn.printed.length > 0 || stripEarn.pending) ? (
+              <span className="flex flex-wrap justify-between gap-x-2 font-mono text-dense-micro text-warning">
+                <span>{stripEarn.printed.length > 0 ? `E ${stripEarn.printed.map((d) => shortDate(d)).join(' · ')}` : ''}</span>
+                {stripEarn.pending ? (
+                  <span title={stripEarn.pending.title} data-strip-pending={stripEarn.pending.late ? 'late' : 'next'}>
+                    {stripEarn.pending.label}
+                  </span>
+                ) : null}
+              </span>
+            ) : null}
             {days.length > 1 ? (
               <span className="text-dense-micro text-muted-foreground">
                 {transitions.length === 0

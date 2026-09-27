@@ -12,14 +12,17 @@
  * panel withheld every figure until the fix). The path is judged hour by hour
  * where the plugin keeps 1-hour bars for the name, on the close alone where it
  * does not — the header says how many of each. Below the list, the model's
- * own calibration by regime over 180 days.
+ * own calibration by regime over 180 days. A session that runs into an
+ * earnings print is marked E (`forecastPrints`).
  */
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { fetchForecastCalibration } from '@/api/researchEngine'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
+import { useEarningsDates } from '@/hooks/useNarrative'
 import { cn } from '@/lib/utils'
 import { SymbolSessionInspector } from './SymbolSessionInspector'
+import { forecastPrints } from './scenarioEarnings'
 import {
   INPUT_FAULT_NOTE,
   LEGACY_SETTLEMENT_NOTE,
@@ -66,6 +69,14 @@ export function SymbolForecastSessions({ symbol }: { symbol: string }) {
   const legacy = days.filter((d) => d.settlement != null && !isForecastSettlement(d.settlement)).length
   const pending = days.filter((d) => d.settlement == null && d.trade_date > newestSettled).length
   const reruns = days.reduce((a, d) => a + d.reruns, 0)
+  const earnQ = useEarningsDates(sym)
+  const printOn = forecastPrints(
+    days.map((d) => ({
+      trade_date: d.trade_date,
+      target: isForecastSettlement(d.settlement) ? settlementTarget(d.settlement) : null,
+    })),
+    earnQ.data?.dates ?? []
+  )
 
   const calQ = useQuery({
     queryKey: ['research', 'forecast-calibration', sym, 180],
@@ -184,6 +195,15 @@ export function SymbolForecastSessions({ symbol }: { symbol: string }) {
                       >
                         {d.trade_date.slice(5)}
                       </button>
+                      {printOn.get(d.trade_date) ? (
+                        <span
+                          className="ml-1.5 text-warning"
+                          title={`Earnings — the 8-K (Item 2.02) was filed ${printOn.get(d.trade_date)}, hour unknown: this forecast runs into the first session after it (a morning release reacts in the session before).`}
+                          data-forecast-earnings
+                        >
+                          E
+                        </span>
+                      ) : null}
                     </td>
                     <td className={cn(td, tl, 'font-sans text-[var(--sk-soft)]')}>{s.regime || '—'}</td>
                     <td className={td}>{s.spot.toFixed(2)}</td>

@@ -34,7 +34,7 @@ import { OpportunityFormModal } from '@/components/strategy/OpportunityFormModal
 import { STORAGE_KEYS } from '@/constants/storage'
 import { usePageViewState } from '@/lib/pageView'
 import { notify } from '@/lib/shellNotify'
-import { useOpportunities } from '@/hooks/useStrategies'
+import { useOpportunities, useStructures } from '@/hooks/useStrategies'
 import { OptionScreenerContracts } from './OptionScreenerContracts'
 import { OptionScreenerFunnel } from './OptionScreenerFunnel'
 import { FiltersPanel, StructurePanel } from './OptionScreenerRail'
@@ -42,8 +42,10 @@ import { OptionScreenerSources } from './OptionScreenerSources'
 import { STRUCTURE_LABEL, STRUCTURE_TYPES } from './optionScreenerConstants'
 import { exportScreenerCsv } from './optionScreenerExport'
 import {
+  anySpreadMeasured,
   buildScreenGroups,
   DEFAULT_LIVE_FILTERS,
+  rulesForStructure,
   screenerFunnel,
   type LiveFilters,
   type ScreenView,
@@ -110,6 +112,7 @@ export default function OptionScreenerPage() {
 
   const { sources } = useScreenerSources()
   const opportunities = useOpportunities()
+  const structures = useStructures()
   const structureOn = STRUCTURE_TYPES.some((s) => s.value === structure && s.enabled)
   const chain = useScreenerChain({ symbols, structure, includeEarnings, enabled: structureOn })
   const data = chain.data
@@ -125,6 +128,17 @@ export default function OptionScreenerPage() {
     [data?.groups, filters, view, failed, chain.pending],
   )
   const pass = groups.reduce((n, g) => n + g.rows.length, 0)
+  const structureRules = useMemo(
+    () => rulesForStructure(opportunities.data?.items, structures.data?.items, structure),
+    [opportunities.data?.items, structures.data?.items, structure],
+  )
+  // Every row the engine returned lacks a bid/ask: the spread slider cannot
+  // bite, and says so rather than looking like it filtered.
+  const returned = data?.groups ?? []
+  const spreadNote =
+    returned.some((g) => g.contracts.length > 0) && !anySpreadMeasured(returned)
+      ? 'not applied — the chain store keeps no bid/ask, so no spread is measured'
+      : null
   const sourceLabel = sources.find((s) => s.id === sourceId)?.label ?? null
 
   const funnel = screenerFunnel({
@@ -254,6 +268,7 @@ export default function OptionScreenerPage() {
             onReset={() => setFilters(DEFAULT_LIVE_FILTERS)}
             includeEarnings={includeEarnings}
             onIncludeEarnings={setIncludeEarnings}
+            spreadNote={spreadNote}
           />
         </aside>
 
@@ -264,6 +279,8 @@ export default function OptionScreenerPage() {
           onView={setView}
           filters={filters}
           opportunities={opportunities.data?.items}
+          structureRules={structureRules}
+          structureLabel={structureLabel}
           selected={selected}
           onSelect={setSelected}
           source="massive"

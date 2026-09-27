@@ -11,11 +11,19 @@ export interface ScreenerFilters {
   source: string
 }
 
+/**
+ * One contract as `POST /research/screener` answers it (bifrost-trade-api
+ * `routers/screener.py`). The field names are the server's: this type once said
+ * `expiry` and `oi`, the server says `expiration` and `open_interest`, and the
+ * page crashed on its first real row (2026-09-27) — the schema is passthrough,
+ * so nothing caught it before render.
+ */
 export interface ScreenerContractRow {
   strike: number
   right: 'C' | 'P'
   dte: number
-  expiry: string
+  /** `YYYYMMDD`. */
+  expiration: string
   score: number
   rating: 'A' | 'B' | 'C' | 'D'
   risk: 'low' | 'medium' | 'high'
@@ -27,11 +35,8 @@ export interface ScreenerContractRow {
   ask: number | null
   mid: number | null
   spread_pct: number | null
-  oi: number | null
+  open_interest: number | null
   delta: number | null
-  gamma: number | null
-  theta: number | null
-  vega: number | null
 }
 
 export interface ScreenerSymbolGroup {

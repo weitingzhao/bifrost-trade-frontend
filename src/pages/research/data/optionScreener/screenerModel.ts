@@ -92,9 +92,9 @@ function expiryToken(expiry: string): string {
 }
 
 /** The §14.4 contract token: `NVDA 16OCT26 150P`, `TSLA 25MAR26 387.5C`. */
-export function contractToken(symbol: string, row: Pick<ScreenerContractRow, 'expiry' | 'strike' | 'right'>): string {
+export function contractToken(symbol: string, row: Pick<ScreenerContractRow, 'expiration' | 'strike' | 'right'>): string {
   const strike = Number.isInteger(row.strike) ? String(row.strike) : String(Number(row.strike.toFixed(2)))
-  return `${symbol} ${expiryToken(row.expiry)} ${strike}${row.right}`
+  return `${symbol} ${expiryToken(row.expiration)} ${strike}${row.right}`
 }
 
 /** Premium per share: the mid, else the engine's own premium. */
@@ -115,19 +115,40 @@ export function annReturnPct(row: ScreenerContractRow): number | null {
   return (prem / row.strike) * (365 / row.dte) * 100
 }
 
+/**
+ * Whether a row's spread was measured. The chain store keeps no bid/ask — the
+ * Options Starter entitlement carries no quotes — and for such a row the engine
+ * writes `spread_pct: 0` and the session close as `mid`. That zero was never
+ * measured, so a spread is read only when both sides are there (§15.8: an
+ * entitlement gap is named, not filled).
+ */
+export function spreadMeasured(row: Pick<ScreenerContractRow, 'bid' | 'ask'>): boolean {
+  return row.bid != null && row.ask != null
+}
+
+/** Why the Spread cell reads `—`, and why Mid is then the session close. */
+export const SPREAD_UNMEASURED =
+  'Not measured — the chain store keeps no bid/ask (the Options Starter entitlement carries no quotes), so there is no spread to read or filter on, and Mid is the session close.'
+
 export function deltaInBand(delta: number | null): boolean {
   if (delta == null) return false
   const a = Math.abs(delta)
   return a >= DELTA_BAND[0] && a <= DELTA_BAND[1]
 }
 
-/** Every filter, each read in the unit its slider speaks. A missing reading fails the filter that needs it. */
+/**
+ * Every filter, each read in the unit its slider speaks. A missing reading
+ * fails the filter that needs it — except a spread the store cannot measure
+ * (`spreadMeasured`): no row has one, so failing on it would empty every screen
+ * over an entitlement, not over the contracts. That filter is skipped and the
+ * slider says so.
+ */
 export function rowPasses(row: ScreenerContractRow, f: LiveFilters): boolean {
   if (row.dte < f.dteMin || row.dte > f.dteMax) return false
   if (row.prob_itm == null || row.prob_itm * 100 > f.maxPitm) return false
   const ret = annReturnPct(row)
   if (ret == null || ret < f.minRet) return false
-  if (row.spread_pct == null || row.spread_pct * 100 > f.maxSpread) return false
+  if (spreadMeasured(row) && (row.spread_pct == null || row.spread_pct * 100 > f.maxSpread)) return false
   const prem = premiumOf(row)
   if (prem == null || prem < f.minPrem) return false
   return true
@@ -140,13 +161,45 @@ function bindingFilter(rows: readonly ScreenerContractRow[], f: LiveFilters): st
   const checks: [string, (r: ScreenerContractRow) => boolean][] = [
     ['P(ITM)', (r) => r.prob_itm != null && r.prob_itm * 100 <= f.maxPitm],
     ['return', (r) => (annReturnPct(r) ?? -1) >= f.minRet],
-    ['spread', (r) => r.spread_pct != null && r.spread_pct * 100 <= f.maxSpread],
+    ['spread', (r) => !spreadMeasured(r) || (r.spread_pct != null && r.spread_pct * 100 <= f.maxSpread)],
     ['premium', (r) => (premiumOf(r) ?? -1) >= f.minPrem],
   ]
   const failing = checks.filter(([, ok]) => !inWindow.some(ok)).map(([name]) => name)
-  return failing.length > 0
-    ? `no contract meets ${failing.join(' or ')}`
-    : `nothing meets ${checks.map(([n]) => n).join(', ')} together`
+  if (failing.length > 0) return `no contract meets ${failing.join(' or ')}`
+  // Only the filters that cut something: an unmeasured spread cuts nothing,
+  // and naming it here read as though it had (walk 2026-09-27).
+  const cutting = checks.filter(([, ok]) => !inWindow.every(ok)).map(([name]) => name)
+  return `nothing meets ${cutting.join(' / ')} together`
+}
+
+/** A Rules structure, as far as matching a rule to a screened structure needs. */
+export interface StructureTypeRef {
+  strategy_structure_id: number
+  structure_type: string | null
+}
+
+/**
+ * The rules that can fit a row: those whose structure is the one being
+ * screened. A covered-call rule on PLTR does not cover a cash-secured put on
+ * PLTR, and the Rule column said it did (walk 2026-09-27). `covered_call`
+ * matches the book's `covered_call_otm`. `undefined` while either book loads.
+ */
+export function rulesForStructure<T extends { strategy_structure_id?: number | null }>(
+  opportunities: readonly T[] | undefined,
+  structures: readonly StructureTypeRef[] | undefined,
+  structure: string,
+): T[] | undefined {
+  if (!opportunities || !structures) return undefined
+  const typeOf = new Map(structures.map((s) => [s.strategy_structure_id, s.structure_type]))
+  return opportunities.filter((o) => {
+    const t = o.strategy_structure_id == null ? undefined : typeOf.get(o.strategy_structure_id)
+    return t != null && (t === structure || t.startsWith(`${structure}_`))
+  })
+}
+
+/** True when some returned contract has a measured spread. */
+export function anySpreadMeasured(groups: readonly ScreenerSymbolGroup[]): boolean {
+  return groups.some((g) => g.contracts.some(spreadMeasured))
 }
 
 export interface ScreenGroup {

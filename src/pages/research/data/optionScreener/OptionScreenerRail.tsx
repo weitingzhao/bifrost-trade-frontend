@@ -6,7 +6,7 @@
  * tight. The filters are live — no Run button — because they only narrow a
  * chain already fetched; see `screenerModel.ts`.
  */
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { IncludeExcludeToggle } from '@/components/data-display'
 import { STRUCTURE_TYPES } from './optionScreenerConstants'
@@ -84,12 +84,15 @@ export function FiltersPanel({
   onReset,
   includeEarnings,
   onIncludeEarnings,
+  spreadNote,
 }: {
   filters: LiveFilters
   onChange: (next: LiveFilters) => void
   onReset: () => void
   includeEarnings: boolean
   onIncludeEarnings: (v: boolean) => void
+  /** Set when no returned contract has a measured spread. */
+  spreadNote?: string | null
 }) {
   return (
     <RailPanel
@@ -110,25 +113,29 @@ export function FiltersPanel({
     >
       <div className="px-3 pb-2.5 pt-1.5">
         {FILTER_SPECS.map((spec) => (
-          <label
-            key={spec.key}
-            className="grid grid-cols-[7.5rem_minmax(0,1fr)_3.5rem] items-center gap-2 py-1 text-dense-meta"
-          >
-            <span className="text-secondary-foreground">{spec.label}</span>
-            <input
-              type="range"
-              min={spec.min}
-              max={spec.max}
-              step={spec.step}
-              value={filters[spec.key]}
-              onChange={(e) => onChange({ ...filters, [spec.key]: Number(e.target.value) })}
-              className="w-full accent-[var(--primary)]"
-              aria-label={spec.label}
-            />
-            <span className="text-right font-mono tabular-nums text-foreground">
-              {spec.format(filters[spec.key])}
-            </span>
-          </label>
+          <Fragment key={spec.key}>
+            <label
+              className="grid grid-cols-[7.5rem_minmax(0,1fr)_3.5rem] items-center gap-2 py-1 text-dense-meta"
+            >
+              <span className="text-secondary-foreground">{spec.label}</span>
+              <input
+                type="range"
+                min={spec.min}
+                max={spec.max}
+                step={spec.step}
+                value={filters[spec.key]}
+                onChange={(e) => onChange({ ...filters, [spec.key]: Number(e.target.value) })}
+                className="w-full accent-[var(--primary)]"
+                aria-label={spec.label}
+              />
+              <span className="text-right font-mono tabular-nums text-foreground">
+                {spec.format(filters[spec.key])}
+              </span>
+            </label>
+            {spec.key === 'maxSpread' && spreadNote ? (
+              <p className="m-0 pb-1 pl-[8rem] text-dense-caption text-warning">{spreadNote}</p>
+            ) : null}
+          </Fragment>
         ))}
         <div className="mt-1 flex flex-wrap items-center gap-2 border-t border-border/60 pt-2">
           <IncludeExcludeToggle

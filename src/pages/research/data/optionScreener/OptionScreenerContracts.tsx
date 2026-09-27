@@ -8,7 +8,7 @@
  * row ends in three actions — Compare, Discovery, Plan.
  */
 import { Link } from 'react-router-dom'
-import { ArrowLeftRight, Columns2, Plus } from 'lucide-react'
+import { ArrowLeftRight, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fmtPctFromFraction } from '@/lib/format'
 import {
@@ -21,6 +21,7 @@ import {
   SegmentControl,
   denseTableNumCell,
 } from '@/components/data-display'
+import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { ruleThatFits, type RuleFitOpportunity } from '@/lib/harness/candidateRuleFit'
 import { SCREEN_BAND_PARAM, SCREEN_DELTA_BAND, encodeScreenBand } from '@/lib/screenBand'
 import { SYMBOL_PATH, symbolTabHref } from '@/lib/symbolTabs'
@@ -31,6 +32,8 @@ import {
   cashPerContract,
   contractToken,
   deltaInBand,
+  SPREAD_UNMEASURED,
+  spreadMeasured,
   type LiveFilters,
   type ScreenGroup,
   type ScreenView,
@@ -47,8 +50,50 @@ function compareHref(symbol: string, strike: number): string {
   return `${withSymbolParam('/research/compare', symbol)}&floor=${encodeURIComponent(String(strike))}`
 }
 
+/**
+ * ◫ — this row's contract on the Symbol page's Chain face, with the screen's
+ * live rule as `?band=`. The contract rides along as the Chain face's own seed
+ * (`?expiration=&strike=&right=`, ISO expiry): without it the face opened on
+ * its nearest expiry, which for a 14–45d band reads "0 in band" — true, and
+ * not the contract the reader clicked (walk 2026-09-27).
+ */
+function chainHref(symbol: string, r: ScreenerContractRow, filters: LiveFilters): string {
+  const d = r.expiration.replace(/\D/g, '')
+  const iso = d.length === 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : r.expiration
+  const band = encodeScreenBand({
+    dteMin: filters.dteMin,
+    dteMax: filters.dteMax,
+    deltaMin: SCREEN_DELTA_BAND[0],
+    deltaMax: SCREEN_DELTA_BAND[1],
+  })
+  return `${symbolTabHref('chain', symbol)}&${SCREEN_BAND_PARAM}=${band}&expiration=${iso}&strike=${r.strike}&right=${r.right}`
+}
+
 function engineHover(r: ScreenerContractRow): string {
   return `engine score ${r.score} · rating ${r.rating} · risk ${r.risk}`
+}
+
+/**
+ * The Rule cell: the first rule for this structure that names the name. When
+ * none does but a rule for another structure does, the hover says so — the
+ * book has an opinion about this name, just not for this trade.
+ */
+function ruleCell(
+  symbol: string,
+  structureRules: readonly RuleFitOpportunity[] | undefined,
+  allRules: readonly RuleFitOpportunity[] | undefined,
+  structureLabel: string,
+) {
+  const fit = ruleThatFits(symbol, structureRules)
+  if (fit.fits || structureRules == null) return fit
+  const elsewhere = ruleThatFits(symbol, allRules)
+  if (!elsewhere.fits) {
+    return { ...fit, title: `No ${structureLabel.toLowerCase()} rule in the Rules book names ${symbol}.` }
+  }
+  return {
+    ...fit,
+    title: `No ${structureLabel.toLowerCase()} rule names ${symbol}. Rules for other structures do:\n${elsewhere.title}`,
+  }
 }
 
 const ICON_BTN =
@@ -61,6 +106,8 @@ export function OptionScreenerContracts({
   onView,
   filters,
   opportunities,
+  structureRules,
+  structureLabel,
   selected,
   onSelect,
   source,
@@ -71,7 +118,11 @@ export function OptionScreenerContracts({
   view: ScreenView
   onView: (v: ScreenView) => void
   filters: LiveFilters
+  /** Every rule in the book, for the hover when none fits this structure. */
   opportunities: readonly RuleFitOpportunity[] | undefined
+  /** The rules whose structure is the one screened (`rulesForStructure`). */
+  structureRules: readonly RuleFitOpportunity[] | undefined
+  structureLabel: string
   selected: string | null
   onSelect: (key: string | null) => void
   source: string
@@ -145,14 +196,14 @@ export function OptionScreenerContracts({
           </DenseTableHeader>
           <DenseTableBody>
             {groups.map((g) => {
-              const fit = ruleThatFits(g.symbol, opportunities)
+              const fit = ruleCell(g.symbol, structureRules, opportunities, structureLabel)
               return [
                 <tr key={`g:${g.symbol}`} className="border-y border-border bg-secondary/50">
                   <td colSpan={COLS} className="px-[var(--table-cell-px)] py-1.5 text-dense-meta">
                     {/* A ticker opens that name. */}
                     <Link
                       to={withSymbolParam(SYMBOL_PATH, g.symbol)}
-                      className="font-mono font-semibold text-link hover:underline"
+                      className="font-mono font-bold text-entity-symbol hover:underline"
                     >
                       {g.symbol}
                     </Link>{' '}
@@ -167,10 +218,11 @@ export function OptionScreenerContracts({
                   </td>
                 </tr>,
                 ...g.rows.map((r) => {
-                  const key = `${g.symbol}|${r.expiry}|${r.strike}|${r.right}`
+                  const key = `${g.symbol}|${r.expiration}|${r.strike}|${r.right}`
                   const on = selected === key
                   const ret = annReturnPct(r)
-                  const wide = r.spread_pct != null && r.spread_pct * 100 > filters.maxSpread
+                  const measured = spreadMeasured(r)
+                  const wide = measured && r.spread_pct != null && r.spread_pct * 100 > filters.maxSpread
                   const token = contractToken(g.symbol, r)
                   return (
                     <tr
@@ -190,7 +242,10 @@ export function OptionScreenerContracts({
                       )}
                       title={engineHover(r)}
                     >
-                      <DenseTableCell className="pl-6 font-mono">{token}</DenseTableCell>
+                      {/* §14.8 contract ink, never wrapped: the table is auto-layout, so a
+                          wrapping token let the column collapse to three lines a row once
+                          real rows arrived (walk 2026-09-27). */}
+                      <DenseTableCell className="whitespace-nowrap pl-6 font-mono text-entity-option">{token}</DenseTableCell>
                       <DenseTableCell className={denseTableNumCell}>{r.dte}</DenseTableCell>
                       <DenseTableCell
                         // Rev .87: inside the band reads in ink, outside it recedes — a band
@@ -202,7 +257,10 @@ export function OptionScreenerContracts({
                       <DenseTableCell className={denseTableNumCell}>
                         {fmtPctFromFraction(r.prob_itm, 0)}
                       </DenseTableCell>
-                      <DenseTableCell className={denseTableNumCell}>
+                      <DenseTableCell
+                        className={denseTableNumCell}
+                        title={measured ? undefined : 'Session close — the chain store keeps no bid/ask to take a mid from.'}
+                      >
                         {r.mid == null ? '—' : r.mid.toFixed(2)}
                       </DenseTableCell>
                       <DenseTableCell
@@ -210,11 +268,14 @@ export function OptionScreenerContracts({
                       >
                         {fmtPctFromFraction(ret == null ? null : ret / 100)}
                       </DenseTableCell>
-                      <DenseTableCell className={cn(denseTableNumCell, wide && 'text-loss')}>
-                        {fmtPctFromFraction(r.spread_pct)}
+                      <DenseTableCell
+                        className={cn(denseTableNumCell, wide && 'text-loss', !measured && 'text-muted-foreground')}
+                        title={measured ? undefined : SPREAD_UNMEASURED}
+                      >
+                        {measured ? fmtPctFromFraction(r.spread_pct) : '—'}
                       </DenseTableCell>
                       <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
-                        {r.oi == null ? '—' : r.oi.toLocaleString()}
+                        {r.open_interest == null ? '—' : r.open_interest.toLocaleString()}
                       </DenseTableCell>
                       <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
                         {cashPerContract(r).toLocaleString()}
@@ -239,26 +300,26 @@ export function OptionScreenerContracts({
                             <ArrowLeftRight className="size-3.5" />
                           </Link>
                           <Link
-                            to={`${symbolTabHref('chain', g.symbol)}&${SCREEN_BAND_PARAM}=${encodeScreenBand({
-                              dteMin: filters.dteMin,
-                              dteMax: filters.dteMax,
-                              deltaMin: SCREEN_DELTA_BAND[0],
-                              deltaMax: SCREEN_DELTA_BAND[1],
-                            })}`}
+                            to={chainHref(g.symbol, r, filters)}
                             className={ICON_BTN}
-                            title={`Open ${g.symbol}'s chain on the Symbol page — the screen band (${filters.dteMin}–${filters.dteMax}d · Δ .15–.35) rides along and rules the ladder`}
+                            title={`Open ${token} on ${g.symbol}'s chain — the screen band (${filters.dteMin}–${filters.dteMax}d · Δ .15–.35) rides along and rules the ladder`}
                             aria-label="Open in Discovery"
                           >
                             <Columns2 className="size-3.5" />
                           </Link>
-                          <Link
-                            to={`/trade/plans?new=1&symbol=${encodeURIComponent(g.symbol)}`}
-                            className={cn(ICON_BTN, 'border-primary/50 text-primary')}
-                            title={`Plan this — opens a new plan beside ${g.symbol}'s plans. The contract and the rule are not carried: Plans takes no contract.`}
-                            aria-label="Plan this"
-                          >
-                            <Plus className="size-3.5" />
-                          </Link>
+                          {/* ＋ writes the plan draft the Chain face's ＋ writes — one write
+                              path (§15.7). It used to open a blank new-plan form: Plans reads
+                              `symbol` as a list filter, so not even the name was carried. */}
+                          <PlanThisButton
+                            compact
+                            symbol={g.symbol}
+                            source="research:contract-screener"
+                            sourceLabel="Option screen"
+                            rule={fit.fits ? fit.label : null}
+                            contract={token}
+                            note={`from the Option screen · ${structureLabel.toLowerCase()}${ret != null ? ` · ann. ${ret.toFixed(1)}%` : ''}`}
+                            className="size-6 border-primary/50 text-primary"
+                          />
                         </div>
                       </DenseTableCell>
                     </tr>
@@ -271,9 +332,10 @@ export function OptionScreenerContracts({
       )}
 
       <p className="m-0 border-t border-border/60 px-3 py-1.75 text-dense-caption leading-normal text-muted-foreground text-pretty">
-        Ann. ret = premium ÷ cash secured × 365 ÷ DTE. Red spread = wider than your max. Δ in ink = inside the
-        structure&rsquo;s target band; greyed = outside it. &ldquo;Rule&rdquo; is the Opportunity in Trade › Rules that names this
-        underlying; Save as rule → creates one from these filters instead of typing it.
+        Ann. ret = premium ÷ cash secured × 365 ÷ DTE. Red spread = wider than your max; a spread of — was not
+        measured — the chain store keeps no bid/ask, so Mid is then the session close. Δ in ink = inside the
+        structure&rsquo;s target band; greyed = outside it. &ldquo;Rule&rdquo; is the Opportunity in Trade › Rules for this structure
+        that names this underlying; Save as rule → creates one from these filters instead of typing it.
       </p>
     </section>
   )

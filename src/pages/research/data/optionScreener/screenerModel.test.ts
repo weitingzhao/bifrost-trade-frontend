@@ -7,7 +7,9 @@ import {
   DEFAULT_LIVE_FILTERS,
   deltaInBand,
   rowPasses,
+  rulesForStructure,
   screenerFunnel,
+  spreadMeasured,
   TOP_PER_NAME,
 } from './screenerModel'
 
@@ -17,7 +19,7 @@ function row(p: Partial<ScreenerContractRow>): ScreenerContractRow {
     strike: 100,
     right: 'P',
     dte: 30,
-    expiry: '20261016',
+    expiration: '20261016',
     score: 50,
     rating: 'B',
     risk: 'medium',
@@ -25,15 +27,12 @@ function row(p: Partial<ScreenerContractRow>): ScreenerContractRow {
     premium: null,
     prob_itm: 0.2,
     margin: null,
-    bid: null,
-    ask: null,
+    bid: 1.47,
+    ask: 1.53,
     mid: 1.5,
     spread_pct: 0.03,
-    oi: 500,
+    open_interest: 500,
     delta: -0.25,
-    gamma: null,
-    theta: null,
-    vega: null,
     ...p,
   }
 }
@@ -54,8 +53,8 @@ describe('the design formula', () => {
   })
 
   it('writes the §14.4 contract token', () => {
-    expect(contractToken('ABC', row({ expiry: '20261016', strike: 150, right: 'P' }))).toBe('ABC 16OCT26 150P')
-    expect(contractToken('ABC', row({ expiry: '2026-03-25', strike: 387.5, right: 'C' }))).toBe('ABC 25MAR26 387.5C')
+    expect(contractToken('ABC', row({ expiration: '20261016', strike: 150, right: 'P' }))).toBe('ABC 16OCT26 150P')
+    expect(contractToken('ABC', row({ expiration: '2026-03-25', strike: 387.5, right: 'C' }))).toBe('ABC 25MAR26 387.5C')
   })
 
   it('lights Δ only inside the structure band', () => {
@@ -81,11 +80,35 @@ describe('live filters', () => {
     expect(rowPasses(row({ spread_pct: null }), f)).toBe(false)
   })
 
+  it('skips the spread filter for a row the store could not measure, and only that filter', () => {
+    // The engine writes spread 0 and the close as mid when the chain has no bid/ask.
+    const unquoted = { bid: null, ask: null, spread_pct: 0 }
+    expect(spreadMeasured(row(unquoted))).toBe(false)
+    expect(rowPasses(row(unquoted), { ...f, maxSpread: 1 })).toBe(true)
+    expect(rowPasses(row({ ...unquoted, prob_itm: 0.31 }), f)).toBe(false)
+    // A quoted row is still filtered on its spread.
+    expect(spreadMeasured(row({}))).toBe(true)
+    expect(rowPasses(row({ spread_pct: 0.03 }), { ...f, maxSpread: 1 })).toBe(false)
+  })
+
   it('keeps the four best a name, best annualised return first', () => {
     const contracts = [1.2, 2.0, 1.6, 1.4, 1.8, 1.3].map((mid, i) => row({ mid, strike: 100 + i * 0 }))
     const [g] = buildScreenGroups([group('ABC', contracts)], f, 'grouped')
     expect(g.rows).toHaveLength(TOP_PER_NAME)
     expect(g.rows.map((r) => r.mid)).toEqual([2.0, 1.8, 1.6, 1.4])
+  })
+
+  it('names only the filters that cut something when none empties a name alone', () => {
+    // One contract passes P(ITM) but not return, the other return but not P(ITM);
+    // spread is unmeasured on both and cuts nothing.
+    const unquoted = { bid: null, ask: null, spread_pct: 0 }
+    const [g] = buildScreenGroups(
+      [group('ABC', [row({ ...unquoted, prob_itm: 0.2, mid: 0.5 }), row({ ...unquoted, prob_itm: 0.45, mid: 3 })])],
+      f,
+      'grouped',
+    )
+    expect(g.rows).toHaveLength(0)
+    expect(g.warn).toBe('nothing meets P(ITM) / return / premium together')
   })
 
   it('says which filter empties a name that passes nothing', () => {
@@ -166,5 +189,33 @@ describe('names still being screened', () => {
       pending: ['XYZ'],
     })
     expect(cells[1].note).toBe('every name has a chain · 1 still screening')
+  })
+})
+
+describe('the rule that fits a row', () => {
+  // Invented book: one covered-call rule and one cash-secured-put rule.
+  const structures = [
+    { strategy_structure_id: 1, structure_type: 'covered_call_otm' },
+    { strategy_structure_id: 4, structure_type: 'cash_secured_put' },
+    { strategy_structure_id: 9, structure_type: null },
+  ]
+  const opps = [
+    { strategy_opportunity_id: 1, name: 'CC book', strategy_structure_id: 1, symbols: ['ABC'] },
+    { strategy_opportunity_id: 2, name: 'CSP book', strategy_structure_id: 4, symbols: ['XYZ'] },
+    { strategy_opportunity_id: 3, name: 'Untyped', strategy_structure_id: 9, symbols: ['ABC'] },
+    { strategy_opportunity_id: 4, name: 'No structure', strategy_structure_id: null, symbols: ['ABC'] },
+  ]
+
+  it('counts only rules for the structure being screened', () => {
+    expect(rulesForStructure(opps, structures, 'cash_secured_put')?.map((o) => o.name)).toEqual(['CSP book'])
+  })
+
+  it('matches the screen\'s covered_call to the book\'s covered_call_otm', () => {
+    expect(rulesForStructure(opps, structures, 'covered_call')?.map((o) => o.name)).toEqual(['CC book'])
+  })
+
+  it('answers undefined while either book is loading, not an empty list', () => {
+    expect(rulesForStructure(undefined, structures, 'cash_secured_put')).toBeUndefined()
+    expect(rulesForStructure(opps, undefined, 'cash_secured_put')).toBeUndefined()
   })
 })

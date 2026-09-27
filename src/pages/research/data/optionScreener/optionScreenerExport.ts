@@ -5,7 +5,7 @@
  * lost by being left off the screen.
  */
 import type { ScreenGroup } from './screenerModel'
-import { annReturnPct, cashPerContract, contractToken } from './screenerModel'
+import { annReturnPct, cashPerContract, contractToken, spreadMeasured } from './screenerModel'
 
 export function exportScreenerCsv(groups: readonly ScreenGroup[], structureType: string): void {
   const header = [
@@ -17,13 +17,13 @@ export function exportScreenerCsv(groups: readonly ScreenGroup[], structureType:
     g.rows.map((r) => {
       const ret = annReturnPct(r)
       return [
-        contractToken(g.symbol, r), g.symbol, r.expiry, r.strike, r.right, r.dte,
+        contractToken(g.symbol, r), g.symbol, r.expiration, r.strike, r.right, r.dte,
         r.delta ?? '',
         r.prob_itm != null ? (r.prob_itm * 100).toFixed(1) : '',
         r.mid ?? '',
         ret != null ? ret.toFixed(2) : '',
-        r.spread_pct != null ? (r.spread_pct * 100).toFixed(2) : '',
-        r.oi ?? '',
+        spreadMeasured(r) && r.spread_pct != null ? (r.spread_pct * 100).toFixed(2) : '',
+        r.open_interest ?? '',
         cashPerContract(r),
         r.score, r.rating, r.risk,
       ]

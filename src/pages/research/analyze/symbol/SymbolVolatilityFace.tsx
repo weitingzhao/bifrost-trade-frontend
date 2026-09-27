@@ -370,12 +370,12 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                 bars={rankPath}
                 title={`Each session's IV30, ranked in the year's range.${pathEarnings.printed.length > 0 ? ' Amber: an earnings session.' : ''}`}
               />
-              {rankPath.length > 0 && (pathEarnings.printed.length > 0 || pathEarnings.ahead) ? (
+              {rankPath.length > 0 && (pathEarnings.printed.length > 0 || pathEarnings.pending) ? (
                 <div className="flex flex-wrap justify-between gap-x-2 font-mono text-dense-micro text-warning" aria-label="Earnings on the rank path">
                   <span>{pathEarnings.printed.length > 0 ? `E ${pathEarnings.printed.map((d) => shortDate(d)).join(' · ')}` : ''}</span>
-                  {pathEarnings.ahead ? (
-                    <span title={pathEarnings.ahead.title} data-rank-path-ahead={pathEarnings.ahead.late ? 'late' : 'next'}>
-                      {pathEarnings.ahead.label}
+                  {pathEarnings.pending ? (
+                    <span title={pathEarnings.pending.title} data-rank-path-pending={pathEarnings.pending.late ? 'late' : 'next'}>
+                      {pathEarnings.pending.label}
                     </span>
                   ) : null}
                 </div>

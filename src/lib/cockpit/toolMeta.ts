@@ -387,7 +387,7 @@ export const TOOL_META: Record<string, ToolMeta> = {
   },
   'research.vrp.get_extremes': {
     title: 'VRP 极值',
-    description: '返回窗口内的 VRP 极端值（前 5% / 后 5%），用于捕捉波动率异常。',
+    description: '最新一个交易日里，VRP 在各名字自身 252 天分位的两端（high = 卖波动 / low = 买波动）；并列出读数早于该日而被排除的名字及原因。',
     category: 'research',
   },
   'research.vol_surface.get_fit': {
@@ -407,7 +407,7 @@ export const TOOL_META: Record<string, ToolMeta> = {
   },
   'research.vol_surface.get_skew_extremes': {
     title: 'Skew 极值',
-    description: '返回 Put Skew 极端 (25Δ Put IV - 25Δ Call IV) 的候选。',
+    description: '最新一个拟合日里，按约 30 天到期（20–45 DTE）SVI 拟合的 ATM 斜率绝对值排名；并列出读数早于该日而被排除的名字及原因。',
     category: 'research',
   },
   'research.opex_cycle.get_current': {

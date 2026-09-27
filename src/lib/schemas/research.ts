@@ -685,6 +685,23 @@ export const AtmIvTermSchema = z
   })
   .passthrough()
 
+/** GET /analytics/options/pcr — one name's daily put/call ratios (the PCR store). */
+export const PcrHistorySchema = z
+  .object({
+    rows: z.array(
+      z
+        .object({
+          symbol: z.string(),
+          trade_date: z.string(),
+          pcr_oi: z.number().nullable(),
+          pcr_volume: z.number().nullable(),
+        })
+        .passthrough(),
+    ),
+    count: z.number(),
+  })
+  .passthrough()
+
 const IvConeTenorSchema = z
   .object({
     tenor_days: z.number(),

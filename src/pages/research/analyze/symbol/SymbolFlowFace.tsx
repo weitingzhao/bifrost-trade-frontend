@@ -4,7 +4,9 @@
  * everything below is an OI × volume proxy from the daily snapshot, and the
  * real tape drops in without a rebuild. Then the sentiment proxy's verdict
  * with its notional split, the concentration table off the chain's own
- * rows, and the multi-leg section as the design's named empty state.
+ * rows, put / call from Research's PCR store (the retired section's PCR pair,
+ * now with its year), and the multi-leg section as the design's named empty
+ * state.
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -18,6 +20,7 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots } from '@/utils/optionChain'
+import { SymbolFlowPcr } from './SymbolFlowPcr'
 
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
@@ -177,6 +180,10 @@ export function SymbolFlowFace({ symbol }: { symbol: string }) {
             Vol / OI above 1 is new positioning, not rolls. The share is of the six largest
             books at the anchor expiry, session notional = last × volume × 100.
           </p>
+        </section>
+
+        <section className={cn(panel, 'col-[1/-1]')}>
+          <SymbolFlowPcr symbol={sym} />
         </section>
 
         <section className={cn(panel, 'col-[1/-1]')}>

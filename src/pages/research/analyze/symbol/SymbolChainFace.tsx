@@ -36,10 +36,12 @@ import { earningsHeadMeta, expiryEarnings, lateLead, termEarningsNote } from '@/
 import { useChainEarningsGap } from '@/pages/research/analyze/symbol/useChainEarningsGap'
 import { SymbolExpiryCard } from '@/pages/research/analyze/symbol/SymbolExpiryCard'
 import { ContractCandles, OiMini, SmileMini } from './symbolChainCharts'
+import { ContractChecksBlock, StrikeWindowControl, WatchlistAddButton } from './SymbolChainParts'
 import {
   LADDER_COLUMNS,
   cardExpiries,
   ladderRows,
+  type StrikeWindow,
   maxPain,
   oiTotals,
   richToSvi,
@@ -107,7 +109,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
   const screenBand = parseScreenBand(urlParams.get(SCREEN_BAND_PARAM))
   const [bandOn, setBandOn] = useState(true)
   const [userExpiry, setUserExpiry] = useState<string | null>(() => urlParams.get('expiration'))
-  const [win, setWin] = useState<5 | 9 | 14>(9)
+  const [win, setWin] = useState<StrikeWindow>({ kind: 'count', n: 9 })
   const [cols, setCols] = useState<LadderColumnSet>('marks')
   const [sel, setSel] = useState<{ strike: number; right: 'C' | 'P' } | null>(() =>
     Number.isFinite(urlStrikeN) && urlStrikeN > 0
@@ -178,7 +180,8 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
   const oi = oiTotals(chain)
   const move = spot != null && atmIv != null && dte != null ? sigmaMove(spot, atmIv, dte) : null
 
-  const rows = spot != null ? ladderRows(chain, spot, win, cols, fitIvPts) : []
+  const rows = spot != null ? ladderRows(chain, spot, win, cols, fitIvPts, move) : []
+  const expiryRows = expiry ? (snapQs[expiries.indexOf(expiry)]?.data?.rows ?? []) : []
   // The design's rule verbatim: DTE in the window, |Δ| in the band, never ITM.
   const inBand = (right: 'C' | 'P', strike: number, delta: number | null) =>
     screenBand != null &&
@@ -371,17 +374,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
             </span>
             <span className="ml-auto inline-flex items-center gap-2">
               <span className={cap}>Window</span>
-              <SegmentControl
-                ariaLabel="Strike window"
-                size="xs"
-                value={String(win)}
-                onChange={(v) => setWin(Number(v) as 5 | 9 | 14)}
-                options={[
-                  { value: '5', label: '±5' },
-                  { value: '9', label: '±9' },
-                  { value: '14', label: '±14' },
-                ]}
-              />
+              <StrikeWindowControl win={win} onChange={setWin} move={move} />
             </span>
             <span className="inline-flex items-center gap-2">
               <span className={cap}>Columns</span>
@@ -659,6 +652,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                     <p className="m-0 text-dense-micro text-muted-foreground">Needs a mark and an IV on the row.</p>
                   )}
                 </div>
+                <ContractChecksBlock chain={chain} selected={selected} dte={dte} earnings={nextEarnings} snapshotRows={expiryRows} today={today} />
                 <ContractCandles ticker={selected.ticker} mark={selected.mark} today={today} />
                 <div className="flex flex-wrap items-center gap-1.5 px-3 py-2">
                   <PlanThisButton
@@ -698,6 +692,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                   >
                     Compare +
                   </button>
+                  {expiry ? <WatchlistAddButton symbol={sym} expiry={expiry} contract={selected} /> : null}
                 </div>
               </>
             ) : (

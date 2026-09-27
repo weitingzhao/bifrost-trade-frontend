@@ -114,20 +114,47 @@ function cellsFor(
   ]
 }
 
+/**
+ * Which strikes the ladder shows: a count each side of the money, every strike,
+ * or the strikes within k standard deviations — k × spot × ATM IV × √(DTE/365),
+ * the expiry's own priced move. The retired Discovery window called ±k × 10% of
+ * spot «σ»; this one is the move the chain prices.
+ */
+export type StrikeWindow = { kind: 'count'; n: number } | { kind: 'all' } | { kind: 'sigma'; k: number }
+
+export function windowStrikes(
+  strikes: readonly number[],
+  spot: number,
+  win: StrikeWindow,
+  move: number | null,
+): number[] {
+  const sorted = [...strikes].sort((a, b) => a - b)
+  if (sorted.length === 0 || spot <= 0) return []
+  if (win.kind === 'all') return sorted
+  if (win.kind === 'sigma') {
+    if (move == null || move <= 0) return []
+    const lo = spot - win.k * move
+    const hi = spot + win.k * move
+    return sorted.filter((k) => k >= lo && k <= hi)
+  }
+  const atm = sorted.reduce((a, b) => (Math.abs(b - spot) < Math.abs(a - spot) ? b : a))
+  const atmIdx = sorted.indexOf(atm)
+  return sorted.slice(Math.max(0, atmIdx - win.n), Math.min(sorted.length - 1, atmIdx + win.n) + 1)
+}
+
 export function ladderRows(
   chain: readonly ChainContract[],
   spot: number,
-  window: number,
+  window: number | StrikeWindow,
   set: LadderColumnSet,
   fitIvPts: ((k: number) => number) | null,
+  move: number | null = null,
 ): LadderRow[] {
   const strikes = [...new Set(chain.map((c) => c.strike))].sort((a, b) => a - b)
   if (strikes.length === 0 || spot <= 0) return []
   const atm = strikes.reduce((a, b) => (Math.abs(b - spot) < Math.abs(a - spot) ? b : a))
-  const atmIdx = strikes.indexOf(atm)
-  const lo = Math.max(0, atmIdx - window)
-  const hi = Math.min(strikes.length - 1, atmIdx + window)
-  return strikes.slice(lo, hi + 1).map((strike) => {
+  const win: StrikeWindow = typeof window === 'number' ? { kind: 'count', n: window } : window
+  return windowStrikes(strikes, spot, win, move).map((strike) => {
     const put = chain.find((c) => c.strike === strike && c.right === 'P') ?? null
     const call = chain.find((c) => c.strike === strike && c.right === 'C') ?? null
     return {
@@ -198,4 +225,50 @@ export function cardExpiries(
   if (handed && all.includes(handed) && !expiries.includes(handed)) expiries.push(handed)
   expiries.sort()
   return { expiries, handedMissing: Boolean(handed && listed && !all.includes(handed)) }
+}
+
+/**
+ * The contract card's liquidity and checks — the retired Discovery detail's
+ * liquidity / data-quality / event-warning blocks, off the chain the face
+ * already holds. Spread needs a quote the plan does not carry, so liquidity is
+ * the contract's open interest ranked among its own side of the expiry, and the
+ * session's volume against it.
+ */
+export interface ContractChecks {
+  /** Share of same-side contracts at this expiry with OI at or below this one. */
+  oiPctile: number | null
+  sameSide: number
+  volOi: number | null
+  warnings: string[]
+}
+
+export function contractChecks(
+  chain: readonly ChainContract[],
+  c: ChainContract,
+  opts: { dte: number | null; earningsDaysAway: number | null; earningsDate: string | null; snapshotTs: string | null; today: string },
+): ContractChecks {
+  const side = chain.filter((x) => x.right === c.right && x.oi != null)
+  const oiPctile = c.oi != null && side.length > 0 ? side.filter((x) => (x.oi ?? 0) <= (c.oi ?? 0)).length / side.length : null
+  const volOi = c.oi != null && c.oi > 0 && c.volume != null ? c.volume / c.oi : null
+  const warnings: string[] = []
+  const { dte } = opts
+  if (dte != null && dte <= 0) warnings.push('Expiration day — liquidity can vanish into the close; avoid market orders.')
+  else if (dte != null && dte <= 3) warnings.push(`${dte} DTE — theta decays fast, and exercise or assignment is close.`)
+  if (opts.earningsDaysAway != null && opts.earningsDaysAway >= 0 && dte != null && opts.earningsDaysAway <= dte) {
+    warnings.push(`Earnings ${opts.earningsDate ? `~${opts.earningsDate} ` : ''}fall before this expiry — the premium carries the print.`)
+  }
+  if (!c.volume) warnings.push('No trade this session — the mark is an older print.')
+  if (c.oi != null && c.oi < 100) warnings.push(`Open interest ${c.oi} — an exit may have no one on the other side.`)
+  if (opts.snapshotTs) {
+    const age = Math.round((Date.parse(opts.today) - Date.parse(opts.snapshotTs.slice(0, 10))) / 86_400_000)
+    if (age > 3) warnings.push(`Snapshot from ${opts.snapshotTs.slice(0, 10)}, ${age} days old.`)
+  }
+  return { oiPctile, sameSide: side.length, volOi, warnings }
+}
+
+/** The watchlist key, as the Trade API builds it (`contract_key_from_parts`). */
+export function optionWatchlistKey(symbol: string, expiry: string, strike: number, right: 'C' | 'P'): string {
+  const exp = expiry.replace(/-/g, '').slice(0, 8)
+  const k = Number.isInteger(strike) ? strike.toFixed(1) : String(strike)
+  return `${symbol.trim().toUpperCase()}|OPT|${exp}|${k}|${right}`
 }

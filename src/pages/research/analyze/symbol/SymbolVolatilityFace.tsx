@@ -17,13 +17,15 @@ import { useExhibitComposite } from '@/hooks/useExhibitComposite'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useAtmIvTerm, useIvCone, useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
+import { ordinal } from '@/lib/analyzeDepth'
 import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { daysTo } from '@/utils/optionTicker'
 import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { SkewSurfaceChart, TermCurveChart } from '@/pages/research/analyze/symbol/symbolVolCharts'
-import { lateLead, termEarningsLegend, termEarningsMark, termEarningsNote } from '@/utils/earningsEstimate'
+import { lateLead, shortDate, termEarningsLegend, termEarningsMark, termEarningsNote } from '@/utils/earningsEstimate'
+import { rankPathEarnings, type RankPathMark } from './rankPathEarnings'
 import {
   LensOwnRecord,
   ResidualHeatmap,
@@ -50,15 +52,30 @@ const tdCls =
 const note =
   'm-0 border-t border-border/60 px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
-/** Tiny bar strip — the 60d rank path / decile histogram of the prototype. */
-function BarStrip({ bars, title }: { bars: { h: number; on?: boolean }[]; title: string }) {
+/**
+ * Tiny bar strip — the 60d rank path / decile histogram of the prototype.
+ * A marked bar is an earnings session: amber when it printed, faint amber
+ * where a late print was expected, each with its own hover title.
+ */
+function BarStrip({ bars, title }: { bars: { h: number; on?: boolean; mark?: RankPathMark | null }[]; title: string }) {
   return (
     <div className="flex h-7 items-end gap-px" title={title}>
       {bars.map((b, i) => (
         <span
           key={i}
+          data-earnings={b.mark?.kind}
+          title={b.mark?.title}
           // The current bar is ink, not the ticker's lime (Rev .92): it marks now, not the name.
-          className={cn('w-full min-w-[2px] flex-1 rounded-[1px]', b.on ? 'bg-foreground' : 'bg-[var(--sk-line2)]')}
+          className={cn(
+            'w-full min-w-[2px] flex-1 rounded-[1px]',
+            b.mark?.kind === 'print'
+              ? 'bg-warning'
+              : b.mark?.kind === 'late'
+                ? 'bg-warning/35'
+                : b.on
+                  ? 'bg-foreground'
+                  : 'bg-[var(--sk-line2)]',
+          )}
           style={{ height: `${Math.max(6, b.h)}%` }}
         />
       ))}
@@ -136,14 +153,24 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
     v == null || low == null || high == null || high <= low
       ? null
       : Math.max(0, Math.min(100, ((v - low) / (high - low)) * 100))
-  // 60d rank path: each day's IV30 ranked in the whole year's range.
+  // ── Earnings: filings and Research's estimate of the next print ──
+  const earnQ = useEarningsDates(sym)
+  const nextEarnings = earnQ.data?.expected_next ?? null
+
+  // 60d rank path: each day's IV30 ranked in the whole year's range, with the
+  // earnings sessions inside it marked and the next print pointed to.
+  const window60 = useMemo(() => year.slice(-60), [year])
+  const pathEarnings = useMemo(
+    () => rankPathEarnings(window60.map((r) => r.trade_date), earnQ.data?.dates ?? [], nextEarnings),
+    [window60, earnQ.data?.dates, nextEarnings]
+  )
   const rankPath = useMemo(() => {
     if (low == null || high == null || high <= low) return []
-    return year.slice(-60).map((r) => {
+    return window60.map((r, i) => {
       const v = r.atm_iv_30d != null ? r.atm_iv_30d * 100 : null
-      return { h: v == null ? 0 : ((v - low) / (high - low)) * 100 }
+      return { h: v == null ? 0 : ((v - low) / (high - low)) * 100, mark: pathEarnings.marks[i] }
     })
-  }, [year, low, high])
+  }, [window60, low, high, pathEarnings])
 
   // ── VRP deciles: the year's spread distribution, current decile lit ──
   const vrp = last?.vrp_60d != null ? last.vrp_60d * 100 : null
@@ -177,8 +204,6 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   const termMax = Math.max(1, ...term.map((t) => t.iv))
 
   // ── Earnings on the term curve: Research's estimate of the next print ──
-  const earnQ = useEarningsDates(sym)
-  const nextEarnings = earnQ.data?.expected_next ?? null
   const earnMark = termEarningsMark(nextEarnings, term.map((t) => t.dte))
   const earnLegend = termEarningsLegend(nextEarnings, earnMark)
 
@@ -341,7 +366,20 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
             <FaceKv label="IV30" value={iv30 != null ? `${iv30.toFixed(1)}%` : '—'} />
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className={cap}>60d rank path</span>
-              <BarStrip bars={rankPath} title="Each session's IV30, ranked in the year's range." />
+              <BarStrip
+                bars={rankPath}
+                title={`Each session's IV30, ranked in the year's range.${pathEarnings.printed.length > 0 ? ' Amber: an earnings session.' : ''}`}
+              />
+              {rankPath.length > 0 && (pathEarnings.printed.length > 0 || pathEarnings.ahead) ? (
+                <div className="flex flex-wrap justify-between gap-x-2 font-mono text-dense-micro text-warning" aria-label="Earnings on the rank path">
+                  <span>{pathEarnings.printed.length > 0 ? `E ${pathEarnings.printed.map((d) => shortDate(d)).join(' · ')}` : ''}</span>
+                  {pathEarnings.ahead ? (
+                    <span title={pathEarnings.ahead.title} data-rank-path-ahead={pathEarnings.ahead.late ? 'late' : 'next'}>
+                      {pathEarnings.ahead.label}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -513,7 +551,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                                 ptl == null ? 'text-muted-foreground' : ptl >= 0.8 ? 'text-warning' : ptl <= 0.2 ? 'text-[var(--sk-soft)]' : undefined,
                               )}
                             >
-                              {ptl == null ? '—' : `${Math.round(ptl * 100)}th pctl · n ${c.n}`}
+                              {ptl == null ? '—' : `${ordinal(Math.round(ptl * 100))} pctl · n ${c.n}`}
                             </span>
                           </>
                         )}

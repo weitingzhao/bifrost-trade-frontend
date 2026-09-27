@@ -469,7 +469,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                             className={cn(
                               td,
                               'cursor-pointer',
-                              isSel('P') ? 'bg-[rgb(var(--sk-accent-rgb)/0.08)]' : 'hover:bg-[var(--sk-surface)]',
+                              isSel('P') ? 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)]' : 'hover:bg-[var(--sk-surface)]',
                               // In the band reads ink, outside it soft (Rev .92) — the
                               // band is a rule, not a name, so never the ticker's lime.
                               i === 3
@@ -490,8 +490,8 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                       <td
                         className={cn(
                           td,
-                          'bg-[color-mix(in_srgb,var(--sk-surface)_60%,transparent)] text-center font-bold',
-                          r.atm ? 'text-[var(--sk-ticker)]' : 'text-foreground'
+                          // Every strike reads ink, ATM too (Rev .92 baseline row); the row's edge marks spot.
+                          'bg-[color-mix(in_srgb,var(--sk-surface)_60%,transparent)] text-center font-bold text-foreground'
                         )}
                       >
                         {r.strike}
@@ -512,7 +512,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                             className={cn(
                               td,
                               'cursor-pointer',
-                              isSel('C') ? 'bg-[rgb(var(--sk-accent-rgb)/0.08)]' : 'hover:bg-[var(--sk-surface)]',
+                              isSel('C') ? 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)]' : 'hover:bg-[var(--sk-surface)]',
                               i === 0
                                 ? callInB
                                   ? 'text-foreground'

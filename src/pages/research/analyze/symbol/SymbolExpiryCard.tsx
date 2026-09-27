@@ -44,9 +44,9 @@ export function SymbolExpiryCard({
       onClick={onPick}
       className={cn(
         'flex cursor-pointer flex-col gap-1.5 border-r border-border/60 px-3 py-2.5 text-left last:border-r-0 hover:bg-[var(--sk-surface)]',
-        // The picked expiry is the active thing: its label and ground are the accent
-        // (Rev .92); the ring stays the name's, as the design draws it.
-        on && 'bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)] shadow-[inset_0_0_0_1px_var(--sk-ticker)]'
+        // The picked expiry is a selection, so label, ground and ring are all the
+        // accent (Rev .92) — the ticker's lime marks the name, never a pick.
+        on && 'bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)] shadow-[inset_0_0_0_1px_var(--sk-accent)]'
       )}
     >
       <span className="flex items-baseline gap-1.5">

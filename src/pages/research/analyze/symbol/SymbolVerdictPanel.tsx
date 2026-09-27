@@ -136,7 +136,7 @@ export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string
             className={cn(
               'rounded-[5px] border px-2.5 py-1 text-dense-label font-semibold',
               stance && line.trim()
-                ? 'cursor-pointer border-[color-mix(in_srgb,var(--sk-accent)_50%,transparent)] bg-[rgb(var(--sk-accent-rgb)/0.16)] text-[var(--sk-accent)] hover:brightness-110'
+                ? 'cursor-pointer border-[color-mix(in_srgb,var(--sk-accent)_50%,transparent)] bg-[color-mix(in_srgb,var(--sk-accent)_16%,transparent)] text-[var(--sk-accent)] hover:brightness-110'
                 : 'cursor-default border-border text-muted-foreground'
             )}
             title="Writes the verdict as a hand-verdict artifact in the hypothesis store — the same store the personas' claims settle in."

@@ -188,7 +188,7 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
           {marks && lo != null && hi != null ? (
             <div className="relative mb-7 h-1.5 rounded-full bg-[var(--sk-line0)]">
               <span
-                className="absolute -inset-y-0.5 rounded-[3px] bg-[rgb(var(--sk-accent-rgb)/0.18)]"
+                className="absolute -inset-y-0.5 rounded-[3px] bg-[color-mix(in_srgb,var(--sk-accent)_25%,transparent)]"
                 style={{ left: `${marks.posOf(lo)}%`, right: `${100 - marks.posOf(hi)}%` }}
                 title="1σ close band — expected ± expected × IV30 × √(20/252), the stores' own numbers"
               />
@@ -234,7 +234,7 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
           )}
           <div className="flex flex-wrap gap-x-3.5 gap-y-1 pb-2 text-dense-micro text-muted-foreground">
             <span>
-              <i className="mr-1 inline-block h-2 w-2.5 rounded-[2px] bg-[rgb(var(--sk-accent-rgb)/0.18)] align-middle" />
+              <i className="mr-1 inline-block h-2 w-2.5 rounded-[2px] bg-[color-mix(in_srgb,var(--sk-accent)_25%,transparent)] align-middle" />
               1σ close band
             </span>
             {gzLo != null && gzHi != null ? (

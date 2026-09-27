@@ -502,7 +502,7 @@ export function PayoffBody() {
                 {greekRows.map((g) => (
                   <tr
                     key={g.spot}
-                    className={g.atSpot ? 'bg-[rgb(var(--sk-accent-rgb)/0.04)]' : undefined}
+                    className={g.atSpot ? 'bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)]' : undefined}
                   >
                     <td
                       className={cn(td, g.atSpot ? 'text-foreground' : 'text-secondary-foreground')}

@@ -56,36 +56,6 @@ export interface MaxPainHistoryPoint {
   underlying_close?: number | null
 }
 
-export interface IvVolatilityConePoint {
-  expiration: string
-  dte_days: number
-  atm_iv: number | null
-  iv_call?: number | null
-  iv_put?: number | null
-  strike?: number | null
-  iv_p10: number | null
-  iv_p50: number | null
-  iv_p90: number | null
-  iv_min: number | null
-  iv_max: number | null
-  sample_days: number
-  iv_hist_mean?: number | null
-  iv_hist_stdev?: number | null
-  iv_hist_min?: number | null
-  iv_hist_max?: number | null
-  iv_hist_plus_1sd?: number | null
-  iv_hist_minus_1sd?: number | null
-  iv_hist_plus_2sd?: number | null
-  iv_hist_minus_2sd?: number | null
-}
-
-export interface IvVolatilityConeResponse {
-  ok: boolean
-  symbol: string
-  points: IvVolatilityConePoint[]
-  error?: string
-}
-
 export interface GreeksCoverageResponse {
   ok: boolean
   symbol?: string

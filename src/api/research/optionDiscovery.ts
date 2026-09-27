@@ -1,4 +1,4 @@
-import type { OptionSnapshotRow, OptionSnapshotsPgResult, MaxPainHistoryPoint, IvVolatilityConeResponse, IvVolatilityConePoint, GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueResponse } from '@/types/optionDiscovery'
+import type { OptionSnapshotRow, OptionSnapshotsPgResult, MaxPainHistoryPoint, GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueResponse } from '@/types/optionDiscovery'
 import { withValidation } from '@/lib/apiValidation'
 import { OptionSnapshotsPgResponseSchema } from '@/lib/schemas/optionDiscovery'
 
@@ -45,15 +45,6 @@ function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
     day_last_updated_day:
       typeof row.day_last_updated_day === 'string' ? row.day_last_updated_day : null,
   }
-}
-
-function dteFromExpiry(expiry: string, asOf?: string | null): number {
-  const exp = expiry.trim().slice(0, 10)
-  const base = (asOf || new Date().toISOString()).slice(0, 10)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(exp) || !/^\d{4}-\d{2}-\d{2}$/.test(base)) return 0
-  const ms = Date.parse(`${exp}T12:00:00Z`) - Date.parse(`${base}T12:00:00Z`)
-  if (!Number.isFinite(ms)) return 0
-  return Math.max(0, Math.round(ms / 86_400_000))
 }
 
 export async function fetchOptionSnapshotsPg(
@@ -120,71 +111,6 @@ export async function fetchMaxPainComputeHistory(params: {
           ? Number(row.underlying_close)
           : null,
     })),
-  }
-}
-
-export async function fetchIvVolatilityCone(
-  symbol: string,
-  expirations: string[],
-  source = 'massive',
-  lookbackDays = 90,
-): Promise<IvVolatilityConeResponse> {
-  void expirations
-  void source
-  void lookbackDays
-  const sym = (symbol || '').trim().toUpperCase()
-  if (!sym) return { ok: false, symbol: '', points: [], error: 'symbol is required' }
-  const r = await fetch(
-    `${marketDataPluginUrl('/market/analytics/atm-iv/term')}?symbol=${encodeURIComponent(sym)}`,
-  )
-  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
-  if (!r.ok) {
-    const detail =
-      typeof j.detail === 'string'
-        ? j.detail
-        : typeof j.error === 'string'
-          ? j.error
-          : `HTTP ${r.status}`
-    return { ok: false, symbol: sym, points: [], error: detail }
-  }
-  const tradeDate = typeof j.trade_date === 'string' ? j.trade_date : null
-  const term = Array.isArray(j.term) ? j.term : []
-  const numOrNull = (v: unknown): number | null => {
-    if (v == null || v === '') return null
-    const n = Number(v)
-    return Number.isFinite(n) ? n : null
-  }
-  const pts: IvVolatilityConePoint[] = term.map((p: Record<string, unknown>) => {
-    const expiration = String(p.expiry ?? p.expiration ?? '')
-    const atm = numOrNull(p.atm_iv)
-    return {
-      expiration,
-      dte_days: dteFromExpiry(expiration, tradeDate),
-      atm_iv: atm,
-      iv_call: null,
-      iv_put: null,
-      strike: numOrNull(p.atm_strike ?? p.strike),
-      iv_p10: null,
-      iv_p50: atm,
-      iv_p90: null,
-      iv_min: null,
-      iv_max: null,
-      sample_days: 0,
-      iv_hist_mean: null,
-      iv_hist_stdev: null,
-      iv_hist_min: null,
-      iv_hist_max: null,
-      iv_hist_plus_1sd: null,
-      iv_hist_minus_1sd: null,
-      iv_hist_plus_2sd: null,
-      iv_hist_minus_2sd: null,
-    }
-  })
-  return {
-    ok: pts.length > 0,
-    symbol: typeof j.symbol === 'string' ? j.symbol : sym,
-    points: pts,
-    error: pts.length === 0 ? 'No atm-iv term rows' : undefined,
   }
 }
 

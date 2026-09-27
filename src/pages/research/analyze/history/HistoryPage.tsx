@@ -13,7 +13,6 @@
  */
 import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { PageFaceSwitch, PageHead, PageShell, SectionPanel } from '@/components/layout'
 import { HistoryCorrelation } from './HistoryCorrelation'
 import { HistoryEarnings } from './HistoryEarnings'
@@ -23,14 +22,15 @@ import { VrpTimeSeriesChart } from '@/components/charts/VrpTimeSeriesChart'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
-import { fetchIvVolatilityCone } from '@/api/research/optionDiscovery'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useEarningsMoves, useRvCone, useVrpHistory } from '@/hooks/useVrpData'
+import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
 import { ordinal } from '@/lib/analyzeDepth'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
+import { daysTo } from '@/utils/optionTicker'
 import {
   HISTORY_WINDOWS,
   coneRows,
@@ -116,12 +116,9 @@ export default function HistoryPage() {
 function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
   const vrp = useVrpHistory(sym, FETCH_DAYS)
   const cone = useRvCone(sym, CONE_YEARS)
-  const term = useQuery({
-    queryKey: ['research', 'history', 'atm-term', sym],
-    queryFn: () => fetchIvVolatilityCone(sym, [], 'massive', 90),
-    enabled: Boolean(sym),
-    staleTime: 5 * 60_000,
-  })
+  // The repaired ATM IV store, read from Research as the Symbol faces read it
+  // (it came through the market-data plugin's deprecated passthrough before).
+  const term = useAtmIvTerm(sym)
 
   // The market's IV30 and the name's earnings dates tell a sharp move from a store
   // fault; until they arrive the rule judges without them, which only withholds more.
@@ -142,13 +139,17 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
   const suspect = suspectLine(reading)
   const event = eventLine(reading)
 
-  const termPoints = useMemo<TermPoint[]>(
-    () =>
-      (term.data?.ok ? term.data.points : [])
-        .filter((p) => p.dte_days != null && p.atm_iv != null)
-        .map((p) => ({ dte: p.dte_days as number, iv: p.atm_iv as number })),
-    [term.data],
-  )
+  // Days from the session the IVs were read on, not from today: the cone
+  // interpolates them in total variance, and T is theirs (as a fit keeps its own T).
+  const termPoints = useMemo<TermPoint[]>(() => {
+    const read = term.data
+    const asOf = read?.trade_date
+    if (!read || !asOf) return []
+    return read.term.flatMap((p) => {
+      const dte = daysTo(p.expiry, asOf)
+      return dte != null && dte >= 0 ? [{ dte, iv: p.atm_iv }] : []
+    })
+  }, [term.data])
   const cRows = useMemo(() => coneRows(cone.data?.tenors ?? [], termPoints), [cone.data, termPoints])
 
   return (
@@ -246,7 +247,11 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
                 <VolCone rows={cRows} />
                 <p className="max-w-[90ch] text-dense-meta leading-relaxed text-muted-foreground">
                   {coneStory(cRows)}
-                  {term.data && !term.data.ok ? ` Implied vol did not answer: ${term.data.error ?? 'unknown error'}.` : ''}
+                  {term.isError
+                    ? ` Implied vol did not answer: ${term.error instanceof Error ? term.error.message : 'unknown error'}.`
+                    : term.data === null
+                      ? ` The ATM IV store holds no expiry for ${sym}, so no implied vol is drawn.`
+                      : ''}
                 </p>
                 <p className="text-dense-caption text-muted-foreground/70">
                   Bands are the 5th–95th and 20th–80th percentile of realised vol; dashed is the median. Implied vol at a

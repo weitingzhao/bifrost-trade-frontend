@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { ExhibitPayload } from '@/api/research/exhibit'
 import {
   bandFromScore,
-  calibrationLine,
   fwd20Line,
   hitCellText,
   vrpLinkLine,
@@ -61,15 +60,5 @@ describe('C2 depth lines', () => {
     expect(bandFromScore(39)).toBe('lean_cold')
     expect(bandFromScore(20)).toBe('cold')
     expect(bandFromScore(null)).toBeNull()
-  })
-
-  it('reads the calibration for the regime the playbook is in', () => {
-    const rows = [
-      { regime: 'range', n: 13, hits: 8, hit_rate: 8 / 13, avg_top_prob: 0.58, calibration_gap: 0.035, avg_close_miss_pct: null },
-      { regime: 'trending', n: 0, hits: 0, hit_rate: null, avg_top_prob: null, calibration_gap: null, avg_close_miss_pct: null },
-    ]
-    expect(calibrationLine(rows, 'Range')).toBe('Paths in range regimes hit 62% of the time against 58% claimed (n=13)')
-    expect(calibrationLine(rows, 'trending')).toBeNull()
-    expect(calibrationLine(rows, null)).toBeNull()
   })
 })

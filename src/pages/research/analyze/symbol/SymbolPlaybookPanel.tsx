@@ -3,16 +3,19 @@
  * §isScenario, third panel).
  *
  * The fan is the newest forecast session's own probability split; LIVE is the
- * branch the intraday terrain is currently confirming, and the transitions
- * list is every regime change the tape printed today. The branch ranges are
+ * branch the intraday terrain is currently confirming. The session snapshots
+ * below replay any session's intraday terrain and its path transitions
+ * (SymbolPlaybookSnapshots). The branch ranges are
  * the daily terrain's own levels — the gamma zone for rangy, past its edges
  * for the directional branches; squeeze is a volatility event, not a band.
  * Observe-only (D10): nothing here places orders.
  *
- * The intraday terrain reads the nightly tables — the prior close's spot, GEX,
- * momentum and IV — so every snapshot of a session is the same (measured on
- * every name, 2026-09-10…09-25). When a session's snapshots do not differ, LIVE
- * says it restates the prior close instead of claiming the tape confirms it.
+ * Until research 0.138.0 the intraday terrain read the nightly tables — the
+ * prior close's spot, GEX, momentum and IV — so every snapshot of a session was
+ * the same (every name, 2026-09-10…09-25); from then a name the plugin's
+ * intraday chain observes stands on its session. When a session's snapshots do
+ * not differ, LIVE says it restates the prior close instead of claiming the
+ * tape confirms it.
  *
  * Below the fan, the playbook's own record (`/research/playbook/hit-rate`,
  * 30 days, 5-session forward return) per branch, and the triggers the newest
@@ -27,11 +30,12 @@ import {
   fetchTerrain,
   fetchTerrainIntraday,
   type PlaybookHitRateSummary,
-  type TerrainIntraday,
 } from '@/api/researchEngine'
-import { DenseTag, type DenseTagVariant } from '@/components/data-display'
+import { DenseTag } from '@/components/data-display'
 import { fmtEtClock } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { BRANCHES, flatSession, liveVariant } from './playbookBranches'
+import { SymbolPlaybookSnapshots } from './SymbolPlaybookSnapshots'
 import { useSymbolForecastSessions } from './useSymbolForecastSessions'
 
 const cap =
@@ -41,44 +45,6 @@ const panel =
   'min-w-0 border mat-card'
 const panelHead =
   'flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal'
-
-// Rangy green, Bull state blue, Bear red, Squeeze amber — the leading branch is
-// bolded, never recoloured. Bull was the ticker lime; §14.4.6 keeps lime for the name (Owner 2026-09-27).
-const BRANCHES = [
-  { key: 'rangy', label: 'Rangy', text: 'text-success', bar: 'bg-success' },
-  { key: 'bull', label: 'Bull', text: 'text-[var(--sk-state-blue)]', bar: 'bg-[var(--sk-state-blue)]' },
-  { key: 'bear', label: 'Bear', text: 'text-destructive', bar: 'bg-destructive' },
-  { key: 'squeeze', label: 'Squeeze', text: 'text-warning', bar: 'bg-warning' },
-] as const
-
-function liveVariant(regime: string): DenseTagVariant {
-  const lo = regime.toLowerCase()
-  if (lo.includes('bull')) return 'success'
-  if (lo.includes('bear')) return 'danger'
-  if (lo.includes('squeeze') || lo.includes('transition')) return 'warning'
-  return 'neutral'
-}
-
-function transitionsOf(rows: TerrainIntraday[]) {
-  const out: { time: string; txt: string }[] = []
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i - 1].regime !== rows[i].regime) {
-      out.push({
-        time: rows[i].asof_ts.slice(11, 16),
-        txt: `${rows[i - 1].regime} → ${rows[i].regime} · ${rows[i].spot.toFixed(2)}`,
-      })
-    }
-  }
-  return out
-}
-
-/** Every snapshot of the session identical — spot, regime and the four probabilities. */
-function flatSession(rows: TerrainIntraday[]) {
-  if (rows.length < 2) return false
-  const key = (r: TerrainIntraday) =>
-    [r.spot, r.regime, r.prob_rangy, r.prob_bull, r.prob_bear, r.prob_squeeze].join('|')
-  return rows.every((r) => key(r) === key(rows[0]))
-}
 
 /** `dominant:bull` and `bull` are the same branch. */
 const branchOf = (scenarioKey: string) => scenarioKey.split(':').pop() ?? scenarioKey
@@ -157,7 +123,6 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
 
   const intraRows = intraQ.data?.rows ?? []
   const live = intraRows[intraRows.length - 1] ?? null
-  const trans = transitionsOf(intraRows)
   const flat = flatSession(intraRows)
   const flatTitle = `All ${intraRows.length} intraday snapshots of ${live?.trade_date ?? 'the session'} are the same: the intraday terrain reads the nightly tables (the prior close's spot ${live ? live.spot.toFixed(2) : ''}, GEX, momentum, IV), so it restates the prior close — nothing here is the tape confirming a branch.`
 
@@ -289,30 +254,7 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
           ))
         )}
       </div>
-      <div className="border-t border-[var(--sk-line0)]">
-        <div className={cn(cap, 'px-3 pb-0.5 pt-1.5')}>
-          path transitions · {live ? live.trade_date.slice(5) : '—'}
-        </div>
-        {flat ? (
-          <p className="m-0 px-3 py-1.5 text-dense-meta text-muted-foreground text-pretty" title={flatTitle}>
-            No path to change: every snapshot of the session stood on the prior close.
-          </p>
-        ) : trans.length === 0 ? (
-          <p className="m-0 px-3 py-1.5 text-dense-meta text-muted-foreground">
-            No path change — the session has held one regime.
-          </p>
-        ) : (
-          trans.map((t) => (
-            <div
-              key={t.time + t.txt}
-              className="grid grid-cols-[52px_minmax(0,1fr)] gap-2.5 px-3 py-1 text-dense-meta"
-            >
-              <span className={cn(mono, 'text-muted-foreground')}>{t.time}</span>
-              <span className="text-[var(--sk-soft)]">{t.txt}</span>
-            </div>
-          ))
-        )}
-      </div>
+      <SymbolPlaybookSnapshots sym={sym} newestRows={intraRows} />
       <p className="m-0 border-t border-[var(--sk-line0)] px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground text-pretty">
         Observe-only. The fan is the model&rsquo;s own probability split for the session; LIVE
         is which branch the intraday terrain is confirming — while it reads the nightly tables it

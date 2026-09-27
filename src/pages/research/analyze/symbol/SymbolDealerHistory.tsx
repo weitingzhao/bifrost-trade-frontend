@@ -33,6 +33,8 @@ import { useEarningsDates } from '@/hooks/useNarrative'
 import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { rankPathEarnings, type RankPathMark } from './rankPathEarnings'
+import { SessionStepper } from './SessionStepper'
+import { useMarketSessions } from './useMarketSessions'
 
 const cap = 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const th =
@@ -340,9 +342,6 @@ const fmtGex = (v: number | null) => {
   return `${v >= 0 ? '+' : '−'}${body}`
 }
 
-const stepBtn =
-  'mat-btn inline-flex h-5 min-w-5 cursor-pointer items-center justify-center px-1.5 text-dense-micro text-secondary-foreground disabled:cursor-default disabled:opacity-40'
-
 /**
  * The session's intraday GEX: every snapshot the intraday job wrote for the
  * newest date it holds — or for a session stepped back to, one of the name's
@@ -362,16 +361,10 @@ export function DealerIntraday({ sym }: { sym: string }) {
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,
   })
-  // The market's sessions, read off SPY's closes: trading days are market-wide,
-  // and an index has no closes of its own (SPX), so the name's own would leave
-  // an index with nothing to step through.
-  const calendarQ = useSymbolCloses('SPY')
+  const sessions = useMarketSessions()
   const rows = [...(q.data?.rows ?? [])].sort((a, b) => a.asof_ts.localeCompare(b.asof_ts))
   const day = pick ?? (q.data?.trade_date || rows[0]?.trade_date || '')
-  const sessions = (calendarQ.data ?? []).map((c) => c.date)
   const lastSession = sessions[sessions.length - 1] ?? ''
-  const prevDay = day ? ([...sessions].reverse().find((d) => d < day) ?? null) : null
-  const nextDay = day ? (sessions.find((d) => d > day) ?? null) : null
   const stale = !pick && Boolean(day && lastSession && day < lastSession)
   const last = rows[rows.length - 1]
   const go = (date: string | null) => setPicked(date ? { sym, date } : null)
@@ -381,28 +374,7 @@ export function DealerIntraday({ sym }: { sym: string }) {
       <header className="flex flex-wrap items-center gap-2.5 border-b px-3 py-1.75 text-dense-body leading-normal">
         <span className={cap}>Intraday</span>
         <span className="text-dense-body font-semibold">session gamma</span>
-        <span className="inline-flex items-center gap-1">
-          <button type="button" className={stepBtn} disabled={!prevDay} onClick={() => go(prevDay)} aria-label="Previous session" title={prevDay ? `Read ${prevDay}` : 'No earlier session in the year of market closes'}>
-            ‹
-          </button>
-          <input
-            type="date"
-            aria-label="Intraday session"
-            value={day}
-            min={sessions[0]}
-            max={lastSession || undefined}
-            onChange={(e) => go(e.target.value || null)}
-            className="mat-field h-5 w-[7.5rem] px-1 font-mono text-dense-micro tabular-nums"
-          />
-          <button type="button" className={stepBtn} disabled={!nextDay} onClick={() => go(nextDay)} aria-label="Next session" title={nextDay ? `Read ${nextDay}` : 'No later session'}>
-            ›
-          </button>
-          {pick ? (
-            <button type="button" className={stepBtn} onClick={() => go(null)} title="Back to the newest session the store holds">
-              Newest
-            </button>
-          ) : null}
-        </span>
+        <SessionStepper day={day} sessions={sessions} picked={Boolean(pick)} onGo={go} label="Intraday session" />
         <span className="ml-auto text-dense-caption text-muted-foreground">
           {rows.length > 0
             ? `${rows.length} snapshot${rows.length === 1 ? '' : 's'} · last ${etClock(last!.asof_ts)} ET · all expiries`

@@ -161,18 +161,6 @@ export interface CalibrationRow {
 }
 
 /**
- * "Paths in range regimes hit 62% of the time against 58% claimed (n=13)" —
- * the reliability the invalidation line should be read with.
- */
-export function calibrationLine(rows: readonly CalibrationRow[] | undefined, regime: string | null | undefined): string | null {
-  if (!rows || !regime) return null
-  const row = rows.find((r) => r.regime.toLowerCase() === regime.toLowerCase())
-  if (!row || row.n === 0 || row.hit_rate == null) return null
-  const claimed = row.avg_top_prob != null ? ` against ${pctText(row.avg_top_prob, 0)} claimed` : ''
-  return `Paths in ${row.regime} regimes hit ${pctText(row.hit_rate, 0)} of the time${claimed} (n=${row.n})`
-}
-
-/**
  * The registry's shared 0-100 bands (`lenses/registry.band_for_score`).
  *
  * 40 and 60 are inclusive ends of neutral on the backend, and this table used to

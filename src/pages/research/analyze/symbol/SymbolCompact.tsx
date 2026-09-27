@@ -14,6 +14,8 @@
  *
  * What an open section holds here is the lens's own words, its record and
  * its date — the wide face's charts are one ⇢ away rather than redrawn small.
+ * The earnings marks those charts carry are said in words instead, in the
+ * IV rank and term-structure sections (`compactVolEarnings.ts`).
  */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -30,6 +32,7 @@ import { SymbolChainFace } from './SymbolChainFace'
 import { SymbolIdentity } from './SymbolIdentity'
 import { SymbolNarrativePanel } from './SymbolNarrativePanel'
 import { SymbolVerdictPanel } from './SymbolVerdictPanel'
+import { useVolFoldEarnings, type VolFoldEarnings } from './compactVolEarnings'
 import type { SymbolFaces } from './useSymbolFaces'
 import head from './symbolHead.module.css'
 
@@ -129,11 +132,14 @@ function FoldSections({
   open,
   onToggle,
   onLift,
+  earnings,
 }: {
   view: DossierFaceView
   open: string | null
   onToggle: (id: string) => void
   onLift: () => void
+  /** A section's earnings line, by lens id — the marks its wide chart carries. */
+  earnings?: VolFoldEarnings
 }) {
   if (view.rows.length === 0) {
     return <p className="m-0 py-2 text-dense-meta text-muted-foreground">{view.headline}</p>
@@ -142,6 +148,7 @@ function FoldSections({
     <div className="flex flex-col">
       {view.rows.map((r) => {
         const on = open === r.id
+        const earn = earnings?.[r.id as keyof VolFoldEarnings]
         return (
           <div key={r.id} className="border-b border-[var(--sk-line0)]">
             <div
@@ -185,6 +192,11 @@ function FoldSections({
             {on ? (
               <div className="flex flex-col gap-1.5 pb-3 pl-[23px] text-dense-meta">
                 {r.means ? <p className="m-0 leading-normal text-[var(--sk-soft)]">{r.means}</p> : null}
+                {earn ? (
+                  <p className="m-0 leading-normal text-warning text-pretty" data-fold-earnings={earn.late ? 'late' : 'next'} title={earn.title}>
+                    {earn.text}
+                  </p>
+                ) : null}
                 <p className="m-0 leading-normal text-muted-foreground">
                   {r.record ?? 'No settled record on this name yet.'}
                   {r.sample ? ` · ${r.sample}` : ''}
@@ -227,6 +239,7 @@ export function SymbolCompact({
   const liftTo = (tab: SymbolTabId) => go(withSymbolParam(`${SYMBOL_PATH}?${TAB_PARAM}=${tab}`, symbol))
 
   const foldView = FOLD_FACE[active] ? faces.views.find((v) => v.face.id === FOLD_FACE[active]) : undefined
+  const volEarnings = useVolFoldEarnings(symbol, active === 'volatility')
   const openRow = foldView ? (active in openBy ? (openBy[active] ?? null) : (foldView.rows[0]?.id ?? null)) : null
 
   return (
@@ -282,6 +295,7 @@ export function SymbolCompact({
           open={openRow}
           onToggle={(id) => setOpenBy((prev) => ({ ...prev, [active]: openRow === id ? null : id }))}
           onLift={() => liftTo(active)}
+          earnings={active === 'volatility' ? volEarnings : undefined}
         />
       ) : active === 'chain' ? (
         <SymbolChainFace symbol={symbol} />

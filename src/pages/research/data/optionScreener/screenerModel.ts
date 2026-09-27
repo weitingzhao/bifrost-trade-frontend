@@ -25,6 +25,7 @@
  * design draws neither — but they stay on each row's hover and in the export.
  */
 import { fmtIsoDateToken } from '@/lib/format'
+import { etDate, etStamp } from '@/lib/freshness'
 import { SCREEN_DELTA_BAND } from '@/lib/screenBand'
 import type { ScreenerContractRow, ScreenerResponse, ScreenerSymbolGroup } from '@/types/research'
 
@@ -118,17 +119,114 @@ export function annReturnPct(row: ScreenerContractRow): number | null {
 /**
  * Whether a row's spread was measured. The chain store keeps no bid/ask — the
  * Options Starter entitlement carries no quotes — and for such a row the engine
- * writes `spread_pct: 0` and the session close as `mid`. That zero was never
- * measured, so a spread is read only when both sides are there (§15.8: an
- * entitlement gap is named, not filled).
+ * sends `spread_pct: null` and the session close as `mid` (since trade-api
+ * 86ebdf7; before it, `spread_pct: 0`, which is why both sides are checked
+ * rather than the null). A spread is read only when both sides are there
+ * (§15.8: an entitlement gap is named, not filled).
  */
 export function spreadMeasured(row: Pick<ScreenerContractRow, 'bid' | 'ask'>): boolean {
   return row.bid != null && row.ask != null
 }
 
-/** Why the Spread cell reads `—`, and why Mid is then the session close. */
+/** Why the Spread cell reads `—`, and why the premium is then the session close. */
 export const SPREAD_UNMEASURED =
-  'Not measured — the chain store keeps no bid/ask (the Options Starter entitlement carries no quotes), so there is no spread to read or filter on, and Mid is the session close.'
+  'Not measured — the chain store keeps no bid/ask (the Options Starter entitlement carries no quotes), so there is no spread to read or filter on, and the premium is the session close.'
+
+/** What the premium is: the engine's word, else read off the quote as an older engine left it. */
+export function premiumBasis(row: Pick<ScreenerContractRow, 'premium_basis' | 'bid' | 'ask'>): 'close' | 'mid' {
+  return row.premium_basis ?? (spreadMeasured(row) ? 'mid' : 'close')
+}
+
+/** When a row's chain snapshot was observed, in ms; null when the engine sent none. */
+export function quoteMs(row: Pick<ScreenerContractRow, 'snapshot_ts'>): number | null {
+  if (!row.snapshot_ts) return null
+  const ms = Date.parse(row.snapshot_ts)
+  return Number.isFinite(ms) ? ms : null
+}
+
+/**
+ * The quote time the design prints in the Contracts panel head, read over the
+ * rows the table shows. The rows of one name do not share a snapshot: on DEV
+ * (2026-09-27) AAPL answered 81 contracts from a 15:30 ET snapshot and 104
+ * from the 16:00 close, AMD two from the session before, VRSN one from three
+ * sessions back. So the head names the newest and counts the rest, and a row
+ * from an earlier session is marked — its premium, and the return read from
+ * it, belong to that session.
+ */
+export interface QuoteReading {
+  /** `today 16:00 ET`, `Fri 16:00 ET`, `09-25 16:00 ET`; null when no row carries a time. */
+  newest: string | null
+  newestMs: number | null
+  /** Rows quoted before the newest. */
+  older: number
+  /** Of those, rows from an earlier session (New York date) than the newest. */
+  olderSession: number
+  /** Every distinct time with its count, for the hover. */
+  title: string
+}
+
+export function quoteReading(rows: readonly ScreenerContractRow[], nowMs: number): QuoteReading {
+  const times = rows.map(quoteMs).filter((ms): ms is number => ms != null)
+  if (times.length === 0) {
+    return {
+      newest: null,
+      newestMs: null,
+      older: 0,
+      olderSession: 0,
+      title: rows.length === 0 ? 'No contract is shown.' : 'The engine sent no quote time for these rows.',
+    }
+  }
+  const newestMs = Math.max(...times)
+  const newestDay = etDate(newestMs)
+  const older = times.filter((ms) => ms < newestMs)
+  const olderSession = older.filter((ms) => etDate(ms) < newestDay).length
+  const newest = etStamp(newestMs, nowMs)
+  const untimed = rows.length - times.length
+  const counts = new Map<number, number>()
+  for (const ms of older) counts.set(ms, (counts.get(ms) ?? 0) + 1)
+  const spread = [...counts.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([ms, n]) => `${n} at ${etStamp(ms, nowMs)}`)
+    .join(', ')
+  const lines = [
+    older.length === 0
+      ? `Every contract shown was quoted ${newest}.`
+      : `Newest quote ${newest}; ${older.length} of ${rows.length} contracts carry an earlier one: ${spread}.`,
+  ]
+  if (olderSession > 0) {
+    lines.push(
+      `${olderSession} of those ${olderSession === 1 ? 'is' : 'are'} from an earlier session: the chain store has no later snapshot for ${olderSession === 1 ? 'it' : 'them'}, so ${olderSession === 1 ? 'its' : 'their'} premium and Ann. ret are that session’s (amber).`,
+    )
+  }
+  if (untimed > 0) lines.push(`${untimed} carry no quote time.`)
+  if (rows.every((r) => premiumBasis(r) === 'close')) {
+    lines.push('Every premium is the last trade as of its quote time — the chain store keeps no bid/ask to take a mid from.')
+  }
+  return { newest, newestMs, older: older.length, olderSession, title: lines.join('\n') }
+}
+
+/** Whether a row's premium is from an earlier session than the table's newest quote. */
+export function quoteFromEarlierSession(row: ScreenerContractRow, reading: QuoteReading): boolean {
+  const ms = quoteMs(row)
+  return ms != null && reading.newestMs != null && etDate(ms) < etDate(reading.newestMs)
+}
+
+/** The premium cell's hover: what the number is, and when it was quoted. */
+export function premiumTitle(row: ScreenerContractRow, reading: QuoteReading, nowMs: number): string {
+  const ms = quoteMs(row)
+  const when = ms == null ? 'at a time the engine did not send' : etStamp(ms, nowMs)
+  const what =
+    premiumBasis(row) === 'close'
+      ? `Last trade as of ${when} — the chain store keeps no bid/ask to take a mid from.`
+      : `Mid of bid and ask, quoted ${when}.`
+  if (quoteFromEarlierSession(row, reading)) {
+    return `${what} An earlier session than the table’s newest quote (${reading.newest}): the chain store has no later snapshot of this contract, so its premium and Ann. ret are that session’s.`
+  }
+  if (ms != null && reading.newestMs != null && ms < reading.newestMs) {
+    return `${what} Earlier than the table’s newest quote (${reading.newest}).`
+  }
+  return what
+}
 
 export function deltaInBand(delta: number | null): boolean {
   if (delta == null) return false

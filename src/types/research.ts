@@ -33,10 +33,20 @@ export interface ScreenerContractRow {
   margin: number | null
   bid: number | null
   ask: number | null
+  /** The premium per share: the mid, or the session close when `premium_basis` says so. */
   mid: number | null
+  /** Null without both bid and ask (engine 86ebdf7); an older engine wrote 0 there. */
   spread_pct: number | null
   open_interest: number | null
   delta: number | null
+  /**
+   * Where `mid` came from: `close` when the chain store has no bid/ask (every
+   * row under the Options Starter entitlement), `mid` when it has both.
+   * Absent from an engine before 86ebdf7.
+   */
+  premium_basis?: 'close' | 'mid'
+  /** When the chain row was observed, ISO UTC. Absent from an engine before 86ebdf7. */
+  snapshot_ts?: string | null
 }
 
 export interface ScreenerSymbolGroup {

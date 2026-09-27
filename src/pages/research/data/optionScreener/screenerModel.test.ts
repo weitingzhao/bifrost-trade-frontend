@@ -6,6 +6,10 @@ import {
   contractToken,
   DEFAULT_LIVE_FILTERS,
   deltaInBand,
+  premiumBasis,
+  premiumTitle,
+  quoteFromEarlierSession,
+  quoteReading,
   rowPasses,
   rulesForStructure,
   screenerFunnel,
@@ -217,5 +221,57 @@ describe('the rule that fits a row', () => {
   it('answers undefined while either book is loading, not an empty list', () => {
     expect(rulesForStructure(undefined, structures, 'cash_secured_put')).toBeUndefined()
     expect(rulesForStructure(opps, undefined, 'cash_secured_put')).toBeUndefined()
+  })
+})
+
+describe('quote time and premium basis', () => {
+  // Invented instants. `now` is Sat 2026-09-26 21:30 ET, already the 27th in UTC.
+  const now = Date.parse('2026-09-27T01:30:00Z')
+  const unquoted = { bid: null, ask: null, spread_pct: null, premium_basis: 'close' as const }
+  const friClose = row({ ...unquoted, strike: 90, snapshot_ts: '2026-09-25T20:00:00+00:00' })
+  const friIntraday = row({ ...unquoted, strike: 95, snapshot_ts: '2026-09-25T19:30:19.62+00:00' })
+  const thuClose = row({ ...unquoted, strike: 85, snapshot_ts: '2026-09-24T20:00:00+00:00' })
+
+  it('reads the basis from the engine, else from the quote an older engine left', () => {
+    expect(premiumBasis(row({ premium_basis: 'close' }))).toBe('close')
+    expect(premiumBasis(row({ premium_basis: undefined, bid: null, ask: null, spread_pct: 0 }))).toBe('close')
+    expect(premiumBasis(row({ premium_basis: undefined }))).toBe('mid')
+  })
+
+  it('names the newest quote with its day, and counts the earlier ones', () => {
+    const q = quoteReading([friIntraday, friClose, thuClose], now)
+    expect(q.newest).toBe('Fri 16:00 ET')
+    expect(q.older).toBe(2)
+    expect(q.olderSession).toBe(1)
+    expect(q.title).toContain('1 at Fri 15:30 ET, 1 at Thu 16:00 ET')
+    expect(q.title).toContain('last trade')
+  })
+
+  it('marks only a premium from an earlier session, not an earlier snapshot of the same one', () => {
+    const q = quoteReading([friIntraday, friClose, thuClose], now)
+    expect(quoteFromEarlierSession(thuClose, q)).toBe(true)
+    expect(quoteFromEarlierSession(friIntraday, q)).toBe(false)
+    expect(quoteFromEarlierSession(friClose, q)).toBe(false)
+    expect(premiumTitle(thuClose, q, now)).toContain('earlier session')
+    expect(premiumTitle(friIntraday, q, now)).toContain('Earlier than the table’s newest quote (Fri 16:00 ET)')
+    expect(premiumTitle(friClose, q, now)).toBe('Last trade as of Fri 16:00 ET — the chain store keeps no bid/ask to take a mid from.')
+  })
+
+  it('dates a session in New York, not UTC', () => {
+    // 19:30 and 21:00 ET on the same Friday; the second is already Saturday in UTC.
+    const early = row({ ...unquoted, snapshot_ts: '2026-09-25T23:30:00Z' })
+    const late = row({ ...unquoted, snapshot_ts: '2026-09-26T01:00:00Z' })
+    const q = quoteReading([early, late], now)
+    expect(q.older).toBe(1)
+    expect(q.olderSession).toBe(0)
+    expect(quoteFromEarlierSession(early, q)).toBe(false)
+  })
+
+  it('says so when nothing carries a time, rather than printing one', () => {
+    expect(quoteReading([], now)).toMatchObject({ newest: null, older: 0, title: 'No contract is shown.' })
+    const q = quoteReading([row({ snapshot_ts: undefined })], now)
+    expect(q.newest).toBeNull()
+    expect(q.title).toBe('The engine sent no quote time for these rows.')
+    expect(premiumTitle(row({ snapshot_ts: undefined }), q, now)).toBe('Mid of bid and ask, quoted at a time the engine did not send.')
   })
 })

@@ -64,6 +64,11 @@ function etParts(ms: number): EtParts {
   }
 }
 
+/** `YYYY-MM-DD` in New York — the session day an instant belongs to. */
+export function etDate(ms: number): string {
+  return etParts(ms).date
+}
+
 /** `HH:MM` (or `HH:MM:SS`) in New York. */
 export function etClock(ms: number, seconds = false): string {
   return new Date(ms).toLocaleTimeString('en-US', {

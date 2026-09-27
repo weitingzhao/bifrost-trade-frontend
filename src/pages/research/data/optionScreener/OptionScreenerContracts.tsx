@@ -7,6 +7,7 @@
  * annualised return first, the top four a name. A row click selects it; each
  * row ends in three actions — Compare, Discovery, Plan.
  */
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeftRight, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -32,6 +33,10 @@ import {
   cashPerContract,
   contractToken,
   deltaInBand,
+  premiumBasis,
+  premiumTitle,
+  quoteFromEarlierSession,
+  quoteReading,
   SPREAD_UNMEASURED,
   spreadMeasured,
   type LiveFilters,
@@ -129,6 +134,14 @@ export function OptionScreenerContracts({
   /** What stands in for the table when it has nothing to draw. */
   status: { kind: 'rows' } | { kind: 'empty'; title: string; detail: string }
 }) {
+  // Only the day word in a stamp (`today` / `Fri`) reads the clock; mount time is enough.
+  const [nowMs] = useState(() => Date.now())
+  const shown = status.kind === 'rows' ? groups.flatMap((g) => g.rows) : []
+  const quotes = quoteReading(shown, nowMs)
+  // The premium column says what its numbers are: under Options Starter every
+  // one is the session's last trade, and a header reading Mid over them was the
+  // footnote's job to correct.
+  const allClose = shown.length > 0 && shown.every((r) => premiumBasis(r) === 'close')
   return (
     <section
       className="min-w-0 flex-[999_1_600px] overflow-hidden border mat-card"
@@ -152,9 +165,16 @@ export function OptionScreenerContracts({
             { value: 'flat', label: 'Passing only' },
           ]}
         />
-        {/* The design prints the quote time here too; the engine's response
-            carries none, so only the source is drawn. */}
-        <span className="ml-auto text-dense-caption text-muted-foreground">chain source {source}</span>
+        {/* The design's `quotes HH:MM · chain source massive`. The day is
+            printed too: outside the session the newest quote is often an
+            earlier day's close, and a bare 16:00 read as today's. */}
+        <span className="ml-auto text-dense-caption text-muted-foreground" title={quotes.title}>
+          quotes {quotes.newest ?? '—'}
+          {quotes.older > 0 ? (
+            <span className={cn(quotes.olderSession > 0 && 'text-warning')}> · {quotes.older} older</span>
+          ) : null}
+          {' · '}chain source {source}
+        </span>
       </header>
 
       {status.kind === 'empty' ? (
@@ -185,7 +205,16 @@ export function OptionScreenerContracts({
               <DenseTableHead className={denseTableNumCell}>DTE</DenseTableHead>
               <DenseTableHead className={denseTableNumCell}>Δ</DenseTableHead>
               <DenseTableHead className={denseTableNumCell}>P(ITM)</DenseTableHead>
-              <DenseTableHead className={denseTableNumCell}>Mid</DenseTableHead>
+              <DenseTableHead
+                className={denseTableNumCell}
+                title={
+                  allClose
+                    ? 'Session close — the last trade as of each row’s quote time. The chain store keeps no bid/ask, so there is no mid.'
+                    : 'Mid of bid and ask; a row without a quote carries its session close (hover the figure).'
+                }
+              >
+                {allClose ? 'Close' : 'Mid'}
+              </DenseTableHead>
               <DenseTableHead className={denseTableNumCell}>Ann. ret</DenseTableHead>
               <DenseTableHead className={denseTableNumCell}>Spread</DenseTableHead>
               <DenseTableHead className={denseTableNumCell}>OI</DenseTableHead>
@@ -258,8 +287,8 @@ export function OptionScreenerContracts({
                         {fmtPctFromFraction(r.prob_itm, 0)}
                       </DenseTableCell>
                       <DenseTableCell
-                        className={denseTableNumCell}
-                        title={measured ? undefined : 'Session close — the chain store keeps no bid/ask to take a mid from.'}
+                        className={cn(denseTableNumCell, quoteFromEarlierSession(r, quotes) && 'text-warning')}
+                        title={premiumTitle(r, quotes, nowMs)}
                       >
                         {r.mid == null ? '—' : r.mid.toFixed(2)}
                       </DenseTableCell>
@@ -333,7 +362,8 @@ export function OptionScreenerContracts({
 
       <p className="m-0 border-t border-border/60 px-3 py-1.75 text-dense-caption leading-normal text-muted-foreground text-pretty">
         Ann. ret = premium ÷ cash secured × 365 ÷ DTE. Red spread = wider than your max; a spread of — was not
-        measured — the chain store keeps no bid/ask, so Mid is then the session close. Δ in ink = inside the
+        measured — the chain store keeps no bid/ask, so the premium is the session close (the column reads
+        Close). An amber premium is an earlier session&rsquo;s quote than the table&rsquo;s newest. Δ in ink = inside the
         structure&rsquo;s target band; greyed = outside it. &ldquo;Rule&rdquo; is the Opportunity in Trade › Rules for this structure
         that names this underlying; Save as rule → creates one from these filters instead of typing it.
       </p>

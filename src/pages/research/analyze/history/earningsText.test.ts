@@ -9,6 +9,8 @@ import {
   ratioBarWidth,
   ratioText,
   setAsideLine,
+  aheadPointer,
+  lateMark,
 } from './earningsText'
 
 // Invented numbers, shaped like the route's rows.
@@ -129,4 +131,23 @@ describe('earnings moves text', () => {
     const [mark] = printMarks(moves([row('2031-08-03', null, 0.05, 'down')]))
     expect(mark.detail).toBe('Earnings 3 Aug 31 · moved \u22125.0% · IV crush \u221210 pts · no ATM IV for an expiry covering the print')
   })
+
+  it('points past the last session to the next print, and marks a late one inside the chart', () => {
+    const next = {
+      date: '2031-11-03',
+      basis: 'same quarter last year + 52 weeks',
+      from: '2030-11-04',
+      days_away: 38,
+      track: { n: 4, median_miss_days: 0, max_miss_days: 0 },
+    }
+    expect(aheadPointer(next)?.label).toBe('next E ~3 Nov · 38d →')
+    expect(aheadPointer(next)?.title).toContain("last year's same-quarter print (4 Nov 30) plus 52 weeks")
+    expect(lateMark(next)).toEqual([])
+    const late = { ...next, days_away: -4, track: { n: 4, median_miss_days: 0, max_miss_days: 1 } }
+    expect(aheadPointer(late)).toBeNull()
+    expect(lateMark(late)).toMatchObject([{ date: '2031-11-03', label: '~3 Nov?' }])
+    expect(lateMark(late)[0].detail).toContain('4 days on. That is later than this estimate has missed this name before')
+    expect(aheadPointer(null)).toBeNull()
+  })
 })
+

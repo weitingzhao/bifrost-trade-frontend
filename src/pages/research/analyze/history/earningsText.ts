@@ -3,6 +3,8 @@
  * `/analytics/vol/earnings-moves`. Pure, so the rules are tested once.
  */
 import type { EarningsMoves, EarningsPrint } from '@/api/research/vrp'
+import type { ExpectedEarnings } from '@/api/research/narrative'
+import { estimateCaveat, lateLead, shortDate } from '@/utils/earningsEstimate'
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const MINUS = '−'
@@ -125,4 +127,32 @@ export function printMarks(
     title: `Earnings — 8-K Item 2.02 filed ${p.filed}`,
     detail: markDetail(p),
   }))
+}
+
+/**
+ * The next print on the IV chart when it lies past the last session: a
+ * pointer at the right edge, dated and counted, with the estimate's caveat.
+ */
+export function aheadPointer(e: ExpectedEarnings | null | undefined): { label: string; title: string } | null {
+  if (!e || e.days_away < 0) return null
+  return {
+    label: `next E ~${shortDate(e.date)} · ${e.days_away}d →`,
+    title: `Next earnings estimated ${e.date}. ${estimateCaveat(e)}`,
+  }
+}
+
+/**
+ * A late print sits inside the chart — its estimated date has passed with no
+ * results 8-K — so it is marked there, with a ? and the late lead on hover.
+ */
+export function lateMark(e: ExpectedEarnings | null | undefined): { date: string; label: string; title: string; detail: string }[] {
+  if (!e || e.days_away >= 0) return []
+  return [
+    {
+      date: e.date,
+      label: `~${shortDate(e.date)}?`,
+      title: `Earnings expected ~${e.date} (estimated) — no results 8-K yet`,
+      detail: lateLead(e),
+    },
+  ]
 }

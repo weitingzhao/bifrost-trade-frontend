@@ -43,4 +43,12 @@ describe('VrpTimeSeriesChart marks', () => {
     render(<VrpTimeSeriesChart rows={ROWS} />)
     expect(screen.queryByText('Earnings — hover the day for the move')).toBeNull()
   })
+
+  it('points to an event past the last session at the right edge', () => {
+    const { container, rerender } = render(<VrpTimeSeriesChart rows={ROWS} ahead={{ label: 'next E ~3 Nov · 38d →', title: 'est.' }} />)
+    expect(container.querySelector('[data-chart-ahead]')?.textContent).toContain('next E ~3 Nov · 38d →')
+    rerender(<VrpTimeSeriesChart rows={ROWS} />)
+    expect(container.querySelector('[data-chart-ahead]')).toBeNull()
+  })
 })
+

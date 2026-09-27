@@ -48,6 +48,12 @@ interface VrpTimeSeriesChartProps {
    * first row on or after its date; a date outside the rows is left off.
    */
   marks?: ChartMark[]
+  /**
+   * An event past the last session — the next earnings print — as an amber
+   * pointer at the chart's right edge, rather than stretching the axis into
+   * days that have no reading.
+   */
+  ahead?: { label: string; title?: string } | null
 }
 
 export interface ChartMark {
@@ -80,6 +86,7 @@ export function VrpTimeSeriesChart({
   band = null,
   fluid = false,
   marks = [],
+  ahead = null,
 }: VrpTimeSeriesChartProps) {
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
 
@@ -153,6 +160,10 @@ export function VrpTimeSeriesChart({
     .map((m) => ({ ...m, i: rows.findIndex((r) => (r.trade_date ?? '') >= m.date) }))
     .filter((m) => m.i >= 0)
   const hoverMark = hoverIdx != null ? drawnMarks.find((m) => m.i === hoverIdx) : undefined
+  // Beside the mark labels when the right edge is clear of them, else just inside the plot.
+  const aheadY = drawnMarks.some((m) => chart.xScale(m.i) > width - chart.pad.right - 150)
+    ? chart.pad.top + 11
+    : chart.pad.top - 5
   const tooltipRow = hoverIdx != null ? rows[hoverIdx] : null
   return (
     <div className={cn('relative', className)}>
@@ -227,6 +238,19 @@ export function VrpTimeSeriesChart({
             </g>
           )
         })}
+
+        {ahead ? (
+          <text
+            x={width - chart.pad.right}
+            y={aheadY}
+            textAnchor="end"
+            className="fill-warning text-dense-micro font-mono"
+            data-chart-ahead=""
+          >
+            {ahead.title ? <title>{ahead.title}</title> : null}
+            {ahead.label}
+          </text>
+        ) : null}
 
         {rows.map((r, i) => (
           <rect

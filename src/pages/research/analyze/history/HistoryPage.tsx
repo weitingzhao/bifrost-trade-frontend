@@ -17,7 +17,7 @@ import { useQuery } from '@tanstack/react-query'
 import { PageFaceSwitch, PageHead, PageShell, SectionPanel } from '@/components/layout'
 import { HistoryCorrelation } from './HistoryCorrelation'
 import { HistoryEarnings } from './HistoryEarnings'
-import { printMarks } from './earningsText'
+import { aheadPointer, lateMark, printMarks } from './earningsText'
 import { SegmentControl } from '@/components/data-display'
 import { VrpTimeSeriesChart } from '@/components/charts/VrpTimeSeriesChart'
 import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
@@ -128,7 +128,10 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
   const market = useVrpHistory(sym === MARKET_IV_SYMBOL ? '' : MARKET_IV_SYMBOL, FETCH_DAYS)
   const earnings = useEarningsDates(sym)
   const moves = useEarningsMoves(sym, PRINTS)
-  const marks = useMemo(() => printMarks(moves.data), [moves.data])
+  // Past prints, a late one where its estimate fell, and the next one pointed to past the edge.
+  const nextPrint = earnings.data?.expected_next ?? null
+  const marks = useMemo(() => [...printMarks(moves.data), ...lateMark(nextPrint)], [moves.data, nextPrint])
+  const ahead = aheadPointer(nextPrint)
   const ctx = useMemo<IvEventContext>(
     () => ({ market: sym === MARKET_IV_SYMBOL ? undefined : market.data, earnings: earnings.data?.dates }),
     [sym, market.data, earnings.data]
@@ -206,6 +209,7 @@ function HistoryBody({ sym, win }: { sym: string; win: HistoryWindow }) {
                 fluid
                 band={reading.band ? { ...reading.band, label: 'IV30 20th–80th pct of window' } : null}
                 marks={marks}
+                ahead={ahead}
               />
               <p className="flex flex-wrap gap-x-4 gap-y-1 text-dense-meta text-muted-foreground">
                 <span>

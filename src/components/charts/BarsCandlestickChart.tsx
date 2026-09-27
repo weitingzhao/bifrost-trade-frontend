@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { DiscoveryHint } from '@/components/optionDiscovery/DiscoveryHint'
 /* eslint-disable react-hooks/set-state-in-effect -- chart layout measures DOM on mount */
 import type { Bar } from '@/types/market'
@@ -14,6 +14,54 @@ import {
   swingHighLow,
 } from './barsChartMath'
 
+/** A horizontal price line across the pane — a wall, a max pain, a flip point. */
+export interface ChartPriceLevel {
+  price: number
+  label?: string
+  color: string
+  dash?: string
+  /** Which edge carries the label (default 'left'). */
+  side?: 'left' | 'right'
+  /** Label above or below the line (default 'above'). */
+  labelPlacement?: 'above' | 'below'
+  opacity?: number
+}
+
+/** A vertical session line. `slot` counts from the last bar: 0 = today, positive = future. */
+export interface ChartSessionVertical {
+  slot: number
+  label?: string
+  color: string
+  dash?: string
+  /** Stack order for the top-edge label (label y = paddingTop + 9 + 11·labelRow). */
+  labelRow?: number
+}
+
+/** A ± band anchored at the last bar's close, widening into the future zone. */
+export interface ChartForwardCone {
+  /** How many sessions forward to draw — keep ≤ futureSlots. */
+  sessions: number
+  /** Half-width in price units at d sessions ahead. */
+  widthAt: (d: number) => number
+  fill?: string
+}
+
+/** The price pane's coordinate system, handed to renderPriceOverlay. */
+export interface ChartOverlayContext {
+  /** x for an index into `bars` (full history, pre-brush). */
+  xForIndex: (fullIdx: number) => number
+  /** x for a slot counted from the last bar (0 = last bar, positive = future). */
+  xForSlot: (slotFromLast: number) => number
+  yForPrice: (p: number) => number
+  lastIndex: number
+  paddingTop: number
+  priceHeight: number
+  paddingLeft: number
+  innerWidth: number
+  width: number
+  height: number
+}
+
 export interface BarsCandlestickChartProps {
   bars: Bar[]
   period?: string
@@ -27,6 +75,21 @@ export interface BarsCandlestickChartProps {
   showRsi?: boolean
   /** Pivot (prev bar H/L/C) + 20-bar swing high/low as horizontal lines. */
   showSr?: boolean
+  /**
+   * Extra x-axis slots after the last bar — a shaded future zone for cones and
+   * event lines (Symbol page). Ignored while a brush selection is active.
+   */
+  futureSlots?: number
+  /** Horizontal price levels, included in the y-domain. */
+  levels?: ChartPriceLevel[]
+  /** Vertical session lines (earnings, OpEx). */
+  verticals?: ChartSessionVertical[]
+  /** ±1σ-style forward cone from the last close; its extremes join the y-domain. */
+  cone?: ChartForwardCone
+  /** Extra prices the y-domain must reach (an overlay's strikes). */
+  domainPrices?: number[]
+  /** Extra SVG in the price pane's coordinate space, drawn above the candles. */
+  renderPriceOverlay?: (ctx: ChartOverlayContext) => ReactNode
 }
 
 const VWAP_STROKE = 'var(--color-link)'
@@ -42,6 +105,13 @@ const SR_SWING = '#22d3ee'
 const CHART_WIDTH = 800
 const PADDING_LEFT = 56
 const PADDING_RIGHT = 16
+
+/** The svg's fixed frame, for callers that place HTML against chart x-positions. */
+export const BARS_CHART_FRAME = {
+  width: CHART_WIDTH,
+  paddingLeft: PADDING_LEFT,
+  paddingRight: PADDING_RIGHT,
+} as const
 
 function xForFullIndex(
   fullIdx: number,
@@ -69,6 +139,12 @@ export function BarsCandlestickChart({
   showBollinger = false,
   showRsi = false,
   showSr = false,
+  futureSlots = 0,
+  levels,
+  verticals,
+  cone,
+  domainPrices,
+  renderPriceOverlay,
 }: BarsCandlestickChartProps) {
   const fullBars = useMemo(
     () => (rawBars || []).map(normalizeBarForChart).filter((x): x is Bar => x != null),
@@ -100,6 +176,11 @@ export function BarsCandlestickChart({
   }, [fullBars, fullCount, view.startIdx, view.endIdx])
 
   const isFiltered = viewRange != null && (view.startIdx > 0 || view.endIdx < fullCount - 1)
+
+  // The future zone: extra slots after the last bar. A brush selection reads in
+  // full-history coordinates, so the zone stands down while one is active.
+  const futureCount = isFiltered ? 0 : Math.max(0, Math.floor(futureSlots))
+  const xCount = fullCount + futureCount
 
   const closesAll = useMemo(() => fullBars.map(b => b.close), [fullBars])
   const rsiAll = useMemo(() => (showRsi && fullBars.length > 0 ? rsiSeries(closesAll, 14) : []), [closesAll, fullBars.length, showRsi])
@@ -157,6 +238,19 @@ export function BarsCandlestickChart({
     if (showSr && swing) {
       pricePoints.push(swing.resistance, swing.support)
     }
+    for (const lv of levels ?? []) {
+      if (Number.isFinite(lv.price)) pricePoints.push(lv.price)
+    }
+    for (const p of domainPrices ?? []) {
+      if (Number.isFinite(p)) pricePoints.push(p)
+    }
+    if (cone && bars.length > 0) {
+      const anchor = bars[bars.length - 1].close
+      const w = cone.widthAt(cone.sessions)
+      if (Number.isFinite(anchor) && Number.isFinite(w)) {
+        pricePoints.push(anchor + w, anchor - w)
+      }
+    }
     if (pricePoints.length === 0) return null
     const minPrice = Math.min(...pricePoints)
     const maxPrice = Math.max(...pricePoints)
@@ -165,7 +259,7 @@ export function BarsCandlestickChart({
     const volumes = bars.map(b => (b.volume != null && Number.isFinite(b.volume) ? Number(b.volume) : 0))
     const maxVolume = hasVolume ? Math.max(...volumes, 1) : 1
     return { minPrice, maxPrice, priceRange, hasVolume, volumes, maxVolume }
-  }, [bars, showVwap, showBollinger, bbAll, view.startIdx, showSr, pivotLevels, swing])
+  }, [bars, showVwap, showBollinger, bbAll, view.startIdx, showSr, pivotLevels, swing, levels, cone, domainPrices])
 
   const showVolPanel = showVolume && (priceStats?.hasVolume ?? false)
   const innerWidth = width - paddingLeft - paddingRight
@@ -201,9 +295,9 @@ export function BarsCandlestickChart({
       if (svgX > right) return fullCount - 1
       if (fullCount <= 1) return 0
       const t = (svgX - left) / innerWidth
-      return Math.max(0, Math.min(fullCount - 1, Math.round(t * (fullCount - 1))))
+      return Math.max(0, Math.min(fullCount - 1, Math.round(t * (xCount - 1))))
     },
-    [fullCount, innerWidth, paddingLeft],
+    [fullCount, xCount, innerWidth, paddingLeft],
   )
 
   const onBrushPointerDown = useCallback(
@@ -596,7 +690,7 @@ export function BarsCandlestickChart({
   const { minPrice, maxPrice, priceRange, hasVolume, volumes, maxVolume } = priceStats
 
   const xForLocalIndex = (localI: number) =>
-    xForFullIndex(view.startIdx + localI, fullCount, innerWidth, paddingLeft)
+    xForFullIndex(view.startIdx + localI, xCount, innerWidth, paddingLeft)
   const xForIndex = (i: number) => xForLocalIndex(i)
 
   const visibleCount = bars.length
@@ -608,6 +702,127 @@ export function BarsCandlestickChart({
 
   const yForVolume = (v: number) =>
     volumeBottom - (v / maxVolume) * innerVolumeHeight
+
+  const lastIndex = fullCount - 1
+  const xForSlot = (slot: number) => xForFullIndex(lastIndex + slot, xCount, innerWidth, paddingLeft)
+  const overlayCtx: ChartOverlayContext = {
+    xForIndex: (fullIdx: number) => xForFullIndex(fullIdx, xCount, innerWidth, paddingLeft),
+    xForSlot,
+    yForPrice,
+    lastIndex,
+    paddingTop,
+    priceHeight: innerPriceHeight,
+    paddingLeft,
+    innerWidth,
+    width,
+    height,
+  }
+
+  const futureZone =
+    futureCount > 0 && fullCount > 0 ? (
+      <rect
+        x={xForSlot(0)}
+        y={paddingTop}
+        width={Math.max(0, paddingLeft + innerWidth - xForSlot(0))}
+        height={(showVolPanel ? volumeBottom : paddingTop + innerPriceHeight) - paddingTop}
+        fill="var(--foreground)"
+        opacity={0.04}
+        pointerEvents="none"
+      />
+    ) : null
+
+  const conePath = (() => {
+    if (!cone || fullCount === 0 || futureCount === 0) return null
+    const anchor = fullBars[lastIndex].close
+    if (!Number.isFinite(anchor)) return null
+    const upper: string[] = []
+    const lower: string[] = []
+    const sessions = Math.min(cone.sessions, futureCount)
+    for (let d = 0; d <= sessions; d++) {
+      const x = xForSlot(d).toFixed(1)
+      const w = cone.widthAt(d)
+      upper.push(`${x} ${yForPrice(anchor + w).toFixed(1)}`)
+      lower.unshift(`${x} ${yForPrice(anchor - w).toFixed(1)}`)
+    }
+    if (upper.length < 2) return null
+    return (
+      <path
+        d={`M${upper.join('L')}L${lower.join('L')}Z`}
+        fill={cone.fill ?? 'var(--sk-accent)'}
+        opacity={cone.fill ? 1 : 0.09}
+        pointerEvents="none"
+      />
+    )
+  })()
+
+  const levelEls = (levels ?? [])
+    .filter((lv) => Number.isFinite(lv.price))
+    .map((lv, i) => {
+      const y = yForPrice(lv.price)
+      const side = lv.side ?? 'left'
+      const labelY = lv.labelPlacement === 'below' ? y + 10 : y - 4
+      return (
+        <g key={`lvl-${i}`} pointerEvents="none">
+          <line
+            x1={paddingLeft}
+            x2={paddingLeft + innerWidth}
+            y1={y}
+            y2={y}
+            stroke={lv.color}
+            strokeWidth={1}
+            strokeDasharray={lv.dash ?? '2 3'}
+            opacity={lv.opacity ?? 0.8}
+          />
+          {lv.label ? (
+            <text
+              x={side === 'left' ? paddingLeft + 4 : paddingLeft + innerWidth - 4}
+              y={labelY}
+              textAnchor={side === 'left' ? 'start' : 'end'}
+              fontSize="9"
+              fontFamily="var(--font-mono)"
+              fill={lv.color}
+            >
+              {lv.label}
+            </text>
+          ) : null}
+        </g>
+      )
+    })
+
+  const verticalEls = (verticals ?? [])
+    .filter((v) => Number.isFinite(v.slot))
+    .map((v, i) => {
+      const x = xForSlot(v.slot)
+      const bottom = showVolPanel ? volumeBottom : paddingTop + innerPriceHeight
+      return (
+        <g key={`vert-${i}`} pointerEvents="none">
+          <line
+            x1={x}
+            x2={x}
+            y1={paddingTop}
+            y2={bottom}
+            stroke={v.color}
+            strokeWidth={1}
+            strokeDasharray={v.dash ?? '3 3'}
+            opacity={0.8}
+          />
+          {v.label ? (
+            <text
+              // Near the right edge the label flips to the line's left, so the
+              // svg's own bounds never clip it to a fragment.
+              x={x + 3 + innerWidth * 0.06 > paddingLeft + innerWidth ? x - 3 : x + 3}
+              y={paddingTop + 9 + (v.labelRow ?? 0) * 11}
+              textAnchor={x + 3 + innerWidth * 0.06 > paddingLeft + innerWidth ? 'end' : 'start'}
+              fontSize="9"
+              fontFamily="var(--font-mono)"
+              fill={v.color}
+            >
+              {v.label}
+            </text>
+          ) : null}
+        </g>
+      )
+    })
 
   const topLabel = maxPrice
   const midLabel = minPrice + priceRange / 2
@@ -687,6 +902,9 @@ export function BarsCandlestickChart({
           rx={8}
         />
 
+        {futureZone}
+        {conePath}
+
         {[topLabel, midLabel, bottomLabel].map((p, idx) => {
           const y = yForPrice(p)
           return (
@@ -715,6 +933,8 @@ export function BarsCandlestickChart({
 
         {srLineEls}
         {bollingerEls}
+        {levelEls}
+        {verticalEls}
 
         {bars.map((b, i) => {
           const x = xForIndex(i)
@@ -756,6 +976,8 @@ export function BarsCandlestickChart({
         })}
 
         {vwapLineEls}
+
+        {renderPriceOverlay?.(overlayCtx)}
 
         {lastBar && bars.length > 1 && (
           <text

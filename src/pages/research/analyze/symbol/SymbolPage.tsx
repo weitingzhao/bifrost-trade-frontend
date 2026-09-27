@@ -55,6 +55,7 @@ import { SymbolVerdictPanel } from '@/pages/research/analyze/symbol/SymbolVerdic
 import { SymbolNarrativePanel } from '@/pages/research/analyze/symbol/SymbolNarrativePanel'
 import { useSymbolFaces } from '@/pages/research/analyze/symbol/useSymbolFaces'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
+import { SymbolPriceChart } from '@/pages/research/analyze/symbol/SymbolPriceChart'
 import { SymbolVolatilityFace } from '@/pages/research/analyze/symbol/SymbolVolatilityFace'
 import { SymbolDealerFace } from '@/pages/research/analyze/symbol/SymbolDealerFace'
 import { SymbolScenarioFace } from '@/pages/research/analyze/symbol/SymbolScenarioFace'
@@ -228,7 +229,10 @@ export default function SymbolPage() {
           /* Two columns, as the design draws them. The rail is not a seventh
              face: your own verdict is a thing you write, what moved is a
              comparison with yesterday, and the record is a ranking *of* the
-             cards beside it. */
+             cards beside it. Above both, the name's own candles (Rev .98):
+             every judgement below reads against price, so price comes first. */
+          <div className="space-y-3">
+          {symbol ? <SymbolPriceChart symbol={symbol} /> : null}
           <div className="flex flex-wrap items-start gap-3">
             <div className="min-w-0 flex-[1_1_34rem]">
               <DossierBody faces={faces} />
@@ -246,6 +250,7 @@ export default function SymbolPage() {
                 />
               </aside>
             ) : null}
+          </div>
           </div>
         )}
         {active === 'volatility' && <SymbolVolatilityFace symbol={symbol} />}

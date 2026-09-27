@@ -277,9 +277,10 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // panel to the Overview rail; Rev .56–.58 the four-layer head, the 440
     // face and the contract seed (frame batch F4) — waiting for a look.
     design: {
-      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      // Rev .82–.83 §16 refinement built in batch J1; Rev .98 Overview candles
+      // + trade-history overlay built in batch K3 — waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.83',
+      rev: '2026-09-26.98',
       note: DESIGN_NOTES['/research/symbol'],
     },
   },

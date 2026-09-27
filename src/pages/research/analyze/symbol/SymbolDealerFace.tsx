@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchGexDistribution } from '@/api/researchEngine'
 import { fetchOpexCurrent, fetchOpexHistory, fetchOpexPinAnalysis } from '@/api/research/opexCycle'
 import { classifyExpiration } from '@/utils/optionDiscovery/expirationMeta'
-import { DealerIntraday, DealerMaxPainTrend, DealerRegimeTimeline, useDealerTimeline } from './SymbolDealerHistory'
+import { DealerIntraday, DealerRegimeTimeline, useDealerTimeline } from './SymbolDealerHistory'
 import { Link } from 'react-router-dom'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
@@ -657,7 +657,10 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           )}
         </div>
         </div>
-        <div className="grid grid-cols-1 items-start md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        {/* Rev .98: 「max pain vs spot 30d」 removed — spot history is the Overview
+            candles now and max pain is a dashed level there; OI by strike takes
+            the whole row. */}
+        <div>
         {rows.length > 0 ? (
           <div className="px-3 pb-1">
             <div className="mb-1 flex flex-wrap items-baseline gap-2">
@@ -698,9 +701,6 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
             </div>
           </div>
         ) : null}
-        <div className="border-l border-border/60 px-3 pb-1 pt-0 md:pt-0">
-          <DealerMaxPainTrend sym={sym} expiry={pinExpiry} />
-        </div>
         </div>
         {/* Owner 2026-09-26: keep the retired OpEx section's map, named for
             what it is — the strike map carries OI and GEX, not vanna, so the

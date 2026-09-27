@@ -28,7 +28,6 @@ import { fetchGexIntraday, fetchGexLevels } from '@/api/researchEngine'
 import { GexTimelineChart } from '@/components/charts/GexTimelineChart'
 import { fmtEtClock } from '@/lib/format'
 import { fetchStockDailyCloses, type DailyBar } from '@/api/marketData/dailyBars'
-import { fetchMaxPainComputeHistory } from '@/api/research/optionDiscovery'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
@@ -41,7 +40,14 @@ const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
 const td = 'whitespace-nowrap border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums'
 const TIMELINE_SESSIONS = 12
-const TREND_SESSIONS = 30
+
+const etClock = (ts: string) => fmtEtClock(new Date(ts)).slice(0, 5)
+const fmtGex = (v: number | null) => {
+  if (v == null) return '—'
+  const a = Math.abs(v)
+  const body = a >= 1e9 ? `${(a / 1e9).toFixed(2)}B` : `${(a / 1e6).toFixed(1)}M`
+  return `${v >= 0 ? '+' : '−'}${body}`
+}
 
 /** A year of daily closes — the same query the Volatility face reads, so one cache serves both. */
 function useSymbolCloses(sym: string) {
@@ -193,153 +199,6 @@ export function DealerRegimeTimeline({
       </table>
     </div>
   )
-}
-
-export function DealerMaxPainTrend({ sym, expiry }: { sym: string; expiry: string | null }) {
-  const closesQ = useSymbolCloses(sym)
-  const earnQ = useEarningsDates(sym)
-  const mpQ = useQuery({
-    queryKey: ['market', 'max-pain-history', sym, expiry],
-    queryFn: () => fetchMaxPainComputeHistory({ symbol: sym, expiry: expiry as string, lookbackDays: 60 }),
-    enabled: Boolean(sym && expiry),
-    staleTime: 30 * 60_000,
-  })
-  const closeOn = new Map((closesQ.data ?? []).map((b) => [b.date, b.close]))
-  const pts = (mpQ.data?.series ?? [])
-    .map((p) => ({ date: p.trade_date.slice(0, 10), mp: p.max_pain_strike, close: closeOn.get(p.trade_date.slice(0, 10)) ?? null }))
-    .filter((p): p is { date: string; mp: number; close: number } => Number.isFinite(p.mp) && p.close != null)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-TREND_SESSIONS)
-
-  if (pts.length < 2) {
-    return (
-      <p className="m-0 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-        {mpQ.isLoading || closesQ.isLoading
-          ? 'Loading the max-pain history…'
-          : mpQ.data && !mpQ.data.ok
-            ? `The plugin's max-pain history did not answer for ${expiry ?? 'this expiry'}: ${mpQ.data.error ?? 'no detail'}.`
-            : `Fewer than two sessions of max pain at ${expiry ?? 'this expiry'} line up with a close.`}
-      </p>
-    )
-  }
-
-  const all = pts.flatMap((p) => [p.close, p.mp * 1.01, p.mp * 0.99])
-  const lo = Math.min(...all)
-  const hi = Math.max(...all)
-  const W = 600
-  const H = 170
-  const x = (i: number) => 4 + (i / Math.max(1, pts.length - 1)) * (W - 8)
-  const y = (v: number) => 6 + (1 - (v - lo) / (hi - lo || 1)) * (H - 20)
-  const line = (vals: number[]) => vals.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join('')
-  const band =
-    line(pts.map((p) => p.mp * 1.01)) +
-    pts
-      .map((p, i) => ({ p, i }))
-      .reverse()
-      .map(({ p, i }) => `L${x(i).toFixed(1)} ${y(p.mp * 0.99).toFixed(1)}`)
-      .join('') +
-    'Z'
-  const last = pts[pts.length - 1]
-  const gap = ((last.close - last.mp) / last.mp) * 100
-  const held = pts.slice(-10).filter((p) => Math.abs(p.close - p.mp) / p.mp < 0.01).length
-  const n = pts.length
-  const earn = rankPathEarnings(
-    pts.map((p) => p.date),
-    earnQ.data?.dates ?? [],
-    earnQ.data?.expected_next ?? null
-  )
-
-  return (
-    <div>
-      <div className="mb-1.5 flex items-baseline gap-2">
-        <span className={cap}>Max pain vs spot · {n} sessions</span>
-        <span className="ml-auto font-mono text-dense-micro tabular-nums text-muted-foreground">
-          gap now{' '}
-          <b className={Math.abs(gap) < 1 ? 'text-warning' : 'text-foreground'}>
-            {`${gap >= 0 ? '+' : '−'}${Math.abs(gap).toFixed(1)}%`}
-          </b>{' '}
-          · pin held {held} of last {Math.min(10, n)}
-        </span>
-      </div>
-      <div className="relative">
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          className="block h-auto w-full"
-          role="img"
-          aria-label={`Max pain at the ${expiry} expiry versus the close over ${n} sessions`}
-        >
-          <path d={band} fill="color-mix(in srgb, var(--sk-ink) 6%, transparent)" />
-          <path d={line(pts.map((p) => p.mp))} fill="none" stroke="var(--sk-mute2)" strokeWidth="1.4" strokeDasharray="4 3" />
-          <path d={line(pts.map((p) => p.close))} fill="none" stroke="var(--sk-ticker)" strokeWidth="1.6" />
-          {earn.marks.map((m, i) =>
-            m ? (
-              <g key={pts[i].date} data-trend-earnings={m.kind}>
-                <title>{m.title}</title>
-                <line
-                  x1={x(i)}
-                  x2={x(i)}
-                  y1={4}
-                  y2={H - 10}
-                  className="stroke-warning"
-                  strokeWidth="1.2"
-                  strokeDasharray="3 3"
-                  opacity={m.kind === 'late' ? 0.5 : 1}
-                />
-                <text x={x(i) + 3} y={12} className="fill-warning text-dense-micro font-mono">
-                  {m.kind === 'late' ? 'E?' : 'E'}
-                </text>
-              </g>
-            ) : null,
-          )}
-        </svg>
-        <span className="pointer-events-none absolute right-1 top-0.5 font-mono text-dense-micro text-muted-foreground">
-          {hi.toFixed(0)}
-        </span>
-        <span className="pointer-events-none absolute bottom-2 right-1 font-mono text-dense-micro text-muted-foreground">
-          {lo.toFixed(0)}
-        </span>
-      </div>
-      <div className="flex justify-between pt-0.5 font-mono text-dense-micro text-muted-foreground">
-        <span>{pts[0].date.slice(5)}</span>
-        <span>{pts[Math.floor((n - 1) / 2)].date.slice(5)}</span>
-        <span>{last.date.slice(5)}</span>
-      </div>
-      <div className="flex flex-wrap gap-x-3.5 gap-y-1 pt-1.5 text-dense-micro text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
-          <i className="h-0 w-3.5 border-t-2 border-[var(--sk-ticker)]" />
-          close
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <i className="h-0 w-3.5 border-t-2 border-dashed border-[var(--sk-mute2)]" />
-          max pain · {expiry}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <i className="h-2 w-3.5 bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]" />
-          ±1% of max pain
-        </span>
-        {earn.printed.length > 0 || earn.marks.some((m) => m?.kind === 'late') ? (
-          <span className="inline-flex items-center gap-1.5">
-            <i className="h-3 w-0 border-l-2 border-dashed border-warning" />
-            earnings
-          </span>
-        ) : null}
-        {earn.pending ? (
-          <span className="ml-auto font-mono text-warning" title={earn.pending.title} data-trend-pending={earn.pending.late ? 'late' : 'next'}>
-            {earn.pending.label}
-          </span>
-        ) : null}
-      </div>
-    </div>
-  )
-}
-
-
-const etClock = (ts: string) => fmtEtClock(new Date(ts)).slice(0, 5)
-const fmtGex = (v: number | null) => {
-  if (v == null) return '—'
-  const a = Math.abs(v)
-  const body = a >= 1e9 ? `${(a / 1e9).toFixed(2)}B` : `${(a / 1e6).toFixed(1)}M`
-  return `${v >= 0 ? '+' : '−'}${body}`
 }
 
 /**

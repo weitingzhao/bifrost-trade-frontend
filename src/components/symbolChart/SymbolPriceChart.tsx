@@ -59,6 +59,7 @@ import {
 import { SymbolTradeOverlay } from '@/components/symbolChart/SymbolTradeOverlay'
 import { SymbolChartPointer } from '@/components/symbolChart/SymbolChartPointer'
 import { useOpenInstance } from '@/layout/instanceGo'
+import { usePersistedChoice } from '@/hooks/usePersistedChoice'
 import { useInstanceIndex } from '@/hooks/useInstanceIndex'
 
 /** The vendor keeps two rolling years; the API caps a page at 500. */
@@ -73,11 +74,18 @@ interface PlacedTrack {
   openAgo: number
 }
 
-export function SymbolPriceChart({ symbol }: { symbol: string }) {
+/**
+ * `instanceId` (Rev .103, the Instance page): the same chart with one instance
+ * lit and labelled; every other trade is dimmed to 20% or hidden (the reader's
+ * choice, kept on this machine), a hover lights one for a moment, and the
+ * window opens on the instance's whole life.
+ */
+export function SymbolPriceChart({ symbol, instanceId }: { symbol: string; instanceId?: number }) {
   const sym = symbol.trim().toUpperCase()
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const [rawView, setView] = useState<PriceView>({ span: 60, off: 0 })
+  const [rawView, setView] = useState<PriceView | null>(null)
+  const [others, setOthers] = usePersistedChoice<'dim' | 'hide'>('bifrost.chart.others', 'dim', ['dim', 'hide'])
   const [tradesOn, setTradesOn] = useState(true)
   const [hover, setHover] = useState<string | null>(null)
 
@@ -106,7 +114,20 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
   const dates = useMemo(() => daily.map((b) => barIsoDate(b.time as number)), [daily])
   const total = daily.length
 
-  const view = clampView(total, rawView)
+  // An instance's page opens on its whole life, a little either side.
+  const focusStart = useMemo(() => {
+    if (instanceId == null) return null
+    const days = (bookQ.data?.items ?? [])
+      .filter((e) => e.strategy_instance_id === instanceId)
+      .map((e) => (e.trade_date ?? '').slice(0, 10))
+      .filter(Boolean)
+      .sort()
+    return days.length ? sessionIndexFor(dates, days[0]) : null
+  }, [instanceId, bookQ.data, dates])
+  const view = clampView(
+    total,
+    rawView ?? { span: focusStart != null ? Math.max(60, total - focusStart + 10) : 60, off: 0 },
+  )
   const winSessions = view.span
   const agg = aggFor(winSessions)
   const winEnd = total - view.off
@@ -277,7 +298,8 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
       {tradesOn && (shown.length > 0 || holding) ? (
         <SymbolTradeOverlay
           ctx={ctx}
-          tracks={shown.map((p) => p.track)}
+          tracks={shown.map((p) => p.track).filter((t) => instanceId == null || others === 'dim' || t.id === instanceId)}
+          focusKey={instanceId != null ? `inst:${instanceId}` : null}
           dates={dates}
           winStart={winStart}
           winEnd={winEnd}
@@ -402,7 +424,18 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
             onChange={(v) => setPreset(v as PriceWindow)}
             options={[...PRICE_WINDOWS]}
           />
-          {tracks.length > 0 ? (
+          {instanceId != null ? (
+            <SegmentControl
+              ariaLabel="Other trades"
+              size="xs"
+              value={others}
+              onChange={(v) => setOthers(v as 'dim' | 'hide')}
+              options={[
+                { value: 'dim', label: 'others: Dim' },
+                { value: 'hide', label: 'Hide' },
+              ]}
+            />
+          ) : tracks.length > 0 ? (
             <button
               type="button"
               onClick={() => setTradesOn((v) => !v)}

@@ -125,11 +125,7 @@ export function InstanceView({ surface }: { surface?: Surface }) {
 
   return (
     <div ref={rootRef} className="min-w-0">
-      <PageShell>
-        <PageHead
-          title={inst ? `#${inst.strategy_instance_id}${inst.label?.trim() ? ` · ${inst.label.trim()}` : ''}` : id != null ? `#${id}` : 'Instance'}
-          info="One strategy instance, whole: its price path, every leg and roll, every fill booked to it, the ledger by leg and the notes written about it. Reached from any #NNN token; beside any page it opens as the 440 panel."
-        />
+      <PageShell padding="compact" className="space-y-3">
         {inst ? (
           <InstanceWide
             instance={inst}
@@ -141,7 +137,10 @@ export function InstanceView({ surface }: { surface?: Surface }) {
             ranUnder={ranUnder}
           />
         ) : (
-          <InstanceMissing id={id} loading={!missing} />
+          <>
+            <PageHead title={id != null ? `#${id}` : 'Instance'} />
+            <InstanceMissing id={id} loading={!missing} />
+          </>
         )}
       </PageShell>
     </div>

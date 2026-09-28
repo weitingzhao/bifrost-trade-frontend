@@ -66,7 +66,8 @@ export function rootOf(e: Pick<Execution, 'symbol'>): string {
   return (e.symbol ?? '').trim().split(/\s+/)[0]?.toUpperCase() ?? ''
 }
 
-function tradeDay(e: Execution): string | null {
+/** A fill's trade day (`YYYY-MM-DD`), from its statement date or its time. */
+export function tradeDay(e: Execution): string | null {
   if (e.trade_date) return String(e.trade_date).slice(0, 10)
   return e.time != null ? new Date(e.time * 1000).toISOString().slice(0, 10) : null
 }

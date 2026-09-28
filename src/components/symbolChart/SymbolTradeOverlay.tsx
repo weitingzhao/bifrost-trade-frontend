@@ -53,6 +53,8 @@ export interface TradeOverlayProps {
   today: string
   coneSessions: number | null
   hover: string | null
+  /** The one track kept lit and labelled (the Instance page); the rest read at 20% until hovered. */
+  focusKey?: string | null
   onHover: (key: string | null) => void
   onOpen: (track: InstanceTrack) => void
   onOpenId: (id: number) => void
@@ -91,7 +93,8 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
     if ((a.closeDate == null) !== (b.closeDate == null)) return a.closeDate == null ? -1 : 1
     return (b.closeDate ?? b.openDate).localeCompare(a.closeDate ?? a.openDate)
   })
-  for (const t of p.hover ? order.filter((x) => x.key === p.hover) : order) {
+  const lit = p.hover ?? p.focusKey ?? null
+  for (const t of lit ? order.filter((x) => x.key === lit) : order) {
     const last = t.legs[t.legs.length - 1]
     const { x } = xOfDate(last.openDate)
     const { y, edge } = yOf(last.strike)
@@ -174,7 +177,7 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
       ) : null}
 
       {p.tracks.map((t) => {
-        const faded = p.hover != null && p.hover !== t.key
+        const faded = lit != null && lit !== t.key
         const open = t.closeDate == null
         const plInk =
           t.pnl == null ? INK.mute : open ? INK.unrealized : t.pnl >= 0 ? INK.profit : INK.loss

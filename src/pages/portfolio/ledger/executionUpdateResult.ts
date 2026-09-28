@@ -1,3 +1,5 @@
+import type { ExecutionsResponse } from '@/types/positions'
+
 /** PUT /executions returns { ok, error } and does not throw on a failed body. */
 
 export function errorFromUpdateResult(res: { ok: boolean; error?: string }): string | null {
@@ -28,4 +30,32 @@ export async function syncOppositeLegAttribution(
   const error = errorFromUpdateResult(res)
   if (error) return { ok: false, error }
   return { ok: true }
+}
+
+
+/**
+ * The two columns a successful opposite-leg sync changed, written into a
+ * cached executions response in place. The PUT is durable when it answers ok;
+ * this makes the row say so immediately, while the refetch that follows is
+ * the audit, not the reveal (a limit=0 refetch takes seconds on PROD and
+ * reads as "the DB lags").
+ */
+export function seedSyncedAttribution(
+  old: ExecutionsResponse | undefined,
+  id: number,
+  source: { opportunity_id: number; instance_id: number },
+): ExecutionsResponse | undefined {
+  if (!old) return old
+  return {
+    ...old,
+    items: (old.items ?? []).map(it =>
+      it.account_executions_id === id
+        ? {
+            ...it,
+            strategy_opportunity_id: source.opportunity_id,
+            strategy_instance_id: source.instance_id,
+          }
+        : it,
+    ),
+  }
 }

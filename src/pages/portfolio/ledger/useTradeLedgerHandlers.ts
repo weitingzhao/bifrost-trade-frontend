@@ -3,8 +3,9 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { Execution } from '@/types/positions'
 import { deleteExecution, updateExecution } from '@/api/trading'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import type { ExecutionsResponse } from '@/types/positions'
 import type { OptSortCol, StkSortCol } from '@/pages/portfolio/ledger/ledgerTypes'
-import { syncOppositeLegAttribution } from '@/pages/portfolio/ledger/executionUpdateResult'
+import { seedSyncedAttribution, syncOppositeLegAttribution } from '@/pages/portfolio/ledger/executionUpdateResult'
 import type { LedgerInspectorState } from '@/pages/portfolio/ledger/ledgerInspectorState'
 
 type Params = {
@@ -107,6 +108,15 @@ export function useTradeLedgerHandlers(p: Params) {
         p.setSyncError({ id, message: result.error })
         throw new Error(result.error)
       }
+      const seed = (old: ExecutionsResponse | undefined) => seedSyncedAttribution(old, id, source)
+      p.queryClient.setQueriesData<ExecutionsResponse>(
+        { queryKey: QUERY_KEYS.trading.executions },
+        seed,
+      )
+      p.queryClient.setQueriesData<ExecutionsResponse>(
+        { queryKey: QUERY_KEYS.trading.executionsBook },
+        seed,
+      )
       void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
       void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
     } finally {

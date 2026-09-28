@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildOptExecutionGroups, isOptionExpired } from './optExecutionGroups'
+import { buildOptExecutionGroups, compareOptExecutionGroups, isOptionExpired } from './optExecutionGroups'
 import type { Execution } from '@/types/positions'
 
 function makeExec(overrides: Partial<Execution>): Execution {
@@ -91,5 +91,45 @@ describe('isOptionExpired', () => {
 
   it('handles dashes in expiry', () => {
     expect(isOptionExpired('2020-01-01')).toBe(true)
+  })
+})
+
+describe('deterministic order under heavy ties (PROD 2026-09-28)', () => {
+  const fill = (id: number, time: number, side: string, ck = 'ZZTM|OPT|20270115|100|P') =>
+    ({
+      account_executions_id: id,
+      contract_key: ck,
+      symbol: 'ZZTM',
+      sec_type: 'OPT',
+      side,
+      quantity: 1,
+      price: 1,
+      time,
+      expiry: '20270115',
+      strike: 100,
+      option_right: 'P',
+      account_id: 'UPROBE',
+    }) as unknown as Execution
+
+  it('same-second fills keep one order however the server returns them', () => {
+    const a = [fill(11, 1000, 'BUY'), fill(12, 1000, 'SELL'), fill(13, 1000, 'BUY')]
+    const b = [a[2], a[0], a[1]] // the reshuffle an UPDATE used to cause
+    const idsA = buildOptExecutionGroups(a)[0].trades.map(t => t.account_executions_id)
+    const idsB = buildOptExecutionGroups(b)[0].trades.map(t => t.account_executions_id)
+    expect(idsA).toEqual([13, 12, 11])
+    expect(idsB).toEqual(idsA)
+  })
+
+  it('same-expiry groups tie-break on contract_key, both directions', () => {
+    const g = (ck: string) =>
+      buildOptExecutionGroups([fill(1, 1000, 'BUY', ck)])[0]
+    const rows = [g('ZZTM|OPT|20270115|300|P'), g('ZZTM|OPT|20270115|100|P')]
+    const sorted = [...rows].sort((x, y) => compareOptExecutionGroups(x, y, 'expiry', 'desc'))
+    expect(sorted.map(r => r.contract_key)).toEqual([
+      'ZZTM|OPT|20270115|100|P',
+      'ZZTM|OPT|20270115|300|P',
+    ])
+    const reversed = [...rows].reverse().sort((x, y) => compareOptExecutionGroups(x, y, 'expiry', 'desc'))
+    expect(reversed.map(r => r.contract_key)).toEqual(sorted.map(r => r.contract_key))
   })
 })

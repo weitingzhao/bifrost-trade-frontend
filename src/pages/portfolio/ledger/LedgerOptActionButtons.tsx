@@ -109,7 +109,13 @@ export function LedgerOptActionButtons({
           }
           size="dense"
           disabled={syncDisabled || syncStep === 'done'}
-          className="text-link hover:text-link-hover"
+          className={
+            syncStep === 'confirm'
+              ? // Armed: the button itself says so — a tooltip alone reads as
+                // "nothing happened" (PROD 2026-09-28).
+                'bg-[color-mix(in_srgb,var(--sk-accent)_18%,transparent)] text-[var(--sk-accent)] hover:text-[var(--sk-accent)]'
+              : 'text-link hover:text-link-hover'
+          }
         >
           <RefreshCw className={`h-3.5 w-3.5 ${syncSpinning ? 'animate-spin' : ''}`} />
         </IconActionButton>

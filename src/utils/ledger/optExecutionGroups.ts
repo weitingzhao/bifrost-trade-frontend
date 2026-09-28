@@ -114,7 +114,14 @@ export function buildOptExecutionGroups(sourceExecutions: Execution[]): OptExecu
       }
     }
 
-    const sortedTrades = [...trades].sort((a, b) => (b.time ?? 0) - (a.time ?? 0))
+    // Ties are heavy here (one contract, several fills, one second) and the
+    // server's peer order follows physical tuples — an UPDATE moves a row.
+    // account_executions_id closes the order so a pair action cannot reshuffle.
+    const sortedTrades = [...trades].sort(
+      (a, b) =>
+        (b.time ?? 0) - (a.time ?? 0) ||
+        (b.account_executions_id ?? 0) - (a.account_executions_id ?? 0),
+    )
 
     result.push({
       contract_key: ck,
@@ -139,7 +146,7 @@ export function buildOptExecutionGroups(sourceExecutions: Execution[]): OptExecu
   result.sort((a, b) => {
     const ta = a.trades[0]?.time ?? 0
     const tb = b.trades[0]?.time ?? 0
-    return tb - ta
+    return tb - ta || a.contract_key.localeCompare(b.contract_key) || a.account_id.localeCompare(b.account_id)
   })
 
   return result
@@ -156,7 +163,11 @@ export function compareOptExecutionGroups(
   if (column === 'expiry') {
     const sa = (a.expiry ?? '').trim().replace(/-/g, '')
     const sb = (b.expiry ?? '').trim().replace(/-/g, '')
-    return mult * sa.localeCompare(sb, undefined, { numeric: true })
+    return (
+      mult * sa.localeCompare(sb, undefined, { numeric: true }) ||
+      a.contract_key.localeCompare(b.contract_key) ||
+      a.account_id.localeCompare(b.account_id)
+    )
   }
   const datesA = (a.trades ?? [])
     .map(t => t.trade_date)
@@ -168,5 +179,9 @@ export function compareOptExecutionGroups(
   datesB.sort()
   const va = datesA.length > 0 ? datesA[0] : ''
   const vb = datesB.length > 0 ? datesB[0] : ''
-  return mult * va.localeCompare(vb)
+  return (
+    mult * va.localeCompare(vb) ||
+    a.contract_key.localeCompare(b.contract_key) ||
+    a.account_id.localeCompare(b.account_id)
+  )
 }

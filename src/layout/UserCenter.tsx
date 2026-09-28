@@ -2,11 +2,16 @@
  * The user centre, in the sidebar foot (design Rev .54, `_Part UserCenter`).
  *
  * One row: the avatar with a summary lamp in its corner · Operator · how many
- * of the trader's questions are degraded — and a square door on the right,
- * Enter System (or Back to Trade inside it). The avatar opens a glass card
- * upward: who is operating over which accounts, Appearance, and the shell's
- * doors. The "Can I trade" card retired to the Control Center's first row
- * (Rev .97 — one business fact in one place); the corner lamp stays. Collapsed, the rail keeps only the avatar and its lamp.
+ * of the trader's questions are degraded — and one square on the right, the
+ * bottom-toolbar switch. The System gear that used to sit beside it retired
+ * with the design (Owner 2026-09-25): the menu's first row already is Enter
+ * System / Back to Trade, and two doors to one place is one too many. The
+ * avatar opens a glass card upward: who is operating over which accounts,
+ * Appearance, and the shell's doors — including the feedback pair the Owner
+ * added 2026-09-26 (Send feedback · My reports with its unread count), the
+ * menu's door for people who don't use ⌘K. The "Can I trade" card retired to
+ * the Control Center's first row (Rev .97 — one business fact in one place);
+ * the corner lamp stays. Collapsed, the rail keeps only the avatar's lamp.
  *
  * Where this side reads the design differently, and why:
  *
@@ -16,12 +21,15 @@
  *   must not hold that open; the card reads all three while it is open.
  * - Under Operator the accounts are listed, not "the current account": the
  *   shell carries no account scope (each page owns its own).
- * - No Keyboard shortcuts row and no package version: this app has neither a
- *   shortcuts sheet nor a version it can state, and a row that opens nothing
- *   is a dead end. The design revision the shell was synced to is stated.
+ * - "Design adoption" stands where the design's "Design docs" row points at
+ *   /docs/index — a design-only page this app deliberately has no copy of.
  */
-import { Link, NavLink, useLocation } from 'react-router-dom'
-import { ExternalLink, SlidersHorizontal, Scale } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { ClipboardList, ExternalLink, Flag, Keyboard, Scale, SlidersHorizontal } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { fetchFeedbackSummary } from '@/api/research/feedback'
+import { openFeedbackDialog } from '@/lib/feedback/feedbackDialog'
+import { UI_VERSION_NOW } from '@/lib/design/uiVersion'
 import { useSidebar } from '@bifrost/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -106,9 +114,31 @@ function UserCard({ onClose }: { onClose: () => void }) {
   const { data: status } = useMonitorStatus()
   const accounts = (status?.portfolio?.accounts ?? []).map((a) => (a.account_id ?? '').trim()).filter(Boolean)
   const door = useDoor()
+  // Read only while the card is open (same rule as the header's tooltip):
+  // the unread count on My reports comes from the feedback store's summary.
+  const sumQ = useQuery({
+    queryKey: ['research', 'feedback', 'summary'],
+    queryFn: fetchFeedbackSummary,
+    staleTime: 60_000,
+    retry: 1,
+  })
+  const unread = sumQ.data?.unread ?? 0
   const items = [
     { label: door.label, to: door.to, Icon: door.Icon },
     { label: 'Settings', to: '/settings', Icon: SlidersHorizontal },
+    // Owner 2026-09-26: the menu's feedback pair, for people who don't use ⌘K.
+    {
+      label: 'Send feedback',
+      Icon: Flag,
+      onPick: () => openFeedbackDialog('bug'),
+    },
+    {
+      label: 'My reports',
+      to: '/settings?pane=reports',
+      Icon: ClipboardList,
+      badge: unread > 0 ? `● ${unread} update${unread > 1 ? 's' : ''}` : '',
+    },
+    { label: 'Keyboard shortcuts', to: '/settings?pane=keys', Icon: Keyboard },
     { label: 'Design adoption', to: '/docs/design-adoption', Icon: Scale },
   ]
   return (
@@ -207,17 +237,36 @@ function UserCard({ onClose }: { onClose: () => void }) {
       </div>
 
       <nav className="border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] py-1.5" aria-label="Doors">
-        {items.map(({ label, to, Icon }) => (
-          <Link
-            key={to}
-            to={to}
-            onClick={onClose}
-            className="flex items-center gap-2 px-3.5 py-1.5 text-dense-body text-foreground no-underline hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]"
-          >
-            <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-            <span>{label}</span>
-          </Link>
-        ))}
+        {items.map(({ label, to, Icon, onPick, badge }) => {
+          const inner = (
+            <>
+              <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="min-w-0 flex-1 truncate">{label}</span>
+              {badge ? (
+                <span className="text-dense-caption whitespace-nowrap text-[var(--sk-accent)]">{badge}</span>
+              ) : null}
+            </>
+          )
+          const rowClass =
+            'flex w-full items-center gap-2 px-3.5 py-1.5 text-left text-dense-body text-foreground no-underline hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]'
+          return onPick ? (
+            <button
+              key={label}
+              type="button"
+              onClick={() => {
+                onClose()
+                onPick()
+              }}
+              className={cn(rowClass, 'border-0 bg-transparent')}
+            >
+              {inner}
+            </button>
+          ) : (
+            <Link key={label} to={to!} onClick={onClose} className={rowClass}>
+              {inner}
+            </Link>
+          )
+        })}
         <a
           href={OPS_CONSOLE_URL}
           target="_blank"
@@ -228,8 +277,9 @@ function UserCard({ onClose }: { onClose: () => void }) {
           <span>Bifröst Ops ↗</span>
         </a>
       </nav>
-      <div className="border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-3.5 py-1.5 font-mono text-dense-micro text-muted-foreground">
-        design Rev {DESIGN_REV}
+      <div className="flex gap-2 border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-3.5 py-1.5 font-mono text-dense-micro text-muted-foreground">
+        <span>design Rev {DESIGN_REV}</span>
+        <span className="ml-auto">@bifrost/ui {UI_VERSION_NOW}</span>
       </div>
     </>
   )
@@ -292,14 +342,8 @@ export function SidebarUserCenter() {
               ) : null}
             </span>
           </span>
-          <NavLink
-            to={door.to}
-            title={door.label}
-            aria-label={door.label}
-            className="flex size-[30px] flex-none items-center justify-center rounded-md border border-sidebar-border text-[var(--sk-mute2)] hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          >
-            <door.Icon className="h-4 w-4" aria-hidden />
-          </NavLink>
+          {/* The System gear retired here (Owner 2026-09-25): the menu's
+              first row already is Enter System / Back to Trade. */}
           {/* The bottom toolbar floats over the page, so it can cover the last
               rows — this square hides and shows it (design Rev .57). */}
           <button

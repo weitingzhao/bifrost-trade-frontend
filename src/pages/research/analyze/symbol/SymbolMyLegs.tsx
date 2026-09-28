@@ -16,13 +16,11 @@
  * Renders nothing when the account holds no leg on this symbol; the page does
  * not carry a "you have no positions" line for every name in the universe.
  */
-import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { flattenPositions } from '@/utils/positionsGrouping'
 import { fmtExpiry, fmtUsd } from '@/utils/positions'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
-import { selectLegs, type SymbolLeg } from './selectLegs'
+import { useSymbolLegs } from './useSymbolLegs'
+import type { SymbolLeg } from './selectLegs'
 
 function stockLabel(leg: SymbolLeg): string {
   return `${leg.qty > 0 ? 'long' : 'short'} ${Math.abs(leg.qty).toLocaleString()} sh`
@@ -39,11 +37,7 @@ function optionLabel(leg: SymbolLeg): string {
 }
 
 export function SymbolMyLegs({ symbol }: { symbol: string }) {
-  const { data } = useMonitorStatus()
-  const legs = useMemo(
-    () => selectLegs(flattenPositions(data?.portfolio?.accounts ?? []), symbol),
-    [data?.portfolio?.accounts, symbol],
-  )
+  const legs = useSymbolLegs(symbol)
 
   if (legs.length === 0) return null
 

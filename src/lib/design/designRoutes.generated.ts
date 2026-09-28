@@ -315,7 +315,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-28.101"
+export const DESIGN_REV = "2026-09-28.102"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
@@ -335,7 +335,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/explorer","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/contract-screener","label":"Option screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Option Screen.dc.html","round":"OLD","rev":"2026-09-25.93","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/event-radar","label":"Alerts","crumbs":["Market"],"designed":true,"file":"Market Alerts.dc.html","round":null,"rev":"2026-09-25.90","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-25.83","inNav":true,"group":"Research","designOnly":false},
+  {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-28.102","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/vol-regime","label":"Vol Regime","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/dealer-levels","label":"Dealer Levels","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/scenario","label":"Scenario","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
@@ -368,10 +368,10 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/agent-personas/you","label":"You","crumbs":["System","Agents","Personas"],"designed":true,"file":"System Agents You.dc.html","round":null,"rev":"2026-09-26.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/orchestration","label":"Orchestration","crumbs":["System","Agents"],"designed":true,"file":"System Agents Orchestration.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
   {"path":"/research/loop/harness","label":"Pilot Console","crumbs":[],"designed":true,"file":"Autopilot Console.dc.html","round":null,"rev":"2026-09-27.2","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/loop/objectives/obj-daily-stock","label":"Daily Loop Stock Explorer","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-25.94","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/loop/objectives/obj-earnings-iv","label":"Earnings-week IV","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-25.94","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/loop/objectives/obj-smallcap-sepa","label":"Small-cap SEPA","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-25.94","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/loop/objectives/obj-vol-crush","label":"Post-earnings vol crush","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-25.94","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/loop/objectives/obj-daily-stock","label":"Daily Loop Stock Explorer","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-28.102","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/loop/objectives/obj-earnings-iv","label":"Earnings-week IV","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-28.102","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/loop/objectives/obj-smallcap-sepa","label":"Small-cap SEPA","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-28.102","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/loop/objectives/obj-vol-crush","label":"Post-earnings vol crush","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-28.102","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/loop/runs","label":"Loop Run","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Console.dc.html","round":null,"rev":"2026-09-18.2","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/loop/decisions","label":"Decision Inbox","crumbs":["Review"],"designed":true,"file":"Autopilot Decision Inbox.dc.html","round":"OLD","rev":"2026-09-25.85","inNav":true,"group":"Review","designOnly":false},
   {"path":"/research/loop/hypotheses","label":"Hypothesis Board","crumbs":["The Book"],"designed":true,"file":"Book Hypotheses.dc.html","round":null,"rev":"2026-09-25.89","inNav":false,"group":null,"designOnly":false},

@@ -10,7 +10,8 @@ import {
   sessionIndexFor,
   sessionsForWindow,
   sessionsUntil,
-  tradeSegmentsFor,
+  holdingFor,
+  instanceTracksFor,
   underlyingOf,
   windowForSessionsAgo,
 } from './symbolPriceModel'
@@ -88,7 +89,7 @@ describe('dates', () => {
   })
 })
 
-describe('trade segments', () => {
+describe('instance tracks (Rev .102)', () => {
   const legs: SymbolLeg[] = [
     {
       key: 'a',
@@ -102,55 +103,108 @@ describe('trade segments', () => {
       expiry: '20270115',
     },
   ]
+  const K90 = { symbol: 'ZZTM  270115P00090000', contract_key: 'ZZTM  270115P00090000|OPT|20270115|90|P', strike: 90 }
 
-  it('pairs a closed contract and names it by the earliest side', () => {
-    const segs = tradeSegmentsFor(
+  it('a flat leg is realized, named by the instance and its last leg', () => {
+    const [t] = instanceTracksFor(
       [
-        fill({ side: 'Sell', trade_date: '2026-08-03', time: 100 }),
-        fill({ side: 'Buy', trade_date: '2026-09-02', time: 200, price: 1.1 }),
+        fill({ side: 'Sell', trade_date: '2026-08-03', time: 100, strategy_instance_id: 7 }),
+        fill({ side: 'Buy', trade_date: '2026-09-02', time: 200, price: 1.1, strategy_instance_id: 7 }),
       ],
       'ZZTM',
       [],
     )
-    expect(segs).toHaveLength(1)
-    expect(segs[0].name).toBe('STO 100P')
-    expect(segs[0].openDate).toBe('2026-08-03')
-    expect(segs[0].closeDate).toBe('2026-09-02')
-    expect(segs[0].pnlIsMark).toBe(false)
+    expect(t.name).toBe('#7 −1 100P')
+    expect(t.closeDate).toBe('2026-09-02')
     // 2.5 sold, 1.1 bought back ×100 = +140 before commissions.
-    expect(segs[0].pnl).toBeCloseTo(140, 0)
+    expect(t.pnl).toBeCloseTo(140, 0)
+    expect(t.pnlIsMark).toBe(false)
   })
 
-  it('an open contract runs to null close and takes its mark from the legs', () => {
-    const segs = tradeSegmentsFor(
-      [
-        fill({
-          symbol: 'ZZTM  270115P00090000',
-          contract_key: 'ZZTM  270115P00090000|OPT|20270115|90|P',
-          strike: 90,
-          side: 'Sell',
-          trade_date: '2026-09-10',
-        }),
-      ],
-      'ZZTM',
-      legs,
-    )
-    expect(segs).toHaveLength(1)
-    expect(segs[0].closeDate).toBeNull()
-    expect(segs[0].pnl).toBe(70)
-    expect(segs[0].pnlIsMark).toBe(true)
+  it('an open leg keeps the track open and takes its mark from the monitor', () => {
+    const [t] = instanceTracksFor([fill({ ...K90, side: 'Sell', trade_date: '2026-09-10', strategy_instance_id: 8 })], 'ZZTM', legs)
+    expect(t.closeDate).toBeNull()
+    expect(t.pnl).toBe(70)
+    expect(t.pnlIsMark).toBe(true)
   })
 
-  it('other underlyings and stock fills stay out', () => {
-    const segs = tradeSegmentsFor(
+  it('a roll is a leg going flat the day another opens under the same instance, with the day’s net', () => {
+    const [t] = instanceTracksFor(
       [
-        fill({ symbol: 'OTHR  270115P00100000', contract_key: 'OTHR|OPT|20270115|100|P' }),
-        fill({ sec_type: 'STK', symbol: 'ZZTM' }),
+        fill({ side: 'Sell', trade_date: '2026-08-03', time: 1, price: 2.5, strategy_instance_id: 9 }),
+        fill({ side: 'Buy', trade_date: '2026-08-20', time: 2, price: 3.0, strategy_instance_id: 9 }),
+        fill({ ...K90, side: 'Sell', trade_date: '2026-08-20', time: 3, price: 3.4, strategy_instance_id: 9 }),
       ],
       'ZZTM',
       [],
     )
-    expect(segs).toHaveLength(0)
+    expect(t.legs.map((l) => [l.strike, l.flatDate])).toEqual([
+      [100, '2026-08-20'],
+      [90, null],
+    ])
+    expect(t.joints).toEqual([{ date: '2026-08-20', fromStrike: 100, toStrike: 90, net: 40 }])
+    expect(t.name).toBe('#9 −1 90P')
+  })
+
+  it('a same-day roll names the leg opened last, whatever its strike', () => {
+    const [t] = instanceTracksFor(
+      [
+        fill({ side: 'Sell', trade_date: '2026-08-20', time: 1, strategy_instance_id: 12 }),
+        fill({ side: 'Buy', trade_date: '2026-08-20', time: 2, strategy_instance_id: 12 }),
+        fill({ ...K90, side: 'Sell', trade_date: '2026-08-20', time: 3, strategy_instance_id: 12 }),
+      ],
+      'ZZTM',
+      [],
+    )
+    expect(t.name).toBe('#12 −1 90P')
+    expect(t.joints).toHaveLength(1)
+  })
+
+  it('an open leg is named at its open size, not the most it ever held', () => {
+    const [t] = instanceTracksFor(
+      [
+        fill({ side: 'Sell', quantity: 5, qty: 5, time: 1, strategy_instance_id: 11 }),
+        fill({ side: 'Buy', quantity: 2, qty: 2, time: 2, trade_date: '2026-08-10', strategy_instance_id: 11 }),
+      ],
+      'ZZTM',
+      [],
+    )
+    expect(t.name).toBe('#11 −3 100P')
+  })
+
+  it('fills no instance claims make one plain track; other names and stock stay out', () => {
+    const tracks = instanceTracksFor(
+      [
+        fill({ strategy_instance_id: null }),
+        fill({ symbol: 'OTHR  270115P00100000', contract_key: 'OTHR|OPT|20270115|100|P', strategy_instance_id: 3 }),
+        fill({ sec_type: 'STK', symbol: 'ZZTM', strategy_instance_id: 3 }),
+      ],
+      'ZZTM',
+      [],
+    )
+    expect(tracks.map((t) => [t.id, t.name])).toEqual([[null, 'no instance · −1 100P']])
+  })
+})
+
+describe('holding (Rev .102)', () => {
+  const stk = (qty: number, avgCost: number | null): SymbolLeg => ({ key: `s${qty}`, kind: 'STK', qty, avgCost, price: null, unrealized: null })
+  it('blends accounts and splits backing under open short calls from free', () => {
+    const tracks = instanceTracksFor(
+      [
+        fill({ symbol: 'ZZTM  270115C00120000', contract_key: 'ZZTM  270115C00120000|OPT|20270115|120|C', option_right: 'C', strike: 120, quantity: 2, qty: 2, strategy_instance_id: 4 }),
+      ],
+      'ZZTM',
+      [],
+    )
+    expect(holdingFor([stk(300, 100), stk(100, 120)], tracks)).toEqual({
+      qty: 400,
+      avg: 105,
+      backing: [{ id: 4, qty: 200 }],
+      free: 200,
+    })
+  })
+  it('no shares, no line', () => {
+    expect(holdingFor([], [])).toBeNull()
   })
 })
 

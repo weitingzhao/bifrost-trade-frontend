@@ -53,6 +53,7 @@ import { EARNINGS_GATE_DAYS, estimateCaveat } from '@/utils/earningsEstimate'
 import type { SymbolFaces } from './useSymbolFaces'
 import { symbolHypothesisPrefill } from './symbolHypothesisPrefill'
 import css from './symbolHead.module.css'
+import { sharesHeld, useSymbolLegs } from './useSymbolLegs'
 
 /**
  * Which Method tab explains the face you are on — the design's `LAB_TAB`.
@@ -94,6 +95,7 @@ export function SymbolIdentity({
 }) {
   const sym = (symbol || '').trim().toUpperCase()
   const quotes = useQuotes(sym ? [sym] : [])
+  const shares = sharesHeld(useSymbolLegs(sym))
   const at = useSymbolTrail(sym)
   // The wide table's universe row carries the company's name; the closes give
   // yesterday's close, the denominator of the day change.
@@ -124,7 +126,9 @@ export function SymbolIdentity({
   const decisive = faces.views.flatMap((v) => v.rows).filter((r) => r.band === 'hot' || r.band === 'cold')
   const drove = faces.drove ? faces.views.find((v) => v.face.id === faces.drove) : null
   const thesis = decisive.length > 0 ? decisive.map((r) => r.verdict).join(' · ') : 'No lens is decisive on this name today'
-  const heldTag = faces.held ? 'in the book' : faces.watched ? 'watchlist' : 'not held'
+  // Rev .102: shares say how many; options alone are 'in the book'.
+  const heldTag =
+    shares > 0 ? `held ${shares.toLocaleString('en-US')} sh` : faces.held ? 'in the book' : faces.watched ? 'watchlist' : 'not held'
   const hyp = symbolHypothesisPrefill(sym, tab, faces.views, thesis)
   const lab = LAB_TAB[tab]
 

@@ -28,6 +28,10 @@ import {
   symbolSurface,
   toggleSurface,
   type Surface,
+  instanceSurface,
+  instancePath,
+  setSurfaceInstance,
+  surfaceState,
 } from './equipSurface'
 
 const CONSOLE = '/research/loop/harness'
@@ -112,6 +116,44 @@ describe('the Symbol page as a surface (Rev .58)', () => {
     closeSurface('symbol:AMD')
     openSurface(symbolSurface('TSLA', { lock: true }))
     expect(placeOf('symbol:TSLA')).toBe('float')
+  })
+})
+
+describe('an instance as a surface (Rev .103)', () => {
+  it('has one following tab and a fresh tab per number', () => {
+    expect(instanceSurface(159).key).toBe('instance')
+    expect(instanceSurface(159, { fresh: true }).key).toBe('instance:159')
+    openSurface(instanceSurface(159))
+    openSurface(instanceSurface(160))
+    openSurface(instanceSurface(12, { fresh: true }), 'panel')
+    openSurface(instanceSurface(12, { fresh: true }), 'panel')
+    expect(openSurfaceKeys()).toEqual(['instance', 'instance:12'])
+    expect(surfaceState().panel?.tabs.find((t) => t.key === 'instance')?.instance).toBe(160)
+  })
+
+  it('keeps the list it came from only when the number is in it', () => {
+    expect(instanceSurface(5, { list: [4, 5, 5, 6] }).instanceList).toEqual([4, 5, 6])
+    expect(instanceSurface(9, { list: [4, 5] }).instanceList).toEqual([9])
+  })
+
+  it('steps in place, keeping its key and its tab', () => {
+    openSurface(instanceSurface(4, { list: [4, 5, 6], from: 'Ledger' }))
+    setSurfaceInstance('instance', 6)
+    const tab = surfaceState().panel?.tabs.find((t) => t.key === 'instance')
+    expect([tab?.instance, tab?.to, tab?.instanceFrom]).toEqual([6, '/instance/6', 'Ledger'])
+    expect(surfaceLabel(tab!, '')).toBe('Instance · #6')
+  })
+
+  it('shares one place memory between the following tab and fresh ones', () => {
+    openSurface(instanceSurface(1), 'float')
+    closeSurface('instance')
+    openSurface(instanceSurface(2, { fresh: true }))
+    expect(placeOf('instance:2')).toBe('float')
+  })
+
+  it('addresses its page with the rows it came from', () => {
+    expect(instancePath(5, [4, 5, 6], 'Ledger · instances')).toBe('/instance/5?list=4%2C5%2C6&from=Ledger+%C2%B7+instances')
+    expect(instancePath(5)).toBe('/instance/5')
   })
 })
 

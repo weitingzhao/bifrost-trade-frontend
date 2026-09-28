@@ -11,7 +11,7 @@
  * side to give it one), so it carries the reading's own mark: a pipeline.
  */
 import { createElement } from 'react'
-import { Workflow } from 'lucide-react'
+import { Workflow, Hash } from 'lucide-react'
 import { glyph } from '@/lib/design/glyphs'
 import { EQUIP_GROUPS } from './equip'
 import type { Surface } from './equipSurface'
@@ -20,6 +20,7 @@ const SUBJECT = glyph('subject')
 
 function iconFor(surface: Surface) {
   if (surface.run) return Workflow
+  if (surface.instance != null) return Hash
   // The toolbar's Symbol button draws the same shape (design `icons.subject`).
   if (surface.subject) return SUBJECT
   for (const g of EQUIP_GROUPS) {

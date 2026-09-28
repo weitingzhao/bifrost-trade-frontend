@@ -38,3 +38,13 @@ export const SURFACE_PAGES: Record<string, PageComponent> = {
 export function surfacePageFor(to: string): PageComponent | null {
   return SURFACE_PAGES[to] ?? null
 }
+
+/**
+ * The Instance surface's body (Rev .103). Not keyed by route like the rows
+ * above: an instance surface is a record, and it hands the id and its list to
+ * the same component `/instance/:id` renders.
+ */
+export const InstanceSurfaceView = lazy(() =>
+  import('@/pages/trade/instance/InstancePage').then((m) => ({ default: m.InstanceView })),
+)
+

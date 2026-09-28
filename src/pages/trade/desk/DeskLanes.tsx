@@ -10,7 +10,7 @@ import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
-import { openInstanceSheet } from '@/lib/instanceSheet'
+import { instanceHowFrom, useOpenInstance } from '@/layout/instanceGo'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import type { DeskItem, DeskLane, DeskTone } from './deskModel'
@@ -87,6 +87,7 @@ export function DeskStrip({ cells }: { cells: StripCell[] }) {
 }
 
 function ItemActions({ item, onAction }: { item: DeskItem; onAction: (item: DeskItem, index: number) => void }) {
+  const openInstance = useOpenInstance()
   return (
     <div className="flex flex-wrap items-center gap-1.5 pt-1">
       {item.tags.map((t) => (
@@ -101,7 +102,7 @@ function ItemActions({ item, onAction }: { item: DeskItem; onAction: (item: Desk
             type="button"
             className={cn(positionsUi.btn, 'font-mono text-[var(--color-instance-multi)]')}
             title={`Open #${a.instance.id} — its record, over the desk`}
-            onClick={() => openInstanceSheet(a.instance!.id, a.instance!.list, a.instance!.from)}
+            onClick={(e) => openInstance(a.instance!.id, { list: a.instance!.list, from: a.instance!.from, ...instanceHowFrom(e) })}
           >
             {a.label}
           </button>

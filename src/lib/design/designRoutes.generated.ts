@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 99 routes, 99 with a designed page,
+ * Derived, not typed: 100 routes, 100 with a designed page,
  * 0 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -315,10 +315,11 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-28.102"
+export const DESIGN_REV = "2026-09-28.103"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
+  {"path":"/instance","label":"Instance","crumbs":[],"designed":true,"file":"Instance.dc.html","round":null,"rev":"2026-09-28.103","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/events","label":"Events","crumbs":["Home"],"designed":true,"file":"Home Events.dc.html","round":"NEW","rev":"2026-09-25.89","inNav":true,"group":"Home","designOnly":false},
   {"path":"/market/live","label":"Live","crumbs":["Market"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-25.85","inNav":false,"group":null,"designOnly":false},
   {"path":"/risk/portfolio","label":"Portfolio Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-25.85","inNav":true,"group":"Risk","designOnly":false},
@@ -335,7 +336,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/explorer","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/contract-screener","label":"Option screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Option Screen.dc.html","round":"OLD","rev":"2026-09-25.93","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/event-radar","label":"Alerts","crumbs":["Market"],"designed":true,"file":"Market Alerts.dc.html","round":null,"rev":"2026-09-25.90","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-28.102","inNav":true,"group":"Research","designOnly":false},
+  {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-28.103","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/vol-regime","label":"Vol Regime","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/dealer-levels","label":"Dealer Levels","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/scenario","label":"Scenario","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
@@ -353,7 +354,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/review/playbook-stats","label":"Playbook stats","crumbs":["Review"],"designed":true,"file":"Review Playbook Stats.dc.html","round":"NEW","rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/objectives","label":"Objectives","crumbs":["Home"],"designed":true,"file":"Home Objectives.dc.html","round":null,"rev":"2026-09-25.89","inNav":true,"group":"Home","designOnly":false},
   {"path":"/research/book","label":"The Book","crumbs":[],"designed":true,"file":"Book.dc.html","round":null,"rev":"2026-09-25.93","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/journal","label":"Journal","crumbs":["The Book"],"designed":true,"file":"Book Journal.dc.html","round":null,"rev":"2026-09-25.89","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/journal","label":"Journal","crumbs":["The Book"],"designed":true,"file":"Book Journal.dc.html","round":null,"rev":"2026-09-28.103","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/signal-decay","label":"Signal Decay","crumbs":["Research","Validate"],"designed":true,"file":"Research Signal Decay.dc.html","round":null,"rev":"2026-09-25.88","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/backtest","label":"Backtest","crumbs":["Research","Validate"],"designed":true,"file":"Research Backtest.dc.html","round":"OLD","rev":"2026-09-25.88","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/signal-health","label":"Signal Health","crumbs":["System","Data"],"designed":true,"file":"System Data Signal Health.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
@@ -376,21 +377,21 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/loop/decisions","label":"Decision Inbox","crumbs":["Review"],"designed":true,"file":"Autopilot Decision Inbox.dc.html","round":"OLD","rev":"2026-09-25.85","inNav":true,"group":"Review","designOnly":false},
   {"path":"/research/loop/hypotheses","label":"Hypothesis Board","crumbs":["The Book"],"designed":true,"file":"Book Hypotheses.dc.html","round":null,"rev":"2026-09-25.89","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/loop/candidates","label":"Candidate Pool","crumbs":["The Book"],"designed":true,"file":"Book Candidates.dc.html","round":null,"rev":"2026-09-25.88","inNav":false,"group":null,"designOnly":false},
-  {"path":"/trade/desk","label":"Trade","crumbs":[],"designed":true,"file":"Trade Desk.dc.html","round":"OLD","rev":"2026-09-25.82","inNav":true,"group":"Trade","designOnly":false},
+  {"path":"/trade/desk","label":"Trade","crumbs":[],"designed":true,"file":"Trade Desk.dc.html","round":"OLD","rev":"2026-09-28.103","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/plans","label":"Plans","crumbs":["Trade"],"designed":true,"file":"Trade Plans.dc.html","round":"OLD","rev":"2026-09-25.94","inNav":true,"group":"Trade","designOnly":false},
-  {"path":"/trade/fills","label":"Orders & Fills","crumbs":["Trade"],"designed":true,"file":"Trade Fills.dc.html","round":"OLD","rev":"2026-09-25.93","inNav":true,"group":"Trade","designOnly":false},
-  {"path":"/trade/rules","label":"Rules","crumbs":["Trade"],"designed":true,"file":"Trade Rules.dc.html","round":null,"rev":"2026-09-28.1","inNav":true,"group":"Trade","designOnly":false},
+  {"path":"/trade/fills","label":"Orders & Fills","crumbs":["Trade"],"designed":true,"file":"Trade Fills.dc.html","round":"OLD","rev":"2026-09-28.103","inNav":true,"group":"Trade","designOnly":false},
+  {"path":"/trade/rules","label":"Rules","crumbs":["Trade"],"designed":true,"file":"Trade Rules.dc.html","round":null,"rev":"2026-09-28.103","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/playbook","label":"Playbook","crumbs":["Trade"],"designed":true,"file":"Trade Playbook.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/review","label":"Review","crumbs":[],"designed":true,"file":"Review Queue.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/fit","label":"Single trade","crumbs":["Review"],"designed":true,"file":"Review Fit.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/habits","label":"Habits","crumbs":["Review"],"designed":true,"file":"Review Habits.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/proposals","label":"Rule proposals","crumbs":["Review"],"designed":true,"file":"Autopilot Decision Inbox.dc.html","round":"OLD","rev":"2026-09-23.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/portfolio/performance","label":"Performance","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Performance.dc.html","round":null,"rev":"2026-09-25.82","inNav":true,"group":"Portfolio","designOnly":false},
-  {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-25.92","inNav":true,"group":"Portfolio","designOnly":false},
+  {"path":"/portfolio/positions","label":"Positions","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Positions.dc.html","round":"OLD","rev":"2026-09-28.103","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/backing","label":"Backing & Model","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Backing.dc.html","round":null,"rev":"2026-09-25.86","inNav":true,"group":"Portfolio","designOnly":false},
-  {"path":"/portfolio/outcome","label":"Outcome","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Outcome.dc.html","round":"OLD","rev":"2026-09-25.86","inNav":true,"group":"Portfolio","designOnly":false},
+  {"path":"/portfolio/outcome","label":"Outcome","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio Outcome.dc.html","round":"OLD","rev":"2026-09-28.103","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/accounts","label":"Accounts","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Accounts.dc.html","round":null,"rev":"2026-09-25.84","inNav":true,"group":"Portfolio","designOnly":false},
-  {"path":"/portfolio/ledger","label":"Trade Ledger","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Ledger.dc.html","round":null,"rev":"2026-09-25.84","inNav":true,"group":"Portfolio","designOnly":false},
+  {"path":"/portfolio/ledger","label":"Trade Ledger","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Ledger.dc.html","round":null,"rev":"2026-09-28.103","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/transfer","label":"Transfer & Pay","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Transfer.dc.html","round":null,"rev":"2026-09-25.86","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/corporate-actions","label":"Corporate Actions","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Corporate Actions.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/trade/assignment","label":"Assignment","crumbs":["Trade"],"designed":true,"file":"Trade Assignment.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Trade","designOnly":false},

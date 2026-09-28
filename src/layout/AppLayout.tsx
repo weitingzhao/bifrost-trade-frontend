@@ -41,7 +41,6 @@ import { CellPickOverlay } from './CellPickOverlay'
 import { setViewStateReportHandler } from '@bifrost/ui'
 import { openFeedbackDialog } from '@/lib/feedback/feedbackDialog'
 import { SymbolDockHost } from './symbolDock/SymbolDockHost'
-import { InstanceSheetHost } from '@/components/instanceRecord/InstanceSheetHost'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
 import { useHeldSymbolSync } from '@/lib/symbolContext'
 import { useRecentPagesTrail } from '@/lib/omnibar'
@@ -182,8 +181,6 @@ export function AppLayout() {
             the panel — docked or a strip it takes its width from the page,
             floating it sits over it. */}
         <SymbolDockHost />
-        {/* Any page's #NNN opens the instance face here (design Rev .101). */}
-        <InstanceSheetHost />
         <NoteComposer />
         {/* K6: the visits beacon — a journal.visit row per page dwell. */}
         <VisitBeaconHost />

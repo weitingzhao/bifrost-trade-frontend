@@ -88,6 +88,14 @@ export interface Surface {
    * makes each ask new.
    */
   intent?: { tab: string; n: number; params?: Record<string, string> }
+  /**
+   * Set when the surface is one strategy instance (design Rev .103): the
+   * Instance page as a surface, like Symbol. `instanceList` / `instanceFrom`
+   * are the rows the token came from, which ‹ › and [ ] step.
+   */
+  instance?: number
+  instanceList?: number[]
+  instanceFrom?: string
 }
 
 /** A tab remembers when it was last looked at — the overflow orders by it. */
@@ -249,6 +257,52 @@ export function threadSurface(): Surface {
   }
 }
 
+/** The Instance page's route (Rev .103) — `/instance/:id`, top level, reached only from a `#NNN`. */
+export const INSTANCE_SURFACE_ROUTE = '/instance'
+
+/** The Instance page's address, with the rows it came from riding along. */
+export function instancePath(id: number, list?: readonly number[], from?: string): string {
+  const q = new URLSearchParams()
+  if (list && list.length > 1 && list.includes(id)) q.set('list', list.join(','))
+  if (from) q.set('from', from)
+  const qs = q.toString()
+  return `${INSTANCE_SURFACE_ROUTE}/${id}${qs ? `?${qs}` : ''}`
+}
+
+/**
+ * One strategy instance as a surface (design Rev .103, Instance ≅ Symbol).
+ *
+ * **One** following tab keyed `instance` — each `#NNN` click shows its
+ * instance there; ⇧ opens a **fresh** tab keyed `instance:NNN` beside it, the
+ * same number twice being one tab. Home is the panel; place memory is shared
+ * by both kinds, so wherever the last one went, the next goes.
+ */
+export function instanceSurface(
+  id: number,
+  opts?: { fresh?: boolean; list?: readonly number[]; from?: string },
+): Surface {
+  const list = opts?.list && opts.list.includes(id) ? [...new Set(opts.list)] : [id]
+  return {
+    key: opts?.fresh ? `instance:${id}` : 'instance',
+    to: `${INSTANCE_SURFACE_ROUTE}/${id}`,
+    label: `#${id}`,
+    group: 'book',
+    canPage: true,
+    def: 'panel',
+    instance: id,
+    instanceList: list,
+    ...(opts?.from ? { instanceFrom: opts.from } : {}),
+  }
+}
+
+/** Step an instance surface to another row of its list, in place — its ‹ › and [ ]. */
+export function setSurfaceInstance(key: string, id: number): void {
+  const patch = <T extends Surface>(s: T): T =>
+    s.key !== key || s.instance == null ? s : { ...s, instance: id, to: `${INSTANCE_SURFACE_ROUTE}/${id}`, label: `#${id}` }
+  const st = store.getState()
+  commit(st.float ? patch(st.float) : null, st.panel ? { ...st.panel, tabs: st.panel.tabs.map(patch) } : null)
+}
+
 /** The Symbol page's route — the one page that is also a surface of its own. */
 export const SYMBOL_SURFACE_ROUTE = '/research/symbol'
 
@@ -299,14 +353,16 @@ export function setSubjectLock(key: string, sym: string | null): void {
 }
 
 /** What a tab or a float bar calls it — the following Symbol tab names what it is showing. */
-export function surfaceLabel(surf: Pick<Surface, 'label' | 'subject'>, carried: string): string {
+export function surfaceLabel(surf: Pick<Surface, 'label' | 'subject' | 'instance'>, carried: string): string {
+  if (surf.instance != null) return `Instance · #${surf.instance}`
   if (surf.subject === 'follow') return `Symbol · ${carried || '—'}`
   // Two tabs on one name — following it, and locked on it — must not read alike.
   return surf.subject === 'lock' ? `${surf.label} (locked)` : surf.label
 }
 
 /** A surface's hue: its group's, except the Symbol page, which wears the ticker's. */
-export function surfaceHue(surf: Pick<Surface, 'group' | 'subject'>): string {
+export function surfaceHue(surf: Pick<Surface, 'group' | 'subject' | 'instance'>): string {
+  if (surf.instance != null) return 'var(--sk-instance)'
   return surf.subject ? 'var(--sk-ticker)' : EQUIP_HUE[surf.group]
 }
 
@@ -319,6 +375,7 @@ export function surfaceHue(surf: Pick<Surface, 'group' | 'subject'>): string {
  */
 function memoryKey(key: string): string {
   if (key.startsWith('run:')) return 'run'
+  if (key === 'instance' || key.startsWith('instance:')) return 'instance'
   return key.startsWith('symbol:') ? 'symbol:lock' : key
 }
 

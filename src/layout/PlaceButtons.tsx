@@ -21,7 +21,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useCarriedSymbol } from '@/lib/symbolContext'
 import { withSymbolParam } from '@/lib/symbolLink'
-import { openSurface, type Place, type Surface } from './equipSurface'
+import { openSurface, type Place, type Surface, instancePath } from './equipSurface'
 import { dismissSurface } from './equipMotion'
 import css from './equipSurface.module.css'
 
@@ -85,9 +85,11 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
                   // The Symbol surface is a name, not just a route: the page
                   // it becomes carries the name it was showing.
                   navigate(
-                    surface.subject
-                      ? withSymbolParam(surface.to, surface.subject === 'lock' ? surface.symbol : carried)
-                      : surface.to,
+                    surface.instance != null
+                      ? instancePath(surface.instance, surface.instanceList, surface.instanceFrom)
+                      : surface.subject
+                        ? withSymbolParam(surface.to, surface.subject === 'lock' ? surface.symbol : carried)
+                        : surface.to,
                   )
                   return
                 }

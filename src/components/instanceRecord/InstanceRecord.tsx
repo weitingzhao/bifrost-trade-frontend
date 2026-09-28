@@ -17,6 +17,8 @@ import { fmtPctSigned, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { useInstanceRecord } from '@/hooks/useInstanceRecord'
+import { useOpenInstance } from '@/layout/instanceGo'
+import { useSymbolGo } from '@/layout/symbolGo'
 import type { StrategyInstance } from '@/types/positions'
 import { d3 } from '@/utils/instanceRecord/instanceRecordModel'
 import { InstanceRiskSection } from './InstanceRiskSection'
@@ -49,14 +51,19 @@ export function InstanceRecord({
   from,
   onPrev,
   onNext,
-  onClose,
   onFull,
-  fullLabel = 'Open in Rules →',
+  fullLabel = 'Full page ↗',
+  list,
   ranUnder,
   actions = [],
 }: {
   instance: StrategyInstance
-  mode: 'sheet' | 'inline'
+  /**
+   * Rev .103's three hosts: `panel` — the Instance surface's compact face (the
+   * panel's own chrome closes it); `inline` — Trade › Rules' picked record;
+   * `rail` — the Instance page's side column, Position and Risk only.
+   */
+  mode: 'panel' | 'inline' | 'rail'
   /** `#160 · MU +1`, as the page names it. */
   title: string
   opportunity: string
@@ -65,9 +72,11 @@ export function InstanceRecord({
   from?: string
   onPrev?: () => void
   onNext?: () => void
-  onClose?: () => void
+  /** Default: the Instance page. */
   onFull?: () => void
   fullLabel?: string
+  /** The rows it came from — carried to the page. */
+  list?: readonly number[]
   ranUnder?: { alloc: string; warn: boolean; onOpp?: () => void }
   actions?: InstanceRecordAction[]
 }) {
@@ -76,7 +85,9 @@ export function InstanceRecord({
   const [withShares, setWithShares] = useState(true)
   const r = useInstanceRecord(instance, { tws: source === 'tws', withShares })
   const d = r.detail
-  const isSheet = mode === 'sheet'
+  const isSheet = mode === 'panel'
+  const openInstance = useOpenInstance()
+  const symbolGo = useSymbolGo()
   const show = (k: Section) => section === 'all' || section === k
   const closed = r.life.closed
   const hasFills = r.legs.length > 0
@@ -84,6 +95,7 @@ export function InstanceRecord({
 
   const id = instance.strategy_instance_id
   const positionsTo = `/portfolio/positions?inst=${id}`
+  const sym = r.legs[0]?.root ?? null
   // The face's own ways out (Rev .102): where its open legs are held, or its
   // review once flat; and the Ledger rows its fills are booked to.
   const footer: InstanceRecordAction[] = [
@@ -96,8 +108,12 @@ export function InstanceRecord({
       disabled: !hasFills,
       title: hasFills ? `Portfolio › Trade Ledger — every fill booked to #${id}` : 'No fill booked yet',
     },
+    ...(sym
+      ? [{ label: `${sym} →`, onClick: () => symbolGo.go(sym, 'swap'), title: `Symbol · ${sym} beside — its chart and every instance on it` }]
+      : []),
     ...actions,
   ]
+  const full = onFull ?? (() => openInstance(id, { page: true, list, from }))
   const openLegs = r.legs.filter((l) => l.open)
   const contractLine = (closed ? r.legs : openLegs)
     .map((l) => `${l.side === 'Short' ? '−' : '+'}${closed ? l.qty : Math.abs(l.openQty)} ${l.strike}${l.right}`)
@@ -105,6 +121,28 @@ export function InstanceRecord({
   const expiries = [...new Set((closed ? r.legs : openLegs).map((l) => d3(l.expiry)))].join(' · ')
   const lifePct =
     r.life.totalDays && r.life.elapsed != null ? Math.min(100, Math.round((r.life.elapsed / r.life.totalDays) * 100)) : 0
+
+  if (mode === 'rail') {
+    // The page draws the rest wider; the rail keeps what is held and what it risks.
+    return (
+      <aside aria-label="Instance position and risk" className="flex min-w-0 flex-col gap-3">
+        {r.loading ? (
+          <p className="m-0 text-dense-meta text-muted-foreground">Reading its fills…</p>
+        ) : (
+          <>
+            {r.position ? <InstancePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} /> : null}
+            <InstanceRiskSection
+              payoffs={r.payoffs}
+              canCover={r.canCover}
+              withShares={withShares}
+              onWithShares={setWithShares}
+              closed={closed}
+            />
+          </>
+        )}
+      </aside>
+    )
+  }
 
   return (
     <aside aria-label="Instance record" className={cn('flex min-w-0 flex-col gap-3', isSheet ? 'min-h-0 px-3.5 pt-2.5 pb-4' : '')}>
@@ -120,13 +158,17 @@ export function InstanceRecord({
             <button type="button" className={positionsUi.btn} onClick={onNext} disabled={!onNext} title="Next row · ]" aria-label="Next instance">
               ›
             </button>
-            {onFull ? (
-              <button type="button" className={positionsUi.btn} onClick={onFull} title="Open as the page's record — Back returns to this list">
-                {fullLabel}
-              </button>
-            ) : null}
-            <button type="button" className={positionsUi.btn} onClick={onClose} title="Close · Esc" aria-label="Close">
-              ✕
+            <button
+              type="button"
+              className={positionsUi.btn}
+              onClick={full}
+              title={
+                onFull
+                  ? "Open as the page's record — Back returns to this list"
+                  : 'The instance page: price chart, legs timeline, every fill, the ledger and the journal'
+              }
+            >
+              {fullLabel}
             </button>
           </span>
         </header>
@@ -213,7 +255,7 @@ export function InstanceRecord({
               </div>
 
               {r.position ? (
-                <InstancePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} onLeave={onClose} />
+                <InstancePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} />
               ) : null}
 
               <div className="flex flex-col gap-1.5 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
@@ -400,7 +442,7 @@ export function InstanceRecord({
         <footer className="flex flex-wrap gap-1.5 border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] pt-2">
           {footer.map((a) =>
             a.to ? (
-              <Link key={a.label} to={a.to} onClick={onClose} className={cn(positionsUi.btn, 'no-underline')} title={a.title}>
+              <Link key={a.label} to={a.to} className={cn(positionsUi.btn, 'no-underline')} title={a.title}>
                 {a.label}
               </Link>
             ) : (

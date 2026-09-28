@@ -48,8 +48,8 @@ import { LineageBar, type Crumb } from './LineageBar'
 import { RulesRecord } from './RulesRecord'
 import { InstanceRecord, type InstanceRecordAction } from '@/components/instanceRecord/InstanceRecord'
 import { buildRecord, type RecordAction } from './rulesRecordModel'
-import { instanceFaceOf, RulesInstanceSheet, type SheetRec } from './RulesInstanceSheet'
-import { instanceSheetStore, openInstanceCompare } from '@/lib/instanceSheet'
+import { instanceFaceOf } from './rulesInstanceFace'
+import { openInstancePair, useOpenInstance } from '@/layout/instanceGo'
 import { buildChain, orphanGates, orphanOpportunities, visibleChain, type ChainSelection } from './rulesChain'
 import {
   NO_FOCUS,
@@ -142,7 +142,7 @@ export default function TradeRulesPage() {
   /** The list an instance was opened from, so the record can step `[ ]` through it. */
   const [siblings, setSiblings] = useState<{ ids: number[]; from: string } | null>(null)
   /** The side sheet: an instance opened over the list, which stays live behind it. */
-  const [sheetRec, setSheetRec] = useState<SheetRec | null>(null)
+  const openInstance = useOpenInstance()
 
   // ── The path ────────────────────────────────────────────────────────────
   const [trail, setTrail] = useState<string[]>([])
@@ -170,7 +170,6 @@ export default function TradeRulesPage() {
     setBoardSort(back?.boardSort ?? 'pnl')
     setChainOpen(false)
     setCompareWith(null)
-    setSheetRec(null)
     requestAnimationFrame(() => {
       const el = scroller()
       if (el) el.scrollTop = back?.scroll ?? 0
@@ -211,11 +210,6 @@ export default function TradeRulesPage() {
   }
   /** `[` `]` — within the list the instance came from; replaces, never adds to Back. */
   const step = (dir: -1 | 1) => {
-    if (sheetRec) {
-      const id = sheetRec.ids[sheetRec.ids.indexOf(sheetRec.id) + dir]
-      if (id != null) setSheetRec({ ...sheetRec, id })
-      return
-    }
     if (sel?.kind !== 'instance' || sel.id == null || !siblings) return
     const j = siblings.ids.indexOf(sel.id) + dir
     const id = siblings.ids[j]
@@ -228,11 +222,9 @@ export default function TradeRulesPage() {
 
   const stepRef = useRef(step)
   const backRef = useRef(back)
-  const sheetRecRef = useRef(sheetRec)
   useEffect(() => {
     stepRef.current = step
     backRef.current = back
-    sheetRecRef.current = sheetRec
   })
   const sheetOpen = sheet.kind !== NO_SHEET.kind || setActiveFor !== undefined
   useEffect(() => {
@@ -240,17 +232,15 @@ export default function TradeRulesPage() {
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       if (sheetOpen || document.querySelector('[role="dialog"][data-state="open"]')) return
-      // An Esc the shell already spent closing an inspector is not also a Back;
-      // and the shell's instance sheet (a compare, a #NNN) owns [ ] while it is up.
-      if (e.defaultPrevented || instanceSheetStore.getState().sheet) return
+      // An Esc the shell already spent closing an inspector is not also a Back.
+      if (e.defaultPrevented) return
       if (e.key === '[' || e.key === ']') {
         stepRef.current(e.key === '[' ? -1 : 1)
         return
       }
       if (e.key === 'Escape' || (e.altKey && e.key === 'ArrowLeft')) {
         if (e.altKey) e.preventDefault()
-        if (sheetRecRef.current && e.key === 'Escape') setSheetRec(null)
-        else if (compareWith != null && e.key === 'Escape') setCompareWith(null)
+        if (compareWith != null && e.key === 'Escape') setCompareWith(null)
         else backRef.current()
       }
     }
@@ -686,22 +676,15 @@ export default function TradeRulesPage() {
                         pickIt({ kind: 'instance', id: inst.strategy_instance_id }, { ids, from: fromLabel })
                       }
                       onSym={(y) => setSym(y, true)}
-                      onViewDetail={(inst, ids) =>
-                        setSheetRec((cur) =>
-                          cur?.id === inst.strategy_instance_id
-                            ? null
-                            : { id: inst.strategy_instance_id, ids, from: fromLabel },
-                        )
-                      }
+                      tokenFrom={fromLabel}
                       onCompare={(inst) => {
                         const id = inst.strategy_instance_id
                         if (compareWith == null || compareWith === id) {
                           setCompareWith(compareWith === id ? null : id)
                           return
                         }
-                        setSheetRec(null)
                         setCompareWith(null)
-                        openInstanceCompare(compareWith, id, 'Rules')
+                        openInstancePair(openInstance, compareWith, id, 'Rules')
                       }}
                       activeDetailId={null}
                       compareId={compareWith}
@@ -714,7 +697,7 @@ export default function TradeRulesPage() {
                     {compareWith != null ? (
                       <p className="m-0 flex flex-wrap items-center gap-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
                         <span className="font-semibold text-secondary-foreground">#{compareWith} is held for comparison.</span>
-                        Pick a second instance’s ⇄ to open the two side by side in a sheet over this page.
+                        Pick a second instance’s ⇄ to open the two side by side — one in the panel, one floating.
                         <button type="button" className={positionsUi.btn} onClick={() => setCompareWith(null)}>
                           Drop it
                         </button>
@@ -725,16 +708,6 @@ export default function TradeRulesPage() {
               ) : null}
             </RulesRecord>
           ) : null}
-
-          <RulesInstanceSheet
-            rec={sheetRec}
-            data={data}
-            rawInstances={rawInstances}
-            actions={instanceDelete}
-            onClose={() => setSheetRec(null)}
-            onStep={step}
-            onPick={pickIt}
-          />
 
           <RulesSheets sheet={sheet} onClose={() => setSheet(NO_SHEET)} status={status.data} />
 

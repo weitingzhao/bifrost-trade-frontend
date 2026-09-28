@@ -23,7 +23,7 @@ import { Suspense, createElement, lazy, useMemo } from 'react'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { InSurfaceContext, SurfaceSubjectContext, type SurfaceSubject } from '@/lib/surfaceScope'
 import { useCarriedSymbol } from '@/lib/symbolContext'
-import { surfacePageFor } from './surfacePages'
+import { surfacePageFor, InstanceSurfaceView } from './surfacePages'
 import { setSubjectLock, type Surface } from './equipSurface'
 import { SurfaceLocation } from './SurfaceLocation'
 import css from './equipSurface.module.css'
@@ -69,7 +69,7 @@ const CopilotThreadBody = lazy(() =>
  * one frame, which is what this used to do.
  */
 export function SurfaceBody({ surface }: { surface: Surface }) {
-  const Page = surface.run || surface.thread ? null : surfacePageFor(surface.to)
+  const Page = surface.run || surface.thread || surface.instance != null ? null : surfacePageFor(surface.to)
   // `createElement`, not `<Page />`: the lint rule reads a capitalised local
   // as a component *defined* during render, which loses its state on every
   // pass. These are `lazy()` objects created once at module scope, so the
@@ -95,7 +95,9 @@ export function SurfaceBody({ surface }: { surface: Surface }) {
       <InSurfaceContext.Provider value>
         <Suspense fallback={<SurfaceSkeleton />}>
           <div className={css.arrive}>
-            {surface.thread ? (
+            {surface.instance != null ? (
+              <InstanceSurfaceView surface={surface} />
+            ) : surface.thread ? (
               <CopilotThreadBody />
             ) : surface.run ? (
               <LoopRunPipelineBody runId={surface.run} live />

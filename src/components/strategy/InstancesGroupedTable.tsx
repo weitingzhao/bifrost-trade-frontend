@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { INSTANCE_GROUP_FAILED, INSTANCE_GROUP_LOADING } from '@/hooks/useInstanceBook'
-import { ChevronRight, ChevronDown, Trash2, Eye, Columns2 } from 'lucide-react'
+import { ChevronRight, ChevronDown, Trash2, Crosshair, Columns2 } from 'lucide-react'
+import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
 import { cn } from '@/lib/utils'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
 import {
@@ -86,7 +87,8 @@ interface Props {
   /** Optional: Trade › Rules deletes from the chain's own detail actions. */
   onDelete?: (instance: StrategyInstance) => void
   /** The ids are the rows in the order drawn, so a side sheet can step through them. */
-  onViewDetail?: (instance: StrategyInstance, orderedIds: number[]) => void
+  /** What the #NNN tokens' surface names as where they came from. */
+  tokenFrom?: string
   onCompare?: (instance: StrategyInstance) => void
   activeDetailId?: number | null
   compareId?: number | null
@@ -312,7 +314,7 @@ export function InstancesGroupedTable({
   collapsedGroups,
   onToggleGroup,
   onDelete,
-  onViewDetail,
+  tokenFrom = 'Trade › Rules',
   onCompare,
   activeDetailId,
   compareId,
@@ -570,13 +572,17 @@ export function InstancesGroupedTable({
                 )}
               >
                 <div className={instancesActionsInnerClass}>
-                  <IconActionButton
-                    title="View instance detail"
-                    ariaLabel="View instance detail"
-                    onClick={() => onViewDetail?.(inst, orderedIds)}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                  </IconActionButton>
+                  {onDrill ? (
+                    // Rev .103: ◎ focuses it here (its lineage lights, Back
+                    // returns); the #NNN beside it opens its own surface.
+                    <IconActionButton
+                      title={`Focus #${inst.strategy_instance_id} here — its lineage lights; Back returns to this list as it is now`}
+                      ariaLabel={`Focus #${inst.strategy_instance_id} here`}
+                      onClick={() => onDrill(inst, orderedIds)}
+                    >
+                      <Crosshair className="h-3.5 w-3.5" />
+                    </IconActionButton>
+                  ) : null}
                   {(
                     compareAnywhere
                       ? (activeDetailId ?? compareId ?? null) !== inst.strategy_instance_id
@@ -607,18 +613,7 @@ export function InstancesGroupedTable({
                 </div>
               </DenseTableCell>
               <DenseTableCell className={cn(instancesColIdClass, denseTableNumCell, 'text-muted-foreground')}>
-                {onDrill ? (
-                  <button
-                    type="button"
-                    onClick={() => onDrill(inst, orderedIds)}
-                    title={`Open #${inst.strategy_instance_id} here — Back returns to this list as it is now`}
-                    className="font-mono font-semibold text-[var(--sk-instance,#c084fc)] hover:underline"
-                  >
-                    #{inst.strategy_instance_id}
-                  </button>
-                ) : (
-                  inst.strategy_instance_id
-                )}
+                <InstanceRef id={inst.strategy_instance_id} list={orderedIds} from={tokenFrom} className="font-semibold" />
               </DenseTableCell>
               {showOpportunity ? (
               <DenseTableCell className={instancesColOppClass}>

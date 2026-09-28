@@ -109,6 +109,9 @@ const PARAM_COVERED: Record<string, string> = {
   '/research/loop/objectives/obj-smallcap-sepa': '/research/loop/objectives/:objectiveId',
   '/research/loop/objectives/obj-vol-crush': '/research/loop/objectives/:objectiveId',
   '/research/loop/runs': '/research/loop/runs/:runId',
+  // Rev .103: the design routes the Instance page at its stem and carries the
+  // id in `?id=`; the app's is `/instance/:id`.
+  '/instance': '/instance/:id',
 }
 
 /**

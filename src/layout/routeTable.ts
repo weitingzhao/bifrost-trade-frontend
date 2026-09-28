@@ -442,6 +442,17 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // Rev .103: the Instance surface's page — top level, in no menu, reached
+    // only from a #NNN (like an objective's detail).
+    path: '/instance/:id',
+    label: 'Instance',
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-28.103',
+      note: DESIGN_NOTES['/instance/:id'],
+    },
+  },
+  {
     path: '/trade/expiration',
     label: 'Expiration',
     crumbs: TRADE_DESK,

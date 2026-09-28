@@ -476,7 +476,8 @@ describe('the design walk, as it stands', () => {
     // (unbuilt 2→1 — only Agents You remains, waiting on the memory store).
     // 76 with K6 (2026-09-27): the You page is built over journal.memory
     // (unbuilt 1→0 — the design has nothing left the app lacks a page for).
-    expect(counts.byState.reviewing).toBe(76)
+    // 77 with Rev .103's Instance page, built in batch T1 (2026-09-28).
+    expect(counts.byState.reviewing).toBe(77)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -502,6 +503,7 @@ describe('the design walk, as it stands', () => {
       '/docs/tech-stack',
       '/docs/ui-design-system',
       '/home',
+      '/instance',
       '/market/live',
       '/portfolio',
       '/portfolio/accounts',
@@ -625,7 +627,8 @@ describe('the design walk, as it stands', () => {
     // 87 with Rev .53: the four System stubs drew — less the tracker itself.
     // 89 with Package .26 @ Rev .98: Agents You (the memory-and-personality
     // page behind Personas) and System Feedback (the reports triage face).
-    expect(counts.designed).toBe(89)
+    // 90 with Package .32 @ Rev .103: the Instance page (/instance/:id).
+    expect(counts.designed).toBe(90)
     expect(counts.byState.designOnly).toBe(9)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three
@@ -700,6 +703,8 @@ describe('the design walk, as it stands', () => {
         .map((r) => r.path)
         .sort()
     ).toEqual([
+      // Rev .103: the design's /instance stem answers to /instance/:id.
+      '/instance',
       '/research/loop/objectives/obj-daily-stock',
       '/research/loop/objectives/obj-earnings-iv',
       '/research/loop/objectives/obj-smallcap-sepa',

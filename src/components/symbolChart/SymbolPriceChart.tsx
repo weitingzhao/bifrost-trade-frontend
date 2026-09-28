@@ -58,7 +58,7 @@ import {
 } from '@/components/symbolChart/symbolPriceModel'
 import { SymbolTradeOverlay } from '@/components/symbolChart/SymbolTradeOverlay'
 import { SymbolChartPointer } from '@/components/symbolChart/SymbolChartPointer'
-import { openInstanceSheet } from '@/lib/instanceSheet'
+import { useOpenInstance } from '@/layout/instanceGo'
 import { useInstanceIndex } from '@/hooks/useInstanceIndex'
 
 /** The vendor keeps two rolling years; the API caps a page at 500. */
@@ -224,12 +224,13 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
   )
   const holding = useMemo(() => holdingFor(legs, tracks), [legs, tracks])
   const known = useInstanceIndex()
+  const openInstance = useOpenInstance()
   const trackIds = useMemo(
     () => tracks.flatMap((t) => (t.id != null && (known == null || known.has(t.id)) ? [t.id] : [])),
     [tracks, known]
   )
   const openTrack = (t: InstanceTrack) => {
-    if (t.id != null) openInstanceSheet(t.id, trackIds, `Symbol · ${sym}`)
+    if (t.id != null) openInstance(t.id, { list: trackIds, from: `Symbol · ${sym}` })
     else navigate(withSymbolParam('/portfolio/ledger', sym))
   }
   const placed = useMemo<PlacedTrack[]>(() => {
@@ -287,7 +288,7 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
           hover={hover}
           onHover={setHover}
           onOpen={openTrack}
-          onOpenId={(id) => openInstanceSheet(id, trackIds, `Symbol · ${sym}`)}
+          onOpenId={(id) => openInstance(id, { list: trackIds, from: `Symbol · ${sym}` })}
           holding={holding}
           spot={spot}
           known={known}

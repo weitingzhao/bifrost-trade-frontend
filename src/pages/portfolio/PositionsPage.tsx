@@ -12,7 +12,7 @@
  * titles, honesty stays printed, and nothing the page could do before was cut.
  */
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { openInstanceCompare, openInstanceSheet, showInstanceSheet } from '@/lib/instanceSheet'
+import { openInstancePair, useOpenInstance } from '@/layout/instanceGo'
 import { useInstanceRoot } from '@/hooks/useInstanceRoot'
 import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -133,14 +133,15 @@ export default function PositionsPage() {
    * address is read once and dropped: the sheet is a look, not a place.
    */
   const [params, setParams] = useSearchParams()
+  const openInstance = useOpenInstance()
   const instanceParam = Number(params.get('instance'))
   const urlInstanceId = Number.isFinite(instanceParam) && instanceParam > 0 ? instanceParam : null
   const vsParam = Number(params.get('vs'))
   const urlCompareId = Number.isFinite(vsParam) && vsParam > 0 ? vsParam : null
   useEffect(() => {
     if (urlInstanceId == null) return
-    if (urlCompareId != null) openInstanceCompare(urlInstanceId, urlCompareId, 'Positions')
-    else showInstanceSheet(urlInstanceId, [urlInstanceId], 'Positions')
+    if (urlCompareId != null) openInstancePair(openInstance, urlInstanceId, urlCompareId, 'Positions')
+    else openInstance(urlInstanceId, { from: 'Positions' })
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev)
@@ -150,7 +151,7 @@ export default function PositionsPage() {
       },
       { replace: true },
     )
-  }, [urlInstanceId, urlCompareId, setParams])
+  }, [urlInstanceId, urlCompareId, setParams, openInstance])
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
   /**
    * `?inst=NNN` (the instance face's Position →, design Rev .102): its row in
@@ -299,7 +300,7 @@ export default function PositionsPage() {
       setFaceRisk({
         title: ctx?.title ?? `Strategy #${id}`,
         profile: ctx?.profile ?? null,
-        onOpenInstance: () => openInstanceSheet(id, [id], 'Positions'),
+        onOpenInstance: () => openInstance(id, { from: 'Positions' }),
         instance:
           record && reading
             ? { id, label: record.label ?? '', status: reading.closed ? 'closed' : 'running' }
@@ -308,7 +309,7 @@ export default function PositionsPage() {
       setFace('risk')
       setFaceOpen(true)
     },
-    [instanceById, book.executionsFinal, setFace],
+    [instanceById, book.executionsFinal, setFace, openInstance],
   )
   /** A face button runs the write it names, on the fill the face is about. */
   const openLedgerMode = useCallback(

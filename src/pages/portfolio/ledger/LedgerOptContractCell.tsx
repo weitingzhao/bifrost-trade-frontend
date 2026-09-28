@@ -1,4 +1,4 @@
-import { openInstanceSheet } from '@/lib/instanceSheet'
+import { instanceHowFrom, useOpenInstance } from '@/layout/instanceGo'
 import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
@@ -67,6 +67,7 @@ export function LedgerDetailInstanceIcon({
   execution?: Execution
   className?: string
 }) {
+  const openInstance = useOpenInstance()
   if (execution == null) return null
 
   const instanceId =
@@ -90,7 +91,7 @@ export function LedgerDetailInstanceIcon({
       aria-label={title}
       onClick={e => {
         e.stopPropagation()
-        openInstanceSheet(instanceId, [instanceId], 'Ledger · fills')
+        openInstance(instanceId, { from: 'Ledger · fills', ...instanceHowFrom(e) })
       }}
       onKeyDown={e => e.stopPropagation()}
     >

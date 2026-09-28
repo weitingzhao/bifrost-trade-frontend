@@ -397,6 +397,11 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/loop/HarnessConsolePage')),
       },
       {
+        // Rev .103: top level, outside every menu — reached only from a #NNN.
+        path: 'instance/:id',
+        lazy: lazyPage(() => import('@/pages/trade/instance/InstancePage')),
+      },
+      {
         path: 'research/loop/objectives/:objectiveId',
         lazy: lazyPage(() => import('@/pages/research/loop/ObjectivePage')),
       },

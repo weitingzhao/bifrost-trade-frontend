@@ -8,9 +8,11 @@
  * settles nothing has a shape you can see rather than a number you have to
  * infer.
  *
- * Two of the six cross into the outer loop — Settle and Feed back are where
- * research meets the account and the policy — and the design marks them,
- * because that crossing is the thing D10 keeps under the Owner's hand.
+ * Rev .102 closes the strip at both ends with The Book's arcs (Vision §22.2):
+ * Borrowed — the belief the objective runs on — before 01, and Learned — what
+ * the nightly distill took from its walk, and what it proposed — after 06. The
+ * ".7" marks on Settle and Feed back ("crosses the outer loop") are withdrawn:
+ * §22.3 gives "outer loop" another meaning.
  *
  * Empty is a reading. A draft objective that has never run shows four empty
  * stations, and that shape *is* its status; hiding the empties would turn it
@@ -46,11 +48,6 @@ export interface Station {
   detail: string
   /** Where the chip goes, with this objective already in scope. */
   to: string
-  /**
-   * Settle and Feed back leave the research loop: one meets the account, the
-   * other rewrites the policy the machine runs on.
-   */
-  crossesOuterLoop?: boolean
 }
 
 /** A hypothesis's birth run, when it was born in one. */
@@ -141,7 +138,6 @@ export function objectiveLap(input: LapInput): Station[] {
           ? 'nothing settled'
           : `settled · hit ${fmtPct0(rec.hit_rate)}${rec.pending ? ` · ${rec.pending} open` : ''}`,
       to: '/research/signal-decay',
-      crossesOuterLoop: true,
     },
     {
       id: 'feedback',
@@ -150,7 +146,6 @@ export function objectiveLap(input: LapInput): Station[] {
       value: fedBack,
       detail: fedBack === 0 ? 'no patch waiting' : 'policy patches to approve',
       to: '/research/loop/decisions',
-      crossesOuterLoop: true,
     },
   ]
 }
@@ -344,3 +339,49 @@ export function candidateOwnTags(
   )
   return (row.tags ?? []).filter((t) => !shownElsewhere.has(t.toLowerCase()))
 }
+
+export interface LapEnd {
+  id: 'borrowed' | 'learned'
+  /** `Book ⟶` / `⟶ Book`, as the design heads them. */
+  head: string
+  label: string
+  /** The Book's id when the arc is walked (`H-12`, `M-38`); null = not yet. */
+  value: string | null
+  detail: string
+  /** Why it reads `not yet` — measured, so the reader knows what would light it. */
+  why: string
+  to: string
+}
+
+/**
+ * The strip's two ends (Rev .102). Both are edges in the Journal the app does
+ * not have yet, measured 2026-09-28 on DEV (research 0.150.0 and the local
+ * 0.145.0): an objective records no origin — its `subject` is a ticker, its
+ * policy carries no belief id — and memories cite fills and decisions, never
+ * an objective's runs. So both ends read `not yet` with that reason, until the
+ * Draft-objective flow (Rev .100, batch R4) writes the origin edge and the
+ * distill attributes what it learned.
+ */
+export function lapEnds(): [LapEnd, LapEnd] {
+  return [
+    {
+      id: 'borrowed',
+      head: 'Book ⟶',
+      label: 'Borrowed',
+      value: null,
+      detail: 'no Book belief recorded',
+      why: 'An objective does not record the belief it was drafted from yet — that edge arrives with Draft objective from a memory proposal.',
+      to: '/research/loop/hypotheses',
+    },
+    {
+      id: 'learned',
+      head: '⟶ Book',
+      label: 'Learned',
+      value: null,
+      detail: 'nothing distilled from it',
+      why: 'Memories cite fills and decisions; none is attributed to an objective’s runs yet, so none can be shown as learned from this one.',
+      to: '/research/agent-personas/you',
+    },
+  ]
+}
+

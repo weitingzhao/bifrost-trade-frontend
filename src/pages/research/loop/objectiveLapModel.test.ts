@@ -3,6 +3,7 @@ import type { ResearchCandidate } from '@/api/research/candidates'
 import type { ObjectiveRun } from '@/api/research/harness'
 import { candidateObjectiveId } from '@/lib/objectiveScope'
 import {
+  lapEnds,
   draftObjectiveId,
   hypothesisRunId,
   objectiveLap,
@@ -80,11 +81,13 @@ describe('objectiveLap', () => {
     expect(s.settle.detail).toContain('1 open')
   })
 
-  it('marks the two stations that leave the research loop', () => {
-    const s = lap()
-    expect(s.settle.crossesOuterLoop).toBe(true)
-    expect(s.feedback.crossesOuterLoop).toBe(true)
-    expect(s.scan.crossesOuterLoop).toBeUndefined()
+  it('closes the strip with the Book’s two ends, reading not yet with the measured reason (Rev .102)', () => {
+    const [borrowed, learned] = lapEnds()
+    expect([borrowed.label, learned.label]).toEqual(['Borrowed', 'Learned'])
+    expect(borrowed.value).toBeNull()
+    expect(learned.value).toBeNull()
+    expect(borrowed.why).toMatch(/Draft objective/)
+    expect(learned.to).toBe('/research/agent-personas/you')
   })
 
   it('keeps every station when the machine has never run', () => {

@@ -1,7 +1,9 @@
 /**
- * Its lap around the loop — six stations under the standing.
+ * Its lap around the loop — six stations under the standing, closed at both
+ * ends by The Book's arcs (Rev .102): the belief it borrowed, and what came
+ * back. An end not walked is dashed and says `not yet`, with why.
  *
- * Design: `Research Objective.dc.html` (Rev 2026-09-20.7) · Vision §20. The
+ * Design: `Autopilot Objective.dc.html` (Rev 2026-09-28.102) · Vision §20, §22.2. The
  * counting is in `objectiveLapModel.ts`; what is here is the row, and one
  * behaviour that is the whole point of the design's ruling:
  *
@@ -27,7 +29,7 @@ import { fetchCandidates } from '@/api/research/candidates'
 import { fetchObjectiveRuns, type AutopilotObjective } from '@/api/research/harness'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useResearchDrafts } from '@/hooks/useResearchDrafts'
-import { objectiveLap } from '@/pages/research/loop/objectiveLapModel'
+import { lapEnds, objectiveLap, type LapEnd } from '@/pages/research/loop/objectiveLapModel'
 
 export function ObjectiveLap({
   objectiveId,
@@ -69,6 +71,8 @@ export function ObjectiveLap({
     [objectiveId, brief, candidatesQ.data, runIds, hypothesesQ.data, draftsQ.data],
   )
 
+  const ends = lapEnds()
+
   return (
     <section
       aria-label="Its lap around the loop"
@@ -83,7 +87,8 @@ export function ObjectiveLap({
         </span>
       </div>
 
-      <ol className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-6">
+      <ol className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+        <End end={ends[0]} objectiveId={objectiveId} />
         {stations.map((s) => {
           // An empty station is dimmed, never hidden: four empties in a row is
           // what a draft objective looks like, and that shape is its status.
@@ -109,30 +114,56 @@ export function ObjectiveLap({
                 )}
               >
                 <span className="flex w-full items-baseline gap-1.5">
-                  <span
-                    className={cn(
-                      'font-mono text-dense-micro',
-                      s.crossesOuterLoop ? 'text-[var(--color-entity-strategy)]' : 'text-muted-foreground/60',
-                    )}
-                  >
-                    {s.n}
-                  </span>
+                  <span className="font-mono text-dense-micro text-muted-foreground/60">{s.n}</span>
                   <span className="text-dense-label font-medium">{s.label}</span>
                   <span className="ml-auto font-mono text-dense-body font-semibold tabular-nums">
                     {s.value == null ? '—' : s.value.toLocaleString()}
                   </span>
                 </span>
                 <span className="text-dense-caption leading-snug text-muted-foreground">{s.detail}</span>
-                {s.crossesOuterLoop ? (
-                  <span className="text-dense-caption text-[var(--color-entity-strategy)]">
-                    crosses the outer loop
-                  </span>
-                ) : null}
               </button>
             </li>
           )
         })}
+        <End end={ends[1]} objectiveId={objectiveId} />
       </ol>
     </section>
   )
 }
+
+/** One of the Book's ends: lit in its ink when walked, dashed and `not yet` when not. */
+function End({ end, objectiveId }: { end: LapEnd; objectiveId: string }) {
+  const navigate = useNavigate()
+  const walked = end.value != null
+  const ink = end.id === 'borrowed' ? 'var(--sk-contract)' : 'var(--color-unrealized)'
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => {
+          setObjective(objectiveId)
+          navigate(end.to)
+        }}
+        title={walked ? `${end.label} — opens with this objective in scope` : `${end.label}: not yet. ${end.why}`}
+        className={cn(
+          'flex w-full flex-col items-start gap-0.5 rounded border px-2 py-1.5 text-left transition-colors',
+          'hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+          walked ? 'border-t-2' : 'border-dashed opacity-70',
+        )}
+        style={walked ? { borderTopColor: ink } : undefined}
+      >
+        <span className="flex w-full items-baseline gap-1.5">
+          <span className="font-mono text-dense-micro" style={{ color: walked ? ink : undefined }}>
+            {end.head}
+          </span>
+          <span className="text-dense-label font-medium">{end.label}</span>
+          <span className="ml-auto font-mono text-dense-body font-semibold" style={{ color: walked ? ink : undefined }}>
+            {end.value ?? 'not yet'}
+          </span>
+        </span>
+        <span className="text-dense-caption leading-snug text-muted-foreground">{end.detail}</span>
+      </button>
+    </li>
+  )
+}
+

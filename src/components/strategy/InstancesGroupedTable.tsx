@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { INSTANCE_GROUP_LOADING } from '@/hooks/useInstanceBook'
+import { INSTANCE_GROUP_FAILED, INSTANCE_GROUP_LOADING } from '@/hooks/useInstanceBook'
 import { ChevronRight, ChevronDown, Trash2, Eye, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
@@ -436,7 +436,16 @@ export function InstancesGroupedTable({
                     <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
                   )}
                   <span>
-                    {group.key === INSTANCE_GROUP_LOADING ? (
+                    {group.key === INSTANCE_GROUP_FAILED ? (
+                      <>
+                        <span className="text-destructive">Couldn’t read fills</span>
+                        <span className={instancesGroupMutedClass}>
+                          {' '}
+                          ({group.rows.length} instance
+                          {group.rows.length !== 1 ? 's' : ''} — symbol unknown until they load)
+                        </span>
+                      </>
+                    ) : group.key === INSTANCE_GROUP_LOADING ? (
                       // Not a reading: these rows' fills are still loading
                       // (five instances at a time), so their symbol is not
                       // known *yet* — they move to their groups as each

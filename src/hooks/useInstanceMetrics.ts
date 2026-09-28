@@ -54,11 +54,20 @@ export function useInstanceMetrics(
   instances: StrategyInstance[],
   revalidateKey = 0,
 ): Map<number, InstanceListMetricsEntry> {
+  // The key is the *content* of the id list. The effect below depends on it
+  // alone — never on the array — because a caller that rebuilds `instances`
+  // every render (Trade › Rules did: its selection is parsed fresh from the
+  // URL each render) hands a new array with the same ids, and an effect keyed
+  // on the array's identity cancels and restarts on every render. Each chunk
+  // that landed re-rendered the page, which restarted the loop at chunk 0:
+  // on PROD 2026-09-28 it fetched the same 10 instances 65 times in 13 s and
+  // the other 31 never loaded.
+  const idsKey = instances.map((i) => i.strategy_instance_id).join(',')
   const ids = useMemo(
-    () => instances.map((i) => i.strategy_instance_id),
-    [instances],
+    () => (idsKey ? idsKey.split(',').map(Number) : []),
+    [idsKey],
   )
-  const sessionKey = `${ids.join(',')}:${revalidateKey}`
+  const sessionKey = `${idsKey}:${revalidateKey}`
 
   const [loaded, setLoaded] = useState<LoadedMetrics>(() => ({
     sessionKey: '',
@@ -120,7 +129,10 @@ export function useInstanceMetrics(
     return () => {
       cancelled = true
     }
-  }, [sessionKey, ids])
+    // `ids` is derived from `sessionKey`'s own content (memoised on idsKey),
+    // so the string is the whole dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey])
 
   return useMemo(() => {
     if (ids.length === 0) return new Map<number, InstanceListMetricsEntry>()

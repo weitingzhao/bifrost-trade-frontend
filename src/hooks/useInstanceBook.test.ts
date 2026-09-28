@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+  INSTANCE_GROUP_FAILED,
   INSTANCE_GROUP_LOADING,
   instanceGroupKey,
   instanceSymbol,
@@ -49,5 +50,12 @@ describe('instanceGroupKey separates loading from the measured —', () => {
   it('metrics not landed yet → the loading sentinel, never —', () => {
     const metrics = new Map<number, InstanceListMetricsEntry>()
     expect(instanceGroupKey(inst(1), bookOpp, metrics)).toBe(INSTANCE_GROUP_LOADING)
+  })
+})
+
+describe('a failed read is named, never parked in loading', () => {
+  it('status error → the failed sentinel', () => {
+    const metrics = new Map([[1, { status: 'error' } as unknown as InstanceListMetricsEntry]])
+    expect(instanceGroupKey(inst(1), bookOpp, metrics)).toBe(INSTANCE_GROUP_FAILED)
   })
 })

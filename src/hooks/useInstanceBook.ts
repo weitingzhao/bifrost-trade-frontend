@@ -81,6 +81,8 @@ export function instanceSymbol(
  * reading — metrics arrived and still no underlying resolves.
  */
 export const INSTANCE_GROUP_LOADING = '__loading__'
+/** Fills that failed to load — named as a failure, never folded into loading. */
+export const INSTANCE_GROUP_FAILED = '__failed__'
 
 export function instanceGroupKey(
   inst: StrategyInstance,
@@ -90,7 +92,9 @@ export function instanceGroupKey(
   const sym = instanceSymbol(inst, opportunities, metricsMap)
   if (sym !== '—') return sym
   const entry = metricsMap.get(inst.strategy_instance_id)
-  return entry?.status === 'ready' ? '—' : INSTANCE_GROUP_LOADING
+  if (entry?.status === 'ready') return '—'
+  if (entry?.status === 'error') return INSTANCE_GROUP_FAILED
+  return INSTANCE_GROUP_LOADING
 }
 
 export interface InstanceBook {
@@ -202,9 +206,8 @@ export function useInstanceBook(args: {
       }
     }
     // The loading group sits last, whatever order the rows arrived in.
-    out.sort((a, b) =>
-      (a.key === INSTANCE_GROUP_LOADING ? 1 : 0) - (b.key === INSTANCE_GROUP_LOADING ? 1 : 0),
-    )
+    const tail = (k: string) => (k === INSTANCE_GROUP_FAILED ? 2 : k === INSTANCE_GROUP_LOADING ? 1 : 0)
+    out.sort((a, b) => tail(a.key) - tail(b.key))
     return out
   }, [filtered, opportunities, metricsMap])
 

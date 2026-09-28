@@ -75,7 +75,10 @@ export default function TradeRulesPage() {
   // The selection lives in the URL so another page can open the chain already
   // lit on the link it means (§ URL state, CLAUDE.md).
   const [params, setParams] = useSearchParams()
-  const sel = parsePick(params.get('pick'))
+  // Memoised on the raw param: a fresh object per render re-ran every memo
+  // keyed on it (detail → scopedInstances → the metrics loader's restart).
+  const pickParam = params.get('pick')
+  const sel = useMemo(() => parsePick(pickParam), [pickParam])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   // The Desk's Decide lane hands a Research proposal over as a prefilled New
   // opportunity (design DECISIONS 2026-09-18). It arrives in router state

@@ -10,7 +10,7 @@
 import type { Bar } from '@/types/market'
 import type { Execution } from '@/types/positions'
 import { buildOptExecutionGroups, isBuySide } from '@/utils/ledger/optExecutionGroups'
-import type { SymbolLeg } from '@/pages/research/analyze/symbol/selectLegs'
+import type { SymbolLeg } from '@/utils/selectLegs'
 
 /** Window presets — beyond 130 sessions the candles aggregate to weekly. */
 export const PRICE_WINDOWS = [

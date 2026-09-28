@@ -55,7 +55,7 @@ import { SymbolVerdictPanel } from '@/pages/research/analyze/symbol/SymbolVerdic
 import { SymbolNarrativePanel } from '@/pages/research/analyze/symbol/SymbolNarrativePanel'
 import { useSymbolFaces } from '@/pages/research/analyze/symbol/useSymbolFaces'
 import { DossierBody } from '@/pages/research/analyze/dossier/DossierBody'
-import { SymbolPriceChart } from '@/pages/research/analyze/symbol/SymbolPriceChart'
+import { SymbolPriceChart } from '@/components/symbolChart/SymbolPriceChart'
 import { SymbolVolatilityFace } from '@/pages/research/analyze/symbol/SymbolVolatilityFace'
 import { SymbolDealerFace } from '@/pages/research/analyze/symbol/SymbolDealerFace'
 import { SymbolScenarioFace } from '@/pages/research/analyze/symbol/SymbolScenarioFace'

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { flattenPositions } from '@/utils/positionsGrouping'
-import { selectLegs, type SymbolLeg } from './selectLegs'
+import { selectLegs, type SymbolLeg } from '@/utils/selectLegs'
 
 /** This name's rows in the monitor's book — the legs `My legs`, the price chart and the identity line read. */
 export function useSymbolLegs(symbol: string): SymbolLeg[] {

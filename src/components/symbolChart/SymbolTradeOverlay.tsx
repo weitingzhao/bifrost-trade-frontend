@@ -19,7 +19,7 @@ import {
   sessionsUntil,
   type Holding,
   type InstanceTrack,
-} from './symbolPriceModel'
+} from '@/components/symbolChart/symbolPriceModel'
 
 const CHAR_W = 5.4
 const INK = {

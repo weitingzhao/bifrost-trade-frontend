@@ -19,8 +19,8 @@
 import { Link } from 'react-router-dom'
 import { fmtExpiry, fmtUsd } from '@/utils/positions'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
-import { useSymbolLegs } from './useSymbolLegs'
-import type { SymbolLeg } from './selectLegs'
+import { useSymbolLegs } from '@/hooks/useSymbolLegs'
+import type { SymbolLeg } from '@/utils/selectLegs'
 
 function stockLabel(leg: SymbolLeg): string {
   return `${leg.qty > 0 ? 'long' : 'short'} ${Math.abs(leg.qty).toLocaleString()} sh`

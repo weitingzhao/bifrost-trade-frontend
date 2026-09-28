@@ -53,7 +53,7 @@ import { EARNINGS_GATE_DAYS, estimateCaveat } from '@/utils/earningsEstimate'
 import type { SymbolFaces } from './useSymbolFaces'
 import { symbolHypothesisPrefill } from './symbolHypothesisPrefill'
 import css from './symbolHead.module.css'
-import { sharesHeld, useSymbolLegs } from './useSymbolLegs'
+import { sharesHeld, useSymbolLegs } from '@/hooks/useSymbolLegs'
 
 /**
  * Which Method tab explains the face you are on — the design's `LAB_TAB`.

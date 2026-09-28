@@ -12,7 +12,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import type { Bar } from '@/types/market'
 import { fmtPctSigned } from '@/lib/format'
-import { barIsoDate, panView, zoomView, type PriceView } from './symbolPriceModel'
+import { barIsoDate, panView, zoomView, type PriceView } from '@/components/symbolChart/symbolPriceModel'
 
 interface Frame {
   paddingLeft: number

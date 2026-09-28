@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { selectLegs } from './selectLegs'
+import { selectLegs } from '@/utils/selectLegs'
 import type { LivePositionRow } from '@/types/positions'
 
 function row(overrides: Partial<LivePositionRow> = {}): LivePositionRow {

@@ -37,7 +37,7 @@ import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { fmtExpiry } from '@/utils/positions'
 import type { Bar } from '@/types/market'
-import { useSymbolLegs } from './useSymbolLegs'
+import { useSymbolLegs } from '@/hooks/useSymbolLegs'
 import {
   PRICE_WINDOWS,
   type PriceWindow,
@@ -55,9 +55,9 @@ import {
   sessionsForWindow,
   sessionsUntil,
   windowForSessionsAgo,
-} from './symbolPriceModel'
-import { SymbolTradeOverlay } from './SymbolTradeOverlay'
-import { SymbolChartPointer } from './SymbolChartPointer'
+} from '@/components/symbolChart/symbolPriceModel'
+import { SymbolTradeOverlay } from '@/components/symbolChart/SymbolTradeOverlay'
+import { SymbolChartPointer } from '@/components/symbolChart/SymbolChartPointer'
 import { openInstanceSheet } from '@/lib/instanceSheet'
 import { useInstanceIndex } from '@/hooks/useInstanceIndex'
 

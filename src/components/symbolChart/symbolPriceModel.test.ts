@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
-import type { SymbolLeg } from '@/pages/research/analyze/symbol/selectLegs'
+import type { SymbolLeg } from '@/utils/selectLegs'
 import {
   aggFor,
   aggIndexFor,
@@ -17,7 +17,7 @@ import {
   zoomView,
   underlyingOf,
   windowForSessionsAgo,
-} from './symbolPriceModel'
+} from '@/components/symbolChart/symbolPriceModel'
 
 // Invented fixture — an OCC symbol carries its underlying padded to six chars.
 function fill(over: Partial<Execution>): Execution {

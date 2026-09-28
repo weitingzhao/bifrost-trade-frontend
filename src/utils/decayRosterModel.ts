@@ -21,6 +21,15 @@
  * and each fires hot or cold, which is the thing the engine actually measures
  * a hit rate for. So a row is `IV Rank · hot`, and the name is the engine's
  * rather than a label invented here to look like the design's.
+ *
+ * ## Profit factor
+ *
+ * research 0.132.0 sums it on the same settled rows the hit rate counts:
+ * each 20-day forward return signed by the side's own direction (mean-revert:
+ * hot expects down, cold up; follow the reverse), gains over losses. Null says
+ * one of three things and the row names which — a magnitude lens (Gamma: its
+ * hit is the size of a move, with no direction to pay off), nothing settled
+ * yet, or no losing outcome to divide by. The design marks it under 1.2.
  */
 import { THIN_SAMPLE } from '@/lib/symbolRecord'
 import type {
@@ -36,6 +45,17 @@ const DRIFT_STRONG_PTS = 3
 
 /** Under this many settled outcomes the design greys the reading out. */
 export const THIN_N = 20
+
+/** The design's profit-factor floor: under it the column reads in the loss colour. */
+export const PF_FLOOR = 1.2
+
+/** Two places, because the readings sit around 1 where one place hides the sign of the edge. */
+export function fmtProfitFactor(v: number | null | undefined): string {
+  return v == null || !Number.isFinite(v) ? '—' : v.toFixed(2)
+}
+
+/** Why a profit factor is missing, when it is. */
+export type ProfitFactorGap = 'magnitude' | 'unsettled' | 'no_loss' | 'unread'
 
 export type DecaySide = 'hot' | 'cold'
 
@@ -62,6 +82,10 @@ export interface DecayRow {
   driftPts: number | null
   /** Settled 20-day outcomes the recent reading rests on. */
   n: number
+  /** 20-day profit factor over the recent window, on this side's direction. */
+  pf: number | null
+  /** Why `pf` is null; null when it is a reading. */
+  pfGap: ProfitFactorGap | null
   bars: DecayBar[]
   /** True when the drift clears the design's decay threshold. */
   decaying: boolean
@@ -72,6 +96,11 @@ export interface DecayRow {
 export interface LensPair {
   lens: SignalDecayLens
   label: string
+  /**
+   * The registry's `hit_rule` is `magnitude`: no direction, so no profit factor.
+   * Undefined until the registry has loaded — a null then cannot be told apart.
+   */
+  magnitude?: boolean
   now: SignalDecayResponse | null
   year: SignalDecayResponse | null
 }
@@ -107,7 +136,7 @@ function bars(points: readonly SignalDecayTrendPoint[], avg: number | null): Dec
  * things is true: the reading is too thin to be one, the signal is drifting
  * below its own average, or it is holding.
  */
-function readOf(hit: number | null, avg: number | null, driftPts: number | null, n: number): string {
+function hitReadOf(hit: number | null, avg: number | null, driftPts: number | null, n: number): string {
   if (hit == null || n === 0) return 'Nothing has settled at 20 days yet — the window has not closed.'
   if (n < THIN_SAMPLE) return `Only ${n} settled — too thin to call a rate, let alone a drift.`
   if (driftPts == null || avg == null) return 'No year-long average to compare against yet.'
@@ -116,6 +145,28 @@ function readOf(hit: number | null, avg: number | null, driftPts: number | null,
   }
   if (driftPts >= DRIFT_STRONG_PTS) return 'Running above its own average.'
   return n < THIN_N ? `Holding, but on only ${n} settled.` : 'Holding its own average.'
+}
+
+/**
+ * The hit line, and the payoff when it says something the rate does not: a
+ * signal can hold its hit rate and still give back more than it makes.
+ */
+function readOf(hit: number | null, avg: number | null, driftPts: number | null, n: number, pf: number | null): string {
+  const line = hitReadOf(hit, avg, driftPts, n)
+  if (pf == null || n < THIN_SAMPLE) return line
+  if (pf < 1) return `${line} Its 20-day profit factor is ${fmtProfitFactor(pf)} — it gave back more than it made.`
+  if (pf < PF_FLOOR) return `${line} Profit factor ${fmtProfitFactor(pf)}, under the design's ${PF_FLOOR} floor.`
+  return line
+}
+
+function pfGapOf(pair: LensPair, side: SignalDecaySideStats | null): ProfitFactorGap | null {
+  if (pair.magnitude) return 'magnitude'
+  if (!side) return null
+  if (side.profit_factor_20d != null) return null
+  if ((side.evaluated_20d ?? 0) === 0) return 'unsettled'
+  // Absent before research 0.132.0; null with settled rows is no loss, once the
+  // registry has said the lens is not a magnitude one.
+  return side.profit_factor_20d === undefined || pair.magnitude === undefined ? 'unread' : 'no_loss'
 }
 
 export function decayRoster(pairs: readonly LensPair[]): DecayRow[] {
@@ -129,6 +180,7 @@ export function decayRoster(pairs: readonly LensPair[]): DecayRow[] {
       const n = now?.evaluated_20d ?? 0
       const driftPts =
         hit != null && avg != null ? Math.round((hit - avg) * 100) : null
+      const pf = p.magnitude ? null : (now?.profit_factor_20d ?? null)
       rows.push({
         key: `${p.lens}:${side}`,
         lens: p.lens,
@@ -139,10 +191,12 @@ export function decayRoster(pairs: readonly LensPair[]): DecayRow[] {
         avg,
         driftPts,
         n,
+        pf,
+        pfGap: pfGapOf(p, now),
         bars: bars(trendOf(p.year, side), avg),
         // A drift is only a decay when there is enough behind it to be one.
         decaying: driftPts != null && driftPts <= DRIFT_DECAY_PTS && n >= THIN_SAMPLE,
-        read: readOf(hit, avg, driftPts, n),
+        read: readOf(hit, avg, driftPts, n, pf),
       })
     }
   }

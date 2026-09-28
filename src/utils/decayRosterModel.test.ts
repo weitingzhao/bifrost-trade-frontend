@@ -113,3 +113,50 @@ describe('decayRoster', () => {
     expect(rows[0].driftPts).toBe(-20)
   })
 })
+
+describe('profit factor', () => {
+  const withPf = (r: SignalDecayResponse, hot: number | null | undefined, cold: number | null | undefined) => ({
+    ...r,
+    by_side: {
+      hot: { ...r.by_side.hot, profit_factor_20d: hot },
+      cold: { ...r.by_side.cold, profit_factor_20d: cold },
+    },
+  })
+  const year = resp({ r20: 0.45, n20: 245 }, { r20: 0.5, n20: 584 })
+
+  it('reads the recent window, per side, and marks where it is missing', () => {
+    const now = withPf(resp({ r20: 0.45, n20: 152 }, { r20: 0.5, n20: 0 }), 0.78, null)
+    const rows = decayRoster([{ lens: 'vrp', label: 'VRP', magnitude: false, now, year }])
+    const hot = rows.find((r) => r.side === 'hot')!
+    const cold = rows.find((r) => r.side === 'cold')!
+    expect(hot.pf).toBe(0.78)
+    expect(hot.pfGap).toBeNull()
+    // Nothing settled is not "no losses".
+    expect(cold.pf).toBeNull()
+    expect(cold.pfGap).toBe('unsettled')
+  })
+
+  it('tells no losses from a lens that has no direction, and does not guess before the registry', () => {
+    const now = withPf(resp({ r20: 0.9, n20: 30 }, { r20: 0.5, n20: 40 }), null, 1.1)
+    const known = decayRoster([{ lens: 'vrp', label: 'VRP', magnitude: false, now, year }])
+    expect(known.find((r) => r.side === 'hot')!.pfGap).toBe('no_loss')
+    const unknown = decayRoster([{ lens: 'vrp', label: 'VRP', now, year }])
+    expect(unknown.find((r) => r.side === 'hot')!.pfGap).toBe('unread')
+    const gamma = decayRoster([{ lens: 'gex_regime', label: 'Gamma', magnitude: true, now, year }])
+    for (const r of gamma) {
+      expect(r.pf).toBeNull()
+      expect(r.pfGap).toBe('magnitude')
+    }
+  })
+
+  it('says when a held hit rate still loses money', () => {
+    const now = withPf(resp({ r20: 0.45, n20: 152 }, { r20: 0.5, n20: 341 }), 0.78, 1.15)
+    const rows = decayRoster([{ lens: 'vrp', label: 'VRP', magnitude: false, now, year }])
+    expect(rows.find((r) => r.side === 'hot')!.read).toBe(
+      'Holding its own average. Its 20-day profit factor is 0.78 — it gave back more than it made.',
+    )
+    expect(rows.find((r) => r.side === 'cold')!.read).toBe(
+      "Holding its own average. Profit factor 1.15, under the design's 1.2 floor.",
+    )
+  })
+})

@@ -52,6 +52,12 @@ export interface SignalDecaySideStats {
   evaluated_20d: number
   pending_20d?: number
   hit_rate_20d: number | null
+  /**
+   * Gains over losses of this side's settled directional returns (research
+   * 0.132.0+): null for a magnitude lens, with nothing settled, or with no loss.
+   */
+  profit_factor_5d?: number | null
+  profit_factor_20d?: number | null
 }
 
 export interface SignalDecayTrendPoint {
@@ -78,6 +84,9 @@ export interface SignalDecayResponse {
   regime: string
   trigger_count: number
   hit_rate_5d: number | null
+  /** Hot and cold together, each row on its own side's direction. */
+  profit_factor_5d?: number | null
+  profit_factor_20d?: number | null
   by_side: {
     hot: SignalDecaySideStats
     cold: SignalDecaySideStats

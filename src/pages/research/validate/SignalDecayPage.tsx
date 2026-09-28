@@ -22,8 +22,9 @@
  *
  * ## What is owed, and why
  *
- * **Profit factor** has no field: the response carries hit rates and no
- * payoff, so the column is named in the footer rather than drawn empty. The
+ * **Profit factor** is read since research 0.132.0 (the page drew it as owed
+ * until 2026-09-28): the settled rows' returns, each signed by its side's own
+ * direction, gains over losses — null for Gamma, a magnitude lens. The
  * trend bars are the engine's weekly **5-day** rolling rate, which is the only
  * series it keeps — the header says `5d` rather than letting a 20-day column
  * sit over a 5-day chart. And the design's alert *"zeroes the conviction cap
@@ -82,6 +83,7 @@ import {
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { DecayRoster } from './DecayRoster'
 import { useDecayRoster } from '@/hooks/useDecayRoster'
+import { fmtProfitFactor } from '@/utils/decayRosterModel'
 
 /**
  * The page's selector, and what `?lens=` may name — one list, in the module
@@ -175,6 +177,12 @@ function SideRow({
         return (
           <DenseTableCell key={w} className={denseTableNumCell}>
             <div>{`${pct(s.hit_rate_5d)} / ${pct(s.hit_rate_20d)} (n=${s.n})`}</div>
+            <div
+              className="text-dense-caption text-muted-foreground"
+              title="Profit factor 5d / 20d — this side's settled returns on its own direction, gains over losses"
+            >
+              PF {fmtProfitFactor(s.profit_factor_5d)} / {fmtProfitFactor(s.profit_factor_20d)}
+            </div>
             {pending > 0 ? (
               <div className="text-dense-caption text-muted-foreground">pending {pending}</div>
             ) : null}
@@ -662,6 +670,7 @@ export default function SignalDecayPage() {
           { label: 'Regime', value: regime },
           { label: 'Triggers', value: String(data?.trigger_count ?? 0) },
           { label: '5d hit', value: pct(data?.hit_rate_5d) },
+          { label: '5d PF', value: fmtProfitFactor(data?.profit_factor_5d) },
         ]}
       />
 

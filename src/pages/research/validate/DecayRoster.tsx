@@ -8,11 +8,31 @@
  * question no amount of picking one at a time will answer.
  */
 import { Link } from 'react-router-dom'
-import { DenseTag } from '@/components/data-display'
 import { ViewState } from '@bifrost/ui'
 import { fmtPctFromFraction } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { THIN_N, type DecayAlert, type DecayRow } from '@/utils/decayRosterModel'
+import {
+  PF_FLOOR,
+  THIN_N,
+  fmtProfitFactor,
+  type DecayAlert,
+  type DecayRow,
+  type ProfitFactorGap,
+} from '@/utils/decayRosterModel'
+
+/** What an empty profit-factor cell means, in the reader's words. */
+const PF_GAP: Record<ProfitFactorGap, { text: string; title: string }> = {
+  magnitude: {
+    text: 'no direction',
+    title: 'A magnitude lens: its hit is the size of a move, which has no direction to pay off.',
+  },
+  unsettled: { text: '—', title: 'Nothing has settled at 20 days in this window.' },
+  no_loss: {
+    text: 'no losses',
+    title: 'Every settled outcome paid — a profit factor has no losses to divide by.',
+  },
+  unread: { text: '—', title: 'Not read yet: the lens registry or the field has not arrived.' },
+}
 
 /** Rev .88: the alerts panel's edge — amber at 45%, as the prototype draws it. */
 const ALERT_EDGE = 'color-mix(in srgb, var(--color-warning) 45%, transparent)'
@@ -116,6 +136,7 @@ export function DecayRoster({
                 <th data-sr-col="num">vs its year</th>
                 <th data-sr-col="tag">6-month trend</th>
                 <th data-sr-col="num">n settled</th>
+                <th data-sr-col="num">Profit factor</th>
                 <th data-sr-col="wrap">Read</th>
               </tr>
             </thead>
@@ -166,6 +187,23 @@ export function DecayRoster({
                   >
                     {r.n}
                   </td>
+                  {r.pf != null ? (
+                    <td
+                      data-sr-col="num"
+                      className={cn(r.pf < PF_FLOOR ? 'text-loss' : 'text-[var(--sk-soft)]', r.n < THIN_N && 'opacity-60')}
+                      title={`20-day gains over losses on ${r.n} settled, signed by this side's own direction${r.pf < PF_FLOOR ? ` — under the design's ${PF_FLOOR} floor` : ''}`}
+                    >
+                      {fmtProfitFactor(r.pf)}
+                    </td>
+                  ) : (
+                    <td
+                      data-sr-col="num"
+                      className="text-dense-caption text-muted-foreground"
+                      title={r.pfGap ? PF_GAP[r.pfGap].title : undefined}
+                    >
+                      {r.pfGap ? PF_GAP[r.pfGap].text : '—'}
+                    </td>
+                  )}
                   <td
                     data-sr-col="wrap"
                     className="min-w-[24ch] whitespace-normal text-dense-caption leading-relaxed text-muted-foreground"
@@ -186,11 +224,10 @@ export function DecayRoster({
           — a 55% signal drifting to 40% is decaying; a 45% signal holding 45% is not. The trend
           bars are the engine&rsquo;s weekly <span className="font-mono">5d</span> rolling rate,
           which is the only series it keeps. <span className="font-mono">Profit factor</span> is
-          not summed yet: every settled row carries its forward return and each lens&rsquo;s hit
-          rule has a direction, but the endpoint returns hit rates only.{' '}
-          <DenseTag variant="neutral" size="cell">
-            not built
-          </DenseTag>
+          the same settled rows&rsquo; 20-day returns, each signed by its side&rsquo;s own direction,
+          gains over losses — under 1 the signal gave back more than it made, under the
+          design&rsquo;s {PF_FLOOR} floor it reads red. Gamma is a magnitude lens: its hit is the size
+          of a move, so it has no direction to pay off.
         </p>
       </section>
     </div>

@@ -8,6 +8,7 @@
  */
 import { useQueries } from '@tanstack/react-query'
 import { fetchSignalDecay, SIGNAL_DECAY_LENSES } from '@/api/research/signalDecay'
+import { useLensRegistry } from '@/hooks/useLensRegistry'
 import { decayAlerts, decayRoster, type LensPair } from '@/utils/decayRosterModel'
 
 /** The page's own six, from the module that owns the vocabulary. */
@@ -29,12 +30,20 @@ export function useDecayRoster() {
     ),
   })
 
+  // A magnitude lens (the registry's hit_rule) has no direction, so no profit
+  // factor — the row says that instead of an empty cell.
+  const registry = useLensRegistry()
+  const magnitude = new Set(
+    (registry.data?.lenses ?? []).filter((s) => s.hit_rule === 'magnitude').map((s) => s.decay_lens ?? s.id),
+  )
+
   // Twelve rows out of twelve objects — cheap enough to do every render, and
   // a memo here would have to be keyed on the query array, which is new every
   // render anyway.
   const pairs: LensPair[] = DECAY_LENSES.map((l, i) => ({
     lens: l.value,
     label: l.label,
+    magnitude: registry.data ? magnitude.has(l.value) : undefined,
     now: queries[i * 2]?.data ?? null,
     year: queries[i * 2 + 1]?.data ?? null,
   }))

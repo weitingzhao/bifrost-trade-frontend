@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildLanes, decideItems, executeItems, expiringItem, needsYou, settleItems } from './deskModel'
+import { buildLanes, decideItems, executeItems, expiringItem, instanceByContract, needsYou, settleItems } from './deskModel'
 import type { ShortLeg } from '@/api/shortLegs'
 import type { OrderIntentDraft } from '@/api/research/orderIntents'
 import type { Execution } from '@/types/positions'
@@ -248,5 +248,38 @@ describe('a draft with no legs', () => {
     expect(none.name).toBeNull()
     const [phrase] = decideItems(draft('hypothesis:earnings season'), [], 0.05, '2026-09-21')
     expect(phrase.name).toBeNull()
+  })
+})
+
+describe('instance tokens on the desk (Rev .101)', () => {
+  it('settle names the instances this window landed on, newest first, and steps all of them', () => {
+    const fills = [
+      exec({ strategy_instance_id: 11, time: 100 }),
+      exec({ strategy_instance_id: 12, time: 300 }),
+      exec({ strategy_instance_id: 13, time: 200 }),
+      exec({ strategy_instance_id: 14, time: 50 }),
+      exec({ strategy_instance_id: 12, time: 250 }),
+    ]
+    const [linked] = settleItems(fills, TODAY)
+    const tokens = linked.actions.filter((a) => a.instance)
+    expect(tokens.map((a) => a.label)).toEqual(['Instance #12', 'Instance #13', 'Instance #11'])
+    expect(tokens[0].instance).toEqual({ id: 12, list: [12, 13, 11, 14], from: 'Desk · settle' })
+  })
+
+  it('a tight leg names the instance holding its contract — its latest claimed fill', () => {
+    const ck = 'ZZTM  261120P00100000|OPT|20261120|100|P'
+    const holders = instanceByContract([
+      exec({ contract_key: ck, strategy_instance_id: 21, time: 1 }),
+      exec({ contract_key: ck, strategy_instance_id: 22, time: 2 }),
+      exec({ contract_key: ck, strategy_instance_id: null, time: 3 }),
+    ])
+    expect(holders.get(ck)).toBe(22)
+    const [item] = decideItems([], [leg({ symbol: 'ZZTM', spot: 101, contract_key: ck })], TIGHT, TODAY, holders)
+    expect(item.actions[0]).toMatchObject({ label: 'Instance #22', instance: { id: 22, from: 'Desk · decide' } })
+  })
+
+  it('a leg no fill claims carries no token', () => {
+    const [item] = decideItems([], [leg({ symbol: 'ZZTM', spot: 101, contract_key: 'NOPE' })], TIGHT, TODAY)
+    expect(item.actions.some((a) => a.instance)).toBe(false)
   })
 })

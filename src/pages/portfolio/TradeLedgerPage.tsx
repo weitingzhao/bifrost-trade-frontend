@@ -352,15 +352,6 @@ export default function TradeLedgerPage() {
     ],
   )
 
-  function goToInstance(instanceId: number) {
-    setActiveTab('instance')
-    setInstanceSubTab('with_instance')
-    setExpandedGroups(prev => {
-      const next = accordionMode ? new Set<string>() : new Set(prev)
-      next.add(`inst-${instanceId}`)
-      return next
-    })
-  }
   const sinceDisabled = sincePreset !== 'all' || tradeDay != null
   const structureApplies = ledgerStructureFilterAppliesToTab(activeTab)
   const sinceLabel = tradeDay
@@ -676,7 +667,6 @@ export default function TradeLedgerPage() {
             toggleOuter={toggleOuterStrategy}
             strategyOppExpanded={strategyOppExpanded}
             toggleStrategyOpp={toggleStrategyOpp}
-            onGoInstance={goToInstance}
             onContractClick={g => openLinks(pickGroupFill(g, linkByOptionId) ?? null)}
             stockFills={stockFills}
           />

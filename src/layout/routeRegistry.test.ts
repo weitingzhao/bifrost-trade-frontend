@@ -93,11 +93,11 @@ describe('route registry', () => {
       '/portfolio/model-analysis',
     )
     expect(aliasesFor('/research/watchlist')).toHaveLength(1)
-    // Positions gained one on 2026-09-18: `/strategy/instances/142` was an
-    // address people wrote down, and the sheet it opened lives here now.
-    expect(aliasesFor('/portfolio/positions').map((a) => a.path)).toEqual([
-      '/strategy/instances/:instanceId',
-    ])
+    // `/strategy/instances/142` was an address people wrote down. It opened
+    // the Positions sheet until Rev .101 (2026-09-28): the instance face is a
+    // sheet over any page now, and its place is its record in the rulebook.
+    expect(aliasesFor('/trade/rules').map((a) => a.path)).toContain('/strategy/instances/:instanceId')
+    expect(aliasesFor('/portfolio/positions')).toEqual([])
   })
 
   it('falls back for an unknown path', () => {

@@ -42,6 +42,8 @@ export interface DeskAction {
   kind?: 'copyIntent' | 'createOpportunity'
   /** Which draft the wired action is about. */
   ref?: string
+  /** An instance token: opens its face over the desk, stepping `list`. */
+  instance?: { id: number; list: number[]; from: string }
 }
 
 export interface DeskItem {
@@ -119,6 +121,21 @@ function oneName(symbols: readonly string[]): string | null {
 }
 
 /**
+ * The instance holding each contract — the one its latest claimed fill is on.
+ * Short legs come from the broker's book and carry no instance, so this is how
+ * a tight leg on the desk names the trade it belongs to.
+ */
+export function instanceByContract(fills: readonly Execution[]): Map<string, number> {
+  const out = new Map<string, number>()
+  const byTime = [...fills].sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
+  for (const e of byTime) {
+    const ck = (e.contract_key ?? '').trim()
+    if (ck && e.strategy_instance_id != null) out.set(ck, e.strategy_instance_id)
+  }
+  return out
+}
+
+/**
  * 1 · Decide — what was handed to you.
  *
  * Two feeds, deliberately kept apart: Research proposes (advisory, D10 BLOCKED
@@ -130,8 +147,12 @@ export function decideItems(
   legs: readonly ShortLeg[],
   tightPct: number,
   today: string,
+  holders: ReadonlyMap<string, number> = new Map(),
 ): DeskItem[] {
   const items: DeskItem[] = []
+  const legIds = [
+    ...new Set(legs.flatMap((l) => (l.contract_key && holders.has(l.contract_key) ? [holders.get(l.contract_key)!] : []))),
+  ]
 
   for (const d of intents) {
     const p = d.payload ?? {}
@@ -194,6 +215,14 @@ export function decideItems(
       tone: band === 'breached' ? 'danger' : 'warning',
       tags: [{ label: band === 'breached' ? 'in the money' : 'tight', tone: band === 'breached' ? 'danger' : 'warning' }],
       actions: [
+        ...(leg.contract_key && holders.has(leg.contract_key)
+          ? [
+              {
+                label: `Instance #${holders.get(leg.contract_key)}`,
+                instance: { id: holders.get(leg.contract_key)!, list: legIds, from: 'Desk · decide' },
+              },
+            ]
+          : []),
         { label: 'Positions →', to: `/portfolio/positions?symbol=${encodeURIComponent(leg.symbol)}` },
         { label: 'Backing →', to: '/portfolio/backing' },
       ],
@@ -283,6 +312,9 @@ export function executeItems(
  * the two that arrived this morning. Orders & Fills is where they are read one
  * at a time.
  */
+/** How many of the settled instances the card names; the rest are a step away in the sheet. */
+const SETTLE_INSTANCE_TOKENS = 3
+
 export function settleItems(fills: readonly Execution[], today: string): DeskItem[] {
   const recent = fills.filter((e) => {
     const d = tradeDateOf(e)
@@ -295,6 +327,11 @@ export function settleItems(fills: readonly Execution[], today: string): DeskIte
   const linked = recent.filter((e) => e.strategy_instance_id != null)
   const orphan = recent.filter((e) => e.strategy_instance_id == null)
 
+  const claimed = [
+    ...new Set(
+      [...linked].sort((a, b) => (b.time ?? 0) - (a.time ?? 0)).map((e) => e.strategy_instance_id as number),
+    ),
+  ]
   if (linked.length > 0) {
     items.push({
       key: 'fills:linked',
@@ -305,7 +342,14 @@ export function settleItems(fills: readonly Execution[], today: string): DeskIte
       sub: 'Each one is attached to the instance its contract and window belong to. Nothing to do — they are in the book.',
       tone: 'success',
       tags: [{ label: 'linked', tone: 'success' }],
-      actions: [{ label: 'Fills →', to: '/trade/fills' }],
+      actions: [
+        // Newest first: the instances this window's fills landed on.
+        ...claimed.slice(0, SETTLE_INSTANCE_TOKENS).map((id) => ({
+          label: `Instance #${id}`,
+          instance: { id, list: claimed, from: 'Desk · settle' },
+        })),
+        { label: 'Fills →', to: '/trade/fills' },
+      ],
     })
   }
 
@@ -370,7 +414,7 @@ export function buildLanes(args: {
       step: '1 · Decide',
       title: 'Handed to you',
       from: 'Research · Positions',
-      items: decideItems(args.intents, args.legs, args.tightPct, args.today),
+      items: decideItems(args.intents, args.legs, args.tightPct, args.today, instanceByContract(args.fills)),
       emptyRead:
         'Research has proposed nothing and no short leg is inside its cushion line. Nothing is waiting on a decision.',
     },

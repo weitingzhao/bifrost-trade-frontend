@@ -17,7 +17,6 @@ export function StrategyTabContent({
   toggleOuter,
   strategyOppExpanded,
   toggleStrategyOpp,
-  onGoInstance,
   onContractClick,
   stockFills,
 }: {
@@ -29,7 +28,6 @@ export function StrategyTabContent({
   toggleOuter: (k: string) => void
   strategyOppExpanded: Set<string>
   toggleStrategyOpp: (oppId: number | 'none') => void
-  onGoInstance?: (instanceId: number) => void
   onContractClick?: (group: OptExecutionGroup) => void
   stockFills?: Execution[]
 }) {
@@ -77,7 +75,6 @@ export function StrategyTabContent({
                     expanded={strategyOppExpanded.has(String(og.opportunityId))}
                     onToggle={() => toggleStrategyOpp(og.opportunityId)}
                     linkByOptionId={linkByOptionId}
-                    onGoInstance={onGoInstance}
                     onContractClick={onContractClick}
                     stockFills={stockFills}
                   />

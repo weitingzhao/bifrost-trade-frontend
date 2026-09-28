@@ -10,6 +10,7 @@ import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
+import { openInstanceSheet } from '@/lib/instanceSheet'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import type { DeskItem, DeskLane, DeskTone } from './deskModel'
@@ -94,7 +95,17 @@ function ItemActions({ item, onAction }: { item: DeskItem; onAction: (item: Desk
         </DenseTag>
       ))}
       {item.actions.map((a, i) =>
-        a.to ? (
+        a.instance ? (
+          <button
+            key={a.label}
+            type="button"
+            className={cn(positionsUi.btn, 'font-mono text-[var(--color-instance-multi)]')}
+            title={`Open #${a.instance.id} — its record, over the desk`}
+            onClick={() => openInstanceSheet(a.instance!.id, a.instance!.list, a.instance!.from)}
+          >
+            {a.label}
+          </button>
+        ) : a.to ? (
           <Link key={a.label} to={a.to} className={cn(positionsUi.btn, 'no-underline')}>
             {a.label}
           </Link>

@@ -16,6 +16,7 @@ import { usePageViewState } from '@/lib/pageView'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
+import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
 import { ViewState } from '@bifrost/ui'
 import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
@@ -131,6 +132,7 @@ export default function FillsPage() {
   const planRows = useMemo(() => buildPlanRows(plans), [plans])
   const orders = ordersQuery.data ?? []
 
+  const linkedIds = rows.flatMap((r) => (r.state === 'linked' && r.instanceId != null ? [r.instanceId] : []))
   const selectedRow = useMemo(() => windowRows.find((r) => r.key === selectedKey) ?? null, [windowRows, selectedKey])
   const candidates = useMemo(
     () =>
@@ -418,17 +420,9 @@ export default function FillsPage() {
                             {r.state === 'linked' ? (
                               <span className="inline-flex flex-wrap items-center gap-1.5 text-dense-meta">
                                 <StatusLamp lamp="green" variant="dot" title="Linked" />
-                                {/* The chain opens already lit on this instance. */}
-                                <Link
-                                  to={`/trade/rules?pick=instance:${r.instanceId}`}
-                                  className={cn(
-                                    positionsUi.mono,
-                                    'font-bold text-[var(--color-entity-instance)] hover:underline',
-                                  )}
-                                  title="Open it in the rules chain"
-                                >
-                                  #{r.instanceId}
-                                </Link>
+                                {r.instanceId != null ? (
+                                  <InstanceRef id={r.instanceId} list={linkedIds} from="Orders & Fills · on screen" />
+                                ) : null}
                                 <span className="text-muted-foreground">
                                   {r.opportunityName ?? r.instanceLabel ?? 'on an instance'}
                                 </span>
@@ -496,9 +490,9 @@ export default function FillsPage() {
                   {selectedRow.state === 'linked' ? (
                     <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
                       Already claimed by{' '}
-                      <Link to={`/trade/rules?pick=instance:${selectedRow.instanceId}`} className={positionsUi.link}>
-                        #{selectedRow.instanceId}
-                      </Link>{' '}
+                      {selectedRow.instanceId != null ? (
+                        <InstanceRef id={selectedRow.instanceId} list={linkedIds} from="Orders & Fills · on screen" />
+                      ) : null}{' '}
                       — relinking and unlinking are the Ledger&rsquo;s writes.
                     </p>
                   ) : candidates.length === 0 ? (

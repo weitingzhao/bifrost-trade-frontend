@@ -33,13 +33,13 @@ function lazyPage(
  * does that through `analyzeRedirect`. Every other target is a page, where
  * forwarding the reader's query and hash is the whole job.
  */
-/** `/strategy/instances/142` → the shared sheet, on that instance. */
+/** `/strategy/instances/142` → the instance's record in the rulebook. */
 function InstanceRedirect() {
   const { instanceId } = useParams()
   const id = Number(instanceId)
   return (
     <Navigate
-      to={Number.isFinite(id) && id > 0 ? `/portfolio/positions?instance=${id}` : '/trade/rules?pick=instance:all'}
+      to={Number.isFinite(id) && id > 0 ? `/trade/rules?pick=instance:${id}` : '/trade/rules?pick=instance:all'}
       replace
     />
   )

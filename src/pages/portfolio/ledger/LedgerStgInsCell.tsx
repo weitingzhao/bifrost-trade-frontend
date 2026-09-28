@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
 import type { Execution } from '@/types/positions'
 import { executionInstanceLabel } from '@/utils/ledger/ledgerOptHelpers'
 import {
@@ -49,13 +49,7 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
                     {label}
                   </DenseOptionCategoryLabel>
                 ) : null}
-                <Link
-                  to={`/strategy/instances/${sid}`}
-                  className={instanceLinkClass}
-                  title={label ? `Open instance #${sid} (${label})` : `Open instance #${sid}`}
-                >
-                  #{sid}
-                </Link>
+                <InstanceRef id={sid} className={instanceLinkClass} from="Ledger · fills" />
                 <span className="text-dense-meta tabular-nums text-muted-foreground">
                   {formatAllocQty(qty)}
                 </span>
@@ -84,17 +78,7 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
             {instLabel}
           </DenseOptionCategoryLabel>
         ) : null}
-        <Link
-          to={`/strategy/instances/${instanceId}`}
-          className={instanceLinkClass}
-          title={
-            instLabel
-              ? `Open instance #${instanceId} (${instLabel})`
-              : `Open instance #${instanceId}`
-          }
-        >
-          #{instanceId}
-        </Link>
+        <InstanceRef id={instanceId} className={instanceLinkClass} from="Ledger · fills" />
       </span>
     )
   }

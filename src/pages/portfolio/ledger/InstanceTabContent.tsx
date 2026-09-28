@@ -249,6 +249,7 @@ export function InstanceTabContent({
   }
 
   const showOuter = groupBy !== 'opportunity'
+  const instanceIds = displayBuckets.flatMap(b => b.groups.map(ig => ig.instanceId))
   return (
     <div className={ledgerShell.panel}>
       {displayBuckets.map(bucket => {
@@ -287,6 +288,7 @@ export function InstanceTabContent({
                     <LedgerInstanceCard
                       key={key}
                       instanceId={ig.instanceId}
+                      instanceIds={instanceIds}
                       label={ig.label}
                       oppName={ig.oppName}
                       closedCount={closedGs.length}

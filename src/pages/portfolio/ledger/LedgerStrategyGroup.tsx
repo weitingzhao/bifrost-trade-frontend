@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom'
-import { ArrowUpRight } from 'lucide-react'
+import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { CollapsibleChevron } from '@/components/data-display'
@@ -17,7 +16,6 @@ type Props = {
   expanded: boolean
   onToggle: () => void
   linkByOptionId: Record<number, OptionStockLinkSummary>
-  onGoInstance?: (instanceId: number) => void
   onContractClick?: (group: OptExecutionGroup) => void
   stockFills?: Execution[]
 }
@@ -28,10 +26,10 @@ export function LedgerStrategyGroup({
   expanded,
   onToggle,
   linkByOptionId,
-  onGoInstance,
   onContractClick,
   stockFills,
 }: Props) {
+  const subgroupIds = og.instanceSubgroups.flatMap(sg => (sg.instanceId === 'none' ? [] : [sg.instanceId]))
   let closedCount = 0
   let openCount = 0
   let totalPnl = 0
@@ -76,14 +74,12 @@ export function LedgerStrategyGroup({
                     <span className="text-dense-body font-semibold text-muted-foreground">No instance</span>
                   ) : (
                     <>
-                      <button
-                        type="button"
-                        className="cursor-pointer border-0 bg-transparent p-0 font-mono text-dense-body font-bold text-[var(--color-instance-multi)] hover:underline"
-                        title={`Show instance #${instanceId} in the Instance view`}
-                        onClick={() => onGoInstance?.(instanceId)}
-                      >
-                        #{instanceId}
-                      </button>
+                      <InstanceRef
+                        id={instanceId}
+                        list={subgroupIds}
+                        from={og.title}
+                        className="text-dense-body"
+                      />
                       {sg.label ? <span className="text-dense-meta text-muted-foreground">{sg.label}</span> : null}
                       <LedgerInstanceStateTag open={openGs.length > 0} />
                     </>
@@ -92,18 +88,6 @@ export function LedgerStrategyGroup({
                     Closed {closedGs.length} · Open {openGs.length} · PnL{' '}
                     <span className={pnlColorClass(instPnl)}>{fmtCcy(instPnl)}</span>
                   </span>
-                  {instanceId != null && (
-                    <Link
-                      to={`/strategy/instances?instance=${instanceId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex h-5 w-5 items-center justify-center rounded-sm border border-transparent text-muted-foreground hover:border-[var(--color-border-strong)] hover:text-foreground"
-                      title={`Open instance #${instanceId} in Strategy → Instances`}
-                      aria-label={`Open instance #${instanceId} in Strategy → Instances`}
-                    >
-                      <ArrowUpRight className="h-3 w-3" aria-hidden />
-                    </Link>
-                  )}
                 </div>
                 <div className="px-2.5">
                   <LedgerInstanceNest

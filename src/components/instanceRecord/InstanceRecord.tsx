@@ -21,6 +21,7 @@ import type { StrategyInstance } from '@/types/positions'
 import { d3 } from '@/utils/instanceRecord/instanceRecordModel'
 import { InstanceRiskSection } from './InstanceRiskSection'
 import { InstanceExecSection } from './InstanceExecSection'
+import { InstanceKlineSection } from '@/components/strategy/instanceDetail/InstanceKlineSection'
 
 export interface InstanceRecordAction {
   label: string
@@ -30,7 +31,7 @@ export interface InstanceRecordAction {
   title?: string
 }
 
-type Section = 'all' | 'overview' | 'pnl' | 'risk' | 'exec'
+type Section = 'all' | 'overview' | 'pnl' | 'risk' | 'chart' | 'exec'
 
 const UNREALIZED = 'text-[var(--color-unrealized)]'
 const signed = (v: number | null | undefined) => (v == null ? '—' : v > 0 ? `+${fmtUsdRound(v)}` : fmtUsdRound(v))
@@ -87,7 +88,7 @@ export function InstanceRecord({
     r.life.totalDays && r.life.elapsed != null ? Math.min(100, Math.round((r.life.elapsed / r.life.totalDays) * 100)) : 0
 
   return (
-    <aside aria-label="Instance record" className={cn('flex min-w-0 flex-col gap-3', isSheet ? 'min-h-0' : '')}>
+    <aside aria-label="Instance record" className={cn('flex min-w-0 flex-col gap-3', isSheet ? 'min-h-0 px-3.5 pt-2.5 pb-4' : '')}>
       {isSheet ? (
         <header className="flex flex-wrap items-center gap-2 border-b border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] pb-2">
           <span className="font-mono type-section font-semibold text-[var(--sk-instance,#c084fc)]">{title}</span>
@@ -123,6 +124,7 @@ export function InstanceRecord({
             { value: 'overview', label: 'Overview' },
             { value: 'pnl', label: 'P&L' },
             { value: 'risk', label: 'Risk' },
+            { value: 'chart', label: 'Chart' },
             { value: 'exec', label: 'Executions' },
           ]}
         />
@@ -334,6 +336,17 @@ export function InstanceRecord({
               onWithShares={setWithShares}
               closed={closed}
             />
+          ) : null}
+
+          {show('chart') && r.legs[0]?.root ? (
+            <div className="flex flex-col gap-2 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
+              <span className="text-dense-body font-semibold">Chart · fills on the price</span>
+              <InstanceKlineSection
+                symbol={r.legs[0].root}
+                executions={d?.executionsFinal ?? []}
+                strategyInstanceId={instance.strategy_instance_id}
+              />
+            </div>
           ) : null}
 
           {show('exec') ? (

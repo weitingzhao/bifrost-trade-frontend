@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { openInstanceSheet } from '@/lib/instanceSheet'
 import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
@@ -76,22 +76,26 @@ export function LedgerDetailInstanceIcon({
   if (instanceId == null) return null
 
   const instLabel = execution.strategy_instance_label?.trim()
-  const title = instLabel ? `Instance: ${instLabel}` : `View instance #${instanceId}`
+  const title = instLabel ? `Instance: ${instLabel}` : `Open instance #${instanceId}`
 
   return (
-    <Link
-      to={`/strategy/instances/${instanceId}`}
+    <button
+      type="button"
       className={cn(
-        'shrink-0 inline-flex items-center',
+        'shrink-0 inline-flex cursor-pointer items-center border-0 bg-transparent p-0',
         INSTANCE_ICON_CLASS.same,
         className,
       )}
       title={title}
       aria-label={title}
-      onClick={e => e.stopPropagation()}
+      onClick={e => {
+        e.stopPropagation()
+        openInstanceSheet(instanceId, [instanceId], 'Ledger · fills')
+      }}
+      onKeyDown={e => e.stopPropagation()}
     >
       <InstanceSquareIcon className={INSTANCE_ICON_CLASS.same} />
-    </Link>
+    </button>
   )
 }
 

@@ -21,6 +21,7 @@ import { instancesTradingSymbol } from '@/lib/plans/planLinkFill'
 import { planEstCredit, planExitSummary, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
+import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
 import { cancelStrategyPlan } from '@/api/strategyPlans'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
@@ -485,12 +486,7 @@ export function PlanCard({
               <Field
                 label="Instance"
                 value={
-                  <Link
-                    to={`/portfolio/positions?instance=${plan.strategy_instance_id}`}
-                    className="underline hover:no-underline"
-                  >
-                    #{plan.strategy_instance_id}
-                  </Link>
+                  <InstanceRef id={plan.strategy_instance_id} from="Plans" />
                 }
               />
               <Field label="Filled at" value={plan.filled_at?.slice(0, 16) ?? '—'} />

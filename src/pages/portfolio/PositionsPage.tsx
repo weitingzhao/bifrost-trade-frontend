@@ -11,7 +11,8 @@
  * The §16 north-star page (design Rev 2026-09-23.21): explanations live in
  * titles, honesty stays printed, and nothing the page could do before was cut.
  */
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { openInstanceCompare, openInstanceSheet, showInstanceSheet } from '@/lib/instanceSheet'
 import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -126,24 +127,30 @@ export default function PositionsPage() {
   const [closeTarget, setCloseTarget] = useState<{ exec: Execution; netQty: number } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Execution | null>(null)
   /**
-   * The instance sheet, addressable.
-   *
-   * `?instance=<id>` opens it on any instance, open or closed — the sidebar
-   * fetches the record itself rather than reading the open book. Without this
-   * the sheet could only be reached by clicking a row in the open book, which
-   * left every closed instance's history with no entrance at all once Strategy
-   * › Instances (which had `?instance=`) retires. Trade › Rules links here.
+   * `?instance=<id>` (and `&vs=<id>`) open the instance face over this page —
+   * the shell's sheet, the same one every `#NNN` opens (design Rev .101). The
+   * address is read once and dropped: the sheet is a look, not a place.
    */
   const [params, setParams] = useSearchParams()
   const instanceParam = Number(params.get('instance'))
   const urlInstanceId = Number.isFinite(instanceParam) && instanceParam > 0 ? instanceParam : null
   const vsParam = Number(params.get('vs'))
   const urlCompareId = Number.isFinite(vsParam) && vsParam > 0 ? vsParam : null
-  const [inspector, setInspector] = useState<InspectorState>(
-    urlInstanceId == null
-      ? { type: null }
-      : { type: 'strategy', id: urlInstanceId, compareId: urlCompareId },
-  )
+  useEffect(() => {
+    if (urlInstanceId == null) return
+    if (urlCompareId != null) openInstanceCompare(urlInstanceId, urlCompareId, 'Positions')
+    else showInstanceSheet(urlInstanceId, [urlInstanceId], 'Positions')
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('instance')
+        next.delete('vs')
+        return next
+      },
+      { replace: true },
+    )
+  }, [urlInstanceId, urlCompareId, setParams])
+  const [inspector, setInspector] = useState<InspectorState>({ type: null })
   const [pressureOpen, setPressureOpen] = usePageViewState('pressure', true)
   // The one slot beside the grid: one thing at a time, on the face that answers it.
   // Which face is kept; the open slot is not — it holds a picked contract,
@@ -153,20 +160,7 @@ export default function PositionsPage() {
   const [faceContract, setFaceContract] = useState<OpenOptionPosition | null>(null)
   const [faceRisk, setFaceRisk] = useState<FaceRisk | null>(null)
   const [faceExec, setFaceExec] = useState<Execution | null>(null)
-  const closeInspector = () => {
-    setInspector({ type: null })
-    if (urlInstanceId != null) {
-      setParams(
-        (prev) => {
-          const next = new URLSearchParams(prev)
-          next.delete('instance')
-          next.delete('vs')
-          return next
-        },
-        { replace: true },
-      )
-    }
-  }
+  const closeInspector = () => setInspector({ type: null })
 
   const filteredInstanceGroups = useMemo(() => {
     const groups = sortInstanceGroupOptions(
@@ -268,7 +262,7 @@ export default function PositionsPage() {
       setFaceRisk({
         title: ctx?.title ?? `Strategy #${id}`,
         profile: ctx?.profile ?? null,
-        onOpenInstance: () => setInspector({ type: 'strategy', id }),
+        onOpenInstance: () => openInstanceSheet(id, [id], 'Positions'),
         instance:
           record && reading
             ? { id, label: record.label ?? '', status: reading.closed ? 'closed' : 'running' }

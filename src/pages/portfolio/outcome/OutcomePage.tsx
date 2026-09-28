@@ -15,6 +15,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
 import { ViewState } from '@bifrost/ui'
 import { PageHead, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
@@ -109,6 +110,7 @@ export default function OutcomePage() {
   const onOpportunity = rows.filter((r) => r.source !== 'No opportunity')
   const attributed = onOpportunity.reduce((s, r) => s + r.realised, 0)
   const pick: OutcomeInstance | null = rows.find((r) => r.instanceId === picked) ?? rows[0] ?? null
+  const rowIds = rows.map((r) => r.instanceId)
   const maxExit = Math.max(1, ...exits.map((e) => Math.abs(e.realised)))
 
   // §17.1: the executions are what an outcome is read from.
@@ -400,8 +402,8 @@ export default function OutcomePage() {
                         onClick={() => setPicked(r.instanceId)}
                         title="Trace this one below"
                       >
-                        <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-instance)]')}>
-                          #{r.instanceId}
+                        <td className={cn(positionsUi.td, 'pl-2 text-left')}>
+                          <InstanceRef id={r.instanceId} list={rowIds} from="Outcome · closed instances" />
                         </td>
                         <td className={cn(positionsUi.td, 'text-left font-bold text-entity-symbol')}>
                           {r.symbols.join(' ') || '—'}
@@ -443,9 +445,7 @@ export default function OutcomePage() {
                   <span className={positionsUi.cap}>Trace</span>
                   {pick ? (
                     <>
-                      <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-[var(--color-entity-instance)]')}>
-                        #{pick.instanceId}
-                      </span>
+                      <InstanceRef id={pick.instanceId} list={rowIds} from="Outcome · trace" className="text-dense-body" />
                       <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-entity-symbol')}>
                         {pick.symbols.join(' ')}
                       </span>

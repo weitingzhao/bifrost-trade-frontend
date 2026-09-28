@@ -42,6 +42,7 @@ import { compareInstanceRisk, summarizeCushion, summarizeExpiry } from '@/utils/
 import type { SpotResolver } from '@/utils/spotPrice'
 import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
 import type { RiskProfile } from '@/utils/riskProfile'
+import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
@@ -227,6 +228,7 @@ export function InstanceTab({
     }))
     .sort(compareInstanceRisk)
     .map((r) => r.group)
+  const rankedIds = ranked.flatMap((g) => (g.strategy_instance_id != null ? [g.strategy_instance_id] : []))
 
   // A column of n/a is not information. When no short leg could be priced the
   // Moneyness column steps out and the unpriced count stays on the cockpit.
@@ -343,24 +345,10 @@ export function InstanceTab({
                     <span className="w-2.5 flex-none text-muted-foreground">{isExpanded ? '▾' : '▸'}</span>
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className={cn('text-xs font-semibold leading-normal', nameInk)}>{name}</span>
-                      {onOpenStrategy && id != null ? (
-                        <span
-                          className="inline"
-                          onClick={(e) => e.stopPropagation()}
-                          onKeyDown={(e) => e.stopPropagation()}
-                          role="presentation"
-                        >
-                          <button
-                            type="button"
-                            className={cn(
-                              positionsUi.mono,
-                              'cursor-pointer border-0 bg-transparent p-0 text-left text-dense-caption leading-normal text-muted-foreground hover:text-foreground hover:underline',
-                            )}
-                            aria-label={`View strategy instance: ${instLabel}`}
-                            onClick={() => onOpenStrategy(id, { title: name, profile: rp })}
-                          >
-                            {sub}
-                          </button>
+                      {id != null ? (
+                        <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal text-muted-foreground')}>
+                          <InstanceRef id={id} list={rankedIds} from="Positions · strategies" />
+                          {group.strategy_instance_label?.trim() ? ` · ${group.strategy_instance_label.trim()}` : ''}
                         </span>
                       ) : (
                         <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal text-muted-foreground')}>

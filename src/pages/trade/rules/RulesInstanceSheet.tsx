@@ -7,6 +7,7 @@
 import { InstanceRecord, type InstanceRecordAction } from '@/components/instanceRecord/InstanceRecord'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import type { StrategyInstance } from '@/types/positions'
+import { ranUnderOf } from '@/utils/instanceRecord/ranUnder'
 import type { ChainData, ChainSelection } from './rulesChain'
 
 export interface SheetRec {
@@ -24,16 +25,6 @@ export function instanceFaceOf(data: ChainData, id: number) {
     opportunity: opp?.name ?? reading?.opportunityName ?? '—',
     structure: opp?.structure_name ?? reading?.structureName ?? '—',
   }
-}
-
-/** The allocation and gate an instance ran under — or that it ran outside the rules. */
-export function ranUnderOf(data: ChainData, id: number) {
-  const reading = data.instances.find((r) => r.id === id)
-  const al = reading ? data.allocations.find((a) => (a.strategy_opportunity_ids ?? []).includes(reading.opportunityId)) : undefined
-  const g = al ? data.gates.find((x) => x.gate_safety_strategy_id === al.gate_safety_strategy_id) : undefined
-  return al
-    ? { alloc: `in ${al.name} · gate ${g ? `${g.name} v${g.version}` : 'none'}`, warn: false }
-    : { alloc: 'in no allocation — ran outside rules, no gate', warn: true }
 }
 
 export function RulesInstanceSheet({
@@ -75,7 +66,7 @@ export function RulesInstanceSheet({
           onPick({ kind: 'instance', id }, { ids: rec.ids, from: rec.from })
         }}
         ranUnder={{
-          ...ranUnderOf(data, id),
+          ...ranUnderOf(reading?.opportunityId, data.allocations, data.gates),
           onOpp: reading
             ? () => {
                 onClose()

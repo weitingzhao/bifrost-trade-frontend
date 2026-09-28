@@ -30,7 +30,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/strategy/instances/:instanceId',
     label: 'Instances',
     crumbs: STRATEGY,
-    redirect: '/portfolio/positions',
+    redirect: '/trade/rules',
   },
   { path: '/strategy/win-rate', label: 'Win Rate', crumbs: STRATEGY, redirect: '/review/playbook-stats?cut=structure' },
   { path: '/strategy/allocations', label: 'Allocations', crumbs: STRATEGY, redirect: '/trade/rules' },

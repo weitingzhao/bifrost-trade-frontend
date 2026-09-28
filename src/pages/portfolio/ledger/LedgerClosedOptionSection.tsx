@@ -34,6 +34,7 @@ import { ExecSourceBadge } from './ExecSourceBadge'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
+import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
 import { LedgerPaginationBar } from './LedgerPaginationBar'
 import { LedgerPanelBar } from './LedgerPanelBar'
 import { ledgerDetailsSubject } from './ledgerDetailsSubject'
@@ -97,6 +98,10 @@ export function LedgerClosedOptionSection({
     (effectivePage - 1) * CLOSED_PAGE_SIZE,
     effectivePage * CLOSED_PAGE_SIZE,
   )
+  // The instances on this page, in row order — what the sheet steps.
+  const closedInstanceIds = [
+    ...new Set(pagedClosedGroups.flatMap(g => (g.trades ?? []).flatMap(t => executionStrategyInstanceIds(t)))),
+  ]
 
   if (sortedClosedGroups.length === 0) {
     return <p className={denseTable.emptyHint}>No closed option groups for this period.</p>
@@ -239,7 +244,7 @@ export function LedgerClosedOptionSection({
                       return ids.length === 0
                         ? '—'
                         : ids.map(id => (
-                          <span key={id} className="font-mono font-bold text-[var(--color-instance-multi)]">#{id}</span>
+                          <InstanceRef key={id} id={id} list={closedInstanceIds} from="Ledger · closed contracts" />
                         ))
                     })()}
                   </span>

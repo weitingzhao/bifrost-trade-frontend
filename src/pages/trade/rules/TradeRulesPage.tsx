@@ -49,6 +49,7 @@ import { RulesRecord } from './RulesRecord'
 import { InstanceRecord, type InstanceRecordAction } from '@/components/instanceRecord/InstanceRecord'
 import { buildRecord, type RecordAction } from './rulesRecordModel'
 import { instanceFaceOf, RulesInstanceSheet, type SheetRec } from './RulesInstanceSheet'
+import { instanceSheetStore, openInstanceCompare } from '@/lib/instanceSheet'
 import { buildChain, orphanGates, orphanOpportunities, visibleChain, type ChainSelection } from './rulesChain'
 import {
   NO_FOCUS,
@@ -239,6 +240,9 @@ export default function TradeRulesPage() {
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       if (sheetOpen || document.querySelector('[role="dialog"][data-state="open"]')) return
+      // An Esc the shell already spent closing an inspector is not also a Back;
+      // and the shell's instance sheet (a compare, a #NNN) owns [ ] while it is up.
+      if (e.defaultPrevented || instanceSheetStore.getState().sheet) return
       if (e.key === '[' || e.key === ']') {
         stepRef.current(e.key === '[' ? -1 : 1)
         return
@@ -359,30 +363,6 @@ export default function TradeRulesPage() {
         { label: 'Breaches → Risk Limits', to: '/risk/limits' },
       ]
     }
-    if (kind === 'instance') {
-      const reading = data.instances.find((r) => r.id === id)
-      const record = rawInstances.find((r) => r.strategy_instance_id === id)
-      if (record == null) return []
-      // An instance the fills have claimed cannot be deleted, and the reason
-      // is on the action rather than behind it.
-      const blocked = (reading?.fills ?? 0) > 0
-      return [
-        ...(reading?.closed
-          ? [{ label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade — actual vs plan vs best available' }]
-          : []),
-        { label: 'Open sheet →', to: `/portfolio/positions?instance=${id}`, title: 'The shared sheet on Positions' },
-        {
-          label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
-          onClick: () => {
-            if (!blocked) setSheet({ kind: 'instanceDelete', instance: record })
-          },
-          disabled: blocked,
-          title: blocked
-            ? 'Unlink its fills on the Trade Ledger first — deleting an instance under them would orphan the fills'
-            : undefined,
-        },
-      ]
-    }
     return []
   }
 
@@ -392,8 +372,9 @@ export default function TradeRulesPage() {
     const rec = rawInstances.find((r) => r.strategy_instance_id === id)
     const blocked = (reading?.fills ?? 0) > 0
     return [
-      { label: 'Positions →', to: `/portfolio/positions?instance=${id}`, title: 'Where its open legs are marked' },
-      ...(reading?.closed ? [{ label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade' }] : []),
+      ...(reading?.closed
+        ? [{ label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade' }]
+        : [{ label: 'Positions →', to: `/portfolio/positions?instance=${id}`, title: 'Where its open legs are marked' }]),
       {
         label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
         onClick: () => {
@@ -707,7 +688,9 @@ export default function TradeRulesPage() {
                           setCompareWith(compareWith === id ? null : id)
                           return
                         }
-                        navigate(`/portfolio/positions?instance=${compareWith}&vs=${id}`)
+                        setSheetRec(null)
+                        setCompareWith(null)
+                        openInstanceCompare(compareWith, id, 'Rules')
                       }}
                       activeDetailId={null}
                       compareId={compareWith}
@@ -720,7 +703,7 @@ export default function TradeRulesPage() {
                     {compareWith != null ? (
                       <p className="m-0 flex flex-wrap items-center gap-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
                         <span className="font-semibold text-secondary-foreground">#{compareWith} is held for comparison.</span>
-                        Pick a second instance’s ⇄ to open the two side by side in the shared sheet.
+                        Pick a second instance’s ⇄ to open the two side by side in a sheet over this page.
                         <button type="button" className={positionsUi.btn} onClick={() => setCompareWith(null)}>
                           Drop it
                         </button>

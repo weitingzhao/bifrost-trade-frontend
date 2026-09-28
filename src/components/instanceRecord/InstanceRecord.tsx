@@ -21,6 +21,7 @@ import type { StrategyInstance } from '@/types/positions'
 import { d3 } from '@/utils/instanceRecord/instanceRecordModel'
 import { InstanceRiskSection } from './InstanceRiskSection'
 import { InstanceExecSection } from './InstanceExecSection'
+import { InstancePositionSection } from './InstancePositionSection'
 import { InstanceKlineSection } from '@/components/strategy/instanceDetail/InstanceKlineSection'
 
 export interface InstanceRecordAction {
@@ -34,6 +35,8 @@ export interface InstanceRecordAction {
 type Section = 'all' | 'overview' | 'pnl' | 'risk' | 'chart' | 'exec'
 
 const UNREALIZED = 'text-[var(--color-unrealized)]'
+const stamp = (iso: string | undefined) =>
+  iso ? new Date(iso).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'
 const signed = (v: number | null | undefined) => (v == null ? '—' : v > 0 ? `+${fmtUsdRound(v)}` : fmtUsdRound(v))
 
 export function InstanceRecord({
@@ -79,6 +82,22 @@ export function InstanceRecord({
   const hasFills = r.legs.length > 0
   const inkFor = (v: number | null | undefined) => (closed ? pnlColorClass(v ?? 0) : UNREALIZED)
 
+  const id = instance.strategy_instance_id
+  const positionsTo = `/portfolio/positions?inst=${id}`
+  // The face's own ways out (Rev .102): where its open legs are held, or its
+  // review once flat; and the Ledger rows its fills are booked to.
+  const footer: InstanceRecordAction[] = [
+    closed
+      ? { label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade' }
+      : { label: 'Position →', to: positionsTo, title: 'Portfolio › Positions — this instance’s open legs' },
+    {
+      label: 'Ledger →',
+      to: hasFills ? `/portfolio/ledger?inst=${id}` : undefined,
+      disabled: !hasFills,
+      title: hasFills ? `Portfolio › Trade Ledger — every fill booked to #${id}` : 'No fill booked yet',
+    },
+    ...actions,
+  ]
   const openLegs = r.legs.filter((l) => l.open)
   const contractLine = (closed ? r.legs : openLegs)
     .map((l) => `${l.side === 'Short' ? '−' : '+'}${closed ? l.qty : Math.abs(l.openQty)} ${l.strike}${l.right}`)
@@ -193,6 +212,10 @@ export function InstanceRecord({
                 </div>
               </div>
 
+              {r.position ? (
+                <InstancePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} onLeave={onClose} />
+              ) : null}
+
               <div className="flex flex-col gap-1.5 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
                 <div className="flex flex-wrap items-baseline gap-x-2.5">
                   <span className="text-dense-body font-semibold">Life</span>
@@ -261,7 +284,9 @@ export function InstanceRecord({
                               l.exitKind === 'mark'
                                 ? l.mark?.source === 'live'
                                   ? 'Live quote'
-                                  : `The contract's last daily close, ${l.mark?.asOf}`
+                                  : l.mark?.source === 'snap'
+                                    ? `The vendor's snapshot of the contract, ${stamp(l.mark.asOf)} — the day's close only once the evening capture has run`
+                                    : `The contract's last daily close, ${l.mark?.asOf}`
                                 : l.exitKind === 'none'
                                   ? 'No quote now and no daily close on file for this contract'
                                   : 'Average of the closing fills'
@@ -270,6 +295,8 @@ export function InstanceRecord({
                             {l.exit != null ? `$${l.exit.toFixed(2)}` : '—'}
                             {l.exitKind === 'mark' && l.mark?.source === 'eod' ? (
                               <span className="ml-1 text-dense-micro text-muted-foreground">EOD {l.mark.asOf?.slice(5)}</span>
+                            ) : l.exitKind === 'mark' && l.mark?.source === 'snap' ? (
+                              <span className="ml-1 text-dense-micro text-muted-foreground">snap {stamp(l.mark.asOf)}</span>
                             ) : null}
                           </td>
                           <td data-sr-col="num" className={l.pnl == null ? 'text-muted-foreground' : l.open ? UNREALIZED : pnlColorClass(l.pnl)}>
@@ -369,11 +396,11 @@ export function InstanceRecord({
         </div>
       ) : null}
 
-      {isSheet && actions.length ? (
+      {isSheet ? (
         <footer className="flex flex-wrap gap-1.5 border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] pt-2">
-          {actions.map((a) =>
+          {footer.map((a) =>
             a.to ? (
-              <Link key={a.label} to={a.to} className={cn(positionsUi.btn, 'no-underline')} title={a.title}>
+              <Link key={a.label} to={a.to} onClick={onClose} className={cn(positionsUi.btn, 'no-underline')} title={a.title}>
                 {a.label}
               </Link>
             ) : (

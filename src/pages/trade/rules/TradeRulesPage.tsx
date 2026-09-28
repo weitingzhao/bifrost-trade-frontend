@@ -366,15 +366,12 @@ export default function TradeRulesPage() {
     return []
   }
 
-  /** What the face offers for one instance — the sheet's footer and the inline record's header. */
-  const instanceActions = (id: number): InstanceRecordAction[] => {
+  /** The rulebook's own write on an instance — the sheet adds it to the face's footer. */
+  const instanceDelete = (id: number): InstanceRecordAction[] => {
     const reading = data.instances.find((r) => r.id === id)
     const rec = rawInstances.find((r) => r.strategy_instance_id === id)
     const blocked = (reading?.fills ?? 0) > 0
     return [
-      ...(reading?.closed
-        ? [{ label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade' }]
-        : [{ label: 'Positions →', to: `/portfolio/positions?instance=${id}`, title: 'Where its open legs are marked' }]),
       {
         label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
         onClick: () => {
@@ -385,6 +382,20 @@ export default function TradeRulesPage() {
       },
     ]
   }
+  /** The inline record's header: the face's ways out, then the write. */
+  const instanceActions = (id: number): InstanceRecordAction[] => {
+    const reading = data.instances.find((r) => r.id === id)
+    return [
+      reading?.closed
+        ? { label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade' }
+        : { label: 'Position →', to: `/portfolio/positions?inst=${id}`, title: 'Portfolio › Positions — its open legs' },
+      ...((reading?.fills ?? 0) > 0
+        ? [{ label: 'Ledger →', to: `/portfolio/ledger?inst=${id}`, title: `Portfolio › Trade Ledger — every fill booked to #${id}` }]
+        : []),
+      ...instanceDelete(id),
+    ]
+  }
+
 
   const record = useMemo(
     () =>
@@ -719,7 +730,7 @@ export default function TradeRulesPage() {
             rec={sheetRec}
             data={data}
             rawInstances={rawInstances}
-            actions={instanceActions}
+            actions={instanceDelete}
             onClose={() => setSheetRec(null)}
             onStep={step}
             onPick={pickIt}

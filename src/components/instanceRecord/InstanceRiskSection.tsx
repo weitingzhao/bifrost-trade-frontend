@@ -15,6 +15,8 @@ export interface PayoffView extends Payoff {
   /** Still reading the price — not the same as having none. */
   spotPending: boolean
   spotDate: string | null
+  /** No quote now: spot is the underlying's last daily close. */
+  lastClose?: boolean
   shares: { qty: number; avgCost: number | null; held: number } | null
 }
 
@@ -59,7 +61,7 @@ function Chart({ p }: { p: PayoffView }) {
         {p.spot != null ? (
           <span className="whitespace-nowrap">
             <span className="text-[var(--sk-ticker)]">│</span>{' '}
-            {p.spotDate ? `spot at close ${p.spotDate}` : 'spot now'} {p.spot.toFixed(2)}
+            {p.spotDate ? `spot at close ${p.spotDate}` : p.lastClose ? 'spot · last close' : 'spot now'} {p.spot.toFixed(2)}
           </span>
         ) : p.spotPending ? (
           <span>reading spot…</span>

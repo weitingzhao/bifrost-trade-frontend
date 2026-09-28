@@ -1,4 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useInstanceRoot } from '@/hooks/useInstanceRoot'
+import { scrollWhenPresent, flashFound } from '@/lib/scrollWhenPresent'
 import { usePageViewParams, usePageViewSet, usePageViewState } from '@/lib/pageView'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -147,6 +149,57 @@ export default function TradeLedgerPage() {
 
   // Expansion state — shared across opt groups
   const [expandedGroups, setExpandedGroups] = usePageViewSet<string>('optRow')
+
+  /**
+   * `?inst=NNN` (the instance face's Ledger →, design Rev .102): the Instance
+   * view with that instance open, over all time and on its own symbol, so a
+   * narrower window or another name never hides the rows it was sent to. The
+   * address is read once and dropped — then the view is the reader's again.
+   */
+  const instRaw = Number(searchParams.get('inst'))
+  const instParam = Number.isFinite(instRaw) && instRaw > 0 ? instRaw : null
+  const [focus, setFocus] = useState<{ id: number; n: number } | null>(null)
+  const [seenInst, setSeenInst] = useState<number | null>(null)
+  if (instParam !== seenInst) {
+    setSeenInst(instParam)
+    if (instParam != null) {
+      setFocus((f) => ({ id: instParam, n: (f?.n ?? 0) + 1 }))
+      setActiveTab('instance')
+      setInstanceSubTab('with_instance')
+      setSincePresetState('all')
+      setExpiryFilterYear('')
+      setExpiryFilterMonth('')
+      setFilterStructure('')
+      setFilterWishlistSymbol('')
+      setExpandedGroups((prev) => new Set([...(accordionMode ? [] : prev), `inst-${instParam}`]))
+    }
+  }
+  useEffect(() => {
+    if (instParam == null) return
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('inst')
+        next.delete('date')
+        return next
+      },
+      { replace: true },
+    )
+  }, [instParam, setSearchParams])
+  const focusInst = focus?.id ?? null
+  const focusRoot = useInstanceRoot(focusInst)
+  const focusScroll = useRef<(() => void) | null>(null)
+  useEffect(() => () => focusScroll.current?.(), [])
+  const focusDone = useRef(0)
+  useEffect(() => {
+    if (focus == null || !focusRoot.isFetched || focusDone.current === focus.n) return
+    focusDone.current = focus.n
+    if (focusRoot.data && focusRoot.data !== symbolFilter) setFilterSymbol(focusRoot.data)
+    focusScroll.current?.()
+    focusScroll.current = scrollWhenPresent(`#ledger-inst-${focus.id}`, 20_000, flashFound)
+    // symbolFilter is read at arrival only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus, focusRoot.isFetched, focusRoot.data])
   // Strategy outer buckets (when groupBy !== 'opportunity')
   const [outerStrategyExpanded, setOuterStrategyExpanded] = useState<Set<string>>(new Set())
   // Strategy Opportunity expand

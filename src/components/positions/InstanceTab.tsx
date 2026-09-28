@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { usePageViewSet } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
@@ -43,6 +43,7 @@ import type { SpotResolver } from '@/utils/spotPrice'
 import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
 import type { RiskProfile } from '@/utils/riskProfile'
 import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { flashFound, scrollWhenPresent } from '@/lib/scrollWhenPresent'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
@@ -105,6 +106,9 @@ interface Props {
   onOpenStrategy?: (instanceId: number, ctx?: { title: string; profile: RiskProfile | null }) => void
   onOpenStock?: (symbol: string, accountId: string) => void
   onOpenOption?: (position: OpenOptionPosition) => void
+  /** A deep link's instance (`?inst=`): open its row and bring it into view, then report back. */
+  focusInstanceId?: number | null
+  onFocused?: () => void
   canonicalOptContractKeys?: Set<string>
 }
 
@@ -157,6 +161,8 @@ export function InstanceTab({
   onOpenStrategy,
   onOpenStock,
   onOpenOption,
+  focusInstanceId,
+  onFocused,
   canonicalOptContractKeys,
 }: Props) {
   // The open rows are the page's view (Rev .75 `openRow`), kept for the session.
@@ -174,6 +180,21 @@ export function InstanceTab({
     structures,
     portfolioAccounts,
   )
+
+  const focusKey = useMemo(() => {
+    const g = focusInstanceId != null ? groups.find((x) => x.strategy_instance_id === focusInstanceId) : undefined
+    return g ? instanceGroupKey(g) : null
+  }, [focusInstanceId, groups])
+  useEffect(() => {
+    if (focusKey == null) return
+    setExpandedKeys((prev) => (detailViewMode === 'accordion' ? new Set([focusKey]) : new Set([...prev, focusKey])))
+    // Not cancelled on cleanup: reporting back clears the focus, which re-runs
+    // this effect before the row has rendered. The poll ends on its own.
+    scrollWhenPresent(`#${CSS.escape(`lines-row-${focusKey}`)}`, 5_000, flashFound)
+    onFocused?.()
+    // Once per focus; the callback identity is the caller's.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusKey])
 
   if (groups.length === 0) {
     return (

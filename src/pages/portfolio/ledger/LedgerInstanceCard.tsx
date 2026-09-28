@@ -37,7 +37,7 @@ export function LedgerInstanceCard({
   const name = label?.trim() || oppName?.trim() || ''
   const showOpp = !!oppName?.trim() && oppName.trim() !== name
   return (
-    <div>
+    <div id={`ledger-inst-${instanceId}`}>
       {/* The token opens the instance; the rest of the row folds it. Two
           controls side by side, because a button cannot hold a button. */}
       <div className={ledgerGroupRowWrapClass}>

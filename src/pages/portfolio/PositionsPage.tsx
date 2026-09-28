@@ -13,6 +13,7 @@
  */
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { openInstanceCompare, openInstanceSheet, showInstanceSheet } from '@/lib/instanceSheet'
+import { useInstanceRoot } from '@/hooks/useInstanceRoot'
 import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -151,6 +152,42 @@ export default function PositionsPage() {
     )
   }, [urlInstanceId, urlCompareId, setParams])
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
+  /**
+   * `?inst=NNN` (the instance face's Position →, design Rev .102): its row in
+   * the strategy view, legs open — the page it was sent to, not the sheet it
+   * came from. Filters that would hide it are cleared; read once and dropped.
+   */
+  const instRaw = Number(params.get('inst'))
+  const instFocusParam = Number.isFinite(instRaw) && instRaw > 0 ? instRaw : null
+  const [focusInst, setFocusInst] = useState<number | null>(null)
+  const [seenInst, setSeenInst] = useState<number | null>(null)
+  if (instFocusParam !== seenInst) {
+    setSeenInst(instFocusParam)
+    if (instFocusParam != null) {
+      setFocusInst(instFocusParam)
+      setPickedLeg(null)
+      setInstanceFilters(CLEAR_FILTERS)
+    }
+  }
+  useEffect(() => {
+    if (instFocusParam == null) return
+    setLinesView('strategy')
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('inst')
+        return next
+      },
+      { replace: true },
+    )
+  }, [instFocusParam, setLinesView, setParams])
+  const focusRoot = useInstanceRoot(focusInst)
+  useEffect(() => {
+    if (focusInst == null || !focusRoot.isFetched) return
+    if (filterSymbol && focusRoot.data && focusRoot.data !== filterSymbol) setFilterSymbol(focusRoot.data)
+    // filterSymbol is read at arrival only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusInst, focusRoot.isFetched, focusRoot.data])
   const [pressureOpen, setPressureOpen] = usePageViewState('pressure', true)
   // The one slot beside the grid: one thing at a time, on the face that answers it.
   // Which face is kept; the open slot is not — it holds a picked contract,
@@ -622,6 +659,8 @@ export default function PositionsPage() {
                       canonicalOptContractKeys={book.canonicalOptContractKeys}
                       onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
                       onOpenOption={openContractFace}
+                      focusInstanceId={focusInst}
+                      onFocused={() => setFocusInst(null)}
                     />
                   ) : linesView === 'contract' ? (
                     <OptionsTab

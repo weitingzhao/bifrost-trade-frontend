@@ -14,9 +14,13 @@ import { payoffOptionsAtPrice, payoffStockAtPrice, type RiskPosition } from '@/u
 
 export interface LegMark {
   price: number
-  /** `live` quote, or the contract's own `eod` close. */
-  source: 'live' | 'eod'
-  /** The bar date for an EOD mark. */
+  /**
+   * `live` quote; the vendor's `snap`shot of the contract (its day close at the
+   * capture time — intraday until the evening capture); or the contract's own
+   * `eod` daily bar.
+   */
+  source: 'live' | 'snap' | 'eod'
+  /** The bar date for an EOD mark; the capture timestamp for a snapshot. */
   asOf?: string
 }
 
@@ -261,4 +265,116 @@ export function twsRowsFor(rows: readonly Execution[], keys: ReadonlySet<string>
   return rows
     .filter((r) => keys.has((r.contract_key ?? '').trim()))
     .sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
+}
+
+export interface PositionRow {
+  key: string
+  label: string
+  kind: 'opt' | 'stk'
+  /** Signed: + long, − short (contracts, or shares). */
+  qty: number
+  mark: number | null
+  /** Signed market value — a short leg is a liability. */
+  value: number | null
+  /** Share-equivalent delta of the holding. */
+  delta: number | null
+  /** Per day, signed for the holder. */
+  theta: number | null
+  /** A short strike's distance from spot, as a fraction; negative = through it. */
+  cushion: number | null
+}
+
+export interface PositionView {
+  spot: number | null
+  dte: number | null
+  /** Sums over the rows that carry the Greek; `priced` says how many did. */
+  delta: number | null
+  theta: number | null
+  unrealized: number | null
+  priced: number
+  optionRows: number
+  greeksAsOf: string | null
+  rows: PositionRow[]
+}
+
+export interface LegGreek {
+  delta: number | null
+  theta: number | null
+  asOf: string | null
+}
+
+/**
+ * What is held right now (design Rev .102, the face's Position block): the
+ * open legs at their open size and marks, with the vendor's Greeks scaled to
+ * the holding — the same per-share rows Positions reads. A leg the vendor did
+ * not price keeps its row and drops out of the sums, and `priced` says so.
+ */
+export function positionOf(
+  legs: readonly RecordLeg[],
+  greekOf: (leg: RecordLeg) => LegGreek | null,
+  spot: number | null,
+  today: string,
+  shares: { qty: number; avgCost: number | null } | null,
+): PositionView | null {
+  const open = legs.filter((l) => l.open && l.openQty !== 0)
+  if (open.length === 0) return null
+  let dSum = 0
+  let tSum = 0
+  let priced = 0
+  let asOf: string | null = null
+  const rows: PositionRow[] = open.map((l) => {
+    const g = greekOf(l)
+    const mark = l.mark?.price ?? null
+    const delta = g?.delta != null ? g.delta * l.openQty * 100 : null
+    const theta = g?.theta != null ? g.theta * l.openQty * 100 : null
+    if (delta != null && theta != null) {
+      priced++
+      dSum += delta
+      tSum += theta
+      if (g?.asOf && (asOf == null || g.asOf < asOf)) asOf = g.asOf
+    }
+    const cushion =
+      l.openQty < 0 && spot != null && spot > 0 ? (l.right === 'C' ? (l.strike - spot) / spot : (spot - l.strike) / spot) : null
+    return {
+      key: l.key,
+      label: l.label,
+      kind: 'opt',
+      qty: l.openQty,
+      mark,
+      value: mark != null ? l.openQty * mark * 100 : null,
+      delta,
+      theta,
+      cushion,
+    }
+  })
+  const optionRows = rows.length
+  if (shares && shares.qty > 0) {
+    const root = open[0].root
+    rows.push({
+      key: `${root}|STK`,
+      label: `${root} shares`,
+      kind: 'stk',
+      qty: shares.qty,
+      mark: spot,
+      value: spot != null ? spot * shares.qty : null,
+      delta: shares.qty,
+      theta: 0,
+      cushion: null,
+    })
+    dSum += shares.qty
+  }
+  const expiries = open.map((l) => l.expiry).filter((e): e is string => e != null).sort()
+  const last = expiries[expiries.length - 1]
+  const pnls = open.map((l) => l.pnl)
+  return {
+    spot,
+    dte: last ? Math.round((toMs(last) - toMs(today)) / dayMs) : null,
+    delta: priced > 0 || shares ? dSum : null,
+    theta: priced > 0 ? tSum : null,
+    unrealized: pnls.every((p) => p != null) ? pnls.reduce((a, p) => a + (p as number), 0) : null,
+    priced,
+    optionRows,
+    greeksAsOf: asOf,
+    rows,
+  }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
-import { d3, execGroupsOf, heldLegs, legsOf, lifeOf, payoffOf, twsRowsFor } from './instanceRecordModel'
+import { d3, execGroupsOf, heldLegs, legsOf, lifeOf, payoffOf, positionOf, twsRowsFor } from './instanceRecordModel'
 
 // Invented fixtures — never copied from a live book.
 const CK_CLOSED = 'ZZTM  270115P00100000|OPT|20270115|100|P'
@@ -121,5 +121,41 @@ describe('as held (Rules walk 2026-09-28)', () => {
   it('a closed instance draws every leg at its largest size', () => {
     const held = heldLegs(legsOf(CLOSED, {}))
     expect(held.map((h) => h.qty)).toEqual([2])
+  })
+})
+
+describe('position now (Rev .102)', () => {
+  const g = { delta: 0.3, theta: -0.05, asOf: '2026-11-12T20:00:00Z' }
+  it('scales the vendor Greeks to the holding and measures a short strike from spot', () => {
+    const legs = legsOf(OPEN, { [CK_OPEN]: { price: 2, source: 'eod', asOf: '2026-11-12' } })
+    const p = positionOf(legs, () => g, 140, '2026-11-12', null)!
+    expect(p.rows).toHaveLength(1)
+    const [r] = p.rows
+    expect(r.qty).toBe(-1)
+    expect(r.value).toBe(-200)
+    expect(r.delta).toBeCloseTo(-30)
+    expect(r.theta).toBeCloseTo(5)
+    // short 150C with spot 140: 10 of headroom over 140
+    expect(r.cushion).toBeCloseTo(10 / 140)
+    expect(p.dte).toBe(99)
+    expect(p).toMatchObject({ priced: 1, optionRows: 1 })
+  })
+
+  it('a leg the vendor did not price keeps its row and drops out of the sums', () => {
+    const p = positionOf(legsOf(OPEN, {}), () => null, 140, '2026-11-12', null)!
+    expect(p.rows[0].delta).toBeNull()
+    expect(p.delta).toBeNull()
+    expect(p.priced).toBe(0)
+    expect(p.unrealized).toBeNull()
+  })
+
+  it('covering shares add a stock row and their delta', () => {
+    const p = positionOf(legsOf(OPEN, {}), () => g, 140, '2026-11-12', { qty: 100, avgCost: 120 })!
+    expect(p.rows.map((r) => r.kind)).toEqual(['opt', 'stk'])
+    expect(p.delta).toBeCloseTo(70)
+  })
+
+  it('a closed instance holds nothing', () => {
+    expect(positionOf(legsOf(CLOSED, {}), () => g, 100, '2026-11-12', null)).toBeNull()
   })
 })

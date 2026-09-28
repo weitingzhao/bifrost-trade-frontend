@@ -4,9 +4,12 @@
  * performance, the Performance-book fills — plus the four things the face adds:
  *
  * - **marks for open legs**: a live quote while the gateway has one, else the
- *   contract's last `option_daily` close with its date (after the close the
- *   quote cache is empty, and the IB snapshot carries no option price at all —
- *   both measured on DEV and PROD 2026-09-28);
+ *   vendor's snapshot of the contract — the same rows Positions reads, with
+ *   the capture time — else the contract's last `option_daily` close with its
+ *   date (after the close the quote cache is empty, and the IB snapshot carries
+ *   no option price at all — both measured on DEV and PROD 2026-09-28);
+ * - **the position now** (Rev .102): the open legs with the vendor's Greeks
+ *   scaled to the holding;
  * - **spot**: the underlying's quote now, or its close on the day an instance
  *   closed;
  * - **covering shares**: an open covered call is drawn with the account's
@@ -19,6 +22,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useInstanceDetailData } from '@/hooks/useInstanceDetailData'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
+import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
+import { buildOptionTicker } from '@/utils/optionTicker'
 import { todayIso } from '@/lib/researchFreshness'
 import { fetchExecutionsRange } from '@/api/trading'
 import { fetchOptionDailyBars, fetchStockDailyCloses, occToOptionTicker } from '@/api/marketData/dailyBars'
@@ -29,6 +34,8 @@ import {
   lifeOf,
   heldLegs,
   payoffOf,
+  positionOf,
+  type RecordLeg,
   twsRowsFor,
   type LegMark,
 } from '@/utils/instanceRecord/instanceRecordModel'
@@ -61,7 +68,34 @@ export function useInstanceRecord(instance: StrategyInstance | null, opts?: { tw
     return out
   }, [quotes, openKeys])
 
-  const needEod = useMemo(() => openKeys.filter((k) => !live[k]), [openKeys, live])
+  // The vendor's per-contract rows for the open legs — Positions' own read.
+  const greekLegs: GreekLeg[] = useMemo(
+    () =>
+      bare
+        .filter((l) => l.open && l.expiry)
+        .map((l) => ({ underlying: l.root, expiry: l.expiry!, strike: l.strike, right: l.right, qty: l.openQty })),
+    [bare],
+  )
+  const greeks = useOptionGreeks(greekLegs)
+  const tickerOf = (l: Pick<RecordLeg, 'root' | 'expiry' | 'strike' | 'right'>) =>
+    buildOptionTicker({ underlying: l.root, expiry: l.expiry ?? '', strike: l.strike, right: l.right })
+  const snap: Record<string, LegMark> = useMemo(() => {
+    const out: Record<string, LegMark> = {}
+    for (const l of bare) {
+      if (!l.open) continue
+      const t = tickerOf(l)
+      const c = t ? greeks.closeByTicker.get(t) : undefined
+      if (c && c.close > 0) out[l.key] = { price: c.close, source: 'snap', asOf: c.asOf ?? undefined }
+    }
+    return out
+    // tickerOf is a pure function of its argument.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bare, greeks.closeByTicker])
+
+  const needEod = useMemo(
+    () => (greeks.isLoading ? [] : openKeys.filter((k) => !live[k] && !snap[k])),
+    [openKeys, live, snap, greeks.isLoading],
+  )
   const eodQ = useQuery({
     queryKey: ['instance-record', 'eod-marks', needEod, today],
     queryFn: async () => {
@@ -81,7 +115,7 @@ export function useInstanceRecord(instance: StrategyInstance | null, opts?: { tw
     staleTime: 15 * 60_000,
   })
 
-  const marks = useMemo(() => ({ ...(eodQ.data ?? {}), ...live }), [eodQ.data, live])
+  const marks = useMemo(() => ({ ...(eodQ.data ?? {}), ...snap, ...live }), [eodQ.data, snap, live])
   const legs = useMemo(() => legsOf(execs, marks), [execs, marks])
   const life = useMemo(() => lifeOf(execs, legs, today), [execs, legs, today])
 
@@ -110,6 +144,25 @@ export function useInstanceRecord(instance: StrategyInstance | null, opts?: { tw
     staleTime: 60 * 60_000,
   })
 
+  // Spot for an open instance when the gateway has no quote (after the close):
+  // the underlying's last daily close, dated.
+  const spotLast = useQuery({
+    queryKey: ['instance-record', 'spot-last', roots, today],
+    queryFn: async () => {
+      const out: Record<string, number> = {}
+      await Promise.all(
+        roots.map(async (r) => {
+          const bars = await fetchStockDailyCloses(r, shiftIso(today, -10), today)
+          const last = [...bars].reverse().find((b) => b.close != null)
+          if (last) out[r] = last.close!
+        }),
+      )
+      return out
+    },
+    enabled: !closed && roots.length > 0 && !quotesQ.isLoading && roots.some((r) => spotNow[r] == null),
+    staleTime: 30 * 60_000,
+  })
+
   // Covering shares: the account's current stock position, for an open
   // instance with a short call on that name.
   const acct = instance?.account_id ?? null
@@ -134,17 +187,40 @@ export function useInstanceRecord(instance: StrategyInstance | null, opts?: { tw
     () =>
       heldRoots
         .map((r) => {
-          const spot = closed ? (closeQ.data?.[r]?.price ?? null) : (spotNow[r] ?? null)
+          const spot = closed ? (closeQ.data?.[r]?.price ?? null) : (spotNow[r] ?? spotLast.data?.[r] ?? null)
           const sh = sharesFor(r)
           const p = payoffOf(legs.filter((l) => l.root === r), sh ? { qty: sh.qty, avgCost: sh.avgCost } : null, spot)
-          const spotPending = spot == null && (closed ? closeQ.isLoading : quotesQ.isLoading)
-          return p ? { ...p, spot, spotPending, spotDate: closed ? (closeQ.data?.[r]?.date ?? null) : null, shares: sh } : null
+          const spotPending = spot == null && (closed ? closeQ.isLoading : quotesQ.isLoading || spotLast.isLoading)
+          const lastClose = !closed && spotNow[r] == null && spotLast.data?.[r] != null
+          return p
+            ? { ...p, spot, spotPending, spotDate: closed ? (closeQ.data?.[r]?.date ?? null) : null, lastClose, shares: sh }
+            : null
         })
         .filter((p): p is NonNullable<typeof p> => p != null),
     // sharesFor reads legs, accounts, closed, opts — all listed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [heldRoots, legs, closed, closeQ.data, closeQ.isLoading, quotesQ.isLoading, spotNow, accounts, acct, opts?.withShares],
+    [heldRoots, legs, closed, closeQ.data, closeQ.isLoading, quotesQ.isLoading, spotNow, spotLast.data, spotLast.isLoading, accounts, acct, opts?.withShares],
   )
+
+  const position = useMemo(() => {
+    if (closed) return null
+    const r0 = heldRoots[0]
+    const spot = r0 ? (spotNow[r0] ?? spotLast.data?.[r0] ?? null) : null
+    const sh = r0 ? sharesFor(r0) : null
+    return positionOf(
+      legs,
+      (l) => {
+        const t = tickerOf(l)
+        const row = t ? greeks.perShareByTicker.get(t) : undefined
+        return row ? { delta: row.delta ?? null, theta: row.theta ?? null, asOf: row.snapshot_ts ?? null } : null
+      },
+      spot,
+      today,
+      sh ? { qty: sh.qty, avgCost: sh.avgCost } : null,
+    )
+    // sharesFor and tickerOf read only what is listed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [closed, heldRoots, spotNow, spotLast.data, legs, greeks.perShareByTicker, today, accounts, acct, opts?.withShares])
 
   const canCover = !closed && roots.some((r) => legs.some((l) => l.open && l.root === r && l.right === 'C' && l.openQty < 0))
 
@@ -173,6 +249,8 @@ export function useInstanceRecord(instance: StrategyInstance | null, opts?: { tw
     execGroups: execGroupsOf(legs),
     tws,
     twsLoading: twsQ.isLoading,
-    marksPending: eodQ.isLoading && needEod.length > 0,
+    marksPending: greeks.isLoading || (eodQ.isLoading && needEod.length > 0),
+    position,
+    positionPending: greeks.isLoading,
   }
 }

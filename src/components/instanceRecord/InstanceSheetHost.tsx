@@ -6,7 +6,7 @@
  * instance is a place rather than a look.
  */
 import { useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { INSTANCE_COMPARE_MAX_WIDTH_PX } from '@/constants/instanceDetailSidebar'
 import { useAllocations, useGateSafety, useStrategyInstance } from '@/hooks/useStrategies'
@@ -14,7 +14,7 @@ import { closeInstanceSheet, pruneInstanceSheet, stepInstanceSheet, useInstanceS
 import { useInstanceIndex } from '@/hooks/useInstanceIndex'
 import type { StrategyInstance } from '@/types/positions'
 import { ranUnderOf } from '@/utils/instanceRecord/ranUnder'
-import { InstanceRecord, type InstanceRecordAction } from './InstanceRecord'
+import { InstanceRecord } from './InstanceRecord'
 
 const editable = (t: EventTarget | null) =>
   t instanceof HTMLElement && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)
@@ -33,7 +33,6 @@ function Pending({ id, missing }: { id: number; missing: boolean }) {
 export function InstanceSheetHost() {
   const sheet = useInstanceSheet()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
   const inst = useStrategyInstance(sheet?.id, sheet != null)
   const vs = useStrategyInstance(sheet?.compareId, sheet?.compareId != null)
   const allocations = useAllocations()
@@ -62,9 +61,6 @@ export function InstanceSheetHost() {
   const face = (rec: StrategyInstance, nav: boolean) => {
     const id = rec.strategy_instance_id
     const j = sheet.ids.indexOf(id)
-    const actions: InstanceRecordAction[] = pathname.startsWith('/portfolio/positions')
-      ? []
-      : [{ label: 'Positions →', to: `/portfolio/positions?instance=${id}`, title: 'Where its open legs are marked' }]
     return (
       <InstanceRecord
         key={id}
@@ -89,7 +85,6 @@ export function InstanceSheetHost() {
             navigate(`/trade/rules?pick=opportunity:${rec.strategy_opportunity_id}`)
           },
         }}
-        actions={actions}
       />
     )
   }

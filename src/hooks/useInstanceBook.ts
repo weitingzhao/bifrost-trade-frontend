@@ -71,6 +71,28 @@ export function instanceSymbol(
   return sym.length === 1 ? sym[0].trim().toUpperCase() : '—'
 }
 
+/**
+ * The loading group's key (PROD 2026-09-28): a multi-symbol book can only
+ * name an instance from its own fills, and those load five instances at a
+ * time — so for tens of seconds most rows have no symbol *yet*. Grouping
+ * them under "—" rendered the wait as a reading ("36 instances with no
+ * symbol", every one of which measured as having fills). Rows whose metrics
+ * are still loading go under this key instead; "—" is reserved for the real
+ * reading — metrics arrived and still no underlying resolves.
+ */
+export const INSTANCE_GROUP_LOADING = '__loading__'
+
+export function instanceGroupKey(
+  inst: StrategyInstance,
+  opportunities: readonly BookOpportunity[],
+  metricsMap: Map<number, InstanceListMetricsEntry>,
+): string {
+  const sym = instanceSymbol(inst, opportunities, metricsMap)
+  if (sym !== '—') return sym
+  const entry = metricsMap.get(inst.strategy_instance_id)
+  return entry?.status === 'ready' ? '—' : INSTANCE_GROUP_LOADING
+}
+
 export interface InstanceBook {
   metricsMap: Map<number, InstanceListMetricsEntry>
   filterOptions: InstanceFilterOptions
@@ -170,15 +192,19 @@ export function useInstanceBook(args: {
     const out: InstanceGroup[] = []
     const indexByKey = new Map<string, number>()
     for (const inst of filtered) {
-      const sym = instanceSymbol(inst, opportunities, metricsMap)
-      const idx = indexByKey.get(sym)
+      const key = instanceGroupKey(inst, opportunities, metricsMap)
+      const idx = indexByKey.get(key)
       if (idx == null) {
-        indexByKey.set(sym, out.length)
-        out.push({ key: sym, label: sym, rows: [inst] })
+        indexByKey.set(key, out.length)
+        out.push({ key, label: key, rows: [inst] })
       } else {
         out[idx].rows.push(inst)
       }
     }
+    // The loading group sits last, whatever order the rows arrived in.
+    out.sort((a, b) =>
+      (a.key === INSTANCE_GROUP_LOADING ? 1 : 0) - (b.key === INSTANCE_GROUP_LOADING ? 1 : 0),
+    )
     return out
   }, [filtered, opportunities, metricsMap])
 

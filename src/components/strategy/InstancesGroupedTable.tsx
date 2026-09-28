@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
+import { INSTANCE_GROUP_LOADING } from '@/hooks/useInstanceBook'
 import { ChevronRight, ChevronDown, Trash2, Eye, Columns2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
@@ -435,11 +436,28 @@ export function InstancesGroupedTable({
                     <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
                   )}
                   <span>
-                    Symbol group: {group.label}
-                    <span className={instancesGroupMutedClass}>
-                      {' '}
-                      ({group.rows.length} instance{group.rows.length !== 1 ? 's' : ''})
-                    </span>
+                    {group.key === INSTANCE_GROUP_LOADING ? (
+                      // Not a reading: these rows' fills are still loading
+                      // (five instances at a time), so their symbol is not
+                      // known *yet* — they move to their groups as each
+                      // batch lands. "—" is reserved for the measured case.
+                      <>
+                        Reading fills…
+                        <span className={instancesGroupMutedClass}>
+                          {' '}
+                          ({group.rows.length} instance
+                          {group.rows.length !== 1 ? 's' : ''} still loading)
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        Symbol group: {group.label}
+                        <span className={instancesGroupMutedClass}>
+                          {' '}
+                          ({group.rows.length} instance{group.rows.length !== 1 ? 's' : ''})
+                        </span>
+                      </>
+                    )}
                   </span>
                 </button>
               </DenseTableCell>

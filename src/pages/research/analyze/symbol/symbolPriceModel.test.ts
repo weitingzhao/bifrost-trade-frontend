@@ -12,6 +12,9 @@ import {
   sessionsUntil,
   holdingFor,
   instanceTracksFor,
+  MIN_SPAN,
+  panView,
+  zoomView,
   underlyingOf,
   windowForSessionsAgo,
 } from './symbolPriceModel'
@@ -237,5 +240,26 @@ describe('aggIndexFor', () => {
     expect(aggIndexFor(11, 5, 10)).toBe(2)
     expect(aggIndexFor(10, 5, 9)).toBe(1)
     expect(aggIndexFor(60, 1, 42)).toBe(42)
+  })
+})
+
+describe('pointer view (Rev .102)', () => {
+  it('pans toward history and stops at both ends', () => {
+    expect(panView(500, { span: 60, off: 0 }, 30)).toEqual({ span: 60, off: 30 })
+    expect(panView(500, { span: 60, off: 0 }, -10)).toEqual({ span: 60, off: 0 })
+    expect(panView(500, { span: 60, off: 400 }, 100)).toEqual({ span: 60, off: 440 })
+  })
+
+  it('zooms about the cursor: the session under it stays put', () => {
+    // span 100 ending today; cursor at the middle is session 450.
+    const v = zoomView(500, { span: 100, off: 0 }, 0.5, 0.5)
+    expect(v.span).toBe(50)
+    const start = 500 - v.off - v.span
+    expect(start + 0.5 * v.span).toBe(450)
+  })
+
+  it('never narrower than the floor nor wider than the history', () => {
+    expect(zoomView(500, { span: 30, off: 0 }, 1, 0.1).span).toBe(MIN_SPAN)
+    expect(zoomView(500, { span: 400, off: 0 }, 0, 5)).toEqual({ span: 500, off: 0 })
   })
 })

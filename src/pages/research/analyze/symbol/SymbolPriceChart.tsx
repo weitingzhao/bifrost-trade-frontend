@@ -41,7 +41,10 @@ import { useSymbolLegs } from './useSymbolLegs'
 import {
   PRICE_WINDOWS,
   type PriceWindow,
+  type PriceView,
   type InstanceTrack,
+  clampView,
+  panView,
   aggFor,
   aggregateBars,
   barIsoDate,
@@ -54,6 +57,7 @@ import {
   windowForSessionsAgo,
 } from './symbolPriceModel'
 import { SymbolTradeOverlay } from './SymbolTradeOverlay'
+import { SymbolChartPointer } from './SymbolChartPointer'
 import { openInstanceSheet } from '@/lib/instanceSheet'
 import { useInstanceIndex } from '@/hooks/useInstanceIndex'
 
@@ -73,7 +77,7 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const [win, setWin] = useState<PriceWindow>('60')
+  const [rawView, setView] = useState<PriceView>({ span: 60, off: 0 })
   const [tradesOn, setTradesOn] = useState(true)
   const [hover, setHover] = useState<string | null>(null)
 
@@ -102,12 +106,20 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
   const dates = useMemo(() => daily.map((b) => barIsoDate(b.time as number)), [daily])
   const total = daily.length
 
-  const winSessions = sessionsForWindow(win, total)
+  const view = clampView(total, rawView)
+  const winSessions = view.span
   const agg = aggFor(winSessions)
-  const winStart = total - winSessions
+  const winEnd = total - view.off
+  const winStart = winEnd - winSessions
+  // Off today (panned into history): the cone and the event lines belong to today.
+  const atToday = view.off === 0
+  const presetOf =
+    PRICE_WINDOWS.find((w) => atToday && sessionsForWindow(w.value, total) === winSessions)
+      ?.value ?? ''
+  const setPreset = (w: PriceWindow) => setView({ span: sessionsForWindow(w, total), off: 0 })
   const chartBars = useMemo(
-    () => aggregateBars(daily.slice(winStart), agg),
-    [daily, winStart, agg],
+    () => aggregateBars(daily.slice(winStart, winEnd), agg),
+    [daily, winStart, winEnd, agg]
   )
 
   const readings = (id: string) =>
@@ -140,7 +152,7 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
     dteSessions != null && dteSessions > 0 && iv30 != null && spot != null
       ? Math.min(dteSessions, CONE_CAP_SESSIONS)
       : null
-  const coneSlots = coneSessions != null ? Math.ceil(coneSessions / agg) : 0
+  const coneSlots = atToday && coneSessions != null ? Math.ceil(coneSessions / agg) : 0
 
   const earnDate = earnQ.data?.expected_next?.date ?? null
   const earnSessions = earnDate ? sessionsUntil(today, earnDate) : null
@@ -206,12 +218,15 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
   }, [coneSessions, earnSessions, opexSessions, agg])
 
   const legs = useSymbolLegs(sym)
-  const tracks = useMemo(() => instanceTracksFor(bookQ.data?.items ?? [], sym, legs), [bookQ.data, sym, legs])
+  const tracks = useMemo(
+    () => instanceTracksFor(bookQ.data?.items ?? [], sym, legs),
+    [bookQ.data, sym, legs]
+  )
   const holding = useMemo(() => holdingFor(legs, tracks), [legs, tracks])
   const known = useInstanceIndex()
   const trackIds = useMemo(
     () => tracks.flatMap((t) => (t.id != null && (known == null || known.has(t.id)) ? [t.id] : [])),
-    [tracks, known],
+    [tracks, known]
   )
   const openTrack = (t: InstanceTrack) => {
     if (t.id != null) openInstanceSheet(t.id, trackIds, `Symbol · ${sym}`)
@@ -229,8 +244,13 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
   // A closed instance that ended before the window stays off the candles; an
   // open one is always visible, clipped at the left edge when it began earlier.
   const shown = useMemo(
-    () => placed.filter((p) => p.track.closeDate == null || (p.closeIdx != null && p.closeIdx >= winStart)),
-    [placed, winStart],
+    () =>
+      placed.filter(
+        (p) =>
+          (p.openIdx ?? -1) < winEnd &&
+          (p.track.closeDate == null || (p.closeIdx != null && p.closeIdx >= winStart))
+      ),
+    [placed, winStart, winEnd]
   )
   const hidden = placed.filter((p) => !shown.includes(p))
 
@@ -247,26 +267,34 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
         100
       : null
 
-  const renderTrades = (ctx: ChartOverlayContext) =>
-    tradesOn && (shown.length > 0 || holding) ? (
-      <SymbolTradeOverlay
-        ctx={ctx}
-        tracks={shown.map((p) => p.track)}
-        dates={dates}
-        winStart={winStart}
-        winSessions={winSessions}
-        agg={agg}
-        today={today}
-        coneSessions={coneSessions}
-        hover={hover}
-        onHover={setHover}
-        onOpen={openTrack}
-        onOpenId={(id) => openInstanceSheet(id, trackIds, `Symbol · ${sym}`)}
-        holding={holding}
-        spot={spot}
-        known={known}
+  const renderTrades = (ctx: ChartOverlayContext) => (
+    <>
+      {/* The price scale for the pointer's readout: price = (y0 − y) / perUnit. */}
+      <g
+        data-price-scale={`${ctx.yForPrice(0)},${ctx.yForPrice(0) - ctx.yForPrice(1)},${ctx.paddingTop},${ctx.paddingTop + ctx.priceHeight}`}
       />
-    ) : null
+      {tradesOn && (shown.length > 0 || holding) ? (
+        <SymbolTradeOverlay
+          ctx={ctx}
+          tracks={shown.map((p) => p.track)}
+          dates={dates}
+          winStart={winStart}
+          winEnd={winEnd}
+          winSessions={winSessions}
+          agg={agg}
+          today={today}
+          coneSessions={atToday ? coneSessions : null}
+          hover={hover}
+          onHover={setHover}
+          onOpen={openTrack}
+          onOpenId={(id) => openInstanceSheet(id, trackIds, `Symbol · ${sym}`)}
+          holding={holding}
+          spot={spot}
+          known={known}
+        />
+      ) : null}
+    </>
+  )
 
   const title = `${winSessions || '—'} sessions · ${agg > 1 ? 'weekly candles' : 'daily'}`
   const coneLabel =
@@ -287,7 +315,7 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
       pts.push(`${((i / (total - 1)) * 900).toFixed(1)} ${(23 - ((closes[i] - lo) / span) * 18).toFixed(1)}`)
     return {
       line: `M${pts.join('L')}`,
-      brushL: `${(((total - winSessions) / total) * 100).toFixed(1)}%`,
+      brushL: `${((winStart / total) * 100).toFixed(1)}%`,
       brushW: `${((winSessions / total) * 100).toFixed(1)}%`,
       ticks: placed.map((p) => ({
         key: p.track.key,
@@ -301,10 +329,31 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
         title: `${p.track.name} · ${p.openAgo} sessions ago${
           p.track.pnl != null ? ` · ${fmtPl(p.track.pnl)}` : ''
         } — click to bring it into the window`,
-        jump: () => setWin(windowForSessionsAgo(p.openAgo)),
+        // Centre the instance in the current span, keeping the zoom.
+        jump: () =>
+          setView({
+            span: winSessions,
+            off: total - (p.openIdx ?? 0) - Math.round(winSessions / 2),
+          }),
       })),
     }
-  }, [daily, total, winSessions, placed])
+  }, [daily, total, winSessions, winStart, placed])
+
+  // The minimap's frame drags the window across the whole history.
+  const dragBrush = (e: React.MouseEvent<HTMLSpanElement>) => {
+    const box = e.currentTarget.parentElement?.getBoundingClientRect()
+    if (!box || box.width <= 0) return
+    e.preventDefault()
+    const start = { x: e.clientX, view }
+    const mv = (ev: MouseEvent) =>
+      setView(panView(total, start.view, -((ev.clientX - start.x) / box.width) * total))
+    const up = () => {
+      window.removeEventListener('mousemove', mv)
+      window.removeEventListener('mouseup', up)
+    }
+    window.addEventListener('mousemove', mv)
+    window.addEventListener('mouseup', up)
+  }
 
   if (!sym) return null
 
@@ -328,8 +377,15 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
             </span>
           ) : null}
           <span
-            className={cn('font-mono text-dense-meta', holding ? 'text-[var(--sk-ticker)]' : 'text-muted-foreground')}
-            title={holding ? 'Shares in the accounts now — the lime line is their blended cost' : 'No shares of this name in the accounts'}
+            className={cn(
+              'font-mono text-dense-meta',
+              holding ? 'text-[var(--sk-ticker)]' : 'text-muted-foreground'
+            )}
+            title={
+              holding
+                ? 'Shares in the accounts now — the lime line is their blended cost'
+                : 'No shares of this name in the accounts'
+            }
           >
             {holding ? `held ${holding.qty.toLocaleString('en-US')} sh` : 'not held'}
           </span>
@@ -341,8 +397,8 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
           <SegmentControl
             ariaLabel="Window"
             size="xs"
-            value={win}
-            onChange={(v) => setWin(v as PriceWindow)}
+            value={presetOf}
+            onChange={(v) => setPreset(v as PriceWindow)}
             options={[...PRICE_WINDOWS]}
           />
           {tracks.length > 0 ? (
@@ -379,28 +435,40 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
         </p>
       ) : (
         <div className="relative">
-          <BarsCandlestickChart
+          <SymbolChartPointer
+            frame={frame}
+            total={total}
+            view={view}
+            onView={setView}
             bars={chartBars}
-            period="1 D"
-            showVwap={false}
-            futureSlots={coneSlots}
-            levels={levels}
-            verticals={verticals}
-            cone={
-              coneSessions != null && spot != null && iv30 != null
-                ? {
-                    sessions: coneSlots,
-                    widthAt: (d) => spot * iv30 * Math.sqrt((d * agg) / 252),
-                  }
-                : undefined
-            }
-            renderPriceOverlay={renderTrades}
-          />
+            xCount={xCount}
+            agg={agg}
+            callWall={callWall}
+            putWall={putWall}
+          >
+            <BarsCandlestickChart
+              bars={chartBars}
+              period="1 D"
+              showVwap={false}
+              futureSlots={coneSlots}
+              levels={levels}
+              verticals={atToday ? verticals : []}
+              cone={
+                atToday && coneSessions != null && spot != null && iv30 != null
+                  ? {
+                      sessions: coneSlots,
+                      widthAt: (d) => spot * iv30 * Math.sqrt((d * agg) / 252),
+                    }
+                  : undefined
+              }
+              renderPriceOverlay={renderTrades}
+            />
+          </SymbolChartPointer>
           {tradesOn && hidden.length > 0 ? (
             <button
               type="button"
               onClick={() =>
-                setWin(windowForSessionsAgo(Math.max(...hidden.map((p) => p.openAgo))))
+                setPreset(windowForSessionsAgo(Math.max(...hidden.map((p) => p.openAgo))))
               }
               title="Trades before this window — click to widen it"
               className="absolute bottom-8 left-14 rounded border border-border bg-background/75 px-1.5 py-0.5 font-mono text-dense-micro text-[var(--sk-contract)]"
@@ -409,13 +477,22 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
             </button>
           ) : null}
           <div className="relative h-4 font-mono text-dense-micro text-muted-foreground">
-            <span className="absolute left-0">−{winSessions}d</span>
-            {todayPct != null ? (
+            <span className="absolute left-0">−{winSessions + view.off}d</span>
+            {!atToday ? (
+              <button
+                type="button"
+                onClick={() => setView({ span: winSessions, off: 0 })}
+                title={`${view.off} sessions back — double-click the chart, or here, to return`}
+                className="absolute right-0 cursor-pointer border-0 bg-transparent p-0 font-mono text-dense-micro text-[var(--sk-accent)] hover:underline"
+              >
+                today →
+              </button>
+            ) : todayPct != null ? (
               <span className="absolute -translate-x-1/2" style={{ left: `${todayPct}%` }}>
                 today
               </span>
             ) : null}
-            <span className="absolute right-0">{coneLabel}</span>
+            {atToday ? <span className="absolute right-0">{coneLabel}</span> : null}
           </div>
           {tradesOn && mini && tracks.length > 0 ? (
             <div className="relative mt-1 h-[26px]">
@@ -427,7 +504,9 @@ export function SymbolPriceChart({ symbol }: { symbol: string }) {
                 <path d={mini.line} fill="none" stroke="var(--sk-line)" strokeWidth={1} />
               </svg>
               <span
-                className="pointer-events-none absolute inset-y-0 border-l border-[var(--sk-accent)]"
+                onMouseDown={dragBrush}
+                title="Drag to move the window through the two years"
+                className="absolute inset-y-0 cursor-grab border-l border-[var(--sk-accent)]"
                 style={{
                   left: mini.brushL,
                   width: mini.brushW,

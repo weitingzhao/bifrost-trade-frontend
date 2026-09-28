@@ -338,3 +338,38 @@ export function fmtPl(v: number): string {
   const n = Math.round(Math.abs(v))
   return `${v >= 0 ? '+$' : '−$'}${n.toLocaleString('en-US')}`
 }
+
+/**
+ * The chart's view over the daily history (design Rev .102's pointer): `span`
+ * sessions ending `off` sessions before the newest. Presets set the span with
+ * `off` 0; drag pans, the wheel zooms about the cursor, double-click returns.
+ */
+export interface PriceView {
+  span: number
+  off: number
+}
+
+export const MIN_SPAN = 20
+
+export function clampView(total: number, v: PriceView): PriceView {
+  const span = Math.max(Math.min(MIN_SPAN, total), Math.min(total, Math.round(v.span)))
+  const off = Math.max(0, Math.min(total - span, Math.round(v.off)))
+  return { span, off }
+}
+
+/** Drag by `dSessions` (positive = toward older history). */
+export function panView(total: number, v: PriceView, dSessions: number): PriceView {
+  return clampView(total, { span: v.span, off: v.off + dSessions })
+}
+
+/**
+ * Zoom by `factor` (>1 widens) keeping the session under the cursor where it
+ * is: `fx` is the cursor's fraction across the plot, 0 = left edge.
+ */
+export function zoomView(total: number, v: PriceView, fx: number, factor: number): PriceView {
+  const start = total - v.off - v.span
+  const anchor = start + fx * v.span
+  const span = Math.max(Math.min(MIN_SPAN, total), Math.min(total, Math.round(v.span * factor)))
+  const nextStart = anchor - fx * span
+  return clampView(total, { span, off: total - nextStart - span })
+}

@@ -12,7 +12,14 @@
  * ↑ / ↓ rather than stretching the candles to reach them.
  */
 import type { ChartOverlayContext } from '@/components/charts/BarsCandlestickChart'
-import { aggIndexFor, fmtPl, sessionIndexFor, sessionsUntil, type Holding, type InstanceTrack } from './symbolPriceModel'
+import {
+  aggIndexFor,
+  fmtPl,
+  sessionIndexFor,
+  sessionsUntil,
+  type Holding,
+  type InstanceTrack,
+} from './symbolPriceModel'
 
 const CHAR_W = 5.4
 const INK = {
@@ -31,13 +38,16 @@ interface Rect {
   w: number
   h: number
 }
-const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
+const overlaps = (a: Rect, b: Rect) =>
+  a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
 
 export interface TradeOverlayProps {
   ctx: ChartOverlayContext
   tracks: readonly InstanceTrack[]
   dates: readonly string[]
   winStart: number
+  /** One past the last session drawn — history after it is off the right edge. */
+  winEnd: number
   winSessions: number
   agg: number
   today: string
@@ -68,6 +78,7 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
   const xOfDate = (iso: string): { x: number; clipped: boolean } => {
     const idx = sessionIndexFor(dates, iso)
     if (idx == null || idx < winStart) return { x: ctx.paddingLeft + 1, clipped: true }
+    if (idx >= p.winEnd) return { x: lastX, clipped: true }
     return { x: ctx.xForIndex(aggIndexFor(winSessions, agg, idx - winStart)), clipped: false }
   }
 
@@ -96,7 +107,8 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
     }
   }
 
-  const opens = (id: number | null): id is number => id != null && (p.known == null || p.known.has(id))
+  const opens = (id: number | null): id is number =>
+    id != null && (p.known == null || p.known.has(id))
   const h = p.holding
   const hy = h?.avg != null ? yOf(h.avg) : null
   const unr = h?.avg != null && p.spot != null ? (p.spot - h.avg) * h.qty : null
@@ -110,13 +122,37 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
               unr != null ? `, unrealized ${fmtPl(unr)} against ${p.spot!.toFixed(2)}` : ''
             }. Shares under a covered call are its backing; the rest are free to write against.`}
           </title>
-          <line x1={ctx.paddingLeft} x2={right} y1={hy.y} y2={hy.y} stroke={INK.shares} strokeWidth={1.25} opacity={p.hover ? 0.3 : 0.85} />
-          <text x={right - 2} y={hy.y - 4} fontSize="9" fontFamily="var(--font-mono)" textAnchor="end" fill={INK.shares}>
+          <line
+            x1={ctx.paddingLeft}
+            x2={right}
+            y1={hy.y}
+            y2={hy.y}
+            stroke={INK.shares}
+            strokeWidth={1.25}
+            opacity={p.hover ? 0.3 : 0.85}
+          />
+          <text
+            x={right - 2}
+            y={hy.y - 4}
+            fontSize="9"
+            fontFamily="var(--font-mono)"
+            textAnchor="end"
+            fill={INK.shares}
+          >
             {hy.edge}
             {h.qty.toLocaleString('en-US')} sh · avg {h.avg!.toFixed(2)}
-            {unr != null ? <tspan fill={unr >= 0 ? INK.profit : INK.loss}> {fmtPl(unr)}</tspan> : null}
+            {unr != null ? (
+              <tspan fill={unr >= 0 ? INK.profit : INK.loss}> {fmtPl(unr)}</tspan>
+            ) : null}
           </text>
-          <text x={right - 2} y={hy.y + 10} fontSize="9" fontFamily="var(--font-mono)" textAnchor="end" fill={INK.mute}>
+          <text
+            x={right - 2}
+            y={hy.y + 10}
+            fontSize="9"
+            fontFamily="var(--font-mono)"
+            textAnchor="end"
+            fill={INK.mute}
+          >
             {h.backing.map((b, i) => (
               <tspan
                 key={b.id}
@@ -130,7 +166,9 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
                 {i > 0 ? ' · ' : ''}#{b.id} {b.qty.toLocaleString('en-US')} backing
               </tspan>
             ))}
-            {h.free > 0 ? `${h.backing.length ? ' · ' : ''}free ${h.free.toLocaleString('en-US')}` : ''}
+            {h.free > 0
+              ? `${h.backing.length ? ' · ' : ''}free ${h.free.toLocaleString('en-US')}`
+              : ''}
           </text>
         </g>
       ) : null}
@@ -138,7 +176,8 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
       {p.tracks.map((t) => {
         const faded = p.hover != null && p.hover !== t.key
         const open = t.closeDate == null
-        const plInk = t.pnl == null ? INK.mute : open ? INK.unrealized : t.pnl >= 0 ? INK.profit : INK.loss
+        const plInk =
+          t.pnl == null ? INK.mute : open ? INK.unrealized : t.pnl >= 0 ? INK.profit : INK.loss
         const label = labelFor.get(t.key)
         const tip =
           `${t.name} · opened ${t.openDate}` +
@@ -167,12 +206,22 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
               const { y } = yOf(l.strike)
               const legOpen = l.flatDate == null
               const dte = legOpen && l.expiryIso ? sessionsUntil(p.today, l.expiryIso) : null
-              const dashEnd = legOpen && dte != null && p.coneSessions != null ? ctx.xForSlot(Math.min(dte, p.coneSessions) / agg) : null
+              const dashEnd =
+                legOpen && dte != null && p.coneSessions != null
+                  ? ctx.xForSlot(Math.min(dte, p.coneSessions) / agg)
+                  : null
               const legInk = l.pnl == null ? INK.mute : l.pnl >= 0 ? INK.profit : INK.loss
               return (
                 <g key={l.key}>
                   {/* A wide transparent stroke so a thin line is easy to hover and click. */}
-                  <line x1={a.x} x2={Math.max(a.x, x1)} y1={y} y2={y} stroke="transparent" strokeWidth={8} />
+                  <line
+                    x1={a.x}
+                    x2={Math.max(a.x, x1)}
+                    y1={y}
+                    y2={y}
+                    stroke="transparent"
+                    strokeWidth={8}
+                  />
                   <line
                     x1={a.x}
                     x2={Math.max(a.x, x1)}
@@ -183,11 +232,30 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
                     strokeDasharray={l.side < 0 ? undefined : '5 2'}
                   />
                   {dashEnd != null && dashEnd > x1 ? (
-                    <line x1={x1} x2={dashEnd} y1={y} y2={y} stroke={INK.contract} strokeWidth={2} strokeDasharray="4 4" opacity={0.55} />
+                    <line
+                      x1={x1}
+                      x2={dashEnd}
+                      y1={y}
+                      y2={y}
+                      stroke={INK.contract}
+                      strokeWidth={2}
+                      strokeDasharray="4 4"
+                      opacity={0.55}
+                    />
                   ) : null}
-                  {!a.clipped ? <circle cx={a.x} cy={y} r={3} fill={INK.contract} stroke="var(--background)" /> : null}
-                  {!legOpen && !t.joints.some((j) => j.date === l.flatDate && j.fromStrike === l.strike) ? (
-                    <rect x={x1 - 3} y={y - 3} width={6} height={6} fill={legInk} stroke="var(--background)" />
+                  {!a.clipped ? (
+                    <circle cx={a.x} cy={y} r={3} fill={INK.contract} stroke="var(--background)" />
+                  ) : null}
+                  {!legOpen &&
+                  !t.joints.some((j) => j.date === l.flatDate && j.fromStrike === l.strike) ? (
+                    <rect
+                      x={x1 - 3}
+                      y={y - 3}
+                      width={6}
+                      height={6}
+                      fill={legInk}
+                      stroke="var(--background)"
+                    />
                   ) : null}
                 </g>
               )
@@ -201,7 +269,13 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
               return (
                 <g key={`${j.date}|${j.fromStrike}|${j.toStrike}`}>
                   <line x1={x} x2={x} y1={y0} y2={y1} stroke={INK.contract} strokeWidth={1.5} />
-                  <text x={x + 3} y={(y0 + y1) / 2 + 3} fontSize="9" fontFamily="var(--font-mono)" fill={ink}>
+                  <text
+                    x={x + 3}
+                    y={(y0 + y1) / 2 + 3}
+                    fontSize="9"
+                    fontFamily="var(--font-mono)"
+                    fill={ink}
+                  >
                     ↻ {fmtPl(j.net)} {j.net >= 0 ? 'cr' : 'db'}
                   </text>
                 </g>
@@ -213,7 +287,9 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
                 {label.full ? (
                   <>
                     <tspan fill={INK.instance}>{t.id != null ? `#${t.id}` : ''}</tspan>
-                    <tspan fill={INK.contract}>{t.id != null ? t.name.slice(`#${t.id}`.length) : t.name}</tspan>
+                    <tspan fill={INK.contract}>
+                      {t.id != null ? t.name.slice(`#${t.id}`.length) : t.name}
+                    </tspan>
                     <tspan fill={plInk}> {t.pnl != null ? fmtPl(t.pnl) : open ? 'open' : ''}</tspan>
                   </>
                 ) : (

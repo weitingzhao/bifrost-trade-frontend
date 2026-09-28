@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { fetchInstancePerformance, fetchInstanceExecutions } from '@/api/trading'
 import { fetchOptionStockLinkMapForExecutions } from '@/utils/ledger/fetchOptionStockLinkMap'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import {
   sliceExecutionForInstanceOptView,
   instanceOptionStockSlippageAdjustment,
@@ -45,6 +47,48 @@ function rawExecutionToExecution(raw: import('@/types/trading').RawExecution): E
 
 const CHUNK_SIZE = 5
 
+/**
+ * How long one instance's reading is reused before it is read from the server
+ * again — the rulebook's own staleTime. A write that moves a fill (Ledger
+ * pairing, Fills, Positions, an import) invalidates `trading.executions`, and
+ * the key below sits under it, so a reused reading is never older than the
+ * last write this tab made.
+ */
+const METRICS_STALE_MS = 60_000
+
+export const instanceMetricsKey = (id: number, revalidateKey: number) =>
+  [...QUERY_KEYS.trading.executions, 'instance-metrics', id, revalidateKey] as const
+
+/** One instance, read and derived. Never throws: a failed read is an entry. */
+async function readInstanceMetrics(id: number): Promise<InstanceListMetricsEntry> {
+  try {
+    const [perf, execRes] = await Promise.all([
+      fetchInstancePerformance(id),
+      fetchInstanceExecutions(id),
+    ])
+    const raw = execRes.executions ?? []
+    const normalized = raw.map(rawExecutionToExecution)
+    const sliced = normalized
+      .map((ex) => sliceExecutionForInstanceOptView(ex, id))
+      .filter((row): row is Execution => row != null)
+    const linkMap = await fetchOptionStockLinkMapForExecutions(sliced)
+    const linkedStockSlippage = instanceOptionStockSlippageAdjustment(normalized, id, linkMap)
+    const execDerivedNetPnl = computeInstanceExecDerivedNetPnl(sliced, linkedStockSlippage)
+    const underlying = underlyingCostSellOptUsd(sliced)
+    const maxRiskUsd = computeInstanceMaxRiskUsd(sliced, underlying)
+    return {
+      status: 'ready',
+      summary: perf.summary,
+      sliced,
+      linkedStockSlippage,
+      execDerivedNetPnl,
+      maxRiskUsd,
+    }
+  } catch {
+    return { status: 'error' }
+  }
+}
+
 type LoadedMetrics = {
   sessionKey: string
   map: Map<number, InstanceListMetricsEntry>
@@ -68,6 +112,7 @@ export function useInstanceMetrics(
     [idsKey],
   )
   const sessionKey = `${idsKey}:${revalidateKey}`
+  const queryClient = useQueryClient()
 
   const [loaded, setLoaded] = useState<LoadedMetrics>(() => ({
     sessionKey: '',
@@ -83,42 +128,36 @@ export function useInstanceMetrics(
       for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
         if (cancelled) return
         const chunk = ids.slice(i, i + CHUNK_SIZE)
+        // Each instance is read through the query cache, not straight off the
+        // network, so a restart costs nothing: a remount, a caller that
+        // regresses to rebuilding its array, or a second reader of the same
+        // instance gets the reading already held (or the request already in
+        // flight) instead of a new one. The key fix above stopped the loop in
+        // the code; this is what keeps any loop off the database. On PROD
+        // 2026-09-28 a tab still running the pre-fix bundle kept it going
+        // for over two hours — ~40 requests a second over the same 10
+        // instances, the primary pinned at its 2-core limit.
         const chunkResults = await Promise.all(
-          chunk.map(async (id): Promise<[number, InstanceListMetricsEntry]> => {
-            try {
-              const [perf, execRes] = await Promise.all([
-                fetchInstancePerformance(id),
-                fetchInstanceExecutions(id),
-              ])
-              const raw = execRes.executions ?? []
-              const normalized = raw.map(rawExecutionToExecution)
-              const sliced = normalized
-                .map((ex) => sliceExecutionForInstanceOptView(ex, id))
-                .filter((row): row is Execution => row != null)
-              const linkMap = await fetchOptionStockLinkMapForExecutions(sliced)
-              const linkedStockSlippage = instanceOptionStockSlippageAdjustment(normalized, id, linkMap)
-              const execDerivedNetPnl = computeInstanceExecDerivedNetPnl(sliced, linkedStockSlippage)
-              const underlying = underlyingCostSellOptUsd(sliced)
-              const maxRiskUsd = computeInstanceMaxRiskUsd(sliced, underlying)
-              return [
-                id,
-                {
-                  status: 'ready',
-                  summary: perf.summary,
-                  sliced,
-                  linkedStockSlippage,
-                  execDerivedNetPnl,
-                  maxRiskUsd,
-                } as const,
-              ]
-            } catch {
-              return [id, { status: 'error' } as const]
-            }
-          }),
+          chunk.map(
+            async (id): Promise<[number, InstanceListMetricsEntry]> => [
+              id,
+              await queryClient
+                .fetchQuery({
+                  queryKey: instanceMetricsKey(id, revalidateKey),
+                  queryFn: () => readInstanceMetrics(id),
+                  staleTime: METRICS_STALE_MS,
+                })
+                .catch((): InstanceListMetricsEntry => ({ status: 'error' })),
+            ],
+          ),
         )
         if (cancelled) return
         setLoaded((prev) => {
           const base = prev.sessionKey === sessionKey ? prev.map : new Map<number, InstanceListMetricsEntry>()
+          // A chunk served from the cache hands back the entries this state
+          // already holds; keeping `prev` then skips the re-render, so a
+          // restart cannot turn into a render loop either.
+          if (base === prev.map && chunkResults.every(([id, row]) => base.get(id) === row)) return prev
           const next = new Map(base)
           for (const [id, row] of chunkResults) next.set(id, row)
           return { sessionKey, map: next }

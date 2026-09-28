@@ -1,26 +1,26 @@
 /**
- * Trade › Rules — the rulebook as one chain.
+ * Trade › Rules — the rulebook as one chain (design Rev .101, `Trade Rules.dc.html`).
  *
  * Structure → Opportunity → Allocation · gate → Instance, read left to right.
- * This is where the seven `/strategy/*` pages go (design DECISIONS 2026-09-18,
- * re-confirming 2026-09-12): they were seven CRUD screens, and what none of
- * them could show is the thing that matters — that a shape is used twice, that
- * one of those opportunities sits in no allocation, and that every instance
- * under it therefore ran under no gate.
+ * Pick a card and the four columns fold into a sticky lineage bar with the
+ * record right under it; pick a ticker and the page reads the symbol lens —
+ * every rule that can act on it and everything that ran on it. The focus lives
+ * in the URL (`?pick=&sym=`) and every change of it is pushed, so ← Back, Esc,
+ * ⌥← and the browser's own Back walk the same path, and the filters, folds and
+ * scroll each step left come back with it.
  *
- * The edit sheets behind each column are the seven pages' own forms, opened
- * from here rather than rewritten (see `RulesSheets.tsx`): a rule edited from
- * the chain and one edited from the old page are the same write with the same
- * validation.
+ * This is where the seven `/strategy/*` pages went (design DECISIONS
+ * 2026-09-18): the edit sheets behind each card are their own forms, opened
+ * from here rather than rewritten (`RulesSheets.tsx`), so a rule edited here
+ * and one edited there are the same write with the same validation.
  *
  * Nothing writes from a card click. Activating an allocation is what the daemon
- * reads on its next start, so it lives behind a form with a confirm — which is
- * what the sheets are. D10 is not in play here: a rule is a rulebook entry, not
- * an order.
+ * reads on its next start, so it lives behind a form with a confirm. D10 is not
+ * in play here: a rule is a rulebook entry, not an order.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -37,31 +37,36 @@ import { createCollapsedGroupsState } from '@/utils/instanceGroupCollapse'
 import type { InstanceListFilterValues } from '@/components/strategy/InstanceListFilters'
 import { fetchOpportunityDetail } from '@/api/strategy'
 import { useRulesChain } from '@/hooks/useRulesChain'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { SetActiveDialog } from './SetActiveDialog'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { ChainColumnList, ChainDetailPanel } from './ChainColumns'
+import { ChainColumnList } from './ChainColumns'
 import { NO_SHEET, RulesSheets, type RulesSheet } from './RulesSheets'
+import { RulesReadings } from './RulesReadings'
+import { LineageBar, type Crumb } from './LineageBar'
+import { RulesRecord } from './RulesRecord'
+import { buildRecord, type RecordAction } from './rulesRecordModel'
+import { buildChain, orphanGates, orphanOpportunities, visibleChain, type ChainSelection } from './rulesChain'
 import {
-  buildChain,
-  detailOf,
-  formatPick,
-  orphanGates,
-  orphanOpportunities,
-  parsePick,
-  visibleChain,
-  type ChainSelection,
-} from './rulesChain'
+  NO_FOCUS,
+  allSymbols,
+  focusKey,
+  focusLineage,
+  focusOfKey,
+  focusSearch,
+  hasFocus,
+  normSym,
+  parseFocus,
+  stepTrail,
+  touches,
+  type BoardSort,
+  type Focus,
+} from './rulesFocus'
 
 const PAGE_LEAD =
-  'One chain, read left to right: a Structure is a shape, an Opportunity is when to use it, an Allocation is what the daemon is told to run, an Instance is one running. Pick anything and its lineage lights up. A gate is a limit whose scope is an allocation — defined here, its breaches land on Risk › Limits.'
+  'One chain, read left to right: a Structure is a shape, an Opportunity is when to use it, an Allocation is what the daemon is told to run, an Instance is one running. Pick a card and the chain folds into its lineage with the record below; pick a ticker for every rule that can act on it and everything that ran on it. Esc or ⌥← walks back. A gate is a limit whose scope is an allocation — defined here, its breaches land on Risk › Limits.'
 
-/**
- * The old page for each column, kept as a way out rather than as the editor.
- *
- * The sheets are the editor now; these still list, filter and sort in ways the
- * chain does not, so the link stays until someone decides they are redundant
- * (design absence is not deletion — the Owner rules on that, not this page).
- */
 /** What each column's ＋ New opens. */
 const NEW_SHEET: Record<string, RulesSheet> = {
   structure: { kind: 'structure', mode: { kind: 'create' } },
@@ -70,29 +75,41 @@ const NEW_SHEET: Record<string, RulesSheet> = {
   instance: { kind: 'instance' },
 }
 
+const NO_FILTERS: InstanceListFilterValues = { status: '', structure: '', symbol: '', right: '', expiry: '', since: '' }
+
+/** What a step leaves behind and gets back (design: filters, folds, scroll). */
+interface Snapshot {
+  filters: InstanceListFilterValues
+  collapsed: Record<string, boolean>
+  flat: boolean
+  boardSort: BoardSort
+  scroll: number
+}
+
+const scroller = () => document.getElementById('main-content')
+
 export default function TradeRulesPage() {
   const [activeOnly, setActiveOnly] = useState('active')
-  // The selection lives in the URL so another page can open the chain already
-  // lit on the link it means (§ URL state, CLAUDE.md).
-  const [params, setParams] = useSearchParams()
-  // Memoised on the raw param: a fresh object per render re-ran every memo
-  // keyed on it (detail → scopedInstances → the metrics loader's restart).
+  const [params] = useSearchParams()
   const pickParam = params.get('pick')
-  const sel = useMemo(() => parsePick(pickParam), [pickParam])
+  const symParam = params.get('sym')
+  // Memoised on the raw params: a fresh object per render re-ran every memo
+  // keyed on it (and once restarted the metrics loader on every render).
+  const focus: Focus = useMemo(
+    () => parseFocus(new URLSearchParams([...(pickParam ? [['pick', pickParam]] : []), ...(symParam ? [['sym', symParam]] : [])])),
+    [pickParam, symParam],
+  )
+  const sel = focus.pick
+  const key = focusKey(focus)
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   // The Desk's Decide lane hands a Research proposal over as a prefilled New
-  // opportunity (design DECISIONS 2026-09-18). It arrives in router state
-  // rather than the URL because it is a form's worth of fields, and the sheet
-  // opens from the first render rather than from an effect — a form that
-  // appeared one frame late would read as a click that missed.
+  // opportunity (design DECISIONS 2026-09-18), in router state; consumed once.
   const location = useLocation()
   const navigate = useNavigate()
   const handedPrefill = (location.state as { opportunityPrefill?: PrefillData } | null)?.opportunityPrefill
   const [sheet, setSheet] = useState<RulesSheet>(() =>
     handedPrefill == null ? NO_SHEET : { kind: 'opportunity', prefill: handedPrefill },
   )
-  // Consumed once: the entry stays in history, so without this a Back to this
-  // page would re-open the sheet on a proposal already turned into a rule.
   useEffect(() => {
     if (handedPrefill == null) return
     navigate(location.pathname + location.search, { replace: true, state: null })
@@ -100,10 +117,7 @@ export default function TradeRulesPage() {
   const status = useMonitorStatus()
   const { data, rawInstances, loading, error, refetch } = useRulesChain()
 
-  /**
-   * What the daemon's own config points at — a different store from the
-   * allocation row's `is_active`, and the one `Set active` writes.
-   */
+  /** What the daemon's own config points at — the store `Set active` writes. */
   const daemon = useMemo(
     () => ({ allocationId: status.data?.strategy?.active?.allocation?.id ?? null }),
     [status.data?.strategy?.active?.allocation?.id],
@@ -112,41 +126,125 @@ export default function TradeRulesPage() {
   const qc = useQueryClient()
   const [duplicating, setDuplicating] = useState(false)
 
-  /**
-   * The instance list's filters, with the metrics table they belonged to.
-   *
-   * Held in component state rather than the URL, unlike everything else on this
-   * page. The chain's address is `?pick=`; this is a narrowing *within* what
-   * was picked. Reusing the old page's URL sync was the first attempt and it
-   * encodes that page's defaults — it drops `since=q` from the URL as its
-   * default and drops an empty `since` too, so this page's All and that page's
-   * quarter would have become the same address meaning different things. The
-   * one thing that genuinely needs an address is a single instance, and that
-   * is `Open sheet →` on Positions.
-   *
-   * All, not a quarter: the column says "every one of them, whatever the filter
-   * shows", and a default window would make that sentence false.
-   */
-  const [instanceFilters, setInstanceFilters] = useState<InstanceListFilterValues>({
-    status: '',
-    structure: '',
-    symbol: '',
-    right: '',
-    expiry: '',
-    since: '',
-  })
+  // The list's narrowing within a focus — component state, restored per step.
+  const [instanceFilters, setInstanceFilters] = useState<InstanceListFilterValues>(NO_FILTERS)
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
-  /**
-   * Held for comparison. The two open side by side in the shared sheet, which
-   * is where the sheet is — so the pair has an address (`?instance=&vs=`) and
-   * the chain keeps only the pick.
-   */
+  const [flat, setFlat] = useState(false)
+  const [boardSort, setBoardSort] = useState<BoardSort>('pnl')
+  const [chainOpen, setChainOpen] = useState(false)
+  const [orphansOnly, setOrphansOnly] = useState(false)
+  const [symQ, setSymQ] = useState('')
+  /** Held for comparison — the pair opens side by side in the shared sheet. */
   const [compareWith, setCompareWith] = useState<number | null>(null)
+  /** The list an instance was opened from, so the record can step `[ ]` through it. */
+  const [siblings, setSiblings] = useState<{ ids: number[]; from: string } | null>(null)
+
+  // ── The path ────────────────────────────────────────────────────────────
+  const [trail, setTrail] = useState<string[]>([])
+  const snapshots = useRef(new Map<string, Snapshot>())
+  const live = useRef<Snapshot>({ filters: NO_FILTERS, collapsed: {}, flat: false, boardSort: 'pnl', scroll: 0 })
+  // Declared before the focus effect on purpose: on the commit that changes the
+  // focus this runs first, while the state (and the scroll) is still the step
+  // being left — which is exactly what the snapshot has to hold.
+  useEffect(() => {
+    live.current = { filters: instanceFilters, collapsed: collapsedGroups, flat, boardSort, scroll: scroller()?.scrollTop ?? 0 }
+  })
+  const lastKey = useRef(key)
+  // A new focus: remember what the step left, extend or truncate the path,
+  // and bring back what this step had when it was last left.
+  useEffect(() => {
+    const leaving = lastKey.current
+    if (leaving === key) return
+    lastKey.current = key
+    snapshots.current.set(leaving, live.current)
+    setTrail((t) => stepTrail(t, leaving, key))
+    const back = snapshots.current.get(key)
+    setInstanceFilters(back?.filters ?? NO_FILTERS)
+    setCollapsedGroups(back?.collapsed ?? {})
+    setFlat(back?.flat ?? false)
+    setBoardSort(back?.boardSort ?? 'pnl')
+    setChainOpen(false)
+    setCompareWith(null)
+    requestAnimationFrame(() => {
+      const el = scroller()
+      if (el) el.scrollTop = back?.scroll ?? 0
+    })
+  }, [key])
+
+  const nav = useCallback(
+    (next: Focus, opts?: { replace?: boolean }) => {
+      if (focusKey(next) === key) return
+      navigate({ search: focusSearch(next) }, { replace: opts?.replace ?? false })
+    },
+    [key, navigate],
+  )
+  const back = useCallback(() => {
+    if (trail.length) nav(focusOfKey(trail[trail.length - 1]))
+    else if (hasFocus(focus)) nav(NO_FOCUS)
+  }, [trail, focus, nav])
+
+  const pickIt = (next: ChainSelection, sib?: { ids: number[]; from: string }) => {
+    const same = sel != null && sel.kind === next.kind && sel.id === next.id
+    if (same) {
+      back()
+      return
+    }
+    const keepSym = focus.sym != null && next.id != null && touches(next, focus.sym, data)
+    if (next.kind === 'instance' && next.id != null) setSiblings(sib ?? null)
+    nav({ pick: next, sym: keepSym ? focus.sym : null })
+  }
+  const setSym = (raw: string | null, keepPick: boolean) => {
+    const sym = normSym(raw)
+    if (!sym || sym === focus.sym) {
+      nav({ pick: focus.pick, sym: null })
+      return
+    }
+    const keep = keepPick && sel != null && sel.id != null && touches(sel, sym, data)
+    setSymQ('')
+    nav({ sym, pick: keep ? sel : null })
+  }
+  /** `[` `]` — within the list the instance came from; replaces, never adds to Back. */
+  const step = (dir: -1 | 1) => {
+    if (sel?.kind !== 'instance' || sel.id == null || !siblings) return
+    const j = siblings.ids.indexOf(sel.id) + dir
+    const id = siblings.ids[j]
+    if (id == null) return
+    const nextFocus = { pick: { kind: 'instance' as const, id }, sym: null }
+    // The path treats a step as the same place: carry the key over by hand.
+    lastKey.current = focusKey(nextFocus)
+    navigate({ search: focusSearch(nextFocus) }, { replace: true })
+  }
+
+  const stepRef = useRef(step)
+  const backRef = useRef(back)
+  useEffect(() => {
+    stepRef.current = step
+    backRef.current = back
+  })
+  const sheetOpen = sheet.kind !== NO_SHEET.kind || setActiveFor !== undefined
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+      if (sheetOpen || document.querySelector('[role="dialog"][data-state="open"]')) return
+      if (e.key === '[' || e.key === ']') {
+        stepRef.current(e.key === '[' ? -1 : 1)
+        return
+      }
+      if (e.key === 'Escape' || (e.altKey && e.key === 'ArrowLeft')) {
+        if (e.altKey) e.preventDefault()
+        if (compareWith != null && e.key === 'Escape') setCompareWith(null)
+        else backRef.current()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sheetOpen, compareWith])
 
   /**
    * A copy carries the whole rule, so the detail is fetched first — the list
-   * row has neither the symbols nor the entry conditions, and a copy missing
-   * its conditions would be a different rule under the same name.
+   * row has no entry conditions, and a copy missing them would be a different
+   * rule under the same name.
    */
   async function duplicateOpportunity(id: number) {
     setDuplicating(true)
@@ -162,56 +260,44 @@ export default function TradeRulesPage() {
     }
   }
 
-  const columns = useMemo(
-    () => buildChain(data, sel, activeOnly === 'active', daemon),
-    [data, sel, activeOnly, daemon],
-  )
+  const lit = useMemo(() => focusLineage(focus, data), [focus, data])
+  const columns = useMemo(() => {
+    const cols = buildChain(data, sel, activeOnly === 'active', daemon, lit)
+    if (!orphansOnly) return cols
+    return cols.map((c) =>
+      c.key === 'opportunity' ? { ...c, cards: c.cards.filter((k) => k.tag === 'no allocation') } : c,
+    )
+  }, [data, sel, activeOnly, daemon, lit, orphansOnly])
 
-
-  // Counted over what the filter leaves visible, the same scope the columns
-  // draw — a banner about 25 opportunities above a column of 7 is a reader's
-  // problem, not a subtlety.
   const visible = useMemo(() => visibleChain(data, activeOnly === 'active'), [data, activeOnly])
   const orphanOpps = orphanOpportunities(visible)
-  // A gate is drawn through the allocation that carries it, so one nothing
-  // carries would not be drawn at all — and it is still in the rulebook.
   const looseGates = orphanGates(data)
   /**
-   * The strategy service intermittently answers HTTP 200 with an empty list,
-   * and the same call seconds later returns the lot (measured 2026-09-18 on DEV,
-   * on both `/instances` and `/win-rate`). An empty 200 is indistinguishable
-   * from an empty book — so when the rulebook has opportunities but the service
-   * returned no instance at all, the page says the service answered empty
-   * instead of printing "0 open · 0 closed" over a book with eighty-seven.
+   * The strategy service intermittently answers HTTP 200 with an empty list
+   * (measured 2026-09-18 on DEV): with opportunities but no instance at all,
+   * the page says the service answered empty rather than "0 open · 0 closed".
    */
   const instancesEmpty = data.opportunities.length > 0 && data.instances.length === 0
-  // The detail is the record, so it keeps the closed history the filter hides —
-  // and names the active count wherever the two numbers differ.
-  const detail = useMemo(() => detailOf(sel, data, visible, daemon), [sel, data, visible, daemon])
 
-  /**
-   * The picked thing's instances, as records — the chain reads them as
-   * `InstanceReading`, the list needs the server's own rows.
-   */
-  const scopedInstances = useMemo(() => {
-    const ids = new Set((detail?.rows ?? []).map((r) => r.id))
-    return rawInstances.filter((i) => ids.has(i.strategy_instance_id))
-  }, [detail?.rows, rawInstances])
-
-  const book = useInstanceBook({
-    instances: scopedInstances,
-    opportunities: data.opportunities,
-    values: instanceFilters,
+  // Entry conditions live only on the opportunity's own record.
+  const oppDetail = useQuery({
+    queryKey: opportunityDetailKey(sel?.kind === 'opportunity' && sel.id != null ? sel.id : -1),
+    queryFn: () => fetchOpportunityDetail(sel!.id!),
+    enabled: sel?.kind === 'opportunity' && sel.id != null,
+    staleTime: 120_000,
   })
 
   /**
    * What the selected thing can have done to it. A gate has no column of its
-   * own, so editing it hangs off the allocation that applies it — which is
-   * where its scope lives (design DECISIONS 2026-09-18).
+   * own, so editing it hangs off the allocation that applies it.
    */
-  const detailActions = (kind: ChainSelection['kind']) => {
-    // A whole column has no single thing to act on — the actions belong to a
-    // card, and the list below is the answer for the column.
+  const detailActions = (kind: ChainSelection['kind'] | 'symbol'): RecordAction[] => {
+    if (kind === 'symbol' && focus.sym) {
+      return [
+        { label: `Research ${focus.sym} →`, to: withSymbolParam(SYMBOL_PATH, focus.sym) },
+        { label: 'Positions →', to: '/portfolio/positions', title: 'Where its open legs are marked' },
+      ]
+    }
     if (sel == null || sel.id == null) return []
     const id = sel.id
     if (kind === 'structure') {
@@ -236,8 +322,7 @@ export default function TradeRulesPage() {
       const gateId = data.allocations.find((a) => a.strategy_allocation_id === id)?.gate_safety_strategy_id
       const isDaemons = daemon.allocationId === id
       return [
-        // The one active switch the design keeps. It edits the daemon's config,
-        // not the allocation's own on-the-books flag, and it is a separate act
+        // The one active switch: it edits the daemon's config, a separate act
         // from saving the definition (design DECISIONS 2026-09-18).
         {
           label: isDaemons ? 'Clear active' : 'Set active',
@@ -265,14 +350,14 @@ export default function TradeRulesPage() {
       const reading = data.instances.find((r) => r.id === id)
       const record = rawInstances.find((r) => r.strategy_instance_id === id)
       if (record == null) return []
-      // The guard the design asks for, and the honest form of it: an instance
-      // the fills have claimed cannot be deleted, and the reason is on the
-      // action rather than behind it.
+      // An instance the fills have claimed cannot be deleted, and the reason
+      // is on the action rather than behind it.
       const blocked = (reading?.fills ?? 0) > 0
       return [
-        // The shared sheet (Positions) — its Overview, PnL, executions and
-        // chart. Addressable by id, so a closed instance has an entrance too.
-        { label: 'Open sheet →', to: `/portfolio/positions?instance=${id}` },
+        ...(reading?.closed
+          ? [{ label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade — actual vs plan vs best available' }]
+          : []),
+        { label: 'Open sheet →', to: `/portfolio/positions?instance=${id}`, title: 'The shared sheet on Positions' },
         {
           label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
           onClick: () => {
@@ -288,125 +373,207 @@ export default function TradeRulesPage() {
     return []
   }
 
-  const pick = (next: ChainSelection) => {
-    const same = sel != null && sel.kind === next.kind && sel.id === next.id
-    setParams(same ? {} : { pick: formatPick(next) }, { replace: true })
+  const record = useMemo(
+    () =>
+      buildRecord({
+        focus,
+        data,
+        daemonAllocationId: daemon.allocationId,
+        conditions:
+          sel?.kind === 'opportunity' ? (oppDetail.isSuccess ? oppDetail.data.entry_conditions ?? [] : undefined) : undefined,
+        boardSort,
+        actions: detailActions(sel ? sel.kind : focus.sym ? 'symbol' : 'structure'),
+        siblings,
+        on: { pick: (s2) => pickIt(s2), setSym, step },
+      }),
+    // detailActions / pickIt / setSym / step close over state already listed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [focus, data, daemon.allocationId, oppDetail.isSuccess, oppDetail.data, boardSort, siblings, duplicating, rawInstances, trail],
+  )
+
+  /** The picked thing's instances, as records — the list needs the server's rows. */
+  const scopedInstances = useMemo(() => {
+    const ids = new Set(record?.scopedIds ?? [])
+    return rawInstances.filter((i) => ids.has(i.strategy_instance_id))
+  }, [record?.scopedIds, rawInstances])
+
+  const book = useInstanceBook({
+    instances: scopedInstances,
+    opportunities: data.opportunities,
+    values: instanceFilters,
+  })
+
+  // ── Names for the path ──────────────────────────────────────────────────
+  const nameOf = (f: Focus): string => {
+    if (!f.pick && !f.sym) return 'Rules'
+    let n = ''
+    if (f.pick) {
+      const id = f.pick.id
+      if (id == null) n = 'Every instance'
+      else if (f.pick.kind === 'opportunity') n = data.opportunities.find((o) => o.strategy_opportunity_id === id)?.name ?? `opportunity ${id}`
+      else if (f.pick.kind === 'structure') n = data.structures.find((s) => s.strategy_structure_id === id)?.name ?? `structure ${id}`
+      else if (f.pick.kind === 'allocation') n = data.allocations.find((a) => a.strategy_allocation_id === id)?.name ?? `allocation ${id}`
+      else n = `#${id}${(() => { const r = data.instances.find((i) => i.id === id); return r ? ` · ${r.symbolish}` : '' })()}`
+    }
+    return f.sym ? (n ? `${n} · ${f.sym}` : f.sym) : n
   }
+  const crumbs: Crumb[] = (() => {
+    let out: Crumb[] = trail.map((k, i) => ({ label: nameOf(focusOfKey(k)), go: () => nav(focusOfKey(trail[i])) }))
+    if (!trail.length || hasFocus(focusOfKey(trail[0]))) out.unshift({ label: 'Rules', go: () => nav(NO_FOCUS) })
+    if (out.length > 4) out = [out[0], { label: '…' }, ...out.slice(-3)]
+    out.push({ label: nameOf(focus) })
+    return out
+  })()
+  const backTitle = `Esc or ⌥← · back to ${trail.length ? nameOf(focusOfKey(trail[trail.length - 1])) : 'Rules'}`
+
+  const symbols = useMemo(() => allSymbols(data), [data])
+  const focused = hasFocus(focus)
+  const fromLabel = record
+    ? `${record.title}${focus.sym && record.kind !== 'symbol' ? ` · ${focus.sym}` : ''}`
+    : ''
 
   return (
     <PageShell padding="compact" className="space-y-3">
-        <PageHead
-          title="Rules"
-          info={PAGE_LEAD}
-          actions={
-            <>
-              <PageHeadLink to="/risk/limits" title="Where a gate's hits land">
-                Breaches · Risk Limits →
-              </PageHeadLink>
-              <PageHeadLink to="/review/playbook-stats" title="Does it pay?">
-                Playbook stats →
-              </PageHeadLink>
-              {/* The snapshot is what the reader is looking at, not the whole
-                  rulebook: the chain plus whatever the selection narrows it to,
-                  so the chat starts where the eye is. */}
-              <AskCopilotButton
-                originPage="trade-rules"
-                originLabel="Trade Rules"
-                size="dense"
-                snapshot={compactSnapshot({
-                  structures: data.structures.length,
-                  opportunities: data.opportunities.length,
-                  opportunities_in_no_allocation: orphanOpps || undefined,
-                  allocations: data.allocations.length,
-                  gates: data.gates.length,
-                  gates_carried_by_no_allocation: looseGates.length || undefined,
-                  instances_open: data.instances.filter((i) => !i.closed).length,
-                  instances_closed: data.instances.filter((i) => i.closed).length,
-                  daemon_allocation_id: daemon.allocationId ?? undefined,
-                  selected: sel == null ? undefined : `${sel.kind}:${sel.id}`,
-                  instances_in_view: scopedInstances.length || undefined,
-                })}
-                suggestedPrompt="这条规则链目前的结构合理吗？哪些机会没有被配置覆盖，哪些闸门形同虚设？"
-              />
-            </>
-          }
-        />
-
-        <div data-sr-toolbar="" role="toolbar" aria-label="Show">
-          <span data-sr-tb="label">Show</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Show"
-            value={activeOnly}
-            onChange={setActiveOnly}
-            options={[
-              { value: 'active', label: 'Active' },
-              { value: 'all', label: 'All' },
-            ]}
-          />
-          <span className="text-dense-label text-muted-foreground">
-            {sel ? 'Lineage lit; everything else dimmed. Click it again to release.' : 'Click any card to light its lineage across the four columns.'}
-          </span>
-          {sel ? (
-            <span data-sr-tb="meta">
-              <button type="button" className={positionsUi.link} onClick={() => setParams({}, { replace: true })}>
-                Clear selection
-              </button>
-            </span>
-          ) : null}
-        </div>
-
-        {error ? <QueryErrorAlert error={error} onRetry={refetch} /> : null}
-        {loading ? (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18.75rem),1fr))] gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-64 w-full rounded-md" />
-            ))}
-          </div>
-        ) : (
+      <PageHead
+        title="Rules"
+        info={PAGE_LEAD}
+        actions={
           <>
-            {instancesEmpty ? (
-              <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-warning/40 bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                <span className="font-semibold text-warning">The strategy service returned no instances.</span>
-                The rulebook has {data.opportunities.length} opportunities, so this is the service answering empty
-                rather than a chain with nothing running — it does that now and then and answers in full a moment
-                later.
-                <button type="button" className={positionsUi.btn} onClick={refetch}>
-                  Ask again
-                </button>
-              </p>
-            ) : null}
+            <PageHeadLink to="/risk/limits" title="Where a gate's hits land">
+              Breaches · Risk Limits →
+            </PageHeadLink>
+            <PageHeadLink to="/review/playbook-stats" title="Does it pay?">
+              Playbook stats →
+            </PageHeadLink>
+            {/* The snapshot is what the reader is looking at: the chain plus
+                whatever the focus narrows it to. */}
+            <AskCopilotButton
+              originPage="trade-rules"
+              originLabel="Trade Rules"
+              size="dense"
+              snapshot={compactSnapshot({
+                structures: data.structures.length,
+                opportunities: data.opportunities.length,
+                opportunities_in_no_allocation: orphanOpps || undefined,
+                allocations: data.allocations.length,
+                gates: data.gates.length,
+                gates_carried_by_no_allocation: looseGates.length || undefined,
+                instances_open: data.instances.filter((i) => !i.closed).length,
+                instances_closed: data.instances.filter((i) => i.closed).length,
+                daemon_allocation_id: daemon.allocationId ?? undefined,
+                selected: sel == null ? undefined : `${sel.kind}:${sel.id}`,
+                symbol: focus.sym ?? undefined,
+                instances_in_view: scopedInstances.length || undefined,
+              })}
+              suggestedPrompt="这条规则链目前的结构合理吗？哪些机会没有被配置覆盖，哪些闸门形同虚设？"
+            />
+          </>
+        }
+      />
 
-            {orphanOpps > 0 ? (
-              <p className="m-0 rounded-md border border-warning/40 bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                <span className="font-semibold text-warning">
-                  {orphanOpps} of {visible.opportunities.length} opportunities sit in no allocation.
-                </span>{' '}
-                Nothing tells the daemon to run them, and an instance opened under one inherits no gate — which is
-                what &ldquo;ran outside rules&rdquo; means on the instance detail below.
-              </p>
-            ) : null}
+      <div data-sr-toolbar="" role="toolbar" aria-label="Rules">
+        <span data-sr-tb="label">Show</span>
+        <SegmentControl
+          size="xs"
+          ariaLabel="Show"
+          value={activeOnly}
+          onChange={setActiveOnly}
+          options={[
+            { value: 'active', label: 'Active' },
+            { value: 'all', label: 'All' },
+          ]}
+        />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Symbol</span>
+        <input
+          value={symQ}
+          onChange={(e) => {
+            const v = e.target.value.toUpperCase()
+            // A datalist pick arrives as a whole value in one event.
+            const native = e.nativeEvent as InputEvent
+            if ((native.inputType === 'insertReplacementText' || native.inputType == null) && symbols.includes(v)) {
+              setSym(v, true)
+            } else setSymQ(v)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const v = normSym(symQ)
+              if (v && symbols.includes(v)) setSym(v, true)
+            }
+            if (e.key === 'Escape') setSymQ('')
+          }}
+          list="rules-syms"
+          placeholder="RKLB ↵"
+          aria-label="Symbol"
+          className={`${positionsUi.input} h-6 w-24 font-mono uppercase`}
+        />
+        <datalist id="rules-syms">
+          {symbols.map((y) => (
+            <option key={y} value={y} />
+          ))}
+        </datalist>
+        {symQ && normSym(symQ) && !symbols.includes(normSym(symQ)!) ? (
+          <span className="text-dense-meta text-muted-foreground">{normSym(symQ)} is in no scope and ran nowhere</span>
+        ) : null}
+        <span data-sr-tb="meta" className="flex flex-none items-center gap-2.5">
+          {!focused ? (
+            <span className="text-dense-label text-muted-foreground">
+              Pick a card for its record · pick a symbol for every rule that can act on it
+            </span>
+          ) : (
+            <button type="button" className={positionsUi.link} onClick={() => nav(NO_FOCUS)}>
+              Release
+            </button>
+          )}
+        </span>
+      </div>
 
-            {looseGates.length > 0 ? (
-              <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-                <span className="font-semibold text-secondary-foreground">
-                  {looseGates.length} {looseGates.length === 1 ? 'gate is' : 'gates are'} carried by no allocation.
-                </span>
-                A gate’s scope is an allocation, so these bound nothing — they are listed because they are still in the
-                rulebook and nothing else on this page would draw them.
-                {looseGates.map((g) => (
-                  <button
-                    key={g.gate_safety_strategy_id}
-                    type="button"
-                    className={positionsUi.btn}
-                    onClick={() => setSheet({ kind: 'gate', mode: { kind: 'edit', id: g.gate_safety_strategy_id } })}
-                  >
-                    {g.name} · v{g.version}
-                  </button>
-                ))}
-              </p>
-            ) : null}
+      {error ? <QueryErrorAlert error={error} onRetry={refetch} /> : null}
+      {loading ? (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18.75rem),1fr))] gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-64 w-full rounded-md" />
+          ))}
+        </div>
+      ) : (
+        <>
+          {instancesEmpty ? (
+            <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-warning/40 bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+              <span className="font-semibold text-warning">The strategy service returned no instances.</span>
+              The rulebook has {data.opportunities.length} opportunities, so this is the service answering empty
+              rather than a chain with nothing running — it does that now and then and answers in full a moment later.
+              <button type="button" className={positionsUi.btn} onClick={refetch}>
+                Ask again
+              </button>
+            </p>
+          ) : null}
 
+          <RulesReadings
+            data={visible}
+            loose={looseGates}
+            daemonAllocationId={daemon.allocationId}
+            orphansOnly={orphansOnly}
+            onDaemon={(id) => pickIt({ kind: 'allocation', id })}
+            onToggleOrphans={() => setOrphansOnly((v) => !v)}
+            onGate={(g) => setSheet({ kind: 'gate', mode: { kind: 'edit', id: g.gate_safety_strategy_id } })}
+          />
+
+          {focused && lit ? (
+            <LineageBar
+              data={data}
+              focus={focus}
+              lit={lit}
+              crumbs={crumbs}
+              backTitle={backTitle}
+              onBack={back}
+              onPick={(s2) => pickIt(s2)}
+              onClearSym={() => setSym(null, true)}
+              chainOpen={chainOpen}
+              onToggleChain={() => setChainOpen((v) => !v)}
+            />
+          ) : null}
+
+          {!focused || chainOpen ? (
             <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18.75rem),1fr))] items-start gap-3">
               {columns.map((column) => (
                 <ChainColumnList
@@ -414,106 +581,126 @@ export default function TradeRulesPage() {
                   column={column}
                   expanded={Boolean(expanded[column.key])}
                   onExpand={() => setExpanded((e) => ({ ...e, [column.key]: true }))}
-                  onPick={pick}
+                  onPick={(s2) => pickIt(s2)}
                   onNew={() => setSheet(NEW_SHEET[column.key])}
-                  onPickAll={
-                    column.key === 'instance' ? () => pick({ kind: 'instance', id: null }) : undefined
-                  }
+                  onPickAll={column.key === 'instance' ? () => pickIt({ kind: 'instance', id: null }) : undefined}
+                  onSym={(y) => setSym(y, false)}
+                  activeSym={focus.sym}
                 />
               ))}
             </div>
+          ) : null}
 
-            {detail ? (
-              <ChainDetailPanel
-                detail={detail}
-                actions={detailActions(detail.kind)}
-                rows={
-                  scopedInstances.length === 0 ? null : (
-                    <div className="flex flex-col gap-2 border-t border-border px-3 py-2.5">
-                      <InstanceListFilters
-                        options={book.filterOptions}
-                        values={instanceFilters}
-                        sinceRangeText={book.sinceRangeText}
-                        filteredCount={book.filtered.length}
-                        totalCount={scopedInstances.length}
-                        onChange={(patch) => setInstanceFilters((prev) => ({ ...prev, ...patch }))}
-                        onClear={() =>
-                          setInstanceFilters({ status: '', structure: '', symbol: '', right: '', expiry: '', since: '' })
-                        }
-                        onExpandAll={() =>
-                          setCollapsedGroups((prev) =>
-                            createCollapsedGroupsState(book.groups, 'multi', prev, 'expandAll'),
-                          )
-                        }
-                        onCollapseAll={() =>
-                          setCollapsedGroups((prev) =>
-                            createCollapsedGroupsState(book.groups, 'multi', prev, 'collapseAll'),
-                          )
-                        }
-                        showGroupToolbar={book.groups.length > 0}
-                      />
-                      <InstancesGroupedTable
-                        groups={book.groups}
-                        metricsMap={book.metricsMap}
-                        detailViewMode="multi"
-                        collapsedGroups={collapsedGroups}
-                        onToggleGroup={(key) =>
-                          setCollapsedGroups((prev) =>
-                            createCollapsedGroupsState(book.groups, 'multi', prev, 'toggle', key),
-                          )
-                        }
-                        onViewDetail={(inst) =>
-                          navigate(`/portfolio/positions?instance=${inst.strategy_instance_id}`)
-                        }
-                        onCompare={(inst) => {
-                          const id = inst.strategy_instance_id
-                          if (compareWith == null || compareWith === id) {
-                            setCompareWith(compareWith === id ? null : id)
-                            return
-                          }
-                          navigate(`/portfolio/positions?instance=${compareWith}&vs=${id}`)
-                        }}
-                        activeDetailId={sel?.kind === 'instance' ? sel.id : null}
-                        compareId={compareWith}
-                        compareAnywhere
-                      />
-                      {compareWith != null ? (
-                        <p className="m-0 flex flex-wrap items-center gap-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                          <span className="font-semibold text-secondary-foreground">
-                            #{compareWith} is held for comparison.
+          {record ? (
+            <RulesRecord model={record} boardSort={boardSort} onBoardSort={setBoardSort}>
+              {record.hasTable ? (
+                scopedInstances.length === 0 ? (
+                  <p className="m-0 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3.5 py-4 text-dense-label text-[var(--sk-mute2)]">
+                    Nothing has run under this yet.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-2 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3 py-2.5">
+                    <InstanceListFilters
+                      options={book.filterOptions}
+                      values={instanceFilters}
+                      sinceRangeText={book.sinceRangeText}
+                      filteredCount={book.filtered.length}
+                      totalCount={scopedInstances.length}
+                      onChange={(patch) => setInstanceFilters((prev) => ({ ...prev, ...patch }))}
+                      onClear={() => setInstanceFilters(NO_FILTERS)}
+                      hideSymbol
+                      onExpandAll={() =>
+                        setCollapsedGroups((prev) => createCollapsedGroupsState(book.groups, 'multi', prev, 'expandAll'))
+                      }
+                      onCollapseAll={() =>
+                        setCollapsedGroups((prev) => createCollapsedGroupsState(book.groups, 'multi', prev, 'collapseAll'))
+                      }
+                      showGroupToolbar={book.groups.length > 0}
+                      groupSlot={
+                        // Grouping by symbol only means something with more than one.
+                        !focus.sym && book.groups.length > 1 ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-dense-micro font-semibold text-muted-foreground">Group</span>
+                            <SegmentControl
+                              size="xs"
+                              ariaLabel="Group"
+                              value={flat ? 'none' : 'symbol'}
+                              onChange={(v) => setFlat(v === 'none')}
+                              options={[
+                                { value: 'symbol', label: 'Symbol' },
+                                { value: 'none', label: 'None' },
+                              ]}
+                            />
                           </span>
-                          Pick a second instance’s ⇄ to open the two side by side in the shared sheet.
-                          <button type="button" className={positionsUi.btn} onClick={() => setCompareWith(null)}>
-                            Drop it
-                          </button>
-                        </p>
-                      ) : null}
-                    </div>
-                  )
-                }
-              />
-            ) : null}
+                        ) : undefined
+                      }
+                    />
+                    <InstancesGroupedTable
+                      groups={book.groups}
+                      metricsMap={book.metricsMap}
+                      detailViewMode="multi"
+                      collapsedGroups={collapsedGroups}
+                      onToggleGroup={(k) =>
+                        setCollapsedGroups((prev) => createCollapsedGroupsState(book.groups, 'multi', prev, 'toggle', k))
+                      }
+                      flat={flat || focus.sym != null}
+                      showOpportunity={record.multiOpp}
+                      onDrill={(inst, ids) =>
+                        pickIt({ kind: 'instance', id: inst.strategy_instance_id }, { ids, from: fromLabel })
+                      }
+                      onSym={(y) => setSym(y, true)}
+                      onViewDetail={(inst) => navigate(`/portfolio/positions?instance=${inst.strategy_instance_id}`)}
+                      onCompare={(inst) => {
+                        const id = inst.strategy_instance_id
+                        if (compareWith == null || compareWith === id) {
+                          setCompareWith(compareWith === id ? null : id)
+                          return
+                        }
+                        navigate(`/portfolio/positions?instance=${compareWith}&vs=${id}`)
+                      }}
+                      activeDetailId={null}
+                      compareId={compareWith}
+                      compareAnywhere
+                    />
+                    <p className="m-0 text-dense-micro text-muted-foreground">
+                      <span className="text-[var(--color-unrealized)]">orange</span> = open, unrealized · Realised
+                      counts closed only
+                    </p>
+                    {compareWith != null ? (
+                      <p className="m-0 flex flex-wrap items-center gap-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                        <span className="font-semibold text-secondary-foreground">#{compareWith} is held for comparison.</span>
+                        Pick a second instance’s ⇄ to open the two side by side in the shared sheet.
+                        <button type="button" className={positionsUi.btn} onClick={() => setCompareWith(null)}>
+                          Drop it
+                        </button>
+                      </p>
+                    ) : null}
+                  </div>
+                )
+              ) : null}
+            </RulesRecord>
+          ) : null}
 
-            <RulesSheets sheet={sheet} onClose={() => setSheet(NO_SHEET)} status={status.data} />
+          <RulesSheets sheet={sheet} onClose={() => setSheet(NO_SHEET)} status={status.data} />
 
-            <SetActiveDialog
-              open={setActiveFor !== undefined}
-              data={data}
-              allocationId={setActiveFor ?? null}
-              currentStructureId={status.data?.strategy?.active?.structure?.id ?? null}
-              onClose={() => setSetActiveFor(undefined)}
-            />
+          <SetActiveDialog
+            open={setActiveFor !== undefined}
+            data={data}
+            allocationId={setActiveFor ?? null}
+            currentStructureId={status.data?.strategy?.active?.structure?.id ?? null}
+            onClose={() => setSetActiveFor(undefined)}
+          />
 
-            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-              <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing writes from a card
-              click. Editing opens the Strategy pages&rsquo; own forms, so a rule changed here and one changed there
-              are the same write with the same validation. Activating an allocation is what the daemon reads on its
-              next start, which is why it sits behind a form with a confirm. An instance the fills have claimed
-              cannot be deleted at all — unlink them on the Trade Ledger first, or the fills are orphaned. None of
-              this is an order: D10 governs the desk, not the rulebook.
-            </p>
-          </>
-        )}
+          <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
+            <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing writes from a click on
+            this page. Edit and Duplicate open the Strategy pages&rsquo; own forms, so a rule changed here and one
+            changed there are the same write with the same validation. Activating an allocation is what the daemon
+            reads on its next start, which is why it sits behind a form with a confirm. An instance the fills have
+            claimed cannot be deleted at all — unlink them on the Trade Ledger first, or the fills are orphaned. None
+            of this is an order: D10 governs the desk, not the rulebook.
+          </p>
+        </>
+      )}
     </PageShell>
   )
 }

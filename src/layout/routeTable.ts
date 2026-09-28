@@ -433,9 +433,11 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Rules',
     crumbs: TRADE_DESK,
     design: {
-      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
+      // Rev .101 redo (Trade Rules.dc.html) — batch R1 built the skeleton:
+      // readings, lineage bar, the pushed back path, the symbol lens, the four
+      // records and the scope board. The InstanceRecord face is R2.
       state: 'reviewing',
-      rev: '2026-09-25.82',
+      rev: '2026-09-28.1',
       note: DESIGN_NOTES['/trade/rules'],
     },
   },

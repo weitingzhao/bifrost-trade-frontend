@@ -142,15 +142,16 @@ describe('the equipment rail', () => {
     // `valve`, which is the point of keying the two maps off one glyph table.
     expect(DESIGN_ROUTE_GLYPH['/research/loop/decisions']).toBe('valve')
     expect(DESIGN_EQUIP_ROUTE_GLYPH['/research/loop/decisions']).toBe('valve')
-    for (const path of [
-      '/research/loop/harness',
-      '/research/book',
-      '/research/journal',
-      '/research/copilot',
-    ]) {
+    for (const path of ['/research/loop/harness', '/research/book', '/research/journal']) {
       expect(DESIGN_ROUTE_GLYPH[path], path).toBeUndefined()
       expect(DESIGN_EQUIP_ROUTE_GLYPH[path], path).toBeTruthy()
     }
+    // Rev .100: the Copilot pod's hub left the toolbar (Desk merged into the
+    // Pilot Console), and its `bubble` moved to Personas — the Console's own
+    // entrance to the bench. The app's rail still carries the Copilot hub
+    // until the Rev .100 round (R4) lands.
+    expect(DESIGN_EQUIP_ROUTE_GLYPH['/research/copilot']).toBeUndefined()
+    expect(DESIGN_EQUIP_ROUTE_GLYPH['/research/agent-personas']).toBe('bubble')
     // Watchlist left the rail in Rev .56: it has neither a tree row nor a rail cell.
     expect(DESIGN_ROUTE_GLYPH['/research/watchlist']).toBeUndefined()
     expect(DESIGN_EQUIP_ROUTE_GLYPH['/research/watchlist']).toBeUndefined()

@@ -98,6 +98,17 @@ interface Props {
    * opens the pair. Opt-in so the older behaviour is unchanged.
    */
   compareAnywhere?: boolean
+  /** Trade › Rules' Group: None — rows without symbol headers (Rev .101). */
+  flat?: boolean
+  /** Hide the Opportunity column when the scope holds one opportunity (Rev .101). */
+  showOpportunity?: boolean
+  /**
+   * `#id` opens the instance where the reader stands; the ids are the rows in
+   * the order drawn, so the record can step `[ ]` through the same list.
+   */
+  onDrill?: (instance: StrategyInstance, orderedIds: number[]) => void
+  /** A group header's ticker narrows the page to it (the symbol lens). */
+  onSym?: (sym: string) => void
 }
 
 function signedClass(n: number | null | undefined): string {
@@ -305,6 +316,10 @@ export function InstancesGroupedTable({
   activeDetailId,
   compareId,
   compareAnywhere = false,
+  flat = false,
+  showOpportunity = true,
+  onDrill,
+  onSym,
 }: Props) {
   const [sort, setSort] = useState<{ column: SortColumn; dir: SortDir } | null>(null)
 
@@ -332,6 +347,14 @@ export function InstancesGroupedTable({
     }))
   }, [groups, sort, metricsMap])
 
+  const orderedIds = useMemo(
+    () =>
+      sortedGroups.flatMap((g) =>
+        !flat && collapsedGroups[g.key] ? [] : g.rows.map((r) => r.strategy_instance_id),
+      ),
+    [sortedGroups, collapsedGroups, flat],
+  )
+
   if (groups.length === 0) {
     return <p className={instancesEmptyHintClass}>No instances found.</p>
   }
@@ -341,7 +364,7 @@ export function InstancesGroupedTable({
       <colgroup>
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.actions }} />
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.id }} />
-        <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.opp }} />
+        {showOpportunity ? <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.opp }} /> : null}
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.status }} />
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.period }} />
         <col style={{ width: INSTANCES_TABLE_COL_WIDTHS.net }} />
@@ -361,9 +384,11 @@ export function InstancesGroupedTable({
           <DenseTableHead rowSpan={2} className={cn(instancesColIdClass, 'normal-case tracking-normal')}>
             ID
           </DenseTableHead>
-          <DenseTableHead rowSpan={2} className={cn(instancesColOppClass, 'normal-case tracking-normal')}>
-            Opportunity
-          </DenseTableHead>
+          {showOpportunity ? (
+            <DenseTableHead rowSpan={2} className={cn(instancesColOppClass, 'normal-case tracking-normal')}>
+              Opportunity
+            </DenseTableHead>
+          ) : null}
           <DenseTableHead rowSpan={2} className={cn(instancesColStatusClass, 'normal-case tracking-normal')}>
             Status
           </DenseTableHead>
@@ -460,7 +485,31 @@ export function InstancesGroupedTable({
                       </>
                     ) : (
                       <>
-                        Symbol group: {group.label}
+                        Symbol group:{' '}
+                        {onSym && group.key !== '—' ? (
+                          <span
+                            role="link"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              // The header row toggles the fold; the ticker
+                              // is its own destination (the symbol lens).
+                              e.stopPropagation()
+                              onSym(group.key)
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.stopPropagation()
+                                onSym(group.key)
+                              }
+                            }}
+                            title={`Narrow to ${group.key}`}
+                            className="cursor-pointer font-mono font-bold text-[var(--sk-ticker)] hover:underline"
+                          >
+                            {group.label}
+                          </span>
+                        ) : (
+                          group.label
+                        )}
                         <span className={instancesGroupMutedClass}>
                           {' '}
                           ({group.rows.length} instance{group.rows.length !== 1 ? 's' : ''})
@@ -501,7 +550,7 @@ export function InstancesGroupedTable({
             </DenseTableSubheadRow>
           )
 
-          if (collapsed) return [headerRow]
+          if (collapsed && !flat) return [headerRow]
 
           const dataRows = group.rows.map((inst) => {
             const selected = activeDetailId === inst.strategy_instance_id
@@ -557,8 +606,20 @@ export function InstancesGroupedTable({
                 </div>
               </DenseTableCell>
               <DenseTableCell className={cn(instancesColIdClass, denseTableNumCell, 'text-muted-foreground')}>
-                {inst.strategy_instance_id}
+                {onDrill ? (
+                  <button
+                    type="button"
+                    onClick={() => onDrill(inst, orderedIds)}
+                    title={`Open #${inst.strategy_instance_id} here — Back returns to this list as it is now`}
+                    className="font-mono font-semibold text-[var(--sk-instance,#c084fc)] hover:underline"
+                  >
+                    #{inst.strategy_instance_id}
+                  </button>
+                ) : (
+                  inst.strategy_instance_id
+                )}
               </DenseTableCell>
+              {showOpportunity ? (
               <DenseTableCell className={instancesColOppClass}>
                 <div className={instancesOppCellClass}>
                   <div
@@ -578,6 +639,7 @@ export function InstancesGroupedTable({
                   ) : null}
                 </div>
               </DenseTableCell>
+              ) : null}
               <MetricsCells instanceId={inst.strategy_instance_id} metricsMap={metricsMap} />
               <DenseTableCell className={cn(denseTableNumCell, 'text-muted-foreground')}>
                 {inst.executions_count != null ? inst.executions_count : '—'}
@@ -586,7 +648,7 @@ export function InstancesGroupedTable({
             )
           })
 
-          return [headerRow, ...dataRows]
+          return flat ? dataRows : [headerRow, ...dataRows]
         })}
       </DenseTableBody>
     </DenseDataTable>

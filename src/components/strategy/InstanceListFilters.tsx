@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -77,6 +78,10 @@ interface Props {
   onExpandAll: () => void
   onCollapseAll: () => void
   showGroupToolbar: boolean
+  /** Trade › Rules narrows by symbol through the lens, not this row (Rev .101). */
+  hideSymbol?: boolean
+  /** Extra controls on the group row (Rules' Group: Symbol / None). */
+  groupSlot?: ReactNode
 }
 
 const SINCE_OPTIONS: { key: SinceFilter; label: string }[] = [
@@ -162,6 +167,8 @@ export function InstanceListFilters({
   onExpandAll,
   onCollapseAll,
   showGroupToolbar,
+  hideSymbol = false,
+  groupSlot,
 }: Props) {
   const hasActive =
     values.status !== '' ||
@@ -290,7 +297,8 @@ export function InstanceListFilters({
             )}
           </FilterRow>
 
-          {options.structures.length > 0 && (
+          {/* Rev .101: a filter with one value filters nothing — not drawn. */}
+          {options.structures.length > 1 && (
             <FilterRow label="Struct">
               <ToggleBubble active={values.structure === ''} onClick={() => onChange({ structure: '' })}>
                 All
@@ -308,7 +316,7 @@ export function InstanceListFilters({
             </FilterRow>
           )}
 
-          {options.symbols.length > 0 && (
+          {!hideSymbol && options.symbols.length > 0 && (
             <FilterRow label="Symbol">
               <ToggleBubble active={values.symbol === ''} onClick={() => onChange({ symbol: '' })}>
                 All
@@ -369,6 +377,7 @@ export function InstanceListFilters({
                 />
               </div>
               ) : null}
+              {groupSlot}
               <div className={instancesToolbarClass}>
                 <span className={instancesToolbarLabelClass}>Groups</span>
                 <Button type="button" variant="outline" size="sm" className="h-6 px-2 text-dense-caption" onClick={onExpandAll}>

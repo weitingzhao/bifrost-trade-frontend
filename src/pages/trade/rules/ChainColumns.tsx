@@ -23,6 +23,8 @@ export function ChainColumnList({
   onPick,
   onNew,
   onPickAll,
+  onSym,
+  activeSym,
 }: {
   column: ChainColumn
   expanded: boolean
@@ -32,6 +34,9 @@ export function ChainColumnList({
   onNew: () => void
   /** Given, the column's count picks the whole column rather than a card. */
   onPickAll?: () => void
+  /** A ticker on an opportunity card is the way into the symbol lens (Rev .101). */
+  onSym?: (sym: string) => void
+  activeSym?: string | null
 }) {
   const hidden = expanded ? 0 : Math.max(0, column.cards.length - COLUMN_CAP)
   const shown = expanded ? column.cards : column.cards.slice(0, COLUMN_CAP)
@@ -67,7 +72,7 @@ export function ChainColumnList({
           </p>
         ) : null}
         {shown.map((card) => (
-          <Card key={`${card.kind}-${card.id}`} card={card} onPick={onPick} />
+          <Card key={`${card.kind}-${card.id}`} card={card} onPick={onPick} onSym={onSym} activeSym={activeSym} />
         ))}
         {hidden > 0 ? (
           <button type="button" className={cn(positionsUi.link, 'self-start')} onClick={onExpand}>
@@ -79,16 +84,41 @@ export function ChainColumnList({
   )
 }
 
-function Card({ card, onPick }: { card: ChainCard; onPick: (sel: ChainSelection) => void }) {
+/** Chips shown on an opportunity card before "+N". */
+const SYM_CAP = 7
+
+function Card({
+  card,
+  onPick,
+  onSym,
+  activeSym,
+}: {
+  card: ChainCard
+  onPick: (sel: ChainSelection) => void
+  onSym?: (sym: string) => void
+  activeSym?: string | null
+}) {
+  const pick = () => onPick({ kind: card.kind, id: card.id })
+  const syms = card.symbols ?? []
   return (
-    <button
-      type="button"
+    // A div, not a button: the ticker chips inside are buttons of their own,
+    // and a button may not hold another. Keyboard reach is kept by hand.
+    <div
+      role="button"
+      tabIndex={0}
       aria-pressed={card.selected}
-      onClick={() => onPick({ kind: card.kind, id: card.id })}
+      onClick={pick}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          pick()
+        }
+      }}
       // The card material (1a); the picked card is the one active thing on
       // the page, so its edge and ground are the accent (Rev .82 §1).
       className={cn(
-        'min-w-0 cursor-pointer rounded-[var(--card-radius)] border px-2.5 py-2 text-left transition-[opacity,background-color]',
+        'min-w-0 cursor-pointer rounded-[var(--card-radius)] border px-2.5 py-2 text-left transition-[opacity,background-color] outline-none focus-visible:shadow-[0_0_0_3px_var(--mat-focus)]',
         card.selected
           ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
           : 'border-transparent bg-[var(--card-fill)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
@@ -103,13 +133,39 @@ function Card({ card, onPick }: { card: ChainCard; onPick: (sel: ChainSelection)
           </DenseTag>
         </span>
       </span>
-      <span className="block pt-0.5 text-dense-label leading-[1.4] text-[var(--sk-mute2)] text-pretty">{card.sub}</span>
+      {syms.length > 0 && onSym ? (
+        <span className="flex flex-wrap items-center gap-x-0.5 gap-y-0.5 pt-1">
+          {syms.slice(0, SYM_CAP).map((y) => (
+            <button
+              key={y}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSym(y.trim().toUpperCase())
+              }}
+              title={`Every rule that can act on ${y}`}
+              className={cn(
+                'rounded px-1 font-mono text-dense-meta font-semibold text-[var(--sk-ticker)] hover:bg-[color-mix(in_srgb,var(--sk-ticker)_16%,transparent)]',
+                activeSym === y.trim().toUpperCase() &&
+                  'bg-[color-mix(in_srgb,var(--sk-ticker)_18%,transparent)]',
+              )}
+            >
+              {y}
+            </button>
+          ))}
+          {syms.length > SYM_CAP ? (
+            <span className="font-mono text-dense-meta text-muted-foreground">+{syms.length - SYM_CAP}</span>
+          ) : null}
+        </span>
+      ) : (
+        <span className="block pt-0.5 text-dense-label leading-[1.4] text-[var(--sk-mute2)] text-pretty">{card.sub}</span>
+      )}
       <span className={cn(positionsUi.mono, 'flex flex-wrap gap-x-2.5 pt-1 text-dense-meta text-muted-foreground')}>
         {card.facts.map((f) => (
           <span key={f}>{f}</span>
         ))}
       </span>
-    </button>
+    </div>
   )
 }
 

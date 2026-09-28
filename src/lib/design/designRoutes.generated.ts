@@ -276,8 +276,8 @@ export const DESIGN_EQUIP_GROUP_GLYPH: Readonly<Record<string, string>> = {
 
 export const DESIGN_EQUIP_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/market/live": "waves",
+  "/research/agent-personas": "bubble",
   "/research/book": "pages",
-  "/research/copilot": "bubble",
   "/research/copilot/trading": "brief",
   "/research/event-radar": "bell",
   "/research/journal": "tree",
@@ -315,7 +315,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-27.99"
+export const DESIGN_REV = "2026-09-28.101"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
@@ -361,13 +361,13 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/watchlist","label":"Watchlist","crumbs":["The Book"],"designed":true,"file":"Book Watchlist.dc.html","round":null,"rev":"2026-09-25.88","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/greeks","label":"Contract Greeks","crumbs":["Risk","Portfolio Exposure"],"designed":true,"file":"Risk Contract Greeks.dc.html","round":null,"rev":"2026-09-25.86","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/narrative","label":"Narrative","crumbs":["Research","Analyze"],"designed":true,"file":"Research Narrative Lens.dc.html","round":null,"rev":"2026-09-25.88","inNav":true,"group":"Research","designOnly":false},
-  {"path":"/research/copilot","label":"Copilot","crumbs":[],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-25.89","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/copilot","label":"Copilot","crumbs":[],"designed":true,"file":"Autopilot Console.dc.html","round":null,"rev":"2026-09-25.89","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/daily-brief","label":"Daily Brief","crumbs":["Home"],"designed":true,"file":"Home Daily Brief.dc.html","round":null,"rev":"2026-09-25.89","inNav":true,"group":"Home","designOnly":false},
   {"path":"/research/copilot/trading","label":"Starters","crumbs":["Copilot"],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-27.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/agent-personas","label":"Personas","crumbs":["System","Agents"],"designed":true,"file":"Copilot.dc.html","round":"REDO","rev":"2026-09-26.1","inNav":true,"group":"System","designOnly":false},
   {"path":"/research/agent-personas/you","label":"You","crumbs":["System","Agents","Personas"],"designed":true,"file":"System Agents You.dc.html","round":null,"rev":"2026-09-26.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/orchestration","label":"Orchestration","crumbs":["System","Agents"],"designed":true,"file":"System Agents Orchestration.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
-  {"path":"/research/loop/harness","label":"Autopilot","crumbs":[],"designed":true,"file":"Autopilot Console.dc.html","round":null,"rev":"2026-09-25.85","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/loop/harness","label":"Pilot Console","crumbs":[],"designed":true,"file":"Autopilot Console.dc.html","round":null,"rev":"2026-09-27.2","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/loop/objectives/obj-daily-stock","label":"Daily Loop Stock Explorer","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-25.94","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/loop/objectives/obj-earnings-iv","label":"Earnings-week IV","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-25.94","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/loop/objectives/obj-smallcap-sepa","label":"Small-cap SEPA","crumbs":["Autopilot"],"designed":true,"file":"Autopilot Objective.dc.html","round":null,"rev":"2026-09-25.94","inNav":false,"group":null,"designOnly":false},
@@ -379,7 +379,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/trade/desk","label":"Trade","crumbs":[],"designed":true,"file":"Trade Desk.dc.html","round":"OLD","rev":"2026-09-25.82","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/plans","label":"Plans","crumbs":["Trade"],"designed":true,"file":"Trade Plans.dc.html","round":"OLD","rev":"2026-09-25.94","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/fills","label":"Orders & Fills","crumbs":["Trade"],"designed":true,"file":"Trade Fills.dc.html","round":"OLD","rev":"2026-09-25.93","inNav":true,"group":"Trade","designOnly":false},
-  {"path":"/trade/rules","label":"Rules","crumbs":["Trade"],"designed":true,"file":"Trade Desk.dc.html","round":"OLD","rev":"2026-09-25.82","inNav":true,"group":"Trade","designOnly":false},
+  {"path":"/trade/rules","label":"Rules","crumbs":["Trade"],"designed":true,"file":"Trade Rules.dc.html","round":null,"rev":"2026-09-28.1","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/playbook","label":"Playbook","crumbs":["Trade"],"designed":true,"file":"Trade Playbook.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/review","label":"Review","crumbs":[],"designed":true,"file":"Review Queue.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/fit","label":"Single trade","crumbs":["Review"],"designed":true,"file":"Review Fit.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},

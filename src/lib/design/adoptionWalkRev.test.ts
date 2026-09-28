@@ -119,7 +119,10 @@ describe('the design walk, by revision', () => {
     // Notes/Feedback/Memory ASK (Spec §20), merges Lists+Symbol+Live into the
     // Market capsule, renames Book starters → Starters (label-only, walked with
     // the rename) and fixes the prototype's floating-material marker.
-    expect(DESIGN_REV).toBe('2026-09-27.99')
+    // Package .30 @ Rev .101 (2026-09-28): full package — Trade › Rules redone
+    // (walked in batch R1), the InstanceRecord face, and Rev .100's Pilot
+    // Console merge (a round of its own, R4).
+    expect(DESIGN_REV).toBe('2026-09-28.101')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

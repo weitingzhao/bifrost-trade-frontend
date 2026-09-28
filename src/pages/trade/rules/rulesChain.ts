@@ -87,6 +87,8 @@ export interface ChainCard {
   tag: string
   tagVariant: 'success' | 'warning' | 'danger' | 'neutral'
   facts: string[]
+  /** An opportunity's scope — each ticker a way into the symbol lens (Rev .101). */
+  symbols?: string[]
   /** Lit by the current selection — the lineage. */
   lit: boolean
   selected: boolean
@@ -249,10 +251,16 @@ export function buildChain(
   sel: ChainSelection | null,
   activeOnly: boolean,
   daemon?: DaemonPick,
+  /**
+   * The focus's lineage when the page has one (a pick met with a symbol —
+   * `rulesFocus.focusLineage`). Undefined keeps the pick-only behaviour.
+   */
+  focusLit?: ReturnType<typeof lineageOf> | null,
 ): ChainColumn[] {
   const d = visibleChain(full, activeOnly)
-  const lit = lineageOf(sel, d)
-  const dim = (on: boolean) => sel != null && !on
+  const lit = focusLit !== undefined ? (focusLit ?? lineageOf(null, d)) : lineageOf(sel, d)
+  const focused = focusLit !== undefined ? focusLit != null : sel != null
+  const dim = (on: boolean) => focused && !on
 
   const oppsByStructure = new Map<number, number>()
   for (const o of d.opportunities) {
@@ -297,6 +305,7 @@ export function buildChain(
           o.structure_name ?? 'no structure',
           o.gate_safety_name ? `default gate ${o.gate_safety_name}` : 'no default gate',
         ],
+        symbols: (o.symbols ?? []).filter((x) => x?.trim()),
       lit: lit.opportunity.has(o.strategy_opportunity_id),
       selected: sel?.kind === 'opportunity' && sel.id === o.strategy_opportunity_id,
     }

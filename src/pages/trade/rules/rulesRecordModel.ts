@@ -337,8 +337,6 @@ export function buildRecord(x: RecordInput): RecordModel | null {
     const i = d.instances.find((r) => r.id === pick.id)
     if (!i) return null
     const o = oppById(i.opportunityId)
-    const al = allocsFor(i.opportunityId)[0]
-    const g = al ? gateOf(al.gate_safety_strategy_id) : undefined
     const sib = x.siblings && x.siblings.ids.includes(i.id) ? x.siblings : null
     const j = sib ? sib.ids.indexOf(i.id) : -1
     const stepTo = (k: -1 | 1) => {
@@ -353,22 +351,8 @@ export function buildRecord(x: RecordInput): RecordModel | null {
       sub: o?.name ?? i.opportunityName,
       actions: x.actions,
       step: sib ? { pos: `${j + 1} of ${sib.ids.length}`, from: sib.from, prev: stepTo(-1), next: stepTo(1) } : undefined,
-      stats: [
-        i.closed
-          ? {
-              k: 'Realised',
-              v: i.realised != null ? signedUsd(i.realised) : '—',
-              note: 'flat by its own fills, fees included',
-              ink: pnlColorClass(i.realised ?? 0),
-            }
-          : { k: 'Net P&L', v: '—', note: i.fills ? 'open — its legs are marked on Positions' : 'no fill has claimed it yet', ink: MUTED },
-        { k: 'Opened', v: i.openedOn ?? '—', note: i.closed ? 'closed by its fills' : 'still open by its fills' },
-        { k: 'Fills', v: String(i.fills), note: i.fills ? 'linked on Orders & Fills' : 'empty — safe to delete' },
-        { k: 'Structure', v: o?.structure_name ?? i.structureName, note: 'as the opportunity specifies' },
-        al
-          ? { k: 'Gate', v: g ? `${g.name} v${g.version}` : 'none', note: `inherited from ${al.name}` }
-          : { k: 'Gate', v: 'none', note: 'ran outside rules — no allocation carries its opportunity', ink: WARN, noteClass: WARN },
-      ],
+      // The face below carries the readings (design: hasStats is false for an instance).
+      stats: [],
       hasTable: false,
       scopedIds: [],
       multiOpp: false,

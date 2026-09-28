@@ -46,7 +46,9 @@ import { NO_SHEET, RulesSheets, type RulesSheet } from './RulesSheets'
 import { RulesReadings } from './RulesReadings'
 import { LineageBar, type Crumb } from './LineageBar'
 import { RulesRecord } from './RulesRecord'
+import { InstanceRecord, type InstanceRecordAction } from '@/components/instanceRecord/InstanceRecord'
 import { buildRecord, type RecordAction } from './rulesRecordModel'
+import { instanceFaceOf, RulesInstanceSheet, type SheetRec } from './RulesInstanceSheet'
 import { buildChain, orphanGates, orphanOpportunities, visibleChain, type ChainSelection } from './rulesChain'
 import {
   NO_FOCUS,
@@ -138,6 +140,8 @@ export default function TradeRulesPage() {
   const [compareWith, setCompareWith] = useState<number | null>(null)
   /** The list an instance was opened from, so the record can step `[ ]` through it. */
   const [siblings, setSiblings] = useState<{ ids: number[]; from: string } | null>(null)
+  /** The side sheet: an instance opened over the list, which stays live behind it. */
+  const [sheetRec, setSheetRec] = useState<SheetRec | null>(null)
 
   // ── The path ────────────────────────────────────────────────────────────
   const [trail, setTrail] = useState<string[]>([])
@@ -165,6 +169,7 @@ export default function TradeRulesPage() {
     setBoardSort(back?.boardSort ?? 'pnl')
     setChainOpen(false)
     setCompareWith(null)
+    setSheetRec(null)
     requestAnimationFrame(() => {
       const el = scroller()
       if (el) el.scrollTop = back?.scroll ?? 0
@@ -205,6 +210,11 @@ export default function TradeRulesPage() {
   }
   /** `[` `]` — within the list the instance came from; replaces, never adds to Back. */
   const step = (dir: -1 | 1) => {
+    if (sheetRec) {
+      const id = sheetRec.ids[sheetRec.ids.indexOf(sheetRec.id) + dir]
+      if (id != null) setSheetRec({ ...sheetRec, id })
+      return
+    }
     if (sel?.kind !== 'instance' || sel.id == null || !siblings) return
     const j = siblings.ids.indexOf(sel.id) + dir
     const id = siblings.ids[j]
@@ -217,9 +227,11 @@ export default function TradeRulesPage() {
 
   const stepRef = useRef(step)
   const backRef = useRef(back)
+  const sheetRecRef = useRef(sheetRec)
   useEffect(() => {
     stepRef.current = step
     backRef.current = back
+    sheetRecRef.current = sheetRec
   })
   const sheetOpen = sheet.kind !== NO_SHEET.kind || setActiveFor !== undefined
   useEffect(() => {
@@ -233,7 +245,8 @@ export default function TradeRulesPage() {
       }
       if (e.key === 'Escape' || (e.altKey && e.key === 'ArrowLeft')) {
         if (e.altKey) e.preventDefault()
-        if (compareWith != null && e.key === 'Escape') setCompareWith(null)
+        if (sheetRecRef.current && e.key === 'Escape') setSheetRec(null)
+        else if (compareWith != null && e.key === 'Escape') setCompareWith(null)
         else backRef.current()
       }
     }
@@ -373,6 +386,25 @@ export default function TradeRulesPage() {
     return []
   }
 
+  /** What the face offers for one instance — the sheet's footer and the inline record's header. */
+  const instanceActions = (id: number): InstanceRecordAction[] => {
+    const reading = data.instances.find((r) => r.id === id)
+    const rec = rawInstances.find((r) => r.strategy_instance_id === id)
+    const blocked = (reading?.fills ?? 0) > 0
+    return [
+      { label: 'Positions →', to: `/portfolio/positions?instance=${id}`, title: 'Where its open legs are marked' },
+      ...(reading?.closed ? [{ label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade' }] : []),
+      {
+        label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
+        onClick: () => {
+          if (!blocked && rec) setSheet({ kind: 'instanceDelete', instance: rec })
+        },
+        disabled: blocked || !rec,
+        title: blocked ? 'Unlink its fills on the Trade Ledger first' : 'Nothing references it',
+      },
+    ]
+  }
+
   const record = useMemo(
     () =>
       buildRecord({
@@ -382,7 +414,10 @@ export default function TradeRulesPage() {
         conditions:
           sel?.kind === 'opportunity' ? (oppDetail.isSuccess ? oppDetail.data.entry_conditions ?? [] : undefined) : undefined,
         boardSort,
-        actions: detailActions(sel ? sel.kind : focus.sym ? 'symbol' : 'structure'),
+        actions:
+          sel?.kind === 'instance' && sel.id != null
+            ? instanceActions(sel.id)
+            : detailActions(sel ? sel.kind : focus.sym ? 'symbol' : 'structure'),
         siblings,
         on: { pick: (s2) => pickIt(s2), setSym, step },
       }),
@@ -593,6 +628,16 @@ export default function TradeRulesPage() {
 
           {record ? (
             <RulesRecord model={record} boardSort={boardSort} onBoardSort={setBoardSort}>
+              {record.kind === 'instance' && sel?.id != null
+                ? (() => {
+                    const inst = rawInstances.find((r) => r.strategy_instance_id === sel.id)
+                    return inst ? (
+                      <div className="border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3.5 py-3">
+                        <InstanceRecord key={inst.strategy_instance_id} instance={inst} mode="inline" {...instanceFaceOf(data, inst.strategy_instance_id)} />
+                      </div>
+                    ) : null
+                  })()
+                : null}
               {record.hasTable ? (
                 scopedInstances.length === 0 ? (
                   <p className="m-0 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3.5 py-4 text-dense-label text-[var(--sk-mute2)]">
@@ -649,7 +694,13 @@ export default function TradeRulesPage() {
                         pickIt({ kind: 'instance', id: inst.strategy_instance_id }, { ids, from: fromLabel })
                       }
                       onSym={(y) => setSym(y, true)}
-                      onViewDetail={(inst) => navigate(`/portfolio/positions?instance=${inst.strategy_instance_id}`)}
+                      onViewDetail={(inst, ids) =>
+                        setSheetRec((cur) =>
+                          cur?.id === inst.strategy_instance_id
+                            ? null
+                            : { id: inst.strategy_instance_id, ids, from: fromLabel },
+                        )
+                      }
                       onCompare={(inst) => {
                         const id = inst.strategy_instance_id
                         if (compareWith == null || compareWith === id) {
@@ -680,6 +731,16 @@ export default function TradeRulesPage() {
               ) : null}
             </RulesRecord>
           ) : null}
+
+          <RulesInstanceSheet
+            rec={sheetRec}
+            data={data}
+            rawInstances={rawInstances}
+            actions={instanceActions}
+            onClose={() => setSheetRec(null)}
+            onStep={step}
+            onPick={pickIt}
+          />
 
           <RulesSheets sheet={sheet} onClose={() => setSheet(NO_SHEET)} status={status.data} />
 

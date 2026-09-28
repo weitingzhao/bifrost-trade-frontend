@@ -85,7 +85,8 @@ interface Props {
   onToggleGroup: (key: string) => void
   /** Optional: Trade › Rules deletes from the chain's own detail actions. */
   onDelete?: (instance: StrategyInstance) => void
-  onViewDetail?: (instance: StrategyInstance) => void
+  /** The ids are the rows in the order drawn, so a side sheet can step through them. */
+  onViewDetail?: (instance: StrategyInstance, orderedIds: number[]) => void
   onCompare?: (instance: StrategyInstance) => void
   activeDetailId?: number | null
   compareId?: number | null
@@ -572,7 +573,7 @@ export function InstancesGroupedTable({
                   <IconActionButton
                     title="View instance detail"
                     ariaLabel="View instance detail"
-                    onClick={() => onViewDetail?.(inst)}
+                    onClick={() => onViewDetail?.(inst, orderedIds)}
                   >
                     <Eye className="h-3.5 w-3.5" />
                   </IconActionButton>

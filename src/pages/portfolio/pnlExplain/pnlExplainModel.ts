@@ -48,7 +48,7 @@ export const PNL_UNRECORDED = {
   hypothesis:
     'Judging a thesis needs both that snapshot and a store of hypotheses with what each should earn from. Neither exists yet.',
   symbol:
-    'Cash rows carry an account and a description, never a symbol, so these cannot be placed against a name.',
+    'these rows carry no symbol — account-level cash, not about any one name, so they cannot be placed against one.',
 } as const
 
 /**
@@ -164,6 +164,8 @@ export function bookGapFills(canonical: readonly Execution[], book: readonly Exe
 
 export interface CashGroup {
   type: string
+  /** The name the cash is about (core 0.25.3); null when the rows carry none. */
+  symbol: string | null
   n: number
   amount: number
 }
@@ -178,6 +180,10 @@ export interface CashGroup {
  * Deposits, withdrawals and transfers are the Owner's own money and are left
  * out: returns are ruled net of external cash flow (§14.5), so they were never
  * part of the P&L this page takes apart.
+ *
+ * Grouped by kind × name since core 0.25.3 returns the row's symbol: a
+ * dividend and its withholding land against the name they are about; only
+ * account-level cash stays nameless.
  */
 export function cashInWindow(
   transactions: readonly AccountTransaction[],
@@ -192,10 +198,12 @@ export function cashInWindow(
     if (!Number.isFinite(ts) || ts < sinceSec || ts > untilSec) continue
     const type = kindOf(t)
     if (type === 'Transfer') continue
-    const group = byType.get(type) ?? { type, n: 0, amount: 0 }
+    const symbol = t.symbol?.trim() ? t.symbol.trim().toUpperCase() : null
+    const key = `${type}|${symbol ?? ''}`
+    const group = byType.get(key) ?? { type, symbol, n: 0, amount: 0 }
     group.n += 1
     group.amount += Number(t.amount) || 0
-    byType.set(type, group)
+    byType.set(key, group)
   }
   return [...byType.values()].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
 }
@@ -237,11 +245,11 @@ export function pnlLeads(input: {
 
   for (const c of input.cash) {
     leads.push({
-      key: `cash:${c.type}`,
-      symbol: null,
+      key: `cash:${c.type}:${c.symbol ?? ''}`,
+      symbol: c.symbol,
       amount: c.amount,
       n: c.n,
-      cause: `${c.n} cash ${c.n === 1 ? 'row' : 'rows'} classified ${c.type} — ${PNL_UNRECORDED.symbol}`,
+      cause: `${c.n} cash ${c.n === 1 ? 'row' : 'rows'} classified ${c.type}${c.symbol ? '' : ` — ${PNL_UNRECORDED.symbol}`}`,
       reading: readingFor(c.amount, input.windowPnl),
       to: '/portfolio/transfer',
       toLabel: 'Transfer & Pay →',

@@ -144,6 +144,13 @@ export interface AccountTransaction {
   description?: string | null
   /** ISO-8601 string in practice, not epoch seconds. */
   created_at?: number | string
+  /**
+   * The security the row is about — a dividend, its withholding, a fee on a
+   * position (core 0.25.3). Null for deposits, withdrawals and account-level
+   * charges; absent from an older API.
+   */
+  symbol?: string | null
+  conid?: number | null
 }
 
 export interface AccountTransactionsResponse {

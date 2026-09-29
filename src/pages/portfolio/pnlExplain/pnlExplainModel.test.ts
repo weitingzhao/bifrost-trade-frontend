@@ -102,6 +102,28 @@ describe('cashInWindow', () => {
     expect(groups.map((g) => g.type).sort()).toEqual(['Data fee', 'Tax'])
   })
 
+  it('places cash against the name it is about, and keeps account-level cash nameless (core 0.25.3)', () => {
+    const groups = cashInWindow(
+      [
+        cash({ type: 'dividend', amount: 40, symbol: 'abc' }),
+        cash({ type: 'other', description: 'WITHHOLDING TAX', amount: -6, symbol: 'ABC' }),
+        cash({ type: 'dividend', amount: 12, symbol: 'XYZ' }),
+        cash({ type: 'other', description: 'OPRA TOP OF BOOK', amount: -5, symbol: null }),
+      ],
+      T0 - DAY,
+      T0 + DAY,
+    )
+    expect(groups.map((g) => [g.type, g.symbol, g.amount])).toEqual([
+      ['Dividend', 'ABC', 40],
+      ['Dividend', 'XYZ', 12],
+      ['Tax', 'ABC', -6],
+      ['Data fee', null, -5],
+    ])
+    const leads = pnlLeads({ gaps: [], cash: groups, unpricedLegs: 0, windowPnl: 10_000 })
+    expect(leads.find((l) => l.symbol === 'ABC')?.cause).not.toMatch(/no symbol/)
+    expect(leads.find((l) => l.symbol == null)?.cause).toMatch(/no symbol/)
+  })
+
   it('reads the epoch the API sends as a string', () => {
     const groups = cashInWindow([cash({ ts: String(T0) as unknown as number, amount: 5 })], T0 - DAY, T0 + DAY)
     expect(groups[0].n).toBe(1)
@@ -115,8 +137,8 @@ describe('pnlLeads', () => {
   ]
 
   it('puts what carries an amount first and leaves a count as a count', () => {
-    const leads = pnlLeads({ gaps, cash: [{ type: 'dividend', n: 2, amount: 52 }], unpricedLegs: 4, windowPnl: 10_000 })
-    expect(leads.map((l) => l.key)).toEqual(['gap:ZZZ', 'cash:dividend', 'gap:YYY', 'unpriced'])
+    const leads = pnlLeads({ gaps, cash: [{ type: 'dividend', symbol: null, n: 2, amount: 52 }], unpricedLegs: 4, windowPnl: 10_000 })
+    expect(leads.map((l) => l.key)).toEqual(['gap:ZZZ', 'cash:dividend:', 'gap:YYY', 'unpriced'])
     expect(leads[0].amount).toBe(900)
     // 900 is more than 5% of 10,000 — worth a look.
     expect(leads[0].reading).toBe('worth a look')
@@ -134,7 +156,7 @@ describe('pnlLeads', () => {
   })
 
   it('sums only what can be summed', () => {
-    const leads = pnlLeads({ gaps, cash: [{ type: 'dividend', n: 2, amount: 52 }], unpricedLegs: 4, windowPnl: 10_000 })
+    const leads = pnlLeads({ gaps, cash: [{ type: 'dividend', symbol: null, n: 2, amount: 52 }], unpricedLegs: 4, windowPnl: 10_000 })
     expect(leadsTotal(leads)).toEqual({ amount: 952, withAmount: 2, countOnly: 2 })
   })
 })

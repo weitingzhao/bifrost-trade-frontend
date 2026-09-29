@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { counterfactuals, derivedTags, sources, timeline } from './tradeFitModel'
+import { corporateActionRow, counterfactuals, derivedTags, sources, timeline } from './tradeFitModel'
+import type { CorporateActionRow } from '@/api/marketData/corporateActions'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 import type { ReviewTrade } from '@/utils/reviewTrades'
 
@@ -155,5 +156,27 @@ describe('sources', () => {
     const rows = sources(TRADE, PATH, 60, 'O:X')
     expect(rows.find((r) => r.key === 'plan')!.lamp).toBe('gray')
     expect(rows.find((r) => r.key === 'mid')!.lamp).toBe('gray')
+  })
+})
+
+describe('corporate action adjustment (Rev .112 · §5.1.4)', () => {
+  const trade = { underlying: 'QQQQ', openedOn: '2026-01-02', closedOn: '2026-02-10' }
+  const ca = (over: Partial<CorporateActionRow>): CorporateActionRow =>
+    ({ action_type: 'split', ex_date: '2026-01-20', ratio_from: 1, ratio_to: 4, ...over }) as CorporateActionRow
+
+  it('names a split inside the holding window and says the path is not adjusted', () => {
+    const row = corporateActionRow(trade, [ca({})], '2026-03-01')
+    expect(row.lamp).toBe('yellow')
+    expect(row.sub).toContain('split 4:1')
+  })
+
+  it('reads a dividend or a split outside the window as nothing to adjust', () => {
+    const row = corporateActionRow(trade, [ca({ ex_date: '2025-12-01' }), ca({ action_type: 'dividend', ratio_from: null, ratio_to: null })], '2026-03-01')
+    expect(row.lamp).toBe('green')
+  })
+
+  it('tells reading and a failed read apart from none', () => {
+    expect(corporateActionRow(trade, undefined, '2026-03-01').title).toMatch(/reading$/)
+    expect(corporateActionRow(trade, null, '2026-03-01').title).toMatch(/not read$/)
   })
 })

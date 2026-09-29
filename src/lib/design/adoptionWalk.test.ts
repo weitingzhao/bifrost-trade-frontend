@@ -491,8 +491,9 @@ describe('the design walk, as it stands', () => {
     // 70 with Rev .110–.111: Playbook stats became the Record tab (an alias of
     // Playbook), and the three pages the Instance → Trade rename moved read
     // stale until that rename was built. 74 with the rename: those three back,
-    // plus /trade/:id as its own design row (/instance is its alias).
-    expect(counts.byState.reviewing).toBe(74)
+    // plus /trade/:id as its own design row (/instance is its alias). 73 with
+    // Rev .112: Outcome is an alias of Playbook now, not a page of its own.
+    expect(counts.byState.reviewing).toBe(73)
     // Since 2026-09-29 a reviewing page whose design rev passed its walk reads
     // stale too; the thirteen that had (Rev .100–.103 built in batches R–V)
     // were re-stamped with the design receipt, so none does.
@@ -529,7 +530,6 @@ describe('the design walk, as it stands', () => {
       '/portfolio/backing',
       '/portfolio/corporate-actions',
       '/portfolio/ledger',
-      '/portfolio/outcome',
       '/portfolio/performance',
       '/portfolio/pnl-explain',
       '/portfolio/positions',

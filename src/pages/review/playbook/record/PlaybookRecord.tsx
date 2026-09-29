@@ -43,6 +43,87 @@ import { StructureFormulas, StructureTable } from './StructureTable'
 import { cutDisagreement, structureRows } from './structureCut'
 import { DECAY_PROFIT_FACTOR, sizeCapFor, type SizeCap } from '@/utils/sizeCap'
 import { winRateInk } from './playbookInk'
+import { lensRows, ORIGIN_SAMPLE_FLOOR, sourceRows, type OriginRow } from './originCut'
+import { useTradeOrigins } from '@/hooks/useTradeOrigins'
+import { buildReviewInstances } from '@/utils/reviewInstances'
+import { ORIGIN_UNRECORDED } from '@/utils/tradeOrigin'
+
+/** Rev .112: four cuts — the two Outcome contributed read where the idea came from. */
+const RECORD_CUTS = ['play', 'structure', 'source', 'lens'] as const
+type RecordCut = (typeof RECORD_CUTS)[number]
+
+function coerceRecordCut(raw: string | null): RecordCut {
+  return (RECORD_CUTS as readonly string[]).includes(raw ?? '') ? (raw as RecordCut) : 'play'
+}
+
+/** Earned from needs the per-trade attribution P&L Explain computes from a daily snapshot nothing stores yet. */
+const EARNED_UNWIRED = 'needs the daily snapshot — computed on P&L Explain'
+
+function OriginTable({ rows, head }: { rows: readonly OriginRow[]; head: string }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[760px] table-fixed border-collapse">
+        <colgroup>
+          <col style={{ width: '30%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '11%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '12%' }} />
+        </colgroup>
+        <thead>
+          <tr>
+            <th className={cn(positionsUi.th, 'text-left')}>{head}</th>
+            <th className={positionsUi.th}>n</th>
+            <th className={positionsUi.th}>Hit rate</th>
+            <th className={positionsUi.th}>Realised</th>
+            <th className={positionsUi.th}>Avg</th>
+            <th className={positionsUi.th}>Worst</th>
+            <th className={positionsUi.th} title="Realised average minus the linked backtest run’s average per event">
+              vs backtest
+            </th>
+            <th className={cn(positionsUi.th, 'text-left')}>Sample</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.key} className={ROW_HOVER}>
+              <td className={cn(positionsUi.td, 'pl-2 whitespace-normal text-left font-sans')}>
+                <Link to="/review" className={cn('block', r.n ? 'text-foreground' : 'text-muted-foreground')} title="These trades in the Queue">
+                  {r.name}
+                </Link>
+                <span className="block text-dense-meta text-muted-foreground">{r.sub}</span>
+              </td>
+              <td className={cn(positionsUi.td, r.n === 0 ? 'text-muted-foreground' : r.thin ? 'text-warning' : 'text-[var(--sk-soft)]')}>
+                {r.n}
+              </td>
+              <td className={cn(positionsUi.td, 'font-semibold', r.hitRate == null ? 'text-muted-foreground' : winRateInk(r.hitRate))}>
+                {r.n === 0 ? '—' : r.hitRate == null ? `${r.wins} of ${r.n}` : fmtPct0(r.hitRate)}
+              </td>
+              <td className={cn(positionsUi.td, 'font-semibold', r.n ? pnlColorClass(r.realised) : 'text-muted-foreground')}>
+                {r.n ? fmtUsd(r.realised) : '—'}
+              </td>
+              <td className={cn(positionsUi.td, r.avg == null ? 'text-muted-foreground' : pnlColorClass(r.avg))}>
+                {r.avg == null ? '—' : fmtUsd(r.avg)}
+              </td>
+              <td className={cn(positionsUi.td, r.worst == null ? 'text-muted-foreground' : pnlColorClass(r.worst))}>
+                {r.worst == null ? '—' : fmtUsd(r.worst)}
+              </td>
+              <td className={cn(positionsUi.td, 'text-muted-foreground')} title={ORIGIN_UNRECORDED.run}>
+                —
+              </td>
+              <td className={cn(positionsUi.td, 'text-left font-sans text-dense-meta', r.thin ? 'text-muted-foreground' : 'text-secondary-foreground')}>
+                {r.n === 0 ? 'none closed' : r.thin ? 'too few to rate' : 'reportable'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
 
 // Rev .62: a foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
@@ -89,14 +170,15 @@ export function PlaybookRecord() {
    * as a cut, not as a second page. The two cuts read different services and do
    * not reconcile — see `structureCut.ts`.
    */
-  // `?cut=structure` is how Win Rate's old address lands here (redirectRoutes).
+  // `?cut=structure` is how Win Rate's old address lands here, `?cut=source`
+  // Outcome's (Rev .112) — both in redirectRoutes.
   const [params, setParams] = useSearchParams()
-  const cut = params.get('cut') === 'structure' ? 'structure' : 'play'
+  const cut = coerceRecordCut(params.get('cut'))
   const setCut = (next: string) =>
     setParams(
       (prev) => {
         const out = new URLSearchParams(prev)
-        if (next === 'structure') out.set('cut', 'structure')
+        if (next !== 'play') out.set('cut', next)
         else out.delete('cut')
         return out
       },
@@ -104,6 +186,7 @@ export function PlaybookRecord() {
     )
   const [since, setSince] = useState<SinceFilter>('')
   const byStructure = cut === 'structure'
+  const byOrigin = cut === 'source' || cut === 'lens'
   /**
    * Asked only when its cut is showing.
    *
@@ -150,6 +233,18 @@ export function PlaybookRecord() {
   // The same cache entry useReviewHabits reads — held here for its §17 state.
   const execQuery = useExecutionsCanonical()
   const thin = plays.filter((p) => p.thin).length
+  // Rev .112 origin cuts: per trade, because a plan names a trade, not a contract.
+  const origins = useTradeOrigins()
+  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  const closedTrades = useMemo(() => {
+    const items = execQuery.data?.items ?? []
+    const scoped = accountFilter === 'all' ? items : items.filter((e) => (e.account_id ?? '').trim() === accountFilter)
+    return buildReviewInstances(scoped, today, origins.exitBy).filter((t) => !t.open)
+  }, [execQuery.data?.items, accountFilter, today, origins.exitBy])
+  const originRows = useMemo(
+    () => (cut === 'lens' ? lensRows(closedTrades) : sourceRows(closedTrades, origins.byTrade)),
+    [cut, closedTrades, origins.byTrade],
+  )
 
   // The prose names plays from the table itself, the way the design's panel
   // does: the biggest play the rule would give a full allowance, and any the
@@ -177,6 +272,8 @@ export function PlaybookRecord() {
           options={[
             { value: 'play', label: 'Play' },
             { value: 'structure', label: 'Structure' },
+            { value: 'source', label: 'Source' },
+            { value: 'lens', label: 'Lens' },
           ]}
         />
         {byStructure ? (
@@ -207,7 +304,9 @@ export function PlaybookRecord() {
         <span data-sr-tb="meta">
           {byStructure
             ? 'closed trades, via the strategy service · totals first'
-            : pageState === 'ready'
+            : byOrigin
+              ? `${closedTrades.length} closed trades · source from the plan that names each · via the `
+              : pageState === 'ready'
               ? `${plays.length} plays · ${trades.length} closed trades · via the `
               : 'closed contracts, via the '}
           {byStructure ? null : (
@@ -227,6 +326,40 @@ export function PlaybookRecord() {
         />
       ) : null}
 
+      {byOrigin ? (
+        <section className={positionsUi.panel} aria-label={cut === 'lens' ? 'By lens' : 'By source'}>
+          <header className={positionsUi.panelHead}>
+            <span className={positionsUi.cap}>{cut === 'lens' ? 'By lens' : 'By source'}</span>
+            <span className={positionsUi.panelTitle}>
+              {cut === 'lens'
+                ? 'no lens recorded'
+                : `${originRows.filter((r) => r.key !== 'none' && r.n > 0).length} of ${originRows.length - 1} sources with a trade`}
+            </span>
+            <span className="text-dense-meta text-muted-foreground">n &lt; {ORIGIN_SAMPLE_FLOOR} shows a tally, not a rate</span>
+            <span className="ml-auto text-dense-meta text-muted-foreground">was Portfolio › Outcome</span>
+          </header>
+          {pageState === 'loading' || origins.loading ? (
+            <ViewState kind="loading" title="Loading the closed trades" rows={6} cols={8} />
+          ) : pageState === 'failed' ? (
+            <ViewState
+              kind="failed"
+              title="Couldn’t load the ledger"
+              detail={failedDetail(execQuery, 'Nothing was evaluated — this is not a book with no closed trade.')}
+              onAction={() => void execQuery.refetch()}
+            />
+          ) : (
+            <>
+              <OriginTable rows={originRows} head={cut === 'lens' ? 'Lens' : 'Source'} />
+              <p className={cn(FOOT, 'm-0')}>
+                {cut === 'lens'
+                  ? `The screen the idea came through. ${ORIGIN_UNRECORDED.lens} vs backtest is — for the same reason: ${ORIGIN_UNRECORDED.run}`
+                  : `Where the idea came from, as recorded on the plan that names the trade.${origins.failed ? ' The plans did not load, so every trade reads No plan.' : ''} vs backtest = realised average minus the linked run’s average per event; ${ORIGIN_UNRECORDED.run}`}{' '}
+                Closed trades only; open ones stay out of every rate.
+              </p>
+            </>
+          )}
+        </section>
+      ) : (
       <section className={positionsUi.panel} aria-label={byStructure ? 'By structure' : 'By play'}>
         <header className={positionsUi.panelHead}>
           <span className={positionsUi.cap}>{byStructure ? 'By structure' : 'By play'}</span>
@@ -295,22 +428,23 @@ export function PlaybookRecord() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              {/* §14.6: the design's twelve columns; its own floor is 1120 and
-                  the two extra columns need another 240 of it. */}
-              <table className="w-full min-w-[1400px] table-fixed border-collapse">
+              {/* §14.6: the design's thirteen columns (Rev .112 adds Earned from); its own
+                  floor is 1120 and the three extra columns need another 360 of it. */}
+              <table className="w-full min-w-[1480px] table-fixed border-collapse">
                 <colgroup>
-                  <col style={{ width: '16%' }} />
+                  <col style={{ width: '15%' }} />
                   <col style={{ width: '4%' }} />
                   <col style={{ width: '5%' }} />
-                  <col style={{ width: '11%' }} />
-                  <col style={{ width: '7%' }} />
+                  <col style={{ width: '10%' }} />
                   <col style={{ width: '6%' }} />
-                  <col style={{ width: '8%' }} />
-                  <col style={{ width: '8%' }} />
-                  <col style={{ width: '8%' }} />
-                  <col style={{ width: '8%' }} />
+                  <col style={{ width: '6%' }} />
                   <col style={{ width: '7%' }} />
-                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '7%' }} />
+                  <col style={{ width: '7%' }} />
+                  <col style={{ width: '7%' }} />
+                  <col style={{ width: '7%' }} />
+                  <col style={{ width: '8%' }} />
+                  <col style={{ width: '11%' }} />
                 </colgroup>
                 <thead>
                   <tr>
@@ -325,6 +459,9 @@ export function PlaybookRecord() {
                     <th className={positionsUi.th}>Worst</th>
                     <th className={positionsUi.th}>MAE</th>
                     <th className={positionsUi.th}>Profit factor</th>
+                    <th className={cn(positionsUi.th, 'text-left')} title={`θ + vega vs Δ share of the move — ${EARNED_UNWIRED}`}>
+                      Earned from
+                    </th>
                     <th className={cn(positionsUi.th, 'text-left')}>Size cap it would earn</th>
                   </tr>
                 </thead>
@@ -363,6 +500,10 @@ export function PlaybookRecord() {
                         <td className={cn(positionsUi.td, 'font-semibold', profitFactorInk(p.profitFactor))}>
                           {p.profitFactor == null ? 'no loser yet' : p.profitFactor.toFixed(2)}
                         </td>
+                        {/* Rev .112: from P&L Explain's Judgment-or-luck band; quoted, never recomputed here. */}
+                        <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')} title={EARNED_UNWIRED}>
+                          —
+                        </td>
                         <td className={cn(positionsUi.td, 'whitespace-normal text-left font-sans')}>
                           <span className={capClass(cap.label)}>{cap.label}</span>{' '}
                           <span className="text-muted-foreground">— {cap.why}</span>
@@ -381,6 +522,7 @@ export function PlaybookRecord() {
           </>
         )}
       </section>
+      )}
 
       <div className={positionsUi.bandGrid}>
         <PlaybookRegimeGrid plays={plays} />

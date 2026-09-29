@@ -53,9 +53,10 @@ describe('adoptionByGroup', () => {
     // three wait for a look, seven are still behind. J2 took Accounts and
     // the Ledger: five and five. J3 took Backing, Transfer, P&L Explain and
     // Outcome: nine wait, Corporate Actions is the one still behind. J5 took
-    // Corporate Actions: all ten wait for a look.
-    expect(portfolio).toMatchObject({ total: 10, aligned: 0, left: 10 })
-    expect(portfolio?.byState.reviewing).toBe(10)
+    // Corporate Actions: all ten wait for a look. Nine with Rev .112: Outcome
+    // left for Review (its address is an alias of Playbook › Record).
+    expect(portfolio).toMatchObject({ total: 9, aligned: 0, left: 9 })
+    expect(portfolio?.byState.reviewing).toBe(9)
     expect(portfolio?.byState.stale).toBe(0)
     expect(portfolio?.byState.unbuilt).toBe(0)
 

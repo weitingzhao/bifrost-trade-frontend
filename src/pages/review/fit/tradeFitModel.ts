@@ -15,7 +15,9 @@ import { daysBetween } from '@/lib/isoDate'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import type { ExpiryBranch, MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import { EXIT_LABEL, type ReviewTrade } from '@/utils/reviewTrades'
+import type { CorporateActionRow } from '@/api/marketData/corporateActions'
+import { planToken, type TradeOrigin } from '@/utils/tradeOrigin'
 
 export type Tone = 'success' | 'warning' | 'danger' | 'neutral'
 
@@ -233,7 +235,7 @@ export function timeline(trade: ReviewTrade, path: MarkPath | null, entry?: Entr
   stages.push({
     key: 'exit',
     stage: 'exit',
-    title: `${trade.exitKind === 'expired' ? 'Expired' : 'Closed by fill'} · ${fmtUsd(trade.realised, true)}`,
+    title: `${trade.exitKind === 'closed' ? 'Closed by fill' : EXIT_LABEL[trade.exitKind]} · ${fmtUsd(trade.realised, true)}`,
     sub:
       trade.daysHeld == null
         ? 'The fills carry no span for this trade.'
@@ -243,6 +245,22 @@ export function timeline(trade: ReviewTrade, path: MarkPath | null, entry?: Entr
   })
 
   return stages
+}
+
+/** Rev .112: the tags the ending names — per trade, not per contract path. */
+export function exitTags(trade: Pick<ReviewTrade, 'exitKind'>): DerivedTag[] {
+  switch (trade.exitKind) {
+    case 'assigned':
+      return [{ key: 'assigned', label: 'assigned', why: 'Ran to expiry with the short leg in the money. Shares moved.', tone: 'danger' }]
+    case 'stop':
+      return [{ key: 'stopped', label: 'stopped out', why: 'Lost more than the credit taken in.', tone: 'danger' }]
+    case 'early':
+      return [{ key: 'early_exit', label: 'exited early', why: 'Out more than three days before the date the plan said.', tone: 'warning' }]
+    case 'late':
+      return [{ key: 'held_past_plan', label: 'held past plan', why: 'Out more than three days after the date the plan said.', tone: 'warning' }]
+    default:
+      return []
+  }
 }
 
 export function derivedTags(trade: ReviewTrade, path: MarkPath | null): DerivedTag[] {
@@ -292,15 +310,63 @@ export function derivedTags(trade: ReviewTrade, path: MarkPath | null): DerivedT
     }
   }
 
-  tags.push({
-    key: 'plan-tags',
-    label: 'held past plan · exited early',
-    why: 'Both are statements about the exit against the planned bar, and no plan is linked to this position.',
-    tone: 'neutral',
-    unreadable: true,
-  })
+  tags.push(...exitTags(trade))
+  if (trade.exitKind !== 'open' && trade.exitKind !== 'early' && trade.exitKind !== 'late' && !trade.planExitBy) {
+    // Both plan tags read the exit against the plan's date; without a plan neither can be said.
+    tags.push({
+      key: 'plan-tags',
+      label: 'held past plan · exited early',
+      why: 'Both are statements about the exit against the planned bar, and no plan is linked to this position.',
+      tone: 'neutral',
+      unreadable: true,
+    })
+  }
 
   return tags
+}
+
+/** An adjustment the OCC makes to a listed contract: a split either way. An ordinary dividend adjusts nothing. */
+function isAdjusting(a: CorporateActionRow): boolean {
+  const kind = a.action_type.toLowerCase()
+  return kind.includes('split') || (a.ratio_from != null && a.ratio_to != null && a.ratio_from !== a.ratio_to)
+}
+
+/**
+ * Rev .112 · §5.1.4: Corporate Actions is the provider of adjustment events.
+ * A split inside the holding window would move the contract's terms, and the
+ * path here is not adjusted for it — so the row names any that fell inside.
+ * `actions` is undefined while read, null when the read failed.
+ */
+export function corporateActionRow(
+  trade: Pick<ReviewTrade, 'underlying' | 'openedOn' | 'closedOn'>,
+  actions: readonly CorporateActionRow[] | null | undefined,
+  today: string,
+): SourceRow {
+  const title = 'Corporate action adjustment'
+  if (actions === undefined) return { key: 'ca', lamp: 'gray', title: `${title} · reading`, sub: 'Reading the corporate actions on file for this name.' }
+  if (actions === null) {
+    return { key: 'ca', lamp: 'gray', title: `${title} · not read`, sub: 'The corporate-action store did not answer, so a split inside this trade cannot be ruled out.' }
+  }
+  const from = trade.openedOn ?? ''
+  const to = trade.closedOn ?? today
+  const inside = actions.filter((a) => isAdjusting(a) && a.ex_date != null && a.ex_date >= from && a.ex_date <= to)
+  if (inside.length === 0) {
+    return {
+      key: 'ca',
+      lamp: 'green',
+      title: `${title} · none`,
+      sub: `No split on ${trade.underlying} between the open and ${trade.closedOn ? 'the close' : 'today'}, so the path needs no adjustment.`,
+    }
+  }
+  const what = inside
+    .map((a) => `${a.action_type.replace(/_/g, ' ')}${a.ratio_from != null && a.ratio_to != null ? ` ${a.ratio_to}:${a.ratio_from}` : ''} on ${fmtIsoDateToken(a.ex_date)}`)
+    .join(', ')
+  return {
+    key: 'ca',
+    lamp: 'yellow',
+    title: `${title} · ${inside.length} inside the trade`,
+    sub: `${trade.underlying} ${what}. The path is not adjusted for it, so the price and P&L lines jump on the ex-date. Corporate Actions lists it.`,
+  }
 }
 
 export function sources(
@@ -310,15 +376,24 @@ export function sources(
   optionTicker: string | null,
   /** The entry session's IV rank: a number, null when the store has none, undefined while it is read. */
   ivRank?: number | null,
+  /** The plan that names the trade (Rev .112), when one does. */
+  origin?: TradeOrigin | null,
 ): SourceRow[] {
   const partial = path != null && path.businessDays > 0 && path.bars < path.businessDays * 0.8
   return [
-    {
-      key: 'plan',
-      lamp: 'gray',
-      title: 'Plan record · absent',
-      sub: 'Trade Plans stores a target and a stop, but nothing links one to a position. The plan exit, both gaps and two of the tags are withheld on that.',
-    },
+    origin
+      ? {
+          key: 'plan',
+          lamp: 'green',
+          title: `Plan record · ${planToken(origin.planId)}`,
+          sub: `Written before the order, from ${origin.source}${origin.ref ? ` · ${origin.ref}` : ''}${origin.exitBy ? `; out by ${fmtIsoDateToken(origin.exitBy)}` : '; it named no exit date, so early and late are not read'}.`,
+        }
+      : {
+          key: 'plan',
+          lamp: 'gray',
+          title: 'Plan record · absent',
+          sub: 'No plan names this trade. The plan exit, both gaps and two of the tags are withheld on that.',
+        },
     {
       key: 'fills',
       lamp: 'green',

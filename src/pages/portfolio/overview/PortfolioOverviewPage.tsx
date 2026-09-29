@@ -84,12 +84,11 @@ const LEAD =
 const AREAS = [
   {
     cap: 'Capital',
-    q: 'The curve over time, the causes behind each move, the base that backs it, and what settled money says about where the ideas came from.',
+    q: 'The curve over time, the causes behind each move, and the base that backs it.',
     pages: [
       ['Performance', '/portfolio/performance', 'The curve over time.'],
       ['P&L Explain', '/portfolio/pnl-explain', 'The waterfall of causes.'],
       ['Backing & Model', '/portfolio/backing', 'What backs the book.'],
-      ['Outcome', '/portfolio/outcome', 'Plan versus actual, by source of idea.'],
     ],
   },
   {

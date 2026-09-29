@@ -386,6 +386,12 @@ export const REDIRECTS: readonly RouteEntry[] = [
   { path: '/trade/playbook', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook' },
   // Rev .110: Playbook stats is Playbook's Record tab — a rule and its record, one page.
   { path: '/review/playbook-stats', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook?tab=record' },
+  // ── Portfolio ↔ Review boundary (design Rev .112, §5.1) ──────────────────
+  // Portfolio only counts; Review only judges. Outcome's source and lens cuts
+  // went to Playbook › Record, How they ended and the Gaps to the Queue, the
+  // single-trade trace to the Trade page's Lineage. Its address lands on the
+  // cut that answers what it asked: settled money by where the idea came from.
+  { path: '/portfolio/outcome', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook?tab=record&cut=source' },
   // ── Instance → Trade (design Rev .111) ─────────────────────────────────
   // The entity is a Trade now, from the page to the table. The old addresses
   // forward one version: /instance/:id carries its id (router.tsx), and

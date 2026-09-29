@@ -55,9 +55,6 @@ const READING_LAMP: Record<string, 'yellow' | 'green' | 'gray'> = {
   'no reading': 'gray',
 }
 
-/** The board that would hold what each thesis should earn from. */
-const HYPOTHESIS_BOARD_PATH = '/research/loop/hypotheses'
-
 const FOOT =
   'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
@@ -440,69 +437,17 @@ export default function PnlExplainPage() {
               </p>
             </section>
 
-            <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Judgment or luck">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>Judgment or luck</span>
-                <span className={positionsUi.panelTitle}>did it earn it the way the thesis says</span>
-                <DenseTag variant="warning" size="cell">
-                  ⚠ needs the daily snapshot
-                </DenseTag>
-                <Link to={HYPOTHESIS_BOARD_PATH} className={cn(positionsUi.link, 'ml-auto')}>
-                  Hypothesis Board →
-                </Link>
-              </header>
-              <p className="m-0 px-3 py-2.5 text-xs leading-normal text-secondary-foreground text-pretty">
-                A sell-vol thesis should earn from θ and vega. When it earns from Δ instead, the cycle settled
-                profitably and the thesis learned nothing — that is a long stock position wearing an options costume.
-                Realized P&amp;L alone cannot tell you which one you have, which is why this panel exists and why it is
-                empty: {PNL_UNRECORDED.hypothesis}
-              </p>
-              <div className="overflow-x-auto border-t border-border">
-                {/* §14.6: five columns, the design's 940 floor. The shape is the design's; the one row
-                    says why there is no other, the way the Attribution table above says it per name. */}
-                <table className="w-full min-w-[940px] table-fixed border-collapse">
-                  <colgroup>
-                    <col style={{ width: '20%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '38%' }} />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th className={cn(positionsUi.th, 'text-left')}>Hypothesis</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Should earn from</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Actually earned from</th>
-                      <th className={positionsUi.th}>Realized</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Verdict</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className={cn(positionsUi.td, 'pl-2 text-left')}>
-                        <span className="inline-flex h-4 items-center border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground mat-tag">
-                          NO HYPOTHESIS STORE
-                        </span>
-                      </td>
-                      {['should', 'actual', 'realized'].map((k) => (
-                        <td key={k} className={cn(positionsUi.td, 'text-muted-foreground')}>
-                          —
-                        </td>
-                      ))}
-                      <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}>
-                        no thesis is stored with what it should earn from, so there is no row to judge
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p className={cn(FOOT, 'm-0')}>
-                Where a finished idea came from and how it ended is a reading that does exist —{' '}
-                <Link to="/portfolio/outcome" className={positionsUi.link}>
-                  Outcome →
-                </Link>
-              </p>
-            </section>
+            {/* Rev .112 (§5.1.3): Judgment or luck moved to Review — the attribution stays
+                computed here, and Review quotes it per play (Record · Earned from) and per trade. */}
+            <div className="flex items-center gap-2.5 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3 py-2 text-xs text-muted-foreground">
+              <span className="min-w-0 text-pretty">
+                Whether each play earned the way it says — θ and vega for a sell-vol play, Δ for a drift play — is read
+                from these attributions on the play&rsquo;s record and on each trade&rsquo;s review.
+              </span>
+              <Link to="/review/playbook?tab=record" className={cn(positionsUi.link, 'ml-auto flex-none')}>
+                Playbook › Record →
+              </Link>
+            </div>
           </>
         )}
     </PageShell>

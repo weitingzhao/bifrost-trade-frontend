@@ -16,6 +16,7 @@
  * table (`lib/design/faces`), never listed here — a hand-kept copy of a
  * pairing is the thing that drifts when the design moves a page.
  */
+import { RECORD_BY_SOURCE_PATH } from '@/utils/tradeOrigin'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { hasMethodFace } from '@/lib/design/faces'
@@ -216,8 +217,8 @@ export function LoopCircuit({ cards, machines }: { cards: LoopCard[]; machines: 
 
       <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
         Settle and Feed back cross the outer loop — a settlement is money in{' '}
-        <Link to="/portfolio/outcome" className="text-primary hover:underline">
-          Portfolio
+        <Link to={RECORD_BY_SOURCE_PATH} className="text-primary hover:underline">
+          Playbook › Record
         </Link>
         , a verdict is a judgment in{' '}
         <Link to="/review/objectives" className={cn('hover:underline', CROSS_INK)}>

@@ -83,6 +83,7 @@ describe('route registry', () => {
 
   it('offers a page its old names', () => {
     expect(aliasesFor('/review/playbook').map((a) => a.path).sort()).toEqual([
+      '/portfolio/outcome',
       '/research/playbook',
       '/review/playbook-stats',
       '/strategy/win-rate',

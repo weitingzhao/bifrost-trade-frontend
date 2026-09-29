@@ -38,7 +38,11 @@ import { TradePicker } from './TradePicker'
 import { TradePathPanels } from './TradePathPanels'
 import { CounterfactualsTable, ExecutionTable } from './TradeFitTables'
 import { SourcesPanel, TagsPanel, TimelinePanel, VerdictPanel } from './TradeFitAside'
-import { counterfactuals, derivedTags, sources, timeline } from './tradeFitModel'
+import { corporateActionRow, counterfactuals, derivedTags, sources, timeline } from './tradeFitModel'
+import { PnlSourcePanel } from './PnlSourcePanel'
+import { useTradeOrigins } from '@/hooks/useTradeOrigins'
+import { useQuery } from '@tanstack/react-query'
+import { fetchCorporateActions } from '@/api/marketData/corporateActions'
 
 const PAGE_LEAD =
   'One trade — every leg on one line, rolls as seams, open ones as an interim read — against the path it actually traded: what I did, what the position was worth on every session it was held, and the best and worst that path ever offered. The distance to my plan would be discipline — and the plan is the one thing not recorded.'
@@ -54,7 +58,11 @@ export default function ReviewFitPage() {
   // the instance that traded it. With neither, the page opens the first trade
   // still awaiting review, and ‹ › walks that queue — or Queue's own row order
   // when arrived from there (`in=list&list=…`).
-  const trades = useMemo(() => buildReviewInstances(execQuery.data?.items ?? [], today), [execQuery.data?.items, today])
+  const origins = useTradeOrigins()
+  const trades = useMemo(
+    () => buildReviewInstances(execQuery.data?.items ?? [], today, origins.exitBy),
+    [execQuery.data?.items, today, origins.exitBy],
+  )
   const reviews = useTradeReviews()
   const saveReview = useSaveTradeReview()
   const wantedInst = (params.get('t') ?? params.get('inst') ?? '').replace('#', '')
@@ -136,15 +144,26 @@ export default function ReviewFitPage() {
     return bar?.close ?? null
   }, [underlying, openedOn])
 
+  // Rev .112 · §5.1.4: the name's corporate actions, for the adjustment row (the Today page's cache family).
+  const caSymbol = trade?.underlying ?? ''
+  const caQuery = useQuery({
+    queryKey: ['market-data', 'corporate-actions', caSymbol, 400],
+    queryFn: () => fetchCorporateActions(caSymbol, 400),
+    enabled: caSymbol !== '',
+    staleTime: 10 * 60_000,
+  })
+  const caRows = caQuery.isError ? null : caQuery.data ? caQuery.data.rows : undefined
+  const origin = trade?.tradeId != null ? (origins.byTrade.get(trade.tradeId) ?? null) : null
+
   const derived = useMemo(() => {
     if (trade == null) return null
     return {
       cfs: counterfactuals(trade, path, expiryBranch, today),
       stages: timeline(trade, path, { ivRank: ivRank ?? null, spot: entrySpot }),
       tags: derivedTags(trade, path),
-      srcs: sources(trade, path, underlying.length, optionTicker, ivRank),
+      srcs: [corporateActionRow(trade, caRows, today), ...sources(trade, path, underlying.length, optionTicker, ivRank, origin)],
     }
-  }, [trade, path, expiryBranch, underlying.length, optionTicker, today, ivRank, entrySpot])
+  }, [trade, path, expiryBranch, underlying.length, optionTicker, today, ivRank, entrySpot, caRows, origin])
 
   const preview = usePreviewState()
   const pageState =
@@ -269,6 +288,7 @@ export default function ReviewFitPage() {
               <PeersPanel self={trade} selfPath={path} all={trades} structureOf={structureOf} today={today} onPick={pick} />
               <CounterfactualsTable rows={derived.cfs} />
               <ExecutionTable trade={trade} />
+              <PnlSourcePanel trade={trade} />
             </div>
 
             <aside className="flex min-w-0 max-w-[27.5rem] flex-[1_1_21rem] flex-col gap-3">

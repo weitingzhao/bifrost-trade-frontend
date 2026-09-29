@@ -29,8 +29,24 @@ import { daysTo, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 import type { Execution } from '@/types/positions'
 
-/** `open` since Rev .104: an instance still running is reviewable (interim). */
-export type ExitKind = 'closed' | 'expired' | 'open'
+/**
+ * `open` since Rev .104: an instance still running is reviewable (interim).
+ * Rev .112 splits how a trade ended six ways (see `reviewInstances`): expired ·
+ * assigned · stop · early · late · closed. The contract-level read keeps the
+ * first two it can tell apart from fills alone.
+ */
+export type ExitKind = 'closed' | 'expired' | 'open' | 'assigned' | 'stop' | 'early' | 'late'
+
+/** How a trade ended, as a reader says it. */
+export const EXIT_LABEL: Record<ExitKind, string> = {
+  open: 'Open',
+  expired: 'Expired',
+  assigned: 'Assigned',
+  stop: 'Stopped',
+  early: 'Closed early',
+  late: 'Closed late',
+  closed: 'Closed',
+}
 
 /** One fill, as Review reads it — enough to price the position on any day it was open. */
 export interface ReviewFill {
@@ -42,6 +58,8 @@ export interface ReviewFill {
   commission: number
   /** Signed cash: premium in is positive, premium out and commission negative. */
   cash: number
+  /** The broker booked it (IB `BookTrade`): an expiry or an assignment, not a trade on an exchange. */
+  booked?: boolean
 }
 
 export interface ReviewTrade {
@@ -72,6 +90,8 @@ export interface ReviewTrade {
   realised: number
   win: boolean
   exitKind: ExitKind
+  /** The date the trade's plan said to be out by (Rev .112); absent when no plan is linked. */
+  planExitBy?: string | null
   /** True when the trade was opened by selling — a short-premium trade. */
   shortPremium: boolean
   /** Premium taken in, and paid to close. */
@@ -154,6 +174,7 @@ export function toFill(e: Execution): ReviewFill {
     price,
     commission,
     cash: buy ? -(price * qty * 100 + commission) : price * qty * 100 - commission,
+    booked: (e.transaction_type ?? '').trim() === 'BookTrade',
   }
 }
 

@@ -5,6 +5,7 @@
  * app already answers; everything here is a pure function so the honest
  * cells (and the deliberately grey ones) are pinned by tests.
  */
+import { RECORD_BY_SOURCE_PATH } from '@/utils/tradeOrigin'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import { operatorOf, sourceOperatorOf, type ResearchOperator } from '@/lib/research/operatorOf'
@@ -261,7 +262,7 @@ export const LOOP_STATIONS: readonly LoopStation[] = [
     row: 'bottom',
     crossNote: 'a settlement is money in Portfolio',
     pages: [
-      { label: 'Outcome', to: '/portfolio/outcome', tip: 'Settled money, attributed.' },
+      { label: 'Record', to: RECORD_BY_SOURCE_PATH, tip: 'Settled money, by where the idea came from.' },
       { label: 'Positions', to: '/portfolio/positions', tip: 'What is still open.' },
     ],
   },

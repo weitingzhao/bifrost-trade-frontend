@@ -35,8 +35,10 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { useBookMarkPaths } from '@/hooks/useBookMarkPaths'
 import { useReviewTrades } from '@/hooks/useReviewTrades'
-import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
-import { derivedTags } from '@/pages/review/fit/tradeFitModel'
+import { EXIT_LABEL, REVIEW_UNRECORDED, type ExitKind } from '@/utils/reviewTrades'
+import { useTradeOrigins } from '@/hooks/useTradeOrigins'
+import { ORIGIN_UNRECORDED, type TradeOrigin } from '@/utils/tradeOrigin'
+import { derivedTags, exitTags } from '@/pages/review/fit/tradeFitModel'
 import { useNavigate } from 'react-router-dom'
 import { tradeReviewPath } from '@/components/layout'
 import { useTradeReviews } from '@/hooks/useTradeReviews'
@@ -65,6 +67,51 @@ function closedSince(months: number | null): string | null {
   return d.toISOString().slice(0, 10)
 }
 
+/** Rev .112: the bar each ending draws in How they ended — its ink says what kind of ending it was. */
+const EXIT_BAR: Record<ExitKind, string> = {
+  expired: 'var(--color-profit)',
+  closed: 'var(--sk-contract)',
+  assigned: 'var(--sk-trade)',
+  stop: 'var(--color-loss)',
+  early: 'var(--color-warning)',
+  late: 'var(--color-warning)',
+  open: 'var(--sk-mute)',
+}
+const EXIT_ORDER: ExitKind[] = ['expired', 'closed', 'assigned', 'stop', 'early', 'late']
+
+function exitVariant(k: ExitKind): 'danger' | 'warning' | 'neutral' {
+  return k === 'assigned' || k === 'stop' ? 'danger' : k === 'early' || k === 'late' ? 'warning' : 'neutral'
+}
+
+/**
+ * The path tags are per contract; the ending is per trade (Rev .112), so the
+ * two tags it names — assigned, stopped out — are put in front here.
+ */
+function withExitTag(
+  t: ReviewInstance,
+  tags: { text: string; title: string } | null,
+): { text: string; title: string } | null {
+  const exit = exitTags(t)
+  if (tags == null || exit.length === 0) return tags
+  return {
+    text: [...exit.map((g) => g.label), tags.text === 'none' ? null : tags.text].filter(Boolean).join(' · '),
+    title: [...exit.map((g) => g.why), tags.title].join('\n'),
+  }
+}
+
+/** Rev .112 Gaps: the two holes Outcome used to count, as filters on the queue. */
+const GAPS = {
+  noplan: {
+    label: 'No plan',
+    title: 'Trades with no written plan — adherence cannot be measured',
+  },
+  norun: {
+    label: 'No run',
+    title: `Ideas with no backtest run behind them — nothing to compare the result against. ${ORIGIN_UNRECORDED.run}`,
+  },
+} as const
+type GapKey = keyof typeof GAPS
+
 /** The design's four cells, each with the fix it implies. */
 const QUADRANTS = [
   {
@@ -92,11 +139,14 @@ const QUADRANTS = [
 function QueueRow({
   t,
   review,
+  origin,
   onOpen,
   tags,
 }: {
   t: ReviewInstance
   review: TradeReview | undefined
+  /** The plan the trade was opened under, when one names it (Rev .112 Source). */
+  origin: TradeOrigin | undefined
   onOpen: () => void
   /** The path-derived tags, summarised; null while the book's bars are read. */
   tags: { text: string; title: string } | null
@@ -136,6 +186,16 @@ function QueueRow({
           {sym}
         </Link>
       </td>
+      <td
+        className={cn(positionsUi.td, 'text-left font-sans', origin ? 'text-[var(--sk-soft)]' : 'text-muted-foreground')}
+        title={
+          origin
+            ? [origin.source, origin.ref, 'no lens recorded', 'no run linked'].filter(Boolean).join(' · ')
+            : 'No plan names this trade, so nothing records where the idea came from'
+        }
+      >
+        {origin?.source ?? '—'}
+      </td>
       <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-[var(--sk-soft)]')}>
         {t.play ?? 'no play recorded'}
         <span className="text-muted-foreground"> → no rule</span>
@@ -151,9 +211,9 @@ function QueueRow({
       <td className={cn(positionsUi.td, 'text-muted-foreground')}>n/c</td>
       <td className={cn(positionsUi.td, 'text-muted-foreground')}>n/c</td>
       <td className={cn(positionsUi.td, 'text-left font-sans')}>
-        {/* The design's five exit kinds (target, stop, early, late, expired) need the
-            planned bar to tell four of them apart. The fills give two. */}
-        <DenseTag variant="neutral" size="cell">
+        {/* Rev .112: six endings. Expired and assigned come from the broker's own
+            booking, stop from the credit; early and late need a plan's date. */}
+        <DenseTag variant={exitVariant(t.exitKind)} size="cell" title={EXIT_LABEL[t.exitKind]}>
           {t.exitKind}
         </DenseTag>
       </td>
@@ -170,6 +230,9 @@ export default function ReviewQueuePage() {
   const [since, setSince] = usePageViewState('since', 'all')
   const [cell, setCell] = usePageViewState<string | null>('quad', null)
   const [reviewFilter, setReviewFilter] = usePageViewState('state', 'all')
+  const [exitFilter, setExitFilter] = usePageViewState<ExitKind | null>('exit', null)
+  const [gap, setGap] = usePageViewState<GapKey | null>('gap', null)
+  const origins = useTradeOrigins()
   const navigate = useNavigate()
   const { trades, expiredUnbooked, accountIds } = useReviewTrades(accountFilter)
   const reviews = useTradeReviews()
@@ -199,8 +262,8 @@ export default function ReviewQueuePage() {
   const instances = useMemo(() => {
     const items = execQuery.data?.items ?? []
     const scoped = accountFilter === 'all' ? items : items.filter((e) => (e.account_id ?? '').trim() === accountFilter)
-    return buildReviewInstances(scoped, today).filter((t) => !t.open)
-  }, [execQuery.data?.items, accountFilter, today])
+    return buildReviewInstances(scoped, today, origins.exitBy).filter((t) => !t.open)
+  }, [execQuery.data?.items, accountFilter, today, origins.exitBy])
 
   // The window first, so every figure on the page is about the same set of trades.
   const rows = useMemo(() => {
@@ -214,13 +277,23 @@ export default function ReviewQueuePage() {
   // A cell is a claim about the plan and the path. The plan never reaches this
   // side, so no trade can be placed in one — the filter works, and answers
   // with nothing every time.
-  const queueRows = useMemo(() => {
+  const baseRows = useMemo(() => {
     if (cell != null) return rows.filter(() => false)
     if (reviewFilter === 'todo') return rows.filter((t) => t.tradeId != null && !isReviewed(t))
     if (reviewFilter === 'done') return rows.filter(isReviewed)
     return rows
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, cell, reviewFilter, reviews.byInstance])
+  const hasPlan = (t: ReviewInstance) => t.tradeId != null && origins.byTrade.has(t.tradeId)
+  // No store holds a backtest run, so every idea is one with no run behind it.
+  const gapTest: Record<GapKey, (t: ReviewInstance) => boolean> = { noplan: (t) => !hasPlan(t), norun: () => true }
+  const queueRows = baseRows.filter((t) => (!exitFilter || t.exitKind === exitFilter) && (!gap || gapTest[gap](t)))
+  // Rev .112 How they ended: the endings of the trades in range, widest first by count.
+  const exits = EXIT_ORDER.map((k) => {
+    const items = baseRows.filter((t) => t.exitKind === k)
+    return { key: k, n: items.length, realised: items.reduce((a, t) => a + t.realised, 0) }
+  }).filter((e) => e.n > 0)
+  const baseRealised = baseRows.reduce((a, t) => a + t.realised, 0)
   const cellName = QUADRANTS.find((q) => q.key === cell)?.name ?? null
 
   /** A row opens Trade review on it, walking the queue in the order shown (Rev .110). */
@@ -241,13 +314,19 @@ export default function ReviewQueuePage() {
   const shown = preview === 'empty' || preview === 'filtered' ? [] : queueRows
   // §17.3: Clear resets every filter axis — the window and the cell. The
   // account is scope, not a filter.
-  const resets = [since !== 'all' ? 'range' : null, cell != null ? 'cell' : null, reviewFilter !== 'all' ? 'state' : null].filter(
-    (r): r is string => r != null,
-  )
+  const resets = [
+    since !== 'all' ? 'range' : null,
+    cell != null ? 'cell' : null,
+    reviewFilter !== 'all' ? 'state' : null,
+    exitFilter != null ? 'ending' : null,
+    gap != null ? 'gap' : null,
+  ].filter((r): r is string => r != null)
   const clearAll = () => {
     setSince('all')
     setCell(null)
     setReviewFilter('all')
+    setExitFilter(null)
+    setGap(null)
   }
 
   return (
@@ -309,6 +388,24 @@ export default function ReviewQueuePage() {
             { value: 'done', label: 'Reviewed' },
           ]}
         />
+        <span data-sr-tb="sep" />
+        <span data-sr-tb="label">Gaps</span>
+        {(Object.keys(GAPS) as GapKey[]).map((k) => {
+          const on = gap === k
+          return (
+            <button
+              key={k}
+              type="button"
+              aria-pressed={on}
+              title={GAPS[k].title}
+              onClick={() => setGap(on ? null : k)}
+              className={cn(positionsUi.btn, on && 'bg-[color-mix(in_srgb,var(--sk-accent)_18%,transparent)] text-foreground')}
+            >
+              {GAPS[k].label}{' '}
+              <span className={cn(positionsUi.mono, 'text-muted-foreground')}>{baseRows.filter(gapTest[k]).length}</span>
+            </button>
+          )
+        })}
         <ToolbarClear resets={resets} onClear={clearAll} />
         <span data-sr-tb="meta" className={positionsUi.mono}>
           <span className={awaitingN > 0 ? 'text-warning' : 'text-muted-foreground'}>{awaitingN} awaiting</span> ·{' '}
@@ -388,6 +485,50 @@ export default function ReviewQueuePage() {
             </p>
           </section>
 
+          {/* Rev .112: how the closed trades ended — from Outcome, now a filter on the queue. */}
+          <section className={positionsUi.panel} aria-label="How they ended">
+            <header className={positionsUi.panelHead}>
+              <span className={positionsUi.cap}>How they ended</span>
+              <span className={positionsUi.panelTitle}>
+                {baseRows.length ? `${baseRows.length} closed · ${fmtUsd(baseRealised)}` : 'nothing closed in range'}
+              </span>
+              <span className="ml-auto text-dense-meta text-muted-foreground">click a segment to filter the queue</span>
+            </header>
+            <div className="flex min-w-0 gap-1 px-3 py-2.5">
+              {exits.map((e) => {
+                const on = exitFilter === e.key
+                return (
+                  <button
+                    key={e.key}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setExitFilter(on ? null : e.key)}
+                    title={`${e.n} ${EXIT_LABEL[e.key].toLowerCase()} · ${fmtUsd(e.realised)} realised`}
+                    style={{ flex: `${e.n} 1 0` }}
+                    className="flex min-w-24 cursor-pointer flex-col gap-1 border-0 bg-transparent p-0 pb-0.5 text-left font-[inherit] text-inherit"
+                  >
+                    <span
+                      className="block h-1.5 rounded-sm"
+                      style={{ background: EXIT_BAR[e.key], outline: on ? '1px solid var(--sk-accent)' : 'none', outlineOffset: 2 }}
+                    />
+                    <span className="flex min-w-0 items-baseline gap-1.5">
+                      <span className={cn('text-dense-meta font-semibold', !exitFilter || on ? 'text-foreground' : 'text-muted-foreground')}>
+                        {EXIT_LABEL[e.key]}
+                      </span>
+                      <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{e.n}</span>
+                      <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta', pnlColorClass(e.realised))}>{fmtUsd(e.realised)}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <p className={cn(FOOT, 'm-0')}>
+              Expired and assigned are the broker&rsquo;s own bookings — assigned when it delivered the stock at a short
+              leg&rsquo;s strike that day. Stopped lost more than the credit taken in. Closed early and closed late read
+              the exit against a written plan&rsquo;s date (±3 days) and need a plan linked to the trade.
+            </p>
+          </section>
+
           {/* Queue and, beside it, the trade being reviewed — the design's own split,
               640px of queue against 360px of review before they stack. */}
           <div className="flex min-w-0 flex-wrap items-start gap-3">
@@ -395,7 +536,14 @@ export default function ReviewQueuePage() {
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.cap}>Queue</span>
                 <span className={positionsUi.panelTitle}>
-                  {cellName ?? (since === 'all' ? 'All closed' : `Closed in the last ${SINCE_LABEL[since]}`)}
+                  {cellName ??
+                    (exitFilter
+                      ? EXIT_LABEL[exitFilter]
+                      : gap
+                        ? GAPS[gap].label
+                        : since === 'all'
+                          ? 'All closed'
+                          : `Closed in the last ${SINCE_LABEL[since]}`)}
                 </span>
                 <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{shown.length}</span>
                 {cellName ? (
@@ -414,6 +562,13 @@ export default function ReviewQueuePage() {
                     actionLabel="Clear cell"
                     onAction={() => setCell(null)}
                   />
+                ) : exitFilter || gap ? (
+                  <ViewState
+                    kind="filtered"
+                    title={`No trades match “${exitFilter ? EXIT_LABEL[exitFilter] : GAPS[gap as GapKey].label}”`}
+                    detail="The ending and the gap filters narrow the queue together."
+                    onAction={clearAll}
+                  />
                 ) : since !== 'all' ? (
                   <ViewState
                     kind="filtered"
@@ -430,14 +585,15 @@ export default function ReviewQueuePage() {
                 )
               ) : (
                 <div className="overflow-x-auto">
-                  {/* §14.6: eleven columns. The design's floor is 1180, where its Trade column
-                      is an id; ours is a whole contract token, so the table holds 1460 to keep
-                      every cell unclipped at the measured widths. */}
-                  <table className="w-full min-w-[1460px] table-fixed border-collapse">
+                  {/* §14.6: twelve columns (Rev .112 adds Source). The design's floor is 1180, where
+                      its Trade column is an id; ours is a whole contract token, so the table holds
+                      1560 to keep every cell unclipped at the measured widths. */}
+                  <table className="w-full min-w-[1560px] table-fixed border-collapse">
                     <colgroup>
-                      <col style={{ width: '15%' }} />
-                      <col style={{ width: '8%' }} />
-                      <col style={{ width: '15%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '7%' }} />
+                      <col style={{ width: '7%' }} />
+                      <col style={{ width: '13%' }} />
                       <col style={{ width: '8%' }} />
                       <col style={{ width: '7%' }} />
                       <col style={{ width: '9%' }} />
@@ -451,6 +607,9 @@ export default function ReviewQueuePage() {
                       <tr>
                         <th className={cn(positionsUi.th, 'text-left')}>Trade</th>
                         <th className={cn(positionsUi.th, 'text-left')}>Symbol</th>
+                        <th className={cn(positionsUi.th, 'text-left')} title="Where the idea came from, as its plan records it">
+                          Source
+                        </th>
                         <th className={cn(positionsUi.th, 'text-left')}>Structure → rule</th>
                         <th className={positionsUi.th}>Closed</th>
                         <th className={positionsUi.th} title="Days held over days to expiry at entry">
@@ -470,14 +629,16 @@ export default function ReviewQueuePage() {
                           key={t.contractKey}
                           t={t}
                           review={t.tradeId != null ? reviews.byInstance.get(t.tradeId) : undefined}
+                          origin={t.tradeId != null ? origins.byTrade.get(t.tradeId) : undefined}
                           onOpen={() => openRow(t)}
-                          tags={
+                          tags={withExitTag(
+                            t,
                             marks.loading
                               ? null
                               : t.legs.length === 1
                                 ? (tagsByKey.get(t.legs[0].contractKey) ?? null)
-                                : { text: `${t.legs.length} legs · on its page`, title: 'Tags are derived per contract path; a multi-leg trade reads them on Trade review.' }
-                          }
+                                : { text: `${t.legs.length} legs · on its page`, title: 'Tags are derived per contract path; a multi-leg trade reads them on Trade review.' },
+                          )}
                         />
                       ))}
                     </tbody>
@@ -518,8 +679,8 @@ export default function ReviewQueuePage() {
                     {
                       key: 'plan',
                       lamp: rows.length > 0 ? ('yellow' as const) : ('green' as const),
-                      title: `${rows.length} of ${rows.length} with no linked plan`,
-                      sub: 'Adherence needs a plan to measure against. These count toward P&L and toward nothing else — the same hole Outcome reports as unattributed.',
+                      title: `${rows.filter((t) => !hasPlan(t)).length} of ${rows.length} with no linked plan`,
+                      sub: 'Adherence needs a plan to measure against. These count toward P&L and toward nothing else — the No plan gap above filters to them.',
                     },
                     {
                       key: 'unbooked',

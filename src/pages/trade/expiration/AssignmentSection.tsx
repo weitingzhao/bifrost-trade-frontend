@@ -500,9 +500,9 @@ export function AssignmentSection() {
                 <Link to="/portfolio/ledger" className={positionsUi.link}>
                   Ledger
                 </Link>
-                ; how each finished idea ended is{' '}
-                <Link to="/portfolio/outcome" className={positionsUi.link}>
-                  Outcome&rsquo;s
+                ; how each finished trade ended is{' '}
+                <Link to="/review" className={positionsUi.link}>
+                  the Review Queue&rsquo;s
                 </Link>
                 .
               </p>

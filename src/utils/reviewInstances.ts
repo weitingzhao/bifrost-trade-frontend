@@ -24,6 +24,7 @@ import { daysTo, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import type { Execution } from '@/types/positions'
 import {
   dateSpan,
+  type ExitKind,
   isoExpiry,
   orderedTrades,
   toFill,
@@ -95,6 +96,66 @@ function legOf(g: OptExecutionGroup): ReviewLeg {
   }
 }
 
+/**
+ * What tells one ending from another, beyond the trade's own fills (Rev .112).
+ *
+ * `assignments` holds the broker's own stock deliveries — a stock `BookTrade`
+ * keyed `ROOT|date|price` — so an option booked out on the day its underlying
+ * was delivered at the strike reads as assigned, from the broker's record
+ * rather than from a close compared with the strike. `planExitBy` is the date
+ * the trade's plan said to be out by.
+ */
+export interface ExitContext {
+  assignments?: ReadonlySet<string>
+  planExitBy?: string | null
+}
+
+/** Days either side of the planned exit that still count as on plan — the early_exit / held_past_plan rule. */
+export const PLAN_EXIT_SLACK_DAYS = 3
+
+export function assignmentKey(root: string, date: string | null | undefined, price: number): string {
+  return `${root.trim().toUpperCase()}|${(date ?? '').slice(0, 10)}|${Number(price)}`
+}
+
+/** Stock deliveries the broker booked: the other half of every assignment. */
+export function assignmentsIn(executions: readonly Execution[]): Set<string> {
+  const out = new Set<string>()
+  for (const e of executions) {
+    if ((e.sec_type ?? '').toUpperCase() !== 'STK' || (e.transaction_type ?? '').trim() !== 'BookTrade') continue
+    out.add(assignmentKey(e.symbol ?? '', e.trade_date, Number(e.price)))
+  }
+  return out
+}
+
+/**
+ * How a finished trade ended, one reading per trade (design Rev .112): ran to
+ * expiry → expired, or assigned when the broker delivered the underlying at a
+ * short leg's strike; otherwise stop (lost more than the credit taken in),
+ * early / late against a written plan (±3 days), else closed.
+ */
+export function exitKindOf(
+  legs: readonly ReviewLeg[],
+  opts: { open: boolean; expiredUnbooked: boolean; closedOn: string | null; cash: number; netIn: number; root: string },
+  ctx: ExitContext = {},
+): ExitKind {
+  if (opts.open) return 'open'
+  // The legs that ended the trade: the ones flat on its last day, or every leg
+  // an unbooked expiry left open.
+  const last = opts.expiredUnbooked ? legs.filter((l) => l.open) : legs.filter((l) => l.flatOn === opts.closedOn)
+  const byBroker = last.length > 0 && last.every((l) => l.open || l.fills[l.fills.length - 1]?.booked)
+  if (byBroker) {
+    const delivered = legs.some(
+      (l) => l.short && l.fills.some((f) => f.booked && ctx.assignments?.has(assignmentKey(opts.root, f.date, l.strike))),
+    )
+    return delivered ? 'assigned' : 'expired'
+  }
+  if (opts.netIn > 0 && opts.cash <= -opts.netIn) return 'stop'
+  const off = ctx.planExitBy && opts.closedOn ? daysBetween(ctx.planExitBy, opts.closedOn) : null
+  if (off != null && off < -PLAN_EXIT_SLACK_DAYS) return 'early'
+  if (off != null && off > PLAN_EXIT_SLACK_DAYS) return 'late'
+  return 'closed'
+}
+
 /** The leg the instance is named by: the open short leg, else the last short leg opened, else the last leg. */
 function primaryOf(legs: readonly ReviewLeg[]): ReviewLeg {
   const byOpen = [...legs].sort((a, b) => (a.openedOn ?? '').localeCompare(b.openedOn ?? ''))
@@ -109,6 +170,7 @@ export function instanceOf(
   instanceId: number | null,
   executions: readonly Execution[],
   today: string,
+  ctx: ExitContext = {},
 ): ReviewInstance | null {
   const groups = buildOptExecutionGroups([...executions])
   if (groups.length === 0) return null
@@ -157,7 +219,8 @@ export function instanceOf(
     // far — the page replaces it with the path's mark to date (provisional).
     realised: cash,
     win: !open && cash > 0,
-    exitKind: open ? 'open' : expired ? 'expired' : 'closed',
+    exitKind: exitKindOf(legs, { open, expiredUnbooked: expired, closedOn, cash, netIn, root }, ctx),
+    planExitBy: ctx.planExitBy ?? null,
     shortPremium: credit,
     entryPremium: Math.abs(netIn),
     exitPremium: Math.abs(netOut),
@@ -175,8 +238,14 @@ export function instanceOf(
  * Every instance the fills book, plus the closed contracts booked to none —
  * open instances first (the design pins them), then newest close first.
  */
-export function buildReviewInstances(executions: readonly Execution[], today: string): ReviewInstance[] {
+export function buildReviewInstances(
+  executions: readonly Execution[],
+  today: string,
+  /** The date each trade's plan said to be out by, keyed by trade id (Rev .112 early / late). */
+  planExitBy?: ReadonlyMap<number, string | null>,
+): ReviewInstance[] {
   const opt = executions.filter((e) => (e.sec_type ?? 'OPT').toUpperCase() === 'OPT')
+  const assignments = assignmentsIn(executions)
   const ids = new Set<number>()
   const unbooked: Execution[] = []
   for (const e of opt) {
@@ -188,13 +257,13 @@ export function buildReviewInstances(executions: readonly Execution[], today: st
   const out: ReviewInstance[] = []
   for (const id of ids) {
     const mine = opt.map((e) => sliceExecutionForInstanceOptView(e, id)).filter((e): e is Execution => e != null)
-    const inst = instanceOf(id, mine, today)
+    const inst = instanceOf(id, mine, today, { assignments, planExitBy: planExitBy?.get(id) ?? null })
     if (inst) out.push(inst)
   }
   // Contracts no instance owns: reviewable on their own, closed ones only.
   for (const g of buildOptExecutionGroups(unbooked)) {
     if (g.status !== 'realized') continue
-    const inst = instanceOf(null, g.trades, today)
+    const inst = instanceOf(null, g.trades, today, { assignments })
     if (inst) out.push(inst)
   }
   return out.sort(

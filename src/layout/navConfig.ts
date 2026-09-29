@@ -153,7 +153,6 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         route('Positions', '/portfolio/positions', TrendingUp),
         route('P&L Explain', '/portfolio/pnl-explain', PieChart),
         route('Backing & Model', '/portfolio/backing', Layers),
-        route('Outcome', '/portfolio/outcome', Target),
       ]),
       home('Accounts', '/portfolio/accounts', LayoutDashboard, [
         route('Ledger', '/portfolio/ledger', List),

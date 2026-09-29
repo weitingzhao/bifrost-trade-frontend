@@ -1,8 +1,12 @@
 /**
- * The Instance page's rail (design Rev .103): the lineage it ran under with
- * its sibling instances, and the Journal notes that link it. A note written
- * here links both the instance and its symbol, and lands in the Journal's
- * Day view with the rest.
+ * The Trade page's rail (design Rev .103): the lineage it ran under with its
+ * sibling trades, and the Journal notes that link it. A note written here
+ * links both the trade and its symbol, and lands in the Journal's Day view
+ * with the rest.
+ *
+ * Rev .112 (§5.1.2): the lineage opens with where the trade came from — the
+ * Idea (source · ref · lens · run) and the Plan — which is the old Outcome
+ * page's single-trade trace; Fills and Close are the page's own blocks.
  */
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -16,6 +20,8 @@ import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
 import type { RanUnder } from '@/utils/tradeRecord/ranUnder'
 import type { StrategyInstance } from '@/types/positions'
 import { TradeBlock } from './TradeBlock'
+import { useTradeOrigins } from '@/hooks/useTradeOrigins'
+import { ORIGIN_UNRECORDED, planTermsText, planToken } from '@/utils/tradeOrigin'
 
 
 export function TradeLineage({
@@ -45,8 +51,27 @@ export function TradeLineage({
   const sibs = [...(siblingsQ.data?.items ?? [])].sort((a, b) => (b.opened_at_epoch ?? 0) - (a.opened_at_epoch ?? 0))
   const sibIds = sibs.map((x) => x.strategy_instance_id)
   const openedIso = instance.opened_at ? instance.opened_at.slice(0, 10) : null
+  const origin = useTradeOrigins().byTrade.get(id)
 
-  const chain: { kind: string; name: string; meta: string; mono?: boolean; warn?: boolean; ink?: string }[] = [
+  const chain: { kind: string; name: string; meta: string; mono?: boolean; warn?: boolean; ink?: string; muted?: boolean; title?: string }[] = [
+    {
+      kind: 'Idea',
+      name: origin ? `${origin.source}${origin.ref ? ` · ${origin.ref}` : ''}` : 'not recorded',
+      muted: !origin,
+      meta: origin
+        ? origin.sourceKind === 'roll'
+          ? 'continues the trade it rolled from · no lens · no backtest run behind it'
+          : 'no lens recorded · no backtest run behind it'
+        : 'no plan names this trade, so nothing records where the idea came from',
+      title: `${ORIGIN_UNRECORDED.lens} ${ORIGIN_UNRECORDED.run}`,
+    },
+    {
+      kind: 'Plan',
+      name: origin ? planToken(origin.planId) : 'no plan written',
+      mono: Boolean(origin),
+      muted: !origin,
+      meta: origin ? planTermsText(origin) : 'nothing to measure the exit against',
+    },
     {
       kind: 'Structure',
       name: st?.name ?? instance.strategy_structure_name ?? '—',
@@ -87,7 +112,7 @@ export function TradeLineage({
   return (
     <TradeBlock
       cap="Lineage"
-      title="Ran under"
+      title="Came from, ran under"
       action={
         <button type="button" className={positionsUi.link} onClick={() => navigate(`/trade/rules?pick=instance:${id}`)}>
           Trading › Rules →
@@ -102,8 +127,14 @@ export function TradeLineage({
           >
             <span className="pt-px text-dense-micro font-semibold text-muted-foreground">{c.kind}</span>
             <span
-              className={cn('min-w-0 text-dense-label font-semibold', c.mono && 'font-mono', c.warn && 'text-warning')}
+              className={cn(
+                'min-w-0 text-dense-label font-semibold',
+                c.mono && 'font-mono',
+                c.warn && 'text-warning',
+                c.muted && 'text-muted-foreground',
+              )}
               style={c.ink ? { color: c.ink } : undefined}
+              title={c.title}
             >
               {c.name}
             </span>

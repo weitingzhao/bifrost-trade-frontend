@@ -178,9 +178,9 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'P&L Explain',
     crumbs: PORTFOLIO,
     design: {
-      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
+      // Rev .86–.87 §16 refinement built in batch J3; Rev .112 moved Judgment or luck to Review.
       state: 'reviewing',
-      rev: '2026-09-25.86',
+      rev: '2026-09-29.112',
       note: DESIGN_NOTES['/portfolio/pnl-explain'],
     },
   },
@@ -194,18 +194,6 @@ export const ROUTES: readonly RouteEntry[] = [
       state: 'reviewing',
       rev: '2026-09-25.86',
       note: DESIGN_NOTES['/portfolio/backing'],
-    },
-  },
-  {
-    path: '/portfolio/outcome',
-    label: 'Outcome',
-    crumbs: PORTFOLIO,
-    design: {
-      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
-      state: 'reviewing',
-      // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-09-28.103',
-      note: DESIGN_NOTES['/portfolio/outcome'],
     },
   },
   {
@@ -228,7 +216,8 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Review',
     crumbs: [],
     // Rev .110: instances, review lamps, rows open Trade review in the queue's order.
-    design: { state: 'reviewing', rev: '2026-09-29.110', note: DESIGN_NOTES['/review'] },
+    // Rev .112: How they ended, the Gaps chips and the Source column (from Outcome).
+    design: { state: 'reviewing', rev: '2026-09-29.112', note: DESIGN_NOTES['/review'] },
   },
   {
     path: '/review/trade',
@@ -236,7 +225,8 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: REVIEW,
     // Rev .110: the Trade's Review face (walk · lamp · Confirm review);
     // Rev .111: /review/fit → /review/trade, Single trade → Trade review.
-    design: { state: 'reviewing', rev: '2026-09-29.111', note: DESIGN_NOTES['/review/trade'] },
+    // Rev .112: Where the P&L came from, the corporate-action row, six endings.
+    design: { state: 'reviewing', rev: '2026-09-29.112', note: DESIGN_NOTES['/review/trade'] },
   },
   {
     path: '/review/habits',
@@ -417,8 +407,9 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/trade/:id',
     label: 'Trade',
     design: {
+      // Rev .112: Lineage opens with Idea and Plan (Came from, ran under).
       state: 'reviewing',
-      rev: '2026-09-29.111',
+      rev: '2026-09-29.112',
       note: DESIGN_NOTES['/trade/:id'],
     },
   },
@@ -442,8 +433,9 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: REVIEW,
     design: {
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
+      // Rev .112: Record gains the Source and Lens cuts (from Outcome) and Earned from.
       state: 'reviewing',
-      rev: '2026-09-29.110',
+      rev: '2026-09-29.112',
       note: DESIGN_NOTES['/review/playbook'],
     },
   },

@@ -13,6 +13,7 @@
  * order intent" saves the plan and marks it intended — this app's intent is
  * that status, not an order: the desk copies, TWS places (D10).
  */
+import { PLAN_SOURCE_KINDS, PLAN_SOURCE_LABELS } from '@/utils/tradeOrigin'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
@@ -42,14 +43,8 @@ const CHOOSE_SIDE = 'Choose buy or sell'
 const LEG_GRID = 'grid grid-cols-[84px_72px_44px_minmax(64px,1fr)_minmax(96px,1.2fr)_40px_20px] gap-1.5'
 
 /** The server's own enum — not the prototype's list, which names kinds no row can store. */
-const SOURCE_KINDS = ['manual', 'symbol', 'hypothesis', 'inbox_draft', 'roll'] as const
-const SOURCE_LABELS: Record<StrategyPlan['source_kind'], string> = {
-  manual: 'Manual',
-  symbol: 'Symbol',
-  hypothesis: 'Hypothesis',
-  inbox_draft: 'Inbox draft',
-  roll: 'Roll',
-}
+const SOURCE_KINDS = PLAN_SOURCE_KINDS
+const SOURCE_LABELS = PLAN_SOURCE_LABELS
 const SOURCE_REF_HINTS: Record<StrategyPlan['source_kind'], string> = {
   manual: 'Optional note',
   symbol: 'Option Scan · composite 88',

@@ -26,6 +26,7 @@
  * The request for the missing write is R5 in
  * `REQUEST-research-data-2026-09-20.md`.
  */
+import { RECORD_BY_SOURCE_PATH } from '@/utils/tradeOrigin'
 import type { ResearchObjective } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
@@ -181,9 +182,9 @@ export function objectiveChain(input: ChainInput): {
     why: wired
       ? 'Hand-opened, or a plan edited past the point where its lineage could be traced back to a run. Real money, and not evidence about any objective.'
       : `Every settled trade is here, because \`${BROKEN_LINK}\` is empty on every hypothesis — nothing on this side ties a position back to the objective that proposed it. Real money, and not yet evidence about any machine.`,
-    // Outcome is where settled money is read by where the idea came from,
-    // which is the question this row raises. The design sends it there too.
-    to: '/portfolio/outcome',
+    // Settled money read by where the idea came from is the question this row
+    // raises — Outcome's cut, Playbook › Record · By source since Rev .112.
+    to: RECORD_BY_SOURCE_PATH,
   }
 
   return { rows, unattributed, wired }

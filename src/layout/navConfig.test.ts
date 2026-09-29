@@ -68,8 +68,8 @@ describe('Portfolio nav', () => {
       '/portfolio/positions',
       '/portfolio/pnl-explain',
       '/portfolio/backing',
-      '/portfolio/outcome',
     ])
+    // Rev .112: Outcome left Performance for Review (Playbook › Record · By source).
     // Corporate Actions sits with the ledger, where the design files it: what
     // the broker did to the book, beside what was traded and what cash moved.
     expect(accounts.children?.map((c) => c.to)).toEqual([

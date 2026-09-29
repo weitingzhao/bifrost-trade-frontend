@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { RECORD_BY_SOURCE_PATH } from '@/utils/tradeOrigin'
 import type { ResearchObjective } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
@@ -121,8 +122,8 @@ describe('chainAction', () => {
     ({ id: 'r', title: 't', verdict: 'NO VERDICT', why: 'because.', to: null, ...over }) as ChainRow
 
   it('sends the unattributed row where settled money is read by source of idea', () => {
-    const a = chainAction(row({ verdict: 'NOT A MACHINE', to: '/portfolio/outcome' }))
-    expect(a).toMatchObject({ label: 'Why →', to: '/portfolio/outcome' })
+    const a = chainAction(row({ verdict: 'NOT A MACHINE', to: RECORD_BY_SOURCE_PATH }))
+    expect(a).toMatchObject({ label: 'Why →', to: RECORD_BY_SOURCE_PATH })
   })
 
   it('never prints "Nothing to change" over a row nobody could judge', () => {

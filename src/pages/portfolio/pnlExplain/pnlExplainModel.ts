@@ -45,8 +45,6 @@ export const PNL_UNEXPLAINED_THRESHOLD = 0.05
 export const PNL_UNRECORDED = {
   snapshot:
     'The four attributions need a per-day snapshot of positions, marks and vendor Greeks. Nothing stores one, so Δ, Γ, vega and θ have no reading — and neither does the difference they define. What is missing is not the market: the benchmark carries each name’s prior close, so today’s move is readable. It is the position and its Greeks as they stood at that close.',
-  hypothesis:
-    'Judging a thesis needs both that snapshot and a store of hypotheses with what each should earn from. Neither exists yet.',
   symbol:
     'these rows carry no symbol — account-level cash, not about any one name, so they cannot be placed against one.',
 } as const

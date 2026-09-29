@@ -49,3 +49,46 @@ describe('review instances (Rev .104)', () => {
     expect(Math.round(eight.realised)).toBe(200)
   })
 })
+
+describe('how a trade ended (Rev .112)', () => {
+  const D = 'QQQQ  260116C00030000|OPT|20260116|30.0|C'
+  const call = (over: Partial<Execution>) =>
+    ex({ contract_key: D, symbol: 'QQQQ', strike: 30, right: 'C', expiry: '20260116', qty: 1, quantity: 1, ...over })
+
+  it('reads a broker booking with the stock delivered at the strike that day as assigned', () => {
+    const rows = [
+      call({ side: 'Sell', price: 1, trade_date: '2026-01-02', strategy_instance_id: 11 }),
+      call({ side: 'Buy', price: 0, trade_date: '2026-01-16', transaction_type: 'BookTrade', strategy_instance_id: 11 }),
+      ex({ sec_type: 'STK', symbol: 'QQQQ', side: 'Sell', qty: 100, quantity: 100, price: 30, trade_date: '2026-01-16', transaction_type: 'BookTrade' }),
+    ]
+    expect(buildReviewInstances(rows, '2026-02-01')[0].exitKind).toBe('assigned')
+  })
+
+  it('reads a broker booking with no delivery as expired', () => {
+    const rows = [
+      call({ side: 'Sell', price: 1, trade_date: '2026-01-02', strategy_instance_id: 12 }),
+      call({ side: 'Buy', price: 0, trade_date: '2026-01-16', transaction_type: 'BookTrade', strategy_instance_id: 12 }),
+    ]
+    expect(buildReviewInstances(rows, '2026-02-01')[0].exitKind).toBe('expired')
+  })
+
+  it('reads a credit bought back for more than twice what came in as a stop', () => {
+    const rows = [
+      call({ side: 'Sell', price: 1, trade_date: '2026-01-02', strategy_instance_id: 13 }),
+      call({ side: 'Buy', price: 2.5, trade_date: '2026-01-09', transaction_type: 'ExchTrade', strategy_instance_id: 13 }),
+    ]
+    expect(buildReviewInstances(rows, '2026-02-01')[0].exitKind).toBe('stop')
+  })
+
+  it('reads the exit against a plan’s date: early, late, or on plan within three days', () => {
+    const rows = [
+      call({ side: 'Sell', price: 1, trade_date: '2026-01-02', strategy_instance_id: 14 }),
+      call({ side: 'Buy', price: 0.4, trade_date: '2026-01-09', transaction_type: 'ExchTrade', strategy_instance_id: 14 }),
+    ]
+    const kind = (exitBy: string | null) => buildReviewInstances(rows, '2026-02-01', new Map([[14, exitBy]]))[0].exitKind
+    expect(kind('2026-01-14')).toBe('early')
+    expect(kind('2026-01-05')).toBe('late')
+    expect(kind('2026-01-11')).toBe('closed')
+    expect(kind(null)).toBe('closed')
+  })
+})

@@ -185,8 +185,8 @@ export function PositionsFaceSlot({
                     instance detail →
                   </button>
                 ) : null}
-                <Link to="/risk/stress" className={positionsUi.link}>
-                  whole-book stress · Risk Stress →
+                <Link to="/risk/portfolio#stress" className={positionsUi.link}>
+                  whole-book stress · Exposure →
                 </Link>
               </span>
             </div>

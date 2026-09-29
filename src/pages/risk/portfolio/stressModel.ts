@@ -1,5 +1,6 @@
 /**
- * The full surface behind Exposure's summary — and who pays for each cell.
+ * Exposure's Stress section (design Rev .107 merged the Stress page into it):
+ * the spot × vol surface, and who pays for each cell.
  *
  * The model service shocks spot and reports what the shock itself costs, both
  * for the account and for each underlying it can price. That gives the spot
@@ -117,13 +118,21 @@ export function whoPays(entries: readonly UnderlyingEntry[], shock: number): Str
     if (!u.stress?.available) continue
     const hit = (u.stress.scenarios ?? []).find((s) => s.spot_shock === shock && s.iv_shock === 0)
     if (!hit || hit.pnl_change == null) continue
+    // The service's `options_pnl` / `stock_pnl` are against cost basis at the
+    // shocked price — a payoff. The shock's own share of each is that minus
+    // the same field at 0%, which is what makes Shares + Options = the cost.
+    const base = (u.stress.scenarios ?? []).find((s) => s.spot_shock === 0 && s.iv_shock === 0)
+    const change = (at: number | undefined, zero: number | undefined) =>
+      at == null || zero == null ? null : at - zero
+    const optionsChange = change(hit.options_pnl, base?.options_pnl)
+    const stockChange = change(hit.stock_pnl, base?.stock_pnl)
     const symbol = (u.symbol ?? '').trim().toUpperCase()
     const prev = bySymbol.get(symbol)
     bySymbol.set(symbol, {
       symbol,
       pnlChange: (prev?.pnlChange ?? 0) + hit.pnl_change,
-      optionsPnl: hit.options_pnl == null && prev?.optionsPnl == null ? null : (prev?.optionsPnl ?? 0) + (hit.options_pnl ?? 0),
-      stockPnl: hit.stock_pnl == null && prev?.stockPnl == null ? null : (prev?.stockPnl ?? 0) + (hit.stock_pnl ?? 0),
+      optionsPnl: optionsChange == null && prev?.optionsPnl == null ? null : (prev?.optionsPnl ?? 0) + (optionsChange ?? 0),
+      stockPnl: stockChange == null && prev?.stockPnl == null ? null : (prev?.stockPnl ?? 0) + (stockChange ?? 0),
       newSpot: prev?.newSpot ?? hit.new_spot ?? null,
       share: null,
     })
@@ -144,4 +153,37 @@ export function worstColumn(columns: readonly StressColumn[]): StressColumn | nu
     if (worst == null || c.pnlChange < worst.pnlChange) worst = c
   }
   return worst
+}
+
+/**
+ * Each name's cost at every spot column, at today's vol — the design's
+ * "Across shocks" bars (Rev .107). Built from the same per-underlying readings
+ * `whoPays` uses, so the bars and the selected column can never disagree.
+ */
+export function acrossShocks(
+  entries: readonly UnderlyingEntry[],
+  shocks: readonly number[],
+): Map<string, number[]> {
+  const out = new Map<string, number[]>()
+  shocks.forEach((shock, i) => {
+    for (const row of whoPays(entries, shock)) {
+      const bars = out.get(row.symbol) ?? shocks.map(() => 0)
+      bars[i] = row.pnlChange
+      out.set(row.symbol, bars)
+    }
+  })
+  return out
+}
+
+/** Names the service could not stress — absent from Who pays rather than zero. */
+export function unstressedNames(entries: readonly UnderlyingEntry[]): string[] {
+  const ok = new Set<string>()
+  const all = new Set<string>()
+  for (const u of entries) {
+    const symbol = (u.symbol ?? '').trim().toUpperCase()
+    if (!symbol) continue
+    all.add(symbol)
+    if (u.stress?.available) ok.add(symbol)
+  }
+  return [...all].filter((s) => !ok.has(s)).sort()
 }

@@ -276,7 +276,7 @@ export const ROUTES: readonly RouteEntry[] = [
   // ── Risk ───────────────────────────────────────────────────────────────
   {
     path: '/risk/portfolio',
-    label: 'Portfolio Exposure',
+    label: 'Exposure',
     crumbs: RISK,
     design: {
       // Rev 2026-09-23.3 added the two doors into Contract Greeks, which the
@@ -284,19 +284,8 @@ export const ROUTES: readonly RouteEntry[] = [
       // header's unfiltered one. Built 2026-09-23.
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.85',
+      rev: '2026-09-29.107',
       note: DESIGN_NOTES['/risk/portfolio'],
-    },
-  },
-  {
-    path: '/risk/budget',
-    label: 'Risk Budget',
-    crumbs: RISK,
-    design: {
-      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
-      state: 'reviewing',
-      rev: '2026-09-25.85',
-      note: DESIGN_NOTES['/risk/budget'],
     },
   },
   {
@@ -317,44 +306,35 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/risk/sizing',
     label: 'Sizing',
     crumbs: RISK,
+    // The shell's account scope reads here (design TopBar ACCT_SCOPED, Rev .107).
+    accountScope: true,
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.85',
+      rev: '2026-09-29.107',
       note: DESIGN_NOTES['/risk/sizing'],
     },
   },
   {
     path: '/risk/limits',
-    label: 'Limits & Breaches',
+    label: 'Limits',
     crumbs: RISK,
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.84',
+      rev: '2026-09-29.107',
       note: DESIGN_NOTES['/risk/limits'],
     },
   },
   {
     path: '/risk/margin',
-    label: 'Margin & Buying Power',
+    label: 'Margin',
     crumbs: RISK,
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.85',
+      rev: '2026-09-29.107',
       note: DESIGN_NOTES['/risk/margin'],
-    },
-  },
-  {
-    path: '/risk/stress',
-    label: 'Stress & Scenario',
-    crumbs: RISK,
-    design: {
-      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
-      state: 'reviewing',
-      rev: '2026-09-25.86',
-      note: DESIGN_NOTES['/risk/stress'],
     },
   },
   {

@@ -203,9 +203,9 @@ export function AccountStressSection({ data }: AccountStressProps) {
           the IV axis is not wired, so every row is intrinsic-only
         </span>
         {/* A different ruler, named so the two are not read as one: this grid is
-            intrinsic at expiry, Risk Stress reprices the whole book one day out. */}
-        <Link to="/risk/stress" className={cn(positionsUi.link, 'ml-auto')}>
-          one-day reprice → Risk Stress
+            intrinsic at expiry, Exposure's Stress reprices the whole book one day out. */}
+        <Link to="/risk/portfolio#stress" className={cn(positionsUi.link, 'ml-auto')}>
+          one-day reprice → Exposure · Stress
         </Link>
       </div>
 

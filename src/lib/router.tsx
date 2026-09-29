@@ -162,10 +162,6 @@ export const router = withPageTransitions(createBrowserRouter([
         path: 'risk/portfolio',
         lazy: lazyPage(() => import('@/pages/risk/portfolio/RiskPortfolioPage')),
       },
-      {
-        path: 'risk/stress',
-        lazy: lazyPage(() => import('@/pages/risk/stress/RiskStressPage')),
-      },
       // The layer's own page (design §5a.1): six parallel children, none of
       // which can stand for the layer, so the layer gets a page.
       {
@@ -241,10 +237,6 @@ export const router = withPageTransitions(createBrowserRouter([
         // deep link the design keeps, and lands on the view that holds it.
         path: 'review/proposals',
         lazy: lazyPage(() => import('@/pages/research/loop/DecisionInboxPage')),
-      },
-      {
-        path: 'risk/budget',
-        lazy: lazyPage(() => import('@/pages/risk/budget/RiskBudgetPage')),
       },
       {
         path: 'risk/sizing',

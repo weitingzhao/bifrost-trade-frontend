@@ -3,6 +3,8 @@ import type { StressScenario, UnderlyingEntry } from '@/types/modelAnalysis'
 import {
   NAMED_SCENARIOS,
   STRESS_VOL_ROWS,
+  acrossShocks,
+  unstressedNames,
   stressColumns,
   whoPays,
   worstColumn,
@@ -39,7 +41,7 @@ describe('stressColumns', () => {
 
 describe('whoPays', () => {
   const entries = [
-    und('ZZZ', [sc({ spot_shock: -0.1, pnl_change: -600, options_pnl: -100, stock_pnl: -500, new_spot: 90 })]),
+    und('ZZZ', [sc({ spot_shock: -0.1, pnl_change: -600, options_pnl: -100, stock_pnl: -500, new_spot: 90 }), sc({ spot_shock: 0, pnl_change: 0, options_pnl: 0, stock_pnl: 0 })]),
     und('YYY', [sc({ spot_shock: -0.1, pnl_change: -200 })]),
     // A name that gains on the shock: it is shown, but it is not paying.
     und('WWW', [sc({ spot_shock: -0.1, pnl_change: 150 })]),
@@ -61,13 +63,27 @@ describe('whoPays', () => {
   it('is one row per name, even when the same symbol is held in two accounts', () => {
     const rows = whoPays(
       [
-        und('ZZZ', [sc({ spot_shock: -0.1, pnl_change: -600, options_pnl: -100, stock_pnl: -500, new_spot: 90 })]),
-        und('ZZZ', [sc({ spot_shock: -0.1, pnl_change: -150, options_pnl: 0, stock_pnl: -150, new_spot: 90 })]),
+        und('ZZZ', [sc({ spot_shock: -0.1, pnl_change: -600, options_pnl: -100, stock_pnl: -500, new_spot: 90 }), sc({ spot_shock: 0, pnl_change: 0, options_pnl: 0, stock_pnl: 0 })]),
+        und('ZZZ', [sc({ spot_shock: -0.1, pnl_change: -150, options_pnl: 0, stock_pnl: -150, new_spot: 90 }), sc({ spot_shock: 0, pnl_change: 0, options_pnl: 0, stock_pnl: 0 })]),
       ],
       -0.1,
     )
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ symbol: 'ZZZ', pnlChange: -750, stockPnl: -650, optionsPnl: -100, newSpot: 90 })
+  })
+
+  it('splits the cost into shares and options measured from 0%, not from cost basis', () => {
+    // Invented: shares carry a large gain over cost either way; the shock takes 300 of it.
+    const rows = whoPays(
+      [
+        und('ABC', [
+          sc({ spot_shock: -0.1, pnl_change: -340, options_pnl: 60, stock_pnl: 9_700 }),
+          sc({ spot_shock: 0, pnl_change: 0, options_pnl: 100, stock_pnl: 10_000 }),
+        ]),
+      ],
+      -0.1,
+    )
+    expect(rows[0]).toMatchObject({ stockPnl: -300, optionsPnl: -40, pnlChange: -340 })
   })
 
   it('leaves out a name the service could not stress at this column rather than reading it as zero', () => {
@@ -91,5 +107,28 @@ describe('the named scenarios', () => {
       expect(s.shock).toMatch(/vol/)
       expect(s.blocked).toMatch(/vol axis/)
     }
+  })
+})
+
+describe('acrossShocks', () => {
+  it('lays each name out over the spot columns, from the same readings as Who pays', () => {
+    const entries = [
+      und('AAA', [sc({ spot_shock: -0.1, pnl_change: -300 }), sc({ spot_shock: 0.1, pnl_change: 120 })]),
+      und('BBB', [sc({ spot_shock: 0.1, pnl_change: 50 })]),
+    ]
+    const bars = acrossShocks(entries, [-0.1, 0, 0.1])
+    expect(bars.get('AAA')).toEqual([-300, 0, 120])
+    expect(bars.get('BBB')).toEqual([0, 0, 50])
+  })
+})
+
+describe('unstressedNames', () => {
+  it('names what the service could not stress, once per symbol', () => {
+    const entries = [
+      und('AAA', []),
+      { symbol: 'CCC', stress: { available: false } } as UnderlyingEntry,
+      { symbol: 'ccc', stress: { available: false } } as UnderlyingEntry,
+    ]
+    expect(unstressedNames(entries)).toEqual(['CCC'])
   })
 })

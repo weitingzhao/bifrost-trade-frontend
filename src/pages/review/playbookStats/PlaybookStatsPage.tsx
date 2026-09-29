@@ -436,8 +436,8 @@ export default function PlaybookStatsPage() {
               </span>
               <span className="text-muted-foreground">
                 Nothing stores a cap or enforces one — the same store{' '}
-                <Link to="/risk/budget" className={positionsUi.link}>
-                  Risk Budget
+                <Link to="/risk/sizing#budget" className={positionsUi.link}>
+                  Sizing’s budget
                 </Link>{' '}
                 is missing. The column says what the rule would produce, not what is in force.
               </span>

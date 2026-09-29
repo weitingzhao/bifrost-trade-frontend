@@ -178,7 +178,7 @@ function BookFace() {
             leg the vendor cannot price keeps its row and is counted out of the totals, never summed
             as zero. β-weighted aggregation across the whole book, including stock, is{' '}
             <Link to="/risk/portfolio" className="text-foreground hover:underline">
-              Risk › Portfolio Exposure
+              Risk › Exposure
             </Link>
             &rsquo;s job; the strip above is that page&rsquo;s own rollup, not a second one.
           </>

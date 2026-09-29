@@ -30,7 +30,7 @@ import { limitRules, openBreaches, withHeadroom, type LimitRow } from '@/utils/l
 
 /** Named on the panel, so "not watched here" is a list rather than a shrug. */
 export const UNWATCHED_HERE =
-  'Concentration, velocity, Greeks and the gates are computed on Limits & Breaches — they read the model service, the positions book and Research β, which is too much to poll from the status bar on every page. Open that page to hold them against their lines.'
+  'Concentration, velocity, Greeks and the gates are computed on Limits — they read the model service, the positions book and Research β, which is too much to poll from the status bar on every page. Open that page to hold them against their lines.'
 
 export interface RiskLimitWatch {
   /** Open breaches among the lines the shell reads continuously. */

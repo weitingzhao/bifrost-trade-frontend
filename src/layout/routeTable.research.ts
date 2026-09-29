@@ -570,7 +570,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.86',
+      rev: '2026-09-29.107',
       note: DESIGN_NOTES['/research/greeks'],
     },
   },

@@ -107,7 +107,7 @@ export default function RiskLimitsPage() {
             — a filter — moved to the toolbar under the head. No stamp: the
             prototype passes none here (§16.14 will give it the book's). */}
         <PageHead
-          title="Limits & Breaches"
+          title="Limits"
           info={PAGE_LEAD}
           meta={`${rows.length} rules · ${withLine} with a line`}
           actions={
@@ -299,6 +299,18 @@ export default function RiskLimitsPage() {
                         <tr key={group} className="bg-[var(--sk-raised2)]">
                           <td className="text-dense-meta font-semibold text-secondary-foreground" colSpan={7}>
                             {group}
+                            {/* Rev .107: the gate group carries the daemon's mode —
+                                paper shows this one tag, live shows nothing. */}
+                            {group === 'Gate' && gateReadings.paperTrade ? (
+                              <span
+                                className="ml-2 inline-flex align-middle"
+                                title="The daemon runs this allocation with paper_trade on — a gate hit blocks a simulated order, not a live one"
+                              >
+                                <DenseTag variant="warning" size="cell">
+                                  ⚠ paper
+                                </DenseTag>
+                              </span>
+                            ) : null}
                           </td>
                         </tr>,
                         ...inGroup.map((r) => (
@@ -468,52 +480,6 @@ export default function RiskLimitsPage() {
               </section>
             </div>
 
-            <SectionHead note="Not one of the twelve — stored parameters the trading engine would read, defined in Trade › Rules.">
-              The daemon&rsquo;s gate
-            </SectionHead>
-            <section className={positionsUi.panel} aria-label="The daemon's gate">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>The gate</span>
-                <span className={positionsUi.panelTitle}>
-                  {gateReadings.gateName == null
-                    ? 'no allocation is active'
-                    : `${gateReadings.gateName} · v${gateReadings.gateVersion}`}
-                </span>
-                {gateReadings.paperTrade ? (
-                  <DenseTag variant="warning" size="cell">
-                    ⚠ PAPER TRADE
-                  </DenseTag>
-                ) : null}
-                <Link to="/trade/rules" className={cn(positionsUi.link, 'ml-auto')}>
-                  Definition · Trade › Rules →
-                </Link>
-              </header>
-              <p className="m-0 px-3 py-2.5 text-dense-body leading-normal text-secondary-foreground text-pretty">
-                {gateReadings.gateName == null ? (
-                  'No allocation is active, so no gate applies and the Gate group above is empty.'
-                ) : (
-                  <>
-                    The gate&rsquo;s lines are in the table above, in the Gate group — a gate is a limit whose scope
-                    is an allocation ({gateReadings.allocationName}), enforced by the daemon before the action
-                    happens rather than noticed after it, so a hit is logged and there is nothing to acknowledge.
-                    Its <em>definition</em> lives in Trade › Rules; this page only reads it.
-                  </>
-                )}
-              </p>
-              <p className={cn(FOOT, 'm-0')}>
-                These are the only limits in this book anybody has written down — and they bound a daemon that is
-                frozen
-                {gateReadings.paperTrade ? ' and configured for paper trading' : ''}. Every other group&rsquo;s line
-                is missing because the store the design edits them in does not exist yet.
-              </p>
-            </section>
-
-            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-              <span className="font-semibold text-secondary-foreground">Boundary.</span> This page holds readings
-              against lines. Each reading is computed on the page named beside it, and the lines belong to a Rules
-              engine that does not exist yet — which is why {noLine.length} of the {rows.length} rules have a reading
-              and nothing to hold it against.
-            </p>
           </>
         )}
     </PageShell>

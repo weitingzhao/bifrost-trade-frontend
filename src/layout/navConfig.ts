@@ -168,23 +168,19 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     label: 'Risk',
     icon: ShieldAlert,
     to: '/risk',
-    // The design's own order (shell-registry `G.Risk`), adopted 2026-09-18.
-    //
-    // It reads forwards through a decision rather than backwards from a
-    // measurement: how big should this be, what have I got left to spend, what
-    // am I not allowed to do, what does the broker say I can do, what am I
-    // holding, and what happens if it moves. The app had the reverse — the
-    // measurements first — which is the order you read *after* the fact.
+    // The design's own order (shell-registry `G.Risk`), Rev .107: four rows,
+    // one word each — page name = menu name = crumb (Owner: fewer names to
+    // hold). It reads forwards through a decision: how big, what I may not do,
+    // what the broker allows, what I hold and what a shock would cost. Budget
+    // folded into Sizing and Stress into Exposure; both old paths redirect.
     items: [
       route('Sizing', '/risk/sizing', Target),
-      route('Risk Budget', '/risk/budget', Layers2),
-      route('Limits & Breaches', '/risk/limits', ListChecks),
-      route('Margin & Buying Power', '/risk/margin', Database),
+      route('Limits', '/risk/limits', ListChecks),
+      route('Margin', '/risk/margin', Database),
       // The design puts its generic dashboard glyph here, which it also uses
       // for Home and for Accounts. Radar stays: three identical icons in one
       // sidebar cost more than matching a glyph the design reuses everywhere.
-      route('Portfolio Exposure', '/risk/portfolio', Radar),
-      route('Stress & Scenario', '/risk/stress', Activity),
+      route('Exposure', '/risk/portfolio', Radar),
     ],
   },
   {

@@ -66,7 +66,7 @@ const LEAD =
   'What stops the next trade first. Every constraint in the book on one scale — share of the limit consumed — so the binding one is at the top instead of buried on the page that owns it.'
 
 /** Where each line is drawn in full. The book knows; this is only the fallback. */
-const OWNER_FALLBACK = { label: 'Limits & Breaches', to: '/risk/limits' }
+const OWNER_FALLBACK = { label: 'Limits', to: '/risk/limits' }
 
 /** The three kinds carry meaning, so the tag's variant carries it — never its position. */
 const KIND_VARIANT: Record<LimitKind, 'danger' | 'neutral' | 'info'> = {
@@ -76,19 +76,18 @@ const KIND_VARIANT: Record<LimitKind, 'danger' | 'neutral' | 'info'> = {
 }
 
 /**
- * The six, in the order a trade meets them.
+ * The four, in the order a trade meets them (Rev .107; six before Budget and Stress merged).
  *
  * Short names on purpose: the sidebar carries each page's full label, and
  * here the point is the sequence, so the numbers and the questions do the
  * work. Every one of them is a live route.
  */
 const AREAS = [
-  ['01', 'Sizing', '/risk/sizing', 'How big?'],
-  ['02', 'Budget', '/risk/budget', 'How much may I still add?'],
-  ['03', 'Limits', '/risk/limits', 'What may not be crossed?'],
-  ['04', 'Margin', '/risk/margin', 'What does the broker allow?'],
-  ['05', 'Exposure', '/risk/portfolio', 'What is the book right now?'],
-  ['06', 'Stress', '/risk/stress', 'What would break it?'],
+  // Rev .107: Risk 6 → 4 — Budget folded into Sizing, Stress into Exposure.
+  ['01', 'Sizing', '/risk/sizing', 'How big, and how much room is left?'],
+  ['02', 'Limits', '/risk/limits', 'What may not be crossed?'],
+  ['03', 'Margin', '/risk/margin', 'What does the broker allow?'],
+  ['04', 'Exposure', '/risk/portfolio', 'What is the book, and what would a shock cost?'],
 ] as const
 
 const TONE_INK = { over: 'text-destructive', near: 'text-warning', plain: '' } as const
@@ -324,7 +323,7 @@ export default function RiskOverviewPage() {
             </Link>
             <Link
               to="/risk/limits"
-              title="Limits & Breaches — the whole book"
+              title="Limits — the whole book"
               className="text-dense-label text-primary no-underline hover:underline"
             >
               The book →

@@ -480,8 +480,10 @@ describe('the design walk, as it stands', () => {
     // with Rev .100's Trace surface, built in batch U3 the same day. 77 with
     // batch V1: the Copilot Desk merged into the Pilot Console and
     // /research/copilot is a redirect to it — the design keeps the path as an
-    // alias of the Console, so it is no longer a page of its own.
-    expect(counts.byState.reviewing).toBe(77)
+    // alias of the Console, so it is no longer a page of its own. 75 with
+    // Rev .107's Risk 6 → 4: Budget folded into Sizing and Stress into
+    // Exposure, and both paths are aliases of the page that holds them.
+    expect(counts.byState.reviewing).toBe(75)
     // Since 2026-09-29 a reviewing page whose design rev passed its walk reads
     // stale too; the thirteen that had (Rev .100–.103 built in batches R–V)
     // were re-stamped with the design receipt, so none does.
@@ -567,12 +569,10 @@ describe('the design walk, as it stands', () => {
       '/review/objectives',
       '/review/playbook-stats',
       '/risk',
-      '/risk/budget',
       '/risk/limits',
       '/risk/margin',
       '/risk/portfolio',
       '/risk/sizing',
-      '/risk/stress',
       '/settings',
       '/system/feedback',
       '/system/status',

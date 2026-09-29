@@ -1,5 +1,7 @@
 /**
- * Risk · Portfolio Exposure — the book as one exposure, not nineteen.
+ * Risk · Exposure — the book as one exposure, not nineteen (design Rev .107:
+ * the Stress page merged in as a full-width section; `/risk/stress` lands on
+ * it).
  *
  * Owner ruling 2026-09-17 (option b): this page does what Backing & Model does
  * not — β-weighting, correlation, and the Greeks rolled to the whole book.
@@ -11,19 +13,21 @@
  * the model service's; Γ / vega / Θ are the vendor legs the Positions page
  * already rolls up. Nothing here re-derives any of the four.
  */
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
-import { HeroCard, HeroRow, PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
-import { DenseTag, SegmentControl } from '@/components/data-display'
+import { HeroCard, HeroRow, PageHead, PageHeadLink, PageShell } from '@/components/layout'
+import { SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsStat } from '@/components/positions/PositionsStat'
 import { BookFetchMarker } from '@/components/positions/BookFetchMarker'
 import { BackingHeadroomPanel } from '@/components/positions/BackingHeadroomPanel'
-import { CorrelationPanel } from './CorrelationPanel'
-import { STRESS_VOL_ROWS } from '@/pages/risk/stress/stressModel'
+import { CorrelationPanel, type CorrBlock, type HeldAs } from './CorrelationPanel'
+import { ExposureStressSection } from './ExposureStressSection'
+import { scrollWhenPresent, flashFound } from '@/lib/scrollWhenPresent'
+import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
@@ -39,7 +43,7 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import { RISK_CONCENTRATION_FLOOR, RISK_UNRECORDED } from '@/utils/riskExposure'
 
 const PAGE_LEAD =
-  'Net book exposure, β-weighted to SPY. What each position is worth and what backs it is Backing & Model’s; this page asks how much of the book is one bet.'
+  'Net book exposure, β-weighted to SPY, and what a spot shock costs it — pick a stress column to see who pays. What a position is worth at that price, and what backs it, is Backing & Model’s.'
 
 // Rev .62: a panel's foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
@@ -83,31 +87,68 @@ export default function RiskPortfolioPage() {
     [status, accountFilter],
   )
 
-  /** The account-level stress the model service reports — a spot axis, at today's vol. */
-  const stress = useMemo(() => {
-    const by = new Map<number, number>()
-    let ivAvailable = false
-    for (const q of modelQueries) {
-      const s = q.data?.account_stress
-      if (!s?.available) continue
-      if (s.iv_stress_available) ivAvailable = true
-      for (const sc of s.scenarios ?? []) {
-        if (sc.iv_shock !== 0) continue
-        const change = sc.pnl_change
-        if (change == null) continue
-        by.set(sc.spot_shock, (by.get(sc.spot_shock) ?? 0) + change)
+  const location = useLocation()
+  // `/risk/stress` is an alias of this page (Rev .107): land on the section.
+  useEffect(() => {
+    if (location.hash !== '#stress') return
+    return scrollWhenPresent('#stress', 8_000, flashFound)
+  }, [location.hash])
+
+  /** What the Stress section reads — the model service's, for the accounts in scope. */
+  const stressInputs = useMemo(
+    () => ({
+      accountScenarios: modelQueries.map((q) =>
+        q.data?.account_stress?.available ? q.data.account_stress.scenarios : undefined,
+      ),
+      entries: modelQueries.flatMap((q) => q.data?.per_underlying ?? []),
+      ivAvailable: modelQueries.some((q) => q.data?.account_stress?.iv_stress_available),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [modelStamp, scopeKey],
+  )
+
+  /**
+   * One bet or many groups by the asset-mix buckets Backing draws (Rev .107):
+   * the positions book already sorts stock rows into core / fixed income /
+   * cash-like by their category. How a name is held marks options — they are
+   * not a block of their own.
+   */
+  const { blockOf, heldAs } = useMemo(() => {
+    const income = new Set(book.fixedIncomeStocks.map((r) => (r.symbol ?? '').toUpperCase()))
+    const cash = new Set(book.cashLikeStocks.map((r) => (r.symbol ?? '').toUpperCase()))
+    const shares = new Map<string, number>()
+    for (const r of book.allStocks) {
+      const sym = (r.symbol ?? '').toUpperCase()
+      shares.set(sym, (shares.get(sym) ?? 0) + (Number(r.position) || 0))
+    }
+    const optLegs = new Map<string, number>()
+    for (const g of book.scopedInstanceGroups ?? []) {
+      for (const o of g.options ?? []) {
+        const sym = extractUnderlyingRootSymbol(o.symbol)
+        optLegs.set(sym, (optLegs.get(sym) ?? 0) + 1)
       }
     }
     return {
-      ivAvailable,
-      cells: [...by.entries()].sort((a, b) => a[0] - b[0]).map(([shock, pnl]) => ({ shock, pnl })),
+      blockOf: (sym: string): CorrBlock => (income.has(sym) ? 'income' : cash.has(sym) ? 'cash' : 'core'),
+      heldAs: (sym: string): HeldAs => {
+        const sh = shares.get(sym) ?? 0
+        const legsN = optLegs.get(sym) ?? 0
+        const shText = sh ? `${sh.toLocaleString('en-US')} sh` : ''
+        const legText = legsN ? `${legsN} option ${legsN === 1 ? 'leg' : 'legs'}` : ''
+        return {
+          tag: legsN && sh ? 'sh+opt' : legsN ? 'opt' : '',
+          title: [shText, legText].filter(Boolean).join(' + ') || 'held',
+        }
+      },
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelStamp, scopeKey])
+  }, [book.fixedIncomeStocks, book.cashLikeStocks, book.allStocks, book.scopedInstanceGroups])
+
+  /** The account switch names the accounts the way the shell does. */
+  const accountLabel = (id: string) =>
+    id === book.hostAccountId ? 'HOST' : id === book.secondaryAccountId ? 'Secondary' : id
 
   const topShare = rows[0]?.share ?? null
   const concentrated = topShare != null && topShare > RISK_CONCENTRATION_FLOOR
-  const maxStress = Math.max(1, ...stress.cells.map((c) => Math.abs(c.pnl)))
 
   // §17.1: the broker snapshot (the monitor's status read) is the page's one
   // critical source; the model service failing is narrower — a strip.
@@ -125,7 +166,7 @@ export default function RiskPortfolioPage() {
           the two counterpart pages as head links, the account switch in the
           toolbar. */}
       <PageHead
-        title="Portfolio Exposure"
+        title="Exposure"
         info={PAGE_LEAD}
         stamp={<BookFetchMarker quiet />}
         actions={
@@ -148,7 +189,7 @@ export default function RiskPortfolioPage() {
             ariaLabel="Account"
             value={accountFilter}
             onChange={setAccountFilter}
-            options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+            options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: accountLabel(a), title: a }))]}
           />
         </div>
       ) : null}
@@ -248,14 +289,13 @@ export default function RiskPortfolioPage() {
             </p>
           </section>
 
-          <SectionHead
-            note="β-wtd Δ$ = Δ$ × β against SPY · share is of the book’s risk, so a short name is a slice too. Click a row for the Symbol page, its legs for them one by one."
-          >
-            Net Greeks by underlying
-          </SectionHead>
             <section className={positionsUi.panel} aria-label="Net Greeks by underlying">
               <header className={positionsUi.panelHead}>
+                <span className={positionsUi.cap}>Net Greeks by underlying</span>
                 <span className={positionsUi.panelTitle}>{rows.length} names</span>
+                <span className="text-dense-meta text-muted-foreground">
+                  β-wtd Δ$ = Δ$ × β against SPY · click a row for the Symbol page · its legs for them one by one
+                </span>
                 {totals.withoutBetaDelta > 0 ? (
                   <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
                     <StatusLamp lamp="gray" variant="dot" title="No reading — not a fault" />
@@ -440,76 +480,17 @@ export default function RiskPortfolioPage() {
               </p>
             </section>
 
-            <div className={positionsUi.bandGrid}>
-              <section className={cn(positionsUi.panel, !stress.ivAvailable && 'border-warning/40')} aria-label="Stress">
-                <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>Stress</span>
-                  <span className={positionsUi.panelTitle}>P&amp;L against a spot move</span>
-                  {!stress.ivAvailable ? (
-                    <DenseTag variant="warning" size="cell">
-                      ⚠ no vol axis
-                    </DenseTag>
-                  ) : null}
-                  <span className="ml-auto text-dense-meta text-muted-foreground">whole book · cited from the model</span>
-                </header>
-                {stress.cells.length === 0 ? (
-                  <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
-                    The model service reports no account stress for this scope.
-                  </p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    {/* The design's matrix, with the vol rows it draws — only flat carries a reading. */}
-                    <table className="w-full min-w-[500px] border-collapse [&_td]:px-1 [&_th]:px-1">
-                      <thead>
-                        <tr>
-                          <th className={cn(positionsUi.th, 'text-left')}>vol \ SPY</th>
-                          {stress.cells.map((c) => (
-                            <th key={c.shock} className={positionsUi.th}>
-                              {c.shock > 0 ? '+' : ''}
-                              {Math.round(c.shock * 100)}%
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {STRESS_VOL_ROWS.map((row) => (
-                          <tr key={row.label}>
-                            <td className={cn(positionsUi.td, 'pl-2 text-left font-sans text-muted-foreground')}>
-                              {row.label}
-                            </td>
-                            {stress.cells.map((c) =>
-                              row.ivShock == null ? (
-                                <td key={c.shock} className={cn(positionsUi.td, 'text-muted-foreground')} title={RISK_UNRECORDED.volShock}>
-                                  —
-                                </td>
-                              ) : (
-                                <td
-                                  key={c.shock}
-                                  className={cn(positionsUi.td, 'border border-[var(--sk-raised2)]', pnlColorClass(c.pnl))}
-                                  style={{
-                                    background: `color-mix(in oklab, ${c.pnl < 0 ? 'var(--color-loss)' : 'var(--color-profit)'} ${Math.round(Math.min(0.32, (Math.abs(c.pnl) / maxStress) * 0.32) * 100)}%, transparent)`,
-                                  }}
-                                  title={`SPY ${c.shock > 0 ? '+' : ''}${Math.round(c.shock * 100)}% · vol flat`}
-                                >
-                                  {fmtSignedUsd0(c.pnl)}
-                                </td>
-                              ),
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                <p className={cn(FOOT, 'm-0')}>
-                  Each row is what the shock itself costs, not the payoff at that price. {RISK_UNRECORDED.volShock} The
-                  same axis opens up, with who pays for each column, on{' '}
-                  <Link to="/risk/stress" className={positionsUi.link}>
-                    Stress &amp; Scenario →
-                  </Link>
-                </p>
-              </section>
+            <ExposureStressSection
+              key={scopeKey}
+              accountScenarios={stressInputs.accountScenarios}
+              entries={stressInputs.entries}
+              ivAvailable={stressInputs.ivAvailable}
+              netLong={totals.withBetaDelta > 0 ? totals.betaDeltaDollars >= 0 : null}
+            />
 
+            {/* The design's band: headroom and expiry side by side, One bet or
+                many across the full width between them. */}
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,28.75rem),1fr))] items-start gap-3">
               <BackingHeadroomPanel
                 usedPct={judgment?.usedPct ?? null}
                 action={
@@ -523,16 +504,17 @@ export default function RiskPortfolioPage() {
                   </>
                 }
               />
-            </div>
 
-            <CorrelationPanel
-              symbols={corrSymbols}
-              matrix={corrQuery.data?.matrix ?? null}
-              clusters={clusters}
-              window={CORR_WINDOW}
-              enp={enp}
-              names={totals.withBetaDelta}
-            />
+              <CorrelationPanel
+                symbols={corrSymbols}
+                matrix={corrQuery.data?.matrix ?? null}
+                clusters={clusters}
+                window={CORR_WINDOW}
+                enp={enp}
+                names={totals.withBetaDelta}
+                blockOf={blockOf}
+                heldAs={heldAs}
+              />
 
             <section className={positionsUi.panel} aria-label="By expiry">
               <header className={positionsUi.panelHead}>
@@ -597,14 +579,7 @@ export default function RiskPortfolioPage() {
               </p>
             </section>
 
-            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-              <span className="font-semibold text-secondary-foreground">Boundary.</span> This page asks how much of the
-              book is one bet. What a position is worth, what backs it, and its own payoff and stress are{' '}
-              <Link to="/portfolio/backing" className={positionsUi.link}>
-                Backing &amp; Model&rsquo;s
-              </Link>{' '}
-              — computed once, cited here.
-            </p>
+            </div>
           </>
         )}
     </PageShell>

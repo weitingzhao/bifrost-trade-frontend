@@ -10,7 +10,7 @@
  * `routeRegistry.test.ts`.
  */
 import type { RouteEntry } from './routeRegistry'
-import { ANALYZE, COPILOT, DATA, DISCOVER, DOCS, PORTFOLIO, STRATEGY, SYSTEM_ALIGNMENT, SYSTEM_CONFIG, SYSTEM_DATA, SYSTEM_RUNTIME } from './routeCrumbs'
+import { ANALYZE, COPILOT, DATA, DISCOVER, DOCS, PORTFOLIO, RISK, STRATEGY, SYSTEM_ALIGNMENT, SYSTEM_CONFIG, SYSTEM_DATA, SYSTEM_RUNTIME } from './routeCrumbs'
 
 export const REDIRECTS: readonly RouteEntry[] = [
   // ── Strategy, retired 2026-09-18 ───────────────────────────────────────
@@ -372,4 +372,11 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: DOCS,
     redirect: '/docs/ui-design-system',
   },
+  // ── Risk 6 → 4 (design Rev .107) ──────────────────────────────────────
+  // Budget and Sizing were the same trades read twice; the design merged them
+  // and keeps the old address as a deep link onto Sizing's Today section.
+  { path: '/risk/budget', label: 'Sizing', crumbs: RISK, redirect: '/risk/sizing#budget' },
+  // With no vol axis the Stress page was one row; its matrix and Who pays are
+  // Exposure's Stress section now, and the old address lands on it.
+  { path: '/risk/stress', label: 'Exposure', crumbs: RISK, redirect: '/risk/portfolio#stress' },
 ]

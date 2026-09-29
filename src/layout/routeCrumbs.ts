@@ -35,7 +35,7 @@ export const RISK = ['Risk'] as const
  * it out of Research › Analyze on the ground that its subject is the whole
  * book's option legs — the symbol is a filter, not a subject.
  */
-export const RISK_EXPOSURE = ['Risk', 'Portfolio Exposure'] as const
+export const RISK_EXPOSURE = ['Risk', 'Exposure'] as const
 export const REVIEW = ['Review'] as const
 export const RESEARCH = ['Research'] as const
 /**

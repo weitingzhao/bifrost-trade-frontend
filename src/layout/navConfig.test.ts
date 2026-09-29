@@ -95,16 +95,11 @@ describe('Risk nav', () => {
     // shell-registry `G.Risk`. The app had the reverse — the measurements
     // first — which is the order you read after the fact rather than before.
     const risk = NAV_GROUPS.find((g) => g.label === 'Risk')!
-    // The layer's own page is its heading (§5a.1); the six rows are the six.
+    // The layer's own page is its heading (§5a.1). Rev .107 cut the rows to
+    // four: Budget folded into Sizing, Stress into Exposure.
     expect(risk.to).toBe('/risk')
-    expect(risk.items!.map((i) => i.to)).toEqual([
-      '/risk/sizing',
-      '/risk/budget',
-      '/risk/limits',
-      '/risk/margin',
-      '/risk/portfolio',
-      '/risk/stress',
-    ])
+    expect(risk.items!.map((i) => i.to)).toEqual(['/risk/sizing', '/risk/limits', '/risk/margin', '/risk/portfolio'])
+    expect(risk.items!.map((i) => i.label)).toEqual(['Sizing', 'Limits', 'Margin', 'Exposure'])
     // Flat, like the design: no page in this group is read through another.
     expect(risk.items!.every((i) => !i.children?.length)).toBe(true)
   })

@@ -230,7 +230,7 @@ export default function AlertsPage() {
             kind="empty"
             title="No limit carries a reading and a line"
             detail="Nothing is armed right now: no limit on the book has both a current reading and its trigger."
-            actionLabel="Open Limits & Breaches"
+            actionLabel="Open Limits"
             onAction={() => navigate('/risk/limits')}
           />
         ) : (

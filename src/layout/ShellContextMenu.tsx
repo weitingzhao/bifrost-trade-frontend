@@ -30,12 +30,13 @@ import {
 import { useWatchlistMutations } from '@/hooks/useStockWatchlist'
 import { useSymbolPickerUniverse } from '@/hooks/useSymbolPickerUniverse'
 import { stockWatchlistContractKey } from '@/components/research/watchlistContractKey'
-import { withSymbolParam } from '@/lib/symbolLink'
+import { useCarriedSymbol } from '@/lib/symbolContext'
 import { notify } from '@/lib/shellNotify'
 import { dismissSurface } from './equipMotion'
 import { closeOtherTabs, openSurface, restoreSurfaces, surfaceState } from './equipSurface'
 import { useSymbolGo } from './symbolGo'
 import { parseContract, targetOf, type ContextTarget } from './shellContextTarget'
+import { markPagedFrom, surfacePagePath } from './pagedFrom'
 
 function copy(text: string): void {
   void navigator.clipboard?.writeText(text).catch(() => undefined)
@@ -44,6 +45,7 @@ function copy(text: string): void {
 
 export function ShellContextMenu() {
   const navigate = useNavigate()
+  const carried = useCarriedSymbol()
   const { go, verb } = useSymbolGo()
   const { addItem } = useWatchlistMutations()
   const universe = useSymbolPickerUniverse()
@@ -77,7 +79,9 @@ export function ShellContextMenu() {
           disabled={!tab.canPage}
           onSelect={() => {
             openSurface(tab, 'page')
-            navigate(tab.subject === 'lock' && tab.symbol ? withSymbolParam(tab.to, tab.symbol) : tab.to)
+            const to = surfacePagePath(tab, carried)
+            markPagedFrom(window.location.pathname + window.location.search, to)
+            navigate(to)
           }}
         >
           Open as page

@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { PagePlaceButtons } from '@/layout/PagePlaceButtons'
 
 export { PageHeadAction, type PageHeadActionProps, type PageHeadTab } from '@bifrost/ui'
 
@@ -68,6 +69,8 @@ export function PageHead(props: PageHeadProps) {
   const actions = (
     <>
       {props.actions}
+      {/* Rev .103: a page that can be a surface can go back to being one. */}
+      <PagePlaceButtons />
       <HeadOverflow />
     </>
   )

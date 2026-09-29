@@ -20,8 +20,8 @@
  */
 import { useNavigate } from 'react-router-dom'
 import { useCarriedSymbol } from '@/lib/symbolContext'
-import { withSymbolParam } from '@/lib/symbolLink'
-import { openSurface, type Place, type Surface, instancePath } from './equipSurface'
+import { openSurface, type Place, type Surface } from './equipSurface'
+import { markPagedFrom, surfacePagePath } from './pagedFrom'
 import { dismissSurface } from './equipMotion'
 import css from './equipSurface.module.css'
 
@@ -31,13 +31,13 @@ import css from './equipSurface.module.css'
  * right column filled, Page = the full-page corners — the design's own three
  * shapes; the names stay in the tooltip and the aria-label.
  */
-const PLACES: { place: Place; label: string; title: string; d: string[]; fill?: string }[] = [
+export const PLACES: { place: Place; label: string; title: string; d: string[]; fill?: string }[] = [
   { place: 'float', label: 'Float', title: 'Float over the page', d: ['M8 8h12v11H8z', 'M4 15V5h12'] },
   { place: 'panel', label: 'Side', title: 'A tab in the side panel', d: ['M3 5h18v14H3z', 'M14 5v14'], fill: 'M14 5h7v14h-7z' },
   { place: 'page', label: 'Page', title: 'Open as the full page', d: ['M4 9V4h5', 'M20 9V4h-5', 'M4 15v5h5', 'M20 15v5h-5'] },
 ]
 
-function PlaceIcon({ p }: { p: (typeof PLACES)[number] }) {
+export function PlaceIcon({ p }: { p: (typeof PLACES)[number] }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       {p.fill ? <path d={p.fill} fill="currentColor" stroke="none" opacity="0.45" /> : null}
@@ -82,15 +82,12 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
                   // and the frame goes. `openSurface` records the choice so the
                   // next open remembers it; the navigating is ours.
                   openSurface(surface, 'page')
-                  // The Symbol surface is a name, not just a route: the page
-                  // it becomes carries the name it was showing.
-                  navigate(
-                    surface.instance != null
-                      ? instancePath(surface.instance, surface.instanceList, surface.instanceFrom)
-                      : surface.subject
-                        ? withSymbolParam(surface.to, surface.subject === 'lock' ? surface.symbol : carried)
-                        : surface.to,
-                  )
+                  // The Symbol surface is a name and an instance a list, not
+                  // just a route: the page carries what it was showing, and
+                  // remembers where the frame was so its head can send it back.
+                  const to = surfacePagePath(surface, carried)
+                  markPagedFrom(window.location.pathname + window.location.search, to)
+                  navigate(to)
                   return
                 }
                 openSurface(surface, p.place)

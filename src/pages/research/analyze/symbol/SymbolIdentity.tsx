@@ -54,6 +54,7 @@ import type { SymbolFaces } from './useSymbolFaces'
 import { symbolHypothesisPrefill } from './symbolHypothesisPrefill'
 import css from './symbolHead.module.css'
 import { sharesHeld, useSymbolLegs } from '@/hooks/useSymbolLegs'
+import { PagePlaceButtons } from '@/layout/PagePlaceButtons'
 
 /**
  * Which Method tab explains the face you are on — the design's `LAB_TAB`.
@@ -166,6 +167,7 @@ export function SymbolIdentity({
       ) : null}
       {company && compact ? <span className={css.name}>{company}</span> : null}
       {compact ? null : <span className={css.chip}>{heldTag}</span>}
+      {compact ? null : <PagePlaceButtons className="ml-auto" />}
     </div>
   )
 

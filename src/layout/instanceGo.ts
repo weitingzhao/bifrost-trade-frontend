@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom'
 import { useFrameNavigate } from '@/lib/surfaceScope'
 import { closeSurface, focusTab, instancePath, instanceSurface, openSurface, opensAsPage, placeOf, surfaceState } from './equipSurface'
 import { howFrom } from './symbolGo'
+import { markPagedFrom } from './pagedFrom'
 
 export interface OpenInstanceOpts {
   list?: readonly number[]
@@ -45,12 +46,16 @@ export function useOpenInstance(): OpenInstance {
         // buttons' ⤢ is where "pages from now on" is said).
         const st = surfaceState()
         for (const sf of [st.float, ...(st.panel?.tabs ?? [])]) if (sf?.instance === id) closeSurface(sf.key)
-        ;(frameNavigate ?? navigate)(instancePath(id, surf.instanceList, opts?.from))
+        const to = instancePath(id, surf.instanceList, opts?.from)
+        markPagedFrom(window.location.pathname + window.location.search, to)
+        ;(frameNavigate ?? navigate)(to)
         return
       }
       if (!opts?.place && placeOf(surf.key) == null && opensAsPage(surf.key)) {
         openSurface(surf, 'page')
-        ;(frameNavigate ?? navigate)(instancePath(id, surf.instanceList, opts?.from))
+        const to = instancePath(id, surf.instanceList, opts?.from)
+        markPagedFrom(window.location.pathname + window.location.search, to)
+        ;(frameNavigate ?? navigate)(to)
         return
       }
       openSurface(surf, opts?.place)

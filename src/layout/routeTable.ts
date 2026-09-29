@@ -168,7 +168,8 @@ export const ROUTES: readonly RouteEntry[] = [
       // the same day; the Owner signed it 2026-09-24.
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.92',
+      // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.103',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },
@@ -202,7 +203,8 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.86',
+      // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.103',
       note: DESIGN_NOTES['/portfolio/outcome'],
     },
   },
@@ -374,7 +376,8 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.84',
+      // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.103',
       note: DESIGN_NOTES['/portfolio/ledger'],
     },
   },
@@ -398,7 +401,8 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.93',
+      // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.103',
       note: DESIGN_NOTES['/trade/fills'],
     },
   },
@@ -424,7 +428,8 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.82',
+      // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.103',
       note: DESIGN_NOTES['/trade/desk'],
     },
   },
@@ -437,7 +442,8 @@ export const ROUTES: readonly RouteEntry[] = [
       // readings, lineage bar, the pushed back path, the symbol lens, the four
       // records and the scope board. The InstanceRecord face is R2.
       state: 'reviewing',
-      rev: '2026-09-28.1',
+      // Rev .103 #NNN = panel, ◎ = focus here (T1); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.103',
       note: DESIGN_NOTES['/trade/rules'],
     },
   },

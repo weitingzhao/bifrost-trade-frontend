@@ -72,7 +72,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // not looked since, and only the Owner marks a page aligned.
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.85',
+      // Rev .100 Pilot Console + three origins, Loop Run (V1–V4, 2026-09-29); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-27.2',
       note: DESIGN_NOTES['/research/loop/harness'],
     },
   },
@@ -135,7 +136,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.94',
+      // Rev .102 lap closed at both ends; walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.102',
       note: DESIGN_NOTES['/research/loop/objectives/:objectiveId'],
     },
   },
@@ -277,7 +279,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Rev .82–.83 §16 refinement built in batch J1; Rev .98 Overview candles
       // + trade-history overlay built in batch K3 — waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-26.98',
+      // Rev .102–.103 price chart + instances (T3); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.103',
       note: DESIGN_NOTES['/research/symbol'],
     },
   },
@@ -491,7 +494,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.89',
+      // Rev .103 instance links open the surface (T5); walk rev moved 2026-09-29 with the design receipt.
+      rev: '2026-09-28.103',
       note: DESIGN_NOTES['/research/journal'],
     },
   },

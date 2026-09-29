@@ -11,7 +11,7 @@
  *
  *   aligned    walked with the Owner against a design rev, and it matches
  *   reviewing  walked and built against the design; waiting for the Owner's look
- *   stale      walked, but against an older rev — the design has moved since
+ *   stale      walked (aligned or reviewing), but against an older rev — the design has moved since
  *   pending    the design has a prototype for this page and we have not walked it
  *   moving     the design dissolves it into another page; waiting on that page
  *   staging    no home found in the design, and nobody has decided yet
@@ -209,6 +209,11 @@ function stateOf(entry: RouteEntry, design: DesignRoute | null): AdoptionState {
     const pageRev = design?.rev ?? DESIGN_REV
     return revIsNewer(pageRev, tag.rev) ? 'stale' : 'aligned'
   }
+  // A page waiting for the Owner's look reads stale too once the design moves
+  // past its walk (2026-09-29): otherwise a page walked at .85 and redrawn at
+  // .100 sat in "reviewing" as if the look would be against what was built.
+  // Only against the page's own rev — the package rev moves for other pages.
+  if (tag?.state === 'reviewing' && design?.rev && revIsNewer(design.rev, tag.rev)) return 'stale'
   if (tag) return tag.state
   if (!design) return 'staging'
   return design.designed ? 'pending' : 'backlog'

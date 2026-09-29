@@ -482,6 +482,10 @@ describe('the design walk, as it stands', () => {
     // /research/copilot is a redirect to it — the design keeps the path as an
     // alias of the Console, so it is no longer a page of its own.
     expect(counts.byState.reviewing).toBe(77)
+    // Since 2026-09-29 a reviewing page whose design rev passed its walk reads
+    // stale too; the thirteen that had (Rev .100–.103 built in batches R–V)
+    // were re-stamped with the design receipt, so none does.
+    expect(counts.byState.stale).toBe(0)
     expect(
       rows
         .filter((r) => r.state === 'aligned')

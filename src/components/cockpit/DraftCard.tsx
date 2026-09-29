@@ -103,6 +103,7 @@ export function DraftCard({
   dismissing,
   onApprove,
   onDismiss,
+  onDiscuss,
   muted,
   read,
   onToggleRead,
@@ -122,6 +123,11 @@ export function DraftCard({
   dismissing?: boolean
   onApprove: () => void
   onDismiss: () => void
+  /**
+   * Discuss ⌗ (design Rev .100, Vision §22.1's two-way bridge): interrogate the
+   * artifact before the verdict, in a Copilot thread anchored to it.
+   */
+  onDiscuss?: () => void
   /** Same hue, lower weight — for a draft whose Approve would write nothing. */
   muted?: boolean
   /**
@@ -419,6 +425,18 @@ export function DraftCard({
           <X className="size-3.5" />
           {dismissing ? 'Dismissing…' : 'Dismiss'}
         </Button>
+        {onDiscuss ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 text-dense-meta"
+            onClick={onDiscuss}
+            title="Interrogate it before the verdict — a Copilot thread anchored to this artifact; nothing is sent until you send it"
+          >
+            Discuss ⌗
+          </Button>
+        ) : null}
         {links.map((l) => (
           <Link key={l.to} to={l.to} className="text-dense-micro text-primary hover:underline">
             {l.label} →

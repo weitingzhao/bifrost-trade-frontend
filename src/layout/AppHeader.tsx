@@ -22,6 +22,7 @@ import { omnibar, omnibarStore } from '@/lib/omnibar'
 import { toggleThread, useThread } from '@/hooks/useCopilotThread'
 import { PAGE_ROUTES, routeFor } from './routeRegistry'
 import { crumbLinks } from './crumbLinks'
+import { parkGate } from './parkGate'
 import { NAV_GROUPS, SYSTEM_ITEM } from './navConfig'
 import { usePageHeadVisibility } from './usePageHeadVisibility'
 import { useCrumbLabel } from './useCrumbLabel'
@@ -72,6 +73,7 @@ export function AppHeader({
     return () => lane.removeEventListener('scroll', mark)
   }, [])
   const trail = crumbLinks(crumbs ?? [], PAGE_ROUTES, CRUMB_GROUPS)
+  const gate = parkGate(location.pathname, trail)
   // §16.12: while the page head shows the page's name, the leaf (and the `›`
   // before it) folds; it fades back once the head scrolls away. A page that
   // has not moved to PageHead reports nothing, and keeps its leaf.
@@ -107,6 +109,22 @@ export function AppHeader({
         aria-label="Breadcrumb"
         className="flex min-w-0 shrink items-center gap-1.5 text-dense-body"
       >
+        {/* The park gate (design 2026-09-27): on a toolbar module's member
+            page, one quiet chip back to the module's home — the only home
+            control on the page, and absent where the trail already is one. */}
+        {gate ? (
+          <Link
+            to={gate.to}
+            title={`Back to ${gate.name} — this module's home`}
+            className={cn(mb.item, 'min-w-0 shrink-[2] gap-1.5 no-underline')}
+          >
+            <span aria-hidden className="shrink-0 text-muted-foreground">
+              ‹
+            </span>
+            <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: gate.hue }} />
+            <span className="min-w-0 truncate">{gate.name}</span>
+          </Link>
+        ) : null}
         {trail.map((crumb) => (
           // Ancestors give way first (Rev .95): at ≤1024 an unshrinkable trail
           // pushed the readings off the bar. They shrink six to the leaf's one,

@@ -58,6 +58,8 @@ import {
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { unreadCount, useReadDrafts } from '@/pages/research/loop/inboxRead'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
+import { approveEffect, draftAskedBy, draftTitle } from '@/lib/harness/draftText'
+import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
 
 /** Enough to see a working session's worth without the rail outgrowing the queue. */
 const LANDED_MAX = 8
@@ -496,6 +498,15 @@ export default function DecisionInboxPage() {
                     })
                   }
                   onDismiss={() => dismiss(draft.id)}
+                  onDiscuss={() =>
+                    openDraftInCopilot({
+                      id: draft.id,
+                      kind: draft.kind,
+                      title: draftTitle(draft, titleById.get(draftParentId(draft) ?? '') ?? null),
+                      askedBy: draftAskedBy(draft.generated_by),
+                      landsIn: approveEffect(draft)?.label ?? null,
+                    })
+                  }
                   // Briefings are read, decisions are answered: only a briefing can be marked read.
                   read={BRIEFING_KINDS.has(draft.kind) ? read.has(draft.id) : undefined}
                   onToggleRead={

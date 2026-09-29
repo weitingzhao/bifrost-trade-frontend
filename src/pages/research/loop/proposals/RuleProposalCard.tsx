@@ -17,6 +17,7 @@ import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { openArtifactDiscussion } from '@/lib/harness/loopCopilotPrefill'
 import { DenseTag } from '@/components/data-display'
 import { ArtifactVerbs } from '@/components/research/ArtifactVerbs'
 import type { VerbKey } from '@/lib/harness/artifactVerbs'
@@ -162,6 +163,22 @@ export function RuleProposalCard({
             >
               <X className="size-3.5" />
               Dismiss
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 text-dense-meta"
+              title="Interrogate it before the verdict — a Copilot thread anchored to this proposal; nothing is sent until you send it"
+              onClick={() =>
+                openArtifactDiscussion({
+                  anchor: `proposal:${p.key}`,
+                  label: `Rule · ${p.target}`,
+                  prompt: `Challenge this rule proposal before I decide: "${p.title}" for Rules › ${p.target}. What in the trades argues for it, what argues against, and what would I lose? D10 observe-only.`,
+                })
+              }
+            >
+              Discuss ⌗
             </Button>
             <Link to="/review/habits" className="text-dense-micro text-primary hover:underline">
               Habits →

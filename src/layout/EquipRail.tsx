@@ -78,6 +78,7 @@ function RailButton({
   open,
   vis,
   here,
+  gate,
   children,
 }: {
   page: EquipPage
@@ -92,6 +93,12 @@ function RailButton({
   vis: boolean
   /** The frame page is this route. */
   here: boolean
+  /**
+   * A head standing for a park (design 2026-09-27): `inside` on a member
+   * page — the click walks back to the module's home — and `home` at the home
+   * itself, where the click does nothing. Outside, the head toggles its float.
+   */
+  gate?: 'inside' | 'home' | null
   children?: ReactNode
 }) {
   const Icon = page.icon
@@ -100,6 +107,11 @@ function RailButton({
     <button
       type="button"
       onClick={(e) => {
+        if (gate === 'home') return
+        if (gate === 'inside') {
+          navigate(page.to)
+          return
+        }
         const surface = surfaceForRoute(page.to)
         if (!surface) return
         // "Open where you last put it" includes the page: `openSurface`'s
@@ -116,7 +128,14 @@ function RailButton({
       }}
       aria-label={page.label}
       aria-pressed={open}
-      title={(title ?? page.label) + placeNote(page.to)}
+      title={
+        (title ?? page.label) +
+        (gate === 'home'
+          ? ' · you are at its home'
+          : gate === 'inside'
+            ? ' · you are inside this module — click for its home'
+            : placeNote(page.to))
+      }
       data-equip-head={headOf}
       className={`${css.btn} ${head ? css.head : css.item}`}
       style={{
@@ -223,6 +242,7 @@ function Group({
         // it (the design's `here = hereIn(module)`), the way the box border
         // already did. The page icons light for their own route only.
         here={here}
+        gate={here ? (activePath === group.hub.to ? 'home' : 'inside') : null}
       >
         {/* Everything about the module sits on its icon (design Rev .57):
             the waiting count is the badge top-right, the status lamp the

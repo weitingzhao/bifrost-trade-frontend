@@ -181,6 +181,22 @@ export function openDraftInCopilot(params: {
 }
 
 /**
+ * Discuss ⌗ on an Inbox card that is not a draft (design Rev .100, Vision
+ * §22.1): the thread opens anchored to the artifact — its id rides in the
+ * snapshot and names the thread's origin — prefilled, never sent.
+ */
+export function openArtifactDiscussion(params: { anchor: string; label: string; prompt: string }) {
+  askCopilotIntentStore.open({
+    originPage: 'research-decision-inbox',
+    originLabel: params.label,
+    suggestedPrompt: params.prompt,
+    snapshot: { anchor: params.anchor },
+  })
+  openThread()
+  cockpitDrawerStore.getState().setTab('copilot')
+}
+
+/**
  * "Walk me through today's digest", tied back to the readings it was written from.
  *
  * The digest's prose is a model's rewrite of lens exhibits, so the prompt asks

@@ -45,6 +45,7 @@ import { useRowLink } from '@/hooks/useRowLink'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { fetchCandidates } from '@/api/research/candidates'
+import { BookLoopInstrument } from './BookLoopInstrument'
 import {
   bookViews,
   census,
@@ -205,6 +206,9 @@ export default function ResearchBookPage() {
           ))}
         </div>
       )}
+
+      {/* Rev .100: the loop both halves of the book run through. */}
+      <BookLoopInstrument hypotheses={hypotheses.data ? hyp : null} />
 
       <SectionPanel
         cap="Waiting on you"

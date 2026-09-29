@@ -120,10 +120,6 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/seats/ResearchOverviewPage')),
       },
       {
-        path: 'research/copilot',
-        lazy: lazyPage(() => import('@/pages/research/seats/CopilotDeskPage')),
-      },
-      {
         path: 'research/copilot/trading',
         lazy: lazyPage(() => import('@/pages/research/seats/TradingCopilotPage')),
       },

@@ -38,7 +38,7 @@ import {
   writesMeta,
   writeThread,
   type WriteResultTone,
-} from '@/pages/research/seats/writesTable'
+} from '@/pages/research/loop/pilot/writesTable'
 
 const RESULT_TAG: Record<WriteResultTone, DenseTagVariant> = {
   green: 'state-green',

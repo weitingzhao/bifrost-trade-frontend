@@ -185,6 +185,7 @@ function Group({
   countTitle,
   full,
   prefix,
+  joined,
 }: {
   group: EquipGroup
   activePath: string
@@ -202,6 +203,8 @@ function Group({
    * reading the module's own state, not theirs.
    */
   prefix?: ReactNode
+  /** Sharing a capsule with another module (the Pilot capsule): no box of its own. */
+  joined?: boolean
 }) {
   // Subscribed so the lit states follow the surfaces; `placeOf` reads the same
   // store, and this is what tells React to look again.
@@ -213,8 +216,8 @@ function Group({
 
   return (
     <div
-      className={full ? css.group : css.bare}
-      data-glass-surface={full ? 'surface' : undefined}
+      className={full && !joined ? css.group : css.bare}
+      data-glass-surface={full && !joined ? 'surface' : undefined}
       style={{
         ['--rh' as string]: EQUIP_HUE[group.id],
         ['--rhi' as string]: `color-mix(in oklch, ${EQUIP_HUE[group.id]}, var(--sk-ink) var(--sk-pastel))`,
@@ -329,6 +332,39 @@ function ListsButton() {
 }
 
 /** The feed's dot on the Market head — the sidebar Live lamp, moved with its row. */
+/**
+ * The Pilot capsule (design Rev .100, Owner 2026-09-27, Vision §22.1):
+ * Autopilot and Copilot are one Pilot at two autonomy dials, so their
+ * containers merge the way Market's did — both heads stay, controls unchanged,
+ * a rule between them. The outline lights when either module is open or
+ * stood in, in the hue of the one that is.
+ */
+function PilotCapsule({ activePath, children }: { activePath: string; children: ReactNode }) {
+  useSurfaces()
+  const litOf = (id: string) => {
+    const g = EQUIP_GROUPS.find((x) => x.id === id)
+    if (!g) return false
+    return equipGroupOf(activePath)?.id === id || placeOf(g.hub.to) != null || g.pages.some((p) => placeOf(p.to) != null)
+  }
+  const lit = (['autopilot', 'copilot'] as const).find(litOf)
+  const hue = EQUIP_HUE[lit ?? 'autopilot']
+  return (
+    <div
+      className={css.group}
+      data-glass-surface="surface"
+      aria-label="Pilot"
+      style={{
+        ['--rh' as string]: hue,
+        ['--rh-box' as string]: lit
+          ? 'color-mix(in oklab, var(--rh) 40%, transparent)'
+          : 'color-mix(in srgb, var(--sk-ink) 10%, transparent)',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 function MarketFeedDot() {
   const { data: status } = useMonitorStatus()
   const daemonAlive = status?.daemon?.heartbeat?.daemon_alive === true
@@ -360,10 +396,12 @@ export function EquipRail() {
 
   if (!visible) return null
 
-  const groups = EQUIP_GROUPS.map((g) => (
+  const PILOT = new Set(['autopilot', 'copilot'])
+  const groupOf = (g: EquipGroup, joined: boolean) => (
     <Group
       key={g.id}
       group={g}
+      joined={joined}
       activePath={pathname}
       lamp={
         g.id === 'autopilot' && running ? (
@@ -386,7 +424,23 @@ export function EquipRail() {
         ) : undefined
       }
     />
-  ))
+  )
+  const pilot = EQUIP_GROUPS.filter((g) => PILOT.has(g.id))
+  const groups = [
+    ...EQUIP_GROUPS.filter((g) => !PILOT.has(g.id)).map((g) => groupOf(g, false)),
+    full ? (
+      <PilotCapsule key="pilot" activePath={pathname}>
+        {pilot.map((g, i) => (
+          <span key={g.id} className="contents">
+            {i > 0 ? <span className={css.rule} aria-hidden /> : null}
+            {groupOf(g, true)}
+          </span>
+        ))}
+      </PilotCapsule>
+    ) : (
+      pilot.map((g) => groupOf(g, false))
+    ),
+  ]
 
   return (
     <div

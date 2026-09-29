@@ -6,7 +6,7 @@ import { useCopilotModels } from '@/hooks/useCopilotModels'
 import { useCopilotSession } from '@/hooks/useCopilotSession'
 import { fmtUsd } from '@/lib/harness/runSpend'
 import { cn } from '@/lib/utils'
-import { newThreadProvider, spendAgainstCap } from '@/pages/research/seats/deskHeader'
+import { newThreadProvider, spendAgainstCap } from '@/pages/research/loop/pilot/deskHeader'
 
 const CHIP = 'inline-flex h-7 items-center gap-1.5 border px-2 text-dense-meta mat-tag'
 

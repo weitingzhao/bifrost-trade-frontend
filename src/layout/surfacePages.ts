@@ -21,13 +21,13 @@ type PageComponent = LazyExoticComponent<ComponentType>
  */
 export const SURFACE_PAGES: Record<string, PageComponent> = {
   '/research/loop/harness': lazy(() => import('@/pages/research/loop/HarnessConsolePage')),
+  '/research/agent-personas': lazy(() => import('@/pages/copilot/AgentPersonaPage')),
   '/research/loop/decisions': lazy(() => import('@/pages/research/loop/DecisionInboxPage')),
   '/research/book': lazy(() => import('@/pages/research/book/ResearchBookPage')),
   '/research/loop/hypotheses': lazy(() => import('@/pages/research/loop/HypothesisBoardPage')),
   '/research/loop/candidates': lazy(() => import('@/pages/research/loop/CandidatePoolPage')),
   '/research/watchlist': lazy(() => import('@/pages/research/data/StockWatchlistPage')),
   '/research/journal': lazy(() => import('@/pages/research/journal/JournalPage')),
-  '/research/copilot': lazy(() => import('@/pages/research/seats/CopilotDeskPage')),
   '/research/copilot/trading': lazy(() => import('@/pages/research/seats/TradingCopilotPage')),
   '/market/live': lazy(() => import('@/pages/market/LivePage')),
   '/research/event-radar': lazy(() => import('@/pages/research/alerts/AlertsPage')),

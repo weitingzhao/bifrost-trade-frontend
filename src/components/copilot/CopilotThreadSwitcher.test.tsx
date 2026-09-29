@@ -97,7 +97,7 @@ describe('CopilotThreadSwitcher', () => {
     expect(screen.getByText('Sunday thread')).toBeTruthy()
     expect(screen.getByRole('menuitem', { name: /new thread/i })).toBeTruthy()
     const all = screen.getByRole('menuitem', { name: /all threads/i })
-    expect(all).toHaveAttribute('href', '/research/copilot')
+    expect(all).toHaveAttribute('href', '/research/loop/harness')
   })
 
   it('opens a pinned row without needing a dock-width gate', async () => {

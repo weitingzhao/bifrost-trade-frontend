@@ -63,7 +63,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   // ── Research · Autopilot ───────────────────────────────────────────────
   {
     path: '/research/loop/harness',
-    label: 'Autopilot',
+    // Rev .100: the Console took in the Copilot Desk (Vision §22.1).
+    label: 'Pilot Console',
     crumbs: [],
     design: {
       // Package 2026-09-22.3 retired this page's own run drawer and pointed
@@ -169,30 +170,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
 
-  // ── Research · Copilot (a seat-free fold since 2026-09-14 — §11.0) ─────
-  // The menu row and crumbs read Research › Copilot › Desk; the page's own
-  // title stays "Copilot Desk" (Design ②: the two are compatible).
-  {
-    path: '/research/copilot',
-    // The Desk is the Copilot itself since §5a: the fold's `to` was this page
-    // and its first child was this page, so two rows lit for one. The row that
-    // remains is named for what it is, and the trail loses the level that no
-    // longer exists.
-    label: 'Copilot',
-    crumbs: RESEARCH,
-    design: {
-      // Package 2026-09-21.4 moved all three Copilot rows' rev while changing
-      // only the Personas face; Today and Threads were untouched, so the walk
-      // held at the newer stamp. Package 2026-09-22.3 then retired the page's
-      // own conversation aside — which this side never grew: the Desk is a
-      // page and the Thread is the shell's surface, which is exactly the two
-      // avatars the design arrived at.
-      // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
-      state: 'reviewing',
-      rev: '2026-09-25.89',
-      note: DESIGN_NOTES['/research/copilot'],
-    },
-  },
   // In the design registry since 2026-09-14 (Owner kept it — a morning agent's
   // written product, filed under the Copilot fold); its state derives from the
   // snapshot now, no tag needed.

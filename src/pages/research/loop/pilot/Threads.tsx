@@ -44,7 +44,7 @@ import { useCopilotSessions } from '@/hooks/useCopilotSessions'
 import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 import { fmtIsoTs } from '@/lib/format'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
-import { nyDate } from '@/pages/research/seats/agentActivity'
+import { nyDate } from '@/pages/research/loop/pilot/agentActivity'
 import {
   THREAD_FILTERS,
   deskThreadsQuery,
@@ -54,7 +54,7 @@ import {
   threadTurns,
   threadWriteCount,
   type ThreadFilter,
-} from '@/pages/research/seats/threadRows'
+} from '@/pages/research/loop/pilot/threadRows'
 import { fmtUsd } from '@/lib/harness/runSpend'
 
 const BridgeDialog = lazy(() =>

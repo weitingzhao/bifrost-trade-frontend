@@ -72,7 +72,7 @@ const ORIGIN_DEST: Record<string, { label: string; to: string }> = {
   'market-live': { label: 'Live', to: '/market/live' },
   'momentum-radar': { label: 'Leaders', to: '/research/ratings/stocks?view=leaders' },
   positions: { label: 'Positions', to: '/portfolio/positions' },
-  'research-copilot-desk': { label: 'Desk', to: '/research/copilot' },
+  'research-copilot-desk': { label: 'Desk', to: '/research/loop/harness' },
   'research-home': { label: 'Research', to: '/research' },
   'research-workbench': { label: 'Workbench', to: '/research/workbench' },
   'sepa-daily-core': { label: 'Ratings', to: '/research/ratings/stocks' },

@@ -17,7 +17,7 @@
  * So this file does Persona and the filters that need nothing else.
  */
 import type { CopilotSessionSummary, PersistedCopilotFrame } from '@/api/researchCopilotSessions'
-import { nyDate } from '@/pages/research/seats/agentActivity'
+import { nyDate } from '@/pages/research/loop/pilot/agentActivity'
 
 /** Moved to `lib/copilot/threadPersona` when the dock became its second reader. */
 export { threadPersona } from '@/lib/copilot/threadPersona'

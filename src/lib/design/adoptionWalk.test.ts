@@ -477,8 +477,11 @@ describe('the design walk, as it stands', () => {
     // 76 with K6 (2026-09-27): the You page is built over journal.memory
     // (unbuilt 1→0 — the design has nothing left the app lacks a page for).
     // 77 with Rev .103's Instance page, built in batch T1 (2026-09-28). 78
-    // with Rev .100's Trace surface, built in batch U3 the same day.
-    expect(counts.byState.reviewing).toBe(78)
+    // with Rev .100's Trace surface, built in batch U3 the same day. 77 with
+    // batch V1: the Copilot Desk merged into the Pilot Console and
+    // /research/copilot is a redirect to it — the design keeps the path as an
+    // alias of the Console, so it is no longer a page of its own.
+    expect(counts.byState.reviewing).toBe(77)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -522,7 +525,6 @@ describe('the design walk, as it stands', () => {
       '/research/book',
       '/research/compare',
       '/research/contract-screener',
-      '/research/copilot',
       '/research/daily-brief',
       '/research/event-radar',
       '/research/events',

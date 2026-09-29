@@ -33,7 +33,7 @@ const SOURCE_TO: Record<string, { to: string; label: string }> = {
   notes: { to: '/research/journal', label: 'Journal · Notes →' },
   visits: { to: '/research/journal?view=day', label: 'Journal · Day →' },
   decisions: { to: '/research/loop/decisions', label: 'Decision Inbox →' },
-  threads: { to: '/research/copilot', label: 'Copilot threads →' },
+  threads: { to: '/research/loop/harness', label: 'Pilot Console · Conversations →' },
 }
 
 export type TraceArc = 'trail' | 'distill' | 'memory' | 'propose' | 'will' | 'run' | 'settle'

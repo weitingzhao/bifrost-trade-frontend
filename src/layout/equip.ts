@@ -181,12 +181,14 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
   },
   {
     id: 'autopilot',
-    label: 'Autopilot',
-    title: 'Autopilot Console (⌥3). Green: running. Amber: decisions waiting.',
+    // One Pilot, two heads in one capsule (Rev .100, Vision §22.1): this head
+    // is the Console, which took in the Copilot Desk.
+    label: 'Pilot',
+    title: 'Pilot Console (⌥3). Green: running. Amber: decisions waiting.',
     icon: railHead('autopilot', Terminal),
     hub: {
       to: '/research/loop/harness',
-      label: 'Autopilot Console',
+      label: 'Pilot Console',
       icon: railIcon('/research/loop/harness', Terminal),
     },
     // The Inbox seats in Review as a menu row (§5a.8) *and* rides here: the
@@ -204,13 +206,16 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
   },
   {
     id: 'copilot',
-    label: 'Copilot',
-    title: 'Copilot Desk (⌥4) — personas, schedules, starters. To ask a question, use Ask in the top bar (⌘J).',
+    // The Desk merged into the Pilot Console (Rev .100); this head is the
+    // bench now — the voice the Pilot answers in — and Starters stays its
+    // conversation entry.
+    label: 'Pilot',
+    title: 'Bench (⌥4) — personas and schedules; the Desk merged into the Pilot Console. To ask a question, use Ask in the top bar (⌘J).',
     icon: railHead('copilot', MessageCircle),
     hub: {
-      to: '/research/copilot',
-      label: 'Copilot Desk',
-      icon: railIcon('/research/copilot', MessageCircle),
+      to: '/research/agent-personas',
+      label: 'Bench',
+      icon: railIcon('/research/agent-personas', MessageCircle),
     },
     pages: [
       {

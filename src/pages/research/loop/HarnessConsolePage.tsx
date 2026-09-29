@@ -57,6 +57,9 @@ import { LeashPanel } from '@/pages/research/loop/LeashPanel'
 import { ReachTodayStrip, reachToday } from '@/pages/research/loop/ReachTodayStrip'
 import { PolicyTemplatePanel } from '@/pages/research/loop/PolicyTemplatePanel'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { useCopilotStanding } from '@/hooks/useCopilotStanding'
+import { ProviderChip, SpendChip } from '@/pages/research/loop/pilot/DeskHeaderChips'
+import { PilotConversations, PilotToday } from '@/pages/research/loop/pilot/PilotDeskSections'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
 
 import { RunLoopDialog } from '@/components/research/harness/RunLoopDialog'
@@ -104,6 +107,7 @@ export default function HarnessConsolePage() {
 
   const [runDialog, setRunDialog] = useState<ResearchObjective | null>(null)
   const standingQ = useAutopilotStanding()
+  const copilotStanding = useCopilotStanding()
   const standingById = useMemo(
     () => new Map((standingQ.data?.objectives ?? []).map((o) => [o.id, o])),
     [standingQ.data],
@@ -355,8 +359,8 @@ export default function HarnessConsolePage() {
   return (
     <PageShell padding="default" className="min-w-0 space-y-3 overflow-x-hidden">
       <PageHead
-        title="Autopilot"
-        info="Standing research objectives that run without you, judged by two models, rated, and held on a leash until you approve."
+        title="Pilot Console"
+        info="One Pilot, one console (Vision §22.1): standing objectives that run without you, the conversations you had with it, and what ran today — judged by two models, rated, held on a leash until you approve."
       />
 
       {/* §17.3: the standing chips and the page's one main action sit in the
@@ -390,6 +394,8 @@ export default function HarnessConsolePage() {
           <MessageCircle className="mr-1 size-3" />
           Copilot
         </Button>
+        <SpendChip usage={copilotStanding.data?.usage} />
+        <ProviderChip />
         <span data-sr-tb="meta">
           <NewObjectiveDialog triggerLabel="New objective" />
         </span>
@@ -616,6 +622,10 @@ export default function HarnessConsolePage() {
           ]}
         />
       </section>
+
+      {/* Merged from the Copilot Desk (Rev .100, Owner 2026-09-27/28). */}
+      <PilotConversations />
+      <PilotToday />
 
       <ConfirmDialog
         open={deletingGroup !== null}

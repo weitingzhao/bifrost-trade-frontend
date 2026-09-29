@@ -23,7 +23,8 @@ describe('the companion rail', () => {
     // Bar order (Owner 2026-09-26, Rev .96): Lists · Live · Book · Autopilot ·
     // Copilot — ⌥1–4 follow the positions, so the order IS the keymap.
     expect(EQUIP_GROUPS.map((g) => g.id)).toEqual(['market', 'book', 'autopilot', 'copilot'])
-    expect(EQUIP_GROUPS.map((g) => g.label)).toEqual(['Market', 'The Book', 'Autopilot', 'Copilot'])
+    // Rev .100: the last two share the Pilot capsule — one Pilot, two heads.
+    expect(EQUIP_GROUPS.map((g) => g.label)).toEqual(['Market', 'The Book', 'Pilot', 'Pilot'])
   })
 
   it('says on every head what the module is and which key opens it', () => {

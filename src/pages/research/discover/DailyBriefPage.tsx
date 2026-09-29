@@ -108,15 +108,17 @@ export default function DailyBriefPage() {
         }
         actions={
           <>
-            {/* The design's `Thread in Desk →`. The digest carries no thread or
-                session id — `generated_by: digest_agent` is all it says about
-                where it came from — so this opens the Desk rather than a
+            {/* The design's `Thread in Desk →`, pointed at the Pilot Console
+                since the Desk merged into it (Rev .100). The digest carries no
+                thread or session id — `generated_by: digest_agent` is all it
+                says about where it came from — so this opens the Console, where
+                the digest and the conversations now live, rather than a
                 conversation it cannot name. */}
             <PageHeadLink
-              to="/research/copilot"
-              title="The digest carries no thread id, so this opens the Desk rather than a conversation it cannot name."
+              to="/research/loop/harness"
+              title="The digest carries no thread id, so this opens the Pilot Console — its digest and conversations — rather than a conversation it cannot name."
             >
-              Desk →
+              Pilot Console →
             </PageHeadLink>
             <PageHeadLink to="/research/loop/decisions" title="Approve or leave the digest">
               Inbox →

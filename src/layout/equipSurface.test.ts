@@ -62,7 +62,7 @@ describe('surfaceForRoute', () => {
     expect(surfaceForRoute(CONSOLE)).toEqual({
       key: CONSOLE,
       to: CONSOLE,
-      label: 'Autopilot Console',
+      label: 'Pilot Console',
       group: 'autopilot',
       canPage: true,
       def: 'float',

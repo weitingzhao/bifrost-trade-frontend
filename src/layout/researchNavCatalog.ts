@@ -29,7 +29,6 @@ import {
   History,
   LayoutGrid,
   ListFilter,
-  MessageCircle,
   Radar,
   ScanSearch,
   Star,
@@ -128,29 +127,6 @@ export const COPILOT_PAGES = {
   // is another face of one route, and the wiring diagram is its own page with
   // its own reader — the engineer's, where Personas answers the trader's.
   orchestration: route('Orchestration', '/research/orchestration', Network),
-}
-
-/** The Desk itself — the fold's own page since §5a, not a row beneath it. */
-export const COPILOT_DESK = '/research/copilot'
-
-/**
- * A dual row, not a container (design §5a, 2026-09-20).
- *
- * It used to carry a `Desk` child whose route was the fold's own `to` — the
- * fold was an alias of the row directly beneath it, so clicking `Copilot`
- * selected `Desk` and left two rows lit for one page. The Desk is the fold
- * now: the label goes there, the caret opens Daily Brief and Personas.
- *
- * The id is the path, not `fold:copilot`. The sidebar matches the active row
- * by id alone, so a fold that grew into a page but kept a `fold:*` id never
- * lights while you are standing on it.
- */
-export const COPILOT_ITEM: ShellNavItem = {
-  id: COPILOT_DESK,
-  label: 'Copilot',
-  to: COPILOT_DESK,
-  icon: routeGlyph(COPILOT_DESK) ?? foldGlyph('Copilot') ?? MessageCircle,
-  children: Object.values(COPILOT_PAGES),
 }
 
 /**
@@ -269,10 +245,10 @@ export function allResearchRoutes(): string[] {
     ...BENCHES.flatMap((b) => b.items),
   ]
     .map((i) => i.to ?? i.id)
-    // Two folds are pages of their own and so are not rows in any PAGES map:
-    // the Copilot Desk (§5a) and The Book (§5a.4). Market's three rows moved
-    // to Home (§5a.1).
-    .concat(COPILOT_DESK, BOOK_PAGE)
+    // A fold that is a page of its own is not a row in any PAGES map: The
+    // Book (§5a.4). The Copilot Desk was the other until it merged into the
+    // Pilot Console (Rev .100). Market's three rows moved to Home (§5a.1).
+    .concat(BOOK_PAGE)
 }
 
 /** The flat layout the top nav and the home page read. */

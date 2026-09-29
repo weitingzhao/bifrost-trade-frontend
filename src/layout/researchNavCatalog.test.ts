@@ -14,7 +14,6 @@ import {
   BOOK_PAGE,
   BOOK_PAGES,
   buildResearchNavGroup,
-  COPILOT_DESK,
   researchItems,
   staticResearchSubGroups,
 } from './researchNavCatalog'
@@ -73,7 +72,6 @@ describe('one tree, both homes', () => {
     expect(buildResearchNavGroup().to).toBe(OVERVIEW)
     const routes = routesOf(researchItems())
     expect(routes).not.toContain(AUTOPILOT_HOME)
-    expect(routes).not.toContain(COPILOT_DESK)
     expect(routes.filter((r) => r === BOOK_PAGE)).toHaveLength(1)
     for (const page of Object.values(BOOK_PAGES)) {
       expect(routes, `${page.label} is equipment and belongs on the rail`).not.toContain(page.to)
@@ -169,11 +167,12 @@ describe('one tree, both homes', () => {
     ])
   })
 
-  it('makes the Copilot Desk the group head, not a row under one', () => {
-    // §5a made the Desk the fold rather than a child of it; §5a.8 moved the
-    // whole group to the rail, where a head icon is exactly that shape.
+  it('makes the bench the Copilot head now the Desk is the Console', () => {
+    // §5a made the Desk the fold; §5a.8 moved the group to the rail; Rev
+    // .100 merged the Desk into the Pilot Console, and the Copilot head
+    // became the bench — the voice the Pilot answers in.
     const copilot = EQUIP_GROUPS.find((g) => g.id === 'copilot')
-    expect(copilot?.hub.to).toBe(COPILOT_DESK)
+    expect(copilot?.hub.to).toBe('/research/agent-personas')
     // The Desk's three old children scattered on 2026-09-22 (§5a.8), each to
     // where its reader is: Daily Brief is the 9am read and went to Home, and
     // Personas and Orchestration answer the operator's and the engineer's

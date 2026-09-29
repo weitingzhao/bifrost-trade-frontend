@@ -39,7 +39,7 @@ import {
   rowCost,
   scheduledRows,
   type RunCost,
-} from '@/pages/research/seats/agentActivity'
+} from '@/pages/research/loop/pilot/agentActivity'
 import { fetchOrchestrationStatus } from '@/api/research/orchestration'
 
 /**

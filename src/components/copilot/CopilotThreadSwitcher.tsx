@@ -137,7 +137,7 @@ export function CopilotThreadSwitcher() {
           New thread
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/research/copilot">
+          <Link to="/research/loop/harness">
             <List className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
             All threads →
           </Link>

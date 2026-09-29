@@ -11,7 +11,7 @@
  */
 import type { CopilotWriteRow, CopilotWrites } from '@/api/research/copilotWrites'
 import { ET_ZONE, fmtIsoDateToken } from '@/lib/format'
-import { nyDate } from '@/pages/research/seats/agentActivity'
+import { nyDate } from '@/pages/research/loop/pilot/agentActivity'
 
 export type WriteResultTone = 'green' | 'warn' | 'danger' | 'muted'
 

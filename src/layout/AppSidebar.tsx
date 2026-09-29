@@ -17,6 +17,7 @@ import { useMemo } from 'react'
 import { Pin as PinIcon } from 'lucide-react'
 import { SHELF_GROUP, isStalePin, usePins } from '@/lib/pins'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
+import { navFilterExtra } from './navFilterExtra'
 
 function renderInAppLink({
   item,
@@ -112,6 +113,18 @@ export function AppSidebar() {
     // full-page check, obvious the moment you click through the tree.
   }, [inSystem, research.group, order, pins, location.pathname])
 
+  // The field finds every page, not only this tree's: the toolbar's equipment
+  // and the other tree ride along as extra entries, placed where they live.
+  const filter = useMemo(
+    () => ({
+      extra: inSystem
+        ? navFilterExtra(NAV_GROUPS.map((g) => (g.label === 'Research' ? research.group : g)), 'Trade')
+        : navFilterExtra(SYSTEM_NAV_GROUPS, 'System'),
+      elsewhere: '⌘K also searches commands and symbols.',
+    }),
+    [inSystem, research.group],
+  )
+
   return (
     <ShellNavSidebar
       // Remount on the swap. `ShellNavSidebar` reads its open-groups store
@@ -145,6 +158,7 @@ export function AppSidebar() {
       // .61 the caret has no frame: which kind you are looking at is read
       // from behaviour (the label goes, the caret opens), not drawn.
       navRowSyntax
+      filter={filter}
       onSelect={(item: ShellNavItem) => {
         navigate(item.to ?? item.id)
       }}

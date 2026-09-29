@@ -22,4 +22,5 @@
  */
 // 0.6.0 (K7): every failed ViewState grows a Report-this link when the shell
 // registers a handler (setViewStateReportHandler) — the feedback loop's entry.
-export const UI_VERSION_NOW = '0.6.0'
+// 0.7.0 (U1): ShellNavSidebar's Filter pages field (design 2026-09-28).
+export const UI_VERSION_NOW = '0.7.0'

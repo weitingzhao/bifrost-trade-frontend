@@ -18,7 +18,7 @@ import type { RunGroup } from '@/lib/harness/harnessTrace'
 import type { AutopilotObjective, ResearchObjective } from '@/api/research/harness'
 import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import type { RunsTableProps } from '@/pages/research/loop/HarnessConsolePage'
-import { objectiveDial } from '@/lib/harness/objectiveOrigin'
+import { objectiveBorn, objectiveDial } from '@/lib/harness/objectiveOrigin'
 import { objectiveLoopStrip, type LoopSegment } from '@/pages/research/loop/objectiveLoopStrip'
 
 export function ObjectiveRows({
@@ -74,6 +74,7 @@ export function ObjectiveRows({
   const foldedHere = Math.max(0, (brief?.pending_drafts ?? brief?.pending_memos ?? 0) - (brief?.pending_memos ?? 0))
   const rec = brief?.track_record ?? null
   const dial = objectiveDial(row, trustL0)
+  const born = objectiveBorn(row)
   return (
     <li className="border mat-card">
       {/* Reading density, on purpose. This is a memo about an autopilot, not
@@ -90,6 +91,7 @@ export function ObjectiveRows({
           <p className="mt-0.5 text-dense-label leading-relaxed text-muted-foreground">
             {brief?.hunts || row.description}
           </p>
+          {born ? <p className="mt-1 font-mono text-dense-micro text-[var(--sk-faint)]">{born}</p> : null}
           <p className="mt-2 flex flex-wrap items-center gap-1.5 text-dense-meta text-muted-foreground">
             <DenseTag variant={archived ? 'neutral' : 'success'} size="cell">
               {row.status}

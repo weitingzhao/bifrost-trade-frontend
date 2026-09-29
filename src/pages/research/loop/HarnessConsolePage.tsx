@@ -50,7 +50,7 @@ import {
   type ResearchObjective,
 } from '@/api/research/harness'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { NewObjectiveDialog } from '@/components/research/NewObjectiveDialog'
+import { NewObjectiveOrigins } from '@/pages/research/loop/newObjective/NewObjectiveOrigins'
 import { UniverseReachStrip } from '@/components/research/UniverseReachStrip'
 import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
@@ -109,6 +109,7 @@ export default function HarnessConsolePage() {
   const [runDialog, setRunDialog] = useState<ResearchObjective | null>(null)
   const standingQ = useAutopilotStanding()
   const copilotStanding = useCopilotStanding()
+  const [newOpen, setNewOpen] = useState(false)
   const standingById = useMemo(
     () => new Map((standingQ.data?.objectives ?? []).map((o) => [o.id, o])),
     [standingQ.data],
@@ -398,9 +399,13 @@ export default function HarnessConsolePage() {
         <SpendChip usage={copilotStanding.data?.usage} />
         <ProviderChip />
         <span data-sr-tb="meta">
-          <NewObjectiveDialog triggerLabel="New objective" />
+          <Button type="button" size="sm" onClick={() => setNewOpen((o) => !o)} aria-expanded={newOpen} className="h-7 px-2 text-dense-meta">
+            ＋ New objective
+          </Button>
         </span>
       </div>
+      {/* Three origins, no blank form (Rev .100, Owner 2026-09-29). */}
+      {newOpen ? <NewObjectiveOrigins onClose={() => setNewOpen(false)} /> : null}
 
       {/* The design's context strip. It said "seat" until the seat model was
           retired (Owner 2026-09-19) — what the tag is actually for is naming

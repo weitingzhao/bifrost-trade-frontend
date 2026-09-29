@@ -44,12 +44,14 @@
  */
 import { type CSSProperties, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { fetchObjectiveRuns } from '@/api/research/harness'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { firedTodayCount, useFiredAlerts } from '@/hooks/useFiredAlerts'
 import { computeLiveNavLamp } from '@/utils/livePageLamps'
-import { EQUIP_GROUPS, EQUIP_HUE, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
-import { isVisible, opensAsPage, placeOf, surfaceForRoute, symbolSurface, usePanelWidth, useSurfaces } from './equipSurface'
+import { EQUIP_GROUPS, EQUIP_HUE, LOOP_RUN, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
+import { isVisible, openSurfaceKeys, opensAsPage, placeOf, runSurface, surfaceForRoute, symbolSurface, usePanelWidth, useSurfaces } from './equipSurface'
 import { useSymbolGo } from './symbolGo'
 import { useCarriedSymbol } from '@/lib/symbolContext'
 import { toggleSurfaceFrom } from './equipMotion'
@@ -79,6 +81,7 @@ function RailButton({
   vis,
   here,
   gate,
+  onPress,
   children,
 }: {
   page: EquipPage
@@ -99,6 +102,8 @@ function RailButton({
    * itself, where the click does nothing. Outside, the head toggles its float.
    */
   gate?: 'inside' | 'home' | null
+  /** Replaces the route-surface toggle — the Loop Run companion opens a run, not a route. */
+  onPress?: (el: HTMLElement) => void
   children?: ReactNode
 }) {
   const Icon = page.icon
@@ -107,6 +112,10 @@ function RailButton({
     <button
       type="button"
       onClick={(e) => {
+        if (onPress) {
+          onPress(e.currentTarget)
+          return
+        }
         if (gate === 'home') return
         if (gate === 'inside') {
           navigate(page.to)
@@ -186,6 +195,7 @@ function Group({
   full,
   prefix,
   joined,
+  suffix,
 }: {
   group: EquipGroup
   activePath: string
@@ -205,6 +215,8 @@ function Group({
   prefix?: ReactNode
   /** Sharing a capsule with another module (the Pilot capsule): no box of its own. */
   joined?: boolean
+  /** Drawn after the page icons on the full bar — Autopilot's Loop Run. */
+  suffix?: ReactNode
 }) {
   // Subscribed so the lit states follow the surfaces; `placeOf` reads the same
   // store, and this is what tells React to look again.
@@ -265,6 +277,7 @@ function Group({
             <RailButton key={p.to} page={p} open={openAt(p.to)} vis={visAt(p.to)} here={activePath === p.to} />
           ))
         : null}
+      {full ? suffix : null}
     </div>
   )
 }
@@ -344,7 +357,12 @@ function PilotCapsule({ activePath, children }: { activePath: string; children: 
   const litOf = (id: string) => {
     const g = EQUIP_GROUPS.find((x) => x.id === id)
     if (!g) return false
-    return equipGroupOf(activePath)?.id === id || placeOf(g.hub.to) != null || g.pages.some((p) => placeOf(p.to) != null)
+    return (
+      equipGroupOf(activePath)?.id === id ||
+      placeOf(g.hub.to) != null ||
+      g.pages.some((p) => placeOf(p.to) != null) ||
+      (id === 'autopilot' && openSurfaceKeys().some((k) => k.startsWith('run:')))
+    )
   }
   const lit = (['autopilot', 'copilot'] as const).find(litOf)
   const hue = EQUIP_HUE[lit ?? 'autopilot']
@@ -362,6 +380,41 @@ function PilotCapsule({ activePath, children }: { activePath: string; children: 
     >
       {children}
     </div>
+  )
+}
+
+/**
+ * Loop Run (design `_Shell TopBar` drawer-kind companion; Owner 2026-09-29).
+ * A run is a reading, never a page: the icon brings forward the run already
+ * open, closes it when it is the one in front, and otherwise opens the newest
+ * run the loop made. With no run yet it says so and does nothing.
+ */
+function LoopRunButton() {
+  useSurfaces()
+  const latestQ = useQuery({
+    queryKey: ['research', 'objective-runs', 'rail-latest'],
+    queryFn: () => fetchObjectiveRuns({ limit: 1 }),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  })
+  const runKeys = openSurfaceKeys().filter((k) => k.startsWith('run:'))
+  const shown = runKeys.find((k) => isVisible(k)) ?? null
+  const latest = latestQ.data?.items[0] ?? null
+  const page: EquipPage = {
+    ...LOOP_RUN,
+    label: latest ? `Loop Run — the newest run, ${latest.id}` : 'Loop Run — no run yet',
+  }
+  return (
+    <RailButton
+      page={page}
+      open={runKeys.length > 0}
+      vis={shown != null}
+      here={false}
+      onPress={(el) => {
+        const key = shown ?? runKeys[0] ?? (latest ? `run:${latest.id}` : null)
+        if (key) toggleSurfaceFrom(runSurface(key.slice(4)), el)
+      }}
+    />
   )
 }
 
@@ -402,6 +455,7 @@ export function EquipRail() {
       key={g.id}
       group={g}
       joined={joined}
+      suffix={g.id === 'autopilot' ? <LoopRunButton /> : undefined}
       activePath={pathname}
       lamp={
         g.id === 'autopilot' && running ? (

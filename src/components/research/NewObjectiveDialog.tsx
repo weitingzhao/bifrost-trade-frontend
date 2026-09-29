@@ -1,5 +1,7 @@
 /**
- * Create an objective — then go and configure it.
+ * Create an objective — then go and configure it. The Console's New
+ * objective panel (three origins, Rev .100) opens this form pre-filled from the
+ * origin picked; it is no longer a dialog with its own trigger.
  *
  * This dialog used to ask for max candidates, preset, flag filter and seed
  * symbols in one modal, and that was the last time the policy had a form.
@@ -11,7 +13,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -37,36 +38,38 @@ import { PERSONAS, SCHEDULES, objectivePath } from '@/lib/harness/objectivePolic
 const TEXTAREA_CLASS =
   'w-full text-dense-body min-h-[70px] resize-y border px-2.5 py-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring mat-field'
 
-export interface NewObjectiveDialogProps {
-  triggerLabel?: string
+/**
+ * What an origin hands the form (Rev .100 three origins): a fork carries its
+ * source's policy and lineage, a promoted screen its origin, a template only
+ * its id. The form still asks for the name and the purpose — an origin fills
+ * them in, it does not skip them.
+ */
+export interface ObjectiveSeed {
+  title?: string
+  description?: string
+  schedule?: string
+  persona?: string
+  templateId?: string
+  /** A policy carried from the origin — replaces the template choice. */
+  policy?: { label: string; json: Record<string, unknown> }
+  /** Written to `policy_json.origin`. */
+  origin?: Record<string, unknown>
+  /** The form's heading, e.g. `Fork · Daily Loop`. */
+  heading?: string
 }
 
-export function NewObjectiveDialog({ triggerLabel = 'New Objective' }: NewObjectiveDialogProps) {
-  const [open, setOpen] = useState(false)
-  return (
-    <>
-      <Button type="button" size="sm" onClick={() => setOpen(true)} className="h-7 px-2 text-dense-meta">
-        <Plus className="mr-1 size-3" />
-        {triggerLabel}
-      </Button>
-      {/* Mounted only while open, so every opening starts blank. */}
-      {open ? <NewObjectiveForm onClose={() => setOpen(false)} /> : null}
-    </>
-  )
-}
-
-function NewObjectiveForm({ onClose }: { onClose: () => void }) {
+export function NewObjectiveForm({ onClose, seed }: { onClose: () => void; seed?: ObjectiveSeed }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const templatesQ = usePolicyTemplates()
   const templates = templatesQ.data?.items ?? []
   const defaultTemplate = templates.find((t) => t.is_default)?.id ?? templates[0]?.id ?? ''
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [schedule, setSchedule] = useState('adhoc')
-  const [persona, setPersona] = useState('loop_curator')
-  const [templateId, setTemplateId] = useState<string | null>(null)
+  const [title, setTitle] = useState(seed?.title ?? '')
+  const [description, setDescription] = useState(seed?.description ?? '')
+  const [schedule, setSchedule] = useState(seed?.schedule ?? 'adhoc')
+  const [persona, setPersona] = useState(seed?.persona ?? 'loop_curator')
+  const [templateId, setTemplateId] = useState<string | null>(seed?.templateId ?? null)
   const chosenTemplate = templates.find((t) => t.id === (templateId ?? defaultTemplate)) ?? null
 
   const mutation = useMutation({
@@ -87,7 +90,11 @@ function NewObjectiveForm({ onClose }: { onClose: () => void }) {
       description: description.trim(),
       schedule,
       persona,
-      policy_json: { ...(chosenTemplate?.policy_json ?? {}), source: 'harness' },
+      policy_json: {
+        ...(seed?.policy?.json ?? chosenTemplate?.policy_json ?? {}),
+        source: 'harness',
+        ...(seed?.origin ? { origin: seed.origin } : {}),
+      },
     })
   }
 
@@ -95,7 +102,7 @@ function NewObjectiveForm({ onClose }: { onClose: () => void }) {
     <Dialog open onOpenChange={(next) => (submitting || next ? undefined : onClose())}>
       <DialogContent className="sm:max-w-md" showCloseButton={!submitting}>
         <DialogHeader>
-          <DialogTitle>New objective</DialogTitle>
+          <DialogTitle>{seed?.heading ?? 'New objective'}</DialogTitle>
           <DialogDescription>
             An objective is one standing hunt the autopilot runs. Name it, say what it is for, and
             pick a policy to start from — you configure every knob on its page next. Advisory only,
@@ -127,6 +134,16 @@ function NewObjectiveForm({ onClose }: { onClose: () => void }) {
               disabled={submitting}
             />
           </div>
+          {seed?.policy ? (
+            <div className="space-y-1">
+              <Label>Policy</Label>
+              <p className="text-dense-label text-[var(--sk-soft)]">{seed.policy.label}</p>
+              <p className="text-dense-caption text-muted-foreground">
+                Copied field for field; the original keeps running unchanged. Change what you forked it to change on the new
+                objective’s page.
+              </p>
+            </div>
+          ) : (
           <div className="space-y-1">
             <Label htmlFor="objective-template">Start from policy</Label>
             <Select
@@ -150,6 +167,7 @@ function NewObjectiveForm({ onClose }: { onClose: () => void }) {
               {chosenTemplate?.description || 'Copied into the objective; edit it freely on the objective page.'}
             </p>
           </div>
+          )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="objective-schedule">Schedule</Label>

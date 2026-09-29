@@ -29,13 +29,12 @@
  * and so does this: the rail reads it to draw, `equipSurface.ts` reads it to
  * decide what a route opens as.
  *
- * **One icon the design has and this side does not draw: Loop Run.** In the
- * design it is a route (`/research/loop/runs`) that a rail icon can open with
- * no run in mind. Here a run is never a page — it is a reading opened *from a
- * run*, either from the Console's runs table or from the
- * `/research/loop/harness?run=<id>` deep link (`runSurface`). An icon with no
- * run behind it would be a door to nothing, so the rail draws nine, not ten,
- * and says which one is missing rather than drawing it hollow.
+ * **Loop Run** (Owner 2026-09-29: draw it, as the design does). In the design
+ * it is a drawer-kind companion (`/research/loop/runs`) opened with no run in
+ * mind. Here a run is never a page — it is a reading opened *from a run*
+ * (`runSurface`) — so the icon is not an `EquipPage` of the group: it opens
+ * the newest run, or brings forward the run already open, and never offers a
+ * page place. `LOOP_RUN` is its label and glyph; `EquipRail` draws it.
  */
 import {
   Activity,
@@ -138,6 +137,20 @@ const railIcon = (path: string, fallback: LucideIcon): GlyphComponent | LucideIc
 
 const railHead = (id: string, fallback: LucideIcon): GlyphComponent | LucideIcon =>
   equipGroupGlyph(id) ?? fallback
+
+/**
+ * The design's route key for Loop Run. Not a path the router serves — a run
+ * is `/research/loop/runs/:runId` or a surface — so nothing navigates to it;
+ * it names the glyph and keys the button.
+ */
+const LOOP_RUN_KEY = '/research/loop/runs'
+
+/** The Pilot capsule's run companion — see the note at the top of this file. */
+export const LOOP_RUN = {
+  to: LOOP_RUN_KEY,
+  label: 'Loop Run',
+  icon: railIcon(LOOP_RUN_KEY, History),
+} satisfies EquipPage
 
 // Bar order (Owner 2026-09-26, Rev .96): Lists · Live · Book · Autopilot ·
 // Copilot, and ⌥1–4 follow the positions — the keybinds read this array.

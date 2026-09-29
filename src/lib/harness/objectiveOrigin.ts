@@ -43,6 +43,25 @@ export function objectiveOrigin(o: Pick<ResearchObjective, 'policy_json'> | null
   }
 }
 
+/**
+ * The birth line a card prints (design Rev .55 `born`, Rev .100 three
+ * origins): memory · fork (`⑂`) · promoted screen. Null for an objective made
+ * from a template or before origins were recorded — nothing to say, not
+ * "unknown".
+ */
+export function objectiveBorn(o: Pick<ResearchObjective, 'policy_json'> | null | undefined): string | null {
+  const raw = (o?.policy_json as { origin?: unknown } | undefined)?.origin
+  if (!raw || typeof raw !== 'object') return null
+  const r = raw as Record<string, unknown>
+  const at = typeof r.at === 'string' && r.at ? ` · ${r.at}` : ''
+  if (r.kind === 'memory' && typeof r.memory_id === 'string') return `born from memory ${r.memory_id} · proposal${at}`
+  if (r.kind === 'fork' && typeof r.objective_id === 'string')
+    return `⑂ forked from ${typeof r.title === 'string' && r.title ? r.title : r.objective_id}${at}`
+  if (r.kind === 'screen' && typeof r.screen_id === 'string')
+    return `promoted from screen ${typeof r.name === 'string' && r.name ? r.name : r.screen_id}${at}`
+  return null
+}
+
 export type Dial = 'L0' | 'L1'
 
 export function objectiveDial(

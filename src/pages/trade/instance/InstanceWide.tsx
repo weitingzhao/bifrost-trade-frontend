@@ -122,7 +122,7 @@ export function InstanceWide({
         {sym ? (
           <button
             type="button"
-            onClick={() => symbolGo.go(sym, 'swap')}
+            onClick={() => symbolGo.go(sym, 'compare')}
             title={`Symbol · ${sym} beside — its chart and every instance on it`}
             className="cursor-pointer rounded border-0 bg-transparent px-0.5 font-mono text-dense-body font-bold text-[var(--sk-ticker)] hover:underline"
           >

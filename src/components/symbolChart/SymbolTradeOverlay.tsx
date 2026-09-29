@@ -62,6 +62,8 @@ export interface TradeOverlayProps {
   spot: number | null
   /** The ids the instance book holds; a number outside it opens nothing. Null while loading. */
   known: ReadonlySet<number> | null
+  /** The mini chart (Symbol's 440 panel): no text layer — a trade's label only while it is hovered. */
+  quiet?: boolean
 }
 
 export function SymbolTradeOverlay(p: TradeOverlayProps) {
@@ -94,7 +96,7 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
     return (b.closeDate ?? b.openDate).localeCompare(a.closeDate ?? a.openDate)
   })
   const lit = p.hover ?? p.focusKey ?? null
-  for (const t of lit ? order.filter((x) => x.key === lit) : order) {
+  for (const t of lit ? order.filter((x) => x.key === lit) : p.quiet ? [] : order) {
     const last = t.legs[t.legs.length - 1]
     const { x } = xOfDate(last.openDate)
     const { y, edge } = yOf(last.strike)
@@ -134,6 +136,8 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
             strokeWidth={1.25}
             opacity={p.hover ? 0.3 : 0.85}
           />
+          {p.quiet ? null : (
+            <>
           <text
             x={right - 2}
             y={hy.y - 4}
@@ -173,6 +177,8 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
               ? `${h.backing.length ? ' · ' : ''}free ${h.free.toLocaleString('en-US')}`
               : ''}
           </text>
+            </>
+          )}
         </g>
       ) : null}
 

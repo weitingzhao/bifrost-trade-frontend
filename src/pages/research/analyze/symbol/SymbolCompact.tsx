@@ -35,6 +35,8 @@ import { SymbolVerdictPanel } from './SymbolVerdictPanel'
 import { useVolFoldEarnings, type VolFoldEarnings } from './compactVolEarnings'
 import type { SymbolFaces } from './useSymbolFaces'
 import head from './symbolHead.module.css'
+import { SymbolPriceChart } from '@/components/symbolChart/SymbolPriceChart'
+import { SymbolInstancesList } from './SymbolInstancesList'
 
 /** Which face a folding tab reads. */
 const FOLD_FACE: Partial<Record<SymbolTabId, DossierFaceId>> = {
@@ -277,6 +279,9 @@ export function SymbolCompact({
 
       {active === 'overview' ? (
         <>
+          {/* Rev .103: the name's price and every instance on it, before the faces. */}
+          <SymbolPriceChart symbol={symbol} variant="mini" />
+          <SymbolInstancesList symbol={symbol} />
           <FaceRows
             views={faces.views}
             loading={faces.loading}

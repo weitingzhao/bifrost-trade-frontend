@@ -109,7 +109,7 @@ export function InstanceRecord({
       title: hasFills ? `Portfolio › Trade Ledger — every fill booked to #${id}` : 'No fill booked yet',
     },
     ...(sym
-      ? [{ label: `${sym} →`, onClick: () => symbolGo.go(sym, 'swap'), title: `Symbol · ${sym} beside — its chart and every instance on it` }]
+      ? [{ label: `${sym} →`, onClick: () => symbolGo.go(sym, 'compare'), title: `Symbol · ${sym} beside — its chart and every instance on it` }]
       : []),
     ...actions,
   ]

@@ -80,7 +80,21 @@ interface PlacedTrack {
  * choice, kept on this machine), a hover lights one for a moment, and the
  * window opens on the instance's whole life.
  */
-export function SymbolPriceChart({ symbol, instanceId }: { symbol: string; instanceId?: number }) {
+export function SymbolPriceChart({
+  symbol,
+  instanceId,
+  variant = 'full',
+}: {
+  symbol: string
+  instanceId?: number
+  /**
+   * `mini` (Rev .103, the Symbol 440 panel): the same chart with its text layer
+   * off — candles, the wall lines, the holding line and the trades, a trade's
+   * label only on hover; no window switch, no volume, no events, no minimap.
+   */
+  variant?: 'full' | 'mini'
+}) {
+  const isMini = variant === 'mini'
   const sym = symbol.trim().toUpperCase()
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -314,6 +328,7 @@ export function SymbolPriceChart({ symbol, instanceId }: { symbol: string; insta
           holding={holding}
           spot={spot}
           known={known}
+          quiet={isMini}
         />
       ) : null}
     </>
@@ -378,7 +393,69 @@ export function SymbolPriceChart({ symbol, instanceId }: { symbol: string; insta
     window.addEventListener('mouseup', up)
   }
 
+  const plot = (
+    <SymbolChartPointer
+      frame={frame}
+      total={total}
+      view={view}
+      onView={setView}
+      bars={chartBars}
+      xCount={xCount}
+      agg={agg}
+      callWall={callWall}
+      putWall={putWall}
+    >
+      <BarsCandlestickChart
+        bars={chartBars}
+        period="1 D"
+        showVwap={false}
+        showVolume={!isMini}
+        futureSlots={coneSlots}
+        levels={isMini ? levels.map((l) => ({ ...l, label: '' })) : levels}
+        verticals={atToday && !isMini ? verticals : []}
+        cone={
+          atToday && coneSessions != null && spot != null && iv30 != null
+            ? {
+                sessions: coneSlots,
+                widthAt: (d) => spot * iv30 * Math.sqrt((d * agg) / 252),
+              }
+            : undefined
+        }
+        renderPriceOverlay={renderTrades}
+      />
+    </SymbolChartPointer>
+  )
+
   if (!sym) return null
+
+  if (isMini) {
+    return (
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex flex-wrap items-baseline gap-x-2 text-dense-micro text-muted-foreground">
+          <span className="font-semibold text-secondary-foreground">Price</span>
+          <span>{winSessions} sessions</span>
+          {spot != null ? <span className="font-mono text-foreground">{spot.toFixed(2)}</span> : null}
+          {chg != null ? (
+            <span className={cn('font-mono', chg >= 0 ? 'text-[var(--color-profit)]' : 'text-[var(--color-loss)]')}>
+              {chg >= 0 ? '+' : ''}
+              {chg.toFixed(2)}%
+            </span>
+          ) : null}
+          <span className={cn('ml-auto font-mono', holding ? 'text-[var(--sk-ticker)]' : '')}>
+            {holding ? `held ${holding.qty.toLocaleString('en-US')} sh` : 'not held'}
+          </span>
+        </div>
+        {barsQ.isLoading ? (
+          <div className="h-[170px] animate-pulse rounded-md bg-secondary/40" />
+        ) : total === 0 ? (
+          <p className="m-0 py-4 text-center text-dense-micro text-muted-foreground">No daily bars for {sym}.</p>
+        ) : (
+          // The plot keeps its height however narrow the panel is.
+          <div className="relative [&_svg.data-bars-chart-svg]:h-[190px] [&_svg.data-bars-chart-svg]:w-full">{plot}</div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <SectionPanel
@@ -469,35 +546,7 @@ export function SymbolPriceChart({ symbol, instanceId }: { symbol: string; insta
         </p>
       ) : (
         <div className="relative">
-          <SymbolChartPointer
-            frame={frame}
-            total={total}
-            view={view}
-            onView={setView}
-            bars={chartBars}
-            xCount={xCount}
-            agg={agg}
-            callWall={callWall}
-            putWall={putWall}
-          >
-            <BarsCandlestickChart
-              bars={chartBars}
-              period="1 D"
-              showVwap={false}
-              futureSlots={coneSlots}
-              levels={levels}
-              verticals={atToday ? verticals : []}
-              cone={
-                atToday && coneSessions != null && spot != null && iv30 != null
-                  ? {
-                      sessions: coneSlots,
-                      widthAt: (d) => spot * iv30 * Math.sqrt((d * agg) / 252),
-                    }
-                  : undefined
-              }
-              renderPriceOverlay={renderTrades}
-            />
-          </SymbolChartPointer>
+          {plot}
           {tradesOn && hidden.length > 0 ? (
             <button
               type="button"

@@ -519,6 +519,20 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
+    // Rev .100/.102's Trace surface (`Research Trace.dc.html`, no registry
+    // route in the design): one memory's chain over Journal edges — evidence,
+    // distill, memory, then the loop's dashed not-yet. Not a menu row; the
+    // You page's memories and the Journal Day's memory changes open it.
+    path: '/research/trace',
+    label: 'Trace',
+    crumbs: THE_BOOK,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-28.102',
+      note: DESIGN_NOTES['/research/trace'],
+    },
+  },
+  {
     // The design's **Stock screen** (Owner ruling 2026-09-20). The earlier note
     // here read the design's Screener as our Explorer; reading the prototype
     // settled it the other way. `Research Screener.dc.html` is universe →

@@ -476,8 +476,9 @@ describe('the design walk, as it stands', () => {
     // (unbuilt 2→1 — only Agents You remains, waiting on the memory store).
     // 76 with K6 (2026-09-27): the You page is built over journal.memory
     // (unbuilt 1→0 — the design has nothing left the app lacks a page for).
-    // 77 with Rev .103's Instance page, built in batch T1 (2026-09-28).
-    expect(counts.byState.reviewing).toBe(77)
+    // 77 with Rev .103's Instance page, built in batch T1 (2026-09-28). 78
+    // with Rev .100's Trace surface, built in batch U3 the same day.
+    expect(counts.byState.reviewing).toBe(78)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -552,6 +553,7 @@ describe('the design walk, as it stands', () => {
       '/research/signal-decay',
       '/research/signal-health',
       '/research/symbol',
+      '/research/trace',
       '/research/watchlist',
       '/review',
       '/review/fit',

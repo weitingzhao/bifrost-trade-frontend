@@ -167,21 +167,27 @@ export function DayView() {
               ) : (
                 <div className="flex flex-col">
                   {changes.map(([id, change, topic], i) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => navigate(`/research/agent-personas/you?m=${id}`)}
-                      className={cn(
-                        'grid grid-cols-[44px_auto_minmax(0,1fr)] items-baseline gap-2.5 px-3 py-2 text-left hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]',
-                        i > 0 && 'border-t border-border/50',
-                      )}
-                    >
-                      <span className="font-mono text-dense-micro font-bold">{id}</span>
-                      <span className="text-dense-micro text-[var(--sk-soft)]">{change}</span>
-                      <span className="truncate text-dense-meta text-muted-foreground">
-                        {topic}
-                      </span>
-                    </button>
+                    <div key={id} className={cn('flex items-baseline', i > 0 && 'border-t border-border/50')}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/research/agent-personas/you?m=${id}`)}
+                        className="grid min-w-0 flex-1 grid-cols-[44px_auto_minmax(0,1fr)] items-baseline gap-2.5 py-2 pl-3 text-left hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]"
+                      >
+                        <span className="font-mono text-dense-micro font-bold">{id}</span>
+                        <span className="text-dense-micro text-[var(--sk-soft)]">{change}</span>
+                        <span className="truncate text-dense-meta text-muted-foreground">
+                          {topic}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/research/trace?m=' + encodeURIComponent(id))}
+                        title={`Trace ${id} — where it came from, what it caused`}
+                        className="flex-none px-3 py-2 text-dense-meta text-primary hover:underline"
+                      >
+                        Trace
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}

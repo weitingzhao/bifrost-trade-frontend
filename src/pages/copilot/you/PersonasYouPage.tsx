@@ -438,6 +438,14 @@ function MemoryRow({
           </button>
           <button
             type="button"
+            onClick={() => onGo(`/research/trace?m=${encodeURIComponent(m.id)}`)}
+            title="Where it came from and what it caused — the chain over Journal edges"
+            className="text-dense-meta text-primary hover:underline"
+          >
+            Trace
+          </button>
+          <button
+            type="button"
             onClick={onForget}
             title="Removes it everywhere at once. Undo stays up for 5 seconds."
             className="text-dense-meta text-muted-foreground hover:text-foreground"

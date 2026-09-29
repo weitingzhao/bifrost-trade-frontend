@@ -311,7 +311,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-29.107"
+export const DESIGN_REV = "2026-09-29.108"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
@@ -375,7 +375,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/loop/hypotheses","label":"Hypothesis Board","crumbs":["The Book"],"designed":true,"file":"Book Hypotheses.dc.html","round":null,"rev":"2026-09-25.89","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/loop/candidates","label":"Candidate Pool","crumbs":["The Book"],"designed":true,"file":"Book Candidates.dc.html","round":null,"rev":"2026-09-25.88","inNav":false,"group":null,"designOnly":false},
   {"path":"/trade/desk","label":"Trade","crumbs":[],"designed":true,"file":"Trade Desk.dc.html","round":"OLD","rev":"2026-09-29.104","inNav":true,"group":"Trade","designOnly":false},
-  {"path":"/trade/plans","label":"Plans","crumbs":["Trade"],"designed":true,"file":"Trade Plans.dc.html","round":"OLD","rev":"2026-09-25.94","inNav":true,"group":"Trade","designOnly":false},
+  {"path":"/trade/plans","label":"Plans","crumbs":["Trade"],"designed":true,"file":"Trade Plans.dc.html","round":"OLD","rev":"2026-09-29.108","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/fills","label":"Orders & Fills","crumbs":["Trade"],"designed":true,"file":"Trade Fills.dc.html","round":"OLD","rev":"2026-09-28.103","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/rules","label":"Rules","crumbs":["Trade"],"designed":true,"file":"Trade Rules.dc.html","round":null,"rev":"2026-09-28.103","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/playbook","label":"Playbook","crumbs":["Trade"],"designed":true,"file":"Trade Playbook.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Trade","designOnly":false},

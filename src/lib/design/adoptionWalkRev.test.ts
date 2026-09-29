@@ -127,7 +127,7 @@ describe('the design walk, by revision', () => {
     // the Objective loop band / Trace lighting (with R4).
     // Package .32 @ Rev .103 (2026-09-28, full): Instance becomes a surface
     // (440 panel · float · /instance/:id), Symbol ↔ Instance, page ↔ surface.
-    expect(DESIGN_REV).toBe('2026-09-29.107')
+    expect(DESIGN_REV).toBe('2026-09-29.108')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

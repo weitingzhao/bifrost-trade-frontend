@@ -38,6 +38,8 @@ const FIELD = 'h-7 w-full min-w-0 px-2 text-dense-body mat-field'
 const NUM = `${FIELD} font-mono tabular-nums`
 const LABEL = 'text-dense-meta font-semibold text-muted-foreground'
 const CHOOSE_SIDE = 'Choose buy or sell'
+/** Rev .108: seven columns in one row at the sheet's 464px form width. */
+const LEG_GRID = 'grid grid-cols-[84px_72px_44px_minmax(64px,1fr)_minmax(96px,1.2fr)_40px_20px] gap-1.5'
 
 /** The server's own enum — not the prototype's list, which names kinds no row can store. */
 const SOURCE_KINDS = ['manual', 'symbol', 'hypothesis', 'inbox_draft', 'roll'] as const
@@ -47,6 +49,13 @@ const SOURCE_LABELS: Record<StrategyPlan['source_kind'], string> = {
   hypothesis: 'Hypothesis',
   inbox_draft: 'Inbox draft',
   roll: 'Roll',
+}
+const SOURCE_REF_HINTS: Record<StrategyPlan['source_kind'], string> = {
+  manual: 'Optional note',
+  symbol: 'Option Scan · composite 88',
+  hypothesis: 'H-118',
+  inbox_draft: 'D-0412',
+  roll: 'The plan it replaces, e.g. #212',
 }
 const SOURCE_HINTS: Record<StrategyPlan['source_kind'], string> = {
   manual: 'No upstream. Still gets matched to its fill.',
@@ -216,6 +225,7 @@ export function PlanForm({
 
   // The account as the scope bar names it; any other id reads as itself.
   const accountName = (id: string) => (id === host ? 'HOST' : id === secondary ? 'Secondary' : id)
+  const rank = (id: string) => (id === host ? 0 : id === secondary ? 1 : 2)
   // Up to three accounts fit the design's segment; more fall back to a list.
   const segmentAccounts = accounts.length > 0 && accounts.length <= 3
 
@@ -331,7 +341,7 @@ export function PlanForm({
 
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_360px] max-[860px]:grid-cols-1 max-[860px]:overflow-y-auto">
         <div className="flex min-h-0 flex-col gap-3 overflow-y-auto border-r border-border p-4 max-[860px]:overflow-visible">
-          <div className="grid grid-cols-[104px_minmax(0,1fr)_auto] gap-2.5">
+          <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2.5">
             <Field label="Symbol">
               <input
                 className={`${FIELD} font-mono uppercase`}
@@ -347,12 +357,7 @@ export function PlanForm({
                 className={FIELD}
                 list="plan-structures"
                 value={structureLabel}
-                placeholder="Cash-secured put"
-                title={
-                  structureId
-                    ? `Rulebook structure #${structureId} — Rules can say which allocation covers this plan`
-                    : 'A hand label, or pick a rulebook structure from the list'
-                }
+                placeholder="A rule’s structure, or your own label"
                 onChange={(e) => {
                   const label = e.target.value
                   setStructureLabel(label)
@@ -367,14 +372,30 @@ export function PlanForm({
                 ))}
               </datalist>
             </Field>
-            <Field label="Account">
+          </div>
+          {/* Rev .108 draws the link under the field. What the form links is the
+              structure — no opportunity is named here, and rule coverage is
+              read through the opportunity — so the line says exactly that. */}
+          <p className="-mt-1.5 text-dense-label text-muted-foreground text-pretty">
+            {structureId
+              ? `Trade › Rules structure · ${structureLabel.trim()} — linked by id. No opportunity is named here, so the plan card reads it as a hand plan until one is.`
+              : structureLabel.trim()
+                ? 'Hand label — no structure in Trade › Rules has this name. Tracked all the same.'
+                : 'Pick a structure from Trade › Rules, or type your own label.'}
+          </p>
+
+          <div className="flex">
+            <Field label="Account" className="flex-none">
               {segmentAccounts ? (
                 <SegmentControl
                   ariaLabel="Account"
                   size="sm"
                   value={accountId}
                   onChange={setAccountId}
-                  options={accounts.map((id) => ({ value: id, label: accountName(id), title: id }))}
+                  // HOST · Secondary · any other account, as the design orders them.
+                  options={[...accounts]
+                    .sort((x, y) => rank(x) - rank(y))
+                    .map((id) => ({ value: id, label: accountName(id), title: id }))}
                 />
               ) : accounts.length > 0 ? (
                 <select className={FIELD} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
@@ -395,21 +416,33 @@ export function PlanForm({
             </Field>
           </div>
 
-          <section className="flex flex-col gap-1" aria-label="Legs">
-            <div className="grid grid-cols-[88px_64px_56px_minmax(0,1fr)_minmax(0,1.3fr)_48px_20px] gap-1.5">
+          <section className="flex flex-col gap-1.5" aria-label="Legs">
+            <div className="flex items-baseline gap-2">
+              <span className={LABEL}>Legs</span>
+              <span className="text-dense-meta text-muted-foreground">
+                {legs.length} {legs.length === 1 ? 'leg' : 'legs'}
+                {legs.length > 1 ? ' · checked on Backing & Model' : ''}
+              </span>
+              <button
+                type="button"
+                className="ml-auto text-dense-label whitespace-nowrap text-primary hover:underline"
+                onClick={() => setLegs((rows) => [...rows, emptyLeg()])}
+              >
+                ＋ Add leg
+              </button>
+            </div>
+            <div className={cn(LEG_GRID, 'text-dense-meta text-muted-foreground')}>
               {['Side', 'Type', 'Right', 'Strike', 'Expiry', 'Ratio'].map((h) => (
-                <span key={h} className={LABEL}>
-                  {h}
-                </span>
+                <span key={h}>{h}</span>
               ))}
               <span />
             </div>
             {legs.map((leg, i) => (
               <div key={i} className="flex flex-col gap-0.5">
-                <div className="grid grid-cols-[88px_64px_56px_minmax(0,1fr)_minmax(0,1.3fr)_48px_20px] items-center gap-1.5">
+                <div className={cn(LEG_GRID, 'items-center')}>
                   <select
                     aria-label={`Leg ${i + 1} side`}
-                    className={FIELD}
+                    className={cn(FIELD, 'pr-0.5 pl-1.5', leg.side === '' && 'text-muted-foreground')}
                     value={leg.side}
                     onChange={(e) => setLeg(i, { side: e.target.value as LegDraft['side'] })}
                   >
@@ -419,30 +452,35 @@ export function PlanForm({
                   </select>
                   <select
                     aria-label={`Leg ${i + 1} type`}
-                    className={FIELD}
+                    className={cn(FIELD, 'pr-0.5 pl-1.5')}
                     value={leg.sec_type}
                     onChange={(e) => setLeg(i, { sec_type: e.target.value as LegDraft['sec_type'] })}
                   >
-                    <option value="OPT">OPT</option>
-                    <option value="STK">STK</option>
+                    <option value="OPT">Option</option>
+                    <option value="STK">Stock</option>
                   </select>
                   <select
                     aria-label={`Leg ${i + 1} right`}
-                    className={FIELD}
+                    title="Put or call"
+                    className={cn(FIELD, 'pr-0.5 pl-1.5')}
                     value={leg.right}
                     disabled={leg.sec_type === 'STK'}
                     onChange={(e) => setLeg(i, { right: e.target.value as LegDraft['right'] })}
                   >
-                    <option value="">—</option>
-                    <option value="P">P</option>
-                    <option value="C">C</option>
+                    <option value="P" title="Put">
+                      P
+                    </option>
+                    <option value="C" title="Call">
+                      C
+                    </option>
                   </select>
                   <input
                     aria-label={`Leg ${i + 1} strike`}
                     className={NUM}
                     value={leg.strike}
                     inputMode="decimal"
-                    placeholder="165"
+                    placeholder="140"
+                    disabled={leg.sec_type === 'STK'}
                     onChange={(e) => setLeg(i, { strike: e.target.value })}
                   />
                   <input
@@ -450,6 +488,7 @@ export function PlanForm({
                     type="date"
                     className={NUM}
                     value={leg.expiry}
+                    disabled={leg.sec_type === 'STK'}
                     onChange={(e) => setLeg(i, { expiry: e.target.value })}
                   />
                   <input
@@ -457,12 +496,15 @@ export function PlanForm({
                     className={NUM}
                     value={leg.ratio}
                     inputMode="numeric"
+                    placeholder="1"
                     onChange={(e) => setLeg(i, { ratio: e.target.value })}
                   />
                   <button
                     type="button"
                     aria-label={`Remove leg ${i + 1}`}
-                    className="text-muted-foreground opacity-70 hover:opacity-100"
+                    title="Remove leg"
+                    className="text-muted-foreground opacity-70 hover:opacity-100 disabled:opacity-30"
+                    disabled={legs.length === 1}
                     onClick={() => setLegs((rows) => rows.filter((_, at) => at !== i))}
                   >
                     ✕
@@ -473,19 +515,9 @@ export function PlanForm({
                 ) : null}
               </div>
             ))}
-            <button
-              type="button"
-              className="self-start text-dense-label text-primary hover:underline"
-              onClick={() => setLegs((rows) => [...rows, emptyLeg()])}
-            >
-              ＋ Add leg
-            </button>
           </section>
 
-          <div className="grid grid-cols-4 gap-2.5">
-            <Field label="Contracts">
-              <input className={NUM} value={qty} inputMode="numeric" placeholder="5" onChange={(e) => setQty(e.target.value)} />
-            </Field>
+          <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_minmax(136px,1.2fr)] gap-2.5">
             <Field label="Price effect">
               <SegmentControl
                 ariaLabel="Price effect"
@@ -498,12 +530,15 @@ export function PlanForm({
                 ]}
               />
             </Field>
+            <Field label="Contracts">
+              <input className={NUM} value={qty} inputMode="numeric" placeholder="5" onChange={(e) => setQty(e.target.value)} />
+            </Field>
             <Field label={`Limit (${priceEffect})`}>
               <input
                 className={NUM}
                 value={limitPrice}
                 inputMode="decimal"
-                placeholder="2.45"
+                placeholder="mid"
                 onChange={(e) => setLimitPrice(e.target.value)}
               />
             </Field>
@@ -513,19 +548,23 @@ export function PlanForm({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-dense-label text-muted-foreground">
-            <span>From chain:</span>
-            {fromContract.map((row) => (
-              <Button
-                key={row.text}
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="h-6 px-2 font-mono text-dense-meta"
-                onClick={() => addFromContract(row.drafts)}
-              >
-                Add leg from {row.text}
-              </Button>
-            ))}
+            {fromContract.length > 0 ? (
+              fromContract.map((row) => (
+                <Button
+                  key={row.text}
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="h-6 px-2 text-dense-meta"
+                  title="Adds the contract the source carries; you still choose buy or sell"
+                  onClick={() => addFromContract(row.drafts)}
+                >
+                  Add leg from <span className="font-mono">{row.text}</span>
+                </Button>
+              ))
+            ) : (
+              <span>The source carries no contract.</span>
+            )}
             <Link
               to={symbol.trim() ? `/research/symbol?symbol=${symbol.trim().toUpperCase()}` : '/research/symbol'}
               className="text-primary hover:underline"
@@ -535,6 +574,26 @@ export function PlanForm({
             </Link>
           </div>
 
+          <div className="flex flex-col gap-1">
+            <span className={LABEL}>Source</span>
+            <SegmentControl
+              ariaLabel="Plan source"
+              size="sm"
+              className="self-start"
+              value={sourceKind}
+              onChange={(v) => setSourceKind(v as StrategyPlan['source_kind'])}
+              options={SOURCE_KINDS.map((k) => ({ value: k, label: SOURCE_LABELS[k] }))}
+            />
+            <input
+              aria-label="Source ref"
+              className={cn(FIELD, 'mt-1')}
+              value={sourceRef}
+              onChange={(e) => setSourceRef(e.target.value)}
+              placeholder={SOURCE_REF_HINTS[sourceKind]}
+            />
+            <p className="mt-0.5 text-dense-label text-muted-foreground">{SOURCE_HINTS[sourceKind]}</p>
+          </div>
+
           <div className="grid grid-cols-3 gap-2.5">
             <Field label="Target">
               <select
@@ -542,10 +601,10 @@ export function PlanForm({
                 value={targetKind ?? ''}
                 onChange={(e) => setTargetKind(e.target.value as typeof targetKind)}
               >
-                <option value="">— none —</option>
-                <option value="credit_pct">Credit %</option>
-                <option value="option_price">Option price</option>
-                <option value="underlying_price">Underlying price</option>
+                <option value="">None</option>
+                <option value="credit_pct">% of credit kept</option>
+                <option value="option_price">Premium at</option>
+                <option value="underlying_price">Underlying at</option>
               </select>
             </Field>
             <Field label="Target value">
@@ -553,6 +612,7 @@ export function PlanForm({
                 className={NUM}
                 value={targetValue}
                 inputMode="decimal"
+                placeholder="50"
                 disabled={targetKind === ''}
                 onChange={(e) => setTargetValue(e.target.value)}
               />
@@ -566,10 +626,10 @@ export function PlanForm({
                 value={stopKind ?? ''}
                 onChange={(e) => setStopKind(e.target.value as typeof stopKind)}
               >
-                <option value="">— none —</option>
-                <option value="credit_multiple">Credit multiple</option>
-                <option value="option_price">Option price</option>
-                <option value="underlying_price">Underlying price</option>
+                <option value="">None</option>
+                <option value="credit_multiple">Loss × credit</option>
+                <option value="option_price">Premium at</option>
+                <option value="underlying_price">Underlying at</option>
               </select>
             </Field>
             <Field label="Stop value">
@@ -577,30 +637,14 @@ export function PlanForm({
                 className={NUM}
                 value={stopValue}
                 inputMode="decimal"
+                placeholder="2"
                 disabled={stopKind === ''}
                 onChange={(e) => setStopValue(e.target.value)}
               />
             </Field>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <span className={LABEL}>Source</span>
-            <SegmentControl
-              ariaLabel="Plan source"
-              size="sm"
-              className="self-start"
-              value={sourceKind}
-              onChange={(v) => setSourceKind(v as StrategyPlan['source_kind'])}
-              options={SOURCE_KINDS.map((k) => ({ value: k, label: SOURCE_LABELS[k] }))}
-            />
-            <p className="text-dense-label text-muted-foreground">{SOURCE_HINTS[sourceKind]}</p>
-            <input
-              aria-label="Source ref"
-              className={FIELD}
-              value={sourceRef}
-              onChange={(e) => setSourceRef(e.target.value)}
-              placeholder="Ref — H-118 · run 7c1e · what it came from"
-            />
+            <p className="self-end text-dense-meta text-muted-foreground text-pretty">
+              The plan card’s exit rules and Review › Discipline read these.
+            </p>
           </div>
 
           <Field label="Rationale">

@@ -469,7 +469,7 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.94',
+      rev: '2026-09-29.108',
       note: DESIGN_NOTES['/trade/plans'],
     },
   },

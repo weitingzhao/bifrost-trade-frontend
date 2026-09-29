@@ -194,6 +194,14 @@
     --sk-warn: #a16207;
     --sk-on-accent: #ffffff;
     --sk-pastel: 55%;
+    /* Risk › Limits group heads (design registry LIMIT_BOOK, Rev .107): pastel
+       hues, written through --sk-pastel so they deepen toward the ink on paper.
+       The gate group uses the accent. */
+    --risk-grp-concentration: #fda4af;
+    --risk-grp-velocity: #7dd3fc;
+    --risk-grp-margin: #a3e635;
+    --risk-grp-greeks: #d6d3d1;
+    --risk-grp-event: #a49cba;
     /* The series violet (Compare's third structure, Performance 1b's pastel):
        the design's #c4b5fd, deepened toward the ink on paper by --sk-pastel.
        Defined once — .dark sits on the same element, so it resolves with the

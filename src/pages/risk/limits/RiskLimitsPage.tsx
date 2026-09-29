@@ -17,7 +17,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { ViewState } from '@bifrost/ui'
-import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -35,6 +35,17 @@ import {
   unwritten,
   watching,
 } from '@/utils/limitsModel'
+
+/** Group heads carry their group's hue (design LIMIT_BOOK); pastel, deepened on paper. */
+const pastel = (v: string) => `color-mix(in oklch, var(${v}), var(--sk-ink) var(--sk-pastel))`
+const GROUP_INK: Record<string, string> = {
+  Concentration: pastel('--risk-grp-concentration'),
+  Velocity: pastel('--risk-grp-velocity'),
+  Margin: pastel('--risk-grp-margin'),
+  Greeks: pastel('--risk-grp-greeks'),
+  Event: pastel('--risk-grp-event'),
+  Gate: 'var(--sk-accent)',
+}
 
 const PAGE_LEAD =
   'A hard limit is one something would act on; a soft limit asks to be acknowledged. Every reading belongs to the page that computes it — this one only holds each against a line, and writes nothing.'
@@ -98,6 +109,10 @@ export default function RiskLimitsPage() {
   const noLine = unwritten(rows)
   const held = rows.filter((r) => r.use != null).length
   const withLine = rows.filter((r) => r.limit != null).length
+  const hostId = statusQ.data?.config?.ib_client?.account?.event_host ?? ''
+  const secondaryId = statusQ.data?.config?.ib_client?.account?.event_secondary ?? ''
+  /** The switch names accounts the way the shell does (HOST · SEC), the id in the hover. */
+  const accountLabel = (id: string) => (id === hostId ? 'HOST' : id === secondaryId ? 'SEC' : id)
 
 
   return (
@@ -126,7 +141,7 @@ export default function RiskLimitsPage() {
               ariaLabel="Account"
               value={accountFilter}
               onChange={setAccountFilter}
-              options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+              options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: accountLabel(a), title: a }))]}
             />
           </div>
         ) : null}
@@ -253,18 +268,26 @@ export default function RiskLimitsPage() {
               <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.ack}</p>
             </section>
 
-            <SectionHead note="Headroom is the distance to the line at today’s book — a rule with no line keeps its reading and says so.">
-              All limits
-            </SectionHead>
             <section className={positionsUi.panel} aria-label="All limits">
               <header className={positionsUi.panelHead}>
-                <span className={positionsUi.panelTitle}>{rows.length} rules · 5 groups</span>
-                <span className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
+                <span className={positionsUi.cap}>All limits</span>
+                <span className={positionsUi.panelTitle}>{rows.length} rules</span>
+                <span className="text-dense-meta text-muted-foreground">
+                  headroom = distance to limit at current book · hard limits carry the derisk action they trip
+                </span>
+                <span
+                  className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground"
+                  title={LIMITS_UNRECORDED.store}
+                >
                   <StatusLamp lamp="gray" variant="dot" title="No line written" />
-                  {noLine.length} read but have no line
+                  {noLine.length} have no line
                 </span>
                 <span className="ml-auto text-dense-meta text-muted-foreground">
-                  the design edits these in the Rules engine — this page reads, never writes
+                  edited in{' '}
+                  <Link to="/trade/rules" className={positionsUi.link}>
+                    Trade › Rules
+                  </Link>{' '}
+                  — this page reads, never writes
                 </span>
               </header>
               <div className="overflow-x-auto">
@@ -297,8 +320,10 @@ export default function RiskLimitsPage() {
                       return [
                         // Rev .84: the group heads lose their caps — 11/600 sentence case.
                         <tr key={group} className="bg-[var(--sk-raised2)]">
-                          <td className="text-dense-meta font-semibold text-secondary-foreground" colSpan={7}>
-                            {group}
+                          <td className="text-dense-meta font-semibold" style={{ color: GROUP_INK[group] }} colSpan={7}>
+                            {group === 'Gate' && gateReadings.gateName != null
+                              ? `Gate · ${gateReadings.allocationName ?? 'allocation'} — ${gateReadings.gateName} v${gateReadings.gateVersion}`
+                              : group}
                             {/* Rev .107: the gate group carries the daemon's mode —
                                 paper shows this one tag, live shows nothing. */}
                             {group === 'Gate' && gateReadings.paperTrade ? (
@@ -315,7 +340,7 @@ export default function RiskLimitsPage() {
                         </tr>,
                         ...inGroup.map((r) => (
                           <tr key={r.key} className={ROW_HOVER}>
-                            <td data-sr-col="entity" className="text-foreground">
+                            <td data-sr-col="entity" className="text-dense-label text-foreground">
                               {r.name}
                               {r.breached ? (
                                 <span className={cn('ml-2 font-mono text-dense-caption font-bold', breachInk(r.kind))}>
@@ -351,18 +376,17 @@ export default function RiskLimitsPage() {
                             </td>
                             <td>
                               {r.use == null || r.headroom == null ? (
-                                <span className="inline-flex items-start gap-1.5 whitespace-normal text-dense-meta leading-normal text-muted-foreground">
-                                  <StatusLamp
-                                    lamp="gray"
-                                    variant="dot"
-                                    title={r.current == null ? 'No reading' : 'No line'}
-                                    className="mt-1 shrink-0"
-                                  />
-                                  {r.noReading ?? 'no line written'}
+                                // One line per rule, as drawn: the reason rides in the hover.
+                                <span
+                                  className="flex max-w-[16rem] items-center gap-1.5 text-dense-caption text-muted-foreground"
+                                  title={r.noReading ?? 'No line is written for this rule'}
+                                >
+                                  <StatusLamp lamp="gray" variant="dot" title={r.current == null ? 'No reading' : 'No line'} />
+                                  <span className="truncate">{r.noReading ?? 'no line written'}</span>
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-2">
-                                  <span className={cn('inline-block h-1.5 w-20 shrink-0 overflow-hidden rounded-sm', TRACK)}>
+                                  <span className={cn('inline-block h-1.25 w-19 shrink-0 overflow-hidden rounded-sm', TRACK)}>
                                     <span
                                       className={cn(
                                         'block h-full',
@@ -379,8 +403,7 @@ export default function RiskLimitsPage() {
                                   </span>
                                   <span
                                     className={cn(
-                                      positionsUi.mono,
-                                      'text-dense-meta',
+                                      'text-dense-caption',
                                       r.breached ? breachInk(r.kind) : r.use > 0.8 ? 'text-warning' : 'text-muted-foreground',
                                     )}
                                   >
@@ -389,10 +412,10 @@ export default function RiskLimitsPage() {
                                 </span>
                               )}
                             </td>
-                            <td data-sr-col="text" title={r.onBreach} className="text-muted-foreground">
+                            <td data-sr-col="text" title={r.onBreach} className="text-dense-meta text-muted-foreground">
                               {r.onBreach}
                             </td>
-                            <td data-sr-col="tag" className="text-muted-foreground">
+                            <td data-sr-col="tag" className="text-dense-meta text-muted-foreground">
                               {r.scope}
                               {r.citedFrom ? (
                                 <>
@@ -410,7 +433,6 @@ export default function RiskLimitsPage() {
                   </tbody>
                 </table>
               </div>
-              <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.store}</p>
             </section>
 
             <div className={positionsUi.bandGrid}>

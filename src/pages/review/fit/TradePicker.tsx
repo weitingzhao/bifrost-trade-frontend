@@ -79,7 +79,7 @@ export function TradePicker({
     <>
       <div data-sr-toolbar="" className="flex-wrap">
         <span data-sr-tb="label">Trade</span>
-        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(-1)} title="Previous closed trade ( [ )" aria-label="Previous trade">
+        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(-1)} title="Previous instance ( [ )" aria-label="Previous instance">
           ‹
         </button>
         <button
@@ -92,27 +92,32 @@ export function TradePicker({
             <>
               <TradeName t={current} />
               <span className="min-w-0 truncate text-[var(--sk-mute2)]">
-                {current.label} · closed {current.closedOn ? fmtIsoDateToken(current.closedOn) : '—'}
+                {current.label} ·{' '}
+                {current.exitKind === 'open'
+                  ? `opened ${current.openedOn ? fmtIsoDateToken(current.openedOn) : '—'}`
+                  : `closed ${current.closedOn ? fmtIsoDateToken(current.closedOn) : '—'}`}
               </span>
-              <span className={cn('font-mono', pnlColorClass(current.realised))}>{fmtSignedUsd0(current.realised)}</span>
+              <span className={cn('font-mono', current.exitKind === 'open' ? 'text-[var(--color-unrealized)]' : pnlColorClass(current.realised))}>
+                {current.exitKind === 'open' ? 'open' : fmtSignedUsd0(current.realised)}
+              </span>
             </>
           ) : (
             'Pick a trade'
           )}
           <span className="text-muted-foreground">▾</span>
         </button>
-        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(1)} title="Next closed trade ( ] )" aria-label="Next trade">
+        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(1)} title="Next instance ( ] )" aria-label="Next instance">
           ›
         </button>
         <span data-sr-tb="meta" className="font-mono">
-          {idx >= 0 ? `${idx + 1} of ${trades.length} closed` : `${trades.length} closed`}
+          {idx >= 0 ? `${idx + 1} of ${trades.length}` : `${trades.length}`}
         </span>
       </div>
 
       {open ? (
-        <section className="overflow-hidden mat-card" aria-label="Closed trades">
+        <section className="overflow-hidden mat-card" aria-label="Instances">
           <header className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-            <span className={positionsUi.cap}>Closed trades</span>
+            <span className={positionsUi.cap}>Instances</span>
             <SegmentControl
               size="sm"
               ariaLabel="Outcome"
@@ -149,23 +154,23 @@ export function TradePicker({
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Symbol, #, rule…"
-              aria-label="Filter closed trades"
+              aria-label="Filter instances"
               className="h-6 w-44 mat-field px-2 text-dense-label"
             />
             <span className="ml-auto text-dense-meta text-muted-foreground">
-              {rows.length === trades.length ? `${trades.length} closed · newest first` : `${rows.length} of ${trades.length}`}
+              {rows.length === trades.length ? `${trades.length} · open first, then newest close` : `${rows.length} of ${trades.length}`}
             </span>
           </header>
           {outcome === 'broke' ? (
             <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">{NO_PLAN}</p>
           ) : rows.length === 0 ? (
-            <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No closed trade matches — clear the search or pick All.</p>
+            <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No instance matches — the filter is on, not the book empty.</p>
           ) : (
             <div className="max-h-80 overflow-y-auto">
               <table data-sr-table="" className="w-full">
                 <thead>
                   <tr>
-                    <th>Trade</th>
+                    <th>Instance</th>
                     <th>Contract</th>
                     <th>Rule</th>
                     <th>Closed</th>
@@ -237,12 +242,18 @@ function GroupRows({
           <td className="max-w-48 truncate text-dense-meta text-[var(--sk-mute2)]" title={t.play ?? 'not booked to a rule'}>
             {t.play ?? '—'}
           </td>
-          <td className="whitespace-nowrap font-mono text-[var(--sk-mute2)]">{t.closedOn ? fmtIsoDateToken(t.closedOn) : '—'}</td>
+          <td className="whitespace-nowrap font-mono text-[var(--sk-mute2)]">
+            {t.exitKind === 'open' ? <span className="text-[var(--color-unrealized)]">open</span> : t.closedOn ? fmtIsoDateToken(t.closedOn) : '—'}
+          </td>
           <td data-sr-col="num" className="font-mono text-[var(--sk-mute2)]">
             {t.daysHeld != null ? `${t.daysHeld}d` : '—'}
           </td>
-          <td data-sr-col="num" className={cn('font-mono', pnlColorClass(t.realised))}>
-            {fmtSignedUsd0(t.realised)}
+          <td
+            data-sr-col="num"
+            className={cn('font-mono', t.exitKind === 'open' ? 'text-muted-foreground' : pnlColorClass(t.realised))}
+            title={t.exitKind === 'open' ? 'Still open — its unrealised line is marked on the page once picked' : undefined}
+          >
+            {t.exitKind === 'open' ? '—' : fmtSignedUsd0(t.realised)}
           </td>
           <td data-sr-col="num" className="font-mono text-muted-foreground" title={NO_PLAN}>
             —

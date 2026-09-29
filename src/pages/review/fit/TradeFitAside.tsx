@@ -46,7 +46,12 @@ export function VerdictPanel({ trade, markPath }: { trade: ReviewTrade; markPath
     <section className={positionsUi.panel} style={TONE_EDGE.warning} aria-label="Verdict">
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Verdict</span>
-        <span className="ml-auto">
+        <span className="ml-auto flex items-center gap-1.5">
+          {trade.exitKind === 'open' ? (
+            <DenseTag variant="neutral" size="cell">
+              provisional
+            </DenseTag>
+          ) : null}
           <DenseTag variant="warning" size="cell">
             no plan to judge
           </DenseTag>

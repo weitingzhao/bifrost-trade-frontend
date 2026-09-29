@@ -4,22 +4,24 @@
  * not a symbol — the same name appears once per trade — so the list carries
  * what a review is picked by: when it closed, what it made, and where it sat.
  *
- * Filters All · Won · Lost · Broke plan, a search over symbol, # and rule, and
+ * Filters All · Open · Won · Lost · Broke plan, a search over symbol, # and rule, and
  * grouping None · Symbol · Expiry (month of the contract's expiry), each group
  * headed by its count and net. "Broke plan" needs a plan linked to the trade,
  * and none is (`REVIEW_UNRECORDED.plan`), so it counts nothing and says so.
  */
 import type { ReviewTrade } from '@/utils/reviewTrades'
 
-export type PickOutcome = 'all' | 'won' | 'lost' | 'broke'
+export type PickOutcome = 'all' | 'open' | 'won' | 'lost' | 'broke'
 export type PickGroup = 'none' | 'sym' | 'exp'
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
 export const OUTCOMES: { key: PickOutcome; label: string; test: (t: ReviewTrade) => boolean | null }[] = [
   { key: 'all', label: 'All', test: () => true },
-  { key: 'won', label: 'Won', test: (t) => t.realised >= 0 },
-  { key: 'lost', label: 'Lost', test: (t) => t.realised < 0 },
+  // Rev .104: an instance still running is reviewable — interim — and pinned first.
+  { key: 'open', label: 'Open', test: (t) => t.exitKind === 'open' },
+  { key: 'won', label: 'Won', test: (t) => t.exitKind !== 'open' && t.realised >= 0 },
+  { key: 'lost', label: 'Lost', test: (t) => t.exitKind !== 'open' && t.realised < 0 },
   // No plan is linked to any position, so "broke its plan" is unknowable — null, not false.
   { key: 'broke', label: 'Broke plan', test: () => null },
 ]

@@ -70,16 +70,29 @@ export function counterfactuals(
   today: string,
 ): Counterfactual[] {
   const realised = trade.realised
+  const open = trade.exitKind === 'open'
+  const legCount = 'legs' in trade && Array.isArray((trade as { legs?: unknown[] }).legs) ? (trade as { legs: unknown[] }).legs.length : 1
   const rows: Counterfactual[] = [
-    {
-      key: 'actual',
-      name: 'What I did',
-      when: trade.closedOn,
-      pl: realised,
-      delta: null,
-      meaning: 'The realised figure the Trade Ledger carries. Everything below is measured against it.',
-      self: true,
-    },
+    open
+      ? {
+          key: 'actual',
+          name: 'Where it stands · today',
+          when: path?.held[path.held.length - 1]?.date ?? null,
+          pl: realised,
+          delta: null,
+          meaning:
+            'Marked at the last close — provisional. It becomes the realised figure the Trade Ledger carries once the instance closes; everything below is measured against it until then.',
+          self: true,
+        }
+      : {
+          key: 'actual',
+          name: 'What I did',
+          when: trade.closedOn,
+          pl: realised,
+          delta: null,
+          meaning: 'The realised figure the Trade Ledger carries. Everything below is measured against it.',
+          self: true,
+        },
     {
       key: 'plan',
       name: 'My plan’s exit',
@@ -122,10 +135,13 @@ export function counterfactuals(
           when: null,
           pl: null,
           delta: null,
-          meaning:
-            trade.expiry >= today
-              ? `This contract expires ${fmtIsoDateToken(trade.expiry)} and has not settled, so there is no expiry price to hold to. Marking it at today’s close would be a different branch wearing this one’s name.`
-              : 'The underlying’s close on the expiry session is not on hand for this name, so the branch cannot be priced.',
+          meaning: open
+            ? `Still open — the do-nothing branch is decided at expiry (${fmtIsoDateToken(trade.expiry)}), not before. This row waits for the settle.`
+            : legCount > 1
+              ? 'A rolled or multi-leg instance held to expiry means holding its last legs to their own expiries — not priced here; the line above is every leg as traded.'
+              : trade.expiry >= today
+                ? `This contract expires ${fmtIsoDateToken(trade.expiry)} and has not settled, so there is no expiry price to hold to. Marking it at today’s close would be a different branch wearing this one’s name.`
+                : 'The underlying’s close on the expiry session is not on hand for this name, so the branch cannot be priced.',
         },
   )
 

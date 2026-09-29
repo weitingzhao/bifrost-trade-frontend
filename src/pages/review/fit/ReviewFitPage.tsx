@@ -14,21 +14,24 @@
  * Research's IV-rank history (measured 2026-09-26: the trailing year, per
  * session) — it had been listed as not recorded.
  */
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
-import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useExecutionsCanonical } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
-import { useReviewTrades } from '@/hooks/useReviewTrades'
-import { useTradeMarkPath } from '@/hooks/useTradeMarkPath'
+import { useInstanceMarkPath } from '@/hooks/useInstanceMarkPath'
+import { buildReviewInstances, type ReviewInstance } from '@/utils/reviewInstances'
 import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
 import { rankOnEntry } from '@/utils/entryIvRank'
 import { useEntryIvRanks } from '@/hooks/useEntryIvRanks'
-import { ReviewTradeFit } from './ReviewTradeFit'
+import { ReviewGaps } from './ReviewTradeFit'
+import { InstanceEconomics } from './InstanceEconomics'
+import { PeersPanel } from './PeersPanel'
+import { useStrategyInstances } from '@/hooks/useStrategies'
 import { TradePicker } from './TradePicker'
 import { TradePathPanels } from './TradePathPanels'
 import { CounterfactualsTable, ExecutionTable } from './TradeFitTables'
@@ -36,23 +39,46 @@ import { SourcesPanel, TagsPanel, TimelinePanel, VerdictPanel } from './TradeFit
 import { counterfactuals, derivedTags, sources, timeline } from './tradeFitModel'
 
 const PAGE_LEAD =
-  'One closed trade against the path it actually traded: what I did, what the position was worth on every session it was held, and the best and worst that path ever offered. The distance to my plan would be discipline — and the plan is the one thing not recorded.'
+  'One instance — every leg on one line, rolls as seams, open ones as an interim read — against the path it actually traded: what I did, what the position was worth on every session it was held, and the best and worst that path ever offered. The distance to my plan would be discipline — and the plan is the one thing not recorded.'
 
 export default function ReviewFitPage() {
   const [params, setParams] = useSearchParams()
-  const [accountFilter] = useState('all')
-  const { trades } = useReviewTrades(accountFilter)
-  // The same cache entry useReviewTrades reads — held here for its §17 state.
+  // The same cache entry every Review page reads — held here for its §17 state.
   const execQuery = useExecutionsCanonical()
+  const today = new Date().toISOString().slice(0, 10)
 
+  // Rev .104: the unit is the instance (open ones first). `?inst=NNN` picks
+  // one; an older `?trade=<contract>` link lands on the instance that traded it.
+  const trades = useMemo(() => buildReviewInstances(execQuery.data?.items ?? [], today), [execQuery.data?.items, today])
+  const wantedInst = params.get('inst')
   const wanted = params.get('trade')
-  const trade = useMemo(
-    () => trades.find((t) => t.contractKey === wanted) ?? trades[0] ?? null,
-    [trades, wanted],
+  const picked = useMemo(
+    () =>
+      (wantedInst ? trades.find((t) => t.instanceId === Number(wantedInst)) : null) ??
+      (wanted ? trades.find((t) => t.contractKey === wanted || t.legs.some((l) => l.contractKey === wanted)) : null) ??
+      trades[0] ??
+      null,
+    [trades, wanted, wantedInst],
   )
 
   const { path, expiryBranch, underlying, optionTicker, loading: pathLoading, error: pathError, refetch: refetchPath } =
-    useTradeMarkPath(trade)
+    useInstanceMarkPath(picked, today)
+  // An open instance reads at its mark to date — provisional, never the Ledger's realised figure.
+  const trade = useMemo(
+    () => (picked && picked.open && path ? { ...picked, realised: path.realised } : picked),
+    [picked, path],
+  )
+  // Structure per instance for the «Same structure» peer set — the rulebook's own name.
+  const instancesQ = useStrategyInstances()
+  const structureOf = useCallback(
+    (x: ReviewInstance) =>
+      x.instanceId == null
+        ? null
+        : (instancesQ.data?.items.find((i) => i.strategy_instance_id === x.instanceId)?.strategy_structure_name ?? null),
+    [instancesQ.data],
+  )
+  const pick = (t: ReviewInstance) =>
+    setParams(t.instanceId != null ? { inst: String(t.instanceId) } : { trade: t.contractKey })
 
   // The entry session's IV rank, on the same cache entry Habits reads it from.
   const ranks = useEntryIvRanks(useMemo(() => (trade ? [trade] : []), [trade]))
@@ -70,7 +96,6 @@ export default function ReviewFitPage() {
     return bar?.close ?? null
   }, [underlying, openedOn])
 
-  const today = new Date().toISOString().slice(0, 10)
   const derived = useMemo(() => {
     if (trade == null) return null
     return {
@@ -94,7 +119,8 @@ export default function ReviewFitPage() {
         meta={
           trade ? (
             <span className={positionsUi.mono}>
-              {trade.label} · {trade.closedOn ? fmtIsoDateToken(trade.closedOn) : '—'}
+              {trade.instanceId != null ? `#${trade.instanceId} · ` : ''}
+              {trade.label} · {trade.open ? 'open' : trade.closedOn ? fmtIsoDateToken(trade.closedOn) : '—'}
             </span>
           ) : undefined
         }
@@ -112,7 +138,7 @@ export default function ReviewFitPage() {
 
       {/* §17.3 · Rev .104: ‹ the current trade › and n of N in the toolbar; the
           closed-trade table (filter · search · group · [ ] step) behind it. */}
-      <TradePicker trades={trades} current={trade} onPick={(t) => setParams({ trade: t.contractKey })} />
+      <TradePicker trades={trades} current={trade} onPick={(t) => pick(t as ReviewInstance)} />
 
       {pageState === 'stale' ? (
         <ViewState
@@ -155,7 +181,26 @@ export default function ReviewFitPage() {
         </section>
       ) : (
         <>
-          <ReviewTradeFit trade={trade} markPath={path} pathLoading={pathLoading} />
+          {trade.open ? (
+            <div
+              role="status"
+              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl border px-3 py-2 text-dense-label text-[var(--sk-soft)]"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)',
+                background: 'color-mix(in srgb, var(--color-warning) 8%, transparent)',
+              }}
+            >
+              <span className="font-bold text-warning">Interim review</span>
+              <span>
+                Day {trade.daysHeld ?? '—'} of {trade.dteAtEntry ?? '—'} · as of {fmtIsoDateToken(today)}. The path stops at
+                today; best and worst are to date; the discipline gap counts only once the planned exit has passed;
+                counterfactuals and the verdict are provisional.
+              </span>
+            </div>
+          ) : null}
+          <InstanceEconomics inst={trade} markPath={path} pathLoading={pathLoading} today={today} />
+          <SectionHead note="What a P&L number cannot separate on its own.">The two gaps</SectionHead>
+          <ReviewGaps tier={false} />
 
           <div className="flex flex-wrap items-start gap-3">
             <div className="flex min-w-0 flex-[999_1_40rem] flex-col gap-3">
@@ -166,6 +211,7 @@ export default function ReviewFitPage() {
               ) : (
                 <TradePathPanels trade={trade} markPath={path} expiryBranch={expiryBranch} underlying={underlying} />
               )}
+              <PeersPanel self={trade} selfPath={path} all={trades} structureOf={structureOf} today={today} onPick={pick} />
               <CounterfactualsTable rows={derived.cfs} />
               <ExecutionTable trade={trade} />
             </div>

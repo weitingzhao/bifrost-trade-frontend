@@ -29,7 +29,8 @@ import { daysTo, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 import type { Execution } from '@/types/positions'
 
-export type ExitKind = 'closed' | 'expired'
+/** `open` since Rev .104: an instance still running is reviewable (interim). */
+export type ExitKind = 'closed' | 'expired' | 'open'
 
 /** One fill, as Review reads it — enough to price the position on any day it was open. */
 export interface ReviewFill {
@@ -111,11 +112,11 @@ export const REVIEW_UNRECORDED = {
 } as const
 
 /** A closed trade's own fills, earliest first. */
-function orderedTrades(g: OptExecutionGroup): Execution[] {
+export function orderedTrades(g: OptExecutionGroup): Execution[] {
   return [...g.trades].sort((a, b) => (a.time ?? 0) - (b.time ?? 0) || (a.trade_date ?? '').localeCompare(b.trade_date ?? ''))
 }
 
-function dateSpan(trades: readonly Execution[]): { first: string | null; last: string | null } {
+export function dateSpan(trades: readonly Execution[]): { first: string | null; last: string | null } {
   // A journal-closed leg carries no trade date; falling back to its epoch is
   // what keeps two of the book's closed trades from reading as never closed.
   const dates = trades
@@ -126,7 +127,7 @@ function dateSpan(trades: readonly Execution[]): { first: string | null; last: s
 }
 
 /** `20261016` → `2026-10-16`; already-ISO values pass through. */
-function isoExpiry(raw: string | null | undefined): string {
+export function isoExpiry(raw: string | null | undefined): string {
   const digits = (raw ?? '').replace(/\D/g, '')
   return digits.length >= 8 ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}` : ''
 }
@@ -140,7 +141,7 @@ function isoExpiry(raw: string | null | undefined): string {
  * exactly on its realised P&L, which is what lets the mark path end on the same
  * number the Ledger shows (§14.2).
  */
-function toFill(e: Execution): ReviewFill {
+export function toFill(e: Execution): ReviewFill {
   const rawQty = Number(e.quantity ?? e.qty)
   const qty = Number.isFinite(rawQty) ? Math.abs(rawQty) : 0
   const price = Number(e.price) || 0

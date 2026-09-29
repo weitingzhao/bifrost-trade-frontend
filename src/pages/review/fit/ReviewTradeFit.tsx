@@ -119,6 +119,15 @@ export function ReviewTradeFit({
         </p>
       </section>
 
+      <ReviewGaps tier={tier} />
+    </>
+  )
+}
+
+/** The two gaps a single P&L blurs — both need the plan's own exit, and no plan is linked. */
+export function ReviewGaps({ tier = true }: { tier?: boolean }) {
+  return (
+    <>
       {tier ? <SectionHead note="What a P&L number cannot separate on its own.">The two gaps</SectionHead> : null}
       <div className={positionsUi.bandGrid}>
         {REVIEW_GAPS.map((g) => (

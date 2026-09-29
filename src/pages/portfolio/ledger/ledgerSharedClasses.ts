@@ -1,4 +1,4 @@
-/** Shared Tailwind classes for Trade Ledger collapsible cards. */
+/** Shared Tailwind classes for Ledger collapsible cards. */
 export {
   denseSymbolTagPillClass as stkPillSymbolClass,
   denseSymbolTagCellClass as stkCellSymbolClass,

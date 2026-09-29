@@ -29,14 +29,14 @@ function renderRiskFace(over: { onOpenInstance?: () => void } = {}) {
 describe('PositionsFaceSlot · risk face', () => {
   it('says the payoff is this instance at expiry, and points at the page that stresses the whole book', () => {
     renderRiskFace()
-    expect(screen.getByText('this instance · at expiry')).toBeInTheDocument()
+    expect(screen.getByText('this trade · at expiry')).toBeInTheDocument()
     const out = screen.getByRole('link', { name: /whole-book stress · Exposure/ })
     expect(out).toHaveAttribute('href', '/risk/portfolio#stress')
   })
   it('keeps the instance sheet beside it when the caller offers one', () => {
     const onOpenInstance = vi.fn()
     renderRiskFace({ onOpenInstance })
-    expect(screen.getByRole('button', { name: /instance detail/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /trade detail/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /whole-book stress · Exposure/ })).toBeInTheDocument()
   })
 })

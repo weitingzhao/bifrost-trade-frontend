@@ -1,5 +1,5 @@
 /**
- * Single trade's right-hand column: the verdict, the timeline, the tags and
+ * Trade review's right-hand column: the verdict, the timeline, the tags and
  * what the page is reading.
  *
  * The verdict the design draws is a cell of the 2×2 — plan quality against

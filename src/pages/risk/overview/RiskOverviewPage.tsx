@@ -316,7 +316,7 @@ export default function RiskOverviewPage() {
             </span>
             <Link
               to="/trade/rules"
-              title="Trade › Rules — where limits and gates are defined"
+              title="Trading › Rules — where limits and gates are defined"
               className="text-dense-label text-primary no-underline hover:underline"
             >
               Rules →
@@ -368,7 +368,7 @@ export default function RiskOverviewPage() {
             title="No limits in the book"
             detail="Nothing constrains the next trade because nothing has been defined — that is different from every limit having headroom."
             actionLabel="Define limits"
-            actionTitle="Trade › Rules — where limits and gates are defined"
+            actionTitle="Trading › Rules — where limits and gates are defined"
             onAction={() => navigate('/trade/rules')}
           />
         ) : (
@@ -390,7 +390,7 @@ export default function RiskOverviewPage() {
                 <DenseTableHead
                   col="tag"
                   className="w-16"
-                  title="One limit model: a gate is a limit at scope = allocation, defined in Trade › Rules and enforced by the daemon before the action happens."
+                  title="One limit model: a gate is a limit at scope = allocation, defined in Trading › Rules and enforced by the daemon before the action happens."
                 >
                   Kind
                 </DenseTableHead>

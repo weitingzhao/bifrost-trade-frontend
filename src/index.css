@@ -221,7 +221,8 @@
        The hexes come from @bifrost/ui; these are their channels. */
     --sk-ticker-rgb: 63 98 18;
     --sk-contract-rgb: 7 89 133;
-    --sk-instance-rgb: 107 33 168;
+    --sk-trade-rgb: 107 33 168;
+    --sk-instance-rgb: var(--sk-trade-rgb);
     --color-profit-rgb: 21 128 61;
     --color-loss-rgb: 185 28 28;
     --color-unrealized-rgb: 154 52 18;
@@ -283,7 +284,7 @@
     --color-warning: #ca8a04;
     --color-warning-soft: rgba(202, 138, 4, 0.12);
     /* Ledger Options: multiple distinct instance IDs on one contract group */
-    --color-instance-multi: var(--sk-instance);
+    --color-instance-multi: var(--sk-trade);
 
     --color-link: #0284c7;
     --color-link-hover: #0369a1;
@@ -312,7 +313,7 @@
 
     /* Business semantics — entity identity (light) */
     /* §14.8: the three entity inks are the ramp's own (--sk-ticker ·
-       --sk-contract · --sk-instance), so a ticker, a contract and an instance
+       --sk-contract · --sk-trade), so a ticker, a contract and a trade
        look the same on every page in either theme. Symbol read the accent
        until 2026-09-23, which quietly turned every ticker violet when the
        accent moved from lime (Package 2026-09-23.3); the design keeps lime
@@ -321,7 +322,7 @@
     --color-entity-symbol: var(--sk-ticker);
     --color-entity-option: var(--sk-contract);
     --color-entity-strategy: #7c3aed; /* violet-600 — Option Category: strategy */
-    --color-entity-instance: var(--sk-instance);
+    --color-entity-instance: var(--sk-trade);
     --color-option-category-opportunity: #c026d3; /* fuchsia-600 — warm, distinct from teal/cyan */
     --color-option-category-structure: #16a34a; /* green-600 — structure type, distinct from instance teal */
     --color-entity-category: #a855f7; /* purple-500 */
@@ -430,7 +431,8 @@
        themselves come from @bifrost/ui. */
     --sk-ticker-rgb: 163 230 53;
     --sk-contract-rgb: 125 211 252;
-    --sk-instance-rgb: 192 132 252;
+    --sk-trade-rgb: 192 132 252;
+    --sk-instance-rgb: var(--sk-trade-rgb);
     --color-profit-rgb: 74 222 128;
     --color-loss-rgb: 248 113 113;
     --color-unrealized-rgb: 251 146 60;
@@ -524,7 +526,7 @@
     --color-danger-soft: rgba(239, 68, 68, 0.15);
     --color-warning: #eab308;
     --color-warning-soft: rgba(234, 179, 8, 0.15);
-    --color-instance-multi: var(--sk-instance);
+    --color-instance-multi: var(--sk-trade);
 
     --color-link: #7dd3fc;
     --color-link-hover: #bae6fd;
@@ -545,7 +547,7 @@
     --color-entity-symbol: var(--sk-ticker);
     --color-entity-option: var(--sk-contract);
     --color-entity-strategy: #a78bfa; /* violet-400 */
-    --color-entity-instance: var(--sk-instance);
+    --color-entity-instance: var(--sk-trade);
     --color-option-category-opportunity: #e879f9; /* fuchsia-400 */
     --color-option-category-structure: #4ade80; /* green-400 */
     --color-entity-category: #c084fc; /* purple-400 */

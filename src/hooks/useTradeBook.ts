@@ -1,7 +1,7 @@
 /**
  * The instance list, filtered and grouped — one derivation, two readers.
  *
- * Strategy › Instances built this inline. Trade › Rules needs the same thing
+ * Strategy › Instances built this inline. Trading › Rules needs the same thing
  * (design 2026-09-18 makes instances a column of the chain, and the Owner asked
  * for the list's metrics, filters and compare to come with it), so it moved
  * here rather than being written twice. Two lists that disagreed about which
@@ -97,7 +97,7 @@ export function instanceGroupKey(
   return INSTANCE_GROUP_LOADING
 }
 
-export interface InstanceBook {
+export interface TradeBook {
   metricsMap: Map<number, InstanceListMetricsEntry>
   filterOptions: InstanceFilterOptions
   filtered: StrategyInstance[]
@@ -106,14 +106,14 @@ export interface InstanceBook {
   sinceRangeText: string | null
 }
 
-export function useInstanceBook(args: {
+export function useTradeBook(args: {
   instances: StrategyInstance[]
   opportunities: readonly BookOpportunity[]
   values: InstanceListFilterValues
   /** A single instance picked by id, which overrides every other filter. */
   instanceId?: number | ''
   metricsRefreshKey?: number
-}): InstanceBook {
+}): TradeBook {
   const { instances, opportunities, values, instanceId = '', metricsRefreshKey = 0 } = args
   const metricsMap = useInstanceMetrics(instances, metricsRefreshKey)
 

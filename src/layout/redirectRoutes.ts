@@ -210,7 +210,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
   },
   {
     path: '/portfolio/trade-history',
-    label: 'Trade Ledger',
+    label: 'Ledger',
     crumbs: PORTFOLIO,
     redirect: '/portfolio/ledger',
   },
@@ -386,4 +386,10 @@ export const REDIRECTS: readonly RouteEntry[] = [
   { path: '/trade/playbook', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook' },
   // Rev .110: Playbook stats is Playbook's Record tab — a rule and its record, one page.
   { path: '/review/playbook-stats', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook?tab=record' },
+  // ── Instance → Trade (design Rev .111) ─────────────────────────────────
+  // The entity is a Trade now, from the page to the table. The old addresses
+  // forward one version: /instance/:id carries its id (router.tsx), and
+  // /review/fit keeps its query (`?t=#NNN`, `in`, `list`).
+  { path: '/instance/:id', label: 'Trade', crumbs: [], redirect: '/trade/:id' },
+  { path: '/review/fit', label: 'Trade review', crumbs: REVIEW, redirect: '/review/trade' },
 ]

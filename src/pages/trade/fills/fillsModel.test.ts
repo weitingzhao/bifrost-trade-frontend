@@ -49,14 +49,14 @@ describe('buildFillRows', () => {
       [plan({ strategy_plan_id: 1, symbol: 'YYY' })],
     )
     expect(orphan.state).toBe('orphan')
-    expect(orphan.why).toBe('no instance · no plan on ZZZ')
+    expect(orphan.why).toBe('no trade · no plan on ZZZ')
     expect(linked).toMatchObject({ state: 'linked', instanceId: 11, instanceLabel: 'ZZZ CC', why: null })
   })
 
   it('separates “nobody wrote this down” from “somebody did and it never linked”', () => {
     const planned = new Set(['ZZZ'])
-    expect(orphanReason(fill({ exec_id: 'a' }), planned)).toBe('no instance · a plan exists on ZZZ')
-    expect(orphanReason(fill({ exec_id: 'a' }), new Set())).toBe('no instance · no plan on ZZZ')
+    expect(orphanReason(fill({ exec_id: 'a' }), planned)).toBe('no trade · a plan exists on ZZZ')
+    expect(orphanReason(fill({ exec_id: 'a' }), new Set())).toBe('no trade · no plan on ZZZ')
   })
 })
 

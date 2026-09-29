@@ -4,7 +4,7 @@ import type { ReviewInstance } from '@/utils/reviewInstances'
 import { reviewState, reviewWalk } from './reviewWalk'
 
 // Invented instances: only the fields the walk reads.
-const t = (id: number, open = false) => ({ instanceId: id, open, contractKey: `K${id}` }) as unknown as ReviewInstance
+const t = (id: number, open = false) => ({ tradeId: id, open, contractKey: `K${id}` }) as unknown as ReviewInstance
 const reviewed = (id: number) => [id, { strategy_instance_id: id, tags_added: [], tags_dropped: [], reviewed: true }] as [number, TradeReview]
 
 describe('reviewWalk', () => {
@@ -13,7 +13,7 @@ describe('reviewWalk', () => {
 
   it('walks the awaiting queue when no trade was asked for', () => {
     const w = reviewWalk(trades, reviews, { explicit: false, list: null })
-    expect(w.trades.map((x) => x.instanceId)).toEqual([1, 4])
+    expect(w.trades.map((x) => x.tradeId)).toEqual([1, 4])
     expect(w.label).toBe('awaiting review')
   })
 
@@ -23,7 +23,7 @@ describe('reviewWalk', () => {
 
   it('keeps Queue’s row order when arrived from Queue, dropping ids it cannot find', () => {
     const w = reviewWalk(trades, reviews, { explicit: true, list: '4,#1,99' })
-    expect(w.trades.map((x) => x.instanceId)).toEqual([4, 1])
+    expect(w.trades.map((x) => x.tradeId)).toEqual([4, 1])
   })
 
   it('falls back to every trade once nothing is waiting', () => {

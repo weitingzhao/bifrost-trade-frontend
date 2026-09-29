@@ -4,9 +4,9 @@
  * The record the server returns carries an opportunity, an account, an
  * opened-at and a fill count — **no state and no P&L**. Both are derived here,
  * with the Ledger's grouping and cash convention so an instance that reads
- * closed is closed by the same rule the Trade Ledger uses (§14.2).
+ * closed is closed by the same rule the Ledger uses (§14.2).
  *
- * Shared because two pages ask the same question of it: Trade › Rules draws the
+ * Shared because two pages ask the same question of it: Trading › Rules draws the
  * Instances column, and Risk › Limits counts the open ones against the
  * allocation's own ceiling.
  */
@@ -34,7 +34,7 @@ export interface InstanceReading {
  * An instance's own fills, read into open/closed and a realised figure.
  *
  * Grouping is `buildOptExecutionGroups`, the Ledger's own, so an instance that
- * reads closed here is closed by the same rule the Trade Ledger uses.
+ * reads closed here is closed by the same rule the Ledger uses.
  */
 export function readInstances(
   instances: readonly StrategyInstance[],

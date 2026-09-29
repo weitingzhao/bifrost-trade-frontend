@@ -32,14 +32,14 @@ export function buildAttributionChips(c: {
       id: 'strategy',
       label: 'Strategy',
       countLabel: `${c.opportunityCount} ${c.opportunityCount === 1 ? 'opportunity' : 'opportunities'}`,
-      title: 'Opportunity → instance → contract',
+      title: 'Opportunity → trade → contract',
       empty: c.opportunityCount === 0,
     },
     {
       id: 'instance',
-      label: 'Instance',
+      label: 'Trade',
       countLabel: `${c.instanceWith} with · ${c.instanceWithout} without`,
-      title: `One instance and the fills under it — ${c.instanceWith} instances, ${c.instanceWithout} option contracts with no instance`,
+      title: `One trade and the fills under it — ${c.instanceWith} trades, ${c.instanceWithout} option contracts with no trade`,
       empty: instTotal === 0,
     },
   ]

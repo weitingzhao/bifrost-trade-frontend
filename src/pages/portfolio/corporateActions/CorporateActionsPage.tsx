@@ -273,7 +273,7 @@ export default function CorporateActionsPage() {
         }
         meta={pageState === 'ready' || pageState === 'stale' ? `${reach.covered} / ${reach.asked} names · ${reach.rows} rows` : undefined}
         actions={
-          <PageHeadLink to="/trade/expiration#assignment" title="Assignment risk → Trade › Expiry">
+          <PageHeadLink to="/trade/expiration#assignment" title="Assignment risk → Trading › Expiry">
             Assignment risk →
           </PageHeadLink>
         }

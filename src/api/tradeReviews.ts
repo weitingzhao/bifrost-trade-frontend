@@ -1,6 +1,6 @@
 /**
  * `/strategies/reviews` — the trader's review of each instance (design Rev
- * .110, core 0.26.0 `trade_review`). Queue, Single trade and the Review menu
+ * .110, core 0.26.0 `trade_review`). Queue, Trade review and the Review menu
  * badge read the same rows.
  */
 import { z } from 'zod'

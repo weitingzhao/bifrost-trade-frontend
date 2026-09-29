@@ -222,7 +222,7 @@ export default function OptionScreenerPage() {
             </PageHeadAction>
             <PageHeadAction
               disabled={symbols.length === 0}
-              title="Turns these names and this structure into an Opportunity in Trade › Rules — the daemon then screens daily"
+              title="Turns these names and this structure into an Opportunity in Trading › Rules — the daemon then screens daily"
               onClick={() => setSaveOpen(true)}
             >
               Save as rule →

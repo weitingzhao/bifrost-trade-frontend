@@ -262,7 +262,7 @@ describe('instance tokens on the desk (Rev .101)', () => {
     ]
     const [linked] = settleItems(fills, TODAY)
     const tokens = linked.actions.filter((a) => a.instance)
-    expect(tokens.map((a) => a.label)).toEqual(['Instance #12', 'Instance #13', 'Instance #11'])
+    expect(tokens.map((a) => a.label)).toEqual(['Trade #12', 'Trade #13', 'Trade #11'])
     expect(tokens[0].instance).toEqual({ id: 12, list: [12, 13, 11, 14], from: 'Desk · settle' })
   })
 
@@ -275,7 +275,7 @@ describe('instance tokens on the desk (Rev .101)', () => {
     ])
     expect(holders.get(ck)).toBe(22)
     const [item] = decideItems([], [leg({ symbol: 'ZZTM', spot: 101, contract_key: ck })], TIGHT, TODAY, holders)
-    expect(item.actions[0]).toMatchObject({ label: 'Instance #22', instance: { id: 22, from: 'Desk · decide' } })
+    expect(item.actions[0]).toMatchObject({ label: 'Trade #22', instance: { id: 22, from: 'Desk · decide' } })
   })
 
   it('a leg no fill claims carries no token', () => {

@@ -69,6 +69,6 @@ export function layerForPath(pathname: string): LayerId {
   if (p.startsWith('/research/')) return 'analysis'
   if (p.startsWith('/market/')) return 'analysis'
   // Strategy has no layer of its own because the design has no Strategy group
-  // — it dissolves into Trade › Rules, and inherits `execution` when it moves.
+  // — it dissolves into Trading › Rules, and inherits `execution` when it moves.
   return 'base'
 }

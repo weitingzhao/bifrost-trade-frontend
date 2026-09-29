@@ -1,5 +1,5 @@
 /**
- * Single trade · Compared with (design Rev .104). One instance read against
+ * Trade review · Compared with (design Rev .104). One instance read against
  * the ones like it: the peer set, the normalised paths overlaid (this one in
  * ink, peers green / red by outcome, hover lifts one, click opens it), the
  * table — this one, the peer median, each peer — and one sentence. The model
@@ -32,7 +32,7 @@ import {
 
 const W = 1000
 const H = 180
-const nameOf = (x: ReviewInstance) => (x.instanceId != null ? `#${x.instanceId}` : x.label)
+const nameOf = (x: ReviewInstance) => (x.tradeId != null ? `#${x.tradeId}` : x.label)
 
 export function PeersPanel({
   self,
@@ -115,7 +115,7 @@ export function PeersPanel({
         />
         <SegmentControl
           size="sm"
-          ariaLabel="Which closed instances"
+          ariaLabel="Which closed trades"
           value={when}
           onChange={(v) => setWhen(v as PeerWhen)}
           options={[
@@ -130,13 +130,13 @@ export function PeersPanel({
       </header>
       {peers.length === 0 ? (
         <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
-          No {when === 'before' ? 'earlier ' : ''}closed instance shares this {noun}. Widen to {when === 'before' ? 'All closed or ' : ''}
+          No {when === 'before' ? 'earlier ' : ''}closed trade shares this {noun}. Widen to {when === 'before' ? 'All closed or ' : ''}
           another peer set.
         </p>
       ) : (
         <>
           <div className="relative px-2.5 pt-2 pb-1">
-            <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block h-[172px] w-full" role="img" aria-label="Normalised P&L paths of this instance and its peers">
+            <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block h-[172px] w-full" role="img" aria-label="Normalised P&L paths of this trade and its peers">
               <line x1={8} y1={Y(0)} x2={W - 8} y2={Y(0)} stroke="var(--sk-line2)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
               <line x1={8} y1={Y(1)} x2={W - 8} y2={Y(1)} stroke="var(--sk-line)" strokeWidth={1} strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
               {lines
@@ -180,7 +180,7 @@ export function PeersPanel({
             <table data-sr-table="" className="w-full">
               <thead>
                 <tr>
-                  <th>Instance</th>
+                  <th>Trade</th>
                   <th>Opened</th>
                   <th data-sr-col="num">Held</th>
                   <th data-sr-col="num">Net</th>
@@ -268,7 +268,7 @@ function PeerRow({
       )}
     >
       <td className="whitespace-nowrap">
-        <span className={cn('font-mono text-[var(--sk-instance)]', self ? 'font-bold' : 'font-semibold')}>{nameOf(x)}</span>{' '}
+        <span className={cn('font-mono text-[var(--sk-trade)]', self ? 'font-bold' : 'font-semibold')}>{nameOf(x)}</span>{' '}
         {self ? <span className="text-dense-micro text-[var(--sk-mute2)]">{x.open ? 'this · open' : 'this'}</span> : null}
       </td>
       <td className="whitespace-nowrap font-mono text-[var(--sk-mute2)]">{x.openedOn ? fmtIsoDateToken(x.openedOn) : '—'}</td>

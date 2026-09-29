@@ -460,7 +460,7 @@ export function InstanceOptionSubTable({
                       <DenseTag
                         variant="neutral"
                         size="cell"
-                        title="Fills that do not match the instance row for this contract (Uncategorized)"
+                        title="Fills that do not match the trade row for this contract (Uncategorized)"
                       >
                         Uncategorized
                       </DenseTag>
@@ -473,7 +473,7 @@ export function InstanceOptionSubTable({
                         Mixed
                       </DenseTag>
                     ) : pos.attribution_type === 'single' ? (
-                      <DenseTag variant="success" size="cell" title="Single instance attribution">
+                      <DenseTag variant="success" size="cell" title="Single trade attribution">
                         Single
                       </DenseTag>
                     ) : (

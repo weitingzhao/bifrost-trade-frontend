@@ -100,7 +100,7 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('Trade › Plans', () => {
+describe('Trading › Plans', () => {
   it('offers no way to place an order', async () => {
     fetchStrategyPlans.mockResolvedValue({ items: [plan()], count: 1 })
     renderPage()

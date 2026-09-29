@@ -83,8 +83,8 @@ export function LedgerExplainFace({
         value={`${health.unlink.n} of ${health.unlink.of}`}
         what={
           unlinkBasis === 'options'
-            ? 'Option fills with no strategy instance and no instance_allocations. Amber, never red — not a fault.'
-            : 'Fills with no strategy instance and no instance_allocations, over every row. Stock fills dominate this basis.'
+            ? 'Option fills with no trade and no instance_allocations. Amber, never red — not a fault.'
+            : 'Fills with no trade and no instance_allocations, over every row. Stock fills dominate this basis.'
         }
         formula="unlinked = executionStrategyInstanceIds(row).length === 0"
         basis="Not a fault — amber, never red. Allocations count as linked even when strategy_instance_id is empty."

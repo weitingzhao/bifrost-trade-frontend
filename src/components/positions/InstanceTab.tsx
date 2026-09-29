@@ -42,7 +42,7 @@ import { compareInstanceRisk, summarizeCushion, summarizeExpiry } from '@/utils/
 import type { SpotResolver } from '@/utils/spotPrice'
 import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
 import type { RiskProfile } from '@/utils/riskProfile'
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { flashFound, scrollWhenPresent } from '@/lib/scrollWhenPresent'
 
 const EXEC_QTY_TITLE =
@@ -203,7 +203,7 @@ export function InstanceTab({
           {totalInstanceCount > 0 ? 'No match' : 'Nothing in the book'}
         </span>
         <span className="text-dense-label font-semibold text-foreground">
-          {totalInstanceCount > 0 ? 'Nothing matches these filters' : 'No strategy instance positions found'}
+          {totalInstanceCount > 0 ? 'Nothing matches these filters' : 'No trade positions found'}
         </span>
         <span className="max-w-115 text-dense-meta text-muted-foreground text-pretty">
           {totalInstanceCount > 0
@@ -276,7 +276,7 @@ export function InstanceTab({
         </colgroup>
         <thead>
           <tr>
-            <ColHead word="Opportunity" code="Opp" align="left" title="Opportunity · strategy instance · when it was opened" />
+            <ColHead word="Opportunity" code="Opp" align="left" title="Opportunity · trade · when it was opened" />
             <ColHead word="Contract type" code="" align="left" />
             <ColHead word="Symbols" code="" align="left" />
             <ColHead word="Days to expiry" code="DTE" title={DTE_TITLE} />
@@ -341,7 +341,7 @@ export function InstanceTab({
 
             const rowBg = isExpanded ? '[&>td]:bg-[var(--sk-surface)]' : 'hover:[&>td]:bg-[var(--sk-raised2)]'
             const name = oppName ?? instLabel
-            const sub = oppName ? instLabel : id == null ? 'not on any strategy' : 'unnamed instance'
+            const sub = oppName ? instLabel : id == null ? 'not on any strategy' : 'unnamed trade'
             const nameInk = oppName ? 'text-foreground' : id == null ? 'text-warning' : 'text-secondary-foreground'
 
             const mainRow = (
@@ -368,7 +368,7 @@ export function InstanceTab({
                       <span className={cn('text-xs font-semibold leading-normal', nameInk)}>{name}</span>
                       {id != null ? (
                         <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal text-muted-foreground')}>
-                          <InstanceRef id={id} list={rankedIds} from="Positions · strategies" />
+                          <TradeRef id={id} list={rankedIds} from="Positions · strategies" />
                           {group.strategy_instance_label?.trim() ? ` · ${group.strategy_instance_label.trim()}` : ''}
                         </span>
                       ) : (

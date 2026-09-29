@@ -70,7 +70,7 @@ export function DensitySection() {
           <DenseTableHeadRow>
             <DenseTableHead col="entity">Symbol</DenseTableHead>
             <DenseTableHead col="entity">Contract</DenseTableHead>
-            <DenseTableHead col="wrap">Strategy · instance</DenseTableHead>
+            <DenseTableHead col="wrap">Strategy · trade</DenseTableHead>
             <DenseTableHead col="tag">Source</DenseTableHead>
             <DenseTableHead col="num">Day $ / %</DenseTableHead>
             <DenseTableHead col="num">Unrealized</DenseTableHead>
@@ -265,7 +265,7 @@ const CHECKS: [string, 'guard' | 'review'][] = [
   ['Every numeric column is mono, tabular, right-aligned', 'review'],
   ['P&L colour comes from the accessor (pnlColorClass · PnlCell · InlinePnl), never a hex or a Tailwind hue', 'guard'],
   ['Unrealized is orange as a whole column, either sign', 'review'],
-  ['A symbol, contract or instance uses its entity ink and is text or a link, not a tag', 'review'],
+  ['A symbol, contract or trade uses its entity ink and is text or a link, not a tag', 'review'],
   ['Lamps and tags never take a direction colour; direction colours never mark a lamp or tag', 'guard'],
   ['Grey means unknown / unprobed; nothing unrecognised renders red', 'review'],
   ['Loading · failed · empty · filtered — and stale, signed out, not wired — each has its own copy and action', 'review'],

@@ -120,7 +120,7 @@ export function RulesReadings({
           rest={
             orphansOnly
               ? '· showing only these — click to show all'
-              : `· ${outside.length} of ${openAll.length} open instances run under no gate`
+              : `· ${outside.length} of ${openAll.length} open trades run under no gate`
           }
           leadClass="text-warning"
           armed={orphansOnly}

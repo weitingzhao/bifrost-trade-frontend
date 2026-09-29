@@ -1,7 +1,7 @@
 /**
  * Trade · Orders & Fills — the work side of the ledger.
  *
- * The Trade Ledger is the record: every fill the book has ever taken,
+ * The Ledger is the record: every fill the book has ever taken,
  * reconciled. This is the desk's window on the same fills — the last few
  * sessions, what claims each one, and the ones nothing claims. One source, two
  * questions, and the Ledger owns the reconciliation (§14.2).
@@ -16,7 +16,7 @@ import { usePageViewState } from '@/lib/pageView'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { ViewState } from '@bifrost/ui'
 import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
@@ -197,7 +197,7 @@ export default function FillsPage() {
               <PageHeadLink to="/portfolio/accounts" title="The TWS and Flex imports live on Accounts' freshness band">
                 ↻ Import from IB →
               </PageHeadLink>
-              <PageHeadLink to="/portfolio/ledger" title="A manual execution is a ledger write — it lives on Trade Ledger">
+              <PageHeadLink to="/portfolio/ledger" title="A manual execution is a ledger write — it lives on Ledger">
                 ＋ Manual execution →
               </PageHeadLink>
             </>
@@ -215,7 +215,7 @@ export default function FillsPage() {
           <span data-sr-tb="meta">
             {summary.newestTradeDate ? `newest fill ${fmtIsoDateToken(summary.newestTradeDate)} · ` : ''}
             <Link to="/portfolio/ledger" className={positionsUi.link}>
-              the record → Trade Ledger
+              the record → Ledger
             </Link>
           </span>
         </div>
@@ -341,7 +341,7 @@ export default function FillsPage() {
                   )}
                 >
                   {summary.orphan > 0
-                    ? `${summary.orphan} ${summary.orphan === 1 ? 'fill' : 'fills'} without a plan or instance`
+                    ? `${summary.orphan} ${summary.orphan === 1 ? 'fill' : 'fills'} without a plan or trade`
                     : 'everything has a home'}
                 </span>
               </header>
@@ -421,10 +421,10 @@ export default function FillsPage() {
                               <span className="inline-flex flex-wrap items-center gap-1.5 text-dense-meta">
                                 <StatusLamp lamp="green" variant="dot" title="Linked" />
                                 {r.instanceId != null ? (
-                                  <InstanceRef id={r.instanceId} list={linkedIds} from="Orders & Fills · on screen" />
+                                  <TradeRef id={r.instanceId} list={linkedIds} from="Orders & Fills · on screen" />
                                 ) : null}
                                 <span className="text-muted-foreground">
-                                  {r.opportunityName ?? r.instanceLabel ?? 'on an instance'}
+                                  {r.opportunityName ?? r.instanceLabel ?? 'on a trade'}
                                 </span>
                               </span>
                             ) : (
@@ -446,7 +446,7 @@ export default function FillsPage() {
                   statement, TWS the terminal, Journal a row the desk wrote.
                 </span>
                 <Link to="/portfolio/ledger" className={cn(positionsUi.link, 'ml-auto')}>
-                  reconcile → Trade Ledger
+                  reconcile → Ledger
                 </Link>
               </div>
             </section>
@@ -491,16 +491,16 @@ export default function FillsPage() {
                     <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
                       Already claimed by{' '}
                       {selectedRow.instanceId != null ? (
-                        <InstanceRef id={selectedRow.instanceId} list={linkedIds} from="Orders & Fills · on screen" />
+                        <TradeRef id={selectedRow.instanceId} list={linkedIds} from="Orders & Fills · on screen" />
                       ) : null}{' '}
                       — relinking and unlinking are the Ledger&rsquo;s writes.
                     </p>
                   ) : candidates.length === 0 ? (
                     <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                      No instance argues for it: nothing holds this contract, and no opportunity in{' '}
+                      No trade argues for it: nothing holds this contract, and no opportunity in{' '}
                       {selectedRow.accountId || 'this account'} covers {selectedRow.symbol}. Create the rule first —{' '}
                       <Link to="/trade/rules" className={positionsUi.link}>
-                        Trade › Rules
+                        Trading › Rules
                       </Link>{' '}
                       — or leave it a hand fill.
                     </p>
@@ -645,7 +645,7 @@ export default function FillsPage() {
               <span className="font-semibold text-secondary-foreground">Boundary.</span> This page is the desk&rsquo;s
               window on the last few sessions. The record, its reconciliation and every write that fixes a fill are{' '}
               <Link to="/portfolio/ledger" className={positionsUi.link}>
-                Trade Ledger&rsquo;s
+                Ledger&rsquo;s
               </Link>
               ; the order itself is TWS&rsquo;.
             </p>

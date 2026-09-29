@@ -4,7 +4,7 @@
  * Pure — the page fetches through `useInstanceRecord`, this lays it out.
  */
 import type { Execution } from '@/types/positions'
-import { d3, tradeDay, type ExecGroup, type RecordLeg } from '@/utils/instanceRecord/instanceRecordModel'
+import { d3, tradeDay, type ExecGroup, type RecordLeg } from '@/utils/tradeRecord/tradeRecordModel'
 import type { TrackJoint } from '@/components/symbolChart/symbolPriceModel'
 
 const dayOn = (e: Execution) => tradeDay(e) ?? ''

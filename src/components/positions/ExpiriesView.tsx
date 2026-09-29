@@ -123,7 +123,7 @@ export function ExpiriesView({
                 <DenseTableHead title="Short legs already past their strike — assignable.">ITM</DenseTableHead>
               ) : null}
               <DenseTableHead>Symbols</DenseTableHead>
-              <DenseTableHead align="right" title="Strategy instances with legs on this date.">
+              <DenseTableHead align="right" title="Trades with legs on this date.">
                 Inst
               </DenseTableHead>
               {showPriced ? (

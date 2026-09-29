@@ -1,7 +1,7 @@
 /**
  * The loader restarts only when the *ids* change (PROD 2026-09-28).
  *
- * Trade › Rules rebuilt its instance array every render. Keyed on the
+ * Trading › Rules rebuilt its instance array every render. Keyed on the
  * array's identity, the loader cancelled and restarted on every render —
  * and every landed chunk re-rendered the page — so it fetched the first
  * ten instances 65 times in 13 s and never reached the rest.

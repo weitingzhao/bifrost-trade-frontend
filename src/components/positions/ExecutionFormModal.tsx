@@ -215,7 +215,7 @@ function ExecutionFormModalBody({
       const si = Number(row.strategyInstanceId)
       const aq = Number(row.allocatedQuantity)
       if (!Number.isFinite(si) || !Number.isFinite(aq)) {
-        throw new Error('Each split row needs a valid instance and allocated quantity.')
+        throw new Error('Each split row needs a valid trade and allocated quantity.')
       }
       allocs.push({ strategy_instance_id: si, allocated_quantity: aq })
     }
@@ -381,7 +381,7 @@ function ExecutionFormModalBody({
           </Select>
         </ExecFormRow>
 
-        <ExecFormRow label="Instance (optional)">
+        <ExecFormRow label="Trade (optional)">
           <Select
             value={strategyInstanceId || '__none__'}
             onValueChange={(v) => {
@@ -410,7 +410,7 @@ function ExecutionFormModalBody({
         </ExecFormRow>
 
         <div className="flex flex-col gap-2 w-full min-w-0">
-          <ExecFormRow label={<span id={splitSectionId}>Multi-instance split</span>}>
+          <ExecFormRow label={<span id={splitSectionId}>Multi-trade split</span>}>
             <div className="flex flex-wrap items-center gap-2">
               <label className="inline-flex items-center gap-1.5 text-sm cursor-pointer">
                 <Checkbox
@@ -424,7 +424,7 @@ function ExecutionFormModalBody({
                   }}
                   aria-describedby={splitSectionId}
                 />
-                Split quantity across instances
+                Split quantity across trades
               </label>
               {useInstanceSplits && (
                 <Button
@@ -447,7 +447,7 @@ function ExecutionFormModalBody({
             <>
               <p className="text-dense-meta text-muted-foreground pl-[96px]">
                 Signed quantities must sum to the execution quantity. Saving with splits enabled and no rows clears
-                allocation rows. Single Strategy / Instance fields are ignored when splits are saved.
+                allocation rows. Single Strategy / Trade fields are ignored when splits are saved.
               </p>
               <div className="flex flex-col gap-2 max-h-[min(42vh,320px)] overflow-y-auto pl-[96px] min-w-0">
                 {splitRows.map((row) => (
@@ -465,10 +465,10 @@ function ExecutionFormModalBody({
                       }
                     >
                       <SelectTrigger className="h-8 text-sm flex-1 min-w-[12rem]">
-                        <SelectValue placeholder="— Instance —" />
+                        <SelectValue placeholder="— Trade —" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">— Instance —</SelectItem>
+                        <SelectItem value="__none__">— Trade —</SelectItem>
                         {allInstancesForAccount.map((si) => (
                           <SelectItem key={si.strategy_instance_id} value={String(si.strategy_instance_id)}>
                             {instanceLabel(si)}

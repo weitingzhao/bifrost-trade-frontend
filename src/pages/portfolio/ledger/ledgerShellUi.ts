@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-/** Trade Ledger page inner surface (elevated card on PageShell canvas). */
+/** Ledger page inner surface (elevated card on PageShell canvas). */
 export const ledgerPageCardClass = cn(
   'flex flex-col gap-3 border p-4 mat-card',
 )

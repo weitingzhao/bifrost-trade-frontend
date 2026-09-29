@@ -239,7 +239,7 @@ export function pnlLeads(input: {
           : `${g.n} ${g.n === 1 ? 'row' : 'rows'} the performance book never took in, none of them a priced option fill — combo wrappers, which carry no cash of their own`,
       reading: readingFor(amount, input.windowPnl),
       to: '/portfolio/ledger',
-      toLabel: 'reconcile → Trade Ledger',
+      toLabel: 'reconcile → Ledger',
     })
   }
 

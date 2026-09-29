@@ -18,7 +18,7 @@ import { loopReading } from './bookLoopModel'
 
 const MUTE = 'var(--sk-mute, var(--muted-foreground))'
 const BOOK = 'var(--equip-book)'
-const OBJ = 'var(--sk-instance)'
+const OBJ = 'var(--sk-objective)'
 const MEM = 'var(--color-unrealized)'
 
 function Node({

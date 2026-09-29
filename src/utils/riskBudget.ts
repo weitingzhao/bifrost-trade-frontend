@@ -33,7 +33,7 @@ export const UNWRITTEN_POLICY: RiskPolicy = {
 
 export const RISK_BUDGET_UNRECORDED = {
   policy:
-    'The three lines are a policy the design edits in Trade › Rules, and this side has no store for it. Every line below is unwritten — not zero. A cap of zero would block every trade; a cap that was never written blocks nothing, and saying so is the only honest reading.',
+    'The three lines are a policy the design edits in Trading › Rules, and this side has no store for it. Every line below is unwritten — not zero. A cap of zero would block every trade; a cap that was never written blocks nothing, and saying so is the only honest reading.',
   spend:
     'Budget is spent on decisions, not fills: a sized plan reserves its max loss the moment it leaves Sizing, and releases it if the plan is cancelled unfilled. Closes and derisks never consume budget. Nothing records a sizing decision on this side, so nothing can be shown as spent — which is not the same as nothing having been spent.',
   log: 'What was suggested, what was taken, and how it turned out is Review’s subject. Nothing writes a sizing decision, so the log has no rows to carry rather than no decisions to show.',

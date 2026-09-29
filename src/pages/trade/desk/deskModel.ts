@@ -218,7 +218,7 @@ export function decideItems(
         ...(leg.contract_key && holders.has(leg.contract_key)
           ? [
               {
-                label: `Instance #${holders.get(leg.contract_key)}`,
+                label: `Trade #${holders.get(leg.contract_key)}`,
                 instance: { id: holders.get(leg.contract_key)!, list: legIds, from: 'Desk · decide' },
               },
             ]
@@ -337,15 +337,15 @@ export function settleItems(fills: readonly Execution[], today: string): DeskIte
       key: 'fills:linked',
       symbol: namesOf(linked.map((e) => rootOf(e))),
       name: oneName(linked.map((e) => rootOf(e))),
-      title: `${linked.length} ${linked.length === 1 ? 'fill' : 'fills'} claimed by an instance`,
+      title: `${linked.length} ${linked.length === 1 ? 'fill' : 'fills'} claimed by a trade`,
       when: newestOf(recent) ?? '—',
-      sub: 'Each one is attached to the instance its contract and window belong to. Nothing to do — they are in the book.',
+      sub: 'Each one is attached to the trade its contract and window belong to. Nothing to do — they are in the book.',
       tone: 'success',
       tags: [{ label: 'linked', tone: 'success' }],
       actions: [
         // Newest first: the instances this window's fills landed on.
         ...claimed.slice(0, SETTLE_INSTANCE_TOKENS).map((id) => ({
-          label: `Instance #${id}`,
+          label: `Trade #${id}`,
           instance: { id, list: claimed, from: 'Desk · settle' },
         })),
         { label: 'Fills →', to: '/trade/fills' },
@@ -360,7 +360,7 @@ export function settleItems(fills: readonly Execution[], today: string): DeskIte
       name: oneName(orphan.map((e) => rootOf(e))),
       title: `${orphan.length} ${orphan.length === 1 ? 'fill' : 'fills'} nothing claims`,
       when: newestOf(orphan) ?? '—',
-      sub: 'No instance carries them, so they price the book but no strategy is credited with them. Link them on the Ledger or leave them as hand trades.',
+      sub: 'No trade carries them, so they price the book but no strategy is credited with them. Link them on the Ledger or leave them as hand trades.',
       tone: 'warning',
       tags: [{ label: 'orphan', tone: 'warning' }],
       actions: [

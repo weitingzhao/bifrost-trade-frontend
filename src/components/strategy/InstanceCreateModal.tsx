@@ -123,7 +123,7 @@ export function InstanceCreateModal({ open, onOpenChange, status }: Props) {
       await queryClient.invalidateQueries({ queryKey: ['strategy', 'instances'] })
       handleDialogOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create instance.')
+      setError(err instanceof Error ? err.message : 'Failed to create trade.')
     } finally {
       setSaving(false)
     }
@@ -133,7 +133,7 @@ export function InstanceCreateModal({ open, onOpenChange, status }: Props) {
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className={instanceCreateDialogClass}>
         <DialogHeader className={instanceCreateHeaderClass}>
-          <DialogTitle className={instanceCreateTitleClass}>Create strategy instance</DialogTitle>
+          <DialogTitle className={instanceCreateTitleClass}>Create trade</DialogTitle>
         </DialogHeader>
 
         {error ? <p className={instanceCreateErrorClass}>{error}</p> : null}

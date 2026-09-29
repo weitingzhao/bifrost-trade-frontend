@@ -100,7 +100,7 @@ export function useInstanceMetrics(
 ): Map<number, InstanceListMetricsEntry> {
   // The key is the *content* of the id list. The effect below depends on it
   // alone — never on the array — because a caller that rebuilds `instances`
-  // every render (Trade › Rules did: its selection is parsed fresh from the
+  // every render (Trading › Rules did: its selection is parsed fresh from the
   // URL each render) hands a new array with the same ids, and an effect keyed
   // on the array's identity cancels and restarts on every render. Each chunk
   // that landed re-rendered the page, which restarted the loop at chunk 0:

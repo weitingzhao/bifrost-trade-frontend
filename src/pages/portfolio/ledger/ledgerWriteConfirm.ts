@@ -25,7 +25,7 @@ export const LEDGER_CONFIRM_JOURNAL_EXPIRED = {
 }
 
 export const LEDGER_CONFIRM_SYNC = {
-  title: 'Copy instance from the opposite leg?',
+  title: 'Copy trade from the opposite leg?',
   body: 'Attribution is copied from the opposite-side fill with the same quantity in this group. It is a ledger write, not an order.',
 }
 

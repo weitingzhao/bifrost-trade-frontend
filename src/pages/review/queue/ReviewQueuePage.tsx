@@ -106,18 +106,18 @@ function QueueRow({
   return (
     <tr
       {...rowSelectProps(false, onOpen, 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]')}
-      title="Open this trade on Single trade"
+      title="Open this trade on Trade review"
     >
       <td className={cn(positionsUi.td, 'pl-2 text-left whitespace-normal')}>
         <span className="inline-flex items-center gap-1.5">
           {/* Rev .110: the lamp reads the review record — green reviewed, yellow awaiting. */}
           <StatusLamp
-            lamp={t.instanceId == null ? 'gray' : done ? 'green' : 'yellow'}
+            lamp={t.tradeId == null ? 'gray' : done ? 'green' : 'yellow'}
             variant="dot"
-            title={t.instanceId == null ? 'Booked to no instance — a review is kept per instance' : done ? 'Reviewed' : 'Awaiting review'}
+            title={t.tradeId == null ? 'Booked to no trade — a review is kept per trade' : done ? 'Reviewed' : 'Awaiting review'}
           />
           <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>
-            {t.instanceId != null ? `#${t.instanceId} · ` : ''}
+            {t.tradeId != null ? `#${t.tradeId} · ` : ''}
             {t.label}
           </span>
         </span>
@@ -173,7 +173,7 @@ export default function ReviewQueuePage() {
   const navigate = useNavigate()
   const { trades, expiredUnbooked, accountIds } = useReviewTrades(accountFilter)
   const reviews = useTradeReviews()
-  // Rev .110: the queue reads instances — the same #NNN Single trade and the
+  // Rev .110: the queue reads instances — the same #NNN Trade review and the
   // Instance page read. Contract-level trades stay for the book's daily bars.
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
   // The Auto tags column reads each contract's own daily bars — the same
@@ -207,30 +207,30 @@ export default function ReviewQueuePage() {
     const cut = closedSince(SINCE_MONTHS[since] ?? null)
     return cut == null ? instances : instances.filter((t) => (t.closedOn ?? '') >= cut)
   }, [instances, since])
-  const isReviewed = (t: ReviewInstance) => t.instanceId != null && Boolean(reviews.byInstance.get(t.instanceId)?.reviewed)
+  const isReviewed = (t: ReviewInstance) => t.tradeId != null && Boolean(reviews.byInstance.get(t.tradeId)?.reviewed)
   const reviewedN = rows.filter(isReviewed).length
-  const awaitingN = rows.filter((t) => t.instanceId != null && !isReviewed(t)).length
+  const awaitingN = rows.filter((t) => t.tradeId != null && !isReviewed(t)).length
 
   // A cell is a claim about the plan and the path. The plan never reaches this
   // side, so no trade can be placed in one — the filter works, and answers
   // with nothing every time.
   const queueRows = useMemo(() => {
     if (cell != null) return rows.filter(() => false)
-    if (reviewFilter === 'todo') return rows.filter((t) => t.instanceId != null && !isReviewed(t))
+    if (reviewFilter === 'todo') return rows.filter((t) => t.tradeId != null && !isReviewed(t))
     if (reviewFilter === 'done') return rows.filter(isReviewed)
     return rows
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, cell, reviewFilter, reviews.byInstance])
   const cellName = QUADRANTS.find((q) => q.key === cell)?.name ?? null
 
-  /** A row opens Single trade on it, walking the queue in the order shown (Rev .110). */
+  /** A row opens Trade review on it, walking the queue in the order shown (Rev .110). */
   const openRow = (t: ReviewInstance) => {
-    if (t.instanceId == null) {
-      navigate(`/review/fit?trade=${encodeURIComponent(t.contractKey)}`)
+    if (t.tradeId == null) {
+      navigate(`/review/trade?trade=${encodeURIComponent(t.contractKey)}`)
       return
     }
-    const list = shown.map((x) => x.instanceId).filter((id): id is number => id != null)
-    navigate(tradeReviewPath(t.instanceId, { in: 'list', list: list.join(',') }))
+    const list = shown.map((x) => x.tradeId).filter((id): id is number => id != null)
+    navigate(tradeReviewPath(t.tradeId, { in: 'list', list: list.join(',') }))
   }
   const realised = useMemo(() => rows.reduce((a, t) => a + t.realised, 0), [rows])
   const shortOfFloor = Math.max(0, SAMPLE_FLOOR - rows.length)
@@ -469,14 +469,14 @@ export default function ReviewQueuePage() {
                         <QueueRow
                           key={t.contractKey}
                           t={t}
-                          review={t.instanceId != null ? reviews.byInstance.get(t.instanceId) : undefined}
+                          review={t.tradeId != null ? reviews.byInstance.get(t.tradeId) : undefined}
                           onOpen={() => openRow(t)}
                           tags={
                             marks.loading
                               ? null
                               : t.legs.length === 1
                                 ? (tagsByKey.get(t.legs[0].contractKey) ?? null)
-                                : { text: `${t.legs.length} legs · on its page`, title: 'Tags are derived per contract path; a multi-leg trade reads them on Single trade.' }
+                                : { text: `${t.legs.length} legs · on its page`, title: 'Tags are derived per contract path; a multi-leg trade reads them on Trade review.' }
                           }
                         />
                       ))}
@@ -513,7 +513,7 @@ export default function ReviewQueuePage() {
                       key: 'reviewed',
                       lamp: awaitingN > 0 ? ('yellow' as const) : ('green' as const),
                       title: `${reviewedN} of ${rows.length} reviewed`,
-                      sub: 'Only a confirmed review counts — an auto-tag is the path’s read, not yours. Confirm one on Single trade.',
+                      sub: 'Only a confirmed review counts — an auto-tag is the path’s read, not yours. Confirm one on Trade review.',
                     },
                     {
                       key: 'plan',
@@ -531,7 +531,7 @@ export default function ReviewQueuePage() {
                       key: 'execution',
                       lamp: 'gray' as const,
                       title: 'Execution quality not in this view',
-                      sub: 'Fill against the mid at submit is per fill, not per trade, and the mid is not recorded — Single trade shows the fills and says so.',
+                      sub: 'Fill against the mid at submit is per fill, not per trade, and the mid is not recorded — Trade review shows the fills and says so.',
                     },
                   ].map((cv) => (
                     <div

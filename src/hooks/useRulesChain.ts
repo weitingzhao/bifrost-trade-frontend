@@ -2,7 +2,7 @@
  * The four entities of the rulebook, plus the gates and the fills that tell an
  * instance whether it is still open.
  *
- * Shared since 2026-09-18: Trade › Rules draws the chain and Trade › Desk
+ * Shared since 2026-09-18: Trading › Rules draws the chain and Trading desk
  * reads what is in force from the same five rows, so it sits in `hooks/` under
  * one query key and the two pages cannot disagree about which allocation the
  * daemon is on. `ChainData` travels with it rather than with the column

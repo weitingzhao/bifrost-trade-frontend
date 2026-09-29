@@ -12,13 +12,13 @@ import { useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageShell } from '@/components/layout'
 import { PageHead } from '@/components/layout/PageHead'
-import { InstanceRecord } from '@/components/instanceRecord/InstanceRecord'
+import { TradeRecord } from '@/components/tradeRecord/TradeRecord'
 import { useAllocations, useGateSafety, useStrategyInstance } from '@/hooks/useStrategies'
 import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { useInSurface } from '@/lib/surfaceScope'
-import { instancePath, setSurfaceInstance, type Surface } from '@/layout/equipSurface'
-import { ranUnderOf } from '@/utils/instanceRecord/ranUnder'
-import { InstanceWide } from './InstanceWide'
+import { tradePath, setSurfaceTrade, type Surface } from '@/layout/equipSurface'
+import { ranUnderOf } from '@/utils/tradeRecord/ranUnder'
+import { TradeWide } from './TradeWide'
 
 const COMPACT_MAX_PX = 640
 
@@ -26,12 +26,12 @@ const editable = (t: EventTarget | null) =>
   t instanceof HTMLElement && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)
 
 /** The route's page: the address carries the id and the list. */
-export default function InstancePage() {
-  return <InstanceView />
+export default function TradePage() {
+  return <TradeView />
 }
 
 /** The page and the surface body — the surface hands over what the address would. */
-export function InstanceView({ surface }: { surface?: Surface }) {
+export function TradeView({ surface }: { surface?: Surface }) {
   const params = useParams()
   const [search] = useSearchParams()
   const navigate = useNavigate()
@@ -39,21 +39,21 @@ export function InstanceView({ surface }: { surface?: Surface }) {
   const rootRef = useRef<HTMLDivElement>(null)
   const width = useContainerWidth(rootRef, 1200)
 
-  const id = surface?.instance ?? (Number(params.id) || null)
+  const id = surface?.trade ?? (Number(params.id) || null)
   const list =
-    surface?.instanceList ??
+    surface?.tradeList ??
     (search.get('list') ?? '')
       .split(',')
       .map(Number)
       .filter((x) => Number.isFinite(x) && x > 0)
-  const from = surface?.instanceFrom ?? search.get('from') ?? ''
+  const from = surface?.tradeFrom ?? search.get('from') ?? ''
   const j = id != null ? list.indexOf(id) : -1
   const hasList = list.length > 1 && j >= 0
   const step = (k: -1 | 1) => {
     const next = hasList ? list[j + k] : undefined
     if (next == null) return
-    if (surface) setSurfaceInstance(surface.key, next)
-    else navigate(instancePath(next, list, from), { replace: true })
+    if (surface) setSurfaceTrade(surface.key, next)
+    else navigate(tradePath(next, list, from), { replace: true })
   }
   const stepRef = useRef(step)
   useEffect(() => {
@@ -95,7 +95,7 @@ export function InstanceView({ surface }: { surface?: Surface }) {
         }}
       >
         {inst ? (
-          <InstanceRecord
+          <TradeRecord
             key={inst.strategy_instance_id}
             instance={inst}
             mode="panel"
@@ -117,7 +117,7 @@ export function InstanceView({ surface }: { surface?: Surface }) {
             }
           />
         ) : (
-          <InstanceMissing id={id} loading={!missing} />
+          <TradeMissing id={id} loading={!missing} />
         )}
       </div>
     )
@@ -127,7 +127,7 @@ export function InstanceView({ surface }: { surface?: Surface }) {
     <div ref={rootRef} className="min-w-0">
       <PageShell padding="compact" className="space-y-3">
         {inst ? (
-          <InstanceWide
+          <TradeWide
             instance={inst}
             list={hasList ? list : undefined}
             from={from}
@@ -138,8 +138,8 @@ export function InstanceView({ surface }: { surface?: Surface }) {
           />
         ) : (
           <>
-            <PageHead title={id != null ? `#${id}` : 'Instance'} />
-            <InstanceMissing id={id} loading={!missing} />
+            <PageHead title={id != null ? `Trade #${id}` : 'Trade'} />
+            <TradeMissing id={id} loading={!missing} />
           </>
         )}
       </PageShell>
@@ -147,15 +147,15 @@ export function InstanceView({ surface }: { surface?: Surface }) {
   )
 }
 
-function InstanceMissing({ id, loading }: { id: number | null; loading: boolean }) {
+function TradeMissing({ id, loading }: { id: number | null; loading: boolean }) {
   if (loading) return <p className="m-0 p-4 text-dense-meta text-muted-foreground">Reading #{id}…</p>
   return (
     <div className="flex flex-col gap-1 p-4">
-      <span className="text-dense-body font-semibold">{id != null ? `No instance #${id} in the book` : 'No instance named'}</span>
+      <span className="text-dense-body font-semibold">{id != null ? `No trade #${id} in the book` : 'No trade named'}</span>
       <span className="text-dense-meta text-muted-foreground text-pretty">
         {id != null
-          ? 'The rulebook has no instance with this number — it may have been deleted with nothing linked to it. Trade › Rules lists every instance that exists.'
-          : 'This page opens from an instance token (#NNN) on any page.'}
+          ? 'The rulebook has no trade with this number — it may have been deleted with nothing linked to it. Trading › Rules lists every trade that exists.'
+          : 'This page opens from a trade token (#NNN) on any page.'}
       </span>
     </div>
   )

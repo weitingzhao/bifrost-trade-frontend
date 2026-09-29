@@ -248,7 +248,7 @@ export function instanceTracksFor(
       joints,
       openDate: tl[0].openDate,
       closeDate: open ? null : tl.map((l) => l.flatDate!).sort().pop()!,
-      name: id != null ? `#${id} ${leg}` : `no instance · ${leg}`,
+      name: id != null ? `#${id} ${leg}` : `no trade · ${leg}`,
       pnl: pnls.every((v) => v != null) ? pnls.reduce((x, v) => x + (v as number), 0) : null,
       pnlIsMark: tl.some((l) => l.pnlIsMark),
       fills: tl.reduce((x, l) => x + l.fills, 0),

@@ -185,7 +185,7 @@ describe('instance tracks (Rev .102)', () => {
       'ZZTM',
       [],
     )
-    expect(tracks.map((t) => [t.id, t.name])).toEqual([[null, 'no instance · −1 100P']])
+    expect(tracks.map((t) => [t.id, t.name])).toEqual([[null, 'no trade · −1 100P']])
   })
 })
 

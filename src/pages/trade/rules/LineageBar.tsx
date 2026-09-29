@@ -206,7 +206,7 @@ export function LineageBar({
           <Note warn>no allocation — runs outside rules</Note>
         )}
       </Segment>
-      <Segment step="› running" title="Instances">
+      <Segment step="› running" title="Trades">
         {pickedInstance ? (
           <Chip
             label={`#${pickedInstance.id} · ${pickedInstance.symbolish}`}

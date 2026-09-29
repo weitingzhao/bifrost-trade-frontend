@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
-import { d3, execGroupsOf, heldLegs, legsOf, lifeOf, payoffOf, positionOf, twsRowsFor } from './instanceRecordModel'
+import { d3, execGroupsOf, heldLegs, legsOf, lifeOf, payoffOf, positionOf, twsRowsFor } from './tradeRecordModel'
 
 // Invented fixtures — never copied from a live book.
 const CK_CLOSED = 'ZZTM  270115P00100000|OPT|20270115|100|P'

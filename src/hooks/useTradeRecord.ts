@@ -38,12 +38,12 @@ import {
   type RecordLeg,
   twsRowsFor,
   type LegMark,
-} from '@/utils/instanceRecord/instanceRecordModel'
+} from '@/utils/tradeRecord/tradeRecordModel'
 
 const shiftIso = (iso: string, days: number) =>
   new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10)
 
-export function useInstanceRecord(instance: StrategyInstance | null, opts?: { tws?: boolean; withShares?: boolean }) {
+export function useTradeRecord(instance: StrategyInstance | null, opts?: { tws?: boolean; withShares?: boolean }) {
   const { data: status } = useMonitorStatus()
   const accounts = status?.portfolio?.accounts ?? undefined
   const detail = useInstanceDetailData(instance, accounts, instance != null)

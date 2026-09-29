@@ -12,7 +12,7 @@
  * titles, honesty stays printed, and nothing the page could do before was cut.
  */
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { openInstancePair, useOpenInstance } from '@/layout/instanceGo'
+import { openTradePair, useOpenTrade } from '@/layout/tradeGo'
 import { useInstanceRoot } from '@/hooks/useInstanceRoot'
 import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -133,14 +133,14 @@ export default function PositionsPage() {
    * address is read once and dropped: the sheet is a look, not a place.
    */
   const [params, setParams] = useSearchParams()
-  const openInstance = useOpenInstance()
+  const openInstance = useOpenTrade()
   const instanceParam = Number(params.get('instance'))
   const urlInstanceId = Number.isFinite(instanceParam) && instanceParam > 0 ? instanceParam : null
   const vsParam = Number(params.get('vs'))
   const urlCompareId = Number.isFinite(vsParam) && vsParam > 0 ? vsParam : null
   useEffect(() => {
     if (urlInstanceId == null) return
-    if (urlCompareId != null) openInstancePair(openInstance, urlInstanceId, urlCompareId, 'Positions')
+    if (urlCompareId != null) openTradePair(openInstance, urlInstanceId, urlCompareId, 'Positions')
     else openInstance(urlInstanceId, { from: 'Positions' })
     setParams(
       (prev) => {

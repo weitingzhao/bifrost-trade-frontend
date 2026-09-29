@@ -55,7 +55,7 @@ export function ViewOptionStockLinksModal({
         )}
         {instanceAttributedSlippage != null && Number.isFinite(instanceAttributedSlippage) && (
           <p className="text-xs text-muted-foreground">
-            <strong>This instance&apos;s attributed slippage</strong>{' '}
+            <strong>This trade&apos;s attributed slippage</strong>{' '}
             (prorated by allocated |qty| ÷ parent |qty|):{' '}
             <strong className={cn('font-mono tabular-nums', pnlColorClass(instanceAttributedSlippage))}>
               {fmtUsd(instanceAttributedSlippage)}

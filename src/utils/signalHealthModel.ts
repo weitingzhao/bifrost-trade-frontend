@@ -47,7 +47,7 @@ import type { SignalFreshnessItem, SignalHealthResponse } from '@/api/research/s
 const DOWNSTREAM: Record<string, { label: string; to: string }> = {
   vrp: { label: 'Symbol › Volatility', to: '/research/symbol?tab=volatility' },
   scan: { label: 'Vol ratings', to: '/research/scan' },
-  canonical_pnl: { label: 'Review › Single trade', to: '/review/fit' },
+  canonical_pnl: { label: 'Review › Trade review', to: '/review/trade' },
   iv_reconstructed: { label: 'Symbol › Chain', to: '/research/symbol?tab=chain' },
   playbook_trigger: { label: 'Review › Playbook · Record', to: '/review/playbook?tab=record' },
   forecast_settlement: { label: 'Signal Decay', to: '/research/signal-decay' },

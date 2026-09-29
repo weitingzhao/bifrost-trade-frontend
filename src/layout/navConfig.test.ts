@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
 import { isSystemRoute, routeFor } from './routeRegistry'
 
-const trade = NAV_GROUPS.find((g) => g.label === 'Trade')!
+const trade = NAV_GROUPS.find((g) => g.label === 'Trading')!
 const portfolio = NAV_GROUPS.find((g) => g.label === 'Portfolio')!
 
 /** Every route a group reaches, parents included. */
@@ -10,7 +10,7 @@ function routesOf(group: (typeof NAV_GROUPS)[number]): (string | undefined)[] {
   return (group.items ?? []).flatMap((i) => [i.to, ...(i.children?.map((c) => c.to) ?? [])])
 }
 
-describe('Trade nav', () => {
+describe('Trading nav', () => {
   it('stands before Portfolio, with Playbook as the only row', () => {
     // Owner (a), 2026-09-14: new top-level Trade group, design order Home ·
     // Trade · Portfolio · Research · …, one row until the rest of Trade exists.
@@ -24,7 +24,7 @@ describe('Trade nav', () => {
     // so the business tree is the design's six groups and nothing else.
     expect(NAV_GROUPS.map((g) => g.label)).toEqual([
       'Home',
-      'Trade',
+      'Trading',
       'Portfolio',
       'Risk',
       'Review',
@@ -256,7 +256,7 @@ describe('Review nav', () => {
     // objective is the whole desk's working object, not this layer's.
     expect(review.to).toBe('/review')
     expect(review.items!.map((c) => c.to)).toEqual([
-      '/review/fit',
+      '/review/trade',
       '/review/habits',
       '/review/playbook',
       // One inbox, not two (§5a.8): Decision Inbox replaced Rule proposals

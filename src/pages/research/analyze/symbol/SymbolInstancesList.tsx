@@ -5,12 +5,12 @@
  * name's instances — the same tracks the price chart above draws.
  */
 import { useMemo, useState } from 'react'
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { fmtPl, instanceTracksFor } from '@/components/symbolChart/symbolPriceModel'
 import { useLedgerExecutionsBook } from '@/hooks/useLedgerExecutions'
 import { useSymbolLegs } from '@/hooks/useSymbolLegs'
 import { cn } from '@/lib/utils'
-import { d3 } from '@/utils/instanceRecord/instanceRecordModel'
+import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
 
 const SHOWN = 3
 
@@ -30,13 +30,13 @@ export function SymbolInstancesList({ symbol }: { symbol: string }) {
   )
   const ids = useMemo(() => everyOne.map((t) => t.id as number), [everyOne])
   const rows = all ? everyOne : recent.slice(0, SHOWN)
-  if (bookQ.isLoading) return <p className="m-0 text-dense-micro text-muted-foreground">Reading the instances on {sym}…</p>
+  if (bookQ.isLoading) return <p className="m-0 text-dense-micro text-muted-foreground">Reading the trades on {sym}…</p>
   if (tracks.length === 0)
-    return <p className="m-0 text-dense-micro text-muted-foreground">No instance has traded {sym} — nothing in the book to open.</p>
+    return <p className="m-0 text-dense-micro text-muted-foreground">No trade on record for {sym} — nothing in the book to open.</p>
   return (
-    <section aria-label={`Instances on ${sym}`} className="flex flex-col gap-1">
+    <section aria-label={`Trades on ${sym}`} className="flex flex-col gap-1">
       <div className="flex items-baseline gap-2 text-dense-micro text-muted-foreground">
-        <span className="font-semibold text-secondary-foreground">Instances</span>
+        <span className="font-semibold text-secondary-foreground">Trades</span>
         <span>
           {tracks.filter((t) => t.closeDate == null).length} open · {tracks.length} in all
         </span>
@@ -54,7 +54,7 @@ export function SymbolInstancesList({ symbol }: { symbol: string }) {
               key={t.key}
               className="grid grid-cols-[52px_minmax(0,1fr)_auto] items-baseline gap-x-2 border-t border-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)] py-1 text-dense-label"
             >
-              <InstanceRef id={t.id as number} list={ids} from={`Symbol · ${sym}`} />
+              <TradeRef id={t.id as number} list={ids} from={`Symbol · ${sym}`} />
               <span className="min-w-0 truncate">
                 <span className="font-mono text-[var(--sk-contract,#7dd3fc)]">{t.name.replace(/^#\d+\s*/, '')}</span>
                 <span className="ml-1.5 text-dense-micro text-muted-foreground">

@@ -1,4 +1,4 @@
-import { instanceHowFrom, useOpenInstance } from '@/layout/instanceGo'
+import { tradeHowFrom, useOpenTrade } from '@/layout/tradeGo'
 import { cn } from '@/lib/utils'
 import type { Execution } from '@/types/positions'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
@@ -67,7 +67,7 @@ export function LedgerDetailInstanceIcon({
   execution?: Execution
   className?: string
 }) {
-  const openInstance = useOpenInstance()
+  const openInstance = useOpenTrade()
   if (execution == null) return null
 
   const instanceId =
@@ -77,7 +77,7 @@ export function LedgerDetailInstanceIcon({
   if (instanceId == null) return null
 
   const instLabel = execution.strategy_instance_label?.trim()
-  const title = instLabel ? `Instance: ${instLabel}` : `Open instance #${instanceId}`
+  const title = instLabel ? `Trade: ${instLabel}` : `Open trade #${instanceId}`
 
   return (
     <button
@@ -91,7 +91,7 @@ export function LedgerDetailInstanceIcon({
       aria-label={title}
       onClick={e => {
         e.stopPropagation()
-        openInstance(instanceId, { from: 'Ledger · fills', ...instanceHowFrom(e) })
+        openInstance(instanceId, { from: 'Ledger · fills', ...tradeHowFrom(e) })
       }}
       onKeyDown={e => e.stopPropagation()}
     >

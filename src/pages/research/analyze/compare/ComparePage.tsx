@@ -213,10 +213,10 @@ function CompareBody({
         ) : data.rows.length === 0 ? (
           <EmptyState
             title="No rule reads this view"
-            description="Trade › Rules holds no active structure whose dimensions match this stance. The structures come from your rulebook, not from this page."
+            description="Trading › Rules holds no active structure whose dimensions match this stance. The structures come from your rulebook, not from this page."
             action={
               <Link to="/trade/rules" className="text-dense-meta text-primary hover:underline">
-                Trade › Rules →
+                Trading › Rules →
               </Link>
             }
           />

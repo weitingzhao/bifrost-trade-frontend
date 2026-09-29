@@ -120,7 +120,7 @@ export function CompareHowBig({
               title={
                 r.record == null
                   ? recordsLoaded
-                    ? 'No closed instance of this structure on record, so the rule has nothing to read.'
+                    ? 'No closed trade of this structure on record, so the rule has nothing to read.'
                     : 'The record is still loading.'
                   : `${recordLabel(r.record)} — ${c.allowance?.label ?? '—'} allowance (${c.allowance?.why ?? ''}), as a share of the backing cap.`
               }

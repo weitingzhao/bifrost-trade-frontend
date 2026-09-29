@@ -34,8 +34,8 @@ const LEDGER_MODES: { id: LedgerMode; label: string; title: string; lead: string
   {
     id: 'link',
     label: 'Link to strategy',
-    title: 'Attach this fill to a strategy instance',
-    lead: 'Attach this fill to a strategy instance. Attribution (Single / Mixed / Unassigned) is recomputed from the link, not typed.',
+    title: 'Attach this fill to a trade',
+    lead: 'Attach this fill to a trade. Attribution (Single / Mixed / Unassigned) is recomputed from the link, not typed.',
   },
   {
     id: 'pair',
@@ -59,7 +59,7 @@ const LEDGER_MODES: { id: LedgerMode; label: string; title: string; lead: string
 
 const FACES: { id: PositionsFace; label: string; title: string }[] = [
   { id: 'contract', label: 'Contract', title: 'The contract you last touched' },
-  { id: 'risk', label: 'Risk profile', title: 'This instance, at expiry' },
+  { id: 'risk', label: 'Risk profile', title: 'This trade, at expiry' },
   { id: 'ledger', label: 'Ledger', title: 'Fix the books — never an order' },
 ]
 
@@ -177,12 +177,12 @@ export function PositionsFaceSlot({
             <div className="flex flex-wrap items-baseline gap-2">
               <span className="text-dense-body font-bold leading-normal text-foreground">{risk.title}</span>
               <DenseTag variant="info" size="cell">
-                this instance · at expiry
+                this trade · at expiry
               </DenseTag>
               <span className="ml-auto flex flex-wrap items-baseline gap-x-3">
                 {risk.onOpenInstance ? (
                   <button type="button" className={positionsUi.link} onClick={risk.onOpenInstance}>
-                    instance detail →
+                    trade detail →
                   </button>
                 ) : null}
                 <Link to="/risk/portfolio#stress" className={positionsUi.link}>

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
-import { INSTANCE_GROUP_FAILED, INSTANCE_GROUP_LOADING } from '@/hooks/useInstanceBook'
+import { INSTANCE_GROUP_FAILED, INSTANCE_GROUP_LOADING } from '@/hooks/useTradeBook'
 import { ChevronRight, ChevronDown, Trash2, Crosshair, Columns2 } from 'lucide-react'
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { cn } from '@/lib/utils'
 import { fmtUsd, fmtUsdRound } from '@/lib/format'
 import {
@@ -58,7 +58,7 @@ import {
   instancesSortHeadActiveClass,
   instancesTableClass,
   INSTANCES_TABLE_COL_WIDTHS,
-} from './instances/instancesUi'
+} from './instances/tradesUi'
 
 interface SymbolGroup {
   key: string
@@ -84,7 +84,7 @@ interface Props {
   detailViewMode: 'accordion' | 'multi'
   collapsedGroups: Record<string, boolean>
   onToggleGroup: (key: string) => void
-  /** Optional: Trade › Rules deletes from the chain's own detail actions. */
+  /** Optional: Trading › Rules deletes from the chain's own detail actions. */
   onDelete?: (instance: StrategyInstance) => void
   /** The ids are the rows in the order drawn, so a side sheet can step through them. */
   /** What the #NNN tokens' surface names as where they came from. */
@@ -96,12 +96,12 @@ interface Props {
    * Offer ⇄ on every row rather than only while a detail is open.
    *
    * Strategy › Instances opened the sheet first and compared against what was
-   * open, so its ⇄ needs a detail. Trade › Rules has no sheet of its own — the
+   * open, so its ⇄ needs a detail. Trading › Rules has no sheet of its own — the
    * sheet is on Positions — so the first ⇄ *holds* an instance and the second
    * opens the pair. Opt-in so the older behaviour is unchanged.
    */
   compareAnywhere?: boolean
-  /** Trade › Rules' Group: None — rows without symbol headers (Rev .101). */
+  /** Trading › Rules' Group: None — rows without symbol headers (Rev .101). */
   flat?: boolean
   /** Hide the Opportunity column when the scope holds one opportunity (Rev .101). */
   showOpportunity?: boolean
@@ -222,7 +222,7 @@ function StatusChip({ status }: { status: 'open' | 'closed' | 'no_fills' }) {
       ? 'All contracts flat (buy and sell quantities net to zero per contract).'
       : status === 'open'
         ? 'At least one contract has non-zero net quantity.'
-        : 'No fills attributed to this instance in the final book.'
+        : 'No fills attributed to this trade in the final book.'
   return (
     <DenseTag variant={variant} size="cell" title={title}>
       {label}
@@ -314,7 +314,7 @@ export function InstancesGroupedTable({
   collapsedGroups,
   onToggleGroup,
   onDelete,
-  tokenFrom = 'Trade › Rules',
+  tokenFrom = 'Trading › Rules',
   onCompare,
   activeDetailId,
   compareId,
@@ -359,7 +359,7 @@ export function InstancesGroupedTable({
   )
 
   if (groups.length === 0) {
-    return <p className={instancesEmptyHintClass}>No instances found.</p>
+    return <p className={instancesEmptyHintClass}>No trades found.</p>
   }
 
   return (
@@ -469,7 +469,7 @@ export function InstancesGroupedTable({
                         <span className="text-destructive">Couldn’t read fills</span>
                         <span className={instancesGroupMutedClass}>
                           {' '}
-                          ({group.rows.length} instance
+                          ({group.rows.length} trade
                           {group.rows.length !== 1 ? 's' : ''} — symbol unknown until they load)
                         </span>
                       </>
@@ -482,7 +482,7 @@ export function InstancesGroupedTable({
                         Reading fills…
                         <span className={instancesGroupMutedClass}>
                           {' '}
-                          ({group.rows.length} instance
+                          ({group.rows.length} trade
                           {group.rows.length !== 1 ? 's' : ''} still loading)
                         </span>
                       </>
@@ -515,7 +515,7 @@ export function InstancesGroupedTable({
                         )}
                         <span className={instancesGroupMutedClass}>
                           {' '}
-                          ({group.rows.length} instance{group.rows.length !== 1 ? 's' : ''})
+                          ({group.rows.length} trade{group.rows.length !== 1 ? 's' : ''})
                         </span>
                       </>
                     )}
@@ -526,7 +526,7 @@ export function InstancesGroupedTable({
               <DenseTableCell className="text-muted-foreground">—</DenseTableCell>
               <DenseTableCell
                 className={cn(denseTableNumCell, signedClass(rollup.totalNet))}
-                title="Sum of execution-derived Net PnL for instances with loaded metrics."
+                title="Sum of execution-derived Net PnL for trades with loaded metrics."
               >
                 {rollup.totalNet != null ? fmtUsd(rollup.totalNet) : '—'}
               </DenseTableCell>
@@ -536,7 +536,7 @@ export function InstancesGroupedTable({
                   denseTableNumCell,
                   rollup.sumUnderlying != null ? '' : 'text-muted-foreground',
                 )}
-                title="Sum of per-instance underlying cost (sell-side OPT)."
+                title="Sum of per-trade underlying cost (sell-side OPT)."
               >
                 {rollup.sumUnderlying != null ? fmtUsdRound(rollup.sumUnderlying) : '—'}
               </DenseTableCell>
@@ -602,8 +602,8 @@ export function InstancesGroupedTable({
                   )}
                   {onDelete ? (
                     <IconActionButton
-                      title="Delete instance"
-                      ariaLabel="Delete instance"
+                      title="Delete trade"
+                      ariaLabel="Delete trade"
                       tone="danger"
                       onClick={() => onDelete(inst)}
                     >
@@ -613,7 +613,7 @@ export function InstancesGroupedTable({
                 </div>
               </DenseTableCell>
               <DenseTableCell className={cn(instancesColIdClass, denseTableNumCell, 'text-muted-foreground')}>
-                <InstanceRef id={inst.strategy_instance_id} list={orderedIds} from={tokenFrom} className="font-semibold" />
+                <TradeRef id={inst.strategy_instance_id} list={orderedIds} from={tokenFrom} className="font-semibold" />
               </DenseTableCell>
               {showOpportunity ? (
               <DenseTableCell className={instancesColOppClass}>

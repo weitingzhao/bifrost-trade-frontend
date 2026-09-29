@@ -44,13 +44,13 @@ export interface InstanceAdminReading {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'running', label: 'running', disabled: true, title: 'Read from fills — this instance still has open legs.' },
-  { value: 'paused', label: 'paused', disabled: true, title: 'Nothing stores a paused instance; there is no status column.' },
+  { value: 'running', label: 'running', disabled: true, title: 'Read from fills — this trade still has open legs.' },
+  { value: 'paused', label: 'paused', disabled: true, title: 'Nothing stores a paused trade; there is no status column.' },
   { value: 'closed', label: 'closed', disabled: true, title: 'Read from fills — closed when every group has been taken flat.' },
 ]
 
 const IDLE_NOTE =
-  'Rename writes the label and nothing else. running / closed is read from this instance’s fills — a close is never written here, and paused has nowhere to be stored.'
+  'Rename writes the label and nothing else. running / closed is read from this trade’s fills — a close is never written here, and paused has nowhere to be stored.'
 
 const CANNOT_CLEAR_NOTE =
   'A name cannot be taken off from here: the endpoint reads an empty label as “leave it alone” and would answer saved without writing. Type the name you want instead.'
@@ -87,12 +87,12 @@ export function InstanceAdminRow({ instance }: { instance: InstanceAdminReading 
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 border px-2 py-1.5 mat-card">
-      <span className={positionsUi.cap}>Instance</span>
+      <span className={positionsUi.cap}>Trade</span>
       <input
         className={cn(positionsUi.input, 'w-42.5')}
         value={draft}
         placeholder={`#${instance.id}`}
-        aria-label="Instance label"
+        aria-label="Trade label"
         onChange={(e) => {
           setDraft(e.target.value)
           setSaved(false)
@@ -101,12 +101,12 @@ export function InstanceAdminRow({ instance }: { instance: InstanceAdminReading 
       />
       <SegmentControl
         size="xs"
-        ariaLabel="Instance status"
+        ariaLabel="Trade status"
         options={STATUS_OPTIONS}
         value={instance.status}
         onChange={() => undefined}
       />
-      <DenseTag variant="neutral" size="cell" title="Derived from this instance’s fills — not a stored field.">
+      <DenseTag variant="neutral" size="cell" title="Derived from this trade’s fills — not a stored field.">
         from fills
       </DenseTag>
       <button

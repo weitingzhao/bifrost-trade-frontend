@@ -11,8 +11,18 @@ import { withValidation } from '@/lib/apiValidation'
 import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
 
 export interface NoteRef {
-  type: 'sym' | 'obj' | 'inst'
+  /**
+   * A trade's ref is `inst` in the store. Design Rev .111 renames it `trade`;
+   * Research still accepts only `sym | obj | inst` (journal_notes.REF_TYPES),
+   * so the app writes `inst` and reads either until the store's rename lands.
+   */
+  type: 'sym' | 'obj' | 'inst' | 'trade'
   id: string
+}
+
+/** A ref that names a trade, under its stored code (`inst`) or its new one (`trade`). */
+export function isTradeRef(r: NoteRef): boolean {
+  return r.type === 'inst' || r.type === 'trade'
 }
 
 export interface JournalNote {

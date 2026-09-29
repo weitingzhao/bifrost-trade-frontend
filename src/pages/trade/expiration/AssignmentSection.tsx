@@ -498,7 +498,7 @@ export function AssignmentSection() {
                 assignment is not kept by the ingest, so a stock leg booked the same day on the same name is what marks
                 one here. What was written against the shares after is on the{' '}
                 <Link to="/portfolio/ledger" className={positionsUi.link}>
-                  Trade Ledger
+                  Ledger
                 </Link>
                 ; how each finished idea ended is{' '}
                 <Link to="/portfolio/outcome" className={positionsUi.link}>

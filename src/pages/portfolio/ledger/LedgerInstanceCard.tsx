@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { CollapsibleChevron } from '@/components/data-display'
@@ -53,7 +53,7 @@ export function LedgerInstanceCard({
             className={cn('h-3 w-3 self-center', expanded ? 'rotate-0' : '-rotate-90')}
           />
         </button>
-        <InstanceRef id={instanceId} list={instanceIds} from="Ledger · instances" className="text-dense-body" />
+        <TradeRef id={instanceId} list={instanceIds} from="Ledger · trades" className="text-dense-body" />
         <button type="button" className={cn(ledgerGroupRowButtonClass, 'pl-2')} onClick={onToggle} tabIndex={-1} aria-hidden>
           <span className="min-w-0 flex-[1_1_200px] text-dense-body text-foreground">
             {name}

@@ -1,6 +1,6 @@
 /**
  * The instance face (design Rev .101, `_Part InstanceRecord`; DESIGN_CONTRACTS
- * §14.4): one record wherever an instance is opened — inline as Trade › Rules'
+ * §14.4): one record wherever an instance is opened — inline as Trading › Rules'
  * record, or a right sheet over any page (the list behind it stays live, ‹ ›
  * and [ ] step the rows it came from, Esc closes). It replaces the old
  * five-box instance detail (Owner 2026-09-28).
@@ -16,17 +16,17 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtPctSigned, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
-import { useInstanceRecord } from '@/hooks/useInstanceRecord'
-import { useOpenInstance } from '@/layout/instanceGo'
+import { useTradeRecord } from '@/hooks/useTradeRecord'
+import { useOpenTrade } from '@/layout/tradeGo'
 import { useSymbolGo } from '@/layout/symbolGo'
 import type { StrategyInstance } from '@/types/positions'
-import { d3 } from '@/utils/instanceRecord/instanceRecordModel'
-import { InstanceRiskSection } from './InstanceRiskSection'
-import { InstanceExecSection } from './InstanceExecSection'
-import { InstancePositionSection } from './InstancePositionSection'
+import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
+import { TradeRiskSection } from './TradeRiskSection'
+import { TradeExecSection } from './TradeExecSection'
+import { TradePositionSection } from './TradePositionSection'
 import { InstanceKlineSection } from '@/components/strategy/instanceDetail/InstanceKlineSection'
 
-export interface InstanceRecordAction {
+export interface TradeRecordAction {
   label: string
   onClick?: () => void
   to?: string
@@ -41,7 +41,7 @@ const stamp = (iso: string | undefined) =>
   iso ? new Date(iso).toLocaleString([], { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'
 const signed = (v: number | null | undefined) => (v == null ? '—' : v > 0 ? `+${fmtUsdRound(v)}` : fmtUsdRound(v))
 
-export function InstanceRecord({
+export function TradeRecord({
   instance,
   mode,
   title,
@@ -60,7 +60,7 @@ export function InstanceRecord({
   instance: StrategyInstance
   /**
    * Rev .103's three hosts: `panel` — the Instance surface's compact face (the
-   * panel's own chrome closes it); `inline` — Trade › Rules' picked record;
+   * panel's own chrome closes it); `inline` — Trading › Rules' picked record;
    * `rail` — the Instance page's side column, Position and Risk only.
    */
   mode: 'panel' | 'inline' | 'rail'
@@ -78,15 +78,15 @@ export function InstanceRecord({
   /** The rows it came from — carried to the page. */
   list?: readonly number[]
   ranUnder?: { alloc: string; warn: boolean; onOpp?: () => void }
-  actions?: InstanceRecordAction[]
+  actions?: TradeRecordAction[]
 }) {
   const [section, setSection] = useState<Section>('all')
   const [source, setSource] = useState<'perf' | 'tws'>('perf')
   const [withShares, setWithShares] = useState(true)
-  const r = useInstanceRecord(instance, { tws: source === 'tws', withShares })
+  const r = useTradeRecord(instance, { tws: source === 'tws', withShares })
   const d = r.detail
   const isSheet = mode === 'panel'
-  const openInstance = useOpenInstance()
+  const openInstance = useOpenTrade()
   const symbolGo = useSymbolGo()
   const show = (k: Section) => section === 'all' || section === k
   const closed = r.life.closed
@@ -98,18 +98,18 @@ export function InstanceRecord({
   const sym = r.legs[0]?.root ?? null
   // The face's own ways out (Rev .102): where its open legs are held, or its
   // review once flat; and the Ledger rows its fills are booked to.
-  const footer: InstanceRecordAction[] = [
+  const footer: TradeRecordAction[] = [
     closed
-      ? { label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade' }
-      : { label: 'Position →', to: positionsTo, title: 'Portfolio › Positions — this instance’s open legs' },
+      ? { label: 'Review this trade →', to: '/review/trade', title: 'Review › Trade review' }
+      : { label: 'Position →', to: positionsTo, title: 'Portfolio › Positions — this trade’s open legs' },
     {
       label: 'Ledger →',
       to: hasFills ? `/portfolio/ledger?inst=${id}` : undefined,
       disabled: !hasFills,
-      title: hasFills ? `Portfolio › Trade Ledger — every fill booked to #${id}` : 'No fill booked yet',
+      title: hasFills ? `Portfolio › Ledger — every fill booked to #${id}` : 'No fill booked yet',
     },
     ...(sym
-      ? [{ label: `${sym} →`, onClick: () => symbolGo.go(sym, 'compare'), title: `Symbol · ${sym} beside — its chart and every instance on it` }]
+      ? [{ label: `${sym} →`, onClick: () => symbolGo.go(sym, 'compare'), title: `Symbol · ${sym} beside — its chart and every trade on it` }]
       : []),
     ...actions,
   ]
@@ -125,13 +125,13 @@ export function InstanceRecord({
   if (mode === 'rail') {
     // The page draws the rest wider; the rail keeps what is held and what it risks.
     return (
-      <aside aria-label="Instance position and risk" className="flex min-w-0 flex-col gap-3">
+      <aside aria-label="Trade position and risk" className="flex min-w-0 flex-col gap-3">
         {r.loading ? (
           <p className="m-0 text-dense-meta text-muted-foreground">Reading its fills…</p>
         ) : (
           <>
-            {r.position ? <InstancePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} /> : null}
-            <InstanceRiskSection
+            {r.position ? <TradePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} /> : null}
+            <TradeRiskSection
               payoffs={r.payoffs}
               canCover={r.canCover}
               withShares={withShares}
@@ -145,17 +145,17 @@ export function InstanceRecord({
   }
 
   return (
-    <aside aria-label="Instance record" className={cn('flex min-w-0 flex-col gap-3', isSheet ? 'min-h-0 px-3.5 pt-2.5 pb-4' : '')}>
+    <aside aria-label="Trade record" className={cn('flex min-w-0 flex-col gap-3', isSheet ? 'min-h-0 px-3.5 pt-2.5 pb-4' : '')}>
       {isSheet ? (
         <header className="flex flex-wrap items-center gap-2 border-b border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] pb-2">
-          <span className="font-mono type-section font-semibold text-[var(--sk-instance,#c084fc)]">{title}</span>
+          <span className="font-mono type-section font-semibold text-[var(--sk-trade,#c084fc)]">{title}</span>
           <span className="min-w-0 truncate text-dense-label text-[var(--sk-mute2)]">{opportunity}</span>
           <span className="ml-auto flex flex-none items-center gap-1">
-            <button type="button" className={positionsUi.btn} onClick={onPrev} disabled={!onPrev} title="Previous row · [" aria-label="Previous instance">
+            <button type="button" className={positionsUi.btn} onClick={onPrev} disabled={!onPrev} title="Previous row · [" aria-label="Previous trade">
               ‹
             </button>
             {pos ? <span className="font-mono text-dense-micro text-muted-foreground">{pos}</span> : null}
-            <button type="button" className={positionsUi.btn} onClick={onNext} disabled={!onNext} title="Next row · ]" aria-label="Next instance">
+            <button type="button" className={positionsUi.btn} onClick={onNext} disabled={!onNext} title="Next row · ]" aria-label="Next trade">
               ›
             </button>
             <button
@@ -165,7 +165,7 @@ export function InstanceRecord({
               title={
                 onFull
                   ? "Open as the page's record — Back returns to this list"
-                  : 'The instance page: price chart, legs timeline, every fill, the ledger and the journal'
+                  : 'The trade page: price chart, legs timeline, every fill, the ledger and the journal'
               }
             >
               {fullLabel}
@@ -198,7 +198,7 @@ export function InstanceRecord({
         <div className="flex flex-col gap-1 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
           <span className="text-dense-body font-semibold">No fill has claimed {title}</span>
           <span className="text-dense-label text-[var(--sk-mute2)] text-pretty">
-            It has no legs, no P&amp;L and no risk. Link a fill to it on the Trade Ledger, or delete it — nothing
+            It has no legs, no P&amp;L and no risk. Link a fill to it on the Ledger, or delete it — nothing
             references it.
           </span>
         </div>
@@ -255,7 +255,7 @@ export function InstanceRecord({
               </div>
 
               {r.position ? (
-                <InstancePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} />
+                <TradePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} />
               ) : null}
 
               <div className="flex flex-col gap-1.5 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
@@ -290,7 +290,7 @@ export function InstanceRecord({
                 </div>
                 {r.life.expired ? (
                   <p className="m-0 text-dense-label text-warning text-pretty">
-                    Past expiry with a leg still open — settle it on Trade › Expiration, or the book keeps marking a
+                    Past expiry with a leg still open — settle it on Trading › Expiration, or the book keeps marking a
                     contract that no longer trades.
                   </p>
                 ) : null}
@@ -398,7 +398,7 @@ export function InstanceRecord({
           ) : null}
 
           {show('risk') ? (
-            <InstanceRiskSection
+            <TradeRiskSection
               payoffs={r.payoffs}
               canCover={r.canCover}
               withShares={withShares}
@@ -419,7 +419,7 @@ export function InstanceRecord({
           ) : null}
 
           {show('exec') ? (
-            <InstanceExecSection groups={r.execGroups} source={source} onSource={setSource} tws={r.tws} twsLoading={r.twsLoading} />
+            <TradeExecSection groups={r.execGroups} source={source} onSource={setSource} tws={r.tws} twsLoading={r.twsLoading} />
           ) : null}
         </>
       )}

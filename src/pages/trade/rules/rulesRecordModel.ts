@@ -135,11 +135,11 @@ export function buildRecord(x: RecordInput): RecordModel | null {
   const pnlStats = (list: readonly (typeof d.instances)[number][]): RecordStat[] => {
     const t: Tally = tally(list)
     return [
-      { k: `Instances${symNote}`, v: String(t.n), note: `${t.open} open · ${t.closed} closed · whatever the filter shows` },
+      { k: `Trades${symNote}`, v: String(t.n), note: `${t.open} open · ${t.closed} closed · whatever the filter shows` },
       {
         k: `Realised${symNote}`,
         v: t.closed ? signedUsd(t.realised) : '—',
-        note: t.closed ? 'closed instances only, fills-based' : 'no closed instance yet',
+        note: t.closed ? 'closed trades only, fills-based' : 'no closed trade yet',
         ink: t.closed ? pnlColorClass(t.realised) : MUTED,
       },
       { k: 'Won', v: t.closed ? `${t.won} / ${t.closed}` : '—', note: t.closed ? 'closed with a positive net P&L' : '' },
@@ -207,7 +207,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
               v: g ? `${g.name} v${g.version}` : 'none',
               note: `inherited from ${al.name} · hits land on Risk › Limits`,
             }
-          : { k: 'Gate', v: 'none', note: 'instances under it ran outside rules', ink: WARN, noteClass: WARN },
+          : { k: 'Gate', v: 'none', note: 'trades under it ran outside rules', ink: WARN, noteClass: WARN },
         ...pnlStats(bySym(all, instanceSym)),
       ],
       conds:
@@ -231,7 +231,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
             flagClass: t.offScope ? WARN : t.tally.open ? 'text-profit' : MUTED,
             pnl: t.tally.closed ? signedUsd(t.tally.realised) : '—',
             pnlClass: t.tally.closed ? pnlColorClass(t.tally.realised) : MUTED,
-            meta: t.tally.n ? plural(t.tally.n, 'instance') : 'no instance',
+            meta: t.tally.n ? plural(t.tally.n, 'trade') : 'no trade',
             win: t.tally.closed ? `won ${t.tally.won}/${t.tally.closed}` : '',
             bar: t.tally.closed ? `${Math.round((Math.abs(t.tally.realised) / maxAbs) * 100)}%` : '0%',
             barClass: t.tally.realised >= 0 ? 'bg-[var(--color-profit)]' : 'bg-[var(--color-loss)]',
@@ -273,7 +273,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
         ? {
             title: 'Opportunities using it',
             note: 'click one to open it',
-            instHead: `Instances${symNote}`,
+            instHead: `Trades${symNote}`,
             rows: ruleRows([...oppIds]),
           }
         : undefined,
@@ -316,7 +316,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
           ? {
               k: 'Positions',
               v: `${openN} / ${a.max_positions}`,
-              note: 'open instances against max positions',
+              note: 'open trades against max positions',
               ink: openN >= a.max_positions ? WARN : undefined,
             }
           : { k: 'Positions', v: String(openN), note: 'no maximum set' },
@@ -324,7 +324,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
       rules: {
         title: 'Opportunities it runs',
         note: 'each keeps its own conditions',
-        instHead: `Instances${symNote}`,
+        instHead: `Trades${symNote}`,
         rows: ruleRows(oppIds),
       },
       hasTable: true,
@@ -346,7 +346,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
     return {
       kind: 'instance',
       title: `#${i.id} · ${i.symbolish}`,
-      titleClass: 'font-mono text-[var(--sk-instance,#c084fc)]',
+      titleClass: 'font-mono text-[var(--sk-trade,#c084fc)]',
       tag: i.closed ? { label: 'closed', variant: 'neutral' } : { label: 'open', variant: 'success' },
       sub: o?.name ?? i.opportunityName,
       actions: x.actions,
@@ -365,7 +365,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
     const all = bySym(d.instances, instanceSym)
     return {
       kind: 'instances',
-      title: 'Every instance',
+      title: 'Every trade',
       titleClass: 'text-foreground',
       sub: sym ? `narrowed to ${sym}` : 'the whole book, whatever the chain is showing',
       actions: x.actions,
@@ -406,7 +406,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
         ? {
             title: `Rules that can act on ${sym}`,
             note: `counts are ${sym} only · click one to open it with ${sym} kept`,
-            instHead: 'Instances',
+            instHead: 'Trades',
             rows: ruleRows(oppIds),
           }
         : undefined,

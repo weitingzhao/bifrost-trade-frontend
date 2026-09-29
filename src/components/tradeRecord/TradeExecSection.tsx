@@ -9,9 +9,9 @@ import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import type { Execution } from '@/types/positions'
-import { d3, type ExecGroup } from '@/utils/instanceRecord/instanceRecordModel'
+import { d3, type ExecGroup } from '@/utils/tradeRecord/tradeRecordModel'
 
-export function InstanceExecSection({
+export function TradeExecSection({
   groups,
   source,
   onSource,
@@ -44,7 +44,7 @@ export function InstanceExecSection({
         <span className="text-dense-micro text-muted-foreground">
           {source === 'perf'
             ? 'final book · buy/sell matched per contract'
-            : 'TWS raw · matched to this instance by contract'}
+            : 'TWS raw · matched to this trade by contract'}
         </span>
       </div>
 
@@ -97,7 +97,7 @@ export function InstanceExecSection({
         <p className="m-0 text-dense-meta text-muted-foreground">Reading the TWS client rows…</p>
       ) : tws.length === 0 ? (
         <p className="m-0 text-dense-meta text-muted-foreground text-pretty">
-          No TWS client row for these contracts. TWS keeps only recent days, so an instance traded before that window
+          No TWS client row for these contracts. TWS keeps only recent days, so a trade opened before that window
           is expected to match nothing here — the Performance book is the record.
         </p>
       ) : (

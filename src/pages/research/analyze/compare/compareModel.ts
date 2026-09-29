@@ -9,7 +9,7 @@
  *
  * The prototype's view reads "from Symbol verdict". Verdicts here are prose
  * claims with no stance, level or horizon, so the view is typed on this page
- * and says it is. The structures are the active ones in Trade › Rules whose
+ * and says it is. The structures are the active ones in Trading › Rules whose
  * dimensions match the stance — the book's own rulebook, not a list invented
  * for the page — placed on the listed chain at the view's levels. A structure
  * the rules do not carry (the prototype's calendar and 1×2 ratio) does not

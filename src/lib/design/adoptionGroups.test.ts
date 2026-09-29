@@ -136,10 +136,9 @@ describe('the design documents stay in the design', () => {
         .map((r) => r.path)
         .sort()
       // /system/feedback left this list when K5 built it (2026-09-27), and
-      // the You page when K6 shipped the memory store. Rev .111 renamed
-      // Instance → Trade and Single trade → Trade review: the two new paths
-      // are unbuilt until the app's rename lands.
-    ).toEqual(['/review/trade', '/trade/:id'])
+      // the You page when K6 shipped the memory store. Rev .111's two new
+      // paths (/trade/:id, /review/trade) landed with the app's rename.
+    ).toEqual([])
     expect(docs.map((r) => r.path)).not.toContain('/docs/options-kit')
   })
 })

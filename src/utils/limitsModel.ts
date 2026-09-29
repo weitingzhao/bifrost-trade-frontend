@@ -20,7 +20,7 @@
  * is a limit whose scope is an allocation, enforced by the daemon before the
  * action happens rather than noticed after it. So it breaches like any other
  * line, but there is nothing to acknowledge — the open simply does not happen,
- * and the attempt is what lands here. The definition lives in Trade › Rules.
+ * and the attempt is what lands here. The definition lives in Trading › Rules.
  */
 import { fmtPct0 } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
@@ -65,7 +65,7 @@ export interface LimitRow extends LimitRule {
 
 export const LIMITS_UNRECORDED = {
   store:
-    'Nine of the twelve rules have no number behind them. The design edits limits in Trade › Rules and this page only reads them; that store does not exist yet. Seven of those nine still carry a live reading and only want a line; the other two — sector share and earnings-week premium — have no reading either, and say on the row which half is missing.',
+    'Nine of the twelve rules have no number behind them. The design edits limits in Trading › Rules and this page only reads them; that store does not exist yet. Seven of those nine still carry a live reading and only want a line; the other two — sector share and earnings-week premium — have no reading either, and say on the row which half is missing.',
   history:
     'Nothing records when a line was crossed. A breach is computable right now — the readings are live — but there is no store behind it, so there is no yesterday, no acknowledgement and no duration. An empty history table would read as a clean record rather than as no record.',
   ack: 'Acknowledging a soft breach would be a write into that missing store. The row names what to do instead, and on which page.',
@@ -372,13 +372,13 @@ function guardNumber(guard: Record<string, unknown> | null, key: string): number
 export function gateLimitRules(r: GateReadings): LimitRule[] {
   if (r.gateName == null) return []
   const rules: LimitRule[] = []
-  const inRules = { label: 'Trade › Rules', to: '/trade/rules' }
+  const inRules = { label: 'Trading › Rules', to: '/trade/rules' }
 
   if (r.maxPositions != null) {
     rules.push({
       key: 'gate-open-instances',
       group: 'Gate',
-      name: 'Open instances',
+      name: 'Open trades',
       kind: 'gate',
       scope: 'allocation',
       unit: 'count',
@@ -387,7 +387,7 @@ export function gateLimitRules(r: GateReadings): LimitRule[] {
       bound: 'ceiling',
       onBreach: 'the daemon does not open another — nothing to acknowledge',
       citedFrom: inRules,
-      noReading: r.openInstances == null ? 'no instance under this allocation carries a fill' : null,
+      noReading: r.openInstances == null ? 'no trade under this allocation carries a fill' : null,
     })
   }
 

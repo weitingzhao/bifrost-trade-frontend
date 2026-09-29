@@ -512,7 +512,7 @@ export default function TradeLedgerPage() {
             the primary action. The title keeps the menu's name (§5a.5); the
             prototype writes "Trade ledger". */}
         <PageHead
-          title="Trade Ledger"
+          title="Ledger"
           info={PAGE_LEAD}
           meta="history · no polling"
           actions={

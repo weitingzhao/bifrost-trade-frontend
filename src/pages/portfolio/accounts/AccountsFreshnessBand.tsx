@@ -109,7 +109,7 @@ export function AccountsFreshnessBand({
           <p className="m-0">
             Ingest lives here because the verdict on freshness lives here;{' '}
             <Link to="/portfolio/ledger" className={accountsUi.tileLink}>
-              Trade Ledger
+              Ledger
             </Link>{' '}
             consumes what these runs write. Nothing on this page reaches an order path.
           </p>

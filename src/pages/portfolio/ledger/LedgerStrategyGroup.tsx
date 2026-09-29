@@ -1,4 +1,4 @@
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { CollapsibleChevron } from '@/components/data-display'
@@ -53,7 +53,7 @@ export function LedgerStrategyGroup({
         />
         <span className="min-w-0 flex-[1_1_220px] text-dense-label font-semibold text-foreground">{og.title}</span>
         <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">
-          Instances {og.instanceSubgroups.length} · Closed {closedCount} · Open {openCount}
+          Trades {og.instanceSubgroups.length} · Closed {closedCount} · Open {openCount}
         </span>
         <span className={cn('font-mono text-dense-body font-bold tabular-nums', pnlColorClass(totalPnl))}>
           {fmtCcy(totalPnl)}
@@ -71,10 +71,10 @@ export function LedgerStrategyGroup({
               <div key={`${og.opportunityId}::${sg.instanceId}`}>
                 <div className="flex flex-wrap items-center gap-2 px-2.5 pt-1.75 pb-1">
                   {instanceId == null ? (
-                    <span className="text-dense-body font-semibold text-muted-foreground">No instance</span>
+                    <span className="text-dense-body font-semibold text-muted-foreground">No trade</span>
                   ) : (
                     <>
-                      <InstanceRef
+                      <TradeRef
                         id={instanceId}
                         list={subgroupIds}
                         from={og.title}

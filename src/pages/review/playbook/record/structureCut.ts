@@ -112,8 +112,8 @@ export function cutDisagreement(
 ): string {
   return (
     `The two cuts count different things and do not reconcile: ${closedTrades} closed contracts over ${plays} plays ` +
-    `on the Ledger's side, ${instances} closed instances over ${structures} structures on the strategy service's. ` +
-    'An instance can hold several contracts, and a contract can be flat while its instance is not. Neither number is ' +
+    `on the Ledger's side, ${instances} closed trades over ${structures} structures on the strategy service's. ` +
+    'A trade can hold several contracts, and a contract can be flat while its trade is not. Neither number is ' +
     'wrong and neither is the other one adjusted.'
   )
 }

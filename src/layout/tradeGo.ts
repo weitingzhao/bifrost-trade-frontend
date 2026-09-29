@@ -10,11 +10,11 @@
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFrameNavigate } from '@/lib/surfaceScope'
-import { closeSurface, focusTab, instancePath, instanceSurface, openSurface, opensAsPage, placeOf, surfaceState } from './equipSurface'
+import { closeSurface, focusTab, tradePath, tradeSurface, openSurface, opensAsPage, placeOf, surfaceState } from './equipSurface'
 import { howFrom } from './symbolGo'
 import { markPagedFrom } from './pagedFrom'
 
-export interface OpenInstanceOpts {
+export interface OpenTradeOpts {
   list?: readonly number[]
   from?: string
   /** A tab of its own, beside the following one (⇧). */
@@ -25,35 +25,35 @@ export interface OpenInstanceOpts {
   place?: 'panel' | 'float'
 }
 
-export type OpenInstance = (id: number, opts?: OpenInstanceOpts) => void
+export type OpenTrade = (id: number, opts?: OpenTradeOpts) => void
 
 /** Read a click's modifiers the way the Symbol tokens do. */
-export function instanceHowFrom(e: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean } | null | undefined): Pick<OpenInstanceOpts, 'fresh' | 'page'> {
+export function tradeHowFrom(e: { shiftKey?: boolean; metaKey?: boolean; ctrlKey?: boolean } | null | undefined): Pick<OpenTradeOpts, 'fresh' | 'page'> {
   const how = howFrom(e)
   return { fresh: how === 'compare', page: how === 'page' }
 }
 
-export function useOpenInstance(): OpenInstance {
+export function useOpenTrade(): OpenTrade {
   const navigate = useNavigate()
   // Inside a surface, a page belongs to the main frame, not the panel.
   const frameNavigate = useFrameNavigate()
   return useCallback(
     (id, opts) => {
-      const surf = instanceSurface(id, { fresh: opts?.fresh, list: opts?.list, from: opts?.from })
+      const surf = tradeSurface(id, { fresh: opts?.fresh, list: opts?.list, from: opts?.from })
       if (opts?.page) {
         // An explicit Full page ↗ is a one-off, not a new habit: the cell that
         // showed it closes and place memory is left as it was (the place
         // buttons' ⤢ is where "pages from now on" is said).
         const st = surfaceState()
-        for (const sf of [st.float, ...(st.panel?.tabs ?? [])]) if (sf?.instance === id) closeSurface(sf.key)
-        const to = instancePath(id, surf.instanceList, opts?.from)
+        for (const sf of [st.float, ...(st.panel?.tabs ?? [])]) if (sf?.trade === id) closeSurface(sf.key)
+        const to = tradePath(id, surf.tradeList, opts?.from)
         markPagedFrom(window.location.pathname + window.location.search, to)
         ;(frameNavigate ?? navigate)(to)
         return
       }
       if (!opts?.place && placeOf(surf.key) == null && opensAsPage(surf.key)) {
         openSurface(surf, 'page')
-        const to = instancePath(id, surf.instanceList, opts?.from)
+        const to = tradePath(id, surf.tradeList, opts?.from)
         markPagedFrom(window.location.pathname + window.location.search, to)
         ;(frameNavigate ?? navigate)(to)
         return
@@ -66,7 +66,7 @@ export function useOpenInstance(): OpenInstance {
 }
 
 /** Two records side by side — Rules' ⇄ and Positions' `?instance=&vs=`: one in the panel, one floating. */
-export function openInstancePair(open: OpenInstance, a: number, b: number, from: string): void {
+export function openTradePair(open: OpenTrade, a: number, b: number, from: string): void {
   open(a, { fresh: true, from, place: 'panel' })
   open(b, { fresh: true, from, place: 'float' })
 }

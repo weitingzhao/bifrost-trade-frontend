@@ -46,7 +46,7 @@ import { RISK_BUDGET_UNRECORDED } from '@/utils/riskBudget'
 import { nyDate, takenToday, weekOf } from './sizingTodayModel'
 
 const PAGE_LEAD =
-  'How big, and how much room is left. Four caps per candidate, the smallest wins; the risk cap spends a per-trade, per-day and per-week budget that the calendar refills. Candidates arrive from Compare and Plans; the gate cap reads the active allocation in Trade › Rules.'
+  'How big, and how much room is left. Four caps per candidate, the smallest wins; the risk cap spends a per-trade, per-day and per-week budget that the calendar refills. Candidates arrive from Compare and Plans; the gate cap reads the active allocation in Trading › Rules.'
 
 const FOOT = 'm-0 border-t border-border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty'
 const GRID = 'grid grid-cols-[repeat(auto-fit,minmax(min(100%,26.25rem),1fr))] items-start gap-3'
@@ -139,7 +139,7 @@ export default function RiskSizingPage() {
       note:
         gateRoom == null
           ? 'No allocation is active, so no gate applies — a hand plan is under none either way.'
-          : `${allocation?.name} · ${gateOpen} of ${gateMax} instances open — ${gateRoom} left.`,
+          : `${allocation?.name} · ${gateOpen} of ${gateMax} trades open — ${gateRoom} left.`,
       n: gateRoom,
     },
   }
@@ -154,7 +154,7 @@ export default function RiskSizingPage() {
       v:
         allocation == null
           ? 'No allocation is active. When one is, it spends this same budget — one pool, hand and daemon alike.'
-          : `${allocation.name} spends this same budget — one pool. Its narrower cap (${gateMax} instances) is the gate cap above.`,
+          : `${allocation.name} spends this same budget — one pool. Its narrower cap (${gateMax} trades) is the gate cap above.`,
     },
     {
       k: 'enforced',

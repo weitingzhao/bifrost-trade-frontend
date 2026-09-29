@@ -88,7 +88,7 @@ const ESCALATION: { kind: string; tone: string; what: string }[] = [
   {
     kind: 'GATE',
     tone: 'text-primary',
-    what: 'Scope = allocation, enforced by the daemon before the action happens — nothing to acknowledge. The blocked attempt is logged in the Gate group above; the definition lives in Trade › Rules.',
+    what: 'Scope = allocation, enforced by the daemon before the action happens — nothing to acknowledge. The blocked attempt is logged in the Gate group above; the definition lives in Trading › Rules.',
   },
 ]
 
@@ -128,7 +128,7 @@ export default function RiskLimitsPage() {
           actions={
             // Straight to the destination: /strategy/gates is a redirect here
             // since the Strategy pages retired (2026-09-18).
-            <PageHeadLink to="/trade/rules" title="Trade › Rules — where gates are defined">
+            <PageHeadLink to="/trade/rules" title="Trading › Rules — where gates are defined">
               Rules engine →
             </PageHeadLink>
           }
@@ -285,7 +285,7 @@ export default function RiskLimitsPage() {
                 <span className="ml-auto text-dense-meta text-muted-foreground">
                   edited in{' '}
                   <Link to="/trade/rules" className={positionsUi.link}>
-                    Trade › Rules
+                    Trading › Rules
                   </Link>{' '}
                   — this page reads, never writes
                 </span>

@@ -36,7 +36,7 @@ function typeLabel(g: OptExecutionGroup): string {
 /** T1: the contracts under one instance in the Strategy view. */
 export function LedgerInstanceNest({ groups, onContractClick, stockFills = [] }: Props) {
   if (groups.length === 0) {
-    return <p className={denseTable.emptyHint}>No contracts for this instance.</p>
+    return <p className={denseTable.emptyHint}>No contracts for this trade.</p>
   }
 
   return (

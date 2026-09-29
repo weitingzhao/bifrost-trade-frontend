@@ -32,20 +32,20 @@ export function InstanceDeleteModal({ instance, onOpenChange }: Props) {
     }
   }
 
-  const name = instance?.strategy_opportunity_name ?? `Instance #${instance?.strategy_instance_id}`
+  const name = instance?.strategy_opportunity_name ?? `Trade #${instance?.strategy_instance_id}`
 
   return (
     <Dialog open={instance != null} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Delete Instance</DialogTitle>
+          <DialogTitle>Delete Trade</DialogTitle>
         </DialogHeader>
 
         <p className="text-sm text-muted-foreground py-2">
           Delete <span className="font-medium text-foreground">{name}</span>?
           {instance?.executions_count ? (
             <span className="block mt-1 text-destructive text-xs">
-              This instance has {instance.executions_count} execution{instance.executions_count !== 1 ? 's' : ''}.
+              This trade has {instance.executions_count} execution{instance.executions_count !== 1 ? 's' : ''}.
               Deletion will fail if they are still linked.
             </span>
           ) : null}

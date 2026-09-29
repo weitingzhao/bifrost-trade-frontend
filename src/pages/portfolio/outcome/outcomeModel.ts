@@ -3,7 +3,7 @@
  *
  * An instance is closed when every option contract under it nets to zero — the
  * book stores no `closed_at`, so the fills decide. Realised is the same signed
- * cash flow the Trade Ledger shows, commissions included, summed over those
+ * cash flow the Ledger shows, commissions included, summed over those
  * fills; nothing here re-prices anything.
  *
  * Two fields the prototype asks for do not exist on this side of the house: a
@@ -79,10 +79,10 @@ export const OUTCOME_SAMPLE_FLOOR = 10
 
 /** The two readings this page cannot make yet, and what would have to exist first. */
 export const OUTCOME_UNRECORDED = {
-  lens: 'No screener lens reaches a trade instance: a candidate in Research carries its lens, and nothing links that candidate to the instance that traded it.',
-  run: 'No backtest run is linked to an instance either, so realised has nothing to be compared against.',
+  lens: 'No screener lens reaches a trade: a candidate in Research carries its lens, and nothing links that candidate to the trade it became.',
+  run: 'No backtest run is linked to a trade either, so realised has nothing to be compared against.',
   plan:
-    'Trade Plans stores a target, a stop and a limit — the fields are there. No plan has reached a fill or been linked to an instance, so no closed idea has one to be measured against.',
+    'Trade Plans stores a target, a stop and a limit — the fields are there. No plan has reached a fill or been linked to a trade, so no closed idea has one to be measured against.',
 } as const
 
 const SELL = /^(s|sell|sld)$/i
@@ -125,7 +125,7 @@ export const EXIT_LABEL: Record<OutcomeExit | 'none', string> = {
   closed_early: 'Closed early',
   assigned: 'Assigned',
   unknown: 'Source did not say',
-  none: 'No instance behind it',
+  none: 'No trade behind it',
 }
 
 /**
@@ -272,15 +272,15 @@ export function unattributedCloses(executions: readonly Execution[]): number {
 export function outcomeGaps(rows: readonly OutcomeInstance[], unattributed: number): OutcomeGap[] {
   return [
     {
-      what: 'Closed with no instance',
+      what: 'Closed with no trade',
       n: unattributed,
       why: 'A contract that closed on no idea — the money is counted, the lesson is not.',
       tone: unattributed > 0 ? 'warn' : 'unknown',
       to: '/portfolio/ledger',
-      toLabel: 'link it → Trade Ledger',
+      toLabel: 'link it → Ledger',
     },
     {
-      what: 'Instance with no plan',
+      what: 'Trade with no plan',
       n: rows.length,
       why: OUTCOME_UNRECORDED.plan,
       tone: 'unknown',

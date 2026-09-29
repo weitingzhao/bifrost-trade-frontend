@@ -7,7 +7,7 @@
  * gate reading on Risk › Limits is quietly about a different population than
  * the reader thinks.
  *
- * The chain is the same one Trade › Rules draws, so the line links into it with
+ * The chain is the same one Trading › Rules draws, so the line links into it with
  * the link already lit rather than restating it.
  */
 import type { StrategyAllocation, StrategyOpportunity } from '@/types/strategy'

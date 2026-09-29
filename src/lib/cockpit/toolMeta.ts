@@ -240,15 +240,15 @@ export const TOOL_META: Record<string, ToolMeta> = {
     },
   },
   'trade.strategy.instances': {
-    title: '活跃策略 Instance',
-    description: 'Daemon 正在管理的策略实例（每个 instance 对应一组开仓 legs）。',
+    title: '活跃策略 Trade',
+    description: 'Daemon 正在管理的策略实例（每个 trade 对应一组开仓 legs）。',
     category: 'strategy',
     summarize: (data) => {
       const d = asRecord(data)
       if (!d) return null
       const rows = asArray(d.instances) ?? []
       return {
-        headline: `${d.count ?? rows.length} 个活跃 instance`,
+        headline: `${d.count ?? rows.length} 个活跃 trade`,
         table:
           rows.length > 0
             ? {

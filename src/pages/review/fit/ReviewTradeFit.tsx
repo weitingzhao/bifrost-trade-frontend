@@ -1,7 +1,7 @@
 /**
  * What the trade did, and the two gaps a single P&L number blurs.
  *
- * Single trade draws this above the path panels; the Queue draws its own
+ * Trade review draws this above the path panels; the Queue draws its own
  * compact version in the Review slot. What the two share is the model — one
  * ReviewTrade and REVIEW_GAPS — so they cannot describe the same missing
  * number differently.
@@ -113,7 +113,7 @@ export function ReviewTradeFit({
         <p className={cn(FOOT, 'm-0')}>
           Fills-based and fees included, the same figures the{' '}
           <Link to="/portfolio/ledger" className={positionsUi.link}>
-            Trade Ledger
+            Ledger
           </Link>{' '}
           shows for this contract — one computation, cited twice.
         </p>

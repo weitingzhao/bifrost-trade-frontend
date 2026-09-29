@@ -8,10 +8,10 @@
  * undo the move. No source (a deep link) returns Home.
  */
 import {
-  INSTANCE_SURFACE_ROUTE,
+  TRADE_SURFACE_ROUTE,
   SYMBOL_SURFACE_ROUTE,
-  instancePath,
-  instanceSurface,
+  tradePath,
+  tradeSurface,
   surfaceForRoute,
   symbolSurface,
   type Surface,
@@ -45,7 +45,7 @@ export function pagedFromFor(path: string): string {
 
 /** The page a surface becomes — the Symbol surface carries its name, an instance its list. */
 export function surfacePagePath(surface: Surface, carried: string): string {
-  if (surface.instance != null) return instancePath(surface.instance, surface.instanceList, surface.instanceFrom)
+  if (surface.trade != null) return tradePath(surface.trade, surface.tradeList, surface.tradeFrom)
   if (surface.subject) return withSymbolParam(surface.to, surface.subject === 'lock' ? surface.symbol : carried)
   return surface.to
 }
@@ -53,14 +53,14 @@ export function surfacePagePath(surface: Surface, carried: string): string {
 /** The surface a full page can go back to being, or null for a page that is only a page. */
 export function surfaceOf(pathname: string, search: string): Surface | null {
   const q = new URLSearchParams(search)
-  if (pathname.startsWith(`${INSTANCE_SURFACE_ROUTE}/`)) {
-    const id = Number(pathname.slice(INSTANCE_SURFACE_ROUTE.length + 1))
+  if (pathname.startsWith(`${TRADE_SURFACE_ROUTE}/`)) {
+    const id = Number(pathname.slice(TRADE_SURFACE_ROUTE.length + 1))
     if (!Number.isFinite(id) || id <= 0) return null
     const list = (q.get('list') ?? '')
       .split(',')
       .map(Number)
       .filter((x) => Number.isFinite(x) && x > 0)
-    return instanceSurface(id, { list, from: q.get('from') ?? undefined })
+    return tradeSurface(id, { list, from: q.get('from') ?? undefined })
   }
   if (pathname === SYMBOL_SURFACE_ROUTE) return symbolSurface()
   return surfaceForRoute(pathname)

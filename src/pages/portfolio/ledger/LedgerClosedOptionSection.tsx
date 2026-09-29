@@ -34,7 +34,7 @@ import { ExecSourceBadge } from './ExecSourceBadge'
 import { LedgerOptActionButtons } from './LedgerOptActionButtons'
 import { sideLabel } from './ledgerOptSideLabel'
 import { LedgerStgInsCell } from './LedgerStgInsCell'
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { LedgerPaginationBar } from './LedgerPaginationBar'
 import { LedgerPanelBar } from './LedgerPanelBar'
 import { ledgerDetailsSubject } from './ledgerDetailsSubject'
@@ -148,7 +148,7 @@ export function LedgerClosedOptionSection({
             <DenseTableHead {...sortHeadProps('trade_date', 'Sort by Trade date')}>
               Trade date{sortMark('trade_date')}
             </DenseTableHead>
-            <DenseTableHead className={closedOptHeadPrimary}>Instance</DenseTableHead>
+            <DenseTableHead className={closedOptHeadPrimary}>Trade</DenseTableHead>
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
@@ -244,7 +244,7 @@ export function LedgerClosedOptionSection({
                       return ids.length === 0
                         ? '—'
                         : ids.map(id => (
-                          <InstanceRef key={id} id={id} list={closedInstanceIds} from="Ledger · closed contracts" />
+                          <TradeRef key={id} id={id} list={closedInstanceIds} from="Ledger · closed contracts" />
                         ))
                     })()}
                   </span>

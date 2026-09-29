@@ -1,5 +1,5 @@
 /**
- * Review · Single trade — one closed trade against the path it actually traded.
+ * Review · Trade review — one closed trade against the path it actually traded.
  *
  * The design's argument is a distance measured twice: what I did against what
  * my plan said is discipline, and what my plan said against the best the trade
@@ -41,7 +41,7 @@ import { SourcesPanel, TagsPanel, TimelinePanel, VerdictPanel } from './TradeFit
 import { counterfactuals, derivedTags, sources, timeline } from './tradeFitModel'
 
 const PAGE_LEAD =
-  'One instance — every leg on one line, rolls as seams, open ones as an interim read — against the path it actually traded: what I did, what the position was worth on every session it was held, and the best and worst that path ever offered. The distance to my plan would be discipline — and the plan is the one thing not recorded.'
+  'One trade — every leg on one line, rolls as seams, open ones as an interim read — against the path it actually traded: what I did, what the position was worth on every session it was held, and the best and worst that path ever offered. The distance to my plan would be discipline — and the plan is the one thing not recorded.'
 
 export default function ReviewFitPage() {
   const [params, setParams] = useSearchParams()
@@ -69,7 +69,7 @@ export default function ReviewFitPage() {
   )
   const picked = useMemo(
     () =>
-      (wantedInst ? trades.find((t) => t.instanceId === Number(wantedInst)) : null) ??
+      (wantedInst ? trades.find((t) => t.tradeId === Number(wantedInst)) : null) ??
       (wanted ? trades.find((t) => t.contractKey === wanted || t.legs.some((l) => l.contractKey === wanted)) : null) ??
       walk.trades[0] ??
       trades[0] ??
@@ -88,9 +88,9 @@ export default function ReviewFitPage() {
   const instancesQ = useStrategyInstances()
   const structureOf = useCallback(
     (x: ReviewInstance) =>
-      x.instanceId == null
+      x.tradeId == null
         ? null
-        : (instancesQ.data?.items.find((i) => i.strategy_instance_id === x.instanceId)?.strategy_structure_name ?? null),
+        : (instancesQ.data?.items.find((i) => i.strategy_instance_id === x.tradeId)?.strategy_structure_name ?? null),
     [instancesQ.data],
   )
   // Keep the walk's context (`in` · `list`) while moving through it.
@@ -99,23 +99,23 @@ export default function ReviewFitPage() {
       const out = new URLSearchParams()
       if (prev.get('in')) out.set('in', prev.get('in') as string)
       if (prev.get('list')) out.set('list', prev.get('list') as string)
-      if (t.instanceId != null) out.set('t', `#${t.instanceId}`)
+      if (t.tradeId != null) out.set('t', `#${t.tradeId}`)
       else out.set('trade', t.contractKey)
       return out
     })
 
-  const review = picked?.instanceId != null ? reviews.byInstance.get(picked.instanceId) : undefined
+  const review = picked?.tradeId != null ? reviews.byInstance.get(picked.tradeId) : undefined
   const state = picked ? reviewState(picked, review) : null
   const writeReview = (patch: { tags_added?: string[]; tags_dropped?: string[]; reviewed?: boolean }, then?: () => void) => {
-    if (picked?.instanceId == null) return
-    saveReview.mutate({ instanceId: picked.instanceId, patch }, { onSuccess: () => then?.() })
+    if (picked?.tradeId == null) return
+    saveReview.mutate({ instanceId: picked.tradeId, patch }, { onSuccess: () => then?.() })
   }
   const confirmAndNext = () =>
     writeReview({ reviewed: true }, () => {
       // The next trade still waiting after this one, in the walk's order.
       const i = walk.trades.findIndex((t) => t.contractKey === picked?.contractKey)
       const next = [...walk.trades.slice(i + 1), ...walk.trades.slice(0, Math.max(0, i))].find(
-        (t) => !t.open && t.instanceId != null && !reviews.byInstance.get(t.instanceId)?.reviewed,
+        (t) => !t.open && t.tradeId != null && !reviews.byInstance.get(t.tradeId)?.reviewed,
       )
       if (next) pick(next)
     })
@@ -154,12 +154,12 @@ export default function ReviewFitPage() {
     <PageShell padding="compact" className="space-y-3">
       {/* §16.10: the lead behind ⓘ, the trade on screen as meta, the Queue and Habits as the head's doors. */}
       <PageHead
-        title="Single trade"
+        title="Trade review"
         info={PAGE_LEAD}
         meta={
           trade ? (
             <span className={positionsUi.mono}>
-              {trade.instanceId != null ? `#${trade.instanceId} · ` : ''}
+              {trade.tradeId != null ? `#${trade.tradeId} · ` : ''}
               {trade.label} · {trade.open ? 'open' : trade.closedOn ? fmtIsoDateToken(trade.closedOn) : '—'}
             </span>
           ) : undefined
@@ -184,7 +184,7 @@ export default function ReviewFitPage() {
         onPick={(t) => pick(t as ReviewInstance)}
         walk={walk.trades}
         walkLabel={walk.label}
-        leading={trade?.instanceId != null ? <TradeFaceSwitch instanceId={trade.instanceId} side="review" /> : null}
+        leading={trade?.tradeId != null ? <TradeFaceSwitch tradeId={trade.tradeId} side="review" /> : null}
         trailing={
           state ? (
             <>
@@ -280,8 +280,8 @@ export default function ReviewFitPage() {
                 dropped={review?.tags_dropped ?? []}
                 reviewed={Boolean(review?.reviewed)}
                 confirmBlocked={
-                  trade.instanceId == null
-                    ? 'Booked to no instance — a review is kept per instance.'
+                  trade.tradeId == null
+                    ? 'Booked to no trade — a review is kept per trade.'
                     : trade.open
                       ? 'Still open — an interim read cannot be confirmed.'
                       : reviews.isError

@@ -1,5 +1,5 @@
 /**
- * Trade › Rules — what the page is looking at, and the way back (design Rev .101).
+ * Trading › Rules — what the page is looking at, and the way back (design Rev .101).
  *
  * A focus is a pick on the chain, a symbol, or both. The symbol is not a fifth
  * link in the chain: it cuts across it — every rule that can act on a ticker,

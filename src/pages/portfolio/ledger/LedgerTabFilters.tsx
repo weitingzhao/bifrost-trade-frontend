@@ -52,7 +52,7 @@ export type LedgerTabFilterProps = {
 }
 
 const VIEW_HINT = {
-  strategy: 'three levels: opportunity → instance → contract',
+  strategy: 'three levels: opportunity → trade → contract',
   instance: 'row actions write to the ledger only',
   options: 'both sides of a closed contract on one row · the fills are below',
   shares: 'stocks, fixed income, cash-like and combos share one table',
@@ -258,12 +258,12 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
       {showInstance && (
         <>
           <SubChips<InstanceSubTab>
-            label="Instance"
+            label="Trade"
             value={instanceSubTab}
             onChange={setInstanceSubTab}
             chips={[
-              countChip('with_instance', 'With instance', instanceGroupsWithCount),
-              countChip('no_instance', 'No instance', noInstanceOptGroupsLength),
+              countChip('with_instance', 'With trade', instanceGroupsWithCount),
+              countChip('no_instance', 'No trade', noInstanceOptGroupsLength),
               countChip('contains_open', 'Contains open', containsOpenCount),
             ]}
           />
@@ -310,16 +310,16 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
                   ))}
                 </div>
               </Control>
-              <Control label="Instance">
+              <Control label="Trade">
                 <SegmentControl
                   size="xs"
-                  ariaLabel="Filter contracts by strategy instance status"
+                  ariaLabel="Filter contracts by trade status"
                   value={optInstanceFilter}
                   onChange={v => setOptInstanceFilter(v as OptInstanceFilter)}
                   options={[
                     { value: 'all', label: 'All' },
-                    { value: 'has_instance', label: 'Has instance' },
-                    { value: 'no_instance', label: 'No instance' },
+                    { value: 'has_instance', label: 'Has trade' },
+                    { value: 'no_instance', label: 'No trade' },
                     { value: 'mixed', label: 'Mixed' },
                   ]}
                 />

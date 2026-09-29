@@ -378,10 +378,10 @@ export function PlanForm({
               read through the opportunity — so the line says exactly that. */}
           <p className="-mt-1.5 text-dense-label text-muted-foreground text-pretty">
             {structureId
-              ? `Trade › Rules structure · ${structureLabel.trim()} — linked by id. No opportunity is named here, so the plan card reads it as a hand plan until one is.`
+              ? `Trading › Rules structure · ${structureLabel.trim()} — linked by id. No opportunity is named here, so the plan card reads it as a hand plan until one is.`
               : structureLabel.trim()
-                ? 'Hand label — no structure in Trade › Rules has this name. Tracked all the same.'
-                : 'Pick a structure from Trade › Rules, or type your own label.'}
+                ? 'Hand label — no structure in Trading › Rules has this name. Tracked all the same.'
+                : 'Pick a structure from Trading › Rules, or type your own label.'}
           </p>
 
           <div className="flex">

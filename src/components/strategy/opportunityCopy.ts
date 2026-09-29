@@ -1,7 +1,7 @@
 /**
  * A copy of an opportunity, as the form takes it.
  *
- * Shared since 2026-09-18: Trade › Rules duplicates one from the chain and
+ * Shared since 2026-09-18: Trading › Rules duplicates one from the chain and
  * Strategy › Opportunity has always had a Copy row action. Both go through this
  * so a copy made from either side is the same opportunity — the same structure,
  * the same gate, the same scope and the same entry conditions, under a name

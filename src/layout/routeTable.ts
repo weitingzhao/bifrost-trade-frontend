@@ -227,15 +227,16 @@ export const ROUTES: readonly RouteEntry[] = [
     // same level twice.
     label: 'Review',
     crumbs: [],
-    // Rev .110: instances, review lamps, rows open Single trade in the queue's order.
+    // Rev .110: instances, review lamps, rows open Trade review in the queue's order.
     design: { state: 'reviewing', rev: '2026-09-29.110', note: DESIGN_NOTES['/review'] },
   },
   {
-    path: '/review/fit',
-    label: 'Single trade',
+    path: '/review/trade',
+    label: 'Trade review',
     crumbs: REVIEW,
-    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
-    design: { state: 'reviewing', rev: '2026-09-25.90', note: DESIGN_NOTES['/review/fit'] },
+    // Rev .110: the Trade's Review face (walk · lamp · Confirm review);
+    // Rev .111: /review/fit → /review/trade, Single trade → Trade review.
+    design: { state: 'reviewing', rev: '2026-09-29.111', note: DESIGN_NOTES['/review/trade'] },
   },
   {
     path: '/review/habits',
@@ -343,7 +344,7 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   {
     path: '/portfolio/ledger',
-    label: 'Trade Ledger',
+    label: 'Ledger',
     crumbs: PORTFOLIO,
     symbolScope: true,
     design: {
@@ -383,15 +384,16 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/trade/desk',
     // A layer's own page carries no trail and the layer's name (§5a.1 ·
     // .23): the heading *is* this page, so "Trade › Trade" would name the
-    // same level twice.
-    label: 'Trade',
+    // same level twice. Rev .111: Trading, the layer; Trade is the entity.
+    label: 'Trading',
     crumbs: [],
     accountScope: true,
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
       // Rev .104: dimensions dictionary read-only, ＋ code gone (V5); walk rev moved with Package .33.
-      rev: '2026-09-29.104',
+      // Rev .111: Trading desk / Trading (the layer's name), Instances → Trades.
+      rev: '2026-09-29.111',
       note: DESIGN_NOTES['/trade/desk'],
     },
   },
@@ -410,14 +412,14 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
-    // Rev .103: the Instance surface's page — top level, in no menu, reached
-    // only from a #NNN (like an objective's detail).
-    path: '/instance/:id',
-    label: 'Instance',
+    // Rev .103: the Trade surface's page — top level, in no menu, reached
+    // only from a #NNN (like an objective's detail). Rev .111: was /instance/:id.
+    path: '/trade/:id',
+    label: 'Trade',
     design: {
       state: 'reviewing',
-      rev: '2026-09-28.103',
-      note: DESIGN_NOTES['/instance/:id'],
+      rev: '2026-09-29.111',
+      note: DESIGN_NOTES['/trade/:id'],
     },
   },
   {
@@ -434,7 +436,7 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   {
     // Rev .109: moved from Trade — written trading principles the daemon does
-    // not read, kept beside Playbook stats rather than beside Trade › Rules.
+    // not read, kept beside Playbook stats rather than beside Trading › Rules.
     path: '/review/playbook',
     label: 'Playbook',
     crumbs: REVIEW,

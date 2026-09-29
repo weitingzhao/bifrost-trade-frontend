@@ -123,7 +123,7 @@ export const KIT_PRIMITIVES: readonly KitPrimitive[] = [
     kitPath: 'src/finance/LegStack.tsx',
     signature:
       'LegStack({ legs: Array<{ side, qty, occ?, symbol?, price }>, multiplier?: 100, net?: { label, value } })',
-    note: 'The ticket view Plans, Desk cards, the strike-ladder builder and Instance detail would all share. Its net line is a PnlValue.',
+    note: 'The ticket view Plans, Desk cards, the strike-ladder builder and Trade detail would all share. Its net line is a PnlValue.',
     here: null,
   },
   {
@@ -437,7 +437,7 @@ export const KIT_ORDER_STATES = [
   { state: 'intended', variant: 'info', who: 'you confirmed the intent' },
   { state: 'placed_by_hand', variant: 'info', who: 'you, in TWS' },
   { state: 'filled', variant: 'success', who: 'the Flex import' },
-  { state: 'linked', variant: 'success', who: 'fill ↔ plan ↔ instance' },
+  { state: 'linked', variant: 'success', who: 'fill ↔ plan ↔ trade' },
   { state: 'orphan', variant: 'neutral', who: 'a fill with no plan' },
   { state: 'expired', variant: 'neutral', who: 'the intent lapsed' },
 ] as const

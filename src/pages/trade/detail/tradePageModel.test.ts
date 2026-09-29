@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
-import { execGroupsOf, legsOf } from '@/utils/instanceRecord/instanceRecordModel'
-import { fillRows, ledgerRows, sourceLabel, timelineRows } from './instancePageModel'
+import { execGroupsOf, legsOf } from '@/utils/tradeRecord/tradeRecordModel'
+import { fillRows, ledgerRows, sourceLabel, timelineRows } from './tradePageModel'
 
 // Invented fixtures — never copied from a live book.
 const A = 'ZZTM  270115C00100000|OPT|20270115|100|C'

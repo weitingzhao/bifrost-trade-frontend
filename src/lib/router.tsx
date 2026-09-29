@@ -89,6 +89,15 @@ export const INDEX_ROUTE = '/home'
 /** `/strategy/instances/142` — retired, but the id it carries still means something. */
 const INSTANCE_PATH = '/strategy/instances/:instanceId'
 
+/** `/instance/142` → `/trade/142` (Rev .111): the id, the query and the hash travel. */
+const TRADE_ALIAS_PATH = '/instance/:id'
+
+function TradeAliasRedirect() {
+  const { id } = useParams()
+  const { search, hash } = useLocation()
+  return <Navigate to={`/trade/${id ?? ''}${search}${hash}`} replace />
+}
+
 export function redirectRoutes(): RouteObject[] {
   return REDIRECT_ROUTES.map((entry) => ({
     path: entry.path.slice(1),
@@ -98,6 +107,8 @@ export function redirectRoutes(): RouteObject[] {
       ) : entry.path === INSTANCE_PATH ? (
         // A forward whose target depends on the path: the id travels.
         <InstanceRedirect />
+      ) : entry.path === TRADE_ALIAS_PATH ? (
+        <TradeAliasRedirect />
       ) : entry.path === EXPLORER_PATH ? (
         // And one whose target depends on the query: the tab decides.
         <ExplorerRedirect />
@@ -209,7 +220,7 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/review/queue/ReviewQueuePage')),
       },
       {
-        path: 'review/fit',
+        path: 'review/trade',
         lazy: lazyPage(() => import('@/pages/review/fit/ReviewFitPage')),
       },
       {
@@ -382,8 +393,10 @@ export const router = withPageTransitions(createBrowserRouter([
       },
       {
         // Rev .103: top level, outside every menu — reached only from a #NNN.
-        path: 'instance/:id',
-        lazy: lazyPage(() => import('@/pages/trade/instance/InstancePage')),
+        // Rev .111: /trade/:id (Instance → Trade); the static /trade/* pages
+        // outrank it, and a non-numeric id reads as a missing trade.
+        path: 'trade/:id',
+        lazy: lazyPage(() => import('@/pages/trade/detail/TradePage')),
       },
       {
         path: 'research/loop/objectives/:objectiveId',

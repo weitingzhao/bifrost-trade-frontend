@@ -3,16 +3,16 @@ import type { ReviewTrade } from '@/utils/reviewTrades'
 import { filterTrades, groupTrades, outcomeCount, stepTrade } from './tradePickerModel'
 
 const t = (key: string, over: Partial<ReviewTrade>): ReviewTrade =>
-  ({ contractKey: key, label: key, underlying: 'AAA', expiry: '2026-01-16', realised: 10, play: null, instanceId: null, ...over }) as ReviewTrade
+  ({ contractKey: key, label: key, underlying: 'AAA', expiry: '2026-01-16', realised: 10, play: null, tradeId: null, ...over }) as ReviewTrade
 
 const trades = [
   t('o', { underlying: 'CCC', realised: 3, exitKind: 'open' }),
-  t('a', { underlying: 'AAA', expiry: '2026-02-20', realised: 50, instanceId: 11, play: 'Wheel' }),
+  t('a', { underlying: 'AAA', expiry: '2026-02-20', realised: 50, tradeId: 11, play: 'Wheel' }),
   t('b', { underlying: 'BBB', expiry: '2026-01-16', realised: -20 }),
   t('c', { underlying: 'AAA', expiry: '2026-01-09', realised: 5 }),
 ]
 
-describe('Single trade picker (Rev .104)', () => {
+describe('Trade review picker (Rev .104)', () => {
   it('filters by outcome and search, and leaves Broke plan unknowable rather than zero', () => {
     expect(filterTrades(trades, 'open', '').map((x) => x.contractKey)).toEqual(['o'])
     expect(filterTrades(trades, 'won', '').map((x) => x.contractKey)).toEqual(['a', 'c'])

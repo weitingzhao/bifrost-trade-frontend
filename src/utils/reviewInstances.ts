@@ -1,5 +1,5 @@
 /**
- * Single trade reviews an **instance**, not a contract (design Rev .104,
+ * Trade review reviews an **instance**, not a contract (design Rev .104,
  * Owner 2026-09-29): every leg the instance traded is one P&L line, a roll is
  * a seam in it, and an instance still open is reviewable as an interim read.
  *
@@ -59,7 +59,7 @@ export interface ReviewLeg {
 }
 
 export interface ReviewInstance extends ReviewTrade {
-  instanceId: number | null
+  tradeId: number | null
   open: boolean
   legs: ReviewLeg[]
   /** Legs opened once an earlier leg was flat — each one a roll seam. */
@@ -147,7 +147,7 @@ export function instanceOf(
     right: p.right,
     fills,
     play,
-    instanceId,
+    tradeId: instanceId,
     openedOn,
     closedOn,
     daysHeld: openedOn ? daysBetween(openedOn, end) : null,
@@ -201,6 +201,6 @@ export function buildReviewInstances(executions: readonly Execution[], today: st
     (a, b) =>
       Number(b.open) - Number(a.open) ||
       (b.closedOn ?? b.openedOn ?? '').localeCompare(a.closedOn ?? a.openedOn ?? '') ||
-      (b.instanceId ?? 0) - (a.instanceId ?? 0),
+      (b.tradeId ?? 0) - (a.tradeId ?? 0),
   )
 }

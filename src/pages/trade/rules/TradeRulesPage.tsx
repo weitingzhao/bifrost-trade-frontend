@@ -1,5 +1,5 @@
 /**
- * Trade › Rules — the rulebook as one chain (design Rev .101, `Trade Rules.dc.html`).
+ * Trading › Rules — the rulebook as one chain (design Rev .101, `Trade Rules.dc.html`).
  *
  * Structure → Opportunity → Allocation · gate → Instance, read left to right.
  * Pick a card and the four columns fold into a sticky lineage bar with the
@@ -32,7 +32,7 @@ import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { InstanceListFilters } from '@/components/strategy/InstanceListFilters'
 import { InstancesGroupedTable } from '@/components/strategy/InstancesGroupedTable'
-import { useInstanceBook } from '@/hooks/useInstanceBook'
+import { useTradeBook } from '@/hooks/useTradeBook'
 import { createCollapsedGroupsState } from '@/utils/instanceGroupCollapse'
 import type { InstanceListFilterValues } from '@/components/strategy/InstanceListFilters'
 import { fetchOpportunityDetail } from '@/api/strategy'
@@ -46,10 +46,10 @@ import { NO_SHEET, RulesSheets, type RulesSheet } from './RulesSheets'
 import { RulesReadings } from './RulesReadings'
 import { LineageBar, type Crumb } from './LineageBar'
 import { RulesRecord } from './RulesRecord'
-import { InstanceRecord, type InstanceRecordAction } from '@/components/instanceRecord/InstanceRecord'
+import { TradeRecord, type TradeRecordAction } from '@/components/tradeRecord/TradeRecord'
 import { buildRecord, type RecordAction } from './rulesRecordModel'
 import { instanceFaceOf } from './rulesInstanceFace'
-import { openInstancePair, useOpenInstance } from '@/layout/instanceGo'
+import { openTradePair, useOpenTrade } from '@/layout/tradeGo'
 import { buildChain, orphanGates, orphanOpportunities, visibleChain, type ChainSelection } from './rulesChain'
 import {
   NO_FOCUS,
@@ -68,7 +68,7 @@ import {
 } from './rulesFocus'
 
 const PAGE_LEAD =
-  'One chain, read left to right: a Structure is a shape, an Opportunity is when to use it, an Allocation is what the daemon is told to run, an Instance is one running. Pick a card and the chain folds into its lineage with the record below; pick a ticker for every rule that can act on it and everything that ran on it. Esc or ⌥← walks back. A gate is a limit whose scope is an allocation — defined here, its breaches land on Risk › Limits.'
+  'One chain, read left to right: a Structure is a shape, an Opportunity is when to use it, an Allocation is what the daemon is told to run, a Trade is one running. Pick a card and the chain folds into its lineage with the record below; pick a ticker for every rule that can act on it and everything that ran on it. Esc or ⌥← walks back. A gate is a limit whose scope is an allocation — defined here, its breaches land on Risk › Limits.'
 
 /** What each column's ＋ New opens. */
 const NEW_SHEET: Record<string, RulesSheet> = {
@@ -142,7 +142,7 @@ export default function TradeRulesPage() {
   /** The list an instance was opened from, so the record can step `[ ]` through it. */
   const [siblings, setSiblings] = useState<{ ids: number[]; from: string } | null>(null)
   /** The side sheet: an instance opened over the list, which stays live behind it. */
-  const openInstance = useOpenInstance()
+  const openInstance = useOpenTrade()
 
   // ── The path ────────────────────────────────────────────────────────────
   const [trail, setTrail] = useState<string[]>([])
@@ -357,7 +357,7 @@ export default function TradeRulesPage() {
   }
 
   /** The rulebook's own write on an instance — the sheet adds it to the face's footer. */
-  const instanceDelete = (id: number): InstanceRecordAction[] => {
+  const instanceDelete = (id: number): TradeRecordAction[] => {
     const reading = data.instances.find((r) => r.id === id)
     const rec = rawInstances.find((r) => r.strategy_instance_id === id)
     const blocked = (reading?.fills ?? 0) > 0
@@ -368,19 +368,19 @@ export default function TradeRulesPage() {
           if (!blocked && rec) setSheet({ kind: 'instanceDelete', instance: rec })
         },
         disabled: blocked || !rec,
-        title: blocked ? 'Unlink its fills on the Trade Ledger first' : 'Nothing references it',
+        title: blocked ? 'Unlink its fills on the Ledger first' : 'Nothing references it',
       },
     ]
   }
   /** The inline record's header: the face's ways out, then the write. */
-  const instanceActions = (id: number): InstanceRecordAction[] => {
+  const instanceActions = (id: number): TradeRecordAction[] => {
     const reading = data.instances.find((r) => r.id === id)
     return [
       reading?.closed
-        ? { label: 'Review this trade →', to: '/review/fit', title: 'Review › Single trade' }
+        ? { label: 'Review this trade →', to: '/review/trade', title: 'Review › Trade review' }
         : { label: 'Position →', to: `/portfolio/positions?inst=${id}`, title: 'Portfolio › Positions — its open legs' },
       ...((reading?.fills ?? 0) > 0
-        ? [{ label: 'Ledger →', to: `/portfolio/ledger?inst=${id}`, title: `Portfolio › Trade Ledger — every fill booked to #${id}` }]
+        ? [{ label: 'Ledger →', to: `/portfolio/ledger?inst=${id}`, title: `Portfolio › Ledger — every fill booked to #${id}` }]
         : []),
       ...instanceDelete(id),
     ]
@@ -414,7 +414,7 @@ export default function TradeRulesPage() {
     return rawInstances.filter((i) => ids.has(i.strategy_instance_id))
   }, [record?.scopedIds, rawInstances])
 
-  const book = useInstanceBook({
+  const book = useTradeBook({
     instances: scopedInstances,
     opportunities: data.opportunities,
     values: instanceFilters,
@@ -426,7 +426,7 @@ export default function TradeRulesPage() {
     let n = ''
     if (f.pick) {
       const id = f.pick.id
-      if (id == null) n = 'Every instance'
+      if (id == null) n = 'Every trade'
       else if (f.pick.kind === 'opportunity') n = data.opportunities.find((o) => o.strategy_opportunity_id === id)?.name ?? `opportunity ${id}`
       else if (f.pick.kind === 'structure') n = data.structures.find((s) => s.strategy_structure_id === id)?.name ?? `structure ${id}`
       else if (f.pick.kind === 'allocation') n = data.allocations.find((a) => a.strategy_allocation_id === id)?.name ?? `allocation ${id}`
@@ -556,7 +556,7 @@ export default function TradeRulesPage() {
         <>
           {instancesEmpty ? (
             <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-warning/40 bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-              <span className="font-semibold text-warning">The strategy service returned no instances.</span>
+              <span className="font-semibold text-warning">The strategy service returned no trades.</span>
               The rulebook has {data.opportunities.length} opportunities, so this is the service answering empty
               rather than a chain with nothing running — it does that now and then and answers in full a moment later.
               <button type="button" className={positionsUi.btn} onClick={refetch}>
@@ -615,7 +615,7 @@ export default function TradeRulesPage() {
                     const inst = rawInstances.find((r) => r.strategy_instance_id === sel.id)
                     return inst ? (
                       <div className="border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3.5 py-3">
-                        <InstanceRecord key={inst.strategy_instance_id} instance={inst} mode="inline" {...instanceFaceOf(data, inst.strategy_instance_id)} />
+                        <TradeRecord key={inst.strategy_instance_id} instance={inst} mode="inline" {...instanceFaceOf(data, inst.strategy_instance_id)} />
                       </div>
                     ) : null
                   })()
@@ -684,7 +684,7 @@ export default function TradeRulesPage() {
                           return
                         }
                         setCompareWith(null)
-                        openInstancePair(openInstance, compareWith, id, 'Rules')
+                        openTradePair(openInstance, compareWith, id, 'Rules')
                       }}
                       activeDetailId={null}
                       compareId={compareWith}
@@ -697,7 +697,7 @@ export default function TradeRulesPage() {
                     {compareWith != null ? (
                       <p className="m-0 flex flex-wrap items-center gap-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
                         <span className="font-semibold text-secondary-foreground">#{compareWith} is held for comparison.</span>
-                        Pick a second instance’s ⇄ to open the two side by side — one in the panel, one floating.
+                        Pick a second trade’s ⇄ to open the two side by side — one in the panel, one floating.
                         <button type="button" className={positionsUi.btn} onClick={() => setCompareWith(null)}>
                           Drop it
                         </button>
@@ -723,8 +723,8 @@ export default function TradeRulesPage() {
             <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing writes from a click on
             this page. Edit and Duplicate open the Strategy pages&rsquo; own forms, so a rule changed here and one
             changed there are the same write with the same validation. Activating an allocation is what the daemon
-            reads on its next start, which is why it sits behind a form with a confirm. An instance the fills have
-            claimed cannot be deleted at all — unlink them on the Trade Ledger first, or the fills are orphaned. None
+            reads on its next start, which is why it sits behind a form with a confirm. A trade the fills have
+            claimed cannot be deleted at all — unlink them on the Ledger first, or the fills are orphaned. None
             of this is an order: D10 governs the desk, not the rulebook.
           </p>
         </>

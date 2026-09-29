@@ -24,7 +24,7 @@ const out = resolve('src/lib/design/designRoutes.generated.ts')
 const inksOut = resolve('src/lib/design/designInks.generated.ts')
 
 /** The six `DIRECTION` keys the registry mirrors from `@bifrost/ui` (§8, Rev .31). */
-const INK_KEYS = ['profit', 'loss', 'unrealized', 'ticker', 'contract', 'instance']
+const INK_KEYS = ['profit', 'loss', 'unrealized', 'ticker', 'contract', 'trade']
 
 /**
  * The registry's colour mirror, per theme: `DIRECTION` plus the accent.
@@ -43,9 +43,6 @@ export function inksOf(R) {
     if (!dir || !accent) throw new Error(`shell-registry.js: DIRECTION.${th} or ACCENT.${th} is missing.`)
     const row = { accent }
     for (const k of INK_KEYS) row[k] = dir[k]
-    // Rev .111 renamed the registry's `instance` ink to `trade` (same values);
-    // the app's mirror keeps its key until its own rename lands.
-    if (row.instance == null && dir.trade != null) row.instance = dir.trade
     for (const [k, v] of Object.entries(row)) {
       if (!/^#[0-9a-f]{6}$/i.test(String(v))) throw new Error(`shell-registry.js: ${th}.${k} is ${JSON.stringify(v)}, not a hex.`)
     }

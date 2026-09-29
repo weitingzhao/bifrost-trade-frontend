@@ -2,7 +2,7 @@
  * The habits, and the mark paths they are read from.
  *
  * Kept apart from `useReviewTrades` because the paths are 46 requests: the
- * queue and Single trade have no use for them, and a page should not pay for a
+ * queue and Trade review have no use for them, and a page should not pay for a
  * read it does not make. Habits and Rule proposals both do, and they share one
  * cache entry — and since 2026-09-26 the same holds for the IV-rank history.
  */

@@ -124,7 +124,9 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     items: [route('Objectives', '/review/objectives', Target), ...Object.values(MARKET_PAGES), COPILOT_PAGES.brief],
   },
   {
-    label: 'Trade',
+    // Rev .111: the layer is Trading — Trade is the entity (one position from
+    // open to flat), and a menu of the same name would read as its list.
+    label: 'Trading',
     icon: Briefcase,
     // The heading is the Desk (§5a.1). Rev .109: four rows — Plans first,
     // because a trade starts as a plan, Expiry last, because that is where one
@@ -154,7 +156,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
         route('Outcome', '/portfolio/outcome', Target),
       ]),
       home('Accounts', '/portfolio/accounts', LayoutDashboard, [
-        route('Trade Ledger', '/portfolio/ledger', List),
+        route('Ledger', '/portfolio/ledger', List),
         route('Transfer & Pay', '/portfolio/transfer', ArrowLeftRight),
         route('Corporate Actions', '/portfolio/corporate-actions', Split),
       ]),
@@ -188,7 +190,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // and its four pages come up a level with it.
     to: '/review',
     items: [
-      route('Single trade', '/review/fit', Target),
+      route('Trade review', '/review/trade', Target),
       route('Habits', '/review/habits', Activity),
       route('Playbook', '/review/playbook', BookOpen),
       // One inbox, not two (design Rev 2026-09-22.2, §5a.8). Decision Inbox

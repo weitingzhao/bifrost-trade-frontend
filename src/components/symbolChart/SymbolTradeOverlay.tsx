@@ -195,10 +195,10 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
           (t.joints.length ? ` · rolled ${t.joints.length}×` : '') +
           ` · ${t.fills} fill${t.fills > 1 ? 's' : ''}` +
           (t.id == null
-            ? ' · no instance claims these fills — click → Ledger'
+            ? ' · no trade claims these fills — click → Ledger'
             : opens(t.id)
               ? ' · click → its record'
-              : ` · #${t.id} is not in the instance book — nothing to open`)
+              : ` · #${t.id} is not in the trade book — nothing to open`)
         return (
           <g
             key={t.key}

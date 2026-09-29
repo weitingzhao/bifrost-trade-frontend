@@ -1,7 +1,7 @@
 /**
  * The work side of the ledger: what came back, and which fills have no home.
  *
- * The Trade Ledger is the record — every fill, reconciled, for as long as the
+ * The Ledger is the record — every fill, reconciled, for as long as the
  * book has existed. This is the desk's window on the same fills: the last few
  * sessions, what each one is linked to, and the ones nothing claims. One
  * source, two questions.
@@ -228,8 +228,8 @@ function execKey(e: Execution): string {
  */
 export function orphanReason(e: Execution, planSymbols: ReadonlySet<string>): string {
   const symbol = extractUnderlyingRootSymbol(e.symbol)
-  if (planSymbols.has(symbol)) return `no instance · a plan exists on ${symbol}`
-  return `no instance · no plan on ${symbol || 'this symbol'}`
+  if (planSymbols.has(symbol)) return `no trade · a plan exists on ${symbol}`
+  return `no trade · no plan on ${symbol || 'this symbol'}`
 }
 
 export function buildFillRows(

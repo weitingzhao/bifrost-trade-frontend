@@ -16,10 +16,10 @@ const TONE: Record<InstanceConsistencyState, string> = {
 }
 
 const TITLE: Record<InstanceConsistencyState, string> = {
-  same: 'All fills share one strategy instance',
-  multiple: 'All fills have an instance; more than one distinct instance ID',
-  mixed: 'Some fills have an instance and some do not',
-  none: 'No fill in this group has a strategy instance',
+  same: 'All fills share one trade',
+  multiple: 'All fills have a trade; more than one distinct trade ID',
+  mixed: 'Some fills have a trade and some do not',
+  none: 'No fill in this group has a trade',
 }
 
 export function LedgerConsistencyTag({

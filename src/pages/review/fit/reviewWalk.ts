@@ -1,5 +1,5 @@
 /**
- * Which trades Single trade's ‹ › walks, and where one stands (design Rev .110).
+ * Which trades Trade review's ‹ › walks, and where one stands (design Rev .110).
  *
  *   arrived from Queue (`in=list&list=…`)  Queue's row order, as it was
  *   arrived for one trade (`?t=` / token / Facts)  every instance
@@ -16,7 +16,7 @@ export function reviewState(t: ReviewInstance, review: TradeReview | undefined):
 }
 
 export function isAwaiting(t: ReviewInstance, reviews: ReadonlyMap<number, TradeReview>): boolean {
-  return !t.open && t.instanceId != null && !reviews.get(t.instanceId)?.reviewed
+  return !t.open && t.tradeId != null && !reviews.get(t.tradeId)?.reviewed
 }
 
 export function reviewWalk(
@@ -25,7 +25,7 @@ export function reviewWalk(
   from: { explicit: boolean; list: string | null },
 ): { trades: ReviewInstance[]; label: string } {
   if (from.list) {
-    const byId = new Map(trades.filter((t) => t.instanceId != null).map((t) => [t.instanceId as number, t]))
+    const byId = new Map(trades.filter((t) => t.tradeId != null).map((t) => [t.tradeId as number, t]))
     const ordered = from.list
       .split(',')
       .map((x) => byId.get(Number(x.replace('#', ''))))

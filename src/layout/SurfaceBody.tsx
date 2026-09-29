@@ -69,7 +69,7 @@ const CopilotThreadBody = lazy(() =>
  * one frame, which is what this used to do.
  */
 export function SurfaceBody({ surface }: { surface: Surface }) {
-  const Page = surface.run || surface.thread || surface.instance != null ? null : surfacePageFor(surface.to)
+  const Page = surface.run || surface.thread || surface.trade != null ? null : surfacePageFor(surface.to)
   // `createElement`, not `<Page />`: the lint rule reads a capitalised local
   // as a component *defined* during render, which loses its state on every
   // pass. These are `lazy()` objects created once at module scope, so the
@@ -95,7 +95,7 @@ export function SurfaceBody({ surface }: { surface: Surface }) {
       <InSurfaceContext.Provider value>
         <Suspense fallback={<SurfaceSkeleton />}>
           <div className={css.arrive}>
-            {surface.instance != null ? (
+            {surface.trade != null ? (
               <InstanceSurfaceView surface={surface} />
             ) : surface.thread ? (
               <CopilotThreadBody />

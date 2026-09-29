@@ -15,7 +15,7 @@ export const DESIGN_INKS = {
     unrealized: "#fb923c",
     ticker: "#a3e635",
     contract: "#7dd3fc",
-    instance: "#c084fc",
+    trade: "#c084fc",
   },
   light: {
     accent: "#6d28d9",
@@ -24,7 +24,7 @@ export const DESIGN_INKS = {
     unrealized: "#9a3412",
     ticker: "#3f6212",
     contract: "#075985",
-    instance: "#6b21a8",
+    trade: "#6b21a8",
   },
 } as const
 

@@ -84,10 +84,10 @@ function InstanceIcon({ fill }: { fill: 'none' | 'all' | 'mixed' }) {
         : 'text-muted-foreground/70'
   const title =
     fill === 'all'
-      ? 'All matched executions have a strategy instance'
+      ? 'All matched executions have a trade'
       : fill === 'mixed'
-        ? 'Mixed strategy instance on matched executions'
-        : 'No strategy instance on matched executions'
+        ? 'Mixed trade on matched executions'
+        : 'No trade on matched executions'
   return (
     <span className={cn('inline-flex mr-1 align-middle', colorClass)} title={title} role="img" aria-label={title}>
       <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth="2">

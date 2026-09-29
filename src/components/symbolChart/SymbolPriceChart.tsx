@@ -58,7 +58,7 @@ import {
 } from '@/components/symbolChart/symbolPriceModel'
 import { SymbolTradeOverlay } from '@/components/symbolChart/SymbolTradeOverlay'
 import { SymbolChartPointer } from '@/components/symbolChart/SymbolChartPointer'
-import { useOpenInstance } from '@/layout/instanceGo'
+import { useOpenTrade } from '@/layout/tradeGo'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
 import { useInstanceIndex } from '@/hooks/useInstanceIndex'
 
@@ -259,7 +259,7 @@ export function SymbolPriceChart({
   )
   const holding = useMemo(() => holdingFor(legs, tracks), [legs, tracks])
   const known = useInstanceIndex()
-  const openInstance = useOpenInstance()
+  const openInstance = useOpenTrade()
   const trackIds = useMemo(
     () => tracks.flatMap((t) => (t.id != null && (known == null || known.has(t.id)) ? [t.id] : [])),
     [tracks, known]
@@ -516,7 +516,7 @@ export function SymbolPriceChart({
             <button
               type="button"
               onClick={() => setTradesOn((v) => !v)}
-              title="Your instances on this symbol, each at its strikes over the days it held them — a roll jumps to its new strike at ↻; click one for its record"
+              title="Your trades on this symbol, each at its strikes over the days it held them — a roll jumps to its new strike at ↻; click one for its record"
               className={cn(
                 'inline-flex h-5 items-center rounded border px-1.5 font-mono text-dense-micro',
                 tradesOn

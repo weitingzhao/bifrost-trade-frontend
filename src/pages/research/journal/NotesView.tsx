@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 import {
   deleteNote,
   fetchNotes,
+  isTradeRef,
   updateNote,
   type JournalNote,
   type NoteRef,
@@ -23,7 +24,7 @@ import { failedDetail } from '@/lib/viewState'
 import { cn } from '@/lib/utils'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { useInstanceIndex } from '@/hooks/useInstanceIndex'
-import { instanceHowFrom, useOpenInstance } from '@/layout/instanceGo'
+import { tradeHowFrom, useOpenTrade } from '@/layout/tradeGo'
 
 const NOTES_KEY = ['research', 'journal', 'notes'] as const
 
@@ -63,11 +64,11 @@ function refTarget(ref: NoteRef): string | null {
 export function InstanceNoteRef({ raw, className }: { raw: string; className: string }) {
   const id = Number(raw.replace(/^#/, ''))
   const known = useInstanceIndex()
-  const open = useOpenInstance()
+  const open = useOpenTrade()
   if (!Number.isFinite(id) || id <= 0) return <span className={className}>{raw}</span>
   if (known && !known.has(id)) {
     return (
-      <Link to={`/portfolio/positions?inst=${id}`} className={className} title={`#${id} is not in the instance book — Positions, where it may still be held`}>
+      <Link to={`/portfolio/positions?inst=${id}`} className={className} title={`#${id} is not in the trade book — Positions, where it may still be held`}>
         #{id}
       </Link>
     )
@@ -77,7 +78,7 @@ export function InstanceNoteRef({ raw, className }: { raw: string; className: st
       type="button"
       className={cn(className, 'cursor-pointer border-0')}
       title={`Open #${id} beside this page · ⇧ in a tab of its own · ⌘ as a page`}
-      onClick={(e) => open(id, { from: 'Journal', ...instanceHowFrom(e) })}
+      onClick={(e) => open(id, { from: 'Journal', ...tradeHowFrom(e) })}
     >
       #{id}
     </button>
@@ -133,9 +134,9 @@ function NoteRow({ note }: { note: JournalNote }) {
           const to = refTarget(r)
           const cls = cn(
             'mat-tag font-mono text-dense-micro',
-            r.type === 'sym' ? 'text-[var(--sk-ticker)]' : r.type === 'inst' ? 'text-[var(--sk-instance)]' : 'text-[var(--sk-accent)]',
+            r.type === 'sym' ? 'text-[var(--sk-ticker)]' : isTradeRef(r) ? 'text-[var(--sk-trade)]' : 'text-[var(--sk-accent)]',
           )
-          if (r.type === 'inst') return <InstanceNoteRef key={`${r.type}|${r.id}`} raw={r.id} className={cls} />
+          if (isTradeRef(r)) return <InstanceNoteRef key={`${r.type}|${r.id}`} raw={r.id} className={cls} />
           return to ? (
             <Link key={`${r.type}|${r.id}`} to={to} className={cls}>
               {r.id}
@@ -281,7 +282,7 @@ export function NotesView() {
               onClick={() => setRefFilter(r)}
               className={cn(
                 'mat-tag font-mono text-dense-micro',
-                r.type === 'sym' ? 'text-[var(--sk-ticker)]' : 'text-[var(--sk-accent)]',
+                r.type === 'sym' ? 'text-[var(--sk-ticker)]' : isTradeRef(r) ? 'text-[var(--sk-trade)]' : 'text-[var(--sk-accent)]',
               )}
               title="Only notes linked to this"
             >

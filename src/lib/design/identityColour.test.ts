@@ -120,7 +120,7 @@ const TOKEN: Record<Ink, string> = {
   unrealized: '--color-unrealized',
   ticker: '--sk-ticker',
   contract: '--sk-contract',
-  instance: '--sk-instance',
+  trade: '--sk-trade',
 }
 const INKS = Object.keys(TOKEN) as Ink[]
 const THEMES = Object.keys(DESIGN_INKS) as Theme[]

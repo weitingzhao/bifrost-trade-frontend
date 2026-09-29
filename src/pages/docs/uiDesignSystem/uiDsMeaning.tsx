@@ -66,7 +66,7 @@ export function DirectionSection() {
 const ENTITIES = [
   { label: 'Symbol / stock', token: '--sk-ticker', sample: 'NVDA · TSLA · BRK.B' },
   { label: 'Option contract, whole', token: '--sk-contract', sample: 'NVDA 250620C140' },
-  { label: 'Strategy instance', token: '--sk-instance', sample: 'CC-NVDA-0620' },
+  { label: 'Trade', token: '--sk-trade', sample: 'CC-NVDA-0620' },
 ] as const
 
 export function EntitySection() {
@@ -74,7 +74,7 @@ export function EntitySection() {
     <DsSection
       n={2}
       title="Entity — one ink per financial entity"
-      lede="A symbol, a contract and a strategy instance each have one ink, the same on every page (§14.4 · §14.8). Identity columns are text or links, never tag pills. A contract is coloured whole; its underlying inside it is not coloured separately. Lime is the ticker's ink and nothing else."
+      lede="A symbol, a contract and a trade each have one ink, the same on every page (§14.4 · §14.8). Identity columns are text or links, never tag pills. A contract is coloured whole; its underlying inside it is not coloured separately. Lime is the ticker's ink and nothing else."
       bodyClassName="flex flex-col gap-3"
     >
       <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2">
@@ -99,7 +99,7 @@ export function EntitySection() {
               <th data-sr-col="text">Placement</th>
               <th data-sr-col="text">Symbol</th>
               <th data-sr-col="text">Contract</th>
-              <th data-sr-col="text">Instance</th>
+              <th data-sr-col="text">Trade</th>
             </tr>
           </thead>
           <tbody>
@@ -134,7 +134,7 @@ export function EntitySection() {
         <span className={EYEBROW}>Identity column — links</span>
         <DenseLinkButton variant="stock" label="NVDA" ariaLabel="Open NVDA" onClick={noop} />
         <DenseLinkButton variant="option" label="NVDA 250620C140" ariaLabel="Open option contract" onClick={noop} />
-        <DenseLinkButton variant="instance" label="CC-NVDA-0620" ariaLabel="Open instance" onClick={noop} />
+        <DenseLinkButton variant="instance" label="CC-NVDA-0620" ariaLabel="Open trade" onClick={noop} />
         <span className={EYEBROW}>read-only</span>
         <strong className="font-semibold text-entity-symbol">CAVA</strong>
       </div>
@@ -146,7 +146,7 @@ export function EntitySection() {
           </>,
           <>
             <Code>text-entity-symbol</Code> · <Code>-option</Code> · <Code>-instance</Code> resolve to{' '}
-            <Code>--sk-ticker</Code> · <Code>--sk-contract</Code> · <Code>--sk-instance</Code> — one value in both
+            <Code>--sk-ticker</Code> · <Code>--sk-contract</Code> · <Code>--sk-trade</Code> — one value in both
             places
           </>,
         ]}
@@ -176,7 +176,7 @@ export function CategorySection() {
               design's category pill: this side's contract reserves the pill
               for position categories (asked of Design, Rev .55 receipt). */}
           <div className="flex flex-wrap items-center gap-3">
-            <DenseOptionCategoryLabel variant="instance">Instance</DenseOptionCategoryLabel>
+            <DenseOptionCategoryLabel variant="instance">Trade</DenseOptionCategoryLabel>
             <DenseOptionCategoryLabel variant="strategy">Strategy</DenseOptionCategoryLabel>
             <DenseOptionCategoryLabel variant="opportunity">Opportunity</DenseOptionCategoryLabel>
             <DenseOptionCategoryLabel variant="structure">Structure</DenseOptionCategoryLabel>
@@ -239,7 +239,7 @@ export function CategorySection() {
         ]}
         never={[
           <>
-            A contract string as a strategy or instance tag · category purple beside the ticker ink in one control ·
+            A contract string as a strategy or trade tag · category purple beside the ticker ink in one control ·
             account / range / status as category chips (those are neutral SegmentControl)
           </>,
         ]}

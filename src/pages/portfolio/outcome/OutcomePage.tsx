@@ -2,7 +2,7 @@
  * Outcome — where the ideas came from, and how much of the plan happened.
  *
  * The book stores no `closed_at`, so a finished idea is one whose option legs
- * net to zero; realised is the Trade Ledger's own signed cash flow summed over
+ * net to zero; realised is the Ledger's own signed cash flow summed over
  * its fills. Two of the prototype's readings have nothing behind them yet and
  * say so rather than showing a zero: the screener lens that found an idea (and
  * the run that argued for it) never reaches a trade instance, and Trade Plans
@@ -15,7 +15,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { ViewState } from '@bifrost/ui'
 import { PageHead, PageShell, SectionHead } from '@/components/layout'
 import { DenseTag, SegmentControl } from '@/components/data-display'
@@ -379,7 +379,7 @@ export default function OutcomePage() {
                   </colgroup>
                   <thead>
                     <tr>
-                      <th className={cn(positionsUi.th, 'text-left')}>Instance</th>
+                      <th className={cn(positionsUi.th, 'text-left')}>Trade</th>
                       <th className={cn(positionsUi.th, 'text-left')}>Symbol</th>
                       <th className={cn(positionsUi.th, 'text-left')}>Source → rule</th>
                       <th className={positionsUi.th}>Closed</th>
@@ -403,7 +403,7 @@ export default function OutcomePage() {
                         title="Trace this one below"
                       >
                         <td className={cn(positionsUi.td, 'pl-2 text-left')}>
-                          <InstanceRef id={r.instanceId} list={rowIds} from="Outcome · closed instances" />
+                          <TradeRef id={r.instanceId} list={rowIds} from="Outcome · closed trades" />
                         </td>
                         <td className={cn(positionsUi.td, 'text-left font-bold text-entity-symbol')}>
                           {r.symbols.join(' ') || '—'}
@@ -445,7 +445,7 @@ export default function OutcomePage() {
                   <span className={positionsUi.cap}>Trace</span>
                   {pick ? (
                     <>
-                      <InstanceRef id={pick.instanceId} list={rowIds} from="Outcome · trace" className="text-dense-body" />
+                      <TradeRef id={pick.instanceId} list={rowIds} from="Outcome · trace" className="text-dense-body" />
                       <span className={cn(positionsUi.mono, 'text-dense-body font-bold text-entity-symbol')}>
                         {pick.symbols.join(' ')}
                       </span>
@@ -477,9 +477,9 @@ export default function OutcomePage() {
                       stage: 'Fills',
                       title: `${pick.fills} ${pick.fills === 1 ? 'fill' : 'fills'} on ${pick.contracts.join(' · ')}`,
                       when: `${epochDay(pick.openedAt)} → ${epochDay(pick.closedAt)}`,
-                      body: 'Every fill on this instance, its FIFO pair and the stock it links to.',
+                      body: 'Every fill on this trade, its FIFO pair and the stock it links to.',
                       lamp: 'green' as const,
-                      out: { to: '/portfolio/ledger', label: 'the fills → Trade Ledger' },
+                      out: { to: '/portfolio/ledger', label: 'the fills → Ledger' },
                     },
                     {
                       stage: 'Close',

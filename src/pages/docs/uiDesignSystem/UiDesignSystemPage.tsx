@@ -5,7 +5,7 @@
  * knowing, and the checklist a page is walked against.
  *
  * Redrawn on the §14.8 tokens. The entity section is the three identity inks
- * — `--sk-ticker`, `--sk-contract`, `--sk-instance` — where the app's page
+ * — `--sk-ticker`, `--sk-contract`, `--sk-trade` — where the app's page
  * had four asset classes, two of them only ever planned. Every Use / Never
  * line the previous page carried is kept under the section it belongs to, so
  * the redraw is no weaker than the page it replaced (§15).

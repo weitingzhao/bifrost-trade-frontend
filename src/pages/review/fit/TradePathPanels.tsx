@@ -1,5 +1,5 @@
 /**
- * The two panels the design puts at the top of Single trade: where the
+ * The two panels the design puts at the top of Trade review: where the
  * underlying went, and what the position was worth while it went there.
  *
  * They share one x scale — an index over the sessions the contract has bars for

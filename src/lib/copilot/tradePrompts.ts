@@ -58,7 +58,7 @@ export const TRADE_QUESTION_GROUPS: {
     label: { zh: '策略与机会', en: 'Strategy & opportunities' },
     lead: {
       zh: '实例在做什么，还有哪些机会等着。',
-      en: 'What the instances are doing, and what is queued.',
+      en: 'What the trades are doing, and what is queued.',
     },
   },
 ]
@@ -114,7 +114,7 @@ export const TRADE_QUESTIONS: TradeQuestion[] = [
     label: { zh: '现在什么在挡着开仓', en: 'What is blocking entries' },
     prompt: {
       zh: '结合当前的 safety gate 配置和我的持仓、策略实例说明：现在有什么在阻止开仓？逐条列出被触发的 gate、它的阈值和当前读数。（D10 冻结中，仅需说明）',
-      en: 'Given the current safety gate configuration, my positions and my strategy instances, what is blocking entries right now? List each triggered gate, its threshold, and the current reading. (D10 frozen — explanation only.)',
+      en: 'Given the current safety gate configuration, my positions and my trades, what is blocking entries right now? List each triggered gate, its threshold, and the current reading. (D10 frozen — explanation only.)',
     },
     tools: ['trade.strategy.gate_safety', 'trade.strategy.instances', 'trade.portfolio.snapshot'],
   },
@@ -151,10 +151,10 @@ export const TRADE_QUESTIONS: TradeQuestion[] = [
   {
     id: 'instances',
     group: 'strategy',
-    label: { zh: '实例都在做什么', en: 'What the instances are doing' },
+    label: { zh: '实例都在做什么', en: 'What the trades are doing' },
     prompt: {
       zh: '我的策略实例现在都处于什么状态？各自持有什么、离目标或止损多远、有没有需要我处理的。',
-      en: 'What state are my strategy instances in? What each holds, how far it sits from its target or stop, and whether any of them needs me.',
+      en: 'What state are my trades in? What each holds, how far it sits from its target or stop, and whether any of them needs me.',
     },
     tools: ['trade.strategy.instances', 'trade.portfolio.snapshot'],
   },

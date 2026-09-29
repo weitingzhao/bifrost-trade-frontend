@@ -232,7 +232,7 @@ function JournalFaceForContract({
           <Input className="h-7 font-mono text-dense-meta text-[var(--color-warning)]" value="journal_closed" readOnly />
         </Field>
         <Field
-          label="Instance"
+          label="Trade"
           note={
             draft.instanceId != null
               ? "from this contract's fills, with its opportunity"

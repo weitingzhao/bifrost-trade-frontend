@@ -1,7 +1,7 @@
 /**
  * Everything Compare reads, assembled into one row per rule.
  *
- * Six sources, none re-derived: the rulebook (Trade › Rules), the plugin's
+ * Six sources, none re-derived: the rulebook (Trading › Rules), the plugin's
  * listed expiries and end-of-day chain, the session's close for spot, the
  * strategy service's record by structure, and the book's room to the backing
  * gate from the same exposure hook Risk › Sizing cites.

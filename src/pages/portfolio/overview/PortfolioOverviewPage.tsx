@@ -102,7 +102,7 @@ const AREAS = [
     q: 'What the broker says, and the two ways the book changes without a trade.',
     pages: [
       ['Accounts', '/portfolio/accounts', 'Broker snapshot, account by account.'],
-      ['Trade Ledger', '/portfolio/ledger', 'Where TWS, Flex and the journal disagree.'],
+      ['Ledger', '/portfolio/ledger', 'Where TWS, Flex and the journal disagree.'],
       ['Transfer & Pay', '/portfolio/transfer', 'Money in and out.'],
       ['Corporate Actions', '/portfolio/corporate-actions', 'Splits, dividends, re-strikes.'],
     ],
@@ -272,10 +272,10 @@ export default function PortfolioOverviewPage() {
           <span className="flex items-baseline gap-2.5">
             <Link
               to="/portfolio/ledger"
-              title="Where the sources disagree is Trade Ledger’s question"
+              title="Where the sources disagree is Ledger’s question"
               className="text-dense-label text-primary no-underline hover:underline"
             >
-              Trade Ledger →
+              Ledger →
             </Link>
             <Link to="/portfolio/accounts" className="text-dense-label text-primary no-underline hover:underline">
               Accounts →
@@ -439,7 +439,7 @@ export default function PortfolioOverviewPage() {
         meta={
           <span className="flex items-baseline gap-2.5">
             <Link
-              to="/review/fit"
+              to="/review/trade"
               title="How a play performs is Review’s question, not this layer’s"
               className="text-dense-label text-primary no-underline hover:underline"
             >

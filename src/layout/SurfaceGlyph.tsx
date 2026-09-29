@@ -20,7 +20,7 @@ const SUBJECT = glyph('subject')
 
 function iconFor(surface: Surface) {
   if (surface.run) return Workflow
-  if (surface.instance != null) return Hash
+  if (surface.trade != null) return Hash
   // The toolbar's Symbol button draws the same shape (design `icons.subject`).
   if (surface.subject) return SUBJECT
   for (const g of EQUIP_GROUPS) {

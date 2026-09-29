@@ -24,7 +24,7 @@
  * What the design draws and the data does not carry, each marked on the page
  * rather than faked: a **relative-strength** lens (no RS or CRS field on this
  * row), an **Earn** column (no earnings date reaches this side at all), a
- * **Rule** column (no per-name evaluation of Trade › Rules), and the per-lens
+ * **Rule** column (no per-name evaluation of Trading › Rules), and the per-lens
  * **1-year band** — `high_52w`/`low_52w` are price, not lens history, so a
  * lens bar can only say where the score sits on its own scale.
  */

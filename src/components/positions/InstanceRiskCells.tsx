@@ -35,7 +35,7 @@ function legLabel(leg: OptionLegLike): string {
 // ── DTE ──────────────────────────────────────────────────────────────────────
 
 export const DTE_TITLE =
-  'Days to the nearest expiry across this instance’s option legs. Time only — whether that time is dangerous is the Moneyness column.'
+  'Days to the nearest expiry across this trade’s option legs. Time only — whether that time is dangerous is the Moneyness column.'
 
 export function InstanceDteCell({ legs }: { legs: readonly OptionLegLike[] }) {
   const { dte, expiry, expiryCount } = summarizeExpiry(legs)

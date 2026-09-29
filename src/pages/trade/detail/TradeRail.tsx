@@ -10,15 +10,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { useAllocations, useGateSafety, useOpportunities, useStructures, useStrategyInstances } from '@/hooks/useStrategies'
 import { createNote, fetchNotes, type NoteRef } from '@/api/research/journal'
-import { instancePath } from '@/layout/equipSurface'
+import { tradePath } from '@/layout/equipSurface'
 import { cn } from '@/lib/utils'
-import { d3 } from '@/utils/instanceRecord/instanceRecordModel'
-import type { RanUnder } from '@/utils/instanceRecord/ranUnder'
+import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
+import type { RanUnder } from '@/utils/tradeRecord/ranUnder'
 import type { StrategyInstance } from '@/types/positions'
-import { InstanceBlock } from './InstanceBlock'
+import { TradeBlock } from './TradeBlock'
 
 
-export function InstanceLineage({
+export function TradeLineage({
   instance,
   sym,
   ranUnder,
@@ -76,21 +76,21 @@ export function InstanceLineage({
         : (ranUnder?.alloc ?? 'ran outside rules — no allocation, no gate'),
     },
     {
-      kind: 'Instance',
+      kind: 'Trade',
       name: `#${id}${sym ? ` · ${sym}` : ''}`,
       mono: true,
-      ink: 'var(--sk-instance)',
+      ink: 'var(--sk-trade)',
       meta: `opened ${d3(openedIso)}`,
     },
   ]
 
   return (
-    <InstanceBlock
+    <TradeBlock
       cap="Lineage"
       title="Ran under"
       action={
         <button type="button" className={positionsUi.link} onClick={() => navigate(`/trade/rules?pick=instance:${id}`)}>
-          Trade › Rules →
+          Trading › Rules →
         </button>
       }
     >
@@ -113,7 +113,7 @@ export function InstanceLineage({
         ))}
         <div className="flex flex-col gap-1.5 px-3 pt-2 pb-2.5">
           <span className="text-dense-micro text-muted-foreground">
-            {sibs.length > 1 ? `${sibs.length} instances under this opportunity — newest first` : 'The only instance under this opportunity'}
+            {sibs.length > 1 ? `${sibs.length} trades under this opportunity — newest first` : 'The only trade under this opportunity'}
           </span>
           {sibs.length > 1 ? (
             <div className="flex flex-wrap gap-1">
@@ -123,7 +123,7 @@ export function InstanceLineage({
                   type="button"
                   onClick={() =>
                     navigate(
-                      instancePath(
+                      tradePath(
                         x.strategy_instance_id,
                         list && list.includes(x.strategy_instance_id) ? list : sibIds,
                         list && list.includes(x.strategy_instance_id) ? from : opp?.name ?? 'Siblings',
@@ -132,10 +132,10 @@ export function InstanceLineage({
                   }
                   title={`#${x.strategy_instance_id}${x.label?.trim() ? ` · ${x.label.trim()}` : ''}`}
                   className={cn(
-                    'h-5.5 cursor-pointer rounded-md border-0 px-1.5 font-mono text-dense-micro font-bold text-[var(--sk-instance)]',
+                    'h-5.5 cursor-pointer rounded-md border-0 px-1.5 font-mono text-dense-micro font-bold text-[var(--sk-trade)]',
                     x.strategy_instance_id === id
-                      ? 'bg-[color-mix(in_srgb,var(--sk-instance)_18%,transparent)]'
-                      : 'bg-transparent hover:bg-[color-mix(in_srgb,var(--sk-instance)_16%,transparent)]',
+                      ? 'bg-[color-mix(in_srgb,var(--sk-trade)_18%,transparent)]'
+                      : 'bg-transparent hover:bg-[color-mix(in_srgb,var(--sk-trade)_16%,transparent)]',
                   )}
                 >
                   #{x.strategy_instance_id}
@@ -145,11 +145,11 @@ export function InstanceLineage({
           ) : null}
         </div>
       </div>
-    </InstanceBlock>
+    </TradeBlock>
   )
 }
 
-export function InstanceJournal({ id, sym }: { id: number; sym: string | null }) {
+export function TradeJournal({ id, sym }: { id: number; sym: string | null }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [draft, setDraft] = useState('')
@@ -161,7 +161,7 @@ export function InstanceJournal({ id, sym }: { id: number; sym: string | null })
   const add = useMutation({
     mutationFn: (body: string) => {
       const refs: NoteRef[] = [{ type: 'inst', id: String(id) }, ...(sym ? [{ type: 'sym' as const, id: sym }] : [])]
-      return createNote({ body_md: body, page_route: `/instance/${id}`, page_label: `Instance #${id}`, refs })
+      return createNote({ body_md: body, page_route: `/trade/${id}`, page_label: `Trade #${id}`, refs })
     },
     onSuccess: () => {
       setDraft('')
@@ -174,7 +174,7 @@ export function InstanceJournal({ id, sym }: { id: number; sym: string | null })
     if (body && !add.isPending) add.mutate(body)
   }
   return (
-    <InstanceBlock
+    <TradeBlock
       cap="Journal"
       title={notes.length ? `${notes.length} ${notes.length === 1 ? 'note' : 'notes'} on #${id}` : `Notes on #${id}`}
       action={
@@ -192,7 +192,7 @@ export function InstanceJournal({ id, sym }: { id: number; sym: string | null })
               if (e.key === 'Enter') submit()
             }}
             placeholder={`A note on #${id}${sym ? ` · ${sym}` : ''}`}
-            aria-label="Note on this instance"
+            aria-label="Note on this trade"
             className="h-7 min-w-0 flex-1 mat-field px-2 text-dense-label"
           />
           <button type="button" className={positionsUi.btn} disabled={!draft.trim() || add.isPending} onClick={submit}>
@@ -206,7 +206,7 @@ export function InstanceJournal({ id, sym }: { id: number; sym: string | null })
           </span>
         ) : notes.length === 0 && !notesQ.isLoading ? (
           <span className="text-dense-label text-muted-foreground text-pretty">
-            No note links this instance yet. A note written here links #{id}
+            No note links this trade yet. A note written here links #{id}
             {sym ? ` and ${sym}` : ''}, and lands in the Journal&rsquo;s Day view with the rest.
           </span>
         ) : (
@@ -220,6 +220,6 @@ export function InstanceJournal({ id, sym }: { id: number; sym: string | null })
           ))
         )}
       </div>
-    </InstanceBlock>
+    </TradeBlock>
   )
 }

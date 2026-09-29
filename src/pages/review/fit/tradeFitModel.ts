@@ -1,5 +1,5 @@
 /**
- * What the Single trade page says about one closed trade.
+ * What the Trade review page says about one closed trade.
  *
  * The design's shape is a diff, and the diff has two halves. The **path** half
  * — best mark, worst mark, how much of the best the exit landed, how long a
@@ -81,7 +81,7 @@ export function counterfactuals(
           pl: realised,
           delta: null,
           meaning:
-            'Marked at the last close — provisional. It becomes the realised figure the Trade Ledger carries once the instance closes; everything below is measured against it until then.',
+            'Marked at the last close — provisional. It becomes the realised figure the Ledger carries once the trade closes; everything below is measured against it until then.',
           self: true,
         }
       : {
@@ -90,7 +90,7 @@ export function counterfactuals(
           when: trade.closedOn,
           pl: realised,
           delta: null,
-          meaning: 'The realised figure the Trade Ledger carries. Everything below is measured against it.',
+          meaning: 'The realised figure the Ledger carries. Everything below is measured against it.',
           self: true,
         },
     {
@@ -138,7 +138,7 @@ export function counterfactuals(
           meaning: open
             ? `Still open — the do-nothing branch is decided at expiry (${fmtIsoDateToken(trade.expiry)}), not before. This row waits for the settle.`
             : legCount > 1
-              ? 'A rolled or multi-leg instance held to expiry means holding its last legs to their own expiries — not priced here; the line above is every leg as traded.'
+              ? 'A rolled or multi-leg trade held to expiry means holding its last legs to their own expiries — not priced here; the line above is every leg as traded.'
               : trade.expiry >= today
                 ? `This contract expires ${fmtIsoDateToken(trade.expiry)} and has not settled, so there is no expiry price to hold to. Marking it at today’s close would be a different branch wearing this one’s name.`
                 : 'The underlying’s close on the expiry session is not on hand for this name, so the branch cannot be priced.',
@@ -323,7 +323,7 @@ export function sources(
       key: 'fills',
       lamp: 'green',
       title: `Fills · ${trade.fills.length}`,
-      sub: 'The Trade Ledger’s own, with their dates, sides, quantities and prices. The realised figure is their cash, summed.',
+      sub: 'The Ledger’s own, with their dates, sides, quantities and prices. The realised figure is their cash, summed.',
     },
     {
       key: 'marks',

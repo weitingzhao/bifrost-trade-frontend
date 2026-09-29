@@ -450,7 +450,7 @@ export function CandidateBatchBody({
                           Plan sheet to pre-fill on this side yet, so the cell says
                           where it would go rather than drawing a button that does
                           nothing. */}
-                      <span className="text-dense-micro text-muted-foreground" title="A Plan sheet pre-filled from this candidate. Trade › Plans does not accept one yet.">
+                      <span className="text-dense-micro text-muted-foreground" title="A Plan sheet pre-filled from this candidate. Trading › Plans does not accept one yet.">
                         —
                       </span>
                     </DenseTableCell>

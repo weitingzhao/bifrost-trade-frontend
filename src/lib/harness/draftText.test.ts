@@ -50,7 +50,7 @@ describe('draftLandsIn', () => {
   })
 
   it('names none for a kind the server passes through', () => {
-    // The prototype says an order intent lands in Trade › Plans. On the server
+    // The prototype says an order intent lands in Trading › Plans. On the server
     // its approval only changes its status.
     for (const kind of ['order_intent', 'decision_draft', 'hypothesis_suggestion', 'hypothesis_draft']) {
       expect(isDecisionKind(kind), kind).toBe(true)

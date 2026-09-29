@@ -85,7 +85,7 @@ export function StrategyTabContent({
         )
       })}
       <p className={ledgerShell.panelFoot}>
-        Opportunity → instance → contract. An instance id is a link into the strategy layer — this page is where a
+        Opportunity → trade → contract. A trade id is a link into the strategy layer — this page is where a
         fill acquires its owner, and nothing else in the app does that.
       </p>
     </div>

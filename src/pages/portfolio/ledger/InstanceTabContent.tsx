@@ -163,7 +163,7 @@ export function InstanceTabContent({
               {noInstGroups.some(g => g.status === 'unrealized') && (
                 <>
                   <h3 className={cn(ledgerShell.cap, 'm-0 pt-2.5')}>
-                    Open · no instance ({noInstGroups.filter(g => g.status === 'unrealized').length})
+                    Open · no trade ({noInstGroups.filter(g => g.status === 'unrealized').length})
                   </h3>
                   {noInstGroups.filter(g => g.status === 'unrealized').map(g => (
                     <ContractFillBlock
@@ -185,7 +185,7 @@ export function InstanceTabContent({
         {rawTotal > 0 && (
           <section>
             <h3 className={cn(ledgerShell.cap, 'm-0 mb-1.5')}>
-              Raw executions without instance · showing {rawSlice.length} of {rawTotal}
+              Raw executions without trade · showing {rawSlice.length} of {rawTotal}
             </h3>
             <DenseDataTable tableClassName={ledgerTableMinClass.t2}>
               <colgroup>
@@ -245,7 +245,7 @@ export function InstanceTabContent({
   }
 
   if (filteredGroups.length === 0) {
-    return <p className={denseTable.emptyHint}>No instances match the current filter.</p>
+    return <p className={denseTable.emptyHint}>No trades match the current filter.</p>
   }
 
   const showOuter = groupBy !== 'opportunity'
@@ -317,7 +317,7 @@ export function InstanceTabContent({
         )
       })}
       <p className={ledgerShell.panelFoot}>
-        Row actions write to the ledger only: edit a fill, link it to an instance, view its option ↔ stock links, sync
+        Row actions write to the ledger only: edit a fill, link it to a trade, view its option ↔ stock links, sync
         the opposite leg, delete. Nothing here is sent to the broker.
       </p>
     </div>

@@ -111,7 +111,7 @@ describe('cutDisagreement', () => {
   it('states the gap between the two cuts rather than reconciling it', () => {
     const said = cutDisagreement(19, 67, 6, 85)
     expect(said).toContain('67 closed contracts over 19 plays')
-    expect(said).toContain('85 closed instances over 6 structures')
+    expect(said).toContain('85 closed trades over 6 structures')
     expect(said).toContain('Neither number is wrong')
   })
 })

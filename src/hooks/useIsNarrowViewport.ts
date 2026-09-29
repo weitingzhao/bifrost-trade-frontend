@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { INSTANCE_DETAIL_NARROW_MAX_PX } from '@/constants/instanceDetailSidebar'
+import { TRADE_DETAIL_NARROW_MAX_PX } from '@/constants/tradeDetailSidebar'
 
 function subscribe(onStoreChange: () => void, maxWidthPx: number): () => void {
   const mq = window.matchMedia(`(max-width: ${maxWidthPx}px)`)
@@ -16,7 +16,7 @@ function getServerSnapshot(): boolean {
 }
 
 /** True when viewport width is at or below the instance detail narrow breakpoint (960px). */
-export function useIsNarrowViewport(maxWidthPx = INSTANCE_DETAIL_NARROW_MAX_PX): boolean {
+export function useIsNarrowViewport(maxWidthPx = TRADE_DETAIL_NARROW_MAX_PX): boolean {
   return useSyncExternalStore(
     (onStoreChange) => subscribe(onStoreChange, maxWidthPx),
     () => getSnapshot(maxWidthPx),

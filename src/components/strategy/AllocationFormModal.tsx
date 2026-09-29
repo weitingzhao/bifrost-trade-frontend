@@ -41,7 +41,7 @@ interface FormState {
   /**
    * On the books — whether this allocation may be picked at all. A different
    * fact from the one the daemon's config holds about which allocation it
-   * runs, which is `Set active` on Trade › Rules. Edited here because it is
+   * runs, which is `Set active` on Trading › Rules. Edited here because it is
    * part of the definition; until 2026-09-18 it was editable on the retiring
    * Strategy › Allocations page and nowhere else, so an allocation taken off
    * the books could not be put back from the chain.
@@ -298,7 +298,7 @@ export function AllocationFormModal({
               </label>
               <p className="text-xs text-muted-foreground text-pretty">
                 Whether it may be picked at all — a plan under an allocation that is off the books runs outside the
-                rules. Which allocation the daemon actually runs is a separate act: Set active, on Trade › Rules.
+                rules. Which allocation the daemon actually runs is a separate act: Set active, on Trading › Rules.
               </p>
             </div>
           </div>

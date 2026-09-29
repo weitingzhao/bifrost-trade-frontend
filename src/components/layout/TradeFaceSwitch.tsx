@@ -1,7 +1,7 @@
 /**
  * `Facts | Review` — one instance, two faces (design Rev .110 `_Part Face`
  * kind="trade"): what happened (the Instance page) and was it right (Review ›
- * Single trade). Not a Reading / Method pair: no ⧉, no violet back-of-page —
+ * Trade review). Not a Reading / Method pair: no ⧉, no violet back-of-page —
  * both sides are doors to the same #NNN.
  */
 import { Link } from 'react-router-dom'
@@ -10,20 +10,20 @@ import { cn } from '@/lib/utils'
 const BTN = 'inline-flex h-6 items-center px-2.75 text-dense-label font-semibold leading-none whitespace-nowrap'
 
 export function tradeFactsPath(instanceId: number): string {
-  return `/instance/${instanceId}`
+  return `/trade/${instanceId}`
 }
 
 export function tradeReviewPath(instanceId: number, extra?: Record<string, string>): string {
   const qs = new URLSearchParams({ t: `#${instanceId}`, ...extra })
-  return `/review/fit?${qs.toString()}`
+  return `/review/trade?${qs.toString()}`
 }
 
 export function TradeFaceSwitch({
-  instanceId,
+  tradeId,
   side,
   className,
 }: {
-  instanceId: number
+  tradeId: number
   side: 'facts' | 'review'
   className?: string
 }) {
@@ -50,8 +50,8 @@ export function TradeFaceSwitch({
         className,
       )}
     >
-      {face('facts', 'Facts', tradeFactsPath(instanceId), 'What happened — path, every leg and roll, every fill, the ledger by leg.')}
-      {face('review', 'Review', tradeReviewPath(instanceId), 'Was it right — against my own plan and the best the trade offered.')}
+      {face('facts', 'Facts', tradeFactsPath(tradeId), 'What happened — path, every leg and roll, every fill, the ledger by leg.')}
+      {face('review', 'Review', tradeReviewPath(tradeId), 'Was it right — against my own plan and the best the trade offered.')}
     </span>
   )
 }

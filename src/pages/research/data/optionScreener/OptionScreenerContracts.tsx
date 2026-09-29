@@ -382,7 +382,7 @@ export function OptionScreenerContracts({
         Ann. ret = premium ÷ cash secured × 365 ÷ DTE. Red spread = wider than your max; a spread of — was not
         measured — the chain store keeps no bid/ask, so the premium is the session close (the column reads
         Close). An amber premium is an earlier session&rsquo;s quote than the table&rsquo;s newest. Δ in ink = inside the
-        structure&rsquo;s target band; greyed = outside it. &ldquo;Rule&rdquo; is the Opportunity in Trade › Rules for this structure
+        structure&rsquo;s target band; greyed = outside it. &ldquo;Rule&rdquo; is the Opportunity in Trading › Rules for this structure
         that names this underlying; Save as rule → creates one from these filters instead of typing it.
       </p>
     </section>

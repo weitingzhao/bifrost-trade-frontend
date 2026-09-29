@@ -8,7 +8,7 @@ import { ledgerChipClass, ledgerShell } from './ledgerShellUi'
 import { SectionHead } from '@/components/layout'
 
 const DETAIL_VIEW_TOOLTIP =
-  'Accordion keeps one expandable panel open (strategy group, instance card, option detail rows, or other sections on this tab). Multi allows several.'
+  'Accordion keeps one expandable panel open (strategy group, trade card, option detail rows, or other sections on this tab). Multi allows several.'
 
 type Props = {
   attributionChips: LedgerViewChip[]

@@ -66,7 +66,7 @@ export function CorporateActionsBand({
           <span className={positionsUi.cap}>Cited, not computed</span>
           <span className={positionsUi.panelTitle}>assignment risk over an ex-date</span>
           <Link to="/trade/expiration#assignment" className={cn(positionsUi.link, 'ml-auto')}>
-            Trade › Expiry →
+            Trading › Expiry →
           </Link>
         </header>
         {shortCalls.length === 0 ? (

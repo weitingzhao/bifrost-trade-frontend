@@ -89,13 +89,13 @@ export interface Surface {
    */
   intent?: { tab: string; n: number; params?: Record<string, string> }
   /**
-   * Set when the surface is one strategy instance (design Rev .103): the
-   * Instance page as a surface, like Symbol. `instanceList` / `instanceFrom`
+   * Set when the surface is one trade (design Rev .103; the entity was an
+   * instance until Rev .111): the Trade page as a surface, like Symbol. `tradeList` / `tradeFrom`
    * are the rows the token came from, which ‹ › and [ ] step.
    */
-  instance?: number
-  instanceList?: number[]
-  instanceFrom?: string
+  trade?: number
+  tradeList?: number[]
+  tradeFrom?: string
 }
 
 /** A tab remembers when it was last looked at — the overflow orders by it. */
@@ -190,14 +190,39 @@ export interface SurfaceState {
 // nothing reads is a trap for whoever next greps for it.
 writeJson('bifrost.drawer', null)
 
+/**
+ * A trade surface saved before Rev .111 carries the Instance names — key
+ * `instance[:N]`, `instance` / `instanceList` / `instanceFrom`, a `/instance/`
+ * route. Read it under the new ones rather than restore a tab nothing drives.
+ */
+export function migrateInstanceSurface<T extends Surface>(s: T): T {
+  const old = s as T & { instance?: number; instanceList?: number[]; instanceFrom?: string }
+  if (old.key !== 'instance' && !old.key.startsWith('instance:')) return s
+  const { instance, instanceList, instanceFrom, ...rest } = old
+  return {
+    ...rest,
+    key: `trade${old.key.slice('instance'.length)}`,
+    to: old.to.replace(/^\/instance\//, '/trade/'),
+    trade: rest.trade ?? instance,
+    ...(instanceList ? { tradeList: instanceList } : {}),
+    ...(instanceFrom ? { tradeFrom: instanceFrom } : {}),
+  } as T
+}
+
 function loadPanel(): PanelState | null {
   const saved = readJson<PanelState>(KEY.panel)
   if (!saved?.tabs?.length) return null
-  return saved
+  const active = saved.active === 'instance' || saved.active?.startsWith('instance:') ? `trade${saved.active.slice('instance'.length)}` : saved.active
+  return { ...saved, active, tabs: saved.tabs.map(migrateInstanceSurface) }
+}
+
+function loadFloat(): FloatState | null {
+  const saved = readJson<FloatState>(KEY.float)
+  return saved ? migrateInstanceSurface(saved) : null
 }
 
 const store = createExternalStore<SurfaceState>({
-  float: readJson<FloatState>(KEY.float),
+  float: loadFloat(),
   panel: loadPanel(),
 })
 
@@ -257,16 +282,16 @@ export function threadSurface(): Surface {
   }
 }
 
-/** The Instance page's route (Rev .103) — `/instance/:id`, top level, reached only from a `#NNN`. */
-export const INSTANCE_SURFACE_ROUTE = '/instance'
+/** The Trade page's route (Rev .111, was `/instance/:id`) — `/trade/:id`, top level, reached only from a `#NNN`. */
+export const TRADE_SURFACE_ROUTE = '/trade'
 
 /** The Instance page's address, with the rows it came from riding along. */
-export function instancePath(id: number, list?: readonly number[], from?: string): string {
+export function tradePath(id: number, list?: readonly number[], from?: string): string {
   const q = new URLSearchParams()
   if (list && list.length > 1 && list.includes(id)) q.set('list', list.join(','))
   if (from) q.set('from', from)
   const qs = q.toString()
-  return `${INSTANCE_SURFACE_ROUTE}/${id}${qs ? `?${qs}` : ''}`
+  return `${TRADE_SURFACE_ROUTE}/${id}${qs ? `?${qs}` : ''}`
 }
 
 /**
@@ -277,28 +302,28 @@ export function instancePath(id: number, list?: readonly number[], from?: string
  * same number twice being one tab. Home is the panel; place memory is shared
  * by both kinds, so wherever the last one went, the next goes.
  */
-export function instanceSurface(
+export function tradeSurface(
   id: number,
   opts?: { fresh?: boolean; list?: readonly number[]; from?: string },
 ): Surface {
   const list = opts?.list && opts.list.includes(id) ? [...new Set(opts.list)] : [id]
   return {
-    key: opts?.fresh ? `instance:${id}` : 'instance',
-    to: `${INSTANCE_SURFACE_ROUTE}/${id}`,
+    key: opts?.fresh ? `trade:${id}` : 'trade',
+    to: `${TRADE_SURFACE_ROUTE}/${id}`,
     label: `#${id}`,
     group: 'book',
     canPage: true,
     def: 'panel',
-    instance: id,
-    instanceList: list,
-    ...(opts?.from ? { instanceFrom: opts.from } : {}),
+    trade: id,
+    tradeList: list,
+    ...(opts?.from ? { tradeFrom: opts.from } : {}),
   }
 }
 
 /** Step an instance surface to another row of its list, in place — its ‹ › and [ ]. */
-export function setSurfaceInstance(key: string, id: number): void {
+export function setSurfaceTrade(key: string, id: number): void {
   const patch = <T extends Surface>(s: T): T =>
-    s.key !== key || s.instance == null ? s : { ...s, instance: id, to: `${INSTANCE_SURFACE_ROUTE}/${id}`, label: `#${id}` }
+    s.key !== key || s.trade == null ? s : { ...s, trade: id, to: `${TRADE_SURFACE_ROUTE}/${id}`, label: `#${id}` }
   const st = store.getState()
   commit(st.float ? patch(st.float) : null, st.panel ? { ...st.panel, tabs: st.panel.tabs.map(patch) } : null)
 }
@@ -353,16 +378,16 @@ export function setSubjectLock(key: string, sym: string | null): void {
 }
 
 /** What a tab or a float bar calls it — the following Symbol tab names what it is showing. */
-export function surfaceLabel(surf: Pick<Surface, 'label' | 'subject' | 'instance'>, carried: string): string {
-  if (surf.instance != null) return `Instance · #${surf.instance}`
+export function surfaceLabel(surf: Pick<Surface, 'label' | 'subject' | 'trade'>, carried: string): string {
+  if (surf.trade != null) return `Trade · #${surf.trade}`
   if (surf.subject === 'follow') return `Symbol · ${carried || '—'}`
   // Two tabs on one name — following it, and locked on it — must not read alike.
   return surf.subject === 'lock' ? `${surf.label} (locked)` : surf.label
 }
 
 /** A surface's hue: its group's, except the Symbol page, which wears the ticker's. */
-export function surfaceHue(surf: Pick<Surface, 'group' | 'subject' | 'instance'>): string {
-  if (surf.instance != null) return 'var(--sk-instance)'
+export function surfaceHue(surf: Pick<Surface, 'group' | 'subject' | 'trade'>): string {
+  if (surf.trade != null) return 'var(--sk-trade)'
   return surf.subject ? 'var(--sk-ticker)' : EQUIP_HUE[surf.group]
 }
 
@@ -375,13 +400,15 @@ export function surfaceHue(surf: Pick<Surface, 'group' | 'subject' | 'instance'>
  */
 function memoryKey(key: string): string {
   if (key.startsWith('run:')) return 'run'
-  if (key === 'instance' || key.startsWith('instance:')) return 'instance'
+  if (key === 'trade' || key.startsWith('trade:')) return 'trade'
   return key.startsWith('symbol:') ? 'symbol:lock' : key
 }
 
 function rememberedPlace(key: string): Place | null {
   const all = readJson<Record<string, Place>>(KEY.where) ?? {}
-  return all[memoryKey(key)] ?? null
+  const k = memoryKey(key)
+  // Rev .111 renamed the Instance surface's memory key; a place stored under the old one still counts.
+  return all[k] ?? (k === 'trade' ? all.instance : undefined) ?? null
 }
 
 function rememberPlace(key: string, place: Place): void {

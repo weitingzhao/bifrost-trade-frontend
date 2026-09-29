@@ -19,7 +19,7 @@ const TRADE: ReviewTrade = {
     { date: '2026-08-18', side: 'buy', qty: 9, price: 0.01, commission: 3.28, cash: -12.28 },
   ],
   play: 'HIMS Covered Call',
-  instanceId: null,
+  tradeId: null,
   openedOn: '2026-05-22',
   closedOn: '2026-08-18',
   daysHeld: 88,

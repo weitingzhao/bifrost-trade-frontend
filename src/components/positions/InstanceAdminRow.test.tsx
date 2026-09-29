@@ -31,19 +31,19 @@ describe('InstanceAdminRow · rename', () => {
   it('leaves Apply disabled until the label actually changes', async () => {
     renderRow(RUNNING)
     expect(screen.getByRole('button', { name: 'Apply' }).hasAttribute('disabled')).toBe(true)
-    await userEvent.type(screen.getByLabelText('Instance label'), '!')
+    await userEvent.type(screen.getByLabelText('Trade label'), '!')
     expect(screen.getByRole('button', { name: 'Apply' }).hasAttribute('disabled')).toBe(false)
   })
 
   it('stays disabled when the only edit is whitespace — a rename to the same name is not a write', async () => {
     renderRow(RUNNING)
-    await userEvent.type(screen.getByLabelText('Instance label'), '   ')
+    await userEvent.type(screen.getByLabelText('Trade label'), '   ')
     expect(screen.getByRole('button', { name: 'Apply' }).hasAttribute('disabled')).toBe(true)
   })
 
   it('PATCHes the label alone, trimmed', async () => {
     renderRow(RUNNING)
-    const input = screen.getByLabelText('Instance label')
+    const input = screen.getByLabelText('Trade label')
     await userEvent.clear(input)
     await userEvent.type(input, '  MU 45d put  ')
     await userEvent.click(screen.getByRole('button', { name: 'Apply' }))
@@ -54,7 +54,7 @@ describe('InstanceAdminRow · rename', () => {
     // Measured on DEV: the endpoint skips a null label and answers ok, so a
     // clear would print "saved" over an unchanged row.
     renderRow(RUNNING)
-    await userEvent.clear(screen.getByLabelText('Instance label'))
+    await userEvent.clear(screen.getByLabelText('Trade label'))
     expect(screen.getByRole('button', { name: 'Apply' }).hasAttribute('disabled')).toBe(true)
     expect(screen.getByText(/cannot be taken off from here/)).toBeTruthy()
     expect(patch).not.toHaveBeenCalled()
@@ -62,7 +62,7 @@ describe('InstanceAdminRow · rename', () => {
 
   it('goes quiet again after a save — the new name is what the server holds', async () => {
     renderRow(RUNNING)
-    await userEvent.type(screen.getByLabelText('Instance label'), '!')
+    await userEvent.type(screen.getByLabelText('Trade label'), '!')
     await userEvent.click(screen.getByRole('button', { name: 'Apply' }))
     expect(await screen.findByText(/saved — the label only/)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Apply' }).hasAttribute('disabled')).toBe(true)
@@ -71,7 +71,7 @@ describe('InstanceAdminRow · rename', () => {
   it('says the rename failed rather than reading as saved', async () => {
     patch.mockRejectedValueOnce(new Error('PATCH /strategies/instances/142: 500'))
     renderRow(RUNNING)
-    await userEvent.type(screen.getByLabelText('Instance label'), '!')
+    await userEvent.type(screen.getByLabelText('Trade label'), '!')
     await userEvent.click(screen.getByRole('button', { name: 'Apply' }))
     expect(await screen.findByText(/500/)).toBeTruthy()
     expect(screen.queryByText(/saved/)).toBeNull()

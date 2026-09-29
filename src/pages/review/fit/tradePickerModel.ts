@@ -1,5 +1,5 @@
 /**
- * Single trade's picker (design Rev .104, Owner 2026-09-29: a row of
+ * Trade review's picker (design Rev .104, Owner 2026-09-29: a row of
  * "#id SYM" pills was too thin to choose from). The choice is a closed trade,
  * not a symbol — the same name appears once per trade — so the list carries
  * what a review is picked by: when it closed, what it made, and where it sat.
@@ -29,7 +29,7 @@ export const OUTCOMES: { key: PickOutcome; label: string; test: (t: ReviewTrade)
 export function matchesQuery(t: ReviewTrade, q: string): boolean {
   const s = q.trim().toLowerCase()
   if (!s) return true
-  const hay = [t.instanceId != null ? `#${t.instanceId}` : '', t.underlying, t.label, t.play ?? ''].join(' ').toLowerCase()
+  const hay = [t.tradeId != null ? `#${t.tradeId}` : '', t.underlying, t.label, t.play ?? ''].join(' ').toLowerCase()
   return hay.includes(s)
 }
 

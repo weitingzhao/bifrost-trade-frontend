@@ -52,7 +52,7 @@ export function useReviewBadge(): number | null {
     const items = execQ.data?.items
     if (!items || !reviews.data) return null
     return buildReviewInstances(items, today).filter(
-      (t) => !t.open && t.instanceId != null && !reviews.byInstance.get(t.instanceId)?.reviewed,
+      (t) => !t.open && t.tradeId != null && !reviews.byInstance.get(t.tradeId)?.reviewed,
     ).length
   }, [execQ.data, reviews.data, reviews.byInstance, today])
 }

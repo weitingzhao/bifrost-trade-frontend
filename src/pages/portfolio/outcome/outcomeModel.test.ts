@@ -182,8 +182,8 @@ describe('exits, scope and gaps', () => {
   it('names the gaps, and says which are unknown rather than wrong', () => {
     const gaps = outcomeGaps(rows, 1)
     expect(gaps.map((g) => g.what)).toEqual([
-      'Closed with no instance',
-      'Instance with no plan',
+      'Closed with no trade',
+      'Trade with no plan',
       'Idea with no run behind it',
       'Closed on no opportunity',
     ])

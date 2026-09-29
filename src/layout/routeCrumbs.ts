@@ -27,7 +27,7 @@ export const TRADE = ['Trade'] as const
  * Flattened to one level: Desk is no longer a row inside Trade — it *is*
  * Trade (§5a.1), so its six pages hang off the layer directly.
  */
-export const TRADE_DESK = ['Trade'] as const
+export const TRADE_DESK = ['Trading'] as const
 export const RISK = ['Risk'] as const
 /**
  * Contract Greeks' own crumbs since design Rev 2026-09-23.3. It is the

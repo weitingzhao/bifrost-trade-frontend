@@ -23,4 +23,5 @@
 // 0.6.0 (K7): every failed ViewState grows a Report-this link when the shell
 // registers a handler (setViewStateReportHandler) — the feedback loop's entry.
 // 0.7.0 (U1): ShellNavSidebar's Filter pages field (design 2026-09-28).
-export const UI_VERSION_NOW = '0.7.0'
+// 0.7.1 (Rev .111): `--sk-trade` and `--sk-objective`; `--sk-instance` stays one version as an alias.
+export const UI_VERSION_NOW = '0.7.1'

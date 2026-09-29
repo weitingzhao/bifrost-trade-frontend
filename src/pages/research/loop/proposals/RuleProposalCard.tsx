@@ -114,7 +114,7 @@ export function RuleProposalCard({
                   {p.cites.map((c) => (
                     <Link
                       key={c.contractKey}
-                      to={`/review/fit?trade=${encodeURIComponent(c.contractKey)}`}
+                      to={`/review/trade?trade=${encodeURIComponent(c.contractKey)}`}
                       className={cn(positionsUi.btn, positionsUi.mono)}
                       title={`${c.label} · ${fmtUsd(c.amount, true)}`}
                     >

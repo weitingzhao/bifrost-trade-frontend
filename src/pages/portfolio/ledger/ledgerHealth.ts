@@ -71,7 +71,7 @@ export function buildLedgerHealth(args: {
   const unlink = unlinkCounts(args.canon, args.unlinkBasis)
   const onlyTws = sources.tws
   const subUnlink =
-    args.unlinkBasis === 'options' ? 'option fills with no instance' : 'incl. every stock fill'
+    args.unlinkBasis === 'options' ? 'option fills with no trade' : 'incl. every stock fill'
 
   const tiles: LedgerHealthTile[] = [
     {

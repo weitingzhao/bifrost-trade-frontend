@@ -4,9 +4,9 @@ import { MemoryRouter } from 'react-router-dom'
 
 const open = vi.fn()
 vi.mock('@/hooks/useInstanceIndex', () => ({ useInstanceIndex: () => new Set([159]) }))
-vi.mock('@/layout/instanceGo', () => ({
-  useOpenInstance: () => open,
-  instanceHowFrom: () => ({ fresh: false, page: false }),
+vi.mock('@/layout/tradeGo', () => ({
+  useOpenTrade: () => open,
+  tradeHowFrom: () => ({ fresh: false, page: false }),
 }))
 
 import { InstanceNoteRef } from './NotesView'

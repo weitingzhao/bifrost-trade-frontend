@@ -98,7 +98,7 @@ export interface DraftLanding {
  *
  * From the branches of `apply_draft_approval` (bifrost-research
  * `api/agents.py`), not from the design's mock: the prototype says an order
- * intent lands in Trade › Plans, and on the server it lands nowhere — its
+ * intent lands in Trading › Plans, and on the server it lands nowhere — its
  * approval only changes its status. A `null` here is that fact, and the page
  * says so rather than inventing a destination.
  *

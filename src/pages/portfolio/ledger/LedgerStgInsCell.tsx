@@ -1,4 +1,4 @@
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import type { Execution } from '@/types/positions'
 import { executionInstanceLabel } from '@/utils/ledger/ledgerOptHelpers'
 import {
@@ -36,7 +36,7 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
             {strategyName}
           </DenseOptionCategoryLabel>
         ) : null}
-        <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-label="Instance allocations">
+        <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-label="Trade allocations">
           {allocs!.map(a => {
             const sid = a.strategy_instance_id
             const label =
@@ -49,7 +49,7 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
                     {label}
                   </DenseOptionCategoryLabel>
                 ) : null}
-                <InstanceRef id={sid} className={instanceLinkClass} from="Ledger · fills" />
+                <TradeRef id={sid} className={instanceLinkClass} from="Ledger · fills" />
                 <span className="text-dense-meta tabular-nums text-muted-foreground">
                   {formatAllocQty(qty)}
                 </span>
@@ -78,7 +78,7 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
             {instLabel}
           </DenseOptionCategoryLabel>
         ) : null}
-        <InstanceRef id={instanceId} className={instanceLinkClass} from="Ledger · fills" />
+        <TradeRef id={instanceId} className={instanceLinkClass} from="Ledger · fills" />
       </span>
     )
   }

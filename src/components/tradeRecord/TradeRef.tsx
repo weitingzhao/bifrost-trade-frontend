@@ -7,11 +7,11 @@
  */
 import type { MouseEvent } from 'react'
 import { useInstanceIndex } from '@/hooks/useInstanceIndex'
-import { instanceHowFrom, useOpenInstance } from '@/layout/instanceGo'
+import { tradeHowFrom, useOpenTrade } from '@/layout/tradeGo'
 import { useSurfaces } from '@/layout/equipSurface'
 import { cn } from '@/lib/utils'
 
-export function InstanceRef({
+export function TradeRef({
   id,
   list,
   from,
@@ -28,19 +28,19 @@ export function InstanceRef({
   children?: React.ReactNode
 }) {
   const known = useInstanceIndex()
-  const open = useOpenInstance()
+  const open = useOpenTrade()
   const surfaces = useSurfaces()
   const text = children ?? `#${id}`
   const base = cn('font-mono font-bold text-[var(--color-instance-multi)]', className)
   if (known && !known.has(id)) {
     return (
-      <span className={cn(base, 'opacity-70')} title={`#${id} is not in the instance book — nothing to open`}>
+      <span className={cn(base, 'opacity-70')} title={`#${id} is not in the trade book — nothing to open`}>
         {text}
       </span>
     )
   }
   const shown = [surfaces.float, surfaces.panel?.tabs.find((t) => t.key === surfaces.panel?.active)]
-  const on = shown.some((sf) => sf?.instance === id)
+  const on = shown.some((sf) => sf?.trade === id)
   return (
     <button
       type="button"
@@ -51,7 +51,7 @@ export function InstanceRef({
         e.stopPropagation()
         // Only the rows the book holds are worth stepping onto.
         const steps = (list ?? [id]).filter((x) => x === id || known == null || known.has(x))
-        open(id, { list: steps, from, ...instanceHowFrom(e) })
+        open(id, { list: steps, from, ...tradeHowFrom(e) })
       }}
       onKeyDown={(e) => e.stopPropagation()}
     >

@@ -75,7 +75,7 @@ export function LedgerOptActionButtons({
       {onLink && (
         <IconActionButton
           onClick={() => onLink()}
-          title="Assign strategy opportunity and instance"
+          title="Assign strategy opportunity and trade"
           ariaLabel="Link strategy"
           size="dense"
         >
@@ -100,7 +100,7 @@ export function LedgerOptActionButtons({
               ? `${LEDGER_CONFIRM_SYNC.title} ${LEDGER_CONFIRM_SYNC.body}`
               : syncStep === 'done'
                 ? LEDGER_WRITE_DONE
-                : 'Apply strategy opportunity and instance from the opposite-side fill with the same quantity in this group'
+                : 'Apply strategy opportunity and trade from the opposite-side fill with the same quantity in this group'
           }
           ariaLabel={
             syncStep === 'confirm'

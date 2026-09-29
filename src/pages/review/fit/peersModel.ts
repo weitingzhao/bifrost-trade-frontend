@@ -1,5 +1,5 @@
 /**
- * Single trade · Compared with (design Rev .104, Owner 2026-09-29: "can I
+ * Trade review · Compared with (design Rev .104, Owner 2026-09-29: "can I
  * compare it with the trades I have already made?").
  *
  * The peer set is closed instances sharing this one's symbol (default), rule

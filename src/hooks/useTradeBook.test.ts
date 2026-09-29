@@ -13,7 +13,7 @@ import {
   INSTANCE_GROUP_LOADING,
   instanceGroupKey,
   instanceSymbol,
-} from './useInstanceBook'
+} from './useTradeBook'
 import type { InstanceListMetricsEntry } from '@/utils/instanceListMetrics'
 import type { StrategyInstance } from '@/types/positions'
 

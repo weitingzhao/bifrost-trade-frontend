@@ -8,7 +8,7 @@ import { DenseTag, SegmentControl } from '@/components/data-display'
 import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
-import type { Payoff, PayoffPoint } from '@/utils/instanceRecord/instanceRecordModel'
+import type { Payoff, PayoffPoint } from '@/utils/tradeRecord/tradeRecordModel'
 
 export interface PayoffView extends Payoff {
   spot: number | null
@@ -81,7 +81,7 @@ function row(name: string, pt: PayoffPoint, withStock: boolean, forceTotal?: num
   return { name, spot: pt.price.toFixed(2), opt: pt.options, stk: withStock ? pt.stock : null, total }
 }
 
-export function InstanceRiskSection({
+export function TradeRiskSection({
   payoffs,
   canCover,
   withShares,
@@ -116,8 +116,8 @@ export function InstanceRiskSection({
       </div>
       {closed ? (
         <p className="m-0 text-dense-micro text-muted-foreground">
-          The position as it was held. Covering shares are not drawn for a closed instance — stock legs are never
-          attributed to an instance, so the shares it held then are not on record.
+          The position as it was held. Covering shares are not drawn for a closed trade — stock legs are never
+          attributed to a trade, so the shares it held then are not on record.
         </p>
       ) : null}
       {payoffs.map((p) => {

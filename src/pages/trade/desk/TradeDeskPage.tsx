@@ -173,7 +173,7 @@ export default function TradeDeskPage() {
       value: active.alloc?.name ?? 'no active allocation',
       note: `${hedge.alive ? `alive · ${hedge.state ?? 'running'}` : 'not running'}${
         active.gate ? ` · gate ${active.gate.name}` : ' · no gate'
-      } · ${active.unread ? 'instances unread' : `${active.open} instance${active.open === 1 ? '' : 's'} open`}`,
+      } · ${active.unread ? 'trades unread' : `${active.open} trade${active.open === 1 ? '' : 's'} open`}`,
       lamp: !hedge.alive ? 'gray' : active.alloc == null ? 'yellow' : 'green',
       slot: <HedgeMenu status={status.data} onChanged={() => void status.refetch()} />,
       flex: 'flex-[1_1_260px]',
@@ -229,7 +229,7 @@ export default function TradeDeskPage() {
   return (
     <PageShell padding="compact" className="space-y-3">
       <PageHead
-        title="Trade Desk"
+        title="Trading desk"
         info="The process between Research and the book: what was handed to you, what is out for a fill, what settled. Every item ends in a plan, a fill, or a dismissal. Orders are worked in TWS — the desk copies."
         actions={
           <>
@@ -259,7 +259,7 @@ export default function TradeDeskPage() {
 
           {active.unread ? (
             <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-warning/40 bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-              <span className="font-semibold text-warning">The strategy service returned no instances.</span>
+              <span className="font-semibold text-warning">The strategy service returned no trades.</span>
               The rulebook has {chain.data.opportunities.length} opportunities, so this is the service answering empty
               rather than a desk with nothing running. What is in force below is read short by it.
               <button type="button" className={positionsUi.btn} onClick={() => chain.refetch()}>
@@ -307,11 +307,11 @@ export default function TradeDeskPage() {
                   lamp: active.gate ? ('green' as const) : ('yellow' as const),
                 },
                 {
-                  k: 'Instances',
+                  k: 'Trades',
                   v: active.unread ? 'not read' : `${active.open} open · ${chain.data.instances.length - active.open} closed`,
                   note: active.unread
                     ? 'The strategy service answered with an empty list while the rulebook has opportunities — it does that now and then and answers in full a moment later.'
-                    : 'Open and closed by each instance’s own fills, the Ledger’s rule.',
+                    : 'Open and closed by each trade’s own fills, the Ledger’s rule.',
                   lamp: active.unread ? ('yellow' as const) : ('green' as const),
                 },
                 {

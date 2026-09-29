@@ -157,7 +157,7 @@ function LinkExecutionModalBody({
       let finalInstanceId: number | null
       if (instanceMode === 'new') {
         if (!executionAccountId) {
-          throw new Error('This execution has no account; create instance is not available.')
+          throw new Error('This execution has no account; create trade is not available.')
         }
         const dateStr = newOpenedAt.trim()
         if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
@@ -198,7 +198,7 @@ function LinkExecutionModalBody({
         <DialogTitle>Assign strategy</DialogTitle>
         {execId != null && (
           <p className="text-xs font-normal text-muted-foreground">
-            Set strategy opportunity and instance for execution #{execId}. No new execution row is created.
+            Set strategy opportunity and trade for execution #{execId}. No new execution row is created.
           </p>
         )}
       </DialogHeader>
@@ -297,7 +297,7 @@ function LinkExecutionModalBody({
           <div className={linkExecInstancePanelClass}>
             <SegmentControl
               size="sm"
-              ariaLabel="Instance mode"
+              ariaLabel="Trade mode"
               value={instanceMode}
               onChange={(v) => {
                 const mode = v as 'existing' | 'new'
@@ -312,15 +312,15 @@ function LinkExecutionModalBody({
 
             {instanceMode === 'existing' ? (
               <div className="space-y-2">
-                <span className={linkExecSectionLabelClass}>Strategy instance</span>
+                <span className={linkExecSectionLabelClass}>Trade</span>
                 {instancesLoading ? (
-                  <p className={linkExecHintClass}>Loading instances…</p>
+                  <p className={linkExecHintClass}>Loading trades…</p>
                 ) : instances.length === 0 ? (
                   <p className={linkExecHintClass}>
-                    No instances for this opportunity. Switch to &quot;Create new&quot; to add one.
+                    No trades for this opportunity. Switch to &quot;Create new&quot; to add one.
                   </p>
                 ) : useInstanceBubbles ? (
-                  <div className={linkExecPillsClass} role="radiogroup" aria-label="Strategy instance">
+                  <div className={linkExecPillsClass} role="radiogroup" aria-label="Trade">
                     <button
                       type="button"
                       role="radio"

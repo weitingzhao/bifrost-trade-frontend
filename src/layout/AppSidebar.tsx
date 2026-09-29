@@ -21,8 +21,8 @@ import { SHELF_GROUP, isStalePin, usePins } from '@/lib/pins'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
 import { navFilterExtra } from './navFilterExtra'
 
-/** The Single trade row, where the review badge sits. */
-const REVIEW_TRADE_PATH = '/review/fit'
+/** The Trade review row, where the review badge sits. */
+const REVIEW_TRADE_PATH = '/review/trade'
 
 function renderInAppLink({
   item,
@@ -50,7 +50,7 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const research = useResearchNavGroup()
-  // Rev .110: "N to review" on the Single trade row — closed instances with no confirmed review.
+  // Rev .110: "N to review" on the Trade review row — closed instances with no confirmed review.
   const toReview = useReviewBadge()
   const reviewBadge =
     toReview != null && toReview > 0 ? (

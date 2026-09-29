@@ -3,7 +3,7 @@ import { SegmentControl } from '@/components/data-display'
 import {
   instancesToolbarClass,
   instancesToolbarLabelClass,
-} from './instances/instancesUi'
+} from './instances/tradesUi'
 
 export type DetailViewMode = 'accordion' | 'multi'
 

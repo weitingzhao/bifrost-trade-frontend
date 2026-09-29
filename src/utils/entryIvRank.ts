@@ -8,7 +8,7 @@
  * option underlyings, 14 carry more than 200 sessions of IV30 before their
  * first fill.
  *
- * Shared since 2026-09-26 (§14.2): Habits reads the reading, Single trade and
+ * Shared since 2026-09-26 (§14.2): Habits reads the reading, Trade review and
  * the Review panel read one trade's rank, and the Decision Inbox's IV-floor
  * card argues from the same reading — one lookup, so the four cannot
  * disagree. The reading itself lives with the other habits in

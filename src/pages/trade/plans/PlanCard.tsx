@@ -21,7 +21,7 @@ import { instancesTradingSymbol } from '@/lib/plans/planLinkFill'
 import { planEstCredit, planExitSummary, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
-import { InstanceRef } from '@/components/instanceRecord/InstanceRef'
+import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { cancelStrategyPlan } from '@/api/strategyPlans'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
@@ -167,7 +167,7 @@ function LinkFillPicker({ plan, onDone }: { plan: StrategyPlan; onDone: () => vo
       ) : null}
       {candidates.length === 0 ? (
         <p className="text-dense-meta text-muted-foreground">
-          No instance in this account opened after the plan was intended trades {plan.symbol}.
+          No trade in this account opened after the plan was intended trades {plan.symbol}.
         </p>
       ) : (
         <ul className="space-y-1">
@@ -484,9 +484,9 @@ export function PlanCard({
           {plan.strategy_instance_id ? (
             <>
               <Field
-                label="Instance"
+                label="Trade"
                 value={
-                  <InstanceRef id={plan.strategy_instance_id} from="Plans" />
+                  <TradeRef id={plan.strategy_instance_id} from="Plans" />
                 }
               />
               <Field label="Filled at" value={plan.filled_at?.slice(0, 16) ?? '—'} />
@@ -499,7 +499,7 @@ export function PlanCard({
                   ? 'Drafts have no intent, so nothing is watched.'
                   : status === 'expired'
                     ? 'Intent lapsed with no linked fill.'
-                    : 'Not linked to an instance. Orders are placed in TWS; linking is how the plan learns what happened.'}
+                    : 'Not linked to a trade. Orders are placed in TWS; linking is how the plan learns what happened.'}
             </p>
           )}
           {actions.canLinkFill ? (

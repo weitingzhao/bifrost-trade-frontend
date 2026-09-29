@@ -30,7 +30,7 @@ describe('review instances (Rev .104)', () => {
 
   it('reads an instance as one line across its legs, and pins open ones first', () => {
     const list = buildReviewInstances(rows, '2026-01-08')
-    expect(list.map((i) => [i.instanceId, i.open, i.legs.length, i.rolls])).toEqual([
+    expect(list.map((i) => [i.tradeId, i.open, i.legs.length, i.rolls])).toEqual([
       [8, true, 1, 0],
       [7, false, 2, 1],
     ])
@@ -44,7 +44,7 @@ describe('review instances (Rev .104)', () => {
 
   it('reads an instance whose open legs are all past expiry as expired, not open', () => {
     const list = buildReviewInstances(rows, '2026-03-01')
-    const eight = list.find((i) => i.instanceId === 8)!
+    const eight = list.find((i) => i.tradeId === 8)!
     expect([eight.open, eight.exitKind, eight.closedOn, eight.expiredUnbooked]).toEqual([false, 'expired', '2026-01-16', true])
     expect(Math.round(eight.realised)).toBe(200)
   })

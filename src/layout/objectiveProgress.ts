@@ -135,7 +135,7 @@ export function handProgress(
       to: '/trade/desk',
     },
     { stage: 'Position', lamp: 'gray', v: '—', note: 'not read in this menu — open Positions', to: '/portfolio/positions' },
-    { stage: 'Settle', lamp: 'gray', v: '—', note: 'not read in this menu — open Single trade', to: '/review/fit' },
+    { stage: 'Settle', lamp: 'gray', v: '—', note: 'not read in this menu — open Trade review', to: '/review/trade' },
   ]
 }
 

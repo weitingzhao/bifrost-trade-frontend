@@ -20,7 +20,7 @@ interface PerformanceOnTheFlySectionProps {
 }
 
 const OPT_UNREALIZED_HELP =
-  'Option legs use the same per-execution cash flow as Trade Ledger → Options → Details. Pairing uses backend opt pairs when available, else FIFO by contract.'
+  'Option legs use the same per-execution cash flow as Ledger → Options → Details. Pairing uses backend opt pairs when available, else FIFO by contract.'
 
 const LEG_VALUE_HELP =
   'Option rows: the premium by side, as the ledger shows it. Stock rows: shares × price, long positive. The unmatched legs sum to the Unrealized figures above.'

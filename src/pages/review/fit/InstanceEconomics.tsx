@@ -1,5 +1,5 @@
 /**
- * Single trade's head block (design Rev .104): the instance as the Ledger
+ * Trade review's head block (design Rev .104): the instance as the Ledger
  * books it — #NNN, the name, its structure and rule, the net (unrealised
  * orange while open) — the seven facts, and the legs table, each leg
  * expandable to its own premium, what was kept and how long it was held. A
@@ -11,7 +11,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsStat } from '@/components/positions/PositionsStat'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
-import { useOpenInstance } from '@/layout/instanceGo'
+import { useOpenTrade } from '@/layout/tradeGo'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
@@ -33,7 +33,7 @@ export function InstanceEconomics({
   pathLoading: boolean
   today: string
 }) {
-  const openInstance = useOpenInstance()
+  const openInstance = useOpenTrade()
   const missing = pathLoading ? '…' : 'n/c'
   const missingSub = pathLoading ? 'reading the legs’ daily bars' : 'no daily bar for this window'
   const net = inst.open && markPath ? markPath.realised : inst.realised
@@ -45,20 +45,20 @@ export function InstanceEconomics({
     ? `open · day ${inst.daysHeld ?? '—'} of ${inst.dteAtEntry ?? '—'} · unrealised`
     : `${inst.expiredUnbooked ? 'expired · no closing fill' : 'closed'}${inst.rolls ? ` · rolled ${inst.rolls}×` : ''}`
   return (
-    <section className={positionsUi.panel} aria-label="What the instance did">
+    <section className={positionsUi.panel} aria-label="What the trade did">
       <header className={positionsUi.panelHead}>
-        {inst.instanceId != null ? (
+        {inst.tradeId != null ? (
           <button
             type="button"
-            onClick={() => openInstance(inst.instanceId!, { from: '/review/fit' })}
-            title={`Open instance #${inst.instanceId} beside this page`}
-            className="font-mono text-sm font-bold text-[var(--sk-instance)] hover:underline"
+            onClick={() => openInstance(inst.tradeId!, { from: '/review/trade' })}
+            title={`Open trade #${inst.tradeId} beside this page`}
+            className="font-mono text-sm font-bold text-[var(--sk-trade)] hover:underline"
           >
-            #{inst.instanceId}
+            #{inst.tradeId}
           </button>
         ) : (
-          <span className="text-dense-meta text-muted-foreground" title="These fills are booked to no instance — reviewed as the contract they traded">
-            no instance
+          <span className="text-dense-meta text-muted-foreground" title="These fills are booked to no trade — reviewed as the contract they traded">
+            no trade
           </span>
         )}
         <Link
@@ -74,7 +74,7 @@ export function InstanceEconomics({
         {/covered/i.test(inst.play ?? '') ? (
           <span
             className="text-dense-meta text-warning"
-            title="Share legs are never booked to an instance, so the shares this call is written against are not in this line — read the option legs alone."
+            title="Share legs are never booked to a trade, so the shares this call is written against are not in this line — read the option legs alone."
           >
             shares not in the line
           </span>
@@ -154,17 +154,17 @@ export function InstanceEconomics({
           {inst.legs.length} {inst.legs.length === 1 ? 'leg' : 'legs'} ·{' '}
           {inst.legs.reduce((n, l) => n + l.fills.length, 0)} fills
         </span>
-        {inst.instanceId != null ? (
+        {inst.tradeId != null ? (
           <>
             {' · '}
-            <Link to={tradeFactsPath(inst.instanceId)} className={positionsUi.link}>
+            <Link to={tradeFactsPath(inst.tradeId)} className={positionsUi.link}>
               Facts face →
             </Link>
           </>
         ) : null}
         {' — '}fills-based, fees included, the same figures the{' '}
         <Link to="/portfolio/ledger" className={positionsUi.link}>
-          Trade Ledger
+          Ledger
         </Link>{' '}
         shows. Share legs are not booked to instances, so a covered call&rsquo;s shares are not in this line.
       </p>

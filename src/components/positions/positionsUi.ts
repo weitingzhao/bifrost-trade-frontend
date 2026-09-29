@@ -3,7 +3,7 @@ import { SECTION_HEAD_CLASSES } from '@/components/layout/sectionHeadClasses'
 
 /**
  * Positions and Backing & Model surfaces — the prototypes' `ps-*` / `bk2-*`
- * vocabulary, in the tokens Performance, Accounts and the Trade Ledger already
+ * vocabulary, in the tokens Performance, Accounts and the Ledger already
  * speak: a section heading (tier), solid raised panels with a raised2 header
  * bar, uppercase captions, and the prototype's 1.5 line height.
  */

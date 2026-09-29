@@ -15,27 +15,27 @@ import { PositionsStat } from '@/components/positions/PositionsStat'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { SymbolPriceChart } from '@/components/symbolChart/SymbolPriceChart'
 import { instanceTracksFor } from '@/components/symbolChart/symbolPriceModel'
-import { InstanceRecord } from '@/components/instanceRecord/InstanceRecord'
-import { useInstanceRecord } from '@/hooks/useInstanceRecord'
+import { TradeRecord } from '@/components/tradeRecord/TradeRecord'
+import { useTradeRecord } from '@/hooks/useTradeRecord'
 import { useSymbolGo } from '@/layout/symbolGo'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { todayIso } from '@/lib/researchFreshness'
 import { fmtPctSigned, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
-import { d3 } from '@/utils/instanceRecord/instanceRecordModel'
-import type { RanUnder } from '@/utils/instanceRecord/ranUnder'
+import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
+import type { RanUnder } from '@/utils/tradeRecord/ranUnder'
 import type { StrategyInstance } from '@/types/positions'
-import { byOpening, fillRows, ledgerRows, timelineRows } from './instancePageModel'
-import { InstanceJournal, InstanceLineage } from './InstanceRail'
-import { InstanceBlock } from './InstanceBlock'
+import { byOpening, fillRows, ledgerRows, timelineRows } from './tradePageModel'
+import { TradeJournal, TradeLineage } from './TradeRail'
+import { TradeBlock } from './TradeBlock'
 
 const UNREALIZED = 'text-[var(--color-unrealized)]'
 const signed = (v: number | null | undefined) => (v == null ? '—' : v > 0 ? `+${fmtUsdRound(v)}` : fmtUsdRound(v))
 const px = (v: number | null) => (v == null ? '—' : `$${v.toFixed(2)}`)
 
 
-export function InstanceWide({
+export function TradeWide({
   instance,
   list,
   from,
@@ -56,7 +56,7 @@ export function InstanceWide({
   const symbolGo = useSymbolGo()
   const id = instance.strategy_instance_id
   const today = todayIso()
-  const r = useInstanceRecord(instance, { withShares: true })
+  const r = useTradeRecord(instance, { withShares: true })
   const d = r.detail
   const execs = useMemo(() => d?.executionsFinal ?? [], [d?.executionsFinal])
   const legs = useMemo(() => byOpening(r.legs), [r.legs])
@@ -90,8 +90,8 @@ export function InstanceWide({
   return (
     <>
       <PageHead
-        title={`#${id}${sym ? ` · ${sym}` : ''}`}
-        info="One strategy instance, whole: its price path, every leg and roll, every fill booked to it, the ledger by leg and the notes written about it. Reached from any #NNN token; beside any page it opens as the 440 panel."
+        title={`Trade #${id}${sym ? ` · ${sym}` : ''}`}
+        info="One trade, whole: its price path, every leg and roll, every fill booked to it, the ledger by leg and the notes written about it. Reached from any #NNN token; beside any page it opens as the 440 panel."
         meta={`${instance.strategy_opportunity_name ?? '—'} · ${closed ? 'closed' : 'open'}`}
         actions={
           <>
@@ -103,7 +103,7 @@ export function InstanceWide({
             <PageHeadAction title="Portfolio › Positions — where its open legs are marked" onClick={() => navigate(`/portfolio/positions?inst=${id}`)}>
               Positions →
             </PageHeadAction>
-            <PageHeadAction title={`Portfolio › Trade Ledger — every fill booked to #${id}`} onClick={() => navigate(`/portfolio/ledger?inst=${id}`)}>
+            <PageHeadAction title={`Portfolio › Ledger — every fill booked to #${id}`} onClick={() => navigate(`/portfolio/ledger?inst=${id}`)}>
               Ledger →
             </PageHeadAction>
           </>
@@ -111,8 +111,8 @@ export function InstanceWide({
       />
 
       <div data-sr-toolbar="">
-        {/* Rev .110: one instance, two faces — Facts here, Review on Single trade. */}
-        <TradeFaceSwitch instanceId={id} side="facts" />
+        {/* Rev .110: one instance, two faces — Facts here, Review on Trade review. */}
+        <TradeFaceSwitch tradeId={id} side="facts" />
         <DenseTag variant={closed ? 'neutral' : expired ? 'warning' : 'success'} size="cell">
           {closed ? 'Closed' : expired ? 'Past expiry' : 'Open'}
         </DenseTag>
@@ -120,7 +120,7 @@ export function InstanceWide({
           <button
             type="button"
             onClick={() => symbolGo.go(sym, 'compare')}
-            title={`Symbol · ${sym} beside — its chart and every instance on it`}
+            title={`Symbol · ${sym} beside — its chart and every trade on it`}
             className="cursor-pointer rounded border-0 bg-transparent px-0.5 font-mono text-dense-body font-bold text-[var(--sk-ticker)] hover:underline"
           >
             {sym}
@@ -136,11 +136,11 @@ export function InstanceWide({
             <span data-sr-tb="sep" />
             <span className="text-dense-micro text-muted-foreground">from {from}</span>
             <span className="inline-flex items-center gap-1">
-              <button type="button" className={positionsUi.btn} onClick={onPrev} disabled={!onPrev} title="Previous in the list · [" aria-label="Previous instance">
+              <button type="button" className={positionsUi.btn} onClick={onPrev} disabled={!onPrev} title="Previous in the list · [" aria-label="Previous trade">
                 ‹
               </button>
               <span className="font-mono text-dense-micro text-muted-foreground">{pos}</span>
-              <button type="button" className={positionsUi.btn} onClick={onNext} disabled={!onNext} title="Next in the list · ]" aria-label="Next instance">
+              <button type="button" className={positionsUi.btn} onClick={onNext} disabled={!onNext} title="Next in the list · ]" aria-label="Next trade">
                 ›
               </button>
             </span>
@@ -175,7 +175,7 @@ export function InstanceWide({
         <div className="flex min-w-0 flex-[999_1_620px] flex-col gap-3">
           {sym ? <SymbolPriceChart symbol={sym} instanceId={id} /> : null}
 
-          <InstanceBlock cap="Legs" title="Timeline" note="open to close · ↻ a roll seam, net beside it · dashed = held to expiry">
+          <TradeBlock cap="Legs" title="Timeline" note="open to close · ↻ a roll seam, net beside it · dashed = held to expiry">
             <div className="flex flex-col gap-1.5 px-3 pt-2.5 pb-3">
               <div className="grid grid-cols-[minmax(160px,240px)_minmax(0,1fr)] gap-3">
                 <span />
@@ -223,7 +223,7 @@ export function InstanceWide({
                         style={{
                           left: `${mk.at}%`,
                           fontSize: mk.glyph === '↻' ? 13 : 9,
-                          color: mk.glyph === '↻' ? 'var(--sk-instance)' : 'var(--sk-contract)',
+                          color: mk.glyph === '↻' ? 'var(--sk-trade)' : 'var(--sk-contract)',
                         }}
                       >
                         {mk.glyph}
@@ -233,9 +233,9 @@ export function InstanceWide({
                 </div>
               ))}
             </div>
-          </InstanceBlock>
+          </TradeBlock>
 
-          <InstanceBlock
+          <TradeBlock
             cap="Fills"
             title={`${fills.rows.length} ${fills.rows.length === 1 ? 'fill' : 'fills'} booked to #${id}`}
             note="Flex is the statement of record; today's fills come from TWS until it lands"
@@ -295,15 +295,15 @@ export function InstanceWide({
                 </tbody>
               </table>
             </div>
-          </InstanceBlock>
+          </TradeBlock>
 
-          <InstanceBlock
+          <TradeBlock
             cap="Ledger"
             title="P&L by leg"
             note={closed ? 'closed — every leg realised' : 'open legs marked at their mark · a rolled leg is realised at its buy-back'}
             action={
               <button type="button" className={positionsUi.link} onClick={() => navigate(`/portfolio/ledger?inst=${id}`)}>
-                Trade Ledger →
+                Ledger →
               </button>
             }
           >
@@ -373,19 +373,19 @@ export function InstanceWide({
                 </span>
               </span>
             </div>
-          </InstanceBlock>
+          </TradeBlock>
         </div>
 
         <aside className="flex min-w-0 max-w-[440px] flex-[1_1_340px] flex-col gap-3">
-          <InstanceLineage instance={instance} sym={sym} ranUnder={ranUnder} from={from} list={list} />
-          <InstanceRecord
+          <TradeLineage instance={instance} sym={sym} ranUnder={ranUnder} from={from} list={list} />
+          <TradeRecord
             instance={instance}
             mode="rail"
             title={`#${id}`}
             opportunity={instance.strategy_opportunity_name ?? '—'}
             structure={instance.strategy_structure_name ?? '—'}
           />
-          <InstanceJournal id={id} sym={sym} />
+          <TradeJournal id={id} sym={sym} />
         </aside>
       </div>
     </>

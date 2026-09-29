@@ -16,6 +16,7 @@ import {
   focusTab,
   isVisible,
   loadGeometry,
+  migrateInstanceSurface,
   openSurface,
   openSurfaceKeys,
   placeOf,
@@ -28,9 +29,9 @@ import {
   symbolSurface,
   toggleSurface,
   type Surface,
-  instanceSurface,
-  instancePath,
-  setSurfaceInstance,
+  tradeSurface,
+  tradePath,
+  setSurfaceTrade,
   surfaceState,
 } from './equipSurface'
 
@@ -119,41 +120,60 @@ describe('the Symbol page as a surface (Rev .58)', () => {
   })
 })
 
-describe('an instance as a surface (Rev .103)', () => {
+describe('a trade as a surface (Rev .103 · .111)', () => {
   it('has one following tab and a fresh tab per number', () => {
-    expect(instanceSurface(159).key).toBe('instance')
-    expect(instanceSurface(159, { fresh: true }).key).toBe('instance:159')
-    openSurface(instanceSurface(159))
-    openSurface(instanceSurface(160))
-    openSurface(instanceSurface(12, { fresh: true }), 'panel')
-    openSurface(instanceSurface(12, { fresh: true }), 'panel')
-    expect(openSurfaceKeys()).toEqual(['instance', 'instance:12'])
-    expect(surfaceState().panel?.tabs.find((t) => t.key === 'instance')?.instance).toBe(160)
+    expect(tradeSurface(159).key).toBe('trade')
+    expect(tradeSurface(159, { fresh: true }).key).toBe('trade:159')
+    openSurface(tradeSurface(159))
+    openSurface(tradeSurface(160))
+    openSurface(tradeSurface(12, { fresh: true }), 'panel')
+    openSurface(tradeSurface(12, { fresh: true }), 'panel')
+    expect(openSurfaceKeys()).toEqual(['trade', 'trade:12'])
+    expect(surfaceState().panel?.tabs.find((t) => t.key === 'trade')?.trade).toBe(160)
   })
 
   it('keeps the list it came from only when the number is in it', () => {
-    expect(instanceSurface(5, { list: [4, 5, 5, 6] }).instanceList).toEqual([4, 5, 6])
-    expect(instanceSurface(9, { list: [4, 5] }).instanceList).toEqual([9])
+    expect(tradeSurface(5, { list: [4, 5, 5, 6] }).tradeList).toEqual([4, 5, 6])
+    expect(tradeSurface(9, { list: [4, 5] }).tradeList).toEqual([9])
   })
 
   it('steps in place, keeping its key and its tab', () => {
-    openSurface(instanceSurface(4, { list: [4, 5, 6], from: 'Ledger' }))
-    setSurfaceInstance('instance', 6)
-    const tab = surfaceState().panel?.tabs.find((t) => t.key === 'instance')
-    expect([tab?.instance, tab?.to, tab?.instanceFrom]).toEqual([6, '/instance/6', 'Ledger'])
-    expect(surfaceLabel(tab!, '')).toBe('Instance · #6')
+    openSurface(tradeSurface(4, { list: [4, 5, 6], from: 'Ledger' }))
+    setSurfaceTrade('trade', 6)
+    const tab = surfaceState().panel?.tabs.find((t) => t.key === 'trade')
+    expect([tab?.trade, tab?.to, tab?.tradeFrom]).toEqual([6, '/trade/6', 'Ledger'])
+    expect(surfaceLabel(tab!, '')).toBe('Trade · #6')
   })
 
   it('shares one place memory between the following tab and fresh ones', () => {
-    openSurface(instanceSurface(1), 'float')
-    closeSurface('instance')
-    openSurface(instanceSurface(2, { fresh: true }))
-    expect(placeOf('instance:2')).toBe('float')
+    openSurface(tradeSurface(1), 'float')
+    closeSurface('trade')
+    openSurface(tradeSurface(2, { fresh: true }))
+    expect(placeOf('trade:2')).toBe('float')
+  })
+
+  it('keeps a place remembered under the old key', () => {
+    localStorage.setItem('bifrost.where', JSON.stringify({ instance: 'float' }))
+    openSurface(tradeSurface(3, { fresh: true }))
+    expect(placeOf('trade:3')).toBe('float')
+  })
+
+  it('reads a tab saved under the Instance names (before Rev .111) as a trade', () => {
+    const old = { key: 'instance:7', to: '/instance/7', label: '#7', instance: 7, instanceList: [6, 7], instanceFrom: 'Ledger' }
+    expect(migrateInstanceSurface(old as unknown as Surface)).toMatchObject({
+      key: 'trade:7',
+      to: '/trade/7',
+      trade: 7,
+      tradeList: [6, 7],
+      tradeFrom: 'Ledger',
+    })
+    const sym = { key: 'symbol', to: '/research/symbol', label: 'Symbol' } as Surface
+    expect(migrateInstanceSurface(sym)).toBe(sym)
   })
 
   it('addresses its page with the rows it came from', () => {
-    expect(instancePath(5, [4, 5, 6], 'Ledger · instances')).toBe('/instance/5?list=4%2C5%2C6&from=Ledger+%C2%B7+instances')
-    expect(instancePath(5)).toBe('/instance/5')
+    expect(tradePath(5, [4, 5, 6], 'Ledger · trades')).toBe('/trade/5?list=4%2C5%2C6&from=Ledger+%C2%B7+trades')
+    expect(tradePath(5)).toBe('/trade/5')
   })
 })
 

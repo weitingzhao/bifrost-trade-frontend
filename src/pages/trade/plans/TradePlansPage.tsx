@@ -1,5 +1,5 @@
 /**
- * Trade › Plans — the structured plan desk (`Trade Plans.dc.html`).
+ * Trading › Plans — the structured plan desk (`Trade Plans.dc.html`).
  *
  * A plan is a record: what I intend, how I exit, what filled. It is stored on
  * the server (`strategy_plan`, core 0.22.0), so a plan written on one machine is

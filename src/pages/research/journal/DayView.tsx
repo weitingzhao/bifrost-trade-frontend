@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
 
 const KIND_INK: Record<DayTrace['kind'], string> = {
   note: 'text-foreground',
-  thread: 'text-[var(--sk-instance,#c084fc)]',
+  thread: 'text-[var(--sk-trade,#c084fc)]',
   fill: 'text-muted-foreground',
   visit: 'text-muted-foreground',
   decision: 'text-warning',

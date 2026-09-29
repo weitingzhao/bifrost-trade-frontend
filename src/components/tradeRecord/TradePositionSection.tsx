@@ -10,11 +10,11 @@ import { PositionsStat } from '@/components/positions/PositionsStat'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtPctFromFraction, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import type { PositionView } from '@/utils/instanceRecord/instanceRecordModel'
+import type { PositionView } from '@/utils/tradeRecord/tradeRecordModel'
 
 const signed0 = (v: number | null) => (v == null ? '—' : `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(0)}`)
 
-export function InstancePositionSection({
+export function TradePositionSection({
   p,
   pending,
   positionsTo,
@@ -84,7 +84,7 @@ export function InstancePositionSection({
                     'font-mono whitespace-nowrap',
                     r.kind === 'stk' ? 'text-[var(--sk-ticker)]' : 'text-[var(--sk-contract,#7dd3fc)]',
                   )}
-                  title={r.kind === 'stk' ? "The account's shares now, covering the short calls — not attributed to the instance" : undefined}
+                  title={r.kind === 'stk' ? "The account's shares now, covering the short calls — not attributed to the trade" : undefined}
                 >
                   {r.label}
                 </td>

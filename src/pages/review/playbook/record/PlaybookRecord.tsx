@@ -206,13 +206,13 @@ export function PlaybookRecord() {
         ) : null}
         <span data-sr-tb="meta">
           {byStructure
-            ? 'closed instances, via the strategy service · totals first'
+            ? 'closed trades, via the strategy service · totals first'
             : pageState === 'ready'
               ? `${plays.length} plays · ${trades.length} closed trades · via the `
               : 'closed contracts, via the '}
           {byStructure ? null : (
             <Link to="/portfolio/ledger" className={positionsUi.link} title="The fills every figure here is read from">
-              Trade Ledger →
+              Ledger →
             </Link>
           )}
         </span>

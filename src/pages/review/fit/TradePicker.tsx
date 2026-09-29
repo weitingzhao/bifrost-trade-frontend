@@ -1,5 +1,5 @@
 /**
- * Single trade's picker (design Rev .104): the toolbar reads ‹ the current
+ * Trade review's picker (design Rev .104): the toolbar reads ‹ the current
  * trade › and n of N; the middle button opens the closed-trade table —
  * filtered All · Won · Lost · Broke plan, searchable, grouped None · Symbol ·
  * Expiry with each group's count and net. [ and ] step anywhere on the page,
@@ -28,8 +28,8 @@ const NO_PLAN = 'No plan is linked to any position, so whether a trade broke its
 function TradeName({ t }: { t: ReviewTrade }) {
   return (
     <>
-      {t.instanceId != null ? (
-        <span className="font-mono font-bold text-[var(--sk-instance)]">#{t.instanceId}</span>
+      {t.tradeId != null ? (
+        <span className="font-mono font-bold text-[var(--sk-trade)]">#{t.tradeId}</span>
       ) : null}{' '}
       <span className="font-mono font-bold text-[var(--sk-ticker)]">{t.underlying}</span>
     </>
@@ -96,7 +96,7 @@ export function TradePicker({
       <div data-sr-toolbar="" className="flex-wrap">
         {leading}
         <span data-sr-tb="label">Trade</span>
-        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(-1)} title="Previous instance ( [ )" aria-label="Previous instance">
+        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(-1)} title="Previous trade ( [ )" aria-label="Previous trade">
           ‹
         </button>
         <button
@@ -123,7 +123,7 @@ export function TradePicker({
           )}
           <span className="text-muted-foreground">▾</span>
         </button>
-        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(1)} title="Next instance ( ] )" aria-label="Next instance">
+        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(1)} title="Next trade ( ] )" aria-label="Next trade">
           ›
         </button>
         <span data-sr-tb="meta" className="font-mono">
@@ -134,9 +134,9 @@ export function TradePicker({
       </div>
 
       {open ? (
-        <section className="overflow-hidden mat-card" aria-label="Instances">
+        <section className="overflow-hidden mat-card" aria-label="Trades">
           <header className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-            <span className={positionsUi.cap}>Instances</span>
+            <span className={positionsUi.cap}>Trades</span>
             <SegmentControl
               size="sm"
               ariaLabel="Outcome"
@@ -173,7 +173,7 @@ export function TradePicker({
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Symbol, #, rule…"
-              aria-label="Filter instances"
+              aria-label="Filter trades"
               className="h-6 w-44 mat-field px-2 text-dense-label"
             />
             <span className="ml-auto text-dense-meta text-muted-foreground">
@@ -183,13 +183,13 @@ export function TradePicker({
           {outcome === 'broke' ? (
             <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">{NO_PLAN}</p>
           ) : rows.length === 0 ? (
-            <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No instance matches — the filter is on, not the book empty.</p>
+            <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No trade matches — the filter is on, not the book empty.</p>
           ) : (
             <div className="max-h-80 overflow-y-auto">
               <table data-sr-table="" className="w-full">
                 <thead>
                   <tr>
-                    <th>Instance</th>
+                    <th>Trade</th>
                     <th>Contract</th>
                     <th>Rule</th>
                     <th>Closed</th>

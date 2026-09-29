@@ -95,17 +95,17 @@ export function PerformanceFilterBar({
       </label>
 
       <label className="inline-flex items-center gap-1.5 text-dense-body text-muted-foreground">
-        Instance
+        Trade
         <Select
           value={selectedInstId != null ? String(selectedInstId) : 'all'}
           onValueChange={onInstChange}
           disabled={selectedOppId == null}
         >
-          <SelectTrigger className={selectTrigger} aria-label="Instance">
-            <SelectValue placeholder="All instances" />
+          <SelectTrigger className={selectTrigger} aria-label="Trade">
+            <SelectValue placeholder="All trades" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All instances</SelectItem>
+            <SelectItem value="all">All trades</SelectItem>
             {(instQuery.data?.items ?? []).map(i => (
               <SelectItem key={i.strategy_instance_id} value={String(i.strategy_instance_id)}>
                 {i.label ?? `#${i.strategy_instance_id}`}

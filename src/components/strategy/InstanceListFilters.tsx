@@ -25,7 +25,7 @@ import {
   instancesInlineFieldClass,
   instancesToolbarClass,
   instancesToolbarLabelClass,
-} from './instances/instancesUi'
+} from './instances/tradesUi'
 
 export type StatusFilter = '' | 'open' | 'closed'
 export type SinceFilter = '' | '1m' | 'q' | 'half' | '1y' | 'ytd'
@@ -58,7 +58,7 @@ interface Props {
   /**
    * The account / opportunity / instance pickers, and the accordion switch.
    *
-   * Optional since 2026-09-18: Trade › Rules shows this list under a chain node
+   * Optional since 2026-09-18: Trading › Rules shows this list under a chain node
    * that has already narrowed by opportunity and allocation, so offering the
    * same narrowing twice would let a reader set the two against each other.
    * Omitting them drops those controls and keeps the rest.
@@ -78,7 +78,7 @@ interface Props {
   onExpandAll: () => void
   onCollapseAll: () => void
   showGroupToolbar: boolean
-  /** Trade › Rules narrows by symbol through the lens, not this row (Rev .101). */
+  /** Trading › Rules narrows by symbol through the lens, not this row (Rev .101). */
   hideSymbol?: boolean
   /** Extra controls on the group row (Rules' Group: Symbol / None). */
   groupSlot?: ReactNode
@@ -223,7 +223,7 @@ export function InstanceListFilters({
 
               {onInstanceIdFilterChange && opportunityIdFilter !== '' && opportunityIdFilter != null && (
                 <div className={instancesInlineFieldClass}>
-                  <Label htmlFor="instances-instance" className={instancesFieldLabelClass}>Instance</Label>
+                  <Label htmlFor="instances-instance" className={instancesFieldLabelClass}>Trade</Label>
                   <Select
                     value={instanceIdFilter === '' ? '__all__' : String(instanceIdFilter)}
                     onValueChange={(v) => onInstanceIdFilterChange(v === '__all__' ? '' : Number(v))}

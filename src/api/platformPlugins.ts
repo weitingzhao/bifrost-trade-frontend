@@ -65,7 +65,7 @@ export const PLATFORM_PLUGINS: PlatformPluginDef[] = [
   {
     key: 'flex-query',
     label: 'Flex Query',
-    supports: 'Executions and cash activity — Trade Ledger, Transfer & Pay',
+    supports: 'Executions and cash activity — Ledger, Transfer & Pay',
   },
   {
     key: 'ib-gateway',

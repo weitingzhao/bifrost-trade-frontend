@@ -1,5 +1,5 @@
 /** One of the Instance page's grouped blocks: a caption, a title, an aside and its body. */
-export function InstanceBlock({
+export function TradeBlock({
   cap,
   title,
   note,

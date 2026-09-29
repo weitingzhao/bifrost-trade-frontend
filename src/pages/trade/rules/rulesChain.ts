@@ -360,7 +360,7 @@ export function buildChain(
     { key: 'structure', step: 'shape', title: 'Structures', count: String(structures.length), cards: structures },
     { key: 'opportunity', step: 'when', title: 'Opportunities', count: String(opportunities.length), cards: opportunities },
     { key: 'allocation', step: 'run', title: 'Allocations · gates', count: String(allocations.length), cards: allocations },
-    { key: 'instance', step: 'running', title: 'Instances', count: `${openN} open · ${closedN} closed`, cards: instances },
+    { key: 'instance', step: 'running', title: 'Trades', count: `${openN} open · ${closedN} closed`, cards: instances },
   ].map((c) => ({ ...c, cards: c.cards.map((k) => ({ ...k, lit: !dim(k.lit) })) })) as ChainColumn[]
 }
 
@@ -446,18 +446,18 @@ export function detailOf(
           : {
               k: 'Allocation',
               v: 'none',
-              note: 'nothing tells the daemon to run this, and an instance under it inherits no gate',
+              note: 'nothing tells the daemon to run this, and a trade under it inherits no gate',
               tone: 'warning' as const,
             },
         {
-          k: 'Instances',
+          k: 'Trades',
           v: String(rows.length),
           note: `${rows.length - closed.length} open · ${closed.length} closed · every one of them, whatever the filter shows`,
         },
         {
           k: 'Realised',
           v: closed.length === 0 ? '—' : String(Math.round(realised)),
-          note: closed.length === 0 ? 'no closed instance yet' : 'closed instances only, fills-based',
+          note: closed.length === 0 ? 'no closed trade yet' : 'closed trades only, fills-based',
           tone: closed.length === 0 ? undefined : realised >= 0 ? ('success' as const) : ('danger' as const),
         },
       ],
@@ -513,11 +513,11 @@ export function detailOf(
             : 'no gate, so nothing bounds what runs under it',
           tone: gate ? undefined : ('warning' as const),
         },
-        { k: 'Max positions', v: a.max_positions == null ? '—' : String(a.max_positions), note: 'what bounds the Instances column' },
+        { k: 'Max positions', v: a.max_positions == null ? '—' : String(a.max_positions), note: 'what bounds the Trades column' },
         { k: 'Max BP', v: a.max_bp_pct == null ? '—' : `${Math.round(a.max_bp_pct * 100)}%`, note: 'share of buying power this allocation may use' },
         { k: 'Opportunities', v: String(oppIds.length), note: 'each with its own conditions' },
         {
-          k: 'Instances',
+          k: 'Trades',
           v: String(rows.length),
           note: `${rows.filter((i) => !i.closed).length} open · every one of them, whatever the filter shows`,
         },
@@ -530,15 +530,15 @@ export function detailOf(
     const open = d.instances.filter((x) => !x.closed).length
     return {
       kind: 'instance',
-      title: 'All instances',
-      lineage: 'every instance in the book, whatever the chain above is showing',
+      title: 'All trades',
+      lineage: 'every trade in the book, whatever the chain above is showing',
       facts: [
         { k: 'Open', v: String(open), note: 'still has legs, by its own fills' },
         { k: 'Closed', v: String(d.instances.length - open), note: 'flat by its own fills' },
         {
           k: 'Opportunities',
           v: String(new Set(d.instances.map((x) => x.opportunityId)).size),
-          note: 'the rules these instances ran under',
+          note: 'the rules these trades ran under',
         },
       ],
       rows: [...d.instances],
@@ -564,7 +564,7 @@ export function detailOf(
         tone: i.realised == null ? undefined : i.realised >= 0 ? ('success' as const) : ('danger' as const),
       },
       { k: 'Opened', v: i.openedOn ?? '—', note: `${i.fills} fill${i.fills === 1 ? '' : 's'} linked` },
-      { k: 'Structure', v: i.structureName, note: o?.structure_name === i.structureName ? 'as the opportunity specifies' : 'recorded on the instance' },
+      { k: 'Structure', v: i.structureName, note: o?.structure_name === i.structureName ? 'as the opportunity specifies' : 'recorded on the trade' },
       {
         k: 'Gate',
         v: gate ? gate.name : '—',

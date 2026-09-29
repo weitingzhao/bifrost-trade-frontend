@@ -121,7 +121,7 @@ export function useLimitBook(accountFilter: string): LimitBook {
   /**
    * The gate the daemon runs under — the only limits in this book anyone has
    * written down. Design DECISIONS 2026-09-18: a gate is a limit at scope =
-   * allocation, defined in Trade › Rules and read here.
+   * allocation, defined in Trading › Rules and read here.
    */
   const allocationsQuery = useQuery({
     queryKey: ['strategy', 'allocations'],

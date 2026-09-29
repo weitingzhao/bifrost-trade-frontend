@@ -119,7 +119,7 @@ describe('the design walk, by revision', () => {
     // Notes/Feedback/Memory ASK (Spec §20), merges Lists+Symbol+Live into the
     // Market capsule, renames Book starters → Starters (label-only, walked with
     // the rename) and fixes the prototype's floating-material marker.
-    // Package .30 @ Rev .101 (2026-09-28): full package — Trade › Rules redone
+    // Package .30 @ Rev .101 (2026-09-28): full package — Trading › Rules redone
     // (walked in batch R1), the InstanceRecord face, and Rev .100's Pilot
     // Console merge (a round of its own, R4).
     // Package .31 @ Rev .102 (2026-09-28, increment): Symbol's price chart on
@@ -182,8 +182,8 @@ describe('the design walk, by revision', () => {
     // was already in `reviewing`. 24 → 12 with J4 (Rev .88–.89): twelve more;
     // Narrative, Backtest and Objectives were already there. 12 → 0 with J5
     // (Rev .90–.92): the last twelve; the round is walked end to end.
-    // 3 while Rev .111's Instance → Trade rename is unbuilt (/instance, /review/fit, /trade/desk).
-    expect(counts.byState.stale).toBe(3)
+    // 3 for a package while Rev .111's Instance → Trade rename was unbuilt; 0 once it landed.
+    expect(counts.byState.stale).toBe(0)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

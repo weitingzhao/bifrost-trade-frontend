@@ -8,7 +8,7 @@ describe('layerForPath', () => {
     expect(layerForPath('/portfolio/positions')).toBe('result')
     expect(layerForPath('/trade/desk')).toBe('execution')
     expect(layerForPath('/risk/sizing')).toBe('risk')
-    expect(layerForPath('/review/fit')).toBe('review')
+    expect(layerForPath('/review/trade')).toBe('review')
     expect(layerForPath('/home')).toBe('home')
   })
 
@@ -45,7 +45,7 @@ describe('layerForPath', () => {
     expect(layerForPath('/system/daemon')).toBe('base')
     expect(layerForPath('/docs/tech-stack')).toBe('base')
     // Strategy has no design group; it inherits `execution` when it moves into
-    // Trade › Rules, and reads as base until then.
+    // Trading › Rules, and reads as base until then.
     expect(layerForPath('/strategy/instances')).toBe('base')
   })
 

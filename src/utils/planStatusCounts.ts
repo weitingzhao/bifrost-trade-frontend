@@ -1,5 +1,5 @@
 /**
- * How many plans stand in each state — read by Trade › Plans for its filter
+ * How many plans stand in each state — read by Trading › Plans for its filter
  * counts and by the shell's Objective control for a hand objective's Plan
  * stage, so both say the same number.
  */

@@ -1,5 +1,5 @@
 /**
- * ＋ Plan this — exit verb from Symbol / Chain into Trade › Plans.
+ * ＋ Plan this — exit verb from Symbol / Chain into Trading › Plans.
  *
  * Writes a real draft on the server (`strategy_plan`) and opens its card. It
  * used to queue into sessionStorage, which meant the plan died with the tab and

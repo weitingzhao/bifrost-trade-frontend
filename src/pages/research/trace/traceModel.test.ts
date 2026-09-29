@@ -52,4 +52,21 @@ describe('trace chain (Rev .100 · §22.6)', () => {
     expect(immuneCheck(mem({ evidence: [{ source: 'decisions', date: 'x', text: '', route: '' }] })).verdict).toBe('echo')
     expect(immuneCheck(mem({ evidence: [] })).verdict).toBe('empty')
   })
+
+  it('lights the downstream arcs from the objective that records this memory as its origin', () => {
+    const nodes = traceChain({
+      memory: mem(),
+      axes: [],
+      sources: [],
+      downstream: { proposed: true, born: { id: 'obj-x', title: 'Flag it', created: '2026-01-10T00:00:00Z', runs: 2, settled: 0 } },
+    })
+    const tail = nodes.slice(-4)
+    expect(tail.map((n) => [n.tag, n.walked])).toEqual([
+      ['PROPOSAL', true],
+      ['OBJECTIVE', true],
+      ['RUNS', true],
+      ['VERDICT', false],
+    ])
+    expect(tail[1]).toMatchObject({ title: 'Flag it', at: '2026-01-10', go: { to: '/research/loop/objectives/obj-x' } })
+  })
 })

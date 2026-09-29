@@ -30,13 +30,17 @@ import { fetchObjectiveRuns, type AutopilotObjective } from '@/api/research/harn
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useResearchDrafts } from '@/hooks/useResearchDrafts'
 import { lapEnds, objectiveLap, type LapEnd } from '@/pages/research/loop/objectiveLapModel'
+import type { MemoryOrigin } from '@/lib/harness/objectiveOrigin'
 
 export function ObjectiveLap({
   objectiveId,
   brief,
+  origin = null,
 }: {
   objectiveId: string
   brief: AutopilotObjective | null
+  /** The memory it was drafted from (`policy_json.origin`), when it was. */
+  origin?: MemoryOrigin | null
 }) {
   const navigate = useNavigate()
 
@@ -71,7 +75,7 @@ export function ObjectiveLap({
     [objectiveId, brief, candidatesQ.data, runIds, hypothesesQ.data, draftsQ.data],
   )
 
-  const ends = lapEnds()
+  const ends = lapEnds(origin)
 
   return (
     <section

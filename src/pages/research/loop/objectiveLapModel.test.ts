@@ -86,8 +86,10 @@ describe('objectiveLap', () => {
     expect([borrowed.label, learned.label]).toEqual(['Borrowed', 'Learned'])
     expect(borrowed.value).toBeNull()
     expect(learned.value).toBeNull()
-    expect(borrowed.why).toMatch(/Draft objective/)
+    expect(borrowed.why).toMatch(/memory proposal/)
     expect(learned.to).toBe('/research/agent-personas/you')
+    const [born] = lapEnds({ kind: 'memory', memory_id: 'M-7', topic: 't', n: 2, strength: 1, at: '2026-01-02' })
+    expect(born).toMatchObject({ value: null, detail: 'born from memory M-7 — no Book belief yet', to: '/research/trace?m=M-7' })
   })
 
   it('keeps every station when the machine has never run', () => {

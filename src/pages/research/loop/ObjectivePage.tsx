@@ -39,6 +39,7 @@
  * records a parent, so lineage cannot be written or read. Both are marked in
  * place rather than drawn dead.
  */
+import { objectiveOrigin } from '@/lib/harness/objectiveOrigin'
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -284,7 +285,7 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
 
       {/* Under the standing, as the design places it: the row above says how
           this machine is doing, this one says where its work is. */}
-      <ObjectiveLap objectiveId={obj.id} brief={brief} />
+      <ObjectiveLap objectiveId={obj.id} brief={brief} origin={objectiveOrigin(obj)} />
 
       {/* Identity and the leash side by side, as the design pairs them: what
           this objective *is*, and what it is allowed to do on its own. */}

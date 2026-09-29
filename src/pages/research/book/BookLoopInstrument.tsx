@@ -141,11 +141,11 @@ export function BookLoopInstrument({ hypotheses }: { hypotheses: readonly Hypoth
           </g>
           <Arc x1={388} x2={466} y={156} label="distill · nightly" />
           <Arc x1={618} x2={696} y={156} label="shapes" />
-          <g>
-            <title>{r.owed.proposes}</title>
-            <path d="M 543 132 C 543 100, 384 104, 368 76" fill="none" stroke={MEM} strokeWidth={1.2} strokeDasharray="4 3" markerEnd="url(#bk-lp-am)" />
+          <g role="link" tabIndex={0} onClick={go('/research/loop/harness')} onKeyDown={(e) => { if (e.key === 'Enter') navigate('/research/loop/harness') }} style={{ cursor: 'pointer' }}>
+            <title>Memory proposes the next objective — Proposed · from memory on the Pilot Console (§22.4). Opens the Console.</title>
+            <path d="M 543 132 C 543 100, 384 104, 368 76" fill="none" stroke={MEM} strokeWidth={1.2} markerEnd="url(#bk-lp-am)" />
             <text x={482} y={96} fontSize="10" fill={MEM}>
-              proposes · not yet
+              proposes · {n(r.proposes)}
             </text>
           </g>
           <line x1={832} y1={52} x2={846} y2={52} stroke={MUTE} strokeWidth={1.2} />

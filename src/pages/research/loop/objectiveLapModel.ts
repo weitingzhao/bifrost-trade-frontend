@@ -28,6 +28,7 @@
  *   Settle     the track record: judged, hit rate, still pending
  *   Feed back  pending policy_suggestion drafts carrying its id
  */
+import type { MemoryOrigin } from '@/lib/harness/objectiveOrigin'
 import type { AutopilotObjective, ObjectiveRun } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
@@ -359,20 +360,31 @@ export interface LapEnd {
  * 0.145.0): an objective records no origin — its `subject` is a ticker, its
  * policy carries no belief id — and memories cite fills and decisions, never
  * an objective's runs. So both ends read `not yet` with that reason, until the
- * Draft-objective flow (Rev .100, batch R4) writes the origin edge and the
- * distill attributes what it learned.
+ * distill attributes what it learned. Since batch V3 an objective drafted from
+ * a memory proposal records that memory (`policy_json.origin`); the Borrowed
+ * end names it and opens its Trace, still unwalked — a memory is not a belief.
  */
-export function lapEnds(): [LapEnd, LapEnd] {
+export function lapEnds(origin: MemoryOrigin | null = null): [LapEnd, LapEnd] {
   return [
-    {
-      id: 'borrowed',
-      head: 'Book ⟶',
-      label: 'Borrowed',
-      value: null,
-      detail: 'no Book belief recorded',
-      why: 'An objective does not record the belief it was drafted from yet — that edge arrives with Draft objective from a memory proposal.',
-      to: '/research/loop/hypotheses',
-    },
+    origin
+      ? {
+          id: 'borrowed',
+          head: 'Book ⟶',
+          label: 'Borrowed',
+          value: null,
+          detail: `born from memory ${origin.memory_id} — no Book belief yet`,
+          why: `Drafted from memory ${origin.memory_id} (batch V3), not from a Book belief — the first settle opens one (§22.2). Opens its Trace.`,
+          to: `/research/trace?m=${encodeURIComponent(origin.memory_id)}`,
+        }
+      : {
+          id: 'borrowed',
+          head: 'Book ⟶',
+          label: 'Borrowed',
+          value: null,
+          detail: 'no Book belief recorded',
+          why: 'An objective does not record the belief it was drafted from — only one drafted from a memory proposal records an origin, and that origin is a memory, not a belief.',
+          to: '/research/loop/hypotheses',
+        },
     {
       id: 'learned',
       head: '⟶ Book',

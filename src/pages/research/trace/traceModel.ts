@@ -6,9 +6,10 @@
  * What DEV answers, measured 2026-09-28 (research 0.150.0 and local 0.145.0):
  * a memory carries its evidence (source · date · text · route) and its
  * first/last distill; the portrait's axes name the memories that back them.
- * Nothing cites a memory downstream yet — no proposal store, no objective
- * origin, no run attributed to an objective's settle — so those nodes are the
- * loop's dashed not-yet, each with the reason.
+ * Downstream (batch V4, Owner 2026-09-28): the Console proposes from a
+ * tension or weak-spot memory, and an objective drafted from one records it in
+ * `policy_json.origin` — so PROPOSAL, OBJECTIVE, RUNS and VERDICT light from
+ * that edge, and stay dashed with the reason where it is absent.
  */
 import type { JournalMemory, MemoryAxis, MemoryEvidence } from '@/api/research/journal'
 
@@ -121,12 +122,23 @@ function trailNodes(m: JournalMemory): TraceNode[] {
   })
 }
 
+/** What the memory caused, read from the objectives that record it as their origin. */
+export interface TraceDownstream {
+  /** The Console proposes from this memory (`isProposable`). */
+  proposed: boolean
+  /** The objective drafted from it, with its runs and its own settles. */
+  born: { id: string; title: string; created: string | null; runs: number; settled: number } | null
+}
+
 export function traceChain(input: {
   memory: JournalMemory
   axes: readonly MemoryAxis[]
   sources: readonly { source: string; enabled: boolean }[]
+  downstream?: TraceDownstream
 }): TraceNode[] {
   const { memory: m, axes, sources } = input
+  const down = input.downstream ?? { proposed: false, born: null }
+  const born = down.born
   const on = sources.filter((s) => s.enabled).map((s) => s.source)
   const feeds = axes.filter((a) => a.backs.includes(m.id))
   const trail = trailNodes(m)
@@ -171,45 +183,91 @@ export function traceChain(input: {
       walked: true,
       go: { to: `/research/agent-personas/you?m=${encodeURIComponent(m.id)}`, label: `You · memory ${m.id} →` },
     },
-    {
-      arc: 'propose',
-      tag: 'PROPOSAL',
-      title: 'Proposal citing this memory',
-      at: 'not yet',
-      sub: 'The outer loop’s last arc (§22.4): the distill proposes, you decide. No proposal store exists yet — Proposed · from memory on the Pilot Console waits on the Owner’s call on objective origin.',
-      kids: [],
-      walked: false,
-      go: null,
-    },
-    {
-      arc: 'will',
-      tag: 'OBJECTIVE',
-      title: 'Draft objective — thesis, scope, dial, leash',
-      at: 'not yet',
-      sub: 'An objective records no origin today — its subject is a ticker, its policy carries no memory or belief id — so none can be shown as born from this memory.',
-      kids: [],
-      walked: false,
-      go: null,
-    },
-    {
-      arc: 'run',
-      tag: 'RUNS',
-      title: 'Six stations — scan, screen, judge, approve',
-      at: 'not yet',
-      sub: 'Runs belong to objectives; with no objective drafted from this memory there are none to show.',
-      kids: [],
-      walked: false,
-      go: null,
-    },
-    {
-      arc: 'settle',
-      tag: 'VERDICT',
-      title: 'Settles feed back — strength and track record return to The Book',
-      at: 'not yet',
-      sub: 'The verdict would also become new trail — the chain you are reading grows a second lap.',
-      kids: [],
-      walked: false,
-      go: null,
-    },
+    down.proposed || born
+      ? {
+          arc: 'propose',
+          tag: 'PROPOSAL',
+          title: born ? 'Proposed on the Pilot Console — and drafted' : 'Proposed on the Pilot Console',
+          at: born ? 'drafted' : 'open',
+          sub: 'The outer loop’s last arc (§22.4): the distill proposes, you decide. A tension or a weak spot is proposed as the next objective; Not now three times and it goes quiet (§20.6).',
+          kids: [],
+          walked: true,
+          go: { to: '/research/loop/harness', label: 'Pilot Console · Proposed →' },
+        }
+      : {
+          arc: 'propose',
+          tag: 'PROPOSAL',
+          title: 'Proposal citing this memory',
+          at: 'not yet',
+          sub: 'Not proposed: the Console proposes from tensions and weak spots only, and from memories strong enough to have been seen more than once.',
+          kids: [],
+          walked: false,
+          go: null,
+        },
+    born
+      ? {
+          arc: 'will',
+          tag: 'OBJECTIVE',
+          title: born.title,
+          at: born.created ? born.created.slice(0, 10) : 'drafted',
+          sub: `Drafted from ${m.id} · dial L0 · no record yet, so every batch waits for you. Born from memory, it has no Book belief yet — the first settle opens one (§22.2).`,
+          kids: [],
+          walked: true,
+          go: { to: `/research/loop/objectives/${encodeURIComponent(born.id)}`, label: 'Objective →' },
+        }
+      : {
+          arc: 'will',
+          tag: 'OBJECTIVE',
+          title: 'Draft objective — thesis, scope, dial, leash',
+          at: 'not yet',
+          sub: down.proposed
+            ? 'Draft it from the proposal on the Pilot Console and this node lights — the objective records this memory as its origin.'
+            : 'No objective records this memory as its origin.',
+          kids: [],
+          walked: false,
+          go: null,
+        },
+    born && born.runs > 0
+      ? {
+          arc: 'run',
+          tag: 'RUNS',
+          title: 'Six stations — scan, screen, judge, approve',
+          at: `${born.runs} run${born.runs === 1 ? '' : 's'}`,
+          sub: 'The batch waits in the Decision Inbox — nothing is approved without you (D10).',
+          kids: [],
+          walked: true,
+          go: { to: '/research/loop/decisions', label: 'Decision Inbox →' },
+        }
+      : {
+          arc: 'run',
+          tag: 'RUNS',
+          title: 'Six stations — scan, screen, judge, approve',
+          at: 'not yet',
+          sub: born ? 'Drafted but never run — a draft runs when you hand-run it.' : 'Runs belong to objectives; with no objective drafted from this memory there are none to show.',
+          kids: [],
+          walked: false,
+          go: null,
+        },
+    born && born.settled > 0
+      ? {
+          arc: 'settle',
+          tag: 'VERDICT',
+          title: 'Settles feed back — strength and track record return to The Book',
+          at: `${born.settled} settled`,
+          sub: 'The verdict also becomes new trail — the chain you are reading grows a second lap.',
+          kids: [],
+          walked: true,
+          go: { to: '/research/journal', label: 'Journal →' },
+        }
+      : {
+          arc: 'settle',
+          tag: 'VERDICT',
+          title: 'Settles feed back — strength and track record return to The Book',
+          at: 'not yet',
+          sub: 'The verdict would also become new trail — the chain you are reading grows a second lap.',
+          kids: [],
+          walked: false,
+          go: null,
+        },
   ]
 }

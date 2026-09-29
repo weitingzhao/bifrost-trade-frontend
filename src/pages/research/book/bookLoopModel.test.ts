@@ -11,15 +11,23 @@ describe('the loop instrument (Rev .100)', () => {
       ],
       runs: [{ started_at: '2026-11-02T13:00:00Z' }, { started_at: '2026-11-01T13:00:00Z' }],
       todayTraces: 7,
-      memory: { memories: [{} as never, {} as never], week: { range: '', moved: 1, forgot: 0 } },
+      memory: {
+        memories: [
+          { id: 'M-1', kind: 'tension', strength: 1, archived: false, topic: 'a' } as never,
+          { id: 'M-2', kind: 'did', strength: 1, archived: false, topic: 'b' } as never,
+        ],
+        week: { range: '', moved: 1, forgot: 0 },
+        axes: [],
+        hints: {},
+      },
       today: '2026-11-02',
     })
-    expect(r).toMatchObject({ beliefs: 2, running: 1, runsToday: 1, settled: '15 · 5 right', traces: 7, memory: '2 · 1 this week' })
-    expect(r.owed.borrow).toMatch(/Draft objective/)
+    expect(r).toMatchObject({ beliefs: 2, running: 1, runsToday: 1, settled: '15 · 5 right', traces: 7, memory: '2 · 1 this week', proposes: 1 })
+    expect(r.owed.borrow).toMatch(/memory proposal/)
   })
 
   it('a store that has not answered reads as unknown, not zero', () => {
     const r = loopReading({ hypotheses: null, objectives: null, runs: null, todayTraces: null, memory: null, today: '2026-11-02' })
-    expect([r.beliefs, r.running, r.runsToday, r.settled, r.memory]).toEqual([null, null, null, null, null])
+    expect([r.beliefs, r.running, r.runsToday, r.settled, r.memory, r.proposes]).toEqual([null, null, null, null, null, null])
   })
 })

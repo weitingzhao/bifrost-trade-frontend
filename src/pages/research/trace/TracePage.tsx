@@ -12,6 +12,11 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchMemory } from '@/api/research/journal'
+import { fetchObjectiveRuns, fetchObjectives } from '@/api/research/harness'
+import { QUERY_KEYS } from '@/constants/queryKeys'
+import { useAutopilotStanding } from '@/hooks/useLoopHarness'
+import { isProposable } from '@/lib/harness/memoryProposals'
+import { objectiveOrigin } from '@/lib/harness/objectiveOrigin'
 import { PageHead, PageShell } from '@/components/layout'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { ViewState } from '@bifrost/ui'
@@ -136,7 +141,36 @@ export default function TracePage() {
   const memories = memQ.data?.memories ?? []
   const asked = params.get('m')
   const memory = asked ? memories.find((m) => m.id === asked) : memories[0]
-  const nodes = memory && memQ.data ? traceChain({ memory, axes: memQ.data.axes, sources: memQ.data.sources }) : []
+  const objQ = useQuery({
+    queryKey: QUERY_KEYS.research.objectives({ status: 'active' }),
+    queryFn: () => fetchObjectives({ status: 'active' }),
+    staleTime: 15_000,
+  })
+  const bornObj = memory ? (objQ.data?.items ?? []).find((o) => objectiveOrigin(o)?.memory_id === memory.id) ?? null : null
+  const bornRunsQ = useQuery({
+    queryKey: ['research', 'objective-runs', 'trace', bornObj?.id ?? ''],
+    queryFn: () => fetchObjectiveRuns({ objective_id: bornObj!.id, limit: 100 }),
+    enabled: bornObj != null,
+    staleTime: 60_000,
+  })
+  const standing = useAutopilotStanding()
+  const bornRec = bornObj ? standing.data?.objectives.find((o) => o.id === bornObj.id)?.track_record : undefined
+  const downstream = memory
+    ? {
+        proposed: isProposable(memory, memQ.data?.axes ?? []),
+        born: bornObj
+          ? {
+              id: bornObj.id,
+              title: bornObj.title,
+              created: bornObj.created_at,
+              runs: bornRunsQ.data?.items.length ?? 0,
+              settled: bornRec?.status === 'ok' && bornRec.scope !== 'source' ? bornRec.judged : 0,
+            }
+          : null,
+      }
+    : undefined
+  const nodes =
+    memory && memQ.data ? traceChain({ memory, axes: memQ.data.axes, sources: memQ.data.sources, downstream }) : []
   const immune = memory ? immuneCheck(memory) : null
   const pick = (id: string) =>
     setParams(
@@ -211,8 +245,8 @@ export default function TracePage() {
                   <span className="text-dense-meta leading-relaxed text-[var(--sk-mute2)]">{immune.text}</span>
                 </div>
                 <span className="text-dense-micro leading-relaxed text-[var(--sk-faint)]">
-                  The chain is derived from the memory store: its evidence, its distill dates, the portrait axes it backs. Proposals,
-                  objective origin and run → verdict attribution are not recorded yet, so every arc below the memory is dashed.
+                  The chain is derived: the memory store gives the evidence, the distill dates and the portrait axes it backs; below
+                  the memory, an objective drafted from its proposal records it as its origin, and its runs and settles follow.
                 </span>
               </footer>
             ) : null}

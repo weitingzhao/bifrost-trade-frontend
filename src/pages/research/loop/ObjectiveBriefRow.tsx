@@ -6,7 +6,7 @@
  * ratchet, and because this row is the unit the Autopilot page is made of.
  * Single user, so it stays beside the page (module-placement-v1).
  */
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Archive, ArchiveRestore, Play, Trash2 } from 'lucide-react'
 import { DenseTag, IconActionButton } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,8 @@ import type { RunGroup } from '@/lib/harness/harnessTrace'
 import type { AutopilotObjective, ResearchObjective } from '@/api/research/harness'
 import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import type { RunsTableProps } from '@/pages/research/loop/HarnessConsolePage'
+import { objectiveDial } from '@/lib/harness/objectiveOrigin'
+import { objectiveLoopStrip, type LoopSegment } from '@/pages/research/loop/objectiveLoopStrip'
 
 export function ObjectiveRows({
   row,
@@ -71,6 +73,7 @@ export function ObjectiveRows({
   const memo = brief?.last_memo ?? null
   const foldedHere = Math.max(0, (brief?.pending_drafts ?? brief?.pending_memos ?? 0) - (brief?.pending_memos ?? 0))
   const rec = brief?.track_record ?? null
+  const dial = objectiveDial(row, trustL0)
   return (
     <li className="border mat-card">
       {/* Reading density, on purpose. This is a memo about an autopilot, not
@@ -94,6 +97,13 @@ export function ObjectiveRows({
             <DenseTag variant="neutral" size="cell">
               {row.schedule}
             </DenseTag>
+            {/* The dial as a reading (Vision §8 · §22.2; Owner 2026-09-28): the
+                auto-approve path is unchanged — see lib/harness/objectiveOrigin. */}
+            <span title={dial.why}>
+              <DenseTag variant={dial.dial === 'L1' ? 'info' : 'neutral'} size="cell">
+                {dial.dial}
+              </DenseTag>
+            </span>
             {brief?.last_run?.started_at ? <span>last ran {fmtIsoTs(brief.last_run.started_at)}</span> : null}
           </p>
         </div>
@@ -231,6 +241,8 @@ export function ObjectiveRows({
         </div>
       </div>
 
+      <LoopLine segments={objectiveLoopStrip(row, groups.length, rec)} onRuns={onToggle} />
+
       {isOpen ? (
         <div className="border-t border-border/60 px-2 pb-2 pt-1">
           {hasRuns ? (
@@ -241,6 +253,56 @@ export function ObjectiveRows({
         </div>
       ) : null}
     </li>
+  )
+}
+
+const SEG_INK: Record<LoopSegment['id'], string> = {
+  belief: 'var(--sk-contract)',
+  runs: 'var(--sk-ticker)',
+  settled: 'var(--sk-soft)',
+  memory: 'var(--color-unrealized)',
+  proposal: 'var(--color-unrealized)',
+}
+
+/** The card's Loop line — lit segments open their landing, dashed ones say why not. */
+function LoopLine({ segments, onRuns }: { segments: LoopSegment[]; onRuns: () => void }) {
+  const navigate = useNavigate()
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-1.75 gap-y-0.75 border-t border-border/60 px-4 pt-1.5 pb-2">
+      <span
+        className="text-dense-micro font-semibold tracking-[.08em] text-muted-foreground uppercase"
+        title="This objective’s walk around the two loops (Vision §22) — belief borrowed, runs, settles, the memory, the proposal. Dashed segments have not happened."
+      >
+        Loop
+      </span>
+      {segments.map((sg, i) => (
+        <span key={sg.id} className="inline-flex items-baseline gap-1.75">
+          {i > 0 ? (
+            <span aria-hidden className="text-dense-micro text-[var(--sk-faint)]">
+              →
+            </span>
+          ) : null}
+          {sg.lit ? (
+            <button
+              type="button"
+              title={sg.tip}
+              onClick={() => (sg.to === 'runs' ? onRuns() : sg.to ? navigate(sg.to) : undefined)}
+              className="font-mono text-dense-micro whitespace-nowrap hover:underline"
+              style={{ color: SEG_INK[sg.id] }}
+            >
+              {sg.label}
+            </button>
+          ) : (
+            <span
+              title={sg.tip}
+              className="cursor-help border-b border-dashed border-[var(--sk-line2)] font-mono text-dense-micro whitespace-nowrap text-[var(--sk-faint)]"
+            >
+              {sg.label}
+            </span>
+          )}
+        </span>
+      ))}
+    </div>
   )
 }
 

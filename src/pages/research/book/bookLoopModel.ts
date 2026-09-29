@@ -7,6 +7,7 @@
 import type { AutopilotObjective, ObjectiveRun } from '@/api/research/harness'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { MemoryPayload } from '@/api/research/journal'
+import { isProposable, QUIET_AT } from '@/lib/harness/memoryProposals'
 
 export interface LoopReading {
   beliefs: number | null
@@ -16,8 +17,10 @@ export interface LoopReading {
   settled: string | null
   traces: number | null
   memory: string | null
+  /** Open proposals on the Console (Rev .100 V3) — the memory → objective arc; null before memory answers. */
+  proposes: number | null
   /** Arcs with no edge in the app yet — drawn dashed, with the reason as their title. */
-  owed: { borrow: string; proposes: string }
+  owed: { borrow: string }
 }
 
 export function loopReading(input: {
@@ -25,7 +28,7 @@ export function loopReading(input: {
   objectives: readonly Pick<AutopilotObjective, 'status' | 'track_record'>[] | null
   runs: readonly Pick<ObjectiveRun, 'started_at'>[] | null
   todayTraces: number | null
-  memory: Pick<MemoryPayload, 'memories' | 'week'> | null
+  memory: Pick<MemoryPayload, 'memories' | 'week' | 'axes' | 'hints'> | null
   today: string
 }): LoopReading {
   const judged = input.objectives?.reduce((a, o) => a + (o.track_record?.judged ?? 0), 0) ?? null
@@ -41,9 +44,13 @@ export function loopReading(input: {
     settled: judged == null ? null : judged === 0 ? '0' : `${judged} · ${right} right`,
     traces: input.todayTraces,
     memory: input.memory ? `${input.memory.memories.length} · ${input.memory.week.moved} this week` : null,
+    proposes: input.memory
+      ? input.memory.memories.filter(
+          (m) => isProposable(m, input.memory!.axes) && (input.memory!.hints[m.topic] ?? 0) < QUIET_AT,
+        ).length
+      : null,
     owed: {
-      borrow: 'Objectives record no belief they were drafted from yet — the borrow edge arrives with Draft objective from a memory proposal.',
-      proposes: 'Memory proposes nothing yet: the Console’s Proposed · from memory is not built on this side.',
+      borrow: 'Objectives record no Book belief they were drafted from — one drafted from a memory proposal records the memory, and a memory is not a belief.',
     },
   }
 }

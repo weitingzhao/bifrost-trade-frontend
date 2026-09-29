@@ -60,6 +60,7 @@ import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { useCopilotStanding } from '@/hooks/useCopilotStanding'
 import { ProviderChip, SpendChip } from '@/pages/research/loop/pilot/DeskHeaderChips'
 import { PilotConversations, PilotToday } from '@/pages/research/loop/pilot/PilotDeskSections'
+import { ProposedFromMemory } from '@/pages/research/loop/pilot/ProposedFromMemory'
 import { groupIdenticalRuns, type RunGroup } from '@/lib/harness/harnessTrace'
 
 import { RunLoopDialog } from '@/components/research/harness/RunLoopDialog'
@@ -474,6 +475,9 @@ export default function HarnessConsolePage() {
             : `Showing this objective alone, of ${allObjectives.length} ${objStatus}. Its runs, funnels and candidates are unchanged; the others are hidden, not filtered out of existence.`}
         </ObjectiveScopeBanner>
       ) : null}
+
+      {/* Memory → objectives (Rev .100, Vision §22.4): the outer loop's last arc. */}
+      <ProposedFromMemory />
 
       <section className="min-w-0 space-y-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">

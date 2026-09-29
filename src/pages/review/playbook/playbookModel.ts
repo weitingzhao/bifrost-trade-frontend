@@ -1,6 +1,13 @@
 import type { PlaybookCase, PlaybookNote, PlaybookRule } from '@/api/playbook'
 
-export type PlaybookTab = 'rules' | 'notes' | 'cases' | 'search'
+export type PlaybookTab = 'rules' | 'notes' | 'cases' | 'record' | 'search'
+
+export const PLAYBOOK_TABS: readonly PlaybookTab[] = ['rules', 'notes', 'cases', 'record', 'search']
+
+/** `?tab=` as the page reads it; anything else is the Rules tab. */
+export function coercePlaybookTab(raw: string | null): PlaybookTab {
+  return (PLAYBOOK_TABS as readonly string[]).includes(raw ?? '') ? (raw as PlaybookTab) : 'rules'
+}
 
 export const CATEGORIES = [
   'general',
@@ -23,6 +30,7 @@ export function tabHint(
   data: { rules?: PlaybookRule[]; notes?: PlaybookNote[]; cases?: PlaybookCase[] },
 ): string | null {
   if (tab === 'search') return 'searches rules and notes'
+  if (tab === 'record') return 'what each play has actually done — closed trades from the ledger'
   if (tab === 'rules') {
     if (!data.rules) return null
     const active = data.rules.filter((r) => r.active !== false).length

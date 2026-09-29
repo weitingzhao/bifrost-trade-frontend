@@ -271,7 +271,7 @@ export function proposalChain(habits: readonly HabitReading[], proposals: readon
       what: 'the trades that followed the change, against the ones before it',
       state: 'missing' as const,
       note: 'Needs the decision to be dated, so there is a before and an after to split on.',
-      to: '/review/playbook-stats',
+      to: '/review/playbook?tab=record',
     },
   ]
 }

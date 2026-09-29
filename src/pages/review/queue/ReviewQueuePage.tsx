@@ -35,9 +35,13 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { useBookMarkPaths } from '@/hooks/useBookMarkPaths'
 import { useReviewTrades } from '@/hooks/useReviewTrades'
-import { REVIEW_UNRECORDED, type ReviewTrade } from '@/utils/reviewTrades'
+import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
 import { derivedTags } from '@/pages/review/fit/tradeFitModel'
-import { ReviewSelectedPanel } from './ReviewSelectedPanel'
+import { useNavigate } from 'react-router-dom'
+import { tradeReviewPath } from '@/components/layout'
+import { useTradeReviews } from '@/hooks/useTradeReviews'
+import { buildReviewInstances, type ReviewInstance } from '@/utils/reviewInstances'
+import type { TradeReview } from '@/api/tradeReviews'
 
 const PAGE_LEAD =
   'Closed trades, newest first, each row carrying the gap between what the plan said and what I did. Reviewing here is what produces the labels — Habits is empty arithmetic without it.'
@@ -87,35 +91,35 @@ const QUADRANTS = [
 
 function QueueRow({
   t,
-  picked,
-  onPick,
+  review,
+  onOpen,
   tags,
 }: {
-  t: ReviewTrade
-  picked: boolean
-  onPick: () => void
+  t: ReviewInstance
+  review: TradeReview | undefined
+  onOpen: () => void
   /** The path-derived tags, summarised; null while the book's bars are read. */
   tags: { text: string; title: string } | null
 }) {
   const sym = extractUnderlyingRootSymbol(t.symbol)
+  const done = Boolean(review?.reviewed)
   return (
     <tr
-      {...rowSelectProps(
-        picked,
-        onPick,
-        cn(
-          'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-          // Selection is the accent (Rev .84 · .90), never the ticker lime.
-          picked && '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)]',
-        ),
-      )}
+      {...rowSelectProps(false, onOpen, 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]')}
+      title="Open this trade on Single trade"
     >
       <td className={cn(positionsUi.td, 'pl-2 text-left whitespace-normal')}>
         <span className="inline-flex items-center gap-1.5">
-          {/* The design lamps reviewed against unreviewed. Nothing records a review, so
-              every row carries the same grey: unknown, not "to do". */}
-          <StatusLamp lamp="gray" variant="dot" title="No review is recorded either way" />
-          <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>{t.label}</span>
+          {/* Rev .110: the lamp reads the review record — green reviewed, yellow awaiting. */}
+          <StatusLamp
+            lamp={t.instanceId == null ? 'gray' : done ? 'green' : 'yellow'}
+            variant="dot"
+            title={t.instanceId == null ? 'Booked to no instance — a review is kept per instance' : done ? 'Reviewed' : 'Awaiting review'}
+          />
+          <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>
+            {t.instanceId != null ? `#${t.instanceId} · ` : ''}
+            {t.label}
+          </span>
         </span>
       </td>
       {/* `symbol` on a closed option trade is the raw OCC string; the column wants the
@@ -164,9 +168,14 @@ export default function ReviewQueuePage() {
   const [accountFilter, setAccountFilter] = useState('all')
   // The page's view (Rev .79 `since · quad · sel`), kept for the session.
   const [since, setSince] = usePageViewState('since', 'all')
-  const [picked, setPicked] = usePageViewState<string | null>('sel', null)
   const [cell, setCell] = usePageViewState<string | null>('quad', null)
+  const [reviewFilter, setReviewFilter] = usePageViewState('state', 'all')
+  const navigate = useNavigate()
   const { trades, expiredUnbooked, accountIds } = useReviewTrades(accountFilter)
+  const reviews = useTradeReviews()
+  // Rev .110: the queue reads instances — the same #NNN Single trade and the
+  // Instance page read. Contract-level trades stay for the book's daily bars.
+  const [today] = useState(() => new Date().toISOString().slice(0, 10))
   // The Auto tags column reads each contract's own daily bars — the same
   // book-wide read (and cache entry) Habits and Playbook stats use. The two
   // plan tags (held past plan · exited early) stay out: no plan is linked.
@@ -187,20 +196,42 @@ export default function ReviewQueuePage() {
   }, [trades, marks.paths])
   // The same cache entry useReviewTrades reads — held here for its §17 state.
   const execQuery = useExecutionsCanonical()
+  const instances = useMemo(() => {
+    const items = execQuery.data?.items ?? []
+    const scoped = accountFilter === 'all' ? items : items.filter((e) => (e.account_id ?? '').trim() === accountFilter)
+    return buildReviewInstances(scoped, today).filter((t) => !t.open)
+  }, [execQuery.data?.items, accountFilter, today])
 
   // The window first, so every figure on the page is about the same set of trades.
   const rows = useMemo(() => {
     const cut = closedSince(SINCE_MONTHS[since] ?? null)
-    return cut == null ? trades : trades.filter((t) => (t.closedOn ?? '') >= cut)
-  }, [trades, since])
+    return cut == null ? instances : instances.filter((t) => (t.closedOn ?? '') >= cut)
+  }, [instances, since])
+  const isReviewed = (t: ReviewInstance) => t.instanceId != null && Boolean(reviews.byInstance.get(t.instanceId)?.reviewed)
+  const reviewedN = rows.filter(isReviewed).length
+  const awaitingN = rows.filter((t) => t.instanceId != null && !isReviewed(t)).length
 
   // A cell is a claim about the plan and the path. The plan never reaches this
   // side, so no trade can be placed in one — the filter works, and answers
   // with nothing every time.
-  const queueRows = useMemo(() => (cell == null ? rows : rows.filter(() => false)), [rows, cell])
+  const queueRows = useMemo(() => {
+    if (cell != null) return rows.filter(() => false)
+    if (reviewFilter === 'todo') return rows.filter((t) => t.instanceId != null && !isReviewed(t))
+    if (reviewFilter === 'done') return rows.filter(isReviewed)
+    return rows
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, cell, reviewFilter, reviews.byInstance])
   const cellName = QUADRANTS.find((q) => q.key === cell)?.name ?? null
 
-  const selected = useMemo(() => queueRows.find((t) => t.contractKey === picked) ?? null, [queueRows, picked])
+  /** A row opens Single trade on it, walking the queue in the order shown (Rev .110). */
+  const openRow = (t: ReviewInstance) => {
+    if (t.instanceId == null) {
+      navigate(`/review/fit?trade=${encodeURIComponent(t.contractKey)}`)
+      return
+    }
+    const list = shown.map((x) => x.instanceId).filter((id): id is number => id != null)
+    navigate(tradeReviewPath(t.instanceId, { in: 'list', list: list.join(',') }))
+  }
   const realised = useMemo(() => rows.reduce((a, t) => a + t.realised, 0), [rows])
   const shortOfFloor = Math.max(0, SAMPLE_FLOOR - rows.length)
 
@@ -210,12 +241,13 @@ export default function ReviewQueuePage() {
   const shown = preview === 'empty' || preview === 'filtered' ? [] : queueRows
   // §17.3: Clear resets every filter axis — the window and the cell. The
   // account is scope, not a filter.
-  const resets = [since !== 'all' ? 'range' : null, cell != null ? 'cell' : null].filter(
+  const resets = [since !== 'all' ? 'range' : null, cell != null ? 'cell' : null, reviewFilter !== 'all' ? 'state' : null].filter(
     (r): r is string => r != null,
   )
   const clearAll = () => {
     setSince('all')
     setCell(null)
+    setReviewFilter('all')
   }
 
   return (
@@ -269,22 +301,17 @@ export default function ReviewQueuePage() {
         <SegmentControl
           size="xs"
           ariaLabel="Review state"
-          value="all"
-          onChange={() => {}}
+          value={reviewFilter}
+          onChange={setReviewFilter}
           options={[
             { value: 'all', label: 'All' },
-            { value: 'todo', label: 'To review', disabled: true },
-            { value: 'done', label: 'Reviewed', disabled: true },
+            { value: 'todo', label: 'To review' },
+            { value: 'done', label: 'Reviewed' },
           ]}
         />
-        <span title={REVIEW_UNRECORDED.reviewed}>
-          <DenseTag variant="warning" size="cell">
-            no review is recorded
-          </DenseTag>
-        </span>
         <ToolbarClear resets={resets} onClear={clearAll} />
         <span data-sr-tb="meta" className={positionsUi.mono}>
-          <span className="text-muted-foreground">n/c awaiting</span> ·{' '}
+          <span className={awaitingN > 0 ? 'text-warning' : 'text-muted-foreground'}>{awaitingN} awaiting</span> ·{' '}
           <span className="text-foreground">{rows.length} in range</span> · realised{' '}
           <span className={pnlColorClass(realised)}>{fmtUsd(realised)}</span> · discipline n/c · plan n/c
         </span>
@@ -442,9 +469,15 @@ export default function ReviewQueuePage() {
                         <QueueRow
                           key={t.contractKey}
                           t={t}
-                          picked={t.contractKey === picked}
-                          onPick={() => setPicked((cur) => (cur === t.contractKey ? null : t.contractKey))}
-                          tags={marks.loading ? null : (tagsByKey.get(t.contractKey) ?? null)}
+                          review={t.instanceId != null ? reviews.byInstance.get(t.instanceId) : undefined}
+                          onOpen={() => openRow(t)}
+                          tags={
+                            marks.loading
+                              ? null
+                              : t.legs.length === 1
+                                ? (tagsByKey.get(t.legs[0].contractKey) ?? null)
+                                : { text: `${t.legs.length} legs · on its page`, title: 'Tags are derived per contract path; a multi-leg trade reads them on Single trade.' }
+                          }
                         />
                       ))}
                     </tbody>
@@ -460,18 +493,6 @@ export default function ReviewQueuePage() {
             </section>
 
             <aside className="flex min-w-0 max-w-[28.75rem] flex-[1_1_22.5rem] flex-col gap-3">
-              {selected ? (
-                <ReviewSelectedPanel
-                  trade={selected}
-                  path={marks.paths.get(selected.contractKey) ?? null}
-                  pathLoading={marks.loading}
-                />
-              ) : (
-                <p className="m-0 rounded-xl border border-dashed border-border px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                  Pick a row to see its plan-vs-actual diff, its two gaps, and the tags derived from its series.
-                </p>
-              )}
-
               <section className={positionsUi.panel} aria-label="Sample">
                 <header className={positionsUi.panelHead}>
                   <span className={positionsUi.cap}>Sample</span>
@@ -490,9 +511,9 @@ export default function ReviewQueuePage() {
                     },
                     {
                       key: 'reviewed',
-                      lamp: 'gray' as const,
-                      title: `n/c of ${rows.length} reviewed`,
-                      sub: 'The design separates a confirmed review from an auto-tag, and counts only the confirmed. Nothing here records either, so every label would be provisional.',
+                      lamp: awaitingN > 0 ? ('yellow' as const) : ('green' as const),
+                      title: `${reviewedN} of ${rows.length} reviewed`,
+                      sub: 'Only a confirmed review counts — an auto-tag is the path’s read, not yours. Confirm one on Single trade.',
                     },
                     {
                       key: 'plan',
@@ -534,11 +555,6 @@ export default function ReviewQueuePage() {
             </aside>
           </div>
 
-          <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-            <span className="font-semibold text-secondary-foreground">Boundary.</span> Closed trades only,
-            fills-based, fees included. An open position never counts toward a win rate — that is how a book talks
-            itself into holding losers. Nothing on this page writes.
-          </p>
         </>
       )}
     </PageShell>

@@ -5,7 +5,6 @@
  * expandable to its own premium, what was kept and how long it was held. A
  * roll is a seam in one line, not a second trade.
  */
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -16,26 +15,12 @@ import { useOpenInstance } from '@/layout/instanceGo'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
-import { daysBetween } from '@/lib/isoDate'
 import type { MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewInstance, ReviewLeg } from '@/utils/reviewInstances'
+import type { ReviewInstance } from '@/utils/reviewInstances'
+import { tradeFactsPath } from '@/components/layout'
 
 const FOOT = 'm-0 border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 const ORANGE = 'text-[var(--color-unrealized)]'
-
-function legDetail(l: ReviewLeg, today: string): { k: string; v: string }[] {
-  const span = l.openedOn ? daysBetween(l.openedOn, l.flatOn ?? today) : null
-  const days = span == null ? null : Math.max(1, span)
-  const held = { k: 'Held', v: days == null ? '—' : `${days} days` }
-  if (l.open) return [{ k: l.short ? 'Premium in' : 'Premium paid', v: fmtUsd(l.premiumIn) }, { k: 'Still open', v: `${Math.abs(l.openQty)} contracts` }, held]
-  const kept = l.premiumIn > 0 ? (l.short ? 1 - l.premiumOut / l.premiumIn : l.premiumOut / l.premiumIn - 1) : null
-  return [
-    { k: l.short ? 'Premium in' : 'Premium paid', v: fmtUsd(l.premiumIn) },
-    { k: l.short ? 'Paid to close' : 'Sold for', v: fmtUsd(l.premiumOut) },
-    { k: l.short ? 'Credit kept' : 'Return', v: kept == null ? '—' : fmtPct0(kept) },
-    held,
-  ]
-}
 
 export function InstanceEconomics({
   inst,
@@ -49,7 +34,6 @@ export function InstanceEconomics({
   today: string
 }) {
   const openInstance = useOpenInstance()
-  const [openLegs, setOpenLegs] = useState<Record<string, boolean>>({})
   const missing = pathLoading ? '…' : 'n/c'
   const missingSub = pathLoading ? 'reading the legs’ daily bars' : 'no daily bar for this window'
   const net = inst.open && markPath ? markPath.realised : inst.realised
@@ -163,106 +147,27 @@ export function InstanceEconomics({
           }
         />
       </div>
-      <div className="overflow-x-auto">
-        <table data-sr-table="" className="w-full">
-          <thead>
-            <tr>
-              <th>Leg</th>
-              <th>Side</th>
-              <th data-sr-col="num">Qty</th>
-              <th data-sr-col="num">Entry</th>
-              <th data-sr-col="num">Exit</th>
-              <th>Opened</th>
-              <th>Flat</th>
-              <th data-sr-col="num">P&amp;L</th>
-            </tr>
-          </thead>
-          <tbody>
-            {inst.legs.map((l, i) => {
-              const on = !!openLegs[l.contractKey]
-              // A roll is a leg opened once an earlier one was already flat — two
-              // legs held side by side are a spread, not a seam.
-              const roll = i > 0 && inst.legs.slice(0, i).some((p) => p.flatOn != null && l.openedOn != null && p.flatOn <= l.openedOn)
-              return (
-                <LegRows
-                  key={l.contractKey}
-                  l={l}
-                  roll={roll}
-                  on={on}
-                  toggle={() => setOpenLegs((s) => ({ ...s, [l.contractKey]: !on }))}
-                  detail={legDetail(l, today)}
-                />
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+      {/* Rev .110: the legs table is the Facts face's (the Instance page); the
+          review keeps the count and the door. */}
       <p className={FOOT}>
-        Fills-based, fees included — the same figures the{' '}
+        <span className="font-mono text-secondary-foreground">
+          {inst.legs.length} {inst.legs.length === 1 ? 'leg' : 'legs'} ·{' '}
+          {inst.legs.reduce((n, l) => n + l.fills.length, 0)} fills
+        </span>
+        {inst.instanceId != null ? (
+          <>
+            {' · '}
+            <Link to={tradeFactsPath(inst.instanceId)} className={positionsUi.link}>
+              Facts face →
+            </Link>
+          </>
+        ) : null}
+        {' — '}fills-based, fees included, the same figures the{' '}
         <Link to="/portfolio/ledger" className={positionsUi.link}>
           Trade Ledger
         </Link>{' '}
-        shows for this instance. A roll is a seam in one line, not a second trade. Share legs are not booked to
-        instances, so a covered call&rsquo;s shares are not in this line.
+        shows. Share legs are not booked to instances, so a covered call&rsquo;s shares are not in this line.
       </p>
     </section>
-  )
-}
-
-function LegRows({
-  l,
-  roll,
-  on,
-  toggle,
-  detail,
-}: {
-  l: ReviewLeg
-  roll: boolean
-  on: boolean
-  toggle: () => void
-  detail: { k: string; v: string }[]
-}) {
-  return (
-    <>
-      <tr
-        role="button"
-        tabIndex={0}
-        aria-expanded={on}
-        onClick={toggle}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') toggle()
-        }}
-        className="cursor-pointer"
-      >
-        <td className="whitespace-nowrap">
-          <span className="inline-block w-2.5 text-dense-micro text-muted-foreground">{on ? '▾' : '▸'}</span>
-          <span className="font-mono text-[var(--sk-contract)]">{l.label}</span>{' '}
-          {roll ? <span className="text-dense-micro text-[var(--sk-mute2)]">↻ rolled in</span> : null}
-        </td>
-        <td className="whitespace-nowrap text-dense-meta text-[var(--sk-mute2)]">{l.short ? 'Short' : 'Long'}</td>
-        <td data-sr-col="num" className="font-mono">{l.qty}</td>
-        <td data-sr-col="num" className="font-mono">{l.entry == null ? '—' : l.entry.toFixed(2)}</td>
-        <td data-sr-col="num" className="font-mono text-[var(--sk-mute2)]">{l.exit == null ? 'open' : l.exit.toFixed(2)}</td>
-        <td className="whitespace-nowrap font-mono text-[var(--sk-mute2)]">{l.openedOn ? fmtIsoDateToken(l.openedOn) : '—'}</td>
-        <td className="whitespace-nowrap font-mono text-[var(--sk-mute2)]">{l.flatOn ? fmtIsoDateToken(l.flatOn) : 'open'}</td>
-        <td data-sr-col="num" className={cn('font-mono', l.open ? 'text-muted-foreground' : pnlColorClass(l.cash))} title={l.open ? 'Cash so far — the open remainder is marked on the line above' : undefined}>
-          {l.open ? `${fmtUsd(l.cash, true)} so far` : fmtUsd(l.cash, true)}
-        </td>
-      </tr>
-      {on ? (
-        <tr>
-          <td colSpan={8} className="bg-[color-mix(in_srgb,var(--sk-ink)_3%,transparent)] py-1.5 pl-7">
-            <span className="flex flex-wrap gap-x-5 gap-y-1.5">
-              {detail.map((d) => (
-                <span key={d.k} className="inline-flex flex-col gap-px">
-                  <span className="text-dense-micro text-muted-foreground">{d.k}</span>
-                  <span className="font-mono text-dense-label">{d.v}</span>
-                </span>
-              ))}
-            </span>
-          </td>
-        </tr>
-      ) : null}
-    </>
   )
 }

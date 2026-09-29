@@ -520,8 +520,8 @@ export default function SignalDecayPage() {
         info="Is each signal still earning its keep — rolling hit rates, drift against its own year, and the alerts that cut conviction credit."
         actions={
           <>
-            <PageHeadLink to="/review/playbook-stats" title="The settled evidence behind each signal">
-              Playbook stats →
+            <PageHeadLink to="/review/playbook?tab=record" title="The settled evidence behind each signal">
+              Playbook record →
             </PageHeadLink>
             <AskCopilotButton
               originPage="analyze-signal-decay"

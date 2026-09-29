@@ -216,10 +216,6 @@ export const router = withPageTransitions(createBrowserRouter([
         path: 'review/habits',
         lazy: lazyPage(() => import('@/pages/review/habits/ReviewHabitsPage')),
       },
-      {
-        path: 'review/playbook-stats',
-        lazy: lazyPage(() => import('@/pages/review/playbookStats/PlaybookStatsPage')),
-      },
       // The loop's closing page (design Review Objectives.dc.html). Built
       // with the chain broken on purpose — see the page's own note.
       {

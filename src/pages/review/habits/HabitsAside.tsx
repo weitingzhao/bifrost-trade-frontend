@@ -9,6 +9,7 @@
  * much was the plan" is the single most consequential figure in the group, and
  * an estimate of it would be acted on.
  */
+import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
@@ -19,41 +20,35 @@ import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
 const QUADRANTS = [
-  { key: 'good-followed', name: 'Good plan · followed' },
-  { key: 'good-broke', name: 'Good plan · broke it' },
-  { key: 'weak-followed', name: 'Weak plan · followed' },
-  { key: 'weak-broke', name: 'Weak plan · broke it' },
+  { key: 'good-followed', short: 'good·kept' },
+  { key: 'good-broke', short: 'good·broke' },
+  { key: 'weak-followed', short: 'weak·kept' },
+  { key: 'weak-broke', short: 'weak·broke' },
 ] as const
 
+/**
+ * Rev .110: the 2×2 lives on Queue, where it filters the list; here it is one
+ * reading — the four cells as counts in a line — and a door. With no plan
+ * linked to any position, every count is n/c and the sentence says why.
+ */
 export function PlanAdherenceQuadrants({ closed }: { closed: number }) {
   return (
     <section className={positionsUi.panel} style={WARN_EDGE} aria-label="Plan × adherence">
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Plan × adherence</span>
-        <span className={positionsUi.panelTitle}>Where the book sits</span>
-        <span className="ml-auto">
-          <DenseTag variant="warning" size="cell">
-            no plan linked
-          </DenseTag>
+        <span className={cn(positionsUi.mono, 'text-xs text-secondary-foreground')}>
+          {QUADRANTS.map((q) => `${q.short} n/c`).join(' · ')}
         </span>
+        <DenseTag variant="warning" size="cell">
+          no plan linked
+        </DenseTag>
+        <Link to="/review" className={cn(positionsUi.link, 'ml-auto')}>
+          In Queue →
+        </Link>
       </header>
-      <div className="grid grid-cols-2 gap-2 px-3 py-2.5">
-        {QUADRANTS.map((q) => (
-          <div key={q.key} className="min-w-0 border px-2.5 py-2 mat-card">
-            <div className="flex items-baseline gap-1.5">
-              <span className="min-w-0 text-dense-meta leading-tight font-semibold text-muted-foreground">
-                {q.name}
-              </span>
-              <span className={cn(positionsUi.mono, 'ml-auto text-dense-meta text-muted-foreground')}>—</span>
-            </div>
-            <div className={cn(positionsUi.mono, 'pt-0.5 text-sm font-semibold text-muted-foreground')}>n/c</div>
-          </div>
-        ))}
-      </div>
-      <p className="m-0 border-t border-border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
+      <p className="m-0 px-3 py-2 text-xs leading-normal text-secondary-foreground text-pretty">
         Both axes are the plan: whether it was any good, and whether it was followed. All {closed} closed trades sit
-        outside the grid rather than being spread across it — a book placed in four boxes by guesswork would be the
-        most confident thing on this page and the least supported.
+        outside the four cells rather than being spread across them — no plan has been linked to a position yet.
       </p>
     </section>
   )

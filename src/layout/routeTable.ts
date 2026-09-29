@@ -227,8 +227,8 @@ export const ROUTES: readonly RouteEntry[] = [
     // same level twice.
     label: 'Review',
     crumbs: [],
-    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
-    design: { state: 'reviewing', rev: '2026-09-25.90', note: DESIGN_NOTES['/review'] },
+    // Rev .110: instances, review lamps, rows open Single trade in the queue's order.
+    design: { state: 'reviewing', rev: '2026-09-29.110', note: DESIGN_NOTES['/review'] },
   },
   {
     path: '/review/fit',
@@ -241,15 +241,8 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/review/habits',
     label: 'Habits',
     crumbs: REVIEW,
-    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
-    design: { state: 'reviewing', rev: '2026-09-25.90', note: DESIGN_NOTES['/review/habits'] },
-  },
-  {
-    path: '/review/playbook-stats',
-    label: 'Playbook stats',
-    crumbs: REVIEW,
-    // Rev .109 only re-pointed its links at /review/playbook; nothing here linked the old path.
-    design: { state: 'reviewing', rev: '2026-09-29.109', note: DESIGN_NOTES['/review/playbook-stats'] },
+    // Rev .110: Plan × adherence is one reading and a door.
+    design: { state: 'reviewing', rev: '2026-09-29.110', note: DESIGN_NOTES['/review/habits'] },
   },
   {
     path: '/review/objectives',
@@ -448,7 +441,7 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-29.109',
+      rev: '2026-09-29.110',
       note: DESIGN_NOTES['/review/playbook'],
     },
   },

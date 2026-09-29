@@ -37,8 +37,8 @@ describe('registry-derived redirects', () => {
   })
 
   it('keeps the view the registry row names, and the hash', async () => {
-    const stats = landOn('/strategy/win-rate?q=nv', '/review/playbook-stats')
-    await waitFor(() => expect(stats.textContent).toBe('/review/playbook-stats?cut=structure&q=nv'))
+    const stats = landOn('/strategy/win-rate?q=nv', '/review/playbook')
+    await waitFor(() => expect(stats.textContent).toBe('/review/playbook?tab=record&cut=structure&q=nv'))
   })
 })
 

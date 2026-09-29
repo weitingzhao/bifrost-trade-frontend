@@ -1,5 +1,7 @@
 /**
- * Review · Playbook stats — what each play has actually done.
+ * Review › Playbook › Record — what each play has actually done (design Rev
+ * .110 merged the Playbook stats page in as this tab; `/review/playbook-stats`
+ * opens it).
  *
  * The most answerable page in the group, because it asks only of closed fills:
  * how many, how many won, what share of the credit was kept, how long they were
@@ -19,10 +21,9 @@
  * that only works in one regime.
  */
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
-import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -42,9 +43,6 @@ import { StructureFormulas, StructureTable } from './StructureTable'
 import { cutDisagreement, structureRows } from './structureCut'
 import { DECAY_PROFIT_FACTOR, sizeCapFor, type SizeCap } from '@/utils/sizeCap'
 import { winRateInk } from './playbookInk'
-
-const PAGE_LEAD =
-  'What each play has actually done — closed trades from the ledger, fills-based and fees included. Under twenty trades the band is the reading, not the point.'
 
 // Rev .62: a foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
@@ -84,14 +82,26 @@ function BandBar({ p }: { p: PlayStat }) {
   )
 }
 
-export default function PlaybookStatsPage() {
+export function PlaybookRecord() {
   const [accountFilter, setAccountFilter] = useState('all')
   /**
    * The design's grouping switch (DECISIONS 2026-09-18): Win Rate folds in here
    * as a cut, not as a second page. The two cuts read different services and do
    * not reconcile — see `structureCut.ts`.
    */
-  const [cut, setCut] = useState('play')
+  // `?cut=structure` is how Win Rate's old address lands here (redirectRoutes).
+  const [params, setParams] = useSearchParams()
+  const cut = params.get('cut') === 'structure' ? 'structure' : 'play'
+  const setCut = (next: string) =>
+    setParams(
+      (prev) => {
+        const out = new URLSearchParams(prev)
+        if (next === 'structure') out.set('cut', 'structure')
+        else out.delete('cut')
+        return out
+      },
+      { replace: true },
+    )
   const [since, setSince] = useState<SinceFilter>('')
   const byStructure = cut === 'structure'
   /**
@@ -156,25 +166,7 @@ export default function PlaybookStatsPage() {
   const shownPlays = preview === 'empty' ? [] : plays
 
   return (
-    <PageShell padding="compact" className="space-y-3">
-      {/* §16.10: the lead behind ⓘ, the sample as meta, the Ledger as the head's door. */}
-      <PageHead
-        title="Playbook stats"
-        info={PAGE_LEAD}
-        meta={
-          pageState === 'ready' ? (
-            <span className={positionsUi.mono}>
-              {plays.length} plays · {trades.length} closed trades
-            </span>
-          ) : undefined
-        }
-        actions={
-          <PageHeadLink to="/portfolio/ledger" title="The fills every figure here is read from">
-            Trade Ledger →
-          </PageHeadLink>
-        }
-      />
-
+    <div className="space-y-3">
       <div data-sr-toolbar="">
         <span data-sr-tb="label">Cut</span>
         <SegmentControl
@@ -213,7 +205,16 @@ export default function PlaybookStatsPage() {
           </>
         ) : null}
         <span data-sr-tb="meta">
-          {byStructure ? 'closed instances, via the strategy service · totals first' : 'closed contracts, via the Trade Ledger'}
+          {byStructure
+            ? 'closed instances, via the strategy service · totals first'
+            : pageState === 'ready'
+              ? `${plays.length} plays · ${trades.length} closed trades · via the `
+              : 'closed contracts, via the '}
+          {byStructure ? null : (
+            <Link to="/portfolio/ledger" className={positionsUi.link} title="The fills every figure here is read from">
+              Trade Ledger →
+            </Link>
+          )}
         </span>
       </div>
 
@@ -449,6 +450,6 @@ export default function PlaybookStatsPage() {
           </p>
         </section>
       </div>
-    </PageShell>
+    </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useRef, useState } from 'react'
 import { ViewState } from '@bifrost/ui'
 import {
@@ -11,7 +11,8 @@ import {
   retirePlaybookRule,
   searchPlaybook,
 } from '@/api/playbook'
-import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
+import { PageHead, PageShell } from '@/components/layout'
+import { PlaybookRecord } from './record/PlaybookRecord'
 import { ExportSessionMenu } from '@/components/cockpit/ExportSessionMenu'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { ResearchUserSwitcher, type ResearchUserSwitcherHandle } from '@/components/auth/ResearchUserSwitcher'
@@ -29,6 +30,7 @@ import {
   CATEGORIES,
   caseHeadline,
   categoryTagVariant,
+  coercePlaybookTab,
   caseMeta,
   hasTradeRef,
   noteWhen,
@@ -136,7 +138,19 @@ function TabState({
 }
 
 export function PlaybookPage() {
-  const [tab, setTab] = useState<PlaybookTab>('rules')
+  // Rev .110: the tab lives in the URL, so /review/playbook-stats can open Record.
+  const [params, setParams] = useSearchParams()
+  const tab = coercePlaybookTab(params.get('tab'))
+  const setTab = (next: PlaybookTab) =>
+    setParams(
+      (prev) => {
+        const out = new URLSearchParams(prev)
+        if (next === 'rules') out.delete('tab')
+        else out.set('tab', next)
+        return out
+      },
+      { replace: true },
+    )
   const [searchQ, setSearchQ] = useState('')
   const [openCase, setOpenCase] = useState<string | null>(null)
   const qc = useQueryClient()
@@ -220,15 +234,8 @@ export function PlaybookPage() {
           Research user beside it — every read here is scoped to one. */}
       <PageHead
         title="Playbook"
-        info="Rules, notes and case studies — the trading system in writing."
-        actions={
-          <>
-            <PageHeadLink to="/review/playbook-stats" title="Does it pay? Playbook stats">
-              Playbook stats →
-            </PageHeadLink>
-            <ResearchUserSwitcher ref={userDialog} />
-          </>
-        }
+        info="The trading system in writing — rules, notes and case studies — and the record of what each play has actually done, closed trades from the ledger. Playbook stats merged in as the Record tab (Rev .110)."
+        actions={<ResearchUserSwitcher ref={userDialog} />}
       />
 
       {/* Program research-copilot-reach P4 — name the knowledge-loop break.
@@ -262,6 +269,7 @@ export function PlaybookPage() {
             { value: 'rules', label: 'Rules' },
             { value: 'notes', label: 'Notes' },
             { value: 'cases', label: 'Cases' },
+            { value: 'record', label: 'Record' },
             { value: 'search', label: 'Search' },
           ]}
         />
@@ -470,6 +478,8 @@ export function PlaybookPage() {
           })}
         </div>
       ) : null}
+
+      {tab === 'record' ? <PlaybookRecord /> : null}
 
       {tab === 'search' ? (
         <div className="space-y-3">

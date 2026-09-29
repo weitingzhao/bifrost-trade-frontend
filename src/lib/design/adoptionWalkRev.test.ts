@@ -127,7 +127,7 @@ describe('the design walk, by revision', () => {
     // the Objective loop band / Trace lighting (with R4).
     // Package .32 @ Rev .103 (2026-09-28, full): Instance becomes a surface
     // (440 panel · float · /instance/:id), Symbol ↔ Instance, page ↔ surface.
-    expect(DESIGN_REV).toBe('2026-09-29.109')
+    expect(DESIGN_REV).toBe('2026-09-29.111')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.
@@ -182,7 +182,8 @@ describe('the design walk, by revision', () => {
     // was already in `reviewing`. 24 → 12 with J4 (Rev .88–.89): twelve more;
     // Narrative, Backtest and Objectives were already there. 12 → 0 with J5
     // (Rev .90–.92): the last twelve; the round is walked end to end.
-    expect(counts.byState.stale).toBe(0)
+    // 3 while Rev .111's Instance → Trade rename is unbuilt (/instance, /review/fit, /trade/desk).
+    expect(counts.byState.stale).toBe(3)
     for (const row of rows) {
       if (row.state !== 'aligned') continue
       // Every walked page carries the rev it was walked against, and the design

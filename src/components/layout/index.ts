@@ -17,6 +17,7 @@ export {
 export { PageRouteFallback } from './PageRouteFallback'
 export { PageSection, type PageSectionProps } from './PageSection'
 export { PageFaceSwitch } from './PageFaceSwitch'
+export { TradeFaceSwitch, tradeFactsPath, tradeReviewPath } from './TradeFaceSwitch'
 export { PinButton } from './PinButton'
 export { GlobalMarketStatusBar } from './GlobalMarketStatusBar'
 export { SkipToContent } from './SkipToContent'

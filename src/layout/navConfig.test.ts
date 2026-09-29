@@ -118,7 +118,7 @@ describe('Strategy, retired', () => {
     // whole instance book is a pick on the chain.
     const target = (path: string) => routeFor(path).redirect
     expect(target('/strategy/instances')).toBe('/trade/rules?pick=instance:all')
-    expect(target('/strategy/win-rate')).toBe('/review/playbook-stats?cut=structure')
+    expect(target('/strategy/win-rate')).toBe('/review/playbook?tab=record&cut=structure')
     for (const p of ['/strategy/allocations', '/strategy/opportunities', '/strategy/structures', '/strategy/gates', '/strategy/option-category']) {
       expect(target(p), p).toBe('/trade/rules')
     }
@@ -259,7 +259,6 @@ describe('Review nav', () => {
       '/review/fit',
       '/review/habits',
       '/review/playbook',
-      '/review/playbook-stats',
       // One inbox, not two (§5a.8): Decision Inbox replaced Rule proposals
       // here — the same act with a row each, because the engine touches both
       // ends of the loop. `/review/proposals` stays a route and a deep link

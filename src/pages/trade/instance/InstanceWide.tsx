@@ -9,7 +9,7 @@
  */
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PageHead, PageHeadAction } from '@/components/layout'
+import { PageHead, PageHeadAction, TradeFaceSwitch } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
 import { PositionsStat } from '@/components/positions/PositionsStat'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -106,16 +106,13 @@ export function InstanceWide({
             <PageHeadAction title={`Portfolio › Trade Ledger — every fill booked to #${id}`} onClick={() => navigate(`/portfolio/ledger?inst=${id}`)}>
               Ledger →
             </PageHeadAction>
-            {closed ? (
-              <PageHeadAction title="Review › Single trade" onClick={() => navigate('/review/fit')}>
-                Review →
-              </PageHeadAction>
-            ) : null}
           </>
         }
       />
 
       <div data-sr-toolbar="">
+        {/* Rev .110: one instance, two faces — Facts here, Review on Single trade. */}
+        <TradeFaceSwitch instanceId={id} side="facts" />
         <DenseTag variant={closed ? 'neutral' : expired ? 'warning' : 'success'} size="cell">
           {closed ? 'Closed' : expired ? 'Past expiry' : 'Open'}
         </DenseTag>

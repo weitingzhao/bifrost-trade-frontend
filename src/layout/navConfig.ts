@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react'
 import { Flag,
   Activity,
   ArrowLeftRight,
-  BarChart2,
   Scale,
   Sigma,
   BookOpen,
@@ -192,7 +191,6 @@ export const NAV_GROUPS: ShellNavGroup[] = [
       route('Single trade', '/review/fit', Target),
       route('Habits', '/review/habits', Activity),
       route('Playbook', '/review/playbook', BookOpen),
-      route('Playbook stats', '/review/playbook-stats', BarChart2),
       // One inbox, not two (design Rev 2026-09-22.2, §5a.8). Decision Inbox
       // sat under Autopilot and Rule proposals sat here: the same act — a
       // machine proposes, I approve — with a row each, because the engine

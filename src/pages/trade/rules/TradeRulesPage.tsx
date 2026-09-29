@@ -459,8 +459,8 @@ export default function TradeRulesPage() {
             <PageHeadLink to="/risk/limits" title="Where a gate's hits land">
               Breaches · Risk Limits →
             </PageHeadLink>
-            <PageHeadLink to="/review/playbook-stats" title="Does it pay?">
-              Playbook stats →
+            <PageHeadLink to="/review/playbook?tab=record" title="Does it pay?">
+              Playbook record →
             </PageHeadLink>
             {/* The snapshot is what the reader is looking at: the chain plus
                 whatever the focus narrows it to. */}

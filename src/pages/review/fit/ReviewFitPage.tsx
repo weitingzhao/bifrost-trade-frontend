@@ -17,7 +17,10 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
-import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
+import { PageHead, PageHeadLink, PageShell, SectionHead, TradeFaceSwitch } from '@/components/layout'
+import { StatusLamp } from '@/components/StatusLamp'
+import { useSaveTradeReview, useTradeReviews } from '@/hooks/useTradeReviews'
+import { reviewState, reviewWalk } from './reviewWalk'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
@@ -25,7 +28,6 @@ import { useExecutionsCanonical } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { useInstanceMarkPath } from '@/hooks/useInstanceMarkPath'
 import { buildReviewInstances, type ReviewInstance } from '@/utils/reviewInstances'
-import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
 import { rankOnEntry } from '@/utils/entryIvRank'
 import { useEntryIvRanks } from '@/hooks/useEntryIvRanks'
 import { ReviewGaps } from './ReviewTradeFit'
@@ -47,18 +49,32 @@ export default function ReviewFitPage() {
   const execQuery = useExecutionsCanonical()
   const today = new Date().toISOString().slice(0, 10)
 
-  // Rev .104: the unit is the instance (open ones first). `?inst=NNN` picks
-  // one; an older `?trade=<contract>` link lands on the instance that traded it.
+  // Rev .104: the unit is the instance (open ones first). Rev .110: `?t=#NNN`
+  // picks one (`?inst=` still read); an older `?trade=<contract>` link lands on
+  // the instance that traded it. With neither, the page opens the first trade
+  // still awaiting review, and ‹ › walks that queue — or Queue's own row order
+  // when arrived from there (`in=list&list=…`).
   const trades = useMemo(() => buildReviewInstances(execQuery.data?.items ?? [], today), [execQuery.data?.items, today])
-  const wantedInst = params.get('inst')
+  const reviews = useTradeReviews()
+  const saveReview = useSaveTradeReview()
+  const wantedInst = (params.get('t') ?? params.get('inst') ?? '').replace('#', '')
   const wanted = params.get('trade')
+  const walk = useMemo(
+    () =>
+      reviewWalk(trades, reviews.byInstance, {
+        explicit: Boolean(wantedInst || wanted),
+        list: params.get('in') === 'list' ? params.get('list') : null,
+      }),
+    [trades, reviews.byInstance, wantedInst, wanted, params],
+  )
   const picked = useMemo(
     () =>
       (wantedInst ? trades.find((t) => t.instanceId === Number(wantedInst)) : null) ??
       (wanted ? trades.find((t) => t.contractKey === wanted || t.legs.some((l) => l.contractKey === wanted)) : null) ??
+      walk.trades[0] ??
       trades[0] ??
       null,
-    [trades, wanted, wantedInst],
+    [trades, wanted, wantedInst, walk.trades],
   )
 
   const { path, expiryBranch, underlying, optionTicker, loading: pathLoading, error: pathError, refetch: refetchPath } =
@@ -77,8 +93,32 @@ export default function ReviewFitPage() {
         : (instancesQ.data?.items.find((i) => i.strategy_instance_id === x.instanceId)?.strategy_structure_name ?? null),
     [instancesQ.data],
   )
+  // Keep the walk's context (`in` · `list`) while moving through it.
   const pick = (t: ReviewInstance) =>
-    setParams(t.instanceId != null ? { inst: String(t.instanceId) } : { trade: t.contractKey })
+    setParams((prev) => {
+      const out = new URLSearchParams()
+      if (prev.get('in')) out.set('in', prev.get('in') as string)
+      if (prev.get('list')) out.set('list', prev.get('list') as string)
+      if (t.instanceId != null) out.set('t', `#${t.instanceId}`)
+      else out.set('trade', t.contractKey)
+      return out
+    })
+
+  const review = picked?.instanceId != null ? reviews.byInstance.get(picked.instanceId) : undefined
+  const state = picked ? reviewState(picked, review) : null
+  const writeReview = (patch: { tags_added?: string[]; tags_dropped?: string[]; reviewed?: boolean }, then?: () => void) => {
+    if (picked?.instanceId == null) return
+    saveReview.mutate({ instanceId: picked.instanceId, patch }, { onSuccess: () => then?.() })
+  }
+  const confirmAndNext = () =>
+    writeReview({ reviewed: true }, () => {
+      // The next trade still waiting after this one, in the walk's order.
+      const i = walk.trades.findIndex((t) => t.contractKey === picked?.contractKey)
+      const next = [...walk.trades.slice(i + 1), ...walk.trades.slice(0, Math.max(0, i))].find(
+        (t) => !t.open && t.instanceId != null && !reviews.byInstance.get(t.instanceId)?.reviewed,
+      )
+      if (next) pick(next)
+    })
 
   // The entry session's IV rank, on the same cache entry Habits reads it from.
   const ranks = useEntryIvRanks(useMemo(() => (trade ? [trade] : []), [trade]))
@@ -138,7 +178,22 @@ export default function ReviewFitPage() {
 
       {/* §17.3 · Rev .104: ‹ the current trade › and n of N in the toolbar; the
           closed-trade table (filter · search · group · [ ] step) behind it. */}
-      <TradePicker trades={trades} current={trade} onPick={(t) => pick(t as ReviewInstance)} />
+      <TradePicker
+        trades={trades}
+        current={trade}
+        onPick={(t) => pick(t as ReviewInstance)}
+        walk={walk.trades}
+        walkLabel={walk.label}
+        leading={trade?.instanceId != null ? <TradeFaceSwitch instanceId={trade.instanceId} side="review" /> : null}
+        trailing={
+          state ? (
+            <>
+              <StatusLamp lamp={state === 'reviewed' ? 'green' : state === 'awaiting' ? 'yellow' : 'gray'} variant="dot" title={state} />
+              <span className="text-dense-meta text-muted-foreground">{state}</span>
+            </>
+          ) : null
+        }
+      />
 
       {pageState === 'stale' ? (
         <ViewState
@@ -219,15 +274,34 @@ export default function ReviewFitPage() {
             <aside className="flex min-w-0 max-w-[27.5rem] flex-[1_1_21rem] flex-col gap-3">
               <VerdictPanel trade={trade} markPath={path} />
               <TimelinePanel stages={derived.stages} />
-              <TagsPanel tags={derived.tags} />
+              <TagsPanel
+                tags={derived.tags}
+                added={review?.tags_added ?? []}
+                dropped={review?.tags_dropped ?? []}
+                reviewed={Boolean(review?.reviewed)}
+                confirmBlocked={
+                  trade.instanceId == null
+                    ? 'Booked to no instance — a review is kept per instance.'
+                    : trade.open
+                      ? 'Still open — an interim read cannot be confirmed.'
+                      : reviews.isError
+                        ? 'The review store did not answer.'
+                        : null
+                }
+                saving={saveReview.isPending}
+                error={saveReview.error ? (saveReview.error as Error).message : null}
+                onChange={(next) =>
+                  writeReview({
+                    ...(next.added ? { tags_added: next.added } : {}),
+                    ...(next.dropped ? { tags_dropped: next.dropped } : {}),
+                  })
+                }
+                onConfirm={confirmAndNext}
+              />
               <SourcesPanel rows={derived.srcs} />
             </aside>
           </div>
 
-          <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-            <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing here writes: no
-            confirmation, no tag, no note. {REVIEW_UNRECORDED.reviewed}
-          </p>
         </>
       )}
     </PageShell>

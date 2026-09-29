@@ -119,6 +119,8 @@ export const QUERY_KEYS = {
     gateSafety: ['strategy', 'gate-safety'] as const,
     allocations: ['strategy', 'allocations'] as const,
     winRate: ['strategy', 'win-rate'] as const,
+    /** Rev .110: one review record per instance, read by Queue, Single trade and the Review badge. */
+    reviews: ['strategy', 'reviews'] as const,
   },
   strategyPlans: {
     /** Every plan query hangs off this, so one write refreshes them all. */

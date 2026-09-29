@@ -304,8 +304,8 @@ export default function HypothesisBoardPage() {
         title="Hypothesis Board"
         info="Every tradable belief, with its evidence and its record — hypotheses are born next to evidence (D2), never typed in here."
         actions={
-          <PageHeadLink to="/review/playbook-stats" title="Settled record → Playbook stats">
-            Playbook stats →
+          <PageHeadLink to="/review/playbook?tab=record" title="Settled record → Playbook · Record">
+            Playbook record →
           </PageHeadLink>
         }
       />

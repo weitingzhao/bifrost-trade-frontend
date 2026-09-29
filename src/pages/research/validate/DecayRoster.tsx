@@ -106,7 +106,7 @@ export function DecayRoster({
               <span className="text-dense-body font-semibold">{a.name}</span>
               <span className="min-w-0 flex-1 text-dense-meta text-foreground/80">{a.why}</span>
               <Link
-                to="/review/playbook-stats"
+                to="/review/playbook?tab=record"
                 className="text-dense-caption text-primary hover:underline"
               >
                 Evidence →

@@ -5,7 +5,7 @@
  * Expiry with each group's count and net. [ and ] step anywhere on the page,
  * Esc closes the table. The model is `tradePickerModel`.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { SegmentControl } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
@@ -40,20 +40,36 @@ export function TradePicker({
   trades,
   current,
   onPick,
+  walk,
+  walkLabel,
+  leading,
+  trailing,
 }: {
   trades: readonly ReviewTrade[]
   current: ReviewTrade | null
   onPick: (t: ReviewTrade) => void
+  /**
+   * What ‹ › and [ ] step through, when it is not every trade (Rev .110): the
+   * awaiting queue by default, Queue's own row order when arrived from Queue.
+   */
+  walk?: readonly ReviewTrade[]
+  /** The walk's name beside its count — "awaiting", "in Queue's order". */
+  walkLabel?: string
+  /** The toolbar's first item — the Facts / Review switch. */
+  leading?: ReactNode
+  /** Right-aligned at the toolbar's end — the review status lamp. */
+  trailing?: ReactNode
 }) {
+  const stepSet = walk && walk.length > 0 ? walk : trades
   const [open, setOpen] = useState(false)
   const [outcome, setOutcome] = useState<PickOutcome>('all')
   const [group, setGroup] = useState<PickGroup>('none')
   const [q, setQ] = useState('')
-  const idx = current ? trades.findIndex((t) => t.contractKey === current.contractKey) : -1
+  const idx = current ? stepSet.findIndex((t) => t.contractKey === current.contractKey) : -1
   const rows = useMemo(() => filterTrades(trades, outcome, q), [trades, outcome, q])
   const groups = useMemo(() => groupTrades(rows, group), [rows, group])
   const step = (d: 1 | -1) => {
-    const next = stepTrade(trades, current?.contractKey ?? null, d)
+    const next = stepTrade(stepSet, current?.contractKey ?? null, d)
     if (next) onPick(next)
   }
 
@@ -63,7 +79,7 @@ export function TradePicker({
       if (el instanceof HTMLElement && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return
       if (e.metaKey || e.ctrlKey || e.altKey) return
       if (e.key === '[' || e.key === ']') {
-        const next = stepTrade(trades, current?.contractKey ?? null, e.key === ']' ? 1 : -1)
+        const next = stepTrade(stepSet, current?.contractKey ?? null, e.key === ']' ? 1 : -1)
         if (next) {
           e.preventDefault()
           onPick(next)
@@ -72,12 +88,13 @@ export function TradePicker({
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [trades, current, onPick, open])
+  }, [stepSet, current, onPick, open])
 
   if (trades.length === 0) return null
   return (
     <>
       <div data-sr-toolbar="" className="flex-wrap">
+        {leading}
         <span data-sr-tb="label">Trade</span>
         <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(-1)} title="Previous instance ( [ )" aria-label="Previous instance">
           ‹
@@ -110,8 +127,10 @@ export function TradePicker({
           ›
         </button>
         <span data-sr-tb="meta" className="font-mono">
-          {idx >= 0 ? `${idx + 1} of ${trades.length}` : `${trades.length}`}
+          {idx >= 0 ? `${idx + 1} of ${stepSet.length}` : `${stepSet.length}`}
+          {walkLabel ? ` · ${walkLabel}` : ''}
         </span>
+        {trailing ? <span className="ml-auto inline-flex items-center gap-1.5">{trailing}</span> : null}
       </div>
 
       {open ? (

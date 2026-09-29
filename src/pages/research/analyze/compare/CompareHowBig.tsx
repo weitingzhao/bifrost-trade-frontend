@@ -135,8 +135,8 @@ export function CompareHowBig({
       <p className="border-t border-border/60 pt-2 text-dense-caption leading-relaxed text-muted-foreground">
         Tail cap needs the 20-day distribution and is not computed. Backing cap = room to the {fmtPct0(HOUSE_GATE_PCT)} gate
         ÷ what one unit takes from the pool. Conviction cap comes from{' '}
-        <Link to="/review/playbook-stats" className="text-primary hover:underline">
-          Playbook stats
+        <Link to="/review/playbook?tab=record" className="text-primary hover:underline">
+          Playbook record
         </Link>
         ’ rule on the structure’s closed record — full allowance, half under the sample floor, none under the decay line — read by
         structure; the split by regime is owed.

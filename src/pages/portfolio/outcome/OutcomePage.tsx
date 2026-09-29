@@ -199,7 +199,7 @@ export default function OutcomePage() {
                 </span>
                 {/* The cut this page deliberately does not make. Review computes the rate per
                     play; two pages computing one rate is how they start disagreeing. */}
-                <Link to="/review/playbook-stats" className={cn(positionsUi.link, 'ml-auto')}>
+                <Link to="/review/playbook?tab=record" className={cn(positionsUi.link, 'ml-auto')}>
                   play &amp; behaviour → Review Playbook Stats
                 </Link>
               </header>

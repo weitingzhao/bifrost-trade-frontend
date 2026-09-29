@@ -138,8 +138,8 @@ export function SymbolRecordRail({
             <span className="text-foreground/80">{unsettled.join(', ')}</span>.
           </>
         ) : null}{' '}
-        <Link to="/review/playbook-stats" className="text-primary hover:underline">
-          Playbook stats →
+        <Link to="/review/playbook?tab=record" className="text-primary hover:underline">
+          Playbook record →
         </Link>
       </p>
     </SectionPanel>

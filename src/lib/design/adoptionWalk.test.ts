@@ -192,7 +192,8 @@ describe('the design walk, as it stands', () => {
     // design rows of the Objective page. 4 with J5 (Rev .90–.92): the Review
     // four, Playbook, Assignment, Alerts, Corporate Actions and the four
     // Method faces — nothing signed is behind its rev any more.
-    expect(counts.aligned + counts.byState.stale).toBe(4)
+    // 7 while Rev .111's rename is not built: /instance, /review/fit and /trade/desk read stale.
+    expect(counts.aligned + counts.byState.stale).toBe(7)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -230,7 +231,8 @@ describe('the design walk, as it stands', () => {
         .map((r) => r.path)
         .sort()
       // Rev .95: every signed page the §16 refinement round re-stamped, until its batch re-walks it.
-    ).toEqual([])
+      // Rev .111 (Instance → Trade) moved these three; the app's rename re-walks them.
+    ).toEqual(['/instance', '/review/fit', '/trade/desk'])
     // Backing & Model was walked and built in C6 (2026-09-15) but never tagged;
     // it waits for the Owner's look (pending 19→18). Plans joined it in R9-6,
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
@@ -485,11 +487,14 @@ describe('the design walk, as it stands', () => {
     // Exposure, and both paths are aliases of the page that holds them. 74
     // with Rev .109's Trade 6 → 4: Assignment is a section of Expiry, and
     // Playbook moved to /review/playbook (a page for a page).
-    expect(counts.byState.reviewing).toBe(74)
+    // 70 with Rev .110–.111: Playbook stats became the Record tab (an alias of
+    // Playbook), and the three pages the Instance → Trade rename moved read
+    // stale until that rename is built.
+    expect(counts.byState.reviewing).toBe(70)
     // Since 2026-09-29 a reviewing page whose design rev passed its walk reads
     // stale too; the thirteen that had (Rev .100–.103 built in batches R–V)
     // were re-stamped with the design receipt, so none does.
-    expect(counts.byState.stale).toBe(0)
+    expect(counts.byState.stale).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'aligned')
@@ -515,7 +520,6 @@ describe('the design walk, as it stands', () => {
       '/docs/tech-stack',
       '/docs/ui-design-system',
       '/home',
-      '/instance',
       '/market/live',
       '/portfolio',
       '/portfolio/accounts',
@@ -566,11 +570,9 @@ describe('the design walk, as it stands', () => {
       '/research/trace',
       '/research/watchlist',
       '/review',
-      '/review/fit',
       '/review/habits',
       '/review/objectives',
       '/review/playbook',
-      '/review/playbook-stats',
       '/risk',
       '/risk/limits',
       '/risk/margin',
@@ -579,7 +581,6 @@ describe('the design walk, as it stands', () => {
       '/settings',
       '/system/feedback',
       '/system/status',
-      '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
       '/trade/plans',
@@ -640,7 +641,8 @@ describe('the design walk, as it stands', () => {
     // with Package .33 @ Rev .104: Trace enters the registry (the app built it
     // in U3 before the design had a route for it).
     // 92 with Rev .109: /review/playbook is a route of its own (ROUTES 101 → 102).
-    expect(counts.designed).toBe(92)
+    // 94 with Rev .111: /trade/:id and /review/trade (ROUTES 102 → 104).
+    expect(counts.designed).toBe(94)
     expect(counts.byState.designOnly).toBe(9)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three
@@ -681,7 +683,8 @@ describe('the design walk, as it stands', () => {
     // and it waits on the K6 memory store, not on a walk.
     // 0 since K6 built /research/agent-personas/you over journal.memory
     // (2026-09-27): the design has nothing left the app lacks a page for.
-    expect(counts.byState.unbuilt).toBe(0)
+    // 2 while Rev .111 is unbuilt: /trade/:id and /review/trade.
+    expect(counts.byState.unbuilt).toBe(2)
     // 20 until R13 tagged Trade Ledger: `pending` is the built-but-unwalked
     // pool, so a page leaving it for `reviewing` takes one off this count.
     // 18 since Performance joined `reviewing`; 16 since Playbook did; 13 since

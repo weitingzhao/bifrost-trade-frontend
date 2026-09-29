@@ -32,7 +32,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: STRATEGY,
     redirect: '/trade/rules',
   },
-  { path: '/strategy/win-rate', label: 'Win Rate', crumbs: STRATEGY, redirect: '/review/playbook-stats?cut=structure' },
+  { path: '/strategy/win-rate', label: 'Win Rate', crumbs: STRATEGY, redirect: '/review/playbook?tab=record&cut=structure' },
   { path: '/strategy/allocations', label: 'Allocations', crumbs: STRATEGY, redirect: '/trade/rules' },
   { path: '/strategy/opportunities', label: 'Opportunity', crumbs: STRATEGY, redirect: '/trade/rules' },
   { path: '/strategy/structures', label: 'Structure', crumbs: STRATEGY, redirect: '/trade/rules' },
@@ -384,4 +384,6 @@ export const REDIRECTS: readonly RouteEntry[] = [
   // section now. Playbook moved to Review, beside its own record.
   { path: '/trade/assignment', label: 'Expiry', crumbs: TRADE_DESK, redirect: '/trade/expiration#assignment' },
   { path: '/trade/playbook', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook' },
+  // Rev .110: Playbook stats is Playbook's Record tab — a rule and its record, one page.
+  { path: '/review/playbook-stats', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook?tab=record' },
 ]

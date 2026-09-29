@@ -13,11 +13,16 @@ import { LAYER_OF_GROUP, layerForPath } from '@/lib/design/layers'
 import { isSystemRoute, matchActiveRow, navRowFor } from './routeRegistry'
 import { ScopeMark } from './ScopeMark'
 import { useResearchNavGroup } from './useResearchNavGroup'
+import { NavBadge } from './NavBadge'
+import { useReviewBadge } from '@/hooks/useTradeReviews'
 import { useMemo } from 'react'
 import { Pin as PinIcon } from 'lucide-react'
 import { SHELF_GROUP, isStalePin, usePins } from '@/lib/pins'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
 import { navFilterExtra } from './navFilterExtra'
+
+/** The Single trade row, where the review badge sits. */
+const REVIEW_TRADE_PATH = '/review/fit'
 
 function renderInAppLink({
   item,
@@ -45,6 +50,14 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const research = useResearchNavGroup()
+  // Rev .110: "N to review" on the Single trade row — closed instances with no confirmed review.
+  const toReview = useReviewBadge()
+  const reviewBadge =
+    toReview != null && toReview > 0 ? (
+      <NavBadge tone="var(--color-lamp-yellow)" title={`${toReview} closed trades to review`}>
+        {toReview} to review
+      </NavBadge>
+    ) : null
   // Two trees, one shell. Inside `/system/*` and `/docs/*` the business tree is
   // replaced rather than appended to — the reader there is checking the
   // machine, not scanning for a position. Everything else about the shell (top
@@ -172,7 +185,9 @@ export function AppSidebar() {
       //
       // A badge outranks the scope mark: a count is news, the unit of
       // analysis is a standing fact about the page.
-      renderItemExtras={(item) => research.extras(item) ?? <ScopeMark path={item.id} />}
+      renderItemExtras={(item) =>
+        research.extras(item) ?? (item.id === REVIEW_TRADE_PATH ? reviewBadge : null) ?? <ScopeMark path={item.id} />
+      }
       renderInAppLink={renderInAppLink}
       footer={<TradeSidebarFooter />}
       openGroupsStorageKey={

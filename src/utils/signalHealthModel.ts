@@ -49,7 +49,7 @@ const DOWNSTREAM: Record<string, { label: string; to: string }> = {
   scan: { label: 'Vol ratings', to: '/research/scan' },
   canonical_pnl: { label: 'Review › Single trade', to: '/review/fit' },
   iv_reconstructed: { label: 'Symbol › Chain', to: '/research/symbol?tab=chain' },
-  playbook_trigger: { label: 'Review › Playbook stats', to: '/review/playbook-stats' },
+  playbook_trigger: { label: 'Review › Playbook · Record', to: '/review/playbook?tab=record' },
   forecast_settlement: { label: 'Signal Decay', to: '/research/signal-decay' },
 }
 

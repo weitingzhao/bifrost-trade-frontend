@@ -60,6 +60,8 @@ export interface ReviewTrade {
   fills: ReviewFill[]
   /** The play this trade belonged to, from the fills' own opportunity name. */
   play: string | null
+  /** The strategy instance the fills were booked to (`#NNN`), when any was. */
+  instanceId: number | null
   openedOn: string | null
   closedOn: string | null
   daysHeld: number | null
@@ -200,6 +202,7 @@ export function buildReviewTrades(executions: readonly Execution[]): {
       right: (g.option_right || '').toUpperCase().slice(0, 1),
       fills: ordered.map(toFill),
       play: ordered.find((t) => t.strategy_opportunity_name)?.strategy_opportunity_name ?? null,
+      instanceId: [...ordered].reverse().find((t) => t.strategy_instance_id != null)?.strategy_instance_id ?? null,
       openedOn: first,
       closedOn: last,
       daysHeld: first && last ? daysBetween(first, last) : null,

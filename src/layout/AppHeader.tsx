@@ -167,10 +167,12 @@ export function AppHeader({
           </span>
         )}
       </nav>
-      {/* The one control that takes the slack, as a macOS toolbar search
-          field (Rev .60 §8): filled, borderless, radius 8, an accent ring
-          only while the omnibar is open. Under 980 of header it folds to
-          the glass and the carried symbol. */}
+      {/* The search entry is a button that says what it opens (design Rev
+          .104, Owner 2026-09-29: a 440px bar that is not a field read as
+          broken): ⌕ · the carried symbol · Search · ⌘K, as wide as its
+          content. Filled, borderless, radius 8, an accent ring while the
+          Spotlight is open — which is unchanged. Under 980 of header it folds
+          to the glass and the carried symbol. */}
       <button
         type="button"
         onClick={omnibar.open}
@@ -178,9 +180,10 @@ export function AppHeader({
         className={cn(
           mb.search,
           mb.omni,
-          'ml-3 hidden h-7 min-w-[88px] max-w-[440px] flex-[1_1_0] items-center gap-[7px] pr-2 pl-[9px] text-left md:inline-flex',
+          'ml-3 hidden h-7 flex-none items-center gap-[7px] pr-2 pl-[9px] text-left whitespace-nowrap md:inline-flex',
         )}
-        aria-label="Open the Omnibar"
+        aria-label="Search symbols, pages and commands"
+        title="Search symbols, pages and commands (⌘K)"
       >
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden className="flex-none">
           <circle cx="11" cy="11" r="6.5" />
@@ -236,10 +239,8 @@ export function AppHeader({
             </span>
           </span>
         ) : null}
-        <span className={cn(mb.omniText, mb.fs12, 'min-w-0 flex-1 truncate')}>
-          {symbol ? 'page or command' : 'Symbol, page, or command'}
-        </span>
-        <span className={cn(mb.omniText, mb.mono, mb.fs10, 'text-[var(--sk-mute)]')}>⌘K</span>
+        <span className={cn(mb.omniText, mb.fs12)}>Search</span>
+        <span className={cn(mb.omniText, mb.mono, mb.fs10, 'text-[var(--sk-faint)]')}>⌘K</span>
       </button>
 
       {/* The right cluster as a macOS menu bar (Rev .60 §1), in its order:

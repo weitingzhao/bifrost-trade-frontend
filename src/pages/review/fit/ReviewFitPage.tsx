@@ -17,7 +17,6 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
-import { cn } from '@/lib/utils'
 import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
@@ -30,6 +29,7 @@ import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
 import { rankOnEntry } from '@/utils/entryIvRank'
 import { useEntryIvRanks } from '@/hooks/useEntryIvRanks'
 import { ReviewTradeFit } from './ReviewTradeFit'
+import { TradePicker } from './TradePicker'
 import { TradePathPanels } from './TradePathPanels'
 import { CounterfactualsTable, ExecutionTable } from './TradeFitTables'
 import { SourcesPanel, TagsPanel, TimelinePanel, VerdictPanel } from './TradeFitAside'
@@ -110,26 +110,9 @@ export default function ReviewFitPage() {
         }
       />
 
-      {/* §17.3: the picker in the toolbar. The design draws a button per trade;
-          the book closes too many for a row of buttons, so it is one select. */}
-      {trades.length > 0 ? (
-        <div data-sr-toolbar="">
-          <span data-sr-tb="label">Trade</span>
-          <select
-            aria-label="Which trade"
-            className={cn(positionsUi.input, 'max-w-72')}
-            value={trade?.contractKey ?? ''}
-            onChange={(e) => setParams({ trade: e.target.value })}
-          >
-            {trades.map((t) => (
-              <option key={t.contractKey} value={t.contractKey}>
-                {t.label} · {t.closedOn ? fmtIsoDateToken(t.closedOn) : '—'}
-              </option>
-            ))}
-          </select>
-          <span data-sr-tb="meta">{trades.length} closed trades</span>
-        </div>
-      ) : null}
+      {/* §17.3 · Rev .104: ‹ the current trade › and n of N in the toolbar; the
+          closed-trade table (filter · search · group · [ ] step) behind it. */}
+      <TradePicker trades={trades} current={trade} onPick={(t) => setParams({ trade: t.contractKey })} />
 
       {pageState === 'stale' ? (
         <ViewState

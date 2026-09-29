@@ -31,6 +31,7 @@ function shortPut(fills: ReviewFill[] = [fill('2026-08-03', 'sell', 1, 10), fill
     right: 'P',
     fills,
     play: null,
+    instanceId: null,
     openedOn: fills[0].date,
     closedOn: fills[fills.length - 1].date,
     daysHeld: 4,

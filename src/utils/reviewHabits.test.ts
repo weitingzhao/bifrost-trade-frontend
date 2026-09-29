@@ -14,6 +14,7 @@ function trade(p: Partial<ReviewTrade> & { contractKey: string }): ReviewTrade {
     right: 'C',
     fills: [],
     play: null,
+    instanceId: null,
     openedOn: '2026-08-03',
     closedOn: '2026-08-17',
     daysHeld: 14,

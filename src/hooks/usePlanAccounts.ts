@@ -12,7 +12,13 @@ import { useMemo } from 'react'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { scopeAccountId, useAccountScope } from '@/lib/accountScope'
 
-export function usePlanAccounts(): { accounts: string[]; defaultAccount: string } {
+export function usePlanAccounts(): {
+  accounts: string[]
+  defaultAccount: string
+  /** The configured host and secondary ids, so a form can name them the way the scope bar does. */
+  host: string
+  secondary: string
+} {
   const { data } = useMonitorStatus()
   const scope = useAccountScope()
   return useMemo(() => {
@@ -23,6 +29,11 @@ export function usePlanAccounts(): { accounts: string[]; defaultAccount: string 
       .filter((id) => id.length > 0)
     const accounts = [...new Set(host ? [host, ...ids] : ids)]
     const scoped = scopeAccountId(scope, host, secondary)
-    return { accounts, defaultAccount: scoped && accounts.includes(scoped) ? scoped : (accounts[0] ?? '') }
+    return {
+      accounts,
+      defaultAccount: scoped && accounts.includes(scoped) ? scoped : (accounts[0] ?? ''),
+      host,
+      secondary,
+    }
   }, [data, scope])
 }

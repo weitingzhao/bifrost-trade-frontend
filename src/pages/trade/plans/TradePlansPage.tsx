@@ -21,10 +21,7 @@ import { IncludeExcludeToggle, SegmentControl } from '@/components/data-display'
 import { HeroCard, HeroRow, PageHead, PageHeadAction, PageHeadLink, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
-import {
-  INSPECTOR_WIDTH_READ_PX,
-  INSPECTOR_WIDTH_WIDE_PX,
-} from '@/components/layout/inspectorDock'
+import { INSPECTOR_WIDTH_READ_PX } from '@/components/layout/inspectorDock'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
@@ -37,6 +34,7 @@ import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 import { usePageViewParams } from '@/lib/pageView'
 import { PlanCard } from './PlanCard'
 import { PlanForm } from './PlanForm'
+import { PlanSheet } from './PlanSheet'
 import { PlansTable } from './PlansTable'
 import { planCashSecured } from './planCardModel'
 import {
@@ -189,6 +187,8 @@ export default function TradePlansPage() {
     setForm(null)
     setParam('plan', String(strategyPlanId))
   }
+
+  const closeForm = useCallback(() => setForm(null), [])
 
   function closePanel() {
     setForm(null)
@@ -388,27 +388,28 @@ export default function TradePlansPage() {
         </span>
       </div>
 
+      {/* The card reads in the inspector; writing a plan is the design's
+          order sheet — modal, twice as wide, the live check beside the form.
+          Closing an edit comes back to the card it was opened from. */}
       <RightInspectorShell
-        open={form != null || selected != null}
-        ariaLabel={form == null ? 'Plan' : 'Plan a trade'}
-        panelWidthPx={form == null ? INSPECTOR_WIDTH_READ_PX : INSPECTOR_WIDTH_WIDE_PX}
+        open={form == null && selected != null}
+        ariaLabel="Plan"
+        panelWidthPx={INSPECTOR_WIDTH_READ_PX}
         onClose={closePanel}
       >
-        {form == null && selected ? (
+        {selected ? (
           <PlanCard
             plan={selected}
             onClose={closePanel}
             onEdit={(plan) => setForm({ kind: 'edit', id: plan.strategy_plan_id })}
           />
         ) : null}
-        {form != null ? (
-          <PlanForm
-            editing={form.kind === 'edit' ? selected : null}
-            onDone={openPlan}
-            onCancel={closePanel}
-          />
-        ) : null}
       </RightInspectorShell>
+      {form != null ? (
+        <PlanSheet label={form.kind === 'edit' ? 'Edit plan' : 'Plan a trade'} onClose={closeForm}>
+          <PlanForm editing={form.kind === 'edit' ? selected : null} onDone={openPlan} onCancel={closeForm} />
+        </PlanSheet>
+      ) : null}
     </PageShell>
   )
 }

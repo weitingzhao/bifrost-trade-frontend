@@ -1,52 +1,59 @@
 /**
- * Writing a plan by hand.
+ * Writing a plan by hand — the design's order sheet (Trade Plans rev .94):
+ * fill the left, watch the right.
  *
- * The prototype's `Create order intent` button is deliberately absent: it wrote
- * an order-intent draft, and under D10 this desk is advisory — orders are placed
- * in TWS. The only button is the one that records the plan.
+ * The left keeps everything the plan store holds, which is more than the
+ * prototype draws: any number of legs with their own side (the reader picks
+ * buy or sell — the form never does), price effect, target / stop / exit-by,
+ * and the plan's own expiry. The prototype's chain quick-picks are not copied
+ * — they fabricate strikes from spot; the real chips are the contracts the
+ * plan's source carried, beside the link to the chain.
  *
- * `Backing check` is grey for the same reason as the table's two columns: no
- * service computes what one plan would cost in margin.
+ * The right is `planCheck` on live readings (`usePlanBacking`). "Create
+ * order intent" saves the plan and marks it intended — this app's intent is
+ * that status, not an order: the desk copies, TWS places (D10).
  */
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { useStructures } from '@/hooks/useStrategies'
 import { usePlanAccounts } from '@/hooks/usePlanAccounts'
-import { useCreateStrategyPlan, useUpdateStrategyPlan } from '@/hooks/useStrategyPlans'
+import {
+  useCreateStrategyPlan,
+  useIntendStrategyPlan,
+  useUpdateStrategyPlan,
+} from '@/hooks/useStrategyPlans'
 import {
   planLegsFromContract,
   type PlanLegDraft,
 } from '@/lib/plans/planLegFromContract'
 import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
-import { NOT_COMPUTED_HINT } from './PlansTable'
-import { MemoryHintLine } from './MemoryHintLine'
+import { checkPasses, planCheck } from './planCheck'
+import { PlanCheckPanel } from './PlanCheckPanel'
+import { usePlanBacking } from './usePlanBacking'
 
-const FIELD = 'h-6 w-full border px-1.5 text-dense-label mat-field'
+const FIELD = 'h-7 w-full min-w-0 px-2 text-dense-body mat-field'
+const NUM = `${FIELD} font-mono tabular-nums`
 const LABEL = 'text-dense-meta font-semibold text-muted-foreground'
 const CHOOSE_SIDE = 'Choose buy or sell'
 
 /** The server's own enum — not the prototype's list, which names kinds no row can store. */
 const SOURCE_KINDS = ['manual', 'symbol', 'hypothesis', 'inbox_draft', 'roll'] as const
+const SOURCE_LABELS: Record<StrategyPlan['source_kind'], string> = {
+  manual: 'Manual',
+  symbol: 'Symbol',
+  hypothesis: 'Hypothesis',
+  inbox_draft: 'Inbox draft',
+  roll: 'Roll',
+}
 const SOURCE_HINTS: Record<StrategyPlan['source_kind'], string> = {
   manual: 'No upstream. Still gets matched to its fill.',
   symbol: 'Came off the Symbol page — the chain pick travels in source_json.',
-  hypothesis: 'Names a hypothesis, so the outcome can flow back to the board.',
+  hypothesis: 'Links the plan to a hypothesis so its outcome flows back to the board.',
   inbox_draft: 'Drafted by the Copilot or Autopilot and taken over here.',
   roll: 'Replaces an earlier plan — name it in the ref.',
-}
-
-const previewUsd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`
-
-function PreviewRow({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="flex items-baseline gap-2 text-dense-meta">
-      <span className="flex-1 text-muted-foreground">{label}</span>
-      <span className="font-mono font-semibold">{value}</span>
-      <span className="w-40 text-right text-dense-micro text-muted-foreground">{note}</span>
-    </div>
-  )
 }
 
 type LegSide = 'sell' | 'buy' | ''
@@ -125,7 +132,9 @@ function draftToLeg(draft: LegDraft): PlanLeg {
 
 function numberOrNull(value: string): number | null {
   const text = value.trim()
-  return text === '' ? null : Number(text)
+  if (text === '') return null
+  const n = Number(text)
+  return Number.isFinite(n) ? n : null
 }
 
 function textOrNull(value: string): string | null {
@@ -133,9 +142,17 @@ function textOrNull(value: string): string | null {
   return text === '' ? null : text
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  className,
+  children,
+}: {
+  label: string
+  className?: string
+  children: React.ReactNode
+}) {
   return (
-    <label className="block space-y-0.5">
+    <label className={cn('flex min-w-0 flex-col gap-1', className)}>
       <span className={LABEL}>{label}</span>
       {children}
     </label>
@@ -153,12 +170,16 @@ export function PlanForm({
   onDone: (strategyPlanId: number) => void
   onCancel: () => void
 }) {
-  const { accounts, defaultAccount } = usePlanAccounts()
+  const { accounts, defaultAccount, host, secondary } = usePlanAccounts()
   const structures = useStructures()
   const create = useCreateStrategyPlan()
   const update = useUpdateStrategyPlan()
+  const intend = useIntendStrategyPlan()
 
-  const [accountId, setAccountId] = useState(editing?.account_id ?? defaultAccount)
+  // Null until the reader picks one: the default arrives with monitor /status,
+  // after the first render, and a state seeded from it would stay empty.
+  const [pickedAccount, setAccountId] = useState<string | null>(editing?.account_id ?? null)
+  const accountId = pickedAccount ?? defaultAccount
   const [symbol, setSymbol] = useState(editing?.symbol ?? '')
   const [structureLabel, setStructureLabel] = useState(editing?.structure_label ?? '')
   const [structureId, setStructureId] = useState(
@@ -168,7 +189,7 @@ export function PlanForm({
     editing && editing.legs_json.length > 0 ? editing.legs_json.map(legToDraft) : [emptyLeg()],
   )
   const [qty, setQty] = useState(String(editing?.qty ?? 1))
-  const [priceEffect, setPriceEffect] = useState(editing?.price_effect ?? 'credit')
+  const [priceEffect, setPriceEffect] = useState<'credit' | 'debit'>(editing?.price_effect ?? 'credit')
   const [limitPrice, setLimitPrice] = useState(
     editing?.limit_price == null ? '' : String(editing.limit_price),
   )
@@ -189,29 +210,36 @@ export function PlanForm({
   const [sourceRef, setSourceRef] = useState(editing?.source_ref ?? '')
   const [sideBlocked, setSideBlocked] = useState(false)
 
-  const pending = create.isPending || update.isPending
-  const error = (create.error ?? update.error) as Error | null | undefined
+  const pending = create.isPending || update.isPending || intend.isPending
+  const error = (create.error ?? update.error ?? intend.error) as Error | null | undefined
   const fromContract = contractSources(editing)
 
-  // What the drafted legs themselves pin down, recomputed as you type.
-  const qtyN = Number(qty) || 1
-  const draftCash = (() => {
-    let sum = 0
-    let found = false
-    for (const leg of legs) {
-      if (leg.side !== 'sell' || leg.sec_type !== 'OPT' || leg.right !== 'P') continue
-      const strike = Number(leg.strike)
-      if (!Number.isFinite(strike) || strike <= 0) continue
-      found = true
-      sum += strike * 100 * qtyN * (Number(leg.ratio) || 1)
-    }
-    return found ? sum : null
-  })()
-  const limitN = Number(limitPrice)
-  const draftCredit =
-    limitPrice.trim() !== '' && Number.isFinite(limitN)
-      ? limitN * 100 * qtyN * (priceEffect === 'debit' ? -1 : 1)
-      : null
+  // The account as the scope bar names it; any other id reads as itself.
+  const accountName = (id: string) => (id === host ? 'HOST' : id === secondary ? 'Secondary' : id)
+  // Up to three accounts fit the design's segment; more fall back to a list.
+  const segmentAccounts = accounts.length > 0 && accounts.length <= 3
+
+  const backing = usePlanBacking({
+    symbol,
+    accountId,
+    editingId: editing?.strategy_plan_id ?? null,
+  })
+  const check = planCheck({
+    symbol: symbol.trim().toUpperCase(),
+    legs: legs.map((leg) => ({
+      side: leg.side,
+      secType: leg.sec_type,
+      right: leg.right,
+      strike: numberOrNull(leg.strike),
+      ratio: numberOrNull(leg.ratio) ?? 1,
+    })),
+    qty: Number(qty) || 0,
+    limit: numberOrNull(limitPrice),
+    priceEffect,
+    accountLabel: accountName(accountId),
+    ...backing,
+  })
+  const canIntend = !editing && checkPasses(check)
 
   function setLeg(index: number, patch: Partial<LegDraft>) {
     setLegs((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)))
@@ -225,8 +253,7 @@ export function PlanForm({
     })
   }
 
-  function submit(event: React.FormEvent) {
-    event.preventDefault()
+  function write(asIntent: boolean) {
     const written = legs.filter(writtenLeg)
     if (written.some((leg) => leg.side !== 'buy' && leg.side !== 'sell')) {
       setSideBlocked(true)
@@ -258,368 +285,370 @@ export function PlanForm({
         { id: editing.strategy_plan_id, payload: body },
         { onSuccess: () => onDone(editing.strategy_plan_id) },
       )
-    } else {
-      create.mutate(body, { onSuccess: (created) => onDone(created.strategy_plan_id) })
+      return
     }
+    create.mutate(body, {
+      onSuccess: (created) => {
+        if (!asIntent) {
+          onDone(created.strategy_plan_id)
+          return
+        }
+        // The plan is written either way; if marking it fails, its card
+        // opens as the draft it is and still offers Mark intended.
+        intend.mutate(created.strategy_plan_id, {
+          onSettled: () => onDone(created.strategy_plan_id),
+        })
+      },
+    })
   }
 
   return (
-    <form onSubmit={submit} className="flex min-h-0 flex-col">
-      <header className="flex items-center gap-2 border-b border-border px-3 py-2">
-        <span className="text-dense-label font-semibold">
+    <form
+      onSubmit={(event) => {
+        event.preventDefault()
+        write(false)
+      }}
+      className="flex h-full min-h-0 flex-col"
+    >
+      <header className="flex items-center gap-2.5 border-b border-border bg-card px-4 py-2.5">
+        <span className="shrink-0 text-sm font-semibold">
           {editing ? `Edit plan #${editing.strategy_plan_id}` : 'Plan a trade'}
         </span>
-        <Button
+        <span className="min-w-0 truncate text-dense-label text-muted-foreground">
+          Fill the left, watch the right. Nothing is sent anywhere — an intent is a plan marked for TWS, and TWS is
+          where you click.
+        </span>
+        <button
           type="button"
-          size="sm"
-          variant="ghost"
-          className="ml-auto h-6 px-1 text-dense-meta"
           onClick={onCancel}
           aria-label="Close form"
+          title="Close — Esc does the same"
+          className="ml-auto shrink-0 px-0.5 text-muted-foreground opacity-70 hover:opacity-100"
         >
           ✕
-        </Button>
+        </button>
       </header>
 
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-2">
-        <div className="grid grid-cols-2 gap-2">
-          <Field label="Account">
-            {accounts.length > 0 ? (
-              <select
-                className={FIELD}
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-              >
-                {accounts.map((id) => (
-                  <option key={id} value={id}>
-                    {id}
-                  </option>
-                ))}
-              </select>
-            ) : (
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_360px] max-[860px]:grid-cols-1 max-[860px]:overflow-y-auto">
+        <div className="flex min-h-0 flex-col gap-3 overflow-y-auto border-r border-border p-4 max-[860px]:overflow-visible">
+          <div className="grid grid-cols-[104px_minmax(0,1fr)_auto] gap-2.5">
+            <Field label="Symbol">
+              <input
+                className={`${FIELD} font-mono uppercase`}
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="NVDA"
+                required
+                autoFocus={!editing}
+              />
+            </Field>
+            <Field label="Structure">
               <input
                 className={FIELD}
-                value={accountId}
-                onChange={(e) => setAccountId(e.target.value)}
-                placeholder="Account id"
+                list="plan-structures"
+                value={structureLabel}
+                placeholder="Cash-secured put"
+                title={
+                  structureId
+                    ? `Rulebook structure #${structureId} — Rules can say which allocation covers this plan`
+                    : 'A hand label, or pick a rulebook structure from the list'
+                }
+                onChange={(e) => {
+                  const label = e.target.value
+                  setStructureLabel(label)
+                  // Naming a rulebook structure exactly links it; anything else is a hand label.
+                  const picked = structures.data?.items.find((s) => s.name === label)
+                  setStructureId(picked ? String(picked.strategy_structure_id) : '')
+                }}
               />
-            )}
-          </Field>
-          <Field label="Symbol">
-            <input
-              className={`${FIELD} font-mono uppercase`}
-              value={symbol}
-              onChange={(e) => setSymbol(e.target.value)}
-              placeholder="NVDA"
-              required
-            />
-          </Field>
-        </div>
+              <datalist id="plan-structures">
+                {(structures.data?.items ?? []).map((s) => (
+                  <option key={s.strategy_structure_id} value={s.name ?? ''} />
+                ))}
+              </datalist>
+            </Field>
+            <Field label="Account">
+              {segmentAccounts ? (
+                <SegmentControl
+                  ariaLabel="Account"
+                  size="sm"
+                  value={accountId}
+                  onChange={setAccountId}
+                  options={accounts.map((id) => ({ value: id, label: accountName(id), title: id }))}
+                />
+              ) : accounts.length > 0 ? (
+                <select className={FIELD} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+                  {accounts.map((id) => (
+                    <option key={id} value={id}>
+                      {id}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className={FIELD}
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  placeholder="Account id"
+                />
+              )}
+            </Field>
+          </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Field label="Structure">
-            <select
-              className={FIELD}
-              value={structureId}
-              onChange={(e) => {
-                setStructureId(e.target.value)
-                const picked = structures.data?.items.find(
-                  (s) => String(s.strategy_structure_id) === e.target.value,
-                )
-                if (picked?.name) setStructureLabel(picked.name)
-              }}
-            >
-              <option value="">— free label —</option>
-              {(structures.data?.items ?? []).map((s) => (
-                <option key={s.strategy_structure_id} value={s.strategy_structure_id}>
-                  {s.name}
-                </option>
+          <section className="flex flex-col gap-1" aria-label="Legs">
+            <div className="grid grid-cols-[88px_64px_56px_minmax(0,1fr)_minmax(0,1.3fr)_48px_20px] gap-1.5">
+              {['Side', 'Type', 'Right', 'Strike', 'Expiry', 'Ratio'].map((h) => (
+                <span key={h} className={LABEL}>
+                  {h}
+                </span>
               ))}
-            </select>
-          </Field>
-          <Field label="Label">
-            <input
-              className={FIELD}
-              value={structureLabel}
-              onChange={(e) => setStructureLabel(e.target.value)}
-              placeholder="Cash-secured put"
-            />
-          </Field>
-        </div>
+              <span />
+            </div>
+            {legs.map((leg, i) => (
+              <div key={i} className="flex flex-col gap-0.5">
+                <div className="grid grid-cols-[88px_64px_56px_minmax(0,1fr)_minmax(0,1.3fr)_48px_20px] items-center gap-1.5">
+                  <select
+                    aria-label={`Leg ${i + 1} side`}
+                    className={FIELD}
+                    value={leg.side}
+                    onChange={(e) => setLeg(i, { side: e.target.value as LegDraft['side'] })}
+                  >
+                    <option value="">Choose…</option>
+                    <option value="sell">Sell</option>
+                    <option value="buy">Buy</option>
+                  </select>
+                  <select
+                    aria-label={`Leg ${i + 1} type`}
+                    className={FIELD}
+                    value={leg.sec_type}
+                    onChange={(e) => setLeg(i, { sec_type: e.target.value as LegDraft['sec_type'] })}
+                  >
+                    <option value="OPT">OPT</option>
+                    <option value="STK">STK</option>
+                  </select>
+                  <select
+                    aria-label={`Leg ${i + 1} right`}
+                    className={FIELD}
+                    value={leg.right}
+                    disabled={leg.sec_type === 'STK'}
+                    onChange={(e) => setLeg(i, { right: e.target.value as LegDraft['right'] })}
+                  >
+                    <option value="">—</option>
+                    <option value="P">P</option>
+                    <option value="C">C</option>
+                  </select>
+                  <input
+                    aria-label={`Leg ${i + 1} strike`}
+                    className={NUM}
+                    value={leg.strike}
+                    inputMode="decimal"
+                    placeholder="165"
+                    onChange={(e) => setLeg(i, { strike: e.target.value })}
+                  />
+                  <input
+                    aria-label={`Leg ${i + 1} expiry`}
+                    type="date"
+                    className={NUM}
+                    value={leg.expiry}
+                    onChange={(e) => setLeg(i, { expiry: e.target.value })}
+                  />
+                  <input
+                    aria-label={`Leg ${i + 1} ratio`}
+                    className={NUM}
+                    value={leg.ratio}
+                    inputMode="numeric"
+                    onChange={(e) => setLeg(i, { ratio: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Remove leg ${i + 1}`}
+                    className="text-muted-foreground opacity-70 hover:opacity-100"
+                    onClick={() => setLegs((rows) => rows.filter((_, at) => at !== i))}
+                  >
+                    ✕
+                  </button>
+                </div>
+                {sideBlocked && writtenLeg(leg) && leg.side !== 'buy' && leg.side !== 'sell' ? (
+                  <p className="text-dense-meta text-destructive">{CHOOSE_SIDE}</p>
+                ) : null}
+              </div>
+            ))}
+            <button
+              type="button"
+              className="self-start text-dense-label text-primary hover:underline"
+              onClick={() => setLegs((rows) => [...rows, emptyLeg()])}
+            >
+              ＋ Add leg
+            </button>
+          </section>
 
-        <section className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={LABEL}>Legs</span>
+          <div className="grid grid-cols-4 gap-2.5">
+            <Field label="Contracts">
+              <input className={NUM} value={qty} inputMode="numeric" placeholder="5" onChange={(e) => setQty(e.target.value)} />
+            </Field>
+            <Field label="Price effect">
+              <SegmentControl
+                ariaLabel="Price effect"
+                size="sm"
+                value={priceEffect}
+                onChange={(v) => setPriceEffect(v as 'credit' | 'debit')}
+                options={[
+                  { value: 'credit', label: 'Credit' },
+                  { value: 'debit', label: 'Debit' },
+                ]}
+              />
+            </Field>
+            <Field label={`Limit (${priceEffect})`}>
+              <input
+                className={NUM}
+                value={limitPrice}
+                inputMode="decimal"
+                placeholder="2.45"
+                onChange={(e) => setLimitPrice(e.target.value)}
+              />
+            </Field>
+            <Field label="Plan expires">
+              <input type="date" className={NUM} value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+            </Field>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-dense-label text-muted-foreground">
+            <span>From chain:</span>
             {fromContract.map((row) => (
               <Button
                 key={row.text}
                 type="button"
                 size="sm"
-                variant="outline"
-                className="h-5 px-1.5 text-dense-micro"
+                variant="secondary"
+                className="h-6 px-2 font-mono text-dense-meta"
                 onClick={() => addFromContract(row.drafts)}
               >
                 Add leg from {row.text}
               </Button>
             ))}
-            <Button
-              type="button"
+            <Link
+              to={symbol.trim() ? `/research/symbol?symbol=${symbol.trim().toUpperCase()}` : '/research/symbol'}
+              className="text-primary hover:underline"
+              title="The chain lives on Symbol — pick a contract there and ＋ Plan this brings it here"
+            >
+              Open Option Discovery →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2.5">
+            <Field label="Target">
+              <select
+                className={FIELD}
+                value={targetKind ?? ''}
+                onChange={(e) => setTargetKind(e.target.value as typeof targetKind)}
+              >
+                <option value="">— none —</option>
+                <option value="credit_pct">Credit %</option>
+                <option value="option_price">Option price</option>
+                <option value="underlying_price">Underlying price</option>
+              </select>
+            </Field>
+            <Field label="Target value">
+              <input
+                className={NUM}
+                value={targetValue}
+                inputMode="decimal"
+                disabled={targetKind === ''}
+                onChange={(e) => setTargetValue(e.target.value)}
+              />
+            </Field>
+            <Field label="Exit by">
+              <input type="date" className={NUM} value={exitBy} onChange={(e) => setExitBy(e.target.value)} />
+            </Field>
+            <Field label="Stop">
+              <select
+                className={FIELD}
+                value={stopKind ?? ''}
+                onChange={(e) => setStopKind(e.target.value as typeof stopKind)}
+              >
+                <option value="">— none —</option>
+                <option value="credit_multiple">Credit multiple</option>
+                <option value="option_price">Option price</option>
+                <option value="underlying_price">Underlying price</option>
+              </select>
+            </Field>
+            <Field label="Stop value">
+              <input
+                className={NUM}
+                value={stopValue}
+                inputMode="decimal"
+                disabled={stopKind === ''}
+                onChange={(e) => setStopValue(e.target.value)}
+              />
+            </Field>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className={LABEL}>Source</span>
+            <SegmentControl
+              ariaLabel="Plan source"
               size="sm"
-              variant="outline"
-              className="ml-auto h-5 px-1.5 text-dense-micro"
-              onClick={() => setLegs((rows) => [...rows, emptyLeg()])}
-            >
-              Add leg
+              className="self-start"
+              value={sourceKind}
+              onChange={(v) => setSourceKind(v as StrategyPlan['source_kind'])}
+              options={SOURCE_KINDS.map((k) => ({ value: k, label: SOURCE_LABELS[k] }))}
+            />
+            <p className="text-dense-label text-muted-foreground">{SOURCE_HINTS[sourceKind]}</p>
+            <input
+              aria-label="Source ref"
+              className={FIELD}
+              value={sourceRef}
+              onChange={(e) => setSourceRef(e.target.value)}
+              placeholder="Ref — H-118 · run 7c1e · what it came from"
+            />
+          </div>
+
+          <Field label="Rationale">
+            <textarea
+              className="min-h-[4.5rem] w-full resize-y px-2 py-1.5 text-dense-body leading-snug mat-field"
+              rows={3}
+              value={rationale}
+              onChange={(e) => setRationale(e.target.value)}
+              placeholder="Why this, why now, what makes you close it early."
+            />
+          </Field>
+
+          {error ? <p className="text-dense-label text-destructive">{error.message}</p> : null}
+
+          <footer className="mt-auto flex flex-wrap items-center gap-2 border-t border-border pt-2">
+            <Button type="submit" size="sm" variant="secondary" className="h-7" disabled={pending}>
+              {editing ? 'Save changes' : 'Save as draft'}
             </Button>
-          </div>
-          <div className="space-y-1">
-            {legs.map((leg, i) => (
-              <div key={i} className="space-y-0.5">
-              <div className="flex items-center gap-1">
-                <select
-                  aria-label={`Leg ${i + 1} side`}
-                  className={`${FIELD} w-24`}
-                  value={leg.side}
-                  onChange={(e) => setLeg(i, { side: e.target.value as LegDraft['side'] })}
-                >
-                  <option value="">Choose…</option>
-                  <option value="sell">Sell</option>
-                  <option value="buy">Buy</option>
-                </select>
-                <select
-                  aria-label={`Leg ${i + 1} type`}
-                  className={`${FIELD} w-16`}
-                  value={leg.sec_type}
-                  onChange={(e) => setLeg(i, { sec_type: e.target.value as LegDraft['sec_type'] })}
-                >
-                  <option value="OPT">OPT</option>
-                  <option value="STK">STK</option>
-                </select>
-                <select
-                  aria-label={`Leg ${i + 1} right`}
-                  className={`${FIELD} w-14`}
-                  value={leg.right}
-                  disabled={leg.sec_type === 'STK'}
-                  onChange={(e) => setLeg(i, { right: e.target.value as LegDraft['right'] })}
-                >
-                  <option value="">—</option>
-                  <option value="C">C</option>
-                  <option value="P">P</option>
-                </select>
-                <input
-                  aria-label={`Leg ${i + 1} strike`}
-                  className={`${FIELD} w-20 font-mono`}
-                  value={leg.strike}
-                  inputMode="decimal"
-                  placeholder="Strike"
-                  onChange={(e) => setLeg(i, { strike: e.target.value })}
-                />
-                <input
-                  aria-label={`Leg ${i + 1} expiry`}
-                  type="date"
-                  className={`${FIELD} w-32 font-mono`}
-                  value={leg.expiry}
-                  onChange={(e) => setLeg(i, { expiry: e.target.value })}
-                />
-                <input
-                  aria-label={`Leg ${i + 1} ratio`}
-                  className={`${FIELD} w-12 font-mono`}
-                  value={leg.ratio}
-                  inputMode="numeric"
-                  onChange={(e) => setLeg(i, { ratio: e.target.value })}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="h-5 px-1 text-dense-micro text-muted-foreground"
-                  aria-label={`Remove leg ${i + 1}`}
-                  onClick={() => setLegs((rows) => rows.filter((_, at) => at !== i))}
-                >
-                  ✕
-                </Button>
-              </div>
-              {sideBlocked && writtenLeg(leg) && (leg.side !== 'buy' && leg.side !== 'sell') ? (
-                <p className="text-dense-micro text-destructive">{CHOOSE_SIDE}</p>
-              ) : null}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <div className="grid grid-cols-3 gap-2">
-          <Field label="Qty">
-            <input
-              className={`${FIELD} font-mono`}
-              value={qty}
-              inputMode="numeric"
-              onChange={(e) => setQty(e.target.value)}
-            />
-          </Field>
-          <Field label="Price effect">
-            <select
-              className={FIELD}
-              value={priceEffect ?? ''}
-              onChange={(e) => setPriceEffect(e.target.value as 'credit' | 'debit')}
-            >
-              <option value="credit">Credit</option>
-              <option value="debit">Debit</option>
-            </select>
-          </Field>
-          <Field label="Limit price">
-            <input
-              className={`${FIELD} font-mono`}
-              value={limitPrice}
-              inputMode="decimal"
-              onChange={(e) => setLimitPrice(e.target.value)}
-            />
-          </Field>
+            {editing ? null : (
+              <Button
+                type="button"
+                size="sm"
+                className="h-7"
+                disabled={pending || !canIntend}
+                title={
+                  canIntend
+                    ? 'Saves the plan and marks it intended — advisory: the desk copies, TWS places'
+                    : 'The backing check must pass first'
+                }
+                onClick={() => write(true)}
+              >
+                Create order intent
+              </Button>
+            )}
+            <span className="text-dense-label text-muted-foreground">
+              {editing
+                ? 'A draft stays a draft; mark it intended from its card.'
+                : canIntend
+                  ? 'Saves and marks it intended; link its fill from the card once TWS fills it.'
+                  : check.lamp === 'unknown'
+                    ? 'Save as draft, or finish the plan for the check on the right.'
+                    : 'Fix the right-hand panel first, or save as draft.'}
+            </span>
+          </footer>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Field label="Target">
-            <select
-              className={FIELD}
-              value={targetKind ?? ''}
-              onChange={(e) => setTargetKind(e.target.value as typeof targetKind)}
-            >
-              <option value="">— none —</option>
-              <option value="credit_pct">Credit %</option>
-              <option value="option_price">Option price</option>
-              <option value="underlying_price">Underlying price</option>
-            </select>
-          </Field>
-          <Field label="Target value">
-            <input
-              className={`${FIELD} font-mono`}
-              value={targetValue}
-              inputMode="decimal"
-              disabled={targetKind === ''}
-              onChange={(e) => setTargetValue(e.target.value)}
-            />
-          </Field>
-          <Field label="Stop">
-            <select
-              className={FIELD}
-              value={stopKind ?? ''}
-              onChange={(e) => setStopKind(e.target.value as typeof stopKind)}
-            >
-              <option value="">— none —</option>
-              <option value="credit_multiple">Credit multiple</option>
-              <option value="option_price">Option price</option>
-              <option value="underlying_price">Underlying price</option>
-            </select>
-          </Field>
-          <Field label="Stop value">
-            <input
-              className={`${FIELD} font-mono`}
-              value={stopValue}
-              inputMode="decimal"
-              disabled={stopKind === ''}
-              onChange={(e) => setStopValue(e.target.value)}
-            />
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <Field label="Exit by">
-            <input
-              type="date"
-              className={`${FIELD} font-mono`}
-              value={exitBy}
-              onChange={(e) => setExitBy(e.target.value)}
-            />
-          </Field>
-          <Field label="Expires">
-            <input
-              type="date"
-              className={`${FIELD} font-mono`}
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-            />
-          </Field>
-        </div>
-
-        <Field label="Source">
-          <SegmentControl
-            ariaLabel="Plan source"
-            size="sm"
-            value={sourceKind}
-            onChange={(v) => setSourceKind(v as StrategyPlan['source_kind'])}
-            options={SOURCE_KINDS.map((k) => ({ value: k, label: k }))}
-          />
-          <p className="pt-0.5 text-dense-micro text-muted-foreground">{SOURCE_HINTS[sourceKind]}</p>
-        </Field>
-        <Field label="Source ref">
-          <input
-            className={FIELD}
-            value={sourceRef}
-            onChange={(e) => setSourceRef(e.target.value)}
-            placeholder="H-118 · run 7c1e · what it came from"
-          />
-        </Field>
-
-        <p className="text-dense-meta text-muted-foreground">
-          From chain:{' '}
-          <Link
-            to={symbol.trim() ? `/research/symbol?symbol=${symbol.trim().toUpperCase()}` : '/research/symbol'}
-            className="text-primary hover:underline"
-          >
-            Open Option Discovery →
-          </Link>{' '}
-          <span className="text-dense-micro">— pick a contract there; it lands on Symbol's chain</span>
-        </p>
-
-        <Field label="Rationale">
-          <textarea
-            className="min-h-16 w-full border px-1.5 py-1 text-dense-label mat-field"
-            value={rationale}
-            onChange={(e) => setRationale(e.target.value)}
-            placeholder="Why this, why now, what makes you close it early."
-          />
-        </Field>
-
-        {/* §20.6 — the sheet's one quiet line from your memory, when a
-            memory names this symbol. Dismissals count in the store. */}
-        <MemoryHintLine symbol={symbol} />
-
-        {/* The design's live right-hand check, kept in its shape: the two
-            readings the drafted legs themselves pin down, and the cells that
-            need a spot mark or the account book marked, not guessed. */}
-        <section className="space-y-1 border px-2 py-1.5 mat-card">
-          <span className={LABEL}>Backing check</span>
-          <div className="space-y-0.5 pt-0.5">
-            <PreviewRow label="Cash secured" value={draftCash == null ? '—' : previewUsd(draftCash)} note={draftCash == null ? 'no short put pins cash' : 'strike × 100 × qty'} />
-            <PreviewRow
-              label="Est. credit at limit"
-              value={draftCredit == null ? '—' : `${draftCredit < 0 ? '-' : '+'}${previewUsd(Math.abs(draftCredit))}`}
-              note={draftCredit == null ? 'no limit price yet' : priceEffect}
-            />
-            <PreviewRow label="Reg-T margin" value="—" note="needs a spot mark · not computed" />
-            <PreviewRow label="Pressure now → after" value="—" note="the account book is not read here" />
-            <PreviewRow label="Max at this strike" value="—" note="needs the two above" />
-          </div>
-          <p className="pt-0.5 text-dense-micro text-muted-foreground" title={NOT_COMPUTED_HINT}>
-            Same derivation as Room to add on Backing &amp; Model — not wired into this form; the
-            fit is judged there.
-          </p>
-        </section>
+        <PlanCheckPanel check={check} symbol={symbol} />
       </div>
-
-      {error ? (
-        <p className="border-t border-border px-3 py-1.5 text-dense-meta text-destructive">
-          {error.message}
-        </p>
-      ) : null}
-
-      <footer className="space-y-1 border-t border-border px-3 py-2">
-        <Button type="submit" size="sm" className="h-7 w-full text-dense-meta" disabled={pending}>
-          {editing ? 'Save changes' : 'Save as draft'}
-        </Button>
-        <p className="text-dense-micro text-muted-foreground">
-          Orders are placed in TWS. D10 keeps this desk advisory.
-        </p>
-      </footer>
     </form>
   )
 }

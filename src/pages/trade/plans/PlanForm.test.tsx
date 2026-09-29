@@ -23,7 +23,14 @@ vi.mock('@/hooks/useStrategies', () => ({
 vi.mock('@/hooks/useStrategyPlans', () => ({
   useCreateStrategyPlan: () => ({ mutate: createMutate, isPending: false, error: null }),
   useUpdateStrategyPlan: () => ({ mutate: updateMutate, isPending: false, error: null }),
+  useIntendStrategyPlan: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }))
+
+vi.mock('./usePlanBacking', () => ({
+  usePlanBacking: () => ({ account: null, sharesHeld: null, spot: null, ceiling: 0.5, intendedCash: 0 }),
+}))
+
+vi.mock('./MemoryHintLine', () => ({ MemoryHintLine: () => null }))
 
 import { PlanForm } from './PlanForm'
 
@@ -93,6 +100,15 @@ describe('PlanForm sides', () => {
     await userEvent.click(screen.getByRole('button', { name: /Add leg from NVDA 2026-11-20 245C/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
     expect(updateMutate).not.toHaveBeenCalled()
-    expect(screen.getByText('Choose buy or sell')).toBeTruthy()
+    // The leg says it inline; the check on the right says it as its verdict.
+    const said = screen.getAllByText('Choose buy or sell')
+    expect(said.some((el) => el.tagName === 'P')).toBe(true)
+  })
+
+  it('holds Create order intent until the check passes', () => {
+    renderForm(null)
+    const intent = screen.getByRole('button', { name: 'Create order intent' })
+    expect(intent).toBeDisabled()
+    expect(intent.getAttribute('title')).toBe('The backing check must pass first')
   })
 })

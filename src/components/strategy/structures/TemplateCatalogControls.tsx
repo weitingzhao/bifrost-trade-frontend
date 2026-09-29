@@ -16,14 +16,13 @@
  *   own legs. Filling them in is still the Option Category page's job until it
  *   retires.
  * - **Dimensions** — the six `dim_type` dictionaries every template picks from,
- *   **read-only**. The design draws a `＋ code` on each row (add-only), but
+ *   **read-only** (design Rev .104, answering the app's ASK of 2026-09-27):
  *   since Wave 9 a code is a label of a Postgres enum (`dim_*_t`) mirrored by
- *   core's `strategy_dim_catalog`: adding one is `ALTER TYPE … ADD VALUE` in
- *   every env plus a core release, and the server answers every create,
- *   rename and delete with 400 "catalog-defined". The button stays, disabled,
- *   with that reason under it — where the capability went is the Owner's call.
+ *   core's `strategy_dim_catalog`, so adding, renaming or removing one is a
+ *   schema migration, not an edit here. The `＋ code` the design used to draw
+ *   is gone from both sides.
  */
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,7 +65,6 @@ export function TemplateCatalogControls({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const dims = useOptionCategoryDims()
-  const dimsNoteId = useId()
 
   async function create() {
     const c = toTemplateCode(code)
@@ -146,12 +144,11 @@ export function TemplateCatalogControls({
             </span>
           </div>
           {CATALOG_DIM_TYPES.map((dt) => (
-            <DimRow key={dt} dimType={dt} rows={dims.data?.by_type[dt] ?? []} noteId={dimsNoteId} />
+            <DimRow key={dt} dimType={dt} rows={dims.data?.by_type[dt] ?? []} />
           ))}
-          <p id={dimsNoteId} className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
-            Read-only. Each code is a label of the Postgres enum dim_*_t, so adding one is ALTER TYPE … ADD VALUE in
-            every env plus a core release — the server refuses create, rename and delete. A template’s own six
-            dimensions are set with “Edit this template…”.
+          <p className="m-0 text-dense-caption leading-normal text-muted-foreground text-pretty">
+            Read-only. Codes come from the dim_type enums and the core catalog — adding, renaming or removing one is a
+            schema migration, not an edit here. A template’s own six dimensions are set with “Edit this template…”.
           </p>
         </div>
       ) : null}
@@ -217,15 +214,12 @@ export function TemplateCatalogControls({
 function DimRow({
   dimType,
   rows,
-  noteId,
 }: {
   dimType: CatalogDimType
   rows: { strategy_dim_id: number; code: string }[]
-  /** The dictionary's footnote, which says why `＋ code` cannot be pressed. */
-  noteId: string
 }) {
   return (
-    <div className="grid grid-cols-[5.75rem_minmax(0,1fr)_auto] items-center gap-2.5">
+    <div className="grid grid-cols-[5.75rem_minmax(0,1fr)] items-center gap-2.5">
       <span className={positionsUi.cap}>dim_{dimType}</span>
       <span className="flex flex-wrap items-center gap-1">
         {rows.length === 0 ? (
@@ -241,19 +235,6 @@ function DimRow({
           ))
         )}
       </span>
-      <button
-        type="button"
-        className={cn(
-          positionsUi.link,
-          'disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline',
-        )}
-        disabled
-        aria-label={`Add a dim_${dimType} code`}
-        aria-describedby={noteId}
-        title="Catalog-defined: a new code is ALTER TYPE … ADD VALUE plus a core release"
-      >
-        ＋ code
-      </button>
     </div>
   )
 }

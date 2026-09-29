@@ -30,24 +30,16 @@
  * names the half that is missing. A table quietly shipped with four of eight
  * columns reads as the whole scoreboard.
  */
-import { useMemo } from 'react'
-import { useQueries, useQuery } from '@tanstack/react-query'
 import { DenseTag } from '@/components/data-display'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
-import {
-  fetchCandidateOutcomeRows,
-  fetchCandidateOutcomeSummary,
-  type CandidateOutcomeSummary,
-} from '@/api/research/candidateOutcome'
+import { TRACK_DAYS, TRACK_THIN, horizonOf, useSourceTrackRecord } from '@/hooks/useSourceTrackRecord'
 import { cn } from '@/lib/utils'
 import { fmtPct0, fmtSignedPct } from '@/utils/positions'
 
-/** The window the record is read over. A year of a book this size is ~100 settled rows. */
-const DAYS = 365
-/** Under this many settled, a hit rate is a coincidence. The design's own line. */
-const THIN = 10
+const DAYS = TRACK_DAYS
+const THIN = TRACK_THIN
 /** The horizons the store settles. The design scores at 20; see the file's note. */
 const HORIZONS = [1, 5] as const
 
@@ -71,41 +63,9 @@ function operatorOf(source: string): { label: string; variant: 'neutral' | 'cate
   return { label: 'screen', variant: 'neutral' }
 }
 
-function horizonOf(summary: CandidateOutcomeSummary | undefined, days: number) {
-  return summary?.horizons?.find((h) => h.horizon_days === days) ?? null
-}
 
 export function JudgeTrackRecord() {
-  // One read to learn which sources the store actually attributes — the rows
-  // endpoint ignores a `source` filter, and the summary needs to be asked for
-  // one at a time.
-  const rowsQuery = useQuery({
-    queryKey: ['research', 'candidate-outcome', 'sources', DAYS],
-    queryFn: () => fetchCandidateOutcomeRows({ limit: 500 }),
-    staleTime: 10 * 60_000,
-  })
-
-  const sources = useMemo(() => {
-    const seen = new Map<string, number>()
-    for (const r of rowsQuery.data?.rows ?? []) {
-      const s = (r.source ?? '').trim()
-      if (s) seen.set(s, (seen.get(s) ?? 0) + 1)
-    }
-    return [...seen.entries()].sort((a, b) => b[1] - a[1]).map(([s]) => s)
-  }, [rowsQuery.data])
-
-  // The numbers are the server's, per source — not re-derived from the rows
-  // above, so this table and Signal Decay cannot disagree about a hit rate.
-  const summaries = useQueries({
-    queries: sources.map((source) => ({
-      queryKey: ['research', 'candidate-outcome', 'summary', source, DAYS],
-      queryFn: () => fetchCandidateOutcomeSummary({ source, days: DAYS }),
-      staleTime: 10 * 60_000,
-    })),
-  })
-
-  const rows = sources.map((source, i) => ({ source, summary: summaries[i]?.data }))
-  const loading = rowsQuery.isLoading || summaries.some((q) => q.isLoading)
+  const { rows, loading, error } = useSourceTrackRecord(DAYS)
 
   return (
     <Card variant="elevated" className="flex flex-col gap-2 p-4">
@@ -131,7 +91,7 @@ export function JudgeTrackRecord() {
         against the outcome that followed, so no row here can carry a judge's name.
       </p>
 
-      {rowsQuery.isError ? <QueryErrorAlert error={rowsQuery.error} /> : null}
+      {error ? <QueryErrorAlert error={error} /> : null}
 
       {loading ? (
         <Skeleton className="h-28 w-full rounded-md" />

@@ -54,12 +54,13 @@ describe('the companion rail', () => {
     }
   })
 
-  it('claims eleven pages — the design\u2019s thirteen less what this app has not built', () => {
-    // Loop Run has no route here at all, so the rail would be offering a door
-    // to nothing; the design draws it as a drawer over the Console. Objectives
-    // are reached from the Console, which is their roster — a data row is not
-    // a place, so they are not icons in either design.
-    expect(equipRoutes()).toHaveLength(11)
+  it('claims twelve pages — Trace joined The Book at Rev .104', () => {
+    // Loop Run is drawn on the rail but is not a route here — it opens a run
+    // (LOOP_RUN), never a page. Objectives are reached from the Console, which
+    // is their roster — a data row is not a place, so they are not icons in
+    // either design. Trace is a Book member without a rail cell.
+    expect(equipRoutes()).toHaveLength(12)
+    expect(equipRoutes()).toContain('/research/trace')
     expect(equipRoutes()).not.toContain('/research/loop/runs')
     // The Market pair, out of the tree since Rev .7.
     expect(equipRoutes()).toContain('/market/live')

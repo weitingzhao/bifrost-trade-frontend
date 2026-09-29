@@ -158,6 +158,8 @@ describe('one tree, both homes', () => {
       ['Candidate Pool', '/research/loop/candidates'],
       ['Watchlist', '/research/watchlist'],
       ['Journal', '/research/journal'],
+      // Rev .104: a member without a rail cell — it opens from a memory.
+      ['Trace', '/research/trace'],
     ])
   })
 

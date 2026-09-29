@@ -22,6 +22,7 @@ type PageComponent = LazyExoticComponent<ComponentType>
 export const SURFACE_PAGES: Record<string, PageComponent> = {
   '/research/loop/harness': lazy(() => import('@/pages/research/loop/HarnessConsolePage')),
   '/research/agent-personas': lazy(() => import('@/pages/copilot/AgentPersonaPage')),
+  '/research/trace': lazy(() => import('@/pages/research/trace/TracePage')),
   '/research/loop/decisions': lazy(() => import('@/pages/research/loop/DecisionInboxPage')),
   '/research/book': lazy(() => import('@/pages/research/book/ResearchBookPage')),
   '/research/loop/hypotheses': lazy(() => import('@/pages/research/loop/HypothesisBoardPage')),

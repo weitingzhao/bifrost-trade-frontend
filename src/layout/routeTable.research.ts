@@ -72,8 +72,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // not looked since, and only the Owner marks a page aligned.
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      // Rev .100 Pilot Console + three origins, Loop Run (V1–V4, 2026-09-29); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-09-27.2',
+      // Rev .104: bench strip = Track record · by source (V5); walk rev moved with Package .33.
+      rev: '2026-09-29.104',
       note: DESIGN_NOTES['/research/loop/harness'],
     },
   },
@@ -136,8 +136,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      // Rev .102 lap closed at both ends; walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-09-28.102',
+      // Rev .104: PB-x out of the lap — this side never drew one; walk rev moved with Package .33.
+      rev: '2026-09-29.104',
       note: DESIGN_NOTES['/research/loop/objectives/:objectiveId'],
     },
   },
@@ -215,7 +215,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Rev .96 walked in batch K2: the You card leads the bench, named owed
       // on the memory store; the You page below it ships with that store.
       state: 'reviewing',
-      rev: '2026-09-26.1',
+      // Rev .104: Personas face drops the Desk's three tabs (done in V1); walk rev moved with Package .33.
+      rev: '2026-09-29.104',
       note: DESIGN_NOTES['/research/agent-personas'],
     },
   },
@@ -509,7 +510,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: THE_BOOK,
     design: {
       state: 'reviewing',
-      rev: '2026-09-28.102',
+      // Rev .104: Trace in the registry, a Book member (V5); walk rev moved with Package .33.
+      rev: '2026-09-29.104',
       note: DESIGN_NOTES['/research/trace'],
     },
   },

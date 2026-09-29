@@ -190,6 +190,9 @@ export const EQUIP_GROUPS: readonly EquipGroup[] = [
       // Watchlist; the page stays in the Book for managing it.
       { to: '/research/watchlist', label: 'Watchlist', icon: railIcon('/research/watchlist', Star), rail: false },
       { to: '/research/journal', label: 'Journal', icon: railIcon('/research/journal', History) },
+      // Rev .104: Trace is a Book member (registry `equip().book.pages`) but not
+      // one of its tabs — it opens from a memory's Trace action, never bare.
+      { to: '/research/trace', label: 'Trace', icon: railIcon('/research/trace', GitFork), rail: false },
     ],
   },
   {

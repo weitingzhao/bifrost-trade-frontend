@@ -428,8 +428,8 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-09-28.103',
+      // Rev .104: dimensions dictionary read-only, ＋ code gone (V5); walk rev moved with Package .33.
+      rev: '2026-09-29.104',
       note: DESIGN_NOTES['/trade/desk'],
     },
   },

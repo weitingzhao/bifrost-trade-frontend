@@ -635,8 +635,10 @@ describe('the design walk, as it stands', () => {
     // 87 with Rev .53: the four System stubs drew — less the tracker itself.
     // 89 with Package .26 @ Rev .98: Agents You (the memory-and-personality
     // page behind Personas) and System Feedback (the reports triage face).
-    // 90 with Package .32 @ Rev .103: the Instance page (/instance/:id).
-    expect(counts.designed).toBe(90)
+    // 90 with Package .32 @ Rev .103: the Instance page (/instance/:id). 91
+    // with Package .33 @ Rev .104: Trace enters the registry (the app built it
+    // in U3 before the design had a route for it).
+    expect(counts.designed).toBe(91)
     expect(counts.byState.designOnly).toBe(9)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three

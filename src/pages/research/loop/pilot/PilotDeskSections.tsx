@@ -19,9 +19,8 @@ import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { DailyDigestBody } from '@/components/cockpit/DailyDigestBody'
 import { DigestLampRow, DigestRead } from '@/components/cockpit/DigestRead'
 import { listResearchDrafts, type DraftStatus } from '@/api/researchDrafts'
-import { useAgentPersonas } from '@/hooks/useAgentPersonas'
+import { TRACK_DAYS, TRACK_THIN, horizonOf, sourceLabel, useSourceTrackRecord } from '@/hooks/useSourceTrackRecord'
 import { useCopilotStanding } from '@/hooks/useCopilotStanding'
-import { AGENT_ROLE_KIND, agentLabel } from '@/lib/copilot/agentPersonaCatalog'
 import { fmtIsoTs } from '@/lib/format'
 import { openDigestInCopilot, openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { digestExhibits } from '@/lib/harness/dailyDigest'
@@ -29,30 +28,53 @@ import { Threads } from './Threads'
 import { Writes } from './Writes'
 import { RanToday } from './RanToday'
 
-/** Roles that grade — the bench strip names these; the rest write or explain. */
-const JUDGE_ROLES = new Set(['specialist', 'composer', 'loop'])
-
-const NOT_RECORDED =
-  'Settled hit rate: not recorded — no store ties a judge’s verdict to the outcome that followed it (Personas says the same on its bench).'
-
+/**
+ * The bench strip: **Track record · by source** (design Rev .104, answering the
+ * app's receipt Q8). Per-judge hit rates have no attribution store, so the
+ * strip reads the outcome store by nomination source — the Personas Track
+ * record table's rule and the same query (5d · 365d · n < 10 amber, ink not
+ * profit green, §14.8).
+ */
 function BenchStrip() {
   const navigate = useNavigate()
-  const personasQ = useAgentPersonas()
-  const judges = (personasQ.data ?? []).filter((a) => JUDGE_ROLES.has(AGENT_ROLE_KIND[a.agent_name] ?? ''))
+  const { rows, loading } = useSourceTrackRecord(TRACK_DAYS)
+  const chips = rows
+    .map(({ source, summary }) => {
+      const five = horizonOf(summary, 5)
+      return { source, n: five?.settled ?? 0, hit: five?.hit_rate ?? null }
+    })
+    .filter((c) => c.n > 0)
   return (
     <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t border-border px-3 py-2">
-      <span className="text-dense-micro font-semibold tracking-[.08em] whitespace-nowrap text-muted-foreground uppercase">
-        The bench
+      <span
+        className="text-dense-micro font-semibold tracking-[.08em] whitespace-nowrap text-muted-foreground uppercase"
+        title={`Where a candidate came from, not which judge graded it — nothing records a judge's verdict against the outcome yet. Settled at 5 days over ${TRACK_DAYS}; n under ${TRACK_THIN} amber.`}
+      >
+        Track record · by source
       </span>
-      {personasQ.isLoading ? <span className="text-dense-meta text-muted-foreground">…</span> : null}
-      {judges.map((a) => (
-        <span key={a.agent_name} className="font-mono text-dense-meta whitespace-nowrap text-[var(--sk-soft)]" title={NOT_RECORDED}>
-          {agentLabel(a.agent_name, 'en')} <span className="text-muted-foreground">—</span>
-        </span>
-      ))}
-      <span className="font-mono text-dense-meta whitespace-nowrap text-[var(--sk-soft)]" title="You are on the bench too — your portrait is on the You page; a hit rate for you waits for the same attribution.">
-        you <span className="text-muted-foreground">—</span>
-      </span>
+      {loading ? <span className="text-dense-meta text-muted-foreground">…</span> : null}
+      {!loading && chips.length === 0 ? (
+        <span className="text-dense-meta text-muted-foreground">nothing settled at 5 days in {TRACK_DAYS} days</span>
+      ) : null}
+      {chips.map((c) => {
+        const thin = c.n < TRACK_THIN
+        return (
+          <span
+            key={c.source}
+            className="font-mono text-dense-meta whitespace-nowrap text-[var(--sk-soft)]"
+            title={
+              thin
+                ? 'Fewer than 10 settled — a hit rate this thin is a coincidence'
+                : `Settled at 5 days over ${TRACK_DAYS} · candidates nominated by ${sourceLabel(c.source)}`
+            }
+          >
+            {sourceLabel(c.source)}{' '}
+            <span style={{ color: thin ? 'var(--sk-warn)' : 'var(--sk-ink)' }}>
+              {c.hit == null ? '—' : `${Math.round(c.hit * 100)}%`} · n {c.n}
+            </span>
+          </span>
+        )
+      })}
       <span className="ml-auto flex items-center gap-3">
         <button
           type="button"

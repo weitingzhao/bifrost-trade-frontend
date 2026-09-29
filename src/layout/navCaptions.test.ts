@@ -85,19 +85,19 @@ describe('the Research tree uses captions where §5a.7 says to', () => {
     expect(shown.map((i) => i.label)).toContain('Discover')
   })
 
-  it('holds the design\'s ten pages plus the Book signpost, and nothing that only expands', () => {
+  it('holds the design\'s ten pages, and nothing that only expands', () => {
     const rows = items.filter((i) => i.kind !== 'caption')
     // The design's ten, all built: History and then Compare joined Analyze on
     // 2026-09-23, and Narrative came back as its fourth row at Rev .43. The
     // design's own rule is that a menu row navigates, which is why each
     // waited for its page.
     //
-    // Plus one row naming the Book's own page so a reader can find the rail
-    // (since 2026-09-22). See BOOK_SIGNPOST.
-    expect(rows).toHaveLength(11)
+    // The Book signpost row (2026-09-22) left on 2026-09-29 (Owner): the
+    // design leaves it out on purpose, and Filter pages finds the Book.
+    expect(rows).toHaveLength(10)
     // The half of §5a.8 that still holds without exception: no row nests. The
-    // equipment's pages are on the rail, and the signpost carries none of
-    // them — a row with children here is the tree filling up again.
+    // equipment's pages are on the rail — a row with children here is the
+    // tree filling up again.
     expect(rows.some((r) => (r.children?.length ?? 0) > 0)).toBe(false)
     expect(rows.every((r) => r.to != null)).toBe(true)
   })

@@ -55,24 +55,20 @@ function routesOf(items: ShellNavItem[]): string[] {
 }
 
 describe('one tree, both homes', () => {
-  it('holds no equipment page — one signpost to the Book, and nothing else', () => {
+  it('holds no equipment page — not even a signpost to the Book', () => {
     // §5a.8 (design Rev 2026-09-22.2): Research → Risk → Trade → Portfolio →
     // Review is the script; Autopilot runs it, The Book remembers it, the
     // Copilot is held while playing it. None of the three is a stage, and a
     // tree cannot say "not a place" — every pixel of it says place. They
     // enter through the companion rail now (`equip.ts`).
     //
-    // Narrowed 2026-09-22 on the Owner's call, and only by one row: the rail
-    // answered "what is the Book" but nothing answered "where is it", and the
-    // Owner went looking for the Watchlist in this tree and found nothing.
-    // `/research/book` is a page about the equipment, so naming it once is a
-    // place and not a lie — but its four pages, Autopilot's home and the
-    // Copilot Desk stay out, which is the part of §5a.8 that was about the
-    // tree filling up again.
+    // The one-row signpost the Owner added on 2026-09-22 left on 2026-09-29
+    // (Owner: the design leaves it out on purpose); Filter pages now answers
+    // "where is the Watchlist" with «Toolbar · The Book».
     expect(buildResearchNavGroup().to).toBe(OVERVIEW)
     const routes = routesOf(researchItems())
     expect(routes).not.toContain(AUTOPILOT_HOME)
-    expect(routes.filter((r) => r === BOOK_PAGE)).toHaveLength(1)
+    expect(routes).not.toContain(BOOK_PAGE)
     for (const page of Object.values(BOOK_PAGES)) {
       expect(routes, `${page.label} is equipment and belongs on the rail`).not.toContain(page.to)
     }
@@ -108,8 +104,6 @@ describe('one tree, both homes', () => {
       ['Validate', 'caption'],
       ['Signal Decay', 'row'],
       ['Backtest', 'row'],
-      // The signpost, last: not a bench, and not one of the ten pages.
-      ['The Book', 'row'],
     ])
   })
 

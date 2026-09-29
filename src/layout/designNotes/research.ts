@@ -710,7 +710,9 @@ export const RESEARCH_NOTES: Record<string, string> = {
     + 'Owner signed off 2026-09-21 on local DEV (:5173) at this rev.'
     + ' §16 REFINEMENT J4 (2026-09-26, Package .23 @ Rev .95, walked on local DEV :5173): page rev .89. `PageHead` with the lead behind ⓘ; Operator and Day are a `data-sr-toolbar`. Type tags follow Rev .89: a run’s memo, a nomination and a screen batch wear the state blue (no ticker lime, no contract sky); who wrote it is ink for the hand, muted for the loop and the Copilot hue for the copilot — the Settled table’s «Wrote it» now wears the operator’s tag, not the settlement’s. Nodes are ink-4% plates, the picked one the accent (edge and 10% wash). The Journal joins five stores: one failing is a strip naming it (its artifacts absent, not zero); only all five failing with nothing to show is a failed page.'
     + ' '
-    + 'K6 (2026-09-27): the Day tab \u2014 the raw trail of one day (notes \u00b7 visits \u00b7 fills \u00b7 Inbox cards \u00b7 threads) read from the stores it happened in, beside the day\u2019s memory changes. The design\u2019s cited end-of-day prose summary is owed by name \u2014 no engine writes sentences yet.',
+    + 'K6 (2026-09-27): the Day tab \u2014 the raw trail of one day (notes \u00b7 visits \u00b7 fills \u00b7 Inbox cards \u00b7 threads) read from the stores it happened in, beside the day\u2019s memory changes. The design\u2019s cited end-of-day prose summary is owed by name \u2014 no engine writes sentences yet.'
+    + ' '
+    + 'Rev .103 batch T5 (2026-09-28): a note’s instance link opens the Instance surface beside the Journal (⇧ a tab of its own, ⌘ the page); a number the instance book does not hold still goes to Positions (`?inst=`), where it may be held. Inst refs used to print as plain text with nowhere to go. Not seen on DEV: the local Journal holds no note at all, so the two cases are covered by a render test.',
   '/research/book':
     "Built 2026-09-20 against Research Book.dc.html (Rev 2026-09-20.24), the fold's own page, "
     + 'then re-walked the same day after /risk and /portfolio, section by section. Four parallel '

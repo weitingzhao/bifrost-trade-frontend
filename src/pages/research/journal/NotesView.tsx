@@ -22,6 +22,8 @@ import { Button } from '@/components/ui/button'
 import { failedDetail } from '@/lib/viewState'
 import { cn } from '@/lib/utils'
 import { withSymbolParam } from '@/lib/symbolLink'
+import { useInstanceIndex } from '@/hooks/useInstanceIndex'
+import { instanceHowFrom, useOpenInstance } from '@/layout/instanceGo'
 
 const NOTES_KEY = ['research', 'journal', 'notes'] as const
 
@@ -51,6 +53,35 @@ function refTarget(ref: NoteRef): string | null {
   if (ref.type === 'sym') return withSymbolParam('/research/symbol', ref.id)
   if (ref.type === 'obj') return `/research/loop/objectives/${ref.id}`
   return null
+}
+
+/**
+ * An instance a note links (Rev .103): its surface when the instance book
+ * holds the number, else Positions — where a number the rulebook lost may
+ * still be held.
+ */
+export function InstanceNoteRef({ raw, className }: { raw: string; className: string }) {
+  const id = Number(raw.replace(/^#/, ''))
+  const known = useInstanceIndex()
+  const open = useOpenInstance()
+  if (!Number.isFinite(id) || id <= 0) return <span className={className}>{raw}</span>
+  if (known && !known.has(id)) {
+    return (
+      <Link to={`/portfolio/positions?inst=${id}`} className={className} title={`#${id} is not in the instance book — Positions, where it may still be held`}>
+        #{id}
+      </Link>
+    )
+  }
+  return (
+    <button
+      type="button"
+      className={cn(className, 'cursor-pointer border-0')}
+      title={`Open #${id} beside this page · ⇧ in a tab of its own · ⌘ as a page`}
+      onClick={(e) => open(id, { from: 'Journal', ...instanceHowFrom(e) })}
+    >
+      #{id}
+    </button>
+  )
 }
 
 function NoteRow({ note }: { note: JournalNote }) {
@@ -102,8 +133,9 @@ function NoteRow({ note }: { note: JournalNote }) {
           const to = refTarget(r)
           const cls = cn(
             'mat-tag font-mono text-dense-micro',
-            r.type === 'sym' ? 'text-[var(--sk-ticker)]' : 'text-[var(--sk-accent)]',
+            r.type === 'sym' ? 'text-[var(--sk-ticker)]' : r.type === 'inst' ? 'text-[var(--sk-instance)]' : 'text-[var(--sk-accent)]',
           )
+          if (r.type === 'inst') return <InstanceNoteRef key={`${r.type}|${r.id}`} raw={r.id} className={cls} />
           return to ? (
             <Link key={`${r.type}|${r.id}`} to={to} className={cls}>
               {r.id}

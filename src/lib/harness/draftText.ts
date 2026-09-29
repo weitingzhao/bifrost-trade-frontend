@@ -114,7 +114,7 @@ export function draftLandsIn(kind: string): DraftLanding | null {
       return { label: 'Autopilot objective', to: '/research/loop/harness' }
     case 'playbook_rule':
     case 'playbook_note':
-      return { label: 'Playbook', to: '/trade/playbook' }
+      return { label: 'Playbook', to: '/review/playbook' }
     default:
       return null
   }

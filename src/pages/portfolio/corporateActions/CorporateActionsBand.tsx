@@ -65,8 +65,8 @@ export function CorporateActionsBand({
         <header className={positionsUi.panelHead}>
           <span className={positionsUi.cap}>Cited, not computed</span>
           <span className={positionsUi.panelTitle}>assignment risk over an ex-date</span>
-          <Link to="/trade/assignment" className={cn(positionsUi.link, 'ml-auto')}>
-            Trade Assignment →
+          <Link to="/trade/expiration#assignment" className={cn(positionsUi.link, 'ml-auto')}>
+            Trade › Expiry →
           </Link>
         </header>
         {shortCalls.length === 0 ? (
@@ -95,7 +95,7 @@ export function CorporateActionsBand({
                   <span className="inline-flex items-center gap-1.5 text-dense-meta text-warning">
                     <StatusLamp lamp="yellow" variant="dot" title="A dividend is declared before this leg expires" />
                     ex {fmtIsoDateToken(div.exDate ?? '')} lands before {fmtIsoDateToken(l.expiry)} — weigh it on{' '}
-                    <Link to="/trade/assignment" className={positionsUi.link}>
+                    <Link to="/trade/expiration#assignment" className={positionsUi.link}>
                       Assignment
                     </Link>
                   </span>

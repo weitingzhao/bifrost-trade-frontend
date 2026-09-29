@@ -1,5 +1,7 @@
 /**
- * Trade · Expiration Desk — what expires next, and what each leg is worth.
+ * Trade · Expiry — what expires next, and what each leg is worth; below it,
+ * what can be exercised against the book before then (design Rev .109 merged
+ * the Assignment page in as a section; `/trade/assignment` lands on it).
  *
  * The design leads with "this Friday". The book rarely has a leg there, so the
  * page leads with the nearest expiry it actually holds and says how far away
@@ -14,8 +16,8 @@
  * Nothing here writes. A decision belongs to Trade Plans, which already owns
  * that write; this page carries the leg to it (D10).
  */
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { ViewState } from '@bifrost/ui'
@@ -24,6 +26,8 @@ import { DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { usePreviewState } from '@/hooks/usePreviewState'
+import { flashFound, scrollWhenPresent } from '@/lib/scrollWhenPresent'
+import { AssignmentSection } from './AssignmentSection'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtIsoDateToken } from '@/lib/format'
@@ -259,12 +263,19 @@ export default function ExpirationPage() {
         : sourceState(attrQuery)
   const retry = () => void attrQuery.refetch()
 
+  const location = useLocation()
+  // `/trade/assignment` is an alias of this page (Rev .109): land on the section.
+  useEffect(() => {
+    if (location.hash !== '#assignment') return
+    return scrollWhenPresent('#assignment', 8_000, flashFound)
+  }, [location.hash])
+
   return (
     <PageShell padding="compact" className="space-y-3">
         {/* §16.10: the lead behind ⓘ, the next expiry and the marks' date as
             meta, Plans — where a decision is written — as the head's door. */}
         <PageHead
-          title="Expiration"
+          title="Expiry"
           info={PAGE_LEAD}
           meta={
             nearest || markAsOf ? (
@@ -283,7 +294,16 @@ export default function ExpirationPage() {
               </span>
             ) : undefined
           }
-          actions={<PageHeadLink to="/trade/plans">Trade Plans →</PageHeadLink>}
+          actions={
+            <>
+              <PageHeadLink to="/portfolio/corporate-actions" title="The dividends and splits behind the early trigger">
+                Corporate Actions →
+              </PageHeadLink>
+              <PageHeadLink to="/trade/plans" title="Where a decision is written">
+                Trade Plans →
+              </PageHeadLink>
+            </>
+          }
         />
 
         {pageState === 'stale' ? (
@@ -339,7 +359,7 @@ export default function ExpirationPage() {
                   </span>
                 ) : null}
                 <span className="text-dense-meta text-muted-foreground">
-                  pin / flip and early assignment have no source — see the notes
+                  pin / flip have no source — see the notes; early assignment is read below
                 </span>
                 <button
                   type="button"
@@ -535,21 +555,6 @@ export default function ExpirationPage() {
                 </p>
               </section>
 
-              <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Early assignment watch">
-                <header className={positionsUi.panelHead}>
-                  <span className={positionsUi.cap}>Early assignment watch</span>
-                  <span className={positionsUi.panelTitle}>a dividend before expiry</span>
-                  <DenseTag variant="warning" size="cell">
-                    ⚠ needs a corporate-action feed
-                  </DenseTag>
-                </header>
-                <p className="m-0 px-3 py-2.5 text-xs leading-normal text-secondary-foreground text-pretty">
-                  A short call goes early when the dividend it gives up is worth more than the time value it keeps. That
-                  is a comparison between one number this page has — the mark — and one it does not: the next ex-date.
-                </p>
-                <p className={cn(FOOT, 'm-0')}>{EXPIRATION_UNRECORDED.assign}</p>
-              </section>
-
               <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Pin and roll">
                 <header className={positionsUi.panelHead}>
                   <span className={positionsUi.cap}>Pin, flip and the roll</span>
@@ -678,20 +683,11 @@ export default function ExpirationPage() {
             </section>
 
 
-            <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-              <span className="font-semibold text-secondary-foreground">Boundary.</span> This page says what is about to
-              expire and what it would cost to act. What the position is, and what backs it, is{' '}
-              <Link to="/portfolio/positions" className={positionsUi.link}>
-                Positions&rsquo;
-              </Link>
-              ; the decision itself is written in{' '}
-              <Link to="/trade/plans" className={positionsUi.link}>
-                Trade Plans
-              </Link>
-              , never here.
-            </p>
           </>
         )}
+
+        {/* Its own reads and states: a failure there leaves the expiry above intact. */}
+        <AssignmentSection />
     </PageShell>
   )
 }

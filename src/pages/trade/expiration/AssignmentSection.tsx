@@ -1,6 +1,7 @@
 /**
- * Trade · Assignment — what can be exercised against you, and what the book
- * becomes if it is.
+ * Expiry › Assignment (design Rev .109 merged the Assignment page into Expiry;
+ * `/trade/assignment` lands here, on `#assignment`) — what can be exercised
+ * against you before expiry, and what the book becomes if it is.
  *
  * Only short legs can be assigned, so only short legs are here. For each one
  * the page says how far spot is from the strike, how much of the price is still
@@ -18,7 +19,7 @@ import { Link } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
-import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
+import { SectionHead } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fetchCorporateActions, type CorporateActionRow } from '@/api/marketData/corporateActions'
@@ -48,7 +49,7 @@ const ROW_HOT = '[&>td]:bg-[color-mix(in_srgb,var(--color-warning)_4%,transparen
 /** A severity edge on a card must be inline: `mat-card` clears border-colour classes. */
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
-export default function AssignmentPage() {
+export function AssignmentSection() {
   const { attrQuery, legs, totals, thin, loading } = useAssignmentLegs()
   const execQuery = useExecutionsCanonical()
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
@@ -88,6 +89,13 @@ export default function AssignmentPage() {
   const shortCalls = legs.filter((l) => l.right === 'C').length
   const caFailed = caQueries.filter((q) => q.isError).length
 
+  // The design's head count: a leg whose early trigger fires — a declared
+  // dividend over its time value, or in the money with almost none left.
+  const earlyN = legs.filter((l) => {
+    const thinHere = l.extrinsic != null && l.extrinsic <= THIN_EXTRINSIC
+    return Boolean(triggers.get(l.contractKey)?.hot) || (Boolean(l.itm) && thinHere)
+  }).length
+
   const history = useMemo(() => bookedHistory(execQuery.data?.items ?? []), [execQuery.data?.items])
 
   // §17.1: the attribution rows are the critical read; the corporate actions
@@ -103,11 +111,11 @@ export default function AssignmentPage() {
   const shownLegs = preview === 'empty' ? [] : legs
 
   return (
-    <PageShell padding="compact" className="space-y-3">
-      {/* §16.10: the lead behind ⓘ, the count as meta, the two neighbours as the head's doors. */}
-      <PageHead
-        title="Assignment"
-        info={PAGE_LEAD}
+    <div className="space-y-3">
+      <SectionHead
+        id="assignment"
+        className="scroll-mt-3"
+        note={PAGE_LEAD}
         meta={
           pageState === 'ready' && legs.length > 0 ? (
             <span className={positionsUi.mono}>
@@ -115,17 +123,9 @@ export default function AssignmentPage() {
             </span>
           ) : undefined
         }
-        actions={
-          <>
-            <PageHeadLink to="/trade/expiration" title="When these legs expire">
-              Expiration →
-            </PageHeadLink>
-            <PageHeadLink to="/portfolio/corporate-actions" title="The dividends and splits behind the early trigger">
-              Corporate Actions →
-            </PageHeadLink>
-          </>
-        }
-      />
+      >
+        Assignment
+      </SectionHead>
 
       {pageState === 'stale' ? (
         <ViewState
@@ -168,10 +168,12 @@ export default function AssignmentPage() {
         </section>
       ) : (
         <>
-          <section className={positionsUi.panel} aria-label="Exposure">
+          <section className={positionsUi.panel} aria-label="Short legs">
             <header className={positionsUi.panelHead}>
-              <span className={positionsUi.cap}>Exposure</span>
-              <span className={positionsUi.panelTitle}>{totals.legs} short legs · assignment lens</span>
+              <span className={positionsUi.cap}>Short legs</span>
+              <span className={positionsUi.panelTitle}>
+                {totals.legs} open · {earlyN} early trigger
+              </span>
               <span
                 className={cn(
                   'inline-flex items-center gap-1.5 text-dense-meta',
@@ -507,20 +509,8 @@ export default function AssignmentPage() {
             </section>
           </div>
 
-          <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-            <span className="font-semibold text-secondary-foreground">Boundary.</span> This page says what could be
-            exercised against the book and what it would become. When those legs expire is{' '}
-            <Link to="/trade/expiration" className={positionsUi.link}>
-              Expiration&rsquo;s
-            </Link>
-            ; whether the cash is there to take the shares is{' '}
-            <Link to="/risk/margin" className={positionsUi.link}>
-              Margin&rsquo;s
-            </Link>
-            .
-          </p>
         </>
       )}
-    </PageShell>
+    </div>
   )
 }

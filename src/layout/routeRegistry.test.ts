@@ -82,7 +82,7 @@ describe('route registry', () => {
   })
 
   it('offers a page its old names', () => {
-    expect(aliasesFor('/trade/playbook').map((a) => a.path)).toEqual(['/research/playbook'])
+    expect(aliasesFor('/review/playbook').map((a) => a.path).sort()).toEqual(['/research/playbook', '/trade/playbook'])
     const symbol = aliasesFor('/research/symbol').map((a) => a.path)
     expect(symbol).toContain('/research/vol-regime')
     expect(symbol).toContain('/research/dossier')

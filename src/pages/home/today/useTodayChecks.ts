@@ -306,7 +306,7 @@ export function useTodayChecks(accountFilter: string) {
       seg: 'close' as const,
       layer: 'portfolio' as const,
       question: 'Is a short leg in the money?',
-      to: '/trade/assignment',
+      to: '/trade/expiration#assignment',
     }
     out.push({
       ...itmCheck,

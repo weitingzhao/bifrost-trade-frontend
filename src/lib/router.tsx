@@ -189,8 +189,8 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/trade/plans/TradePlansPage')),
       },
       {
-        path: 'trade/playbook',
-        lazy: lazyPage(() => import('@/pages/trade/playbook/PlaybookPage')),
+        path: 'review/playbook',
+        lazy: lazyPage(() => import('@/pages/review/playbook/PlaybookPage')),
       },
       {
         path: 'trade/expiration',
@@ -199,10 +199,6 @@ export const router = withPageTransitions(createBrowserRouter([
       {
         path: 'trade/fills',
         lazy: lazyPage(() => import('@/pages/trade/fills/FillsPage')),
-      },
-      {
-        path: 'trade/assignment',
-        lazy: lazyPage(() => import('@/pages/trade/assignment/AssignmentPage')),
       },
       {
         path: 'portfolio/backing',

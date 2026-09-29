@@ -391,7 +391,7 @@ export function expiringItem(legs: readonly ShortLeg[], today: string): DeskItem
     tone: nearest <= 2 ? 'danger' : 'warning',
     tags: [{ label: 'expiring', tone: nearest <= 2 ? 'danger' : 'warning' }],
     actions: [
-      { label: 'Expiration →', to: '/trade/expiration' },
+      { label: 'Expiry →', to: '/trade/expiration' },
       { label: 'Backing →', to: '/portfolio/backing' },
     ],
   }

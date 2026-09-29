@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 101 routes, 101 with a designed page,
+ * Derived, not typed: 102 routes, 102 with a designed page,
  * 0 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -92,6 +92,7 @@ export const DESIGN_OBJ_TARGET: readonly string[] = [
   "/review",
   "/review/fit",
   "/review/objectives",
+  "/review/playbook",
   "/review/playbook-stats",
   "/trade/desk",
   "/trade/plans",
@@ -139,7 +140,6 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "datecal": "M4 5h16v15H4zM8 3v4M16 3v4M4 10h16M8.5 14h2M13.5 14h2M8.5 17h2",
   "db": "M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3",
   "decay": "M3 5h4v5h4v5h4v5h6",
-  "deliver": "M12 3v8M8.5 7.5L12 11l3.5-3.5M4 14h16v6H4z",
   "doc": "M7 3h7l4 4v14H7zM14 3v4h4M10 12h5M10 16h3",
   "excerpt": "M5 3h14v18H5zM8 7.5h2.5v3H8zM12.5 7.5H15v3h-2.5zM8 14h8M8 17.5h5",
   "flag": "M5 21V4M5 4h11l-2 4 2 4H5",
@@ -226,6 +226,7 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/review/fit": "pathmarks",
   "/review/habits": "streak",
   "/review/objectives": "bullseye",
+  "/review/playbook": "openbook",
   "/review/playbook-stats": "pie",
   "/risk/limits": "ceiling",
   "/risk/margin": "gaugebar",
@@ -234,11 +235,9 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/settings": "gear",
   "/system/feedback": "flag",
   "/system/status": "pulse",
-  "/trade/assignment": "deliver",
   "/trade/expiration": "hourglass",
   "/trade/fills": "matched",
   "/trade/plans": "slip",
-  "/trade/playbook": "openbook",
   "/trade/rules": "gates",
 }
 
@@ -311,7 +310,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/fit": "contract",
 }
 
-export const DESIGN_REV = "2026-09-29.108"
+export const DESIGN_REV = "2026-09-29.109"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
@@ -320,7 +319,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/market/live","label":"Live","crumbs":["Market"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-25.85","inNav":false,"group":null,"designOnly":false},
   {"path":"/risk/portfolio","label":"Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-29.107","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-25.86","inNav":true,"group":"Portfolio","designOnly":false},
-  {"path":"/trade/expiration","label":"Expiration","crumbs":["Trade"],"designed":true,"file":"Trade Expiration.dc.html","round":"NEW","rev":"2026-09-25.84","inNav":true,"group":"Trade","designOnly":false},
+  {"path":"/trade/expiration","label":"Expiry","crumbs":["Trade"],"designed":true,"file":"Trade Expiration.dc.html","round":"NEW","rev":"2026-09-29.109","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/research/overview","label":"Research","crumbs":[],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-25.87","inNav":true,"group":"Research","designOnly":false},
   {"path":"/risk","label":"Risk","crumbs":["Risk"],"designed":true,"file":"Risk Overview.dc.html","round":null,"rev":"2026-09-25.82","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/portfolio","label":"Portfolio","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Overview.dc.html","round":null,"rev":"2026-09-25.82","inNav":true,"group":"Portfolio","designOnly":false},
@@ -347,7 +346,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/lab/history","label":"History · method","crumbs":["Research","Analyze"],"designed":true,"file":"Research History Method.dc.html","round":"LAB","rev":"2026-09-25.91","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/lab/calibration","label":"Calibration","crumbs":["System","Alignment"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
   {"path":"/research/lab/discover-model","label":"Discover model","crumbs":["System","Data"],"designed":true,"file":"System Data Discover Model.dc.html","round":"LAB","rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
-  {"path":"/review/playbook-stats","label":"Playbook stats","crumbs":["Review"],"designed":true,"file":"Review Playbook Stats.dc.html","round":"NEW","rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
+  {"path":"/review/playbook-stats","label":"Playbook stats","crumbs":["Review"],"designed":true,"file":"Review Playbook Stats.dc.html","round":"NEW","rev":"2026-09-29.109","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/objectives","label":"Objectives","crumbs":["Home"],"designed":true,"file":"Home Objectives.dc.html","round":null,"rev":"2026-09-25.89","inNav":true,"group":"Home","designOnly":false},
   {"path":"/research/book","label":"The Book","crumbs":[],"designed":true,"file":"Book.dc.html","round":null,"rev":"2026-09-25.93","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/journal","label":"Journal","crumbs":["The Book"],"designed":true,"file":"Book Journal.dc.html","round":null,"rev":"2026-09-28.103","inNav":false,"group":null,"designOnly":false},
@@ -378,7 +377,8 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/trade/plans","label":"Plans","crumbs":["Trade"],"designed":true,"file":"Trade Plans.dc.html","round":"OLD","rev":"2026-09-29.108","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/fills","label":"Orders & Fills","crumbs":["Trade"],"designed":true,"file":"Trade Fills.dc.html","round":"OLD","rev":"2026-09-28.103","inNav":true,"group":"Trade","designOnly":false},
   {"path":"/trade/rules","label":"Rules","crumbs":["Trade"],"designed":true,"file":"Trade Rules.dc.html","round":null,"rev":"2026-09-28.103","inNav":true,"group":"Trade","designOnly":false},
-  {"path":"/trade/playbook","label":"Playbook","crumbs":["Trade"],"designed":true,"file":"Trade Playbook.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Trade","designOnly":false},
+  {"path":"/review/playbook","label":"Playbook","crumbs":["Review"],"designed":true,"file":"Review Playbook.dc.html","round":null,"rev":"2026-09-29.109","inNav":true,"group":"Review","designOnly":false},
+  {"path":"/trade/playbook","label":"Playbook","crumbs":["Review"],"designed":true,"file":"Review Playbook.dc.html","round":null,"rev":"2026-09-29.109","inNav":false,"group":null,"designOnly":false},
   {"path":"/review","label":"Review","crumbs":[],"designed":true,"file":"Review Queue.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/fit","label":"Single trade","crumbs":["Review"],"designed":true,"file":"Review Fit.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
   {"path":"/review/habits","label":"Habits","crumbs":["Review"],"designed":true,"file":"Review Habits.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Review","designOnly":false},
@@ -390,8 +390,8 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/portfolio/accounts","label":"Accounts","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Accounts.dc.html","round":null,"rev":"2026-09-25.84","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/ledger","label":"Trade Ledger","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Ledger.dc.html","round":null,"rev":"2026-09-28.103","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/portfolio/transfer","label":"Transfer & Pay","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Transfer.dc.html","round":null,"rev":"2026-09-25.86","inNav":true,"group":"Portfolio","designOnly":false},
-  {"path":"/portfolio/corporate-actions","label":"Corporate Actions","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Corporate Actions.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"Portfolio","designOnly":false},
-  {"path":"/trade/assignment","label":"Assignment","crumbs":["Trade"],"designed":true,"file":"Trade Assignment.dc.html","round":null,"rev":"2026-09-25.90","inNav":true,"group":"Trade","designOnly":false},
+  {"path":"/portfolio/corporate-actions","label":"Corporate Actions","crumbs":["Portfolio","Accounts"],"designed":true,"file":"Portfolio Corporate Actions.dc.html","round":null,"rev":"2026-09-29.109","inNav":true,"group":"Portfolio","designOnly":false},
+  {"path":"/trade/assignment","label":"Expiry","crumbs":["Trade"],"designed":true,"file":"Trade Expiration.dc.html","round":"NEW","rev":"2026-09-29.109","inNav":false,"group":null,"designOnly":false},
   {"path":"/risk/sizing","label":"Sizing","crumbs":["Risk"],"designed":true,"file":"Risk Sizing.dc.html","round":null,"rev":"2026-09-29.107","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/risk/budget","label":"Sizing","crumbs":["Risk"],"designed":true,"file":"Risk Sizing.dc.html","round":null,"rev":"2026-09-29.107","inNav":false,"group":null,"designOnly":false},
   {"path":"/risk/limits","label":"Limits","crumbs":["Risk"],"designed":true,"file":"Risk Limits.dc.html","round":null,"rev":"2026-09-29.107","inNav":true,"group":"Risk","designOnly":false},
@@ -406,7 +406,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/docs/tech-stack","label":"Tech Stack","crumbs":["System","Reference"],"designed":true,"file":"System Reference Tech Stack.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/ui-design-system","label":"UI Design System","crumbs":["System","Reference"],"designed":true,"file":"System Reference UI Design System.dc.html","round":null,"rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},
   {"path":"/docs/index","label":"Index","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Index.dc.html","round":null,"rev":"2026-09-15.5","inNav":false,"group":null,"designOnly":true},
-  {"path":"/docs/progress","label":"Progress","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Progress.dc.html","round":null,"rev":"2026-09-15.6","inNav":false,"group":null,"designOnly":true},
+  {"path":"/docs/progress","label":"Progress","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Progress.dc.html","round":null,"rev":"2026-09-29.109","inNav":false,"group":null,"designOnly":true},
   {"path":"/docs/layout","label":"Layout Map","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Layout Map.dc.html","round":null,"rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":true},
   {"path":"/docs/audit","label":"UI Audit","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Audit.dc.html","round":null,"rev":"2026-09-12.1","inNav":false,"group":null,"designOnly":true},
   {"path":"/docs/capability","label":"Capability Map","crumbs":["System","Reference","Design"],"designed":true,"file":"Docs Capability.dc.html","round":null,"rev":"2026-09-12.1","inNav":false,"group":null,"designOnly":true},

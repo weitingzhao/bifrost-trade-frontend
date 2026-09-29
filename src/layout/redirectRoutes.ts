@@ -10,7 +10,7 @@
  * `routeRegistry.test.ts`.
  */
 import type { RouteEntry } from './routeRegistry'
-import { ANALYZE, COPILOT, DATA, DISCOVER, DOCS, PORTFOLIO, RISK, STRATEGY, SYSTEM_ALIGNMENT, SYSTEM_CONFIG, SYSTEM_DATA, SYSTEM_RUNTIME } from './routeCrumbs'
+import { ANALYZE, COPILOT, DATA, DISCOVER, DOCS, PORTFOLIO, REVIEW, RISK, STRATEGY, SYSTEM_ALIGNMENT, SYSTEM_CONFIG, SYSTEM_DATA, SYSTEM_RUNTIME, TRADE_DESK } from './routeCrumbs'
 
 export const REDIRECTS: readonly RouteEntry[] = [
   // ── Strategy, retired 2026-09-18 ───────────────────────────────────────
@@ -224,7 +224,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/research/playbook',
     label: 'My Trading System',
     crumbs: COPILOT,
-    redirect: '/trade/playbook',
+    redirect: '/review/playbook',
   },
   {
     path: '/portfolio/model-analysis',
@@ -379,4 +379,9 @@ export const REDIRECTS: readonly RouteEntry[] = [
   // With no vol axis the Stress page was one row; its matrix and Who pays are
   // Exposure's Stress section now, and the old address lands on it.
   { path: '/risk/stress', label: 'Exposure', crumbs: RISK, redirect: '/risk/portfolio#stress' },
+  // ── Trade 6 → 4 (design Rev .109) ─────────────────────────────────────
+  // Assignment was the same short legs as Expiry, read twice; it is Expiry's
+  // section now. Playbook moved to Review, beside its own record.
+  { path: '/trade/assignment', label: 'Expiry', crumbs: TRADE_DESK, redirect: '/trade/expiration#assignment' },
+  { path: '/trade/playbook', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook' },
 ]

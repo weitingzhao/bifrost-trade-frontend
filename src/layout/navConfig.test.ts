@@ -30,27 +30,25 @@ describe('Trade nav', () => {
       'Review',
       'Research',
     ])
-    // The heading is the Desk (§5a.1): the layer wrapped exactly one row and
-    // that row was the layer, so the six pages came up a level. Plans first,
-    // because a trade starts as a plan, and Assignment last, where one ends
-    // when it goes to stock.
+    // The heading is the Desk (§5a.1). Rev .109 cut the rows to four:
+    // Assignment is a section of Expiry, and Playbook moved to Review.
     expect(trade.to).toBe('/trade/desk')
     expect(trade.items!.map((c) => [c.label, c.to])).toEqual([
       ['Plans', '/trade/plans'],
       ['Orders & Fills', '/trade/fills'],
       ['Rules', '/trade/rules'],
-      ['Playbook', '/trade/playbook'],
-      ['Expiration', '/trade/expiration'],
-      ['Assignment', '/trade/assignment'],
+      ['Expiry', '/trade/expiration'],
     ])
-    const entry = routeFor('/trade/playbook')
-    expect(entry.path).toBe('/trade/playbook')
+    expect(routeFor('/trade/playbook').redirect).toBe('/review/playbook')
+    expect(routeFor('/trade/assignment').redirect).toBe('/trade/expiration#assignment')
+    const entry = routeFor('/review/playbook')
+    expect(entry.path).toBe('/review/playbook')
     expect(entry.redirect ?? false).toBe(false)
   })
 
   it('keeps the old Copilot address as a one-hop redirect onto Playbook', () => {
     const retired = routeFor('/research/playbook')
-    expect(retired.redirect).toBe('/trade/playbook')
+    expect(retired.redirect).toBe('/review/playbook')
     expect(routeFor(retired.redirect!).redirect ?? false).toBe(false)
   })
 })
@@ -252,7 +250,7 @@ describe('the old names', () => {
 const review = NAV_GROUPS.find((g) => g.label === 'Review')!
 
 describe('Review nav', () => {
-  it('is the Queue as its heading, with the other four beneath it', () => {
+  it('is the Queue as its heading, with the other five beneath it', () => {
     // §5a.1: the heading is the page. The Queue row retired into it.
     // Objectives joined 2026-09-20 and left for Home at Rev .55 — an
     // objective is the whole desk's working object, not this layer's.
@@ -260,6 +258,7 @@ describe('Review nav', () => {
     expect(review.items!.map((c) => c.to)).toEqual([
       '/review/fit',
       '/review/habits',
+      '/review/playbook',
       '/review/playbook-stats',
       // One inbox, not two (§5a.8): Decision Inbox replaced Rule proposals
       // here — the same act with a row each, because the engine touches both

@@ -127,18 +127,15 @@ export const NAV_GROUPS: ShellNavGroup[] = [
   {
     label: 'Trade',
     icon: Briefcase,
-    // The heading is the Desk (§5a.1). The layer wrapped one row and that row
-    // was the layer, so its six pages come up a level: Plans first, because a
-    // trade starts as a plan, and Assignment last, because that is where one
-    // ends when it goes to stock.
+    // The heading is the Desk (§5a.1). Rev .109: four rows — Plans first,
+    // because a trade starts as a plan, Expiry last, because that is where one
+    // ends (assignment is a section of it). Playbook moved to Review.
     to: '/trade/desk',
     items: [
       route('Plans', '/trade/plans', ClipboardList),
       route('Orders & Fills', '/trade/fills', ListChecks),
       route('Rules', '/trade/rules', Workflow),
-      route('Playbook', '/trade/playbook', BookOpen),
-      route('Expiration', '/trade/expiration', CalendarClock),
-      route('Assignment', '/trade/assignment', ArrowLeftRight),
+      route('Expiry', '/trade/expiration', CalendarClock),
     ],
   },
   {
@@ -194,6 +191,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     items: [
       route('Single trade', '/review/fit', Target),
       route('Habits', '/review/habits', Activity),
+      route('Playbook', '/review/playbook', BookOpen),
       route('Playbook stats', '/review/playbook-stats', BarChart2),
       // One inbox, not two (design Rev 2026-09-22.2, §5a.8). Decision Inbox
       // sat under Autopilot and Rule proposals sat here: the same act — a

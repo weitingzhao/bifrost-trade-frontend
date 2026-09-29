@@ -78,7 +78,7 @@ function BenchStrip() {
       <span className="ml-auto flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate('/trade/playbook')}
+          onClick={() => navigate('/review/playbook')}
           title="The rules, cases and notes the Pilot is told to follow"
           className="text-dense-meta whitespace-nowrap text-muted-foreground hover:text-foreground hover:underline"
         >

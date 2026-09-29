@@ -215,7 +215,7 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.91',
+      rev: '2026-09-29.109',
       note: DESIGN_NOTES['/portfolio/corporate-actions'],
     },
   },
@@ -248,8 +248,8 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/review/playbook-stats',
     label: 'Playbook stats',
     crumbs: REVIEW,
-    // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
-    design: { state: 'reviewing', rev: '2026-09-25.90', note: DESIGN_NOTES['/review/playbook-stats'] },
+    // Rev .109 only re-pointed its links at /review/playbook; nothing here linked the old path.
+    design: { state: 'reviewing', rev: '2026-09-29.109', note: DESIGN_NOTES['/review/playbook-stats'] },
   },
   {
     path: '/review/objectives',
@@ -387,17 +387,6 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
-    path: '/trade/assignment',
-    label: 'Assignment',
-    crumbs: TRADE_DESK,
-    design: {
-      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
-      state: 'reviewing',
-      rev: '2026-09-25.90',
-      note: DESIGN_NOTES['/trade/assignment'],
-    },
-  },
-  {
     path: '/trade/desk',
     // A layer's own page carries no trail and the layer's name (§5a.1 ·
     // .23): the heading *is* this page, so "Trade › Trade" would name the
@@ -440,24 +429,27 @@ export const ROUTES: readonly RouteEntry[] = [
   },
   {
     path: '/trade/expiration',
-    label: 'Expiration',
+    // Rev .109: page name Expiry; Assignment is a section of it now.
+    label: 'Expiry',
     crumbs: TRADE_DESK,
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.84',
+      rev: '2026-09-29.109',
       note: DESIGN_NOTES['/trade/expiration'],
     },
   },
   {
-    path: '/trade/playbook',
+    // Rev .109: moved from Trade — written trading principles the daemon does
+    // not read, kept beside Playbook stats rather than beside Trade › Rules.
+    path: '/review/playbook',
     label: 'Playbook',
-    crumbs: TRADE_DESK,
+    crumbs: REVIEW,
     design: {
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.90',
-      note: DESIGN_NOTES['/trade/playbook'],
+      rev: '2026-09-29.109',
+      note: DESIGN_NOTES['/review/playbook'],
     },
   },
   {

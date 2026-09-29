@@ -482,8 +482,10 @@ describe('the design walk, as it stands', () => {
     // /research/copilot is a redirect to it — the design keeps the path as an
     // alias of the Console, so it is no longer a page of its own. 75 with
     // Rev .107's Risk 6 → 4: Budget folded into Sizing and Stress into
-    // Exposure, and both paths are aliases of the page that holds them.
-    expect(counts.byState.reviewing).toBe(75)
+    // Exposure, and both paths are aliases of the page that holds them. 74
+    // with Rev .109's Trade 6 → 4: Assignment is a section of Expiry, and
+    // Playbook moved to /review/playbook (a page for a page).
+    expect(counts.byState.reviewing).toBe(74)
     // Since 2026-09-29 a reviewing page whose design rev passed its walk reads
     // stale too; the thirteen that had (Rev .100–.103 built in batches R–V)
     // were re-stamped with the design receipt, so none does.
@@ -567,6 +569,7 @@ describe('the design walk, as it stands', () => {
       '/review/fit',
       '/review/habits',
       '/review/objectives',
+      '/review/playbook',
       '/review/playbook-stats',
       '/risk',
       '/risk/limits',
@@ -576,12 +579,10 @@ describe('the design walk, as it stands', () => {
       '/settings',
       '/system/feedback',
       '/system/status',
-      '/trade/assignment',
       '/trade/desk',
       '/trade/expiration',
       '/trade/fills',
       '/trade/plans',
-      '/trade/playbook',
       '/trade/rules',
     ])
     // Was ten: the seven Strategy pages plus Momentum Radar, SEPA Daily Core
@@ -638,7 +639,8 @@ describe('the design walk, as it stands', () => {
     // 90 with Package .32 @ Rev .103: the Instance page (/instance/:id). 91
     // with Package .33 @ Rev .104: Trace enters the registry (the app built it
     // in U3 before the design had a route for it).
-    expect(counts.designed).toBe(91)
+    // 92 with Rev .109: /review/playbook is a route of its own (ROUTES 101 → 102).
+    expect(counts.designed).toBe(92)
     expect(counts.byState.designOnly).toBe(9)
     // 24 until Trade › Desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three

@@ -44,6 +44,8 @@ export interface VolSurfaceResidualRow {
   residual: number | null
   residual_z: number | null
   computed_at: string | null
+  /** `C` / `P` from research 0.153.0; null from an older API, which kept one row per strike. */
+  option_right: 'C' | 'P' | null
 }
 
 /**
@@ -128,7 +130,31 @@ function parseResidual(raw: unknown): VolSurfaceResidualRow | null {
     residual: numOrNull(r.residual),
     residual_z: numOrNull(r.residual_z),
     computed_at: strOrNull(r.computed_at),
+    option_right: r.option_right === 'C' || r.option_right === 'P' ? r.option_right : null,
   }
+}
+
+/**
+ * One contract per strike, the out-of-the-money one: the put below spot
+ * (k < 0), the call at or above it — how a smile is read, and what every
+ * reader here keys on. research 0.153.0 stores a residual for both contracts
+ * at a strike; before it the second of each pair overwrote the first. A strike
+ * with only one contract keeps it, and rows without a right pass through.
+ */
+export function outOfTheMoneyPerStrike(rows: readonly VolSurfaceResidualRow[]): VolSurfaceResidualRow[] {
+  const pick = new Map<string, VolSurfaceResidualRow>()
+  const out: VolSurfaceResidualRow[] = []
+  for (const r of rows) {
+    if (r.option_right == null || r.strike == null) {
+      out.push(r)
+      continue
+    }
+    const key = `${r.expiry ?? ''}|${r.strike}`
+    const held = pick.get(key)
+    const otm = r.log_moneyness != null && (r.log_moneyness < 0 ? r.option_right === 'P' : r.option_right === 'C')
+    if (!held || otm) pick.set(key, r)
+  }
+  return [...out, ...pick.values()].sort((a, b) => (a.strike ?? 0) - (b.strike ?? 0))
 }
 
 const validateEnvelope = withValidation<{ ok: boolean; data?: unknown; error?: string | null }>(
@@ -177,7 +203,7 @@ export async function fetchResiduals(
   )
   const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(res)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
-  return raw.map(parseResidual).filter((r): r is VolSurfaceResidualRow => r !== null)
+  return outOfTheMoneyPerStrike(raw.map(parseResidual).filter((r): r is VolSurfaceResidualRow => r !== null))
 }
 
 export interface SkewExtremesResponse {

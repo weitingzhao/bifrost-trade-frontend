@@ -7,6 +7,7 @@
  * guessed; actions live in the Intent section, and a refusal is shown in the
  * server's own words — the desk does not restate the rule.
  */
+import { planToken } from '@/utils/tradeOrigin'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
@@ -275,8 +276,8 @@ export function PlanCard({
         <DenseTag variant={planStatusVariant(plan.effective_status)}>
           {planStatusLabel(plan.effective_status)}
         </DenseTag>
-        <span className="ml-auto font-mono text-dense-micro text-muted-foreground">
-          #{plan.strategy_plan_id}
+        <span className="ml-auto font-mono text-dense-micro text-[var(--sk-mute2)]">
+          {planToken(plan.strategy_plan_id)}
         </span>
         <Button
           type="button"
@@ -519,7 +520,7 @@ export function PlanCard({
         <Section
           id="plan-intent"
           title="Intent"
-          meta={`advisory · D10 · strategy_plan #${plan.strategy_plan_id}`}
+          meta={`advisory · D10 · strategy_plan · ${planToken(plan.strategy_plan_id)}`}
         >
           <pre className="overflow-x-auto border px-2.5 py-2 font-mono text-dense-micro leading-relaxed text-secondary-foreground mat-card">
             {planIntentJson(plan)}

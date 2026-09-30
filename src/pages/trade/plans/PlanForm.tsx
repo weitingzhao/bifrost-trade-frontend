@@ -13,7 +13,7 @@
  * order intent" saves the plan and marks it intended — this app's intent is
  * that status, not an order: the desk copies, TWS places (D10).
  */
-import { PLAN_SOURCE_KINDS, PLAN_SOURCE_LABELS } from '@/utils/tradeOrigin'
+import { PLAN_SOURCE_KINDS, PLAN_SOURCE_LABELS, planToken } from '@/utils/tradeOrigin'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
@@ -317,7 +317,7 @@ export function PlanForm({
     >
       <header className="flex items-center gap-2.5 border-b border-border bg-card px-4 py-2.5">
         <span className="shrink-0 text-sm font-semibold">
-          {editing ? `Edit plan #${editing.strategy_plan_id}` : 'Plan a trade'}
+          {editing ? `Edit plan ${planToken(editing.strategy_plan_id)}` : 'Plan a trade'}
         </span>
         <span className="min-w-0 truncate text-dense-label text-muted-foreground">
           Fill the left, watch the right. Nothing is sent anywhere — an intent is a plan marked for TWS, and TWS is

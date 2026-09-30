@@ -91,7 +91,12 @@ function OriginTable({ rows, head }: { rows: readonly OriginRow[]; head: string 
           {rows.map((r) => (
             <tr key={r.key} className={ROW_HOVER}>
               <td className={cn(positionsUi.td, 'pl-2 whitespace-normal text-left font-sans')}>
-                <Link to="/review" className={cn('block', r.n ? 'text-foreground' : 'text-muted-foreground')} title="These trades in the Queue">
+                {/* Rev .113 §5.1.4a: No plan / No lens recorded read muted — a hole, not a source. */}
+                <Link
+                  to="/review"
+                  className={cn('block', r.key === 'none' ? 'text-[var(--sk-mute2)]' : r.n ? 'text-foreground' : 'text-muted-foreground')}
+                  title="These trades in the Queue"
+                >
                   {r.name}
                 </Link>
                 <span className="block text-dense-meta text-muted-foreground">{r.sub}</span>
@@ -332,7 +337,7 @@ export function PlaybookRecord() {
             <span className={positionsUi.cap}>{cut === 'lens' ? 'By lens' : 'By source'}</span>
             <span className={positionsUi.panelTitle}>
               {cut === 'lens'
-                ? 'no lens recorded'
+                ? 'No lens recorded'
                 : `${originRows.filter((r) => r.key !== 'none' && r.n > 0).length} of ${originRows.length - 1} sources with a trade`}
             </span>
             <span className="text-dense-meta text-muted-foreground">n &lt; {ORIGIN_SAMPLE_FLOOR} shows a tally, not a rate</span>

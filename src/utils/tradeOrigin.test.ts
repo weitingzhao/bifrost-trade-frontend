@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
-import { originsByTrade, planTermsText } from './tradeOrigin'
+import { originsByTrade, planTermsText, planToken } from './tradeOrigin'
 
 // Invented plans (fixtures are never copied from DEV).
 const plan = (over: Partial<StrategyPlan>): StrategyPlan =>
@@ -43,5 +43,11 @@ describe('trade origins (Rev .112)', () => {
     expect(planTermsText(o)).toBe('target 50% of credit kept · stop at a loss of 2× credit · out by 2026-04-17')
     const [bare] = originsByTrade([plan({ strategy_instance_id: 43 })]).values()
     expect(planTermsText(bare)).toBe('no target, stop or exit date written')
+  })
+})
+
+describe('plan token (Rev .113 §5.1.4a)', () => {
+  it('pads to four digits and keeps longer ids whole', () => {
+    expect([planToken(7), planToken(212), planToken(12345)]).toEqual(['TP-0007', 'TP-0212', 'TP-12345'])
   })
 })

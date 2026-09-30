@@ -66,5 +66,5 @@ export function sourceRows(
 
 /** One row: nothing records a lens, so every closed trade is one whose screen is unknown. */
 export function lensRows(closed: readonly ReviewInstance[]): OriginRow[] {
-  return [originRowOf('none', 'no lens recorded', 'no plan or trade field holds the screen an idea came through', closed)]
+  return [originRowOf('none', 'No lens recorded', 'did not come through a screen, or no plan names it', closed)]
 }

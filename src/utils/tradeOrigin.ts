@@ -91,9 +91,17 @@ export function originsByTrade(plans: readonly StrategyPlan[]): Map<number, Trad
   return out
 }
 
-/** The plan's id as Trading › Plans prints it. */
+/**
+ * A plan's one written form (Rev .113, §5.1.4a): `TP-` and the id padded to
+ * four digits (`TP-0007`, `TP-0212`; 10000 and up as is). `#NNN` is a Trade's.
+ */
 export function planToken(planId: number): string {
-  return `TP-${planId}`
+  return `TP-${String(planId).padStart(4, '0')}`
+}
+
+/** Trading › Plans with this plan selected — where a TP token lands. */
+export function planPath(planId: number): string {
+  return `/trade/plans?plan=${planId}`
 }
 
 /** The plan's exit terms in a line: target, stop and the date, each only when the plan wrote it. */

@@ -25,6 +25,6 @@ describe('Record · By source and By lens (Rev .112)', () => {
   })
 
   it('reads lens as one unrecorded row over every closed trade', () => {
-    expect(lensRows([t(1, 5), t(2, 6)]).map((r) => [r.name, r.n])).toEqual([['no lens recorded', 2]])
+    expect(lensRows([t(1, 5), t(2, 6)]).map((r) => [r.name, r.n])).toEqual([['No lens recorded', 2]])
   })
 })

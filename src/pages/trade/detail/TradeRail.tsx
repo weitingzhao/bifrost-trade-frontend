@@ -21,7 +21,7 @@ import type { RanUnder } from '@/utils/tradeRecord/ranUnder'
 import type { StrategyInstance } from '@/types/positions'
 import { TradeBlock } from './TradeBlock'
 import { useTradeOrigins } from '@/hooks/useTradeOrigins'
-import { ORIGIN_UNRECORDED, planTermsText, planToken } from '@/utils/tradeOrigin'
+import { ORIGIN_UNRECORDED, planPath, planTermsText, planToken } from '@/utils/tradeOrigin'
 
 
 export function TradeLineage({
@@ -53,7 +53,17 @@ export function TradeLineage({
   const openedIso = instance.opened_at ? instance.opened_at.slice(0, 10) : null
   const origin = useTradeOrigins().byTrade.get(id)
 
-  const chain: { kind: string; name: string; meta: string; mono?: boolean; warn?: boolean; ink?: string; muted?: boolean; title?: string }[] = [
+  const chain: {
+    kind: string
+    name: string
+    meta: string
+    mono?: boolean
+    warn?: boolean
+    ink?: string
+    muted?: boolean
+    title?: string
+    to?: string
+  }[] = [
     {
       kind: 'Idea',
       name: origin ? `${origin.source}${origin.ref ? ` · ${origin.ref}` : ''}` : 'not recorded',
@@ -69,7 +79,10 @@ export function TradeLineage({
       kind: 'Plan',
       name: origin ? planToken(origin.planId) : 'no plan written',
       mono: Boolean(origin),
-      muted: !origin,
+      // Rev .113 §5.1.4a: a TP token is mono and muted — never an identity ink — and lands on Plans.
+      muted: true,
+      to: origin ? planPath(origin.planId) : undefined,
+      title: origin ? `Open ${planToken(origin.planId)} on Trading › Plans` : undefined,
       meta: origin ? planTermsText(origin) : 'nothing to measure the exit against',
     },
     {
@@ -136,7 +149,17 @@ export function TradeLineage({
               style={c.ink ? { color: c.ink } : undefined}
               title={c.title}
             >
-              {c.name}
+              {c.to ? (
+                <button
+                  type="button"
+                  onClick={() => navigate(c.to as string)}
+                  className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-[var(--sk-mute2)] hover:underline"
+                >
+                  {c.name}
+                </button>
+              ) : (
+                c.name
+              )}
             </span>
             <span />
             <span className={cn('min-w-0 text-dense-micro text-pretty', c.warn ? 'text-warning' : 'text-[var(--sk-mute2)]')}>{c.meta}</span>

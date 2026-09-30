@@ -48,9 +48,9 @@ import {
   namesByCondition,
   namesPassing,
 } from '@/lib/research/narrativeItems'
-import { SCREENER_PRESETS, PRESET_PAGE_LIMIT } from './stockScreener/screenerPresets'
-import { fetchMomentumRadar } from '@/api/researchEngine'
-import { useQuery } from '@tanstack/react-query'
+import { SCREENER_PRESETS } from './stockScreener/screenerPresets'
+import { useFunnelLiveStages } from './stockScreener/useFunnelLiveStages'
+import { SavedScreensPanel } from './stockScreener/SavedScreensPanel'
 import type { ReadinessSnapshotRow } from '@/types/stockScreener'
 import { formatCriteriaAsOf, prepareDistBuckets } from '@/utils/stockScreener'
 
@@ -252,49 +252,6 @@ export default function StockScreenerPage() {
   // It drives the page's own filter sets rather than keeping a second copy:
   // the trend chips are the technical conditions, the growth chips the
   // fundamental ones, and the five stages with no data are inert.
-  // The Momentum stage's chips, read from the radar. The tier mart behind
-  // `momentum-filter` is still accumulating; this route answers today.
-  const momentumQ = useQuery({
-    queryKey: ['screener', 'momentum-grades'],
-    queryFn: async () => {
-      const grades = ['A+', 'A', 'B', 'C'] as const
-      const res = await Promise.all(
-        grades.map((g) => fetchMomentumRadar({ grade: g, limit: PRESET_PAGE_LIMIT })),
-      )
-      return grades.map((g, i) => {
-        const rows = res[i].rows ?? []
-        return {
-          id: `grade_${g === 'A+' ? 'aplus' : g.toLowerCase()}`,
-          // **Names, not rows.** The radar returns a row per symbol per
-          // date — grade A comes back as 92 rows over 56 names — and every
-          // other chip on this panel counts names out of the universe. Two
-          // chips side by side meaning different things is worse than either
-          // number being wrong.
-          pass: new Set(rows.map((r) => r.symbol)).size,
-          // The route caps its page, so a full page is a floor, not a count.
-          capped: rows.length >= PRESET_PAGE_LIMIT,
-        }
-      })
-    },
-    staleTime: 5 * 60_000,
-  })
-
-  const [presetBusy, setPresetBusy] = useState<string | null>(null)
-  const applyPreset = useCallback(
-    async (id: string) => {
-      const preset = SCREENER_PRESETS.find((x) => x.id === id)
-      if (preset?.load == null) return
-      setPresetBusy(id)
-      try {
-        const symbols = await preset.load()
-        setSymbolText(symbols.join(','))
-      } finally {
-        setPresetBusy(null)
-      }
-    },
-    [setSymbolText],
-  )
-
   // Catalyst's SEC 8-K chips (Rev .43): one read of the whole 7-day window,
   // asked for in full so a chip never counts a truncated page.
   const narrQ = useNarrativeWindow(NARRATIVE_WINDOW_DAYS, { limit: 2000 })
@@ -305,17 +262,45 @@ export default function StockScreenerPage() {
   const [narrActive, setNarrActive] = usePageViewSet<string>('narr')
 
   const universe = criteriaStats?.universe_count ?? null
+  // Momentum (latest-session grades), Structure (its tier mart) and the run's
+  // "at least N of" cuts (2026-09-30).
+  const live = useFunnelLiveStages({ structure: filters.tierFilters.structure, universe })
+  const { setGrades } = live
+  // A preset sets criteria — it never loads a model's list (Owner 2026-09-30).
+  const applyPreset = useCallback(
+    (id: string) => {
+      const pr = SCREENER_PRESETS.find((x) => x.id === id)
+      if (!pr?.criteria) return
+      const c = pr.criteria
+      filters.restoreCriteria({
+        cond: c.cond,
+        tech: c.tech,
+        tiers: { structure: { indicators: c.structureAny, minScore: 0, match: 'any' } },
+      })
+      setMins(c.mins)
+      setGrades(new Set(c.grades))
+      setNarrActive(new Set())
+      notify(`${pr.label} set as criteria — edit freely, then Run`)
+    },
+    [filters, setMins, setGrades, setNarrActive],
+  )
   const funnelActive = useMemo(
-    () => new Set<string>([...filters.techCondFilter, ...filters.condFilter, ...narrActive]),
-    [filters.techCondFilter, filters.condFilter, narrActive],
+    () =>
+      new Set<string>([
+        ...filters.techCondFilter,
+        ...filters.condFilter,
+        ...narrActive,
+        ...filters.tierFilters.structure.indicators,
+        ...live.grades,
+      ]),
+    [filters.techCondFilter, filters.condFilter, narrActive, filters.tierFilters.structure.indicators, live.grades],
   )
   const stageCounts = useMemo(
     () => ({
       trend: atLeast(criteriaStats?.technical?.pass_count_distribution, mins.trend ?? 0),
       growth: atLeast(criteriaStats?.fundamental?.pass_count_distribution, mins.growth ?? 0),
-      // Every graded name the radar can reach. Two of the four grades come
-      // back at the route's cap, so this is a floor — the panel says so.
-      momentum: momentumQ.data?.reduce((n, g) => n + g.pass, 0) ?? null,
+      momentum: live.stageCounts.momentum,
+      structure: live.stageCounts.structure,
       // Nothing picked passes the whole universe through, as a `min` of 0
       // does; otherwise the names passing any picked 8-K chip.
       catalyst:
@@ -325,13 +310,14 @@ export default function StockScreenerPage() {
             ? namesPassing(narrByCondition, narrActive).size
             : null,
     }),
-    [criteriaStats, mins, momentumQ.data, narrActive, narrByCondition],
+    [criteriaStats, mins, live.stageCounts, narrActive, narrByCondition],
   )
   const chipCounts = useMemo(
     () => ({
       trend: criteriaStats?.technical?.conditions ?? null,
       growth: criteriaStats?.fundamental?.conditions ?? null,
-      momentum: momentumQ.data ?? null,
+      momentum: live.chipCounts.momentum,
+      structure: live.chipCounts.structure,
       catalyst: narrByCondition
         ? NARRATIVE_CONDITIONS.map((c) => ({
             id: c.id,
@@ -340,11 +326,12 @@ export default function StockScreenerPage() {
           }))
         : null,
     }),
-    [criteriaStats, momentumQ.data, narrByCondition, narrQ.data],
+    [criteriaStats, live.chipCounts, narrByCondition, narrQ.data],
   )
   // Narrative page rule 4: an 8-K condition cuts a screen but cannot start
   // one. Picked alone, Run says so instead of running the universe.
-  const measuredPicked = filters.techCondFilter.size + filters.condFilter.size > 0
+  const minsOn = (mins.trend ?? 0) > 0 || (mins.growth ?? 0) > 0
+  const measuredPicked = filters.anyFilterActive || live.grades.size > 0 || minsOn
   const runBlocked =
     narrActive.size > 0 && !measuredPicked
       ? 'Narrative conditions cut a screen; they cannot start one — pick a measured condition too'
@@ -354,10 +341,14 @@ export default function StockScreenerPage() {
   // panel and does both halves in one press.
   const [runBusy, setRunBusy] = useState(false)
   const runFunnel = useCallback(async () => {
-    if (!filters.anyFilterActive) return
+    if (!measuredPicked) return
     setRunBusy(true)
     try {
-      const symbols = await filters.runFilter()
+      // Server-side criteria first, then the cuts the funnel draws: at least N
+      // of each `min` stage and the picked grades — so Run keeps what it shows.
+      const base = filters.anyFilterActive ? await filters.runFilter() : null
+      if (filters.anyFilterActive && base == null) return
+      const symbols = await live.cut(base, mins)
       if (symbols != null) {
         fundBucket.clearActive()
         techBucket.clearActive()
@@ -374,15 +365,19 @@ export default function StockScreenerPage() {
             : symbols
         setSymbolText(kept.join(','))
       }
+    } catch (e) {
+      notify(`Run failed — ${(e as Error).message}`)
     } finally {
       setRunBusy(false)
     }
-  }, [filters, fundBucket, techBucket, fundCond, techCond, narrActive, narrByCondition, setSymbolText])
+  }, [measuredPicked, filters, live, mins, fundBucket, techBucket, fundCond, techCond, narrActive, narrByCondition, setSymbolText])
 
   const toggleFunnelChip = useCallback(
     (stageId: string, conditionId: string) => {
       if (stageId === 'trend') filters.toggleTechCondFilter(conditionId)
       else if (stageId === 'growth') filters.toggleCondFilter(conditionId)
+      else if (stageId === 'momentum') live.toggleGrade(conditionId)
+      else if (stageId === 'structure') filters.toggleTierIndicator('structure', conditionId, 'any')
       else if (stageId === 'catalyst' && isNarrativeCondition(conditionId)) {
         setNarrActive((prev) => {
           const next = new Set(prev)
@@ -392,28 +387,31 @@ export default function StockScreenerPage() {
         })
       }
     },
-    [filters, setNarrActive],
+    [filters, live, setNarrActive],
   )
   // Clear all with Undo (Rev .75): the criteria as they were come back.
   const clearCriteria = useCallback(
     (withNarr: boolean) => {
-      const prev = { criteria: filters.criteria, narr: [...narrActive] }
+      const prev = { criteria: filters.criteria, narr: [...narrActive], grades: [...live.grades] }
       const had =
         prev.criteria.cond.length > 0 ||
         prev.criteria.tech.length > 0 ||
         Object.values(prev.criteria.tiers).some((t) => t && (t.indicators.length > 0 || t.minScore > 0)) ||
+        prev.grades.length > 0 ||
         (withNarr && prev.narr.length > 0)
       filters.clearAllFilters()
+      setGrades(new Set())
       if (withNarr) setNarrActive(new Set())
       if (!had) return
       notify('Criteria cleared', {
         undo: () => {
           filters.restoreCriteria(prev.criteria)
+          setGrades(new Set(prev.grades))
           if (withNarr) setNarrActive(new Set(prev.narr))
         },
       })
     },
-    [filters, narrActive, setNarrActive],
+    [filters, narrActive, setNarrActive, live.grades, setGrades],
   )
   const clearFunnel = useCallback(() => clearCriteria(true), [clearCriteria])
 
@@ -477,10 +475,10 @@ export default function StockScreenerPage() {
           <SectionPanel cap="Presets" title="Starting points, not models">
             <div className="flex flex-col">
               {SCREENER_PRESETS.map((pr) =>
-                pr.load == null ? (
+                pr.criteria == null ? (
                   <span
                     key={pr.id}
-                    title={pr.missing ?? undefined}
+                    title={pr.note ?? undefined}
                     className="flex items-baseline justify-between gap-2 border-b border-border/60 px-3 py-1.5 text-muted-foreground last:border-b-0"
                   >
                     <span className="text-dense-label">{pr.label}</span>
@@ -490,31 +488,27 @@ export default function StockScreenerPage() {
                   <button
                     key={pr.id}
                     type="button"
-                    disabled={presetBusy != null}
-                    onClick={() => void applyPreset(pr.id)}
-                    title={`Load ${pr.label} (${pr.meta}) into Results`}
-                    className="flex cursor-pointer items-baseline justify-between gap-2 border-b border-border/60 px-3 py-1.5 text-left last:border-b-0 hover:bg-secondary/40 disabled:cursor-default disabled:opacity-60"
+                    onClick={() => applyPreset(pr.id)}
+                    title={`Set ${pr.label} as the funnel’s criteria (${pr.meta})${pr.note ? ` — ${pr.note}` : ''}`}
+                    className="flex cursor-pointer items-baseline justify-between gap-2 border-b border-border/60 px-3 py-1.5 text-left last:border-b-0 hover:bg-secondary/40"
                   >
                     <span className="text-dense-label">{pr.label}</span>
-                    <span className="font-mono text-dense-caption text-muted-foreground">
-                      {presetBusy === pr.id ? 'loading…' : pr.meta}
-                    </span>
+                    <span className="font-mono text-dense-caption text-muted-foreground">{pr.meta}</span>
                   </button>
                 ),
               )}
             </div>
             <p className="border-t border-border/60 px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-              A preset here resolves to a set of names and lands in Results. It is not a saved
-              screen — nothing on this side stores criteria. The two that are greyed say why on
-              hover.
+              A preset sets the funnel’s criteria — it is just criteria; edit freely, then Run. The
+              two greyed have no condition on this side; hover says why.
             </p>
           </SectionPanel>
-          <SectionPanel cap="My screens" title="Saved by you">
-            <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-              Nothing saves a screen yet. The design writes one as a Workbench preset or an
-              Autopilot objective, both through the Decision Inbox; neither write exists here.
-            </p>
-          </SectionPanel>
+          <SavedScreensPanel
+            onApply={(syms, screen) => {
+              setSymbolText(syms.join(','))
+              notify(`${screen.name}: ${syms.length} ${syms.length === 1 ? 'name' : 'names'} in Results`)
+            }}
+          />
         </aside>
 
         <div className="min-w-0 max-w-[32.5rem] flex-[1_1_24rem]">

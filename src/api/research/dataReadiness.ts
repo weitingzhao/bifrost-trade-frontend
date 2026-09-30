@@ -13,6 +13,8 @@ import type {
   TechnicalFilterResponse,
   TechDistSymbolsResponse,
   TierFilterResponse,
+  TierStatsResponse,
+  MomentumGradesResponse,
 } from '@/types/stockScreener'
 import { normalizeCriteriaStats, normalizeSnapshotRow } from '@/utils/stockScreener'
 
@@ -166,11 +168,13 @@ export async function fetchTechnicalFilter(opts: {
 export async function fetchMomentumFilter(params: {
   include?: string[]
   min_score?: number
+  match?: 'all' | 'any'
   limit?: number
 }): Promise<MomentumFilterResponse> {
   const qs = new URLSearchParams()
   if (params.include?.length) qs.set('include', params.include.join(','))
   if (params.min_score != null) qs.set('min_score', String(params.min_score))
+  if (params.match) qs.set('match', params.match)
   if (params.limit != null) qs.set('limit', String(params.limit))
   return fetchJson(
     researchUrl(`/research/data/readiness/momentum-filter?${qs.toString()}`),
@@ -183,17 +187,35 @@ export async function fetchTierFilter(params: {
   tier: 'structure' | 'sentiment'
   include?: string[]
   min_score?: number
+  match?: 'all' | 'any'
   limit?: number
 }): Promise<TierFilterResponse> {
   const qs = new URLSearchParams({ tier: params.tier })
   if (params.include?.length) qs.set('include', params.include.join(','))
   if (params.min_score != null && params.min_score > 0) qs.set('min_score', String(params.min_score))
+  if (params.match) qs.set('match', params.match)
   if (params.limit != null) qs.set('limit', String(params.limit))
   return fetchJson(
     researchUrl(`/research/data/readiness/tier-filter?${qs.toString()}`),
     15_000,
     { ok: false },
   )
+}
+
+/** Per-signal pass counts and the signals-passed histogram for one tier, latest eval_date. */
+export async function fetchTierStats(tier: 'momentum' | 'structure' | 'sentiment'): Promise<TierStatsResponse> {
+  return fetchJson(researchUrl(`/research/data/readiness/tier-stats?tier=${tier}`), 15_000, { ok: false })
+}
+
+/**
+ * The radar's grades on its latest session. `/research/momentum/radar` only
+ * resolves "latest" for one symbol — across the universe it returns every
+ * session it holds, so counting a grade there counts months of names.
+ */
+export async function fetchMomentumGrades(grades: readonly string[] = []): Promise<MomentumGradesResponse> {
+  const qs = new URLSearchParams()
+  if (grades.length) qs.set('grades', grades.join(','))
+  return fetchJson(researchUrl(`/research/data/readiness/momentum-grades?${qs.toString()}`), 15_000, { ok: false })
 }
 
 export async function fetchSymbolsReadinessSnapshot(

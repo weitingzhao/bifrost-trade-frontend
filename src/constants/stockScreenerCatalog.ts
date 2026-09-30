@@ -59,36 +59,43 @@ export const MOMENTUM_GROUP_LABELS = {
   trend: 'Trend / Volume',
 } as const
 
+/**
+ * The three tier marts' own signal columns (dw_stock.mart_sepa_tier_*, one row
+ * per symbol for the latest eval_date). The ids are the column names the
+ * filters take (api 0.1.8); until 2026-09-30 this list named an older
+ * vocabulary no mart carries, so every pick filtered to nothing.
+ */
 export const MOMENTUM_INDICATORS = [
-  { id: 'rsi_14_in_band', label: 'RSI 14 In Band', group: 'oscillator' as const },
-  { id: 'macd_hist_positive', label: 'MACD Hist Positive', group: 'oscillator' as const },
-  { id: 'roc_3m_positive', label: 'ROC 3M Positive', group: 'roc' as const },
-  { id: 'roc_6m_positive', label: 'ROC 6M Positive', group: 'roc' as const },
-  { id: 'roc_12m_positive', label: 'ROC 12M Positive', group: 'roc' as const },
-  { id: 'multi_period_rs_4w_positive', label: 'RS 4W Positive', group: 'rs' as const },
-  { id: 'multi_period_rs_13w_positive', label: 'RS 13W Positive', group: 'rs' as const },
-  { id: 'multi_period_rs_26w_positive', label: 'RS 26W Positive', group: 'rs' as const },
-  { id: 'slope_sma200_positive', label: 'SMA200 Slope ↑', group: 'trend' as const },
-  { id: 'up_down_volume_50d_gt_1', label: 'Up/Down Vol > 1', group: 'trend' as const },
+  { id: 'rsi_above_50', label: 'RSI 14 > 50', group: 'oscillator' as const },
+  { id: 'rsi_healthy_range', label: 'RSI 14 in 40–70', group: 'oscillator' as const },
+  { id: 'macd_bullish', label: 'EMA12 > EMA26', group: 'oscillator' as const },
+  { id: 'macd_strong', label: 'MACD > 1% of price', group: 'oscillator' as const },
+  { id: 'roc_10_positive', label: 'ROC 10D > 0', group: 'roc' as const },
+  { id: 'roc_21_positive', label: 'ROC 21D > 0', group: 'roc' as const },
+  { id: 'rs_gt_spy', label: '252D return > SPY', group: 'rs' as const },
+  { id: 'volume_expanding', label: 'Vol 10D > 50D avg', group: 'trend' as const },
+  { id: 'volume_surge', label: 'Vol 10D > 1.5× 50D', group: 'trend' as const },
+  { id: 'price_gt_sma10', label: 'Price > SMA10', group: 'trend' as const },
 ] as const
 
 export const STRUCTURE_INDICATORS = [
-  { id: 'realized_vol_contraction', label: 'Vol Contraction' },
-  { id: 'bb_squeeze', label: 'BB Squeeze' },
-  { id: 'obv_slope_30d_positive', label: 'OBV Slope ↑' },
-  { id: 'adx_14_ge_25', label: 'ADX 14 ≥ 25' },
-  { id: 'aroon_oscillator_ge_50', label: 'Aroon ≥ 50' },
-  { id: 'tight_closes_5d', label: 'Tight Closes 5D' },
-  { id: 'vcp_contraction_3m', label: 'VCP 3M' },
-  { id: 'pocket_pivot_count', label: 'Pocket Pivot' },
-  { id: 'rsl_new_high', label: 'RSL New High' },
-  { id: 'base_metrics', label: 'Base Metrics' },
+  { id: 'bb_squeeze', label: 'BB squeeze (width < 50D avg)' },
+  { id: 'bb_tight_squeeze', label: 'BB tight squeeze (< 75%)' },
+  { id: 'adx_trending', label: 'ADX trending' },
+  { id: 'adx_strong_trend', label: 'ADX strong trend' },
+  { id: 'aroon_bullish', label: 'Aroon up > down' },
+  { id: 'aroon_up_strong', label: 'Aroon up > 70' },
+  { id: 'vol_contracting', label: 'ATR < 80% of 50D ago' },
+  { id: 'vol_tight_contraction', label: 'ATR < 60% of 50D ago' },
 ] as const
 
 export const SENTIMENT_INDICATORS = [
-  { id: 'days_to_cover_ge_5', label: 'Days to Cover ≥ 5' },
-  { id: 'short_volume_ratio_le_30pct_recent', label: 'Short Vol ≤ 30%' },
-  { id: 'short_volume_ratio_trend_4w_falling', label: 'Short Vol ↓ 4W' },
+  { id: 'si_declining', label: 'Short interest falling' },
+  { id: 'low_short_float', label: 'Short float < 10%' },
+  { id: 'high_days_to_cover', label: 'Days to cover > 5' },
+  { id: 'short_float_declining', label: 'Short float falling' },
+  { id: 'low_short_volume', label: 'Short volume < 30%' },
+  { id: 'sv_ratio_declining', label: 'Short volume 5D < 20D' },
 ] as const
 
 export const FUND_GROUP_LABELS: Record<string, string> = {
@@ -115,10 +122,11 @@ export const TECH_GROUP_LABELS: Record<string, string> = {
 
 export type TierKey = 'momentum' | 'structure' | 'sentiment'
 
+/** Signals per tier — a tier's score is how many of them pass. */
 export const TIER_MAX_SCORE: Record<TierKey, number> = {
-  momentum: 10,
-  structure: 10,
-  sentiment: 3,
+  momentum: MOMENTUM_INDICATORS.length,
+  structure: STRUCTURE_INDICATORS.length,
+  sentiment: SENTIMENT_INDICATORS.length,
 }
 
 export const TIER_CATALOG: Record<TierKey, readonly { id: string; label: string; group?: string }[]> = {

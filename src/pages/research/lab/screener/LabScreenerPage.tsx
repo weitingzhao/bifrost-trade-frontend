@@ -50,7 +50,7 @@ import {
   type ScreenFilter,
   type SortDir,
   type SortKey,
-} from './labScreenerModel'
+} from '@/utils/sepaScreenModel'
 
 const LEAD =
   "Build and tune a screen against the SEPA wide table. Saved screens are one object with one id — Trade's result face renders the same screen read-only, so the filter vocabulary is defined here and nowhere else."

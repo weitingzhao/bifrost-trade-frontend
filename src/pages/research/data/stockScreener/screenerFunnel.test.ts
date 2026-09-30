@@ -7,6 +7,7 @@ import {
   type DistBucket,
 } from './screenerFunnel'
 import { SCREENER_PRESETS } from './screenerPresets'
+import { STRUCTURE_INDICATORS } from '@/constants/stockScreenerCatalog'
 
 // Invented buckets in the endpoint's shape, not a copy of DEV's.
 const dist: DistBucket[] = [
@@ -61,13 +62,14 @@ describe('FUNNEL_STAGES', () => {
     for (const s of FUNNEL_STAGES) {
       if (s.missing != null) expect(s.missing.length).toBeGreaterThan(40)
     }
-    // Momentum is in this list because the radar answers it, even though the
-    // tier mart behind the other endpoint does not. A stage is dead only when
+    // Structure joined 2026-09-30, when its tier mart turned out to hold every
+    // name the "awaiting 252 days" stub denied. A stage is dead only when
     // every source for it is.
     expect(FUNNEL_STAGES.filter((s) => s.missing == null).map((s) => s.id)).toEqual([
       'trend',
       'growth',
       'momentum',
+      'structure',
       'catalyst',
     ])
   })
@@ -120,25 +122,44 @@ describe('funnelReadings', () => {
 })
 
 describe('SCREENER_PRESETS', () => {
-  it('offers the design’s four, and only greys the ones with no source', () => {
+  it('offers the design’s four, and only greys the ones with no condition', () => {
     expect(SCREENER_PRESETS.map((p) => p.label)).toEqual([
       'SEPA Daily Core',
       'Momentum Radar',
       'Event Radar',
       'Premium seller',
     ])
-    // The correction this file exists to record: an earlier pass called all
-    // four unavailable. Two of them are pages that work today.
-    expect(SCREENER_PRESETS.filter((p) => p.load != null).map((p) => p.id)).toEqual([
+    expect(SCREENER_PRESETS.filter((p) => p.criteria != null).map((p) => p.id)).toEqual([
       'sepa-daily-core',
       'momentum-radar',
     ])
   })
 
-  it('gives every unavailable preset a reason on the row, not a blank', () => {
+  it('sets criteria the funnel carries — never a model’s name list', () => {
+    const chipsOf = (id: string) => new Set(FUNNEL_STAGES.find((st) => st.id === id)?.chips.map((c) => c.id))
     for (const p of SCREENER_PRESETS) {
-      if (p.load == null) expect(p.missing && p.missing.length).toBeGreaterThan(40)
-      else expect(p.missing).toBeNull()
+      if (!p.criteria) {
+        expect(p.note && p.note.length).toBeGreaterThan(40)
+        continue
+      }
+      for (const id of p.criteria.structureAny) expect(chipsOf('structure').has(id)).toBe(true)
+      for (const id of p.criteria.grades) expect(chipsOf('momentum').has(id)).toBe(true)
+      for (const id of p.criteria.tech) expect(chipsOf('trend').has(id)).toBe(true)
+      for (const id of p.criteria.cond) expect(chipsOf('growth').has(id)).toBe(true)
     }
+    const core = SCREENER_PRESETS.find((p) => p.id === 'sepa-daily-core')?.criteria
+    expect(core?.mins.trend).toBe(9)
+  })
+})
+
+describe('live tier stages (2026-09-30)', () => {
+  it('draws Structure from its mart’s own signals and counts it', () => {
+    const st = FUNNEL_STAGES.find((x) => x.id === 'structure')
+    expect(st?.missing).toBeNull()
+    expect(st?.chips.map((c) => c.id)).toEqual(STRUCTURE_INDICATORS.map((c) => c.id))
+  })
+
+  it('grades momentum A+ through D', () => {
+    expect(FUNNEL_STAGES.find((x) => x.id === 'momentum')?.chips.map((c) => c.label)).toEqual(['A+', 'A', 'B', 'C', 'D'])
   })
 })

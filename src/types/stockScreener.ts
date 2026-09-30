@@ -129,10 +129,10 @@ export interface TechnicalFilterResponse {
   limit?: number
 }
 
+/** A name a tier filter kept, with how many of the tier's signals it passes. */
 export interface MomentumFilterSymbol {
   symbol: string
-  momentum_score: number
-  core_pass_count: number
+  score: number
 }
 
 export interface MomentumFilterResponse {
@@ -140,7 +140,10 @@ export interface MomentumFilterResponse {
   error?: string
   include?: string[]
   min_score?: number
+  /** The whole match; `symbols` is capped at `limit`. */
   count?: number
+  truncated?: boolean
+  eval_date?: string | null
   symbols?: MomentumFilterSymbol[]
   limit?: number
 }
@@ -152,8 +155,35 @@ export interface TierFilterResponse {
   include?: string[]
   min_score?: number
   count?: number
-  symbols?: { symbol: string; tier_score: number; core_pass_count: number }[]
+  truncated?: boolean
+  eval_date?: string | null
+  symbols?: MomentumFilterSymbol[]
   limit?: number
+}
+
+/** A tier's per-signal pass counts and signals-passed histogram (api 0.1.8 `tier-stats`). */
+export interface TierStatsResponse {
+  ok: boolean
+  error?: string
+  tier?: string
+  eval_date?: string | null
+  universe_count?: number
+  max_score?: number
+  conditions?: { id: string; pass: number }[]
+  pass_count_distribution?: Record<string, number>
+}
+
+/** The radar's grades on its latest session (api 0.1.8 `momentum-grades`). */
+export interface MomentumGradesResponse {
+  ok: boolean
+  error?: string
+  trade_date?: string | null
+  counts?: Record<string, number>
+  graded?: number
+  grades?: string[]
+  count?: number
+  truncated?: boolean
+  symbols?: string[]
 }
 
 /**
@@ -249,6 +279,8 @@ export interface SymbolsReadinessSnapshotResponse {
 export interface TierFilterState {
   indicators: Set<string>
   minScore: number
+  /** How the picked signals combine: every one (the tier cards) or any one (the funnel's Structure stage). */
+  match: 'all' | 'any'
 }
 
 export interface FilterPreview {

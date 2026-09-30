@@ -10,8 +10,13 @@
  * 1000/1000 against the model store's own columns before this file was
  * written (the model endpoint serves only its top 1000, the wide read serves
  * the whole universe).
+ *
+ * Shared since 2026-09-30: the result face's My screens resolves a saved
+ * screen with the same `screenRows`, so a screen names the same set on both
+ * faces.
  */
 import type { SepaWideRow } from '@/api/research/sepaScreenerWide'
+import type { SavedScreenDefinition } from '@/api/research/savedScreens'
 
 /** [mart column, label] in the design's failure order — display order too. */
 export const TECH_CONDS: readonly [string, string][] = [
@@ -187,4 +192,16 @@ export function sortRows(
     if (y == null) return -1
     return (x > y ? 1 : x < y ? -1 : 0) * sgn
   })
+}
+
+/** A saved screen's definition as the filter `screenRows` runs (min_composite is the slider's 0–100). */
+export function filterOfSavedScreen(d: SavedScreenDefinition): ScreenFilter {
+  return {
+    q: d.q ?? '',
+    paths: [...(d.paths ?? [])],
+    grades: [...(d.grades ?? [])],
+    minScore: d.min_composite ?? 0,
+    tech: [...(d.tech ?? [])],
+    fund: [...(d.fund ?? [])],
+  }
 }

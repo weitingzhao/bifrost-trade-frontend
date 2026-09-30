@@ -11,7 +11,7 @@ import {
   sortRows,
   stageOf,
   vsSma50,
-} from './labScreenerModel'
+} from './sepaScreenModel'
 
 function row(over: Partial<SepaWideRow>): SepaWideRow {
   return {

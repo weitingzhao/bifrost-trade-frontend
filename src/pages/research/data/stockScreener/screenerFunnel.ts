@@ -17,16 +17,16 @@
  *
  * The other five are not, and each is missing for its own reason:
  *
- *   Momentum   countable, but **not** through `momentum-filter`: that reads
- *              `dw_stock.mart_sepa_tier_momentum`, which answers 200 with 0
- *              and a note saying it is awaiting 252+ trading days. The radar
- *              at `/research/momentum/radar` answers today — A+ 2, A 92, and
- *              B and C both at the route's 500 cap. The first pass of this
- *              walk read only the tier mart and called the whole stage dead,
- *              which was wrong, and is the reason a stage's reason has to
- *              name the endpoint rather than say "no data".
- *   Structure  `tier-filter?tier=structure`, the same mart, and here the note
- *              does hold: no second source answers it.
+ *   Momentum   the radar's grade on its **latest session** (`momentum-grades`,
+ *              api 0.1.8 — 2026-09-30). Until then the chips counted
+ *              `/research/momentum/radar` by grade, which across the universe
+ *              returns every session it holds: grade A read 68 names over 31
+ *              sessions where the latest session holds 1.
+ *   Structure  live since 2026-09-30: `tier-filter` had answered a hard-coded
+ *              0 ("awaiting 252+ trading days") and validated an id
+ *              vocabulary no mart carries, while
+ *              `dw_stock.mart_sepa_tier_structure` held every name. The chips
+ *              are its own eight signals now, counted by `tier-stats`.
  *   Quality    `fundamental-filter` works — it returns rows for the growth
  *              conditions — and returns nothing for any of the seven quality
  *              ids. So this is no data for these conditions, not a broken
@@ -48,6 +48,16 @@
  */
 
 import { NARRATIVE_CONDITIONS } from '@/lib/research/narrativeItems'
+import { STRUCTURE_INDICATORS } from '@/constants/stockScreenerCatalog'
+
+/** The Momentum stage's chips: the radar's grades, best first (chip id → grade). */
+export const GRADE_CHIPS: readonly (readonly [string, string])[] = [
+  ['grade_aplus', 'A+'],
+  ['grade_a', 'A'],
+  ['grade_b', 'B'],
+  ['grade_c', 'C'],
+  ['grade_d', 'D'],
+]
 
 export type StageMode = 'min' | 'any' | 'all'
 
@@ -130,33 +140,18 @@ export const FUNNEL_STAGES: readonly FunnelStage[] = [
   {
     id: 'momentum',
     title: 'Momentum',
-    mode: 'grade · any selected',
+    mode: 'grade on the radar’s latest session · any selected',
     kind: 'any',
-    // Live through the radar. The tier mart behind `momentum-filter` is still
-    // accumulating, which is a fact about that mart and not about the grade.
     missing: null,
-    chips: [
-      { id: 'grade_aplus', label: 'A+' },
-      { id: 'grade_a', label: 'A' },
-      { id: 'grade_b', label: 'B' },
-      { id: 'grade_c', label: 'C' },
-    ],
+    chips: GRADE_CHIPS.map(([id, label]) => ({ id, label })),
   },
   {
     id: 'structure',
     title: 'Structure',
-    mode: 'any selected',
+    mode: 'any selected · structure tier',
     kind: 'any',
-    missing:
-      'dw_stock.mart_sepa_tier_structure is awaiting 252+ trading days of data — the same mart family as Momentum, and the same wait.',
-    chips: [
-      { id: 'vcp_contraction_3m', label: 'VCP 3M' },
-      { id: 'bb_squeeze', label: 'BB squeeze' },
-      { id: 'tight_closes_5d', label: 'Tight closes 5D' },
-      { id: 'pocket_pivot_count', label: 'Pocket pivot' },
-      { id: 'realized_vol_contraction', label: 'Vol contraction' },
-      { id: 'rsl_new_high', label: 'RSL new high' },
-    ],
+    missing: null,
+    chips: STRUCTURE_INDICATORS.map(({ id, label }) => ({ id, label })),
   },
   {
     id: 'quality',

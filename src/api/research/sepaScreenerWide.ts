@@ -4,7 +4,7 @@
  * table the authoring face's filter vocabulary is defined against; the
  * `/sepa/model/daily` read serves committed grade/path/iv for its top 1000
  * only, so the universe-wide face reads here and re-applies the dbt case
- * rules (verified against the model store — see labScreenerModel).
+ * rules (verified against the model store — see utils/sepaScreenModel).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'

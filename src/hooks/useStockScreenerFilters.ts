@@ -6,18 +6,21 @@ import {
   fetchTechnicalFilter,
   fetchTierFilter,
 } from '@/api/research/dataReadiness'
-import type { TierKey } from '@/constants/stockScreenerCatalog'
+import { TIER_CATALOG, type TierKey } from '@/constants/stockScreenerCatalog'
 import type { FilterPreview, TierFilterState } from '@/types/stockScreener'
 import { intersectSymbolLists } from '@/utils/stockScreener'
 import { readPageView, usePageViewKey, writePageView } from '@/lib/pageView'
 
 function emptyTierFilters(): Record<TierKey, TierFilterState> {
   return {
-    momentum: { indicators: new Set(), minScore: 0 },
-    structure: { indicators: new Set(), minScore: 0 },
-    sentiment: { indicators: new Set(), minScore: 0 },
+    momentum: { indicators: new Set(), minScore: 0, match: 'all' },
+    structure: { indicators: new Set(), minScore: 0, match: 'all' },
+    sentiment: { indicators: new Set(), minScore: 0, match: 'all' },
   }
 }
+
+/** A tier filter's page can name more than 2000 names (structure "any of two" is ~3,100 on DEV). */
+const TIER_PAGE = 5000
 
 /**
  * The criteria as plain data: what the page keeps as its view (Rev .79, the
@@ -26,13 +29,20 @@ function emptyTierFilters(): Record<TierKey, TierFilterState> {
 export interface ScreenerCriteria {
   cond: string[]
   tech: string[]
-  tiers: Partial<Record<TierKey, { indicators: string[]; minScore: number }>>
+  tiers: Partial<Record<TierKey, { indicators: string[]; minScore: number; match?: 'all' | 'any' }>>
 }
 
 function tiersFrom(c: ScreenerCriteria['tiers'] | undefined): Record<TierKey, TierFilterState> {
   const out = emptyTierFilters()
   for (const [k, v] of Object.entries(c ?? {})) {
-    if (v && k in out) out[k as TierKey] = { indicators: new Set(v.indicators), minScore: v.minScore }
+    if (!v || !(k in out)) continue
+    // A view saved before 2026-09-30 can hold the old signal ids no mart carries: drop them.
+    const valid = new Set(TIER_CATALOG[k as TierKey].map((x) => x.id))
+    out[k as TierKey] = {
+      indicators: new Set(v.indicators.filter((id) => valid.has(id))),
+      minScore: v.minScore,
+      match: v.match === 'any' ? 'any' : 'all',
+    }
   }
   return out
 }
@@ -49,7 +59,10 @@ export function useStockScreenerFilters() {
       cond: [...condFilter],
       tech: [...techCondFilter],
       tiers: Object.fromEntries(
-        Object.entries(tierFilters).map(([k, v]) => [k, { indicators: [...v.indicators], minScore: v.minScore }]),
+        Object.entries(tierFilters).map(([k, v]) => [
+          k,
+          { indicators: [...v.indicators], minScore: v.minScore, match: v.match },
+        ]),
       ),
     }),
     [condFilter, techCondFilter, tierFilters],
@@ -82,13 +95,14 @@ export function useStockScreenerFilters() {
     setFilterError(null)
   }, [])
 
-  const toggleTierIndicator = useCallback((tier: TierKey, id: string) => {
+  /** `match` switches how the tier's picks combine; left out, it stays as it was. */
+  const toggleTierIndicator = useCallback((tier: TierKey, id: string, match?: 'all' | 'any') => {
     setTierFilters((prev) => {
       const cur = prev[tier]
       const next = new Set(cur.indicators)
       if (next.has(id)) next.delete(id)
       else next.add(id)
-      return { ...prev, [tier]: { ...cur, indicators: next } }
+      return { ...prev, [tier]: { ...cur, indicators: next, match: match ?? cur.match } }
     })
     setFilterPreview(null)
     setFilterError(null)
@@ -111,7 +125,7 @@ export function useStockScreenerFilters() {
   }, [])
 
   const clearTierFilter = useCallback((tier: TierKey) => {
-    setTierFilters((prev) => ({ ...prev, [tier]: { indicators: new Set(), minScore: 0 } }))
+    setTierFilters((prev) => ({ ...prev, [tier]: { indicators: new Set(), minScore: 0, match: 'all' } }))
     setFilterPreview(null)
   }, [])
 
@@ -191,9 +205,11 @@ export function useStockScreenerFilters() {
         const res = await fetchMomentumFilter({
           include: f.indicators.size > 0 ? Array.from(f.indicators) : undefined,
           min_score: f.minScore > 0 ? f.minScore : undefined,
-          limit: 2000,
+          match: f.match,
+          limit: TIER_PAGE,
         })
         if (!res.ok) throw new Error(res.error ?? 'Momentum filter failed')
+        if (res.truncated) throw new Error(`Momentum keeps ${res.count} names, more than one page — narrow it`)
         results.push({ label: `M(≥${f.minScore})`, syms: (res.symbols ?? []).map((s) => s.symbol) })
       }
       if (structureActive) {
@@ -202,9 +218,11 @@ export function useStockScreenerFilters() {
           tier: 'structure',
           include: f.indicators.size > 0 ? Array.from(f.indicators) : undefined,
           min_score: f.minScore > 0 ? f.minScore : undefined,
-          limit: 2000,
+          match: f.match,
+          limit: TIER_PAGE,
         })
         if (!res.ok) throw new Error(res.error ?? 'Structure filter failed')
+        if (res.truncated) throw new Error(`Structure keeps ${res.count} names, more than one page — narrow it`)
         results.push({ label: `S(≥${f.minScore})`, syms: (res.symbols ?? []).map((s) => s.symbol) })
       }
       if (sentimentActive) {
@@ -213,9 +231,11 @@ export function useStockScreenerFilters() {
           tier: 'sentiment',
           include: f.indicators.size > 0 ? Array.from(f.indicators) : undefined,
           min_score: f.minScore > 0 ? f.minScore : undefined,
-          limit: 2000,
+          match: f.match,
+          limit: TIER_PAGE,
         })
         if (!res.ok) throw new Error(res.error ?? 'Sentiment filter failed')
+        if (res.truncated) throw new Error(`Sentiment keeps ${res.count} names, more than one page — narrow it`)
         results.push({ label: `Se(≥${f.minScore})`, syms: (res.symbols ?? []).map((s) => s.symbol) })
       }
 

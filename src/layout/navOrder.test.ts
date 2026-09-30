@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import { LIFECYCLE, NAV_ORDERS, navOrder, orderGroups, setNavOrder } from './navOrder'
+import { NAV_GROUPS } from './navConfig'
+import { LAYER_OF_GROUP } from '@/lib/design/layers'
 
-const groups = ['Home', 'Trade', 'Portfolio', 'Risk', 'Review', 'Research'].map((label) => ({ label }))
+// The real groups, not a hand-written list: a list written here kept saying
+// 'Trade' after the menu was renamed Trading (Rev .111), so the tests stayed
+// green while the sidebar lost Trading's numeral, its layer highlight and its
+// place in the order.
+const groups = NAV_GROUPS.map((g) => ({ label: g.label }))
+
+describe('every sidebar group is known by name to the tables keyed on it', () => {
+  it('has a lifecycle numeral, a place in both orders and a layer', () => {
+    for (const { label } of groups) {
+      if (label === 'Home') continue
+      expect(LIFECYCLE[label], label).toBeTypeOf('number')
+      expect(NAV_ORDERS.loop, label).toContain(label)
+      expect(NAV_ORDERS.reach, label).toContain(label)
+      expect(LAYER_OF_GROUP[label], label).toBeTypeOf('string')
+    }
+  })
+})
 
 describe('the sidebar order', () => {
   it('rests on the loop: Home, then the lifecycle chain', () => {
@@ -11,7 +29,7 @@ describe('the sidebar order', () => {
       'Home',
       'Research',
       'Risk',
-      'Trade',
+      'Trading',
       'Portfolio',
       'Review',
     ])
@@ -20,7 +38,7 @@ describe('the sidebar order', () => {
   it('reach puts what is touched most closest, lifecycle positions unchanged', () => {
     expect(orderGroups(groups, 'reach').map((g) => g.label)).toEqual([
       'Home',
-      'Trade',
+      'Trading',
       'Portfolio',
       'Research',
       'Risk',

@@ -14,8 +14,8 @@ import { STORAGE_KEYS } from '@/constants/storage'
 export type NavOrder = 'loop' | 'reach'
 
 export const NAV_ORDERS: Record<NavOrder, readonly string[]> = {
-  loop: ['Research', 'Risk', 'Trade', 'Portfolio', 'Review'],
-  reach: ['Trade', 'Portfolio', 'Research', 'Risk', 'Review'],
+  loop: ['Research', 'Risk', 'Trading', 'Portfolio', 'Review'],
+  reach: ['Trading', 'Portfolio', 'Research', 'Risk', 'Review'],
 }
 
 /**
@@ -26,7 +26,7 @@ export const NAV_ORDERS: Record<NavOrder, readonly string[]> = {
 export const LIFECYCLE: Record<string, number> = {
   Research: 1,
   Risk: 2,
-  Trade: 3,
+  Trading: 3,
   Portfolio: 4,
   Review: 5,
 }

@@ -42,7 +42,7 @@ export const LAYER_OF_GROUP: Readonly<Record<string, LayerId>> = {
   Home: 'home',
   Research: 'analysis',
   Risk: 'risk',
-  Trade: 'execution',
+  Trading: 'execution',
   Portfolio: 'result',
   Review: 'review',
 }

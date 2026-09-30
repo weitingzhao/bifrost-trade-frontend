@@ -101,7 +101,7 @@ export const HOME_LAYERS: Record<HomeLayer, { label: string; ink: string }> = {
   // The design gives each layer its own hue. The five hexes are not in this
   // app's palette, so each maps to the token that already means that layer
   // here — no new colours enter the system for one page.
-  trade: { label: 'Trade', ink: 'text-primary' },
+  trade: { label: 'Trading', ink: 'text-primary' },
   portfolio: { label: 'Portfolio', ink: 'text-secondary-foreground' },
   research: { label: 'Research', ink: 'text-[var(--color-entity-option)]' },
   risk: { label: 'Risk', ink: 'text-warning' },

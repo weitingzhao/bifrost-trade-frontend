@@ -84,7 +84,7 @@ describe('a page whose path and layer disagree', () => {
       'Research',
       'Review',
       'Risk',
-      'Trade',
+      'Trading',
     ])
   })
 })

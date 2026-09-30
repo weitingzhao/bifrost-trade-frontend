@@ -18,7 +18,7 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { STORAGE_KEYS } from '@/constants/storage'
-import { PAGE_ROUTES } from '@/layout/routeRegistry'
+import { PAGE_ROUTES, REDIRECT_ROUTES, routeFor } from '@/layout/routeRegistry'
 
 const STORAGE_KEY = 'bifrost.pins'
 const EVENT = 'bifrost:pins'
@@ -47,10 +47,44 @@ export function readPins(): Pin[] {
     if (!Array.isArray(raw)) return []
     return raw
       .filter((p): p is Pin => typeof p === 'object' && p != null && typeof (p as Pin).to === 'string')
-      .map((p) => ({ to: p.to, label: p.label || p.to }))
+      .map((p) => forwardPin({ to: p.to, label: p.label || p.to }))
   } catch {
     return []
   }
+}
+
+/**
+ * A pin saved before a page moved follows it. Renames and merges leave the old
+ * address as a redirect (`/review/fit` → `/review/trade`, `/portfolio/outcome`
+ * → Record · By source), and a pin to one read stale under its old name while
+ * the click still worked. So the pin is rewritten to where the redirect lands
+ * and, for a page, takes that page's name; an instance pin (`/trade/159`) keeps
+ * its own label. A redirect whose target cannot carry the id is left alone —
+ * the router forwards it (`/strategy/instances/:instanceId`).
+ */
+export function forwardPin(pin: Pin): Pin {
+  let cur = pin
+  for (let hop = 0; hop < 3; hop += 1) {
+    const cut = cur.to.search(/[?#]/)
+    const path = cut < 0 ? cur.to : cur.to.slice(0, cut)
+    const rest = cut < 0 ? '' : cur.to.slice(cut)
+    const entry = REDIRECT_ROUTES.find((r) => routeMatches(r.path, path))
+    if (!entry) return cur
+    const names = entry.path.split('/')
+    const segs = path.split('/')
+    const params: Record<string, string> = {}
+    names.forEach((n, i) => {
+      if (n.startsWith(':')) params[n.slice(1)] = segs[i]
+    })
+    const carriesId = Object.keys(params).length > 0
+    if (carriesId && !Object.keys(params).every((k) => entry.redirect.includes(`:${k}`))) return cur
+    let to = entry.redirect
+    for (const [k, v] of Object.entries(params)) to = to.replace(`:${k}`, v)
+    if (rest && !/[?#]/.test(to)) to += rest
+    const target = routeFor(to.split(/[?#]/)[0])
+    cur = { to, label: carriesId ? cur.label : (target?.label ?? cur.label) }
+  }
+  return cur
 }
 
 /**

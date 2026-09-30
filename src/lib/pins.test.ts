@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { memoryStorage } from '@/test/memoryStorage'
-import { PIN_MAX, SHELF_GROUP, isPinned, isStalePin, readPins, togglePin } from './pins'
+import { PIN_MAX, SHELF_GROUP, forwardPin, isPinned, isStalePin, readPins, togglePin } from './pins'
 
 beforeEach(() => {
   vi.stubGlobal('localStorage', memoryStorage())
@@ -76,5 +76,24 @@ describe('the shelf opens itself', () => {
     togglePin(pin(2))
     const open = JSON.parse(localStorage.getItem('bifrost-sidebar-open-groups') as string) as string[]
     expect(open.filter((g) => g === SHELF_GROUP)).toHaveLength(1)
+  })
+})
+
+describe('a pin follows its page when the page moves', () => {
+  it('rewrites a renamed page to its new address and name', () => {
+    expect(forwardPin({ to: '/review/fit', label: 'Single trade' })).toEqual({ to: '/review/trade', label: 'Trade review' })
+    expect(forwardPin({ to: '/portfolio/outcome', label: 'Outcome' })).toEqual({
+      to: '/review/playbook?tab=record&cut=source',
+      label: 'Playbook',
+    })
+  })
+
+  it('carries an id through and keeps an instance pin’s own label', () => {
+    expect(forwardPin({ to: '/instance/159', label: '#159 · NVDA' })).toEqual({ to: '/trade/159', label: '#159 · NVDA' })
+  })
+
+  it('leaves a live page and an id the redirect cannot carry alone', () => {
+    expect(forwardPin({ to: '/review/habits', label: 'Habits' })).toEqual({ to: '/review/habits', label: 'Habits' })
+    expect(forwardPin({ to: '/strategy/instances/7', label: '#7' })).toEqual({ to: '/strategy/instances/7', label: '#7' })
   })
 })

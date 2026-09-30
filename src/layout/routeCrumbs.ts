@@ -22,7 +22,6 @@ export const MARKET = ['Home'] as const
  */
 export const MARKET_RAIL = ['Market'] as const
 export const PORTFOLIO = ['Portfolio'] as const
-export const TRADE = ['Trade'] as const
 /**
  * Flattened to one level: Desk is no longer a row inside Trade — it *is*
  * Trade (§5a.1), so its six pages hang off the layer directly.

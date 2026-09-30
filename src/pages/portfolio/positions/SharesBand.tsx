@@ -38,6 +38,7 @@ import {
 } from '@/utils/sharesBook'
 import type { CoverRow } from '@/utils/bookVsBase'
 import type { LivePositionRow } from '@/types/positions'
+import type { InstrumentClass } from '@/types/monitor'
 import type { DailyBenchmark, QuoteItem } from '@/types/market'
 
 /** A row's bucket as the store spells the class. */
@@ -84,9 +85,23 @@ export function SharesBand({
   const [writeError, setWriteError] = useState<string | null>(null)
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
 
+  // A registration shows at once: the monitor's status is cached for about 15 s
+  // server-side, and the select must not snap back to the old type meanwhile.
+  // Dropped when the write fails; once the status agrees it is a no-op.
+  const [pendingClass, setPendingClass] = useState<Record<string, InstrumentClass | null>>({})
+  const shown = useMemo(
+    () =>
+      Object.keys(pendingClass).length === 0
+        ? stocks
+        : stocks.map((p) => {
+            const k = p.contract_key ?? ''
+            return k in pendingClass ? { ...p, instrument_class: pendingClass[k] } : p
+          }),
+    [stocks, pendingClass],
+  )
   const all = useMemo(
-    () => buildShareRows({ stocks, quotesBySymbol, benchBySymbol, cover }),
-    [stocks, quotesBySymbol, benchBySymbol, cover],
+    () => buildShareRows({ stocks: shown, quotesBySymbol, benchBySymbol, cover }),
+    [shown, quotesBySymbol, benchBySymbol, cover],
   )
   const q = filterSymbol.trim().toUpperCase()
   const rows = all.filter((r) => (bucket === 'all' || r.bucket === bucket) && (!q || r.symbol.startsWith(q)))
@@ -114,10 +129,13 @@ export function SharesBand({
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.portfolio.positionCategories })
     void qc.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })
   }
-  const write = async (op: () => Promise<{ ok: boolean; error?: string }>) => {
+  const write = async (op: () => Promise<{ ok: boolean; error?: string }>, onFail?: () => void) => {
     setWriteError(null)
     const r = await op().catch((e: Error) => ({ ok: false, error: e.message }))
-    if (!r.ok) setWriteError(r.error ?? 'The category store refused the write.')
+    if (!r.ok) {
+      setWriteError(r.error ?? 'The store refused the write.')
+      onFail?.()
+    }
     refresh()
   }
   const retag = (r: ShareRow, name: string) => {
@@ -127,7 +145,17 @@ export function SharesBand({
 
   const register = (r: ShareRow, cls: string) => {
     const next = cls === 'stock' || cls === 'fixed_income' || cls === 'cash_like' ? cls : null
-    void write(() => setInstrumentClass(r.contractKey || r.symbol, next))
+    const key = r.contractKey || r.symbol
+    setPendingClass((m) => ({ ...m, [key]: next }))
+    void write(
+      () => setInstrumentClass(key, next),
+      () =>
+        setPendingClass((m) => {
+          const rest = { ...m }
+          delete rest[key]
+          return rest
+        }),
+    )
   }
   const unregistered = new Set(all.filter((r) => !r.registered).map((r) => r.symbol)).size
 

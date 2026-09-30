@@ -31,7 +31,8 @@ import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
 import { useOptionLiveBasis } from '@/hooks/useOptionLiveBasis'
 import { useQuotesMap } from '@/hooks/useQuoteStream'
 import { accountTag } from '@/utils/accountTag'
-import { bookLiveTotals, buildBookLiveRows, etDate, stockBookBucket, type BookLiveRow, type BookLiveTotals } from '@/utils/bookLive'
+import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveRow, type BookLiveTotals } from '@/utils/bookLive'
+import { equityDeltaOf, noEquityDeltaKeys } from '@/utils/equityDelta'
 import {
   extractOptPositionRows,
   mergeQuotesIntoSymbolMap,
@@ -145,17 +146,7 @@ export function useBookLive(open: boolean): BookLive {
   const modelStamp = models.map((m) => m.dataUpdatedAt).join(',')
   // Rev .114: the Δ is stocks + options. A bond or T-bill ETF carries no equity
   // delta, so its shares leave the sum (an option written on it stays).
-  const noEquityDelta = useMemo(() => {
-    const out = new Set<string>()
-    for (const a of accounts) {
-      for (const p of a.positions ?? []) {
-        if ((p.secType ?? '') !== 'STK') continue
-        const b = stockBookBucket(p.category)
-        if (b === 'fi' || b === 'cash') out.add(`${a.account_id ?? ''}|${(p.symbol ?? '').trim().toUpperCase()}`)
-      }
-    }
-    return out
-  }, [accounts])
+  const noEquityDelta = useMemo(() => noEquityDeltaKeys(accounts), [accounts])
   const { modelDelta, modelDegraded, modelDeltaByAccount } = useMemo(() => {
     let sum: number | null = null
     let degraded = 0
@@ -163,10 +154,8 @@ export function useBookLive(open: boolean): BookLive {
     models.forEach((m, i) => {
       for (const u of m.data?.per_underlying ?? []) {
         if (u.greeks?.degraded) degraded += 1
-        const raw = u.greeks?.delta
-        if (raw != null && Number.isFinite(raw)) {
-          const shares = noEquityDelta.has(`${accountIds[i]}|${u.symbol.trim().toUpperCase()}`) ? (u.stock_qty ?? 0) : 0
-          const d = raw - shares
+        const d = equityDeltaOf(u, accountIds[i], noEquityDelta).delta
+        if (d != null && Number.isFinite(d)) {
           sum = (sum ?? 0) + d
           byAccount[accountIds[i]] = (byAccount[accountIds[i]] ?? 0) + d
         }

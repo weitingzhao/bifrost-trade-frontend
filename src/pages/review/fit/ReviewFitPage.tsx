@@ -273,8 +273,12 @@ export default function ReviewFitPage() {
             </div>
           ) : null}
           <InstanceEconomics inst={trade} markPath={path} pathLoading={pathLoading} today={today} />
-          <SectionHead note="What a P&L number cannot separate on its own.">The two gaps</SectionHead>
-          <ReviewGaps tier={false} />
+          {/* §17.8: a band folds what follows it up to the next band, so this one
+              is boxed with its own body — the rest of the page is not its section. */}
+          <div className="space-y-3">
+            <SectionHead note="What a P&L number cannot separate on its own.">The two gaps</SectionHead>
+            <ReviewGaps tier={false} />
+          </div>
 
           <div className="flex flex-wrap items-start gap-3">
             <div className="flex min-w-0 flex-[999_1_40rem] flex-col gap-3">

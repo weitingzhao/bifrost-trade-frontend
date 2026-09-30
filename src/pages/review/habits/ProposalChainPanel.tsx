@@ -33,8 +33,9 @@ export function ProposalChainPanel({
   pathsLoading: boolean
 }) {
   const chain = proposalChain(habits, buildProposals(habits, trades, paths))
+  // §17.8: boxed, so the band folds the chain and not the page's Boundary line after it.
   return (
-    <>
+    <div className="space-y-3">
       <SectionHead note="Each link needs the one before it — and where it breaks.">The chain</SectionHead>
       <section className={positionsUi.panel} aria-label="The chain">
         <header className={positionsUi.panelHead}>
@@ -78,6 +79,6 @@ export function ProposalChainPanel({
             : 'Two stores close the rest: a plan linked to a position turns the remaining tendencies into costs, and a rules store gives every diff its missing half.'}
         </p>
       </section>
-    </>
+    </div>
   )
 }

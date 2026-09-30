@@ -2,11 +2,11 @@
  * The user centre, in the sidebar foot (design Rev .54, `_Part UserCenter`).
  *
  * One row: the avatar with a summary lamp in its corner · Operator · how many
- * of the trader's questions are degraded — and one square on the right, the
+ * readings are degraded (or all normal) — and one square on the right, the
  * bottom-toolbar switch. The System gear that used to sit beside it retired
  * with the design (Owner 2026-09-25): the menu's first row already is Enter
  * System / Back to Trade, and two doors to one place is one too many. The
- * avatar opens a glass card upward: who is operating over which accounts,
+ * row opens a glass card upward (Rev .118): what is degraded, who is operating over which accounts,
  * Appearance, and the shell's doors — including the feedback pair the Owner
  * added 2026-09-26 (Send feedback · My reports with its unread count), the
  * menu's door for people who don't use ⌘K. The "Can I trade" card retired to
@@ -23,6 +23,10 @@
  *   shell carries no account scope (each page owns its own).
  * - "Design adoption" stands where the design's "Design docs" row points at
  *   /docs/index — a design-only page this app deliberately has no copy of.
+ * - The degraded list (Rev .118) is `degradedItems` over the same domain rows
+ *   System Status draws — the design's registry `DEGRADED` made real. A red
+ *   domain is listed too (a stopped link is at least degraded); the block
+ *   stays amber, as the design sets it.
  */
 import { Link, useLocation } from 'react-router-dom'
 import { ClipboardList, ExternalLink, Flag, Keyboard, Scale, SlidersHorizontal } from 'lucide-react'
@@ -43,7 +47,7 @@ import { useDisplay, type TextSize } from '@/lib/display'
 import { SwitchTrack } from '@/components/ui/SwitchTrack'
 import { useShellPopover } from '@/lib/shellPopover'
 import { cn } from '@/lib/utils'
-import { worstLamp } from '@/utils/systemStanding'
+import { degradedItems, worstLamp, type DegradedItem } from '@/utils/systemStanding'
 import { toggleToolbar, useToolbarShown } from './bottomLane'
 import { isSystemRoute } from './routeRegistry'
 
@@ -106,8 +110,45 @@ function useDoor() {
     : { to: '/system/status', label: 'Enter System', Icon: GEAR, inSystem }
 }
 
+/**
+ * What is degraded, what it costs, and where it shows (Rev .118) — the list
+ * the foot's count names. Amber only: degraded is not down.
+ */
+function DegradedBlock({ items, onClose }: { items: readonly DegradedItem[]; onClose: () => void }) {
+  const domains = [...new Set(items.map((d) => d.domain))].join(' · ')
+  return (
+    <div className="mx-2 mb-2 flex flex-col gap-0.5 rounded-lg bg-[color-mix(in_srgb,var(--color-lamp-yellow)_10%,transparent)] px-1 pt-1.5 pb-1">
+      <div className="flex items-center gap-1.5 px-1.5 pb-0.5">
+        <span aria-hidden className="size-[7px] flex-none rounded-full bg-lamp-yellow" />
+        <span className="text-dense-label font-semibold text-[var(--sk-warn)]">{items.length} degraded</span>
+        <span className="ml-auto truncate text-dense-micro text-[var(--sk-mute2)]">{domains}</span>
+      </div>
+      {items.map((d) => (
+        <Link
+          key={d.key}
+          to={d.to}
+          onClick={onClose}
+          title={`${d.domain} · opens ${d.label}`}
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-2 gap-y-0.5 rounded-md px-1.5 py-[5px] no-underline hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]"
+        >
+          <span className="text-dense-label text-foreground">{d.what}</span>
+          <span className="whitespace-nowrap text-dense-caption text-[var(--sk-accent)]">{d.label} →</span>
+          <span className="col-span-2 text-dense-caption text-pretty text-[var(--sk-mute2)]">{d.impact}</span>
+        </Link>
+      ))}
+      <Link
+        to="/system/status"
+        onClick={onClose}
+        className="mx-1.5 mt-0.5 self-start text-dense-caption text-[var(--sk-accent)] no-underline hover:underline"
+      >
+        Every service · System Status →
+      </Link>
+    </div>
+  )
+}
+
 /** The card: mounted only while open, so the live quote reading lives only as long as it does. */
-function UserCard({ onClose }: { onClose: () => void }) {
+function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readonly DegradedItem[] }) {
   const { mode, theme, choose } = useThemeMode()
   const glass = useGlass()
   const display = useDisplay()
@@ -155,6 +196,8 @@ function UserCard({ onClose }: { onClose: () => void }) {
           </div>
         </div>
       </div>
+
+      {degraded.length > 0 ? <DegradedBlock items={degraded} onClose={onClose} /> : null}
 
       {/* The "Can I trade" card left this menu (Owner 2026-09-26, Rev .97):
           three rows written here could contradict the top bar's own live
@@ -294,54 +337,76 @@ export function SidebarUserCenter() {
   const summary = useSystemDomains({ live: false })
   const lamp = worstLamp(summary)
   // Amber and red only: a reading still loading, or none at all, is unknown —
-  // grey, never a fault (§11.3.1).
-  const degraded = summary.filter((d) => d.lamp === 'yellow' || d.lamp === 'red').length
+  // grey, never a fault (§11.3.1). The count is the list's length (Rev .118).
+  const items = degradedItems(summary)
+  const degraded = items.length
   const door = useDoor()
   const toolbarShown = useToolbarShown()
-  const footLine = [door.inSystem ? 'in System' : null, degraded > 0 ? `${degraded} degraded` : null]
-    .filter(Boolean)
-    .join(' · ')
+  // "all normal" only when every reading is in and green — unknown is not normal.
+  const health = degraded > 0 ? `${degraded} degraded` : lamp === 'green' ? 'all normal' : null
+  const footLine = [door.inSystem ? 'in System' : null, health].filter(Boolean).join(' · ')
+  const healthTitle =
+    degraded > 0
+      ? `${items.map((d) => d.what).join(' · ')} — open the user centre for where`
+      : lamp === 'green'
+        ? 'All services normal'
+        : 'Not every service has answered yet'
 
-  const avatar = (
-    <PopoverTrigger asChild>
-      <button
-        type="button"
-        className={cn(AVATAR, 'size-[26px] cursor-pointer text-[10.5px] hover:border-[color-mix(in_srgb,var(--sk-accent)_55%,transparent)]')}
-        title={`Account, appearance & system — can I trade: ${summary.map((d) => `${d.name} ${d.state}`).join(' · ')}. Market data is read when you open this.`}
-        aria-label="User menu"
-      >
-        OP
-        <span
-          aria-hidden
-          className={cn('absolute -right-0.5 -bottom-0.5 size-2 rounded-full ring-2 ring-[var(--sidebar)]', LAMP_BG[lamp])}
-        />
-      </button>
-    </PopoverTrigger>
+  // The avatar's face and its lamp; the trigger around it is the rail's
+  // avatar when collapsed, and the whole row when open (Rev .118: the foot
+  // opens the user centre).
+  const face = (size: string) => (
+    <span className={cn(AVATAR, size)}>
+      OP
+      <span
+        aria-hidden
+        className={cn('absolute -right-0.5 -bottom-0.5 size-2 rounded-full ring-2 ring-[var(--sidebar)]', LAMP_BG[lamp])}
+      />
+    </span>
   )
+  const triggerTitle = `Account, appearance & system — ${healthTitle}`
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       {collapsed ? (
-        <div className="flex justify-center py-1.5">{avatar}</div>
+        <div className="flex justify-center py-1.5">
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              title={triggerTitle}
+              aria-label="User menu"
+              className="cursor-pointer rounded-full border-0 bg-transparent p-0 [&>span]:hover:border-[color-mix(in_srgb,var(--sk-accent)_55%,transparent)]"
+            >
+              {face('size-[26px] text-[10.5px]')}
+            </button>
+          </PopoverTrigger>
+        </div>
       ) : (
         <div className="flex items-center gap-1 px-1.5 pt-0.5 pb-2">
-          <span className="flex h-[38px] min-w-0 flex-1 items-center gap-2 px-1.5">
-            {avatar}
-            {/* Two lines, as the design sets them: who, then where and what is degraded. */}
-            <span className="flex min-w-0 flex-col leading-tight">
-              <span className="text-dense-label font-semibold whitespace-nowrap text-foreground">Operator</span>
-              {footLine ? (
-                <span
-                  className={cn(
-                    'font-mono text-dense-caption whitespace-nowrap',
-                    degraded > 0 ? 'text-[var(--color-lamp-yellow)]' : 'text-muted-foreground',
-                  )}
-                >
-                  {footLine}
-                </span>
-              ) : null}
-            </span>
-          </span>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              title={triggerTitle}
+              aria-label="User menu"
+              className="flex h-[38px] min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-1.5 text-left hover:bg-sidebar-accent"
+            >
+              {face('size-[26px] text-[10.5px]')}
+              {/* Two lines, as the design sets them: who, then where and what is degraded. */}
+              <span className="flex min-w-0 flex-col leading-tight">
+                <span className="text-dense-label font-semibold whitespace-nowrap text-foreground">Operator</span>
+                {footLine ? (
+                  <span
+                    className={cn(
+                      'font-mono text-dense-caption whitespace-nowrap',
+                      degraded > 0 ? 'text-[var(--color-lamp-yellow)]' : 'text-muted-foreground',
+                    )}
+                  >
+                    {footLine}
+                  </span>
+                ) : null}
+              </span>
+            </button>
+          </PopoverTrigger>
           {/* The System gear retired here (Owner 2026-09-25): the menu's
               first row already is Enter System / Back to Trade. */}
           {/* The bottom toolbar floats over the page, so it can cover the last
@@ -366,13 +431,14 @@ export function SidebarUserCenter() {
         align="start"
         sideOffset={8}
         className={cn(
-          'w-[300px] overflow-hidden rounded-xl p-0',
+          // Capped as the design's (Rev .118): a long degraded list scrolls, it never runs off the screen.
+          'max-h-[calc(100vh-72px)] w-[300px] overflow-y-auto rounded-xl p-0',
           'border-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] bg-[color-mix(in_srgb,var(--sk-raised)_82%,transparent)]',
           'backdrop-blur-[16px] backdrop-saturate-[1.4]',
           'shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_7%,transparent),0_24px_60px_-16px_rgb(0_0_0/0.55)]',
         )}
       >
-        <UserCard onClose={() => setOpen(false)} />
+        <UserCard onClose={() => setOpen(false)} degraded={items} />
       </PopoverContent>
     </Popover>
   )

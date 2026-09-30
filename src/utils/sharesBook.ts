@@ -149,6 +149,23 @@ export function sharesTotal(rows: readonly ShareRow[]): ShareGroup {
   return groupOf('total', 'Shares total', [...rows])
 }
 
+/** Rev .119: the type is inferred until an instrument class is stored — said wherever the type shows. */
+export const TYPE_INFERRED = 'Inferred from category until the instrument class is stored'
+
+/**
+ * Rev .119: an unrealized percentage past ±999% reads as a bound. Calls sold
+ * against the shares lower the broker's average cost, so the ratio outgrows
+ * any sense; the title keeps the exact figure and says why.
+ */
+export function unrealizedPctText(pct: number | null): { text: string; title?: string } {
+  if (pct == null || !Number.isFinite(pct)) return { text: '—' }
+  if (Math.abs(pct) < 1000) return { text: `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%` }
+  return {
+    text: pct > 0 ? '>+999%' : '<−999%',
+    title: `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}% — average cost is lowered by premium from calls sold against the shares`,
+  }
+}
+
 /**
  * Trailing-twelve-month distribution yield: the cash dividends that went ex in
  * the last 365 days over today's mark. Fixed-income and T-bill ETFs pay

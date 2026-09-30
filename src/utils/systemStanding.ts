@@ -37,6 +37,12 @@ export interface DomainDetail {
   text: string
   /** The Ops Console view that owns this line, when it is not the row's own. */
   ops?: { view: string; label: string }
+  /**
+   * This line as the user centre lists it (Rev .118): what is degraded, what it
+   * costs the reader, and the page where it shows when that is not the row's
+   * own. Only amber lines carry it.
+   */
+  degraded?: { what: string; impact: string; to?: string; label?: string }
 }
 
 export interface DomainStanding {
@@ -65,6 +71,8 @@ const BLOCK_TEXT: Record<string, string> = {
   daemon_not_alive: 'the daemon is not running',
 }
 
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
 export function blockText(reason: string): string {
   return BLOCK_TEXT[reason] ?? reason.replace(/_/g, ' ')
 }
@@ -90,7 +98,11 @@ export function tradingStanding(status: StatusResponse | undefined): DomainStand
   const reasons = [...new Set([...(status.health?.block_reasons ?? []), ...(status.daemon?.block_reasons ?? [])])]
   const alive = hb?.daemon_alive === true
   const ibConnected = hb?.ib_connected === true
-  const detail: DomainDetail[] = reasons.map((r) => ({ tone: 'warn', text: blockText(r) }))
+  const detail: DomainDetail[] = reasons.map((r) => ({
+    tone: 'warn',
+    text: blockText(r),
+    degraded: { what: sentence(blockText(r)), impact: 'Positions still read; a new position does not go out.' },
+  }))
   if (!alive) {
     return {
       ...base,
@@ -210,6 +222,12 @@ export function watchlistDataLine(
     tone: 'warn',
     text: `Watchlist market data did not fully land: ${failed.length || 'the'} plugin check${failed.length === 1 ? '' : 's'} fail${over}${which ? ` — ${which}` : ''}.`,
     ops: MASSIVE,
+    degraded: {
+      what: 'Watchlist market data short',
+      impact: `${failed.length || 'The'} plugin check${failed.length === 1 ? '' : 's'} fail${which ? ` — ${which}` : ''}; readings on those names rest on what did land.`,
+      to: '/system/status',
+      label: 'System Status',
+    },
   }
 }
 
@@ -274,6 +292,10 @@ export function nightlyStanding(
           f.age_hours == null
             ? `${f.label} is ${f.status} — readings grounded in it carry the amber asof.`
             : `${f.label} is ${f.age_hours.toFixed(1)}h old — readings grounded in it carry the amber asof.`,
+        degraded: {
+          what: f.age_hours == null ? `${f.label} lens ${f.status}` : `${f.label} lens ${f.age_hours.toFixed(1)}h old`,
+          impact: 'Readings grounded in it carry an amber asof until tonight’s run lands.',
+        },
       })),
       ...unjudged,
       ...extra,
@@ -294,4 +316,45 @@ export function worstLamp(domains: readonly DomainStanding[]): DomainLamp {
   if (domains.some((d) => d.lamp === 'yellow')) return 'yellow'
   if (domains.every((d) => d.lamp === 'green')) return 'green'
   return 'gray'
+}
+
+/** One degraded reading as the sidebar foot counts it and the user centre lists it (Rev .118). */
+export interface DegradedItem {
+  key: string
+  what: string
+  /** The System Status domain that carries it. */
+  domain: string
+  impact: string
+  to: string
+  label: string
+}
+
+/**
+ * The degraded list — read off the same domain rows System Status draws, never
+ * written separately. An amber or red domain lists each amber detail line it
+ * carries; one with none (the daemon down, the IB link down with no monitor
+ * reason) is listed as itself, in its own state and sentence.
+ */
+export function degradedItems(domains: readonly DomainStanding[]): DegradedItem[] {
+  const out: DegradedItem[] = []
+  for (const d of domains) {
+    if (d.lamp !== 'yellow' && d.lamp !== 'red') continue
+    const label = d.toLabel.replace(/\s*→$/, '')
+    const named = d.detail.filter((x) => x.tone === 'warn' && x.degraded)
+    if (named.length === 0) {
+      out.push({ key: d.key, what: `${d.name} ${d.state}`, domain: d.name, impact: d.why, to: d.to, label })
+      continue
+    }
+    named.forEach((x, i) =>
+      out.push({
+        key: `${d.key}:${i}`,
+        what: x.degraded!.what,
+        domain: d.name,
+        impact: x.degraded!.impact,
+        to: x.degraded!.to ?? d.to,
+        label: x.degraded!.label ?? label,
+      }),
+    )
+  }
+  return out
 }

@@ -41,6 +41,7 @@ import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { RISK_CONCENTRATION_FLOOR, RISK_UNRECORDED } from '@/utils/riskExposure'
+import { EQUITY_DELTA_LABEL, EQUITY_DELTA_TITLE } from '@/utils/equityDelta'
 
 const PAGE_LEAD =
   'Net book exposure, β-weighted to SPY, and what a spot shock costs it — pick a stress column to see who pays. What a position is worth at that price, and what backs it, is Backing & Model’s.'
@@ -233,7 +234,8 @@ export default function RiskPortfolioPage() {
               under them. Each keeps its sub-line, link and state ink. */}
           <HeroRow label="The book's exposure">
             <HeroCard
-              label="β-wtd Δ$ · SPY-eq"
+              label={`β-wtd Δ$ · SPY-eq · ${EQUITY_DELTA_LABEL}`}
+              title={EQUITY_DELTA_TITLE}
               value={totals.withBetaDelta > 0 ? fmtSignedUsd0(totals.betaDeltaDollars) : '—'}
               // An exposure, not a gain: ink when long, the loss ink only when
               // the book is net short (the design's bdColor).

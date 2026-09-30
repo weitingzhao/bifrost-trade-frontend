@@ -10,6 +10,7 @@
  * the correlation matrix are Research's (RS2, computed on read), and Γ / Θ /
  * vega are the vendor legs the Positions page already prices.
  */
+import { equityDeltaOf, noEquityDeltaKeys } from '@/utils/equityDelta'
 import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants/queryKeys'
@@ -58,16 +59,19 @@ export function useRiskExposure(accountFilter: string) {
   const modelStamp = modelQueries.map((q) => q.dataUpdatedAt).join(',')
   const scopeKey = scoped.join(',')
 
+  // Rev .119: stocks + options — a fixed-income or cash-like holding's shares leave the Δ (§5.1.4b).
+  const noEquity = useMemo(() => noEquityDeltaKeys(status?.portfolio?.accounts ?? []), [status?.portfolio?.accounts])
   const model = useMemo<UnderlyingModelRow[]>(() => {
     const by = new Map<string, UnderlyingModelRow>()
-    for (const q of modelQueries) {
+    modelQueries.forEach((q, qi) => {
       for (const u of q.data?.per_underlying ?? []) {
         const symbol = (u.symbol ?? '').trim().toUpperCase()
         if (!symbol) continue
         const g = u.greeks ?? {}
         const prev = by.get(symbol)
-        const dd = g.delta_dollars ?? null
-        const ds = g.delta ?? null
+        const eq = equityDeltaOf(u, scoped[qi] ?? '', noEquity)
+        const dd = eq.dollars
+        const ds = eq.delta
         by.set(symbol, {
           symbol,
           spot: u.spot ?? prev?.spot ?? null,
@@ -77,10 +81,10 @@ export function useRiskExposure(accountFilter: string) {
           reason: g.reason ?? prev?.reason ?? null,
         })
       }
-    }
+    })
     return [...by.values()]
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelStamp, scopeKey])
+  }, [modelStamp, scopeKey, noEquity])
 
   const symbols = useMemo(() => model.map((m) => m.symbol).sort(), [model])
 

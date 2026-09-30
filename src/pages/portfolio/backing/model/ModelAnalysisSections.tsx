@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import type { ModelAnalysisResponse } from '@/types/modelAnalysis'
 import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { EQUITY_DELTA_LABEL, EQUITY_DELTA_TITLE, equityDeltaRollup, noEquityDeltaKeys } from '@/utils/equityDelta'
 import { Badge } from '@/components/ui/badge'
 import {
   CollapsibleChevron,
@@ -296,6 +298,12 @@ export function ModelAnalysisSummaryStrip({ data }: SummaryProps) {
   // Core can answer with either container missing; every field then prints as —.
   const rollups: Partial<ModelAnalysisResponse['account_rollups']> = data.account_rollups ?? {}
   const summary: ModelAnalysisResponse['account_summary'] = data.account_summary ?? {}
+  // Rev .119 (§5.1.4b): Δ is stocks + options — the model's figure less fixed-income and cash-like shares.
+  const status = useMonitorStatus().data
+  const eq = equityDeltaRollup(data.per_underlying ?? [], data.account_id ?? '', noEquityDeltaKeys(status?.portfolio?.accounts ?? []), {
+    delta: rollups.total_delta ?? null,
+    dollars: rollups.total_delta_dollars ?? null,
+  })
 
   const items = [
     { label: 'Net Liquidation', value: fmtUsd(summary.net_liquidation) },
@@ -306,14 +314,14 @@ export function ModelAnalysisSummaryStrip({ data }: SummaryProps) {
       value: rollups.car_has_unbounded ? 'Unbounded' : fmtUsd(rollups.total_car),
     },
     { label: 'Wtd Annual Return', value: fmtRatioAsPct(rollups.weighted_annualized_return) },
-    { label: 'Portfolio Delta', value: fmtModelDelta(rollups.total_delta) },
-    { label: 'Delta $', value: fmtUsd(rollups.total_delta_dollars) },
+    { label: `Δ · share equivalent · ${EQUITY_DELTA_LABEL}`, value: fmtModelDelta(eq.delta), title: EQUITY_DELTA_TITLE },
+    { label: `Δ$ · exposure · ${EQUITY_DELTA_LABEL}`, value: fmtUsd(eq.dollars), title: EQUITY_DELTA_TITLE },
   ]
 
   return (
     <div className={modelAnalysisSummaryStripClass} role="status" aria-label="Account summary">
       {items.map((item) => (
-        <div key={item.label} className={modelAnalysisSummaryItemClass}>
+        <div key={item.label} className={modelAnalysisSummaryItemClass} title={'title' in item ? item.title : undefined}>
           <span className={modelAnalysisSummaryLabelClass}>{item.label}</span>
           <span className={modelAnalysisSummaryValueClass}>{item.value}</span>
         </div>

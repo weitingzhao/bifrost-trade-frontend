@@ -404,6 +404,9 @@ export default function CorporateActionsPage() {
             <p className={cn(FOOT, 'm-0')}>{CORPORATE_ACTIONS_UNRECORDED.cash}</p>
           </section>
 
+          {/* §17.8 (Rev .119): the two bands sit in their own box, so folding the last one
+              never takes the page's Boundary line with it. */}
+          <div className="space-y-3">
           <SectionHead note="The only page that says what an event does to an option you already hold">
             Contract changes
           </SectionHead>
@@ -542,6 +545,7 @@ export default function CorporateActionsPage() {
           <CorporateActionsCalendar ahead={ahead} beyond={beyond} reach={reach} bookSymbols={bookSymbols} />
 
           <CorporateActionsBand shortCalls={shortCalls} events={events} history={history} legSymbols={legSymbols} />
+          </div>
 
           <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
             <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing here reaches the

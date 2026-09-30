@@ -6,6 +6,9 @@ import { ModelBandSection, type ModelBandProps } from './ModelBandSection'
 import { modelBandScopeSentence } from './modelBandScope'
 import { buildModelAnalysisResponse } from './modelAnalysis.fixture'
 
+// The summary strip reads categories off the monitor to put Δ on the stocks + options basis (Rev .119).
+vi.mock('@/hooks/useMonitorStatus', () => ({ useMonitorStatus: () => ({ data: undefined }) }))
+
 const accounts = {
   hostId: 'U111',
   secondaryId: 'U222',

@@ -8,6 +8,7 @@ import type { QuoteItem } from '@/types/market'
 import type { SignalHealthResponse } from '@/api/research/similarRegime'
 import {
   blockText,
+  degradedItems,
   marketStanding,
   nightlyStanding,
   watchlistDataLine,
@@ -190,5 +191,45 @@ describe('watchlistDataLine', () => {
   it('tells silence from a pass, and says nothing before the plugin answers', () => {
     expect(watchlistDataLine(undefined, true)?.text).toContain('did not answer')
     expect(watchlistDataLine(undefined, false)).toBeNull()
+  })
+})
+
+describe('degradedItems (Rev .118)', () => {
+  const lateHealth = {
+    overall: 'warn',
+    as_of: '',
+    freshness: [
+      { label: 'flow', table: 'f.x', max_computed_at: null, row_count: 1, status: 'stale', age_hours: 30.25, sla_hours: 26 },
+      { label: 'vrp', table: 'f.y', max_computed_at: null, row_count: 1, status: 'fresh', age_hours: 4, sla_hours: 36 },
+    ],
+    extra_tables: [],
+    hypotheses: { counts: {}, total_active: 0, total: 0 },
+    canonical_pnl: { insufficient_pct: null },
+  } as unknown as SignalHealthResponse
+
+  it('lists each amber line System Status draws, with its domain and destination', () => {
+    const trading = tradingStanding(
+      status({ health: { status_lamp: 'red', block_reasons: ['trading_suspended'] } }),
+    )
+    const nightly = nightlyStanding(lateHealth, false)
+    const items = degradedItems([trading, nightly])
+    expect(items.map((i) => [i.what, i.domain, i.to, i.label])).toEqual([
+      ['Trading is suspended by the operator', 'Trading link', '/trade/fills', 'Orders & Fills'],
+      ['flow lens 30.3h old', 'Nightly data', '/research/signal-health', 'Signal Health'],
+    ])
+    expect(items[1].impact).toContain('amber asof')
+  })
+
+  it('lists a domain with no amber line as itself', () => {
+    const down = tradingStanding(
+      status({ daemon: { heartbeat: { daemon_alive: true, ib_connected: false }, lamp: 'yellow', block_reasons: [] } }),
+    )
+    expect(degradedItems([down])).toEqual([
+      expect.objectContaining({ what: 'Trading link degraded', domain: 'Trading link', impact: down.why }),
+    ])
+  })
+
+  it('counts nothing that is green or unknown', () => {
+    expect(degradedItems([tradingStanding(status()), tradingStanding(undefined)])).toEqual([])
   })
 })

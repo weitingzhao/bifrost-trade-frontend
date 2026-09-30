@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { LivePositionRow } from '@/types/positions'
 import type { CoverRow } from '@/utils/bookVsBase'
-import { buildShareRows, groupShareRows, sharesTotal, ttmDistributionYield } from './sharesBook'
+import { buildShareRows, groupShareRows, sharesTotal, ttmDistributionYield, unrealizedPctText } from './sharesBook'
 
 // Invented holdings (fixtures are never copied from DEV).
 const pos = (over: Partial<LivePositionRow>): LivePositionRow =>
@@ -61,5 +61,17 @@ describe('Positions › Shares (Rev .115)', () => {
     expect(ttmDistributionYield(divs, 10, '2026-09-30')).toBeCloseTo(2)
     expect(ttmDistributionYield([], 10, '2026-09-30')).toBeNull()
     expect(ttmDistributionYield(divs, null, '2026-09-30')).toBeNull()
+  })
+})
+
+describe('unrealized % past the bound (Rev .119)', () => {
+  it('reads ±999% as a bound and keeps the exact figure in the title', () => {
+    expect(unrealizedPctText(12.345)).toEqual({ text: '+12.35%' })
+    expect(unrealizedPctText(3656.86)).toEqual({
+      text: '>+999%',
+      title: '+3656.86% — average cost is lowered by premium from calls sold against the shares',
+    })
+    expect(unrealizedPctText(-1200).text).toBe('<−999%')
+    expect(unrealizedPctText(null)).toEqual({ text: '—' })
   })
 })

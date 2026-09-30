@@ -28,7 +28,9 @@ import {
   groupShareRows,
   SHARE_BUCKETS,
   sharesTotal,
+  TYPE_INFERRED,
   UNCATEGORISED,
+  unrealizedPctText,
   type ShareBucket,
   type ShareGroup,
   type ShareGrouping,
@@ -136,7 +138,12 @@ export function SharesBand({
           onChange={(v) => setBucket(v as 'all' | ShareBucket)}
           options={[
             { value: 'all', label: `All · ${count('all')}` },
-            ...SHARE_BUCKETS.map(([k, label]) => ({ value: k, label: `${label} · ${count(k)}`, disabled: count(k) === 0 })),
+            ...SHARE_BUCKETS.map(([k, label]) => ({
+              value: k,
+              label: `${label} · ${count(k)}`,
+              disabled: count(k) === 0,
+              title: TYPE_INFERRED,
+            })),
           ]}
         />
         <span className="inline-flex items-center gap-1.5">
@@ -148,7 +155,7 @@ export function SharesBand({
             onChange={(v) => setGrouping(v as ShareGrouping)}
             options={[
               { value: 'cat', label: 'Category' },
-              { value: 'type', label: 'Type' },
+              { value: 'type', label: 'Type', title: TYPE_INFERRED },
               { value: 'none', label: 'None' },
             ]}
           />
@@ -283,8 +290,8 @@ export function SharesBand({
                 <th className={positionsUi.th} title="Shares standing behind short calls · what is left">
                   Backing
                 </th>
-                <th className={positionsUi.th} title="Trailing twelve months of distributions over the mark">
-                  Yield
+                <th className={positionsUi.th} title="Trailing twelve months of distributions over the mark — not an SEC yield">
+                  Yield (TTM)
                 </th>
                 <th className={positionsUi.th}>Duration</th>
               </tr>
@@ -295,6 +302,7 @@ export function SharesBand({
                   key={g.key}
                   g={g}
                   head={grouping !== 'none'}
+                  headTitle={grouping === 'type' ? TYPE_INFERRED : undefined}
                   categories={categoryItems.map((c) => c.name)}
                   yields={yields}
                   accountLabel={accountLabel}
@@ -321,9 +329,9 @@ export function SharesBand({
       <p className="m-0 border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
         Unrealized = market value − cost (the broker&rsquo;s Chg). Backing = shares standing behind short calls on the same
         account × symbol; the spare shares, in whole calls, are what Room to add counts. Fixed income and cash-like back puts
-        through buying power, so they carry no call backing. Yield is the trailing twelve months of distributions on file over
-        the mark; no source serves a duration, so it reads —. Type is read from the holding&rsquo;s category — the broker books
-        these funds as stock and no instrument class is stored.
+        through buying power, so they carry no call backing. Yield (TTM) is the trailing twelve months of distributions on file
+        over the mark, not an SEC yield; no source serves a duration, so it reads —. Type is inferred from the holding&rsquo;s
+        category until the instrument class is stored — the broker books these funds as stock.
       </p>
     </section>
     </>
@@ -333,6 +341,7 @@ export function SharesBand({
 function GroupRows({
   g,
   head,
+  headTitle,
   categories,
   yields,
   accountLabel,
@@ -341,6 +350,7 @@ function GroupRows({
 }: {
   g: ShareGroup
   head: boolean
+  headTitle?: string
   categories: readonly string[]
   yields: ReadonlyMap<string, number | null | undefined>
   accountLabel: (accountId: string) => string
@@ -352,7 +362,9 @@ function GroupRows({
       {head ? (
         <tr className={HEAD_ROW}>
           <td className={cn(positionsUi.td, 'pl-3 text-left font-sans')} colSpan={4}>
-            <span className="text-dense-meta font-bold text-[var(--sk-soft)]">{g.label}</span>{' '}
+            <span className="text-dense-meta font-bold text-[var(--sk-soft)]" title={headTitle}>
+              {g.label}
+            </span>{' '}
             <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
               {g.rows.length} {g.rows.length === 1 ? 'holding' : 'holdings'}
             </span>
@@ -411,7 +423,9 @@ function GroupRows({
             </td>
             <td className={cn(positionsUi.td, 'text-[var(--color-unrealized)]')}>
               <span className="block">{signedUsd(r.unreal)}</span>
-              <span className="block text-dense-micro">{fmtPctSigned(r.unrealPct)}</span>
+              <span className="block text-dense-micro" title={unrealizedPctText(r.unrealPct).title}>
+                {unrealizedPctText(r.unrealPct).text}
+              </span>
             </td>
             <td
               className={positionsUi.td}

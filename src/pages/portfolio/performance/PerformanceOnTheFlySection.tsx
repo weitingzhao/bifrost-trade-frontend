@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { CollapsibleChevron } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { perfUi } from './performanceUi'
@@ -73,7 +74,7 @@ export function PerformanceOnTheFlySection({
           open ? 'rounded-t-md' : 'rounded-md',
         )}
       >
-        <span className="w-2.5 text-muted-foreground">{open ? '▾' : '▸'}</span>
+        <CollapsibleChevron expanded={open} className="size-3" />
         <span className={cn(perfUi.cap, 'leading-normal')}>On the fly</span>
         <span className={cn(perfUi.panelTitle, 'leading-normal')}>outside every strategy</span>
         <span className={cn(perfUi.mono, 'text-xs leading-normal text-muted-foreground')}>{count}</span>

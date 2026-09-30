@@ -126,7 +126,7 @@ export function SharesBand({
 
   return (
     <>
-    <PositionsTier heading label="Shares" note={headline} />
+    <PositionsTier label="Shares" note="Stocks, fixed income and cash-like, as the broker reports them" summary={headline} />
     <section id="shares" className={cn(positionsUi.panel, 'sk-rise')} aria-label="Shares">
       <header className={positionsUi.panelHead}>
         <SegmentControl

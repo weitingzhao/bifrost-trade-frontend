@@ -16,6 +16,7 @@ import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useScrollSpy } from '@/hooks/useScrollSpy'
 import { cn } from '@/lib/utils'
+import { SectionBand } from '@bifrost/ui'
 
 export interface DocTocItem {
   anchor: string
@@ -88,7 +89,11 @@ export function DocReader({
   )
 }
 
-/** A section heading: `§n` in mono, then the title, with an optional right-hand count. */
+/**
+ * A section heading: `§n` in mono, then the title, with an optional right-hand
+ * count. Since Rev .117 (§17.8) it is a band: the row folds the section under
+ * it, remembered per page.
+ */
 export function DocSectionHead({
   mark,
   title,
@@ -103,17 +108,18 @@ export function DocSectionHead({
   className?: string
 }) {
   return (
-    <h2
-      className={cn(
-        'm-0 flex items-baseline gap-2.5 border-b border-[var(--sk-line0)] pb-1.5 text-base font-semibold',
-        className,
-      )}
-    >
-      <span className="font-mono text-dense-label font-normal text-muted-foreground">{mark}</span>
-      <span>{title}</span>
-      {sub ? <span className="text-dense-meta font-normal text-muted-foreground">{sub}</span> : null}
-      {count ? <span className="ml-auto font-mono text-dense-meta font-normal text-muted-foreground">{count}</span> : null}
-    </h2>
+    <SectionBand
+      id={`${mark}-${title}`.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
+      className={className}
+      title={
+        <>
+          <span className="mr-2.5 font-mono text-dense-label font-normal text-muted-foreground">{mark}</span>
+          {title}
+        </>
+      }
+      summary={sub}
+      meta={count}
+    />
   )
 }
 

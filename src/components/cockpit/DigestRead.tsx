@@ -10,6 +10,7 @@
  * the draft is what the Inbox approves and the reader may want the words it
  * will be approving.
  */
+import { CollapsibleChevron } from '@/components/data-display'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { digestLamps } from '@/lib/harness/dailyDigest'
@@ -105,7 +106,7 @@ export function DigestRead({
             aria-expanded={proseOpen}
             className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-dense-meta text-muted-foreground hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] hover:text-foreground"
           >
-            <span aria-hidden>{proseOpen ? '▾' : '▸'}</span>
+            <CollapsibleChevron expanded={proseOpen} className="size-3" />
             The draft’s own words
             <span className="text-dense-micro text-muted-foreground/70">
               — what the Inbox approves

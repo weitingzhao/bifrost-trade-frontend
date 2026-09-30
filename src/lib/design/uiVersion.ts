@@ -24,4 +24,5 @@
 // registers a handler (setViewStateReportHandler) — the feedback loop's entry.
 // 0.7.0 (U1): ShellNavSidebar's Filter pages field (design 2026-09-28).
 // 0.7.1 (Rev .111): `--sk-trade` and `--sk-objective`; `--sk-instance` stays one version as an alias.
-export const UI_VERSION_NOW = '0.7.1'
+// 0.8.0 (Rev .117): `SectionBand` — every page section folds (§17.8).
+export const UI_VERSION_NOW = '0.8.0'

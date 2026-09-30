@@ -74,7 +74,7 @@ import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { computeRoomToAdd, summarizeRoom } from '@/utils/roomToAdd'
 import { instanceGroupKey } from '@/utils/instanceSheetExec'
-import { riskMapLegShort, type RiskMapLeg } from '@/utils/shortLegRiskMap'
+import { pressureFoldSummary, riskMapLegShort, type RiskMapLeg } from '@/utils/shortLegRiskMap'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
 import type { Execution, OpenOptionPosition } from '@/types/positions'
 import type { RiskProfile } from '@/utils/riskProfile'
@@ -549,7 +549,7 @@ export default function PositionsPage() {
                   onOpenTarget={openTarget}
                 />
 
-                <PositionsTier heading label="Book" note="How tight · how backed · how exposed · how much room — in that order" />
+                <PositionsTier label="Book" note="How tight · how backed · how exposed · how much room — in that order" />
                 {/* Demand against supply — what the readings grade — then the margin rows
                     Pressure opens and the Backing pool Backing grades: three panels, one
                     height (§16.5). */}
@@ -586,13 +586,13 @@ export default function PositionsPage() {
                 </div>
 
                 <PositionsTier
-                  heading
                   label="Pressure points"
                   note="Which leg is closest to being run over, and what is still sellable"
+                  summary={pressureFoldSummary(book.riskLegs)}
+                  summaryWhenFolded
                   open={pressureOpen}
-                  onToggle={() => setPressureOpen((v) => !v)}
+                  onOpenChange={setPressureOpen}
                 />
-                {pressureOpen ? (
                   <div className={cn(positionsUi.band, 'sk-rise')}>
                     <div className={positionsUi.bandItemWide}>
                       <ShortLegsPanel
@@ -618,11 +618,10 @@ export default function PositionsPage() {
                       <RoomToAddSection quiet room={roomFull} coverRows={book.coverRows} ceiling={ceiling} onLevelChange={setLevel} />
                     </div>
                   </div>
-                ) : null}
 
                 {types.opt ? (
                 <>
-                <PositionsTier heading label="Options" note="Option lines, tightest first · one thing at a time opens on the right" />
+                <PositionsTier label="Options" note="Option lines, tightest first · one thing at a time opens on the right" />
                 <div
                   className={cn(
                     'sk-rise grid min-w-0 items-start gap-3',

@@ -7,18 +7,28 @@
  * is the h2's `title` — kept, not deleted (§16.3); a sentence the reader
  * would misread the numbers without stays on screen, as the page's own text.
  *
- * Positions set the grammar first (Rev .21); its tier headings read the same
- * classes (sectionHeadClasses.ts).
+ * Positions set the grammar first (Rev .21). Since Rev .117 it is the DS
+ * `SectionBand`, as Positions' tiers are: the whole row folds its section.
  */
-import type { ReactNode } from 'react'
-import { cn } from '@/lib/utils'
-import { SECTION_HEAD_CLASSES } from './sectionHeadClasses'
+import { Children, type ReactNode } from 'react'
+import { SectionBand } from '@bifrost/ui'
+
+/** A band's key from its own words, when the caller names none: stable across renders and data. */
+function slugOf(node: ReactNode): string {
+  const text = Children.toArray(node)
+    .map((c) => (typeof c === 'string' || typeof c === 'number' ? String(c) : ''))
+    .join(' ')
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'section'
+}
 
 export function SectionHead({
   children,
   note,
   meta,
   id,
+  band,
+  summary,
+  defaultOpen,
   className,
 }: {
   children: ReactNode
@@ -26,16 +36,28 @@ export function SectionHead({
   note?: string
   /** A count or scope at the rule's end (11px, muted). */
   meta?: ReactNode
+  /** An anchor id on the heading. */
   id?: string
+  /** The band's key on this page (Rev .117); the heading's words by default. */
+  band?: string
+  /** What the section holds, shown only while it is folded. */
+  summary?: ReactNode
+  defaultOpen?: boolean
   className?: string
 }) {
+  // Rev .117 (§17.8): every page section is a band — it folds, open by default,
+  // remembered per page. The body is what follows it up to the next band.
   return (
-    <div className={cn(SECTION_HEAD_CLASSES.row, className)}>
-      <h2 id={id} title={note} className={SECTION_HEAD_CLASSES.heading}>
-        {children}
-      </h2>
-      <span aria-hidden className={SECTION_HEAD_CLASSES.rule} />
-      {meta != null ? <span className="shrink-0 text-dense-meta text-muted-foreground">{meta}</span> : null}
-    </div>
+    <SectionBand
+      id={band ?? id ?? slugOf(children)}
+      headingId={id}
+      title={children}
+      note={note}
+      meta={meta}
+      summary={summary}
+      summaryWhenFolded
+      defaultOpen={defaultOpen}
+      className={className}
+    />
   )
 }

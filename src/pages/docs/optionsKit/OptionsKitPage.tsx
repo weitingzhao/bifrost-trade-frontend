@@ -23,6 +23,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHead, PageShell } from '@/components/layout'
+import { SectionBand } from '@bifrost/ui'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -83,8 +84,9 @@ const HEAD_FACTS: readonly [string, ReactNode][] = [
 ]
 
 /**
- * One section in the design's editorial layout: the number, the title and
- * what it answers on the left; the section's content beside it.
+ * One section in the design's editorial layout: a band (Rev .117, §17.8) with
+ * the number and the title, then what it answers on the left and the
+ * section's content beside it. The band folds the section.
  */
 function KitSection({
   id,
@@ -100,14 +102,23 @@ function KitSection({
   children: ReactNode
 }) {
   return (
-    <section id={id} className="flex scroll-mt-24 flex-wrap gap-x-8 gap-y-6 border-t border-[var(--sk-line)] pt-6 pb-6.5">
-      <aside className="min-w-[200px] flex-[0_1_220px]">
-        <div className="font-mono text-dense-meta text-muted-foreground">{n}</div>
-        <h2 className="mt-0.5 mb-2 text-base font-semibold">{title}</h2>
-        <p className="m-0 text-dense-label leading-normal text-[var(--sk-mute2)] text-pretty">{description}</p>
-      </aside>
-      <div className="min-w-0 flex-[1_1_560px] space-y-4 text-sm leading-relaxed text-muted-foreground">{children}</div>
-    </section>
+    <>
+      <SectionBand
+        id={id}
+        title={
+          <>
+            <span className="mr-2 font-mono text-dense-meta font-normal text-muted-foreground">{n}</span>
+            {title}
+          </>
+        }
+      />
+      <section id={id} className="flex scroll-mt-24 flex-wrap gap-x-8 gap-y-6 pt-6 pb-6.5">
+        <aside className="min-w-[200px] flex-[0_1_220px]">
+          <p className="m-0 text-dense-label leading-normal text-[var(--sk-mute2)] text-pretty">{description}</p>
+        </aside>
+        <div className="min-w-0 flex-[1_1_560px] space-y-4 text-sm leading-relaxed text-muted-foreground">{children}</div>
+      </section>
+    </>
   )
 }
 

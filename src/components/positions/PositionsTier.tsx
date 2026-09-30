@@ -1,57 +1,39 @@
-import { cn } from '@/lib/utils'
-import { positionsUi } from './positionsUi'
+import type { ReactNode } from 'react'
+import { SectionBand } from '@bifrost/ui'
 
 /**
- * A section heading across the page: what the panels below it answer. With
- * `onToggle` the label folds the band away — Pressure points does.
+ * A band across Positions: what the panels below it answer (design Rev .117,
+ * §17.8). It is the DS `SectionBand` — the whole row folds its section, open
+ * by default and remembered per page; the note is the heading's title.
  *
- * `heading` is the §16 form (design Rev 2026-09-23.21), so far only on
- * Positions: a sentence-case h2 at 15px, its note moved into the title rather
- * than printed beside it. Pages not yet walked against §16 keep the small
- * uppercase label.
+ * Pressure points passes `open` / `onOpenChange` because a reading elsewhere
+ * on the page opens it to show what it points at; its folded summary is the
+ * legs, their premium range and the close the cushions are priced against.
  */
 export function PositionsTier({
   label,
   note,
+  summary,
+  summaryWhenFolded = false,
   open,
-  onToggle,
-  heading = false,
+  onOpenChange,
 }: {
   label: string
   note: string
+  summary?: ReactNode
+  summaryWhenFolded?: boolean
   open?: boolean
-  onToggle?: () => void
-  heading?: boolean
+  onOpenChange?: (open: boolean) => void
 }) {
-  if (heading) {
-    return (
-      <div className={positionsUi.tierHeadingRow}>
-        {onToggle ? (
-          <button type="button" className={positionsUi.tierToggle} onClick={onToggle} aria-expanded={open} title={note}>
-            <span className="w-2.5 self-center text-dense-meta text-muted-foreground">{open ? '▾' : '▸'}</span>
-            <h2 className={positionsUi.tierHeading}>{label}</h2>
-          </button>
-        ) : (
-          <h2 className={positionsUi.tierHeading} title={note}>
-            {label}
-          </h2>
-        )}
-        <span className={positionsUi.tierHeadingRule} />
-      </div>
-    )
-  }
   return (
-    <div className={positionsUi.tierRow}>
-      {onToggle ? (
-        <button type="button" className={positionsUi.tierToggle} onClick={onToggle} aria-expanded={open}>
-          <span className="w-2.5 text-muted-foreground">{open ? '▾' : '▸'}</span>
-          <span className={positionsUi.tierLabel}>{label}</span>
-        </button>
-      ) : (
-        <span className={positionsUi.tierLabel}>{label}</span>
-      )}
-      <span className={positionsUi.tierRule} />
-      <span className={cn(positionsUi.tierNote)}>{note}</span>
-    </div>
+    <SectionBand
+      id={label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
+      title={label}
+      note={note}
+      summary={summary}
+      summaryWhenFolded={summaryWhenFolded}
+      open={open}
+      onOpenChange={onOpenChange}
+    />
   )
 }

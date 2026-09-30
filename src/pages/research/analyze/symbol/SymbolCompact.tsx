@@ -17,6 +17,7 @@
  * The earnings marks those charts carry are said in words instead, in the
  * IV rank and term-structure sections (`compactVolEarnings.ts`).
  */
+import { CollapsibleChevron } from '@/components/data-display'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StatusLamp } from '@/components/StatusLamp'
@@ -165,7 +166,7 @@ function FoldSections({
               }}
               className="grid cursor-pointer grid-cols-[12px_3px_minmax(0,1fr)_auto] items-center gap-2 py-2 pr-1"
             >
-              <span className="text-dense-micro text-muted-foreground">{on ? '▾' : '▸'}</span>
+              <CollapsibleChevron expanded={on} className="size-3" />
               <span className={cn('self-stretch rounded-sm', TONE_BAR[r.tone] ?? TONE_BAR.neutral)} />
               <span className="flex min-w-0 items-baseline gap-1.5">
                 <span className={head.cap}>{r.label}</span>

@@ -18,7 +18,7 @@ import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { openArtifactDiscussion } from '@/lib/harness/loopCopilotPrefill'
-import { DenseTag } from '@/components/data-display'
+import { DenseTag, CollapsibleChevron } from '@/components/data-display'
 import { ArtifactVerbs } from '@/components/research/ArtifactVerbs'
 import type { VerbKey } from '@/lib/harness/artifactVerbs'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -68,7 +68,7 @@ export function RuleProposalCard({
         </span>
         <span className="ml-auto shrink-0 text-dense-micro text-muted-foreground">
           {p.n == null ? 'n —' : `n ${p.n}`}
-          {p.effect == null ? '' : ` · ${fmtUsd(p.effect, true)}`} {expanded ? '▾' : '▸'}
+          {p.effect == null ? '' : ` · ${fmtUsd(p.effect, true)}`} <CollapsibleChevron expanded={expanded} className="inline size-3 align-[-2px]" />
         </span>
       </button>
 

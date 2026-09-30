@@ -14,7 +14,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type RefObject } from 'react'
 import { ChevronRight, PanelRight, PictureInPicture2, Plus, X } from 'lucide-react'
-import { IconActionButton } from '@/components/data-display'
+import { IconActionButton, CollapsibleChevron } from '@/components/data-display'
 import { stockWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { useWatchlistMutations } from '@/hooks/useStockWatchlist'
 import { glyph } from '@/lib/design/glyphs'
@@ -365,7 +365,7 @@ function Group({
         title={g.sub}
       >
         <span className="flex min-w-0 items-center gap-[5px]">
-          <span className={css.caret}>{open ? '▾' : '▸'}</span>
+          <CollapsibleChevron expanded={open} className={css.caret} />
           <span className="text-[var(--sk-soft)]">{g.title}</span>
           <span className="font-mono font-normal tracking-normal">{g.loading ? '…' : g.rows.length}</span>
         </span>
@@ -430,7 +430,7 @@ function Row({
                 toggle(e)
               }}
             >
-              {open ? '▾' : '▸'} {r.contracts.length}c
+              <CollapsibleChevron expanded={open} className="inline size-3 align-[-2px]" /> {r.contracts.length}c
             </span>
           ) : null}
         </span>

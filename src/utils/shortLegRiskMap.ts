@@ -627,3 +627,22 @@ export function labelPoints(
   }
   return placed
 }
+
+/**
+ * Pressure points folded (design Rev .117): what the band holds, in a line —
+ * the legs, the range of the credit each was sold for, and the close their
+ * cushions are priced against.
+ */
+export function pressureFoldSummary(legs: readonly RiskMapLeg[]): string {
+  if (legs.length === 0) return 'no short legs'
+  const prem = legs.map((l) => l.premium).filter((p): p is number => p != null && Number.isFinite(p))
+  const usd = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`
+  const asOf = Math.max(0, ...legs.map((l) => l.spotAsOf ?? 0))
+  return [
+    `${legs.length} ${legs.length === 1 ? 'leg' : 'legs'}`,
+    prem.length ? (Math.min(...prem) === Math.max(...prem) ? usd(prem[0]) : `${usd(Math.min(...prem))}–${usd(Math.max(...prem))}`) : null,
+    asOf > 0 ? `close ${new Date(asOf * 1000).toISOString().slice(0, 10)}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}

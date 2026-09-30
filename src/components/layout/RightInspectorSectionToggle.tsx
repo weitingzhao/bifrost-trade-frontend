@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
+import { CollapsibleChevron } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import type { InspectorNavItem } from './InspectorSectionNav'
 import { inspectorSectionTitle } from './inspectorNavUtils'
@@ -54,7 +55,7 @@ export function RightInspectorSectionToggle({
         <span>{title}</span>
       </span>
       <span className={inspectorShell.sectionTitleChevron} aria-hidden>
-        {expanded ? '▴' : '▾'}
+        <CollapsibleChevron expanded={expanded} />
       </span>
     </button>
   )

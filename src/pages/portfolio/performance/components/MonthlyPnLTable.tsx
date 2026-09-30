@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DataStateBlock } from '@/components/data-display'
+import { DataStateBlock, CollapsibleChevron } from '@/components/data-display'
 import { dataState } from '@/lib/dataState'
 import type { ByDayRangeData } from '@/types/trading'
 import type { OpenOptCashLeg } from '@/utils/ledger/optAsOfPnL'
@@ -327,7 +327,7 @@ function MonthSection({
         aria-expanded={expanded}
       >
         <td className={cn(td, monthCell, 'pl-2 text-left font-sans text-foreground')}>
-          {expanded ? '▾' : '▸'} {group.label}
+          <CollapsibleChevron expanded={expanded} className="inline size-3 align-[-2px]" /> {group.label}
         </td>
         <td className={cn(td, monthCell, realizedInk(sums.optR))}>{fmtVal(sums.optR)}</td>
         <td className={cn(td, monthCell, unrealizedInk(sums.optU))}>{fmtVal(sums.optU)}</td>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { CollapsibleChevron } from '@/components/data-display'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -209,7 +210,7 @@ export function StockPutCallSection({
                     className={cn(styles.pcrShowDataBtn, showTrendData && styles.pcrShowDataBtnOpen)}
                     onClick={() => setShowTrendData((v) => !v)}
                   >
-                    {showTrendData ? '▴' : '▾'} Show Data · {chartWindowDays}d
+                    <CollapsibleChevron expanded={showTrendData} className="inline size-3 align-[-2px]" /> Show Data · {chartWindowDays}d
                   </button>
                   <span className={styles.pcrHintItalic}>OI ratio &gt; 1 = more puts (bearish lean)</span>
                 </div>

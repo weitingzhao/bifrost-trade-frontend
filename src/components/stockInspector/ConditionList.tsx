@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { CollapsibleChevron } from '@/components/data-display'
 import type { DisplayCondition } from '@/hooks/useStockInspector'
 import { ConditionIcon } from './ConditionIcon'
 import styles from './stock-inspector.module.css'
@@ -59,7 +60,7 @@ export function ConditionList({ conditions, activeId, onSelect, clickable }: Pro
             )}
             {canClick && (
               <span className={styles.condChevron} aria-hidden>
-                {isActive ? '▴' : '▾'}
+                <CollapsibleChevron expanded={isActive} className="size-3" />
               </span>
             )}
           </li>

@@ -192,7 +192,7 @@ export function AccountStressSection({ data }: AccountStressProps) {
           aria-expanded={open}
           className="flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-dense-body leading-normal font-semibold text-foreground"
         >
-          <span className="w-2.5 text-muted-foreground">{open ? '▾' : '▸'}</span>
+          <CollapsibleChevron expanded={open} className="size-3" />
           Account stress — spot only
         </button>
         <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>

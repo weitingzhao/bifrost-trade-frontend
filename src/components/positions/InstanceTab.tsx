@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { usePageViewSet } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
-import { DenseTag } from '@/components/data-display'
+import { DenseTag, CollapsibleChevron } from '@/components/data-display'
 import { positionsUi } from './positionsUi'
 import { pnlColorClass } from '@/utils/dailyChange'
 import type { DetailViewMode } from './LinesToolbar'
@@ -363,7 +363,7 @@ export function InstanceTab({
               >
                 <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')}>
                   <span className="flex items-baseline gap-1.5">
-                    <span className="w-2.5 flex-none text-muted-foreground">{isExpanded ? '▾' : '▸'}</span>
+                    <CollapsibleChevron expanded={isExpanded} className="size-3" />
                     <span className="flex min-w-0 flex-col gap-px">
                       <span className={cn('text-xs font-semibold leading-normal', nameInk)}>{name}</span>
                       {id != null ? (

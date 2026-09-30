@@ -8,6 +8,7 @@
  * the basis they rest on, including the two the page does not compute and says
  * so rather than guessing.
  */
+import { CollapsibleChevron } from '@/components/data-display'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { StatusLamp } from '@/components/StatusLamp'
@@ -81,7 +82,7 @@ export function BackingVerdictPanel({
           onClick={() => setBasisOpen((v) => !v)}
           aria-expanded={basisOpen}
         >
-          <span className="text-muted-foreground">{basisOpen ? '▾' : '▸'}</span>
+          <CollapsibleChevron expanded={basisOpen} className="size-3" />
           Model basis · {rows.length} assumptions
         </button>
         {unknown.length > 0 ? (

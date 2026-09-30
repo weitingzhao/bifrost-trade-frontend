@@ -11,6 +11,7 @@
  *
  * Advisory only — D10 BLOCKED (no trade execution).
  */
+import { SectionBand } from '@bifrost/ui'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -485,29 +486,31 @@ export default function HarnessConsolePage() {
       <ProposedFromMemory />
 
       <section className="min-w-0 space-y-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="m-0 shrink-0 type-section font-semibold">Objectives</h2>
-          {/* The design draws five states here — "a draft and a retired one are
-              not the same absence". The backend has exactly two and refuses the
-              rest with a 422 (`OBJECTIVE_STATUSES`), so the filter is the pair
-              that exists and the note says what is missing rather than drawing
-              three tabs nothing can enter. */}
-          <span className="text-dense-label text-muted-foreground">
-            one standing brief each · two states here, not the design's five — draft, paused and
-            retired have no column and the API refuses them
-          </span>
-          <SegmentControl
-            value={objStatus}
-            onChange={(v) => setObjStatus(v as 'active' | 'archived')}
-            options={[
-              { value: 'active', label: 'Active' },
-              { value: 'archived', label: 'Archived' },
-            ]}
-          />
-          <span className="ml-auto shrink-0 text-dense-caption text-muted-foreground">
-            Runs
-          </span>
-        </div>
+        {/* Rev .117 (§17.8): a band — the row folds the objectives beneath it.
+            The design draws five states here — "a draft and a retired one are
+            not the same absence". The backend has exactly two and refuses the
+            rest with a 422 (`OBJECTIVE_STATUSES`), so the filter is the pair
+            that exists and the note says what is missing rather than drawing
+            three tabs nothing can enter. */}
+        <SectionBand
+          id="objectives"
+          className="flex-wrap"
+          title="Objectives"
+          meta="one standing brief each · two states here, not the design's five — draft, paused and retired have no column and the API refuses them"
+          actions={
+            <>
+              <SegmentControl
+                value={objStatus}
+                onChange={(v) => setObjStatus(v as 'active' | 'archived')}
+                options={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'archived', label: 'Archived' },
+                ]}
+              />
+              <span className="shrink-0 text-dense-caption text-muted-foreground">Runs</span>
+            </>
+          }
+        />
 
         {objectivesQ.isError ? (
           <QueryErrorAlert error={objectivesQ.error} />
@@ -569,14 +572,16 @@ export default function HarnessConsolePage() {
           answerable across them; a run whose objective was archived is a row
           with its name on it rather than a footnote about disappearance. */}
       <section className="min-w-0 space-y-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h2 className="shrink-0 text-base font-semibold">Runs today</h2>
-          <span className="text-dense-label text-muted-foreground">
-            {objective === ALL_OBJECTIVES
+        <SectionBand
+          id="runs-today"
+          className="flex-wrap"
+          title="Runs today"
+          meta={
+            objective === ALL_OBJECTIVES
               ? "across every objective — one objective's own history is behind its card"
-              : `filtered to ${scopeName} — a run belongs to exactly one objective`}
-          </span>
-          <span className="ml-auto">
+              : `filtered to ${scopeName} — a run belongs to exactly one objective`
+          }
+          actions={
             <SegmentControl
               value={runStatus}
               onChange={(v) => setRunStatus(v as RunStatusFilter)}
@@ -584,8 +589,8 @@ export default function HarnessConsolePage() {
               size="sm"
               ariaLabel="Filter runs by status"
             />
-          </span>
-        </div>
+          }
+        />
 
         <HarnessRunsTable
           groups={

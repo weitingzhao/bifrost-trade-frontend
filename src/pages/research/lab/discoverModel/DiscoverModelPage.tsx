@@ -10,10 +10,10 @@
  * No data behind it by design; the one live thing on the page is the METHOD
  * badge's promise, which is D10's.
  */
+import { SectionHead } from '@/components/layout'
 import { PageShell } from '@/components/layout'
 import { cn } from '@/lib/utils'
 
-const h2 = 'mb-2.5 mt-0 type-section font-semibold tracking-[-0.005em] text-foreground'
 const p = 'm-0 text-dense-body leading-[1.65] text-secondary-foreground text-pretty'
 // Table heads keep the DS uppercase but lose the raised band; rules are the
 // page's own hairline (Rev .91 · .84).
@@ -148,7 +148,7 @@ export default function DiscoverModelPage() {
         </header>
 
         <section>
-          <h2 className={h2}>01 · 行业怎么分</h2>
+          <SectionHead band="s01">01 · 行业怎么分</SectionHead>
           <div className="overflow-x-auto border mat-card">
             <table className="w-full border-collapse">
               <thead>
@@ -186,7 +186,7 @@ export default function DiscoverModelPage() {
         </section>
 
         <section>
-          <h2 className={h2}>02 · 量化用户的组合规则</h2>
+          <SectionHead band="s02">02 · 量化用户的组合规则</SectionHead>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-2.5">
             {RULES.map((r) => (
               <div
@@ -203,7 +203,7 @@ export default function DiscoverModelPage() {
         </section>
 
         <section>
-          <h2 className={h2}>03 · Bifrost 的映射</h2>
+          <SectionHead band="s03">03 · Bifrost 的映射</SectionHead>
           <div className="overflow-x-auto border mat-card">
             <table className="w-full border-collapse">
               <thead>
@@ -236,7 +236,7 @@ export default function DiscoverModelPage() {
         </section>
 
         <section className="rounded-[12px] border border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[color-mix(in_srgb,var(--sk-accent)_5%,transparent)] px-5 py-4">
-          <h2 className={h2}>04 · 下一步</h2>
+          <SectionHead band="s04">04 · 下一步</SectionHead>
           <p className={cn(p, 'type-section text-foreground')}>
             <span className={strong}>Ratings › Stocks</span> 已建（与 Underlyings
             同一形状）。剩下的是在两个 Screener 结果表加「Rank by」、两个 Ratings 表加「Filter by

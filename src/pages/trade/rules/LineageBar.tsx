@@ -7,6 +7,7 @@
  * ⌥←) walks it one step, a crumb jumps to it, and the state each step left
  * (filters, folds, scroll) comes back with it.
  */
+import { CollapsibleChevron } from '@/components/data-display'
 import type { ReactNode } from 'react'
 import type { ChainData } from '@/hooks/useRulesChain'
 import { cn } from '@/lib/utils'
@@ -143,7 +144,7 @@ export function LineageBar({
           onClick={onToggleChain}
           className="inline-flex h-6 flex-none items-center rounded-lg px-2 text-dense-label text-[var(--sk-mute2)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_13%,transparent)] hover:text-foreground"
         >
-          {chainOpen ? 'Fold chain ▴' : 'Whole chain ▾'}
+          {chainOpen ? 'Fold chain' : 'Whole chain'} <CollapsibleChevron expanded={chainOpen} className="inline size-3 align-[-2px]" />
         </button>
       </div>
 

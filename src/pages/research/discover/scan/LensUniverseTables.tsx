@@ -34,6 +34,7 @@ import {
   DenseTag,
   SegmentControl,
   denseTableNumCell,
+  CollapsibleChevron
 } from '@/components/data-display'
 import { SectionPanel } from '@/components/layout'
 import { IvGauge } from '@/components/charts/IvGauge'
@@ -125,7 +126,7 @@ function SessionTally({
           title={`Read before ${day} but not on it, so not ranked against ${day}'s readings`}
           className="hover:text-foreground hover:underline"
         >
-          · {leftOut.length} left out {open ? '▾' : '▸'}
+          · {leftOut.length} left out <CollapsibleChevron expanded={open} className="inline size-3 align-[-2px]" />
         </button>
       ) : null}
     </span>

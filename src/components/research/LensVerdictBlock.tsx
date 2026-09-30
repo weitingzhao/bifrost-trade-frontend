@@ -12,7 +12,8 @@
  * verdict (S7, 2026-09-26). It asks the same k-NN the cell summarises: the lens
  * and value the exhibit matched on, at its k and horizon.
  */
-import { useState } from 'react'
+import { CollapsibleChevron } from '@/components/data-display'
+import { useState, type ReactNode } from 'react'
 import type { ExhibitPayload } from '@/api/research/exhibit'
 import type { SimilarRegimeLens } from '@/api/research/similarRegime'
 import { labelForBand, toneForBand } from '@/lib/lensVerdict'
@@ -45,7 +46,7 @@ function toneClasses(tone: string): { bar: string; text: string } {
   }
 }
 
-function Evidence({ cap, value, sub, cls }: { cap: string; value: string; sub?: string; cls?: string }) {
+function Evidence({ cap, value, sub, cls }: { cap: ReactNode; value: string; sub?: string; cls?: string }) {
   return (
     <span className="flex min-w-[4.5rem] flex-col items-start gap-px">
       <span className={CAP}>{cap}</span>
@@ -100,7 +101,11 @@ export function LensVerdictBlock({ lensId, exhibit }: { lensId: string; exhibit:
   const canOpen = Boolean(exhibit?.symbol && sim?.lens && sim.value != null && sim.value !== '')
   const simCell = (
     <Evidence
-      cap={`similar · ${sim?.horizon ?? 5}d${canOpen ? (open ? ' ▾' : ' ▸') : ''}`}
+      cap={
+        <>
+          similar · {sim?.horizon ?? 5}d{canOpen ? <> <CollapsibleChevron expanded={open} className="inline size-3 align-[-2px]" /></> : null}
+        </>
+      }
       value={simMed}
       sub={sim ? `${pct(sim.share_positive)} positive · n ${sim.n}` : 'no neighbours'}
       cls={simCls}

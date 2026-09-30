@@ -1,27 +1,13 @@
 import { cn } from '@/lib/utils'
-import { SECTION_HEAD_CLASSES } from '@/components/layout/sectionHeadClasses'
 
 /**
  * Positions and Backing & Model surfaces — the prototypes' `ps-*` / `bk2-*`
  * vocabulary, in the tokens Performance, Accounts and the Ledger already
- * speak: a section heading (tier), solid raised panels with a raised2 header
+ * speak: solid raised panels with a raised2 header
  * bar, uppercase captions, and the prototype's 1.5 line height.
  */
 export const positionsUi = {
   pageCard: 'flex flex-col gap-3 border p-4 mat-card',
-
-  tierRow: 'flex flex-wrap items-center gap-x-2.5 gap-y-1',
-  tierLabel: 'text-dense-caption font-bold uppercase tracking-[0.16em] text-foreground/85',
-  tierToggle: cn(
-    'flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-foreground',
-    'focus-visible:outline-1 focus-visible:outline-ring',
-  ),
-  tierRule: 'h-px min-w-8 flex-1 bg-[var(--sk-line2)]',
-  tierNote: 'text-dense-meta text-muted-foreground',
-  /** §16 section heading (Rev 2026-09-23.21): a sentence-case h2, its note in the title, a quiet rule after. */
-  tierHeadingRow: SECTION_HEAD_CLASSES.row,
-  tierHeading: SECTION_HEAD_CLASSES.heading,
-  tierHeadingRule: SECTION_HEAD_CLASSES.rule,
 
   /** Two panels side by side from 920px of content, one column below — the prototype's auto-fit 460. */
   bandGrid: 'grid grid-cols-[repeat(auto-fit,minmax(min(100%,28.75rem),1fr))] items-start gap-3',

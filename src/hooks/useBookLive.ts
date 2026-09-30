@@ -14,7 +14,8 @@
  * The bar's Δ is the model service's — the number Risk › Portfolio and
  * Backing & Model hold (§14.2) — not a sum of the drawer's per-leg rows, which
  * are the Positions page's vendor legs. Where the model marks an underlying
- * degraded, the Δ says so.
+ * degraded, the Δ says so. Since Rev .114 it counts stocks and options only:
+ * the shares of a fixed-income or cash-like holding are taken back out.
  */
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -30,7 +31,7 @@ import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
 import { useOptionLiveBasis } from '@/hooks/useOptionLiveBasis'
 import { useQuotesMap } from '@/hooks/useQuoteStream'
 import { accountTag } from '@/utils/accountTag'
-import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveRow, type BookLiveTotals } from '@/utils/bookLive'
+import { bookLiveTotals, buildBookLiveRows, etDate, stockBookBucket, type BookLiveRow, type BookLiveTotals } from '@/utils/bookLive'
 import {
   extractOptPositionRows,
   mergeQuotesIntoSymbolMap,
@@ -142,6 +143,19 @@ export function useBookLive(open: boolean): BookLive {
     })),
   })
   const modelStamp = models.map((m) => m.dataUpdatedAt).join(',')
+  // Rev .114: the Δ is stocks + options. A bond or T-bill ETF carries no equity
+  // delta, so its shares leave the sum (an option written on it stays).
+  const noEquityDelta = useMemo(() => {
+    const out = new Set<string>()
+    for (const a of accounts) {
+      for (const p of a.positions ?? []) {
+        if ((p.secType ?? '') !== 'STK') continue
+        const b = stockBookBucket(p.category)
+        if (b === 'fi' || b === 'cash') out.add(`${a.account_id ?? ''}|${(p.symbol ?? '').trim().toUpperCase()}`)
+      }
+    }
+    return out
+  }, [accounts])
   const { modelDelta, modelDegraded, modelDeltaByAccount } = useMemo(() => {
     let sum: number | null = null
     let degraded = 0
@@ -149,8 +163,10 @@ export function useBookLive(open: boolean): BookLive {
     models.forEach((m, i) => {
       for (const u of m.data?.per_underlying ?? []) {
         if (u.greeks?.degraded) degraded += 1
-        const d = u.greeks?.delta
-        if (d != null && Number.isFinite(d)) {
+        const raw = u.greeks?.delta
+        if (raw != null && Number.isFinite(raw)) {
+          const shares = noEquityDelta.has(`${accountIds[i]}|${u.symbol.trim().toUpperCase()}`) ? (u.stock_qty ?? 0) : 0
+          const d = raw - shares
           sum = (sum ?? 0) + d
           byAccount[accountIds[i]] = (byAccount[accountIds[i]] ?? 0) + d
         }
@@ -158,7 +174,7 @@ export function useBookLive(open: boolean): BookLive {
     })
     return { modelDelta: sum, modelDegraded: degraded, modelDeltaByAccount: byAccount }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modelStamp])
+  }, [modelStamp, noEquityDelta])
 
   // The Positions page's price rule, over this snapshot and the daily bars the
   // day change already reads — so a stock never prices off a stale broker mark.

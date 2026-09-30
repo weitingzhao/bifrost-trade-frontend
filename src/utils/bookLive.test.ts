@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
-import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveInputs } from './bookLive'
+import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveInputs, BOOK_BUCKETS, stockBookBucket } from './bookLive'
 
 const TODAY = '2031-03-12'
 
@@ -129,5 +129,23 @@ describe('etDate', () => {
   it('reads the New York calendar day, not UTC', () => {
     expect(etDate('2031-03-12T02:30:00Z')).toBe('2031-03-11')
     expect(etDate(null)).toBeNull()
+  })
+})
+
+describe('holding type (Rev .114)', () => {
+  it('reads a stock’s bucket off its category, the way Accounts and the Ledger do', () => {
+    expect(['Fix Income', 'Fixed income', 'Cash', 'Money market', 'SEPA', '', null].map(stockBookBucket)).toEqual([
+      'fi',
+      'fi',
+      'cash',
+      'cash',
+      'stk',
+      'stk',
+      'stk',
+    ])
+  })
+
+  it('keeps the four buckets in the design’s order', () => {
+    expect(BOOK_BUCKETS.map(([k]) => k)).toEqual(['opt', 'stk', 'fi', 'cash'])
   })
 })

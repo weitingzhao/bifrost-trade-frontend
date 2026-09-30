@@ -36,6 +36,7 @@ import type { SpotResolver } from '@/utils/spotPrice'
 import { buildOptionTicker, positionGreek } from '@/utils/optionTicker'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { cushionBand, shortLegCushion } from '@/utils/positionsOptionRisk'
+import { classifyStockBucket } from '@/utils/positionsGrouping'
 
 export interface BookLiveNext {
   text: string
@@ -44,9 +45,31 @@ export interface BookLiveNext {
   title: string
 }
 
+/**
+ * The four holding types (design Rev .114): the buckets Ledger and Accounts
+ * use. IB books a bond ETF and a T-bill ETF as STK, so a stock's bucket comes
+ * from the position's own category (`classifyStockBucket`), not its secType.
+ */
+export type BookBucket = 'opt' | 'stk' | 'fi' | 'cash'
+
+export const BOOK_BUCKETS: readonly (readonly [BookBucket, string])[] = [
+  ['opt', 'Options'],
+  ['stk', 'Stocks'],
+  ['fi', 'Fixed income'],
+  ['cash', 'Cash-like'],
+]
+
+/** A stock position's bucket, by its category — the rule Accounts and the Ledger apply. */
+export function stockBookBucket(category: string | null | undefined): BookBucket {
+  const b = classifyStockBucket(category)
+  return b === 'fixed_income' ? 'fi' : b === 'cash_like' ? 'cash' : 'stk'
+}
+
 export interface BookLiveRow {
   key: string
   kind: 'stk' | 'opt'
+  /** Rev .114: which of the four holding types it is. */
+  bucket: BookBucket
   /** `PLTR` · `NVDA Oct 17'26 CALL 170` — Live's contract token. */
   label: string
   symbol: string
@@ -149,6 +172,7 @@ function stkRow(p: IbPositionRow, accountId: string, x: BookLiveInputs): BookLiv
   return {
     key: `${accountId}|${symbol}`,
     kind: 'stk',
+    bucket: stockBookBucket(p.category),
     label: symbol,
     symbol,
     accountId,
@@ -232,6 +256,7 @@ function optRow(p: IbPositionRow, accountId: string, x: BookLiveInputs): BookLiv
   return {
     key: `${accountId}|${ck}`,
     kind: 'opt',
+    bucket: 'opt',
     label: `${symbol} ${formatExpiryIbGroupLabel(parts.expiry)} ${parts.right === 'C' ? 'CALL' : 'PUT'} ${parts.strike}`,
     symbol,
     accountId,

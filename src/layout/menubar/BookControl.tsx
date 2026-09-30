@@ -16,6 +16,14 @@
  * The badge says the scope and nothing else: amber fill = narrowed, amber
  * ring = an order page still on All. A page that does not read the scope yet
  * shows the whole book, and the tip says so.
+ *
+ * Rev .114 (Owner comment, 2026-09-30): the holdings list splits by type —
+ * All · Options · Stocks · Fixed income · Cash-like, the four buckets Ledger
+ * and Accounts use, each chip with its count (an empty one reads 0 and cannot
+ * be picked). All groups the list under a heading per bucket with its day
+ * subtotal; one type lists flat. A stock's bucket is its position category,
+ * because IB books bond and T-bill ETFs as STK. The Δ counts stocks and
+ * options only. Legs and breaches are not split.
  */
 import { useMemo, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -27,6 +35,7 @@ import { inAccountScope, scopeAccountId, setAccountScope, useAccountScope, type 
 import { withSymbolParam } from '@/lib/symbolLink'
 import { cn } from '@/lib/utils'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
+import { BOOK_BUCKETS, type BookBucket } from '@/utils/bookLive'
 import { routeFor } from '../routeRegistry'
 import { MenubarTip } from './MenubarTip'
 import { useShellPopover } from '@/lib/shellPopover'
@@ -75,6 +84,8 @@ type ListKind = 'pos' | 'legs' | 'breach'
 
 interface ListRow {
   key: string
+  /** A bucket's heading in the grouped Positions list (Rev .114): name · count · day subtotal. */
+  head?: boolean
   dot: string
   name: string
   sub: string
@@ -89,6 +100,8 @@ export function BookControl() {
   // One shell popover at a time (Rev .68).
   const [open, setOpen] = useShellPopover('book')
   const [list, setList] = useState<ListKind | null>(null)
+  // Rev .114: the Positions list by holding type — All is grouped, one type is flat.
+  const [bucketPick, setBucket] = useState<'all' | BookBucket>('all')
   const scope = useAccountScope()
   const status = useMonitorStatus().data
   const hostId = status?.config?.ib_client?.account?.event_host ?? ''
@@ -143,17 +156,45 @@ export function BookControl() {
   const perAccount = (s: AccountScope) =>
     dayOf(book.rows.filter((r) => inAccountScope(r.accountId, s, hostId, secondaryId)))
 
+  const bucketCount = (b: BookBucket) => scoped.filter((r) => r.bucket === b).length
+  // A type the scope no longer holds falls back to All rather than showing an empty list.
+  const bucket = bucketPick !== 'all' && bucketCount(bucketPick) === 0 ? 'all' : bucketPick
+  const posRow = (r: (typeof scoped)[number]): ListRow => ({
+    key: r.key,
+    dot: r.kind === 'opt' ? 'var(--sk-contract)' : 'var(--sk-ticker)',
+    name: r.label,
+    sub: `${book.tagOf(r.accountId)} · ${r.qty > 0 ? '+' : ''}${r.qty}${r.next.text ? ` · ${r.next.text}` : ''}`,
+    right: r.dayUsd == null ? '—' : fmtSignedUsd0(r.dayUsd),
+    rightInk: dirInk(r.dayUsd),
+    to: withSymbolParam('/portfolio/positions', r.symbol),
+  })
+  const posRows: ListRow[] =
+    bucket === 'all'
+      ? BOOK_BUCKETS.flatMap(([b, label]) => {
+          const rs = scoped.filter((r) => r.bucket === b)
+          if (rs.length === 0) return []
+          const sub = dayOf(rs)
+          const unknown = rs.some((r) => r.dayUsd == null)
+          const known = rs.some((r) => r.dayUsd != null)
+          return [
+            {
+              key: `head:${b}`,
+              head: true,
+              dot: 'transparent',
+              name: label,
+              sub: String(rs.length),
+              // A bucket with no day figure at all has no subtotal — not a zero.
+              right: known ? `${fmtSignedUsd0(sub)}${unknown ? '+?' : ''}` : '—',
+              rightInk: dirInk(known ? sub : null),
+              to: '/portfolio/positions',
+            },
+            ...rs.map(posRow),
+          ]
+        })
+      : scoped.filter((r) => r.bucket === bucket).map(posRow)
   const rows: ListRow[] =
     list === 'pos'
-      ? scoped.map((r) => ({
-          key: r.key,
-          dot: r.kind === 'opt' ? 'var(--sk-contract)' : 'var(--sk-ticker)',
-          name: r.label,
-          sub: `${book.tagOf(r.accountId)} · ${r.qty > 0 ? '+' : ''}${r.qty}${r.next.text ? ` · ${r.next.text}` : ''}`,
-          right: r.dayUsd == null ? '—' : fmtSignedUsd0(r.dayUsd),
-          rightInk: dirInk(r.dayUsd),
-          to: withSymbolParam('/portfolio/positions', r.symbol),
-        }))
+      ? posRows
       : list === 'legs'
         ? legs.map((r) => ({
             key: r.key,
@@ -270,7 +311,10 @@ export function BookControl() {
               {dayText}
             </span>
           </button>
-          <div className={cn(css.tile, 'col-span-2 justify-start gap-2.5 px-3')} title="Effective delta — the model service's">
+          <div
+            className={cn(css.tile, 'col-span-2 justify-start gap-2.5 px-3')}
+            title="Effective delta — the model service's, stocks and options only: fixed income and cash-like holdings carry no equity delta and are left out"
+          >
             <span className={cn(css.round, 'font-mono font-bold', css.fs14)}>Δ</span>
             <span className={cn(css.mono, 'font-semibold', css.fs16)}>{delta == null ? '—' : signedInt(delta)}</span>
           </div>
@@ -296,10 +340,39 @@ export function BookControl() {
 
         {list ? (
           <div className={cn(css.card, 'p-1')}>
+            {list === 'pos' ? (
+              <div className={cn(css.seg, css.segTight, 'm-0.5 mb-1')} role="group" aria-label="Position type">
+                {([['all', 'All'], ...BOOK_BUCKETS] as const).map(([k, label]) => {
+                  const n = k === 'all' ? scoped.length : bucketCount(k)
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      data-on={bucket === k ? '1' : '0'}
+                      disabled={n === 0}
+                      title={k === 'all' ? 'Every position, grouped by type' : `${label} · ${n}`}
+                      onClick={() => setBucket(k)}
+                    >
+                      <span className={cn('whitespace-nowrap', css.fs11)}>{label}</span>
+                      <span className={cn(css.mono, 'font-medium text-[var(--sk-mute)]', css.fs10)}>{n}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : null}
             {rows.length === 0 ? (
               <div className={cn('px-2 py-2.5 text-[var(--sk-mute2)]', css.fs12)}>{emptyText}</div>
             ) : (
-              rows.map((r) => (
+              rows.map((r) =>
+                r.head ? (
+                  <div key={r.key} className="flex items-baseline gap-1.5 px-2 pt-2 pb-0.5">
+                    <span className={cn('font-semibold text-[var(--sk-mute2)]', css.fs11)}>{r.name}</span>
+                    <span className={cn(css.mono, 'text-[var(--sk-mute)]', css.fs10)}>{r.sub}</span>
+                    <span className={cn(css.mono, 'ml-auto', css.fs11)} style={{ color: r.rightInk }}>
+                      {r.right}
+                    </span>
+                  </div>
+                ) : (
                 <div key={r.key} className={css.row} onClick={() => go(r.to)} role="link" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && go(r.to)}>
                   <span className="size-[7px] rounded-full" style={{ background: r.dot }} />
                   <span className="flex min-w-0 flex-col gap-px">
@@ -310,7 +383,8 @@ export function BookControl() {
                     {r.right}
                   </span>
                 </div>
-              ))
+                ),
+              )
             )}
           </div>
         ) : null}

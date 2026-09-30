@@ -256,6 +256,19 @@ button.tile:active {
   opacity: 0.45;
 }
 
+/* Rev .114: the Positions list's type chips — five to a row, so tighter than the scope switch. */
+.segTight {
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.segTight button {
+  height: 34px;
+  padding: 0 4px;
+  border-radius: 8px;
+  gap: 1px;
+}
+
 .lamp {
   width: 7px;
   height: 7px;

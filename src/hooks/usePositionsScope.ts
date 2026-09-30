@@ -19,7 +19,7 @@ import { useSearchParams } from 'react-router-dom'
 import type { AccountFilter } from '@/utils/positionsGrouping'
 import type { AccountPair } from '@/lib/accountScope'
 import { useFollowedAccountPair } from '@/hooks/useFollowedAccountPair'
-import { keepHeldSymbol } from '@/lib/symbolContext'
+import { clearCarriedSymbol, keepHeldSymbol } from '@/lib/symbolContext'
 
 export interface PositionsScope {
   accountFilter: AccountFilter
@@ -103,17 +103,24 @@ export function usePositionsScope(opts?: { followAccount?: boolean }) {
       (accountFilter: AccountFilter) => (follow ? setFollowedPair(accountFilter) : update({ accountFilter })),
       [follow, setFollowedPair, update],
     ),
-    setFilterSymbol: useCallback((filterSymbol: string) => update({ filterSymbol }), [update]),
+    // Rev .120: the symbol is the top bar's — clearing it here clears it there.
+    setFilterSymbol: useCallback(
+      (filterSymbol: string) => {
+        if (!filterSymbol.trim()) clearCarriedSymbol()
+        update({ filterSymbol })
+      },
+      [update],
+    ),
     setFilterExpiry: useCallback((filterExpiry: string) => update({ filterExpiry }), [update]),
     /**
      * Every axis back to the whole book in one write (§17.3 Clear). Three
      * setters in a row would each serialise from the same stale params, and
      * the last would put the other two back.
      */
-    resetScope: useCallback(
-      () => update({ accountFilter: { host: true, secondary: true }, filterSymbol: '', filterExpiry: '' }),
-      [update],
-    ),
+    resetScope: useCallback(() => {
+      clearCarriedSymbol()
+      update({ accountFilter: { host: true, secondary: true }, filterSymbol: '', filterExpiry: '' })
+    }, [update]),
     /** The scope alone, for a link to the other page. */
     scopeSearch: serializePositionsScope(scope).toString(),
   }

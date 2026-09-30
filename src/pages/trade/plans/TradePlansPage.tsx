@@ -28,7 +28,8 @@ import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useFollowedAccountPair } from '@/hooks/useFollowedAccountPair'
 import type { AccountPair } from '@/lib/accountScope'
-import { keepHeldSymbol } from '@/lib/symbolContext'
+import { clearCarriedSymbol, keepHeldSymbol } from '@/lib/symbolContext'
+import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 import { usePageViewParams } from '@/lib/pageView'
@@ -90,7 +91,7 @@ export default function TradePlansPage() {
   const [form, setForm] = useState<Form>(params.get('new') === '1' ? { kind: 'new' } : null)
 
   // The whole book, filtered client-side, so `N of M plans` can name the true
-  // denominator and the Symbol box answers as you type.
+  // denominator. The symbol is the top bar's (Rev .120) — a whole name, not a prefix.
   // The filter and the open plan are the page's view (Rev .79): reached again
   // without them, the page comes back as it was left. Account and symbol are
   // the shell's and are not kept twice.
@@ -118,7 +119,7 @@ export default function TradePlansPage() {
       sortPlans(
         filterPlans(plans, filter)
           .filter((plan) => planInAccountScope(plan, acctScope, hostAccountId, secondaryAccountId))
-          .filter((plan) => !symbol || plan.symbol.startsWith(symbol)),
+          .filter((plan) => !symbol || plan.symbol.trim().toUpperCase() === symbol),
       ),
     [plans, filter, acctScope, hostAccountId, secondaryAccountId, symbol],
   )
@@ -150,13 +151,14 @@ export default function TradePlansPage() {
   )
 
   // §17.3: what the toolbar's Clear N resets — status back to Open, both
-  // accounts in, the symbol box empty.
+  // accounts in, the top bar's symbol cleared (Rev .120).
   const resets = [
     ...(filter !== 'open' ? ['status'] : []),
     ...(!acctScope.host || !acctScope.secondary ? ['accounts'] : []),
     ...(symbol ? ['symbol'] : []),
   ]
   function clearScope() {
+    clearCarriedSymbol()
     setAcctScope({ host: true, secondary: true })
     setParams(
       (prev) => {
@@ -225,7 +227,7 @@ export default function TradePlansPage() {
       />
 
       {/* The design's Scope bar (§17.3): status, one Include/Exclude per
-          account, the symbol box, Clear N, and the shown-of-total count. It
+          account, the top bar's symbol as a chip (Rev .120), Clear N, and the shown-of-total count. It
           parks at the top of the scroller as glass. */}
       <div data-sr-toolbar="" data-sticky="">
         <span data-sr-tb="label">Scope</span>
@@ -254,12 +256,12 @@ export default function TradePlansPage() {
           />
         ) : null}
         <span data-sr-tb="sep" />
-        <input
-          value={symbol}
-          onChange={(e) => setParam('symbol', e.target.value.trim() ? e.target.value.trim().toUpperCase() : null)}
-          placeholder="Symbol"
-          aria-label="Symbol"
-          className="h-6 w-24 border px-1.5 font-mono text-dense-meta uppercase outline-none mat-field"
+        <SymbolScopeChip
+          symbol={symbol}
+          onClear={() => {
+            clearCarriedSymbol()
+            setParam('symbol', null)
+          }}
         />
         <ToolbarClear resets={resets} onClear={clearScope} />
         <span data-sr-tb="meta">
@@ -358,7 +360,7 @@ export default function TradePlansPage() {
                 <ViewState
                   kind="filtered"
                   title="No plans in this scope"
-                  detail={`${plans.length} plans exist · 0 match ${symbol ? `symbol ${symbol} ` : ''}in ${PLAN_FILTER_LABELS[filter]}.`}
+                  detail={`${symbol ? `Filtered to ${symbol} (the top bar symbol). ` : ''}${plans.length} plans exist · 0 match in ${PLAN_FILTER_LABELS[filter]}.`}
                   actionTitle="Status back to Open, both accounts included, symbol cleared"
                   onAction={clearScope}
                 />

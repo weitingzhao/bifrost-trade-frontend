@@ -1,7 +1,7 @@
 /**
  * The scope bar: the one row that decides what the whole page is about.
  *
- * Accounts, symbol, expiry — and the tightness threshold, which is a setting
+ * Accounts, symbol (the top bar's, Rev .120), expiry — and the tightness threshold, which is a setting
  * the Owner asked to keep visible rather than a filter. Everything that only
  * changes the grid (contract type, opportunity, attribution, detail mode) lives
  * on the grid's own toolbar, so a filter there never quietly re-grades the
@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { ToolbarClear } from '@bifrost/ui'
 import { DenseTagButton } from '@/components/data-display'
 import type { AccountFilter } from '@/utils/positionsGrouping'
+import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import { positionsUi } from './positionsUi'
 
 export type { AccountFilter }
@@ -82,7 +83,6 @@ export function PositionsOpenControls({
   onTypesChange,
 }: Props) {
   const showAccountToggles = !!(hostAccountId || secondaryAccountId)
-  const symbolChip = filterSymbol.trim().toUpperCase()
   const expiryChip = filterExpiry.trim()
   const [copied, setCopied] = useState(false)
   useEffect(() => {
@@ -140,13 +140,8 @@ export function PositionsOpenControls({
         </span>
       ) : null}
 
-      <input
-        placeholder="Symbol"
-        value={filterSymbol}
-        onChange={(e) => onFilterSymbolChange(e.target.value)}
-        className={cn(positionsUi.input, 'w-24')}
-        aria-label="Symbol scope"
-      />
+      {/* Rev .120: no Symbol box — the page reads the top bar's symbol. */}
+      <SymbolScopeChip symbol={filterSymbol} onClear={() => onFilterSymbolChange('')} />
       <input
         placeholder="YYYYMMDD"
         value={filterExpiry}
@@ -192,11 +187,6 @@ export function PositionsOpenControls({
       </button>
 
       <span className="ml-auto flex flex-wrap items-center gap-2.5" aria-label="Scope in force">
-        {symbolChip ? (
-          <DenseTagButton variant="category" size="cell" title="Symbol scope — click to clear" onClick={() => onFilterSymbolChange('')}>
-            {symbolChip} ×
-          </DenseTagButton>
-        ) : null}
         {expiryChip ? (
           <DenseTagButton variant="category" size="cell" title="Expiry scope — click to clear" onClick={() => onFilterExpiryChange('')}>
             {expiryChip} ×

@@ -246,7 +246,6 @@ export default function TradeLedgerPage() {
     expiryYearOptions,
     expiryMonthOptions,
     activeFilterSummary,
-    symbolSuggestions,
     filteredClosedOptGroups,
     sortedOpenOptGroups,
     allOrphanGroups,
@@ -558,7 +557,6 @@ export default function TradeLedgerPage() {
           onAccountFilter={id => setScopeAccount(ledgerScopeFromAccountId(id, status))}
           symbolFilter={symbolFilter}
           onSymbolFilter={setFilterSymbol}
-          symbolSuggestions={symbolSuggestions}
           structureOptions={structureOptions}
           filterStructure={filterStructure}
           onFilterStructure={setFilterStructure}

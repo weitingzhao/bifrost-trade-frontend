@@ -4,7 +4,8 @@
  * A focus is a pick on the chain, a symbol, or both. The symbol is not a fifth
  * link in the chain: it cuts across it — every rule that can act on a ticker,
  * and every instance that ran on it (DECISIONS 2026-09-28). Both live in the
- * URL (`?pick=&sym=`) and every change of focus is pushed, so the browser's
+ * URL (`?pick=&symbol=` — the symbol is the top bar's, Rev .120; the old
+ * `?sym=` is still read) and every change of focus is pushed, so the browser's
  * Back and the page's own ← Back walk the same path.
  *
  * Everything here is pure: the page derives, it does not store.
@@ -28,14 +29,14 @@ export function normSym(raw: string | null | undefined): string | null {
 }
 
 export function parseFocus(params: URLSearchParams): Focus {
-  return { pick: parsePick(params.get('pick')), sym: normSym(params.get('sym')) }
+  return { pick: parsePick(params.get('pick')), sym: normSym(params.get('symbol') ?? params.get('sym')) }
 }
 
 /** The search string a focus lives at — `pick` then `sym`, nothing else kept. */
 export function focusSearch(f: Focus): string {
   const p = new URLSearchParams()
   if (f.pick) p.set('pick', formatPick(f.pick))
-  if (f.sym) p.set('sym', f.sym)
+  if (f.sym) p.set('symbol', f.sym)
   const s = p.toString()
   return s ? `?${s}` : ''
 }

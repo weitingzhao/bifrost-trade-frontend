@@ -75,6 +75,15 @@ export function keepHeldSymbol(params: URLSearchParams): URLSearchParams {
   return params
 }
 
+/**
+ * Clear the carried symbol (design Rev .120): a page's × on its symbol chip,
+ * its Clear N and an empty state's reset all clear the top bar's symbol, not
+ * just the page's filter — otherwise the next page would hand it straight back.
+ */
+export function clearCarriedSymbol(): void {
+  writeStoredContext('', readStoredContext().date ?? '')
+}
+
 /** The carried symbol — what the Symbol panel follows. */
 export function useCarriedSymbol(): string {
   return carry.useStore().symbol

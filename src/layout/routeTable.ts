@@ -391,6 +391,8 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/trade/rules',
     label: 'Rules',
     crumbs: TRADE_DESK,
+    // Rev .120: the symbol lens step is the top bar's symbol (design ROUTES `sym`).
+    symbolScope: true,
     design: {
       // Rev .101 redo (Trade Rules.dc.html) — batch R1 built the skeleton:
       // readings, lineage bar, the pushed back path, the symbol lens, the four

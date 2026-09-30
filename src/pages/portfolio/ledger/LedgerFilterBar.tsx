@@ -13,7 +13,7 @@ import {
 } from '@/utils/ledger/summaryPeriod'
 import { MONTH_NAMES } from './ledgerConstants'
 import { fmtIsoDateToken } from '@/lib/format'
-import { LedgerSymbolCombobox } from './LedgerSymbolCombobox'
+import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import type { LedgerAccountTab } from '@/lib/ledgerAccountTabs'
 import {
   ledgerFilterPanelClass,
@@ -45,7 +45,6 @@ type Props = {
   onAccountFilter: (id: string) => void
   symbolFilter: string
   onSymbolFilter: (v: string) => void
-  symbolSuggestions: string[]
   structureOptions: string[]
   filterStructure: string
   onFilterStructure: (v: string) => void
@@ -80,7 +79,6 @@ export function LedgerFilterBar({
   onAccountFilter,
   symbolFilter,
   onSymbolFilter,
-  symbolSuggestions,
   structureOptions,
   filterStructure,
   onFilterStructure,
@@ -203,15 +201,8 @@ export function LedgerFilterBar({
         </div>
 
         <div className={ledgerFilterRowClass}>
-          <label className="inline-flex items-center gap-1.5 min-w-0">
-            <span className={ledgerFilterLabelClass}>Symbol</span>
-            <LedgerSymbolCombobox
-              value={symbolFilter}
-              onChange={onSymbolFilter}
-              suggestions={symbolSuggestions}
-              className="min-w-[7.5rem] flex-[1_1_7.5rem] max-w-[12rem]"
-            />
-          </label>
+          {/* Rev .120: no Symbol box — the ledger reads the top bar's symbol. */}
+          <SymbolScopeChip symbol={symbolFilter} onClear={() => onSymbolFilter('')} />
 
           {structureOptions.length > 0 && (
             <div

@@ -270,8 +270,10 @@ export function SharesBand({
 
       {rows.length === 0 ? (
         <p className="m-0 px-4 py-5 text-center text-dense-meta text-muted-foreground">
-          No {bucket === 'all' ? 'shares' : SHARE_BUCKETS.find(([k]) => k === bucket)?.[1].toLowerCase()} held in the accounts in scope
-          {q ? ` matching ${q}` : ''}.
+          {/* Rev .120: say the filter, so an empty band never reads as missing data. */}
+          {q
+            ? `Filtered to ${q} — no ${bucket === 'all' ? 'shares' : SHARE_BUCKETS.find(([k]) => k === bucket)?.[1].toLowerCase()} of it held in the accounts in scope.`
+            : `No ${bucket === 'all' ? 'shares' : SHARE_BUCKETS.find(([k]) => k === bucket)?.[1].toLowerCase()} held in the accounts in scope.`}
         </p>
       ) : (
         <div className="overflow-x-auto">

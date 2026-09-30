@@ -4,3 +4,4 @@ export {
   type SymbolPickerProps,
 } from './SymbolPicker'
 export { SymbolSourceBadges } from './SymbolSourceBadges'
+export { SymbolScopeChip } from './SymbolScopeChip'

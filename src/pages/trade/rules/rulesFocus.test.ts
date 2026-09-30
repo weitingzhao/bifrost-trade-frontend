@@ -61,7 +61,9 @@ describe('focus in the URL', () => {
   it('round-trips pick and sym, and drops an empty or dash symbol', () => {
     const f = parseFocus(new URLSearchParams('pick=opportunity:1&sym=zztm'))
     expect(f).toEqual({ pick: { kind: 'opportunity', id: 1 }, sym: 'ZZTM' })
-    expect(focusSearch(f)).toBe('?pick=opportunity%3A1&sym=ZZTM')
+    // Written as the top bar's `symbol` (Rev .120); the old `sym` still reads.
+    expect(focusSearch(f)).toBe('?pick=opportunity%3A1&symbol=ZZTM')
+    expect(parseFocus(new URLSearchParams('symbol=zztm')).sym).toBe('ZZTM')
     expect(parseFocus(new URLSearchParams('sym=—')).sym).toBeNull()
     expect(focusSearch({ pick: null, sym: null })).toBe('')
   })

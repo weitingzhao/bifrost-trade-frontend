@@ -38,6 +38,8 @@ import type { InstanceListFilterValues } from '@/components/strategy/InstanceLis
 import { fetchOpportunityDetail } from '@/api/strategy'
 import { useRulesChain } from '@/hooks/useRulesChain'
 import { withSymbolParam } from '@/lib/symbolLink'
+import { clearCarriedSymbol, useCarriedSymbol } from '@/lib/symbolContext'
+import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { SetActiveDialog } from './SetActiveDialog'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -95,7 +97,8 @@ export default function TradeRulesPage() {
   const [activeOnly, setActiveOnly] = useState('active')
   const [params] = useSearchParams()
   const pickParam = params.get('pick')
-  const symParam = params.get('sym')
+  // Rev .120: the symbol step is the top bar's `?symbol=`; `?sym=` is the old spelling, still read.
+  const symParam = params.get('symbol') ?? params.get('sym')
   // Memoised on the raw params: a fresh object per render re-ran every memo
   // keyed on it (and once restarted the metrics loader on every render).
   const focus: Focus = useMemo(
@@ -136,7 +139,6 @@ export default function TradeRulesPage() {
   const [boardSort, setBoardSort] = useState<BoardSort>('pnl')
   const [chainOpen, setChainOpen] = useState(false)
   const [orphansOnly, setOrphansOnly] = useState(false)
-  const [symQ, setSymQ] = useState('')
   /** Held for comparison — the pair opens side by side in the shared sheet. */
   const [compareWith, setCompareWith] = useState<number | null>(null)
   /** The list an instance was opened from, so the record can step `[ ]` through it. */
@@ -205,7 +207,6 @@ export default function TradeRulesPage() {
       return
     }
     const keep = keepPick && sel != null && sel.id != null && touches(sel, sym, data)
-    setSymQ('')
     nav({ sym, pick: keep ? sel : null })
   }
   /** `[` `]` — within the list the instance came from; replaces, never adds to Back. */
@@ -444,6 +445,34 @@ export default function TradeRulesPage() {
   const backTitle = `Esc or ⌥← · back to ${trail.length ? nameOf(focusOfKey(trail[trail.length - 1])) : 'Rules'}`
 
   const symbols = useMemo(() => allSymbols(data), [data])
+
+  // Rev .120 — the symbol is the top bar's. Arriving, the page takes the
+  // carried one only if some scope names it or an instance ran on it; any
+  // other is left carried and said so, and the page stays unfiltered. Every
+  // change of the step here (a symbol cell, Back, Release, the chip's ×)
+  // writes the top bar; a set symbol reaches it through the URL.
+  const carried = useCarriedSymbol()
+  const refused = useRef<string | null>(null)
+  useEffect(() => {
+    if (loading || error || !focus.sym || symbols.includes(focus.sym)) return
+    refused.current = focus.sym
+    const next = { pick: focus.pick, sym: null }
+    // Not a step on the path: carry the key over by hand, as `[` `]` do.
+    lastKey.current = focusKey(next)
+    navigate({ search: focusSearch(next) }, { replace: true })
+  }, [loading, error, focus.sym, focus.pick, symbols, navigate])
+  const lastSym = useRef(focus.sym)
+  useEffect(() => {
+    const prev = lastSym.current
+    lastSym.current = focus.sym
+    if (prev === focus.sym || focus.sym) return
+    if (prev != null && refused.current === prev) {
+      refused.current = null
+      return
+    }
+    clearCarriedSymbol()
+  }, [focus.sym])
+  const unadopted = !loading && carried && carried !== focus.sym && !symbols.includes(carried) ? carried : null
   const focused = hasFocus(focus)
   const fromLabel = record
     ? `${record.title}${focus.sym && record.kind !== 'symbol' ? ` · ${focus.sym}` : ''}`
@@ -501,36 +530,12 @@ export default function TradeRulesPage() {
           ]}
         />
         <span data-sr-tb="sep" />
-        <span data-sr-tb="label">Symbol</span>
-        <input
-          value={symQ}
-          onChange={(e) => {
-            const v = e.target.value.toUpperCase()
-            // A datalist pick arrives as a whole value in one event.
-            const native = e.nativeEvent as InputEvent
-            if ((native.inputType === 'insertReplacementText' || native.inputType == null) && symbols.includes(v)) {
-              setSym(v, true)
-            } else setSymQ(v)
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              const v = normSym(symQ)
-              if (v && symbols.includes(v)) setSym(v, true)
-            }
-            if (e.key === 'Escape') setSymQ('')
-          }}
-          list="rules-syms"
-          placeholder="RKLB ↵"
-          aria-label="Symbol"
-          className={`${positionsUi.input} h-6 w-24 font-mono uppercase`}
-        />
-        <datalist id="rules-syms">
-          {symbols.map((y) => (
-            <option key={y} value={y} />
-          ))}
-        </datalist>
-        {symQ && normSym(symQ) && !symbols.includes(normSym(symQ)!) ? (
-          <span className="text-dense-meta text-muted-foreground">{normSym(symQ)} is in no scope and ran nowhere</span>
+        {/* Rev .120: no Symbol box — the symbol step is the top bar's symbol. */}
+        <SymbolScopeChip symbol={focus.sym ?? ''} onClear={() => setSym(null, true)} />
+        {unadopted ? (
+          <span className="text-dense-meta text-muted-foreground" title="The top bar keeps it; this page is not filtered by it.">
+            {unadopted} is in no scope and ran nowhere
+          </span>
         ) : null}
         <span data-sr-tb="meta" className="flex flex-none items-center gap-2.5">
           {!focused ? (

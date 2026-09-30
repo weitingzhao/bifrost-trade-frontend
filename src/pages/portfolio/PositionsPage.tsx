@@ -531,7 +531,7 @@ export default function PositionsPage() {
               <ViewState
                 kind="filtered"
                 title="No positions match these filters"
-                detail={`The book has positions, but none pass the current ${scopeOn.join(', ') || 'scope'}. Off-track options appear when both accounts are in scope.`}
+                detail={`${filterSymbol ? `Filtered to ${filterSymbol} (the top bar symbol). ` : ''}The book has positions, but none pass the current ${scopeOn.join(', ') || 'scope'}. Off-track options appear when both accounts are in scope.`}
                 actionTitle={`Resets ${scopeOn.join(' · ')}`}
                 onAction={clearScope}
               />

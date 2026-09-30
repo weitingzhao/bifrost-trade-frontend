@@ -431,15 +431,6 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   return Array.from(rights).sort()
   }, [strategyOpportunityGroups])
 
-  const symbolSuggestions = useMemo(() => {
-  const syms = new Set<string>()
-  for (const e of bookData?.items ?? []) {
-    const s = (e.symbol ?? '').trim().toUpperCase()
-    if (s) syms.add(s)
-  }
-  return Array.from(syms).sort()
-  }, [bookData])
-
   const activeFilterSummary = useMemo(() => {
   const parts: string[] = []
   if (symbolFilter.trim()) parts.push(`Symbol: ${symbolFilter.trim()}`)
@@ -701,7 +692,6 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
     strategyOpportunityGroups,
     filteredStrategyOpportunityGroups,
     strategyPanelOptionRights,
-    symbolSuggestions,
     activeFilterSummary,
     instanceGroupsRaw,
     filteredInstanceGroups,

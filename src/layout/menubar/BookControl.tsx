@@ -166,7 +166,8 @@ export function BookControl() {
     sub: `${book.tagOf(r.accountId)} · ${r.qty > 0 ? '+' : ''}${r.qty}${r.next.text ? ` · ${r.next.text}` : ''}`,
     right: r.dayUsd == null ? '—' : fmtSignedUsd0(r.dayUsd),
     rightInk: dirInk(r.dayUsd),
-    to: withSymbolParam('/portfolio/positions', r.symbol),
+    // Rev .115: an option row lands on Positions › Options, a stock-like row on Positions › Shares.
+    to: `${withSymbolParam('/portfolio/positions', r.symbol)}${r.kind === 'opt' ? '' : '#shares'}`,
   })
   const posRows: ListRow[] =
     bucket === 'all'

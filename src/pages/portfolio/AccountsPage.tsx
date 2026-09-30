@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { HelpCircle, RefreshCw, Tag } from 'lucide-react'
+import { HelpCircle, RefreshCw } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
@@ -12,9 +12,8 @@ import { ViewState } from '@bifrost/ui'
 import { PageHead, PageHeadAction, PageShell } from '@/components/layout'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
-import { QUERY_KEYS } from '@/constants/queryKeys'
 import { OverviewCompact } from '@/components/accounts/OverviewCompact'
-import { buildQuoteMap, buildCkMap, uniqueSymbols, uniqueContractKeys } from '@/utils/positions'
+import { buildQuoteMap, uniqueSymbols } from '@/utils/positions'
 import { flattenPositions, splitBySecType } from '@/utils/positionsGrouping'
 import { buildSpotResolver, repriceRows } from '@/utils/spotPrice'
 import {
@@ -32,15 +31,19 @@ import { AccountsFreshnessBand } from './accounts/AccountsFreshnessBand'
 import { AccountsBrokerBand } from './accounts/AccountsBrokerBand'
 import { AccountsComposedBand } from './accounts/AccountsComposedBand'
 import { useTradingCalendar } from '@/hooks/useTradingCalendar'
-import { AccountsHoldingsBand } from './accounts/AccountsHoldingsBand'
 import { AccountsInspector, type AccountsInspectorState } from './accounts/AccountsInspector'
 import { accountsUi } from './accounts/accountsUi'
+
+/** Positions narrowed to one account by its role (`acct=host|secondary`), landing on a band. */
+function positionsFor(role: string | undefined, hash: string): string {
+  const r = (role ?? '').toLowerCase()
+  return `/portfolio/positions${r === 'host' || r === 'secondary' ? `?acct=${r}` : ''}${hash}`
+}
 
 const PAGE_LEAD =
   'What the broker says, account by account. Freshness first — stale account data poisons every page downstream.'
 
 export default function AccountsPage() {
-  const queryClient = useQueryClient()
   const statusQ = useMonitorStatus()
   const { data } = statusQ
   const preview = usePreviewState()
@@ -69,9 +72,9 @@ export default function AccountsPage() {
   )
 
   const stkSymbols = uniqueSymbols(accounts)
-  const optCks = uniqueContractKeys(accounts)
 
-  const { data: quotesData } = useQuotes(stkSymbols, optCks)
+  // Option quotes left with the Holdings band (Rev .115); the composition reads stock marks.
+  const { data: quotesData } = useQuotes(stkSymbols, [])
   const { data: benchData } = useBenchmarks(stkSymbols)
   const { data: freshnessData } = useExecutionsFreshness()
   const { data: flexCoverage } = useFlexCoverageFreshness()
@@ -96,7 +99,6 @@ export default function AccountsPage() {
   })
 
   const quotesBySymbol = useMemo(() => buildQuoteMap(quotesData), [quotesData])
-  const quotesByCk = useMemo(() => buildCkMap(quotesData), [quotesData])
   const benchBySymbol = benchData?.benchmarks ?? {}
 
   const barsBySymbol = useLatestBars(stkSymbols)
@@ -112,10 +114,7 @@ export default function AccountsPage() {
   )
   const broker = useMemo(() => buildBrokerRows(accounts, execItems), [accounts, execItems])
   const totalNetLiq = broker.totals.netLiq
-  const selectedBroker = broker.rows.find((r) => r.accountId === selected?.account_id)
 
-  const stkPositions = selected?.positions?.filter((p) => p.secType?.toUpperCase() === 'STK') ?? []
-  const optPositions = selected?.positions?.filter((p) => p.secType?.toUpperCase() === 'OPT') ?? []
 
   function closeInspector() {
     setInspector({ type: null })
@@ -128,8 +127,8 @@ export default function AccountsPage() {
   return (
     <PageShell padding="compact" className="space-y-3">
         {/* §16.10: the lead behind ⓘ; the two clocks — never one — are the
-            stamp (IB pull/rec and Flex); the help, Categories and the IB
-            refresh are the head's actions. */}
+            stamp (IB pull/rec and Flex); the help and the IB refresh are the
+            head's actions — Categories moved to Positions › Shares (Rev .115). */}
         <PageHead
           title="Accounts"
           info={PAGE_LEAD}
@@ -143,9 +142,6 @@ export default function AccountsPage() {
             <>
               <PageHeadAction onClick={() => setClockHelp((v) => !v)} title="What Pull and Rec mean — two clocks, never one">
                 <HelpCircle className="size-3.5" aria-label="What Pull and Rec mean" />
-              </PageHeadAction>
-              <PageHeadAction onClick={() => setInspector({ type: 'categories' })} title="Manage the Owner’s position categories">
-                <Tag className="size-3.5" aria-hidden /> Categories
               </PageHeadAction>
               <PageHeadAction
                 onClick={() => void refresh()}
@@ -267,43 +263,27 @@ export default function AccountsPage() {
               onSymbolClick={(symbol) => setInspector({ type: 'stock', symbol })}
             />
 
+            {/* Rev .115 (§5.1.4b): Positions is the one holdings page. The Holdings band's stock
+                and option tables moved there; what is left here points at them. */}
             {selected ? (
-              <AccountsHoldingsBand
-                accountId={selected.account_id ?? '—'}
-                roleLabel={
-                  selectedBroker?.roleNote
-                    ? `${selectedBroker.role} · ${selectedBroker.roleNote}`
-                    : (selectedBroker?.role ?? roles[selected.account_id ?? ''] ?? '')
-                }
-                dormant={selectedBroker?.dormant === true}
-                stockPositions={stkPositions}
-                optionPositions={optPositions}
-                quotesBySymbol={quotesBySymbol}
-                quotesByCk={quotesByCk}
-                benchBySymbol={benchBySymbol}
-                onSymbolClick={(symbol) =>
-                  setInspector({
-                    type: 'stock',
-                    symbol,
-                    accountId: selected.account_id,
-                  })
-                }
-                onCategoryClick={() => setInspector({ type: 'categories' })}
-              />
+              <p className="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-1 px-1 text-dense-meta text-muted-foreground">
+                <span>
+                  Holdings for {selected.account_id ?? '—'} are on Positions —
+                </span>
+                <Link to={positionsFor(roles[selected.account_id ?? ''], '#shares')} className="text-primary hover:underline">
+                  Shares →
+                </Link>
+                <Link to={positionsFor(roles[selected.account_id ?? ''], '')} className="text-primary hover:underline">
+                  Options →
+                </Link>
+              </p>
             ) : null}
           </>
         )}
         </>
         )}
 
-      <AccountsInspector
-        state={inspector}
-        accounts={accounts}
-        onClose={closeInspector}
-        onRefreshed={() => {
-          void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })
-        }}
-      />
+      <AccountsInspector state={inspector} onClose={closeInspector} />
     </PageShell>
   )
 }

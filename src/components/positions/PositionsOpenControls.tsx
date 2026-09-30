@@ -32,18 +32,24 @@ interface Props {
   scopedCount: number
   /** Holdings on no strategy — Positions shows the way to them when both accounts are in scope. */
   offTrack?: { count: number; onOpen: () => void } | null
-  /** The axes narrowing the book right now (accounts · symbol · expiry), for Clear N (§17.3). */
+  /** The axes narrowing the book right now (accounts · type · symbol · expiry), for Clear N (§17.3). */
   scopeOn?: readonly string[]
+  /**
+   * Positions only (Rev .116): which of the page's two bands are in scope —
+   * Options (the option lines) and Shares. At least one stays on.
+   */
+  types?: { opt: boolean; sh: boolean }
+  onTypesChange?: (t: { opt: boolean; sh: boolean }) => void
   onClearScope?: () => void
 }
 
-function AccountToggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
+function AccountToggle({ label, on, onClick, title }: { label: string; on: boolean; onClick: () => void; title?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={on}
-      title={`${on ? 'In scope — click to drop' : 'Out of scope — click to add'} ${label}. Margin follows scope; the two are never mixed.`}
+      title={title ?? `${on ? 'In scope — click to drop' : 'Out of scope — click to add'} ${label}. Margin follows scope; the two are never mixed.`}
       className={cn(
         'h-5.5 cursor-pointer border-0 px-2.5 text-dense-meta font-semibold',
         // Rev .86: an account in scope is the accent, mixed — not the surface token.
@@ -72,6 +78,8 @@ export function PositionsOpenControls({
   offTrack,
   scopeOn = [],
   onClearScope,
+  types,
+  onTypesChange,
 }: Props) {
   const showAccountToggles = !!(hostAccountId || secondaryAccountId)
   const symbolChip = filterSymbol.trim().toUpperCase()
@@ -108,6 +116,29 @@ export function PositionsOpenControls({
           )}
         </span>
       )}
+
+      {types && onTypesChange ? (
+        <span className="inline-flex overflow-hidden rounded-[5px] border border-border" aria-label="Holding types in scope">
+          {(
+            [
+              ['opt', 'Options', 'the option lines · the expiry filter applies here only'],
+              ['sh', 'Shares', 'stocks, fixed income, cash-like'],
+            ] as const
+          ).map(([k, label, what]) => (
+            <AccountToggle
+              key={k}
+              label={label}
+              on={types[k]}
+              title={`${types[k] ? 'Showing' : 'Hidden — click to show'} ${what}`}
+              onClick={() => {
+                const next = { ...types, [k]: !types[k] }
+                // At least one stays on: hiding both would read as an empty book.
+                if (next.opt || next.sh) onTypesChange(next)
+              }}
+            />
+          ))}
+        </span>
+      ) : null}
 
       <input
         placeholder="Symbol"

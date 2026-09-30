@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { IbPositionRow } from '@/types/monitor'
 import type { QuoteItem, DailyBenchmark } from '@/types/market'
-import {
-  calcStockGroupTotals,
-  computeStockPositionRowMetrics,
-  groupStockPositionsByCategory,
-  stockGroupPctFromTotals,
-} from './accountsStockPositions'
+import { computeStockPositionRowMetrics } from './accountsStockPositions'
 
 function stk(overrides: Partial<IbPositionRow> = {}): IbPositionRow {
   return {
@@ -67,50 +62,5 @@ describe('computeStockPositionRowMetrics', () => {
     const pos = stk({ unrealized_pnl: 42 })
     const m = computeStockPositionRowMetrics(pos, quote({ last: 110 }), undefined)
     expect(m.changeUsd).toBe(42)
-  })
-})
-
-describe('calcStockGroupTotals', () => {
-  it('sums group metrics across rows', () => {
-    const rows = [stk({ symbol: 'A' }), stk({ symbol: 'B', position: 5, avgCost: 200 })]
-    const quotes: Record<string, QuoteItem> = {
-      A: quote({ last: 110 }),
-      B: quote({ last: 210 }),
-    }
-    const benches: Record<string, DailyBenchmark> = {
-      A: bench({ prev_close: 105 }),
-      B: bench({ prev_close: 200 }),
-    }
-    const t = calcStockGroupTotals(rows, quotes, benches)
-    expect(t.totalCost).toBe(1000 + 1000)
-    expect(t.totalMarket).toBe(1100 + 1050)
-    expect(t.dailyUsd).toBeCloseTo(50 + 50)
-    expect(t.changeUsd).toBeCloseTo(100 + 50)
-    expect(t.dailyNotional).toBeCloseTo(105 * 10 + 200 * 5)
-    expect(stockGroupPctFromTotals(t).dailyPct).toBeCloseTo((100 / (105 * 10 + 200 * 5)) * 100)
-  })
-})
-
-describe('groupStockPositionsByCategory', () => {
-  it('sorts Uncategorized first then alphabetically', () => {
-    const groups = groupStockPositionsByCategory([
-      stk({ category: 'Option Pool', symbol: 'A' }),
-      stk({ category: undefined, symbol: 'B' }),
-      stk({ category: 'SEPA', symbol: 'C' }),
-    ])
-    expect(groups.map((g) => g.category)).toEqual(['Uncategorized', 'Option Pool', 'SEPA'])
-  })
-})
-
-describe('stockGroupPctFromTotals', () => {
-  it('returns null pcts when total cost is zero', () => {
-    expect(stockGroupPctFromTotals({
-      totalCost: 0,
-      totalMarket: 0,
-      dailyUsd: 0,
-      dailyNotional: 0,
-      changeUsd: 0,
-      hasDailyDenom: false,
-    })).toEqual({ dailyPct: null, changePct: null })
   })
 })

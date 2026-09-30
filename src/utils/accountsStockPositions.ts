@@ -15,15 +15,6 @@ export interface StockPositionRowMetrics {
   updTs: number | null
 }
 
-export interface StockGroupTotals {
-  totalCost: number
-  totalMarket: number
-  dailyUsd: number
-  dailyNotional: number
-  changeUsd: number
-  hasDailyDenom: boolean
-}
-
 export function computeStockPositionRowMetrics(
   pos: IbPositionRow,
   quote: QuoteItem | undefined,
@@ -55,66 +46,5 @@ export function computeStockPositionRowMetrics(
     changePct,
     changeUsd,
     updTs,
-  }
-}
-
-export function calcStockGroupTotals(
-  rows: IbPositionRow[],
-  quotesBySymbol: Record<string, QuoteItem>,
-  benchBySymbol: Record<string, DailyBenchmark>,
-): StockGroupTotals {
-  let totalCost = 0
-  let totalMarket = 0
-  let dailyUsd = 0
-  let dailyNotional = 0
-  let changeUsd = 0
-  let hasDailyDenom = false
-  for (const pos of rows) {
-    const sym = pos.symbol?.toUpperCase() ?? ''
-    const r = computeStockPositionRowMetrics(
-      pos,
-      quotesBySymbol[sym],
-      benchBySymbol[sym],
-    )
-    if (r.totalCost != null) totalCost += r.totalCost
-    if (r.totalMarket != null) totalMarket += r.totalMarket
-    if (r.dailyUsd != null) {
-      dailyUsd += r.dailyUsd
-      hasDailyDenom = true
-    }
-    const qty = pos.position ?? 0
-    if (r.basePrice != null && r.basePrice > 0 && qty !== 0) {
-      dailyNotional += r.basePrice * Math.abs(qty)
-    }
-    if (r.changeUsd != null) changeUsd += r.changeUsd
-  }
-  return { totalCost, totalMarket, dailyUsd, dailyNotional, changeUsd, hasDailyDenom }
-}
-
-export function groupStockPositionsByCategory(
-  positions: IbPositionRow[],
-): { category: string; rows: IbPositionRow[] }[] {
-  const byCategory: Record<string, IbPositionRow[]> = {}
-  for (const pos of positions) {
-    const cat = pos.category ?? 'Uncategorized'
-    ;(byCategory[cat] ??= []).push(pos)
-  }
-  return Object.keys(byCategory)
-    .sort((a, b) => {
-      if (a === 'Uncategorized') return -1
-      if (b === 'Uncategorized') return 1
-      return a.localeCompare(b)
-    })
-    .map((category) => ({ category, rows: byCategory[category] }))
-}
-
-export function stockGroupPctFromTotals(totals: StockGroupTotals): {
-  dailyPct: number | null
-  changePct: number | null
-} {
-  return {
-    dailyPct:
-      totals.dailyNotional !== 0 ? (totals.dailyUsd / totals.dailyNotional) * 100 : null,
-    changePct: totals.totalCost !== 0 ? (totals.changeUsd / totals.totalCost) * 100 : null,
   }
 }

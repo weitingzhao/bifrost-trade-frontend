@@ -48,6 +48,8 @@ import { BackingPoolCard } from '@/components/positions/charts/BackingPoolCard'
 import { PositionsOpenControls } from '@/components/positions/PositionsOpenControls'
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
 import { BookHeroBand } from './positions/BookHeroBand'
+import { SharesBand } from './positions/SharesBand'
+import { positionMatchesAccountFilter } from '@/utils/positionsGrouping'
 import { MarginByAccountStrip } from '@/components/positions/MarginByAccountStrip'
 import { ShortLegsPanel } from '@/components/positions/ShortLegsPanel'
 import { RoomToAddSection } from '@/components/positions/RoomToAddSection'
@@ -190,6 +192,8 @@ export default function PositionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusInst, focusRoot.isFetched, focusRoot.data])
   const [pressureOpen, setPressureOpen] = usePageViewState('pressure', true)
+  // Rev .116: the page's two holding bands — Options and Shares — as a scope axis; one stays on.
+  const [types, setTypes] = usePageViewState('types', { opt: true, sh: true })
   // The one slot beside the grid: one thing at a time, on the face that answers it.
   // Which face is kept; the open slot is not — it holds a picked contract,
   // leg or fill, which is data, and reopens on the next pick.
@@ -383,10 +387,14 @@ export default function PositionsPage() {
   // only the one that did — both accounts back, any symbol, any expiry.
   const scopeOn = [
     !(accountFilter.host && accountFilter.secondary) && 'accounts',
+    !(types.opt && types.sh) && 'type',
     filterSymbol.trim() && 'symbol',
     filterExpiry.trim() && 'expiry',
   ].filter((x): x is string => typeof x === 'string' && x !== '')
-  const clearScope = resetScope
+  const clearScope = () => {
+    resetScope()
+    setTypes({ opt: true, sh: true })
+  }
 
   const scopedCount = book.hasAccountSelection ? book.totalPositions : 0
   const rowsInView =
@@ -430,6 +438,8 @@ export default function PositionsPage() {
       offTrack={accountFilter.host && accountFilter.secondary ? { count: book.offTrackCount, onOpen: openOffTrack } : null}
       scopeOn={scopeOn}
       onClearScope={clearScope}
+      types={types}
+      onTypesChange={setTypes}
     />
   )
 
@@ -610,14 +620,16 @@ export default function PositionsPage() {
                   </div>
                 ) : null}
 
-                <PositionsTier heading label="Lines" note="The rows themselves, tightest first · one thing at a time opens on the right" />
+                {types.opt ? (
+                <>
+                <PositionsTier heading label="Options" note="Option lines, tightest first · one thing at a time opens on the right" />
                 <div
                   className={cn(
                     'sk-rise grid min-w-0 items-start gap-3',
                     faceOpen ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,32.5rem),1fr))]' : 'grid-cols-1',
                   )}
                 >
-                <section id="positions-lines" className={positionsUi.panel} aria-label="Lines">
+                <section id="positions-lines" className={positionsUi.panel} aria-label="Options">
                   <LinesToolbar
                     view={linesView}
                     onViewChange={setLinesView}
@@ -713,6 +725,22 @@ export default function PositionsPage() {
                   />
                 ) : null}
                 </div>
+                </>
+                ) : null}
+
+                {types.sh ? (
+                  <SharesBand
+                    stocks={book.allStocks.filter((p) =>
+                      positionMatchesAccountFilter(p.account_id ?? '', accountFilter, book.hostAccountId ?? '', book.secondaryAccountId ?? ''),
+                    )}
+                    quotesBySymbol={book.quotesBySymbol}
+                    benchBySymbol={book.benchBySymbol}
+                    cover={book.coverRows}
+                    accountLabel={(id) => (id === book.hostAccountId ? 'Host' : id === book.secondaryAccountId ? 'Secondary' : id)}
+                    filterSymbol={filterSymbol}
+                    onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
+                  />
+                ) : null}
               </>
             )}
           </>

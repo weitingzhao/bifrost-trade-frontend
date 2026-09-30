@@ -37,6 +37,38 @@ describe('latest-session extremes', () => {
     ])
   })
 
+  it('reads how each skew slope was taken, and an older API as unknown', async () => {
+    answer({
+      rows: [
+        {
+          symbol: 'xel',
+          trade_date: '2026-09-29',
+          expiry: '2026-10-16',
+          dte: 30,
+          atm_slope: 0.01,
+          basis: 'interpolated',
+          short_expiry: '2026-10-16',
+          short_dte: 17,
+          long_expiry: '2026-11-20',
+          long_dte: 52,
+          svi_a: null,
+        },
+        { symbol: 'ia', trade_date: '2026-09-29', expiry: '2026-10-16', dte: 21, atm_slope: 0.09, basis: 'window' },
+        { symbol: 'nvda', trade_date: '2026-09-29', expiry: '2026-10-30', atm_slope: 0.02 },
+      ],
+      count: 3,
+      limit: 100,
+      as_of: '2026-09-29',
+      ranked: 656,
+      excluded: [],
+    })
+    const [xel, ia, nvda] = (await fetchSkewExtremes(100)).rows
+    expect(xel).toMatchObject({ symbol: 'XEL', basis: 'interpolated', dte: 30, short_dte: 17, long_dte: 52, svi_a: null })
+    expect(xel?.long_expiry).toBe('2026-11-20')
+    expect(ia).toMatchObject({ basis: 'window', short_expiry: null, long_dte: null })
+    expect(nvda?.basis).toBeNull()
+  })
+
   it('reads an older research API as nothing left out and no count', async () => {
     answer({ rows: [], count: 0, bucket: 'high', limit: 20, as_of: '2026-08-25' })
     const r = await fetchVrpExtremes('high', 20)

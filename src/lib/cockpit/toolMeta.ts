@@ -407,7 +407,7 @@ export const TOOL_META: Record<string, ToolMeta> = {
   },
   'research.vol_surface.get_skew_extremes': {
     title: 'Skew 极值',
-    description: '最新一个拟合日里，按约 30 天到期（20–45 DTE）SVI 拟合的 ATM 斜率绝对值排名；并列出读数早于该日而被排除的名字及原因。',
+    description: '最新一个拟合日里，按约 30 天 ATM 斜率绝对值排名（在 30 DTE 两侧的 SVI 拟合之间按期限插值；缺一侧时取 20–45 DTE 内最接近 30 的那一个）；并列出读数早于该日而被排除的名字及原因。',
     category: 'research',
   },
   'research.opex_cycle.get_current': {

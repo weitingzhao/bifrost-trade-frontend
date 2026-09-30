@@ -54,7 +54,7 @@ import { SYMBOL_PATH, TAB_PARAM } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import type { IvRadarRow, IvRadarUniverseFilter } from '@/types/ivRadar'
 import { IV_RADAR_BUCKET_HINTS, formatIvRadarSource, ivRankDistanceFrom50 } from '@/utils/ivRadar/universe'
-import { daysTo } from '@/utils/optionTicker'
+import { skewTenor } from './skewTenorModel'
 
 type LensTab = 'iv_rank' | 'vrp' | 'skew'
 type RankSort = 'rank' | 'extremes' | 'symbol'
@@ -167,7 +167,7 @@ const VRP_LEFT_OUT: Record<string, string> = {
 
 const SKEW_LEFT_OUT: Record<string, string> = {
   not_fit: 'No surface fit that session',
-  no_30d_fit: 'Fit, but no 20–45 DTE expiry fit',
+  no_30d_fit: 'Fit, but none either side of 30 DTE and none 20–45 DTE out',
 }
 
 function IvRankTable() {
@@ -456,8 +456,9 @@ function SkewSteepTable() {
           ]}
         />
         <span className="text-dense-micro text-muted-foreground text-pretty">
-          The steepest ATM slopes of the SVI fits at each name&rsquo;s ~30-day expiry, ungraded: a slope is judged
-          against the name&rsquo;s own year on its Volatility face, not against one cut across names.
+          The steepest ~30-day ATM slopes, ungraded: each is interpolated to 30 DTE between the SVI fits either side,
+          or is one fit&rsquo;s where a side is missing. A slope is judged against the name&rsquo;s own year on its
+          Volatility face, not against one cut across names.
         </span>
         <span className="ml-auto">
           <SessionTally
@@ -476,24 +477,33 @@ function SkewSteepTable() {
         <p className="m-0 px-3 py-4 text-dense-meta text-muted-foreground">
           {goodOnly
             ? `None of the ${all.length} steepest fits is within ${GOOD_FIT_PTS} IV points.`
-            : `No ~30-day SVI fit with a slope on ${fmtIsoDateToken(q.data?.as_of)}.`}
+            : `No ~30-day slope reading on ${fmtIsoDateToken(q.data?.as_of)}.`}
         </p>
       ) : (
         <DenseDataTable wrapClassName="rounded-none border-0 overflow-x-auto" tableClassName="min-w-[36rem]">
           <DenseTableHeader>
             <DenseTableHeadRow>
               <DenseTableHead>Symbol</DenseTableHead>
-              <DenseTableHead className="text-right">DTE</DenseTableHead>
+              <DenseTableHead
+                className="text-right"
+                title="30 when interpolated, with the two fits' DTE under it; otherwise the one fit's DTE."
+              >
+                DTE
+              </DenseTableHead>
               <DenseTableHead className="text-right">ATM slope</DenseTableHead>
               <DenseTableHead className="text-right">ATM vol</DenseTableHead>
-              <DenseTableHead className="text-right" title="The fit's RMSE in IV points (0.20 = 20 pts) — a poor fit's slope is the wings talking.">
+              <DenseTableHead className="text-right" title="The fit's RMSE in IV points (0.20 = 20 pts), the worse of the two when interpolated — a poor fit's slope is the wings talking.">
                 RMSE
               </DenseTableHead>
-              <DenseTableHead className="text-right">Points</DenseTableHead>
+              <DenseTableHead className="text-right" title="IV points in the fit, the fewer of the two when interpolated.">
+                Points
+              </DenseTableHead>
             </DenseTableHeadRow>
           </DenseTableHeader>
           <DenseTableBody>
-            {rows.map((r) => (
+            {rows.map((r) => {
+              const tenor = skewTenor(r, today)
+              return (
               <DenseTableRow key={`${r.symbol}-${r.expiry}`}>
                 <DenseTableCell>
                   <SymbolCell
@@ -509,7 +519,10 @@ function SkewSteepTable() {
                     }
                   />
                 </DenseTableCell>
-                <DenseTableCell className={denseTableNumCell}>{(r.expiry ? daysTo(r.expiry, today) : null) ?? '—'}</DenseTableCell>
+                <DenseTableCell className={denseTableNumCell} title={tenor.title || undefined}>
+                  {tenor.main}
+                  {tenor.sub ? <span className="ml-1 text-dense-micro text-muted-foreground">{tenor.sub}</span> : null}
+                </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>{r.atm_slope != null ? r.atm_slope.toFixed(4) : '—'}</DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>{fmtPctFromFraction(r.atm_vol)}</DenseTableCell>
                 <DenseTableCell className={cn(denseTableNumCell, r.fit_rmse != null && r.fit_rmse * 100 > GOOD_FIT_PTS ? 'text-warning' : undefined)}>
@@ -517,7 +530,8 @@ function SkewSteepTable() {
                 </DenseTableCell>
                 <DenseTableCell className={denseTableNumCell}>{r.n_points ?? '—'}</DenseTableCell>
               </DenseTableRow>
-            ))}
+              )
+            })}
           </DenseTableBody>
         </DenseDataTable>
       )}

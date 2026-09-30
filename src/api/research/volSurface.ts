@@ -46,7 +46,23 @@ export interface VolSurfaceResidualRow {
   computed_at: string | null
 }
 
-export type SkewExtremeRow = VolSurfaceFitRow
+/**
+ * How a ~30-day slope was read (research 0.152.0, lenses/slope_tenor.py):
+ * `interpolated` — in T to 30 DTE between the fits either side of 30;
+ * `window` — no fit on one side, so the one fit nearest 30 within 20–45 DTE.
+ * `null` from a research API before 0.152.0, where every row was one fit's.
+ */
+export type SkewSlopeBasis = 'interpolated' | 'window'
+
+/** One ~30-day reading. On an interpolated row `dte` is 30 and `expiry` is the nearer input; there is no single smile, so the SVI parameters are null. */
+export interface SkewExtremeRow extends VolSurfaceFitRow {
+  basis: SkewSlopeBasis | null
+  /** The two fits an interpolated reading came from; null on a window reading. */
+  short_expiry: string | null
+  short_dte: number | null
+  long_expiry: string | null
+  long_dte: number | null
+}
 
 interface Envelope<T> {
   ok: boolean
@@ -78,6 +94,21 @@ function parseFit(raw: unknown): VolSurfaceFitRow | null {
     fit_rmse: numOrNull(r.fit_rmse),
     n_points: numOrNull(r.n_points),
     computed_at: strOrNull(r.computed_at),
+  }
+}
+
+function parseSkewRow(raw: unknown): SkewExtremeRow | null {
+  const fit = parseFit(raw)
+  if (!fit) return null
+  const r = raw as Record<string, unknown>
+  const basis = r.basis === 'interpolated' || r.basis === 'window' ? r.basis : null
+  return {
+    ...fit,
+    basis,
+    short_expiry: strOrNull(r.short_expiry),
+    short_dte: numOrNull(r.short_dte),
+    long_expiry: strOrNull(r.long_expiry),
+    long_dte: numOrNull(r.long_dte),
   }
 }
 
@@ -157,7 +188,7 @@ export interface SkewExtremesResponse {
   as_of: string | null
   /** Names with a ~30-day fit on `as_of`; null from a research API before 0.137.0. */
   ranked: number | null
-  /** Names whose last ~30-day fit predates `as_of`: `not_fit` · `no_30d_fit`. */
+  /** Names whose last ~30-day reading predates `as_of`: `not_fit` · `no_30d_fit`. */
   excluded: SessionLeftOut[]
 }
 
@@ -175,7 +206,7 @@ export async function fetchSkewExtremes(limit = 20): Promise<SkewExtremesRespons
     excluded?: unknown
   }>(res)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
-  const rows = raw.map(parseFit).filter((r): r is SkewExtremeRow => r !== null)
+  const rows = raw.map(parseSkewRow).filter((r): r is SkewExtremeRow => r !== null)
   return {
     rows,
     count: rows.length,

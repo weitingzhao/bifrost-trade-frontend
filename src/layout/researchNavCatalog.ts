@@ -25,7 +25,6 @@ import {
   BookOpen,
   ClipboardList,
   Compass,
-  Gauge,
   History,
   LayoutGrid,
   ListFilter,
@@ -177,17 +176,14 @@ export const BENCHES: Bench[] = [
     // which is one instance of the 26-glyphs-over-70-rows finding that package
     // opens with.
     icon: foldGlyph('Discover') ?? Compass,
-    // The design's four rows, row for row and in its order. Stock ratings
-    // leads: it is the model's own opinion, and the screens below it are ways
-    // of asking about that opinion.
-    //
-    // Stock Explorer left this list on 2026-09-20 (Owner ruling): it is a tab
-    // shell over SEPA, Momentum and Event Radar, and the design redistributed
-    // all three, so it answers to no row here. Its route stays.
+    // Three rows since design Rev .121 (Owner option A, 2026-09-30): Stock
+    // ratings and Stock screen read the same SEPA tables twice, so they are
+    // one picking page now — a model ranks, a screen cuts. Their old routes
+    // forward to it. Vol ratings stays one version beside it as Rank by ›
+    // Premium's own page, until the Owner rules on it.
     items: [
-      route('Stock ratings', '/research/ratings/stocks', Gauge),
+      route('Stock screen', '/research/stocks', ListFilter),
       route('Vol ratings', '/research/scan', ScanSearch),
-      route('Stock screen', '/research/screener', ListFilter),
       route('Option screen', '/research/contract-screener', ListFilter),
     ],
   },

@@ -62,7 +62,7 @@ export function usePipelineCensus() {
   const readings = useMemo(() => {
     const m = new Map<string, StoreReading>()
     if (sepaQ.data) {
-      m.set('/research/ratings/stocks', {
+      m.set('/research/stocks', {
         made: sepaQ.data.rows.length,
         newest: sepaQ.data.trade_date ?? null,
       })

@@ -55,17 +55,17 @@ function InstanceRedirect() {
 function ExplorerRedirect() {
   const location = useLocation()
   const tab = new URLSearchParams(location.search).get('tab')
-  // SEPA's tab went to Stock ratings; no tab lands where the design says the
-  // path itself belongs — its registry files `/research/explorer` against the
-  // Stock screen's own prototype.
+  // SEPA's tab went to Stock ratings, which is Stock screen ranked by SEPA
+  // since Rev .121; no tab lands where the design says the path belongs —
+  // Stock screen with no model and the old screener's opening criteria.
   const to =
     tab === 'events'
       ? '/research/events'
       : tab === 'momentum'
-        ? '/research/ratings/stocks?view=leaders'
+        ? '/research/stocks?view=leaders'
         : tab === 'sepa'
-          ? '/research/ratings/stocks'
-          : '/research/screener'
+          ? '/research/stocks?model=sepa'
+          : '/research/stocks?model=none&start=legacy'
   return <Navigate to={to} replace />
 }
 
@@ -271,10 +271,6 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/discover/DailyBriefPage')),
       },
       {
-        path: 'research/screener',
-        lazy: lazyPage(() => import('@/pages/research/data/StockScreenerPage')),
-      },
-      {
         path: 'research/contract-screener',
         lazy: lazyPage(() => import('@/pages/research/data/ScreenerPage')),
       },
@@ -332,20 +328,12 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/lab/discoverModel/DiscoverModelPage')),
       },
       {
-        path: 'research/lab/today',
-        lazy: lazyPage(() => import('@/pages/research/lab/today/LabTodayPage')),
-      },
-      {
         path: 'research/lab/history',
         lazy: lazyPage(() => import('@/pages/research/lab/history/LabHistoryPage')),
       },
       {
         path: 'research/lab/symbol',
         lazy: lazyPage(() => import('@/pages/research/lab/symbol/LabSymbolPage')),
-      },
-      {
-        path: 'research/lab/screener',
-        lazy: lazyPage(() => import('@/pages/research/lab/screener/LabScreenerPage')),
       },
       {
         path: 'research/lab/calibration',
@@ -399,8 +387,12 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/loop/ObjectivePage')),
       },
       {
-        path: 'research/ratings/stocks',
-        lazy: lazyPage(() => import('@/pages/research/ratings/StockRatingsPage')),
+        path: 'research/stocks',
+        lazy: lazyPage(() => import('@/pages/research/stocks/StockScreenPage')),
+      },
+      {
+        path: 'research/lab/stocks',
+        lazy: lazyPage(() => import('@/pages/research/stocks/StockScreenMethodPage')),
       },
       {
         path: 'research/loop/runs/:runId',

@@ -106,7 +106,9 @@ describe('the stamps the app writes', () => {
 
   it('reads a token, an address, and refuses anything it cannot place', () => {
     expect(censusRowFor('analyze-scan')).toBe('/research/scan')
-    expect(censusRowFor('sepa-daily-core')).toBe('/research/ratings/stocks')
+    expect(censusRowFor('sepa-daily-core')).toBe('/research/stocks')
+    // Stamped before Rev .121 merged the two pages: they read as Stock screen's.
+    expect(censusRowFor('/research/ratings/stocks')).toBe('/research/stocks')
     // The Symbol page absorbed six pages; its tabs' tokens are Symbol's.
     expect(censusRowFor('order-sentiment')).toBe('/research/symbol')
     expect(censusRowFor('/research/backtest')).toBe('/research/backtest')
@@ -119,10 +121,9 @@ describe('the stamps the app writes', () => {
 
   it('never places two stations on the one token', () => {
     // `sepa` was the Stock screener's stamp by mistake and SEPA's by name.
-    // The token keeps the meaning the rows on file were written under; the
-    // page that writes new ones says `stock-screener`.
-    expect(censusRowFor('sepa')).toBe('/research/ratings/stocks')
-    expect(censusRowFor('stock-screener')).toBe('/research/screener')
+    // Since Rev .121 both pages are Stock screen, so the two tokens agree.
+    expect(censusRowFor('sepa')).toBe('/research/stocks')
+    expect(censusRowFor('stock-screener')).toBe('/research/stocks')
     expect(savedStamps().some((s) => s.token === 'sepa')).toBe(false)
   })
 })

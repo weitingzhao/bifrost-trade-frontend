@@ -88,13 +88,13 @@ describe('one tree, both homes', () => {
   it('stands the stations directly under the layer, one depth', () => {
     // §5a.9: the Pipeline fold merged into the Research layer, so the three
     // captions and their pages are the layer's own rows. Three captions and
-    // the ten pages they name — the design's thirteen, since History and
-    // Compare joined Analyze on 2026-09-23 and Narrative at Rev .43.
+    // the nine pages they name — History and Compare joined Analyze on
+    // 2026-09-23, Narrative at Rev .43, and at Rev .121 Stock ratings and
+    // Stock screen became one page.
     expect(researchItems().map((i) => [i.label, i.kind ?? 'row'])).toEqual([
       ['Discover', 'caption'],
-      ['Stock ratings', 'row'],
-      ['Vol ratings', 'row'],
       ['Stock screen', 'row'],
+      ['Vol ratings', 'row'],
       ['Option screen', 'row'],
       ['Analyze', 'caption'],
       ['Symbol', 'row'],
@@ -127,20 +127,12 @@ describe('one tree, both homes', () => {
       }
       return out
     }
-    // All four of the design's now. Stock ratings landed 2026-09-21 and leads
-    // the fold: it is the model's own opinion, and the screens below it are
-    // ways of asking about that opinion. It was built before it was routed
-    // into the menu, which is how it spent a day reachable only by URL.
-    //
-    // The Owner settled the Stock screen on 2026-09-20 by what the prototype
-    // holds rather than what it is labelled: universe, criteria stages and
-    // lineage, none of which Stock Explorer has. Explorer left the fold with
-    // that ruling — it is a tab shell over three subjects the design
-    // redistributed — and keeps its route.
+    // Three rows since design Rev .121 (Owner option A, 2026-09-30): Stock
+    // ratings and Stock screen read the same SEPA tables twice, so they are
+    // one picking page; their old routes forward to it.
     expect(rows('Discover')).toEqual([
-      ['Stock ratings', '/research/ratings/stocks'],
+      ['Stock screen', '/research/stocks'],
       ['Vol ratings', '/research/scan'],
-      ['Stock screen', '/research/screener'],
       ['Option screen', '/research/contract-screener'],
     ])
     // Data is gone. Signal Health and Lens Coverage are System rows now, and

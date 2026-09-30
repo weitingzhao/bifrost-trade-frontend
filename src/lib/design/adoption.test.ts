@@ -73,12 +73,12 @@ describe('design adoption', () => {
     // forward as adoption would have retired the Stock screen from "to build"
     // without anyone building it — which is the rule this test pins. The Owner
     // ruled on 2026-09-20 that this side's SEPA-conditions page *is* that
-    // screen, so it holds the path itself now and answers for itself.
-    const home = rows.find((r) => r.path === '/research/screener')
+    // screen. Since Rev .121 the screen lives on `/research/stocks`, and the
+    // old addresses are forwards to it that the design files against the same
+    // prototype — so they are the forwards this page may answer for.
+    const home = rows.find((r) => r.path === '/research/stocks')
     expect(home?.inApp).toBe(true)
-    // Explorer's redirect lands here and is the same prototype (an alias row
-    // in the registry), so it is the one forward this page may answer for.
-    expect(home?.aliasOf).toEqual(['/research/explorer'])
+    expect(home?.aliasOf).toEqual(['/research/explorer', '/research/ratings/stocks', '/research/screener'])
     const contracts = rows.find((r) => r.path === '/research/contract-screener')
     // Walked 2026-09-22 on its own path, signed 2026-09-23; what this line
     // pins is the `aliasOf`, not the state — the rule is that the forward

@@ -186,15 +186,14 @@ export const LOOP_STATIONS: readonly LoopStation[] = [
     row: 'top',
     pages: [
       {
-        label: 'Stock ratings',
-        to: '/research/ratings/stocks',
-        tip: 'The equity model’s daily opinion.',
-      },
-      { label: 'Vol ratings', to: '/research/scan', tip: 'The vol model.' },
-      {
         label: 'Stock screen',
-        to: '/research/screener',
-        tip: 'Conditions in, a set out — the ranked universe browse lives here too.',
+        to: '/research/stocks',
+        tip: 'Pick stocks: a model ranks (SEPA · Radar · Premium), a screen cuts, alone or together. Its Method face holds the models, the condition vocabulary, the screens and the nightly queue.',
+      },
+      {
+        label: 'Vol ratings',
+        to: '/research/scan',
+        tip: 'The vol model on its own page for one more version; it is also the Premium model on Stock screen.',
       },
     ],
   },

@@ -493,7 +493,9 @@ describe('the design walk, as it stands', () => {
     // stale until that rename was built. 74 with the rename: those three back,
     // plus /trade/:id as its own design row (/instance is its alias). 73 with
     // Rev .112: Outcome is an alias of Playbook now, not a page of its own.
-    expect(counts.byState.reviewing).toBe(73)
+    // 71 with Rev .121: Stock ratings, Stock screen and their two method
+    // faces are one page and one method face (four aliases now).
+    expect(counts.byState.reviewing).toBe(71)
     // Since 2026-09-29 a reviewing page whose design rev passed its walk reads
     // stale too; the thirteen that had (Rev .100–.103 built in batches R–V)
     // were re-stamped with the design receipt, so none does.
@@ -549,9 +551,8 @@ describe('the design walk, as it stands', () => {
       '/research/lab/calibration',
       '/research/lab/discover-model',
       '/research/lab/history',
-      '/research/lab/screener',
+      '/research/lab/stocks',
       '/research/lab/symbol',
-      '/research/lab/today',
       '/research/lens-coverage',
       '/research/loop/candidates',
       '/research/loop/decisions',
@@ -564,11 +565,10 @@ describe('the design walk, as it stands', () => {
       '/research/narrative',
       '/research/orchestration',
       '/research/overview',
-      '/research/ratings/stocks',
       '/research/scan',
-      '/research/screener',
       '/research/signal-decay',
       '/research/signal-health',
+      '/research/stocks',
       '/research/symbol',
       '/research/trace',
       '/research/watchlist',
@@ -648,7 +648,8 @@ describe('the design walk, as it stands', () => {
     // in U3 before the design had a route for it).
     // 92 with Rev .109: /review/playbook is a route of its own (ROUTES 101 → 102).
     // 94 with Rev .111: /trade/:id and /review/trade (ROUTES 102 → 104).
-    expect(counts.designed).toBe(94)
+    // 96 with Rev .121: /research/stocks and /research/lab/stocks (ROUTES 104 → 106).
+    expect(counts.designed).toBe(96)
     expect(counts.byState.designOnly).toBe(9)
     // 24 until Trading desk was built 2026-09-18; 26 since Package 2026-09-19.1
     // added Journal, Narrative and the Artifact Dock concept page — all three

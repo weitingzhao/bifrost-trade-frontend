@@ -25,6 +25,10 @@ export interface SepaWideRow {
   sma_50: number | null
   crs_percentile: number | null
   return_252d: number | null
+  /** SEPA's momentum tier, 0–1 (signals passed / 10). */
+  momentum_score: number | null
+  /** SEPA's options tier, 0–1; null when the name has no options structure. */
+  structure_score: number | null
   /** All 19 condition booleans by mart column name; null = not evaluated. */
   conditions: Record<string, boolean | null>
 }
@@ -100,6 +104,8 @@ export async function fetchSepaScreenerWide(
       sma_50: numOrNull(r.sma_50),
       crs_percentile: numOrNull(r.crs_percentile),
       return_252d: numOrNull(r.return_252d),
+      momentum_score: numOrNull(r.momentum_score),
+      structure_score: numOrNull(r.structure_score),
       conditions,
     })
   }

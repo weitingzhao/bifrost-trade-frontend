@@ -117,9 +117,10 @@ interface Spec {
  * built" is a fact about this side.
  */
 const SPECS: readonly Spec[] = [
-  { to: '/research/ratings/stocks', label: 'Stock ratings', station: 'discover', store: 'sepa_daily_core', storeState: 'has-store', note: null },
+  // One row since design Rev .121: Stock ratings and Stock screen merged into
+  // one picking page, and its store is the SEPA model's (the design's census).
+  { to: '/research/stocks', label: 'Stock screen', station: 'discover', store: 'sepa_daily_core', storeState: 'has-store', note: null },
   { to: '/research/scan', label: 'Vol ratings', station: 'discover', store: 'option_snapshot_aggregates', storeState: 'has-store', note: null },
-  { to: '/research/screener', label: 'Stock screen', station: 'discover', store: 'screen_run', storeState: 'store-owed', note: 'store owed — a screen is an object you fork and cite' },
   { to: '/research/contract-screener', label: 'Option screen', station: 'discover', store: 'screen_run', storeState: 'store-owed', note: 'store owed — a screen is an object you fork and cite' },
   { to: '/research/event-radar', label: 'Alerts', station: 'off-bench', store: null, storeState: 'off-bench', note: 'off this bench — Home › Alerts' },
   { to: '/research/symbol', label: 'Symbol', station: 'analyze', store: 'symbol_verdict', storeState: 'store-owed', note: 'store owed — a verdict is cited as a hypothesis’s origin' },
@@ -163,21 +164,20 @@ const STAMP_ROW: Record<string, string> = {
   'gex-intraday': '/research/symbol',
   'intraday-playbook': '/research/symbol',
   'iv-radar': '/research/symbol',
-  'momentum-radar': '/research/ratings/stocks',
+  'momentum-radar': '/research/stocks',
   'opex-cycle-lab': '/research/symbol',
   'order-sentiment': '/research/symbol',
-  // Historical: the Stock screener stamped `sepa` until 2026-09-21, so rows
-  // already on file read as SEPA's. They are kept pointing at Stock ratings
-  // rather than silently re-labelled — the page that writes them now says
-  // `stock-screener`.
-  sepa: '/research/ratings/stocks',
-  'sepa-daily-core': '/research/ratings/stocks',
+  // Stock ratings and the Stock screener were one page from design Rev .121,
+  // so every token either of them ever stamped reads as Stock screen's.
+  sepa: '/research/stocks',
+  'sepa-daily-core': '/research/stocks',
   // The Overview face stamps the page itself rather than one of the six tab
   // tokens beside it: a hypothesis written from the identity line or the rail
   // was read across every face, not out of one.
   symbol: '/research/symbol',
   screener: '/research/contract-screener',
-  'stock-screener': '/research/screener',
+  'stock-screener': '/research/stocks',
+  'stock-screen': '/research/stocks',
   'vol-surface-lab': '/research/symbol',
   'vrp-lab': '/research/symbol',
 }
@@ -215,9 +215,22 @@ export const NOT_A_STATION: Record<string, string> = {
  * same as an unknown token — a stamp this census cannot place is not a row it
  * may invent.
  */
+/**
+ * Paths stamped before a page moved, and the row that page is now. The
+ * discovery lanes stamped `/research/ratings/stocks` until design Rev .121
+ * merged it into Stock screen; those rows are Stock screen's.
+ */
+const MOVED_ROW: Record<string, string> = {
+  '/research/ratings/stocks': '/research/stocks',
+  '/research/screener': '/research/stocks',
+}
+
 export function censusRowFor(originPage: string | null | undefined): string | null {
   if (!originPage) return null
-  if (originPage.startsWith('/')) return CENSUS_ROUTES.includes(originPage) ? originPage : null
+  if (originPage.startsWith('/')) {
+    const row = MOVED_ROW[originPage] ?? originPage
+    return CENSUS_ROUTES.includes(row) ? row : null
+  }
   return STAMP_ROW[originPage] ?? null
 }
 

@@ -16,7 +16,7 @@ const NO_READINGS = new Map<string, StoreReading>()
 const NO_ORIGINS = new Map<string, number>()
 
 const READINGS = new Map<string, StoreReading>([
-  ['/research/ratings/stocks', { made: 500, newest: '2026-09-19' }],
+  ['/research/stocks', { made: 500, newest: '2026-09-19' }],
   ['/research/scan', { made: 500, newest: null }],
   // Handed a count on purpose: Narrative was once read off order flow's 100
   // rows, and a row that owes its store must not take one it is given.
@@ -31,14 +31,14 @@ describe('the four classes', () => {
   const by = (to: string) => rows.find((r) => r.to === to)!
 
   it('counts a store that exists', () => {
-    expect(by('/research/ratings/stocks').made).toBe(500)
-    expect(by('/research/ratings/stocks').storeState).toBe('has-store')
+    expect(by('/research/stocks').made).toBe(500)
+    expect(by('/research/stocks').storeState).toBe('has-store')
   })
 
   it('names the store a page owes instead of showing a zero', () => {
     // Owing a store is not having none: a screen is an object you fork and
     // cite, so something should be keeping it.
-    for (const to of ['/research/screener', '/research/contract-screener', '/research/symbol', '/research/signal-decay']) {
+    for (const to of ['/research/contract-screener', '/research/symbol', '/research/signal-decay']) {
       expect(by(to).storeState, to).toBe('store-owed')
       expect(by(to).made, to).toBeNull()
       expect(by(to).store, to).toBeTruthy()
@@ -123,8 +123,9 @@ describe('stationReadings', () => {
 
   it('counts a page that owes no store as on the bench', () => {
     // It is still a page you work at; only Alerts is excluded.
+    // Three since Rev .121: Stock ratings and Stock screen are one page.
     const discover = stationReadings(rowsAt()).find((s) => s.station === 'discover')!
-    expect(discover.onBench).toBe(4)
+    expect(discover.onBench).toBe(3)
     expect(discover.withStore).toBe(2)
   })
 

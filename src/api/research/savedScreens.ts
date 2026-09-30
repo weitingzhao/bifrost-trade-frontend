@@ -1,8 +1,8 @@
 /**
  * Saved screens — one object with one id (6A, research 0.107.0).
  *
- * The authoring face (/research/lab/screener) writes them; Trade's result
- * face renders the same object read-only. The definition is validated
+ * The authoring face (/research/lab/stocks › Conditions) and Stock screen
+ * write them; Stock screen's My screens reads the same object. The definition is validated
  * server-side against the v1 vocabulary (repositories/saved_screen.py); a
  * 422 names the drift instead of storing it.
  */

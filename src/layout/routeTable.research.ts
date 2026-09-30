@@ -153,22 +153,30 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/loop/runs/:runId'],
     },
   },
+
   {
-    // The Screener's `Rank by` was blocked on this page, and the design gives
-    // Momentum Radar and SEPA Daily Core their home in it when they dissolve.
-    path: '/research/ratings/stocks',
-    label: 'Stock ratings',
+    // Stock screen (design Rev .121–.130, Owner option A): Stock ratings and
+    // the old Stock screen merged into one picking page — a universe, a model
+    // to order it, a screen to cut it. Their old addresses forward here.
+    path: '/research/stocks',
+    label: 'Stock screen',
     crumbs: DISCOVER,
     design: {
-      // Re-walked 2026-09-23 against Rev .6, which is the design answering the
-      // §15.2 disposition tables. Back to `reviewing`: the walk and the build
-      // are this side's, and only the Owner's look puts a page in place.
-      // Rev .9 adds the Leaders view — the design answering this side's own
-      // ask about Momentum Radar's ranking. Re-walked 2026-09-23.
-      // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.83',
-      note: DESIGN_NOTES['/research/ratings/stocks'],
+      rev: '2026-09-30.130',
+      note: DESIGN_NOTES['/research/stocks'],
+    },
+  },
+  {
+    // The back face: Models · Conditions (the old Screener authoring face) ·
+    // Screens · Queue (the old Ratings method face, the night batch's queue).
+    path: '/research/lab/stocks',
+    label: 'Stock screen · method',
+    crumbs: DISCOVER,
+    design: {
+      state: 'reviewing',
+      rev: '2026-09-30.123',
+      note: DESIGN_NOTES['/research/lab/stocks'],
     },
   },
 
@@ -418,35 +426,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
-    // The Method face of Ratings · Stocks — the night batch's queue with the
-    // evidence behind each name, in the batch's own four states. Built
-    // 2026-09-24; the ⧉ switch on both faces lights by itself.
-    path: '/research/lab/today',
-    label: "Today's candidates",
-    crumbs: DISCOVER,
-    design: {
-      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
-      state: 'reviewing',
-      rev: '2026-09-25.91',
-      note: DESIGN_NOTES['/research/lab/today'],
-    },
-  },
-  {
-    // The Method face of Stock screen — the authoring face where the filter
-    // vocabulary is defined against the SEPA wide table. Built 2026-09-24;
-    // the ⧉ switch on both faces lights by itself. The saved-screen store
-    // (6A) is live since (`/research/screens` answers; measured 2026-09-26).
-    path: '/research/lab/screener',
-    label: 'Stock screen · method',
-    crumbs: DISCOVER,
-    design: {
-      // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
-      state: 'reviewing',
-      rev: '2026-09-25.91',
-      note: DESIGN_NOTES['/research/lab/screener'],
-    },
-  },
-  {
     // The design's vocabulary page for the Discover menu — a System › Data
     // reference with no data behind it, transcribed whole. Built 2026-09-24.
     path: '/research/lab/discover-model',
@@ -513,25 +492,6 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Rev .104: Trace in the registry, a Book member (V5); walk rev moved with Package .33.
       rev: '2026-09-29.104',
       note: DESIGN_NOTES['/research/trace'],
-    },
-  },
-  {
-    // The design's **Stock screen** (Owner ruling 2026-09-20). The earlier note
-    // here read the design's Screener as our Explorer; reading the prototype
-    // settled it the other way. `Research Screener.dc.html` is universe →
-    // criteria stages → results → lineage, and only this page has any of the
-    // three: Explorer has no criteria of its own, it is a tab shell over SEPA,
-    // Momentum and Event Radar.
-    path: '/research/screener',
-    label: 'Stock screen',
-    crumbs: DISCOVER,
-    // Signed at .20.10; Rev .43 added four narrative conditions to the
-    // Catalyst stage, built 2026-09-25 and waiting for a look.
-    design: {
-      // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
-      state: 'reviewing',
-      rev: '2026-09-25.87',
-      note: DESIGN_NOTES['/research/screener'],
     },
   },
   // The Contracts half of the design's screener, on its own path since

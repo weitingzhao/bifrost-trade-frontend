@@ -85,7 +85,7 @@ describe('the Research tree uses captions where §5a.7 says to', () => {
     expect(shown.map((i) => i.label)).toContain('Discover')
   })
 
-  it('holds the design\'s ten pages, and nothing that only expands', () => {
+  it('holds the design\'s nine pages, and nothing that only expands', () => {
     const rows = items.filter((i) => i.kind !== 'caption')
     // The design's ten, all built: History and then Compare joined Analyze on
     // 2026-09-23, and Narrative came back as its fourth row at Rev .43. The
@@ -94,7 +94,8 @@ describe('the Research tree uses captions where §5a.7 says to', () => {
     //
     // The Book signpost row (2026-09-22) left on 2026-09-29 (Owner): the
     // design leaves it out on purpose, and Filter pages finds the Book.
-    expect(rows).toHaveLength(10)
+    // Nine since Rev .121: Stock ratings and Stock screen are one page.
+    expect(rows).toHaveLength(9)
     // The half of §5a.8 that still holds without exception: no row nests. The
     // equipment's pages are on the rail — a row with children here is the
     // tree filling up again.

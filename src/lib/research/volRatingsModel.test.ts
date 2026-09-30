@@ -24,7 +24,7 @@ import {
   toVolRow,
   volTape,
   type VolRow,
-} from './volRatingsModel'
+} from '@/lib/research/volRatingsModel'
 import type { ScanRow } from '@/api/research/scan'
 
 function scanRow(over: Partial<ScanRow> = {}): ScanRow {

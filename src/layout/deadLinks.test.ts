@@ -164,11 +164,9 @@ const REACHABLE_BY_DESIGN: Record<string, string> = {
   // all three of which the design redistributed. It answers to no design row,
   // so it holds no menu row — the route stays for the bookmarks that predate
   // the ruling.
-  '/research/lab/today':
-    'A method face holds no menu row by design — the ⧉ switch on its reading (Ratings · Stocks) is the way in, and the link is built from the faces table at render, which this scan cannot see.',
   '/research/lab/symbol':
     'A method face holds no menu row by design — the ⧉ switch on its reading (Symbol) is the way in, and the link is built from the faces table at render, which this scan cannot see.',
-  '/research/lab/screener':
+  '/research/lab/stocks':
     'A method face holds no menu row by design — the ⧉ switch on its reading (Stock screen) is the way in, and the link is built from the faces table at render, which this scan cannot see.',
 }
 

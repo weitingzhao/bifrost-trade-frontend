@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 104 routes, 104 with a designed page,
+ * Derived, not typed: 106 routes, 106 with a designed page,
  * 0 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -58,8 +58,7 @@ export interface DesignFace {
 }
 
 export const DESIGN_FACES: readonly DesignFace[] = [
-  {"reading":"/research/ratings/stocks","method":"/research/lab/today"},
-  {"reading":"/research/screener","method":"/research/lab/screener"},
+  {"reading":"/research/stocks","method":"/research/lab/stocks"},
   {"reading":"/research/symbol","method":"/research/lab/symbol"},
   {"reading":"/research/history","method":"/research/lab/history"},
 ]
@@ -147,7 +146,6 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "flows": "M3 12h18M8 8V3M5 6l3-3 3 3M16 16v5M13 18l3 3 3-3",
   "fork": "M12 3v5M12 8l-5 4M12 8l5 4M7 12v4M17 12v4M4 16h6M14 16h6",
   "gates": "M3 6l4 6-4 6M10 6l4 6-4 6M19 4v16",
-  "gauge": "M4 17a8 8 0 0116 0M12 17l4.5-5.5",
   "gaugebar": "M3 9h18v6H3zM13 9v6M6 12h4",
   "gear": "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z",
   "hourglass": "M7 3h10M7 21h10M7 3c0 4 5 5 5 9s-5 5-5 9M17 3c0 4-5 5-5 9s5 5 5 9",
@@ -215,11 +213,10 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/research/loop/decisions": "valve",
   "/research/narrative": "excerpt",
   "/research/orchestration": "tree",
-  "/research/ratings/stocks": "gauge",
   "/research/scan": "smile",
-  "/research/screener": "sieve",
   "/research/signal-decay": "decay",
   "/research/signal-health": "lamprows",
+  "/research/stocks": "sieve",
   "/research/symbol": "card",
   "/review/habits": "streak",
   "/review/objectives": "bullseye",
@@ -295,6 +292,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/research/history": "underlying",
   "/research/lab/history": "underlying",
   "/research/lab/screener": "underlying",
+  "/research/lab/stocks": "underlying",
   "/research/lab/symbol": "underlying",
   "/research/narrative": "underlying",
   "/research/payoff": "contract",
@@ -302,12 +300,13 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/research/scan": "contract",
   "/research/scenario": "underlying",
   "/research/screener": "underlying",
+  "/research/stocks": "underlying",
   "/research/symbol": "underlying",
   "/research/vol-regime": "underlying",
   "/review/trade": "contract",
 }
 
-export const DESIGN_REV = "2026-09-30.120"
+export const DESIGN_REV = "2026-09-30.130"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
@@ -323,10 +322,11 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/portfolio","label":"Portfolio","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Overview.dc.html","round":null,"rev":"2026-09-25.82","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/research/workbench","label":"Pipeline","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-22.2","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/ratings","label":"Vol ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Vol Ratings.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/ratings/stocks","label":"Stock ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Ratings.dc.html","round":"OLD","rev":"2026-09-25.83","inNav":true,"group":"Research","designOnly":false},
+  {"path":"/research/stocks","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-30.130","inNav":true,"group":"Research","designOnly":false},
+  {"path":"/research/ratings/stocks","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-30.123","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/scan","label":"Vol ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Vol Ratings.dc.html","round":"OLD","rev":"2026-09-25.87","inNav":true,"group":"Research","designOnly":false},
-  {"path":"/research/screener","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-25.87","inNav":true,"group":"Research","designOnly":false},
-  {"path":"/research/explorer","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/screener","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-30.123","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/explorer","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-30.123","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/contract-screener","label":"Option screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Option Screen.dc.html","round":"OLD","rev":"2026-09-25.93","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/event-radar","label":"Alerts","crumbs":["Market"],"designed":true,"file":"Market Alerts.dc.html","round":null,"rev":"2026-09-25.90","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/symbol","label":"Symbol","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-28.103","inNav":true,"group":"Research","designOnly":false},
@@ -338,8 +338,9 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/research/payoff","label":"Payoff","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol.dc.html","round":"REDO","rev":"2026-09-17.1","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/compare","label":"Compare","crumbs":["Research","Analyze"],"designed":true,"file":"Research Compare.dc.html","round":"NEW","rev":"2026-09-25.87","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/history","label":"History","crumbs":["Research","Analyze"],"designed":true,"file":"Research History.dc.html","round":"NEW","rev":"2026-09-25.87","inNav":true,"group":"Research","designOnly":false},
-  {"path":"/research/lab/today","label":"Stock ratings · method","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Ratings Method.dc.html","round":"LAB","rev":"2026-09-25.91","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/lab/screener","label":"Stock screen · method","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen Method.dc.html","round":"LAB","rev":"2026-09-25.91","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/lab/stocks","label":"Stock screen · method","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen Method.dc.html","round":"LAB","rev":"2026-09-30.123","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/lab/today","label":"Stock screen · method","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen Method.dc.html","round":"LAB","rev":"2026-09-30.123","inNav":false,"group":null,"designOnly":false},
+  {"path":"/research/lab/screener","label":"Stock screen · method","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen Method.dc.html","round":"LAB","rev":"2026-09-30.123","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/lab/symbol","label":"Symbol · method","crumbs":["Research","Analyze"],"designed":true,"file":"Research Symbol Method.dc.html","round":"LAB","rev":"2026-09-25.91","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/lab/history","label":"History · method","crumbs":["Research","Analyze"],"designed":true,"file":"Research History Method.dc.html","round":"LAB","rev":"2026-09-25.91","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/lab/calibration","label":"Calibration","crumbs":["System","Alignment"],"designed":true,"file":"System Data Calibration.dc.html","round":"LAB","rev":"2026-09-25.91","inNav":true,"group":"System","designOnly":false},

@@ -167,26 +167,14 @@ if [[ -f "$tp_css" ]]; then
   report "transferPay.module.css must be deleted (Transfer Pay Dense migration)"
 fi
 
-# Stock Screener: Dense migration — no module CSS
-if ss_legacy=$(grep -rE 'styles\.(ssTechRow|ssFundRow|ssStackCol|ssCard|ssChip|ssGroupHeader|ssFilterBadge)' \
-  src/pages/research/data/stockScreener --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
-  if [[ -n "$ss_legacy" ]]; then
-    echo "$ss_legacy" >&2
-    report "legacy stock-screener.module.css class references under Stock Screener"
-  fi
-fi
+# Stock Screener: Dense migration — no module CSS. The page itself merged into
+# Stock screen (`src/pages/research/stocks`, design Rev .121); the import rule
+# still guards the whole Research tree.
 if ss_styles=$(grep -rl "stock-screener.module.css" src/pages/research --include='*.tsx' --include='*.ts' 2>/dev/null || true); then
   if [[ -n "$ss_styles" ]]; then
     echo "$ss_styles" >&2
     report "stock-screener.module.css import under src/pages/research"
   fi
-fi
-ss_css=src/pages/research/data/stockScreener/stock-screener.module.css
-if [[ -f "$ss_css" ]]; then
-  report "stock-screener.module.css must be deleted (Stock Screener Dense migration)"
-fi
-if grep -q "@/components/ui/table" src/pages/research/data/stockScreener/ReadinessResultsTable.tsx 2>/dev/null; then
-  report "shadcn Table in ReadinessResultsTable.tsx (use DenseDataTable)"
 fi
 
 # Option Screener: Dense migration — no raw HTML tables
@@ -511,7 +499,7 @@ fi
 
 # Dense typography ratchet: hardcoded text-[Npx] / text-[0.NNrem] should only go DOWN.
 # Allowed exceptions: text-[7px], text-[8px], and sizing/winRate responsive gradations.
-HARDCODED_TYPO_BASELINE=5
+HARDCODED_TYPO_BASELINE=4
 hardcoded_typo_count=$(grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null | wc -l | tr -d ' ')
 if [[ "$hardcoded_typo_count" -gt "$HARDCODED_TYPO_BASELINE" ]]; then
   grep -rE 'text-\[\d+px\]|text-\[0\.\d+rem\]' src --include='*.tsx' --include='*.ts' 2>/dev/null >&2
@@ -529,7 +517,7 @@ fi
 # itself goes through `pnlColorClass` / `text-profit` / `text-loss`, which are
 # teal and orange now (DESIGN_CONTRACTS §11.9); putting one of these classes on
 # a signed number would re-create the collision that move exists to end.
-RAW_PALETTE_BASELINE=17
+RAW_PALETTE_BASELINE=1
 raw_pnl_count=$(grep -rE 'text-emerald-[0-9]|text-red-[0-9]' src/pages src/components \
   --include='*.tsx' --include='*.ts' 2>/dev/null \
   | grep -v 'src/components/data-display' | wc -l | tr -d ' ')

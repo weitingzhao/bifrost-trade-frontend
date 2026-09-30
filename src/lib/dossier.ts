@@ -74,7 +74,7 @@ export const DOSSIER_FACES: readonly DossierFace[] = [
     lenses: ['sepa', 'momentum'],
     // The one face whose full reading is another page: the equity model ranks
     // every name, and this card is that ranking for one of them.
-    openTo: '/research/ratings/stocks',
+    openTo: '/research/stocks?model=sepa',
     openLabel: 'Ratings › Stocks →',
     isTab: false,
   },

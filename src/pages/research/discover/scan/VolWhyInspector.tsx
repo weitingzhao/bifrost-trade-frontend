@@ -25,7 +25,7 @@ import { SYMBOL_PATH, labHref, type LabViewId } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { cn } from '@/lib/utils'
 import type { SimilarRegimeLens } from '@/api/research/similarRegime'
-import { compositeParts, regimeVariant, type VolRow, type VolWeights } from './volRatingsModel'
+import { compositeParts, regimeVariant, type VolRow, type VolWeights } from '@/lib/research/volRatingsModel'
 
 /**
  * The lens the similar-regime lookup is asked about.

@@ -214,6 +214,12 @@
     --sk-copilot-ink: color-mix(in oklch, #c084fc, var(--sk-ink) var(--sk-pastel));
     --sk-state-blue: color-mix(in oklch, #60a5fa, var(--sk-ink) var(--sk-pastel));
     --sk-state-green: color-mix(in oklch, #22c55e, var(--sk-ink) var(--sk-pastel));
+    /* Stock screen's three model marks (design Rev .126, temporary until the
+       DS carries them): markers only — a square, a letter, a 3px rule. Colour
+       on that page still means "clears the bar", never "which model". */
+    --sk-model-sepa: oklch(0.48 0.07 165);
+    --sk-model-radar: oklch(0.5 0.08 65);
+    --sk-model-premium: oklch(0.48 0.07 255);
     --sk-accent2: #5b21b6;
     --sk-accent-rgb: 109 40 217;
 
@@ -424,6 +430,9 @@
     --sk-warn: #fbbf24;
     --sk-on-accent: #16112b;
     --sk-pastel: 0%;
+    --sk-model-sepa: oklch(0.76 0.06 165);
+    --sk-model-radar: oklch(0.78 0.06 65);
+    --sk-model-premium: oklch(0.76 0.05 255);
 
     /* Entity inks and tint triplets (Rev 2026-09-23.15–.17, §14.8). A tint
        fill writes rgb(var(--color-profit-rgb) / .12), so a 12% wash is the

@@ -529,7 +529,7 @@ export function SymbolPriceChart({
           ) : null}
           <button
             type="button"
-            onClick={() => navigate(withSymbolParam('/research/ratings/stocks', sym))}
+            onClick={() => navigate(withSymbolParam('/research/stocks?model=sepa', sym))}
             title="Moving averages, SEPA and structure live in Ratings"
             className="text-dense-meta text-muted-foreground hover:text-foreground hover:underline"
           >

@@ -27,6 +27,8 @@ function row(over: Partial<SepaWideRow>): SepaWideRow {
     sma_50: 95,
     crs_percentile: 60,
     return_252d: 0.2,
+    momentum_score: 0.3,
+    structure_score: null,
     conditions: {},
     ...over,
   }

@@ -74,9 +74,8 @@ export const MOMENTUM_FACTORS: readonly MomentumFactor[] = [
 ] as const
 
 /**
- * The same cuts the composite uses (`stockRatingsModel.HOT_AT` / `COLD_AT`),
- * repeated here because a `lib/` module may not read a page's — pinned to
- * those constants by the test so the two cannot drift.
+ * The same cuts the ratings composites use (hot at 70, cold at 35),
+ * repeated here because a `lib/` module may not read a page’s.
  */
 export const FACTOR_HOT_AT = 70
 export const FACTOR_COLD_AT = 35

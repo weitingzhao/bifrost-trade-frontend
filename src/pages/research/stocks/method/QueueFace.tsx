@@ -15,6 +15,7 @@
  * batch that carries the name. The first build called the first three and the
  * draft "not on the plan"; each answers on DEV.
  */
+import { METHOD_INFO, METHOD_PATH, METHOD_TITLE, type MethodHead } from './methodHead'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -70,9 +71,6 @@ import {
   type CandidateTile,
 } from './labTodayModel'
 
-const LEAD =
-  'The night batch produced this queue, each candidate carrying the evidence behind it. Analysis only — crossing to Trade is what places an order.'
-
 /** The design's event flag: a print this close is carried on the hero as a chip. */
 const EARNINGS_FLAG_DAYS = 14
 
@@ -96,7 +94,7 @@ function Tile({ t }: { t: CandidateTile }) {
   )
 }
 
-export default function LabTodayPage() {
+export function QueueFace({ head }: { head: MethodHead }) {
   const preview = usePreviewState()
   const [sel, setSel] = useState(0)
   const health = useSignalHealthSummary()
@@ -303,8 +301,11 @@ export default function LabTodayPage() {
       {/* §16.10: the lead behind ⓘ; the queue's session is the stamp, held
           and flagged by the orchestrator when the night batch failed. */}
       <PageHead
-        title="Today's candidates"
-        info={LEAD}
+        title={METHOD_TITLE}
+        info={METHOD_INFO}
+        tabs={head.tabs}
+        tab={head.tab}
+        onTab={head.onTab}
         stamp={<AsofTag asof={session} flag={batchFlag} judgedBy="Research" href="/research/orchestration" />}
       />
 
@@ -312,7 +313,7 @@ export default function LabTodayPage() {
           next one lands. The prototype's Batch state switch is its own
           preview control; here the orchestrator decides (and ?preview=). */}
       <div data-sr-toolbar="">
-        <PageFaceSwitch path="/research/lab/today" />
+        <PageFaceSwitch path={METHOD_PATH} />
         <span data-sr-tb="sep" />
         <span
           className="inline-flex items-center gap-1.5 px-2 py-0.5 mat-tag font-mono text-dense-micro font-semibold tracking-[0.05em] text-[var(--sk-series-violet)]"
@@ -551,7 +552,7 @@ export default function LabTodayPage() {
                   Open in Symbol →
                 </Link>
                 <Link
-                  to="/research/ratings/stocks"
+                  to="/research/stocks?model=sepa"
                   className="border px-3 py-1.5 text-dense-label text-muted-foreground no-underline mat-btn"
                   title="The model this queue came out of — weights, tape and the ranked table."
                 >

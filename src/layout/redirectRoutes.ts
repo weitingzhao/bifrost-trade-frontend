@@ -47,13 +47,13 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/research/sepa-daily-core',
     label: 'SEPA Daily Core',
     crumbs: DISCOVER,
-    redirect: '/research/ratings/stocks',
+    redirect: '/research/stocks?model=sepa',
   },
   {
     path: '/research/momentum-radar',
     label: 'Momentum Radar',
     crumbs: DISCOVER,
-    redirect: '/research/ratings/stocks?view=leaders',
+    redirect: '/research/stocks?view=leaders',
   },
   // The one whose target depends on the link: Explorer was four tabs, and
   // each tab went somewhere different. `router.tsx` renders a component for
@@ -67,7 +67,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/research/explorer',
     label: 'Stock Explorer',
     crumbs: DISCOVER,
-    redirect: '/research/screener',
+    redirect: '/research/stocks?model=none&start=legacy',
   },
 
   // ── Research · home and seats ──────────────────────────────────────────
@@ -90,7 +90,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/research/sepa',
     label: 'Stock screen',
     crumbs: DISCOVER,
-    redirect: '/research/screener',
+    redirect: '/research/stocks?model=sepa',
   },
   // Went to `/settings/data-readiness`, which is itself a redirect — two hops
   // and two history entries. Points at the page now; the test forbids the shape.
@@ -128,8 +128,16 @@ export const REDIRECTS: readonly RouteEntry[] = [
     path: '/research/stock-screener',
     label: 'Stock screen',
     crumbs: DISCOVER,
-    redirect: '/research/screener',
+    redirect: '/research/stocks?model=none&start=legacy',
   },
+  // Stock screen merged with Stock ratings (design Rev .121, Owner option A).
+  // The design keeps the old addresses as aliases for one version: ratings
+  // opens Rank by SEPA; screener opens Rank by None with the old screener's
+  // opening criteria (trend ≥ 8); the two method faces open their tabs.
+  { path: '/research/ratings/stocks', label: 'Stock screen', crumbs: DISCOVER, redirect: '/research/stocks?model=sepa' },
+  { path: '/research/screener', label: 'Stock screen', crumbs: DISCOVER, redirect: '/research/stocks?model=none&start=legacy' },
+  { path: '/research/lab/today', label: 'Stock screen · method', crumbs: DISCOVER, redirect: '/research/lab/stocks?tab=queue' },
+  { path: '/research/lab/screener', label: 'Stock screen · method', crumbs: DISCOVER, redirect: '/research/lab/stocks?tab=conditions' },
   { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/trade/desk' },
   // The Copilot Desk merged into the Pilot Console (design Rev .100, Owner
   // 2026-09-27; everything it had data for moved with it, Owner 2026-09-28).

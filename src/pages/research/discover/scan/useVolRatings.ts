@@ -23,7 +23,7 @@ import { fetchScan } from '@/api/research/scan'
 import { fetchOpportunities } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { usePortfolioSymbols, type PortfolioUniverse } from '@/hooks/usePortfolioSymbols'
-import { ruleIndex, toVolRow, type VolRow, type VolWeights } from './volRatingsModel'
+import { ruleIndex, toVolRow, type VolRow, type VolWeights } from '@/lib/research/volRatingsModel'
 
 /** The route's own cap, and the number the page asks for. */
 export const SCAN_LIMIT = 500

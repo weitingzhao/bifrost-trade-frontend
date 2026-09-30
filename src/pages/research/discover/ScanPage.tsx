@@ -70,6 +70,7 @@ import {
   type PortfolioUniverse,
 } from '@/hooks/usePortfolioSymbols'
 import { rowSelectProps } from '@/hooks/useRowLink'
+import { RuleCell } from '@/components/research/RuleCell'
 import { publishSymbolTrail } from '@/lib/symbolTrail'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
@@ -92,9 +93,8 @@ import {
   volTape,
   type VolLensKey,
   type VolRow,
-  type VolRule,
   type VolWeights,
-} from './scan/volRatingsModel'
+} from '@/lib/research/volRatingsModel'
 
 const LEAD =
   'The vol model’s daily opinion: which underlyings are worth selling premium on. Five lenses, one composite; the weights are the model and they are yours to move. It says nothing about the company — that is the equity side’s question.'
@@ -616,39 +616,6 @@ export default function ScanPage() {
         ) : null}
       </RightInspectorShell>
     </PageShell>
-  )
-}
-
-/**
- * The Rule cell.
- *
- * One active opportunity is named; more than one says how many, because the
- * column is 36 characters wide and a name that fits three rules is a name to
- * open rather than to read in a cell.
- */
-function RuleCell({ rules }: { rules: VolRule[] | undefined }) {
-  if (!rules || rules.length === 0) {
-    return (
-      <span
-        className="text-muted-foreground"
-        title="No active opportunity is registered on this name."
-      >
-        none active
-      </span>
-    )
-  }
-  return (
-    <Link
-      to={`/trade/rules?pick=opportunity:${rules[0].id}`}
-      onClick={(e) => e.stopPropagation()}
-      className="truncate hover:underline"
-      title={`${rules.map((r) => r.name).join(' · ')} — opens its chain on Rules`}
-    >
-      {rules[0].name}
-      {rules.length > 1 ? (
-        <span className="text-muted-foreground"> +{rules.length - 1}</span>
-      ) : null}
-    </Link>
   )
 }
 

@@ -49,18 +49,18 @@ describe('faceOf', () => {
     // the first method face landed 2026-09-24 — Ratings · Stocks flips to
     // Today's candidates; all four flips are live as of 2026-09-24, and no
     // switch renders a disabled half any more.
+    // Rev .121 folded the two stock pairs into one (Stock screen ⇄ its method).
     expect(DESIGN_FACES.filter((f) => built.has(f.method)).map((f) => f.method)).toEqual([
-      '/research/lab/today',
-      '/research/lab/screener',
+      '/research/lab/stocks',
       '/research/lab/symbol',
       '/research/lab/history',
     ])
   })
 
-  it('is generated, not typed — four pairs, eight distinct routes', () => {
-    expect(DESIGN_FACES).toHaveLength(4)
+  it('is generated, not typed — three pairs, six distinct routes', () => {
+    expect(DESIGN_FACES).toHaveLength(3)
     const all = DESIGN_FACES.flatMap((f) => [f.reading, f.method])
-    expect(new Set(all).size).toBe(8)
+    expect(new Set(all).size).toBe(6)
     // Every method route lives under the reading's own root: same subject,
     // same endpoint, which is the whole argument for the switch being on the
     // page rather than in the tree.

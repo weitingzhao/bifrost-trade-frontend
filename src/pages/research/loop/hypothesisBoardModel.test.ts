@@ -43,9 +43,9 @@ describe('hypothesis board derivations', () => {
     // than a token, and three of the census's pages never had a token to
     // stamp. The label comes off the route table so the card reads the same
     // name the menu does.
-    expect(originDest('/research/ratings/stocks')).toEqual({
-      label: 'Stock ratings',
-      to: '/research/ratings/stocks',
+    expect(originDest('/research/stocks')).toEqual({
+      label: 'Stock screen',
+      to: '/research/stocks',
     })
     // An address the app does not serve is no destination — same answer as an
     // unknown token, and deliberately not a link to a 404.

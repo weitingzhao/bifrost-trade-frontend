@@ -13,6 +13,7 @@
  * Save as screen writes `research.saved_screen` (research 0.107.0): one
  * object, one id, which Trade's result face renders read-only.
  */
+import { METHOD_INFO, METHOD_PATH, METHOD_TITLE, type MethodHead } from './methodHead'
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -51,9 +52,6 @@ import {
   type SortDir,
   type SortKey,
 } from '@/utils/sepaScreenModel'
-
-const LEAD =
-  "Build and tune a screen against the SEPA wide table. Saved screens are one object with one id — Trade's result face renders the same screen read-only, so the filter vocabulary is defined here and nowhere else."
 
 /** The universe is thousands of rows; the table draws this many under the sort. */
 const RENDER_CAP = 200
@@ -148,7 +146,7 @@ function condDots(r: SepaWideRow, conds: readonly [string, string][]) {
   })
 }
 
-export default function LabScreenerPage() {
+export function ConditionsFace({ head }: { head: MethodHead }) {
   const preview = usePreviewState()
   const [filter, setFilter] = useState<ScreenFilter>(EMPTY_FILTER)
   // ── Saved screens (6A · research 0.107.0): one object, one id ──
@@ -164,7 +162,7 @@ export default function LabScreenerPage() {
     mutationFn: () =>
       createSavedScreen({
         name: screenName.trim(),
-        origin_page: '/research/lab/screener',
+        origin_page: METHOD_PATH,
         definition: {
           q: filter.q,
           paths: filter.paths,
@@ -247,8 +245,11 @@ export default function LabScreenerPage() {
       {/* §16.10: the lead behind ⓘ, the mart's eval date as the stamp, the
           saved count as meta, Save and Reset as the head's two actions. */}
       <PageHead
-        title="Symbol Screener · authoring"
-        info={LEAD}
+        title={METHOD_TITLE}
+        info={METHOD_INFO}
+        tabs={head.tabs}
+        tab={head.tab}
+        onTab={head.onTab}
         stamp={
           <AsofTag
             asof={wideQ.data?.evalDate ?? null}
@@ -313,7 +314,7 @@ export default function LabScreenerPage() {
       />
 
       <div data-sr-toolbar="">
-        <PageFaceSwitch path="/research/lab/screener" />
+        <PageFaceSwitch path={METHOD_PATH} />
         <span data-sr-tb="sep" />
         {/* The prototype's own pastel violet, as Backtest's lab mark. */}
         <span
@@ -328,7 +329,7 @@ export default function LabScreenerPage() {
           {wideQ.data ? ` · ${wideQ.data.count.toLocaleString()} evaluated` : ''}
         </span>
         <Link
-          to="/research/screener"
+          to="/research/stocks"
           title="The reading face — what the market says. Same subject, same endpoint."
           className="ml-auto whitespace-nowrap font-mono text-dense-meta text-primary hover:underline"
         >

@@ -29,9 +29,6 @@ import { ROUTES } from './routeTable'
  * disagreement until the design side settles it.
  */
 const TITLE_MAY_DIFFER: Record<string, string> = {
-  '/research/screener': 'design ROUTES says Stock screen, its own prototype heads it Screener · Stocks',
-  '/research/lab/screener':
-    'design ROUTES says Stock screen · method, its own prototype heads it Symbol Screener · authoring',
   '/trade/desk': 'design ROUTES says Trade (a layer head, no crumbs), its own prototype heads it Trade Desk',
   // Surfaced 2026-09-26 when the gate learned to read `PageHead`: this page
   // had moved to the new head and so had silently left the check.

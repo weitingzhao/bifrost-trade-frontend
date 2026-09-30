@@ -21,7 +21,7 @@
  */
 export const LANE_ORIGIN = {
   /** SEPA scores — read on Stock ratings, which is `sepa_daily_core`'s page. */
-  sepa: '/research/ratings/stocks',
+  sepa: '/research/stocks',
   /** IV extremes — Vol ratings, over `option_snapshot_aggregates`. */
   iv: '/research/scan',
   /**

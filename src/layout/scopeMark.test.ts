@@ -26,9 +26,8 @@ describe('the unit mark', () => {
     // Option screen opt` — the design's own line (DECISIONS 2026-09-23).
     // Two of the four were unmarked while the other two were not, which is
     // worse than none: an absent mark read as "this page has no unit".
-    expect(DESIGN_SCOPE['/research/ratings/stocks']).toBe('underlying')
+    expect(DESIGN_SCOPE['/research/stocks']).toBe('underlying')
     expect(DESIGN_SCOPE['/research/scan']).toBe('contract')
-    expect(DESIGN_SCOPE['/research/screener']).toBe('underlying')
     expect(DESIGN_SCOPE['/research/contract-screener']).toBe('contract')
   })
 
@@ -46,14 +45,13 @@ describe('the method-face mark', () => {
     const marked = Object.keys(DESIGN_SCOPE).filter((p) => hasMethodFace(p))
     expect(marked.sort()).toEqual([
       '/research/history',
-      '/research/ratings/stocks',
-      '/research/screener',
+      '/research/stocks',
       '/research/symbol',
     ])
   })
 
   it('never rides the method side — that page is the face, not its owner', () => {
-    for (const p of ['/research/lab/today', '/research/lab/screener', '/research/lab/symbol']) {
+    for (const p of ['/research/lab/stocks', '/research/lab/symbol']) {
       expect(hasMethodFace(p), p).toBe(false)
     }
   })

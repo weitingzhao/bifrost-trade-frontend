@@ -79,7 +79,7 @@ export function buildBySymbolRows({
     const entry =
       bySymbol.get(symbol) ??
       {
-        bucket: classifyStockBucket(pos.category),
+        bucket: classifyStockBucket(pos),
         quantity: 0,
         mark: null,
         value: 0,

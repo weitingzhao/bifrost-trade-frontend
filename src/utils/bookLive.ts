@@ -48,7 +48,7 @@ export interface BookLiveNext {
 /**
  * The four holding types (design Rev .114): the buckets Ledger and Accounts
  * use. IB books a bond ETF and a T-bill ETF as STK, so a stock's bucket comes
- * from the position's own category (`classifyStockBucket`), not its secType.
+ * from the Owner's instrument registration (`classifyStockBucket`), not its secType.
  */
 export type BookBucket = 'opt' | 'stk' | 'fi' | 'cash'
 
@@ -59,9 +59,9 @@ export const BOOK_BUCKETS: readonly (readonly [BookBucket, string])[] = [
   ['cash', 'Cash-like'],
 ]
 
-/** A stock position's bucket, by its category — the rule Accounts and the Ledger apply. */
-export function stockBookBucket(category: string | null | undefined): BookBucket {
-  const b = classifyStockBucket(category)
+/** A stock position's bucket, by its registered instrument class — unregistered reads as a stock. */
+export function stockBookBucket(pos: { instrument_class?: string | null }): BookBucket {
+  const b = classifyStockBucket(pos)
   return b === 'fixed_income' ? 'fi' : b === 'cash_like' ? 'cash' : 'stk'
 }
 
@@ -172,7 +172,7 @@ function stkRow(p: IbPositionRow, accountId: string, x: BookLiveInputs): BookLiv
   return {
     key: `${accountId}|${symbol}`,
     kind: 'stk',
-    bucket: stockBookBucket(p.category),
+    bucket: stockBookBucket(p),
     label: symbol,
     symbol,
     accountId,

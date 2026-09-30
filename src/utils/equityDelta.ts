@@ -4,9 +4,9 @@
  *
  * A bond or T-bill ETF carries no equity delta, but the model service counts
  * its shares like any stock. So every page that shows the book's Δ takes those
- * shares back out — per account × symbol, because the same ticker can be
- * tagged differently in two accounts — and an option written on such a fund
- * stays in. The model service's own figures are left unchanged; this is the
+ * shares back out — the funds the Owner registered as fixed income or
+ * cash-like (core 0.27.0) — and an option written on such a fund stays in.
+ * Keyed per account × symbol because the model service answers per account. The model service's own figures are left unchanged; this is the
  * one place the deduction is made.
  */
 import { stockBookBucket } from '@/utils/bookLive'
@@ -19,15 +19,18 @@ export const EQUITY_DELTA_TITLE =
 
 const keyOf = (accountId: string, symbol: string) => `${accountId.trim()}|${symbol.trim().toUpperCase()}`
 
-/** `account|SYMBOL` for every stock holding whose category makes it fixed income or cash-like. */
+/** `account|SYMBOL` for every stock holding registered as fixed income or cash-like. */
 export function noEquityDeltaKeys(
-  accounts: readonly { account_id?: string | null; positions?: readonly { secType?: string | null; symbol?: string | null; category?: string | null }[] | null }[],
+  accounts: readonly {
+    account_id?: string | null
+    positions?: readonly { secType?: string | null; symbol?: string | null; instrument_class?: string | null }[] | null
+  }[],
 ): Set<string> {
   const out = new Set<string>()
   for (const a of accounts) {
     for (const p of a.positions ?? []) {
       if ((p.secType ?? '') !== 'STK') continue
-      const b = stockBookBucket(p.category)
+      const b = stockBookBucket(p)
       if (b === 'fi' || b === 'cash') out.add(keyOf(a.account_id ?? '', p.symbol ?? ''))
     }
   }

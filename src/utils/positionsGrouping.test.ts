@@ -9,22 +9,17 @@ import {
 } from './positionsGrouping'
 import type { LivePositionRow, OpenOptionPosition } from '@/types/positions'
 
-describe('classifyStockBucket', () => {
-  it('returns core for regular categories', () => {
-    expect(classifyStockBucket('Tech')).toBe('core')
-    expect(classifyStockBucket('Uncategorized')).toBe('core')
-    expect(classifyStockBucket(null)).toBe('core')
-    expect(classifyStockBucket(undefined)).toBe('core')
+describe('classifyStockBucket (instrument class, Rev .119)', () => {
+  it('reads the Owner’s registration', () => {
+    expect(classifyStockBucket({ instrument_class: 'fixed_income' })).toBe('fixed_income')
+    expect(classifyStockBucket({ instrument_class: 'cash_like' })).toBe('cash_like')
+    expect(classifyStockBucket({ instrument_class: 'stock' })).toBe('core')
   })
 
-  it('returns fixed_income for fixed income categories', () => {
-    expect(classifyStockBucket('Fixed Income')).toBe('fixed_income')
-    expect(classifyStockBucket('fix income fund')).toBe('fixed_income')
-  })
-
-  it('returns cash_like for cash-like categories', () => {
-    expect(classifyStockBucket('Cash-like')).toBe('cash_like')
-    expect(classifyStockBucket('Money Market')).toBe('cash_like')
+  it('reads an unregistered instrument as a stock, and never infers from the category', () => {
+    expect(classifyStockBucket({})).toBe('core')
+    expect(classifyStockBucket({ instrument_class: null })).toBe('core')
+    expect(classifyStockBucket({ category: 'Fix Income' } as { instrument_class?: string | null })).toBe('core')
   })
 })
 
@@ -64,8 +59,8 @@ describe('filterStocksByBucket', () => {
   it('filters by core bucket', () => {
     const stocks = [
       { account_id: 'U1', category: 'Tech' },
-      { account_id: 'U1', category: 'Fixed Income' },
-      { account_id: 'U1', category: 'Money Market' },
+      { account_id: 'U1', category: 'Fixed Income', instrument_class: 'fixed_income' },
+      { account_id: 'U1', category: 'Money Market', instrument_class: 'cash_like' },
     ] as LivePositionRow[]
     expect(filterStocksByBucket(stocks, 'core')).toHaveLength(1)
     expect(filterStocksByBucket(stocks, 'fixed_income')).toHaveLength(1)

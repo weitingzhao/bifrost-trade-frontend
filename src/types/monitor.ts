@@ -1,3 +1,6 @@
+/** What kind of security a stock-like holding is — registered by the Owner per instrument. */
+export type InstrumentClass = 'stock' | 'fixed_income' | 'cash_like'
+
 export interface DaemonHeartbeat {
   last_ts: number
   daemon_alive: boolean
@@ -31,6 +34,8 @@ export interface IbPositionRow {
   daily_prev_close?: number | null
   category_id?: number | null
   category?: string | null
+  /** The Owner's registration (core 0.27.0, design Rev .119); absent = unregistered, read as a stock. */
+  instrument_class?: InstrumentClass | null
   optionable?: boolean
   strategy_opportunity_name?: string | null
   strategy_instance_label?: string | null

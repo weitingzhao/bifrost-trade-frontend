@@ -133,11 +133,9 @@ describe('etDate', () => {
 })
 
 describe('holding type (Rev .114)', () => {
-  it('reads a stock’s bucket off its category, the way Accounts and the Ledger do', () => {
-    expect(['Fix Income', 'Fixed income', 'Cash', 'Money market', 'SEPA', '', null].map(stockBookBucket)).toEqual([
+  it('reads a stock’s bucket off its registered instrument class (Rev .119)', () => {
+    expect(['fixed_income', 'cash_like', 'stock', null, undefined].map((c) => stockBookBucket({ instrument_class: c }))).toEqual([
       'fi',
-      'fi',
-      'cash',
       'cash',
       'stk',
       'stk',

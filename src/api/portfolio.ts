@@ -99,6 +99,26 @@ export async function deletePositionCategory(
   return res.json()
 }
 
+/**
+ * Register an instrument's class (core 0.27.0, design Rev .119) — stock, fixed
+ * income or cash-like, once per instrument, every account at once. `null`
+ * drops the registration and the instrument reads as a stock again.
+ */
+export async function setInstrumentClass(
+  contractKey: string,
+  instrumentClass: 'stock' | 'fixed_income' | 'cash_like' | null,
+): Promise<{ ok: boolean; error?: string }> {
+  const url = portfolioUrl(`/instrument-classes/${encodeURIComponent(contractKey)}`)
+  const res = await fetch(
+    url,
+    instrumentClass == null
+      ? { method: 'DELETE' }
+      : { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ instrument_class: instrumentClass }) },
+  )
+  if (!res.ok) throw new Error(`Instrument class: ${res.status}`)
+  return res.json()
+}
+
 export async function tagPosition(
   req: TagPositionRequest
 ): Promise<{ ok: boolean; error?: string }> {

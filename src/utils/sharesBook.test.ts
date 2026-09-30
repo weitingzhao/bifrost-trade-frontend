@@ -10,15 +10,15 @@ const pos = (over: Partial<LivePositionRow>): LivePositionRow =>
 const stocks = [
   pos({ symbol: 'AAA', contract_key: 'AAA', position: 450, category: 'Core', category_id: 1 }),
   pos({ symbol: 'BBB', contract_key: 'BBB', position: 80, category: '' }),
-  pos({ symbol: 'FIX', contract_key: 'FIX', position: 200, category: 'Fix Income', price: 20, avgCost: 21 }),
-  pos({ symbol: 'TBL', contract_key: 'TBL', position: 50, category: 'Cash', price: 100, avgCost: 100 }),
+  pos({ symbol: 'FIX', contract_key: 'FIX', position: 200, category: 'Fix Income', instrument_class: 'fixed_income', price: 20, avgCost: 21 }),
+  pos({ symbol: 'TBL', contract_key: 'TBL', position: 50, category: 'Cash', instrument_class: 'cash_like', price: 100, avgCost: 100 }),
 ]
 const cover: CoverRow[] = [{ accountId: 'U0000001', symbol: 'AAA', held: 450, backing: 300, spare: 150, moreCalls: 1, price: 12 }]
 
 describe('Positions › Shares (Rev .115)', () => {
   const rows = buildShareRows({ stocks, quotesBySymbol: {}, benchBySymbol: {}, cover })
 
-  it('types each holding from its category and backs calls with stock only', () => {
+  it('types each holding from its registered class and backs calls with stock only', () => {
     expect(rows.map((r) => [r.symbol, r.bucket])).toEqual([
       ['AAA', 'stk'],
       ['TBL', 'cash'],

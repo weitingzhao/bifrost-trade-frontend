@@ -52,8 +52,8 @@ describe('the by-symbol table', () => {
 
   it('carries the Owner\u2019s bucket, not a broker field', () => {
     const stocks = [
-      stock({ symbol: 'SGOV', category: 'Cash' }),
-      stock({ symbol: 'PFF', category: 'Fix Income' }),
+      stock({ symbol: 'SGOV', category: 'Cash', instrument_class: 'cash_like' }),
+      stock({ symbol: 'PFF', category: 'Fix Income', instrument_class: 'fixed_income' }),
       stock({ symbol: 'NVDA', category: 'Option leg' }),
     ]
     const { rows } = buildBySymbolRows({

@@ -1,6 +1,5 @@
 import type { IbPositionRow } from '@/types/monitor'
 import type { LivePositionRow, OpenOptionPosition, InstanceAllGroup, PositionInstanceAttribution } from '@/types/positions'
-import { isLedgerFixedIncomeCategory, isLedgerCashLikeCategory } from './stockCategories'
 
 export interface AccountFilter {
   host: boolean
@@ -27,11 +26,21 @@ export function positionMatchesAccountFilter(
 
 export type StockBucket = 'core' | 'fixed_income' | 'cash_like'
 
-export function classifyStockBucket(category: string | null | undefined): StockBucket {
-  const cat = String(category ?? '').trim()
-  if (isLedgerFixedIncomeCategory(cat)) return 'fixed_income'
-  if (isLedgerCashLikeCategory(cat)) return 'cash_like'
+/**
+ * A stock-like holding's type, from the Owner's instrument registration
+ * (core 0.27.0, design Rev .119). IB books bond and T-bill ETFs as STK, and the
+ * type is never inferred from the category: an unregistered instrument is a
+ * stock until the Owner says otherwise.
+ */
+export function classifyStockBucket(pos: { instrument_class?: string | null }): StockBucket {
+  if (pos.instrument_class === 'fixed_income') return 'fixed_income'
+  if (pos.instrument_class === 'cash_like') return 'cash_like'
   return 'core'
+}
+
+/** The Owner has registered this instrument's class (any of the three). */
+export function isInstrumentRegistered(pos: { instrument_class?: string | null }): boolean {
+  return pos.instrument_class === 'stock' || pos.instrument_class === 'fixed_income' || pos.instrument_class === 'cash_like'
 }
 
 export function flattenPositions(accounts: { account_id?: string; positions?: IbPositionRow[] }[]): LivePositionRow[] {
@@ -60,7 +69,7 @@ export function splitBySecType(positions: LivePositionRow[]): {
 }
 
 export function filterStocksByBucket(stocks: LivePositionRow[], bucket: StockBucket): LivePositionRow[] {
-  return stocks.filter((p) => classifyStockBucket(p.category) === bucket)
+  return stocks.filter((p) => classifyStockBucket(p) === bucket)
 }
 
 export function buildOpenOptionPositions(

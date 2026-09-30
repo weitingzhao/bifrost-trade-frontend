@@ -16,7 +16,7 @@ import { SegmentControl } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { createPositionCategory, deletePositionCategory, tagPosition, updatePositionCategory } from '@/api/portfolio'
+import { createPositionCategory, deletePositionCategory, setInstrumentClass, tagPosition, updatePositionCategory } from '@/api/portfolio'
 import { useDistributionYields } from '@/hooks/useDistributionYields'
 import { usePositionCategories } from '@/hooks/usePositionCategories'
 import { cn } from '@/lib/utils'
@@ -28,7 +28,7 @@ import {
   groupShareRows,
   SHARE_BUCKETS,
   sharesTotal,
-  TYPE_INFERRED,
+  TYPE_REGISTERED,
   UNCATEGORISED,
   unrealizedPctText,
   type ShareBucket,
@@ -39,6 +39,9 @@ import {
 import type { CoverRow } from '@/utils/bookVsBase'
 import type { LivePositionRow } from '@/types/positions'
 import type { DailyBenchmark, QuoteItem } from '@/types/market'
+
+/** A row's bucket as the store spells the class. */
+const CLASS_OF: Record<ShareBucket, string> = { stk: 'stock', fi: 'fixed_income', cash: 'cash_like' }
 
 const HEAD_ROW = 'bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
@@ -122,9 +125,15 @@ export function SharesBand({
     void write(() => tagPosition({ account_id: r.accountId, contract_key: r.contractKey, category_id: id }))
   }
 
+  const register = (r: ShareRow, cls: string) => {
+    const next = cls === 'stock' || cls === 'fixed_income' || cls === 'cash_like' ? cls : null
+    void write(() => setInstrumentClass(r.contractKey || r.symbol, next))
+  }
+  const unregistered = new Set(all.filter((r) => !r.registered).map((r) => r.symbol)).size
+
   const headline = `${rows.length} ${rows.length === 1 ? 'holding' : 'holdings'} · ${fmtUsd(total.value, true)} market value${
     total.callsSpare ? ` · +${total.callsSpare} calls spare` : ''
-  }`
+  }${unregistered ? ` · ${unregistered} unregistered` : ''}`
 
   return (
     <>
@@ -142,7 +151,6 @@ export function SharesBand({
               value: k,
               label: `${label} · ${count(k)}`,
               disabled: count(k) === 0,
-              title: TYPE_INFERRED,
             })),
           ]}
         />
@@ -155,7 +163,7 @@ export function SharesBand({
             onChange={(v) => setGrouping(v as ShareGrouping)}
             options={[
               { value: 'cat', label: 'Category' },
-              { value: 'type', label: 'Type', title: TYPE_INFERRED },
+              { value: 'type', label: 'Type' },
               { value: 'none', label: 'None' },
             ]}
           />
@@ -304,11 +312,11 @@ export function SharesBand({
                   key={g.key}
                   g={g}
                   head={grouping !== 'none'}
-                  headTitle={grouping === 'type' ? TYPE_INFERRED : undefined}
                   categories={categoryItems.map((c) => c.name)}
                   yields={yields}
                   accountLabel={accountLabel}
                   onRetag={retag}
+                  onRegister={register}
                   onOpenStock={onOpenStock}
                 />
               ))}
@@ -332,8 +340,8 @@ export function SharesBand({
         Unrealized = market value − cost (the broker&rsquo;s Chg). Backing = shares standing behind short calls on the same
         account × symbol; the spare shares, in whole calls, are what Room to add counts. Fixed income and cash-like back puts
         through buying power, so they carry no call backing. Yield (TTM) is the trailing twelve months of distributions on file
-        over the mark, not an SEC yield; no source serves a duration, so it reads —. Type is inferred from the holding&rsquo;s
-        category until the instrument class is stored — the broker books these funds as stock.
+        over the mark, not an SEC yield; no source serves a duration, so it reads —. Type is the instrument&rsquo;s, registered
+        under each Category once for every account — the broker books these funds as stock, so an unregistered one counts as a stock.
       </p>
     </section>
     </>
@@ -343,20 +351,20 @@ export function SharesBand({
 function GroupRows({
   g,
   head,
-  headTitle,
   categories,
   yields,
   accountLabel,
   onRetag,
+  onRegister,
   onOpenStock,
 }: {
   g: ShareGroup
   head: boolean
-  headTitle?: string
   categories: readonly string[]
   yields: ReadonlyMap<string, number | null | undefined>
   accountLabel: (accountId: string) => string
   onRetag: (r: ShareRow, name: string) => void
+  onRegister: (r: ShareRow, cls: string) => void
   onOpenStock: (symbol: string, accountId: string) => void
 }) {
   return (
@@ -364,7 +372,7 @@ function GroupRows({
       {head ? (
         <tr className={HEAD_ROW}>
           <td className={cn(positionsUi.td, 'pl-3 text-left font-sans')} colSpan={4}>
-            <span className="text-dense-meta font-bold text-[var(--sk-soft)]" title={headTitle}>
+            <span className="text-dense-meta font-bold text-[var(--sk-soft)]">
               {g.label}
             </span>{' '}
             <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
@@ -407,6 +415,19 @@ function GroupRows({
                   </option>
                 ))}
                 <option value="">{UNCATEGORISED}</option>
+              </select>
+              {/* Rev .119: the type is the instrument's, registered here once for every account. */}
+              <select
+                className={cn(positionsUi.input, 'mt-0.5 block font-sans text-dense-micro', r.registered ? 'text-muted-foreground' : 'text-[var(--color-warning)]')}
+                value={r.registered ? CLASS_OF[r.bucket] : ''}
+                onChange={(e) => onRegister(r, e.target.value)}
+                aria-label={`Type for ${r.symbol}`}
+                title={TYPE_REGISTERED}
+              >
+                <option value="">Unregistered · stock</option>
+                <option value="stock">Stock</option>
+                <option value="fixed_income">Fixed income</option>
+                <option value="cash_like">Cash-like</option>
               </select>
             </td>
             <td className={cn(positionsUi.td, 'text-[var(--sk-soft)]')}>

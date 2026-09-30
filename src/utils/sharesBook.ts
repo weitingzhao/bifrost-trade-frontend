@@ -12,12 +12,13 @@
  * CallsSpare Room to add counts. Fixed income and cash-like back puts through
  * buying power, never calls.
  *
- * The type is the position's own category read the Ledger's way (IB books a
- * bond or T-bill ETF as STK, so secType cannot tell), which is why Type and
- * the Owner's Category can look alike here — the store has no instrument class.
+ * The type is the Owner's instrument registration (core 0.27.0, design Rev
+ * .119): IB books a bond or T-bill ETF as STK, so secType cannot tell, and the
+ * category is never read for it. An unregistered instrument is a stock.
  */
 import { computeStockPositionRowMetrics } from '@/utils/accountsStockPositions'
 import { stockBookBucket } from '@/utils/bookLive'
+import { isInstrumentRegistered } from '@/utils/positionsGrouping'
 import type { CoverRow } from '@/utils/bookVsBase'
 import type { LivePositionRow } from '@/types/positions'
 import type { DailyBenchmark, QuoteItem } from '@/types/market'
@@ -39,6 +40,8 @@ export interface ShareRow {
   symbol: string
   contractKey: string
   bucket: ShareBucket
+  /** The Owner registered this instrument's class; an unregistered one reads as a stock. */
+  registered: boolean
   /** The Owner's category; empty when none. */
   category: string
   categoryId: number | null
@@ -81,7 +84,7 @@ export function buildShareRows(input: {
       const symbol = (p.symbol ?? '').trim().toUpperCase()
       const accountId = (p.account_id ?? '').trim()
       const m = computeStockPositionRowMetrics(p, input.quotesBySymbol[symbol], input.benchBySymbol[symbol])
-      const bucket = stockBookBucket(p.category) as ShareBucket
+      const bucket = stockBookBucket(p) as ShareBucket
       const c = cover.get(coverKey(accountId, symbol))
       const held = c?.held ?? Math.floor(Number(p.position ?? 0))
       return {
@@ -90,6 +93,7 @@ export function buildShareRows(input: {
         symbol,
         contractKey: p.contract_key ?? '',
         bucket,
+        registered: isInstrumentRegistered(p),
         category: (p.category ?? '').trim(),
         categoryId: p.category_id ?? null,
         qty: Number(p.position ?? 0),
@@ -149,8 +153,9 @@ export function sharesTotal(rows: readonly ShareRow[]): ShareGroup {
   return groupOf('total', 'Shares total', [...rows])
 }
 
-/** Rev .119: the type is inferred until an instrument class is stored — said wherever the type shows. */
-export const TYPE_INFERRED = 'Inferred from category until the instrument class is stored'
+/** What the registration control says: the type is registered once per instrument, not per account. */
+export const TYPE_REGISTERED =
+  'The instrument’s type, registered once for every account — a bond or T-bill fund is fixed income or cash-like; an unregistered one counts as a stock'
 
 /**
  * Rev .119: an unrealized percentage past ±999% reads as a bound. Calls sold

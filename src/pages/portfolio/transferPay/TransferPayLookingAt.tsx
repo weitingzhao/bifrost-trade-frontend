@@ -53,7 +53,7 @@ type Props = {
   onPage: (page: number) => void
 }
 
-function Chip({
+function FilterCountChip({
   label,
   count,
   active,
@@ -119,7 +119,7 @@ export function TransferPayLookingAt({
         <div className={transferPayUi.chipRow}>
           <span className={transferPayUi.chipRowLabel}>Account</span>
           <div className={transferPayUi.chipGroup} role="group" aria-label="Account">
-            <Chip
+            <FilterCountChip
               label="All accounts"
               count={totalCount}
               active={activeAccountId === 'all'}
@@ -127,7 +127,7 @@ export function TransferPayLookingAt({
               onClick={() => onActiveAccountId('all')}
             />
             {accountIds.map(id => (
-              <Chip
+              <FilterCountChip
                 key={id}
                 label={id}
                 count={accountCounts[id] ?? 0}
@@ -142,7 +142,7 @@ export function TransferPayLookingAt({
         <div className={transferPayUi.chipRow}>
           <span className={transferPayUi.chipRowLabel}>Type</span>
           <div className={transferPayUi.chipGroup} role="group" aria-label="Type">
-            <Chip
+            <FilterCountChip
               label="All"
               count={scopeCount}
               active={allTypesOn}
@@ -150,7 +150,7 @@ export function TransferPayLookingAt({
               onClick={() => onToggleAllTypes(!allTypesOn)}
             />
             {ALL_TYPES.map(t => (
-              <Chip
+              <FilterCountChip
                 key={t}
                 label={TYPE_LABELS[t]}
                 count={typeCounts[t] ?? 0}
@@ -178,7 +178,7 @@ export function TransferPayLookingAt({
               <span className={transferPayUi.chipRowLabel}>Kind · read from the description</span>
               <div className={transferPayUi.chipGroup} role="group" aria-label="Kind">
                 {KIND_NAMES.map(k => (
-                  <Chip
+                  <FilterCountChip
                     key={k}
                     label={k}
                     count={kindCounts[k] ?? 0}

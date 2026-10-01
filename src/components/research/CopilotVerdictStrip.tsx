@@ -23,7 +23,7 @@ import {
 } from '@/lib/symbolVerdicts'
 import { cn } from '@/lib/utils'
 
-function Chip({ chip }: { chip: VerdictChip }) {
+function VerdictChipTag({ chip }: { chip: VerdictChip }) {
   if (!chip.to) {
     return (
       <DenseTag variant={chip.tone} size="cell" title={chip.title}>
@@ -70,7 +70,7 @@ export function CopilotVerdictStrip({
         <span className="text-dense-micro text-muted-foreground">digest {digest.day}</span>
       ) : null}
       {decisions.map((c) => (
-        <Chip key={c.key} chip={c} />
+        <VerdictChipTag key={c.key} chip={c} />
       ))}
       {summary.total > 0 ? (
         <>
@@ -133,7 +133,7 @@ export function CopilotVerdictStrip({
           data-testid="copilot-verdict-proposals"
         >
           {proposals.map((c) => (
-            <Chip key={c.key} chip={c} />
+            <VerdictChipTag key={c.key} chip={c} />
           ))}
         </div>
       ) : null}

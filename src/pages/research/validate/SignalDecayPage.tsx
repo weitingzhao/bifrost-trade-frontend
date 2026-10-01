@@ -48,10 +48,7 @@ import {
   SegmentControl,
   denseTableNumCell,
 } from '@/components/data-display'
-import { fmtNum, fmtPctFromFraction } from '@/lib/format'
-
-/** Whole-percent from a 0–1 rate — the shared formatter, named for this page. */
-const pct = (v: number | null | undefined) => fmtPctFromFraction(v, 0)
+import { fmtNum, fmtPctWholeFromFraction } from '@/lib/format'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -176,7 +173,7 @@ function SideRow({
         const pending = s.pending_5d ?? Math.max(0, s.n - s.evaluated_5d)
         return (
           <DenseTableCell key={w} className={denseTableNumCell}>
-            <div>{`${pct(s.hit_rate_5d)} / ${pct(s.hit_rate_20d)} (n=${s.n})`}</div>
+            <div>{`${fmtPctWholeFromFraction(s.hit_rate_5d)} / ${fmtPctWholeFromFraction(s.hit_rate_20d)} (n=${s.n})`}</div>
             <div
               className="text-dense-caption text-muted-foreground"
               title="Profit factor 5d / 20d — this side's settled returns on its own direction, gains over losses"
@@ -301,7 +298,7 @@ function CombinedLensesMatrix({
                           className="text-dense-body tabular-nums underline-offset-2 hover:underline text-foreground"
                           onClick={() => setDetail({ label, data })}
                         >
-                          {`${pct(data.hit_rate_5d)} (n=${data.n})`}
+                          {`${fmtPctWholeFromFraction(data.hit_rate_5d)} (n=${data.n})`}
                         </button>
                       </DenseTableCell>
                     )
@@ -326,7 +323,7 @@ function CombinedLensesMatrix({
               </DialogHeader>
               <div className="space-y-3">
                 <p className="text-dense-body">
-                  Combined 5d {pct(detail.data.hit_rate_5d)} / 20d {pct(detail.data.hit_rate_20d)}{' '}
+                  Combined 5d {fmtPctWholeFromFraction(detail.data.hit_rate_5d)} / 20d {fmtPctWholeFromFraction(detail.data.hit_rate_20d)}{' '}
                   (n={detail.data.n})
                 </p>
                 <div className="space-y-1">
@@ -345,7 +342,7 @@ function CombinedLensesMatrix({
                       {Object.entries(detail.data.single_lens_baseline).map(([k, v]) => (
                         <DenseTableRow key={k}>
                           <DenseTableCell className="font-mono text-dense-meta">{k}</DenseTableCell>
-                          <DenseTableCell className={denseTableNumCell}>{pct(v.hit_rate_5d)}</DenseTableCell>
+                          <DenseTableCell className={denseTableNumCell}>{fmtPctWholeFromFraction(v.hit_rate_5d)}</DenseTableCell>
                           <DenseTableCell className={denseTableNumCell}>{v.n}</DenseTableCell>
                         </DenseTableRow>
                       ))}
@@ -476,20 +473,20 @@ export default function SignalDecayPage() {
     if ((hot ?? 0) >= 0.55) {
       return {
         tone: 'success' as const,
-        label: `${lens} hot 5d ${pct(hot)}`,
+        label: `${lens} hot 5d ${fmtPctWholeFromFraction(hot)}`,
         narrative: `Mean-revert hypothesis looks viable on ${scope}${lens} hot triggers (${windowDays}d window${regimeNote}, n=${data?.by_side.hot.n ?? 0}).`,
       }
     }
     if ((hot ?? 1) < 0.45) {
       return {
         tone: 'warning' as const,
-        label: `${lens} hot 5d ${pct(hot)}`,
+        label: `${lens} hot 5d ${fmtPctWholeFromFraction(hot)}`,
         narrative: `Hot-side hit-rate below coin-flip — treat ${scope}${lens} extremes cautiously.`,
       }
     }
     return {
       tone: 'neutral' as const,
-      label: `${lens} 5d ${pct(rate)}`,
+      label: `${lens} 5d ${fmtPctWholeFromFraction(rate)}`,
       narrative: `Mixed edge on ${scope}${lens} (${windowDays}d${regimeNote}). Compare hot vs cold columns below.`,
     }
   }, [data, lens, windowDays, symbol, regime])
@@ -537,8 +534,8 @@ export default function SignalDecayPage() {
               })}
               suggestedPrompt={
                 symbol
-                  ? `Interpret ${symbol} ${lens} signal decay (regime=${regime}): hot 5d hit-rate ${pct(data?.by_side.hot.hit_rate_5d)} over ${windowDays}d. Is mean-revert still valid?`
-                  : `Interpret ${lens} signal decay (regime=${regime}): hot 5d hit-rate ${pct(data?.by_side.hot.hit_rate_5d)} over ${windowDays}d. Is mean-revert still valid?`
+                  ? `Interpret ${symbol} ${lens} signal decay (regime=${regime}): hot 5d hit-rate ${fmtPctWholeFromFraction(data?.by_side.hot.hit_rate_5d)} over ${windowDays}d. Is mean-revert still valid?`
+                  : `Interpret ${lens} signal decay (regime=${regime}): hot 5d hit-rate ${fmtPctWholeFromFraction(data?.by_side.hot.hit_rate_5d)} over ${windowDays}d. Is mean-revert still valid?`
               }
             />
             <SaveAsHypothesisButton
@@ -669,7 +666,7 @@ export default function SignalDecayPage() {
           { label: 'Window', value: `${windowDays}d` },
           { label: 'Regime', value: regime },
           { label: 'Triggers', value: String(data?.trigger_count ?? 0) },
-          { label: '5d hit', value: pct(data?.hit_rate_5d) },
+          { label: '5d hit', value: fmtPctWholeFromFraction(data?.hit_rate_5d) },
           { label: '5d PF', value: fmtProfitFactor(data?.profit_factor_5d) },
         ]}
       />

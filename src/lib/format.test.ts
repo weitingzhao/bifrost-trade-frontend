@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtIsoDateToken, fmtMonthKeyToken, fmtEpochEtClock, fmtOccContractToken } from '@/lib/format'
+import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtPctWholeFromFraction, fmtIsoDateToken, fmtMonthKeyToken, fmtEpochEtClock, fmtOccContractToken } from '@/lib/format'
 
 /**
  * The two percentage families must stay distinguishable.
@@ -21,10 +21,11 @@ describe('percentage formatting families', () => {
   it('fmtPctFromFraction honours the digits argument', () => {
     expect(fmtPctFromFraction(0.12345, 0)).toBe('12%')
     expect(fmtPctFromFraction(0.12345, 2)).toBe('12.35%')
+    expect(fmtPctWholeFromFraction(0.12345)).toBe(fmtPctFromFraction(0.12345, 0))
   })
 
   it('every helper renders an em dash for null, undefined and non-finite input', () => {
-    for (const f of [fmtPct1, fmtPct2, fmtPctSigned, fmtPctFromFraction]) {
+    for (const f of [fmtPct1, fmtPct2, fmtPctSigned, fmtPctFromFraction, fmtPctWholeFromFraction]) {
       expect(f(null)).toBe('—')
       expect(f(undefined)).toBe('—')
       expect(f(Number.NaN)).toBe('—')

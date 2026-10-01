@@ -47,6 +47,11 @@ export function fmtPctFromFraction(v: number | null | undefined, digits = 1): st
   return `${(v * 100).toFixed(digits)}%`
 }
 
+/** 0.125 -> "13%"  — a fraction as a whole percent (hit rates, cushion, coverage). */
+export function fmtPctWholeFromFraction(v: number | null | undefined): string {
+  return fmtPctFromFraction(v, 0)
+}
+
 /** "24.1%"  (1dp, no sign) — input is already a percentage. */
 export function fmtPct1(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v)) return '—'

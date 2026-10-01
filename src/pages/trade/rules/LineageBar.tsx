@@ -20,7 +20,7 @@ export interface Crumb {
   go?: () => void
 }
 
-function Chip({
+function LineageChip({
   label,
   title,
   selected,
@@ -167,7 +167,7 @@ export function LineageBar({
       <Segment step="shape" title="Structure">
         {structures.length ? (
           structures.map((s) => (
-            <Chip
+            <LineageChip
               key={s.strategy_structure_id}
               label={s.name}
               title="Pick this structure"
@@ -181,7 +181,7 @@ export function LineageBar({
       </Segment>
       <Segment step="› when" title="Opportunity">
         {opps.slice(0, OPP_CAP).map((o) => (
-          <Chip
+          <LineageChip
             key={o.strategy_opportunity_id}
             label={o.name}
             title={o.name}
@@ -193,7 +193,7 @@ export function LineageBar({
       </Segment>
       <Segment step="› run" title="Allocation · gate">
         {allocs.map((a) => (
-          <Chip
+          <LineageChip
             key={a.strategy_allocation_id}
             label={a.name}
             title={a.name}
@@ -209,7 +209,7 @@ export function LineageBar({
       </Segment>
       <Segment step="› running" title="Trades">
         {pickedInstance ? (
-          <Chip
+          <LineageChip
             label={`#${pickedInstance.id} · ${pickedInstance.symbolish}`}
             title={pickedInstance.opportunityName}
             selected

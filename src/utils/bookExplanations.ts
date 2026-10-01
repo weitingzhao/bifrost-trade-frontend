@@ -11,7 +11,7 @@
  * describes from the same objects the cockpit reads.
  */
 import type { BookVsBase, CoverRow, GaugeLevel } from './bookVsBase'
-import { fmtPctFromFraction } from '@/lib/format'
+import { fmtPctWholeFromFraction } from '@/lib/format'
 import { PRESSURE_BANDS } from './bookVsBase'
 import type { ExposureSummary } from './assignmentExposure'
 import type { MarginRollup } from './marginPressure'
@@ -65,7 +65,6 @@ export interface ExplainInputs {
   room?: RoomSummary
 }
 
-const pct = (v: number | null | undefined) => fmtPctFromFraction(v, 0)
 const pct1 = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${(v * 100).toFixed(1)}%`)
 const usd = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : fmtUsd(v))
 const n = (v: number) => v.toLocaleString()
@@ -91,21 +90,21 @@ export function explainBook(topic: ExplainTopic, input: ExplainInputs): Explanat
         value:
           a.cushion == null
             ? 'no Cushion reported'
-            : `Cushion ${pct(a.cushion)} → pressure ${pct(a.pressure)} · excess ${usd(a.excessLiquidity)} / NLV ${usd(a.netLiquidation)}`,
+            : `Cushion ${fmtPctWholeFromFraction(a.cushion)} → pressure ${fmtPctWholeFromFraction(a.pressure)} · excess ${usd(a.excessLiquidity)} / NLV ${usd(a.netLiquidation)}`,
       }))
       return {
         title: 'Pressure',
         lines: [
-          `Pressure ${pct(book.pressure.pct)} = 1 − Cushion ${pct(book.pressure.cushion)}.`,
+          `Pressure ${fmtPctWholeFromFraction(book.pressure.pct)} = 1 − Cushion ${fmtPctWholeFromFraction(book.pressure.cushion)}.`,
           "Cushion is the broker's own field (ExcessLiquidity / NetLiquidation), read verbatim and never recomputed here; with more than one account in scope it is the scope's ExcessLiquidity over its NetLiquidation.",
           'At 100% excess liquidity is gone and the broker starts closing positions.',
         ],
         rows,
         scale: [
-          `1/4 below ${pct(PRESSURE_BANDS.idle)} — idle`,
-          `2/4 ${pct(PRESSURE_BANDS.idle)} to ${pct(PRESSURE_BANDS.heavy)} — normal`,
-          `3/4 ${pct(PRESSURE_BANDS.heavy)} to ${pct(PRESSURE_BANDS.critical)} — heavy`,
-          `4/4 from ${pct(PRESSURE_BANDS.critical)} — critical`,
+          `1/4 below ${fmtPctWholeFromFraction(PRESSURE_BANDS.idle)} — idle`,
+          `2/4 ${fmtPctWholeFromFraction(PRESSURE_BANDS.idle)} to ${fmtPctWholeFromFraction(PRESSURE_BANDS.heavy)} — normal`,
+          `3/4 ${fmtPctWholeFromFraction(PRESSURE_BANDS.heavy)} to ${fmtPctWholeFromFraction(PRESSURE_BANDS.critical)} — heavy`,
+          `4/4 from ${fmtPctWholeFromFraction(PRESSURE_BANDS.critical)} — critical`,
         ],
       }
     }
@@ -122,7 +121,7 @@ export function explainBook(topic: ExplainTopic, input: ExplainInputs): Explanat
         title: 'Backing',
         lines: [
           `${b.callsCovered} / ${b.callsTotal} calls covered: a short call counts as covered when whole shares of the same symbol in the same account back it (100 per contract), allocated once per account × symbol; the rest are naked.`,
-          `Puts need ${usd(b.putCashNeeded)} (Σ strike × 100 × contracts) against ${usd(b.cashLike)} cash-like (TotalCashValue + SGOV-class holdings)${b.putsCashCovered != null ? ` → ${pct(b.putsCashCovered)} covered in cash, the rest on margin` : ''}.`,
+          `Puts need ${usd(b.putCashNeeded)} (Σ strike × 100 × contracts) against ${usd(b.cashLike)} cash-like (TotalCashValue + SGOV-class holdings)${b.putsCashCovered != null ? ` → ${fmtPctWholeFromFraction(b.putsCashCovered)} covered in cash, the rest on margin` : ''}.`,
         ],
         rows,
         scale: [
@@ -186,7 +185,7 @@ export function explainBook(topic: ExplainTopic, input: ExplainInputs): Explanat
         ],
         rows,
         scale: [
-          `Segments = share of held shares still free: ${n(book.supply.sharesFree)} / ${n(held)} = ${held > 0 ? pct(book.supply.sharesFree / held) : '—'} → ${potentialSegments(book)}/4`,
+          `Segments = share of held shares still free: ${n(book.supply.sharesFree)} / ${n(held)} = ${held > 0 ? fmtPctWholeFromFraction(book.supply.sharesFree / held) : '—'} → ${potentialSegments(book)}/4`,
         ],
       }
     }

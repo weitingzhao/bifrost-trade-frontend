@@ -351,21 +351,30 @@ export interface StageCount {
   after: number
 }
 
-/** The funnel down the Screen panel: a running intersection, in stage order. */
+/**
+ * The funnel down the Screen panel: a running intersection, in stage order.
+ * `cuts[i]` is what stage i removed from the names that reached it — the set a
+ * stage's −N lists (Rev .131).
+ */
 export function runStages(
   pool: readonly NameRow[],
   stages: readonly Stage[],
   s: ScreenState,
   probe: Probe,
-): { counts: StageCount[]; survivors: NameRow[] } {
+): { counts: StageCount[]; cuts: NameRow[][]; survivors: NameRow[] } {
   let cur = pool.slice()
   const counts: StageCount[] = []
+  const cuts: NameRow[][] = []
   for (const st of stages) {
     const before = cur.length
-    cur = cur.filter((r) => passesStage(r, st, s, probe))
+    const kept: NameRow[] = []
+    const cut: NameRow[] = []
+    for (const r of cur) (passesStage(r, st, s, probe) ? kept : cut).push(r)
+    cur = kept
+    cuts.push(cut)
     counts.push({ before, after: cur.length })
   }
-  return { counts, survivors: cur }
+  return { counts, cuts, survivors: cur }
 }
 
 /** Conditions on, as Clear N counts them: every chip plus every min above 0. */
@@ -556,4 +565,28 @@ export function versionDiff(cur: ScreenVersion, parent: ScreenVersion | null): s
   const list = (xs: string[], sign: string) =>
     xs.length ? sign + xs.slice(0, 3).join(` ${sign}`) + (xs.length > 3 ? ` ${sign}${xs.length - 3}` : '') : ''
   return `vs v${parent.v} · ${[list(added, '+'), list(dropped, '−')].filter(Boolean).join('  ')}`
+}
+
+// ─── Hovering a stage (Rev .131) ───────────────────────────────────────────
+
+/**
+ * What hovering a Screen stage shows on the lineage. The ribbons are drawn on
+ * the names that pass every stage but Model agreement, so only that stage can
+ * cut inside the drawing; for any other stage the note says it already cut
+ * its names before the lineage, and a pass-through stage says it cuts nothing.
+ */
+export function stageHover(
+  index: number,
+  stage: Stage,
+  base: readonly NameRow[],
+  screen: ScreenState,
+  probe: Probe,
+  cutBefore: number,
+): { keep: ((r: NameRow) => boolean) | null; note: string } {
+  const head = `stage ${index + 1} ${stage.title}`
+  if (!stageActive(stage, screen)) return { keep: null, note: `${head} · pass-through, cuts nothing` }
+  const keep = (r: NameRow) => passesStage(r, stage, screen, probe)
+  const inside = base.filter((r) => !keep(r)).length
+  if (inside) return { keep, note: `${head} · cuts ${inside} of these ${base.length} (faded)` }
+  return { keep: null, note: `${head} · cut ${cutBefore} before the lineage; none of these ${base.length} fail it` }
 }

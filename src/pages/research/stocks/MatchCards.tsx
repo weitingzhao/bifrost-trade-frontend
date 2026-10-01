@@ -1,11 +1,13 @@
 /**
- * The page's core reading (Rev .123–.128): Pass the screen, then one card per
- * model and All three. A card counts, among the names that pass every other
- * condition, how many clear that model's own bar. Clicking a card requires it
- * (the Model agreement stage); its "rank by ↓" orders the list by it instead —
- * two actions, two entries, the words kept apart.
+ * The page's core reading (Rev .123–.131), in two groups. Result: Pass the
+ * screen | All three — both clickable to *focus* the list (Pass clears every
+ * focus, All three lists the names that clear all three bars); requiring all
+ * three is the small `require` button, because that changes the screen. Per
+ * model: one card each, counting among the names that pass every other
+ * condition how many clear that model's own bar. Clicking a model card
+ * requires it (the Model agreement stage); its "rank by ↓" orders the list.
  */
-import type { KeyboardEvent, MouseEvent } from 'react'
+import type { KeyboardEvent, MouseEvent, Ref } from 'react'
 import { cn } from '@/lib/utils'
 import { MODEL_TINT } from './stockScreenView'
 import {
@@ -26,7 +28,7 @@ export interface ModelReach {
   unit: string
 }
 
-function pct(k: number, of: number): string {
+function shareOf(k: number, of: number): string {
   return of ? `${Math.round((k / of) * 100)}%` : '0%'
 }
 
@@ -96,12 +98,18 @@ export function MatchCards({
   cells,
   base,
   on,
-  mins,
   model,
   reach,
   onToggle,
-  onAllThree,
   onRankBy,
+  allRequired,
+  onRequireAll,
+  noFocus,
+  onListAll,
+  allThreeListed,
+  onListAllThree,
+  cardsRef,
+  pulse,
 }: {
   pass: number
   poolN: number
@@ -109,119 +117,181 @@ export function MatchCards({
   cells: readonly MatchCell[]
   base: readonly NameRow[]
   on: Record<string, boolean>
-  mins: Record<string, number>
   model: RankModel
   reach: Record<ModelKey, ModelReach>
   onToggle: (id: AgreeId) => void
-  onAllThree: () => void
   onRankBy: (m: ModelKey) => void
+  allRequired: boolean
+  onRequireAll: () => void
+  /** No funnel, lineage or stage focus: the list shows every name that passes. */
+  noFocus: boolean
+  onListAll: () => void
+  allThreeListed: boolean
+  onListAllThree: () => void
+  cardsRef: Ref<HTMLDivElement>
+  /** Stage 1 was clicked: ring the model cards for a moment (Rev .131 #8). */
+  pulse: boolean
 }) {
   const bN = base.length
-  const allOn = MODEL_KEYS.every((_, i) => on[cells[i].id]) && !((mins.agree ?? 0) > 0)
+  const all3 = cells[3]
+  const cap = 'font-mono text-dense-caption uppercase tracking-[0.06em] text-muted-foreground'
+  const mark = (onOff: boolean) => (
+    <span className={cn('ml-auto whitespace-nowrap text-dense-caption', onOff ? 'font-semibold text-primary' : 'text-[var(--sk-mute2)]')}>
+      {onOff ? 'listed ✓' : 'list ↓'}
+    </span>
+  )
   return (
-    <div
-      className="flex flex-wrap items-stretch gap-2.5"
-      title="Each model is judged by its own bar: SEPA SETUP / PIVOT · Radar A+ / A · Premium ≥ 70. Nothing is blended."
-    >
-      <div
-        data-sr-kpi="hero"
-        className="flex-[1_1_150px]"
-        title={`Names that pass every active condition. The cards to the right count, among the ${bN} that pass the other conditions, how many clear each model’s bar; click one to require it.`}
-      >
-        <span data-sr-kpi-l="" className="text-[var(--sk-soft)]">
-          Pass the screen
-        </span>
-        <span data-sr-kpi-v="panel" className="text-foreground">
-          {fmt(pass)}
-        </span>
-        <span data-sr-kpi-s="">
-          of {fmt(poolN)} in {universeLabel}
-        </span>
-      </div>
-      {MODEL_KEYS.map((m, i) => {
-        const cell = cells[i]
-        const id = cell.id as AgreeId
-        const active = !!on[id]
-        const ranking = model === m
-        const r = reach[m]
-        const pick = () => onToggle(id)
-        return (
+    <div className="flex flex-wrap items-stretch gap-x-[18px] gap-y-2.5">
+      <div className="flex min-w-0 flex-[1.2_1_300px] flex-col gap-1.5">
+        <span className={cap}>Result</span>
+        <div
+          data-sr-kpi="hero"
+          className={cn('!grid flex-1 [grid-template-columns:minmax(0,1fr)_minmax(0,1.4fr)] !bg-primary/[0.07]', allRequired ? '!border-primary' : '!border-primary/25')}
+        >
           <div
-            key={m}
             role="button"
             tabIndex={0}
-            data-sr-kpi="hero"
-            onClick={pick}
-            onKeyDown={onKeyActivate(pick)}
-            aria-pressed={active}
-            title={`${AGREE_BAR[id]} · ${cell.k} of ${bN} that pass the other conditions · ${bN - cell.covered} not covered by ${MODEL_LABEL[m]} · click to ${active ? 'stop requiring' : 'require'} it`}
-            className={cn(
-              'flex-[1_1_170px] cursor-pointer text-left transition-colors hover:bg-[var(--card-fill-hover)]',
-              active && '!border-primary',
-            )}
+            onClick={onListAll}
+            onKeyDown={onKeyActivate(onListAll)}
+            aria-pressed={noFocus}
+            title={
+              noFocus
+                ? 'The list below shows every name that passes the screen'
+                : 'Click to clear the funnel / lineage / stage focus and list every name that passes'
+            }
+            className={cn('-my-1.5 -ml-1.5 mr-2 flex min-w-0 cursor-pointer flex-col rounded-md p-1.5', noFocus && 'bg-primary/15')}
           >
             <span data-sr-kpi-l="" className="flex items-center gap-1.5 text-[var(--sk-soft)]">
-              <span className="h-2 w-2 flex-none rounded-[2px]" style={{ background: MODEL_TINT[m] }} />
-              {MODEL_LABEL[m]}
+              Pass the screen
+              {mark(noFocus)}
+            </span>
+            <span data-sr-kpi-v="" className="text-foreground">
+              {fmt(pass)}
+            </span>
+            <span data-sr-kpi-s="">
+              of {fmt(poolN)} in {universeLabel}
+            </span>
+          </div>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={onListAllThree}
+            onKeyDown={onKeyActivate(onListAllThree)}
+            aria-pressed={allThreeListed}
+            title={
+              allThreeListed
+                ? `Listed below: the ${all3.k} that clear all three bars · click to show every name that passes`
+                : `Click to list the ${all3.k} that clear all three bars below`
+            }
+            className={cn(
+              '-my-1.5 -mr-1.5 flex min-w-0 cursor-pointer flex-col rounded-r-md border-l border-foreground/10 py-1.5 pl-3.5 pr-1.5',
+              allThreeListed && 'bg-primary/15',
+            )}
+          >
+            <span data-sr-kpi-l="" className="flex items-center gap-2 text-[var(--sk-soft)]">
+              All three
               <button
                 type="button"
                 onClick={(e: MouseEvent) => {
                   e.stopPropagation()
-                  if (!ranking) onRankBy(m)
+                  onRequireAll()
                 }}
                 title={
-                  ranking
-                    ? 'This model orders the list below'
-                    : `Order the list below by ${MODEL_LABEL[m]} (same as Rank by › ${MODEL_LABEL[m]})`
+                  allRequired
+                    ? 'All three bars are screen conditions · click to drop them'
+                    : 'Make all three bars screen conditions (changes the screen)'
                 }
                 className={cn(
                   'ml-auto cursor-pointer whitespace-nowrap border-0 bg-transparent p-0 text-dense-caption',
-                  ranking ? 'font-semibold text-primary' : 'font-normal text-[var(--sk-mute2)] hover:text-foreground',
+                  allRequired ? 'text-primary' : 'text-[var(--sk-mute2)] hover:text-foreground',
                 )}
               >
-                {ranking ? 'ranking ✓' : 'rank by ↓'}
+                {allRequired ? 'required ✓' : 'require'}
               </button>
+              <span className={cn('whitespace-nowrap text-dense-caption', allThreeListed ? 'font-semibold text-primary' : 'text-[var(--sk-mute2)]')}>
+                {allThreeListed ? 'listed ✓' : 'list ↓'}
+              </span>
             </span>
-            <span data-sr-kpi-v="panel" className="text-foreground">
-              {fmt(cell.k)}
+            <span data-sr-kpi-v="" className="text-foreground">
+              {fmt(all3.k)}
             </span>
             <span data-sr-kpi-s="">
-              of {fmt(cell.of)} · {pct(cell.k, cell.of)}
+              of {fmt(all3.of)} · {shareOf(all3.k, all3.of)}
             </span>
-            <span className="mt-0.5 block text-pretty font-mono text-dense-caption text-muted-foreground">
-              reaches {fmt(r.rated)} of {fmt(r.universe)}
-              {r.unit} · {fmt(cell.covered)} of {fmt(bN)} here
-            </span>
-            <Segs axis={i} base={base} />
+            <span className="mt-0.5 block font-mono text-dense-caption text-muted-foreground">SEPA ∩ Radar ∩ Premium bars</span>
+            <Segs axis={3} base={base} />
           </div>
-        )
-      })}
+        </div>
+      </div>
       <div
-        role="button"
-        tabIndex={0}
-        data-sr-kpi="hero"
-        onClick={onAllThree}
-        onKeyDown={onKeyActivate(onAllThree)}
-        aria-pressed={allOn}
-        title="Clears all three bars · click to require all three"
+        ref={cardsRef}
         className={cn(
-          'flex-[1.4_1_190px] cursor-pointer text-left transition-colors hover:bg-[var(--card-fill-hover)]',
-          allOn && '!border-primary',
+          'flex min-w-0 flex-[3_1_480px] flex-col gap-1.5 rounded-xl transition-shadow duration-300',
+          pulse && 'shadow-[0_0_0_2px_var(--sk-accent)]',
         )}
+        title="Each model is judged by its own bar: SEPA SETUP / PIVOT · Radar A+ / A · Premium ≥ 70. Nothing is blended."
       >
-        <span data-sr-kpi-l="" className="text-[var(--sk-soft)]">
-          All three
-        </span>
-        <span data-sr-kpi-v="" className="text-foreground">
-          {fmt(cells[3].k)}
-        </span>
-        <span data-sr-kpi-s="">
-          of {fmt(cells[3].of)} · {pct(cells[3].k, cells[3].of)}
-        </span>
-        <span className="mt-0.5 block font-mono text-dense-caption text-muted-foreground">
-          SEPA ∩ Radar ∩ Premium bars
-        </span>
-        <Segs axis={3} base={base} />
+        <span className={cap}>Per model · each judged by its own bar</span>
+        <div className="flex flex-1 flex-wrap items-stretch gap-2.5">
+          {MODEL_KEYS.map((m, i) => {
+            const cell = cells[i]
+            const id = cell.id as AgreeId
+            const active = !!on[id]
+            const ranking = model === m
+            const r = reach[m]
+            const pick = () => onToggle(id)
+            return (
+              <div
+                key={m}
+                role="button"
+                tabIndex={0}
+                data-sr-kpi="hero"
+                onClick={pick}
+                onKeyDown={onKeyActivate(pick)}
+                aria-pressed={active}
+                title={`${AGREE_BAR[id]} · ${cell.k} of ${bN} that pass the other conditions · ${bN - cell.covered} not covered by ${MODEL_LABEL[m]} · click to ${active ? 'stop requiring' : 'require'} it`}
+                className={cn(
+                  'flex-[1_1_150px] cursor-pointer text-left transition-colors hover:bg-[var(--card-fill-hover)]',
+                  active && '!border-primary',
+                )}
+              >
+                <span data-sr-kpi-l="" className="flex items-center gap-1.5 text-[var(--sk-soft)]">
+                  <span className="h-2 w-2 flex-none rounded-[2px]" style={{ background: MODEL_TINT[m] }} />
+                  {MODEL_LABEL[m]}
+                  <button
+                    type="button"
+                    onClick={(e: MouseEvent) => {
+                      e.stopPropagation()
+                      if (!ranking) onRankBy(m)
+                    }}
+                    title={
+                      ranking
+                        ? 'This model orders the list below'
+                        : `Order the list below by ${MODEL_LABEL[m]} (same as Rank › ${MODEL_LABEL[m]})`
+                    }
+                    className={cn(
+                      'ml-auto cursor-pointer whitespace-nowrap border-0 bg-transparent p-0 text-dense-caption',
+                      ranking ? 'font-semibold text-primary' : 'font-normal text-[var(--sk-mute2)] hover:text-foreground',
+                    )}
+                  >
+                    {ranking ? 'ranking ✓' : 'rank by ↓'}
+                  </button>
+                </span>
+                <span data-sr-kpi-v="panel" className="text-foreground">
+                  {fmt(cell.k)}
+                </span>
+                <span data-sr-kpi-s="">
+                  of {fmt(cell.of)} · {shareOf(cell.k, cell.of)}
+                </span>
+                <span className="mt-0.5 block text-pretty font-mono text-dense-caption text-muted-foreground">
+                  reaches {fmt(r.rated)} of {fmt(r.universe)}
+                  {r.unit} · {fmt(cell.covered)} of {fmt(bN)} here
+                </span>
+                <Segs axis={i} base={base} />
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

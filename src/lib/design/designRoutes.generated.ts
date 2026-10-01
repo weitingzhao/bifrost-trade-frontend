@@ -306,7 +306,7 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/trade": "contract",
 }
 
-export const DESIGN_REV = "2026-09-30.130"
+export const DESIGN_REV = "2026-09-30.131"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
@@ -322,7 +322,7 @@ export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/portfolio","label":"Portfolio","crumbs":["Portfolio"],"designed":true,"file":"Portfolio Overview.dc.html","round":null,"rev":"2026-09-25.82","inNav":true,"group":"Portfolio","designOnly":false},
   {"path":"/research/workbench","label":"Pipeline","crumbs":["Research"],"designed":true,"file":"Research Overview.dc.html","round":"OLD","rev":"2026-09-22.2","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/ratings","label":"Vol ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Vol Ratings.dc.html","round":"OLD","rev":"2026-09-20.10","inNav":false,"group":null,"designOnly":false},
-  {"path":"/research/stocks","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-30.130","inNav":true,"group":"Research","designOnly":false},
+  {"path":"/research/stocks","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-30.131","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/ratings/stocks","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-30.123","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/scan","label":"Vol ratings","crumbs":["Research","Discover"],"designed":true,"file":"Research Vol Ratings.dc.html","round":"OLD","rev":"2026-09-25.87","inNav":true,"group":"Research","designOnly":false},
   {"path":"/research/screener","label":"Stock screen","crumbs":["Research","Discover"],"designed":true,"file":"Research Stock Screen.dc.html","round":"OLD","rev":"2026-09-30.123","inNav":false,"group":null,"designOnly":false},

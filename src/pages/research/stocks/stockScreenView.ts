@@ -20,6 +20,19 @@ export const PREMIUM_PRESETS = SERVER_PRESETS.map((p) => ({
   label: p.id === 'momentum' ? 'Trend' : p.id === 'mean_revert' ? 'Revert' : p.label,
 }))
 
+export interface WeightSet {
+  sepa: Record<string, number>
+  premium: Record<string, number>
+}
+
+/** The four Rank choices (Rev .131: in the Rank section of the result head). */
+export const RANK_OPTIONS = [
+  { value: 'sepa', label: 'SEPA' },
+  { value: 'radar', label: 'Radar' },
+  { value: 'premium', label: 'Premium' },
+  { value: 'none', label: 'None' },
+]
+
 /** The result list stops here and says so; Show all lifts it. */
 export const ROW_CAP = 200
 

@@ -35,6 +35,7 @@ export function FlowPanel({
   selected,
   onNode,
   onPick,
+  hover,
 }: {
   open: boolean
   onToggle: () => void
@@ -51,10 +52,13 @@ export function FlowPanel({
   selected: string | null
   onNode: (axis: number, node: number) => void
   onPick: (sym: string) => void
+  /** A hovered Screen stage: what it does to the lineage, and its test. */
+  hover: { note: string; keep: ((r: NameRow) => boolean) | null } | null
 }) {
-  const laNote = pickedModels.length
+  const pickNote = pickedModels.length
     ? `showing ${pickedModels.map((i) => AXES[i].title).join(' · ')} · picked in the cards above`
     : 'all three models · pick cards above to narrow'
+  const laNote = hover ? `hover · ${hover.note}` : pickNote
   return (
     <section className="mat-card min-w-0 overflow-hidden border">
       <header className="flex flex-wrap items-baseline gap-2 border-b border-foreground/[0.06] px-3 py-2">
@@ -109,9 +113,15 @@ export function FlowPanel({
                           {st.label}
                         </span>
                         <span className="flex h-3.5 justify-center">
+                          {/* Rev .131: the steps darken as they narrow (ink 14% → 44%); the last is the accent. */}
                           <span
-                            className={cn('h-full rounded-[3px]', last ? 'bg-primary/60' : 'bg-foreground/15')}
-                            style={{ width: `${Math.max(4, poolN ? (n / poolN) * 100 : 0).toFixed(1)}%` }}
+                            className={cn('h-full rounded-[3px]', last && 'bg-primary/60')}
+                            style={{
+                              width: `${Math.max(4, poolN ? (n / poolN) * 100 : 0).toFixed(1)}%`,
+                              background: last
+                                ? undefined
+                                : `color-mix(in srgb, var(--sk-ink) ${Math.round(14 + (fn.steps.length > 2 ? si / (fn.steps.length - 2) : 0) * 30)}%, transparent)`,
+                            }}
                           />
                         </span>
                         <span className="text-right font-mono text-dense-label">{fmt(n)}</span>
@@ -134,7 +144,15 @@ export function FlowPanel({
               one ribbon per path · accent ribbons clear all three · click a node to list its names below (click nodes on
               several axes to intersect) · click a ribbon to open its first name
             </div>
-            <LineageRibbons set={base} visible={visible} focus={focus} selected={selected} onNode={onNode} onPick={onPick} />
+            <LineageRibbons
+              set={base}
+              visible={visible}
+              focus={focus}
+              selected={selected}
+              onNode={onNode}
+              onPick={onPick}
+              keep={hover?.keep ?? null}
+            />
           </div>
         </>
       ) : null}

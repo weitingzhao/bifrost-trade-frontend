@@ -11,7 +11,7 @@
  * this file holds state and wiring.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ViewState } from '@bifrost/ui'
 import { PageFaceSwitch, PageHead, PageHeadAction, PageShell } from '@/components/layout'
@@ -26,11 +26,11 @@ import { LeadersFace } from './LeadersFace'
 import type { LeaderSortKey } from './leadersModel'
 import { FlowPanel, type FunnelFocus } from './FlowPanel'
 import { MatchCards, type ModelReach } from './MatchCards'
-import { RankByPanel, type WeightSet } from './RankByPanel'
+import { ResultHead } from './ResultHead'
 import { ResultTable, type Scored, type SortKey } from './ResultTable'
 import { SaveScreenAction } from './SaveScreenAction'
 import { ScreenPanel } from './ScreenPanel'
-import { presetChoices } from './stockScreenView'
+import { presetChoices, type WeightSet } from './stockScreenView'
 import { WhyDrawer } from './WhyDrawer'
 import { useStockScreenData } from './useStockScreenData'
 import {
@@ -48,6 +48,7 @@ import {
   rowProbe,
   runStages,
   sepaScoreAt,
+  stageHover,
   versionDiff,
   visibleAxes,
   type AgreeId,
@@ -115,6 +116,22 @@ export default function StockScreenPage() {
   const [showAll, setShowAll] = useState(false)
   const [versions, setVersions] = useState<ScreenVersion[]>([])
   const [cur, setCur] = useState(-1)
+  // Rev .131: a stage's −N focus (exclusive with the funnel and lineage focus),
+  // the hovered stage, the collapsed Screen column, the Rank drawer, and the
+  // model cards' pulse when stage 1 sends you back to them.
+  const [sf, setSf] = useState<number | null>(null)
+  const [hs, setHs] = useState<number | null>(null)
+  const [scrOpen, setScrOpen] = useState(true)
+  const [wOpen, setWOpen] = useState(false)
+  const [pulse, setPulse] = useState(false)
+  const cardsRef = useRef<HTMLDivElement>(null)
+  const pulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const toCards = () => {
+    cardsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setPulse(true)
+    if (pulseTimer.current) clearTimeout(pulseTimer.current)
+    pulseTimer.current = setTimeout(() => setPulse(false), 1400)
+  }
 
   const data = useStockScreenData(screen.on)
   const probe = useMemo(() => rowProbe(data.sets), [data.sets])
@@ -126,7 +143,7 @@ export default function StockScreenPage() {
     return data.rows.filter(inU)
   }, [data.rows, universe, pf])
 
-  const { counts, survivors } = useMemo(() => runStages(pool, STAGES, screen, probe), [pool, screen, probe])
+  const { counts, cuts, survivors } = useMemo(() => runStages(pool, STAGES, screen, probe), [pool, screen, probe])
   const base = useMemo(() => pool.filter((r) => passesAll(r, STAGES, screen, probe, 'agree')), [pool, screen, probe])
   const cells = useMemo(() => matchRate(base), [base])
   const funnels = useMemo(() => funnelsOf(pool, base), [pool, base])
@@ -134,6 +151,15 @@ export default function StockScreenPage() {
   const picked = AGREE_IDS.map((id, i) => (screen.on[id] ? i : -1)).filter((i) => i >= 0)
   const focus = focusOnVisible(lf, visible)
   const ffStep = ff ? funnels[ff.f]?.steps[ff.st] : undefined
+  const cutAt = sf != null && cuts[sf]?.length ? sf : null
+  // Under a funnel or lineage focus, that focus counted through each stage.
+  const focusCounts = useMemo(() => {
+    if (cutAt != null) return null
+    const lfKeys = Object.keys(focus).length
+    const fpool = ffStep ? ffStep.set.filter((r) => inFocus(r, focus)) : lfKeys ? base.filter((r) => inFocus(r, focus)) : null
+    return fpool ? runStages(fpool, STAGES, screen, probe).counts : null
+  }, [cutAt, ffStep, focus, base, screen, probe])
+  const hover = hs != null && STAGES[hs] ? stageHover(hs, STAGES[hs], base, screen, probe, cuts[hs]?.length ?? 0) : null
   const nOn = conditionCount(screen)
 
   // ── Versions (Rev .121 #4): every change is a fork of the one you stand on.
@@ -265,8 +291,8 @@ export default function StockScreenPage() {
     [model, weights],
   )
   const shown = useMemo(
-    () => (ffStep ? ffStep.set : survivors).filter((r) => inFocus(r, focus)),
-    [ffStep, survivors, focus],
+    () => (cutAt != null ? cuts[cutAt] : (ffStep ? ffStep.set : survivors).filter((r) => inFocus(r, focus))),
+    [cutAt, cuts, ffStep, survivors, focus],
   )
   const { rated, unrated } = useMemo(() => {
     const scored: Scored[] = shown.map((row) => ({ row, score: scoreOf(row) }))
@@ -340,7 +366,6 @@ export default function StockScreenPage() {
 
   const curV = versions[cur] ?? null
   const parentV = curV && curV.parent >= 0 ? versions[curV.parent] : null
-  const lineage = versions.length > 6 ? versions.slice(versions.length - 6) : versions
   const selRow = sel ? (data.rows.find((r) => r.sym === sel) ?? null) : null
   const lselRow = view === 'leaders' && lsel ? (data.rows.find((r) => r.sym === lsel.symbol) ?? null) : null
   const whyRow = view === 'leaders' ? lselRow : selRow
@@ -354,6 +379,7 @@ export default function StockScreenPage() {
     return `#${above + 1} of ${of} in ${UNIVERSE_LABEL[universe]}`
   }
   const lfChips = [
+    ...(cutAt != null ? [{ key: 'sf', label: `Cut by stage ${cutAt + 1} · ${STAGES[cutAt].title}`, clear: () => setSf(null) }] : []),
     ...(ffStep && ff ? [{ key: 'ff', label: `${funnels[ff.f].title} funnel · ${ffStep.label}`, clear: () => setFf(null) }] : []),
     ...Object.entries(focus).map(([a, n]) => ({
       key: `lf${a}`,
@@ -367,17 +393,28 @@ export default function StockScreenPage() {
     })),
   ]
   const hasLf = lfChips.length > 0
-  const clearAll = () => {
-    const prev = screen
+  const focusNote =
+    cutAt != null
+      ? `${shown.length} names · outside the result`
+      : ffStep
+        ? `${shown.length} names · funnel${Object.keys(focus).length ? ' + lineage' : ''}`
+        : `${shown.length} of ${survivors.length} · lineage`
+  const clearFocus = () => {
     setLf({})
     setFf(null)
+    setSf(null)
+  }
+  const allThreeListed = !!ff && ff.f === 3 && ff.st === 4 && !Object.keys(focus).length
+  const clearAll = () => {
+    const prev = screen
+    clearFocus()
     if (universe !== 'all') setUniverse('all')
     if (nOn) {
       commit(EMPTY_SCREEN, 'clear all', null, 'all')
       notify('Criteria cleared', { undo: () => commit(prev, 'undo clear') })
     }
   }
-  const nClear = (universe !== 'all' ? 1 : 0) + nOn + Object.keys(focus).length + (ff ? 1 : 0)
+  const nClear = (universe !== 'all' ? 1 : 0) + nOn + Object.keys(focus).length + (ff ? 1 : 0) + (cutAt != null ? 1 : 0)
   const toggle = (id: string, label: string) => commit({ ...screen, on: { ...screen.on, [id]: !screen.on[id] } }, `${screen.on[id] ? '−' : '+'} ${label}`)
   const toggleAgree = (id: AgreeId) => toggle(id, `${MODEL_LABEL[id === 'm_sepa' ? 'sepa' : id === 'm_radar' ? 'radar' : 'premium']} agrees`)
   const allThree = () => {
@@ -485,12 +522,25 @@ export default function StockScreenPage() {
                 cells={cells}
                 base={base}
                 on={screen.on}
-                mins={screen.mins}
                 model={model}
                 reach={reach}
                 onToggle={toggleAgree}
-                onAllThree={allThree}
                 onRankBy={rankBy}
+                allRequired={AGREE_IDS.every((id) => screen.on[id]) && !((screen.mins.agree ?? 0) > 0)}
+                onRequireAll={allThree}
+                noFocus={!hasLf}
+                onListAll={() => {
+                  clearFocus()
+                  setView('ranked')
+                }}
+                allThreeListed={allThreeListed}
+                onListAllThree={() => {
+                  setFf(allThreeListed ? null : { f: 3, st: 4 })
+                  setLf({})
+                  setSf(null)
+                }}
+                cardsRef={cardsRef}
+                pulse={pulse}
               />
               <FlowPanel
                 open={flowOpen}
@@ -500,27 +550,30 @@ export default function StockScreenPage() {
                 baseN={base.length}
                 reach={reach}
                 ff={ff}
-                onFunnelStep={(f, st) => setFf(ff && ff.f === f && ff.st === st ? null : { f, st })}
+                onFunnelStep={(f, st) => {
+                  setFf(ff && ff.f === f && ff.st === st ? null : { f, st })
+                  setSf(null)
+                }}
                 base={base}
                 visible={visible}
                 pickedModels={picked}
                 focus={focus}
                 selected={sel}
-                onNode={(a, n) =>
+                onNode={(a, n) => {
+                  setSf(null)
                   setLf((f) => {
                     const o = { ...f }
                     if (o[a] === n) delete o[a]
                     else o[a] = n
                     return o
                   })
-                }
+                }}
                 onPick={(sym) => setSel(sym)}
+                hover={hover}
               />
             </>
           ) : null}
           <div className="flex min-w-0 flex-wrap items-start gap-3">
-            <aside className="flex min-w-[290px] max-w-full flex-[0_1_330px] flex-col gap-2.5">
-              <RankByPanel model={model} onModel={rankBy} weights={weights} onWeights={setWeights} source={source[model]} />
               <ScreenPanel
                 title={screenTitle}
                 poolN={pool.length}
@@ -537,80 +590,48 @@ export default function StockScreenPage() {
                 pending={data.setsPending}
                 onChip={toggle}
                 onMin={(stageId, n, why) => commit({ ...screen, mins: { ...screen.mins, [stageId]: n } }, why)}
+                collapsed={!scrOpen}
+                onToggle={() => setScrOpen(!scrOpen)}
+                hovered={hs}
+                onHover={setHs}
+                cutIdx={cutAt}
+                onCut={(i) => {
+                  setSf(cutAt === i ? null : i)
+                  setFf(null)
+                  setLf({})
+                  setView('ranked')
+                }}
+                focusCounts={focusCounts}
+                onToCards={toCards}
               />
-            </aside>
-            <section className="mat-card min-w-0 max-w-full flex-[999_1_600px] overflow-hidden border">
+            <section className="mat-card min-w-[min(100%,480px)] max-w-full flex-[999_1_0] overflow-hidden border">
               {view === 'ranked' ? (
                 <>
-                  <header className="flex flex-wrap items-baseline gap-2 border-b border-foreground/[0.06] px-3 py-2">
-                    <span data-sr-tb="label">Result</span>
-                    <span className="text-dense-body font-semibold">
-                      {model === 'none'
+                  <ResultHead
+                    title={
+                      model === 'none'
                         ? `${rated.length} names · A–Z`
-                        : `${rated.length} ranked by ${MODEL_LABEL[model]}${unrated.length ? ` · ${unrated.length} not rated` : ''}`}
-                    </span>
-                    {hasLf ? (
-                      <span className="inline-flex flex-wrap items-center gap-1">
-                        {lfChips.map((c) => (
-                          <button key={c.key} type="button" onClick={c.clear} title="Focus · click to remove" className="mat-tag inline-flex h-[22px] items-center gap-1 border !border-primary bg-primary/15 text-dense-meta">
-                            {c.label} <span className="text-muted-foreground">×</span>
-                          </button>
-                        ))}
-                        <span className="font-mono text-dense-meta text-muted-foreground">
-                          {shown.length} of {survivors.length} · {ffStep ? 'funnel' : 'lineage'} focus
-                        </span>
-                      </span>
-                    ) : null}
-                    <span className="font-mono text-dense-meta font-bold text-primary" title="The screen's version in this session. Every change is a new version whose parent is the one you stood on.">
-                      {curV ? `v${curV.v}` : 'v…'}
-                    </span>
-                    <span className="font-mono text-dense-meta text-[var(--sk-mute2)]">{curV ? versionDiff({ ...curV, syms: survivorSyms }, parentV) : ''}</span>
-                    <span className="ml-auto text-dense-meta text-muted-foreground">click a row for why · j k walk · esc</span>
-                  </header>
-                  <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5 border-b border-foreground/[0.06] px-3 py-1.5">
-                    <span data-sr-tb="label" className="mr-1">
-                      Lineage
-                    </span>
-                    {lineage.map((v, k) => {
-                      const i = versions.indexOf(v)
-                      const n = symsOf(i).length
-                      const d = v.parent >= 0 ? n - symsOf(v.parent).length : 0
-                      return (
-                        <span key={v.v} className="inline-flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => standOn(i)}
-                            title={`${v.why} · ${v.at}${v.parent >= 0 && v.parent !== i - 1 ? ` · branched from v${versions[v.parent].v}` : ''} · click to stand here; the next change branches from it`}
-                            className={
-                              i === cur
-                                ? 'inline-flex h-5 items-baseline gap-1 rounded-md border border-primary bg-primary/15 px-2 font-mono text-dense-caption text-foreground'
-                                : 'inline-flex h-5 items-baseline gap-1 rounded-md border border-transparent bg-foreground/[0.06] px-2 font-mono text-dense-caption text-[var(--sk-soft)]'
-                            }
-                          >
-                            v{v.v}
-                            <span className="text-muted-foreground">{n || '…'}</span>
-                            {v.parent >= 0 ? (
-                              <span className={d < 0 ? 'text-destructive' : d > 0 ? 'text-[var(--sk-state-green)]' : 'text-muted-foreground'}>
-                                {d === 0 ? '±0' : `${d > 0 ? '+' : '−'}${Math.abs(d)}`}
-                              </span>
-                            ) : null}
-                          </button>
-                          {k < lineage.length - 1 ? <span className="text-dense-caption text-[var(--sk-faint)]">→</span> : null}
-                        </span>
-                      )
-                    })}
-                    <span className="ml-auto inline-flex items-baseline gap-2.5">
-                      <Link to="/research/lab/stocks?tab=screens" className="text-dense-meta text-primary hover:underline" title="Saved screens and provenance live on the Method face">
-                        Explain · lineage ⧉
-                      </Link>
-                      <span
-                        className="font-mono text-dense-caption text-muted-foreground"
-                        title="Not linked: these versions live in this tab. The screen store keeps saved screens, not their versions, so no Journal node exists for one."
-                      >
-                        Journal →
-                      </span>
-                    </span>
-                  </div>
+                        : `${rated.length} ranked by ${MODEL_LABEL[model]}${unrated.length ? ` · ${unrated.length} not rated` : ''}`
+                    }
+                    version={curV ? `v${curV.v}` : 'v…'}
+                    universeN={pool.length}
+                    resultN={survivors.length}
+                    diff={curV ? versionDiff({ ...curV, syms: survivorSyms }, parentV) : ''}
+                    chips={lfChips}
+                    focusNote={focusNote}
+                    onClearFocus={clearFocus}
+                    model={model}
+                    onModel={rankBy}
+                    wOpen={wOpen}
+                    onToggleW={() => setWOpen(!wOpen)}
+                    weights={weights}
+                    onWeights={setWeights}
+                    source={source[model]}
+                    versions={versions}
+                    cur={cur}
+                    countOf={(i) => symsOf(i).length}
+                    onStand={standOn}
+                  />
                   {rated.length + unrated.length > 0 ? (
                     <ResultTable
                       model={model}

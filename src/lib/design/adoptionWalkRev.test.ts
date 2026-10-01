@@ -129,7 +129,9 @@ describe('the design walk, by revision', () => {
     // (440 panel · float · /instance/:id), Symbol ↔ Instance, page ↔ surface.
     // Package .48 @ Rev .130 (2026-09-30, increment): Stock screen — Stock
     // ratings and the Stock screen as one picking page (Rev .121–.130).
-    expect(DESIGN_REV).toBe('2026-09-30.130')
+    // Package .49 @ Rev .131 (2026-09-30, increment): Stock screen — Screen ·
+    // Focus · Rank as three layers.
+    expect(DESIGN_REV).toBe('2026-09-30.131')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

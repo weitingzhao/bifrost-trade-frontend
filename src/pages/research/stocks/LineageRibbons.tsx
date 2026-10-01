@@ -58,6 +58,7 @@ export function LineageRibbons({
   selected,
   onNode,
   onPick,
+  keep,
 }: {
   set: readonly NameRow[]
   /** AXES indexes drawn after Screen (models picked, then Bars cleared). */
@@ -66,6 +67,8 @@ export function LineageRibbons({
   selected: string | null
   onNode: (axis: number, node: number) => void
   onPick: (sym: string) => void
+  /** A hovered stage's own test (Rev .131): ribbons of names it rejects fade. */
+  keep?: ((r: NameRow) => boolean) | null
 }) {
   const { ref, w: width } = useWidth()
   const N = set.length
@@ -134,7 +137,7 @@ export function LineageRibbons({
   }
   const focusKeys = Object.keys(focus).map(Number)
   const inF = (rows: NameRow[]) =>
-    !focusKeys.length || rows.some((r) => focusKeys.every((a) => AXES[a].of(r) === focus[a]))
+    rows.some((r) => (!focusKeys.length || focusKeys.every((a) => AXES[a].of(r) === focus[a])) && (!keep || keep(r)))
   const barsHidden = !visible.includes(3)
   return (
     <div ref={ref} className="min-w-0 overflow-x-auto">

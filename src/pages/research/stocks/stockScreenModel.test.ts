@@ -16,12 +16,13 @@ import {
   runStages,
   sepaParts,
   sepaScoreAt,
+  stageHover,
   versionDiff,
   visibleAxes,
   type NameRow,
   type ScreenState,
 } from './stockScreenModel'
-import { LEGACY_SCREEN, STAGES } from './stockScreenStages'
+import { LEGACY_SCREEN, STAGES, STAGE_OF } from './stockScreenStages'
 import { toSavedDefinition } from './stockScreenView'
 
 const MODEL_W = { trend: 35, growth: 30, mom: 20, opt: 15 }
@@ -193,5 +194,24 @@ describe('versions and saving', () => {
     expect(ok.definition).toEqual({ q: '', paths: ['SETUP', 'PIVOT'], grades: [], min_composite: 0, tech: ['price_gt_sma50'], fund: ['eps_acc_fy'] })
     const no = toSavedDefinition({ on: { bb_squeeze: true }, mins: { trend: 8 } }, STAGES)
     expect(no.blocked).toEqual(['Trend template ≥ 8', 'BB squeeze (width < 50D avg)'])
+  })
+})
+
+describe('focus and hover (Rev .131)', () => {
+  it('keeps what each stage cut, so its −N can list them', () => {
+    const { counts, cuts } = runStages(ROWS, STAGES, { on: { grade_a: true }, mins: { trend: 9 } }, probe)
+    counts.forEach((c, i) => expect(cuts[i]).toHaveLength(c.before - c.after))
+    expect(cuts[1].map((r) => r.sym).sort()).toEqual(['CCC', 'ZZZ'])
+  })
+
+  it('fades inside the lineage only for a stage that cuts there', () => {
+    const agree = { on: { m_radar: true }, mins: {} }
+    const inside = stageHover(0, STAGE_OF.agree, ROWS, agree, probe, 2)
+    expect(inside.note).toBe('stage 1 Model agreement · cuts 2 of these 4 (faded)')
+    expect(ROWS.filter((r) => !inside.keep!(r)).map((r) => r.sym).sort()).toEqual(['BBB', 'CCC'])
+    const before = stageHover(1, STAGE_OF.trend, [row('AAA')], { on: {}, mins: { trend: 9 } }, probe, 2)
+    expect(before.keep).toBeNull()
+    expect(before.note).toMatch(/cut 2 before the lineage; none of these 1 fail it/)
+    expect(stageHover(2, STAGE_OF.growth, ROWS, { on: {}, mins: {} }, probe, 0).note).toMatch(/pass-through, cuts nothing/)
   })
 })

@@ -25,4 +25,8 @@
 // 0.7.0 (U1): ShellNavSidebar's Filter pages field (design 2026-09-28).
 // 0.7.1 (Rev .111): `--sk-trade` and `--sk-objective`; `--sk-instance` stays one version as an alias.
 // 0.8.0 (Rev .117): `SectionBand` — every page section folds (§17.8).
-export const UI_VERSION_NOW = '0.8.0'
+// 0.9.0 (Rev .132): Liquid Glass — the glass tokens (rim, lens, tinted primary,
+// vibrancy inks, scroll edge, press, morph / spring motion), morph-from-source
+// on Popover · ContextMenu · the sheet, InspectorPanel, TokenSearchField,
+// UndoToast, ScrollEdge. The design targeted 0.8.0, which SectionBand had taken.
+export const UI_VERSION_NOW = '0.9.0'

@@ -25,7 +25,7 @@ export function linkifyKnownSymbols(
         key={`${match.index}-${token}`}
         type="button"
         onClick={() => onSymbolClick(token)}
-        className="inline-flex items-center rounded-sm border border-border/50 bg-secondary/70 px-1 py-0 font-mono text-[0.85em] text-entity-symbol hover:border-primary/40 hover:bg-secondary"
+        className="inline-flex items-center rounded-full border border-border/50 bg-secondary/70 px-1 py-0 font-mono text-[0.85em] text-entity-symbol hover:border-primary/40 hover:bg-secondary"
       >
         {token}
       </button>,

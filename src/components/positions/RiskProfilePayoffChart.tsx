@@ -296,7 +296,8 @@ export function RiskProfilePayoffChart({
         {helpOpen ? (
           <div
             id={helpPanelId}
-            className={styles.helpPanel}
+            className={cn(styles.helpPanel, 'sr-glass-float')}
+            data-glass-surface="raised"
             role="region"
             aria-label="Chart guide"
             onClick={e => e.stopPropagation()}

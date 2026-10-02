@@ -334,7 +334,7 @@ export function CorrelationPanel({
                 {shownClusters.map((c) => (
                   <div
                     key={c.members.join('-')}
-                    className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-0.5 rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-2.5 py-1.75"
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-0.5 rounded-lg bg-[var(--card-fill)] px-2.5 py-1.75"
                   >
                     <span className="min-w-0 font-mono text-xs font-semibold text-entity-symbol">
                       {c.members.join(' · ')}

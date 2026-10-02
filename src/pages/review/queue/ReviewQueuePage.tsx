@@ -457,11 +457,12 @@ export default function ReviewQueuePage() {
                     aria-pressed={on}
                     onClick={() => setCell((cur) => (cur === q.key ? null : q.key))}
                     className={cn(
-                      'flex min-w-0 cursor-pointer flex-col gap-1 rounded-xl border px-3 py-2 text-left font-[inherit]',
-                      // The picked cell is a selection: the accent edge and a 10% ground.
+                      // Rev .142: a clickable card is group material, no frame.
+                      'flex min-w-0 cursor-pointer flex-col gap-1 border px-3 py-2 text-left font-[inherit] mat-card',
+                      // The picked cell is a selection: the accent outline and a 10% ground.
                       on
-                        ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]'
-                        : 'border-transparent bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
+                        ? 'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)] ring-1 ring-[var(--sk-accent)]'
+                        : 'hover:bg-[var(--mat-card-fill-hover)]',
                     )}
                   >
                     <span className="flex flex-wrap items-baseline gap-x-2">

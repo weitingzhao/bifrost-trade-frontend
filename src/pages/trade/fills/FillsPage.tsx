@@ -512,11 +512,12 @@ export default function FillsPage() {
                           type="button"
                           onClick={() => setPickedCandidate((prev) => (prev === c.instanceId ? null : c.instanceId))}
                           className={cn(
-                            'grid cursor-pointer grid-cols-[0.875rem_minmax(0,1fr)] items-start gap-2.5 rounded-md border bg-[var(--sk-raised)] px-2.5 py-2 text-left',
+                            // Rev .142: a clickable card is group material — no frame, the card fill and radius.
+                            'grid cursor-pointer grid-cols-[0.875rem_minmax(0,1fr)] items-start gap-2.5 rounded-[var(--mat-card-radius)] border px-2.5 py-2 text-left',
                             // Rev .84: the picked candidate is the accent — edge and a 12% ground.
                             pickedCandidate === c.instanceId
                               ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
-                              : 'border-border hover:border-[var(--sk-line2)]',
+                              : 'border-transparent bg-[var(--mat-card-fill)] hover:bg-[var(--mat-card-fill-hover)]',
                           )}
                         >
                           <span

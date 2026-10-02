@@ -52,8 +52,8 @@ export function LedgerHealthBand({
           />
         ))}
       </HeroRow>
-      {/* Its own card now, no raised band (Rev .84). */}
-      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 border px-3 py-1.5 mat-card">
+      {/* A strip of controls, no slab (Rev .142; was its own card since Rev .84). */}
+      <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2 px-3 py-1.5">
         <span className="text-dense-meta font-semibold text-muted-foreground">Unlinked counts</span>
         <SegmentControl
           size="xs"

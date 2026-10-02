@@ -151,7 +151,7 @@ export function DialStrip({
               type="button"
               disabled
               title={c.why}
-              className="cursor-not-allowed rounded border border-warning/50 px-2.5 py-1 text-dense-label font-semibold text-warning opacity-55"
+              className="cursor-not-allowed rounded-full border border-warning/50 px-2.5 py-1 text-dense-label font-semibold text-warning opacity-55"
             >
               Set {confirm.level}
             </button>

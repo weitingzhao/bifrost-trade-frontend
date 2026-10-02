@@ -37,7 +37,7 @@ function LineageChip({
       onClick={onClick}
       title={title}
       className={cn(
-        'max-w-[16rem] truncate rounded-md px-2 py-0.5 text-dense-label',
+        'max-w-[16rem] truncate rounded-full px-2 py-0.5 text-dense-label',
         selected
           ? 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] text-[var(--sk-accent)]'
           : 'bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] text-foreground hover:bg-[color-mix(in_srgb,var(--sk-ink)_12%,transparent)]',
@@ -110,7 +110,7 @@ export function LineageBar({
           type="button"
           onClick={onBack}
           title={backTitle}
-          className="inline-flex h-6 flex-none items-center gap-1.5 rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-2.5 text-dense-label text-foreground hover:bg-[color-mix(in_srgb,var(--sk-ink)_13%,transparent)]"
+          className="inline-flex h-6 flex-none items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-2.5 text-dense-label text-foreground hover:bg-[color-mix(in_srgb,var(--sk-ink)_13%,transparent)]"
         >
           ← Back
         </button>

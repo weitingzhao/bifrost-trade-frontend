@@ -67,11 +67,12 @@ export function RightInspectorShell({
         'flex min-h-0 max-w-full flex-col',
         docked
           ? 'h-svh shrink-0 border-l border-border bg-card'
-          : // The floating sheet (design Rev .59, `[data-sr-sheet]`): off the
-            // edge by 8, radius 12, a hairline and a top highlight, sliding in
-            // over 240ms. Opaque — a sheet holds rows, not glass.
-            'pointer-events-auto my-2 mr-2 h-[calc(100svh-16px)] overflow-hidden rounded-[12px] border border-[color-mix(in_srgb,var(--sk-ink)_10%,transparent)] bg-[var(--sk-raised)] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_8%,transparent),0_24px_60px_-12px_rgba(0,0,0,0.6)] animate-in fade-in-0 slide-in-from-right-4 duration-[240ms] motion-reduce:animate-none',
+          : // The floating inspector (Rev .142): off the edge by 8, radius 14,
+            // the side glass (fill over rim, lens, drop, blur), sliding in over
+            // 240ms. Solid / reduced transparency come from data-glass-surface.
+            'sr-glass-side pointer-events-auto my-2 mr-2 h-[calc(100svh-16px)] overflow-hidden rounded-[14px] animate-in fade-in-0 slide-in-from-right-4 duration-[240ms] motion-reduce:animate-none',
       )}
+      data-glass-surface={docked ? undefined : 'surface'}
       style={{ width: docked ? `${width}px` : `min(${width}px, 96vw)` }}
       role="dialog"
       aria-modal="false"

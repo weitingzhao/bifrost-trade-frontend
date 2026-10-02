@@ -28,7 +28,7 @@ export function TradeExecSection({
   const tComm = groups.reduce((a, g) => a + g.comm, 0)
   const tNet = tGross - tComm
   return (
-    <div className="flex flex-col gap-2.5 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
+    <div className="flex flex-col gap-2.5 mat-card px-3.5 py-3">
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="text-dense-body font-semibold">Executions</span>
         <SegmentControl
@@ -67,7 +67,7 @@ export function TradeExecSection({
             </div>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(12rem,1fr))] gap-2">
               {g.sides.map((s) => (
-                <div key={s.name} className="rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-2.5 py-2">
+                <div key={s.name} className="rounded-lg bg-[var(--card-fill)] px-2.5 py-2">
                   <div className="flex gap-1.5 text-dense-micro">
                     <span className="font-semibold text-[var(--sk-soft)]">{s.name}</span>
                     <span className="ml-auto font-mono text-[var(--sk-mute2)]">

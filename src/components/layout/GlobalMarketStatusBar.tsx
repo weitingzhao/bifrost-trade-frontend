@@ -70,7 +70,7 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
       <button
         type="button"
         onClick={goLive}
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/50 px-2.5 py-1 font-medium text-foreground transition-colors hover:bg-secondary"
+        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-2.5 py-1 font-medium text-foreground transition-colors hover:bg-secondary"
         aria-label="Open orders"
         title={model.ordersLampTitle}
       >

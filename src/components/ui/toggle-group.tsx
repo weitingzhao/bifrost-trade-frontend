@@ -7,7 +7,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const toggleVariants = cva(
-  "inline-flex min-w-0 items-center justify-center gap-1 rounded-md border border-transparent px-2.5 text-sm font-medium whitespace-nowrap transition-colors outline-none select-none disabled:pointer-events-none disabled:opacity-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground",
+  "inline-flex min-w-0 items-center justify-center gap-1 rounded-full border border-transparent px-2.5 text-sm font-medium whitespace-nowrap transition-colors outline-none select-none disabled:pointer-events-none disabled:opacity-50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground",
   {
     variants: {
       variant: {
@@ -17,7 +17,7 @@ const toggleVariants = cva(
       },
       size: {
         default: "h-8 px-2.5",
-        sm: "h-7 rounded-[min(var(--radius-md),10px)] px-2 text-xs",
+        sm: "h-7 px-2 text-xs",
       },
     },
     defaultVariants: {
@@ -41,7 +41,8 @@ function ToggleGroup({
       data-variant={variant}
       data-size={size}
       className={cn(
-        "group/toggle-group inline-flex w-fit items-center rounded-lg border border-border bg-muted/40 p-0.5",
+        // Rev .142: a capsule track — ink 7%, no frame; the items are capsules.
+        "group/toggle-group inline-flex w-fit items-center rounded-full bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] p-[3px]",
         className,
       )}
       {...props}

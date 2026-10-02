@@ -683,7 +683,7 @@
    element's border width and only clears its colour, so nothing moves.
    - mat-card   a container: ink 4%, radius 12, no shadow
    - mat-tag    a chip: currentColor 15%, fully round, 8px sides
-   - mat-btn    a secondary control: ink 8%, radius 8, 13% on hover
+   - mat-btn    a secondary control: ink 8%, a capsule (Rev .142), 13% on hover
    - mat-field  an input: ink 7%, radius 8, a 3px accent ring on focus */
 @utility mat-card {
   border-color: transparent;
@@ -701,7 +701,7 @@
 
 @utility mat-btn {
   border-color: transparent;
-  border-radius: 8px;
+  border-radius: 999px;
   background-color: var(--mat-btn-fill);
   &:hover {
     background-color: var(--mat-btn-fill-hover);
@@ -957,17 +957,6 @@ tbody tr:hover > td {
 [data-mat] [role='group'].rounded-full {
   border-color: transparent;
   background-color: var(--mat-card-fill-hover);
-}
-
-/* The page head's ⓘ (DS PageHead) is the design's help circle: round, no
-   frame, ink 8%, 14% on hover or while open (Rev .64). */
-[data-mat] button[aria-label='About this page'] {
-  border-color: transparent;
-  background-color: var(--mat-btn-fill);
-}
-
-[data-mat] button[aria-label='About this page']:is(:hover, [aria-expanded='true']) {
-  background-color: color-mix(in srgb, var(--sk-ink) 14%, transparent);
 }
 
 /* The page toolbar and the KPI boxes wear 1a in @bifrost/ui's patterns layer

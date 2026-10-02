@@ -114,7 +114,7 @@ export const opportunitiesColTitleClass = cn(
 export const opportunitiesColBodyClass = cn('flex flex-col gap-3 p-3')
 
 export const opportunitiesAddBtnClass = cn(
-  'inline-flex h-8 items-center gap-1 self-start rounded-md border border-dashed border-border px-3 text-xs text-muted-foreground',
+  'inline-flex h-8 items-center gap-1 self-start rounded-full border border-dashed border-border px-3 text-xs text-muted-foreground',
   'transition-colors hover:border-primary hover:bg-primary/10 hover:text-primary',
 )
 

@@ -51,7 +51,7 @@ function PageChip({ page }: { page: LoopPage }) {
   if (!BUILT.has(page.to)) {
     return (
       <span
-        className="inline-flex h-5 cursor-default items-center rounded border border-dashed border-border/60 px-1.5 text-dense-caption text-muted-foreground/60"
+        className="inline-flex h-5 cursor-default items-center rounded-full border border-dashed border-border/60 px-1.5 text-dense-caption text-muted-foreground/60"
         title={`${tip} — not built on this side yet.`}
       >
         {label}
@@ -73,8 +73,11 @@ function StationCard({ card }: { card: LoopCard }) {
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-col gap-1.5 rounded-md border bg-card px-2.5 py-2',
-        card.crossNote ? 'border-[var(--color-entity-strategy)]/40' : 'border-border',
+        // Group material (Rev .142); a station that crosses the outer loop keeps its violet frame.
+        'flex min-w-0 flex-col gap-1.5 border px-2.5 py-2',
+        card.crossNote
+          ? 'rounded-[var(--mat-card-radius)] border-[var(--color-entity-strategy)]/40 bg-[var(--mat-card-fill)]'
+          : 'mat-card',
       )}
     >
       <div className="flex flex-wrap items-baseline gap-x-2">

@@ -56,10 +56,8 @@
   width: clamp(220px, 30vw, 280px);
   max-width: calc(100% - 16px);
   padding: 0.5rem 0.625rem;
-  border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--popover) 94%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  /* Rev .142: fill, rim and drop come from .sr-glass-float on the element. */
+  border-radius: 12px;
   transform: translate(-50%, calc(-100% - 8px));
   font-size: 0.72rem;
   line-height: 1.35;

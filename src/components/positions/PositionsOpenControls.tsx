@@ -97,7 +97,7 @@ export function PositionsOpenControls({
       <span data-sr-tb="label">Scope</span>
       {showAccountToggles && (
         <span
-          className="inline-flex overflow-hidden rounded-[5px] border border-border"
+          className="inline-flex overflow-hidden rounded-full border border-border"
           aria-label="Accounts in scope"
         >
           {hostAccountId && (
@@ -118,7 +118,7 @@ export function PositionsOpenControls({
       )}
 
       {types && onTypesChange ? (
-        <span className="inline-flex overflow-hidden rounded-[5px] border border-border" aria-label="Holding types in scope">
+        <span className="inline-flex overflow-hidden rounded-full border border-border" aria-label="Holding types in scope">
           {(
             [
               ['opt', 'Options', 'the option lines · the expiry filter applies here only'],

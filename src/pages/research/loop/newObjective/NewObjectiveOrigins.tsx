@@ -86,7 +86,7 @@ function PromoteDraft({ pick, onDone }: { pick: Extract<OriginPick, { kind: 'dra
           type="button"
           disabled={promote.isPending}
           onClick={() => promote.mutate()}
-          className="h-6 rounded-lg border-0 bg-[var(--color-profit)] px-2.5 text-dense-meta font-semibold text-[var(--sk-on-accent)] disabled:opacity-60"
+          className="h-6 rounded-full border-0 bg-[var(--color-profit)] px-2.5 text-dense-meta font-semibold text-[var(--sk-on-accent)] disabled:opacity-60"
         >
           {promote.isPending ? 'Promoting…' : 'Promote'}
         </button>
@@ -127,7 +127,7 @@ export function NewObjectiveOrigins({ onClose }: { onClose: () => void }) {
   const today = todayIso()
 
   return (
-    <section className="overflow-hidden rounded-xl bg-[color-mix(in_srgb,var(--sk-accent)_6%,transparent)] mat-card" aria-label="New objective">
+    <section className="overflow-hidden bg-[color-mix(in_srgb,var(--sk-accent)_6%,transparent)] mat-card" aria-label="New objective">
       <header className="flex flex-wrap items-baseline gap-2 border-b border-border px-3 py-2">
         <span className="text-dense-body font-semibold">New objective</span>
         <span className="text-dense-meta text-muted-foreground">

@@ -64,7 +64,7 @@ export function BackingFaceSlot({
 }) {
   return (
     <aside
-      className={cn(positionsUi.panel, 'sticky top-0 border-[var(--sk-line2)]')}
+      className={cn(positionsUi.panel, 'sticky top-0')}
       aria-label="Backing detail"
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
@@ -79,7 +79,7 @@ export function BackingFaceSlot({
             aria-pressed={face === f.id}
             title={f.title}
             className={cn(
-              'h-6 cursor-pointer whitespace-nowrap rounded-[5px] border bg-transparent px-2.25',
+              'h-6 cursor-pointer whitespace-nowrap rounded-full border bg-transparent px-2.25',
               'text-dense-meta leading-normal font-semibold',
               face === f.id ? 'border-primary text-primary' : 'border-border text-secondary-foreground hover:text-foreground',
             )}

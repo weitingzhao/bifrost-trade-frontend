@@ -316,7 +316,7 @@ export function SymbolIdentity({
         {asof}
         <span className={css.verbs}>
           <span
-            className="rounded border border-dashed border-border px-1.5 py-0.5 text-dense-caption text-muted-foreground/70"
+            className="rounded-full border border-dashed border-border px-1.5 py-0.5 text-dense-caption text-muted-foreground/70"
             title="The design gives every read an artifact id and six verbs that walk it — Explain, Challenge, Fork, Extend, Settle, Distill. No artifact store exists on this side (the Journal's own walk found no artifact endpoint across its five joins), and the Owner deferred the verbs until their semantics are settled."
           >
             read · no artifact store

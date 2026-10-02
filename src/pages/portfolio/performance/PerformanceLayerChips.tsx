@@ -53,13 +53,13 @@ export function PerformanceLayerChips({
             aria-pressed={on}
             onClick={() => onLayerToggle(layer.key)}
             title={`${on ? 'On the curve — click to drop' : 'Off the curve — click to add'} ${layer.label}`}
-            // A card, not a capsule (Rev .82): radius 12. On / off rides the
-            // swatch and the edge — line2 on the raised ground when the layer
-            // is on the curve, the quiet line when it is off.
+            // A card, not a capsule (Rev .82). Rev .142: group material, no
+            // frame — on / off rides the swatch and the ground: the card fill
+            // when the layer is on the curve, bare when it is off.
             className={cn(
-              'flex min-w-0 cursor-pointer flex-col items-stretch gap-0.75 rounded-[var(--card-radius)] border px-3 py-2 text-left',
-              'hover:border-[var(--sk-line2)] hover:bg-[var(--sk-raised2)]',
-              on ? 'border-[var(--sk-line2)] bg-[var(--sk-raised)]' : 'border-[var(--sk-line)] bg-transparent',
+              'flex min-w-0 cursor-pointer flex-col items-stretch gap-0.75 border px-3 py-2 text-left mat-card',
+              'hover:bg-[var(--mat-card-fill-hover)]',
+              !on && 'bg-transparent',
             )}
           >
             <span className="flex items-center gap-1.25">

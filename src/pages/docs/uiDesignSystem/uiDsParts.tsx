@@ -33,7 +33,8 @@ export function DsSection({
     <section
       id={`ds-${n}`}
       data-sec={`ds-${n}`}
-      className={cn('overflow-hidden rounded-[var(--radius)] border bg-[var(--sk-raised)]', LINE0)}
+      // Rev .142: a section is group material, not a framed raised card.
+      className="overflow-hidden mat-card"
     >
       <header
         className={cn(
@@ -56,7 +57,7 @@ export function DsSection({
 /** A token read from the running stylesheet: the square, its name, the variable. */
 export function DsSwatch({ label, token }: { label: string; token: string }) {
   return (
-    <div className={cn('flex items-center gap-2.5 rounded-md border bg-card p-2', LINE0)}>
+    <div className="flex items-center gap-2.5 p-2 mat-card">
       <span className="size-7 flex-none rounded" style={{ background: `var(${token})` }} />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="text-dense-label">{label}</span>
@@ -103,9 +104,11 @@ export function DsNav({
   onJump: (anchor: string) => void
 }) {
   return (
+    // Rev .142: the sticky strip has no plate — it parks over the scroll edge
+    // (the ground fading out under a blur), as the DS sticky FilterBar does.
     <nav
       aria-label="Sections"
-      className={cn('sticky -top-3 z-[2] mt-1 flex flex-wrap gap-1 border-b bg-card py-2.5', LINE0)}
+      className="sticky -top-3 z-[2] mt-1 -mb-2 flex flex-wrap gap-1 bg-[linear-gradient(var(--scroll-edge-from)_60%,transparent)] pt-2.5 pb-3.5 backdrop-blur-[var(--scroll-edge-blur)] [mask-image:linear-gradient(black_70%,transparent)]"
     >
       {labels.map((label, i) => {
         const id = `ds-${i + 1}`
@@ -117,7 +120,7 @@ export function DsNav({
             onClick={() => onJump(id)}
             aria-current={on ? 'location' : undefined}
             className={cn(
-              'inline-flex cursor-pointer items-baseline gap-1.25 rounded border px-2 py-0.5 text-dense-meta',
+              'inline-flex cursor-pointer items-baseline gap-1.25 rounded-full border px-2 py-0.5 text-dense-meta',
               on
                 ? 'border-[var(--sk-accent)] bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)] text-foreground'
                 : cn(LINE0, 'bg-transparent text-[var(--sk-mute2)] hover:text-foreground'),

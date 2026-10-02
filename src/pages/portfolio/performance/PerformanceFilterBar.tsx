@@ -141,7 +141,7 @@ export function PerformanceFilterBar({
             className={cn(
               // The control material with its edge kept: the open tree's edge and ink
               // are the accent (one active thing), the others a quiet line.
-              'inline-flex h-[22px] cursor-pointer items-center whitespace-nowrap rounded-[var(--control-radius)] border bg-[var(--control-fill)] px-2 text-dense-meta hover:bg-[var(--control-fill-hover)]',
+              'inline-flex h-[22px] cursor-pointer items-center whitespace-nowrap rounded-full border bg-[var(--control-fill)] px-2 text-dense-meta hover:bg-[var(--control-fill-hover)]',
               openTree === t.id
                 ? 'border-primary text-primary'
                 : 'border-[var(--sk-line)] text-[var(--sk-soft)] hover:text-foreground',

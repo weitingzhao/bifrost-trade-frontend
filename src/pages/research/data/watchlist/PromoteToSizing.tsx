@@ -68,8 +68,11 @@ export function PromoteToSizing({
             <ChevronDown className={cn('h-4 w-4 shrink-0 opacity-50 transition-transform', open && 'rotate-180')} />
           </button>
           {open && (
-            <ul className="absolute z-20 mt-1 w-full max-h-48 overflow-auto rounded-md border bg-popover shadow-md py-1 text-sm">
-              <li className="px-2 py-1 sticky top-0 bg-popover border-b">
+            <ul
+              data-glass-surface="raised"
+              className="sr-glass-float absolute z-20 mt-1 w-full max-h-48 overflow-auto rounded-[11px] py-1 text-sm"
+            >
+              <li className="sticky top-0 border-b bg-popover px-2 py-1">
                 <Input
                   value={filter}
                   onChange={e => setFilter(e.target.value)}

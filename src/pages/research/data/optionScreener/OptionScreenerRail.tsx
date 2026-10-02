@@ -52,9 +52,12 @@ export function StructurePanel({ value, onChange }: { value: string; onChange: (
               onClick={() => onChange(s.value)}
               title={s.enabled ? undefined : s.needs}
               className={cn(
-                'flex items-start gap-2 rounded-md border px-2.5 py-2 text-left',
-                on ? 'border-primary/60 bg-primary/[0.05]' : 'border-border bg-[var(--sk-raised)]',
-                s.enabled ? 'hover:bg-secondary/60' : 'cursor-not-allowed opacity-50',
+                // A clickable card is group material (Rev .142); the pick keeps its accent outline.
+                'flex items-start gap-2 border px-2.5 py-2 text-left',
+                on
+                  ? 'rounded-[var(--mat-card-radius)] border-primary/60 bg-primary/[0.05]'
+                  : cn('mat-card', s.enabled && 'hover:bg-[var(--mat-card-fill-hover)]'),
+                !s.enabled && 'cursor-not-allowed opacity-50',
               )}
             >
               <span

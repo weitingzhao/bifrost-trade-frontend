@@ -201,7 +201,7 @@ export default function TracePage() {
                 title={m.text}
                 aria-pressed={m.id === memory?.id}
                 className={cn(
-                  'h-5.5 cursor-pointer rounded-md border-0 px-1.5 font-mono text-dense-micro font-bold',
+                  'h-5.5 cursor-pointer rounded-full border-0 px-1.5 font-mono text-dense-micro font-bold',
                   m.id === memory?.id
                     ? 'bg-[color-mix(in_srgb,var(--color-unrealized)_18%,transparent)] text-[var(--color-unrealized)]'
                     : 'bg-transparent text-[var(--sk-soft)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]',

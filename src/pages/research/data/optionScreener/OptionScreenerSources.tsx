@@ -129,7 +129,7 @@ export function OptionScreenerSources({
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="inline-flex h-5 items-center rounded border border-border px-1.5 text-dense-caption hover:bg-secondary/60"
+              className="inline-flex h-5 items-center rounded-full border border-border px-1.5 text-dense-caption hover:bg-secondary/60"
             >
               ＋ symbol
             </button>

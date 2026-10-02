@@ -122,7 +122,7 @@ export function CompareTable({
                     <span className="inline-flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
-                        className="h-5 w-5 rounded border border-border text-dense-meta text-muted-foreground hover:bg-secondary"
+                        className="h-5 w-5 rounded-full border border-border text-dense-meta text-muted-foreground hover:bg-secondary"
                         aria-label={`Size ${r.name} down`}
                         disabled={n == null || n <= 0}
                         onClick={() => onStep(r.id, -1)}
@@ -134,7 +134,7 @@ export function CompareTable({
                       </span>
                       <button
                         type="button"
-                        className="h-5 w-5 rounded border border-border text-dense-meta text-muted-foreground hover:bg-secondary"
+                        className="h-5 w-5 rounded-full border border-border text-dense-meta text-muted-foreground hover:bg-secondary"
                         aria-label={`Size ${r.name} up`}
                         onClick={() => onStep(r.id, 1)}
                       >
@@ -192,7 +192,7 @@ export function CompareTable({
                     <Link
                       to={planHref}
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex h-6 items-center rounded-md border border-border px-2 text-dense-meta text-foreground hover:bg-secondary"
+                      className="inline-flex h-6 items-center rounded-full border border-border px-2 text-dense-meta text-foreground hover:bg-secondary"
                     >
                       → Plan
                     </Link>

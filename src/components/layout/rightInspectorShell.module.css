@@ -124,10 +124,11 @@
   color: var(--color-text-dim, var(--muted-foreground));
 }
 
+/* Rev .142: an inspector card reads the card tokens — no frame, the group fill. */
 .card {
-  border-radius: 0.5rem;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--secondary) 30%, transparent);
+  border-radius: var(--card-radius);
+  border: 1px solid transparent;
+  background: var(--card-fill);
   padding: 0.5rem;
 }
 
@@ -174,36 +175,24 @@
   margin-top: 0.25rem;
 }
 
+/* Rev .142: the section tabs are a capsule segmented control (tabs.tsx
+   variant="capsule") — no band behind them, the track carries the material. */
 .sectionNavWrap {
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--card) 78%, var(--foreground) 22%);
-  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--border) 80%, transparent);
 }
 
 .sectionNavList {
   width: 100%;
-  justify-content: stretch;
-  gap: 0.125rem;
-  padding: 0.25rem 0.5rem 0;
-  background: transparent;
-  border-bottom: none;
 }
 
 .sectionNavTrigger {
   flex: 1;
   min-width: 0;
-  height: 2.875rem;
   gap: 0.45rem;
-  padding-inline: 0.75rem;
   /* A section head, not a code (_Part Inspector .in-sec-h, Rev .92): 12/600 sans, sentence case. */
   font-size: 0.75rem;
   font-weight: 600;
-}
-
-.sectionNavTrigger[data-state='active'] {
-  font-weight: 700;
-  color: var(--foreground);
-  background: color-mix(in srgb, var(--background) 55%, transparent);
 }
 
 .sectionNavIcon {

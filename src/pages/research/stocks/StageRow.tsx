@@ -160,7 +160,7 @@ export function StageRow({
               }}
               title={cutOn ? 'Listed below · click to clear' : `List the ${cut} names this stage cut (${count.before} → ${count.after})`}
               className={cn(
-                'h-[18px] whitespace-nowrap rounded-[5px] px-1.5 font-mono text-dense-caption',
+                'h-[18px] whitespace-nowrap rounded-full px-1.5 font-mono text-dense-caption',
                 cutOn ? 'bg-primary/15 text-primary ring-1 ring-inset ring-primary' : 'text-[var(--sk-mute2)] ring-1 ring-inset ring-foreground/15',
               )}
             >

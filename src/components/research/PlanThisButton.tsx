@@ -89,7 +89,7 @@ export function PlanThisButton({
         disabled={disabled}
         onClick={onClick}
         className={cn(
-          'inline-flex size-5 items-center justify-center rounded border border-border text-dense-meta text-muted-foreground hover:bg-secondary/70 hover:text-foreground disabled:opacity-40',
+          'inline-flex size-5 items-center justify-center rounded-full border border-border text-dense-meta text-muted-foreground hover:bg-secondary/70 hover:text-foreground disabled:opacity-40',
           failed && 'border-destructive/60 text-destructive',
           className,
         )}

@@ -33,13 +33,12 @@ export function InspectorSectionNav<T extends string>({
           if (value) onFocus(value as T)
         }}
       >
-        <TabsList variant="line" className={inspectorShell.sectionNavList}>
+        {/* Rev .142: in-page tabs are a capsule segmented control, not an underline. */}
+        <TabsList variant="capsule" className={inspectorShell.sectionNavList}>
           {items.map(({ id, label, icon: Icon }) => (
             <TabsTrigger key={id} value={id} className={cn('group/nav-tab', inspectorShell.sectionNavTrigger)}>
-              {/* One accent, and it belongs to the layer. The DS line variant
-                  already underlines the active tab in `--primary`, which the
-                  layer ramp now owns — so the section that is open is marked
-                  by where you are standing, not by a hue of its own. */}
+              {/* One accent, and it belongs to the layer: the open section is
+                  the lifted segment, not a hue of its own. */}
               <Icon
                 className={cn(
                   inspectorShell.sectionNavIcon,

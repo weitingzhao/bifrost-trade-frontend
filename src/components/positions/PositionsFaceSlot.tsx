@@ -109,7 +109,7 @@ export function PositionsFaceSlot({
 }) {
   return (
     <section
-      className={cn(positionsUi.panel, 'sticky top-0 border-[var(--sk-line2)]')}
+      className={cn(positionsUi.panel, 'sticky top-0')}
       aria-label="Position detail"
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
@@ -124,7 +124,7 @@ export function PositionsFaceSlot({
             aria-pressed={face === f.id}
             title={f.title}
             className={cn(
-              'h-6 cursor-pointer whitespace-nowrap rounded-[5px] border bg-transparent px-2.25',
+              'h-6 cursor-pointer whitespace-nowrap rounded-full border bg-transparent px-2.25',
               'text-dense-meta leading-normal font-semibold',
               face === f.id ? 'border-primary text-primary' : 'border-border text-secondary-foreground hover:text-foreground',
             )}
@@ -215,7 +215,7 @@ export function PositionsFaceSlot({
                 title={ledger?.exec ? m.title : 'Pick a fill in the grid first'}
                 onClick={() => ledger?.onMode(m.id)}
                 className={cn(
-                  'h-6 whitespace-nowrap rounded-[5px] border border-border bg-transparent px-2.25 text-dense-meta font-semibold',
+                  'h-6 whitespace-nowrap rounded-full border border-border bg-transparent px-2.25 text-dense-meta font-semibold',
                   ledger?.exec
                     ? 'cursor-pointer text-secondary-foreground hover:border-primary hover:text-primary'
                     : 'cursor-default text-muted-foreground/60',

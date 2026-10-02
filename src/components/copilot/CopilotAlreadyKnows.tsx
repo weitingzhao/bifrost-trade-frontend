@@ -25,7 +25,7 @@ export function CopilotAlreadyKnows() {
         <CopilotContextPopover>
           <button
             type="button"
-            className="inline-flex items-center rounded-md border border-dashed border-border/60 px-1.5 py-0.5 text-dense-caption text-muted-foreground hover:text-foreground"
+            className="inline-flex items-center rounded-full border border-dashed border-border/60 px-1.5 py-0.5 text-dense-caption text-muted-foreground hover:text-foreground"
             title="Set session context"
           >
             +

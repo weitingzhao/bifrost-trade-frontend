@@ -77,7 +77,7 @@ export function LedgerInspector({
                 type="button"
                 onClick={() => onFace(f.id)}
                 className={cn(
-                  'rounded border px-1.5 py-0.5 text-dense-meta font-medium',
+                  'rounded-full border px-1.5 py-0.5 text-dense-meta font-medium',
                   face === f.id
                     ? 'border-[var(--color-success)] text-[var(--color-success)]'
                     : 'border-border text-muted-foreground',

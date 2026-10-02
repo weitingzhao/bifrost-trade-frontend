@@ -36,7 +36,7 @@ export function TradePositionSection({
           ? `Greeks as of ${new Date(p.greeksAsOf).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
           : ''
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] py-3">
+    <div className="flex flex-col gap-2 mat-card py-3">
       <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1 px-3.5">
         <span className="text-dense-body font-semibold">Position</span>
         <span className="text-dense-micro text-[var(--sk-mute2)]">held now · cushion = distance of a short strike from spot</span>

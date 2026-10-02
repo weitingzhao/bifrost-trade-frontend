@@ -134,7 +134,7 @@ export function PolicyTemplatePanel() {
                 setParseError(null)
               }}
               className={
-                'flex items-center gap-1.5 rounded-md border px-2 py-1 text-left transition-colors ' +
+                'flex items-center gap-1.5 rounded-full border px-2 py-1 text-left transition-colors ' +
                 (draft?.id === t.id
                   ? 'border-primary/60 bg-secondary'
                   : 'border-border/60 hover:bg-secondary/60')

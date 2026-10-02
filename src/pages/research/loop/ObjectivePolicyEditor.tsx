@@ -131,7 +131,8 @@ export function ObjectivePolicyEditor({
         )
       })}
 
-      <div className="sticky bottom-0 rounded-lg border border-border bg-card/95 px-4 py-3 shadow-[0_-2px_8px_rgba(0,0,0,0.2)] backdrop-blur">
+      {/* The stuck action bar floats over the knobs: float glass (Rev .142). */}
+      <div data-glass-surface="raised" className="sr-glass-float sticky bottom-0 rounded-[14px] px-4 py-3">
         {nEdits > 0 ? (
           <p className="mb-2 text-dense-label">
             <span className="font-medium">{nEdits} change{nEdits === 1 ? '' : 's'}:</span>{' '}

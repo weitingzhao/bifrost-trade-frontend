@@ -103,7 +103,9 @@ export function HedgeMenu({
         <div
           role="menu"
           aria-label="Hedging"
-          className="absolute right-0 top-7 z-45 w-75 overflow-hidden rounded-lg border border-[var(--sk-line2)] bg-[var(--sk-raised)] shadow-[0_24px_60px_-20px_#000]"
+          // Rev .142: a self-drawn popover reads the float glass.
+          data-glass-surface="raised"
+          className="sr-glass-float absolute right-0 top-7 z-45 w-75 overflow-hidden rounded-xl"
         >
           <div className="border-b border-border px-3 py-2 text-dense-meta leading-normal">
             <span className="font-semibold text-foreground">Hedging</span>{' '}
@@ -167,9 +169,11 @@ export function HedgeMenu({
       {ctrl.msg.text ? (
         <p
           role="status"
+          data-glass-surface={ctrl.msg.isErr ? undefined : 'raised'}
           className={cn(
-            'absolute right-0 top-8 z-45 m-0 w-75 rounded-md border bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-pretty',
-            ctrl.msg.isErr ? 'border-danger/50 text-danger' : 'border-border text-secondary-foreground',
+            'absolute right-0 top-8 z-45 m-0 w-75 rounded-xl px-3 py-2 text-dense-meta leading-normal text-pretty',
+            // The error keeps its danger edge (a reading); the plain note floats on glass.
+            ctrl.msg.isErr ? 'border border-danger/50 bg-[var(--sk-raised)] text-danger' : 'sr-glass-float text-secondary-foreground',
           )}
         >
           {ctrl.msg.text}

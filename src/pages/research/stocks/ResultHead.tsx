@@ -148,7 +148,7 @@ export function ResultHead({
                 onClick={() => onStand(i)}
                 title={`${v.why} · ${v.at}${v.parent >= 0 && v.parent !== i - 1 ? ` · branched from v${versions[v.parent].v}` : ''} · click to stand here; the next change branches from it`}
                 className={cn(
-                  'inline-flex h-5 items-baseline gap-1 rounded-md border px-2 font-mono text-dense-caption',
+                  'inline-flex h-5 items-baseline gap-1 rounded-full border px-2 font-mono text-dense-caption',
                   i === cur ? 'border-primary bg-primary/15 text-foreground' : 'border-transparent bg-foreground/[0.06] text-[var(--sk-soft)]',
                 )}
               >

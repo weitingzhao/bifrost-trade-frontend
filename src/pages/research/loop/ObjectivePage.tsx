@@ -212,13 +212,13 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
         {/* Two of the design's header actions have no store, and say so
             rather than being drawn dead. */}
         <span
-          className="rounded border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
+          className="rounded-full border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
           title="Pause is the reversible retirement in the design. This schema has two statuses — active and archived — and the backend answers 422 to anything else, so pausing would have to mean archiving, which is the other thing."
         >
           ⏸ pause · no status for it
         </span>
         <span
-          className="rounded border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
+          className="rounded-full border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
           title="Fork copies an objective into a draft and records the lineage. No endpoint copies one and no column records a parent, so neither half can be written or read."
         >
           ⑂ fork · no lineage stored

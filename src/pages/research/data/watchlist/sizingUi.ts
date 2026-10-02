@@ -10,20 +10,12 @@ export const sizingSheetOrderRowClass = cn(
   'mb-4 grid grid-cols-1 items-start gap-3 @4xl/page:grid-cols-[minmax(0,3fr)_minmax(0,9fr)]',
 )
 
-export const sizingDashClass = cn(
-  'rounded-[10px] border border-border/85 p-3',
-  'bg-[color-mix(in_srgb,var(--secondary)_88%,transparent)]',
-)
+// Cards read the group material (Rev .142): no neutral frame, ink 4%, card radius.
+export const sizingDashClass = cn('border p-3 mat-card')
 
-export const sizingDashNestedClass = cn(
-  'mt-3 rounded-[10px] border border-border/85 p-3',
-  'bg-[color-mix(in_srgb,var(--background)_70%,transparent)]',
-)
+export const sizingDashNestedClass = cn('mt-3 border p-3 mat-card')
 
-export const sizingDashRiskVerifyClass = cn(
-  sizingDashNestedClass,
-  'bg-[color-mix(in_srgb,var(--secondary)_88%,transparent)]',
-)
+export const sizingDashRiskVerifyClass = sizingDashNestedClass
 
 export const sizingDashWorkflowColClass = cn(sizingDashClass, 'mb-0')
 
@@ -43,10 +35,7 @@ export const sizingSheetBlockPromoteClass = cn(
   'space-y-3 border-t border-border pt-3',
 )
 
-export const sizingPanelClass = cn(
-  'rounded-[10px] border border-border/85 p-3',
-  'bg-[color-mix(in_srgb,var(--secondary)_92%,transparent)]',
-)
+export const sizingPanelClass = cn('border p-3 mat-card')
 
 export const sizingPanelHeadClass = cn('mb-3 flex flex-wrap items-center gap-2')
 
@@ -57,7 +46,8 @@ export const sizingPanelControlsClass = cn(
 )
 
 export const sizingOrderSectionDangerClass = cn(
-  sizingDashNestedClass,
+  // The danger frame is a reading, so this card keeps its border and only takes the card radius.
+  'mt-3 rounded-[var(--mat-card-radius)] border p-3',
   'border-[color-mix(in_srgb,var(--destructive)_42%,var(--border))]',
   'bg-[color-mix(in_srgb,var(--destructive)_14%,var(--secondary))]',
   'shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--destructive)_22%,transparent)]',
@@ -133,10 +123,7 @@ export const sizingDashValueHighlightClass = cn(
 
 export const sizingDashValueWarnClass = cn('text-[var(--sk-warn)]')
 
-export const sizingOrderAtrSheetClass = cn(
-  'mt-2 rounded-[7px] border border-border/85 p-[0.45rem_0.6rem]',
-  'bg-[color-mix(in_srgb,var(--background)_55%,var(--secondary))]',
-)
+export const sizingOrderAtrSheetClass = cn('mt-2 border p-[0.45rem_0.6rem] mat-card')
 
 export const sizingOrderAtrSheetGroupClass = cn(sizingOrderAtrSheetClass, 'mt-2')
 
@@ -220,14 +207,13 @@ export const sizingDashTitleClass = cn(
 export const sizingDashTitleInlineClass = cn(sizingDashTitleClass, 'shrink-0')
 
 export const sizingPortfolioRiskToggleClass = cn(
-  'ml-auto inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+  'ml-auto inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
   'border border-border/80 bg-secondary/60 text-muted-foreground',
   'transition-colors hover:bg-secondary hover:text-foreground',
 )
 
 export const sizingPortfolioSummaryClass = cn(
-  'mb-2 flex flex-nowrap items-center gap-3 overflow-x-auto rounded-lg border border-border/85 px-2.5 py-2',
-  'bg-[color-mix(in_srgb,var(--background)_72%,var(--secondary))]',
+  'mb-2 flex flex-nowrap items-center gap-3 overflow-x-auto border px-2.5 py-2 mat-card',
 )
 
 export const sizingPortfolioSummaryItemClass = cn(
@@ -256,10 +242,7 @@ export const sizingPortfolioMaxDdRowClass = cn(
   'grid-cols-1 @4xl/page:grid-cols-[minmax(11rem,2fr)_minmax(11rem,2fr)_minmax(0,8fr)]',
 )
 
-export const sizingRangeFieldClass = cn(
-  'min-w-0 max-w-full flex-none rounded-[10px] border border-border/85 p-2 px-3',
-  'bg-[color-mix(in_srgb,var(--secondary)_92%,transparent)]',
-)
+export const sizingRangeFieldClass = cn('min-w-0 max-w-full flex-none border p-2 px-3 mat-card')
 
 export const sizingRangeFieldPortfolioClass = cn(sizingRangeFieldClass, 'max-w-[34rem]')
 
@@ -325,10 +308,7 @@ export const sizingPortfolioNumEmphClass = cn(
   'text-[color-mix(in_srgb,var(--primary)_82%,var(--foreground))]',
 )
 
-export const sizingCashPieSplitWrapClass = cn(
-  'my-3 rounded-[10px] border border-border/85 p-3',
-  'bg-[color-mix(in_srgb,var(--secondary)_90%,transparent)]',
-)
+export const sizingCashPieSplitWrapClass = cn('my-3 border p-3 mat-card')
 
 export const sizingCashPieSplitHeadClass = cn(
   'mb-2 flex flex-wrap items-center gap-x-2 gap-y-1',
@@ -338,10 +318,7 @@ export const sizingCashPieSplitGridClass = cn(
   'grid grid-cols-[repeat(auto-fit,minmax(15.5rem,1fr))] gap-3',
 )
 
-export const sizingCashPiePanelClass = cn(
-  'rounded-[10px] border border-border/75 p-2 px-3',
-  'bg-[color-mix(in_srgb,var(--background)_55%,transparent)]',
-)
+export const sizingCashPiePanelClass = cn('border p-2 px-3 mat-card')
 
 export const sizingCashPiePanelTitleClass = cn(
   'mb-2 text-dense-body font-bold uppercase tracking-wider text-muted-foreground',

@@ -61,7 +61,7 @@ export function GreeksCalcTooltip({ row, pos, riskFreeRate }: Props) {
   const rightLabel = row.right.toUpperCase() === 'C' ? 'Call' : 'Put'
 
   return createPortal(
-    <div className={greeksCalcTooltipClass} style={style}>
+    <div className={greeksCalcTooltipClass} style={style} data-glass-surface="raised">
       <div className={greeksTooltipBodyClass}>
         <section className={greeksTooltipSectionClass}>
           <div className={greeksTooltipHeadingClass}>Inputs</div>

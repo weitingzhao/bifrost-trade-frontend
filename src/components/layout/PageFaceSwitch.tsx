@@ -15,8 +15,10 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { faceOf } from '@/lib/design/faces'
 
+// Rev .142: a capsule segmented control — track ink 7%, the face you are on a
+// raised glass pill; on the Method side the pill keeps the violet, at 26%.
 const BTN =
-  'h-6 border-0 bg-transparent px-2.75 text-dense-label font-semibold leading-none whitespace-nowrap'
+  'h-[22px] rounded-full border-0 bg-transparent px-3 text-xs font-semibold leading-none whitespace-nowrap transition-colors active:[filter:var(--press)]'
 
 export function PageFaceSwitch({
   path,
@@ -52,13 +54,13 @@ export function PageFaceSwitch({
           'inline-flex items-center',
           active
             ? cn(
-                'bg-[var(--sk-surface)] text-foreground',
+                'text-foreground shadow-[var(--glass-lens),0_1px_2px_rgba(0,0,0,0.22)]',
                 side === 'method'
-                  ? 'shadow-[inset_0_-2px_0_var(--color-entity-strategy)]'
-                  : 'shadow-[inset_0_-2px_0_var(--primary)]',
+                  ? 'bg-[color-mix(in_srgb,var(--color-entity-strategy)_26%,transparent)]'
+                  : 'bg-[color-mix(in_srgb,var(--foreground)_15%,transparent)]',
               )
             : built
-              ? 'cursor-pointer text-muted-foreground hover:bg-[var(--sk-surface)] hover:text-foreground'
+              ? 'cursor-pointer text-[var(--sk-mute2)] hover:text-foreground'
               : 'cursor-not-allowed text-muted-foreground/60',
         )}
       >
@@ -83,12 +85,8 @@ export function PageFaceSwitch({
   return (
     <span
       className={cn(
-        // Rev .67: no frame — the face you are on is the fill (Method violet
-        // 12%, at rest ink 6%), radius 8.
-        'inline-flex min-w-0 items-center overflow-hidden rounded-[8px] border border-transparent',
-        onMethod
-          ? 'bg-[var(--color-entity-strategy)]/[0.12]'
-          : 'bg-[var(--mat-card-fill-hover)]',
+        'inline-flex min-w-0 items-center gap-0.5 overflow-hidden rounded-full border border-transparent p-0.5',
+        'bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)]',
         className,
       )}
       role="group"
@@ -99,8 +97,8 @@ export function PageFaceSwitch({
           to={flipTo}
           title={flipTitle}
           className={cn(
-            'inline-flex h-6 w-6.5 flex-none items-center justify-center border-r border-border',
-            'text-dense-body no-underline hover:bg-[var(--sk-surface)]',
+            'inline-flex h-[22px] w-6 flex-none items-center justify-center rounded-full',
+            'text-dense-body no-underline hover:bg-[color-mix(in_srgb,var(--foreground)_10%,transparent)]',
             onMethod ? 'text-[var(--color-entity-strategy)]' : 'text-muted-foreground',
           )}
         >
@@ -110,7 +108,7 @@ export function PageFaceSwitch({
         <span
           title="This page has a Method face in the design; it is not built on this side yet."
           className={cn(
-            'inline-flex h-6 w-6.5 flex-none items-center justify-center border-r border-border',
+            'inline-flex h-[22px] w-6 flex-none items-center justify-center rounded-full',
             'text-dense-body text-muted-foreground/60',
           )}
           aria-disabled

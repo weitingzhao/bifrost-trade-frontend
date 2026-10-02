@@ -7,7 +7,9 @@
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
-const BTN = 'inline-flex h-6 items-center px-2.75 text-dense-label font-semibold leading-none whitespace-nowrap'
+// Rev .142: a capsule segmented control, the side you are on a raised glass pill.
+const BTN =
+  'inline-flex h-[22px] items-center rounded-full px-3 text-xs font-semibold leading-none whitespace-nowrap transition-colors active:[filter:var(--press)]'
 
 export function tradeFactsPath(instanceId: number): string {
   return `/trade/${instanceId}`
@@ -29,14 +31,19 @@ export function TradeFaceSwitch({
 }) {
   const face = (which: 'facts' | 'review', label: string, to: string, title: string) =>
     which === side ? (
-      <span className={cn(BTN, 'bg-[var(--sk-surface)] text-foreground shadow-[inset_0_-2px_0_var(--primary)]')}>
+      <span
+        className={cn(
+          BTN,
+          'bg-[color-mix(in_srgb,var(--foreground)_15%,transparent)] text-foreground shadow-[var(--glass-lens),0_1px_2px_rgba(0,0,0,0.22)]',
+        )}
+      >
         {label}
       </span>
     ) : (
       <Link
         to={to}
         title={title}
-        className={cn(BTN, 'text-muted-foreground no-underline hover:bg-[var(--sk-surface)] hover:text-foreground')}
+        className={cn(BTN, 'text-[var(--sk-mute2)] no-underline hover:text-foreground')}
       >
         {label}
       </Link>
@@ -46,7 +53,7 @@ export function TradeFaceSwitch({
       role="group"
       aria-label="Facts or Review"
       className={cn(
-        'inline-flex flex-none items-center overflow-hidden rounded-[8px] bg-[var(--mat-card-fill-hover)]',
+        'inline-flex flex-none items-center gap-0.5 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] p-0.5',
         className,
       )}
     >

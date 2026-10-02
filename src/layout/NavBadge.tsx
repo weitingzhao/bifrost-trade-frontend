@@ -10,7 +10,7 @@ export function NavBadge({ tone, title, children }: { tone?: string; title?: str
   return (
     <span
       title={title}
-      className="ml-auto flex-none whitespace-nowrap font-mono text-[11px] font-medium leading-[17px] tabular-nums"
+      className="ml-auto flex-none whitespace-nowrap font-mono text-dense-meta font-medium leading-[17px] tabular-nums"
       style={{ color: tone ?? 'var(--vib-mute)' }}
     >
       {children}

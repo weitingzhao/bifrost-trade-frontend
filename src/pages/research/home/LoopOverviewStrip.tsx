@@ -33,10 +33,11 @@ function SegmentCell({ segment, isLast }: { segment: LoopSegment; isLast: boolea
       <Link
         to={SEGMENT_HREF[segment.id]}
         className={cn(
-          'group min-w-0 flex-1 rounded-md border px-2.5 py-2 transition-colors',
+          // A clickable card is group material (Rev .142); starved keeps its warning frame.
+          'group min-w-0 flex-1 border px-2.5 py-2 transition-colors',
           segment.starved
-            ? 'border-warning/40 bg-warning/5 hover:bg-warning/10'
-            : 'border-border/60 bg-secondary/40 hover:bg-secondary/70',
+            ? 'rounded-[var(--mat-card-radius)] border-warning/40 bg-warning/5 hover:bg-warning/10'
+            : 'mat-card hover:bg-[var(--mat-card-fill-hover)]',
         )}
       >
         <div className="flex items-baseline gap-1.5">

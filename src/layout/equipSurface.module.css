@@ -306,7 +306,8 @@
   display: flex;
   gap: 2px;
   padding: 2px;
-  border-radius: 8px;
+  /* Rev .142: push buttons and their segment tracks are capsules. */
+  border-radius: 999px;
   background: color-mix(in srgb, var(--sk-ink) 6%, transparent);
   flex: none;
 }
@@ -316,7 +317,7 @@
   height: 22px;
   padding: 0 8px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 999px;
   background: transparent;
   color: var(--sk-mute2);
   font: inherit;
@@ -349,7 +350,7 @@
   min-width: 26px;
   padding: 0 6px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 999px;
   background: color-mix(in srgb, var(--sk-ink) 6%, transparent);
   color: var(--sk-mute2);
   font: inherit;

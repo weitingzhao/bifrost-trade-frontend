@@ -398,7 +398,7 @@ export default function PortfolioOverviewPage() {
               <Link
                 key={e.key}
                 to={e.to}
-                className="flex min-w-0 flex-[1_1_180px] flex-col gap-1 rounded-[var(--card-radius)] border border-transparent bg-[var(--card-fill)] px-3 py-2.5 text-foreground no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] hover:text-foreground motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                className="flex min-w-0 flex-[1_1_180px] flex-col gap-1 rounded-[var(--card-radius)] border border-transparent bg-[var(--card-fill)] px-3 py-2.5 text-foreground no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[var(--mat-card-fill-hover)] hover:text-foreground motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               >
                 <span className="flex items-center gap-1.5">
                   <span aria-hidden className="size-2 rounded-xs" style={{ background: LAYER_COLOR[e.key] }} />
@@ -469,7 +469,7 @@ export default function PortfolioOverviewPage() {
                   key={to}
                   to={to}
                   title={tip}
-                  className="inline-flex h-[26px] items-center rounded-[var(--control-radius)] bg-[var(--control-fill)] px-2.5 text-dense-label text-[var(--sk-soft)] no-underline hover:bg-[var(--control-fill-hover)] hover:text-foreground"
+                  className="inline-flex h-[26px] items-center rounded-full bg-[var(--control-fill)] px-2.5 text-dense-label text-[var(--sk-soft)] no-underline hover:bg-[var(--control-fill-hover)] hover:text-foreground"
                 >
                   {label}
                 </Link>

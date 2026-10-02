@@ -104,7 +104,7 @@ function ruleCell(
 }
 
 const ICON_BTN =
-  'inline-flex size-6 items-center justify-center rounded border border-border text-muted-foreground hover:bg-secondary/70 hover:text-foreground'
+  'inline-flex size-6 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary/70 hover:text-foreground'
 
 export function OptionScreenerContracts({
   groups,

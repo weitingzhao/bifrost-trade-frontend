@@ -321,7 +321,7 @@ export default function RiskSizingPage() {
                         'grid grid-cols-[7.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2.5 py-2',
                         binds
                           ? 'bg-[color-mix(in_srgb,var(--sk-warn)_10%,transparent)]'
-                          : 'bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                          : 'bg-[var(--card-fill)]',
                       )}
                     >
                       <span className={cn('text-dense-meta font-semibold', binds ? 'text-[var(--sk-warn)]' : 'text-muted-foreground')}>

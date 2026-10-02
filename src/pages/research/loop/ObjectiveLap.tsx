@@ -112,8 +112,9 @@ export function ObjectiveLap({
                     : 'Opens with this objective in scope. That page does not read the scope yet, and the Lens says so.'
                 }
                 className={cn(
-                  'flex w-full flex-col items-start gap-0.5 rounded border px-2 py-1.5 text-left transition-colors',
-                  'border-border hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
+                  // A clickable station is group material (Rev .142).
+                  'flex w-full flex-col items-start gap-0.5 border px-2 py-1.5 text-left transition-colors mat-card',
+                  'hover:bg-[var(--mat-card-fill-hover)]',
                   empty && 'opacity-55',
                 )}
               >
@@ -150,9 +151,11 @@ function End({ end, objectiveId }: { end: LapEnd; objectiveId: string }) {
         }}
         title={walked ? `${end.label} — opens with this objective in scope` : `${end.label}: not yet. ${end.why}`}
         className={cn(
-          'flex w-full flex-col items-start gap-0.5 rounded border px-2 py-1.5 text-left transition-colors',
-          'hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-          walked ? 'border-t-2' : 'border-dashed opacity-70',
+          // Group material like the stations; the walked end keeps its ink on top
+          // and the unwalked one its dashes — both are readings.
+          'flex w-full flex-col items-start gap-0.5 rounded-[var(--mat-card-radius)] border px-2 py-1.5 text-left transition-colors',
+          'hover:bg-[var(--mat-card-fill-hover)]',
+          walked ? 'border-t-2 border-transparent bg-[var(--mat-card-fill)]' : 'border-dashed opacity-70',
         )}
         style={walked ? { borderTopColor: ink } : undefined}
       >

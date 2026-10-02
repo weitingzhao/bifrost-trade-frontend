@@ -258,7 +258,7 @@ export default function ReviewFitPage() {
           {trade.open ? (
             <div
               role="status"
-              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl border px-3 py-2 text-dense-label text-[var(--sk-soft)]"
+              className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-[var(--mat-card-radius)] border px-3 py-2 text-dense-label text-[var(--sk-soft)]"
               style={{
                 borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)',
                 background: 'color-mix(in srgb, var(--color-warning) 8%, transparent)',

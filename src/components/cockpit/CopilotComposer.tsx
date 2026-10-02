@@ -131,7 +131,7 @@ function ComposerForm({
               <button
                 type="button"
                 data-testid="copilot-context-chip"
-                className="inline-flex items-center gap-1 rounded-md border border-dashed border-border/60 px-1.5 py-0.5 text-dense-caption text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center gap-1 rounded-full border border-dashed border-border/60 px-1.5 py-0.5 text-dense-caption text-muted-foreground hover:text-foreground"
                 title="Set session context"
               >
                 <Crosshair className="size-3" />

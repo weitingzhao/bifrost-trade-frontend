@@ -43,8 +43,9 @@ function Reading({
       disabled={!onClick}
       title={title}
       className={cn(
-        'flex min-w-0 flex-[1_1_17.5rem] items-center gap-2 rounded-[10px] border px-3 py-1.5 text-left text-dense-label',
-        'bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] enabled:hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]',
+        // Rev .142: the card tokens, not a hand-written radius and fill; the warn edge is a reading and stays.
+        'flex min-w-0 flex-[1_1_17.5rem] items-center gap-2 rounded-[var(--mat-card-radius)] border px-3 py-1.5 text-left text-dense-label',
+        'bg-[var(--mat-card-fill)] enabled:hover:bg-[var(--mat-card-fill-hover)]',
         armed ? 'border-[color-mix(in_srgb,var(--sk-warn)_55%,transparent)]' : 'border-transparent',
       )}
     >

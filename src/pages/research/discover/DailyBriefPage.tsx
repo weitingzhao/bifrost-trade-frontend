@@ -128,7 +128,7 @@ export default function DailyBriefPage() {
                 and there is no route that asks for another. Marked rather than
                 drawn — a button that queued nothing would be worse. */}
             <span
-              className="rounded border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
+              className="rounded-full border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
               title="The design offers ⟳ Re-run here. The digest agent runs on a schedule and no route asks it for another run, so there is nothing to queue."
             >
               ⟳ re-run · not on this side

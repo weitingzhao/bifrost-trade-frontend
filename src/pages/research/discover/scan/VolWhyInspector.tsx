@@ -88,7 +88,7 @@ export function VolWhyInspector({
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
         <span className={SECTION_CAP_CLASS}>Why</span>
         <Link
           to={withSymbolParam(SYMBOL_PATH, row.symbol)}

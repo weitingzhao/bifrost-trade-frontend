@@ -28,7 +28,7 @@ import { ViewState, type ViewStateKind } from '@bifrost/ui'
 import { fmtPctSigned } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { fmtDollar, unrealizedPnlColorClass } from '@/utils/dailyChange'
-import { Code, DsRules, DsSection, EYEBROW, LINE0, MUTE_MONO } from './uiDsParts'
+import { Code, DsRules, DsSection, EYEBROW, MUTE_MONO } from './uiDsParts'
 
 const noop = () => {}
 
@@ -240,7 +240,7 @@ export function NotKnowingSection() {
     >
       <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-2.5">
         {STATES.map((s) => (
-          <div key={s.kind} className={cn('flex flex-col gap-1 rounded-md border bg-card p-3', LINE0)}>
+          <div key={s.kind} className="flex flex-col gap-1 p-3 mat-card">
             <span className={EYEBROW}>{s.kind}</span>
             <ViewState kind={s.kind} title={s.title} detail={s.detail} onAction={s.kind === 'loading' ? undefined : noop} />
           </div>

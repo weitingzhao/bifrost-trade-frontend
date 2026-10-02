@@ -2,10 +2,8 @@ import { cn } from '@/lib/utils'
 import { denseTable } from '@/components/data-display'
 
 export const ledgerSummary = {
-  section: cn(
-    'rounded-[10px] border border-border bg-muted/25 px-4 py-3',
-    'shadow-[inset_0_1px_0_color-mix(in_srgb,var(--foreground)_4%,transparent)]',
-  ),
+  // Rev .142: a card reads the group material, not a frame.
+  section: 'border px-4 py-3 mat-card',
   head: 'mb-3 flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2',
   title: 'shrink-0 text-dense-body font-semibold text-muted-foreground',
   body: 'flex w-full min-w-0 flex-wrap items-stretch gap-3',

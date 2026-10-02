@@ -57,6 +57,13 @@ const tabsListVariants = cva(
           "rounded-xl p-[3px]",
           "h-auto",
         ],
+        // ── Capsule (Rev .142 segmented control) ────────────────────────────
+        // In-page tabs: an ink-7% capsule track; the chosen segment sits at
+        // ink 15% with the glass lens. Replaces underline tabs inside a page.
+        capsule: [
+          "h-[30px] w-fit gap-0.5 self-start rounded-full p-[3px]",
+          "bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)]",
+        ],
       },
     },
     defaultVariants: {
@@ -156,6 +163,19 @@ function TabsTrigger({
         "group-data-[variant=segment]/tabs-list:data-active:border-border/50",
         "dark:group-data-[variant=segment]/tabs-list:data-active:border-border/40",
 
+        // ── Capsule variant ───────────────────────────────────────────────────
+        "group-data-[variant=capsule]/tabs-list:h-6",
+        "group-data-[variant=capsule]/tabs-list:rounded-full",
+        "group-data-[variant=capsule]/tabs-list:px-3",
+        "group-data-[variant=capsule]/tabs-list:text-xs",
+        "group-data-[variant=capsule]/tabs-list:font-semibold",
+        "group-data-[variant=capsule]/tabs-list:text-[var(--sk-mute2)]",
+        "group-data-[variant=capsule]/tabs-list:hover:text-[var(--foreground)]",
+        "group-data-[variant=capsule]/tabs-list:active:[filter:var(--press)]",
+        "group-data-[variant=capsule]/tabs-list:data-[state=active]:bg-[color-mix(in_srgb,var(--foreground)_15%,transparent)]",
+        "group-data-[variant=capsule]/tabs-list:data-[state=active]:text-[var(--foreground)]",
+        "group-data-[variant=capsule]/tabs-list:data-[state=active]:shadow-[var(--glass-lens),0_1px_2px_rgba(0,0,0,0.22)]",
+
         className
       )}
       {...props}
@@ -188,7 +208,7 @@ function TabsContent({
 //     </TabsPanel>
 //   </Tabs>
 //
-// TabsPanel   — `rounded-xl border overflow-hidden` card that visually scopes
+// TabsPanel   — a `mat-card` group (Rev .142: no frame) that visually scopes
 //               the tab group; the TabsList border-b becomes the header divider.
 // TabsPanelContent — padded body (p-5 by default); swap for p-4 in modals.
 
@@ -198,7 +218,7 @@ function TabsPanel({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-xl border border-border overflow-hidden", className)}
+      className={cn("mat-card overflow-hidden", className)}
       {...props}
     />
   )

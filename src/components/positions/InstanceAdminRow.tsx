@@ -86,7 +86,8 @@ export function InstanceAdminRow({ instance }: { instance: InstanceAdminReading 
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border px-2 py-1.5 mat-card">
+    // Rev .142: a strip of controls has no slab.
+    <div className="flex flex-wrap items-center gap-1.5 px-2 py-1.5">
       <span className={positionsUi.cap}>Trade</span>
       <input
         className={cn(positionsUi.input, 'w-42.5')}

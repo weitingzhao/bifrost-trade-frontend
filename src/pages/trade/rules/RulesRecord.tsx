@@ -28,7 +28,7 @@ export function RulesRecord({
 }) {
   const m = model
   return (
-    <section aria-label="Record" className="min-w-0 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+    <section aria-label="Record" className="min-w-0 mat-card">
       <header className="flex flex-wrap items-baseline gap-2 px-3.5 pt-3 pb-2">
         <span className="text-dense-micro font-semibold text-muted-foreground">{m.kind}</span>
         <span className={cn('type-section font-semibold', m.titleClass)}>{m.title}</span>
@@ -135,10 +135,11 @@ export function RulesRecord({
                 title={t.title}
                 aria-pressed={t.on}
                 className={cn(
-                  'flex min-w-0 flex-col gap-1 rounded-lg px-2.5 py-2 text-left transition-opacity',
+                  // Rev .142: a clickable tile is group material; the picked one keeps its accent outline.
+                  'flex min-w-0 flex-col gap-1 rounded-[var(--mat-card-radius)] px-2.5 py-2 text-left transition-opacity',
                   t.on
                     ? 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] shadow-[inset_0_0_0_1px_var(--sk-accent)]'
-                    : 'bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_9%,transparent)]',
+                    : 'bg-[var(--mat-card-fill)] hover:bg-[var(--mat-card-fill-hover)]',
                   t.dim && 'opacity-60',
                 )}
               >

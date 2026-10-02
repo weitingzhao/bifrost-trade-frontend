@@ -90,7 +90,7 @@ export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string
               type="button"
               onClick={() => setStance(stance === s.id ? null : s.id)}
               className={cn(
-                'h-6 flex-1 cursor-pointer rounded-[5px] border text-dense-caption font-semibold',
+                'h-6 flex-1 cursor-pointer rounded-full border text-dense-caption font-semibold',
                 s.cls,
                 stance === s.id ? s.on : 'bg-transparent opacity-80 hover:opacity-100'
               )}
@@ -117,7 +117,7 @@ export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string
                 setCites((l) => (l.includes(c) ? l.filter((x) => x !== c) : [...l, c]))
               }
               className={cn(
-                'cursor-pointer rounded border px-1.5 py-0.5 font-mono text-dense-micro',
+                'cursor-pointer rounded-full border px-1.5 py-0.5 font-mono text-dense-micro',
                 cites.includes(c)
                   ? 'border-[color-mix(in_srgb,var(--sk-accent)_50%,transparent)] text-[var(--sk-accent)]'
                   : 'border-border text-muted-foreground hover:text-foreground'
@@ -134,7 +134,7 @@ export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string
             onClick={record}
             disabled={!stance || !line.trim() || createHyp.isPending}
             className={cn(
-              'rounded-[5px] border px-2.5 py-1 text-dense-label font-semibold',
+              'rounded-full border px-2.5 py-1 text-dense-label font-semibold',
               stance && line.trim()
                 ? 'cursor-pointer border-[color-mix(in_srgb,var(--sk-accent)_50%,transparent)] bg-[color-mix(in_srgb,var(--sk-accent)_16%,transparent)] text-[var(--sk-accent)] hover:brightness-110'
                 : 'cursor-default border-border text-muted-foreground'

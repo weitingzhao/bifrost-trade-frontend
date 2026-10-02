@@ -38,11 +38,11 @@ export function JournalNodeRow({
         onClick={() => onSelect(node.id)}
         aria-pressed={selected}
         className={cn(
-          'my-px flex w-full min-w-0 flex-wrap items-center gap-2 rounded-[12px] border px-2.5 py-1 text-left',
+          'my-px flex w-full min-w-0 flex-wrap items-center gap-2 rounded-[var(--card-radius)] border px-2.5 py-1 text-left',
           // Each node is a quiet ink-4% plate; the picked one is the accent.
           selected
             ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]'
-            : 'border-transparent bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
+            : 'border-transparent bg-[var(--card-fill)] hover:bg-[var(--card-fill-hover)]',
           !selected && context && 'opacity-60',
         )}
       >

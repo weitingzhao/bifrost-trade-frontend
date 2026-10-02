@@ -22,7 +22,7 @@ export const instanceStatusUnknownClass =
 export const instancePnlColumnClass = 'min-w-0'
 export const instancePnlSectionHeadClass = 'flex items-center gap-2 mb-2'
 export const instancePnlInfoBtnClass =
-  'inline-flex h-5 w-5 items-center justify-center rounded border border-border text-muted-foreground text-dense-caption hover:bg-secondary'
+  'inline-flex h-5 w-5 items-center justify-center rounded-full border border-border text-muted-foreground text-dense-caption hover:bg-secondary'
 export const instancePnlPanelClass = inspectorShell.card
 export const instancePnlPanelMutedClass = 'rounded-lg border border-dashed border-border p-3 text-center'
 export const instancePnlBandsClass = 'grid gap-2 sm:grid-cols-2'
@@ -38,10 +38,13 @@ export const instancePnlLabelClass = 'text-muted-foreground shrink-0'
 export const instancePnlValueClass = 'font-mono tabular-nums text-right'
 export const instanceCommissionClass = 'text-muted-foreground'
 
-export const instanceExecTabsClass = 'inline-flex rounded-full border border-border bg-secondary/60 p-0.5 gap-0.5'
+// Rev .142: the capsule segmented control — an ink-7% track, the chosen segment at 15% with the lens.
+export const instanceExecTabsClass =
+  'inline-flex h-[30px] items-center gap-0.5 self-start rounded-full bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] p-[3px]'
 export const instanceExecTabClass =
-  'rounded-full px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors'
-export const instanceExecTabActiveClass = 'bg-card text-foreground shadow-sm'
+  'inline-flex h-6 items-center gap-1.5 rounded-full bg-transparent px-3 text-xs font-semibold text-[var(--sk-mute2)] transition-colors hover:text-[var(--foreground)] active:[filter:var(--press)]'
+export const instanceExecTabActiveClass =
+  'bg-[color-mix(in_srgb,var(--foreground)_15%,transparent)] text-[var(--foreground)] shadow-[var(--glass-lens),0_1px_2px_rgba(0,0,0,0.22)] hover:text-[var(--foreground)]'
 export const instanceExecHintClass = 'text-dense-meta text-muted-foreground'
 
 export const instanceKlinePanelClass =

@@ -209,7 +209,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
           <span className="text-dense-meta font-semibold text-muted-foreground">Appearance</span>
           {mode === 'auto' ? <span className="font-mono text-dense-micro text-muted-foreground">now → {theme}</span> : null}
         </div>
-        <div className="flex gap-0.5 rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-0.5" role="radiogroup" aria-label="Theme">
+        <div className="flex gap-0.5 rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-0.5" role="radiogroup" aria-label="Theme">
           {MODES.map((m) => {
             const on = mode === m.mode
             return (
@@ -221,7 +221,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
                 title={m.title}
                 onClick={() => choose(m.mode)}
                 className={cn(
-                  'h-6 flex-1 rounded-md text-dense-meta font-semibold transition-colors',
+                  'h-6 flex-1 rounded-full text-dense-meta font-semibold transition-colors',
                   on
                     ? 'bg-[var(--sk-raised2)] text-foreground shadow-[0_1px_3px_rgb(0_0_0/0.4),inset_0_0_0_1px_color-mix(in_srgb,var(--sk-ink)_10%,transparent)]'
                     : 'text-[var(--sk-mute2)] hover:text-foreground',
@@ -249,7 +249,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
         <div className="flex items-center gap-2 py-0.5">
           <span className="flex-1 text-dense-label text-foreground">Text size</span>
           <div
-            className="flex gap-0.5 rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-0.5"
+            className="flex gap-0.5 rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-0.5"
             role="radiogroup"
             aria-label="Text size"
             title="Scales page content only — the toolbar, sidebar and panels keep their size."
@@ -265,7 +265,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
                   aria-label={z.label}
                   onClick={() => display.set({ textSize: z.size })}
                   className={cn(
-                    'h-6 w-7 rounded-md font-semibold leading-none transition-colors',
+                    'h-6 w-7 rounded-full font-semibold leading-none transition-colors',
                     z.className,
                     on
                       ? 'bg-[var(--sk-raised2)] text-foreground shadow-[0_1px_3px_rgb(0_0_0/0.4),inset_0_0_0_1px_color-mix(in_srgb,var(--sk-ink)_10%,transparent)]'
@@ -421,7 +421,7 @@ export function SidebarUserCenter() {
             title={toolbarShown ? 'Hide the bottom toolbar' : 'Show the bottom toolbar'}
             aria-label="Show or hide the bottom toolbar"
             className={cn(
-              'flex size-[30px] flex-none items-center justify-center rounded-md border border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
+              'flex size-[30px] flex-none items-center justify-center rounded-full border border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
               toolbarShown ? 'text-[var(--sk-mute2)]' : 'text-muted-foreground/50',
             )}
           >

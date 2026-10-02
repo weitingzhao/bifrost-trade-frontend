@@ -11,10 +11,8 @@ export const optionDiscoveryExpiryBubbleBaseClass = cn(
 export const optionDiscoveryExpiryBubbleSelectedClass =
   'border-primary/55 bg-accent/15'
 
-export const optionDiscoveryCardSectionClass = cn(
-  'min-w-0 rounded-lg border border-border p-2 px-3',
-  'bg-[color-mix(in_srgb,var(--card)_88%,var(--foreground)_12%)]',
-)
+// Rev .142: group material — no frame, the card fill and radius.
+export const optionDiscoveryCardSectionClass = 'min-w-0 border p-2 px-3 mat-card'
 
 export const optionDiscoveryCardGridClass =
   'grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-3'

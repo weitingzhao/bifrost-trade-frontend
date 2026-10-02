@@ -29,17 +29,15 @@ export function DocsQuickNav({
   ariaLabel: string
 }) {
   return (
-    <nav
-      aria-label={ariaLabel}
-      className="sticky top-0 z-10 rounded-lg border border-border bg-secondary/95 px-3 py-2.5 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-secondary/85"
-    >
+    // Rev .142: no plate — the sticky toolbar parks over the scroll edge.
+    <nav aria-label={ariaLabel} data-sr-toolbar="" data-sticky="">
       <div className="flex flex-wrap items-center gap-1.5">
         {sections.map(section => (
           <a
             key={section.id}
             href={`#${section.id}`}
             className={cn(
-              'inline-flex h-7 shrink-0 items-center rounded-md border border-border bg-background/70 px-2.5',
+              'inline-flex h-7 shrink-0 items-center rounded-full border border-border bg-background/70 px-2.5',
               'text-xs font-medium text-foreground transition-colors hover:bg-background hover:text-primary',
             )}
           >

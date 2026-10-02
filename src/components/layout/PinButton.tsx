@@ -25,7 +25,7 @@ export function PinButton({ to, label, className }: { to: string; label: string;
           onClick={() => setSaid(toggle({ to, label }).why)}
           aria-pressed={pinned}
           className={cn(
-            'inline-flex h-6 items-center gap-1.25 rounded border px-1.75 text-dense-meta transition-colors',
+            'inline-flex h-6 items-center gap-1.25 rounded-full border px-1.75 text-dense-meta transition-colors',
             pinned
               ? 'border-primary/45 bg-primary/[0.08] text-primary'
               : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground',

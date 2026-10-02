@@ -44,8 +44,8 @@ export const ledgerShell = {
 /** A view or sub-view chip: lime when on, dim when it would show nothing. */
 export function ledgerChipClass(active: boolean, empty: boolean, filled = true): string {
   return cn(
-    // Rev .62: no frame — on is the accent fill, off the ink one.
-    'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-[8px] border border-transparent px-2',
+    // Rev .62: no frame — on is the accent fill, off the ink one. Rev .142: a capsule.
+    'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-full border border-transparent px-2',
     'text-dense-meta font-semibold transition-colors',
     active
       ? cn('text-primary', filled ? 'bg-primary/15' : 'bg-[var(--mat-btn-fill)]')

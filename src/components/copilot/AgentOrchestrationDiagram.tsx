@@ -65,10 +65,11 @@ function StageTile({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-md border px-3 py-1.5 shadow-sm',
+        // Group material (Rev .142); the router keeps its accent frame.
+        'flex items-center gap-2 border px-3 py-1.5 text-foreground',
         tone === 'router'
-          ? 'border-primary/40 bg-primary/5 text-foreground'
-          : 'border-border/60 bg-background/70 text-foreground',
+          ? 'rounded-[var(--mat-card-radius)] border-primary/40 bg-primary/5'
+          : 'mat-card',
       )}
     >
       <span className="grid size-6 place-items-center rounded bg-muted text-muted-foreground">
@@ -146,11 +147,12 @@ function AgentTile({
       onClick={() => onSelect(agentName)}
       onKeyDown={handleKey}
       className={cn(
-        'group flex cursor-pointer flex-col gap-1.5 rounded-md border bg-background/70 p-2 text-left transition-all',
-        'hover:border-primary/40 hover:bg-background focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        // A clickable card is group material (Rev .142); the pick keeps its accent outline.
+        'group flex cursor-pointer flex-col gap-1.5 border p-2 text-left transition-all',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         selected
-          ? 'border-primary/60 bg-primary/5 ring-1 ring-primary/40 shadow-sm'
-          : 'border-border/60',
+          ? 'rounded-[var(--mat-card-radius)] border-primary/60 bg-primary/5 ring-1 ring-primary/40'
+          : 'mat-card hover:bg-[var(--mat-card-fill-hover)]',
       )}
     >
       <div className="flex items-start justify-between gap-1.5">
@@ -352,7 +354,7 @@ export function AgentOrchestrationDiagram({
                 key={n}
                 type="button"
                 onClick={() => onSelect(n)}
-                className="rounded border border-border/50 bg-background/70 px-1.5 py-0.5 text-dense-micro hover:border-primary/40"
+                className="rounded-full border border-border/50 bg-background/70 px-1.5 py-0.5 text-dense-micro hover:border-primary/40"
               >
                 {agentLabel(n, lang)}
               </button>

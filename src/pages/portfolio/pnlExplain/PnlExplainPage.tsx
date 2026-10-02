@@ -439,7 +439,7 @@ export default function PnlExplainPage() {
 
             {/* Rev .112 (§5.1.3): Judgment or luck moved to Review — the attribution stays
                 computed here, and Review quotes it per play (Record · Earned from) and per trade. */}
-            <div className="flex items-center gap-2.5 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3 py-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2.5 mat-card px-3 py-2 text-xs text-muted-foreground">
               <span className="min-w-0 text-pretty">
                 Whether each play earned the way it says — θ and vega for a sell-vol play, Δ for a drift play — is read
                 from these attributions on the play&rsquo;s record and on each trade&rsquo;s review.

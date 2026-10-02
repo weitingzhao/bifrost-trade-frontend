@@ -406,7 +406,7 @@ export function QueueFace({ head }: { head: MethodHead }) {
             </div>
             <Link
               to="/system/status"
-              className="shrink-0 rounded-[8px] bg-[color-mix(in_srgb,var(--color-warning)_15%,transparent)] px-3 py-2 text-dense-label text-warning no-underline hover:bg-[color-mix(in_srgb,var(--color-warning)_22%,transparent)]"
+              className="shrink-0 rounded-full bg-[color-mix(in_srgb,var(--color-warning)_15%,transparent)] px-3 py-2 text-dense-label text-warning no-underline hover:bg-[color-mix(in_srgb,var(--color-warning)_22%,transparent)]"
             >
               Open System Status · needs you
             </Link>

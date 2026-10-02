@@ -360,7 +360,7 @@ export function EventsMarketFace({
                         <button
                           type="button"
                           onClick={() => setTheme(theme === e.theme ? null : e.theme)}
-                          className="rounded border border-border px-1.5 py-0.5 text-dense-caption text-secondary-foreground hover:border-primary/40"
+                          className="rounded-full border border-border px-1.5 py-0.5 text-dense-caption text-secondary-foreground hover:border-primary/40"
                           title={`Filter to ${e.theme}`}
                         >
                           {e.theme || '—'}

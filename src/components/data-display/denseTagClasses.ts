@@ -125,17 +125,17 @@ export function denseTagClass(
 export type DenseEntityFilterVariant = 'category' | 'symbol' | 'strategy' | 'instance'
 
 const entityFilterInactiveClass =
-  'rounded-md border-border bg-secondary/60 font-medium text-muted-foreground opacity-100 hover:bg-secondary hover:text-foreground hover:opacity-100'
+  'rounded-full border-border bg-secondary/60 font-medium text-muted-foreground opacity-100 hover:bg-secondary hover:text-foreground hover:opacity-100'
 
 const entityFilterActiveClass: Record<DenseEntityFilterVariant, string> = {
   category:
-    'rounded-md border-entity-category/50 text-entity-category opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-category)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-category)_14%,transparent)]',
+    'rounded-full border-entity-category/50 text-entity-category opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-category)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-category)_14%,transparent)]',
   symbol:
-    'rounded-md border-entity-symbol/50 text-entity-symbol opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-symbol)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-symbol)_14%,transparent)]',
+    'rounded-full border-entity-symbol/50 text-entity-symbol opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-symbol)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-symbol)_14%,transparent)]',
   strategy:
-    'rounded-md border-entity-strategy/50 text-entity-strategy opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-strategy)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-strategy)_14%,transparent)]',
+    'rounded-full border-entity-strategy/50 text-entity-strategy opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-strategy)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-strategy)_14%,transparent)]',
   instance:
-    'rounded-md border-entity-instance/50 text-entity-instance opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-instance)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-instance)_14%,transparent)]',
+    'rounded-full border-entity-instance/50 text-entity-instance opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-instance)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-instance)_14%,transparent)]',
 }
 
 export function denseEntityFilterChipClass(

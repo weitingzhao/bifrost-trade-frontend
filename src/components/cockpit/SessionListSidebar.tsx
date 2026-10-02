@@ -401,7 +401,8 @@ function GroupNamePrompt({
   const [text, setText] = useState('')
   return (
     <div
-      className="absolute inset-x-2 bottom-2 z-10 rounded-lg border border-primary/30 bg-card p-2 shadow-lg"
+      data-glass-surface="raised"
+      className="sr-glass-float absolute inset-x-2 bottom-2 z-10 rounded-[14px] p-2"
       role="dialog"
       aria-label="New group name"
     >

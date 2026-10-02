@@ -37,8 +37,9 @@ export function greeksDeltaCellClass(delta: number | null): string {
   return ''
 }
 
+// A self-drawn popover reads the float glass (Rev .142); pair with data-glass-surface="raised".
 export const greeksCalcTooltipClass = cn(
-  'fixed z-50 max-w-md rounded-lg border border-border bg-popover p-3 shadow-lg',
+  'sr-glass-float fixed z-50 max-w-md rounded-[11px] p-3',
   'text-dense-meta font-mono pointer-events-none',
 )
 

@@ -296,7 +296,7 @@ export function PlaybookPage() {
                   onClick={() => setNewRuleCategory(c)}
                   className={cn(
                     // The picked category is a selection, so it wears the accent (Rev .90).
-                    'rounded-[8px] border px-2 py-0.5 font-mono text-dense-micro font-semibold',
+                    'rounded-full border px-2 py-0.5 font-mono text-dense-micro font-semibold',
                     newRuleCategory === c
                       ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_20%,transparent)] text-primary'
                       : 'border-transparent bg-[var(--mat-btn-fill)] text-muted-foreground hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',

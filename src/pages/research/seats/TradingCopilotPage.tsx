@@ -121,7 +121,7 @@ export default function TradingCopilotPage() {
                       type="button"
                       onClick={() => ask(q)}
                       title={q.prompt[lang]}
-                      className="flex w-full items-start gap-2 rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-left transition-colors hover:border-primary/40 hover:bg-primary/[0.06]"
+                      className="flex w-full items-start gap-2 border px-2.5 py-1.5 text-left transition-colors mat-card hover:bg-[var(--mat-card-fill-hover)]"
                     >
                       <MessageCircle className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
                       <span className="min-w-0 flex-1">
@@ -185,7 +185,7 @@ export default function TradingCopilotPage() {
         )}
       </section>
 
-      <section className="rounded-lg border border-warning/40 bg-warning/[0.06] px-4 py-3">
+      <section className="rounded-[var(--mat-card-radius)] border border-warning/40 bg-warning/[0.06] px-4 py-3">
         <h2 className="flex items-center gap-2 text-dense-body font-semibold">
           <AlertOctagon className="size-4 text-warning" />
           What it cannot do

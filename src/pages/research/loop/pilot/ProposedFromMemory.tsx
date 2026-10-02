@@ -28,7 +28,7 @@ function DraftForm({ p, onCreate, onCancel, busy, error }: { p: MemoryProposal; 
     ['Leash', 'no record yet, so every batch waits for you (the fourth condition needs five settled outcomes)'],
   ]
   return (
-    <div className="mx-3 mb-2.5 flex flex-col gap-2 rounded-xl bg-[color-mix(in_srgb,var(--sk-accent)_7%,transparent)] px-3 py-2.5">
+    <div className="mx-3 mb-2.5 flex flex-col gap-2 rounded-[var(--card-radius)] bg-[color-mix(in_srgb,var(--sk-accent)_7%,transparent)] px-3 py-2.5">
       <dl className="m-0 grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-dense-label leading-normal">
         {rows.map(([k, v]) => (
           <div key={k} className="contents">
@@ -49,7 +49,7 @@ function DraftForm({ p, onCreate, onCancel, busy, error }: { p: MemoryProposal; 
           type="button"
           onClick={onCreate}
           disabled={busy}
-          className="h-6 rounded-lg border-0 bg-[var(--sk-accent)] px-3 text-dense-label font-semibold text-[var(--sk-on-accent)] disabled:opacity-60"
+          className="h-6 rounded-full border-0 bg-[var(--sk-accent)] px-3 text-dense-label font-semibold text-[var(--sk-on-accent)] disabled:opacity-60"
         >
           {busy ? 'Creating…' : 'Create draft objective'}
         </button>
@@ -146,7 +146,7 @@ export function ProposedFromMemory() {
                       <button
                         type="button"
                         onClick={() => setOpen(m.id)}
-                        className="h-5.5 rounded-lg border border-[color-mix(in_srgb,var(--sk-accent)_45%,transparent)] bg-transparent px-2.5 text-dense-meta font-semibold whitespace-nowrap text-[var(--sk-accent)]"
+                        className="h-5.5 rounded-full border border-[color-mix(in_srgb,var(--sk-accent)_45%,transparent)] bg-transparent px-2.5 text-dense-meta font-semibold whitespace-nowrap text-[var(--sk-accent)]"
                       >
                         Draft objective →
                       </button>

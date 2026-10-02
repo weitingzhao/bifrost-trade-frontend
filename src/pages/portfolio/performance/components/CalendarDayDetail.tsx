@@ -661,7 +661,7 @@ function ExecutionRow({
                       slippageTotal,
                     )
                   }}
-                  className="inline-block cursor-pointer rounded bg-amber-500/20 px-1 py-px font-mono text-dense-micro text-[var(--sk-warn)] transition-colors hover:bg-amber-500/30"
+                  className="inline-block cursor-pointer rounded-full bg-amber-500/20 px-1 py-px font-mono text-dense-micro text-[var(--sk-warn)] transition-colors hover:bg-amber-500/30"
                 >
                   #{lid}
                 </button>

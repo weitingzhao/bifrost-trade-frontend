@@ -43,7 +43,6 @@ import { useInSurface } from '@/lib/surfaceScope'
 import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { SymbolCompact } from '@/pages/research/analyze/symbol/SymbolCompact'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
-import { cn } from '@/lib/utils'
 import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
 import { SymbolIdentity } from '@/pages/research/analyze/symbol/SymbolIdentity'
 import { SymbolInsightChip } from '@/pages/research/analyze/symbol/SymbolInsightChip'
@@ -61,6 +60,7 @@ import { SymbolDealerFace } from '@/pages/research/analyze/symbol/SymbolDealerFa
 import { SymbolScenarioFace } from '@/pages/research/analyze/symbol/SymbolScenarioFace'
 import { SymbolFlowFace } from '@/pages/research/analyze/symbol/SymbolFlowFace'
 import { SymbolChainFace } from '@/pages/research/analyze/symbol/SymbolChainFace'
+import { FACE_TAB_TRACK, faceTabClass } from '@/pages/research/analyze/symbol/faceTabsUi'
 import { PayoffBody } from '@/pages/research/analyze/payoff/PayoffBody'
 
 /** The design's line at the right of the tab strip — what this face is for. */
@@ -165,39 +165,38 @@ export default function SymbolPage() {
         <SymbolIdentity symbol={symbol} faces={faces} tab={active} asof={<SymbolAsofTag symbol={symbol} />} />
       )}
 
-      <div className="sticky top-0 z-10 -mx-3 flex items-end overflow-x-auto border-b border-border bg-card px-3">
-        {SYMBOL_TABS.map((t, i) => {
-          const lamp = lampFor(t.id)
-          const on = t.id === active
-          return (
-            <Fragment key={t.id}>
-              {t.id === 'chain' ? (
-                <span
-                  className="ml-2 self-center border-l border-border pl-3 font-mono text-dense-micro tracking-wide text-entity-contract opacity-75"
-                  title="The option faces — Chain and Payoff, contract-level where the rest of the page is the underlying."
+      {/* Rev .142: the faces are capsule segments on a sticky bar with no slab —
+          it parks over the scroll edge, as the DS sticky FilterBar does. */}
+      <div data-sr-toolbar="" data-sticky="">
+        <div className={FACE_TAB_TRACK}>
+          {SYMBOL_TABS.map((t, i) => {
+            const lamp = lampFor(t.id)
+            const on = t.id === active
+            return (
+              <Fragment key={t.id}>
+                {t.id === 'chain' ? (
+                  <span
+                    className="self-center px-1.5 font-mono text-dense-micro tracking-wide text-entity-contract opacity-75"
+                    title="The option faces — Chain and Payoff, contract-level where the rest of the page is the underlying."
+                  >
+                    opt
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  aria-current={on ? 'page' : undefined}
+                  title={`${TAB_HINT[t.id]} — ${i + 1}`}
+                  className={faceTabClass(on)}
                 >
-                  opt
-                </span>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => setTab(t.id)}
-                aria-current={on ? 'page' : undefined}
-                title={`${TAB_HINT[t.id]} — ${i + 1}`}
-                className={cn(
-                  'inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-dense-label',
-                  on
-                    ? 'border-primary font-semibold text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {lamp ? <StatusLamp variant="dot" lamp={lamp} className="h-1.5 w-1.5" /> : null}
-                {t.label}
-              </button>
-            </Fragment>
-          )
-        })}
-        <span className="ml-auto hidden min-w-0 shrink truncate pb-2 pl-3 text-dense-meta text-muted-foreground lg:block">
+                  {lamp ? <StatusLamp variant="dot" lamp={lamp} className="h-1.5 w-1.5" /> : null}
+                  {t.label}
+                </button>
+              </Fragment>
+            )
+          })}
+        </div>
+        <span className="ml-auto hidden min-w-0 shrink truncate pl-3 text-dense-meta text-muted-foreground lg:block">
           {TAB_HINT[active]}
         </span>
       </div>

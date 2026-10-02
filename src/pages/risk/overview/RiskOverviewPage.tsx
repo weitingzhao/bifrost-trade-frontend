@@ -501,7 +501,7 @@ export default function RiskOverviewPage() {
             key={to}
             to={to}
             title={`${name} — ${q}`}
-            className="flex min-w-0 flex-[1_1_170px] flex-col gap-1 rounded-[var(--card-radius)] border border-transparent bg-[var(--card-fill)] px-3 py-2.5 text-foreground no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] hover:text-foreground motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            className="flex min-w-0 flex-[1_1_170px] flex-col gap-1 rounded-[var(--card-radius)] border border-transparent bg-[var(--card-fill)] px-3 py-2.5 text-foreground no-underline transition-[background-color,translate] duration-150 hover:-translate-y-px hover:bg-[var(--mat-card-fill-hover)] hover:text-foreground motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             <span className="flex items-baseline gap-2">
               <span className="font-mono text-dense-caption text-muted-foreground">{n}</span>

@@ -190,7 +190,7 @@ export function ObjectiveControl() {
                   onClick={() => pick(o)}
                   title={o ? o.title : 'No objective'}
                   className={cn(
-                    'max-w-[9rem] cursor-pointer truncate rounded-[4px] border bg-transparent px-2 py-0.5 text-dense-meta',
+                    'max-w-[9rem] cursor-pointer truncate rounded-full border bg-transparent px-2 py-0.5 text-dense-meta',
                     on ? 'border-[var(--sk-accent)] text-foreground' : 'border-[var(--sk-line)] text-secondary-foreground',
                   )}
                 >

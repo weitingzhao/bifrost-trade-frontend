@@ -27,7 +27,7 @@ export function CopilotSourceLink({
     <Link
       to={path}
       className={cn(
-        'inline-flex items-center gap-0.5 rounded border border-border/60 bg-secondary/60',
+        'inline-flex items-center gap-0.5 rounded-full border border-border/60 bg-secondary/60',
         'px-1.5 py-0.5 text-dense-caption text-entity-symbol hover:bg-secondary',
         className,
       )}

@@ -10,7 +10,7 @@ export function DiscoveryIconButton({ className, ...props }: ComponentProps<type
       variant="outline"
       size="icon"
       className={cn(
-        'size-8 shrink-0 rounded-lg border-border bg-secondary text-muted-foreground',
+        'size-8 shrink-0 rounded-full border-border bg-secondary text-muted-foreground',
         'hover:bg-accent/10 hover:border-primary/40 hover:text-primary',
         className,
       )}

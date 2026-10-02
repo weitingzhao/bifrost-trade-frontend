@@ -172,7 +172,7 @@ export function TagsPanel({
                 'min-w-0 px-2.5 py-1.75',
                 // An unreadable tag keeps its place on a dashed outline — the
                 // absence marker — rather than on the card material.
-                t.unreadable ? 'rounded-xl border border-dashed border-border' : 'border mat-card',
+                t.unreadable ? 'rounded-[var(--mat-card-radius)] border border-dashed border-border' : 'border mat-card',
                 off && 'opacity-55',
               )}
               style={t.unreadable || off ? undefined : TONE_EDGE[t.tone]}
@@ -240,7 +240,7 @@ export function TagsPanel({
         <button
           type="button"
           className={cn(
-            'inline-flex h-7 items-center rounded-lg px-3 text-dense-label font-semibold',
+            'inline-flex h-7 items-center rounded-full px-3 text-dense-label font-semibold',
             reviewed
               ? 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] text-foreground'
               : 'bg-primary text-primary-foreground hover:bg-primary/90',

@@ -114,8 +114,10 @@ export function DraggableExplainPanel({
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
+      // Rev .142: a self-drawn floating panel reads the float glass.
+      data-glass-surface="raised"
       className={cn(
-        'fixed z-[10050] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl',
+        'sr-glass-float fixed z-[10050] rounded-xl text-popover-foreground',
         'flex flex-col max-h-[min(85vh,640px)] overflow-hidden',
       )}
       style={{
@@ -126,7 +128,7 @@ export function DraggableExplainPanel({
       }}
     >
       <div
-        className="flex items-start justify-between gap-2 border-b border-border px-3 py-2 cursor-move select-none bg-muted/40"
+        className="flex items-start justify-between gap-2 border-b border-border px-3 py-2 cursor-move select-none"
         onMouseDown={onHeaderMouseDown}
         role="presentation"
       >

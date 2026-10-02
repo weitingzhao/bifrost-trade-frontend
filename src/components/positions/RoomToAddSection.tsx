@@ -263,7 +263,7 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange, quie
           <DerivationBlock
             derivation={roomDerivation(r, coverRows, openView)}
             onClose={() => setOpenView(null)}
-            className="mt-0 rounded-[5px] border-[var(--sk-line2)] bg-[var(--sk-raised2)]"
+            className="mt-0"
           />
         ) : null}
       </div>

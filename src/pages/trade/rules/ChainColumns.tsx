@@ -194,7 +194,7 @@ export function ChainDetailPanel({
   rows?: ReactNode
 }) {
   return (
-    <section className={cn(positionsUi.panel, 'border-[var(--sk-line2)]')} aria-label="Selected">
+    <section className={positionsUi.panel} aria-label="Selected">
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>{detail.kind}</span>
         <span className={positionsUi.panelTitle}>{detail.title}</span>

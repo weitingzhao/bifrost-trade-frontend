@@ -20,7 +20,7 @@ export const liveFilterPillGripClass = 'cursor-grab text-dense-caption leading-n
 export const liveFeedbackHintClass = 'text-xs text-muted-foreground animate-pulse'
 
 export const liveIconBtnClass =
-  'inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground'
+  'inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground'
 
 export const liveEmptyHintClass = 'text-sm text-muted-foreground py-2'
 

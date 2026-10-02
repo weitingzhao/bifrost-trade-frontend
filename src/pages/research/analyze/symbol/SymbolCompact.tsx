@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import { PayoffBody } from '@/pages/research/analyze/payoff/PayoffBody'
 import { SymbolAsofTag } from './SymbolAsofTag'
 import { SymbolChainFace } from './SymbolChainFace'
+import { FACE_TAB_TRACK, faceTabClass } from './faceTabsUi'
 import { SymbolIdentity } from './SymbolIdentity'
 import { SymbolNarrativePanel } from './SymbolNarrativePanel'
 import { SymbolVerdictPanel } from './SymbolVerdictPanel'
@@ -256,26 +257,27 @@ export function SymbolCompact({
         asof={<SymbolAsofTag symbol={symbol} />}
       />
 
-      <div className="sticky top-0 z-10 -mx-3 flex items-end overflow-x-auto border-b border-border bg-card px-2.5 [scrollbar-width:none]">
-        {SYMBOL_TABS.map((t) => {
-          const lamp = lampFor(t.id)
-          const on = t.id === active
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              aria-current={on ? 'page' : undefined}
-              className={cn(
-                'inline-flex h-7.5 shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-1.75 text-dense-meta',
-                on ? 'border-primary font-semibold text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {lamp ? <StatusLamp variant="dot" lamp={lamp} className="h-1.5 w-1.5" /> : null}
-              {t.label}
-            </button>
-          )
-        })}
+      {/* Rev .142: capsule segments on a slab-free sticky bar (the scroll edge);
+          the track scrolls sideways when the seven do not fit. */}
+      <div data-sr-toolbar="" data-sticky="">
+        <div className={FACE_TAB_TRACK}>
+          {SYMBOL_TABS.map((t) => {
+            const lamp = lampFor(t.id)
+            const on = t.id === active
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                aria-current={on ? 'page' : undefined}
+                className={faceTabClass(on)}
+              >
+                {lamp ? <StatusLamp variant="dot" lamp={lamp} className="h-1.5 w-1.5" /> : null}
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {active === 'overview' ? (

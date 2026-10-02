@@ -16,7 +16,7 @@ export function DailyCalcBreakdown({ symbol, bench, positionDailyPrevClose, last
   const { dailyPct, dailyDollar } = computeDailyChange(last, base, q)
 
   return (
-    <div className={styles.dailyCalcPopup} role="tooltip">
+    <div className={`${styles.dailyCalcPopup} sr-glass-float`} data-glass-surface="raised" role="tooltip">
       <div className="font-semibold mb-1">{symbol}</div>
       <div>Base (daily ref): {base != null ? base.toFixed(4) : '—'}</div>
       <div>Last: {last != null ? last.toFixed(4) : '—'}</div>

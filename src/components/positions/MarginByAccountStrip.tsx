@@ -213,7 +213,7 @@ export function MarginByAccountStrip({
                   <DerivationBlock
                     derivation={marginDerivation(r.facts, r.label, positions ? holdingsOf(positions, r.accountId, resolveSpot) : undefined)}
                     onClose={() => setOpenId(null)}
-                    className="mx-2.5 mt-0.5 mb-2.25 rounded-[5px] border-[var(--sk-line2)] bg-[var(--sk-raised2)]"
+                    className="mx-2.5 mt-0.5 mb-2.25"
                   />
                 ) : null}
               </AccountRow>

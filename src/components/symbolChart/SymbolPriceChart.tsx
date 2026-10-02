@@ -518,7 +518,7 @@ export function SymbolPriceChart({
               onClick={() => setTradesOn((v) => !v)}
               title="Your trades on this symbol, each at its strikes over the days it held them — a roll jumps to its new strike at ↻; click one for its record"
               className={cn(
-                'inline-flex h-5 items-center rounded border px-1.5 font-mono text-dense-micro',
+                'inline-flex h-5 items-center rounded-full border px-1.5 font-mono text-dense-micro',
                 tradesOn
                   ? 'border-[var(--sk-accent)] text-foreground'
                   : 'border-border text-muted-foreground',
@@ -554,7 +554,7 @@ export function SymbolPriceChart({
                 setPreset(windowForSessionsAgo(Math.max(...hidden.map((p) => p.openAgo))))
               }
               title="Trades before this window — click to widen it"
-              className="absolute bottom-8 left-14 rounded border border-border bg-background/75 px-1.5 py-0.5 font-mono text-dense-micro text-[var(--sk-contract)]"
+              className="absolute bottom-8 left-14 rounded-full border border-border bg-background/75 px-1.5 py-0.5 font-mono text-dense-micro text-[var(--sk-contract)]"
             >
               ← {hidden.length} earlier trade{hidden.length > 1 ? 's' : ''}
             </button>

@@ -235,7 +235,7 @@ export default function DiscoverModelPage() {
           </p>
         </section>
 
-        <section className="rounded-[12px] border border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[color-mix(in_srgb,var(--sk-accent)_5%,transparent)] px-5 py-4">
+        <section className="rounded-[var(--card-radius)] border border-[color-mix(in_srgb,var(--sk-accent)_40%,transparent)] bg-[color-mix(in_srgb,var(--sk-accent)_5%,transparent)] px-5 py-4">
           <SectionHead band="s04">04 · 下一步</SectionHead>
           <p className={cn(p, 'type-section text-foreground')}>
             <span className={strong}>Ratings › Stocks</span> 已建（与 Underlyings

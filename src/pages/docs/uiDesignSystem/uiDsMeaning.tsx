@@ -17,7 +17,7 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { fmtPctSigned } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { fmtDollar, unrealizedPnlColorClass } from '@/utils/dailyChange'
-import { Code, DsRules, DsSection, DsSwatch, EYEBROW, LINE0, MUTE_MONO } from './uiDsParts'
+import { Code, DsRules, DsSection, DsSwatch, EYEBROW, MUTE_MONO } from './uiDsParts'
 
 const noop = () => {}
 
@@ -79,7 +79,7 @@ export function EntitySection() {
     >
       <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2">
         {ENTITIES.map((e) => (
-          <div key={e.token} className={cn('flex flex-col gap-1.5 rounded-md border bg-card p-2.5', LINE0)}>
+          <div key={e.token} className="flex flex-col gap-1.5 p-2.5 mat-card">
             <span className="flex items-center gap-2">
               <span className="size-2.5 rounded-sm" style={{ background: `var(${e.token})` }} />
               <span className="text-dense-label">{e.label}</span>
@@ -92,7 +92,7 @@ export function EntitySection() {
         ))}
       </div>
       {/* Where each ink goes: the same token, the primitive by placement. */}
-      <div data-sr-hscroll="1" className={cn('overflow-x-auto rounded-md border bg-card', LINE0)}>
+      <div data-sr-hscroll="1" className="overflow-x-auto mat-card">
         <table data-sr-table="" className="min-w-[540px]">
           <thead>
             <tr>

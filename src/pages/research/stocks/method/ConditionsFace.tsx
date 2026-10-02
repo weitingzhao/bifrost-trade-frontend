@@ -59,7 +59,7 @@ const RENDER_CAP = 200
 // A chip is a toggle: off on the ink fill, on in the accent (Rev .84 — the
 // selection is the accent, never a framed box).
 const chipBase =
-  'cursor-pointer rounded-[6px] border border-transparent px-1.75 py-0.75 font-mono text-dense-caption transition-colors'
+  'cursor-pointer rounded-full border border-transparent px-1.75 py-0.75 font-mono text-dense-caption transition-colors'
 const chipOff =
   'bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] text-muted-foreground hover:text-foreground'
 const chipOn = 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] font-semibold text-primary'

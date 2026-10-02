@@ -403,9 +403,11 @@ function Tooltip({
     <div
       className={cn(
         styles.tooltip,
+        'sr-glass-float',
         pos.anchor === 'left' && styles.tooltipAnchorLeft,
         pos.anchor === 'right' && styles.tooltipAnchorRight,
       )}
+      data-glass-surface="raised"
       style={{ left: pos.left, top: pos.top }}
       role="tooltip"
     >

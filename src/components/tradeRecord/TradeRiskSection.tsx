@@ -96,7 +96,7 @@ export function TradeRiskSection({
 }) {
   if (payoffs.length === 0) return null
   return (
-    <div className="flex flex-col gap-2.5 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
+    <div className="flex flex-col gap-2.5 mat-card px-3.5 py-3">
       <div className="flex flex-wrap items-center gap-2.5">
         <span className="text-dense-body font-semibold">Risk at expiration</span>
         {canCover ? (

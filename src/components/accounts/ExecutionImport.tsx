@@ -66,7 +66,8 @@ function buildFlexSuccessMessage(r: {
 }
 
 // The 1a material (Rev .62): a group is a card fill, not a framed pill.
-const pillGroupClass = 'inline-flex flex-wrap items-center gap-2 border px-2.5 py-1.5 min-h-[30px] mat-card'
+// Rev .142: a strip of controls has no slab.
+const pillGroupClass = 'inline-flex flex-wrap items-center gap-2 px-2.5 py-1.5 min-h-[30px]'
 
 export function ExecutionImport({
   accountsFetchedAt,

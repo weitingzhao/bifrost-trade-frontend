@@ -175,7 +175,7 @@ function JournalFaceForContract({
               }
               onClick={() => setMode(m.id)}
               className={cn(
-                'rounded-md border px-2 py-0.5 text-dense-meta',
+                'rounded-full border px-2 py-0.5 text-dense-meta',
                 on
                   ? 'border-[var(--color-success)] text-[var(--color-success)]'
                   : 'border-border text-muted-foreground',

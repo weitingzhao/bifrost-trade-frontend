@@ -471,7 +471,7 @@ function MemoryRow({
         </span>
       </div>
       {open ? (
-        <div className="flex flex-col overflow-hidden rounded-lg bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+        <div className="flex flex-col overflow-hidden mat-card">
           {m.evidence.map((e, j) => (
             <button
               key={`${e.source}-${j}`}

@@ -691,7 +691,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                         list.some((e) => e.ticker === entry.ticker) ? list : [...list, entry]
                       )
                     }}
-                    className="cursor-pointer rounded-[6px] border border-border px-2.5 py-1 text-dense-label text-muted-foreground hover:bg-[var(--sk-surface)]"
+                    className="cursor-pointer rounded-full border border-border px-2.5 py-1 text-dense-label text-muted-foreground hover:bg-[var(--sk-surface)]"
                     title="Keep this contract in the Compare drawer — it holds contracts across expiries and symbols for this session."
                   >
                     Compare +

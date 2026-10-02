@@ -195,7 +195,7 @@ export function TradeRecord({
       {r.loading ? (
         <p className="m-0 text-dense-meta text-muted-foreground">Reading its fills…</p>
       ) : !hasFills ? (
-        <div className="flex flex-col gap-1 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
+        <div className="flex flex-col gap-1 mat-card px-3.5 py-3">
           <span className="text-dense-body font-semibold">No fill has claimed {title}</span>
           <span className="text-dense-label text-[var(--sk-mute2)] text-pretty">
             It has no legs, no P&amp;L and no risk. Link a fill to it on the Ledger, or delete it — nothing
@@ -206,7 +206,7 @@ export function TradeRecord({
         <>
           {show('overview') ? (
             <>
-              <div className="flex flex-col gap-2 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
+              <div className="flex flex-col gap-2 mat-card px-3.5 py-3">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <DenseTag variant={closed ? 'neutral' : 'success'} size="cell">
                     {closed ? 'Closed' : 'Open'}
@@ -258,7 +258,7 @@ export function TradeRecord({
                 <TradePositionSection p={r.position} pending={r.positionPending} positionsTo={positionsTo} />
               ) : null}
 
-              <div className="flex flex-col gap-1.5 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
+              <div className="flex flex-col gap-1.5 mat-card px-3.5 py-3">
                 <div className="flex flex-wrap items-baseline gap-x-2.5">
                   <span className="text-dense-body font-semibold">Life</span>
                   <span className="text-dense-micro text-[var(--sk-mute2)]">
@@ -296,7 +296,7 @@ export function TradeRecord({
                 ) : null}
               </div>
 
-              <div className="rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+              <div className="mat-card">
                 <div className="px-3.5 pt-2.5 pb-0.5 text-dense-body font-semibold">Legs</div>
                 <div className="overflow-x-auto">
                   <table data-sr-table="" className="w-full">
@@ -357,7 +357,7 @@ export function TradeRecord({
           ) : null}
 
           {show('pnl') && d ? (
-            <div className="flex flex-col gap-2 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
+            <div className="flex flex-col gap-2 mat-card px-3.5 py-3">
               <div className="flex flex-wrap items-baseline gap-x-2.5">
                 <span className="text-dense-body font-semibold">P&amp;L &amp; commission</span>
                 <span className="text-dense-micro text-muted-foreground">
@@ -408,7 +408,7 @@ export function TradeRecord({
           ) : null}
 
           {show('chart') && r.legs[0]?.root ? (
-            <div className="flex flex-col gap-2 rounded-xl bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-3.5 py-3">
+            <div className="flex flex-col gap-2 mat-card px-3.5 py-3">
               <span className="text-dense-body font-semibold">Chart · fills on the price</span>
               <InstanceKlineSection
                 symbol={r.legs[0].root}

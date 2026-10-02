@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import styles from '@/components/strategy/gates/gatesForm.module.css'
 import {
   useCreateGateSafety,
+  useGateSafetyDefaults,
   useGateSafetyFull,
   useUpdateGateSafety,
 } from '@/hooks/useGateSafety'
@@ -90,20 +91,38 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
 
   const editId = mode.kind === 'edit' ? mode.id : null
 
-  const [form, setForm] = useState<GateFormState>(emptyGateForm)
+  /**
+   * Null until the form has something real to start from: the set itself
+   * (edit / copy) or core's defaults (create, TD-72). Nothing renders the
+   * fields — so nothing can be saved — while it is null.
+   */
+  const [form, setForm] = useState<GateFormState | null>(null)
   const [earningsDates, setEarningsDates] = useState<string[]>([])
+  /** Create seeds once: a later defaults refetch must not wipe what was typed. */
+  const [seeded, setSeeded] = useState(false)
 
+  const defaultsQuery = useGateSafetyDefaults(mode.kind === 'create')
   const detailQuery = useGateSafetyFull(
     mode.kind === 'edit' ? mode.id : mode.kind === 'copy' ? mode.id : null,
   )
 
+  const modeKey = mode.kind === 'edit' || mode.kind === 'copy' ? `${mode.kind}:${mode.id}` : mode.kind
   useEffect(() => {
-    if (mode.kind === 'create') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setForm(emptyGateForm())
-      setEarningsDates([])
-    }
-  }, [mode.kind])
+    // A different sheet: drop what the last one held before anything seeds it.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm(null)
+    setEarningsDates([])
+    setSeeded(false)
+  }, [modeKey])
+
+  const defaultGates = defaultsQuery.data?.gates
+  useEffect(() => {
+    if (mode.kind !== 'create' || seeded || !defaultGates) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm(emptyGateForm(defaultGates))
+    setEarningsDates([])
+    setSeeded(true)
+  }, [mode.kind, seeded, defaultGates])
 
   useEffect(() => {
     if (detailQuery.data && (mode.kind === 'edit' || mode.kind === 'copy')) {
@@ -115,15 +134,20 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
     }
   }, [detailQuery.data, mode.kind])
 
-  const setGateValue = useCallback((path: string, value: unknown) => {
-    setForm((prev) => setGatePath(prev, path, value))
+  const patchForm = useCallback((patch: Partial<GateFormState>) => {
+    setForm((prev) => (prev ? { ...prev, ...patch } : prev))
   }, [])
 
+  const setGateValue = useCallback((path: string, value: unknown) => {
+    setForm((prev) => (prev ? setGatePath(prev, path, value) : prev))
+  }, [])
+
+  const formGates = form?.gates
   const gateVal = useCallback(
     (path: string): unknown => {
-      return getGateValue(form.gates, path)
+      return formGates ? getGateValue(formGates, path) : undefined
     },
-    [form.gates],
+    [formGates],
   )
 
   const gateNum = useCallback(
@@ -143,6 +167,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
   )
 
   async function handleSubmit() {
+    if (!form) return
     const payload = gateFormToPayload({ ...form, earnings_dates: earningsDates })
     if (mode.kind === 'edit') {
       await updateMut.mutateAsync({ id: mode.id, payload })
@@ -168,6 +193,9 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
   const submitError = createMut.error ?? updateMut.error
   const detailLoading =
     (mode.kind === 'edit' || mode.kind === 'copy') && detailQuery.isLoading
+  /** Create waits for core's defaults; on failure it offers Retry and no form. */
+  const defaultsLoading = mode.kind === 'create' && !form && !defaultsQuery.isError
+  const defaultsError = mode.kind === 'create' && !form && defaultsQuery.isError ? defaultsQuery.error : null
 
   if (mode.kind === 'closed') return null
 
@@ -180,8 +208,30 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
     <section className={styles.formSection}>
       <div className={styles.stickyHeader}>
         <h3 className={styles.headerTitle}>{panelTitle}</h3>
-        {detailLoading && !form.name && (
+        {detailLoading && !form?.name && (
           <p className={styles.headerHint}>Loading…</p>
+        )}
+        {defaultsLoading && <p className={styles.headerHint}>Loading gate defaults…</p>}
+        {defaultsError && (
+          <Alert variant="destructive" className={styles.errorAlert}>
+            <AlertDescription>
+              Could not load the gate defaults a new set starts from — {(defaultsError as Error).message}
+            </AlertDescription>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => void defaultsQuery.refetch()}
+              disabled={defaultsQuery.isFetching}
+            >
+              {defaultsQuery.isFetching ? 'Retrying…' : 'Retry'}
+            </Button>
+          </Alert>
+        )}
+        {(mode.kind === 'edit' || mode.kind === 'copy') && !form && detailQuery.isError && (
+          <Alert variant="destructive" className={styles.errorAlert}>
+            <AlertDescription>Could not load gate set {mode.id} — {(detailQuery.error as Error).message}</AlertDescription>
+          </Alert>
         )}
         {submitError && (
           <Alert variant="destructive" className={styles.errorAlert}>
@@ -190,7 +240,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
         )}
       </div>
 
-      {!detailLoading && (
+      {form && !detailLoading && (
         <div className={styles.formGrid}>
           <div className={cn(styles.formGroup, styles.metadataRoot)}>
             <h4 className={styles.metadataTitle}>Metadata</h4>
@@ -199,7 +249,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
               <input
                 type="text"
                 value={form.name}
-                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                onChange={(e) => patchForm({ name: e.target.value })}
                 placeholder="Gate set name"
               />
             </div>
@@ -210,7 +260,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
                 min={1}
                 value={form.version ?? 1}
                 onChange={(e) =>
-                  setForm((p) => ({ ...p, version: parseInt(e.target.value, 10) || 1 }))
+                  patchForm({ version: parseInt(e.target.value, 10) || 1 })
                 }
               />
             </div>
@@ -222,12 +272,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
                 <label>{gateDimLabel(dim)}</label>
                 <Select
                   value={form[dim] || '__any__'}
-                  onValueChange={(v) =>
-                    setForm((p) => ({
-                      ...p,
-                      [dim]: v === '__any__' ? null : v,
-                    }))
-                  }
+                  onValueChange={(v) => patchForm({ [dim]: v === '__any__' ? null : v })}
                 >
                   <SelectTrigger aria-label={gateDimLabel(dim)}>
                     <SelectValue />
@@ -247,7 +292,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
               <label className={styles.toggleRow}>
                 <Switch
                   checked={form.is_active ?? false}
-                  onCheckedChange={(checked) => setForm((p) => ({ ...p, is_active: checked }))}
+                  onCheckedChange={(checked) => patchForm({ is_active: checked })}
                   aria-label="Active"
                 />
                 <span>Active</span>

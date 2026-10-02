@@ -12,7 +12,7 @@ import {
   setGateValue,
   withNextVersion,
 } from './gateForm'
-import { DEFAULT_GATES } from '@/utils/gateDefaults'
+import { GATES_FIXTURE, gatesFixture } from './gateDefaults.fixture'
 import type { GateSafetyFull } from '@/types/positions'
 
 /** Made-up values, distinct per field so a crossed wire shows. */
@@ -91,11 +91,23 @@ describe('gateForm — full → form → payload', () => {
 
   it('sends back keys no form binds (the server’s object, not a flat copy)', () => {
     const d = full()
-    ;(d.gates.strategy!.earnings as Record<string, unknown>).dates = ['2030-01-02']
     ;(d.gates as Record<string, unknown>).future = { x: 1 }
     const p = gateFormToPayload(gateToForm(d))
-    expect((p.gates.strategy!.earnings as Record<string, unknown>).dates).toEqual(['2030-01-02'])
     expect((p.gates as Record<string, unknown>).future).toEqual({ x: 1 })
+  })
+
+  it('never sends earnings dates inside gates — only the top-level earnings_dates', () => {
+    // The full read folds the dates into gates.strategy.earnings; the API rejects them there on a write.
+    const d = full()
+    ;(d.gates.strategy!.earnings as Record<string, unknown>).dates = ['2030-01-02', '2030-04-03']
+    const f = gateToForm(d)
+    const p = gateFormToPayload(f)
+    expect(p.gates.strategy!.earnings).toEqual({ blackout_days_before: 14, blackout_days_after: 15 })
+    expect(p.earnings_dates).toEqual(['2030-01-02', '2030-04-03'])
+    // the form's own object is untouched
+    expect((f.gates.strategy!.earnings as Record<string, unknown>).dates).toEqual(['2030-01-02', '2030-04-03'])
+    // a copy goes out the same way
+    expect(gateFormToPayload(gateToForm(d, { copy: true })).gates.strategy!.earnings).not.toHaveProperty('dates')
   })
 
   it('does not share objects with what it was read from', () => {
@@ -116,11 +128,15 @@ describe('gateForm — full → form → payload', () => {
     expect(f.gates).toEqual(full().gates)
   })
 
-  it('empty: the default gates, version 1, inactive', () => {
-    const f = emptyGateForm()
+  it('empty: the defaults it is given (the API’s), version 1, inactive', () => {
+    const defaults = gatesFixture()
+    const f = emptyGateForm(defaults)
     expect(f).toMatchObject({ name: '', version: 1, is_active: false, earnings_dates: [] })
-    expect(f.gates).toEqual(DEFAULT_GATES)
-    expect(f.gates).not.toBe(DEFAULT_GATES)
+    expect(f.gates).toEqual(GATES_FIXTURE)
+    expect(f.gates).not.toBe(defaults)
+    // a changed default reaches the next new set — no copy of its own wins
+    defaults.strategy!.structure!.min_dte = 99
+    expect(emptyGateForm(defaults).gates.strategy!.structure!.min_dte).toBe(99)
   })
 })
 

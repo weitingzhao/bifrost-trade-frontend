@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { GateSafetyFull, GateSafetyPayload } from '@/types/positions'
-import { DEFAULT_GATES } from '@/utils/gateDefaults'
+import { GATES_FIXTURE, gatesFixture } from '@/components/strategy/gates/gateDefaults.fixture'
 import { clearUndo, runUndo } from '@/lib/shellNotify'
 
 const api = vi.hoisted(() => ({
@@ -21,7 +21,7 @@ function set(version: number): GateSafetyFull {
     name: 'Fixture gate',
     version,
     is_active: true,
-    gates: JSON.parse(JSON.stringify(DEFAULT_GATES)),
+    gates: gatesFixture(),
     earnings_dates: [],
   }
 }
@@ -77,7 +77,7 @@ describe('GateInspector', () => {
     await waitFor(() => expect(api.updateGateSafety).toHaveBeenCalledTimes(1), { timeout: 2000 })
     expect(lastPut().version).toBe(5)
     expect(lastPut().gates.strategy?.structure?.min_dte).toBe(30)
-    expect(lastPut().gates.guard?.risk?.max_position_shares).toBe(DEFAULT_GATES.guard!.risk!.max_position_shares)
+    expect(lastPut().gates.guard?.risk?.max_position_shares).toBe(GATES_FIXTURE.guard!.risk!.max_position_shares)
 
     // the reload answers v5 — the header still names the version the daemon kept
     await waitFor(() => expect(api.fetchGateSafetyFull).toHaveBeenCalledTimes(2))
@@ -93,7 +93,7 @@ describe('GateInspector', () => {
     })
     await waitFor(() => expect(api.updateGateSafety).toHaveBeenCalledTimes(3), { timeout: 2000 })
     expect(lastPut().version).toBe(4)
-    expect(lastPut().gates.strategy?.structure?.min_dte).toBe(DEFAULT_GATES.strategy!.structure!.min_dte)
+    expect(lastPut().gates.strategy?.structure?.min_dte).toBe(GATES_FIXTURE.strategy!.structure!.min_dte)
   })
 
   it('a cleared field is held back, not written as 0', async () => {

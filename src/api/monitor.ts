@@ -53,8 +53,6 @@ export async function postIbConfig(accounts: {
   return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }
 }
 
-// ─── Market Holidays API (via Market service) ────────────────────────────────
-
 /** Working orders IB reports, as the monitor reads them. */
 export async function fetchOpenOrders(): Promise<OpenOrder[]> {
   const res = await tradeFetch(monitorUrl('/open-orders'))

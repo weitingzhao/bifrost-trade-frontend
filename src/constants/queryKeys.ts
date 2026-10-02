@@ -114,6 +114,8 @@ export const QUERY_KEYS = {
     /** The six-dimension dictionary the catalogue and the gates both read. */
     dims: ['strategy', 'dims'] as const,
     gateSafety: ['strategy', 'gate-safety'] as const,
+    /** Core's GateParams defaults a new gate set is seeded from — outside `gateSafety`, so a gate write does not refetch them. */
+    gateSafetyDefaults: ['strategy', 'gate-safety-defaults'] as const,
     allocations: ['strategy', 'allocations'] as const,
     winRate: ['strategy', 'win-rate'] as const,
     /** Rev .110: one review record per instance, read by Queue, Trade review and the Review badge. */

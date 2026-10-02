@@ -22,3 +22,18 @@ export const StrategyInstancesResponseSchema = z.object({
 }).passthrough()
 
 export const StrategyInstanceDetailSchema = StrategyInstanceSchema
+
+/**
+ * `GET /strategies/gate-safety/defaults`. Parsed strictly (not `withValidation`):
+ * a new gate set is seeded from this, so an answer without the four families
+ * is an error the sheet shows, never a half-seeded form.
+ */
+const GateFamilySchema = z.object({}).passthrough()
+export const GateSafetyDefaultsResponseSchema = z.object({
+  gates: z.object({
+    strategy: GateFamilySchema,
+    state: GateFamilySchema,
+    intent: GateFamilySchema,
+    guard: GateFamilySchema,
+  }).passthrough(),
+}).passthrough()

@@ -24,7 +24,12 @@ import type {
   WinRateResponse,
 } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
-import { StrategyInstancesResponseSchema, StrategyInstanceDetailSchema } from '@/lib/schemas/strategy'
+import {
+  GateSafetyDefaultsResponseSchema,
+  StrategyInstancesResponseSchema,
+  StrategyInstanceDetailSchema,
+} from '@/lib/schemas/strategy'
+import type { GateSafetyDefaultsResponse } from '@/types/strategy'
 import { monitorUrl, strategyUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
 
@@ -193,6 +198,18 @@ export async function fetchGateSafety(): Promise<GateSafetyResponse> {
   const res = await tradeFetch(strategyUrl('/strategies/gate-safety'))
   if (!res.ok) throw new Error(`Strategy /gate-safety: ${res.status}`)
   return res.json() as Promise<GateSafetyResponse>
+}
+
+/**
+ * Core `GateParams` defaults (TD-72): what a new gate set starts from. Throws on
+ * a non-2xx or an answer missing a family — there is no local copy to fall back to.
+ */
+export async function fetchGateSafetyDefaults(): Promise<GateSafetyDefaultsResponse> {
+  const res = await tradeFetch(strategyUrl('/strategies/gate-safety/defaults'))
+  if (!res.ok) throw new Error(`Strategy /gate-safety/defaults: ${res.status}`)
+  const parsed = GateSafetyDefaultsResponseSchema.safeParse(await res.json())
+  if (!parsed.success) throw new Error('Strategy /gate-safety/defaults: answer has no complete gates object')
+  return parsed.data as GateSafetyDefaultsResponse
 }
 
 export async function fetchGateSafetyFull(id: number): Promise<GateSafetyFull> {

@@ -118,18 +118,6 @@ export interface FetchGreeksParams {
   limit?: number
 }
 
-export interface DataReadinessSummary {
-  universe_count: number
-  tickers_active_count: number
-  price_readiness_live: {
-    total_symbols: number
-    price_ready: number
-  } | null
-  snapshot_populated: boolean
-  snapshot_today: boolean
-  fundamentals_coverage: Record<string, { total: number; with_data: number }> | null
-}
-
 // --- Stock Inspector Panel ---
 
 export interface TickerOverview {

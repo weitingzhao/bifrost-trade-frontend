@@ -180,6 +180,15 @@ export interface GateSafetyGates {
   }
 }
 
+/**
+ * `GET /strategies/gate-safety/defaults` — core `GateParams()` as the API holds
+ * it, in the same shape as a gate row's `gates` (no earnings dates). What a new
+ * gate set starts from; the UI keeps no copy of its own.
+ */
+export interface GateSafetyDefaultsResponse {
+  gates: GateSafetyGates
+}
+
 export interface GateSafetyFull {
   gate_safety_strategy_id: number
   name: string

@@ -7,7 +7,7 @@
  * flat copy of the fields we render: whatever the set carries that no form
  * binds still goes back on the PUT unchanged.
  */
-import { DEFAULT_GATES, DIM_LABELS, DIM_TYPES, type DimFieldName } from '@/utils/gateDefaults'
+import { DIM_LABELS, DIM_TYPES, type DimFieldName } from '@/utils/gateDefaults'
 import type { GateSafetyFull, GateSafetyGates, GateSafetyPayload } from '@/types/positions'
 
 export interface GateFormState extends GateSafetyPayload {
@@ -118,7 +118,12 @@ function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj)) as T
 }
 
-export function emptyGateForm(): GateFormState {
+/**
+ * A new set, seeded from core's defaults as the API serves them
+ * (`GET /strategies/gate-safety/defaults`, TD-72) — the UI keeps no copy, so a
+ * core default change reaches the next new set without a frontend release.
+ */
+export function emptyGateForm(defaults: GateSafetyGates): GateFormState {
   return {
     name: '',
     version: 1,
@@ -129,7 +134,7 @@ export function emptyGateForm(): GateFormState {
     dim_volatility: null,
     dim_time: null,
     is_active: false,
-    gates: deepClone(DEFAULT_GATES),
+    gates: deepClone(defaults),
     earnings_dates: [],
   }
 }
@@ -151,6 +156,18 @@ export function gateToForm(d: GateSafetyFull, opts: { copy?: boolean } = {}): Ga
   }
 }
 
+/**
+ * `gates` as it goes on the wire: without `strategy.earnings.dates`. The full
+ * read folds the earnings dates into the gates object too, but a write carries
+ * them only at the top level (`earnings_dates`) — the API rejects them inside.
+ */
+function gatesForWrite(gates: GateSafetyGates): GateSafetyGates {
+  const out = deepClone(gates)
+  const earnings = out.strategy?.earnings as Record<string, unknown> | undefined
+  if (earnings && 'dates' in earnings) delete earnings.dates
+  return out
+}
+
 /** What the sheet's Create / Update and the inspector's PUT send. */
 export function gateFormToPayload(f: GateFormState): GateSafetyPayload {
   return {
@@ -163,7 +180,7 @@ export function gateFormToPayload(f: GateFormState): GateSafetyPayload {
     dim_volatility: f.dim_volatility,
     dim_time: f.dim_time,
     is_active: f.is_active,
-    gates: deepClone(f.gates),
+    gates: gatesForWrite(f.gates),
     earnings_dates: [...f.earnings_dates],
   }
 }

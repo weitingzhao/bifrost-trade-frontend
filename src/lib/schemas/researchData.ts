@@ -290,15 +290,6 @@ export const GreeksResponseSchema = z
 
 export const TickerOverviewSchema = z.object({ ok: z.boolean() }).passthrough()
 
-export const DataReadinessSummarySchema = z
-  .object({
-    universe_count: z.number(),
-    tickers_active_count: z.number(),
-    snapshot_populated: z.boolean(),
-    snapshot_today: z.boolean(),
-  })
-  .passthrough()
-
 export const PlaybookRuleListSchema = z.array(PlaybookRuleSchema)
 export const PlaybookNoteListSchema = z.array(PlaybookNoteSchema)
 export const PlaybookCaseListSchema = z.array(PlaybookCaseSchema)

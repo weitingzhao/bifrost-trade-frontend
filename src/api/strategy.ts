@@ -32,7 +32,7 @@ import {
 import type { GateSafetyDefaultsResponse } from '@/types/strategy'
 import { monitorUrl, strategyUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
-import { requestJson } from '@/lib/http'
+import { requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
 
 
 const validateInstances = withValidation<StrategyInstancesResponse>(StrategyInstancesResponseSchema, 'strategy/instances')
@@ -141,27 +141,26 @@ export async function createStrategyInstance(
   return { strategy_instance_id: Number(id) }
 }
 
+/**
+ * Change the fields sent (api 0.3.0): `null` clears a label or notes, a blank
+ * string is refused (400). Answers the instance as GET /instances/{id} does.
+ */
 export async function patchStrategyInstance(
   id: number,
   body: PatchStrategyInstanceBody,
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/instances/${id}`), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`PATCH /strategies/instances/${id}: ${res.status}`)
-  return res.json()
+): Promise<StrategyInstance> {
+  return validateInstance(
+    await requestJson(strategyUrl(`/strategies/instances/${id}`), { method: 'PATCH', body }),
+  )
 }
 
-export async function deleteStrategyInstance(
-  id: number,
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/instances/${id}`), {
-    method: 'DELETE',
-  })
-  if (!res.ok) throw new Error(`DELETE /strategies/instances/${id}: ${res.status}`)
-  return res.json()
+/**
+ * A missing instance resolves as `deleted: 'gone'`. Refused with the server's
+ * reason: 409 while fills are attributed or split-allocated to it, 503 when
+ * the Golden Source cannot be read (nothing deleted).
+ */
+export function deleteStrategyInstance(id: number): Promise<DeleteOutcome> {
+  return requestDelete(strategyUrl(`/strategies/instances/${id}`))
 }
 
 export async function fetchOpportunityDetail(id: number): Promise<StrategyOpportunityDetail> {
@@ -182,17 +181,17 @@ export async function createOpportunity(
   return res.json()
 }
 
-export async function putOpportunity(
+/**
+ * Change the fields sent (api 0.3.0; the PUT it replaces reset the gate, the
+ * scope and is_active when they were left out). `symbols` and
+ * `entry_conditions` replace the stored lists whole. Answers the opportunity
+ * as GET /opportunities/{id} does; a refusal throws the server's reason.
+ */
+export function patchOpportunity(
   id: number,
   body: Partial<CreateOpportunityBody>,
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/opportunities/${id}`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`PUT /strategies/opportunities/${id}: ${res.status}`)
-  return res.json()
+): Promise<StrategyOpportunityDetail> {
+  return requestJson(strategyUrl(`/strategies/opportunities/${id}`), { method: 'PATCH', body })
 }
 
 export async function fetchGateSafety(): Promise<GateSafetyResponse> {
@@ -273,23 +272,40 @@ export function createTemplate(
   return requestJson(strategyUrl('/strategies/templates'), { method: 'POST', body: payload })
 }
 
-export async function updateTemplate(
-  id: number,
-  payload: Record<string, unknown>,
-): Promise<{ ok: boolean }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!res.ok) throw new Error(`PUT /strategies/templates/${id}: ${res.status}`)
-  return res.json()
+/** The info and dimensions PATCH /strategies/templates/{id} takes; `null` clears a nullable one. */
+export interface TemplateInfoPatch {
+  template_code?: string
+  display_name?: string
+  dim_direction?: string | null
+  dim_structure?: string | null
+  dim_coverage?: string | null
+  dim_risk?: string | null
+  dim_volatility?: string | null
+  dim_time?: string | null
+  explanation?: string | null
+  typical_use?: string | null
+  example?: string | null
+  nature?: string | null
+  sort_order?: number
+  is_active?: boolean
 }
 
-export async function deleteTemplate(id: number): Promise<{ ok: boolean }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}`), { method: 'DELETE' })
-  if (!res.ok) throw new Error(`DELETE /strategies/templates/${id}: ${res.status}`)
-  return res.json()
+/**
+ * Change a template's info and dimensions (api 0.3.0). A blank text is refused
+ * (400 "send null to clear it"); a code another template uses is 409. Answers
+ * the template as GET /templates/{id} does. Legs, params and characteristics
+ * stay on their own PUTs below.
+ */
+export function updateTemplate(id: number, payload: TemplateInfoPatch): Promise<StrategyTemplateDetail> {
+  return requestJson(strategyUrl(`/strategies/templates/${id}`), { method: 'PATCH', body: payload })
+}
+
+/**
+ * A missing template resolves as `deleted: 'gone'`; one that structures still
+ * use (deactivated ones count) is 409 with their names.
+ */
+export function deleteTemplate(id: number): Promise<DeleteOutcome> {
+  return requestDelete(strategyUrl(`/strategies/templates/${id}`))
 }
 
 export async function replaceTemplateLegs(
@@ -397,18 +413,13 @@ export async function createAllocation(
   return j as { strategy_allocation_id: number }
 }
 
-export async function updateAllocation(
-  id: number,
-  payload: Partial<AllocationPayload>,
-): Promise<{ ok: boolean }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/allocations/${id}`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  const j = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? String(res.status))
-  return j as { ok: boolean }
+/**
+ * Change the fields sent (api 0.3.0). `allocation_limits` keys patch one by
+ * one (`null` clears both); `strategy_opportunity_ids` replaces the
+ * membership. Answers the allocation as GET /allocations/{id} does.
+ */
+export function updateAllocation(id: number, payload: Partial<AllocationPayload>): Promise<StrategyAllocation> {
+  return requestJson(strategyUrl(`/strategies/allocations/${id}`), { method: 'PATCH', body: payload })
 }
 
 export function setActiveAllocation(
@@ -429,20 +440,21 @@ export function setActiveAllocation(
 /**
  * Delete a Desk rule object (api 0.1.9, design Rev .140). The Desk calls these
  * only once its Undo toast has closed (Owner 2026-10-01: held delete). An
- * object still in use is refused with a 409 whose reason is the error's text.
+ * object still in use is refused with a 409 whose reason is the error's text;
+ * one already gone (another tab, a second ⌘Z) resolves as `deleted: 'gone'`.
  */
-function deleteRule(path: string): Promise<{ ok: boolean }> {
-  return requestJson(strategyUrl(path), { method: 'DELETE' })
+function deleteRule(path: string): Promise<DeleteOutcome> {
+  return requestDelete(strategyUrl(path))
 }
 
-export function deleteOpportunity(id: number): Promise<{ ok: boolean }> {
+export function deleteOpportunity(id: number): Promise<DeleteOutcome> {
   return deleteRule(`/strategies/opportunities/${id}`)
 }
 
-export function deleteAllocation(id: number): Promise<{ ok: boolean }> {
+export function deleteAllocation(id: number): Promise<DeleteOutcome> {
   return deleteRule(`/strategies/allocations/${id}`)
 }
 
-export function deleteGateSafety(id: number): Promise<{ ok: boolean }> {
+export function deleteGateSafety(id: number): Promise<DeleteOutcome> {
   return deleteRule(`/strategies/gate-safety/${id}`)
 }

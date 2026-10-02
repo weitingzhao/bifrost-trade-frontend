@@ -22,7 +22,7 @@ import { withValidation } from '@/lib/apiValidation'
 import { ExecutionsWireSchema, type ExecutionsWire } from '@/lib/schemas/positions'
 import { tradingUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
-import { httpFailure, listItems, requestJson } from '@/lib/http'
+import { httpFailure, listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
 
 /**
  * Checks the body the API sent, before it is unwrapped into `{ items }`, so a
@@ -72,7 +72,12 @@ export function createExecution(
   return requestJson(tradingUrl('/executions'), { method: 'POST', body })
 }
 
-/** Never throws for a refusal: callers read `{ ok, error }`; `error` is the server's reason. */
+/**
+ * The fill's own columns (time, price, quantity …) — the manual edit in
+ * `ExecutionFormModal`. Stays on PUT: api 0.3.0 has no PATCH for them, only for
+ * the attribution (`patchExecutionAttribution`), which every other caller uses.
+ * Never throws for a refusal: callers read `{ ok, error }`; `error` is the server's reason.
+ */
 export async function updateExecution(
   id: number,
   body: UpdateExecutionBody,
@@ -85,8 +90,56 @@ export async function updateExecution(
   }
 }
 
-export function deleteExecution(id: number): Promise<{ ok: boolean; error?: string }> {
-  return requestJson(tradingUrl(`/executions/${id}`), { method: 'DELETE' })
+/** What PATCH /executions/{id}/attribution changes; `null` clears an id, `[]` removes the split. */
+export interface ExecutionAttributionPatch {
+  strategy_opportunity_id?: number | null
+  strategy_instance_id?: number | null
+  instance_allocations?: { strategy_instance_id: number; allocated_quantity: number }[]
+}
+
+/** The execution's attribution as the PATCH answers it. */
+export interface ExecutionAttribution {
+  account_executions_id: number
+  account_id: string | null
+  strategy_opportunity_id: number | null
+  strategy_instance_id: number | null
+  instance_allocations: {
+    strategy_instance_id: number
+    allocated_quantity: number
+    strategy_opportunity_id: number | null
+    strategy_instance_label?: string
+  }[]
+}
+
+/**
+ * Attribute a fill to a trade (api 0.3.0, the successor of the attribution-only
+ * PUT). A fill is attributed one way or the other: setting an id on a fill that
+ * is split across trades is refused (409) unless the same patch sends
+ * `instance_allocations: []`, which removes the split. An instance on another
+ * account is 400. Never throws for a refusal: `{ ok: false, error }` carries
+ * the server's reason.
+ */
+export async function patchExecutionAttribution(
+  id: number,
+  patch: ExecutionAttributionPatch,
+): Promise<{ ok: true; attribution: ExecutionAttribution } | { ok: false; error: string }> {
+  try {
+    const attribution = await requestJson<ExecutionAttribution>(tradingUrl(`/executions/${id}/attribution`), {
+      method: 'PATCH',
+      body: patch,
+    })
+    return { ok: true, attribution }
+  } catch (e) {
+    return { ok: false, error: httpFailure(e) }
+  }
+}
+
+/**
+ * A fill already gone resolves as `deleted: 'gone'`. Refused with the server's
+ * reason: 409 while an option/stock link names it (unlink first).
+ */
+export function deleteExecution(id: number): Promise<DeleteOutcome> {
+  return requestDelete(tradingUrl(`/executions/${id}`))
 }
 
 export async function fetchInstancePerformance(instanceId: number): Promise<PerformanceResponse> {
@@ -240,7 +293,10 @@ export async function createOptionStockLink(body: {
   }
 }
 
-/** Never throws for a refusal: `{ ok: false, error }` with the server's reason. */
+/**
+ * Never throws for a refusal: `{ ok: false, error }` with the server's reason.
+ * A link already gone (404 naming it) is `ok` — what the caller wanted is true.
+ */
 export async function deleteOptionStockLink(
   linkId: number,
   accountId: string,
@@ -248,7 +304,7 @@ export async function deleteOptionStockLink(
   const q = new URLSearchParams()
   q.set('account_id', accountId.trim())
   try {
-    await requestJson(tradingUrl(`/executions/option-stock-links/${linkId}?${q}`), { method: 'DELETE' })
+    await requestDelete(tradingUrl(`/executions/option-stock-links/${linkId}?${q}`))
     return { ok: true }
   } catch (e) {
     return { ok: false, error: httpFailure(e) }

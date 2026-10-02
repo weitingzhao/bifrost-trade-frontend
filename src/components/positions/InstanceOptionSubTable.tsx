@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { updateExecution } from '@/api/trading'
+import { patchExecutionAttribution } from '@/api/trading'
+import { notify } from '@/lib/shellNotify'
 import {
   DenseTableBody,
   DenseTableCell,
@@ -149,11 +150,16 @@ export function InstanceOptionSubTable({
       if (id == null) return
       setSyncingExecId(id)
       try {
-        const res = await updateExecution(id, {
+        // The twin's two ids, nothing else: a fill split across trades is not
+        // un-split by a sync — the server refuses (409) and the toast says why.
+        const res = await patchExecutionAttribution(id, {
           strategy_opportunity_id: source.strategy_opportunity_id ?? null,
           strategy_instance_id: source.strategy_instance_id ?? null,
         })
-        if (!res.ok) throw new Error(res.error || 'Sync failed')
+        if (!res.ok) {
+          notify(`Attribution not synced — ${res.error}`)
+          return
+        }
         onRefreshExecs?.()
       } finally {
         setSyncingExecId(null)

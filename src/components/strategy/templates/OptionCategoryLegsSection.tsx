@@ -15,7 +15,7 @@ import {
 } from '@/components/data-display'
 import { X } from 'lucide-react'
 import type { StructureLeg, StrategyTemplateDetail, TemplateConfigOption } from '@/types/positions'
-import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
+import { SaveFeedback, type SaveFeedbackState } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategoryEmptyHintClass,
   optionCategorySectionActionsClass,
@@ -38,7 +38,7 @@ export interface OptionCategoryLegsSectionProps {
   legRoleOpts: TemplateConfigOption[]
   legDirOpts: TemplateConfigOption[]
   legOrOpts: TemplateConfigOption[]
-  feedback: { section: string; ok: boolean } | null
+  feedback: SaveFeedbackState
   onDetailChange: (d: StrategyTemplateDetail) => void
   onSave: () => void
 }

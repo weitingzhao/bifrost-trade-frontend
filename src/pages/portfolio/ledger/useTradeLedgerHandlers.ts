@@ -1,7 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
 import type { Execution } from '@/types/positions'
-import { deleteExecution, updateExecution } from '@/api/trading'
+import { deleteExecution, patchExecutionAttribution } from '@/api/trading'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { ExecutionsResponse } from '@/types/positions'
 import type { OptSortCol, StkSortCol } from '@/pages/portfolio/ledger/ledgerTypes'
@@ -87,6 +87,8 @@ export function useTradeLedgerHandlers(p: Params) {
 
   const handleDelete = async () => {
     if (!p.deleteTarget?.account_executions_id) return
+    // A refusal (409: an option/stock link names it) throws into the dialog,
+    // which stays open with the reason; a fill already gone resolves.
     await deleteExecution(p.deleteTarget.account_executions_id)
     void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
     void p.queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executionsBook })
@@ -102,7 +104,9 @@ export function useTradeLedgerHandlers(p: Params) {
     p.setSyncingId(id)
     p.setSyncError(null)
     try {
-      const result = await syncOppositeLegAttribution(updateExecution, id, source)
+      // The twin's two ids, nothing else. A fill split across trades is not
+      // un-split by a sync: the server refuses (409) and the row says why.
+      const result = await syncOppositeLegAttribution(patchExecutionAttribution, id, source)
       if (!result.ok) {
         p.setSyncError({ id, message: result.error })
         throw new Error(result.error)

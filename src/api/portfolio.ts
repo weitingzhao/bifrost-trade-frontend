@@ -8,7 +8,7 @@ import { PositionCategoriesResponseSchema } from '@/lib/schemas/portfolio'
 import { ModelAnalysisResponseSchema } from '@/lib/schemas/modelAnalysis'
 import { portfolioUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
-import { listItems, requestJson } from '@/lib/http'
+import { HttpError, listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
 
 const validateCategories = withValidation<PositionCategoriesResponse>(
   PositionCategoriesResponseSchema, 'portfolio/position-categories'
@@ -49,9 +49,15 @@ export function updatePositionCategory(id: number, name: string): Promise<{ ok: 
   return patchPositionCategory(id, { name })
 }
 
+/**
+ * Change the fields sent (api 0.3.0): `name` is required (never null),
+ * `description` / `sort_order` take `null` to clear, a blank text is 400 and
+ * `sort_order` must be an integer. A missing category is 404. The answer keeps
+ * `ok: true` for one release beside the row.
+ */
 export function patchPositionCategory(
   id: number,
-  patch: { name?: string; description?: string; sort_order?: number },
+  patch: { name?: string; description?: string | null; sort_order?: number | null },
 ): Promise<{ ok: boolean; error?: string }> {
   return requestJson(portfolioUrl(`/position-categories/${id}`), { method: 'PATCH', body: patch })
 }
@@ -76,23 +82,42 @@ export function putMarketStreamsSymbolOrder(
   })
 }
 
-export function deletePositionCategory(id: number): Promise<{ ok: boolean; error?: string }> {
-  return requestJson(portfolioUrl(`/position-categories/${id}`), { method: 'DELETE' })
+/** A category already gone resolves as `deleted: 'gone'` (`ok` is not in that answer). */
+export async function deletePositionCategory(id: number): Promise<{ ok: boolean; error?: string } & DeleteOutcome> {
+  return { ok: true, ...(await requestDelete(portfolioUrl(`/position-categories/${id}`))) }
 }
 
 /**
  * Register an instrument's class (core 0.27.0, design Rev .119) — stock, fixed
  * income or cash-like, once per instrument, every account at once. `null`
  * drops the registration and the instrument reads as a stock again.
+ *
+ * api 0.3.0 (TD-15): a change to a registered instrument is a PATCH of the
+ * class alone, so the stored note is kept; PATCH never inserts, so the first
+ * registration stays on PUT — and so does a change the page thought was
+ * registered but the server answers 404 for (another tab dropped it). A drop
+ * of a class that is already gone resolves `ok`.
  */
-export function setInstrumentClass(
+export async function setInstrumentClass(
   contractKey: string,
   instrumentClass: 'stock' | 'fixed_income' | 'cash_like' | null,
+  registered: boolean,
 ): Promise<{ ok: boolean; error?: string }> {
   const url = portfolioUrl(`/instrument-classes/${encodeURIComponent(contractKey)}`)
-  return instrumentClass == null
-    ? requestJson(url, { method: 'DELETE' })
-    : requestJson(url, { method: 'PUT', body: { instrument_class: instrumentClass } })
+  if (instrumentClass == null) {
+    await requestDelete(url)
+    return { ok: true }
+  }
+  const body = { instrument_class: instrumentClass }
+  if (registered) {
+    try {
+      await requestJson(url, { method: 'PATCH', body })
+      return { ok: true }
+    } catch (e) {
+      if (!(e instanceof HttpError && e.status === 404)) throw e
+    }
+  }
+  return requestJson(url, { method: 'PUT', body })
 }
 
 export function tagPosition(req: TagPositionRequest): Promise<{ ok: boolean; error?: string }> {

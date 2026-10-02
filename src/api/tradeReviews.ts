@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { withValidation } from '@/lib/apiValidation'
 import { strategyUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
+import { requestJson } from '@/lib/http'
 
 export const TradeReviewSchema = z
   .object({
@@ -29,7 +30,8 @@ const validateList = withValidation<z.infer<typeof TradeReviewsResponseSchema>>(
 export interface TradeReviewPatch {
   tags_added?: string[]
   tags_dropped?: string[]
-  note?: string
+  /** `null` clears the note (the replaced PUT could not). */
+  note?: string | null
   /** true stamps the review done; false reopens it. */
   reviewed?: boolean
 }
@@ -40,15 +42,15 @@ export async function fetchTradeReviews(): Promise<TradeReview[]> {
   return validateList(await res.json()).items
 }
 
-export async function saveTradeReview(instanceId: number, patch: TradeReviewPatch): Promise<TradeReview> {
-  const res = await tradeFetch(strategyUrl(`/strategies/reviews/${instanceId}`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patch),
+/**
+ * PATCH the fields sent (api 0.3.0) — an upsert: the first write creates the
+ * review row. Tag lists replace the stored lists whole; `reviewed: true`
+ * stamps (the first stamp is kept), `false` reopens. Answers the review row.
+ */
+export function saveTradeReview(instanceId: number, patch: TradeReviewPatch): Promise<TradeReview> {
+  return requestJson(strategyUrl(`/strategies/reviews/${instanceId}`), {
+    method: 'PATCH',
+    body: patch,
+    schema: TradeReviewSchema,
   })
-  if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { detail?: string }
-    throw new Error(body.detail ?? `PUT /strategies/reviews/${instanceId}: ${res.status}`)
-  }
-  return TradeReviewSchema.parse(await res.json())
 }

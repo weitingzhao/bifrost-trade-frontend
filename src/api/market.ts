@@ -3,6 +3,7 @@ import type {
   QuotesResponse,
   BenchmarkResponse,
   WatchlistResponse,
+  WatchlistItem,
   BarsResponse,
   BarStatsResponse,
 } from '@/types/market'
@@ -11,7 +12,7 @@ import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/mar
 import { openSseWithBackoff } from '@/lib/sse'
 import { marketUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
-import { listItems, requestJson } from '@/lib/http'
+import { listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
 
 const validateQuotes = withValidation<QuotesResponse>(QuotesResponseSchema, 'market/quotes')
 const validateWatchlist = withValidation<WatchlistResponse>(WatchlistResponseSchema, 'market/watchlist')
@@ -142,12 +143,29 @@ export function postWatchlistItem(item: {
   category_id?: number | null
 }): Promise<{ ok: boolean; error?: string }> {
   // A refusal throws with the server's reason: a real status from api 0.2.2,
-  // 200 `{ ok: false, error }` before it.
+  // 200 `{ ok: false, error }` before it. From api 0.3.0 a contract already on
+  // the list changes only the fields sent here; nothing else is reset.
   return requestJson(marketUrl('/watchlist'), { method: 'POST', body: item })
 }
 
-export function deleteWatchlistItem(contractKey: string): Promise<{ ok: boolean; error?: string }> {
-  return requestJson(marketUrl(`/watchlist?contract_key=${encodeURIComponent(contractKey)}`), { method: 'DELETE' })
+/** The fields PATCH /watchlist/{contract_key} changes; `null` clears (`category_id: null` = the None list). */
+export interface WatchlistItemPatch {
+  category_id?: number | null
+  optionable?: boolean
+  display_label?: string | null
+}
+
+/**
+ * Change the fields sent on a watched contract (api 0.3.0). Never inserts:
+ * a contract not on the list is 404 with the reason. Answers the row.
+ */
+export function patchWatchlistItem(contractKey: string, patch: WatchlistItemPatch): Promise<WatchlistItem> {
+  return requestJson(marketUrl(`/watchlist/${encodeURIComponent(contractKey)}`), { method: 'PATCH', body: patch })
+}
+
+/** A contract already off the list resolves as `deleted: 'gone'`. */
+export function deleteWatchlistItem(contractKey: string): Promise<DeleteOutcome> {
+  return requestDelete(marketUrl(`/watchlist?contract_key=${encodeURIComponent(contractKey)}`))
 }
 
 function parseQuoteFromSSE(raw: string): QuoteItem | null {

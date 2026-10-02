@@ -69,11 +69,16 @@ describe('trading executions', () => {
   })
 
   it('a refused delete shows the error from either release', async () => {
-    const msg = 'Delete failed (account_executions_id missing or database error).'
-    fetchMock.mockResolvedValueOnce(failure(404, msg))
+    const msg = 'This execution is in 1 option/stock link; unlink it first.'
+    fetchMock.mockResolvedValueOnce(failure(409, msg))
     await expect(deleteExecution(7)).rejects.toThrow(msg)
     fetchMock.mockResolvedValueOnce(ok({ ok: false, error: msg }))
     await expect(deleteExecution(7)).rejects.toThrow(msg)
+  })
+
+  it('a delete of a fill already gone (api 0.3.0: 404 naming it) resolves as gone', async () => {
+    fetchMock.mockResolvedValueOnce(failure(404, 'No execution -42.'))
+    await expect(deleteExecution(-42)).resolves.toEqual({ deleted: 'gone', detail: 'No execution -42.' })
   })
 
   it('a gateway failure on fetch is the server reason, not a bare 503', async () => {

@@ -21,7 +21,7 @@ import type {
   TemplateConfigOption,
 } from '@/types/positions'
 import { fetchMetaKeyOptions, fetchMetaValueOptions } from '@/api/strategy'
-import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
+import { SaveFeedback, type SaveFeedbackState } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategoryEmptyHintClass,
   optionCategorySectionBodyCompactClass,
@@ -43,7 +43,7 @@ import { OptionCategoryMetaColgroup } from '@/components/strategy/templates/opti
 export interface OptionCategoryMetaTableProps {
   detail: StrategyTemplateDetail
   paramKindOpts: TemplateConfigOption[]
-  feedback: { section: string; ok: boolean } | null
+  feedback: SaveFeedbackState
   onDetailChange: (d: StrategyTemplateDetail) => void
   onSave: () => void
 }

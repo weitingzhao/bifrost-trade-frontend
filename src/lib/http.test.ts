@@ -3,7 +3,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
-import { HttpError, listItems, readJsonResponse, requestJson } from '@/lib/http'
+import { HttpError, listItems, readJsonResponse, requestDelete, requestJson } from '@/lib/http'
 import { ResearchHttpError, researchHttpStatus } from '@/lib/auth/researchHttpError'
 import { closeTradeOperatorDialog, tradeOperatorStore } from '@/lib/auth/tradeOperator'
 
@@ -201,5 +201,61 @@ describe('listItems', () => {
     expect(listItems({ data: [3] }, 'rows')).toEqual([])
     expect(listItems(null, 'rows')).toEqual([])
     expect(listItems({ items: 'not a list' })).toEqual([])
+  })
+})
+
+describe('requestDelete (strict deletes, api 0.3.0)', () => {
+  const fetchMock = vi.fn()
+
+  beforeEach(() => {
+    fetchMock.mockReset()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    tradeOperatorStore.clear()
+    closeTradeOperatorDialog()
+  })
+
+  it('returns the body with how it was deleted', async () => {
+    fetchMock.mockResolvedValue(json({ deleted: 'hard', strategy_plan_id: 12, ok: true }))
+    await expect(requestDelete('/api/strategy/strategies/plans/12')).resolves.toEqual({
+      deleted: 'hard',
+      strategy_plan_id: 12,
+      ok: true,
+    })
+    expect(initOf(fetchMock.mock.calls[0]).method).toBe('DELETE')
+  })
+
+  it('keeps a soft delete soft', async () => {
+    fetchMock.mockResolvedValue(json({ deleted: 'soft', strategy_structure_id: 3, ok: true }))
+    expect((await requestDelete('/api/strategy/strategies/structures/3')).deleted).toBe('soft')
+  })
+
+  it('reads a 404 that names the row as already gone', async () => {
+    fetchMock.mockResolvedValue(json({ detail: 'No plan 12.', ok: false, error: 'No plan 12.' }, 404))
+    await expect(requestDelete('/api/strategy/strategies/plans/12')).resolves.toEqual({
+      deleted: 'gone',
+      detail: 'No plan 12.',
+    })
+  })
+
+  it("still throws on a route miss (FastAPI's bare Not Found) or a 404 with no reason", async () => {
+    fetchMock.mockResolvedValueOnce(json({ detail: 'Not Found' }, 404))
+    expect((await caught(requestDelete('/api/strategy/nope'))).status).toBe(404)
+    fetchMock.mockResolvedValueOnce(new Response('', { status: 404 }))
+    expect((await caught(requestDelete('/api/strategy/nope'))).status).toBe(404)
+  })
+
+  it('throws the 409 and 503 reasons', async () => {
+    fetchMock.mockResolvedValueOnce(json({ detail: 'It has 2 trades; a rule with trades stays.', ok: false }, 409))
+    const e = await caught(requestDelete('/api/strategy/strategies/opportunities/5'))
+    expect(e.status).toBe(409)
+    expect(e.message).toBe('It has 2 trades; a rule with trades stays.')
+    fetchMock.mockResolvedValueOnce(
+      json({ detail: 'Cannot write strategy instance 7: the Golden Source is unreachable.', ok: false }, 503),
+    )
+    await expect(requestDelete('/api/strategy/strategies/instances/7')).rejects.toThrow('Golden Source is unreachable')
   })
 })

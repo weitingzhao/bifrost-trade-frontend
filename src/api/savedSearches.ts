@@ -6,7 +6,7 @@
 import { withValidation } from '@/lib/apiValidation'
 import { strategyUrl } from '@/lib/devApiUrl'
 import { SavedSearchesResponseSchema, type SavedSearchesResponse } from '@/lib/schemas/savedSearch'
-import { requestJson, type RequestJsonOptions } from '@/lib/http'
+import { requestDelete, requestJson, type DeleteOutcome, type RequestJsonOptions } from '@/lib/http'
 
 const validate = withValidation<SavedSearchesResponse>(SavedSearchesResponseSchema, 'strategy/saved-searches')
 
@@ -26,6 +26,7 @@ export async function createSavedSearch(body: {
   return request('/strategies/saved-searches', { method: 'POST', body })
 }
 
-export async function deleteSavedSearch(id: number): Promise<{ ok: boolean }> {
-  return request(`/strategies/saved-searches/${id}`, { method: 'DELETE' })
+/** A saved search already gone resolves as `deleted: 'gone'`; 503 when the store is unreachable. */
+export function deleteSavedSearch(id: number): Promise<DeleteOutcome> {
+  return requestDelete(strategyUrl(`/strategies/saved-searches/${id}`))
 }

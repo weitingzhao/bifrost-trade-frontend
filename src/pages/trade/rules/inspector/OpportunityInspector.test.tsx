@@ -19,11 +19,11 @@ const DETAIL: StrategyOpportunityDetail = {
   entry_conditions: [{ condition_type: 'dte_min', value_text: null, value_numeric: 21 }],
 }
 
-const putOpportunity = vi.fn<(id: number, body: unknown) => Promise<{ ok: boolean }>>(() => Promise.resolve({ ok: true }))
+const patchOpportunity = vi.fn<(id: number, body: unknown) => Promise<{ ok: boolean }>>(() => Promise.resolve({ ok: true }))
 
 vi.mock('@/api/strategy', () => ({
   fetchOpportunityDetail: () => Promise.resolve(DETAIL),
-  putOpportunity: (id: number, body: unknown) => putOpportunity(id, body),
+  patchOpportunity: (id: number, body: unknown) => patchOpportunity(id, body),
 }))
 
 vi.mock('@/hooks/useStrategies', () => ({
@@ -56,7 +56,7 @@ function mount(tradeCount = 0) {
 }
 
 describe('OpportunityInspector', () => {
-  beforeEach(() => putOpportunity.mockClear())
+  beforeEach(() => patchOpportunity.mockClear())
 
   it('writes the whole opportunity, conditions included, after an edit', async () => {
     const { onSaved } = mount()
@@ -64,8 +64,8 @@ describe('OpportunityInspector', () => {
     expect(screen.getByText('Opportunity · Example Put Harvest')).toBeTruthy()
     expect((screen.getByLabelText('Symbols') as HTMLInputElement).value).toBe('AAA · BBB')
     fireEvent.change(name, { target: { value: 'Renamed' } })
-    await waitFor(() => expect(putOpportunity).toHaveBeenCalledTimes(1), { timeout: 2000 })
-    expect(putOpportunity).toHaveBeenCalledWith(41, {
+    await waitFor(() => expect(patchOpportunity).toHaveBeenCalledTimes(1), { timeout: 2000 })
+    expect(patchOpportunity).toHaveBeenCalledWith(41, {
       name: 'Renamed',
       strategy_structure_id: 3,
       default_gate_safety_strategy_id: null,
@@ -83,7 +83,7 @@ describe('OpportunityInspector', () => {
     fireEvent.change(name, { target: { value: '  ' } })
     expect(screen.getByText(/A name is required/)).toBeTruthy()
     await new Promise((r) => setTimeout(r, 700))
-    expect(putOpportunity).not.toHaveBeenCalled()
+    expect(patchOpportunity).not.toHaveBeenCalled()
   })
 
   it('keeps separators while typing symbols', async () => {
@@ -92,8 +92,8 @@ describe('OpportunityInspector', () => {
     fireEvent.change(sym, { target: { value: 'AAA · BBB · ' } })
     expect(sym.value).toBe('AAA · BBB · ')
     fireEvent.change(sym, { target: { value: 'AAA · BBB · ccc' } })
-    await waitFor(() => expect(putOpportunity).toHaveBeenCalledTimes(1), { timeout: 2000 })
-    expect((putOpportunity.mock.calls[0][1] as { symbols: string[] }).symbols).toEqual(['AAA', 'BBB', 'CCC'])
+    await waitFor(() => expect(patchOpportunity).toHaveBeenCalledTimes(1), { timeout: 2000 })
+    expect((patchOpportunity.mock.calls[0][1] as { symbols: string[] }).symbols).toEqual(['AAA', 'BBB', 'CCC'])
   })
 
   it('refuses Delete while the opportunity has trades', async () => {

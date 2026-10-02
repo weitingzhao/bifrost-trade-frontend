@@ -1,6 +1,9 @@
 import type { ExecutionsResponse } from '@/types/positions'
 
-/** PUT /executions returns { ok, error } and does not throw on a failed body. */
+/**
+ * `patchExecutionAttribution` (PATCH /executions/{id}/attribution, api 0.3.0)
+ * returns { ok, error } and does not throw on a refusal.
+ */
 
 export function errorFromUpdateResult(res: { ok: boolean; error?: string }): string | null {
   if (res.ok) return null

@@ -7,7 +7,13 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/api/strategy', () => ({ patchStrategyInstance: vi.fn(async () => ({ ok: true })) }))
+vi.mock('@/api/strategy', () => ({
+  // api 0.3.0 answers the instance row (no `ok`).
+  patchStrategyInstance: vi.fn(async (id?: number, body?: { label?: string | null }) => ({
+    strategy_instance_id: id,
+    label: body?.label ?? null,
+  })),
+}))
 
 import { patchStrategyInstance } from '@/api/strategy'
 import { InstanceAdminRow, type InstanceAdminReading } from './InstanceAdminRow'
@@ -50,14 +56,13 @@ describe('InstanceAdminRow · rename', () => {
     expect(patch).toHaveBeenCalledWith(142, { label: 'MU 45d put' })
   })
 
-  it('refuses to un-name an instance rather than reporting a write that never happens', async () => {
-    // Measured on DEV: the endpoint skips a null label and answers ok, so a
-    // clear would print "saved" over an unchanged row.
+  it('takes the name off with label: null — a blank string is refused by api 0.3.0', async () => {
     renderRow(RUNNING)
     await userEvent.clear(screen.getByLabelText('Trade label'))
-    expect(screen.getByRole('button', { name: 'Apply' }).hasAttribute('disabled')).toBe(true)
-    expect(screen.getByText(/cannot be taken off from here/)).toBeTruthy()
-    expect(patch).not.toHaveBeenCalled()
+    expect(screen.getByText(/takes the name off/)).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Apply' }))
+    expect(patch).toHaveBeenCalledWith(142, { label: null })
+    expect(await screen.findByText(/saved — the label only/)).toBeTruthy()
   })
 
   it('goes quiet again after a save — the new name is what the server holds', async () => {

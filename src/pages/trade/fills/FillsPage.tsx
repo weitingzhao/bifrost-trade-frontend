@@ -30,7 +30,7 @@ import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { useExecutionsAll } from '@/hooks/useExecutions'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
 import { useQueryClient } from '@tanstack/react-query'
-import { updateExecution } from '@/api/trading'
+import { patchExecutionAttribution } from '@/api/trading'
 import { useOpportunities, useStrategyInstances } from '@/hooks/useStrategies'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
 import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
@@ -161,11 +161,13 @@ export default function FillsPage() {
     setLinking(true)
     setLinkError(null)
     try {
-      const res = await updateExecution(selectedRow.execId, {
+      // The two ids alone. A fill split across trades is refused (409) with the
+      // server's reason rather than un-split from a candidate pick.
+      const res = await patchExecutionAttribution(selectedRow.execId, {
         strategy_opportunity_id: chosen.opportunityId,
         strategy_instance_id: chosen.instanceId,
       })
-      if (!res.ok) throw new Error(res.error ?? 'The link was refused')
+      if (!res.ok) throw new Error(res.error)
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
       setSelectedKey(null)
       setPickedCandidate(null)

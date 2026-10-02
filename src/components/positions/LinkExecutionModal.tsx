@@ -19,10 +19,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { fetchStrategyInstances, createStrategyInstance } from '@/api/strategy'
-import { updateExecution } from '@/api/trading'
+import { patchExecutionAttribution } from '@/api/trading'
 import { ExecSourceBadge, SegmentControl } from '@/components/data-display'
 import {
+  assignAttributionPatch,
   defaultOpenedAtFromExecution,
+  executionSplitCount,
   executionQtyLabel,
   filterInstancesForOpportunity,
   filterOpportunitiesBySymbol,
@@ -106,6 +108,7 @@ function LinkExecutionModalBody({
 
   const ex = context?.execution
   const execId = context?.account_executions_id
+  const splitCount = executionSplitCount(ex)
   const peerPicks = context?.peer_instance_picks
 
   const activeOpportunities = useMemo(
@@ -175,11 +178,8 @@ function LinkExecutionModalBody({
         finalInstanceId = instRaw && Number.isFinite(Number(instRaw)) ? Number(instRaw) : null
       }
 
-      const updateRes = await updateExecution(execId, {
-        strategy_opportunity_id: opp,
-        strategy_instance_id: finalInstanceId,
-      })
-      if (!updateRes.ok) throw new Error(updateRes.error ?? 'Update failed')
+      const updateRes = await patchExecutionAttribution(execId, assignAttributionPatch(ex, opp, finalInstanceId))
+      if (!updateRes.ok) throw new Error(updateRes.error)
       onSuccess()
       onClose()
     } catch (err) {
@@ -417,6 +417,13 @@ function LinkExecutionModalBody({
               </div>
             )}
           </div>
+        ) : null}
+
+        {splitCount > 0 ? (
+          <p className={linkExecHintClass}>
+            This fill is split across {splitCount} {splitCount === 1 ? 'trade' : 'trades'}. Saving assigns the whole
+            fill here and removes that split.
+          </p>
         ) : null}
 
         {error ? (

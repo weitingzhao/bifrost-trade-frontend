@@ -16,7 +16,7 @@ import {
   type StrategyPlan,
   type StrategyPlansResponse,
 } from '@/lib/schemas/strategyPlan'
-import { requestJson, type RequestJsonOptions } from '@/lib/http'
+import { requestDelete, requestJson, type DeleteOutcome, type RequestJsonOptions } from '@/lib/http'
 
 const validatePlans = withValidation<StrategyPlansResponse>(
   StrategyPlansResponseSchema,
@@ -78,11 +78,17 @@ export async function createStrategyPlan(
   return planRequest('/strategies/plans', { method: 'POST', body: payload })
 }
 
+/**
+ * PATCH the fields sent (api 0.3.0). A draft takes any field; an intended plan
+ * — expired or not — takes `expires_at` alone (Extend 7 days, Re-issue
+ * intent), anything else is 409 with the reason. `null` clears a nullable
+ * field, a blank text is 400. Answers the plan as GET /plans/{id} does.
+ */
 export async function updateStrategyPlan(
   id: number,
   payload: Partial<PlanWriteBody>,
-): Promise<{ ok: boolean }> {
-  return planRequest(`/strategies/plans/${id}`, { method: 'PUT', body: payload })
+): Promise<StrategyPlan> {
+  return validatePlan(await planRequest(`/strategies/plans/${id}`, { method: 'PATCH', body: payload }))
 }
 
 export async function intendStrategyPlan(id: number): Promise<{ ok: boolean }> {
@@ -104,7 +110,8 @@ export async function cancelStrategyPlan(id: number): Promise<{ ok: boolean }> {
 }
 
 /** Remove a draft (core 0.28.0). The desk calls this only once its Undo toast
- *  has closed (design Rev .138); anything past draft is refused with the reason. */
-export async function deleteStrategyPlan(id: number): Promise<{ ok: boolean }> {
-  return planRequest(`/strategies/plans/${id}`, { method: 'DELETE' })
+ *  has closed (design Rev .138); anything past draft is refused with the reason
+ *  (409). A plan already gone resolves as `deleted: 'gone'`. */
+export function deleteStrategyPlan(id: number): Promise<DeleteOutcome> {
+  return requestDelete(strategyUrl(`/strategies/plans/${id}`))
 }

@@ -8,6 +8,7 @@ import {
   funnelTiles,
   ivTile,
   IV_UNRANKED,
+  labWatchlistItem,
   loopBriefFor,
   pinTile,
   sameSetupTile,
@@ -253,5 +254,16 @@ describe('the funnel', () => {
     // The leash ambering is the record being under the line, not a fault.
     expect(tiles[3].warn).toBe(true)
     expect(tiles[3].src).toContain('71 candidates')
+  })
+})
+
+describe('labWatchlistItem (the queue\'s Watch button)', () => {
+  it('posts the canonical stock key, not STK:SYM', () => {
+    expect(labWatchlistItem('zzq')).toEqual({
+      contract_key: 'ZZQ|STK|||',
+      symbol: 'ZZQ',
+      sec_type: 'STK',
+      source: 'lab-today',
+    })
   })
 })

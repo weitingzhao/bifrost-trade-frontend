@@ -11,7 +11,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { InspectorField } from '@bifrost/ui'
 import { Plus, X } from 'lucide-react'
-import { fetchOpportunityDetail, putOpportunity } from '@/api/strategy'
+import { fetchOpportunityDetail, patchOpportunity } from '@/api/strategy'
 import { SegmentControl } from '@/components/data-display'
 import { opportunityDetailKey } from '@/components/strategy/opportunityCopy'
 import {
@@ -115,7 +115,7 @@ function OpportunityFields({
     initial,
     undoKey: `opp:${id}`,
     ready: (d) => opportunityFormProblem(d) == null,
-    write: (d) => putOpportunity(id, opportunityFormToPayload(d)),
+    write: (d) => patchOpportunity(id, opportunityFormToPayload(d)),
     onSaved: () => {
       void qc.invalidateQueries({ queryKey: opportunityDetailKey(id) })
       onSaved()

@@ -140,3 +140,31 @@ export function filterInstancesForOpportunity(
 
 /** Re-exported for the callers that already import it from here. */
 export { extractUnderlyingRootSymbol }
+
+/** How many trades this fill is split across (its `instance_allocations`). */
+export function executionSplitCount(ex: Execution | null | undefined): number {
+  return ex?.instance_allocations?.length ?? 0
+}
+
+/**
+ * The attribution PATCH Assign strategy sends (api 0.3.0). The modal moves the
+ * whole fill to one opportunity / trade, so a fill that is split across trades
+ * also sends `instance_allocations: []` — the split is replaced, and the modal
+ * says so before Save. Without it the server refuses (409): a fill is
+ * attributed one way or the other. A fill with no split sends the ids alone.
+ */
+export function assignAttributionPatch(
+  ex: Execution | null | undefined,
+  opportunityId: number,
+  instanceId: number | null,
+): {
+  strategy_opportunity_id: number
+  strategy_instance_id: number | null
+  instance_allocations?: []
+} {
+  return {
+    strategy_opportunity_id: opportunityId,
+    strategy_instance_id: instanceId,
+    ...(executionSplitCount(ex) > 0 ? { instance_allocations: [] as [] } : {}),
+  }
+}

@@ -18,12 +18,10 @@
  * persist would make the daemon's book and the hand book disagree about which
  * instances are live.
  *
- * The same reason is why an emptied box is not a write. Measured on DEV
- * 2026-09-18: the endpoint skips any field that arrives null (`if label is not
- * None`) and answers `{ok: true}` when that leaves nothing to update, so a
- * clear returns success and changes nothing. Renaming is what the design asks
- * for and what this row does; un-naming is refused out loud instead of being
- * reported as saved.
+ * An emptied box takes the name off. Until api 0.3.0 it could not (measured on
+ * DEV 2026-09-18: the endpoint skipped a null label and answered ok), so the
+ * row refused it out loud; the PATCH now clears on `{label: null}` and refuses
+ * a blank string, so a clear sends null and the trade reads as `#id` again.
  *
  * D10 is untouched — a label is a name in the rulebook, not an order.
  */
@@ -52,8 +50,7 @@ const STATUS_OPTIONS = [
 const IDLE_NOTE =
   'Rename writes the label and nothing else. running / closed is read from this trade’s fills — a close is never written here, and paused has nowhere to be stored.'
 
-const CANNOT_CLEAR_NOTE =
-  'A name cannot be taken off from here: the endpoint reads an empty label as “leave it alone” and would answer saved without writing. Type the name you want instead.'
+const CLEAR_NOTE = 'Apply takes the name off — the trade reads as its number again.'
 
 export function InstanceAdminRow({ instance }: { instance: InstanceAdminReading }) {
   const queryClient = useQueryClient()
@@ -67,14 +64,15 @@ export function InstanceAdminRow({ instance }: { instance: InstanceAdminReading 
   const next = draft.trim()
   const changed = next !== stored.trim()
   const clearing = changed && next === ''
-  const canApply = changed && !clearing
+  const canApply = changed
 
   async function apply() {
     if (!canApply || saving) return
     setSaving(true)
     setError(null)
     try {
-      await patchStrategyInstance(instance.id, { label: next })
+      // A blank label is refused (400); null is how a name is taken off.
+      await patchStrategyInstance(instance.id, { label: clearing ? null : next })
       await queryClient.invalidateQueries({ queryKey: ['strategy', 'instances'] })
       setStored(next)
       setSaved(true)
@@ -117,7 +115,7 @@ export function InstanceAdminRow({ instance }: { instance: InstanceAdminReading 
         disabled={!canApply || saving}
         title={
           clearing
-            ? 'The endpoint cannot clear a label'
+            ? 'PATCH the label to null — the name comes off'
             : changed
               ? 'PATCH the label — nothing else is written'
               : 'The label is unchanged'
@@ -128,12 +126,12 @@ export function InstanceAdminRow({ instance }: { instance: InstanceAdminReading 
       <span
         className={cn(
           'text-dense-caption leading-normal text-pretty',
-          error ? 'text-danger' : clearing ? 'text-warning' : saved ? 'text-success' : 'text-muted-foreground',
+          error ? 'text-danger' : saved ? 'text-success' : 'text-muted-foreground',
         )}
       >
         {error ??
           (clearing
-            ? CANNOT_CLEAR_NOTE
+            ? CLEAR_NOTE
             : saved
               ? 'saved — the label only; the daemon is unaffected.'
               : IDLE_NOTE)}

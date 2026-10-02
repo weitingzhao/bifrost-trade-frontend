@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  assignAttributionPatch,
+  executionSplitCount,
   extractUnderlyingRootSymbol,
   filterOpportunitiesBySymbol,
   getUnderlyingSymbolFromExecution,
@@ -104,5 +106,30 @@ describe('filterOpportunitiesBySymbol', () => {
       10,
     ])
     expect(filterOpportunitiesBySymbol(books, 'AAPL')).toHaveLength(0)
+  })
+})
+
+describe('assignAttributionPatch (api 0.3.0 attribution PATCH)', () => {
+  const fill = { account_executions_id: 41 } as Execution
+
+  it('a fill with no split sends the two ids alone', () => {
+    expect(assignAttributionPatch(fill, 3, 30)).toEqual({ strategy_opportunity_id: 3, strategy_instance_id: 30 })
+    expect(assignAttributionPatch(null, 3, null)).toEqual({ strategy_opportunity_id: 3, strategy_instance_id: null })
+  })
+
+  it('a split fill moved to one trade also sends instance_allocations: [] — the split is replaced', () => {
+    const split = {
+      ...fill,
+      instance_allocations: [
+        { strategy_instance_id: 30, allocated_quantity: 1 },
+        { strategy_instance_id: 31, allocated_quantity: 1 },
+      ],
+    } as Execution
+    expect(executionSplitCount(split)).toBe(2)
+    expect(assignAttributionPatch(split, 3, 30)).toEqual({
+      strategy_opportunity_id: 3,
+      strategy_instance_id: 30,
+      instance_allocations: [],
+    })
   })
 })

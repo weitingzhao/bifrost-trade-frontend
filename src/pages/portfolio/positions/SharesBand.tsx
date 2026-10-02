@@ -147,8 +147,10 @@ export function SharesBand({
     const next = cls === 'stock' || cls === 'fixed_income' || cls === 'cash_like' ? cls : null
     const key = r.contractKey || r.symbol
     setPendingClass((m) => ({ ...m, [key]: next }))
+    // Registered: PATCH the class (the note stays). Not yet: PUT registers it.
+    // Unregister of one already gone resolves — it reads as a stock either way.
     void write(
-      () => setInstrumentClass(key, next),
+      () => setInstrumentClass(key, next, r.registered),
       () =>
         setPendingClass((m) => {
           const rest = { ...m }

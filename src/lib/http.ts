@@ -177,6 +177,42 @@ export async function requestJson<T>(url: string, opts: RequestJsonOptions<T> = 
 }
 
 /**
+ * What a strict DELETE answered (api 0.3.0, TD-15): the server's body —
+ * `deleted: 'hard'` (the row is gone) or `'soft'` (deactivated, e.g. a
+ * structure) plus the route's own keys — or `deleted: 'gone'` when the row
+ * was not there to delete.
+ */
+export type DeleteOutcome = {
+  deleted: 'hard' | 'soft' | 'gone'
+  /** The server's 404 reason (`No plan 12.`) when `deleted` is `'gone'`. */
+  detail?: string
+} & Record<string, unknown>
+
+/** FastAPI's answer for a path no route matches — not a missing row. */
+const ROUTE_MISS = 'Not Found'
+
+/**
+ * DELETE through `requestJson`. Every strict delete answers a missing row with
+ * 404 and the row's name (`No template 7.`): what the caller wanted is already
+ * true, so that resolves as `deleted: 'gone'` instead of throwing — a delete
+ * sent twice, or after another tab, is not an error to show. A 404 with no
+ * reason or FastAPI's bare `Not Found` (no such route, a proxy) still throws,
+ * and so do 409 (in use, with the server's reason) and 503 (store unreachable).
+ */
+export async function requestDelete(url: string, opts: ReadJsonOptions<unknown> & { signal?: AbortSignal } = {}): Promise<DeleteOutcome> {
+  try {
+    const body = await requestJson<unknown>(url, { ...opts, method: 'DELETE' })
+    const rec = isRecord(body) ? body : {}
+    return { ...rec, deleted: rec.deleted === 'soft' ? 'soft' : 'hard' }
+  } catch (e) {
+    if (e instanceof HttpError && e.status === 404 && e.detail && e.detail !== ROUTE_MISS) {
+      return { deleted: 'gone', detail: e.detail }
+    }
+    throw e
+  }
+}
+
+/**
  * The message of a failed request, for wrappers whose callers read
  * `{ ok: false, error }` instead of catching. Anything that is not an
  * `HttpError` (the network is down, a bug) is not a refusal and is rethrown.

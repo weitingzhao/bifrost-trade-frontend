@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import type { StrategyTemplateDetail } from '@/types/positions'
-import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
+import { SaveFeedback, type SaveFeedbackState } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategorySectionActionsClass,
   optionCategorySectionBodyCompactClass,
@@ -12,7 +12,7 @@ import { optionCategoryTextareaClass } from '@/components/strategy/templates/opt
 
 export interface OptionCategoryCharacteristicsSectionProps {
   detail: StrategyTemplateDetail
-  feedback: { section: string; ok: boolean } | null
+  feedback: SaveFeedbackState
   onDetailChange: (d: StrategyTemplateDetail) => void
   onSave: () => void
 }

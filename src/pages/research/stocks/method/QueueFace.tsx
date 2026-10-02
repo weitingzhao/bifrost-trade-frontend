@@ -61,6 +61,7 @@ import {
   gradeVariant,
   ivTile,
   IV_UNRANKED,
+  labWatchlistItem,
   loopBriefFor,
   mom20From,
   perSymbolHits,
@@ -256,7 +257,7 @@ export function QueueFace({ head }: { head: MethodHead }) {
   const [watchNote, setWatchNote] = useState<string | null>(null)
   const addToWatchlist = (sym: string) => {
     setWatchNote('adding…')
-    postWatchlistItem({ contract_key: `STK:${sym}`, symbol: sym, sec_type: 'STK', source: 'lab-today' })
+    postWatchlistItem(labWatchlistItem(sym))
       .then((r) => setWatchNote(r.ok ? `${sym} added to the watchlist.` : (r.error ?? 'refused')))
       .catch((e) => setWatchNote(`watchlist: ${(e as Error).message}`))
   }

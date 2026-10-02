@@ -34,6 +34,8 @@ import { OptionCategoryLegsSection } from './OptionCategoryLegsSection'
 import { OptionCategoryMetaTable } from './OptionCategoryMetaTable'
 import { OptionCategoryCharacteristicsSection } from './OptionCategoryCharacteristicsSection'
 import { optionCategoryDetailContentClass } from './optionCategoryUi'
+import type { SaveFeedbackState } from './SaveFeedback'
+import { normalTemplateCode, templateInfoPatch } from './templateInfoPatch'
 import type { MetaParamPayload, StrategyTemplateDetail, TemplateLegPayload } from '@/types/positions'
 
 export type TemplateSection = 'info' | 'legs' | 'params' | 'chars' | 'create'
@@ -53,9 +55,11 @@ export function TemplateEditor({
    * save clears it so the refetched row becomes the truth again.
    */
   const [edited, setEdited] = useState<{ id: number; value: StrategyTemplateDetail } | null>(null)
-  const [feedback, setFeedback] = useState<{ section: string; ok: boolean } | null>(null)
+  const [feedback, setFeedback] = useState<SaveFeedbackState>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  /** Why the server refused the delete (a 409 names the structures still using it). */
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const { data: detailData, isLoading } = useTemplateDetail(templateId)
   const { data: dimsData } = useStrategyDims()
@@ -66,9 +70,11 @@ export function TemplateEditor({
     if (templateId != null) setEdited({ id: templateId, value: next })
   }
 
-  function flash(section: TemplateSection, ok: boolean) {
-    setFeedback({ section, ok })
-    window.setTimeout(() => setFeedback((f) => (f?.section === section ? null : f)), 2500)
+  /** "Saved" fades; a refusal stays, with the server's reason, until the next save. */
+  function flash(section: TemplateSection, ok: boolean, error?: unknown) {
+    const message = error == null ? undefined : error instanceof Error ? error.message : String(error)
+    setFeedback({ section, ok, message })
+    if (ok) window.setTimeout(() => setFeedback((f) => (f?.section === section && f.ok ? null : f)), 2500)
   }
 
   async function afterWrite(section: TemplateSection, id: number) {
@@ -82,30 +88,16 @@ export function TemplateEditor({
 
   async function saveInfo() {
     if (!detail) return
-    const code = detail.template_code.trim().toLowerCase().replace(/\s+/g, '_')
     // The server keys templates by code, and a code it would reject is caught
     // here rather than after a round trip.
-    if (!code || !/^[a-z][a-z0-9_]*$/.test(code)) return flash('info', false)
+    const code = normalTemplateCode(detail.template_code)
+    if (!code) return flash('info', false, 'the template code must be lower snake case, starting with a letter')
     try {
-      await updateTemplate(detail.strategy_template_id, {
-        template_code: code,
-        display_name: detail.display_name,
-        dim_direction: detail.dim_direction,
-        dim_structure: detail.dim_structure,
-        dim_coverage: detail.dim_coverage,
-        dim_risk: detail.dim_risk,
-        dim_volatility: detail.dim_volatility,
-        dim_time: detail.dim_time,
-        explanation: detail.explanation,
-        typical_use: detail.typical_use,
-        example: detail.example,
-        nature: detail.nature,
-        sort_order: detail.sort_order,
-        is_active: detail.is_active,
-      })
+      // PATCH (api 0.3.0): an emptied text goes as null — a blank one is refused.
+      await updateTemplate(detail.strategy_template_id, templateInfoPatch(detail, code))
       await afterWrite('info', detail.strategy_template_id)
-    } catch {
-      flash('info', false)
+    } catch (e) {
+      flash('info', false, e)
     }
   }
 
@@ -121,8 +113,8 @@ export function TemplateEditor({
       }))
       await replaceTemplateLegs(detail.strategy_template_id, legs)
       await afterWrite('legs', detail.strategy_template_id)
-    } catch {
-      flash('legs', false)
+    } catch (e) {
+      flash('legs', false, e)
     }
   }
 
@@ -138,8 +130,8 @@ export function TemplateEditor({
       }))
       await replaceTemplateParams(detail.strategy_template_id, items)
       await afterWrite('params', detail.strategy_template_id)
-    } catch {
-      flash('params', false)
+    } catch (e) {
+      flash('params', false, e)
     }
   }
 
@@ -148,22 +140,25 @@ export function TemplateEditor({
     try {
       await replaceTemplateCharacteristics(detail.strategy_template_id, detail.characteristics ?? [])
       await afterWrite('chars', detail.strategy_template_id)
-    } catch {
-      flash('chars', false)
+    } catch (e) {
+      flash('chars', false, e)
     }
   }
 
   async function reallyDelete() {
     if (!detail) return
     setDeleting(true)
+    setDeleteError(null)
     try {
+      // A template already gone (another tab) resolves too: what was asked is true.
       await deleteTemplate(detail.strategy_template_id)
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategy.templates.root })
       setEdited(null)
       setConfirmDelete(false)
       onDeleted?.()
-    } catch {
-      flash('info', false)
+    } catch (e) {
+      // In use (409) names the structures; the dialog stays open with it.
+      setDeleteError(e instanceof Error ? e.message : String(e))
     } finally {
       setDeleting(false)
     }
@@ -214,11 +209,21 @@ export function TemplateEditor({
       <ConfirmDialog
         open={confirmDelete}
         title="Delete template"
-        message={`Delete template “${detail.display_name}”? This fails if any structure references it — which is the point: a structure with no template has no dimensions.`}
+        message={`Delete template “${detail.display_name}”? This fails if any structure references it, deactivated ones included — which is the point: a structure with no template has no dimensions.`}
+        bodyExtra={
+          deleteError ? (
+            <p role="alert" className="m-0 text-sm text-destructive text-pretty">
+              {deleteError}
+            </p>
+          ) : null
+        }
         confirmLabel="Confirm delete"
         confirming={deleting}
         onConfirm={() => void reallyDelete()}
-        onCancel={() => setConfirmDelete(false)}
+        onCancel={() => {
+          setDeleteError(null)
+          setConfirmDelete(false)
+        }}
       />
     </div>
   )

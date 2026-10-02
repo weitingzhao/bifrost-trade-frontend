@@ -21,6 +21,7 @@ import type { OrchestrationStatus } from '@/api/research/orchestration'
 import type { CandidateOutcomeSummary } from '@/api/research/candidateOutcome'
 import type { UniverseReach } from '@/api/research/universeReach'
 import type { IvPercentileRow } from '@/types/ivRadar'
+import { stockWatchlistContractKey } from '@/components/research/watchlistContractKey'
 
 export type BatchState = 'loading' | 'live' | 'empty' | 'failed'
 
@@ -466,4 +467,19 @@ export function ivTile(
     measured: false,
     title: 'The chain is collected and today\'s IV is read; a 1y percentile needs a year of it.',
   }
+}
+
+/**
+ * What the queue's Watch button posts: the stock under its canonical key
+ * (`SYM|STK|||`). It used to post `STK:SYM`, which the store has no `|` to
+ * recognise in and kept as `STK:SYM|STK|||` — a second row beside the real one.
+ */
+export function labWatchlistItem(symbol: string): {
+  contract_key: string
+  symbol: string
+  sec_type: 'STK'
+  source: 'lab-today'
+} {
+  const sym = symbol.trim().toUpperCase()
+  return { contract_key: stockWatchlistContractKey(sym), symbol: sym, sec_type: 'STK', source: 'lab-today' }
 }

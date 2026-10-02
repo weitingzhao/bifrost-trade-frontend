@@ -63,7 +63,7 @@ import {
 import { SegmentControl } from '@/components/data-display'
 import { useGateSafety } from '@/hooks/useStrategies'
 import { useWatchlist } from '@/hooks/useWatchlist'
-import { createOpportunity, putOpportunity, fetchOpportunityDetail, fetchStructures } from '@/api/strategy'
+import { createOpportunity, patchOpportunity, fetchOpportunityDetail, fetchStructures } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
 import type { StrategyStructure } from '@/types/strategy'
@@ -245,7 +245,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
     })
     try {
       if (isEdit && initial) {
-        await putOpportunity(initial.strategy_opportunity_id, body)
+        await patchOpportunity(initial.strategy_opportunity_id, body)
         await queryClient.invalidateQueries({
           queryKey: ['strategy', 'opportunity-detail', initial.strategy_opportunity_id],
         })

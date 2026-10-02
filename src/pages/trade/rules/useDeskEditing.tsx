@@ -27,7 +27,7 @@ import {
   deleteOpportunity,
   deleteStrategyInstance,
   fetchOpportunityDetail,
-  putOpportunity,
+  patchOpportunity,
   setActiveAllocation,
 } from '@/api/strategy'
 import type { ChainData } from '@/hooks/useRulesChain'
@@ -207,12 +207,14 @@ export function useDeskEditing({
   // ── Done at once, undone by the toast ───────────────────────────────────
   const setOppActive = async (id: number, on: boolean) => {
     try {
-      const d = await fetchOpportunityDetail(id)
-      await putOpportunity(id, opportunityBody(d, { is_active: on }))
+      // PATCH the one flag (api 0.3.0) — the rest of the rule is not resent;
+      // Undo puts back the flag as it was read, not as the toggle assumed.
+      const was = (await fetchOpportunityDetail(id)).is_active
+      const d = await patchOpportunity(id, { is_active: on })
       refresh()
       notify(`${on ? 'Activated' : 'Deactivated'} ${d.name}${on ? '' : ' — no new trades; running ones keep going'}`, {
         undo: () =>
-          void putOpportunity(id, opportunityBody(d))
+          void patchOpportunity(id, { is_active: was })
             .then(refresh)
             .catch((e: unknown) => notify(`Not undone — ${said(e)}`)),
       })

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import type { StrategyDimRow, StrategyTemplateDetail } from '@/types/positions'
 import { DIM_TYPES, DIM_LABELS, DIM_ICONS } from '@/components/strategy/templates/constants'
-import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
+import { SaveFeedback, type SaveFeedbackState } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategorySectionActionsClass,
   optionCategorySectionBodyClass,
@@ -29,7 +29,7 @@ import {
 export interface OptionCategoryTemplateInfoSectionProps {
   detail: StrategyTemplateDetail
   dimsByType: Record<string, StrategyDimRow[]>
-  feedback: { section: string; ok: boolean } | null
+  feedback: SaveFeedbackState
   onDetailChange: (d: StrategyTemplateDetail) => void
   onSave: () => void
   onDelete: () => void

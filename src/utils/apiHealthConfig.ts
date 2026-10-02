@@ -55,8 +55,10 @@ export const ACCOUNT_SERVICES: ServiceDef[] = [
 ]
 
 export const RESEARCH_SERVICES: ServiceDef[] = [
-  { key: 'research', name: 'Research', base: domainOrigin('research'), port: '8773', description: 'SEPA screener & backtest',  healthPath: '/health' },
-  { key: 'market',   name: 'Market',   base: domainOrigin('market'),   port: '8772', description: 'Real-time quotes SSE',      healthPath: '/health' },
+  // TD-39: the Trade API's research app, not the Research engine (/api/plugin/research,
+  // bifrost-research); it serves no backtest.
+  { key: 'research', name: 'Trade research', base: domainOrigin('research'), port: '8773', description: 'Screener, option discovery, Greeks, data readiness and feedback', healthPath: '/health' },
+  { key: 'market',   name: 'Market',   base: domainOrigin('market'),   port: '8772', description: 'Quotes SSE, bars and the watchlist',      healthPath: '/health' },
 ]
 
 export const ALL_SERVICES = [...ARCH_SERVICES, ...ACCOUNT_SERVICES, ...RESEARCH_SERVICES]

@@ -122,6 +122,8 @@ export const QUERY_KEYS = {
     /** Rev .110: one review record per instance, read by Queue, Trade review and the Review badge. */
     reviews: ['strategy', 'reviews'] as const,
   },
+  /** Rev .139: a page's scope kept under a name, listed in the sidebar. */
+  savedSearches: ['saved-searches'] as const,
   strategyPlans: {
     /** Every plan query hangs off this, so one write refreshes them all. */
     root: ['strategy-plans'] as const,

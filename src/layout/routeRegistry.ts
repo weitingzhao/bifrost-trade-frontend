@@ -148,7 +148,9 @@ const OWNED_BY_ROW: ReadonlyArray<{ prefix: string; row: string }> = [
  * A `pin:` id is an identity, not a path, so it is matched as one.
  */
 export function matchActiveRow(item: ShellNavItem, activeId: string): boolean {
-  if (activeId.startsWith('pin:')) return item.id === activeId
+  // A pinned page or a saved search lights its own row only (Rev .139: the
+  // saved search, not the page row, while its scope is the page's).
+  if (activeId.startsWith('pin:') || activeId.startsWith('saved:')) return item.id === activeId
   return shellNavMatchByPathPrefix(item, activeId)
 }
 

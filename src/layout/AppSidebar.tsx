@@ -16,13 +16,17 @@ import { useResearchNavGroup } from './useResearchNavGroup'
 import { NavBadge } from './NavBadge'
 import { useReviewBadge } from '@/hooks/useTradeReviews'
 import { useMemo } from 'react'
-import { Pin as PinIcon } from 'lucide-react'
+import { ListFilter as SavedIcon, Pin as PinIcon } from 'lucide-react'
 import { SHELF_GROUP, isStalePin, usePins } from '@/lib/pins'
 import { TradeSidebarFooter } from './TradeSidebarFooter'
+import { useSavedSearches } from '@/hooks/useSavedSearches'
+import { matchSavedSearch, savedSearchTo } from '@/lib/savedSearch'
 import { navFilterExtra } from './navFilterExtra'
 
 /** The Trade review row, where the review badge sits. */
 const REVIEW_TRADE_PATH = '/review/trade'
+/** The sidebar group the saved searches sit in (Rev .139). */
+const SAVED_GROUP = 'Saved searches'
 
 function renderInAppLink({
   item,
@@ -67,6 +71,9 @@ export function AppSidebar() {
   const inSystem = isSystemRoute(location.pathname)
   const order = useNavOrder()
   const { pins } = usePins()
+  const savedQuery = useSavedSearches()
+  const saved = useMemo(() => savedQuery.data?.items ?? [], [savedQuery.data])
+  const savedHere = matchSavedSearch(saved, location.pathname, location.search)
   // Research is re-laid for the seat; then the six groups take the design's
   // order (`loop` rests: Home, then the lifecycle chain) and their icons
   // become the lifecycle numerals — in loop order the numerals draw the
@@ -119,12 +126,27 @@ export function AppSidebar() {
         })),
       })
     }
+    // Saved searches (design Rev .139, Finder's smart folders) follow the
+    // pins on every page: a page with a scope, under the name it was saved by.
+    if (saved.length > 0) {
+      marked.push({
+        label: SAVED_GROUP,
+        icon: SavedIcon,
+        defaultOpen: true,
+        items: saved.map((s) => ({
+          id: `saved:${s.preference_saved_search_id}`,
+          label: s.label,
+          to: savedSearchTo(s),
+          icon: SavedIcon,
+        })),
+      })
+    }
     return marked
     // `hereLayer` is read from the route, so the route is a dependency. It was
     // missing, and every navigation that does not reload — which is all of
     // them — left the previous page's numeral lit. Invisible in a
     // full-page check, obvious the moment you click through the tree.
-  }, [inSystem, research.group, order, pins, location.pathname])
+  }, [inSystem, research.group, order, pins, saved, location.pathname])
 
   // The field finds every page, not only this tree's: the toolbar's equipment
   // and the other tree ride along as extra entries, placed where they live.
@@ -157,9 +179,11 @@ export function AppSidebar() {
       // rows for one page reads as a bug. Unpinned, it falls back to the
       // section that owns it (an objective lights Autopilot).
       activeId={
-        pins.some((p) => p.to === location.pathname)
-          ? `pin:${location.pathname}`
-          : navRowFor(location.pathname)
+        savedHere
+          ? `saved:${savedHere.preference_saved_search_id}`
+          : pins.some((p) => p.to === location.pathname)
+            ? `pin:${location.pathname}`
+            : navRowFor(location.pathname)
       }
       matchActive={matchActiveRow}
       // The three-kind row grammar (design §5a, 2026-09-20). It replaces

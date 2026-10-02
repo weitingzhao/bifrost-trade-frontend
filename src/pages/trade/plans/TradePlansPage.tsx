@@ -34,6 +34,10 @@ import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 import { deleteStrategyPlan, fetchStrategyPlan } from '@/api/strategyPlans'
+import { createSavedSearch, deleteSavedSearch } from '@/api/savedSearches'
+import { useSavedSearches } from '@/hooks/useSavedSearches'
+import { matchSavedSearch } from '@/lib/savedSearch'
+import { Button } from '@/components/ui/button'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { notify } from '@/lib/shellNotify'
@@ -283,6 +287,66 @@ export default function TradePlansPage() {
     [hostAccountId, secondaryAccountId],
   )
   const suggest = useCallback((q: string) => suggestPlanTokens(plans, q), [plans])
+
+  /**
+   * Save as list (design Rev .139): the scope bar's state under a name the
+   * page makes up — tokens · symbol · account · status, e.g. "AMD · all" —
+   * kept server-side and listed in the sidebar. On a saved scope the button
+   * is Remove list. Both go through the toast and ⌘Z.
+   */
+  const savedSearches = useSavedSearches()
+  const scopeSearch = useMemo(() => {
+    const p = new URLSearchParams()
+    if (filter !== 'open') p.set('status', filter)
+    if (!acctScope.host) p.set('host', '0')
+    if (!acctScope.secondary) p.set('sec', '0')
+    if (symbol) p.set('symbol', symbol)
+    const q = serializePlanTokens(tokens)
+    if (q) p.set('q', q)
+    return p.toString()
+  }, [filter, acctScope, symbol, tokens])
+  const savedHere = matchSavedSearch(savedSearches.data?.items ?? [], '/trade/plans', scopeSearch)
+  const listLabel = [
+    ...tokens.map((t) => t.value),
+    ...(symbol ? [symbol] : []),
+    ...(!acctScope.host && acctScope.secondary ? ['Secondary'] : acctScope.host && !acctScope.secondary ? ['HOST'] : []),
+    PLAN_FILTER_LABELS[filter].toLowerCase(),
+  ].join(' · ')
+  const refreshSaved = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.savedSearches })
+  const failed = (what: string) => (e: unknown) =>
+    notify(`${what} — ${e instanceof Error ? e.message : String(e)}`)
+  async function saveList() {
+    const label = listLabel
+    try {
+      const { preference_saved_search_id: id } = await createSavedSearch({
+        route: '/trade/plans',
+        label,
+        state: { search: scopeSearch },
+      })
+      await refreshSaved()
+      notify(`Saved “${label}” to the sidebar`, {
+        undo: () => void deleteSavedSearch(id).then(refreshSaved).catch(failed('The list was not removed')),
+      })
+    } catch (e) {
+      failed('The list was not saved')(e)
+    }
+  }
+  async function removeList() {
+    if (!savedHere) return
+    const it = savedHere
+    try {
+      await deleteSavedSearch(it.preference_saved_search_id)
+      await refreshSaved()
+      notify(`Removed “${it.label}” from Saved searches`, {
+        undo: () =>
+          void createSavedSearch({ route: it.route, label: it.label, state: { search: it.state_json.search ?? '' } })
+            .then(refreshSaved)
+            .catch(failed('The list was not restored')),
+      })
+    } catch (e) {
+      failed('The list was not removed')(e)
+    }
+  }
   const setTokens = (next: SearchToken[]) => setParam('q', serializePlanTokens(next))
 
   function closePanel() {
@@ -366,6 +430,29 @@ export default function TradePlansPage() {
           className="w-64 min-w-40"
         />
         <ToolbarClear resets={resets} onClear={clearScope} />
+        {savedHere ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 text-dense-meta"
+            title={`Remove “${savedHere.label}” from Saved searches — Undo on the toast or ⌘Z`}
+            onClick={() => void removeList()}
+          >
+            Remove list
+          </Button>
+        ) : resets.length > 0 ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 text-dense-meta"
+            title={`Keep this scope in the sidebar as “${listLabel}”`}
+            onClick={() => void saveList()}
+          >
+            Save as list
+          </Button>
+        ) : null}
         <span data-sr-tb="meta">
           <span className="font-mono font-semibold text-foreground">{rows.length}</span> of {plans.length} plans
         </span>

@@ -119,7 +119,7 @@ export function OptGroupRow({
           const tSide = (t.side ?? '').toUpperCase()
           const isBuy = tSide === 'BUY' || tSide === 'BOT' || tSide === 'B'
           const isSyncing = oid != null && syncingId === oid
-          const q = Math.abs(t.quantity ?? t.qty)
+          const q = Math.abs(t.quantity)
           const p = Number(t.price) || 0
           const c = Number(t.commission) || 0
           const fillPnl = isBuy ? -(q * p * 100 - c) : q * p * 100 - c

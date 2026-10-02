@@ -79,6 +79,7 @@ import type { ObligationsSort } from '@/utils/obligationsRoom'
 import type { Execution, OpenOptionPosition } from '@/types/positions'
 import type { RiskProfile } from '@/utils/riskProfile'
 import { BACKING_TARGET_ANCHOR, backingHref, isBackingTarget } from '@/utils/backingAnchors'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 /** The page's own URL view (Rev .75): the expiry. Account and symbol are the shell's. */
 const POSITIONS_VIEW_PARAMS = ['expiry'] as const
@@ -321,7 +322,7 @@ export default function PositionsPage() {
       const ex = faceExec
       if (!ex) return
       if (mode === 'edit') setEditExecConfirm({ open: true, exec: ex })
-      else if (mode === 'close') setCloseTarget({ exec: ex, netQty: Math.abs(Number(ex.quantity ?? ex.qty ?? 0)) })
+      else if (mode === 'close') setCloseTarget({ exec: ex, netQty: Math.abs(Number(ex.quantity ?? 0)) })
       else if (mode === 'delete') setDeleteTarget(ex)
       else if (ex.account_executions_id != null) setLinkContext({ account_executions_id: ex.account_executions_id, execution: ex })
     },
@@ -357,7 +358,7 @@ export default function PositionsPage() {
     : null
 
   function refreshExecData() {
-    queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
     queryClient.invalidateQueries({ queryKey: ['trading', 'position-attribution'] })
   }
   function requestEditExec(ex: Execution) {

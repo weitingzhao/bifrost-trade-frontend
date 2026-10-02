@@ -1,36 +1,43 @@
+import type { ExecutionSourceScope } from '@/types/trading'
+
 /** Centralised TanStack Query key factory.
  *  Use spread to build full keys: [...QUERY_KEYS.trading.performance, params]
+ *  A resource's keys hang off one prefix, so invalidating the prefix reaches
+ *  every reading of it — a second literal for the same data is a cache that
+ *  writes never refresh.
  */
 export const QUERY_KEYS = {
   market: {
     quotesLive: ['market', 'quotes-live'] as const,
     quotesSnapshot: ['market', 'quotes-snapshot'] as const,
-    systemMessages: ['market', 'system-messages'] as const,
     benchmark: (symbol: string) => ['market', 'benchmark', symbol] as const,
+    barStats: (symbol: string) => ['market', 'bar-stats', symbol] as const,
   },
   trading: {
     performance: ['trading', 'performance'] as const,
+    /** Every executions read sits under this — a fill write invalidates it once. */
     executions: ['trading', 'executions'] as const,
-    executionsBook: ['trading', 'executions-book'] as const,
+    executionsByScope: (scope: ExecutionSourceScope) => ['trading', 'executions', 'scope', scope] as const,
+    /** The Ledger's performance-book reads; nested so a link write elsewhere reaches them. */
+    executionsBook: ['trading', 'executions', 'book'] as const,
     optStockLinks: ['trading', 'opt-stock-links'] as const,
     transactions: ['trading', 'transactions'] as const,
   },
   monitor: {
     status: ['monitor', 'status'] as const,
     openOrders: ['monitor', 'open-orders'] as const,
-    heartbeat: ['monitor', 'heartbeat'] as const,
+    /** `/api/messages` and its stream — the monitor serves them. */
+    systemMessages: ['monitor', 'system-messages'] as const,
   },
   portfolio: {
-    accounts: ['portfolio', 'accounts'] as const,
-    positions: ['portfolio', 'positions'] as const,
     modelAnalysis: ['portfolio', 'model-analysis'] as const,
     positionCategories: ['portfolio', 'position-categories'] as const,
     marketStreamsSymbolOrder: ['portfolio', 'market-streams-symbol-order'] as const,
+    shortLegs: ['portfolio', 'short-legs'] as const,
   },
   research: {
     greeks: ['research', 'greeks'] as const,
     screener: ['research', 'screener'] as const,
-    stockData: ['research', 'stock-data'] as const,
     watchlist: ['research', 'watchlist'] as const,
     performanceKelly: ['research', 'performance-kelly'] as const,
     universeReach: ['research', 'universe-reach'] as const,
@@ -42,25 +49,12 @@ export const QUERY_KEYS = {
       summary: ['research', 'candidate-outcome', 'summary'] as const,
       rows: ['research', 'candidate-outcome', 'rows'] as const,
     },
-    stockScreener: {
-      criteriaStats: ['research', 'stock-screener', 'criteria-stats'] as const,
-      fundDistSymbols: (n: number) => ['research', 'stock-screener', 'fund-dist', n] as const,
-      techDistSymbols: (n: number) => ['research', 'stock-screener', 'tech-dist', n] as const,
-      readinessSnapshot: (key: string) => ['research', 'stock-screener', 'snapshot', key] as const,
-    },
-    stockInspector: (symbol: string) => ['research', 'stock-inspector', symbol] as const,
     tickerOverview: (symbol: string) => ['research', 'ticker-overview', symbol] as const,
     fundConditions: (symbol: string) => ['research', 'fundamental-conditions', symbol] as const,
     techConditions: (symbol: string) => ['research', 'technical-conditions', symbol] as const,
     fundRaw: (symbol: string) => ['research', 'fund-raw', symbol] as const,
     statements: (symbol: string) => ['research', 'statements', symbol] as const,
     optionPcr: (symbol: string) => ['research', 'option-pcr', symbol] as const,
-    barStats: (symbol: string) => ['market', 'bar-stats', symbol] as const,
-    discovery: {
-      snapshots: ['research', 'discovery', 'snapshots'] as const,
-      ivTerm: ['research', 'discovery', 'iv-term'] as const,
-      maxPain: ['research', 'discovery', 'max-pain'] as const,
-    },
     ivRadar: ['research', 'iv-radar'] as const,
     scan: ['research', 'scan'] as const,
     alerts: ['research', 'alerts'] as const,
@@ -79,8 +73,6 @@ export const QUERY_KEYS = {
     volSurface: {
       fit: (symbol: string, tradeDate: string) =>
         ['research', 'vol-surface', 'fit', symbol, tradeDate] as const,
-      termStructure: (symbol: string, tradeDate: string) =>
-        ['research', 'vol-surface', 'term', symbol, tradeDate] as const,
       residuals: (symbol: string, tradeDate: string, expiry: string) =>
         ['research', 'vol-surface', 'residuals', symbol, tradeDate, expiry] as const,
       skewExtremes: (limit: number) => ['research', 'vol-surface', 'skew-extremes', limit] as const,
@@ -89,7 +81,6 @@ export const QUERY_KEYS = {
     },
     hypothesis: {
       list: ['research', 'hypothesis', 'list'] as const,
-      active: ['research', 'hypothesis', 'active'] as const,
       summaryActive: ['research', 'hypothesis', 'summary-active'] as const,
       byId: (id: string) => ['research', 'hypothesis', 'by-id', id] as const,
     },
@@ -99,8 +90,6 @@ export const QUERY_KEYS = {
     objectives: (params?: { status?: string }) => ['research', 'objectives', params ?? {}] as const,
     objectiveRuns: (params?: { status?: string; objective_id?: string }) =>
       ['research', 'objective-runs', params ?? {}] as const,
-    orderIntents: (params?: { status?: string }) =>
-      ['research', 'order-intents', params ?? {}] as const,
     backtest: {
       runs: ['research', 'backtest', 'runs'] as const,
       runsByHypothesis: (hid: string) =>
@@ -114,8 +103,16 @@ export const QUERY_KEYS = {
     instanceDetail: ['strategy', 'instance-detail'] as const,
     opportunities: ['strategy', 'opportunities'] as const,
     structures: ['strategy', 'structures'] as const,
-    structureDetail: ['strategy', 'structure-detail'] as const,
-    gates: ['strategy', 'gates'] as const,
+    /** One structure's record — under `structures`, so a structure write reaches it. */
+    structure: (id: number) => ['strategy', 'structures', 'detail', id] as const,
+    templates: {
+      root: ['strategy', 'templates'] as const,
+      /** `active` is what a structure can be put on; `all` is the whole catalogue. */
+      list: (scope: 'active' | 'all') => ['strategy', 'templates', 'list', scope] as const,
+      detail: (id: number | null) => ['strategy', 'templates', 'detail', id] as const,
+    },
+    /** The six-dimension dictionary the catalogue and the gates both read. */
+    dims: ['strategy', 'dims'] as const,
     gateSafety: ['strategy', 'gate-safety'] as const,
     allocations: ['strategy', 'allocations'] as const,
     winRate: ['strategy', 'win-rate'] as const,
@@ -127,8 +124,8 @@ export const QUERY_KEYS = {
   strategyPlans: {
     /** Every plan query hangs off this, so one write refreshes them all. */
     root: ['strategy-plans'] as const,
-    list: ['strategy-plans', 'list'] as const,
-    detail: ['strategy-plans', 'detail'] as const,
+    list: (f: { status?: string; symbol?: string; accountId?: string; limit?: number } = {}) =>
+      ['strategy-plans', 'list', f.status ?? null, f.symbol ?? null, f.accountId ?? null, f.limit ?? null] as const,
   },
   settings: {
     apiHealth: ['settings', 'api-health'] as const,

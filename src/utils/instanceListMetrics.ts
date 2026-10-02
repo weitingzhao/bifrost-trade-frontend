@@ -70,7 +70,7 @@ export function computeInstancePositionStatus(executions: Execution[]): Instance
   for (const [, trades] of byKey) {
     let net = 0
     for (const t of trades) {
-      const q = Math.abs(Number(t.quantity ?? t.qty) || 0)
+      const q = Math.abs(Number(t.quantity) || 0)
       if (q < NET_QTY_EPS) continue
       const side = (t.side ?? '').toUpperCase()
       if (side === 'BUY' || side === 'BOT' || side === 'B') net += q
@@ -89,7 +89,7 @@ export function underlyingCostSellOptUsd(executions: Execution[]): number {
     if (!isExecutionSellSide(e)) continue
     const strike = executionStrikeUsd(e)
     if (strike == null || strike <= 0) continue
-    const q = Math.abs(Number(e.quantity ?? e.qty) || 0)
+    const q = Math.abs(Number(e.quantity) || 0)
     if (q <= 0) continue
     total += strike * q * 100
   }
@@ -390,7 +390,7 @@ export function computeInstanceMaxRiskUsd(sliced: Execution[], underlyingFallbac
     if (right == null || strike <= 0) continue
     const key = `${strike}|${right}`
     const side = (e.side ?? '').toUpperCase()
-    const qty = Math.abs(Number(e.quantity ?? e.qty) || 0)
+    const qty = Math.abs(Number(e.quantity) || 0)
     if (qty <= 0) continue
     const price = Number(e.price) || 0
     const signedQty = side === 'BUY' || side === 'BOT' || side === 'B' ? qty : -qty

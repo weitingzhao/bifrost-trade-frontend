@@ -237,7 +237,7 @@ export default function ExpirationPage() {
           source_ref: `expiration:${leg.expiry}`,
         })
       }
-      await queryClient.invalidateQueries({ queryKey: ['strategy', 'plans'] })
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategyPlans.root })
       navigate('/trade/plans?status=draft')
     } catch (e) {
       setCreateError(e instanceof Error ? e.message : String(e))

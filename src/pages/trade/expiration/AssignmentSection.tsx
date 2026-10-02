@@ -24,7 +24,7 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fetchCorporateActions, type CorporateActionRow } from '@/api/marketData/corporateActions'
 import { useAssignmentLegs } from '@/hooks/useAssignmentLegs'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { fmtIsoDateToken } from '@/lib/format'
@@ -51,7 +51,7 @@ const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, t
 
 export function AssignmentSection() {
   const { attrQuery, legs, totals, thin, loading } = useAssignmentLegs()
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
 
   // One read per name carrying a short call, on the key Home · Today uses —

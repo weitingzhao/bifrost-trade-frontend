@@ -69,9 +69,9 @@ describe('bookedHistory', () => {
 
   it('pairs an option book entry with a same-day stock leg as an assignment', () => {
     const h = bookedHistory([
-      row({ symbol: 'XYZ   261016C00050000', trade_date: '2026-10-16', expiry: '20261016', side: 'Buy', qty: 2, option_right: 'C' }),
-      row({ symbol: 'XYZ', sec_type: 'STK', trade_date: '2026-10-16', side: 'Sell', qty: 200 }),
-      row({ symbol: 'ABC   261016P00020000', trade_date: '2026-10-16', expiry: '20261016', side: 'Buy', qty: 1 }),
+      row({ symbol: 'XYZ   261016C00050000', trade_date: '2026-10-16', expiry: '20261016', side: 'Buy', quantity: 2, option_right: 'C' }),
+      row({ symbol: 'XYZ', sec_type: 'STK', trade_date: '2026-10-16', side: 'Sell', quantity: 200 }),
+      row({ symbol: 'ABC   261016P00020000', trade_date: '2026-10-16', expiry: '20261016', side: 'Buy', quantity: 1 }),
       row({ symbol: 'ABC', sec_type: 'STK', transaction_type: 'ExchTrade', trade_date: '2026-10-16' }),
     ])
     expect(h.optionLegs).toBe(2)
@@ -83,7 +83,7 @@ describe('bookedHistory', () => {
   it('marks a stock leg booked before the option’s expiry as early', () => {
     const h = bookedHistory([
       row({ symbol: 'XYZ   261016C00050000', trade_date: '2026-10-01', expiry: '20261016', side: 'Buy' }),
-      row({ symbol: 'XYZ', sec_type: 'STK', trade_date: '2026-10-01', side: 'Sell', qty: 100 }),
+      row({ symbol: 'XYZ', sec_type: 'STK', trade_date: '2026-10-01', side: 'Sell', quantity: 100 }),
     ])
     expect(h.events[0].early).toBe(true)
   })

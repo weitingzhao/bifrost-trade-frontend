@@ -14,7 +14,6 @@
 import { useMemo, useState } from 'react'
 import { usePageViewState } from '@/lib/pageView'
 import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { ViewState } from '@bifrost/ui'
@@ -27,8 +26,8 @@ import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
-import { fetchStrategyPlans } from '@/api/strategyPlans'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useStrategyPlans } from '@/hooks/useStrategyPlans'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
 import { useQueryClient } from '@tanstack/react-query'
 import { updateExecution } from '@/api/trading'
@@ -44,6 +43,7 @@ import {
   scopeFills,
   summarize,
 } from './fillsModel'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 const PAGE_LEAD =
   'The work side of the ledger: what IB is working right now, what came back, and which fills still need a home. Nothing here sends an order — TWS does that, and the reserved Send action lives on Plans, not wired.'
@@ -86,7 +86,7 @@ export default function FillsPage() {
    */
   const [show, setShow] = usePageViewState('execFilter', 'needs')
   const preview = usePreviewState()
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
   const ordersQuery = useOpenOrders()
   const freshnessQuery = useExecutionsFreshness()
   const flexQuery = useFlexCoverageFreshness()
@@ -98,10 +98,7 @@ export default function FillsPage() {
   const [pickedCandidate, setPickedCandidate] = useState<number | null>(null)
   const [linking, setLinking] = useState(false)
   const [linkError, setLinkError] = useState<string | null>(null)
-  const plansQuery = useQuery({
-    queryKey: ['strategy', 'plans', 'fills'],
-    queryFn: () => fetchStrategyPlans({}),
-  })
+  const plansQuery = useStrategyPlans()
 
   const plans = useMemo(() => plansQuery.data?.items ?? [], [plansQuery.data?.items])
   const all = useMemo(
@@ -169,7 +166,7 @@ export default function FillsPage() {
         strategy_instance_id: chosen.instanceId,
       })
       if (!res.ok) throw new Error(res.error ?? 'The link was refused')
-      await queryClient.invalidateQueries({ queryKey: ['trading', 'executions'] })
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
       setSelectedKey(null)
       setPickedCandidate(null)
     } catch (e) {

@@ -21,7 +21,7 @@ import { ToolbarClear, ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
 import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { rowSelectProps } from '@/hooks/useRowLink'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
@@ -258,7 +258,7 @@ export default function ReviewQueuePage() {
     return by
   }, [trades, marks.paths])
   // The same cache entry useReviewTrades reads — held here for its §17 state.
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
   const instances = useMemo(() => {
     const items = execQuery.data?.items ?? []
     const scoped = accountFilter === 'all' ? items : items.filter((e) => (e.account_id ?? '').trim() === accountFilter)

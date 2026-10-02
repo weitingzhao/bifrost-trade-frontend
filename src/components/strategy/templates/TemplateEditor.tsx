@@ -24,13 +24,9 @@ import {
   replaceTemplateParams,
   updateTemplate,
 } from '@/api/strategy'
-import {
-  TEMPLATES_KEY,
-  TEMPLATE_DETAIL_KEY,
-  useOptionCategoryDims,
-  useOptionCategoryFormOptions,
-  useOptionCategoryTemplateDetail,
-} from '@/hooks/useOptionCategory'
+import { QUERY_KEYS } from '@/constants/queryKeys'
+import { useOptionCategoryFormOptions, useStrategyDims } from '@/hooks/useOptionCategory'
+import { useTemplateDetail } from '@/hooks/useStructureManagement'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { OptionCategoryTemplateInfoSection } from './OptionCategoryTemplateInfoSection'
@@ -38,7 +34,7 @@ import { OptionCategoryLegsSection } from './OptionCategoryLegsSection'
 import { OptionCategoryMetaTable } from './OptionCategoryMetaTable'
 import { OptionCategoryCharacteristicsSection } from './OptionCategoryCharacteristicsSection'
 import { optionCategoryDetailContentClass } from './optionCategoryUi'
-import type { MetaParamPayload, StrategyTemplateDetail, StructureTypeLegPayload } from '@/types/positions'
+import type { MetaParamPayload, StrategyTemplateDetail, TemplateLegPayload } from '@/types/positions'
 
 export type TemplateSection = 'info' | 'legs' | 'params' | 'chars' | 'create'
 
@@ -61,8 +57,8 @@ export function TemplateEditor({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  const { data: detailData, isLoading } = useOptionCategoryTemplateDetail(templateId)
-  const { data: dimsData } = useOptionCategoryDims()
+  const { data: detailData, isLoading } = useTemplateDetail(templateId)
+  const { data: dimsData } = useStrategyDims()
   const { paramKinds, legRoles, legDirs, legOrs } = useOptionCategoryFormOptions()
 
   const detail = edited?.id === templateId ? edited.value : (detailData ?? null)
@@ -76,8 +72,10 @@ export function TemplateEditor({
   }
 
   async function afterWrite(section: TemplateSection, id: number) {
-    await queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY })
-    await queryClient.invalidateQueries({ queryKey: [...TEMPLATE_DETAIL_KEY, id] })
+    // The list the catalogue picks from and this template's detail — the same
+    // detail the Structure inspector around this editor reads.
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategy.templates.list('active') })
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategy.templates.detail(id) })
     setEdited(null)
     flash(section, true)
   }
@@ -114,7 +112,7 @@ export function TemplateEditor({
   async function saveLegs() {
     if (!detail) return
     try {
-      const legs: StructureTypeLegPayload[] = (detail.legs ?? []).map((l, i) => ({
+      const legs: TemplateLegPayload[] = (detail.legs ?? []).map((l, i) => ({
         role: l.role,
         direction: l.direction,
         option_right: l.option_right == null ? '' : String(l.option_right),
@@ -160,7 +158,7 @@ export function TemplateEditor({
     setDeleting(true)
     try {
       await deleteTemplate(detail.strategy_template_id)
-      await queryClient.invalidateQueries({ queryKey: TEMPLATES_KEY })
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategy.templates.root })
       setEdited(null)
       setConfirmDelete(false)
       onDeleted?.()

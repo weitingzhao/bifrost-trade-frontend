@@ -112,7 +112,7 @@ export function TradeExecSection({
                 <span className="text-muted-foreground">{(r.contract_key ?? '').split('|')[0].trim()}</span>
               </span>
               <span className="font-semibold">{(r.side ?? '').toUpperCase().startsWith('B') ? 'BOT' : 'SLD'}</span>
-              <span className="text-right">{Math.abs(Number(r.quantity ?? r.qty) || 0)}</span>
+              <span className="text-right">{Math.abs(Number(r.quantity) || 0)}</span>
               <span className="text-right">{Number(r.price).toFixed(2)}</span>
               <span className="text-right text-muted-foreground">{fmtUsd(Number(r.commission) || 0)}</span>
             </div>

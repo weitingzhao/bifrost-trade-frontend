@@ -30,7 +30,7 @@ import { mapIntentToPrefill } from '@/components/strategy/orderIntentPrefill'
 import { fetchOrderIntents } from '@/api/research/orderIntents'
 import { fetchShortLegs } from '@/api/shortLegs'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { inAccountScope, useAccountScope } from '@/lib/accountScope'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
@@ -44,6 +44,7 @@ import { HedgeMenu } from './HedgeMenu'
 import { hedgeReading } from './hedgeModel'
 import { buildLanes, needsYou, type DeskItem } from './deskModel'
 import { planLineage } from '@/pages/trade/plans/planLineage'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 /** Advisory proposals only: an intent that was acted on is no longer handed to you. */
 const INTENT_STATUS = 'pending'
@@ -61,13 +62,13 @@ export default function TradeDeskPage() {
     staleTime: 60_000,
   })
   const legs = useQuery({
-    queryKey: ['portfolio', 'short-legs'],
+    queryKey: QUERY_KEYS.portfolio.shortLegs,
     queryFn: ({ signal }) => fetchShortLegs(signal),
     staleTime: 30_000,
   })
   const plans = useStrategyPlans({})
   const orders = useOpenOrders()
-  const execs = useExecutionsCanonical()
+  const execs = useExecutionsAll()
 
   const today = chicagoTodayDateStr()
 

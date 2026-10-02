@@ -10,7 +10,7 @@ const api = vi.hoisted(() => ({
   updateGateSafety: vi.fn(),
 }))
 vi.mock('@/api/strategy', () => api)
-vi.mock('@/hooks/useGateSafety', () => ({ useStrategyDims: () => ({ data: { by_type: {} } }) }))
+vi.mock('@/hooks/useOptionCategory', () => ({ useStrategyDims: () => ({ data: { by_type: {} } }) }))
 
 import { GateInspector } from './GateInspector'
 import { gateVersionMeta } from '@/components/strategy/gates/gateForm'

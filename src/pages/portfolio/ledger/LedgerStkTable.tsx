@@ -139,7 +139,7 @@ function StkFillRow({
       </DenseTableCell>
       <DenseTableCell className={stkMetaCell}>{stkSideLabel(ex)}</DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
-        {ex.quantity != null ? Number(ex.quantity ?? ex.qty) : '—'}
+        {ex.quantity != null ? Number(ex.quantity) : '—'}
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
       <LedgerStkNotionalCell ex={ex} />

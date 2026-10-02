@@ -230,8 +230,8 @@ export function execGroupsOf(legs: readonly RecordLeg[]): ExecGroup[] {
   return legs.map((l) => {
     const side = (buy: boolean): ExecSide => {
       const xs = l.group.trades.filter((t) => isBuySide(t.side) === buy)
-      const qty = xs.reduce((a, t) => a + Math.abs(Number(t.quantity ?? t.qty) || 0), 0)
-      const total = xs.reduce((a, t) => a + Math.abs(Number(t.quantity ?? t.qty) || 0) * (Number(t.price) || 0) * 100, 0)
+      const qty = xs.reduce((a, t) => a + Math.abs(Number(t.quantity) || 0), 0)
+      const total = xs.reduce((a, t) => a + Math.abs(Number(t.quantity) || 0) * (Number(t.price) || 0) * 100, 0)
       return {
         name: buy ? 'Buy' : 'Sell',
         qty,
@@ -241,7 +241,7 @@ export function execGroupsOf(legs: readonly RecordLeg[]): ExecGroup[] {
           .map((t) => ({
             date: tradeDay(t) ?? '',
             id: t.account_executions_id ?? null,
-            qty: Math.abs(Number(t.quantity ?? t.qty) || 0),
+            qty: Math.abs(Number(t.quantity) || 0),
             price: Number(t.price) || 0,
             comm: Number(t.commission) || 0,
           }))

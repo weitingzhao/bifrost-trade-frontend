@@ -176,6 +176,12 @@ export interface PerformanceParams {
   summary_only?: boolean
 }
 
+/**
+ * `/executions?source_scope=` in the API's own words. `all` is the canonical
+ * view (Flex over TWS, plus journal) and is sent as no parameter.
+ */
+export type ExecutionSourceScope = 'all' | 'performance_book' | 'on_the_fly' | 'tws_raw'
+
 export interface ExecutionsRangeParams {
   since_ts?: number
   until_ts?: number
@@ -183,7 +189,7 @@ export interface ExecutionsRangeParams {
   include_opt_pairs?: boolean
   strategy_opportunity_id?: number
   strategy_instance_id?: number
-  source_scope?: 'performance_book' | 'on_the_fly' | 'tws_raw'
+  source_scope?: Exclude<ExecutionSourceScope, 'all'>
   account_id?: string
 }
 

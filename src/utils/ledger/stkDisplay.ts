@@ -20,7 +20,7 @@ export function stkPctOf(numer: number, denom: number | null): number | null {
 
 export function stkNotionalAbsUsd(ex: Execution): number | null {
   const p = Number(ex.price)
-  const q = Math.abs(Number(ex.quantity ?? ex.qty) || 0)
+  const q = Math.abs(Number(ex.quantity) || 0)
   if (!Number.isFinite(p) || q <= 0) return null
   return q * p
 }

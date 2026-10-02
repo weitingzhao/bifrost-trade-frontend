@@ -33,9 +33,9 @@ import { cn } from '@/lib/utils'
 import type { StrategyStructure } from '@/types/strategy'
 import { FIELD, RuleInspector } from './RuleInspector'
 
-const structureDetailKey = (id: number) => ['strategy', 'structure', id] as const
+const structureDetailKey = QUERY_KEYS.strategy.structure
 /** The key `useTemplateDetail` reads — a pick fills it, so the panel never waits on it twice. */
-const templateDetailKey = (id: number) => [...QUERY_KEYS.strategy.structures, 'template', id] as const
+const templateDetailKey = QUERY_KEYS.strategy.templates.detail
 
 const CAP = 'text-dense-meta font-semibold text-muted-foreground'
 

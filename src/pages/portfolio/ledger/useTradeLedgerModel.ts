@@ -629,7 +629,7 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
   let notional = 0
   let realized = 0
   for (const e of execs) {
-    notional += Math.abs(Number(e.quantity ?? e.qty) || 0) * (Number(e.price) || 0)
+    notional += Math.abs(Number(e.quantity) || 0) * (Number(e.price) || 0)
     realized += Number(e.realized_pnl) || 0
   }
   const seen = new Set<string>()

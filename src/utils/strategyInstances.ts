@@ -55,7 +55,7 @@ export function readInstances(
     const closed = groups.length > 0 && groups.every((g) => g.status === 'realized')
     const realised = closed
       ? own.reduce((a, e) => {
-          const qty = Math.abs(Number(e.quantity ?? e.qty) || 0)
+          const qty = Math.abs(Number(e.quantity) || 0)
           const price = Number(e.price) || 0
           const commission = Number(e.commission) || 0
           return a + (isBuySide(e.side) ? -(price * qty * 100 + commission) : price * qty * 100 - commission)

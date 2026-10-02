@@ -51,7 +51,7 @@ export function executionPassesLedgerFilters(e: Execution, args: LedgerFilterMat
   if (!executionMatchesRowType(e, args.rowType)) return false
   const isOpt = (e.sec_type ?? '').toUpperCase() === 'OPT'
   if (isOpt && args.expiryFilterYear) {
-    return executionMatchesExpiryYearMonth(e.expiry, args.expiryFilterYear, args.expiryFilterMonth)
+    return executionMatchesExpiryYearMonth(e.expiry ?? undefined, args.expiryFilterYear, args.expiryFilterMonth)
   }
   if (args.tradeDay) return ledgerExecutionDateKey(e.trade_date) === args.tradeDay
   if (!shouldApplySinceTradeFilter(args.sincePreset, args.expiryFilterYear)) return true

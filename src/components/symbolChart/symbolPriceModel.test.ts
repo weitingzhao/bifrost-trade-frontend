@@ -166,8 +166,8 @@ describe('instance tracks (Rev .102)', () => {
   it('an open leg is named at its open size, not the most it ever held', () => {
     const [t] = instanceTracksFor(
       [
-        fill({ side: 'Sell', quantity: 5, qty: 5, time: 1, strategy_instance_id: 11 }),
-        fill({ side: 'Buy', quantity: 2, qty: 2, time: 2, trade_date: '2026-08-10', strategy_instance_id: 11 }),
+        fill({ side: 'Sell', quantity: 5, time: 1, strategy_instance_id: 11 }),
+        fill({ side: 'Buy', quantity: 2, time: 2, trade_date: '2026-08-10', strategy_instance_id: 11 }),
       ],
       'ZZTM',
       [],
@@ -194,7 +194,7 @@ describe('holding (Rev .102)', () => {
   it('blends accounts and splits backing under open short calls from free', () => {
     const tracks = instanceTracksFor(
       [
-        fill({ symbol: 'ZZTM  270115C00120000', contract_key: 'ZZTM  270115C00120000|OPT|20270115|120|C', option_right: 'C', strike: 120, quantity: 2, qty: 2, strategy_instance_id: 4 }),
+        fill({ symbol: 'ZZTM  270115C00120000', contract_key: 'ZZTM  270115C00120000|OPT|20270115|120|C', option_right: 'C', strike: 120, quantity: 2, strategy_instance_id: 4 }),
       ],
       'ZZTM',
       [],

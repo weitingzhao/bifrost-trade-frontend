@@ -7,11 +7,11 @@
  * and a play's `n` are always the same trades (§14.2).
  */
 import { useMemo } from 'react'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { buildReviewTrades, playbookStats } from '@/utils/reviewTrades'
 
 export function useReviewTrades(accountFilter: string) {
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
 
   const scoped = useMemo(() => {
     const rows = execQuery.data?.items ?? []

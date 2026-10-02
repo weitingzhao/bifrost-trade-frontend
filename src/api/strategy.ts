@@ -15,9 +15,9 @@ import type {
   DimsGroupedResponse,
   StrategyTemplatesResponse,
   StrategyTemplateDetail,
-  StructureTypeLegPayload,
+  TemplateLegPayload,
   MetaParamPayload,
-  StructureTypeConfigOption,
+  TemplateConfigOption,
   AllocationsResponse,
   StrategyAllocation,
   AllocationPayload,
@@ -194,14 +194,6 @@ export async function fetchGateSafety(): Promise<GateSafetyResponse> {
   return res.json() as Promise<GateSafetyResponse>
 }
 
-/** @deprecated Prefer updateStructure with full StructurePayload */
-export async function putStructure(
-  id: number,
-  body: StructurePayload,
-): Promise<{ ok: boolean; error?: string }> {
-  return updateStructure(id, body)
-}
-
 export async function fetchGateSafetyFull(id: number): Promise<GateSafetyFull> {
   const res = await fetch(strategyUrl(`/strategies/gate-safety/${id}`))
   if (!res.ok) throw new Error(`Strategy /gate-safety/${id}: ${res.status}`)
@@ -301,7 +293,7 @@ export async function deleteTemplate(id: number): Promise<{ ok: boolean }> {
 
 export async function replaceTemplateLegs(
   id: number,
-  legs: StructureTypeLegPayload[],
+  legs: TemplateLegPayload[],
 ): Promise<{ ok: boolean }> {
   const res = await fetch(strategyUrl(`/strategies/templates/${id}/legs`), {
     method: 'PUT',
@@ -338,7 +330,7 @@ export async function replaceTemplateCharacteristics(
   return res.json()
 }
 
-async function fetchConfigOptions(path: string): Promise<{ options: StructureTypeConfigOption[] }> {
+async function fetchConfigOptions(path: string): Promise<{ options: TemplateConfigOption[] }> {
   const res = await fetch(strategyUrl(`/strategies/templates/options/${path}`))
   if (!res.ok) throw new Error(`Strategy /templates/options/${path}: ${res.status}`)
   return res.json()
@@ -354,7 +346,7 @@ export function fetchMetaKeyOptions() { return fetchConfigOptions('meta-keys') }
 export async function fetchMetaValueOptions(
   templateCode: string,
   metaKey: string,
-): Promise<{ options: StructureTypeConfigOption[] }> {
+): Promise<{ options: TemplateConfigOption[] }> {
   const res = await fetch(
     strategyUrl(`/strategies/templates/options/meta-values?template_code=${encodeURIComponent(templateCode)}&meta_key=${encodeURIComponent(metaKey)}`),
   )

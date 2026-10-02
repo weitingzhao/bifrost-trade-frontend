@@ -155,7 +155,7 @@ export interface BookedHistory {
 }
 
 const up = (v: string | null | undefined) => (v ?? '').trim().toUpperCase()
-const qtyOf = (e: Execution) => Math.abs(Number(e.quantity ?? e.qty ?? 0)) || 0
+const qtyOf = (e: Execution) => Math.abs(Number(e.quantity ?? 0)) || 0
 const dayOf = (e: Execution) => (e.trade_date ?? '').slice(0, 10)
 
 /**
@@ -183,7 +183,7 @@ export function bookedHistory(executions: readonly Execution[]): BookedHistory {
       date: dayOf(s),
       underlying: name,
       contractKey: leg.contract_key || null,
-      right: up(leg.option_right ?? leg.right),
+      right: up(leg.option_right),
       expiry,
       contracts: qtyOf(leg),
       shares,

@@ -63,7 +63,7 @@ export function computeInstanceRiskProfile(
       if (strike <= 0) continue
       const key = `${strike}|${r}`
       const side = (e.side ?? '').toUpperCase()
-      const qty = Math.abs(Number(e.quantity ?? e.qty) || 0)
+      const qty = Math.abs(Number(e.quantity) || 0)
       const price = Number(e.price) || 0
       const signedQty = side === 'BUY' || side === 'BOT' || side === 'B' ? qty : -qty
       const prev = netByKey.get(key) ?? { strike, right: r, qty: 0, totalCost: 0 }

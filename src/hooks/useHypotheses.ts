@@ -12,7 +12,6 @@ import {
   getHypothesis,
   listHypotheses,
   patchHypothesis,
-  retireHypothesis,
   type Hypothesis,
   type HypothesisCreateInput,
   type HypothesisPatchInput,
@@ -53,7 +52,6 @@ export function useHypothesis(id: string | undefined, enabled = true) {
 function invalidateHypothesisCaches(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.list })
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.summaryActive })
-  queryClient.invalidateQueries({ queryKey: ['research', 'hypothesis', 'active'] })
   queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.home })
 }
 
@@ -70,17 +68,6 @@ export function usePatchHypothesis() {
   return useMutation({
     mutationFn: (args: { id: string; patch: HypothesisPatchInput }) =>
       patchHypothesis(args.id, args.patch),
-    onSuccess: (updated: Hypothesis) => {
-      invalidateHypothesisCaches(queryClient)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.byId(updated.id) })
-    },
-  })
-}
-
-export function useRetireHypothesis() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => retireHypothesis(id),
     onSuccess: (updated: Hypothesis) => {
       invalidateHypothesisCaches(queryClient)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.byId(updated.id) })

@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { createTemplate } from '@/api/strategy'
-import { useOptionCategoryDims } from '@/hooks/useOptionCategory'
+import { useStrategyDims } from '@/hooks/useOptionCategory'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { TemplateEditor } from '@/components/strategy/templates/TemplateEditor'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -64,7 +64,7 @@ export function TemplateCatalogControls({
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const dims = useOptionCategoryDims()
+  const dims = useStrategyDims()
 
   async function create() {
     const c = toTemplateCode(code)
@@ -83,11 +83,9 @@ export function TemplateCatalogControls({
         display_name: name.trim() || c,
         sort_order: 100,
       })
-      // The prefix, not one of the two keys: this sheet reads the active-only
-      // list and the Option Category page reads the whole catalogue, and a new
-      // template that showed up in one but not the other is worse than a
-      // refetch nobody needed.
-      await qc.invalidateQueries({ queryKey: [...QUERY_KEYS.strategy.structures, 'templates'] })
+      // The prefix, not the one list: a template list that missed a new
+      // template is worse than a refetch nobody needed.
+      await qc.invalidateQueries({ queryKey: QUERY_KEYS.strategy.templates.root })
       setNewOpen(false)
       setCode('')
       setName('')

@@ -29,7 +29,7 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
@@ -236,7 +236,7 @@ export function PlaybookRecord() {
   const serviceEmpty = winRate.isSuccess && structures.length === 0 && catalogCount > 0
   const { trades, plays, accountIds, pathRequests, pathsLoading } = useReviewHabits(accountFilter)
   // The same cache entry useReviewHabits reads — held here for its §17 state.
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
   const thin = plays.filter((p) => p.thin).length
   // Rev .112 origin cuts: per trade, because a plan names a trade, not a contract.
   const origins = useTradeOrigins()

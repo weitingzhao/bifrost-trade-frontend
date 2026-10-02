@@ -38,7 +38,7 @@ import { fmtPct0 } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
 import { fetchAllocations, fetchStrategyInstances } from '@/api/strategy'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { readInstances } from '@/utils/strategyInstances'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
@@ -82,7 +82,7 @@ export default function RiskSizingPage() {
 
   const allocationsQuery = useQuery({ queryKey: ['strategy', 'allocations'], queryFn: () => fetchAllocations() })
   const instancesQuery = useQuery({ queryKey: ['strategy', 'instances'], queryFn: () => fetchStrategyInstances() })
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
   const allocation = (allocationsQuery.data?.items ?? []).find((a) => a.is_active) ?? null
   const gateOpen = useMemo(() => {
     if (allocation == null) return null

@@ -4,7 +4,6 @@ import type {
   ScreenerResponse,
   FetchGreeksParams,
   GreeksResponse,
-  DataReadinessSummary,
   TickerOverview,
   FundamentalConditionsData,
   TechnicalConditionsData,
@@ -14,7 +13,6 @@ import type {
 } from '@/types/research'
 import { withValidation } from '@/lib/apiValidation'
 import {
-  DataReadinessSummarySchema,
   GreeksResponseSchema,
   ScreenerResponseSchema,
   TickerOverviewSchema,
@@ -25,10 +23,6 @@ const validateScreener = withValidation<ScreenerResponse>(
   'research/screener',
 )
 const validateGreeksShape = withValidation<unknown>(GreeksResponseSchema, 'research/greeks')
-const validateReadiness = withValidation<DataReadinessSummary>(
-  DataReadinessSummarySchema,
-  'research/data/readiness-summary',
-)
 const validateTickerOverview = withValidation<TickerOverview>(
   TickerOverviewSchema,
   'research/data/ticker-overview',
@@ -120,12 +114,6 @@ export async function fetchGreeksAvailableDates(symbol: string): Promise<string[
   } catch {
     return []
   }
-}
-
-export async function fetchDataReadinessSummary(): Promise<DataReadinessSummary> {
-  const res = await fetch(researchUrl('/research/data/readiness/summary'))
-  if (!res.ok) throw new Error(`GET /research/data/readiness/summary: ${res.status}`)
-  return res.json().then(validateReadiness)
 }
 
 export async function fetchTickerOverview(symbol: string): Promise<TickerOverview> {

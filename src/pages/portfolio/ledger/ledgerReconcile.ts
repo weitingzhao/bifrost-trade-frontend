@@ -83,7 +83,7 @@ function sideKey(e: Execution): string {
 }
 
 export function flexMatchKey(e: Execution): string {
-  const qty = Math.abs(Number(e.quantity ?? e.qty) || 0)
+  const qty = Math.abs(Number(e.quantity) || 0)
   const price = Number(e.price) || 0
   const date = ledgerExecutionDateKey(e.trade_date) ?? ''
   return [e.account_id ?? '', e.contract_key ?? '', sideKey(e), String(qty), String(price), date].join('|')

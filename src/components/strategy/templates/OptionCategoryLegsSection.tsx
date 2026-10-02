@@ -14,7 +14,7 @@ import {
   NestedDenseTable,
 } from '@/components/data-display'
 import { X } from 'lucide-react'
-import type { StructureLeg, StrategyTemplateDetail, StructureTypeConfigOption } from '@/types/positions'
+import type { StructureLeg, StrategyTemplateDetail, TemplateConfigOption } from '@/types/positions'
 import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
 import {
   optionCategoryEmptyHintClass,
@@ -35,9 +35,9 @@ import { OptionCategoryLegsColgroup } from '@/components/strategy/templates/opti
 
 export interface OptionCategoryLegsSectionProps {
   detail: StrategyTemplateDetail
-  legRoleOpts: StructureTypeConfigOption[]
-  legDirOpts: StructureTypeConfigOption[]
-  legOrOpts: StructureTypeConfigOption[]
+  legRoleOpts: TemplateConfigOption[]
+  legDirOpts: TemplateConfigOption[]
+  legOrOpts: TemplateConfigOption[]
   feedback: { section: string; ok: boolean } | null
   onDetailChange: (d: StrategyTemplateDetail) => void
   onSave: () => void

@@ -49,15 +49,6 @@ export function useResearchDrafts(opts?: {
 /** The API's own ceiling (`api/agents.py`: `le=200`). */
 export const DRAFTS_PAGE_MAX = 200
 
-export function usePendingDraftCount() {
-  const q = useResearchDrafts({ status: 'pending' })
-  return {
-    count: q.data?.pending_count ?? q.data?.count ?? 0,
-    isLoading: q.isLoading,
-    refetch: q.refetch,
-  }
-}
-
 export function useApproveDraft() {
   const qc = useQueryClient()
   return useMutation({

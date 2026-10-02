@@ -4,6 +4,7 @@ import type {
   PerformanceResponse,
   PerformanceParams,
   ExecutionsRangeParams,
+  ExecutionSourceScope,
   RawExecutionsResponse,
   OptionStockLinkBatch,
   OptionStockLinksResponse,
@@ -16,10 +17,15 @@ import type {
   UpdateExecutionBody,
 } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
-import { ExecutionsResponseSchema } from '@/lib/schemas/positions'
+import { ExecutionsWireSchema, type ExecutionsWire } from '@/lib/schemas/positions'
 import { tradingUrl } from '@/lib/devApiUrl'
 
-const validateExecutions = withValidation<ExecutionsResponse>(ExecutionsResponseSchema, 'trading/executions')
+/**
+ * Checks the body the API sent, before it is unwrapped into `{ items }`, so a
+ * missing `executions` key reads as drift rather than as an empty book.
+ */
+const validateExecutions = withValidation<Partial<ExecutionsWire>>(ExecutionsWireSchema, 'trading/executions')
+const validateInstanceExecutions = withValidation<RawExecutionsResponse>(ExecutionsWireSchema, 'trading/executions')
 
 export async function fetchExecutionsFreshness(): Promise<ExecutionsFreshnessResponse> {
   const res = await fetch(tradingUrl('/executions/freshness'))
@@ -33,15 +39,15 @@ export async function postTwsFetch(days: 1 | 3 | 7): Promise<TwsFetchResponse> {
   return res.json() as Promise<TwsFetchResponse>
 }
 
-export async function fetchExecutions(source: 'final' | 'tws' | 'canonical' = 'final'): Promise<ExecutionsResponse> {
-  // Backend uses source_scope; map our internal alias to the correct backend value
-  const scopeMap: Record<string, string> = { final: 'performance_book', tws: 'tws_raw', canonical: '' }
-  const scope = scopeMap[source] ?? ''
-  const url = scope ? tradingUrl(`/executions?limit=0&source_scope=${scope}`) : tradingUrl('/executions?limit=0')
+export async function fetchExecutions(scope: ExecutionSourceScope = 'performance_book'): Promise<ExecutionsResponse> {
+  const url =
+    scope === 'all'
+      ? tradingUrl('/executions?limit=0')
+      : tradingUrl(`/executions?limit=0&source_scope=${scope}`)
   const res = await fetch(url)
-  if (!res.ok) throw new Error(`Trading /executions (${source}): ${res.status}`)
-  const raw = await res.json() as { executions?: import('@/types/positions').Execution[] }
-  return validateExecutions({ items: raw.executions ?? [] })
+  if (!res.ok) throw new Error(`Trading /executions (${scope}): ${res.status}`)
+  const raw = validateExecutions(await res.json())
+  return { items: raw.executions ?? [] }
 }
 
 /** Legacy: GET /executions/position-attribution → { attributions: PositionInstanceAttribution[] } */
@@ -62,7 +68,9 @@ export async function fetchPositionAttribution(
   return { items: raw.attributions ?? raw.items ?? [] }
 }
 
-export async function createExecution(body: CreateExecutionBody): Promise<{ ok: boolean; id?: number; error?: string }> {
+export async function createExecution(
+  body: CreateExecutionBody,
+): Promise<{ ok: boolean; account_executions_id?: number | null; error?: string }> {
   const res = await fetch(tradingUrl('/executions'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -115,7 +123,7 @@ export async function fetchInstanceExecutions(instanceId: number): Promise<RawEx
     tradingUrl(`/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`),
   )
   if (!res.ok) throw new Error(`Trading /executions [${instanceId}]: ${res.status}`)
-  return res.json() as Promise<RawExecutionsResponse>
+  return validateInstanceExecutions(await res.json())
 }
 
 export async function fetchPerformance(params: PerformanceParams = {}): Promise<PerformanceResponse> {
@@ -149,8 +157,8 @@ export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): 
   if (params.account_id) qs.set('account_id', params.account_id)
   const res = await fetch(tradingUrl(`/executions?${qs}`))
   if (!res.ok) throw new Error(`Trading /executions range: ${res.status}`)
-  const json = await res.json() as { executions?: import('@/types/positions').Execution[] }
-  return { items: json.executions ?? [] }
+  const raw = validateExecutions(await res.json())
+  return { items: raw.executions ?? [] }
 }
 
 export async function getTransactions(params?: {

@@ -1,4 +1,5 @@
 import type { IbPositionRow } from './monitor'
+import type { ExecutionRow, InstanceAllocation } from '@/lib/schemas/positions'
 import type { RiskProfile, RiskScenarioBreakdown, RiskCalcContext } from '@/utils/riskProfile'
 
 export type { RiskProfile, RiskScenarioBreakdown, RiskCalcContext }
@@ -119,46 +120,10 @@ export interface PositionAttributionResponse {
   items: PositionInstanceAttribution[]
 }
 
-export interface InstanceAllocation {
-  strategy_instance_id: number
-  allocated_quantity: number
-  strategy_opportunity_id?: number | null
-  strategy_instance_label?: string | null
-  strategy_opportunity_name?: string | null
-}
+export type { InstanceAllocation }
 
-export interface Execution {
-  account_executions_id: number | null
-  account_id: string
-  contract_key: string
-  symbol: string
-  sec_type: string
-  right?: string
-  strike?: number
-  expiry?: string
-  side: 'Buy' | 'Sell'
-  qty: number
-  quantity?: number
-  price: number
-  time: number | null
-  trade_date?: string | null
-  report_date?: string | null
-  exec_id?: string
-  source?: string
-  /** Flex booking class. Empty on TWS and journal rows — they stay in Type = All. */
-  transaction_type?: string | null
-  commission?: number | null
-  realized_pnl?: number | null
-  net_cash?: number | null
-  taxes?: number | null
-  option_right?: string | null
-  strategy_instance_id?: number | null
-  strategy_opportunity_id?: number | null
-  strategy_opportunity_name?: string | null
-  strategy_instance_label?: string | null
-  unrealized_pnl?: number | null
-  instance_allocations?: InstanceAllocation[]
-}
+/** One execution row as the API sends it — see `ExecutionRowSchema` for the wire rules. */
+export type Execution = ExecutionRow
 
 export interface ExecutionsResponse {
   items: Execution[]
@@ -233,9 +198,9 @@ export type {
   StrategyTemplateRow,
   MetaParamItem,
   StrategyTemplateDetail,
-  StructureTypeLegPayload,
+  TemplateLegPayload,
   MetaParamPayload,
-  StructureTypeConfigOption,
+  TemplateConfigOption,
   StrategyTemplatesResponse,
   StrategyAllocation,
   AllocationPayload,

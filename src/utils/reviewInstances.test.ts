@@ -20,12 +20,12 @@ const C = 'YYY   260116C00020000|OPT|20260116|20.0|C'
 describe('review instances (Rev .104)', () => {
   const rows = [
     // Instance 7: sold A, bought it back, rolled into B, bought B back — one line, one roll.
-    ex({ contract_key: A, side: 'Sell', qty: 1, quantity: 1, price: 2, trade_date: '2026-01-02', strike: 50, right: 'P', expiry: '20260116', strategy_instance_id: 7, strategy_opportunity_name: 'Wheel' }),
-    ex({ contract_key: A, side: 'Buy', qty: 1, quantity: 1, price: 0.5, trade_date: '2026-01-10', strike: 50, right: 'P', expiry: '20260116', strategy_instance_id: 7 }),
-    ex({ contract_key: B, side: 'Sell', qty: 1, quantity: 1, price: 1.5, trade_date: '2026-01-10', strike: 48, right: 'P', expiry: '20260220', strategy_instance_id: 7 }),
-    ex({ contract_key: B, side: 'Buy', qty: 1, quantity: 1, price: 0.2, trade_date: '2026-02-01', strike: 48, right: 'P', expiry: '20260220', strategy_instance_id: 7 }),
+    ex({ contract_key: A, side: 'Sell', quantity: 1, price: 2, trade_date: '2026-01-02', strike: 50, option_right: 'P', expiry: '20260116', strategy_instance_id: 7, strategy_opportunity_name: 'Wheel' }),
+    ex({ contract_key: A, side: 'Buy', quantity: 1, price: 0.5, trade_date: '2026-01-10', strike: 50, option_right: 'P', expiry: '20260116', strategy_instance_id: 7 }),
+    ex({ contract_key: B, side: 'Sell', quantity: 1, price: 1.5, trade_date: '2026-01-10', strike: 48, option_right: 'P', expiry: '20260220', strategy_instance_id: 7 }),
+    ex({ contract_key: B, side: 'Buy', quantity: 1, price: 0.2, trade_date: '2026-02-01', strike: 48, option_right: 'P', expiry: '20260220', strategy_instance_id: 7 }),
     // Instance 8: still open.
-    ex({ contract_key: C, symbol: 'YYY', side: 'Sell', qty: 2, quantity: 2, price: 1, trade_date: '2026-01-05', strike: 20, right: 'C', expiry: '20260116', strategy_instance_id: 8 }),
+    ex({ contract_key: C, symbol: 'YYY', side: 'Sell', quantity: 2, price: 1, trade_date: '2026-01-05', strike: 20, option_right: 'C', expiry: '20260116', strategy_instance_id: 8 }),
   ]
 
   it('reads an instance as one line across its legs, and pins open ones first', () => {
@@ -53,13 +53,13 @@ describe('review instances (Rev .104)', () => {
 describe('how a trade ended (Rev .112)', () => {
   const D = 'QQQQ  260116C00030000|OPT|20260116|30.0|C'
   const call = (over: Partial<Execution>) =>
-    ex({ contract_key: D, symbol: 'QQQQ', strike: 30, right: 'C', expiry: '20260116', qty: 1, quantity: 1, ...over })
+    ex({ contract_key: D, symbol: 'QQQQ', strike: 30, option_right: 'C', expiry: '20260116', quantity: 1, ...over })
 
   it('reads a broker booking with the stock delivered at the strike that day as assigned', () => {
     const rows = [
       call({ side: 'Sell', price: 1, trade_date: '2026-01-02', strategy_instance_id: 11 }),
       call({ side: 'Buy', price: 0, trade_date: '2026-01-16', transaction_type: 'BookTrade', strategy_instance_id: 11 }),
-      ex({ sec_type: 'STK', symbol: 'QQQQ', side: 'Sell', qty: 100, quantity: 100, price: 30, trade_date: '2026-01-16', transaction_type: 'BookTrade' }),
+      ex({ sec_type: 'STK', symbol: 'QQQQ', side: 'Sell', quantity: 100, price: 30, trade_date: '2026-01-16', transaction_type: 'BookTrade' }),
     ]
     expect(buildReviewInstances(rows, '2026-02-01')[0].exitKind).toBe('assigned')
   })

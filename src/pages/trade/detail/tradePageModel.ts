@@ -49,7 +49,7 @@ export function fillRows(
     .sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
     .map((e, i) => {
       const buy = String(e.side ?? '').toUpperCase().startsWith('B')
-      const qty = Math.abs(Number(e.quantity ?? e.qty) || 0)
+      const qty = Math.abs(Number(e.quantity) || 0)
       const price = Number(e.price) || 0
       const comm = Number(e.commission) || 0
       const net = (e as { net_cash?: number | null }).net_cash

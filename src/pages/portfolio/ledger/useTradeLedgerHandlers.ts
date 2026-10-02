@@ -70,7 +70,6 @@ export function useTradeLedgerHandlers(p: Params) {
       symbol,
       sec_type: 'STK',
       side: 'Buy',
-      qty: 0,
       quantity: 0,
       price: 0,
       time: null,

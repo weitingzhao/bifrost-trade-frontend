@@ -35,7 +35,7 @@ function isSell(e: Execution): boolean {
 }
 
 function fmtSignedQty(e: Execution): string {
-  const q = Math.abs(Number(e.quantity ?? e.qty) || 0)
+  const q = Math.abs(Number(e.quantity) || 0)
   return `${isSell(e) ? MINUS : '+'}${q.toLocaleString('en-US')}`
 }
 
@@ -50,7 +50,7 @@ function optionParts(e: Execution): { sym: string; contract: string } {
     const [sym, ...rest] = token.split(' ')
     return { sym, contract: rest.join(' ') }
   }
-  const right = String(e.option_right ?? e.right ?? '').trim().charAt(0).toUpperCase()
+  const right = String(e.option_right ?? '').trim().charAt(0).toUpperCase()
   return {
     sym: String(e.symbol ?? '').trim() || '—',
     contract: `${fmtIsoDateToken(e.expiry)} ${fmtStrike(e.strike)}${right}`,

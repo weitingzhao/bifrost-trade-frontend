@@ -222,7 +222,7 @@ export function computeOptPairsFromExecutions(
       .map((e) => ({
         side: isBuySide(e.side) ? 'buy' as const : 'sell' as const,
         price: e.price,
-        remQty: Math.abs(e.quantity ?? e.qty),
+        remQty: Math.abs(e.quantity),
         remComm: Math.abs(e.commission ?? 0),
         eid: e.account_executions_id,
         e,
@@ -263,7 +263,7 @@ export function computeOptPairsFromExecutions(
             symbol: buyItem.e.symbol,
             expiry: buyItem.e.expiry ?? '',
             strike: buyItem.e.strike ?? 0,
-            option_right: buyItem.e.option_right ?? buyItem.e.right ?? '',
+            option_right: buyItem.e.option_right ?? '',
           })
 
           buyItem.remQty -= qMatch
@@ -282,7 +282,7 @@ export function computeOptPairsFromExecutions(
 // --- Bulk Performance PnL functions ---
 
 function execQty(e: Execution): number {
-  return Math.abs(Number(e.quantity ?? e.qty) || 0)
+  return Math.abs(Number(e.quantity) || 0)
 }
 
 function sideUpper(e: Execution): string {

@@ -39,19 +39,6 @@ async function get<T = unknown>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-async function post<T = unknown>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(researchEngineUrl(path), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json()
-}
-
 // --- Terrain ---
 
 export interface TerrainData {
@@ -319,14 +306,6 @@ export async function fetchVolatilitySmile(symbol: string, date?: string) {
   }>
 }
 
-export function fetchVolatilitySurface(symbol: string, date?: string) {
-  const params = new URLSearchParams({ symbol })
-  if (date) params.set('trade_date', date)
-  return get<{ rows: unknown[]; surface_points: unknown[]; count: number }>(
-    `/research/volatility/surface?${params}`,
-  )
-}
-
 // --- Order Flow ---
 
 export interface OrderSentiment {
@@ -402,13 +381,6 @@ export function fetchEventRadarEvents(opts?: {
   return get<{ rows: EventRadarRow[]; count: number }>(
     `/research/event-radar/events?${params}`,
   )
-}
-
-export function runEventRadarPipeline(payload: string, source?: string) {
-  return post<Record<string, unknown>>('/research/event-radar/run', {
-    payload,
-    source: source ?? 'console',
-  })
 }
 
 export function fetchEventBatches() {
@@ -632,26 +604,6 @@ export function fetchPlaybookHitRate(symbol: string, windowDays = 30, horizon = 
     horizon: String(horizon),
   })
   return getEnveloped<PlaybookHitRateSummary>(`/research/playbook/hit-rate?${params}`)
-}
-
-export function fetchBacktestResults(symbol: string, start?: string, end?: string) {
-  const params = new URLSearchParams({ symbol })
-  if (start) params.set('start', start)
-  if (end) params.set('end', end)
-  return get<Record<string, unknown>>(`/research/backtest/results?${params}`)
-}
-
-export function triggerSettlement(sessionId: string, body: {
-  symbol: string
-  trade_date: string
-  expected_close: number
-  actual_close: number
-  hourly?: unknown[]
-}) {
-  return post<Record<string, unknown>>('/research/backtest/settle', {
-    session_id: sessionId,
-    ...body,
-  })
 }
 
 // --- SEPA (Wave B fusion) ---

@@ -58,7 +58,7 @@ describe('getStkLedgerBucketForExecution', () => {
       symbol,
       sec_type: 'STK',
       side: 'Buy',
-      qty: 10,
+      quantity: 10,
       price: 100,
       time: 1700000000,
     }

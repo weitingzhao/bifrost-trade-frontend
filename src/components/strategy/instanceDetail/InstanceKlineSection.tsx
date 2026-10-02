@@ -34,7 +34,7 @@ type KlineTab =
 function resolveOptFields(e: Execution): { expiry: string; strike: number; option_right: string } | null {
   let expiry = e.expiry
   let strike = e.strike
-  let option_right = e.option_right ?? e.right
+  let option_right = e.option_right
 
   if ((!expiry || strike == null || !option_right) && e.contract_key) {
     const parsed = parseOptionContractKey(e.contract_key)

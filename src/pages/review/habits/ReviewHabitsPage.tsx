@@ -28,7 +28,7 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { daysBetween } from '@/lib/isoDate'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { ProposalChainPanel } from './ProposalChainPanel'
@@ -78,7 +78,7 @@ export default function ReviewHabitsPage() {
     ivRankNames,
   } = useReviewHabits(accountFilter)
   // The same cache entry the hook reads — held here for its §17 state.
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
 
   const today = new Date().toISOString().slice(0, 10)
   const inWindow = useMemo(() => {

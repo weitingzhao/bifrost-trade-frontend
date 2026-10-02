@@ -4,7 +4,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addCandidates,
-  dismissCandidate,
   fetchCandidates,
   promoteCandidate,
   type CandidateCreateItem,
@@ -51,13 +50,5 @@ export function usePromoteCandidate() {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.summaryActive })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.home })
     },
-  })
-}
-
-export function useDismissCandidate() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => dismissCandidate(id),
-    onSuccess: () => invalidateCandidateCaches(queryClient),
   })
 }

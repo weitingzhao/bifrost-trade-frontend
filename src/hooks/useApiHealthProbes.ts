@@ -1,4 +1,3 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
 export interface ApiServiceDef {
@@ -37,14 +36,4 @@ export function makeProbeQuery(svc: ApiServiceDef) {
     refetchInterval: 20_000,
     retry: 1,
   } as const
-}
-
-export function useApiHealthProbe(svc: ApiServiceDef) {
-  return useQuery(makeProbeQuery(svc))
-}
-
-export function useApiHealthProbes(services: ApiServiceDef[]) {
-  return useQueries({
-    queries: services.map(svc => makeProbeQuery(svc)),
-  })
 }

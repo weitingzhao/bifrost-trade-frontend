@@ -215,7 +215,7 @@ export function InstanceTabContent({
                     <DenseTableCell className="font-medium">{e.symbol}</DenseTableCell>
                     <DenseTableCell>{e.side}</DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>
-                      {Math.abs(e.quantity ?? e.qty)}
+                      {Math.abs(e.quantity)}
                     </DenseTableCell>
                     <DenseTableCell className={denseTableNumCell}>{fmtPrice(e.price)}</DenseTableCell>
                     <DenseTableCell className={cn(denseTableNumCell, pnlColorClass(e.realized_pnl ?? 0))}>

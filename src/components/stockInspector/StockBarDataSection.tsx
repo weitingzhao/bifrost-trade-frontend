@@ -37,7 +37,7 @@ export function StockBarDataSection({
   const [showSr, setShowSr] = useState(false)
 
   const { data: stats } = useQuery({
-    queryKey: QUERY_KEYS.research.barStats(sym),
+    queryKey: QUERY_KEYS.market.barStats(sym),
     queryFn: () => fetchBarStats(sym),
     enabled: !!sym && expanded,
     staleTime: 60_000,

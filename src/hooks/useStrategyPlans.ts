@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  cancelStrategyPlan,
   createStrategyPlan,
-  fetchStrategyPlan,
   fetchStrategyPlans,
   intendStrategyPlan,
   linkStrategyPlanFill,
@@ -18,23 +16,8 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
  */
 export function useStrategyPlans(filters: PlanFilters = {}) {
   return useQuery({
-    queryKey: [
-      ...QUERY_KEYS.strategyPlans.list,
-      filters.status ?? null,
-      filters.symbol ?? null,
-      filters.accountId ?? null,
-      filters.limit ?? null,
-    ] as const,
+    queryKey: QUERY_KEYS.strategyPlans.list(filters),
     queryFn: () => fetchStrategyPlans(filters),
-    staleTime: 15_000,
-  })
-}
-
-export function useStrategyPlan(id: number | null | undefined, enabled = true) {
-  return useQuery({
-    queryKey: [...QUERY_KEYS.strategyPlans.detail, id] as const,
-    queryFn: () => fetchStrategyPlan(id!),
-    enabled: enabled && id != null && id > 0,
     staleTime: 15_000,
   })
 }
@@ -67,8 +50,4 @@ export function useLinkStrategyPlanFill() {
   return usePlanMutation(({ id, strategyInstanceId }: { id: number; strategyInstanceId: number }) =>
     linkStrategyPlanFill(id, strategyInstanceId),
   )
-}
-
-export function useCancelStrategyPlan() {
-  return usePlanMutation((id: number) => cancelStrategyPlan(id))
 }

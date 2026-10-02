@@ -19,7 +19,7 @@ vi.mock('@/hooks/useGateSafety', () => ({
   useGateSafetyList: () => ({ isLoading: false, data: { items: [] } }),
 }))
 vi.mock('@/hooks/useExecutions', () => ({
-  useExecutionsFinal: () => ({ isLoading: false, data: { items: [] } }),
+  useExecutionsPerformanceBook: () => ({ isLoading: false, data: { items: [] } }),
 }))
 vi.mock('@/hooks/useCopilotTools', () => ({
   useCopilotTools: () => ({ data: { tools: [] } }),

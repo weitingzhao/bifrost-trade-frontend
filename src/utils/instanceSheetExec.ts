@@ -29,9 +29,9 @@ function absExecQty(ex: Execution, instId: number | null): number {
   if (instId != null) {
     const sliced = sliceExecutionForInstanceOptView(ex, instId)
     if (!sliced) return 0
-    return Math.abs(Number(sliced.quantity ?? sliced.qty) || 0)
+    return Math.abs(Number(sliced.quantity) || 0)
   }
-  return Math.abs(Number(ex.quantity ?? ex.qty) || 0)
+  return Math.abs(Number(ex.quantity) || 0)
 }
 
 export function scopedExecListsForPosition(

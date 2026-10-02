@@ -10,7 +10,7 @@ function makeExec(overrides: Partial<Execution>): Execution {
     symbol: 'NVDA',
     sec_type: 'OPT',
     side: 'Buy',
-    qty: 1,
+    quantity: 1,
     price: 5.0,
     time: 1700000000,
     ...overrides,
@@ -24,8 +24,8 @@ describe('buildOptExecutionGroups', () => {
   })
 
   it('groups by contract_key and computes realized for closed position', () => {
-    const buy = makeExec({ side: 'Buy', qty: 2, price: 3.0, commission: 1.3 })
-    const sell = makeExec({ side: 'Sell', qty: 2, price: 5.0, commission: 1.3, time: 1700001000 })
+    const buy = makeExec({ side: 'Buy', quantity: 2, price: 3.0, commission: 1.3 })
+    const sell = makeExec({ side: 'Sell', quantity: 2, price: 5.0, commission: 1.3, time: 1700001000 })
     const groups = buildOptExecutionGroups([buy, sell])
     expect(groups).toHaveLength(1)
     const g = groups[0]
@@ -40,8 +40,8 @@ describe('buildOptExecutionGroups', () => {
   })
 
   it('marks open position as unrealized', () => {
-    const buy = makeExec({ side: 'Buy', qty: 3, price: 4.0 })
-    const sell = makeExec({ side: 'Sell', qty: 1, price: 6.0 })
+    const buy = makeExec({ side: 'Buy', quantity: 3, price: 4.0 })
+    const sell = makeExec({ side: 'Sell', quantity: 1, price: 6.0 })
     const groups = buildOptExecutionGroups([buy, sell])
     expect(groups).toHaveLength(1)
     expect(groups[0].status).toBe('unrealized')
@@ -49,8 +49,8 @@ describe('buildOptExecutionGroups', () => {
   })
 
   it('handles both BUY/BOT/B and SELL/SLD/S side aliases', () => {
-    const buy = makeExec({ side: 'BOT' as 'Buy', qty: 1, price: 2.0 })
-    const sell = makeExec({ side: 'SLD' as 'Buy', qty: 1, price: 3.0, time: 1700001000 })
+    const buy = makeExec({ side: 'BOT' as 'Buy', quantity: 1, price: 2.0 })
+    const sell = makeExec({ side: 'SLD' as 'Buy', quantity: 1, price: 3.0, time: 1700001000 })
     const groups = buildOptExecutionGroups([buy, sell])
     expect(groups[0].status).toBe('realized')
   })

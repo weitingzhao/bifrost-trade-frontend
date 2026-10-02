@@ -21,6 +21,7 @@ import {
 } from '@/utils/instanceListMetrics'
 import { computeInstanceRiskProfile } from '@/utils/instanceDetail/riskProfile'
 import { computeOpenEndDisplay } from '@/utils/instanceDetail/openEndDisplay'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 function sliceExecutions(list: Execution[], instanceId: number): Execution[] {
   return list
@@ -63,7 +64,7 @@ export function useInstanceDetailData(
   const structureId = instance?.strategy_structure_id
 
   const { data: structure, isLoading: structureLoading, error: structureError } = useQuery({
-    queryKey: ['instance-detail-structure', structureId],
+    queryKey: QUERY_KEYS.strategy.structure(structureId ?? 0),
     queryFn: () => fetchStructure(structureId!),
     enabled: enabled && structureId != null && structureId > 0,
     staleTime: 120_000,

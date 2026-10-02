@@ -87,7 +87,7 @@ export function realizedPnlFifoMatchPlusStock(
   for (const e of sortedExecs) {
     const id = e.account_executions_id
     if (id == null) continue
-    const eq = Math.abs(Number(e.quantity ?? e.qty) || 0)
+    const eq = Math.abs(Number(e.quantity) || 0)
     if (eq <= 1e-9) continue
     const mq = matchedQtyById.get(id) ?? 0
     if (mq <= 1e-9) continue
@@ -110,7 +110,7 @@ export function ledgerOptDetailRowPnl(
 ): { displayPnl: number; hasCombinedStock: boolean; stockAdj: number } {
   const s = (ex.side ?? '').toUpperCase()
   const isBuy = s === 'BUY' || s === 'BOT' || s === 'B'
-  const q = Number(ex.quantity ?? ex.qty) || 0
+  const q = Number(ex.quantity) || 0
   const p = Number(ex.price) || 0
   const c = Number(ex.commission) || 0
   const value = q * p * 100 - c
@@ -143,7 +143,7 @@ export function scaledLedgerOptDetailRowPnl(
   if (ratio <= 0 || !Number.isFinite(ratio)) return { displayPnl: 0, hasCombinedStock: false }
   const s = (ex.side ?? '').toUpperCase()
   const isBuy = s === 'BUY' || s === 'BOT' || s === 'B'
-  const q = Number(ex.quantity ?? ex.qty) || 0
+  const q = Number(ex.quantity) || 0
   const p = Number(ex.price) || 0
   const c = Number(ex.commission) || 0
   const value = q * p * 100 - c
@@ -201,9 +201,9 @@ export function instanceOptionStockSlippageAdjustment(
     if (!slice) continue
     const oid = ex.account_executions_id
     if (oid == null) continue
-    const parentQty = Math.abs(Number(ex.quantity ?? ex.qty) || 0)
+    const parentQty = Math.abs(Number(ex.quantity) || 0)
     if (parentQty < 1e-9) continue
-    const sliceQty = Math.abs(Number(slice.quantity ?? slice.qty) || 0)
+    const sliceQty = Math.abs(Number(slice.quantity) || 0)
     const ratio = sliceQty / parentQty
     const slip = stockSlippageTotalForOptionExecution(oid, linkByOptionId)
     if (slip !== 0) sum += slip * ratio
@@ -276,7 +276,6 @@ export function sliceExecutionForInstanceOptView(
 
     return {
       ...ex,
-      qty: allocQty,
       quantity: allocQty,
       realized_pnl:
         rp != null && Number.isFinite(Number(rp)) ? Number(rp) * w : rp,
@@ -471,7 +470,7 @@ export function isExecutionBuySide(ex: Execution): boolean {
 }
 
 export function executionAbsQuantity(ex: Execution): number {
-  return Math.abs(Number(ex.quantity ?? ex.qty) || 0)
+  return Math.abs(Number(ex.quantity) || 0)
 }
 
 /** Sibling fills on the same option contract that already have instance attribution (Assign strategy shortcut). */

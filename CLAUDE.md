@@ -139,26 +139,40 @@ System 只回答交易者的三个问题（能否交易 / 能否看到 / 数据�
 
 ### 数据获取：必须使用 TanStack Query
 
+三层各管一件事：`api/` 只发 HTTP（URL 走 `@/lib/devApiUrl` 的域助手，响应过 `withValidation` + `lib/schemas`），
+`hooks/` 包 `useQuery`，页面只读 hook。queryKey 一律取自 `QUERY_KEYS`（`src/constants/queryKeys.ts`）——
+同一份数据挂在同一个前缀下，写入时 invalidate 前缀就能刷新所有读法；另写一个字面量数组就多出一份写入刷不到的缓存。
+
 ```tsx
-// ✅ 正确
-function usePositions() {
+// ✅ 正确 — api/trading.ts：先校验 API 原样的响应，再拆包
+const validateExecutions = withValidation<Partial<ExecutionsWire>>(ExecutionsWireSchema, 'trading/executions')
+
+export async function fetchExecutions(scope: ExecutionSourceScope): Promise<ExecutionsResponse> {
+  const res = await fetch(tradingUrl(`/executions?limit=0&source_scope=${scope}`))
+  if (!res.ok) throw new Error(`Trading /executions: ${res.status}`)
+  const raw = validateExecutions(await res.json())
+  return { items: raw.executions ?? [] }
+}
+
+// ✅ 正确 — hooks/useExecutions.ts：key 来自 QUERY_KEYS，不写字面量
+export function useExecutionsPerformanceBook() {
   return useQuery({
-    queryKey: ['positions'],
-    queryFn: fetchPositions,
-    refetchInterval: 15_000,
+    queryKey: QUERY_KEYS.trading.executionsByScope('performance_book'),
+    queryFn: () => fetchExecutions('performance_book'),
+    staleTime: 30_000,
   })
 }
 
-function PositionsPage() {
-  const { data, isLoading } = usePositions()
-  return <PositionsTable data={data} />
+function FillsPage() {
+  const { data, isLoading } = useExecutionsPerformanceBook()
+  return <FillsTable rows={data?.items ?? []} />
 }
 
 // ❌ 禁止 — 旧代码模式，严禁在新项目出现
-function PositionsPage() {
-  const [positions, setPositions] = useState([])
+function FillsPage() {
+  const [rows, setRows] = useState([])
   useEffect(() => {
-    fetchPositions().then(setPositions)
+    fetch('/api/trading/executions').then((r) => r.json()).then(setRows)
   }, [])
 }
 ```
@@ -166,17 +180,20 @@ function PositionsPage() {
 ### SSE 实时订阅：必须封装成 hook，用 QueryClient 推入
 
 ```tsx
-// ✅ 正确
-function useQuoteStream(symbols: string[]) {
+// ✅ 正确 — api/ 用 openSseWithBackoff（重连 + 空闲暂停）开流，返回 cleanup；
+//    hook 把消息写进与首屏查询同一个 QUERY_KEYS key
+export function subscribeSystemMessages(onMessage: (msg: SystemMessage) => void): () => void {
+  return openSseWithBackoff(monitorUrl('/api/messages/stream'), (raw) => onMessage(JSON.parse(raw)))
+}
+
+function useSystemMessagesStream() {
   const queryClient = useQueryClient()
   useEffect(() => {
-    const es = new EventSource(`/api/quotes/stream?symbols=${symbols.join(',')}`)
-    es.onmessage = (e) => {
-      const quote = JSON.parse(e.data)
-      queryClient.setQueryData(['quote', quote.symbol], quote)
-    }
-    return () => es.close()  // 必须 cleanup
-  }, [symbols.join(',')])
+    const unsubscribe = subscribeSystemMessages((msg) => {
+      queryClient.setQueryData<SystemMessage[]>(QUERY_KEYS.monitor.systemMessages, (prev) => [msg, ...(prev ?? [])])
+    })
+    return unsubscribe  // 必须 cleanup
+  }, [queryClient])
 }
 
 // ❌ 禁止 — SSE 逻辑写在 App.tsx 或页面组件顶层

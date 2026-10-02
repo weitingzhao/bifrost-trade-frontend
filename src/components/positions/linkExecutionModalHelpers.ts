@@ -125,7 +125,7 @@ export function filterOpportunitiesBySymbol(
 }
 
 export function executionQtyLabel(ex: Execution): string {
-  const q = ex.quantity ?? ex.qty
+  const q = ex.quantity
   return q != null ? String(q) : '—'
 }
 

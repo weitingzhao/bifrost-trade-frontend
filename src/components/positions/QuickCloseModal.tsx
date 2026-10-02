@@ -72,9 +72,9 @@ export function QuickCloseModal({ exec, netQty, onClose, onSuccess }: Props) {
             <div><span className="text-muted-foreground">Qty:</span> {closeQty || '—'}</div>
             {exec.sec_type === 'OPT' && (
               <>
-                <div><span className="text-muted-foreground">Right:</span> {rightLabel(exec.right)}</div>
+                <div><span className="text-muted-foreground">Right:</span> {rightLabel(exec.option_right ?? undefined)}</div>
                 <div><span className="text-muted-foreground">Strike:</span> {fmtUsd(exec.strike)}</div>
-                <div><span className="text-muted-foreground">Expiry:</span> {fmtExpiry(exec.expiry)}</div>
+                <div><span className="text-muted-foreground">Expiry:</span> {fmtExpiry(exec.expiry ?? undefined)}</div>
               </>
             )}
           </div>

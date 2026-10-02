@@ -39,7 +39,7 @@ function underlyingOf(e: Execution): string {
 }
 
 function optionRightNorm(e: Execution): string {
-  const r = (e.option_right ?? e.right ?? '').toString().trim().toUpperCase()
+  const r = (e.option_right ?? '').toString().trim().toUpperCase()
   if (r === 'CALL' || r === 'C') return 'C'
   if (r === 'PUT' || r === 'P') return 'P'
   return r.slice(0, 1) || '?'
@@ -55,7 +55,7 @@ function contractKeyOf(e: Execution): string {
 }
 
 function rollAbsQty(e: Execution): number {
-  return Math.abs(Number(e.quantity ?? e.qty) || 0)
+  return Math.abs(Number(e.quantity) || 0)
 }
 
 /** Signed inventory: Buy +, Sell −. */

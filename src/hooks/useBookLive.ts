@@ -120,9 +120,9 @@ export function useBookLive(open: boolean): BookLive {
   const { data: bench } = useBenchmarks(stkSymbols)
   const greeks = useOptionGreeks(legs)
   const { pct: tightPct } = useCushionThreshold()
-  // Same key and cadence as useBookCushion, which the bar already mounts.
+  // The Desk reads the same key, so whichever mounts first fills the other.
   const shortLegs = useQuery({
-    queryKey: ['portfolio', 'short-legs'],
+    queryKey: QUERY_KEYS.portfolio.shortLegs,
     queryFn: ({ signal }) => fetchShortLegs(signal),
     refetchInterval: 60_000,
     refetchOnWindowFocus: false,

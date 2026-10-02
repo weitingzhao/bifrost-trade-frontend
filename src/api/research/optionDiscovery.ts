@@ -1,4 +1,4 @@
-import type { OptionSnapshotRow, OptionSnapshotsPgResult, MaxPainHistoryPoint, GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueResponse } from '@/types/optionDiscovery'
+import type { OptionSnapshotRow, OptionSnapshotsPgResult, GreeksCoverageResponse, LiquiditySummaryResponse, RelativeValueResponse } from '@/types/optionDiscovery'
 import { withValidation } from '@/lib/apiValidation'
 import { OptionSnapshotsPgResponseSchema } from '@/lib/schemas/optionDiscovery'
 
@@ -72,45 +72,6 @@ export async function fetchOptionSnapshotsPg(
     rows,
     error: typeof j.error === 'string' ? j.error : undefined,
     warning: typeof j.warning === 'string' ? j.warning : undefined,
-  }
-}
-
-export async function fetchMaxPainComputeHistory(params: {
-  symbol: string
-  expiry: string
-  lookbackDays?: number
-}): Promise<{ ok: boolean; error?: string; expiry?: string; series: MaxPainHistoryPoint[] }> {
-  const sym = (params.symbol || '').trim().toUpperCase()
-  const exp = (params.expiry || '').trim()
-  if (!sym || !exp) return { ok: false, error: 'symbol and expiry are required', series: [] }
-  const q = new URLSearchParams({ symbol: sym, expiry: exp })
-  if (params.lookbackDays != null && params.lookbackDays > 0) q.set('lookback_days', String(params.lookbackDays))
-  const r = await fetch(
-    `${marketDataPluginUrl('/market/analytics/max-pain/compute/history')}?${q.toString()}`,
-  )
-  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
-  if (!r.ok || j.ok === false) {
-    const detail =
-      typeof j.detail === 'string'
-        ? j.detail
-        : typeof j.error === 'string'
-          ? j.error
-          : `HTTP ${r.status}`
-    return { ok: false, error: detail, series: [] }
-  }
-  const raw = Array.isArray(j.series) ? j.series : []
-  return {
-    ok: true,
-    expiry: typeof j.expiry === 'string' ? j.expiry : undefined,
-    series: raw.map((row: Record<string, unknown>) => ({
-      trade_date: String(row.trade_date ?? ''),
-      max_pain_strike: Number(row.max_pain_strike),
-      total_oi: Number(row.total_oi ?? 0),
-      underlying_close:
-        row.underlying_close != null && Number.isFinite(Number(row.underlying_close))
-          ? Number(row.underlying_close)
-          : null,
-    })),
   }
 }
 

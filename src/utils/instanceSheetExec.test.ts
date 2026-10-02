@@ -55,11 +55,11 @@ describe('instanceSheetExec', () => {
         contract_key: 'NVDA|OPT|20250620|120|C',
         symbol: 'NVDA',
         sec_type: 'OPT',
-        right: 'C',
+        option_right: 'C',
         strike: 120,
         expiry: '20250620',
         side: 'Buy',
-        qty: 2,
+        quantity: 2,
         price: 4,
         time: 1,
         strategy_instance_id: 99,
@@ -70,11 +70,11 @@ describe('instanceSheetExec', () => {
         contract_key: 'NVDA|OPT|20250620|120|C',
         symbol: 'NVDA',
         sec_type: 'OPT',
-        right: 'C',
+        option_right: 'C',
         strike: 120,
         expiry: '20250620',
         side: 'Buy',
-        qty: 1,
+        quantity: 1,
         price: 4,
         time: 2,
         strategy_instance_id: 10,
@@ -94,11 +94,11 @@ describe('instanceSheetExec', () => {
       contract_key: pos.contract_key,
       symbol: 'NVDA',
       sec_type: 'OPT',
-      right: 'C',
+      option_right: 'C',
       strike: 120,
       expiry: '20250620',
       side: 'Buy',
-      qty: 3,
+      quantity: 3,
       price: 4,
       time: 1,
       strategy_instance_id: 10,
@@ -106,7 +106,7 @@ describe('instanceSheetExec', () => {
     const twsExec: Execution = {
       ...finalExec,
       account_executions_id: 2,
-      qty: 9,
+      quantity: 9,
     }
     const cell = formatInstanceOptExecQtyCell(
       baseGroup,
@@ -128,11 +128,11 @@ describe('instanceSheetExec', () => {
             contract_key: ck,
             symbol: 'NVDA',
             sec_type: 'OPT',
-            right: 'C',
+            option_right: 'C',
             strike: 120,
             expiry: '20250620',
             side: 'Buy',
-            qty: 7,
+            quantity: 7,
             price: 1,
             time: 1,
           },
@@ -147,6 +147,6 @@ describe('instanceSheetExec', () => {
       new Map(),
       new Map(),
     )
-    expect(scoped.final[0].qty).toBe(7)
+    expect(scoped.final[0].quantity).toBe(7)
   })
 })

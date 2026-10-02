@@ -4,9 +4,7 @@ import {
   fetchGateSafetyFull,
   createGateSafety,
   updateGateSafety,
-  fetchDimsGrouped,
 } from '@/api/strategy'
-import { postActiveStrategy } from '@/api/monitor'
 import type { GateSafetyPayload } from '@/types/positions'
 
 const LIST_KEY = ['strategy', 'gate-safety'] as const
@@ -27,14 +25,6 @@ export function useGateSafetyFull(id: number | null) {
   })
 }
 
-export function useStrategyDims() {
-  return useQuery({
-    queryKey: ['strategy', 'dims'],
-    queryFn: fetchDimsGrouped,
-    staleTime: 300_000,
-  })
-}
-
 export function useCreateGateSafety() {
   const qc = useQueryClient()
   return useMutation({
@@ -52,16 +42,6 @@ export function useUpdateGateSafety() {
       updateGateSafety(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: LIST_KEY })
-    },
-  })
-}
-
-export function useSetActiveStrategy() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: postActiveStrategy,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['monitor', 'status'] })
     },
   })
 }

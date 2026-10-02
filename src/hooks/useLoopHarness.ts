@@ -5,7 +5,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   approveAllRun,
-  batchRunObjective,
   curateRun,
   fetchLoopTrust,
   fetchObjectiveRun,
@@ -147,19 +146,6 @@ export function useRunObjective() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
       void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-    },
-  })
-}
-
-export function useBatchRunObjective() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (objectiveId: string) => batchRunObjective(objectiveId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'loop-trust'] })
     },
   })
 }

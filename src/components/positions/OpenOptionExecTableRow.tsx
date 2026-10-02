@@ -31,7 +31,7 @@ interface Props {
 }
 
 function execQty(exec: Execution): number {
-  return Math.abs(Number(exec.quantity ?? exec.qty) || 0)
+  return Math.abs(Number(exec.quantity) || 0)
 }
 
 /** Column-aligned execution row for the Options tab (13 columns). */

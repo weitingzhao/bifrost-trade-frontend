@@ -168,7 +168,3 @@ export function createHypothesis(body: HypothesisCreateInput): Promise<Hypothesi
 export function patchHypothesis(id: string, body: HypothesisPatchInput): Promise<Hypothesis> {
   return send<Hypothesis>('PATCH', `/research/hypothesis/${encodeURIComponent(id)}`, body)
 }
-
-export function retireHypothesis(id: string): Promise<Hypothesis> {
-  return send<Hypothesis>('POST', `/research/hypothesis/${encodeURIComponent(id)}/retire`, {})
-}

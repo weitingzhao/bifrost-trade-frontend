@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { DataStateBlock, DenseTag, SegmentControl } from '@/components/data-display'
 import { dataState } from '@/lib/dataState'
 import { Card, CardContent } from '@/components/ui/card'
@@ -7,9 +7,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import {
   fetchCanonicalTrajectory,
+  refreshHypothesisTrajectory,
   type CanonicalStructure,
 } from '@/api/research/canonicalPnl'
-import { researchEngineUrl } from '@/lib/devApiUrl'
 import { PromoteToWatchlistButton } from '@/components/research/PromoteToWatchlistButton'
 
 const STRUCTURES: { value: CanonicalStructure; label: string }[] = [
@@ -104,15 +104,15 @@ export function WatchlistHypothesisDetail({ symbol }: { symbol: string }) {
 
   const pnls = (trajQ.data?.rows ?? []).map((r) => r.pnl_since_entry)
 
-  async function refreshTrajectory(id: string) {
-    const q = new URLSearchParams({ structure })
-    await fetch(
-      researchEngineUrl(`/research/hypothesis/${encodeURIComponent(id)}/refresh-trajectory?${q}`),
-      { method: 'POST' },
-    )
-    void trajQ.refetch()
-    void listQ.refetch()
-  }
+  // A refused refresh used to read as success: the POST's status was never
+  // checked and the series simply did not move.
+  const refresh = useMutation({
+    mutationFn: (id: string) => refreshHypothesisTrajectory(id, structure),
+    onSuccess: () => {
+      void trajQ.refetch()
+      void listQ.refetch()
+    },
+  })
 
   return (
     <div className="space-y-3 p-2">
@@ -144,12 +144,18 @@ export function WatchlistHypothesisDetail({ symbol }: { symbol: string }) {
                       <button
                         type="button"
                         className="text-dense-caption underline"
-                        onClick={() => void refreshTrajectory(h.id)}
+                        disabled={refresh.isPending}
+                        onClick={() => refresh.mutate(h.id)}
                       >
-                        Refresh PnL
+                        {refresh.isPending && refresh.variables === h.id ? 'Refreshing…' : 'Refresh PnL'}
                       </button>
                     </div>
                   </div>
+                  {refresh.isError && refresh.variables === h.id ? (
+                    <span className="text-dense-caption text-destructive">
+                      PnL not refreshed — {refresh.error instanceof Error ? refresh.error.message : String(refresh.error)}
+                    </span>
+                  ) : null}
                   <SnapshotChips
                     originRef={
                       h.origin_ref && typeof h.origin_ref === 'object'

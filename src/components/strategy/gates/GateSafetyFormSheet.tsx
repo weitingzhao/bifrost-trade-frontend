@@ -8,9 +8,9 @@ import styles from '@/components/strategy/gates/gatesForm.module.css'
 import {
   useCreateGateSafety,
   useGateSafetyFull,
-  useStrategyDims,
   useUpdateGateSafety,
 } from '@/hooks/useGateSafety'
+import { useStrategyDims } from '@/hooks/useOptionCategory'
 import { DIM_TYPES, dimCatalogType } from '@/utils/gateDefaults'
 import {
   emptyGateForm,

@@ -250,7 +250,7 @@ export function buildFillRows(
         secType: (e.sec_type ?? '').toUpperCase(),
         accountId: (e.account_id ?? '').trim(),
         side: sideWord(e),
-        qty: Math.abs(Number(e.quantity ?? e.qty ?? 0)) || 0,
+        qty: Math.abs(Number(e.quantity ?? 0)) || 0,
         price: Number(e.price) || 0,
         // Sources disagree on the sign of a commission; it is a cost either way.
         fees: Math.abs(Number(e.commission) || 0),

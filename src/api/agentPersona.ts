@@ -55,16 +55,6 @@ export async function fetchAgentPersonas(): Promise<AgentPersona[]> {
   return validatePersonas(body.agents ?? [])
 }
 
-export async function fetchAgentPersona(agent: string): Promise<AgentPersona> {
-  const body = await personaFetch<{
-    ok: boolean
-    persona: AgentPersona
-    base_instruction: string
-    assembled_preview: string
-  }>(`/research/agent_persona/${encodeURIComponent(agent)}`)
-  return body.persona
-}
-
 export async function updateAgentPersona(
   agent: string,
   input: { persona_md?: string; preferences_json?: PersonaPreferences },

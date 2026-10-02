@@ -23,7 +23,7 @@ function makeExec(overrides: Partial<Execution>): Execution {
     symbol: 'NVDA',
     sec_type: 'OPT',
     side: 'Buy',
-    qty: 1,
+    quantity: 1,
     price: 5.0,
     time: 1700000000,
     ...overrides,
@@ -116,7 +116,7 @@ describe('computeOptPairsFromExecutions', () => {
     const buy = makeExec({
       account_executions_id: 1,
       side: 'Buy',
-      qty: 2,
+      quantity: 2,
       price: 3.0,
       commission: 1.0,
       expiry: '20260620',
@@ -125,7 +125,7 @@ describe('computeOptPairsFromExecutions', () => {
     const sell = makeExec({
       account_executions_id: 2,
       side: 'Sell',
-      qty: 2,
+      quantity: 2,
       price: 5.0,
       commission: 1.0,
       expiry: '20260620',
@@ -143,7 +143,7 @@ describe('computeOptPairsFromExecutions', () => {
     const buy = makeExec({
       account_executions_id: 1,
       side: 'Buy',
-      qty: 3,
+      quantity: 3,
       price: 4.0,
       commission: 0,
       expiry: '20260620',
@@ -152,7 +152,7 @@ describe('computeOptPairsFromExecutions', () => {
     const sell = makeExec({
       account_executions_id: 2,
       side: 'Sell',
-      qty: 1,
+      quantity: 1,
       price: 6.0,
       commission: 0,
       expiry: '20260620',
@@ -167,8 +167,8 @@ describe('computeOptPairsFromExecutions', () => {
   })
 
   it('does not pair same-side executions', () => {
-    const buy1 = makeExec({ account_executions_id: 1, side: 'Buy', qty: 1, price: 3.0 })
-    const buy2 = makeExec({ account_executions_id: 2, side: 'Buy', qty: 1, price: 4.0 })
+    const buy1 = makeExec({ account_executions_id: 1, side: 'Buy', quantity: 1, price: 3.0 })
+    const buy2 = makeExec({ account_executions_id: 2, side: 'Buy', quantity: 1, price: 4.0 })
     const pairs = computeOptPairsFromExecutions([buy1, buy2])
     expect(pairs).toHaveLength(0)
   })
@@ -201,7 +201,6 @@ describe('computeOptionDayPnLForPerformanceDate OCC symbols', () => {
       account_executions_id: 10,
       symbol: 'SPCX  261016C00165000',
       side: 'Sell',
-      qty: 2,
       quantity: 2,
       price: 11.75,
       commission: 0,
@@ -214,7 +213,6 @@ describe('computeOptionDayPnLForPerformanceDate OCC symbols', () => {
       account_executions_id: 11,
       symbol: 'SPCX  261016C00165000',
       side: 'Buy',
-      qty: 2,
       quantity: 2,
       price: 4.35,
       commission: 0,
@@ -227,7 +225,6 @@ describe('computeOptionDayPnLForPerformanceDate OCC symbols', () => {
       account_executions_id: 12,
       symbol: 'HIMS  261218C00040000',
       side: 'Sell',
-      qty: 4,
       quantity: 4,
       price: 3.8,
       commission: 2.833672,
@@ -250,12 +247,12 @@ describe('ledgerOptionExecutionCashFlowSigned', () => {
     // Buying a leg back for 0.50 with a $1 commission costs $51, not $49 — the
     // commission leaves the account whichever way the leg went. Netting it
     // against the premium first turned every buy's commission into a discount.
-    const buy = makeExec({ side: 'Buy', qty: 1, quantity: 1, price: 0.5, commission: 1 })
+    const buy = makeExec({ side: 'Buy', quantity: 1, price: 0.5, commission: 1 })
     expect(ledgerOptionExecutionCashFlowSigned(buy)).toBeCloseTo(-51, 6)
-    const sell = makeExec({ side: 'Sell', qty: 1, quantity: 1, price: 0.5, commission: 1 })
+    const sell = makeExec({ side: 'Sell', quantity: 1, price: 0.5, commission: 1 })
     expect(ledgerOptionExecutionCashFlowSigned(sell)).toBeCloseTo(49, 6)
     // The sign of the reported commission does not change what it costs.
-    const negCommission = makeExec({ side: 'Buy', qty: 1, quantity: 1, price: 0.5, commission: -1 })
+    const negCommission = makeExec({ side: 'Buy', quantity: 1, price: 0.5, commission: -1 })
     expect(ledgerOptionExecutionCashFlowSigned(negCommission)).toBeCloseTo(-51, 6)
   })
 })

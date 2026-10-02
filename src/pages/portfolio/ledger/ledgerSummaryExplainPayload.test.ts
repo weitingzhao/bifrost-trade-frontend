@@ -8,7 +8,7 @@ function stk(partial: Partial<Execution> & Pick<Execution, 'symbol' | 'account_i
     contract_key: `${partial.symbol}|STK|||`,
     sec_type: 'STK',
     side: 'Buy',
-    qty: 1,
+    quantity: 1,
     price: 1,
     time: 1_700_000_000,
     ...partial,

@@ -41,11 +41,11 @@ export interface WeekDay {
 const MULTIPLIER = 100
 
 function qtyOf(e: Execution): number {
-  return Math.abs(Number(e.quantity ?? e.qty) || 0)
+  return Math.abs(Number(e.quantity) || 0)
 }
 
 function fillRight(e: Execution): string {
-  return (e.option_right ?? e.right ?? '').toUpperCase().slice(0, 1)
+  return (e.option_right ?? '').toUpperCase().slice(0, 1)
 }
 
 function isOption(e: Execution): boolean {
@@ -66,7 +66,7 @@ function expiryTag(expiry: string | undefined): string {
 export function contractText(e: Execution): string {
   const side = sideOf(e) === 'sell' ? 'sell' : 'buy'
   if (!isOption(e)) return `${side} ${qtyOf(e)} sh`
-  return `${side} ${expiryTag(e.expiry)} ${e.strike ?? ''}${fillRight(e)}`.replace(/\s+/g, ' ').trim()
+  return `${side} ${expiryTag(e.expiry ?? undefined)} ${e.strike ?? ''}${fillRight(e)}`.replace(/\s+/g, ' ').trim()
 }
 
 /** Max loss at entry for one fill, with the reason it reads the way it does. */

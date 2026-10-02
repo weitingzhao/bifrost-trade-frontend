@@ -44,13 +44,13 @@ export function useSaveTradeReview() {
  *
  * `enabled: false` is what keeps it from fetching; the queryFn is still given
  * because TanStack reads the query's options from its latest observer, and a
- * refetch or invalidation driven by useExecutionsCanonical would otherwise log
+ * refetch or invalidation driven by useExecutionsAll would otherwise log
  * "No queryFn was passed" whenever the badge happened to be that observer.
  */
 export function useReviewBadge(): number | null {
   const execQ = useQuery<ExecutionsResponse>({
-    queryKey: ['trading', 'executions', 'canonical'],
-    queryFn: () => fetchExecutions('canonical'),
+    queryKey: QUERY_KEYS.trading.executionsByScope('all'),
+    queryFn: () => fetchExecutions('all'),
     enabled: false,
   })
   const reviews = useTradeReviews()

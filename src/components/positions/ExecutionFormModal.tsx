@@ -16,6 +16,7 @@ import { fetchOpportunities, fetchStrategyInstances } from '@/api/strategy'
 import { formatInstanceOpenedDate } from '@/components/positions/linkExecutionModalHelpers'
 import type { Execution, StrategyInstance, CreateExecutionBody, UpdateExecutionBody } from '@/types/positions'
 import { cn } from '@/lib/utils'
+import { isSellSide } from '@/utils/instanceDetail/executionSide'
 import {
   datetimeLocalToEpochSeconds,
   epochSecondsToDatetimeLocal,
@@ -78,13 +79,13 @@ function initFormFromExec(exec: Execution | null, accountOptions: string[]) {
       accountId: exec?.account_id?.trim() || defaultAccount,
       symbol: exec?.symbol ?? '',
       secType: (exec?.sec_type === 'OPT' ? 'OPT' : 'STK') as 'STK' | 'OPT',
-      side: (exec?.side === 'Sell' ? 'SELL' : 'BUY') as 'BUY' | 'SELL',
+      side: (exec && isSellSide(exec) ? 'SELL' : 'BUY') as 'BUY' | 'SELL',
       quantity: '',
       price: exec?.price != null && exec.price !== 0 ? String(exec.price) : '',
       execTime: defaultTime,
       expiry: exec?.expiry ?? '',
       strike: exec?.strike != null ? String(exec.strike) : '',
-      right: ((exec?.right ?? exec?.option_right ?? 'C').toString().toUpperCase().slice(0, 1) === 'P' ? 'P' : 'C') as 'C' | 'P',
+      right: ((exec?.option_right ?? 'C').toString().toUpperCase().slice(0, 1) === 'P' ? 'P' : 'C') as 'C' | 'P',
       commission: '',
       realizedPnl: '',
       currency: 'USD',
@@ -95,10 +96,9 @@ function initFormFromExec(exec: Execution | null, accountOptions: string[]) {
     }
   }
 
-  const sideRaw = (exec.side ?? 'BUY').toUpperCase()
-  const isSell = sideRaw === 'SELL' || sideRaw === 'SLD' || sideRaw === 'S'
-  const qty = Math.abs(Number(exec.quantity ?? exec.qty) || 0)
-  const r = (exec.right ?? exec.option_right ?? 'C').toString().toUpperCase().slice(0, 1)
+  const isSell = isSellSide(exec)
+  const qty = Math.abs(Number(exec.quantity) || 0)
+  const r = (exec.option_right ?? 'C').toString().toUpperCase().slice(0, 1)
   const ia = exec.instance_allocations
 
   return {

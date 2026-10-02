@@ -66,7 +66,7 @@ export function LedgerInstanceFillsTable({
       <DenseTableBody>
         {fills.map(ex => {
           const buy = isBuy(ex)
-          const q = Math.abs(ex.quantity ?? ex.qty)
+          const q = Math.abs(ex.quantity)
           const oid = ex.account_executions_id
           const syncSrc = oppositeLegSyncPayload(fills, ex)
           const showSync = onSyncOpposite && oid != null && syncSrc != null

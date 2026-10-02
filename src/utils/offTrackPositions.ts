@@ -36,7 +36,7 @@ export function buildOffTrackPositions(
         symbol: ex.symbol,
         expiry: ex.expiry ?? '',
         strike: ex.strike ?? 0,
-        right: ex.right ?? '',
+        right: ex.option_right ?? '',
         net_qty: 0,
         buy_cost: 0,
         sell_premium: 0,

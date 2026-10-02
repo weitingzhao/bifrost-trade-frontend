@@ -260,7 +260,7 @@ export function LedgerLinksFace({
                   })
                 }} />
                 <span className={cn('min-w-0 flex-1 font-mono text-dense-meta text-foreground')}>
-                  {c.symbol} · {c.side} {c.quantity ?? c.qty} @ {c.price}
+                  {c.symbol} · {c.side} {c.quantity} @ {c.price}
                 </span>
                 <span className="font-mono text-dense-meta text-muted-foreground">#{sid}</span>
               </label>

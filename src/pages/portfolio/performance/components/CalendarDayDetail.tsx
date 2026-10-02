@@ -209,7 +209,7 @@ function buildOptionsDayComputed(
     let unrealizedComm = 0
     let hasUnmatched = false
     for (const e of sortedExecs) {
-      const eq = Math.abs(Number(e.quantity ?? e.qty) || 0)
+      const eq = Math.abs(Number(e.quantity) || 0)
       if (eq <= 0) continue
       const mq = e.account_executions_id != null ? (matchedQtyById.get(e.account_executions_id) ?? 0) : 0
       const uq = eq - mq
@@ -483,7 +483,7 @@ function ContractGroup({
       for (const e of sortedExecs) {
         const id = e.account_executions_id
         if (id == null || !pairedLegIdSet.has(id)) continue
-        const eq = Math.abs(Number(e.quantity ?? e.qty) || 0)
+        const eq = Math.abs(Number(e.quantity) || 0)
         if (eq <= 0) continue
         const mq = matchedQtyById.get(id) ?? 0
         if (mq <= 1e-9) continue
@@ -503,7 +503,7 @@ function ContractGroup({
     let tabComm = 0
     const unmatchedRows: { e: Execution; unmatchedRatio: number }[] = []
     for (const e of sortedExecs) {
-      const eq = Math.abs(Number(e.quantity ?? e.qty) || 0)
+      const eq = Math.abs(Number(e.quantity) || 0)
       if (eq <= 0) continue
       const mq = e.account_executions_id != null ? (matchedQtyById.get(e.account_executions_id) ?? 0) : 0
       const uq = eq - mq
@@ -626,8 +626,8 @@ function ExecutionRow({
   isRealized: boolean
   onViewLinks: (links: OptionStockLinkSummary['links'], title: string, slippageTotal: number | null) => void
 }) {
-  const eq = Math.abs(Number(ex.quantity ?? ex.qty) || 0)
-  const displayQty = ratio < 1 - 1e-9 ? Math.round(eq * ratio * 1e4) / 1e4 : (ex.quantity ?? ex.qty ?? '—')
+  const eq = Math.abs(Number(ex.quantity) || 0)
+  const displayQty = ratio < 1 - 1e-9 ? Math.round(eq * ratio * 1e4) / 1e4 : (ex.quantity ?? '—')
   const ec = (Number(ex.commission) || 0) * ratio
 
   const { displayPnl, hasCombinedStock } = isRealized
@@ -797,7 +797,7 @@ function StkDayDetail({
                   <td className={cn(tdLeft, 'font-bold text-entity-option')}>{ex.symbol ?? '—'}</td>
                   <td className={cn(tdLeft, 'text-secondary-foreground')}>{ex.side ?? '—'}</td>
                   <td className={cn(td, 'text-secondary-foreground')}>
-                    {ex.quantity != null ? Number(ex.quantity) : (ex.qty ?? '—')}
+                    {ex.quantity != null ? Number(ex.quantity) : '—'}
                   </td>
                   <td className={cn(td, 'text-secondary-foreground')}>{fmtUsd(ex.price)}</td>
                   <td className={cn(td, 'text-secondary-foreground')}>{fmtUsd(notionalDisplay)}</td>

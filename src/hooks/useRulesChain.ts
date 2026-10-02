@@ -22,7 +22,7 @@ import {
   fetchStrategyInstances,
   fetchStructures,
 } from '@/api/strategy'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { readInstances, type InstanceReading } from '@/utils/strategyInstances'
 import type {
   GateSafetyItem,
@@ -70,7 +70,7 @@ export function useRulesChain() {
     },
   })
 
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
   const raw = chain.data ?? EMPTY
 
   const data: ChainData = useMemo(

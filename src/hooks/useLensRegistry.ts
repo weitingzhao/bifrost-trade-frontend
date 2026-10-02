@@ -6,7 +6,7 @@
  * it summarises.
  */
 import { useQuery } from '@tanstack/react-query'
-import { fetchLensRegistry, type LensRegistry, type LensSpec } from '@/api/research/lenses'
+import { fetchLensRegistry, type LensRegistry } from '@/api/research/lenses'
 import { fetchExhibit, type ExhibitLens, type ExhibitPayload } from '@/api/research/exhibit'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
@@ -19,12 +19,6 @@ export function useLensRegistry() {
     queryFn: fetchLensRegistry,
     staleTime: REGISTRY_STALE_MS,
   })
-}
-
-/** One registry entry, or undefined until the registry has loaded. */
-export function useLensSpec(lensId: string): LensSpec | undefined {
-  const q = useLensRegistry()
-  return q.data?.lenses.find((l) => l.id === lensId)
 }
 
 export function useExhibit(lens: ExhibitLens, symbol: string) {

@@ -22,7 +22,7 @@ import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
 import { rollupMargin } from '@/utils/marginPressure'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { readInstances } from '@/utils/strategyInstances'
 import {
   fetchAllocations,
@@ -76,7 +76,7 @@ export function useLimitBook(accountFilter: string): LimitBook {
   )
 
   /** Velocity, read off the same fills Orders & Fills lists. */
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
   const velocity = useMemo(() => {
     const dated = (execQuery.data?.items ?? []).filter((e) => (e.trade_date ?? '').length >= 8)
     if (dated.length === 0) return { contracts: null, date: null, newNames: null }
@@ -91,7 +91,7 @@ export function useLimitBook(accountFilter: string): LimitBook {
       if (day >= weekFloor) {
         if (symbol) inWeek.add(symbol)
         if (day === newest.slice(0, 10) && (e.sec_type ?? '').toUpperCase() === 'OPT') {
-          contracts += Math.abs(Number(e.quantity ?? e.qty ?? 0)) || 0
+          contracts += Math.abs(Number(e.quantity ?? 0)) || 0
         }
       } else if (symbol) before.add(symbol)
     }

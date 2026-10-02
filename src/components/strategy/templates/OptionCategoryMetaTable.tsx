@@ -18,7 +18,7 @@ import { X } from 'lucide-react'
 import type {
   StrategyTemplateDetail,
   MetaParamItem,
-  StructureTypeConfigOption,
+  TemplateConfigOption,
 } from '@/types/positions'
 import { fetchMetaKeyOptions, fetchMetaValueOptions } from '@/api/strategy'
 import { SaveFeedback } from '@/components/strategy/templates/SaveFeedback'
@@ -42,7 +42,7 @@ import { OptionCategoryMetaColgroup } from '@/components/strategy/templates/opti
 
 export interface OptionCategoryMetaTableProps {
   detail: StrategyTemplateDetail
-  paramKindOpts: StructureTypeConfigOption[]
+  paramKindOpts: TemplateConfigOption[]
   feedback: { section: string; ok: boolean } | null
   onDetailChange: (d: StrategyTemplateDetail) => void
   onSave: () => void
@@ -55,8 +55,8 @@ export function OptionCategoryMetaTable({
   onDetailChange,
   onSave,
 }: OptionCategoryMetaTableProps) {
-  const [metaKeyOpts, setMetaKeyOpts] = useState<StructureTypeConfigOption[]>([])
-  const [valueOptsByKey, setValueOptsByKey] = useState<Record<string, StructureTypeConfigOption[]>>({})
+  const [metaKeyOpts, setMetaKeyOpts] = useState<TemplateConfigOption[]>([])
+  const [valueOptsByKey, setValueOptsByKey] = useState<Record<string, TemplateConfigOption[]>>({})
 
   useEffect(() => {
     fetchMetaKeyOptions()

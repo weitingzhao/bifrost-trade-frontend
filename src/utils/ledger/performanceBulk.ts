@@ -109,7 +109,7 @@ export async function fetchPerformanceExecutionsMerged(
 /** Absolute fill notional for Cash-like: |qty| * price */
 export function stkFillNotional(e: Execution): number {
   if ((e.sec_type ?? '').toUpperCase() !== 'STK') return 0
-  const q = Math.abs(Number(e.quantity ?? e.qty) || 0)
+  const q = Math.abs(Number(e.quantity) || 0)
   const p = Number(e.price) || 0
   return q * p
 }
@@ -122,7 +122,7 @@ export function stkSignedTradeNotionalUsd(e: Execution): number {
   if ((e.sec_type ?? '').toUpperCase() !== 'STK') return 0
   const p = Number(e.price) || 0
   if (!Number.isFinite(p)) return 0
-  const absQ = Math.abs(Number(e.quantity ?? e.qty) || 0)
+  const absQ = Math.abs(Number(e.quantity) || 0)
   if (absQ <= 0) return 0
   const nv = absQ * p
   const side = (e.side ?? '').toString().trim().toUpperCase()
@@ -139,7 +139,7 @@ export function stkFixedIncomeStreamUsd(e: Execution): number {
   if ((e.sec_type ?? '').toUpperCase() !== 'STK') return 0
   const p = Number(e.price) || 0
   if (!Number.isFinite(p)) return 0
-  const absQ = Math.abs(Number(e.quantity ?? e.qty) || 0)
+  const absQ = Math.abs(Number(e.quantity) || 0)
   if (absQ <= 0) return 0
   const nv = absQ * p
   const side = (e.side ?? '').toString().trim().toUpperCase()

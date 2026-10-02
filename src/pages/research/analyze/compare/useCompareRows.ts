@@ -29,6 +29,7 @@ import {
   type StructureRecord,
   type View,
 } from './compareModel'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 /**
  * The series each row draws in, in rulebook order — Performance's 1b scheme
@@ -96,7 +97,7 @@ export function useCompareRows(sym: string, view: View, today: string) {
   const needsDetail = matching.filter((s) => (s.structure_type ?? '').startsWith('covered_call'))
   const detailQs = useQueries({
     queries: needsDetail.map((s) => ({
-      queryKey: ['strategy', 'structure', s.strategy_structure_id],
+      queryKey: QUERY_KEYS.strategy.structure(s.strategy_structure_id),
       queryFn: () => fetchStructure(s.strategy_structure_id),
       staleTime: 5 * 60_000,
     })),

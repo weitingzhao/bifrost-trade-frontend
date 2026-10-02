@@ -10,7 +10,7 @@ function exec(over: Partial<Execution>): Execution {
     symbol: 'ZZZ',
     sec_type: 'STK',
     side: 'Buy',
-    qty: 10,
+    quantity: 10,
     price: 12.5,
     time: 1_790_000_000,
     trade_date: '2026-09-15',
@@ -32,8 +32,8 @@ describe('buildOtfRows', () => {
 
   it('names an option fill by its contract token, from an OCC symbol or from the fields', () => {
     const rows = buildOtfRows([
-      exec({ account_executions_id: 2, sec_type: 'OPT', side: 'Sell', qty: 2, symbol: 'QQQX  260919P00228000' }),
-      exec({ account_executions_id: 3, sec_type: 'OPT', side: 'Sell', qty: 1, symbol: 'YYY', expiry: '20261017', strike: 7.5, option_right: 'C' }),
+      exec({ account_executions_id: 2, sec_type: 'OPT', side: 'Sell', quantity: 2, symbol: 'QQQX  260919P00228000' }),
+      exec({ account_executions_id: 3, sec_type: 'OPT', side: 'Sell', quantity: 1, symbol: 'YYY', expiry: '20261017', strike: 7.5, option_right: 'C' }),
     ])
     expect(rows[0].sym).toBe('QQQX')
     expect(rows[0].what).toBe('−2 19SEP26 228P')

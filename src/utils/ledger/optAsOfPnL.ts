@@ -42,7 +42,7 @@ export function chicagoTodayDateStr(nowMs: number = Date.now()): string {
 }
 
 function asOfAbsQty(e: Execution): number {
-  return Math.abs(Number(e.quantity ?? e.qty) || 0)
+  return Math.abs(Number(e.quantity) || 0)
 }
 
 /**
@@ -119,7 +119,7 @@ export function listOpenOptCashLegsAsOf(
       side: e.side ?? '',
       expiry: e.expiry ?? null,
       strike: e.strike != null && Number.isFinite(Number(e.strike)) ? Number(e.strike) : null,
-      optionRight: e.option_right ?? e.right ?? null,
+      optionRight: e.option_right ?? null,
       price: Number(e.price) || 0,
     })
   }

@@ -22,7 +22,7 @@ import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { CopilotPromptLangToggle } from '@/components/cockpit/CopilotPromptLangToggle'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useGateSafetyList } from '@/hooks/useGateSafety'
-import { useExecutionsFinal } from '@/hooks/useExecutions'
+import { useExecutionsPerformanceBook } from '@/hooks/useExecutions'
 import { useCopilotTools } from '@/hooks/useCopilotTools'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
 import { copilotViewStore } from '@/store/copilotViewStore'
@@ -38,7 +38,7 @@ export default function TradingCopilotPage() {
   const [lang] = useCopilotPromptLang()
   const status = useMonitorStatus()
   const gates = useGateSafetyList()
-  const execs = useExecutionsFinal()
+  const execs = useExecutionsPerformanceBook()
   const toolsQ = useCopilotTools()
 
   const accounts = status.data?.portfolio.accounts ?? []

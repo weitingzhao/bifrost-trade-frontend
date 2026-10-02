@@ -126,7 +126,7 @@ export function useTradeBook(args: {
       map.set(inst.strategy_instance_id, { rights: new Set(), expiryMonths: new Set() })
       const meta = map.get(inst.strategy_instance_id)!
       for (const e of entry.sliced) {
-        const right = (e.option_right ?? e.right ?? '').toUpperCase().charAt(0)
+        const right = (e.option_right ?? '').toUpperCase().charAt(0)
         if (right === 'C' || right === 'P') meta.rights.add(right)
         const exp = (e.expiry ?? '').replace(/\D/g, '')
         if (exp.length >= 6) meta.expiryMonths.add(`${exp.slice(0, 4)}-${exp.slice(4, 6)}`)

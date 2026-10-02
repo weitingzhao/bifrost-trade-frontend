@@ -117,8 +117,8 @@ describe('journalSeedFromContract', () => {
 describe('expiredCloseTarget', () => {
   it("closes one account's own net", () => {
     const fills = [
-      fill({ account_executions_id: 1, side: 'SELL', quantity: -2, qty: 2 }),
-      fill({ account_executions_id: 2, side: 'SELL', quantity: -1, qty: 1 }),
+      fill({ account_executions_id: 1, side: 'SELL', quantity: -2 }),
+      fill({ account_executions_id: 2, side: 'SELL', quantity: -1 }),
     ]
     const [group] = buildOptExecutionGroups(fills)
     const target = expiredCloseTarget(group)
@@ -130,8 +130,8 @@ describe('expiredCloseTarget', () => {
 
   it('writes nothing when two accounts still hold it, even if the group nets to zero', () => {
     const fills = [
-      fill({ account_executions_id: 1, account_id: 'A1', side: 'BUY', quantity: 1, qty: 1 }),
-      fill({ account_executions_id: 2, account_id: 'A2', side: 'SELL', quantity: -1, qty: 1 }),
+      fill({ account_executions_id: 1, account_id: 'A1', side: 'BUY', quantity: 1 }),
+      fill({ account_executions_id: 2, account_id: 'A2', side: 'SELL', quantity: -1 }),
     ]
     const [group] = buildOptExecutionGroups(fills)
     const target = expiredCloseTarget(group)
@@ -140,8 +140,8 @@ describe('expiredCloseTarget', () => {
 
   it('writes nothing for a flat position', () => {
     const fills = [
-      fill({ account_executions_id: 1, side: 'BUY', quantity: 1, qty: 1 }),
-      fill({ account_executions_id: 2, side: 'SELL', quantity: -1, qty: 1 }),
+      fill({ account_executions_id: 1, side: 'BUY', quantity: 1 }),
+      fill({ account_executions_id: 2, side: 'SELL', quantity: -1 }),
     ]
     const [group] = buildOptExecutionGroups(fills)
     expect(expiredCloseTarget(group).ok).toBe(false)

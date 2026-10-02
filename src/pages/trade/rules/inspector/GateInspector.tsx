@@ -27,7 +27,7 @@ import {
   type GateFormState,
 } from '@/components/strategy/gates/gateForm'
 import { Switch } from '@/components/ui/switch'
-import { useStrategyDims } from '@/hooks/useGateSafety'
+import { useStrategyDims } from '@/hooks/useOptionCategory'
 import { useLiveEdit } from '@/hooks/useLiveEdit'
 import { dimCatalogType } from '@/utils/gateDefaults'
 import { cn } from '@/lib/utils'

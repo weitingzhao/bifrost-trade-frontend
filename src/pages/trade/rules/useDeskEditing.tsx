@@ -248,7 +248,7 @@ export function useDeskEditing({
   }
   const structChanged = (id: number) => {
     refresh()
-    void qc.invalidateQueries({ queryKey: ['strategy', 'structure', id] })
+    void qc.invalidateQueries({ queryKey: QUERY_KEYS.strategy.structure(id) })
   }
   const setStructActive = async (id: number, on: boolean) => {
     try {

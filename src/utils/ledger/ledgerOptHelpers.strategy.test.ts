@@ -11,7 +11,6 @@ import {
 function optFill(
   partial: Partial<Execution> & Pick<Execution, 'side' | 'contract_key' | 'strike'>,
 ): Execution {
-  const qty = partial.qty ?? partial.quantity ?? 1
   return {
     ...partial,
     account_executions_id: partial.account_executions_id ?? 1,
@@ -20,8 +19,7 @@ function optFill(
     sec_type: partial.sec_type ?? 'OPT',
     price: partial.price ?? 1,
     time: partial.time ?? 1,
-    qty,
-    quantity: partial.quantity ?? qty,
+    quantity: partial.quantity ?? 1,
   }
 }
 

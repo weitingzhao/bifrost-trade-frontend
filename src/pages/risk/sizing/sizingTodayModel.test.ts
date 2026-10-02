@@ -14,7 +14,6 @@ function fill(over: Partial<Execution>): Execution {
     symbol: 'ABC',
     sec_type: 'OPT',
     side: 'Sell',
-    qty: 1,
     quantity: 1,
     price: 2,
     time: TUE_10,

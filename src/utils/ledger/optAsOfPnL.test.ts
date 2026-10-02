@@ -16,7 +16,7 @@ function makeOpt(overrides: Partial<Execution> & { account_executions_id: number
     symbol: 'RKLB',
     sec_type: 'OPT',
     side: 'Sell',
-    qty: 1,
+    quantity: 1,
     price: 5,
     time: 1_700_000_000,
     trade_date: '2026-04-01',
@@ -75,7 +75,7 @@ describe('listOpenOptCashLegsAsOf expiry', () => {
       trade_date: '2026-02-18',
       side: 'Buy',
       price: 0.01,
-      qty: 2,
+      quantity: 2,
       expiry: '20260220',
       contract_key: 'NVDA|OPT|20260220|210|C',
       symbol: 'NVDA 260220C00210000',
@@ -96,7 +96,7 @@ describe('listOpenOptCashLegsAsOf expiry', () => {
       trade_date: '2026-02-18',
       side: 'Buy',
       price: 0.01,
-      qty: 2,
+      quantity: 2,
       expiry: '20260220',
       contract_key: 'NVDA|OPT|20260220|210|C',
       option_right: 'C',
@@ -136,14 +136,14 @@ describe('aggregateOpenOptLegsByContract', () => {
       trade_date: '2026-08-01',
       side: 'Sell',
       price: 5,
-      qty: 1,
+      quantity: 1,
     })
     const b = makeOpt({
       account_executions_id: 2,
       trade_date: '2026-08-15',
       side: 'Sell',
       price: 4,
-      qty: 2,
+      quantity: 2,
     })
     const legs = listOpenOptCashLegsAsOf([a, b], '2026-09-02')
     const rows = aggregateOpenOptLegsByContract(legs)

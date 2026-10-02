@@ -162,7 +162,7 @@ export function isoExpiry(raw: string | null | undefined): string {
  * number the Ledger shows (§14.2).
  */
 export function toFill(e: Execution): ReviewFill {
-  const rawQty = Number(e.quantity ?? e.qty)
+  const rawQty = Number(e.quantity)
   const qty = Number.isFinite(rawQty) ? Math.abs(rawQty) : 0
   const price = Number(e.price) || 0
   const commission = Number(e.commission) || 0

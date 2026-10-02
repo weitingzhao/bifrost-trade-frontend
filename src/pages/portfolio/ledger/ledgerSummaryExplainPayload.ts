@@ -64,7 +64,7 @@ function sumRealizedPnL(execRows: Execution[]): number {
 function sumNotional(execRows: Execution[]): number {
   let s = 0
   for (const ex of execRows) {
-    const q = Number(ex.quantity ?? ex.qty) || 0
+    const q = Number(ex.quantity) || 0
     const p = Number(ex.price) || 0
     s += Math.abs(q) * p
   }
@@ -86,7 +86,7 @@ function buildRealizedPnLFormula(execRows: Execution[]): string[] {
 function buildNotionalFormula(execRows: Execution[]): string[] {
   if (execRows.length === 0) return ['Σ |qty| × price = 0 (no rows in this bucket)']
   const lineVals = execRows.map(ex => {
-    const q = Number(ex.quantity ?? ex.qty) || 0
+    const q = Number(ex.quantity) || 0
     const p = Number(ex.price) || 0
     return Math.abs(q) * p
   })
@@ -209,7 +209,7 @@ export function buildLedgerMetricExplainPayload(
       symbol: ex.symbol ?? '—',
       account: ex.account_id ?? '—',
       time: ex.time != null ? fmtTsShort(ex.time) : '—',
-      qty: ex.quantity ?? ex.qty ?? '—',
+      qty: ex.quantity ?? '—',
       price: ex.price != null ? fmtCcy(ex.price) : '—',
       realized_pnl: fmtCcy(Number(ex.realized_pnl) || 0),
     }))
@@ -235,14 +235,14 @@ export function buildLedgerMetricExplainPayload(
     const execRows = stockExecsInPeriodBucket(stockFilteredExecutions, period, bucketKey)
     const sum = sumNotional(execRows)
     const allRows = execRows.map((ex, i) => {
-      const q = Number(ex.quantity ?? ex.qty) || 0
+      const q = Number(ex.quantity) || 0
       const p = Number(ex.price) || 0
       return {
         '#': i + 1,
         symbol: ex.symbol ?? '—',
         account: ex.account_id ?? '—',
         time: ex.time != null ? fmtTsShort(ex.time) : '—',
-        qty: ex.quantity ?? ex.qty ?? '—',
+        qty: ex.quantity ?? '—',
         price: ex.price != null ? fmtCcy(ex.price) : '—',
         line_notional: fmtCcy(Math.abs(q) * p),
       }
@@ -271,7 +271,7 @@ export function buildLedgerMetricExplainPayload(
       symbol: ex.symbol ?? '—',
       account: ex.account_id ?? '—',
       time: ex.time != null ? fmtTsShort(ex.time) : '—',
-      qty: ex.quantity ?? ex.qty ?? '—',
+      qty: ex.quantity ?? '—',
       price: ex.price != null ? fmtCcy(ex.price) : '—',
       realized_pnl: fmtCcy(Number(ex.realized_pnl) || 0),
     }))
@@ -295,14 +295,14 @@ export function buildLedgerMetricExplainPayload(
     const execRows = stockFilteredExecutions
     const sum = sumNotional(execRows)
     const allRows = execRows.map((ex, i) => {
-      const q = Number(ex.quantity ?? ex.qty) || 0
+      const q = Number(ex.quantity) || 0
       const p = Number(ex.price) || 0
       return {
         '#': i + 1,
         symbol: ex.symbol ?? '—',
         account: ex.account_id ?? '—',
         time: ex.time != null ? fmtTsShort(ex.time) : '—',
-        qty: ex.quantity ?? ex.qty ?? '—',
+        qty: ex.quantity ?? '—',
         price: ex.price != null ? fmtCcy(ex.price) : '—',
         line_notional: fmtCcy(Math.abs(q) * p),
       }

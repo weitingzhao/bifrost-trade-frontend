@@ -41,7 +41,7 @@ function buildContractKey(e: Execution): string {
   const sym = (e.symbol ?? '').split(' ')[0]
   const exp = (e.expiry ?? '').replace(/-/g, '')
   const strike = e.strike ?? 0
-  const right = (e.option_right ?? e.right ?? 'C')[0].toUpperCase()
+  const right = (e.option_right ?? 'C')[0].toUpperCase()
   return `${sym}|OPT|${exp}|${strike}|${right}`
 }
 
@@ -95,7 +95,7 @@ export function buildOptExecutionGroups(sourceExecutions: Execution[]): OptExecu
     let sell_value_raw = 0
 
     for (const t of trades) {
-      const rawQty = Number(t.quantity ?? t.qty)
+      const rawQty = Number(t.quantity)
       const q = Number.isFinite(rawQty) ? Math.abs(rawQty) : 0
       if (q < NET_QTY_EPS) continue
       const p = Number(t.price) || 0
@@ -127,7 +127,7 @@ export function buildOptExecutionGroups(sourceExecutions: Execution[]): OptExecu
       contract_key: ck,
       strike: Number.isFinite(first.strike) ? first.strike! : 0,
       expiry: first.expiry ?? '',
-      option_right: first.option_right ?? first.right ?? '',
+      option_right: first.option_right ?? '',
       symbol: first.symbol,
       account_id: first.account_id,
       net_qty,

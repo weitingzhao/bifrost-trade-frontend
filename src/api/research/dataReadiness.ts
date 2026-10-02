@@ -1,22 +1,16 @@
 import { withValidation } from '@/lib/apiValidation'
-import {
-  SepaCriteriaStatsSchema,
-  SymbolsReadinessSnapshotSchema,
-} from '@/lib/schemas/stockScreener'
+import { SepaCriteriaStatsSchema } from '@/lib/schemas/stockScreener'
 import { researchUrl } from '@/lib/devApiUrl'
 import type {
-  FundamentalFilterResponse,
   FundDistSymbolsResponse,
   MomentumFilterResponse,
   SepaCriteriaStats,
-  SymbolsReadinessSnapshotResponse,
-  TechnicalFilterResponse,
   TechDistSymbolsResponse,
   TierFilterResponse,
   TierStatsResponse,
   MomentumGradesResponse,
 } from '@/types/stockScreener'
-import { normalizeCriteriaStats, normalizeSnapshotRow } from '@/utils/stockScreener'
+import { normalizeCriteriaStats } from '@/utils/stockScreener'
 
 
 const EMPTY_CRITERIA: SepaCriteriaStats = {
@@ -64,11 +58,6 @@ async function fetchJson<T>(url: string, timeoutMs: number, fallback: T): Promis
 const validateCriteriaStats = withValidation<SepaCriteriaStats>(
   SepaCriteriaStatsSchema,
   'research/data/readiness/criteria-stats',
-)
-
-const validateSnapshot = withValidation<SymbolsReadinessSnapshotResponse>(
-  SymbolsReadinessSnapshotSchema,
-  'research/data/readiness/symbols-snapshot',
 )
 
 export async function fetchSepaCriteriaStats(): Promise<SepaCriteriaStats> {
@@ -131,40 +120,6 @@ export async function fetchTechnicalDistributionSymbols(
   )
 }
 
-export async function fetchFundamentalFilter(opts: {
-  include: string[]
-  limit?: number
-}): Promise<FundamentalFilterResponse> {
-  const include = (opts.include ?? []).map((s) => s.trim()).filter(Boolean)
-  if (include.length === 0) {
-    return { ok: true, include: [], count: 0, symbols: [], limit: opts.limit ?? 500 }
-  }
-  const limit = Math.max(1, Math.min(opts.limit ?? 500, 5000))
-  const qs = new URLSearchParams({ include: include.join(','), limit: String(limit) })
-  return fetchJson(
-    researchUrl(`/research/data/readiness/fundamental-filter?${qs}`),
-    20_000,
-    { ok: false },
-  )
-}
-
-export async function fetchTechnicalFilter(opts: {
-  include: string[]
-  limit?: number
-}): Promise<TechnicalFilterResponse> {
-  const include = (opts.include ?? []).map((s) => s.trim()).filter(Boolean)
-  if (include.length === 0) {
-    return { ok: true, include: [], count: 0, symbols: [], limit: opts.limit ?? 500 }
-  }
-  const limit = Math.max(1, Math.min(opts.limit ?? 500, 5000))
-  const qs = new URLSearchParams({ include: include.join(','), limit: String(limit) })
-  return fetchJson(
-    researchUrl(`/research/data/readiness/technical-filter?${qs}`),
-    20_000,
-    { ok: false },
-  )
-}
-
 export async function fetchMomentumFilter(params: {
   include?: string[]
   min_score?: number
@@ -216,26 +171,4 @@ export async function fetchMomentumGrades(grades: readonly string[] = []): Promi
   const qs = new URLSearchParams()
   if (grades.length) qs.set('grades', grades.join(','))
   return fetchJson(researchUrl(`/research/data/readiness/momentum-grades?${qs.toString()}`), 15_000, { ok: false })
-}
-
-export async function fetchSymbolsReadinessSnapshot(
-  symbols: string[],
-): Promise<SymbolsReadinessSnapshotResponse> {
-  const clean = symbols.map((s) => s.trim().toUpperCase()).filter(Boolean)
-  if (clean.length === 0) {
-    return { ok: true, as_of_date: null, count: 0, symbols: [] }
-  }
-  const sliced = clean.slice(0, 500)
-  const qs = new URLSearchParams({ symbols: sliced.join(',') })
-  const data = await fetchJson<SymbolsReadinessSnapshotResponse>(
-    researchUrl(`/research/data/readiness/symbols-snapshot?${qs}`),
-    20_000,
-    { ok: false },
-  )
-  if (!data.ok) return data
-  const validated = validateSnapshot(data)
-  if (validated.symbols) {
-    validated.symbols = validated.symbols.map(normalizeSnapshotRow)
-  }
-  return validated
 }

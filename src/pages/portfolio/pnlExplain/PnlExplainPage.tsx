@@ -22,7 +22,7 @@ import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { TIME_RANGE_OPTIONS } from '@/pages/portfolio/performance/performanceConstants'
 import { getTimeRangeDates, type PerformanceTimeRange } from '@/utils/ledger/performanceUtils'
 import { usePerformanceBulk } from '@/hooks/usePerformanceBulk'
-import { useExecutionsCanonical, useExecutionsFinal } from '@/hooks/useExecutions'
+import { useExecutionsAll, useExecutionsPerformanceBook } from '@/hooks/useExecutions'
 import { useQuery } from '@tanstack/react-query'
 import { getTransactions } from '@/api/trading'
 import { QUERY_KEYS } from '@/constants/queryKeys'
@@ -78,8 +78,8 @@ export default function PnlExplainPage() {
     strategyOpportunityId: null,
     strategyInstanceId: null,
   })
-  const canonicalQuery = useExecutionsCanonical()
-  const bookQuery = useExecutionsFinal()
+  const canonicalQuery = useExecutionsAll()
+  const bookQuery = useExecutionsPerformanceBook()
   const cashQuery = useQuery({
     queryKey: [...QUERY_KEYS.trading.transactions, 'pnl-explain'],
     queryFn: () => getTransactions({ limit: 500 }),

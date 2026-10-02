@@ -95,7 +95,7 @@ export function execPremiumPnl(execs: Execution[]): number {
   let buyCost = 0
   for (const e of execs) {
     const side = (e.side ?? '').toUpperCase()
-    const q = Math.abs(Number(e.quantity ?? e.qty) || 0)
+    const q = Math.abs(Number(e.quantity) || 0)
     const p = Number(e.price) || 0
     const c = Number(e.commission) || 0
     if (side === 'SELL' || side === 'SLD' || side === 'S') {

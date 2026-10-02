@@ -12,7 +12,7 @@ const execDetailCell =
 const execDetailNumCell = cn(execDetailCell, 'font-mono tabular-nums whitespace-nowrap')
 
 function execQty(exec: Execution): number {
-  return Math.abs(Number(exec.quantity ?? exec.qty) || 0)
+  return Math.abs(Number(exec.quantity) || 0)
 }
 
 /** Self-aligned mini-table for execution fills (independent of parent Options columns). */

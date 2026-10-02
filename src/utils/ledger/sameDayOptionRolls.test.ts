@@ -19,7 +19,7 @@ function makeOpt(overrides: Partial<Execution> & { account_executions_id: number
     symbol: 'RKLB',
     sec_type: 'OPT',
     side: 'Sell',
-    qty: 1,
+    quantity: 1,
     price: 5,
     time: 1_700_000_000,
     trade_date: '2026-05-01',

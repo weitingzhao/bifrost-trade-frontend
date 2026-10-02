@@ -24,7 +24,7 @@ import { reviewState, reviewWalk } from './reviewWalk'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { useInstanceMarkPath } from '@/hooks/useInstanceMarkPath'
 import { buildReviewInstances, type ReviewInstance } from '@/utils/reviewInstances'
@@ -50,7 +50,7 @@ const PAGE_LEAD =
 export default function ReviewFitPage() {
   const [params, setParams] = useSearchParams()
   // The same cache entry every Review page reads — held here for its §17 state.
-  const execQuery = useExecutionsCanonical()
+  const execQuery = useExecutionsAll()
   const today = new Date().toISOString().slice(0, 10)
 
   // Rev .104: the unit is the instance (open ones first). Rev .110: `?t=#NNN`

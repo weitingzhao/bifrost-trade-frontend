@@ -24,7 +24,7 @@ export function useSystemMessages() {
 
   // Initial load via TanStack Query — gives proper loading/error states.
   const { data: messages = [] } = useQuery<SystemMessage[]>({
-    queryKey: QUERY_KEYS.market.systemMessages,
+    queryKey: QUERY_KEYS.monitor.systemMessages,
     queryFn: async () => {
       const res = await fetchSystemMessages(INITIAL_LIMIT)
       return pruned(res.messages)
@@ -37,7 +37,7 @@ export function useSystemMessages() {
   // SSE subscription — pushes new messages into the Query cache.
   useEffect(() => {
     const unsub = subscribeSystemMessages((msg) => {
-      queryClient.setQueryData<SystemMessage[]>(QUERY_KEYS.market.systemMessages, (prev) =>
+      queryClient.setQueryData<SystemMessage[]>(QUERY_KEYS.monitor.systemMessages, (prev) =>
         mergeMessages(pruned(prev ?? []), [msg]),
       )
     })

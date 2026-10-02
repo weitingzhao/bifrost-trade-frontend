@@ -3,7 +3,7 @@ import { isBuySide, isSellSide } from '@/utils/instanceDetail/executionSide'
 
 /** Signed size of one fill. IB sides are BUY/SELL (or BOT/SLD), not 'Buy'. */
 export function signedFillQty(exec: Execution): number {
-  const mag = Math.abs(Number(exec.quantity ?? exec.qty) || 0)
+  const mag = Math.abs(Number(exec.quantity) || 0)
   if (!Number.isFinite(mag) || mag === 0) return 0
   if (isSellSide(exec)) return -mag
   if (isBuySide(exec)) return mag
@@ -55,9 +55,9 @@ export function quickCloseBody(
     quantity: signedCloseQuantity(close),
     price,
     source: 'journal_closed',
-    expiry: exec.expiry,
-    strike: exec.strike,
-    option_right: exec.option_right ?? exec.right,
+    expiry: exec.expiry ?? undefined,
+    strike: exec.strike ?? undefined,
+    option_right: exec.option_right ?? undefined,
     contract_key: exec.contract_key,
     commission,
     currency: 'USD',

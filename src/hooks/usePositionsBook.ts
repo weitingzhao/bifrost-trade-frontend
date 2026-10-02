@@ -16,7 +16,7 @@ import { useMonitorStatus } from './useMonitorStatus'
 import { useQuotes } from './useQuotes'
 import { useBenchmarks } from './useBenchmarks'
 import { usePositionAttribution } from './usePositionAttribution'
-import { useExecutionsFinal, useExecutionsTws, useExecutionsCanonical } from './useExecutions'
+import { useExecutionsPerformanceBook, useExecutionsTwsRaw, useExecutionsAll } from './useExecutions'
 import { useOpportunities, useStructures, useStrategyInstances } from './useStrategies'
 import { useOptionGreeks, type GreekLeg } from './useOptionGreeks'
 import { usePositionsAlarm } from './usePositionsAlarm'
@@ -61,9 +61,9 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   const { accountFilter, filterSymbol, filterExpiry } = scope
   const { data, isLoading, isError, error } = useMonitorStatus()
   const { data: attrData } = usePositionAttribution()
-  const { data: execFinalData } = useExecutionsFinal()
-  const { data: execTwsData } = useExecutionsTws()
-  const { data: execCanonicalData } = useExecutionsCanonical()
+  const { data: execFinalData } = useExecutionsPerformanceBook()
+  const { data: execTwsData } = useExecutionsTwsRaw()
+  const { data: execCanonicalData } = useExecutionsAll()
   const { data: oppsData } = useOpportunities()
   const { data: structsData } = useStructures()
   const { data: instancesData } = useStrategyInstances()

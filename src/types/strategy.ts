@@ -269,7 +269,7 @@ export interface StrategyTemplateDetail extends StrategyTemplateRow {
   characteristics: string[]
 }
 
-export interface StructureTypeLegPayload {
+export interface TemplateLegPayload {
   role: string | null
   direction: string | null
   option_right: string
@@ -285,7 +285,7 @@ export interface MetaParamPayload {
   sort_order: number
 }
 
-export interface StructureTypeConfigOption {
+export interface TemplateConfigOption {
   value: string
   label: string
 }

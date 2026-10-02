@@ -14,10 +14,10 @@
  * and nothing records that a trade was reviewed.
  */
 import { useMemo, useState } from 'react'
-import { useQueries, useQuery } from '@tanstack/react-query'
-import { fetchStrategyPlans } from '@/api/strategyPlans'
+import { useQueries } from '@tanstack/react-query'
+import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { fetchCorporateActions } from '@/api/marketData/corporateActions'
-import { useExecutionsCanonical } from '@/hooks/useExecutions'
+import { useExecutionsAll } from '@/hooks/useExecutions'
 import { useAssignmentLegs } from '@/hooks/useAssignmentLegs'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
@@ -51,8 +51,8 @@ export function useTodayChecks(accountFilter: string) {
   const exposure = useRiskExposure(accountFilter)
   const assignment = useAssignmentLegs()
   const { ceiling } = usePressureCeiling()
-  const execQuery = useExecutionsCanonical()
-  const plansQuery = useQuery({ queryKey: ['strategy', 'plans', 'home'], queryFn: () => fetchStrategyPlans({}) })
+  const execQuery = useExecutionsAll()
+  const plansQuery = useStrategyPlans()
 
   // The book's dates are calendar dates on the desk, not UTC ones: after 20:00
   // ET `toISOString()` is already tomorrow, and "fills booked today" would look

@@ -21,7 +21,6 @@ function exec(partial: Partial<Execution> & Pick<Execution, 'symbol' | 'account_
     contract_key: `${partial.symbol}|STK|||`,
     sec_type: 'STK',
     side: 'Buy',
-    qty: 1,
     quantity: 1,
     price: 10,
     time: 1_700_000_000,
@@ -117,7 +116,6 @@ describe('flex match key uses contract_key not symbol', () => {
       contract_key: 'AAA|OPT|P|10|20240621',
       source: 'tws_client',
       side: 'Buy',
-      qty: 2,
       quantity: 2,
       price: 1.5,
       trade_date: '2024-03-15',
@@ -129,7 +127,6 @@ describe('flex match key uses contract_key not symbol', () => {
       contract_key: 'AAA|OPT|P|10|20240621',
       source: 'flex_trades',
       side: 'Buy',
-      qty: 2,
       quantity: 2,
       price: 1.5,
       trade_date: '2024-03-15',
@@ -172,7 +169,6 @@ describe('reconcile scope and sources', () => {
       sec_type: 'OPT',
       contract_key: 'AAA|OPT|P|10|20240621',
       side: 'Buy',
-      qty: 2,
       quantity: 2,
       price: 1.5,
       trade_date: '2024-03-15',
@@ -191,7 +187,7 @@ describe('reconcile scope and sources', () => {
   })
 
   it('reconciles a TWS stock fill instead of leaving it in no group', () => {
-    const stock = exec({ symbol: 'AAA', account_id: 'U0000001', sec_type: 'STK', contract_key: 'AAA', source: 'tws_client', side: 'Buy', quantity: 100, qty: 100, price: 10, trade_date: '2024-03-15' })
+    const stock = exec({ symbol: 'AAA', account_id: 'U0000001', sec_type: 'STK', contract_key: 'AAA', source: 'tws_client', side: 'Buy', quantity: 100, price: 10, trade_date: '2024-03-15' })
     const rec = buildLedgerReconcile([stock], [])
     const un = rec.groups.find(g => g.id === 'unconfirmed')
     expect(un?.count).toBe(1)

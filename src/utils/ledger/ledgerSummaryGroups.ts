@@ -56,7 +56,7 @@ export function buildStocksSummaryByMonth(execs: Execution[]): [string, StockSum
     if (!monthStr) continue
     const cur = byMonth.get(monthStr) ?? { count: 0, notional: 0, realizedPnl: 0 }
     cur.count += 1
-    const q = Math.abs(Number(e.quantity ?? e.qty) || 0)
+    const q = Math.abs(Number(e.quantity) || 0)
     const p = Number(e.price) || 0
     cur.notional += q * p
     cur.realizedPnl += Number(e.realized_pnl) || 0

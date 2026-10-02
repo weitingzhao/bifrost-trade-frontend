@@ -3,21 +3,13 @@
  *
  * Endpoints on Research API `:8795`:
  *   GET /research/canonical-pnl/trajectory
- *   GET /research/canonical-pnl/coverage
- *   GET /research/canonical-pnl/structures
+ *   POST /research/hypothesis/{id}/refresh-trajectory
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
 import { withValidation } from '@/lib/apiValidation'
-import {
-  CanonicalCoverageResponseSchema,
-  CanonicalTrajectoryResponseSchema,
-} from '@/lib/schemas/researchData'
+import { CanonicalTrajectoryResponseSchema } from '@/lib/schemas/researchData'
 
-const validateCoverage = withValidation<CanonicalCoverageResponse>(
-  CanonicalCoverageResponseSchema,
-  'research/canonical-pnl/coverage',
-)
 const validateTrajectory = withValidation<CanonicalTrajectoryResponse>(
   CanonicalTrajectoryResponseSchema,
   'research/canonical-pnl/trajectory',
@@ -30,14 +22,6 @@ export type CanonicalStructure =
   | 'long_straddle'
   | 'covered_call'
   | 'short_put'
-
-export const CANONICAL_STRUCTURES: { value: CanonicalStructure; label: string }[] = [
-  { value: 'short_strangle', label: 'Short Strangle' },
-  { value: 'put_credit_spread', label: 'Put Credit Spread' },
-  { value: 'long_straddle', label: 'Long Straddle' },
-  { value: 'covered_call', label: 'Covered Call' },
-  { value: 'short_put', label: 'Short Put' },
-]
 
 export interface CanonicalPnlRow {
   as_of_date: string
@@ -75,19 +59,6 @@ export interface CanonicalCoverageResponse {
   insufficient_pct: number | null
   mart_table?: string
   features_table?: string
-}
-
-export async function fetchCanonicalStructures(): Promise<string[]> {
-  const data = await unwrap<{ structures: string[] }>(
-    await fetch(researchEngineUrl('/research/canonical-pnl/structures')),
-  )
-  return Array.isArray(data.structures) ? data.structures : []
-}
-
-export async function fetchCanonicalCoverage(): Promise<CanonicalCoverageResponse> {
-  return validateCoverage(
-    await unwrap(await fetch(researchEngineUrl('/research/canonical-pnl/coverage'))),
-  )
 }
 
 export async function fetchCanonicalTrajectory(opts: {

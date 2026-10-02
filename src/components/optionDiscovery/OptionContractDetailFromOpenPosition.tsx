@@ -5,6 +5,7 @@ import { inspectorShell } from '@/components/layout/rightInspectorUi'
 /* eslint-disable react-hooks/set-state-in-effect -- loads contract snapshot on mount */
 import type { OptionSnapshotRow, GreeksCoverageResponse } from '@/types/optionDiscovery'
 import { fetchGreeksCoverage, fetchOptionSnapshotsPg } from '@/api/research/optionDiscovery'
+import { notify } from '@/lib/shellNotify'
 import { postWatchlistItem } from '@/api/market'
 import type { QuoteItem } from '@/types/market'
 import { getContractLabelParts, parseOptionContractKey } from '@/lib/format'
@@ -227,15 +228,19 @@ export function OptionContractDetailFromOpenPosition({
       const exp = expirationDigits
       if (!symbol || !exp) return
       const contract_key = `${symbol}|OPT|${exp}|${row.strike}|${row.right}`
-      await postWatchlistItem({
-        contract_key,
-        symbol,
-        sec_type: 'OPT',
-        expiry: exp,
-        strike: row.strike,
-        option_right: row.right,
-        source: 'positions',
-      })
+      try {
+        await postWatchlistItem({
+          contract_key,
+          symbol,
+          sec_type: 'OPT',
+          expiry: exp,
+          strike: row.strike,
+          option_right: row.right,
+          source: 'positions',
+        })
+      } catch (e) {
+        notify(`Watchlist not saved — ${e instanceof Error ? e.message : String(e)}`)
+      }
     },
     [symbol, expirationDigits],
   )

@@ -14,26 +14,41 @@ interface Props {
 
 export function DeleteConfirmDialog({ open, title, message, onClose, onConfirm }: Props) {
   const [confirming, setConfirming] = useState(false)
+  // A refused delete keeps the dialog open with the server's reason.
+  const [error, setError] = useState<string | null>(null)
 
   async function handleConfirm() {
     setConfirming(true)
+    setError(null)
     try {
       await onConfirm()
       onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setConfirming(false)
     }
   }
 
+  function close() {
+    setError(null)
+    onClose()
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v && !confirming) onClose() }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v && !confirming) close() }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">{message}</p>
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={confirming}>
+          <Button variant="outline" size="sm" onClick={close} disabled={confirming}>
             Cancel
           </Button>
           <Button variant="destructive" size="sm" onClick={handleConfirm} disabled={confirming}>

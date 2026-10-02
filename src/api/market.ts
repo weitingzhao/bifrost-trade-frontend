@@ -11,6 +11,7 @@ import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/mar
 import { openSseWithBackoff } from '@/lib/sse'
 import { marketUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
+import { listItems, requestJson } from '@/lib/http'
 
 const validateQuotes = withValidation<QuotesResponse>(QuotesResponseSchema, 'market/quotes')
 const validateWatchlist = withValidation<WatchlistResponse>(WatchlistResponseSchema, 'market/watchlist')
@@ -78,9 +79,8 @@ export async function fetchBenchmarks(symbols: string[]): Promise<BenchmarkRespo
 }
 
 export async function fetchWatchlist(): Promise<WatchlistResponse> {
-  const res = await tradeFetch(marketUrl('/watchlist'))
-  if (!res.ok) throw new Error(`Market /watchlist: ${res.status}`)
-  return validateWatchlist(await res.json())
+  const raw = await requestJson<Record<string, unknown>>(marketUrl('/watchlist'))
+  return validateWatchlist({ ...raw, items: listItems(raw) })
 }
 
 export async function fetchBarStats(symbol: string): Promise<BarStatsResponse> {
@@ -129,7 +129,7 @@ export async function fetchOptionBars(params: {
   return res.json() as Promise<BarsResponse>
 }
 
-export async function postWatchlistItem(item: {
+export function postWatchlistItem(item: {
   contract_key: string
   symbol?: string
   sec_type?: string
@@ -141,21 +141,13 @@ export async function postWatchlistItem(item: {
   source?: string
   category_id?: number | null
 }): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(marketUrl('/watchlist'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(item),
-  })
-  if (!res.ok) throw new Error(`Market POST /watchlist: ${res.status}`)
-  return res.json()
+  // A refusal throws with the server's reason: a real status from api 0.2.2,
+  // 200 `{ ok: false, error }` before it.
+  return requestJson(marketUrl('/watchlist'), { method: 'POST', body: item })
 }
 
-export async function deleteWatchlistItem(contractKey: string): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(marketUrl(`/watchlist?contract_key=${encodeURIComponent(contractKey)}`), {
-    method: 'DELETE',
-  })
-  if (!res.ok) throw new Error(`Market DELETE /watchlist: ${res.status}`)
-  return res.json()
+export function deleteWatchlistItem(contractKey: string): Promise<{ ok: boolean; error?: string }> {
+  return requestJson(marketUrl(`/watchlist?contract_key=${encodeURIComponent(contractKey)}`), { method: 'DELETE' })
 }
 
 function parseQuoteFromSSE(raw: string): QuoteItem | null {

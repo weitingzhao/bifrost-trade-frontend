@@ -4,6 +4,7 @@ import { withValidation } from '@/lib/apiValidation'
 import { StatusResponseSchema } from '@/lib/schemas/monitor'
 import { monitorUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
+import { httpFailure, listItems, requestJson } from '@/lib/http'
 
 const validateStatus = withValidation<StatusResponse>(StatusResponseSchema, 'monitor/status')
 
@@ -44,20 +45,17 @@ export async function postIbConfig(accounts: {
   stream_host_account_id?: string | null
   stream_secondary_account_id?: string | null
 }): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(monitorUrl('/config/ib'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(accounts),
-  })
-  const j = await res.json().catch(() => ({}))
-  return { ...j, ok: res.ok, error: j.error ?? (res.ok ? undefined : res.statusText) }
+  try {
+    const j = await requestJson<Record<string, unknown>>(monitorUrl('/config/ib'), { method: 'POST', body: accounts })
+    return { ...j, ok: true }
+  } catch (e) {
+    // The settings form prints `error`; the server's `detail` is it.
+    return { ok: false, error: httpFailure(e) }
+  }
 }
 
 /** Working orders IB reports, as the monitor reads them. */
 export async function fetchOpenOrders(): Promise<OpenOrder[]> {
-  const res = await tradeFetch(monitorUrl('/open-orders'))
-  if (!res.ok) throw new Error(`Monitor /open-orders: ${res.status}`)
-  const data = await res.json()
-  const result = data.open_orders ?? data.orders ?? data.items ?? data
-  return Array.isArray(result) ? result : []
+  // GET /open-orders answers `{ open_orders }` (monitor/routers/status.py).
+  return listItems<OpenOrder>(await requestJson(monitorUrl('/open-orders')), 'open_orders')
 }

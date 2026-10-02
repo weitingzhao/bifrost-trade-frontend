@@ -177,6 +177,16 @@ export async function requestJson<T>(url: string, opts: RequestJsonOptions<T> = 
 }
 
 /**
+ * The message of a failed request, for wrappers whose callers read
+ * `{ ok: false, error }` instead of catching. Anything that is not an
+ * `HttpError` (the network is down, a bug) is not a refusal and is rethrown.
+ */
+export function httpFailure(e: unknown): string {
+  if (e instanceof HttpError) return e.message
+  throw e
+}
+
+/**
  * The rows of a list answer: `items`, else the ONE named legacy key, else none.
  * No chain of guessed keys — a list under any other name is a contract change
  * to make on purpose, not to absorb here.

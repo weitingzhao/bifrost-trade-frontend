@@ -8,6 +8,7 @@ import { PositionCategoriesResponseSchema } from '@/lib/schemas/portfolio'
 import { ModelAnalysisResponseSchema } from '@/lib/schemas/modelAnalysis'
 import { portfolioUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
+import { listItems, requestJson } from '@/lib/http'
 
 const validateCategories = withValidation<PositionCategoriesResponse>(
   PositionCategoriesResponseSchema, 'portfolio/position-categories'
@@ -24,49 +25,35 @@ export async function fetchModelAnalysis(accountId: string): Promise<ModelAnalys
   return validateModelAnalysis(await res.json())
 }
 
+/**
+ * Every write below throws `HttpError` with the server's reason. From api
+ * 0.2.2 a refusal is a real status with `detail`; 0.2.1 answered 200
+ * `{ ok: false, error }`, which `requestJson` throws the same way.
+ */
 export async function fetchPositionCategories(): Promise<PositionCategoriesResponse> {
-  const res = await tradeFetch(portfolioUrl('/position-categories'))
-  if (!res.ok) throw new Error(`Portfolio /position-categories: ${res.status}`)
-  return validateCategories(await res.json())
+  const raw = await requestJson<Record<string, unknown>>(portfolioUrl('/position-categories'))
+  return validateCategories({ ...raw, items: listItems(raw) })
 }
 
-export async function createPositionCategory(
+export function createPositionCategory(
   name: string,
   sort_order?: number,
 ): Promise<{ ok: boolean; id: number | null; error?: string }> {
-  const res = await tradeFetch(portfolioUrl('/position-categories'), {
+  return requestJson(portfolioUrl('/position-categories'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, ...(sort_order != null ? { sort_order } : {}) }),
+    body: { name, ...(sort_order != null ? { sort_order } : {}) },
   })
-  if (!res.ok) throw new Error(`Create category: ${res.status}`)
-  return res.json()
 }
 
-export async function updatePositionCategory(
-  id: number,
-  name: string
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(portfolioUrl(`/position-categories/${id}`), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
-  })
-  if (!res.ok) throw new Error(`Update category: ${res.status}`)
-  return res.json()
+export function updatePositionCategory(id: number, name: string): Promise<{ ok: boolean; error?: string }> {
+  return patchPositionCategory(id, { name })
 }
 
-export async function patchPositionCategory(
+export function patchPositionCategory(
   id: number,
   patch: { name?: string; description?: string; sort_order?: number },
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(portfolioUrl(`/position-categories/${id}`), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(patch),
-  })
-  if (!res.ok) throw new Error(`Patch category: ${res.status}`)
-  return res.json()
+  return requestJson(portfolioUrl(`/position-categories/${id}`), { method: 'PATCH', body: patch })
 }
 
 export async function fetchMarketStreamsSymbolOrder(): Promise<{
@@ -79,25 +66,18 @@ export async function fetchMarketStreamsSymbolOrder(): Promise<{
   return { ok: j.ok === true, order: j.order ?? {} }
 }
 
-export async function putMarketStreamsSymbolOrder(
+export function putMarketStreamsSymbolOrder(
   category_name: string,
   symbols: string[],
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(portfolioUrl('/position-categories/symbol-order'), {
+  return requestJson(portfolioUrl('/position-categories/symbol-order'), {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ category_name, symbols }),
+    body: { category_name, symbols },
   })
-  if (!res.ok) throw new Error(`Put symbol order: ${res.status}`)
-  return res.json()
 }
 
-export async function deletePositionCategory(
-  id: number
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(portfolioUrl(`/position-categories/${id}`), { method: 'DELETE' })
-  if (!res.ok) throw new Error(`Delete category: ${res.status}`)
-  return res.json()
+export function deletePositionCategory(id: number): Promise<{ ok: boolean; error?: string }> {
+  return requestJson(portfolioUrl(`/position-categories/${id}`), { method: 'DELETE' })
 }
 
 /**
@@ -105,30 +85,16 @@ export async function deletePositionCategory(
  * income or cash-like, once per instrument, every account at once. `null`
  * drops the registration and the instrument reads as a stock again.
  */
-export async function setInstrumentClass(
+export function setInstrumentClass(
   contractKey: string,
   instrumentClass: 'stock' | 'fixed_income' | 'cash_like' | null,
 ): Promise<{ ok: boolean; error?: string }> {
   const url = portfolioUrl(`/instrument-classes/${encodeURIComponent(contractKey)}`)
-  const res = await tradeFetch(
-    url,
-    instrumentClass == null
-      ? { method: 'DELETE' }
-      : { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ instrument_class: instrumentClass }) },
-  )
-  if (!res.ok) throw new Error(`Instrument class: ${res.status}`)
-  return res.json()
+  return instrumentClass == null
+    ? requestJson(url, { method: 'DELETE' })
+    : requestJson(url, { method: 'PUT', body: { instrument_class: instrumentClass } })
 }
 
-export async function tagPosition(
-  req: TagPositionRequest
-): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(portfolioUrl('/position-categories/tag'), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(req),
-  })
-  if (!res.ok) throw new Error(`Tag position: ${res.status}`)
-  return res.json()
+export function tagPosition(req: TagPositionRequest): Promise<{ ok: boolean; error?: string }> {
+  return requestJson(portfolioUrl('/position-categories/tag'), { method: 'PUT', body: req })
 }
-

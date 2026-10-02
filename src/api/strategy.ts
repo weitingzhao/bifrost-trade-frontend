@@ -411,22 +411,19 @@ export async function updateAllocation(
   return j as { ok: boolean }
 }
 
-export async function setActiveAllocation(
+export function setActiveAllocation(
   allocationId: number | null,
   opts?: { structureId?: number | null; gateSafetyId?: number | null },
 ): Promise<{ ok: boolean }> {
-  const res = await tradeFetch(monitorUrl('/config/active-strategy'), {
+  // A refusal (409: the id does not exist) throws with the server's reason.
+  return requestJson(monitorUrl('/config/active-strategy'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    body: {
       active_strategy_structure_id: opts?.structureId ?? null,
       active_gate_safety_strategy_id: opts?.gateSafetyId ?? null,
       active_strategy_allocation_id: allocationId,
-    }),
+    },
   })
-  const j = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? String(res.status))
-  return j as { ok: boolean }
 }
 
 /**

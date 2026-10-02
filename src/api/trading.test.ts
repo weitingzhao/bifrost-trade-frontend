@@ -76,7 +76,7 @@ describe('fetchExecutions', () => {
   })
 
   function stubFetch(body: unknown) {
-    const fetchMock = vi.fn<(url: string) => Promise<unknown>>(async () => ({ ok: true, json: async () => body }))
+    const fetchMock = vi.fn<(url: string) => Promise<Response>>(async () => new Response(JSON.stringify(body)))
     vi.stubGlobal('fetch', fetchMock)
     return fetchMock
   }

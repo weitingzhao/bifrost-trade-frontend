@@ -9,17 +9,20 @@ import type {
   OptionStockLinkBatch,
   OptionStockLinksResponse,
   AccountTransactionsResponse,
+  OptionStockLink,
 } from '@/types/trading'
 import type {
   ExecutionsResponse,
   PositionAttributionResponse,
   CreateExecutionBody,
   UpdateExecutionBody,
+  Execution,
 } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
 import { ExecutionsWireSchema, type ExecutionsWire } from '@/lib/schemas/positions'
 import { tradingUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
+import { httpFailure, listItems, requestJson } from '@/lib/http'
 
 /**
  * Checks the body the API sent, before it is unwrapped into `{ items }`, so a
@@ -28,16 +31,16 @@ import { tradeFetch } from '@/lib/tradeFetch'
 const validateExecutions = withValidation<Partial<ExecutionsWire>>(ExecutionsWireSchema, 'trading/executions')
 const validateInstanceExecutions = withValidation<RawExecutionsResponse>(ExecutionsWireSchema, 'trading/executions')
 
-export async function fetchExecutionsFreshness(): Promise<ExecutionsFreshnessResponse> {
-  const res = await tradeFetch(tradingUrl('/executions/freshness'))
-  if (!res.ok) throw new Error(`Trading /executions/freshness: ${res.status}`)
-  return res.json() as Promise<ExecutionsFreshnessResponse>
+export function fetchExecutionsFreshness(): Promise<ExecutionsFreshnessResponse> {
+  return requestJson(tradingUrl('/executions/freshness'))
 }
 
-export async function postTwsFetch(days: 1 | 3 | 7): Promise<TwsFetchResponse> {
-  const res = await tradeFetch(tradingUrl(`/executions/fetch?days=${days}`), { method: 'POST' })
-  if (!res.ok) throw new Error(`Trading /executions/fetch: ${res.status}`)
-  return res.json() as Promise<TwsFetchResponse>
+/**
+ * Gateway trouble, a stopped monitor or a failed write throws with the
+ * server's reason (503/500 from api 0.2.2; 200 `{ ok: false, error }` before).
+ */
+export function postTwsFetch(days: 1 | 3 | 7): Promise<TwsFetchResponse> {
+  return requestJson(tradingUrl(`/executions/fetch?days=${days}`), { method: 'POST' })
 }
 
 export async function fetchExecutions(scope: ExecutionSourceScope = 'performance_book'): Promise<ExecutionsResponse> {
@@ -45,13 +48,11 @@ export async function fetchExecutions(scope: ExecutionSourceScope = 'performance
     scope === 'all'
       ? tradingUrl('/executions?limit=0')
       : tradingUrl(`/executions?limit=0&source_scope=${scope}`)
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`Trading /executions (${scope}): ${res.status}`)
-  const raw = validateExecutions(await res.json())
-  return { items: raw.executions ?? [] }
+  const raw = validateExecutions(await requestJson(url))
+  return { items: listItems(raw, 'executions') }
 }
 
-/** Legacy: GET /executions/position-attribution → { attributions: PositionInstanceAttribution[] } */
+/** GET /executions/position-attribution → `{ items, count, attributions }` (`attributions` until api 0.2.3). */
 export async function fetchPositionAttribution(
   accountId?: string,
   secType?: string,
@@ -60,57 +61,32 @@ export async function fetchPositionAttribution(
   if (accountId?.trim()) params.set('account_id', accountId.trim())
   if (secType?.trim()) params.set('sec_type', secType.trim())
   const qs = params.toString()
-  const res = await tradeFetch(tradingUrl(`/executions/position-attribution${qs ? `?${qs}` : ''}`))
-  if (!res.ok) throw new Error(`Trading /executions/position-attribution: ${res.status}`)
-  const raw = (await res.json()) as {
-    items?: PositionAttributionResponse['items']
-    attributions?: PositionAttributionResponse['items']
-  }
-  return { items: raw.attributions ?? raw.items ?? [] }
+  const raw = await requestJson(tradingUrl(`/executions/position-attribution${qs ? `?${qs}` : ''}`))
+  return { items: listItems(raw, 'attributions') }
 }
 
-export async function createExecution(
+/** A refusal throws with the server's reason (400/404/500/503 from api 0.2.2). */
+export function createExecution(
   body: CreateExecutionBody,
 ): Promise<{ ok: boolean; account_executions_id?: number | null; error?: string }> {
-  const res = await tradeFetch(tradingUrl('/executions'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`POST /executions: ${res.status}`)
-  return res.json()
+  return requestJson(tradingUrl('/executions'), { method: 'POST', body })
 }
 
+/** Never throws for a refusal: callers read `{ ok, error }`; `error` is the server's reason. */
 export async function updateExecution(
   id: number,
   body: UpdateExecutionBody,
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(tradingUrl(`/executions/${id}`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const j = (await res.json().catch(() => ({}))) as {
-    ok?: boolean
-    error?: string
-    detail?: string | { msg?: string }[]
+  try {
+    await requestJson(tradingUrl(`/executions/${id}`), { method: 'PUT', body })
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: httpFailure(e) }
   }
-  const detail = j.detail
-  const detailMsg =
-    typeof detail === 'string'
-      ? detail
-      : Array.isArray(detail) && detail[0] && typeof detail[0] === 'object' && 'msg' in detail[0]
-        ? String(detail[0].msg)
-        : undefined
-  const ok = Boolean(j.ok) && res.ok
-  const error = j.error ?? detailMsg ?? (!res.ok ? `${res.status} ${res.statusText}`.trim() : undefined)
-  return { ok, error }
 }
 
-export async function deleteExecution(id: number): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(tradingUrl(`/executions/${id}`), { method: 'DELETE' })
-  if (!res.ok) throw new Error(`DELETE /executions/${id}: ${res.status}`)
-  return res.json()
+export function deleteExecution(id: number): Promise<{ ok: boolean; error?: string }> {
+  return requestJson(tradingUrl(`/executions/${id}`), { method: 'DELETE' })
 }
 
 export async function fetchInstancePerformance(instanceId: number): Promise<PerformanceResponse> {
@@ -120,11 +96,12 @@ export async function fetchInstancePerformance(instanceId: number): Promise<Perf
 }
 
 export async function fetchInstanceExecutions(instanceId: number): Promise<RawExecutionsResponse> {
-  const res = await tradeFetch(
-    tradingUrl(`/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`),
+  const raw = validateInstanceExecutions(
+    await requestJson(
+      tradingUrl(`/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`),
+    ),
   )
-  if (!res.ok) throw new Error(`Trading /executions [${instanceId}]: ${res.status}`)
-  return validateInstanceExecutions(await res.json())
+  return { ...raw, executions: listItems(raw, 'executions') }
 }
 
 export async function fetchPerformance(params: PerformanceParams = {}): Promise<PerformanceResponse> {
@@ -156,10 +133,8 @@ export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): 
     qs.set('strategy_instance_id', String(params.strategy_instance_id))
   if (params.source_scope) qs.set('source_scope', params.source_scope)
   if (params.account_id) qs.set('account_id', params.account_id)
-  const res = await tradeFetch(tradingUrl(`/executions?${qs}`))
-  if (!res.ok) throw new Error(`Trading /executions range: ${res.status}`)
-  const raw = validateExecutions(await res.json())
-  return { items: raw.executions ?? [] }
+  const raw = validateExecutions(await requestJson(tradingUrl(`/executions?${qs}`)))
+  return { items: listItems(raw, 'executions') }
 }
 
 export async function getTransactions(params?: {
@@ -173,46 +148,41 @@ export async function getTransactions(params?: {
   if (params?.until_ts != null) qs.set('until_ts', String(params.until_ts))
   if (params?.account_id) qs.set('account_id', params.account_id)
   if (params?.limit != null) qs.set('limit', String(params.limit))
-  const res = await tradeFetch(tradingUrl(`/transactions?${qs}`))
-  if (!res.ok) throw new Error(`Trading /transactions: ${res.status}`)
-  return res.json() as Promise<AccountTransactionsResponse>
+  const raw = await requestJson<AccountTransactionsResponse>(tradingUrl(`/transactions?${qs}`))
+  return { ...raw, transactions: listItems(raw, 'transactions') }
 }
 
-export async function postOptionStockLinksQuery(
-  batches: OptionStockLinkBatch[],
-): Promise<OptionStockLinksResponse> {
-  const res = await tradeFetch(tradingUrl('/executions/option-stock-links/query'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ batches }),
-  })
-  if (!res.ok) throw new Error(`POST /option-stock-links/query: ${res.status}`)
-  return res.json() as Promise<OptionStockLinksResponse>
+/** 400 (bad batches) / 503 (no database) throw with the server's reason. */
+export function postOptionStockLinksQuery(batches: OptionStockLinkBatch[]): Promise<OptionStockLinksResponse> {
+  return requestJson(tradingUrl('/executions/option-stock-links/query'), { method: 'POST', body: { batches } })
 }
 
+/**
+ * Never throws for a refusal: the link panels print `error`. api 0.2.1 sent
+ * a failure as 200 `{ links: [], error }`, so a 2xx `error` is still read.
+ */
 export async function fetchOptionStockLinks(
   accountId: string,
   optionAccountExecutionsId: number,
-): Promise<{ links: import('@/types/trading').OptionStockLink[]; slippage_total: number | null; error?: string }> {
+): Promise<{ links: OptionStockLink[]; slippage_total: number | null; error?: string }> {
   const q = new URLSearchParams()
   q.set('account_id', accountId.trim())
   q.set('option_account_executions_id', String(optionAccountExecutionsId))
-  const res = await tradeFetch(tradingUrl(`/executions/option-stock-links?${q}`))
-  const j = (await res.json().catch(() => ({}))) as {
-    links?: import('@/types/trading').OptionStockLink[]
-    slippage_total?: number | null
-    error?: string
-  }
-  if (!res.ok) {
-    return { links: [], slippage_total: null, error: j.error ?? res.statusText }
-  }
-  return {
-    links: j.links ?? [],
-    slippage_total: j.slippage_total ?? null,
-    error: j.error,
+  try {
+    const j = await requestJson<{ slippage_total?: number | null; error?: string | null }>(
+      tradingUrl(`/executions/option-stock-links?${q}`),
+    )
+    return {
+      links: listItems<OptionStockLink>(j, 'links'),
+      slippage_total: j.slippage_total ?? null,
+      error: j.error ?? undefined,
+    }
+  } catch (e) {
+    return { links: [], slippage_total: null, error: httpFailure(e) }
   }
 }
 
+/** Never throws for a refusal (see `fetchOptionStockLinks`). */
 export async function fetchStockLinkCandidates(params: {
   account_id: string
   option_account_executions_id: number
@@ -220,7 +190,7 @@ export async function fetchStockLinkCandidates(params: {
   trade_date_to?: string
   limit?: number
 }): Promise<{
-  executions: import('@/types/positions').Execution[]
+  executions: Execution[]
   underlying_symbol?: string
   trade_date_from?: string
   trade_date_to?: string
@@ -232,26 +202,26 @@ export async function fetchStockLinkCandidates(params: {
   if (params.trade_date_from?.trim()) q.set('trade_date_from', params.trade_date_from.trim())
   if (params.trade_date_to?.trim()) q.set('trade_date_to', params.trade_date_to.trim())
   if (params.limit != null) q.set('limit', String(params.limit))
-  const res = await tradeFetch(tradingUrl(`/executions/stock-link-candidates?${q}`))
-  const j = (await res.json().catch(() => ({}))) as {
-    executions?: import('@/types/positions').Execution[]
-    underlying_symbol?: string
-    trade_date_from?: string
-    trade_date_to?: string
-    error?: string
-  }
-  if (!res.ok) {
-    return { executions: [], error: j.error ?? res.statusText }
-  }
-  return {
-    executions: j.executions ?? [],
-    underlying_symbol: j.underlying_symbol,
-    trade_date_from: j.trade_date_from,
-    trade_date_to: j.trade_date_to,
-    error: j.error,
+  try {
+    const j = await requestJson<{
+      underlying_symbol?: string
+      trade_date_from?: string
+      trade_date_to?: string
+      error?: string | null
+    }>(tradingUrl(`/executions/stock-link-candidates?${q}`))
+    return {
+      executions: listItems<Execution>(j, 'executions'),
+      underlying_symbol: j.underlying_symbol,
+      trade_date_from: j.trade_date_from,
+      trade_date_to: j.trade_date_to,
+      error: j.error ?? undefined,
+    }
+  } catch (e) {
+    return { executions: [], error: httpFailure(e) }
   }
 }
 
+/** Never throws for a refusal: `{ ok: false, error }` with the server's reason (400/404/409/500/503). */
 export async function createOptionStockLink(body: {
   account_id: string
   option_account_executions_id: number
@@ -259,33 +229,29 @@ export async function createOptionStockLink(body: {
   role?: string | null
   note?: string | null
 }): Promise<{ ok: boolean; link_id?: number | null; error?: string; warning?: string | null }> {
-  const res = await tradeFetch(tradingUrl('/executions/option-stock-links'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const j = (await res.json().catch(() => ({}))) as {
-    ok?: boolean
-    link_id?: number | null
-    error?: string
-    warning?: string | null
-  }
-  return {
-    ok: Boolean(j.ok) && res.ok,
-    link_id: j.link_id,
-    error: j.error,
-    warning: j.warning ?? null,
+  try {
+    const j = await requestJson<{ link_id?: number | null; warning?: string | null }>(
+      tradingUrl('/executions/option-stock-links'),
+      { method: 'POST', body },
+    )
+    return { ok: true, link_id: j.link_id, warning: j.warning ?? null }
+  } catch (e) {
+    return { ok: false, link_id: null, error: httpFailure(e), warning: null }
   }
 }
 
+/** Never throws for a refusal: `{ ok: false, error }` with the server's reason. */
 export async function deleteOptionStockLink(
   linkId: number,
   accountId: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const q = new URLSearchParams()
   q.set('account_id', accountId.trim())
-  const res = await tradeFetch(tradingUrl(`/executions/option-stock-links/${linkId}?${q}`), { method: 'DELETE' })
-  const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string }
-  return { ok: Boolean(j.ok) && res.ok, error: j.error }
+  try {
+    await requestJson(tradingUrl(`/executions/option-stock-links/${linkId}?${q}`), { method: 'DELETE' })
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: httpFailure(e) }
+  }
 }
 

@@ -403,7 +403,7 @@ export default function StockWatchlistPage() {
             void upsertFromItem(item, { optionable: !item.optionable })
           }
           onCategoryChange={(item, catId) => void upsertFromItem(item, { category_id: catId })}
-          onRemove={item => void removeItem.mutateAsync(item.contract_key)}
+          onRemove={item => removeItem.mutate(item.contract_key)}
           onAddOption={item => setAddOptionSymbol(symbolFromItem(item))}
           onAddFromPosition={handleAddFromPosition}
         />
@@ -436,7 +436,7 @@ export default function StockWatchlistPage() {
           portfolioRiskCollapsed={portfolioRiskCollapsed}
           onPromote={handlePromote}
           onSymbolClick={handleSymbolClick}
-          onRemove={item => void removeItem.mutateAsync(item.contract_key)}
+          onRemove={item => removeItem.mutate(item.contract_key)}
           onMaxDdChange={setStaticMaxDdPctCap}
           onStaticRiskPctChange={setStaticRiskPctPerTrade}
           onKellyFractionChange={handleKellyFractionChange}
@@ -469,7 +469,7 @@ export default function StockWatchlistPage() {
           onSymbolClick={item => handleSymbolClick(item)}
           onToggleOptionable={item => void upsertFromItem(item, { optionable: !item.optionable })}
           onCategoryChange={(item, catId) => void upsertFromItem(item, { category_id: catId })}
-          onRemove={item => void removeItem.mutateAsync(item.contract_key)}
+          onRemove={item => removeItem.mutate(item.contract_key)}
           onAddOption={item => setAddOptionSymbol(symbolFromItem(item))}
         />
       )}

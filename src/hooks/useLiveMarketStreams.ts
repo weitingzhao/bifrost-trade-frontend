@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { notify } from '@/lib/shellNotify'
 import type { DailyBenchmark, QuoteItem, WatchlistItem } from '@/types/market'
 import type { StatusResponse } from '@/types/monitor'
 import type { PositionCategory } from '@/types/portfolio'
@@ -270,7 +271,9 @@ export function useLiveMarketStreams(args: {
       const next = [...current]
       next.splice(fromIdx, 1)
       next.splice(next.indexOf(dropTarget), 0, dragged)
-      persistCategoryOrder(next)
+      persistCategoryOrder(next).catch((e: unknown) =>
+        notify(`Category order not saved — ${e instanceof Error ? e.message : String(e)}`),
+      )
     },
     [categoryOrder, defaultCategoryOrder, persistCategoryOrder],
   )

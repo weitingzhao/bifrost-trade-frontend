@@ -170,17 +170,18 @@ export function AppHeader({
       {/* The search entry is a button that says what it opens (design Rev
           .104, Owner 2026-09-29: a 440px bar that is not a field read as
           broken): ⌕ · the carried symbol · Search · ⌘K, as wide as its
-          content. Filled, borderless, radius 8, an accent ring while the
-          Spotlight is open — which is unchanged. Under 980 of header it folds
-          to the glass and the carried symbol. */}
+          content. A glass capsule 32 high (Rev .136), an accent ring while the
+          Spotlight is open. Under 980 of header it folds to the glass and the
+          carried symbol. */}
       <button
         type="button"
         onClick={omnibar.open}
         data-on={omniOpen ? '1' : '0'}
+        data-glass-surface="surface"
         className={cn(
           mb.search,
           mb.omni,
-          'ml-3 hidden h-7 flex-none items-center gap-[7px] pr-2 pl-[9px] text-left whitespace-nowrap md:inline-flex',
+          'ml-3 hidden h-8 flex-none items-center gap-2 pr-3 pl-[11px] text-left text-xs whitespace-nowrap md:inline-flex',
         )}
         aria-label="Search symbols, pages and commands"
         title="Search symbols, pages and commands (⌘K)"

@@ -719,6 +719,19 @@
   }
 }
 
+:root {
+  --ground:
+    radial-gradient(100% 105% at 12% -8%, color-mix(in srgb, var(--sk-accent) 10%, transparent), transparent 62%),
+    radial-gradient(76% 85% at 92% 108%, color-mix(in srgb, var(--sk-ticker) 5%, transparent), transparent 60%),
+    var(--sk-ground);
+}
+html[data-theme='light'] {
+  --ground:
+    radial-gradient(100% 105% at 12% -8%, color-mix(in srgb, var(--sk-accent) 9%, transparent), transparent 62%),
+    radial-gradient(76% 85% at 92% 108%, color-mix(in srgb, var(--sk-ticker) 7%, transparent), transparent 60%),
+    var(--sk-ground);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -729,14 +742,13 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     }
-  /* The ground's ambient light (design Rev 2026-09-23.14, #sr-polish-css):
-     two faint accent glows, top right and bottom left, fixed to the window.
-     Data surfaces sit on top of it opaque; only floating things let it show. */
+  /* The ground the glass refracts (design Rev .137, = Glass Study C): an
+     accent haze top-left, behind the floating sidebar, and a ticker trace
+     bottom-right, sized in % of the window and fixed to it. Without it the
+     sidebar reads as a grey slab. Data surfaces sit on it opaque; only
+     floating things let it show. */
   body {
-    background:
-      radial-gradient(1100px 520px at 78% -8%, rgb(var(--sk-accent-rgb) / 0.06), transparent 62%),
-      radial-gradient(900px 520px at -12% 110%, rgb(var(--sk-accent-rgb) / 0.04), transparent 60%),
-      var(--sk-ground);
+    background: var(--ground);
     background-attachment: fixed;
     }
   ::selection {
@@ -1226,6 +1238,32 @@ html[data-contrast='more'] .mat-tag {
    contrast hook; this app's own glass surfaces from here. */
 html[data-contrast='more'] [data-glass-surface] {
   border-color: color-mix(in srgb, var(--sk-ink) 28%, transparent);
+}
+
+/* The app's own glass pieces in the DS 0.9.0 material (Rev .134 / .139): the
+   side glass for a panel or bar, the float glass for anything that pops —
+   fill over a rim, the lens, the drop. Unlayered, so they outrank a stray
+   background or border utility on the same element. Solid and reduced
+   transparency come from the DS hooks keyed on [data-glass-surface], so the
+   element carries that too. */
+.sr-glass-side,
+.sr-glass-float {
+  border: 1px solid transparent;
+  box-shadow: var(--glass-lens), var(--glass-drop);
+}
+.sr-glass-side {
+  background:
+    linear-gradient(var(--glass-bg), var(--glass-bg)) padding-box,
+    var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+.sr-glass-float {
+  background:
+    linear-gradient(var(--glass-bg-float), var(--glass-bg-float)) padding-box,
+    var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter-float);
+  backdrop-filter: var(--glass-filter-float);
 }
 
 html[data-contrast='more']:not([data-theme='light']) {

@@ -22,14 +22,14 @@
   overflow: auto;
   translate: -50% -50%;
   padding: 22px 22px 18px;
-  border: 1px solid color-mix(in srgb, var(--sk-ink) 12%, transparent);
+  border: 1px solid transparent;
   border-radius: 18px;
-  background: color-mix(in srgb, var(--sk-surface) 78%, transparent);
-  -webkit-backdrop-filter: blur(26px) saturate(1.7);
-  backdrop-filter: blur(26px) saturate(1.7);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 8%, transparent),
-    0 30px 80px -20px rgba(0, 0, 0, 0.75);
+  background:
+    linear-gradient(var(--glass-bg-float), var(--glass-bg-float)) padding-box,
+    var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter-float);
+  backdrop-filter: var(--glass-filter-float);
+  box-shadow: var(--glass-lens), var(--glass-drop);
   font-family: var(--font-sans);
   color: var(--sk-ink);
   opacity: 0;

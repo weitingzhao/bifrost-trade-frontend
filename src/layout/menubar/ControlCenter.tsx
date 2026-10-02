@@ -17,7 +17,7 @@
  *
  * Grey means unprobed, not down — the foot says so, as the design's does.
  */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HealthLamp } from '@bifrost/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -109,6 +109,8 @@ export function ControlCenter() {
         : 'unprobed — the gateway is out of reach'
   const tip = `Data — ${dataText}\nSystem — ${sysText}\ngrey = unprobed, not down`
 
+  // The popover grows out of its trigger and goes back in (Rev .139).
+  const morphRef = useRef<HTMLButtonElement>(null)
   const close = () => setOpen(false)
 
   return (
@@ -120,7 +122,7 @@ export function ControlCenter() {
       }}
     >
       <MenubarTip tip={tip}>
-        <PopoverTrigger asChild>
+        <PopoverTrigger asChild ref={morphRef}>
           <button type="button" className={cn(css.item, 'relative min-w-8 justify-center px-[7px]')} aria-label="Data and system health">
             <span className={css.ccGlyph}>{SWITCHES}</span>
             <span
@@ -143,6 +145,7 @@ export function ControlCenter() {
         </PopoverTrigger>
       </MenubarTip>
       <PopoverContent
+        morphFrom={morphRef}
         align="end"
         sideOffset={6}
         className={cn(css.pop, 'flex max-h-[calc(100vh-64px)] w-[400px] max-w-[calc(100vw-24px)] flex-col overflow-hidden')}

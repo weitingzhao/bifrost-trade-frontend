@@ -31,7 +31,7 @@ export interface AsofTagProps {
 // Rev .67: no frame — the state is the fill (neutral ink 8%, holding amber
 // 20%), radius 8.
 const CHIP =
-  'inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-transparent px-2 font-mono text-dense-micro tracking-wide hover:brightness-125'
+  'inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-transparent px-2 font-mono text-dense-micro tracking-wide hover:brightness-125'
 
 export function AsofTag({ asof, expected, sessions, flag, judgedBy, href, className }: AsofTagProps) {
   const behind = asofHolding(asof, expected, sessions)

@@ -11,7 +11,7 @@
  * control that shows a scope it cannot set is the thing the Lens existed to
  * prevent — that question is with Design.
  */
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useRef, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { HealthLamp } from '@bifrost/ui'
@@ -101,6 +101,8 @@ export function ObjectiveControl() {
   }
   const wired = objectiveWiredPages().map(scopeRouteLabel).join(' · ')
 
+  // The popover grows out of its trigger and goes back in (Rev .139).
+  const morphRef = useRef<HTMLButtonElement>(null)
   const render = (steps: ProgressStep[]) => {
     const wait = waitingStep(steps)
     const chipTitle = current
@@ -111,7 +113,7 @@ export function ObjectiveControl() {
         {/* Rev .60: the sidebar's own Objectives glyph + the short name + the
             waiting count; the mode and the stages move to the tip. */}
         <MenubarTip tip={chipTitle}>
-          <PopoverTrigger asChild>
+          <PopoverTrigger asChild ref={morphRef}>
             <button type="button" aria-label={chipTitle} className={cn(mb.item, 'hidden gap-[5px] px-1.5 sm:inline-flex')}>
               <OBJECTIVE_GLYPH
                 className="size-[15px] shrink-0"
@@ -126,7 +128,8 @@ export function ObjectiveControl() {
             </button>
           </PopoverTrigger>
         </MenubarTip>
-        <PopoverContent align="end" sideOffset={6} className={cn(mb.pop, 'w-[420px] max-w-[calc(100vw-24px)]')}>
+        <PopoverContent
+        morphFrom={morphRef} align="end" sideOffset={6} className={cn(mb.pop, 'w-[420px] max-w-[calc(100vw-24px)]')}>
           {current ? (
             <>
               <div className="flex flex-wrap items-baseline gap-2 border-b border-border px-3 py-2.5">

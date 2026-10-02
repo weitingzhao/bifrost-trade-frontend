@@ -10,17 +10,19 @@
   top: 0;
   max-width: 300px;
   padding: 6px 9px;
-  border: 1px solid color-mix(in srgb, var(--sk-ink) 12%, transparent);
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--sk-raised) 92%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background:
+    linear-gradient(var(--glass-bg-float), var(--glass-bg-float)) padding-box,
+    var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter-float);
+  backdrop-filter: var(--glass-filter-float);
   color: var(--sk-ink);
   font: 500 11px/1.45 var(--font-sans);
   white-space: pre-line;
   text-wrap: pretty;
   pointer-events: none;
-  box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.6);
+  box-shadow: var(--glass-lens), var(--glass-drop);
   opacity: 0;
   translate: 0 -2px;
   transition:

@@ -102,7 +102,8 @@ export function LineageBar({
   return (
     <nav
       aria-label="Lineage"
-      className="sticky top-0 z-[4] flex min-w-0 flex-wrap overflow-hidden rounded-xl bg-[color-mix(in_srgb,var(--sk-surface)_90%,transparent)] shadow-[0_8px_24px_-16px_rgb(0_0_0/0.6)] backdrop-blur-[12px]"
+      data-glass-surface="raised"
+      className="sr-glass-float sticky top-0 z-[4] flex min-w-0 flex-wrap overflow-hidden rounded-xl"
     >
       <div className="flex min-w-0 flex-[1_1_100%] items-center gap-2.5 border-b border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3 py-1.5">
         <button

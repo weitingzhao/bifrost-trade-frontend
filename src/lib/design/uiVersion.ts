@@ -29,4 +29,7 @@
 // vibrancy inks, scroll edge, press, morph / spring motion), morph-from-source
 // on Popover · ContextMenu · the sheet, InspectorPanel, TokenSearchField,
 // UndoToast, ScrollEdge. The design targeted 0.8.0, which SectionBand had taken.
-export const UI_VERSION_NOW = '0.9.0'
+// 0.9.1 (Rev .135–.142): every Button a capsule; FilterBar without a slab (sticky =
+// the scroll edge); PageHead capsule tabs, no hairline, glass ⓘ note; the sidebar
+// fills its row only on keyboard focus, overlay scrollbar, glass Filter pages.
+export const UI_VERSION_NOW = '0.9.1'

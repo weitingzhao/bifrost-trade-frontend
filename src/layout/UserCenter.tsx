@@ -28,6 +28,7 @@
  *   domain is listed too (a stopped link is at least degraded); the block
  *   stays amber, as the design sets it.
  */
+import { useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ClipboardList, ExternalLink, Flag, Keyboard, Scale, SlidersHorizontal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -364,13 +365,15 @@ export function SidebarUserCenter() {
       />
     </span>
   )
+  // The popover grows out of its trigger and goes back in (Rev .139).
+  const morphRef = useRef<HTMLButtonElement>(null)
   const triggerTitle = `Account, appearance & system — ${healthTitle}`
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       {collapsed ? (
         <div className="flex justify-center py-1.5">
-          <PopoverTrigger asChild>
+          <PopoverTrigger asChild ref={morphRef}>
             <button
               type="button"
               title={triggerTitle}
@@ -383,7 +386,7 @@ export function SidebarUserCenter() {
         </div>
       ) : (
         <div className="flex items-center gap-1 px-1.5 pt-0.5 pb-2">
-          <PopoverTrigger asChild>
+          <PopoverTrigger asChild ref={morphRef}>
             <button
               type="button"
               title={triggerTitle}
@@ -427,15 +430,14 @@ export function SidebarUserCenter() {
         </div>
       )}
       <PopoverContent
+        morphFrom={morphRef}
         side={collapsed ? 'right' : 'top'}
         align="start"
         sideOffset={8}
         className={cn(
           // Capped as the design's (Rev .118): a long degraded list scrolls, it never runs off the screen.
+          // The DS popover glass (0.9.0) is the material; nothing local.
           'max-h-[calc(100vh-72px)] w-[300px] overflow-y-auto rounded-xl p-0',
-          'border-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] bg-[color-mix(in_srgb,var(--sk-raised)_82%,transparent)]',
-          'backdrop-blur-[16px] backdrop-saturate-[1.4]',
-          'shadow-[inset_0_1px_0_color-mix(in_srgb,var(--sk-ink)_7%,transparent),0_24px_60px_-16px_rgb(0_0_0/0.55)]',
         )}
       >
         <UserCard onClose={() => setOpen(false)} degraded={items} />

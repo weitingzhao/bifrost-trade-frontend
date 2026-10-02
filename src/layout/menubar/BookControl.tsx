@@ -25,7 +25,7 @@
  * because IB books bond and T-bill ETFs as STK. The Δ counts stocks and
  * options only. Legs and breaches are not split.
  */
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useBookLive } from '@/hooks/useBookLive'
@@ -229,6 +229,8 @@ export function BookControl() {
     onClick: () => setList((v) => (v === kind ? null : kind)),
   })
 
+  // The popover grows out of its trigger and goes back in (Rev .139).
+  const morphRef = useRef<HTMLButtonElement>(null)
   const accountFoot = orderPage
     ? 'Desk and Plans put plans into one account, so All is not offered here.'
     : 'Margin and buying power are per account — under All they are listed per account, never added.'
@@ -236,7 +238,7 @@ export function BookControl() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <MenubarTip tip={tip}>
-        <PopoverTrigger asChild>
+        <PopoverTrigger asChild ref={morphRef}>
           <button type="button" className={cn(css.item, 'gap-1.5 pr-[7px] pl-[5px]')} aria-label={acctTitle}>
             <span
               aria-hidden
@@ -269,6 +271,7 @@ export function BookControl() {
         </PopoverTrigger>
       </MenubarTip>
       <PopoverContent
+        morphFrom={morphRef}
         align="end"
         sideOffset={6}
         className={cn(css.pop, 'flex max-h-[calc(100vh-64px)] w-[360px] max-w-[calc(100vw-24px)] flex-col gap-2 overflow-y-auto rounded-[16px] p-2.5')}

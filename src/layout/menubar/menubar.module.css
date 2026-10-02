@@ -92,23 +92,31 @@
 }
 
 /* ── The omnibar as a macOS toolbar search field ─────────────────────── */
+/* Rev .136: a glass capsule, 32 high — the DS field glass (the same as
+   TokenSearchField's), a slight lift on hover, the accent ring while open. */
 .search {
-  border: 0;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--sk-ink) 7%, transparent);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(var(--glass-bg-field), var(--glass-bg-field)) padding-box,
+    var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter-field);
+  backdrop-filter: var(--glass-filter-field);
+  box-shadow: var(--glass-lens);
   color: var(--sk-mute2);
   transition:
-    background 0.15s ease,
+    filter 0.15s ease,
     box-shadow 0.15s ease;
 }
 
 .search:hover {
-  background: color-mix(in srgb, var(--sk-ink) 10%, transparent);
+  filter: brightness(1.08);
 }
 
 .search[data-on='1'] {
-  background: color-mix(in srgb, var(--sk-ink) 10%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sk-accent) 35%, transparent);
+  box-shadow:
+    var(--glass-lens),
+    0 0 0 3px color-mix(in srgb, var(--sk-accent) 35%, transparent);
 }
 
 /* The carried symbol, as a capsule in its ticker ink. */
@@ -128,14 +136,14 @@
 
 /* ── One glass for every popover off the bar ─────────────────────────── */
 .pop {
-  border: 1px solid color-mix(in srgb, var(--sk-ink) 14%, transparent);
+  border: 1px solid transparent;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--sk-raised) 86%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
-  backdrop-filter: blur(18px) saturate(1.5);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 7%, transparent),
-    0 24px 60px -16px rgba(0, 0, 0, 0.6);
+  background:
+    linear-gradient(var(--glass-bg-float), var(--glass-bg-float)) padding-box,
+    var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter-float);
+  backdrop-filter: var(--glass-filter-float);
+  box-shadow: var(--glass-lens), var(--glass-drop);
   padding: 0;
 }
 

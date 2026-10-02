@@ -1,17 +1,17 @@
 import type { ReactNode } from 'react'
 
 /**
- * A count on a sidebar row (design Rev .61 §5): a borderless capsule, the
- * tone at 18% under the tone's own ink, fully round, 17 high. No frame — the
- * number is the news and the colour says what kind; a boxed tag read as one
- * more control on a row that already has two.
+ * A count on a sidebar row, the Finder way (design Rev .137 §3): no capsule,
+ * just the figure at the row's end in mono 11/500. A live reading keeps its
+ * state colour on the digits; a neutral one (`tone` omitted) reads the
+ * vibrancy mute, like every other secondary ink on the glass.
  */
-export function NavBadge({ tone, title, children }: { tone: string; title?: string; children: ReactNode }) {
+export function NavBadge({ tone, title, children }: { tone?: string; title?: string; children: ReactNode }) {
   return (
     <span
       title={title}
-      className="ml-auto flex-none whitespace-nowrap rounded-full px-[7px] font-mono text-dense-caption font-semibold leading-[17px]"
-      style={{ color: tone, background: `color-mix(in srgb, ${tone} 18%, transparent)` }}
+      className="ml-auto flex-none whitespace-nowrap font-mono text-[11px] font-medium leading-[17px] tabular-nums"
+      style={{ color: tone ?? 'var(--vib-mute)' }}
     >
       {children}
     </span>

@@ -16,7 +16,7 @@
  * or a link whose own text is the name its `?symbol=` carries. Anything else
  * keeps the browser's own menu, and inputs always do.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   DropdownMenu,
@@ -144,6 +144,17 @@ export function ShellContextMenu() {
   const headInk =
     target?.kind === 'sym' ? (target.contract ? 'var(--sk-contract)' : 'var(--sk-ticker)') : 'var(--sk-mute2)'
 
+  // The menu grows out of the pointer (Rev .139, the DS `morphFrom="pointer"`
+  // morph): Radix publishes the origin, the DS keyframes do the rest, and
+  // reduced motion turns them off.
+  const menuRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const el = menuRef.current
+    if (!target || !el) return
+    el.style.setProperty('--morph-origin', 'var(--radix-dropdown-menu-content-transform-origin)')
+    el.dataset.morph = 'point'
+  }, [target])
+
   return (
     <DropdownMenu open={target != null && body != null} onOpenChange={close} modal={false}>
       <DropdownMenuTrigger asChild>
@@ -154,6 +165,7 @@ export function ShellContextMenu() {
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent
+        ref={menuRef}
         align="start"
         side="bottom"
         sideOffset={2}

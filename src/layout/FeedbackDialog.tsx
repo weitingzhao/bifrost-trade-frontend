@@ -142,8 +142,8 @@ export function FeedbackDialog() {
     <div
       role="dialog"
       aria-label="Send feedback"
-      className="fixed right-4 top-12 z-[70] w-[400px] rounded-xl border border-[var(--sk-line)] p-3 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6)] backdrop-blur-[18px]"
-      style={{ background: 'color-mix(in srgb, var(--sk-raised) 88%, transparent)' }}
+      data-glass-surface="raised"
+      className="sr-glass-float fixed right-4 top-12 z-[70] w-[400px] rounded-xl p-3"
       onPaste={(e) => {
         const files = [...e.clipboardData.files]
         if (files.length) void addFiles(files)

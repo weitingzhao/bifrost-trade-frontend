@@ -48,13 +48,12 @@
 }
 
 .group:hover {
-  background: color-mix(in srgb, var(--sk-surface) 50%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(1.7);
-  backdrop-filter: blur(18px) saturate(1.7);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 12%, transparent),
-    inset 1px 0 0 color-mix(in srgb, var(--sk-ink) 5%, transparent),
-    0 12px 32px rgba(0, 0, 0, 0.45),
+    var(--glass-lens),
+    var(--glass-drop),
     0 0 18px color-mix(in oklab, var(--rh) 14%, transparent);
 }
 

@@ -78,7 +78,7 @@ export function CellPickOverlay() {
       }}
       data-cell-pick-overlay=""
     >
-      <div className="pointer-events-none fixed top-12 left-1/2 -translate-x-1/2 rounded-full border border-[var(--sk-line)] bg-[color-mix(in_srgb,var(--sk-raised)_92%,transparent)] px-3 py-1 text-dense-meta shadow-lg backdrop-blur-[12px]">
+      <div data-glass-surface="raised" className="sr-glass-float pointer-events-none fixed top-12 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-dense-meta">
         Click the wrong number — its column, row and panel ride along · esc cancels
       </div>
     </div>

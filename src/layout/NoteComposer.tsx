@@ -103,8 +103,8 @@ export function NoteComposer() {
     <div
       role="dialog"
       aria-label="New note"
-      className="fixed right-4 top-12 z-[70] w-[360px] rounded-xl border border-[var(--sk-line)] p-3 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.6)] backdrop-blur-[18px]"
-      style={{ background: 'color-mix(in srgb, var(--sk-raised) 88%, transparent)' }}
+      data-glass-surface="raised"
+      className="sr-glass-float fixed right-4 top-12 z-[70] w-[360px] rounded-xl p-3"
     >
       <div className="mb-1.5 flex items-baseline gap-2">
         <span className="text-dense-meta font-semibold text-muted-foreground">New note</span>

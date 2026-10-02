@@ -5,7 +5,7 @@ import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { clearUndo, runUndo } from '@/lib/shellNotify'
 import { PlanEditSection } from './PlanEditSection'
 
-const updateStrategyPlan = vi.fn((..._args: unknown[]) => Promise.resolve({ ok: true }))
+const updateStrategyPlan = vi.fn<(...args: unknown[]) => Promise<{ ok: boolean }>>(() => Promise.resolve({ ok: true }))
 vi.mock('@/api/strategyPlans', () => ({
   updateStrategyPlan: (...args: unknown[]) => updateStrategyPlan(...args),
 }))

@@ -346,7 +346,7 @@ export function PlanCard({
         {/* Rev .138: a draft is edited here, in place; anything past draft is
             read-only and says why — changing it is an action below, not an edit. */}
         {plan.effective_status === 'draft' ? (
-          <PlanEditSection plan={plan} accounts={accounts} />
+          <PlanEditSection key={plan.strategy_plan_id} plan={plan} accounts={accounts} />
         ) : readOnly ? (
           <p
             id="plan-edit"

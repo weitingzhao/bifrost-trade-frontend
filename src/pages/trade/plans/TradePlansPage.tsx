@@ -14,7 +14,7 @@
  * connected". `Cash / margin` / `Pressure after` are grey: nothing computes
  * what one plan would cost in margin, so the column says so.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { TokenSearchField, ToolbarClear, ViewState, type SearchToken } from '@bifrost/ui'
@@ -219,7 +219,9 @@ export default function TradePlansPage() {
 
   const queryClient = useQueryClient()
   const inViewRef = useRef(inView)
-  inViewRef.current = inView
+  useLayoutEffect(() => {
+    inViewRef.current = inView
+  })
   /**
    * A new plan from the sheet (Rev .138 §6): it is in the list and selected.
    * When the scope bar hides it, the toast's action is Show — clear the scope
@@ -258,7 +260,9 @@ export default function TradePlansPage() {
   // ⌘⌫ deletes the selected draft (Finder's Move to Trash): no confirm — Undo
   // is on the toast and ⌘Z (Rev .138 §5).
   const selectedRef = useRef(selected)
-  selectedRef.current = selected
+  useLayoutEffect(() => {
+    selectedRef.current = selected
+  })
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey) || e.key !== 'Backspace') return

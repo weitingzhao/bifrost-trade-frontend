@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
-import { draftOf, payloadFor } from './PlanEditSection'
+import { draftOf, payloadFor } from './planEditModel'
 import { planReadOnlyReason } from './planRows'
 
 const LEGS: PlanLeg[] = [

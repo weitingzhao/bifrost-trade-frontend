@@ -97,7 +97,7 @@ export function TradeLineage({
     {
       kind: 'Opportunity',
       name: opp?.name ?? instance.strategy_opportunity_name ?? '—',
-      meta: opp ? (opp.symbols.length ? opp.symbols.join(' · ') : 'no symbols') + (opp.is_active ? '' : ' · inactive') : '—',
+      meta: opp ? (opp.symbols?.length ? opp.symbols.join(' · ') : 'no symbols') + (opp.is_active ? '' : ' · inactive') : '—',
     },
     {
       kind: 'Allocation',

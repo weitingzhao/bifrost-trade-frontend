@@ -25,6 +25,13 @@ function set(): GateSafetyFull {
     name: 'Fixture set',
     version: 2,
     is_active: false,
+    dim_direction: null,
+    dim_structure: null,
+    dim_coverage: null,
+    dim_risk: null,
+    dim_volatility: null,
+    dim_time: null,
+    structure_type: null,
     gates,
     earnings_dates: ['2031-02-03'],
   }

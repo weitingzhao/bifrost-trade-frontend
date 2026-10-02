@@ -8,11 +8,13 @@ const ALLOC: StrategyAllocation = {
   name: 'Test sleeve',
   strategy_opportunity_ids: [3, 4],
   gate_safety_strategy_id: 2,
+  gate_safety_name: null,
   max_positions: 6,
   max_bp_pct: 0.35,
+  allocation_limits: { max_positions: 6, max_bp_pct: 0.35 },
   is_active: true,
-  created_at: null,
-  updated_at: null,
+  created_at: '2031-03-04T14:30:00Z',
+  updated_at: '2031-03-04T14:30:00Z',
 }
 
 describe('allocationFormToPayload', () => {

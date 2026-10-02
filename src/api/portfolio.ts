@@ -3,6 +3,7 @@ import type {
   TagPositionRequest,
 } from '@/types/portfolio'
 import type { ModelAnalysisResponse } from '@/types/modelAnalysis'
+import type { InstrumentClassBody, PositionCategoryBody, SymbolOrderBody } from '@/types/requestBodies'
 import { withValidation } from '@/lib/apiValidation'
 import { PositionCategoriesResponseSchema } from '@/lib/schemas/portfolio'
 import { ModelAnalysisResponseSchema } from '@/lib/schemas/modelAnalysis'
@@ -39,10 +40,8 @@ export function createPositionCategory(
   name: string,
   sort_order?: number,
 ): Promise<{ ok: boolean; id: number | null; error?: string }> {
-  return requestJson(portfolioUrl('/position-categories'), {
-    method: 'POST',
-    body: { name, ...(sort_order != null ? { sort_order } : {}) },
-  })
+  const body: PositionCategoryBody = { name, ...(sort_order != null ? { sort_order } : {}) }
+  return requestJson(portfolioUrl('/position-categories'), { method: 'POST', body })
 }
 
 export function updatePositionCategory(id: number, name: string): Promise<{ ok: boolean; error?: string }> {
@@ -76,10 +75,8 @@ export function putMarketStreamsSymbolOrder(
   category_name: string,
   symbols: string[],
 ): Promise<{ ok: boolean; error?: string }> {
-  return requestJson(portfolioUrl('/position-categories/symbol-order'), {
-    method: 'PUT',
-    body: { category_name, symbols },
-  })
+  const body: SymbolOrderBody = { category_name, symbols }
+  return requestJson(portfolioUrl('/position-categories/symbol-order'), { method: 'PUT', body })
 }
 
 /** A category already gone resolves as `deleted: 'gone'` (`ok` is not in that answer). */
@@ -108,7 +105,7 @@ export async function setInstrumentClass(
     await requestDelete(url)
     return { ok: true }
   }
-  const body = { instrument_class: instrumentClass }
+  const body: InstrumentClassBody = { instrument_class: instrumentClass }
   if (registered) {
     try {
       await requestJson(url, { method: 'PATCH', body })

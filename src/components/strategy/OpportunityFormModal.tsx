@@ -65,7 +65,7 @@ import { useGateSafety } from '@/hooks/useStrategies'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { createOpportunity, patchOpportunity, fetchOpportunityDetail, fetchStructures } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import type { StrategyOpportunity, EntryCondition } from '@/types/positions'
+import type { StrategyOpportunity, EntryConditionInput } from '@/types/positions'
 import type { StrategyStructure } from '@/types/strategy'
 import {
   OPPORTUNITY_CONDITION_TYPES,
@@ -83,7 +83,7 @@ export interface PrefillData {
   gateSafetyId: string
   scopeType: string
   symbols: string[]
-  conditions: EntryCondition[]
+  conditions: EntryConditionInput[]
 }
 
 const GATE_NONE = '__none__'
@@ -126,7 +126,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
   const [gateSafetyId, setGateSafetyId] = useState<string>(prefill?.gateSafetyId || GATE_NONE)
   const [scopeType, setScopeType] = useState<string>(prefill?.scopeType ?? '')
   const [symbols, setSymbols] = useState<string[]>(prefill?.symbols ?? [])
-  const [conditions, setConditions] = useState<EntryCondition[]>(prefill?.conditions ?? [])
+  const [conditions, setConditions] = useState<EntryConditionInput[]>(prefill?.conditions ?? [])
   const [isActive, setIsActive] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -218,7 +218,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
     setConditions((prev) => [...prev, newEntryCondition()])
   }
 
-  function handleConditionPatch(index: number, patch: Partial<EntryCondition>) {
+  function handleConditionPatch(index: number, patch: Partial<EntryConditionInput>) {
     setConditions((prev) => prev.map((c, i) => (i === index ? { ...c, ...patch } : c)))
   }
 

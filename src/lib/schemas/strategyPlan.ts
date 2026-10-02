@@ -3,19 +3,27 @@ import { z } from 'zod'
 /**
  * `/api/strategy/strategies/plans` — structured trade plans (core 0.22.0).
  *
+ * Mirrors the api 0.3.1 response models `PlanRow` / `PlanLegRow` / `PlanList`
+ * (`bifrost_api/strategy/schemas/responses.py`); the FE types are their
+ * `z.infer`. Where the model says `str` and names the values in a comment
+ * (`# buy | sell`, the plan kinds and statuses), the schema keeps the enum: the
+ * pages switch on those values, and one outside the list is drift worth a
+ * report (advisory — the row still reaches the page).
+ *
  * `status` is what the row stores; `effective_status` is what to show, and adds
  * `expired`: an intent past `expires_at` is expired to a reader while the row
  * keeps saying `intended`, because that is what happened.
  */
 
+/** `PlanLegRow`: every field may be left out — a leg is what core normalised when the plan was written. */
 export const PlanLegSchema = z
   .object({
-    side: z.enum(['buy', 'sell']),
-    sec_type: z.enum(['OPT', 'STK']),
+    side: z.enum(['buy', 'sell']).optional(),
+    sec_type: z.enum(['OPT', 'STK']).optional(),
     right: z.enum(['C', 'P']).nullable().optional(),
     strike: z.number().nullable().optional(),
     expiry: z.string().nullable().optional(),
-    ratio: z.number(),
+    ratio: z.number().int().optional(),
     contract_key: z.string().nullable().optional(),
     mid_at_plan: z.number().nullable().optional(),
     quote_asof: z.string().nullable().optional(),
@@ -48,20 +56,21 @@ const apiNumeric = z.preprocess(
 
 export const StrategyPlanSchema = z
   .object({
-    strategy_plan_id: z.number(),
+    strategy_plan_id: z.number().int(),
     account_id: z.string(),
     symbol: z.string(),
     structure_label: z.string(),
-    strategy_structure_id: z.number().nullable(),
-    strategy_opportunity_id: z.number().nullable(),
+    strategy_structure_id: z.number().int().nullable(),
+    strategy_opportunity_id: z.number().int().nullable(),
     legs_json: z.array(PlanLegSchema),
-    qty: z.number(),
+    qty: z.number().int(),
     price_effect: z.enum(['credit', 'debit']).nullable(),
     limit_price: apiNumeric,
     target_kind: z.enum(['credit_pct', 'option_price', 'underlying_price']).nullable(),
     target_value: apiNumeric,
     stop_kind: z.enum(['credit_multiple', 'option_price', 'underlying_price']).nullable(),
     stop_value: apiNumeric,
+    /** YYYY-MM-DD. */
     exit_by: z.string().nullable(),
     rationale: z.string().nullable(),
     source_kind: z.enum(['manual', 'symbol', 'hypothesis', 'inbox_draft', 'roll']),
@@ -73,17 +82,17 @@ export const StrategyPlanSchema = z
     intended_at: z.string().nullable(),
     filled_at: z.string().nullable(),
     cancelled_at: z.string().nullable(),
-    strategy_instance_id: z.number().nullable(),
-    parent_strategy_plan_id: z.number().nullable(),
-    created_at: z.string().nullable(),
-    updated_at: z.string().nullable(),
+    strategy_instance_id: z.number().int().nullable(),
+    parent_strategy_plan_id: z.number().int().nullable(),
+    created_at: z.string(),
+    updated_at: z.string(),
   })
   .passthrough()
 
 export const StrategyPlansResponseSchema = z
   .object({
     items: z.array(StrategyPlanSchema),
-    count: z.number(),
+    count: z.number().int(),
   })
   .passthrough()
 

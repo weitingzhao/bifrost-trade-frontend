@@ -8,7 +8,7 @@
  */
 import type { ChainData } from '@/hooks/useRulesChain'
 import type { DenseTagVariant } from '@/components/data-display'
-import type { EntryCondition } from '@/types/strategy'
+import type { EntryConditionFields } from '@/types/strategy'
 import { fmtUsdRound } from '@/lib/format'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { plural, type ChainSelection } from './rulesChain'
@@ -100,9 +100,10 @@ const MUTED = 'text-muted-foreground'
 const WARN = 'text-warning'
 
 /** How an entry condition reads on one line — the store's own words. */
-export function conditionText(c: EntryCondition): string {
+export function conditionText(c: EntryConditionFields): string {
   const v = c.value_text ?? (c.value_numeric != null ? String(c.value_numeric) : '')
-  return v ? `${c.condition_type.replace(/_/g, ' ')} ${v}` : c.condition_type.replace(/_/g, ' ')
+  const type = (c.condition_type ?? '—').replace(/_/g, ' ')
+  return v ? `${type} ${v}` : type
 }
 
 export interface RecordInput {
@@ -110,7 +111,7 @@ export interface RecordInput {
   data: ChainData
   daemonAllocationId: number | null
   /** The picked opportunity's detail, when fetched (entry conditions live only there). */
-  conditions?: EntryCondition[] | null
+  conditions?: EntryConditionFields[] | null
   boardSort: BoardSort
   actions: RecordAction[]
   siblings?: { ids: number[]; from: string } | null

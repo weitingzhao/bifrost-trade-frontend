@@ -1,6 +1,7 @@
 import type { IbPositionRow } from './monitor'
 import type { ExecutionRow, InstanceAllocation } from '@/lib/schemas/positions'
 import type { RiskProfile, RiskScenarioBreakdown, RiskCalcContext } from '@/utils/riskProfile'
+import type { ExecutionCreateBody, ExecutionUpdateBody } from './requestBodies'
 
 export type { RiskProfile, RiskScenarioBreakdown, RiskCalcContext }
 
@@ -141,45 +142,25 @@ export interface ExecutionsResponse {
   items: Execution[]
 }
 
-export interface CreateExecutionBody {
+/** A split as the FE sends it: both fields, always. */
+interface InstanceAllocationSplit {
+  strategy_instance_id: number
+  allocated_quantity: number
+}
+
+/** `ExecutionCreateBody` (POST /executions) as the fill forms send it. */
+export interface CreateExecutionBody extends ExecutionCreateBody {
   account_id: string
   time: number
   symbol: string
   sec_type: 'STK' | 'OPT'
   side: 'BUY' | 'SELL'
-  quantity: number
-  price: number
-  source?: string
-  expiry?: string
-  strike?: number
-  option_right?: string
-  contract_key?: string
-  commission?: number
-  realized_pnl?: number
-  currency?: string
-  strategy_opportunity_id?: number | null
-  strategy_instance_id?: number | null
-  instance_allocations?: { strategy_instance_id: number; allocated_quantity: number }[]
+  instance_allocations?: InstanceAllocationSplit[]
 }
 
-export interface UpdateExecutionBody {
-  account_id?: string
-  exec_time?: number
-  symbol?: string
-  sec_type?: string
-  side?: string
-  quantity?: number
-  price?: number
-  expiry?: string
-  strike?: number
-  option_right?: string
-  contract_key?: string
-  commission?: number
-  realized_pnl?: number
-  currency?: string
-  strategy_opportunity_id?: number | null
-  strategy_instance_id?: number | null
-  instance_allocations?: { strategy_instance_id: number; allocated_quantity: number }[]
+/** `ExecutionUpdateBody` (PUT /executions/{id}): the fields sent change. */
+export interface UpdateExecutionBody extends ExecutionUpdateBody {
+  instance_allocations?: InstanceAllocationSplit[]
 }
 
 // ── Strategy types — re-exported for backward compatibility ───────────────────
@@ -191,6 +172,7 @@ export type {
   PatchStrategyInstanceBody,
   StrategyOpportunity,
   EntryCondition,
+  EntryConditionInput,
   StrategyOpportunityDetail,
   CreateOpportunityBody,
   OpportunitiesResponse,

@@ -24,7 +24,8 @@ import type { StrategyInstance } from '@/types/positions'
 export interface BookOpportunity {
   strategy_opportunity_id: number
   scope_type: string | null
-  symbols: string[]
+  /** Null in the opportunity list when it has none (api 0.3.1 `OpportunityRow`). */
+  symbols: string[] | null
 }
 
 export interface InstanceGroup {

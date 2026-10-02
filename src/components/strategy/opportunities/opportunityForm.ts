@@ -5,7 +5,7 @@
  *
  * The form keeps ids as strings (they come from pickers); `''` means none.
  */
-import type { CreateOpportunityBody, EntryCondition, StrategyOpportunityDetail } from '@/types/strategy'
+import type { CreateOpportunityBody, EntryCondition, EntryConditionInput, StrategyOpportunityDetail } from '@/types/strategy'
 
 export interface OpportunityFormState {
   name: string
@@ -16,7 +16,7 @@ export interface OpportunityFormState {
   /** `''` · `watchlist_stk` · `explicit_symbols` (see `OPPORTUNITY_SCOPE_TYPES`). */
   scopeType: string
   symbols: string[]
-  conditions: EntryCondition[]
+  conditions: EntryConditionInput[]
   /** Available — on the books. Not every surface edits it; every write carries it. */
   isActive: boolean
 }
@@ -32,8 +32,13 @@ export const EMPTY_OPPORTUNITY_FORM: OpportunityFormState = {
 }
 
 /** The row "Add condition" starts from. */
-export function newEntryCondition(): EntryCondition {
+export function newEntryCondition(): EntryConditionInput {
   return { condition_type: 'iv_min', value_text: null, value_numeric: null }
+}
+
+/** A stored condition into the form: a missing type reads as none picked (`''`), which the payload drops. */
+export function conditionToInput(c: EntryCondition): EntryConditionInput {
+  return { condition_type: c.condition_type ?? '', value_text: c.value_text, value_numeric: c.value_numeric }
 }
 
 /** Scope types that carry a symbol list; any other scope sends none. */
@@ -53,7 +58,7 @@ export function opportunityToForm(d: StrategyOpportunityDetail): OpportunityForm
     gateSafetyId: d.default_gate_safety_strategy_id != null ? String(d.default_gate_safety_strategy_id) : '',
     scopeType: d.scope_type ?? '',
     symbols: d.symbols ?? [],
-    conditions: d.entry_conditions ?? [],
+    conditions: (d.entry_conditions ?? []).map(conditionToInput),
     isActive: d.is_active === true,
   }
 }

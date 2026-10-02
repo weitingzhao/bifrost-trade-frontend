@@ -21,6 +21,13 @@ function set(version: number): GateSafetyFull {
     name: 'Fixture gate',
     version,
     is_active: true,
+    dim_direction: null,
+    dim_structure: null,
+    dim_coverage: null,
+    dim_risk: null,
+    dim_volatility: null,
+    dim_time: null,
+    structure_type: null,
     gates: gatesFixture(),
     earnings_dates: [],
   }

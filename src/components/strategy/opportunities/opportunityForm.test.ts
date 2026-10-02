@@ -20,8 +20,8 @@ function detail(p: Partial<StrategyOpportunityDetail> = {}): StrategyOpportunity
     default_gate_safety_strategy_id: 9,
     scope_type: 'explicit_symbols',
     is_active: true,
-    created_at: null,
-    updated_at: null,
+    created_at: '2031-03-04T14:30:00Z',
+    updated_at: '2031-03-04T14:30:00Z',
     structure_name: 'Cash Secured Put',
     gate_safety_name: 'Example Gate',
     symbols: ['AAA', 'BBB'],
@@ -92,7 +92,9 @@ describe('opportunityForm', () => {
     expect(opportunityFormProblem(f)).toBeNull()
     expect(opportunityFormProblem({ ...f, name: '  ' })).toBe('Name is required.')
     expect(opportunityFormProblem({ ...f, structureId: '' })).toBe('Structure is required.')
-    expect(opportunityToForm(detail({ strategy_structure_id: null })).structureId).toBe('')
+    // The model says the id is always there; a row without one still reads as no structure.
+    const noStructure = detail({ strategy_structure_id: null as unknown as number })
+    expect(opportunityToForm(noStructure).structureId).toBe('')
   })
 
   it('reads and writes the symbols line', () => {

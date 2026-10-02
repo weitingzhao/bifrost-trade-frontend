@@ -106,7 +106,7 @@ export function planLegsText(legs: readonly PlanLeg[]): string {
       if (leg.sec_type === 'STK') return `${side} shares`
       const expiry = (leg.expiry ?? '').replace(/-/g, '')
       const strike = leg.strike == null ? '' : String(leg.strike)
-      const ratio = leg.ratio > 1 ? ` ×${leg.ratio}` : ''
+      const ratio = (leg.ratio ?? 1) > 1 ? ` ×${leg.ratio}` : ''
       return `${side} ${expiry} ${strike}${leg.right ?? ''}${ratio}`
     })
     .join(' · ')

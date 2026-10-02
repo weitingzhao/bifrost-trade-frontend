@@ -13,6 +13,7 @@ import { openSseWithBackoff } from '@/lib/sse'
 import { marketUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
 import { listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
+import type { WatchlistBody } from '@/types/requestBodies'
 
 const validateQuotes = withValidation<QuotesResponse>(QuotesResponseSchema, 'market/quotes')
 const validateWatchlist = withValidation<WatchlistResponse>(WatchlistResponseSchema, 'market/watchlist')
@@ -130,18 +131,8 @@ export async function fetchOptionBars(params: {
   return res.json() as Promise<BarsResponse>
 }
 
-export function postWatchlistItem(item: {
-  contract_key: string
-  symbol?: string
-  sec_type?: string
-  expiry?: string
-  strike?: number
-  option_right?: string
-  display_label?: string
-  optionable?: boolean | null
-  source?: string
-  category_id?: number | null
-}): Promise<{ ok: boolean; error?: string }> {
+/** `WatchlistBody` (api 0.3.1): strict types, `strike` a number. */
+export function postWatchlistItem(item: WatchlistBody): Promise<{ ok: boolean; error?: string }> {
   // A refusal throws with the server's reason: a real status from api 0.2.2,
   // 200 `{ ok: false, error }` before it. From api 0.3.0 a contract already on
   // the list changes only the fields sent here; nothing else is reset.

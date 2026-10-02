@@ -1,3 +1,5 @@
+import type { OptionStockLinkBatchItem } from './requestBodies'
+
 export interface ExecutionFreshnessItem {
   account_id: string
   source: string
@@ -193,7 +195,8 @@ export interface ExecutionsRangeParams {
   account_id?: string
 }
 
-export interface OptionStockLinkBatch {
+/** `OptionStockLinkBatch` of POST /executions/option-stock-links/query. */
+export interface OptionStockLinkBatch extends OptionStockLinkBatchItem {
   account_id: string
   option_account_executions_ids: number[]
 }

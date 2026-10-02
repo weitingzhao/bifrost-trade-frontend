@@ -28,6 +28,7 @@ function full(): GateSafetyFull {
     dim_risk: null,
     dim_volatility: 'long_vol',
     dim_time: 'swing',
+    structure_type: null,
     gates: {
       strategy: {
         structure: { min_dte: 11, max_dte: 12, atm_band_pct: 0.13 },

@@ -23,8 +23,8 @@ function opp(id: number, name: string): StrategyOpportunity {
     default_gate_safety_strategy_id: 1,
     scope_type: 'explicit_symbols',
     is_active: true,
-    created_at: null,
-    updated_at: null,
+    created_at: '2031-03-04T14:30:00Z',
+    updated_at: '2031-03-04T14:30:00Z',
     structure_name: 'Cash Secured Put',
     gate_safety_name: 'Security Gate',
     symbols: ['NVDA'],
@@ -40,9 +40,10 @@ function alloc(p: Partial<StrategyAllocation> = {}): StrategyAllocation {
     gate_safety_name: 'Security Gate',
     max_positions: 10,
     max_bp_pct: 0.5,
+    allocation_limits: { max_positions: 10, max_bp_pct: 0.5 },
     is_active: true,
-    created_at: null,
-    updated_at: null,
+    created_at: '2031-03-04T14:30:00Z',
+    updated_at: '2031-03-04T14:30:00Z',
     ...p,
   }
 }

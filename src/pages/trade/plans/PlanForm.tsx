@@ -105,14 +105,15 @@ function writtenLeg(leg: LegDraft): boolean {
   return leg.strike.trim() !== '' || leg.expiry.trim() !== '' || leg.side !== ''
 }
 
+/** Every `PlanLegRow` field may be absent: no side reads as unchosen, no type as the form's OPT, no ratio as 1. */
 function legToDraft(leg: PlanLeg): LegDraft {
   return {
-    side: leg.side,
-    sec_type: leg.sec_type,
+    side: leg.side ?? '',
+    sec_type: leg.sec_type ?? 'OPT',
     right: leg.right ?? '',
     strike: leg.strike == null ? '' : String(leg.strike),
     expiry: leg.expiry ?? '',
-    ratio: String(leg.ratio),
+    ratio: String(leg.ratio ?? 1),
   }
 }
 

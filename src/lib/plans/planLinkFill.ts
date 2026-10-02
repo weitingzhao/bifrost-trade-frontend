@@ -9,7 +9,8 @@ import type { StrategyInstance } from '@/types/strategy'
 
 export type OpportunitySymbols = {
   strategy_opportunity_id: number
-  symbols: string[]
+  /** Null in the opportunity list when it has none. */
+  symbols: string[] | null
 }
 
 export function instancesTradingSymbol(

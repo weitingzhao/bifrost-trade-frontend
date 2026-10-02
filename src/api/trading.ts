@@ -23,6 +23,14 @@ import { ExecutionsWireSchema, type ExecutionsWire } from '@/lib/schemas/positio
 import { tradingUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
 import { httpFailure, listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
+import type { OptionStockLinkBody, OptionStockLinksQueryBody } from '@/types/requestBodies'
+
+/** `OptionStockLinkBody` as the link panels send it: the account and both fills. */
+export interface OptionStockLinkCreate extends OptionStockLinkBody {
+  account_id: string
+  option_account_executions_id: number
+  stock_account_executions_id: number
+}
 
 /**
  * Checks the body the API sent, before it is unwrapped into `{ items }`, so a
@@ -207,7 +215,8 @@ export async function getTransactions(params?: {
 
 /** 400 (bad batches) / 503 (no database) throw with the server's reason. */
 export function postOptionStockLinksQuery(batches: OptionStockLinkBatch[]): Promise<OptionStockLinksResponse> {
-  return requestJson(tradingUrl('/executions/option-stock-links/query'), { method: 'POST', body: { batches } })
+  const body: OptionStockLinksQueryBody = { batches }
+  return requestJson(tradingUrl('/executions/option-stock-links/query'), { method: 'POST', body })
 }
 
 /**
@@ -275,13 +284,7 @@ export async function fetchStockLinkCandidates(params: {
 }
 
 /** Never throws for a refusal: `{ ok: false, error }` with the server's reason (400/404/409/500/503). */
-export async function createOptionStockLink(body: {
-  account_id: string
-  option_account_executions_id: number
-  stock_account_executions_id: number
-  role?: string | null
-  note?: string | null
-}): Promise<{ ok: boolean; link_id?: number | null; error?: string; warning?: string | null }> {
+export async function createOptionStockLink(body: OptionStockLinkCreate): Promise<{ ok: boolean; link_id?: number | null; error?: string; warning?: string | null }> {
   try {
     const j = await requestJson<{ link_id?: number | null; warning?: string | null }>(
       tradingUrl('/executions/option-stock-links'),

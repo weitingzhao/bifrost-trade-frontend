@@ -7,6 +7,14 @@ import { withValidation } from '@/lib/apiValidation'
 import { strategyUrl } from '@/lib/devApiUrl'
 import { SavedSearchesResponseSchema, type SavedSearchesResponse } from '@/lib/schemas/savedSearch'
 import { requestDelete, requestJson, type DeleteOutcome, type RequestJsonOptions } from '@/lib/http'
+import type { SavedSearchBody } from '@/types/requestBodies'
+
+/** `SavedSearchBody` as the Finder sends it: a route, a name and the page's search. */
+export interface SavedSearchCreate extends SavedSearchBody {
+  route: string
+  label: string
+  state: { search: string }
+}
 
 const validate = withValidation<SavedSearchesResponse>(SavedSearchesResponseSchema, 'strategy/saved-searches')
 
@@ -18,11 +26,7 @@ export async function fetchSavedSearches(): Promise<SavedSearchesResponse> {
   return validate(await request('/strategies/saved-searches'))
 }
 
-export async function createSavedSearch(body: {
-  route: string
-  label: string
-  state: { search: string }
-}): Promise<{ preference_saved_search_id: number }> {
+export async function createSavedSearch(body: SavedSearchCreate): Promise<{ preference_saved_search_id: number }> {
   return request('/strategies/saved-searches', { method: 'POST', body })
 }
 

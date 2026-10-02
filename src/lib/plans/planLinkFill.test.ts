@@ -10,7 +10,7 @@ function instance(over: Partial<StrategyInstance> & Pick<StrategyInstance, 'stra
     opened_at_epoch: 1,
     created_at: '2026-09-15T12:00:00Z',
     created_at_epoch: 1,
-    updated_at: null,
+    updated_at: '2031-03-04T14:30:00Z',
     strategy_opportunity_name: over.label,
     strategy_structure_id: null,
     strategy_structure_name: null,

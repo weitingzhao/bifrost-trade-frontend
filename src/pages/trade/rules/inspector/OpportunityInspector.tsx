@@ -27,7 +27,7 @@ import {
 import { useGateSafety, useStructures } from '@/hooks/useStrategies'
 import { useLiveEdit } from '@/hooks/useLiveEdit'
 import { cn } from '@/lib/utils'
-import type { EntryCondition } from '@/types/strategy'
+import type { EntryConditionInput } from '@/types/strategy'
 import { OPPORTUNITY_CONDITION_TYPES, getOpportunityConditionTypeLabel } from '@/utils/strategyFormUtils'
 import { FIELD, RuleInspector } from './RuleInspector'
 
@@ -130,7 +130,7 @@ function OpportunityFields({
   const structureListed = structures.some((s) => String(s.strategy_structure_id) === draft.structureId)
   const gateListed = gates.some((g) => String(g.gate_safety_strategy_id) === draft.gateSafetyId)
 
-  const setCondition = (idx: number, field: string, patch: Partial<EntryCondition>) =>
+  const setCondition = (idx: number, field: string, patch: Partial<EntryConditionInput>) =>
     edit(`cond:${idx}:${field}`, (d) => ({
       ...d,
       conditions: d.conditions.map((c, i) => (i === idx ? { ...c, ...patch } : c)),

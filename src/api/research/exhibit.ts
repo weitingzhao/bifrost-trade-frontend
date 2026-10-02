@@ -108,7 +108,7 @@ export async function fetchExhibitComposite(
   const data = await unwrap<{ symbol: string; lenses: string[]; exhibits: ExhibitPayload[] }>(
     await fetch(`${researchEngineUrl('/research/exhibit/composite')}?${q}`)
   )
-  return (data.exhibits ?? []).map(validate)
+  return (data.exhibits ?? []).map((ex) => validate(ex))
 }
 
 /** True when the batch stubbed this lens because its builder threw. */

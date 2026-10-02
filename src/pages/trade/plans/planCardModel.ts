@@ -60,7 +60,7 @@ export function twsCopyText(
   const legs = plan.legs_json
     .map((leg) => {
       const side = leg.side === 'sell' ? 'Sell' : 'Buy'
-      const qty = plan.qty * leg.ratio
+      const qty = plan.qty * (leg.ratio ?? 1)
       if (leg.sec_type === 'STK') return `${side} ${qty * 100} shares`
       return `${side} ${qty} ${legExpiryText(leg.expiry)} ${leg.strike ?? ''}${leg.right ?? ''}`
     })
@@ -82,7 +82,7 @@ export function planCashSecured(
       leg.side === 'sell' && leg.right === 'P' && leg.strike != null,
   )
   if (shortPuts.length === 0) return null
-  return shortPuts.reduce((sum, leg) => sum + leg.strike * 100 * plan.qty * leg.ratio, 0)
+  return shortPuts.reduce((sum, leg) => sum + leg.strike * 100 * plan.qty * (leg.ratio ?? 1), 0)
 }
 
 /** `+$1,470 · 1.75% on cash` when both halves are real; the credit alone otherwise. */

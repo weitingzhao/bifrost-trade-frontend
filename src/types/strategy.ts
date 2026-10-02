@@ -1,25 +1,36 @@
+import type { z } from 'zod'
+import type {
+  AllocationsResponseSchema,
+  EntryConditionSchema,
+  GateSafetyFullSchema,
+  GateSafetyItemSchema,
+  GateSafetyResponseSchema,
+  OpportunitiesResponseSchema,
+  StrategyAllocationSchema,
+  StrategyInstanceSchema,
+  StrategyInstancesResponseSchema,
+  StrategyOpportunityDetailSchema,
+  StrategyOpportunitySchema,
+} from '@/lib/schemas/strategy'
+import type {
+  GateSafetyBody,
+  TemplateBody,
+  StructureBody,
+  StructureMetaItem,
+  TemplateLegItem,
+  TemplateParamItem,
+} from './requestBodies'
+
+// The five response-modelled resources (api 0.3.1: allocations, opportunities,
+// gate-safety, instances; plans in `@/lib/schemas/strategyPlan`) are inferred
+// from the schemas that mirror the API's models — one description, checked at
+// runtime by `withValidation` and at compile time here.
+
 // ── Strategy Instance ─────────────────────────────────────────────────────────
 
-export interface StrategyInstance {
-  strategy_instance_id: number
-  strategy_opportunity_id: number
-  account_id: string
-  label: string | null
-  notes: string | null
-  opened_at: string | null
-  opened_at_epoch: number | null
-  created_at: string | null
-  created_at_epoch: number | null
-  updated_at: string | null
-  strategy_opportunity_name: string | null
-  strategy_structure_id: number | null
-  strategy_structure_name: string | null
-  executions_count: number
-}
-
-export interface StrategyInstancesResponse {
-  items: StrategyInstance[]
-}
+/** `InstanceRow`: `executions_count` is in list items only. */
+export type StrategyInstance = z.infer<typeof StrategyInstanceSchema>
+export type StrategyInstancesResponse = z.infer<typeof StrategyInstancesResponseSchema>
 
 export interface CreateStrategyInstanceBody {
   strategy_opportunity_id: number
@@ -37,29 +48,18 @@ export interface PatchStrategyInstanceBody {
 
 // ── Strategy Opportunity ──────────────────────────────────────────────────────
 
-export interface StrategyOpportunity {
-  strategy_opportunity_id: number
-  name: string
-  strategy_structure_id: number | null
-  default_gate_safety_strategy_id: number | null
-  scope_type: string | null
-  is_active: boolean
-  created_at: string | null
-  updated_at: string | null
-  structure_name: string | null
-  gate_safety_name: string | null
-  symbols: string[]
-}
-
-export interface EntryCondition {
+/** `OpportunityRow`: `symbols` is null in the list for an opportunity without symbols. */
+export type StrategyOpportunity = z.infer<typeof StrategyOpportunitySchema>
+/** As the API answers it: `condition_type` may be null. */
+export type EntryCondition = z.infer<typeof EntryConditionSchema>
+/** A condition's own three fields — what a write carries back. */
+export type EntryConditionFields = Pick<EntryCondition, 'condition_type' | 'value_text' | 'value_numeric'>
+/** A condition as the opportunity forms edit it: a type is always picked (`''` = none yet). */
+export interface EntryConditionInput extends EntryConditionFields {
   condition_type: string
-  value_text: string | null
-  value_numeric: number | null
 }
-
-export interface StrategyOpportunityDetail extends StrategyOpportunity {
-  entry_conditions: EntryCondition[]
-}
+/** `OpportunityDetail`: `symbols` always an array, plus the entry conditions. */
+export type StrategyOpportunityDetail = z.infer<typeof StrategyOpportunityDetailSchema>
 
 export interface CreateOpportunityBody {
   name: string
@@ -67,13 +67,11 @@ export interface CreateOpportunityBody {
   default_gate_safety_strategy_id?: number | null
   scope_type?: string | null
   symbols?: string[]
-  entry_conditions?: EntryCondition[]
+  entry_conditions?: EntryConditionFields[]
   is_active?: boolean
 }
 
-export interface OpportunitiesResponse {
-  items: StrategyOpportunity[]
-}
+export type OpportunitiesResponse = z.infer<typeof OpportunitiesResponseSchema>
 
 // ── Strategy Structure ────────────────────────────────────────────────────────
 
@@ -111,20 +109,18 @@ export interface StrategyStructure {
   metadata?: Record<string, unknown> | null
 }
 
-export interface StructureMetaEntry {
+export interface StructureMetaEntry extends StructureMetaItem {
   meta_key: string
   meta_value_text: string | null
 }
 
-/** Payload for create/update strategy structure. Dimensions come from the linked template. */
-export interface StructurePayload {
+/**
+ * Payload for create/update strategy structure (`StructureBody`). Dimensions
+ * come from the linked template. Legs go back as GET returned them.
+ */
+export interface StructurePayload extends StructureBody {
   name: string
-  strategy_template_id?: number
-  structure_type?: string
-  structure_subtype?: string | null
   legs: StructureLeg[]
-  version?: number
-  is_active?: boolean
   notes?: string
   meta?: StructureMetaEntry[]
 }
@@ -135,18 +131,7 @@ export interface StructuresResponse {
 
 // ── Gate Safety ───────────────────────────────────────────────────────────────
 
-export interface GateSafetyItem {
-  gate_safety_strategy_id: number
-  name: string
-  version: number
-  is_active: boolean
-  dim_direction?: string | null
-  dim_structure?: string | null
-  dim_coverage?: string | null
-  dim_risk?: string | null
-  dim_volatility?: string | null
-  dim_time?: string | null
-}
+export type GateSafetyItem = z.infer<typeof GateSafetyItemSchema>
 
 export interface GateSafetyGates {
   strategy?: {
@@ -189,38 +174,15 @@ export interface GateSafetyDefaultsResponse {
   gates: GateSafetyGates
 }
 
-export interface GateSafetyFull {
-  gate_safety_strategy_id: number
+export type GateSafetyFull = z.infer<typeof GateSafetyFullSchema>
+
+/** `GateSafetyBody` as the gate form sends it. */
+export interface GateSafetyPayload extends GateSafetyBody {
   name: string
-  version: number
-  is_active: boolean
-  dim_direction?: string | null
-  dim_structure?: string | null
-  dim_coverage?: string | null
-  dim_risk?: string | null
-  dim_volatility?: string | null
-  dim_time?: string | null
   gates: GateSafetyGates
-  earnings_dates: string[]
 }
 
-export interface GateSafetyPayload {
-  name: string
-  version?: number
-  dim_direction?: string | null
-  dim_structure?: string | null
-  dim_coverage?: string | null
-  dim_risk?: string | null
-  dim_volatility?: string | null
-  dim_time?: string | null
-  is_active?: boolean
-  gates: GateSafetyGates
-  earnings_dates?: string[]
-}
-
-export interface GateSafetyResponse {
-  items: GateSafetyItem[]
-}
+export type GateSafetyResponse = z.infer<typeof GateSafetyResponseSchema>
 
 // ── Active Strategy Config ────────────────────────────────────────────────────
 
@@ -278,7 +240,8 @@ export interface StrategyTemplateDetail extends StrategyTemplateRow {
   characteristics: string[]
 }
 
-export interface TemplateLegPayload {
+/** `TemplateLegItem` as the template editor sends it (`''` for no right). */
+export interface TemplateLegPayload extends TemplateLegItem {
   role: string | null
   direction: string | null
   option_right: string
@@ -286,12 +249,18 @@ export interface TemplateLegPayload {
   sort_order: number
 }
 
-export interface MetaParamPayload {
+/** `TemplateParamItem` as the template editor sends it (strings only). */
+export interface MetaParamPayload extends TemplateParamItem {
   meta_key: string
   display_label: string | null
   default_value_text: string | null
   param_kind: string
   sort_order: number
+}
+
+/** `TemplateBody` for POST /strategies/templates: core refuses one without a code (400). */
+export interface CreateTemplateBody extends TemplateBody {
+  template_code: string
 }
 
 export interface TemplateConfigOption {
@@ -331,19 +300,7 @@ export interface WinRateResponse {
 
 // ── Allocation ────────────────────────────────────────────────────────────────
 
-export interface StrategyAllocation {
-  strategy_allocation_id: number
-  name: string
-  strategy_opportunity_ids: number[]
-  gate_safety_strategy_id?: number | null
-  gate_safety_name?: string | null
-  max_positions?: number | null
-  max_bp_pct?: number | null
-  allocation_limits?: Record<string, unknown> | null
-  is_active: boolean
-  created_at: string | null
-  updated_at: string | null
-}
+export type StrategyAllocation = z.infer<typeof StrategyAllocationSchema>
 
 export interface AllocationPayload {
   name: string
@@ -354,6 +311,4 @@ export interface AllocationPayload {
   is_active?: boolean
 }
 
-export interface AllocationsResponse {
-  items: StrategyAllocation[]
-}
+export type AllocationsResponse = z.infer<typeof AllocationsResponseSchema>

@@ -13,6 +13,7 @@
  */
 import { fetchOpportunityDetail } from '@/api/strategy'
 import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
+import { conditionToInput } from '@/components/strategy/opportunities/opportunityForm'
 
 /** Query key for the detail, shared so a copy reuses whatever is already cached. */
 export function opportunityDetailKey(id: number) {
@@ -27,6 +28,6 @@ export function opportunityCopyPrefill(detail: Awaited<ReturnType<typeof fetchOp
       detail.default_gate_safety_strategy_id != null ? String(detail.default_gate_safety_strategy_id) : '',
     scopeType: detail.scope_type ?? '',
     symbols: detail.symbols ?? [],
-    conditions: detail.entry_conditions ?? [],
+    conditions: (detail.entry_conditions ?? []).map(conditionToInput),
   }
 }

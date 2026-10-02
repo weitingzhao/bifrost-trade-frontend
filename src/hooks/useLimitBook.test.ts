@@ -8,9 +8,13 @@ const alloc = (id: number, gate: number | null, is_active = true): StrategyAlloc
   name: `A${id}`,
   strategy_opportunity_ids: [],
   gate_safety_strategy_id: gate,
+  gate_safety_name: null,
+  max_positions: null,
+  max_bp_pct: null,
+  allocation_limits: null,
   is_active,
-  created_at: null,
-  updated_at: null,
+  created_at: '2031-03-04T14:30:00Z',
+  updated_at: '2031-03-04T14:30:00Z',
 })
 
 describe('runningGate', () => {

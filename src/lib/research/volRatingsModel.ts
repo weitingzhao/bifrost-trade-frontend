@@ -372,7 +372,8 @@ export function ruleIndex(
   opportunities: readonly {
     strategy_opportunity_id: number
     name: string
-    symbols: string[]
+    /** Null in the opportunity list when it has none. */
+    symbols: string[] | null
     is_active: boolean
   }[],
 ): Map<string, VolRule[]> {

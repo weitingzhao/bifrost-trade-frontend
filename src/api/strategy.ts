@@ -25,25 +25,45 @@ import type {
 } from '@/types/positions'
 import { withValidation } from '@/lib/apiValidation'
 import {
+  AllocationsResponseSchema,
   GateSafetyDefaultsResponseSchema,
+  GateSafetyFullSchema,
+  GateSafetyResponseSchema,
+  OpportunitiesResponseSchema,
+  StrategyAllocationSchema,
   StrategyInstancesResponseSchema,
   StrategyInstanceDetailSchema,
+  StrategyOpportunityDetailSchema,
 } from '@/lib/schemas/strategy'
-import type { GateSafetyDefaultsResponse } from '@/types/strategy'
+import type { CreateTemplateBody, GateSafetyDefaultsResponse } from '@/types/strategy'
+import type { TemplateCharacteristicsBody, TemplateLegsBody, TemplateParamsBody } from '@/types/requestBodies'
 import { monitorUrl, strategyUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
 import { requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
 
 
+// The five response-modelled resources (api 0.3.1) are read through their
+// schemas; the types are those schemas' `z.infer`. Advisory: a mismatch is
+// reported (DEV console, PROD drift record) and the answer still passes.
 const validateInstances = withValidation<StrategyInstancesResponse>(StrategyInstancesResponseSchema, 'strategy/instances')
 const validateInstance = withValidation<StrategyInstance>(StrategyInstanceDetailSchema, 'strategy/instances/:id')
+const validateOpportunities = withValidation<OpportunitiesResponse>(OpportunitiesResponseSchema, 'strategy/opportunities')
+const validateOpportunity = withValidation<StrategyOpportunityDetail>(
+  StrategyOpportunityDetailSchema,
+  'strategy/opportunities/:id',
+)
+const validateGateSafetyList = withValidation<GateSafetyResponse>(GateSafetyResponseSchema, 'strategy/gate-safety')
+const validateGateSafety = withValidation<GateSafetyFull>(GateSafetyFullSchema, 'strategy/gate-safety/:id')
+const validateAllocations = withValidation<AllocationsResponse>(AllocationsResponseSchema, 'strategy/allocations')
+const validateAllocation = withValidation<StrategyAllocation>(StrategyAllocationSchema, 'strategy/allocations/:id')
 
 /** List page needs inactive rows too — Legacy calls with active_only=false. */
 export async function fetchOpportunities(activeOnly = false): Promise<OpportunitiesResponse> {
   const qs = new URLSearchParams({ active_only: String(activeOnly) })
-  const res = await tradeFetch(strategyUrl(`/strategies/opportunities?${qs}`))
+  const url = strategyUrl(`/strategies/opportunities?${qs}`)
+  const res = await tradeFetch(url)
   if (!res.ok) throw new Error(`Strategy /opportunities: ${res.status}`)
-  return res.json() as Promise<OpportunitiesResponse>
+  return validateOpportunities(await res.json(), url)
 }
 
 export async function fetchStructures(activeOnly = false): Promise<StructuresResponse> {
@@ -99,15 +119,18 @@ export async function fetchStrategyInstances(params?: {
   if (params?.accountId) sp.set('account_id', params.accountId)
   if (params?.openedAtFrom != null) sp.set('opened_at_from', String(params.openedAtFrom))
   const qs = sp.toString()
-  const res = await tradeFetch(strategyUrl(`/strategies/instances${qs ? `?${qs}` : ''}`))
+  const url = strategyUrl(`/strategies/instances${qs ? `?${qs}` : ''}`)
+  const res = await tradeFetch(url)
   if (!res.ok) throw new Error(`Strategy /instances: ${res.status}`)
-  return validateInstances(await res.json())
+  return validateInstances(await res.json(), url)
 }
 
+/** `InstanceRow` without `executions_count` (the list alone carries it). */
 export async function fetchStrategyInstance(id: number): Promise<StrategyInstance> {
-  const res = await tradeFetch(strategyUrl(`/strategies/instances/${id}`))
+  const url = strategyUrl(`/strategies/instances/${id}`)
+  const res = await tradeFetch(url)
   if (!res.ok) throw new Error(`Strategy /instances/${id}: ${res.status}`)
-  return validateInstance(await res.json())
+  return validateInstance(await res.json(), url)
 }
 
 /** Legacy Strategy API returns `{ strategy_instance_id }` on success (no `ok` field). */
@@ -149,9 +172,8 @@ export async function patchStrategyInstance(
   id: number,
   body: PatchStrategyInstanceBody,
 ): Promise<StrategyInstance> {
-  return validateInstance(
-    await requestJson(strategyUrl(`/strategies/instances/${id}`), { method: 'PATCH', body }),
-  )
+  const url = strategyUrl(`/strategies/instances/${id}`)
+  return validateInstance(await requestJson(url, { method: 'PATCH', body }), url)
 }
 
 /**
@@ -164,9 +186,10 @@ export function deleteStrategyInstance(id: number): Promise<DeleteOutcome> {
 }
 
 export async function fetchOpportunityDetail(id: number): Promise<StrategyOpportunityDetail> {
-  const res = await tradeFetch(strategyUrl(`/strategies/opportunities/${id}`))
+  const url = strategyUrl(`/strategies/opportunities/${id}`)
+  const res = await tradeFetch(url)
   if (!res.ok) throw new Error(`Strategy /opportunities/${id}: ${res.status}`)
-  return res.json() as Promise<StrategyOpportunityDetail>
+  return validateOpportunity(await res.json(), url)
 }
 
 export async function createOpportunity(
@@ -187,17 +210,19 @@ export async function createOpportunity(
  * `entry_conditions` replace the stored lists whole. Answers the opportunity
  * as GET /opportunities/{id} does; a refusal throws the server's reason.
  */
-export function patchOpportunity(
+export async function patchOpportunity(
   id: number,
   body: Partial<CreateOpportunityBody>,
 ): Promise<StrategyOpportunityDetail> {
-  return requestJson(strategyUrl(`/strategies/opportunities/${id}`), { method: 'PATCH', body })
+  const url = strategyUrl(`/strategies/opportunities/${id}`)
+  return validateOpportunity(await requestJson(url, { method: 'PATCH', body }), url)
 }
 
 export async function fetchGateSafety(): Promise<GateSafetyResponse> {
-  const res = await tradeFetch(strategyUrl('/strategies/gate-safety'))
+  const url = strategyUrl('/strategies/gate-safety')
+  const res = await tradeFetch(url)
   if (!res.ok) throw new Error(`Strategy /gate-safety: ${res.status}`)
-  return res.json() as Promise<GateSafetyResponse>
+  return validateGateSafetyList(await res.json(), url)
 }
 
 /**
@@ -213,9 +238,10 @@ export async function fetchGateSafetyDefaults(): Promise<GateSafetyDefaultsRespo
 }
 
 export async function fetchGateSafetyFull(id: number): Promise<GateSafetyFull> {
-  const res = await tradeFetch(strategyUrl(`/strategies/gate-safety/${id}`))
+  const url = strategyUrl(`/strategies/gate-safety/${id}`)
+  const res = await tradeFetch(url)
   if (!res.ok) throw new Error(`Strategy /gate-safety/${id}: ${res.status}`)
-  return res.json() as Promise<GateSafetyFull>
+  return validateGateSafety(await res.json(), url)
 }
 
 export async function createGateSafety(
@@ -265,7 +291,7 @@ export async function fetchTemplateDetail(id: number): Promise<StrategyTemplateD
 }
 
 export function createTemplate(
-  payload: Record<string, unknown>,
+  payload: CreateTemplateBody,
 ): Promise<{ strategy_template_id: number }> {
   // The server says *why* — `Invalid structure code: custom`, a duplicate code
   // — and a bare 400 makes the reader guess at something already known.
@@ -312,10 +338,11 @@ export async function replaceTemplateLegs(
   id: number,
   legs: TemplateLegPayload[],
 ): Promise<{ ok: boolean }> {
+  const body: TemplateLegsBody = { legs }
   const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}/legs`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ legs }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/legs: ${res.status}`)
   return res.json()
@@ -325,10 +352,11 @@ export async function replaceTemplateParams(
   id: number,
   items: MetaParamPayload[],
 ): Promise<{ ok: boolean }> {
+  const body: TemplateParamsBody = { items }
   const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}/params`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ items }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/params: ${res.status}`)
   return res.json()
@@ -338,10 +366,11 @@ export async function replaceTemplateCharacteristics(
   id: number,
   items: string[],
 ): Promise<{ ok: boolean }> {
+  const body: TemplateCharacteristicsBody = { items }
   const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}/characteristics`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ items }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/characteristics: ${res.status}`)
   return res.json()
@@ -388,16 +417,17 @@ export async function fetchWinRate(params?: {
 
 
 export async function fetchAllocations(activeOnly = false): Promise<AllocationsResponse> {
-  const qs = `?active_only=${activeOnly}`
-  const res = await tradeFetch(strategyUrl(`/strategies/allocations${qs}`))
+  const url = strategyUrl(`/strategies/allocations?active_only=${activeOnly}`)
+  const res = await tradeFetch(url)
   if (!res.ok) throw new Error(`GET /strategies/allocations: ${res.status}`)
-  return res.json() as Promise<AllocationsResponse>
+  return validateAllocations(await res.json(), url)
 }
 
 export async function fetchAllocation(id: number): Promise<StrategyAllocation> {
-  const res = await tradeFetch(strategyUrl(`/strategies/allocations/${id}`))
+  const url = strategyUrl(`/strategies/allocations/${id}`)
+  const res = await tradeFetch(url)
   if (!res.ok) throw new Error(`GET /strategies/allocations/${id}: ${res.status}`)
-  return res.json() as Promise<StrategyAllocation>
+  return validateAllocation(await res.json(), url)
 }
 
 export async function createAllocation(
@@ -418,8 +448,9 @@ export async function createAllocation(
  * one (`null` clears both); `strategy_opportunity_ids` replaces the
  * membership. Answers the allocation as GET /allocations/{id} does.
  */
-export function updateAllocation(id: number, payload: Partial<AllocationPayload>): Promise<StrategyAllocation> {
-  return requestJson(strategyUrl(`/strategies/allocations/${id}`), { method: 'PATCH', body: payload })
+export async function updateAllocation(id: number, payload: Partial<AllocationPayload>): Promise<StrategyAllocation> {
+  const url = strategyUrl(`/strategies/allocations/${id}`)
+  return validateAllocation(await requestJson(url, { method: 'PATCH', body: payload }), url)
 }
 
 export function setActiveAllocation(

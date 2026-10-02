@@ -1,25 +1,30 @@
 import { z } from 'zod'
+import { reportSchemaDrift } from '@/lib/schemaDriftReport'
 
 /**
  * Wraps a Zod schema to validate API responses at runtime.
  *
- * TExpected: the TypeScript interface the caller expects (e.g. ExecutionsResponse).
- * The schema validates structure; TExpected describes the semantic type with narrower
- * string unions etc. The two are intentionally decoupled — the schema catches structural
- * drift (missing required fields, wrong types) without needing to match every literal union.
+ * TExpected: the TypeScript type the caller expects — `z.infer` of the schema
+ * where the schema mirrors an API response model (TD-24), a narrower hand type
+ * elsewhere. The schema catches structural drift (missing required fields,
+ * wrong types).
  *
- * On mismatch: logs a warning in dev mode, then passes the raw data through so the app
- * keeps working even when backend schema drifts. Failures surface immediately in dev
- * without crashing production.
+ * Advisory on mismatch: the raw data passes through so the page keeps working
+ * when the backend drifts. DEV logs the first issues on every mismatch; PROD
+ * records it through `reportSchemaDrift` — once per (schema, field path) per
+ * session, names only, never values. Pass the request `url` so the record says
+ * which call answered it (only its path is kept).
  */
 export function withValidation<TExpected>(schema: z.ZodSchema, endpointName: string) {
-  return (data: unknown): TExpected => {
+  return (data: unknown, url?: string): TExpected => {
     const result = schema.safeParse(data)
     if (!result.success) {
       if (import.meta.env.DEV) {
         const sample = result.error.issues.slice(0, 3)
         // eslint-disable-next-line no-console -- dev-only schema drift warning
         console.warn(`[api-schema] ${endpointName} — ${result.error.issues.length} issue(s):`, sample)
+      } else {
+        reportSchemaDrift(endpointName, result.error.issues, url)
       }
       return data as TExpected
     }

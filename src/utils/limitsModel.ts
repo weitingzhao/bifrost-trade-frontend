@@ -461,7 +461,8 @@ export function gateLimitRules(r: GateReadings): LimitRule[] {
       bound: 'ceiling',
       onBreach: 'the daemon stops hedging for the day',
       citedFrom: inRules,
-      noReading: 'the daemon does not hedge — D10 freezes execution and the gate is set to paper',
+      // Paper mode is forced in the daemon's code under D10, not by the gate (TD-66).
+      noReading: 'no hedge is counted — D10 freezes execution and the daemon only simulates hedges',
     })
   }
 

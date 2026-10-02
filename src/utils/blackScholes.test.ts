@@ -34,6 +34,29 @@ describe('bsComputeDetail', () => {
     expect(p.theta).toBeLessThan(0)
   })
 
+  it('call and put theta satisfy put-call parity (θc − θp = −rK·e^(−rT) per year)', () => {
+    for (const [S, K, T, r, sigma] of [
+      [100, 100, 0.25, 0.05, 0.2],
+      [100, 90, 0.1, 0.045, 0.35],
+      [50, 60, 1, 0.04, 0.6],
+    ]) {
+      const c = bsComputeDetail({ S, K, T, r, sigma, right: 'C' })
+      const p = bsComputeDetail({ S, K, T, r, sigma, right: 'P' })
+      expect(c.theta - p.theta).toBeCloseTo((-r * K * Math.exp(-r * T)) / 365, 9)
+    }
+  })
+
+  it('theta matches the price change over one calendar day', () => {
+    const day = 1 / 365
+    for (const right of ['C', 'P'] as const) {
+      const base = { S: 100, K: 105, r: 0.05, sigma: 0.3, right }
+      const now = bsComputeDetail({ ...base, T: 0.5 })
+      const later = bsComputeDetail({ ...base, T: 0.5 - day })
+      // Central enough at T=0.5: the one-day price change agrees with theta to ~1e-4.
+      expect(later.price - now.price).toBeCloseTo(now.theta, 3)
+    }
+  })
+
   it('deep ITM call delta ≈ 1', () => {
     const { delta } = bsComputeDetail({ S: 150, K: 100, T: 0.5, r: 0.05, sigma: 0.2, right: 'C' })
     expect(delta).toBeGreaterThan(0.95)

@@ -52,8 +52,11 @@ export function bsComputeDetail({ S, K, T, r, sigma, right }: BsInputs): BsDetai
 
   const delta = right === 'C' ? normalCDF(d1) : normalCDF(d1) - 1
   const gamma = nd1 / (S * sigma * sqrtT)
+  // Per calendar day. The carry term has opposite signs: a call pays −rK·e^(−rT)·N(d2),
+  // a put earns +rK·e^(−rT)·N(−d2) (put-call parity: θc − θp = −rK·e^(−rT)).
+  const carry = r * K * disc
   const theta = (-(S * nd1 * sigma) / (2 * sqrtT)
-    - r * K * disc * (right === 'C' ? normalCDF(d2) : normalCDF(-d2))) / 365
+    + (right === 'C' ? -carry * normalCDF(d2) : carry * normalCDF(-d2))) / 365
   const vega = S * sqrtT * nd1 / 100  // per 1% vol
 
   const price = right === 'C'

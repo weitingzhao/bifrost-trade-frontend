@@ -79,7 +79,10 @@ describe('gateForm — full → form → payload', () => {
 
   it('binds every params key the four families hold, in the sheet’s order', () => {
     expect(GATE_FAMILIES.map((f) => f.id)).toEqual(['strategy', 'state', 'intent', 'guard'])
-    expect(GATE_FIELDS).toHaveLength(24)
+    // 23: guard.risk.paper_trade is not editable — the daemon never reads it and forces
+    // paper mode in code (TD-66); the stored key still round-trips untouched.
+    expect(GATE_FIELDS).toHaveLength(23)
+    expect(GATE_FIELDS.map((f) => f.path)).not.toContain('guard.risk.paper_trade')
     const d = full()
     for (const field of GATE_FIELDS) {
       expect(getGateValue(d.gates, field.path), field.path).not.toBeUndefined()

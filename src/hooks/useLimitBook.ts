@@ -26,12 +26,14 @@ import { useExecutionsAll } from '@/hooks/useExecutions'
 import { readInstances } from '@/utils/strategyInstances'
 import {
   fetchAllocations,
-  fetchGateSafety,
   fetchGateSafetyFull,
   fetchStrategyInstances,
 } from '@/api/strategy'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import { gateLimitRules, limitRules, withHeadroom, type GateReadings, type LimitRow } from '@/utils/limitsModel'
+import { daemonPaperTrade } from '@/utils/daemonMode'
+import type { StatusStrategyActive } from '@/types/monitor'
+import type { StrategyAllocation } from '@/types/strategy'
 
 /**
  * The window "new underlyings this week" looks back over.
@@ -41,6 +43,21 @@ import { gateLimitRules, limitRules, withHeadroom, type GateReadings, type Limit
  * name that had already been seen as new.
  */
 const WEEK_MS = 6 * 86_400_000
+
+/**
+ * The allocation and gate the daemon runs, from its settings (status.strategy.active)
+ * — never the first allocation flagged is_active, which only means "on the books" (TD-18).
+ */
+export function runningGate(
+  allocations: StrategyAllocation[],
+  active: StatusStrategyActive | undefined,
+): { allocation: StrategyAllocation | null; gateId: number | null } {
+  const id = active?.allocation?.id ?? null
+  return {
+    allocation: id == null ? null : allocations.find((a) => a.strategy_allocation_id === id) ?? null,
+    gateId: active?.gate_safety?.id ?? null,
+  }
+}
 
 /** Everything the two pages that draw the book need from it. */
 export interface LimitBook {
@@ -122,6 +139,12 @@ export function useLimitBook(accountFilter: string): LimitBook {
    * The gate the daemon runs under — the only limits in this book anyone has
    * written down. Design DECISIONS 2026-09-18: a gate is a limit at scope =
    * allocation, defined in Trading › Rules and read here.
+   *
+   * "Runs" is what the daemon's settings point at (status.strategy.active), as
+   * Trading › Rules reads it — not the first allocation on the books. With a
+   * second allocation or gate the two differ, and the book graded positions
+   * against a gate the daemon does not load (TD-18). No settings gate means the
+   * daemon falls back to its config file, so there is no gate here to read.
    */
   const allocationsQuery = useQuery({
     queryKey: ['strategy', 'allocations'],
@@ -131,15 +154,8 @@ export function useLimitBook(accountFilter: string): LimitBook {
     queryKey: ['strategy', 'instances'],
     queryFn: () => fetchStrategyInstances(),
   })
-  const gatesQuery = useQuery({ queryKey: ['strategy', 'gate-safety'], queryFn: fetchGateSafety })
-
-  const allocation = (allocationsQuery.data?.items ?? []).find((a) => a.is_active) ?? null
-  // The allocation names its own gate; the active-gate list is the fallback for
-  // an allocation that carries none.
-  const gateId =
-    allocation?.gate_safety_strategy_id ??
-    (gatesQuery.data?.items ?? []).find((g) => g.is_active)?.gate_safety_strategy_id ??
-    null
+  const { allocation, gateId } = runningGate(allocationsQuery.data?.items ?? [], status?.strategy?.active)
+  const paperTrade = daemonPaperTrade(status)
   const gateFullQuery = useQuery({
     queryKey: ['strategy', 'gate-safety', gateId],
     queryFn: () => fetchGateSafetyFull(gateId!),
@@ -160,7 +176,7 @@ export function useLimitBook(accountFilter: string): LimitBook {
         openInstances: null,
         maxPositions: allocation?.max_positions ?? null,
         lossToday: null,
-        paperTrade: typeof guard?.paper_trade === 'boolean' ? (guard.paper_trade as boolean) : null,
+        paperTrade,
       }
     }
     const oppIds = new Set(allocation.strategy_opportunity_ids ?? [])
@@ -182,9 +198,9 @@ export function useLimitBook(accountFilter: string): LimitBook {
       // Nothing settled under the allocation today is a reading of zero loss,
       // not an absence — but only once a fill today exists to say so.
       lossToday: todayFills.length === 0 ? null : closedToday.reduce((a, i) => a + (i.realised ?? 0), 0),
-      paperTrade: typeof guard?.paper_trade === 'boolean' ? (guard.paper_trade as boolean) : null,
+      paperTrade,
     }
-  }, [allocation, gateFullQuery.data, instancesQuery.data?.items, execQuery.data?.items])
+  }, [allocation, gateFullQuery.data, instancesQuery.data?.items, execQuery.data?.items, paperTrade])
 
   const rows = useMemo(
     () =>

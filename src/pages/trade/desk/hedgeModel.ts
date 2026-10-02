@@ -3,6 +3,7 @@
  * show them. Pure, so the menu and the strip read the same words, and kept
  * out of the component file so fast refresh can keep the menu's state.
  */
+import { daemonPaperTrade } from '@/utils/daemonMode'
 import type { StatusResponse } from '@/types/monitor'
 
 export interface HedgeReading {
@@ -48,11 +49,10 @@ export function hedgeFacts(status: StatusResponse | undefined): HedgeFact[] {
 /** The daemon's own words, read once so the menu and the strip agree. */
 export function hedgeReading(status: StatusResponse | undefined): HedgeReading {
   const auto = status?.daemon?.trading?.auto_status as Record<string, unknown> | undefined
-  const summary = typeof auto?.config_summary === 'string' ? auto.config_summary : null
   return {
     suspended: status?.daemon?.trading?.trading_suspended ?? false,
     alive: status?.daemon?.heartbeat?.daemon_alive ?? false,
     state: typeof auto?.daemon_state === 'string' ? auto.daemon_state : null,
-    paperTrade: summary == null ? null : /paper_trade\s*=\s*true/i.test(summary),
+    paperTrade: daemonPaperTrade(status),
   }
 }

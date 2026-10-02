@@ -102,7 +102,6 @@ export const GATE_FAMILIES: readonly GateFamily[] = [
       f('guard.risk.max_daily_loss_usd', 'Max daily loss · $', 'float'),
       f('guard.risk.max_net_delta_shares', 'Max net Δ · sh', 'int'),
       f('guard.risk.max_spread_pct', 'Max spread · pct', 'float', 0.01),
-      f('guard.risk.paper_trade', 'Paper trade', 'bool'),
     ],
   },
 ]

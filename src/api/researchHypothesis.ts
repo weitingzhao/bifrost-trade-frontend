@@ -5,7 +5,7 @@
  * that Wave 4 endpoints use. Response envelope: `{ ok, data, error? }`.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { requestJson, type RequestJsonOptions } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   HypothesisListResponseSchema,
@@ -104,8 +104,9 @@ export interface HypothesisPatchInput {
   conclusion?: string | null
 }
 
-function unwrap<T>(res: Response): Promise<T> {
-  return unwrapResearchEnvelope(res, { apiLabel: 'Hypothesis API' })
+/** Every hypothesis route answers the `{ ok, data }` envelope. */
+function hypothesisApi<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
+  return requestJson<T>(researchEngineUrl(path), { ...init, envelope: 'research', label: 'Hypothesis API' })
 }
 
 const validateList = withValidation<HypothesisListResponse>(
@@ -117,20 +118,6 @@ const validateActive = withValidation<HypothesisSummaryActive>(
   HypothesisSummaryActiveSchema,
   'research/hypothesis/summary/active',
 )
-
-async function get<T>(path: string): Promise<T> {
-  return unwrap<T>(await fetch(researchEngineUrl(path)))
-}
-
-async function send<T>(method: 'POST' | 'PATCH', path: string, body: unknown): Promise<T> {
-  return unwrap<T>(
-    await fetch(researchEngineUrl(path), {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }),
-  )
-}
 
 export interface ListHypothesesQuery {
   status?: HypothesisStatus
@@ -150,21 +137,21 @@ export function listHypotheses(opts: ListHypothesesQuery = {}): Promise<Hypothes
   if (opts.limit) params.set('limit', String(opts.limit))
   if (opts.offset) params.set('offset', String(opts.offset))
   const suffix = params.toString() ? `?${params.toString()}` : ''
-  return get(`/research/hypothesis${suffix}`).then(validateList)
+  return hypothesisApi(`/research/hypothesis${suffix}`).then(validateList)
 }
 
 export function getHypothesis(id: string): Promise<Hypothesis> {
-  return get(`/research/hypothesis/${encodeURIComponent(id)}`).then(validateOne)
+  return hypothesisApi(`/research/hypothesis/${encodeURIComponent(id)}`).then(validateOne)
 }
 
 export function fetchActiveSummary(topN = 5): Promise<HypothesisSummaryActive> {
-  return get(`/research/hypothesis/summary/active?top_n=${topN}`).then(validateActive)
+  return hypothesisApi(`/research/hypothesis/summary/active?top_n=${topN}`).then(validateActive)
 }
 
 export function createHypothesis(body: HypothesisCreateInput): Promise<Hypothesis> {
-  return send<Hypothesis>('POST', '/research/hypothesis', body)
+  return hypothesisApi<Hypothesis>('/research/hypothesis', { method: 'POST', body })
 }
 
 export function patchHypothesis(id: string, body: HypothesisPatchInput): Promise<Hypothesis> {
-  return send<Hypothesis>('PATCH', `/research/hypothesis/${encodeURIComponent(id)}`, body)
+  return hypothesisApi<Hypothesis>(`/research/hypothesis/${encodeURIComponent(id)}`, { method: 'PATCH', body })
 }

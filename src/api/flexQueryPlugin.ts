@@ -7,6 +7,7 @@ import type {
   TransactionsFetchResponse,
 } from '@/types/trading'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import {
   FlexConfigSummarySchema,
   FlexCoverageFreshnessResponseSchema,
@@ -32,35 +33,22 @@ export type FlexConfigSummary = {
   query_rows: FlexAccountItem[]
 }
 
-function pluginErrorMessage(json: unknown, fallback: string): string {
-  if (json != null && typeof json === 'object') {
-    const rec = json as { error?: unknown; detail?: unknown }
-    if (typeof rec.error === 'string' && rec.error.trim()) return rec.error
-    if (typeof rec.detail === 'string' && rec.detail.trim()) return rec.detail
-  }
-  return fallback
-}
-
 export async function pluginFlexConfigSummary(): Promise<FlexConfigSummary> {
-  const res = await fetch(flexQueryPluginUrl('/flex/config/summary'))
-  const json: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(pluginErrorMessage(json, `Flex Plugin /flex/config/summary: ${res.status}`))
-  }
-  return validateFlexConfig(json)
+  return validateFlexConfig(await requestJson(flexQueryPluginUrl('/flex/config/summary'), { label: 'Flex Plugin' }))
 }
 
-async function pluginPost<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(flexQueryPluginUrl(path), {
+/**
+ * A Flex run reports a refusal as a 2xx `{ ok: false, error, raw_count,
+ * per_query }` and the import panel prints those fields, so the body comes
+ * back rather than throwing; a non-2xx still throws with the plugin's reason.
+ */
+function pluginPost<T>(path: string, body: unknown): Promise<T> {
+  return requestJson<T>(flexQueryPluginUrl(path), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body ?? {}),
+    body: body ?? {},
+    okFalse: 'return',
+    label: 'Flex Plugin',
   })
-  const json: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(pluginErrorMessage(json, `Flex Plugin ${path}: ${res.status}`))
-  }
-  return json as T
 }
 
 /**
@@ -89,27 +77,19 @@ export async function pluginFlexWriteConfig(
   flexInitRangeDays?: number | null,
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch(flexQueryPluginUrl('/flex/config/write'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        host_token: hostToken ?? undefined,
-        secondary_token: secondaryToken ?? undefined,
-        accounts,
-        flex_default_range_days:
-          flexDefaultRangeDays != null && Number.isFinite(flexDefaultRangeDays)
-            ? Math.max(1, Math.round(flexDefaultRangeDays))
-            : undefined,
-        flex_init_range_days:
-          flexInitRangeDays != null && Number.isFinite(flexInitRangeDays)
-            ? Math.max(1, Math.round(flexInitRangeDays))
-            : undefined,
-      }),
+    const j = await pluginPost<{ ok?: boolean; error?: string; detail?: string }>('/flex/config/write', {
+      host_token: hostToken ?? undefined,
+      secondary_token: secondaryToken ?? undefined,
+      accounts,
+      flex_default_range_days:
+        flexDefaultRangeDays != null && Number.isFinite(flexDefaultRangeDays)
+          ? Math.max(1, Math.round(flexDefaultRangeDays))
+          : undefined,
+      flex_init_range_days:
+        flexInitRangeDays != null && Number.isFinite(flexInitRangeDays)
+          ? Math.max(1, Math.round(flexInitRangeDays))
+          : undefined,
     })
-    const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; detail?: string }
-    if (!res.ok) {
-      return { ok: false, error: pluginErrorMessage(j, res.statusText) }
-    }
     return { ...j, ok: j.ok !== false }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
@@ -117,11 +97,7 @@ export async function pluginFlexWriteConfig(
 }
 
 export async function pluginFlexCoverageFreshness(): Promise<FlexCoverageFreshnessResponse> {
-  const res = await fetch(flexQueryPluginUrl('/flex/coverage/freshness'))
-  const json: unknown = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(pluginErrorMessage(json, `Flex Plugin /flex/coverage/freshness: ${res.status}`))
-  }
+  const json = await requestJson(flexQueryPluginUrl('/flex/coverage/freshness'), { label: 'Flex Plugin' })
   const rec = json as Partial<FlexCoverageFreshnessResponse>
   return validateFlexCoverage({
     dimensions: Array.isArray(rec.dimensions) ? rec.dimensions : [],

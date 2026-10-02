@@ -32,6 +32,7 @@ import {
 import type { GateSafetyDefaultsResponse } from '@/types/strategy'
 import { monitorUrl, strategyUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
+import { requestJson } from '@/lib/http'
 
 
 const validateInstances = withValidation<StrategyInstancesResponse>(StrategyInstancesResponseSchema, 'strategy/instances')
@@ -264,30 +265,12 @@ export async function fetchTemplateDetail(id: number): Promise<StrategyTemplateD
   return res.json() as Promise<StrategyTemplateDetail>
 }
 
-/** The server's own `detail`, when it sent one; the status otherwise. */
-async function detailOrStatus(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { detail?: unknown; error?: unknown }
-    const detail = body.detail ?? body.error
-    if (typeof detail === 'string' && detail.trim()) return detail
-  } catch {
-    /* not JSON — the status is all there is */
-  }
-  return String(res.status)
-}
-
-export async function createTemplate(
+export function createTemplate(
   payload: Record<string, unknown>,
 ): Promise<{ strategy_template_id: number }> {
-  const res = await tradeFetch(strategyUrl('/strategies/templates'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
   // The server says *why* — `Invalid structure code: custom`, a duplicate code
   // — and a bare 400 makes the reader guess at something already known.
-  if (!res.ok) throw new Error(`POST /strategies/templates: ${await detailOrStatus(res)}`)
-  return res.json()
+  return requestJson(strategyUrl('/strategies/templates'), { method: 'POST', body: payload })
 }
 
 export async function updateTemplate(
@@ -348,10 +331,8 @@ export async function replaceTemplateCharacteristics(
   return res.json()
 }
 
-async function fetchConfigOptions(path: string): Promise<{ options: TemplateConfigOption[] }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/templates/options/${path}`))
-  if (!res.ok) throw new Error(`Strategy /templates/options/${path}: ${res.status}`)
-  return res.json()
+function fetchConfigOptions(path: string): Promise<{ options: TemplateConfigOption[] }> {
+  return requestJson(strategyUrl(`/strategies/templates/options/${path}`))
 }
 
 /** Paths match Legacy + strategy API (`/templates/options/*` singular). */
@@ -453,11 +434,8 @@ export async function setActiveAllocation(
  * only once its Undo toast has closed (Owner 2026-10-01: held delete). An
  * object still in use is refused with a 409 whose reason is the error's text.
  */
-async function deleteRule(path: string): Promise<{ ok: boolean }> {
-  const res = await tradeFetch(strategyUrl(path), { method: 'DELETE' })
-  const j = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `DELETE ${path}: ${res.status}`)
-  return j as { ok: boolean }
+function deleteRule(path: string): Promise<{ ok: boolean }> {
+  return requestJson(strategyUrl(path), { method: 'DELETE' })
 }
 
 export function deleteOpportunity(id: number): Promise<{ ok: boolean }> {

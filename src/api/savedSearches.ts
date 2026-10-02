@@ -6,15 +6,12 @@
 import { withValidation } from '@/lib/apiValidation'
 import { strategyUrl } from '@/lib/devApiUrl'
 import { SavedSearchesResponseSchema, type SavedSearchesResponse } from '@/lib/schemas/savedSearch'
-import { tradeFetch } from '@/lib/tradeFetch'
+import { requestJson, type RequestJsonOptions } from '@/lib/http'
 
 const validate = withValidation<SavedSearchesResponse>(SavedSearchesResponseSchema, 'strategy/saved-searches')
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await tradeFetch(strategyUrl(path), init)
-  const body = (await res.json().catch(() => ({}))) as { detail?: string }
-  if (!res.ok) throw new Error(body.detail ?? `${init?.method ?? 'GET'} ${path}: ${res.status}`)
-  return body as T
+function request<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
+  return requestJson<T>(strategyUrl(path), init)
 }
 
 export async function fetchSavedSearches(): Promise<SavedSearchesResponse> {
@@ -26,11 +23,7 @@ export async function createSavedSearch(body: {
   label: string
   state: { search: string }
 }): Promise<{ preference_saved_search_id: number }> {
-  return request('/strategies/saved-searches', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+  return request('/strategies/saved-searches', { method: 'POST', body })
 }
 
 export async function deleteSavedSearch(id: number): Promise<{ ok: boolean }> {

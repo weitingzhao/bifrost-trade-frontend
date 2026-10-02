@@ -10,7 +10,7 @@ import { withValidation } from '@/lib/apiValidation'
 import {
   DraftListResponseSchema,
 } from '@/lib/schemas/research'
-import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 
 /**
  * Every kind the backend will accept, mirroring `repositories/ai_draft`'s
@@ -64,8 +64,15 @@ export interface AgentRunResult {
   message?: string
 }
 
-function unwrap<T>(res: Response): Promise<T> {
-  return unwrapResearchEnvelope(res, { apiLabel: 'Drafts API' })
+/** Every drafts route: the research bearer and the `{ ok, data }` envelope. */
+function draftsApi<T>(path: string, body?: unknown): Promise<T> {
+  return requestJson<T>(researchEngineUrl(path), {
+    method: body === undefined ? 'GET' : 'POST',
+    body,
+    headers: getResearchAuthHeaders(),
+    envelope: 'research',
+    label: 'Drafts API',
+  })
 }
 
 /** Feeds InboxBanner — pending_count decides whether the banner renders at all. */
@@ -90,11 +97,7 @@ export async function listResearchDrafts(params?: {
   if (params?.limit) qs.set('limit', String(params.limit))
   const suffix = qs.toString() ? `?${qs}` : ''
   return validateDraftList(
-    await unwrap(
-      await fetch(researchEngineUrl(`/research/drafts${suffix}`), {
-        headers: getResearchAuthHeaders(),
-      }),
-    ),
+    await draftsApi(`/research/drafts${suffix}`),
   )
 }
 
@@ -102,26 +105,14 @@ export async function approveResearchDraft(
   id: string,
   approvedBy = 'owner',
 ): Promise<{ draft: AiDraft; executed?: Record<string, unknown> }> {
-  return unwrap(
-    await fetch(researchEngineUrl(`/research/drafts/${encodeURIComponent(id)}/approve`), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-      body: JSON.stringify({ approved_by: approvedBy }),
-    }),
-  )
+  return draftsApi(`/research/drafts/${encodeURIComponent(id)}/approve`, { approved_by: approvedBy })
 }
 
 export async function dismissResearchDraft(
   id: string,
   approvedBy = 'owner',
 ): Promise<{ draft: AiDraft }> {
-  return unwrap(
-    await fetch(researchEngineUrl(`/research/drafts/${encodeURIComponent(id)}/dismiss`), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-      body: JSON.stringify({ approved_by: approvedBy }),
-    }),
-  )
+  return draftsApi(`/research/drafts/${encodeURIComponent(id)}/dismiss`, { approved_by: approvedBy })
 }
 
 /** The subset a person may create by hand — deliberately narrower than DraftKind. */
@@ -141,31 +132,13 @@ export interface CreateResearchDraftBody {
 export async function createResearchDraft(
   body: CreateResearchDraftBody,
 ): Promise<{ draft: AiDraft }> {
-  return unwrap(
-    await fetch(researchEngineUrl('/research/drafts'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-      body: JSON.stringify(body),
-    }),
-  )
+  return draftsApi('/research/drafts', body)
 }
 
 export async function runMorningAgent(dryRun = false): Promise<AgentRunResult> {
-  return unwrap(
-    await fetch(researchEngineUrl('/research/agents/morning/run'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-      body: JSON.stringify({ dry_run: dryRun }),
-    }),
-  )
+  return draftsApi('/research/agents/morning/run', { dry_run: dryRun })
 }
 
 export async function runEodAgent(dryRun = false): Promise<AgentRunResult> {
-  return unwrap(
-    await fetch(researchEngineUrl('/research/agents/eod/run'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-      body: JSON.stringify({ dry_run: dryRun }),
-    }),
-  )
+  return draftsApi('/research/agents/eod/run', { dry_run: dryRun })
 }

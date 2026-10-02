@@ -115,7 +115,9 @@ describe('nothing writes to Trade around tradeFetch', () => {
   })
 
   it('still finds the Trade API modules (the scan has not gone quiet)', () => {
-    const users = sourceFiles('src').filter((f) => /\btradeFetch\(/.test(readFileSync(f, 'utf8')))
+    // `requestJson` (lib/http, TD-50) sends through tradeFetch, so its callers count.
+    const users = sourceFiles('src').filter((f) => /\b(tradeFetch\(|requestJson[<(])/.test(readFileSync(f, 'utf8')))
     expect(users.length).toBeGreaterThanOrEqual(14)
+    expect(readFileSync('src/lib/http.ts', 'utf8')).toMatch(/await tradeFetch\(/)
   })
 })

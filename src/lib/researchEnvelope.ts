@@ -1,9 +1,15 @@
 /**
- * Shared Research Engine envelope unwrap — used by research/* API modules.
+ * Shared Research Engine envelope unwrap — used by research/* API modules
+ * that hold the `Response` themselves.
  *
  * Research responses are `{ ok, data, error? }`. Callers get `data` or throw.
+ * The reading is `readJsonResponse` in `@/lib/http` (TD-50) — one rule for
+ * every module: the server's reason (`detail ?? error`) is the message, the
+ * status is on `HttpError.status` (alias `ResearchHttpError`) so 401
+ * empty-states do not scrape the message string. New code calls
+ * `requestJson(url, { envelope: 'research' })` instead.
  */
-import { ResearchHttpError } from '@/lib/auth/researchHttpError'
+import { readJsonResponse } from '@/lib/http'
 
 export interface ResearchEnvelope<T> {
   ok: boolean
@@ -12,60 +18,11 @@ export interface ResearchEnvelope<T> {
 }
 
 export type UnwrapResearchOpts = {
-  /** When set, use HTML-aware error path with this label in messages. */
+  /** Names the API in messages the server gave no reason for (status line, HTML proxy page). */
   apiLabel?: string
 }
 
-/**
- * Parse a Research Engine Response and return `body.data`.
- *
- * Default path: JSON parse + throw when `!res.ok` or `body.ok === false`.
- * With `apiLabel`: detect HTML proxy errors and include the label in throws
- * (Drafts / Hypothesis / Backtest event).
- * HTTP failures carry `ResearchHttpError.status` so 401 empty-states do not
- * scrape the message string.
- */
-export async function unwrapResearchEnvelope<T>(
-  res: Response,
-  opts?: UnwrapResearchOpts,
-): Promise<T> {
-  const label = opts?.apiLabel
-
-  if (label) {
-    const ct = res.headers.get('content-type') ?? ''
-    if (!res.ok) {
-      const text = await res.text().catch(() => res.statusText)
-      if (text.trimStart().startsWith('<!') || ct.includes('text/html')) {
-        throw new ResearchHttpError(
-          res.status,
-          `${label} unreachable (got HTML instead of JSON). ` +
-            'Ensure research-api :8795 is running and VITE_API_RESEARCH_ENGINE is set.',
-        )
-      }
-      let detail = text
-      try {
-        const parsed = JSON.parse(text) as { detail?: string; error?: string }
-        detail = parsed.detail ?? parsed.error ?? text
-      } catch {
-        /* keep raw text */
-      }
-      throw new ResearchHttpError(res.status, `${label} ${res.status}: ${detail}`)
-    }
-    const body = (await res.json()) as ResearchEnvelope<T>
-    if (!body.ok) {
-      throw new Error(body.error ?? `${label} returned ok=false`)
-    }
-    return body.data
-  }
-
-  const body = (await res.json().catch(() => ({}))) as ResearchEnvelope<T> & {
-    detail?: string
-  }
-  if (!res.ok || body.ok === false) {
-    const msg = body.error ?? body.detail ?? `HTTP ${res.status}`
-    const text = typeof msg === 'string' ? msg : `HTTP ${res.status}`
-    if (!res.ok) throw new ResearchHttpError(res.status, text)
-    throw new Error(text)
-  }
-  return body.data
+/** Parse a Research Engine Response and return `body.data`. */
+export function unwrapResearchEnvelope<T>(res: Response, opts?: UnwrapResearchOpts): Promise<T> {
+  return readJsonResponse<T>(res, { envelope: 'research', label: opts?.apiLabel })
 }

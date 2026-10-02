@@ -48,10 +48,7 @@ describe('CompositeRegimeRibbon', () => {
   it('renders one tag per lens and the active lens meaning inline', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => ({
-        ok: true,
-        json: async () => ({ ok: true, data: { exhibits: EXHIBITS } }),
-      }))
+      vi.fn(async () => new Response(JSON.stringify({ ok: true, data: { exhibits: EXHIBITS } }), { status: 200 }))
     )
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(

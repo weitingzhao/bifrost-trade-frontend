@@ -1,6 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
-import { researchThrowHttp } from '@/lib/auth/researchHttpError'
+import { requestJson, type RequestJsonOptions } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import { AgentPersonaListSchema } from '@/lib/schemas/platform'
 
@@ -35,17 +35,13 @@ export type AgentPersona = {
   assembled_preview?: string
 }
 
-async function personaFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(researchEngineUrl(path), {
+/** Persona routes answer `{ ok, agents | persona }` with the research bearer. */
+function personaFetch<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
+  return requestJson<T>(researchEngineUrl(path), {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getResearchAuthHeaders(),
-      ...(init?.headers ?? {}),
-    },
+    headers: getResearchAuthHeaders(),
+    label: 'Agent persona',
   })
-  if (!res.ok) researchThrowHttp(res, 'agent persona')
-  return (await res.json()) as T
 }
 
 export async function fetchAgentPersonas(): Promise<AgentPersona[]> {
@@ -61,10 +57,7 @@ export async function updateAgentPersona(
 ): Promise<AgentPersona> {
   const body = await personaFetch<{ ok: boolean; persona: AgentPersona }>(
     `/research/agent_persona/${encodeURIComponent(agent)}`,
-    {
-      method: 'PUT',
-      body: JSON.stringify(input),
-    },
+    { method: 'PUT', body: input },
   )
   return body.persona
 }

@@ -10,7 +10,7 @@ import { parseLeftOut } from '@/lib/researchParseHelpers'
 function answer(data: Record<string, unknown>) {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ ok: true, data }) })),
+    vi.fn(async () => new Response(JSON.stringify({ ok: true, data }), { status: 200 })),
   )
 }
 

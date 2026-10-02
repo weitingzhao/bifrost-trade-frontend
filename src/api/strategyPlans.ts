@@ -16,7 +16,7 @@ import {
   type StrategyPlan,
   type StrategyPlansResponse,
 } from '@/lib/schemas/strategyPlan'
-import { tradeFetch } from '@/lib/tradeFetch'
+import { requestJson, type RequestJsonOptions } from '@/lib/http'
 
 const validatePlans = withValidation<StrategyPlansResponse>(
   StrategyPlansResponseSchema,
@@ -54,21 +54,8 @@ export interface PlanWriteBody {
 }
 
 /** The server's own words when it refuses, so the desk never invents a reason. */
-async function planRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await tradeFetch(strategyUrl(path), init)
-  const body = (await res.json().catch(() => ({}))) as { detail?: string }
-  if (!res.ok) {
-    throw new Error(body.detail ?? `${init?.method ?? 'GET'} ${path}: ${res.status}`)
-  }
-  return body as T
-}
-
-function jsonBody(payload: unknown): RequestInit {
-  return {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  }
+function planRequest<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
+  return requestJson<T>(strategyUrl(path), init)
 }
 
 export async function fetchStrategyPlans(filters: PlanFilters = {}): Promise<StrategyPlansResponse> {
@@ -88,14 +75,14 @@ export async function fetchStrategyPlan(id: number): Promise<StrategyPlan> {
 export async function createStrategyPlan(
   payload: PlanWriteBody,
 ): Promise<{ strategy_plan_id: number }> {
-  return planRequest('/strategies/plans', jsonBody(payload))
+  return planRequest('/strategies/plans', { method: 'POST', body: payload })
 }
 
 export async function updateStrategyPlan(
   id: number,
   payload: Partial<PlanWriteBody>,
 ): Promise<{ ok: boolean }> {
-  return planRequest(`/strategies/plans/${id}`, { ...jsonBody(payload), method: 'PUT' })
+  return planRequest(`/strategies/plans/${id}`, { method: 'PUT', body: payload })
 }
 
 export async function intendStrategyPlan(id: number): Promise<{ ok: boolean }> {
@@ -108,7 +95,7 @@ export async function linkStrategyPlanFill(
 ): Promise<{ ok: boolean }> {
   return planRequest(
     `/strategies/plans/${id}/link-fill`,
-    jsonBody({ strategy_instance_id: strategyInstanceId }),
+    { method: 'POST', body: { strategy_instance_id: strategyInstanceId } },
   )
 }
 

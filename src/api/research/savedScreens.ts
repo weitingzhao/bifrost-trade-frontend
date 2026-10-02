@@ -8,6 +8,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson, type RequestJsonOptions } from '@/lib/http'
 import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
 
 export interface SavedScreenDefinition {
@@ -43,30 +44,22 @@ const validateScreensEnvelope = withValidation<Envelope<unknown>>(
   'research/screens',
 )
 
-async function unwrapScreens<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    throw new Error(`saved screens: ${res.status} ${text.slice(0, 200)}`)
-  }
-  const j = validateScreensEnvelope(await res.json()) as Envelope<T>
+/** A 422 names the definition's drift; that reason is the error text. */
+async function screensApi<T>(init: RequestJsonOptions<T> = {}): Promise<T> {
+  const body = await requestJson(researchEngineUrl('/research/screens'), { ...init, label: 'saved screens' })
+  const j = validateScreensEnvelope(body) as Envelope<T>
   return (j.data ?? (j as unknown as T)) as T
 }
 
-export async function fetchSavedScreens(): Promise<{ screens: SavedScreen[]; count: number }> {
-  return unwrapScreens(await fetch(researchEngineUrl('/research/screens')))
+export function fetchSavedScreens(): Promise<{ screens: SavedScreen[]; count: number }> {
+  return screensApi()
 }
 
-export async function createSavedScreen(body: {
+export function createSavedScreen(body: {
   name: string
   definition: SavedScreenDefinition
   description?: string | null
   origin_page?: string | null
 }): Promise<SavedScreen> {
-  return unwrapScreens(
-    await fetch(researchEngineUrl('/research/screens'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    }),
-  )
+  return screensApi({ method: 'POST', body })
 }

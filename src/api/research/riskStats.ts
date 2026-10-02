@@ -14,6 +14,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import { RiskBetaResponseSchema, RiskCorrelationResponseSchema } from '@/lib/schemas/researchData'
 
 export interface RiskBetaItem {
@@ -50,13 +51,8 @@ const validateCorrelation = withValidation<RiskCorrelationResponse>(
 )
 
 /** Research wraps every answer as `{ ok, data }`; an `ok: false` is an error, not an empty reading. */
-async function readEnvelope(url: string, what: string): Promise<unknown> {
-  const r = await fetch(url)
-  const j = (await r.json().catch(() => ({}))) as { ok?: boolean; data?: unknown; error?: unknown }
-  if (!r.ok || j.ok === false) {
-    throw new Error(`research ${what}: ${r.status}${j.error ? ` — ${String(j.error)}` : ''}`)
-  }
-  return j.data
+function readEnvelope(url: string, what: string): Promise<unknown> {
+  return requestJson(url, { envelope: 'research', label: `research ${what}` })
 }
 
 export async function fetchRiskBeta(

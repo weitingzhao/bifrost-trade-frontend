@@ -8,7 +8,7 @@
 import { z } from 'zod'
 import { researchUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { tradeFetch } from '@/lib/tradeFetch'
+import { requestJson, type RequestJsonOptions } from '@/lib/http'
 
 export const FEEDBACK_KINDS = ['bug', 'data', 'idea', 'howto'] as const
 export type FeedbackKind = (typeof FEEDBACK_KINDS)[number]
@@ -53,15 +53,12 @@ const validateFeedback = withValidation<{ ok: boolean; error?: string | null }>(
   'research/feedback',
 )
 
-async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await tradeFetch(researchUrl(path), {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-  })
-  if (!res.ok) throw new Error(`feedback: HTTP ${res.status}`)
-  const body = validateFeedback(await res.json()) as { ok: boolean; error?: string | null } & T
-  if (!body.ok) throw new Error(body.error ?? 'feedback store error')
-  return body
+/** `ok: false` throws with the store's `error` inside `requestJson`. */
+async function call<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
+  return validateFeedback(await requestJson(researchUrl(path), { ...init, label: 'feedback' })) as {
+    ok: boolean
+    error?: string | null
+  } & T
 }
 
 export interface FeedbackSubmit {
@@ -76,7 +73,7 @@ export interface FeedbackSubmit {
 }
 
 export function submitFeedback(input: FeedbackSubmit): Promise<{ report: FeedbackReport }> {
-  return call('/research/feedback/reports', { method: 'POST', body: JSON.stringify(input) })
+  return call('/research/feedback/reports', { method: 'POST', body: input })
 }
 
 export function fetchFeedbackReports(
@@ -106,14 +103,14 @@ export function setFeedbackStatus(
 ): Promise<{ report: FeedbackReport }> {
   return call(`/research/feedback/reports/${encodeURIComponent(id)}/status`, {
     method: 'POST',
-    body: JSON.stringify({ status }),
+    body: { status },
   })
 }
 
 export function replyFeedback(id: string, reply_md: string): Promise<{ report: FeedbackReport }> {
   return call(`/research/feedback/reports/${encodeURIComponent(id)}/reply`, {
     method: 'POST',
-    body: JSON.stringify({ reply_md }),
+    body: { reply_md },
   })
 }
 

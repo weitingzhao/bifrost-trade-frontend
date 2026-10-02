@@ -11,7 +11,7 @@ import type {
   MomentumGradesResponse,
 } from '@/types/stockScreener'
 import { normalizeCriteriaStats } from '@/utils/stockScreener'
-import { tradeFetch } from '@/lib/tradeFetch'
+import { requestJson } from '@/lib/http'
 
 
 const EMPTY_CRITERIA: SepaCriteriaStats = {
@@ -37,17 +37,17 @@ const EMPTY_CRITERIA: SepaCriteriaStats = {
   },
 }
 
+/**
+ * Never throws: a failure comes back as `{ ...fallback, ok: false, error }`
+ * and the readiness panels print it. Kept on purpose (TD-50 phase 1 does not
+ * change who swallows errors).
+ */
 async function fetchJson<T>(url: string, timeoutMs: number, fallback: T): Promise<T> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const r = await tradeFetch(url, { method: 'GET', signal: controller.signal })
-    const j = await r.json().catch(() => ({})) as Record<string, unknown>
-    if (!r.ok) {
-      const msg = typeof j.detail === 'string' ? j.detail : (typeof j.error === 'string' ? j.error : `HTTP ${r.status}`)
-      return { ...fallback, ok: false, error: msg } as T
-    }
-    return j as T
+    // A 2xx `ok: false` body is already this shape; it comes back as sent.
+    return await requestJson<T>(url, { signal: controller.signal, okFalse: 'return' })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Network error'
     return { ...fallback, ok: false, error: msg } as T

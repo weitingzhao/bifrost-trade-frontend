@@ -5,6 +5,7 @@
  * IV surface, order flow, event radar, settlement).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   DailyBriefSynthSchema,
@@ -14,29 +15,9 @@ import type { LampColor } from '@/lib/researchFreshness'
 import type { LensBand } from '@/api/research/lenses'
 import type { ExhibitFreshness, ExhibitSimilar, ExhibitTrackRecord } from '@/api/research/exhibit'
 
-async function get<T = unknown>(path: string): Promise<T> {
-  const res = await fetch(researchEngineUrl(path))
-  const ct = res.headers.get('content-type') ?? ''
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    // HTML (gateway SPA fallback / missing proxy) is a config failure — surface clearly.
-    if (text.trimStart().startsWith('<!') || ct.includes('text/html')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML instead of JSON). ` +
-          `Ensure research-api :8795 is running and VITE_API_RESEARCH_ENGINE is set.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  if (!ct.includes('application/json') && !ct.includes('+json')) {
-    const text = await res.text().catch(() => '')
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine returned HTML. Check Vite proxy / VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-  }
-  return res.json() as Promise<T>
+/** Bare-payload routes (forecast, GEX, terrain …); the server's reason on failure. */
+function get<T = unknown>(path: string): Promise<T> {
+  return requestJson<T>(researchEngineUrl(path), { label: 'Research Engine' })
 }
 
 // --- Terrain ---
@@ -563,12 +544,8 @@ export interface PlaybookTriggerRow {
  * see nothing from the day they were written (2026-08-29 → 09-26: DEV had 42
  * PLTR triggers in the window while the page read zero).
  */
-async function getEnveloped<T>(path: string): Promise<T> {
-  const j = await get<unknown>(path)
-  if (j && typeof j === 'object' && 'ok' in j && 'data' in j) {
-    return (j as { data: T }).data
-  }
-  return j as T
+function getEnveloped<T>(path: string): Promise<T> {
+  return requestJson<T>(researchEngineUrl(path), { envelope: 'research', label: 'Research Engine' })
 }
 
 export function fetchPlaybookTriggers(symbol: string, date?: string) {

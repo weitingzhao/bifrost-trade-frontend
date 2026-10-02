@@ -5,6 +5,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import {
   EarningsMovesSchema,
   ResearchEnvelopeSchema,
@@ -74,12 +75,9 @@ const validateEnvelope = withValidation<{ ok: boolean; data?: unknown; error?: s
   'research/vrp',
 )
 
-async function jsonOrThrow<T>(res: Response): Promise<Envelope<T>> {
-  const j = (await res.json().catch(() => ({}))) as Envelope<T> & { detail?: string }
-  if (!res.ok || j.ok === false) {
-    const msg = j.error ?? j.detail ?? `HTTP ${res.status}`
-    throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`)
-  }
+/** `requestJson` throws on a failure or `ok: false`; the envelope check here is advisory. */
+async function jsonOrThrow<T>(url: string): Promise<Envelope<T>> {
+  const j = await requestJson<Envelope<T>>(url, { label: 'research/vrp' })
   // Envelope-level check only — payload shapes vary per endpoint and are
   // deliberately validated at their own call sites where useful.
   validateEnvelope(j)
@@ -90,8 +88,7 @@ export async function fetchVrpLatest(symbol: string): Promise<VrpRow | null> {
   const sym = (symbol || '').trim().toUpperCase()
   if (!sym) return null
   const q = new URLSearchParams({ symbol: sym })
-  const res = await fetch(`${researchEngineUrl('/research/vrp/latest')}?${q.toString()}`)
-  const env = await jsonOrThrow<{ row: unknown; symbol: string }>(res)
+  const env = await jsonOrThrow<{ row: unknown; symbol: string }>(`${researchEngineUrl('/research/vrp/latest')}?${q.toString()}`)
   return parseRow(env.data?.row)
 }
 
@@ -99,8 +96,7 @@ export async function fetchVrpHistory(symbol: string, days = 252): Promise<VrpRo
   const sym = (symbol || '').trim().toUpperCase()
   if (!sym) return []
   const q = new URLSearchParams({ symbol: sym, days: String(Math.max(1, Math.min(days, 5000))) })
-  const res = await fetch(`${researchEngineUrl('/research/vrp/history')}?${q.toString()}`)
-  const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(res)
+  const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(`${researchEngineUrl('/research/vrp/history')}?${q.toString()}`)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   return raw.map(parseRow).filter((r): r is VrpRow => r !== null)
 }
@@ -113,7 +109,6 @@ export async function fetchVrpExtremes(
     bucket,
     limit: String(Math.max(1, Math.min(limit, 200))),
   })
-  const res = await fetch(`${researchEngineUrl('/research/vrp/extremes')}?${q.toString()}`)
   const env = await jsonOrThrow<{
     rows: unknown[]
     count: number
@@ -122,7 +117,7 @@ export async function fetchVrpExtremes(
     as_of: string | null
     ranked?: unknown
     excluded?: unknown
-  }>(res)
+  }>(`${researchEngineUrl('/research/vrp/extremes')}?${q.toString()}`)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   const rows = raw.map(parseRow).filter((r): r is VrpRow => r !== null)
   return {
@@ -171,8 +166,7 @@ export async function fetchRvCone(symbol: string, years = 2): Promise<RvCone | n
   const sym = (symbol || '').trim().toUpperCase()
   if (!sym) return null
   const q = new URLSearchParams({ symbol: sym, years: String(years) })
-  const res = await fetch(`${researchEngineUrl('/analytics/vol/rv-cone')}?${q.toString()}`)
-  const env = await jsonOrThrow<unknown>(res)
+  const env = await jsonOrThrow<unknown>(`${researchEngineUrl('/analytics/vol/rv-cone')}?${q.toString()}`)
   return validateRvCone(env.data) as RvCone
 }
 
@@ -227,7 +221,6 @@ export async function fetchEarningsMoves(symbol: string, limit = 8): Promise<Ear
   const sym = (symbol || '').trim().toUpperCase()
   if (!sym) return null
   const q = new URLSearchParams({ symbol: sym, limit: String(limit) })
-  const res = await fetch(`${researchEngineUrl('/analytics/vol/earnings-moves')}?${q.toString()}`)
-  const env = await jsonOrThrow<unknown>(res)
+  const env = await jsonOrThrow<unknown>(`${researchEngineUrl('/analytics/vol/earnings-moves')}?${q.toString()}`)
   return validateEarningsMoves(env.data) as EarningsMoves
 }

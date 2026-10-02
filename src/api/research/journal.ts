@@ -8,6 +8,7 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson, type RequestJsonOptions } from '@/lib/http'
 import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
 
 export interface NoteRef {
@@ -42,27 +43,14 @@ const validateJournal = withValidation<{ ok: boolean; data: unknown }>(
   'research/journal/notes',
 )
 
-async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(researchEngineUrl(path), {
+/** The research bearer on every call; the server's `detail` (the §20.1 lock's memory id) is the error. */
+async function call<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
+  const body = await requestJson(researchEngineUrl(path), {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getResearchAuthHeaders(),
-      ...(init?.headers ?? {}),
-    },
+    headers: getResearchAuthHeaders(),
+    label: 'Journal',
   })
-  if (!res.ok) {
-    let detail = `HTTP ${res.status}`
-    try {
-      const body = (await res.json()) as { detail?: string }
-      if (body.detail) detail = body.detail
-    } catch {
-      /* the status is the story */
-    }
-    throw new Error(detail)
-  }
-  const body = validateJournal(await res.json()) as { ok: boolean; data: T }
-  return body.data
+  return (validateJournal(body) as { ok: boolean; data: T }).data
 }
 
 export function createNote(input: {
@@ -71,7 +59,7 @@ export function createNote(input: {
   page_label?: string
   refs?: NoteRef[]
 }): Promise<{ note: JournalNote }> {
-  return call('/research/journal/notes', { method: 'POST', body: JSON.stringify(input) })
+  return call('/research/journal/notes', { method: 'POST', body: input })
 }
 
 export function fetchNotes(params: {
@@ -97,7 +85,7 @@ export function updateNote(
 ): Promise<{ note: JournalNote }> {
   return call(`/research/journal/notes/${encodeURIComponent(id)}`, {
     method: 'PATCH',
-    body: JSON.stringify(patch),
+    body: patch,
   })
 }
 
@@ -164,7 +152,7 @@ export function setMemorySource(
 ): Promise<{ sources: { source: string; enabled: boolean }[] }> {
   return call(`/research/journal/memory/sources/${encodeURIComponent(source)}`, {
     method: 'PUT',
-    body: JSON.stringify({ enabled }),
+    body: { enabled },
   })
 }
 
@@ -172,7 +160,7 @@ export function setMemorySource(
 export function postVisit(route: string, symbol: string): Promise<{ recorded: boolean }> {
   return call('/research/journal/visits', {
     method: 'POST',
-    body: JSON.stringify({ route, symbol }),
+    body: { route, symbol },
   })
 }
 

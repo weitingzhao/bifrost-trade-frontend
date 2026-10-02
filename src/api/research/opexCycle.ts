@@ -6,6 +6,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import {
   ResearchEnvelopeSchema,
 } from '@/lib/schemas/research'
@@ -146,12 +147,9 @@ const validateEnvelope = withValidation<{ ok: boolean; data?: unknown; error?: s
   'research/opex-cycle',
 )
 
-async function jsonOrThrow<T>(res: Response): Promise<Envelope<T>> {
-  const j = (await res.json().catch(() => ({}))) as Envelope<T> & { detail?: string }
-  if (!res.ok || j.ok === false) {
-    const msg = j.error ?? j.detail ?? `HTTP ${res.status}`
-    throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`)
-  }
+/** `requestJson` throws on a failure or `ok: false`; the envelope check here is advisory. */
+async function jsonOrThrow<T>(url: string): Promise<Envelope<T>> {
+  const j = await requestJson<Envelope<T>>(url, { label: 'research/opex-cycle' })
   // Envelope-level check only — payload shapes vary per endpoint and are
   // deliberately validated at their own call sites where useful.
   validateEnvelope(j)
@@ -177,7 +175,6 @@ export async function fetchOpexCurrent(
   }
   const q = new URLSearchParams({ symbol: sym, include_map: includeMap ? 'true' : 'false' })
   if (tradeDate) q.set('trade_date', tradeDate)
-  const res = await fetch(`${researchEngineUrl('/research/opex-cycle/current')}?${q.toString()}`)
   const env = await jsonOrThrow<{
     row: unknown
     strike_map: unknown[]
@@ -186,7 +183,7 @@ export async function fetchOpexCurrent(
     next_opex_date: string | null
     dte_to_opex_today: number
     is_opex_week_today: boolean
-  }>(res)
+  }>(`${researchEngineUrl('/research/opex-cycle/current')}?${q.toString()}`)
   const rawStrikes = Array.isArray(env.data?.strike_map) ? env.data.strike_map : []
   return {
     row: parseDaily(env.data?.row),
@@ -209,8 +206,7 @@ export async function fetchOpexHistory(
     symbol: sym,
     cycles: String(Math.max(1, Math.min(cycles, 60))),
   })
-  const res = await fetch(`${researchEngineUrl('/research/opex-cycle/history')}?${q.toString()}`)
-  const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(res)
+  const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(`${researchEngineUrl('/research/opex-cycle/history')}?${q.toString()}`)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   return raw.map(parseHistory).filter((r): r is OpexHistoryRow => r !== null)
 }
@@ -227,16 +223,13 @@ export async function fetchOpexPinAnalysis(
     symbol: sym,
     cycles: String(Math.max(1, Math.min(cycles, 60))),
   })
-  const res = await fetch(
-    `${researchEngineUrl('/research/opex-cycle/pin-analysis')}?${q.toString()}`,
-  )
   const env = await jsonOrThrow<{
     rows: unknown[]
     count: number
     symbol: string
     cycles_requested: number
     pin_rate: number | null
-  }>(res)
+  }>(`${researchEngineUrl('/research/opex-cycle/pin-analysis')}?${q.toString()}`)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   const rows = raw.map(parsePin).filter((r): r is OpexPinRow => r !== null)
   return {

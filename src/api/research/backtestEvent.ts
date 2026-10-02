@@ -5,7 +5,7 @@
  * Response envelope: `{ ok, data, error? }`.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   EventQueryResponseSchema,
@@ -125,19 +125,19 @@ export interface EventQueryResponse {
   advisory: string
 }
 
-function unwrap<T>(res: Response): Promise<T> {
-  return unwrapResearchEnvelope(res, { apiLabel: 'Backtest event API' })
+/** Every backtest route answers the `{ ok, data }` envelope. */
+function backtestApi<T>(path: string, body?: unknown): Promise<T> {
+  return requestJson<T>(researchEngineUrl(path), {
+    method: body === undefined ? 'GET' : 'POST',
+    body,
+    envelope: 'research',
+    label: 'Backtest event API',
+  })
 }
 
 export async function postEventQuery(input: EventQueryInput): Promise<EventQueryResponse> {
   return validateEventQuery(
-    await unwrap(
-    await fetch(researchEngineUrl('/research/backtest/event-query'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    }),
-    ),
+    await backtestApi('/research/backtest/event-query', input),
   )
 }
 
@@ -163,9 +163,7 @@ export async function fetchBacktestRuns(
   if (opts.limit) params.set('limit', String(opts.limit))
   if (opts.offset) params.set('offset', String(opts.offset))
   const suffix = params.toString() ? `?${params.toString()}` : ''
-  return unwrap<ListBacktestRunsResponse>(
-    await fetch(researchEngineUrl(`/research/backtest/runs${suffix}`)),
-  )
+  return backtestApi<ListBacktestRunsResponse>(`/research/backtest/runs${suffix}`)
 }
 
 export interface GetBacktestRunResponse {
@@ -173,7 +171,5 @@ export interface GetBacktestRunResponse {
 }
 
 export async function fetchBacktestRun(runId: string): Promise<GetBacktestRunResponse> {
-  return unwrap<GetBacktestRunResponse>(
-    await fetch(researchEngineUrl(`/research/backtest/run/${encodeURIComponent(runId)}`)),
-  )
+  return backtestApi<GetBacktestRunResponse>(`/research/backtest/run/${encodeURIComponent(runId)}`)
 }

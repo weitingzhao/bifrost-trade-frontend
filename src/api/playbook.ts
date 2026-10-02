@@ -1,6 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
-import { researchThrowHttp } from '@/lib/auth/researchHttpError'
+import { requestJson, type RequestJsonOptions } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   PlaybookCaseListSchema,
@@ -41,17 +41,14 @@ export type PlaybookCase = {
   created_at?: string
 }
 
-async function playbookFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(researchEngineUrl(path), {
+/** Playbook routes answer the `{ ok, data }` envelope with the research bearer. */
+function playbookFetch<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
+  return requestJson<T>(researchEngineUrl(path), {
     ...init,
-    headers: {
-      ...getResearchAuthHeaders(),
-      ...(init?.headers ?? {}),
-    },
+    headers: getResearchAuthHeaders(),
+    envelope: 'research',
+    label: 'Playbook',
   })
-  if (!res.ok) researchThrowHttp(res, 'playbook')
-  const body = (await res.json()) as { ok?: boolean; data: T }
-  return body.data
 }
 
 export async function fetchPlaybookRules(category?: string): Promise<PlaybookRule[]> {
@@ -66,11 +63,7 @@ export async function createPlaybookRule(input: {
   body_md: string
   tags?: string[]
 }): Promise<PlaybookRule> {
-  return playbookFetch<PlaybookRule>('/research/playbook/rules', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  })
+  return playbookFetch<PlaybookRule>('/research/playbook/rules', { method: 'POST', body: input })
 }
 
 export async function retirePlaybookRule(id: string): Promise<void> {
@@ -90,11 +83,7 @@ export async function createPlaybookNote(input: {
   tags?: string[]
   symbols?: string[]
 }): Promise<PlaybookNote> {
-  return playbookFetch<PlaybookNote>('/research/playbook/notes', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  })
+  return playbookFetch<PlaybookNote>('/research/playbook/notes', { method: 'POST', body: input })
 }
 
 export async function fetchPlaybookCases(): Promise<PlaybookCase[]> {
@@ -108,11 +97,7 @@ export async function createPlaybookCaseFromBridge(input: {
   outcome?: string
   tags?: string[]
 }): Promise<PlaybookCase> {
-  return playbookFetch<PlaybookCase>('/research/playbook/cases/from_bridge', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  })
+  return playbookFetch<PlaybookCase>('/research/playbook/cases/from_bridge', { method: 'POST', body: input })
 }
 
 export async function searchPlaybook(q: string): Promise<{

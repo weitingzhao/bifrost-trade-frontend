@@ -3,6 +3,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import {
   AtmIvTermSchema,
   IvConeSchema,
@@ -162,12 +163,9 @@ const validateEnvelope = withValidation<{ ok: boolean; data?: unknown; error?: s
   'research/vol-surface',
 )
 
-async function jsonOrThrow<T>(res: Response): Promise<Envelope<T>> {
-  const j = (await res.json().catch(() => ({}))) as Envelope<T> & { detail?: string }
-  if (!res.ok || j.ok === false) {
-    const msg = j.error ?? j.detail ?? `HTTP ${res.status}`
-    throw new Error(typeof msg === 'string' ? msg : `HTTP ${res.status}`)
-  }
+/** `requestJson` throws on a failure or `ok: false`; the envelope check here is advisory. */
+async function jsonOrThrow<T>(url: string): Promise<Envelope<T>> {
+  const j = await requestJson<Envelope<T>>(url, { label: 'research/vol-surface' })
   // Envelope-level check only — payload shapes vary per endpoint and are
   // deliberately validated at their own call sites where useful.
   validateEnvelope(j)
@@ -182,8 +180,7 @@ export async function fetchVolSurfaceFit(
   if (!sym) return []
   const q = new URLSearchParams({ symbol: sym })
   if (tradeDate) q.set('trade_date', tradeDate)
-  const res = await fetch(`${researchEngineUrl('/research/vol-surface/fit')}?${q.toString()}`)
-  const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(res)
+  const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(`${researchEngineUrl('/research/vol-surface/fit')}?${q.toString()}`)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   return raw.map(parseFit).filter((r): r is VolSurfaceFitRow => r !== null)
 }
@@ -198,10 +195,7 @@ export async function fetchResiduals(
   if (!sym || !exp) return []
   const q = new URLSearchParams({ symbol: sym, expiry: exp })
   if (tradeDate) q.set('trade_date', tradeDate)
-  const res = await fetch(
-    `${researchEngineUrl('/research/vol-surface/residuals')}?${q.toString()}`,
-  )
-  const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(res)
+  const env = await jsonOrThrow<{ rows: unknown[]; count: number }>(`${researchEngineUrl('/research/vol-surface/residuals')}?${q.toString()}`)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   return outOfTheMoneyPerStrike(raw.map(parseResidual).filter((r): r is VolSurfaceResidualRow => r !== null))
 }
@@ -220,9 +214,6 @@ export interface SkewExtremesResponse {
 
 export async function fetchSkewExtremes(limit = 20): Promise<SkewExtremesResponse> {
   const q = new URLSearchParams({ limit: String(Math.max(1, Math.min(limit, 200))) })
-  const res = await fetch(
-    `${researchEngineUrl('/research/vol-surface/skew-extremes')}?${q.toString()}`,
-  )
   const env = await jsonOrThrow<{
     rows: unknown[]
     count: number
@@ -230,7 +221,7 @@ export async function fetchSkewExtremes(limit = 20): Promise<SkewExtremesRespons
     as_of: string | null
     ranked?: unknown
     excluded?: unknown
-  }>(res)
+  }>(`${researchEngineUrl('/research/vol-surface/skew-extremes')}?${q.toString()}`)
   const raw = Array.isArray(env.data?.rows) ? env.data.rows : []
   const rows = raw.map(parseSkewRow).filter((r): r is SkewExtremeRow => r !== null)
   return {

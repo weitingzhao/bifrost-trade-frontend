@@ -1,7 +1,8 @@
+import type { OpenOrder } from '@/types/market'
 import type { StatusResponse } from '@/types/monitor'
 import { withValidation } from '@/lib/apiValidation'
 import { StatusResponseSchema } from '@/lib/schemas/monitor'
-import { monitorUrl, marketUrl } from '@/lib/devApiUrl'
+import { monitorUrl } from '@/lib/devApiUrl'
 
 const validateStatus = withValidation<StatusResponse>(StatusResponseSchema, 'monitor/status')
 
@@ -53,26 +54,11 @@ export async function postIbConfig(accounts: {
 
 // ─── Market Holidays API (via Market service) ────────────────────────────────
 
-export interface MarketHolidayRow {
-  exchange: string
-  holiday_date: string
-  label: string | null
-  name?: string | null
-  status?: string | null
-  /** Set on an `early-close` row: the session's own hours, as UTC instants. */
-  open_time?: string | null
-  close_time?: string | null
-  source?: string | null
-}
-
-export async function fetchMarketHolidays(
-  year?: number,
-  exchange?: string,
-): Promise<MarketHolidayRow[]> {
-  const params = new URLSearchParams()
-  if (year != null) params.set('year', String(year))
-  if (exchange?.trim()) params.set('exchange', exchange.trim())
-  const res = await fetch(marketUrl(`/market/holidays?${params}`))
-  if (!res.ok) throw new Error(`Market /holidays: ${res.status}`)
-  return res.json()
+/** Working orders IB reports, as the monitor reads them. */
+export async function fetchOpenOrders(): Promise<OpenOrder[]> {
+  const res = await fetch(monitorUrl('/open-orders'))
+  if (!res.ok) throw new Error(`Monitor /open-orders: ${res.status}`)
+  const data = await res.json()
+  const result = data.open_orders ?? data.orders ?? data.items ?? data
+  return Array.isArray(result) ? result : []
 }

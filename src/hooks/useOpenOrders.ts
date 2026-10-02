@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchOpenOrders } from '@/api/market'
+import { fetchOpenOrders } from '@/api/monitor'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
 export function useOpenOrders() {

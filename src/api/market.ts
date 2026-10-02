@@ -3,14 +3,13 @@ import type {
   QuotesResponse,
   BenchmarkResponse,
   WatchlistResponse,
-  OpenOrder,
   BarsResponse,
   BarStatsResponse,
 } from '@/types/market'
 import { withValidation } from '@/lib/apiValidation'
 import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/market'
 import { openSseWithBackoff } from '@/lib/sse'
-import { marketUrl, monitorUrl } from '@/lib/devApiUrl'
+import { marketUrl } from '@/lib/devApiUrl'
 
 const validateQuotes = withValidation<QuotesResponse>(QuotesResponseSchema, 'market/quotes')
 const validateWatchlist = withValidation<WatchlistResponse>(WatchlistResponseSchema, 'market/watchlist')
@@ -188,10 +187,27 @@ export function subscribeQuotes(onQuote: (q: QuoteItem) => void): () => void {
   })
 }
 
-export async function fetchOpenOrders(): Promise<OpenOrder[]> {
-  const res = await fetch(monitorUrl('/open-orders'))
-  if (!res.ok) throw new Error(`Monitor /open-orders: ${res.status}`)
-  const data = await res.json()
-  const result = data.open_orders ?? data.orders ?? data.items ?? data
-  return Array.isArray(result) ? result : []
+/** NYSE (or another exchange's) holidays and early closes, from the market service. */
+export interface MarketHolidayRow {
+  exchange: string
+  holiday_date: string
+  label: string | null
+  name?: string | null
+  status?: string | null
+  /** Set on an `early-close` row: the session's own hours, as UTC instants. */
+  open_time?: string | null
+  close_time?: string | null
+  source?: string | null
+}
+
+export async function fetchMarketHolidays(
+  year?: number,
+  exchange?: string,
+): Promise<MarketHolidayRow[]> {
+  const params = new URLSearchParams()
+  if (year != null) params.set('year', String(year))
+  if (exchange?.trim()) params.set('exchange', exchange.trim())
+  const res = await fetch(marketUrl(`/market/holidays?${params}`))
+  if (!res.ok) throw new Error(`Market /holidays: ${res.status}`)
+  return res.json()
 }

@@ -7,7 +7,7 @@
  * *more* cautious, never hide a stale one.
  */
 import { useQuery } from '@tanstack/react-query'
-import { fetchMarketHolidays } from '@/api/monitor'
+import { fetchMarketHolidays } from '@/api/market'
 import { tradingCalendar, type TradingCalendar } from '@/lib/freshness'
 
 export function useTradingCalendar(): TradingCalendar | undefined {

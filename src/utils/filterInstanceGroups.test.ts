@@ -13,7 +13,9 @@ function group(
     strategy_instance_opened_at_epoch: null,
     stock_coverage: [],
     options_unrealized_pnl: 0,
-    structure_type: null,
+    template_code: null,
+    template_label: null,
+    structure_name: null,
     scope_type: null,
     risk_profile: null,
     ...overrides,
@@ -81,4 +83,18 @@ describe('filterInstanceGroups', () => {
     expect(out).toHaveLength(1)
     expect(out[0]).toBe(base)
   })
+
+  it('the structure filter matches the template code, not a structure name (TD-41)', () => {
+    const condor = group({ options: [], strategy_instance_id: 2, template_code: 'iron_condor', structure_name: 'Iron Condor weekly' })
+    const call = group({ options: [], strategy_instance_id: 3, template_code: 'covered_call_otm', structure_name: 'Covered Call 10% OTM' })
+    const run = (structureType: string) =>
+      filterInstanceGroups({
+        groups: [condor, call],
+        filterSymbol: '',
+        filters: { structureType, oppName: 'all', scopeType: 'all', attributionType: 'all' },
+      })
+    expect(run('iron_condor').map((g) => g.strategy_instance_id)).toEqual([2])
+    expect(run('Iron Condor weekly')).toEqual([])
+  })
 })
+

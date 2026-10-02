@@ -30,7 +30,8 @@ interface Props {
   detailViewMode: DetailViewMode
   onDetailViewModeChange: (m: DetailViewMode) => void
   /** Option lists always come from the unfiltered groups, so a chosen value never vanishes from its own menu. */
-  structureTypes: string[]
+  /** Template codes, each with the label to show (TD-41). */
+  structureTypes: { value: string; label: string }[]
   oppNames: string[]
   scopeTypes: string[]
   values: InstanceFilterValues
@@ -131,8 +132,8 @@ export function LinesToolbar({
             <SelectContent>
               <SelectItem value="all">All contract types</SelectItem>
               {structureTypes.map((st) => (
-                <SelectItem key={st} value={st}>
-                  {st.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                <SelectItem key={st.value} value={st.value}>
+                  {st.label}
                 </SelectItem>
               ))}
             </SelectContent>

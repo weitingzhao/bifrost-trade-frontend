@@ -182,7 +182,12 @@ export function buildInstanceAllGroups(input: BuildInstanceAllGroupsInput): Inst
       options: b.options,
       stock_coverage: coverage,
       options_unrealized_pnl: optPnl,
-      structure_type: str?.structure_type ?? attrForInstance?.structure_type ?? null,
+      // One meaning per key (TD-41): the structures list and attribution used to fill
+      // structure_type with a template code and a structure name respectively.
+      template_code: str?.template_code ?? attrForInstance?.template_code ?? null,
+      template_label: str?.template_display_name ?? null,
+      structure_name:
+        str?.name ?? attrForInstance?.strategy_structure_name ?? attrForInstance?.structure_type ?? null,
       scope_type: resolvedScopeType,
       risk_profile: riskProfile,
     })

@@ -36,7 +36,9 @@ const baseGroup: InstanceAllGroup = {
   options: [liveOpt()],
   stock_coverage: [],
   options_unrealized_pnl: 0,
-  structure_type: 'long_call',
+  template_code: 'long_call',
+  template_label: 'Long Call',
+  structure_name: 'Long Call',
   scope_type: 'single_stk',
   risk_profile: null,
 }

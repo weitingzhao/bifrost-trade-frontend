@@ -44,6 +44,7 @@ import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
 import type { RiskProfile } from '@/utils/riskProfile'
 import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { flashFound, scrollWhenPresent } from '@/lib/scrollWhenPresent'
+import { titleCaseCode } from '@/utils/strategyFormUtils'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
@@ -295,8 +296,8 @@ export function InstanceTab({
             const instLabel =
               group.strategy_instance_label ?? (id != null ? `Strategy #${id}` : 'Uncategorized')
             const oppName = group.strategy_opportunity_name?.trim() || null
-            const structLabel = group.structure_type
-              ? group.structure_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+            const structLabel = group.template_code
+              ? (group.template_label ?? titleCaseCode(group.template_code))
               : '—'
 
             const opp =
@@ -380,7 +381,11 @@ export function InstanceTab({
                   </span>
                 </td>
                 <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-secondary-foreground')}>
-                  {group.structure_type ? structLabel : <span className="text-muted-foreground">—</span>}
+                  {group.template_code ? (
+                    <span title={group.structure_name ?? undefined}>{structLabel}</span>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </td>
                 <td className={cn(positionsUi.td, 'text-left whitespace-normal')}>
                   {scopeType === 'watchlist_stk' ? (

@@ -146,7 +146,9 @@ export function groupByInstance(positions: OpenOptionPosition[]): InstanceAllGro
       options: opts,
       stock_coverage: [],
       options_unrealized_pnl: totalPnl,
-      structure_type: null,
+      template_code: null,
+      template_label: null,
+      structure_name: null,
       scope_type: null,
       risk_profile: null,
     })
@@ -163,7 +165,9 @@ export function groupByInstance(positions: OpenOptionPosition[]): InstanceAllGro
       options: [pos],
       stock_coverage: [],
       options_unrealized_pnl: pos.unrealized_pnl,
-      structure_type: null,
+      template_code: null,
+      template_label: null,
+      structure_name: null,
       scope_type: null,
       risk_profile: null,
     })

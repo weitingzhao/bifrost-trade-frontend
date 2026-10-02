@@ -33,7 +33,7 @@ describe('buildInstanceAllGroups', () => {
     total_unrealized_pnl: 100,
   }
 
-  it('enriches structure_type and scope from opportunity/structure', () => {
+  it('enriches the template, structure name and scope from opportunity/structure', () => {
     const groups = buildInstanceAllGroups({
       instanceGroups: [baseGroup],
       attributions: [],
@@ -52,13 +52,17 @@ describe('buildInstanceAllGroups', () => {
         {
           strategy_structure_id: 5,
           structure_type: 'long_call',
-          name: 'Long Call',
+          template_code: 'long_call',
+          template_display_name: 'Long Call',
+          name: 'NVDA long call',
         } as StrategyStructure,
       ],
       liveStocks: [],
     })
     expect(groups).toHaveLength(1)
-    expect(groups[0].structure_type).toBe('long_call')
+    expect(groups[0].template_code).toBe('long_call')
+    expect(groups[0].template_label).toBe('Long Call')
+    expect(groups[0].structure_name).toBe('NVDA long call')
     expect(groups[0].scope_type).toBe('single_stk')
     expect(groups[0].strategy_opportunity_id).toBe(1)
   })
@@ -92,5 +96,30 @@ describe('buildInstanceAllGroups', () => {
       liveStocks: [],
     })
     expect(groups[0].options_unrealized_pnl).toBe(-400)
+  })
+
+  it('keys the filter on the template code even when the structures list misses the id (TD-41)', () => {
+    // Attribution used to put the structure *name* under structure_type, so a missing
+    // structures row mixed names into a filter of template codes.
+    const groups = buildInstanceAllGroups({
+      instanceGroups: [baseGroup],
+      attributions: [
+        {
+          strategy_instance_id: 10,
+          strategy_structure_id: 9,
+          strategy_structure_name: 'Iron Condor weekly',
+          template_code: 'iron_condor',
+          structure_type: 'Iron Condor weekly',
+          scope_type: null,
+        } as never,
+      ],
+      executionsFinal: [],
+      executionsTws: [],
+      opportunities: [],
+      structures: [],
+      liveStocks: [],
+    })
+    expect(groups[0].template_code).toBe('iron_condor')
+    expect(groups[0].structure_name).toBe('Iron Condor weekly')
   })
 })

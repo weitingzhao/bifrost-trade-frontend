@@ -39,6 +39,7 @@ import {
 } from '@/utils/positionsGrouping'
 import { buildOffTrackPositions } from '@/utils/offTrackPositions'
 import { buildInstanceAllGroups } from '@/utils/buildInstanceAllGroups'
+import { titleCaseCode } from '@/utils/strategyFormUtils'
 import { buildCanonicalOptContractKeySet } from '@/utils/execAttributionSync'
 import { buildInstanceGroups } from '@/utils/buildInstanceGroups'
 import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
@@ -177,7 +178,14 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   const scopedInstanceGroups = useMemo(() => sortInstanceGroupOptions(instanceAllGroups), [instanceAllGroups])
 
   const instanceFilterOptions = useMemo(() => {
-    const structureTypes = [...new Set(instanceAllGroups.map((g) => g.structure_type).filter(Boolean) as string[])]
+    // Template codes, labelled by the template's own display name (TD-41).
+    const templateLabels = new Map<string, string>()
+    for (const g of instanceAllGroups) {
+      if (g.template_code && !templateLabels.has(g.template_code)) {
+        templateLabels.set(g.template_code, g.template_label ?? titleCaseCode(g.template_code))
+      }
+    }
+    const structureTypes = [...templateLabels].map(([value, label]) => ({ value, label }))
     const oppNames = [
       ...new Set(instanceAllGroups.map((g) => g.strategy_opportunity_name).filter(Boolean) as string[]),
     ]

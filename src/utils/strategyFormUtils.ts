@@ -34,6 +34,11 @@ export const STRUCTURE_TYPE_LABELS: Record<string, string> = {
   custom: 'Custom',
 }
 
+/** `covered_call_otm` → `Covered Call Otm`: a template code shown where no display name came with it. */
+export function titleCaseCode(code: string): string {
+  return code.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 export function getStructureTypeLabel(structureType: string | null | undefined): string {
   if (structureType == null || structureType === '') return '—'
   return STRUCTURE_TYPE_LABELS[structureType] ?? structureType.replace(/_/g, ' ')
@@ -41,8 +46,7 @@ export function getStructureTypeLabel(structureType: string | null | undefined):
 
 export function getStructureDisplayLabel(row: StrategyStructure): string {
   if (row.template_display_name) return row.template_display_name
-  if (row.structure_subtype_label) return row.structure_subtype_label
-  return getStructureTypeLabel(row.structure_type)
+  return getStructureTypeLabel(row.template_code ?? row.structure_type)
 }
 
 export function summarizeDimensions(row: StrategyStructure): string {
@@ -111,16 +115,14 @@ export function wizardParamValuesFromSavedMeta(
 export function structureToPayload(row: StrategyStructure): StructurePayload {
   const legs: StructureLeg[] = Array.isArray(row.legs) ? row.legs : []
   const meta = metadataToMetaEntries(row.metadata)
-  const structureType = row.structure_type ?? 'custom'
-  const structureSubtype =
-    structureType === 'covered_call' && row.structure_subtype
-      ? row.structure_subtype
-      : undefined
+  // The template code (TD-41). The covered_call subtype branch is gone: no template is
+  // coded `covered_call` and the API's structure_subtype is always null.
+  const structureType = row.template_code ?? row.structure_type ?? 'custom'
   return {
     name: row.name,
     strategy_template_id: row.strategy_template_id ?? undefined,
     structure_type: structureType,
-    structure_subtype: structureSubtype ?? null,
+    structure_subtype: null,
     legs,
     version:
       typeof row.version === 'number'

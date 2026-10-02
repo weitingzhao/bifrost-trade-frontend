@@ -27,11 +27,13 @@ const PARAMS: MetaParamItem[] = [param('otm_pct', 'percent', '5'), param('right'
 const ROW: StrategyStructure = {
   strategy_structure_id: 7,
   name: 'Sample shape',
-  structure_type: 'covered_call',
-  structure_subtype: 'otm',
+  // What the API sends: structure_type repeats the template code, and structure_subtype
+  // is always null — no template is coded `covered_call` (TD-41).
+  structure_type: 'covered_call_otm',
+  structure_subtype: null,
   structure_subtype_label: null,
   strategy_template_id: 3,
-  template_code: 'covered_call',
+  template_code: 'covered_call_otm',
   template_display_name: 'Covered call',
   dim_direction: null,
   dim_structure: null,
@@ -79,8 +81,8 @@ describe('structureToForm → structureFormToPayload', () => {
     expect(payload).toEqual({
       name: 'Sample shape',
       strategy_template_id: 3,
-      structure_type: 'covered_call',
-      structure_subtype: 'otm',
+      structure_type: 'covered_call_otm',
+      structure_subtype: null,
       legs: ROW.legs,
       version: 4,
       is_active: false,

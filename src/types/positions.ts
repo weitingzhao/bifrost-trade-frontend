@@ -78,7 +78,15 @@ export interface InstanceAllGroup {
   options: OpenOptionPosition[]
   stock_coverage: InstanceStockCoverage[]
   options_unrealized_pnl: number
-  structure_type: string | null
+  /**
+   * The template the instance's structure is built from (`covered_call_otm`) and its
+   * display name. 'structure' is the strategy_structure row (debt TD-41): the Positions
+   * filter keys on the template code, never on a structure name.
+   */
+  template_code: string | null
+  template_label: string | null
+  /** The strategy_structure row's own name ("Covered Call 10% OTM"). */
+  structure_name: string | null
   scope_type: string | null
   risk_profile: RiskProfile | null
 }
@@ -101,6 +109,10 @@ export interface PositionInstanceAttribution {
   strategy_opportunity_id: number | null
   strategy_opportunity_name: string | null
   strategy_instance_opened_at_epoch: number | null
+  /** core 0.32.1 (TD-41); absent from an older API. */
+  strategy_structure_name?: string | null
+  template_code?: string | null
+  /** @deprecated The structure's name under an old key; read `strategy_structure_name`. */
   structure_type: string | null
   scope_type: string | null
   strategy_structure_id: number | null

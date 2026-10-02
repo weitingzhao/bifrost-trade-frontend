@@ -26,7 +26,7 @@ export function filterInstanceGroups({
     list = list.filter((g) => g.options.some((o) => (o.symbol ?? '').toUpperCase().includes(upper)))
   }
   if (filters.structureType !== 'all') {
-    list = list.filter((g) => (g.structure_type ?? '') === filters.structureType)
+    list = list.filter((g) => (g.template_code ?? '') === filters.structureType)
   }
   if (filters.oppName !== 'all') {
     list = list.filter((g) => (g.strategy_opportunity_name ?? '') === filters.oppName)

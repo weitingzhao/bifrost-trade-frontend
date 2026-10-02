@@ -114,3 +114,9 @@ export async function linkStrategyPlanFill(
 export async function cancelStrategyPlan(id: number): Promise<{ ok: boolean }> {
   return planRequest(`/strategies/plans/${id}/cancel`, { method: 'POST' })
 }
+
+/** Remove a draft (core 0.28.0). The desk calls this only once its Undo toast
+ *  has closed (design Rev .138); anything past draft is refused with the reason. */
+export async function deleteStrategyPlan(id: number): Promise<{ ok: boolean }> {
+  return planRequest(`/strategies/plans/${id}`, { method: 'DELETE' })
+}

@@ -107,7 +107,7 @@ describe('PlanCard link fill', () => {
     render(
       <QueryClientProvider client={client}>
         <MemoryRouter>
-          <PlanCard plan={intendedMu()} onClose={() => undefined} onEdit={() => undefined} />
+          <PlanCard plan={intendedMu()} onClose={() => undefined} accounts={[]} />
         </MemoryRouter>
       </QueryClientProvider>,
     )
@@ -123,7 +123,7 @@ describe('PlanCard · the reserved order route', () => {
     render(
       <QueryClientProvider client={client}>
         <MemoryRouter>
-          <PlanCard plan={intendedMu()} onClose={() => undefined} onEdit={() => undefined} />
+          <PlanCard plan={intendedMu()} onClose={() => undefined} accounts={[]} />
         </MemoryRouter>
       </QueryClientProvider>,
     )

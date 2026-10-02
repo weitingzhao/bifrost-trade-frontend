@@ -164,3 +164,44 @@ export function planActions(status: PlanEffectiveStatus): {
 
 /** The held-removal scope for a plan's Cancel — the card holds, the page reads. */
 export const HELD_PLAN_SCOPE = 'strategy-plan'
+/** Mark intended, held behind its toast the same way (Rev .138). */
+export const HELD_PLAN_INTEND_SCOPE = 'strategy-plan-intend'
+/** Delete draft: the row leaves the list until the toast goes (Rev .138). */
+export const HELD_PLAN_DELETE_SCOPE = 'strategy-plan-delete'
+
+/**
+ * Why a plan past draft is not edited in place (Rev .138 §3), in one line —
+ * null for a draft. The way out is the card's actions, not an edit.
+ */
+export function planReadOnlyReason(plan: Pick<StrategyPlan, 'effective_status' | 'intended_at' | 'filled_at'>): string | null {
+  switch (plan.effective_status) {
+    case 'draft':
+      return null
+    case 'intended':
+      return `Intended${plan.intended_at ? ` ${plan.intended_at.slice(0, 10)}` : ''} — frozen as written, so the fill has something to be compared against. Cancel it and plan again to change it.`
+    case 'expired':
+      return 'The intent lapsed. Link a fill if one came, or cancel it — a lapsed plan is a record, not a draft.'
+    case 'filled':
+      return `Filled${plan.filled_at ? ` ${plan.filled_at.slice(0, 10)}` : ''} — the legs are a trade now; the plan stays as the record it is judged against.`
+    case 'cancelled':
+      return 'Cancelled — kept as a record; plan again to take the trade.'
+    default:
+      return null
+  }
+}
+
+/**
+ * What stops a draft from being marked intended, in the server's own words
+ * (core `intend_plan`) — null when nothing does. Mark intended is held behind
+ * its toast (Rev .138), so the reason is said now rather than five seconds
+ * later when the write would be refused; the server still has the last word.
+ */
+export function planIntendBlocker(
+  plan: Pick<StrategyPlan, 'legs_json' | 'target_kind' | 'stop_kind' | 'exit_by'>,
+): string | null {
+  if (!plan.legs_json.length) return 'Write at least one leg before marking this intended.'
+  if (!plan.target_kind && !plan.stop_kind && plan.exit_by == null) {
+    return 'Write a target, a stop or an exit-by date. Without one there is nothing to compare the outcome against.'
+  }
+  return null
+}

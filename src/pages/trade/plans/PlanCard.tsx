@@ -13,21 +13,26 @@ import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { useAllocations, useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
-import {
-  useIntendStrategyPlan,
-  useLinkStrategyPlanFill,
-  useUpdateStrategyPlan,
-} from '@/hooks/useStrategyPlans'
+import { useLinkStrategyPlanFill, useUpdateStrategyPlan } from '@/hooks/useStrategyPlans'
 import { instancesTradingSymbol } from '@/lib/plans/planLinkFill'
 import { planEstCredit, planExitSummary, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
 import { TradeRef } from '@/components/tradeRecord/TradeRef'
-import { cancelStrategyPlan } from '@/api/strategyPlans'
+import { cancelStrategyPlan, deleteStrategyPlan, intendStrategyPlan } from '@/api/strategyPlans'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 import { NOT_COMPUTED_HINT } from './PlansTable'
-import { HELD_PLAN_SCOPE, planActions, planStatusVariant } from './planRows'
+import {
+  HELD_PLAN_DELETE_SCOPE,
+  HELD_PLAN_INTEND_SCOPE,
+  HELD_PLAN_SCOPE,
+  planActions,
+  planIntendBlocker,
+  planReadOnlyReason,
+  planStatusVariant,
+} from './planRows'
+import { PlanEditSection } from './PlanEditSection'
 import { SEND_TO_IB, planLineage } from './planLineage'
 import {
   creditOnCash,
@@ -42,6 +47,7 @@ import {
 const LINK = 'text-dense-meta text-primary hover:underline'
 
 const SECTIONS = [
+  ['plan-edit', 'Plan'],
   ['plan-legs', 'Legs'],
   ['plan-backing', 'Backing check'],
   ['plan-source', 'Source'],
@@ -210,20 +216,24 @@ const backingUsd = (n: number) => `$${Math.abs(Math.round(n)).toLocaleString('en
 
 export function PlanCard({
   plan,
+  accounts,
   onClose,
-  onEdit,
 }: {
   plan: StrategyPlan
+  /** The followed accounts, for the draft's Account field. */
+  accounts: { id: string; label: string }[]
   onClose: () => void
-  onEdit: (plan: StrategyPlan) => void
 }) {
   const [picking, setPicking] = useState(false)
   const [copied, setCopied] = useState(false)
-  const intend = useIntendStrategyPlan()
-  // Cancel with Undo (design Rev .79 names it Archive): the plan reads
-  // cancelled at once and the write goes when the toast leaves — the server
-  // has no way to uncancel.
+  const [blocked, setBlocked] = useState<string | null>(null)
+  // Cancel, Mark intended and Delete draft all go through the toast (design
+  // Rev .79 / .138): the plan reads changed at once and the write goes when
+  // the toast leaves without Undo — the server has no way back from any of
+  // the three.
   const { hold } = useHeldRemoval(HELD_PLAN_SCOPE)
+  const { hold: holdIntend } = useHeldRemoval(HELD_PLAN_INTEND_SCOPE)
+  const { hold: holdDelete } = useHeldRemoval(HELD_PLAN_DELETE_SCOPE)
   const update = useUpdateStrategyPlan()
   const actions = planActions(plan.effective_status)
   const status = plan.effective_status
@@ -266,7 +276,9 @@ export function PlanCard({
     })
   }
 
-  const mutationError = (intend.error ?? update.error) as Error | null
+  const mutationError = update.error as Error | null
+  const intendBlocked = blocked != null && planIntendBlocker(plan) === blocked ? blocked : null
+  const readOnly = planReadOnlyReason(plan)
 
   return (
     <div className="flex min-h-0 flex-col">
@@ -291,15 +303,12 @@ export function PlanCard({
         </Button>
       </header>
 
-      <nav
-        aria-label="Plan sections"
-        className="flex items-center gap-0.5 overflow-x-auto border-b border-border px-2"
-      >
+      <nav aria-label="Plan sections" className="flex items-center gap-0.5 overflow-x-auto px-2 py-1">
         {SECTIONS.map(([id, label]) => (
           <button
             key={id}
             type="button"
-            className="whitespace-nowrap border-b-2 border-transparent px-2 py-1.5 text-dense-meta text-muted-foreground hover:text-foreground"
+            className="h-6 whitespace-nowrap rounded-full px-2.5 text-dense-meta text-muted-foreground hover:bg-[var(--mat-btn-fill)] hover:text-foreground"
             onClick={() => scrollTo(id)}
           >
             {label}
@@ -334,6 +343,19 @@ export function PlanCard({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
+        {/* Rev .138: a draft is edited here, in place; anything past draft is
+            read-only and says why — changing it is an action below, not an edit. */}
+        {plan.effective_status === 'draft' ? (
+          <PlanEditSection plan={plan} accounts={accounts} />
+        ) : readOnly ? (
+          <p
+            id="plan-edit"
+            role="note"
+            className="mx-3 my-2 rounded-lg bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] px-2.5 py-2 text-dense-meta text-[var(--sk-soft)]"
+          >
+            {readOnly}
+          </p>
+        ) : null}
         <Section id="plan-legs" title="Legs" meta={`${plan.legs_json.length} · qty ${plan.qty}`}>
           <LegsTable plan={plan} />
         </Section>
@@ -528,14 +550,24 @@ export function PlanCard({
           {mutationError ? (
             <p className="text-dense-meta text-destructive">{mutationError.message}</p>
           ) : null}
+          {intendBlocked ? <p className="text-dense-meta text-destructive">{intendBlocked}</p> : null}
           <div className="flex flex-wrap gap-2 pt-1">
             {actions.canIntend ? (
               <Button
                 type="button"
                 size="sm"
                 className="h-7 text-dense-meta"
-                disabled={intend.isPending}
-                onClick={() => intend.mutate(plan.strategy_plan_id)}
+                onClick={() => {
+                  const why = planIntendBlocker(plan)
+                  setBlocked(why)
+                  if (why) return
+                  holdIntend(plan.strategy_plan_id, {
+                    msg: `${planToken(plan.strategy_plan_id)} · ${plan.symbol} marked intended`,
+                    commit: () => intendStrategyPlan(plan.strategy_plan_id),
+                    invalidate: [QUERY_KEYS.strategyPlans.root],
+                    failed: `${plan.symbol} plan was not marked intended`,
+                  })
+                }}
               >
                 Mark intended
               </Button>
@@ -546,9 +578,17 @@ export function PlanCard({
                 size="sm"
                 variant="outline"
                 className="h-7 text-dense-meta"
-                onClick={() => onEdit(plan)}
+                title="No confirm — Undo on the toast or ⌘Z · ⌘⌫"
+                onClick={() =>
+                  holdDelete(plan.strategy_plan_id, {
+                    msg: `Deleted draft ${planToken(plan.strategy_plan_id)} · ${plan.symbol}`,
+                    commit: () => deleteStrategyPlan(plan.strategy_plan_id),
+                    invalidate: [QUERY_KEYS.strategyPlans.root],
+                    failed: `Draft ${planToken(plan.strategy_plan_id)} was not deleted`,
+                  })
+                }
               >
-                Edit
+                Delete draft
               </Button>
             ) : null}
             {status === 'intended' ? (

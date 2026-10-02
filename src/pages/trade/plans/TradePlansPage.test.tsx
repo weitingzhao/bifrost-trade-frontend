@@ -135,21 +135,21 @@ describe('Trading › Plans', () => {
     expect(screen.queryByText(/70%/)).toBeNull()
   })
 
-  it('shows the server’s own reason when a plan cannot be marked intended', async () => {
+  it('says what a draft lacks before it can be marked intended, and holds nothing', async () => {
+    // Mark intended is held behind its toast (Rev .138), so the reason the
+    // server would give is said at once, in its words, and nothing is sent.
     fetchStrategyPlans.mockResolvedValue({ items: [plan()], count: 1 })
-    intendStrategyPlan.mockRejectedValue(
-      new Error('A plan needs a target, a stop, or an exit-by date before it is intended'),
-    )
     renderPage('/trade/plans?plan=1')
     const intend = await screen.findByRole('button', { name: 'Mark intended' })
     await userEvent.click(intend)
     await waitFor(() =>
       expect(
         screen.getByText(
-          'A plan needs a target, a stop, or an exit-by date before it is intended',
+          'Write a target, a stop or an exit-by date. Without one there is nothing to compare the outcome against.',
         ),
       ).toBeTruthy(),
     )
+    expect(intendStrategyPlan).not.toHaveBeenCalled()
   })
 
   it('leaves a filled plan read-only', async () => {
@@ -168,6 +168,8 @@ describe('Trading › Plans', () => {
     expect(await screen.findByRole('dialog', { name: 'Plan' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Mark intended' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Delete draft' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Plan' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Link fill' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
   })

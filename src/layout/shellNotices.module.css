@@ -60,6 +60,18 @@
   background: color-mix(in srgb, var(--sk-accent) 32%, transparent);
 }
 
+/* The shortcut the button shares (DS UndoToast's hint). */
+.undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.undoKey {
+  font: 500 11px var(--font-sans);
+  color: var(--sk-mute2);
+}
+
 /* ── Banners: top right, left of the Symbol list ─────────────────────── */
 .banners {
   position: fixed;

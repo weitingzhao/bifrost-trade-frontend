@@ -14,9 +14,10 @@
  * connected". `Cash / margin` / `Pressure after` are grey: nothing computes
  * what one plan would cost in margin, so the column says so.
  */
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ToolbarClear, ViewState } from '@bifrost/ui'
+import { useQueryClient } from '@tanstack/react-query'
+import { TokenSearchField, ToolbarClear, ViewState, type SearchToken } from '@bifrost/ui'
 import { IncludeExcludeToggle, SegmentControl } from '@/components/data-display'
 import { HeroCard, HeroRow, PageHead, PageHeadAction, PageHeadLink, PageShell } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
@@ -32,13 +33,21 @@ import { clearCarriedSymbol, keepHeldSymbol } from '@/lib/symbolContext'
 import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
+import { deleteStrategyPlan, fetchStrategyPlan } from '@/api/strategyPlans'
+import { QUERY_KEYS } from '@/constants/queryKeys'
+import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
+import { notify } from '@/lib/shellNotify'
+import { planToken } from '@/utils/tradeOrigin'
 import { usePageViewParams } from '@/lib/pageView'
 import { PlanCard } from './PlanCard'
 import { PlanForm } from './PlanForm'
 import { PlanSheet } from './PlanSheet'
 import { PlansTable } from './PlansTable'
 import { planCashSecured } from './planCardModel'
+import { matchesPlanTokens, parsePlanTokens, serializePlanTokens, suggestPlanTokens } from './planTokens'
 import {
+  HELD_PLAN_DELETE_SCOPE,
+  HELD_PLAN_INTEND_SCOPE,
   HELD_PLAN_SCOPE,
   PLAN_FILTERS,
   PLAN_FILTER_LABELS,
@@ -50,10 +59,11 @@ import {
   type PlanFilterValue,
 } from './planRows'
 
-/** The form is a local mode; which card is open is the URL's business. */
-type Form = { kind: 'new' } | { kind: 'edit'; id: number } | null
+/** The new-plan sheet is a local mode; which card is open is the URL's
+ *  business. Editing is the inspector's (Rev .138) — the edit sheet retired. */
+type Form = { kind: 'new' } | null
 
-const PLANS_VIEW_PARAMS = ['status', 'plan'] as const
+const PLANS_VIEW_PARAMS = ['status', 'plan', 'q'] as const
 
 export default function TradePlansPage() {
   const [params, setParams] = useSearchParams()
@@ -97,15 +107,25 @@ export default function TradePlansPage() {
   // the shell's and are not kept twice.
   usePageViewParams(PLANS_VIEW_PARAMS)
   const query = useStrategyPlans()
-  // A plan whose Cancel is still behind its toast's Undo reads cancelled here.
+  // A plan whose Cancel or Mark intended is still behind its toast's Undo
+  // reads that way here already; a deleted draft has left the list.
   const { isHeld } = useHeldRemoval(HELD_PLAN_SCOPE)
+  const { isHeld: isHeldIntend } = useHeldRemoval(HELD_PLAN_INTEND_SCOPE)
+  const { isHeld: isHeldDelete, hold: holdDelete } = useHeldRemoval(HELD_PLAN_DELETE_SCOPE)
   const plans = useMemo(
     () =>
-      (query.data?.items ?? []).map((p) =>
-        isHeld(p.strategy_plan_id) ? { ...p, status: 'cancelled' as const } : p,
-      ),
-    [query.data, isHeld],
+      (query.data?.items ?? [])
+        .filter((p) => !isHeldDelete(p.strategy_plan_id))
+        .map((p) =>
+          isHeld(p.strategy_plan_id)
+            ? { ...p, status: 'cancelled' as const, effective_status: 'cancelled' as const }
+            : isHeldIntend(p.strategy_plan_id)
+              ? { ...p, status: 'intended' as const, effective_status: 'intended' as const }
+              : p,
+        ),
+    [query.data, isHeld, isHeldIntend, isHeldDelete],
   )
+  const tokens = useMemo(() => parsePlanTokens(params.get('q')), [params])
   const monitor = useMonitorStatus()
   const hostAccountId = monitor.data?.config?.ib_client?.account?.event_host ?? ''
   const secondaryAccountId = monitor.data?.config?.ib_client?.account?.event_secondary ?? ''
@@ -114,16 +134,17 @@ export default function TradePlansPage() {
   const inboxCount = standing?.pending_decisions?.calls ?? standing?.pending_memos ?? 0
 
   const counts = useMemo(() => planFilterCounts(plans), [plans])
-  const rows = useMemo(
-    () =>
-      sortPlans(
-        filterPlans(plans, filter)
-          .filter((plan) => planInAccountScope(plan, acctScope, hostAccountId, secondaryAccountId))
-          .filter((plan) => !symbol || plan.symbol.trim().toUpperCase() === symbol),
-      ),
-    [plans, filter, acctScope, hostAccountId, secondaryAccountId, symbol],
+  /** Whether a plan passes the scope bar: status, accounts, symbol, tokens. */
+  const inView = useCallback(
+    (plan: StrategyPlan) =>
+      filterPlans([plan], filter).length > 0 &&
+      planInAccountScope(plan, acctScope, hostAccountId, secondaryAccountId) &&
+      (!symbol || plan.symbol.trim().toUpperCase() === symbol) &&
+      matchesPlanTokens(plan, tokens),
+    [filter, acctScope, hostAccountId, secondaryAccountId, symbol, tokens],
   )
-  const cardId = form?.kind === 'edit' ? form.id : openId
+  const rows = useMemo(() => sortPlans(plans.filter(inView)), [plans, inView])
+  const cardId = openId
   const selected = useMemo(
     () => (cardId == null ? null : (plans.find((p) => p.strategy_plan_id === cardId) ?? null)),
     [cardId, plans],
@@ -156,6 +177,7 @@ export default function TradePlansPage() {
     ...(filter !== 'open' ? ['status'] : []),
     ...(!acctScope.host || !acctScope.secondary ? ['accounts'] : []),
     ...(symbol ? ['symbol'] : []),
+    ...(tokens.length ? [`${tokens.length} search token${tokens.length === 1 ? '' : 's'}`] : []),
   ]
   function clearScope() {
     clearCarriedSymbol()
@@ -165,6 +187,7 @@ export default function TradePlansPage() {
         const next = new URLSearchParams(prev)
         next.delete('status')
         next.delete('symbol')
+        next.delete('q')
         return next
       },
       { replace: true },
@@ -190,7 +213,77 @@ export default function TradePlansPage() {
     setParam('plan', String(strategyPlanId))
   }
 
+  const queryClient = useQueryClient()
+  const inViewRef = useRef(inView)
+  inViewRef.current = inView
+  /**
+   * A new plan from the sheet (Rev .138 §6): it is in the list and selected.
+   * When the scope bar hides it, the toast's action is Show — clear the scope
+   * and select it; a draft that shows offers Undo, which deletes it again.
+   */
+  async function planSaved(strategyPlanId: number, intended: boolean) {
+    openPlan(strategyPlanId)
+    const what = `${intended ? 'Intent' : 'Draft'} ${planToken(strategyPlanId)}`
+    const saved = await fetchStrategyPlan(strategyPlanId).catch(() => null)
+    if (saved && !inViewRef.current(saved)) {
+      notify(`${what} saved — hidden by the scope bar`, {
+        label: 'Show',
+        undo: () => {
+          clearScope()
+          openPlan(strategyPlanId)
+        },
+      })
+      return
+    }
+    if (intended) {
+      notify(`${what} saved and marked intended`)
+      return
+    }
+    notify(`${what} saved`, {
+      undo: () => {
+        setParam('plan', null)
+        void deleteStrategyPlan(strategyPlanId)
+          .then(() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.strategyPlans.root }))
+          .catch((e: unknown) => notify(`Draft was not removed — ${e instanceof Error ? e.message : String(e)}`))
+      },
+    })
+  }
+
   const closeForm = useCallback(() => setForm(null), [])
+
+  // ⌘⌫ deletes the selected draft (Finder's Move to Trash): no confirm — Undo
+  // is on the toast and ⌘Z (Rev .138 §5).
+  const selectedRef = useRef(selected)
+  selectedRef.current = selected
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key !== 'Backspace') return
+      const el = e.target as HTMLElement | null
+      if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return
+      const plan = selectedRef.current
+      if (!plan || plan.effective_status !== 'draft') return
+      e.preventDefault()
+      holdDelete(plan.strategy_plan_id, {
+        msg: `Deleted draft ${planToken(plan.strategy_plan_id)} · ${plan.symbol}`,
+        commit: () => deleteStrategyPlan(plan.strategy_plan_id),
+        invalidate: [QUERY_KEYS.strategyPlans.root],
+        failed: `Draft ${planToken(plan.strategy_plan_id)} was not deleted`,
+      })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [holdDelete])
+
+  const accounts = useMemo(
+    () =>
+      [
+        hostAccountId ? { id: hostAccountId, label: 'HOST' } : null,
+        secondaryAccountId ? { id: secondaryAccountId, label: 'Secondary' } : null,
+      ].filter((a): a is { id: string; label: string } => a != null),
+    [hostAccountId, secondaryAccountId],
+  )
+  const suggest = useCallback((q: string) => suggestPlanTokens(plans, q), [plans])
+  const setTokens = (next: SearchToken[]) => setParam('q', serializePlanTokens(next))
 
   function closePanel() {
     setForm(null)
@@ -262,6 +355,15 @@ export default function TradePlansPage() {
             clearCarriedSymbol()
             setParam('symbol', null)
           }}
+        />
+        <TokenSearchField
+          tokens={tokens}
+          onChange={setTokens}
+          suggest={suggest}
+          placeholder="Search plans"
+          aria-label="Search plans"
+          tokenClassName={(t) => (t.kind === 'sym' ? 'font-mono text-[var(--sk-ticker)]' : undefined)}
+          className="w-64 min-w-40"
         />
         <ToolbarClear resets={resets} onClear={clearScope} />
         <span data-sr-tb="meta">
@@ -390,9 +492,9 @@ export default function TradePlansPage() {
         </span>
       </div>
 
-      {/* The card reads in the inspector; writing a plan is the design's
-          order sheet — modal, twice as wide, the live check beside the form.
-          Closing an edit comes back to the card it was opened from. */}
+      {/* The card reads — and a draft is edited — in the inspector (Rev .138);
+          a new plan is the design's order sheet, modal, twice as wide, the
+          live check beside the form. */}
       <RightInspectorShell
         open={form == null && selected != null}
         ariaLabel="Plan"
@@ -400,16 +502,12 @@ export default function TradePlansPage() {
         onClose={closePanel}
       >
         {selected ? (
-          <PlanCard
-            plan={selected}
-            onClose={closePanel}
-            onEdit={(plan) => setForm({ kind: 'edit', id: plan.strategy_plan_id })}
-          />
+          <PlanCard plan={selected} accounts={accounts} onClose={closePanel} />
         ) : null}
       </RightInspectorShell>
       {form != null ? (
-        <PlanSheet label={form.kind === 'edit' ? 'Edit plan' : 'Plan a trade'} onClose={closeForm}>
-          <PlanForm editing={form.kind === 'edit' ? selected : null} onDone={openPlan} onCancel={closeForm} />
+        <PlanSheet label="Plan a trade" onClose={closeForm}>
+          <PlanForm editing={null} onDone={(id, intended) => void planSaved(id, intended)} onCancel={closeForm} />
         </PlanSheet>
       ) : null}
     </PageShell>

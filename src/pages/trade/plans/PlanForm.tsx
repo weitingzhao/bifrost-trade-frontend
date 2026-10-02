@@ -171,7 +171,8 @@ export function PlanForm({
   /** A draft being edited, or null for a new plan. */
   editing: StrategyPlan | null
   /** The plan that was written — the page opens its card. */
-  onDone: (strategyPlanId: number) => void
+  /** `intended`: it was saved as an intent, not a draft. */
+  onDone: (strategyPlanId: number, intended: boolean) => void
   onCancel: () => void
 }) {
   const { accounts, defaultAccount, host, secondary } = usePlanAccounts()
@@ -288,20 +289,20 @@ export function PlanForm({
     if (editing) {
       update.mutate(
         { id: editing.strategy_plan_id, payload: body },
-        { onSuccess: () => onDone(editing.strategy_plan_id) },
+        { onSuccess: () => onDone(editing.strategy_plan_id, editing.status === 'intended') },
       )
       return
     }
     create.mutate(body, {
       onSuccess: (created) => {
         if (!asIntent) {
-          onDone(created.strategy_plan_id)
+          onDone(created.strategy_plan_id, false)
           return
         }
         // The plan is written either way; if marking it fails, its card
         // opens as the draft it is and still offers Mark intended.
         intend.mutate(created.strategy_plan_id, {
-          onSettled: () => onDone(created.strategy_plan_id),
+          onSettled: (_r, err) => onDone(created.strategy_plan_id, err == null),
         })
       },
     })

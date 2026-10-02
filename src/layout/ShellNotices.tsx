@@ -9,11 +9,13 @@
  *   opens its detail on a click, and goes on × or Esc.
  */
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   bannerStore,
+  clearUndo,
   dismissBanner,
   dismissToast,
+  runUndo,
   toastStore,
   undoToast,
   type ShellBanner,
@@ -27,6 +29,28 @@ const TONE: Record<BannerTone, string> = {
   red: 'var(--color-lamp-red)',
   amber: 'var(--color-lamp-yellow)',
   accent: 'var(--sk-accent)',
+}
+
+function typing(t: EventTarget | null): boolean {
+  const el = t as HTMLElement | null
+  return !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)
+}
+
+/** ⌘Z / Ctrl+Z outside a text field undoes the page's last change (§17.5);
+ *  the stack starts empty on every page. */
+function UndoKey() {
+  const { pathname } = useLocation()
+  useEffect(() => clearUndo(), [pathname])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'z') return
+      if (typing(e.target)) return
+      if (runUndo()) e.preventDefault()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+  return null
 }
 
 function Toast() {
@@ -70,6 +94,7 @@ function Toast() {
           }}
         >
           {toast.label ?? 'Undo'}
+          {(toast.label ?? 'Undo') === 'Undo' ? <kbd className={css.undoKey}>⌘Z</kbd> : null}
         </button>
       ) : null}
     </div>
@@ -168,6 +193,7 @@ function Banners() {
 export function ShellNotices() {
   return (
     <>
+      <UndoKey />
       <Toast />
       <Banners />
     </>

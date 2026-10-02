@@ -28,19 +28,32 @@ import css from './equipSurface.module.css'
 /**
  * Icons, not words (Owner 2026-09-26, Rev .97): the words cost the tab strip
  * about 100px. Float = a window lifted off the page, Side = a window with its
- * right column filled, Page = the full-page corners — the design's own three
+ * right column ruled off, Page = the full-page corners — the design's own three
  * shapes; the names stay in the tooltip and the aria-label.
+ *
+ * All three are outlines on one stroke (2026-10-02): Float was two offset
+ * squares, which read as "copy", and Side's right column was a 45% solid that
+ * sat heavy in a row of line icons. Float is now a window with a title bar.
  */
-export const PLACES: { place: Place; label: string; title: string; d: string[]; fill?: string }[] = [
-  { place: 'float', label: 'Float', title: 'Float over the page', d: ['M8 8h12v11H8z', 'M4 15V5h12'] },
-  { place: 'panel', label: 'Side', title: 'A tab in the side panel', d: ['M3 5h18v14H3z', 'M14 5v14'], fill: 'M14 5h7v14h-7z' },
+export const PLACES: { place: Place; label: string; title: string; d: string[] }[] = [
+  {
+    place: 'float',
+    label: 'Float',
+    title: 'Float over the page',
+    d: ['M6 5h12a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z', 'M4 9h16'],
+  },
+  {
+    place: 'panel',
+    label: 'Side',
+    title: 'A tab in the side panel',
+    d: ['M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z', 'M15 5v14'],
+  },
   { place: 'page', label: 'Page', title: 'Open as the full page', d: ['M4 9V4h5', 'M20 9V4h-5', 'M4 15v5h5', 'M20 15v5h-5'] },
 ]
 
 export function PlaceIcon({ p }: { p: (typeof PLACES)[number] }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      {p.fill ? <path d={p.fill} fill="currentColor" stroke="none" opacity="0.45" /> : null}
       {p.d.map((d) => (
         <path key={d} d={d} />
       ))}
@@ -74,7 +87,6 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
                     ? `${p.title} (here now)`
                     : p.title
               }
-              style={{ width: 26, paddingInline: 0 }}
               onClick={() => {
                 if (current || off) return
                 if (p.place === 'page') {
@@ -105,7 +117,9 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
         title="Close"
         onClick={() => dismissSurface(surface.key)}
       >
-        ×
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+          <path d="M7 7l10 10M17 7 7 17" />
+        </svg>
       </button>
     </>
   )

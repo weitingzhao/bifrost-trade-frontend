@@ -50,10 +50,23 @@ import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
 import css from './equipSurface.module.css'
 
-/** One toggle: the glyph is the size it is, the title says what a click makes it. */
-const SIZE_TOGGLE: Record<FloatSize, { glyph: string; title: string; next: FloatSize }> = {
-  phone: { glyph: '▯', title: 'Size: Phone — switch to Pad (wider, centred)', next: 'pad' },
-  pad: { glyph: '▭', title: 'Size: Pad — switch to Phone (tall, right edge)', next: 'phone' },
+/**
+ * One toggle: the icon is the size it is, the title says what a click makes it.
+ * A drawn device on the place icons' stroke, not the `▯ ▭` characters, whose
+ * weight and baseline came from the font and sat beside the icons like a stray
+ * glyph (2026-10-02).
+ */
+const SIZE_TOGGLE: Record<FloatSize, { d: string[]; title: string; next: FloatSize }> = {
+  phone: {
+    d: ['M9 3h6a2 2 0 012 2v14a2 2 0 01-2 2H9a2 2 0 01-2-2V5a2 2 0 012-2z', 'M11 18h2'],
+    title: 'Size: Phone — switch to Pad (wider, centred)',
+    next: 'pad',
+  },
+  pad: {
+    d: ['M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z', 'M18 11v2'],
+    title: 'Size: Pad — switch to Phone (tall, right edge)',
+    next: 'phone',
+  },
 }
 
 const PHONE_W = 420
@@ -357,8 +370,13 @@ export function EquipFloat() {
           aria-label={SIZE_TOGGLE[size].title}
           onClick={() => setFloatSize(SIZE_TOGGLE[size].next)}
         >
-          {SIZE_TOGGLE[size].glyph}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            {SIZE_TOGGLE[size].d.map((d) => (
+              <path key={d} d={d} />
+            ))}
+          </svg>
         </button>
+        <span className={css.barSep} aria-hidden />
         <PlaceButtons surface={float} here="float" />
       </div>
       <div className={css.body} data-mat="" onClickCapture={keepEquipmentLinksIn('float')}>

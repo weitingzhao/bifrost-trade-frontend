@@ -299,9 +299,11 @@
   flex: none;
 }
 
-/* The place control (Rev .25): one segmented group with words, in every
-   header. The place it is in is lit and inert; Page is dimmed where the
-   surface has no page. */
+/* The place control (Rev .25): one segmented group, in every header. The
+   place it is in is lit and inert; Page is dimmed where the surface has no
+   page. Size, place and close share one height, one stroke and one shape
+   language (Rev .142 capsules) and carry no plate of their own until hovered
+   (2026-10-02): before, three controls wore three different grey blobs. */
 .seg {
   display: flex;
   gap: 2px;
@@ -314,28 +316,32 @@
 
 .seg button {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
   height: 22px;
-  padding: 0 8px;
+  padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--sk-mute2);
-  font: inherit;
-  font-size: 11px;
-  font-weight: 600;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .seg button:hover {
   color: var(--sk-ink);
 }
 
+/* Lit one step above the track, the way PageHead's place capsule is — the
+   darker raised2 plate read as a hole in the track, not a selection. */
 .seg button[data-on='1'] {
-  background: var(--sk-raised2);
+  background: color-mix(in srgb, var(--sk-ink) 15%, transparent);
   color: var(--sk-ink);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.4),
-    inset 0 0 0 1px color-mix(in srgb, var(--sk-ink) 10%, transparent);
+  box-shadow: var(--glass-lens), 0 1px 2px rgba(0, 0, 0, 0.22);
   cursor: default;
 }
 
@@ -344,49 +350,43 @@
   cursor: default;
 }
 
-/* The float's one size toggle: ▯ Phone ⇄ ▭ Pad. */
-.size {
-  height: 22px;
-  min-width: 26px;
-  padding: 0 6px;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--sk-ink) 6%, transparent);
-  color: var(--sk-mute2);
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-  flex: none;
-}
-
-.size:hover {
-  color: var(--sk-ink);
-  background: color-mix(in srgb, var(--sk-ink) 12%, transparent);
-}
-
-/* A round close (Rev .59), 22px; it still closes the current tab. */
+/* The float's one size toggle: a drawn Phone ⇄ Pad, plateless until hovered. */
+.size,
 .close {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
   border: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--sk-ink) 7%, transparent);
+  background: transparent;
   color: var(--sk-mute2);
-  font-size: 13px;
-  line-height: 1;
-  padding: 0;
   cursor: pointer;
   transition:
     background 0.15s ease,
     color 0.15s ease;
 }
 
+.size:hover {
+  color: var(--sk-ink);
+  background: color-mix(in srgb, var(--sk-ink) 10%, transparent);
+}
+
+/* Size answers "how big", the segment "where": a hairline keeps the two
+   questions apart without a second plate. */
+.barSep {
+  width: 1px;
+  height: 14px;
+  flex: none;
+  background: color-mix(in srgb, var(--sk-ink) 12%, transparent);
+}
+
+/* The close (Rev .59): it still closes the current tab. */
 .close:hover {
-  background: color-mix(in srgb, var(--sk-ink) 16%, transparent);
+  background: color-mix(in srgb, var(--destructive) 22%, transparent);
   color: var(--sk-ink);
 }
 

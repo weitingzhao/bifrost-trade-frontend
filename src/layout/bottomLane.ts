@@ -113,13 +113,14 @@ export function useBottomLane(overlayRight = 0): BottomLane {
       })
     }
     update()
-    const ro = new ResizeObserver(update)
+    // jsdom has no ResizeObserver; the window's resize still keeps it current.
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update)
     const main = document.getElementById('main-content')
-    if (main) ro.observe(main)
+    if (main) ro?.observe(main)
     window.addEventListener('resize', update)
     return () => {
       cancelAnimationFrame(frame)
-      ro.disconnect()
+      ro?.disconnect()
       window.removeEventListener('resize', update)
     }
   }, [overlayRight])

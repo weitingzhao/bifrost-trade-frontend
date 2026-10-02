@@ -11,8 +11,18 @@ import {
   useStrategyDims,
   useUpdateGateSafety,
 } from '@/hooks/useGateSafety'
-import { DEFAULT_GATES, DIM_TYPES, DIM_LABELS, dimCatalogType, type DimFieldName } from '@/utils/gateDefaults'
-import type { GateSafetyPayload } from '@/types/positions'
+import { DIM_TYPES, dimCatalogType } from '@/utils/gateDefaults'
+import {
+  emptyGateForm,
+  gateDimLabel,
+  gateFormToPayload,
+  gateToForm,
+  getGateValue,
+  GATE_FAMILIES,
+  isGateFormReady,
+  setGateValue as setGatePath,
+  type GateFormState,
+} from '@/components/strategy/gates/gateForm'
 
 export type GateSheetMode =
   | { kind: 'closed' }
@@ -20,45 +30,6 @@ export type GateSheetMode =
   | { kind: 'edit'; id: number }
   | { kind: 'copy'; id: number }
 
-const DIM_TIME_LABEL = 'Time horizon'
-
-function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj)) as T
-}
-
-function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-  return path.split('.').reduce<unknown>((cur, key) => {
-    if (cur != null && typeof cur === 'object') return (cur as Record<string, unknown>)[key]
-    return undefined
-  }, obj)
-}
-
-function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): void {
-  const keys = path.split('.')
-  let cur: Record<string, unknown> = obj
-  for (let i = 0; i < keys.length - 1; i++) {
-    const k = keys[i]
-    if (cur[k] == null || typeof cur[k] !== 'object') cur[k] = {}
-    cur = cur[k] as Record<string, unknown>
-  }
-  cur[keys[keys.length - 1]] = value
-}
-
-function buildEmptyPayload(): GateSafetyPayload {
-  return {
-    name: '',
-    version: 1,
-    dim_direction: null,
-    dim_structure: null,
-    dim_coverage: null,
-    dim_risk: null,
-    dim_volatility: null,
-    dim_time: null,
-    is_active: false,
-    gates: deepClone(DEFAULT_GATES),
-    earnings_dates: [],
-  }
-}
 
 function GateNumberRow({
   label,
@@ -119,7 +90,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
 
   const editId = mode.kind === 'edit' ? mode.id : null
 
-  const [form, setForm] = useState<GateSafetyPayload>(buildEmptyPayload)
+  const [form, setForm] = useState<GateFormState>(emptyGateForm)
   const [earningsDates, setEarningsDates] = useState<string[]>([])
 
   const detailQuery = useGateSafetyFull(
@@ -129,7 +100,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
   useEffect(() => {
     if (mode.kind === 'create') {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setForm(buildEmptyPayload())
+      setForm(emptyGateForm())
       setEarningsDates([])
     }
   }, [mode.kind])
@@ -137,19 +108,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
   useEffect(() => {
     if (detailQuery.data && (mode.kind === 'edit' || mode.kind === 'copy')) {
       const d = detailQuery.data
-      const payload: GateSafetyPayload = {
-        name: mode.kind === 'copy' ? `${d.name} (copy)` : d.name,
-        version: d.version,
-        dim_direction: d.dim_direction ?? null,
-        dim_structure: d.dim_structure ?? null,
-        dim_coverage: d.dim_coverage ?? null,
-        dim_risk: d.dim_risk ?? null,
-        dim_volatility: d.dim_volatility ?? null,
-        dim_time: d.dim_time ?? null,
-        is_active: mode.kind === 'copy' ? false : d.is_active,
-        gates: deepClone(d.gates),
-        earnings_dates: [...d.earnings_dates],
-      }
+      const payload = gateToForm(d, { copy: mode.kind === 'copy' })
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm(payload)
       setEarningsDates([...d.earnings_dates])
@@ -157,16 +116,12 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
   }, [detailQuery.data, mode.kind])
 
   const setGateValue = useCallback((path: string, value: unknown) => {
-    setForm((prev) => {
-      const next = { ...prev, gates: deepClone(prev.gates) }
-      setNestedValue(next.gates as unknown as Record<string, unknown>, path, value)
-      return next
-    })
+    setForm((prev) => setGatePath(prev, path, value))
   }, [])
 
   const gateVal = useCallback(
     (path: string): unknown => {
-      return getNestedValue(form.gates as unknown as Record<string, unknown>, path)
+      return getGateValue(form.gates, path)
     },
     [form.gates],
   )
@@ -188,7 +143,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
   )
 
   async function handleSubmit() {
-    const payload: GateSafetyPayload = { ...form, earnings_dates: earningsDates }
+    const payload = gateFormToPayload({ ...form, earnings_dates: earningsDates })
     if (mode.kind === 'edit') {
       await updateMut.mutateAsync({ id: mode.id, payload })
     } else if (mode.kind === 'create' || mode.kind === 'copy') {
@@ -264,7 +219,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
             </p>
             {DIM_TYPES.map((dim) => (
               <div key={dim} className={styles.formRow}>
-                <label>{dim === 'dim_time' ? DIM_TIME_LABEL : DIM_LABELS[dim as DimFieldName]}</label>
+                <label>{gateDimLabel(dim)}</label>
                 <Select
                   value={form[dim] || '__any__'}
                   onValueChange={(v) =>
@@ -274,7 +229,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
                     }))
                   }
                 >
-                  <SelectTrigger aria-label={dim === 'dim_time' ? DIM_TIME_LABEL : DIM_LABELS[dim as DimFieldName]}>
+                  <SelectTrigger aria-label={gateDimLabel(dim)}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -300,146 +255,29 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
             </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <h4 className={styles.groupTitle}>Strategy (structure &amp; earnings)</h4>
-            <GateNumberRow
-              label="min_dte"
-              value={gateNum('strategy.structure.min_dte')}
-              onChange={(v) => setGateValue('strategy.structure.min_dte', v)}
-            />
-            <GateNumberRow
-              label="max_dte"
-              value={gateNum('strategy.structure.max_dte')}
-              onChange={(v) => setGateValue('strategy.structure.max_dte', v)}
-            />
-            <GateNumberRow
-              label="atm_band_pct"
-              value={gateNum('strategy.structure.atm_band_pct')}
-              onChange={(v) => setGateValue('strategy.structure.atm_band_pct', v)}
-              step={0.01}
-            />
-            <GateNumberRow
-              label="blackout_days_before"
-              value={gateNum('strategy.earnings.blackout_days_before')}
-              onChange={(v) => setGateValue('strategy.earnings.blackout_days_before', v)}
-            />
-            <GateNumberRow
-              label="blackout_days_after"
-              value={gateNum('strategy.earnings.blackout_days_after')}
-              onChange={(v) => setGateValue('strategy.earnings.blackout_days_after', v)}
-            />
-            <GateSwitchRow
-              label="trading_hours_only"
-              checked={gateBool('strategy.trading_hours_only')}
-              onChange={(v) => setGateValue('strategy.trading_hours_only', v)}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <h4 className={styles.groupTitle}>State (delta, market, liquidity, system)</h4>
-            <GateNumberRow
-              label="epsilon_band"
-              value={gateNum('state.delta.epsilon_band')}
-              onChange={(v) => setGateValue('state.delta.epsilon_band', v)}
-            />
-            <GateNumberRow
-              label="threshold_hedge_shares"
-              value={gateNum('state.delta.threshold_hedge_shares')}
-              onChange={(v) => setGateValue('state.delta.threshold_hedge_shares', v)}
-            />
-            <GateNumberRow
-              label="max_delta_limit"
-              value={gateNum('state.delta.max_delta_limit')}
-              onChange={(v) => setGateValue('state.delta.max_delta_limit', v)}
-            />
-            <GateNumberRow
-              label="vol_window_min"
-              value={gateNum('state.market.vol_window_min')}
-              onChange={(v) => setGateValue('state.market.vol_window_min', v)}
-            />
-            <GateNumberRow
-              label="stale_ts_threshold_ms"
-              value={gateNum('state.market.stale_ts_threshold_ms')}
-              onChange={(v) => setGateValue('state.market.stale_ts_threshold_ms', v)}
-            />
-            <GateNumberRow
-              label="wide_spread_pct"
-              value={gateNum('state.liquidity.wide_spread_pct')}
-              onChange={(v) => setGateValue('state.liquidity.wide_spread_pct', v)}
-              step={0.01}
-            />
-            <GateNumberRow
-              label="extreme_spread_pct"
-              value={gateNum('state.liquidity.extreme_spread_pct')}
-              onChange={(v) => setGateValue('state.liquidity.extreme_spread_pct', v)}
-              step={0.01}
-            />
-            <GateNumberRow
-              label="data_lag_threshold_ms"
-              value={gateNum('state.system.data_lag_threshold_ms')}
-              onChange={(v) => setGateValue('state.system.data_lag_threshold_ms', v)}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <h4 className={styles.groupTitle}>Intent (hedge)</h4>
-            <GateNumberRow
-              label="min_hedge_shares"
-              value={gateNum('intent.hedge.min_hedge_shares')}
-              onChange={(v) => setGateValue('intent.hedge.min_hedge_shares', v)}
-            />
-            <GateNumberRow
-              label="cooldown_seconds"
-              value={gateNum('intent.hedge.cooldown_seconds')}
-              onChange={(v) => setGateValue('intent.hedge.cooldown_seconds', v)}
-            />
-            <GateNumberRow
-              label="max_hedge_shares_per_order"
-              value={gateNum('intent.hedge.max_hedge_shares_per_order')}
-              onChange={(v) => setGateValue('intent.hedge.max_hedge_shares_per_order', v)}
-            />
-            <GateNumberRow
-              label="min_price_move_pct"
-              value={gateNum('intent.hedge.min_price_move_pct')}
-              onChange={(v) => setGateValue('intent.hedge.min_price_move_pct', v)}
-              step={0.01}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <h4 className={styles.groupTitle}>Guard (risk)</h4>
-            <GateNumberRow
-              label="max_daily_hedge_count"
-              value={gateNum('guard.risk.max_daily_hedge_count')}
-              onChange={(v) => setGateValue('guard.risk.max_daily_hedge_count', v)}
-            />
-            <GateNumberRow
-              label="max_position_shares"
-              value={gateNum('guard.risk.max_position_shares')}
-              onChange={(v) => setGateValue('guard.risk.max_position_shares', v)}
-            />
-            <GateNumberRow
-              label="max_daily_loss_usd"
-              value={gateNum('guard.risk.max_daily_loss_usd')}
-              onChange={(v) => setGateValue('guard.risk.max_daily_loss_usd', v)}
-            />
-            <GateNumberRow
-              label="max_net_delta_shares"
-              value={gateNum('guard.risk.max_net_delta_shares')}
-              onChange={(v) => setGateValue('guard.risk.max_net_delta_shares', v)}
-            />
-            <GateNumberRow
-              label="max_spread_pct"
-              value={gateNum('guard.risk.max_spread_pct')}
-              onChange={(v) => setGateValue('guard.risk.max_spread_pct', v)}
-              step={0.01}
-            />
-            <GateSwitchRow
-              label="paper_trade"
-              checked={gateBool('guard.risk.paper_trade')}
-              onChange={(v) => setGateValue('guard.risk.paper_trade', v)}
-            />
-          </div>
+          {GATE_FAMILIES.map((fam) => (
+            <div key={fam.id} className={styles.formGroup}>
+              <h4 className={styles.groupTitle}>{fam.title}</h4>
+              {fam.fields.map((field) =>
+                field.kind === 'bool' ? (
+                  <GateSwitchRow
+                    key={field.path}
+                    label={field.key}
+                    checked={gateBool(field.path)}
+                    onChange={(v) => setGateValue(field.path, v)}
+                  />
+                ) : (
+                  <GateNumberRow
+                    key={field.path}
+                    label={field.key}
+                    value={gateNum(field.path)}
+                    onChange={(v) => setGateValue(field.path, v)}
+                    step={field.step}
+                  />
+                ),
+              )}
+            </div>
+          ))}
 
           <div className={styles.formGroup}>
             <h4 className={styles.groupTitle}>Earnings dates (blacklist YYYY-MM-DD)</h4>
@@ -472,7 +310,7 @@ export function GateSafetyFormSheet({ mode, onClose }: GateSafetyFormSheetProps)
             <Button
               type="button"
               onClick={() => void handleSubmit()}
-              disabled={submitting || !form.name.trim()}
+              disabled={submitting || !isGateFormReady(form)}
             >
               {submitting ? 'Saving…' : mode.kind === 'edit' ? 'Update' : 'Create'}
             </Button>

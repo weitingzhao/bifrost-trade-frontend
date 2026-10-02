@@ -29,60 +29,15 @@ import {
 } from '@/components/strategy/allocations/allocationsFormUi'
 import { useOpportunities, useGateSafety } from '@/hooks/useStrategies'
 import { createAllocation, updateAllocation, fetchAllocation } from '@/api/strategy'
-import type { AllocationPayload, StrategyAllocation } from '@/types/positions'
+import type { AllocationPayload } from '@/types/positions'
+import {
+  EMPTY_ALLOCATION_FORM as EMPTY_FORM,
+  allocationToForm,
+  createAllocationPayload as createPayload,
+  allocationFormToPayload as formToPayload,
+  type AllocationFormState as FormState,
+} from './allocations/allocationForm'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-
-interface FormState {
-  name: string
-  opportunityIds: number[]
-  gateSafetyId: number | null
-  maxPositions: string
-  maxBpPct: string
-  /**
-   * On the books — whether this allocation may be picked at all. A different
-   * fact from the one the daemon's config holds about which allocation it
-   * runs, which is `Set active` on Trading › Rules. Edited here because it is
-   * part of the definition; until 2026-09-18 it was editable on the retiring
-   * Strategy › Allocations page and nowhere else, so an allocation taken off
-   * the books could not be put back from the chain.
-   */
-  isActive: boolean
-}
-
-const EMPTY_FORM: FormState = {
-  name: '',
-  opportunityIds: [],
-  gateSafetyId: null,
-  maxPositions: '',
-  maxBpPct: '',
-  isActive: true,
-}
-
-function allocationToForm(a: StrategyAllocation): FormState {
-  return {
-    name: a.name,
-    opportunityIds: a.strategy_opportunity_ids ?? [],
-    gateSafetyId: a.gate_safety_strategy_id ?? null,
-    maxPositions: a.max_positions != null ? String(a.max_positions) : '',
-    maxBpPct: a.max_bp_pct != null ? String(a.max_bp_pct) : '',
-    isActive: a.is_active ?? true,
-  }
-}
-
-function formToPayload(f: FormState): AllocationPayload {
-  return {
-    name: f.name.trim(),
-    strategy_opportunity_ids: f.opportunityIds,
-    gate_safety_strategy_id: f.gateSafetyId,
-    max_positions: f.maxPositions !== '' ? Number(f.maxPositions) : null,
-    max_bp_pct: f.maxBpPct !== '' ? Number(f.maxBpPct) : null,
-    is_active: f.isActive,
-  }
-}
-
-function createPayload(f: FormState): AllocationPayload {
-  return formToPayload(f)
-}
 
 export interface AllocationFormModalProps {
   mode: 'create' | 'edit'

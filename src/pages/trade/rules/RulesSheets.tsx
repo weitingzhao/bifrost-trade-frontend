@@ -1,21 +1,12 @@
 /**
- * The edit sheets behind the four columns.
+ * The sheets the Rules page still opens: New (＋ in a column, and ＋ New
+ * gate), the Desk's Plan-this hand-over, and New trade (design Rev .140:
+ * "new = sheet"). Editing moved to the inspectors (`inspector/*`, select =
+ * edit); the sheets and the inspectors share each object's field mapping
+ * (allocationForm · opportunityForm · gateForm · structureForm), so a rule
+ * made here and one edited there are one definition of valid.
  *
- * Design DECISIONS 2026-09-18: the seven `/strategy/*` CRUD pages become edit
- * entries behind each column of the chain. They are **not rewritten** here —
- * the forms already exist and are the same ones those pages open, so a rule
- * edited from the chain and one edited from the old page are the same write
- * with the same validation. Rewriting them would have produced a second
- * definition of what a valid structure is, which is the thing the chain exists
- * to prevent.
- *
- * What this file adds is the mapping: which column opens which sheet, for a new
- * one and for the one that is selected. One place holds it, so the column
- * headers and the detail panel cannot disagree about what "Edit" means.
- *
- * D10 is not in play — a rule is a rulebook entry, not an order. Activating an
- * allocation is what the daemon reads on its next start, and that is why it
- * lives behind a form with a confirm rather than behind a card click.
+ * D10 is not in play — a rule is a rulebook entry, not an order.
  */
 import { useQueryClient } from '@tanstack/react-query'
 import { AllocationFormModal } from '@/components/strategy/AllocationFormModal'
@@ -24,8 +15,7 @@ import { OpportunityFormModal, type PrefillData } from '@/components/strategy/Op
 import { StructureFormSheet, type StructureFormMode } from '@/components/strategy/StructureFormSheet'
 import { GateSafetyFormSheet, type GateSheetMode } from '@/components/strategy/gates/GateSafetyFormSheet'
 import type { StatusResponse } from '@/types/monitor'
-import { InstanceDeleteModal } from '@/components/strategy/InstanceDeleteModal'
-import type { StrategyInstance, StrategyOpportunity } from '@/types/strategy'
+import type { StrategyOpportunity } from '@/types/strategy'
 
 /** Which sheet is open, and on what. */
 export type RulesSheet =
@@ -35,7 +25,6 @@ export type RulesSheet =
   | { kind: 'allocation'; mode: 'create' | 'edit'; editId: number | null }
   | { kind: 'gate'; mode: GateSheetMode }
   | { kind: 'instance' }
-  | { kind: 'instanceDelete'; instance: StrategyInstance }
 
 export const NO_SHEET: RulesSheet = { kind: 'none' }
 
@@ -73,11 +62,6 @@ export function RulesSheets({
   }
   if (sheet.kind === 'gate') {
     return <GateSafetyFormSheet mode={sheet.mode} onClose={saved} />
-  }
-  if (sheet.kind === 'instanceDelete') {
-    return (
-      <InstanceDeleteModal instance={sheet.instance} onOpenChange={(next) => (next ? undefined : saved())} />
-    )
   }
   if (sheet.kind === 'instance') {
     return <InstanceCreateModal open onOpenChange={(next) => (next ? undefined : saved())} status={status} />

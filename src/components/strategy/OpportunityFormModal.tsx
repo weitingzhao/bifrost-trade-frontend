@@ -53,6 +53,13 @@ import {
   opportunitiesWatchlistCheckboxClass,
   opportunitiesWatchlistGridClass,
 } from '@/components/strategy/opportunities/opportunitiesFormUi'
+import {
+  newEntryCondition,
+  opportunityFormProblem,
+  opportunityFormToPayload,
+  opportunityToForm,
+  scopeTakesSymbols,
+} from '@/components/strategy/opportunities/opportunityForm'
 import { SegmentControl } from '@/components/data-display'
 import { useGateSafety } from '@/hooks/useStrategies'
 import { useWatchlist } from '@/hooks/useWatchlist'
@@ -174,18 +181,15 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
     const detail = editDetailQuery.data
     const id = initial?.strategy_opportunity_id
     if (!open || !isEdit || !detail || id == null || editHydratedId === id) return
-    setName(detail.name)
+    const f = opportunityToForm(detail)
+    setName(f.name)
     setNameEdited(true)
-    setStructureId(detail.strategy_structure_id != null ? String(detail.strategy_structure_id) : '')
-    setGateSafetyId(
-      detail.default_gate_safety_strategy_id != null
-        ? String(detail.default_gate_safety_strategy_id)
-        : GATE_NONE,
-    )
-    setScopeType(detail.scope_type ?? '')
-    setSymbols(detail.symbols ?? [])
-    setConditions(detail.entry_conditions ?? [])
-    setIsActive(detail.is_active === true)
+    setStructureId(f.structureId)
+    setGateSafetyId(f.gateSafetyId || GATE_NONE)
+    setScopeType(f.scopeType)
+    setSymbols(f.symbols)
+    setConditions(f.conditions)
+    setIsActive(f.isActive)
     setEditHydratedId(id)
   }, [open, isEdit, initial?.strategy_opportunity_id, editDetailQuery.data, editHydratedId])
 
@@ -207,14 +211,11 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
 
   function handleScopeChange(val: string) {
     setScopeType(val)
-    if (val !== 'explicit_symbols' && val !== 'watchlist_stk') setSymbols([])
+    if (!scopeTakesSymbols(val)) setSymbols([])
   }
 
   function handleAddCondition() {
-    setConditions((prev) => [
-      ...prev,
-      { condition_type: 'iv_min', value_text: null, value_numeric: null },
-    ])
+    setConditions((prev) => [...prev, newEntryCondition()])
   }
 
   function handleConditionPatch(index: number, patch: Partial<EntryCondition>) {
@@ -226,40 +227,22 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
   }
 
   async function handleSubmit() {
-    if (!resolvedName.trim()) {
-      setError('Name is required.')
-      return
-    }
-    if (!resolvedStructureId) {
-      setError('Structure is required.')
+    const problem = opportunityFormProblem({ name: resolvedName, structureId: resolvedStructureId })
+    if (problem) {
+      setError(problem)
       return
     }
     setSaving(true)
     setError(null)
-    const scope = (scopeType || '').trim() || null
-    const symbolPayload =
-      scope === 'explicit_symbols'
-        ? symbols.map((s) => s.trim()).filter(Boolean)
-        : scope === 'watchlist_stk'
-          ? symbols.map((s) => s.trim().toUpperCase()).filter(Boolean)
-          : []
-    const entryConditions = conditions
-      .filter((c) => (c.condition_type ?? '').trim())
-      .map((c) => ({
-        condition_type: c.condition_type.trim(),
-        value_text: c.value_text?.trim() || null,
-        value_numeric: c.value_numeric ?? null,
-      }))
-    const body = {
-      name: (nameEdited ? name : resolvedName).trim(),
-      strategy_structure_id: Number(resolvedStructureId),
-      default_gate_safety_strategy_id:
-        gateSafetyId && gateSafetyId !== GATE_NONE ? Number(gateSafetyId) : null,
-      scope_type: scope,
-      symbols: symbolPayload,
-      entry_conditions: entryConditions,
-      is_active: isActive,
-    }
+    const body = opportunityFormToPayload({
+      name: nameEdited ? name : resolvedName,
+      structureId: resolvedStructureId,
+      gateSafetyId: gateSafetyId !== GATE_NONE ? gateSafetyId : '',
+      scopeType,
+      symbols,
+      conditions,
+      isActive,
+    })
     try {
       if (isEdit && initial) {
         await putOpportunity(initial.strategy_opportunity_id, body)

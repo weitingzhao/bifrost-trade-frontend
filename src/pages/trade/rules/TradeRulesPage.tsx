@@ -20,14 +20,14 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
-import { opportunityCopyPrefill, opportunityDetailKey } from '@/components/strategy/opportunityCopy'
+import { opportunityDetailKey } from '@/components/strategy/opportunityCopy'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { InstanceListFilters } from '@/components/strategy/InstanceListFilters'
@@ -41,7 +41,10 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import { clearCarriedSymbol, useCarriedSymbol } from '@/lib/symbolContext'
 import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
-import { SetActiveDialog } from './SetActiveDialog'
+import { useDeskEditing } from './useDeskEditing'
+import { OpportunityInspector } from './inspector/OpportunityInspector'
+import { StructureInspector } from './inspector/StructureInspector'
+import { GateInspector } from './inspector/GateInspector'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { ChainColumnList } from './ChainColumns'
 import { NO_SHEET, RulesSheets, type RulesSheet } from './RulesSheets'
@@ -121,16 +124,28 @@ export default function TradeRulesPage() {
     navigate(location.pathname + location.search, { replace: true, state: null })
   }, [handedPrefill, navigate, location.pathname, location.search])
   const status = useMonitorStatus()
-  const { data, rawInstances, loading, error, refetch } = useRulesChain()
+  const chain = useRulesChain()
+  const { loading, error, refetch } = chain
+  // Rev .140: select = edit, delete held behind the toast — the chain reads
+  // with the held deletes already gone.
+  const pickRef = useRef<(s: ChainSelection) => void>(() => undefined)
+  const desk = useDeskEditing({
+    data: chain.data,
+    rawInstances: chain.rawInstances,
+    status: status.data,
+    sel,
+    pick: (s2) => pickRef.current(s2),
+    renderOpportunity: (p) => <OpportunityInspector key={p.id} {...p} />,
+    renderStructure: (p) => <StructureInspector key={p.id} {...p} />,
+    renderGate: (p) => <GateInspector key={p.id} {...p} />,
+  })
+  const { data, rawInstances } = desk.view
 
   /** What the daemon's own config points at — the store `Set active` writes. */
   const daemon = useMemo(
     () => ({ allocationId: status.data?.strategy?.active?.allocation?.id ?? null }),
     [status.data?.strategy?.active?.allocation?.id],
   )
-  const [setActiveFor, setSetActiveFor] = useState<number | null | undefined>(undefined)
-  const qc = useQueryClient()
-  const [duplicating, setDuplicating] = useState(false)
 
   // The list's narrowing within a focus — component state, restored per step.
   const [instanceFilters, setInstanceFilters] = useState<InstanceListFilterValues>(NO_FILTERS)
@@ -226,8 +241,10 @@ export default function TradeRulesPage() {
   useEffect(() => {
     stepRef.current = step
     backRef.current = back
+    pickRef.current = pickIt
   })
-  const sheetOpen = sheet.kind !== NO_SHEET.kind || setActiveFor !== undefined
+  // An open inspector takes Esc first (it closes); the next Esc is Back.
+  const sheetOpen = sheet.kind !== NO_SHEET.kind || desk.inspectorOpen
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
@@ -248,25 +265,6 @@ export default function TradeRulesPage() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [sheetOpen, compareWith])
-
-  /**
-   * A copy carries the whole rule, so the detail is fetched first — the list
-   * row has no entry conditions, and a copy missing them would be a different
-   * rule under the same name.
-   */
-  async function duplicateOpportunity(id: number) {
-    setDuplicating(true)
-    try {
-      const detail = await qc.fetchQuery({
-        queryKey: opportunityDetailKey(id),
-        queryFn: () => fetchOpportunityDetail(id),
-        staleTime: 120_000,
-      })
-      setSheet({ kind: 'opportunity', prefill: opportunityCopyPrefill(detail) })
-    } finally {
-      setDuplicating(false)
-    }
-  }
 
   const lit = useMemo(() => focusLineage(focus, data), [focus, data])
   const columns = useMemo(() => {
@@ -308,21 +306,33 @@ export default function TradeRulesPage() {
     }
     if (sel == null || sel.id == null) return []
     const id = sel.id
+    // Rev .140: the picked object is edited in its inspector; Edit reopens a closed one.
+    const edit: RecordAction = { label: 'Edit', onClick: desk.reopen, disabled: desk.inspectorOpen, title: 'Edit it in the inspector' }
     if (kind === 'structure') {
+      const active = data.structures.find((x) => x.strategy_structure_id === id)?.is_active ?? true
       return [
-        { label: 'Edit', onClick: () => setSheet({ kind: 'structure', mode: { kind: 'edit', id } }) },
-        { label: 'Duplicate', onClick: () => setSheet({ kind: 'structure', mode: { kind: 'copy', id } }) },
+        edit,
+        {
+          label: active ? 'Deactivate' : 'Activate',
+          onClick: () => desk.setStructActive(id, !active),
+          title: active ? 'Hidden from new opportunities — Undo on the toast or ⌘Z' : 'Undo on the toast or ⌘Z',
+        },
+        { label: 'Duplicate', onClick: () => desk.duplicateStruct(id), title: 'A copy, opened here' },
       ]
     }
     if (kind === 'opportunity') {
-      const initial = data.opportunities.find((o) => o.strategy_opportunity_id === id)
+      const active = data.opportunities.find((o) => o.strategy_opportunity_id === id)?.is_active ?? true
       return [
-        { label: 'Edit', onClick: () => setSheet({ kind: 'opportunity', initial }) },
+        edit,
         {
-          label: duplicating ? 'Copying…' : 'Duplicate',
-          onClick: () => void duplicateOpportunity(id),
-          disabled: duplicating,
-          title: 'Open a new opportunity prefilled from this one — structure, gate, scope and conditions',
+          label: active ? 'Deactivate' : 'Activate',
+          onClick: () => desk.setOppActive(id, !active),
+          title: active ? 'No new trades; running ones keep going — Undo on the toast or ⌘Z' : 'Undo on the toast or ⌘Z',
+        },
+        {
+          label: 'Duplicate',
+          onClick: () => desk.duplicateOpp(id),
+          title: 'A copy — structure, gate, scope and conditions — inactive until you turn it on, opened here',
         },
       ]
     }
@@ -334,20 +344,20 @@ export default function TradeRulesPage() {
         // from saving the definition (design DECISIONS 2026-09-18).
         {
           label: isDaemons ? 'Clear active' : 'Set active',
-          onClick: () => setSetActiveFor(isDaemons ? null : id),
+          onClick: () => desk.setActive(isDaemons ? null : id),
           title: isDaemons
-            ? 'The daemon is on this one — clearing leaves it with no allocation to load'
-            : 'Write this allocation into the config the daemon loads on its next start',
+            ? 'The daemon is on this one — clearing leaves it with no allocation to load · Undo on the toast or ⌘Z'
+            : 'Write this allocation into the config the daemon loads on its next start · Undo on the toast or ⌘Z',
         },
-        { label: 'Edit', onClick: () => setSheet({ kind: 'allocation', mode: 'edit', editId: id }) },
+        edit,
         ...(gateId == null
           ? []
           : [
-              { label: 'Edit gate', onClick: () => setSheet({ kind: 'gate', mode: { kind: 'edit' as const, id: gateId } }) },
+              { label: 'Edit gate', onClick: () => desk.openGate(gateId) },
               {
                 label: 'Copy gate',
-                onClick: () => setSheet({ kind: 'gate', mode: { kind: 'copy' as const, id: gateId } }),
-                title: 'Start a new gate from this one — the sixteen fields, under a new name',
+                onClick: () => desk.duplicateGate(gateId),
+                title: 'A copy of this gate set, opened in the inspector — point an allocation at it',
               },
             ]),
         { label: '＋ New gate', onClick: () => setSheet({ kind: 'gate', mode: { kind: 'create' as const } }) },
@@ -364,12 +374,12 @@ export default function TradeRulesPage() {
     const blocked = (reading?.fills ?? 0) > 0
     return [
       {
-        label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete…',
+        label: blocked ? `Delete — ${reading?.fills} fills linked` : 'Delete',
         onClick: () => {
-          if (!blocked && rec) setSheet({ kind: 'instanceDelete', instance: rec })
+          if (!blocked && rec) desk.deleteTrade(id)
         },
         disabled: blocked || !rec,
-        title: blocked ? 'Unlink its fills on the Ledger first' : 'Nothing references it',
+        title: blocked ? 'Unlink its fills on the Ledger first' : 'No confirm — Undo on the toast or ⌘Z',
       },
     ]
   }
@@ -406,7 +416,7 @@ export default function TradeRulesPage() {
       }),
     // detailActions / pickIt / setSym / step close over state already listed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [focus, data, daemon.allocationId, oppDetail.isSuccess, oppDetail.data, boardSort, siblings, duplicating, rawInstances, trail],
+    [focus, data, daemon.allocationId, oppDetail.isSuccess, oppDetail.data, boardSort, siblings, rawInstances, trail, desk.inspectorOpen],
   )
 
   /** The picked thing's instances, as records — the list needs the server's rows. */
@@ -577,7 +587,7 @@ export default function TradeRulesPage() {
             orphansOnly={orphansOnly}
             onDaemon={(id) => pickIt({ kind: 'allocation', id })}
             onToggleOrphans={() => setOrphansOnly((v) => !v)}
-            onGate={(g) => setSheet({ kind: 'gate', mode: { kind: 'edit', id: g.gate_safety_strategy_id } })}
+            onGate={(g) => desk.openGate(g.gate_safety_strategy_id)}
           />
 
           {focused && lit ? (
@@ -716,21 +726,16 @@ export default function TradeRulesPage() {
 
           <RulesSheets sheet={sheet} onClose={() => setSheet(NO_SHEET)} status={status.data} />
 
-          <SetActiveDialog
-            open={setActiveFor !== undefined}
-            data={data}
-            allocationId={setActiveFor ?? null}
-            currentStructureId={status.data?.strategy?.active?.structure?.id ?? null}
-            onClose={() => setSetActiveFor(undefined)}
-          />
+          {desk.inspector}
 
           <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">
-            <span className="font-semibold text-secondary-foreground">Boundary.</span> Nothing writes from a click on
-            this page. Edit and Duplicate open the Strategy pages&rsquo; own forms, so a rule changed here and one
-            changed there are the same write with the same validation. Activating an allocation is what the daemon
-            reads on its next start, which is why it sits behind a form with a confirm. A trade the fills have
-            claimed cannot be deleted at all — unlink them on the Ledger first, or the fills are orphaned. None
-            of this is an order: D10 governs the desk, not the rulebook.
+            <span className="font-semibold text-secondary-foreground">Boundary.</span> Picking a card opens it in
+            the inspector, where fields write into the rule as you type; every act here — an edit, Delete,
+            Duplicate, Activate, Set active — is undone from the toast or with ⌘Z, and nothing asks first. Set
+            active is what the daemon reads on its next start. A rule in use is not deleted (an opportunity with
+            trades, the allocation the daemon runs, a gate set something points at), and a trade the fills have
+            claimed cannot be deleted at all — unlink them on the Ledger first. None of this is an order: D10
+            governs the desk, not the rulebook.
           </p>
         </>
       )}

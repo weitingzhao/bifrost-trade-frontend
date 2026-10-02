@@ -437,3 +437,27 @@ export async function setActiveAllocation(
   if (!res.ok) throw new Error((j as { detail?: string }).detail ?? String(res.status))
   return j as { ok: boolean }
 }
+
+/**
+ * Delete a Desk rule object (api 0.1.9, design Rev .140). The Desk calls these
+ * only once its Undo toast has closed (Owner 2026-10-01: held delete). An
+ * object still in use is refused with a 409 whose reason is the error's text.
+ */
+async function deleteRule(path: string): Promise<{ ok: boolean }> {
+  const res = await fetch(strategyUrl(path), { method: 'DELETE' })
+  const j = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `DELETE ${path}: ${res.status}`)
+  return j as { ok: boolean }
+}
+
+export function deleteOpportunity(id: number): Promise<{ ok: boolean }> {
+  return deleteRule(`/strategies/opportunities/${id}`)
+}
+
+export function deleteAllocation(id: number): Promise<{ ok: boolean }> {
+  return deleteRule(`/strategies/allocations/${id}`)
+}
+
+export function deleteGateSafety(id: number): Promise<{ ok: boolean }> {
+  return deleteRule(`/strategies/gate-safety/${id}`)
+}

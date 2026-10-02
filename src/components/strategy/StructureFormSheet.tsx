@@ -25,7 +25,6 @@ import {
   useUpdateStructure,
 } from '@/hooks/useStructureManagement'
 import type {
-  MetaParamItem,
   StructureLeg,
   StructureMetaEntry,
   StructurePayload,
@@ -37,29 +36,24 @@ import {
   structureToPayload,
   wizardParamValuesFromSavedMeta,
 } from '@/utils/strategyFormUtils'
+import {
+  TEMPLATE_DIM_TYPES,
+  buildStructureMeta,
+  metaEntriesEqual,
+  structureEditPayload,
+  templateDimAt,
+  templateMatchesSearch,
+  templateParamDefaults,
+  type TemplateDimType,
+} from '@/components/strategy/structures/structureForm'
 
-const TEMPLATE_DIM_TYPES = [
-  'direction',
-  'structure',
-  'coverage',
-  'risk',
-  'volatility',
-  'time',
-] as const
-
-const TEMPLATE_DIM_LABELS: Record<(typeof TEMPLATE_DIM_TYPES)[number], string> = {
+const TEMPLATE_DIM_LABELS: Record<TemplateDimType, string> = {
   direction: 'Direction',
   structure: 'Structure',
   coverage: 'Coverage',
   risk: 'Risk',
   volatility: 'Volatility',
   time: 'Time',
-}
-
-function templateDimAt(t: StrategyTemplateRow, dt: (typeof TEMPLATE_DIM_TYPES)[number]): string | null {
-  const key = `dim_${dt}` as keyof StrategyTemplateRow
-  const v = t[key]
-  return typeof v === 'string' && v.trim() !== '' ? v : null
 }
 
 export type StructureFormMode =
@@ -145,15 +139,8 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
 
   const filteredTemplatesForPicker = useMemo(() => {
     let result = templates
-    const q = tplFilterSearch.trim().toLowerCase()
-    if (q) {
-      result = result.filter(
-        (t) =>
-          t.display_name.toLowerCase().includes(q) ||
-          t.template_code.toLowerCase().includes(q) ||
-          (t.typical_use && t.typical_use.toLowerCase().includes(q)) ||
-          (t.explanation && t.explanation.toLowerCase().includes(q)),
-      )
+    if (tplFilterSearch.trim()) {
+      result = result.filter((t) => templateMatchesSearch(t, tplFilterSearch))
     }
     for (const dt of TEMPLATE_DIM_TYPES) {
       const fv = tplDimFilters[dt]
@@ -321,13 +308,7 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
           setDefaultLegsFallbackMsg(
             (d.legs ?? []).length === 0 && d.template_code !== 'custom' ? 'No legs on template.' : null,
           )
-          const pv: Record<string, string | number> = {}
-          d.meta_params?.forEach((p: MetaParamItem) => {
-            if (p.param_kind !== 'fixed' && p.default_value_text) {
-              pv[p.meta_key] = p.default_value_text
-            }
-          })
-          setWizardParamValues(pv)
+          setWizardParamValues(templateParamDefaults(d.meta_params))
         })
         .catch(() => {
           setWizardTemplateDetail(null)
@@ -352,35 +333,8 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
     return tpl?.display_name ?? 'Structure'
   }
 
-  const getCurrentBuiltMeta = (): StructureMetaEntry[] => {
-    if (wizardTemplateDetail?.meta_params?.length) {
-      const meta: StructureMetaEntry[] = []
-      wizardTemplateDetail.meta_params.forEach((p: MetaParamItem) => {
-        if (p.param_kind === 'fixed') {
-          if (p.default_value_text != null && p.default_value_text !== '') {
-            meta.push({ meta_key: p.meta_key, meta_value_text: p.default_value_text })
-          }
-        } else {
-          const v = wizardParamValues[p.meta_key]
-          if (v !== undefined && v !== '') {
-            meta.push({ meta_key: p.meta_key, meta_value_text: String(v) })
-          }
-        }
-      })
-      return meta
-    }
-    return [...formMeta]
-  }
-
-  const metaEntriesEqual = (a: StructureMetaEntry[], b: StructureMetaEntry[]): boolean => {
-    const norm = (arr: StructureMetaEntry[]) =>
-      [...arr]
-        .filter((m) => m.meta_key)
-        .sort((x, y) => (x.meta_key ?? '').localeCompare(y.meta_key ?? ''))
-        .map((m) => `${m.meta_key}:${m.meta_value_text ?? ''}`)
-        .join('|')
-    return norm(a) === norm(b)
-  }
+  const getCurrentBuiltMeta = (): StructureMetaEntry[] =>
+    buildStructureMeta(wizardTemplateDetail?.meta_params, wizardParamValues, formMeta)
 
   const haveTypeSubtypeOrMetaChanged = (): boolean => {
     const curTid = formPayload.strategy_template_id ?? null
@@ -390,19 +344,17 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
   }
 
   const buildWizardPayload = (name: string, versionOverride?: number): StructurePayload => {
-    const meta = getCurrentBuiltMeta()
-    const tpl = wizardTemplateDetail
-    return {
-      name: name.trim(),
-      strategy_template_id: formPayload.strategy_template_id,
-      structure_type: tpl?.template_code ?? formPayload.structure_type,
-      structure_subtype: null,
+    return structureEditPayload({
+      name,
+      strategyTemplateId: formPayload.strategy_template_id,
+      structureType: wizardTemplateDetail?.template_code ?? formPayload.structure_type,
+      structureSubtype: null,
       legs: formLegs,
-      version: versionOverride !== undefined ? versionOverride : (formPayload.version ?? 1),
-      is_active: formPayload.is_active ?? true,
-      notes: formNotes.trim() || undefined,
-      meta: meta.length ? meta : undefined,
-    }
+      version: versionOverride !== undefined ? versionOverride : formPayload.version,
+      isActive: formPayload.is_active,
+      notes: formNotes,
+      meta: getCurrentBuiltMeta(),
+    })
   }
 
   const doWizardSubmit = async (chosenName: string, versionOverride?: number) => {

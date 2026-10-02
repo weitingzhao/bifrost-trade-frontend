@@ -1,6 +1,7 @@
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { getContractLabelParts } from '@/lib/format'
 import type { Execution, StrategyInstance, StrategyOpportunity } from '@/types/positions'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 export function formatInstanceOpenedDate(si: StrategyInstance): string {
   let ms: number | null = null
@@ -124,9 +125,9 @@ export function filterOpportunitiesBySymbol(
   })
 }
 
+/** Printed after the side word, so the size alone: a sell is −|q| from api 0.3.3 (TD-30). */
 export function executionQtyLabel(ex: Execution): string {
-  const q = ex.quantity
-  return q != null ? String(q) : '—'
+  return String(fillQtyShown(ex.quantity))
 }
 
 /** Client-side guard when API filter is applied — instances must belong to selected opportunity. */

@@ -39,6 +39,7 @@ import {
 import { getStkLedgerBucketForExecution } from '@/utils/ledger/stkBuckets'
 import { stkSignedTradeNotionalUsd, stkFillNotional, stkFixedIncomeStreamUsd } from '@/utils/ledger/performanceBulk'
 import { pnlColorClass } from '@/utils/dailyChange'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 // ─── Format helpers ───
 
@@ -627,7 +628,7 @@ function ExecutionRow({
   onViewLinks: (links: OptionStockLinkSummary['links'], title: string, slippageTotal: number | null) => void
 }) {
   const eq = Math.abs(Number(ex.quantity) || 0)
-  const displayQty = ratio < 1 - 1e-9 ? Math.round(eq * ratio * 1e4) / 1e4 : (ex.quantity ?? '—')
+  const displayQty = ratio < 1 - 1e-9 ? Math.round(eq * ratio * 1e4) / 1e4 : fillQtyShown(ex.quantity)
   const ec = (Number(ex.commission) || 0) * ratio
 
   const { displayPnl, hasCombinedStock } = isRealized
@@ -797,7 +798,7 @@ function StkDayDetail({
                   <td className={cn(tdLeft, 'font-bold text-entity-option')}>{ex.symbol ?? '—'}</td>
                   <td className={cn(tdLeft, 'text-secondary-foreground')}>{ex.side ?? '—'}</td>
                   <td className={cn(td, 'text-secondary-foreground')}>
-                    {ex.quantity != null ? Number(ex.quantity) : '—'}
+                    {fillQtyShown(ex.quantity)}
                   </td>
                   <td className={cn(td, 'text-secondary-foreground')}>{fmtUsd(ex.price)}</td>
                   <td className={cn(td, 'text-secondary-foreground')}>{fmtUsd(notionalDisplay)}</td>
@@ -870,7 +871,7 @@ function OptionStockLinkDialog({
                     <TableCell className="text-xs">{String(row.stock_symbol ?? '—')}</TableCell>
                     <TableCell className="text-xs tabular-nums">{String(row.stock_trade_date ?? '—')}</TableCell>
                     <TableCell className="text-xs text-right tabular-nums">
-                      {row.stock_quantity != null ? String(Number(row.stock_quantity)) : '—'}
+                      {String(fillQtyShown(row.stock_quantity))}
                     </TableCell>
                     <TableCell className="text-xs text-right tabular-nums">{fmtUsd(row.stock_price as number)}</TableCell>
                     <TableCell className="text-xs text-right tabular-nums">{fmtUsd(row.stock_close_price as number)}</TableCell>

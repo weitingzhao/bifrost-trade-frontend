@@ -53,6 +53,7 @@ import {
 } from '@/components/data-display'
 import { fmtLedgerTradeDate } from './ledgerTradeDate'
 import { closedGroupSummaryPnl } from '@/utils/ledger/ledgerSummaryGroups'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 const CLOSED_PAGE_SIZE = 50
 
@@ -340,7 +341,7 @@ export function LedgerClosedOptionSection({
                     </DenseTableCell>
                     <DenseTableCell>{sideLabel(ex)}</DenseTableCell>
                     <DenseTableCell className={closedOptNumCell}>
-                      {ex.quantity != null ? Number(ex.quantity) : '—'}
+                      {fillQtyShown(ex.quantity)}
                     </DenseTableCell>
                     <DenseTableCell className={closedOptNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
                     <DenseTableCell className={closedOptNumCell}>

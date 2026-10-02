@@ -45,6 +45,7 @@ import {
   IconActionButton,
   denseTableNumCell,
 } from '@/components/data-display'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 /** A bare symbol (§14.4): mono 700 sky, the same whether or not it can be clicked. */
 const LEDGER_SYMBOL_MARK = 'font-mono font-bold text-entity-option'
@@ -139,7 +140,7 @@ function StkFillRow({
       </DenseTableCell>
       <DenseTableCell className={stkMetaCell}>{stkSideLabel(ex)}</DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>
-        {ex.quantity != null ? Number(ex.quantity) : '—'}
+        {fillQtyShown(ex.quantity)}
       </DenseTableCell>
       <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
       <LedgerStkNotionalCell ex={ex} />

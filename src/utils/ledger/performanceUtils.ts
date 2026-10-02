@@ -358,7 +358,8 @@ export function computeDayRealizedUnrealizedStock(
     const sellQueue: { q: number; p: number; c: number }[] = []
 
     for (const x of sorted) {
-      const q = Number(x.quantity) || 0
+      // Size only; the side says which queue. A sell is −|q| from api 0.3.3 (TD-30).
+      const q = execQty(x)
       const p = Number(x.price) || 0
       const comm = Number(x.commission) || 0
       if (!Number.isFinite(q) || q <= 0 || !Number.isFinite(p)) continue

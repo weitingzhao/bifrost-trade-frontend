@@ -5,6 +5,7 @@ import type { LedgerMetricExplainKind } from '@/utils/ledger/ledgerMetricExplain
 import { fmtCcy, fmtTsShort } from '@/pages/portfolio/ledger/ledgerFormat'
 import { lastFillTradeDate, monthKeyFromTradeDate } from '@/utils/ledger/ledgerSummaryGroups'
 import { fmtMonthKeyToken } from '@/lib/format'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 export const LEDGER_METRIC_EXPLAIN_MAX_ROWS = 50
 
@@ -209,7 +210,7 @@ export function buildLedgerMetricExplainPayload(
       symbol: ex.symbol ?? '—',
       account: ex.account_id ?? '—',
       time: ex.time != null ? fmtTsShort(ex.time) : '—',
-      qty: ex.quantity ?? '—',
+      qty: fillQtyShown(ex.quantity),
       price: ex.price != null ? fmtCcy(ex.price) : '—',
       realized_pnl: fmtCcy(Number(ex.realized_pnl) || 0),
     }))
@@ -242,7 +243,7 @@ export function buildLedgerMetricExplainPayload(
         symbol: ex.symbol ?? '—',
         account: ex.account_id ?? '—',
         time: ex.time != null ? fmtTsShort(ex.time) : '—',
-        qty: ex.quantity ?? '—',
+        qty: fillQtyShown(ex.quantity),
         price: ex.price != null ? fmtCcy(ex.price) : '—',
         line_notional: fmtCcy(Math.abs(q) * p),
       }
@@ -271,7 +272,7 @@ export function buildLedgerMetricExplainPayload(
       symbol: ex.symbol ?? '—',
       account: ex.account_id ?? '—',
       time: ex.time != null ? fmtTsShort(ex.time) : '—',
-      qty: ex.quantity ?? '—',
+      qty: fillQtyShown(ex.quantity),
       price: ex.price != null ? fmtCcy(ex.price) : '—',
       realized_pnl: fmtCcy(Number(ex.realized_pnl) || 0),
     }))
@@ -302,7 +303,7 @@ export function buildLedgerMetricExplainPayload(
         symbol: ex.symbol ?? '—',
         account: ex.account_id ?? '—',
         time: ex.time != null ? fmtTsShort(ex.time) : '—',
-        qty: ex.quantity ?? '—',
+        qty: fillQtyShown(ex.quantity),
         price: ex.price != null ? fmtCcy(ex.price) : '—',
         line_notional: fmtCcy(Math.abs(q) * p),
       }

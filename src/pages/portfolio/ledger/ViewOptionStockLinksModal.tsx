@@ -20,6 +20,7 @@ import {
   DenseTableRow,
   denseTableNumCell,
 } from '@/components/data-display'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 type Props = {
   open: boolean
@@ -107,7 +108,7 @@ export function ViewOptionStockLinksModal({
                       {row.stock_trade_date ? fmtTradeDate(row.stock_trade_date) : '—'}
                     </DenseTableCell>
                     <DenseTableCell className={cn(denseTableNumCell, 'px-1.5 text-xs')}>
-                      {row.stock_quantity != null ? Number(row.stock_quantity) : '—'}
+                      {fillQtyShown(row.stock_quantity)}
                     </DenseTableCell>
                     <DenseTableCell className={cn(denseTableNumCell, 'px-1.5 text-xs whitespace-nowrap')}>
                       {fmtUsd(row.stock_price)}

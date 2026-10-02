@@ -108,9 +108,9 @@ export function ledgerOptDetailRowPnl(
   ex: Execution,
   linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
 ): { displayPnl: number; hasCombinedStock: boolean; stockAdj: number } {
-  const s = (ex.side ?? '').toUpperCase()
-  const isBuy = s === 'BUY' || s === 'BOT' || s === 'B'
-  const q = Number(ex.quantity) || 0
+  const isBuy = isExecutionBuySide(ex)
+  // The side carries the direction, so the size is |q| whichever sign the API sent (TD-30).
+  const q = executionAbsQuantity(ex)
   const p = Number(ex.price) || 0
   const c = Number(ex.commission) || 0
   const value = q * p * 100 - c
@@ -141,9 +141,9 @@ export function scaledLedgerOptDetailRowPnl(
   linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
 ): { displayPnl: number; hasCombinedStock: boolean } {
   if (ratio <= 0 || !Number.isFinite(ratio)) return { displayPnl: 0, hasCombinedStock: false }
-  const s = (ex.side ?? '').toUpperCase()
-  const isBuy = s === 'BUY' || s === 'BOT' || s === 'B'
-  const q = Number(ex.quantity) || 0
+  const isBuy = isExecutionBuySide(ex)
+  // The side carries the direction, so the size is |q| whichever sign the API sent (TD-30).
+  const q = executionAbsQuantity(ex)
   const p = Number(ex.price) || 0
   const c = Number(ex.commission) || 0
   const value = q * p * 100 - c

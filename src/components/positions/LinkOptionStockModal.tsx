@@ -38,6 +38,7 @@ import {
   DenseTableRow,
   denseTableNumCell,
 } from '@/components/data-display'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 type LinkRole = '' | 'exercise' | 'assignment'
 
@@ -184,7 +185,7 @@ export function LinkOptionStockModal({
           </p>
           <p className="text-xs text-muted-foreground">
             Tie underlying stock execution rows (performance book) to this option fill for exercise or
-            assignment. Slippage vs Flex close is signed quantity × (price − close).
+            assignment. Slippage vs Flex close is |quantity| × (price − close).
           </p>
 
           {displayError ? (
@@ -232,7 +233,7 @@ export function LinkOptionStockModal({
                         {row.stock_trade_date ? fmtTradeDate(row.stock_trade_date) : '—'}
                       </DenseTableCell>
                       <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
-                        {row.stock_quantity != null ? Number(row.stock_quantity) : '—'}
+                        {fillQtyShown(row.stock_quantity)}
                       </DenseTableCell>
                       <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>{fmtUsd(row.stock_price)}</DenseTableCell>
                       <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>{fmtUsd(row.stock_close_price)}</DenseTableCell>
@@ -313,7 +314,7 @@ export function LinkOptionStockModal({
                           {c.trade_date ? fmtTradeDate(c.trade_date) : '—'}
                         </DenseTableCell>
                         <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
-                          {c.quantity != null ? Number(c.quantity) : '—'}
+                          {fillQtyShown(c.quantity)}
                         </DenseTableCell>
                         <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>{fmtUsd(c.price)}</DenseTableCell>
                         <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>{fmtUsd(c.close_price)}</DenseTableCell>

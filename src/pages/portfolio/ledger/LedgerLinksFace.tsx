@@ -28,6 +28,7 @@ import {
   LEDGER_CONFIRM_LINKS,
   LEDGER_WRITE_FOOTER_LINKS,
 } from './ledgerWriteConfirm'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 async function loadLinks(accountId: string, optId: number) {
   const [linksRes, candRes] = await Promise.all([
@@ -52,11 +53,11 @@ async function loadLinks(accountId: string, optId: number) {
 function stockFillLabel(row: OptionStockLink): string {
   const sym = row.stock_symbol ?? '—'
   const side = row.stock_side ?? row.side ?? ''
-  const qty = row.stock_quantity ?? row.quantity
+  const qty = fillQtyShown(row.stock_quantity ?? row.quantity)
   const px = row.stock_price ?? row.price
   const id = row.stock_account_executions_id ?? row.stock_execution_id
   const role = row.role ? ` · ${row.role}` : ''
-  return `${sym} · ${side} ${qty ?? '—'} @ ${px ?? '—'}`.trim() + (id != null ? ` · #${id}` : '') + role
+  return `${sym} · ${side} ${qty} @ ${px ?? '—'}`.trim() + (id != null ? ` · #${id}` : '') + role
 }
 
 type LinkRole = '' | 'exercise' | 'assignment'
@@ -199,7 +200,7 @@ export function LedgerLinksFace({
                     {stockFillLabel(row)}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
-                    {row.stock_quantity ?? row.quantity ?? '—'}
+                    {fillQtyShown(row.stock_quantity ?? row.quantity)}
                   </DenseTableCell>
                   <DenseTableCell className={denseTableNumCell}>
                     {row.slippage_vs_close != null || row.slippage != null
@@ -260,7 +261,7 @@ export function LedgerLinksFace({
                   })
                 }} />
                 <span className={cn('min-w-0 flex-1 font-mono text-dense-meta text-foreground')}>
-                  {c.symbol} · {c.side} {c.quantity} @ {c.price}
+                  {c.symbol} · {c.side} {fillQtyShown(c.quantity)} @ {c.price}
                 </span>
                 <span className="font-mono text-dense-meta text-muted-foreground">#{sid}</span>
               </label>

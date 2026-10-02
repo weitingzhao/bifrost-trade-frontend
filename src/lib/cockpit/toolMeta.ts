@@ -13,6 +13,8 @@
  * disclosure in the tool card.
  */
 
+import { fillQtyShown } from '@/utils/fillQuantity'
+
 export type ToolCategory =
   | 'portfolio'
   | 'trading'
@@ -229,7 +231,8 @@ export const TOOL_META: Record<string, ToolMeta> = {
                     typeof ts === 'string' ? ts.slice(0, 19).replace('T', ' ') : String(ts),
                     String(x.symbol ?? x.local_symbol ?? '—'),
                     String(x.side ?? x.action ?? '—'),
-                    String(x.qty ?? x.shares ?? x.quantity ?? '—'),
+                    // Size beside the side column: /executions signs a sell −|q| from api 0.3.3 (TD-30).
+                    String(fillQtyShown(x.qty ?? x.shares ?? x.quantity)),
                     fmtUsdAbbrev(x.price) ?? String(x.price ?? '—'),
                   ]
                 }),

@@ -54,11 +54,12 @@ import { expiredCloseTarget } from './ledgerJournalWrite'
 import { LedgerPanelBar } from './LedgerPanelBar'
 import { ledgerDetailsSubject } from './ledgerDetailsSubject'
 import { ledgerShell } from './ledgerShellUi'
+import { fillQtyShown } from '@/utils/fillQuantity'
 
 function tradesSummary(g: OptExecutionGroup): string {
   return (g.trades ?? [])
     .map(ex => {
-      const q = ex.quantity != null ? Number(ex.quantity) : NaN
+      const q = ex.quantity != null ? Math.abs(Number(ex.quantity)) : NaN
       const p = ex.price != null ? Number(ex.price) : NaN
       const idLabel = ex.account_executions_id != null ? `#${ex.account_executions_id}` : 'id?'
       const parts: string[] = [sideLabel(ex)]
@@ -322,7 +323,7 @@ export function LedgerOpenOptionSection({
                     </DenseTableCell>
                     <DenseTableCell>{sideLabel(ex)}</DenseTableCell>
                     <DenseTableCell className={closedOptNumCell}>
-                      {ex.quantity != null ? Number(ex.quantity) : '—'}
+                      {fillQtyShown(ex.quantity)}
                     </DenseTableCell>
                     <DenseTableCell className={closedOptNumCell}>{fmtUsd(ex.price)}</DenseTableCell>
                     <DenseTableCell className={closedOptNumCell}>

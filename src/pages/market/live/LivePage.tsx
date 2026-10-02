@@ -28,7 +28,6 @@ import { quotesByContractKeyFromMap, type OptPositionRow } from '@/utils/marketS
 import {
   computeMarketStreamsOk,
   computeMarketStreamsLamp,
-  computeOpenOrdersLamp,
   countFreshQuotes,
 } from '@/utils/livePageLamps'
 import { partitionOpenOrders } from './openOrdersPartition'
@@ -139,7 +138,6 @@ export default function LivePage() {
   )
 
   const streamsLamp = computeMarketStreamsLamp(status, quotesMap)
-  const ordersLamp = computeOpenOrdersLamp(status)
 
   const marketStreamsDailyTotals = useMemo(
     () => aggregateMarketStreamsDailyTotals(streams.filteredRows, benchmarks),
@@ -263,7 +261,6 @@ export default function LivePage() {
             row only because this page had no header to sit in. */}
         <LiveHeader
           streamsLamp={streamsLamp}
-          ordersLamp={ordersLamp}
           freshQuotes={streamCount.fresh}
           totalStreams={streamCount.total}
           ordersWorking={optOrders.length + stkOrders.length}
@@ -358,10 +355,8 @@ export default function LivePage() {
           quotesMap={quotesMap}
           quotesByContractKey={quotesByContractKey}
           streamsLamp={streamsLamp}
-          ordersLamp={ordersLamp}
           hasStreamAccounts={streams.hasStreamAccounts}
           openOrdersUpdatedAt={openOrdersUpdatedAt}
-          status={status}
         />
 
         <ReferencePanel

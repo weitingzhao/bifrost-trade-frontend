@@ -212,7 +212,7 @@ export default function BackingPage() {
   ) : !book.showOpenPositionsPanel ? (
     <EmptyState
       title="No open positions"
-      description="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
+      description="Position data comes from account snapshots. Ensure IB is connected."
     />
   ) : (
     <>

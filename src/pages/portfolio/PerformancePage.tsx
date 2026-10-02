@@ -284,7 +284,7 @@ export default function PerformancePage() {
         // browser's clock, not a reading — and printing a clock as a session
         // is the mistake this badge exists to prevent. Accounts is where the
         // book's freshness is actually judged.
-        stamp={<AsofTag asof={null} judgedBy="Account Sync" href="/portfolio/accounts" />}
+        stamp={<AsofTag asof={null} judgedBy="Accounts" href="/portfolio/accounts" />}
       />
 
       {/* One toolbar, above the data (§17.3, Rev .82): the range and scope, and

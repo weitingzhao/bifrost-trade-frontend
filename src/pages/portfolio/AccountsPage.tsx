@@ -80,14 +80,12 @@ export default function AccountsPage() {
   const { data: flexCoverage } = useFlexCoverageFreshness()
   const execItems = useMemo(() => freshnessData?.items ?? [], [freshnessData])
   const tradingCal = useTradingCalendar()
-  const daemonAlive = data?.account_sync_daemon?.heartbeat.daemon_alive === true
   const ibConnected = data?.daemon.heartbeat?.ib_connected === true
   const flexPullTs = flexPullTsFromCoverage(flexCoverage?.dimensions ?? [])
   const flexRecTs = latestFlexFreshness(execItems)?.latest_exec_ts ?? null
   const flexClockLine = pullAndRecLine(flexPullTs, flexRecTs)
 
   const ibClock = ibClockReading({
-    daemonAlive,
     ibConnected,
     fetchedAt: accountsFetchedAt,
     twsRecDays: latestClientExecFreshness(execItems)?.days_since_latest ?? null,

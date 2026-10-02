@@ -47,18 +47,6 @@ export interface IbAccountSnapshot {
   positions?: IbPositionRow[]
 }
 
-export interface AccountSyncHeartbeat {
-  last_ts: number | null
-  daemon_alive: boolean
-  heartbeat_interval_sec: number
-  last_sync_version: number
-  stream_lag: number
-  accounts_synced?: number
-  positions_synced?: number
-  executions_synced?: number
-  open_orders_synced?: number
-}
-
 export interface StrategyActiveRef {
   id?: number | null
   name?: string | null
@@ -242,9 +230,6 @@ export interface StatusResponse {
     ib_client?: IbClient
     redis?: { subscribe_channel?: string | null }
   }
-  account_sync_daemon: {
-    heartbeat: AccountSyncHeartbeat
-  } | null
   strategy?: StatusStrategy
   market_data?: StatusMarketData
   socket?: StatusSocket

@@ -72,10 +72,9 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
         onClick={goLive}
         className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-2.5 py-1 font-medium text-foreground transition-colors hover:bg-secondary"
         aria-label="Open orders"
-        title={model.ordersLampTitle}
+        title="Open orders (PostgreSQL)"
       >
         <ListOrdered className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-        <StatusLamp lamp={model.ordersLamp} title={model.ordersLampTitle} />
         <span className="text-muted-foreground">Open orders</span>
         <span className="font-mono tabular-nums">{model.openOrderCount}</span>
       </button>

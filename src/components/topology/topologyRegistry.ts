@@ -61,7 +61,6 @@ export const TOPOLOGY_NODE_REGISTRY: TopologyNodeDef[] = [
   { key: 'ib_account_agent', name: 'IB Acct', kind: 'socket', zoneId: 'edge' },
   { key: 'ib_operator', name: 'IB Operator', kind: 'socket', zoneId: 'edge' },
   { key: 'daemon_trading', name: 'Strategy Daemon', kind: 'daemon', zoneId: 'daemon' },
-  { key: 'account_sync', name: 'Account Sync', kind: 'daemon', zoneId: 'daemon' },
 ]
 
 /** @deprecated Use topologyLayouts + active layout spec in ServiceTopologyOverview. */
@@ -78,7 +77,6 @@ export const TOPOLOGY_NODE_LAYOUT: Record<string, { x: number; y: number }> = {
   strategy: { x: 568, y: 48 },
   market: { x: 648, y: 48 },
   daemon_trading: { x: 160, y: 400 },
-  account_sync: { x: 260, y: 400 },
 }
 
 /** @deprecated Use topologyLayouts. */
@@ -99,5 +97,4 @@ export const TOPOLOGY_EDGES: TopologyEdgeDef[] = [
   { from: 'ib_operator', to: 'trading', label: 'orders' },
   { from: 'ib_account_agent', to: 'portfolio', label: 'positions' },
   { from: 'daemon_trading', to: 'trading', label: 'engine' },
-  { from: 'account_sync', to: 'portfolio', label: 'sync' },
 ]

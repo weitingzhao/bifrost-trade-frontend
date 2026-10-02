@@ -4,11 +4,9 @@ import { fmtPctCompact, fmtUsdCompact } from '@/lib/format'
 import {
   computeMarketStreamsLamp,
   computeMarketStreamsOk,
-  computeOpenOrdersLamp,
   type LiveLamp,
 } from '@/utils/livePageLamps'
 import { computeMarketStreamDailyChange } from '@/utils/marketStreamsDailyTotals'
-import { computeAccountSyncLamp } from '@/utils/daemonLamps'
 import { quoteDisplayLast } from '@/utils/watchlistHelpers'
 import { streamSymbolFromQuoteMapKey } from '@/utils/marketStreamsRows'
 
@@ -25,9 +23,7 @@ export interface StreamStripSymbolRow {
 export interface StreamStripModel {
   streamsOnline: boolean
   streamsLamp: LiveLamp
-  ordersLamp: LiveLamp
   openOrderCount: number
-  ordersLampTitle: string
   totalDailyDollar: number
   totalDailyPct: number | null
   totalDailyPctDisplay: string
@@ -142,14 +138,10 @@ export function buildStreamStripModel(
     }
   })
 
-  const accountSync = computeAccountSyncLamp(status)
-
   return {
     streamsOnline,
     streamsLamp: computeMarketStreamsLamp(status ?? undefined, quotesMap),
-    ordersLamp: computeOpenOrdersLamp(status ?? undefined),
     openOrderCount: (status?.portfolio?.open_orders ?? []).length,
-    ordersLampTitle: `Open orders (PostgreSQL): ${accountSync.title}`,
     totalDailyDollar,
     totalDailyPct,
     totalDailyPctDisplay: fmtPctCompact(totalDailyPct),

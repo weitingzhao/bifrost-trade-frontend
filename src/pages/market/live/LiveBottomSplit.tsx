@@ -1,6 +1,5 @@
 import type { DailyBenchmark, QuoteItem, WatchlistItem } from '@/types/market'
 import type { OpenOrder } from '@/types/market'
-import type { StatusResponse } from '@/types/monitor'
 import type { MarketStreamsRow } from '@/utils/marketStreamsRows'
 import { OpenOrdersPane } from './OpenOrdersPane'
 import { WatchingOptionsPane, WatchingStocksPane } from './WatchingStocksPane'
@@ -22,10 +21,8 @@ interface Props {
   quotesMap: Record<string, QuoteItem>
   quotesByContractKey: Record<string, QuoteItem>
   streamsLamp: string
-  ordersLamp: string
   hasStreamAccounts: boolean
   openOrdersUpdatedAt: number | null
-  status: StatusResponse | undefined
 }
 
 export function LiveBottomSplit({
@@ -38,10 +35,8 @@ export function LiveBottomSplit({
   quotesMap,
   quotesByContractKey,
   streamsLamp,
-  ordersLamp,
   hasStreamAccounts,
   openOrdersUpdatedAt,
-  status,
 }: Props) {
   return (
     <div className={liveSplitOuterCardClass}>
@@ -70,9 +65,7 @@ export function LiveBottomSplit({
             <OpenOrdersPane
               optOrders={optOrders}
               stkOrders={stkOrders}
-              ordersLamp={ordersLamp}
               openOrdersUpdatedAt={openOrdersUpdatedAt}
-              status={status}
             />
           </div>
         </div>

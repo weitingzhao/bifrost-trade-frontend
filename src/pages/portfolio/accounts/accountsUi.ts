@@ -13,7 +13,6 @@ export const accountsPageCardClass = cn(
 const CLOCK_LAMP: Record<ClockTone, LampTone> = {
   ok: 'green',
   warn: 'yellow',
-  fault: 'red',
   muted: 'gray',
 }
 

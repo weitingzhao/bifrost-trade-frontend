@@ -92,7 +92,6 @@ const WIDE_LAYOUT: TopologyLayoutSpec = {
     strategy: { x: 568, y: 48 },
     market: { x: 648, y: 48 },
     daemon_trading: { x: 160, y: 400 },
-    account_sync: { x: 260, y: 400 },
   },
   edges: TOPOLOGY_EDGES,
 }
@@ -177,7 +176,6 @@ const TALL_LAYOUT: TopologyLayoutSpec = {
     strategy: { x: 400, y: 172 },
     market: { x: 600, y: 172 },
     daemon_trading: { x: 280, y: 576 },
-    account_sync: { x: 480, y: 576 },
   },
   edges: TOPOLOGY_EDGES,
 }
@@ -201,7 +199,6 @@ const BALANCED_LAYOUT: TopologyLayoutSpec = {
     ib_account_agent: { x: 50, y: 160 },
     ib_operator: { x: 50, y: 256 },
     daemon_trading: { x: 160, y: 468 },
-    account_sync: { x: 260, y: 468 },
   },
 }
 

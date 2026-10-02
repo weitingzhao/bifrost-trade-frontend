@@ -19,7 +19,6 @@ function liveIbServiceLabel(
 /** A quote older than this is not the tape any more. The lamp and the
  *  header's `streams N/M` count answer to the same number. */
 export const RECENT_QUOTE_MAX_AGE_S = 60
-export const ACCOUNT_SYNC_HEARTBEAT_MAX_AGE_S = 35
 
 /**
  * A lamp that can also be absent. `none` is not a spelling of grey: grey is a
@@ -81,29 +80,6 @@ export function computeMarketStreamsLamp(
   const ingestorConnected = ingestRedisTruthyConnected(status?.socket?.ib_ingestor?.connected)
   if (quotesOk || ingestorConnected) return 'yellow'
   return 'red'
-}
-
-export function computeOpenOrdersSectionOk(
-  status: StatusResponse | null | undefined,
-  nowSec: number = Date.now() / 1000,
-): boolean {
-  if (!status) return false
-  const hb = status.account_sync_daemon?.heartbeat
-  if (!hb) return false
-  if (!hb.daemon_alive) return false
-  if (hb.last_ts == null) return false
-  const ageSec = nowSec - hb.last_ts
-  if (ageSec > ACCOUNT_SYNC_HEARTBEAT_MAX_AGE_S) return false
-  if (typeof hb.stream_lag === 'number' && hb.stream_lag > 50) return false
-  return true
-}
-
-export function computeOpenOrdersLamp(status: StatusResponse | undefined): LiveLamp {
-  if (!status) return 'none'
-  if (computeOpenOrdersSectionOk(status)) return 'green'
-  const hb = status.account_sync_daemon?.heartbeat
-  if (!hb || !hb.daemon_alive) return 'red'
-  return 'yellow'
 }
 
 /**

@@ -6,7 +6,6 @@ import { makeProbeQuery } from '@/hooks/useApiHealthProbes'
 import { ALL_SERVICES } from '@/utils/apiHealthConfig'
 import type { StatusResponse } from '@/types/monitor'
 import {
-  computeAccountSyncLamp,
   computeIbBrokerGroupLamp,
   computeStrategyTradingDaemonLamp,
   type DaemonLamp,
@@ -64,13 +63,6 @@ function buildDaemonTradingNode(status: StatusResponse | null | undefined): Pick
   const state = status?.daemon?.trading?.auto_status?.daemon_state?.trim()
   const subtitle = state && state.length > 0 ? state : hb?.daemon_alive ? 'Running' : 'Not running'
   return { lamp: daemonToTopologyLamp(lamp), subtitle }
-}
-
-function buildAccountSyncNode(status: StatusResponse | null | undefined): Pick<TopologyNodeHealth, 'lamp' | 'subtitle'> {
-  const sync = computeAccountSyncLamp(status)
-  const alive = status?.account_sync_daemon?.heartbeat?.daemon_alive
-  const subtitle = alive ? 'Heartbeat OK' : 'Stale or stopped'
-  return { lamp: daemonToTopologyLamp(sync.lamp), subtitle: truncateSubtitle(sync.title.split('.')[0] ?? subtitle) }
 }
 
 /**
@@ -157,10 +149,6 @@ export function useSystemTopologyHealth(enabled: boolean) {
 
       if (def.key === 'daemon_trading') {
         return { ...base, ...buildDaemonTradingNode(status) }
-      }
-
-      if (def.key === 'account_sync') {
-        return { ...base, ...buildAccountSyncNode(status) }
       }
 
       return base

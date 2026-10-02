@@ -15,7 +15,6 @@ describe('categoryForServiceId', () => {
     expect(categoryForServiceId('ib_operator')).toBe('IB')
     expect(categoryForServiceId('ib_account_agent')).toBe('IB')
     expect(categoryForServiceId('trading_engine')).toBe('Engine')
-    expect(categoryForServiceId('account_sync_daemon')).toBe('Engine')
     expect(categoryForServiceId('something_else')).toBe('Other')
   })
 })

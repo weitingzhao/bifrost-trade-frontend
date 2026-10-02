@@ -3,7 +3,7 @@
  *
  * `Market Live.dc.html` opens with a title, one line saying what the page is,
  * and three readings pinned to the right: the streams lamp with a count, the
- * orders lamp, and where in the session we are. The production page had none
+ * working orders, and where in the session we are. The production page had none
  * of it — not even an `<h1>`, which is also the house rule (`CLAUDE.md`: every
  * `PageShell` business page uses `PageHeader`).
  *
@@ -17,7 +17,6 @@ import { sessionLabel, sessionTag } from '@/lib/marketSession'
 
 export interface LiveHeaderProps {
   streamsLamp: string
-  ordersLamp: string
   /** Symbols with a quote fresh enough to be called live, over the total. */
   freshQuotes: number
   totalStreams: number
@@ -29,12 +28,11 @@ export interface LiveHeaderProps {
 
 /**
  * §16.10: the unified head. The lead is behind ⓘ; the three readings — the
- * streams lamp with its count, the orders link, the session and clock — are
+ * streams lamp with its count, the working orders, the session and clock — are
  * its stamp, the Copilot entry its action.
  */
 export function LiveHeader({
   streamsLamp,
-  ordersLamp,
   freshQuotes,
   totalStreams,
   ordersWorking,
@@ -58,11 +56,10 @@ export function LiveHeader({
           </span>
           <span
             className="inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground"
-            title="Green when the Account Sync Daemon heartbeat is fresh — the link that puts working orders on this page."
+            title="Working orders from GET /open-orders (PostgreSQL daemon_open_orders)."
           >
-            <StatusLamp lamp={ordersLamp} variant="dot" />
             <span>
-              orders link
+              orders
               {ordersWorking > 0 ? <span className="ml-1 font-mono tabular-nums">· {ordersWorking} working</span> : null}
             </span>
           </span>

@@ -6,7 +6,6 @@ const NOW = 1789608275
 describe('the IB clock', () => {
   it('reads a live snapshot as a fetch time, not an as-of date', () => {
     const c = ibClockReading({
-      daemonAlive: true,
       ibConnected: true,
       fetchedAt: NOW - 61,
       twsRecDays: 123.8,
@@ -22,7 +21,6 @@ describe('the IB clock', () => {
     // Thursday 2026-09-24 14:00 ET.
     const rth = Date.UTC(2026, 8, 24, 18, 0, 0) / 1000
     const c = ibClockReading({
-      daemonAlive: true,
       ibConnected: true,
       fetchedAt: rth - 18 * 60,
       twsRecDays: 123.8,
@@ -35,7 +33,6 @@ describe('the IB clock', () => {
   it('does not call a snapshot stale outside regular hours (§16.13)', () => {
     // NOW is after the close: five hours frozen is the session ending.
     const c = ibClockReading({
-      daemonAlive: true,
       ibConnected: true,
       fetchedAt: NOW - 5 * 3600,
       twsRecDays: 123.8,
@@ -50,7 +47,6 @@ describe('the IB clock', () => {
   // red would claim something is broken.
   it('calls an unopened TWS session disconnected, in grey — never red', () => {
     const c = ibClockReading({
-      daemonAlive: true,
       ibConnected: false,
       fetchedAt: NOW - 5 * 3600,
       twsRecDays: 123.8,
@@ -61,23 +57,8 @@ describe('the IB clock', () => {
     expect(c.name).toBe('IB Client')
   })
 
-  // K3 and F5 are two different conditions, and the data tells them apart:
-  // `daemon_alive` is the daemon, `ib_connected` is the TWS session behind it.
-  it('keeps red for the daemon itself being down, and renames the row', () => {
-    const c = ibClockReading({
-      daemonAlive: false,
-      ibConnected: false,
-      fetchedAt: NOW - 5 * 3600,
-      twsRecDays: 123.8,
-      nowSec: NOW,
-    })
-    expect(c.name).toBe('IB Client offline')
-    expect(c.pullTone).toBe('fault')
-  })
-
   it('warns on a TWS record past two weeks without calling it a fault', () => {
     const warm = ibClockReading({
-      daemonAlive: true,
       ibConnected: true,
       fetchedAt: NOW,
       twsRecDays: 3,
@@ -86,7 +67,6 @@ describe('the IB clock', () => {
     expect(warm.recTone).toBe('ok')
 
     const dry = ibClockReading({
-      daemonAlive: true,
       ibConnected: true,
       fetchedAt: NOW,
       twsRecDays: 123.8,

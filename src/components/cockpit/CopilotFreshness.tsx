@@ -1,7 +1,7 @@
 import { HealthLamp } from '@bifrost/ui'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useSignalHealthSummary } from '@/hooks/useCopilotStanding'
-import { computeAccountSyncLamp } from '@/utils/daemonLamps'
+import { useFreshReading } from '@/hooks/useFreshReading'
 import { lensCell } from '@/components/cockpit/freshnessRule'
 
 /**
@@ -11,8 +11,9 @@ import { lensCell } from '@/components/cockpit/freshnessRule'
  * three lamps under the context chips, so the answer you are about to ask for
  * arrives with the staleness of what it will be built from.
  *
- * No thresholds are invented here. `book` reads the same
- * `computeAccountSyncLamp` the daemon page reads, and `lenses` reads the
+ * No thresholds are invented here. `book` reads the broker snapshot's
+ * `accounts_fetched_at` by the same §16.13 rule the Positions head marker
+ * uses (`BookFetchMarker`), and `lenses` reads the
  * feature batch's own `overall` — the batch judges itself against its own SLA
  * and this renders that judgement. Deciding here what counts as stale would
  * put a second opinion on screen next to the first.
@@ -52,8 +53,11 @@ export function CopilotFreshness() {
   const { data: status } = useMonitorStatus()
   const lenses = useSignalHealthSummary()
 
-  const book = computeAccountSyncLamp(status)
-  const bookTs = status?.account_sync_daemon?.heartbeat?.last_ts ?? null
+  const bookTs = status?.portfolio?.accounts_fetched_at ?? null
+  const book = useFreshReading('snapshot', bookTs == null ? null : bookTs * 1000, {
+    src: 'monitor accounts_fetched_at',
+  })
+  const bookLamp = bookTs == null ? 'gray' : book.warn ? 'yellow' : 'green'
 
   const lens = lensCell({
     isPending: lenses.isPending,
@@ -66,7 +70,7 @@ export function CopilotFreshness() {
     <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-2 pt-1 text-dense-micro text-muted-foreground">
       <span className="uppercase tracking-[0.08em] text-muted-foreground/60">Freshness</span>
       <Cell
-        lamp={book.lamp === 'none' ? 'gray' : book.lamp}
+        lamp={bookLamp}
         label="book"
         value={bookTs != null ? clockOf(bookTs) : '—'}
         title={book.title}

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { opsConsoleHref } from '@/lib/opsConsole'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { ANALYZE_HUB } from '@/lib/analyzeHubs'
-import { StatusLamp } from '@/components/StatusLamp'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import {
   DenseTableBody,
@@ -15,7 +14,6 @@ import {
   denseTableNumCell,
 } from '@/components/data-display'
 import type { OpenOrder } from '@/types/market'
-import type { StatusResponse } from '@/types/monitor'
 import { fmtSince, fmtTs, parseOptionContractKey } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import { liveTable } from './liveTableClasses'
@@ -56,33 +54,23 @@ import {
 interface Props {
   optOrders: OpenOrder[]
   stkOrders: OpenOrder[]
-  ordersLamp: string
   openOrdersUpdatedAt: number | null
-  status: StatusResponse | undefined
 }
 
 export function OpenOrdersPane({
   optOrders,
   stkOrders,
-  ordersLamp,
   openOrdersUpdatedAt,
-  status,
 }: Props) {
-  const hb = status?.account_sync_daemon?.heartbeat
-  const lampTitle = `Open orders lamp: green when Account Sync Daemon is healthy and heartbeat is fresh.${
-    hb?.last_ts != null ? ` Last heartbeat ${fmtSince(hb.last_ts)} ago.` : ''
-  }${openOrdersUpdatedAt != null ? ` Last UI read (GET /open-orders): ${fmtSince(openOrdersUpdatedAt)} ago.` : ''}`
-
   const total = optOrders.length + stkOrders.length
 
   return (
     <div className={livePaneClass}>
       <div className={livePaneHeaderRowClass}>
         <div className={livePaneTitleRowClass}>
-          <StatusLamp lamp={ordersLamp} title={lampTitle} />
           <h2 className={livePaneTitleClass}>
             Open Orders
-            <InfoTooltip text="Unfilled orders from PostgreSQL (daemon_open_orders). The Account Sync Daemon writes this table from the IB account stream. This page polls GET /open-orders every few seconds for UI updates. Account ID is the IB account that placed each order." />
+            <InfoTooltip text="Unfilled orders from PostgreSQL (daemon_open_orders). This page polls GET /open-orders every few seconds for UI updates. Account ID is the IB account that placed each order." />
           </h2>
         </div>
         <div className={livePaneHeaderActionsClass}>

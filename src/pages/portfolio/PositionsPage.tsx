@@ -514,7 +514,7 @@ export default function PositionsPage() {
           <ViewState
             kind="empty"
             title="No open positions"
-            detail="Position data comes from account snapshots. Ensure IB is connected and Account Sync is running."
+            detail="Position data comes from account snapshots. Ensure IB is connected."
           />
         ) : (
           <>

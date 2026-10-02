@@ -22,7 +22,6 @@ export function categoryForServiceId(id: string): IngestCategory {
   if (id === 'ib_ingestor' || id === 'ib_market' || id === 'ib_operator' || id === 'ib_account_agent') {
     return 'IB'
   }
-  if (id === 'account_sync_daemon') return 'Engine'
   if (id === 'trading_engine') return 'Engine'
   return 'Other'
 }
@@ -63,9 +62,6 @@ export function daemonServiceHealthAlive(
   if (serviceId === 'trading_engine') {
     return status?.daemon?.heartbeat?.daemon_alive === true
   }
-  if (serviceId === 'account_sync_daemon') {
-    return status?.account_sync_daemon?.heartbeat?.daemon_alive === true
-  }
   return null
 }
 
@@ -76,9 +72,6 @@ export function buildIngestLogicalSummary(
   pending: IngestOpsPending = null,
 ): string {
   if (pending === 'starting') {
-    if (svc.id === 'account_sync_daemon') {
-      return 'Starting… connecting PostgreSQL and IB account stream consumer'
-    }
     if (svc.id === 'trading_engine') {
       return 'Starting… waiting for daemon heartbeat and IB edge health'
     }
@@ -86,9 +79,6 @@ export function buildIngestLogicalSummary(
     return `Starting… (process ${proc})`
   }
   if (pending === 'stopping') {
-    if (svc.id === 'account_sync_daemon') {
-      return 'Stopping… clearing Redis health and pausing sync loop'
-    }
     if (svc.id === 'trading_engine') {
       return 'Stopping… waiting for graceful shutdown and heartbeat to clear'
     }
@@ -124,21 +114,6 @@ export function buildIngestLogicalSummary(
     }
     return 'Monitor /status heartbeat (not Redis ingest meta)'
   }
-  if (svc.id === 'account_sync_daemon') {
-    const hb = status?.account_sync_daemon?.heartbeat
-    if (hb?.daemon_alive && hb.last_ts != null) {
-      const age = fmtAgeShort(Date.now() / 1000 - hb.last_ts)
-      const ver = hb.last_sync_version ?? 0
-      const lag = hb.stream_lag ?? 0
-      const lagHint = lag > 5 ? `; stream lag ${lag}` : ''
-      return `Alive; last sync heartbeat ${age} ago; sync v${ver}${lagHint}`
-    }
-    if (hb?.last_ts != null) {
-      const age = fmtAgeShort(Date.now() / 1000 - hb.last_ts)
-      return `Heartbeat stale (${age} ago); Ops start or check account-sync logs`
-    }
-    return 'GET /status account_sync_daemon (PostgreSQL heartbeat)'
-  }
   if (svc.redis_meta_key) return `Meta: ${svc.redis_meta_key}`
   return '—'
 }
@@ -167,12 +142,12 @@ export interface MarketIngestServiceRow {
 
 /**
  * Services included in the Socket aggregate lamp.
- * Excludes trading_engine (Daemon) and account_sync_daemon (PostgreSQL sync).
+ * Excludes trading_engine (Daemon).
  */
 export function marketIngestServicesForSocketAggregate(
   services: MarketIngestServiceRow[],
 ): MarketIngestServiceRow[] {
-  return services.filter(s => s.id !== 'trading_engine' && s.id !== 'account_sync_daemon')
+  return services.filter(s => s.id !== 'trading_engine')
 }
 
 /**
@@ -258,26 +233,6 @@ export function ingestRedisHealthLamp(
     return {
       lamp: 'red',
       title: 'Strategy Trading Daemon not running or heartbeat stale (check systemd / local process).',
-    }
-  }
-
-  if (id === 'account_sync_daemon') {
-    const asd = status.account_sync_daemon?.heartbeat
-    if (asd == null) {
-      return {
-        lamp: 'gray',
-        title: 'Account Sync Daemon block missing from GET /status (PostgreSQL heartbeat or Redis health).',
-      }
-    }
-    if (asd.daemon_alive === true) {
-      return {
-        lamp: 'green',
-        title: 'Account Sync Daemon alive (GET /status account_sync_daemon.heartbeat).',
-      }
-    }
-    return {
-      lamp: 'red',
-      title: 'Account Sync Daemon not running or heartbeat stale (start systemd unit or run script).',
     }
   }
 
@@ -375,7 +330,7 @@ export function aggregateIngestServicesLamp(
   return { lamp: 'yellow', title: 'Mixed state: some services active, inactive, or unknown. See each row.' }
 }
 
-export const DAEMON_PAGE_SERVICE_IDS = ['trading_engine', 'account_sync_daemon'] as const
+export const DAEMON_PAGE_SERVICE_IDS = ['trading_engine'] as const
 
 export function marketIngestServicesForDaemonAggregate(
   services: MarketIngestServiceRow[],

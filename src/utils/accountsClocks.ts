@@ -9,18 +9,16 @@
  * The IB clock's colour is the part worth reading twice. A disconnected TWS is
  * not a fault — the daemon polls every 5 seconds, so a snapshot frozen for
  * hours with `ib_connected: false` means nobody is logged in. That is grey. The
- * one case worth amber is connected and not advancing. Red is kept for a real
- * fault: the account-sync daemon itself not running, which is the only one of
- * the three the data lets us tell apart.
+ * one case worth amber is connected and not advancing.
  */
 import { fmtEtClock } from '@/lib/format'
 import { snapshotStale, type TradingCalendar } from '@/lib/freshness'
 import { clockLabel } from '@/utils/accountsFreshness'
 
-export type ClockTone = 'ok' | 'warn' | 'muted' | 'fault'
+export type ClockTone = 'ok' | 'warn' | 'muted'
 
 export interface ClockReading {
-  /** Source name; the IB row renames itself when the daemon is down. */
+  /** Source name. */
   name: string
   pull: string
   pullTone: ClockTone
@@ -67,14 +65,12 @@ function recLabel(days: number | null | undefined): string {
 }
 
 export function ibClockReading({
-  daemonAlive,
   ibConnected,
   fetchedAt,
   twsRecDays,
   nowSec = Date.now() / 1000,
   calendar,
 }: {
-  daemonAlive: boolean
   ibConnected: boolean
   fetchedAt: number | null | undefined
   twsRecDays: number | null | undefined
@@ -89,19 +85,6 @@ export function ibClockReading({
     twsRecDays != null && twsRecDays > TWS_REC_WARN_DAYS
       ? ` No TWS execution in ${Math.round(twsRecDays)} days. Not necessarily broken — TWS may simply be disconnected while Flex carries the trades.`
       : ''
-
-  if (!daemonAlive) {
-    return {
-      name: 'IB Client offline',
-      pull: 'DAEMON DOWN',
-      pullTone: 'fault',
-      rec,
-      recTone,
-      title:
-        'The account-sync daemon is not reporting a heartbeat. Nothing is fetching accounts, and nothing will until it is back. This is the one red case: a fault, not a closed session.' +
-        recWhy,
-    }
-  }
 
   if (!ibConnected) {
     return {

@@ -30,10 +30,11 @@
  */
 import { useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ClipboardList, ExternalLink, Flag, Keyboard, Scale, SlidersHorizontal } from 'lucide-react'
+import { ClipboardList, ExternalLink, Flag, KeyRound, Keyboard, Scale, SlidersHorizontal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchFeedbackSummary } from '@/api/research/feedback'
 import { openFeedbackDialog } from '@/lib/feedback/feedbackDialog'
+import { openTradeOperatorDialog, useTradeOperator } from '@/lib/auth/tradeOperator'
 import { UI_VERSION_NOW } from '@/lib/design/uiVersion'
 import { useSidebar } from '@bifrost/ui'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -165,6 +166,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
     retry: 1,
   })
   const unread = sumQ.data?.unread ?? 0
+  const operatorToken = useTradeOperator().token
   const items = [
     { label: door.label, to: door.to, Icon: door.Icon },
     { label: 'Settings', to: '/settings', Icon: SlidersHorizontal },
@@ -181,6 +183,13 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
       badge: unread > 0 ? `● ${unread} update${unread > 1 ? 's' : ''}` : '',
     },
     { label: 'Keyboard shortcuts', to: '/settings?pane=keys', Icon: Keyboard },
+    // TD-23: Trade writes need an operator token; it lives in this browser.
+    {
+      label: operatorToken ? 'Operator token' : 'Operator sign-in',
+      Icon: KeyRound,
+      onPick: () => openTradeOperatorDialog(),
+      badge: operatorToken ? 'saved' : '',
+    },
     { label: 'Design adoption', to: '/docs/design-adoption', Icon: Scale },
   ]
   return (

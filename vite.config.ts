@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig, loadEnv, type ProxyOptions } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { resolve } from 'path'
@@ -18,6 +18,7 @@ const uiRoot = resolve(__dirname, '../bifrost-ui')
  * `http://localhost:8780/api/v1/plugins/flex-query/api`) to bypass Trade gateway.
  */
 function buildDevProxies(env: Record<string, string>): Record<string, object> {
+  const devOperatorToken = env.TRADE_OPERATOR_TOKEN?.trim() || ''
   const rawBase = env.VITE_API_BASE?.trim() || 'http://127.0.0.1:80'
   let tradeTarget = 'http://127.0.0.1:80'
   try {
@@ -126,6 +127,19 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
       changeOrigin: true,
       timeout: 0,
       proxyTimeout: 0,
+      // TD-23: the local inner loop can run as an operator without pasting a
+      // token — `TRADE_OPERATOR_TOKEN` in a local .env (no VITE_ prefix, so it
+      // never reaches the bundle) is added here, server-side, to any request
+      // the browser sent without its own Authorization.
+      ...(devOperatorToken
+        ? {
+            configure: ((proxy) => {
+              proxy.on('proxyReq', (proxyReq, req) => {
+                if (!req.headers.authorization) proxyReq.setHeader('authorization', `Bearer ${devOperatorToken}`)
+              })
+            }) satisfies ProxyOptions['configure'],
+          }
+        : {}),
     },
   }
 }

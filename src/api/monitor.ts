@@ -3,35 +3,36 @@ import type { StatusResponse } from '@/types/monitor'
 import { withValidation } from '@/lib/apiValidation'
 import { StatusResponseSchema } from '@/lib/schemas/monitor'
 import { monitorUrl } from '@/lib/devApiUrl'
+import { tradeFetch } from '@/lib/tradeFetch'
 
 const validateStatus = withValidation<StatusResponse>(StatusResponseSchema, 'monitor/status')
 
 export async function fetchMonitorStatus(): Promise<StatusResponse> {
-  const res = await fetch(monitorUrl('/status'))
+  const res = await tradeFetch(monitorUrl('/status'))
   if (!res.ok) throw new Error(`Monitor /status: ${res.status}`)
   return validateStatus(await res.json())
 }
 
 export async function postRefreshAccounts(signal?: AbortSignal): Promise<{ ok: boolean; message?: string; error?: string }> {
-  const res = await fetch(monitorUrl('/control/refresh_accounts'), { method: 'POST', signal })
+  const res = await tradeFetch(monitorUrl('/control/refresh_accounts'), { method: 'POST', signal })
   if (!res.ok) throw new Error(`Refresh accounts: ${res.status}`)
   return res.json()
 }
 
 export async function postSuspend(): Promise<{ ok?: boolean; error?: string }> {
-  const res = await fetch(monitorUrl('/control/suspend'), { method: 'POST' })
+  const res = await tradeFetch(monitorUrl('/control/suspend'), { method: 'POST' })
   if (!res.ok) throw new Error(`POST /control/suspend: ${res.status}`)
   return res.json()
 }
 
 export async function postResume(): Promise<{ ok?: boolean; error?: string }> {
-  const res = await fetch(monitorUrl('/control/resume'), { method: 'POST' })
+  const res = await tradeFetch(monitorUrl('/control/resume'), { method: 'POST' })
   if (!res.ok) throw new Error(`POST /control/resume: ${res.status}`)
   return res.json()
 }
 
 export async function postFlatten(): Promise<{ ok?: boolean; error?: string }> {
-  const res = await fetch(monitorUrl('/control/flatten'), { method: 'POST' })
+  const res = await tradeFetch(monitorUrl('/control/flatten'), { method: 'POST' })
   if (!res.ok) throw new Error(`POST /control/flatten: ${res.status}`)
   return res.json()
 }
@@ -43,7 +44,7 @@ export async function postIbConfig(accounts: {
   stream_host_account_id?: string | null
   stream_secondary_account_id?: string | null
 }): Promise<{ ok: boolean; error?: string }> {
-  const res = await fetch(monitorUrl('/config/ib'), {
+  const res = await tradeFetch(monitorUrl('/config/ib'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(accounts),
@@ -56,7 +57,7 @@ export async function postIbConfig(accounts: {
 
 /** Working orders IB reports, as the monitor reads them. */
 export async function fetchOpenOrders(): Promise<OpenOrder[]> {
-  const res = await fetch(monitorUrl('/open-orders'))
+  const res = await tradeFetch(monitorUrl('/open-orders'))
   if (!res.ok) throw new Error(`Monitor /open-orders: ${res.status}`)
   const data = await res.json()
   const result = data.open_orders ?? data.orders ?? data.items ?? data

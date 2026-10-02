@@ -35,6 +35,7 @@ import { EquipRail } from './EquipRail'
 import { EquipFloat } from './EquipFloat'
 import { EquipPanel } from './EquipPanel'
 import { FeedbackDialog } from './FeedbackDialog'
+import { TradeOperatorDialog } from '@/components/auth/TradeOperatorDialog'
 import { NoteComposer } from './NoteComposer'
 import { VisitBeaconHost } from '@/hooks/useVisitBeacon'
 import { CellPickOverlay } from './CellPickOverlay'
@@ -185,6 +186,8 @@ export function AppLayout() {
         {/* K6: the visits beacon — a journal.visit row per page dwell. */}
         <VisitBeaconHost />
         <FeedbackDialog />
+        {/* TD-23: the operator token Trade writes carry; opens itself on a refused write. */}
+        <TradeOperatorDialog />
         <CellPickOverlay />
         {/* The equipment's edge. After the panel and the dock, so it floats
             over both — the rail is shell furniture, not page furniture, and

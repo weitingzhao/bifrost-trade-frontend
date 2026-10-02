@@ -6,6 +6,7 @@
 import { z } from 'zod'
 import { withValidation } from '@/lib/apiValidation'
 import { strategyUrl } from '@/lib/devApiUrl'
+import { tradeFetch } from '@/lib/tradeFetch'
 
 export const TradeReviewSchema = z
   .object({
@@ -34,13 +35,13 @@ export interface TradeReviewPatch {
 }
 
 export async function fetchTradeReviews(): Promise<TradeReview[]> {
-  const res = await fetch(strategyUrl('/strategies/reviews'))
+  const res = await tradeFetch(strategyUrl('/strategies/reviews'))
   if (!res.ok) throw new Error(`Strategy /strategies/reviews: ${res.status}`)
   return validateList(await res.json()).items
 }
 
 export async function saveTradeReview(instanceId: number, patch: TradeReviewPatch): Promise<TradeReview> {
-  const res = await fetch(strategyUrl(`/strategies/reviews/${instanceId}`), {
+  const res = await tradeFetch(strategyUrl(`/strategies/reviews/${instanceId}`), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),

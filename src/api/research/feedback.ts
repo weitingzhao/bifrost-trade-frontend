@@ -8,6 +8,7 @@
 import { z } from 'zod'
 import { researchUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { tradeFetch } from '@/lib/tradeFetch'
 
 export const FEEDBACK_KINDS = ['bug', 'data', 'idea', 'howto'] as const
 export type FeedbackKind = (typeof FEEDBACK_KINDS)[number]
@@ -53,7 +54,7 @@ const validateFeedback = withValidation<{ ok: boolean; error?: string | null }>(
 )
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(researchUrl(path), {
+  const res = await tradeFetch(researchUrl(path), {
     ...init,
     headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
   })

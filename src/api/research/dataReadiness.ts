@@ -11,6 +11,7 @@ import type {
   MomentumGradesResponse,
 } from '@/types/stockScreener'
 import { normalizeCriteriaStats } from '@/utils/stockScreener'
+import { tradeFetch } from '@/lib/tradeFetch'
 
 
 const EMPTY_CRITERIA: SepaCriteriaStats = {
@@ -40,7 +41,7 @@ async function fetchJson<T>(url: string, timeoutMs: number, fallback: T): Promis
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const r = await fetch(url, { method: 'GET', signal: controller.signal })
+    const r = await tradeFetch(url, { method: 'GET', signal: controller.signal })
     const j = await r.json().catch(() => ({})) as Record<string, unknown>
     if (!r.ok) {
       const msg = typeof j.detail === 'string' ? j.detail : (typeof j.error === 'string' ? j.error : `HTTP ${r.status}`)

@@ -3,6 +3,7 @@ import { withValidation } from '@/lib/apiValidation'
 import { OptionSnapshotsPgResponseSchema } from '@/lib/schemas/optionDiscovery'
 
 import { marketDataPluginUrl, researchUrl } from '@/lib/devApiUrl'
+import { tradeFetch } from '@/lib/tradeFetch'
 
 function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
   return {
@@ -57,7 +58,7 @@ export async function fetchOptionSnapshotsPg(
   const e = (expiration || '').trim()
   const q = new URLSearchParams({ symbol: s, expiration: e, source })
   if (strikesCsv?.trim()) q.set('strikes', strikesCsv.trim())
-  const r = await fetch(`${researchUrl('/research/option-snapshots')}?${q.toString()}`)
+  const r = await tradeFetch(`${researchUrl('/research/option-snapshots')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   withValidation(OptionSnapshotsPgResponseSchema, 'fetchOptionSnapshotsPg')(j)
   const rows: OptionSnapshotRow[] = Array.isArray(j.rows)
@@ -84,7 +85,7 @@ export async function fetchGreeksCoverage(
   const s = (symbol || '').trim()
   if (!s) return { ok: false, error: 'symbol is required' }
   const q = new URLSearchParams({ symbol: s })
-  const r = await fetch(`${marketDataPluginUrl('/market/coverage/greeks')}?${q.toString()}`)
+  const r = await tradeFetch(`${marketDataPluginUrl('/market/coverage/greeks')}?${q.toString()}`)
   const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
   if (!r.ok || j.ok === false) {
     return {
@@ -157,7 +158,7 @@ export async function fetchLiquiditySummary(
     right: (right || '').trim(),
     source,
   })
-  const r = await fetch(`${researchUrl('/research/option-contract/liquidity-summary')}?${q.toString()}`)
+  const r = await tradeFetch(`${researchUrl('/research/option-contract/liquidity-summary')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   return {
     ok: Boolean(j.ok),
@@ -190,7 +191,7 @@ export async function fetchRelativeValue(
     right: (right || '').trim(),
     source,
   })
-  const r = await fetch(`${researchUrl('/research/option-contract/relative-value')}?${q.toString()}`)
+  const r = await tradeFetch(`${researchUrl('/research/option-contract/relative-value')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   return {
     ok: Boolean(j.ok),

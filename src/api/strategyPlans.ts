@@ -16,6 +16,7 @@ import {
   type StrategyPlan,
   type StrategyPlansResponse,
 } from '@/lib/schemas/strategyPlan'
+import { tradeFetch } from '@/lib/tradeFetch'
 
 const validatePlans = withValidation<StrategyPlansResponse>(
   StrategyPlansResponseSchema,
@@ -54,7 +55,7 @@ export interface PlanWriteBody {
 
 /** The server's own words when it refuses, so the desk never invents a reason. */
 async function planRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(strategyUrl(path), init)
+  const res = await tradeFetch(strategyUrl(path), init)
   const body = (await res.json().catch(() => ({}))) as { detail?: string }
   if (!res.ok) {
     throw new Error(body.detail ?? `${init?.method ?? 'GET'} ${path}: ${res.status}`)

@@ -340,8 +340,8 @@ export interface AllocationPayload {
   name: string
   strategy_opportunity_ids: number[]
   gate_safety_strategy_id?: number | null
-  max_positions?: number | null
-  max_bp_pct?: number | null
+  /** The API reads the limits only here; `max_bp_pct` is a share (0.5 = 50%). */
+  allocation_limits?: { max_positions: number | null; max_bp_pct: number | null }
   is_active?: boolean
 }
 

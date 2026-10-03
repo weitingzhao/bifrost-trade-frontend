@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { InspectorField } from '@bifrost/ui'
-import { fetchStructure, fetchTemplateDetail, updateStructure } from '@/api/strategy'
+import { fetchStructure, fetchTemplateDetail, updateStructure, STRATEGY_WRITES, strategyWriteLabel } from '@/api/strategy'
 import { TemplateCatalogControls } from '@/components/strategy/structures/TemplateCatalogControls'
 import {
   TEMPLATE_DIM_TYPES,
@@ -59,7 +59,7 @@ export function StructureInspector({
   return (
     <RuleInspector
       title={q.data ? `Structure · ${q.data.name}` : `Structure · ${id}`}
-      meta="PUT /strategy/structures"
+      meta={strategyWriteLabel(STRATEGY_WRITES.structure, id)}
       onClose={onClose}
       loading={!ready}
       onDuplicate={q.data ? onDuplicate : undefined}

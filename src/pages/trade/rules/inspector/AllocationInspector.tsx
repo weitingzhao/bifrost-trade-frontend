@@ -7,7 +7,7 @@
  */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { InspectorField } from '@bifrost/ui'
-import { fetchAllocation, updateAllocation } from '@/api/strategy'
+import { fetchAllocation, updateAllocation, STRATEGY_WRITES, strategyWriteLabel } from '@/api/strategy'
 import {
   allocationDetailKey,
   allocationFormToPayload,
@@ -37,7 +37,7 @@ export function AllocationInspector({
   return (
     <RuleInspector
       title={q.data ? `Allocation · ${q.data.name}` : `Allocation · ${id}`}
-      meta="PUT /strategy/allocations"
+      meta={strategyWriteLabel(STRATEGY_WRITES.allocation, id)}
       onClose={onClose}
       loading={!q.data}
       onDelete={q.data ? () => onDelete(q.data.name) : undefined}

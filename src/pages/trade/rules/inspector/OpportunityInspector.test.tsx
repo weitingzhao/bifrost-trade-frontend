@@ -21,7 +21,8 @@ const DETAIL: StrategyOpportunityDetail = {
 
 const patchOpportunity = vi.fn<(id: number, body: unknown) => Promise<{ ok: boolean }>>(() => Promise.resolve({ ok: true }))
 
-vi.mock('@/api/strategy', () => ({
+vi.mock('@/api/strategy', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/strategy')>()),
   fetchOpportunityDetail: () => Promise.resolve(DETAIL),
   patchOpportunity: (id: number, body: unknown) => patchOpportunity(id, body),
 }))
@@ -75,6 +76,12 @@ describe('OpportunityInspector', () => {
       is_active: true,
     })
     await waitFor(() => expect(onSaved).toHaveBeenCalled())
+  })
+
+  it('names the request it makes under the title (TD-62)', async () => {
+    mount()
+    await screen.findByLabelText('Name')
+    expect(screen.getByText('PATCH /api/strategy/strategies/opportunities/41')).toBeTruthy()
   })
 
   it('holds back a blank name and says why', async () => {

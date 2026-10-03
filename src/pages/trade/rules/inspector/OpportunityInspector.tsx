@@ -11,7 +11,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { InspectorField } from '@bifrost/ui'
 import { Plus, X } from 'lucide-react'
-import { fetchOpportunityDetail, patchOpportunity } from '@/api/strategy'
+import { fetchOpportunityDetail, patchOpportunity, STRATEGY_WRITES, strategyWriteLabel } from '@/api/strategy'
 import { SegmentControl } from '@/components/data-display'
 import { opportunityDetailKey } from '@/components/strategy/opportunityCopy'
 import {
@@ -62,7 +62,7 @@ export function OpportunityInspector({
   return (
     <RuleInspector
       title={q.data ? `Opportunity · ${q.data.name}` : `Opportunity · ${id}`}
-      meta="PUT /strategy/opportunities"
+      meta={strategyWriteLabel(STRATEGY_WRITES.opportunity, id)}
       onClose={onClose}
       loading={!q.data && !q.isError}
       onDelete={q.data ? () => onDelete(q.data.name) : undefined}

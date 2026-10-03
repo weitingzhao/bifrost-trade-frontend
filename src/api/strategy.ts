@@ -79,16 +79,37 @@ export async function fetchStructure(id: number): Promise<StrategyStructure> {
   return res.json() as Promise<StrategyStructure>
 }
 
+/**
+ * The writes the Rules inspectors make, one place (TD-62): the api functions below send
+ * exactly these, and `strategyWriteLabel` prints them on the inspectors and in refusals,
+ * so the label a reader copies into curl is the request the app makes.
+ */
+export const STRATEGY_WRITES = {
+  createStructure: { method: 'POST', path: () => '/strategies/structures' },
+  structure: { method: 'PUT', path: (id: number) => `/strategies/structures/${id}` },
+  opportunity: { method: 'PATCH', path: (id: number) => `/strategies/opportunities/${id}` },
+  allocation: { method: 'PATCH', path: (id: number) => `/strategies/allocations/${id}` },
+} as const
+
+type StrategyWrite = (typeof STRATEGY_WRITES)[keyof typeof STRATEGY_WRITES]
+
+/** `METHOD /api/strategy/...` as the request goes out (the path only, never the host). */
+export function strategyWriteLabel(write: StrategyWrite, id?: number): string {
+  const url = strategyUrl(write.path(id as number))
+  return `${write.method} ${new URL(url, 'http://local').pathname}`
+}
+
 export async function createStructure(
   payload: StructurePayload,
 ): Promise<{ strategy_structure_id: number }> {
-  const res = await tradeFetch(strategyUrl('/strategies/structures'), {
-    method: 'POST',
+  const write = STRATEGY_WRITES.createStructure
+  const res = await tradeFetch(strategyUrl(write.path()), {
+    method: write.method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
   const j = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `POST /structures: ${res.status}`)
+  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `${strategyWriteLabel(write)}: ${res.status}`)
   return j as { strategy_structure_id: number }
 }
 
@@ -96,13 +117,14 @@ export async function updateStructure(
   id: number,
   payload: StructurePayload,
 ): Promise<{ ok: boolean }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/structures/${id}`), {
-    method: 'PUT',
+  const write = STRATEGY_WRITES.structure
+  const res = await tradeFetch(strategyUrl(write.path(id)), {
+    method: write.method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
   const j = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `PUT /structures/${id}: ${res.status}`)
+  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `${strategyWriteLabel(write, id)}: ${res.status}`)
   return j as { ok: boolean }
 }
 
@@ -214,8 +236,9 @@ export async function patchOpportunity(
   id: number,
   body: Partial<CreateOpportunityBody>,
 ): Promise<StrategyOpportunityDetail> {
-  const url = strategyUrl(`/strategies/opportunities/${id}`)
-  return validateOpportunity(await requestJson(url, { method: 'PATCH', body }), url)
+  const write = STRATEGY_WRITES.opportunity
+  const url = strategyUrl(write.path(id))
+  return validateOpportunity(await requestJson(url, { method: write.method, body }), url)
 }
 
 export async function fetchGateSafety(): Promise<GateSafetyResponse> {
@@ -449,8 +472,9 @@ export async function createAllocation(
  * membership. Answers the allocation as GET /allocations/{id} does.
  */
 export async function updateAllocation(id: number, payload: Partial<AllocationPayload>): Promise<StrategyAllocation> {
-  const url = strategyUrl(`/strategies/allocations/${id}`)
-  return validateAllocation(await requestJson(url, { method: 'PATCH', body: payload }), url)
+  const write = STRATEGY_WRITES.allocation
+  const url = strategyUrl(write.path(id))
+  return validateAllocation(await requestJson(url, { method: write.method, body: payload }), url)
 }
 
 export function setActiveAllocation(

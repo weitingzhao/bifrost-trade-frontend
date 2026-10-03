@@ -61,22 +61,16 @@ const validateAllocation = withValidation<StrategyAllocation>(StrategyAllocation
 export async function fetchOpportunities(activeOnly = false): Promise<OpportunitiesResponse> {
   const qs = new URLSearchParams({ active_only: String(activeOnly) })
   const url = strategyUrl(`/strategies/opportunities?${qs}`)
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`Strategy /opportunities: ${res.status}`)
-  return validateOpportunities(await res.json(), url)
+  return validateOpportunities(await requestJson(url, { label: `Strategy /opportunities` }), url)
 }
 
 export async function fetchStructures(activeOnly = false): Promise<StructuresResponse> {
   const qs = `?active_only=${activeOnly}`
-  const res = await tradeFetch(strategyUrl(`/strategies/structures${qs}`))
-  if (!res.ok) throw new Error(`Strategy /structures: ${res.status}`)
-  return res.json() as Promise<StructuresResponse>
+  return requestJson<StructuresResponse>(strategyUrl(`/strategies/structures${qs}`), { label: `Strategy /structures` })
 }
 
 export async function fetchStructure(id: number): Promise<StrategyStructure> {
-  const res = await tradeFetch(strategyUrl(`/strategies/structures/${id}`))
-  if (!res.ok) throw new Error(`Strategy /structures/${id}: ${res.status}`)
-  return res.json() as Promise<StrategyStructure>
+  return requestJson<StrategyStructure>(strategyUrl(`/strategies/structures/${id}`), { label: `Strategy /structures/${id}` })
 }
 
 /**
@@ -103,14 +97,11 @@ export async function createStructure(
   payload: StructurePayload,
 ): Promise<{ strategy_structure_id: number }> {
   const write = STRATEGY_WRITES.createStructure
-  const res = await tradeFetch(strategyUrl(write.path()), {
+  return requestJson<{ strategy_structure_id: number }>(strategyUrl(write.path()), {
     method: write.method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: payload,
+    label: strategyWriteLabel(write),
   })
-  const j = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `${strategyWriteLabel(write)}: ${res.status}`)
-  return j as { strategy_structure_id: number }
 }
 
 export async function updateStructure(
@@ -118,14 +109,11 @@ export async function updateStructure(
   payload: StructurePayload,
 ): Promise<{ ok: boolean }> {
   const write = STRATEGY_WRITES.structure
-  const res = await tradeFetch(strategyUrl(write.path(id)), {
+  return requestJson<{ ok: boolean }>(strategyUrl(write.path(id)), {
     method: write.method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: payload,
+    label: strategyWriteLabel(write, id),
   })
-  const j = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? `${strategyWriteLabel(write, id)}: ${res.status}`)
-  return j as { ok: boolean }
 }
 
 export async function fetchStrategyInstances(params?: {
@@ -142,43 +130,25 @@ export async function fetchStrategyInstances(params?: {
   if (params?.openedAtFrom != null) sp.set('opened_at_from', String(params.openedAtFrom))
   const qs = sp.toString()
   const url = strategyUrl(`/strategies/instances${qs ? `?${qs}` : ''}`)
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`Strategy /instances: ${res.status}`)
-  return validateInstances(await res.json(), url)
+  return validateInstances(await requestJson(url, { label: `Strategy /instances` }), url)
 }
 
 /** `InstanceRow` without `executions_count` (the list alone carries it). */
 export async function fetchStrategyInstance(id: number): Promise<StrategyInstance> {
   const url = strategyUrl(`/strategies/instances/${id}`)
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`Strategy /instances/${id}: ${res.status}`)
-  return validateInstance(await res.json(), url)
+  return validateInstance(await requestJson(url, { label: `Strategy /instances/${id}` }), url)
 }
 
 /** Legacy Strategy API returns `{ strategy_instance_id }` on success (no `ok` field). */
 export async function createStrategyInstance(
   body: CreateStrategyInstanceBody,
 ): Promise<{ strategy_instance_id: number }> {
-  const res = await tradeFetch(strategyUrl('/strategies/instances'), {
+  // A refusal throws HttpError with the server's detail (a 422's messages joined).
+  const j = await requestJson<{ strategy_instance_id?: number; error?: string }>(strategyUrl('/strategies/instances'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body,
+    label: 'POST /strategies/instances',
   })
-  const j = (await res.json().catch(() => ({}))) as {
-    strategy_instance_id?: number
-    detail?: string | { msg?: string }[]
-    error?: string
-  }
-  if (!res.ok) {
-    const detail = j.detail
-    const detailMsg =
-      typeof detail === 'string'
-        ? detail
-        : Array.isArray(detail) && detail[0] && typeof detail[0] === 'object' && 'msg' in detail[0]
-          ? String(detail[0].msg)
-          : undefined
-    throw new Error(detailMsg ?? j.error ?? `POST /strategies/instances: ${res.status}`)
-  }
   const id = j.strategy_instance_id
   if (id == null || !Number.isFinite(Number(id))) {
     throw new Error(j.error ?? 'Failed to create strategy instance')
@@ -209,21 +179,13 @@ export function deleteStrategyInstance(id: number): Promise<DeleteOutcome> {
 
 export async function fetchOpportunityDetail(id: number): Promise<StrategyOpportunityDetail> {
   const url = strategyUrl(`/strategies/opportunities/${id}`)
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`Strategy /opportunities/${id}: ${res.status}`)
-  return validateOpportunity(await res.json(), url)
+  return validateOpportunity(await requestJson(url, { label: `Strategy /opportunities/${id}` }), url)
 }
 
 export async function createOpportunity(
   body: CreateOpportunityBody,
 ): Promise<{ strategy_opportunity_id: number }> {
-  const res = await tradeFetch(strategyUrl('/strategies/opportunities'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`POST /strategies/opportunities: ${res.status}`)
-  return res.json()
+  return requestJson(strategyUrl('/strategies/opportunities'), { method: 'POST', body: body, label: `POST /strategies/opportunities` })
 }
 
 /**
@@ -243,9 +205,7 @@ export async function patchOpportunity(
 
 export async function fetchGateSafety(): Promise<GateSafetyResponse> {
   const url = strategyUrl('/strategies/gate-safety')
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`Strategy /gate-safety: ${res.status}`)
-  return validateGateSafetyList(await res.json(), url)
+  return validateGateSafetyList(await requestJson(url, { label: `Strategy /gate-safety` }), url)
 }
 
 /**
@@ -253,64 +213,45 @@ export async function fetchGateSafety(): Promise<GateSafetyResponse> {
  * a non-2xx or an answer missing a family — there is no local copy to fall back to.
  */
 export async function fetchGateSafetyDefaults(): Promise<GateSafetyDefaultsResponse> {
-  const res = await tradeFetch(strategyUrl('/strategies/gate-safety/defaults'))
-  if (!res.ok) throw new Error(`Strategy /gate-safety/defaults: ${res.status}`)
-  const parsed = GateSafetyDefaultsResponseSchema.safeParse(await res.json())
+  const raw = await requestJson<unknown>(strategyUrl('/strategies/gate-safety/defaults'), {
+    label: 'Strategy /gate-safety/defaults',
+  })
+  const parsed = GateSafetyDefaultsResponseSchema.safeParse(raw)
   if (!parsed.success) throw new Error('Strategy /gate-safety/defaults: answer has no complete gates object')
   return parsed.data as GateSafetyDefaultsResponse
 }
 
 export async function fetchGateSafetyFull(id: number): Promise<GateSafetyFull> {
   const url = strategyUrl(`/strategies/gate-safety/${id}`)
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`Strategy /gate-safety/${id}: ${res.status}`)
-  return validateGateSafety(await res.json(), url)
+  return validateGateSafety(await requestJson(url, { label: `Strategy /gate-safety/${id}` }), url)
 }
 
 export async function createGateSafety(
   payload: GateSafetyPayload,
 ): Promise<{ ok: boolean; gate_safety_strategy_id?: number; error?: string }> {
-  const res = await tradeFetch(strategyUrl('/strategies/gate-safety'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!res.ok) throw new Error(`POST /strategies/gate-safety: ${res.status}`)
-  return res.json()
+  return requestJson(strategyUrl('/strategies/gate-safety'), { method: 'POST', body: payload, label: `POST /strategies/gate-safety` })
 }
 
 export async function updateGateSafety(
   id: number,
   payload: GateSafetyPayload,
 ): Promise<{ ok: boolean; error?: string }> {
-  const res = await tradeFetch(strategyUrl(`/strategies/gate-safety/${id}`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!res.ok) throw new Error(`PUT /strategies/gate-safety/${id}: ${res.status}`)
-  return res.json()
+  return requestJson(strategyUrl(`/strategies/gate-safety/${id}`), { method: 'PUT', body: payload, label: `PUT /strategies/gate-safety/${id}` })
 }
 
 export async function fetchDimsGrouped(): Promise<DimsGroupedResponse> {
-  const res = await tradeFetch(strategyUrl('/strategies/dims'))
-  if (!res.ok) throw new Error(`Strategy /dims: ${res.status}`)
-  return res.json() as Promise<DimsGroupedResponse>
+  return requestJson<DimsGroupedResponse>(strategyUrl('/strategies/dims'), { label: `Strategy /dims` })
 }
 
 // ── Template API ─────────────────────────────────────────────────────────────
 
 export async function fetchTemplates(activeOnly = true): Promise<StrategyTemplatesResponse> {
   const qs = activeOnly ? '?active_only=true' : ''
-  const res = await tradeFetch(strategyUrl(`/strategies/templates${qs}`))
-  if (!res.ok) throw new Error(`Strategy /templates: ${res.status}`)
-  return res.json() as Promise<StrategyTemplatesResponse>
+  return requestJson<StrategyTemplatesResponse>(strategyUrl(`/strategies/templates${qs}`), { label: `Strategy /templates` })
 }
 
 export async function fetchTemplateDetail(id: number): Promise<StrategyTemplateDetail> {
-  const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}`))
-  if (!res.ok) throw new Error(`Strategy /templates/${id}: ${res.status}`)
-  return res.json() as Promise<StrategyTemplateDetail>
+  return requestJson<StrategyTemplateDetail>(strategyUrl(`/strategies/templates/${id}`), { label: `Strategy /templates/${id}` })
 }
 
 export function createTemplate(
@@ -362,13 +303,7 @@ export async function replaceTemplateLegs(
   legs: TemplateLegPayload[],
 ): Promise<{ ok: boolean }> {
   const body: TemplateLegsBody = { legs }
-  const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}/legs`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/legs: ${res.status}`)
-  return res.json()
+  return requestJson(strategyUrl(`/strategies/templates/${id}/legs`), { method: 'PUT', body: body, label: `PUT /strategies/templates/${id}/legs` })
 }
 
 export async function replaceTemplateParams(
@@ -376,13 +311,7 @@ export async function replaceTemplateParams(
   items: MetaParamPayload[],
 ): Promise<{ ok: boolean }> {
   const body: TemplateParamsBody = { items }
-  const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}/params`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/params: ${res.status}`)
-  return res.json()
+  return requestJson(strategyUrl(`/strategies/templates/${id}/params`), { method: 'PUT', body: body, label: `PUT /strategies/templates/${id}/params` })
 }
 
 export async function replaceTemplateCharacteristics(
@@ -390,13 +319,7 @@ export async function replaceTemplateCharacteristics(
   items: string[],
 ): Promise<{ ok: boolean }> {
   const body: TemplateCharacteristicsBody = { items }
-  const res = await tradeFetch(strategyUrl(`/strategies/templates/${id}/characteristics`), {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`PUT /strategies/templates/${id}/characteristics: ${res.status}`)
-  return res.json()
+  return requestJson(strategyUrl(`/strategies/templates/${id}/characteristics`), { method: 'PUT', body: body, label: `PUT /strategies/templates/${id}/characteristics` })
 }
 
 function fetchConfigOptions(path: string): Promise<{ options: TemplateConfigOption[] }> {
@@ -431,9 +354,7 @@ export async function fetchWinRate(params?: {
   if (params?.sinceTs != null) sp.set('since_ts', String(params.sinceTs))
   if (params?.untilTs != null) sp.set('until_ts', String(params.untilTs))
   const qs = sp.toString()
-  const res = await tradeFetch(strategyUrl(`/strategies/win-rate${qs ? `?${qs}` : ''}`))
-  if (!res.ok) throw new Error(`GET /strategies/win-rate: ${res.status}`)
-  return res.json() as Promise<WinRateResponse>
+  return requestJson<WinRateResponse>(strategyUrl(`/strategies/win-rate${qs ? `?${qs}` : ''}`), { label: `GET /strategies/win-rate` })
 }
 
 // ── Allocations ───────────────────────────────────────────────────────────────
@@ -441,29 +362,22 @@ export async function fetchWinRate(params?: {
 
 export async function fetchAllocations(activeOnly = false): Promise<AllocationsResponse> {
   const url = strategyUrl(`/strategies/allocations?active_only=${activeOnly}`)
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`GET /strategies/allocations: ${res.status}`)
-  return validateAllocations(await res.json(), url)
+  return validateAllocations(await requestJson(url, { label: `GET /strategies/allocations` }), url)
 }
 
 export async function fetchAllocation(id: number): Promise<StrategyAllocation> {
   const url = strategyUrl(`/strategies/allocations/${id}`)
-  const res = await tradeFetch(url)
-  if (!res.ok) throw new Error(`GET /strategies/allocations/${id}: ${res.status}`)
-  return validateAllocation(await res.json(), url)
+  return validateAllocation(await requestJson(url, { label: `GET /strategies/allocations/${id}` }), url)
 }
 
 export async function createAllocation(
   payload: AllocationPayload,
 ): Promise<{ strategy_allocation_id: number }> {
-  const res = await tradeFetch(strategyUrl('/strategies/allocations'), {
+  return requestJson<{ strategy_allocation_id: number }>(strategyUrl('/strategies/allocations'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: payload,
+    label: 'POST /strategies/allocations',
   })
-  const j = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((j as { detail?: string }).detail ?? String(res.status))
-  return j as { strategy_allocation_id: number }
 }
 
 /**

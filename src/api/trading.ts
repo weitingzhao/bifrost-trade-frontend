@@ -21,7 +21,6 @@ import type {
 import { withValidation } from '@/lib/apiValidation'
 import { ExecutionsWireSchema, type ExecutionsWire } from '@/lib/schemas/positions'
 import { tradingUrl } from '@/lib/devApiUrl'
-import { tradeFetch } from '@/lib/tradeFetch'
 import { httpFailure, listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
 import type { OptionStockLinkBody, OptionStockLinksQueryBody } from '@/types/requestBodies'
 
@@ -150,9 +149,7 @@ export function deleteExecution(id: number): Promise<DeleteOutcome> {
 }
 
 export async function fetchInstancePerformance(instanceId: number): Promise<PerformanceResponse> {
-  const res = await tradeFetch(tradingUrl(`/performance?strategy_instance_id=${instanceId}&summary_only=true`))
-  if (!res.ok) throw new Error(`Trading /performance [${instanceId}]: ${res.status}`)
-  return res.json() as Promise<PerformanceResponse>
+  return requestJson<PerformanceResponse>(tradingUrl(`/performance?strategy_instance_id=${instanceId}&summary_only=true`), { label: `Trading /performance [${instanceId}]` })
 }
 
 export async function fetchInstanceExecutions(instanceId: number): Promise<RawExecutionsResponse> {
@@ -176,9 +173,7 @@ export async function fetchPerformance(params: PerformanceParams = {}): Promise<
     qs.set('strategy_instance_id', String(params.strategy_instance_id))
   if (params.source_scope) qs.set('source_scope', params.source_scope)
   if (params.summary_only) qs.set('summary_only', 'true')
-  const res = await tradeFetch(tradingUrl(`/performance?${qs}`))
-  if (!res.ok) throw new Error(`Trading /performance: ${res.status}`)
-  return res.json() as Promise<PerformanceResponse>
+  return requestJson<PerformanceResponse>(tradingUrl(`/performance?${qs}`), { label: `Trading /performance` })
 }
 
 export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): Promise<ExecutionsResponse> {

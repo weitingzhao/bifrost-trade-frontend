@@ -2,8 +2,8 @@ import type { SystemMessagesResponse, SystemMessage } from '@/types/messages'
 import { openSseWithBackoff } from '@/lib/sse'
 import { monitorUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import { SystemMessagesResponseSchema } from '@/lib/schemas/platform'
-import { tradeFetch } from '@/lib/tradeFetch'
 
 const validateMessages = withValidation<SystemMessagesResponse>(
   SystemMessagesResponseSchema,
@@ -12,9 +12,7 @@ const validateMessages = withValidation<SystemMessagesResponse>(
 
 
 export async function fetchSystemMessages(limit = 50): Promise<SystemMessagesResponse> {
-  const res = await tradeFetch(monitorUrl(`/api/messages?limit=${limit}`))
-  if (!res.ok) throw new Error(`Messages: ${res.status}`)
-  return res.json().then(validateMessages)
+  return requestJson(monitorUrl(`/api/messages?limit=${limit}`), { label: `Messages` }).then(validateMessages)
 }
 
 export function subscribeSystemMessages(

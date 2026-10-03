@@ -21,9 +21,7 @@ const validateModelAnalysis = withValidation<ModelAnalysisResponse>(
 
 export async function fetchModelAnalysis(accountId: string): Promise<ModelAnalysisResponse> {
   const params = new URLSearchParams({ account_id: accountId })
-  const res = await tradeFetch(portfolioUrl(`/portfolio/model-analysis?${params}`))
-  if (!res.ok) throw new Error(`Portfolio /portfolio/model-analysis: ${res.status}`)
-  return validateModelAnalysis(await res.json())
+  return validateModelAnalysis(await requestJson(portfolioUrl(`/portfolio/model-analysis?${params}`), { label: `Portfolio /portfolio/model-analysis` }))
 }
 
 /**

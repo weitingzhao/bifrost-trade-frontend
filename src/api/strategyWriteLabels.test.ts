@@ -40,13 +40,13 @@ describe('the inspector label is the request that goes out', () => {
 
   it('structure, and its refusal names the same request', async () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 503 }))
-    await expect(updateStructure(9, { name: 'x' } as never)).rejects.toThrow('PUT /api/strategy/strategies/structures/9: 503')
+    await expect(updateStructure(9, { name: 'x' } as never)).rejects.toThrow('PUT /api/strategy/strategies/structures/9: HTTP 503')
     expect(strategyWriteLabel(STRATEGY_WRITES.structure, 9)).toBe(sent())
   })
 
   it('creating a structure', async () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 503 }))
-    await expect(createStructure({ name: 'x' } as never)).rejects.toThrow('POST /api/strategy/strategies/structures: 503')
+    await expect(createStructure({ name: 'x' } as never)).rejects.toThrow('POST /api/strategy/strategies/structures: HTTP 503')
     expect(strategyWriteLabel(STRATEGY_WRITES.createStructure)).toBe(sent())
   })
 })

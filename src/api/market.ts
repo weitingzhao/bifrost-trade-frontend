@@ -11,8 +11,7 @@ import { withValidation } from '@/lib/apiValidation'
 import { QuotesResponseSchema, WatchlistResponseSchema } from '@/lib/schemas/market'
 import { openSseWithBackoff } from '@/lib/sse'
 import { marketUrl } from '@/lib/devApiUrl'
-import { tradeFetch } from '@/lib/tradeFetch'
-import { listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
+import { HttpError, listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
 import type { WatchlistBody } from '@/types/requestBodies'
 
 const validateQuotes = withValidation<QuotesResponse>(QuotesResponseSchema, 'market/quotes')
@@ -25,9 +24,7 @@ export async function fetchQuotes(
   const params = new URLSearchParams()
   if (symbols.length > 0) params.set('symbols', symbols.join(','))
   if (contractKeys.length > 0) params.set('contract_keys', contractKeys.join(','))
-  const res = await tradeFetch(marketUrl(`/quotes?${params}`))
-  if (!res.ok) throw new Error(`Market /quotes: ${res.status}`)
-  return validateQuotes(await res.json())
+  return validateQuotes(await requestJson(marketUrl(`/quotes?${params}`), { label: `Market /quotes` }))
 }
 
 export interface QuotesCleanupResponse {
@@ -37,13 +34,11 @@ export interface QuotesCleanupResponse {
 
 /** Unsubscribe stale on-demand STK symbols not in keepSymbols (Wave 2 cleanup). */
 export async function postQuotesCleanup(keepSymbols: string[]): Promise<QuotesCleanupResponse> {
-  const res = await tradeFetch(marketUrl('/quotes/cleanup'), {
+  const data = await requestJson<Partial<QuotesCleanupResponse>>(marketUrl('/quotes/cleanup'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ keep_symbols: keepSymbols }),
+    body: { keep_symbols: keepSymbols },
+    label: 'Market /quotes/cleanup',
   })
-  if (!res.ok) throw new Error(`Market /quotes/cleanup: ${res.status}`)
-  const data = (await res.json()) as Partial<QuotesCleanupResponse>
   return {
     removed: Array.isArray(data.removed) ? data.removed : [],
     kept: Array.isArray(data.kept) ? data.kept : [],
@@ -59,14 +54,17 @@ export interface QuotesRefreshOptionsResponse {
 export async function postQuotesRefreshOptions(
   contractKeys: string[],
 ): Promise<QuotesRefreshOptionsResponse | null> {
-  const res = await tradeFetch(marketUrl('/quotes/refresh-options'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contract_keys: contractKeys }),
-  })
-  if (res.status === 404) return null
-  if (!res.ok) throw new Error(`Market /quotes/refresh-options: ${res.status}`)
-  const data = (await res.json()) as Partial<QuotesRefreshOptionsResponse>
+  let data: Partial<QuotesRefreshOptionsResponse>
+  try {
+    data = await requestJson<Partial<QuotesRefreshOptionsResponse>>(marketUrl('/quotes/refresh-options'), {
+      method: 'POST',
+      body: { contract_keys: contractKeys },
+      label: 'Market /quotes/refresh-options',
+    })
+  } catch (e) {
+    if (e instanceof HttpError && e.status === 404) return null
+    throw e
+  }
   return {
     registered: typeof data.registered === 'number' ? data.registered : 0,
     contract_keys: Array.isArray(data.contract_keys) ? data.contract_keys : [],
@@ -75,9 +73,7 @@ export async function postQuotesRefreshOptions(
 
 export async function fetchBenchmarks(symbols: string[]): Promise<BenchmarkResponse> {
   const params = new URLSearchParams({ symbols: symbols.join(',') })
-  const res = await tradeFetch(marketUrl(`/bars/benchmark?${params}`))
-  if (!res.ok) throw new Error(`Market /bars/benchmark: ${res.status}`)
-  return res.json() as Promise<BenchmarkResponse>
+  return requestJson<BenchmarkResponse>(marketUrl(`/bars/benchmark?${params}`), { label: `Market /bars/benchmark` })
 }
 
 export async function fetchWatchlist(): Promise<WatchlistResponse> {
@@ -87,9 +83,7 @@ export async function fetchWatchlist(): Promise<WatchlistResponse> {
 
 export async function fetchBarStats(symbol: string): Promise<BarStatsResponse> {
   const params = new URLSearchParams({ symbol: symbol.trim().toUpperCase() })
-  const res = await tradeFetch(marketUrl(`/bars/stats?${params}`))
-  if (!res.ok) throw new Error(`Market /bars/stats: ${res.status}`)
-  return res.json() as Promise<BarStatsResponse>
+  return requestJson<BarStatsResponse>(marketUrl(`/bars/stats?${params}`), { label: `Market /bars/stats` })
 }
 
 export async function fetchBars(
@@ -102,9 +96,7 @@ export async function fetchBars(
     period,
     limit: String(limit),
   })
-  const res = await tradeFetch(marketUrl(`/bars?${params}`))
-  if (!res.ok) throw new Error(`Market /bars: ${res.status}`)
-  return res.json() as Promise<BarsResponse>
+  return requestJson<BarsResponse>(marketUrl(`/bars?${params}`), { label: `Market /bars` })
 }
 
 export async function fetchOptionBars(params: {
@@ -126,9 +118,7 @@ export async function fetchOptionBars(params: {
     limit: String(params.limit ?? 100),
     source: params.source ?? 'massive',
   })
-  const res = await tradeFetch(marketUrl(`/bars?${q}`))
-  if (!res.ok) throw new Error(`Market /bars (option): ${res.status}`)
-  return res.json() as Promise<BarsResponse>
+  return requestJson<BarsResponse>(marketUrl(`/bars?${q}`), { label: `Market /bars (option)` })
 }
 
 /** `WatchlistBody` (api 0.3.1): strict types, `strike` a number. */
@@ -209,7 +199,5 @@ export async function fetchMarketHolidays(
   const params = new URLSearchParams()
   if (year != null) params.set('year', String(year))
   if (exchange?.trim()) params.set('exchange', exchange.trim())
-  const res = await tradeFetch(marketUrl(`/market/holidays?${params}`))
-  if (!res.ok) throw new Error(`Market /holidays: ${res.status}`)
-  return res.json()
+  return requestJson(marketUrl(`/market/holidays?${params}`), { label: `Market /holidays` })
 }

@@ -9,9 +9,7 @@ import { httpFailure, listItems, requestJson } from '@/lib/http'
 const validateStatus = withValidation<StatusResponse>(StatusResponseSchema, 'monitor/status')
 
 export async function fetchMonitorStatus(): Promise<StatusResponse> {
-  const res = await tradeFetch(monitorUrl('/status'))
-  if (!res.ok) throw new Error(`Monitor /status: ${res.status}`)
-  return validateStatus(await res.json())
+  return validateStatus(await requestJson(monitorUrl('/status'), { label: `Monitor /status` }))
 }
 
 export async function postRefreshAccounts(signal?: AbortSignal): Promise<{ ok: boolean; message?: string; error?: string }> {

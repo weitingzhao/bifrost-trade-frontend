@@ -8,9 +8,9 @@
  * Positions page uses. One rule, one implementation, two readers.
  */
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import { portfolioUrl } from '@/lib/devApiUrl'
 import { ShortLegsResponseSchema } from '@/lib/schemas/portfolio'
-import { tradeFetch } from '@/lib/tradeFetch'
 
 export interface ShortLeg {
   account_id?: string | null
@@ -32,7 +32,5 @@ export interface ShortLegsResponse {
 const validate = withValidation<ShortLegsResponse>(ShortLegsResponseSchema, 'portfolio/short-legs')
 
 export async function fetchShortLegs(signal?: AbortSignal): Promise<ShortLegsResponse> {
-  const res = await tradeFetch(portfolioUrl('/portfolio/short-legs'), { signal })
-  if (!res.ok) throw new Error(`Portfolio /portfolio/short-legs: ${res.status}`)
-  return validate(await res.json())
+  return validate(await requestJson(portfolioUrl('/portfolio/short-legs'), { label: `Portfolio /portfolio/short-legs`, signal }))
 }

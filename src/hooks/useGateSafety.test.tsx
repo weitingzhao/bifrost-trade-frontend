@@ -14,7 +14,7 @@ function wrap(qc: QueryClient) {
 }
 
 function answer(status: number, body: unknown) {
-  return vi.fn(async (url: string) => ({ url, ok: status < 400, status, json: async () => body }))
+  return vi.fn<(url: string) => Promise<Response>>(async () => new Response(JSON.stringify(body), { status }))
 }
 
 describe('useGateSafetyDefaults', () => {
@@ -41,7 +41,8 @@ describe('useGateSafetyDefaults', () => {
     const { result } = renderHook(() => useGateSafetyDefaults(), { wrapper: wrap(qc) })
 
     await waitFor(() => expect(result.current.isError).toBe(true))
-    expect(result.current.error?.message).toBe('Strategy /gate-safety/defaults: 503')
+    // The server's reason (TD-50: the shared client reads detail ?? error ?? message).
+    expect(result.current.error?.message).toBe('down')
     expect(result.current.data).toBeUndefined()
   })
 

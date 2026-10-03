@@ -4,7 +4,31 @@ import { OptionSnapshotsPgResponseSchema } from '@/lib/schemas/optionDiscovery'
 
 import { marketDataPluginUrl, tradeResearchUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
-import { reasonOf } from '@/lib/http'
+import { httpFailure, reasonOf, requestJson } from '@/lib/http'
+
+type Refusal = { ok: false; error: string }
+
+/** The body of a Trade research read, or `{ ok: false, error }` with the server's reason. A network error still throws. */
+async function readOrRefusal<T extends object>(url: string, label: string): Promise<T | Refusal> {
+  try {
+    return await requestJson<T>(url, { label })
+  } catch (e) {
+    return { ok: false, error: httpFailure(e) }
+  }
+}
+
+function isRefusal(v: object): v is Refusal {
+  return 'ok' in v && v.ok === false && 'error' in v
+}
+
+/** What GET /research/option-snapshots sends, before rows are mapped. */
+interface SnapshotsWire {
+  symbol?: string
+  expiration?: string
+  underlying_price?: unknown
+  rows?: Record<string, unknown>[]
+  warning?: unknown
+}
 
 function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
   return {
@@ -59,13 +83,12 @@ export async function fetchOptionSnapshotsPg(
   const e = (expiration || '').trim()
   const q = new URLSearchParams({ symbol: s, expiration: e, source })
   if (strikesCsv?.trim()) q.set('strikes', strikesCsv.trim())
-  const r = await tradeFetch(`${tradeResearchUrl('/research/option-snapshots')}?${q.toString()}`)
-  const j = await r.json().catch(() => ({}))
   // api 0.5.0: a refusal is its status with `{ detail }` (TD-16); only a success is checked for shape.
-  if (!r.ok) return { symbol: s, expiration: e, rows: [], error: reasonOf(j) ?? `HTTP ${r.status}` }
+  const j = await readOrRefusal<SnapshotsWire>(`${tradeResearchUrl('/research/option-snapshots')}?${q.toString()}`, 'GET /research/option-snapshots')
+  if (isRefusal(j)) return { symbol: s, expiration: e, rows: [], error: j.error }
   withValidation(OptionSnapshotsPgResponseSchema, 'fetchOptionSnapshotsPg')(j)
   const rows: OptionSnapshotRow[] = Array.isArray(j.rows)
-    ? j.rows.map((row: Record<string, unknown>) => mapSnapshotRow(row))
+    ? j.rows.map((row) => mapSnapshotRow(row))
     : []
   return {
     symbol: j.symbol ?? s,
@@ -161,8 +184,11 @@ export async function fetchLiquiditySummary(
     right: (right || '').trim(),
     source,
   })
-  const r = await tradeFetch(`${tradeResearchUrl('/research/option-contract/liquidity-summary')}?${q.toString()}`)
-  const j = await r.json().catch(() => ({}))
+  const r = await readOrRefusal<LiquiditySummaryResponse>(
+    `${tradeResearchUrl('/research/option-contract/liquidity-summary')}?${q.toString()}`,
+    'GET /research/option-contract/liquidity-summary',
+  )
+  const j: Partial<LiquiditySummaryResponse> & { error?: string } = r
   return {
     ok: Boolean(j.ok),
     symbol: j.symbol,
@@ -194,8 +220,11 @@ export async function fetchRelativeValue(
     right: (right || '').trim(),
     source,
   })
-  const r = await tradeFetch(`${tradeResearchUrl('/research/option-contract/relative-value')}?${q.toString()}`)
-  const j = await r.json().catch(() => ({}))
+  const r = await readOrRefusal<RelativeValueResponse>(
+    `${tradeResearchUrl('/research/option-contract/relative-value')}?${q.toString()}`,
+    'GET /research/option-contract/relative-value',
+  )
+  const j: Partial<RelativeValueResponse> & { error?: string } = r
   return {
     ok: Boolean(j.ok),
     label: j.label ?? null,

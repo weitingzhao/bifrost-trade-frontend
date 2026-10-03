@@ -17,8 +17,7 @@ import {
   ScreenerResponseSchema,
   TickerOverviewSchema,
 } from '@/lib/schemas/researchData'
-import { tradeFetch } from '@/lib/tradeFetch'
-import { reasonOf } from '@/lib/http'
+import { httpFailure, requestJson } from '@/lib/http'
 
 const validateScreener = withValidation<ScreenerResponse>(
   ScreenerResponseSchema,
@@ -38,16 +37,12 @@ export async function fetchScreenerResults(filters: ScreenerFilters): Promise<Sc
     Object.entries(filters).filter(([, v]) => v !== null && v !== undefined),
   )
   try {
-    const res = await tradeFetch(url, {
+    const j = await requestJson<ScreenerResponse>(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body,
       signal: controller.signal,
+      label: 'POST /research/screener',
     })
-    const j = await res.json().catch(() => ({})) as ScreenerResponse
-    if (!res.ok) {
-      throw new Error(reasonOf(j) ?? `POST /research/screener: ${res.status}`)
-    }
     return validateScreener({ ...j, groups: j.groups ?? [] })
   } finally {
     clearTimeout(timeout)
@@ -75,10 +70,8 @@ export async function fetchGreeks(params: FetchGreeksParams): Promise<GreeksResp
     if (params.expiry) qs.set('expiry', params.expiry)
     if (params.right) qs.set('right', params.right)
     if (params.limit != null) qs.set('limit', String(params.limit))
-    const res = await tradeFetch(tradeResearchUrl(`/research/greeks?${qs}`))
-    const raw = await res.json().catch(() => ({}))
-    // api 0.5.0: a refusal is its status with `{ detail }` (TD-16), not a 200 body.
-    if (!res.ok) throw new Error(reasonOf(raw) ?? `GET /research/greeks: ${res.status}`)
+    // api 0.5.0: a refusal is its status with `{ detail }` (TD-16); it lands in the catch below.
+    const raw = await requestJson<unknown>(tradeResearchUrl(`/research/greeks?${qs}`), { label: 'GET /research/greeks' })
     // The coercion below already keeps the UI safe; the schema is here to say
     // so in dev when the shape moves, which the coercion never does.
     const j = validateGreeksShape(raw) as Record<string, unknown>
@@ -110,9 +103,11 @@ export async function fetchGreeksAvailableDates(symbol: string): Promise<string[
   const s = (symbol || '').trim().toUpperCase()
   if (!s) return []
   try {
-    const res = await tradeFetch(tradeResearchUrl(`/research/greeks/available-dates?symbol=${encodeURIComponent(s)}`))
-    const j = await res.json().catch(() => ({})) as Record<string, unknown>
-    if (Array.isArray(j)) return j as string[]
+    // Any failure reads as "no dates" (a fallback batch 4 of TD-50 decides on).
+    const j = await requestJson<Record<string, unknown> | string[]>(
+      tradeResearchUrl(`/research/greeks/available-dates?symbol=${encodeURIComponent(s)}`),
+    )
+    if (Array.isArray(j)) return j
     if (Array.isArray(j.dates)) return j.dates as string[]
     return []
   } catch {
@@ -122,42 +117,33 @@ export async function fetchGreeksAvailableDates(symbol: string): Promise<string[
 
 export async function fetchTickerOverview(symbol: string): Promise<TickerOverview> {
   const sym = symbol.trim().toUpperCase()
-  const res = await tradeFetch(tradeResearchUrl(`/research/data/ticker-overview/${encodeURIComponent(sym)}`))
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new Error(`GET /research/data/ticker-overview: ${res.status} — ${detail}`)
-  }
-  return res.json().then(validateTickerOverview)
+  return requestJson(tradeResearchUrl(`/research/data/ticker-overview/${encodeURIComponent(sym)}`), {
+    label: 'GET /research/data/ticker-overview',
+  }).then(validateTickerOverview)
 }
 
 export async function fetchSymbolFundamentalConditions(symbol: string): Promise<FundamentalConditionsData> {
   const sym = symbol.trim().toUpperCase()
-  const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/fundamental-conditions?symbol=${encodeURIComponent(sym)}`))
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new Error(`GET /research/data/readiness/fundamental-conditions: ${res.status} — ${detail}`)
-  }
-  return res.json() as Promise<FundamentalConditionsData>
+  return requestJson<FundamentalConditionsData>(
+    tradeResearchUrl(`/research/data/readiness/fundamental-conditions?symbol=${encodeURIComponent(sym)}`),
+    { label: 'GET /research/data/readiness/fundamental-conditions' },
+  )
 }
 
 export async function fetchSymbolTechnicalConditions(symbol: string): Promise<TechnicalConditionsData> {
   const sym = symbol.trim().toUpperCase()
-  const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/symbol-technical-conditions?symbol=${encodeURIComponent(sym)}`))
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new Error(`GET /research/data/readiness/symbol-technical-conditions: ${res.status} — ${detail}`)
-  }
-  return res.json() as Promise<TechnicalConditionsData>
+  return requestJson<TechnicalConditionsData>(
+    tradeResearchUrl(`/research/data/readiness/symbol-technical-conditions?symbol=${encodeURIComponent(sym)}`),
+    { label: 'GET /research/data/readiness/symbol-technical-conditions' },
+  )
 }
 
 export async function fetchSymbolFundRawData(symbol: string): Promise<FundRawData> {
   const sym = symbol.trim().toUpperCase()
-  const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/symbol-fundamental-raw-data?symbol=${encodeURIComponent(sym)}`))
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new Error(`GET /research/data/readiness/symbol-fundamental-raw-data: ${res.status} — ${detail}`)
-  }
-  return res.json() as Promise<FundRawData>
+  return requestJson<FundRawData>(
+    tradeResearchUrl(`/research/data/readiness/symbol-fundamental-raw-data?symbol=${encodeURIComponent(sym)}`),
+    { label: 'GET /research/data/readiness/symbol-fundamental-raw-data' },
+  )
 }
 
 export async function fetchSymbolStatements(symbol: string): Promise<SymbolStatementsData> {
@@ -171,10 +157,15 @@ export async function fetchSymbolStatements(symbol: string): Promise<SymbolState
     short_volume: [],
   }
   if (!sym) return { ...empty, error: 'symbol is required' }
-  const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/symbol-statements?symbol=${encodeURIComponent(sym)}`))
-  const j = await res.json().catch(() => ({}))
-  if (!res.ok) return { ...empty, error: reasonOf(j) ?? `HTTP ${res.status}` }
-  return j as SymbolStatementsData
+  try {
+    return await requestJson<SymbolStatementsData>(
+      tradeResearchUrl(`/research/data/readiness/symbol-statements?symbol=${encodeURIComponent(sym)}`),
+      { label: 'GET /research/data/readiness/symbol-statements' },
+    )
+  } catch (e) {
+    // A refusal is the empty sheet with the server's reason; a network error still throws.
+    return { ...empty, error: httpFailure(e) }
+  }
 }
 
 export async function fetchSymbolOptionPcr(
@@ -188,14 +179,7 @@ export async function fetchSymbolOptionPcr(
     `/research/data/readiness/symbol-option-pcr?symbol=${encodeURIComponent(sym)}&lookback_days=${lookbackDays}`,
   )
   try {
-    const res = await tradeFetch(url)
-    const j = await res.json().catch(() => ({})) as Record<string, unknown>
-    if (!res.ok) {
-      const detail = typeof j.detail === 'string' ? j.detail : undefined
-      const err = typeof j.error === 'string' ? j.error : undefined
-      return { ...empty, error: detail ?? err ?? `HTTP ${res.status}` }
-    }
-    return j as unknown as SymbolOptionPcrData
+    return await requestJson<SymbolOptionPcrData>(url, { label: 'GET /research/data/readiness/symbol-option-pcr' })
   } catch (e) {
     return { ...empty, error: e instanceof Error ? e.message : 'Network error' }
   }

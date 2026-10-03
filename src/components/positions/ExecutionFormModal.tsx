@@ -21,6 +21,7 @@ import {
   datetimeLocalToEpochSeconds,
   epochSecondsToDatetimeLocal,
 } from '@/components/positions/executionFormTime'
+import { optContractKey } from '@/utils/contractKey'
 
 interface Props {
   open: boolean
@@ -194,9 +195,9 @@ function ExecutionFormModalBody({
 
   function buildContractKey(sym: string): string | undefined {
     if (secType !== 'OPT') return undefined
+    // The positions format (TD-25): 82.25 stays 82.25 (toFixed(1) wrote 82.3, another contract).
     const rawStrike = strike ? Number(strike) : 0
-    const strikeStr = Number.isFinite(rawStrike) ? rawStrike.toFixed(1) : '0.0'
-    return `${sym}|OPT|${expiry || ''}|${strikeStr}|${right}`
+    return optContractKey(sym, expiry || '', Number.isFinite(rawStrike) ? rawStrike : 0, right)
   }
 
   function signedQuantity(q: number): number {

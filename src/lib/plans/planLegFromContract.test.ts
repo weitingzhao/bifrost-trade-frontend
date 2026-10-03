@@ -10,7 +10,8 @@ describe('planLegsFromContract', () => {
         strike: 245,
         expiry: '2026-11-20',
         ratio: 1,
-        contract_key: 'NVDA|OPT|20261120|245|C',
+        // The positions format (TD-25), as core writes it: a whole strike keeps one decimal.
+        contract_key: 'NVDA|OPT|20261120|245.0|C',
       },
     ])
     expect(planLegsFromContract('NVDA 2026-11-20 245C')[0]).not.toHaveProperty('side')
@@ -24,6 +25,7 @@ describe('planLegsFromContract', () => {
 
   it('keeps a fractional strike as written', () => {
     expect(planLegsFromContract('SPY 2026-10-16 612.5P')[0]?.strike).toBe(612.5)
+    expect(planLegsFromContract('SPY 2026-10-16 612.5P')[0]?.contract_key).toBe('SPY|OPT|20261016|612.5|P')
   })
 
   it('returns nothing rather than a guess', () => {

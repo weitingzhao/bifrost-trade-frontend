@@ -8,6 +8,7 @@
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import { expiryEarnings, firstListedAfter, shortDate, type ExpiryEarnings } from '@/utils/earningsEstimate'
 import type { ChainContract } from '@/utils/optionChain'
+import { optContractKey } from '@/utils/contractKey'
 
 /**
  * Calendar days from `today` to `expiry` (both `YYYY-MM-DD`; `today` the New
@@ -299,9 +300,7 @@ export function contractChecks(
   return { oiPctile, sameSide: side.length, volOi, warnings }
 }
 
-/** The watchlist key, as the Trade API builds it (`contract_key_from_parts`). */
+/** The watchlist key, as the Trade API builds it (`contract_key_from_parts`) — the one builder, `optContractKey`. */
 export function optionWatchlistKey(symbol: string, expiry: string, strike: number, right: 'C' | 'P'): string {
-  const exp = expiry.replace(/-/g, '').slice(0, 8)
-  const k = Number.isInteger(strike) ? strike.toFixed(1) : String(strike)
-  return `${symbol.trim().toUpperCase()}|OPT|${exp}|${k}|${right}`
+  return optContractKey(symbol, expiry, strike, right)
 }

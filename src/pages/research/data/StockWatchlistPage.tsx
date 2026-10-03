@@ -40,6 +40,7 @@ import { WatchingTab } from './watchlist/WatchingTab'
 import { SizingTab } from './watchlist/SizingTab'
 import { PositionsTab } from './watchlist/PositionsTab'
 import { AddOptionModal } from './watchlist/AddOptionModal'
+import { optContractKey, optExpiryDigits } from '@/utils/contractKey'
 
 export default function StockWatchlistPage() {
   const { data: status } = useMonitorStatus()
@@ -303,12 +304,14 @@ export default function StockWatchlistPage() {
       if (!addOptionSymbol) return
       const sym = addOptionSymbol.trim().toUpperCase()
       const rightLetter = fields.right === 'CALL' ? 'C' : 'P'
-      const contract_key = `${sym}|OPT|${fields.expiry}|${fields.strike}|${rightLetter}`
+      // The positions format (TD-25): `80.0`, and a 6-digit expiry read as 20YYMMDD.
+      const expiry = optExpiryDigits(fields.expiry)
+      const contract_key = optContractKey(sym, expiry, fields.strike, rightLetter)
       await addItem.mutateAsync({
         contract_key,
         symbol: sym,
         sec_type: 'OPT',
-        expiry: fields.expiry,
+        expiry,
         strike: fields.strike,
         option_right: rightLetter,
         source: 'manual',

@@ -14,6 +14,7 @@ import { OptionContractDetailPanel } from './OptionContractDetailPanel'
 import { computeDerivedMetrics, normalizeOptionRight, parseDteNumeric } from '@/utils/optionDiscovery/optionContractMetrics'
 import { useOptionContractLiquidity } from './useOptionContractLiquidity'
 import { THETA_BURN_DAYS } from '@/lib/optionSemantics'
+import { optContractKey } from '@/utils/contractKey'
 
 function expirationDigitsFromPosition(pos: OpenOptionPosition): string {
   const fromKey = parseOptionContractKey(pos.contract_key).expiry
@@ -227,7 +228,7 @@ export function OptionContractDetailFromOpenPosition({
     async (row: OptionSnapshotRow) => {
       const exp = expirationDigits
       if (!symbol || !exp) return
-      const contract_key = `${symbol}|OPT|${exp}|${row.strike}|${row.right}`
+      const contract_key = optContractKey(symbol, exp, row.strike, row.right)
       try {
         await postWatchlistItem({
           contract_key,

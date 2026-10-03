@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 import { fmtUsd } from '@/utils/positions'
 import type { IbAccountSnapshot } from '@/types/monitor'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
+import { optContractKey } from '@/utils/contractKey'
 
 interface Props {
   accounts: IbAccountSnapshot[]
@@ -22,7 +23,7 @@ function computeOverviewTotals(accounts: IbAccountSnapshot[]) {
         const strike = Number(position.strike) || 0
         const right = (position.right ?? '').toUpperCase().slice(0, 1)
         optKeys.add(
-          position.contract_key ?? `${position.symbol ?? ''}|OPT|${expiry}|${strike}|${right}`,
+          position.contract_key ?? optContractKey(position.symbol ?? '', expiry, strike, right),
         )
       } else {
         stockLines += 1

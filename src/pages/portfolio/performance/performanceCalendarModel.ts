@@ -84,6 +84,11 @@ export function buildDayMapFromBulk(
   return maps
 }
 
+/**
+ * Fallback when the bulk load is missing: each tab reads only its own sec type
+ * from `calendar_by_sec_type` (OPT rows are core's closed option pairs).
+ * `perf.calendar` is every fill of every asset, so it is not a source for any tab.
+ */
 export function buildDayMapFromApi(
   perf: PerformanceResponse | undefined,
 ): Record<CalendarAssetTab, Map<string, DayData>> {
@@ -92,16 +97,6 @@ export function buildDayMapFromApi(
     stocks: new Map(),
     fixed_income: new Map(),
     cash_like: new Map(),
-  }
-  for (const e of perf?.calendar ?? []) {
-    if (e.period_label) {
-      maps.options.set(e.period_label, {
-        realized: e.net_pnl,
-        unrealized: 0,
-        fillCount: fillCountOf(e),
-        notional: 0,
-      })
-    }
   }
   for (const e of perf?.calendar_by_sec_type ?? []) {
     if (!e.period_label) continue

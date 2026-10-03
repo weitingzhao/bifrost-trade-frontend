@@ -3,7 +3,6 @@ import { withValidation } from '@/lib/apiValidation'
 import { OptionSnapshotsPgResponseSchema } from '@/lib/schemas/optionDiscovery'
 
 import { marketDataPluginUrl, tradeResearchUrl } from '@/lib/devApiUrl'
-import { tradeFetch } from '@/lib/tradeFetch'
 import { httpFailure, reasonOf, requestJson } from '@/lib/http'
 
 type Refusal = { ok: false; error: string }
@@ -111,19 +110,11 @@ export async function fetchGreeksCoverage(
   const s = (symbol || '').trim()
   if (!s) return { ok: false, error: 'symbol is required' }
   const q = new URLSearchParams({ symbol: s })
-  const r = await tradeFetch(`${marketDataPluginUrl('/market/coverage/greeks')}?${q.toString()}`)
-  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
-  if (!r.ok || j.ok === false) {
-    return {
-      ok: false,
-      error:
-        typeof j.detail === 'string'
-          ? j.detail
-          : typeof j.error === 'string'
-            ? j.error
-            : `HTTP ${r.status}`,
-    }
-  }
+  const j = await readOrRefusal<{ rows?: Record<string, unknown>[] }>(
+    `${marketDataPluginUrl('/market/coverage/greeks')}?${q.toString()}`,
+    'Market Data Plugin /market/coverage/greeks',
+  )
+  if (isRefusal(j)) return { ok: false, error: j.error }
   const rows = Array.isArray(j.rows) ? j.rows : []
   const row =
     (rows.find(

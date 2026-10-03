@@ -2,6 +2,7 @@ import { marketDataPluginUrl, researchEngineUrl } from '@/lib/devApiUrl'
 import type { IvPercentileRow } from '@/types/ivRadar'
 import { numOrNull } from '@/lib/researchParseHelpers'
 import { withValidation } from '@/lib/apiValidation'
+import { HttpError, requestJson } from '@/lib/http'
 import {
   IvPercentileRowSchema,
 } from '@/lib/schemas/researchData'
@@ -38,17 +39,15 @@ export async function fetchIvPercentile(symbol: string): Promise<IvPercentileRow
   const sym = (symbol || '').trim().toUpperCase()
   if (!sym) return null
   const q = new URLSearchParams({ symbol: sym })
-  const r = await fetch(`${marketDataPluginUrl('/market/analytics/iv-percentile')}?${q.toString()}`)
-  if (r.status === 404) return null
-  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
-  if (!r.ok) {
-    const detail =
-      typeof j.detail === 'string'
-        ? j.detail
-        : typeof j.error === 'string'
-          ? j.error
-          : `HTTP ${r.status}`
-    throw new Error(detail)
+  let j: Record<string, unknown>
+  try {
+    j = await requestJson<Record<string, unknown>>(`${marketDataPluginUrl('/market/analytics/iv-percentile')}?${q.toString()}`, {
+      label: 'Market Data Plugin /market/analytics/iv-percentile',
+    })
+  } catch (e) {
+    // No rows for the symbol is a 404 on the plugin — an answer, not a failure.
+    if (e instanceof HttpError && e.status === 404) return null
+    throw e
   }
   const rows = Array.isArray(j.rows) ? j.rows : []
   if (rows.length === 0) return null

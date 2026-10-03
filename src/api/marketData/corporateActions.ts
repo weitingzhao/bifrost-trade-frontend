@@ -16,6 +16,7 @@
  */
 import { marketDataPluginUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import { CorporateActionsResponseSchema } from '@/lib/schemas/marketData'
 
 export interface CorporateActionRow {
@@ -54,9 +55,10 @@ export async function fetchCorporateActions(
   signal?: AbortSignal,
 ): Promise<CorporateActionsResponse> {
   const params = new URLSearchParams({ symbol, limit: String(limit) })
-  const res = await fetch(`${marketDataPluginUrl('/market/corporate-actions')}?${params.toString()}`, {
-    signal,
-  })
-  if (!res.ok) throw new Error(`corporate-actions ${symbol}: ${res.status}`)
-  return validate(await res.json())
+  return validate(
+    await requestJson(`${marketDataPluginUrl('/market/corporate-actions')}?${params.toString()}`, {
+      signal,
+      label: `corporate-actions ${symbol}`,
+    }),
+  )
 }

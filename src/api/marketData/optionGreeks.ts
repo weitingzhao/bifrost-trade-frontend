@@ -14,6 +14,7 @@
  */
 import { marketDataPluginUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import { ChainExpirationsResponseSchema, OptionSnapshotsResponseSchema } from '@/lib/schemas/marketData'
 
 export interface VendorGreeksRow {
@@ -61,9 +62,9 @@ export async function fetchOptionSnapshots(
       ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
       : expiry
   const qs = new URLSearchParams({ symbol, expiration: iso, limit: String(limit) })
-  const res = await fetch(marketDataPluginUrl(`/market/options/snapshots?${qs}`))
-  if (!res.ok) throw new Error(`market-data /options/snapshots: ${res.status}`)
-  const j = validateSnapshots(await res.json()) as Partial<OptionSnapshotsResponse>
+  const j = validateSnapshots(
+    await requestJson(marketDataPluginUrl(`/market/options/snapshots?${qs}`), { label: 'market-data /options/snapshots' }),
+  ) as Partial<OptionSnapshotsResponse>
   return {
     symbol: j.symbol ?? symbol,
     expiration: j.expiration ?? iso,
@@ -87,9 +88,9 @@ const validateExpirations = withValidation<{ symbol: string; expirations: string
  */
 export async function fetchChainExpirations(symbol: string, today: string): Promise<string[]> {
   const qs = new URLSearchParams({ symbol })
-  const res = await fetch(marketDataPluginUrl(`/market/options/expirations?${qs}`))
-  if (!res.ok) throw new Error(`market-data /options/expirations: ${res.status}`)
-  const j = validateExpirations(await res.json()) as { expirations?: unknown }
+  const j = validateExpirations(
+    await requestJson(marketDataPluginUrl(`/market/options/expirations?${qs}`), { label: 'market-data /options/expirations' }),
+  ) as { expirations?: unknown }
   const list = Array.isArray(j.expirations) ? j.expirations.filter((e): e is string => typeof e === 'string') : []
   return [...new Set(list.map((e) => e.slice(0, 10)))].filter((e) => e >= today).sort()
 }

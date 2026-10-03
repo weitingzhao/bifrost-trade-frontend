@@ -19,6 +19,7 @@
  */
 import { marketDataPluginUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import { OptionDailyResponseSchema, StockDailyResponseSchema } from '@/lib/schemas/marketData'
 
 export interface DailyBar {
@@ -82,9 +83,9 @@ export async function fetchOptionDailyBars(
   to: string,
 ): Promise<DailyBar[]> {
   const qs = new URLSearchParams({ option_ticker: optionTicker, from, to, limit: '5000' })
-  const res = await fetch(marketDataPluginUrl(`/market/options/daily?${qs}`))
-  if (!res.ok) throw new Error(`market-data /options/daily: ${res.status}`)
-  const j = validateOptionDaily(await res.json()) as Partial<OptionDailyResponse>
+  const j = validateOptionDaily(
+    await requestJson(marketDataPluginUrl(`/market/options/daily?${qs}`), { label: 'market-data /options/daily' }),
+  ) as Partial<OptionDailyResponse>
   const rows = Array.isArray(j.rows) ? j.rows : []
   return rows
     .map((r) => ({
@@ -110,9 +111,9 @@ export async function fetchStockDailyCloses(symbol: string, from: string, to: st
     ? Math.min(3000, Math.max(1, Math.ceil((Date.now() - start) / 86_400_000) + 5))
     : 400
   const qs = new URLSearchParams({ symbols: symbol, days: String(days) })
-  const res = await fetch(marketDataPluginUrl(`/market/stocks/db/bars/daily?${qs}`))
-  if (!res.ok) throw new Error(`market-data /stocks/db/bars/daily: ${res.status}`)
-  const j = validateStockDaily(await res.json()) as Partial<StockDailyResponse>
+  const j = validateStockDaily(
+    await requestJson(marketDataPluginUrl(`/market/stocks/db/bars/daily?${qs}`), { label: 'market-data /stocks/db/bars/daily' }),
+  ) as Partial<StockDailyResponse>
   const rows = j.data?.[symbol] ?? []
   return rows
     .map((r) => ({
@@ -141,9 +142,10 @@ export async function fetchDailyClosesMulti(
 ): Promise<Record<string, { date: string; close: number | null }[]>> {
   if (symbols.length === 0) return {}
   const qs = new URLSearchParams({ symbols: symbols.join(','), days: String(days) })
-  const res = await fetch(marketDataPluginUrl(`/market/stocks/db/bars/daily?${qs}`))
-  if (!res.ok) throw new Error(`market-data /stocks/db/bars/daily: ${res.status}`)
-  const j = (await res.json()) as { data?: Record<string, { bar_time: string; close: number | null }[]> }
+  const j = await requestJson<{ data?: Record<string, { bar_time: string; close: number | null }[]> }>(
+    marketDataPluginUrl(`/market/stocks/db/bars/daily?${qs}`),
+    { label: 'market-data /stocks/db/bars/daily' },
+  )
   const out: Record<string, { date: string; close: number | null }[]> = {}
   for (const [sym, rows] of Object.entries(j.data ?? {})) {
     out[sym.toUpperCase()] = (rows ?? [])
@@ -173,9 +175,9 @@ export async function fetchOptionDailyByExpiry(
   to: string,
 ): Promise<Map<string, DailyBar[]>> {
   const qs = new URLSearchParams({ symbol, expiry, from, to, limit: '5000' })
-  const res = await fetch(marketDataPluginUrl(`/market/options/daily?${qs}`))
-  if (!res.ok) throw new Error(`market-data /options/daily: ${res.status}`)
-  const j = validateOptionDaily(await res.json()) as Partial<OptionDailyResponse>
+  const j = validateOptionDaily(
+    await requestJson(marketDataPluginUrl(`/market/options/daily?${qs}`), { label: 'market-data /options/daily' }),
+  ) as Partial<OptionDailyResponse>
   const byTicker = new Map<string, DailyBar[]>()
   for (const r of Array.isArray(j.rows) ? j.rows : []) {
     const list = byTicker.get(r.option_ticker) ?? []

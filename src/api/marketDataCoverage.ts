@@ -13,6 +13,7 @@
 import { z } from 'zod'
 import { withValidation } from '@/lib/apiValidation'
 import { marketDataPluginUrl } from '@/lib/devApiUrl'
+import { requestJson } from '@/lib/http'
 
 /**
  * The plugin ships on its own chain, so this guards the envelope rather than
@@ -45,7 +46,10 @@ export interface CoverageQuality {
 const vQuality = withValidation<CoverageQuality>(QualitySchema, 'market-data/coverage/quality-score')
 
 export async function fetchCoverageQuality(signal?: AbortSignal): Promise<CoverageQuality> {
-  const res = await fetch(marketDataPluginUrl('/market/coverage/quality-score'), { signal })
-  if (!res.ok) throw new Error(`Market Data Plugin /market/coverage/quality-score: HTTP ${res.status}`)
-  return vQuality(await res.json())
+  return vQuality(
+    await requestJson(marketDataPluginUrl('/market/coverage/quality-score'), {
+      signal,
+      label: 'Market Data Plugin /market/coverage/quality-score',
+    }),
+  )
 }

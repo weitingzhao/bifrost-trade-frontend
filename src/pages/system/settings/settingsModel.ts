@@ -184,6 +184,39 @@ export function flexStanding(
   }
 }
 
+/** One line of the read-only token reading: a slot and what the Secret holds for it. */
+export interface FlexTokenLine {
+  label: string
+  value: string
+}
+
+/**
+ * The Flex tokens as Settings shows them (TD-83): the last four per slot, never the
+ * value. Tokens live in the K8s Secret and are set with `make sync-flex-tokens`; the
+ * plugin refuses a token write (flex 0.8.0), so this is a reading, not a form.
+ */
+export function flexTokenLines(summary: FlexConfigSummary | undefined, secondaryOn: boolean): FlexTokenLine[] {
+  const t = summary?.tokens
+  const last4 = (set: boolean | undefined, l4: string | null | undefined) =>
+    set ? `…${l4 ?? '????'}` : 'no token set'
+  return [
+    { label: 'Token · host', value: last4(t?.host_token_set, t?.host_token_last4) },
+    {
+      label: 'Token · secondary',
+      value: secondaryOn ? last4(t?.secondary_token_set, t?.secondary_token_last4) : 'no secondary slot',
+    },
+  ]
+}
+
+/** `issued N days ago` from the Secret's issue date, or what is unknown about it. */
+export function flexTokenIssued(summary: FlexConfigSummary | undefined): string {
+  const t = summary?.tokens
+  if (!t?.issued_at) return 'issue date not recorded'
+  if (t.age_days == null) return `issued ${t.issued_at}`
+  const ago = t.age_days === 0 ? 'today' : `${t.age_days} day${t.age_days === 1 ? '' : 's'} ago`
+  return `issued ${ago} (${t.issued_at})`
+}
+
 export function flexRows(summary: FlexConfigSummary | undefined): [SettingRow, SettingRow, SettingRow] {
   const t = summary?.tokens
   const rows = summary?.query_rows ?? []
@@ -192,7 +225,7 @@ export function flexRows(summary: FlexConfigSummary | undefined): [SettingRow, S
     {
       id: 'flex-query',
       label: 'Flex Query',
-      what: 'Query id + token · the token shows as set, never the value',
+      what: 'Query id + token · the token is set in the K8s Secret',
       // Never the token — only whether one is set, and its last four, which is
       // what the plugin itself reports.
       reading: t?.host_token_set

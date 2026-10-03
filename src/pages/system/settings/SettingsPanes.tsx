@@ -42,7 +42,7 @@ import {
   AccountEditor,
   FlexQueryEditor,
   FlexRangeEditor,
-  FlexTokenEditor,
+  FlexTokenReading,
   YamlReading,
 } from './SettingsEditors'
 import {
@@ -179,7 +179,7 @@ export function FlexPane() {
           open={open === query.id}
           onToggle={() => toggle(query.id)}
           editor={
-            <FlexTokenEditor summary={flexConfig.data} secondaryOn={secondaryOn} onDone={close} />
+            <FlexTokenReading summary={flexConfig.data} secondaryOn={secondaryOn} />
           }
         />
         <RowWithEditor

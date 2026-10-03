@@ -6,7 +6,7 @@
  * router family answers {ok, ...} with error inline rather than by status.
  */
 import { z } from 'zod'
-import { researchUrl } from '@/lib/devApiUrl'
+import { tradeResearchUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { requestJson, type RequestJsonOptions } from '@/lib/http'
 
@@ -55,7 +55,7 @@ const validateFeedback = withValidation<{ ok: boolean; error?: string | null }>(
 
 /** `ok: false` throws with the store's `error` inside `requestJson`. */
 async function call<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
-  return validateFeedback(await requestJson(researchUrl(path), { ...init, label: 'feedback' })) as {
+  return validateFeedback(await requestJson(tradeResearchUrl(path), { ...init, label: 'feedback' })) as {
     ok: boolean
     error?: string | null
   } & T
@@ -115,5 +115,5 @@ export function replyFeedback(id: string, reply_md: string): Promise<{ report: F
 }
 
 export function feedbackImageUrl(id: string, seq: number): string {
-  return researchUrl(`/research/feedback/reports/${encodeURIComponent(id)}/images/${seq}`)
+  return tradeResearchUrl(`/research/feedback/reports/${encodeURIComponent(id)}/images/${seq}`)
 }

@@ -50,7 +50,14 @@ export function portfolioUrl(path: string): string {
   return domainUrl('portfolio', path)
 }
 
-export function researchUrl(path: string): string {
+/**
+ * The Trade API's research app (api-research, :8773, `/api/research/…`): screener,
+ * option discovery, Greeks, data readiness, feedback. Not the Research engine — that is
+ * `researchEngineUrl` (bifrost-research, `/api/plugin/research/…`). The two used to be
+ * `researchUrl` and `researchEngineUrl`, both taking `/research/…` paths, and a
+ * diagnosis has already gone to the wrong backend over it (debt TD-39).
+ */
+export function tradeResearchUrl(path: string): string {
   return domainUrl('research', path)
 }
 

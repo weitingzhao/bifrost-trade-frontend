@@ -1,4 +1,4 @@
-import { researchUrl } from '@/lib/devApiUrl'
+import { tradeResearchUrl } from '@/lib/devApiUrl'
 import type {
   ScreenerFilters,
   ScreenerResponse,
@@ -32,7 +32,7 @@ const validateTickerOverview = withValidation<TickerOverview>(
 export async function fetchScreenerResults(filters: ScreenerFilters): Promise<ScreenerResponse> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 60_000)
-  const url = researchUrl('/research/screener')
+  const url = tradeResearchUrl('/research/screener')
   const body = Object.fromEntries(
     Object.entries(filters).filter(([, v]) => v !== null && v !== undefined),
   )
@@ -74,7 +74,7 @@ export async function fetchGreeks(params: FetchGreeksParams): Promise<GreeksResp
     if (params.expiry) qs.set('expiry', params.expiry)
     if (params.right) qs.set('right', params.right)
     if (params.limit != null) qs.set('limit', String(params.limit))
-    const res = await tradeFetch(researchUrl(`/research/greeks?${qs}`))
+    const res = await tradeFetch(tradeResearchUrl(`/research/greeks?${qs}`))
     const raw = await res.json().catch(() => ({}))
     // The coercion below already keeps the UI safe; the schema is here to say
     // so in dev when the shape moves, which the coercion never does.
@@ -107,7 +107,7 @@ export async function fetchGreeksAvailableDates(symbol: string): Promise<string[
   const s = (symbol || '').trim().toUpperCase()
   if (!s) return []
   try {
-    const res = await tradeFetch(researchUrl(`/research/greeks/available-dates?symbol=${encodeURIComponent(s)}`))
+    const res = await tradeFetch(tradeResearchUrl(`/research/greeks/available-dates?symbol=${encodeURIComponent(s)}`))
     const j = await res.json().catch(() => ({})) as Record<string, unknown>
     if (Array.isArray(j)) return j as string[]
     if (Array.isArray(j.dates)) return j.dates as string[]
@@ -119,7 +119,7 @@ export async function fetchGreeksAvailableDates(symbol: string): Promise<string[
 
 export async function fetchTickerOverview(symbol: string): Promise<TickerOverview> {
   const sym = symbol.trim().toUpperCase()
-  const res = await tradeFetch(researchUrl(`/research/data/ticker-overview/${encodeURIComponent(sym)}`))
+  const res = await tradeFetch(tradeResearchUrl(`/research/data/ticker-overview/${encodeURIComponent(sym)}`))
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
     throw new Error(`GET /research/data/ticker-overview: ${res.status} — ${detail}`)
@@ -129,7 +129,7 @@ export async function fetchTickerOverview(symbol: string): Promise<TickerOvervie
 
 export async function fetchSymbolFundamentalConditions(symbol: string): Promise<FundamentalConditionsData> {
   const sym = symbol.trim().toUpperCase()
-  const res = await tradeFetch(researchUrl(`/research/data/readiness/fundamental-conditions?symbol=${encodeURIComponent(sym)}`))
+  const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/fundamental-conditions?symbol=${encodeURIComponent(sym)}`))
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
     throw new Error(`GET /research/data/readiness/fundamental-conditions: ${res.status} — ${detail}`)
@@ -139,7 +139,7 @@ export async function fetchSymbolFundamentalConditions(symbol: string): Promise<
 
 export async function fetchSymbolTechnicalConditions(symbol: string): Promise<TechnicalConditionsData> {
   const sym = symbol.trim().toUpperCase()
-  const res = await tradeFetch(researchUrl(`/research/data/readiness/symbol-technical-conditions?symbol=${encodeURIComponent(sym)}`))
+  const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/symbol-technical-conditions?symbol=${encodeURIComponent(sym)}`))
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
     throw new Error(`GET /research/data/readiness/symbol-technical-conditions: ${res.status} — ${detail}`)
@@ -149,7 +149,7 @@ export async function fetchSymbolTechnicalConditions(symbol: string): Promise<Te
 
 export async function fetchSymbolFundRawData(symbol: string): Promise<FundRawData> {
   const sym = symbol.trim().toUpperCase()
-  const res = await tradeFetch(researchUrl(`/research/data/readiness/symbol-fundamental-raw-data?symbol=${encodeURIComponent(sym)}`))
+  const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/symbol-fundamental-raw-data?symbol=${encodeURIComponent(sym)}`))
   if (!res.ok) {
     const detail = await res.text().catch(() => '')
     throw new Error(`GET /research/data/readiness/symbol-fundamental-raw-data: ${res.status} — ${detail}`)
@@ -168,7 +168,7 @@ export async function fetchSymbolStatements(symbol: string): Promise<SymbolState
     short_volume: [],
   }
   if (!sym) return { ...empty, error: 'symbol is required' }
-  const res = await tradeFetch(researchUrl(`/research/data/readiness/symbol-statements?symbol=${encodeURIComponent(sym)}`))
+  const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/symbol-statements?symbol=${encodeURIComponent(sym)}`))
   const j = await res.json().catch(() => ({}))
   if (!res.ok) return { ...empty, error: typeof j.error === 'string' ? j.error : `HTTP ${res.status}` }
   return j as SymbolStatementsData
@@ -181,7 +181,7 @@ export async function fetchSymbolOptionPcr(
   const sym = symbol.trim().toUpperCase()
   const empty: SymbolOptionPcrData = { ok: false, trend: [], chain_by_expiry: [] }
   if (!sym) return { ...empty, error: 'symbol is required' }
-  const url = researchUrl(
+  const url = tradeResearchUrl(
     `/research/data/readiness/symbol-option-pcr?symbol=${encodeURIComponent(sym)}&lookback_days=${lookbackDays}`,
   )
   try {

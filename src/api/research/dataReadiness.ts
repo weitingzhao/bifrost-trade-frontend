@@ -1,6 +1,6 @@
 import { withValidation } from '@/lib/apiValidation'
 import { SepaCriteriaStatsSchema } from '@/lib/schemas/stockScreener'
-import { researchUrl } from '@/lib/devApiUrl'
+import { tradeResearchUrl } from '@/lib/devApiUrl'
 import type {
   FundDistSymbolsResponse,
   MomentumFilterResponse,
@@ -62,7 +62,7 @@ const validateCriteriaStats = withValidation<SepaCriteriaStats>(
 )
 
 export async function fetchSepaCriteriaStats(): Promise<SepaCriteriaStats> {
-  const data = await fetchJson(researchUrl('/research/data/readiness/criteria-stats'), 60_000, EMPTY_CRITERIA)
+  const data = await fetchJson(tradeResearchUrl('/research/data/readiness/criteria-stats'), 60_000, EMPTY_CRITERIA)
   if (!data.ok) throw new Error(data.error ?? 'Failed to load criteria stats')
   const normalized = normalizeCriteriaStats(data)
 
@@ -99,7 +99,7 @@ export async function fetchFundamentalDistributionSymbols(
     symbols: [],
   }
   return fetchJson(
-    researchUrl(`/research/data/readiness/fundamental-distribution/symbols?conditions_passed=${conditionsPassed}`),
+    tradeResearchUrl(`/research/data/readiness/fundamental-distribution/symbols?conditions_passed=${conditionsPassed}`),
     20_000,
     fallback,
   )
@@ -115,7 +115,7 @@ export async function fetchTechnicalDistributionSymbols(
     symbols: [],
   }
   return fetchJson(
-    researchUrl(`/research/data/readiness/technical-distribution/symbols?conditions_passed=${conditionsPassed}`),
+    tradeResearchUrl(`/research/data/readiness/technical-distribution/symbols?conditions_passed=${conditionsPassed}`),
     20_000,
     fallback,
   )
@@ -133,7 +133,7 @@ export async function fetchMomentumFilter(params: {
   if (params.match) qs.set('match', params.match)
   if (params.limit != null) qs.set('limit', String(params.limit))
   return fetchJson(
-    researchUrl(`/research/data/readiness/momentum-filter?${qs.toString()}`),
+    tradeResearchUrl(`/research/data/readiness/momentum-filter?${qs.toString()}`),
     15_000,
     { ok: false },
   )
@@ -152,7 +152,7 @@ export async function fetchTierFilter(params: {
   if (params.match) qs.set('match', params.match)
   if (params.limit != null) qs.set('limit', String(params.limit))
   return fetchJson(
-    researchUrl(`/research/data/readiness/tier-filter?${qs.toString()}`),
+    tradeResearchUrl(`/research/data/readiness/tier-filter?${qs.toString()}`),
     15_000,
     { ok: false },
   )
@@ -160,7 +160,7 @@ export async function fetchTierFilter(params: {
 
 /** Per-signal pass counts and the signals-passed histogram for one tier, latest eval_date. */
 export async function fetchTierStats(tier: 'momentum' | 'structure' | 'sentiment'): Promise<TierStatsResponse> {
-  return fetchJson(researchUrl(`/research/data/readiness/tier-stats?tier=${tier}`), 15_000, { ok: false })
+  return fetchJson(tradeResearchUrl(`/research/data/readiness/tier-stats?tier=${tier}`), 15_000, { ok: false })
 }
 
 /**
@@ -171,5 +171,5 @@ export async function fetchTierStats(tier: 'momentum' | 'structure' | 'sentiment
 export async function fetchMomentumGrades(grades: readonly string[] = []): Promise<MomentumGradesResponse> {
   const qs = new URLSearchParams()
   if (grades.length) qs.set('grades', grades.join(','))
-  return fetchJson(researchUrl(`/research/data/readiness/momentum-grades?${qs.toString()}`), 15_000, { ok: false })
+  return fetchJson(tradeResearchUrl(`/research/data/readiness/momentum-grades?${qs.toString()}`), 15_000, { ok: false })
 }

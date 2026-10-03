@@ -2,7 +2,7 @@ import type { OptionSnapshotRow, OptionSnapshotsPgResult, GreeksCoverageResponse
 import { withValidation } from '@/lib/apiValidation'
 import { OptionSnapshotsPgResponseSchema } from '@/lib/schemas/optionDiscovery'
 
-import { marketDataPluginUrl, researchUrl } from '@/lib/devApiUrl'
+import { marketDataPluginUrl, tradeResearchUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
 
 function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
@@ -58,7 +58,7 @@ export async function fetchOptionSnapshotsPg(
   const e = (expiration || '').trim()
   const q = new URLSearchParams({ symbol: s, expiration: e, source })
   if (strikesCsv?.trim()) q.set('strikes', strikesCsv.trim())
-  const r = await tradeFetch(`${researchUrl('/research/option-snapshots')}?${q.toString()}`)
+  const r = await tradeFetch(`${tradeResearchUrl('/research/option-snapshots')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   withValidation(OptionSnapshotsPgResponseSchema, 'fetchOptionSnapshotsPg')(j)
   const rows: OptionSnapshotRow[] = Array.isArray(j.rows)
@@ -158,7 +158,7 @@ export async function fetchLiquiditySummary(
     right: (right || '').trim(),
     source,
   })
-  const r = await tradeFetch(`${researchUrl('/research/option-contract/liquidity-summary')}?${q.toString()}`)
+  const r = await tradeFetch(`${tradeResearchUrl('/research/option-contract/liquidity-summary')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   return {
     ok: Boolean(j.ok),
@@ -191,7 +191,7 @@ export async function fetchRelativeValue(
     right: (right || '').trim(),
     source,
   })
-  const r = await tradeFetch(`${researchUrl('/research/option-contract/relative-value')}?${q.toString()}`)
+  const r = await tradeFetch(`${tradeResearchUrl('/research/option-contract/relative-value')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
   return {
     ok: Boolean(j.ok),

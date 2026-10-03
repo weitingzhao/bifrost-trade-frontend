@@ -101,7 +101,7 @@ function sourceFiles(dir: string): string[] {
 }
 
 describe('nothing writes to Trade around tradeFetch', () => {
-  const TRADE_URL_HELPER = /\b(monitorUrl|marketUrl|tradingUrl|strategyUrl|portfolioUrl|researchUrl)\b/
+  const TRADE_URL_HELPER = /\b(monitorUrl|marketUrl|tradingUrl|strategyUrl|portfolioUrl|tradeResearchUrl)\b/
   const BARE_FETCH = /(?<![\w.$])fetch\(/
 
   it('a module that builds a Trade URL fetches through tradeFetch', () => {

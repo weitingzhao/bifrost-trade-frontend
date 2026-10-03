@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
-import { buildReviewInstances } from './reviewInstances'
+import { buildReviewInstances, serverStatesOf } from './reviewInstances'
+import type { StrategyInstance } from '@/types/strategy'
 
 // Invented contracts and prices (fixtures are never copied from DEV).
 const ex = (over: Partial<Execution>): Execution =>
@@ -47,6 +48,26 @@ describe('review instances (Rev .104)', () => {
     const eight = list.find((i) => i.tradeId === 8)!
     expect([eight.open, eight.exitKind, eight.closedOn, eight.expiredUnbooked]).toEqual([false, 'expired', '2026-01-16', true])
     expect(Math.round(eight.realised)).toBe(200)
+  })
+
+  it('reads open / closed from the instance list when it has a state (core 0.41.0, TD-43)', () => {
+    const states = serverStatesOf([
+      { strategy_instance_id: 8, state: 'expired', closed_on: '2026-01-16' },
+      { strategy_instance_id: 7, state: 'closed', closed_on: '2026-02-01' },
+      { strategy_instance_id: 9 },
+    ] as unknown as StrategyInstance[])
+    expect([...states.keys()]).toEqual([8, 7])
+    // On 2026-01-08 the legs alone say 8 is open; the server's state wins.
+    const list = buildReviewInstances(rows, '2026-01-08', undefined, states)
+    const eight = list.find((i) => i.tradeId === 8)!
+    expect([eight.open, eight.exitKind, eight.closedOn, eight.expiredUnbooked]).toEqual([false, 'expired', '2026-01-16', true])
+    expect(list.find((i) => i.tradeId === 7)!.closedOn).toBe('2026-02-01')
+  })
+
+  it('keeps the legs reading when the server state is no_fills or missing', () => {
+    const states = serverStatesOf([{ strategy_instance_id: 8, state: 'no_fills', closed_on: null }] as unknown as StrategyInstance[])
+    const list = buildReviewInstances(rows, '2026-01-08', undefined, states)
+    expect(list.find((i) => i.tradeId === 8)!.open).toBe(true)
   })
 })
 

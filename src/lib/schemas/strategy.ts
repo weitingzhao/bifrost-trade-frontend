@@ -169,6 +169,14 @@ export const StrategyInstanceSchema = z
      * that needs the count takes it from the instance's executions.
      */
     executions_count: int.optional(),
+    /**
+     * The list only (core 0.41.0, TD-43): where the instance stands by its own
+     * option fills — the one open / closed rule every page reads. `expired` (every
+     * open leg past expiry, no closing fill) counts as closed.
+     */
+    state: z.enum(['no_fills', 'open', 'expired', 'closed']).optional(),
+    /** YYYY-MM-DD the instance closed (last flat day, or last expiry); null unless closed / expired. */
+    closed_on: z.string().nullable().optional(),
   })
   .passthrough()
 

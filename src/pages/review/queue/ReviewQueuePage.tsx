@@ -42,6 +42,7 @@ import { derivedTags, exitTags } from '@/pages/review/fit/tradeFitModel'
 import { useNavigate } from 'react-router-dom'
 import { tradeReviewPath } from '@/components/layout'
 import { useTradeReviews } from '@/hooks/useTradeReviews'
+import { useInstanceStates } from '@/hooks/useStrategies'
 import { buildReviewInstances, type ReviewInstance } from '@/utils/reviewInstances'
 import type { TradeReview } from '@/api/tradeReviews'
 
@@ -259,11 +260,13 @@ export default function ReviewQueuePage() {
   }, [trades, marks.paths])
   // The same cache entry useReviewContracts reads — held here for its §17 state.
   const execQuery = useExecutionsAll()
+  // Open / closed is the instance list's state (core 0.41.0, TD-43).
+  const states = useInstanceStates()
   const instances = useMemo(() => {
     const items = execQuery.data?.items ?? []
     const scoped = accountFilter === 'all' ? items : items.filter((e) => (e.account_id ?? '').trim() === accountFilter)
-    return buildReviewInstances(scoped, today, origins.exitBy).filter((t) => !t.open)
-  }, [execQuery.data?.items, accountFilter, today, origins.exitBy])
+    return buildReviewInstances(scoped, today, origins.exitBy, states).filter((t) => !t.open)
+  }, [execQuery.data?.items, accountFilter, today, origins.exitBy, states])
 
   // The window first, so every figure on the page is about the same set of trades.
   const rows = useMemo(() => {

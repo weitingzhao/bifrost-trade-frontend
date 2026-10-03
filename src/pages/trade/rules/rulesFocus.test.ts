@@ -36,6 +36,7 @@ const reading = (
   structureName: 'S1',
   openedOn: '2026-01-05',
   fills: 2,
+  state: closed ? 'closed' : 'open',
   closed,
   realised,
 })

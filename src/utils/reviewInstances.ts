@@ -15,6 +15,12 @@
  * contracts. Stock fills are never attributed to an instance (0 of 168), so a
  * covered call's share leg cannot enter the line from fills — named, not
  * guessed.
+ *
+ * Open or closed (core 0.41.0, TD-43): when the instance list's `state` is
+ * given (`states`), an instance reads it — the one rule Rules, Risk and the
+ * research MCP read too. The legs' own reading below is that same rule (core
+ * copied it from here) and stays for contracts no instance owns and for a
+ * page that has no instance list yet.
  */
 import { buildOptExecutionGroups, isBuySide, type OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { sliceExecutionForInstanceOptView } from '@/utils/ledger/ledgerOptHelpers'
@@ -22,6 +28,7 @@ import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
 import { daysBetween } from '@/lib/isoDate'
 import { daysTo, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import type { Execution } from '@/types/positions'
+import type { StrategyInstance } from '@/types/strategy'
 import {
   dateSpan,
   type ExitKind,
@@ -110,6 +117,21 @@ export interface ExitContext {
   planExitBy?: string | null
 }
 
+/** The instance list's own answer for one instance (GET /strategies/instances, core 0.41.0). */
+export interface ServerInstanceState {
+  state: NonNullable<StrategyInstance['state']>
+  closedOn: string | null
+}
+
+/** `state` / `closed_on` by instance id, from the instance list's records. */
+export function serverStatesOf(instances: readonly StrategyInstance[] | undefined): Map<number, ServerInstanceState> {
+  const out = new Map<number, ServerInstanceState>()
+  for (const i of instances ?? []) {
+    if (i.state) out.set(i.strategy_instance_id, { state: i.state, closedOn: i.closed_on ?? null })
+  }
+  return out
+}
+
 /** Days either side of the planned exit that still count as on plan — the early_exit / held_past_plan rule. */
 export const PLAN_EXIT_SLACK_DAYS = 3
 
@@ -170,24 +192,31 @@ export function instanceOf(
   instanceId: number | null,
   executions: readonly Execution[],
   today: string,
-  ctx: ExitContext = {},
+  ctx: ExitContext & { server?: ServerInstanceState | null } = {},
 ): ReviewInstance | null {
   const groups = buildOptExecutionGroups([...executions])
   if (groups.length === 0) return null
   const legs = groups.map(legOf).sort((a, b) => (a.openedOn ?? '').localeCompare(b.openedOn ?? ''))
   const p = primaryOf(legs)
   const openLegs = legs.filter((l) => l.open)
-  // Every open leg past its expiry: over, but the broker never booked the
+  // The server's state when the instance list gave one (`no_fills` cannot
+  // describe an instance with fills, so it is not taken). Otherwise the legs:
+  // every open leg past its expiry is over, but the broker never booked the
   // expiry — read as expired at the last one, worthless (no closing fill).
-  const expired = openLegs.length > 0 && openLegs.every((l) => l.expiry !== '' && l.expiry < today)
-  const open = openLegs.length > 0 && !expired
+  const server = ctx.server && ctx.server.state !== 'no_fills' ? ctx.server : null
+  const expired = server
+    ? server.state === 'expired'
+    : openLegs.length > 0 && openLegs.every((l) => l.expiry !== '' && l.expiry < today)
+  const open = server ? server.state === 'open' : openLegs.length > 0 && !expired
   const fills = legs.flatMap((l) => l.fills).sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
   const openedOn = legs[0].openedOn
   const closedOn = open
     ? null
-    : expired
-      ? openLegs.map((l) => l.expiry).sort().pop() || null
-      : legs.map((l) => l.flatOn ?? '').sort().pop() || null
+    : server?.closedOn
+      ? server.closedOn
+      : expired
+        ? openLegs.map((l) => l.expiry).sort().pop() || null
+        : legs.map((l) => l.flatOn ?? '').sort().pop() || null
   const end = closedOn ?? today
   const cash = legs.reduce((a, l) => a + l.cash, 0)
   // Net, across legs: credit taken on opening (short legs in, long legs paid)
@@ -243,6 +272,8 @@ export function buildReviewInstances(
   today: string,
   /** The date each trade's plan said to be out by, keyed by trade id (Rev .112 early / late). */
   planExitBy?: ReadonlyMap<number, string | null>,
+  /** The instance list's `state` / `closed_on` by trade id (core 0.41.0); see `serverStatesOf`. */
+  states?: ReadonlyMap<number, ServerInstanceState>,
 ): ReviewInstance[] {
   const opt = executions.filter((e) => (e.sec_type ?? 'OPT').toUpperCase() === 'OPT')
   const assignments = assignmentsIn(executions)
@@ -257,7 +288,11 @@ export function buildReviewInstances(
   const out: ReviewInstance[] = []
   for (const id of ids) {
     const mine = opt.map((e) => sliceExecutionForInstanceOptView(e, id)).filter((e): e is Execution => e != null)
-    const inst = instanceOf(id, mine, today, { assignments, planExitBy: planExitBy?.get(id) ?? null })
+    const inst = instanceOf(id, mine, today, {
+      assignments,
+      planExitBy: planExitBy?.get(id) ?? null,
+      server: states?.get(id) ?? null,
+    })
     if (inst) out.push(inst)
   }
   // Contracts no instance owns: reviewable on their own, closed ones only.

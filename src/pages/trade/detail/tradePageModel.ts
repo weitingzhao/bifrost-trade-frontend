@@ -53,7 +53,7 @@ export function fillRows(
       const price = Number(e.price) || 0
       const comm = Number(e.commission) || 0
       const net = (e as { net_cash?: number | null }).net_cash
-      const cash = net != null && Number.isFinite(net) ? Number(net) : (buy ? -1 : 1) * qty * price * 100 - Math.abs(comm)
+      const cash = net != null && Number.isFinite(net) ? Number(net) : (buy ? -1 : 1) * qty * price * 100 - comm
       const ck = (e.contract_key ?? '').trim()
       const day = dayOn(e)
       return {

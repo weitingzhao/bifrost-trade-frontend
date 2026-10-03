@@ -412,7 +412,7 @@ export default function FillsPage() {
                           <td className={cn(positionsUi.td, 'text-secondary-foreground')}>{r.qty}</td>
                           <td className={cn(positionsUi.td, 'text-foreground')}>{fmtUsd(r.price)}</td>
                           <td className={cn(positionsUi.td, 'text-muted-foreground')}>
-                            {r.fees > 0 ? fmtUsd(r.fees) : '—'}
+                            {r.fees !== 0 ? fmtUsd(r.fees) : '—'}
                           </td>
                           <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}>
                             {SOURCE_LABEL[r.source] ?? r.source}

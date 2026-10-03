@@ -247,7 +247,7 @@ export function computeOptPairsFromExecutions(
         side: isBuySide(e.side) ? 'buy' as const : 'sell' as const,
         price: e.price,
         remQty: Math.abs(e.quantity),
-        remComm: Math.abs(e.commission ?? 0),
+        remComm: Number(e.commission) || 0,
         eid: e.account_executions_id,
         e,
       }))
@@ -320,14 +320,16 @@ function sideUpper(e: Execution): string {
  * The commission leaves the account whichever way the leg went, so it is taken
  * off the signed figure, not off the premium: a $0.50 buy with a $1 commission
  * is −$51, not −$49. Netting it against the premium first made a commission
- * look like a discount on every buy.
+ * look like a discount on every buy. It is signed as IB books it: a rebate is a
+ * negative commission and comes back in (net_cash = ±premium − commission on
+ * every Flex fill, DEV and PROD 2026-10-03).
  */
 export function ledgerOptionExecutionCashFlowSigned(e: Execution): number {
   const s = sideUpper(e)
   const buy = s === 'BUY' || s === 'BOT' || s === 'B'
   const q = execQty(e)
   const p = Number(e.price) || 0
-  const c = Math.abs(Number(e.commission) || 0)
+  const c = Number(e.commission) || 0
   const premium = q * p * 100
   return (buy ? -premium : premium) - c
 }
@@ -464,7 +466,7 @@ export function matchPairLegCashFlows(p: {
   commission: number
 }): { cashC: number; cashP: number; net: number } {
   const qty = Number(p.quantity) || 0
-  const halfComm = Math.abs(Number(p.commission) || 0) / 2
+  const halfComm = (Number(p.commission) || 0) / 2
   const cashC = matchLegCashFlow(p.c_side, Number(p.c_price) || 0, qty, halfComm)
   const cashP = matchLegCashFlow(p.p_side, Number(p.p_price) || 0, qty, halfComm)
   return { cashC, cashP, net: cashC + cashP }
@@ -520,7 +522,7 @@ export function computeBackendOptPairsFromExecutions(
     for (const x of sorted) {
       const q = execQty(x)
       const p = Number(x.price) || 0
-      const comm = Math.abs(Number(x.commission) || 0)
+      const comm = Number(x.commission) || 0
       const eid = x.account_executions_id
       if (eid == null || !Number.isFinite(q) || q <= 0 || !Number.isFinite(p)) continue
       work.push({ eid, side: sideUpper(x), price: p, remQty: q, remComm: comm })

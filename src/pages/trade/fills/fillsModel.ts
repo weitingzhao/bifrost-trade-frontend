@@ -252,8 +252,8 @@ export function buildFillRows(
         side: sideWord(e),
         qty: Math.abs(Number(e.quantity ?? 0)) || 0,
         price: Number(e.price) || 0,
-        // Sources disagree on the sign of a commission; it is a cost either way.
-        fees: Math.abs(Number(e.commission) || 0),
+        // Signed as IB books it: a cost is positive, a rebate negative.
+        fees: Number(e.commission) || 0,
         source: (e.source ?? '').trim() || 'unknown',
         state: (linked ? 'linked' : 'orphan') as FillState,
         tradeId: e.trade_id ?? null,

@@ -369,7 +369,7 @@ function OptionsPnlColumn({
         <span className={cn('font-mono text-dense-body font-bold tabular-nums', isRealized ? pnlColorClass(total) : 'text-unrealized')}>
           {fmtSignedUsd0(total)}
         </span>
-        <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">comm {fmtUsd(Math.abs(commission))}</span>
+        <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">comm {fmtUsd(commission)}</span>
         {!isRealized && <DenseTag variant="category" size="cell">UNREALIZED</DenseTag>}
       </div>
       <span className="text-dense-meta text-muted-foreground">
@@ -534,7 +534,7 @@ function ContractGroup({
         <span className={cn('ml-auto font-mono text-xs font-semibold tabular-nums', isRealized ? pnlColorClass(tabPnl) : 'text-unrealized')}>
           {fmtSignedUsd0(tabPnl)}
         </span>
-        <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">{fmtUsd(Math.abs(tabComm))}</span>
+        <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">{fmtUsd(tabComm)}</span>
       </div>
 
       <div className="overflow-x-auto">

@@ -25,7 +25,7 @@ export function buildDayStats(bulk: PerformanceDayPnLBulkResult | undefined, day
   const fiR = cell('fixed_income')?.realized ?? 0
   const cashR = cell('cash_like')?.realized ?? 0
   const fills: Execution[] = (bulk?.rawExecsWindow ?? []).filter((e) => executionDateStr(e) === day)
-  const comm = fills.reduce((s, e) => s + Math.abs(Number(e.commission) || 0), 0)
+  const comm = fills.reduce((s, e) => s + (Number(e.commission) || 0), 0)
   const open = bulk?.byDayRangeData?.optOpenByDay?.[day] ?? null
   const dayPnl = optR + stkR + fiR + cashR - comm
 

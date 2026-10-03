@@ -66,7 +66,7 @@ export function buildOtfRows(execs: Execution[]): OtfRow[] {
       typeof e.realized_pnl === 'number' && Number.isFinite(e.realized_pnl) ? e.realized_pnl : null
     const legValue = group === 'OPT' ? ledgerOptionExecutionDisplayPnl(e) : stockOnTheFlyUnrealizedPnlLeg(e)
     const price = Number(e.price)
-    const comm = e.commission == null ? null : Math.abs(Number(e.commission))
+    const comm = e.commission == null ? null : Number(e.commission)
     return {
       key: `${e.account_executions_id ?? e.exec_id ?? `${e.account_id}-${e.time}-${e.symbol}`}-${i}`,
       group,

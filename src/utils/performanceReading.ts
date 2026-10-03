@@ -60,7 +60,7 @@ export function buildReadingMetrics(perf: PerformanceResponse | undefined): Read
     { label: 'Unrealized', value: fmtSignedUsd0(unrealized), tone: 'unrealized',
       title: 'Every open position now — not limited to the range' },
     { label: 'Net of fees', value: fmtSignedUsd0(s.net_pnl), raw: s.net_pnl, tone: 'pnl' },
-    { label: 'Commissions', value: fmtSignedUsd0(-Math.abs(s.total_commission ?? 0)), tone: 'muted',
+    { label: 'Commissions', value: fmtSignedUsd0(-(s.total_commission ?? 0)), tone: 'muted',
       title: 'A cost: Net of fees is Realized less this' },
     { label: 'Consistency · win rate · closing fills', value: winRate, tone: 'plain', groupHead: true,
       title: `${s.win_count} of ${closed} fills that realized a gain or a loss — opening fills are left out. Not the calendar's win days.` },

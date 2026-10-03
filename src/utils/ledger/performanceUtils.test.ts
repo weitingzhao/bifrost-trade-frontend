@@ -283,8 +283,39 @@ describe('ledgerOptionExecutionCashFlowSigned', () => {
     expect(ledgerOptionExecutionCashFlowSigned(buy)).toBeCloseTo(-51, 6)
     const sell = makeExec({ side: 'Sell', quantity: 1, price: 0.5, commission: 1 })
     expect(ledgerOptionExecutionCashFlowSigned(sell)).toBeCloseTo(49, 6)
-    // The sign of the reported commission does not change what it costs.
-    const negCommission = makeExec({ side: 'Buy', quantity: 1, price: 0.5, commission: -1 })
-    expect(ledgerOptionExecutionCashFlowSigned(negCommission)).toBeCloseTo(-51, 6)
+    // A negative commission is a rebate, as IB books it (net_cash = ±premium − commission).
+    const rebate = makeExec({ side: 'Buy', quantity: 1, price: 0.5, commission: -0.14 })
+    expect(ledgerOptionExecutionCashFlowSigned(rebate)).toBeCloseTo(-49.86, 6)
+  })
+})
+
+describe('a commission rebate (negative commission) comes back in', () => {
+  // Invented: sell to open 1 @ 5.00 paying 1.00, buy to close 1 @ 2.00 with a 0.20 rebate.
+  const open = makeExec({ account_executions_id: 1, side: 'Sell', quantity: -1, price: 5.0, commission: 1.0, expiry: '20260620', strike: 130, time: 1700000000 })
+  const close = makeExec({ account_executions_id: 2, side: 'Buy', quantity: 1, price: 2.0, commission: -0.2, expiry: '20260620', strike: 130, time: 1700001000 })
+  // 500 − 1.00 − 200 + 0.20; taking |commission| gave 298.80.
+  const net = 299.2
+
+  it('in the backend-shaped FIFO pairs', () => {
+    const [p] = computeBackendOptPairsFromExecutions([open, close])
+    expect(p.net_pnl).toBeCloseTo(net, 6)
+    expect(p.commission).toBeCloseTo(0.8, 6)
+  })
+
+  it('in the ledger FIFO pairs', () => {
+    expect(computeOptPairsFromExecutions([open, close])[0].net_pnl).toBeCloseTo(net, 6)
+  })
+
+  it('in a pair split into its two legs', () => {
+    const cash = matchPairLegCashFlows({ quantity: 1, c_side: 'SELL', p_side: 'BUY', c_price: 5, p_price: 2, commission: 0.8 })
+    expect(cash.net).toBeCloseTo(net, 6)
+    const allRebate = matchPairLegCashFlows({ quantity: 1, c_side: 'SELL', p_side: 'BUY', c_price: 5, p_price: 2, commission: -0.4 })
+    expect(allRebate.net).toBeCloseTo(300.4, 6)
+  })
+
+  it('in the day realized the calendar shows', () => {
+    const day = new Date(1700001000 * 1000).toISOString().slice(0, 10)
+    const r = computeOptionDayPnLForPerformanceDate(day, [open, close], computeBackendOptPairsFromExecutions([open, close]))
+    expect(r.realized).toBeCloseTo(net, 6)
   })
 })

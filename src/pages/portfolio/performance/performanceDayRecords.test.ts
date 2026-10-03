@@ -13,8 +13,8 @@ const bulk = {
   },
   byDayRangeData: { optOpenByDay: { '2026-01-05': 700 } },
   rawExecsWindow: [
-    { trade_date: '2026-01-05', commission: -1.5 },
-    { trade_date: '2026-01-05', commission: 0.5 },
+    { trade_date: '2026-01-05', commission: 1.5 },
+    { trade_date: '2026-01-05', commission: -0.5 }, // a rebate
     { trade_date: '2026-01-06', commission: 9 },
   ],
 } as unknown as PerformanceDayPnLBulkResult
@@ -23,14 +23,14 @@ describe('buildDayStats', () => {
   const s = Object.fromEntries(buildDayStats(bulk, '2026-01-05').map((x) => [x.label, x]))
 
   it('takes Day P&L as realized across layers less that day’s commissions, unrealized left out', () => {
-    expect(s['Day P&L'].raw).toBe(88)
+    expect(s['Day P&L'].raw).toBe(89)
     expect(s['Options unrealized'].value).toBe('+$40')
     expect(s['Unpaired premium'].value).toBe('+$700')
   })
 
   it('counts only that day’s fills', () => {
     expect(s.Fills.value).toBe('2')
-    expect(s.Comm.value).toBe('−$2')
+    expect(s.Comm.value).toBe('−$1')
   })
 })
 

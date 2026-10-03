@@ -20,7 +20,7 @@ function exec(over: Partial<Execution>): Execution {
 
 describe('buildOtfRows', () => {
   it('shapes a stock fill as signed shares', () => {
-    const [r] = buildOtfRows([exec({ quantity: 400, price: 52.184, commission: -0.4, realized_pnl: 18 })])
+    const [r] = buildOtfRows([exec({ quantity: 400, price: 52.184, commission: 0.4, realized_pnl: 18 })])
     expect(r.sym).toBe('ZZZ')
     expect(r.what).toBe('+400 sh')
     expect(r.qty).toBe('+400')

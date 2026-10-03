@@ -18,7 +18,7 @@ function fill(over: Partial<Execution> & Pick<Execution, 'exec_id'>): Execution 
     price: 1.5,
     time: T0,
     trade_date: '2026-09-16',
-    commission: -1.25,
+    commission: 1.25,
     source: 'flex_trades',
     ...over,
   } as Execution
@@ -29,14 +29,14 @@ function plan(over: Partial<StrategyPlan> & Pick<StrategyPlan, 'strategy_plan_id
 }
 
 describe('buildFillRows', () => {
-  it('reads a fill the way a desk does, newest first, with the commission as a cost either way', () => {
+  it('reads a fill the way a desk does, newest first, with the commission signed as IB books it', () => {
     const rows = buildFillRows([
       fill({ exec_id: 'a', time: T0 }),
-      fill({ exec_id: 'b', time: T0 + 60, side: 'Buy', commission: 1.25 }),
+      fill({ exec_id: 'b', time: T0 + 60, side: 'Buy', commission: -0.14 }),
     ])
     expect(rows.map((r) => r.side)).toEqual(['BUY', 'SELL'])
-    // The sources disagree on the sign; both are $1.25 out of the account.
-    expect(rows.map((r) => r.fees)).toEqual([1.25, 1.25])
+    // A cost is positive, a rebate negative (net_cash = ±premium − commission).
+    expect(rows.map((r) => r.fees)).toEqual([-0.14, 1.25])
     expect(rows[0]).toMatchObject({ symbol: 'ZZZ', qty: 2, price: 1.5, source: 'flex_trades' })
   })
 

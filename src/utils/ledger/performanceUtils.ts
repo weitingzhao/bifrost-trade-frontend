@@ -68,16 +68,40 @@ export function unixTimeToChicagoDateStr(ts: number): string {
   return `${y}-${m}-${d}`
 }
 
+const chicagoClockFmt = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Chicago',
+  hourCycle: 'h23',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+})
+
+/** Chicago wall clock minus UTC at this instant (−5 h in CDT, −6 h in CST). */
+function chicagoOffsetMs(utcMs: number): number {
+  const parts = chicagoClockFmt.formatToParts(new Date(utcMs))
+  const part = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((p) => p.type === type)?.value ?? 0)
+  const wallMs = Date.UTC(part('year'), part('month') - 1, part('day'), part('hour'), part('minute'), part('second'))
+  return wallMs - utcMs
+}
+
+/** The UTC instant of Chicago midnight on y-m-d (d may overflow into the next month). */
+function chicagoMidnightUtcMs(y: number, m: number, d: number): number {
+  const wallMidnight = Date.UTC(y, m - 1, d)
+  // Offset read at the answer itself, so a DST day still starts at its own midnight.
+  return wallMidnight - chicagoOffsetMs(wallMidnight - chicagoOffsetMs(wallMidnight))
+}
+
+/**
+ * The Chicago calendar day as Unix seconds, midnight to 23:59:59 — whatever the
+ * browser's own time zone, and 23 or 25 hours long on a DST day.
+ */
 export function getChicagoDayRange(dateStr: string): { since_ts: number; until_ts: number } {
   const [y, m, d] = dateStr.split('-').map(Number)
-  const noonUtc = Date.UTC(y, m - 1, d, 12, 0, 0)
-  const noonChicago = chicagoFmt.format(new Date(noonUtc))
-  const parsed = new Date(noonChicago)
-  const offsetMs = noonUtc - parsed.getTime()
-
-  const startOfDayUtcMs = Date.UTC(y, m - 1, d, 0, 0, 0) - offsetMs
-  const since_ts = Math.floor(startOfDayUtcMs / 1000)
-  const until_ts = since_ts + 86400 - 1
+  const since_ts = Math.floor(chicagoMidnightUtcMs(y, m, d) / 1000)
+  const until_ts = Math.floor(chicagoMidnightUtcMs(y, m, d + 1) / 1000) - 1
   return { since_ts, until_ts }
 }
 

@@ -11,6 +11,7 @@ import {
   computeOptionDayPnLForPerformanceDate,
   matchPairLegCashFlows,
   dateStrMinusDays,
+  getChicagoDayRange,
   ledgerOptionExecutionCashFlowSigned,
 } from './performanceUtils'
 import type { Execution } from '@/types/positions'
@@ -68,6 +69,37 @@ describe('dateStrMinusDays', () => {
 
   it('handles month boundary', () => {
     expect(dateStrMinusDays('2024-03-02', 5)).toBe('2024-02-26')
+  })
+})
+
+describe('getChicagoDayRange', () => {
+  const iso = (ts: number) => new Date(ts * 1000).toISOString()
+
+  it('runs from Chicago midnight to 23:59:59 (CDT)', () => {
+    const r = getChicagoDayRange('2026-08-24')
+    expect(iso(r.since_ts)).toBe('2026-08-24T05:00:00.000Z')
+    expect(iso(r.until_ts)).toBe('2026-08-25T04:59:59.000Z')
+  })
+
+  it('keeps an afternoon fill inside its own day', () => {
+    const fill = Date.UTC(2026, 7, 24, 19, 29, 1) / 1000 // 14:29 CT
+    const r = getChicagoDayRange('2026-08-24')
+    expect(fill >= r.since_ts && fill <= r.until_ts).toBe(true)
+  })
+
+  it('uses CST in winter', () => {
+    const r = getChicagoDayRange('2026-01-15')
+    expect(iso(r.since_ts)).toBe('2026-01-15T06:00:00.000Z')
+    expect(iso(r.until_ts)).toBe('2026-01-16T05:59:59.000Z')
+  })
+
+  it('is 23 hours on spring-forward day and 25 on fall-back day', () => {
+    const spring = getChicagoDayRange('2026-03-08')
+    expect(iso(spring.since_ts)).toBe('2026-03-08T06:00:00.000Z')
+    expect(spring.until_ts - spring.since_ts + 1).toBe(23 * 3600)
+    const fall = getChicagoDayRange('2026-11-01')
+    expect(iso(fall.since_ts)).toBe('2026-11-01T05:00:00.000Z')
+    expect(fall.until_ts - fall.since_ts + 1).toBe(25 * 3600)
   })
 })
 

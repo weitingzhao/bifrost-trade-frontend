@@ -1,103 +1,9 @@
 /**
- * Black-Scholes math for Option Discovery contract detail (European approximation).
- * Ported from bifrost-trader-engine frontend/src/utils/bsCalc.ts
+ * The option contract detail panel's Black-Scholes breakdown (implied vol from the market
+ * price, then each intermediate the panel prints). The math is `@/utils/blackScholes`,
+ * the frontend's one copy (TD-42); this module only shapes it for the panel.
  */
-
-export function normCdf(x: number): number {
-  return 0.5 * (1.0 + erf(x / Math.SQRT2))
-}
-
-export function normPdf(x: number): number {
-  return Math.exp(-0.5 * x * x) / Math.sqrt(2.0 * Math.PI)
-}
-
-function erf(x: number): number {
-  const sign = x >= 0 ? 1 : -1
-  const ax = Math.abs(x)
-  const t = 1.0 / (1.0 + 0.3275911 * ax)
-  const poly =
-    t * (0.254829592 +
-      t * (-0.284496736 +
-        t * (1.421413741 +
-          t * (-1.453152027 +
-            t * 1.061405429))))
-  return sign * (1.0 - poly * Math.exp(-ax * ax))
-}
-
-function bsD1D2(S: number, K: number, T: number, r: number, sigma: number): [number, number] {
-  const sqrtT = Math.sqrt(T)
-  const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * sqrtT)
-  const d2 = d1 - sigma * sqrtT
-  return [d1, d2]
-}
-
-function bsPrice(S: number, K: number, T: number, r: number, sigma: number, right: string): number {
-  const [d1, d2] = bsD1D2(S, K, T, r, sigma)
-  const discount = Math.exp(-r * T)
-  if (right.toUpperCase() === 'C') {
-    return S * normCdf(d1) - K * discount * normCdf(d2)
-  }
-  return K * discount * normCdf(-d2) - S * normCdf(-d1)
-}
-
-function bsVega(S: number, K: number, T: number, r: number, sigma: number): number {
-  const [d1] = bsD1D2(S, K, T, r, sigma)
-  return S * normPdf(d1) * Math.sqrt(T)
-}
-
-function impliedVolNR(
-  marketPrice: number,
-  S: number,
-  K: number,
-  T: number,
-  r: number,
-  right: string,
-  maxIter = 50,
-): { iv: number | null; converged: boolean; iterCount: number } {
-  if (T <= 0 || marketPrice <= 0 || S <= 0 || K <= 0) {
-    return { iv: null, converged: false, iterCount: 0 }
-  }
-  const discount = Math.exp(-r * T)
-  const intrinsic =
-    right.toUpperCase() === 'C'
-      ? Math.max(0, S - K * discount)
-      : Math.max(0, K * discount - S)
-  if (marketPrice < intrinsic - 1e-6) {
-    return { iv: null, converged: false, iterCount: 0 }
-  }
-  let sigma = 0.3
-  let iterCount = 0
-  let converged = false
-  for (let i = 0; i < maxIter; i++) {
-    iterCount++
-    try {
-      const price = bsPrice(S, K, T, r, sigma, right)
-      const vega = bsVega(S, K, T, r, sigma)
-      if (vega < 1e-10) break
-      const diff = price - marketPrice
-      sigma -= diff / vega
-      sigma = Math.max(0.001, Math.min(5.0, sigma))
-      if (Math.abs(diff) < 1e-8) {
-        converged = true
-        break
-      }
-    } catch {
-      break
-    }
-  }
-  try {
-    const check = bsPrice(S, K, T, r, sigma, right)
-    if (Math.abs(check - marketPrice) > Math.max(0.05 * marketPrice, 0.05)) {
-      return { iv: null, converged: false, iterCount }
-    }
-  } catch {
-    return { iv: null, converged: false, iterCount }
-  }
-  if (sigma < 0.001 || sigma > 5.0) {
-    return { iv: null, converged: false, iterCount }
-  }
-  return { iv: sigma, converged, iterCount }
-}
+import { bsPrice, impliedVolResearch, normalCDF as normCdf, normalPDF as normPdf } from '@/utils/blackScholes'
 
 export interface BSDetail {
   inputs: {
@@ -140,7 +46,7 @@ export function bsComputeDetail(params: {
   const { marketPrice, S, K, tYears, r, right } = params
   const tDays = Math.round(tYears * 365)
   const inputs = { S, K, tYears, tDays, r, right, marketPrice }
-  const { iv, converged, iterCount } = impliedVolNR(marketPrice, S, K, tYears, r, right)
+  const { iv, converged, iterCount } = impliedVolResearch(marketPrice, S, K, tYears, r, right)
   if (iv == null) {
     return {
       inputs,

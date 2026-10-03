@@ -71,7 +71,7 @@ export default function TransferPayPage() {
   const preview = usePreviewState()
   const txQuery = useQuery({
     queryKey: [...QUERY_KEYS.trading.transactions, rangePreset],
-    queryFn: () => getTransactions({ since_ts: sinceTs, until_ts: untilTs, limit: 500 }),
+    queryFn: () => getTransactions({ from_ts: sinceTs, to_ts: untilTs, limit: 500 }),
   })
 
   const { data, isLoading, refetch } = txQuery

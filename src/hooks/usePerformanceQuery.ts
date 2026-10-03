@@ -20,8 +20,8 @@ export function usePerformanceQuery(params: PerformanceQueryParams | null) {
     ],
     queryFn: () =>
       fetchPerformance({
-        since_ts: params!.since_ts,
-        until_ts: params!.until_ts,
+        from_ts: params!.since_ts,
+        to_ts: params!.until_ts,
         granularity: 'day',
         strategy_opportunity_id: params!.strategy_opportunity_id,
         strategy_instance_id: params!.strategy_instance_id,

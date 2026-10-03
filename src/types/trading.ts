@@ -173,9 +173,10 @@ export interface TransactionsFetchResponse {
   by_account?: number
 }
 
+/** Time bounds are `from_ts` / `to_ts`, Unix seconds (api 0.6.6, TD-51). */
 export interface PerformanceParams {
-  since_ts?: number
-  until_ts?: number
+  from_ts?: number
+  to_ts?: number
   account_id?: string
   granularity?: 'day' | 'week' | 'month'
   strategy_opportunity_id?: number
@@ -190,9 +191,10 @@ export interface PerformanceParams {
  */
 export type ExecutionSourceScope = 'all' | 'performance_book' | 'on_the_fly' | 'tws_raw'
 
+/** Time bounds are `from_ts` / `to_ts`, Unix seconds (api 0.6.6, TD-51). */
 export interface ExecutionsRangeParams {
-  since_ts?: number
-  until_ts?: number
+  from_ts?: number
+  to_ts?: number
   limit?: number
   include_opt_pairs?: boolean
   strategy_opportunity_id?: number

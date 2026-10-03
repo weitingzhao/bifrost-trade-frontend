@@ -80,7 +80,7 @@ export async function fetchOptionSnapshotsPg(
 ): Promise<OptionSnapshotsPgResult> {
   const s = (symbol || '').trim()
   const e = (expiration || '').trim()
-  const q = new URLSearchParams({ symbol: s, expiration: e, source })
+  const q = new URLSearchParams({ symbol: s, expiry: e, source })
   if (strikesCsv?.trim()) q.set('strikes', strikesCsv.trim())
   // api 0.5.0: a refusal is its status with `{ detail }` (TD-16); only a success is checked for shape.
   const j = await readOrRefusal<SnapshotsWire>(`${tradeResearchUrl('/research/option-snapshots')}?${q.toString()}`, 'GET /research/option-snapshots')
@@ -170,9 +170,9 @@ export async function fetchLiquiditySummary(
 ): Promise<LiquiditySummaryResponse> {
   const q = new URLSearchParams({
     symbol: (symbol || '').trim(),
-    expiration: (expiration || '').trim(),
+    expiry: (expiration || '').trim(),
     strike: String(strike),
-    right: (right || '').trim(),
+    option_right: (right || '').trim(),
     source,
   })
   const r = await readOrRefusal<LiquiditySummaryResponse>(
@@ -206,9 +206,9 @@ export async function fetchRelativeValue(
 ): Promise<RelativeValueResponse> {
   const q = new URLSearchParams({
     symbol: (symbol || '').trim(),
-    expiration: (expiration || '').trim(),
+    expiry: (expiration || '').trim(),
     strike: String(strike),
-    right: (right || '').trim(),
+    option_right: (right || '').trim(),
     source,
   })
   const r = await readOrRefusal<RelativeValueResponse>(

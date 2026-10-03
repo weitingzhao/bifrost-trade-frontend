@@ -230,7 +230,7 @@ export function useTradeRecord(instance: StrategyInstance | null, opts?: { tws?:
       fetchExecutionsRange({
         source_scope: 'tws_raw',
         account_id: acct ?? undefined,
-        since_ts: life.from ? Date.parse(`${life.from}T00:00:00Z`) / 1000 - 86_400 : undefined,
+        from_ts: life.from ? Date.parse(`${life.from}T00:00:00Z`) / 1000 - 86_400 : undefined,
         limit: 2000,
       }),
     enabled: Boolean(opts?.tws) && life.from != null,

@@ -50,8 +50,8 @@ export function usePerformanceOnTheFly(params: {
     queryFn: async () => {
       const [perf, executions] = await Promise.all([
         fetchPerformance({
-          since_ts,
-          until_ts,
+          from_ts: since_ts,
+          to_ts: until_ts,
           granularity: 'day',
           strategy_opportunity_id: strategyOpportunityId ?? undefined,
           strategy_instance_id: strategyInstanceId ?? undefined,

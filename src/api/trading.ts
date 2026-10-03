@@ -163,8 +163,8 @@ export async function fetchInstanceExecutions(instanceId: number): Promise<RawEx
 
 export async function fetchPerformance(params: PerformanceParams = {}): Promise<PerformanceResponse> {
   const qs = new URLSearchParams()
-  if (params.since_ts != null) qs.set('since_ts', String(params.since_ts))
-  if (params.until_ts != null) qs.set('until_ts', String(params.until_ts))
+  if (params.from_ts != null) qs.set('from_ts', String(params.from_ts))
+  if (params.to_ts != null) qs.set('to_ts', String(params.to_ts))
   if (params.account_id) qs.set('account_id', params.account_id)
   if (params.granularity) qs.set('granularity', params.granularity)
   if (params.strategy_opportunity_id != null)
@@ -178,8 +178,8 @@ export async function fetchPerformance(params: PerformanceParams = {}): Promise<
 
 export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): Promise<ExecutionsResponse> {
   const qs = new URLSearchParams()
-  if (params.since_ts != null) qs.set('since_ts', String(params.since_ts))
-  if (params.until_ts != null) qs.set('until_ts', String(params.until_ts))
+  if (params.from_ts != null) qs.set('from_ts', String(params.from_ts))
+  if (params.to_ts != null) qs.set('to_ts', String(params.to_ts))
   if (params.limit != null) qs.set('limit', String(params.limit))
   if (params.include_opt_pairs) qs.set('include_opt_pairs', 'true')
   if (params.strategy_opportunity_id != null)
@@ -193,14 +193,14 @@ export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): 
 }
 
 export async function getTransactions(params?: {
-  since_ts?: number
-  until_ts?: number
+  from_ts?: number
+  to_ts?: number
   account_id?: string
   limit?: number
 }): Promise<AccountTransactionsResponse> {
   const qs = new URLSearchParams()
-  if (params?.since_ts != null) qs.set('since_ts', String(params.since_ts))
-  if (params?.until_ts != null) qs.set('until_ts', String(params.until_ts))
+  if (params?.from_ts != null) qs.set('from_ts', String(params.from_ts))
+  if (params?.to_ts != null) qs.set('to_ts', String(params.to_ts))
   if (params?.account_id) qs.set('account_id', params.account_id)
   if (params?.limit != null) qs.set('limit', String(params.limit))
   const raw = await requestJson<AccountTransactionsResponse>(tradingUrl(`/transactions?${qs}`))
@@ -242,8 +242,9 @@ export async function fetchOptionStockLinks(
 export async function fetchStockLinkCandidates(params: {
   account_id: string
   option_account_executions_id: number
-  trade_date_from?: string
-  trade_date_to?: string
+  /** YYYY-MM-DD bounds on the stock fill's trade_date (api 0.6.6, TD-51). */
+  from_date?: string
+  to_date?: string
   limit?: number
 }): Promise<{
   executions: Execution[]
@@ -255,8 +256,8 @@ export async function fetchStockLinkCandidates(params: {
   const q = new URLSearchParams()
   q.set('account_id', params.account_id.trim())
   q.set('option_account_executions_id', String(params.option_account_executions_id))
-  if (params.trade_date_from?.trim()) q.set('trade_date_from', params.trade_date_from.trim())
-  if (params.trade_date_to?.trim()) q.set('trade_date_to', params.trade_date_to.trim())
+  if (params.from_date?.trim()) q.set('from_date', params.from_date.trim())
+  if (params.to_date?.trim()) q.set('to_date', params.to_date.trim())
   if (params.limit != null) q.set('limit', String(params.limit))
   try {
     const j = await requestJson<{

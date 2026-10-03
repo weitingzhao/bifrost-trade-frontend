@@ -75,7 +75,7 @@ export function BriefOvernight() {
   const [lookbackTs] = useMemoNow(LOOKBACK_DAYS * 24)
   const fills = useQuery({
     queryKey: ['trading', 'executions', 'brief-overnight', lookbackTs],
-    queryFn: () => fetchExecutionsRange({ since_ts: lookbackTs, source_scope: 'performance_book' }),
+    queryFn: () => fetchExecutionsRange({ from_ts: lookbackTs, source_scope: 'performance_book' }),
     staleTime: 60_000,
   })
   const health = useSignalHealthSummary()

@@ -68,7 +68,7 @@ export async function fetchGreeks(params: FetchGreeksParams): Promise<GreeksResp
     const qs = new URLSearchParams({ symbol: s, trade_date: params.trade_date })
     if (params.risk_free_rate != null) qs.set('risk_free_rate', String(params.risk_free_rate))
     if (params.expiry) qs.set('expiry', params.expiry)
-    if (params.right) qs.set('right', params.right)
+    if (params.right) qs.set('option_right', params.right)
     if (params.limit != null) qs.set('limit', String(params.limit))
     // api 0.5.0: a refusal is its status with `{ detail }` (TD-16); it lands in the catch below.
     const raw = await requestJson<unknown>(tradeResearchUrl(`/research/greeks?${qs}`), { label: 'GET /research/greeks' })

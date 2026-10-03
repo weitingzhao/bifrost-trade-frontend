@@ -126,7 +126,7 @@ export async function fetchStrategyInstances(params?: {
     sp.set('strategy_opportunity_id', String(params.opportunityId))
   }
   if (params?.accountId) sp.set('account_id', params.accountId)
-  if (params?.openedAtFrom != null) sp.set('opened_at_from', String(params.openedAtFrom))
+  if (params?.openedAtFrom != null) sp.set('from_ts', String(params.openedAtFrom))
   const qs = sp.toString()
   const url = strategyUrl(`/strategies/instances${qs ? `?${qs}` : ''}`)
   return validateInstances(await requestJson(url, { label: `Strategy /instances` }), url)
@@ -356,8 +356,8 @@ export async function fetchWinRate(params?: {
   untilTs?: number
 }): Promise<WinRateResponse> {
   const sp = new URLSearchParams()
-  if (params?.sinceTs != null) sp.set('since_ts', String(params.sinceTs))
-  if (params?.untilTs != null) sp.set('until_ts', String(params.untilTs))
+  if (params?.sinceTs != null) sp.set('from_ts', String(params.sinceTs))
+  if (params?.untilTs != null) sp.set('to_ts', String(params.untilTs))
   const qs = sp.toString()
   return requestJson<WinRateResponse>(strategyUrl(`/strategies/win-rate${qs ? `?${qs}` : ''}`), { label: `GET /strategies/win-rate` })
 }

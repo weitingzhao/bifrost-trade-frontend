@@ -65,8 +65,8 @@ export async function fetchPerformanceExecutionsMerged(
   const { until_ts: gUntil } = getChicagoDayRange(rangeEndDateStr)
 
   const res = await fetchExecutionsRange({
-    since_ts: gSince,
-    until_ts: gUntil,
+    from_ts: gSince,
+    to_ts: gUntil,
     limit: FETCH_LIMIT,
     include_opt_pairs: false,
     strategy_opportunity_id: strategyOpportunityId ?? undefined,
@@ -90,8 +90,8 @@ export async function fetchPerformanceExecutionsMerged(
     const { since_ts: cs } = getChicagoDayRange(chunkLb)
     const { until_ts: cu } = getChicagoDayRange(lastDateStr)
     const chunkRes = await fetchExecutionsRange({
-      since_ts: cs,
-      until_ts: cu,
+      from_ts: cs,
+      to_ts: cu,
       limit: FETCH_LIMIT,
       include_opt_pairs: false,
       strategy_opportunity_id: strategyOpportunityId ?? undefined,

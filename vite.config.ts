@@ -87,6 +87,18 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
     }
   })()
 
+  // TD-73: Research is one instance behind every environment, and a trade id only
+  // names one trade inside one environment, so the journal stores trade refs as
+  // `<env>:<id>` from `X-Bifrost-Env`. The K3s gateways stamp it (Traefik
+  // overwrites what arrives); the inner loop is DEV's, and an override that goes
+  // straight to a research-api passes no gateway, so the proxy says `dev` here.
+  const researchEnvHeader = {
+    configure: ((proxy) => {
+      proxy.on('proxyReq', (proxyReq) => {
+        proxyReq.setHeader('x-bifrost-env', 'dev')
+      })
+    }) satisfies ProxyOptions['configure'],
+  }
   const researchPluginProxy = (() => {
     if (!researchOverride || researchOverride === '/') {
       return {
@@ -121,7 +133,7 @@ function buildDevProxies(env: Record<string, string>): Record<string, object> {
     },
     '/api/plugin/market-data': pluginProxy,
     '/api/plugin/flex-query': flexPluginProxy,
-    '/api/plugin/research': researchPluginProxy,
+    '/api/plugin/research': { ...researchPluginProxy, ...researchEnvHeader },
     '/api': {
       target: tradeTarget,
       changeOrigin: true,

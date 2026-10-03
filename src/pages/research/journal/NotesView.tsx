@@ -14,6 +14,7 @@ import {
   deleteNote,
   fetchNotes,
   isTradeRef,
+  otherEnvOfTradeRef,
   updateNote,
   type JournalNote,
   type NoteRef,
@@ -65,6 +66,15 @@ export function InstanceNoteRef({ raw, className }: { raw: string; className: st
   const id = Number(raw.replace(/^#/, ''))
   const known = useInstanceIndex()
   const open = useOpenTrade()
+  const otherEnv = otherEnvOfTradeRef({ type: 'trade', id: raw })
+  if (otherEnv) {
+    // TD-73: another environment's trade — the same number here is a different trade.
+    return (
+      <span className={className} title={`A trade in ${otherEnv.toUpperCase()} — not this environment's #${raw.split(':')[1]}`}>
+        {raw}
+      </span>
+    )
+  }
   if (!Number.isFinite(id) || id <= 0) return <span className={className}>{raw}</span>
   if (known && !known.has(id)) {
     return (
@@ -92,6 +102,8 @@ function NoteRow({ note }: { note: JournalNote }) {
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const locked = note.distilled_memory_id != null
+  // A note on another environment's trade was written on that environment's page.
+  const otherEnv = note.refs.map(otherEnvOfTradeRef).find((e) => e != null) ?? null
 
   const save = useMutation({
     mutationFn: () => updateNote(note.id, { body_md: draft.trim() }),
@@ -121,7 +133,14 @@ function NoteRow({ note }: { note: JournalNote }) {
     <div className="flex flex-col gap-1 border-b border-border/55 px-3 py-2 last:border-b-0">
       <div className="flex flex-wrap items-baseline gap-2">
         <span className="font-mono text-dense-micro text-muted-foreground">{time}</span>
-        {note.page_route ? (
+        {note.page_route && otherEnv ? (
+          <span
+            className="text-dense-micro text-muted-foreground"
+            title={`Written in ${otherEnv.toUpperCase()} — its page is not this environment's`}
+          >
+            on {note.page_label || note.page_route} · {otherEnv.toUpperCase()}
+          </span>
+        ) : note.page_route ? (
           <Link
             to={note.page_route}
             className="text-dense-micro text-muted-foreground hover:text-foreground hover:underline"

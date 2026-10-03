@@ -74,7 +74,6 @@ export function InstanceCreateModal({ open, onOpenChange, status }: Props) {
   const [accountIdPick, setAccountIdPick] = useState<string>('')
   const [openedAt, setOpenedAt] = useState<string>(todayIso())
   const [label, setLabel] = useState<string>('')
-  const [notes, setNotes] = useState<string>('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -89,7 +88,6 @@ export function InstanceCreateModal({ open, onOpenChange, status }: Props) {
     setOpportunityId('')
     setAccountIdPick('')
     setLabel('')
-    setNotes('')
     setOpenedAt(todayIso())
     setError(null)
   }
@@ -118,7 +116,6 @@ export function InstanceCreateModal({ open, onOpenChange, status }: Props) {
         account_id: accountId,
         opened_at: `${dateStr}T12:00:00.000Z`,
         label: label.trim() || undefined,
-        notes: notes.trim() || undefined,
       })
       await queryClient.invalidateQueries({ queryKey: ['strategy', 'instances'] })
       handleDialogOpenChange(false)
@@ -211,15 +208,6 @@ export function InstanceCreateModal({ open, onOpenChange, status }: Props) {
                 placeholder="e.g. Straddle 2025-03"
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
-              />
-            </InstanceCreateFormRow>
-
-            <InstanceCreateFormRow label="Notes (optional)">
-              <Input
-                className={instanceCreateInputClass}
-                placeholder="Optional notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
               />
             </InstanceCreateFormRow>
           </section>

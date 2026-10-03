@@ -240,7 +240,7 @@ function JournalFaceForContract({
           }
         >
           <Input
-            className="h-7 font-mono text-dense-meta text-[var(--color-instance-multi)]"
+            className="h-7 font-mono text-dense-meta text-[var(--color-trade-multi)]"
             value={draft.instanceId != null ? `#${draft.instanceId}` : '—'}
             readOnly
           />

@@ -124,7 +124,7 @@ export function EntitySection() {
                 <Code>text-entity-option</Code>
               </td>
               <td data-sr-col="wrap">
-                <Code>text-entity-instance</Code>
+                <Code>text-entity-trade</Code>
               </td>
             </tr>
           </tbody>

@@ -10,7 +10,7 @@ const perf = {
     net_pnl: 1100,
     total_commission: 100,
     total_unrealized_pnl: 400,
-    trade_count: 10,
+    fill_count: 10,
     win_count: 4,
     loss_count: 6,
     win_rate: 0.4,
@@ -27,10 +27,10 @@ describe('buildReadingMetrics', () => {
   const m = Object.fromEntries(buildReadingMetrics(perf).map(x => [x.label, x]))
 
   it('reads win rate over the fills that closed something, not over every fill', () => {
-    // trade_count counts opening fills too: 4 wins and 6 losses of 10 fills is 40%,
+    // fill_count counts opening fills too: 4 wins and 6 losses of 10 fills is 40%,
     // and the same 10 closing fills among 25 fills would still be 40%.
     expect(m['Consistency · win rate · closing fills'].value).toBe('40.0%')
-    const withOpens = { ...perf, summary: { ...perf.summary, trade_count: 25, win_rate: 0.16 } }
+    const withOpens = { ...perf, summary: { ...perf.summary, fill_count: 25, win_rate: 0.16 } }
     const w = buildReadingMetrics(withOpens).find(x => x.label.startsWith('Consistency'))
     expect(w?.value).toBe('40.0%')
   })

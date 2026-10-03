@@ -22,7 +22,7 @@ function makeSummary(overrides: Partial<PerformanceSummary> = {}): PerformanceSu
   return {
     net_pnl: 500,
     total_commission: 10,
-    trade_count: 2,
+    fill_count: 2,
     win_count: 1,
     loss_count: 1,
     win_rate: 50,

@@ -204,7 +204,7 @@ describe('one unit', () => {
 describe('the three caps', () => {
   const row = (w: number, l: number, profit: number | null, loss: number | null): WinRateStructureRow => ({
     structure_name: 'Cash Secured Put',
-    total_instances: w + l,
+    total_trades: w + l,
     profit_trades: w,
     loss_trades: l,
     total_profit: profit,

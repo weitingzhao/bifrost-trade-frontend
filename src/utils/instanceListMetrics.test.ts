@@ -51,7 +51,7 @@ describe('computeSymbolGroupRollup', () => {
     const summary = {
       net_pnl: 100,
       total_commission: 1,
-      trade_count: 2,
+      fill_count: 2,
       win_count: 1,
       loss_count: 0,
       win_rate: 1,

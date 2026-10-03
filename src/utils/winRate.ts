@@ -96,7 +96,7 @@ export function fallbackTotalsAllFromStructures(structures: WinRateStructureRow[
       return {
         profit_trades: a.profit_trades + r.profit_trades,
         loss_trades: a.loss_trades + r.loss_trades,
-        total_instances: a.total_instances + tradeTotalOf(r),
+        total_trades: a.total_trades + tradeTotalOf(r),
         total_profit: a.total_profit + winRateTotalProfitDisplayUsd(r),
         total_max_risk: (a.total_max_risk ?? 0) + (r.total_max_risk ?? 0),
         profit_investment: (a.profit_investment ?? 0) + (r.profit_investment ?? 0),
@@ -146,7 +146,7 @@ export function fallbackTotalsAllFromStructures(structures: WinRateStructureRow[
     {
       profit_trades: 0,
       loss_trades: 0,
-      total_instances: 0,
+      total_trades: 0,
       total_profit: 0,
       total_max_risk: 0,
       profit_investment: 0,
@@ -184,7 +184,7 @@ export function fallbackTotalsAllFromStructures(structures: WinRateStructureRow[
 
   return {
     structure_name: 'All structures',
-    total_instances: acc.total_instances,
+    total_trades: acc.total_trades,
     profit_trades: acc.profit_trades,
     loss_trades: acc.loss_trades,
     total_profit: Math.round((acc.total_profit ?? 0) * 100) / 100,

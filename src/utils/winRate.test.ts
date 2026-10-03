@@ -10,7 +10,7 @@ import type { WinRateStructureRow } from '@/types/strategy'
 
 function row(partial: Partial<WinRateStructureRow> & Pick<WinRateStructureRow, 'structure_name'>): WinRateStructureRow {
   return {
-    total_instances: 0,
+    total_trades: 0,
     profit_trades: 0,
     loss_trades: 0,
     total_profit: null,
@@ -82,7 +82,7 @@ describe('fallbackTotalsAllFromStructures', () => {
     const structures = [
       row({
         structure_name: 'A',
-        total_instances: 2,
+        total_trades: 2,
         profit_trades: 2,
         loss_trades: 0,
         total_profit: 100,
@@ -93,7 +93,7 @@ describe('fallbackTotalsAllFromStructures', () => {
       }),
       row({
         structure_name: 'B',
-        total_instances: 1,
+        total_trades: 1,
         profit_trades: 0,
         loss_trades: 1,
         total_loss: -50,
@@ -107,7 +107,7 @@ describe('fallbackTotalsAllFromStructures', () => {
     ]
     const totals = fallbackTotalsAllFromStructures(structures)
     expect(totals.structure_name).toBe('All structures')
-    expect(totals.total_instances).toBe(3)
+    expect(totals.total_trades).toBe(3)
     expect(totals.profit_trades).toBe(2)
     expect(totals.loss_trades).toBe(1)
     expect(totals.total_profit).toBe(100)

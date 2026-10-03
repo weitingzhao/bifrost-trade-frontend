@@ -23,7 +23,7 @@ export function DenseLinkButton({
         variant === 'coverage' && 'text-entity-option',
         variant === 'option' && 'text-entity-option font-mono',
         variant === 'strategy' && 'text-entity-strategy',
-        variant === 'instance' && 'text-entity-instance font-mono',
+        variant === 'instance' && 'text-entity-trade font-mono',
         (variant === 'default' || variant === 'stock') && 'text-entity-symbol',
         className,
       )}

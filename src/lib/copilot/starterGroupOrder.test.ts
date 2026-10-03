@@ -19,8 +19,8 @@ describe('starterGroupOrder', () => {
   })
 
   it('joins known tool names, nothing invented', () => {
-    expect(starterToolCaption(['trade.strategy.gate_safety'])).toBe(
-      'trade.strategy.gate_safety',
+    expect(starterToolCaption(['trade.strategy.gate_sets'])).toBe(
+      'trade.strategy.gate_sets',
     )
     expect(
       starterToolCaption(['trade.portfolio.snapshot', 'trade.portfolio.risk_summary']),

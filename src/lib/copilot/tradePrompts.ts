@@ -57,7 +57,7 @@ export const TRADE_QUESTION_GROUPS: {
     id: 'strategy',
     label: { zh: '策略与机会', en: 'Strategy & opportunities' },
     lead: {
-      zh: '实例在做什么，还有哪些机会等着。',
+      zh: 'trade 在做什么，还有哪些机会等着。',
       en: 'What the trades are doing, and what is queued.',
     },
   },
@@ -113,10 +113,10 @@ export const TRADE_QUESTIONS: TradeQuestion[] = [
     group: 'gates',
     label: { zh: '现在什么在挡着开仓', en: 'What is blocking entries' },
     prompt: {
-      zh: '结合当前的 safety gate 配置和我的持仓、策略实例说明：现在有什么在阻止开仓？逐条列出被触发的 gate、它的阈值和当前读数。（D10 冻结中，仅需说明）',
+      zh: '结合当前的 safety gate 配置和我的持仓、trade 说明：现在有什么在阻止开仓？逐条列出被触发的 gate、它的阈值和当前读数。（D10 冻结中，仅需说明）',
       en: 'Given the current safety gate configuration, my positions and my trades, what is blocking entries right now? List each triggered gate, its threshold, and the current reading. (D10 frozen — explanation only.)',
     },
-    tools: ['trade.strategy.gate_safety', 'trade.strategy.instances', 'trade.portfolio.snapshot'],
+    tools: ['trade.strategy.gate_sets', 'trade.strategy.trades', 'trade.portfolio.snapshot'],
   },
   {
     id: 'gates-why',
@@ -126,7 +126,7 @@ export const TRADE_QUESTIONS: TradeQuestion[] = [
       zh: '逐个解释我的 safety gate：每一维（direction / structure / coverage / risk / volatility / time）现在的设置是什么，它防的是哪一类损失，以及和我实际成交记录相比是不是太松或太紧。',
       en: 'Explain my safety gates one dimension at a time — direction, structure, coverage, risk, volatility, time: what each is set to, which loss it is there to prevent, and whether my actual execution record says it is too loose or too tight.',
     },
-    tools: ['trade.strategy.gate_safety', 'trade.trading.recent_executions'],
+    tools: ['trade.strategy.gate_sets', 'trade.trading.recent_executions'],
   },
   {
     id: 'recent-fills',
@@ -151,12 +151,12 @@ export const TRADE_QUESTIONS: TradeQuestion[] = [
   {
     id: 'instances',
     group: 'strategy',
-    label: { zh: '实例都在做什么', en: 'What the trades are doing' },
+    label: { zh: 'trade 都在做什么', en: 'What the trades are doing' },
     prompt: {
-      zh: '我的策略实例现在都处于什么状态？各自持有什么、离目标或止损多远、有没有需要我处理的。',
+      zh: '我的 trade 现在都处于什么状态？各自持有什么、离目标或止损多远、有没有需要我处理的。',
       en: 'What state are my trades in? What each holds, how far it sits from its target or stop, and whether any of them needs me.',
     },
-    tools: ['trade.strategy.instances', 'trade.portfolio.snapshot'],
+    tools: ['trade.strategy.trades', 'trade.portfolio.snapshot'],
   },
   {
     id: 'opportunities',

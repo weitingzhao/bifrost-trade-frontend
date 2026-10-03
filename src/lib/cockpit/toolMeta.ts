@@ -242,27 +242,35 @@ export const TOOL_META: Record<string, ToolMeta> = {
       }
     },
   },
-  'trade.strategy.instances': {
-    title: '活跃策略 Trade',
-    description: 'Daemon 正在管理的策略实例（每个 trade 对应一组开仓 legs）。',
+  // Research 0.160.0 (naming R2): the trades and the gate sets under their own names. The
+  // old names below stay one version as aliases answering the old keys.
+  'trade.strategy.trades': {
+    title: 'Trade 列表',
+    description: '按规则开出的持仓（trade）：每个 trade 一组 legs，带结构与开 / 平状态。',
+    category: 'strategy',
+    summarize: (data) => summarizeTrades(asRecord(data), 'trades'),
+  },
+  'trade.strategy.gate_sets': {
+    title: '门禁集 Gate set',
+    description: '限额参数组（gate set）：每组一套门禁，标出哪组启用。',
     category: 'strategy',
     summarize: (data) => {
       const d = asRecord(data)
       if (!d) return null
-      const rows = asArray(d.instances) ?? []
+      const rows = asArray(d.gate_sets) ?? []
       return {
-        headline: `${d.count ?? rows.length} 个活跃 trade`,
+        headline: `${d.count ?? rows.length} 个门禁集 · ${d.active_count ?? rows.filter((r) => asRecord(r)?.is_active).length} 个启用`,
         table:
           rows.length > 0
             ? {
-                columns: ['ID', '标的', '结构', '状态'],
+                columns: ['ID', '名称', '版本', '启用'],
                 rows: rows.slice(0, 8).map((r) => {
                   const x = r as Record<string, unknown>
                   return [
-                    String(x.instance_id ?? x.id ?? '—').slice(0, 12),
-                    String(x.symbol ?? '—'),
-                    String(x.structure ?? x.structure_type ?? '—'),
-                    String(x.status ?? x.state ?? '—'),
+                    String(x.gate_safety_strategy_id ?? '—'),
+                    String(x.name ?? '—'),
+                    String(x.version ?? '—'),
+                    x.is_active ? '是' : '否',
                   ]
                 }),
                 truncatedFrom: rows.length > 8 ? rows.length : undefined,
@@ -270,6 +278,13 @@ export const TOOL_META: Record<string, ToolMeta> = {
             : undefined,
       }
     },
+  },
+  /** @deprecated Research 0.160.0 alias of `trade.strategy.trades` (rows under `instances`); goes next version. */
+  'trade.strategy.instances': {
+    title: 'Trade 列表',
+    description: '按规则开出的持仓（trade）——旧工具名，同 trade.strategy.trades。',
+    category: 'strategy',
+    summarize: (data) => summarizeTrades(asRecord(data), 'instances'),
   },
   'trade.strategy.opportunities': {
     title: '策略 Opportunity',
@@ -542,6 +557,31 @@ export function getToolMeta(toolName: string): ToolMeta {
   }
 }
 
+/** The open trades `trade.strategy.trades` lists (and its old alias, under `instances`). */
+function summarizeTrades(d: Record<string, unknown> | null, key: 'trades' | 'instances'): ToolSummary | null {
+  if (!d) return null
+  const rows = asArray(d[key]) ?? []
+  return {
+    headline: `${d.count ?? rows.length} 个 trade`,
+    table:
+      rows.length > 0
+        ? {
+            columns: ['Trade', '名称', '结构', '状态'],
+            rows: rows.slice(0, 8).map((r) => {
+              const x = r as Record<string, unknown>
+              return [
+                `#${String(x.trade_id ?? x.strategy_instance_id ?? x.id ?? '—')}`,
+                String(x.label ?? x.strategy_opportunity_name ?? '—'),
+                String(x.strategy_structure_name ?? x.structure_type ?? '—'),
+                String(x.state ?? x.status ?? '—'),
+              ]
+            }),
+            truncatedFrom: rows.length > 8 ? rows.length : undefined,
+          }
+        : undefined,
+  }
+}
+
 /**
  * Generic summarizer for tools without a specific one.  Extracts the row
  * count from common array keys and highlights top-level scalars.
@@ -553,6 +593,8 @@ export function genericSummary(data: unknown): ToolSummary | null {
     'items',
     'rows',
     'executions',
+    'trades',
+    'gate_sets',
     'instances',
     'opportunities',
     'quotes',

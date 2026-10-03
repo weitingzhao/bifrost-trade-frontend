@@ -4,7 +4,7 @@ import type { WinRateStructureRow } from '@/types/strategy'
 
 function row(p: Partial<WinRateStructureRow> & { structure_name: string }): WinRateStructureRow {
   return {
-    total_instances: 0,
+    total_trades: 0,
     profit_trades: 0,
     loss_trades: 0,
     total_profit: null,
@@ -23,12 +23,12 @@ function row(p: Partial<WinRateStructureRow> & { structure_name: string }): WinR
   }
 }
 
-const CSP = row({ structure_name: 'Cash Secured Put', total_instances: 19, profit_trades: 18, loss_trades: 1 })
-const CC = row({ structure_name: 'Covered Call', total_instances: 57, profit_trades: 50, loss_trades: 7 })
+const CSP = row({ structure_name: 'Cash Secured Put', total_trades: 19, profit_trades: 18, loss_trades: 1 })
+const CC = row({ structure_name: 'Covered Call', total_trades: 57, profit_trades: 50, loss_trades: 7 })
 const IC = row({ structure_name: 'Iron Condor' })
 const TOTALS = row({
   structure_name: 'All structures',
-  total_instances: 85,
+  total_trades: 85,
   profit_trades: 75,
   loss_trades: 10,
 })
@@ -60,7 +60,7 @@ describe('structureRows', () => {
   it('takes the win rate over what resolved, not over n', () => {
     // 18 of 19 instances resolved as wins and one as a loss; an open instance
     // has neither won nor lost, and counting it would depress every rate.
-    const open = row({ structure_name: 'Half open', total_instances: 20, profit_trades: 5, loss_trades: 5 })
+    const open = row({ structure_name: 'Half open', total_trades: 20, profit_trades: 5, loss_trades: 5 })
     expect(structureRows([open], null)[0].winRate).toBeCloseTo(0.5, 6)
     expect(structureRows([CSP], null)[0].winRate).toBeCloseTo(18 / 19, 6)
   })
@@ -72,7 +72,7 @@ describe('structureRows', () => {
   it('carries every figure through as the service gave it, nulls included', () => {
     const rich = row({
       structure_name: 'Rich',
-      total_instances: 3,
+      total_trades: 3,
       profit_trades: 2,
       loss_trades: 1,
       total_profit: 100,

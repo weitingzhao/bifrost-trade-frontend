@@ -100,7 +100,7 @@ function ItemActions({ item, onAction }: { item: DeskItem; onAction: (item: Desk
           <button
             key={a.label}
             type="button"
-            className={cn(positionsUi.btn, 'font-mono text-[var(--color-instance-multi)]')}
+            className={cn(positionsUi.btn, 'font-mono text-[var(--color-trade-multi)]')}
             title={`Open #${a.instance.id} — its record, over the desk`}
             onClick={(e) => openInstance(a.instance!.id, { list: a.instance!.list, from: a.instance!.from, ...tradeHowFrom(e) })}
           >

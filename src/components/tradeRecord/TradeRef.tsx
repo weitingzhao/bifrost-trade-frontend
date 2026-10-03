@@ -31,7 +31,7 @@ export function TradeRef({
   const open = useOpenTrade()
   const surfaces = useSurfaces()
   const text = children ?? `#${id}`
-  const base = cn('font-mono font-bold text-[var(--color-instance-multi)]', className)
+  const base = cn('font-mono font-bold text-[var(--color-trade-multi)]', className)
   if (known && !known.has(id)) {
     return (
       <span className={cn(base, 'opacity-70')} title={`#${id} is not in the trade book — nothing to open`}>

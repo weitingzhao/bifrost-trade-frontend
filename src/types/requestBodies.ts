@@ -110,8 +110,8 @@ export interface StructureBody {
   meta?: StructureMetaItem[]
 }
 
-/** POST `/strategies/gate-safety`, PUT `/strategies/gate-safety/{id}` (a full replace). */
-export interface GateSafetyBody {
+/** POST `/gate-sets`, PUT `/gate-sets/{id}` (a full replace; `/strategies/gate-safety` until api R4). */
+export interface GateSetBody {
   name?: string
   version?: number
   dim_direction?: string | null
@@ -126,6 +126,9 @@ export interface GateSafetyBody {
   /** YYYY-MM-DD; a `""` entry is dropped by core. */
   earnings_dates?: string[]
 }
+
+/** The api's old name of `GateSetBody` (api 0.7.0 keeps it as an alias until R4). */
+export type GateSafetyBody = GateSetBody
 
 /** POST `/strategies/saved-searches`. */
 export interface SavedSearchBody {
@@ -167,10 +170,16 @@ export interface InstrumentClassBody {
 
 // ── Trading (`/api/trading`) ─────────────────────────────────────────────────
 
-/** One split of a fill across trades; the splits sum to the fill's quantity (core, 400). */
+/** One split of a fill across trades, old names (api 0.7.0 reads them until R4). */
 export interface InstanceAllocationItem {
   strategy_instance_id?: number
   allocated_quantity?: number
+}
+
+/** One split of a fill across trades; the splits sum to the fill's quantity (core, 400). api 0.7.0. */
+export interface FillSplitItem {
+  trade_id?: number
+  quantity?: number
 }
 
 interface ExecutionFields {
@@ -194,6 +203,9 @@ interface ExecutionFields {
   realized_pnl?: number
   currency?: string
   strategy_opportunity_id?: number | null
+  /** api 0.7.0 names (naming R1); the old two below lose when both are sent. Callers switch in R2. */
+  trade_id?: number | null
+  fill_splits?: FillSplitItem[]
   strategy_instance_id?: number | null
   instance_allocations?: InstanceAllocationItem[]
 }

@@ -13,7 +13,7 @@ const perf = {
     total_commission: 50,
     win_count: 6,
     loss_count: 4,
-    trade_count: 18,
+    fill_count: 18,
     profit_factor: 1.5,
     avg_win: 250,
     avg_loss: -120,

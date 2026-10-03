@@ -24,7 +24,7 @@ import {
 const CHAR_W = 5.4
 const INK = {
   contract: 'var(--sk-contract)',
-  instance: 'var(--color-instance-multi)',
+  instance: 'var(--color-trade-multi)',
   shares: 'var(--sk-ticker)',
   profit: 'var(--color-profit)',
   loss: 'var(--color-loss)',

@@ -46,8 +46,8 @@ const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
     pill: 'text-entity-strategy font-semibold',
   },
   instance: {
-    cell: 'text-entity-instance font-mono font-semibold',
-    pill: 'text-entity-instance font-mono font-semibold',
+    cell: 'text-entity-trade font-mono font-semibold',
+    pill: 'text-entity-trade font-mono font-semibold',
   },
   success: {
     cell: 'text-emerald-600 dark:text-emerald-400',
@@ -135,7 +135,7 @@ const entityFilterActiveClass: Record<DenseEntityFilterVariant, string> = {
   strategy:
     'rounded-full border-entity-strategy/50 text-entity-strategy opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-strategy)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-strategy)_14%,transparent)]',
   instance:
-    'rounded-full border-entity-instance/50 text-entity-instance opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-instance)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-instance)_14%,transparent)]',
+    'rounded-full border-entity-trade/50 text-entity-trade opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-trade)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-trade)_14%,transparent)]',
 }
 
 export function denseEntityFilterChipClass(
@@ -180,7 +180,7 @@ export type DenseOptionCategoryVariant = 'strategy' | 'instance' | 'opportunity'
 
 const optionCategoryLabelByVariant: Record<DenseOptionCategoryVariant, string> = {
   strategy: 'font-semibold text-entity-strategy',
-  instance: 'font-mono font-semibold text-entity-instance',
+  instance: 'font-mono font-semibold text-entity-trade',
   opportunity: 'font-semibold text-option-category-opportunity',
   structure: 'font-semibold text-option-category-structure',
 }

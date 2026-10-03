@@ -54,7 +54,7 @@ export function JournalNodeRow({
           {OPERATOR_LABEL[node.operator]}
         </DenseTag>
         {node.diff !== '—' ? (
-          <span className="font-mono text-dense-micro text-entity-instance">{node.diff}</span>
+          <span className="font-mono text-dense-micro text-entity-trade">{node.diff}</span>
         ) : null}
         <span className="min-w-0 flex-[1_1_8rem] truncate text-dense-meta text-muted-foreground">
           {node.summary}

@@ -36,7 +36,7 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
             {strategyName}
           </DenseOptionCategoryLabel>
         ) : null}
-        <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-label="Trade allocations">
+        <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-label="Fill splits">
           {allocs!.map(a => {
             const sid = a.strategy_instance_id
             const label =

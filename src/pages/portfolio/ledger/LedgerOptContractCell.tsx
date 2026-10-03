@@ -14,7 +14,7 @@ import type { OptionStockLink, OptionStockLinkSummary } from '@/types/trading'
 
 const INSTANCE_ICON_CLASS: Record<string, string> = {
   same: 'text-[var(--color-success)] hover:text-[var(--color-success)]',
-  multiple: 'text-[var(--color-instance-multi)] hover:text-[var(--color-instance-multi)]',
+  multiple: 'text-[var(--color-trade-multi)] hover:text-[var(--color-trade-multi)]',
   mixed: 'text-[var(--color-warning)] hover:text-[var(--color-warning)]',
 }
 

@@ -25,7 +25,7 @@ import {
 } from './shortLegRiskMap'
 import { buildExpiryLadder, type LadderLeg } from './positionsOptionRisk'
 
-type InputLeg = LadderLeg & { instanceKey: string; contractKey: string }
+type InputLeg = LadderLeg & { tradeKey: string; contractKey: string }
 
 function pin(iso: string) {
   vi.useFakeTimers()
@@ -42,14 +42,14 @@ const inputLeg = (o: Partial<InputLeg> = {}): InputLeg => ({
   right: 'C',
   qty: -1,
   underlying: 'AAA',
-  instanceKey: 'inst-1',
+  tradeKey: 'inst-1',
   contractKey: 'AAA|OPT|20250620|100|C',
   ...o,
 })
 
 const mapLeg = (o: Partial<RiskMapLeg> = {}): RiskMapLeg => ({
   key: 'k',
-  instanceKey: 'inst-1',
+  tradeKey: 'inst-1',
   symbol: 'AAA',
   right: 'C',
   strike: 100,

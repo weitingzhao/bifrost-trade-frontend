@@ -32,23 +32,23 @@ const CALLS: [string, () => Promise<unknown>, string][] = [
   ['fetchStructure', () => strategy.fetchStructure(3), 'Strategy /structures/3'],
   ['createStructure', () => strategy.createStructure({ name: 'x' } as never), 'POST /api/strategy/strategies/structures'],
   ['updateStructure', () => strategy.updateStructure(3, { name: 'x' } as never), 'PUT /api/strategy/strategies/structures/3'],
-  ['fetchStrategyInstances', () => strategy.fetchStrategyInstances(), 'Strategy /instances'],
-  ['fetchStrategyInstance', () => strategy.fetchStrategyInstance(7), 'Strategy /instances/7'],
-  ['createStrategyInstance', () => strategy.createStrategyInstance({} as never), 'POST /strategies/instances'],
+  ['fetchTrades', () => strategy.fetchTrades(), 'Strategy /trades'],
+  ['fetchTrade', () => strategy.fetchTrade(7), 'Strategy /trades/7'],
+  ['createTrade', () => strategy.createTrade({} as never), 'POST /trades'],
   ['fetchOpportunityDetail', () => strategy.fetchOpportunityDetail(4), 'Strategy /opportunities/4'],
   ['createOpportunity', () => strategy.createOpportunity({} as never), 'POST /strategies/opportunities'],
-  ['fetchGateSafety', () => strategy.fetchGateSafety(), 'Strategy /gate-safety'],
-  ['fetchGateSafetyDefaults', () => strategy.fetchGateSafetyDefaults(), 'Strategy /gate-safety/defaults'],
-  ['fetchGateSafetyFull', () => strategy.fetchGateSafetyFull(2), 'Strategy /gate-safety/2'],
-  ['createGateSafety', () => strategy.createGateSafety({} as never), 'POST /strategies/gate-safety'],
-  ['updateGateSafety', () => strategy.updateGateSafety(2, {} as never), 'PUT /strategies/gate-safety/2'],
+  ['fetchGateSets', () => strategy.fetchGateSets(), 'Strategy /gate-sets'],
+  ['fetchGateSetDefaults', () => strategy.fetchGateSetDefaults(), 'Strategy /gate-sets/defaults'],
+  ['fetchGateSetFull', () => strategy.fetchGateSetFull(2), 'Strategy /gate-sets/2'],
+  ['createGateSet', () => strategy.createGateSet({} as never), 'POST /gate-sets'],
+  ['updateGateSet', () => strategy.updateGateSet(2, {} as never), 'PUT /gate-sets/2'],
   ['fetchDimsGrouped', () => strategy.fetchDimsGrouped(), 'Strategy /dims'],
   ['fetchTemplates', () => strategy.fetchTemplates(), 'Strategy /templates'],
   ['fetchTemplateDetail', () => strategy.fetchTemplateDetail(9), 'Strategy /templates/9'],
   ['replaceTemplateLegs', () => strategy.replaceTemplateLegs(9, []), 'PUT /strategies/templates/9/legs'],
   ['replaceTemplateParams', () => strategy.replaceTemplateParams(9, []), 'PUT /strategies/templates/9/params'],
   ['replaceTemplateCharacteristics', () => strategy.replaceTemplateCharacteristics(9, []), 'PUT /strategies/templates/9/characteristics'],
-  ['fetchWinRate', () => strategy.fetchWinRate(), 'GET /strategies/win-rate'],
+  ['fetchWinRate', () => strategy.fetchWinRate(), 'GET /trades/win-rate'],
   ['fetchAllocations', () => strategy.fetchAllocations(), 'GET /strategies/allocations'],
   ['fetchAllocation', () => strategy.fetchAllocation(5), 'GET /strategies/allocations/5'],
   ['createAllocation', () => strategy.createAllocation({} as never), 'POST /strategies/allocations'],
@@ -61,10 +61,10 @@ const CALLS: [string, () => Promise<unknown>, string][] = [
   ['fetchOptionBars', () => market.fetchOptionBars({ symbol: 'ZZQ', expiry: '20310117', strike: 10, right: 'P' } as never), 'Market /bars (option)'],
   ['fetchMarketHolidays', () => market.fetchMarketHolidays(2031), 'Market /holidays'],
   ['fetchMonitorStatus', () => monitor.fetchMonitorStatus(), 'Monitor /status'],
-  ['fetchInstancePerformance', () => trading.fetchInstancePerformance(7), 'Trading /performance [7]'],
+  ['fetchTradePerformance', () => trading.fetchTradePerformance(7), 'Trading /performance [7]'],
   ['fetchPerformance', () => trading.fetchPerformance(), 'Trading /performance'],
   ['fetchModelAnalysis', () => portfolio.fetchModelAnalysis('U0000001'), 'Portfolio /portfolio/model-analysis'],
-  ['fetchTradeReviews', () => fetchTradeReviews(), 'Strategy /strategies/reviews'],
+  ['fetchTradeReviews', () => fetchTradeReviews(), 'Strategy /trade-reviews'],
   ['fetchShortLegs', () => fetchShortLegs(), 'Portfolio /portfolio/short-legs'],
   ['fetchSystemMessages', () => fetchSystemMessages(), 'Messages'],
 ]
@@ -87,8 +87,8 @@ describe('TD-50 batch 1 successes', () => {
     expect(await strategy.createAllocation({} as never)).toEqual({ strategy_allocation_id: 12 })
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ removed: ['ZZQ'], kept: [] }), { status: 200 }))
     expect(await market.postQuotesCleanup([])).toEqual({ removed: ['ZZQ'], kept: [] })
-    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ strategy_instance_id: 31 }), { status: 200 }))
-    expect(await strategy.createStrategyInstance({} as never)).toEqual({ strategy_instance_id: 31 })
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ trade_id: 31 }), { status: 200 }))
+    expect(await strategy.createTrade({} as never)).toEqual({ trade_id: 31 })
   })
 
   it('sends a JSON body with its method', async () => {

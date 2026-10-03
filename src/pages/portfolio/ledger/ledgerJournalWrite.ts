@@ -1,7 +1,7 @@
 import type { CreateExecutionBody, Execution } from '@/types/positions'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import { closingFillFromNet, signedFillQty } from '@/components/positions/quickCloseOffset'
-import { executionStrategyInstanceIds } from '@/utils/ledger/ledgerOptHelpers'
+import { executionTradeIds } from '@/utils/ledger/ledgerOptHelpers'
 
 export type LedgerJournalMode = 'gap' | 'expired' | 'assigned'
 
@@ -24,7 +24,7 @@ export type LedgerJournalSeed = {
   strike?: number
   optionRight?: string
   netQty?: number
-  instanceId?: number
+  tradeId?: number
   opportunityId?: number
 }
 
@@ -39,7 +39,7 @@ export type LedgerJournalDraft = {
   expiry?: string
   strike?: number
   optionRight?: string
-  instanceId?: number
+  tradeId?: number
   opportunityId?: number
 }
 
@@ -56,7 +56,7 @@ export function journalDraftFromSeed(seed: LedgerJournalSeed): LedgerJournalDraf
     expiry: seed.expiry,
     strike: seed.strike,
     optionRight: seed.optionRight,
-    instanceId: seed.instanceId,
+    tradeId: seed.tradeId,
     opportunityId: seed.opportunityId,
   }
 }
@@ -96,21 +96,21 @@ export function journalCreateBody(
   // Instance and opportunity travel together. The rows already in the ledger
   // carry both; one without the other files under "No opportunity" and splits
   // the instance across two places in the Strategy view.
-  if (draft.instanceId != null && draft.opportunityId != null) {
-    body.strategy_instance_id = draft.instanceId
+  if (draft.tradeId != null && draft.opportunityId != null) {
+    body.trade_id = draft.tradeId
     body.strategy_opportunity_id = draft.opportunityId
   }
   return { ok: true, body }
 }
 
-function opportunityForInstance(fills: Execution[], instanceId: number): number | undefined {
+function opportunityForTrade(fills: Execution[], tradeId: number): number | undefined {
   const found = new Set<number>()
   for (const f of fills) {
-    if (f.strategy_instance_id === instanceId && f.strategy_opportunity_id != null) {
+    if (f.trade_id === tradeId && f.strategy_opportunity_id != null) {
       found.add(f.strategy_opportunity_id)
     }
-    for (const a of f.instance_allocations ?? []) {
-      if (a.strategy_instance_id === instanceId && a.strategy_opportunity_id != null) {
+    for (const a of f.fill_splits ?? []) {
+      if (a.trade_id === tradeId && a.strategy_opportunity_id != null) {
         found.add(a.strategy_opportunity_id)
       }
     }
@@ -126,9 +126,9 @@ export function journalSeedFromContract(
   mode: LedgerJournalMode,
   netQty: number,
 ): LedgerJournalSeed {
-  const instanceIds = new Set(accountFills.flatMap(executionStrategyInstanceIds))
-  const instanceId = instanceIds.size === 1 ? [...instanceIds][0] : undefined
-  const opportunityId = instanceId != null ? opportunityForInstance(accountFills, instanceId) : undefined
+  const tradeIds = new Set(accountFills.flatMap(executionTradeIds))
+  const tradeId = tradeIds.size === 1 ? [...tradeIds][0] : undefined
+  const opportunityId = tradeId != null ? opportunityForTrade(accountFills, tradeId) : undefined
   const strike = Number(group.strike)
   return {
     mode,
@@ -139,7 +139,7 @@ export function journalSeedFromContract(
     strike: Number.isFinite(strike) ? strike : undefined,
     optionRight: group.option_right || undefined,
     netQty,
-    instanceId: opportunityId != null ? instanceId : undefined,
+    tradeId: opportunityId != null ? tradeId : undefined,
     opportunityId,
   }
 }

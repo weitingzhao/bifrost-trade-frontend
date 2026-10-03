@@ -31,7 +31,7 @@ vi.mock('@/hooks/useMonitorStatus', () => ({
 
 vi.mock('@/hooks/useStrategies', () => ({
   useStructures: () => ({ data: { items: [] } }),
-  useStrategyInstances: () => ({ data: { items: [] } }),
+  useTrades: () => ({ data: { items: [] } }),
   useOpportunities: () => ({ data: { items: [] } }),
   useAllocations: () => ({ data: { items: [] } }),
 }))
@@ -77,7 +77,7 @@ function plan(over: Partial<StrategyPlan> = {}): StrategyPlan {
     intended_at: null,
     filled_at: null,
     cancelled_at: null,
-    strategy_instance_id: null,
+    trade_id: null,
     parent_strategy_plan_id: null,
     created_at: '2026-09-15T12:00:00Z',
     updated_at: '2026-09-15T12:00:00Z',
@@ -159,7 +159,7 @@ describe('Trading › Plans', () => {
           status: 'filled',
           effective_status: 'filled',
           filled_at: '2026-09-16T14:30:00Z',
-          strategy_instance_id: 77,
+          trade_id: 77,
         }),
       ],
       count: 1,

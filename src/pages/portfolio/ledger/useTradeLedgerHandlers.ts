@@ -14,7 +14,7 @@ type Params = {
   setExpandedGroups: Dispatch<SetStateAction<Set<string>>>
   setStrategyOppExpanded: Dispatch<SetStateAction<Set<string>>>
   setOuterStrategyExpanded: Dispatch<SetStateAction<Set<string>>>
-  setOuterInstanceExpanded: Dispatch<SetStateAction<Set<string>>>
+  setOuterTradeExpanded: Dispatch<SetStateAction<Set<string>>>
   setOptSort: Dispatch<SetStateAction<{ col: OptSortCol; dir: 'asc' | 'desc' }>>
   setStkSort: Dispatch<SetStateAction<{ col: StkSortCol; dir: 'asc' | 'desc' }>>
   setInspector: Dispatch<SetStateAction<LedgerInspectorState>>
@@ -44,7 +44,7 @@ export function useTradeLedgerHandlers(p: Params) {
   const toggleGroup = (key: string) => toggleExpanded(key, p.setExpandedGroups)
   const toggleStrategyOpp = (oppId: number | 'none') => toggleExpanded(String(oppId), p.setStrategyOppExpanded)
   const toggleOuterStrategy = (key: string) => toggleExpanded(key, p.setOuterStrategyExpanded)
-  const toggleOuterInstance = (key: string) => toggleExpanded(key, p.setOuterInstanceExpanded)
+  const toggleOuterTrade = (key: string) => toggleExpanded(key, p.setOuterTradeExpanded)
 
   const toggleOptSort = (col: OptSortCol) => {
     p.setOptSort(prev =>
@@ -97,7 +97,7 @@ export function useTradeLedgerHandlers(p: Params) {
 
   const handleSyncOppositeLeg = async (
     ex: Execution,
-    source: { opportunity_id: number; instance_id: number },
+    source: { opportunity_id: number; trade_id: number },
   ) => {
     const id = ex.account_executions_id
     if (id == null) return
@@ -131,7 +131,7 @@ export function useTradeLedgerHandlers(p: Params) {
     toggleGroup,
     toggleStrategyOpp,
     toggleOuterStrategy,
-    toggleOuterInstance,
+    toggleOuterTrade,
     toggleOptSort,
     toggleStkSort,
     handleAddJournal,

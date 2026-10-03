@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   AllocationsResponseSchema,
-  GateSafetyFullSchema,
-  GateSafetyResponseSchema,
+  GateSetFullSchema,
+  GateSetResponseSchema,
   OpportunitiesResponseSchema,
-  StrategyInstanceDetailSchema,
-  StrategyInstancesResponseSchema,
+  TradeDetailSchema,
+  TradesResponseSchema,
   StrategyOpportunityDetailSchema,
 } from './strategy'
 import { StrategyPlansResponseSchema } from './strategyPlan'
@@ -30,8 +30,8 @@ const opportunityRow = {
   updated_at: TS,
 }
 
-const instanceRow = {
-  strategy_instance_id: 7,
+const tradeRow = {
+  trade_id: 7,
   strategy_opportunity_id: 41,
   strategy_opportunity_name: 'Fixture Put Harvest',
   strategy_structure_id: null,
@@ -39,7 +39,6 @@ const instanceRow = {
   account_id: 'U0000001',
   opened_at: TS,
   label: null,
-  notes: null,
   created_at: TS,
   updated_at: TS,
   opened_at_epoch: 1930401000,
@@ -77,26 +76,26 @@ describe('strategy response schemas (api 0.3.1 models)', () => {
   })
 
   it('reads one instance without executions_count — GET / PATCH never send it', () => {
-    expect(StrategyInstanceDetailSchema.safeParse(instanceRow).success).toBe(true)
-    const listed = StrategyInstancesResponseSchema.safeParse({
-      items: [{ ...instanceRow, executions_count: 4 }],
+    expect(TradeDetailSchema.safeParse(tradeRow).success).toBe(true)
+    const listed = TradesResponseSchema.safeParse({
+      items: [{ ...tradeRow, executions_count: 4 }],
       count: 1,
     })
     expect(listed.success).toBe(true)
   })
 
   it('keeps fields the model does not declare (extra="allow")', () => {
-    const parsed = StrategyInstanceDetailSchema.parse({ ...instanceRow, added_later: 'x' })
+    const parsed = TradeDetailSchema.parse({ ...tradeRow, added_later: 'x' })
     expect(parsed.added_later).toBe('x')
-    const list = GateSafetyResponseSchema.parse({ items: [{ ...gateRow, added_later: 1 }], count: 1 })
+    const list = GateSetResponseSchema.parse({ items: [{ ...gateRow, added_later: 1 }], count: 1 })
     expect(list.items[0].added_later).toBe(1)
   })
 
   it('checks gates as an object and keeps it whole', () => {
     const gates = { strategy: { trading_hours_only: true }, guard: { risk: { paper_trade: true } } }
-    const parsed = GateSafetyFullSchema.parse({ ...gateRow, gates, earnings_dates: ['2031-02-03'] })
+    const parsed = GateSetFullSchema.parse({ ...gateRow, gates, earnings_dates: ['2031-02-03'] })
     expect(parsed.gates).toEqual(gates)
-    expect(GateSafetyFullSchema.safeParse({ ...gateRow, gates: [], earnings_dates: [] }).success).toBe(false)
+    expect(GateSetFullSchema.safeParse({ ...gateRow, gates: [], earnings_dates: [] }).success).toBe(false)
   })
 
   it('takes an allocation with no limits, and refuses a fraction where an id is an int', () => {
@@ -146,7 +145,7 @@ describe('strategy response schemas (api 0.3.1 models)', () => {
       intended_at: null,
       filled_at: null,
       cancelled_at: null,
-      strategy_instance_id: null,
+      trade_id: null,
       parent_strategy_plan_id: null,
       created_at: TS,
       updated_at: TS,

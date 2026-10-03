@@ -23,17 +23,18 @@ import { rollupMargin } from '@/utils/marginPressure'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
 import { useExecutionsAll } from '@/hooks/useExecutions'
-import { readInstances } from '@/utils/strategyInstances'
+import { readTrades } from '@/utils/tradeReadings'
 import {
   fetchAllocations,
-  fetchGateSafetyFull,
-  fetchStrategyInstances,
+  fetchGateSetFull,
+  fetchTrades,
 } from '@/api/strategy'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import { gateLimitRules, limitRules, withHeadroom, type GateReadings, type LimitRow } from '@/utils/limitsModel'
 import { daemonPaperTrade } from '@/utils/daemonMode'
 import type { StatusStrategyActive } from '@/types/monitor'
 import type { StrategyAllocation } from '@/types/strategy'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 /**
  * The window "new underlyings this week" looks back over.
@@ -147,18 +148,18 @@ export function useLimitBook(accountFilter: string): LimitBook {
    * daemon falls back to its config file, so there is no gate here to read.
    */
   const allocationsQuery = useQuery({
-    queryKey: ['strategy', 'allocations'],
+    queryKey: QUERY_KEYS.strategy.allocations,
     queryFn: () => fetchAllocations(),
   })
-  const instancesQuery = useQuery({
-    queryKey: ['strategy', 'instances'],
-    queryFn: () => fetchStrategyInstances(),
+  const tradesQuery = useQuery({
+    queryKey: QUERY_KEYS.trades.list,
+    queryFn: () => fetchTrades(),
   })
   const { allocation, gateId } = runningGate(allocationsQuery.data?.items ?? [], status?.strategy?.active)
   const paperTrade = daemonPaperTrade(status)
   const gateFullQuery = useQuery({
-    queryKey: ['strategy', 'gate-safety', gateId],
-    queryFn: () => fetchGateSafetyFull(gateId!),
+    queryKey: [...QUERY_KEYS.strategy.gateSets, 'detail', gateId],
+    queryFn: () => fetchGateSetFull(gateId!),
     enabled: gateId != null,
   })
 
@@ -173,34 +174,34 @@ export function useLimitBook(accountFilter: string): LimitBook {
         gateName: gate?.name ?? null,
         gateVersion: gate?.version ?? null,
         guard: guard ?? null,
-        openInstances: null,
+        openTrades: null,
         maxPositions: allocation?.max_positions ?? null,
         lossToday: null,
         paperTrade,
       }
     }
     const oppIds = new Set(allocation.strategy_opportunity_ids ?? [])
-    const mine = readInstances(instancesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter((i) =>
+    const mine = readTrades(tradesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter((i) =>
       oppIds.has(i.opportunityId),
     )
     const today = new Date().toISOString().slice(0, 10)
     const closedToday = mine.filter((i) => i.closed && i.openedOn != null)
     const todayFills = (execQuery.data?.items ?? []).filter(
-      (e) => (e.trade_date ?? '').slice(0, 10) === today && e.strategy_instance_id != null,
+      (e) => (e.trade_date ?? '').slice(0, 10) === today && e.trade_id != null,
     )
     return {
       allocationName: allocation.name,
       gateName: gate.name,
       gateVersion: gate.version,
       guard: guard ?? null,
-      openInstances: mine.filter((i) => !i.closed).length,
+      openTrades: mine.filter((i) => !i.closed).length,
       maxPositions: allocation.max_positions ?? null,
       // Nothing settled under the allocation today is a reading of zero loss,
       // not an absence — but only once a fill today exists to say so.
       lossToday: todayFills.length === 0 ? null : closedToday.reduce((a, i) => a + (i.realised ?? 0), 0),
       paperTrade,
     }
-  }, [allocation, gateFullQuery.data, instancesQuery.data?.items, execQuery.data?.items, paperTrade])
+  }, [allocation, gateFullQuery.data, tradesQuery.data?.items, execQuery.data?.items, paperTrade])
 
   const rows = useMemo(
     () =>

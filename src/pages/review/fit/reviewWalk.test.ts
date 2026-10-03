@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { TradeReview } from '@/api/tradeReviews'
-import type { ReviewInstance } from '@/utils/reviewInstances'
+import type { ReviewedTrade } from '@/utils/reviewedTrades'
 import { reviewState, reviewWalk } from './reviewWalk'
 
 // Invented instances: only the fields the walk reads.
-const t = (id: number, open = false) => ({ tradeId: id, open, contractKey: `K${id}` }) as unknown as ReviewInstance
-const reviewed = (id: number) => [id, { strategy_instance_id: id, tags_added: [], tags_dropped: [], reviewed: true }] as [number, TradeReview]
+const t = (id: number, open = false) => ({ tradeId: id, open, contractKey: `K${id}` }) as unknown as ReviewedTrade
+const reviewed = (id: number) => [id, { trade_id: id, tags_added_json: [], tags_dropped_json: [], reviewed: true }] as [number, TradeReview]
 
 describe('reviewWalk', () => {
   const trades = [t(1), t(2, true), t(3), t(4)]

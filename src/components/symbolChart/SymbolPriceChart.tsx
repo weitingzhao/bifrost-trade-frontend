@@ -42,7 +42,7 @@ import {
   PRICE_WINDOWS,
   type PriceWindow,
   type PriceView,
-  type InstanceTrack,
+  type TradeTrack,
   clampView,
   panView,
   aggFor,
@@ -50,7 +50,7 @@ import {
   barIsoDate,
   fmtPl,
   holdingFor,
-  instanceTracksFor,
+  tradeTracksFor,
   sessionIndexFor,
   sessionsForWindow,
   sessionsUntil,
@@ -60,14 +60,14 @@ import { SymbolTradeOverlay } from '@/components/symbolChart/SymbolTradeOverlay'
 import { SymbolChartPointer } from '@/components/symbolChart/SymbolChartPointer'
 import { useOpenTrade } from '@/layout/tradeGo'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
-import { useInstanceIndex } from '@/hooks/useInstanceIndex'
+import { useTradeIndex } from '@/hooks/useTradeIndex'
 
 /** The vendor keeps two rolling years; the API caps a page at 500. */
 const HISTORY_LIMIT = 500
 const CONE_CAP_SESSIONS = 30
 
 interface PlacedTrack {
-  track: InstanceTrack
+  track: TradeTrack
   /** Index into the full daily history; null = before it. */
   openIdx: number | null
   closeIdx: number | null
@@ -75,18 +75,18 @@ interface PlacedTrack {
 }
 
 /**
- * `instanceId` (Rev .103, the Instance page): the same chart with one instance
+ * `tradeId` (Rev .103, the Instance page): the same chart with one instance
  * lit and labelled; every other trade is dimmed to 20% or hidden (the reader's
  * choice, kept on this machine), a hover lights one for a moment, and the
  * window opens on the instance's whole life.
  */
 export function SymbolPriceChart({
   symbol,
-  instanceId,
+  tradeId,
   variant = 'full',
 }: {
   symbol: string
-  instanceId?: number
+  tradeId?: number
   /**
    * `mini` (Rev .103, the Symbol 440 panel): the same chart with its text layer
    * off — candles, the wall lines, the holding line and the trades, a trade's
@@ -130,14 +130,14 @@ export function SymbolPriceChart({
 
   // An instance's page opens on its whole life, a little either side.
   const focusStart = useMemo(() => {
-    if (instanceId == null) return null
+    if (tradeId == null) return null
     const days = (bookQ.data?.items ?? [])
-      .filter((e) => e.strategy_instance_id === instanceId)
+      .filter((e) => e.trade_id === tradeId)
       .map((e) => (e.trade_date ?? '').slice(0, 10))
       .filter(Boolean)
       .sort()
     return days.length ? sessionIndexFor(dates, days[0]) : null
-  }, [instanceId, bookQ.data, dates])
+  }, [tradeId, bookQ.data, dates])
   const view = clampView(
     total,
     rawView ?? { span: focusStart != null ? Math.max(60, total - focusStart + 10) : 60, off: 0 },
@@ -254,18 +254,18 @@ export function SymbolPriceChart({
 
   const legs = useSymbolLegs(sym)
   const tracks = useMemo(
-    () => instanceTracksFor(bookQ.data?.items ?? [], sym, legs),
+    () => tradeTracksFor(bookQ.data?.items ?? [], sym, legs),
     [bookQ.data, sym, legs]
   )
   const holding = useMemo(() => holdingFor(legs, tracks), [legs, tracks])
-  const known = useInstanceIndex()
-  const openInstance = useOpenTrade()
+  const known = useTradeIndex()
+  const openTrade = useOpenTrade()
   const trackIds = useMemo(
     () => tracks.flatMap((t) => (t.id != null && (known == null || known.has(t.id)) ? [t.id] : [])),
     [tracks, known]
   )
-  const openTrack = (t: InstanceTrack) => {
-    if (t.id != null) openInstance(t.id, { list: trackIds, from: `Symbol · ${sym}` })
+  const openTrack = (t: TradeTrack) => {
+    if (t.id != null) openTrade(t.id, { list: trackIds, from: `Symbol · ${sym}` })
     else navigate(withSymbolParam('/portfolio/ledger', sym))
   }
   const placed = useMemo<PlacedTrack[]>(() => {
@@ -312,8 +312,8 @@ export function SymbolPriceChart({
       {tradesOn && (shown.length > 0 || holding) ? (
         <SymbolTradeOverlay
           ctx={ctx}
-          tracks={shown.map((p) => p.track).filter((t) => instanceId == null || others === 'dim' || t.id === instanceId)}
-          focusKey={instanceId != null ? `inst:${instanceId}` : null}
+          tracks={shown.map((p) => p.track).filter((t) => tradeId == null || others === 'dim' || t.id === tradeId)}
+          focusKey={tradeId != null ? `inst:${tradeId}` : null}
           dates={dates}
           winStart={winStart}
           winEnd={winEnd}
@@ -324,7 +324,7 @@ export function SymbolPriceChart({
           hover={hover}
           onHover={setHover}
           onOpen={openTrack}
-          onOpenId={(id) => openInstance(id, { list: trackIds, from: `Symbol · ${sym}` })}
+          onOpenId={(id) => openTrade(id, { list: trackIds, from: `Symbol · ${sym}` })}
           holding={holding}
           spot={spot}
           known={known}
@@ -501,7 +501,7 @@ export function SymbolPriceChart({
             onChange={(v) => setPreset(v as PriceWindow)}
             options={[...PRICE_WINDOWS]}
           />
-          {instanceId != null ? (
+          {tradeId != null ? (
             <SegmentControl
               ariaLabel="Other trades"
               size="xs"

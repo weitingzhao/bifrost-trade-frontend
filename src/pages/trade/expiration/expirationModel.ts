@@ -37,7 +37,7 @@ export interface ExpiryLeg {
   itm: boolean | null
   /** What buying the leg back would cost at the mark; negative is a credit. */
   closeCost: number | null
-  instanceId: number | null
+  tradeId: number | null
   structure: string | null
   /** The accounts holding it — one contract in two accounts is one leg to a reader. */
   accounts: string[]
@@ -279,8 +279,8 @@ export function buildExpiryLegs(input: {
       closeCost: mark == null ? null : -totalQty * mark * 100,
       entryCost,
       thetaPerDay: thetaPerShare == null ? null : thetaPerShare * totalQty * 100,
-      instanceId: prev?.instanceId ?? a.strategy_instance_id ?? null,
-      structure: prev?.structure ?? a.structure_type ?? a.strategy_instance_label ?? null,
+      tradeId: prev?.tradeId ?? a.trade_id ?? null,
+      structure: prev?.structure ?? a.structure_type ?? a.trade_label ?? null,
       accounts: account && !prev?.accounts.includes(account) ? [...(prev?.accounts ?? []), account] : (prev?.accounts ?? []),
     })
   }

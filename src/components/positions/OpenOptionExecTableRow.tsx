@@ -24,7 +24,7 @@ interface Props {
   onLink: (exec: Execution) => void
   onDelete: (exec: Execution) => void
   onClose?: (exec: Execution) => void
-  onOpenStrategy?: (instanceId: number) => void
+  onOpenStrategy?: (tradeId: number) => void
   showSync?: boolean
   syncBusy?: boolean
   onSync?: () => void
@@ -60,12 +60,12 @@ export function OpenOptionExecTableRow({
   const eComm = Number(exec.commission) || 0
   const eTs = exec.time != null ? Number(exec.time) : null
   const bookLabel = book === 'final' ? '[Final]' : '[TWS client]'
-  const execInstanceId = exec.strategy_instance_id
+  const execTradeId = exec.trade_id
   const isOffTrack = pos.kind === 'offtrack'
 
   const execLabel = `↳ ${bookLabel} exec #${exec.account_executions_id ?? '?'}`
   const execTitle =
-    execInstanceId != null ? `${execLabel} · strategy #${execInstanceId}` : execLabel
+    execTradeId != null ? `${execLabel} · strategy #${execTradeId}` : execLabel
 
   const syncFromLabel = book === 'final' ? 'TWS client book' : 'final book'
 
@@ -76,7 +76,7 @@ export function OpenOptionExecTableRow({
         <div className="flex flex-col gap-0.5">
           <div className={denseTable.detailRowLabel} title={execTitle}>
             {execLabel}
-            {execInstanceId != null ? (
+            {execTradeId != null ? (
               <>
                 {' '}
                 <span className={denseTable.mutedMeta}>·</span>{' '}
@@ -85,10 +85,10 @@ export function OpenOptionExecTableRow({
                   className="text-primary hover:underline font-medium"
                   onClick={e => {
                     e.stopPropagation()
-                    onOpenStrategy?.(execInstanceId)
+                    onOpenStrategy?.(execTradeId)
                   }}
                 >
-                  strategy #{execInstanceId}
+                  strategy #{execTradeId}
                 </button>
               </>
             ) : null}

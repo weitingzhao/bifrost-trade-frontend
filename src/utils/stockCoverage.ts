@@ -1,10 +1,10 @@
-import type { LivePositionRow, OpenOptionPosition, InstanceAllGroup, InstanceStockCoverage, StockCoverageItem, StrategyStructure } from '@/types/positions'
+import type { LivePositionRow, OpenOptionPosition, TradeAllGroup, TradeStockCoverage, StockCoverageItem, StrategyStructure } from '@/types/positions'
 import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 
-export function computeInstanceStockCoverage(
+export function computeTradeStockCoverage(
   options: OpenOptionPosition[],
   structure: StrategyStructure | undefined,
-): InstanceStockCoverage[] {
+): TradeStockCoverage[] {
   if (!structure?.legs?.length) return []
   const underlyingLeg = structure.legs.find((l) => l.role?.toLowerCase() === 'underlying')
   if (!underlyingLeg) return []
@@ -25,7 +25,7 @@ export function computeInstanceStockCoverage(
     }
   }
 
-  const result: InstanceStockCoverage[] = []
+  const result: TradeStockCoverage[] = []
   for (const { symbol, account_id, contracts } of bySymbolAccount.values()) {
     result.push({
       symbol,
@@ -42,19 +42,19 @@ function covKey(sym: string, accountId: string): string {
 }
 
 export function buildStockCoverageItems(
-  instanceGroups: InstanceAllGroup[],
+  tradeGroups: TradeAllGroup[],
   liveStocks: LivePositionRow[],
 ): StockCoverageItem[] {
   type DemandMeta = {
     required: number
     requiredWatchlist: number
-    instances: number
+    trades: number
     oppNames: Set<string>
-    watchlistScopeInstances: number
+    watchlistScopeTrades: number
   }
   const demandMap = new Map<string, DemandMeta>()
 
-  for (const g of instanceGroups) {
+  for (const g of tradeGroups) {
     const oppName = (g.strategy_opportunity_name ?? '').trim()
     const isWl = (g.scope_type ?? '').trim() === 'watchlist_stk'
     for (const sc of g.stock_coverage) {
@@ -64,15 +64,15 @@ export function buildStockCoverageItems(
       const prev = demandMap.get(k) ?? {
         required: 0,
         requiredWatchlist: 0,
-        instances: 0,
+        trades: 0,
         oppNames: new Set<string>(),
-        watchlistScopeInstances: 0,
+        watchlistScopeTrades: 0,
       }
       prev.required += sc.required_shares
       if (isWl) prev.requiredWatchlist += sc.required_shares
-      prev.instances += 1
+      prev.trades += 1
       if (oppName) prev.oppNames.add(oppName)
-      if (isWl) prev.watchlistScopeInstances += 1
+      if (isWl) prev.watchlistScopeTrades += 1
       demandMap.set(k, prev)
     }
   }
@@ -176,10 +176,10 @@ export function buildStockCoverageItems(
       required_watchlist_shares: demand?.requiredWatchlist ?? 0,
       held_shares: held,
       surplus_or_gap: held - required,
-      instances_needing: demand?.instances ?? 0,
+      trades_needing: demand?.trades ?? 0,
       backing_opportunities:
         demand != null ? [...demand.oppNames].sort() : [],
-      watchlist_scope_instances: demand?.watchlistScopeInstances ?? 0,
+      watchlist_scope_trades: demand?.watchlistScopeTrades ?? 0,
       optionable_supported: optionableSupported,
       avg_cost_per_share:
         heldMeta != null && heldMeta.heldAbs > 0 ? heldMeta.costBasisAbs / heldMeta.heldAbs : null,

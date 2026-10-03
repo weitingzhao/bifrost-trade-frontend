@@ -43,7 +43,7 @@ export interface DeskAction {
   /** Which draft the wired action is about. */
   ref?: string
   /** An instance token: opens its face over the desk, stepping `list`. */
-  instance?: { id: number; list: number[]; from: string }
+  trade?: { id: number; list: number[]; from: string }
 }
 
 export interface DeskItem {
@@ -125,12 +125,12 @@ function oneName(symbols: readonly string[]): string | null {
  * Short legs come from the broker's book and carry no instance, so this is how
  * a tight leg on the desk names the trade it belongs to.
  */
-export function instanceByContract(fills: readonly Execution[]): Map<string, number> {
+export function tradeByContract(fills: readonly Execution[]): Map<string, number> {
   const out = new Map<string, number>()
   const byTime = [...fills].sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
   for (const e of byTime) {
     const ck = (e.contract_key ?? '').trim()
-    if (ck && e.strategy_instance_id != null) out.set(ck, e.strategy_instance_id)
+    if (ck && e.trade_id != null) out.set(ck, e.trade_id)
   }
   return out
 }
@@ -219,7 +219,7 @@ export function decideItems(
           ? [
               {
                 label: `Trade #${holders.get(leg.contract_key)}`,
-                instance: { id: holders.get(leg.contract_key)!, list: legIds, from: 'Desk · decide' },
+                trade: { id: holders.get(leg.contract_key)!, list: legIds, from: 'Desk · decide' },
               },
             ]
           : []),
@@ -313,7 +313,7 @@ export function executeItems(
  * at a time.
  */
 /** How many of the settled instances the card names; the rest are a step away in the sheet. */
-const SETTLE_INSTANCE_TOKENS = 3
+const SETTLE_TRADE_TOKENS = 3
 
 export function settleItems(fills: readonly Execution[], today: string): DeskItem[] {
   const recent = fills.filter((e) => {
@@ -324,12 +324,12 @@ export function settleItems(fills: readonly Execution[], today: string): DeskIte
   })
 
   const items: DeskItem[] = []
-  const linked = recent.filter((e) => e.strategy_instance_id != null)
-  const orphan = recent.filter((e) => e.strategy_instance_id == null)
+  const linked = recent.filter((e) => e.trade_id != null)
+  const orphan = recent.filter((e) => e.trade_id == null)
 
   const claimed = [
     ...new Set(
-      [...linked].sort((a, b) => (b.time ?? 0) - (a.time ?? 0)).map((e) => e.strategy_instance_id as number),
+      [...linked].sort((a, b) => (b.time ?? 0) - (a.time ?? 0)).map((e) => e.trade_id as number),
     ),
   ]
   if (linked.length > 0) {
@@ -344,9 +344,9 @@ export function settleItems(fills: readonly Execution[], today: string): DeskIte
       tags: [{ label: 'linked', tone: 'success' }],
       actions: [
         // Newest first: the instances this window's fills landed on.
-        ...claimed.slice(0, SETTLE_INSTANCE_TOKENS).map((id) => ({
+        ...claimed.slice(0, SETTLE_TRADE_TOKENS).map((id) => ({
           label: `Trade #${id}`,
-          instance: { id, list: claimed, from: 'Desk · settle' },
+          trade: { id, list: claimed, from: 'Desk · settle' },
         })),
         { label: 'Fills →', to: '/trade/fills' },
       ],
@@ -414,7 +414,7 @@ export function buildLanes(args: {
       step: '1 · Decide',
       title: 'Handed to you',
       from: 'Research · Positions',
-      items: decideItems(args.intents, args.legs, args.tightPct, args.today, instanceByContract(args.fills)),
+      items: decideItems(args.intents, args.legs, args.tightPct, args.today, tradeByContract(args.fills)),
       emptyRead:
         'Research has proposed nothing and no short leg is inside its cushion line. Nothing is waiting on a decision.',
     },

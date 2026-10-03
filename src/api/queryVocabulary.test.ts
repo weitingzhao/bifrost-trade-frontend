@@ -53,7 +53,7 @@ describe('query vocabulary (TD-51)', () => {
       expect([q.get('from_ts'), q.get('to_ts')]).toEqual([from, to])
       expectNoOldNames(q)
     }
-    await strategy.fetchStrategyInstances({ openedAtFrom: 10 }).catch(() => undefined)
+    await strategy.fetchTrades({ openedAtFrom: 10 }).catch(() => undefined)
     expect(sentQuery().get('from_ts')).toBe('10')
     expectNoOldNames(sentQuery())
   })

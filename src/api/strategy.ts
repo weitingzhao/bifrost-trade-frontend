@@ -2,16 +2,16 @@ import type {
   OpportunitiesResponse,
   StructuresResponse,
   StructurePayload,
-  StrategyInstancesResponse,
-  StrategyInstance,
+  TradesResponse,
+  Trade,
   StrategyStructure,
   StrategyOpportunityDetail,
-  CreateStrategyInstanceBody,
-  PatchStrategyInstanceBody,
+  CreateTradeBody,
+  PatchTradeBody,
   CreateOpportunityBody,
-  GateSafetyResponse,
-  GateSafetyFull,
-  GateSafetyPayload,
+  GateSetResponse,
+  GateSetFull,
+  GateSetPayload,
   DimsGroupedResponse,
   StrategyTemplatesResponse,
   StrategyTemplateDetail,
@@ -26,16 +26,16 @@ import type {
 import { withValidation } from '@/lib/apiValidation'
 import {
   AllocationsResponseSchema,
-  GateSafetyDefaultsResponseSchema,
-  GateSafetyFullSchema,
-  GateSafetyResponseSchema,
+  GateSetDefaultsResponseSchema,
+  GateSetFullSchema,
+  GateSetResponseSchema,
   OpportunitiesResponseSchema,
   StrategyAllocationSchema,
-  StrategyInstancesResponseSchema,
-  StrategyInstanceDetailSchema,
+  TradesResponseSchema,
+  TradeDetailSchema,
   StrategyOpportunityDetailSchema,
 } from '@/lib/schemas/strategy'
-import type { CreateTemplateBody, GateSafetyDefaultsResponse } from '@/types/strategy'
+import type { CreateTemplateBody, GateSetDefaultsResponse } from '@/types/strategy'
 import type { TemplateCharacteristicsBody, TemplateLegsBody, TemplateParamsBody } from '@/types/requestBodies'
 import { monitorUrl, strategyUrl } from '@/lib/devApiUrl'
 import { requestDelete, requestJson, type DeleteOutcome, httpFailure } from '@/lib/http'
@@ -44,15 +44,15 @@ import { requestDelete, requestJson, type DeleteOutcome, httpFailure } from '@/l
 // The five response-modelled resources (api 0.3.1) are read through their
 // schemas; the types are those schemas' `z.infer`. Advisory: a mismatch is
 // reported (DEV console, PROD drift record) and the answer still passes.
-const validateInstances = withValidation<StrategyInstancesResponse>(StrategyInstancesResponseSchema, 'strategy/instances')
-const validateInstance = withValidation<StrategyInstance>(StrategyInstanceDetailSchema, 'strategy/instances/:id')
+const validateTrades = withValidation<TradesResponse>(TradesResponseSchema, 'strategy/trades')
+const validateTrade = withValidation<Trade>(TradeDetailSchema, 'strategy/trades/:id')
 const validateOpportunities = withValidation<OpportunitiesResponse>(OpportunitiesResponseSchema, 'strategy/opportunities')
 const validateOpportunity = withValidation<StrategyOpportunityDetail>(
   StrategyOpportunityDetailSchema,
   'strategy/opportunities/:id',
 )
-const validateGateSafetyList = withValidation<GateSafetyResponse>(GateSafetyResponseSchema, 'strategy/gate-safety')
-const validateGateSafety = withValidation<GateSafetyFull>(GateSafetyFullSchema, 'strategy/gate-safety/:id')
+const validateGateSetList = withValidation<GateSetResponse>(GateSetResponseSchema, 'strategy/gate-sets')
+const validateGateSet = withValidation<GateSetFull>(GateSetFullSchema, 'strategy/gate-sets/:id')
 const validateAllocations = withValidation<AllocationsResponse>(AllocationsResponseSchema, 'strategy/allocations')
 const validateAllocation = withValidation<StrategyAllocation>(StrategyAllocationSchema, 'strategy/allocations/:id')
 
@@ -115,12 +115,12 @@ export async function updateStructure(
   })
 }
 
-export async function fetchStrategyInstances(params?: {
+export async function fetchTrades(params?: {
   opportunityId?: number
   accountId?: string
   /** Unix seconds; the plan's `intended_at` when looking for the fill it caused. */
   openedAtFrom?: number
-}): Promise<StrategyInstancesResponse> {
+}): Promise<TradesResponse> {
   const sp = new URLSearchParams()
   if (params?.opportunityId != null) {
     sp.set('strategy_opportunity_id', String(params.opportunityId))
@@ -128,43 +128,43 @@ export async function fetchStrategyInstances(params?: {
   if (params?.accountId) sp.set('account_id', params.accountId)
   if (params?.openedAtFrom != null) sp.set('from_ts', String(params.openedAtFrom))
   const qs = sp.toString()
-  const url = strategyUrl(`/strategies/instances${qs ? `?${qs}` : ''}`)
-  return validateInstances(await requestJson(url, { label: `Strategy /instances` }), url)
+  const url = strategyUrl(`/trades${qs ? `?${qs}` : ''}`)
+  return validateTrades(await requestJson(url, { label: `Strategy /trades` }), url)
 }
 
 /** `InstanceRow` without `executions_count` (the list alone carries it). */
-export async function fetchStrategyInstance(id: number): Promise<StrategyInstance> {
-  const url = strategyUrl(`/strategies/instances/${id}`)
-  return validateInstance(await requestJson(url, { label: `Strategy /instances/${id}` }), url)
+export async function fetchTrade(id: number): Promise<Trade> {
+  const url = strategyUrl(`/trades/${id}`)
+  return validateTrade(await requestJson(url, { label: `Strategy /trades/${id}` }), url)
 }
 
-/** Legacy Strategy API returns `{ strategy_instance_id }` on success (no `ok` field). */
-export async function createStrategyInstance(
-  body: CreateStrategyInstanceBody,
-): Promise<{ strategy_instance_id: number }> {
+/** POST /trades answers `{ trade_id }` (and `strategy_instance_id`, the same id, until R4); no `ok` field. */
+export async function createTrade(
+  body: CreateTradeBody,
+): Promise<{ trade_id: number }> {
   // A refusal throws HttpError with the server's detail (a 422's messages joined).
-  const j = await requestJson<{ strategy_instance_id?: number; error?: string }>(strategyUrl('/strategies/instances'), {
+  const j = await requestJson<{ trade_id?: number; error?: string }>(strategyUrl('/trades'), {
     method: 'POST',
     body,
-    label: 'POST /strategies/instances',
+    label: 'POST /trades',
   })
-  const id = j.strategy_instance_id
+  const id = j.trade_id
   if (id == null || !Number.isFinite(Number(id))) {
-    throw new Error(j.error ?? 'Failed to create strategy instance')
+    throw new Error(j.error ?? 'Failed to create trade')
   }
-  return { strategy_instance_id: Number(id) }
+  return { trade_id: Number(id) }
 }
 
 /**
  * Change the fields sent (api 0.3.0): `null` clears a label, a blank
  * string is refused (400). Answers the instance as GET /instances/{id} does.
  */
-export async function patchStrategyInstance(
+export async function patchTrade(
   id: number,
-  body: PatchStrategyInstanceBody,
-): Promise<StrategyInstance> {
-  const url = strategyUrl(`/strategies/instances/${id}`)
-  return validateInstance(await requestJson(url, { method: 'PATCH', body }), url)
+  body: PatchTradeBody,
+): Promise<Trade> {
+  const url = strategyUrl(`/trades/${id}`)
+  return validateTrade(await requestJson(url, { method: 'PATCH', body }), url)
 }
 
 /**
@@ -172,8 +172,8 @@ export async function patchStrategyInstance(
  * reason: 409 while fills are attributed or split-allocated to it, 503 when
  * the Golden Source cannot be read (nothing deleted).
  */
-export function deleteStrategyInstance(id: number): Promise<DeleteOutcome> {
-  return requestDelete(strategyUrl(`/strategies/instances/${id}`))
+export function deleteTrade(id: number): Promise<DeleteOutcome> {
+  return requestDelete(strategyUrl(`/trades/${id}`))
 }
 
 export async function fetchOpportunityDetail(id: number): Promise<StrategyOpportunityDetail> {
@@ -202,40 +202,40 @@ export async function patchOpportunity(
   return validateOpportunity(await requestJson(url, { method: write.method, body }), url)
 }
 
-export async function fetchGateSafety(): Promise<GateSafetyResponse> {
-  const url = strategyUrl('/strategies/gate-safety')
-  return validateGateSafetyList(await requestJson(url, { label: `Strategy /gate-safety` }), url)
+export async function fetchGateSets(): Promise<GateSetResponse> {
+  const url = strategyUrl('/gate-sets')
+  return validateGateSetList(await requestJson(url, { label: `Strategy /gate-sets` }), url)
 }
 
 /**
  * Core `GateParams` defaults (TD-72): what a new gate set starts from. Throws on
  * a non-2xx or an answer missing a family — there is no local copy to fall back to.
  */
-export async function fetchGateSafetyDefaults(): Promise<GateSafetyDefaultsResponse> {
-  const raw = await requestJson<unknown>(strategyUrl('/strategies/gate-safety/defaults'), {
-    label: 'Strategy /gate-safety/defaults',
+export async function fetchGateSetDefaults(): Promise<GateSetDefaultsResponse> {
+  const raw = await requestJson<unknown>(strategyUrl('/gate-sets/defaults'), {
+    label: 'Strategy /gate-sets/defaults',
   })
-  const parsed = GateSafetyDefaultsResponseSchema.safeParse(raw)
-  if (!parsed.success) throw new Error('Strategy /gate-safety/defaults: answer has no complete gates object')
-  return parsed.data as GateSafetyDefaultsResponse
+  const parsed = GateSetDefaultsResponseSchema.safeParse(raw)
+  if (!parsed.success) throw new Error('Strategy /gate-sets/defaults: answer has no complete gates object')
+  return parsed.data as GateSetDefaultsResponse
 }
 
-export async function fetchGateSafetyFull(id: number): Promise<GateSafetyFull> {
-  const url = strategyUrl(`/strategies/gate-safety/${id}`)
-  return validateGateSafety(await requestJson(url, { label: `Strategy /gate-safety/${id}` }), url)
+export async function fetchGateSetFull(id: number): Promise<GateSetFull> {
+  const url = strategyUrl(`/gate-sets/${id}`)
+  return validateGateSet(await requestJson(url, { label: `Strategy /gate-sets/${id}` }), url)
 }
 
-export async function createGateSafety(
-  payload: GateSafetyPayload,
+export async function createGateSet(
+  payload: GateSetPayload,
 ): Promise<{ ok: boolean; gate_safety_strategy_id?: number; error?: string }> {
-  return requestJson(strategyUrl('/strategies/gate-safety'), { method: 'POST', body: payload, label: `POST /strategies/gate-safety` })
+  return requestJson(strategyUrl('/gate-sets'), { method: 'POST', body: payload, label: `POST /gate-sets` })
 }
 
-export async function updateGateSafety(
+export async function updateGateSet(
   id: number,
-  payload: GateSafetyPayload,
+  payload: GateSetPayload,
 ): Promise<{ ok: boolean; error?: string }> {
-  return requestJson(strategyUrl(`/strategies/gate-safety/${id}`), { method: 'PUT', body: payload, label: `PUT /strategies/gate-safety/${id}` })
+  return requestJson(strategyUrl(`/gate-sets/${id}`), { method: 'PUT', body: payload, label: `PUT /gate-sets/${id}` })
 }
 
 export async function fetchDimsGrouped(): Promise<DimsGroupedResponse> {
@@ -359,7 +359,7 @@ export async function fetchWinRate(params?: {
   if (params?.sinceTs != null) sp.set('from_ts', String(params.sinceTs))
   if (params?.untilTs != null) sp.set('to_ts', String(params.untilTs))
   const qs = sp.toString()
-  return requestJson<WinRateResponse>(strategyUrl(`/strategies/win-rate${qs ? `?${qs}` : ''}`), { label: `GET /strategies/win-rate` })
+  return requestJson<WinRateResponse>(strategyUrl(`/trades/win-rate${qs ? `?${qs}` : ''}`), { label: `GET /trades/win-rate` })
 }
 
 // ── Allocations ───────────────────────────────────────────────────────────────
@@ -398,14 +398,14 @@ export async function updateAllocation(id: number, payload: Partial<AllocationPa
 
 export function setActiveAllocation(
   allocationId: number | null,
-  opts?: { structureId?: number | null; gateSafetyId?: number | null },
+  opts?: { structureId?: number | null; gateSetId?: number | null },
 ): Promise<{ ok: boolean }> {
   // A refusal (409: the id does not exist) throws with the server's reason.
   return requestJson(monitorUrl('/config/active-strategy'), {
     method: 'POST',
     body: {
       active_strategy_structure_id: opts?.structureId ?? null,
-      active_gate_safety_strategy_id: opts?.gateSafetyId ?? null,
+      active_gate_safety_strategy_id: opts?.gateSetId ?? null,
       active_strategy_allocation_id: allocationId,
     },
   })
@@ -429,6 +429,6 @@ export function deleteAllocation(id: number): Promise<DeleteOutcome> {
   return deleteRule(`/strategies/allocations/${id}`)
 }
 
-export function deleteGateSafety(id: number): Promise<DeleteOutcome> {
-  return deleteRule(`/strategies/gate-safety/${id}`)
+export function deleteGateSet(id: number): Promise<DeleteOutcome> {
+  return deleteRule(`/gate-sets/${id}`)
 }

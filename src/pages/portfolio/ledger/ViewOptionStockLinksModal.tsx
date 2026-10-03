@@ -27,7 +27,7 @@ type Props = {
   title: string
   rows: OptionStockLink[]
   slippageTotal: number | null
-  instanceAttributedSlippage?: number | null
+  tradeAttributedSlippage?: number | null
   onClose: () => void
 }
 
@@ -36,7 +36,7 @@ export function ViewOptionStockLinksModal({
   title,
   rows,
   slippageTotal,
-  instanceAttributedSlippage,
+  tradeAttributedSlippage,
   onClose,
 }: Props) {
   return (
@@ -54,12 +54,12 @@ export function ViewOptionStockLinksModal({
             </strong>
           </p>
         )}
-        {instanceAttributedSlippage != null && Number.isFinite(instanceAttributedSlippage) && (
+        {tradeAttributedSlippage != null && Number.isFinite(tradeAttributedSlippage) && (
           <p className="text-xs text-muted-foreground">
             <strong>This trade&apos;s attributed slippage</strong>{' '}
             (prorated by allocated |qty| ÷ parent |qty|):{' '}
-            <strong className={cn('font-mono tabular-nums', pnlColorClass(instanceAttributedSlippage))}>
-              {fmtUsd(instanceAttributedSlippage)}
+            <strong className={cn('font-mono tabular-nums', pnlColorClass(tradeAttributedSlippage))}>
+              {fmtUsd(tradeAttributedSlippage)}
             </strong>
           </p>
         )}

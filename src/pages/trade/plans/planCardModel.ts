@@ -29,7 +29,7 @@ export interface TimelineStep {
 export function planTimeline(
   plan: Pick<
     StrategyPlan,
-    'created_at' | 'intended_at' | 'filled_at' | 'expires_at' | 'effective_status' | 'strategy_instance_id'
+    'created_at' | 'intended_at' | 'filled_at' | 'expires_at' | 'effective_status' | 'trade_id'
   >,
 ): TimelineStep[] {
   const day = (iso: string | null) => (iso ? iso.slice(0, 16).replace('T', ' ') : null)
@@ -44,8 +44,8 @@ export function planTimeline(
     },
     {
       label: 'Linked',
-      when: plan.strategy_instance_id ? `#${plan.strategy_instance_id}` : null,
-      on: plan.strategy_instance_id != null,
+      when: plan.trade_id ? `#${plan.trade_id}` : null,
+      on: plan.trade_id != null,
     },
   ]
 }

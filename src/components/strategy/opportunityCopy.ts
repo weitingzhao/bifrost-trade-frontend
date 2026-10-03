@@ -24,7 +24,7 @@ export function opportunityCopyPrefill(detail: Awaited<ReturnType<typeof fetchOp
   return {
     name: `${detail.name} (copy)`,
     structureId: detail.strategy_structure_id != null ? String(detail.strategy_structure_id) : '',
-    gateSafetyId:
+    gateSetId:
       detail.default_gate_safety_strategy_id != null ? String(detail.default_gate_safety_strategy_id) : '',
     scopeType: detail.scope_type ?? '',
     symbols: detail.symbols ?? [],

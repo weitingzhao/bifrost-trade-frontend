@@ -14,7 +14,7 @@ import {
   allocationToForm,
   type AllocationFormState,
 } from '@/components/strategy/allocations/allocationForm'
-import { useGateSafety, useOpportunities } from '@/hooks/useStrategies'
+import { useGateSets, useOpportunities } from '@/hooks/useStrategies'
 import { useLiveEdit } from '@/hooks/useLiveEdit'
 import { cn } from '@/lib/utils'
 import { FIELD, RuleInspector } from './RuleInspector'
@@ -60,7 +60,7 @@ function AllocationFields({
 }) {
   const qc = useQueryClient()
   const opps = useOpportunities().data?.items ?? []
-  const gates = useGateSafety().data?.items ?? []
+  const gates = useGateSets().data?.items ?? []
   const { draft, edit } = useLiveEdit<AllocationFormState>({
     initial,
     undoKey: `alloc:${id}`,
@@ -118,8 +118,8 @@ function AllocationFields({
       <InspectorField label="Gate">
         <select
           className={FIELD}
-          value={draft.gateSafetyId ?? ''}
-          onChange={(e) => edit('gate', (d) => ({ ...d, gateSafetyId: e.target.value ? Number(e.target.value) : null }))}
+          value={draft.gateSetId ?? ''}
+          onChange={(e) => edit('gate', (d) => ({ ...d, gateSetId: e.target.value ? Number(e.target.value) : null }))}
         >
           <option value="">No gate</option>
           {gates.map((g) => (

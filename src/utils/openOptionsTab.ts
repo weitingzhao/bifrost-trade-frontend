@@ -51,16 +51,16 @@ export function getPositionUnderlyingLast(
   return q?.last != null && Number.isFinite(q.last) ? q.last : null
 }
 
-export function instanceIconFillFromMergedExecutions(
+export function tradeIconFillFromMergedExecutions(
   merged: Execution[],
 ): 'empty' | 'none' | 'all' | 'mixed' {
   if (merged.length === 0) return 'empty'
-  let withInstance = 0
+  let withTrade = 0
   for (const ex of merged) {
-    if (ex.strategy_instance_id != null) withInstance += 1
+    if (ex.trade_id != null) withTrade += 1
   }
-  if (withInstance === 0) return 'none'
-  if (withInstance === merged.length) return 'all'
+  if (withTrade === 0) return 'none'
+  if (withTrade === merged.length) return 'all'
   return 'mixed'
 }
 

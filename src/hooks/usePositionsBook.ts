@@ -17,7 +17,7 @@ import { useQuotes } from './useQuotes'
 import { useBenchmarks } from './useBenchmarks'
 import { usePositionAttribution } from './usePositionAttribution'
 import { useExecutionsPerformanceBook, useExecutionsTwsRaw, useExecutionsAll } from './useExecutions'
-import { useOpportunities, useStructures, useStrategyInstances } from './useStrategies'
+import { useOpportunities, useStructures, useTrades } from './useStrategies'
 import { useOptionGreeks, type GreekLeg } from './useOptionGreeks'
 import { usePositionsAlarm } from './usePositionsAlarm'
 import { useLatestBars } from './useLatestBars'
@@ -38,11 +38,11 @@ import {
   positionMatchesAccountFilter,
 } from '@/utils/positionsGrouping'
 import { buildOffTrackPositions } from '@/utils/offTrackPositions'
-import { buildInstanceAllGroups } from '@/utils/buildInstanceAllGroups'
+import { buildTradeAllGroups } from '@/utils/buildTradeAllGroups'
 import { titleCaseCode } from '@/utils/strategyFormUtils'
 import { buildCanonicalOptContractKeySet } from '@/utils/execAttributionSync'
-import { buildInstanceGroups } from '@/utils/buildInstanceGroups'
-import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
+import { buildTradeGroups } from '@/utils/buildTradeGroups'
+import { sortTradeGroupOptions } from '@/utils/tradeGroupSort'
 import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
 import { rollupMargin } from '@/utils/marginPressure'
 import { coverByAccountSymbol } from '@/utils/bookVsBase'
@@ -67,7 +67,7 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   const { data: execCanonicalData } = useExecutionsAll()
   const { data: oppsData } = useOpportunities()
   const { data: structsData } = useStructures()
-  const { data: instancesData } = useStrategyInstances()
+  const { data: tradesData } = useTrades()
 
   const accounts = useMemo(() => data?.portfolio.accounts ?? [], [data])
   const hostAccountId = data?.config?.ib_client?.account?.event_host ?? ''
@@ -129,14 +129,14 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   const structures = useMemo(() => structsData?.items ?? [], [structsData?.items])
   const attributions = useMemo(() => attrData?.items ?? [], [attrData])
   /** The instance records themselves — the sheet renames one from its own row. */
-  const instances = useMemo(() => instancesData?.items ?? [], [instancesData?.items])
-  const instanceStructureById = useMemo(() => {
+  const trades = useMemo(() => tradesData?.items ?? [], [tradesData?.items])
+  const tradeStructureById = useMemo(() => {
     const map = new Map<number, number | null | undefined>()
-    for (const inst of instancesData?.items ?? []) {
-      map.set(inst.strategy_instance_id, inst.strategy_structure_id)
+    for (const inst of tradesData?.items ?? []) {
+      map.set(inst.trade_id, inst.strategy_structure_id)
     }
     return map
-  }, [instancesData?.items])
+  }, [tradesData?.items])
 
   const liveOptions = useMemo(() => buildOpenOptionPositions(allOptions, attributions), [allOptions, attributions])
   const showOffTrack = accountFilter.host && accountFilter.secondary
@@ -146,9 +146,9 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   )
   const openOptions = useMemo(() => [...liveOptions, ...offTrackPositions], [liveOptions, offTrackPositions])
 
-  const baseInstanceGroups = useMemo(
+  const baseTradeGroups = useMemo(
     () =>
-      buildInstanceGroups({
+      buildTradeGroups({
         attributions,
         liveOptions: allOptions,
         accountFilter,
@@ -161,10 +161,10 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
       }),
     [attributions, allOptions, accountFilter, hostAccountId, secondaryAccountId, filterSymbol, filterExpiry, showOffTrack, executionsFinal],
   )
-  const instanceAllGroups = useMemo(
+  const tradeAllGroups = useMemo(
     () =>
-      buildInstanceAllGroups({
-        instanceGroups: baseInstanceGroups,
+      buildTradeAllGroups({
+        tradeGroups: baseTradeGroups,
         attributions,
         executionsFinal,
         executionsTws,
@@ -172,26 +172,26 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
         structures,
         liveStocks: allStocks,
       }),
-    [baseInstanceGroups, attributions, executionsFinal, executionsTws, opportunities, structures, allStocks],
+    [baseTradeGroups, attributions, executionsFinal, executionsTws, opportunities, structures, allStocks],
   )
   /** The scope bar's set — accounts, symbol, expiry — with no grid filter applied. */
-  const scopedInstanceGroups = useMemo(() => sortInstanceGroupOptions(instanceAllGroups), [instanceAllGroups])
+  const scopedTradeGroups = useMemo(() => sortTradeGroupOptions(tradeAllGroups), [tradeAllGroups])
 
-  const instanceFilterOptions = useMemo(() => {
+  const tradeFilterOptions = useMemo(() => {
     // Template codes, labelled by the template's own display name (TD-41).
     const templateLabels = new Map<string, string>()
-    for (const g of instanceAllGroups) {
+    for (const g of tradeAllGroups) {
       if (g.template_code && !templateLabels.has(g.template_code)) {
         templateLabels.set(g.template_code, g.template_label ?? titleCaseCode(g.template_code))
       }
     }
     const structureTypes = [...templateLabels].map(([value, label]) => ({ value, label }))
     const oppNames = [
-      ...new Set(instanceAllGroups.map((g) => g.strategy_opportunity_name).filter(Boolean) as string[]),
+      ...new Set(tradeAllGroups.map((g) => g.strategy_opportunity_name).filter(Boolean) as string[]),
     ]
-    const scopeTypes = [...new Set(instanceAllGroups.map((g) => g.scope_type).filter(Boolean) as string[])]
+    const scopeTypes = [...new Set(tradeAllGroups.map((g) => g.scope_type).filter(Boolean) as string[])]
     return { structureTypes, oppNames, scopeTypes }
-  }, [instanceAllGroups])
+  }, [tradeAllGroups])
 
   const filteredOptions = useMemo(() => {
     let list = openOptions
@@ -212,7 +212,7 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
 
   // Vendor Greeks for the legs actually held (Owner decision 2026-09-05: the
   // Golden Source is the authority, not a second in-house derivation).
-  const greekLegs: GreekLeg[] = scopedInstanceGroups.flatMap((g) =>
+  const greekLegs: GreekLeg[] = scopedTradeGroups.flatMap((g) =>
     g.options.map((p) => ({
       underlying: extractUnderlyingRootSymbol(p.symbol),
       expiry: p.expiry,
@@ -227,7 +227,7 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
   // (Owner decision 2026-09-05): with one account off, Pressure is that
   // account's pressure, not a two-account blend.
   const alarm = usePositionsAlarm({
-    groups: scopedInstanceGroups,
+    groups: scopedTradeGroups,
     quotesBySymbol,
     accounts: scopedAccounts,
     liveStocks: allStocks,
@@ -285,11 +285,11 @@ export function usePositionsBook(scope: PositionsScope, cushionTightPct: number)
     opportunities,
     structures,
     attributions,
-    instances,
-    instanceStructureById,
-    instanceAllGroups,
-    scopedInstanceGroups,
-    instanceFilterOptions,
+    trades,
+    tradeStructureById,
+    tradeAllGroups,
+    scopedTradeGroups,
+    tradeFilterOptions,
     filteredOptions,
     greeks,
     alarm,

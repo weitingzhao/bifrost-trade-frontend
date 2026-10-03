@@ -8,15 +8,14 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
-import type { StrategyInstance } from '@/types/strategy'
+import type { Trade } from '@/types/strategy'
 
-const instances: StrategyInstance[] = [
+const trades: Trade[] = [
   {
-    strategy_instance_id: 11,
+    trade_id: 11,
     strategy_opportunity_id: 1,
     account_id: 'U1',
     label: 'MU cash-secured put',
-    notes: null,
     opened_at: '2026-09-16T10:00:00Z',
     opened_at_epoch: 1,
     created_at: '2026-09-16T10:00:00Z',
@@ -28,11 +27,10 @@ const instances: StrategyInstance[] = [
     executions_count: 1,
   },
   {
-    strategy_instance_id: 22,
+    trade_id: 22,
     strategy_opportunity_id: 2,
     account_id: 'U1',
     label: 'Premium MU lookalike book',
-    notes: null,
     opened_at: '2026-09-16T11:00:00Z',
     opened_at_epoch: 2,
     created_at: '2026-09-16T11:00:00Z',
@@ -46,7 +44,7 @@ const instances: StrategyInstance[] = [
 ]
 
 vi.mock('@/hooks/useStrategies', () => ({
-  useStrategyInstances: () => ({ data: { items: instances } }),
+  useTrades: () => ({ data: { items: trades } }),
   useOpportunities: () => ({
     data: {
       items: [
@@ -93,7 +91,7 @@ function intendedMu(): StrategyPlan {
     intended_at: '2026-09-15T12:00:00Z',
     filled_at: null,
     cancelled_at: null,
-    strategy_instance_id: null,
+    trade_id: null,
     parent_strategy_plan_id: null,
     created_at: '2026-09-15T12:00:00Z',
     updated_at: '2026-09-15T12:00:00Z',

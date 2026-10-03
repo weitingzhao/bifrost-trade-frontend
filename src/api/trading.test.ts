@@ -30,10 +30,10 @@ const stockRow = {
   taxes: 0,
   net_cash: 1249,
   strategy_opportunity_id: null,
-  strategy_instance_id: null,
+  trade_id: null,
   strategy_opportunity_name: null,
-  strategy_instance_label: null,
-  instance_allocations: [],
+  trade_label: null,
+  fill_splits: [],
 }
 
 const optionRow = {

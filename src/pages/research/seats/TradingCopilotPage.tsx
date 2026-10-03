@@ -21,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { CopilotPromptLangToggle } from '@/components/cockpit/CopilotPromptLangToggle'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { useGateSafetyList } from '@/hooks/useGateSafety'
+import { useGateSetList } from '@/hooks/useGateSet'
 import { useExecutionsPerformanceBook } from '@/hooks/useExecutions'
 import { useCopilotTools } from '@/hooks/useCopilotTools'
 import { askCopilotIntentStore } from '@/store/askCopilotIntentStore'
@@ -37,7 +37,7 @@ const ORIGIN = 'trading-copilot'
 export default function TradingCopilotPage() {
   const [lang] = useCopilotPromptLang()
   const status = useMonitorStatus()
-  const gates = useGateSafetyList()
+  const gates = useGateSetList()
   const execs = useExecutionsPerformanceBook()
   const toolsQ = useCopilotTools()
 

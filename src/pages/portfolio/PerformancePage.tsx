@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
-import { useOpportunities, useStrategyInstances } from '@/hooks/useStrategies'
+import { useOpportunities, useTrades } from '@/hooks/useStrategies'
 import { usePerformanceBulk } from '@/hooks/usePerformanceBulk'
 import { usePerformanceQuery } from '@/hooks/usePerformanceQuery'
 import {
@@ -92,13 +92,13 @@ export default function PerformancePage() {
   )
 
   const oppQuery = useOpportunities()
-  const instQuery = useStrategyInstances(selectedOppId != null ? { opportunityId: selectedOppId } : undefined)
+  const instQuery = useTrades(selectedOppId != null ? { opportunityId: selectedOppId } : undefined)
 
   const perfQuery = usePerformanceQuery({
     since_ts: sinceTs,
     until_ts: untilTs,
     strategy_opportunity_id: selectedOppId ?? undefined,
-    strategy_instance_id: selectedInstId ?? undefined,
+    trade_id: selectedInstId ?? undefined,
   })
 
   const perf = perfQuery.data
@@ -108,7 +108,7 @@ export default function PerformancePage() {
     timeRange,
     calendarMonth,
     strategyOpportunityId: selectedOppId,
-    strategyInstanceId: selectedInstId,
+    tradeId: selectedInstId,
   })
   const bulk = bulkQuery.data
 
@@ -436,7 +436,7 @@ export default function PerformancePage() {
         timeRange={timeRange}
         calendarMonth={calendarMonth}
         strategyOpportunityId={selectedOppId}
-        strategyInstanceId={selectedInstId}
+        tradeId={selectedInstId}
         onExplain={() => explain('otf')}
       />
     </PageShell>

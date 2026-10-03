@@ -1,6 +1,6 @@
 import type { Execution } from '@/types/positions'
-import { executionStrategyInstanceIds } from '@/utils/ledger/ledgerOptHelpers'
-import { isBuySide, isSellSide } from '@/utils/instanceDetail/executionSide'
+import { executionTradeIds } from '@/utils/ledger/ledgerOptHelpers'
+import { isBuySide, isSellSide } from '@/utils/tradeDetail/executionSide'
 import { fmtIsoDateToken } from '@/lib/format'
 import { ledgerExecutionDateKey } from '@/utils/ledger/summaryPeriod'
 import { ledgerContractDisplay } from './ledgerContractMark'
@@ -27,7 +27,7 @@ export function isUndatedExecution(e: Execution): boolean {
 }
 
 export function isUnlinkedExecution(e: Execution): boolean {
-  return executionStrategyInstanceIds(e).length === 0
+  return executionTradeIds(e).length === 0
 }
 
 export function secTypeOf(e: Execution): string {

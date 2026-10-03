@@ -1,15 +1,15 @@
 import { z } from 'zod'
 
-export const InstanceAllocationSchema = z.object({
-  strategy_instance_id: z.number(),
-  allocated_quantity: z.number(),
+export const FillSplitSchema = z.object({
+  trade_id: z.number(),
+  quantity: z.number(),
   strategy_opportunity_id: z.number().nullable().optional(),
-  strategy_instance_label: z.string().nullable().optional(),
+  trade_label: z.string().nullable().optional(),
   strategy_opportunity_name: z.string().nullable().optional(),
 })
 
 /** Per-instance split of one execution (multi-instance allocation bridge). */
-export type InstanceAllocation = z.infer<typeof InstanceAllocationSchema>
+export type FillSplit = z.infer<typeof FillSplitSchema>
 
 /**
  * One row of core `get_executions` — the link and candidate readers share its
@@ -45,11 +45,11 @@ const ExecutionRowSchema = z.object({
   realized_pnl: z.number().nullable().optional(),
   net_cash: z.number().nullable().optional(),
   taxes: z.number().nullable().optional(),
-  strategy_instance_id: z.number().nullable().optional(),
+  trade_id: z.number().nullable().optional(),
   strategy_opportunity_id: z.number().nullable().optional(),
   strategy_opportunity_name: z.string().nullable().optional(),
-  strategy_instance_label: z.string().nullable().optional(),
-  instance_allocations: z.array(InstanceAllocationSchema).optional(),
+  trade_label: z.string().nullable().optional(),
+  fill_splits: z.array(FillSplitSchema).optional(),
 })
 
 export const ExecutionSchema = ExecutionRowSchema.passthrough()

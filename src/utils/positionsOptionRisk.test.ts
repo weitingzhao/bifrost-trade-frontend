@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   buildExpiryLadder,
-  compareInstanceRisk,
+  compareTradeRisk,
   cushionBand,
   normalizeRight,
   shortLegCushion,
@@ -188,7 +188,7 @@ describe('buildExpiryLadder', () => {
     right: 'C',
     qty: -1,
     underlying: 'AAA',
-    instanceKey: 'i1',
+    tradeKey: 'i1',
     ...o,
   })
 
@@ -238,14 +238,14 @@ describe('buildExpiryLadder', () => {
     pin('2025-06-02T12:00:00')
     const [row] = buildExpiryLadder(
       [
-        mk({ underlying: 'BBB', instanceKey: 'i1' }),
-        mk({ underlying: 'AAA', instanceKey: 'i2' }),
-        mk({ underlying: 'AAA', instanceKey: 'i2' }),
+        mk({ underlying: 'BBB', tradeKey: 'i1' }),
+        mk({ underlying: 'AAA', tradeKey: 'i2' }),
+        mk({ underlying: 'AAA', tradeKey: 'i2' }),
       ],
       () => 96,
     )
     expect(row?.symbols).toEqual(['AAA', 'BBB'])
-    expect(row?.instanceCount).toBe(2)
+    expect(row?.tradeCount).toBe(2)
   })
 
   it('drops legs it cannot place on the calendar', () => {
@@ -263,7 +263,7 @@ describe('buildExpiryLadder', () => {
   })
 })
 
-describe('compareInstanceRisk', () => {
+describe('compareTradeRisk', () => {
   const mk = (o: {
     shorts?: number
     itm?: number
@@ -282,12 +282,12 @@ describe('compareInstanceRisk', () => {
   })
 
   it('puts a breached short ahead of everything', () => {
-    const order = [mk({ cushion: 0.2 }), mk({ itm: 1, cushion: -0.05 })].sort(compareInstanceRisk)
+    const order = [mk({ cushion: 0.2 }), mk({ itm: 1, cushion: -0.05 })].sort(compareTradeRisk)
     expect(order[0]?.cushion.itmShortCount).toBe(1)
   })
 
   it('treats an unpriced short as more urgent than a comfortable one', () => {
-    const order = [mk({ cushion: 0.3 }), mk({ cushion: null })].sort(compareInstanceRisk)
+    const order = [mk({ cushion: 0.3 }), mk({ cushion: null })].sort(compareTradeRisk)
     expect(order[0]?.cushion.cushionPct).toBeNull()
   })
 
@@ -296,7 +296,7 @@ describe('compareInstanceRisk', () => {
       mk({ cushion: 0.2, dte: 5 }),
       mk({ cushion: 0.02, dte: 40 }),
       mk({ cushion: 0.02, dte: 10 }),
-    ].sort(compareInstanceRisk)
+    ].sort(compareTradeRisk)
     expect(order.map((x) => [x.cushion.cushionPct, x.expiry.dte])).toEqual([
       [0.02, 10],
       [0.02, 40],
@@ -305,7 +305,7 @@ describe('compareInstanceRisk', () => {
   })
 
   it('leaves instances with no short legs last', () => {
-    const order = [mk({ shorts: 0 }), mk({ cushion: 0.5 })].sort(compareInstanceRisk)
+    const order = [mk({ shorts: 0 }), mk({ cushion: 0.5 })].sort(compareTradeRisk)
     expect(order[1]?.cushion.shortLegCount).toBe(0)
   })
 })

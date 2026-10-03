@@ -2,18 +2,18 @@ import type { z } from 'zod'
 import type {
   AllocationsResponseSchema,
   EntryConditionSchema,
-  GateSafetyFullSchema,
-  GateSafetyItemSchema,
-  GateSafetyResponseSchema,
+  GateSetFullSchema,
+  GateSetItemSchema,
+  GateSetResponseSchema,
   OpportunitiesResponseSchema,
   StrategyAllocationSchema,
-  StrategyInstanceSchema,
-  StrategyInstancesResponseSchema,
+  TradeSchema,
+  TradesResponseSchema,
   StrategyOpportunityDetailSchema,
   StrategyOpportunitySchema,
 } from '@/lib/schemas/strategy'
 import type {
-  GateSafetyBody,
+  GateSetBody,
   TemplateBody,
   StructureBody,
   StructureMetaItem,
@@ -26,13 +26,13 @@ import type {
 // from the schemas that mirror the API's models — one description, checked at
 // runtime by `withValidation` and at compile time here.
 
-// ── Strategy Instance ─────────────────────────────────────────────────────────
+// ── Trade ─────────────────────────────────────────────────────────────────────
 
-/** `InstanceRow`: `executions_count` is in list items only. */
-export type StrategyInstance = z.infer<typeof StrategyInstanceSchema>
-export type StrategyInstancesResponse = z.infer<typeof StrategyInstancesResponseSchema>
+/** `TradeRow`: `executions_count` is in list items only. */
+export type Trade = z.infer<typeof TradeSchema>
+export type TradesResponse = z.infer<typeof TradesResponseSchema>
 
-export interface CreateStrategyInstanceBody {
+export interface CreateTradeBody {
   strategy_opportunity_id: number
   account_id: string
   opened_at?: string
@@ -44,7 +44,7 @@ export interface CreateStrategyInstanceBody {
  * (Research `journal.note`, refs `{type: trade}`), read and written by the
  * trade's Journal block. The column stops being written and is dropped later.
  */
-export interface PatchStrategyInstanceBody {
+export interface PatchTradeBody {
   label?: string | null
   opened_at?: string
 }
@@ -132,9 +132,9 @@ export interface StructuresResponse {
 
 // ── Gate Safety ───────────────────────────────────────────────────────────────
 
-export type GateSafetyItem = z.infer<typeof GateSafetyItemSchema>
+export type GateSetItem = z.infer<typeof GateSetItemSchema>
 
-export interface GateSafetyGates {
+export interface GateSetGates {
   strategy?: {
     structure?: { min_dte?: number; max_dte?: number; atm_band_pct?: number }
     earnings?: { blackout_days_before?: number; blackout_days_after?: number }
@@ -167,23 +167,23 @@ export interface GateSafetyGates {
 }
 
 /**
- * `GET /strategies/gate-safety/defaults` — core `GateParams()` as the API holds
+ * `GET /gate-sets/defaults` — core `GateParams()` as the API holds
  * it, in the same shape as a gate row's `gates` (no earnings dates). What a new
  * gate set starts from; the UI keeps no copy of its own.
  */
-export interface GateSafetyDefaultsResponse {
-  gates: GateSafetyGates
+export interface GateSetDefaultsResponse {
+  gates: GateSetGates
 }
 
-export type GateSafetyFull = z.infer<typeof GateSafetyFullSchema>
+export type GateSetFull = z.infer<typeof GateSetFullSchema>
 
-/** `GateSafetyBody` as the gate form sends it. */
-export interface GateSafetyPayload extends GateSafetyBody {
+/** `GateSetBody` as the gate form sends it. */
+export interface GateSetPayload extends GateSetBody {
   name: string
-  gates: GateSafetyGates
+  gates: GateSetGates
 }
 
-export type GateSafetyResponse = z.infer<typeof GateSafetyResponseSchema>
+export type GateSetResponse = z.infer<typeof GateSetResponseSchema>
 
 // ── Active Strategy Config ────────────────────────────────────────────────────
 

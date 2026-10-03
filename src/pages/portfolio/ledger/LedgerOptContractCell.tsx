@@ -4,7 +4,7 @@ import type { Execution } from '@/types/positions'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import {
   flattenLinksForOptGroup,
-  getInstanceConsistencyState,
+  getTradeConsistencyState,
   getOptionStockLinkDetailForExecution,
   sumLinkSlippageForOptGroup,
 } from '@/utils/ledger/ledgerOptHelpers'
@@ -12,13 +12,13 @@ import { ledgerContractDisplay } from '@/pages/portfolio/ledger/ledgerContractMa
 import { LedgerConsistencyTag } from '@/pages/portfolio/ledger/ledgerConsistencyTag'
 import type { OptionStockLink, OptionStockLinkSummary } from '@/types/trading'
 
-const INSTANCE_ICON_CLASS: Record<string, string> = {
+const TRADE_ICON_CLASS: Record<string, string> = {
   same: 'text-[var(--color-success)] hover:text-[var(--color-success)]',
   multiple: 'text-[var(--color-trade-multi)] hover:text-[var(--color-trade-multi)]',
   mixed: 'text-[var(--color-warning)] hover:text-[var(--color-warning)]',
 }
 
-function InstanceSquareIcon({ className }: { className?: string }) {
+function TradeSquareIcon({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -60,54 +60,54 @@ function StockLinkAggregateIcon() {
  * Detail rows: icon only when this fill has been assigned an instance (Legacy detail parity).
  * Unassigned fills (Stg/Ins —) show no icon.
  */
-export function LedgerDetailInstanceIcon({
+export function LedgerDetailTradeIcon({
   execution,
   className,
 }: {
   execution?: Execution
   className?: string
 }) {
-  const openInstance = useOpenTrade()
+  const openTrade = useOpenTrade()
   if (execution == null) return null
 
-  const instanceId =
-    execution.strategy_instance_id != null && Number.isFinite(Number(execution.strategy_instance_id))
-      ? Number(execution.strategy_instance_id)
+  const tradeId =
+    execution.trade_id != null && Number.isFinite(Number(execution.trade_id))
+      ? Number(execution.trade_id)
       : null
-  if (instanceId == null) return null
+  if (tradeId == null) return null
 
-  const instLabel = execution.strategy_instance_label?.trim()
-  const title = instLabel ? `Trade: ${instLabel}` : `Open trade #${instanceId}`
+  const instLabel = execution.trade_label?.trim()
+  const title = instLabel ? `Trade: ${instLabel}` : `Open trade #${tradeId}`
 
   return (
     <button
       type="button"
       className={cn(
         'shrink-0 inline-flex cursor-pointer items-center border-0 bg-transparent p-0',
-        INSTANCE_ICON_CLASS.same,
+        TRADE_ICON_CLASS.same,
         className,
       )}
       title={title}
       aria-label={title}
       onClick={e => {
         e.stopPropagation()
-        openInstance(instanceId, { from: 'Ledger · fills', ...tradeHowFrom(e) })
+        openTrade(tradeId, { from: 'Ledger · fills', ...tradeHowFrom(e) })
       }}
       onKeyDown={e => e.stopPropagation()}
     >
-      <InstanceSquareIcon className={INSTANCE_ICON_CLASS.same} />
+      <TradeSquareIcon className={TRADE_ICON_CLASS.same} />
     </button>
   )
 }
 
-export function LedgerInstanceConsistencyIcon({
+export function LedgerTradeConsistencyIcon({
   trades,
   className,
 }: {
   trades: Execution[]
   className?: string
 }) {
-  return <LedgerConsistencyTag state={getInstanceConsistencyState(trades)} className={className} />
+  return <LedgerConsistencyTag state={getTradeConsistencyState(trades)} className={className} />
 }
 
 export type ViewLinksPayload = {
@@ -160,13 +160,13 @@ export function LedgerOptContractCell({
     : `Linked stocks · ${occ}`
 
   const isDetailRow = showExecId != null
-  const InstanceIcon = isDetailRow ? (
-    <LedgerDetailInstanceIcon
+  const TradeIcon = isDetailRow ? (
+    <LedgerDetailTradeIcon
       execution={fillExec}
       className={prominent ? 'mr-1' : 'mr-1.5'}
     />
   ) : (
-    <LedgerInstanceConsistencyIcon trades={trades} className={prominent ? 'mr-1' : undefined} />
+    <LedgerTradeConsistencyIcon trades={trades} className={prominent ? 'mr-1' : undefined} />
   )
 
   return (
@@ -179,7 +179,7 @@ export function LedgerOptContractCell({
         className,
       )}
     >
-      {InstanceIcon}
+      {TradeIcon}
       <span className="min-w-0" title={occ}>
         <strong
           className={cn(

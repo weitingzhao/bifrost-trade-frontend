@@ -13,10 +13,10 @@ import {
   withNextVersion,
 } from './gateForm'
 import { GATES_FIXTURE, gatesFixture } from './gateDefaults.fixture'
-import type { GateSafetyFull } from '@/types/positions'
+import type { GateSetFull } from '@/types/positions'
 
 /** Made-up values, distinct per field so a crossed wire shows. */
-function full(): GateSafetyFull {
+function full(): GateSetFull {
   return {
     gate_safety_strategy_id: 7,
     name: 'Test set',

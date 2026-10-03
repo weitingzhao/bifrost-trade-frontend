@@ -146,7 +146,7 @@ export default function PortfolioOverviewPage() {
     timeRange: 'quarter',
     calendarMonth: anchorMonth,
     strategyOpportunityId: null,
-    strategyInstanceId: null,
+    tradeId: null,
   })
   // The same range, asked of the summary endpoint, because the strip under the
   // split is Performance's reading and not a second derivation of the by-day

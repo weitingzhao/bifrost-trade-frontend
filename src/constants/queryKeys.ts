@@ -99,8 +99,6 @@ export const QUERY_KEYS = {
     home: ['research', 'home', 'aggregate'] as const,
   },
   strategy: {
-    instances: ['strategy', 'instances'] as const,
-    instanceDetail: ['strategy', 'instance-detail'] as const,
     opportunities: ['strategy', 'opportunities'] as const,
     structures: ['strategy', 'structures'] as const,
     /** One structure's record — under `structures`, so a structure write reaches it. */
@@ -113,13 +111,23 @@ export const QUERY_KEYS = {
     },
     /** The six-dimension dictionary the catalogue and the gates both read. */
     dims: ['strategy', 'dims'] as const,
-    gateSafety: ['strategy', 'gate-safety'] as const,
-    /** Core's GateParams defaults a new gate set is seeded from — outside `gateSafety`, so a gate write does not refetch them. */
-    gateSafetyDefaults: ['strategy', 'gate-safety-defaults'] as const,
+    /** Gate sets (`/gate-sets`; the table keeps its legacy name gate_safety_strategy, naming D6-A). */
+    gateSets: ['strategy', 'gate-sets'] as const,
+    /** Core's GateParams defaults a new gate set is seeded from — outside `gateSets`, so a gate write does not refetch them. */
+    gateSetDefaults: ['strategy', 'gate-set-defaults'] as const,
     allocations: ['strategy', 'allocations'] as const,
-    winRate: ['strategy', 'win-rate'] as const,
-    /** Rev .110: one review record per instance, read by Queue, Trade review and the Review badge. */
-    reviews: ['strategy', 'reviews'] as const,
+  },
+  /**
+   * Trades (`/trades`, `/trade-reviews`; naming R2). Kept under the `strategy` prefix —
+   * the gateway's domain — so a Rules write that invalidates `['strategy']` reaches them.
+   */
+  trades: {
+    /** Every list read hangs off this: a trade write invalidates it and all its filters refetch. */
+    list: ['strategy', 'trades'] as const,
+    detail: ['strategy', 'trade-detail'] as const,
+    winRate: ['strategy', 'trades-win-rate'] as const,
+    /** Rev .110: one review record per trade, read by Queue, Trade review and the Review badge. */
+    reviews: ['strategy', 'trade-reviews'] as const,
   },
   /** Rev .139: a page's scope kept under a name, listed in the sidebar. */
   savedSearches: ['saved-searches'] as const,

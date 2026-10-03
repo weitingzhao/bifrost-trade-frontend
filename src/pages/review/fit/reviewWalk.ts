@@ -6,30 +6,30 @@
  *   neither                                 the awaiting queue — closed, no confirmed review
  */
 import type { TradeReview } from '@/api/tradeReviews'
-import type { ReviewInstance } from '@/utils/reviewInstances'
+import type { ReviewedTrade } from '@/utils/reviewedTrades'
 
 export type ReviewState = 'awaiting' | 'reviewed' | 'interim'
 
-export function reviewState(t: ReviewInstance, review: TradeReview | undefined): ReviewState {
+export function reviewState(t: ReviewedTrade, review: TradeReview | undefined): ReviewState {
   if (t.open) return 'interim'
   return review?.reviewed ? 'reviewed' : 'awaiting'
 }
 
-export function isAwaiting(t: ReviewInstance, reviews: ReadonlyMap<number, TradeReview>): boolean {
+export function isAwaiting(t: ReviewedTrade, reviews: ReadonlyMap<number, TradeReview>): boolean {
   return !t.open && t.tradeId != null && !reviews.get(t.tradeId)?.reviewed
 }
 
 export function reviewWalk(
-  trades: readonly ReviewInstance[],
+  trades: readonly ReviewedTrade[],
   reviews: ReadonlyMap<number, TradeReview>,
   from: { explicit: boolean; list: string | null },
-): { trades: ReviewInstance[]; label: string } {
+): { trades: ReviewedTrade[]; label: string } {
   if (from.list) {
     const byId = new Map(trades.filter((t) => t.tradeId != null).map((t) => [t.tradeId as number, t]))
     const ordered = from.list
       .split(',')
       .map((x) => byId.get(Number(x.replace('#', ''))))
-      .filter((t): t is ReviewInstance => t != null)
+      .filter((t): t is ReviewedTrade => t != null)
     if (ordered.length > 0) return { trades: ordered, label: 'in Queue’s order' }
   }
   if (from.explicit) return { trades: [...trades], label: 'all trades' }

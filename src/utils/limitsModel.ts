@@ -344,7 +344,7 @@ export interface GateReadings {
   /** `guard.risk` as the record stores it. */
   guard: Record<string, unknown> | null
   /** Instances open under the allocation right now. */
-  openInstances: number | null
+  openTrades: number | null
   /** The allocation's own ceiling on concurrent instances. */
   maxPositions: number | null
   /** Realised on the allocation's instances today. */
@@ -382,12 +382,12 @@ export function gateLimitRules(r: GateReadings): LimitRule[] {
       kind: 'gate',
       scope: 'allocation',
       unit: 'count',
-      current: r.openInstances,
+      current: r.openTrades,
       limit: r.maxPositions,
       bound: 'ceiling',
       onBreach: 'the daemon does not open another — nothing to acknowledge',
       citedFrom: inRules,
-      noReading: r.openInstances == null ? 'no trade under this allocation carries a fill' : null,
+      noReading: r.openTrades == null ? 'no trade under this allocation carries a fill' : null,
     })
   }
 

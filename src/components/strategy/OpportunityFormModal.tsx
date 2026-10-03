@@ -61,7 +61,7 @@ import {
   scopeTakesSymbols,
 } from '@/components/strategy/opportunities/opportunityForm'
 import { SegmentControl } from '@/components/data-display'
-import { useGateSafety } from '@/hooks/useStrategies'
+import { useGateSets } from '@/hooks/useStrategies'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { createOpportunity, patchOpportunity, fetchOpportunityDetail, fetchStructures } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
@@ -80,7 +80,7 @@ import { cn } from '@/lib/utils'
 export interface PrefillData {
   name: string
   structureId: string
-  gateSafetyId: string
+  gateSetId: string
   scopeType: string
   symbols: string[]
   conditions: EntryConditionInput[]
@@ -108,7 +108,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
   const isEdit = initial != null
   const isCopy = prefill != null && !isEdit
   const isCreate = !isEdit
-  const { data: gateData } = useGateSafety()
+  const { data: gateData } = useGateSets()
   const { data: watchlistData } = useWatchlist()
   const { data: structuresData } = useQuery({
     queryKey: [...QUERY_KEYS.strategy.structures, 'all'],
@@ -123,7 +123,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
   const [name, setName] = useState(prefill?.name ?? '')
   const [nameEdited, setNameEdited] = useState(prefill != null || isEdit)
   const [structureId, setStructureId] = useState<string>(prefill?.structureId ?? '')
-  const [gateSafetyId, setGateSafetyId] = useState<string>(prefill?.gateSafetyId || GATE_NONE)
+  const [gateSetId, setGateSetId] = useState<string>(prefill?.gateSetId || GATE_NONE)
   const [scopeType, setScopeType] = useState<string>(prefill?.scopeType ?? '')
   const [symbols, setSymbols] = useState<string[]>(prefill?.symbols ?? [])
   const [conditions, setConditions] = useState<EntryConditionInput[]>(prefill?.conditions ?? [])
@@ -185,7 +185,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
     setName(f.name)
     setNameEdited(true)
     setStructureId(f.structureId)
-    setGateSafetyId(f.gateSafetyId || GATE_NONE)
+    setGateSetId(f.gateSetId || GATE_NONE)
     setScopeType(f.scopeType)
     setSymbols(f.symbols)
     setConditions(f.conditions)
@@ -237,7 +237,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
     const body = opportunityFormToPayload({
       name: nameEdited ? name : resolvedName,
       structureId: resolvedStructureId,
-      gateSafetyId: gateSafetyId !== GATE_NONE ? gateSafetyId : '',
+      gateSetId: gateSetId !== GATE_NONE ? gateSetId : '',
       scopeType,
       symbols,
       conditions,
@@ -392,21 +392,21 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
               <label
                 className={cn(
                   opportunitiesGatePillClass,
-                  gateSafetyId === GATE_NONE && opportunitiesGatePillSelectedClass,
+                  gateSetId === GATE_NONE && opportunitiesGatePillSelectedClass,
                 )}
               >
                 <input
                   type="radio"
                   name="opp_gate"
                   className="sr-only"
-                  checked={gateSafetyId === GATE_NONE}
-                  onChange={() => setGateSafetyId(GATE_NONE)}
+                  checked={gateSetId === GATE_NONE}
+                  onChange={() => setGateSetId(GATE_NONE)}
                 />
                 None
               </label>
               {activeGates.map((g) => {
                 const id = String(g.gate_safety_strategy_id)
-                const selected = gateSafetyId === id
+                const selected = gateSetId === id
                 return (
                   <label
                     key={id}
@@ -420,7 +420,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
                       name="opp_gate"
                       className="sr-only"
                       checked={selected}
-                      onChange={() => setGateSafetyId(id)}
+                      onChange={() => setGateSetId(id)}
                     />
                     <span>{g.name}</span>
                     {g.version != null && (

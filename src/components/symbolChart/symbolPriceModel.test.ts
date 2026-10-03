@@ -11,7 +11,7 @@ import {
   sessionsForWindow,
   sessionsUntil,
   holdingFor,
-  instanceTracksFor,
+  tradeTracksFor,
   MIN_SPAN,
   panView,
   zoomView,
@@ -109,10 +109,10 @@ describe('instance tracks (Rev .102)', () => {
   const K90 = { symbol: 'ZZTM  270115P00090000', contract_key: 'ZZTM  270115P00090000|OPT|20270115|90|P', strike: 90 }
 
   it('a flat leg is realized, named by the instance and its last leg', () => {
-    const [t] = instanceTracksFor(
+    const [t] = tradeTracksFor(
       [
-        fill({ side: 'Sell', trade_date: '2026-08-03', time: 100, strategy_instance_id: 7 }),
-        fill({ side: 'Buy', trade_date: '2026-09-02', time: 200, price: 1.1, strategy_instance_id: 7 }),
+        fill({ side: 'Sell', trade_date: '2026-08-03', time: 100, trade_id: 7 }),
+        fill({ side: 'Buy', trade_date: '2026-09-02', time: 200, price: 1.1, trade_id: 7 }),
       ],
       'ZZTM',
       [],
@@ -125,18 +125,18 @@ describe('instance tracks (Rev .102)', () => {
   })
 
   it('an open leg keeps the track open and takes its mark from the monitor', () => {
-    const [t] = instanceTracksFor([fill({ ...K90, side: 'Sell', trade_date: '2026-09-10', strategy_instance_id: 8 })], 'ZZTM', legs)
+    const [t] = tradeTracksFor([fill({ ...K90, side: 'Sell', trade_date: '2026-09-10', trade_id: 8 })], 'ZZTM', legs)
     expect(t.closeDate).toBeNull()
     expect(t.pnl).toBe(70)
     expect(t.pnlIsMark).toBe(true)
   })
 
   it('a roll is a leg going flat the day another opens under the same instance, with the day’s net', () => {
-    const [t] = instanceTracksFor(
+    const [t] = tradeTracksFor(
       [
-        fill({ side: 'Sell', trade_date: '2026-08-03', time: 1, price: 2.5, strategy_instance_id: 9 }),
-        fill({ side: 'Buy', trade_date: '2026-08-20', time: 2, price: 3.0, strategy_instance_id: 9 }),
-        fill({ ...K90, side: 'Sell', trade_date: '2026-08-20', time: 3, price: 3.4, strategy_instance_id: 9 }),
+        fill({ side: 'Sell', trade_date: '2026-08-03', time: 1, price: 2.5, trade_id: 9 }),
+        fill({ side: 'Buy', trade_date: '2026-08-20', time: 2, price: 3.0, trade_id: 9 }),
+        fill({ ...K90, side: 'Sell', trade_date: '2026-08-20', time: 3, price: 3.4, trade_id: 9 }),
       ],
       'ZZTM',
       [],
@@ -150,11 +150,11 @@ describe('instance tracks (Rev .102)', () => {
   })
 
   it('a same-day roll names the leg opened last, whatever its strike', () => {
-    const [t] = instanceTracksFor(
+    const [t] = tradeTracksFor(
       [
-        fill({ side: 'Sell', trade_date: '2026-08-20', time: 1, strategy_instance_id: 12 }),
-        fill({ side: 'Buy', trade_date: '2026-08-20', time: 2, strategy_instance_id: 12 }),
-        fill({ ...K90, side: 'Sell', trade_date: '2026-08-20', time: 3, strategy_instance_id: 12 }),
+        fill({ side: 'Sell', trade_date: '2026-08-20', time: 1, trade_id: 12 }),
+        fill({ side: 'Buy', trade_date: '2026-08-20', time: 2, trade_id: 12 }),
+        fill({ ...K90, side: 'Sell', trade_date: '2026-08-20', time: 3, trade_id: 12 }),
       ],
       'ZZTM',
       [],
@@ -164,10 +164,10 @@ describe('instance tracks (Rev .102)', () => {
   })
 
   it('an open leg is named at its open size, not the most it ever held', () => {
-    const [t] = instanceTracksFor(
+    const [t] = tradeTracksFor(
       [
-        fill({ side: 'Sell', quantity: 5, time: 1, strategy_instance_id: 11 }),
-        fill({ side: 'Buy', quantity: 2, time: 2, trade_date: '2026-08-10', strategy_instance_id: 11 }),
+        fill({ side: 'Sell', quantity: 5, time: 1, trade_id: 11 }),
+        fill({ side: 'Buy', quantity: 2, time: 2, trade_date: '2026-08-10', trade_id: 11 }),
       ],
       'ZZTM',
       [],
@@ -176,11 +176,11 @@ describe('instance tracks (Rev .102)', () => {
   })
 
   it('fills no instance claims make one plain track; other names and stock stay out', () => {
-    const tracks = instanceTracksFor(
+    const tracks = tradeTracksFor(
       [
-        fill({ strategy_instance_id: null }),
-        fill({ symbol: 'OTHR  270115P00100000', contract_key: 'OTHR|OPT|20270115|100|P', strategy_instance_id: 3 }),
-        fill({ sec_type: 'STK', symbol: 'ZZTM', strategy_instance_id: 3 }),
+        fill({ trade_id: null }),
+        fill({ symbol: 'OTHR  270115P00100000', contract_key: 'OTHR|OPT|20270115|100|P', trade_id: 3 }),
+        fill({ sec_type: 'STK', symbol: 'ZZTM', trade_id: 3 }),
       ],
       'ZZTM',
       [],
@@ -192,9 +192,9 @@ describe('instance tracks (Rev .102)', () => {
 describe('holding (Rev .102)', () => {
   const stk = (qty: number, avgCost: number | null): SymbolLeg => ({ key: `s${qty}`, kind: 'STK', qty, avgCost, price: null, unrealized: null })
   it('blends accounts and splits backing under open short calls from free', () => {
-    const tracks = instanceTracksFor(
+    const tracks = tradeTracksFor(
       [
-        fill({ symbol: 'ZZTM  270115C00120000', contract_key: 'ZZTM  270115C00120000|OPT|20270115|120|C', option_right: 'C', strike: 120, quantity: 2, strategy_instance_id: 4 }),
+        fill({ symbol: 'ZZTM  270115C00120000', contract_key: 'ZZTM  270115C00120000|OPT|20270115|120|C', option_right: 'C', strike: 120, quantity: 2, trade_id: 4 }),
       ],
       'ZZTM',
       [],

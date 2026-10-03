@@ -4,7 +4,7 @@
  * screen and backtest run that argued for it.
  *
  * The plan is the only record that joins an idea to a trade: a plan names the
- * trade it became in `strategy_instance_id`. Source is the server's own five
+ * trade it became in `trade_id`. Source is the server's own five
  * values (Owner, Rev .108); the old Outcome page's four are not mapped onto
  * them. Lens and run have no store at all — no plan or trade field holds
  * either — so they read as unrecorded rather than as "none".
@@ -69,7 +69,7 @@ export function originsByTrade(plans: readonly StrategyPlan[]): Map<number, Trad
   const out = new Map<number, TradeOrigin>()
   const filledPlan = new Set<number>()
   for (const p of plans) {
-    const id = p.strategy_instance_id
+    const id = p.trade_id
     if (id == null) continue
     const filled = p.status === 'filled'
     const cur = out.get(id)

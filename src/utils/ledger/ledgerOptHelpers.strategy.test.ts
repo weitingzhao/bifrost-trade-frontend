@@ -4,8 +4,8 @@ import { buildOptExecutionGroups } from '@/utils/ledger/optExecutionGroups'
 import {
   executionStrategyOpportunityKey,
   expandExecutionRowsForStrategyOptView,
-  groupExecutionsByStrategyInstanceId,
-  sliceExecutionForInstanceOptView,
+  groupExecutionsByTradeId,
+  sliceExecutionForTradeOptView,
 } from '@/utils/ledger/ledgerOptHelpers'
 
 function optFill(
@@ -24,16 +24,16 @@ function optFill(
 }
 
 describe('strategy opt view allocation parity', () => {
-  it('slice uses signed allocated_quantity (not parent-qty ratio)', () => {
+  it('slice uses signed quantity (not parent-qty ratio)', () => {
     const ex = optFill({
       account_executions_id: 10,
       contract_key: 'RKLB|OPT|20260320|76|C',
       strike: 76,
       side: 'Sell',
       quantity: -4,
-      instance_allocations: [{ strategy_instance_id: 5, allocated_quantity: -4 }],
+      fill_splits: [{ trade_id: 5, quantity: -4 }],
     })
-    const row = sliceExecutionForInstanceOptView(ex, 5)
+    const row = sliceExecutionForTradeOptView(ex, 5)
     expect(row?.quantity).toBe(-4)
   })
 
@@ -44,8 +44,8 @@ describe('strategy opt view allocation parity', () => {
       side: 'Buy',
       quantity: 4,
       strategy_opportunity_id: null,
-      instance_allocations: [
-        { strategy_instance_id: 5, allocated_quantity: 4, strategy_opportunity_id: 42 },
+      fill_splits: [
+        { trade_id: 5, quantity: 4, strategy_opportunity_id: 42 },
       ],
     })
     const [row] = expandExecutionRowsForStrategyOptView(ex)
@@ -62,7 +62,7 @@ describe('strategy opt view allocation parity', () => {
         side: 'Buy',
         quantity: 4,
         price: 2,
-        instance_allocations: [{ strategy_instance_id: 5, allocated_quantity: 4 }],
+        fill_splits: [{ trade_id: 5, quantity: 4 }],
       }),
       optFill({
         account_executions_id: 2,
@@ -71,7 +71,7 @@ describe('strategy opt view allocation parity', () => {
         side: 'Sell',
         quantity: -4,
         price: 1.5,
-        instance_allocations: [{ strategy_instance_id: 5, allocated_quantity: -4 }],
+        fill_splits: [{ trade_id: 5, quantity: -4 }],
       }),
       optFill({
         account_executions_id: 3,
@@ -80,7 +80,7 @@ describe('strategy opt view allocation parity', () => {
         side: 'Sell',
         quantity: -4,
         price: 3,
-        instance_allocations: [{ strategy_instance_id: 5, allocated_quantity: -4 }],
+        fill_splits: [{ trade_id: 5, quantity: -4 }],
       }),
       optFill({
         account_executions_id: 4,
@@ -89,12 +89,12 @@ describe('strategy opt view allocation parity', () => {
         side: 'Buy',
         quantity: 4,
         price: 2.5,
-        instance_allocations: [{ strategy_instance_id: 5, allocated_quantity: 4 }],
+        fill_splits: [{ trade_id: 5, quantity: 4 }],
       }),
     ]
 
     const expanded = fills.flatMap(e => expandExecutionRowsForStrategyOptView(e))
-    const byInst = groupExecutionsByStrategyInstanceId(expanded)
+    const byInst = groupExecutionsByTradeId(expanded)
     const instTrades = byInst.get(5) ?? []
     const groups = buildOptExecutionGroups(instTrades)
 

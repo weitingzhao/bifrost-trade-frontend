@@ -26,7 +26,7 @@ import { quoteFeedAgeSec } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
 import { cushionBand, type ExpiryLadderRow } from '@/utils/positionsOptionRisk'
 import type { QuoteItem } from '@/types/market'
-import { instancePanel } from './instancePanelClasses'
+import { tradePanel } from './tradePanelClasses'
 
 const TIGHTEST_TITLE =
   'Smallest short-leg cushion expiring on this date — the closest any short strike on this date is to being breached.'
@@ -107,7 +107,7 @@ export function ExpiriesView({
         ) : null}
         <span className="ml-auto text-dense-caption">click a date to scope the page to it</span>
       </div>
-      <div className={instancePanel.tableWrap}>
+      <div className={tradePanel.tableWrap}>
         <DenseDataTable tableClassName="min-w-[46rem]">
           <DenseTableHeader>
             <DenseTableHeadRow>
@@ -214,7 +214,7 @@ function ExpiryRow({
           ))}
         </span>
       </DenseTableCell>
-      <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>{row.instanceCount}</DenseTableCell>
+      <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>{row.tradeCount}</DenseTableCell>
       {showPriced ? (
         <DenseTableCell className={cn(denseTableNumCell, 'text-xs')}>
           {row.tightestCushionPct == null ? (

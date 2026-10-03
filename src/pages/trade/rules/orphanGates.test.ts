@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { orphanGates } from './rulesChain'
 import type { ChainData } from '@/hooks/useRulesChain'
-import type { GateSafetyItem, StrategyAllocation } from '@/types/strategy'
+import type { GateSetItem, StrategyAllocation } from '@/types/strategy'
 
-function gate(id: number, name: string): GateSafetyItem {
-  return { gate_safety_strategy_id: id, name, version: 1 } as GateSafetyItem
+function gate(id: number, name: string): GateSetItem {
+  return { gate_safety_strategy_id: id, name, version: 1 } as GateSetItem
 }
 
 function alloc(gateId: number | null): StrategyAllocation {
@@ -12,7 +12,7 @@ function alloc(gateId: number | null): StrategyAllocation {
 }
 
 function data(p: Partial<ChainData> = {}): ChainData {
-  return { structures: [], opportunities: [], allocations: [], gates: [], instances: [], ...p }
+  return { structures: [], opportunities: [], allocations: [], gates: [], trades: [], ...p }
 }
 
 describe('orphanGates', () => {

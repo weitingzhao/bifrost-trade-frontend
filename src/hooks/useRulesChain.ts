@@ -17,15 +17,15 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   fetchAllocations,
-  fetchGateSafety,
+  fetchGateSets,
   fetchOpportunities,
-  fetchStrategyInstances,
+  fetchTrades,
   fetchStructures,
 } from '@/api/strategy'
 import { useExecutionsAll } from '@/hooks/useExecutions'
-import { readInstances, type InstanceReading } from '@/utils/strategyInstances'
+import { readTrades, type TradeReading } from '@/utils/tradeReadings'
 import type {
-  GateSafetyItem,
+  GateSetItem,
   StrategyAllocation,
   StrategyOpportunity,
   StrategyStructure,
@@ -36,16 +36,16 @@ export interface ChainData {
   structures: readonly StrategyStructure[]
   opportunities: readonly StrategyOpportunity[]
   allocations: readonly StrategyAllocation[]
-  gates: readonly GateSafetyItem[]
-  instances: readonly InstanceReading[]
+  gates: readonly GateSetItem[]
+  trades: readonly TradeReading[]
 }
 
-const EMPTY: Omit<ChainData, 'instances'> & { rawInstances: [] } = {
+const EMPTY: Omit<ChainData, 'trades'> & { rawTrades: [] } = {
   structures: [],
   opportunities: [],
   allocations: [],
   gates: [],
-  rawInstances: [],
+  rawTrades: [],
 }
 
 export function useRulesChain() {
@@ -53,19 +53,19 @@ export function useRulesChain() {
     queryKey: ['trade', 'rulesChain'],
     staleTime: 60_000,
     queryFn: async () => {
-      const [structures, opportunities, allocations, gates, instances] = await Promise.all([
+      const [structures, opportunities, allocations, gates, trades] = await Promise.all([
         fetchStructures(),
         fetchOpportunities(),
         fetchAllocations(),
-        fetchGateSafety(),
-        fetchStrategyInstances(),
+        fetchGateSets(),
+        fetchTrades(),
       ])
       return {
         structures: structures.items,
         opportunities: opportunities.items,
         allocations: allocations.items,
         gates: gates.items,
-        rawInstances: instances.items,
+        rawTrades: trades.items,
       }
     },
   })
@@ -79,7 +79,7 @@ export function useRulesChain() {
       opportunities: raw.opportunities,
       allocations: raw.allocations,
       gates: raw.gates,
-      instances: readInstances(raw.rawInstances, execQuery.data?.items ?? []),
+      trades: readTrades(raw.rawTrades, execQuery.data?.items ?? []),
     }),
     [raw, execQuery.data?.items],
   )
@@ -87,7 +87,7 @@ export function useRulesChain() {
   return {
     data,
     /** The server's own instance records — what a delete sheet needs to act on. */
-    rawInstances: raw.rawInstances,
+    rawTrades: raw.rawTrades,
     loading: chain.isLoading || execQuery.isLoading,
     error: chain.error ?? execQuery.error ?? null,
     refetch: () => {

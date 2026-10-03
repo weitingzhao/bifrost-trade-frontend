@@ -2,7 +2,7 @@
  * What the record shows for each kind of focus (design Rev .101).
  *
  * Every figure is derived from the chain the page already holds — the rulebook
- * rows and each instance's own fills (`readInstances`) — so the counts on the
+ * rows and each instance's own fills (`readTrades`) — so the counts on the
  * record, the lineage bar and the scope board are one computation read three
  * ways. The actions are the page's (they open its sheets); this only places them.
  */
@@ -13,7 +13,7 @@ import { fmtUsdRound } from '@/lib/format'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { plural, type ChainSelection } from './rulesChain'
 import {
-  instanceSym,
+  tradeSym,
   oppsForSym,
   symbolBoard,
   tally,
@@ -133,7 +133,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
   const bySym = <T extends { id: number }>(list: readonly T[], read: (t: T) => string | null): T[] =>
     sym ? list.filter((t) => read(t) === sym) : [...list]
 
-  const pnlStats = (list: readonly (typeof d.instances)[number][]): RecordStat[] => {
+  const pnlStats = (list: readonly (typeof d.trades)[number][]): RecordStat[] => {
     const t: Tally = tally(list)
     return [
       { k: `Trades${symNote}`, v: String(t.n), note: `${t.open} open · ${t.closed} closed · whatever the filter shows` },
@@ -152,8 +152,8 @@ export function buildRecord(x: RecordInput): RecordModel | null {
       .map(oppById)
       .filter((o): o is NonNullable<typeof o> => o != null)
       .map((o) => {
-        const list = d.instances.filter(
-          (i) => i.opportunityId === o.strategy_opportunity_id && (!sym || instanceSym(i) === sym),
+        const list = d.trades.filter(
+          (i) => i.opportunityId === o.strategy_opportunity_id && (!sym || tradeSym(i) === sym),
         )
         const t = tally(list)
         const al = allocsFor(o.strategy_opportunity_id)[0]
@@ -179,7 +179,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
     if (!o) return null
     const al = allocsFor(o.strategy_opportunity_id)[0]
     const g = al ? gateOf(al.gate_safety_strategy_id) : undefined
-    const all = d.instances.filter((i) => i.opportunityId === o.strategy_opportunity_id)
+    const all = d.trades.filter((i) => i.opportunityId === o.strategy_opportunity_id)
     const tiles = symbolBoard(o.symbols ?? [], all, x.boardSort)
     const maxAbs = Math.max(1, ...tiles.map((t) => Math.abs(t.tally.realised)))
     const ran = tiles.filter((t) => t.tally.n).length
@@ -209,7 +209,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
               note: `inherited from ${al.name} · hits land on Risk › Limits`,
             }
           : { k: 'Gate', v: 'none', note: 'trades under it ran outside rules', ink: WARN, noteClass: WARN },
-        ...pnlStats(bySym(all, instanceSym)),
+        ...pnlStats(bySym(all, tradeSym)),
       ],
       conds:
         conds === undefined
@@ -244,7 +244,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
         }),
       },
       hasTable: true,
-      scopedIds: bySym(all, instanceSym).map((i) => i.id),
+      scopedIds: bySym(all, tradeSym).map((i) => i.id),
       multiOpp: false,
     }
   }
@@ -254,7 +254,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
     if (!s) return null
     const opps = d.opportunities.filter((o) => o.strategy_structure_id === s.strategy_structure_id)
     const oppIds = new Set(opps.map((o) => o.strategy_opportunity_id))
-    const scoped = d.instances.filter((i) => oppIds.has(i.opportunityId))
+    const scoped = d.trades.filter((i) => oppIds.has(i.opportunityId))
     const dims = [s.dim_direction, s.dim_coverage, s.dim_risk].filter(Boolean).join(' · ')
     return {
       kind: 'structure',
@@ -268,7 +268,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
         { k: 'Template', v: s.template_display_name ?? '—', note: 'the Option Category catalog — a field, not a page' },
         { k: 'Dimensions', v: s.dim_direction ?? '—', note: dims || 'no dimensions recorded' },
         { k: 'Version', v: `v${s.version}`, note: s.is_active ? 'available to new opportunities' : 'off — not offered' },
-        ...pnlStats(bySym(scoped, instanceSym)),
+        ...pnlStats(bySym(scoped, tradeSym)),
       ],
       rules: opps.length
         ? {
@@ -279,7 +279,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
           }
         : undefined,
       hasTable: true,
-      scopedIds: bySym(scoped, instanceSym).map((i) => i.id),
+      scopedIds: bySym(scoped, tradeSym).map((i) => i.id),
       multiOpp: opps.length > 1,
     }
   }
@@ -289,7 +289,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
     if (!a) return null
     const g = gateOf(a.gate_safety_strategy_id)
     const oppIds = a.strategy_opportunity_ids ?? []
-    const scoped = d.instances.filter((i) => oppIds.includes(i.opportunityId))
+    const scoped = d.trades.filter((i) => oppIds.includes(i.opportunityId))
     const openN = scoped.filter((i) => !i.closed).length
     const mine = a.strategy_allocation_id === x.daemonAllocationId
     return {
@@ -329,13 +329,13 @@ export function buildRecord(x: RecordInput): RecordModel | null {
         rows: ruleRows(oppIds),
       },
       hasTable: true,
-      scopedIds: bySym(scoped, instanceSym).map((i) => i.id),
+      scopedIds: bySym(scoped, tradeSym).map((i) => i.id),
       multiOpp: true,
     }
   }
 
   if (pick?.kind === 'instance' && pick.id != null) {
-    const i = d.instances.find((r) => r.id === pick.id)
+    const i = d.trades.find((r) => r.id === pick.id)
     if (!i) return null
     const o = oppById(i.opportunityId)
     const sib = x.siblings && x.siblings.ids.includes(i.id) ? x.siblings : null
@@ -363,7 +363,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
   if (pick?.kind === 'instance' && pick.id == null) {
     // The whole column — every instance in the book (what Strategy › Instances
     // was, and where its address still lands).
-    const all = bySym(d.instances, instanceSym)
+    const all = bySym(d.trades, tradeSym)
     return {
       kind: 'instances',
       title: 'Every trade',
@@ -379,7 +379,7 @@ export function buildRecord(x: RecordInput): RecordModel | null {
 
   if (sym) {
     const oppIds = oppsForSym(sym, d)
-    const scoped = d.instances.filter((i) => instanceSym(i) === sym)
+    const scoped = d.trades.filter((i) => tradeSym(i) === sym)
     const allocated = new Set(d.allocations.flatMap((a) => a.strategy_opportunity_ids ?? []))
     const inA = oppIds.filter((oid) => allocated.has(oid)).length
     return {

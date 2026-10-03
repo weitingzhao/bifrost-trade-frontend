@@ -23,10 +23,10 @@ export function sharesAllCount(c: LedgerInstrumentCounts): number {
 
 export function buildAttributionChips(c: {
   opportunityCount: number
-  instanceWith: number
-  instanceWithout: number
+  tradeWith: number
+  tradeWithout: number
 }): LedgerViewChip[] {
-  const instTotal = c.instanceWith + c.instanceWithout
+  const instTotal = c.tradeWith + c.tradeWithout
   return [
     {
       id: 'strategy',
@@ -38,8 +38,8 @@ export function buildAttributionChips(c: {
     {
       id: 'instance',
       label: 'Trade',
-      countLabel: `${c.instanceWith} with · ${c.instanceWithout} without`,
-      title: `One trade and the fills under it — ${c.instanceWith} trades, ${c.instanceWithout} option contracts with no trade`,
+      countLabel: `${c.tradeWith} with · ${c.tradeWithout} without`,
+      title: `One trade and the fills under it — ${c.tradeWith} trades, ${c.tradeWithout} option contracts with no trade`,
       empty: instTotal === 0,
     },
   ]

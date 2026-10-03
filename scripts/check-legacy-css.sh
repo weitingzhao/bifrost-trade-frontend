@@ -281,7 +281,7 @@ fi
 
 # Strategy Instances list: Dense migration — no table/filter module CSS
 for f in instancesTable.module.css instancesFilters.module.css; do
-  if [[ -f "src/components/strategy/instances/$f" ]]; then
+  if [[ -f "src/components/strategy/trades/$f" ]]; then
     report "$f must be deleted (Strategy Instances Dense migration)"
   fi
 done
@@ -297,13 +297,13 @@ if inst_filters_css=$(grep -rl 'instancesFilters\.module\.css' src/components/st
     report "instancesFilters.module.css import under src/components/strategy"
   fi
 fi
-if inst_raw_table=$(grep -rE '<table' src/components/strategy/InstancesGroupedTable.tsx 2>/dev/null || true); then
+if inst_raw_table=$(grep -rE '<table' src/components/strategy/TradesGroupedTable.tsx 2>/dev/null || true); then
   if [[ -n "$inst_raw_table" ]]; then
     echo "$inst_raw_table" >&2
-    report "raw <table in InstancesGroupedTable (use DenseDataTable family)"
+    report "raw <table in TradesGroupedTable (use DenseDataTable family)"
   fi
 fi
-if inst_danger=$(grep -rE 'dangerGhostBtnClass' src/components/strategy/instances src/components/strategy/InstancesGroupedTable.tsx --include='*.tsx' 2>/dev/null || true); then
+if inst_danger=$(grep -rE 'dangerGhostBtnClass' src/components/strategy/trades src/components/strategy/TradesGroupedTable.tsx --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$inst_danger" ]]; then
     echo "$inst_danger" >&2
     report "dangerGhostBtnClass under strategy instances list (use IconActionButton tone=danger)"
@@ -317,8 +317,8 @@ if inst_legacy_strings=$(grep -rE 'strategy-instances-|instance-list-symbol-tool
 fi
 
 # Instance detail sidebar (Phase 4.9)
-if [[ -f src/components/strategy/instanceDetail/InstanceDetail.module.css ]]; then
-  report "InstanceDetail.module.css must be deleted (use instanceDetailUi.ts tokens)"
+if [[ -f src/components/strategy/tradeDetail/InstanceDetail.module.css ]]; then
+  report "InstanceDetail.module.css must be deleted (use tradeDetailUi.ts tokens)"
 fi
 if inst_detail_css=$(grep -rl 'InstanceDetail\.module\.css' src/components/strategy --include='*.tsx' 2>/dev/null || true); then
   if [[ -n "$inst_detail_css" ]]; then
@@ -374,7 +374,7 @@ fi
 
 # Gates: Dense migration (Phase 4.13)
 for f in \
-  src/components/strategy/gates/GateSafetyFormSheet.tsx
+  src/components/strategy/gates/GateSetFormSheet.tsx
 do
   if [[ -f "$f" ]] && grep -q '@/components/ui/table' "$f" 2>/dev/null; then
     echo "$f" >&2
@@ -441,7 +441,7 @@ if [[ -n "$accounts_table" ]]; then
 fi
 
 # Positions Instance tab: Dense migration (Phase 1)
-for f in InstanceTab.tsx InstanceOptionSubTable.tsx InstanceCoverageSubTable.tsx; do
+for f in TradeTab.tsx TradeOptionSubTable.tsx TradeCoverageSubTable.tsx; do
   if grep -q "@/components/ui/table" "src/components/positions/$f" 2>/dev/null; then
     echo "src/components/positions/$f" >&2
     report "shadcn Table in src/components/positions/$f"

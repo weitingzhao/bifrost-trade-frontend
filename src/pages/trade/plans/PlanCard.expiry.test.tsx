@@ -16,7 +16,7 @@ import { useStrategyPlans, withPlan } from '@/hooks/useStrategyPlans'
 import { extendedExpiry } from './planCardModel'
 
 vi.mock('@/hooks/useStrategies', () => ({
-  useStrategyInstances: () => ({ data: { items: [] } }),
+  useTrades: () => ({ data: { items: [] } }),
   useOpportunities: () => ({ data: { items: [] } }),
   useAllocations: () => ({ data: { items: [] } }),
 }))
@@ -50,7 +50,7 @@ function plan(over: Partial<StrategyPlan>): StrategyPlan {
     intended_at: '2025-12-26T12:00:00Z',
     filled_at: null,
     cancelled_at: null,
-    strategy_instance_id: null,
+    trade_id: null,
     parent_strategy_plan_id: null,
     created_at: '2025-12-26T12:00:00Z',
     updated_at: '2025-12-26T12:00:00Z',

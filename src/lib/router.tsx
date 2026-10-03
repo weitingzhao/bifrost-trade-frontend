@@ -35,8 +35,8 @@ function lazyPage(
  */
 /** `/strategy/instances/142` → the instance's record in the rulebook. */
 function InstanceRedirect() {
-  const { instanceId } = useParams()
-  const id = Number(instanceId)
+  const { tradeId } = useParams()
+  const id = Number(tradeId)
   return (
     <Navigate
       to={Number.isFinite(id) && id > 0 ? `/trade/rules?pick=instance:${id}` : '/trade/rules?pick=instance:all'}
@@ -87,7 +87,7 @@ function RedirectKeepingQuery({ to }: { to: string }) {
 export const INDEX_ROUTE = '/home'
 
 /** `/strategy/instances/142` — retired, but the id it carries still means something. */
-const INSTANCE_PATH = '/strategy/instances/:instanceId'
+const TRADE_PATH = '/strategy/instances/:instanceId'
 
 /** `/instance/142` → `/trade/142` (Rev .111): the id, the query and the hash travel. */
 const TRADE_ALIAS_PATH = '/instance/:id'
@@ -104,7 +104,7 @@ export function redirectRoutes(): RouteObject[] {
     element:
       entry.redirect === SYMBOL_PATH ? (
         <LabRedirect from={entry.path} />
-      ) : entry.path === INSTANCE_PATH ? (
+      ) : entry.path === TRADE_PATH ? (
         // A forward whose target depends on the path: the id travels.
         <InstanceRedirect />
       ) : entry.path === TRADE_ALIAS_PATH ? (

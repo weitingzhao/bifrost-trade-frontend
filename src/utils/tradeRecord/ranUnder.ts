@@ -1,4 +1,4 @@
-import type { GateSafetyItem, StrategyAllocation } from '@/types/strategy'
+import type { GateSetItem, StrategyAllocation } from '@/types/strategy'
 
 export interface RanUnder {
   alloc: string
@@ -10,7 +10,7 @@ export interface RanUnder {
 export function ranUnderOf(
   opportunityId: number | null | undefined,
   allocations: readonly StrategyAllocation[],
-  gates: readonly GateSafetyItem[],
+  gates: readonly GateSetItem[],
 ): RanUnder {
   const al =
     opportunityId != null ? allocations.find((a) => (a.strategy_opportunity_ids ?? []).includes(opportunityId)) : undefined

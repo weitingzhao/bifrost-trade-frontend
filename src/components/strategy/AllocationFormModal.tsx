@@ -27,7 +27,7 @@ import {
   allocationsFormHintClass,
   allocationsFormLimitsGridClass,
 } from '@/components/strategy/allocations/allocationsFormUi'
-import { useOpportunities, useGateSafety } from '@/hooks/useStrategies'
+import { useOpportunities, useGateSets } from '@/hooks/useStrategies'
 import { createAllocation, updateAllocation, fetchAllocation } from '@/api/strategy'
 import type { AllocationPayload } from '@/types/positions'
 import {
@@ -56,7 +56,7 @@ export function AllocationFormModal({
 }: AllocationFormModalProps) {
   const qc = useQueryClient()
   const { data: oppsData } = useOpportunities()
-  const { data: gateData } = useGateSafety()
+  const { data: gateData } = useGateSets()
   const opportunities = oppsData?.items ?? []
   const gateSets = gateData?.items ?? []
 
@@ -183,11 +183,11 @@ export function AllocationFormModal({
             <div className={allocationsFormFieldClass}>
               <Label>Gate safety</Label>
               <Select
-                value={form.gateSafetyId != null ? String(form.gateSafetyId) : '__none__'}
+                value={form.gateSetId != null ? String(form.gateSetId) : '__none__'}
                 onValueChange={(v) =>
                   setForm((f) => ({
                     ...f,
-                    gateSafetyId: v === '__none__' ? null : Number(v),
+                    gateSetId: v === '__none__' ? null : Number(v),
                   }))
                 }
               >

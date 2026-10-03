@@ -23,7 +23,7 @@ import { Suspense, createElement, lazy, useMemo } from 'react'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { InSurfaceContext, SurfaceSubjectContext, type SurfaceSubject } from '@/lib/surfaceScope'
 import { useCarriedSymbol } from '@/lib/symbolContext'
-import { surfacePageFor, InstanceSurfaceView } from './surfacePages'
+import { surfacePageFor, TradeSurfaceView } from './surfacePages'
 import { setSubjectLock, type Surface } from './equipSurface'
 import { SurfaceLocation } from './SurfaceLocation'
 import css from './equipSurface.module.css'
@@ -96,7 +96,7 @@ export function SurfaceBody({ surface }: { surface: Surface }) {
         <Suspense fallback={<SurfaceSkeleton />}>
           <div className={css.arrive}>
             {surface.trade != null ? (
-              <InstanceSurfaceView surface={surface} />
+              <TradeSurfaceView surface={surface} />
             ) : surface.thread ? (
               <CopilotThreadBody />
             ) : surface.run ? (

@@ -43,7 +43,7 @@ const SEED: LedgerJournalSeed = {
   strike: 50,
   optionRight: 'C',
   netQty: 3,
-  instanceId: 11,
+  tradeId: 11,
   opportunityId: 7,
 }
 
@@ -73,7 +73,7 @@ describe('journalCreateBody', () => {
   it('carries the opportunity with the instance, as the rows already in the ledger do', () => {
     const res = journalCreateBody(journalDraftFromSeed(SEED), 1_700_000_000)
     if (!res.ok) throw new Error(res.error)
-    expect(res.body.strategy_instance_id).toBe(11)
+    expect(res.body.trade_id).toBe(11)
     expect(res.body.strategy_opportunity_id).toBe(7)
   })
 
@@ -83,7 +83,7 @@ describe('journalCreateBody', () => {
       1_700_000_000,
     )
     if (!res.ok) throw new Error(res.error)
-    expect(res.body).not.toHaveProperty('strategy_instance_id')
+    expect(res.body).not.toHaveProperty('trade_id')
     expect(res.body).not.toHaveProperty('strategy_opportunity_id')
   })
 
@@ -95,21 +95,21 @@ describe('journalCreateBody', () => {
 describe('journalSeedFromContract', () => {
   it('takes the opportunity from an allocation when the fill carries only allocations', () => {
     const f = fill({
-      strategy_instance_id: null,
+      trade_id: null,
       strategy_opportunity_id: null,
-      instance_allocations: [{ strategy_instance_id: 12, allocated_quantity: 1, strategy_opportunity_id: 8 }],
+      fill_splits: [{ trade_id: 12, quantity: 1, strategy_opportunity_id: 8 }],
     } as Omit<Partial<Execution>, 'side'>)
     const [group] = buildOptExecutionGroups([f])
     const seed = journalSeedFromContract(group, [f], 'A1', 'expired', 1)
-    expect(seed).toMatchObject({ instanceId: 12, opportunityId: 8, contractKey: KEY })
+    expect(seed).toMatchObject({ tradeId: 12, opportunityId: 8, contractKey: KEY })
   })
 
   it('names no instance when the fills disagree on one', () => {
-    const a = fill({ account_executions_id: 1, strategy_instance_id: 11, strategy_opportunity_id: 7 })
-    const b = fill({ account_executions_id: 2, strategy_instance_id: 12, strategy_opportunity_id: 7 })
+    const a = fill({ account_executions_id: 1, trade_id: 11, strategy_opportunity_id: 7 })
+    const b = fill({ account_executions_id: 2, trade_id: 12, strategy_opportunity_id: 7 })
     const [group] = buildOptExecutionGroups([a, b])
     const seed = journalSeedFromContract(group, [a, b], 'A1', 'expired', 2)
-    expect(seed.instanceId).toBeUndefined()
+    expect(seed.tradeId).toBeUndefined()
     expect(seed.opportunityId).toBeUndefined()
   })
 })

@@ -5,7 +5,7 @@ import type { AllocationPayload, StrategyAllocation } from '@/types/positions'
 export interface AllocationFormState {
   name: string
   opportunityIds: number[]
-  gateSafetyId: number | null
+  gateSetId: number | null
   maxPositions: string
   maxBpPct: string
   /**
@@ -22,7 +22,7 @@ export interface AllocationFormState {
 export const EMPTY_ALLOCATION_FORM: AllocationFormState = {
   name: '',
   opportunityIds: [],
-  gateSafetyId: null,
+  gateSetId: null,
   maxPositions: '',
   maxBpPct: '',
   isActive: true,
@@ -32,7 +32,7 @@ export function allocationToForm(a: StrategyAllocation): AllocationFormState {
   return {
     name: a.name,
     opportunityIds: a.strategy_opportunity_ids ?? [],
-    gateSafetyId: a.gate_safety_strategy_id ?? null,
+    gateSetId: a.gate_safety_strategy_id ?? null,
     maxPositions: a.max_positions != null ? String(a.max_positions) : '',
     maxBpPct: a.max_bp_pct != null ? String(Math.round(a.max_bp_pct * 10000) / 100) : '',
     isActive: a.is_active ?? true,
@@ -60,7 +60,7 @@ export function allocationFormToPayload(f: AllocationFormState): AllocationPaylo
   return {
     name: f.name.trim(),
     strategy_opportunity_ids: f.opportunityIds,
-    gate_safety_strategy_id: f.gateSafetyId,
+    gate_safety_strategy_id: f.gateSetId,
     allocation_limits: {
       max_positions: numberOrNull(f.maxPositions),
       max_bp_pct: bpPct == null ? null : bpPct / 100,

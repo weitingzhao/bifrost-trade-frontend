@@ -13,9 +13,9 @@ import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
 
 export interface NoteRef {
   /**
-   * A trade's ref. Design Rev .111 renames `inst` to `trade`; Research 0.158.0
-   * stores `trade` and still takes `inst`, so the app writes `inst` until every
-   * environment runs 0.158.0 (naming R2) and reads either.
+   * A trade's ref. Design Rev .111 renames `inst` to `trade`; Research stores
+   * `trade` (0.158.0) and still takes `inst`. The app writes `trade` (naming R2)
+   * and reads either until R4.
    *
    * Research stores a trade ref per environment (`prod:158`, TD-73) — the Trade
    * gateway tells it which. This environment's trades come back bare (`158`),

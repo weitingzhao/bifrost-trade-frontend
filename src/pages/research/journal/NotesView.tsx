@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button'
 import { failedDetail } from '@/lib/viewState'
 import { cn } from '@/lib/utils'
 import { withSymbolParam } from '@/lib/symbolLink'
-import { useInstanceIndex } from '@/hooks/useInstanceIndex'
+import { useTradeIndex } from '@/hooks/useTradeIndex'
 import { tradeHowFrom, useOpenTrade } from '@/layout/tradeGo'
 
 const NOTES_KEY = ['research', 'journal', 'notes'] as const
@@ -62,9 +62,9 @@ function refTarget(ref: NoteRef): string | null {
  * holds the number, else Positions — where a number the rulebook lost may
  * still be held.
  */
-export function InstanceNoteRef({ raw, className }: { raw: string; className: string }) {
+export function TradeNoteRef({ raw, className }: { raw: string; className: string }) {
   const id = Number(raw.replace(/^#/, ''))
-  const known = useInstanceIndex()
+  const known = useTradeIndex()
   const open = useOpenTrade()
   const otherEnv = otherEnvOfTradeRef({ type: 'trade', id: raw })
   if (otherEnv) {
@@ -155,7 +155,7 @@ function NoteRow({ note }: { note: JournalNote }) {
             'mat-tag font-mono text-dense-micro',
             r.type === 'sym' ? 'text-[var(--sk-ticker)]' : isTradeRef(r) ? 'text-[var(--sk-trade)]' : 'text-[var(--sk-accent)]',
           )
-          if (isTradeRef(r)) return <InstanceNoteRef key={`${r.type}|${r.id}`} raw={r.id} className={cls} />
+          if (isTradeRef(r)) return <TradeNoteRef key={`${r.type}|${r.id}`} raw={r.id} className={cls} />
           return to ? (
             <Link key={`${r.type}|${r.id}`} to={to} className={cls}>
               {r.id}

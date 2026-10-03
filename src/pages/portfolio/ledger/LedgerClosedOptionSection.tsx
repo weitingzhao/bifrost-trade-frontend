@@ -7,8 +7,8 @@ import type { OptionStockLinkSummary } from '@/types/trading'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 import {
   adjustedRealizedPnlForOptGroup,
-  executionStrategyInstanceIds,
-  getInstanceConsistencyState,
+  executionTradeIds,
+  getTradeConsistencyState,
   getOptGroupKey,
   ledgerOptDetailRowPnl,
 } from '@/utils/ledger/ledgerOptHelpers'
@@ -100,8 +100,8 @@ export function LedgerClosedOptionSection({
     effectivePage * CLOSED_PAGE_SIZE,
   )
   // The instances on this page, in row order — what the sheet steps.
-  const closedInstanceIds = [
-    ...new Set(pagedClosedGroups.flatMap(g => (g.trades ?? []).flatMap(t => executionStrategyInstanceIds(t)))),
+  const closedTradeIds = [
+    ...new Set(pagedClosedGroups.flatMap(g => (g.trades ?? []).flatMap(t => executionTradeIds(t)))),
   ]
 
   if (sortedClosedGroups.length === 0) {
@@ -239,13 +239,13 @@ export function LedgerClosedOptionSection({
                 </DenseTableCell>
                 <DenseTableCell>
                   <span className="inline-flex flex-wrap items-center gap-1">
-                    <LedgerConsistencyTag state={getInstanceConsistencyState(trades)} />
+                    <LedgerConsistencyTag state={getTradeConsistencyState(trades)} />
                     {(() => {
-                      const ids = [...new Set(trades.flatMap(t => executionStrategyInstanceIds(t)))]
+                      const ids = [...new Set(trades.flatMap(t => executionTradeIds(t)))]
                       return ids.length === 0
                         ? '—'
                         : ids.map(id => (
-                          <TradeRef key={id} id={id} list={closedInstanceIds} from="Ledger · closed contracts" />
+                          <TradeRef key={id} id={id} list={closedTradeIds} from="Ledger · closed contracts" />
                         ))
                     })()}
                   </span>

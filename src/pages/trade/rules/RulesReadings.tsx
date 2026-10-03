@@ -7,7 +7,7 @@
  * reader to find the place to act on them.
  */
 import type { ChainData } from '@/hooks/useRulesChain'
-import type { GateSafetyItem } from '@/types/strategy'
+import type { GateSetItem } from '@/types/strategy'
 import { cn } from '@/lib/utils'
 import { plural } from './rulesChain'
 
@@ -74,16 +74,16 @@ export function RulesReadings({
    */
   data: ChainData
   /** Gates no allocation carries, over the whole rulebook (nothing else draws them). */
-  loose: GateSafetyItem[]
+  loose: GateSetItem[]
   daemonAllocationId: number | null
   orphansOnly: boolean
   onDaemon: (allocationId: number) => void
   onToggleOrphans: () => void
-  onGate: (gate: GateSafetyItem) => void
+  onGate: (gate: GateSetItem) => void
 }) {
   const allocated = new Set(data.allocations.flatMap((a) => a.strategy_opportunity_ids ?? []))
   const orphans = data.opportunities.filter((o) => !allocated.has(o.strategy_opportunity_id))
-  const openAll = data.instances.filter((i) => !i.closed)
+  const openAll = data.trades.filter((i) => !i.closed)
   const outside = openAll.filter((i) => !allocated.has(i.opportunityId))
 
   const dA = data.allocations.find((a) => a.strategy_allocation_id === daemonAllocationId)

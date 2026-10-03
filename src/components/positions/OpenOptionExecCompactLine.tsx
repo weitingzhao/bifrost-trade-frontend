@@ -43,7 +43,7 @@ interface RowProps {
   onLink: (exec: Execution) => void
   onDelete: (exec: Execution) => void
   onClose?: (exec: Execution) => void
-  onOpenStrategy?: (instanceId: number) => void
+  onOpenStrategy?: (tradeId: number) => void
   showSync?: boolean
   syncBusy?: boolean
   onSync?: () => void
@@ -74,7 +74,7 @@ export function OpenOptionExecDetailRow({
   const eComm = Number(exec.commission) || 0
   const eTs = exec.time != null ? Number(exec.time) : null
   const bookLabel = book === 'final' ? '[Final]' : '[TWS client]'
-  const execInstanceId = exec.strategy_instance_id
+  const execTradeId = exec.trade_id
   const isOffTrack = pos.kind === 'offtrack'
   const oppName = exec.strategy_opportunity_name?.trim()
   const syncFromLabel = book === 'final' ? 'TWS client book' : 'final book'
@@ -86,15 +86,15 @@ export function OpenOptionExecDetailRow({
           <span className="text-muted-foreground">↳ </span>
           <span className="font-medium text-profit">{bookLabel}</span>
           <span className="text-foreground"> exec #{exec.account_executions_id ?? '?'}</span>
-          {execInstanceId != null ? (
+          {execTradeId != null ? (
             <>
               <span className={denseTable.mutedMeta}> · </span>
               <button
                 type="button"
                 className="font-medium text-primary hover:underline"
-                onClick={() => onOpenStrategy?.(execInstanceId)}
+                onClick={() => onOpenStrategy?.(execTradeId)}
               >
-                strategy #{execInstanceId}
+                strategy #{execTradeId}
               </button>
             </>
           ) : null}
@@ -138,13 +138,13 @@ export function OpenOptionExecDetailRow({
       <td className={cn(execDetailCell, 'min-w-0')}>
         {oppName ? (
           <span className="inline-flex min-w-0 max-w-full items-center gap-1">
-            {execInstanceId != null ? (
+            {execTradeId != null ? (
               <button
                 type="button"
                 className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-                title={`View strategy #${execInstanceId}`}
-                aria-label={`View strategy #${execInstanceId}`}
-                onClick={() => onOpenStrategy?.(execInstanceId)}
+                title={`View strategy #${execTradeId}`}
+                aria-label={`View strategy #${execTradeId}`}
+                onClick={() => onOpenStrategy?.(execTradeId)}
               >
                 <Square className="h-3 w-3" aria-hidden />
               </button>

@@ -9,18 +9,18 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
-  INSTANCE_GROUP_FAILED,
-  INSTANCE_GROUP_LOADING,
-  instanceGroupKey,
-  instanceSymbol,
+  TRADE_GROUP_FAILED,
+  TRADE_GROUP_LOADING,
+  tradeGroupKey,
+  tradeSymbol,
 } from './useTradeBook'
-import type { InstanceListMetricsEntry } from '@/utils/instanceListMetrics'
-import type { StrategyInstance } from '@/types/positions'
+import type { TradeListMetricsEntry } from '@/utils/tradeListMetrics'
+import type { Trade } from '@/types/positions'
 
-type BookOpportunity = Parameters<typeof instanceSymbol>[1][number]
+type BookOpportunity = Parameters<typeof tradeSymbol>[1][number]
 
 const inst = (id: number) =>
-  ({ strategy_instance_id: id, strategy_opportunity_id: 2 }) as unknown as StrategyInstance
+  ({ trade_id: id, strategy_opportunity_id: 2 }) as unknown as Trade
 
 const bookOpp = [
   {
@@ -30,32 +30,32 @@ const bookOpp = [
   },
 ] as unknown as BookOpportunity[]
 
-const ready = (rows: { symbol: string }[]): InstanceListMetricsEntry =>
+const ready = (rows: { symbol: string }[]): TradeListMetricsEntry =>
   ({
     status: 'ready',
     sliced: rows.map((r) => ({ ...r, sec_type: 'OPT', quantity: 1 })),
-  }) as unknown as InstanceListMetricsEntry
+  }) as unknown as TradeListMetricsEntry
 
-describe('instanceGroupKey separates loading from the measured —', () => {
+describe('tradeGroupKey separates loading from the measured —', () => {
   it('metrics landed and an underlying resolves → the symbol', () => {
     const metrics = new Map([[1, ready([{ symbol: 'ZZTM 18SEP26 100 P' }])]])
-    expect(instanceGroupKey(inst(1), bookOpp, metrics)).toBe('ZZTM')
+    expect(tradeGroupKey(inst(1), bookOpp, metrics)).toBe('ZZTM')
   })
 
   it('metrics landed, nothing resolves, multi-symbol book → the real —', () => {
     const metrics = new Map([[1, ready([])]])
-    expect(instanceGroupKey(inst(1), bookOpp, metrics)).toBe('—')
+    expect(tradeGroupKey(inst(1), bookOpp, metrics)).toBe('—')
   })
 
   it('metrics not landed yet → the loading sentinel, never —', () => {
-    const metrics = new Map<number, InstanceListMetricsEntry>()
-    expect(instanceGroupKey(inst(1), bookOpp, metrics)).toBe(INSTANCE_GROUP_LOADING)
+    const metrics = new Map<number, TradeListMetricsEntry>()
+    expect(tradeGroupKey(inst(1), bookOpp, metrics)).toBe(TRADE_GROUP_LOADING)
   })
 })
 
 describe('a failed read is named, never parked in loading', () => {
   it('status error → the failed sentinel', () => {
-    const metrics = new Map([[1, { status: 'error' } as unknown as InstanceListMetricsEntry]])
-    expect(instanceGroupKey(inst(1), bookOpp, metrics)).toBe(INSTANCE_GROUP_FAILED)
+    const metrics = new Map([[1, { status: 'error' } as unknown as TradeListMetricsEntry]])
+    expect(tradeGroupKey(inst(1), bookOpp, metrics)).toBe(TRADE_GROUP_FAILED)
   })
 })

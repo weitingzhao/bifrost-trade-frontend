@@ -5,7 +5,7 @@ import type { RiskMapLeg } from '@/utils/shortLegRiskMap'
 
 const leg = (o: Partial<RiskMapLeg> = {}): RiskMapLeg => ({
   key: 'k',
-  instanceKey: 'inst-1',
+  tradeKey: 'inst-1',
   symbol: 'MU',
   right: 'C',
   strike: 250,

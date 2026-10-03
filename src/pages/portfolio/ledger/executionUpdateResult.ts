@@ -12,18 +12,18 @@ export function errorFromUpdateResult(res: { ok: boolean; error?: string }): str
 }
 
 export async function syncOppositeLegAttribution(
-  update: (id: number, body: { strategy_opportunity_id: number; strategy_instance_id: number }) => Promise<{
+  update: (id: number, body: { strategy_opportunity_id: number; trade_id: number }) => Promise<{
     ok: boolean
     error?: string
   }>,
   id: number,
-  source: { opportunity_id: number; instance_id: number },
+  source: { opportunity_id: number; trade_id: number },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   let res: { ok: boolean; error?: string }
   try {
     res = await update(id, {
       strategy_opportunity_id: source.opportunity_id,
-      strategy_instance_id: source.instance_id,
+      trade_id: source.trade_id,
     })
   } catch (e) {
     // A request that never reached the API throws instead of returning ok: false.
@@ -46,7 +46,7 @@ export async function syncOppositeLegAttribution(
 export function seedSyncedAttribution(
   old: ExecutionsResponse | undefined,
   id: number,
-  source: { opportunity_id: number; instance_id: number },
+  source: { opportunity_id: number; trade_id: number },
 ): ExecutionsResponse | undefined {
   if (!old) return old
   return {
@@ -56,7 +56,7 @@ export function seedSyncedAttribution(
         ? {
             ...it,
             strategy_opportunity_id: source.opportunity_id,
-            strategy_instance_id: source.instance_id,
+            trade_id: source.trade_id,
           }
         : it,
     ),

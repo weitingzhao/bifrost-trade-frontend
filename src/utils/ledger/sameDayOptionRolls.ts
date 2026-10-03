@@ -5,7 +5,7 @@
 
 import type { Execution } from '@/types/positions'
 import type { BackendOptPair, EconomicOptDayCell, PerformanceDayPnLCell } from '@/types/trading'
-import { isBuySide } from '@/utils/instanceDetail/executionSide'
+import { isBuySide } from '@/utils/tradeDetail/executionSide'
 import {
   computeBackendOptPairsFromExecutions,
   executionDateStr,

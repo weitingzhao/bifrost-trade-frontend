@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
 import { RiskProfileDetail } from './RiskProfileDetail'
-import { InstanceAdminRow, type InstanceAdminReading } from './InstanceAdminRow'
+import { TradeAdminRow, type TradeAdminReading } from './TradeAdminRow'
 import { Link } from 'react-router-dom'
 import { positionsUi } from './positionsUi'
 import type { Execution, OpenOptionPosition } from '@/types/positions'
@@ -80,9 +80,9 @@ export interface FaceRisk {
   title: string
   profile: RiskProfile | null
   /** The instance's own sheet, which carries far more than the payoff. */
-  onOpenInstance?: () => void
+  onOpenTrade?: () => void
   /** Rename it from here; its status is a reading. Absent when the row is not an instance. */
-  instance?: InstanceAdminReading | null
+  trade?: TradeAdminReading | null
 }
 
 export interface FaceLedger {
@@ -180,8 +180,8 @@ export function PositionsFaceSlot({
                 this trade · at expiry
               </DenseTag>
               <span className="ml-auto flex flex-wrap items-baseline gap-x-3">
-                {risk.onOpenInstance ? (
-                  <button type="button" className={positionsUi.link} onClick={risk.onOpenInstance}>
+                {risk.onOpenTrade ? (
+                  <button type="button" className={positionsUi.link} onClick={risk.onOpenTrade}>
                     trade detail →
                   </button>
                 ) : null}
@@ -190,8 +190,8 @@ export function PositionsFaceSlot({
                 </Link>
               </span>
             </div>
-            {risk.instance ? <InstanceAdminRow key={risk.instance.id} instance={risk.instance} /> : null}
-            <RiskProfileDetail profile={risk.profile} hideHeading variant="instanceDetail" />
+            {risk.trade ? <TradeAdminRow key={risk.trade.id} trade={risk.trade} /> : null}
+            <RiskProfileDetail profile={risk.profile} hideHeading variant="tradeDetail" />
           </div>
         ) : (
           <Hint>Pick a strategy row — its payoff at expiry, the scenarios behind it and its breakeven open here.</Hint>

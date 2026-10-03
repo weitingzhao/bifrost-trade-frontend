@@ -187,7 +187,7 @@ export interface LadderLeg extends OptionLegLike {
   /** Root symbol of the underlying, resolved by the caller. */
   underlying: string
   /** Identifies the strategy instance the leg belongs to. */
-  instanceKey: string
+  tradeKey: string
 }
 
 export interface ExpiryLadderRow {
@@ -201,7 +201,7 @@ export interface ExpiryLadderRow {
   /** Short legs on this expiry with no spot — cannot be called safe. */
   unpricedShortCount: number
   symbols: string[]
-  instanceCount: number
+  tradeCount: number
   /**
    * Tightest short-leg cushion falling on this date. Negative = already breached.
    *
@@ -239,7 +239,7 @@ export function buildExpiryLadder(
   const rows: ExpiryLadderRow[] = []
   for (const [expiry, bucket] of byExpiry) {
     const symbols = new Set<string>()
-    const instances = new Set<string>()
+    const trades = new Set<string>()
     let shortContracts = 0
     let longContracts = 0
     let itmShortCount = 0
@@ -248,7 +248,7 @@ export function buildExpiryLadder(
 
     for (const leg of bucket) {
       if (leg.underlying) symbols.add(leg.underlying)
-      instances.add(leg.instanceKey)
+      trades.add(leg.tradeKey)
       if (leg.qty < 0) shortContracts += Math.abs(leg.qty)
       else longContracts += leg.qty
       if (leg.qty < 0) {
@@ -271,7 +271,7 @@ export function buildExpiryLadder(
       itmShortCount,
       unpricedShortCount,
       symbols: Array.from(symbols).sort(),
-      instanceCount: instances.size,
+      tradeCount: trades.size,
       tightestCushionPct,
     })
   }
@@ -296,7 +296,7 @@ export function buildExpiryLadder(
  *
  * Within a tier, nearer expiry first. Returns a comparator result.
  */
-export function compareInstanceRisk(
+export function compareTradeRisk(
   a: { cushion: CushionSummary; expiry: ExpirySummary },
   b: { cushion: CushionSummary; expiry: ExpirySummary },
 ): number {

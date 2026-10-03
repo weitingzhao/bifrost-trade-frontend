@@ -2,19 +2,19 @@ import { describe, expect, it } from 'vitest'
 import { planActive } from './SetActiveDialog'
 import type { ChainData } from '@/hooks/useRulesChain'
 import type {
-  GateSafetyItem,
+  GateSetItem,
   StrategyAllocation,
   StrategyOpportunity,
   StrategyStructure,
 } from '@/types/strategy'
 
 function data(p: Partial<ChainData> = {}): ChainData {
-  return { structures: [], opportunities: [], allocations: [], gates: [], instances: [], ...p }
+  return { structures: [], opportunities: [], allocations: [], gates: [], trades: [], ...p }
 }
 
 const CSP = { strategy_structure_id: 1, name: 'Cash Secured Put' } as StrategyStructure
 const CC = { strategy_structure_id: 2, name: 'Covered Call' } as StrategyStructure
-const GATE = { gate_safety_strategy_id: 7, name: 'Security Gate', version: 2 } as GateSafetyItem
+const GATE = { gate_safety_strategy_id: 7, name: 'Security Gate', version: 2 } as GateSetItem
 
 function opp(id: number, structureId: number | null): StrategyOpportunity {
   return { strategy_opportunity_id: id, strategy_structure_id: structureId } as StrategyOpportunity

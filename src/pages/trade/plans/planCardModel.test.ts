@@ -35,7 +35,7 @@ const plan = (over: Partial<StrategyPlan> = {}): StrategyPlan =>
     filled_at: null,
     expires_at: '2026-09-12',
     effective_status: 'intended',
-    strategy_instance_id: null,
+    trade_id: null,
     ...over,
   }) as StrategyPlan
 
@@ -52,7 +52,7 @@ describe('planTimeline', () => {
   })
 
   it('calls the third step Expired when the intent lapsed, and Linked names the instance', () => {
-    const tl = planTimeline(plan({ effective_status: 'expired', strategy_instance_id: 77 }))
+    const tl = planTimeline(plan({ effective_status: 'expired', trade_id: 77 }))
     expect(tl[2]).toMatchObject({ label: 'Expired', when: '2026-09-12', on: true })
     expect(tl[3]).toMatchObject({ label: 'Linked', when: '#77', on: true })
   })

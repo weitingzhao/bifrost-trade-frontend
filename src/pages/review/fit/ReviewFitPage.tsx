@@ -26,14 +26,14 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useExecutionsAll } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
-import { useInstanceMarkPath } from '@/hooks/useInstanceMarkPath'
-import { buildReviewInstances, type ReviewInstance } from '@/utils/reviewInstances'
+import { useTradePath } from '@/hooks/useTradePath'
+import { buildReviewedTrades, type ReviewedTrade } from '@/utils/reviewedTrades'
 import { rankOnEntry } from '@/utils/entryIvRank'
 import { useEntryIvRanks } from '@/hooks/useEntryIvRanks'
 import { ReviewGaps } from './ReviewTradeFit'
-import { InstanceEconomics } from './InstanceEconomics'
+import { TradeEconomics } from './TradeEconomics'
 import { PeersPanel } from './PeersPanel'
-import { useInstanceStates, useStrategyInstances } from '@/hooks/useStrategies'
+import { useTradeStates, useTrades } from '@/hooks/useStrategies'
 import { TradePicker } from './TradePicker'
 import { TradePathPanels } from './TradePathPanels'
 import { CounterfactualsTable, ExecutionTable } from './TradeFitTables'
@@ -60,9 +60,9 @@ export default function ReviewFitPage() {
   // when arrived from there (`in=list&list=…`).
   const origins = useTradeOrigins()
   // Open / closed is the instance list's state (core 0.41.0, TD-43).
-  const states = useInstanceStates()
+  const states = useTradeStates()
   const trades = useMemo(
-    () => buildReviewInstances(execQuery.data?.items ?? [], today, origins.exitBy, states),
+    () => buildReviewedTrades(execQuery.data?.items ?? [], today, origins.exitBy, states),
     [execQuery.data?.items, today, origins.exitBy, states],
   )
   const reviews = useTradeReviews()
@@ -71,11 +71,11 @@ export default function ReviewFitPage() {
   const wanted = params.get('trade')
   const walk = useMemo(
     () =>
-      reviewWalk(trades, reviews.byInstance, {
+      reviewWalk(trades, reviews.byTrade, {
         explicit: Boolean(wantedInst || wanted),
         list: params.get('in') === 'list' ? params.get('list') : null,
       }),
-    [trades, reviews.byInstance, wantedInst, wanted, params],
+    [trades, reviews.byTrade, wantedInst, wanted, params],
   )
   const picked = useMemo(
     () =>
@@ -88,23 +88,23 @@ export default function ReviewFitPage() {
   )
 
   const { path, expiryBranch, underlying, optionTicker, loading: pathLoading, error: pathError, refetch: refetchPath } =
-    useInstanceMarkPath(picked, today)
+    useTradePath(picked, today)
   // An open instance reads at its mark to date — provisional, never the Ledger's realised figure.
   const trade = useMemo(
     () => (picked && picked.open && path ? { ...picked, realised: path.realised } : picked),
     [picked, path],
   )
   // Structure per instance for the «Same structure» peer set — the rulebook's own name.
-  const instancesQ = useStrategyInstances()
+  const tradesQ = useTrades()
   const structureOf = useCallback(
-    (x: ReviewInstance) =>
+    (x: ReviewedTrade) =>
       x.tradeId == null
         ? null
-        : (instancesQ.data?.items.find((i) => i.strategy_instance_id === x.tradeId)?.strategy_structure_name ?? null),
-    [instancesQ.data],
+        : (tradesQ.data?.items.find((i) => i.trade_id === x.tradeId)?.strategy_structure_name ?? null),
+    [tradesQ.data],
   )
   // Keep the walk's context (`in` · `list`) while moving through it.
-  const pick = (t: ReviewInstance) =>
+  const pick = (t: ReviewedTrade) =>
     setParams((prev) => {
       const out = new URLSearchParams()
       if (prev.get('in')) out.set('in', prev.get('in') as string)
@@ -114,18 +114,18 @@ export default function ReviewFitPage() {
       return out
     })
 
-  const review = picked?.tradeId != null ? reviews.byInstance.get(picked.tradeId) : undefined
+  const review = picked?.tradeId != null ? reviews.byTrade.get(picked.tradeId) : undefined
   const state = picked ? reviewState(picked, review) : null
-  const writeReview = (patch: { tags_added?: string[]; tags_dropped?: string[]; reviewed?: boolean }, then?: () => void) => {
+  const writeReview = (patch: { tags_added_json?: string[]; tags_dropped_json?: string[]; reviewed?: boolean }, then?: () => void) => {
     if (picked?.tradeId == null) return
-    saveReview.mutate({ instanceId: picked.tradeId, patch }, { onSuccess: () => then?.() })
+    saveReview.mutate({ tradeId: picked.tradeId, patch }, { onSuccess: () => then?.() })
   }
   const confirmAndNext = () =>
     writeReview({ reviewed: true }, () => {
       // The next trade still waiting after this one, in the walk's order.
       const i = walk.trades.findIndex((t) => t.contractKey === picked?.contractKey)
       const next = [...walk.trades.slice(i + 1), ...walk.trades.slice(0, Math.max(0, i))].find(
-        (t) => !t.open && t.tradeId != null && !reviews.byInstance.get(t.tradeId)?.reviewed,
+        (t) => !t.open && t.tradeId != null && !reviews.byTrade.get(t.tradeId)?.reviewed,
       )
       if (next) pick(next)
     })
@@ -202,7 +202,7 @@ export default function ReviewFitPage() {
       <TradePicker
         trades={trades}
         current={trade}
-        onPick={(t) => pick(t as ReviewInstance)}
+        onPick={(t) => pick(t as ReviewedTrade)}
         walk={walk.trades}
         walkLabel={walk.label}
         leading={trade?.tradeId != null ? <TradeFaceSwitch tradeId={trade.tradeId} side="review" /> : null}
@@ -274,7 +274,7 @@ export default function ReviewFitPage() {
               </span>
             </div>
           ) : null}
-          <InstanceEconomics inst={trade} markPath={path} pathLoading={pathLoading} today={today} />
+          <TradeEconomics inst={trade} markPath={path} pathLoading={pathLoading} today={today} />
           {/* §17.8: a band folds what follows it up to the next band, so this one
               is boxed with its own body — the rest of the page is not its section. */}
           <div className="space-y-3">
@@ -302,8 +302,8 @@ export default function ReviewFitPage() {
               <TimelinePanel stages={derived.stages} />
               <TagsPanel
                 tags={derived.tags}
-                added={review?.tags_added ?? []}
-                dropped={review?.tags_dropped ?? []}
+                added={review?.tags_added_json ?? []}
+                dropped={review?.tags_dropped_json ?? []}
                 reviewed={Boolean(review?.reviewed)}
                 confirmBlocked={
                   trade.tradeId == null
@@ -318,8 +318,8 @@ export default function ReviewFitPage() {
                 error={saveReview.error ? (saveReview.error as Error).message : null}
                 onChange={(next) =>
                   writeReview({
-                    ...(next.added ? { tags_added: next.added } : {}),
-                    ...(next.dropped ? { tags_dropped: next.dropped } : {}),
+                    ...(next.added ? { tags_added_json: next.added } : {}),
+                    ...(next.dropped ? { tags_dropped_json: next.dropped } : {}),
                   })
                 }
                 onConfirm={confirmAndNext}

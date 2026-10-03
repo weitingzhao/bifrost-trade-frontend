@@ -15,7 +15,7 @@ interface PerformanceOnTheFlySectionProps {
   timeRange: PerformanceTimeRange
   calendarMonth: string
   strategyOpportunityId: number | null
-  strategyInstanceId: number | null
+  tradeId: number | null
   /** Open the On the fly derivation: which TWS fills end up here. */
   onExplain?: () => void
 }
@@ -43,7 +43,7 @@ export function PerformanceOnTheFlySection({
   timeRange,
   calendarMonth,
   strategyOpportunityId,
-  strategyInstanceId,
+  tradeId,
   onExplain,
 }: PerformanceOnTheFlySectionProps) {
   const [open, setOpen] = useState(false)
@@ -54,7 +54,7 @@ export function PerformanceOnTheFlySection({
     timeRange,
     calendarMonth,
     strategyOpportunityId,
-    strategyInstanceId,
+    tradeId,
   })
 
   const rows = useMemo(() => buildOtfRows(data?.executions ?? []), [data?.executions])

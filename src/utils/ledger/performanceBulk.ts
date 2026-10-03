@@ -58,7 +58,7 @@ export async function fetchPerformanceExecutionsMerged(
   lookbackStartDateStr: string,
   rangeEndDateStr: string,
   strategyOpportunityId: number | null,
-  strategyInstanceId: number | null,
+  tradeId: number | null,
   sourceScope: 'performance_book' | 'on_the_fly' = 'performance_book',
 ): Promise<Execution[]> {
   const { since_ts: gSince } = getChicagoDayRange(lookbackStartDateStr)
@@ -70,7 +70,7 @@ export async function fetchPerformanceExecutionsMerged(
     limit: FETCH_LIMIT,
     include_opt_pairs: false,
     strategy_opportunity_id: strategyOpportunityId ?? undefined,
-    strategy_instance_id: strategyInstanceId ?? undefined,
+    trade_id: tradeId ?? undefined,
     source_scope: sourceScope,
   })
 
@@ -95,7 +95,7 @@ export async function fetchPerformanceExecutionsMerged(
       limit: FETCH_LIMIT,
       include_opt_pairs: false,
       strategy_opportunity_id: strategyOpportunityId ?? undefined,
-      strategy_instance_id: strategyInstanceId ?? undefined,
+      trade_id: tradeId ?? undefined,
       source_scope: sourceScope,
     })
     const chunkRows = chunkRes.items ?? []
@@ -212,7 +212,7 @@ export async function loadPerformanceDayPnLBulk(params: {
   untilStr: string
   calendarMonth: string
   strategyOpportunityId: number | null
-  strategyInstanceId: number | null
+  tradeId: number | null
   lookBackDays: number
   positionCategoryByAccountContract: Map<string, string>
 }): Promise<PerformanceDayPnLBulkResult> {
@@ -221,7 +221,7 @@ export async function loadPerformanceDayPnLBulk(params: {
     untilStr,
     calendarMonth,
     strategyOpportunityId,
-    strategyInstanceId,
+    tradeId,
     lookBackDays,
     positionCategoryByAccountContract,
   } = params
@@ -231,7 +231,7 @@ export async function loadPerformanceDayPnLBulk(params: {
     lookbackStartDateStr,
     untilStr,
     strategyOpportunityId,
-    strategyInstanceId,
+    tradeId,
     'performance_book',
   )
   const linkByOptionId = await fetchOptionStockLinkMapForExecutions(rawExecsWindow)

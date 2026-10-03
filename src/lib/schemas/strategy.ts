@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { GateSafetyGates } from '@/types/strategy'
+import type { GateSetGates } from '@/types/strategy'
 
 /**
  * `/api/strategy` response models (api 0.3.1, TD-24 batch 3c-1) — mirrored from
@@ -102,8 +102,8 @@ export const OpportunitiesResponseSchema = z
 
 // ── Gate safety ──────────────────────────────────────────────────────────────
 
-/** `GateSafetyRow` — GET `/strategies/gate-safety` items. */
-export const GateSafetyItemSchema = z
+/** `GateSetRow` — GET `/gate-sets` items. */
+export const GateSetItemSchema = z
   .object({
     gate_safety_strategy_id: int,
     name: z.string(),
@@ -123,33 +123,37 @@ export const GateSafetyItemSchema = z
 /**
  * `gates` is a free-form object in the model (core's `GateParams`: strategy /
  * state / intent / guard, without `strategy.earnings.dates`). It is checked as
- * an object and typed with the FE's reading of GateParams, `GateSafetyGates` —
+ * an object and typed with the FE's reading of GateParams, `GateSetGates` —
  * the model does not declare the families, so a schema for them here would be
  * the FE's invention, not the contract.
  */
-const GatesObjectSchema = z.custom<GateSafetyGates>(
+const GatesObjectSchema = z.custom<GateSetGates>(
   (v) => v != null && typeof v === 'object' && !Array.isArray(v),
   { message: 'expected an object' },
 )
 
-/** `GateSafetyDetail` — GET / PATCH `/strategies/gate-safety/{id}`. */
-export const GateSafetyFullSchema = GateSafetyItemSchema.extend({
+/** `GateSetDetail` — GET / PATCH `/gate-sets/{id}`. */
+export const GateSetFullSchema = GateSetItemSchema.extend({
   gates: GatesObjectSchema,
   /** YYYY-MM-DD. */
   earnings_dates: z.array(z.string()),
 }).passthrough()
 
-/** `GateSafetyList` — GET `/strategies/gate-safety`. */
-export const GateSafetyResponseSchema = z
-  .object({ items: z.array(GateSafetyItemSchema), count: int })
+/** `GateSetList` — GET `/gate-sets`. */
+export const GateSetResponseSchema = z
+  .object({ items: z.array(GateSetItemSchema), count: int })
   .passthrough()
 
-// ── Instances ────────────────────────────────────────────────────────────────
+// ── Trades ───────────────────────────────────────────────────────────────────
 
-/** `InstanceRow` — list items, GET / PATCH `/strategies/instances/{id}`. */
-export const StrategyInstanceSchema = z
+/**
+ * `TradeRow` — list items, GET / PATCH `/trades/{id}`. Rows still carry
+ * `strategy_instance_id` (the same id) until naming R4; the app reads `trade_id`.
+ * No `notes`: a trade's notes live in the journal only (TD-73; api 0.7.1 drops the field).
+ */
+export const TradeSchema = z
   .object({
-    strategy_instance_id: int,
+    trade_id: int,
     strategy_opportunity_id: int,
     strategy_opportunity_name: z.string().nullable(),
     strategy_structure_id: int.nullable(),
@@ -157,44 +161,43 @@ export const StrategyInstanceSchema = z
     account_id: z.string(),
     opened_at: timestamp,
     label: z.string().nullable(),
-    notes: z.string().nullable(),
     created_at: timestamp,
     updated_at: timestamp,
     /** Unix seconds of `opened_at` / `created_at`, sent whenever those are. */
     opened_at_epoch: z.number().optional(),
     created_at_epoch: z.number().optional(),
     /**
-     * The list only: fills attributed or split-allocated to the instance.
-     * GET / PATCH `/instances/{id}` never send it — a reader of one instance
-     * that needs the count takes it from the instance's executions.
+     * The list only: fills attributed or split to the trade.
+     * GET / PATCH `/trades/{id}` never send it — a reader of one trade
+     * that needs the count takes it from the trade's executions.
      */
     executions_count: int.optional(),
     /**
-     * The list only (core 0.41.0, TD-43): where the instance stands by its own
+     * The list only (core 0.41.0, TD-43): where the trade stands by its own
      * option fills — the one open / closed rule every page reads. `expired` (every
      * open leg past expiry, no closing fill) counts as closed.
      */
     state: z.enum(['no_fills', 'open', 'expired', 'closed']).optional(),
-    /** YYYY-MM-DD the instance closed (last flat day, or last expiry); null unless closed / expired. */
+    /** YYYY-MM-DD the trade closed (last flat day, or last expiry); null unless closed / expired. */
     closed_on: z.string().nullable().optional(),
   })
   .passthrough()
 
-/** `InstanceList` — GET `/strategies/instances`. */
-export const StrategyInstancesResponseSchema = z
-  .object({ items: z.array(StrategyInstanceSchema), count: int })
+/** `TradeList` — GET `/trades`. */
+export const TradesResponseSchema = z
+  .object({ items: z.array(TradeSchema), count: int })
   .passthrough()
 
-/** GET / PATCH `/strategies/instances/{id}` answer the same `InstanceRow`, without `executions_count`. */
-export const StrategyInstanceDetailSchema = StrategyInstanceSchema
+/** GET / PATCH `/trades/{id}` answer the same `TradeRow`, without `executions_count`. */
+export const TradeDetailSchema = TradeSchema
 
 /**
- * `GET /strategies/gate-safety/defaults`. Parsed strictly (not `withValidation`):
+ * `GET /gate-sets/defaults`. Parsed strictly (not `withValidation`):
  * a new gate set is seeded from this, so an answer without the four families
  * is an error the sheet shows, never a half-seeded form.
  */
 const GateFamilySchema = z.object({}).passthrough()
-export const GateSafetyDefaultsResponseSchema = z.object({
+export const GateSetDefaultsResponseSchema = z.object({
   gates: z.object({
     strategy: GateFamilySchema,
     state: GateFamilySchema,

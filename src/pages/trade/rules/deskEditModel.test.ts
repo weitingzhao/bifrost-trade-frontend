@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChainData } from '@/hooks/useRulesChain'
-import type { StrategyInstance } from '@/types/strategy'
+import type { Trade } from '@/types/strategy'
 import { gateInUseReason, withoutHeld } from './deskEditModel'
 
 const DATA = {
@@ -11,22 +11,22 @@ const DATA = {
   ],
   allocations: [{ strategy_allocation_id: 5, gate_safety_strategy_id: 8, strategy_opportunity_ids: [1, 2] }],
   gates: [{ gate_safety_strategy_id: 8 }, { gate_safety_strategy_id: 9 }, { gate_safety_strategy_id: 10 }],
-  instances: [{ id: 30, opportunityId: 1 }],
+  trades: [{ id: 30, opportunityId: 1 }],
 } as unknown as ChainData
-const RAW = [{ strategy_instance_id: 30 }] as unknown as StrategyInstance[]
+const RAW = [{ trade_id: 30 }] as unknown as Trade[]
 const none = () => false
 
 describe('the Desk with held deletes (Rev .140)', () => {
   it('a held opportunity leaves the chain and its allocations', () => {
-    const v = withoutHeld(DATA, RAW, { opportunity: (id) => id === 2, allocation: none, gate: none, instance: none })
+    const v = withoutHeld(DATA, RAW, { opportunity: (id) => id === 2, allocation: none, gate: none, trade: none })
     expect(v.data.opportunities.map((o) => o.strategy_opportunity_id)).toEqual([1])
     expect(v.data.allocations[0].strategy_opportunity_ids).toEqual([1])
   })
 
   it('a held trade leaves both the readings and the raw records', () => {
-    const v = withoutHeld(DATA, RAW, { opportunity: none, allocation: none, gate: none, instance: (id) => id === 30 })
-    expect(v.data.instances).toEqual([])
-    expect(v.rawInstances).toEqual([])
+    const v = withoutHeld(DATA, RAW, { opportunity: none, allocation: none, gate: none, trade: (id) => id === 30 })
+    expect(v.data.trades).toEqual([])
+    expect(v.rawTrades).toEqual([])
   })
 })
 

@@ -11,7 +11,7 @@
  * Everything here is pure: the page derives, it does not store.
  */
 import type { ChainData } from '@/hooks/useRulesChain'
-import type { InstanceReading } from '@/utils/strategyInstances'
+import type { TradeReading } from '@/utils/tradeReadings'
 import { formatPick, lineageOf, parsePick, type ChainSelection } from './rulesChain'
 
 export interface Focus {
@@ -70,12 +70,12 @@ export function focusOfKey(key: string): Focus {
 }
 
 /** The ticker an instance ran on — the first of its fills' underlyings. */
-export function instanceSym(r: InstanceReading): string | null {
+export function tradeSym(r: TradeReading): string | null {
   return normSym(r.symbolish.split(' ')[0])
 }
 
 function emptyLit(): Lit {
-  return { structure: new Set(), opportunity: new Set(), allocation: new Set(), instance: new Set() }
+  return { structure: new Set(), opportunity: new Set(), allocation: new Set(), trade: new Set() }
 }
 
 /** Opportunities that can act on a ticker: in its scope, or ran on it anyway. */
@@ -84,7 +84,7 @@ export function oppsForSym(sym: string, d: ChainData): number[] {
   for (const o of d.opportunities) {
     if ((o.symbols ?? []).some((s) => normSym(s) === sym)) out.add(o.strategy_opportunity_id)
   }
-  for (const i of d.instances) if (instanceSym(i) === sym) out.add(i.opportunityId)
+  for (const i of d.trades) if (tradeSym(i) === sym) out.add(i.opportunityId)
   return [...out]
 }
 
@@ -99,7 +99,7 @@ export function symLineage(sym: string, d: ChainData): Lit {
       if ((a.strategy_opportunity_ids ?? []).includes(oid)) lit.allocation.add(a.strategy_allocation_id)
     }
   }
-  for (const i of d.instances) if (instanceSym(i) === sym) lit.instance.add(i.id)
+  for (const i of d.trades) if (tradeSym(i) === sym) lit.trade.add(i.id)
   return lit
 }
 
@@ -109,7 +109,7 @@ function meet(a: Lit, b: Lit): Lit {
     structure: keep(a.structure, b.structure),
     opportunity: keep(a.opportunity, b.opportunity),
     allocation: keep(a.allocation, b.allocation),
-    instance: keep(a.instance, b.instance),
+    trade: keep(a.trade, b.trade),
   }
 }
 
@@ -138,7 +138,7 @@ export interface Tally {
   won: number
 }
 
-export function tally(list: readonly InstanceReading[]): Tally {
+export function tally(list: readonly TradeReading[]): Tally {
   const closed = list.filter((i) => i.closed)
   return {
     n: list.length,
@@ -165,16 +165,16 @@ export interface BoardTile {
  */
 export function symbolBoard(
   scope: readonly string[],
-  readings: readonly InstanceReading[],
+  readings: readonly TradeReading[],
   sort: BoardSort,
 ): BoardTile[] {
   const named = [...new Set(scope.map(normSym).filter((s): s is string => s != null))]
-  const ran = [...new Set(readings.map(instanceSym).filter((s): s is string => s != null))]
+  const ran = [...new Set(readings.map(tradeSym).filter((s): s is string => s != null))]
   const all = [...named, ...ran.filter((s) => !named.includes(s))]
   const tiles = all.map((sym) => ({
     sym,
     offScope: !named.includes(sym),
-    tally: tally(readings.filter((r) => instanceSym(r) === sym)),
+    tally: tally(readings.filter((r) => tradeSym(r) === sym)),
   }))
   const cmp: Record<BoardSort, (a: BoardTile, b: BoardTile) => number> = {
     pnl: (a, b) =>
@@ -194,8 +194,8 @@ export function allSymbols(d: ChainData): string[] {
     const n = normSym(s)
     if (n) out.add(n)
   }
-  for (const i of d.instances) {
-    const n = instanceSym(i)
+  for (const i of d.trades) {
+    const n = tradeSym(i)
     if (n) out.add(n)
   }
   return [...out].sort()

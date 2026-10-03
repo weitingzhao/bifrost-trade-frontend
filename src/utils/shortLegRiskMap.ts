@@ -33,7 +33,7 @@ import type { Spot, SpotSource } from './spotPrice'
 
 export interface RiskMapLeg {
   key: string
-  instanceKey: string
+  tradeKey: string
   symbol: string
   right: 'C' | 'P'
   strike: number
@@ -84,7 +84,7 @@ function rightFromContractKey(contractKey: string): 'C' | 'P' | null {
  */
 export function buildRiskMapLegs(input: {
   legs: readonly (LadderLeg & {
-    instanceKey: string
+    tradeKey: string
     contractKey: string
     accountId?: string
     /** Entry cost per share, IB's ×100 already unwound. */
@@ -106,12 +106,12 @@ export function buildRiskMapLegs(input: {
     const cushionPct = spot == null ? null : shortLegCushion(leg.right, leg.strike, spot.price)
     // One instance can hold the same contract across two accounts; the key
     // still has to be unique so React and the click handler can tell them apart.
-    const base = `${leg.instanceKey}|${leg.contractKey}`
+    const base = `${leg.tradeKey}|${leg.contractKey}`
     const n = seen.get(base) ?? 0
     seen.set(base, n + 1)
     out.push({
       key: n === 0 ? base : `${base}#${n}`,
-      instanceKey: leg.instanceKey,
+      tradeKey: leg.tradeKey,
       contractKey: leg.contractKey,
       accountId: leg.accountId,
       symbol: leg.underlying,

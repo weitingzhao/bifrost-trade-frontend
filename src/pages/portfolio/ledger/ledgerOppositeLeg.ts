@@ -1,6 +1,6 @@
 import type { Execution } from '@/types/positions'
 import {
-  executionStrategyInstanceIds,
+  executionTradeIds,
   findOppositeLegAttributionSource,
 } from '@/utils/ledger/ledgerOptHelpers'
 
@@ -15,12 +15,12 @@ export { findOppositeLegAttributionSource }
 export function oppositeLegSyncPayload(
   trades: Execution[],
   ex: Execution,
-): { opportunity_id: number; instance_id: number } | null {
-  if (executionStrategyInstanceIds(ex).length > 0) return null
+): { opportunity_id: number; trade_id: number } | null {
+  if (executionTradeIds(ex).length > 0) return null
   const peer = findOppositeLegAttributionSource(trades, ex)
   if (!peer) return null
   const opp = peer.strategy_opportunity_id
-  const ids = executionStrategyInstanceIds(peer)
+  const ids = executionTradeIds(peer)
   if (opp == null || !Number.isFinite(Number(opp)) || ids.length !== 1) return null
-  return { opportunity_id: Number(opp), instance_id: ids[0] }
+  return { opportunity_id: Number(opp), trade_id: ids[0] }
 }

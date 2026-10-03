@@ -31,7 +31,7 @@ import { useExecutionsAll } from '@/hooks/useExecutions'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
 import { useQueryClient } from '@tanstack/react-query'
 import { patchExecutionAttribution } from '@/api/trading'
-import { useOpportunities, useStrategyInstances } from '@/hooks/useStrategies'
+import { useOpportunities, useTrades } from '@/hooks/useStrategies'
 import { useExecutionsFreshness } from '@/hooks/useExecutionsFreshness'
 import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
 import {
@@ -90,7 +90,7 @@ export default function FillsPage() {
   const ordersQuery = useOpenOrders()
   const freshnessQuery = useExecutionsFreshness()
   const flexQuery = useFlexCoverageFreshness()
-  const instancesQuery = useStrategyInstances()
+  const tradesQuery = useTrades()
   const oppsQuery = useOpportunities()
   const queryClient = useQueryClient()
   /** The fill the belong panel is about — a row click, cleared on Esc or Leave. */
@@ -129,7 +129,7 @@ export default function FillsPage() {
   const planRows = useMemo(() => buildPlanRows(plans), [plans])
   const orders = ordersQuery.data ?? []
 
-  const linkedIds = rows.flatMap((r) => (r.state === 'linked' && r.instanceId != null ? [r.instanceId] : []))
+  const linkedIds = rows.flatMap((r) => (r.state === 'linked' && r.tradeId != null ? [r.tradeId] : []))
   const selectedRow = useMemo(() => windowRows.find((r) => r.key === selectedKey) ?? null, [windowRows, selectedKey])
   const candidates = useMemo(
     () =>
@@ -138,10 +138,10 @@ export default function FillsPage() {
         : belongCandidates({
             row: selectedRow,
             executions: execQuery.data?.items ?? [],
-            instances: instancesQuery.data?.items ?? [],
+            trades: tradesQuery.data?.items ?? [],
             opportunities: oppsQuery.data?.items ?? [],
           }),
-    [selectedRow, execQuery.data?.items, instancesQuery.data?.items, oppsQuery.data?.items],
+    [selectedRow, execQuery.data?.items, tradesQuery.data?.items, oppsQuery.data?.items],
   )
 
   function selectRow(key: string) {
@@ -156,7 +156,7 @@ export default function FillsPage() {
    */
   async function confirmLink() {
     if (selectedRow?.execId == null || pickedCandidate == null) return
-    const chosen = candidates.find((c) => c.instanceId === pickedCandidate)
+    const chosen = candidates.find((c) => c.tradeId === pickedCandidate)
     if (!chosen) return
     setLinking(true)
     setLinkError(null)
@@ -165,7 +165,7 @@ export default function FillsPage() {
       // server's reason rather than un-split from a candidate pick.
       const res = await patchExecutionAttribution(selectedRow.execId, {
         strategy_opportunity_id: chosen.opportunityId,
-        strategy_instance_id: chosen.instanceId,
+        trade_id: chosen.tradeId,
       })
       if (!res.ok) throw new Error(res.error)
       await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
@@ -419,11 +419,11 @@ export default function FillsPage() {
                             {r.state === 'linked' ? (
                               <span className="inline-flex flex-wrap items-center gap-1.5 text-dense-meta">
                                 <StatusLamp lamp="green" variant="dot" title="Linked" />
-                                {r.instanceId != null ? (
-                                  <TradeRef id={r.instanceId} list={linkedIds} from="Orders & Fills · on screen" />
+                                {r.tradeId != null ? (
+                                  <TradeRef id={r.tradeId} list={linkedIds} from="Orders & Fills · on screen" />
                                 ) : null}
                                 <span className="text-muted-foreground">
-                                  {r.opportunityName ?? r.instanceLabel ?? 'on a trade'}
+                                  {r.opportunityName ?? r.tradeLabel ?? 'on a trade'}
                                 </span>
                               </span>
                             ) : (
@@ -489,8 +489,8 @@ export default function FillsPage() {
                   {selectedRow.state === 'linked' ? (
                     <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
                       Already claimed by{' '}
-                      {selectedRow.instanceId != null ? (
-                        <TradeRef id={selectedRow.instanceId} list={linkedIds} from="Orders & Fills · on screen" />
+                      {selectedRow.tradeId != null ? (
+                        <TradeRef id={selectedRow.tradeId} list={linkedIds} from="Orders & Fills · on screen" />
                       ) : null}{' '}
                       — relinking and unlinking are the Ledger&rsquo;s writes.
                     </p>
@@ -507,14 +507,14 @@ export default function FillsPage() {
                     <>
                       {candidates.map((c) => (
                         <button
-                          key={c.instanceId}
+                          key={c.tradeId}
                           type="button"
-                          onClick={() => setPickedCandidate((prev) => (prev === c.instanceId ? null : c.instanceId))}
+                          onClick={() => setPickedCandidate((prev) => (prev === c.tradeId ? null : c.tradeId))}
                           className={cn(
                             // Rev .142: a clickable card is group material — no frame, the card fill and radius.
                             'grid cursor-pointer grid-cols-[0.875rem_minmax(0,1fr)] items-start gap-2.5 rounded-[var(--mat-card-radius)] border px-2.5 py-2 text-left',
                             // Rev .84: the picked candidate is the accent — edge and a 12% ground.
-                            pickedCandidate === c.instanceId
+                            pickedCandidate === c.tradeId
                               ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
                               : 'border-transparent bg-[var(--mat-card-fill)] hover:bg-[var(--mat-card-fill-hover)]',
                           )}
@@ -522,7 +522,7 @@ export default function FillsPage() {
                           <span
                             className={cn(
                               'mt-0.5 h-3 w-3 rounded-full border',
-                              pickedCandidate === c.instanceId ? 'border-primary bg-primary' : 'border-[var(--sk-line2)]',
+                              pickedCandidate === c.tradeId ? 'border-primary bg-primary' : 'border-[var(--sk-line2)]',
                             )}
                             aria-hidden
                           />

@@ -12,26 +12,26 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { useAllocations, useGateSafety, useOpportunities, useStructures, useStrategyInstances } from '@/hooks/useStrategies'
+import { useAllocations, useGateSets, useOpportunities, useStructures, useTrades } from '@/hooks/useStrategies'
 import { createNote, fetchNotes, type NoteRef } from '@/api/research/journal'
 import { tradePath } from '@/layout/equipSurface'
 import { cn } from '@/lib/utils'
 import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
 import type { RanUnder } from '@/utils/tradeRecord/ranUnder'
-import type { StrategyInstance } from '@/types/positions'
+import type { Trade } from '@/types/positions'
 import { TradeBlock } from './TradeBlock'
 import { useTradeOrigins } from '@/hooks/useTradeOrigins'
 import { ORIGIN_UNRECORDED, planPath, planTermsText, planToken } from '@/utils/tradeOrigin'
 
 
 export function TradeLineage({
-  instance,
+  trade,
   sym,
   ranUnder,
   from,
   list,
 }: {
-  instance: StrategyInstance
+  trade: Trade
   sym: string | null
   ranUnder: RanUnder | null
   from: string
@@ -41,16 +41,16 @@ export function TradeLineage({
   const opps = useOpportunities()
   const structures = useStructures()
   const allocations = useAllocations()
-  const gates = useGateSafety()
-  const siblingsQ = useStrategyInstances({ opportunityId: instance.strategy_opportunity_id })
-  const id = instance.strategy_instance_id
-  const opp = opps.data?.items.find((o) => o.strategy_opportunity_id === instance.strategy_opportunity_id)
-  const st = structures.data?.items.find((x) => x.strategy_structure_id === (opp?.strategy_structure_id ?? instance.strategy_structure_id))
-  const al = allocations.data?.items.find((a) => (a.strategy_opportunity_ids ?? []).includes(instance.strategy_opportunity_id))
+  const gates = useGateSets()
+  const siblingsQ = useTrades({ opportunityId: trade.strategy_opportunity_id })
+  const id = trade.trade_id
+  const opp = opps.data?.items.find((o) => o.strategy_opportunity_id === trade.strategy_opportunity_id)
+  const st = structures.data?.items.find((x) => x.strategy_structure_id === (opp?.strategy_structure_id ?? trade.strategy_structure_id))
+  const al = allocations.data?.items.find((a) => (a.strategy_opportunity_ids ?? []).includes(trade.strategy_opportunity_id))
   const gate = al ? gates.data?.items.find((g) => g.gate_safety_strategy_id === al.gate_safety_strategy_id) : undefined
   const sibs = [...(siblingsQ.data?.items ?? [])].sort((a, b) => (b.opened_at_epoch ?? 0) - (a.opened_at_epoch ?? 0))
-  const sibIds = sibs.map((x) => x.strategy_instance_id)
-  const openedIso = instance.opened_at ? instance.opened_at.slice(0, 10) : null
+  const sibIds = sibs.map((x) => x.trade_id)
+  const openedIso = trade.opened_at ? trade.opened_at.slice(0, 10) : null
   const origin = useTradeOrigins().byTrade.get(id)
 
   const chain: {
@@ -87,7 +87,7 @@ export function TradeLineage({
     },
     {
       kind: 'Structure',
-      name: st?.name ?? instance.strategy_structure_name ?? '—',
+      name: st?.name ?? trade.strategy_structure_name ?? '—',
       meta: st
         ? [st.template_display_name, `${st.legs.length} ${st.legs.length === 1 ? 'leg' : 'legs'}`, st.dim_direction, st.dim_coverage, `v${st.version}`]
             .filter(Boolean)
@@ -96,7 +96,7 @@ export function TradeLineage({
     },
     {
       kind: 'Opportunity',
-      name: opp?.name ?? instance.strategy_opportunity_name ?? '—',
+      name: opp?.name ?? trade.strategy_opportunity_name ?? '—',
       meta: opp ? (opp.symbols?.length ? opp.symbols.join(' · ') : 'no symbols') + (opp.is_active ? '' : ' · inactive') : '—',
     },
     {
@@ -173,26 +173,26 @@ export function TradeLineage({
             <div className="flex flex-wrap gap-1">
               {sibs.slice(0, 24).map((x) => (
                 <button
-                  key={x.strategy_instance_id}
+                  key={x.trade_id}
                   type="button"
                   onClick={() =>
                     navigate(
                       tradePath(
-                        x.strategy_instance_id,
-                        list && list.includes(x.strategy_instance_id) ? list : sibIds,
-                        list && list.includes(x.strategy_instance_id) ? from : opp?.name ?? 'Siblings',
+                        x.trade_id,
+                        list && list.includes(x.trade_id) ? list : sibIds,
+                        list && list.includes(x.trade_id) ? from : opp?.name ?? 'Siblings',
                       ),
                     )
                   }
-                  title={`#${x.strategy_instance_id}${x.label?.trim() ? ` · ${x.label.trim()}` : ''}`}
+                  title={`#${x.trade_id}${x.label?.trim() ? ` · ${x.label.trim()}` : ''}`}
                   className={cn(
                     'h-5.5 cursor-pointer rounded-md border-0 px-1.5 font-mono text-dense-micro font-bold text-[var(--sk-trade)]',
-                    x.strategy_instance_id === id
+                    x.trade_id === id
                       ? 'bg-[color-mix(in_srgb,var(--sk-trade)_18%,transparent)]'
                       : 'bg-transparent hover:bg-[color-mix(in_srgb,var(--sk-trade)_16%,transparent)]',
                   )}
                 >
-                  #{x.strategy_instance_id}
+                  #{x.trade_id}
                 </button>
               ))}
             </div>
@@ -208,13 +208,13 @@ export function TradeJournal({ id, sym }: { id: number; sym: string | null }) {
   const qc = useQueryClient()
   const [draft, setDraft] = useState('')
   const notesQ = useQuery({
-    queryKey: ['research', 'journal', 'notes', 'inst', id],
-    queryFn: () => fetchNotes({ ref_type: 'inst', ref_id: String(id), limit: 50 }),
+    queryKey: ['research', 'journal', 'notes', 'trade', id],
+    queryFn: () => fetchNotes({ ref_type: 'trade', ref_id: String(id), limit: 50 }),
     staleTime: 60_000,
   })
   const add = useMutation({
     mutationFn: (body: string) => {
-      const refs: NoteRef[] = [{ type: 'inst', id: String(id) }, ...(sym ? [{ type: 'sym' as const, id: sym }] : [])]
+      const refs: NoteRef[] = [{ type: 'trade', id: String(id) }, ...(sym ? [{ type: 'sym' as const, id: sym }] : [])]
       return createNote({ body_md: body, page_route: `/trade/${id}`, page_label: `Trade #${id}`, refs })
     },
     onSuccess: () => {

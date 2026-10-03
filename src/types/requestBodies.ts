@@ -130,7 +130,7 @@ export interface GateSetBody {
 /** The api's old name of `GateSetBody` (api 0.7.0 keeps it as an alias until R4). */
 export type GateSafetyBody = GateSetBody
 
-/** POST `/strategies/saved-searches`. */
+/** POST `/preferences/saved-searches` (`/strategies/saved-searches` until api R4). */
 export interface SavedSearchBody {
   route?: string
   label?: string

@@ -86,7 +86,7 @@ export function LedgerExplainFace({
             ? 'Option fills with no trade and no split across trades. Amber, never red — not a fault.'
             : 'Fills with no trade and no split across trades, over every row. Stock fills dominate this basis.'
         }
-        formula="unlinked = executionStrategyInstanceIds(row).length === 0"
+        formula="unlinked = executionTradeIds(row).length === 0"
         basis="Not a fault — amber, never red. A fill split across trades counts as linked though it has no single trade."
       />
     )

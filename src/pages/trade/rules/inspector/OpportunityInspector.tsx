@@ -24,7 +24,7 @@ import {
   withScopeType,
   type OpportunityFormState,
 } from '@/components/strategy/opportunities/opportunityForm'
-import { useGateSafety, useStructures } from '@/hooks/useStrategies'
+import { useGateSets, useStructures } from '@/hooks/useStrategies'
 import { useLiveEdit } from '@/hooks/useLiveEdit'
 import { cn } from '@/lib/utils'
 import type { EntryConditionInput } from '@/types/strategy'
@@ -108,8 +108,8 @@ function OpportunityFields({
 }) {
   const qc = useQueryClient()
   const structures = useStructures().data?.items ?? []
-  const gates = (useGateSafety().data?.items ?? []).filter(
-    (g) => g.is_active || String(g.gate_safety_strategy_id) === initial.gateSafetyId,
+  const gates = (useGateSets().data?.items ?? []).filter(
+    (g) => g.is_active || String(g.gate_safety_strategy_id) === initial.gateSetId,
   )
   const { draft, edit } = useLiveEdit<OpportunityFormState>({
     initial,
@@ -128,7 +128,7 @@ function OpportunityFields({
   const symbolsValue = symText && symText.of === draft.symbols ? symText.text : symbolsToText(draft.symbols)
 
   const structureListed = structures.some((s) => String(s.strategy_structure_id) === draft.structureId)
-  const gateListed = gates.some((g) => String(g.gate_safety_strategy_id) === draft.gateSafetyId)
+  const gateListed = gates.some((g) => String(g.gate_safety_strategy_id) === draft.gateSetId)
 
   const setCondition = (idx: number, field: string, patch: Partial<EntryConditionInput>) =>
     edit(`cond:${idx}:${field}`, (d) => ({
@@ -290,12 +290,12 @@ function OpportunityFields({
         <select
           className={FIELD}
           aria-label="Default gate"
-          value={draft.gateSafetyId}
-          onChange={(e) => edit('gate', (d) => ({ ...d, gateSafetyId: e.target.value }))}
+          value={draft.gateSetId}
+          onChange={(e) => edit('gate', (d) => ({ ...d, gateSetId: e.target.value }))}
         >
           <option value="">No gate</option>
-          {draft.gateSafetyId && !gateListed ? (
-            <option value={draft.gateSafetyId}>{gateName ?? `Gate #${draft.gateSafetyId}`}</option>
+          {draft.gateSetId && !gateListed ? (
+            <option value={draft.gateSetId}>{gateName ?? `Gate #${draft.gateSetId}`}</option>
           ) : null}
           {gates.map((g) => (
             <option key={g.gate_safety_strategy_id} value={String(g.gate_safety_strategy_id)}>

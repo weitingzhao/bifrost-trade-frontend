@@ -41,10 +41,10 @@ const SCALE = [
 ] as const
 
 const DEMO = [
-  { symbol: 'NVDA', contract: 'NVDA 250620C140', strategy: 'Covered Call', instance: 'CC-NVDA-0620', source: 'flex_trades', day: 1245.5, pct: 2.31, unrl: 3120 },
-  { symbol: 'TSLA', contract: 'TSLA 250718P200', strategy: 'Wheel', instance: 'WH-TSLA-0718', source: 'tws_client', day: -872.25, pct: -1.64, unrl: -540 },
-  { symbol: 'AAPL', contract: '—', strategy: 'Buy & Hold', instance: 'BH-AAPL-CORE', source: 'journal_closed', day: 0, pct: 0, unrl: 12480 },
-  { symbol: 'BRK.B', contract: 'BRK.B 251219C500000', strategy: 'Long Gamma Scalping NVDA Straddle', instance: 'GS-NVDA-STRADDLE-2025-Q4-HOST', source: 'manual', day: 42, pct: 0.12, unrl: -18 },
+  { symbol: 'NVDA', contract: 'NVDA 250620C140', strategy: 'Covered Call', trade: 'CC-NVDA-0620', source: 'flex_trades', day: 1245.5, pct: 2.31, unrl: 3120 },
+  { symbol: 'TSLA', contract: 'TSLA 250718P200', strategy: 'Wheel', trade: 'WH-TSLA-0718', source: 'tws_client', day: -872.25, pct: -1.64, unrl: -540 },
+  { symbol: 'AAPL', contract: '—', strategy: 'Buy & Hold', trade: 'BH-AAPL-CORE', source: 'journal_closed', day: 0, pct: 0, unrl: 12480 },
+  { symbol: 'BRK.B', contract: 'BRK.B 251219C500000', strategy: 'Long Gamma Scalping NVDA Straddle', trade: 'GS-NVDA-STRADDLE-2025-Q4-HOST', source: 'manual', day: 42, pct: 0.12, unrl: -18 },
 ] as const
 
 export function DensitySection() {
@@ -95,7 +95,7 @@ export function DensitySection() {
                   <DenseOptionCategoryLabel variant="opportunity" className="whitespace-normal">
                     {r.strategy}
                   </DenseOptionCategoryLabel>
-                  <DenseLinkButton variant="instance" label={r.instance} ariaLabel={`Open ${r.instance}`} onClick={noop} className={denseTableEntityLink} />
+                  <DenseLinkButton variant="trade" label={r.trade} ariaLabel={`Open ${r.trade}`} onClick={noop} className={denseTableEntityLink} />
                 </div>
               </DenseTableCell>
               <DenseTableCell col="tag">

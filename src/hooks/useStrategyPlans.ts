@@ -66,7 +66,7 @@ export function useIntendStrategyPlan() {
 }
 
 export function useLinkStrategyPlanFill() {
-  return usePlanMutation(({ id, strategyInstanceId }: { id: number; strategyInstanceId: number }) =>
-    linkStrategyPlanFill(id, strategyInstanceId),
+  return usePlanMutation(({ id, tradeId }: { id: number; tradeId: number }) =>
+    linkStrategyPlanFill(id, tradeId),
   )
 }

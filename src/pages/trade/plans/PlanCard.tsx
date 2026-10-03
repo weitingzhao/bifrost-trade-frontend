@@ -12,9 +12,9 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
-import { useAllocations, useStrategyInstances, useOpportunities } from '@/hooks/useStrategies'
+import { useAllocations, useTrades, useOpportunities } from '@/hooks/useStrategies'
 import { useLinkStrategyPlanFill, useUpdateStrategyPlan } from '@/hooks/useStrategyPlans'
-import { instancesTradingSymbol } from '@/lib/plans/planLinkFill'
+import { tradesTradingSymbol } from '@/lib/plans/planLinkFill'
 import { planEstCredit, planExitSummary, planStatusLabel } from '@/lib/plans/planMath'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { cn } from '@/lib/utils'
@@ -152,19 +152,19 @@ function LegsTable({ plan }: { plan: StrategyPlan }) {
 function LinkFillPicker({ plan, onDone }: { plan: StrategyPlan; onDone: () => void }) {
   const link = useLinkStrategyPlanFill()
   const since = plan.intended_at ? Date.parse(plan.intended_at) / 1000 : undefined
-  const instances = useStrategyInstances({
+  const trades = useTrades({
     accountId: plan.account_id,
     openedAtFrom: Number.isFinite(since) ? since : undefined,
   })
   const opportunities = useOpportunities()
   const candidates = useMemo(
     () =>
-      instancesTradingSymbol(
-        instances.data?.items ?? [],
+      tradesTradingSymbol(
+        trades.data?.items ?? [],
         opportunities.data?.items ?? [],
         plan.symbol,
       ),
-    [instances.data, opportunities.data, plan.symbol],
+    [trades.data, opportunities.data, plan.symbol],
   )
 
   return (
@@ -179,9 +179,9 @@ function LinkFillPicker({ plan, onDone }: { plan: StrategyPlan; onDone: () => vo
       ) : (
         <ul className="space-y-1">
           {candidates.map((row) => (
-            <li key={row.strategy_instance_id} className="flex items-center justify-between gap-2">
+            <li key={row.trade_id} className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate text-dense-meta">
-                {row.label ?? row.strategy_opportunity_name ?? `#${row.strategy_instance_id}`}
+                {row.label ?? row.strategy_opportunity_name ?? `#${row.trade_id}`}
                 <span className="ml-2 font-mono text-dense-micro text-muted-foreground">
                   {row.opened_at?.slice(0, 16) ?? ''}
                 </span>
@@ -196,7 +196,7 @@ function LinkFillPicker({ plan, onDone }: { plan: StrategyPlan; onDone: () => vo
                   link.mutate(
                     {
                       id: plan.strategy_plan_id,
-                      strategyInstanceId: row.strategy_instance_id,
+                      tradeId: row.trade_id,
                     },
                     { onSuccess: onDone },
                   )
@@ -502,14 +502,14 @@ export function PlanCard({
         <Section
           id="plan-execs"
           title="Executions"
-          meta={plan.strategy_instance_id ? 'linked' : 'none yet'}
+          meta={plan.trade_id ? 'linked' : 'none yet'}
         >
-          {plan.strategy_instance_id ? (
+          {plan.trade_id ? (
             <>
               <Field
                 label="Trade"
                 value={
-                  <TradeRef id={plan.strategy_instance_id} from="Plans" />
+                  <TradeRef id={plan.trade_id} from="Plans" />
                 }
               />
               <Field label="Filled at" value={plan.filled_at?.slice(0, 16) ?? '—'} />

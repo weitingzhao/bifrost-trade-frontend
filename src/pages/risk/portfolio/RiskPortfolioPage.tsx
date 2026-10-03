@@ -123,7 +123,7 @@ export default function RiskPortfolioPage() {
       shares.set(sym, (shares.get(sym) ?? 0) + (Number(r.position) || 0))
     }
     const optLegs = new Map<string, number>()
-    for (const g of book.scopedInstanceGroups ?? []) {
+    for (const g of book.scopedTradeGroups ?? []) {
       for (const o of g.options ?? []) {
         const sym = extractUnderlyingRootSymbol(o.symbol)
         optLegs.set(sym, (optLegs.get(sym) ?? 0) + 1)
@@ -142,7 +142,7 @@ export default function RiskPortfolioPage() {
         }
       },
     }
-  }, [book.fixedIncomeStocks, book.cashLikeStocks, book.allStocks, book.scopedInstanceGroups])
+  }, [book.fixedIncomeStocks, book.cashLikeStocks, book.allStocks, book.scopedTradeGroups])
 
   /** The account switch names the accounts the way the shell does. */
   const accountLabel = (id: string) =>

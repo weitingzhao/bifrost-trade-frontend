@@ -7,7 +7,7 @@ import { RiskProfilePayoffChart } from './RiskProfilePayoffChart'
 import { SegmentControl } from '@/components/data-display'
 import { RiskProfileScenarioMatrix } from './RiskProfileScenarioMatrix'
 import { cn } from '@/lib/utils'
-import { instancePanel } from './instancePanelClasses'
+import { tradePanel } from './tradePanelClasses'
 import styles from './riskProfile.module.css'
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
   /** Hide the inner "Risk Profile" heading when the parent section already has a title. */
   hideHeading?: boolean
   /** Lighter shell for instance detail drawer (no accordion sheet chrome). */
-  variant?: 'sheet' | 'instanceDetail'
+  variant?: 'sheet' | 'tradeDetail'
 }
 
 type PayoffScope = 'with_coverage' | 'options_only'
@@ -94,14 +94,14 @@ export function RiskProfileDetail({ profile, hideHeading = false, variant = 'she
   return (
     <section
       className={cn(
-        variant === 'sheet' && instancePanel.subSection,
-        variant === 'sheet' && instancePanel.subSectionRisk,
+        variant === 'sheet' && tradePanel.subSection,
+        variant === 'sheet' && tradePanel.subSectionRisk,
       )}
       onClick={(e) => e.stopPropagation()}
     >
-      {!hideHeading ? <h4 className={instancePanel.subHeading}>Risk Profile</h4> : null}
+      {!hideHeading ? <h4 className={tradePanel.subHeading}>Risk Profile</h4> : null}
 
-      <div className={variant === 'sheet' ? instancePanel.subSectionBody : undefined}>
+      <div className={variant === 'sheet' ? tradePanel.subSectionBody : undefined}>
         <div className={styles.topLine}>
           <div className={styles.topSegment}>
             <span className={styles.topLabel}>Risk Type</span>

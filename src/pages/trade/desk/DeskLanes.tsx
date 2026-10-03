@@ -87,7 +87,7 @@ export function DeskStrip({ cells }: { cells: StripCell[] }) {
 }
 
 function ItemActions({ item, onAction }: { item: DeskItem; onAction: (item: DeskItem, index: number) => void }) {
-  const openInstance = useOpenTrade()
+  const openTrade = useOpenTrade()
   return (
     <div className="flex flex-wrap items-center gap-1.5 pt-1">
       {item.tags.map((t) => (
@@ -96,13 +96,13 @@ function ItemActions({ item, onAction }: { item: DeskItem; onAction: (item: Desk
         </DenseTag>
       ))}
       {item.actions.map((a, i) =>
-        a.instance ? (
+        a.trade ? (
           <button
             key={a.label}
             type="button"
             className={cn(positionsUi.btn, 'font-mono text-[var(--color-trade-multi)]')}
-            title={`Open #${a.instance.id} — its record, over the desk`}
-            onClick={(e) => openInstance(a.instance!.id, { list: a.instance!.list, from: a.instance!.from, ...tradeHowFrom(e) })}
+            title={`Open #${a.trade.id} — its record, over the desk`}
+            onClick={(e) => openTrade(a.trade!.id, { list: a.trade!.list, from: a.trade!.from, ...tradeHowFrom(e) })}
           >
             {a.label}
           </button>

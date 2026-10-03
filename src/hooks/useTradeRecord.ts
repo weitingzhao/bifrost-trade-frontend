@@ -19,7 +19,7 @@
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useInstanceDetailData } from '@/hooks/useInstanceDetailData'
+import { useTradeDetailData } from '@/hooks/useTradeDetailData'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
@@ -27,7 +27,7 @@ import { buildOptionTicker } from '@/utils/optionTicker'
 import { todayIso } from '@/lib/researchFreshness'
 import { fetchExecutionsRange } from '@/api/trading'
 import { fetchOptionDailyBars, fetchStockDailyCloses, occToOptionTicker } from '@/api/marketData/dailyBars'
-import type { StrategyInstance } from '@/types/positions'
+import type { Trade } from '@/types/positions'
 import {
   execGroupsOf,
   legsOf,
@@ -43,10 +43,10 @@ import {
 const shiftIso = (iso: string, days: number) =>
   new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10)
 
-export function useTradeRecord(instance: StrategyInstance | null, opts?: { tws?: boolean; withShares?: boolean }) {
+export function useTradeRecord(trade: Trade | null, opts?: { tws?: boolean; withShares?: boolean }) {
   const { data: status } = useMonitorStatus()
   const accounts = status?.portfolio?.accounts ?? undefined
-  const detail = useInstanceDetailData(instance, accounts, instance != null)
+  const detail = useTradeDetailData(trade, accounts, trade != null)
   const execs = useMemo(() => detail?.executionsFinal ?? [], [detail?.executionsFinal])
   const today = todayIso()
 
@@ -97,7 +97,7 @@ export function useTradeRecord(instance: StrategyInstance | null, opts?: { tws?:
     [openKeys, live, snap, greeks.isLoading],
   )
   const eodQ = useQuery({
-    queryKey: ['instance-record', 'eod-marks', needEod, today],
+    queryKey: ['trade-record', 'eod-marks', needEod, today],
     queryFn: async () => {
       const out: Record<string, LegMark> = {}
       await Promise.all(
@@ -128,7 +128,7 @@ export function useTradeRecord(instance: StrategyInstance | null, opts?: { tws?:
     return out
   }, [quotes])
   const closeQ = useQuery({
-    queryKey: ['instance-record', 'spot-at-close', roots, life.to],
+    queryKey: ['trade-record', 'spot-at-close', roots, life.to],
     queryFn: async () => {
       const out: Record<string, { price: number; date: string }> = {}
       await Promise.all(
@@ -147,7 +147,7 @@ export function useTradeRecord(instance: StrategyInstance | null, opts?: { tws?:
   // Spot for an open instance when the gateway has no quote (after the close):
   // the underlying's last daily close, dated.
   const spotLast = useQuery({
-    queryKey: ['instance-record', 'spot-last', roots, today],
+    queryKey: ['trade-record', 'spot-last', roots, today],
     queryFn: async () => {
       const out: Record<string, number> = {}
       await Promise.all(
@@ -165,7 +165,7 @@ export function useTradeRecord(instance: StrategyInstance | null, opts?: { tws?:
 
   // Covering shares: the account's current stock position, for an open
   // instance with a short call on that name.
-  const acct = instance?.account_id ?? null
+  const acct = trade?.account_id ?? null
   const sharesFor = (root: string) => {
     if (closed || opts?.withShares === false) return null
     const shortCalls = legs.filter((l) => l.open && l.root === root && l.right === 'C' && l.openQty < 0)
@@ -225,7 +225,7 @@ export function useTradeRecord(instance: StrategyInstance | null, opts?: { tws?:
   const canCover = !closed && roots.some((r) => legs.some((l) => l.open && l.root === r && l.right === 'C' && l.openQty < 0))
 
   const twsQ = useQuery({
-    queryKey: ['instance-record', 'tws', acct, life.from],
+    queryKey: ['trade-record', 'tws', acct, life.from],
     queryFn: () =>
       fetchExecutionsRange({
         source_scope: 'tws_raw',

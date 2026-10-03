@@ -13,7 +13,7 @@ function fill(partial: Partial<Execution> & Pick<Execution, 'account_executions_
     price: 2,
     time: 1_700_000_000,
     strategy_opportunity_id: null,
-    strategy_instance_id: null,
+    trade_id: null,
     ...partial,
   } as Execution
 }
@@ -23,7 +23,7 @@ const buyLinked = fill({
   side: 'Buy',
   quantity: 2,
   strategy_opportunity_id: 8,
-  strategy_instance_id: 21,
+  trade_id: 21,
 })
 
 describe('oppositeLegSyncPayload', () => {
@@ -31,7 +31,7 @@ describe('oppositeLegSyncPayload', () => {
     const sell = fill({ account_executions_id: 12, side: 'Sell', quantity: 2 })
     expect(oppositeLegSyncPayload([buyLinked, sell], sell)).toEqual({
       opportunity_id: 8,
-      instance_id: 21,
+      trade_id: 21,
     })
   })
 
@@ -46,7 +46,7 @@ describe('oppositeLegSyncPayload', () => {
       side: 'Sell',
       quantity: 2,
       strategy_opportunity_id: 9,
-      strategy_instance_id: 22,
+      trade_id: 22,
     })
     expect(oppositeLegSyncPayload([buyLinked, sellLinked], sellLinked)).toBeNull()
   })

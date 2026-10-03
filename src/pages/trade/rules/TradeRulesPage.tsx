@@ -30,11 +30,11 @@ import type { PrefillData } from '@/components/strategy/OpportunityFormModal'
 import { opportunityDetailKey } from '@/components/strategy/opportunityCopy'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
-import { InstanceListFilters } from '@/components/strategy/InstanceListFilters'
-import { InstancesGroupedTable } from '@/components/strategy/InstancesGroupedTable'
+import { TradeListFilters } from '@/components/strategy/TradeListFilters'
+import { TradesGroupedTable } from '@/components/strategy/TradesGroupedTable'
 import { useTradeBook } from '@/hooks/useTradeBook'
-import { createCollapsedGroupsState } from '@/utils/instanceGroupCollapse'
-import type { InstanceListFilterValues } from '@/components/strategy/InstanceListFilters'
+import { createCollapsedGroupsState } from '@/utils/tradeGroupCollapse'
+import type { TradeListFilterValues } from '@/components/strategy/TradeListFilters'
 import { fetchOpportunityDetail } from '@/api/strategy'
 import { useRulesChain } from '@/hooks/useRulesChain'
 import { withSymbolParam } from '@/lib/symbolLink'
@@ -53,7 +53,7 @@ import { LineageBar, type Crumb } from './LineageBar'
 import { RulesRecord } from './RulesRecord'
 import { TradeRecord, type TradeRecordAction } from '@/components/tradeRecord/TradeRecord'
 import { buildRecord, type RecordAction } from './rulesRecordModel'
-import { instanceFaceOf } from './rulesInstanceFace'
+import { tradeFaceOf } from './rulesTradeFace'
 import { openTradePair, useOpenTrade } from '@/layout/tradeGo'
 import { buildChain, orphanGates, orphanOpportunities, visibleChain, type ChainSelection } from './rulesChain'
 import {
@@ -80,14 +80,14 @@ const NEW_SHEET: Record<string, RulesSheet> = {
   structure: { kind: 'structure', mode: { kind: 'create' } },
   opportunity: { kind: 'opportunity' },
   allocation: { kind: 'allocation', mode: 'create', editId: null },
-  instance: { kind: 'instance' },
+  trade: { kind: 'instance' },
 }
 
-const NO_FILTERS: InstanceListFilterValues = { status: '', structure: '', symbol: '', right: '', expiry: '', since: '' }
+const NO_FILTERS: TradeListFilterValues = { status: '', structure: '', symbol: '', right: '', expiry: '', since: '' }
 
 /** What a step leaves behind and gets back (design: filters, folds, scroll). */
 interface Snapshot {
-  filters: InstanceListFilterValues
+  filters: TradeListFilterValues
   collapsed: Record<string, boolean>
   flat: boolean
   boardSort: BoardSort
@@ -131,7 +131,7 @@ export default function TradeRulesPage() {
   const pickRef = useRef<(s: ChainSelection) => void>(() => undefined)
   const desk = useDeskEditing({
     data: chain.data,
-    rawInstances: chain.rawInstances,
+    rawTrades: chain.rawTrades,
     status: status.data,
     sel,
     pick: (s2) => pickRef.current(s2),
@@ -139,7 +139,7 @@ export default function TradeRulesPage() {
     renderStructure: (p) => <StructureInspector key={p.id} {...p} />,
     renderGate: (p) => <GateInspector key={p.id} {...p} />,
   })
-  const { data, rawInstances } = desk.view
+  const { data, rawTrades } = desk.view
 
   /** What the daemon's own config points at — the store `Set active` writes. */
   const daemon = useMemo(
@@ -148,7 +148,7 @@ export default function TradeRulesPage() {
   )
 
   // The list's narrowing within a focus — component state, restored per step.
-  const [instanceFilters, setInstanceFilters] = useState<InstanceListFilterValues>(NO_FILTERS)
+  const [tradeFilters, setTradeFilters] = useState<TradeListFilterValues>(NO_FILTERS)
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
   const [flat, setFlat] = useState(false)
   const [boardSort, setBoardSort] = useState<BoardSort>('pnl')
@@ -159,7 +159,7 @@ export default function TradeRulesPage() {
   /** The list an instance was opened from, so the record can step `[ ]` through it. */
   const [siblings, setSiblings] = useState<{ ids: number[]; from: string } | null>(null)
   /** The side sheet: an instance opened over the list, which stays live behind it. */
-  const openInstance = useOpenTrade()
+  const openTrade = useOpenTrade()
 
   // ── The path ────────────────────────────────────────────────────────────
   const [trail, setTrail] = useState<string[]>([])
@@ -169,7 +169,7 @@ export default function TradeRulesPage() {
   // focus this runs first, while the state (and the scroll) is still the step
   // being left — which is exactly what the snapshot has to hold.
   useEffect(() => {
-    live.current = { filters: instanceFilters, collapsed: collapsedGroups, flat, boardSort, scroll: scroller()?.scrollTop ?? 0 }
+    live.current = { filters: tradeFilters, collapsed: collapsedGroups, flat, boardSort, scroll: scroller()?.scrollTop ?? 0 }
   })
   const lastKey = useRef(key)
   // A new focus: remember what the step left, extend or truncate the path,
@@ -181,7 +181,7 @@ export default function TradeRulesPage() {
     snapshots.current.set(leaving, live.current)
     setTrail((t) => stepTrail(t, leaving, key))
     const back = snapshots.current.get(key)
-    setInstanceFilters(back?.filters ?? NO_FILTERS)
+    setTradeFilters(back?.filters ?? NO_FILTERS)
     setCollapsedGroups(back?.collapsed ?? {})
     setFlat(back?.flat ?? false)
     setBoardSort(back?.boardSort ?? 'pnl')
@@ -283,7 +283,7 @@ export default function TradeRulesPage() {
    * (measured 2026-09-18 on DEV): with opportunities but no instance at all,
    * the page says the service answered empty rather than "0 open · 0 closed".
    */
-  const instancesEmpty = data.opportunities.length > 0 && data.instances.length === 0
+  const tradesEmpty = data.opportunities.length > 0 && data.trades.length === 0
 
   // Entry conditions live only on the opportunity's own record.
   const oppDetail = useQuery({
@@ -368,9 +368,9 @@ export default function TradeRulesPage() {
   }
 
   /** The rulebook's own write on an instance — the sheet adds it to the face's footer. */
-  const instanceDelete = (id: number): TradeRecordAction[] => {
-    const reading = data.instances.find((r) => r.id === id)
-    const rec = rawInstances.find((r) => r.strategy_instance_id === id)
+  const tradeDelete = (id: number): TradeRecordAction[] => {
+    const reading = data.trades.find((r) => r.id === id)
+    const rec = rawTrades.find((r) => r.trade_id === id)
     const blocked = (reading?.fills ?? 0) > 0
     return [
       {
@@ -384,8 +384,8 @@ export default function TradeRulesPage() {
     ]
   }
   /** The inline record's header: the face's ways out, then the write. */
-  const instanceActions = (id: number): TradeRecordAction[] => {
-    const reading = data.instances.find((r) => r.id === id)
+  const tradeActions = (id: number): TradeRecordAction[] => {
+    const reading = data.trades.find((r) => r.id === id)
     return [
       reading?.closed
         ? { label: 'Review this trade →', to: '/review/trade', title: 'Review › Trade review' }
@@ -393,7 +393,7 @@ export default function TradeRulesPage() {
       ...((reading?.fills ?? 0) > 0
         ? [{ label: 'Ledger →', to: `/portfolio/ledger?inst=${id}`, title: `Portfolio › Ledger — every fill booked to #${id}` }]
         : []),
-      ...instanceDelete(id),
+      ...tradeDelete(id),
     ]
   }
 
@@ -409,26 +409,26 @@ export default function TradeRulesPage() {
         boardSort,
         actions:
           sel?.kind === 'instance' && sel.id != null
-            ? instanceActions(sel.id)
+            ? tradeActions(sel.id)
             : detailActions(sel ? sel.kind : focus.sym ? 'symbol' : 'structure'),
         siblings,
         on: { pick: (s2) => pickIt(s2), setSym, step },
       }),
     // detailActions / pickIt / setSym / step close over state already listed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [focus, data, daemon.allocationId, oppDetail.isSuccess, oppDetail.data, boardSort, siblings, rawInstances, trail, desk.inspectorOpen],
+    [focus, data, daemon.allocationId, oppDetail.isSuccess, oppDetail.data, boardSort, siblings, rawTrades, trail, desk.inspectorOpen],
   )
 
   /** The picked thing's instances, as records — the list needs the server's rows. */
-  const scopedInstances = useMemo(() => {
+  const scopedTrades = useMemo(() => {
     const ids = new Set(record?.scopedIds ?? [])
-    return rawInstances.filter((i) => ids.has(i.strategy_instance_id))
-  }, [record?.scopedIds, rawInstances])
+    return rawTrades.filter((i) => ids.has(i.trade_id))
+  }, [record?.scopedIds, rawTrades])
 
   const book = useTradeBook({
-    instances: scopedInstances,
+    trades: scopedTrades,
     opportunities: data.opportunities,
-    values: instanceFilters,
+    values: tradeFilters,
   })
 
   // ── Names for the path ──────────────────────────────────────────────────
@@ -441,7 +441,7 @@ export default function TradeRulesPage() {
       else if (f.pick.kind === 'opportunity') n = data.opportunities.find((o) => o.strategy_opportunity_id === id)?.name ?? `opportunity ${id}`
       else if (f.pick.kind === 'structure') n = data.structures.find((s) => s.strategy_structure_id === id)?.name ?? `structure ${id}`
       else if (f.pick.kind === 'allocation') n = data.allocations.find((a) => a.strategy_allocation_id === id)?.name ?? `allocation ${id}`
-      else n = `#${id}${(() => { const r = data.instances.find((i) => i.id === id); return r ? ` · ${r.symbolish}` : '' })()}`
+      else n = `#${id}${(() => { const r = data.trades.find((i) => i.id === id); return r ? ` · ${r.symbolish}` : '' })()}`
     }
     return f.sym ? (n ? `${n} · ${f.sym}` : f.sym) : n
   }
@@ -514,12 +514,12 @@ export default function TradeRulesPage() {
                 allocations: data.allocations.length,
                 gates: data.gates.length,
                 gates_carried_by_no_allocation: looseGates.length || undefined,
-                instances_open: data.instances.filter((i) => !i.closed).length,
-                instances_closed: data.instances.filter((i) => i.closed).length,
+                trades_open: data.trades.filter((i) => !i.closed).length,
+                trades_closed: data.trades.filter((i) => i.closed).length,
                 daemon_allocation_id: daemon.allocationId ?? undefined,
                 selected: sel == null ? undefined : `${sel.kind}:${sel.id}`,
                 symbol: focus.sym ?? undefined,
-                instances_in_view: scopedInstances.length || undefined,
+                trades_in_view: scopedTrades.length || undefined,
               })}
               suggestedPrompt="这条规则链目前的结构合理吗？哪些机会没有被配置覆盖，哪些闸门形同虚设？"
             />
@@ -569,7 +569,7 @@ export default function TradeRulesPage() {
         </div>
       ) : (
         <>
-          {instancesEmpty ? (
+          {tradesEmpty ? (
             <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-warning/40 bg-[var(--sk-raised)] px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
               <span className="font-semibold text-warning">The strategy service returned no trades.</span>
               The rulebook has {data.opportunities.length} opportunities, so this is the service answering empty
@@ -627,29 +627,29 @@ export default function TradeRulesPage() {
             <RulesRecord model={record} boardSort={boardSort} onBoardSort={setBoardSort}>
               {record.kind === 'instance' && sel?.id != null
                 ? (() => {
-                    const inst = rawInstances.find((r) => r.strategy_instance_id === sel.id)
+                    const inst = rawTrades.find((r) => r.trade_id === sel.id)
                     return inst ? (
                       <div className="border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3.5 py-3">
-                        <TradeRecord key={inst.strategy_instance_id} instance={inst} mode="inline" {...instanceFaceOf(data, inst.strategy_instance_id)} />
+                        <TradeRecord key={inst.trade_id} trade={inst} mode="inline" {...tradeFaceOf(data, inst.trade_id)} />
                       </div>
                     ) : null
                   })()
                 : null}
               {record.hasTable ? (
-                scopedInstances.length === 0 ? (
+                scopedTrades.length === 0 ? (
                   <p className="m-0 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3.5 py-4 text-dense-label text-[var(--sk-mute2)]">
                     Nothing has run under this yet.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-2 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3 py-2.5">
-                    <InstanceListFilters
+                    <TradeListFilters
                       options={book.filterOptions}
-                      values={instanceFilters}
+                      values={tradeFilters}
                       sinceRangeText={book.sinceRangeText}
                       filteredCount={book.filtered.length}
-                      totalCount={scopedInstances.length}
-                      onChange={(patch) => setInstanceFilters((prev) => ({ ...prev, ...patch }))}
-                      onClear={() => setInstanceFilters(NO_FILTERS)}
+                      totalCount={scopedTrades.length}
+                      onChange={(patch) => setTradeFilters((prev) => ({ ...prev, ...patch }))}
+                      onClear={() => setTradeFilters(NO_FILTERS)}
                       hideSymbol
                       onExpandAll={() =>
                         setCollapsedGroups((prev) => createCollapsedGroupsState(book.groups, 'multi', prev, 'expandAll'))
@@ -677,7 +677,7 @@ export default function TradeRulesPage() {
                         ) : undefined
                       }
                     />
-                    <InstancesGroupedTable
+                    <TradesGroupedTable
                       groups={book.groups}
                       metricsMap={book.metricsMap}
                       detailViewMode="multi"
@@ -688,18 +688,18 @@ export default function TradeRulesPage() {
                       flat={flat || focus.sym != null}
                       showOpportunity={record.multiOpp}
                       onDrill={(inst, ids) =>
-                        pickIt({ kind: 'instance', id: inst.strategy_instance_id }, { ids, from: fromLabel })
+                        pickIt({ kind: 'instance', id: inst.trade_id }, { ids, from: fromLabel })
                       }
                       onSym={(y) => setSym(y, true)}
                       tokenFrom={fromLabel}
                       onCompare={(inst) => {
-                        const id = inst.strategy_instance_id
+                        const id = inst.trade_id
                         if (compareWith == null || compareWith === id) {
                           setCompareWith(compareWith === id ? null : id)
                           return
                         }
                         setCompareWith(null)
-                        openTradePair(openInstance, compareWith, id, 'Rules')
+                        openTradePair(openTrade, compareWith, id, 'Rules')
                       }}
                       activeDetailId={null}
                       compareId={compareWith}

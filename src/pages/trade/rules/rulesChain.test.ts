@@ -7,15 +7,15 @@ import {
   lineageOf,
   orphanOpportunities,
   plural,
-  readInstances,
+  readTrades,
   visibleChain,
   type ChainData,
 } from './rulesChain'
 import type { Execution } from '@/types/positions'
 import type {
-  GateSafetyItem,
+  GateSetItem,
   StrategyAllocation,
-  StrategyInstance,
+  Trade,
   StrategyOpportunity,
   StrategyStructure,
 } from '@/types/strategy'
@@ -75,7 +75,7 @@ const ALLOC: StrategyAllocation = {
   updated_at: '2031-03-04T14:30:00Z',
 }
 
-const GATE: GateSafetyItem = {
+const GATE: GateSetItem = {
   gate_safety_strategy_id: 1,
   name: 'Security Gate',
   version: 2,
@@ -89,12 +89,11 @@ const GATE: GateSafetyItem = {
   structure_type: null,
 }
 
-function instance(p: Partial<StrategyInstance> & { strategy_instance_id: number }): StrategyInstance {
+function trade(p: Partial<Trade> & { trade_id: number }): Trade {
   return {
     strategy_opportunity_id: 1,
     account_id: 'U1',
     label: null,
-    notes: null,
     opened_at: '2026-08-03T12:00:00Z',
     created_at: '2031-03-04T14:30:00Z',
     updated_at: '2031-03-04T14:30:00Z',
@@ -107,7 +106,7 @@ function instance(p: Partial<StrategyInstance> & { strategy_instance_id: number 
 }
 
 function fill(p: {
-  instance: number
+  trade: number
   side: 'BUY' | 'SELL'
   qty: number
   price: number
@@ -123,27 +122,27 @@ function fill(p: {
     quantity: p.qty,
     price: p.price,
     commission: 0,
-    strategy_instance_id: p.instance,
+    trade_id: p.trade,
     trade_date: '2026-08-03',
     time: 1,
   } as unknown as Execution
 }
 
-describe('readInstances', () => {
+describe('readTrades', () => {
   it('reads closed from the server state; expired counts as closed (core 0.41.0, TD-43)', () => {
-    const [closed, expired, open, none] = readInstances(
+    const [closed, expired, open, none] = readTrades(
       [
-        instance({ strategy_instance_id: 1, state: 'closed', closed_on: '2026-08-10' }),
-        instance({ strategy_instance_id: 2, state: 'expired', closed_on: '2026-09-18' }),
-        instance({ strategy_instance_id: 3, state: 'open' }),
-        instance({ strategy_instance_id: 4, state: 'no_fills' }),
+        trade({ trade_id: 1, state: 'closed', closed_on: '2026-08-10' }),
+        trade({ trade_id: 2, state: 'expired', closed_on: '2026-09-18' }),
+        trade({ trade_id: 3, state: 'open' }),
+        trade({ trade_id: 4, state: 'no_fills' }),
       ],
       // The fills no longer decide: instance 2 still has an open short leg by them.
       [
-        fill({ instance: 1, side: 'SELL', qty: 1, price: 10 }),
-        fill({ instance: 1, side: 'BUY', qty: 1, price: 3 }),
-        fill({ instance: 2, side: 'SELL', qty: 1, price: 10 }),
-        fill({ instance: 3, side: 'SELL', qty: 1, price: 10 }),
+        fill({ trade: 1, side: 'SELL', qty: 1, price: 10 }),
+        fill({ trade: 1, side: 'BUY', qty: 1, price: 3 }),
+        fill({ trade: 2, side: 'SELL', qty: 1, price: 10 }),
+        fill({ trade: 3, side: 'SELL', qty: 1, price: 10 }),
       ],
     )
     expect([closed.closed, expired.closed, open.closed, none.closed]).toEqual([true, true, false, false])
@@ -151,17 +150,17 @@ describe('readInstances', () => {
   })
 
   it('gives a realised figure only once the instance is closed', () => {
-    const [closed, expired, open] = readInstances(
+    const [closed, expired, open] = readTrades(
       [
-        instance({ strategy_instance_id: 1, state: 'closed' }),
-        instance({ strategy_instance_id: 2, state: 'expired' }),
-        instance({ strategy_instance_id: 3, state: 'open' }),
+        trade({ trade_id: 1, state: 'closed' }),
+        trade({ trade_id: 2, state: 'expired' }),
+        trade({ trade_id: 3, state: 'open' }),
       ],
       [
-        fill({ instance: 1, side: 'SELL', qty: 1, price: 10 }),
-        fill({ instance: 1, side: 'BUY', qty: 1, price: 3 }),
-        fill({ instance: 2, side: 'SELL', qty: 1, price: 10 }),
-        fill({ instance: 3, side: 'SELL', qty: 1, price: 10 }),
+        fill({ trade: 1, side: 'SELL', qty: 1, price: 10 }),
+        fill({ trade: 1, side: 'BUY', qty: 1, price: 3 }),
+        fill({ trade: 2, side: 'SELL', qty: 1, price: 10 }),
+        fill({ trade: 3, side: 'SELL', qty: 1, price: 10 }),
       ],
     )
     expect(closed.realised).toBeCloseTo(700, 6)
@@ -173,8 +172,8 @@ describe('readInstances', () => {
   })
 
   it('does not call an instance with no fill at all closed, nor one the server sent no state for', () => {
-    const [none, unsaid] = readInstances(
-      [instance({ strategy_instance_id: 9, state: 'no_fills' }), instance({ strategy_instance_id: 8 })],
+    const [none, unsaid] = readTrades(
+      [trade({ trade_id: 9, state: 'no_fills' }), trade({ trade_id: 8 })],
       [],
     )
     expect(none.closed).toBe(false)
@@ -185,8 +184,8 @@ describe('readInstances', () => {
   })
 
   it('names an instance by its label, and falls back to its id', () => {
-    const [labelled, bare] = readInstances(
-      [instance({ strategy_instance_id: 1, label: 'Wheel · NVDA' }), instance({ strategy_instance_id: 2 })],
+    const [labelled, bare] = readTrades(
+      [trade({ trade_id: 1, label: 'Wheel · NVDA' }), trade({ trade_id: 2 })],
       [],
     )
     expect(labelled.label).toBe('Wheel · NVDA')
@@ -203,15 +202,15 @@ const DATA: ChainData = {
   ],
   allocations: [ALLOC],
   gates: [GATE],
-  instances: readInstances(
+  trades: readTrades(
     [
-      instance({ strategy_instance_id: 10, strategy_opportunity_id: 1, state: 'closed' }),
-      instance({ strategy_instance_id: 11, strategy_opportunity_id: 2, state: 'open' }),
+      trade({ trade_id: 10, strategy_opportunity_id: 1, state: 'closed' }),
+      trade({ trade_id: 11, strategy_opportunity_id: 2, state: 'open' }),
     ],
     [
-      fill({ instance: 10, side: 'SELL', qty: 1, price: 10 }),
-      fill({ instance: 10, side: 'BUY', qty: 1, price: 3 }),
-      fill({ instance: 11, side: 'SELL', qty: 1, price: 10 }),
+      fill({ trade: 10, side: 'SELL', qty: 1, price: 10 }),
+      fill({ trade: 10, side: 'BUY', qty: 1, price: 3 }),
+      fill({ trade: 11, side: 'SELL', qty: 1, price: 10 }),
     ],
   ),
 }
@@ -219,12 +218,12 @@ const DATA: ChainData = {
 describe('lineageOf', () => {
   it('lights nothing when nothing is picked', () => {
     const lit = lineageOf(null, DATA)
-    expect(lit.structure.size + lit.opportunity.size + lit.allocation.size + lit.instance.size).toBe(0)
+    expect(lit.structure.size + lit.opportunity.size + lit.allocation.size + lit.trade.size).toBe(0)
   })
 
   it('walks up from an instance to its gate-bearing allocation', () => {
     const lit = lineageOf({ kind: 'instance', id: 10 }, DATA)
-    expect([...lit.instance]).toEqual([10])
+    expect([...lit.trade]).toEqual([10])
     expect([...lit.opportunity]).toEqual([1])
     expect([...lit.structure]).toEqual([1])
     expect([...lit.allocation]).toEqual([1])
@@ -233,7 +232,7 @@ describe('lineageOf', () => {
   it('walks down from a structure to every instance under it', () => {
     const lit = lineageOf({ kind: 'structure', id: 1 }, DATA)
     expect([...lit.opportunity].sort()).toEqual([1, 2])
-    expect([...lit.instance].sort()).toEqual([10, 11])
+    expect([...lit.trade].sort()).toEqual([10, 11])
   })
 
   it('leaves the allocation dark for an opportunity no allocation carries', () => {
@@ -348,7 +347,7 @@ describe('visibleChain and its counts', () => {
         o.strategy_opportunity_id === 2 ? { ...o, is_active: false } : o,
       ),
     }
-    expect(visibleChain(hidden, true).instances.map((i) => i.id)).toEqual([])
+    expect(visibleChain(hidden, true).trades.map((i) => i.id)).toEqual([])
   })
 })
 

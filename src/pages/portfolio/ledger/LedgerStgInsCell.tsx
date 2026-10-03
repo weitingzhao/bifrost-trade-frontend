@@ -1,6 +1,6 @@
 import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import type { Execution } from '@/types/positions'
-import { executionInstanceLabel } from '@/utils/ledger/ledgerOptHelpers'
+import { executionTradeLabel } from '@/utils/ledger/ledgerOptHelpers'
 import {
   DenseOptionCategoryLabel,
   denseOptionCategoryLabelClass,
@@ -13,18 +13,18 @@ function formatAllocQty(q: number): string {
   return n % 1 === 0 ? String(n) : String(Number(n.toFixed(6)))
 }
 
-const instanceLinkClass = cn(
-  denseOptionCategoryLabelClass('instance'),
+const tradeLinkClass = cn(
+  denseOptionCategoryLabelClass('trade'),
   'hover:underline whitespace-normal',
 )
 
 export function LedgerStgInsCell({ ex }: { ex: Execution }) {
   const strategyName = ex.strategy_opportunity_name?.trim()
-  const allocs = ex.instance_allocations
+  const allocs = ex.fill_splits
   const hasSplits = Array.isArray(allocs) && allocs.length > 0
-  const instanceId = ex.strategy_instance_id
+  const tradeId = ex.trade_id
 
-  if (!strategyName && instanceId == null && !hasSplits) {
+  if (!strategyName && tradeId == null && !hasSplits) {
     return <>—</>
   }
 
@@ -38,18 +38,18 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
         ) : null}
         <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-label="Fill splits">
           {allocs!.map(a => {
-            const sid = a.strategy_instance_id
+            const sid = a.trade_id
             const label =
-              a.strategy_instance_label?.trim() || executionInstanceLabel(ex, sid) || undefined
-            const qty = a.allocated_quantity
+              a.trade_label?.trim() || executionTradeLabel(ex, sid) || undefined
+            const qty = a.quantity
             return (
               <li key={sid} className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
                 {label ? (
-                  <DenseOptionCategoryLabel variant="instance" className="whitespace-normal">
+                  <DenseOptionCategoryLabel variant="trade" className="whitespace-normal">
                     {label}
                   </DenseOptionCategoryLabel>
                 ) : null}
-                <TradeRef id={sid} className={instanceLinkClass} from="Ledger · fills" />
+                <TradeRef id={sid} className={tradeLinkClass} from="Ledger · fills" />
                 <span className="text-dense-meta tabular-nums text-muted-foreground">
                   {formatAllocQty(qty)}
                 </span>
@@ -61,8 +61,8 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
     )
   }
 
-  if (instanceId != null) {
-    const instLabel = executionInstanceLabel(ex, instanceId)?.trim()
+  if (tradeId != null) {
+    const instLabel = executionTradeLabel(ex, tradeId)?.trim()
     return (
       <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5">
         {strategyName ? (
@@ -74,11 +74,11 @@ export function LedgerStgInsCell({ ex }: { ex: Execution }) {
           </>
         ) : null}
         {instLabel ? (
-          <DenseOptionCategoryLabel variant="instance" className="whitespace-normal">
+          <DenseOptionCategoryLabel variant="trade" className="whitespace-normal">
             {instLabel}
           </DenseOptionCategoryLabel>
         ) : null}
-        <TradeRef id={instanceId} className={instanceLinkClass} from="Ledger · fills" />
+        <TradeRef id={tradeId} className={tradeLinkClass} from="Ledger · fills" />
       </span>
     )
   }

@@ -1,5 +1,5 @@
 import type { UseQueryResult } from '@tanstack/react-query'
-import type { OpportunitiesResponse, StrategyInstancesResponse } from '@/types/strategy'
+import type { OpportunitiesResponse, TradesResponse } from '@/types/strategy'
 import type { PerformanceTimeRange } from '@/utils/ledger/performanceUtils'
 import { cn } from '@/lib/utils'
 import {
@@ -31,7 +31,7 @@ interface PerformanceFilterBarProps {
   onOppChange: (v: string) => void
   onInstChange: (v: string) => void
   oppQuery: UseQueryResult<OpportunitiesResponse>
-  instQuery: UseQueryResult<StrategyInstancesResponse>
+  instQuery: UseQueryResult<TradesResponse>
   /** `N active days · N trades · capital base $X`. */
   scopeNote: string
   isLoading?: boolean
@@ -107,8 +107,8 @@ export function PerformanceFilterBar({
           <SelectContent>
             <SelectItem value="all">All trades</SelectItem>
             {(instQuery.data?.items ?? []).map(i => (
-              <SelectItem key={i.strategy_instance_id} value={String(i.strategy_instance_id)}>
-                {i.label ?? `#${i.strategy_instance_id}`}
+              <SelectItem key={i.trade_id} value={String(i.trade_id)}>
+                {i.label ?? `#${i.trade_id}`}
               </SelectItem>
             ))}
           </SelectContent>

@@ -11,13 +11,13 @@ import { cn } from '@/lib/utils'
 import { DenseTagButton, SegmentControl } from '@/components/data-display'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { positionsUi } from './positionsUi'
-import type { InstanceFilterValues } from '@/utils/filterInstanceGroups'
+import type { TradeFilterValues } from '@/utils/filterTradeGroups'
 
-export type { InstanceFilterValues }
+export type { TradeFilterValues }
 export type LinesView = 'strategy' | 'contract' | 'expiries'
 export type DetailViewMode = 'accordion' | 'multi'
 
-export const CLEAR_FILTERS: InstanceFilterValues = {
+export const CLEAR_FILTERS: TradeFilterValues = {
   structureType: 'all',
   oppName: 'all',
   scopeType: 'all',
@@ -34,8 +34,8 @@ interface Props {
   structureTypes: { value: string; label: string }[]
   oppNames: string[]
   scopeTypes: string[]
-  values: InstanceFilterValues
-  onChange: (values: InstanceFilterValues) => void
+  values: TradeFilterValues
+  onChange: (values: TradeFilterValues) => void
   /** "N of M" for the strategy view; the contract view prints its own count. */
   shown: number
   total: number
@@ -68,7 +68,7 @@ export function LinesToolbar({
     values.scopeType !== 'all' ||
     values.attributionType !== 'all'
 
-  function update(partial: Partial<InstanceFilterValues>) {
+  function update(partial: Partial<TradeFilterValues>) {
     onChange({ ...values, ...partial })
   }
 

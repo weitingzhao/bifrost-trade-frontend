@@ -37,13 +37,14 @@ import { scrollWhenPresent, flashFound } from '@/lib/scrollWhenPresent'
 import { fmtPct0 } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
-import { fetchAllocations, fetchStrategyInstances } from '@/api/strategy'
+import { fetchAllocations, fetchTrades } from '@/api/strategy'
 import { useExecutionsAll } from '@/hooks/useExecutions'
-import { readInstances } from '@/utils/strategyInstances'
+import { readTrades } from '@/utils/tradeReadings'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
 import { RISK_BUDGET_UNRECORDED } from '@/utils/riskBudget'
 import { nyDate, takenToday, weekOf } from './sizingTodayModel'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 const PAGE_LEAD =
   'How big, and how much room is left. Four caps per candidate, the smallest wins; the risk cap spends a per-trade, per-day and per-week budget that the calendar refills. Candidates arrive from Compare and Plans; the gate cap reads the active allocation in Trading › Rules.'
@@ -81,16 +82,16 @@ export default function RiskSizingPage() {
   }, [location.hash])
 
   const allocationsQuery = useQuery({ queryKey: ['strategy', 'allocations'], queryFn: () => fetchAllocations() })
-  const instancesQuery = useQuery({ queryKey: ['strategy', 'instances'], queryFn: () => fetchStrategyInstances() })
+  const tradesQuery = useQuery({ queryKey: QUERY_KEYS.trades.list, queryFn: () => fetchTrades() })
   const execQuery = useExecutionsAll()
   const allocation = (allocationsQuery.data?.items ?? []).find((a) => a.is_active) ?? null
   const gateOpen = useMemo(() => {
     if (allocation == null) return null
     const oppIds = new Set(allocation.strategy_opportunity_ids ?? [])
-    return readInstances(instancesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter(
+    return readTrades(tradesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter(
       (i) => !i.closed && oppIds.has(i.opportunityId),
     ).length
-  }, [allocation, instancesQuery.data?.items, execQuery.data?.items])
+  }, [allocation, tradesQuery.data?.items, execQuery.data?.items])
   const gateMax = allocation?.max_positions ?? null
   const gateRoom = gateOpen == null || gateMax == null ? null : Math.max(0, gateMax - gateOpen)
 

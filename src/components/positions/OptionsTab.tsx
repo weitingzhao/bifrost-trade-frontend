@@ -7,7 +7,7 @@ import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { Link } from 'react-router-dom'
 import { Compass, ScanSearch } from 'lucide-react'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
-import { getPositionExecLists } from '@/utils/buildInstanceAllGroups'
+import { getPositionExecLists } from '@/utils/buildTradeAllGroups'
 import { buildLiveOptExecutionMap } from '@/utils/positionsExecutions'
 import {
   findMatchingFinalForTws,
@@ -20,7 +20,7 @@ import {
   getOptionsTabPositionKey,
   getPositionTime,
   getPositionUnderlyingLast,
-  instanceIconFillFromMergedExecutions,
+  tradeIconFillFromMergedExecutions,
   optionExpiryMatchesFilter,
   optionLastStrikePctClass,
   optQuoteMid,
@@ -71,12 +71,12 @@ interface Props {
   onDeleteExec?: (exec: Execution) => void
   onCloseExec?: (exec: Execution, netQty: number) => void
   onInspect?: (pos: OpenOptionPosition) => void
-  onOpenStrategy?: (instanceId: number) => void
+  onOpenStrategy?: (tradeId: number) => void
   onRefreshExecs?: () => void
   canonicalOptContractKeys?: Set<string>
 }
 
-function InstanceIcon({ fill }: { fill: 'none' | 'all' | 'mixed' }) {
+function TradeIcon({ fill }: { fill: 'none' | 'all' | 'mixed' }) {
   const colorClass =
     fill === 'all'
       ? 'text-success'
@@ -165,7 +165,7 @@ export function OptionsTab({
         // un-split by a sync — the server refuses (409) and the toast says why.
         const res = await patchExecutionAttribution(id, {
           strategy_opportunity_id: source.strategy_opportunity_id ?? null,
-          strategy_instance_id: source.strategy_instance_id ?? null,
+          trade_id: source.trade_id ?? null,
         })
         if (!res.ok) {
           notify(`Attribution not synced — ${res.error}`)
@@ -324,7 +324,7 @@ export function OptionsTab({
                 ? computeOptionMtmPnlUsd(liveMid, avgPerShare, pos.qty)
                 : null
 
-            const iconFill = instanceIconFillFromMergedExecutions(execLists.merged)
+            const iconFill = tradeIconFillFromMergedExecutions(execLists.merged)
 
             const posRow = (
               <DenseTableRow
@@ -359,7 +359,7 @@ export function OptionsTab({
                   ) : null}
                 </DenseTableCell>
                 <DenseTableCell className={denseTableEntityCell}>
-                  {iconFill !== 'empty' && <InstanceIcon fill={iconFill} />}
+                  {iconFill !== 'empty' && <TradeIcon fill={iconFill} />}
                   {onInspect ? (
                     <span onClick={e => e.stopPropagation()}>
                       <DenseLinkButton

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildLanes, decideItems, executeItems, expiringItem, instanceByContract, needsYou, settleItems } from './deskModel'
+import { buildLanes, decideItems, executeItems, expiringItem, tradeByContract, needsYou, settleItems } from './deskModel'
 import type { ShortLeg } from '@/api/shortLegs'
 import type { OrderIntentDraft } from '@/api/research/orderIntents'
 import type { Execution } from '@/types/positions'
@@ -28,7 +28,7 @@ function intent(p: Partial<OrderIntentDraft> = {}): OrderIntentDraft {
 }
 
 function exec(p: Partial<Execution> = {}): Execution {
-  return { trade_date: '2026-09-17', symbol: 'MU', strategy_instance_id: 11, ...p } as Execution
+  return { trade_date: '2026-09-17', symbol: 'MU', trade_id: 11, ...p } as Execution
 }
 
 function plan(p: Partial<StrategyPlan> = {}): StrategyPlan {
@@ -108,7 +108,7 @@ describe('execute lane', () => {
 
 describe('settle lane', () => {
   it('groups the window’s fills into claimed and unclaimed rather than listing them', () => {
-    const items = settleItems([exec(), exec({ strategy_instance_id: null, symbol: 'GOOG' })], TODAY)
+    const items = settleItems([exec(), exec({ trade_id: null, symbol: 'GOOG' })], TODAY)
     expect(items.map((i) => i.key)).toEqual(['fills:linked', 'fills:orphan'])
     expect(items[1].tone).toBe('warning')
   })
@@ -174,7 +174,7 @@ describe('lanes', () => {
       tightPct: TIGHT,
       plans: [plan()],
       orders: [],
-      fills: [exec({ strategy_instance_id: null })],
+      fills: [exec({ trade_id: null })],
       outsideRules: () => null,
       today: TODAY,
     })
@@ -190,7 +190,7 @@ describe('what is in force', () => {
   // same bytes, and only another count that arrived in the same batch can tell
   // them apart.
   it('is only unread when another row of the same batch did arrive', () => {
-    const unread = (opportunities: number, instances: number) => opportunities > 0 && instances === 0
+    const unread = (opportunities: number, trades: number) => opportunities > 0 && trades === 0
     expect(unread(7, 0)).toBe(true)
     // A rulebook with nothing in it at all is not the service failing.
     expect(unread(0, 0)).toBe(false)
@@ -254,32 +254,32 @@ describe('a draft with no legs', () => {
 describe('instance tokens on the desk (Rev .101)', () => {
   it('settle names the instances this window landed on, newest first, and steps all of them', () => {
     const fills = [
-      exec({ strategy_instance_id: 11, time: 100 }),
-      exec({ strategy_instance_id: 12, time: 300 }),
-      exec({ strategy_instance_id: 13, time: 200 }),
-      exec({ strategy_instance_id: 14, time: 50 }),
-      exec({ strategy_instance_id: 12, time: 250 }),
+      exec({ trade_id: 11, time: 100 }),
+      exec({ trade_id: 12, time: 300 }),
+      exec({ trade_id: 13, time: 200 }),
+      exec({ trade_id: 14, time: 50 }),
+      exec({ trade_id: 12, time: 250 }),
     ]
     const [linked] = settleItems(fills, TODAY)
-    const tokens = linked.actions.filter((a) => a.instance)
+    const tokens = linked.actions.filter((a) => a.trade)
     expect(tokens.map((a) => a.label)).toEqual(['Trade #12', 'Trade #13', 'Trade #11'])
-    expect(tokens[0].instance).toEqual({ id: 12, list: [12, 13, 11, 14], from: 'Desk · settle' })
+    expect(tokens[0].trade).toEqual({ id: 12, list: [12, 13, 11, 14], from: 'Desk · settle' })
   })
 
   it('a tight leg names the instance holding its contract — its latest claimed fill', () => {
     const ck = 'ZZTM  261120P00100000|OPT|20261120|100|P'
-    const holders = instanceByContract([
-      exec({ contract_key: ck, strategy_instance_id: 21, time: 1 }),
-      exec({ contract_key: ck, strategy_instance_id: 22, time: 2 }),
-      exec({ contract_key: ck, strategy_instance_id: null, time: 3 }),
+    const holders = tradeByContract([
+      exec({ contract_key: ck, trade_id: 21, time: 1 }),
+      exec({ contract_key: ck, trade_id: 22, time: 2 }),
+      exec({ contract_key: ck, trade_id: null, time: 3 }),
     ])
     expect(holders.get(ck)).toBe(22)
     const [item] = decideItems([], [leg({ symbol: 'ZZTM', spot: 101, contract_key: ck })], TIGHT, TODAY, holders)
-    expect(item.actions[0]).toMatchObject({ label: 'Trade #22', instance: { id: 22, from: 'Desk · decide' } })
+    expect(item.actions[0]).toMatchObject({ label: 'Trade #22', trade: { id: 22, from: 'Desk · decide' } })
   })
 
   it('a leg no fill claims carries no token', () => {
     const [item] = decideItems([], [leg({ symbol: 'ZZTM', spot: 101, contract_key: 'NOPE' })], TIGHT, TODAY)
-    expect(item.actions.some((a) => a.instance)).toBe(false)
+    expect(item.actions.some((a) => a.trade)).toBe(false)
   })
 })

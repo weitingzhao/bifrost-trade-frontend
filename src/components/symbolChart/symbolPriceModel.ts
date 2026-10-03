@@ -134,7 +134,7 @@ export interface TrackJoint {
  * that join them, and one label. `id` null gathers fills no instance claims —
  * drawn plain, since there is no record to open.
  */
-export interface InstanceTrack {
+export interface TradeTrack {
   key: string
   id: number | null
   legs: TrackLeg[]
@@ -168,20 +168,20 @@ const stripCash = (l: TrackLeg & { cashIn: number; cashOut: number; t0: number }
  * same instance. Open legs take their mark from the monitor rows `My legs`
  * shows, and carry none when the monitor has no matching leg.
  */
-export function instanceTracksFor(
+export function tradeTracksFor(
   executions: readonly Execution[],
   symbol: string,
   legs: readonly SymbolLeg[],
-): InstanceTrack[] {
+): TradeTrack[] {
   const sym = symbol.trim().toUpperCase()
   if (!sym) return []
   const mine = executions.filter((e) => (e.sec_type ?? '').toUpperCase() === 'OPT' && underlyingOf(e.symbol) === sym)
   const byInst = new Map<number | null, Execution[]>()
   for (const e of mine) {
-    const id = e.strategy_instance_id ?? null
+    const id = e.trade_id ?? null
     byInst.set(id, [...(byInst.get(id) ?? []), e])
   }
-  const out: InstanceTrack[] = []
+  const out: TradeTrack[] = []
   for (const [id, fills] of byInst) {
     const tl: (TrackLeg & { cashIn: number; cashOut: number; t0: number })[] = []
     for (const g of buildOptExecutionGroups([...fills])) {
@@ -273,7 +273,7 @@ export interface Holding {
  * free to write against. Stock legs are never attributed to instances, so
  * backing is read from the calls, not from a share fill.
  */
-export function holdingFor(legs: readonly SymbolLeg[], tracks: readonly InstanceTrack[]): Holding | null {
+export function holdingFor(legs: readonly SymbolLeg[], tracks: readonly TradeTrack[]): Holding | null {
   const stk = legs.filter((l) => l.kind === 'STK' && l.qty > 0)
   const qty = stk.reduce((a, l) => a + l.qty, 0)
   if (qty <= 0) return null

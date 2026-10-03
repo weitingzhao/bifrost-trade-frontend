@@ -13,7 +13,7 @@ const profile = {
   max_loss: -880,
 } as unknown as RiskProfile
 
-function renderRiskFace(over: { onOpenInstance?: () => void } = {}) {
+function renderRiskFace(over: { onOpenTrade?: () => void } = {}) {
   return render(
     <MemoryRouter>
       <PositionsFaceSlot
@@ -34,8 +34,8 @@ describe('PositionsFaceSlot · risk face', () => {
     expect(out).toHaveAttribute('href', '/risk/portfolio#stress')
   })
   it('keeps the instance sheet beside it when the caller offers one', () => {
-    const onOpenInstance = vi.fn()
-    renderRiskFace({ onOpenInstance })
+    const onOpenTrade = vi.fn()
+    renderRiskFace({ onOpenTrade })
     expect(screen.getByRole('button', { name: /trade detail/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /whole-book stress · Exposure/ })).toBeInTheDocument()
   })

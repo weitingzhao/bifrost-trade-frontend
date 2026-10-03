@@ -13,7 +13,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { PageShell } from '@/components/layout'
 import { PageHead } from '@/components/layout/PageHead'
 import { TradeRecord } from '@/components/tradeRecord/TradeRecord'
-import { useAllocations, useGateSafety, useStrategyInstance } from '@/hooks/useStrategies'
+import { useAllocations, useGateSets, useTrade } from '@/hooks/useStrategies'
 import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { useInSurface } from '@/lib/surfaceScope'
 import { tradePath, setSurfaceTrade, type Surface } from '@/layout/equipSurface'
@@ -60,9 +60,9 @@ export function TradeView({ surface }: { surface?: Surface }) {
     stepRef.current = step
   })
 
-  const q = useStrategyInstance(id, id != null)
+  const q = useTrade(id, id != null)
   const allocations = useAllocations()
-  const gates = useGateSafety()
+  const gates = useGateSets()
   const inst = q.data ?? null
   const compact = inSurface && width <= COMPACT_MAX_PX
 
@@ -96,10 +96,10 @@ export function TradeView({ surface }: { surface?: Surface }) {
       >
         {inst ? (
           <TradeRecord
-            key={inst.strategy_instance_id}
-            instance={inst}
+            key={inst.trade_id}
+            trade={inst}
             mode="panel"
-            title={`#${inst.strategy_instance_id}${inst.label?.trim() ? ` · ${inst.label.trim()}` : ''}`}
+            title={`#${inst.trade_id}${inst.label?.trim() ? ` · ${inst.label.trim()}` : ''}`}
             opportunity={inst.strategy_opportunity_name ?? '—'}
             structure={inst.strategy_structure_name ?? '—'}
             pos={pos}
@@ -128,7 +128,7 @@ export function TradeView({ surface }: { surface?: Surface }) {
       <PageShell padding="compact" className="space-y-3">
         {inst ? (
           <TradeWide
-            instance={inst}
+            trade={inst}
             list={hasList ? list : undefined}
             from={from}
             pos={pos}

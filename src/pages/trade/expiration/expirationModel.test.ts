@@ -86,9 +86,9 @@ describe('buildExpiryLegs', () => {
     // each — DEV 2026-09-22: RKLB 18DEC26 90C three times carrying -26.
     const legs = buildExpiryLegs({
       attributions: [
-        leg({ position_qty: -26, strategy_instance_id: 158 } as Partial<PositionAttribution>),
-        leg({ position_qty: -26, strategy_instance_id: 160 } as Partial<PositionAttribution>),
-        leg({ position_qty: -26, strategy_instance_id: null } as Partial<PositionAttribution>),
+        leg({ position_qty: -26, trade_id: 158 } as Partial<PositionAttribution>),
+        leg({ position_qty: -26, trade_id: 160 } as Partial<PositionAttribution>),
+        leg({ position_qty: -26, trade_id: null } as Partial<PositionAttribution>),
       ],
       markByKey: MARKS,
       spotBySymbol: SPOTS,
@@ -176,7 +176,7 @@ describe('decisionEffect', () => {
     closeCost: 370,
     entryCost: 500,
     thetaPerDay: 12,
-    instanceId: null,
+    tradeId: null,
     structure: null,
     accounts: ['U1'],
   }

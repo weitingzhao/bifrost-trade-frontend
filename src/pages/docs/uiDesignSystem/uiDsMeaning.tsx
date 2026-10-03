@@ -112,7 +112,7 @@ export function EntitySection() {
                 <Code>DenseLinkButton variant=&quot;option&quot;</Code>
               </td>
               <td data-sr-col="wrap">
-                <Code>DenseLinkButton variant=&quot;instance&quot;</Code>
+                <Code>DenseLinkButton variant=&quot;trade&quot;</Code>
               </td>
             </tr>
             <tr>
@@ -134,7 +134,7 @@ export function EntitySection() {
         <span className={EYEBROW}>Identity column — links</span>
         <DenseLinkButton variant="stock" label="NVDA" ariaLabel="Open NVDA" onClick={noop} />
         <DenseLinkButton variant="option" label="NVDA 250620C140" ariaLabel="Open option contract" onClick={noop} />
-        <DenseLinkButton variant="instance" label="CC-NVDA-0620" ariaLabel="Open trade" onClick={noop} />
+        <DenseLinkButton variant="trade" label="CC-NVDA-0620" ariaLabel="Open trade" onClick={noop} />
         <span className={EYEBROW}>read-only</span>
         <strong className="font-semibold text-entity-symbol">CAVA</strong>
       </div>
@@ -145,7 +145,7 @@ export function EntitySection() {
             never <Code>truncate</Code>
           </>,
           <>
-            <Code>text-entity-symbol</Code> · <Code>-option</Code> · <Code>-instance</Code> resolve to{' '}
+            <Code>text-entity-symbol</Code> · <Code>-option</Code> · <Code>-trade</Code> resolve to{' '}
             <Code>--sk-ticker</Code> · <Code>--sk-contract</Code> · <Code>--sk-trade</Code> — one value in both
             places
           </>,
@@ -176,7 +176,7 @@ export function CategorySection() {
               design's category pill: this side's contract reserves the pill
               for position categories (asked of Design, Rev .55 receipt). */}
           <div className="flex flex-wrap items-center gap-3">
-            <DenseOptionCategoryLabel variant="instance">Trade</DenseOptionCategoryLabel>
+            <DenseOptionCategoryLabel variant="trade">Trade</DenseOptionCategoryLabel>
             <DenseOptionCategoryLabel variant="strategy">Strategy</DenseOptionCategoryLabel>
             <DenseOptionCategoryLabel variant="opportunity">Opportunity</DenseOptionCategoryLabel>
             <DenseOptionCategoryLabel variant="structure">Structure</DenseOptionCategoryLabel>

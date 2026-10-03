@@ -1,5 +1,5 @@
 import type { IbPositionRow } from '@/types/monitor'
-import type { LivePositionRow, OpenOptionPosition, InstanceAllGroup, PositionInstanceAttribution } from '@/types/positions'
+import type { LivePositionRow, OpenOptionPosition, TradeAllGroup, PositionTradeAttribution } from '@/types/positions'
 
 export interface AccountFilter {
   host: boolean
@@ -74,9 +74,9 @@ export function filterStocksByBucket(stocks: LivePositionRow[], bucket: StockBuc
 
 export function buildOpenOptionPositions(
   optionPositions: LivePositionRow[],
-  attributions: PositionInstanceAttribution[],
+  attributions: PositionTradeAttribution[],
 ): OpenOptionPosition[] {
-  const attrMap = new Map<string, PositionInstanceAttribution>()
+  const attrMap = new Map<string, PositionTradeAttribution>()
   for (const a of attributions) {
     attrMap.set(`${a.account_id}|${a.contract_key}`, a)
   }
@@ -101,27 +101,27 @@ export function buildOpenOptionPositions(
       account_id: pos.account_id,
       position: pos,
       attribution_type: attr
-        ? attr.strategy_instance_id == null
+        ? attr.trade_id == null
           ? 'unassigned'
           : attr.is_mixed
             ? 'mixed'
             : 'single'
         : undefined,
       attribution_ratio: attr?.attribution_ratio,
-      strategy_instance_id: attr?.strategy_instance_id,
-      strategy_instance_label: attr?.strategy_instance_label,
+      trade_id: attr?.trade_id,
+      trade_label: attr?.trade_label,
       strategy_opportunity_name: attr?.strategy_opportunity_name,
     }
   })
 }
 
-export function groupByInstance(positions: OpenOptionPosition[]): InstanceAllGroup[] {
+export function groupByTrade(positions: OpenOptionPosition[]): TradeAllGroup[] {
   // Positions with a real instance ID → group by instance
   const linked = new Map<number, OpenOptionPosition[]>()
   const unlinked: OpenOptionPosition[] = []
 
   for (const pos of positions) {
-    const instId = pos.strategy_instance_id ?? null
+    const instId = pos.trade_id ?? null
     if (instId != null) {
       const arr = linked.get(instId)
       if (arr) arr.push(pos)
@@ -131,18 +131,18 @@ export function groupByInstance(positions: OpenOptionPosition[]): InstanceAllGro
     }
   }
 
-  const result: InstanceAllGroup[] = []
+  const result: TradeAllGroup[] = []
 
   // Linked instance groups
   for (const [instId, opts] of linked) {
     const first = opts[0]
     const totalPnl = opts.reduce((sum, o) => sum + o.unrealized_pnl, 0)
     result.push({
-      strategy_instance_id: instId,
-      strategy_instance_label: first?.strategy_instance_label ?? null,
+      trade_id: instId,
+      trade_label: first?.trade_label ?? null,
       strategy_opportunity_name: first?.strategy_opportunity_name ?? null,
       strategy_opportunity_id: null,
-      strategy_instance_opened_at_epoch: null,
+      trade_opened_at_epoch: null,
       options: opts,
       stock_coverage: [],
       options_unrealized_pnl: totalPnl,
@@ -157,11 +157,11 @@ export function groupByInstance(positions: OpenOptionPosition[]): InstanceAllGro
   // Unlinked positions: each contract becomes its own row (not all merged under "Uncategorized")
   for (const pos of unlinked) {
     result.push({
-      strategy_instance_id: null,
-      strategy_instance_label: null,
+      trade_id: null,
+      trade_label: null,
       strategy_opportunity_name: null,
       strategy_opportunity_id: null,
-      strategy_instance_opened_at_epoch: null,
+      trade_opened_at_epoch: null,
       options: [pos],
       stock_coverage: [],
       options_unrealized_pnl: pos.unrealized_pnl,
@@ -174,9 +174,9 @@ export function groupByInstance(positions: OpenOptionPosition[]): InstanceAllGro
   }
 
   result.sort((a, b) => {
-    if (a.strategy_instance_id == null && b.strategy_instance_id != null) return 1
-    if (a.strategy_instance_id != null && b.strategy_instance_id == null) return -1
-    return (a.strategy_instance_label ?? '').localeCompare(b.strategy_instance_label ?? '')
+    if (a.trade_id == null && b.trade_id != null) return 1
+    if (a.trade_id != null && b.trade_id == null) return -1
+    return (a.trade_label ?? '').localeCompare(b.trade_label ?? '')
   })
 
   return result

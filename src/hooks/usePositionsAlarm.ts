@@ -18,7 +18,7 @@
  *    alarm channel stops being read.
  */
 import { extractUnderlyingRootSymbol } from '@/components/positions/linkExecutionModalHelpers'
-import { instanceGroupKey } from '@/utils/instanceSheetExec'
+import { tradeGroupKey } from '@/utils/tradeSheetExec'
 import { quoteFeedAgeSec } from '@/utils/positions'
 import {
   buildExpiryLadder,
@@ -33,7 +33,7 @@ import {
   summarizeAssignmentExposure,
   type ExposureSummary,
 } from '@/utils/assignmentExposure'
-import type { InstanceAllGroup, LivePositionRow } from '@/types/positions'
+import type { TradeAllGroup, LivePositionRow } from '@/types/positions'
 import {
   deriveBookVsBase,
   riskCountsFromLadder,
@@ -108,7 +108,7 @@ export function usePositionsAlarm({
   cushionTightPct,
   barsBySymbol,
 }: {
-  groups: InstanceAllGroup[]
+  groups: TradeAllGroup[]
   quotesBySymbol: Record<string, QuoteItem>
   accounts: IbAccountSnapshot[]
   /** Stock rows in scope, for allocating shares against short calls. */
@@ -125,7 +125,7 @@ export function usePositionsAlarm({
 }): PositionsAlarm {
   const legs: AlarmLeg[] = []
   for (const group of groups) {
-    const key = instanceGroupKey(group)
+    const key = tradeGroupKey(group)
     for (const pos of group.options) {
       legs.push({
         strike: pos.strike,
@@ -133,7 +133,7 @@ export function usePositionsAlarm({
         right: pos.right,
         qty: pos.qty,
         underlying: extractUnderlyingRootSymbol(pos.symbol),
-        instanceKey: key,
+        tradeKey: key,
         accountId: (pos.account_id ?? '').trim(),
         contractKey: pos.contract_key ?? '',
         // Instance groups already carry the cost per share (IB's ×100 unwound upstream); normalising again would

@@ -82,7 +82,7 @@ export const StrategyPlanSchema = z
     intended_at: z.string().nullable(),
     filled_at: z.string().nullable(),
     cancelled_at: z.string().nullable(),
-    strategy_instance_id: z.number().int().nullable(),
+    trade_id: z.number().int().nullable(),
     parent_strategy_plan_id: z.number().int().nullable(),
     created_at: z.string(),
     updated_at: z.string(),

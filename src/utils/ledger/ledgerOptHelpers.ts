@@ -188,16 +188,16 @@ export function getOptionStockLinkDetailForExecution(
  * Prorated sum of option–stock link slippage attributed to this strategy instance.
  * For split executions, slippage scales by (|instance qty| / |parent execution qty|).
  */
-export function instanceOptionStockSlippageAdjustment(
+export function tradeOptionStockSlippageAdjustment(
   executionsFinalRaw: Execution[],
-  strategyInstanceId: number,
+  tradeId: number,
   linkByOptionId: Record<number, OptionStockLinkSummary> | undefined,
 ): number {
   if (!linkByOptionId || Object.keys(linkByOptionId).length === 0) return 0
   let sum = 0
   for (const ex of executionsFinalRaw) {
     if ((ex.sec_type ?? '').toUpperCase() !== 'OPT') continue
-    const slice = sliceExecutionForInstanceOptView(ex, strategyInstanceId)
+    const slice = sliceExecutionForTradeOptView(ex, tradeId)
     if (!slice) continue
     const oid = ex.account_executions_id
     if (oid == null) continue
@@ -211,43 +211,43 @@ export function instanceOptionStockSlippageAdjustment(
   return sum
 }
 
-/** Instance id(s) on this execution: allocation rows or single strategy_instance_id. */
-export function executionStrategyInstanceIds(e: Execution): number[] {
-  const allocs = e.instance_allocations
+/** Trade id(s) on this execution: its fill splits, or its single trade_id. */
+export function executionTradeIds(e: Execution): number[] {
+  const allocs = e.fill_splits
   if (allocs && allocs.length > 0) {
     const out: number[] = []
     for (const a of allocs) {
-      const id = a.strategy_instance_id
+      const id = a.trade_id
       if (id != null && Number.isFinite(Number(id))) {
         out.push(Number(id))
       }
     }
     if (out.length > 0) return out
   }
-  if (e.strategy_instance_id != null && Number.isFinite(Number(e.strategy_instance_id))) {
-    return [Number(e.strategy_instance_id)]
+  if (e.trade_id != null && Number.isFinite(Number(e.trade_id))) {
+    return [Number(e.trade_id)]
   }
   return []
 }
 
 /**
- * Synthetic row for one strategy_instance: allocated signed qty and pro-rata PnL/commission
+ * Synthetic row for one trade: its split's signed qty and pro-rata PnL/commission
  * (Legacy ledgerOptHelpers / reader weight_realized_for_strategy_instance parity).
  */
-export function sliceExecutionForInstanceOptView(
+export function sliceExecutionForTradeOptView(
   ex: Execution,
-  instanceId: number,
+  tradeId: number,
 ): Execution | null {
-  const allocs = ex.instance_allocations
+  const allocs = ex.fill_splits
   if (allocs && allocs.length > 0) {
     let denom = 0
     for (const a of allocs) {
-      denom += Math.abs(Number(a.allocated_quantity) || 0)
+      denom += Math.abs(Number(a.quantity) || 0)
     }
     if (denom <= 0) return null
-    const mine = allocs.find(a => Number(a.strategy_instance_id) === instanceId)
+    const mine = allocs.find(a => Number(a.trade_id) === tradeId)
     if (!mine) return null
-    const allocQty = Number(mine.allocated_quantity)
+    const allocQty = Number(mine.quantity)
     if (!Number.isFinite(allocQty)) return null
     const w = Math.abs(allocQty) / denom
 
@@ -287,20 +287,20 @@ export function sliceExecutionForInstanceOptView(
         netCash != null && Number.isFinite(Number(netCash)) ? Number(netCash) * w : netCash,
       strategy_opportunity_id: resolvedOppId,
       strategy_opportunity_name: resolvedOppName,
-      strategy_instance_id: instanceId,
-      strategy_instance_label:
-        (mine.strategy_instance_label?.trim() || ex.strategy_instance_label?.trim()) ?? null,
-      instance_allocations: undefined,
+      trade_id: tradeId,
+      trade_label:
+        (mine.trade_label?.trim() || ex.trade_label?.trim()) ?? null,
+      fill_splits: undefined,
     }
   }
 
-  if (ex.strategy_instance_id === instanceId) return ex
+  if (ex.trade_id === tradeId) return ex
   return null
 }
 
 /** Expand one execution into per-allocation instance rows (qty/PnL + opportunity id from allocation). */
 export function expandExecutionRowsForStrategyOptView(ex: Execution): Execution[] {
-  const ids = executionStrategyInstanceIds(ex)
+  const ids = executionTradeIds(ex)
   if (ids.length === 0) {
     return [ex]
   }
@@ -309,18 +309,18 @@ export function expandExecutionRowsForStrategyOptView(ex: Execution): Execution[
   for (const id of ids) {
     if (seen.has(id)) continue
     seen.add(id)
-    const row = sliceExecutionForInstanceOptView(ex, id)
+    const row = sliceExecutionForTradeOptView(ex, id)
     if (row) out.push(row)
   }
   return out
 }
 
-export function groupExecutionsByStrategyInstanceId(
+export function groupExecutionsByTradeId(
   trades: Execution[],
 ): Map<number | 'none', Execution[]> {
   const m = new Map<number | 'none', Execution[]>()
   for (const t of trades) {
-    const sid = t.strategy_instance_id
+    const sid = t.trade_id
     const key: number | 'none' =
       sid != null && Number.isFinite(Number(sid)) ? Number(sid) : 'none'
     const arr = m.get(key)
@@ -364,15 +364,15 @@ export function executionStrategyOpportunityKey(ex: Execution): number | 'none' 
 }
 
 /** Resolved label for a specific instance on this execution. */
-export function executionInstanceLabel(ex: Execution, instanceId: number): string | null {
-  const allocs = ex.instance_allocations
+export function executionTradeLabel(ex: Execution, tradeId: number): string | null {
+  const allocs = ex.fill_splits
   if (allocs && allocs.length > 0) {
-    const m = allocs.find(a => a.strategy_instance_id === instanceId)
-    const fromAlloc = m?.strategy_instance_label?.trim()
+    const m = allocs.find(a => a.trade_id === tradeId)
+    const fromAlloc = m?.trade_label?.trim()
     if (fromAlloc) return fromAlloc
   }
-  const col = ex.strategy_instance_label?.trim()
-  if (ex.strategy_instance_id === instanceId && col) return col
+  const col = ex.trade_label?.trim()
+  if (ex.trade_id === tradeId && col) return col
   return null
 }
 
@@ -440,18 +440,18 @@ export function sumLinkSlippageForOptGroup(
 }
 
 /** Attribution consistency across all trades in a closed option group. */
-export type InstanceConsistencyState = 'none' | 'mixed' | 'same' | 'multiple'
+export type TradeConsistencyState = 'none' | 'mixed' | 'same' | 'multiple'
 
 /**
  * 'none' = no fill has instance, 'mixed' = some do/some don't,
  * 'same' = all same single id, 'multiple' = all attributed but to different ids.
  */
-export function getInstanceConsistencyState(trades: Execution[]): InstanceConsistencyState {
+export function getTradeConsistencyState(trades: Execution[]): TradeConsistencyState {
   if (trades.length === 0) return 'none'
   const ids: number[] = []
-  for (const t of trades) ids.push(...executionStrategyInstanceIds(t))
+  for (const t of trades) ids.push(...executionTradeIds(t))
   if (ids.length === 0) return 'none'
-  const allHave = trades.every(t => executionStrategyInstanceIds(t).length > 0)
+  const allHave = trades.every(t => executionTradeIds(t).length > 0)
   if (!allHave) return 'mixed'
   return new Set(ids).size === 1 ? 'same' : 'multiple'
 }
@@ -477,25 +477,25 @@ export function executionAbsQuantity(ex: Execution): number {
 }
 
 /** Sibling fills on the same option contract that already have instance attribution (Assign strategy shortcut). */
-export interface PeerInstancePick {
+export interface PeerTradePick {
   strategy_opportunity_id: number
-  strategy_instance_id: number
+  trade_id: number
   label: string
 }
 
 /** Unique (opportunity, instance) pairs from other executions in the same contract group. */
-export function collectPeerInstancePicks(
+export function collectPeerTradePicks(
   sameContractTrades: Execution[],
   currentAccountExecutionsId: number,
-): PeerInstancePick[] {
+): PeerTradePick[] {
   const seen = new Set<string>()
-  const out: PeerInstancePick[] = []
+  const out: PeerTradePick[] = []
   for (const peer of sameContractTrades) {
     const pid = peer.account_executions_id
     if (pid != null && pid === currentAccountExecutionsId) continue
-    const iids = executionStrategyInstanceIds(peer)
+    const iids = executionTradeIds(peer)
     for (const iid of iids) {
-      const sliced = sliceExecutionForInstanceOptView(peer, iid)
+      const sliced = sliceExecutionForTradeOptView(peer, iid)
       const oppRaw = sliced?.strategy_opportunity_id ?? peer.strategy_opportunity_id
       if (oppRaw == null || !Number.isFinite(Number(oppRaw))) continue
       const oppId = Number(oppRaw)
@@ -507,9 +507,9 @@ export function collectPeerInstancePicks(
           peer.strategy_opportunity_name?.trim() ||
           '') || `Opportunity #${oppId}`
       const instLab =
-        (sliced?.strategy_instance_label?.trim() || peer.strategy_instance_label?.trim() || '') || ''
+        (sliced?.trade_label?.trim() || peer.trade_label?.trim() || '') || ''
       const label = instLab ? `${oppName} · ${instLab} (#${iid})` : `${oppName} · #${iid}`
-      out.push({ strategy_opportunity_id: oppId, strategy_instance_id: iid, label })
+      out.push({ strategy_opportunity_id: oppId, trade_id: iid, label })
     }
   }
   out.sort((a, b) => a.label.localeCompare(b.label))
@@ -537,7 +537,7 @@ export function findOppositeLegAttributionSource(
     if (executionAbsQuantity(t) !== exQty) continue
 
     const opp = t.strategy_opportunity_id
-    const instIds = executionStrategyInstanceIds(t)
+    const instIds = executionTradeIds(t)
     if (instIds.length !== 1) continue
     const inst = instIds[0]
     if (opp == null || !Number.isFinite(Number(opp)) || !Number.isFinite(Number(inst))) continue

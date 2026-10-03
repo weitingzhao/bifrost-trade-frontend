@@ -28,9 +28,9 @@ export function usePerformanceOnTheFly(params: {
   timeRange: PerformanceTimeRange
   calendarMonth: string
   strategyOpportunityId: number | null
-  strategyInstanceId: number | null
+  tradeId: number | null
 }) {
-  const { enabled, timeRange, calendarMonth, strategyOpportunityId, strategyInstanceId } = params
+  const { enabled, timeRange, calendarMonth, strategyOpportunityId, tradeId } = params
 
   const { sinceStr, untilStr } = getTimeRangeDates(timeRange, calendarMonth)
   const { since_ts } = getChicagoDayRange(sinceStr)
@@ -43,7 +43,7 @@ export function usePerformanceOnTheFly(params: {
       sinceStr,
       untilStr,
       strategyOpportunityId,
-      strategyInstanceId,
+      tradeId,
     ],
     enabled,
     staleTime: 30_000,
@@ -54,14 +54,14 @@ export function usePerformanceOnTheFly(params: {
           to_ts: until_ts,
           granularity: 'day',
           strategy_opportunity_id: strategyOpportunityId ?? undefined,
-          strategy_instance_id: strategyInstanceId ?? undefined,
+          trade_id: tradeId ?? undefined,
           source_scope: 'on_the_fly',
         }),
         fetchPerformanceExecutionsMerged(
           sinceStr,
           untilStr,
           strategyOpportunityId,
-          strategyInstanceId,
+          tradeId,
           'on_the_fly',
         ),
       ])

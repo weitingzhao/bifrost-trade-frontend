@@ -55,32 +55,32 @@ export function mergeExecsUniqueById(a: Execution[], b: Execution[]): Execution[
   return out
 }
 
-export function executionStrategyInstanceIds(ex: Execution): number[] {
-  const allocs = ex.instance_allocations
+export function executionTradeIds(ex: Execution): number[] {
+  const allocs = ex.fill_splits
   if (allocs && allocs.length > 0) {
     const out: number[] = []
     for (const a of allocs) {
-      const id = a.strategy_instance_id
+      const id = a.trade_id
       if (id != null && Number.isFinite(Number(id))) out.push(Number(id))
     }
     if (out.length > 0) return out
   }
-  if (ex.strategy_instance_id != null && Number.isFinite(Number(ex.strategy_instance_id))) {
-    return [Number(ex.strategy_instance_id)]
+  if (ex.trade_id != null && Number.isFinite(Number(ex.trade_id))) {
+    return [Number(ex.trade_id)]
   }
   return []
 }
 
-export function executionMatchesInstanceGroup(
+export function executionMatchesTradeGroup(
   ex: Execution,
-  strategyInstanceId: number | null,
+  tradeId: number | null,
   strategyOpportunityId: number | null,
 ): boolean {
-  if (strategyInstanceId == null) {
-    return executionStrategyInstanceIds(ex).length === 0
+  if (tradeId == null) {
+    return executionTradeIds(ex).length === 0
   }
-  const ids = executionStrategyInstanceIds(ex)
-  if (!ids.includes(strategyInstanceId)) return false
+  const ids = executionTradeIds(ex)
+  if (!ids.includes(tradeId)) return false
   if (strategyOpportunityId == null) return true
   const exOpp =
     ex.strategy_opportunity_id != null && Number.isFinite(Number(ex.strategy_opportunity_id))

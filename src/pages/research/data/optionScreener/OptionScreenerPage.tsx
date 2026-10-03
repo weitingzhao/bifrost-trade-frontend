@@ -300,7 +300,7 @@ export default function OptionScreenerPage() {
         prefill={{
           name: `${structureLabel} · ${sourceLabel?.split(' ·')[0] ?? symbols.join(' ')}`,
           structureId: '',
-          gateSafetyId: '',
+          gateSetId: '',
           scopeType: 'explicit_symbols',
           symbols,
           conditions: [],

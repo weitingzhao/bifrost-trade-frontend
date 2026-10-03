@@ -1,5 +1,5 @@
 import type { CreateExecutionBody, Execution } from '@/types/positions'
-import { isBuySide, isSellSide } from '@/utils/instanceDetail/executionSide'
+import { isBuySide, isSellSide } from '@/utils/tradeDetail/executionSide'
 
 /** Signed size of one fill. IB sides are BUY/SELL (or BOT/SLD), not 'Buy'. */
 export function signedFillQty(exec: Execution): number {
@@ -62,8 +62,8 @@ export function quickCloseBody(
     commission,
     currency: 'USD',
   }
-  if (exec.strategy_instance_id != null && exec.strategy_opportunity_id != null) {
-    body.strategy_instance_id = exec.strategy_instance_id
+  if (exec.trade_id != null && exec.strategy_opportunity_id != null) {
+    body.trade_id = exec.trade_id
     body.strategy_opportunity_id = exec.strategy_opportunity_id
   }
   return body

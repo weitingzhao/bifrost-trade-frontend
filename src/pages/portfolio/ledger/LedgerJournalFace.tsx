@@ -234,14 +234,14 @@ function JournalFaceForContract({
         <Field
           label="Trade"
           note={
-            draft.instanceId != null
+            draft.tradeId != null
               ? "from this contract's fills, with its opportunity"
               : 'none written — link it afterwards with ⛓'
           }
         >
           <Input
             className="h-7 font-mono text-dense-meta text-[var(--color-trade-multi)]"
-            value={draft.instanceId != null ? `#${draft.instanceId}` : '—'}
+            value={draft.tradeId != null ? `#${draft.tradeId}` : '—'}
             readOnly
           />
         </Field>

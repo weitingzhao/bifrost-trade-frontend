@@ -25,18 +25,18 @@ import {
 } from '@/utils/ledger/stkBuckets'
 import type { StkLedgerBucket } from '@/utils/ledger/stkBuckets'
 import {
-  executionStrategyInstanceIds,
-  sliceExecutionForInstanceOptView,
+  executionTradeIds,
+  sliceExecutionForTradeOptView,
   expandExecutionRowsForStrategyOptView,
-  groupExecutionsByStrategyInstanceId,
+  groupExecutionsByTradeId,
   executionStrategyOpportunityKey,
-  executionInstanceLabel,
-  getInstanceConsistencyState,
+  executionTradeLabel,
+  getTradeConsistencyState,
 } from '@/utils/ledger/ledgerOptHelpers'
-import type { InstanceConsistencyState } from '@/utils/ledger/ledgerOptHelpers'
+import type { TradeConsistencyState } from '@/utils/ledger/ledgerOptHelpers'
 import { useLedgerOptionStockLinks } from '@/hooks/useLedgerOptionStockLinks'
 import { getLedgerAccountTabs, getLedgerAccountIds } from '@/lib/ledgerAccountTabs'
-import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter } from '@/pages/portfolio/ledger/ledgerTypes'
+import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, TradeSubTab, OptTradeFilter } from '@/pages/portfolio/ledger/ledgerTypes'
 import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { executionPassesLedgerFilters } from '@/pages/portfolio/ledger/ledgerFilterMatch'
 import { LEDGER_ROW_TYPE_TABS, countUnreportedTransactionType, type LedgerRowType } from '@/pages/portfolio/ledger/ledgerRowType'
@@ -61,14 +61,14 @@ export type TradeLedgerModelParams = {
   rowType: LedgerRowType
   groupBy: GroupBy
   optSubTab: OptSubTab
-  instanceSubTab: InstanceSubTab
-  optInstanceFilter: OptInstanceFilter
+  tradeSubTab: TradeSubTab
+  optTradeFilter: OptTradeFilter
   stkCategoryTab: string
   optRightFilter: '' | 'C' | 'P'
   optSort: { col: OptSortCol; dir: 'asc' | 'desc' }
   stkSort: { col: StkSortCol; dir: 'asc' | 'desc' }
   groupByPosition: boolean
-  instanceContainOpenFilter: 'all' | 'yes' | 'no'
+  tradeContainOpenFilter: 'all' | 'yes' | 'no'
 }
 
 export function useTradeLedgerModel(p: TradeLedgerModelParams) {
@@ -88,13 +88,13 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     filterWishlistSymbol,
     rowType,
     groupBy,
-    instanceSubTab,
+    tradeSubTab,
     optRightFilter,
     optSort,
     stkSort,
     groupByPosition,
-    instanceContainOpenFilter,
-    optInstanceFilter,
+    tradeContainOpenFilter,
+    optTradeFilter,
     stkCategoryTab,
   } = p
 
@@ -245,15 +245,15 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
 
   // Options tab attribution filter
   const filteredClosedOptGroups = useMemo(() => {
-  if (optInstanceFilter === 'all') return sortedClosedOptGroups
+  if (optTradeFilter === 'all') return sortedClosedOptGroups
   return sortedClosedOptGroups.filter(g => {
-    const state: InstanceConsistencyState = getInstanceConsistencyState(g.trades)
-    if (optInstanceFilter === 'has_instance') return state === 'same' || state === 'multiple'
-    if (optInstanceFilter === 'no_instance') return state === 'none'
-    if (optInstanceFilter === 'mixed') return state === 'mixed'
+    const state: TradeConsistencyState = getTradeConsistencyState(g.trades)
+    if (optTradeFilter === 'has_instance') return state === 'same' || state === 'multiple'
+    if (optTradeFilter === 'no_instance') return state === 'none'
+    if (optTradeFilter === 'mixed') return state === 'mixed'
     return true
   })
-  }, [sortedClosedOptGroups, optInstanceFilter])
+  }, [sortedClosedOptGroups, optTradeFilter])
 
   const sortedOpenOptGroups = useMemo(() => {
   const list = optRightFilter
@@ -375,29 +375,29 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   }
   return Array.from(byOpp.entries())
     .map(([oppId, trades]) => {
-      const byInst = groupExecutionsByStrategyInstanceId(trades)
-      const instanceSubgroups = Array.from(byInst.entries())
+      const byInst = groupExecutionsByTradeId(trades)
+      const tradeSubgroups = Array.from(byInst.entries())
         .map(([instId, instTrades]) => {
           // Legacy parity: allocation split happens in expandExecutionRowsForStrategyOptView;
           // do not slice again per instance or legs can mis-classify as open.
           const groups = buildOptExecutionGroups(instTrades)
           // The row already shows the id; a label is only what a fill names the instance.
           const label = instId !== 'none'
-            ? instTrades.map(t => executionInstanceLabel(t, instId as number)).find(l => l && l.trim()) ?? null
+            ? instTrades.map(t => executionTradeLabel(t, instId as number)).find(l => l && l.trim()) ?? null
             : null
-          return { instanceId: instId, label, groups }
+          return { tradeId: instId, label, groups }
         })
         .sort((a, b) => {
-          if (a.instanceId === 'none') return 1
-          if (b.instanceId === 'none') return -1
-          return (b.instanceId as number) - (a.instanceId as number)
+          if (a.tradeId === 'none') return 1
+          if (b.tradeId === 'none') return -1
+          return (b.tradeId as number) - (a.tradeId as number)
         })
       const opp = oppId !== 'none' ? opportunitiesMap.get(oppId as number) : null
       const title = trades.find(t => t.strategy_opportunity_name)?.strategy_opportunity_name
         ?? opp?.name ?? (oppId !== 'none' ? `Opportunity #${oppId as number}` : 'No opportunity')
       const structure = opp?.structure_name ?? '—'
       const symbols = opp?.symbols ?? []
-      return { opportunityId: oppId, title, structure, symbols, instanceSubgroups }
+      return { opportunityId: oppId, title, structure, symbols, tradeSubgroups }
     })
     .sort((a, b) => {
       if (a.opportunityId === 'none') return 1
@@ -409,7 +409,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   const filteredStrategyOpportunityGroups = useMemo(() => {
   if (!optRightFilter) return strategyOpportunityGroups
   return strategyOpportunityGroups.filter(og =>
-    og.instanceSubgroups.some(sg =>
+    og.tradeSubgroups.some(sg =>
       sg.groups.some(g => {
         const r = (g.contract_key?.split('|')[4] ?? '').toUpperCase().slice(0, 1)
         return r === optRightFilter
@@ -421,7 +421,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   const strategyPanelOptionRights = useMemo((): ('C' | 'P')[] => {
   const rights = new Set<'C' | 'P'>()
   for (const og of strategyOpportunityGroups) {
-    for (const sg of og.instanceSubgroups) {
+    for (const sg of og.tradeSubgroups) {
       for (const g of sg.groups) {
         const r = (g.contract_key?.split('|')[4] ?? '').toUpperCase().slice(0, 1)
         if (r === 'C' || r === 'P') rights.add(r)
@@ -474,11 +474,11 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   ])
 
   // ── Instance groups ──────────────────────────────────────────────────────
-  const instanceGroupsRaw = useMemo(() => {
+  const tradeGroupsRaw = useMemo(() => {
   const byId = new Map<number, Execution[]>()
   const noInst: Execution[] = []
   for (const e of optionExecutionsBook) {
-    const ids = executionStrategyInstanceIds(e)
+    const ids = executionTradeIds(e)
     if (ids.length === 0) {
       noInst.push(e)
     } else {
@@ -493,14 +493,14 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     withInst: Array.from(byId.entries())
       .map(([id, trades]) => {
         const tradesForGroups = trades.flatMap(t => {
-          const row = sliceExecutionForInstanceOptView(t, id)
+          const row = sliceExecutionForTradeOptView(t, id)
           return row ? [row] : []
         })
-        const label = trades.map(t => executionInstanceLabel(t, id)).find(l => l && l.trim()) ?? null
+        const label = trades.map(t => executionTradeLabel(t, id)).find(l => l && l.trim()) ?? null
         const oppId = trades.find(t => t.strategy_opportunity_id)?.strategy_opportunity_id ?? null
         const opp = oppId != null ? opportunitiesMap.get(oppId) : null
         return {
-          instanceId: id,
+          tradeId: id,
           label,
           oppName: trades.find(t => t.strategy_opportunity_name)?.strategy_opportunity_name ?? null,
           structure: opp?.structure_name ?? '—',
@@ -509,30 +509,30 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
           trades,
         }
       })
-      .sort((a, b) => b.instanceId - a.instanceId),
+      .sort((a, b) => b.tradeId - a.tradeId),
     noInst,
   }
   }, [optionExecutionsBook, opportunitiesMap])
 
-  const filteredInstanceGroups = useMemo(() => {
-  let list = instanceGroupsRaw.withInst
-  if (instanceSubTab === 'contains_open' || instanceContainOpenFilter === 'yes') {
+  const filteredTradeGroups = useMemo(() => {
+  let list = tradeGroupsRaw.withInst
+  if (tradeSubTab === 'contains_open' || tradeContainOpenFilter === 'yes') {
     list = list.filter(ig => ig.groups.some(g => g.status === 'unrealized'))
-  } else if (instanceContainOpenFilter === 'no') {
+  } else if (tradeContainOpenFilter === 'no') {
     list = list.filter(ig => ig.groups.every(g => g.status !== 'unrealized'))
   }
   if (optRightFilter) list = list.filter(ig => ig.groups.some(g => g.option_right.toUpperCase()[0] === optRightFilter))
   return list
-  }, [instanceGroupsRaw, instanceContainOpenFilter, instanceSubTab, optRightFilter])
+  }, [tradeGroupsRaw, tradeContainOpenFilter, tradeSubTab, optRightFilter])
 
-  const noInstanceOptGroups = useMemo(
-    () => buildOptExecutionGroups(instanceGroupsRaw.noInst),
-  [instanceGroupsRaw.noInst],
+  const noTradeOptGroups = useMemo(
+    () => buildOptExecutionGroups(tradeGroupsRaw.noInst),
+  [tradeGroupsRaw.noInst],
 )
 
 // ── Group-by display buckets ─────────────────────────────────────────────
 type StratOppGroupBase = typeof strategyOpportunityGroups[number]
-type InstGroupBase = typeof filteredInstanceGroups[number]
+type InstGroupBase = typeof filteredTradeGroups[number]
 
   const strategyDisplayBuckets = useMemo((): { key: string; label: string; groups: StratOppGroupBase[] }[] => {
   if (groupBy === 'opportunity') return [{ key: '_all', label: '', groups: filteredStrategyOpportunityGroups }]
@@ -559,11 +559,11 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
     .map(([k, g]) => ({ key: `sym:${k}`, label: k === '—' ? 'No watchlist symbol' : k, groups: g }))
   }, [groupBy, filteredStrategyOpportunityGroups])
 
-  const instanceDisplayBuckets = useMemo((): { key: string; label: string; groups: InstGroupBase[] }[] => {
-  if (groupBy === 'opportunity') return [{ key: '_all', label: '', groups: filteredInstanceGroups }]
+  const tradeDisplayBuckets = useMemo((): { key: string; label: string; groups: InstGroupBase[] }[] => {
+  if (groupBy === 'opportunity') return [{ key: '_all', label: '', groups: filteredTradeGroups }]
   if (groupBy === 'structure') {
     const m = new Map<string, InstGroupBase[]>()
-    for (const ig of filteredInstanceGroups) {
+    for (const ig of filteredTradeGroups) {
       const k = ig.structure || '—'
       const arr = m.get(k) ?? []; arr.push(ig); m.set(k, arr)
     }
@@ -571,7 +571,7 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
       .map(([k, g]) => ({ key: `struct:${k}`, label: k === '—' ? 'Unspecified structure' : k, groups: g }))
   }
   const m = new Map<string, InstGroupBase[]>()
-  for (const ig of filteredInstanceGroups) {
+  for (const ig of filteredTradeGroups) {
     const syms = ig.symbols.length > 0 ? ig.symbols : ['—']
     const seen = new Set<string>()
     for (const sym of syms) {
@@ -581,7 +581,7 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
   }
   return Array.from(m.entries()).sort(([a], [b]) => a.localeCompare(b))
     .map(([k, g]) => ({ key: `sym:${k}`, label: k === '—' ? 'No watchlist symbol' : k, groups: g }))
-  }, [groupBy, filteredInstanceGroups])
+  }, [groupBy, filteredTradeGroups])
 
   // ── Tab availability ─────────────────────────────────────────────────────
   const hasOptExecs = optGroups.length > 0
@@ -589,7 +589,7 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
   const hasFixedIncomeExecs = stkByBucket.fixed_income.length > 0
   const hasCashLikeExecs = stkByBucket.cash_like.length > 0
   const hasComboExecs = comboExecs.length > 0
-  const containsOpenCount = instanceGroupsRaw.withInst.filter(ig =>
+  const containsOpenCount = tradeGroupsRaw.withInst.filter(ig =>
     ig.groups.some(g => g.status === 'unrealized'),
   ).length
   const uncategorizedCount = stkExecsSorted.filter(e => {
@@ -693,11 +693,11 @@ type InstGroupBase = typeof filteredInstanceGroups[number]
     filteredStrategyOpportunityGroups,
     strategyPanelOptionRights,
     activeFilterSummary,
-    instanceGroupsRaw,
-    filteredInstanceGroups,
-    noInstanceOptGroups,
+    tradeGroupsRaw,
+    filteredTradeGroups,
+    noTradeOptGroups,
     strategyDisplayBuckets,
-    instanceDisplayBuckets,
+    tradeDisplayBuckets,
     hasOptExecs,
     hasStkExecs,
     hasFixedIncomeExecs,

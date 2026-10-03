@@ -31,12 +31,12 @@
  * The daemon's finer states — tight, roll due — are FSM states nothing exposes,
  * so the column says open or closed and does not invent the rest.
  */
-export { readInstances, type InstanceReading } from '@/utils/strategyInstances'
-import { type InstanceReading } from '@/utils/strategyInstances'
+export { readTrades, type TradeReading } from '@/utils/tradeReadings'
+import { type TradeReading } from '@/utils/tradeReadings'
 export type { ChainData } from '@/hooks/useRulesChain'
 import type { ChainData } from '@/hooks/useRulesChain'
 import type {
-  GateSafetyItem,
+  GateSetItem,
   StrategyOpportunity,
   StrategyStructure,
 } from '@/types/strategy'
@@ -106,7 +106,7 @@ interface Lit {
   structure: Set<number>
   opportunity: Set<number>
   allocation: Set<number>
-  instance: Set<number>
+  trade: Set<number>
 }
 
 /**
@@ -121,7 +121,7 @@ export function lineageOf(sel: ChainSelection | null, d: ChainData): Lit {
     structure: new Set(),
     opportunity: new Set(),
     allocation: new Set(),
-    instance: new Set(),
+    trade: new Set(),
   }
   // A whole column lights nothing: everything is in scope, and dimming
   // three columns to say so would read as a lineage rather than its absence.
@@ -129,20 +129,20 @@ export function lineageOf(sel: ChainSelection | null, d: ChainData): Lit {
 
   const allocsFor = (oppId: number) =>
     d.allocations.filter((a) => (a.strategy_opportunity_ids ?? []).includes(oppId))
-  const instancesFor = (oppId: number) => d.instances.filter((i) => i.opportunityId === oppId)
+  const tradesFor = (oppId: number) => d.trades.filter((i) => i.opportunityId === oppId)
 
   const addOpportunity = (oppId: number) => {
     lit.opportunity.add(oppId)
     const o = d.opportunities.find((x) => x.strategy_opportunity_id === oppId)
     if (o?.strategy_structure_id != null) lit.structure.add(o.strategy_structure_id)
     for (const a of allocsFor(oppId)) lit.allocation.add(a.strategy_allocation_id)
-    for (const i of instancesFor(oppId)) lit.instance.add(i.id)
+    for (const i of tradesFor(oppId)) lit.trade.add(i.id)
   }
 
   if (sel.kind === 'instance') {
-    const i = d.instances.find((x) => x.id === sel.id)
+    const i = d.trades.find((x) => x.id === sel.id)
     if (i == null) return lit
-    lit.instance.add(i.id)
+    lit.trade.add(i.id)
     lit.opportunity.add(i.opportunityId)
     const o = d.opportunities.find((x) => x.strategy_opportunity_id === i.opportunityId)
     const structureId = o?.strategy_structure_id ?? i.structureId
@@ -199,7 +199,7 @@ export function visibleChain(d: ChainData, activeOnly: boolean): ChainData {
     opportunities,
     allocations: d.allocations.filter((a) => a.is_active),
     gates: d.gates,
-    instances: d.instances.filter((i) => !i.closed && oppIds.has(i.opportunityId)),
+    trades: d.trades.filter((i) => !i.closed && oppIds.has(i.opportunityId)),
   }
 }
 
@@ -224,7 +224,7 @@ export function orphanOpportunities(d: ChainData): number {
  * of thing that gets edited by accident later because nobody knew it was
  * there.
  */
-export function orphanGates(d: ChainData): GateSafetyItem[] {
+export function orphanGates(d: ChainData): GateSetItem[] {
   const carried = new Set(d.allocations.map((a) => a.gate_safety_strategy_id).filter((v): v is number => v != null))
   return d.gates.filter((g) => !carried.has(g.gate_safety_strategy_id))
 }
@@ -338,7 +338,7 @@ export function buildChain(
     }
   })
 
-  const instances: ChainCard[] = d.instances.map((i) => ({
+  const trades: ChainCard[] = d.trades.map((i) => ({
       kind: 'instance' as const,
       id: i.id,
       title: `${i.label} · ${i.symbolish}`,
@@ -349,18 +349,18 @@ export function buildChain(
         plural(i.fills, 'fill'),
         i.closed ? 'flat by its own fills' : 'marked on Positions',
       ],
-      lit: lit.instance.has(i.id),
+      lit: lit.trade.has(i.id),
       selected: sel?.kind === 'instance' && sel.id === i.id,
     }))
 
-  const openN = d.instances.filter((i) => !i.closed).length
-  const closedN = d.instances.length - openN
+  const openN = d.trades.filter((i) => !i.closed).length
+  const closedN = d.trades.length - openN
 
   return [
     { key: 'structure', step: 'shape', title: 'Structures', count: String(structures.length), cards: structures },
     { key: 'opportunity', step: 'when', title: 'Opportunities', count: String(opportunities.length), cards: opportunities },
     { key: 'allocation', step: 'run', title: 'Allocations · gates', count: String(allocations.length), cards: allocations },
-    { key: 'instance', step: 'running', title: 'Trades', count: `${openN} open · ${closedN} closed`, cards: instances },
+    { key: 'instance', step: 'running', title: 'Trades', count: `${openN} open · ${closedN} closed`, cards: trades },
   ].map((c) => ({ ...c, cards: c.cards.map((k) => ({ ...k, lit: !dim(k.lit) })) })) as ChainColumn[]
 }
 
@@ -377,7 +377,7 @@ export interface ChainDetail {
   lineage: string
   facts: ChainFact[]
   /** Instances under the selection, for the table beneath the facts. */
-  rows: InstanceReading[]
+  rows: TradeReading[]
 }
 
 /**
@@ -405,7 +405,7 @@ export function detailOf(
     const s = d.structures.find((x) => x.strategy_structure_id === sel.id)
     if (s == null) return null
     const opps = d.opportunities.filter((o) => o.strategy_structure_id === s.strategy_structure_id)
-    const rows = d.instances.filter((i) => opps.some((o) => o.strategy_opportunity_id === i.opportunityId))
+    const rows = d.trades.filter((i) => opps.some((o) => o.strategy_opportunity_id === i.opportunityId))
     return {
       kind: 'structure',
       title: s.name,
@@ -429,7 +429,7 @@ export function detailOf(
     const o = d.opportunities.find((x) => x.strategy_opportunity_id === sel.id)
     if (o == null) return null
     const allocs = d.allocations.filter((a) => (a.strategy_opportunity_ids ?? []).includes(o.strategy_opportunity_id))
-    const rows = d.instances.filter((i) => i.opportunityId === o.strategy_opportunity_id)
+    const rows = d.trades.filter((i) => i.opportunityId === o.strategy_opportunity_id)
     const closed = rows.filter((i) => i.closed)
     const realised = closed.reduce((a, i) => a + (i.realised ?? 0), 0)
     return {
@@ -470,7 +470,7 @@ export function detailOf(
     if (a == null) return null
     const gate = d.gates.find((g) => g.gate_safety_strategy_id === a.gate_safety_strategy_id)
     const oppIds = a.strategy_opportunity_ids ?? []
-    const rows = d.instances.filter((i) => oppIds.includes(i.opportunityId))
+    const rows = d.trades.filter((i) => oppIds.includes(i.opportunityId))
     return {
       kind: 'allocation',
       title: a.name,
@@ -527,25 +527,25 @@ export function detailOf(
   }
 
   if (sel.id == null) {
-    const open = d.instances.filter((x) => !x.closed).length
+    const open = d.trades.filter((x) => !x.closed).length
     return {
       kind: 'instance',
       title: 'All trades',
       lineage: 'every trade in the book, whatever the chain above is showing',
       facts: [
         { k: 'Open', v: String(open), note: 'still has legs, by its own fills' },
-        { k: 'Closed', v: String(d.instances.length - open), note: 'flat by its own fills' },
+        { k: 'Closed', v: String(d.trades.length - open), note: 'flat by its own fills' },
         {
           k: 'Opportunities',
-          v: String(new Set(d.instances.map((x) => x.opportunityId)).size),
+          v: String(new Set(d.trades.map((x) => x.opportunityId)).size),
           note: 'the rules these trades ran under',
         },
       ],
-      rows: [...d.instances],
+      rows: [...d.trades],
     }
   }
 
-  const i = d.instances.find((x) => x.id === sel.id)
+  const i = d.trades.find((x) => x.id === sel.id)
   if (i == null) return null
   const o = d.opportunities.find((x) => x.strategy_opportunity_id === i.opportunityId)
   const allocs = d.allocations.filter((a) => (a.strategy_opportunity_ids ?? []).includes(i.opportunityId))

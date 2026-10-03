@@ -43,17 +43,17 @@ describe('ledger row type', () => {
   })
 })
 
-describe('unlinked uses allocations as well as strategy_instance_id', () => {
+describe('unlinked uses allocations as well as trade_id', () => {
   it('does not count a split fill as unlinked', () => {
     const split = exec({
       symbol: 'AAA',
       account_id: 'U0000001',
       sec_type: 'OPT',
       contract_key: 'AAA|OPT|P|10|20240621',
-      strategy_instance_id: null,
-      instance_allocations: [
-        { strategy_instance_id: 11, allocated_quantity: 1 },
-        { strategy_instance_id: 12, allocated_quantity: 1 },
+      trade_id: null,
+      fill_splits: [
+        { trade_id: 11, quantity: 1 },
+        { trade_id: 12, quantity: 1 },
       ],
     })
     const none = exec({
@@ -61,7 +61,7 @@ describe('unlinked uses allocations as well as strategy_instance_id', () => {
       account_id: 'U0000001',
       sec_type: 'OPT',
       contract_key: 'AAA|OPT|C|10|20240621',
-      strategy_instance_id: null,
+      trade_id: null,
     })
     expect(isUnlinkedExecution(split)).toBe(false)
     expect(isUnlinkedExecution(none)).toBe(true)

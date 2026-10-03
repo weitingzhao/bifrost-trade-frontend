@@ -44,13 +44,13 @@ describe('buildFillRows', () => {
     const [orphan, linked] = buildFillRows(
       [
         fill({ exec_id: 'a', time: T0 + 60 }),
-        fill({ exec_id: 'b', time: T0, strategy_instance_id: 11, strategy_instance_label: 'ZZZ CC' }),
+        fill({ exec_id: 'b', time: T0, trade_id: 11, trade_label: 'ZZZ CC' }),
       ],
       [plan({ strategy_plan_id: 1, symbol: 'YYY' })],
     )
     expect(orphan.state).toBe('orphan')
     expect(orphan.why).toBe('no trade · no plan on ZZZ')
-    expect(linked).toMatchObject({ state: 'linked', instanceId: 11, instanceLabel: 'ZZZ CC', why: null })
+    expect(linked).toMatchObject({ state: 'linked', tradeId: 11, tradeLabel: 'ZZZ CC', why: null })
   })
 
   it('separates “nobody wrote this down” from “somebody did and it never linked”', () => {
@@ -77,7 +77,7 @@ describe('scopeFills', () => {
 describe('summarize', () => {
   it('counts the window and still reports the newest fill the book has', () => {
     const all = buildFillRows([
-      fill({ exec_id: 'a', trade_date: '2026-09-16', strategy_instance_id: 11 }),
+      fill({ exec_id: 'a', trade_date: '2026-09-16', trade_id: 11 }),
       fill({ exec_id: 'b', trade_date: '2026-09-16', source: 'tws_client' }),
       fill({ exec_id: 'c', trade_date: '2026-08-01' }),
     ])
@@ -168,10 +168,10 @@ describe('importRows', () => {
 })
 
 describe('belongCandidates', () => {
-  const instances = [
-    { strategy_instance_id: 158, strategy_opportunity_id: 7, account_id: 'U1', label: null },
-    { strategy_instance_id: 121, strategy_opportunity_id: 7, account_id: 'U1', label: 'CC book' },
-    { strategy_instance_id: 99, strategy_opportunity_id: 7, account_id: 'U2', label: 'other account' },
+  const trades = [
+    { trade_id: 158, strategy_opportunity_id: 7, account_id: 'U1', label: null },
+    { trade_id: 121, strategy_opportunity_id: 7, account_id: 'U1', label: 'CC book' },
+    { trade_id: 99, strategy_opportunity_id: 7, account_id: 'U2', label: 'other account' },
   ]
   const opportunities = [{ strategy_opportunity_id: 7, name: 'CC 10% OTM book', symbols: ['RKLB', 'MU'] }]
   const row = { execId: 7898, contractKey: 'RKLB|OPT|20261218|90.0|C', symbol: 'RKLB', accountId: 'U1' }
@@ -181,19 +181,19 @@ describe('belongCandidates', () => {
       exec_id: 'p1',
       account_executions_id: 500,
       contract_key: 'RKLB|OPT|20261218|90.0|C',
-      strategy_instance_id: 158,
+      trade_id: 158,
       strategy_opportunity_id: 7,
       strategy_opportunity_name: 'CC 10% OTM book',
     })
-    const out = belongCandidates({ row, executions: [peer], instances, opportunities })
-    expect(out[0]).toMatchObject({ instanceId: 158, tag: 'same contract' })
+    const out = belongCandidates({ row, executions: [peer], trades, opportunities })
+    expect(out[0]).toMatchObject({ tradeId: 158, tag: 'same contract' })
     // 158 is not offered twice under the weaker reason.
-    expect(out.filter((c) => c.instanceId === 158)).toHaveLength(1)
+    expect(out.filter((c) => c.tradeId === 158)).toHaveLength(1)
   })
 
   it('offers coverage only inside the fill’s own account — a fill cannot belong elsewhere', () => {
-    const out = belongCandidates({ row, executions: [], instances, opportunities })
-    expect(out.map((c) => c.instanceId)).toEqual([158, 121])
+    const out = belongCandidates({ row, executions: [], trades, opportunities })
+    expect(out.map((c) => c.tradeId)).toEqual([158, 121])
     expect(out.every((c) => c.tag === 'covers the symbol')).toBe(true)
   })
 
@@ -201,7 +201,7 @@ describe('belongCandidates', () => {
     const out = belongCandidates({
       row: { ...row, symbol: 'GOOG' },
       executions: [],
-      instances,
+      trades,
       opportunities,
     })
     expect(out).toEqual([])

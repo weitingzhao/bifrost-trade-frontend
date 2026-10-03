@@ -38,7 +38,7 @@ export interface IbPositionRow {
   instrument_class?: InstrumentClass | null
   optionable?: boolean
   strategy_opportunity_name?: string | null
-  strategy_instance_label?: string | null
+  trade_label?: string | null
 }
 
 export interface IbAccountSnapshot {

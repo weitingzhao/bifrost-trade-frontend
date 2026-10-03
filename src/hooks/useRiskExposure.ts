@@ -133,7 +133,7 @@ export function useRiskExposure(accountFilter: string) {
    */
   const legs = useMemo<LegGreeks[]>(() => {
     const out: LegGreeks[] = []
-    for (const g of book.scopedInstanceGroups ?? []) {
+    for (const g of book.scopedTradeGroups ?? []) {
       for (const p of g.options ?? []) {
         const underlying = extractUnderlyingRootSymbol(p.symbol)
         const ticker = buildOptionTicker({
@@ -154,7 +154,7 @@ export function useRiskExposure(accountFilter: string) {
       }
     }
     return out
-  }, [book.scopedInstanceGroups, book.greeks.perShareByTicker])
+  }, [book.scopedTradeGroups, book.greeks.perShareByTicker])
 
   const betaBySymbol = useMemo(() => {
     const by = new Map<string, { beta: number | null; n: number }>()

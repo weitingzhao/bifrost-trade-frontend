@@ -1,5 +1,5 @@
 import type { IbPositionRow } from './monitor'
-import type { ExecutionRow, InstanceAllocation } from '@/lib/schemas/positions'
+import type { ExecutionRow, FillSplit } from '@/lib/schemas/positions'
 import type { RiskProfile, RiskScenarioBreakdown, RiskCalcContext } from '@/utils/riskProfile'
 import type { ExecutionCreateBody, ExecutionUpdateBody } from './requestBodies'
 
@@ -25,24 +25,24 @@ export interface OpenOptionPosition {
   position?: LivePositionRow
   attribution_type?: 'single' | 'mixed' | 'unassigned'
   attribution_ratio?: number
-  strategy_instance_id?: number | null
-  strategy_instance_label?: string | null
+  trade_id?: number | null
+  trade_label?: string | null
   strategy_opportunity_name?: string | null
   filtered_exec_lists?: { final: Execution[]; tws: Execution[] }
   trades?: Execution[]
 }
 
-export interface InstancePositionGroup {
-  strategy_instance_id: number | null
-  strategy_instance_label: string | null
+export interface TradePositionGroup {
+  trade_id: number | null
+  trade_label: string | null
   strategy_opportunity_name: string | null
   strategy_opportunity_id: number | null
-  strategy_instance_opened_at_epoch: number | null
+  trade_opened_at_epoch: number | null
   positions: OpenOptionPosition[]
   total_unrealized_pnl: number
 }
 
-export interface InstanceStockCoverage {
+export interface TradeStockCoverage {
   symbol: string
   account_id: string
   required_shares: number
@@ -57,9 +57,9 @@ export interface StockCoverageItem {
   required_watchlist_shares?: number
   held_shares: number
   surplus_or_gap: number
-  instances_needing: number
+  trades_needing: number
   backing_opportunities?: string[]
-  watchlist_scope_instances?: number
+  watchlist_scope_trades?: number
   optionable_supported?: boolean | null
   avg_cost_per_share?: number | null
   live_last_price?: number | null
@@ -70,14 +70,14 @@ export interface StockCoverageItem {
   total_pct?: number | null
 }
 
-export interface InstanceAllGroup {
-  strategy_instance_id: number | null
-  strategy_instance_label: string | null
+export interface TradeAllGroup {
+  trade_id: number | null
+  trade_label: string | null
   strategy_opportunity_name: string | null
   strategy_opportunity_id: number | null
-  strategy_instance_opened_at_epoch: number | null
+  trade_opened_at_epoch: number | null
   options: OpenOptionPosition[]
-  stock_coverage: InstanceStockCoverage[]
+  stock_coverage: TradeStockCoverage[]
   options_unrealized_pnl: number
   /**
    * The template the instance's structure is built from (`covered_call_otm`) and its
@@ -93,7 +93,7 @@ export interface InstanceAllGroup {
 }
 
 /** One row from GET /executions/position-attribution: one (position, instance). */
-export interface PositionInstanceAttribution {
+export interface PositionTradeAttribution {
   account_id: string
   contract_key: string
   symbol: string
@@ -105,11 +105,11 @@ export interface PositionInstanceAttribution {
   avg_cost: number | null
   price_mid: number | null
   price_last: number | null
-  strategy_instance_id: number | null
-  strategy_instance_label: string | null
+  trade_id: number | null
+  trade_label: string | null
   strategy_opportunity_id: number | null
   strategy_opportunity_name: string | null
-  strategy_instance_opened_at_epoch: number | null
+  trade_opened_at_epoch: number | null
   /** core 0.32.1 (TD-41); absent from an older API. */
   strategy_structure_name?: string | null
   template_code?: string | null
@@ -126,14 +126,14 @@ export interface PositionInstanceAttribution {
   method?: string
 }
 
-/** @deprecated Use PositionInstanceAttribution */
-export type PositionAttribution = PositionInstanceAttribution
+/** @deprecated Use PositionTradeAttribution */
+export type PositionAttribution = PositionTradeAttribution
 
 export interface PositionAttributionResponse {
-  items: PositionInstanceAttribution[]
+  items: PositionTradeAttribution[]
 }
 
-export type { InstanceAllocation }
+export type { FillSplit }
 
 /** One execution row as the API sends it — see `ExecutionRowSchema` for the wire rules. */
 export type Execution = ExecutionRow
@@ -143,9 +143,9 @@ export interface ExecutionsResponse {
 }
 
 /** A split as the FE sends it: both fields, always. */
-interface InstanceAllocationSplit {
-  strategy_instance_id: number
-  allocated_quantity: number
+interface FillSplitPayload {
+  trade_id: number
+  quantity: number
 }
 
 /** `ExecutionCreateBody` (POST /executions) as the fill forms send it. */
@@ -155,21 +155,21 @@ export interface CreateExecutionBody extends ExecutionCreateBody {
   symbol: string
   sec_type: 'STK' | 'OPT'
   side: 'BUY' | 'SELL'
-  instance_allocations?: InstanceAllocationSplit[]
+  fill_splits?: FillSplitPayload[]
 }
 
 /** `ExecutionUpdateBody` (PUT /executions/{id}): the fields sent change. */
 export interface UpdateExecutionBody extends ExecutionUpdateBody {
-  instance_allocations?: InstanceAllocationSplit[]
+  fill_splits?: FillSplitPayload[]
 }
 
 // ── Strategy types — re-exported for backward compatibility ───────────────────
 // Primary definitions live in @/types/strategy
 export type {
-  StrategyInstance,
-  StrategyInstancesResponse,
-  CreateStrategyInstanceBody,
-  PatchStrategyInstanceBody,
+  Trade,
+  TradesResponse,
+  CreateTradeBody,
+  PatchTradeBody,
   StrategyOpportunity,
   EntryCondition,
   EntryConditionInput,
@@ -181,11 +181,11 @@ export type {
   StructuresResponse,
   StructurePayload,
   StructureMetaEntry,
-  GateSafetyItem,
-  GateSafetyGates,
-  GateSafetyFull,
-  GateSafetyPayload,
-  GateSafetyResponse,
+  GateSetItem,
+  GateSetGates,
+  GateSetFull,
+  GateSetPayload,
+  GateSetResponse,
   ActiveStrategyPayload,
   StrategyDimRow,
   DimsGroupedResponse,

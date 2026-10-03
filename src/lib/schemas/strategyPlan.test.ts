@@ -32,7 +32,7 @@ describe('StrategyPlanSchema numerics', () => {
     filled_at: null,
     cancelled_at: null,
     expires_at: null,
-    strategy_instance_id: null,
+    trade_id: null,
     parent_strategy_plan_id: null,
     created_at: '2031-03-04T14:30:00Z',
     updated_at: '2031-03-04T14:30:00Z',

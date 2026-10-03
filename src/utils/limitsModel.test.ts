@@ -136,7 +136,7 @@ const GATE: GateReadings = {
   gateName: 'Security Gate',
   gateVersion: 2,
   guard: GUARD,
-  openInstances: 3,
+  openTrades: 3,
   maxPositions: 10,
   lossToday: null,
   paperTrade: true,

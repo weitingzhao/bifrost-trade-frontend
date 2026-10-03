@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchOpportunities, fetchStructures, fetchStrategyInstances, fetchStrategyInstance, fetchGateSafety, fetchAllocations, fetchWinRate } from '@/api/strategy'
+import { fetchOpportunities, fetchStructures, fetchTrades, fetchTrade, fetchGateSets, fetchAllocations, fetchWinRate } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { serverStatesOf, type ServerInstanceState } from '@/utils/reviewInstances'
+import { serverStatesOf, type ServerTradeState } from '@/utils/reviewedTrades'
 
 export function useOpportunities(activeOnly = false) {
   return useQuery({
@@ -20,15 +20,15 @@ export function useStructures() {
   })
 }
 
-export function useGateSafety() {
+export function useGateSets() {
   return useQuery({
-    queryKey: QUERY_KEYS.strategy.gateSafety,
-    queryFn: fetchGateSafety,
+    queryKey: QUERY_KEYS.strategy.gateSets,
+    queryFn: fetchGateSets,
     staleTime: 60_000,
   })
 }
 
-export function useStrategyInstances(
+export function useTrades(
   params?: {
     opportunityId?: number
     accountId?: string
@@ -38,12 +38,12 @@ export function useStrategyInstances(
 ) {
   return useQuery({
     queryKey: [
-      ...QUERY_KEYS.strategy.instances,
+      ...QUERY_KEYS.trades.list,
       params?.opportunityId ?? null,
       params?.accountId ?? null,
       params?.openedAtFrom ?? null,
     ],
-    queryFn: () => fetchStrategyInstances(params),
+    queryFn: () => fetchTrades(params),
     refetchInterval: 30_000,
     enabled: options?.enabled ?? true,
   })
@@ -54,16 +54,16 @@ export function useStrategyInstances(
  * TD-43) — the open / closed answer Review reads. `cachedOnly` reads whatever
  * the list query already holds without fetching it (the Review menu badge).
  */
-export function useInstanceStates(cachedOnly = false): ReadonlyMap<number, ServerInstanceState> {
-  const q = useStrategyInstances(undefined, { enabled: !cachedOnly })
+export function useTradeStates(cachedOnly = false): ReadonlyMap<number, ServerTradeState> {
+  const q = useTrades(undefined, { enabled: !cachedOnly })
   return useMemo(() => serverStatesOf(q.data?.items), [q.data?.items])
 }
 
-export function useStrategyInstance(instanceId: number | null | undefined, enabled = true) {
+export function useTrade(tradeId: number | null | undefined, enabled = true) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.strategy.instanceDetail, instanceId],
-    queryFn: () => fetchStrategyInstance(instanceId!),
-    enabled: enabled && instanceId != null && instanceId > 0,
+    queryKey: [...QUERY_KEYS.trades.detail, tradeId],
+    queryFn: () => fetchTrade(tradeId!),
+    enabled: enabled && tradeId != null && tradeId > 0,
     staleTime: 60_000,
   })
 }
@@ -81,7 +81,7 @@ export function useWinRate(
   options?: { enabled?: boolean },
 ) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.strategy.winRate, params?.sinceTs ?? null, params?.untilTs ?? null],
+    queryKey: [...QUERY_KEYS.trades.winRate, params?.sinceTs ?? null, params?.untilTs ?? null],
     queryFn: () => fetchWinRate(params),
     staleTime: 60_000,
     enabled: options?.enabled ?? true,

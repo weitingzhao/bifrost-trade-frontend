@@ -14,7 +14,7 @@ import { DenseTag } from '@/components/data-display'
 import { PositionsStat } from '@/components/positions/PositionsStat'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { SymbolPriceChart } from '@/components/symbolChart/SymbolPriceChart'
-import { instanceTracksFor } from '@/components/symbolChart/symbolPriceModel'
+import { tradeTracksFor } from '@/components/symbolChart/symbolPriceModel'
 import { TradeRecord } from '@/components/tradeRecord/TradeRecord'
 import { useTradeRecord } from '@/hooks/useTradeRecord'
 import { useSymbolGo } from '@/layout/symbolGo'
@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
 import type { RanUnder } from '@/utils/tradeRecord/ranUnder'
-import type { StrategyInstance } from '@/types/positions'
+import type { Trade } from '@/types/positions'
 import { byOpening, fillRows, ledgerRows, timelineRows } from './tradePageModel'
 import { TradeJournal, TradeLineage } from './TradeRail'
 import { TradeBlock } from './TradeBlock'
@@ -36,7 +36,7 @@ const px = (v: number | null) => (v == null ? '—' : `$${v.toFixed(2)}`)
 
 
 export function TradeWide({
-  instance,
+  trade,
   list,
   from,
   pos,
@@ -44,7 +44,7 @@ export function TradeWide({
   onNext,
   ranUnder,
 }: {
-  instance: StrategyInstance
+  trade: Trade
   list?: readonly number[]
   from: string
   pos?: string
@@ -54,16 +54,16 @@ export function TradeWide({
 }) {
   const navigate = useNavigate()
   const symbolGo = useSymbolGo()
-  const id = instance.strategy_instance_id
+  const id = trade.trade_id
   const today = todayIso()
-  const r = useTradeRecord(instance, { withShares: true })
+  const r = useTradeRecord(trade, { withShares: true })
   const d = r.detail
   const execs = useMemo(() => d?.executionsFinal ?? [], [d?.executionsFinal])
   const legs = useMemo(() => byOpening(r.legs), [r.legs])
   const sym = legs[0]?.root ?? null
   const closed = r.life.closed
   const expired = r.life.expired
-  const joints = useMemo(() => (sym ? (instanceTracksFor(execs, sym, [])[0]?.joints ?? []) : []), [execs, sym])
+  const joints = useMemo(() => (sym ? (tradeTracksFor(execs, sym, [])[0]?.joints ?? []) : []), [execs, sym])
   const fills = useMemo(
     () => fillRows(execs, (ck) => legs.find((l) => l.key === ck)?.label ?? ck.split('|')[0], today),
     [execs, legs, today],
@@ -92,7 +92,7 @@ export function TradeWide({
       <PageHead
         title={`Trade #${id}${sym ? ` · ${sym}` : ''}`}
         info="One trade, whole: its price path, every leg and roll, every fill booked to it, the ledger by leg and the notes written about it. Reached from any #NNN token; beside any page it opens as the 440 panel."
-        meta={`${instance.strategy_opportunity_name ?? '—'} · ${closed ? 'closed' : 'open'}`}
+        meta={`${trade.strategy_opportunity_name ?? '—'} · ${closed ? 'closed' : 'open'}`}
         actions={
           <>
             {sym ? (
@@ -126,7 +126,7 @@ export function TradeWide({
             {sym}
           </button>
         ) : null}
-        <span className="text-dense-label font-semibold text-[var(--sk-soft)]">{instance.strategy_structure_name ?? '—'}</span>
+        <span className="text-dense-label font-semibold text-[var(--sk-soft)]">{trade.strategy_structure_name ?? '—'}</span>
         <span className="font-mono text-dense-label text-[var(--sk-contract,#7dd3fc)]">
           {contract}
           {!closed && lastExp ? ` ${d3(lastExp)}` : ''}
@@ -173,7 +173,7 @@ export function TradeWide({
 
       <div className="flex min-w-0 flex-wrap items-start gap-3">
         <div className="flex min-w-0 flex-[999_1_620px] flex-col gap-3">
-          {sym ? <SymbolPriceChart symbol={sym} instanceId={id} /> : null}
+          {sym ? <SymbolPriceChart symbol={sym} tradeId={id} /> : null}
 
           <TradeBlock cap="Legs" title="Timeline" note="open to close · ↻ a roll seam, net beside it · dashed = held to expiry">
             <div className="flex flex-col gap-1.5 px-3 pt-2.5 pb-3">
@@ -377,13 +377,13 @@ export function TradeWide({
         </div>
 
         <aside className="flex min-w-0 max-w-[440px] flex-[1_1_340px] flex-col gap-3">
-          <TradeLineage instance={instance} sym={sym} ranUnder={ranUnder} from={from} list={list} />
+          <TradeLineage trade={trade} sym={sym} ranUnder={ranUnder} from={from} list={list} />
           <TradeRecord
-            instance={instance}
+            trade={trade}
             mode="rail"
             title={`#${id}`}
-            opportunity={instance.strategy_opportunity_name ?? '—'}
-            structure={instance.strategy_structure_name ?? '—'}
+            opportunity={trade.strategy_opportunity_name ?? '—'}
+            structure={trade.strategy_structure_name ?? '—'}
           />
           <TradeJournal id={id} sym={sym} />
         </aside>

@@ -21,7 +21,7 @@ export const linkExecSymbolBadgeClass = cn(
   'ml-1.5 inline-flex border px-1.5 py-0 font-mono text-dense-caption font-semibold text-foreground mat-tag',
 )
 
-export const linkExecInstancePanelClass = cn(
+export const linkExecTradePanelClass = cn(
   'space-y-3 border p-3 mat-card',
 )
 

@@ -12,16 +12,17 @@ import {
 } from '@/components/ui/select'
 import { SegmentControl } from '@/components/data-display'
 import { updateExecution, createExecution } from '@/api/trading'
-import { fetchOpportunities, fetchStrategyInstances } from '@/api/strategy'
-import { formatInstanceOpenedDate } from '@/components/positions/linkExecutionModalHelpers'
-import type { Execution, StrategyInstance, CreateExecutionBody, UpdateExecutionBody } from '@/types/positions'
+import { fetchOpportunities, fetchTrades } from '@/api/strategy'
+import { formatTradeOpenedDate } from '@/components/positions/linkExecutionModalHelpers'
+import type { Execution, Trade, CreateExecutionBody, UpdateExecutionBody } from '@/types/positions'
 import { cn } from '@/lib/utils'
-import { isSellSide } from '@/utils/instanceDetail/executionSide'
+import { isSellSide } from '@/utils/tradeDetail/executionSide'
 import {
   datetimeLocalToEpochSeconds,
   epochSecondsToDatetimeLocal,
 } from '@/components/positions/executionFormTime'
 import { optContractKey } from '@/utils/contractKey'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 interface Props {
   open: boolean
@@ -91,16 +92,16 @@ function initFormFromExec(exec: Execution | null, accountOptions: string[]) {
       realizedPnl: '',
       currency: 'USD',
       strategyOpportunityId: '',
-      strategyInstanceId: '',
-      useInstanceSplits: false,
-      splitRows: [] as Array<{ uid: string; strategyInstanceId: string; allocatedQuantity: string }>,
+      tradeId: '',
+      useFillSplits: false,
+      splitRows: [] as Array<{ uid: string; tradeId: string; allocatedQuantity: string }>,
     }
   }
 
   const isSell = isSellSide(exec)
   const qty = Math.abs(Number(exec.quantity) || 0)
   const r = (exec.option_right ?? 'C').toString().toUpperCase().slice(0, 1)
-  const ia = exec.instance_allocations
+  const ia = exec.fill_splits
 
   return {
     accountId: exec.account_id ?? '',
@@ -117,14 +118,14 @@ function initFormFromExec(exec: Execution | null, accountOptions: string[]) {
     realizedPnl: exec.realized_pnl != null ? String(exec.realized_pnl) : '',
     currency: (exec as Execution & { currency?: string }).currency?.trim() || 'USD',
     strategyOpportunityId: exec.strategy_opportunity_id != null ? String(exec.strategy_opportunity_id) : '',
-    strategyInstanceId: exec.strategy_instance_id != null ? String(exec.strategy_instance_id) : '',
-    useInstanceSplits: Boolean(ia && ia.length > 0),
+    tradeId: exec.trade_id != null ? String(exec.trade_id) : '',
+    useFillSplits: Boolean(ia && ia.length > 0),
     splitRows:
       ia && ia.length > 0
         ? ia.map((a, i) => ({
             uid: `split-${exec.account_executions_id ?? 'x'}-${i}`,
-            strategyInstanceId: String(a.strategy_instance_id),
-            allocatedQuantity: String(a.allocated_quantity),
+            tradeId: String(a.trade_id),
+            allocatedQuantity: String(a.quantity),
           }))
         : [],
   }
@@ -154,8 +155,8 @@ function ExecutionFormModalBody({
   const [realizedPnl, setRealizedPnl] = useState(init.realizedPnl)
   const [currency, setCurrency] = useState(init.currency)
   const [strategyOpportunityId, setStrategyOpportunityId] = useState(init.strategyOpportunityId)
-  const [strategyInstanceId, setStrategyInstanceId] = useState(init.strategyInstanceId)
-  const [useInstanceSplits, setUseInstanceSplits] = useState(init.useInstanceSplits)
+  const [tradeId, setTradeId] = useState(init.tradeId)
+  const [useFillSplits, setUseFillSplits] = useState(init.useFillSplits)
   const [splitRows, setSplitRows] = useState(init.splitRows)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -172,25 +173,25 @@ function ExecutionFormModalBody({
   const opportunities = oppsData?.items ?? []
 
   const oppIdNum = strategyOpportunityId.trim() ? Number(strategyOpportunityId) : null
-  const { data: instancesData } = useQuery({
-    queryKey: ['strategy', 'instances', 'exec-form', oppIdNum],
-    queryFn: () => fetchStrategyInstances({ opportunityId: oppIdNum! }),
+  const { data: tradesData } = useQuery({
+    queryKey: [...QUERY_KEYS.trades.list, 'exec-form', oppIdNum],
+    queryFn: () => fetchTrades({ opportunityId: oppIdNum! }),
     enabled: oppIdNum != null && Number.isFinite(oppIdNum),
     staleTime: 30_000,
   })
-  const instances = instancesData?.items ?? []
+  const trades = tradesData?.items ?? []
 
   const accountTrimmed = accountId.trim()
-  const { data: accountInstancesData } = useQuery({
-    queryKey: ['strategy', 'instances', 'exec-form-account', accountTrimmed],
-    queryFn: () => fetchStrategyInstances({ accountId: accountTrimmed }),
+  const { data: accountTradesData } = useQuery({
+    queryKey: [...QUERY_KEYS.trades.list, 'exec-form-account', accountTrimmed],
+    queryFn: () => fetchTrades({ accountId: accountTrimmed }),
     enabled: Boolean(accountTrimmed),
     staleTime: 30_000,
   })
-  const allInstancesForAccount = accountInstancesData?.items ?? []
+  const allTradesForAccount = accountTradesData?.items ?? []
 
-  function instanceLabel(si: StrategyInstance): string {
-    return si.label?.trim() || formatInstanceOpenedDate(si)
+  function tradeLabel(si: Trade): string {
+    return si.label?.trim() || formatTradeOpenedDate(si)
   }
 
   function buildContractKey(sym: string): string | undefined {
@@ -206,25 +207,25 @@ function ExecutionFormModalBody({
 
   function resolveSplitAllocations(
     quantityForDb: number,
-  ): { instance_allocations: { strategy_instance_id: number; allocated_quantity: number }[] } | null {
-    if (!useInstanceSplits) return null
+  ): { fill_splits: { trade_id: number; quantity: number }[] } | null {
+    if (!useFillSplits) return null
     if (splitRows.length === 0) {
-      return { instance_allocations: [] }
+      return { fill_splits: [] }
     }
-    const allocs: { strategy_instance_id: number; allocated_quantity: number }[] = []
+    const allocs: { trade_id: number; quantity: number }[] = []
     for (const row of splitRows) {
-      const si = Number(row.strategyInstanceId)
+      const si = Number(row.tradeId)
       const aq = Number(row.allocatedQuantity)
       if (!Number.isFinite(si) || !Number.isFinite(aq)) {
         throw new Error('Each split row needs a valid trade and allocated quantity.')
       }
-      allocs.push({ strategy_instance_id: si, allocated_quantity: aq })
+      allocs.push({ trade_id: si, quantity: aq })
     }
-    const sum = allocs.reduce((s, x) => s + x.allocated_quantity, 0)
+    const sum = allocs.reduce((s, x) => s + x.quantity, 0)
     if (Math.abs(sum - quantityForDb) > 1e-4 * Math.max(1, Math.abs(quantityForDb))) {
       throw new Error(`Split quantities must sum to the execution quantity (${quantityForDb}).`)
     }
-    return { instance_allocations: allocs }
+    return { fill_splits: allocs }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -257,11 +258,11 @@ function ExecutionFormModalBody({
           ? Number(strategyOpportunityId)
           : undefined
       const strategyInst =
-        strategyInstanceId.trim() && Number.isFinite(Number(strategyInstanceId))
-          ? Number(strategyInstanceId)
+        tradeId.trim() && Number.isFinite(Number(tradeId))
+          ? Number(tradeId)
           : undefined
       // A fill belongs to a trade; its strategy is the trade's (core 0.37.0 refuses one alone).
-      if (strategyOpp !== undefined && strategyInst === undefined && !useInstanceSplits) {
+      if (strategyOpp !== undefined && strategyInst === undefined && !useFillSplits) {
         throw new Error('Pick the trade under this strategy, or clear the strategy.')
       }
 
@@ -286,7 +287,7 @@ function ExecutionFormModalBody({
           currency: currency.trim() || undefined,
           ...(splitPayload ?? {
             strategy_opportunity_id: strategyOpp,
-            strategy_instance_id: strategyInst,
+            trade_id: strategyInst,
           }),
         }
         const res = await createExecution(body)
@@ -308,7 +309,7 @@ function ExecutionFormModalBody({
           currency: currency.trim() || undefined,
           ...(splitPayload ?? {
             strategy_opportunity_id: strategyOpp,
-            strategy_instance_id: strategyInst,
+            trade_id: strategyInst,
           }),
         }
         const expiryTrimmed = expiry.trim()
@@ -369,7 +370,7 @@ function ExecutionFormModalBody({
             value={strategyOpportunityId || '__none__'}
             onValueChange={(v) => {
               setStrategyOpportunityId(v === '__none__' ? '' : v)
-              setStrategyInstanceId('')
+              setTradeId('')
             }}
           >
             <SelectTrigger className={inputClass}>
@@ -388,15 +389,15 @@ function ExecutionFormModalBody({
 
         <ExecFormRow label="Trade (optional)">
           <Select
-            value={strategyInstanceId || '__none__'}
+            value={tradeId || '__none__'}
             onValueChange={(v) => {
-              const instanceId = v === '__none__' ? '' : v
-              const instance = instanceId
-                ? instances.find((si) => String(si.strategy_instance_id) === instanceId)
+              const tradeId = v === '__none__' ? '' : v
+              const trade = tradeId
+                ? trades.find((si) => String(si.trade_id) === tradeId)
                 : null
-              setStrategyInstanceId(instanceId)
-              if (instance && !strategyOpportunityId.trim()) {
-                setStrategyOpportunityId(String(instance.strategy_opportunity_id))
+              setTradeId(tradeId)
+              if (trade && !strategyOpportunityId.trim()) {
+                setStrategyOpportunityId(String(trade.strategy_opportunity_id))
               }
             }}
           >
@@ -405,9 +406,9 @@ function ExecutionFormModalBody({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">—</SelectItem>
-              {instances.map((si) => (
-                <SelectItem key={si.strategy_instance_id} value={String(si.strategy_instance_id)}>
-                  {instanceLabel(si)}
+              {trades.map((si) => (
+                <SelectItem key={si.trade_id} value={String(si.trade_id)}>
+                  {tradeLabel(si)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -419,19 +420,19 @@ function ExecutionFormModalBody({
             <div className="flex flex-wrap items-center gap-2">
               <label className="inline-flex items-center gap-1.5 text-sm cursor-pointer">
                 <Checkbox
-                  checked={useInstanceSplits}
+                  checked={useFillSplits}
                   onCheckedChange={(checked) => {
                     const on = checked === true
-                    setUseInstanceSplits(on)
+                    setUseFillSplits(on)
                     if (on && splitRows.length === 0) {
-                      setSplitRows([{ uid: `new-${Date.now()}`, strategyInstanceId: '', allocatedQuantity: '' }])
+                      setSplitRows([{ uid: `new-${Date.now()}`, tradeId: '', allocatedQuantity: '' }])
                     }
                   }}
                   aria-describedby={splitSectionId}
                 />
                 Split quantity across trades
               </label>
-              {useInstanceSplits && (
+              {useFillSplits && (
                 <Button
                   type="button"
                   variant="outline"
@@ -439,7 +440,7 @@ function ExecutionFormModalBody({
                   onClick={() =>
                     setSplitRows((rows) => [
                       ...rows,
-                      { uid: `new-${Date.now()}-${rows.length}`, strategyInstanceId: '', allocatedQuantity: '' },
+                      { uid: `new-${Date.now()}-${rows.length}`, tradeId: '', allocatedQuantity: '' },
                     ])
                   }
                 >
@@ -448,7 +449,7 @@ function ExecutionFormModalBody({
               )}
             </div>
           </ExecFormRow>
-          {useInstanceSplits && (
+          {useFillSplits && (
             <>
               <p className="text-dense-meta text-muted-foreground pl-[96px]">
                 Signed quantities must sum to the execution quantity. Saving with splits enabled and no rows clears
@@ -458,12 +459,12 @@ function ExecutionFormModalBody({
                 {splitRows.map((row) => (
                   <div key={row.uid} className="flex flex-wrap items-center gap-2 min-w-0">
                     <Select
-                      value={row.strategyInstanceId || '__none__'}
+                      value={row.tradeId || '__none__'}
                       onValueChange={(v) =>
                         setSplitRows((rows) =>
                           rows.map((r) =>
                             r.uid === row.uid
-                              ? { ...r, strategyInstanceId: v === '__none__' ? '' : v }
+                              ? { ...r, tradeId: v === '__none__' ? '' : v }
                               : r,
                           ),
                         )
@@ -474,9 +475,9 @@ function ExecutionFormModalBody({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__">— Trade —</SelectItem>
-                        {allInstancesForAccount.map((si) => (
-                          <SelectItem key={si.strategy_instance_id} value={String(si.strategy_instance_id)}>
-                            {instanceLabel(si)}
+                        {allTradesForAccount.map((si) => (
+                          <SelectItem key={si.trade_id} value={String(si.trade_id)}>
+                            {tradeLabel(si)}
                           </SelectItem>
                         ))}
                       </SelectContent>

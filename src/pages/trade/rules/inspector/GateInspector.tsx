@@ -9,7 +9,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { InspectorField } from '@bifrost/ui'
-import { fetchGateSafetyFull, updateGateSafety } from '@/api/strategy'
+import { fetchGateSetFull, updateGateSet } from '@/api/strategy'
 import {
   GATE_DIM_FIELDS,
   GATE_FAMILIES,
@@ -31,7 +31,7 @@ import { useStrategyDims } from '@/hooks/useOptionCategory'
 import { useLiveEdit } from '@/hooks/useLiveEdit'
 import { dimOptions } from '@/utils/gateDefaults'
 import { cn } from '@/lib/utils'
-import type { GateSafetyFull } from '@/types/positions'
+import type { GateSetFull } from '@/types/positions'
 import { FIELD, RuleInspector } from './RuleInspector'
 
 const gateDetailKey = (id: number) => ['strategy', 'gate-safety', id] as const
@@ -62,7 +62,7 @@ export function GateInspector({
   onDuplicate: () => void
   onSaved: () => void
 }) {
-  const q = useQuery({ queryKey: gateDetailKey(id), queryFn: () => fetchGateSafetyFull(id), staleTime: 30_000 })
+  const q = useQuery({ queryKey: gateDetailKey(id), queryFn: () => fetchGateSetFull(id), staleTime: 30_000 })
   if (!q.data) {
     return (
       <RuleInspector title={`Gate · ${id}`} onClose={onClose} loading>
@@ -95,7 +95,7 @@ function GateEditor({
   onSaved,
 }: {
   id: number
-  full: GateSafetyFull
+  full: GateSetFull
   deleteBlocked: string | null
   onClose: () => void
   onDelete: (name: string) => void
@@ -110,7 +110,7 @@ function GateEditor({
     initial,
     undoKey: `gate:${id}`,
     ready: isGateFormReady,
-    write: (d) => updateGateSafety(id, gateFormToPayload(d)),
+    write: (d) => updateGateSet(id, gateFormToPayload(d)),
     onSaved: () => {
       void qc.invalidateQueries({ queryKey: ['strategy', 'gate-safety'] })
       onSaved()

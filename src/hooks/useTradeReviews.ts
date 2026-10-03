@@ -9,28 +9,28 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 import { fetchTradeReviews, saveTradeReview, type TradeReview, type TradeReviewPatch } from '@/api/tradeReviews'
 import { fetchExecutions } from '@/api/trading'
 import type { ExecutionsResponse } from '@/types/positions'
-import { buildReviewInstances } from '@/utils/reviewInstances'
-import { useInstanceStates } from '@/hooks/useStrategies'
+import { buildReviewedTrades } from '@/utils/reviewedTrades'
+import { useTradeStates } from '@/hooks/useStrategies'
 
 export function useTradeReviews() {
   const q = useQuery({
-    queryKey: QUERY_KEYS.strategy.reviews,
+    queryKey: QUERY_KEYS.trades.reviews,
     queryFn: fetchTradeReviews,
     staleTime: 30_000,
   })
-  const byInstance = useMemo(
-    () => new Map<number, TradeReview>((q.data ?? []).map((r) => [r.strategy_instance_id, r])),
+  const byTrade = useMemo(
+    () => new Map<number, TradeReview>((q.data ?? []).map((r) => [r.trade_id, r])),
     [q.data],
   )
-  return { ...q, byInstance }
+  return { ...q, byTrade }
 }
 
 export function useSaveTradeReview() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ instanceId, patch }: { instanceId: number; patch: TradeReviewPatch }) =>
-      saveTradeReview(instanceId, patch),
-    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.strategy.reviews }),
+    mutationFn: ({ tradeId, patch }: { tradeId: number; patch: TradeReviewPatch }) =>
+      saveTradeReview(tradeId, patch),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.trades.reviews }),
   })
 }
 
@@ -56,13 +56,13 @@ export function useReviewBadge(): number | null {
   })
   const reviews = useTradeReviews()
   // The instance list's state when a page has already read it; the legs' reading otherwise.
-  const states = useInstanceStates(true)
+  const states = useTradeStates(true)
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
   return useMemo(() => {
     const items = execQ.data?.items
     if (!items || !reviews.data) return null
-    return buildReviewInstances(items, today, undefined, states).filter(
-      (t) => !t.open && t.tradeId != null && !reviews.byInstance.get(t.tradeId)?.reviewed,
+    return buildReviewedTrades(items, today, undefined, states).filter(
+      (t) => !t.open && t.tradeId != null && !reviews.byTrade.get(t.tradeId)?.reviewed,
     ).length
-  }, [execQ.data, reviews.data, reviews.byInstance, today, states])
+  }, [execQ.data, reviews.data, reviews.byTrade, today, states])
 }

@@ -76,7 +76,7 @@ export default function PnlExplainPage() {
     timeRange,
     calendarMonth,
     strategyOpportunityId: null,
-    strategyInstanceId: null,
+    tradeId: null,
   })
   const canonicalQuery = useExecutionsAll()
   const bookQuery = useExecutionsPerformanceBook()

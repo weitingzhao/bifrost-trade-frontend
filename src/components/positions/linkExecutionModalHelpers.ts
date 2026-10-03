@@ -1,9 +1,9 @@
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { getContractLabelParts } from '@/lib/format'
-import type { Execution, StrategyInstance, StrategyOpportunity } from '@/types/positions'
+import type { Execution, Trade, StrategyOpportunity } from '@/types/positions'
 import { fillQtyShown } from '@/utils/fillQuantity'
 
-export function formatInstanceOpenedDate(si: StrategyInstance): string {
+export function formatTradeOpenedDate(si: Trade): string {
   let ms: number | null = null
   if (si.opened_at_epoch != null && Number.isFinite(si.opened_at_epoch)) {
     ms = si.opened_at_epoch * 1000
@@ -11,7 +11,7 @@ export function formatInstanceOpenedDate(si: StrategyInstance): string {
     const t = Date.parse(si.opened_at)
     if (!Number.isNaN(t)) ms = t
   }
-  const id = si.strategy_instance_id
+  const id = si.trade_id
   const dateStr =
     ms != null
       ? new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -131,41 +131,41 @@ export function executionQtyLabel(ex: Execution): string {
 }
 
 /** Client-side guard when API filter is applied — instances must belong to selected opportunity. */
-export function filterInstancesForOpportunity(
-  instances: StrategyInstance[],
+export function filterTradesForOpportunity(
+  trades: Trade[],
   opportunityId: number | null,
-): StrategyInstance[] {
+): Trade[] {
   if (opportunityId == null || !Number.isFinite(opportunityId)) return []
-  return instances.filter((i) => i.strategy_opportunity_id === opportunityId)
+  return trades.filter((i) => i.strategy_opportunity_id === opportunityId)
 }
 
 /** Re-exported for the callers that already import it from here. */
 export { extractUnderlyingRootSymbol }
 
-/** How many trades this fill is split across (its `instance_allocations`). */
+/** How many trades this fill is split across (its `fill_splits`). */
 export function executionSplitCount(ex: Execution | null | undefined): number {
-  return ex?.instance_allocations?.length ?? 0
+  return ex?.fill_splits?.length ?? 0
 }
 
 /**
  * The attribution PATCH Assign strategy sends (api 0.3.0). The modal moves the
  * whole fill to one opportunity / trade, so a fill that is split across trades
- * also sends `instance_allocations: []` — the split is replaced, and the modal
+ * also sends `fill_splits: []` — the split is replaced, and the modal
  * says so before Save. Without it the server refuses (409): a fill is
  * attributed one way or the other. A fill with no split sends the ids alone.
  */
 export function assignAttributionPatch(
   ex: Execution | null | undefined,
   opportunityId: number,
-  instanceId: number,
+  tradeId: number,
 ): {
   strategy_opportunity_id: number
-  strategy_instance_id: number
-  instance_allocations?: []
+  trade_id: number
+  fill_splits?: []
 } {
   return {
     strategy_opportunity_id: opportunityId,
-    strategy_instance_id: instanceId,
-    ...(executionSplitCount(ex) > 0 ? { instance_allocations: [] as [] } : {}),
+    trade_id: tradeId,
+    ...(executionSplitCount(ex) > 0 ? { fill_splits: [] as [] } : {}),
   }
 }

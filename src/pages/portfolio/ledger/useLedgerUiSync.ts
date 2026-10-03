@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import type { GroupBy, InstanceSubTab, MainTab } from '@/pages/portfolio/ledger/ledgerTypes'
+import type { GroupBy, TradeSubTab, MainTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { pruneExpandedKeys } from '@/pages/portfolio/ledger/ledgerExpandKeys'
 
@@ -12,13 +12,13 @@ export function useLedgerUiSync(params: {
   setStkCategoryTab: (v: string) => void
   groupBy: GroupBy
   strategyDisplayBuckets: DisplayBucket[]
-  instanceDisplayBuckets: DisplayBucket[]
+  tradeDisplayBuckets: DisplayBucket[]
   setOuterStrategyExpanded: Dispatch<SetStateAction<Set<string>>>
-  setOuterInstanceExpanded: Dispatch<SetStateAction<Set<string>>>
+  setOuterTradeExpanded: Dispatch<SetStateAction<Set<string>>>
   activeTab: MainTab
-  instanceSubTab: InstanceSubTab
-  setInstanceSubTab: (v: InstanceSubTab) => void
-  instanceGroupsRaw: { withInst: unknown[]; noInst: unknown[] }
+  tradeSubTab: TradeSubTab
+  setTradeSubTab: (v: TradeSubTab) => void
+  tradeGroupsRaw: { withInst: unknown[]; noInst: unknown[] }
   hasOptExecs: boolean
   hasStkExecs: boolean
   hasFixedIncomeExecs: boolean
@@ -33,13 +33,13 @@ export function useLedgerUiSync(params: {
     setStkCategoryTab,
     groupBy,
     strategyDisplayBuckets,
-    instanceDisplayBuckets,
+    tradeDisplayBuckets,
     setOuterStrategyExpanded,
-    setOuterInstanceExpanded,
+    setOuterTradeExpanded,
     activeTab,
-    instanceSubTab,
-    setInstanceSubTab,
-    instanceGroupsRaw,
+    tradeSubTab,
+    setTradeSubTab,
+    tradeGroupsRaw,
     hasOptExecs,
     hasStkExecs,
     hasFixedIncomeExecs,
@@ -66,25 +66,25 @@ export function useLedgerUiSync(params: {
     setOuterStrategyExpanded(prev =>
       pruneExpandedKeys(prev, strategyDisplayBuckets.map(b => b.key), opp),
     )
-    setOuterInstanceExpanded(prev =>
-      pruneExpandedKeys(prev, instanceDisplayBuckets.map(b => b.key), opp),
+    setOuterTradeExpanded(prev =>
+      pruneExpandedKeys(prev, tradeDisplayBuckets.map(b => b.key), opp),
     )
   }, [
     isLoading,
     groupBy,
     strategyDisplayBuckets,
-    instanceDisplayBuckets,
+    tradeDisplayBuckets,
     setOuterStrategyExpanded,
-    setOuterInstanceExpanded,
+    setOuterTradeExpanded,
   ])
 
   useEffect(() => {
     if (activeTab !== 'instance') return
-    const hasWithInst = instanceGroupsRaw.withInst.length > 0
-    const hasNoInst = instanceGroupsRaw.noInst.length > 0
-    if (instanceSubTab === 'with_instance' && !hasWithInst && hasNoInst) setInstanceSubTab('no_instance')
-    if (instanceSubTab === 'no_instance' && !hasNoInst && hasWithInst) setInstanceSubTab('with_instance')
-  }, [activeTab, instanceSubTab, instanceGroupsRaw, setInstanceSubTab])
+    const hasWithInst = tradeGroupsRaw.withInst.length > 0
+    const hasNoInst = tradeGroupsRaw.noInst.length > 0
+    if (tradeSubTab === 'with_instance' && !hasWithInst && hasNoInst) setTradeSubTab('no_instance')
+    if (tradeSubTab === 'no_instance' && !hasNoInst && hasWithInst) setTradeSubTab('with_instance')
+  }, [activeTab, tradeSubTab, tradeGroupsRaw, setTradeSubTab])
 
   useEffect(() => {
     if (isLoading) return

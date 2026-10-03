@@ -119,13 +119,13 @@ export default function TradeDeskPage() {
   const active = useMemo(() => {
     const alloc = chain.data.allocations.find((a) => a.is_active) ?? null
     const gate = alloc == null ? null : chain.data.gates.find((g) => g.gate_safety_strategy_id === alloc.gate_safety_strategy_id) ?? null
-    const open = chain.data.instances.filter((i) => !i.closed).length
+    const open = chain.data.trades.filter((i) => !i.closed).length
     // The strategy service answers 200 with an empty list now and then, and a
     // successful empty response is indistinguishable from an empty book. It is
     // caught the way Rules catches it: cross-checked against a count that did
     // arrive in the same batch, and said out loud rather than retried, because
     // a silent retry hides the defect and "genuinely none" is a legal answer.
-    const unread = chain.data.opportunities.length > 0 && chain.data.instances.length === 0
+    const unread = chain.data.opportunities.length > 0 && chain.data.trades.length === 0
     return { alloc, gate, open, unread }
   }, [chain.data])
 
@@ -309,7 +309,7 @@ export default function TradeDeskPage() {
                 },
                 {
                   k: 'Trades',
-                  v: active.unread ? 'not read' : `${active.open} open · ${chain.data.instances.length - active.open} closed`,
+                  v: active.unread ? 'not read' : `${active.open} open · ${chain.data.trades.length - active.open} closed`,
                   note: active.unread
                     ? 'The strategy service answered with an empty list while the rulebook has opportunities — it does that now and then and answers in full a moment later.'
                     : 'Open and closed by each trade’s own fills, the Ledger’s rule.',

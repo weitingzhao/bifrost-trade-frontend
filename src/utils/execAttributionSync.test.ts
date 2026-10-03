@@ -28,10 +28,10 @@ describe('execAttributionSync', () => {
   it('shows sync on TWS when final has attribution and differs', () => {
     const final = ex({
       account_executions_id: 1,
-      strategy_instance_id: 66,
+      trade_id: 66,
       strategy_opportunity_id: 10,
     })
-    const tws = ex({ account_executions_id: 2, strategy_instance_id: null })
+    const tws = ex({ account_executions_id: 2, trade_id: null })
     const keys = new Set(['U1|RKLB|OPT|20260821|115|C'])
     expect(twsNeedsStrategySyncFromFinal(tws, final)).toBe(true)
     expect(
@@ -42,9 +42,9 @@ describe('execAttributionSync', () => {
   it('shows sync on final when TWS has attribution and differs', () => {
     const tws = ex({
       account_executions_id: 2,
-      strategy_instance_id: 66,
+      trade_id: 66,
     })
-    const final = ex({ account_executions_id: 1, strategy_instance_id: null })
+    const final = ex({ account_executions_id: 1, trade_id: null })
     const keys = new Set(['U1|RKLB|OPT|20260821|115|C'])
     expect(finalNeedsStrategySyncFromTws(final, tws)).toBe(true)
     expect(
@@ -53,7 +53,7 @@ describe('execAttributionSync', () => {
   })
 
   it('hides sync when canonical contract key missing', () => {
-    const final = ex({ account_executions_id: 1, strategy_instance_id: 66 })
+    const final = ex({ account_executions_id: 1, trade_id: 66 })
     const tws = ex({ account_executions_id: 2 })
     expect(
       shouldShowOptionExecSync({

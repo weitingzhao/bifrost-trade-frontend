@@ -36,7 +36,7 @@ export function mapIntentToPrefill(payload: OrderIntentPayload): PrefillData {
   return {
     name: nameParts.join(' · '),
     structureId: '',
-    gateSafetyId: '',
+    gateSetId: '',
     scopeType,
     symbols,
     conditions: [],

@@ -102,11 +102,11 @@ export async function intendStrategyPlan(id: number): Promise<{ ok: boolean }> {
 
 export async function linkStrategyPlanFill(
   id: number,
-  strategyInstanceId: number,
+  tradeId: number,
 ): Promise<{ ok: boolean }> {
   return planRequest(
     `/strategies/plans/${id}/link-fill`,
-    { method: 'POST', body: { strategy_instance_id: strategyInstanceId } },
+    { method: 'POST', body: { trade_id: tradeId } },
   )
 }
 

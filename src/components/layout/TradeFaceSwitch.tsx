@@ -11,12 +11,12 @@ import { cn } from '@/lib/utils'
 const BTN =
   'inline-flex h-[22px] items-center rounded-full px-3 text-xs font-semibold leading-none whitespace-nowrap transition-colors active:[filter:var(--press)]'
 
-export function tradeFactsPath(instanceId: number): string {
-  return `/trade/${instanceId}`
+export function tradeFactsPath(tradeId: number): string {
+  return `/trade/${tradeId}`
 }
 
-export function tradeReviewPath(instanceId: number, extra?: Record<string, string>): string {
-  const qs = new URLSearchParams({ t: `#${instanceId}`, ...extra })
+export function tradeReviewPath(tradeId: number, extra?: Record<string, string>): string {
+  const qs = new URLSearchParams({ t: `#${tradeId}`, ...extra })
   return `/review/trade?${qs.toString()}`
 }
 

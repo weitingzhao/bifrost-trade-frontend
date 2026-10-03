@@ -51,8 +51,8 @@ import { layerForPath } from '@/lib/design/layers'
 
 /** Stable ErrorBoundary key — keep Instances mounted when opening/closing detail. */
 function outletBoundaryKey(pathname: string): string {
-  const instances = pathname.match(/^(\/strategy\/instances)(?:\/\d+)?\/?$/)
-  if (instances) return instances[1]
+  const trades = pathname.match(/^(\/strategy\/instances)(?:\/\d+)?\/?$/)
+  if (trades) return trades[1]
   return pathname
 }
 

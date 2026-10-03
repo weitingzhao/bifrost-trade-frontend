@@ -38,11 +38,11 @@ describe('ledger view chips', () => {
   it('counts name their unit, as the prototype chips do', () => {
     const chips = buildAttributionChips({
       opportunityCount: 8,
-      instanceWith: 13,
-      instanceWithout: 7,
+      tradeWith: 13,
+      tradeWithout: 7,
     })
     expect(chips.map(ch => ch.countLabel)).toEqual(['8 opportunities', '13 with · 7 without'])
-    expect(buildAttributionChips({ opportunityCount: 1, instanceWith: 0, instanceWithout: 0 })[0].countLabel)
+    expect(buildAttributionChips({ opportunityCount: 1, tradeWith: 0, tradeWithout: 0 })[0].countLabel)
       .toBe('1 opportunity')
     const options = buildInstrumentChips({
       closedOpt: 18,

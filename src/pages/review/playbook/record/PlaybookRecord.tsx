@@ -35,7 +35,7 @@ import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { THIN_SAMPLE, type PlayStat } from '@/utils/reviewContracts'
 import { SINCE_OPTIONS, sinceEpoch, type SinceFilter } from '@/utils/sinceWindow'
-import { useInstanceStates, useWinRate } from '@/hooks/useStrategies'
+import { useTradeStates, useWinRate } from '@/hooks/useStrategies'
 import { useQuery } from '@tanstack/react-query'
 import { fetchStructures } from '@/api/strategy'
 import { PlaybookRegimeGrid } from './PlaybookRegimeGrid'
@@ -45,7 +45,7 @@ import { DECAY_PROFIT_FACTOR, sizeCapFor, type SizeCap } from '@/utils/sizeCap'
 import { winRateInk } from './playbookInk'
 import { lensRows, ORIGIN_SAMPLE_FLOOR, sourceRows, type OriginRow } from './originCut'
 import { useTradeOrigins } from '@/hooks/useTradeOrigins'
-import { buildReviewInstances } from '@/utils/reviewInstances'
+import { buildReviewedTrades } from '@/utils/reviewedTrades'
 import { ORIGIN_UNRECORDED } from '@/utils/tradeOrigin'
 
 /** Rev .112: four cuts — the two Outcome contributed read where the idea came from. */
@@ -242,11 +242,11 @@ export function PlaybookRecord() {
   const origins = useTradeOrigins()
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
   // Open / closed is the instance list's state (core 0.41.0, TD-43).
-  const states = useInstanceStates()
+  const states = useTradeStates()
   const closedTrades = useMemo(() => {
     const items = execQuery.data?.items ?? []
     const scoped = accountFilter === 'all' ? items : items.filter((e) => (e.account_id ?? '').trim() === accountFilter)
-    return buildReviewInstances(scoped, today, origins.exitBy, states).filter((t) => !t.open)
+    return buildReviewedTrades(scoped, today, origins.exitBy, states).filter((t) => !t.open)
   }, [execQuery.data?.items, accountFilter, today, origins.exitBy, states])
   const originRows = useMemo(
     () => (cut === 'lens' ? lensRows(closedTrades) : sourceRows(closedTrades, origins.byTrade)),

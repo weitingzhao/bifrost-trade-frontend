@@ -31,7 +31,7 @@ vi.mock('@/hooks/useStrategies', () => ({
   useStructures: () => ({
     data: { items: [{ strategy_structure_id: 3, name: 'Cash Secured Put', version: 1, is_active: true }] },
   }),
-  useGateSafety: () => ({
+  useGateSets: () => ({
     data: { items: [{ gate_safety_strategy_id: 9, name: 'Example Gate', version: 2, is_active: true }] },
   }),
 }))

@@ -13,10 +13,10 @@ import type { Execution } from '@/types/positions'
 import type { OptionStockLinkSummary } from '@/types/trading'
 import { computeDayRealizedUnrealizedStock } from '@/utils/ledger/performanceUtils'
 import {
-  instanceOptionStockSlippageAdjustment,
+  tradeOptionStockSlippageAdjustment,
   ledgerOptDetailRowPnl,
   scaledLedgerOptDetailRowPnl,
-  sliceExecutionForInstanceOptView,
+  sliceExecutionForTradeOptView,
 } from '@/utils/ledger/ledgerOptHelpers'
 import { buildOptExecutionGroups } from '@/utils/ledger/optExecutionGroups'
 import { toFill } from '@/utils/reviewContracts'
@@ -73,9 +73,9 @@ const splitBefore = opt({
   price: 2,
   commission: 1.5,
   realized_pnl: 90,
-  instance_allocations: [
-    { strategy_instance_id: 11, allocated_quantity: -2 },
-    { strategy_instance_id: 12, allocated_quantity: -1 },
+  fill_splits: [
+    { trade_id: 11, quantity: -2 },
+    { trade_id: 12, quantity: -1 },
   ],
 })
 const splitLinks: Record<number, OptionStockLinkSummary> = { 31: { links: [], slippage_total: 30 } }
@@ -125,12 +125,12 @@ describe.each(shapes)('TD-30 sell sign — %s', (_label, wire) => {
 
   it('split allocation: the slice and the slippage share are unchanged', () => {
     const ex = wire(splitBefore)
-    const mine = sliceExecutionForInstanceOptView(ex, 11)!
+    const mine = sliceExecutionForTradeOptView(ex, 11)!
     expect(mine.quantity).toBe(-2)
     expect(mine.commission).toBeCloseTo(1, 9)
     expect(mine.realized_pnl).toBeCloseTo(60, 9)
-    expect(instanceOptionStockSlippageAdjustment([ex], 11, splitLinks)).toBeCloseTo(20, 9)
-    expect(instanceOptionStockSlippageAdjustment([ex], 12, splitLinks)).toBeCloseTo(10, 9)
+    expect(tradeOptionStockSlippageAdjustment([ex], 11, splitLinks)).toBeCloseTo(20, 9)
+    expect(tradeOptionStockSlippageAdjustment([ex], 12, splitLinks)).toBeCloseTo(10, 9)
     // The parent row: 3 × 2.00 × 100 − 1.5 = 598.5, plus its 30 of slippage.
     expect(ledgerOptDetailRowPnl(ex, splitLinks).displayPnl).toBeCloseTo(628.5, 9)
   })

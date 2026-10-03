@@ -94,9 +94,9 @@ export function LineageBar({
   const gatesOf = allocs
     .map((a) => data.gates.find((g) => g.gate_safety_strategy_id === a.gate_safety_strategy_id))
     .filter((g): g is NonNullable<typeof g> => g != null)
-  const insts = data.instances.filter((i) => lit.instance.has(i.id))
-  const pickedInstance =
-    focus.pick?.kind === 'instance' ? data.instances.find((i) => i.id === focus.pick!.id) : undefined
+  const insts = data.trades.filter((i) => lit.trade.has(i.id))
+  const pickedTrade =
+    focus.pick?.kind === 'instance' ? data.trades.find((i) => i.id === focus.pick!.id) : undefined
   const OPP_CAP = 3
 
   return (
@@ -209,12 +209,12 @@ export function LineageBar({
         )}
       </Segment>
       <Segment step="› running" title="Trades">
-        {pickedInstance ? (
+        {pickedTrade ? (
           <LineageChip
-            label={`#${pickedInstance.id} · ${pickedInstance.symbolish}`}
-            title={pickedInstance.opportunityName}
+            label={`#${pickedTrade.id} · ${pickedTrade.symbolish}`}
+            title={pickedTrade.opportunityName}
             selected
-            onClick={() => onPick({ kind: 'instance', id: pickedInstance.id })}
+            onClick={() => onPick({ kind: 'instance', id: pickedTrade.id })}
           />
         ) : (
           <Note>

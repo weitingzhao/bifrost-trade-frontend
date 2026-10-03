@@ -5,7 +5,7 @@ import {
   splitBySecType,
   filterStocksByBucket,
   buildOpenOptionPositions,
-  groupByInstance,
+  groupByTrade,
 } from './positionsGrouping'
 import type { LivePositionRow, OpenOptionPosition } from '@/types/positions'
 
@@ -98,11 +98,11 @@ describe('buildOpenOptionPositions', () => {
         avg_cost: 5,
         price_mid: null,
         price_last: null,
-        strategy_instance_id: 42,
-        strategy_instance_label: 'AAPL CC #1',
+        trade_id: 42,
+        trade_label: 'AAPL CC #1',
         strategy_opportunity_id: 10,
         strategy_opportunity_name: 'AAPL Covered Call',
-        strategy_instance_opened_at_epoch: null,
+        trade_opened_at_epoch: null,
         structure_type: null,
         scope_type: null,
         strategy_structure_id: null,
@@ -117,40 +117,40 @@ describe('buildOpenOptionPositions', () => {
 
     const result = buildOpenOptionPositions(optionPositions, attributions)
     expect(result).toHaveLength(1)
-    expect(result[0].strategy_instance_id).toBe(42)
+    expect(result[0].trade_id).toBe(42)
     expect(result[0].attribution_type).toBe('single')
     expect(result[0].strategy_opportunity_name).toBe('AAPL Covered Call')
     expect(result[0].qty).toBe(2)
   })
 })
 
-describe('groupByInstance', () => {
-  it('groups positions by strategy_instance_id', () => {
+describe('groupByTrade', () => {
+  it('groups positions by trade_id', () => {
     const positions = [
-      { strategy_instance_id: 1, strategy_instance_label: 'A', unrealized_pnl: 100 },
-      { strategy_instance_id: 1, strategy_instance_label: 'A', unrealized_pnl: 50 },
-      { strategy_instance_id: null, strategy_instance_label: null, unrealized_pnl: -20 },
+      { trade_id: 1, trade_label: 'A', unrealized_pnl: 100 },
+      { trade_id: 1, trade_label: 'A', unrealized_pnl: 50 },
+      { trade_id: null, trade_label: null, unrealized_pnl: -20 },
     ] as OpenOptionPosition[]
 
-    const groups = groupByInstance(positions)
+    const groups = groupByTrade(positions)
     expect(groups).toHaveLength(2)
 
-    const assigned = groups.find((g) => g.strategy_instance_id === 1)
+    const assigned = groups.find((g) => g.trade_id === 1)
     expect(assigned?.options).toHaveLength(2)
     expect(assigned?.options_unrealized_pnl).toBe(150)
 
-    const unassigned = groups.find((g) => g.strategy_instance_id === null)
+    const unassigned = groups.find((g) => g.trade_id === null)
     expect(unassigned?.options).toHaveLength(1)
   })
 
   it('sorts unassigned to end', () => {
     const positions = [
-      { strategy_instance_id: null, unrealized_pnl: 0 },
-      { strategy_instance_id: 5, strategy_instance_label: 'B', unrealized_pnl: 0 },
+      { trade_id: null, unrealized_pnl: 0 },
+      { trade_id: 5, trade_label: 'B', unrealized_pnl: 0 },
     ] as OpenOptionPosition[]
 
-    const groups = groupByInstance(positions)
-    expect(groups[0].strategy_instance_id).toBe(5)
-    expect(groups[1].strategy_instance_id).toBeNull()
+    const groups = groupByTrade(positions)
+    expect(groups[0].trade_id).toBe(5)
+    expect(groups[1].trade_id).toBeNull()
   })
 })

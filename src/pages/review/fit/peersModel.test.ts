@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { ReviewInstance } from '@/utils/reviewInstances'
+import type { ReviewedTrade } from '@/utils/reviewedTrades'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 import { landed, median, normalised, peerPool, peerReading } from './peersModel'
 
-const inst = (key: string, over: Partial<ReviewInstance>): ReviewInstance =>
-  ({ contractKey: key, underlying: 'ZZZ', play: 'Wheel', open: false, openedOn: '2026-01-01', entryPremium: 100, dteAtEntry: 10, ...over }) as ReviewInstance
+const inst = (key: string, over: Partial<ReviewedTrade>): ReviewedTrade =>
+  ({ contractKey: key, underlying: 'ZZZ', play: 'Wheel', open: false, openedOn: '2026-01-01', entryPremium: 100, dteAtEntry: 10, ...over }) as ReviewedTrade
 
 describe('Compared with (Rev .104)', () => {
   const self = inst('s', { openedOn: '2026-03-01', open: true })

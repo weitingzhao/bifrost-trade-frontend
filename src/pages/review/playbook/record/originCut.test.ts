@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { ReviewInstance } from '@/utils/reviewInstances'
+import type { ReviewedTrade } from '@/utils/reviewedTrades'
 import type { TradeOrigin } from '@/utils/tradeOrigin'
 import { lensRows, sourceRows } from './originCut'
 
 // Invented trades and plans.
-const t = (tradeId: number, realised: number) => ({ tradeId, realised }) as ReviewInstance
+const t = (tradeId: number, realised: number) => ({ tradeId, realised }) as ReviewedTrade
 const o = (sourceKind: TradeOrigin['sourceKind']) => ({ sourceKind }) as TradeOrigin
 
 describe('Record · By source and By lens (Rev .112)', () => {

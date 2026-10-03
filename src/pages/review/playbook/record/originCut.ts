@@ -9,7 +9,7 @@
  *
  * Closed trades only: an open one stays out of every rate, as on the play cut.
  */
-import type { ReviewInstance } from '@/utils/reviewInstances'
+import type { ReviewedTrade } from '@/utils/reviewedTrades'
 import { PLAN_SOURCE_KINDS, PLAN_SOURCE_LABELS, PLAN_SOURCE_SUBS, type TradeOrigin } from '@/utils/tradeOrigin'
 
 /** Under this many closes a count is a tally, not a rate (the design's floor). */
@@ -31,7 +31,7 @@ export interface OriginRow {
   thin: boolean
 }
 
-function originRowOf(key: string, name: string, sub: string, trades: readonly ReviewInstance[]): OriginRow {
+function originRowOf(key: string, name: string, sub: string, trades: readonly ReviewedTrade[]): OriginRow {
   const n = trades.length
   const realised = trades.reduce((a, t) => a + t.realised, 0)
   const wins = trades.filter((t) => t.realised > 0).length
@@ -53,10 +53,10 @@ function originRowOf(key: string, name: string, sub: string, trades: readonly Re
 
 /** Every source the server knows, then the trades no plan names — the design's order, "No plan" last. */
 export function sourceRows(
-  closed: readonly ReviewInstance[],
+  closed: readonly ReviewedTrade[],
   origins: ReadonlyMap<number, TradeOrigin>,
 ): OriginRow[] {
-  const originOf = (t: ReviewInstance) => (t.tradeId == null ? undefined : origins.get(t.tradeId))
+  const originOf = (t: ReviewedTrade) => (t.tradeId == null ? undefined : origins.get(t.tradeId))
   const rows = PLAN_SOURCE_KINDS.map((k) =>
     originRowOf(k, PLAN_SOURCE_LABELS[k], PLAN_SOURCE_SUBS[k], closed.filter((t) => originOf(t)?.sourceKind === k)),
   )
@@ -65,6 +65,6 @@ export function sourceRows(
 }
 
 /** One row: nothing records a lens, so every closed trade is one whose screen is unknown. */
-export function lensRows(closed: readonly ReviewInstance[]): OriginRow[] {
+export function lensRows(closed: readonly ReviewedTrade[]): OriginRow[] {
   return [originRowOf('none', 'No lens recorded', 'did not come through a screen, or no plan names it', closed)]
 }

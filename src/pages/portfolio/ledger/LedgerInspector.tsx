@@ -29,7 +29,7 @@ function journalSeedKey(seed: LedgerJournalSeed | undefined): string {
   if (!seed) return 'no-contract'
   // The contract key, not just account and symbol: two contracts on one symbol
   // must not share a draft or a half-confirmed write.
-  return [seed.mode, seed.accountId, seed.contractKey, String(seed.netQty ?? ''), String(seed.instanceId ?? '')].join('|')
+  return [seed.mode, seed.accountId, seed.contractKey, String(seed.netQty ?? ''), String(seed.tradeId ?? '')].join('|')
 }
 
 export function LedgerInspector({

@@ -10,10 +10,10 @@
  */
 import { useQueryClient } from '@tanstack/react-query'
 import { AllocationFormModal } from '@/components/strategy/AllocationFormModal'
-import { InstanceCreateModal } from '@/components/strategy/InstanceCreateModal'
+import { TradeCreateModal } from '@/components/strategy/TradeCreateModal'
 import { OpportunityFormModal, type PrefillData } from '@/components/strategy/OpportunityFormModal'
 import { StructureFormSheet, type StructureFormMode } from '@/components/strategy/StructureFormSheet'
-import { GateSafetyFormSheet, type GateSheetMode } from '@/components/strategy/gates/GateSafetyFormSheet'
+import { GateSetFormSheet, type GateSheetMode } from '@/components/strategy/gates/GateSetFormSheet'
 import type { StatusResponse } from '@/types/monitor'
 import type { StrategyOpportunity } from '@/types/strategy'
 
@@ -61,10 +61,10 @@ export function RulesSheets({
     )
   }
   if (sheet.kind === 'gate') {
-    return <GateSafetyFormSheet mode={sheet.mode} onClose={saved} />
+    return <GateSetFormSheet mode={sheet.mode} onClose={saved} />
   }
   if (sheet.kind === 'instance') {
-    return <InstanceCreateModal open onOpenChange={(next) => (next ? undefined : saved())} status={status} />
+    return <TradeCreateModal open onOpenChange={(next) => (next ? undefined : saved())} status={status} />
   }
   return null
 }

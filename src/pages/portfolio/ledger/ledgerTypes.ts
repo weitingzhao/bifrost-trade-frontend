@@ -16,7 +16,7 @@ export type OptSortCol = 'expiry' | 'trade_date'
 export type StkSortCol = 'trade_date' | 'realized_pnl'
 export type GroupBy = 'opportunity' | 'structure' | 'watchlist_symbol'
 export type OptSubTab = 'contracts' | 'orphans'
-export type InstanceSubTab = 'with_instance' | 'no_instance' | 'contains_open'
+export type TradeSubTab = 'with_instance' | 'no_instance' | 'contains_open'
 /** Strategy view scope: every opportunity, or only the fills filed under none. */
 export type StrategyScope = 'all' | 'unlinked'
 
@@ -29,7 +29,7 @@ export function isSharesTab(tab: MainTab): tab is SharesTab {
     tab === 'all'
   )
 }
-export type OptInstanceFilter = 'all' | 'has_instance' | 'no_instance' | 'mixed'
+export type OptTradeFilter = 'all' | 'has_instance' | 'no_instance' | 'mixed'
 
 export type OptGroupCallbacks = {
   onEdit?: (e: Execution) => void
@@ -40,7 +40,7 @@ export type OptGroupCallbacks = {
   onExpiredClose?: (group: OptExecutionGroup) => void
   syncingId?: number | null
   syncError?: { id: number; message: string } | null
-  onSyncOpposite?: (e: Execution, src: { opportunity_id: number; instance_id: number }) => void
+  onSyncOpposite?: (e: Execution, src: { opportunity_id: number; trade_id: number }) => void
   stockFills?: Execution[]
 }
 
@@ -58,15 +58,15 @@ export type StratOppGroup = {
   opportunityId: number | 'none'
   title: string
   structure: string
-  instanceSubgroups: {
-    instanceId: number | 'none'
+  tradeSubgroups: {
+    tradeId: number | 'none'
     label: string | null
     groups: OptExecutionGroup[]
   }[]
 }
 
 export type InstGroup = {
-  instanceId: number
+  tradeId: number
   label: string | null
   oppName: string | null
   structure: string

@@ -227,7 +227,7 @@ export function buildReviewContracts(executions: readonly Execution[]): {
       right: (g.option_right || '').toUpperCase().slice(0, 1),
       fills: ordered.map(toFill),
       play: ordered.find((t) => t.strategy_opportunity_name)?.strategy_opportunity_name ?? null,
-      tradeId: [...ordered].reverse().find((t) => t.strategy_instance_id != null)?.strategy_instance_id ?? null,
+      tradeId: [...ordered].reverse().find((t) => t.trade_id != null)?.trade_id ?? null,
       openedOn: first,
       closedOn: last,
       daysHeld: first && last ? daysBetween(first, last) : null,

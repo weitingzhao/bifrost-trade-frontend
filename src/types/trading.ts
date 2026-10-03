@@ -126,7 +126,8 @@ export interface PerformanceResponse {
   realized_by_account?: Record<string, number>
   realized_by_sec_type?: { sec_type: string; total_pnl: number; commission: number; net_pnl: number; fill_count: number; return_pct?: number }[]
   realized_by_strategy_opportunity?: Record<string, number>
-  realized_by_strategy_instance?: Record<string, number>
+  /** One row per trade (api 0.7.0; `realized_by_strategy_instance` until R4). */
+  realized_by_trade?: { trade_id: number; total_pnl: number; commission: number; net_pnl: number; fill_count: number; return_pct?: number }[]
   unrealized?: number
   unrealized_by_account?: Record<string, number>
   unrealized_by_sec_type?: { sec_type: string; total_pnl: number }[]
@@ -177,7 +178,7 @@ export interface PerformanceParams {
   account_id?: string
   granularity?: 'day' | 'week' | 'month'
   strategy_opportunity_id?: number
-  strategy_instance_id?: number
+  trade_id?: number
   source_scope?: 'performance_book' | 'on_the_fly'
   summary_only?: boolean
 }
@@ -195,7 +196,7 @@ export interface ExecutionsRangeParams {
   limit?: number
   include_opt_pairs?: boolean
   strategy_opportunity_id?: number
-  strategy_instance_id?: number
+  trade_id?: number
   source_scope?: Exclude<ExecutionSourceScope, 'all'>
   account_id?: string
 }
@@ -331,11 +332,11 @@ export interface RawExecution {
   report_date?: string | null
   time?: number | null
   account_id?: string | null
-  strategy_instance_id?: number | null
-  instance_allocations?: { strategy_instance_id: number; allocated_quantity: number }[]
+  trade_id?: number | null
+  fill_splits?: { trade_id: number; quantity: number }[]
 }
 
 export interface RawExecutionsResponse {
-  /** `fetchInstanceExecutions` fills this from `items` (or the legacy `executions`). */
+  /** `fetchTradeExecutions` fills this from `items` (or the legacy `executions`). */
   executions: RawExecution[]
 }

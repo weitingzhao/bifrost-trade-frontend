@@ -99,8 +99,8 @@ export async function updateExecution(
 /** What PATCH /executions/{id}/attribution changes; `null` clears an id, `[]` removes the split. */
 export interface ExecutionAttributionPatch {
   strategy_opportunity_id?: number | null
-  strategy_instance_id?: number | null
-  instance_allocations?: { strategy_instance_id: number; allocated_quantity: number }[]
+  trade_id?: number | null
+  fill_splits?: { trade_id: number; quantity: number }[]
 }
 
 /** The execution's attribution as the PATCH answers it. */
@@ -108,12 +108,12 @@ export interface ExecutionAttribution {
   account_executions_id: number
   account_id: string | null
   strategy_opportunity_id: number | null
-  strategy_instance_id: number | null
-  instance_allocations: {
-    strategy_instance_id: number
-    allocated_quantity: number
+  trade_id: number | null
+  fill_splits: {
+    trade_id: number
+    quantity: number
     strategy_opportunity_id: number | null
-    strategy_instance_label?: string
+    trade_label?: string
   }[]
 }
 
@@ -121,7 +121,7 @@ export interface ExecutionAttribution {
  * Attribute a fill to a trade (api 0.3.0, the successor of the attribution-only
  * PUT). A fill is attributed one way or the other: setting an id on a fill that
  * is split across trades is refused (409) unless the same patch sends
- * `instance_allocations: []`, which removes the split. An instance on another
+ * `fill_splits: []`, which removes the split. A trade on another
  * account is 400. Never throws for a refusal: `{ ok: false, error }` carries
  * the server's reason.
  */
@@ -148,14 +148,14 @@ export function deleteExecution(id: number): Promise<DeleteOutcome> {
   return requestDelete(tradingUrl(`/executions/${id}`))
 }
 
-export async function fetchInstancePerformance(instanceId: number): Promise<PerformanceResponse> {
-  return requestJson<PerformanceResponse>(tradingUrl(`/performance?strategy_instance_id=${instanceId}&summary_only=true`), { label: `Trading /performance [${instanceId}]` })
+export async function fetchTradePerformance(tradeId: number): Promise<PerformanceResponse> {
+  return requestJson<PerformanceResponse>(tradingUrl(`/performance?trade_id=${tradeId}&summary_only=true`), { label: `Trading /performance [${tradeId}]` })
 }
 
-export async function fetchInstanceExecutions(instanceId: number): Promise<RawExecutionsResponse> {
+export async function fetchTradeExecutions(tradeId: number): Promise<RawExecutionsResponse> {
   const raw = validateExecutions(
     await requestJson(
-      tradingUrl(`/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`),
+      tradingUrl(`/executions?trade_id=${tradeId}&source_scope=performance_book&limit=500`),
     ),
   )
   return { ...raw, executions: listItems(raw) }
@@ -169,8 +169,8 @@ export async function fetchPerformance(params: PerformanceParams = {}): Promise<
   if (params.granularity) qs.set('granularity', params.granularity)
   if (params.strategy_opportunity_id != null)
     qs.set('strategy_opportunity_id', String(params.strategy_opportunity_id))
-  if (params.strategy_instance_id != null)
-    qs.set('strategy_instance_id', String(params.strategy_instance_id))
+  if (params.trade_id != null)
+    qs.set('trade_id', String(params.trade_id))
   if (params.source_scope) qs.set('source_scope', params.source_scope)
   if (params.summary_only) qs.set('summary_only', 'true')
   return requestJson<PerformanceResponse>(tradingUrl(`/performance?${qs}`), { label: `Trading /performance` })
@@ -184,8 +184,8 @@ export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): 
   if (params.include_opt_pairs) qs.set('include_opt_pairs', 'true')
   if (params.strategy_opportunity_id != null)
     qs.set('strategy_opportunity_id', String(params.strategy_opportunity_id))
-  if (params.strategy_instance_id != null)
-    qs.set('strategy_instance_id', String(params.strategy_instance_id))
+  if (params.trade_id != null)
+    qs.set('trade_id', String(params.trade_id))
   if (params.source_scope) qs.set('source_scope', params.source_scope)
   if (params.account_id) qs.set('account_id', params.account_id)
   const raw = validateExecutions(await requestJson(tradingUrl(`/executions?${qs}`)))

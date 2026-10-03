@@ -94,7 +94,7 @@ export function SetActiveDialog({
     try {
       await setActiveAllocation(plan.allocationId, {
         structureId: plan.structureId,
-        gateSafetyId: plan.gateId,
+        gateSetId: plan.gateId,
       })
       await qc.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })
       onClose()

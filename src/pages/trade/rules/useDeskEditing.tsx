@@ -16,16 +16,16 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  createGateSafety,
-  fetchGateSafetyFull,
+  createGateSet,
+  fetchGateSetFull,
   createOpportunity,
   createStructure,
   fetchStructure,
   updateStructure,
   deleteAllocation,
-  deleteGateSafety,
+  deleteGateSet,
   deleteOpportunity,
-  deleteStrategyInstance,
+  deleteTrade as deleteTradeRequest,
   fetchOpportunityDetail,
   patchOpportunity,
   setActiveAllocation,
@@ -34,7 +34,7 @@ import type { ChainData } from '@/hooks/useRulesChain'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 import { notify } from '@/lib/shellNotify'
 import type { StatusResponse } from '@/types/monitor'
-import type { StrategyInstance, StrategyOpportunityDetail } from '@/types/strategy'
+import type { Trade, StrategyOpportunityDetail } from '@/types/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { ChainSelection } from './rulesChain'
 import { planActive } from './SetActiveDialog'
@@ -47,7 +47,7 @@ const HELD = {
   opportunity: 'rules-opportunity',
   allocation: 'rules-allocation',
   gate: 'rules-gate',
-  instance: 'rules-instance',
+  trade: 'rules-instance',
 } as const
 
 type Kind = 'structure' | 'opportunity' | 'allocation'
@@ -69,7 +69,7 @@ const said = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 export function useDeskEditing({
   data,
-  rawInstances,
+  rawTrades,
   status,
   sel,
   pick,
@@ -78,7 +78,7 @@ export function useDeskEditing({
   renderGate,
 }: {
   data: ChainData
-  rawInstances: StrategyInstance[]
+  rawTrades: Trade[]
   status: StatusResponse | undefined
   sel: ChainSelection | null
   pick: (s: ChainSelection) => void
@@ -110,18 +110,18 @@ export function useDeskEditing({
   const opp = useHeldRemoval(HELD.opportunity)
   const alloc = useHeldRemoval(HELD.allocation)
   const gate = useHeldRemoval(HELD.gate)
-  const inst = useHeldRemoval(HELD.instance)
+  const inst = useHeldRemoval(HELD.trade)
 
   /** The chain as it reads with the held deletes already gone. */
   const view = useMemo(
     () =>
-      withoutHeld(data, rawInstances, {
+      withoutHeld(data, rawTrades, {
         opportunity: opp.isHeld,
         allocation: alloc.isHeld,
         gate: gate.isHeld,
-        instance: inst.isHeld,
+        trade: inst.isHeld,
       }),
-    [data, rawInstances, opp.isHeld, alloc.isHeld, gate.isHeld, inst.isHeld],
+    [data, rawTrades, opp.isHeld, alloc.isHeld, gate.isHeld, inst.isHeld],
   )
 
   const daemonAllocationId = status?.strategy?.active?.allocation?.id ?? null
@@ -144,7 +144,7 @@ export function useDeskEditing({
   const openGate = (id: number) => setGateFor({ id, key: selKey })
 
   // ── Refusals said before anything is held ───────────────────────────────
-  const tradesOn = (id: number) => view.data.instances.filter((i) => i.opportunityId === id).length
+  const tradesOn = (id: number) => view.data.trades.filter((i) => i.opportunityId === id).length
   const gateUsers = (id: number) => gateInUseReason(view.data, id, daemonGateId)
 
   // ── Deletes (held) ──────────────────────────────────────────────────────
@@ -184,21 +184,21 @@ export function useDeskEditing({
     setGateFor(null)
     gate.hold(id, {
       msg: `Deleted gate set ${name}`,
-      commit: () => deleteGateSafety(id),
+      commit: () => deleteGateSet(id),
       invalidate: [['trade', 'rulesChain'], ['strategy']],
       failed: `Gate set ${name} was not deleted`,
     })
   }
   /** An empty trade goes without a confirm; one with fills is refused (unlink on the Ledger first). */
   const deleteTrade = (id: number) => {
-    const reading = view.data.instances.find((r) => r.id === id)
+    const reading = view.data.trades.find((r) => r.id === id)
     if ((reading?.fills ?? 0) > 0) {
       notify(`#${id} has ${reading?.fills} fills linked — unlink them on the Ledger first.`)
       return
     }
     inst.hold(id, {
       msg: `Deleted trade #${id}`,
-      commit: () => deleteStrategyInstance(id),
+      commit: () => deleteTradeRequest(id),
       invalidate: [['trade', 'rulesChain'], ['strategy']],
       failed: `Trade #${id} was not deleted`,
     })
@@ -291,8 +291,8 @@ export function useDeskEditing({
   /** Duplicate set: a real copy at v1-as-saved, opened in the gate inspector; Undo deletes it (nothing points at it yet). */
   const duplicateGate = async (id: number) => {
     try {
-      const f = gateToForm(await fetchGateSafetyFull(id), { copy: true })
-      const r = await createGateSafety(gateFormToPayload(f))
+      const f = gateToForm(await fetchGateSetFull(id), { copy: true })
+      const r = await createGateSet(gateFormToPayload(f))
       const copy = r.gate_safety_strategy_id
       if (copy == null) throw new Error(r.error ?? 'no id returned')
       refresh()
@@ -300,7 +300,7 @@ export function useDeskEditing({
       notify(`Duplicated as ${f.name} — point an allocation at it`, {
         undo: () => {
           setGateFor(null)
-          void deleteGateSafety(copy)
+          void deleteGateSet(copy)
             .then(refresh)
             .catch((e: unknown) => notify(`Copy not removed — ${said(e)}`))
         },
@@ -316,11 +316,11 @@ export function useDeskEditing({
     const before = {
       allocationId: current?.allocation?.id ?? null,
       structureId: current?.structure?.id ?? null,
-      gateSafetyId: current?.gate_safety?.id ?? null,
+      gateSetId: current?.gate_safety?.id ?? null,
     }
     const plan = planActive(view.data, id, before.structureId)
     try {
-      await setActiveAllocation(plan.allocationId, { structureId: plan.structureId, gateSafetyId: plan.gateId })
+      await setActiveAllocation(plan.allocationId, { structureId: plan.structureId, gateSetId: plan.gateId })
       await qc.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status })
       notify(
         plan.allocationId == null
@@ -330,7 +330,7 @@ export function useDeskEditing({
           undo: () =>
             void setActiveAllocation(before.allocationId, {
               structureId: before.structureId,
-              gateSafetyId: before.gateSafetyId,
+              gateSetId: before.gateSetId,
             })
               .then(() => qc.invalidateQueries({ queryKey: QUERY_KEYS.monitor.status }))
               .catch((e: unknown) => notify(`Not undone — ${said(e)}`)),

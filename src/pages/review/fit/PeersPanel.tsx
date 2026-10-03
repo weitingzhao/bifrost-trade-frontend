@@ -11,12 +11,12 @@ import { SegmentControl } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { instancePathQuery } from '@/hooks/useInstanceMarkPath'
+import { tradePathQuery } from '@/hooks/useTradePath'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { fmtPct0 } from '@/utils/positions'
 import type { MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewInstance } from '@/utils/reviewInstances'
+import type { ReviewedTrade } from '@/utils/reviewedTrades'
 import {
   PEER_CAP,
   PEER_LABEL,
@@ -32,7 +32,7 @@ import {
 
 const W = 1000
 const H = 180
-const nameOf = (x: ReviewInstance) => (x.tradeId != null ? `#${x.tradeId}` : x.label)
+const nameOf = (x: ReviewedTrade) => (x.tradeId != null ? `#${x.tradeId}` : x.label)
 
 export function PeersPanel({
   self,
@@ -42,12 +42,12 @@ export function PeersPanel({
   today,
   onPick,
 }: {
-  self: ReviewInstance
+  self: ReviewedTrade
   selfPath: MarkPath | null
-  all: readonly ReviewInstance[]
-  structureOf: (x: ReviewInstance) => string | null
+  all: readonly ReviewedTrade[]
+  structureOf: (x: ReviewedTrade) => string | null
   today: string
-  onPick: (x: ReviewInstance) => void
+  onPick: (x: ReviewedTrade) => void
 }) {
   const [by, setBy] = useState<PeerBy>('sym')
   const [when, setWhen] = useState<PeerWhen>('before')
@@ -61,7 +61,7 @@ export function PeersPanel({
     [all, self, when, structureOf],
   )
   const peers = pools[by].slice(0, PEER_CAP)
-  const paths = useQueries({ queries: peers.map((x) => instancePathQuery(x, today)) })
+  const paths = useQueries({ queries: peers.map((x) => tradePathQuery(x, today)) })
   const pathOf = (i: number) => paths[i]?.data?.path ?? null
   const loading = paths.some((q) => q.isLoading)
 
@@ -242,7 +242,7 @@ function PeerRow({
   onLeave,
   onPick,
 }: {
-  x: ReviewInstance
+  x: ReviewedTrade
   self?: boolean
   pd: number
   ld: number | null

@@ -220,7 +220,7 @@ export function computeOptionLiveAvgPerShareFromExecutions(
  *
  * Empirically (Host live book): HIMS 111 → $1.11/sh, RKLB 319 → $3.19/sh,
  * MRVL 1459 → $14.60/sh. Same rule as `normalizeAvgCostPerShare` in
- * buildInstanceGroups (`>= 10 → /100`). Tiny values (< 10) are left as
+ * buildTradeGroups (`>= 10 → /100`). Tiny values (< 10) are left as
  * already-$/share. FIFO-derived averages are already $/share — do not pass
  * them through this.
  */

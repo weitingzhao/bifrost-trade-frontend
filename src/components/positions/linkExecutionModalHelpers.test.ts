@@ -113,23 +113,23 @@ describe('assignAttributionPatch (api 0.3.0 attribution PATCH)', () => {
   const fill = { account_executions_id: 41 } as Execution
 
   it('a fill with no split sends the two ids alone', () => {
-    expect(assignAttributionPatch(fill, 3, 30)).toEqual({ strategy_opportunity_id: 3, strategy_instance_id: 30 })
-    expect(assignAttributionPatch(null, 3, 31)).toEqual({ strategy_opportunity_id: 3, strategy_instance_id: 31 })
+    expect(assignAttributionPatch(fill, 3, 30)).toEqual({ strategy_opportunity_id: 3, trade_id: 30 })
+    expect(assignAttributionPatch(null, 3, 31)).toEqual({ strategy_opportunity_id: 3, trade_id: 31 })
   })
 
-  it('a split fill moved to one trade also sends instance_allocations: [] — the split is replaced', () => {
+  it('a split fill moved to one trade also sends fill_splits: [] — the split is replaced', () => {
     const split = {
       ...fill,
-      instance_allocations: [
-        { strategy_instance_id: 30, allocated_quantity: 1 },
-        { strategy_instance_id: 31, allocated_quantity: 1 },
+      fill_splits: [
+        { trade_id: 30, quantity: 1 },
+        { trade_id: 31, quantity: 1 },
       ],
     } as Execution
     expect(executionSplitCount(split)).toBe(2)
     expect(assignAttributionPatch(split, 3, 30)).toEqual({
       strategy_opportunity_id: 3,
-      strategy_instance_id: 30,
-      instance_allocations: [],
+      trade_id: 30,
+      fill_splits: [],
     })
   })
 })

@@ -19,12 +19,12 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { useTradeRecord } from '@/hooks/useTradeRecord'
 import { useOpenTrade } from '@/layout/tradeGo'
 import { useSymbolGo } from '@/layout/symbolGo'
-import type { StrategyInstance } from '@/types/positions'
+import type { Trade } from '@/types/positions'
 import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
 import { TradeRiskSection } from './TradeRiskSection'
 import { TradeExecSection } from './TradeExecSection'
 import { TradePositionSection } from './TradePositionSection'
-import { InstanceKlineSection } from '@/components/strategy/instanceDetail/InstanceKlineSection'
+import { TradeKlineSection } from '@/components/strategy/tradeDetail/TradeKlineSection'
 
 export interface TradeRecordAction {
   label: string
@@ -42,7 +42,7 @@ const stamp = (iso: string | undefined) =>
 const signed = (v: number | null | undefined) => (v == null ? '—' : v > 0 ? `+${fmtUsdRound(v)}` : fmtUsdRound(v))
 
 export function TradeRecord({
-  instance,
+  trade,
   mode,
   title,
   opportunity,
@@ -57,7 +57,7 @@ export function TradeRecord({
   ranUnder,
   actions = [],
 }: {
-  instance: StrategyInstance
+  trade: Trade
   /**
    * Rev .103's three hosts: `panel` — the Instance surface's compact face (the
    * panel's own chrome closes it); `inline` — Trading › Rules' picked record;
@@ -83,17 +83,17 @@ export function TradeRecord({
   const [section, setSection] = useState<Section>('all')
   const [source, setSource] = useState<'perf' | 'tws'>('perf')
   const [withShares, setWithShares] = useState(true)
-  const r = useTradeRecord(instance, { tws: source === 'tws', withShares })
+  const r = useTradeRecord(trade, { tws: source === 'tws', withShares })
   const d = r.detail
   const isSheet = mode === 'panel'
-  const openInstance = useOpenTrade()
+  const openTrade = useOpenTrade()
   const symbolGo = useSymbolGo()
   const show = (k: Section) => section === 'all' || section === k
   const closed = r.life.closed
   const hasFills = r.legs.length > 0
   const inkFor = (v: number | null | undefined) => (closed ? pnlColorClass(v ?? 0) : UNREALIZED)
 
-  const id = instance.strategy_instance_id
+  const id = trade.trade_id
   const positionsTo = `/portfolio/positions?inst=${id}`
   const sym = r.legs[0]?.root ?? null
   // The face's own ways out (Rev .102): where its open legs are held, or its
@@ -113,7 +113,7 @@ export function TradeRecord({
       : []),
     ...actions,
   ]
-  const full = onFull ?? (() => openInstance(id, { page: true, list, from }))
+  const full = onFull ?? (() => openTrade(id, { page: true, list, from }))
   const openLegs = r.legs.filter((l) => l.open)
   const contractLine = (closed ? r.legs : openLegs)
     .map((l) => `${l.side === 'Short' ? '−' : '+'}${closed ? l.qty : Math.abs(l.openQty)} ${l.strike}${l.right}`)
@@ -410,10 +410,10 @@ export function TradeRecord({
           {show('chart') && r.legs[0]?.root ? (
             <div className="flex flex-col gap-2 mat-card px-3.5 py-3">
               <span className="text-dense-body font-semibold">Chart · fills on the price</span>
-              <InstanceKlineSection
+              <TradeKlineSection
                 symbol={r.legs[0].root}
                 executions={d?.executionsFinal ?? []}
-                strategyInstanceId={instance.strategy_instance_id}
+                tradeId={trade.trade_id}
               />
             </div>
           ) : null}

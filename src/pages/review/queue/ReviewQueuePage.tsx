@@ -42,8 +42,8 @@ import { derivedTags, exitTags } from '@/pages/review/fit/tradeFitModel'
 import { useNavigate } from 'react-router-dom'
 import { tradeReviewPath } from '@/components/layout'
 import { useTradeReviews } from '@/hooks/useTradeReviews'
-import { useInstanceStates } from '@/hooks/useStrategies'
-import { buildReviewInstances, type ReviewInstance } from '@/utils/reviewInstances'
+import { useTradeStates } from '@/hooks/useStrategies'
+import { buildReviewedTrades, type ReviewedTrade } from '@/utils/reviewedTrades'
 import type { TradeReview } from '@/api/tradeReviews'
 
 const PAGE_LEAD =
@@ -89,7 +89,7 @@ function exitVariant(k: ExitKind): 'danger' | 'warning' | 'neutral' {
  * two tags it names — assigned, stopped out — are put in front here.
  */
 function withExitTag(
-  t: ReviewInstance,
+  t: ReviewedTrade,
   tags: { text: string; title: string } | null,
 ): { text: string; title: string } | null {
   const exit = exitTags(t)
@@ -144,7 +144,7 @@ function QueueRow({
   onOpen,
   tags,
 }: {
-  t: ReviewInstance
+  t: ReviewedTrade
   review: TradeReview | undefined
   /** The plan the trade was opened under, when one names it (Rev .112 Source). */
   origin: TradeOrigin | undefined
@@ -261,19 +261,19 @@ export default function ReviewQueuePage() {
   // The same cache entry useReviewContracts reads — held here for its §17 state.
   const execQuery = useExecutionsAll()
   // Open / closed is the instance list's state (core 0.41.0, TD-43).
-  const states = useInstanceStates()
-  const instances = useMemo(() => {
+  const states = useTradeStates()
+  const reviewed = useMemo(() => {
     const items = execQuery.data?.items ?? []
     const scoped = accountFilter === 'all' ? items : items.filter((e) => (e.account_id ?? '').trim() === accountFilter)
-    return buildReviewInstances(scoped, today, origins.exitBy, states).filter((t) => !t.open)
+    return buildReviewedTrades(scoped, today, origins.exitBy, states).filter((t) => !t.open)
   }, [execQuery.data?.items, accountFilter, today, origins.exitBy, states])
 
   // The window first, so every figure on the page is about the same set of trades.
   const rows = useMemo(() => {
     const cut = closedSince(SINCE_MONTHS[since] ?? null)
-    return cut == null ? instances : instances.filter((t) => (t.closedOn ?? '') >= cut)
-  }, [instances, since])
-  const isReviewed = (t: ReviewInstance) => t.tradeId != null && Boolean(reviews.byInstance.get(t.tradeId)?.reviewed)
+    return cut == null ? reviewed : reviewed.filter((t) => (t.closedOn ?? '') >= cut)
+  }, [reviewed, since])
+  const isReviewed = (t: ReviewedTrade) => t.tradeId != null && Boolean(reviews.byTrade.get(t.tradeId)?.reviewed)
   const reviewedN = rows.filter(isReviewed).length
   const awaitingN = rows.filter((t) => t.tradeId != null && !isReviewed(t)).length
 
@@ -286,10 +286,10 @@ export default function ReviewQueuePage() {
     if (reviewFilter === 'done') return rows.filter(isReviewed)
     return rows
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, cell, reviewFilter, reviews.byInstance])
-  const hasPlan = (t: ReviewInstance) => t.tradeId != null && origins.byTrade.has(t.tradeId)
+  }, [rows, cell, reviewFilter, reviews.byTrade])
+  const hasPlan = (t: ReviewedTrade) => t.tradeId != null && origins.byTrade.has(t.tradeId)
   // No store holds a backtest run, so every idea is one with no run behind it.
-  const gapTest: Record<GapKey, (t: ReviewInstance) => boolean> = { noplan: (t) => !hasPlan(t), norun: () => true }
+  const gapTest: Record<GapKey, (t: ReviewedTrade) => boolean> = { noplan: (t) => !hasPlan(t), norun: () => true }
   const queueRows = baseRows.filter((t) => (!exitFilter || t.exitKind === exitFilter) && (!gap || gapTest[gap](t)))
   // Rev .112 How they ended: the endings of the trades in range, widest first by count.
   const exits = EXIT_ORDER.map((k) => {
@@ -300,7 +300,7 @@ export default function ReviewQueuePage() {
   const cellName = QUADRANTS.find((q) => q.key === cell)?.name ?? null
 
   /** A row opens Trade review on it, walking the queue in the order shown (Rev .110). */
-  const openRow = (t: ReviewInstance) => {
+  const openRow = (t: ReviewedTrade) => {
     if (t.tradeId == null) {
       navigate(`/review/trade?trade=${encodeURIComponent(t.contractKey)}`)
       return
@@ -632,7 +632,7 @@ export default function ReviewQueuePage() {
                         <QueueRow
                           key={t.contractKey}
                           t={t}
-                          review={t.tradeId != null ? reviews.byInstance.get(t.tradeId) : undefined}
+                          review={t.tradeId != null ? reviews.byTrade.get(t.tradeId) : undefined}
                           origin={t.tradeId != null ? origins.byTrade.get(t.tradeId) : undefined}
                           onOpen={() => openRow(t)}
                           tags={withExitTag(

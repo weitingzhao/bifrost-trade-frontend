@@ -7,10 +7,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   deleteAllocation,
-  deleteStrategyInstance,
+  deleteTrade,
   deleteTemplate,
   patchOpportunity,
-  patchStrategyInstance,
+  patchTrade,
   updateAllocation,
   updateTemplate,
 } from '@/api/strategy'
@@ -74,19 +74,19 @@ describe('plans', () => {
 describe('reviews', () => {
   it('PATCHes only what the reader changed and reads the row back', async () => {
     fetchMock.mockResolvedValue(
-      json({ strategy_instance_id: 7, tags_added: [], tags_dropped: [], note: null, reviewed: true }),
+      json({ trade_id: 7, tags_added_json: [], tags_dropped_json: [], note: null, reviewed: true }),
     )
     const row = await saveTradeReview(7, { reviewed: true })
-    expect(call()).toEqual({ url: '/api/strategy/strategies/reviews/7', method: 'PATCH', body: { reviewed: true } })
+    expect(call()).toEqual({ url: '/api/strategy/trade-reviews/7', method: 'PATCH', body: { reviewed: true } })
     expect(row.reviewed).toBe(true)
   })
 
   it('tag lists go alone', async () => {
     fetchMock.mockResolvedValue(
-      json({ strategy_instance_id: 7, tags_added: ['early-exit'], tags_dropped: [], note: 'kept', reviewed: false }),
+      json({ trade_id: 7, tags_added_json: ['early-exit'], tags_dropped_json: [], note: 'kept', reviewed: false }),
     )
-    await saveTradeReview(7, { tags_added: ['early-exit'], tags_dropped: [] })
-    expect(call().body).toEqual({ tags_added: ['early-exit'], tags_dropped: [] })
+    await saveTradeReview(7, { tags_added_json: ['early-exit'], tags_dropped_json: [] })
+    expect(call().body).toEqual({ tags_added_json: ['early-exit'], tags_dropped_json: [] })
   })
 })
 
@@ -95,26 +95,26 @@ describe('execution attribution', () => {
     account_executions_id: 41,
     account_id: 'U0000001',
     strategy_opportunity_id: 3,
-    strategy_instance_id: 30,
-    instance_allocations: [],
+    trade_id: 30,
+    fill_splits: [],
   }
 
   it('PATCHes /executions/{id}/attribution with the two ids — not the fill PUT', async () => {
     fetchMock.mockResolvedValue(json(attribution))
-    const res = await patchExecutionAttribution(41, { strategy_opportunity_id: 3, strategy_instance_id: 30 })
+    const res = await patchExecutionAttribution(41, { strategy_opportunity_id: 3, trade_id: 30 })
     expect(call()).toEqual({
       url: '/api/trading/executions/41/attribution',
       method: 'PATCH',
-      body: { strategy_opportunity_id: 3, strategy_instance_id: 30 },
+      body: { strategy_opportunity_id: 3, trade_id: 30 },
     })
     expect(res).toEqual({ ok: true, attribution })
   })
 
-  it('a split fill without instance_allocations: [] comes back as { ok: false } with the 409 reason', async () => {
+  it('a split fill without fill_splits: [] comes back as { ok: false } with the 409 reason', async () => {
     const msg =
       'This execution is split across 2 instances; send instance_allocations: [] with the ids to replace the split.'
     fetchMock.mockResolvedValue(refusal(409, msg))
-    await expect(patchExecutionAttribution(41, { strategy_instance_id: 30 })).resolves.toEqual({ ok: false, error: msg })
+    await expect(patchExecutionAttribution(41, { trade_id: 30 })).resolves.toEqual({ ok: false, error: msg })
   })
 
   it('the fill edit stays on PUT /executions/{id}', async () => {
@@ -177,13 +177,13 @@ describe('strategy rules', () => {
   })
 
   it('instance: PATCH answers the row; delete 409 / 503 throw their reasons', async () => {
-    fetchMock.mockResolvedValueOnce(json({ strategy_instance_id: 7, label: null }))
-    await patchStrategyInstance(7, { label: null })
-    expect(call(0)).toEqual({ url: '/api/strategy/strategies/instances/7', method: 'PATCH', body: { label: null } })
+    fetchMock.mockResolvedValueOnce(json({ trade_id: 7, label: null }))
+    await patchTrade(7, { label: null })
+    expect(call(0)).toEqual({ url: '/api/strategy/trades/7', method: 'PATCH', body: { label: null } })
     fetchMock.mockResolvedValueOnce(refusal(409, '3 executions are attributed to this instance.'))
-    await expect(deleteStrategyInstance(7)).rejects.toThrow('3 executions are attributed')
+    await expect(deleteTrade(7)).rejects.toThrow('3 executions are attributed')
     fetchMock.mockResolvedValueOnce(refusal(503, 'Cannot write strategy instance 7: the Golden Source is unreachable.'))
-    await expect(deleteStrategyInstance(7)).rejects.toThrow('Golden Source is unreachable')
+    await expect(deleteTrade(7)).rejects.toThrow('Golden Source is unreachable')
   })
 
   it('a saved search already gone resolves', async () => {

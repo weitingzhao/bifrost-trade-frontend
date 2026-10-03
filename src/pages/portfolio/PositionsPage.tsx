@@ -13,7 +13,7 @@
  */
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { openTradePair, useOpenTrade } from '@/layout/tradeGo'
-import { useInstanceRoot } from '@/hooks/useInstanceRoot'
+import { useTradeRoot } from '@/hooks/useTradeRoot'
 import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -34,12 +34,12 @@ import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import {
   LinesToolbar,
   CLEAR_FILTERS,
-  type InstanceFilterValues,
+  type TradeFilterValues,
   type LinesView,
   type DetailViewMode,
 } from '@/components/positions/LinesToolbar'
 import { OptionsTab } from '@/components/positions/OptionsTab'
-import { InstanceTab } from '@/components/positions/InstanceTab'
+import { TradeTab } from '@/components/positions/TradeTab'
 import { ExpiriesView } from '@/components/positions/ExpiriesView'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
@@ -56,7 +56,7 @@ import { RoomToAddSection } from '@/components/positions/RoomToAddSection'
 import { EditExecutionConfirmDialog } from '@/components/positions/EditExecutionConfirmDialog'
 import { ExecutionFormModal } from '@/components/positions/ExecutionFormModal'
 import { LinkExecutionModal, type LinkExecutionContext } from '@/components/positions/LinkExecutionModal'
-import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
+import { collectPeerTradePicks } from '@/utils/ledger/ledgerOptHelpers'
 import { QuickCloseModal } from '@/components/positions/QuickCloseModal'
 import { DeleteConfirmDialog } from '@/components/positions/DeleteConfirmDialog'
 import { InspectorDrawer, type InspectorState } from '@/components/positions/InspectorDrawer'
@@ -67,13 +67,13 @@ import {
   type PositionsFace,
 } from '@/components/positions/PositionsFaceSlot'
 import { buildDiscoveryUrl } from '@/utils/optionDiscovery/discoveryNav'
-import { readInstances } from '@/utils/strategyInstances'
-import { filterInstanceGroups } from '@/utils/filterInstanceGroups'
-import { sortInstanceGroupOptions } from '@/utils/instanceGroupSort'
+import { readTrades } from '@/utils/tradeReadings'
+import { filterTradeGroups } from '@/utils/filterTradeGroups'
+import { sortTradeGroupOptions } from '@/utils/tradeGroupSort'
 import type { AlarmTarget } from '@/hooks/usePositionsAlarm'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { computeRoomToAdd, summarizeRoom } from '@/utils/roomToAdd'
-import { instanceGroupKey } from '@/utils/instanceSheetExec'
+import { tradeGroupKey } from '@/utils/tradeSheetExec'
 import { pressureFoldSummary, riskMapLegShort, type RiskMapLeg } from '@/utils/shortLegRiskMap'
 import type { ObligationsSort } from '@/utils/obligationsRoom'
 import type { Execution, OpenOptionPosition } from '@/types/positions'
@@ -114,7 +114,7 @@ export default function PositionsPage() {
     'accordion',
     ['accordion', 'multi'],
   )
-  const [instanceFilters, setInstanceFilters] = usePageViewState<InstanceFilterValues>('filters', CLEAR_FILTERS)
+  const [tradeFilters, setTradeFilters] = usePageViewState<TradeFilterValues>('filters', CLEAR_FILTERS)
   usePageViewParams(POSITIONS_VIEW_PARAMS)
   // A leg picked on the risk map. It narrows the grid's views to that leg —
   // grid-only, like the toolbar filters, so the cockpit is untouched — and it
@@ -136,15 +136,15 @@ export default function PositionsPage() {
    * address is read once and dropped: the sheet is a look, not a place.
    */
   const [params, setParams] = useSearchParams()
-  const openInstance = useOpenTrade()
-  const instanceParam = Number(params.get('instance'))
-  const urlInstanceId = Number.isFinite(instanceParam) && instanceParam > 0 ? instanceParam : null
+  const openTrade = useOpenTrade()
+  const tradeParam = Number(params.get('instance'))
+  const urlTradeId = Number.isFinite(tradeParam) && tradeParam > 0 ? tradeParam : null
   const vsParam = Number(params.get('vs'))
   const urlCompareId = Number.isFinite(vsParam) && vsParam > 0 ? vsParam : null
   useEffect(() => {
-    if (urlInstanceId == null) return
-    if (urlCompareId != null) openTradePair(openInstance, urlInstanceId, urlCompareId, 'Positions')
-    else openInstance(urlInstanceId, { from: 'Positions' })
+    if (urlTradeId == null) return
+    if (urlCompareId != null) openTradePair(openTrade, urlTradeId, urlCompareId, 'Positions')
+    else openTrade(urlTradeId, { from: 'Positions' })
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev)
@@ -154,7 +154,7 @@ export default function PositionsPage() {
       },
       { replace: true },
     )
-  }, [urlInstanceId, urlCompareId, setParams, openInstance])
+  }, [urlTradeId, urlCompareId, setParams, openTrade])
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
   /**
    * `?inst=NNN` (the instance face's Position →, design Rev .102): its row in
@@ -170,7 +170,7 @@ export default function PositionsPage() {
     if (instFocusParam != null) {
       setFocusInst(instFocusParam)
       setPickedLeg(null)
-      setInstanceFilters(CLEAR_FILTERS)
+      setTradeFilters(CLEAR_FILTERS)
     }
   }
   useEffect(() => {
@@ -185,7 +185,7 @@ export default function PositionsPage() {
       { replace: true },
     )
   }, [instFocusParam, setLinesView, setParams])
-  const focusRoot = useInstanceRoot(focusInst)
+  const focusRoot = useTradeRoot(focusInst)
   useEffect(() => {
     if (focusInst == null || !focusRoot.isFetched) return
     if (filterSymbol && focusRoot.data && focusRoot.data !== filterSymbol) setFilterSymbol(focusRoot.data)
@@ -205,12 +205,12 @@ export default function PositionsPage() {
   const [faceExec, setFaceExec] = useState<Execution | null>(null)
   const closeInspector = () => setInspector({ type: null })
 
-  const filteredInstanceGroups = useMemo(() => {
-    const groups = sortInstanceGroupOptions(
-      filterInstanceGroups({ groups: book.instanceAllGroups, filterSymbol, filters: instanceFilters }),
+  const filteredTradeGroups = useMemo(() => {
+    const groups = sortTradeGroupOptions(
+      filterTradeGroups({ groups: book.tradeAllGroups, filterSymbol, filters: tradeFilters }),
     )
-    return selectedLeg ? groups.filter((g) => instanceGroupKey(g) === selectedLeg.instanceKey) : groups
-  }, [book.instanceAllGroups, filterSymbol, instanceFilters, selectedLeg])
+    return selectedLeg ? groups.filter((g) => tradeGroupKey(g) === selectedLeg.tradeKey) : groups
+  }, [book.tradeAllGroups, filterSymbol, tradeFilters, selectedLeg])
   const contractsInView = useMemo(
     () =>
       selectedLeg
@@ -292,21 +292,21 @@ export default function PositionsPage() {
     setFace('contract')
     setFaceOpen(true)
   }, [setFace])
-  const instanceById = useMemo(
-    () => new Map(book.instances.map((i) => [i.strategy_instance_id, i])),
-    [book.instances],
+  const tradeById = useMemo(
+    () => new Map(book.trades.map((i) => [i.trade_id, i])),
+    [book.trades],
   )
   const openRiskFace = useCallback(
     (id: number, ctx?: { title: string; profile: RiskProfile | null }) => {
       // running / closed by the Ledger's own rule, on this instance's own
       // fills — the sheet renames it, it never writes its state.
-      const record = instanceById.get(id)
-      const reading = record ? readInstances([record], book.executionsFinal)[0] : null
+      const record = tradeById.get(id)
+      const reading = record ? readTrades([record], book.executionsFinal)[0] : null
       setFaceRisk({
         title: ctx?.title ?? `Strategy #${id}`,
         profile: ctx?.profile ?? null,
-        onOpenInstance: () => openInstance(id, { from: 'Positions' }),
-        instance:
+        onOpenTrade: () => openTrade(id, { from: 'Positions' }),
+        trade:
           record && reading
             ? { id, label: record.label ?? '', status: reading.closed ? 'closed' : 'running' }
             : null,
@@ -314,7 +314,7 @@ export default function PositionsPage() {
       setFace('risk')
       setFaceOpen(true)
     },
-    [instanceById, book.executionsFinal, setFace, openInstance],
+    [tradeById, book.executionsFinal, setFace, openTrade],
   )
   /** A face button runs the write it names, on the fill the face is about. */
   const openLedgerMode = useCallback(
@@ -351,7 +351,7 @@ export default function PositionsPage() {
     ? [
         faceExec.account_executions_id != null ? `exec #${faceExec.account_executions_id}` : 'fill',
         faceExec.symbol,
-        faceExec.strategy_instance_id != null ? `strategy #${faceExec.strategy_instance_id}` : null,
+        faceExec.trade_id != null ? `strategy #${faceExec.trade_id}` : null,
       ]
         .filter(Boolean)
         .join(' · ')
@@ -370,11 +370,11 @@ export default function PositionsPage() {
     if (execId == null) return
     openLedgerFace(ex)
     const peerPicks =
-      sameContractTrades?.length && sameContractTrades.length > 0 ? collectPeerInstancePicks(sameContractTrades, execId) : []
+      sameContractTrades?.length && sameContractTrades.length > 0 ? collectPeerTradePicks(sameContractTrades, execId) : []
     setLinkContext({
       account_executions_id: execId,
       execution: ex,
-      ...(peerPicks.length > 0 ? { peer_instance_picks: peerPicks } : {}),
+      ...(peerPicks.length > 0 ? { peer_trade_picks: peerPicks } : {}),
     })
   }
 
@@ -399,7 +399,7 @@ export default function PositionsPage() {
 
   const scopedCount = book.hasAccountSelection ? book.totalPositions : 0
   const rowsInView =
-    linesView === 'strategy' ? filteredInstanceGroups.length : linesView === 'contract' ? contractsInView.length : expiriesInView.length
+    linesView === 'strategy' ? filteredTradeGroups.length : linesView === 'contract' ? contractsInView.length : expiriesInView.length
   const accountsWord =
     accountFilter.host && accountFilter.secondary
       ? 'both accounts'
@@ -419,7 +419,7 @@ export default function PositionsPage() {
     .join(' · ')
   const openOffTrack = () => {
     setLinesView('strategy')
-    setInstanceFilters({ ...CLEAR_FILTERS, attributionType: 'unassigned' })
+    setTradeFilters({ ...CLEAR_FILTERS, attributionType: 'unassigned' })
     scrollTo('positions-lines')
   }
 
@@ -635,21 +635,21 @@ export default function PositionsPage() {
                     onViewChange={setLinesView}
                     detailViewMode={detailViewMode}
                     onDetailViewModeChange={setDetailViewMode}
-                    structureTypes={book.instanceFilterOptions.structureTypes}
-                    oppNames={book.instanceFilterOptions.oppNames}
-                    scopeTypes={book.instanceFilterOptions.scopeTypes}
-                    values={instanceFilters}
-                    onChange={setInstanceFilters}
-                    shown={filteredInstanceGroups.length}
-                    total={book.instanceAllGroups.length}
+                    structureTypes={book.tradeFilterOptions.structureTypes}
+                    oppNames={book.tradeFilterOptions.oppNames}
+                    scopeTypes={book.tradeFilterOptions.scopeTypes}
+                    values={tradeFilters}
+                    onChange={setTradeFilters}
+                    shown={filteredTradeGroups.length}
+                    total={book.tradeAllGroups.length}
                     expiryCount={expiriesInView.length}
                     selectionLabel={selectedLeg ? riskMapLegShort(selectedLeg) : null}
                     onClearSelection={() => setPickedLeg(null)}
                   />
                   {linesView === 'strategy' ? (
-                    <InstanceTab
-                      groups={filteredInstanceGroups}
-                      totalInstanceCount={book.instanceAllGroups.length}
+                    <TradeTab
+                      groups={filteredTradeGroups}
+                      totalTradeCount={book.tradeAllGroups.length}
                       quotesBySymbol={book.quotesBySymbol}
                       resolveSpot={book.alarm.resolveSpot}
                       quotesByCk={book.quotesByCk}
@@ -660,7 +660,7 @@ export default function PositionsPage() {
                       opportunities={book.opportunities}
                       structures={book.structures}
                       attributions={book.attributions}
-                      instanceStructureById={book.instanceStructureById}
+                      tradeStructureById={book.tradeStructureById}
                       portfolioAccounts={book.accounts}
                       perShareByTicker={book.greeks.perShareByTicker}
                       detailViewMode={detailViewMode}
@@ -672,7 +672,7 @@ export default function PositionsPage() {
                       canonicalOptContractKeys={book.canonicalOptContractKeys}
                       onOpenStock={(symbol, accountId) => setInspector({ type: 'stock', symbol, accountId })}
                       onOpenOption={openContractFace}
-                      focusInstanceId={focusInst}
+                      focusTradeId={focusInst}
                       onFocused={() => setFocusInst(null)}
                     />
                   ) : linesView === 'contract' ? (

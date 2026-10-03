@@ -12,7 +12,7 @@ export type DenseTagVariant =
   | 'category'
   | 'symbol'
   | 'strategy'
-  | 'instance'
+  | 'trade'
   | 'success'
   | 'warning'
   | 'danger'
@@ -45,7 +45,7 @@ const variantByType: Record<DenseTagVariant, Record<DenseTagSize, string>> = {
     cell: 'text-entity-strategy font-semibold',
     pill: 'text-entity-strategy font-semibold',
   },
-  instance: {
+  trade: {
     cell: 'text-entity-trade font-mono font-semibold',
     pill: 'text-entity-trade font-mono font-semibold',
   },
@@ -122,7 +122,7 @@ export function denseTagClass(
 }
 
 /** Toggleable filter chip for entity values — same token as table GroupHeaderRow / cell tags. */
-export type DenseEntityFilterVariant = 'category' | 'symbol' | 'strategy' | 'instance'
+export type DenseEntityFilterVariant = 'category' | 'symbol' | 'strategy' | 'trade'
 
 const entityFilterInactiveClass =
   'rounded-full border-border bg-secondary/60 font-medium text-muted-foreground opacity-100 hover:bg-secondary hover:text-foreground hover:opacity-100'
@@ -134,7 +134,7 @@ const entityFilterActiveClass: Record<DenseEntityFilterVariant, string> = {
     'rounded-full border-entity-symbol/50 text-entity-symbol opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-symbol)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-symbol)_14%,transparent)]',
   strategy:
     'rounded-full border-entity-strategy/50 text-entity-strategy opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-strategy)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-strategy)_14%,transparent)]',
-  instance:
+  trade:
     'rounded-full border-entity-trade/50 text-entity-trade opacity-100 hover:opacity-100 ring-1 ring-[color-mix(in_oklch,var(--color-entity-trade)_45%,transparent)] bg-[color-mix(in_oklch,var(--color-entity-trade)_14%,transparent)]',
 }
 
@@ -176,11 +176,11 @@ export const denseSymbolTagCellClass = denseTagClass('symbol', 'cell')
 export const denseSymbolTagPillClass = denseTagClass('symbol', 'pill')
 
 /** Option Category text in table identity columns — token color only, no pill border. */
-export type DenseOptionCategoryVariant = 'strategy' | 'instance' | 'opportunity' | 'structure'
+export type DenseOptionCategoryVariant = 'strategy' | 'trade' | 'opportunity' | 'structure'
 
 const optionCategoryLabelByVariant: Record<DenseOptionCategoryVariant, string> = {
   strategy: 'font-semibold text-entity-strategy',
-  instance: 'font-mono font-semibold text-entity-trade',
+  trade: 'font-mono font-semibold text-entity-trade',
   opportunity: 'font-semibold text-option-category-opportunity',
   structure: 'font-semibold text-option-category-structure',
 }

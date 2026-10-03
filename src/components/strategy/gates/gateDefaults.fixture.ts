@@ -1,12 +1,12 @@
 /**
  * A complete gate set for tests — invented values in core's `GateParams`
  * shape. Runtime code never reads this: a new set is seeded from
- * `GET /strategies/gate-safety/defaults` (TD-72), so the UI holds no copy of
+ * `GET /gate-sets/defaults` (TD-72), so the UI holds no copy of
  * core's defaults that a core change could leave behind.
  */
-import type { GateSafetyGates } from '@/types/strategy'
+import type { GateSetGates } from '@/types/strategy'
 
-export const GATES_FIXTURE: GateSafetyGates = {
+export const GATES_FIXTURE: GateSetGates = {
   strategy: {
     structure: { min_dte: 21, max_dte: 35, atm_band_pct: 0.03 },
     earnings: { blackout_days_before: 3, blackout_days_after: 1 },
@@ -39,6 +39,6 @@ export const GATES_FIXTURE: GateSafetyGates = {
 }
 
 /** A fresh deep copy, so a test that edits it cannot leak into the next. */
-export function gatesFixture(): GateSafetyGates {
-  return JSON.parse(JSON.stringify(GATES_FIXTURE)) as GateSafetyGates
+export function gatesFixture(): GateSetGates {
+  return JSON.parse(JSON.stringify(GATES_FIXTURE)) as GateSetGates
 }

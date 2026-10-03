@@ -15,8 +15,8 @@ vi.mock('@/hooks/useMonitorStatus', () => ({
     data: { portfolio: { accounts: [], open_orders: [] } },
   }),
 }))
-vi.mock('@/hooks/useGateSafety', () => ({
-  useGateSafetyList: () => ({ isLoading: false, data: { items: [] } }),
+vi.mock('@/hooks/useGateSet', () => ({
+  useGateSetList: () => ({ isLoading: false, data: { items: [] } }),
 }))
 vi.mock('@/hooks/useExecutions', () => ({
   useExecutionsPerformanceBook: () => ({ isLoading: false, data: { items: [] } }),

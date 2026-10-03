@@ -6,7 +6,7 @@
  * and says so — a token that opens nothing is a dead end wearing a link.
  */
 import type { MouseEvent } from 'react'
-import { useInstanceIndex } from '@/hooks/useInstanceIndex'
+import { useTradeIndex } from '@/hooks/useTradeIndex'
 import { tradeHowFrom, useOpenTrade } from '@/layout/tradeGo'
 import { useSurfaces } from '@/layout/equipSurface'
 import { cn } from '@/lib/utils'
@@ -27,7 +27,7 @@ export function TradeRef({
   /** Defaults to `#id`. */
   children?: React.ReactNode
 }) {
-  const known = useInstanceIndex()
+  const known = useTradeIndex()
   const open = useOpenTrade()
   const surfaces = useSurfaces()
   const text = children ?? `#${id}`

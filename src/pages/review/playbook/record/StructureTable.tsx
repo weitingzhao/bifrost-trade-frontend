@@ -155,7 +155,7 @@ export function StructureFormulas() {
   return (
     <p className={cn(FOOT, 'm-0')}>
       Quoted from the strategy service, never recomputed here: underlying cost = strike × |qty| × 100 per
-      sell-option instance, with the allocation splitting qty where one applies; Total profit is the sum of execution
+      sell-option trade, with the fill splits dividing qty where one applies; Total profit is the sum of execution
       net P&amp;L where net &gt; 0 and Total loss the sum where it is negative — one formula for every structure.
       Max risk reads &mdash; where nothing bounds it in cash, which is what a covered call is. The totals row is the
       service&rsquo;s own, not this page summing the rows.

@@ -12,7 +12,7 @@
 import { daysBetween } from '@/lib/isoDate'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 import { fmtPct0 } from '@/utils/positions'
-import type { ReviewInstance } from '@/utils/reviewInstances'
+import type { ReviewedTrade } from '@/utils/reviewedTrades'
 
 export type PeerBy = 'sym' | 'rule' | 'struct'
 export type PeerWhen = 'before' | 'all'
@@ -21,13 +21,13 @@ export const PEER_CAP = 12
 export const PEER_LABEL: Record<PeerBy, string> = { sym: 'Same symbol', rule: 'Same rule', struct: 'Same structure' }
 
 export function peerPool(
-  all: readonly ReviewInstance[],
-  self: ReviewInstance,
+  all: readonly ReviewedTrade[],
+  self: ReviewedTrade,
   by: PeerBy,
   when: PeerWhen,
-  structureOf: (x: ReviewInstance) => string | null,
-): ReviewInstance[] {
-  const key = (x: ReviewInstance) => (by === 'sym' ? x.underlying : by === 'rule' ? x.play : structureOf(x))
+  structureOf: (x: ReviewedTrade) => string | null,
+): ReviewedTrade[] {
+  const key = (x: ReviewedTrade) => (by === 'sym' ? x.underlying : by === 'rule' ? x.play : structureOf(x))
   const mine = key(self)
   if (mine == null || mine === '') return []
   return all
@@ -52,7 +52,7 @@ export function median(values: readonly (number | null)[]): number | null {
 }
 
 /** The normalised line: x in [0, 1] of the life to expiry, y in premium multiples. */
-export function normalised(x: ReviewInstance, path: MarkPath | null): { x: number; y: number }[] {
+export function normalised(x: ReviewedTrade, path: MarkPath | null): { x: number; y: number }[] {
   if (!path || !x.openedOn || !x.entryPremium) return []
   const life = Math.max(1, x.dteAtEntry ?? path.held.length)
   return path.held.map((p) => ({ x: Math.min(1, Math.max(0, (daysBetween(x.openedOn!, p.date) ?? 0) / life)), y: p.pl / x.entryPremium }))

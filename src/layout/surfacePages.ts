@@ -45,7 +45,7 @@ export function surfacePageFor(to: string): PageComponent | null {
  * above: an instance surface is a record, and it hands the id and its list to
  * the same component `/instance/:id` renders.
  */
-export const InstanceSurfaceView = lazy(() =>
+export const TradeSurfaceView = lazy(() =>
   import('@/pages/trade/detail/TradePage').then((m) => ({ default: m.TradeView })),
 )
 

@@ -48,15 +48,15 @@ export function findMatchingTwsForFinal(f: Execution, twsRows: Execution[]): Exe
 }
 
 export function hasStrategyAttribution(ex: Execution): boolean {
-  return ex.strategy_instance_id != null || ex.strategy_opportunity_id != null
+  return ex.trade_id != null || ex.strategy_opportunity_id != null
 }
 
 /** TWS row needs sync when final peer has attribution and ids differ. */
 export function twsNeedsStrategySyncFromFinal(t: Execution, f: Execution): boolean {
   if (!hasStrategyAttribution(f)) return false
-  const siT = t.strategy_instance_id ?? null
+  const siT = t.trade_id ?? null
   const soT = t.strategy_opportunity_id ?? null
-  const siF = f.strategy_instance_id ?? null
+  const siF = f.trade_id ?? null
   const soF = f.strategy_opportunity_id ?? null
   return siT !== siF || soT !== soF
 }
@@ -64,9 +64,9 @@ export function twsNeedsStrategySyncFromFinal(t: Execution, f: Execution): boole
 /** Final row needs sync when TWS peer has attribution and ids differ. */
 export function finalNeedsStrategySyncFromTws(f: Execution, t: Execution): boolean {
   if (!hasStrategyAttribution(t)) return false
-  const siT = t.strategy_instance_id ?? null
+  const siT = t.trade_id ?? null
   const soT = t.strategy_opportunity_id ?? null
-  const siF = f.strategy_instance_id ?? null
+  const siF = f.trade_id ?? null
   const soF = f.strategy_opportunity_id ?? null
   return siT !== siF || soT !== soF
 }

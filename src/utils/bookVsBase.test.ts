@@ -47,7 +47,7 @@ const row = (o: Partial<ExpiryLadderRow>): ExpiryLadderRow => ({
   itmShortCount: 0,
   unpricedShortCount: 0,
   symbols: ['AAA'],
-  instanceCount: 1,
+  tradeCount: 1,
   tightestCushionPct: 0.2,
   ...o,
 })

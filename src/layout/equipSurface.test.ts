@@ -153,13 +153,13 @@ describe('a trade as a surface (Rev .103 · .111)', () => {
   })
 
   it('keeps a place remembered under the old key', () => {
-    localStorage.setItem('bifrost.where', JSON.stringify({ instance: 'float' }))
+    localStorage.setItem('bifrost.where', JSON.stringify({ trade: 'float' }))
     openSurface(tradeSurface(3, { fresh: true }))
     expect(placeOf('trade:3')).toBe('float')
   })
 
   it('reads a tab saved under the Instance names (before Rev .111) as a trade', () => {
-    const old = { key: 'instance:7', to: '/instance/7', label: '#7', instance: 7, instanceList: [6, 7], instanceFrom: 'Ledger' }
+    const old = { key: 'instance:7', to: '/instance/7', label: '#7', trade: 7, tradeList: [6, 7], tradeFrom: 'Ledger' }
     expect(migrateInstanceSurface(old as unknown as Surface)).toMatchObject({
       key: 'trade:7',
       to: '/trade/7',

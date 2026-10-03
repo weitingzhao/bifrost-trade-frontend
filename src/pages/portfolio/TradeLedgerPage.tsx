@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useInstanceRoot } from '@/hooks/useInstanceRoot'
+import { useTradeRoot } from '@/hooks/useTradeRoot'
 import { scrollWhenPresent, flashFound } from '@/lib/scrollWhenPresent'
 import { usePageViewParams, usePageViewSet, usePageViewState } from '@/lib/pageView'
 import { useQueryClient } from '@tanstack/react-query'
@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { RefreshCw, Plus } from 'lucide-react'
 import type { LinkExecutionContext } from '@/components/positions/LinkExecutionModal'
 import type { Execution } from '@/types/positions'
-import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
+import { collectPeerTradePicks } from '@/utils/ledger/ledgerOptHelpers'
 import type { LedgerSincePreset, LedgerSummaryPeriod } from '@/utils/ledger/summaryPeriod'
 import { LEDGER_SINCE_PRESET_TABS, LEDGER_SUMMARY_PERIOD_TABS } from '@/utils/ledger/summaryPeriod'
 import { isOptionExpired } from '@/utils/ledger/optExecutionGroups'
@@ -28,14 +28,14 @@ import { LedgerFilterBar } from '@/pages/portfolio/ledger/LedgerFilterBar'
 import { LedgerSummarySection } from '@/pages/portfolio/ledger/LedgerSummarySection'
 import { LedgerHealthBand } from '@/pages/portfolio/ledger/LedgerHealthBand'
 import { LedgerInspector } from '@/pages/portfolio/ledger/LedgerInspector'
-import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, InstanceSubTab, OptInstanceFilter, StrategyScope } from '@/pages/portfolio/ledger/ledgerTypes'
+import type { MainTab, OptSortCol, StkSortCol, GroupBy, OptSubTab, TradeSubTab, OptTradeFilter, StrategyScope } from '@/pages/portfolio/ledger/ledgerTypes'
 import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { buildAttributionChips, buildInstrumentChips } from '@/pages/portfolio/ledger/ledgerViewChips'
 import { unlinkedOpportunityCount } from '@/pages/portfolio/ledger/ledgerStrategyScope'
 import { OptionsTabContent } from '@/pages/portfolio/ledger/OptionsTabContent'
 import { StkTabContent } from '@/pages/portfolio/ledger/StkTabContent'
 import { StrategyTabContent } from '@/pages/portfolio/ledger/StrategyTabContent'
-import { InstanceTabContent } from '@/pages/portfolio/ledger/InstanceTabContent'
+import { TradeTabContent } from '@/pages/portfolio/ledger/TradeTabContent'
 import { useTradeLedgerHandlers } from '@/pages/portfolio/ledger/useTradeLedgerHandlers'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import {
@@ -134,9 +134,9 @@ export default function TradeLedgerPage() {
   const [accordionMode, setAccordionMode] = usePageViewState('accordion', false)
   const [groupBy, setGroupBy] = usePageViewState<GroupBy>('groupBy', 'opportunity')
   const [optSubTab, setOptSubTab] = usePageViewState<OptSubTab>('sub.options', 'contracts')
-  const [instanceSubTab, setInstanceSubTab] = usePageViewState<InstanceSubTab>('sub.instance', 'with_instance')
+  const [tradeSubTab, setTradeSubTab] = usePageViewState<TradeSubTab>('sub.instance', 'with_instance')
   const [strategyScope, setStrategyScope] = usePageViewState<StrategyScope>('sub.strategy', 'all')
-  const [optInstanceFilter, setOptInstanceFilter] = useState<OptInstanceFilter>('all')
+  const [optTradeFilter, setOptTradeFilter] = useState<OptTradeFilter>('all')
   const [stkCategoryTab, setStkCategoryTab] = usePageViewState('layoutSub.category', 'All')
 
   // Options display
@@ -165,7 +165,7 @@ export default function TradeLedgerPage() {
     if (instParam != null) {
       setFocus((f) => ({ id: instParam, n: (f?.n ?? 0) + 1 }))
       setActiveTab('instance')
-      setInstanceSubTab('with_instance')
+      setTradeSubTab('with_instance')
       setSincePresetState('all')
       setExpiryFilterYear('')
       setExpiryFilterMonth('')
@@ -187,7 +187,7 @@ export default function TradeLedgerPage() {
     )
   }, [instParam, setSearchParams])
   const focusInst = focus?.id ?? null
-  const focusRoot = useInstanceRoot(focusInst)
+  const focusRoot = useTradeRoot(focusInst)
   const focusScroll = useRef<(() => void) | null>(null)
   useEffect(() => () => focusScroll.current?.(), [])
   const focusDone = useRef(0)
@@ -205,7 +205,7 @@ export default function TradeLedgerPage() {
   // Strategy Opportunity expand
   const [strategyOppExpanded, setStrategyOppExpanded] = usePageViewSet<string>('openOpp')
   // Instance outer buckets
-  const [outerInstanceExpanded, setOuterInstanceExpanded] = usePageViewSet<string>('openInst.outer')
+  const [outerTradeExpanded, setOuterTradeExpanded] = usePageViewSet<string>('openInst.outer')
 
   // Pagination + modals
   const [stkPageState, setStkPageState] = useState({ scope: '', page: 0 })
@@ -221,12 +221,12 @@ export default function TradeLedgerPage() {
     if (execId == null) return
     const peerPicks =
       sameContractTrades && sameContractTrades.length > 0
-        ? collectPeerInstancePicks(sameContractTrades, execId)
+        ? collectPeerTradePicks(sameContractTrades, execId)
         : []
     setLinkContext({
       account_executions_id: execId,
       execution: ex,
-      ...(peerPicks.length > 0 ? { peer_instance_picks: peerPicks } : {}),
+      ...(peerPicks.length > 0 ? { peer_trade_picks: peerPicks } : {}),
     })
   }, [setLinkContext])
 
@@ -252,11 +252,11 @@ export default function TradeLedgerPage() {
     strategyOpportunityGroups,
     filteredStrategyOpportunityGroups,
     strategyPanelOptionRights,
-    instanceGroupsRaw,
-    filteredInstanceGroups,
-    noInstanceOptGroups,
+    tradeGroupsRaw,
+    filteredTradeGroups,
+    noTradeOptGroups,
     strategyDisplayBuckets,
-    instanceDisplayBuckets,
+    tradeDisplayBuckets,
     hasOptExecs,
     hasStkExecs,
     hasFixedIncomeExecs,
@@ -294,14 +294,14 @@ export default function TradeLedgerPage() {
     rowType,
     groupBy,
     optSubTab,
-    instanceSubTab,
-    optInstanceFilter,
+    tradeSubTab,
+    optTradeFilter,
     stkCategoryTab,
     optRightFilter,
     optSort,
     stkSort,
     groupByPosition,
-    instanceContainOpenFilter: instanceSubTab === 'contains_open' ? 'yes' : 'all',
+    tradeContainOpenFilter: tradeSubTab === 'contains_open' ? 'yes' : 'all',
   })
 
   useLedgerUiSync({
@@ -310,13 +310,13 @@ export default function TradeLedgerPage() {
     setStkCategoryTab,
     groupBy,
     strategyDisplayBuckets,
-    instanceDisplayBuckets,
+    tradeDisplayBuckets,
     setOuterStrategyExpanded,
-    setOuterInstanceExpanded,
+    setOuterTradeExpanded,
     activeTab,
-    instanceSubTab,
-    setInstanceSubTab,
-    instanceGroupsRaw,
+    tradeSubTab,
+    setTradeSubTab,
+    tradeGroupsRaw,
     hasOptExecs,
     hasStkExecs,
     hasFixedIncomeExecs,
@@ -330,7 +330,7 @@ export default function TradeLedgerPage() {
     toggleGroup,
     toggleStrategyOpp,
     toggleOuterStrategy,
-    toggleOuterInstance,
+    toggleOuterTrade,
     toggleOptSort,
     toggleStkSort,
     handleAddJournal,
@@ -344,7 +344,7 @@ export default function TradeLedgerPage() {
     setExpandedGroups,
     setStrategyOppExpanded,
     setOuterStrategyExpanded,
-    setOuterInstanceExpanded,
+    setOuterTradeExpanded,
     setOptSort,
     setStkSort,
     setInspector,
@@ -381,10 +381,10 @@ export default function TradeLedgerPage() {
     () =>
       buildAttributionChips({
         opportunityCount: strategyOpportunityGroups.length,
-        instanceWith: instanceGroupsRaw.withInst.length,
-        instanceWithout: noInstanceOptGroups.length,
+        tradeWith: tradeGroupsRaw.withInst.length,
+        tradeWithout: noTradeOptGroups.length,
       }),
-    [strategyOpportunityGroups.length, instanceGroupsRaw, noInstanceOptGroups.length],
+    [strategyOpportunityGroups.length, tradeGroupsRaw, noTradeOptGroups.length],
   )
   const instrumentChips = useMemo(
     () =>
@@ -600,19 +600,19 @@ export default function TradeLedgerPage() {
             strategyScope,
             setStrategyScope,
             strategyUnlinkedCount: unlinkedOpportunityCount(filteredStrategyOpportunityGroups),
-            instanceSubTab,
-            setInstanceSubTab,
-            instanceGroupsWithCount: instanceGroupsRaw.withInst.length,
-            noInstanceOptGroupsLength: noInstanceOptGroups.length,
+            tradeSubTab,
+            setTradeSubTab,
+            tradeGroupsWithCount: tradeGroupsRaw.withInst.length,
+            noTradeOptGroupsLength: noTradeOptGroups.length,
             containsOpenCount,
-            filteredInstanceGroupsLength: filteredInstanceGroups.length,
-            instanceGroupsLength: instanceGroupsRaw.withInst.length,
+            filteredTradeGroupsLength: filteredTradeGroups.length,
+            tradeGroupsLength: tradeGroupsRaw.withInst.length,
             optSubTab,
             setOptSubTab,
             filteredClosedOptGroupsLength: filteredClosedOptGroups.length,
             allOrphanGroupsLength: allOrphanGroups.length,
-            optInstanceFilter,
-            setOptInstanceFilter,
+            optTradeFilter,
+            setOptTradeFilter,
             optSort,
             toggleOptSort,
             groupByPosition,
@@ -725,16 +725,16 @@ export default function TradeLedgerPage() {
         )}
 
         {!isLoading && activeTab === 'instance' && (
-          <InstanceTabContent
-            instanceSubTab={instanceSubTab}
-            filteredGroups={filteredInstanceGroups}
-            noInstGroups={noInstanceOptGroups}
-            noInstExecs={instanceGroupsRaw.noInst}
+          <TradeTabContent
+            tradeSubTab={tradeSubTab}
+            filteredGroups={filteredTradeGroups}
+            noInstGroups={noTradeOptGroups}
+            noInstExecs={tradeGroupsRaw.noInst}
             linkByOptionId={linkByOptionId}
             groupBy={groupBy}
-            displayBuckets={instanceDisplayBuckets}
-            outerExpanded={outerInstanceExpanded}
-            toggleOuter={toggleOuterInstance}
+            displayBuckets={tradeDisplayBuckets}
+            outerExpanded={outerTradeExpanded}
+            toggleOuter={toggleOuterTrade}
             expandedGroups={expandedGroups}
             toggleGroup={toggleGroup}
             accordionMode={accordionMode}

@@ -4,9 +4,9 @@ import { SegmentControl, segmentButtonClass, segmentGroupClass } from '@/compone
 import { LedgerSortIcon as SortIcon } from './LedgerSortIcon'
 import type {
   GroupBy,
-  InstanceSubTab,
+  TradeSubTab,
   MainTab,
-  OptInstanceFilter,
+  OptTradeFilter,
   OptSortCol,
   OptSubTab,
   StrategyScope,
@@ -27,19 +27,19 @@ export type LedgerTabFilterProps = {
   strategyScope: StrategyScope
   setStrategyScope: (v: StrategyScope) => void
   strategyUnlinkedCount: number
-  instanceSubTab: InstanceSubTab
-  setInstanceSubTab: (v: InstanceSubTab) => void
-  instanceGroupsWithCount: number
-  noInstanceOptGroupsLength: number
+  tradeSubTab: TradeSubTab
+  setTradeSubTab: (v: TradeSubTab) => void
+  tradeGroupsWithCount: number
+  noTradeOptGroupsLength: number
   containsOpenCount: number
-  filteredInstanceGroupsLength: number
-  instanceGroupsLength: number
+  filteredTradeGroupsLength: number
+  tradeGroupsLength: number
   optSubTab: OptSubTab
   setOptSubTab: (v: OptSubTab) => void
   filteredClosedOptGroupsLength: number
   allOrphanGroupsLength: number
-  optInstanceFilter: OptInstanceFilter
-  setOptInstanceFilter: (v: OptInstanceFilter) => void
+  optTradeFilter: OptTradeFilter
+  setOptTradeFilter: (v: OptTradeFilter) => void
   optSort: { col: OptSortCol; dir: 'asc' | 'desc' }
   toggleOptSort: (col: OptSortCol) => void
   groupByPosition: boolean
@@ -53,7 +53,7 @@ export type LedgerTabFilterProps = {
 
 const VIEW_HINT = {
   strategy: 'three levels: opportunity → trade → contract',
-  instance: 'row actions write to the ledger only',
+  trade: 'row actions write to the ledger only',
   options: 'both sides of a closed contract on one row · the fills are below',
   shares: 'stocks, fixed income, cash-like and combos share one table',
 } as const
@@ -184,19 +184,19 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
     strategyScope,
     setStrategyScope,
     strategyUnlinkedCount,
-    instanceSubTab,
-    setInstanceSubTab,
-    instanceGroupsWithCount,
-    noInstanceOptGroupsLength,
+    tradeSubTab,
+    setTradeSubTab,
+    tradeGroupsWithCount,
+    noTradeOptGroupsLength,
     containsOpenCount,
-    filteredInstanceGroupsLength,
-    instanceGroupsLength,
+    filteredTradeGroupsLength,
+    tradeGroupsLength,
     optSubTab,
     setOptSubTab,
     filteredClosedOptGroupsLength,
     allOrphanGroupsLength,
-    optInstanceFilter,
-    setOptInstanceFilter,
+    optTradeFilter,
+    setOptTradeFilter,
     optSort,
     toggleOptSort,
     groupByPosition,
@@ -209,11 +209,11 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
   } = props
 
   const showStrategy = activeTab === 'strategy' && hasOptExecs
-  const showInstance = activeTab === 'instance'
+  const showTrade = activeTab === 'instance'
   const showOptions = activeTab === 'options'
   const showStk = isSharesTab(activeTab)
 
-  if (!showStrategy && !showInstance && !showOptions && !showStk) return null
+  if (!showStrategy && !showTrade && !showOptions && !showStk) return null
 
   const typeSwitch = (
     <TypeSwitch
@@ -224,8 +224,8 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
   )
   const hint = showStrategy
     ? VIEW_HINT.strategy
-    : showInstance
-      ? VIEW_HINT.instance
+    : showTrade
+      ? VIEW_HINT.trade
       : showOptions
         ? VIEW_HINT.options
         : VIEW_HINT.shares
@@ -255,27 +255,27 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
         </>
       )}
 
-      {showInstance && (
+      {showTrade && (
         <>
-          <SubChips<InstanceSubTab>
+          <SubChips<TradeSubTab>
             label="Trade"
-            value={instanceSubTab}
-            onChange={setInstanceSubTab}
+            value={tradeSubTab}
+            onChange={setTradeSubTab}
             chips={[
-              countChip('with_instance', 'With trade', instanceGroupsWithCount),
-              countChip('no_instance', 'No trade', noInstanceOptGroupsLength),
+              countChip('with_instance', 'With trade', tradeGroupsWithCount),
+              countChip('no_instance', 'No trade', noTradeOptGroupsLength),
               countChip('contains_open', 'Contains open', containsOpenCount),
             ]}
           />
-          {instanceSubTab !== 'no_instance' && (
+          {tradeSubTab !== 'no_instance' && (
             <>
               <GroupSwitch groupBy={groupBy} setGroupBy={setGroupBy} />
               {typeSwitch}
             </>
           )}
-          {instanceSubTab === 'contains_open' && instanceGroupsLength > 0 && (
+          {tradeSubTab === 'contains_open' && tradeGroupsLength > 0 && (
             <span className={ledgerShell.filterMetaInline}>
-              Showing {filteredInstanceGroupsLength} of {instanceGroupsLength}
+              Showing {filteredTradeGroupsLength} of {tradeGroupsLength}
             </span>
           )}
         </>
@@ -314,8 +314,8 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
                 <SegmentControl
                   size="xs"
                   ariaLabel="Filter contracts by trade status"
-                  value={optInstanceFilter}
-                  onChange={v => setOptInstanceFilter(v as OptInstanceFilter)}
+                  value={optTradeFilter}
+                  onChange={v => setOptTradeFilter(v as OptTradeFilter)}
                   options={[
                     { value: 'all', label: 'All' },
                     { value: 'has_instance', label: 'Has trade' },

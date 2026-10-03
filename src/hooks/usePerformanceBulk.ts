@@ -16,9 +16,9 @@ export function usePerformanceBulk(params: {
   timeRange: PerformanceTimeRange
   calendarMonth: string
   strategyOpportunityId: number | null
-  strategyInstanceId: number | null
+  tradeId: number | null
 }) {
-  const { timeRange, calendarMonth, strategyOpportunityId, strategyInstanceId } = params
+  const { timeRange, calendarMonth, strategyOpportunityId, tradeId } = params
 
   const { data: status } = useMonitorStatus()
 
@@ -46,7 +46,7 @@ export function usePerformanceBulk(params: {
       untilStr,
       calendarMonth,
       strategyOpportunityId,
-      strategyInstanceId,
+      tradeId,
       positionCategoryKey,
     ],
     queryFn: () =>
@@ -55,7 +55,7 @@ export function usePerformanceBulk(params: {
         untilStr,
         calendarMonth,
         strategyOpportunityId,
-        strategyInstanceId,
+        tradeId,
         lookBackDays: OPT_PAIR_LOOK_BACK_DAYS,
         positionCategoryByAccountContract,
       }),

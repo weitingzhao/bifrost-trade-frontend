@@ -10,7 +10,7 @@
  * them (D10).
  */
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
-import { collectPeerInstancePicks } from '@/utils/ledger/ledgerOptHelpers'
+import { collectPeerTradePicks } from '@/utils/ledger/ledgerOptHelpers'
 import type { Execution } from '@/types/positions'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
 
@@ -36,8 +36,8 @@ export interface FillRow {
   /** `flex_trades`, `tws_client`, `journal_closed` — the source's own word. */
   source: string
   state: FillState
-  instanceId: number | null
-  instanceLabel: string | null
+  tradeId: number | null
+  tradeLabel: string | null
   opportunityName: string | null
   /** Why nothing claims it, when nothing does. */
   why: string | null
@@ -146,7 +146,7 @@ export function importRows(args: {
  * match either way — a fill cannot belong to another account's instance.
  */
 export interface BelongCandidate {
-  instanceId: number
+  tradeId: number
   opportunityId: number | null
   label: string
   why: string
@@ -156,8 +156,8 @@ export interface BelongCandidate {
 export function belongCandidates(args: {
   row: Pick<FillRow, 'execId' | 'contractKey' | 'symbol' | 'accountId'>
   executions: readonly Execution[]
-  instances: readonly {
-    strategy_instance_id: number
+  trades: readonly {
+    trade_id: number
     strategy_opportunity_id: number
     account_id: string
     label?: string | null
@@ -170,15 +170,15 @@ export function belongCandidates(args: {
   const seen = new Set<number>()
 
   // Same contract first: another fill on this exact contract already claimed.
-  const peers = collectPeerInstancePicks(
+  const peers = collectPeerTradePicks(
     args.executions.filter((e) => (e.contract_key ?? '') !== '' && e.contract_key === row.contractKey),
     row.execId ?? -1,
   )
   for (const peer of peers) {
-    if (seen.has(peer.strategy_instance_id)) continue
-    seen.add(peer.strategy_instance_id)
+    if (seen.has(peer.trade_id)) continue
+    seen.add(peer.trade_id)
     out.push({
-      instanceId: peer.strategy_instance_id,
+      tradeId: peer.trade_id,
       opportunityId: peer.strategy_opportunity_id,
       label: peer.label,
       why: 'already holds fills on this exact contract',
@@ -188,16 +188,16 @@ export function belongCandidates(args: {
 
   // Then instances whose opportunity covers the symbol, in this account.
   const symbol = row.symbol.trim().toUpperCase()
-  for (const inst of args.instances) {
-    if (seen.has(inst.strategy_instance_id)) continue
+  for (const inst of args.trades) {
+    if (seen.has(inst.trade_id)) continue
     if (row.accountId && (inst.account_id ?? '').trim() !== row.accountId) continue
     const opp = args.opportunities.find((o) => o.strategy_opportunity_id === inst.strategy_opportunity_id)
     if (!opp?.symbols?.some((sym) => sym.trim().toUpperCase() === symbol)) continue
-    seen.add(inst.strategy_instance_id)
+    seen.add(inst.trade_id)
     out.push({
-      instanceId: inst.strategy_instance_id,
+      tradeId: inst.trade_id,
       opportunityId: inst.strategy_opportunity_id,
-      label: `${opp.name} · ${inst.label?.trim() || `#${inst.strategy_instance_id}`}`,
+      label: `${opp.name} · ${inst.label?.trim() || `#${inst.trade_id}`}`,
       why: `${opp.name} covers ${symbol}`,
       tag: 'covers the symbol',
     })
@@ -239,7 +239,7 @@ export function buildFillRows(
   const planSymbols = new Set(plans.map((p) => (p.symbol ?? '').trim().toUpperCase()).filter(Boolean))
   return executions
     .map((e) => {
-      const linked = e.strategy_instance_id != null
+      const linked = e.trade_id != null
       return {
         key: execKey(e),
         execId: e.account_executions_id ?? null,
@@ -256,8 +256,8 @@ export function buildFillRows(
         fees: Math.abs(Number(e.commission) || 0),
         source: (e.source ?? '').trim() || 'unknown',
         state: (linked ? 'linked' : 'orphan') as FillState,
-        instanceId: e.strategy_instance_id ?? null,
-        instanceLabel: e.strategy_instance_label ?? null,
+        tradeId: e.trade_id ?? null,
+        tradeLabel: e.trade_label ?? null,
         opportunityName: e.strategy_opportunity_name ?? null,
         why: linked ? null : orphanReason(e, planSymbols),
       }

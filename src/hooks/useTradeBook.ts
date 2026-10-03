@@ -8,17 +8,17 @@
  * symbol an instance belongs to, or about what `open` means, would be worse
  * than one list in the wrong place.
  *
- * The per-instance metrics come from `useInstanceMetrics`, which loads in
+ * The per-instance metrics come from `useTradeMetrics`, which loads in
  * chunks: everything below tolerates an entry that is still `loading`, and a
  * filter that depends on one (status, right, expiry) simply does not match
  * until it is ready rather than guessing.
  */
 import { useMemo } from 'react'
-import { useInstanceMetrics, type InstanceListMetricsEntry } from '@/hooks/useInstanceMetrics'
-import { computeInstancePositionStatus } from '@/utils/instanceListMetrics'
+import { useTradeMetrics, type TradeListMetricsEntry } from '@/hooks/useTradeMetrics'
+import { computeTradePositionStatus } from '@/utils/tradeListMetrics'
 import { primaryUnderlyingFromExecutions } from '@/components/positions/linkExecutionModalHelpers'
-import type { InstanceFilterOptions, InstanceListFilterValues } from '@/components/strategy/InstanceListFilters'
-import type { StrategyInstance } from '@/types/positions'
+import type { TradeFilterOptions, TradeListFilterValues } from '@/components/strategy/TradeListFilters'
+import type { Trade } from '@/types/positions'
 
 /** An opportunity, as this derivation needs to read it. */
 export interface BookOpportunity {
@@ -28,10 +28,10 @@ export interface BookOpportunity {
   symbols: string[] | null
 }
 
-export interface InstanceGroup {
+export interface TradeGroup {
   key: string
   label: string
-  rows: StrategyInstance[]
+  rows: Trade[]
 }
 
 function ymdUtcMonthsAgo(months: number): string {
@@ -39,7 +39,7 @@ function ymdUtcMonthsAgo(months: number): string {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - months, d.getUTCDate())).toISOString().slice(0, 10)
 }
 
-export function sinceThresholdYmd(v: InstanceListFilterValues['since']): string | null {
+export function sinceThresholdYmd(v: TradeListFilterValues['since']): string | null {
   if (v === '1m') return ymdUtcMonthsAgo(1)
   if (v === 'q') return ymdUtcMonthsAgo(3)
   if (v === 'half') return ymdUtcMonthsAgo(6)
@@ -54,12 +54,12 @@ export function sinceThresholdYmd(v: InstanceListFilterValues['since']): string 
  * A multi-symbol opportunity book must not fall back to `symbols[0]`: that
  * collapses every instance in the book under the first ticker in it.
  */
-export function instanceSymbol(
-  inst: StrategyInstance,
+export function tradeSymbol(
+  inst: Trade,
   opportunities: readonly BookOpportunity[],
-  metricsMap: Map<number, InstanceListMetricsEntry>,
+  metricsMap: Map<number, TradeListMetricsEntry>,
 ): string {
-  const entry = metricsMap.get(inst.strategy_instance_id)
+  const entry = metricsMap.get(inst.trade_id)
   if (entry?.status === 'ready') {
     const fromExec = primaryUnderlyingFromExecutions(entry.sliced)
     if (fromExec) return fromExec
@@ -81,51 +81,51 @@ export function instanceSymbol(
  * are still loading go under this key instead; "—" is reserved for the real
  * reading — metrics arrived and still no underlying resolves.
  */
-export const INSTANCE_GROUP_LOADING = '__loading__'
+export const TRADE_GROUP_LOADING = '__loading__'
 /** Fills that failed to load — named as a failure, never folded into loading. */
-export const INSTANCE_GROUP_FAILED = '__failed__'
+export const TRADE_GROUP_FAILED = '__failed__'
 
-export function instanceGroupKey(
-  inst: StrategyInstance,
+export function tradeGroupKey(
+  inst: Trade,
   opportunities: readonly BookOpportunity[],
-  metricsMap: Map<number, InstanceListMetricsEntry>,
+  metricsMap: Map<number, TradeListMetricsEntry>,
 ): string {
-  const sym = instanceSymbol(inst, opportunities, metricsMap)
+  const sym = tradeSymbol(inst, opportunities, metricsMap)
   if (sym !== '—') return sym
-  const entry = metricsMap.get(inst.strategy_instance_id)
+  const entry = metricsMap.get(inst.trade_id)
   if (entry?.status === 'ready') return '—'
-  if (entry?.status === 'error') return INSTANCE_GROUP_FAILED
-  return INSTANCE_GROUP_LOADING
+  if (entry?.status === 'error') return TRADE_GROUP_FAILED
+  return TRADE_GROUP_LOADING
 }
 
 export interface TradeBook {
-  metricsMap: Map<number, InstanceListMetricsEntry>
-  filterOptions: InstanceFilterOptions
-  filtered: StrategyInstance[]
-  groups: InstanceGroup[]
+  metricsMap: Map<number, TradeListMetricsEntry>
+  filterOptions: TradeFilterOptions
+  filtered: Trade[]
+  groups: TradeGroup[]
   /** `2026-06-18 ~ 2026-09-18`, or null when the window is All. */
   sinceRangeText: string | null
 }
 
 export function useTradeBook(args: {
-  instances: StrategyInstance[]
+  trades: Trade[]
   opportunities: readonly BookOpportunity[]
-  values: InstanceListFilterValues
+  values: TradeListFilterValues
   /** A single instance picked by id, which overrides every other filter. */
-  instanceId?: number | ''
+  tradeId?: number | ''
   metricsRefreshKey?: number
 }): TradeBook {
-  const { instances, opportunities, values, instanceId = '', metricsRefreshKey = 0 } = args
-  const metricsMap = useInstanceMetrics(instances, metricsRefreshKey)
+  const { trades, opportunities, values, tradeId = '', metricsRefreshKey = 0 } = args
+  const metricsMap = useTradeMetrics(trades, metricsRefreshKey)
 
   /** Rights and expiry months an instance actually holds, from its own fills. */
   const positionMeta = useMemo(() => {
     const map = new Map<number, { rights: Set<'C' | 'P'>; expiryMonths: Set<string> }>()
-    for (const inst of instances) {
-      const entry = metricsMap.get(inst.strategy_instance_id)
+    for (const inst of trades) {
+      const entry = metricsMap.get(inst.trade_id)
       if (!entry || entry.status !== 'ready') continue
-      map.set(inst.strategy_instance_id, { rights: new Set(), expiryMonths: new Set() })
-      const meta = map.get(inst.strategy_instance_id)!
+      map.set(inst.trade_id, { rights: new Set(), expiryMonths: new Set() })
+      const meta = map.get(inst.trade_id)!
       for (const e of entry.sliced) {
         const right = (e.option_right ?? '').toUpperCase().charAt(0)
         if (right === 'C' || right === 'P') meta.rights.add(right)
@@ -134,19 +134,19 @@ export function useTradeBook(args: {
       }
     }
     return map
-  }, [instances, metricsMap])
+  }, [trades, metricsMap])
 
-  const filterOptions = useMemo<InstanceFilterOptions>(() => {
+  const filterOptions = useMemo<TradeFilterOptions>(() => {
     const structures = new Set<string>()
     const symbols = new Set<string>()
     const rights = new Set<'C' | 'P'>()
     const expiryMonths = new Set<string>()
-    for (const inst of instances) {
+    for (const inst of trades) {
       const sn = (inst.strategy_structure_name ?? '').trim()
       if (sn) structures.add(sn)
-      const sym = instanceSymbol(inst, opportunities, metricsMap)
+      const sym = tradeSymbol(inst, opportunities, metricsMap)
       if (sym !== '—') symbols.add(sym)
-      const meta = positionMeta.get(inst.strategy_instance_id)
+      const meta = positionMeta.get(inst.trade_id)
       if (meta) {
         for (const r of meta.rights) rights.add(r)
         for (const m of meta.expiryMonths) expiryMonths.add(m)
@@ -158,28 +158,28 @@ export function useTradeBook(args: {
       rights: [...rights].sort(),
       expiryMonths: [...expiryMonths].sort(),
     }
-  }, [instances, opportunities, positionMeta, metricsMap])
+  }, [trades, opportunities, positionMeta, metricsMap])
 
   const filtered = useMemo(() => {
-    let list = instances
-    if (instanceId !== '') list = list.filter((i) => i.strategy_instance_id === instanceId)
+    let list = trades
+    if (tradeId !== '') list = list.filter((i) => i.trade_id === tradeId)
     if (values.structure) {
       list = list.filter((i) => (i.strategy_structure_name ?? '').trim() === values.structure)
     }
     if (values.symbol) {
-      list = list.filter((i) => instanceSymbol(i, opportunities, metricsMap) === values.symbol)
+      list = list.filter((i) => tradeSymbol(i, opportunities, metricsMap) === values.symbol)
     }
     if (values.right) {
-      list = list.filter((i) => positionMeta.get(i.strategy_instance_id)?.rights.has(values.right as 'C' | 'P') ?? false)
+      list = list.filter((i) => positionMeta.get(i.trade_id)?.rights.has(values.right as 'C' | 'P') ?? false)
     }
     if (values.expiry) {
-      list = list.filter((i) => positionMeta.get(i.strategy_instance_id)?.expiryMonths.has(values.expiry) ?? false)
+      list = list.filter((i) => positionMeta.get(i.trade_id)?.expiryMonths.has(values.expiry) ?? false)
     }
     if (values.status) {
       list = list.filter((i) => {
-        const entry = metricsMap.get(i.strategy_instance_id)
+        const entry = metricsMap.get(i.trade_id)
         if (!entry || entry.status !== 'ready') return false
-        const ps = computeInstancePositionStatus(entry.sliced)
+        const ps = computeTradePositionStatus(entry.sliced)
         return values.status === 'open' ? ps === 'open' : ps === 'closed'
       })
     }
@@ -191,13 +191,13 @@ export function useTradeBook(args: {
       }
     }
     return list
-  }, [instances, instanceId, values, metricsMap, opportunities, positionMeta])
+  }, [trades, tradeId, values, metricsMap, opportunities, positionMeta])
 
   const groups = useMemo(() => {
-    const out: InstanceGroup[] = []
+    const out: TradeGroup[] = []
     const indexByKey = new Map<string, number>()
     for (const inst of filtered) {
-      const key = instanceGroupKey(inst, opportunities, metricsMap)
+      const key = tradeGroupKey(inst, opportunities, metricsMap)
       const idx = indexByKey.get(key)
       if (idx == null) {
         indexByKey.set(key, out.length)
@@ -207,7 +207,7 @@ export function useTradeBook(args: {
       }
     }
     // The loading group sits last, whatever order the rows arrived in.
-    const tail = (k: string) => (k === INSTANCE_GROUP_FAILED ? 2 : k === INSTANCE_GROUP_LOADING ? 1 : 0)
+    const tail = (k: string) => (k === TRADE_GROUP_FAILED ? 2 : k === TRADE_GROUP_LOADING ? 1 : 0)
     out.sort((a, b) => tail(a.key) - tail(b.key))
     return out
   }, [filtered, opportunities, metricsMap])

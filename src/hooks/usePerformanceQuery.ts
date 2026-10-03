@@ -6,7 +6,7 @@ export interface PerformanceQueryParams {
   since_ts: number
   until_ts: number
   strategy_opportunity_id?: number
-  strategy_instance_id?: number
+  trade_id?: number
 }
 
 export function usePerformanceQuery(params: PerformanceQueryParams | null) {
@@ -16,7 +16,7 @@ export function usePerformanceQuery(params: PerformanceQueryParams | null) {
       params?.since_ts,
       params?.until_ts,
       params?.strategy_opportunity_id ?? null,
-      params?.strategy_instance_id ?? null,
+      params?.trade_id ?? null,
     ],
     queryFn: () =>
       fetchPerformance({
@@ -24,7 +24,7 @@ export function usePerformanceQuery(params: PerformanceQueryParams | null) {
         to_ts: params!.until_ts,
         granularity: 'day',
         strategy_opportunity_id: params!.strategy_opportunity_id,
-        strategy_instance_id: params!.strategy_instance_id,
+        trade_id: params!.trade_id,
         source_scope: 'performance_book',
       }),
     enabled: params != null,

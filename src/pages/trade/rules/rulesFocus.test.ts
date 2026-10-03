@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ChainData } from '@/hooks/useRulesChain'
-import type { InstanceReading } from '@/utils/strategyInstances'
+import type { TradeReading } from '@/utils/tradeReadings'
 import type { StrategyAllocation, StrategyOpportunity } from '@/types/strategy'
 import {
   allSymbols,
@@ -26,7 +26,7 @@ const reading = (
   sym: string,
   closed: boolean,
   realised: number | null = null,
-): InstanceReading => ({
+): TradeReading => ({
   id,
   label: `#${id}`,
   symbolish: sym,
@@ -48,7 +48,7 @@ const DATA: ChainData = {
     { strategy_allocation_id: 9, strategy_opportunity_ids: [1] } as unknown as StrategyAllocation,
   ],
   gates: [],
-  instances: [
+  trades: [
     reading(10, 1, 'ZZTM', true, 300),
     reading(11, 1, 'ZZTM', true, -100),
     reading(12, 1, 'ZZTM', false),
@@ -96,7 +96,7 @@ describe('the symbol cuts across the chain', () => {
   it('meets a pick with a symbol', () => {
     const lit = focusLineage({ pick: { kind: 'opportunity', id: 1 }, sym: 'ZZTM' }, DATA)!
     expect([...lit.opportunity]).toEqual([1])
-    expect([...lit.instance].sort()).toEqual([10, 11, 12])
+    expect([...lit.trade].sort()).toEqual([10, 11, 12])
     expect(focusLineage({ pick: null, sym: null }, DATA)).toBeNull()
   })
 
@@ -113,18 +113,18 @@ describe('the symbol cuts across the chain', () => {
 
 describe('tallies and the scope board', () => {
   it('realised and won count closed instances only', () => {
-    const t = tally(DATA.instances.filter((i) => i.opportunityId === 1))
+    const t = tally(DATA.trades.filter((i) => i.opportunityId === 1))
     expect(t).toEqual({ n: 3, open: 1, closed: 2, realised: 200, won: 1 })
   })
 
   it('shows named symbols that never ran, and ran symbols off the scope', () => {
-    const own = DATA.instances.filter((i) => i.opportunityId === 1)
+    const own = DATA.trades.filter((i) => i.opportunityId === 1)
     const tiles = symbolBoard(['ZZTM', 'QQXX'], own, 'pnl')
     expect(tiles.map((t) => [t.sym, t.tally.n, t.offScope])).toEqual([
       ['ZZTM', 3, false],
       ['QQXX', 0, false],
     ])
-    const off = symbolBoard(['WWVY'], DATA.instances.filter((i) => i.opportunityId === 3), 'az')
+    const off = symbolBoard(['WWVY'], DATA.trades.filter((i) => i.opportunityId === 3), 'az')
     expect(off.map((t) => [t.sym, t.offScope])).toEqual([
       ['PPLN', true],
       ['WWVY', false],

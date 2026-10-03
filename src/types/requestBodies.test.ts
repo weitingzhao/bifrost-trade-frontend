@@ -8,8 +8,8 @@ import { describe, expect, it } from 'vitest'
 import type {
   ExecutionCreateBody,
   ExecutionUpdateBody,
-  GateSafetyBody,
-  InstanceAllocationItem,
+  FillSplitItem,
+  GateSetBody,
   InstrumentClassBody,
   OptionStockLinkBatchItem,
   OptionStockLinkBody,
@@ -27,7 +27,7 @@ import type {
 } from './requestBodies'
 import type {
   CreateTemplateBody,
-  GateSafetyPayload,
+  GateSetPayload,
   MetaParamPayload,
   StructureLeg,
   StructureMetaEntry,
@@ -49,7 +49,7 @@ type Conforms<Fe, Model> = [Exclude<keyof Fe, keyof Model>] extends [never]
   : false
 
 type Item<A> = A extends readonly (infer T)[] ? T : never
-type InstanceSplit = Item<NonNullable<CreateExecutionBody['instance_allocations']>>
+type FillSplitRow = Item<NonNullable<CreateExecutionBody['fill_splits']>>
 
 const CHECKS = {
   // strategy
@@ -59,14 +59,14 @@ const CHECKS = {
   StructurePayload: true satisfies Conforms<StructurePayload, StructureBody>,
   StructureLeg: true satisfies Conforms<StructureLeg, StructureLegItem>,
   StructureMetaEntry: true satisfies Conforms<StructureMetaEntry, StructureMetaItem>,
-  GateSafetyPayload: true satisfies Conforms<GateSafetyPayload, GateSafetyBody>,
+  GateSetPayload: true satisfies Conforms<GateSetPayload, GateSetBody>,
   SavedSearchCreate: true satisfies Conforms<SavedSearchCreate, SavedSearchBody>,
   // portfolio
   TagPositionRequest: true satisfies Conforms<TagPositionRequest, PositionTagBody>,
   // trading
   CreateExecutionBody: true satisfies Conforms<CreateExecutionBody, ExecutionCreateBody>,
   UpdateExecutionBody: true satisfies Conforms<UpdateExecutionBody, ExecutionUpdateBody>,
-  InstanceSplit: true satisfies Conforms<InstanceSplit, InstanceAllocationItem>,
+  FillSplitRow: true satisfies Conforms<FillSplitRow, FillSplitItem>,
   OptionStockLinkCreate: true satisfies Conforms<OptionStockLinkCreate, OptionStockLinkBody>,
   OptionStockLinkBatch: true satisfies Conforms<OptionStockLinkBatch, OptionStockLinkBatchItem>,
   // market

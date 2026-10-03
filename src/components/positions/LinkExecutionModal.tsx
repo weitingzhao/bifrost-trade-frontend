@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { fetchStrategyInstances, createStrategyInstance } from '@/api/strategy'
+import { fetchTrades, createTrade } from '@/api/strategy'
 import { patchExecutionAttribution } from '@/api/trading'
 import { ExecSourceBadge, SegmentControl } from '@/components/data-display'
 import {
@@ -26,15 +26,15 @@ import {
   defaultOpenedAtFromExecution,
   executionSplitCount,
   executionQtyLabel,
-  filterInstancesForOpportunity,
+  filterTradesForOpportunity,
   filterOpportunitiesBySymbol,
-  formatInstanceOpenedDate,
+  formatTradeOpenedDate,
   getUnderlyingSymbolFromExecution,
 } from '@/components/positions/linkExecutionModalHelpers'
 import {
   linkExecDialogFooterClass,
   linkExecHintClass,
-  linkExecInstancePanelClass,
+  linkExecTradePanelClass,
   linkExecPillClass,
   linkExecPillSelectedClass,
   linkExecPillsClass,
@@ -43,16 +43,17 @@ import {
   linkExecSummaryClass,
   linkExecSymbolBadgeClass,
 } from '@/components/positions/linkExecutionModalUi'
-import type { PeerInstancePick } from '@/utils/ledger/ledgerOptHelpers'
+import type { PeerTradePick } from '@/utils/ledger/ledgerOptHelpers'
 import { opportunityIsActive } from '@/utils/strategyFormUtils'
 import { fmtDate, fmtUsd } from '@/utils/positions'
 import { cn } from '@/lib/utils'
 import type { Execution, StrategyOpportunity } from '@/types/positions'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 
 export interface LinkExecutionContext {
   account_executions_id: number
   execution?: Execution | null
-  peer_instance_picks?: PeerInstancePick[]
+  peer_trade_picks?: PeerTradePick[]
 }
 
 interface Props {
@@ -65,27 +66,27 @@ interface Props {
 
 function initLinkForm(context: LinkExecutionContext | null) {
   const ex = context?.execution
-  const picks = context?.peer_instance_picks
+  const picks = context?.peer_trade_picks
   const preOpp = ex?.strategy_opportunity_id != null ? String(ex.strategy_opportunity_id) : ''
-  const preInst = ex?.strategy_instance_id != null ? String(ex.strategy_instance_id) : ''
+  const preInst = ex?.trade_id != null ? String(ex.trade_id) : ''
   let peerShortcut = ''
   if (picks?.length && preOpp && preInst) {
     const hit = picks.find(
-      (p) => String(p.strategy_opportunity_id) === preOpp && String(p.strategy_instance_id) === preInst,
+      (p) => String(p.strategy_opportunity_id) === preOpp && String(p.trade_id) === preInst,
     )
-    peerShortcut = hit ? `${hit.strategy_opportunity_id}::${hit.strategy_instance_id}` : ''
+    peerShortcut = hit ? `${hit.strategy_opportunity_id}::${hit.trade_id}` : ''
   }
   return {
     oppId: preOpp,
-    instanceId: preInst,
-    instanceMode: 'existing' as const,
+    tradeId: preInst,
+    tradeMode: 'existing' as const,
     newOpenedAt: defaultOpenedAtFromExecution(ex),
     newLabel: '',
     peerShortcut,
   }
 }
 
-const INSTANCE_MODE_OPTIONS = [
+const TRADE_MODE_OPTIONS = [
   { value: 'existing', label: 'Use existing' },
   { value: 'new', label: '+ Create new' },
 ] as const
@@ -98,8 +99,8 @@ function LinkExecutionModalBody({
 }: Omit<Props, 'open'>) {
   const init = initLinkForm(context)
   const [oppId, setOppId] = useState(init.oppId)
-  const [instanceMode, setInstanceMode] = useState<'existing' | 'new'>(init.instanceMode)
-  const [instanceId, setInstanceId] = useState(init.instanceId)
+  const [tradeMode, setTradeMode] = useState<'existing' | 'new'>(init.tradeMode)
+  const [tradeId, setTradeId] = useState(init.tradeId)
   const [newOpenedAt, setNewOpenedAt] = useState(init.newOpenedAt)
   const [newLabel, setNewLabel] = useState(init.newLabel)
   const [peerShortcut, setPeerShortcut] = useState(init.peerShortcut)
@@ -109,7 +110,7 @@ function LinkExecutionModalBody({
   const ex = context?.execution
   const execId = context?.account_executions_id
   const splitCount = executionSplitCount(ex)
-  const peerPicks = context?.peer_instance_picks
+  const peerPicks = context?.peer_trade_picks
 
   const activeOpportunities = useMemo(
     () => opportunities.filter((o) => opportunityIsActive(o.is_active)),
@@ -117,15 +118,15 @@ function LinkExecutionModalBody({
   )
 
   const oppIdNum = oppId.trim() ? Number(oppId) : null
-  const { data: instancesData, isLoading: instancesLoading } = useQuery({
-    queryKey: ['strategy', 'instances', 'link-modal', oppIdNum],
-    queryFn: () => fetchStrategyInstances({ opportunityId: oppIdNum! }),
+  const { data: tradesData, isLoading: tradesLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.trades.list, 'link-modal', oppIdNum],
+    queryFn: () => fetchTrades({ opportunityId: oppIdNum! }),
     enabled: oppIdNum != null && Number.isFinite(oppIdNum),
     staleTime: 30_000,
   })
-  const instances = useMemo(
-    () => filterInstancesForOpportunity(instancesData?.items ?? [], oppIdNum),
-    [instancesData?.items, oppIdNum],
+  const trades = useMemo(
+    () => filterTradesForOpportunity(tradesData?.items ?? [], oppIdNum),
+    [tradesData?.items, oppIdNum],
   )
 
   const execSymbol = getUnderlyingSymbolFromExecution(ex)
@@ -140,10 +141,10 @@ function LinkExecutionModalBody({
   }, [filteredOpps, oppId])
 
   useEffect(() => {
-    if (!instanceId || instances.length === 0) return
-    const ok = instances.some((i) => String(i.strategy_instance_id) === instanceId)
-    if (!ok) setInstanceId('')
-  }, [instances, instanceId, oppIdNum])
+    if (!tradeId || trades.length === 0) return
+    const ok = trades.some((i) => String(i.trade_id) === tradeId)
+    if (!ok) setTradeId('')
+  }, [trades, tradeId, oppIdNum])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -157,8 +158,8 @@ function LinkExecutionModalBody({
 
     setSubmitting(true)
     try {
-      let finalInstanceId: number
-      if (instanceMode === 'new') {
+      let finalTradeId: number
+      if (tradeMode === 'new') {
         if (!executionAccountId) {
           throw new Error('This execution has no account; create trade is not available.')
         }
@@ -166,23 +167,23 @@ function LinkExecutionModalBody({
         if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
           throw new Error('Opened at (date) is required.')
         }
-        const created = await createStrategyInstance({
+        const created = await createTrade({
           strategy_opportunity_id: opp,
           account_id: executionAccountId,
           opened_at: `${dateStr}T12:00:00.000Z`,
           label: newLabel.trim() || undefined,
         })
-        finalInstanceId = created.strategy_instance_id
+        finalTradeId = created.trade_id
       } else {
-        const instRaw = instanceId.trim()
+        const instRaw = tradeId.trim()
         // A fill belongs to a trade; its opportunity is the trade's (core 0.37.0).
         if (!instRaw || !Number.isFinite(Number(instRaw))) {
           throw new Error('Pick the trade this fill belongs to, or create one.')
         }
-        finalInstanceId = Number(instRaw)
+        finalTradeId = Number(instRaw)
       }
 
-      const updateRes = await patchExecutionAttribution(execId, assignAttributionPatch(ex, opp, finalInstanceId))
+      const updateRes = await patchExecutionAttribution(execId, assignAttributionPatch(ex, opp, finalTradeId))
       if (!updateRes.ok) throw new Error(updateRes.error)
       onSuccess()
       onClose()
@@ -194,7 +195,7 @@ function LinkExecutionModalBody({
   }
 
   const eTs = ex?.time != null ? Number(ex.time) : null
-  const useInstanceBubbles = instances.length > 0 && instances.length <= 12
+  const useTradeBubbles = trades.length > 0 && trades.length <= 12
 
   return (
     <DialogContent className="max-w-xl gap-0 overflow-hidden p-0 sm:max-w-xl">
@@ -226,7 +227,7 @@ function LinkExecutionModalBody({
             <span className={linkExecSectionLabelClass}>Reuse from this contract</span>
             <div className={linkExecPillsClass} role="radiogroup" aria-label="Reuse from this contract">
               {peerPicks.map((p) => {
-                const key = `${p.strategy_opportunity_id}::${p.strategy_instance_id}`
+                const key = `${p.strategy_opportunity_id}::${p.trade_id}`
                 const isActive = peerShortcut === key
                 return (
                   <button
@@ -239,8 +240,8 @@ function LinkExecutionModalBody({
                     onClick={() => {
                       setPeerShortcut(key)
                       setOppId(String(p.strategy_opportunity_id))
-                      setInstanceId(String(p.strategy_instance_id))
-                      setInstanceMode('existing')
+                      setTradeId(String(p.trade_id))
+                      setTradeMode('existing')
                     }}
                   >
                     {p.label}
@@ -279,7 +280,7 @@ function LinkExecutionModalBody({
                     title={label}
                     onClick={() => {
                       setOppId(idStr)
-                      setInstanceId('')
+                      setTradeId('')
                       setPeerShortcut('')
                     }}
                   >
@@ -298,47 +299,47 @@ function LinkExecutionModalBody({
         </div>
 
         {oppId ? (
-          <div className={linkExecInstancePanelClass}>
+          <div className={linkExecTradePanelClass}>
             <SegmentControl
               size="sm"
               ariaLabel="Trade mode"
-              value={instanceMode}
+              value={tradeMode}
               onChange={(v) => {
                 const mode = v as 'existing' | 'new'
-                setInstanceMode(mode)
+                setTradeMode(mode)
                 if (mode === 'new') setPeerShortcut('')
               }}
-              options={INSTANCE_MODE_OPTIONS.map((o) => ({
+              options={TRADE_MODE_OPTIONS.map((o) => ({
                 ...o,
                 disabled: o.value === 'new' && !executionAccountId,
               }))}
             />
 
-            {instanceMode === 'existing' ? (
+            {tradeMode === 'existing' ? (
               <div className="space-y-2">
                 <span className={linkExecSectionLabelClass}>Trade</span>
-                {instancesLoading ? (
+                {tradesLoading ? (
                   <p className={linkExecHintClass}>Loading trades…</p>
-                ) : instances.length === 0 ? (
+                ) : trades.length === 0 ? (
                   <p className={linkExecHintClass}>
                     No trades for this opportunity. Switch to &quot;Create new&quot; to add one.
                   </p>
-                ) : useInstanceBubbles ? (
+                ) : useTradeBubbles ? (
                   <div className={linkExecPillsClass} role="radiogroup" aria-label="Trade">
-                    {instances.map((inst) => {
-                      const idStr = String(inst.strategy_instance_id)
-                      const isActive = instanceId === idStr
-                      const label = formatInstanceOpenedDate(inst)
+                    {trades.map((inst) => {
+                      const idStr = String(inst.trade_id)
+                      const isActive = tradeId === idStr
+                      const label = formatTradeOpenedDate(inst)
                       return (
                         <button
-                          key={inst.strategy_instance_id}
+                          key={inst.trade_id}
                           type="button"
                           role="radio"
                           aria-checked={isActive}
                           className={cn(linkExecPillClass, isActive && linkExecPillSelectedClass)}
                           title={label}
                           onClick={() => {
-                            setInstanceId(idStr)
+                            setTradeId(idStr)
                             setPeerShortcut('')
                           }}
                         >
@@ -349,9 +350,9 @@ function LinkExecutionModalBody({
                   </div>
                 ) : (
                   <Select
-                    value={instanceId || undefined}
+                    value={tradeId || undefined}
                     onValueChange={(v) => {
-                      setInstanceId(v)
+                      setTradeId(v)
                       setPeerShortcut('')
                     }}
                   >
@@ -359,12 +360,12 @@ function LinkExecutionModalBody({
                       <SelectValue placeholder="Pick a trade" />
                     </SelectTrigger>
                     <SelectContent>
-                      {instances.map((inst) => (
+                      {trades.map((inst) => (
                         <SelectItem
-                          key={inst.strategy_instance_id}
-                          value={String(inst.strategy_instance_id)}
+                          key={inst.trade_id}
+                          value={String(inst.trade_id)}
                         >
-                          {formatInstanceOpenedDate(inst)}
+                          {formatTradeOpenedDate(inst)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -435,14 +436,14 @@ function LinkExecutionModalBody({
           disabled={
             submitting ||
             !oppId ||
-            (instanceMode === 'new' ? !executionAccountId : !instanceId)
+            (tradeMode === 'new' ? !executionAccountId : !tradeId)
           }
         >
           {submitting
-            ? instanceMode === 'new'
+            ? tradeMode === 'new'
               ? 'Creating…'
               : 'Saving…'
-            : instanceMode === 'new'
+            : tradeMode === 'new'
               ? 'Create & assign'
               : 'Save'}
         </Button>

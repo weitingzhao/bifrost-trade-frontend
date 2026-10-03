@@ -12,7 +12,7 @@ export interface OpportunityFormState {
   /** `''` = no structure picked (the server refuses that). */
   structureId: string
   /** `''` = no default gate. */
-  gateSafetyId: string
+  gateSetId: string
   /** `''` · `watchlist_stk` · `explicit_symbols` (see `OPPORTUNITY_SCOPE_TYPES`). */
   scopeType: string
   symbols: string[]
@@ -24,7 +24,7 @@ export interface OpportunityFormState {
 export const EMPTY_OPPORTUNITY_FORM: OpportunityFormState = {
   name: '',
   structureId: '',
-  gateSafetyId: '',
+  gateSetId: '',
   scopeType: '',
   symbols: [],
   conditions: [],
@@ -55,7 +55,7 @@ export function opportunityToForm(d: StrategyOpportunityDetail): OpportunityForm
   return {
     name: d.name,
     structureId: d.strategy_structure_id != null ? String(d.strategy_structure_id) : '',
-    gateSafetyId: d.default_gate_safety_strategy_id != null ? String(d.default_gate_safety_strategy_id) : '',
+    gateSetId: d.default_gate_safety_strategy_id != null ? String(d.default_gate_safety_strategy_id) : '',
     scopeType: d.scope_type ?? '',
     symbols: d.symbols ?? [],
     conditions: (d.entry_conditions ?? []).map(conditionToInput),
@@ -88,7 +88,7 @@ export function opportunityFormToPayload(f: OpportunityFormState): CreateOpportu
   return {
     name: f.name.trim(),
     strategy_structure_id: Number(f.structureId),
-    default_gate_safety_strategy_id: f.gateSafetyId ? Number(f.gateSafetyId) : null,
+    default_gate_safety_strategy_id: f.gateSetId ? Number(f.gateSetId) : null,
     scope_type: scope,
     symbols,
     entry_conditions: entryConditions,

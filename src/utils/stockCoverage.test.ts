@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { computeInstanceStockCoverage, buildStockCoverageItems, coverageStatus } from './stockCoverage'
-import type { StrategyStructure, OpenOptionPosition, InstanceAllGroup, StockCoverageItem, LivePositionRow } from '@/types/positions'
+import { computeTradeStockCoverage, buildStockCoverageItems, coverageStatus } from './stockCoverage'
+import type { StrategyStructure, OpenOptionPosition, TradeAllGroup, StockCoverageItem, LivePositionRow } from '@/types/positions'
 
-describe('computeInstanceStockCoverage', () => {
+describe('computeTradeStockCoverage', () => {
   it('returns empty when no underlying leg', () => {
     const structure: StrategyStructure = {
       strategy_structure_id: 1, name: 'Iron Condor',
@@ -13,7 +13,7 @@ describe('computeInstanceStockCoverage', () => {
       created_at: null, updated_at: null, notes: null,
       legs: [{ role: 'option', direction: null, option_right: null, quantity: 1, strike: null, expiration: null }],
     }
-    expect(computeInstanceStockCoverage([], structure)).toHaveLength(0)
+    expect(computeTradeStockCoverage([], structure)).toHaveLength(0)
   })
 
   it('computes required shares from options + underlying leg', () => {
@@ -32,7 +32,7 @@ describe('computeInstanceStockCoverage', () => {
     const options: OpenOptionPosition[] = [
       { kind: 'live', contract_key: 'AAPL|OPT|20250620|150|C', symbol: 'AAPL', strike: 150, expiry: '20250620', right: 'C', qty: -2, avg_cost: 3, mark_price: 2.5, unrealized_pnl: 100, pool_label: 'On', account_id: 'U001' },
     ]
-    const result = computeInstanceStockCoverage(options, structure)
+    const result = computeTradeStockCoverage(options, structure)
     expect(result).toHaveLength(1)
     expect(result[0].symbol).toBe('AAPL')
     expect(result[0].required_shares).toBe(200)
@@ -42,13 +42,13 @@ describe('computeInstanceStockCoverage', () => {
 
 describe('buildStockCoverageItems', () => {
   it('aggregates demand from instances and held from stocks', () => {
-    const groups: InstanceAllGroup[] = [
+    const groups: TradeAllGroup[] = [
       {
-        strategy_instance_id: 1,
-        strategy_instance_label: 'CC #1',
+        trade_id: 1,
+        trade_label: 'CC #1',
         strategy_opportunity_name: 'AAPL CC',
         strategy_opportunity_id: 10,
-        strategy_instance_opened_at_epoch: null,
+        trade_opened_at_epoch: null,
         options: [],
         stock_coverage: [{ symbol: 'AAPL', account_id: 'U001', required_shares: 200, direction: 'long' }],
         options_unrealized_pnl: 0,

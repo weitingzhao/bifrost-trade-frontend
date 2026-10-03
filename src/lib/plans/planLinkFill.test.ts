@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import type { StrategyInstance } from '@/types/strategy'
-import { instancesTradingSymbol } from './planLinkFill'
+import type { Trade } from '@/types/strategy'
+import { tradesTradingSymbol } from './planLinkFill'
 
-function instance(over: Partial<StrategyInstance> & Pick<StrategyInstance, 'strategy_instance_id' | 'strategy_opportunity_id' | 'label'>): StrategyInstance {
+function trade(over: Partial<Trade> & Pick<Trade, 'trade_id' | 'strategy_opportunity_id' | 'label'>): Trade {
   return {
     account_id: 'U1',
-    notes: null,
     opened_at: '2026-09-15T12:00:00Z',
     opened_at_epoch: 1,
     created_at: '2026-09-15T12:00:00Z',
@@ -19,19 +18,19 @@ function instance(over: Partial<StrategyInstance> & Pick<StrategyInstance, 'stra
   }
 }
 
-describe('instancesTradingSymbol', () => {
+describe('tradesTradingSymbol', () => {
   it('keeps an instance whose opportunity lists the plan symbol', () => {
-    const kept = instance({
-      strategy_instance_id: 1,
+    const kept = trade({
+      trade_id: 1,
       strategy_opportunity_id: 10,
       label: 'MU cash-secured put',
     })
-    const dropped = instance({
-      strategy_instance_id: 2,
+    const dropped = trade({
+      trade_id: 2,
       strategy_opportunity_id: 20,
       label: 'Premium MU lookalike book',
     })
-    const result = instancesTradingSymbol(
+    const result = tradesTradingSymbol(
       [kept, dropped],
       [
         { strategy_opportunity_id: 10, symbols: ['MU'] },
@@ -39,17 +38,17 @@ describe('instancesTradingSymbol', () => {
       ],
       'MU',
     )
-    expect(result.map((r) => r.strategy_instance_id)).toEqual([1])
+    expect(result.map((r) => r.trade_id)).toEqual([1])
   })
 
   it('drops a name that contains MU when the opportunity does not list MU', () => {
-    const decoy = instance({
-      strategy_instance_id: 3,
+    const decoy = trade({
+      trade_id: 3,
       strategy_opportunity_id: 30,
       label: 'AMU basket',
     })
     expect(
-      instancesTradingSymbol(
+      tradesTradingSymbol(
         [decoy],
         [{ strategy_opportunity_id: 30, symbols: ['NVDA', 'AAPL'] }],
         'MU',

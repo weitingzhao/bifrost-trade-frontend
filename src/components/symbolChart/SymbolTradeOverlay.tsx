@@ -18,13 +18,13 @@ import {
   sessionIndexFor,
   sessionsUntil,
   type Holding,
-  type InstanceTrack,
+  type TradeTrack,
 } from '@/components/symbolChart/symbolPriceModel'
 
 const CHAR_W = 5.4
 const INK = {
   contract: 'var(--sk-contract)',
-  instance: 'var(--color-trade-multi)',
+  trade: 'var(--color-trade-multi)',
   shares: 'var(--sk-ticker)',
   profit: 'var(--color-profit)',
   loss: 'var(--color-loss)',
@@ -43,7 +43,7 @@ const overlaps = (a: Rect, b: Rect) =>
 
 export interface TradeOverlayProps {
   ctx: ChartOverlayContext
-  tracks: readonly InstanceTrack[]
+  tracks: readonly TradeTrack[]
   dates: readonly string[]
   winStart: number
   /** One past the last session drawn — history after it is off the right edge. */
@@ -56,7 +56,7 @@ export interface TradeOverlayProps {
   /** The one track kept lit and labelled (the Instance page); the rest read at 20% until hovered. */
   focusKey?: string | null
   onHover: (key: string | null) => void
-  onOpen: (track: InstanceTrack) => void
+  onOpen: (track: TradeTrack) => void
   onOpenId: (id: number) => void
   holding: Holding | null
   spot: number | null
@@ -163,7 +163,7 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
             {h.backing.map((b, i) => (
               <tspan
                 key={b.id}
-                fill={opens(b.id) ? INK.instance : INK.mute}
+                fill={opens(b.id) ? INK.trade : INK.mute}
                 style={{ cursor: opens(b.id) ? 'pointer' : 'default' }}
                 onClick={(e) => {
                   e.stopPropagation()
@@ -295,14 +295,14 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
                 {label.edge ? <tspan fill={INK.mute}>{label.edge}</tspan> : null}
                 {label.full ? (
                   <>
-                    <tspan fill={INK.instance}>{t.id != null ? `#${t.id}` : ''}</tspan>
+                    <tspan fill={INK.trade}>{t.id != null ? `#${t.id}` : ''}</tspan>
                     <tspan fill={INK.contract}>
                       {t.id != null ? t.name.slice(`#${t.id}`.length) : t.name}
                     </tspan>
                     <tspan fill={plInk}> {t.pnl != null ? fmtPl(t.pnl) : open ? 'open' : ''}</tspan>
                   </>
                 ) : (
-                  <tspan fill={INK.instance}>{t.id != null ? `#${t.id}` : '·'}</tspan>
+                  <tspan fill={INK.trade}>{t.id != null ? `#${t.id}` : '·'}</tspan>
                 )}
               </text>
             ) : null}

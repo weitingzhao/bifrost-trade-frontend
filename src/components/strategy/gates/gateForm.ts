@@ -8,9 +8,9 @@
  * binds still goes back on the PUT unchanged.
  */
 import { DIM_LABELS, DIM_TYPES, type DimFieldName } from '@/utils/gateDefaults'
-import type { GateSafetyFull, GateSafetyGates, GateSafetyPayload } from '@/types/positions'
+import type { GateSetFull, GateSetGates, GateSetPayload } from '@/types/positions'
 
-export interface GateFormState extends GateSafetyPayload {
+export interface GateFormState extends GateSetPayload {
   version: number
   is_active: boolean
   dim_direction: string | null
@@ -120,10 +120,10 @@ function deepClone<T>(obj: T): T {
 
 /**
  * A new set, seeded from core's defaults as the API serves them
- * (`GET /strategies/gate-safety/defaults`, TD-72) — the UI keeps no copy, so a
+ * (`GET /gate-sets/defaults`, TD-72) — the UI keeps no copy, so a
  * core default change reaches the next new set without a frontend release.
  */
-export function emptyGateForm(defaults: GateSafetyGates): GateFormState {
+export function emptyGateForm(defaults: GateSetGates): GateFormState {
   return {
     name: '',
     version: 1,
@@ -140,7 +140,7 @@ export function emptyGateForm(defaults: GateSafetyGates): GateFormState {
 }
 
 /** The set as loaded, or — `copy` — the start of its duplicate (named `(copy)`, inactive). */
-export function gateToForm(d: GateSafetyFull, opts: { copy?: boolean } = {}): GateFormState {
+export function gateToForm(d: GateSetFull, opts: { copy?: boolean } = {}): GateFormState {
   return {
     name: opts.copy ? `${d.name} (copy)` : d.name,
     version: d.version,
@@ -161,7 +161,7 @@ export function gateToForm(d: GateSafetyFull, opts: { copy?: boolean } = {}): Ga
  * read folds the earnings dates into the gates object too, but a write carries
  * them only at the top level (`earnings_dates`) — the API rejects them inside.
  */
-function gatesForWrite(gates: GateSafetyGates): GateSafetyGates {
+function gatesForWrite(gates: GateSetGates): GateSetGates {
   const out = deepClone(gates)
   const earnings = out.strategy?.earnings as Record<string, unknown> | undefined
   if (earnings && 'dates' in earnings) delete earnings.dates
@@ -169,7 +169,7 @@ function gatesForWrite(gates: GateSafetyGates): GateSafetyGates {
 }
 
 /** What the sheet's Create / Update and the inspector's PUT send. */
-export function gateFormToPayload(f: GateFormState): GateSafetyPayload {
+export function gateFormToPayload(f: GateFormState): GateSetPayload {
   return {
     name: f.name,
     version: f.version,
@@ -185,7 +185,7 @@ export function gateFormToPayload(f: GateFormState): GateSafetyPayload {
   }
 }
 
-export function getGateValue(gates: GateSafetyGates, path: string): unknown {
+export function getGateValue(gates: GateSetGates, path: string): unknown {
   return path.split('.').reduce<unknown>((cur, key) => {
     if (cur != null && typeof cur === 'object') return (cur as Record<string, unknown>)[key]
     return undefined
@@ -203,7 +203,7 @@ export function setGateValue(form: GateFormState, path: string, value: unknown):
     cur = cur[k] as Record<string, unknown>
   }
   cur[keys[keys.length - 1]] = value
-  return { ...form, gates: gates as GateSafetyGates }
+  return { ...form, gates: gates as GateSetGates }
 }
 
 /**

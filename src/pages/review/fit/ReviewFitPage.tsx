@@ -33,7 +33,7 @@ import { useEntryIvRanks } from '@/hooks/useEntryIvRanks'
 import { ReviewGaps } from './ReviewTradeFit'
 import { InstanceEconomics } from './InstanceEconomics'
 import { PeersPanel } from './PeersPanel'
-import { useStrategyInstances } from '@/hooks/useStrategies'
+import { useInstanceStates, useStrategyInstances } from '@/hooks/useStrategies'
 import { TradePicker } from './TradePicker'
 import { TradePathPanels } from './TradePathPanels'
 import { CounterfactualsTable, ExecutionTable } from './TradeFitTables'
@@ -59,9 +59,11 @@ export default function ReviewFitPage() {
   // still awaiting review, and ‹ › walks that queue — or Queue's own row order
   // when arrived from there (`in=list&list=…`).
   const origins = useTradeOrigins()
+  // Open / closed is the instance list's state (core 0.41.0, TD-43).
+  const states = useInstanceStates()
   const trades = useMemo(
-    () => buildReviewInstances(execQuery.data?.items ?? [], today, origins.exitBy),
-    [execQuery.data?.items, today, origins.exitBy],
+    () => buildReviewInstances(execQuery.data?.items ?? [], today, origins.exitBy, states),
+    [execQuery.data?.items, today, origins.exitBy, states],
   )
   const reviews = useTradeReviews()
   const saveReview = useSaveTradeReview()

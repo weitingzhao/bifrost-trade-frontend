@@ -35,7 +35,7 @@ import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { THIN_SAMPLE, type PlayStat } from '@/utils/reviewContracts'
 import { SINCE_OPTIONS, sinceEpoch, type SinceFilter } from '@/utils/sinceWindow'
-import { useWinRate } from '@/hooks/useStrategies'
+import { useInstanceStates, useWinRate } from '@/hooks/useStrategies'
 import { useQuery } from '@tanstack/react-query'
 import { fetchStructures } from '@/api/strategy'
 import { PlaybookRegimeGrid } from './PlaybookRegimeGrid'
@@ -241,11 +241,13 @@ export function PlaybookRecord() {
   // Rev .112 origin cuts: per trade, because a plan names a trade, not a contract.
   const origins = useTradeOrigins()
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  // Open / closed is the instance list's state (core 0.41.0, TD-43).
+  const states = useInstanceStates()
   const closedTrades = useMemo(() => {
     const items = execQuery.data?.items ?? []
     const scoped = accountFilter === 'all' ? items : items.filter((e) => (e.account_id ?? '').trim() === accountFilter)
-    return buildReviewInstances(scoped, today, origins.exitBy).filter((t) => !t.open)
-  }, [execQuery.data?.items, accountFilter, today, origins.exitBy])
+    return buildReviewInstances(scoped, today, origins.exitBy, states).filter((t) => !t.open)
+  }, [execQuery.data?.items, accountFilter, today, origins.exitBy, states])
   const originRows = useMemo(
     () => (cut === 'lens' ? lensRows(closedTrades) : sourceRows(closedTrades, origins.byTrade)),
     [cut, closedTrades, origins.byTrade],

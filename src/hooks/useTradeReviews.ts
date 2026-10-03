@@ -10,6 +10,7 @@ import { fetchTradeReviews, saveTradeReview, type TradeReview, type TradeReviewP
 import { fetchExecutions } from '@/api/trading'
 import type { ExecutionsResponse } from '@/types/positions'
 import { buildReviewInstances } from '@/utils/reviewInstances'
+import { useInstanceStates } from '@/hooks/useStrategies'
 
 export function useTradeReviews() {
   const q = useQuery({
@@ -54,12 +55,14 @@ export function useReviewBadge(): number | null {
     enabled: false,
   })
   const reviews = useTradeReviews()
+  // The instance list's state when a page has already read it; the legs' reading otherwise.
+  const states = useInstanceStates(true)
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
   return useMemo(() => {
     const items = execQ.data?.items
     if (!items || !reviews.data) return null
-    return buildReviewInstances(items, today).filter(
+    return buildReviewInstances(items, today, undefined, states).filter(
       (t) => !t.open && t.tradeId != null && !reviews.byInstance.get(t.tradeId)?.reviewed,
     ).length
-  }, [execQ.data, reviews.data, reviews.byInstance, today])
+  }, [execQ.data, reviews.data, reviews.byInstance, today, states])
 }

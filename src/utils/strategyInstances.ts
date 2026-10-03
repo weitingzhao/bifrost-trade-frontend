@@ -1,18 +1,29 @@
 /**
- * A strategy instance, read from its own fills.
+ * A strategy instance, read with its own fills.
  *
- * The record the server returns carries an opportunity, an account, an
- * opened-at and a fill count — **no state and no P&L**. Both are derived here,
- * with the Ledger's grouping and cash convention so an instance that reads
- * closed is closed by the same rule the Ledger uses (§14.2).
+ * Open or closed is the server's answer (core 0.41.0, TD-43): the list carries
+ * `state` — `no_fills` · `open` · `expired` · `closed` — derived from the
+ * instance's option fills by the Ledger's rule, the one Review applies. Expired
+ * (every open leg past expiry, no closing fill) counts as closed, so it no
+ * longer holds room under an allocation's ceiling. This module used to derive
+ * its own answer and called those instances open while Review called them
+ * closed; it no longer decides. The realised figure is still summed here over
+ * the instance's own fills, with the Ledger's cash convention (§14.2).
  *
- * Shared because two pages ask the same question of it: Trading › Rules draws the
- * Instances column, and Risk › Limits counts the open ones against the
- * allocation's own ceiling.
+ * Shared because several pages ask the same question of it: Trading › Rules
+ * draws the Instances column, Risk › Limits and Risk › Sizing count the open
+ * ones against the allocation's own ceiling, and Positions names a risk face.
  */
-import { buildOptExecutionGroups, isBuySide } from '@/utils/ledger/optExecutionGroups'
+import { isBuySide } from '@/utils/ledger/optExecutionGroups'
 import type { Execution } from '@/types/positions'
 import type { StrategyInstance } from '@/types/strategy'
+
+export type InstanceState = NonNullable<StrategyInstance['state']>
+
+/** `expired` and `closed` are over; `open` and `no_fills` (nothing has happened yet) are not. */
+export function isClosedState(state: StrategyInstance['state'] | null | undefined): boolean {
+  return state === 'closed' || state === 'expired'
+}
 
 /** One instance, as the chain reads it. */
 export interface InstanceReading {
@@ -25,16 +36,16 @@ export interface InstanceReading {
   structureName: string
   openedOn: string | null
   fills: number
+  /** The server's state; null when the record came without one (an api older than 0.6.12). */
+  state: InstanceState | null
   closed: boolean
   /** Signed cash over the instance's own fills. Null while it is still open. */
   realised: number | null
 }
 
 /**
- * An instance's own fills, read into open/closed and a realised figure.
- *
- * Grouping is `buildOptExecutionGroups`, the Ledger's own, so an instance that
- * reads closed here is closed by the same rule the Ledger uses.
+ * Each instance with its fills: closed from the server's `state`, and a
+ * realised figure over its own fills once closed.
  */
 export function readInstances(
   instances: readonly StrategyInstance[],
@@ -49,10 +60,9 @@ export function readInstances(
 
   return instances.map((i) => {
     const own = byInstance.get(i.strategy_instance_id) ?? []
-    const groups = buildOptExecutionGroups([...own])
-    // An instance with no fill at all is not closed — nothing has happened to
-    // it yet, which is a different fact from having been taken flat.
-    const closed = groups.length > 0 && groups.every((g) => g.status === 'realized')
+    // No fill at all is `no_fills`, not closed — nothing has happened to it yet,
+    // which is a different fact from having been taken flat.
+    const closed = isClosedState(i.state)
     const realised = closed
       ? own.reduce((a, e) => {
           const qty = Math.abs(Number(e.quantity) || 0)
@@ -73,6 +83,7 @@ export function readInstances(
       structureName: i.strategy_structure_name ?? '—',
       openedOn: i.opened_at ? i.opened_at.slice(0, 10) : null,
       fills: own.length,
+      state: i.state ?? null,
       closed,
       realised,
     }

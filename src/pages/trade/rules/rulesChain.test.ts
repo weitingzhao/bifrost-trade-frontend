@@ -130,39 +130,58 @@ function fill(p: {
 }
 
 describe('readInstances', () => {
-  it('closes an instance when every contract it touched is flat by its own fills', () => {
-    const [closed, open] = readInstances(
-      [instance({ strategy_instance_id: 1 }), instance({ strategy_instance_id: 2 })],
+  it('reads closed from the server state; expired counts as closed (core 0.41.0, TD-43)', () => {
+    const [closed, expired, open, none] = readInstances(
+      [
+        instance({ strategy_instance_id: 1, state: 'closed', closed_on: '2026-08-10' }),
+        instance({ strategy_instance_id: 2, state: 'expired', closed_on: '2026-09-18' }),
+        instance({ strategy_instance_id: 3, state: 'open' }),
+        instance({ strategy_instance_id: 4, state: 'no_fills' }),
+      ],
+      // The fills no longer decide: instance 2 still has an open short leg by them.
       [
         fill({ instance: 1, side: 'SELL', qty: 1, price: 10 }),
         fill({ instance: 1, side: 'BUY', qty: 1, price: 3 }),
         fill({ instance: 2, side: 'SELL', qty: 1, price: 10 }),
+        fill({ instance: 3, side: 'SELL', qty: 1, price: 10 }),
       ],
     )
-    expect(closed.closed).toBe(true)
-    expect(open.closed).toBe(false)
+    expect([closed.closed, expired.closed, open.closed, none.closed]).toEqual([true, true, false, false])
+    expect([closed.state, expired.state, open.state, none.state]).toEqual(['closed', 'expired', 'open', 'no_fills'])
   })
 
-  it('gives a realised figure only once the instance is flat', () => {
-    const [closed, open] = readInstances(
-      [instance({ strategy_instance_id: 1 }), instance({ strategy_instance_id: 2 })],
+  it('gives a realised figure only once the instance is closed', () => {
+    const [closed, expired, open] = readInstances(
+      [
+        instance({ strategy_instance_id: 1, state: 'closed' }),
+        instance({ strategy_instance_id: 2, state: 'expired' }),
+        instance({ strategy_instance_id: 3, state: 'open' }),
+      ],
       [
         fill({ instance: 1, side: 'SELL', qty: 1, price: 10 }),
         fill({ instance: 1, side: 'BUY', qty: 1, price: 3 }),
         fill({ instance: 2, side: 'SELL', qty: 1, price: 10 }),
+        fill({ instance: 3, side: 'SELL', qty: 1, price: 10 }),
       ],
     )
     expect(closed.realised).toBeCloseTo(700, 6)
+    // Expired worthless: the premium taken in is the whole result.
+    expect(expired.realised).toBeCloseTo(1000, 6)
     // Not 1000: an open instance's legs need a mark, and a partial figure under
     // "realised" is the one number a reader would act on wrongly.
     expect(open.realised).toBeNull()
   })
 
-  it('does not call an instance with no fill at all closed', () => {
-    const [none] = readInstances([instance({ strategy_instance_id: 9 })], [])
+  it('does not call an instance with no fill at all closed, nor one the server sent no state for', () => {
+    const [none, unsaid] = readInstances(
+      [instance({ strategy_instance_id: 9, state: 'no_fills' }), instance({ strategy_instance_id: 8 })],
+      [],
+    )
     expect(none.closed).toBe(false)
     expect(none.realised).toBeNull()
     expect(none.fills).toBe(0)
+    expect(unsaid.closed).toBe(false)
+    expect(unsaid.state).toBeNull()
   })
 
   it('names an instance by its label, and falls back to its id', () => {
@@ -186,8 +205,8 @@ const DATA: ChainData = {
   gates: [GATE],
   instances: readInstances(
     [
-      instance({ strategy_instance_id: 10, strategy_opportunity_id: 1 }),
-      instance({ strategy_instance_id: 11, strategy_opportunity_id: 2 }),
+      instance({ strategy_instance_id: 10, strategy_opportunity_id: 1, state: 'closed' }),
+      instance({ strategy_instance_id: 11, strategy_opportunity_id: 2, state: 'open' }),
     ],
     [
       fill({ instance: 10, side: 'SELL', qty: 1, price: 10 }),

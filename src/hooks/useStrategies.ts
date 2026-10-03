@@ -1,6 +1,8 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchOpportunities, fetchStructures, fetchStrategyInstances, fetchStrategyInstance, fetchGateSafety, fetchAllocations, fetchWinRate } from '@/api/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { serverStatesOf, type ServerInstanceState } from '@/utils/reviewInstances'
 
 export function useOpportunities(activeOnly = false) {
   return useQuery({
@@ -26,11 +28,14 @@ export function useGateSafety() {
   })
 }
 
-export function useStrategyInstances(params?: {
-  opportunityId?: number
-  accountId?: string
-  openedAtFrom?: number
-}) {
+export function useStrategyInstances(
+  params?: {
+    opportunityId?: number
+    accountId?: string
+    openedAtFrom?: number
+  },
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: [
       ...QUERY_KEYS.strategy.instances,
@@ -40,7 +45,18 @@ export function useStrategyInstances(params?: {
     ],
     queryFn: () => fetchStrategyInstances(params),
     refetchInterval: 30_000,
+    enabled: options?.enabled ?? true,
   })
+}
+
+/**
+ * Each instance's `state` / `closed_on` from the instance list (core 0.41.0,
+ * TD-43) — the open / closed answer Review reads. `cachedOnly` reads whatever
+ * the list query already holds without fetching it (the Review menu badge).
+ */
+export function useInstanceStates(cachedOnly = false): ReadonlyMap<number, ServerInstanceState> {
+  const q = useStrategyInstances(undefined, { enabled: !cachedOnly })
+  return useMemo(() => serverStatesOf(q.data?.items), [q.data?.items])
 }
 
 export function useStrategyInstance(instanceId: number | null | undefined, enabled = true) {

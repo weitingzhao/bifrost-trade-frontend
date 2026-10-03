@@ -1,5 +1,6 @@
 import { marketDataPluginUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
+import { requestJson } from '@/lib/http'
 import { TickerSearchResponseSchema } from '@/lib/schemas/marketData'
 
 const validateTickers = withValidation<TickerHit[]>(
@@ -24,19 +25,12 @@ export async function fetchTickerSearch(q: string, limit = 20): Promise<TickerHi
   if (!needle) return []
 
   const params = new URLSearchParams({ q: needle, limit: String(limit) })
-  try {
-    const r = await fetch(
-      `${marketDataPluginUrl('/market/reference/tickers/search')}?${params.toString()}`,
-      {
-        credentials: 'omit',
-        signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
-      },
-    )
-    if (!r.ok) return []
-    const body = (await r.json()) as { ok?: boolean; results?: TickerHit[] }
-    if (!body.ok || !Array.isArray(body.results)) return []
-    return validateTickers(body.results)
-  } catch {
-    return []
-  }
+  // A failure throws (TD-50 batch 4, Owner 10-03): the pickers say the search failed
+  // instead of "No matches". A refusal or a 2xx `ok: false` is the plugin's reason; a
+  // search slower than SEARCH_TIMEOUT_MS is aborted and says so.
+  const body = await requestJson<{ ok?: boolean; results?: TickerHit[] }>(
+    `${marketDataPluginUrl('/market/reference/tickers/search')}?${params.toString()}`,
+    { signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS), label: 'Symbol search' },
+  )
+  return Array.isArray(body.results) ? validateTickers(body.results) : []
 }

@@ -193,7 +193,7 @@ export async function fetchSignalDecayBySymbol(params: {
   q.set('symbols', params.symbols.map((s) => s.trim().toUpperCase()).filter(Boolean).join(','))
   q.set('window_days', String(params.windowDays ?? 365))
   return validateBySymbol(
-    requestJson<SignalDecayBySymbolResponse>(`${researchEngineUrl('/research/signal-decay/by-symbol')}?${q}`, {
+    await requestJson<SignalDecayBySymbolResponse>(`${researchEngineUrl('/research/signal-decay/by-symbol')}?${q}`, {
       envelope: 'research',
     }),
   )

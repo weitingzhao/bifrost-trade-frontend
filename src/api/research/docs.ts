@@ -27,6 +27,6 @@ const validateDoc = withValidation<ResearchDoc>(ResearchDocSchema, 'research/doc
 
 export async function fetchResearchDoc(slug: string): Promise<ResearchDoc> {
   return validateDoc(
-    requestJson<ResearchDoc>(researchEngineUrl(`/research/docs/${encodeURIComponent(slug)}`), { envelope: 'research' }),
+    await requestJson<ResearchDoc>(researchEngineUrl(`/research/docs/${encodeURIComponent(slug)}`), { envelope: 'research' }),
   )
 }

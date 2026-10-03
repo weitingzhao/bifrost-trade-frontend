@@ -44,6 +44,6 @@ export async function fetchLensCoverage(tiers?: readonly string[]): Promise<Lens
   if (tiers && tiers.length > 0) q.set('tiers', tiers.join(','))
   const suffix = q.toString() ? `?${q}` : ''
   return validate(
-    requestJson<LensCoverage>(researchEngineUrl(`/research/screen/coverage${suffix}`), { envelope: 'research' }),
+    await requestJson<LensCoverage>(researchEngineUrl(`/research/screen/coverage${suffix}`), { envelope: 'research' }),
   )
 }

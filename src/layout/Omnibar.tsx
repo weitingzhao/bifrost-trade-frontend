@@ -343,6 +343,12 @@ export function Omnibar() {
           </CommandGroup>
         )}
 
+        {search.error && tickerTerm.length >= 1 && (
+          <div role="alert" className="px-3 py-1.5 text-dense-caption text-destructive">
+            Symbol search failed: {search.error.message}
+          </div>
+        )}
+
         {(search.data?.length ?? 0) > 0 && (
           <CommandGroup heading="Symbols">
             {search.data!.slice(0, 6).map((hit) => (

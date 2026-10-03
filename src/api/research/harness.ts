@@ -373,7 +373,7 @@ const validateStanding = withValidation<AutopilotStanding>(AutopilotStandingSche
 
 export async function fetchAutopilotStanding(): Promise<AutopilotStanding> {
   return validateStanding(
-    requestJson<AutopilotStanding>(researchEngineUrl('/research/loop/autopilot'), { envelope: 'research' }),
+    await requestJson<AutopilotStanding>(researchEngineUrl('/research/loop/autopilot'), { envelope: 'research' }),
   )
 }
 
@@ -435,7 +435,7 @@ export async function fetchRunEstimate(
   if (params?.models?.length) q.set('models', params.models.join(','))
   const qs = q.toString()
   return validateEstimate(
-    requestJson<RunEstimate>(
+    await requestJson<RunEstimate>(
       researchEngineUrl(
         `/research/objectives/${encodeURIComponent(objectiveId)}/run-estimate${qs ? `?${qs}` : ''}`,
       ),

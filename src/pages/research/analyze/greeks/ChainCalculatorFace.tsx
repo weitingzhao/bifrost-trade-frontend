@@ -56,7 +56,11 @@ export function ChainCalculatorFace() {
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
   const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const { data: availableDates = [], isLoading: datesLoading } = useGreeksAvailableDates(symbol)
+  const {
+    data: availableDates = [],
+    isLoading: datesLoading,
+    error: datesError,
+  } = useGreeksAvailableDates(symbol)
   const loadMutation = useGreeksLoad()
 
   const resolvedTradeDate = useMemo(() => {
@@ -114,21 +118,6 @@ export function ChainCalculatorFace() {
 
   return (
     <div className="space-y-3">
-      {/* Measured 2026-09-22: the research engine's OpenAPI carries no
-          /research/greeks route at all, and `fetchGreeksAvailableDates`
-          swallows the 404 and returns []. Without this the date picker reads
-          "— no data —", which says this symbol has no history rather than
-          this engine has no endpoint. */}
-      <p
-        role="status"
-        className="rounded-md border border-warning/40 bg-warning-soft/20 px-2.5 py-1.5 text-dense-caption leading-relaxed text-warning"
-      >
-        This face has no backend today: the research engine serves no{' '}
-        <span className="font-mono">/research/greeks</span> route, so the date list is empty and
-        Load cannot return rows. The controls are kept because the design has no page for this
-        calculator, which is not the same as saying it should go — where it belongs is the
-        Owner&rsquo;s call.
-      </p>
       <div className="flex justify-end">
         {
           <div className="flex items-center gap-1.5">
@@ -186,7 +175,9 @@ export function ChainCalculatorFace() {
                 disabled={availableDates.length === 0}
               >
                 <SelectTrigger id="greeks-date" className="h-8 text-xs font-mono">
-                  <SelectValue placeholder={availableDates.length === 0 ? '— no data —' : 'Select date'} />
+                  <SelectValue
+                    placeholder={datesError ? '— could not read —' : availableDates.length === 0 ? '— no data —' : 'Select date'}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {availableDates.map(d => (
@@ -194,6 +185,11 @@ export function ChainCalculatorFace() {
                   ))}
                 </SelectContent>
               </Select>
+              {datesError && (
+                <p role="alert" className="text-dense-caption text-destructive">
+                  Could not read the trade dates: {datesError.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1">

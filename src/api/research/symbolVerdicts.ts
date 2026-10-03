@@ -75,7 +75,7 @@ const validate = withValidation<SymbolVerdicts>(SymbolVerdictsSchema, 'research/
 export async function fetchSymbolVerdicts(symbol: string): Promise<SymbolVerdicts> {
   const sym = symbol.trim().toUpperCase()
   return validate(
-    requestJson<SymbolVerdicts>(researchEngineUrl(`/research/verdicts/${encodeURIComponent(sym)}`), {
+    await requestJson<SymbolVerdicts>(researchEngineUrl(`/research/verdicts/${encodeURIComponent(sym)}`), {
       envelope: 'research',
     }),
   )

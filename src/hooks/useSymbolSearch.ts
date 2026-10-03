@@ -19,5 +19,7 @@ export function useSymbolSearch(query: string, enabled = true) {
     enabled: enabled && debounced.length >= 1,
     staleTime: STALE_TIME_MS,
     placeholderData: keepPreviousData,
+    // A failure is shown, not retried three times (TD-50 batch 4); the next keystroke asks again.
+    retry: 1,
   })
 }

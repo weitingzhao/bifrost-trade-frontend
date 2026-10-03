@@ -76,10 +76,12 @@ describe('readers that return the refusal', () => {
     expect((await research.fetchSymbolOptionPcr('ZZQ')).error).toBe('Failed to fetch')
   })
 
-  it('available dates: a list on success, nothing on any failure (unchanged; batch 4 decides)', async () => {
+  it('available dates: a list on success; a failure throws (batch 4, Owner 10-03)', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, symbol: 'ZZQ', dates: ['2031-01-02'] })))
     expect(await research.fetchGreeksAvailableDates('zzq')).toEqual(['2031-01-02'])
     fetchMock.mockResolvedValueOnce(bodiless())
+    await expect(research.fetchGreeksAvailableDates('zzq')).rejects.toThrow('GET /research/greeks/available-dates: HTTP 503')
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, symbol: 'ZZQ', dates: [] })))
     expect(await research.fetchGreeksAvailableDates('zzq')).toEqual([])
   })
 })

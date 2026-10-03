@@ -102,17 +102,14 @@ export async function fetchGreeks(params: FetchGreeksParams): Promise<GreeksResp
 export async function fetchGreeksAvailableDates(symbol: string): Promise<string[]> {
   const s = (symbol || '').trim().toUpperCase()
   if (!s) return []
-  try {
-    // Any failure reads as "no dates" (a fallback batch 4 of TD-50 decides on).
-    const j = await requestJson<Record<string, unknown> | string[]>(
-      tradeResearchUrl(`/research/greeks/available-dates?symbol=${encodeURIComponent(s)}`),
-    )
-    if (Array.isArray(j)) return j
-    if (Array.isArray(j.dates)) return j.dates as string[]
-    return []
-  } catch {
-    return []
-  }
+  // A failure throws (TD-50 batch 4, Owner 10-03): "no dates" is only what the server says.
+  const j = await requestJson<Record<string, unknown> | string[]>(
+    tradeResearchUrl(`/research/greeks/available-dates?symbol=${encodeURIComponent(s)}`),
+    { label: 'GET /research/greeks/available-dates' },
+  )
+  if (Array.isArray(j)) return j
+  if (Array.isArray(j.dates)) return j.dates as string[]
+  return []
 }
 
 export async function fetchTickerOverview(symbol: string): Promise<TickerOverview> {

@@ -8,8 +8,7 @@ import { withValidation } from '@/lib/apiValidation'
 import { PositionCategoriesResponseSchema } from '@/lib/schemas/portfolio'
 import { ModelAnalysisResponseSchema } from '@/lib/schemas/modelAnalysis'
 import { portfolioUrl } from '@/lib/devApiUrl'
-import { tradeFetch } from '@/lib/tradeFetch'
-import { HttpError, listItems, requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
+import { HttpError, listItems, requestDelete, requestJson, type DeleteOutcome, httpFailure } from '@/lib/http'
 
 const validateCategories = withValidation<PositionCategoriesResponse>(
   PositionCategoriesResponseSchema, 'portfolio/position-categories'
@@ -63,10 +62,18 @@ export async function fetchMarketStreamsSymbolOrder(): Promise<{
   ok: boolean
   order?: Record<string, string[]>
 }> {
-  const res = await tradeFetch(portfolioUrl('/position-categories/symbol-order'))
-  if (!res.ok) return { ok: false }
-  const j = await res.json()
-  return { ok: j.ok === true, order: j.order ?? {} }
+  // A failure falls back to the default order (Owner 10-03, TD-50 batch 4: kept on purpose).
+  // A network error still throws, as before.
+  try {
+    const j = await requestJson<{ ok?: boolean; order?: Record<string, string[]> }>(
+      portfolioUrl('/position-categories/symbol-order'),
+      { label: 'Portfolio /position-categories/symbol-order' },
+    )
+    return { ok: j.ok === true, order: j.order ?? {} }
+  } catch (e) {
+    httpFailure(e)
+    return { ok: false }
+  }
 }
 
 export function putMarketStreamsSymbolOrder(

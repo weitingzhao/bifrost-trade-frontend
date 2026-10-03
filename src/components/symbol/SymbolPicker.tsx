@@ -112,7 +112,7 @@ export function SymbolPicker({
 
   const inputValue = open ? draft : value
   const trimmed = inputValue.trim()
-  const { data: hits = [], isFetching } = useSymbolSearch(trimmed, open)
+  const { data: hits = [], isFetching, error: searchError } = useSymbolSearch(trimmed, open)
   const showPreferred = trimmed.length === 0
 
   const benchmarkSymbols = useMemo(() => {
@@ -275,7 +275,13 @@ export function SymbolPicker({
                   Searching…
                 </div>
               ) : null}
-              <CommandEmpty>No matches.</CommandEmpty>
+              {searchError && !showPreferred ? (
+                <div role="alert" className="py-2 text-center text-dense-caption text-destructive">
+                  Search failed: {searchError.message}
+                </div>
+              ) : (
+                <CommandEmpty>No matches.</CommandEmpty>
+              )}
               {showPreferred && hasPortfolioGroups ? (
                 <>
                   {portfolio.positionSymbols.length > 0 ? (

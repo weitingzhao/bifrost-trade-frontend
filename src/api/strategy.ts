@@ -38,8 +38,7 @@ import {
 import type { CreateTemplateBody, GateSafetyDefaultsResponse } from '@/types/strategy'
 import type { TemplateCharacteristicsBody, TemplateLegsBody, TemplateParamsBody } from '@/types/requestBodies'
 import { monitorUrl, strategyUrl } from '@/lib/devApiUrl'
-import { tradeFetch } from '@/lib/tradeFetch'
-import { requestDelete, requestJson, type DeleteOutcome } from '@/lib/http'
+import { requestDelete, requestJson, type DeleteOutcome, httpFailure } from '@/lib/http'
 
 
 // The five response-modelled resources (api 0.3.1) are read through their
@@ -337,11 +336,17 @@ export async function fetchMetaValueOptions(
   templateCode: string,
   metaKey: string,
 ): Promise<{ options: TemplateConfigOption[] }> {
-  const res = await tradeFetch(
-    strategyUrl(`/strategies/templates/options/meta-values?template_code=${encodeURIComponent(templateCode)}&meta_key=${encodeURIComponent(metaKey)}`),
-  )
-  if (!res.ok) return { options: [] }
-  return res.json()
+  // A failure leaves the picker without suggestions (Owner 10-03, TD-50 batch 4: kept on purpose —
+  // the field still takes a typed value). A network error still throws, as before.
+  try {
+    return await requestJson<{ options: TemplateConfigOption[] }>(
+      strategyUrl(`/strategies/templates/options/meta-values?template_code=${encodeURIComponent(templateCode)}&meta_key=${encodeURIComponent(metaKey)}`),
+      { label: 'Strategy /templates/options/meta-values' },
+    )
+  } catch (e) {
+    httpFailure(e)
+    return { options: [] }
+  }
 }
 
 // ── Win Rate ──────────────────────────────────────────────────────────────────

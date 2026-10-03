@@ -8,7 +8,7 @@
 import { withValidation } from '@/lib/apiValidation'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   CopilotStandingSchema,
 } from '@/lib/schemas/research'
@@ -42,8 +42,11 @@ export interface CopilotStanding {
 const validate = withValidation<CopilotStanding>(CopilotStandingSchema, 'research/copilot/standing')
 
 export async function fetchCopilotStanding(): Promise<CopilotStanding> {
-  const res = await fetch(researchEngineUrl('/research/copilot/standing'), {
-    headers: getResearchAuthHeaders(),
-  })
-  return validate(await unwrapResearchEnvelope(res, { apiLabel: 'Copilot standing' }))
+  return validate(
+    await requestJson<unknown>(researchEngineUrl('/research/copilot/standing'), {
+      headers: getResearchAuthHeaders(),
+      envelope: 'research',
+      label: 'Copilot standing',
+    }),
+  )
 }

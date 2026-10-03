@@ -3,7 +3,7 @@
  * GET /research/alerts
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   AlertsResponseSchema,
@@ -45,6 +45,6 @@ export async function fetchAlerts(params: FetchAlertsParams = {}): Promise<Alert
   if (params.kind) q.set('kind', params.kind)
   const qs = q.toString()
   return validateAlerts(
-    await unwrap(await fetch(`${researchEngineUrl('/research/alerts')}${qs ? `?${qs}` : ''}`)),
+    await requestJson<unknown>(`${researchEngineUrl('/research/alerts')}${qs ? `?${qs}` : ''}`, { envelope: 'research' }),
   )
 }

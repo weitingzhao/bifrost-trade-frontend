@@ -6,7 +6,7 @@
  *   POST /research/hypothesis/{id}/refresh-trajectory
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import { CanonicalTrajectoryResponseSchema } from '@/lib/schemas/researchData'
 
@@ -74,16 +74,13 @@ export async function fetchCanonicalTrajectory(opts: {
   })
   if (opts.paramsHash) q.set('params_hash', opts.paramsHash)
   return validateTrajectory(
-    await unwrap(
-      await fetch(`${researchEngineUrl('/research/canonical-pnl/trajectory')}?${q}`),
-    ),
+    await requestJson<unknown>(`${researchEngineUrl('/research/canonical-pnl/trajectory')}?${q}`, {
+      envelope: 'research',
+    }),
   )
 }
 
-export async function refreshHypothesisTrajectory(
-  hypothesisId: string,
-  structure: string = 'short_strangle',
-): Promise<{
+interface RefreshTrajectoryResult {
   hypothesis: unknown
   symbol: string
   entry_date: string
@@ -91,12 +88,15 @@ export async function refreshHypothesisTrajectory(
   rows: CanonicalPnlRow[]
   count: number
   trajectory_summary: Record<string, unknown>
-}> {
+}
+
+export async function refreshHypothesisTrajectory(
+  hypothesisId: string,
+  structure: string = 'short_strangle',
+): Promise<RefreshTrajectoryResult> {
   const q = new URLSearchParams({ structure })
-  return unwrap(
-    await fetch(
-      `${researchEngineUrl(`/research/hypothesis/${encodeURIComponent(hypothesisId)}/refresh-trajectory`)}?${q}`,
-      { method: 'POST' },
-    ),
+  return requestJson<RefreshTrajectoryResult>(
+    `${researchEngineUrl(`/research/hypothesis/${encodeURIComponent(hypothesisId)}/refresh-trajectory`)}?${q}`,
+    { method: 'POST', envelope: 'research' },
   )
 }

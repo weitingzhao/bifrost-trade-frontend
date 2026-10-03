@@ -1,6 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
-import { ResearchHttpError, researchThrowHttp } from '@/lib/auth/researchHttpError'
+import { HttpError, requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   BridgePresetsSchema,
@@ -45,13 +45,23 @@ export type BridgeResponse = {
 }
 
 export async function fetchBridgePresets(signal?: AbortSignal): Promise<BridgePresets> {
-  const res = await fetch(researchEngineUrl('/research/copilot/bridge/presets'), {
-    signal,
-    headers: getResearchAuthHeaders(),
-  })
-  if (!res.ok) researchThrowHttp(res, 'bridge presets')
-  const body = (await res.json()) as { data: BridgePresets }
-  return validatePresets(body.data)
+  return validatePresets(
+    await requestJson<unknown>(researchEngineUrl('/research/copilot/bridge/presets'), {
+      signal,
+      headers: getResearchAuthHeaders(),
+      envelope: 'research',
+      label: 'bridge presets',
+    }),
+  )
+}
+
+/** `detail.retry_after_sec` of the 429 body (`{ detail: { error, retry_after_sec, … } }`). */
+function retryAfterSec(body: unknown): number | undefined {
+  if (body == null || typeof body !== 'object') return undefined
+  const detail = (body as { detail?: unknown }).detail
+  if (detail == null || typeof detail !== 'object') return undefined
+  const v = (detail as { retry_after_sec?: unknown }).retry_after_sec
+  return typeof v === 'number' ? v : undefined
 }
 
 export async function postCopilotBridge(
@@ -64,25 +74,22 @@ export async function postCopilotBridge(
     frames_from_message_id?: string
   },
 ): Promise<BridgeResponse> {
-  const res = await fetch(
-    researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(sessionId)}/bridge`),
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-      body: JSON.stringify(body),
-    },
-  )
-  if (res.status === 429) {
-    const detail = (await res.json().catch(() => ({}))) as { detail?: { retry_after_sec?: number } }
-    return {
-      ok: false,
-      error: 'bridge_rate_limit',
-      retry_after_sec: detail.detail?.retry_after_sec ?? 60,
+  try {
+    return await requestJson<BridgeResponse>(
+      researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(sessionId)}/bridge`),
+      {
+        method: 'POST',
+        headers: getResearchAuthHeaders(),
+        body,
+        okFalse: 'return',
+        label: 'bridge',
+      },
+    )
+  } catch (e) {
+    // The rate limit is an answer the panel shows (with its wait), not an error.
+    if (e instanceof HttpError && e.status === 429) {
+      return { ok: false, error: 'bridge_rate_limit', retry_after_sec: retryAfterSec(e.body) ?? 60 }
     }
+    throw e
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new ResearchHttpError(res.status, `bridge HTTP ${res.status}${text ? `: ${text}` : ''}`)
-  }
-  return (await res.json()) as BridgeResponse
 }

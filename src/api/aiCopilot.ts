@@ -8,7 +8,8 @@ import {
   CopilotUsageSchema,
 } from '@/lib/schemas/research'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
-import { ResearchHttpError, researchThrowHttp } from '@/lib/auth/researchHttpError'
+import { ResearchHttpError } from '@/lib/auth/researchHttpError'
+import { requestJson } from '@/lib/http'
 import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
 
 export type CopilotChatMessage = {
@@ -121,12 +122,13 @@ const validateUsage = withValidation<CopilotUsage>(
 )
 
 export async function fetchCopilotUsage(signal?: AbortSignal): Promise<CopilotUsage> {
-  const res = await fetch(researchEngineUrl('/research/copilot/usage'), {
-    signal,
-    headers: getResearchAuthHeaders(),
-  })
-  if (!res.ok) researchThrowHttp(res, 'usage')
-  return validateUsage(await res.json())
+  return validateUsage(
+    await requestJson<unknown>(researchEngineUrl('/research/copilot/usage'), {
+      signal,
+      headers: getResearchAuthHeaders(),
+      label: 'usage',
+    }),
+  )
 }
 
 export type StreamHandlers = {
@@ -232,19 +234,14 @@ export async function approveCopilotWrite(body: {
   preview?: Record<string, unknown>
   approved_by?: string
 }): Promise<ApproveWriteResponse> {
-  const res = await fetch(researchEngineUrl('/research/copilot/approve'), {
+  // The caller reads the whole `{ ok, data }` body, so a 2xx is handed back as is.
+  return requestJson<ApproveWriteResponse>(researchEngineUrl('/research/copilot/approve'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-    body: JSON.stringify(body),
+    headers: getResearchAuthHeaders(),
+    body,
+    okFalse: 'return',
+    label: 'approve',
   })
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new ResearchHttpError(
-      res.status,
-      `approve HTTP ${res.status}${detail ? `: ${detail}` : ''}`,
-    )
-  }
-  return (await res.json()) as ApproveWriteResponse
 }
 
 export type ExecuteWriteResponse = {
@@ -263,19 +260,15 @@ export async function executeCopilotWrite(body: {
   action_id?: string
   approved_by?: string
 }): Promise<ExecuteWriteResponse> {
-  const res = await fetch(researchEngineUrl('/research/copilot/execute'), {
+  // A write the tool refused below 400 answers 2xx `{ ok: false, data: { result } }`;
+  // the caller shows that result, so it is returned, not thrown.
+  return requestJson<ExecuteWriteResponse>(researchEngineUrl('/research/copilot/execute'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-    body: JSON.stringify(body),
+    headers: getResearchAuthHeaders(),
+    body,
+    okFalse: 'return',
+    label: 'execute',
   })
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new ResearchHttpError(
-      res.status,
-      `execute HTTP ${res.status}${detail ? `: ${detail}` : ''}`,
-    )
-  }
-  return (await res.json()) as ExecuteWriteResponse
 }
 
 export async function dismissCopilotWrite(body: {
@@ -284,11 +277,11 @@ export async function dismissCopilotWrite(body: {
   session_id?: string
   reason?: string
 }): Promise<void> {
-  await fetch(researchEngineUrl('/research/copilot/dismiss'), {
+  await requestJson<unknown>(researchEngineUrl('/research/copilot/dismiss'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-    body: JSON.stringify(body),
+    headers: getResearchAuthHeaders(),
+    body,
   }).catch(() => {
-    // dismiss is best-effort telemetry
+    // dismiss is best-effort telemetry: no failure reaches the caller
   })
 }

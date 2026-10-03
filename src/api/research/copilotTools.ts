@@ -4,7 +4,7 @@
  */
 import { withValidation } from '@/lib/apiValidation'
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   CopilotToolListSchema,
 } from '@/lib/schemas/research'
@@ -28,6 +28,10 @@ export interface CopilotToolList {
 const validate = withValidation<CopilotToolList>(CopilotToolListSchema, 'research/copilot/tools')
 
 export async function fetchCopilotTools(): Promise<CopilotToolList> {
-  const res = await fetch(researchEngineUrl('/research/copilot/tools'))
-  return validate(await unwrapResearchEnvelope(res, { apiLabel: 'Copilot tools' }))
+  return validate(
+    await requestJson<unknown>(researchEngineUrl('/research/copilot/tools'), {
+      envelope: 'research',
+      label: 'Copilot tools',
+    }),
+  )
 }

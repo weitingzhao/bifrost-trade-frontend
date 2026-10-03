@@ -10,6 +10,7 @@ import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { SepaScreenerWideSchema } from '@/lib/schemas/research'
 import { numOrNull } from '@/lib/researchParseHelpers'
+import { requestJson } from '@/lib/http'
 
 export interface SepaWideRow {
   symbol: string
@@ -76,12 +77,11 @@ export async function fetchSepaScreenerWide(
 ): Promise<SepaScreenerWideResponse> {
   const q = new URLSearchParams({ limit: String(limit) })
   if (symbols && symbols.length > 0) q.set('symbols', symbols.join(','))
-  const res = await fetch(researchEngineUrl(`/analytics/sepa/screener-wide?${q}`))
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    throw new Error(`sepa screener-wide ${res.status}: ${text.slice(0, 200)}`)
-  }
-  const env = validate(await res.json())
+  const env = validate(
+    await requestJson<unknown>(researchEngineUrl(`/analytics/sepa/screener-wide?${q}`), {
+      label: 'sepa screener-wide',
+    }),
+  )
   const rows: SepaWideRow[] = []
   for (const raw of env.rows) {
     const r = raw as Record<string, unknown>

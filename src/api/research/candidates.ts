@@ -5,7 +5,7 @@
  * Envelope: `{ ok, data, error? }`.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   CandidateListResponseSchema,
@@ -85,43 +85,35 @@ export async function fetchCandidates(params?: {
   if (params?.days != null) q.set('days', String(params.days))
   const qs = q.toString()
   return validateCandidates(
-    await unwrap(
-      await fetch(`${researchEngineUrl('/research/candidates')}${qs ? `?${qs}` : ''}`),
-    ),
+    await requestJson<unknown>(`${researchEngineUrl('/research/candidates')}${qs ? `?${qs}` : ''}`, {
+      envelope: 'research',
+    }),
   )
 }
 
 export async function addCandidates(
   items: CandidateCreateItem[],
 ): Promise<CandidateListResponse> {
-  return unwrap(
-    await fetch(researchEngineUrl('/research/candidates'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
-    }),
-  )
+  return requestJson<CandidateListResponse>(researchEngineUrl('/research/candidates'), {
+    method: 'POST',
+    body: { items },
+    envelope: 'research',
+  })
 }
 
 export async function promoteCandidate(
   id: string,
   body?: PromoteCandidateBody,
 ): Promise<PromoteCandidateResult> {
-  return unwrap(
-    await fetch(researchEngineUrl(`/research/candidates/${encodeURIComponent(id)}/promote`), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body ?? {}),
-    }),
+  return requestJson<PromoteCandidateResult>(
+    researchEngineUrl(`/research/candidates/${encodeURIComponent(id)}/promote`),
+    { method: 'POST', body: body ?? {}, envelope: 'research' },
   )
 }
 
 export async function dismissCandidate(id: string): Promise<ResearchCandidate> {
-  return unwrap(
-    await fetch(researchEngineUrl(`/research/candidates/${encodeURIComponent(id)}/dismiss`), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    }),
+  return requestJson<ResearchCandidate>(
+    researchEngineUrl(`/research/candidates/${encodeURIComponent(id)}/dismiss`),
+    { method: 'POST', body: {}, envelope: 'research' },
   )
 }

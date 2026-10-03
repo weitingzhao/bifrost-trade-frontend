@@ -2,7 +2,7 @@
  * Materialized Analyze scanner API — Wave D/H.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   ScanResponseSchema,
@@ -107,6 +107,6 @@ export async function fetchScan(params: FetchScanParams = {}): Promise<ScanRespo
   if (params.offset != null) q.set('offset', String(params.offset))
   const qs = q.toString()
   return validateScan(
-    await unwrap(await fetch(`${researchEngineUrl('/research/scan')}${qs ? `?${qs}` : ''}`)),
+    await requestJson<unknown>(`${researchEngineUrl('/research/scan')}${qs ? `?${qs}` : ''}`, { envelope: 'research' }),
   )
 }

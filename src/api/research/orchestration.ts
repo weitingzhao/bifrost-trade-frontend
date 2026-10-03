@@ -7,7 +7,7 @@
 import { withValidation } from '@/lib/apiValidation'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { OrchestrationStatusSchema } from '@/lib/schemas/research'
 
 export interface OrchestrationSchedule {
@@ -39,8 +39,11 @@ export interface OrchestrationStatus {
 const validate = withValidation<OrchestrationStatus>(OrchestrationStatusSchema, 'research/orchestration/status')
 
 export async function fetchOrchestrationStatus(): Promise<OrchestrationStatus> {
-  const res = await fetch(researchEngineUrl('/research/orchestration/status'), {
-    headers: getResearchAuthHeaders(),
-  })
-  return validate(await unwrapResearchEnvelope(res, { apiLabel: 'Orchestration status' }))
+  return validate(
+    await requestJson<unknown>(researchEngineUrl('/research/orchestration/status'), {
+      headers: getResearchAuthHeaders(),
+      envelope: 'research',
+      label: 'Orchestration status',
+    }),
+  )
 }

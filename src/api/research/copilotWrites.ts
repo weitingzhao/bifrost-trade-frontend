@@ -9,7 +9,7 @@
 import { withValidation } from '@/lib/apiValidation'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { CopilotWritesSchema } from '@/lib/schemas/research'
 
 export interface CopilotWriteRow {
@@ -49,8 +49,11 @@ const validate = withValidation<CopilotWrites>(CopilotWritesSchema, 'research/co
 
 export async function fetchCopilotWrites(days = 7, limit = 50): Promise<CopilotWrites> {
   const qs = new URLSearchParams({ days: String(days), limit: String(limit) })
-  const res = await fetch(researchEngineUrl(`/research/copilot/writes?${qs}`), {
-    headers: getResearchAuthHeaders(),
-  })
-  return validate(await unwrapResearchEnvelope(res, { apiLabel: 'Copilot writes' }))
+  return validate(
+    await requestJson<unknown>(researchEngineUrl(`/research/copilot/writes?${qs}`), {
+      headers: getResearchAuthHeaders(),
+      envelope: 'research',
+      label: 'Copilot writes',
+    }),
+  )
 }

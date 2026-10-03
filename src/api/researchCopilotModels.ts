@@ -1,6 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
-import { researchThrowHttp } from '@/lib/auth/researchHttpError'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   CopilotModelsResponseSchema,
@@ -42,10 +42,11 @@ export async function fetchCopilotModels(
   signal?: AbortSignal,
 ): Promise<CopilotModelsResponse> {
   const url = researchEngineUrl('/research/copilot/models')
-  const resp = await fetch(url, {
-    signal,
-    headers: getResearchAuthHeaders(),
-  })
-  if (!resp.ok) researchThrowHttp(resp, 'copilot/models')
-  return validateModels(await resp.json())
+  return validateModels(
+    await requestJson<unknown>(url, {
+      signal,
+      headers: getResearchAuthHeaders(),
+      label: 'copilot/models',
+    }),
+  )
 }

@@ -9,6 +9,7 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
+import { requestJson } from '@/lib/http'
 
 export type NarrativeBasis = 'sec' | 'vendor'
 
@@ -82,12 +83,10 @@ export async function fetchNarrative(days: number, q: NarrativeQuery = {}): Prom
   const params = new URLSearchParams({ days: String(days) })
   if (q.symbol) params.set('symbol', q.symbol)
   if (q.limit != null) params.set('limit', String(q.limit))
-  const res = await fetch(researchEngineUrl(`/research/narrative?${params.toString()}`))
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    throw new Error(`narrative: ${res.status} ${text.slice(0, 200)}`)
-  }
-  return (validateNarrative(await res.json()) as Envelope<NarrativeReading>).data
+  const body = await requestJson<unknown>(researchEngineUrl(`/research/narrative?${params.toString()}`), {
+    label: 'narrative',
+  })
+  return (validateNarrative(body) as Envelope<NarrativeReading>).data
 }
 
 /**
@@ -124,10 +123,8 @@ const validateEarnings = withValidation<Envelope<unknown>>(ResearchEnvelopeSchem
 
 export async function fetchEarningsDates(symbol: string): Promise<EarningsDates> {
   const params = new URLSearchParams({ symbol })
-  const res = await fetch(researchEngineUrl(`/research/narrative/earnings?${params.toString()}`))
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    throw new Error(`narrative/earnings: ${res.status} ${text.slice(0, 200)}`)
-  }
-  return (validateEarnings(await res.json()) as Envelope<EarningsDates>).data
+  const body = await requestJson<unknown>(researchEngineUrl(`/research/narrative/earnings?${params.toString()}`), {
+    label: 'narrative/earnings',
+  })
+  return (validateEarnings(body) as Envelope<EarningsDates>).data
 }

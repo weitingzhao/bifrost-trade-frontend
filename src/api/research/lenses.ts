@@ -7,7 +7,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   LensRegistrySchema,
 } from '@/lib/schemas/research'
@@ -55,6 +55,6 @@ export interface LensRegistry {
 const validate = withValidation<LensRegistry>(LensRegistrySchema, 'research/lenses')
 
 export async function fetchLensRegistry(): Promise<LensRegistry> {
-  const data = await unwrap<LensRegistry>(await fetch(researchEngineUrl('/research/lenses')))
+  const data = await requestJson<LensRegistry>(researchEngineUrl('/research/lenses'), { envelope: 'research' })
   return validate(data)
 }

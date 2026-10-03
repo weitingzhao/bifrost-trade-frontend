@@ -6,7 +6,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   SymbolVerdictsSchema,
 } from '@/lib/schemas/research'
@@ -74,5 +74,9 @@ const validate = withValidation<SymbolVerdicts>(SymbolVerdictsSchema, 'research/
 
 export async function fetchSymbolVerdicts(symbol: string): Promise<SymbolVerdicts> {
   const sym = symbol.trim().toUpperCase()
-  return validate(unwrap(await fetch(researchEngineUrl(`/research/verdicts/${encodeURIComponent(sym)}`))))
+  return validate(
+    requestJson<SymbolVerdicts>(researchEngineUrl(`/research/verdicts/${encodeURIComponent(sym)}`), {
+      envelope: 'research',
+    }),
+  )
 }

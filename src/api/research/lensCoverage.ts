@@ -7,7 +7,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   LensCoverageSchema,
 } from '@/lib/schemas/research'
@@ -43,5 +43,7 @@ export async function fetchLensCoverage(tiers?: readonly string[]): Promise<Lens
   const q = new URLSearchParams()
   if (tiers && tiers.length > 0) q.set('tiers', tiers.join(','))
   const suffix = q.toString() ? `?${q}` : ''
-  return validate(unwrap(await fetch(researchEngineUrl(`/research/screen/coverage${suffix}`))))
+  return validate(
+    requestJson<LensCoverage>(researchEngineUrl(`/research/screen/coverage${suffix}`), { envelope: 'research' }),
+  )
 }

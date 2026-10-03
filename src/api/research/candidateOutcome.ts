@@ -5,7 +5,7 @@
  */
 import { withValidation } from '@/lib/apiValidation'
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   CandidateOutcomeRowsSchema,
   CandidateOutcomeSummarySchema,
@@ -63,8 +63,9 @@ export async function fetchCandidateOutcomeSummary(
   if (params.source) q.set('source', params.source)
   if (params.days != null) q.set('days', String(params.days))
   const qs = q.toString()
-  const data = await unwrap<CandidateOutcomeSummary>(
-    await fetch(`${researchEngineUrl('/research/candidate-outcome/summary')}${qs ? `?${qs}` : ''}`),
+  const data = await requestJson<CandidateOutcomeSummary>(
+    `${researchEngineUrl('/research/candidate-outcome/summary')}${qs ? `?${qs}` : ''}`,
+    { envelope: 'research' },
   )
   return validateSummary(data)
 }
@@ -77,8 +78,9 @@ export async function fetchCandidateOutcomeRows(
   if (params.horizonDays != null) q.set('horizon_days', String(params.horizonDays))
   if (params.limit != null) q.set('limit', String(params.limit))
   const qs = q.toString()
-  const data = await unwrap<{ rows: CandidateOutcomeRow[]; count: number }>(
-    await fetch(`${researchEngineUrl('/research/candidate-outcome/rows')}${qs ? `?${qs}` : ''}`),
+  const data = await requestJson<{ rows: CandidateOutcomeRow[]; count: number }>(
+    `${researchEngineUrl('/research/candidate-outcome/rows')}${qs ? `?${qs}` : ''}`,
+    { envelope: 'research' },
   )
   return validateRows(data)
 }

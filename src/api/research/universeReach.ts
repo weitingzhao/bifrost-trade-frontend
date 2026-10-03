@@ -8,7 +8,7 @@ import { researchEngineUrl } from '@/lib/devApiUrl'
 import {
   UniverseReachSchema,
 } from '@/lib/schemas/research'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 
 export interface UniverseReachLayer {
   key: string
@@ -37,8 +37,8 @@ const validateReach = withValidation<UniverseReach>(
 )
 
 export async function fetchUniverseReach(): Promise<UniverseReach> {
-  const data = await unwrap<UniverseReach>(
-    await fetch(researchEngineUrl('/research/universe/reach')),
-  )
+  const data = await requestJson<UniverseReach>(researchEngineUrl('/research/universe/reach'), {
+    envelope: 'research',
+  })
   return validateReach(data)
 }

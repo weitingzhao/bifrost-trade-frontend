@@ -5,7 +5,7 @@
  * Envelope: `{ ok, data, error? }`.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   OrderIntentListResponseSchema,
@@ -58,8 +58,8 @@ export async function fetchOrderIntents(params?: {
   if (params?.limit != null) q.set('limit', String(params.limit))
   const qs = q.toString()
   return validateIntents(
-    await unwrap(
-      await fetch(`${researchEngineUrl('/research/order-intents')}${qs ? `?${qs}` : ''}`),
-    ),
+    await requestJson<unknown>(`${researchEngineUrl('/research/order-intents')}${qs ? `?${qs}` : ''}`, {
+      envelope: 'research',
+    }),
   )
 }

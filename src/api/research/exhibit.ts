@@ -7,7 +7,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   ExhibitSchema,
 } from '@/lib/schemas/research'
@@ -88,8 +88,9 @@ const validate = withValidation<ExhibitPayload>(ExhibitSchema, 'research/exhibit
 
 export async function fetchExhibit(lens: ExhibitLens, symbol: string): Promise<ExhibitPayload> {
   const q = new URLSearchParams({ symbol: symbol.trim().toUpperCase() })
-  const data = await unwrap<ExhibitPayload>(
-    await fetch(`${researchEngineUrl(`/research/exhibit/${encodeURIComponent(lens)}`)}?${q}`)
+  const data = await requestJson<ExhibitPayload>(
+    `${researchEngineUrl(`/research/exhibit/${encodeURIComponent(lens)}`)}?${q}`,
+    { envelope: 'research' }
   )
   return validate(data)
 }
@@ -105,8 +106,9 @@ export async function fetchExhibitComposite(
   symbol: string
 ): Promise<ExhibitPayload[]> {
   const q = new URLSearchParams({ symbol: symbol.trim().toUpperCase(), lenses: lenses.join(',') })
-  const data = await unwrap<{ symbol: string; lenses: string[]; exhibits: ExhibitPayload[] }>(
-    await fetch(`${researchEngineUrl('/research/exhibit/composite')}?${q}`)
+  const data = await requestJson<{ symbol: string; lenses: string[]; exhibits: ExhibitPayload[] }>(
+    `${researchEngineUrl('/research/exhibit/composite')}?${q}`,
+    { envelope: 'research' }
   )
   return (data.exhibits ?? []).map((ex) => validate(ex))
 }

@@ -8,7 +8,7 @@
  */
 import { withValidation } from '@/lib/apiValidation'
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   PolicyTemplateListSchema,
   PolicyTemplateSchema,
@@ -35,7 +35,7 @@ export interface PolicyValidation {
 }
 
 const BASE = '/research/policy-templates'
-const LABEL = { apiLabel: 'Policy templates' }
+const LABEL = 'Policy templates'
 
 // Research and the frontend ship on separate chains, so the console may be newer
 // or older than the API it talks to. These warn on drift in dev and pass the
@@ -56,8 +56,9 @@ export async function fetchPolicyTemplates(params?: {
   const qs = params?.universeMode
     ? `?universe_mode=${encodeURIComponent(params.universeMode)}`
     : ''
-  const res = await fetch(`${researchEngineUrl(BASE)}${qs}`)
-  return validateList(await unwrapResearchEnvelope(res, LABEL))
+  return validateList(
+    await requestJson<unknown>(`${researchEngineUrl(BASE)}${qs}`, { envelope: 'research', label: LABEL }),
+  )
 }
 
 /**
@@ -70,12 +71,14 @@ export async function fetchPolicyTemplates(params?: {
 export async function validatePolicy(
   policyJson: Record<string, unknown>,
 ): Promise<PolicyValidation> {
-  const res = await fetch(researchEngineUrl(`${BASE}/validate`), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ policy_json: policyJson }),
-  })
-  return validateCheck(await unwrapResearchEnvelope(res, LABEL))
+  return validateCheck(
+    await requestJson<unknown>(researchEngineUrl(`${BASE}/validate`), {
+      method: 'POST',
+      body: { policy_json: policyJson },
+      envelope: 'research',
+      label: LABEL,
+    }),
+  )
 }
 
 export async function createPolicyTemplate(body: {
@@ -84,12 +87,14 @@ export async function createPolicyTemplate(body: {
   description?: string
   is_default?: boolean
 }): Promise<PolicyTemplate> {
-  const res = await fetch(researchEngineUrl(BASE), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  return validateOne(await unwrapResearchEnvelope(res, LABEL))
+  return validateOne(
+    await requestJson<unknown>(researchEngineUrl(BASE), {
+      method: 'POST',
+      body,
+      envelope: 'research',
+      label: LABEL,
+    }),
+  )
 }
 
 export async function patchPolicyTemplate(
@@ -101,17 +106,20 @@ export async function patchPolicyTemplate(
     is_default?: boolean
   },
 ): Promise<PolicyTemplate> {
-  const res = await fetch(researchEngineUrl(`${BASE}/${encodeURIComponent(id)}`), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  return validateOne(await unwrapResearchEnvelope(res, LABEL))
+  return validateOne(
+    await requestJson<unknown>(researchEngineUrl(`${BASE}/${encodeURIComponent(id)}`), {
+      method: 'PATCH',
+      body,
+      envelope: 'research',
+      label: LABEL,
+    }),
+  )
 }
 
 export async function deletePolicyTemplate(id: string): Promise<{ deleted: boolean }> {
-  const res = await fetch(researchEngineUrl(`${BASE}/${encodeURIComponent(id)}`), {
+  return requestJson<{ deleted: boolean }>(researchEngineUrl(`${BASE}/${encodeURIComponent(id)}`), {
     method: 'DELETE',
+    envelope: 'research',
+    label: LABEL,
   })
-  return unwrapResearchEnvelope(res, LABEL)
 }

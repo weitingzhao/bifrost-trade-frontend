@@ -108,21 +108,18 @@ export async function fetchIvRankHistory(
     symbol: sym,
     lookback_days: String(lookbackDays),
   })
-  const r = await fetch(
-    `${researchEngineUrl('/analytics/options/iv-percentile')}?${q.toString()}`,
-  )
-  if (r.status === 404) return []
-  const j = (await r.json().catch(() => ({}))) as Record<string, unknown>
-  if (!r.ok) {
-    const detail =
-      typeof j.detail === 'string'
-        ? j.detail
-        : typeof j.error === 'string'
-          ? j.error
-          : `HTTP ${r.status}`
-    throw new Error(detail)
+  let j: Record<string, unknown> | null
+  try {
+    j = await requestJson<Record<string, unknown> | null>(
+      `${researchEngineUrl('/analytics/options/iv-percentile')}?${q.toString()}`,
+      { label: 'Research Engine /analytics/options/iv-percentile' },
+    )
+  } catch (e) {
+    // No rows for the symbol is a 404 — an answer, not a failure.
+    if (e instanceof HttpError && e.status === 404) return []
+    throw e
   }
-  const rows = Array.isArray(j.rows) ? j.rows : []
+  const rows = Array.isArray(j?.rows) ? j.rows : []
   const parsed = rows
     .map((raw) => parseRow(raw as Record<string, unknown>))
     .filter((row): row is IvPercentileRow => row != null)

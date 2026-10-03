@@ -3,7 +3,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   SignalDecayBySymbolSchema,
 } from '@/lib/schemas/research'
@@ -137,7 +137,9 @@ export async function fetchSignalDecay(params: {
   q.set('window_days', String(params.windowDays ?? 30))
   if (params.symbol) q.set('symbol', params.symbol)
   if (params.regime && params.regime !== 'any') q.set('regime', params.regime)
-  return unwrap(await fetch(`${researchEngineUrl('/research/signal-decay')}?${q}`))
+  return requestJson<SignalDecayResponse>(`${researchEngineUrl('/research/signal-decay')}?${q}`, {
+    envelope: 'research',
+  })
 }
 
 export async function fetchSignalDecayIntersect(params: {
@@ -151,8 +153,9 @@ export async function fetchSignalDecayIntersect(params: {
   q.set('window_days', String(params.windowDays ?? 30))
   if (params.symbol) q.set('symbol', params.symbol)
   if (params.regime && params.regime !== 'any') q.set('regime', params.regime)
-  return unwrap(
-    await fetch(`${researchEngineUrl('/research/signal-decay/intersect')}?${q}`),
+  return requestJson<SignalDecayIntersectResponse>(
+    `${researchEngineUrl('/research/signal-decay/intersect')}?${q}`,
+    { envelope: 'research' },
   )
 }
 
@@ -190,6 +193,8 @@ export async function fetchSignalDecayBySymbol(params: {
   q.set('symbols', params.symbols.map((s) => s.trim().toUpperCase()).filter(Boolean).join(','))
   q.set('window_days', String(params.windowDays ?? 365))
   return validateBySymbol(
-    unwrap(await fetch(`${researchEngineUrl('/research/signal-decay/by-symbol')}?${q}`)),
+    requestJson<SignalDecayBySymbolResponse>(`${researchEngineUrl('/research/signal-decay/by-symbol')}?${q}`, {
+      envelope: 'research',
+    }),
   )
 }

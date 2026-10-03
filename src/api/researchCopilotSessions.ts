@@ -1,6 +1,6 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
-import { researchThrowHttp } from '@/lib/auth/researchHttpError'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   CopilotSessionDetailSchema,
@@ -72,28 +72,30 @@ export async function fetchCopilotSessions(
   const params = new URLSearchParams({ limit: String(limit) })
   const term = (q ?? '').trim()
   if (term) params.set('q', term)
-  const res = await fetch(researchEngineUrl(`/research/copilot/sessions?${params}`), {
-    headers: getResearchAuthHeaders(),
-  })
-  if (!res.ok) researchThrowHttp(res, 'sessions')
-  const body = validateSessionList(await res.json())
+  const body = validateSessionList(
+    await requestJson<unknown>(researchEngineUrl(`/research/copilot/sessions?${params}`), {
+      headers: getResearchAuthHeaders(),
+      label: 'sessions',
+    }),
+  )
   return body.rows ?? []
 }
 
 export async function fetchCopilotSession(id: string): Promise<CopilotSessionDetail> {
-  const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
-    headers: getResearchAuthHeaders(),
-  })
-  if (!res.ok) researchThrowHttp(res, 'session')
-  return validateSessionDetail(await res.json())
+  return validateSessionDetail(
+    await requestJson<unknown>(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
+      headers: getResearchAuthHeaders(),
+      label: 'session',
+    }),
+  )
 }
 
 export async function archiveCopilotSession(id: string): Promise<void> {
-  const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
+  await requestJson<unknown>(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
     method: 'DELETE',
     headers: getResearchAuthHeaders(),
+    label: 'archive',
   })
-  if (!res.ok) researchThrowHttp(res, 'archive')
 }
 
 export async function patchCopilotSession(
@@ -105,12 +107,9 @@ export async function patchCopilotSession(
     clear_group?: boolean
   },
 ): Promise<CopilotSessionSummary> {
-  const res = await fetch(researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`), {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getResearchAuthHeaders() },
-    body: JSON.stringify(changes),
-  })
-  if (!res.ok) researchThrowHttp(res, 'patch')
-  const body = (await res.json()) as { session: CopilotSessionSummary }
+  const body = await requestJson<{ session: CopilotSessionSummary }>(
+    researchEngineUrl(`/research/copilot/sessions/${encodeURIComponent(id)}`),
+    { method: 'PATCH', headers: getResearchAuthHeaders(), body: changes, label: 'patch' },
+  )
   return body.session
 }

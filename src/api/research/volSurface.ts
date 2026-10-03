@@ -3,7 +3,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { requestJson } from '@/lib/http'
+import { HttpError, requestJson } from '@/lib/http'
 import {
   AtmIvTermSchema,
   IvConeSchema,
@@ -259,10 +259,18 @@ const validateAtmIvTerm = withValidation<unknown>(AtmIvTermSchema, 'research/ana
 export async function fetchAtmIvTerm(symbol: string): Promise<AtmIvTerm | null> {
   const sym = (symbol || '').trim().toUpperCase()
   if (!sym) return null
-  const res = await fetch(`${researchEngineUrl('/analytics/options/atm-iv/term')}?symbol=${encodeURIComponent(sym)}`)
-  if (res.status === 404) return null
-  if (!res.ok) throw new Error(`research /analytics/options/atm-iv/term: ${res.status}`)
-  const j = validateAtmIvTerm(await res.json()) as {
+  let raw: unknown
+  try {
+    raw = await requestJson<unknown>(
+      `${researchEngineUrl('/analytics/options/atm-iv/term')}?symbol=${encodeURIComponent(sym)}`,
+      { label: 'research /analytics/options/atm-iv/term' },
+    )
+  } catch (e) {
+    // No rows for the name is a 404 — an answer, not a failure.
+    if (e instanceof HttpError && e.status === 404) return null
+    throw e
+  }
+  const j = validateAtmIvTerm(raw) as {
     symbol: string
     trade_date: string | null
     term: { expiry: string | null; atm_iv: number | null }[]
@@ -316,8 +324,15 @@ const validateIvCone = withValidation<IvCone>(IvConeSchema, 'research/volatility
 export async function fetchIvCone(symbol: string): Promise<IvCone | null> {
   const sym = (symbol || '').trim().toUpperCase()
   if (!sym) return null
-  const res = await fetch(`${researchEngineUrl('/research/volatility/iv-cone')}?symbol=${encodeURIComponent(sym)}`)
-  if (res.status === 404) return null
-  if (!res.ok) throw new Error(`research /research/volatility/iv-cone: ${res.status}`)
-  return validateIvCone(await res.json())
+  try {
+    return validateIvCone(
+      await requestJson<unknown>(
+        `${researchEngineUrl('/research/volatility/iv-cone')}?symbol=${encodeURIComponent(sym)}`,
+        { label: 'research /research/volatility/iv-cone' },
+      ),
+    )
+  } catch (e) {
+    if (e instanceof HttpError && e.status === 404) return null
+    throw e
+  }
 }

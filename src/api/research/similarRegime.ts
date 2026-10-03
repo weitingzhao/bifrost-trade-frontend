@@ -2,7 +2,7 @@
  * Similar-regime + Signal Health API clients — Wave 14.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   SignalHealthResponseSchema,
@@ -92,7 +92,7 @@ export async function fetchSimilarRegime(opts: {
     k: String(opts.k ?? 5),
   })
   return validateSimilar(
-    await unwrap(await fetch(`${researchEngineUrl('/research/similar-regime')}?${q}`)),
+    await requestJson<unknown>(`${researchEngineUrl('/research/similar-regime')}?${q}`, { envelope: 'research' }),
   )
 }
 
@@ -156,6 +156,6 @@ export interface SignalHealthResponse {
 
 export async function fetchSignalHealth(): Promise<SignalHealthResponse> {
   return validateSignalHealth(
-    await unwrap(await fetch(researchEngineUrl('/research/signal-health'))),
+    await requestJson<unknown>(researchEngineUrl('/research/signal-health'), { envelope: 'research' }),
   )
 }

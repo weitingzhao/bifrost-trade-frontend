@@ -7,7 +7,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { unwrapResearchEnvelope as unwrap } from '@/lib/researchEnvelope'
+import { requestJson } from '@/lib/http'
 import {
   ResearchDocSchema,
 } from '@/lib/schemas/research'
@@ -26,5 +26,7 @@ export interface ResearchDoc {
 const validateDoc = withValidation<ResearchDoc>(ResearchDocSchema, 'research/docs')
 
 export async function fetchResearchDoc(slug: string): Promise<ResearchDoc> {
-  return validateDoc(unwrap<ResearchDoc>(await fetch(researchEngineUrl(`/research/docs/${encodeURIComponent(slug)}`))))
+  return validateDoc(
+    requestJson<ResearchDoc>(researchEngineUrl(`/research/docs/${encodeURIComponent(slug)}`), { envelope: 'research' }),
+  )
 }

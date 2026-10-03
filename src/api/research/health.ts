@@ -9,6 +9,7 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { ResearchHealthSchema } from '@/lib/schemas/research'
+import { requestJson } from '@/lib/http'
 
 export interface ResearchHealth {
   status: string
@@ -20,7 +21,5 @@ export interface ResearchHealth {
 const validateHealth = withValidation<ResearchHealth>(ResearchHealthSchema, 'research/health')
 
 export async function fetchResearchHealth(): Promise<ResearchHealth> {
-  const res = await fetch(researchEngineUrl('/health'))
-  if (!res.ok) throw new Error(`research health: ${res.status}`)
-  return validateHealth(await res.json())
+  return validateHealth(await requestJson<unknown>(researchEngineUrl('/health'), { label: 'research health' }))
 }

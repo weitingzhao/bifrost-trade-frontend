@@ -10,7 +10,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { expect, it } from 'vitest'
 
-const BASELINE = 85 // 147 before batch 1, 107 after it, 95 after batch 2, 85 after 3a (2026-10-03)
+const BASELINE = 10 // 147 before batch 1, 107 after it, 95 after batch 2, 85 after 3a, 10 after 3b (2026-10-03)
 
 const SRC = resolve(__dirname, '..')
 const CLIENT = [join('lib', 'http.ts'), join('lib', 'tradeFetch.ts')]

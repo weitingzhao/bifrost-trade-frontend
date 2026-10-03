@@ -5,7 +5,7 @@
  * IV surface, order flow, event radar, settlement).
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { requestJson } from '@/lib/http'
+import { HttpError, requestJson } from '@/lib/http'
 import { withValidation } from '@/lib/apiValidation'
 import {
   DailyBriefSynthSchema,
@@ -18,6 +18,11 @@ import type { ExhibitFreshness, ExhibitSimilar, ExhibitTrackRecord } from '@/api
 /** Bare-payload routes (forecast, GEX, terrain …); the server's reason on failure. */
 function get<T = unknown>(path: string): Promise<T> {
   return requestJson<T>(researchEngineUrl(path), { label: 'Research Engine' })
+}
+
+/** A 404 from `get` — "not computed yet" (or a build without the route), not a failure. */
+function isNotFound(e: unknown): boolean {
+  return e instanceof HttpError && e.status === 404
 }
 
 // --- Terrain ---
@@ -49,45 +54,29 @@ export interface TerrainIntraday extends TerrainData {
 export async function fetchTerrain(symbol: string, date?: string) {
   const qs = date ? `?symbol=${symbol}&trade_date=${date}` : `?symbol=${symbol}`
   const path = `/research/forecast/terrain${qs}`
-  const res = await fetch(researchEngineUrl(path))
-  if (res.status === 404) {
+  try {
+    return await get<{ terrain: TerrainData; symbol: string; trade_date: string }>(path)
+  } catch (e) {
+    if (!isNotFound(e)) throw e
     // No computed terrain yet — page shows empty state, not a hard failure.
     return null
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<{ terrain: TerrainData; symbol: string; trade_date: string }>
 }
 
 export async function fetchTerrainIntraday(symbol: string, date?: string) {
   const qs = date ? `?symbol=${symbol}&date=${date}` : `?symbol=${symbol}`
   const path = `/research/terrain/intraday${qs}`
-  const res = await fetch(researchEngineUrl(path))
-  if (res.status === 404) {
+  try {
+    return await get<{
+      rows: TerrainIntraday[]
+      count: number
+      symbol: string
+      trade_date: string
+    }>(path)
+  } catch (e) {
+    if (!isNotFound(e)) throw e
     return { rows: [] as TerrainIntraday[], count: 0, symbol, trade_date: date ?? '' }
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<{
-    rows: TerrainIntraday[]
-    count: number
-    symbol: string
-    trade_date: string
-  }>
 }
 
 // --- Forecast Sessions ---
@@ -170,25 +159,17 @@ export interface GexIntraday {
 export async function fetchGexIntraday(symbol: string, date?: string) {
   const qs = date ? `?symbol=${symbol}&date=${date}` : `?symbol=${symbol}`
   const path = `/research/gex/intraday${qs}`
-  const res = await fetch(researchEngineUrl(path))
-  if (res.status === 404) {
+  try {
+    return await get<{
+      rows: GexIntraday[]
+      count: number
+      symbol: string
+      trade_date: string
+    }>(path)
+  } catch (e) {
+    if (!isNotFound(e)) throw e
     return { rows: [] as GexIntraday[], count: 0, symbol, trade_date: date ?? '' }
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<{
-    rows: GexIntraday[]
-    count: number
-    symbol: string
-    trade_date: string
-  }>
 }
 
 /**
@@ -266,25 +247,17 @@ export async function fetchVolatilitySmile(symbol: string, date?: string) {
   const params = new URLSearchParams({ symbol })
   if (date) params.set('trade_date', date)
   const path = `/research/volatility/smile?${params}`
-  const res = await fetch(researchEngineUrl(path))
-  if (res.status === 404) {
+  try {
+    return await get<{
+      rows: VolatilitySmileRow[]
+      count: number
+      symbol: string
+      trade_date: string | null
+    }>(path)
+  } catch (e) {
+    if (!isNotFound(e)) throw e
     return { rows: [] as VolatilitySmileRow[], count: 0, symbol, trade_date: date ?? null }
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<{
-    rows: VolatilitySmileRow[]
-    count: number
-    symbol: string
-    trade_date: string | null
-  }>
 }
 
 // --- Order Flow ---
@@ -650,9 +623,11 @@ export async function fetchSepaDaily(opts?: {
   if (opts?.limit) params.set('limit', String(opts.limit))
   // Model/Feature Store path — grade/stage/path/sepa_score (dashboard /sepa/daily is screener-wide).
   const path = `/research/sepa/model/daily?${params}`
-  const res = await fetch(researchEngineUrl(path))
   // Older research-api builds may lack fusion routes; empty is honest, not a hard fail.
-  if (res.status === 404) {
+  try {
+    return await get<SepaDailyResponse>(path)
+  } catch (e) {
+    if (!isNotFound(e)) throw e
     return {
       rows: [] as SepaScoreRow[],
       count: 0,
@@ -666,16 +641,6 @@ export async function fetchSepaDaily(opts?: {
       },
     }
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<SepaDailyResponse>
 }
 
 export async function fetchSepaCandidates(opts?: { trade_date?: string; top?: number }) {
@@ -684,24 +649,16 @@ export async function fetchSepaCandidates(opts?: { trade_date?: string; top?: nu
   if (opts?.top) params.set('top', String(opts.top))
   // SETUP/PIVOT short-list from features.stock_signal_sepa_daily (not screener-wide ranks).
   const path = `/research/sepa/model/candidates?${params}`
-  const res = await fetch(researchEngineUrl(path))
-  if (res.status === 404) {
+  try {
+    return await get<SepaCandidatesResponse>(path)
+  } catch (e) {
+    if (!isNotFound(e)) throw e
     return {
       trade_date: opts?.trade_date ?? null,
       candidates: [] as SepaScoreRow[],
       count: 0,
     }
   }
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText)
-    if (text.trimStart().startsWith('<!')) {
-      throw new Error(
-        `Research Engine unreachable (got HTML). Start research-api :8795 and set VITE_API_RESEARCH_ENGINE.`,
-      )
-    }
-    throw new Error(`Research Engine ${res.status}: ${text}`)
-  }
-  return res.json() as Promise<SepaCandidatesResponse>
 }
 
 // --- Daily Brief Synth (Wave R8 · exhibit-sourced since research-loop-automation C3) ---

@@ -92,7 +92,6 @@ export interface StructureEditFields {
   name: string
   strategyTemplateId: number | undefined
   structureType: string | undefined
-  structureSubtype: string | null
   legs: StructureLeg[]
   version: number | undefined
   isActive: boolean | undefined
@@ -106,7 +105,6 @@ export function structureEditPayload(f: StructureEditFields): StructurePayload {
     name: f.name.trim(),
     strategy_template_id: f.strategyTemplateId,
     structure_type: f.structureType,
-    structure_subtype: f.structureSubtype,
     legs: f.legs,
     version: f.version ?? 1,
     is_active: f.isActive ?? true,
@@ -125,7 +123,7 @@ export interface StructureFormState extends StructureEditFields {
 
 /**
  * The structure as saved. Nothing is rebuilt here — an edit of the name alone
- * writes back the legs, meta, type, subtype, version, notes and availability
+ * writes back the legs, meta, type, version, notes and availability
  * the structure already had.
  */
 export function structureToForm(
@@ -139,7 +137,6 @@ export function structureToForm(
     name: p.name,
     strategyTemplateId: p.strategy_template_id,
     structureType: p.structure_type,
-    structureSubtype: p.structure_subtype ?? null,
     legs: p.legs,
     version: p.version,
     isActive: p.is_active,
@@ -152,7 +149,7 @@ export function structureToForm(
 
 /**
  * Link another template, as the sheet does: its code becomes the structure's
- * type, the subtype clears, its legs replace the structure's, its editable
+ * type, its legs replace the structure's, its editable
  * parameters start at their defaults, and the meta is rebuilt from them.
  */
 export function withTemplate(f: StructureFormState, t: StrategyTemplateDetail): StructureFormState {
@@ -161,7 +158,6 @@ export function withTemplate(f: StructureFormState, t: StrategyTemplateDetail): 
     ...f,
     strategyTemplateId: t.strategy_template_id,
     structureType: t.template_code,
-    structureSubtype: null,
     legs: t.legs ?? [],
     metaParams: t.meta_params ?? null,
     paramValues,

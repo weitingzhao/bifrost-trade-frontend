@@ -293,7 +293,7 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
   const handleTemplateSelect = useCallback(
     (strategyTemplateId: number) => {
       setSelectedTemplateId(strategyTemplateId)
-      updateForm({ strategy_template_id: strategyTemplateId, structure_subtype: null })
+      updateForm({ strategy_template_id: strategyTemplateId })
       setDefaultLegsLoading(true)
       setDefaultLegsFallbackMsg(null)
       setWizardParamValues({})
@@ -348,7 +348,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
       name,
       strategyTemplateId: formPayload.strategy_template_id,
       structureType: wizardTemplateDetail?.template_code ?? formPayload.structure_type,
-      structureSubtype: null,
       legs: formLegs,
       version: versionOverride !== undefined ? versionOverride : formPayload.version,
       isActive: formPayload.is_active,
@@ -403,7 +402,6 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
       name,
       strategy_template_id: tid,
       structure_type: formPayload.structure_type,
-      structure_subtype: null,
       legs: formLegs,
       version: formPayload.version ?? 1,
       is_active: formPayload.is_active ?? true,

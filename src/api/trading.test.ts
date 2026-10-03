@@ -63,9 +63,20 @@ describe('ExecutionSchema matches the wire', () => {
     expect(ExecutionSchema.safeParse({ ...rest, qty: quantity }).success).toBe(false)
   })
 
-  it('rejects a body without the executions key', () => {
+  it('rejects a body with neither items nor executions', () => {
     expect(ExecutionsWireSchema.safeParse({}).success).toBe(false)
+    expect(ExecutionsWireSchema.safeParse({ count: 0 }).success).toBe(false)
+  })
+
+  it('accepts items alone (after the api drops legacy keys), executions alone, and both', () => {
+    expect(ExecutionsWireSchema.safeParse({ items: [stockRow, optionRow], count: 2 }).success).toBe(true)
     expect(ExecutionsWireSchema.safeParse({ executions: [stockRow, optionRow] }).success).toBe(true)
+    expect(ExecutionsWireSchema.safeParse({ items: [stockRow], executions: [stockRow], count: 1 }).success).toBe(true)
+  })
+
+  it('still checks the rows under items', () => {
+    const { quantity, ...rest } = stockRow
+    expect(ExecutionsWireSchema.safeParse({ items: [{ ...rest, qty: quantity }] }).success).toBe(false)
   })
 })
 

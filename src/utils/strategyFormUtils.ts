@@ -115,14 +115,13 @@ export function wizardParamValuesFromSavedMeta(
 export function structureToPayload(row: StrategyStructure): StructurePayload {
   const legs: StructureLeg[] = Array.isArray(row.legs) ? row.legs : []
   const meta = metadataToMetaEntries(row.metadata)
-  // The template code (TD-41). The covered_call subtype branch is gone: no template is
-  // coded `covered_call` and the API's structure_subtype is always null.
+  // The template code (TD-41). No subtype is sent: no template is coded `covered_call`,
+  // and the template id alone names the structure's template.
   const structureType = row.template_code ?? row.structure_type ?? 'custom'
   return {
     name: row.name,
     strategy_template_id: row.strategy_template_id ?? undefined,
     structure_type: structureType,
-    structure_subtype: null,
     legs,
     version:
       typeof row.version === 'number'

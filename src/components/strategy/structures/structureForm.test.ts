@@ -27,11 +27,8 @@ const PARAMS: MetaParamItem[] = [param('otm_pct', 'percent', '5'), param('right'
 const ROW: StrategyStructure = {
   strategy_structure_id: 7,
   name: 'Sample shape',
-  // What the API sends: structure_type repeats the template code, and structure_subtype
-  // is always null — no template is coded `covered_call` (TD-41).
+  // What the API sends: structure_type repeats the template code (TD-41).
   structure_type: 'covered_call_otm',
-  structure_subtype: null,
-  structure_subtype_label: null,
   strategy_template_id: 3,
   template_code: 'covered_call_otm',
   template_display_name: 'Covered call',
@@ -82,7 +79,6 @@ describe('structureToForm → structureFormToPayload', () => {
       name: 'Sample shape',
       strategy_template_id: 3,
       structure_type: 'covered_call_otm',
-      structure_subtype: null,
       legs: ROW.legs,
       version: 4,
       is_active: false,
@@ -110,12 +106,12 @@ describe('structureToForm → structureFormToPayload', () => {
 })
 
 describe('withTemplate', () => {
-  it('links the template as the sheet does: its code, its legs, defaults, subtype cleared', () => {
+  it('links the template as the sheet does: its code, its legs, defaults, no subtype sent', () => {
     const form = withTemplate(structureToForm(ROW, { meta_params: PARAMS }), TEMPLATE)
     const p = structureFormToPayload(form)
     expect(p.strategy_template_id).toBe(9)
     expect(p.structure_type).toBe('bull_put_spread')
-    expect(p.structure_subtype).toBeNull()
+    expect(p).not.toHaveProperty('structure_subtype')
     expect(p.legs).toEqual(TEMPLATE.legs)
     expect(p.meta).toEqual([
       { meta_key: 'width', meta_value_text: '5' },
@@ -180,7 +176,6 @@ describe('helpers lifted from the sheet', () => {
       name: ' n ',
       strategyTemplateId: 1,
       structureType: 'x',
-      structureSubtype: null,
       legs: [],
       version: undefined,
       isActive: undefined,
@@ -191,7 +186,6 @@ describe('helpers lifted from the sheet', () => {
       name: 'n',
       strategy_template_id: 1,
       structure_type: 'x',
-      structure_subtype: null,
       legs: [],
       version: 1,
       is_active: true,

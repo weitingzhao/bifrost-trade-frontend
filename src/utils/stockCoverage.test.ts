@@ -6,7 +6,7 @@ describe('computeInstanceStockCoverage', () => {
   it('returns empty when no underlying leg', () => {
     const structure: StrategyStructure = {
       strategy_structure_id: 1, name: 'Iron Condor',
-      structure_type: null, structure_subtype: null, structure_subtype_label: null,
+      structure_type: null,
       strategy_template_id: null, template_code: null, template_display_name: null,
       dim_direction: null, dim_structure: null, dim_coverage: null, dim_risk: null,
       dim_volatility: null, dim_time: null, version: 1, is_active: true,
@@ -19,7 +19,7 @@ describe('computeInstanceStockCoverage', () => {
   it('computes required shares from options + underlying leg', () => {
     const structure: StrategyStructure = {
       strategy_structure_id: 2, name: 'Covered Call',
-      structure_type: null, structure_subtype: null, structure_subtype_label: null,
+      structure_type: null,
       strategy_template_id: null, template_code: null, template_display_name: null,
       dim_direction: null, dim_structure: null, dim_coverage: null, dim_risk: null,
       dim_volatility: null, dim_time: null, version: 1, is_active: true,

@@ -24,8 +24,6 @@ function structure(p: Partial<StrategyStructure> & { strategy_structure_id: numb
   return {
     name: `S${p.strategy_structure_id}`,
     structure_type: 'single_leg',
-    structure_subtype: null,
-    structure_subtype_label: null,
     strategy_template_id: null,
     template_code: null,
     template_display_name: 'Cash Secured Put',

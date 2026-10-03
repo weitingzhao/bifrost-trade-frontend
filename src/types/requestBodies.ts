@@ -103,7 +103,6 @@ export interface StructureBody {
   name?: string
   strategy_template_id?: number
   structure_type?: string
-  structure_subtype?: string | null
   legs?: StructureLegItem[]
   version?: number
   is_active?: boolean

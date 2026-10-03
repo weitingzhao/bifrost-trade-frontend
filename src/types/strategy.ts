@@ -88,8 +88,6 @@ export interface StrategyStructure {
   strategy_structure_id: number
   name: string
   structure_type: string | null
-  structure_subtype: string | null
-  structure_subtype_label: string | null
   strategy_template_id: number | null
   template_code: string | null
   template_display_name: string | null

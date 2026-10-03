@@ -8,7 +8,8 @@ const PositionCategorySchema = z.object({
 }).passthrough()
 
 export const PositionCategoriesResponseSchema = z.object({
-  ok: z.boolean(),
+  /** Sent until the api release that drops legacy keys; nothing reads it. */
+  ok: z.boolean().optional(),
   items: z.array(PositionCategorySchema),
 }).passthrough()
 

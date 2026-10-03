@@ -8,7 +8,7 @@ export interface PositionCategory {
 }
 
 export interface PositionCategoriesResponse {
-  ok: boolean
+  ok?: boolean
   items: PositionCategory[]
 }
 

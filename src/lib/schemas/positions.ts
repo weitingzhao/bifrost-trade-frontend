@@ -61,11 +61,20 @@ export const ExecutionSchema = ExecutionRowSchema.passthrough()
  */
 export type ExecutionRow = z.infer<typeof ExecutionRowSchema>
 
-/** What `/executions` actually sends — validated before the FE unwraps it. */
+/**
+ * What `/executions` actually sends — validated before the FE unwraps it.
+ * `items` is the list (api 0.2.3+); `executions` is the same list under its old
+ * name, sent until the api release that drops legacy keys. A body with neither
+ * is drift, not an empty book.
+ */
 export const ExecutionsWireSchema = z
   .object({
-    executions: z.array(ExecutionSchema),
+    items: z.array(ExecutionSchema).optional(),
+    executions: z.array(ExecutionSchema).optional(),
   })
   .passthrough()
+  .refine((b) => b.items !== undefined || b.executions !== undefined, {
+    message: 'neither items nor executions',
+  })
 
-export type ExecutionsWire = { executions: ExecutionRow[] }
+export type ExecutionsWire = { items?: ExecutionRow[]; executions?: ExecutionRow[] }

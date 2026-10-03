@@ -9,8 +9,6 @@ function baseStructure(legs: StrategyStructure['legs']): StrategyStructure {
     strategy_structure_id: 1,
     name: 'Test',
     structure_type: 'test',
-    structure_subtype: null,
-    structure_subtype_label: null,
     strategy_template_id: null,
     template_code: null,
     template_display_name: null,

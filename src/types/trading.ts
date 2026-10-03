@@ -330,5 +330,6 @@ export interface RawExecution {
 }
 
 export interface RawExecutionsResponse {
+  /** `fetchInstanceExecutions` fills this from `items` (or the legacy `executions`). */
   executions: RawExecution[]
 }

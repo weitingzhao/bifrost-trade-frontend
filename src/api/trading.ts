@@ -34,10 +34,10 @@ export interface OptionStockLinkCreate extends OptionStockLinkBody {
 
 /**
  * Checks the body the API sent, before it is unwrapped into `{ items }`, so a
- * missing `executions` key reads as drift rather than as an empty book.
+ * body with neither `items` nor the legacy `executions` reads as drift rather
+ * than as an empty book.
  */
-const validateExecutions = withValidation<Partial<ExecutionsWire>>(ExecutionsWireSchema, 'trading/executions')
-const validateInstanceExecutions = withValidation<RawExecutionsResponse>(ExecutionsWireSchema, 'trading/executions')
+const validateExecutions = withValidation<ExecutionsWire>(ExecutionsWireSchema, 'trading/executions')
 
 export function fetchExecutionsFreshness(): Promise<ExecutionsFreshnessResponse> {
   return requestJson(tradingUrl('/executions/freshness'))
@@ -157,7 +157,7 @@ export async function fetchInstancePerformance(instanceId: number): Promise<Perf
 }
 
 export async function fetchInstanceExecutions(instanceId: number): Promise<RawExecutionsResponse> {
-  const raw = validateInstanceExecutions(
+  const raw = validateExecutions(
     await requestJson(
       tradingUrl(`/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`),
     ),

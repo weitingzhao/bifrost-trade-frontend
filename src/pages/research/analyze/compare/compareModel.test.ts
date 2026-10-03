@@ -23,8 +23,6 @@ function rule(id: number, name: string, type: string, dims: Partial<StrategyStru
     strategy_structure_id: id,
     name,
     structure_type: type,
-    structure_subtype: null,
-    structure_subtype_label: null,
     strategy_template_id: null,
     template_code: null,
     template_display_name: null,

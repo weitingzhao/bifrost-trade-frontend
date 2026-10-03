@@ -139,7 +139,7 @@ export function SharesBand({
     refresh()
   }
   const retag = (r: ShareRow, name: string) => {
-    const id = categoryItems.find((c) => c.name === name)?.id ?? null
+    const id = categoryItems.find((c) => c.name === name)?.category_id ?? null
     void write(() => tagPosition({ account_id: r.accountId, contract_key: r.contractKey, category_id: id }))
   }
 
@@ -216,20 +216,20 @@ export function SharesBand({
         <div className="flex flex-col gap-2 border-b border-border px-3 py-2">
           <div className="flex flex-wrap items-center gap-1.5">
             {categoryItems.map((c) => (
-              <span key={c.id} className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] pr-1 pl-2.5">
-                {renaming?.id === c.id ? (
+              <span key={c.category_id} className="inline-flex h-6 items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] pr-1 pl-2.5">
+                {renaming?.id === c.category_id ? (
                   <input
                     autoFocus
                     className={cn(positionsUi.input, 'h-5 w-28 font-sans text-dense-meta')}
                     value={renaming.name}
                     aria-label={`Rename ${c.name}`}
-                    onChange={(e) => setRenaming({ id: c.id, name: e.target.value })}
+                    onChange={(e) => setRenaming({ id: c.category_id, name: e.target.value })}
                     onKeyDown={(e) => {
                       if (e.key === 'Escape') setRenaming(null)
                       if (e.key !== 'Enter') return
                       const name = renaming.name.trim()
                       setRenaming(null)
-                      if (name && name !== c.name) void write(() => updatePositionCategory(c.id, name))
+                      if (name && name !== c.name) void write(() => updatePositionCategory(c.category_id, name))
                     }}
                     onBlur={() => setRenaming(null)}
                   />
@@ -238,7 +238,7 @@ export function SharesBand({
                     type="button"
                     className="cursor-text border-0 bg-transparent p-0 text-dense-meta text-foreground"
                     title={`Rename ${c.name}`}
-                    onClick={() => setRenaming({ id: c.id, name: c.name })}
+                    onClick={() => setRenaming({ id: c.category_id, name: c.name })}
                   >
                     {c.name}
                   </button>
@@ -249,7 +249,7 @@ export function SharesBand({
                 <button
                   type="button"
                   className={positionsUi.q}
-                  onClick={() => setPending({ id: c.id, name: c.name })}
+                  onClick={() => setPending({ id: c.category_id, name: c.name })}
                   title={`Delete ${c.name}`}
                   aria-label={`Delete ${c.name}`}
                 >

@@ -44,8 +44,8 @@ async function loadLinks(accountId: string, optId: number) {
     slippageTotal: linksRes.slippage_total ?? null,
     candidates: candRes.executions,
     underlying: candRes.underlying_symbol ?? null,
-    from: candRes.trade_date_from,
-    to: candRes.trade_date_to,
+    from: candRes.from_date,
+    to: candRes.to_date,
     error: linksRes.error || candRes.error || null,
   }
 }
@@ -195,7 +195,7 @@ export function LedgerLinksFace({
             </DenseTableHeader>
             <DenseTableBody>
               {links.map(row => (
-                <DenseTableRow key={row.link_id ?? row.stock_account_executions_id}>
+                <DenseTableRow key={row.account_execution_option_stock_link_id ?? row.stock_account_executions_id}>
                   <DenseTableCell className="text-dense-meta text-foreground">
                     {stockFillLabel(row)}
                   </DenseTableCell>
@@ -211,7 +211,7 @@ export function LedgerLinksFace({
                     <button
                       type="button"
                       className="text-dense-meta text-destructive hover:underline"
-                      onClick={() => row.link_id != null && setUnlinkId(row.link_id)}
+                      onClick={() => row.account_execution_option_stock_link_id != null && setUnlinkId(row.account_execution_option_stock_link_id)}
                     >
                       Remove
                     </button>

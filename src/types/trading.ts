@@ -210,7 +210,8 @@ export interface OptionStockLinkBatch extends OptionStockLinkBatchItem {
 }
 
 export interface OptionStockLink {
-  link_id?: number
+  /** The link's id, under the table's own name (api 0.6.7, TD-57; `link_id` goes next release). */
+  account_execution_option_stock_link_id?: number
   option_execution_id?: number
   option_account_executions_id?: number
   stock_execution_id?: number

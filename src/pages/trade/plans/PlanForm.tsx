@@ -30,6 +30,7 @@ import {
   planLegsFromContract,
   type PlanLegDraft,
 } from '@/lib/plans/planLegFromContract'
+import type { PlanWriteBody } from '@/api/strategyPlans'
 import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { checkPasses, planCheck } from './planCheck'
 import { PlanCheckPanel } from './PlanCheckPanel'
@@ -267,12 +268,12 @@ export function PlanForm({
       return
     }
     setSideBlocked(false)
-    const body = {
+    const body: PlanWriteBody = {
       account_id: accountId.trim(),
       symbol: symbol.trim().toUpperCase(),
       structure_label: structureLabel.trim() || 'Unspecified',
       strategy_structure_id: structureId === '' ? null : Number(structureId),
-      legs: written.map(draftToLeg),
+      legs_json: written.map(draftToLeg),
       qty: Number(qty) || 1,
       price_effect: priceEffect,
       limit_price: numberOrNull(limitPrice),

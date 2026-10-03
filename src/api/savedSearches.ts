@@ -9,11 +9,12 @@ import { SavedSearchesResponseSchema, type SavedSearchesResponse } from '@/lib/s
 import { requestDelete, requestJson, type DeleteOutcome, type RequestJsonOptions } from '@/lib/http'
 import type { SavedSearchBody } from '@/types/requestBodies'
 
-/** `SavedSearchBody` as the Finder sends it: a route, a name and the page's search. */
+/** `SavedSearchBody` as the Finder sends it: a route, a name and the page's search, under
+ *  `state_json` — the name it is read back with (api 0.6.7, TD-57). */
 export interface SavedSearchCreate extends SavedSearchBody {
   route: string
   label: string
-  state: { search: string }
+  state_json: { search: string }
 }
 
 const validate = withValidation<SavedSearchesResponse>(SavedSearchesResponseSchema, 'strategy/saved-searches')

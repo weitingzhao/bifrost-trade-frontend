@@ -57,6 +57,6 @@ export function payloadFor(
     if (d.expiry && !/^\d{4}-\d{2}-\d{2}$/.test(d.expiry)) return null
     next.push({ ...leg, strike, expiry: d.expiry || null })
   }
-  return { legs: next }
+  return { legs_json: next }
 }
 

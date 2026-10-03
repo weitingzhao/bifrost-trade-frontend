@@ -11,7 +11,7 @@ export type PrimaryWorkflowTab = 'watching' | 'sizing' | 'positions'
 export function categoryIdForName(cats: PositionCategory[], name: string): number | null {
   const n = name.trim().toLowerCase()
   const hit = cats.find(c => String(c.name ?? '').trim().toLowerCase() === n)
-  return hit != null && Number.isFinite(Number(hit.id)) ? Number(hit.id) : null
+  return hit != null && Number.isFinite(Number(hit.category_id)) ? Number(hit.category_id) : null
 }
 
 export function itemMatchesCategory(

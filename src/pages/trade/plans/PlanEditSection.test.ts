@@ -41,7 +41,7 @@ describe('editing a draft in place (Rev .138 §2)', () => {
     const d = draftOf(PLAN)
     const next = { ...d, legs: [{ strike: '145', expiry: '2026-12-18' }, d.legs[1]] }
     expect(payloadFor('strike0', next, LEGS)).toEqual({
-      legs: [{ ...LEGS[0], strike: 145, expiry: '2026-12-18' }, LEGS[1]],
+      legs_json: [{ ...LEGS[0], strike: 145, expiry: '2026-12-18' }, LEGS[1]],
     })
     expect(payloadFor('strike0', { ...d, legs: [{ strike: 'abc', expiry: '' }, d.legs[1]] }, LEGS)).toBeNull()
   })

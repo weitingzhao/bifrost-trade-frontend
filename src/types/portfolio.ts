@@ -1,7 +1,9 @@
 import type { PositionTagBody } from './requestBodies'
 
 export interface PositionCategory {
-  id: number
+  /** The path's and every referencing column's name for the category id (api 0.6.7,
+   *  TD-57); the row's `id` goes next release. */
+  category_id: number
   name: string
   description: string | null
   sort_order: number | null

@@ -201,7 +201,11 @@ export interface StrategyDimRow {
 }
 
 export interface DimsGroupedResponse {
+  /** Keyed by the bare dim type (`direction`) — the dictionary's own grouping. */
   by_type: Record<string, StrategyDimRow[]>
+  /** The same lists keyed by the column a code is written to (`dim_direction`), the
+   *  names the template / gate bodies use (api 0.6.7, TD-57). */
+  by_column?: Record<string, StrategyDimRow[]>
 }
 
 // ── Strategy Templates ────────────────────────────────────────────────────────

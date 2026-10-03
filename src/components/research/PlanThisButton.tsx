@@ -58,12 +58,12 @@ export function PlanThisButton({
         qty: 1,
         // The contract label never carries a side, so the draft is posted
         // without legs. The card keeps the label under source kind=contract.
-        legs: [],
+        legs_json: [],
         rationale: note ?? null,
         source_kind: 'symbol',
         source_ref: source,
         // Where the reading came from, so the card can walk back to it.
-        source: [
+        source_json: [
           { kind: 'where', text: sourceLabel, to: withSymbolParam(SYMBOL_PATH, sym) },
           ...(rule ? [{ kind: 'rule', text: rule }] : []),
           ...(contract ? [{ kind: 'contract', text: contract }] : []),

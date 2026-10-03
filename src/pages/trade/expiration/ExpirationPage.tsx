@@ -215,7 +215,7 @@ export default function ExpirationPage() {
           symbol: leg.symbol,
           structure_label: `${closing ? 'Close' : 'Roll out of'} ${shortOptContractKey(leg.contractKey)}`,
           qty: Math.abs(leg.qty),
-          legs: [
+          legs_json: [
             {
               side: leg.qty < 0 ? 'buy' : 'sell',
               sec_type: 'OPT',

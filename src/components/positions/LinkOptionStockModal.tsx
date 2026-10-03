@@ -54,8 +54,8 @@ async function loadLinkOptionStockData(accountId: string, optId: number) {
     }),
   ])
   const dateWindow =
-    candRes.trade_date_from && candRes.trade_date_to
-      ? `${candRes.trade_date_from} — ${candRes.trade_date_to}`
+    candRes.from_date && candRes.to_date
+      ? `${candRes.from_date} — ${candRes.to_date}`
       : null
   const err = linksRes.error || candRes.error
   return {
@@ -226,7 +226,7 @@ export function LinkOptionStockModal({
                 </DenseTableHeader>
                 <DenseTableBody>
                   {links.map((row: OptionStockLink) => (
-                    <DenseTableRow key={row.link_id}>
+                    <DenseTableRow key={row.account_execution_option_stock_link_id}>
                       <DenseTableCell className="text-xs font-mono">#{row.stock_account_executions_id}</DenseTableCell>
                       <DenseTableCell className="text-xs">{row.stock_symbol ?? '—'}</DenseTableCell>
                       <DenseTableCell className="text-xs font-mono">
@@ -247,7 +247,10 @@ export function LinkOptionStockModal({
                           variant="outline"
                           size="sm"
                           className="h-6 px-2 text-dense-meta"
-                          onClick={() => row.link_id != null && setUnlinkLinkId(row.link_id)}
+                          onClick={() => {
+                            const lid = row.account_execution_option_stock_link_id
+                            if (lid != null) setUnlinkLinkId(lid)
+                          }}
                         >
                           Remove
                         </Button>

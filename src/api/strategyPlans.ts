@@ -31,12 +31,17 @@ export interface PlanFilters {
   limit?: number
 }
 
+/**
+ * POST / PATCH body. The legs and the source chain go under the names a plan is read
+ * with, `legs_json` / `source_json` (api 0.6.7, TD-57): the server took only `legs` /
+ * `source` before, and silently dropped `legs_json` on create.
+ */
 export interface PlanWriteBody {
   account_id: string
   symbol: string
   structure_label: string
   qty: number
-  legs?: PlanLeg[]
+  legs_json?: PlanLeg[]
   strategy_structure_id?: number | null
   strategy_opportunity_id?: number | null
   price_effect?: 'credit' | 'debit' | null
@@ -49,7 +54,7 @@ export interface PlanWriteBody {
   rationale?: string | null
   source_kind?: PlanSourceKind
   source_ref?: string | null
-  source?: PlanSourceEntry[]
+  source_json?: PlanSourceEntry[]
   expires_at?: string | null
 }
 

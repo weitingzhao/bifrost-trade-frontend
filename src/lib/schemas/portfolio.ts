@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const PositionCategorySchema = z.object({
-  id: z.number(),
+  category_id: z.number(),
   name: z.string(),
   description: z.string().nullable(),
   sort_order: z.number().nullable(),

@@ -1,3 +1,5 @@
+import type { DimsGroupedResponse, StrategyDimRow } from '@/types/strategy'
+
 export const DIM_TYPES = [
   'dim_direction',
   'dim_structure',
@@ -16,6 +18,17 @@ export type DimFieldName = (typeof DIM_TYPES)[number]
  */
 export function dimCatalogType(field: DimFieldName): string {
   return field.slice('dim_'.length)
+}
+
+/**
+ * The codes a gate / template field may take: `by_column[field]` (api 0.6.7, TD-57), which
+ * is keyed by the field name itself, else `by_type` under the bare type for an older API.
+ */
+export function dimOptions(
+  dims: Pick<DimsGroupedResponse, 'by_type' | 'by_column'> | null | undefined,
+  field: DimFieldName,
+): StrategyDimRow[] {
+  return dims?.by_column?.[field] ?? dims?.by_type[dimCatalogType(field)] ?? []
 }
 
 export const DIM_LABELS: Record<DimFieldName, string> = {

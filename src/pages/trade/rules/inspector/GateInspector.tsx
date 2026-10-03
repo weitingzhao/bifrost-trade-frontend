@@ -29,7 +29,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { useStrategyDims } from '@/hooks/useOptionCategory'
 import { useLiveEdit } from '@/hooks/useLiveEdit'
-import { dimCatalogType } from '@/utils/gateDefaults'
+import { dimOptions } from '@/utils/gateDefaults'
 import { cn } from '@/lib/utils'
 import type { GateSafetyFull } from '@/types/positions'
 import { FIELD, RuleInspector } from './RuleInspector'
@@ -175,12 +175,12 @@ function GateEditor({
                 onChange={(e) => edit(dim, (d) => ({ ...d, [dim]: e.target.value || null }))}
               >
                 <option value="">Any</option>
-                {(dims?.by_type[dimCatalogType(dim)] ?? []).map((o) => (
+                {dimOptions(dims, dim).map((o) => (
                   <option key={o.strategy_dim_id} value={o.code}>
                     {o.display_label}
                   </option>
                 ))}
-                {draft[dim] && !(dims?.by_type[dimCatalogType(dim)] ?? []).some((o) => o.code === draft[dim]) ? (
+                {draft[dim] && !dimOptions(dims, dim).some((o) => o.code === draft[dim]) ? (
                   <option value={draft[dim] ?? ''}>{draft[dim]}</option>
                 ) : null}
               </select>

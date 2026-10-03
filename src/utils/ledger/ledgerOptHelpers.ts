@@ -174,7 +174,7 @@ export function getOptionStockLinkDetailForExecution(
   const links = s?.links ?? []
   if (links.length === 0) return { linkIds: [], links: [], slippageTotal: null }
   const linkIds = links
-    .map(r => r.link_id)
+    .map(r => r.account_execution_option_stock_link_id)
     .filter((id): id is number => id != null && Number.isFinite(Number(id)))
     .sort((a, b) => a - b)
   return {
@@ -388,8 +388,9 @@ export function collectLinkIdsForOptGroup(
     if (oid == null || seen.has(oid)) continue
     seen.add(oid)
     for (const row of linkByOptionId[oid]?.links ?? []) {
-      if (row.link_id != null && Number.isFinite(Number(row.link_id))) {
-        ids.add(Number(row.link_id))
+      const lid = row.account_execution_option_stock_link_id
+      if (lid != null && Number.isFinite(Number(lid))) {
+        ids.add(Number(lid))
       }
     }
   }
@@ -408,11 +409,13 @@ export function flattenLinksForOptGroup(
     if (oid == null || seen.has(oid)) continue
     seen.add(oid)
     for (const row of linkByOptionId[oid]?.links ?? []) {
-      const lid = row.link_id
+      const lid = row.account_execution_option_stock_link_id
       if (lid != null && !byId.has(lid)) byId.set(lid, row)
     }
   }
-  return Array.from(byId.values()).sort((a, b) => (a.link_id ?? 0) - (b.link_id ?? 0))
+  return Array.from(byId.values()).sort(
+    (a, b) => (a.account_execution_option_stock_link_id ?? 0) - (b.account_execution_option_stock_link_id ?? 0),
+  )
 }
 
 export function sumLinkSlippageForOptGroup(

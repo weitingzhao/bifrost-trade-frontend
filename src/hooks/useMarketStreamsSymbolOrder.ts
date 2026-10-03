@@ -83,7 +83,7 @@ export function useCategoryOrderPersistence(positionCategories: PositionCategory
           const desired = idx ?? 999
           const current = cat.sort_order ?? 999
           if (desired !== current) {
-            await patchPositionCategory(cat.id, { sort_order: desired })
+            await patchPositionCategory(cat.category_id, { sort_order: desired })
           }
         }
         setCategoryOrder(ordered)

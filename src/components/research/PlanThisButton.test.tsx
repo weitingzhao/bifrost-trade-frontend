@@ -45,8 +45,11 @@ describe('＋ Plan this', () => {
     renderButton()
     await userEvent.click(screen.getByRole('button', { name: /Plan this/ }))
     expect(mutate).toHaveBeenCalledTimes(1)
-    const payload = mutate.mock.calls[0][0] as { legs: unknown[]; source: { kind: string; text?: string }[] }
-    expect(payload.legs).toEqual([])
-    expect(payload.source).toContainEqual({ kind: 'contract', text: 'NVDA 2026-11-20 245C' })
+    // Sent under the names a plan is read with (api 0.6.7, TD-57).
+    const payload = mutate.mock.calls[0][0] as { legs_json: unknown[]; source_json: { kind: string; text?: string }[] }
+    expect(payload.legs_json).toEqual([])
+    expect(payload.source_json).toContainEqual({ kind: 'contract', text: 'NVDA 2026-11-20 245C' })
+    expect(payload).not.toHaveProperty('legs')
+    expect(payload).not.toHaveProperty('source')
   })
 })

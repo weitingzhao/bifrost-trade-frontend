@@ -131,6 +131,9 @@ export interface GateSafetyBody {
 export interface SavedSearchBody {
   route?: string
   label?: string
+  /** The read name (api 0.6.7, TD-57); `state` still works one release and loses to it. */
+  state_json?: JsonObject
+  /** @deprecated api 0.6.7: send `state_json`. Goes next api release. */
   state?: JsonObject
 }
 

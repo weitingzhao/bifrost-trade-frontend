@@ -325,7 +325,7 @@ export default function TradePlansPage() {
       const { preference_saved_search_id: id } = await createSavedSearch({
         route: '/trade/plans',
         label,
-        state: { search: scopeSearch },
+        state_json: { search: scopeSearch },
       })
       await refreshSaved()
       notify(`Saved “${label}” to the sidebar`, {
@@ -343,7 +343,7 @@ export default function TradePlansPage() {
       await refreshSaved()
       notify(`Removed “${it.label}” from Saved searches`, {
         undo: () =>
-          void createSavedSearch({ route: it.route, label: it.label, state: { search: it.state_json.search ?? '' } })
+          void createSavedSearch({ route: it.route, label: it.label, state_json: { search: it.state_json.search ?? '' } })
             .then(refreshSaved)
             .catch(failed('The list was not restored')),
       })

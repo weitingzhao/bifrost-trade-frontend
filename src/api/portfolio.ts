@@ -36,7 +36,7 @@ export async function fetchPositionCategories(): Promise<PositionCategoriesRespo
 export function createPositionCategory(
   name: string,
   sort_order?: number,
-): Promise<{ ok: boolean; id: number | null; error?: string }> {
+): Promise<{ ok: boolean; category_id: number | null; error?: string }> {
   const body: PositionCategoryBody = { name, ...(sort_order != null ? { sort_order } : {}) }
   return requestJson(portfolioUrl('/position-categories'), { method: 'POST', body })
 }

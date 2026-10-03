@@ -94,9 +94,9 @@ export function ViewOptionStockLinksModal({
               </DenseTableHeader>
               <DenseTableBody>
                 {rows.map(row => (
-                  <DenseTableRow key={row.link_id ?? `${row.stock_account_executions_id}-${row.option_account_executions_id}`}>
+                  <DenseTableRow key={row.account_execution_option_stock_link_id ?? `${row.stock_account_executions_id}-${row.option_account_executions_id}`}>
                     <DenseTableCell className="px-1.5 font-mono tabular-nums text-xs">
-                      {row.link_id != null ? `#${row.link_id}` : '—'}
+                      {row.account_execution_option_stock_link_id != null ? `#${row.account_execution_option_stock_link_id}` : '—'}
                     </DenseTableCell>
                     <DenseTableCell className="px-1.5 font-mono tabular-nums text-xs">
                       {row.stock_account_executions_id != null

@@ -179,7 +179,7 @@ export function WatchlistStockTable({
                     <SelectContent>
                       <SelectItem value="none">—</SelectItem>
                       {categories.map(c => (
-                        <SelectItem key={c.id} value={String(c.id)}>
+                        <SelectItem key={c.category_id} value={String(c.category_id)}>
                           {c.name}
                         </SelectItem>
                       ))}

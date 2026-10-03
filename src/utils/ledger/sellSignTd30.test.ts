@@ -62,7 +62,7 @@ function opt(p: Partial<Execution> & Pick<Execution, 'account_executions_id' | '
 const optOpenBefore = opt({ account_executions_id: 21, side: 'SELL', quantity: 2, price: 1.5 })
 const optCloseBefore = opt({ account_executions_id: 22, side: 'BUY', quantity: 2, price: 0.4, trade_date: '2026-01-20' })
 const links: Record<number, OptionStockLinkSummary> = {
-  21: { links: [{ link_id: 7, stock_account_executions_id: 2, stock_quantity: 60 }], slippage_total: 12.5 },
+  21: { links: [{ account_execution_option_stock_link_id: 7, stock_account_executions_id: 2, stock_quantity: 60 }], slippage_total: 12.5 },
 }
 
 // Split: one sell of 3 contracts across two trades. Allocations are stored as sent (sells negative).

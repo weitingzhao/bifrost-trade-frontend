@@ -90,7 +90,7 @@ describe('trading executions', () => {
     fetchMock.mockResolvedValue(failure(409, 'Link already exists or insert failed.', { link_id: null, warning: null }))
     await expect(
       createOptionStockLink({ account_id: 'U0000001', option_account_executions_id: 1, stock_account_executions_id: 2 }),
-    ).resolves.toEqual({ ok: false, link_id: null, error: 'Link already exists or insert failed.', warning: null })
+    ).resolves.toEqual({ ok: false, account_execution_option_stock_link_id: null, error: 'Link already exists or insert failed.', warning: null })
   })
 
   it('a refused update comes back as { ok: false, error }', async () => {
@@ -126,8 +126,8 @@ describe('trading executions', () => {
     fetchMock.mockResolvedValueOnce(ok({ links: [], slippage_total: null, error: 'database_unavailable' }))
     expect((await fetchOptionStockLinks('U0000001', 1)).error).toBe('database_unavailable')
 
-    fetchMock.mockResolvedValueOnce(ok({ items: [{ link_id: 3 }], count: 1, slippage_total: 0.5 }))
-    expect(await fetchOptionStockLinks('U0000001', 1)).toEqual({ links: [{ link_id: 3 }], slippage_total: 0.5, error: undefined })
+    fetchMock.mockResolvedValueOnce(ok({ items: [{ account_execution_option_stock_link_id: 3 }], count: 1, slippage_total: 0.5 }))
+    expect(await fetchOptionStockLinks('U0000001', 1)).toEqual({ links: [{ account_execution_option_stock_link_id: 3 }], slippage_total: 0.5, error: undefined })
 
     fetchMock.mockResolvedValueOnce(failure(404, 'Option execution not found in performance book.', { executions: [] }))
     expect(await fetchStockLinkCandidates({ account_id: 'U0000001', option_account_executions_id: 1 })).toEqual({

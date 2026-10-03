@@ -865,8 +865,8 @@ function OptionStockLinkDialog({
               </TableHeader>
               <TableBody>
                 {rows.map((row, idx) => (
-                  <TableRow key={(row.link_id as number) ?? idx}>
-                    <TableCell className="text-xs tabular-nums">#{String(row.link_id ?? '—')}</TableCell>
+                  <TableRow key={(row.account_execution_option_stock_link_id as number) ?? idx}>
+                    <TableCell className="text-xs tabular-nums">#{String(row.account_execution_option_stock_link_id ?? '—')}</TableCell>
                     <TableCell className="text-xs tabular-nums">#{String(row.stock_account_executions_id ?? '—')}</TableCell>
                     <TableCell className="text-xs">{String(row.stock_symbol ?? '—')}</TableCell>
                     <TableCell className="text-xs tabular-nums">{String(row.stock_trade_date ?? '—')}</TableCell>

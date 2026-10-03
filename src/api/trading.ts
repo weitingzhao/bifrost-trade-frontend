@@ -249,8 +249,9 @@ export async function fetchStockLinkCandidates(params: {
 }): Promise<{
   executions: Execution[]
   underlying_symbol?: string
-  trade_date_from?: string
-  trade_date_to?: string
+  /** The window read, YYYY-MM-DD (api 0.6.7 also sends it as `from_date` / `to_date`). */
+  from_date?: string
+  to_date?: string
   error?: string
 }> {
   const q = new URLSearchParams()
@@ -262,15 +263,15 @@ export async function fetchStockLinkCandidates(params: {
   try {
     const j = await requestJson<{
       underlying_symbol?: string
-      trade_date_from?: string
-      trade_date_to?: string
+      from_date?: string
+      to_date?: string
       error?: string | null
     }>(tradingUrl(`/executions/stock-link-candidates?${q}`))
     return {
       executions: listItems<Execution>(j),
       underlying_symbol: j.underlying_symbol,
-      trade_date_from: j.trade_date_from,
-      trade_date_to: j.trade_date_to,
+      from_date: j.from_date,
+      to_date: j.to_date,
       error: j.error ?? undefined,
     }
   } catch (e) {
@@ -279,15 +280,21 @@ export async function fetchStockLinkCandidates(params: {
 }
 
 /** Never throws for a refusal: `{ ok: false, error }` with the server's reason (400/404/409/500/503). */
-export async function createOptionStockLink(body: OptionStockLinkCreate): Promise<{ ok: boolean; link_id?: number | null; error?: string; warning?: string | null }> {
+/** The new link's id is read under the table's name (api 0.6.7, TD-57). */
+export async function createOptionStockLink(body: OptionStockLinkCreate): Promise<{
+  ok: boolean
+  account_execution_option_stock_link_id?: number | null
+  error?: string
+  warning?: string | null
+}> {
   try {
-    const j = await requestJson<{ link_id?: number | null; warning?: string | null }>(
+    const j = await requestJson<{ account_execution_option_stock_link_id?: number | null; warning?: string | null }>(
       tradingUrl('/executions/option-stock-links'),
       { method: 'POST', body },
     )
-    return { ok: true, link_id: j.link_id, warning: j.warning ?? null }
+    return { ok: true, account_execution_option_stock_link_id: j.account_execution_option_stock_link_id, warning: j.warning ?? null }
   } catch (e) {
-    return { ok: false, link_id: null, error: httpFailure(e), warning: null }
+    return { ok: false, account_execution_option_stock_link_id: null, error: httpFailure(e), warning: null }
   }
 }
 

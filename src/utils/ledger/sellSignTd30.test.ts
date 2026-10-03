@@ -19,7 +19,7 @@ import {
   sliceExecutionForInstanceOptView,
 } from '@/utils/ledger/ledgerOptHelpers'
 import { buildOptExecutionGroups } from '@/utils/ledger/optExecutionGroups'
-import { toFill } from '@/utils/reviewTrades'
+import { toFill } from '@/utils/reviewContracts'
 import { signedFillQty } from '@/components/positions/quickCloseOffset'
 import { executionQtyLabel } from '@/components/positions/linkExecutionModalHelpers'
 import { fillQtyShown } from '@/utils/fillQuantity'

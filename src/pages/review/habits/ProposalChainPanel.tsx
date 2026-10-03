@@ -16,7 +16,7 @@ import { SectionHead } from '@/components/layout'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { buildProposals, proposalChain } from '@/pages/research/loop/proposals/proposalsModel'
 import type { HabitReading } from '@/utils/reviewHabits'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 // Rev .62: a foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
@@ -28,7 +28,7 @@ export function ProposalChainPanel({
   pathsLoading,
 }: {
   habits: readonly HabitReading[]
-  trades: readonly ReviewTrade[]
+  trades: readonly ReviewContract[]
   paths: Map<string, { best: number }>
   pathsLoading: boolean
 }) {

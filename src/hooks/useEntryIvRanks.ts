@@ -12,12 +12,12 @@ import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { fetchIvRankHistory } from '@/api/research/ivRadar'
 import type { IvPercentileRow } from '@/types/ivRadar'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 /** The store's own cap: `lookback_days` answers at most a year. */
 const LOOKBACK_DAYS = 365
 
-export function useEntryIvRanks(trades: readonly ReviewTrade[]) {
+export function useEntryIvRanks(trades: readonly ReviewContract[]) {
   const names = useMemo(
     () => [...new Set(trades.map((t) => t.underlying).filter(Boolean))].sort(),
     [trades],

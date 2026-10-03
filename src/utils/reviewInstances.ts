@@ -7,7 +7,7 @@
  * instance the Ledger's way (`sliceExecutionForInstanceOptView`, so a fill
  * split across instances counts its share), and grouped per contract with
  * the Ledger's own `buildOptExecutionGroups`. Each instance is also a
- * `ReviewTrade` — its primary leg supplies the contract fields — so the
+ * `ReviewContract` — its primary leg supplies the contract fields — so the
  * page's panels read it unchanged.
  *
  * Measured on DEV 2026-09-29: 89 instances (78 single-leg, 10 two-leg, 1
@@ -29,8 +29,8 @@ import {
   orderedTrades,
   toFill,
   type ReviewFill,
-  type ReviewTrade,
-} from '@/utils/reviewTrades'
+  type ReviewContract,
+} from '@/utils/reviewContracts'
 
 export interface ReviewLeg {
   contractKey: string
@@ -59,7 +59,7 @@ export interface ReviewLeg {
   open: boolean
 }
 
-export interface ReviewInstance extends ReviewTrade {
+export interface ReviewInstance extends ReviewContract {
   tradeId: number | null
   open: boolean
   legs: ReviewLeg[]

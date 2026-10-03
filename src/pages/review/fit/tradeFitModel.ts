@@ -15,7 +15,7 @@ import { daysBetween } from '@/lib/isoDate'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import type { ExpiryBranch, MarkPath } from '@/utils/reviewMarkPath'
-import { EXIT_LABEL, type ReviewTrade } from '@/utils/reviewTrades'
+import { EXIT_LABEL, type ReviewContract } from '@/utils/reviewContracts'
 import type { CorporateActionRow } from '@/api/marketData/corporateActions'
 import { planToken, type TradeOrigin } from '@/utils/tradeOrigin'
 
@@ -66,7 +66,7 @@ const GIVE_BACK_FLOOR = 50
 const SLOW_CUT_DAYS = 5
 
 export function counterfactuals(
-  trade: ReviewTrade,
+  trade: ReviewContract,
   path: MarkPath | null,
   expiry: ExpiryBranch | null,
   today: string,
@@ -185,7 +185,7 @@ export interface EntryContext {
   spot: number | null
 }
 
-export function timeline(trade: ReviewTrade, path: MarkPath | null, entry?: EntryContext): TimelineStage[] {
+export function timeline(trade: ReviewContract, path: MarkPath | null, entry?: EntryContext): TimelineStage[] {
   const context = [
     entry?.ivRank == null ? null : `IV rank ${entry.ivRank.toFixed(0)}`,
     entry?.spot == null ? null : `underlying ${entry.spot.toFixed(2)}`,
@@ -248,7 +248,7 @@ export function timeline(trade: ReviewTrade, path: MarkPath | null, entry?: Entr
 }
 
 /** Rev .112: the tags the ending names — per trade, not per contract path. */
-export function exitTags(trade: Pick<ReviewTrade, 'exitKind'>): DerivedTag[] {
+export function exitTags(trade: Pick<ReviewContract, 'exitKind'>): DerivedTag[] {
   switch (trade.exitKind) {
     case 'assigned':
       return [{ key: 'assigned', label: 'assigned', why: 'Ran to expiry with the short leg in the money. Shares moved.', tone: 'danger' }]
@@ -263,7 +263,7 @@ export function exitTags(trade: Pick<ReviewTrade, 'exitKind'>): DerivedTag[] {
   }
 }
 
-export function derivedTags(trade: ReviewTrade, path: MarkPath | null): DerivedTag[] {
+export function derivedTags(trade: ReviewContract, path: MarkPath | null): DerivedTag[] {
   const tags: DerivedTag[] = []
 
   if (path) {
@@ -338,7 +338,7 @@ function isAdjusting(a: CorporateActionRow): boolean {
  * `actions` is undefined while read, null when the read failed.
  */
 export function corporateActionRow(
-  trade: Pick<ReviewTrade, 'underlying' | 'openedOn' | 'closedOn'>,
+  trade: Pick<ReviewContract, 'underlying' | 'openedOn' | 'closedOn'>,
   actions: readonly CorporateActionRow[] | null | undefined,
   today: string,
 ): SourceRow {
@@ -370,7 +370,7 @@ export function corporateActionRow(
 }
 
 export function sources(
-  trade: ReviewTrade,
+  trade: ReviewContract,
   path: MarkPath | null,
   underlyingBars: number,
   optionTicker: string | null,

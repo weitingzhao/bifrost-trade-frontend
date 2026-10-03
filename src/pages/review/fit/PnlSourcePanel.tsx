@@ -13,14 +13,14 @@ import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 const PARTS = ['Δ · direction', 'Γ · convexity', 'Vega · vol marks', 'Θ · carry', 'Unexplained'] as const
 
 /** A severity edge on a card is inline: `mat-card` clears border-colour classes. */
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
-export function PnlSourcePanel({ trade }: { trade: Pick<ReviewTrade, 'shortPremium' | 'exitKind'> }) {
+export function PnlSourcePanel({ trade }: { trade: Pick<ReviewContract, 'shortPremium' | 'exitKind'> }) {
   // A credit trade is a sell-vol play and should earn from carry; a debit one is a drift play.
   const should = trade.shortPremium ? 'should earn from θ + vega' : 'should earn from Δ'
   return (

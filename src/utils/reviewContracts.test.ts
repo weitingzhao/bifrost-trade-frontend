@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildReviewTrades, playbookStats, winRateBand } from './reviewTrades'
+import { buildReviewContracts, playbookStats, winRateBand } from './reviewContracts'
 import type { Execution } from '@/types/positions'
 
 /** Invented fills — one short-premium trade closed, one debit trade closed. */
@@ -78,9 +78,9 @@ const expiredUnbooked: Execution[] = [
   }),
 ]
 
-describe('buildReviewTrades', () => {
+describe('buildReviewContracts', () => {
   it('reads a short-premium trade from its own fills', () => {
-    const { trades } = buildReviewTrades(shortTrade)
+    const { trades } = buildReviewContracts(shortTrade)
     expect(trades).toHaveLength(1)
     const t = trades[0]
     expect(t.shortPremium).toBe(true)
@@ -99,7 +99,7 @@ describe('buildReviewTrades', () => {
   })
 
   it('has no credit to keep on a debit trade, and says so with null', () => {
-    const [t] = buildReviewTrades(debitTrade).trades
+    const [t] = buildReviewContracts(debitTrade).trades
     expect(t.shortPremium).toBe(false)
     // Zero would read as "kept none of the credit" on a trade that never took one.
     expect(t.creditKept).toBeNull()
@@ -108,7 +108,7 @@ describe('buildReviewTrades', () => {
   })
 
   it('counts a contract past expiry that was never bought back apart, not as closed', () => {
-    const { trades, expiredUnbooked: n } = buildReviewTrades(expiredUnbooked)
+    const { trades, expiredUnbooked: n } = buildReviewContracts(expiredUnbooked)
     // It is over economically, but it carries no closing fill and therefore no
     // realised figure — folding it in would invent one.
     expect(trades).toHaveLength(0)
@@ -116,7 +116,7 @@ describe('buildReviewTrades', () => {
   })
 
   it('puts the newest close first', () => {
-    const { trades } = buildReviewTrades([...debitTrade, ...shortTrade])
+    const { trades } = buildReviewContracts([...debitTrade, ...shortTrade])
     expect(trades.map((t) => t.symbol)).toEqual(['ZEBR 18DEC26 90C', 'QUOK 20NOV26 40P'])
   })
 })
@@ -137,7 +137,7 @@ describe('winRateBand', () => {
 
 describe('playbookStats', () => {
   it('aggregates a play and marks a thin sample', () => {
-    const { trades } = buildReviewTrades([...shortTrade, ...debitTrade])
+    const { trades } = buildReviewContracts([...shortTrade, ...debitTrade])
     const stats = playbookStats(trades)
     expect(stats.map((s) => s.play)).toEqual(['Covered call book', 'Hedge book'])
     const cc = stats[0]
@@ -152,7 +152,7 @@ describe('playbookStats', () => {
   })
 
   it('takes the profit factor as gross win over gross loss', () => {
-    const { trades } = buildReviewTrades([
+    const { trades } = buildReviewContracts([
       ...shortTrade,
       ...debitTrade.map((e) => ({ ...e, strategy_opportunity_name: 'Covered call book' })),
     ])
@@ -166,7 +166,7 @@ describe('playbookStats', () => {
 
 describe('playbookStats MAE', () => {
   it('is the median excursion across the play, and the worst one beside it', () => {
-    const { trades } = buildReviewTrades([...shortTrade, ...debitTrade])
+    const { trades } = buildReviewContracts([...shortTrade, ...debitTrade])
     const paths = new Map(
       trades.map((t, i) => [
         t.contractKey,
@@ -193,7 +193,7 @@ describe('playbookStats MAE', () => {
   })
 
   it('is null rather than zero when no trade in the play has a path', () => {
-    const { trades } = buildReviewTrades([...shortTrade])
+    const { trades } = buildReviewContracts([...shortTrade])
     expect(playbookStats(trades).every((p) => p.mae == null && p.maeWorst == null)).toBe(true)
   })
 })

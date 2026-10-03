@@ -32,7 +32,7 @@ import { useExecutionsAll } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { ProposalChainPanel } from './ProposalChainPanel'
-import { THIN_SAMPLE } from '@/utils/reviewTrades'
+import { THIN_SAMPLE } from '@/utils/reviewContracts'
 import { habitReadings, type HabitReading } from '@/utils/reviewHabits'
 import { HabitStrip } from './HabitStrip'
 import { CostSplit, NotClaimed, PlanAdherenceQuadrants } from './HabitsAside'
@@ -103,12 +103,12 @@ export default function ReviewHabitsPage() {
   const n = inWindow.length
   const gate =
     n === 0
-      ? { lamp: 'gray' as const, title: 'No closed trade in this window', sub: 'Widen the window, or wait for a trade to close.' }
+      ? { lamp: 'gray' as const, title: 'No closed contract in this window', sub: 'Widen the window, or wait for a contract to close.' }
       : n < THIN_SAMPLE
         ? {
             lamp: 'yellow' as const,
             title: `Below the sample floor · n ${n} of ${THIN_SAMPLE}`,
-            sub: 'Every reading below is the band rather than the point. A tendency read off this few trades is a description of this few trades.',
+            sub: 'Every reading below is the band rather than the point. A tendency read off this few contracts is a description of this few contracts.',
           }
         : {
             lamp: 'green' as const,
@@ -131,7 +131,7 @@ export default function ReviewHabitsPage() {
         info={PAGE_LEAD}
         actions={
           <>
-            <PageHeadLink to="/review" title="The closed trades these are read from">
+            <PageHeadLink to="/review" title="The closed contracts these are read from">
               ← Queue
             </PageHeadLink>
             <PageHeadLink to="/review/proposals" title="Rule proposals are decided in the Decision Inbox">
@@ -178,7 +178,7 @@ export default function ReviewHabitsPage() {
         <ViewState
           kind="stale"
           title="Couldn’t refresh the closed book"
-          detail={staleDetail(execQuery, 'a trade closed since then is not counted.')}
+          detail={staleDetail(execQuery, 'a contract closed since then is not counted.')}
           onAction={() => void execQuery.refetch()}
         />
       ) : null}
@@ -187,7 +187,7 @@ export default function ReviewHabitsPage() {
           kind="stale"
           layout="strip"
           title="Couldn’t read every contract’s daily bars"
-          detail="The path habits — winner trimming and cut-loss latency — cover only the trades whose bars arrived; the rest are unread, not unmoved."
+          detail="The path habits — winner trimming and cut-loss latency — cover only the contracts whose bars arrived; the rest are unread, not unmoved."
         />
       ) : null}
       {pageState === 'ready' && ivRankFailed > 0 ? (
@@ -195,7 +195,7 @@ export default function ReviewHabitsPage() {
           kind="stale"
           layout="strip"
           title="Couldn’t read some IV ranks"
-          detail={`${ivRankFailed} of ${ivRankNames} names did not answer; their trades are out of the IV-rank-at-entry sample.`}
+          detail={`${ivRankFailed} of ${ivRankNames} names did not answer; their contracts are out of the IV-rank-at-entry sample.`}
         />
       ) : null}
 
@@ -216,7 +216,7 @@ export default function ReviewHabitsPage() {
         <section className="overflow-hidden mat-card">
           <ViewState
             kind="filtered"
-            detail="No trade closed inside this window."
+            detail="No contract closed inside this window."
             onAction={() => setWindow('all')}
           />
         </section>
@@ -224,8 +224,8 @@ export default function ReviewHabitsPage() {
         <section className="overflow-hidden mat-card">
           <ViewState
             kind="empty"
-            title="No closed trade yet"
-            detail="A habit is read over closed trades — a contract reaches this page once its own fills have taken it flat."
+            title="No closed contract yet"
+            detail="A habit is read over closed contracts — a contract reaches this page once its own fills have taken it flat."
           />
         </section>
       ) : (
@@ -262,7 +262,7 @@ export default function ReviewHabitsPage() {
                   <span className={positionsUi.cap}>Tendencies</span>
                   <span className={positionsUi.panelTitle}>Each with its sample and its consequence</span>
                   <span className="ml-auto text-dense-meta text-muted-foreground">
-                    dots are trades · green earned, red lost
+                    dots are contracts · green earned, red lost
                   </span>
                 </header>
                 {habits.map((h) => (

@@ -6,7 +6,7 @@ export type PositionStatus = 'no_fills' | 'open' | 'closed'
 export interface InstanceMetrics {
   netPnl: number
   commission: number
-  tradeCount: number
+  fillCount: number
   underlyingCost: number | null
   holdDays: number
   netPnlPerDay: number | null
@@ -80,7 +80,7 @@ export function computeInstanceMetrics(
 ): InstanceMetrics {
   const netPnl = summary.net_pnl
   const commission = summary.total_commission
-  const tradeCount = summary.trade_count
+  const fillCount = summary.trade_count
   const underlyingCost = computeUnderlyingCost(executions)
   const holdDays = computeHoldDays(openedAtEpoch)
   const positionStatus = computePositionStatus(executions)
@@ -97,5 +97,5 @@ export function computeInstanceMetrics(
       ? (netPnl / underlyingCost) * 100
       : null
 
-  return { netPnl, commission, tradeCount, underlyingCost, holdDays, netPnlPerDay, annualPct, returnPct, positionStatus }
+  return { netPnl, commission, fillCount, underlyingCost, holdDays, netPnlPerDay, annualPct, returnPct, positionStatus }
 }

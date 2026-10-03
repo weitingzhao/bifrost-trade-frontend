@@ -27,7 +27,7 @@ const SEC_TYPE_TAB: Record<string, CalendarAssetTab> = {
 export interface DayData {
   realized: number
   unrealized: number
-  tradeCount: number
+  fillCount: number
   notional: number
 }
 
@@ -40,7 +40,7 @@ export interface CalendarDayCell {
   dayNum: number
   realized: number
   unrealized: number
-  tradeCount: number
+  fillCount: number
   notional: number
 }
 
@@ -65,7 +65,7 @@ export function buildDayMapFromBulk(
       maps[tab].set(date, {
         realized: cell.realized,
         unrealized: cell.unrealized,
-        tradeCount: 0,
+        fillCount: 0,
         notional: notionalRec[date] ?? 0,
       })
     }
@@ -75,7 +75,7 @@ export function buildDayMapFromBulk(
     maps.options.set(date, {
       realized: cell.realized,
       unrealized: cell.unrealized,
-      tradeCount: 0,
+      fillCount: 0,
       notional: 0,
     })
   }
@@ -97,7 +97,7 @@ export function buildDayMapFromApi(
       maps.options.set(e.period_label, {
         realized: e.net_pnl,
         unrealized: 0,
-        tradeCount: e.trade_count,
+        fillCount: e.trade_count,
         notional: 0,
       })
     }
@@ -106,11 +106,11 @@ export function buildDayMapFromApi(
     if (!e.period_label) continue
     const tab = SEC_TYPE_TAB[(e.sec_type ?? '').toUpperCase()]
     if (!tab) continue
-    const prev = maps[tab].get(e.period_label) ?? { realized: 0, unrealized: 0, tradeCount: 0, notional: 0 }
+    const prev = maps[tab].get(e.period_label) ?? { realized: 0, unrealized: 0, fillCount: 0, notional: 0 }
     maps[tab].set(e.period_label, {
       realized: prev.realized + e.net_pnl,
       unrealized: 0,
-      tradeCount: prev.tradeCount + e.trade_count,
+      fillCount: prev.fillCount + e.trade_count,
       notional: 0,
     })
   }
@@ -136,7 +136,7 @@ export function buildCalendarGrid(yearMonth: string, dayMap: Map<string, DayData
       dayNum: d,
       realized: data?.realized ?? 0,
       unrealized: data?.unrealized ?? 0,
-      tradeCount: data?.tradeCount ?? 0,
+      fillCount: data?.fillCount ?? 0,
       notional: data?.notional ?? 0,
     })
     if (currentWeek.length === 7) {

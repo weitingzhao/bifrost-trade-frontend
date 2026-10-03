@@ -215,7 +215,7 @@ export function CalendarSummaryPanel({
     { label: 'Unrealized', value: fmtUsd(optUnrealizedPnl), valueClassName: 'text-unrealized' },
     { label: 'Comm', value: fmtUsd(rOpt?.commission ?? 0), valueClassName: 'text-muted-foreground' },
     { label: 'Net', value: fmtUsd(optNetPnl), colorValue: optNetPnl },
-    { label: 'Trades', value: String(rOpt?.trade_count ?? 0) },
+    { label: 'Fills', value: String(rOpt?.trade_count ?? 0) },
   ]
 
   const stocksMetrics = buildStkBucketMetrics({
@@ -226,7 +226,7 @@ export function CalendarSummaryPanel({
     fallbackRealized: rStk?.total_pnl ?? 0,
     fallbackCommission: rStk?.commission ?? 0,
     fallbackNet: rStk?.net_pnl ?? 0,
-    fallbackTrades: rStk?.trade_count ?? 0,
+    fallbackFills: rStk?.trade_count ?? 0,
     showFallback: rStk != null,
     notionalSignedTone: true,
   })
@@ -239,7 +239,7 @@ export function CalendarSummaryPanel({
     fallbackRealized: 0,
     fallbackCommission: 0,
     fallbackNet: 0,
-    fallbackTrades: 0,
+    fallbackFills: 0,
     showFallback: false,
     notionalSignedTone: true,
     notionalLabel: 'Stream',
@@ -253,7 +253,7 @@ export function CalendarSummaryPanel({
     fallbackRealized: 0,
     fallbackCommission: 0,
     fallbackNet: 0,
-    fallbackTrades: 0,
+    fallbackFills: 0,
     showFallback: false,
     notionalSignedTone: false,
   })
@@ -300,7 +300,7 @@ function buildStkBucketMetrics({
   fallbackRealized,
   fallbackCommission,
   fallbackNet,
-  fallbackTrades,
+  fallbackFills,
   showFallback,
   notionalSignedTone,
   notionalLabel = 'Notional',
@@ -312,7 +312,7 @@ function buildStkBucketMetrics({
   fallbackRealized: number
   fallbackCommission: number
   fallbackNet: number
-  fallbackTrades: number
+  fallbackFills: number
   showFallback: boolean
   notionalSignedTone: boolean
   notionalLabel?: string
@@ -342,7 +342,7 @@ function buildStkBucketMetrics({
       },
       { label: 'Comm', value: useBulk ? '—' : fmtUsd(fallbackCommission) },
       { label: 'Net', value: fmtUsd(netVal), colorValue: netVal },
-      { label: 'Trades', value: useBulk ? '—' : String(fallbackTrades) },
+      { label: 'Fills', value: useBulk ? '—' : String(fallbackFills) },
     ].map((m) =>
       m.label === notionalLabel && useBulk
         ? {

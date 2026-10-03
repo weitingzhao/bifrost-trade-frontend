@@ -25,7 +25,7 @@
  */
 import { businessDaysBetween, daysBetween } from '@/lib/isoDate'
 import type { DailyBar } from '@/api/marketData/dailyBars'
-import type { ReviewFill, ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewFill, ReviewContract } from '@/utils/reviewContracts'
 
 export interface MarkPoint {
   date: string
@@ -92,7 +92,7 @@ function upTo(fills: readonly ReviewFill[], date: string): { cash: number; openQ
  * to the last session before expiry — so the days after the exit are in the same
  * series and become the "had I stayed" branch rather than a second request.
  */
-export function buildMarkPath(trade: ReviewTrade, bars: readonly DailyBar[]): MarkPath | null {
+export function buildMarkPath(trade: ReviewContract, bars: readonly DailyBar[]): MarkPath | null {
   const opened = trade.openedOn
   const closed = trade.closedOn
   if (!opened || !closed) return null
@@ -169,7 +169,7 @@ const EXPIRY_SESSION_SLACK_DAYS = 4
  * different argument.
  */
 export function buildExpiryBranch(
-  trade: ReviewTrade,
+  trade: ReviewContract,
   underlying: readonly DailyBar[],
   today: string,
 ): ExpiryBranch | null {

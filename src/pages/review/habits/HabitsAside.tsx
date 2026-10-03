@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
-import { REVIEW_UNRECORDED } from '@/utils/reviewTrades'
+import { REVIEW_UNRECORDED } from '@/utils/reviewContracts'
 
 /** A severity edge on a card is inline: `mat-card` clears border-colour classes. */
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
@@ -47,7 +47,7 @@ export function PlanAdherenceQuadrants({ closed }: { closed: number }) {
         </Link>
       </header>
       <p className="m-0 px-3 py-2 text-xs leading-normal text-secondary-foreground text-pretty">
-        Both axes are the plan: whether it was any good, and whether it was followed. All {closed} closed trades sit
+        Both axes are the plan: whether it was any good, and whether it was followed. All {closed} closed contracts sit
         outside the four cells rather than being spread across them — no plan has been linked to a position yet.
       </p>
     </section>
@@ -115,12 +115,12 @@ export function NotClaimed({
       lamp: withoutPath === 0 ? ('green' as const) : ('yellow' as const),
       title:
         withoutPath === 0
-          ? `That a path is missing · all ${closed} closed trades have one`
-          : `That every trade has a path · ${withoutPath} of ${closed} do not`,
+          ? `That a path is missing · all ${closed} closed contracts have one`
+          : `That every contract has a path · ${withoutPath} of ${closed} do not`,
       sub:
         withoutPath === 0
           ? `Read from market.option_daily over ${pathRequests} requests, one per underlying and expiry. The best mark, the worst mark and the give-back are measured, not estimated.`
-          : `Those ${withoutPath} are excluded from every path habit rather than counted at zero — a trade with no bars is not a trade that never moved.`,
+          : `Those ${withoutPath} are excluded from every path habit rather than counted at zero — a contract with no bars is not a contract that never moved.`,
     },
     {
       key: 'cost',

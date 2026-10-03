@@ -34,7 +34,7 @@ function fmtFactor(v: number | null | undefined): string {
  * figures here and anywhere that cites them cannot disagree.
  *
  * Three API facts shape the labels. `trade_count` counts every fill in the range,
- * opening fills included, so the API's `win_rate` (wins ÷ all fills) reads low
+ * opening fills included (so it reads as Fills: a trade is the entity, TD-19), so the API's `win_rate` (wins ÷ all fills) reads low
  * against closed trades; the reading divides wins by the fills that realized a
  * gain or a loss instead. `total_unrealized_pnl` is every open position now, not
  * limited to the range. The return divides by a capital base built from today's
@@ -61,10 +61,10 @@ export function buildReadingMetrics(perf: PerformanceResponse | undefined): Read
     { label: 'Net of fees', value: fmtSignedUsd0(s.net_pnl), raw: s.net_pnl, tone: 'pnl' },
     { label: 'Commissions', value: fmtSignedUsd0(-Math.abs(s.total_commission ?? 0)), tone: 'muted',
       title: 'A cost: Net of fees is Realized less this' },
-    { label: 'Consistency · win rate · closed trades', value: winRate, tone: 'plain', groupHead: true,
+    { label: 'Consistency · win rate · closing fills', value: winRate, tone: 'plain', groupHead: true,
       title: `${s.win_count} of ${closed} fills that realized a gain or a loss — opening fills are left out. Not the calendar's win days.` },
     { label: 'Profit factor', value: fmtFactor(s.profit_factor), tone: 'plain' },
-    { label: 'Trades', value: String(s.trade_count ?? 0), tone: 'soft', title: 'Every fill in the range, opening fills included' },
+    { label: 'Fills', value: String(s.trade_count ?? 0), tone: 'soft', title: 'Every fill in the range, opening fills included' },
     { label: 'Avg win / loss', value: `${fmtSignedUsd0(s.avg_win)} / ${fmtSignedUsd0(s.avg_loss)}`, tone: 'soft' },
     { label: 'Risk · max drawdown', value: fmtSignedUsd0(maxDd), tone: 'loss', groupHead: true },
     { label: 'Return on capital base', value: ret == null ? '—' : `${ret >= 0 ? '+' : '−'}${Math.abs(ret).toFixed(2)}%`,
@@ -75,7 +75,7 @@ export function buildReadingMetrics(perf: PerformanceResponse | undefined): Read
   ]
 }
 
-/** `N active days · N trades · capital base $X` for the filter strip. */
+/** `N active days · N fills · capital base $X` for the filter strip. */
 export function buildScopeNote(
   byDayRangeData: ByDayRangeData | null | undefined,
   perf: PerformanceResponse | undefined,
@@ -97,7 +97,7 @@ export function buildScopeNote(
     }
     parts.push(`${dates.size} active ${dates.size === 1 ? 'day' : 'days'}`)
   }
-  if (perf?.summary) parts.push(`${perf.summary.trade_count ?? 0} trades`)
+  if (perf?.summary) parts.push(`${perf.summary.trade_count ?? 0} fills`)
   const base = perf?.transaction?.capital_base
   parts.push(base != null ? `capital base ${fmtUsdRound(base)}` : 'no capital base')
   return parts.join(' · ')

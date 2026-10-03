@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 import { filterTrades, groupTrades, outcomeCount, stepTrade } from './tradePickerModel'
 
-const t = (key: string, over: Partial<ReviewTrade>): ReviewTrade =>
-  ({ contractKey: key, label: key, underlying: 'AAA', expiry: '2026-01-16', realised: 10, play: null, tradeId: null, ...over }) as ReviewTrade
+const t = (key: string, over: Partial<ReviewContract>): ReviewContract =>
+  ({ contractKey: key, label: key, underlying: 'AAA', expiry: '2026-01-16', realised: 10, play: null, tradeId: null, ...over }) as ReviewContract
 
 const trades = [
   t('o', { underlying: 'CCC', realised: 3, exitKind: 'open' }),

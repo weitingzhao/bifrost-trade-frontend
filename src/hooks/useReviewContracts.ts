@@ -8,9 +8,9 @@
  */
 import { useMemo } from 'react'
 import { useExecutionsAll } from '@/hooks/useExecutions'
-import { buildReviewTrades, playbookStats } from '@/utils/reviewTrades'
+import { buildReviewContracts, playbookStats } from '@/utils/reviewContracts'
 
-export function useReviewTrades(accountFilter: string) {
+export function useReviewContracts(accountFilter: string) {
   const execQuery = useExecutionsAll()
 
   const scoped = useMemo(() => {
@@ -18,7 +18,7 @@ export function useReviewTrades(accountFilter: string) {
     return accountFilter === 'all' ? rows : rows.filter((e) => (e.account_id ?? '').trim() === accountFilter)
   }, [execQuery.data?.items, accountFilter])
 
-  const { trades, expiredUnbooked } = useMemo(() => buildReviewTrades(scoped), [scoped])
+  const { trades, expiredUnbooked } = useMemo(() => buildReviewContracts(scoped), [scoped])
   const plays = useMemo(() => playbookStats(trades), [trades])
 
   const accountIds = useMemo(

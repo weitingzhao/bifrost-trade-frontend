@@ -102,11 +102,11 @@ describe('computeHoldDays', () => {
 describe('computeInstanceMetrics', () => {
   afterEach(() => { vi.useRealTimers() })
 
-  it('propagates netPnl, commission, tradeCount from summary', () => {
+  it('propagates netPnl, commission, fillCount from summary', () => {
     const result = computeInstanceMetrics(makeSummary(), [], null)
     expect(result.netPnl).toBe(500)
     expect(result.commission).toBe(10)
-    expect(result.tradeCount).toBe(2)
+    expect(result.fillCount).toBe(2)
   })
 
   it('annualPct and returnPct are null when no sell-side OPT (underlyingCost=null)', () => {

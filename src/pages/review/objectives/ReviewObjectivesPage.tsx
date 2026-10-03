@@ -50,7 +50,7 @@ import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import { useHypothesisList } from '@/hooks/useHypotheses'
-import { useReviewTrades } from '@/hooks/useReviewTrades'
+import { useReviewContracts } from '@/hooks/useReviewContracts'
 import { fetchCandidates } from '@/api/research/candidates'
 import { useObjectiveScope, ALL_OBJECTIVES } from '@/lib/objectiveScope'
 import {
@@ -200,7 +200,7 @@ export default function ReviewObjectivesPage() {
     queryFn: () => fetchCandidates({ status: 'all' }),
     staleTime: 60_000,
   })
-  const review = useReviewTrades('all')
+  const review = useReviewContracts('all')
 
   const chain = useMemo(
     () =>
@@ -277,7 +277,7 @@ export default function ReviewObjectivesPage() {
         <ViewState
           kind="stale"
           layout="strip"
-          title="The trades did not load"
+          title="The contracts did not load"
           detail="Traded, settled, hit and net below are unread — a dash there is not a zero."
         />
       ) : null}
@@ -296,10 +296,10 @@ export default function ReviewObjectivesPage() {
             No hypothesis on this side carries an opportunity id —{' '}
             <span className="font-mono text-foreground/80">{BROKEN_LINK}</span> is empty on all{' '}
             {hypothesesQ.data?.rows.length ?? 0} of them. So none of the{' '}
-            {chain.unattributed.settled ?? 0} closed trades can be reached from a belief, and no
+            {chain.unattributed.settled ?? 0} closed contracts can be reached from a belief, and no
             position can be traced back to the objective that proposed it: the four columns after{' '}
             <span className="font-mono">accepted</span> read <span className="font-mono">—</span>,
-            not zero, and every settled trade sits in Unattributed. Proposed and accepted are real.
+            not zero, and every settled contract sits in Unattributed. Proposed and accepted are real.
           </p>
         </section>
       ) : null}
@@ -312,7 +312,7 @@ export default function ReviewObjectivesPage() {
             sub: 'by settled money',
             // A count of machines, not money — ink, never the direction inks.
             ink: earning > 0 ? 'text-foreground' : 'text-muted-foreground',
-            tip: `An objective earns when it clears the floor it set itself AND is net positive on settled trades. Both, because either alone can lie. ${VERDICT_FLOOR} settled trades are needed before a hit rate is a claim at all.`,
+            tip: `An objective earns when it clears the floor it set itself AND is net positive on settled contracts. Both, because either alone can lie. ${VERDICT_FLOOR} settled contracts are needed before a hit rate is a claim at all.`,
           },
           {
             label: 'Net from objectives',
@@ -333,7 +333,7 @@ export default function ReviewObjectivesPage() {
             value: '0',
             sub: "by this quarter's record",
             ink: 'text-muted-foreground',
-            tip: 'A patch drafted from settled evidence, waiting to be sent to the Decision Inbox. None can be drafted while no settled trade can be attributed to an objective.',
+            tip: 'A patch drafted from settled evidence, waiting to be sent to the Decision Inbox. None can be drafted while no settled contract can be attributed to an objective.',
           },
         ].map((k) => (
           <div
@@ -438,7 +438,7 @@ export default function ReviewObjectivesPage() {
           <div className="space-y-2 px-3 py-2 text-dense-meta">
             <p className="max-w-[78ch] text-muted-foreground">
               Nothing argues for a change yet, and the reason is the one above: a patch has to carry
-              the settled evidence that argued for it, and no settled trade can be attributed to an
+              the settled evidence that argued for it, and no settled contract can be attributed to an
               objective. With the link written, a verdict here drafts a patch — and that patch is a
               card in the{' '}
               <Link to="/research/loop/decisions" className="text-primary hover:underline">
@@ -456,8 +456,8 @@ export default function ReviewObjectivesPage() {
 
       <p className="max-w-[96ch] text-dense-caption leading-relaxed text-muted-foreground/70">
         A verdict needs enough settled outcomes to be one. Below the floor this page says so rather
-        than showing a number that looks like an answer — an objective with three settled trades has
-        a record of three settled trades, not a hit rate.
+        than showing a number that looks like an answer — an objective with three settled contracts has
+        a record of three settled contracts, not a hit rate.
       </p>
     </PageShell>
   )

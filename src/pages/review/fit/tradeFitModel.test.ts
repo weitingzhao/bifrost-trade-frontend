@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { corporateActionRow, counterfactuals, derivedTags, sources, timeline } from './tradeFitModel'
 import type { CorporateActionRow } from '@/api/marketData/corporateActions'
 import type { MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 const TODAY = '2026-09-18'
 
-const TRADE: ReviewTrade = {
+const TRADE: ReviewContract = {
   contractKey: 'HIMS  260821C00040000|OPT|20260821|40.0|C',
   label: 'HIMS 21AUG26 40C',
   symbol: 'HIMS  260821C00040000',

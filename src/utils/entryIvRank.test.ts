@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { IvPercentileRow } from '@/types/ivRadar'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 import { rankOnEntry } from './entryIvRank'
 import { entryIvRankReading, habitReadings } from './reviewHabits'
 
@@ -13,8 +13,8 @@ const row = (trade_date: string, iv_rank_1y: number | null): IvPercentileRow => 
   iv_rank_1y,
   lookback_days: 252,
 })
-const trade = (openedOn: string, underlying = 'XYZ'): ReviewTrade =>
-  ({ contractKey: `${underlying}-${openedOn}`, underlying, openedOn, realised: 1 }) as unknown as ReviewTrade
+const trade = (openedOn: string, underlying = 'XYZ'): ReviewContract =>
+  ({ contractKey: `${underlying}-${openedOn}`, underlying, openedOn, realised: 1 }) as unknown as ReviewContract
 
 describe('rankOnEntry', () => {
   const rows = [row('2026-03-02', 20), row('2026-03-05', 40), row('2026-03-20', 60)]

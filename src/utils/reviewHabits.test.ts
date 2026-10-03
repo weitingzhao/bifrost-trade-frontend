@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { habitReadings, iqr, maeDollars, meanBand, plotRange } from './reviewHabits'
 import type { MarkPath } from './reviewMarkPath'
-import type { ReviewTrade } from './reviewTrades'
+import type { ReviewContract } from './reviewContracts'
 
-function trade(p: Partial<ReviewTrade> & { contractKey: string }): ReviewTrade {
+function trade(p: Partial<ReviewContract> & { contractKey: string }): ReviewContract {
   return {
     label: p.contractKey,
     symbol: `${p.underlying ?? 'ZEBR'}  261218C00090000`,

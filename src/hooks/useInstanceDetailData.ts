@@ -51,7 +51,7 @@ export interface InstanceDetailData {
   holdDays: number | null
   returnPct: number | null
   annualReturnPct: number | null
-  tradeCount: number
+  fillCount: number
 }
 
 export function useInstanceDetailData(
@@ -211,6 +211,6 @@ export function useInstanceDetailData(
     holdDays: holdDaysUsed,
     returnPct,
     annualReturnPct: annualDetail?.annualReturnPct ?? null,
-    tradeCount: summary?.trade_count ?? 0,
+    fillCount: summary?.trade_count ?? 0,
   }
 }

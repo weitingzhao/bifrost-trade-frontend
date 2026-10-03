@@ -3,7 +3,7 @@ import { RECORD_BY_SOURCE_PATH } from '@/utils/tradeOrigin'
 import type { ResearchObjective } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 import {
   BROKEN_LINK,
   chainAction,
@@ -29,8 +29,8 @@ const cand = (objectiveId: string | null, status = 'open'): ResearchCandidate =>
 const hyp = (over: Partial<Hypothesis> = {}): Hypothesis =>
   ({ id: 'h1', status: 'active', symbols: [], linked_opportunity_ids: [], ...over }) as Hypothesis
 
-const trade = (realised: number, win: boolean): ReviewTrade =>
-  ({ closedOn: '2026-09-01', realised, win }) as ReviewTrade
+const trade = (realised: number, win: boolean): ReviewContract =>
+  ({ closedOn: '2026-09-01', realised, win }) as ReviewContract
 
 describe('lineageIsWired', () => {
   it('is the one reading the page turns on', () => {
@@ -145,9 +145,9 @@ describe('chainAction', () => {
 describe('chainWindow', () => {
   it('states the span the figures are actually true of, not the design’s 90 days', () => {
     // This side reads every canonical execution with no window at all.
-    const t = (closedOn: string) => ({ closedOn, realised: 0, win: true }) as ReviewTrade
+    const t = (closedOn: string) => ({ closedOn, realised: 0, win: true }) as ReviewContract
     expect(chainWindow([t('2026-09-01'), t('2026-02-13'), t('2026-09-18')])).toBe(
-      'settled trades · 2026-02-13 → 2026-09-18 · all accounts',
+      'settled contracts · 2026-02-13 → 2026-09-18 · all accounts',
     )
   })
 

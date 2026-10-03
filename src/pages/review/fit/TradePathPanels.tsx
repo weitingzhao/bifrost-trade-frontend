@@ -21,7 +21,7 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import type { DailyBar } from '@/api/marketData/dailyBars'
 import type { ExpiryBranch, MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 const VW = 1000
 /** The right-hand gutter the value labels sit in. */
@@ -54,7 +54,7 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 interface Props {
-  trade: ReviewTrade
+  trade: ReviewContract
   markPath: MarkPath | null
   expiryBranch: ExpiryBranch | null
   underlying: readonly DailyBar[]

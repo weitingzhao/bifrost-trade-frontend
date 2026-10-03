@@ -9,14 +9,14 @@
  * headed by its count and net. "Broke plan" needs a plan linked to the trade,
  * and none is (`REVIEW_UNRECORDED.plan`), so it counts nothing and says so.
  */
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 export type PickOutcome = 'all' | 'open' | 'won' | 'lost' | 'broke'
 export type PickGroup = 'none' | 'sym' | 'exp'
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
-export const OUTCOMES: { key: PickOutcome; label: string; test: (t: ReviewTrade) => boolean | null }[] = [
+export const OUTCOMES: { key: PickOutcome; label: string; test: (t: ReviewContract) => boolean | null }[] = [
   { key: 'all', label: 'All', test: () => true },
   // Rev .104: an instance still running is reviewable — interim — and pinned first.
   { key: 'open', label: 'Open', test: (t) => t.exitKind === 'open' },
@@ -26,14 +26,14 @@ export const OUTCOMES: { key: PickOutcome; label: string; test: (t: ReviewTrade)
   { key: 'broke', label: 'Broke plan', test: () => null },
 ]
 
-export function matchesQuery(t: ReviewTrade, q: string): boolean {
+export function matchesQuery(t: ReviewContract, q: string): boolean {
   const s = q.trim().toLowerCase()
   if (!s) return true
   const hay = [t.tradeId != null ? `#${t.tradeId}` : '', t.underlying, t.label, t.play ?? ''].join(' ').toLowerCase()
   return hay.includes(s)
 }
 
-export function outcomeCount(trades: readonly ReviewTrade[], key: PickOutcome): number | null {
+export function outcomeCount(trades: readonly ReviewContract[], key: PickOutcome): number | null {
   const o = OUTCOMES.find((x) => x.key === key)!
   let n = 0
   for (const t of trades) {
@@ -44,7 +44,7 @@ export function outcomeCount(trades: readonly ReviewTrade[], key: PickOutcome): 
   return n
 }
 
-export function filterTrades(trades: readonly ReviewTrade[], outcome: PickOutcome, q: string): ReviewTrade[] {
+export function filterTrades(trades: readonly ReviewContract[], outcome: PickOutcome, q: string): ReviewContract[] {
   const o = OUTCOMES.find((x) => x.key === outcome)!
   return trades.filter((t) => o.test(t) === true && matchesQuery(t, q))
 }
@@ -54,10 +54,10 @@ export interface PickGroupRows {
   label: string | null
   count: number
   net: number
-  rows: ReviewTrade[]
+  rows: ReviewContract[]
 }
 
-function expiryMonth(t: ReviewTrade): { key: string; label: string } {
+function expiryMonth(t: ReviewContract): { key: string; label: string } {
   const [y, m] = t.expiry.split('-')
   const mi = Number(m) - 1
   if (!y || !(mi >= 0 && mi < 12)) return { key: '0000-00', label: 'no expiry' }
@@ -65,7 +65,7 @@ function expiryMonth(t: ReviewTrade): { key: string; label: string } {
 }
 
 /** Groups keep the list's own order inside; Symbol groups by size, Expiry newest month first. */
-export function groupTrades(rows: readonly ReviewTrade[], by: PickGroup): PickGroupRows[] {
+export function groupTrades(rows: readonly ReviewContract[], by: PickGroup): PickGroupRows[] {
   if (by === 'none') return [{ key: 'all', label: null, count: rows.length, net: rows.reduce((a, t) => a + t.realised, 0), rows: [...rows] }]
   const map = new Map<string, PickGroupRows>()
   for (const t of rows) {
@@ -83,7 +83,7 @@ export function groupTrades(rows: readonly ReviewTrade[], by: PickGroup): PickGr
 }
 
 /** ‹ › and [ ]: the neighbour in the full list, wrapping. */
-export function stepTrade(trades: readonly ReviewTrade[], current: string | null, d: 1 | -1): ReviewTrade | null {
+export function stepTrade(trades: readonly ReviewContract[], current: string | null, d: 1 | -1): ReviewContract | null {
   if (trades.length === 0) return null
   const i = Math.max(0, trades.findIndex((t) => t.contractKey === current))
   return trades[(i + d + trades.length) % trades.length]

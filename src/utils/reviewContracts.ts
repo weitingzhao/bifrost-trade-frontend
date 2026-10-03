@@ -1,5 +1,8 @@
 /**
- * Closed trades, as Review reads them.
+ * Closed contracts, as Review reads them. A contract here is one option
+ * contract from its first fill to flat; the Trade (an instance, `#NNN`) is
+ * `reviewInstances`, which builds on these. Named contracts since TD-19:
+ * 'trade' is kept for the entity.
  *
  * Review's whole method is to separate two questions a single P&L number
  * blurs: **was the plan any good**, and **did I follow it**. The design draws
@@ -7,7 +10,7 @@
  * numbers needs two things this side does not have: a written plan linked to
  * the position, and the mark through the holding period.
  *
- * What it does have is the ledger. A closed trade is an option contract the
+ * What it does have is the ledger. A closed contract is one the
  * fills have taken flat, and from the fills alone a great deal is knowable:
  * what it made, how long it was held, how far out it was opened, what share of
  * the credit was kept, and which play it belonged to. Those readings are real
@@ -62,7 +65,7 @@ export interface ReviewFill {
   booked?: boolean
 }
 
-export interface ReviewTrade {
+export interface ReviewContract {
   contractKey: string
   /** The §14.4 contract token. */
   label: string
@@ -193,13 +196,13 @@ function epochDate(time: number | null | undefined): string | null {
  * is counted separately rather than folded in with a realised figure it does
  * not have.
  */
-export function buildReviewTrades(executions: readonly Execution[]): {
-  trades: ReviewTrade[]
+export function buildReviewContracts(executions: readonly Execution[]): {
+  trades: ReviewContract[]
   /** Contracts past expiry that the fills never closed — over, but unbooked. */
   expiredUnbooked: number
 } {
   const groups = buildOptExecutionGroups([...executions])
-  const trades: ReviewTrade[] = []
+  const trades: ReviewContract[] = []
   let expiredUnbooked = 0
 
   for (const g of groups) {
@@ -310,10 +313,10 @@ function mean(values: readonly number[]): number | null {
 
 /** What each play has actually done, largest sample first. */
 export function playbookStats(
-  trades: readonly ReviewTrade[],
+  trades: readonly ReviewContract[],
   paths: Map<string, MarkPath> = new Map(),
 ): PlayStat[] {
-  const byPlay = new Map<string, ReviewTrade[]>()
+  const byPlay = new Map<string, ReviewContract[]>()
   for (const t of trades) {
     const play = t.play ?? 'no play recorded'
     byPlay.set(play, [...(byPlay.get(play) ?? []), t])

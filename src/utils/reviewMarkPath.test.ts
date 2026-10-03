@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildExpiryBranch, buildMarkPath } from './reviewMarkPath'
-import type { ReviewFill, ReviewTrade } from './reviewTrades'
+import type { ReviewFill, ReviewContract } from './reviewContracts'
 import type { DailyBar } from '@/api/marketData/dailyBars'
 
 function bar(date: string, close: number | null): DailyBar {
@@ -19,7 +19,7 @@ function fill(date: string | null, side: 'buy' | 'sell', qty: number, price: num
 }
 
 /** One short put: sold at 10.00, bought back at 3.00, one contract, no commission. */
-function shortPut(fills: ReviewFill[] = [fill('2026-08-03', 'sell', 1, 10), fill('2026-08-07', 'buy', 1, 3)]): ReviewTrade {
+function shortPut(fills: ReviewFill[] = [fill('2026-08-03', 'sell', 1, 10), fill('2026-08-07', 'buy', 1, 3)]): ReviewContract {
   return {
     contractKey: 'DDOG  261016P00200000|OPT|20261016|200.0|P',
     label: 'DDOG 26-10-16 P200',

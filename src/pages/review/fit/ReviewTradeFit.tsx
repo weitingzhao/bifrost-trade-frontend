@@ -3,7 +3,7 @@
  *
  * Trade review draws this above the path panels; the Queue draws its own
  * compact version in the Review slot. What the two share is the model — one
- * ReviewTrade and REVIEW_GAPS — so they cannot describe the same missing
+ * ReviewContract and REVIEW_GAPS — so they cannot describe the same missing
  * number differently.
  *
  * Both gaps are measured from the plan's own exit, and no plan is linked to a
@@ -24,7 +24,7 @@ import { shortOptLegLabel } from '@/utils/ledger/optionsModeBridge'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
-import { REVIEW_GAPS, type ReviewTrade } from '@/utils/reviewTrades'
+import { REVIEW_GAPS, type ReviewContract } from '@/utils/reviewContracts'
 import type { MarkPath } from '@/utils/reviewMarkPath'
 
 // Rev .62: a foot is a rule, not a band.
@@ -38,7 +38,7 @@ export function ReviewTradeFit({
   pathLoading = false,
   tier = true,
 }: {
-  trade: ReviewTrade
+  trade: ReviewContract
   markPath?: MarkPath | null
   /** The marks are still in flight — a loading state must not read as "not recorded". */
   pathLoading?: boolean

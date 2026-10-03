@@ -2,7 +2,7 @@
  * One reviewed instance's path (design Rev .104), and the underlying beneath it.
  *
  * A closed single-leg instance is a contract: it keeps the contract path and
- * its exact held-to-expiry branch (`useTradeMarkPath`'s reading). Anything
+ * its exact held-to-expiry branch (`useContractMarkPath`'s reading). Anything
  * else — a roll, a spread, or an instance still open — is the multi-leg line
  * (`buildInstancePath`), which has no do-nothing branch: holding a rolled
  * instance to expiry means holding its last legs, and an open one has not
@@ -18,7 +18,7 @@ import {
 import { buildExpiryBranch, buildMarkPath } from '@/utils/reviewMarkPath'
 import { buildInstancePath } from '@/utils/reviewInstancePath'
 import type { ReviewInstance } from '@/utils/reviewInstances'
-import type { TradeMarkPath } from '@/hooks/useTradeMarkPath'
+import type { TradeMarkPath } from '@/hooks/useContractMarkPath'
 
 const EMPTY: TradeMarkPath = { path: null, expiryBranch: null, underlying: [], optionTicker: null }
 

@@ -31,7 +31,7 @@
  */
 import type { StrategyStructure, WinRateStructureRow } from '@/types/strategy'
 import { positionGreek } from '@/utils/optionTicker'
-import { winRateBand } from '@/utils/reviewTrades'
+import { winRateBand } from '@/utils/reviewContracts'
 import { ALLOWANCE_SHARE, sizeCapFor, type SizeCap } from '@/utils/sizeCap'
 
 const SHARES = 100

@@ -16,7 +16,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import type { MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 import type { DerivedTag, SourceRow, TimelineStage, Tone } from './tradeFitModel'
 
 /**
@@ -42,7 +42,7 @@ const TONE_EDGE: Record<Tone, { borderColor: string } | undefined> = {
   neutral: undefined,
 }
 
-export function VerdictPanel({ trade, markPath }: { trade: ReviewTrade; markPath: MarkPath | null }) {
+export function VerdictPanel({ trade, markPath }: { trade: ReviewContract; markPath: MarkPath | null }) {
   return (
     <section className={positionsUi.panel} style={TONE_EDGE.warning} aria-label="Verdict">
       <header className={positionsUi.panelHead}>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PerformanceResponse } from '@/types/trading'
-import { buildReadingMetrics, fmtSignedUsd0 } from '@/utils/performanceReading'
+import { buildReadingMetrics, buildScopeNote, fmtSignedUsd0 } from '@/utils/performanceReading'
 
 // Invented figures.
 const perf = {
@@ -29,10 +29,16 @@ describe('buildReadingMetrics', () => {
   it('reads win rate over the fills that closed something, not over every fill', () => {
     // trade_count counts opening fills too: 4 wins and 6 losses of 10 fills is 40%,
     // and the same 10 closing fills among 25 fills would still be 40%.
-    expect(m['Consistency · win rate · closed trades'].value).toBe('40.0%')
+    expect(m['Consistency · win rate · closing fills'].value).toBe('40.0%')
     const withOpens = { ...perf, summary: { ...perf.summary, trade_count: 25, win_rate: 0.16 } }
     const w = buildReadingMetrics(withOpens).find(x => x.label.startsWith('Consistency'))
     expect(w?.value).toBe('40.0%')
+  })
+
+  it('calls a fill count Fills — a trade is the entity, not a fill (TD-19)', () => {
+    expect(m.Fills.value).toBe('10')
+    expect(buildReadingMetrics(perf).some(x => /\btrades?\b/i.test(x.label))).toBe(false)
+    expect(buildScopeNote(null, perf)).toContain('10 fills')
   })
 
   it('shows commissions as the cost they are', () => {

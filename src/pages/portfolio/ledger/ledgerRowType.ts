@@ -4,7 +4,7 @@ export type LedgerRowType = 'all' | 'exch' | 'book'
 
 export const LEDGER_ROW_TYPE_TABS: { id: LedgerRowType; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'exch', label: 'Trades' },
+  { id: 'exch', label: 'Exchange fills' },
   { id: 'book', label: 'Book events' },
 ]
 

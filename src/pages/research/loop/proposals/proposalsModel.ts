@@ -26,7 +26,7 @@
  */
 import { fmtUsd } from '@/utils/positions'
 import type { HabitReading } from '@/utils/reviewHabits'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 export type ProposalState = 'argued' | 'no-cost' | 'no-habit' | 'measuring'
 
@@ -93,7 +93,7 @@ function habit(habits: readonly HabitReading[], key: string): HabitReading | und
 }
 
 /** The trades that contribute most to a habit's cost, worst first. */
-function citesFor(h: HabitReading | undefined, trades: readonly ReviewTrade[], amount: (dot: { key: string; value: number }) => number): ProposalCite[] {
+function citesFor(h: HabitReading | undefined, trades: readonly ReviewContract[], amount: (dot: { key: string; value: number }) => number): ProposalCite[] {
   if (h == null || h.dots.length === 0) return []
   const byKey = new Map(trades.map((t) => [t.contractKey, t]))
   return h.dots
@@ -105,7 +105,7 @@ function citesFor(h: HabitReading | undefined, trades: readonly ReviewTrade[], a
 
 export function buildProposals(
   habits: readonly HabitReading[],
-  trades: readonly ReviewTrade[],
+  trades: readonly ReviewContract[],
   paths: Map<string, { best: number }>,
 ): Proposal[] {
   const disposition = habit(habits, 'disposition')

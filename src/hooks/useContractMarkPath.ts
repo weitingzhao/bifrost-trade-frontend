@@ -17,7 +17,7 @@ import {
   type DailyBar,
 } from '@/api/marketData/dailyBars'
 import { buildExpiryBranch, buildMarkPath, type ExpiryBranch, type MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 export interface TradeMarkPath {
   path: MarkPath | null
@@ -32,7 +32,7 @@ function today(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-export function useTradeMarkPath(trade: ReviewTrade | null) {
+export function useContractMarkPath(trade: ReviewContract | null) {
   const optionTicker = trade ? occToOptionTicker(trade.contractKey) : null
   const from = trade?.openedOn ?? null
   // Expiry, or today when the contract has not reached it — the vendor has no

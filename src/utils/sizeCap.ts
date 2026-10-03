@@ -19,7 +19,7 @@
  * prototype's own words for the panel are "feeds the conviction cap on
  * Compare". One rule, read twice (§14.2).
  */
-import { THIN_SAMPLE } from '@/utils/reviewTrades'
+import { THIN_SAMPLE } from '@/utils/reviewContracts'
 
 /** What the rule reads off a record — a play's or a structure's. */
 export interface SizeCapRecord {

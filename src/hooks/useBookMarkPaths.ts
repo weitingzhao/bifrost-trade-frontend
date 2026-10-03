@@ -15,7 +15,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchOptionDailyByExpiry, occToOptionTicker, type DailyBar } from '@/api/marketData/dailyBars'
 import { buildMarkPath, type MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 const CONCURRENCY = 6
 
@@ -33,7 +33,7 @@ interface Group {
   expiry: string
   from: string
   to: string
-  trades: ReviewTrade[]
+  trades: ReviewContract[]
 }
 
 function today(): string {
@@ -41,7 +41,7 @@ function today(): string {
 }
 
 /** One request per underlying and expiry, over the union of those trades' windows. */
-export function groupForBars(trades: readonly ReviewTrade[], now: string): Group[] {
+export function groupForBars(trades: readonly ReviewContract[], now: string): Group[] {
   const groups = new Map<string, Group>()
   for (const t of trades) {
     if (!t.underlying || !t.expiry || !t.openedOn || !t.closedOn) continue
@@ -79,7 +79,7 @@ async function inPools<T, R>(items: readonly T[], run: (item: T) => Promise<R>):
   return out
 }
 
-export function useBookMarkPaths(trades: readonly ReviewTrade[]) {
+export function useBookMarkPaths(trades: readonly ReviewContract[]) {
   const now = today()
   const groups = groupForBars(trades, now)
   // The key is the book, not the render: two pages asking the same question

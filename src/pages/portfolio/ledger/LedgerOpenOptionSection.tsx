@@ -227,7 +227,7 @@ export function LedgerOpenOptionSection({
           <LedgerPanelBar
             title="Open option"
             subject={`${openActiveGroups.length} ${openActiveGroups.length === 1 ? 'contract' : 'contracts'}`}
-            hint="net quantity not zero, expiry ahead · not in the Summary, which counts closed trades only"
+            hint="net quantity not zero, expiry ahead · not in the Summary, which counts closed contracts only"
           />
           <OpenGroupTable
             groups={openActiveGroups}

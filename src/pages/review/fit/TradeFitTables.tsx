@@ -14,7 +14,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtUsd } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 import type { Counterfactual } from './tradeFitModel'
 
 export function CounterfactualsTable({ rows }: { rows: readonly Counterfactual[] }) {
@@ -100,7 +100,7 @@ function deltaClass(delta: number): string {
   return delta > 0 ? 'text-warning' : 'text-profit'
 }
 
-export function ExecutionTable({ trade }: { trade: ReviewTrade }) {
+export function ExecutionTable({ trade }: { trade: ReviewContract }) {
   return (
     <section className={positionsUi.panel} aria-label="Execution">
       <header className={positionsUi.panelHead}>

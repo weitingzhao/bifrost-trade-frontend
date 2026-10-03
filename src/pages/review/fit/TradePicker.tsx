@@ -12,7 +12,7 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 import {
   OUTCOMES,
   filterTrades,
@@ -25,7 +25,7 @@ import {
 
 const NO_PLAN = 'No plan is linked to any position, so whether a trade broke its plan cannot be read.'
 
-function TradeName({ t }: { t: ReviewTrade }) {
+function TradeName({ t }: { t: ReviewContract }) {
   return (
     <>
       {t.tradeId != null ? (
@@ -45,14 +45,14 @@ export function TradePicker({
   leading,
   trailing,
 }: {
-  trades: readonly ReviewTrade[]
-  current: ReviewTrade | null
-  onPick: (t: ReviewTrade) => void
+  trades: readonly ReviewContract[]
+  current: ReviewContract | null
+  onPick: (t: ReviewContract) => void
   /**
    * What ‹ › and [ ] step through, when it is not every trade (Rev .110): the
    * awaiting queue by default, Queue's own row order when arrived from Queue.
    */
-  walk?: readonly ReviewTrade[]
+  walk?: readonly ReviewContract[]
   /** The walk's name beside its count — "awaiting", "in Queue's order". */
   walkLabel?: string
   /** The toolbar's first item — the Facts / Review switch. */
@@ -221,8 +221,8 @@ function GroupRows({
 }: {
   g: ReturnType<typeof groupTrades>[number]
   group: PickGroup
-  current: ReviewTrade | null
-  onPick: (t: ReviewTrade) => void
+  current: ReviewContract | null
+  onPick: (t: ReviewContract) => void
 }) {
   return (
     <>

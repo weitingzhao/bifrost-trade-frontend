@@ -29,7 +29,7 @@ describe('buildDayStats', () => {
   })
 
   it('counts only that day’s fills', () => {
-    expect(s.Trades.value).toBe('2')
+    expect(s.Fills.value).toBe('2')
     expect(s.Comm.value).toBe('−$2')
   })
 })

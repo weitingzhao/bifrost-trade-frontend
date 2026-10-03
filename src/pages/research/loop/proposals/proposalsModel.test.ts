@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildProposals, proposalChain } from './proposalsModel'
 import type { HabitReading } from '@/utils/reviewHabits'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 function habit(p: Partial<HabitReading> & { key: string }): HabitReading {
   return {
@@ -26,7 +26,7 @@ function habit(p: Partial<HabitReading> & { key: string }): HabitReading {
 const TRADES = [
   { contractKey: 'A', label: 'AAA 18DEC26 90C', realised: 500 },
   { contractKey: 'B', label: 'BBB 18DEC26 90C', realised: 100 },
-] as unknown as ReviewTrade[]
+] as unknown as ReviewContract[]
 
 const PATHS = new Map([
   ['A', { best: 900 }],

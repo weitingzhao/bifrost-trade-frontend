@@ -34,8 +34,8 @@ import { fmtUsd } from '@/utils/positions'
 import { fmtIsoDateToken } from '@/lib/format'
 import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { useBookMarkPaths } from '@/hooks/useBookMarkPaths'
-import { useReviewTrades } from '@/hooks/useReviewTrades'
-import { EXIT_LABEL, REVIEW_UNRECORDED, type ExitKind } from '@/utils/reviewTrades'
+import { useReviewContracts } from '@/hooks/useReviewContracts'
+import { EXIT_LABEL, REVIEW_UNRECORDED, type ExitKind } from '@/utils/reviewContracts'
 import { useTradeOrigins } from '@/hooks/useTradeOrigins'
 import { ORIGIN_UNRECORDED, type TradeOrigin } from '@/utils/tradeOrigin'
 import { derivedTags, exitTags } from '@/pages/review/fit/tradeFitModel'
@@ -234,7 +234,7 @@ export default function ReviewQueuePage() {
   const [gap, setGap] = usePageViewState<GapKey | null>('gap', null)
   const origins = useTradeOrigins()
   const navigate = useNavigate()
-  const { trades, expiredUnbooked, accountIds } = useReviewTrades(accountFilter)
+  const { trades, expiredUnbooked, accountIds } = useReviewContracts(accountFilter)
   const reviews = useTradeReviews()
   // Rev .110: the queue reads instances — the same #NNN Trade review and the
   // Instance page read. Contract-level trades stay for the book's daily bars.
@@ -257,7 +257,7 @@ export default function ReviewQueuePage() {
     }
     return by
   }, [trades, marks.paths])
-  // The same cache entry useReviewTrades reads — held here for its §17 state.
+  // The same cache entry useReviewContracts reads — held here for its §17 state.
   const execQuery = useExecutionsAll()
   const instances = useMemo(() => {
     const items = execQuery.data?.items ?? []

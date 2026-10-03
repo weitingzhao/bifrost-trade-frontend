@@ -30,7 +30,7 @@ import { RECORD_BY_SOURCE_PATH } from '@/utils/tradeOrigin'
 import type { ResearchObjective } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 import { candidateObjectiveId } from '@/lib/objectiveScope'
 
 /**
@@ -38,7 +38,7 @@ import { candidateObjectiveId } from '@/lib/objectiveScope'
  *
  * The design's own default. Below it the page says so rather than printing a
  * percentage that reads like an answer: an objective with three settled
- * trades has a record of three settled trades, not a hit rate.
+ * contracts has a record of three settled contracts, not a hit rate.
  */
 export const VERDICT_FLOOR = 5
 
@@ -82,7 +82,7 @@ function verdictOf(settled: number | null, hit: number | null, net: number | nul
   if (settled == null) {
     return {
       verdict: 'NO VERDICT',
-      why: `Nothing links this objective to a settled position — \`${BROKEN_LINK}\` is empty on every hypothesis, so the trades it may have produced cannot be found. Not a bad machine, an unmeasurable one.`,
+      why: `Nothing links this objective to a settled position — \`${BROKEN_LINK}\` is empty on every hypothesis, so the contracts it may have produced cannot be found. Not a bad machine, an unmeasurable one.`,
     }
   }
   if (settled < floor) {
@@ -92,12 +92,12 @@ function verdictOf(settled: number | null, hit: number | null, net: number | nul
     }
   }
   if (net != null && net > 0 && hit != null && hit >= 0.45) {
-    return { verdict: 'EARNING', why: 'Clears its floor and is net positive on settled trades.' }
+    return { verdict: 'EARNING', why: 'Clears its floor and is net positive on settled contracts.' }
   }
   if (net != null && net <= 0) {
     return {
       verdict: 'DID NOT EARN',
-      why: `Net negative on ${settled} settled trades. Whether the signal or the vehicle is at fault is the next question, not this column.`,
+      why: `Net negative on ${settled} settled contracts. Whether the signal or the vehicle is at fault is the next question, not this column.`,
     }
   }
   return {
@@ -111,7 +111,7 @@ export interface ChainInput {
   candidates: readonly ResearchCandidate[]
   hypotheses: readonly Hypothesis[]
   /** Closed trades, from the same builder the Review queue reads. */
-  trades: readonly ReviewTrade[]
+  trades: readonly ReviewContract[]
   floor?: number
 }
 
@@ -181,7 +181,7 @@ export function objectiveChain(input: ChainInput): {
     verdict: 'NOT A MACHINE',
     why: wired
       ? 'Hand-opened, or a plan edited past the point where its lineage could be traced back to a run. Real money, and not evidence about any objective.'
-      : `Every settled trade is here, because \`${BROKEN_LINK}\` is empty on every hypothesis — nothing on this side ties a position back to the objective that proposed it. Real money, and not yet evidence about any machine.`,
+      : `Every settled contract is here, because \`${BROKEN_LINK}\` is empty on every hypothesis — nothing on this side ties a position back to the objective that proposed it. Real money, and not yet evidence about any machine.`,
     // Settled money read by where the idea came from is the question this row
     // raises — Outcome's cut, Playbook › Record · By source since Rev .112.
     to: RECORD_BY_SOURCE_PATH,
@@ -261,12 +261,12 @@ export function chainAction(row: ChainRow): { label: string; to: string | null; 
  * printing the design's 90 days over an all-time read would be a caption that
  * lies about its own figures.
  */
-export function chainWindow(trades: readonly ReviewTrade[]): string {
+export function chainWindow(trades: readonly ReviewContract[]): string {
   const days = trades.map((t) => t.closedOn).filter(Boolean).sort()
-  if (days.length === 0) return 'settled trades · nothing closed yet · all accounts'
+  if (days.length === 0) return 'settled contracts · nothing closed yet · all accounts'
   const first = days[0]
   const last = days[days.length - 1]
   return first === last
-    ? `settled trades · ${first} · all accounts`
-    : `settled trades · ${first} → ${last} · all accounts`
+    ? `settled contracts · ${first} · all accounts`
+    : `settled contracts · ${first} → ${last} · all accounts`
 }

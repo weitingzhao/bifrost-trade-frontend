@@ -21,7 +21,7 @@
  */
 import { rankOnEntry, type EntryIvRanks } from '@/utils/entryIvRank'
 import type { MarkPath } from '@/utils/reviewMarkPath'
-import type { ReviewTrade } from '@/utils/reviewTrades'
+import type { ReviewContract } from '@/utils/reviewContracts'
 
 export interface HabitDot {
   key: string
@@ -146,12 +146,12 @@ export function plotRange(values: readonly number[]): [number, number] | null {
 }
 
 interface Ctx {
-  trades: readonly ReviewTrade[]
+  trades: readonly ReviewContract[]
   paths: Map<string, MarkPath>
 }
 
-function withPath(ctx: Ctx): { trade: ReviewTrade; path: MarkPath }[] {
-  const out: { trade: ReviewTrade; path: MarkPath }[] = []
+function withPath(ctx: Ctx): { trade: ReviewContract; path: MarkPath }[] {
+  const out: { trade: ReviewContract; path: MarkPath }[] = []
   for (const trade of ctx.trades) {
     const path = ctx.paths.get(trade.contractKey)
     if (path) out.push({ trade, path })
@@ -189,7 +189,7 @@ function unmeasured(
 
 /** The design's seven, plus the one this book's own fills answer outright. */
 export function habitReadings(
-  trades: readonly ReviewTrade[],
+  trades: readonly ReviewContract[],
   paths: Map<string, MarkPath> = new Map(),
   pathsLoading = false,
   /** Each name's trailing year of IV rank (`useEntryIvRanks`); omitted → the reading says it was not read. */
@@ -228,8 +228,8 @@ function holdTime({ trades }: Ctx): HabitReading {
     ciLabel: '95%',
     read:
       avg == null
-        ? 'No closed trade carries both a first and a last fill date.'
-        : `Trades are held ${avg.toFixed(0)} days on average, over ${values.length} closed.`,
+        ? 'No closed contract carries both a first and a last fill date.'
+        : `Contracts are held ${avg.toFixed(0)} days on average, over ${values.length} closed.`,
     consequence: null,
     consequenceLabel: 'holding longer or shorter than planned is what costs — and the plan is absent',
     dots: held.map((t) => ({ key: t.contractKey, value: t.daysHeld as number, realised: t.realised })),
@@ -249,7 +249,7 @@ function holdTime({ trades }: Ctx): HabitReading {
  * winner, what share of the best mark the position ever printed did the exit
  * actually land. The dollars left behind are the consequence, and they are real.
  */
-function disposition(pathed: { trade: ReviewTrade; path: MarkPath }[]): HabitReading {
+function disposition(pathed: { trade: ReviewContract; path: MarkPath }[]): HabitReading {
   const winners = pathed.filter(({ trade, path }) => trade.win && path.captureOfBest != null)
   const values = winners.map(({ path }) => path.captureOfBest as number)
   const med = median(values)
@@ -265,7 +265,7 @@ function disposition(pathed: { trade: ReviewTrade; path: MarkPath }[]): HabitRea
     ciLabel: 'IQR',
     read:
       med == null
-        ? 'No winning trade has a mark path, so there is no peak to compare the exit against.'
+        ? 'No winning contract has a mark path, so there is no peak to compare the exit against.'
         : `Half of the ${values.length} winners landed ${(med * 100).toFixed(0)}% of the best mark they ever printed or better.`,
     consequence: winners.length === 0 ? null : -givenBack,
     consequenceLabel: 'left on the table across the winners — what the exits did not take',
@@ -277,12 +277,12 @@ function disposition(pathed: { trade: ReviewTrade; path: MarkPath }[]): HabitRea
     needsPath: true,
     reference: { value: 1, label: 'the peak' },
     unmeasured:
-      'whether the plan asked for the peak — this is the exit against what the trade offered, not against what I said I wanted',
+      'whether the plan asked for the peak — this is the exit against what the contract offered, not against what I said I wanted',
     kind: 'share',
   }
 }
 
-function cutLatency(pathed: { trade: ReviewTrade; path: MarkPath }[]): HabitReading {
+function cutLatency(pathed: { trade: ReviewContract; path: MarkPath }[]): HabitReading {
   const losers = pathed.filter(({ trade, path }) => !trade.win && path.cutLatencyDays != null)
   const values = losers.map(({ path }) => path.cutLatencyDays as number)
   const avg = mean(values)
@@ -297,7 +297,7 @@ function cutLatency(pathed: { trade: ReviewTrade; path: MarkPath }[]): HabitRead
     ciLabel: '95%',
     read:
       avg == null
-        ? 'No losing trade has a mark path, so there is no worst mark to date the exit against.'
+        ? 'No losing contract has a mark path, so there is no worst mark to date the exit against.'
         : `A losing position stays open ${avg.toFixed(1)} days past its worst mark on average, over ${values.length}.`,
     consequence: null,
     consequenceLabel: 'what the delay cost needs the exit the plan would have taken',
@@ -321,11 +321,11 @@ function cutLatency(pathed: { trade: ReviewTrade; path: MarkPath }[]): HabitRead
  * against — no rule on this side states one — so there is no reference line.
  */
 export function entryIvRankReading(
-  trades: readonly ReviewTrade[],
+  trades: readonly ReviewContract[],
   rowsByName: EntryIvRanks['rowsByName'],
   measuring: boolean,
 ): HabitReading {
-  const ranked: { trade: ReviewTrade; rank: number }[] = []
+  const ranked: { trade: ReviewContract; rank: number }[] = []
   for (const trade of trades) {
     if (!trade.openedOn) continue
     const rows = rowsByName.get(trade.underlying)
@@ -351,8 +351,8 @@ export function entryIvRankReading(
     ciLabel: '95%',
     read:
       avg == null
-        ? 'No closed trade opened inside the trailing year the IV-rank store answers for.'
-        : `Opened at an IV rank of ${avg.toFixed(0)} on average across ${values.length} of ${trades.length} closed trades; ${high} at 50 or over, ${low} under 30.`,
+        ? 'No closed contract opened inside the trailing year the IV-rank store answers for.'
+        : `Opened at an IV rank of ${avg.toFixed(0)} on average across ${values.length} of ${trades.length} closed contracts; ${high} at 50 or over, ${low} under 30.`,
     consequence: null,
     consequenceLabel: 'what a low-rank entry cost needs the plan it would have broken',
     dots: ranked.map(({ trade, rank }) => ({ key: trade.contractKey, value: rank, realised: trade.realised })),
@@ -364,7 +364,7 @@ export function entryIvRankReading(
   }
 }
 
-function ivRankAtEntry(trades: readonly ReviewTrade[], ivRanks: EntryIvRanks | undefined): HabitReading {
+function ivRankAtEntry(trades: readonly ReviewContract[], ivRanks: EntryIvRanks | undefined): HabitReading {
   // A caller that did not read the IV-rank history gets the honest absence,
   // never an empty sample dressed as "no trade qualified".
   if (ivRanks == null) {
@@ -373,7 +373,7 @@ function ivRankAtEntry(trades: readonly ReviewTrade[], ivRanks: EntryIvRanks | u
       'IV rank at entry',
       'IV rank',
       trades.length,
-      'Where in its own year’s volatility each trade was opened.',
+      'Where in its own year’s volatility each contract was opened.',
       'the IV-rank history was not read for this view',
       'count',
     )
@@ -397,7 +397,7 @@ function dteAtEntry({ trades }: Ctx): HabitReading {
     ciLabel: '95%',
     read:
       avg == null
-        ? 'No closed trade carries an open date and an expiry.'
+        ? 'No closed contract carries an open date and an expiry.'
         : `Written at ${avg.toFixed(0)} days to expiry on average; ${short} of ${values.length} inside 30.`,
     consequence: null,
     consequenceLabel: 'no rule on this side states a window to be inside or outside of',
@@ -423,8 +423,8 @@ function creditKept({ trades }: Ctx): HabitReading {
     ciLabel: 'IQR',
     read:
       med == null
-        ? 'No short-premium trade carries an entry credit.'
-        : `Half of the ${values.length} short-premium trades kept ${(med * 100).toFixed(0)}% of the credit or more.`,
+        ? 'No short-premium contract carries an entry credit.'
+        : `Half of the ${values.length} short-premium contracts kept ${(med * 100).toFixed(0)}% of the credit or more.`,
     consequence: null,
     consequenceLabel: 'the credit kept is already the outcome, not a deviation from one',
     dots: kept.map((t) => ({ key: t.contractKey, value: t.creditKept as number, realised: t.realised })),
@@ -434,25 +434,25 @@ function creditKept({ trades }: Ctx): HabitReading {
   }
 }
 
-function planCapture(trades: readonly ReviewTrade[]): HabitReading {
+function planCapture(trades: readonly ReviewContract[]): HabitReading {
   return unmeasured(
     'capture',
     'Plan capture of best available',
     'of the best mark',
     trades.length,
-    'What the plan aimed at, as a share of the best mark the trade printed — the quality of the plans themselves.',
+    'What the plan aimed at, as a share of the best mark the contract printed — the quality of the plans themselves.',
     'the planned exit. The best mark it would be divided by is read off the contract’s own daily bars; the numerator is what is missing',
     'share',
   )
 }
 
-function lateExit(trades: readonly ReviewTrade[]): HabitReading {
+function lateExit(trades: readonly ReviewContract[]): HabitReading {
   return unmeasured(
     'late_exit',
     'Held past the planned exit',
     'days past plan',
     trades.length,
-    'How far past its own planned bar a trade runs, and how often.',
+    'How far past its own planned bar a contract runs, and how often.',
     'the planned bar — the exit dates are all here, and there is nothing to measure them against',
     'days',
   )

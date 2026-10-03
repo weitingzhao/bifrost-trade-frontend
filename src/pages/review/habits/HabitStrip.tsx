@@ -45,7 +45,7 @@ export function HabitStrip({ habit, fmt }: { habit: HabitReading; fmt: (v: numbe
         preserveAspectRatio="none"
         style={{ display: 'block' }}
         role="img"
-        aria-label={`${habit.label}: ${habit.dots.length} trades`}
+        aria-label={`${habit.label}: ${habit.dots.length} contracts`}
       >
         <line x1={PL} y1={24} x2={VW - PR} y2={24} stroke={chartTokens.grid} strokeWidth={1} />
         {habit.reference == null ? null : (

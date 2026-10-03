@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ALLOWANCE_SHARE, DECAY_PROFIT_FACTOR, sizeCapFor } from './sizeCap'
-import type { PlayStat } from '@/utils/reviewTrades'
+import type { PlayStat } from '@/utils/reviewContracts'
 
 function play(p: Partial<PlayStat>): PlayStat {
   return {

@@ -1,20 +1,20 @@
 /**
  * The habits, and the mark paths they are read from.
  *
- * Kept apart from `useReviewTrades` because the paths are 46 requests: the
+ * Kept apart from `useReviewContracts` because the paths are 46 requests: the
  * queue and Trade review have no use for them, and a page should not pay for a
  * read it does not make. Habits and Rule proposals both do, and they share one
  * cache entry — and since 2026-09-26 the same holds for the IV-rank history.
  */
 import { useMemo } from 'react'
-import { useReviewTrades } from '@/hooks/useReviewTrades'
+import { useReviewContracts } from '@/hooks/useReviewContracts'
 import { useBookMarkPaths } from '@/hooks/useBookMarkPaths'
 import { useEntryIvRanks } from '@/hooks/useEntryIvRanks'
 import { habitReadings } from '@/utils/reviewHabits'
-import { playbookStats } from '@/utils/reviewTrades'
+import { playbookStats } from '@/utils/reviewContracts'
 
 export function useReviewHabits(accountFilter: string) {
-  const book = useReviewTrades(accountFilter)
+  const book = useReviewContracts(accountFilter)
   const marks = useBookMarkPaths(book.trades)
   // IV rank at entry is read here, once, so Habits and the Decision Inbox's
   // IV-floor card argue from the same reading (§14.2).

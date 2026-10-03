@@ -42,7 +42,7 @@ export function buildDayStats(bulk: PerformanceDayPnLBulkResult | undefined, day
     { label: 'Stocks realized', value: stkR === 0 ? '—' : fmtSignedUsd0(stkR), raw: stkR, tone: 'pnl' },
     { label: 'Unpaired premium', value: fmtSignedUsd0(open), raw: open, tone: 'soft', title: 'Option premium still unpaired as of this day — an inventory' },
     { label: 'Comm', value: fmtSignedUsd0(-comm), raw: -comm, tone: 'muted' },
-    { label: 'Trades', value: String(fills.length), raw: fills.length, tone: 'plain' },
+    { label: 'Fills', value: String(fills.length), raw: fills.length, tone: 'plain' },
   ]
 }
 

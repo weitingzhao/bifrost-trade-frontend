@@ -19,7 +19,7 @@
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
-import type { PlayStat } from '@/utils/reviewTrades'
+import type { PlayStat } from '@/utils/reviewContracts'
 
 /** The four the design buckets by, and the ones Home's own regime read would name. */
 const REGIMES = ['calm · high IV', 'calm · low IV', 'trend up', 'vol spike']

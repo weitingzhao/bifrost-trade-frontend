@@ -18,6 +18,7 @@ import {
   TickerOverviewSchema,
 } from '@/lib/schemas/researchData'
 import { tradeFetch } from '@/lib/tradeFetch'
+import { reasonOf } from '@/lib/http'
 
 const validateScreener = withValidation<ScreenerResponse>(
   ScreenerResponseSchema,
@@ -45,7 +46,7 @@ export async function fetchScreenerResults(filters: ScreenerFilters): Promise<Sc
     })
     const j = await res.json().catch(() => ({})) as ScreenerResponse
     if (!res.ok) {
-      throw new Error(j.error ?? `POST /research/screener: ${res.status}`)
+      throw new Error(reasonOf(j) ?? `POST /research/screener: ${res.status}`)
     }
     return validateScreener({ ...j, groups: j.groups ?? [] })
   } finally {
@@ -76,6 +77,8 @@ export async function fetchGreeks(params: FetchGreeksParams): Promise<GreeksResp
     if (params.limit != null) qs.set('limit', String(params.limit))
     const res = await tradeFetch(tradeResearchUrl(`/research/greeks?${qs}`))
     const raw = await res.json().catch(() => ({}))
+    // api 0.5.0: a refusal is its status with `{ detail }` (TD-16), not a 200 body.
+    if (!res.ok) throw new Error(reasonOf(raw) ?? `GET /research/greeks: ${res.status}`)
     // The coercion below already keeps the UI safe; the schema is here to say
     // so in dev when the shape moves, which the coercion never does.
     const j = validateGreeksShape(raw) as Record<string, unknown>
@@ -170,7 +173,7 @@ export async function fetchSymbolStatements(symbol: string): Promise<SymbolState
   if (!sym) return { ...empty, error: 'symbol is required' }
   const res = await tradeFetch(tradeResearchUrl(`/research/data/readiness/symbol-statements?symbol=${encodeURIComponent(sym)}`))
   const j = await res.json().catch(() => ({}))
-  if (!res.ok) return { ...empty, error: typeof j.error === 'string' ? j.error : `HTTP ${res.status}` }
+  if (!res.ok) return { ...empty, error: reasonOf(j) ?? `HTTP ${res.status}` }
   return j as SymbolStatementsData
 }
 

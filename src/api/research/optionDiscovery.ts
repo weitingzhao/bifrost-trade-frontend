@@ -4,6 +4,7 @@ import { OptionSnapshotsPgResponseSchema } from '@/lib/schemas/optionDiscovery'
 
 import { marketDataPluginUrl, tradeResearchUrl } from '@/lib/devApiUrl'
 import { tradeFetch } from '@/lib/tradeFetch'
+import { reasonOf } from '@/lib/http'
 
 function mapSnapshotRow(row: Record<string, unknown>): OptionSnapshotRow {
   return {
@@ -60,6 +61,8 @@ export async function fetchOptionSnapshotsPg(
   if (strikesCsv?.trim()) q.set('strikes', strikesCsv.trim())
   const r = await tradeFetch(`${tradeResearchUrl('/research/option-snapshots')}?${q.toString()}`)
   const j = await r.json().catch(() => ({}))
+  // api 0.5.0: a refusal is its status with `{ detail }` (TD-16); only a success is checked for shape.
+  if (!r.ok) return { symbol: s, expiration: e, rows: [], error: reasonOf(j) ?? `HTTP ${r.status}` }
   withValidation(OptionSnapshotsPgResponseSchema, 'fetchOptionSnapshotsPg')(j)
   const rows: OptionSnapshotRow[] = Array.isArray(j.rows)
     ? j.rows.map((row: Record<string, unknown>) => mapSnapshotRow(row))
@@ -71,7 +74,7 @@ export async function fetchOptionSnapshotsPg(
       ? { underlying_price: Number(j.underlying_price) }
       : {}),
     rows,
-    error: typeof j.error === 'string' ? j.error : undefined,
+    error: reasonOf(j) ?? undefined,
     warning: typeof j.warning === 'string' ? j.warning : undefined,
   }
 }
@@ -173,7 +176,7 @@ export async function fetchLiquiditySummary(
     oi_percentile: j.oi_percentile ?? null,
     contracts_compared: j.contracts_compared,
     snapshot_ts: j.snapshot_ts ?? null,
-    error: j.error,
+    error: reasonOf(j) ?? undefined,
   }
 }
 
@@ -202,7 +205,7 @@ export async function fetchRelativeValue(
     std_iv: j.std_iv ?? null,
     contracts_compared: j.contracts_compared,
     iv_curve: Array.isArray(j.iv_curve) ? j.iv_curve : undefined,
-    error: j.error,
+    error: reasonOf(j) ?? undefined,
   }
 }
 

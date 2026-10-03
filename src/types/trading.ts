@@ -69,6 +69,8 @@ export interface PerformanceSummary {
   realized?: number
   total_commission: number
   trade_count: number
+  /** core 0.38.0 (TD-19): the same count under its name; trade_count goes next version. */
+  fill_count?: number
   win_count: number
   loss_count: number
   win_rate: number
@@ -89,6 +91,7 @@ export interface PerformanceCalendarEntry {
   commission: number
   net_pnl: number
   trade_count: number
+  fill_count?: number
   win_rate?: number | null
   return_pct?: number | null
 }
@@ -100,7 +103,10 @@ export interface PerformanceCalendarBySecType {
   pnl: number
   commission: number
   net_pnl: number
+  /** Option rows count closed option pairs (`pair_count`), the others fills (`fill_count`). */
   trade_count: number
+  fill_count?: number
+  pair_count?: number
 }
 
 export interface PerformanceTransaction {
@@ -121,7 +127,7 @@ export interface PerformanceResponse {
   calendar_by_sec_type?: PerformanceCalendarBySecType[]
   cumulative_curve?: CumulativeCurvePoint[]
   realized_by_account?: Record<string, number>
-  realized_by_sec_type?: { sec_type: string; total_pnl: number; commission: number; net_pnl: number; trade_count: number; return_pct?: number }[]
+  realized_by_sec_type?: { sec_type: string; total_pnl: number; commission: number; net_pnl: number; trade_count: number; fill_count?: number; return_pct?: number }[]
   realized_by_strategy_opportunity?: Record<string, number>
   realized_by_strategy_instance?: Record<string, number>
   unrealized?: number

@@ -1,5 +1,6 @@
 import { fmtUsdRound } from '@/lib/format'
 import type { ByDayRangeData, PerformanceResponse } from '@/types/trading'
+import { fillCountOf } from '@/utils/apiCounts'
 
 /** How a figure is inked: direction, unrealized orange (§14.7), no direction (counts), or quiet. */
 export type ReadingTone = 'pnl' | 'loss' | 'unrealized' | 'plain' | 'soft' | 'muted'
@@ -33,7 +34,7 @@ function fmtFactor(v: number | null | undefined): string {
  * cash flows the page leaves out. One read of the performance response, so the
  * figures here and anywhere that cites them cannot disagree.
  *
- * Three API facts shape the labels. `trade_count` counts every fill in the range,
+ * Three API facts shape the labels. `fill_count` (`trade_count` before core 0.38.0) counts every fill in the range,
  * opening fills included (so it reads as Fills: a trade is the entity, TD-19), so the API's `win_rate` (wins ÷ all fills) reads low
  * against closed trades; the reading divides wins by the fills that realized a
  * gain or a loss instead. `total_unrealized_pnl` is every open position now, not
@@ -64,7 +65,7 @@ export function buildReadingMetrics(perf: PerformanceResponse | undefined): Read
     { label: 'Consistency · win rate · closing fills', value: winRate, tone: 'plain', groupHead: true,
       title: `${s.win_count} of ${closed} fills that realized a gain or a loss — opening fills are left out. Not the calendar's win days.` },
     { label: 'Profit factor', value: fmtFactor(s.profit_factor), tone: 'plain' },
-    { label: 'Fills', value: String(s.trade_count ?? 0), tone: 'soft', title: 'Every fill in the range, opening fills included' },
+    { label: 'Fills', value: String(fillCountOf(s)), tone: 'soft', title: 'Every fill in the range, opening fills included' },
     { label: 'Avg win / loss', value: `${fmtSignedUsd0(s.avg_win)} / ${fmtSignedUsd0(s.avg_loss)}`, tone: 'soft' },
     { label: 'Risk · max drawdown', value: fmtSignedUsd0(maxDd), tone: 'loss', groupHead: true },
     { label: 'Return on capital base', value: ret == null ? '—' : `${ret >= 0 ? '+' : '−'}${Math.abs(ret).toFixed(2)}%`,
@@ -97,7 +98,7 @@ export function buildScopeNote(
     }
     parts.push(`${dates.size} active ${dates.size === 1 ? 'day' : 'days'}`)
   }
-  if (perf?.summary) parts.push(`${perf.summary.trade_count ?? 0} fills`)
+  if (perf?.summary) parts.push(`${fillCountOf(perf.summary)} fills`)
   const base = perf?.transaction?.capital_base
   parts.push(base != null ? `capital base ${fmtUsdRound(base)}` : 'no capital base')
   return parts.join(' · ')

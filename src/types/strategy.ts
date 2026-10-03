@@ -275,6 +275,8 @@ export interface StrategyTemplatesResponse {
 export interface WinRateStructureRow {
   structure_name: string
   total_instances: number
+  /** core 0.38.0 (TD-19): the same count under its name; total_instances goes next version. */
+  total_trades?: number
   profit_trades: number
   loss_trades: number
   total_profit: number | null

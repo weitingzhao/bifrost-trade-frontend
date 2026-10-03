@@ -1,5 +1,6 @@
 import { isBuySide } from '@/utils/ledger/optExecutionGroups'
 import type { PerformanceSummary, RawExecution } from '@/types/trading'
+import { fillCountOf } from '@/utils/apiCounts'
 
 export type PositionStatus = 'no_fills' | 'open' | 'closed'
 
@@ -80,7 +81,7 @@ export function computeInstanceMetrics(
 ): InstanceMetrics {
   const netPnl = summary.net_pnl
   const commission = summary.total_commission
-  const fillCount = summary.trade_count
+  const fillCount = fillCountOf(summary)
   const underlyingCost = computeUnderlyingCost(executions)
   const holdDays = computeHoldDays(openedAtEpoch)
   const positionStatus = computePositionStatus(executions)

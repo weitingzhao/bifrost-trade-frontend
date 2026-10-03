@@ -26,6 +26,7 @@
  * changed its definition of investment.
  */
 import type { WinRateStructureRow } from '@/types/strategy'
+import { tradeTotalOf } from '@/utils/apiCounts'
 
 export interface StructureRow {
   key: string
@@ -57,7 +58,7 @@ function toRow(r: WinRateStructureRow, totals: boolean): StructureRow {
     key: `${totals ? 'totals' : 'structure'}:${r.structure_name}`,
     name: r.structure_name,
     totals,
-    n: r.total_instances,
+    n: tradeTotalOf(r),
     wins: r.profit_trades,
     losses: r.loss_trades,
     // Over what resolved, not over `n`: an instance that is open has not won or

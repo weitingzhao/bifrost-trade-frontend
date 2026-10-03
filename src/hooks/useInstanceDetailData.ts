@@ -22,6 +22,7 @@ import {
 import { computeInstanceRiskProfile } from '@/utils/instanceDetail/riskProfile'
 import { computeOpenEndDisplay } from '@/utils/instanceDetail/openEndDisplay'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { fillCountOf } from '@/utils/apiCounts'
 
 function sliceExecutions(list: Execution[], instanceId: number): Execution[] {
   return list
@@ -211,6 +212,6 @@ export function useInstanceDetailData(
     holdDays: holdDaysUsed,
     returnPct,
     annualReturnPct: annualDetail?.annualReturnPct ?? null,
-    fillCount: summary?.trade_count ?? 0,
+    fillCount: fillCountOf(summary),
   }
 }

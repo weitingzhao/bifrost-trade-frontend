@@ -1,4 +1,5 @@
 import type { WinRateStructureRow } from '@/types/strategy'
+import { tradeTotalOf } from '@/utils/apiCounts'
 
 export const WIN_RATE_PNL_RECONCILE_USD = 0.05
 
@@ -95,7 +96,7 @@ export function fallbackTotalsAllFromStructures(structures: WinRateStructureRow[
       return {
         profit_trades: a.profit_trades + r.profit_trades,
         loss_trades: a.loss_trades + r.loss_trades,
-        total_instances: a.total_instances + r.total_instances,
+        total_instances: a.total_instances + tradeTotalOf(r),
         total_profit: a.total_profit + winRateTotalProfitDisplayUsd(r),
         total_max_risk: (a.total_max_risk ?? 0) + (r.total_max_risk ?? 0),
         profit_investment: (a.profit_investment ?? 0) + (r.profit_investment ?? 0),

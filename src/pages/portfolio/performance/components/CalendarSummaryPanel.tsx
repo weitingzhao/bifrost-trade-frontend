@@ -10,6 +10,7 @@ import type {
 } from '@/types/trading'
 import type { StkLedgerBucket } from '@/utils/ledger/stkBuckets'
 import { perfUi } from '@/pages/portfolio/performance/performanceUi'
+import { fillCountOf } from '@/utils/apiCounts'
 
 // ─── Formatting ───
 
@@ -215,7 +216,7 @@ export function CalendarSummaryPanel({
     { label: 'Unrealized', value: fmtUsd(optUnrealizedPnl), valueClassName: 'text-unrealized' },
     { label: 'Comm', value: fmtUsd(rOpt?.commission ?? 0), valueClassName: 'text-muted-foreground' },
     { label: 'Net', value: fmtUsd(optNetPnl), colorValue: optNetPnl },
-    { label: 'Fills', value: String(rOpt?.trade_count ?? 0) },
+    { label: 'Fills', value: String(fillCountOf(rOpt)) },
   ]
 
   const stocksMetrics = buildStkBucketMetrics({
@@ -226,7 +227,7 @@ export function CalendarSummaryPanel({
     fallbackRealized: rStk?.total_pnl ?? 0,
     fallbackCommission: rStk?.commission ?? 0,
     fallbackNet: rStk?.net_pnl ?? 0,
-    fallbackFills: rStk?.trade_count ?? 0,
+    fallbackFills: fillCountOf(rStk),
     showFallback: rStk != null,
     notionalSignedTone: true,
   })

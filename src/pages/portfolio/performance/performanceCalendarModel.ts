@@ -1,4 +1,5 @@
 import type { PerformanceDayPnLBulkResult, PerformanceResponse } from '@/types/trading'
+import { fillCountOf } from '@/utils/apiCounts'
 
 export type CalendarAssetTab = 'options' | 'stocks' | 'fixed_income' | 'cash_like'
 
@@ -97,7 +98,7 @@ export function buildDayMapFromApi(
       maps.options.set(e.period_label, {
         realized: e.net_pnl,
         unrealized: 0,
-        fillCount: e.trade_count,
+        fillCount: fillCountOf(e),
         notional: 0,
       })
     }
@@ -110,7 +111,7 @@ export function buildDayMapFromApi(
     maps[tab].set(e.period_label, {
       realized: prev.realized + e.net_pnl,
       unrealized: 0,
-      fillCount: prev.fillCount + e.trade_count,
+      fillCount: prev.fillCount + (e.pair_count ?? fillCountOf(e)),
       notional: 0,
     })
   }

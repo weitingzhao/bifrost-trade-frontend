@@ -5,11 +5,11 @@
  * Each editor saves only its own part, through the two writes the retired page
  * used: `POST /api/monitor/config/ib` for the accounts, and the Flex plugin's
  * `POST /flex/config/write`, whose fields are all optional — a field left out
- * is left as stored. So a token edit cannot touch the query rows, and a blank
- * token field keeps the stored token rather than clearing it.
+ * is left as stored.
  *
- * The two YAML rows have no write route (config.yaml is read at process start),
- * so they open their full reading instead of a form.
+ * Three rows have no write here, so they open their reading instead of a form: the
+ * two YAML rows (config.yaml is read at process start) and the Flex tokens, which
+ * live in the K8s Secret — the plugin refuses a token write (flex 0.8.0, TD-83).
  */
 import { useState } from 'react'
 import { postIbConfig } from '@/api/monitor'
@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { FlexAccountItem, StatusResponse } from '@/types/monitor'
-import { FLEX_QUERY_TYPES, initFlexRows, type SlotLine } from './settingsModel'
+import { FLEX_QUERY_TYPES, flexTokenIssued, flexTokenLines, initFlexRows, type SlotLine } from './settingsModel'
 
 type Result = { ok: boolean; error?: string }
 
@@ -182,12 +182,6 @@ export function AccountEditor({ status, onDone }: { status: StatusResponse | und
 
 // ── Flex ─────────────────────────────────────────────────────────────────────
 
-function tokenHint(set: boolean | undefined, last4: string | null | undefined): string {
-  if (set && last4) return `blank keeps the stored token (…${last4})`
-  if (set) return 'blank keeps the stored token'
-  return 'no token stored'
-}
-
 function useFlexSave(onDone: () => void) {
   const invalidate = useInvalidateFlexConfigSummary()
   return useSave(() => {
@@ -196,53 +190,34 @@ function useFlexSave(onDone: () => void) {
   })
 }
 
-export function FlexTokenEditor({
+/**
+ * The Flex tokens, read only (TD-83): the last four per slot and how old they are.
+ * They are set in the K8s Secret `bifrost-flex-tokens` with `make sync-flex-tokens`;
+ * this page used to offer a form whose save reported success without storing anything.
+ */
+export function FlexTokenReading({
   summary,
   secondaryOn,
-  onDone,
 }: {
   summary: FlexConfigSummary | undefined
   secondaryOn: boolean
-  onDone: () => void
 }) {
-  const t = summary?.tokens
-  const [host, setHost] = useState('')
-  const [secondary, setSecondary] = useState('')
-  const { saving, message, run } = useFlexSave(onDone)
   return (
-    <EditorFrame
-      saving={saving}
-      message={message}
-      canSave={host.trim().length > 0 || secondary.trim().length > 0}
-      onCancel={onDone}
-      onSave={() =>
-        void run(() => pluginFlexWriteConfig(host.trim() || undefined, secondary.trim() || undefined, undefined))
-      }
-    >
-      <div className="grid gap-3 @md/page:grid-cols-2">
-        <EditorField label="Token · host">
-          <Input
-            type="password"
-            autoComplete="off"
-            value={host}
-            onChange={(e) => setHost(e.target.value)}
-            placeholder={tokenHint(t?.host_token_set, t?.host_token_last4)}
-            aria-label="Flex token host"
-          />
-        </EditorField>
-        <EditorField label="Token · secondary">
-          <Input
-            type="password"
-            autoComplete="off"
-            value={secondary}
-            onChange={(e) => setSecondary(e.target.value)}
-            placeholder={secondaryOn ? tokenHint(t?.secondary_token_set, t?.secondary_token_last4) : 'no secondary slot'}
-            disabled={!secondaryOn}
-            aria-label="Flex token secondary"
-          />
-        </EditorField>
-      </div>
-    </EditorFrame>
+    <div className={cn(EDITOR_WELL, 'space-y-2')}>
+      <DenseDataTable wrapClassName="max-w-xl">
+        <DenseTableBody>
+          {flexTokenLines(summary, secondaryOn).map((l) => (
+            <DenseTableRow key={l.label}>
+              <DenseTableCell className="text-muted-foreground">{l.label}</DenseTableCell>
+              <DenseTableCell className="font-mono tabular-nums">{l.value}</DenseTableCell>
+            </DenseTableRow>
+          ))}
+        </DenseTableBody>
+      </DenseDataTable>
+      <p className="text-dense-caption text-muted-foreground">
+        {flexTokenIssued(summary)} · Set in the K8s Secret (make sync-flex-tokens).
+      </p>
+    </div>
   )
 }
 
@@ -270,8 +245,6 @@ export function FlexQueryEditor({
       onSave={() =>
         void run(() =>
           pluginFlexWriteConfig(
-            undefined,
-            undefined,
             rows.map((r) => ({
               purpose: r.purpose,
               query_label: r.query_label,
@@ -331,7 +304,7 @@ export function FlexRangeEditor({ summary, onDone }: { summary: FlexConfigSummar
       message={message}
       note="Used when a pull is sent without a date range; the first pull reaches back the longer one."
       onCancel={onDone}
-      onSave={() => void run(() => pluginFlexWriteConfig(undefined, undefined, undefined, def, init))}
+      onSave={() => void run(() => pluginFlexWriteConfig(undefined, def, init))}
     >
       <div className="flex flex-wrap gap-4">
         <EditorField label="Default range · days">

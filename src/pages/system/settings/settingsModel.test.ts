@@ -8,6 +8,8 @@ import type { FlexCoverageFreshnessResponse } from '@/types/trading'
 import {
   flexLandedMeta,
   flexRows,
+  flexTokenIssued,
+  flexTokenLines,
   flexStanding,
   ibClientIdLines,
   ibConnectionLines,
@@ -82,6 +84,32 @@ describe('flexRows', () => {
 
   it('says no token rather than leaving the row blank', () => {
     expect(flexRows(undefined)[0].reading).toBe('no token set')
+  })
+})
+
+describe('flex token reading (TD-83)', () => {
+  const summary = (tokens: Partial<FlexConfigSummary['tokens']>) =>
+    ({
+      tokens: { host_token_set: false, host_token_last4: null, secondary_token_set: false, secondary_token_last4: null, ...tokens },
+      range_days: { default: 30, init: 270 },
+      query_rows: [],
+    }) as FlexConfigSummary
+
+  it('shows the last four per slot, never a value, and no token when none is set', () => {
+    const lines = flexTokenLines(summary({ host_token_set: true, host_token_last4: '0001' }), true)
+    expect(lines).toEqual([
+      { label: 'Token · host', value: '…0001' },
+      { label: 'Token · secondary', value: 'no token set' },
+    ])
+    expect(flexTokenLines(summary({}), false)[1].value).toBe('no secondary slot')
+  })
+
+  it('says how old the tokens are, from the Secret\'s issue date', () => {
+    expect(flexTokenIssued(summary({ issued_at: '2031-03-01', age_days: 12 }))).toBe('issued 12 days ago (2031-03-01)')
+    expect(flexTokenIssued(summary({ issued_at: '2031-03-01', age_days: 1 }))).toBe('issued 1 day ago (2031-03-01)')
+    expect(flexTokenIssued(summary({ issued_at: '2031-03-01', age_days: 0 }))).toBe('issued today (2031-03-01)')
+    expect(flexTokenIssued(summary({}))).toBe('issue date not recorded')
+    expect(flexTokenIssued(undefined)).toBe('issue date not recorded')
   })
 })
 

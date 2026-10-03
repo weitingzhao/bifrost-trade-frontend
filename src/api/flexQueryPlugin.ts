@@ -28,6 +28,9 @@ export type FlexConfigSummary = {
     host_token_last4: string | null
     secondary_token_set: boolean
     secondary_token_last4: string | null
+    /** When the Secret's tokens were issued (YYYY-MM-DD, `FLEX_TOKENS_ISSUED_AT`), and their age. */
+    issued_at?: string | null
+    age_days?: number | null
   }
   range_days: { default: number; init: number }
   query_rows: FlexAccountItem[]
@@ -68,9 +71,12 @@ export async function pluginFlexUploadXml(xml: string): Promise<FlexUploadRespon
   return pluginPost('/flex/ingest/upload-xml', { xml })
 }
 
+/**
+ * Query rows and range days. Tokens are not written here: they live in the K8s Secret
+ * `bifrost-flex-tokens` (`make sync-flex-tokens`), and the plugin answers 409 to a body
+ * that names one (flex 0.8.0, TD-83).
+ */
 export async function pluginFlexWriteConfig(
-  hostToken: string | null | undefined,
-  secondaryToken: string | null | undefined,
   /** Omitted (undefined) leaves the stored query rows as they are. */
   accounts: FlexAccountItem[] | undefined,
   flexDefaultRangeDays?: number | null,
@@ -78,8 +84,6 @@ export async function pluginFlexWriteConfig(
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const j = await pluginPost<{ ok?: boolean; error?: string; detail?: string }>('/flex/config/write', {
-      host_token: hostToken ?? undefined,
-      secondary_token: secondaryToken ?? undefined,
       accounts,
       flex_default_range_days:
         flexDefaultRangeDays != null && Number.isFinite(flexDefaultRangeDays)

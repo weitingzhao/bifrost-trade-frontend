@@ -5,6 +5,8 @@
  * draft has no direction; the reader picks one in the form before the plan can
  * be marked intended. Anything unparseable yields no drafts rather than a guess.
  */
+import { optContractKey } from '@/utils/contractKey'
+
 export type PlanLegDraft = {
   sec_type: 'OPT'
   right: 'C' | 'P'
@@ -27,7 +29,7 @@ export function planLegsFromContract(contract: string | null | undefined): PlanL
       strike: Number(strike),
       expiry,
       ratio: 1,
-      contract_key: `${symbol}|OPT|${expiry.replace(/-/g, '')}|${strike}|${right}`,
+      contract_key: optContractKey(symbol, expiry, Number(strike), right),
     })
   }
   return legs

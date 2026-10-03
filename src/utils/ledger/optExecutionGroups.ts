@@ -1,4 +1,5 @@
 import type { Execution } from '@/types/positions'
+import { optContractKey } from '@/utils/contractKey'
 
 const NET_QTY_EPS = 1e-9
 
@@ -38,11 +39,7 @@ function isSellSide(side: string): boolean {
 
 function buildContractKey(e: Execution): string {
   if (e.contract_key?.trim()) return e.contract_key.trim()
-  const sym = (e.symbol ?? '').split(' ')[0]
-  const exp = (e.expiry ?? '').replace(/-/g, '')
-  const strike = e.strike ?? 0
-  const right = (e.option_right ?? 'C')[0].toUpperCase()
-  return `${sym}|OPT|${exp}|${strike}|${right}`
+  return optContractKey((e.symbol ?? '').split(' ')[0], e.expiry, e.strike ?? 0, e.option_right || 'C')
 }
 
 export function isOptionExpired(expiryRaw: string | undefined | null): boolean {

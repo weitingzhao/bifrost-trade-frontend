@@ -19,6 +19,7 @@ import {
   addOptionPreviewClass,
   addOptionSymbolBadgeClass,
 } from './addOptionModalUi'
+import { optContractKey } from '@/utils/contractKey'
 
 const RIGHT_OPTIONS = [
   { value: 'CALL', label: 'Call' },
@@ -59,7 +60,7 @@ function AddOptionModalBody({
     if (!expiryValid || !strikeValid) return null
     const rightLabel = right === 'CALL' ? 'Call' : 'Put'
     const rightLetter = right === 'CALL' ? 'C' : 'P'
-    const contractKey = `${symbol}|OPT|${normalizedExpiry}|${strikeNum}|${rightLetter}`
+    const contractKey = optContractKey(symbol, normalizedExpiry, strikeNum, rightLetter)
     return {
       label: `${symbol} · ${normalizedExpiry} · ${rightLabel} · ${strikeNum}`,
       contractKey,

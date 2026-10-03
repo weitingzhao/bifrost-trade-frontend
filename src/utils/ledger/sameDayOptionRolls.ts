@@ -13,6 +13,7 @@ import {
   matchPnl,
   sortExecByExecutionDateThenTime,
 } from '@/utils/ledger/performanceUtils'
+import { optContractKey } from '@/utils/contractKey'
 
 const QTY_EPS = 1e-9
 
@@ -47,11 +48,7 @@ function optionRightNorm(e: Execution): string {
 
 function contractKeyOf(e: Execution): string {
   if (e.contract_key?.trim()) return e.contract_key.trim()
-  const sym = underlyingOf(e)
-  const exp = (e.expiry ?? '').replace(/-/g, '')
-  const strike = e.strike ?? 0
-  const right = optionRightNorm(e)
-  return `${sym}|OPT|${exp}|${strike}|${right}`
+  return optContractKey(underlyingOf(e), e.expiry, e.strike ?? 0, optionRightNorm(e))
 }
 
 function rollAbsQty(e: Execution): number {

@@ -2,6 +2,7 @@ import type { LivePositionRow, OpenOptionPosition, InstancePositionGroup, Positi
 import type { AccountFilter } from '@/utils/positionsGrouping'
 import { positionMatchesAccountFilter } from '@/utils/positionsGrouping'
 import { buildOffTrackPositions } from '@/utils/offTrackPositions'
+import { optContractKey } from '@/utils/contractKey'
 
 export function normalizeAvgCostPerShare(raw: number | null | undefined): number | null {
   if (raw == null || !Number.isFinite(Number(raw))) return null
@@ -183,7 +184,7 @@ export function buildInstanceGroups(input: BuildInstanceGroupsInput): InstancePo
         ? (markPrice - avgCostPerShare) * qty * 100
         : Number(pos.unrealized_pnl) || 0
     const contractKey =
-      ck || `${symbol}|OPT|${expiry}|${strike}|${(pos.right ?? '').toUpperCase().slice(0, 1)}`
+      ck || optContractKey(symbol, expiry, strike, pos.right)
 
     addToInstance(null, null, null, null, null, {
       kind: 'live',

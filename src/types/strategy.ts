@@ -37,12 +37,15 @@ export interface CreateStrategyInstanceBody {
   account_id: string
   opened_at?: string
   label?: string
-  notes?: string
 }
 
+/**
+ * `notes` is not sent (TD-73): a trade's notes live in the journal only
+ * (Research `journal.note`, refs `{type: trade}`), read and written by the
+ * trade's Journal block. The column stops being written and is dropped later.
+ */
 export interface PatchStrategyInstanceBody {
   label?: string | null
-  notes?: string | null
   opened_at?: string
 }
 

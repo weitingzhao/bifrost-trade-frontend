@@ -29,8 +29,8 @@ const validateList = withValidation<z.infer<typeof TradeReviewsResponseSchema>>(
 export interface TradeReviewPatch {
   tags_added?: string[]
   tags_dropped?: string[]
-  /** `null` clears the note (the replaced PUT could not). */
-  note?: string | null
+  // No `note` (TD-73): a trade's notes live in the journal only; the review's
+  // note column stops being written and is dropped later.
   /** true stamps the review done; false reopens it. */
   reviewed?: boolean
 }

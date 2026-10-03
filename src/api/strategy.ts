@@ -156,7 +156,7 @@ export async function createStrategyInstance(
 }
 
 /**
- * Change the fields sent (api 0.3.0): `null` clears a label or notes, a blank
+ * Change the fields sent (api 0.3.0): `null` clears a label, a blank
  * string is refused (400). Answers the instance as GET /instances/{id} does.
  */
 export async function patchStrategyInstance(

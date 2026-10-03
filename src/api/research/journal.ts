@@ -13,9 +13,13 @@ import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
 
 export interface NoteRef {
   /**
-   * A trade's ref is `inst` in the store. Design Rev .111 renames it `trade`;
-   * Research still accepts only `sym | obj | inst` (journal_notes.REF_TYPES),
-   * so the app writes `inst` and reads either until the store's rename lands.
+   * A trade's ref. Design Rev .111 renames `inst` to `trade`; Research 0.158.0
+   * stores `trade` and still takes `inst`, so the app writes `inst` until every
+   * environment runs 0.158.0 (naming R2) and reads either.
+   *
+   * Research stores a trade ref per environment (`prod:158`, TD-73) — the Trade
+   * gateway tells it which. This environment's trades come back bare (`158`),
+   * another environment's still qualified (`dev:158`): never one of ours.
    */
   type: 'sym' | 'obj' | 'inst' | 'trade'
   id: string
@@ -24,6 +28,15 @@ export interface NoteRef {
 /** A ref that names a trade, under its stored code (`inst`) or its new one (`trade`). */
 export function isTradeRef(r: NoteRef): boolean {
   return r.type === 'inst' || r.type === 'trade'
+}
+
+const OTHER_ENV_TRADE_ID = /^(dev|stg|prod):\d+$/
+
+/** The environment a trade ref belongs to when it is not this one's (`dev:158` → `dev`), else null. */
+export function otherEnvOfTradeRef(r: NoteRef): string | null {
+  if (!isTradeRef(r)) return null
+  const m = OTHER_ENV_TRADE_ID.exec(r.id)
+  return m ? m[1] : null
 }
 
 export interface JournalNote {

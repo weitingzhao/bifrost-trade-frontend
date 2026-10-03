@@ -101,20 +101,22 @@ describe('trading executions', () => {
     })
   })
 
-  it('reads executions from items, and from executions while 0.2.1 serves', async () => {
-    fetchMock.mockResolvedValueOnce(ok({ items: [{ id: 'new' }], count: 1, executions: [{ id: 'old' }] }))
+  it('reads executions from items only (api 0.4.0 dropped the executions key)', async () => {
+    fetchMock.mockResolvedValueOnce(ok({ items: [{ id: 'new' }], count: 1 }))
     expect((await fetchExecutions('all')).items).toEqual([{ id: 'new' }])
     fetchMock.mockResolvedValueOnce(ok({ executions: [{ id: 'old' }] }))
-    expect((await fetchExecutions('all')).items).toEqual([{ id: 'old' }])
+    expect((await fetchExecutions('all')).items).toEqual([])
   })
 
-  it('reads attributions and transactions the same way', async () => {
-    fetchMock.mockResolvedValueOnce(ok({ attributions: [{ a: 1 }] }))
+  it('reads attributions and transactions from items the same way', async () => {
+    fetchMock.mockResolvedValueOnce(ok({ items: [{ a: 1 }], count: 1 }))
     expect((await fetchPositionAttribution()).items).toEqual([{ a: 1 }])
-    fetchMock.mockResolvedValueOnce(ok({ items: [{ t: 2 }], count: 1, transactions: [{ t: 1 }] }))
+    fetchMock.mockResolvedValueOnce(ok({ attributions: [{ a: 1 }] }))
+    expect((await fetchPositionAttribution()).items).toEqual([])
+    fetchMock.mockResolvedValueOnce(ok({ items: [{ t: 2 }], count: 1 }))
     expect((await getTransactions()).transactions).toEqual([{ t: 2 }])
     fetchMock.mockResolvedValueOnce(ok({ transactions: [{ t: 1 }] }))
-    expect((await getTransactions()).transactions).toEqual([{ t: 1 }])
+    expect((await getTransactions()).transactions).toEqual([])
   })
 
   it('link lists keep their error field from both releases', async () => {
@@ -124,7 +126,7 @@ describe('trading executions', () => {
     fetchMock.mockResolvedValueOnce(ok({ links: [], slippage_total: null, error: 'database_unavailable' }))
     expect((await fetchOptionStockLinks('U0000001', 1)).error).toBe('database_unavailable')
 
-    fetchMock.mockResolvedValueOnce(ok({ items: [{ link_id: 3 }], count: 1, links: [{ link_id: 3 }], slippage_total: 0.5 }))
+    fetchMock.mockResolvedValueOnce(ok({ items: [{ link_id: 3 }], count: 1, slippage_total: 0.5 }))
     expect(await fetchOptionStockLinks('U0000001', 1)).toEqual({ links: [{ link_id: 3 }], slippage_total: 0.5, error: undefined })
 
     fetchMock.mockResolvedValueOnce(failure(404, 'Option execution not found in performance book.', { executions: [] }))

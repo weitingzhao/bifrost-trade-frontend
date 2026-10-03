@@ -74,7 +74,7 @@ export async function fetchPerformanceExecutionsMerged(
     source_scope: sourceScope,
   })
 
-  const rows = res.items ?? (res as unknown as { executions?: Execution[] }).executions ?? []
+  const rows = res.items ?? []
   if (rows.length < FETCH_LIMIT) {
     return dedupeExecutionsById(rows)
   }
@@ -98,7 +98,7 @@ export async function fetchPerformanceExecutionsMerged(
       strategy_instance_id: strategyInstanceId ?? undefined,
       source_scope: sourceScope,
     })
-    const chunkRows = chunkRes.items ?? (chunkRes as unknown as { executions?: Execution[] }).executions ?? []
+    const chunkRows = chunkRes.items ?? []
     merged.push(...chunkRows)
   }
   return dedupeExecutionsById(merged)

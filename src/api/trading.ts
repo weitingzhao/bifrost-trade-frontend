@@ -34,8 +34,7 @@ export interface OptionStockLinkCreate extends OptionStockLinkBody {
 
 /**
  * Checks the body the API sent, before it is unwrapped into `{ items }`, so a
- * body with neither `items` nor the legacy `executions` reads as drift rather
- * than as an empty book.
+ * body without `items` reads as drift rather than as an empty book.
  */
 const validateExecutions = withValidation<ExecutionsWire>(ExecutionsWireSchema, 'trading/executions')
 
@@ -57,10 +56,10 @@ export async function fetchExecutions(scope: ExecutionSourceScope = 'performance
       ? tradingUrl('/executions?limit=0')
       : tradingUrl(`/executions?limit=0&source_scope=${scope}`)
   const raw = validateExecutions(await requestJson(url))
-  return { items: listItems(raw, 'executions') }
+  return { items: listItems(raw) }
 }
 
-/** GET /executions/position-attribution → `{ items, count, attributions }` (`attributions` until api 0.2.3). */
+/** GET /executions/position-attribution → `{ items, count }`. */
 export async function fetchPositionAttribution(
   accountId?: string,
   secType?: string,
@@ -70,7 +69,7 @@ export async function fetchPositionAttribution(
   if (secType?.trim()) params.set('sec_type', secType.trim())
   const qs = params.toString()
   const raw = await requestJson(tradingUrl(`/executions/position-attribution${qs ? `?${qs}` : ''}`))
-  return { items: listItems(raw, 'attributions') }
+  return { items: listItems(raw) }
 }
 
 /** A refusal throws with the server's reason (400/404/500/503 from api 0.2.2). */
@@ -162,7 +161,7 @@ export async function fetchInstanceExecutions(instanceId: number): Promise<RawEx
       tradingUrl(`/executions?strategy_instance_id=${instanceId}&source_scope=performance_book&limit=500`),
     ),
   )
-  return { ...raw, executions: listItems(raw, 'executions') }
+  return { ...raw, executions: listItems(raw) }
 }
 
 export async function fetchPerformance(params: PerformanceParams = {}): Promise<PerformanceResponse> {
@@ -195,7 +194,7 @@ export async function fetchExecutionsRange(params: ExecutionsRangeParams = {}): 
   if (params.source_scope) qs.set('source_scope', params.source_scope)
   if (params.account_id) qs.set('account_id', params.account_id)
   const raw = validateExecutions(await requestJson(tradingUrl(`/executions?${qs}`)))
-  return { items: listItems(raw, 'executions') }
+  return { items: listItems(raw) }
 }
 
 export async function getTransactions(params?: {
@@ -210,7 +209,7 @@ export async function getTransactions(params?: {
   if (params?.account_id) qs.set('account_id', params.account_id)
   if (params?.limit != null) qs.set('limit', String(params.limit))
   const raw = await requestJson<AccountTransactionsResponse>(tradingUrl(`/transactions?${qs}`))
-  return { ...raw, transactions: listItems(raw, 'transactions') }
+  return { ...raw, transactions: listItems(raw) }
 }
 
 /** 400 (bad batches) / 503 (no database) throw with the server's reason. */
@@ -235,7 +234,7 @@ export async function fetchOptionStockLinks(
       tradingUrl(`/executions/option-stock-links?${q}`),
     )
     return {
-      links: listItems<OptionStockLink>(j, 'links'),
+      links: listItems<OptionStockLink>(j),
       slippage_total: j.slippage_total ?? null,
       error: j.error ?? undefined,
     }
@@ -272,7 +271,7 @@ export async function fetchStockLinkCandidates(params: {
       error?: string | null
     }>(tradingUrl(`/executions/stock-link-candidates?${q}`))
     return {
-      executions: listItems<Execution>(j, 'executions'),
+      executions: listItems<Execution>(j),
       underlying_symbol: j.underlying_symbol,
       trade_date_from: j.trade_date_from,
       trade_date_to: j.trade_date_to,

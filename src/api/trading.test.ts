@@ -63,15 +63,14 @@ describe('ExecutionSchema matches the wire', () => {
     expect(ExecutionSchema.safeParse({ ...rest, qty: quantity }).success).toBe(false)
   })
 
-  it('rejects a body with neither items nor executions', () => {
+  it('rejects a body without items, including the old executions key alone', () => {
     expect(ExecutionsWireSchema.safeParse({}).success).toBe(false)
     expect(ExecutionsWireSchema.safeParse({ count: 0 }).success).toBe(false)
+    expect(ExecutionsWireSchema.safeParse({ executions: [stockRow, optionRow] }).success).toBe(false)
   })
 
-  it('accepts items alone (after the api drops legacy keys), executions alone, and both', () => {
+  it('accepts items', () => {
     expect(ExecutionsWireSchema.safeParse({ items: [stockRow, optionRow], count: 2 }).success).toBe(true)
-    expect(ExecutionsWireSchema.safeParse({ executions: [stockRow, optionRow] }).success).toBe(true)
-    expect(ExecutionsWireSchema.safeParse({ items: [stockRow], executions: [stockRow], count: 1 }).success).toBe(true)
   })
 
   it('still checks the rows under items', () => {
@@ -93,7 +92,7 @@ describe('fetchExecutions', () => {
   }
 
   it('sends the API scope name and unwraps the rows', async () => {
-    const fetchMock = stubFetch({ executions: [stockRow] })
+    const fetchMock = stubFetch({ items: [stockRow], count: 1 })
     const res = await fetchExecutions('performance_book')
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain('source_scope=performance_book')
     expect(res.items).toHaveLength(1)
@@ -101,12 +100,12 @@ describe('fetchExecutions', () => {
   })
 
   it('sends no source_scope for the canonical view', async () => {
-    const fetchMock = stubFetch({ executions: [] })
+    const fetchMock = stubFetch({ items: [], count: 0 })
     await fetchExecutions('all')
     expect(String(fetchMock.mock.calls[0]?.[0])).not.toContain('source_scope')
   })
 
-  it('reports a missing executions key as drift before reading it as an empty book', async () => {
+  it('reports a missing items key as drift before reading it as an empty book', async () => {
     stubFetch({})
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const res = await fetchExecutions('tws_raw')

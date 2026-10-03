@@ -259,6 +259,10 @@ function ExecutionFormModalBody({
         strategyInstanceId.trim() && Number.isFinite(Number(strategyInstanceId))
           ? Number(strategyInstanceId)
           : undefined
+      // A fill belongs to a trade; its strategy is the trade's (core 0.37.0 refuses one alone).
+      if (strategyOpp !== undefined && strategyInst === undefined && !useInstanceSplits) {
+        throw new Error('Pick the trade under this strategy, or clear the strategy.')
+      }
 
       const splitPayload = resolveSplitAllocations(quantityForDb)
 

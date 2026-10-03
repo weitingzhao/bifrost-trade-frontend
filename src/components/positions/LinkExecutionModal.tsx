@@ -157,7 +157,7 @@ function LinkExecutionModalBody({
 
     setSubmitting(true)
     try {
-      let finalInstanceId: number | null
+      let finalInstanceId: number
       if (instanceMode === 'new') {
         if (!executionAccountId) {
           throw new Error('This execution has no account; create trade is not available.')
@@ -175,7 +175,11 @@ function LinkExecutionModalBody({
         finalInstanceId = created.strategy_instance_id
       } else {
         const instRaw = instanceId.trim()
-        finalInstanceId = instRaw && Number.isFinite(Number(instRaw)) ? Number(instRaw) : null
+        // A fill belongs to a trade; its opportunity is the trade's (core 0.37.0).
+        if (!instRaw || !Number.isFinite(Number(instRaw))) {
+          throw new Error('Pick the trade this fill belongs to, or create one.')
+        }
+        finalInstanceId = Number(instRaw)
       }
 
       const updateRes = await patchExecutionAttribution(execId, assignAttributionPatch(ex, opp, finalInstanceId))
@@ -321,18 +325,6 @@ function LinkExecutionModalBody({
                   </p>
                 ) : useInstanceBubbles ? (
                   <div className={linkExecPillsClass} role="radiogroup" aria-label="Trade">
-                    <button
-                      type="button"
-                      role="radio"
-                      aria-checked={!instanceId}
-                      className={cn(linkExecPillClass, !instanceId && linkExecPillSelectedClass)}
-                      onClick={() => {
-                        setInstanceId('')
-                        setPeerShortcut('')
-                      }}
-                    >
-                      — None —
-                    </button>
                     {instances.map((inst) => {
                       const idStr = String(inst.strategy_instance_id)
                       const isActive = instanceId === idStr
@@ -357,17 +349,16 @@ function LinkExecutionModalBody({
                   </div>
                 ) : (
                   <Select
-                    value={instanceId || '__none__'}
+                    value={instanceId || undefined}
                     onValueChange={(v) => {
-                      setInstanceId(v === '__none__' ? '' : v)
+                      setInstanceId(v)
                       setPeerShortcut('')
                     }}
                   >
                     <SelectTrigger id="link-strategy-inst" className="h-9 w-full text-sm">
-                      <SelectValue placeholder="— None —" />
+                      <SelectValue placeholder="Pick a trade" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">— None —</SelectItem>
                       {instances.map((inst) => (
                         <SelectItem
                           key={inst.strategy_instance_id}
@@ -441,7 +432,11 @@ function LinkExecutionModalBody({
           type="submit"
           size="sm"
           form="link-exec-assign-form"
-          disabled={submitting || !oppId || (instanceMode === 'new' && !executionAccountId)}
+          disabled={
+            submitting ||
+            !oppId ||
+            (instanceMode === 'new' ? !executionAccountId : !instanceId)
+          }
         >
           {submitting
             ? instanceMode === 'new'

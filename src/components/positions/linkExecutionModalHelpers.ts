@@ -157,10 +157,10 @@ export function executionSplitCount(ex: Execution | null | undefined): number {
 export function assignAttributionPatch(
   ex: Execution | null | undefined,
   opportunityId: number,
-  instanceId: number | null,
+  instanceId: number,
 ): {
   strategy_opportunity_id: number
-  strategy_instance_id: number | null
+  strategy_instance_id: number
   instance_allocations?: []
 } {
   return {

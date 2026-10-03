@@ -114,7 +114,7 @@ describe('assignAttributionPatch (api 0.3.0 attribution PATCH)', () => {
 
   it('a fill with no split sends the two ids alone', () => {
     expect(assignAttributionPatch(fill, 3, 30)).toEqual({ strategy_opportunity_id: 3, strategy_instance_id: 30 })
-    expect(assignAttributionPatch(null, 3, null)).toEqual({ strategy_opportunity_id: 3, strategy_instance_id: null })
+    expect(assignAttributionPatch(null, 3, 31)).toEqual({ strategy_opportunity_id: 3, strategy_instance_id: 31 })
   })
 
   it('a split fill moved to one trade also sends instance_allocations: [] — the split is replaced', () => {

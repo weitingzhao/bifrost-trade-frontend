@@ -12,9 +12,9 @@ export const FillSplitSchema = z.object({
 export type FillSplit = z.infer<typeof FillSplitSchema>
 
 /**
- * One row of core `get_executions` — the link and candidate readers share its
- * SELECT, so `/executions`, `/executions/link-candidates` and the positions
- * exec lists all carry this shape.
+ * One row of core `get_executions` — `/executions` and the positions exec lists
+ * both carry this shape (the strategy-link candidate reader that shared its SELECT
+ * went with `GET /executions/link-candidates`, api 0.7.6, TD-40).
  *
  * - `quantity` is signed (sells negative) in every scope except `tws_raw`,
  *   which passes the stored magnitude through and leaves direction in `side`.

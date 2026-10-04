@@ -12,8 +12,9 @@ import apiFields from './requestBodies.fields.json'
 
 /** The api's model name → the TS interface that mirrors it. */
 const TS_NAME: Record<string, string> = { OptionStockLinkBatch: 'OptionStockLinkBatchItem' }
-/** Api models with no frontend caller (PATCH /executions/strategy-attribution is deprecated, TD-40). */
-const API_ONLY = new Set(['StrategyAttributionBatchBody'])
+/** Api models with no frontend caller. Empty since api 0.7.6: StrategyAttributionBatchBody went with
+ * PATCH /executions/strategy-attribution (TD-40). */
+const API_ONLY = new Set<string>()
 
 function interfaceFields(source: string): Record<string, string[]> {
   const out: Record<string, string[]> = {}

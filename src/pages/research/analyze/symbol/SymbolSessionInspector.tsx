@@ -8,7 +8,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { fetchForecastSessionDetail } from '@/api/researchEngine'
-import { DenseTag, SettlementBadges, type DenseTagVariant } from '@/components/data-display'
+import { CloseButton, DenseTag, SettlementBadges, type DenseTagVariant } from '@/components/data-display'
 import { ProbabilityBar } from '@/components/charts/ProbabilityBar'
 import { ForecastStructureCards } from '@/components/research/ForecastStructureCards'
 import { FaceKv } from '@/components/research/FaceKv'
@@ -88,14 +88,7 @@ export function SymbolSessionInspector({ day, onClose }: { day: SessionDay; onCl
             {s.regime}
           </DenseTag>
         ) : null}
-        <button
-          type="button"
-          onClick={onClose}
-          className="ml-auto rounded px-1.5 py-0.5 text-dense-meta text-muted-foreground hover:bg-secondary"
-          aria-label="Close"
-        >
-          esc
-        </button>
+        <CloseButton className="ml-auto" onClick={onClose} title="Close · esc" />
       </header>
 
       <div className="flex flex-col gap-3 px-3 py-3">
@@ -145,7 +138,7 @@ export function SymbolSessionInspector({ day, onClose }: { day: SessionDay; onCl
               The session stored no hourly path.
             </p>
           ) : (
-            <table className="w-full border-collapse">
+            <table className="w-full">
               <thead>
                 <tr>
                   <th className={cn(th, 'text-left')}>Hour ET</th>

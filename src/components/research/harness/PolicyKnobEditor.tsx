@@ -151,7 +151,7 @@ export function PolicyKnobEditor({
           if (e.key === 'Escape') setOpen(false)
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit()
         }}
-        className="h-6 w-full rounded border border-border bg-card px-1.5 font-mono text-dense-caption"
+        className="mat-field h-6 w-full border px-1.5 font-mono text-dense-caption"
         aria-label={`New value for ${field}`}
       />
       {/* Asked for, not optional-looking: a change with no reason is why drift
@@ -164,7 +164,7 @@ export function PolicyKnobEditor({
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit()
         }}
         placeholder="Why this change?"
-        className="h-6 w-full rounded border border-border bg-card px-1.5 text-dense-caption"
+        className="mat-field h-6 w-full border px-1.5 text-dense-caption"
         aria-label={`Reason for changing ${field}`}
       />
       {parseError ? <span className="text-dense-caption text-destructive">{parseError}</span> : null}

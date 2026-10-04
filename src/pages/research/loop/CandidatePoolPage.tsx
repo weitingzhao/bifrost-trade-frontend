@@ -534,7 +534,7 @@ export default function CandidatePoolPage() {
                     each verb writes and where it lands is a product decision,
                     so the line says they are owed where they would sit. */}
                 <tr>
-                  <td colSpan={colCount} className="border-b border-border px-2.5 pb-1.5 pt-0">
+                  <td colSpan={colCount} className="px-2.5 pb-1.5 pt-0">
                     <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-dense-caption text-muted-foreground">
                       <span
                         className="font-mono text-muted-foreground/70"

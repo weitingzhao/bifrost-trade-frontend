@@ -1,5 +1,4 @@
-import { X } from 'lucide-react'
-import { DenseTag } from '@/components/data-display'
+import { CloseButton, DenseTag } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 
 export interface PinChipProps {
@@ -36,15 +35,7 @@ export function PinChip({ label, meta, onJump, onRemove, className }: PinChipPro
         ) : null}
       </button>
       {onRemove ? (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="shrink-0 rounded p-0.5 text-muted-foreground opacity-60 hover:opacity-100 hover:text-destructive"
-          aria-label={`Unpin ${label}`}
-          title="Unpin"
-        >
-          <X className="h-3 w-3" />
-        </button>
+        <CloseButton size="sm" className="shrink-0" onClick={onRemove} label={`Unpin ${label}`} title="Unpin" />
       ) : null}
     </div>
   )

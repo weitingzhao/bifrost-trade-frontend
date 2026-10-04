@@ -228,9 +228,9 @@ export function PipelineCensus() {
             origin — see the footnote for why that is a stamping fault rather than an empty day.
           </p>
         ) : (
-          <ul className="divide-y divide-border/40">
+          <ul className="py-1">
             {left.map((row) => (
-              <li key={row.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-1.5">
+              <li key={row.id} data-sr-row="" className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-2.5 py-1.5">
                 <DenseTag variant="category" size="cell">
                   {row.kind}
                 </DenseTag>

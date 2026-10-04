@@ -103,8 +103,7 @@ function ruleCell(
   }
 }
 
-const ICON_BTN =
-  'inline-flex size-6 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-secondary/70 hover:text-foreground'
+const ICON_BTN = 'mat-btn inline-flex size-6 items-center justify-center border text-muted-foreground hover:text-foreground'
 
 export function OptionScreenerContracts({
   groups,
@@ -231,7 +230,7 @@ export function OptionScreenerContracts({
               const iv = g.iv ? nameIvLabel(g.iv) : null
               const earn = earningsLabel(g.earnings)
               return [
-                <tr key={`g:${g.symbol}`} className="border-y border-border bg-secondary/50">
+                <tr key={`g:${g.symbol}`} data-sr-group="">
                   <td colSpan={COLS} className="px-[var(--table-cell-px)] py-1.5 text-dense-meta">
                     {/* A ticker opens that name. */}
                     <Link
@@ -283,10 +282,7 @@ export function OptionScreenerContracts({
                           onSelect(on ? null : key)
                         }
                       }}
-                      className={cn(
-                        'cursor-pointer border-b border-border/50 hover:bg-secondary/40',
-                        on && 'bg-primary/[0.05]',
-                      )}
+                      className="cursor-pointer"
                       title={engineHover(r)}
                     >
                       {/* §14.8 contract ink, never wrapped: the table is auto-layout, so a

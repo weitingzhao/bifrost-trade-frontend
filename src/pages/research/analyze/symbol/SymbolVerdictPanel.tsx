@@ -103,7 +103,7 @@ export function SymbolVerdictPanel({ symbol }: { symbol: string; thesis?: string
           value={line}
           onChange={(e) => setLine(e.target.value)}
           placeholder="One line — the claim, and what would prove it wrong"
-          className="h-7 rounded-[5px] border border-border bg-background px-2 text-dense-meta text-foreground outline-none placeholder:text-muted-foreground/70"
+          className="mat-field h-7 border px-2 text-dense-meta text-foreground outline-none placeholder:text-muted-foreground/70"
         />
         <div className="flex flex-wrap items-center gap-1">
           <span className="text-dense-meta font-semibold text-muted-foreground">

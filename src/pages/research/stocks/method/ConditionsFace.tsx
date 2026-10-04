@@ -500,7 +500,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
                 )
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[900px] border-collapse">
+                  <table className="w-full min-w-[900px]">
                     <thead>
                       <tr>
                         <th className={cn(th, 'text-left')}>#</th>
@@ -524,7 +524,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
                         const vs = vsSma50(r)
                         const iv = ivOf(r.symbol)
                         return (
-                          <tr key={r.symbol} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+                          <tr key={r.symbol}>
                             <td className={cn(td, 'text-left text-muted-foreground')}>
                               {r.overall_rank}
                             </td>

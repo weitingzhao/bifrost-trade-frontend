@@ -250,7 +250,7 @@ export default function BacktestPage() {
                 />
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[460px] border-collapse">
+                  <table className="w-full min-w-[460px]">
                     <thead>
                       <tr>
                         <th className={cn(th, 'text-left')}>Run</th>
@@ -278,12 +278,9 @@ export default function BacktestPage() {
                                 setSelectedId(r.id)
                               }
                             }}
-                            className={cn(
-                              'cursor-pointer hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-                              // Selection is the accent (Rev .84) — edge included.
-                              on &&
-                                'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)] shadow-[inset_2px_0_0_var(--sk-accent)]'
-                            )}
+                            // Selection is the list's accent capsule (Rev .154 data-selected).
+                            data-selected={on ? 'true' : undefined}
+                            className="cursor-pointer"
                           >
                             <td className={cn(td, 'text-left')}>
                               <div className={cn(mono, 'text-dense-caption font-semibold')}>
@@ -629,7 +626,7 @@ function SettlementTab() {
             />
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse">
+            <table className="w-full min-w-[720px]">
               <thead>
                 <tr>
                   <th className={cn(th, 'text-left')}>Session</th>
@@ -646,10 +643,7 @@ function SettlementTab() {
                   const missPct = r.close_miss_pct * 100
                   const absMiss = Math.abs(missPct)
                   return (
-                    <tr
-                      key={r.settlement_id}
-                      className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
-                    >
+                    <tr key={r.settlement_id}>
                       <td className={cn(td, 'text-left text-muted-foreground')}>{r.trade_date}</td>
                       <td className={cn(td, 'text-left')}>
                         <Link

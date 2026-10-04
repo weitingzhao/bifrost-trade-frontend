@@ -169,11 +169,9 @@ export const sizingKellyExactInputClass = cn(
 
 export const sizingRangeElegantClass = cn('h-2 w-full cursor-pointer accent-primary')
 
-export const sizingRowSelectedClass = cn(
-  'bg-primary/10 shadow-[inset_3px_0_0_0] shadow-primary hover:bg-primary/[0.14]',
-)
-
-export const sizingCapRowFocusClass = cn('bg-primary/10 font-semibold')
+// The binding cap is a total row: in the list grammar (Rev .153–.154) it
+// reads by weight alone, no band.
+export const sizingCapRowFocusClass = cn('font-semibold')
 
 export const watchlistStepperSizingHubClass = cn(
   'bg-primary/10 shadow-[inset_0_0_0_1px] shadow-primary/40',

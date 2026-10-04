@@ -30,9 +30,10 @@ const cap = 'whitespace-nowrap text-dense-meta font-semibold text-muted-foregrou
 const panel = 'min-w-0 overflow-hidden border mat-card'
 // A panel head is a rule, not a band.
 const panelHead = 'flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-border px-3 py-2'
-const th =
-  'sticky top-0 z-[1] whitespace-nowrap border-b border-border bg-background px-2.5 py-1.5 text-left text-dense-micro font-semibold uppercase tracking-[0.08em] text-muted-foreground'
-const td = 'border-b border-border px-2.5 py-1.5 align-top text-dense-meta'
+// The list grammar (Rev .153–.154 §17.2) draws the head: sentence case, ink 8%
+// hairline, a glass band only while it is stuck over rows.
+const th = 'sticky top-0 z-[1] whitespace-nowrap px-2.5 py-1.5 text-left text-dense-micro font-semibold text-muted-foreground'
+const td = 'px-2.5 py-1.5 align-top text-dense-meta'
 
 type Kind = 'all' | 'event' | 'risk' | 'supply' | 'guidance'
 
@@ -261,7 +262,7 @@ export default function NarrativePage() {
                 frame so the page keeps its order: readings, then where they enter,
                 then whether they are worth anything. */}
             <div className="max-h-[560px] overflow-auto">
-              <table className="w-full min-w-[980px] border-collapse">
+              <table className="w-full min-w-[980px]">
                 <thead>
                   <tr>
                     <th className={th}>Symbol</th>
@@ -285,10 +286,7 @@ export default function NarrativePage() {
                     </tr>
                   ) : (
                     shown.map((t) => (
-                      <tr
-                        key={`${t.accession}|${t.symbol}|${t.basis}|${t.item ?? t.reading}`}
-                        className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
-                      >
+                      <tr key={`${t.accession}|${t.symbol}|${t.basis}|${t.item ?? t.reading}`}>
                         <td className={cn(td, 'font-mono font-bold')}>
                           <Link to={withSymbolParam(SYMBOL_PATH, t.symbol)} className="text-entity-symbol hover:underline">
                             {t.symbol}

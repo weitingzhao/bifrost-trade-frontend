@@ -554,7 +554,7 @@ export function SymbolPriceChart({
                 setPreset(windowForSessionsAgo(Math.max(...hidden.map((p) => p.openAgo))))
               }
               title="Trades before this window — click to widen it"
-              className="absolute bottom-8 left-14 rounded-full border border-border bg-background/75 px-1.5 py-0.5 font-mono text-dense-micro text-[var(--sk-contract)]"
+              className="absolute bottom-8 left-14 rounded-full bg-background/80 px-1.5 py-0.5 font-mono text-dense-micro text-[var(--sk-contract)] shadow-[var(--glass-lens)]"
             >
               ← {hidden.length} earlier trade{hidden.length > 1 ? 's' : ''}
             </button>

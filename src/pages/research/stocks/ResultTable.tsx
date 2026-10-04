@@ -280,7 +280,7 @@ export function ResultTable({
   const row = (x: Scored, rank: number | null) => {
     const on = selected === x.row.sym
     return (
-      <DenseTableRow key={x.row.sym} {...rowSelectProps(on, () => onSelect(on ? null : x.row.sym), cn(on && 'bg-primary/[0.08]'))}>
+      <DenseTableRow key={x.row.sym} selected={on} {...rowSelectProps(on, () => onSelect(on ? null : x.row.sym))}>
         <DenseTableCell className={cn(denseTableNumCell, 'max-w-none text-dense-meta text-muted-foreground')}>{rank ?? ''}</DenseTableCell>
         <DenseTableCell className="max-w-none whitespace-nowrap">
           <Link

@@ -176,7 +176,8 @@ export function LeadersFace({
                   <DenseTableRow
                     key={r.symbol}
                     onClick={() => onSelect(on ? null : { symbol: r.symbol, date: r.lastHit })}
-                    className={cn('cursor-pointer', on && 'bg-primary/[0.06]')}
+                    selected={on}
+                    className="cursor-pointer"
                   >
                     <DenseTableCell className="w-20 max-w-none whitespace-nowrap">
                       <Link

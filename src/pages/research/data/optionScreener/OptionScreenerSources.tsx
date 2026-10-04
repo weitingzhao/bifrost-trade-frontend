@@ -11,10 +11,10 @@
  * this app (§1), and "IV-rich today" is a reading, not a failure.
  */
 import { useState } from 'react'
-import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { RailPanel } from './OptionScreenerRail'
 import type { ScreenerSource } from './useScreenerSources'
+import { CloseButton } from '@/components/data-display'
 
 const DOT: Record<string, string> = {
   scan: 'bg-warning',
@@ -96,15 +96,7 @@ export function OptionScreenerSources({
               className="inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-dense-caption mat-tag"
             >
               {sym}
-              <button
-                type="button"
-                aria-label={`Drop ${sym}`}
-                title={`Drop ${sym}`}
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => onDrop(sym)}
-              >
-                <X className="size-2.5" />
-              </button>
+              <CloseButton size="sm" onClick={() => onDrop(sym)} label={`Drop ${sym}`} />
             </span>
           ))}
           {adding ? (
@@ -123,13 +115,13 @@ export function OptionScreenerSources({
               onBlur={commit}
               placeholder="ANET, CAVA"
               aria-label="Add symbols"
-              className="h-5 w-28 rounded border border-input bg-background px-1.5 font-mono text-dense-caption placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="mat-field h-5 w-28 border px-1.5 font-mono text-dense-caption placeholder:text-muted-foreground"
             />
           ) : (
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="inline-flex h-5 items-center rounded-full border border-border px-1.5 text-dense-caption hover:bg-secondary/60"
+              className="mat-btn inline-flex h-5 items-center border px-1.5 text-dense-caption"
             >
               ＋ symbol
             </button>

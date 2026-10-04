@@ -185,7 +185,7 @@ export function WatchlistAddButton({
             setState({ key, ok: false, msg: e instanceof Error ? e.message : 'add failed' })
           }
         }}
-        className="cursor-pointer rounded-full border border-border px-2.5 py-1 text-dense-label text-muted-foreground hover:bg-[var(--sk-surface)]"
+        className="mat-btn cursor-pointer border px-2.5 py-1 text-dense-label text-muted-foreground"
         title={`Add ${key} to the watchlist.`}
       >
         Watchlist +

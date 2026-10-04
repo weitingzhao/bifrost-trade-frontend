@@ -101,7 +101,7 @@ export function JudgeTrackRecord() {
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-dense-label">
+          <table className="w-full text-dense-label">
             <colgroup>
               <col className="min-w-[8rem]" />
               <col className="min-w-[5rem]" />
@@ -111,26 +111,26 @@ export function JudgeTrackRecord() {
               <col className="min-w-[6rem]" />
             </colgroup>
             <thead>
-              <tr className="border-b border-border">
-                <th className="px-2 py-1 text-left text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="px-2 py-1 text-left text-dense-micro font-semibold text-muted-foreground">
                   Source
                 </th>
-                <th className="px-2 py-1 text-left text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="px-2 py-1 text-left text-dense-micro font-semibold text-muted-foreground">
                   Operator
                 </th>
-                <th className="px-2 py-1 text-right text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="px-2 py-1 text-right text-dense-micro font-semibold text-muted-foreground">
                   Settled
                 </th>
                 {HORIZONS.map((h) => (
                   <th
                     key={h}
-                    className="px-2 py-1 text-right text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground"
+                    className="px-2 py-1 text-right text-dense-micro font-semibold text-muted-foreground"
                   >
                     Hit {h}d
                   </th>
                 ))}
                 <th
-                  className="px-2 py-1 text-right text-dense-micro font-semibold uppercase tracking-wide text-muted-foreground"
+                  className="px-2 py-1 text-right text-dense-micro font-semibold text-muted-foreground"
                   title="Average return above the benchmark over 5 days"
                 >
                   Excess 5d
@@ -144,7 +144,7 @@ export function JudgeTrackRecord() {
                 const settled = Math.max(...HORIZONS.map((h) => horizonOf(summary, h)?.settled ?? 0))
                 const thin = settled < THIN
                 return (
-                  <tr key={source} className="border-b border-border/50">
+                  <tr key={source}>
                     <td className="px-2 py-1 font-medium">{source}</td>
                     <td className="px-2 py-1">
                       <DenseTag variant={op.variant} size="cell">

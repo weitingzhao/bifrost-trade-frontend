@@ -27,6 +27,7 @@ import {
   waitingQueueTruncationLine,
 } from '@/lib/copilot/waitingQueue'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display'
 
 /**
  * The Desk / Inbox waiting queue, one collapsed row. Same fetch and the same
@@ -188,14 +189,11 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
                   </button>
                 ) : null}
                 {row.showDismiss && row.draft ? (
-                  <button
-                    type="button"
-                    className="h-5 px-1 text-dense-caption hover:bg-secondary"
-                    title="Dismiss — Undo for five seconds"
+                  <CloseButton
                     onClick={() => dismiss(row.draft!.id, 'Dismissed')}
-                  >
-                    ✕
-                  </button>
+                    label="Dismiss"
+                    title="Dismiss — Undo for five seconds"
+                  />
                 ) : null}
               </span>
             </div>

@@ -67,7 +67,7 @@ export function SmileFitPanel({
                   <>
                     <SviSmileChart rows={rows} />
                     <div className="overflow-x-auto">
-                      <table className="w-full min-w-[560px] border-collapse">
+                      <table className="w-full min-w-[560px]">
                         <thead>
                           <tr>
                             <th className={cn(th, 'text-left')}>Strike</th>
@@ -81,7 +81,7 @@ export function SmileFitPanel({
                         </thead>
                         <tbody>
                           {rows.map((r) => (
-                            <tr key={r.strike} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+                            <tr key={r.strike}>
                               {/* The at-the-money strike is ink bold (Rev .92 #3): lime is
                                   the ticker's, and a strike is not a ticker. */}
                               <td

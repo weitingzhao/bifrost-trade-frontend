@@ -34,6 +34,7 @@ import {
   type CopilotSessionSummary,
 } from '@/api/researchCopilotSessions'
 import { openCopilotSession } from '@/lib/copilot/openCopilotSession'
+import { CloseButton } from '@/components/data-display'
 
 /**
  * Session history module (Wave RS-UX3 → RS-UX5, QA follow-up).
@@ -301,14 +302,12 @@ export function SessionListSidebar({
           className="h-7 pl-7 pr-6 text-dense-meta"
         />
         {searchInput ? (
-          <button
-            type="button"
+          <CloseButton
+            size="sm"
             onClick={() => setSearchInput('')}
-            aria-label="Clear search"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-sm text-muted-foreground hover:text-foreground"
-          >
-            <X className="size-3" />
-          </button>
+            label="Clear search"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2"
+          />
         ) : null}
       </div>
 
@@ -319,7 +318,7 @@ export function SessionListSidebar({
       ) : null}
 
       {!isLoading && rows.length === 0 ? (
-        <div className="flex flex-col items-center gap-1 rounded border border-dashed border-border/50 px-2 py-3 text-center">
+        <div className="flex flex-col items-center gap-1 border mat-card px-2 py-3 text-center">
           <MessageSquare className="size-4 text-muted-foreground/60" />
           {searching ? (
             <>
@@ -432,7 +431,7 @@ function GroupNamePrompt({
               key={g}
               type="button"
               onClick={() => onCommit(g)}
-              className="rounded-full border border-border bg-secondary px-1.5 py-0.5 text-dense-caption text-foreground/80 hover:bg-primary/10 hover:text-primary"
+              className="mat-btn border px-1.5 py-0.5 text-dense-caption text-foreground/80 hover:text-primary"
             >
               {g}
             </button>

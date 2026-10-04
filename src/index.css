@@ -834,6 +834,21 @@ html[data-frost='on']:not([data-glass='solid']) [data-inspector-dock] {
   box-shadow: var(--glass-lens), var(--glass-drop);
 }
 
+/* The floating inspector is a float over a live page (HANDOFF .152: floats
+   and panes are thick, ≈80%): the same thick base as the docked one, over
+   the side glass's blur, so the rows behind frost instead of reading
+   through (46% dark / 58% light let them). Solid / ?frost=0 keep the side
+   glass. */
+html[data-frost='on']:not([data-glass='solid']) aside[data-frost-host='inspector']:not([data-inspector-dock]) {
+  background:
+    linear-gradient(
+        color-mix(in srgb, var(--glass-base) 80%, transparent),
+        color-mix(in srgb, var(--glass-base) 80%, transparent)
+      )
+      padding-box,
+    var(--glass-rim) border-box;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

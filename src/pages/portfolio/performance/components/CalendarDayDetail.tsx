@@ -848,10 +848,11 @@ function OptionStockLinkDialog({
         {rows.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4">No link rows.</p>
         ) : (
-          <div className="max-h-[360px] overflow-auto border mat-card">
+          // The dialog portals out of the page lane's list scope; it opens its own.
+          <div className="max-h-[360px] overflow-auto border mat-card" data-sr-list="">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                <TableRow>
                   <TableHead className="text-dense-caption">Link id</TableHead>
                   <TableHead className="text-dense-caption">Stock id</TableHead>
                   <TableHead className="text-dense-caption">Symbol</TableHead>

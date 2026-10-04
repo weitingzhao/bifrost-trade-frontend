@@ -100,13 +100,23 @@ export function RightInspectorShell({
   if (docked) return createPortal(panel, slot)
 
   const overlayRight = inspectorOverlayInsetRightPx(panelOpen, room) + dock.width
-  return (
+  // Floating, it portals to <body>, out of the page lane: #main-content is a
+  // size container (`@container/page`), and containment makes it the fixed
+  // overlay's containing block and stacking context — the glass's
+  // backdrop-filter then sampled nothing (the page read straight through it)
+  // and the top bar painted over its head. On <body> it measures the viewport,
+  // which is what `room` and the dock offset are computed in. z 40: over the
+  // page and its top bar, under every Radix layer it opens (dialogs, menus,
+  // popovers at 50) and under the shell's panel, floats and rail (57–59),
+  // the order it had inside the lane.
+  return createPortal(
     <div
-      className="pointer-events-none fixed inset-y-0 left-0 z-[200] flex justify-end"
+      className="pointer-events-none fixed inset-y-0 left-0 z-40 flex justify-end"
       style={{ right: overlayRight }}
       role="presentation"
     >
       {panel}
-    </div>
+    </div>,
+    document.body,
   )
 }

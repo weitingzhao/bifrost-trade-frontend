@@ -255,7 +255,7 @@ export function LedgerClosedOptionSection({
           })}
         </DenseTableBody>
         <tfoot>
-          <DenseTableRow className="font-semibold hover:bg-transparent">
+          <DenseTableRow className="font-semibold">
             <DenseTableCell colSpan={10} className="text-left text-muted-foreground">
               Total
             </DenseTableCell>
@@ -396,7 +396,7 @@ export function LedgerClosedOptionSection({
           )}
         </DenseTableBody>
         <tfoot>
-          <DenseTableRow className="hover:bg-transparent">
+          <DenseTableRow>
             <DenseTableCell colSpan={7} className="text-left text-muted-foreground">
               Total PNL
             </DenseTableCell>

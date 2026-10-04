@@ -318,6 +318,27 @@ describe('the 0.10.0 patterns layer', () => {
     expect(outside).toEqual([])
   })
 
+  it('neutralises DenseTableRow hover on footer rows (a total reads by weight alone)', () => {
+    if (!css) return
+    const sels = rules.flatMap((r) => selectors(r.sel).map((sel) => ({ sel, body: r.body })))
+    const rowHover = sels.find((r) => r.sel === '[data-sr-list] table > tfoot > tr:hover')
+    expect(rowHover?.body).toMatch(/background:\s*transparent/)
+    expect(sels.find((r) => r.sel === '[data-sr-list] table > tfoot > tr')?.body).toMatch(/background:\s*transparent/)
+    const cells = sels.find((r) => r.sel === '[data-sr-list] table > tfoot > tr > :is(td, th)')
+    expect(cells?.body).toMatch(/border-bottom-color:\s*transparent/)
+    // The row's own hover class is still written; the scope rule is what clears it.
+    const { container } = render(
+      <DenseDataTable variant="list">
+        <tfoot>
+          <DenseTableRow>
+            <DenseTableCell>Total</DenseTableCell>
+          </DenseTableRow>
+        </tfoot>
+      </DenseDataTable>,
+    )
+    expect(container.querySelector('[data-sr-list] table > tfoot > tr')).not.toBeNull()
+  })
+
   it('gives every --sr-* reference a fallback', () => {
     if (!css) return
     expect(css.match(/var\(--sr-[a-z-]+\)/g) ?? []).toEqual([])

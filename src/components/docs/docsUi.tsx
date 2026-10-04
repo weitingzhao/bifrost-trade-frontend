@@ -37,8 +37,9 @@ export function DocsQuickNav({
             key={section.id}
             href={`#${section.id}`}
             className={cn(
-              'inline-flex h-7 shrink-0 items-center rounded-full border border-border bg-background/70 px-2.5',
-              'text-xs font-medium text-foreground transition-colors hover:bg-background hover:text-primary',
+              // .154: a button fill (ink 8%), no frame and no opaque plate.
+              'inline-flex h-7 shrink-0 items-center rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-2.5',
+              'text-xs font-medium text-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] hover:text-primary',
             )}
           >
             {section.label}
@@ -92,7 +93,7 @@ export function TokenSwatch({ label, varName }: { label: string; varName: string
   return (
     <div className="flex items-center gap-2.5 border px-2.5 py-2 mat-card">
       <span
-        className="h-5 w-5 shrink-0 rounded-full border border-border/60"
+        className="h-5 w-5 shrink-0 rounded-full shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--sk-ink)_12%,transparent)]"
         style={{ background: `var(${varName})` }}
       />
       <div className="min-w-0">
@@ -117,9 +118,9 @@ export function PlannedTokenSwatch({
   note: string
 }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-md border border-dashed border-border bg-background px-2.5 py-2">
+    <div className="flex items-center gap-2.5 rounded-md border border-dashed border-border px-2.5 py-2">
       <span
-        className="h-5 w-5 shrink-0 rounded-full border border-border/60"
+        className="h-5 w-5 shrink-0 rounded-full shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--sk-ink)_12%,transparent)]"
         style={{ background: color }}
       />
       <div className="min-w-0">

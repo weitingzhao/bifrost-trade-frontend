@@ -35,6 +35,7 @@ import {
 import { routeFor } from '@/layout/routeRegistry'
 import { DESIGN_REV } from '@/lib/design/designRoutes.generated'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display/CloseButton'
 
 const KIND_LABELS: Record<FeedbackKind, string> = {
   bug: 'Broken',
@@ -155,14 +156,7 @@ export function FeedbackDialog() {
         <span className="min-w-0 truncate text-dense-micro text-muted-foreground/80">
           on {route.label} — this page rides along
         </span>
-        <button
-          type="button"
-          onClick={closeFeedbackDialog}
-          aria-label="Close"
-          className="ml-auto text-dense-meta text-muted-foreground hover:text-foreground"
-        >
-          ×
-        </button>
+        <CloseButton onClick={closeFeedbackDialog} className="ml-auto self-center" />
       </div>
 
       {sent ? (
@@ -187,14 +181,11 @@ export function FeedbackDialog() {
               <span className="min-w-0 font-mono text-base font-semibold tabular-nums [overflow-wrap:anywhere]">
                 {cell.value}
               </span>
-              <button
-                type="button"
+              <CloseButton
                 onClick={clearPickedCell}
-                aria-label="Remove the picked cell"
-                className="ml-auto text-dense-meta text-muted-foreground hover:text-foreground"
-              >
-                ×
-              </button>
+                label="Remove the picked cell"
+                className="ml-auto self-center"
+              />
             </span>
             <dl className="grid grid-cols-[52px_minmax(0,1fr)] gap-x-2.5 gap-y-0.5 text-dense-micro">
               {(
@@ -280,15 +271,17 @@ export function FeedbackDialog() {
       {images.length > 0 ? (
         <div className="mt-1 flex flex-wrap gap-1">
           {images.map((img, i) => (
-            <button
+            <span
               key={`${img.name}-${i}`}
-              type="button"
-              onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
-              title="Remove"
-              className="mat-tag font-mono text-dense-micro text-foreground"
+              className="mat-tag inline-flex items-center font-mono text-dense-micro text-foreground"
             >
-              {img.name} ×
-            </button>
+              {img.name}
+              <CloseButton
+                size="sm"
+                label={`Remove ${img.name}`}
+                onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
+              />
+            </span>
           ))}
         </div>
       ) : null}

@@ -202,7 +202,7 @@ export default function OptionsKitPage() {
         <dl className="m-0 flex flex-[0_1_320px] flex-col gap-1.5 pt-1.5 text-dense-label text-[var(--sk-mute2)]">
           {HEAD_FACTS.map(([k, v]) => (
             <div key={k} className="flex items-start gap-2">
-              <dt className="w-[82px] flex-none text-dense-meta font-semibold uppercase tracking-[0.06em] text-muted-foreground">{k}</dt>
+              <dt className="w-[82px] flex-none text-dense-meta font-semibold text-muted-foreground">{k}</dt>
               <dd className="m-0 text-pretty">{v}</dd>
             </div>
           ))}
@@ -322,7 +322,7 @@ export default function OptionsKitPage() {
 
         <SampleBox className="gap-6">
           <div>
-            <p className="mb-1.5 text-dense-caption uppercase tracking-wide">PnlValue · realised</p>
+            <p className="mb-1.5 text-dense-meta font-semibold text-muted-foreground">PnlValue · realised</p>
             <div className="flex items-center gap-4 font-mono tabular-nums">
               <PnlCell dollar={1940} pct={2.4} formatDollar={fmtDollar} formatPct={fmtPctSigned} />
               <PnlCell dollar={-412} pct={-0.6} formatDollar={fmtDollar} formatPct={fmtPctSigned} />
@@ -331,7 +331,7 @@ export default function OptionsKitPage() {
             </div>
           </div>
           <div>
-            <p className="mb-1.5 text-dense-caption uppercase tracking-wide">
+            <p className="mb-1.5 text-dense-meta font-semibold text-muted-foreground">
               PnlValue · unrealised
             </p>
             <span className={cn('font-mono tabular-nums', unrealizedPnlColorClass(3120))}>
@@ -342,7 +342,7 @@ export default function OptionsKitPage() {
 
         <SampleBox className="gap-6">
           <div>
-            <p className="mb-1.5 text-dense-caption uppercase tracking-wide">GreekCell</p>
+            <p className="mb-1.5 text-dense-meta font-semibold text-muted-foreground">GreekCell</p>
             <div className="flex items-center gap-4 font-mono tabular-nums">
               {[
                 { g: 'Δ', v: 0.52 },
@@ -362,7 +362,7 @@ export default function OptionsKitPage() {
         </SampleBox>
 
         <div className="border px-3 py-2.5 mat-card">
-          <p className="mb-2 text-dense-caption uppercase tracking-wide">
+          <p className="mb-2 text-dense-meta font-semibold text-muted-foreground">
             IvRankStrip — as it renders today
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -446,7 +446,7 @@ export default function OptionsKitPage() {
             { label: 'Max drawdown', value: fmtDollar(s.dd), note: 'peak to trough', cls: tone(-1) },
           ].map(st => (
             <div key={st.label} className="border px-2.5 py-2 mat-card">
-              <p className="text-dense-caption uppercase tracking-wide">{st.label}</p>
+              <p className="text-dense-meta font-semibold text-muted-foreground">{st.label}</p>
               <p className={cn('font-mono text-sm tabular-nums text-foreground', st.cls)}>{st.value}</p>
               <p className="text-dense-caption text-muted-foreground">{st.note}</p>
             </div>
@@ -462,7 +462,7 @@ export default function OptionsKitPage() {
 
         <SampleBox>
           <div>
-            <p className="mb-1.5 text-dense-caption uppercase tracking-wide">Sparkline · line</p>
+            <p className="mb-1.5 text-dense-meta font-semibold text-muted-foreground">Sparkline · line</p>
             <div className="flex items-center gap-4">
               {[
                 { sym: 'NVDA', v: [41, 44, 43, 47, 52, 50, 55, 58], d: 4.2 },

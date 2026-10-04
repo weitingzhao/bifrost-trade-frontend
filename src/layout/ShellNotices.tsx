@@ -24,6 +24,7 @@ import {
 import { useDockColumn } from './symbolDock/dockState'
 import { useBottomLane } from './bottomLane'
 import css from './shellNotices.module.css'
+import { CloseButton } from '@/components/data-display/CloseButton'
 
 const TONE: Record<BannerTone, string> = {
   red: 'var(--color-lamp-red)',
@@ -162,17 +163,14 @@ function Banner({ b }: { b: ShellBanner }) {
         </div>
         {b.sub ? <div className={css.bannerSub}>{b.sub}</div> : null}
       </div>
-      <button
-        type="button"
+      <CloseButton
         className={css.bannerX}
-        aria-label="Dismiss"
+        label="Dismiss"
         onClick={(e) => {
           e.stopPropagation()
           gone()
         }}
-      >
-        ×
-      </button>
+      />
     </div>
   )
 }

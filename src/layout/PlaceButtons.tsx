@@ -24,6 +24,7 @@ import { openSurface, type Place, type Surface } from './equipSurface'
 import { markPagedFrom, surfacePagePath } from './pagedFrom'
 import { dismissSurface } from './equipMotion'
 import css from './equipSurface.module.css'
+import { CloseButton } from '@/components/data-display/CloseButton'
 
 /**
  * Icons, not words (Owner 2026-09-26, Rev .97): the words cost the tab strip
@@ -110,17 +111,11 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
           )
         })}
       </div>
-      <button
-        type="button"
-        className={css.close}
-        aria-label={`Close ${surface.label}`}
+      <CloseButton
+        label={`Close ${surface.label}`}
         title="Close"
         onClick={() => dismissSurface(surface.key)}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-          <path d="M7 7l10 10M17 7 7 17" />
-        </svg>
-      </button>
+      />
     </>
   )
 }

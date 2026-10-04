@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display/CloseButton'
 
 const PANEL_MAX_W = 820
 const PANEL_MARGIN = 10
@@ -128,22 +129,15 @@ export function DraggableExplainPanel({
       }}
     >
       <div
-        className="flex items-start justify-between gap-2 border-b border-border px-3 py-2 cursor-move select-none"
+        className="flex items-start justify-between gap-2 border-b border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-3 py-2 cursor-move select-none"
         onMouseDown={onHeaderMouseDown}
         role="presentation"
       >
         <h3 id={titleId} className="text-sm font-semibold leading-snug pr-2">{title}</h3>
-        <button
-          type="button"
-          className="shrink-0 h-6 w-6 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-          onClick={onClose}
-          aria-label="Close"
-        >
-          ×
-        </button>
+        <CloseButton onClick={onClose} title="Close (Esc)" />
       </div>
       <div className="overflow-y-auto px-3 py-2 text-xs leading-relaxed">{children}</div>
-      <p className="border-t border-border px-3 py-1.5 text-dense-caption text-muted-foreground">
+      <p className="border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-3 py-1.5 text-dense-caption text-muted-foreground">
         Drag the header to move. Click × or press Escape to close.
       </p>
     </div>

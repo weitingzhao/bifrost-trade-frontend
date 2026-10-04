@@ -13,6 +13,7 @@
  * account has one beside it — a shell scope the wired pages follow.
  */
 import { useEffect, useRef } from 'react'
+import { X } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { FeedbackButton } from './FeedbackButton'
@@ -234,9 +235,9 @@ export function AppHeader({
                   clearSymbol()
                 }
               }}
-              className="cursor-pointer px-0.5 font-normal text-muted-foreground hover:text-foreground"
+              data-sr-close="sm"
             >
-              ×
+              <X aria-hidden />
             </span>
           </span>
         ) : null}

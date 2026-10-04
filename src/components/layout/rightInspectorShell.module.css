@@ -90,7 +90,8 @@
 
 .section {
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border);
+  /* A divider, not a frame (_Part Inspector .in-sec, Rev .154): ink 8%. */
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 8%, transparent);
 }
 
 .sectionTitle {

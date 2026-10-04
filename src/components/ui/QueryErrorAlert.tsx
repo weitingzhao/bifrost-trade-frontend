@@ -40,7 +40,7 @@ export function QueryErrorAlert({ error, onRetry, className, inline }: QueryErro
       {onRetry && (
         <button
           onClick={onRetry}
-          className="shrink-0 flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+          className="shrink-0 flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] hover:text-foreground"
         >
           <RefreshCw className="h-3 w-3" />
           Retry

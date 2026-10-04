@@ -1,6 +1,7 @@
 import { useReducer, useEffect } from 'react'
-import { X, Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+import { Info, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display/CloseButton'
 import { useDockColumn } from '@/layout/symbolDock/dockState'
 import { formatLastUpdate } from '@/utils/positions'
 import type { SystemMessage, SystemMessageLevel } from '@/types/messages'
@@ -95,13 +96,11 @@ export function MessageToastStack({ messages, dismissedIds, onDismiss }: Props) 
               {formatLastUpdate(msg.occurred_at)} ago
             </p>
           </div>
-          <button
+          <CloseButton
+            label="Dismiss"
             onClick={() => onDismiss(msg.message_id)}
-            className="shrink-0 self-start rounded p-0.5 text-[#5c6572] hover:text-white hover:bg-white/[0.08] transition-colors"
-            aria-label="Dismiss"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+            className="self-start"
+          />
         </div>
       ))}
     </div>

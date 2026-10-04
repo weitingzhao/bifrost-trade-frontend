@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button'
 import { failedDetail } from '@/lib/viewState'
 import { cn } from '@/lib/utils'
 
-const td = 'whitespace-nowrap border-b border-border/55 px-2 py-1.25 text-left text-dense-body'
+const td = 'whitespace-nowrap px-2 py-1.25 text-left text-dense-body'
 const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-left align-bottom text-dense-caption font-semibold text-secondary-foreground'
 
@@ -134,11 +134,8 @@ export default function SystemFeedbackPage() {
                   <tr
                     key={r.id}
                     onClick={() => setSel(r.id)}
-                    className={cn(
-                      'cursor-pointer hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]',
-                      selected?.id === r.id &&
-                        'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
-                    )}
+                    data-selected={selected?.id === r.id || undefined}
+                    className="cursor-pointer"
                   >
                     <td className={cn(td, 'font-mono')}>{r.id}</td>
                     <td className={td}>{r.kind}</td>
@@ -182,17 +179,17 @@ export default function SystemFeedbackPage() {
                       <img
                         src={feedbackImageUrl(selected.id, i)}
                         alt={`attachment ${i + 1}`}
-                        className="h-16 rounded border border-border/60 object-cover"
+                        className="h-16 rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] object-cover"
                       />
                     </a>
                   ))}
                 </div>
               ) : null}
-              <pre className="max-h-32 overflow-auto rounded bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-2 font-mono text-dense-micro text-muted-foreground">
+              <pre className="max-h-32 overflow-auto rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] p-2 font-mono text-dense-micro text-muted-foreground">
                 {JSON.stringify(selected.context, null, 1)}
               </pre>
               {selected.reply_md ? (
-                <p className="rounded bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)] px-2 py-1 text-dense-meta">
+                <p className="rounded-sm bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)] px-2 py-1 text-dense-meta">
                   Reply · {(selected.replied_at ?? '').slice(5, 16).replace('T', ' ')} —{' '}
                   {selected.reply_md}
                 </p>

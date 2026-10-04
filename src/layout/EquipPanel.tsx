@@ -51,6 +51,7 @@ import css from './equipSurface.module.css'
 import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
 import { useStuckMarks } from '@bifrost/ui'
+import { X } from 'lucide-react'
 
 /** The width grip's drag: the column follows the pointer, and is kept on release. */
 function resizeFrom(e: ReactPointerEvent<HTMLDivElement>): void {
@@ -255,7 +256,9 @@ export function EquipPanel() {
                   role="button"
                   tabIndex={0}
                   className={css.tabClose}
+                  data-sr-close="sm"
                   aria-label={`Close ${t.label}`}
+                  title="Close"
                   onClick={(e) => {
                     e.stopPropagation()
                     dismissSurface(t.key)
@@ -267,7 +270,7 @@ export function EquipPanel() {
                     dismissSurface(t.key)
                   }}
                 >
-                  ×
+                  <X aria-hidden />
                 </span>
               </button>
             ))}

@@ -296,7 +296,7 @@ export default function OrchestrationPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[45rem] border-collapse text-dense-label">
                 <thead>
-                  <tr className="border-b border-border text-dense-micro uppercase tracking-wide text-muted-foreground">
+                  <tr className="text-dense-micro text-muted-foreground">
                     <th className="px-3 py-1.5 text-left font-semibold">Agent</th>
                     <th className="px-3 py-1.5 text-left font-semibold">Role</th>
                     <th className="px-3 py-1.5 text-left font-semibold">Called by</th>
@@ -311,7 +311,6 @@ export default function OrchestrationPage() {
                     <tr
                       key={r.agent}
                       {...rowSelectProps(false, () => toPersona(r.agent))}
-                      className="border-b border-border last:border-b-0 hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
                       title={`Open ${agentLabel(r.agent, 'en', labels[r.agent])}’s persona`}
                     >
                       <td className="px-3 py-1.5">

@@ -21,11 +21,14 @@
   border-left: 1px solid var(--sk-line0);
 }
 
+/* Floating (design Rev .154 `_Part SymbolDock`): radius 12, the glass lens
+   and drop, an ink 10% ring instead of a line-coloured frame. */
 .float {
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow:
-    0 12px 32px rgb(0 0 0 / 0.45),
-    0 0 0 1px var(--sk-line);
+    var(--glass-lens),
+    var(--glass-drop),
+    0 0 0 1px color-mix(in srgb, var(--sk-ink) 10%, transparent);
 }
 
 .mono {
@@ -262,28 +265,27 @@
   font-size: 8px;
 }
 
+/* Full-list rows are the list grammar (design Rev .154, `data-sr-row
+   data-sr-click` under the scroll body's own `data-sr-list`): no rules, a 3%
+   zebra, hover ink 7% and the name you are on (`data-selected`) accent 18%,
+   as 6px capsules inset by a 6px transparent side border — so the side
+   padding is 4px, keeping the content where the 2px rule + 8px had it. */
 .row {
   min-height: 30px;
-  padding: 3px 10px 3px 8px;
-  border-left: 2px solid transparent;
-  border-bottom: 1px solid color-mix(in srgb, var(--sk-line) 45%, transparent);
+  padding: 3px 4px;
   background: transparent;
 }
 
-/* The name you are on: a violet rule and a 9% wash (the design's `on`). */
-.row.cur,
+/* The collapsed strip keeps its own marks: a violet rule and a 9% wash. */
 .stripRow.cur {
   border-left-color: var(--sk-accent);
   background: color-mix(in srgb, var(--sk-accent) 9%, transparent);
 }
 
-.row:hover,
-.stripRow:hover,
-.contract:hover {
+.stripRow:hover {
   background: color-mix(in srgb, var(--sk-ink) 5%, transparent);
 }
 
-.row.cur:hover,
 .stripRow.cur:hover {
   background: color-mix(in srgb, var(--sk-accent) 14%, transparent);
 }
@@ -358,12 +360,13 @@
   text-align: right;
 }
 
+/* A contract under its name: indented, and its 3% contract wash is the row
+   state (`--sr-row`), so the zebra and the hover still read over it. */
 .contract {
   min-height: 26px;
-  padding: 2px 10px 2px 20px;
-  border-left: 2px solid transparent;
-  border-bottom: 1px solid color-mix(in srgb, var(--sk-line) 30%, transparent);
-  background: color-mix(in srgb, var(--sk-contract) 3%, transparent);
+  padding: 2px 4px 2px 14px;
+  background: transparent;
+  --sr-row: color-mix(in srgb, var(--sk-contract) 3%, transparent);
 }
 
 .contractName {

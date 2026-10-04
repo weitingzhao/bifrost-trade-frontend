@@ -25,6 +25,7 @@ import {
 } from '@/lib/notes/noteComposer'
 import { routeFor } from '@/layout/routeRegistry'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display/CloseButton'
 
 interface ChipRef extends NoteRef {
   label: string
@@ -111,14 +112,7 @@ export function NoteComposer() {
         <span className="min-w-0 truncate text-dense-micro text-muted-foreground/80">
           on {route.label} · saved to Journal
         </span>
-        <button
-          type="button"
-          onClick={closeNoteComposer}
-          aria-label="Close"
-          className="ml-auto text-dense-meta text-muted-foreground hover:text-foreground"
-        >
-          ×
-        </button>
+        <CloseButton onClick={closeNoteComposer} className="ml-auto self-center" />
       </div>
       {chips.length > 0 ? (
         <div className="mb-1.5 flex flex-wrap items-center gap-1">

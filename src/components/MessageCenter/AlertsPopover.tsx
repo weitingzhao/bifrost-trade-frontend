@@ -15,8 +15,8 @@
  */
 import { useReducer, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X } from 'lucide-react'
 import { HealthLamp } from '@bifrost/ui'
+import { CloseButton } from '@/components/data-display/CloseButton'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { formatLastUpdate } from '@/utils/positions'
 import { useShellPopover } from '@/lib/shellPopover'
@@ -42,10 +42,6 @@ function whenLabel(when: AlertItem['when']): string {
   return typeof when === 'number' ? `${formatLastUpdate(when)} ago` : when
 }
 
-/** The small round × the centre uses for a source and for a row (Rev .72 §10). */
-const X_CLASS =
-  'inline-flex size-[18px] shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] text-[var(--sk-mute2)] transition-colors hover:bg-[color-mix(in_srgb,var(--sk-ink)_16%,transparent)] hover:text-foreground'
-
 /** Clear an item: its own dismissal when it has one, and this session's hide either way. */
 function clearItems(group: AlertGroup, items: readonly AlertItem[]): void {
   items.forEach((i) => i.onDismiss?.())
@@ -55,7 +51,7 @@ function clearItems(group: AlertGroup, items: readonly AlertItem[]): void {
 function GroupHeading({ group, canFold, onFold }: { group: AlertGroup; canFold: boolean; onFold: () => void }) {
   return (
     <div className="flex items-center gap-2 px-3 pb-1 pt-2">
-      <span className="text-dense-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+      <span className="text-dense-micro font-semibold text-muted-foreground">
         {group.title}
       </span>
       <span className="font-mono text-dense-micro tabular-nums text-muted-foreground/70">
@@ -68,15 +64,11 @@ function GroupHeading({ group, canFold, onFold }: { group: AlertGroup; canFold: 
         </button>
       ) : null}
       {group.items.length > 0 ? (
-        <button
-          type="button"
-          className={X_CLASS}
-          aria-label={`Clear ${group.title}`}
+        <CloseButton
+          label={`Clear ${group.title}`}
           title="Clear this source"
           onClick={() => clearItems(group, group.items)}
-        >
-          <X className="size-3" />
-        </button>
+        />
       ) : null}
     </div>
   )
@@ -102,7 +94,7 @@ function AlertRow({ group, item, onGo }: { group: AlertGroup; item: AlertItem; o
   )
 
   return (
-    <div className="group/row flex items-start gap-2 px-3 py-1.5 hover:bg-accent/50">
+    <div className="group/row flex items-start gap-2 px-3 py-1.5 transition-colors hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]">
       {item.to ? (
         <button
           type="button"
@@ -116,15 +108,11 @@ function AlertRow({ group, item, onGo }: { group: AlertGroup; item: AlertItem; o
       )}
       {/* Every row can be cleared now (Rev .72 §10): the × shows on hover
           or keyboard focus, so it never moves the timestamp. */}
-      <button
-        type="button"
+      <CloseButton
+        label="Clear"
         onClick={() => clearItems(group, [item])}
-        className={cn(X_CLASS, 'opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100')}
-        aria-label="Clear"
-        title="Clear"
-      >
-        <X className="size-3" />
-      </button>
+        className="opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100"
+      />
     </div>
   )
 }

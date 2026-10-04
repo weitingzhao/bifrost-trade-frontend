@@ -11,6 +11,7 @@ export const API_ROUTE_KEYS = [
   'monitor',
   'ops',
   'docs',
+  'account',
   'trading',
   'portfolio',
   'strategy',
@@ -51,7 +52,7 @@ export const ARCH_SERVICES: ServiceDef[] = [
 ]
 
 export const ACCOUNT_SERVICES: ServiceDef[] = [
-  { key: 'trading',   name: 'Account',   base: domainOrigin('trading'),   port: '8769', description: 'Orders, positions, Greeks and the strategy gate', healthPath: '/health' },
+  { key: 'account',   name: 'Account',   base: domainOrigin('account'),   port: '8769', description: 'Orders, positions, Greeks and the strategy gate', healthPath: '/health' },
 ]
 
 export const RESEARCH_SERVICES: ServiceDef[] = [

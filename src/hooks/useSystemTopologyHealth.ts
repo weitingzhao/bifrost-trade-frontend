@@ -74,13 +74,15 @@ function buildDaemonTradingNode(status: StatusResponse | null | undefined): Pick
  * The board collapsed to the four, and these four nodes were left with no probe
  * of their own — drawn yellow, which reads as "unknown" when the truth is that
  * a neighbour already answered for them. The gateway routes are real and worth
- * drawing; the process behind them is what has a lamp.
+ * drawing; the process behind them is what has a lamp. The account probe reads the
+ * process's own prefix, `/api/account/health` (TD-55 B1).
  */
 const PROBE_ALIAS: Record<string, string> = {
   ops: 'monitor',
   docs: 'monitor',
-  portfolio: 'trading',
-  strategy: 'trading',
+  trading: 'account',
+  portfolio: 'account',
+  strategy: 'account',
 }
 
 function probeKeyFor(key: string): string {

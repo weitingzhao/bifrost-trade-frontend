@@ -118,7 +118,7 @@ describe('PlanCard · expiry writes are a PATCH of expires_at', () => {
 
     await waitFor(() => expect(patchCalls()).toHaveLength(1))
     const [url, init] = patchCalls()[0]
-    expect(String(url)).toContain('/api/strategy/strategies/plans/9')
+    expect(String(url)).toContain('/api/account/strategies/plans/9')
     expect(JSON.parse(String(init?.body))).toEqual({ expires_at: want })
     expect(fetchMock.mock.calls.some(([, i]) => i?.method === 'PUT')).toBe(false)
 

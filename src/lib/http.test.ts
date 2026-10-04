@@ -47,7 +47,7 @@ describe('requestJson', () => {
 
   it('returns the parsed body of a 2xx', async () => {
     fetchMock.mockResolvedValue(json({ rows: [1, 2] }))
-    await expect(requestJson('/api/strategy/strategies/plans')).resolves.toEqual({ rows: [1, 2] })
+    await expect(requestJson('/api/account/strategies/plans')).resolves.toEqual({ rows: [1, 2] })
   })
 
   it('serialises a body and sets the JSON header only when there is one', async () => {
@@ -66,7 +66,7 @@ describe('requestJson', () => {
 
   it('throws HttpError with the server detail on a non-2xx', async () => {
     fetchMock.mockResolvedValue(json({ detail: 'Plan 7 is not a draft' }, 409, 'Conflict'))
-    const err = await caught(requestJson('/api/strategy/strategies/plans/7', { method: 'DELETE' }))
+    const err = await caught(requestJson('/api/account/strategies/plans/7', { method: 'DELETE' }))
     expect(err.status).toBe(409)
     expect(err.detail).toBe('Plan 7 is not a draft')
     expect(err.message).toBe('Plan 7 is not a draft')
@@ -151,7 +151,7 @@ describe('requestJson', () => {
   it('sends a Trade write through tradeFetch: the operator Bearer goes on', async () => {
     tradeOperatorStore.setToken(TOKEN)
     fetchMock.mockResolvedValue(json({ ok: true }))
-    await requestJson('/api/strategy/strategies/plans/7/cancel', { method: 'POST' })
+    await requestJson('/api/account/strategies/plans/7/cancel', { method: 'POST' })
     expect(new Headers(initOf(fetchMock.mock.calls[0]).headers).get('Authorization')).toBe(`Bearer ${TOKEN}`)
   })
 
@@ -160,7 +160,7 @@ describe('requestJson', () => {
     fetchMock.mockResolvedValue(
       json({ ok: false, detail: 'operator role required', required_role: 'operator', current_role: 'viewer' }, 403),
     )
-    const err = await caught(requestJson('/api/strategy/strategies/plans', { method: 'POST', body: {} }))
+    const err = await caught(requestJson('/api/account/strategies/plans', { method: 'POST', body: {} }))
     expect(err.status).toBe(403)
     expect(err.message).toBe('operator role required')
     expect(tradeOperatorStore.getState().open).toBe(true)
@@ -220,7 +220,7 @@ describe('requestDelete (strict deletes, api 0.3.0)', () => {
 
   it('returns the body with how it was deleted', async () => {
     fetchMock.mockResolvedValue(json({ deleted: 'hard', strategy_plan_id: 12, ok: true }))
-    await expect(requestDelete('/api/strategy/strategies/plans/12')).resolves.toEqual({
+    await expect(requestDelete('/api/account/strategies/plans/12')).resolves.toEqual({
       deleted: 'hard',
       strategy_plan_id: 12,
       ok: true,
@@ -230,12 +230,12 @@ describe('requestDelete (strict deletes, api 0.3.0)', () => {
 
   it('keeps a soft delete soft', async () => {
     fetchMock.mockResolvedValue(json({ deleted: 'soft', strategy_structure_id: 3, ok: true }))
-    expect((await requestDelete('/api/strategy/strategies/structures/3')).deleted).toBe('soft')
+    expect((await requestDelete('/api/account/strategies/structures/3')).deleted).toBe('soft')
   })
 
   it('reads a 404 that names the row as already gone', async () => {
     fetchMock.mockResolvedValue(json({ detail: 'No plan 12.', ok: false, error: 'No plan 12.' }, 404))
-    await expect(requestDelete('/api/strategy/strategies/plans/12')).resolves.toEqual({
+    await expect(requestDelete('/api/account/strategies/plans/12')).resolves.toEqual({
       deleted: 'gone',
       detail: 'No plan 12.',
     })
@@ -243,19 +243,19 @@ describe('requestDelete (strict deletes, api 0.3.0)', () => {
 
   it("still throws on a route miss (FastAPI's bare Not Found) or a 404 with no reason", async () => {
     fetchMock.mockResolvedValueOnce(json({ detail: 'Not Found' }, 404))
-    expect((await caught(requestDelete('/api/strategy/nope'))).status).toBe(404)
+    expect((await caught(requestDelete('/api/account/nope'))).status).toBe(404)
     fetchMock.mockResolvedValueOnce(new Response('', { status: 404 }))
-    expect((await caught(requestDelete('/api/strategy/nope'))).status).toBe(404)
+    expect((await caught(requestDelete('/api/account/nope'))).status).toBe(404)
   })
 
   it('throws the 409 and 503 reasons', async () => {
     fetchMock.mockResolvedValueOnce(json({ detail: 'It has 2 trades; a rule with trades stays.', ok: false }, 409))
-    const e = await caught(requestDelete('/api/strategy/strategies/opportunities/5'))
+    const e = await caught(requestDelete('/api/account/strategies/opportunities/5'))
     expect(e.status).toBe(409)
     expect(e.message).toBe('It has 2 trades; a rule with trades stays.')
     fetchMock.mockResolvedValueOnce(
       json({ detail: 'Cannot write strategy instance 7: the Golden Source is unreachable.', ok: false }, 503),
     )
-    await expect(requestDelete('/api/strategy/strategies/instances/7')).rejects.toThrow('Golden Source is unreachable')
+    await expect(requestDelete('/api/account/strategies/instances/7')).rejects.toThrow('Golden Source is unreachable')
   })
 })

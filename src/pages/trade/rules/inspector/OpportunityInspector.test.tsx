@@ -81,7 +81,7 @@ describe('OpportunityInspector', () => {
   it('names the request it makes under the title (TD-62)', async () => {
     mount()
     await screen.findByLabelText('Name')
-    expect(screen.getByText('PATCH /api/strategy/strategies/opportunities/41')).toBeTruthy()
+    expect(screen.getByText('PATCH /api/account/strategies/opportunities/41')).toBeTruthy()
   })
 
   it('holds back a blank name and says why', async () => {

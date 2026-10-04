@@ -28,25 +28,25 @@ describe('the inspector label is the request that goes out', () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 500 }))
     await updateAllocation(42, { name: 'x' }).catch(() => undefined)
     expect(strategyWriteLabel(STRATEGY_WRITES.allocation, 42)).toBe(sent())
-    expect(sent()).toBe('PATCH /api/strategy/strategies/allocations/42')
+    expect(sent()).toBe('PATCH /api/account/strategies/allocations/42')
   })
 
   it('opportunity', async () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 500 }))
     await patchOpportunity(7, { name: 'x' }).catch(() => undefined)
     expect(strategyWriteLabel(STRATEGY_WRITES.opportunity, 7)).toBe(sent())
-    expect(sent()).toBe('PATCH /api/strategy/strategies/opportunities/7')
+    expect(sent()).toBe('PATCH /api/account/strategies/opportunities/7')
   })
 
   it('structure, and its refusal names the same request', async () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 503 }))
-    await expect(updateStructure(9, { name: 'x' } as never)).rejects.toThrow('PUT /api/strategy/strategies/structures/9: HTTP 503')
+    await expect(updateStructure(9, { name: 'x' } as never)).rejects.toThrow('PUT /api/account/strategies/structures/9: HTTP 503')
     expect(strategyWriteLabel(STRATEGY_WRITES.structure, 9)).toBe(sent())
   })
 
   it('creating a structure', async () => {
     fetchMock.mockResolvedValueOnce(new Response('{}', { status: 503 }))
-    await expect(createStructure({ name: 'x' } as never)).rejects.toThrow('POST /api/strategy/strategies/structures: HTTP 503')
+    await expect(createStructure({ name: 'x' } as never)).rejects.toThrow('POST /api/account/strategies/structures: HTTP 503')
     expect(strategyWriteLabel(STRATEGY_WRITES.createStructure)).toBe(sent())
   })
 })

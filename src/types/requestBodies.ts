@@ -25,7 +25,7 @@
 /** A free-form JSON object (`Dict[str, Any]` in the model). */
 type JsonObject = object
 
-// ── Strategy (`/api/strategy`) ───────────────────────────────────────────────
+// ── Strategy (`/api/account`, was `/api/strategy`) ───────────────────────────────────────────────
 
 /** POST `/strategies/templates` (core 400 without a snake_case `template_code`). */
 export interface TemplateBody {
@@ -140,7 +140,7 @@ export interface SavedSearchBody {
   state?: JsonObject
 }
 
-// ── Portfolio (`/api/portfolio`) ─────────────────────────────────────────────
+// ── Portfolio (`/api/account`, was `/api/portfolio`) ─────────────────────────────────────────────
 
 /** POST `/position-categories`. */
 export interface PositionCategoryBody {
@@ -168,7 +168,7 @@ export interface InstrumentClassBody {
   note?: string | null
 }
 
-// ── Trading (`/api/trading`) ─────────────────────────────────────────────────
+// ── Trading (`/api/account`, was `/api/trading`) ─────────────────────────────────────────────────
 
 /** One split of a fill across trades, old names (api 0.7.0 reads them until R4). */
 export interface InstanceAllocationItem {

@@ -51,7 +51,7 @@ describe('plans', () => {
   it('the plan editor writes one field per PATCH — a cleared rationale is null', async () => {
     fetchMock.mockResolvedValue(json({ strategy_plan_id: 12, rationale: null }))
     await updateStrategyPlan(12, { rationale: null })
-    expect(call()).toEqual({ url: '/api/strategy/strategies/plans/12', method: 'PATCH', body: { rationale: null } })
+    expect(call()).toEqual({ url: '/api/account/strategies/plans/12', method: 'PATCH', body: { rationale: null } })
   })
 
   it('a field an intent refuses throws the 409 reason', async () => {
@@ -77,7 +77,7 @@ describe('reviews', () => {
       json({ trade_id: 7, tags_added_json: [], tags_dropped_json: [], note: null, reviewed: true }),
     )
     const row = await saveTradeReview(7, { reviewed: true })
-    expect(call()).toEqual({ url: '/api/strategy/trade-reviews/7', method: 'PATCH', body: { reviewed: true } })
+    expect(call()).toEqual({ url: '/api/account/trade-reviews/7', method: 'PATCH', body: { reviewed: true } })
     expect(row.reviewed).toBe(true)
   })
 
@@ -103,7 +103,7 @@ describe('execution attribution', () => {
     fetchMock.mockResolvedValue(json(attribution))
     const res = await patchExecutionAttribution(41, { strategy_opportunity_id: 3, trade_id: 30 })
     expect(call()).toEqual({
-      url: '/api/trading/executions/41/attribution',
+      url: '/api/account/executions/41/attribution',
       method: 'PATCH',
       body: { strategy_opportunity_id: 3, trade_id: 30 },
     })
@@ -120,7 +120,7 @@ describe('execution attribution', () => {
   it('the fill edit stays on PUT /executions/{id}', async () => {
     fetchMock.mockResolvedValue(json({ ok: true }))
     await updateExecution(41, { price: 1.25 })
-    expect(call()).toMatchObject({ url: '/api/trading/executions/41', method: 'PUT' })
+    expect(call()).toMatchObject({ url: '/api/account/executions/41', method: 'PUT' })
   })
 
   it('delete: 409 while a link names it, 404 already gone', async () => {
@@ -143,7 +143,7 @@ describe('strategy rules', () => {
     fetchMock.mockResolvedValue(json({ strategy_template_id: 4 }))
     await updateTemplate(4, { display_name: 'Covered call', explanation: null })
     expect(call()).toEqual({
-      url: '/api/strategy/strategies/templates/4',
+      url: '/api/account/strategies/templates/4',
       method: 'PATCH',
       body: { display_name: 'Covered call', explanation: null },
     })
@@ -160,10 +160,10 @@ describe('strategy rules', () => {
   it('opportunity and allocation edits are PATCHes', async () => {
     fetchMock.mockResolvedValue(json({}))
     await patchOpportunity(5, { is_active: false })
-    expect(call(0)).toEqual({ url: '/api/strategy/strategies/opportunities/5', method: 'PATCH', body: { is_active: false } })
+    expect(call(0)).toEqual({ url: '/api/account/strategies/opportunities/5', method: 'PATCH', body: { is_active: false } })
     await updateAllocation(6, { allocation_limits: { max_positions: null, max_bp_pct: 0.25 } })
     expect(call(1)).toEqual({
-      url: '/api/strategy/strategies/allocations/6',
+      url: '/api/account/strategies/allocations/6',
       method: 'PATCH',
       body: { allocation_limits: { max_positions: null, max_bp_pct: 0.25 } },
     })
@@ -179,7 +179,7 @@ describe('strategy rules', () => {
   it('instance: PATCH answers the row; delete 409 / 503 throw their reasons', async () => {
     fetchMock.mockResolvedValueOnce(json({ trade_id: 7, label: null }))
     await patchTrade(7, { label: null })
-    expect(call(0)).toEqual({ url: '/api/strategy/trades/7', method: 'PATCH', body: { label: null } })
+    expect(call(0)).toEqual({ url: '/api/account/trades/7', method: 'PATCH', body: { label: null } })
     fetchMock.mockResolvedValueOnce(refusal(409, '3 executions are attributed to this instance.'))
     await expect(deleteTrade(7)).rejects.toThrow('3 executions are attributed')
     fetchMock.mockResolvedValueOnce(refusal(503, 'Cannot write strategy instance 7: the Golden Source is unreachable.'))
@@ -202,7 +202,7 @@ describe('portfolio', () => {
     fetchMock.mockResolvedValue(json({ ok: true }))
     await setInstrumentClass('ZZFI|STK|||', 'fixed_income', true)
     expect(call(0)).toEqual({
-      url: '/api/portfolio/instrument-classes/ZZFI%7CSTK%7C%7C%7C',
+      url: '/api/account/instrument-classes/ZZFI%7CSTK%7C%7C%7C',
       method: 'PATCH',
       body: { instrument_class: 'fixed_income' },
     })

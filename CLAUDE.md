@@ -143,6 +143,9 @@ System 只回答交易者的三个问题（能否交易 / 能否看到 / 数据�
 `hooks/` 包 `useQuery`，页面只读 hook。queryKey 一律取自 `QUERY_KEYS`（`src/constants/queryKeys.ts`）——
 同一份数据挂在同一个前缀下，写入时 invalidate 前缀就能刷新所有读法；另写一个字面量数组就多出一份写入刷不到的缓存。
 
+网关一个进程一个前缀：`monitorUrl` → `/api/monitor`、`accountUrl`（`tradingUrl` / `strategyUrl` / `portfolioUrl` 同指它）→ `/api/account`、
+`marketUrl` → `/api/market`、`tradeResearchUrl` → `/api/research`；`/api/trading|strategy|portfolio` 是待 B2 删除的别名，不要再拼。（TD-55）
+
 ```tsx
 // ✅ 正确 — api/trading.ts：先校验 API 原样的响应，再拆包
 const validateExecutions = withValidation<Partial<ExecutionsWire>>(ExecutionsWireSchema, 'trading/executions')

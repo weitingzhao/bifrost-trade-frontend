@@ -3,7 +3,8 @@
  *
  * Same signature as `fetch`, so a module swaps one word. A request is touched
  * only when it is a write (not GET / HEAD / OPTIONS) to a Trade API prefix —
- * `/api/{monitor,trading,strategy,portfolio,market,research}` — and carries no
+ * `/api/{monitor,account,market,research}`, or one of the account aliases
+ * `/api/{trading,strategy,portfolio}` until TD-55 B2 removes them — and carries no
  * Authorization of its own. `/api/plugin/research` is the Research engine with
  * its own bearer and is left alone.
  *
@@ -14,7 +15,7 @@
 
 import { openTradeOperatorDialog, tradeOperatorToken } from '@/lib/auth/tradeOperator'
 
-const TRADE_PATH = /(^|\/)api\/(monitor|trading|strategy|portfolio|market|research)(\/|$)/
+const TRADE_PATH = /(^|\/)api\/(monitor|account|trading|strategy|portfolio|market|research)(\/|$)/
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 
 function urlOf(input: RequestInfo | URL): string {

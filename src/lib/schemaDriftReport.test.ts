@@ -41,11 +41,11 @@ describe('schema drift reporter', () => {
   })
 
   it('keeps the URL path only — no origin, no query', () => {
-    expect(driftUrlPath('http://192.0.2.1:30882/api/strategy/strategies/instances?account_id=U0000001')).toBe(
-      '/api/strategy/strategies/instances',
+    expect(driftUrlPath('http://192.0.2.1:30882/api/account/strategies/instances?account_id=U0000001')).toBe(
+      '/api/account/strategies/instances',
     )
-    expect(driftUrlPath('/api/strategy/strategies/opportunities?active_only=false')).toBe(
-      '/api/strategy/strategies/opportunities',
+    expect(driftUrlPath('/api/account/strategies/opportunities?active_only=false')).toBe(
+      '/api/account/strategies/opportunities',
     )
     expect(driftUrlPath(undefined)).toBeNull()
   })
@@ -120,11 +120,11 @@ describe('withValidation in production', () => {
   it('passes a drifted answer through and records it', () => {
     const validate = withValidation<unknown>(List, 'strategy/fixture')
     const bad = { items: [{ id: 1, symbols: null, side: 'buy' }] }
-    expect(validate(bad, '/api/strategy/strategies/fixture?active_only=false')).toBe(bad)
+    expect(validate(bad, '/api/account/strategies/fixture?active_only=false')).toBe(bad)
     expect(reports).toEqual([
       {
         schema: 'strategy/fixture',
-        url: '/api/strategy/strategies/fixture',
+        url: '/api/account/strategies/fixture',
         fields: ['items[].symbols (invalid_type, expected array)'],
       },
     ])

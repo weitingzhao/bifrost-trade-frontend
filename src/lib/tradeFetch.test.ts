@@ -31,8 +31,15 @@ describe('tradeFetch', () => {
     closeTradeOperatorDialog()
   })
 
-  it('knows the six Trade prefixes and nothing else', () => {
+  it('knows the Trade prefixes and nothing else', () => {
+    // One prefix per process (TD-55): monitor, account, market, research.
+    expect(tradeApiPath('/api/account/strategies/allocations')).toBe('/api/account/strategies/allocations')
+    expect(tradeApiPath('/api/market/watchlist')).toBe('/api/market/watchlist')
+    // The account aliases answer until B2 removes them, so a write through one is still Trade's.
     expect(tradeApiPath('/api/strategy/strategies/allocations')).toBe('/api/strategy/strategies/allocations')
+    expect(tradeApiPath('/api/trading/executions/1')).toBe('/api/trading/executions/1')
+    expect(tradeApiPath('/api/portfolio/instrument-classes/X')).toBe('/api/portfolio/instrument-classes/X')
+    expect(tradeApiPath('/api/accounts/x')).toBeNull()
     expect(tradeApiPath('http://host:30882/api/monitor/control/flatten')).toBe('/api/monitor/control/flatten')
     expect(tradeApiPath('/api/research/research/feedback/reports')).not.toBeNull()
     expect(tradeApiPath('/api/plugin/research/research/copilot/chat')).toBeNull()
@@ -41,12 +48,17 @@ describe('tradeFetch', () => {
   })
 
   it('puts the token on a write to Trade', async () => {
+    await tradeFetch('/api/account/strategies/allocations', { method: 'POST', body: '{}' })
+    expect(authOf(fetchMock.mock.calls[0])).toBe(`Bearer ${TOKEN}`)
+  })
+
+  it('puts the token on a write through an account alias too (until TD-55 B2)', async () => {
     await tradeFetch('/api/strategy/strategies/allocations', { method: 'POST', body: '{}' })
     expect(authOf(fetchMock.mock.calls[0])).toBe(`Bearer ${TOKEN}`)
   })
 
   it('leaves a read alone', async () => {
-    await tradeFetch('/api/strategy/strategies/allocations')
+    await tradeFetch('/api/account/strategies/allocations')
     expect(fetchMock.mock.calls[0][1]).toBeUndefined()
   })
 

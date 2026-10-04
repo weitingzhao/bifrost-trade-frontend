@@ -20,7 +20,7 @@ function answer(status: number, body: unknown) {
 describe('useGateSetDefaults', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it('reads GET /gate-sets/defaults on the strategy domain and caches it under its own key', async () => {
+  it('reads GET /gate-sets/defaults on the account process and caches it under its own key', async () => {
     const fetchMock = answer(200, { gates: gatesFixture() })
     vi.stubGlobal('fetch', fetchMock)
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -28,7 +28,7 @@ describe('useGateSetDefaults', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/strategy/gate-sets/defaults')
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/account/gate-sets/defaults')
     expect(result.current.data?.gates).toEqual(gatesFixture())
     expect(qc.getQueryData(QUERY_KEYS.strategy.gateSetDefaults)).toEqual({ gates: gatesFixture() })
     // outside the gate list's key, so a gate write does not refetch it

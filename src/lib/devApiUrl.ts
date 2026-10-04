@@ -13,6 +13,10 @@ function joinBase(base: string, path: string): string {
  *   - absolute URL → e.g. `http://host:30882/api/{domain}/…`
  *
  * Backend route prefixes (e.g. `/research/…`, `/ops/…`) remain part of `path`.
+ *
+ * One gateway prefix per process (TD-55, Owner option B): `monitor` (api-monitor, which also
+ * serves `/ops/…` and `/research/docs/…`), `account` (api-account), `market` (api-market) and
+ * `research` (api-research, the Trade API's research app).
  */
 
 function tradeApiBase(): string {
@@ -38,16 +42,26 @@ export function marketUrl(path: string): string {
   return domainUrl('market', path)
 }
 
+/**
+ * The api-account process (:8769) at its own gateway prefix, `/api/account/…` (TD-55
+ * option B1). `/api/trading`, `/api/strategy` and `/api/portfolio` are aliases of the same
+ * process and keep answering until B2 removes them; nothing here calls them any more.
+ */
+export function accountUrl(path: string): string {
+  return domainUrl('account', path)
+}
+
+/** Account routes grouped by what they serve; all three are api-account (`/api/account`). */
 export function tradingUrl(path: string): string {
-  return domainUrl('trading', path)
+  return accountUrl(path)
 }
 
 export function strategyUrl(path: string): string {
-  return domainUrl('strategy', path)
+  return accountUrl(path)
 }
 
 export function portfolioUrl(path: string): string {
-  return domainUrl('portfolio', path)
+  return accountUrl(path)
 }
 
 /**

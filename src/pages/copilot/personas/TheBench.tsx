@@ -44,7 +44,6 @@ import {
   agentLabel,
 } from '@/lib/copilot/agentPersonaCatalog'
 import type { AgentPersona } from '@/api/agentPersona'
-import { cn } from '@/lib/utils'
 
 /** Roles that grade. The other three write or explain and never do. */
 const JUDGES = new Set(['specialist', 'composer', 'loop'])
@@ -110,14 +109,10 @@ export function TheBench({
             return (
               <DenseTableRow
                 key={id}
-                {...rowSelectProps(
-                  selected === id,
-                  () => onSelect(id),
-                  cn(
-                    selected === id && 'bg-primary/[0.06]',
-                    note != null && 'bg-secondary/40',
-                  ),
-                )}
+                {...rowSelectProps(selected === id, () => onSelect(id))}
+                selected={selected === id}
+                // A judge you never route to yourself is a row state (Rev .154).
+                rowTint={note != null ? 'color-mix(in srgb, var(--sk-ink) 4%, transparent)' : undefined}
                 title={
                   note == null
                     ? 'Click to edit its persona below.'

@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
-import { Crosshair, Send, Square, X } from 'lucide-react'
+import { Crosshair, Send, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AgentActionsMenu } from '@/components/cockpit/AgentActionsMenu'
 import { CopilotContextPopover } from '@/components/cockpit/CopilotContextPopover'
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import type { CopilotModelId } from '@/lib/cockpit/modelCatalog'
 import { askCopilotIntentStore, useAskCopilotIntent } from '@/store/askCopilotIntentStore'
 import { copilotViewStore, useCopilotView } from '@/store/copilotViewStore'
+import { CloseButton } from '@/components/data-display'
 
 function contextChipLabel(ctx: { originLabel: string; symbol?: string; date?: string }): string {
   const parts = [ctx.originLabel]
@@ -117,21 +118,14 @@ function ComposerForm({
                   {contextChipLabel(view)}
                 </button>
               </CopilotContextPopover>
-              <button
-                type="button"
-                onClick={() => copilotViewStore.suppress()}
-                aria-label="Remove context"
-                className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3 w-3" />
-              </button>
+              <CloseButton size="sm" className="shrink-0" onClick={() => copilotViewStore.suppress()} label="Remove context" />
             </span>
           ) : (
             <CopilotContextPopover>
               <button
                 type="button"
                 data-testid="copilot-context-chip"
-                className="inline-flex items-center gap-1 rounded-full border border-dashed border-border/60 px-1.5 py-0.5 text-dense-caption text-muted-foreground hover:text-foreground"
+                className="mat-btn inline-flex items-center gap-1 border px-1.5 py-0.5 text-dense-caption text-muted-foreground hover:text-foreground"
                 title="Set session context"
               >
                 <Crosshair className="size-3" />

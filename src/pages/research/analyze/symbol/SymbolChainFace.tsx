@@ -51,7 +51,7 @@ import {
   type LadderColumnSet,
 } from './symbolChainModel'
 import { useQuery } from '@tanstack/react-query'
-import { SegmentControl } from '@/components/data-display'
+import { CloseButton, SegmentControl } from '@/components/data-display'
 
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
@@ -412,7 +412,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
             ) : null}
           </header>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse" style={{ minWidth: 720 }}>
+            <table className="w-full" style={{ minWidth: 720 }}>
               <thead>
                 <tr>
                   {screenBand ? <th className={cn(th, 'w-9')} /> : null}
@@ -691,7 +691,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                         list.some((e) => e.ticker === entry.ticker) ? list : [...list, entry]
                       )
                     }}
-                    className="cursor-pointer rounded-full border border-border px-2.5 py-1 text-dense-label text-muted-foreground hover:bg-[var(--sk-surface)]"
+                    className="mat-btn cursor-pointer border px-2.5 py-1 text-dense-label text-muted-foreground"
                     title="Keep this contract in the Compare drawer — it holds contracts across expiries and symbols for this session."
                   >
                     Compare +
@@ -773,14 +773,11 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
                           {e.sym === sym ? 'expiry not loaded' : 'other name'}
                         </span>
                       )}
-                      <button
-                        type="button"
+                      <CloseButton
+                        size="sm"
                         onClick={() => setCompare((l) => l.filter((x) => x.ticker !== e.ticker))}
-                        className="cursor-pointer text-muted-foreground hover:text-foreground"
-                        aria-label={`Remove ${e.ticker} from compare`}
-                      >
-                        ✕
-                      </button>
+                        label={`Remove ${e.ticker} from compare`}
+                      />
                     </div>
                   )
                 })}

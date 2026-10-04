@@ -134,7 +134,8 @@ export function MatchCards({
 }) {
   const bN = base.length
   const all3 = cells[3]
-  const cap = 'font-mono text-dense-caption uppercase tracking-[0.06em] text-muted-foreground'
+  // Sentence case, 11/600 mono, as the prototype's two caps (Rev .154).
+  const cap = 'font-mono text-dense-caption font-semibold text-muted-foreground'
   const mark = (onOff: boolean) => (
     <span className={cn('ml-auto whitespace-nowrap text-dense-caption', onOff ? 'font-semibold text-primary' : 'text-[var(--sk-mute2)]')}>
       {onOff ? 'listed ✓' : 'list ↓'}

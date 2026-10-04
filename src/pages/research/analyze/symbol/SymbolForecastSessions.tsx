@@ -124,7 +124,7 @@ export function SymbolForecastSessions({ symbol }: { symbol: string }) {
         </p>
       ) : (
         <div className="max-h-[22rem] overflow-y-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full">
             <thead>
               <tr>
                 <th className={cn(th, tl)}>Session</th>
@@ -179,7 +179,8 @@ export function SymbolForecastSessions({ symbol }: { symbol: string }) {
                 return (
                   <tr
                     key={d.trade_date}
-                    className={cn('cursor-pointer hover:bg-secondary/40', open && 'bg-secondary/60')}
+                    className="cursor-pointer"
+                    data-selected={open ? 'true' : undefined}
                     onClick={() => setOpen(open ? null : s.session_id)}
                   >
                     <td className={cn(td, tl)}>
@@ -246,7 +247,7 @@ export function SymbolForecastSessions({ symbol }: { symbol: string }) {
         ) : cal.length === 0 ? (
           <p className="m-0 py-1 text-dense-meta text-muted-foreground">No settled session on this name in 180 days.</p>
         ) : (
-          <table className="mt-1 w-full border-collapse">
+          <table className="mt-1 w-full">
             <thead>
               <tr>
                 <th className={cn(th, tl, 'static bg-transparent')}>Regime</th>

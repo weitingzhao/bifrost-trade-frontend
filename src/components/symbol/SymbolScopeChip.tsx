@@ -9,6 +9,7 @@
  * name there swaps this page in place.
  */
 import { omnibar } from '@/lib/omnibar'
+import { CloseButton } from '@/components/data-display'
 
 export function SymbolScopeChip({ symbol, onClear }: { symbol: string; onClear: () => void }) {
   const sym = symbol.trim().toUpperCase()
@@ -30,15 +31,7 @@ export function SymbolScopeChip({ symbol, onClear }: { symbol: string; onClear: 
       className="inline-flex h-[22px] flex-none items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--sk-ticker)_15%,transparent)] pr-0.5 pl-2 text-dense-caption whitespace-nowrap text-[var(--sk-soft)]"
     >
       filtered to <span className="font-mono font-bold text-[var(--sk-ticker)]">{sym}</span>
-      <button
-        type="button"
-        onClick={onClear}
-        aria-label={`Clear symbol ${sym}`}
-        title={`Clear ${sym} — here and in the top bar`}
-        className="inline-flex size-[18px] cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-dense-micro text-[var(--sk-mute2)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_10%,transparent)]"
-      >
-        ✕
-      </button>
+      <CloseButton size="sm" onClick={onClear} label={`Clear symbol ${sym}`} title={`Clear ${sym} — here and in the top bar`} />
     </span>
   )
 }

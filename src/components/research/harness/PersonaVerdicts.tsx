@@ -128,7 +128,12 @@ export function VerdictList({ verdicts }: { verdicts: PersonaVerdict[] }) {
         const a = agentView(v.agent)
         const AgentIcon = AGENT_ICON[a.icon]
         return (
-          <li key={`${v.model ?? ''}:${v.agent}`} className="flex gap-2 text-dense-caption">
+          // Below 600px of page (the 440 Loop Run panel) the four fixed columns
+          // (~320px) would leave the reason a sliver: it wraps to its own line.
+          <li
+            key={`${v.model ?? ''}:${v.agent}`}
+            className="flex flex-wrap gap-x-2 gap-y-0.5 text-dense-caption @min-[600px]/page:flex-nowrap"
+          >
             {judged ? (
               <span
                 className="w-28 shrink-0 truncate font-mono text-muted-foreground/80"
@@ -148,7 +153,7 @@ export function VerdictList({ verdicts }: { verdicts: PersonaVerdict[] }) {
             <span className="w-8 shrink-0 tabular-nums text-muted-foreground/70">
               {v.confidence == null ? '—' : v.confidence.toFixed(2)}
             </span>
-            <span className="min-w-0 flex-1 text-muted-foreground">
+            <span className="min-w-0 basis-full text-muted-foreground @min-[600px]/page:flex-1 @min-[600px]/page:basis-auto">
               <ReasonText text={reason(v).text} />
               {lang === 'zh' && !reason(v).translated ? (
                 <span

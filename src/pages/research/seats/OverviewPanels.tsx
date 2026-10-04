@@ -294,9 +294,9 @@ export function StationsTable({ rows, footnote }: { rows: StationRow[]; footnote
         <span className="text-dense-body font-semibold">Six stations, shared</span>
         <span className="ml-auto text-dense-meta text-muted-foreground">artifacts per station, by operator</span>
       </header>
-      <table className="w-full border-collapse">
+      <table className="w-full">
         <thead>
-          <tr className="border-b border-border text-dense-micro uppercase tracking-wide text-muted-foreground">
+          <tr className="text-dense-micro text-muted-foreground">
             <th className="px-3 py-1.5 text-left font-semibold">Station</th>
             <th className="px-3 py-1.5 text-left font-semibold">Produces</th>
             <th className="px-3 py-1.5 text-right font-semibold">hand</th>
@@ -306,7 +306,7 @@ export function StationsTable({ rows, footnote }: { rows: StationRow[]; footnote
         </thead>
         <tbody>
           {rows.map((st) => (
-            <tr key={st.name} className="border-b border-border/50 last:border-b-0">
+            <tr key={st.name}>
               <td className="whitespace-nowrap px-3 py-1.5 text-dense-label font-semibold">{st.name}</td>
               <td className="px-3 py-1.5 font-mono text-dense-meta text-muted-foreground">{st.produces}</td>
               <StationCell v={st.h} tip={st.hTip} />

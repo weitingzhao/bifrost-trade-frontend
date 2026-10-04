@@ -128,7 +128,8 @@
   gap: 8px;
   margin-top: 4px;
   padding-top: 8px;
-  border-top: 1px solid var(--sk-line0);
+  /* A section divider, the ink 6% hairline on glass (Rev .154). */
+  border-top: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
   font-size: 11px;
   color: var(--sk-mute);
   min-width: 0;

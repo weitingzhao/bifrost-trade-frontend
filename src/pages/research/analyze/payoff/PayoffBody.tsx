@@ -438,7 +438,7 @@ export function PayoffBody() {
                 σ from IV {anchor.iv != null ? `${(anchor.iv * 100).toFixed(1)}%` : '—'}
               </span>
             </header>
-            <table className="w-full border-collapse">
+            <table className="w-full">
               <thead>
                 <tr>
                   <th className={cn(th, 'text-left')}>Scenario</th>
@@ -465,7 +465,7 @@ export function PayoffBody() {
                 {scen.map((r) => (
                   <tr
                     key={r.label}
-                    className={r.flat ? 'bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]' : undefined}
+                    className={r.flat ? '[--sr-row:color-mix(in_srgb,var(--sk-ink)_4%,transparent)]' : undefined}
                   >
                     <td
                       className={cn(td, 'text-left font-sans', r.earnings && 'text-warning')}
@@ -508,7 +508,7 @@ export function PayoffBody() {
               <span className={cap}>Greeks by spot</span>
               <span className="text-dense-body font-semibold text-foreground">today</span>
             </header>
-            <table className="w-full border-collapse">
+            <table className="w-full">
               <thead>
                 <tr>
                   <th className={th}>Spot</th>
@@ -522,7 +522,7 @@ export function PayoffBody() {
                 {greekRows.map((g) => (
                   <tr
                     key={g.spot}
-                    className={g.atSpot ? 'bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)]' : undefined}
+                    className={g.atSpot ? '[--sr-row:color-mix(in_srgb,var(--sk-accent)_8%,transparent)]' : undefined}
                   >
                     <td
                       className={cn(td, g.atSpot ? 'text-foreground' : 'text-secondary-foreground')}

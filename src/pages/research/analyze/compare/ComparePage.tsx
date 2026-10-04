@@ -265,14 +265,14 @@ function CompareBody({
           {/* The design's table, kept in its shape: the columns the store cannot
               answer print a dash rather than vanish — mark, not drop. */}
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full">
               <thead>
                 <tr>
                   {['Structure', 'Bid/Ask', 'Spread', 'of credit', 'OI', 'Vol', 'Limit', 'Fill'].map((h, i) => (
                     <th
                       key={h}
                       className={cn(
-                        'whitespace-nowrap border-b border-border px-2 py-1 text-dense-caption font-semibold text-secondary-foreground',
+                        'whitespace-nowrap px-2 py-1 text-dense-caption font-semibold text-secondary-foreground',
                         i === 0 ? 'text-left' : 'text-right'
                       )}
                     >
@@ -286,13 +286,13 @@ function CompareBody({
                   const thinOi = r.thinnest?.oi != null && r.thinnest.oi < 500
                   return (
                     <tr key={r.id}>
-                      <td className={cn('border-b border-border/55 px-2 py-1.25 text-left text-dense-meta font-semibold', r.series.text)}>
+                      <td className={cn('px-2 py-1.25 text-left text-dense-meta font-semibold', r.series.text)}>
                         {r.name}
                       </td>
                       {['—', '—', '—'].map((v, i) => (
                         <td
                           key={i}
-                          className="border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground"
+                          className="px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground"
                           title="Needs a quote — the snapshots carry the session's last trade, never bid/ask."
                         >
                           {v}
@@ -300,20 +300,20 @@ function CompareBody({
                       ))}
                       <td
                         className={cn(
-                          'border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums',
+                          'px-2 py-1.25 text-right font-mono text-xs tabular-nums',
                           thinOi ? 'text-warning' : 'text-secondary-foreground'
                         )}
                         title="The thinnest option leg's open interest — a liquidity proxy, not a spread."
                       >
                         {r.thinnest?.oi == null ? '—' : r.thinnest.oi.toLocaleString('en-US')}
                       </td>
-                      <td className="border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                      <td className="px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground">
                         {r.thinnest?.volume == null ? '—' : r.thinnest.volume.toLocaleString('en-US')}
                       </td>
-                      <td className="border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground" title="Where to sit needs the combo book — not on the plan.">
+                      <td className="px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground" title="Where to sit needs the combo book — not on the plan.">
                         —
                       </td>
-                      <td className="border-b border-border/55 px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground" title="Fill likelihood needs an order-fill record — not on the plan.">
+                      <td className="px-2 py-1.25 text-right font-mono text-xs tabular-nums text-muted-foreground" title="Fill likelihood needs an order-fill record — not on the plan.">
                         —
                       </td>
                     </tr>

@@ -19,6 +19,7 @@ import { SCHEDULES, objectivePath } from '@/lib/harness/objectivePolicy'
 import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { forkBody, objectiveOrigins, screenOrigin, type OriginColumn, type OriginPick } from './objectiveOrigins'
+import { CloseButton } from '@/components/data-display'
 
 const TAG_INK: Record<OriginColumn['id'], string> = {
   promote: 'var(--color-profit)',
@@ -133,9 +134,7 @@ export function NewObjectiveOrigins({ onClose }: { onClose: () => void }) {
         <span className="text-dense-meta text-muted-foreground">
           three origins, no blank form — a policy you guessed is a policy with no evidence behind it
         </span>
-        <button type="button" onClick={onClose} aria-label="Close" className="ml-auto text-dense-meta text-[var(--sk-mute2)] hover:text-foreground">
-          ✕
-        </button>
+        <CloseButton className="ml-auto self-center" onClick={onClose} label="Close new objective" />
       </header>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))]">
         {columns.map((c, ci) => (

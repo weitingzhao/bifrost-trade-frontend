@@ -504,11 +504,10 @@ export default function ScanPage() {
                   {scored.slice(0, ROW_CAP).map(({ row, score, missing }) => (
                     <DenseTableRow
                       key={row.symbol}
-                      {...rowSelectProps(
-                        selected === row.symbol,
-                        () => setParam('sym', selected === row.symbol ? '' : row.symbol, ''),
-                        cn(selected === row.symbol && 'bg-primary/[0.06]'),
+                      {...rowSelectProps(selected === row.symbol, () =>
+                        setParam('sym', selected === row.symbol ? '' : row.symbol, ''),
                       )}
+                      selected={selected === row.symbol}
                     >
                       <DenseTableCell className="max-w-none whitespace-nowrap">
                         <Link

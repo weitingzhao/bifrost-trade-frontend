@@ -144,10 +144,8 @@ export function DecayRoster({
               {rows.map((r) => (
                 <tr
                   key={r.key}
-                  className={cn(
-                    'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-                    r.decaying && 'bg-[color-mix(in_srgb,var(--color-warning)_4%,transparent)]',
-                  )}
+                  // A decaying signal is a row state (Rev .154 --sr-row).
+                  className={r.decaying ? '[--sr-row:color-mix(in_srgb,var(--color-warning)_4%,transparent)]' : undefined}
                 >
                   <td data-sr-col="entity" className="text-dense-meta font-medium">
                     {r.name}

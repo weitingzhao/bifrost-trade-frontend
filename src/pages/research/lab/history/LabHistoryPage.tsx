@@ -410,7 +410,7 @@ export default function LabHistoryPage() {
                     </span>
                   </header>
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[560px] border-collapse">
+                    <table className="w-full min-w-[560px]">
                       <thead>
                         <tr>
                           <th className={cn(th, 'text-left')}>window</th>
@@ -436,10 +436,9 @@ export default function LabHistoryPage() {
                           return (
                             <tr
                               key={r.window}
+                              // The committed window is a row state (Rev .154 --sr-row).
                               className={
-                                isCommitted
-                                  ? 'bg-[color-mix(in_srgb,var(--sk-accent)_6%,transparent)]'
-                                  : 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+                                isCommitted ? '[--sr-row:color-mix(in_srgb,var(--sk-accent)_6%,transparent)]' : undefined
                               }
                             >
                               <td

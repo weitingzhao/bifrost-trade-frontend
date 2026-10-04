@@ -5,8 +5,8 @@
  * passed (every active stage, condition by condition).
  */
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
-import { IconActionButton } from '@/components/data-display'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { CloseButton, IconActionButton } from '@/components/data-display'
 import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
@@ -151,9 +151,7 @@ export function WhyDrawer({
           <IconActionButton title="Next (j)" ariaLabel="Next" onClick={onNext}>
             <ChevronRight className="h-3.5 w-3.5" />
           </IconActionButton>
-          <IconActionButton title="Close (esc)" ariaLabel="Close" onClick={onClose}>
-            <X className="h-3.5 w-3.5" />
-          </IconActionButton>
+          <CloseButton title="Close (esc)" onClick={onClose} className="self-center" />
         </span>
       </header>
       <div className="px-3 py-1.5 font-mono text-dense-meta text-muted-foreground">{pos}</div>

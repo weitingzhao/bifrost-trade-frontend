@@ -1,6 +1,5 @@
-import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { IconActionButton } from '@/components/data-display'
+import { CloseButton } from '@/components/data-display'
 import { fmtUsd } from '@/utils/positions'
 import type { AtrResult, KellyMetrics, PositionSizeResult } from '@/utils/riskSizing'
 import { WatchlistSizingCapTable } from './WatchlistSizingCapTable'
@@ -87,14 +86,7 @@ export function SizingOrderPanel({
     <div className={sizingPanelClass}>
       <div className={sizingPanelHeadClass}>
         <h4 className={sizingPanelTitleClass}>Order sizing — {symbol}</h4>
-        <IconActionButton
-          onClick={onClose}
-          title="Close order sizing"
-          ariaLabel="Close order sizing"
-          className="ml-auto"
-        >
-          <X className="h-3.5 w-3.5" />
-        </IconActionButton>
+        <CloseButton onClick={onClose} label="Close order sizing" className="ml-auto" />
       </div>
 
       <div className={sizingPanelControlsClass}>
@@ -159,7 +151,7 @@ export function SizingOrderPanel({
             step={0.5}
             value={sizeAtrMultiplier}
             onChange={e => onAtrMultiplierChange(Number.parseFloat(e.target.value) || 2)}
-            className="h-8 w-[4.1rem] rounded-md border border-input bg-background px-2 font-mono text-sm"
+            className="mat-field h-8 w-[4.1rem] border px-2 font-mono text-sm"
           />
         </div>
 

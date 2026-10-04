@@ -54,17 +54,18 @@ export function SessionRenameField({
       >
         <Check className="size-3" />
       </Button>
-      <Button
+      {/* The one close (Rev .151 data-sr-close, chip size); a raw button so the
+          mousedown can keep the field from blurring into a commit. */}
+      <button
         type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="h-5 w-5 text-muted-foreground"
+        data-sr-close="sm"
         aria-label="Cancel rename"
+        title="Cancel rename"
         onMouseDown={(e) => e.preventDefault()}
         onClick={onCancel}
       >
-        <X className="size-3" />
-      </Button>
+        <X aria-hidden />
+      </button>
     </div>
   )
 }

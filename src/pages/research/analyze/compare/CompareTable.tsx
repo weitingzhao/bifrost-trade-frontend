@@ -14,7 +14,7 @@ import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { legLine } from './compareModel'
 import type { CompareRow } from './useCompareRows'
 
-const TH = 'px-2 py-1.5 text-right text-dense-micro font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap'
+const TH = 'px-2 py-1.5 text-right text-dense-micro font-semibold text-muted-foreground whitespace-nowrap'
 const TD = 'px-2 py-1.5 text-right font-mono text-dense-meta tabular-nums whitespace-nowrap'
 
 export const OWED_DISTRIBUTION = 'Owed — needs the 20-day distribution, which nothing on this side computes.'
@@ -49,9 +49,9 @@ export function CompareTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
+      <table className="w-full">
         <thead>
-          <tr className="border-b border-border">
+          <tr>
             <th className={TH} aria-label="Payoff curve" />
             <th className={cn(TH, 'text-left')}>Structure</th>
             <th className={cn(TH, 'text-left')}>Size</th>
@@ -94,8 +94,7 @@ export function CompareTable({
                 aria-pressed={placed ? on.has(r.id) : undefined}
                 title={placed ? 'Click to show or hide its payoff curve' : undefined}
                 className={cn(
-                  'border-b border-border/60 last:border-b-0',
-                  placed ? 'cursor-pointer hover:bg-secondary/50' : 'opacity-70',
+                  placed ? 'cursor-pointer' : 'opacity-70',
                   placed && !on.has(r.id) && 'opacity-55',
                 )}
               >
@@ -122,7 +121,7 @@ export function CompareTable({
                     <span className="inline-flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
-                        className="h-5 w-5 rounded-full border border-border text-dense-meta text-muted-foreground hover:bg-secondary"
+                        className="mat-btn h-5 w-5 border text-dense-meta text-muted-foreground"
                         aria-label={`Size ${r.name} down`}
                         disabled={n == null || n <= 0}
                         onClick={() => onStep(r.id, -1)}
@@ -134,7 +133,7 @@ export function CompareTable({
                       </span>
                       <button
                         type="button"
-                        className="h-5 w-5 rounded-full border border-border text-dense-meta text-muted-foreground hover:bg-secondary"
+                        className="mat-btn h-5 w-5 border text-dense-meta text-muted-foreground"
                         aria-label={`Size ${r.name} up`}
                         onClick={() => onStep(r.id, 1)}
                       >
@@ -192,7 +191,7 @@ export function CompareTable({
                     <Link
                       to={planHref}
                       onClick={(e) => e.stopPropagation()}
-                      className="inline-flex h-6 items-center rounded-full border border-border px-2 text-dense-meta text-foreground hover:bg-secondary"
+                      className="mat-btn inline-flex h-6 items-center border px-2 text-dense-meta text-foreground"
                     >
                       → Plan
                     </Link>

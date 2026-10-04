@@ -3,9 +3,10 @@
  * Optional AskCopilot wiring via origin props.
  */
 import { useState } from 'react'
-import { Sparkles, X } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
+import { CloseButton } from '@/components/data-display'
 
 export interface CopilotAutoInsightChipProps {
   message?: string
@@ -68,14 +69,7 @@ export function CopilotAutoInsightChip({
           </button>
         ) : null}
       </div>
-      <button
-        type="button"
-        className="shrink-0 rounded p-0.5 opacity-70 hover:opacity-100"
-        aria-label="Dismiss insight"
-        onClick={() => setDismissed(true)}
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      <CloseButton size="sm" className="shrink-0" onClick={() => setDismissed(true)} label="Dismiss insight" />
     </div>
   )
 }

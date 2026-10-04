@@ -242,7 +242,7 @@ export function Threads() {
                   // click and does not take one is the defect the interaction
                   // standard exists for — and a `<tr>` needs the keyboard route
                   // written out, which `rowSelectProps` carries.
-                  {...rowSelectProps(false, () => void open(row), 'hover:[&>td]:bg-[var(--sk-raised2)]')}
+                  {...rowSelectProps(false, () => void open(row))}
                   aria-label={`Open ${row.title || 'this thread'} in the Copilot panel`}
                 >
                   <DenseTableCell className="max-w-[18rem]">

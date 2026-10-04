@@ -93,7 +93,7 @@ export function SymbolPlaybookSnapshots({
       ) : (
         <div className="flex flex-col gap-2.5 px-3 pb-2">
           <div className="min-w-0 overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full">
               <thead>
                 <tr>
                   <th className={cn(th, 'text-left')}>ET</th>
@@ -120,10 +120,7 @@ export function SymbolPlaybookSnapshots({
                           setChosen({ key: viewKey, ts: r.asof_ts })
                         }
                       }}
-                      className={cn(
-                        'cursor-pointer',
-                        on ? 'bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]' : 'hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-                      )}
+                      className="cursor-pointer"
                     >
                       <td className={cn(td, 'text-left text-muted-foreground')}>{etClock(r.asof_ts)}</td>
                       <td className={cn(td, 'text-left font-sans')}>{r.regime}</td>

@@ -88,9 +88,9 @@ export function MomentumFactorsPanel({
           momentum row. This is a fact about the radar's coverage, not a failure.
         </p>
       ) : (
-        <ul className="divide-y divide-border/60">
+        <ul className="py-1">
           {readings.map((f) => (
-            <li key={f.key} className="px-3 py-1.5" title={f.pinned ?? f.note}>
+            <li key={f.key} data-sr-row="" className="px-2.5 py-1.5" title={f.pinned ?? f.note}>
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-mono text-dense-meta text-foreground">{f.key}</span>
                 <span

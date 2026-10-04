@@ -119,11 +119,12 @@ export function RanToday() {
     )
   } else {
     body = (
-      <ul className="divide-y divide-border border mat-card">
+      // A list on glass (Rev .153–.154 §17.2): zebra rows, no rules between them.
+      <ul className="border py-1 mat-card">
         {rows.map((r) => {
           const { lamp, why } = rowLamp(r.runIds, statusByRun)
           return (
-            <li key={r.agent} className="flex items-start gap-2 px-3 py-2">
+            <li key={r.agent} data-sr-row="" className="flex items-start gap-2 px-2.5 py-2">
               <span className="mt-1 shrink-0" title={why}>
                 <StatusLamp lamp={lamp} variant="dot" title={why} />
               </span>

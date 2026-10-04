@@ -396,7 +396,7 @@ function SettledPanel({
           nominations settle days after they were written.
         </p>
       ) : (
-        <table className="w-full border-collapse">
+        <table className="w-full">
           <thead>
             <tr>
               {['Artifact', 'Wrote it', 'Outcome', 'Cited', 'Feeds'].map((h) => (
@@ -404,7 +404,7 @@ function SettledPanel({
                   key={h}
                   className={cn(
                     SECTION_CAP_CLASS,
-                    'border-b border-border px-2.5 py-1 text-left',
+                    'px-2.5 py-1 text-left',
                     h === 'Feeds' && 'text-right',
                   )}
                 >
@@ -415,10 +415,7 @@ function SettledPanel({
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr
-                key={r.id}
-                className="border-b border-border hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
-              >
+              <tr key={r.id}>
                 <td className="px-2.5 py-1.5">
                   <button
                     type="button"

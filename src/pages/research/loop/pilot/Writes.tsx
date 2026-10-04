@@ -110,7 +110,7 @@ export function Writes({ approvals }: { approvals: Record<string, number> | null
                 const rowProps =
                   thread.openable && sessionId
                     ? {
-                        ...rowSelectProps(false, () => void openThread(sessionId), 'hover:[&>td]:bg-[var(--sk-raised2)]'),
+                        ...rowSelectProps(false, () => void openThread(sessionId)),
                         'aria-label': `Open the thread behind “${row.change}” in the Copilot panel`,
                       }
                     : {}

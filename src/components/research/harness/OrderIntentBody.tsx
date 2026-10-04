@@ -55,7 +55,7 @@ export function OrderIntentBody({ payload }: { payload: Record<string, unknown> 
           </p>
         ) : (
           <div className="min-w-0 overflow-x-auto">
-            <table className="w-full min-w-[26rem] border-collapse text-dense-meta">
+            <table className="w-full min-w-[26rem] text-dense-meta">
               <thead>
                 <tr>
                   <th className={TH}>Side</th>
@@ -68,7 +68,7 @@ export function OrderIntentBody({ payload }: { payload: Record<string, unknown> 
               </thead>
               <tbody>
                 {v.legs.map((l, i) => (
-                  <tr key={`${l.symbol}-${l.right}-${l.strike}-${i}`} className="border-t border-border/40">
+                  <tr key={`${l.symbol}-${l.right}-${l.strike}-${i}`}>
                     <td className={TD}>
                       <LegCell value={l.side} />
                     </td>

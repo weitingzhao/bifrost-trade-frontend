@@ -117,7 +117,8 @@ describe('CopilotWaitingQueue', () => {
     expect(screen.queryByText('NVDA EOD')).toBeNull()
     expect(screen.getAllByText('Ask')).toHaveLength(4)
     expect(screen.getAllByText('✓')).toHaveLength(1)
-    expect(screen.getAllByText('✕')).toHaveLength(2)
+    // Dismiss is the round DS close (Rev .151 data-sr-close), named Dismiss.
+    expect(screen.getAllByRole('button', { name: 'Dismiss' })).toHaveLength(2)
     const truncation = screen.getByRole('link', { name: '2 of 45 listed · Open Decision Inbox →' })
     expect(truncation).toHaveAttribute('href', '/research/loop/decisions')
   })

@@ -400,7 +400,7 @@ function AgentPersonaEditor({
             <p className="text-dense-caption text-muted-foreground">{copy.personaHint}</p>
           </div>
           <textarea
-            className="min-h-[14rem] w-full rounded-md border border-input bg-background px-3 py-2 text-dense-meta leading-relaxed"
+            className="mat-field min-h-[14rem] w-full border px-3 py-2 text-dense-meta leading-relaxed"
             value={md}
             placeholder={copy.personaPlaceholder}
             onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {

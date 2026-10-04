@@ -107,7 +107,8 @@ export function WatchlistMetricTable({ table, maxDdPct }: Props) {
         {rows.map(row => (
           <DenseTableRow
             key={row.label}
-            className={'total' in row && row.total ? 'border-t border-border/90 font-medium' : undefined}
+            // A total reads by weight alone in the list grammar (Rev .153–.154).
+            className={'total' in row && row.total ? 'font-semibold' : undefined}
           >
             <DenseTableCell>
               <div className="text-sm font-semibold">{row.label}</div>

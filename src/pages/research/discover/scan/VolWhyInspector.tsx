@@ -18,7 +18,7 @@
  *   ranks by.
  */
 import { Link } from 'react-router-dom'
-import { DenseTag } from '@/components/data-display'
+import { CloseButton, DenseTag } from '@/components/data-display'
 import { SECTION_CAP_CLASS } from '@/components/layout'
 import { SimilarRegimeCard } from '@/components/research'
 import { SYMBOL_PATH, labHref, type LabViewId } from '@/lib/analyzeHubs'
@@ -104,14 +104,7 @@ export function VolWhyInspector({
             {row.regime}
           </DenseTag>
         ) : null}
-        <button
-          type="button"
-          onClick={onClose}
-          className="ml-auto rounded px-1.5 py-0.5 text-dense-meta text-muted-foreground hover:bg-secondary"
-          aria-label="Close"
-        >
-          esc
-        </button>
+        <CloseButton className="ml-auto" onClick={onClose} title="Close · esc" />
       </header>
 
       <div className="flex flex-col gap-3 px-3 py-3">

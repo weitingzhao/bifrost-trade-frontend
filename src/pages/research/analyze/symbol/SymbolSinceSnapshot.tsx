@@ -166,11 +166,13 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
           {flips > 0 ? ` · ${flips} band flip${flips === 1 ? '' : 's'}` : ''}
         </span>
       </header>
-      <ul className="divide-y divide-border/40">
+      {/* A list on glass (Rev .153–.154 §17.2): zebra, no rules between rows. */}
+      <ul>
         {rows.map((r) => (
           <li
             key={r.lens}
-            className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 py-1 text-dense-meta"
+            data-sr-row=""
+            className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 px-1.5 py-1 text-dense-meta"
           >
             <span className="truncate text-muted-foreground">{r.label}</span>
             <span className="font-mono tabular-nums">

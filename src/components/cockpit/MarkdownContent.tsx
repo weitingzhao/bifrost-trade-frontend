@@ -184,14 +184,14 @@ const components: Components = {
     <div className="my-1.5 overflow-x-auto">
       <table
         {...props}
-        className="w-full border-collapse text-dense-meta"
+        className="w-full text-dense-meta"
       >
         {children}
       </table>
     </div>
   ),
   thead: ({ children, ...props }) => (
-    <thead {...props} className="border-b border-border/60 bg-secondary/40 text-left">
+    <thead {...props} className="text-left">
       {children}
     </thead>
   ),
@@ -201,7 +201,7 @@ const components: Components = {
     </th>
   ),
   td: ({ children, ...props }) => (
-    <td {...props} className="border-b border-border/30 px-1.5 py-1 align-top">
+    <td {...props} className="px-1.5 py-1 align-top">
       {children}
     </td>
   ),
@@ -233,7 +233,7 @@ export function MarkdownContent({
             </li>
           ),
           td: ({ children: kids, ...props }) => (
-            <td {...props} className="border-b border-border/30 px-1.5 py-1 align-top">
+            <td {...props} className="px-1.5 py-1 align-top">
               {enhanceChildren(kids, knownSymbols, onSymbolClick)}
             </td>
           ),

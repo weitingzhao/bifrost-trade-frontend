@@ -35,7 +35,6 @@ import {
   watchlistSizingSheetTableClass,
   watchlistSizingSheetTableWrapClass,
 } from './watchlistUi'
-import { sizingRowSelectedClass } from './sizingUi'
 
 export interface WatchlistStockTableProps {
   items: WatchlistItem[]
@@ -119,11 +118,8 @@ export function WatchlistStockTable({
           return (
             <DenseTableRow
               key={item.contract_key}
-              className={cn(
-                isSelected && sizingRowSelectedClass,
-                isSelected && !sizingSheet && 'bg-primary/10',
-                !optOn && !hideOpt && 'opacity-70',
-              )}
+              selected={isSelected}
+              className={cn(!optOn && !hideOpt && 'opacity-70')}
             >
               <DenseTableCell>
                 <div className="flex items-center gap-1.5">

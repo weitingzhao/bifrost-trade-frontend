@@ -105,7 +105,7 @@ export function PolicySuggestionBody({
             </thead>
             <tbody>
               {diff.changes.map((c) => (
-                <tr key={c.path} className="border-t border-border/40">
+                <tr key={c.path}>
                   <td
                     className="cursor-help py-0.5 pr-4 text-muted-foreground underline decoration-border decoration-dotted underline-offset-2"
                     title={POLICY_FIELD_HELP[c.key]}

@@ -99,9 +99,9 @@ export function ResearchContextBar({
             onClick={openMention}
             className={cn(
               asof ? '' : 'ml-auto',
-              'inline-flex items-center gap-1 rounded-full border border-border/60',
-              'bg-secondary/60 px-1.5 py-0.5 text-dense-caption text-muted-foreground',
-              'hover:border-primary/40 hover:text-foreground',
+              'mat-btn inline-flex items-center gap-1 border',
+              'px-1.5 py-0.5 text-dense-caption text-muted-foreground',
+              'hover:text-foreground',
             )}
             title="Open Copilot at the mentioning message"
           >

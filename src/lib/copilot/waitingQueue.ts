@@ -5,7 +5,7 @@
  */
 import type { AiDraft } from '@/api/researchDrafts'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
-import { draftKindLabel, draftTitle } from '@/lib/harness/draftText'
+import { draftTitle, kindTag } from '@/lib/harness/draftText'
 import {
   BRIEFING_KINDS,
   groupIdenticalDrafts,
@@ -110,7 +110,8 @@ export function waitingQueueItems(
     out.push({
       key: `draft:${draft.id}`,
       kind: 'decision',
-      kindLabel: draftKindLabel(draft.kind),
+      // The Inbox's five words: this is the same queue (Rev .143).
+      kindLabel: kindTag(draft.kind, draft.scope),
       what: draftTitle(draft),
       showApprove: waitingQueueShowsApprove(draft),
       showDismiss: true,

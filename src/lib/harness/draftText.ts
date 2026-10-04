@@ -11,31 +11,49 @@ import { policySuggestionMergeCount } from '@/lib/harness/harnessDraftHelpers'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
 
-/** Short label for a draft kind. */
-export function draftKindLabel(kind: string): string {
-  if (kind === 'morning_brief') return 'Morning'
-  if (kind === 'daily_digest') return 'Digest'
-  if (kind === 'eod_verdict') return 'EOD'
-  if (kind === 'hypothesis_suggestion') return 'Suggestion'
-  if (kind === 'candidate_batch') return 'Candidate Batch'
-  // `rule`, not `Policy Suggestion` (design Rev 2026-09-23.1): the engine's
-  // rule-keeper and a Review proposal write to the same place, and two labels
-  // for one consequence say they are different things. The tag was already
-  // warning on both, which is the colour saying what the words did not.
-  if (kind === 'policy_suggestion') return 'rule'
-  // The decision kinds the card used to print as snake_case. The Desk's queue
-  // put them in a column called Kind, where `decision_draft` read as a bug.
-  if (kind === 'decision_draft') return 'Decision'
-  // `vehicle`, not the payload's own name (design Rev 2026-09-22.7, Vision §21's
-  // thesis/vehicle pair): the card draws a shape for expressing a belief, and it
-  // stops here — calling it an order is the one word on this page that could
-  // read as if something reached Trade. The meta line keeps `order_intent`.
-  if (kind === 'order_intent') return 'vehicle'
-  if (kind === 'hypothesis_draft') return 'Hypothesis Draft'
-  if (kind === 'playbook_rule') return 'Playbook Rule'
-  if (kind === 'playbook_note') return 'Playbook Note'
-  // A kind nobody modelled yet still shows, under its own name.
-  return kind
+/**
+ * The tag a card carries — one function, five words for the five places
+ * Approve writes (design Rev .143 #1): `rule` · `patch` · `hypothesis` ·
+ * `candidates` · `call`. All lowercase.
+ *
+ * It replaces two vocabularies that were both reaching the cards — this file's
+ * `Decision` / `Candidate Batch` / `Playbook Note` and `writesTo`'s `rule` /
+ * `vehicle` — so one screen carried four spellings in two cases. `vehicle`
+ * stays as the name of a section inside a call card, not as a tag.
+ *
+ * `policy_suggestion` reads its scope, as `writesTo` does: an objective's
+ * policy is a patch, anything else a rule. A playbook note files into the
+ * Playbook beside the rules, so it reads `rule` (Owner 2026-10-04 #10).
+ *
+ * Briefings are not one of the five — they are read, not decided — and keep
+ * their own name, lowercased the way the prototype's Briefings list writes it.
+ */
+export function kindTag(kind: string, scope?: string | null): string {
+  switch (kind) {
+    case 'policy_suggestion':
+      return (scope ?? '').startsWith('objective:') ? 'patch' : 'rule'
+    case 'playbook_rule':
+    case 'playbook_note':
+    case 'rule':
+      return 'rule'
+    case 'hypothesis_suggestion':
+    case 'hypothesis_draft':
+      return 'hypothesis'
+    case 'candidate_batch':
+      return 'candidates'
+    case 'decision_draft':
+    case 'order_intent':
+      return 'call'
+    case 'morning_brief':
+      return 'morning brief'
+    case 'daily_digest':
+      return 'daily digest'
+    case 'eod_verdict':
+      return 'eod verdict'
+    default:
+      // A kind nobody modelled yet still shows, under its own name.
+      return kind.replace(/_/g, ' ')
+  }
 }
 
 /** The draft's headline: its own title, the hypothesis it is about, or its scope. */

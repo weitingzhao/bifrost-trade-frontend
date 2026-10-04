@@ -4,6 +4,8 @@
 import { useCallback } from 'react'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
+import { notify } from '@/lib/shellNotify'
+import { settleDraftWrites } from '@/lib/harness/draftWriteFailures'
 import {
   BRIEFING_QUEUE_KINDS,
   combineInboxQueue,
@@ -94,28 +96,81 @@ export function useDismissDraft() {
   })
 }
 
+export interface HeldWriteOptions {
+  /** Called once the write has gone out and at least one draft landed. */
+  onCommitted?: (landed: readonly string[]) => void
+}
+
 /**
- * Dismiss with Undo (design Rev .75/.79). The server has no way to take a
- * dismissal back — it also marks the linked action rejected — so the draft
- * leaves every list at once and the write goes out when the toast does. One
- * scope for the store, so a draft held on the Inbox is gone from the Copilot
- * queue and the Hypothesis board too.
+ * Held writes on drafts (design Rev .75/.79; Record answer since Owner
+ * 2026-10-04 #9). Neither write can be taken back on the server — a dismissal
+ * also marks the linked action rejected, an approval moves the draft out of
+ * the queue for good — so the draft leaves every list at once, the toast offers
+ * Undo for 5s (and ⌘Z while it is up), and the write goes out when the toast
+ * does. One scope for the store, so a draft held on the Inbox is gone from the
+ * Copilot queue and the Hypothesis board too.
+ *
+ * Several ids are one toast and one request each. When some land and some do
+ * not, the ones that did not come back on their card with the reason
+ * (`draftWriteFailures`).
  */
-export function useHeldDraftDismiss() {
+export function useHeldDraftWrites() {
   const { isHeld, hold } = useHeldRemoval('research-draft')
   const dismiss = useCallback(
-    (ids: string | readonly string[], msg = 'Draft dismissed') => {
+    (ids: string | readonly string[], msg = 'Draft dismissed', opts: HeldWriteOptions = {}) => {
       const list: readonly string[] = typeof ids === 'string' ? [ids] : ids
       if (list.length === 0) return
       hold(list, {
         msg,
-        commit: () => Promise.all(list.map((id) => dismissResearchDraft(id))),
+        commit: async () => {
+          const { landed, failed } = await settleDraftWrites(list, 'Dismiss', (id) => dismissResearchDraft(id))
+          if (failed.length > 0) notify(`Dismissed ${landed.length} of ${list.length} — the rest stay on the card`)
+          opts.onCommitted?.(landed)
+        },
         invalidate: [researchDraftsQueryKey],
         failed: 'Dismiss did not save',
       })
     },
     [hold],
   )
+  /**
+   * Record answer on a call (Rev .144): the server's approve for
+   * `decision_draft` / `order_intent` is an advisory pass-through — it writes
+   * the draft's status and an action-log row, nothing in Trade (D10) — but it
+   * is still final, so it waits behind the same toast as Dismiss.
+   */
+  const record = useCallback(
+    (
+      ids: string | readonly string[],
+      msg: string,
+      opts: HeldWriteOptions & { onLanded?: (result: Awaited<ReturnType<typeof approveResearchDraft>>) => void } = {},
+    ) => {
+      const list: readonly string[] = typeof ids === 'string' ? [ids] : ids
+      if (list.length === 0) return
+      hold(list, {
+        msg,
+        commit: async () => {
+          const { landed, failed } = await settleDraftWrites(
+            list,
+            'Record answer',
+            (id) => approveResearchDraft(id),
+            (_id, result) => opts.onLanded?.(result),
+          )
+          if (failed.length > 0) notify(`Recorded ${landed.length} of ${list.length} — the rest stay on the card`)
+          opts.onCommitted?.(landed)
+        },
+        invalidate: [researchDraftsQueryKey, ['research-engine', 'hypothesis']],
+        failed: 'Record answer did not save',
+      })
+    },
+    [hold],
+  )
+  return { isHeld, dismiss, record }
+}
+
+/** Dismiss with Undo, for the surfaces that only dismiss. */
+export function useHeldDraftDismiss() {
+  const { isHeld, dismiss } = useHeldDraftWrites()
   return { isHeld, dismiss }
 }
 

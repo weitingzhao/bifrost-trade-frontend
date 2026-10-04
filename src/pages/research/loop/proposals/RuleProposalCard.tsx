@@ -13,6 +13,7 @@
  * the same reason retires Dismiss beside it — a button that answers nothing is
  * worse than one that says why.
  */
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -35,42 +36,74 @@ const DIFF_GLYPH = 'text-muted-foreground/50'
 
 const RULE_VERBS_OFF: ReadonlySet<VerbKey> = new Set(['distill', 'settle'])
 
-const NO_STORE = 'no rules store on this side, so neither verdict can be recorded'
+export const NO_RULES_STORE = 'no rules store on this side, so neither verdict can be recorded'
+const NO_STORE = NO_RULES_STORE
 
 export function RuleProposalCard({
   proposal,
   expanded,
   onToggle,
+  quick,
+  cursor,
+  cardKey,
 }: {
   proposal: Proposal
   expanded: boolean
   onToggle: () => void
+  /** The folded row's quick actions (Rev .144), shown only while folded. */
+  quick?: ReactNode
+  /** Under the keyboard cursor while folded. */
+  cursor?: boolean
+  cardKey?: string
 }) {
   const p = proposal
   return (
-    <div className="space-y-2 rounded-md border border-l-4 border-warning/50 border-l-warning bg-warning/5 px-2.5 py-2 text-dense-meta">
+    <div
+      data-card={cardKey}
+      className={cn(
+        'scroll-mt-24 space-y-2 rounded-md border border-l-4 border-warning/50 border-l-warning bg-warning/5 px-2.5 py-2 text-dense-meta',
+        cursor ? 'border-primary/55' : '',
+      )}
+    >
       {/* The header is the whole card when it is folded, so it carries what a
           reader needs to choose which one to open: kind, title, what it would
-          change, and the size of the argument. */}
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={expanded}
-        className="flex w-full flex-wrap items-baseline gap-x-2 gap-y-0.5 text-left"
-        title={expanded ? 'Fold' : 'Open this card'}
+          change, and the size of the argument. The row clicks; the keyboard
+          handle is the span inside, which holds no buttons — the folded row
+          carries buttons of its own (Rev .144). */}
+      <div
+        onClick={(e) => {
+          if ((e.target as Element).closest('a, button')) return
+          onToggle()
+        }}
+        className="flex w-full cursor-pointer flex-wrap items-baseline gap-x-2 gap-y-0.5 text-left"
       >
-        <DenseTag variant="warning" size="cell">
-          rule
-        </DenseTag>
-        <span className="min-w-0 truncate text-dense-label font-medium">{p.title}</span>
-        <span className={cn(positionsUi.mono, 'text-dense-micro text-muted-foreground')}>
-          review · habits · {p.target}
+        <span
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onToggle()
+            }
+          }}
+          aria-expanded={expanded}
+          title={expanded ? 'Fold' : 'Open this card'}
+          className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5"
+        >
+          <DenseTag variant="warning" size="cell">
+            rule
+          </DenseTag>
+          <span className="min-w-0 truncate text-dense-label font-medium">{p.title}</span>
+          <span className={cn(positionsUi.mono, 'text-dense-micro text-muted-foreground')}>
+            review · habits · {p.target}
+          </span>
         </span>
-        <span className="ml-auto shrink-0 text-dense-micro text-muted-foreground">
+        {!expanded && quick ? <span className="ml-auto shrink-0">{quick}</span> : null}
+        <span className={cn('shrink-0 text-dense-micro text-muted-foreground', !expanded && quick ? '' : 'ml-auto')}>
           {p.n == null ? 'n —' : `n ${p.n}`}
           {p.effect == null ? '' : ` · ${fmtUsd(p.effect, true)}`} <CollapsibleChevron expanded={expanded} className="inline size-3 align-[-2px]" />
         </span>
-      </button>
+      </div>
 
       {expanded ? (
         <>

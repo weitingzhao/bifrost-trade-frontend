@@ -1,23 +1,42 @@
 import { describe, expect, it } from 'vitest'
-import { draftAskedBy, draftKindLabel, draftLandsIn, draftTitle } from './draftText'
+import { draftAskedBy, draftLandsIn, draftTitle, kindTag } from './draftText'
 import { APPROVE_WRITES_KINDS, isDecisionKind } from './harnessDraftHelpers'
 
-describe('draftKindLabel', () => {
-  it('names the kinds it models and passes the rest through', () => {
-    expect(draftKindLabel('candidate_batch')).toBe('Candidate Batch')
-    expect(draftKindLabel('policy_suggestion')).toBe('rule')
-    expect(draftKindLabel('decision_draft')).toBe('Decision')
-    // `vehicle` since the design's Rev 2026-09-22.7 ruling — the card draws a
-    // shape for expressing a belief, and it never reaches Trade.
-    expect(draftKindLabel('order_intent')).toBe('vehicle')
-    expect(draftKindLabel('some_future_kind')).toBe('some_future_kind')
+describe('kindTag', () => {
+  it('draws five words for the five places Approve writes (Rev .143)', () => {
+    expect(kindTag('candidate_batch')).toBe('candidates')
+    expect(kindTag('decision_draft')).toBe('call')
+    // `vehicle` left the tag in Rev .143 — a verdict and its vehicle are one call.
+    expect(kindTag('order_intent')).toBe('call')
+    expect(kindTag('hypothesis_draft')).toBe('hypothesis')
+    expect(kindTag('hypothesis_suggestion')).toBe('hypothesis')
+    expect(kindTag('playbook_rule')).toBe('rule')
+    // Owner 2026-10-04 #10: a playbook note files beside the rules.
+    expect(kindTag('playbook_note')).toBe('rule')
+    expect(kindTag('rule')).toBe('rule')
+    expect(kindTag('some_future_kind')).toBe('some future kind')
   })
 
-  it('names every decision kind the server knows', () => {
-    // No snake_case in a column called Kind for anything the backend accepts.
+  it('splits a policy suggestion by scope: an objective policy is a patch', () => {
+    expect(kindTag('policy_suggestion', 'objective:obj-a')).toBe('patch')
+    expect(kindTag('policy_suggestion', 'opportunity:O1')).toBe('rule')
+    expect(kindTag('policy_suggestion')).toBe('rule')
+  })
+
+  it('keeps every decision kind to the five lowercase words', () => {
     const known = ['candidate_batch', 'policy_suggestion', 'playbook_rule', 'playbook_note',
       'decision_draft', 'order_intent', 'hypothesis_suggestion', 'hypothesis_draft']
-    for (const kind of known) expect(draftKindLabel(kind), kind).not.toMatch(/_/)
+    const five = new Set(['rule', 'patch', 'hypothesis', 'candidates', 'call'])
+    for (const kind of known) {
+      expect(five.has(kindTag(kind, 'objective:x')), kind).toBe(true)
+      expect(five.has(kindTag(kind, 'global')), kind).toBe(true)
+    }
+  })
+
+  it('names briefings in lowercase words, outside the five', () => {
+    expect(kindTag('eod_verdict')).toBe('eod verdict')
+    expect(kindTag('daily_digest')).toBe('daily digest')
+    expect(kindTag('morning_brief')).toBe('morning brief')
   })
 })
 

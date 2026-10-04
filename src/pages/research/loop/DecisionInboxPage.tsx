@@ -1,21 +1,25 @@
 /**
  * Decision Inbox — `/research/loop/decisions`.
  *
- * Design: `Research Autopilot Decisions.dc.html`. Walked 2026-09-20 against
- * package 2026-09-20.1, whose one ruling for this page is a narrative
- * retirement rather than a layout: **approving is not a handoff to the Desk.**
- * It accepts research into The Book — a candidate enters the pool, a
- * hypothesis opens, a patch merges into its policy — and nothing here reaches
- * Trade, because an order is the Owner's to originate (D10). Every surface on
- * the page that used to imply otherwise says so now: the header, the rail, and
- * the line under each card's buttons.
+ * Design: `Autopilot Decision Inbox.dc.html`, walked at Rev 2026-10-02.144.
+ * The page's one standing ruling is a narrative retirement rather than a
+ * layout: **approving is not a handoff to the Desk.** It accepts research into
+ * The Book — a candidate enters the pool, a hypothesis opens, a patch merges
+ * into its policy — and nothing here reaches Trade, because an order is the
+ * Owner's to originate (D10).
+ *
+ * Rev .143 made the stream one card per question (`lib/harness/inboxCards`):
+ * a hypothesis's verdict and vehicle are one call, an objective's newest run
+ * covers its earlier ones, and the cards are grouped by where Approve writes.
+ * Rev .144 put Dismiss (and a call's Record answer) on the folded row and gave
+ * the page keys (`inbox/inboxKeys`).
  *
  * What the page shows is still what the server does, not what the prototype
  * draws: `approveEffect` reads the branches of `apply_draft_approval`, so a
  * kind whose approval writes nothing says that instead of naming a
  * destination the design imagined for it.
  */
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Inbox } from 'lucide-react'
 import { HeroCard, HeroRow, PageHead, PageShell } from '@/components/layout'
@@ -25,36 +29,32 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApprovalsLanded, landedApproval, type LandedApproval } from '@/pages/research/loop/ApprovalsLanded'
-import { DraftCard } from '@/components/cockpit/DraftCard'
-import { typedFirst } from '@/lib/harness/inboxOrder'
+import type { ApprovedDraftResult } from '@/components/cockpit/ApprovedStrip'
 import { useHypothesisList } from '@/hooks/useHypotheses'
+import { useObjectiveList } from '@/hooks/useLoopHarness'
 import { draftParentId } from '@/lib/research/draftProvenance'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
-import { useApproveDraft, useHeldDraftDismiss, useInboxQueue } from '@/hooks/useResearchDrafts'
-import {
-  WRITES_TO_LABEL,
-  WRITES_TO_ORDER,
-  writesTo,
-  type WritesTo,
-} from '@/lib/harness/writesTo'
+import { useApproveDraft, useHeldDraftWrites, useInboxQueue } from '@/hooks/useResearchDrafts'
+import { WRITES_TO_LABEL, WRITES_TO_ORDER, type WritesTo } from '@/lib/harness/writesTo'
 import { buildProposals } from '@/pages/research/loop/proposals/proposalsModel'
-import { RuleProposalCard } from '@/pages/research/loop/proposals/RuleProposalCard'
-import { Link } from 'react-router-dom'
-import { StatusLamp } from '@/components/StatusLamp'
-import { positionsUi } from '@/components/positions/positionsUi'
-import { cn } from '@/lib/utils'
+import { NO_RULES_STORE } from '@/pages/research/loop/proposals/RuleProposalCard'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
-import {
-  BRIEFING_KINDS,
-  groupIdenticalDrafts,
-  isActionableDraft,
-  isDecisionKind,
-} from '@/lib/harness/harnessDraftHelpers'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
-import { unreadCount, useReadDrafts } from '@/pages/research/loop/inboxRead'
+import { unreadCount, useReadDrafts, useStoredDraftIds } from '@/pages/research/loop/inboxRead'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
-import { approveEffect, draftAskedBy, draftTitle } from '@/lib/harness/draftText'
+import { approveEffect, draftAskedBy } from '@/lib/harness/draftText'
+import { draftHeadline, type DraftHeadline } from '@/lib/harness/draftHeadline'
+import { buildInboxCards, cardHoldingDraft, hiddenDecisionCount, inboxSections, type InboxCard } from '@/lib/harness/inboxCards'
+import { useDraftWriteFailures } from '@/lib/harness/draftWriteFailures'
 import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
+import { useInSurface } from '@/lib/surfaceScope'
+import { notify } from '@/lib/shellNotify'
+import { STORAGE_KEYS } from '@/constants/storage'
+import { InboxDecisionList, InboxKeyHints, type InboxItem } from '@/pages/research/loop/inbox/InboxDecisionList'
+import { InboxBriefings } from '@/pages/research/loop/inbox/InboxBriefings'
+import { InboxStrips } from '@/pages/research/loop/inbox/InboxStrips'
+import { cardWrites, recordToast } from '@/pages/research/loop/inbox/inboxCardText'
+import { revealCard, useInboxKeys, type InboxKeyAction } from '@/pages/research/loop/inbox/inboxKeys'
 
 /** Enough to see a working session's worth without the rail outgrowing the queue. */
 const LANDED_MAX = 8
@@ -71,10 +71,10 @@ const INBOX_LEDE =
 type Dest = 'any' | WritesTo
 
 /**
- * Three views, as in the design (`Research Autopilot Decisions.dc.html`):
- * what needs a call, what needs reading, everything. The page used to offer
- * nine peers in one row — the three views beside six kinds — so "EOD" sat next
- * to "Decisions" as if it were another answer to the same question.
+ * Three views, as in the design: what needs a call, what needs reading,
+ * everything. The page used to offer nine peers in one row — the three views
+ * beside six kinds — so "EOD" sat next to "Decisions" as if it were another
+ * answer to the same question.
  */
 const VIEW_OPTIONS: { value: View; label: string; title?: string }[] = [
   { value: 'decisions', label: 'Decisions' },
@@ -82,204 +82,260 @@ const VIEW_OPTIONS: { value: View; label: string; title?: string }[] = [
   { value: 'all', label: 'All' },
 ]
 
-/**
- * The kind filter, along the axis the kind tag's colour already used.
- *
- * It was thirteen server kinds in a Select — the record's name rather than
- * the consequence, so "Candidate batches" and "Hypothesis drafts" read as two
- * unrelated choices when the reader is deciding between the pool and the book.
- * Design Rev 2026-09-23.1 collapses them to the five places Approve writes,
- * each carrying what is pending there.
- */
+function itemDest(i: InboxItem): WritesTo {
+  return i.type === 'rule' ? 'rules' : i.card.dest
+}
 
-/**
- * Recurring agent posts — read them, then move on.
- *
- * These used to sit in the decisions bucket, so even the Decisions filter
- * carried the two agents' daily status posts — "no material change; keep
- * active", "Today's Discoveries: SEPA PAYS 82.75…". Those need reading, not a
- * verdict, and putting an Approve button on them teaches you to clear the queue
- * without looking, which is how a real decision gets waved through.
- */
 export default function DecisionInboxPage() {
-  // Opens on what needs a call (D3: the leash accepts the rest on its own, so
-  // what is left here is a real decision). Today's digest is one click away —
-  // a strip above the list says it is there. Briefings keep their own count,
-  // so nothing is hidden.
-  // The route seeds the view, so `/review/proposals` still lands on what it
-  // names — the same way `/research/workbench` lands on the census face.
-  //
   // `/review/proposals` is a deep-link alias (design Rev 2026-09-23.1): it
-  // lands on the Decisions view narrowed to what writes to Rules, which is
-  // where its rows went. It is not a view and not a row.
-  const { pathname } = useLocation()
+  // lands on the Decisions view narrowed to what writes to Rules. `?card=<draft
+  // id>` lands on that draft's card — first, ringed, open, its provenance out.
+  const { pathname, search } = useLocation()
+  const inSurface = useInSurface()
+  const cardParam = useMemo(() => new URLSearchParams(search).get('card'), [search])
   const [view, setViewState] = useState<View>('decisions')
   const [dest, setDestState] = useState<Dest>(pathname === PROPOSALS_PATH ? 'rules' : 'any')
-  // One card open at a time (design Rev 2026-09-23.1). A queue of eleven cards
-  // each carrying a diff, a table and a paragraph is a page you scroll past
-  // rather than read; folded, the header line is what a reader chooses from.
-  // `null` means "the first pending one", resolved at render so it follows the
-  // list rather than freezing on whatever was first when the page loaded.
+  // One card open at a time (design Rev 2026-09-23.1). `null` means "the first
+  // pending one", resolved at render so it follows the list rather than
+  // freezing on whatever was first when the page loaded; '' means none.
   const [openId, setOpenId] = useState<string | null>(null)
-  // A place belongs to the decisions side, so narrowing to one inside Briefings
-  // would show an empty list for a place that has cards.
+  // The keyboard cursor (Rev .144). '' until a key or a click places it.
+  const [cur, setCur] = useState('')
   const setView = (next: View) => {
     setViewState(next)
+    setOpenId(null)
     if (next === 'briefings') setDestState('any')
   }
   const setDest = (next: Dest) => {
     setDestState(next)
+    setOpenId(null)
     if (next !== 'any' && view === 'briefings') setViewState('decisions')
   }
 
-  // The whole queue, one kind at a time (`useInboxQueue`). One page of every
-  // kind was the newest 200 drafts, and on DEV (2026-10-04) 184 of them were
-  // EOD verdicts: 16 of the 144 drafts waiting for a call were visible, and
-  // every count below was taken off those 16.
-  const query = useInboxQueue()
+  // The whole queue, one kind at a time (`useInboxQueue`): a single page of
+  // every kind was 200 rows of which 184 were briefings.
+  const queue = useInboxQueue()
   const approve = useApproveDraft()
-  // Dismiss with Undo (Rev .75): the card leaves at once and the write goes
-  // when the toast does, since the server cannot take a dismissal back.
-  const { isHeld, dismiss } = useHeldDraftDismiss()
+  // Dismiss and Record answer are held behind the toast's Undo (Rev .75 ·
+  // Owner 2026-10-04 #9): the server cannot take either back.
+  const { isHeld, dismiss, record } = useHeldDraftWrites()
+  const failures = useDraftWriteFailures()
   // The card leaves on approval and the server cannot take one back, so what
-  // was accepted is only ever recorded here. The rail keeps the session's
-  // list; the six-second strip belongs to the two surfaces that have no rail.
+  // was accepted is only ever recorded here.
   const [landed, setLanded] = useState<LandedApproval[]>([])
+  const land = useCallback(
+    (result: ApprovedDraftResult) => setLanded((prev) => [landedApproval(result), ...prev].slice(0, LANDED_MAX)),
+    [],
+  )
 
-  const rawRows = useMemo(() => [...query.decisions, ...query.briefings], [query.decisions, query.briefings])
-  const liveRows = useMemo(() => rawRows.filter((d) => !isHeld(d.id)), [rawRows, isHeld])
-  const heldCount = rawRows.length - liveRows.length
-  const digest = liveRows.find(isDailyDigest)
+  const decisionRows = useMemo(() => queue.decisions.filter((d) => !isHeld(d.id)), [queue.decisions, isHeld])
+  const briefingRows = useMemo(() => digestFirst(queue.briefings.filter((d) => !isHeld(d.id))), [queue.briefings, isHeld])
+  const heldCount = queue.listed - decisionRows.length - briefingRows.length
+  const digest = briefingRows.find(isDailyDigest)
 
-  // Read state for briefings, kept in this browser (see inboxRead.ts). It is
-  // pruned only against the whole queue: a narrowed list, or a page that could
-  // not hold every pending draft, would un-read everything it did not contain.
-  const { read, setRead } = useReadDrafts(query.complete ? rawRows.map((d) => d.id) : null)
+  // Read state and hidden earlier runs, kept in this browser (inboxRead.ts),
+  // pruned only against the whole queue — a partial read would drop every id
+  // it did not happen to contain.
+  const pendingKey = queue.complete ? [...queue.decisions, ...queue.briefings].map((d) => d.id).join(',') : null
+  const pendingIds = useMemo(() => (pendingKey == null ? null : pendingKey.split(',').filter(Boolean)), [pendingKey])
+  const { read, setRead } = useReadDrafts(pendingIds)
+  const { ids: hidden, setMany: setHidden } = useStoredDraftIds(STORAGE_KEYS.inboxHiddenEarlier, pendingIds)
 
-  // Three kinds — decision_draft, order_intent, policy_suggestion — carry only
-  // a `hypothesis_id`, so without this every one of their cards was headed by
-  // its scope: `hypothesis:intc-stage-2a-setup-perfect-…`. The Book already
-  // holds the sentence; all ten pending on DEV resolve. Same list the Watchlist
-  // reads, so it is one query between them rather than a second copy.
+  // Three kinds carry only a `hypothesis_id`; the Book holds the sentence.
   const hypotheses = useHypothesisList({ limit: 200 })
-  const titleById = useMemo(() => {
-    const m = new Map<string, string>()
-    for (const h of hypotheses.data?.rows ?? []) m.set(h.id, h.title)
-    return m
-  }, [hypotheses.data?.rows])
+  const objectives = useObjectiveList()
+  const headlineOf = useMemo(() => {
+    const hypTitle = new Map<string, string>()
+    for (const h of hypotheses.data?.rows ?? []) hypTitle.set(h.id, h.title)
+    const objName = new Map<string, string>()
+    // A batch names its objective in its title; the list wins where it has one.
+    for (const d of decisionRows) {
+      if (d.kind === 'candidate_batch' && typeof d.payload.objective_id === 'string' && typeof d.payload.title === 'string') {
+        objName.set(d.payload.objective_id, d.payload.title)
+      }
+    }
+    for (const o of objectives.data?.items ?? []) objName.set(o.id, o.title)
+    const cache = new Map<string, DraftHeadline>()
+    return (card: InboxCard): DraftHeadline => {
+      const hit = cache.get(card.head.id)
+      if (hit) return hit
+      const h = draftHeadline(card.head, {
+        hypothesisTitle: hypTitle.get(draftParentId(card.head) ?? '') ?? null,
+        objectiveName: (id) => objName.get(id) ?? null,
+      })
+      cache.set(card.head.id, h)
+      return h
+    }
+  }, [hypotheses.data?.rows, objectives.data?.items, decisionRows])
 
-  // The proposals, read off the habits rather than fetched: they are the fourth
-  // thing the engine proposes, and since Rev 2026-09-23.1 they are cards in
-  // this queue rather than a queue of their own. `thin` ones are not cards at
-  // all — a sample of one is a habit still being measured, and it is named on
-  // a strip instead of asked about.
+  // Rule proposals, read off the habits rather than fetched: a Rules card in
+  // this queue since Rev 2026-09-23.1. `thin` ones are named on a strip.
   const habitsQ = useReviewHabits('all')
   const proposals = useMemo(
-    () =>
-      buildProposals(
-        habitsQ.habits,
-        habitsQ.trades,
-        habitsQ.paths,
-      ),
+    () => buildProposals(habitsQ.habits, habitsQ.trades, habitsQ.paths),
     [habitsQ.habits, habitsQ.trades, habitsQ.paths],
   )
   const ruleCards = useMemo(() => proposals.filter((p) => !p.thin), [proposals])
   const thin = useMemo(() => proposals.filter((p) => p.thin), [proposals])
 
-  const rows = useMemo(() => {
-    const all = liveRows
-    const place = (d: { kind: string }) => writesTo(d.kind)
-    const narrowed = dest === 'any' ? all : all.filter((d) => place(d) === dest)
-    if (view === 'decisions') {
-      return typedFirst(narrowed.filter((d) => isDecisionKind(d.kind)))
-    }
-    if (view === 'briefings') {
-      return digestFirst(all.filter((d) => BRIEFING_KINDS.has(d.kind)))
-    }
-    return narrowed
-  }, [liveRows, view, dest])
-
-  // Rule cards ride the same two filters as everything else: they write to
-  // Rules, and they are decisions rather than posts to read.
-  const shownRules = useMemo(
-    () => (view === 'briefings' || (dest !== 'any' && dest !== 'rules') ? [] : ruleCards),
-    [ruleCards, view, dest],
+  const cards = useMemo(() => buildInboxCards(decisionRows, hidden), [decisionRows, hidden])
+  const items = useMemo<InboxItem[]>(
+    () => [
+      ...cards.map((card) => ({ type: 'draft' as const, key: card.key, card })),
+      ...ruleCards.map((proposal) => ({ type: 'rule' as const, key: `rule:${proposal.key}`, proposal })),
+    ],
+    [cards, ruleCards],
   )
+  const itemByKey = useMemo(() => new Map(items.map((i) => [i.key, i])), [items])
+  const focusCard = cardParam ? cardHoldingDraft(cards, cardParam) : null
+  const litKey = focusCard?.key ?? null
 
-  // One card per decision, not per draft. Repeated runs of the same objective
-  // post an identical batch each time; they are folded into the newest and
-  // listed under it rather than dropped.
-  const groups = useMemo(() => groupIdenticalDrafts(rows), [rows])
+  // A `?card=` is resolved once the queue is in: it may name a briefing, which
+  // lives under its own view. Adjusted during render, not in an effect, so the
+  // first painted frame is already the right view.
+  const [cardSeen, setCardSeen] = useState<string | null>(null)
+  if (cardParam && cardParam !== cardSeen && queue.complete) {
+    setCardSeen(cardParam)
+    if (focusCard) {
+      setViewState('decisions')
+      setDestState('any')
+    } else if (briefingRows.some((b) => b.id === cardParam)) {
+      setViewState('briefings')
+      setDestState('any')
+    }
+  }
 
-  // Shown next to the filter so the split is visible without switching views:
-  // you can see at a glance whether anything actually needs a call today.
-  //
-  // `decisions` counts calls, not drafts. Counting drafts is what let the header
-  // read "25 to decide" when thirteen were the same eight symbols and eight more
-  // were policy suggestions that would write nothing.
+  const showDecisions = view !== 'briefings'
+  const sections = useMemo(() => {
+    if (!showDecisions) return []
+    const shown = dest === 'any' ? items : items.filter((i) => itemDest(i) === dest)
+    return inboxSections(shown, itemDest, litKey ? (i) => i.key === litKey : undefined)
+  }, [showDecisions, dest, items, litKey])
+  const order = useMemo(() => sections.flatMap((s) => s.items.map((i) => i.key)), [sections])
+  const openKey = openId ?? (litKey && order.includes(litKey) ? litKey : (order[0] ?? ''))
+
   const counts = useMemo(() => {
-    const all = liveRows
-    const decisionGroups = groupIdenticalDrafts(all.filter((d) => isDecisionKind(d.kind)))
-    // The server's count of the whole queue; the kinds read add up to it, and
-    // `unaccounted` is what sits in a kind this page does not read.
-    const total = (query.pendingCount ?? all.length) - heldCount
+    const unread = unreadCount(briefingRows.map((d) => d.id), read)
     return {
-      decisions: decisionGroups.filter((g) => isActionableDraft(g.draft)).length,
-      inert: decisionGroups.filter((g) => !isActionableDraft(g.draft)).length,
-      collapsed: decisionGroups.reduce((n, g) => n + g.superseded.length, 0),
-      briefings: all.filter((d) => BRIEFING_KINDS.has(d.kind)).length,
-      total,
-      // Pending on the server in a kind this page does not read.
-      unseen: query.unaccounted,
-      unreadBriefings: unreadCount(
-        all.filter((d) => BRIEFING_KINDS.has(d.kind)).map((d) => d.id),
-        read,
-      ),
+      // One per question, not per draft: a call is one, an objective's runs are one.
+      decisions: items.length,
+      rules: ruleCards.length,
+      inert: cards.filter((c) => !cardWrites(c)).length,
+      folded: cards.reduce((n, c) => n + c.folded.length + c.hiddenEarlier.length, 0),
+      briefings: briefingRows.length,
+      unreadBriefings: unread,
+      total: (queue.pendingCount ?? queue.listed) - heldCount,
+      hiddenHere: hiddenDecisionCount(decisionRows, hidden),
     }
-  }, [liveRows, heldCount, query.pendingCount, query.unaccounted, read])
+  }, [items.length, ruleCards.length, cards, briefingRows, read, queue.pendingCount, queue.listed, heldCount, decisionRows, hidden])
 
-  /** Pending per place, for the segment's own labels. */
   const pendingByDest = useMemo(() => {
-    const all = liveRows
     const n: Record<WritesTo, number> = { rules: 0, policy: 0, book: 0, pool: 0, nothing: 0 }
-    for (const d of all) {
-      const place = writesTo(d.kind)
-      if (place && isDecisionKind(d.kind)) n[place] += 1
-    }
-    n.rules += ruleCards.length
+    for (const i of items) n[itemDest(i)] += 1
     return n
-  }, [liveRows, ruleCards.length])
-
-  /**
-   * Which card is open when nothing has been picked: the first pending one, in
-   * the order the list draws. A collapsed card carries no Approve, so opening
-   * on none would mean nothing could be answered without a click first.
-   */
-  const firstCardId =
-    shownRules.length > 0
-      ? `rule:${shownRules[0].key}`
-      : groups.length > 0
-        ? `draft:${groups[0].draft.id}`
-        : ''
+  }, [items])
 
   const destOptions = useMemo(
     () => [
       { value: 'any' as Dest, label: 'Any' },
-      ...WRITES_TO_ORDER.map((w) => ({
-        value: w as Dest,
-        label: `${WRITES_TO_LABEL[w]} ${pendingByDest[w]}`,
-      })),
+      ...WRITES_TO_ORDER.map((w) => ({ value: w as Dest, label: `${WRITES_TO_LABEL[w]} ${pendingByDest[w]}` })),
     ],
     [pendingByDest],
   )
 
+  // ── Answers ──────────────────────────────────────────────────────────────
+  // After a verdict the next pending card opens (the accordion's `null`).
+  const settle = () => {
+    setOpenId(null)
+    setCur('')
+  }
+  // Deciding a run also folds away the runs it covered, here only: they stay
+  // pending on the server (Owner 2026-10-04 #11).
+  const hideFolded = (card: InboxCard) => setHidden(card.folded.map((d) => d.id), true)
+  const recordCard = (card: InboxCard) => {
+    record(
+      card.answers.map((d) => d.id),
+      recordToast(card, headlineOf(card)),
+      { onLanded: land },
+    )
+    settle()
+  }
+  const approveCard = (card: InboxCard) => {
+    if (card.shape === 'call') return recordCard(card)
+    approve.mutate(card.head.id, {
+      onSuccess: (result) => {
+        land(result)
+        if (card.shape === 'objective') hideFolded(card)
+      },
+    })
+    settle()
+  }
+  const dismissCard = (card: InboxCard) => {
+    const ids = card.answers.map((d) => d.id)
+    const msg =
+      card.shape === 'call'
+        ? `Call dismissed${ids.length > 1 ? ` (${ids.length} drafts)` : ''}`
+        : card.folded.length > 0
+          ? 'Dismissed — the earlier runs stay pending and fold away here'
+          : 'Draft dismissed'
+    dismiss(ids, msg, card.shape === 'objective' ? { onCommitted: () => hideFolded(card) } : {})
+    settle()
+  }
+  const discussCard = (card: InboxCard) =>
+    openDraftInCopilot({
+      id: card.head.id,
+      kind: card.head.kind,
+      title: headlineOf(card).title,
+      askedBy: draftAskedBy(card.head.generated_by),
+      landsIn: approveEffect(card.head)?.label ?? null,
+    })
+  const toggle = (key: string) => {
+    setCur(key)
+    setOpenId(openKey === key ? '' : key)
+  }
+
+  // ── Keys (Rev .144) — the route page only (Owner 2026-10-04 #13) ─────────
+  const onKey = (a: InboxKeyAction) => {
+    const target = itemByKey.get(a.type === 'move' ? a.to : a.id)
+    if (!target) return
+    if (a.type === 'move') {
+      setCur(a.to)
+      setOpenId(a.to)
+      revealCard(a.to)
+    } else if (a.type === 'toggle') {
+      toggle(a.id)
+    } else if (a.type === 'open-to-approve') {
+      setCur(a.id)
+      setOpenId(a.id)
+      revealCard(a.id)
+      notify('Opened — read it, then A again to approve.')
+    } else if (target.type === 'rule') {
+      notify(`Rule proposals: ${NO_RULES_STORE}.`)
+    } else if (a.type === 'approve') {
+      approveCard(target.card)
+    } else {
+      dismissCard(target.card)
+    }
+  }
+  useInboxKeys({
+    enabled: !inSurface && showDecisions,
+    order,
+    cur,
+    openId: openKey,
+    isCall: (key) => {
+      const i = itemByKey.get(key)
+      return i?.type === 'draft' && i.card.shape === 'call'
+    },
+    onAction: onKey,
+  })
+
   // The toolbar's old sentence, whole — the heroes' shared title.
-  const countsLine = `${counts.decisions + shownRules.length} to decide${
-    shownRules.length > 0 ? ` (${shownRules.length} rule change${shownRules.length === 1 ? '' : 's'})` : ''
+  const countsLine = `${counts.decisions} to decide${
+    counts.rules > 0 ? ` (${counts.rules} rule change${counts.rules === 1 ? '' : 's'})` : ''
   }${counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''} · ${counts.unreadBriefings} of ${
     counts.briefings
   } briefing${counts.briefings === 1 ? '' : 's'} unread · ${counts.total} pending${
-    counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''
+    counts.folded > 0 ? ` · ${counts.folded} earlier runs folded in` : ''
   }`
 
   return (
@@ -287,10 +343,7 @@ export default function DecisionInboxPage() {
       <PageHead title="Decision Inbox" info={INBOX_LEDE} actions={<NewDraftDialog />} />
 
       <div data-sr-toolbar="">
-        {/* The design's chip. It reads "the engine", not "autopilot seat": the
-            seat model was retired on 2026-09-19, and what the tag is for is
-            saying which operator wrote the queue you are looking at. The level
-            is soft ink (Rev .85) — a level, not a name and not a selection. */}
+        {/* Which operator wrote the queue you are looking at; the level is soft ink (Rev .85). */}
         <span className="inline-flex h-5.5 shrink-0 items-center gap-1.5 border px-2 text-dense-meta mat-tag">
           <span className="font-mono font-bold text-[var(--sk-soft)]">L3</span>
           <span className="text-muted-foreground">the engine</span>
@@ -298,241 +351,148 @@ export default function DecisionInboxPage() {
         <span data-sr-tb="sep" />
         <span data-sr-tb="label">View</span>
         <SegmentControl size="xs" value={view} onChange={(v) => setView(v as View)} options={VIEW_OPTIONS} ariaLabel="View" />
-        {/* Not a second row of views: the kind tag's colour already says where
-            Approve writes, and this narrows along that same axis. Hidden under
-            Briefings, which are read rather than written anywhere. */}
         {view === 'briefings' ? null : (
           <>
             <span data-sr-tb="sep" />
-            <span
-              data-sr-tb="label"
-              title="Kind, read as where Approve writes. The tag colour on each card says the same thing."
-            >
+            <span data-sr-tb="label" title="Kind, read as where Approve writes. The tag colour on each card says the same thing.">
               Writes to
             </span>
-            <SegmentControl
-              size="xs"
-              value={dest}
-              onChange={(v) => setDest(v as Dest)}
-              options={destOptions}
-              ariaLabel="Writes to"
-            />
+            <SegmentControl size="xs" value={dest} onChange={(v) => setDest(v as Dest)} options={destOptions} ariaLabel="Writes to" />
           </>
         )}
-        {dest !== 'any' || counts.unseen > 0 ? (
+        {dest !== 'any' || queue.unaccounted > 0 || counts.hiddenHere > 0 ? (
           <span data-sr-tb="meta">
-            {/* Counted over one place, the heroes' split says nothing: the list
-                itself is narrowed. Say what the list is. */}
-            {dest !== 'any' ? `${groups.length + shownRules.length} shown · ${counts.total} pending` : null}
-            {counts.unseen > 0 ? (
+            {dest !== 'any' ? `${pendingByDest[dest]} shown · ${counts.total} pending` : null}
+            {counts.hiddenHere > 0 ? (
+              <>
+                {dest !== 'any' ? ' · ' : ''}
+                {counts.hiddenHere} earlier run{counts.hiddenHere === 1 ? '' : 's'} hidden here ·{' '}
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => setHidden([...hidden], false)}
+                  title="Hidden in this browser by Dismiss earlier; still pending on the server"
+                >
+                  Show all
+                </button>
+              </>
+            ) : null}
+            {queue.unaccounted > 0 ? (
               <span
                 className="text-warning"
                 title="The server counts more pending drafts than the kinds this page reads add up to — a kind it does not know yet."
               >
-                {dest !== 'any' ? ' · ' : ''}
-                {counts.unseen} pending in kinds this page does not read
+                {dest !== 'any' || counts.hiddenHere > 0 ? ' · ' : ''}
+                {queue.unaccounted} pending in kinds this page does not read
               </span>
             ) : null}
           </span>
         ) : null}
       </div>
 
-      {/* §16.2 (Rev .85): the toolbar's count sentence as three heroes; the
-          whole sentence stays in the row's title. Rule changes are named
-          inside To decide, because they are decisions of the same kind and
-          not a second queue. */}
+      {/* §16.2 (Rev .85): the toolbar's count sentence as three heroes. */}
       <HeroRow label="The queue">
         <HeroCard
           label="To decide"
-          value={String(counts.decisions + shownRules.length)}
-          valueClassName={counts.decisions + shownRules.length > 0 ? 'text-foreground' : 'text-muted-foreground'}
-          state={counts.decisions + shownRules.length > 0 ? 'warn' : null}
+          value={queue.decisionsLoading ? '—' : String(counts.decisions)}
+          valueClassName={counts.decisions > 0 ? 'text-foreground' : 'text-muted-foreground'}
+          state={counts.decisions > 0 ? 'warn' : null}
           title={countsLine}
-          sub={`${shownRules.length} rule change${shownRules.length === 1 ? '' : 's'} among them${
+          sub={`${counts.rules} rule change${counts.rules === 1 ? '' : 's'} among them${
             counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''
           }`}
         />
         <HeroCard
           label="Unread briefings"
-          value={String(counts.unreadBriefings)}
+          value={queue.briefingsLoading ? '—' : String(counts.unreadBriefings)}
           valueClassName={counts.unreadBriefings > 0 ? 'text-foreground' : 'text-muted-foreground'}
           title={countsLine}
           sub={`of ${counts.briefings} · need reading, not a decision`}
         />
         <HeroCard
           label="Pending"
-          value={String(counts.total)}
+          value={queue.pendingCount == null ? '—' : String(counts.total)}
           valueClassName="text-[var(--sk-soft)]"
           title={countsLine}
-          sub={`drafts and briefings${counts.collapsed > 0 ? ` · ${counts.collapsed} repeats folded in` : ''}`}
+          sub={`drafts and briefings${counts.folded > 0 ? ` · ${counts.folded} earlier runs folded in` : ''}`}
         />
       </HeroRow>
 
-      {/* A thin proposal is not a card: it has not argued anything yet, and
-          asking about it would be asking a question the sample cannot answer.
-          Named on one strip so it is visible as measured-but-not-yet-arguing
-          rather than absent. */}
-      {thin.length > 0 && view !== 'briefings' && (dest === 'any' || dest === 'rules') ? (
-        <div className="flex flex-wrap items-center gap-2 border px-3 py-1.5 text-dense-meta mat-card">
-          <StatusLamp lamp="gray" variant="dot" title="Measured, not yet arguing" />
-          <span className={cn(positionsUi.mono, 'font-semibold')}>
-            {thin.map((p) => `${p.title} · n ${p.n}`).join(' · ')}
-          </span>
-          <span className="min-w-0 text-muted-foreground">
-            measured on too few trades to argue a rule. Not a card until the sample is.
-          </span>
-          <Link to="/review/habits" className="ml-auto shrink-0 text-dense-micro text-primary hover:underline">
-            Habits →
-          </Link>
-        </div>
-      ) : null}
-
-      {/* Until it is read: the strip exists to say the digest is waiting, and a read digest is not.
-          Neutral, not a hue: classification is not colour (§7 / Design 09-13 ④). */}
-      {digest && !read.has(digest.id) && view !== 'briefings' && dest === 'any' ? (
-        <div className="flex flex-wrap items-center gap-2 border px-3 py-1.5 text-dense-meta mat-card">
-          <span className="font-medium">
-            {typeof digest.payload.title === 'string' ? digest.payload.title : 'Daily digest'}
-          </span>
-          <span className="text-muted-foreground">is waiting under Briefings — it needs reading, not a verdict.</span>
-          <button
-            type="button"
-            className="ml-auto text-dense-meta text-primary underline"
-            onClick={() => setView('briefings')}
-          >
-            Read it
-          </button>
-        </div>
-      ) : null}
+      <InboxStrips
+        thin={thin.length > 0 && view !== 'briefings' && (dest === 'any' || dest === 'rules') ? thin : []}
+        digest={digest && !read.has(digest.id) && view !== 'briefings' && dest === 'any' ? digest : null}
+        onReadDigest={() => setView('briefings')}
+      />
 
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
       {/* The queue, and beside it the leash: what reaches this page is what the
           leash did not accept on its own, so the rule sits next to its result. */}
       <div className="grid gap-4 @4xl/page:grid-cols-[minmax(0,1fr)_18rem] @4xl/page:items-start">
-      <div className="min-w-0">
-      {query.error ? (
-        <ResearchAuthGap error={query.error} />
-      ) : query.decisionsLoading ? (
-        <Skeleton className="h-48 w-full rounded-md" />
-      ) : rows.length === 0 && shownRules.length === 0 ? (
-        <EmptyState
-          icon={<Inbox />}
-          title={view === 'decisions' && dest === 'any' ? 'Nothing needs a call' : 'Nothing waiting'}
-          description={
-            dest !== 'any'
-              ? `Nothing pending that writes to ${WRITES_TO_LABEL[dest]}.`
-              : view === 'decisions' && counts.briefings > 0
-                ? `No draft needs a call. ${counts.briefings} agent briefing${counts.briefings === 1 ? '' : 's'} waiting under Briefings.`
-                : 'Every decision draft has a verdict. Approved ones are in The Book; the leash accepted the rest on its own.'
-          }
-          action={
-            view === 'decisions' && dest === 'any' && counts.briefings > 0 ? (
-              <Button type="button" size="sm" variant="outline" onClick={() => setView('briefings')}>
-                Read briefings
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        // No cap at all (design §5a.3): a page container fills the pane and
-        // only continuous text is measured. The cards were capped at 48rem,
-        // then at 80rem, and both were the same mistake at different sizes —
-        // width belongs to the content that needs it, and the content that
-        // does not need it already carries its own measure (`max-w-prose` on
-        // the card's prose and its policy diff).
-        //
-        // Gap is 4, not 2: at 2 the space between two decisions matched the
-        // space between a card's own lines, so eleven cards read as one wall.
-        <div className="space-y-4">
-          {shownRules.map((p) => (
-            <RuleProposalCard
-              key={p.key}
-              proposal={p}
-              expanded={(openId ?? firstCardId) === `rule:${p.key}`}
-              onToggle={() =>
-                setOpenId((openId ?? firstCardId) === `rule:${p.key}` ? '' : `rule:${p.key}`)
+        <div className="min-w-0 space-y-3">
+          {queue.error ? (
+            <ResearchAuthGap error={queue.error} />
+          ) : showDecisions && queue.decisionsLoading ? (
+            <Skeleton className="h-48 w-full rounded-md" />
+          ) : showDecisions && sections.length === 0 && view === 'decisions' ? (
+            <EmptyState
+              icon={<Inbox />}
+              title={dest === 'any' ? 'Nothing needs a call' : 'Nothing waiting'}
+              description={
+                dest !== 'any'
+                  ? `Nothing pending that writes to ${WRITES_TO_LABEL[dest]}.`
+                  : counts.briefings > 0
+                    ? `No draft needs a call. ${counts.briefings} agent briefing${counts.briefings === 1 ? '' : 's'} waiting under Briefings.`
+                    : 'Every decision draft has a verdict. Approved ones are in The Book; the leash accepted the rest on its own.'
+              }
+              action={
+                dest === 'any' && counts.briefings > 0 ? (
+                  <Button type="button" size="sm" variant="outline" onClick={() => setView('briefings')}>
+                    Read briefings
+                  </Button>
+                ) : undefined
               }
             />
-          ))}
-          {groups.map(({ draft, superseded }) => {
-            // A card that would write nothing on Approve keeps its content and
-            // its colour, at lower weight — the calls that matter sit forward,
-            // and nothing is hidden or reordered to get there.
-            const actionable = isActionableDraft(draft)
-            return (
-              <div key={draft.id} className="space-y-1">
-                <DraftCard
-                  draft={draft}
-                  expanded={(openId ?? firstCardId) === `draft:${draft.id}`}
-                  onToggle={() =>
-                    setOpenId(
-                      (openId ?? firstCardId) === `draft:${draft.id}` ? '' : `draft:${draft.id}`,
-                    )
-                  }
-                  hypothesisTitle={titleById.get(draftParentId(draft) ?? '') ?? null}
-                  muted={!actionable}
-                  approving={approve.isPending && approve.variables === draft.id}
-                  dismissing={false}
-                  onApprove={() =>
-                    approve.mutate(draft.id, {
-                      // The rail lists this session's approvals, so what the
-                      // server says it wrote is recorded as it answers —
-                      // reading it back off the queue is impossible, because
-                      // an approved draft leaves the queue.
-                      onSuccess: (result) =>
-                        setLanded((prev) => [landedApproval(result), ...prev].slice(0, LANDED_MAX)),
-                    })
-                  }
-                  onDismiss={() => dismiss(draft.id)}
-                  onDiscuss={() =>
-                    openDraftInCopilot({
-                      id: draft.id,
-                      kind: draft.kind,
-                      title: draftTitle(draft, titleById.get(draftParentId(draft) ?? '') ?? null),
-                      askedBy: draftAskedBy(draft.generated_by),
-                      landsIn: approveEffect(draft)?.label ?? null,
-                    })
-                  }
-                  // Briefings are read, decisions are answered: only a briefing can be marked read.
-                  read={BRIEFING_KINDS.has(draft.kind) ? read.has(draft.id) : undefined}
-                  onToggleRead={
-                    BRIEFING_KINDS.has(draft.kind) ? () => setRead(draft.id, !read.has(draft.id)) : undefined
-                  }
-                />
-                {superseded.length > 0 ? (
-                  // Indented under its own card: unattached, this line sat
-                  // between two cards belonging visibly to neither.
-                  <div className="ml-3.5 flex flex-wrap items-center gap-2 border-l-2 border-border/50 pl-2 text-dense-meta text-muted-foreground">
-                    <span>
-                      {superseded.length} earlier run{superseded.length === 1 ? '' : 's'} proposed
-                      exactly this. Folded in, not decided for you.
-                    </span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 px-2"
-                      onClick={() =>
-                        dismiss(
-                          superseded.map((stale) => stale.id),
-                          `${superseded.length} earlier run${superseded.length === 1 ? '' : 's'} dismissed`,
-                        )
-                      }
-                    >
-                      Dismiss {superseded.length}
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-            )
-          })}
+          ) : showDecisions && sections.length > 0 ? (
+            <>
+              {/* The keys work on the route page only, so a surfaced Inbox does not advertise them. */}
+              {inSurface ? null : <InboxKeyHints />}
+              <InboxDecisionList
+                sections={sections}
+                openKey={openKey}
+                curKey={cur}
+                litKey={litKey}
+                headlineOf={headlineOf}
+                failures={failures}
+                approvingId={approve.isPending ? (approve.variables ?? null) : null}
+                handlers={{
+                  toggle,
+                  approve: approveCard,
+                  record: recordCard,
+                  dismiss: dismissCard,
+                  discuss: discussCard,
+                  hideEarlier: hideFolded,
+                  showEarlier: (card) => setHidden(card.hiddenEarlier.map((d) => d.id), false),
+                }}
+              />
+            </>
+          ) : null}
+          {view === 'decisions' || queue.error ? null : (
+            <InboxBriefings
+              rows={briefingRows}
+              loading={queue.briefingsLoading}
+              read={read}
+              setRead={setRead}
+              litId={cardParam}
+              onDismiss={(id) => dismiss(id)}
+              onApprove={(id) => approve.mutate(id, { onSuccess: land })}
+              approvingId={approve.isPending ? (approve.variables ?? null) : null}
+            />
+          )}
         </div>
-      )}
-      </div>
-      <div className="space-y-3">
-        <ApprovalsLanded landed={landed} />
-        <LeashPanel />
-      </div>
+        <div className="space-y-3">
+          <ApprovalsLanded landed={landed} />
+          <LeashPanel />
+        </div>
       </div>
     </PageShell>
   )

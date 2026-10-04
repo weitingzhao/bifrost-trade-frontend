@@ -18,10 +18,7 @@ import { symbolSurface } from './equipSurface'
 import { parseContract, symbolIn, type SymbolHit } from './shellContextTarget'
 import { contractParams, useSymbolGo } from './symbolGo'
 import css from './quickLook.module.css'
-
-/** A table row or list item first; a marked name stands in only where there is no row. */
-const ROW = 'tr, [role="row"], li'
-const NAME = '[data-ctx-sym], [data-dock-sym]'
+import { QUICK_LOOK_NAME as NAME, QUICK_LOOK_ROW as ROW } from './quickLookTargets'
 const W = 420
 const H = 540
 

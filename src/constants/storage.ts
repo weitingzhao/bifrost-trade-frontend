@@ -16,6 +16,9 @@ export const STORAGE_KEYS = {
   // Briefings you marked read in the Decision Inbox. Per browser: the Research
   // service keeps no read state on drafts.
   inboxReadDrafts: 'bifrost-inbox-read-drafts',
+  // Earlier runs folded under a newer one that you hid in the Decision Inbox
+  // (Dismiss earlier). Per browser and sent nowhere: they stay pending.
+  inboxHiddenEarlier: 'bifrost-inbox-hidden-earlier',
   // Last exhibit this browser saw per symbol — prior half of "Since you last looked".
   symbolExhibitSnapshot: 'bifrost-symbol-exhibit-snapshot',
   // Option Discovery compare drawer — survives symbol / expiry switches.

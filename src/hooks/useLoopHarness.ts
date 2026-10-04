@@ -38,6 +38,20 @@ export function useActiveObjectives() {
   })
 }
 
+/**
+ * Every objective, whatever its status — for naming one from its id. An
+ * archived objective's drafts can still be pending, and the active list alone
+ * would leave them headed by a slug.
+ */
+export function useObjectiveList() {
+  return useQuery({
+    queryKey: QUERY_KEYS.researchEngine.objectives({}),
+    queryFn: () => fetchObjectives(),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  })
+}
+
 export function useAwaitingRuns() {
   return useQuery({
     queryKey: QUERY_KEYS.researchEngine.objectiveRuns({ status: 'awaiting_approval' }),

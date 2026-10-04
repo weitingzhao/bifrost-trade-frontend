@@ -56,6 +56,22 @@ export const SHORTCUTS: readonly Shortcut[] = [
     what: 'Next / previous name in the Symbol list, in the order it shows them (a page with its own j / k keeps it)',
     scope: 'Anywhere the list is shown',
   },
+  // Design Rev .144: the Decision Inbox's triage keys, on the route page only
+  // (a surfaced Inbox binds nothing — it shares the document with the page).
+  {
+    keys: 'J / K',
+    name: 'Inbox: move',
+    what: 'Next / previous pending card, opening it (the Symbol list keeps its own j / k everywhere else)',
+    scope: 'Decision Inbox',
+  },
+  { keys: 'Space', name: 'Inbox: open', what: 'Open or fold the card — Quick Look keeps Space on a row or a ticker', scope: 'Decision Inbox' },
+  {
+    keys: 'A',
+    name: 'Inbox: approve',
+    what: 'Approve the open card; on a folded card it only opens it. A call records its answer, held 5s with Undo',
+    scope: 'Decision Inbox',
+  },
+  { keys: 'D', name: 'Inbox: dismiss', what: 'Dismiss the card — Undo on the toast or ⌘Z for 5s', scope: 'Decision Inbox' },
   // The Omnibar's own prefixes: not keys, but the same question — "what can I
   // type here" — and the only place a reader would look for the answer.
   { keys: '/', name: 'Pages only', what: 'Omnibar: pages only', scope: 'Omnibar' },

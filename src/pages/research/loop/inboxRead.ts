@@ -32,24 +32,33 @@ export function unreadCount(ids: readonly string[], read: ReadonlySet<string>): 
   return ids.filter((id) => !read.has(id)).length
 }
 
-function load(): Set<string> {
+type StoredKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
+
+function load(key: StoredKey): Set<string> {
   try {
-    return parseReadIds(localStorage.getItem(STORAGE_KEYS.inboxReadDrafts))
+    return parseReadIds(localStorage.getItem(key))
   } catch {
     return new Set()
   }
 }
 
-function save(read: ReadonlySet<string>): void {
+function save(key: StoredKey, ids: ReadonlySet<string>): void {
   try {
-    localStorage.setItem(STORAGE_KEYS.inboxReadDrafts, JSON.stringify([...read]))
+    localStorage.setItem(key, JSON.stringify([...ids]))
   } catch {
-    // A browser that refuses storage still lets you mark read for this visit.
+    // A browser that refuses storage still keeps the set for this visit.
   }
 }
 
-export function useReadDrafts(pendingIds: readonly string[] | null) {
-  const [read, setReadState] = useState<Set<string>>(load)
+/**
+ * A set of draft ids kept in this browser, pruned to the drafts still pending.
+ *
+ * Two sets live this way: the briefings you marked read, and the earlier runs
+ * you hid under their card (`Dismiss earlier`, Owner 2026-10-04 #11 — local,
+ * nothing is sent).
+ */
+export function useStoredDraftIds(key: StoredKey, pendingIds: readonly string[] | null) {
+  const [ids, setIdsState] = useState<Set<string>>(() => load(key))
 
   // Prune only against a full answer: a narrowed or loading list would drop
   // every id it did not happen to contain. The page sees the pruned set; the
@@ -57,25 +66,36 @@ export function useReadDrafts(pendingIds: readonly string[] | null) {
   // render never loops through it.
   const pendingKey = pendingIds ? pendingIds.join(',') : null
   const current = useMemo(
-    () => (pendingIds ? pruneReadIds(read, pendingIds) : read),
+    () => (pendingIds ? pruneReadIds(ids, pendingIds) : ids),
     // pendingKey stands in for the array's contents.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [read, pendingKey],
+    [ids, pendingKey],
   )
   useEffect(() => {
-    if (current.size < read.size) save(current)
-  }, [current, read])
+    if (current.size < ids.size) save(key, current)
+  }, [current, ids, key])
 
-  const setRead = useCallback((id: string, isRead: boolean) => {
-    setReadState((prev) => {
-      if (prev.has(id) === isRead) return prev
-      const next = new Set(prev)
-      if (isRead) next.add(id)
-      else next.delete(id)
-      save(next)
-      return next
-    })
-  }, [])
+  const setMany = useCallback(
+    (list: readonly string[], on: boolean) => {
+      setIdsState((prev) => {
+        if (list.every((id) => prev.has(id) === on)) return prev
+        const next = new Set(prev)
+        for (const id of list) {
+          if (on) next.add(id)
+          else next.delete(id)
+        }
+        save(key, next)
+        return next
+      })
+    },
+    [key],
+  )
 
-  return { read: current, setRead }
+  return { ids: current, setMany }
+}
+
+export function useReadDrafts(pendingIds: readonly string[] | null) {
+  const { ids, setMany } = useStoredDraftIds(STORAGE_KEYS.inboxReadDrafts, pendingIds)
+  const setRead = useCallback((id: string, isRead: boolean) => setMany([id], isRead), [setMany])
+  return { read: ids, setRead }
 }

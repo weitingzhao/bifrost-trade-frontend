@@ -1,8 +1,11 @@
-import { approveEffect, draftAskedBy, draftKindLabel, draftLinks, draftTitle } from '@/lib/harness/draftText'
+import { approveEffect, draftAskedBy, draftLinks, kindTag } from '@/lib/harness/draftText'
+import { draftHeadline, type DraftHeadline } from '@/lib/harness/draftHeadline'
+import { writesTo, type WritesTo } from '@/lib/harness/writesTo'
 import { Link } from 'react-router-dom'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DenseTag, type DenseTagVariant } from '@/components/data-display'
+import { CollapsibleChevron, DenseTag, type DenseTagVariant } from '@/components/data-display'
+import type { ReactNode } from 'react'
 import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import {
   CandidateBatchBody,
@@ -44,13 +47,6 @@ import { cn } from '@/lib/utils'
  * and the EOD verdict's own status tag.
  */
 /**
- * The prototype's `kindVariant`, for the kinds it drew.
- *
- * Anything else stays `category`: the design assigned a colour to the four
- * cards it has, and giving the rest one by guess is the drift §7 was right
- * about.
- */
-/**
  * The two kinds whose button says what it does instead of borrowing a word
  * that means something else here (design Rev 2026-09-22.7).
  *
@@ -61,16 +57,27 @@ import { cn } from '@/lib/utils'
  */
 const RECORD_ONLY_KINDS: ReadonlySet<string> = new Set(['decision_draft', 'order_intent'])
 
-const KIND_VARIANT: Record<string, DenseTagVariant> = {
-  candidate_batch: 'info',
-  hypothesis_suggestion: 'success',
-  hypothesis_draft: 'success',
-  policy_suggestion: 'warning',
+/**
+ * The tag's colour is where Approve writes (the prototype's `kindVariant`):
+ * Pool info, Book success, a rule or a policy warning — warning means this
+ * card edits your rules. A call writes nothing and stays neutral; a briefing
+ * or a kind nobody placed stays `category`.
+ */
+const DEST_VARIANT: Record<WritesTo, DenseTagVariant> = {
+  rules: 'warning',
+  policy: 'warning',
+  book: 'success',
+  pool: 'info',
+  nothing: 'neutral',
 }
 
 const ACCENT = {
   normal: 'border-border/60 border-l-border bg-secondary/40',
   muted: 'border-border/35 border-l-border/60 bg-transparent',
+  // A deep-linked card (`?card=`) is what the reader came for; the keyboard
+  // cursor on a folded card is a lighter version of the same ring (Rev .144).
+  lit: 'border-primary border-l-primary',
+  cursor: 'border-primary/55 border-l-primary/55',
 }
 
 /**
@@ -109,10 +116,41 @@ export function DraftCard({
   onToggleRead,
   className,
   hypothesisTitle,
+  headline,
+  meta,
+  vehicle,
+  quick,
+  lit,
+  cursor,
+  defaultVerb = null,
+  footer,
+  cardKey,
   expanded = true,
   onToggle,
 }: {
   draft: AiDraft
+  /** The cut headline (Rev .143 #4); computed from the draft when not given. */
+  headline?: DraftHeadline
+  /** The meta line after the title: setup, objective, the drafts on a call, earlier runs. */
+  meta?: string | null
+  /**
+   * A call card (Rev .143 #2): the verdict is `draft` and this is the vehicle
+   * for the same hypothesis, or `null` when the curator proposed none. Left
+   * undefined on every other card.
+   */
+  vehicle?: AiDraft | null
+  /** The folded row's quick actions (Rev .144) — shown only while folded. */
+  quick?: ReactNode
+  /** Deep-linked (`?card=`): ringed in the accent. */
+  lit?: boolean
+  /** Under the keyboard cursor while folded: a lighter ring. */
+  cursor?: boolean
+  /** A verb open on arrival — Explain, for a deep-linked card. */
+  defaultVerb?: VerbKey | null
+  /** Drawn under the open card: the fold of earlier runs, the failed writes. */
+  footer?: ReactNode
+  /** `data-card`, for the keyboard's scroll-follow. */
+  cardKey?: string
   /**
    * The title of the hypothesis this draft is about, when the caller holds the
    * list. Three kinds carry no title of their own and would otherwise head
@@ -149,13 +187,16 @@ export function DraftCard({
   className?: string
 }) {
   const busy = Boolean(approving || dismissing)
-  const title = draftTitle(draft, hypothesisTitle)
+  const head = headline ?? draftHeadline(draft, { hypothesisTitle })
+  const isCall = vehicle !== undefined
+  const tag = kindTag(draft.kind, draft.scope)
+  const dest = writesTo(draft.kind, draft.scope)
   const recordOnly = RECORD_ONLY_KINDS.has(draft.kind)
   // One verb open at a time. The five that are not Explain have nothing behind
   // them here, so the row reports and this panel says what the verb would do —
   // drawn rather than omitted, because a card without them says the vocabulary
   // does not apply, and inert rather than wired, because it does not yet.
-  const [verb, setVerb] = useState<VerbKey | null>(null)
+  const [verb, setVerb] = useState<VerbKey | null>(defaultVerb)
   const off = verbsOff(draft.kind)
   const proposed =
     typeof draft.payload.proposed_status === 'string'
@@ -201,11 +242,12 @@ export function DraftCard({
 
   return (
     <div
+      data-card={cardKey}
       className={cn(
         // The card sets its own base size. Without it everything that does not
         // name a size inherits the app default 16px — which is how the kind tag
         // came to render larger than the title it labels.
-        'rounded-md border border-l-4 px-2.5 py-2 space-y-2 text-dense-meta',
+        'scroll-mt-24 rounded-md border border-l-4 px-2.5 py-2 space-y-2 text-dense-meta',
         dissentActive
           ? 'border-destructive/50 border-l-destructive bg-destructive/5'
           : warnActive
@@ -213,6 +255,7 @@ export function DraftCard({
             : muted
               ? ACCENT.muted
               : ACCENT.normal,
+        lit ? ACCENT.lit : cursor ? ACCENT.cursor : '',
         read ? 'opacity-70' : '',
         className,
       )}
@@ -224,42 +267,64 @@ export function DraftCard({
         read left, provenance sits right where it stops competing.
       */}
       <div
-        className={cn('flex flex-wrap items-baseline gap-x-2 gap-y-0.5', onToggle ? 'cursor-pointer' : '')}
-        role={onToggle ? 'button' : undefined}
-        tabIndex={onToggle ? 0 : undefined}
-        aria-expanded={onToggle ? expanded : undefined}
-        title={onToggle ? (expanded ? 'Fold' : 'Open this card') : undefined}
-        onClick={onToggle}
-        onKeyDown={
+        className={cn(
+          // Folded, the header is one line and the title gives way (Rev .143 #4:
+          // the folded summary is a single line; opening it wraps).
+          'flex items-baseline gap-x-2 gap-y-0.5',
+          expanded ? 'flex-wrap' : 'flex-nowrap',
+          onToggle ? 'cursor-pointer' : '',
+        )}
+        // The whole row folds and opens on a click, as in the design; a link or
+        // a button inside it (Pipeline, Mark read, the quick actions) is its own.
+        onClick={
           onToggle
             ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  onToggle()
-                }
+                if ((e.target as Element).closest('a, button')) return
+                onToggle()
               }
             : undefined
         }
       >
-        <DenseTag variant={KIND_VARIANT[draft.kind] ?? 'category'} size="cell">
-          {draftKindLabel(draft.kind)}
-        </DenseTag>
-        {proposed ? (
-          <DenseTag
-            variant={
-              proposed === 'validated'
-                ? 'success'
-                : proposed === 'rejected'
-                  ? 'danger'
-                  : 'warning'
-            }
-            size="cell"
-          >
-            → {proposed}
+        {/* The keyboard's handle on the row: a role=button that holds no
+            buttons, so the quick actions beside it stay buttons of their own. */}
+        <span
+          className={cn('flex min-w-0 items-baseline gap-x-2 gap-y-0.5', expanded ? 'flex-wrap' : 'flex-nowrap')}
+          role={onToggle ? 'button' : undefined}
+          tabIndex={onToggle ? 0 : undefined}
+          aria-expanded={onToggle ? expanded : undefined}
+          title={onToggle ? (expanded ? 'Fold' : 'Open this card') : undefined}
+          onKeyDown={
+            onToggle
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onToggle()
+                  }
+                }
+              : undefined
+          }
+        >
+          <DenseTag variant={dest ? DEST_VARIANT[dest] : 'category'} size="cell">
+            {tag}
           </DenseTag>
-        ) : null}
-        <span className="min-w-0 truncate text-dense-label font-medium">{title}</span>
-        <span className="ml-auto shrink-0 text-dense-micro text-muted-foreground">
+          {proposed ? (
+            <DenseTag
+              variant={proposed === 'validated' ? 'success' : proposed === 'rejected' ? 'danger' : 'warning'}
+              size="cell"
+            >
+              → {proposed}
+            </DenseTag>
+          ) : null}
+          {head.sym ? (
+            <span data-ctx-sym={head.sym} className="shrink-0 font-mono text-dense-label font-bold text-entity-symbol">
+              {head.sym}
+            </span>
+          ) : null}
+          <span className="min-w-0 truncate text-dense-label font-medium">{head.title}</span>
+          {meta ? <span className="min-w-0 truncate font-mono text-dense-micro text-muted-foreground">{meta}</span> : null}
+        </span>
+        {!expanded && quick ? <span className="ml-auto shrink-0">{quick}</span> : null}
+        <span className={cn('shrink-0 text-dense-micro text-muted-foreground', !expanded && quick ? '' : 'ml-auto')}>
           {draft.generated_by} · {new Date(draft.created_at).toLocaleString()}
           {runId ? (
             <>
@@ -272,6 +337,7 @@ export function DraftCard({
               </Link>
             </>
           ) : null}
+          {onToggle ? <CollapsibleChevron expanded={expanded} className="ml-1 inline size-3 align-[-2px]" /> : null}
         </span>
         {onToggleRead ? (
           <button
@@ -303,10 +369,24 @@ export function DraftCard({
         </div>
       ) : null}
 
-      {/* Keep `TYPED_BODY_KINDS` (lib/harness/inboxOrder.ts) in step with this
-          chain: the Inbox orders by it, and a kind that gains a body here and
-          not there sinks below the prose cards it just stopped being one of. */}
-      {draft.kind === 'candidate_batch' ? (
+      {isCall ? (
+        // One call per hypothesis (Rev .143 #2): the verdict above, the
+        // vehicle below, and a line saying which half the curator left out.
+        <>
+          {draft.kind === 'decision_draft' ? (
+            <DecisionDraftBody payload={draft.payload} />
+          ) : (
+            <p className="m-0 text-muted-foreground">No verdict drafted — the curator proposed a vehicle only.</p>
+          )}
+          {draft.kind === 'order_intent' ? (
+            <OrderIntentBody payload={draft.payload} />
+          ) : vehicle ? (
+            <OrderIntentBody payload={vehicle.payload} />
+          ) : (
+            <p className="m-0 text-muted-foreground">No vehicle proposed.</p>
+          )}
+        </>
+      ) : draft.kind === 'candidate_batch' ? (
         <CandidateBatchBody payload={draft.payload} />
       ) : draft.kind === 'daily_digest' ? (
         <DailyDigestBody payload={draft.payload} />
@@ -460,12 +540,15 @@ export function DraftCard({
                     false on exactly that kind. */}
                 {' · never an order'}
               </>
+            ) : recordOnly ? (
+              `Record answer marks ${isCall && vehicle ? 'the verdict and the vehicle' : 'this call'} answered — nothing is written, never an order (D10)`
             ) : (
               'Approve only records your answer — nothing is written'
             )}
           </span>
         )}
       </div>
+        {footer}
         </>
       ) : null}
     </div>

@@ -109,7 +109,7 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                     <th>Period</th>
                     <th>Cash</th>
                     <th>Equity</th>
-                    <th>LT Debt</th>
+                    <th>LT debt</th>
                     <th>Retained</th>
                   </tr>
                 </thead>
@@ -179,7 +179,7 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                 <thead>
                   <tr>
                     <th>Period</th>
-                    <th>Net Inc</th>
+                    <th>Net inc</th>
                     <th>Op CF</th>
                     <th>Inv CF</th>
                     <th>Capex</th>
@@ -249,7 +249,7 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                   <th>ROE</th>
                   <th>ROA</th>
                   <th>EPS</th>
-                  <th>Mkt Cap</th>
+                  <th>Mkt cap</th>
                 </tr>
               </thead>
               <tbody>
@@ -315,8 +315,8 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                 <thead>
                   <tr>
                     <th>Settlement</th>
-                    <th>Short Int</th>
-                    <th>Avg Vol</th>
+                    <th>Short int</th>
+                    <th>Avg vol</th>
                     <th>Days</th>
                   </tr>
                 </thead>
@@ -361,9 +361,9 @@ function StatementsBody({ stmts }: { stmts: SymbolStatementsData }) {
                 <thead>
                   <tr>
                     <th>Date</th>
-                    <th>Short Vol</th>
+                    <th>Short vol</th>
                     <th>Ratio</th>
-                    <th>Total Vol</th>
+                    <th>Total vol</th>
                   </tr>
                 </thead>
                 <tbody>

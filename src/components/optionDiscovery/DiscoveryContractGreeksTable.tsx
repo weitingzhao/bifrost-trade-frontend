@@ -62,7 +62,7 @@ export function DiscoveryContractGreeksTable({ rows, footer }: Props) {
         ))}
       </DenseTableBody>
       <tfoot>
-        <tr className="hover:bg-transparent">
+        <tr>
           <DenseTableCell colSpan={4} className="text-xs text-muted-foreground">
             {footer}
           </DenseTableCell>

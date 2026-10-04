@@ -93,7 +93,7 @@ function CashBar({ cash, total }: { cash: number; total: number }) {
     <span
       role="img"
       aria-label={`${pct}% of cash-like${over ? ', exceeds cash-like on its own' : ''}`}
-      className="mt-0.5 block h-1 w-full overflow-hidden rounded-sm border border-border/60 bg-secondary"
+      className="mt-0.5 block h-1 w-full overflow-hidden rounded-sm bg-secondary"
     >
       <span
         className={cn('block h-full', over ? 'bg-warning' : 'bg-muted-foreground/70')}

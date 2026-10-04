@@ -9,9 +9,6 @@ import type { BookEvent } from './corporateActionsModel'
 export const FOOT =
   'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
-/** Row hover: ink 4% (Rev .84). */
-export const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
-
 /**
  * A band whose emptiness is not a reading wears an amber edge (the design's
  * pending mark, Rev .91 #4) — inline, because mat-card clears a border class.

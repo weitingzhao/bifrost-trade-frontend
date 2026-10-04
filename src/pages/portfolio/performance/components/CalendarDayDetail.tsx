@@ -852,15 +852,15 @@ function OptionStockLinkDialog({
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="text-dense-caption uppercase tracking-wider">Link id</TableHead>
-                  <TableHead className="text-dense-caption uppercase tracking-wider">Stock id</TableHead>
-                  <TableHead className="text-dense-caption uppercase tracking-wider">Symbol</TableHead>
-                  <TableHead className="text-dense-caption uppercase tracking-wider">Trade date</TableHead>
-                  <TableHead className="text-dense-caption uppercase tracking-wider text-right">Qty</TableHead>
-                  <TableHead className="text-dense-caption uppercase tracking-wider text-right">Price</TableHead>
-                  <TableHead className="text-dense-caption uppercase tracking-wider text-right">Close</TableHead>
-                  <TableHead className="text-dense-caption uppercase tracking-wider text-right">Slippage</TableHead>
-                  <TableHead className="text-dense-caption uppercase tracking-wider">Role</TableHead>
+                  <TableHead className="text-dense-caption">Link id</TableHead>
+                  <TableHead className="text-dense-caption">Stock id</TableHead>
+                  <TableHead className="text-dense-caption">Symbol</TableHead>
+                  <TableHead className="text-dense-caption">Trade date</TableHead>
+                  <TableHead className="text-dense-caption text-right">Qty</TableHead>
+                  <TableHead className="text-dense-caption text-right">Price</TableHead>
+                  <TableHead className="text-dense-caption text-right">Close</TableHead>
+                  <TableHead className="text-dense-caption text-right">Slippage</TableHead>
+                  <TableHead className="text-dense-caption">Role</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

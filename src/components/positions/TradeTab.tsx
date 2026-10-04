@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { Fragment, useEffect, useMemo } from 'react'
 import { usePageViewSet } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import { DenseTag, CollapsibleChevron } from '@/components/data-display'
@@ -436,8 +436,22 @@ export function TradeTab({
                     <TradeCushionCell legs={group.options} spotOf={spotOfLeg} tightPct={cushionTightPct} />
                   </td>
                 ) : null}
-                <td className={cn(positionsUi.td, 'text-muted-foreground')} title={EXEC_QTY_TITLE}>
-                  {optN > 0 ? optExecQty : '—'}
+                {/* A many-legged row (Uncategorized: `1 ｜ 1 ｜ −5, 4, 5`) is wider than
+                    its 8% column: it wraps between legs, each leg's fills kept on
+                    one line, instead of running over Option P&L. */}
+                <td className={cn(positionsUi.td, 'whitespace-normal text-muted-foreground')} title={EXEC_QTY_TITLE}>
+                  {optN > 0
+                    ? optExecQty.split(' ｜ ').map((leg, i, legs) => (
+                        <Fragment key={i}>
+                          {/* The break falls after a separator, never inside a leg (the prototype's narrow `|`). */}
+                          <span className="whitespace-nowrap">
+                            {leg}
+                            {i < legs.length - 1 ? '\u00a0|' : ''}
+                          </span>
+                          {i < legs.length - 1 ? ' ' : null}
+                        </Fragment>
+                      ))
+                    : '—'}
                 </td>
                 <td className={cn(positionsUi.td, 'text-right')}>{coverageBadge(group.stock_coverage, liveStocks)}</td>
                 <td

@@ -317,10 +317,13 @@ function MonthSection({
 }) {
   const { sums } = group
   const canDrill = onOpenDrill != null && Math.abs(openAsOfMonth) >= 0.5
-  const monthCell = 'bg-[var(--sk-raised2)] font-bold'
+  // Rev .154: the month is the prototype's group row (`data-sr-group`): no
+  // fill, no zebra, its weight alone; the days under it are the list.
+  const monthCell = 'font-bold'
   return (
     <>
       <tr
+        data-sr-group=""
         className="cursor-pointer"
         onClick={onToggle}
         title={expanded ? 'Collapse the month' : 'Expand into days'}
@@ -370,26 +373,28 @@ function MonthSection({
             .some((v) => Math.abs(v) >= 0.005)
           const clickable = active && onOpenDay != null
           const selected = selectedDay === day.date
-          const dayCell = selected ? 'bg-[var(--sk-surface)]' : ''
+          // The open day is the list's selection (accent 18% capsule), as the
+          // prototype marks it; hover is the grammar's own.
           return (
             <tr
               key={day.date}
-              className={cn('hover:[&>td]:bg-[var(--sk-raised2)]', clickable && 'cursor-pointer')}
+              data-selected={selected ? 'true' : undefined}
+              className={cn(clickable && 'cursor-pointer')}
               onClick={clickable ? () => onOpenDay(day.date) : undefined}
               title={clickable ? "Open this day's records" : 'No fills that day'}
             >
-              <td className={cn(td, dayCell, 'pl-6.5 text-left font-sans', selected ? 'text-[var(--sk-accent)]' : 'text-secondary-foreground')}>
+              <td className={cn(td, 'pl-6.5 text-left font-sans', selected ? 'text-[var(--sk-accent)]' : 'text-secondary-foreground')}>
                 {fmtIsoDateToken(day.date)}
               </td>
-              <td className={cn(td, dayCell, realizedInk(day.optR))}>{fmtVal(day.optR)}</td>
-              <td className={cn(td, dayCell, unrealizedInk(day.optU))}>{fmtVal(day.optU)}</td>
-              {showOpen && <td className={cn(td, dayCell, dim)}>—</td>}
-              <td className={cn(td, dayCell, quietInk(day.stocksN, 'soft'))}>{fmtVal(day.stocksN)}</td>
-              <td className={cn(td, dayCell, realizedInk(day.stocksR))}>{fmtVal(day.stocksR)}</td>
-              <td className={cn(td, dayCell, quietInk(day.fiN, 'muted'))}>{fmtVal(day.fiN)}</td>
-              <td className={cn(td, dayCell, realizedInk(day.fiR))}>{fmtVal(day.fiR)}</td>
-              <td className={cn(td, dayCell, dim)}>{fmtVal(day.cashN)}</td>
-              <td className={cn(td, dayCell, dim)}>{fmtVal(day.cashR)}</td>
+              <td className={cn(td, realizedInk(day.optR))}>{fmtVal(day.optR)}</td>
+              <td className={cn(td, unrealizedInk(day.optU))}>{fmtVal(day.optU)}</td>
+              {showOpen && <td className={cn(td, dim)}>—</td>}
+              <td className={cn(td, quietInk(day.stocksN, 'soft'))}>{fmtVal(day.stocksN)}</td>
+              <td className={cn(td, realizedInk(day.stocksR))}>{fmtVal(day.stocksR)}</td>
+              <td className={cn(td, quietInk(day.fiN, 'muted'))}>{fmtVal(day.fiN)}</td>
+              <td className={cn(td, realizedInk(day.fiR))}>{fmtVal(day.fiR)}</td>
+              <td className={cn(td, dim)}>{fmtVal(day.cashN)}</td>
+              <td className={cn(td, dim)}>{fmtVal(day.cashR)}</td>
             </tr>
           )
         })}

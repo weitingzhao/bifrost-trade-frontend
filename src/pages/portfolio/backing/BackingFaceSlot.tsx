@@ -9,7 +9,7 @@
  */
 import { cn } from '@/lib/utils'
 import { Link } from 'react-router-dom'
-import { DenseTag } from '@/components/data-display'
+import { CloseButton, DenseTag } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtUsd, fmtSignedPct } from '@/utils/positions'
 import { computeIndependentHoldingMetrics } from '@/utils/independentHoldings'
@@ -87,9 +87,7 @@ export function BackingFaceSlot({
             {f.label}
           </button>
         ))}
-        <button type="button" className={cn(positionsUi.btn, 'ml-auto')} onClick={onClose} title="Close · esc" aria-label="Close">
-          ✕
-        </button>
+        <CloseButton className="ml-auto" onClick={onClose} title="Close · esc" />
       </header>
 
       {face === 'model' ? (

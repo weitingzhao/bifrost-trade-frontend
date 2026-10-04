@@ -216,7 +216,8 @@ export function PositionsFaceSlot({
                 title={ledger?.exec ? m.title : 'Pick a fill in the grid first'}
                 onClick={() => ledger?.onMode(m.id)}
                 className={cn(
-                  'h-6 whitespace-nowrap rounded-full border border-border bg-transparent px-2.25 text-dense-meta font-semibold',
+                  // `.ps-face` as the faces above: ink 4% fill, the line edge kept.
+                  'h-6 whitespace-nowrap rounded-full border border-border bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-2.25 text-dense-meta font-semibold',
                   ledger?.exec
                     ? 'cursor-pointer text-secondary-foreground hover:border-primary hover:text-primary'
                     : 'cursor-default text-muted-foreground/60',

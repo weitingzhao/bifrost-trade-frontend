@@ -7,7 +7,7 @@ import type { PerformanceDayPnLBulkResult, PerformanceResponse } from '@/types/t
 import type { PerformanceSummary } from '@/types/trading'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DenseTag, SegmentControl, type SegmentOption } from '@/components/data-display'
+import { CloseButton, DenseTag, SegmentControl, type SegmentOption } from '@/components/data-display'
 import { CalendarSummaryPanel } from '@/pages/portfolio/performance/components/CalendarSummaryPanel'
 import { CalendarDayDetail } from '@/pages/portfolio/performance/components/CalendarDayDetail'
 import {
@@ -308,16 +308,14 @@ export function PerformanceCalendarSection({
               : `by asset class · ${rangeLabel}`}
           </span>
           {showRecords && (
-            <span className="flex gap-1">
+            <span className="flex items-center gap-1">
               <button type="button" className={btn} onClick={() => stepDay(-1)} title="Previous trading day · k" aria-label="Previous day with a reading">
                 ↑
               </button>
               <button type="button" className={btn} onClick={() => stepDay(1)} title="Next trading day · j" aria-label="Next day with a reading">
                 ↓
               </button>
-              <button type="button" className={btn} onClick={() => openDay(null)} title="Back to Summary · esc" aria-label="Close the day's records">
-                ✕
-              </button>
+              <CloseButton onClick={() => openDay(null)} label="Close the day's records" title="Back to Summary · esc" />
             </span>
           )}
         </header>

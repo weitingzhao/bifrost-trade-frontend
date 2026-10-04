@@ -184,7 +184,6 @@ function SecTypeStrip({
 function OnTheFlyRow({ row: r }: { row: OtfRow }) {
   return (
     <tr
-      className="hover:[&>td]:bg-[var(--sk-raised2)]"
       title={`${r.account} · exec ${r.execId} · ${fmtChicagoTime(r.time)} CT`}
     >
       <td className={cn(td, 'text-left text-secondary-foreground')}>{r.date}</td>

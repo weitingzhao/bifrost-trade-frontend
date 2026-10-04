@@ -115,7 +115,8 @@ export function BookLegsPanel({
                 {g.rows.map((r) => (
                   <DenseTableRow
                     key={r.ticker ?? r.token}
-                    className={r.tight ? 'bg-warning-soft/15' : undefined}
+                    // A tight leg is a row state: the list grammar's capsule (--sr-row), not a <tr> fill.
+                    rowTint={r.tight ? 'color-mix(in srgb, var(--sk-warn) 6%, transparent)' : undefined}
                   >
                     <LegCell row={r} loading={loading} />
                     <DenseTableCell className={cn(NUM, r.qty < 0 ? 'text-loss' : 'text-profit')}>

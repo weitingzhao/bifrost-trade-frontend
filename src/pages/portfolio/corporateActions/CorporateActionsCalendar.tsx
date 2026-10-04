@@ -15,7 +15,7 @@ import {
   type BookEvent,
   type FeedReach,
 } from './corporateActionsModel'
-import { AMBER_EDGE, amountLabel, FOOT, fmtShares, ROW_HOVER } from './corporateActionsFormat'
+import { AMBER_EDGE, amountLabel, FOOT, fmtShares } from './corporateActionsFormat'
 import { KindTag, Ticker } from './corporateActionsMarks'
 
 type Show = 'all' | 'book' | 'reshaping'
@@ -29,7 +29,7 @@ function shown(list: readonly BookEvent[], show: Show, bookSymbols: ReadonlySet<
 function EventRow({ e, bookSymbols }: { e: BookEvent; bookSymbols: ReadonlySet<string> }) {
   const held = bookSymbols.has(e.symbol)
   return (
-    <tr className={ROW_HOVER}>
+    <tr>
       <td className={cn(positionsUi.td, 'pl-2 text-left')}>
         <Ticker symbol={e.symbol} />
         {held ? null : (

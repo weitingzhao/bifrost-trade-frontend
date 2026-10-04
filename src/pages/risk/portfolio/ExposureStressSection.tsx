@@ -36,7 +36,6 @@ import {
 } from './stressModel'
 
 const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
-const ROW_HOVER = 'cursor-pointer hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
 
 function shockPct(shock: number): string {
   return `${shock > 0 ? '+' : shock < 0 ? '−' : ''}${Math.abs(Math.round(shock * 100))}%`
@@ -238,7 +237,7 @@ export function ExposureStressSection({
                 {payers.map((p) => (
                   <tr
                     key={p.symbol}
-                    className={ROW_HOVER}
+                    className="cursor-pointer"
                     title={`Open ${p.symbol} beside`}
                     tabIndex={0}
                     onClick={(e) => symbolGo.go(p.symbol, howFrom(e))}

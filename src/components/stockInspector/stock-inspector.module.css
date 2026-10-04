@@ -448,10 +448,9 @@
 }
 
 .stmtDataTable thead th {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  /* Rev .154 §17.2: sentence case, no tracking. */
+  font-size: 0.65rem;
+  font-weight: 600;
   color: var(--muted-foreground);
 }
 
@@ -863,11 +862,10 @@
 }
 
 .chainTable th {
+  /* Rev .154 §17.2: sentence case, no tracking. */
   padding: 6px 8px;
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.65rem;
+  font-weight: 600;
   color: var(--muted-foreground);
   border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
   text-align: right;

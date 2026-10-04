@@ -13,7 +13,7 @@
  * draws from, not from a second derivation. Nothing here writes: not a limit,
  * not an acknowledgement.
  */
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { ViewState } from '@bifrost/ui'
@@ -53,8 +53,9 @@ const PAGE_LEAD =
 // Rev .62: a panel's foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
-/** Row hover and tracks in ink (Rev .84). */
-const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+/** A group head is the prototype's row state (`--sr-row: raised2` → ink 6% capsule); row hover is the list grammar's. */
+const GROUP_ROW = { '--sr-row': 'var(--sk-raised2)' } as CSSProperties
+/** Tracks in ink (Rev .84). */
 const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
 
 /**
@@ -319,7 +320,7 @@ export default function RiskLimitsPage() {
                       if (inGroup.length === 0) return []
                       return [
                         // Rev .84: the group heads lose their caps — 11/600 sentence case.
-                        <tr key={group} className="bg-[var(--sk-raised2)]">
+                        <tr key={group} style={GROUP_ROW}>
                           <td className="text-dense-meta font-semibold" style={{ color: GROUP_INK[group] }} colSpan={7}>
                             {group === 'Gate' && gateReadings.gateName != null
                               ? `Gate · ${gateReadings.allocationName ?? 'allocation'} — ${gateReadings.gateName} v${gateReadings.gateVersion}`
@@ -339,7 +340,7 @@ export default function RiskLimitsPage() {
                           </td>
                         </tr>,
                         ...inGroup.map((r) => (
-                          <tr key={r.key} className={ROW_HOVER}>
+                          <tr key={r.key}>
                             <td data-sr-col="entity" className="text-dense-label text-foreground">
                               {r.name}
                               {r.breached ? (

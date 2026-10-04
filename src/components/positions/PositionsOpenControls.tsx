@@ -44,6 +44,10 @@ interface Props {
   onClearScope?: () => void
 }
 
+/** A toggle group is a fill, not a frame (Rev .154: the prototype's ink 4% group, transparent edge). */
+const SCOPE_GROUP =
+  'inline-flex overflow-hidden rounded-full border border-transparent bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+
 function AccountToggle({ label, on, onClick, title }: { label: string; on: boolean; onClick: () => void; title?: string }) {
   return (
     <button
@@ -97,7 +101,7 @@ export function PositionsOpenControls({
       <span data-sr-tb="label">Scope</span>
       {showAccountToggles && (
         <span
-          className="inline-flex overflow-hidden rounded-full border border-border"
+          className={SCOPE_GROUP}
           aria-label="Accounts in scope"
         >
           {hostAccountId && (
@@ -118,7 +122,7 @@ export function PositionsOpenControls({
       )}
 
       {types && onTypesChange ? (
-        <span className="inline-flex overflow-hidden rounded-full border border-border" aria-label="Holding types in scope">
+        <span className={SCOPE_GROUP} aria-label="Holding types in scope">
           {(
             [
               ['opt', 'Options', 'the option lines · the expiry filter applies here only'],

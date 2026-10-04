@@ -6,7 +6,7 @@ import type { FetchGreeksParams } from '@/types/research'
 export function useGreeksAvailableDates(symbol: string) {
   const sym = symbol.trim().toUpperCase()
   return useQuery({
-    queryKey: [...QUERY_KEYS.research.greeks, 'dates', sym],
+    queryKey: [...QUERY_KEYS.tradeResearch.greeks, 'dates', sym],
     queryFn: () => fetchGreeksAvailableDates(sym),
     enabled: sym.length > 0,
     staleTime: 600_000,
@@ -16,7 +16,7 @@ export function useGreeksAvailableDates(symbol: string) {
 
 export function useGreeksLoad() {
   return useMutation({
-    mutationKey: [...QUERY_KEYS.research.greeks, 'load'],
+    mutationKey: [...QUERY_KEYS.tradeResearch.greeks, 'load'],
     mutationFn: (params: FetchGreeksParams) => fetchGreeks(params),
   })
 }

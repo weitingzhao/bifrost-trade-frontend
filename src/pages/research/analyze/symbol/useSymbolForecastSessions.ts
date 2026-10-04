@@ -96,13 +96,13 @@ export function foldSessionDays(
 export function useSymbolForecastSessions(symbol: string) {
   const sym = symbol.trim().toUpperCase()
   const sessQ = useQuery({
-    queryKey: ['research', 'forecast-sessions', sym, 200],
+    queryKey: ['research-engine', 'forecast-sessions', sym, 200],
     queryFn: () => fetchForecastSessions(sym, undefined, 200),
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,
   })
   const settQ = useQuery({
-    queryKey: ['research', 'forecast-settlements', sym],
+    queryKey: ['research-engine', 'forecast-settlements', sym],
     queryFn: () => fetchSettlements(sym, undefined, 200),
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,

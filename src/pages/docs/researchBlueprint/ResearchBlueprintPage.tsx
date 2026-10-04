@@ -93,7 +93,7 @@ function Section({ s, contracts }: { s: DocSection; contracts: ReadonlyMap<strin
 
 export default function ResearchBlueprintPage() {
   const q = useQuery({
-    queryKey: ['research', 'docs', 'blueprint'],
+    queryKey: ['research-engine', 'docs', 'blueprint'],
     queryFn: () => fetchResearchDoc('blueprint'),
     staleTime: 5 * 60_000,
   })

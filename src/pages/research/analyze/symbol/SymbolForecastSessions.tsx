@@ -79,7 +79,7 @@ export function SymbolForecastSessions({ symbol }: { symbol: string }) {
   )
 
   const calQ = useQuery({
-    queryKey: ['research', 'forecast-calibration', sym, 180],
+    queryKey: ['research-engine', 'forecast-calibration', sym, 180],
     queryFn: () => fetchForecastCalibration(sym, 180),
     enabled: Boolean(sym),
     staleTime: 30 * 60_000,

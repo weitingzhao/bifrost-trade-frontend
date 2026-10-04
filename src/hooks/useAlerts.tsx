@@ -175,7 +175,7 @@ export interface AlertsMessageStream {
 
 export function useAlerts({ messages, dismissedIds, dismissMessage }: AlertsMessageStream) {
   const alertsQuery = useQuery({
-    queryKey: QUERY_KEYS.research.alerts,
+    queryKey: QUERY_KEYS.researchEngine.alerts,
     queryFn: () => fetchAlerts({ limit: 20, days: 14 }),
     refetchInterval: 120_000,
     staleTime: 60_000,

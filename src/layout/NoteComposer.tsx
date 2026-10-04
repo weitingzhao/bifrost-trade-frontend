@@ -92,7 +92,7 @@ export function NoteComposer() {
       setBody('')
       setError(null)
       closeNoteComposer()
-      void qc.invalidateQueries({ queryKey: ['research', 'journal', 'notes'] })
+      void qc.invalidateQueries({ queryKey: ['research-engine', 'journal', 'notes'] })
     },
     onError: (e: Error) => setError(e.message),
   })

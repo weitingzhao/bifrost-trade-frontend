@@ -106,13 +106,13 @@ export default function ResearchOverviewPage() {
   const candsQ = useCandidates({ status: 'open' })
   const watchQ = useWatchlist()
   const runsQ = useQuery({
-    queryKey: ['research', 'objective-runs', 'overview'],
+    queryKey: ['research-engine', 'objective-runs', 'overview'],
     queryFn: () => fetchObjectiveRuns({ limit: 10 }),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
   })
   const orchQ = useQuery({
-    queryKey: ['research', 'orchestration', 'overview'],
+    queryKey: ['research-engine', 'orchestration', 'overview'],
     queryFn: fetchOrchestrationStatus,
     staleTime: 60_000,
     refetchOnWindowFocus: false,

@@ -54,14 +54,14 @@ describe('useExhibitComposite', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain('symbol=MSFT&lenses=vrp%2Cterrain')
     // Under the name asked for…
-    expect(qc.getQueryData(QUERY_KEYS.research.exhibit('vrp', 'MSFT'))).toMatchObject({
+    expect(qc.getQueryData(QUERY_KEYS.researchEngine.exhibit('vrp', 'MSFT'))).toMatchObject({
       lens: 'vrp',
     })
-    expect(qc.getQueryData(QUERY_KEYS.research.exhibit('terrain', 'MSFT'))).toMatchObject({
+    expect(qc.getQueryData(QUERY_KEYS.researchEngine.exhibit('terrain', 'MSFT'))).toMatchObject({
       lens: 'terrain',
     })
     // …and under the registry id, so the lab that reads `terrain_regime` is warm too.
-    expect(qc.getQueryData(QUERY_KEYS.research.exhibit('terrain_regime', 'MSFT'))).toMatchObject({
+    expect(qc.getQueryData(QUERY_KEYS.researchEngine.exhibit('terrain_regime', 'MSFT'))).toMatchObject({
       lens: 'terrain',
     })
   })

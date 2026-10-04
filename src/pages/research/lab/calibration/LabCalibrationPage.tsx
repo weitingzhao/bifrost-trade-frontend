@@ -67,12 +67,12 @@ export default function LabCalibrationPage() {
   // Both documents, live: the calibration carries the states and evidence,
   // the blueprint the contracts' own wording.
   const calQ = useQuery({
-    queryKey: ['research', 'docs', 'calibration'],
+    queryKey: ['research-engine', 'docs', 'calibration'],
     queryFn: () => fetchResearchDoc('calibration'),
     staleTime: 5 * 60_000,
   })
   const blueQ = useQuery({
-    queryKey: ['research', 'docs', 'blueprint'],
+    queryKey: ['research-engine', 'docs', 'blueprint'],
     queryFn: () => fetchResearchDoc('blueprint'),
     staleTime: 5 * 60_000,
   })

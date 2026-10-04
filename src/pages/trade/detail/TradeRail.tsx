@@ -208,7 +208,7 @@ export function TradeJournal({ id, sym }: { id: number; sym: string | null }) {
   const qc = useQueryClient()
   const [draft, setDraft] = useState('')
   const notesQ = useQuery({
-    queryKey: ['research', 'journal', 'notes', 'trade', id],
+    queryKey: ['research-engine', 'journal', 'notes', 'trade', id],
     queryFn: () => fetchNotes({ ref_type: 'trade', ref_id: String(id), limit: 50 }),
     staleTime: 60_000,
   })
@@ -219,7 +219,7 @@ export function TradeJournal({ id, sym }: { id: number; sym: string | null }) {
     },
     onSuccess: () => {
       setDraft('')
-      void qc.invalidateQueries({ queryKey: ['research', 'journal', 'notes'] })
+      void qc.invalidateQueries({ queryKey: ['research-engine', 'journal', 'notes'] })
     },
   })
   const notes = notesQ.data?.notes ?? []

@@ -32,7 +32,7 @@ function conds(s: SavedScreen): string {
 }
 
 export function ScreensFace({ head }: { head: MethodHead }) {
-  const q = useQuery({ queryKey: ['research', 'saved-screens'], queryFn: fetchSavedScreens, staleTime: 60_000 })
+  const q = useQuery({ queryKey: ['research-engine', 'saved-screens'], queryFn: fetchSavedScreens, staleTime: 60_000 })
   const screens = q.data?.screens ?? []
   return (
     <PageShell padding="compact" className="space-y-3">

@@ -65,7 +65,7 @@ function sessionCostUsd(terrainJson: unknown): number | null {
 export function SymbolSessionInspector({ day, onClose }: { day: SessionDay; onClose: () => void }) {
   const s = day.session
   const detailQ = useQuery({
-    queryKey: ['research', 'forecast-session-detail', s.session_id],
+    queryKey: ['research-engine', 'forecast-session-detail', s.session_id],
     queryFn: () => fetchForecastSessionDetail(s.session_id),
     staleTime: 10 * 60_000,
   })

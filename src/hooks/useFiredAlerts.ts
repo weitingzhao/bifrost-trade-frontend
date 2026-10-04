@@ -16,7 +16,7 @@ export const ALERTS_ROW_CAP = 200
 
 export function useFiredAlerts(): UseQueryResult<AlertsResponse> {
   return useQuery({
-    queryKey: ['research', 'alerts', 'page', ALERTS_WINDOW_DAYS],
+    queryKey: ['research-engine', 'alerts', 'page', ALERTS_WINDOW_DAYS],
     queryFn: () => fetchAlerts({ limit: ALERTS_ROW_CAP, days: ALERTS_WINDOW_DAYS }),
     staleTime: 60_000,
   })

@@ -12,9 +12,13 @@ export const QUERY_KEYS = {
     quotesSnapshot: ['market', 'quotes-snapshot'] as const,
     benchmark: (symbol: string) => ['market', 'benchmark', symbol] as const,
     barStats: (symbol: string) => ['market', 'bar-stats', symbol] as const,
+    /** `/api/market/watchlist` — the market app serves it, so its key is under `market`. */
+    watchlist: ['market', 'watchlist'] as const,
   },
   trading: {
     performance: ['trading', 'performance'] as const,
+    /** `/performance?summary_only=true` — under `performance`, so a write that refreshes it refreshes this. */
+    performanceSummary: ['trading', 'performance', 'summary-only'] as const,
     /** Every executions read sits under this — a fill write invalidates it once. */
     executions: ['trading', 'executions'] as const,
     executionsByScope: (scope: ExecutionSourceScope) => ['trading', 'executions', 'scope', scope] as const,
@@ -35,68 +39,91 @@ export const QUERY_KEYS = {
     marketStreamsSymbolOrder: ['portfolio', 'market-streams-symbol-order'] as const,
     shortLegs: ['portfolio', 'short-legs'] as const,
   },
-  research: {
-    greeks: ['research', 'greeks'] as const,
-    screener: ['research', 'screener'] as const,
-    watchlist: ['research', 'watchlist'] as const,
-    performanceKelly: ['research', 'performance-kelly'] as const,
-    universeReach: ['research', 'universe-reach'] as const,
-    lenses: ['research', 'lenses'] as const,
-    exhibit: (lens: string, symbol: string) => ['research', 'exhibit', lens, symbol] as const,
-    exhibitComposite: (symbol: string, lenses: string) =>
-      ['research', 'exhibit-composite', symbol, lenses] as const,
-    candidateOutcome: {
-      summary: ['research', 'candidate-outcome', 'summary'] as const,
-      rows: ['research', 'candidate-outcome', 'rows'] as const,
+  /**
+   * The Trade API's research app (`/api/research/…`, `tradeResearchUrl`): screener, Greeks,
+   * data readiness, option discovery and feedback. Not the Research service — that is
+   * `researchEngine`. Invalidating `tradeResearch.root` reaches every key below.
+   */
+  tradeResearch: {
+    root: ['trade-research'] as const,
+    greeks: ['trade-research', 'greeks'] as const,
+    screener: ['trade-research', 'screener'] as const,
+    tickerOverview: (symbol: string) => ['trade-research', 'ticker-overview', symbol] as const,
+    fundConditions: (symbol: string) => ['trade-research', 'fundamental-conditions', symbol] as const,
+    techConditions: (symbol: string) => ['trade-research', 'technical-conditions', symbol] as const,
+    fundRaw: (symbol: string) => ['trade-research', 'fund-raw', symbol] as const,
+    statements: (symbol: string) => ['trade-research', 'statements', symbol] as const,
+    optionPcr: (symbol: string) => ['trade-research', 'option-pcr', symbol] as const,
+    /** `/research/data/readiness/criteria-stats`. */
+    criteriaStats: ['trade-research', 'readiness', 'criteria-stats'] as const,
+    /** `/research/data/readiness/tier-stats?tier=`. */
+    tierStats: (tier: 'structure' | 'sentiment' | 'momentum') => ['trade-research', 'tier-stats', tier] as const,
+    /** One Stock screen chip's server set (`momentum-filter` / `tier-filter`). */
+    screenSet: (stage: string, id: string) => ['trade-research', 'screen-set', stage, id] as const,
+    feedback: {
+      /** Every feedback read hangs off this; a feedback write invalidates it once. */
+      root: ['trade-research', 'feedback'] as const,
+      summary: ['trade-research', 'feedback', 'summary'] as const,
+      reports: (scope: string) => ['trade-research', 'feedback', 'reports', scope] as const,
     },
-    tickerOverview: (symbol: string) => ['research', 'ticker-overview', symbol] as const,
-    fundConditions: (symbol: string) => ['research', 'fundamental-conditions', symbol] as const,
-    techConditions: (symbol: string) => ['research', 'technical-conditions', symbol] as const,
-    fundRaw: (symbol: string) => ['research', 'fund-raw', symbol] as const,
-    statements: (symbol: string) => ['research', 'statements', symbol] as const,
-    optionPcr: (symbol: string) => ['research', 'option-pcr', symbol] as const,
-    ivRadar: ['research', 'iv-radar'] as const,
-    scan: ['research', 'scan'] as const,
-    alerts: ['research', 'alerts'] as const,
-    signalDecay: ['research', 'signal-decay'] as const,
-    signalDecayIntersect: ['research', 'signal-decay', 'intersect'] as const,
+  },
+  /**
+   * The Research service (bifrost-research `research-api`, OLAP) — every read made with
+   * `researchEngineUrl`, i.e. `/api/plugin/research/…`. A key goes under the backend whose
+   * rows it holds; the Trade API's own research app is `tradeResearch`, a separate prefix.
+   */
+  researchEngine: {
+    root: ['research-engine'] as const,
+    universeReach: ['research-engine', 'universe-reach'] as const,
+    lenses: ['research-engine', 'lenses'] as const,
+    exhibit: (lens: string, symbol: string) => ['research-engine', 'exhibit', lens, symbol] as const,
+    exhibitComposite: (symbol: string, lenses: string) =>
+      ['research-engine', 'exhibit-composite', symbol, lenses] as const,
+    candidateOutcome: {
+      summary: ['research-engine', 'candidate-outcome', 'summary'] as const,
+      rows: ['research-engine', 'candidate-outcome', 'rows'] as const,
+    },
+    scan: ['research-engine', 'scan'] as const,
+    alerts: ['research-engine', 'alerts'] as const,
+    signalDecay: ['research-engine', 'signal-decay'] as const,
+    signalDecayIntersect: ['research-engine', 'signal-decay', 'intersect'] as const,
     vrp: {
-      latest: (symbol: string) => ['research', 'vrp', 'latest', symbol] as const,
+      latest: (symbol: string) => ['research-engine', 'vrp', 'latest', symbol] as const,
       history: (symbol: string, days: number) =>
-        ['research', 'vrp', 'history', symbol, days] as const,
+        ['research-engine', 'vrp', 'history', symbol, days] as const,
       extremes: (bucket: 'high' | 'low', limit: number) =>
-        ['research', 'vrp', 'extremes', bucket, limit] as const,
-      rvCone: (symbol: string, years: number) => ['research', 'vrp', 'rv-cone', symbol, years] as const,
+        ['research-engine', 'vrp', 'extremes', bucket, limit] as const,
+      rvCone: (symbol: string, years: number) => ['research-engine', 'vrp', 'rv-cone', symbol, years] as const,
       earningsMoves: (symbol: string, limit: number) =>
-        ['research', 'vrp', 'earnings-moves', symbol, limit] as const,
+        ['research-engine', 'vrp', 'earnings-moves', symbol, limit] as const,
     },
     volSurface: {
       fit: (symbol: string, tradeDate: string) =>
-        ['research', 'vol-surface', 'fit', symbol, tradeDate] as const,
+        ['research-engine', 'vol-surface', 'fit', symbol, tradeDate] as const,
       residuals: (symbol: string, tradeDate: string, expiry: string) =>
-        ['research', 'vol-surface', 'residuals', symbol, tradeDate, expiry] as const,
-      skewExtremes: (limit: number) => ['research', 'vol-surface', 'skew-extremes', limit] as const,
-      atmIvTerm: (symbol: string) => ['research', 'vol-surface', 'atm-iv-term', symbol] as const,
-      ivCone: (symbol: string) => ['research', 'vol-surface', 'iv-cone', symbol] as const,
+        ['research-engine', 'vol-surface', 'residuals', symbol, tradeDate, expiry] as const,
+      skewExtremes: (limit: number) => ['research-engine', 'vol-surface', 'skew-extremes', limit] as const,
+      atmIvTerm: (symbol: string) => ['research-engine', 'vol-surface', 'atm-iv-term', symbol] as const,
+      ivCone: (symbol: string) => ['research-engine', 'vol-surface', 'iv-cone', symbol] as const,
     },
     hypothesis: {
-      list: ['research', 'hypothesis', 'list'] as const,
-      summaryActive: ['research', 'hypothesis', 'summary-active'] as const,
-      byId: (id: string) => ['research', 'hypothesis', 'by-id', id] as const,
+      list: ['research-engine', 'hypothesis', 'list'] as const,
+      summaryActive: ['research-engine', 'hypothesis', 'summary-active'] as const,
+      byId: (id: string) => ['research-engine', 'hypothesis', 'by-id', id] as const,
     },
-    drafts: ['research', 'drafts'] as const,
+    drafts: ['research-engine', 'drafts'] as const,
     candidates: (params?: { status?: string; source?: string; days?: number }) =>
-      ['research', 'candidates', params ?? {}] as const,
-    objectives: (params?: { status?: string }) => ['research', 'objectives', params ?? {}] as const,
+      ['research-engine', 'candidates', params ?? {}] as const,
+    objectives: (params?: { status?: string }) => ['research-engine', 'objectives', params ?? {}] as const,
     objectiveRuns: (params?: { status?: string; objective_id?: string }) =>
-      ['research', 'objective-runs', params ?? {}] as const,
+      ['research-engine', 'objective-runs', params ?? {}] as const,
     backtest: {
-      runs: ['research', 'backtest', 'runs'] as const,
+      runs: ['research-engine', 'backtest', 'runs'] as const,
       runsByHypothesis: (hid: string) =>
-        ['research', 'backtest', 'runs', 'hypothesis', hid] as const,
-      run: (runId: string) => ['research', 'backtest', 'run', runId] as const,
+        ['research-engine', 'backtest', 'runs', 'hypothesis', hid] as const,
+      run: (runId: string) => ['research-engine', 'backtest', 'run', runId] as const,
     },
-    home: ['research', 'home', 'aggregate'] as const,
+    home: ['research-engine', 'home', 'aggregate'] as const,
   },
   strategy: {
     opportunities: ['strategy', 'opportunities'] as const,
@@ -141,6 +168,9 @@ export const QUERY_KEYS = {
     apiHealth: ['settings', 'api-health'] as const,
   },
   plugin: {
+    /** IV percentile / rank over a symbol set, read from the market-data plugin (`/market/analytics/iv-percentile`). */
+    ivRadar: ['plugin', 'market-data', 'iv-radar'] as const,
+    ivPercentile: (symbol: string) => ['plugin', 'market-data', 'iv-percentile', symbol] as const,
     flexConfigSummary: ['plugin', 'flex-query', 'config-summary'] as const,
     flexCoverageFreshness: ['plugin', 'flex-query', 'coverage-freshness'] as const,
   },

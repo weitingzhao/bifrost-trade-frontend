@@ -15,7 +15,7 @@ export function useExhibitComposite(lenses: readonly string[], symbol: string) {
   const requested = lenses.join(',')
   const qc = useQueryClient()
   const q = useQuery<ExhibitPayload[]>({
-    queryKey: QUERY_KEYS.research.exhibitComposite(sym, requested),
+    queryKey: QUERY_KEYS.researchEngine.exhibitComposite(sym, requested),
     queryFn: () => fetchExhibitComposite(lenses, sym),
     enabled: sym.length > 0,
     staleTime: EXHIBIT_STALE_MS,
@@ -25,9 +25,9 @@ export function useExhibitComposite(lenses: readonly string[], symbol: string) {
     for (const ex of q.data) {
       // Under the name it was asked for, and under its registry id when the
       // two differ (the ribbon asks for `terrain`, the lab reads `terrain_regime`).
-      qc.setQueryData(QUERY_KEYS.research.exhibit(ex.lens, sym), ex)
+      qc.setQueryData(QUERY_KEYS.researchEngine.exhibit(ex.lens, sym), ex)
       if (ex.lens_id && ex.lens_id !== ex.lens) {
-        qc.setQueryData(QUERY_KEYS.research.exhibit(ex.lens_id, sym), ex)
+        qc.setQueryData(QUERY_KEYS.researchEngine.exhibit(ex.lens_id, sym), ex)
       }
     }
   }, [q.data, qc, sym])

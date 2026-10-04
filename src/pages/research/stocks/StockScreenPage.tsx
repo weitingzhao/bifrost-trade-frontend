@@ -233,7 +233,7 @@ export default function StockScreenPage() {
     setParams(next, { replace: true })
   }, [params, setParams, setModel, setView, setSel, commit, screen, versions.length])
 
-  const saved = useQuery({ queryKey: ['research', 'saved-screens'], queryFn: fetchSavedScreens, staleTime: 60_000 })
+  const saved = useQuery({ queryKey: ['research-engine', 'saved-screens'], queryFn: fetchSavedScreens, staleTime: 60_000 })
   const applySaved = (s: SavedScreen) => {
     const on: Record<string, boolean> = {}
     for (const id of [...s.definition.tech, ...s.definition.fund]) on[id] = true

@@ -94,8 +94,8 @@ export function LoopRunPipelineBody({
   const rateMut = useMutation({
     mutationFn: (id: string) => rateRun(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-run', runId] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-run', runId] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
     },
   })
 

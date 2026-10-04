@@ -8,6 +8,7 @@
  * clears it on sight).
  */
 import { useMemo, useState } from 'react'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FEEDBACK_STATUSES,
@@ -38,7 +39,7 @@ export default function SystemFeedbackPage() {
   const [error, setError] = useState<string | null>(null)
 
   const reportsQ = useQuery({
-    queryKey: ['research', 'feedback', 'reports', scope],
+    queryKey: QUERY_KEYS.tradeResearch.feedback.reports(scope),
     queryFn: () => fetchFeedbackReports(scope),
     refetchInterval: 60_000,
     retry: 1,
@@ -46,7 +47,7 @@ export default function SystemFeedbackPage() {
   const rows = useMemo(() => reportsQ.data?.reports ?? [], [reportsQ.data])
   const selected: FeedbackReport | null = rows.find((r) => r.id === sel) ?? rows[0] ?? null
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['research', 'feedback'] })
+  const invalidate = () => qc.invalidateQueries({ queryKey: QUERY_KEYS.tradeResearch.feedback.root })
   const statusMut = useMutation({
     mutationFn: (s: FeedbackStatus) => setFeedbackStatus(selected!.id, s),
     onSuccess: invalidate,

@@ -41,7 +41,7 @@ const pct0 = (v: number | null | undefined) => (v == null ? '—' : `${Math.roun
  */
 export function LensOwnRecord({ sym, lens }: { sym: string; lens: SignalDecayLens }) {
   const q = useQuery({
-    queryKey: ['research', 'signal-decay-by-symbol', lens, 365, sym],
+    queryKey: ['research-engine', 'signal-decay-by-symbol', lens, 365, sym],
     queryFn: () => fetchSignalDecayBySymbol({ lens, symbols: [sym], windowDays: 365 }),
     enabled: Boolean(sym),
     staleTime: 30 * 60_000,
@@ -181,7 +181,7 @@ function rmseOf(params: Record<string, unknown> | null, model: 'svi' | 'polynomi
 /** The second smile fitter at the same expiry: which model it kept, and how both fit. */
 export function SmileSecondFit({ sym, expiry }: { sym: string; expiry: string | null }) {
   const q = useQuery({
-    queryKey: ['research', 'volatility-smile', sym],
+    queryKey: ['research-engine', 'volatility-smile', sym],
     queryFn: () => fetchVolatilitySmile(sym),
     enabled: Boolean(sym),
     staleTime: 30 * 60_000,
@@ -213,7 +213,7 @@ export function ResidualHeatmap({
   const [mode, setMode] = useState<'residual_z' | 'iv'>('residual_z')
   const qs = useQueries({
     queries: expiries.map((exp) => ({
-      queryKey: QUERY_KEYS.research.volSurface.residuals(sym, 'latest', exp),
+      queryKey: QUERY_KEYS.researchEngine.volSurface.residuals(sym, 'latest', exp),
       queryFn: () => fetchResiduals(sym, exp),
       enabled: Boolean(sym && exp),
       staleTime: 5 * 60_000,

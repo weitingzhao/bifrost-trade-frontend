@@ -60,22 +60,22 @@ export default function EventsPage() {
   const face = params.get('face') === 'market' ? 'market' : 'book'
 
   const batches = useQuery({
-    queryKey: ['research', 'events', 'batches'],
+    queryKey: ['research-engine', 'events', 'batches'],
     queryFn: fetchEventBatches,
     staleTime: 5 * 60_000,
   })
   const events = useQuery({
-    queryKey: ['research', 'events', 'rows'],
+    queryKey: ['research-engine', 'events', 'rows'],
     queryFn: () => fetchEventRadarEvents({ limit: 200 }),
     staleTime: 5 * 60_000,
   })
   const themes = useQuery({
-    queryKey: ['research', 'events', 'themes'],
+    queryKey: ['research-engine', 'events', 'themes'],
     queryFn: fetchEventThemes,
     staleTime: 5 * 60_000,
   })
   const calendar = useQuery({
-    queryKey: ['research', 'events', 'calendar'],
+    queryKey: ['research-engine', 'events', 'calendar'],
     queryFn: fetchEventCalendar,
     staleTime: 5 * 60_000,
   })

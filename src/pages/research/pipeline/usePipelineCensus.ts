@@ -29,17 +29,17 @@ import {
 
 export function usePipelineCensus() {
   const sepaQ = useQuery({
-    queryKey: ['research', 'pipeline', 'sepa'],
+    queryKey: ['research-engine', 'pipeline', 'sepa'],
     queryFn: () => fetchSepaDaily({ limit: 500 }),
     staleTime: 5 * 60_000,
   })
   const scanQ = useQuery({
-    queryKey: ['research', 'pipeline', 'scan'],
+    queryKey: ['research-engine', 'pipeline', 'scan'],
     queryFn: () => fetchScan({ limit: 500 }),
     staleTime: 5 * 60_000,
   })
   const runsQ = useQuery({
-    queryKey: ['research', 'pipeline', 'backtests'],
+    queryKey: ['research-engine', 'pipeline', 'backtests'],
     queryFn: () => fetchBacktestRuns({ limit: 200 }),
     staleTime: 5 * 60_000,
   })

@@ -133,7 +133,7 @@ export default function TracePage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const memQ = useQuery({
-    queryKey: ['research', 'journal', 'memory'],
+    queryKey: ['research-engine', 'journal', 'memory'],
     queryFn: fetchMemory,
     staleTime: 300_000,
     retry: 1,
@@ -142,13 +142,13 @@ export default function TracePage() {
   const asked = params.get('m')
   const memory = asked ? memories.find((m) => m.id === asked) : memories[0]
   const objQ = useQuery({
-    queryKey: QUERY_KEYS.research.objectives({ status: 'active' }),
+    queryKey: QUERY_KEYS.researchEngine.objectives({ status: 'active' }),
     queryFn: () => fetchObjectives({ status: 'active' }),
     staleTime: 15_000,
   })
   const bornObj = memory ? (objQ.data?.items ?? []).find((o) => objectiveOrigin(o)?.memory_id === memory.id) ?? null : null
   const bornRunsQ = useQuery({
-    queryKey: ['research', 'objective-runs', 'trace', bornObj?.id ?? ''],
+    queryKey: ['research-engine', 'objective-runs', 'trace', bornObj?.id ?? ''],
     queryFn: () => fetchObjectiveRuns({ objective_id: bornObj!.id, limit: 100 }),
     enabled: bornObj != null,
     staleTime: 60_000,

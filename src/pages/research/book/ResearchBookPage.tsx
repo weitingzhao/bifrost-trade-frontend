@@ -123,7 +123,7 @@ export default function ResearchBookPage() {
   // Every status, not only what is open: the census counts the funnel, and a
   // funnel drawn from its narrowest band is not a funnel.
   const candidates = useQuery({
-    queryKey: ['research', 'candidates', 'book', 'all'],
+    queryKey: ['research-engine', 'candidates', 'book', 'all'],
     queryFn: () => fetchCandidates({ status: 'all' }),
     staleTime: 60_000,
   })

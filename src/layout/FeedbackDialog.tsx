@@ -12,6 +12,7 @@
  * Owner's call).
  */
 import { useRef, useState } from 'react'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useLocation } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -122,7 +123,7 @@ export function FeedbackDialog() {
       setImages([])
       setBlocks('no')
       clearPickedCell()
-      void qc.invalidateQueries({ queryKey: ['research', 'feedback'] })
+      void qc.invalidateQueries({ queryKey: QUERY_KEYS.tradeResearch.feedback.root })
     },
     onError: (e: Error) => setError(e.message),
   })

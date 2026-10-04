@@ -18,7 +18,7 @@ export function MemoryHintLine({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const [hidden, setHidden] = useState<Record<string, boolean>>({})
   const hintQ = useQuery({
-    queryKey: ['research', 'journal', 'memory-hint', sym],
+    queryKey: ['research-engine', 'journal', 'memory-hint', sym],
     queryFn: () => fetchMemoryHint(sym),
     enabled: sym.length > 0,
     staleTime: 300_000,

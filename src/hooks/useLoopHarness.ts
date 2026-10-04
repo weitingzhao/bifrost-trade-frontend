@@ -31,7 +31,7 @@ import { notify } from '@/lib/shellNotify'
 
 export function useActiveObjectives() {
   return useQuery({
-    queryKey: QUERY_KEYS.research.objectives({ status: 'active' }),
+    queryKey: QUERY_KEYS.researchEngine.objectives({ status: 'active' }),
     queryFn: () => fetchObjectives({ status: 'active' }),
     staleTime: 15_000,
     refetchOnWindowFocus: false,
@@ -40,7 +40,7 @@ export function useActiveObjectives() {
 
 export function useAwaitingRuns() {
   return useQuery({
-    queryKey: QUERY_KEYS.research.objectiveRuns({ status: 'awaiting_approval' }),
+    queryKey: QUERY_KEYS.researchEngine.objectiveRuns({ status: 'awaiting_approval' }),
     queryFn: () => fetchObjectiveRuns({ status: 'awaiting_approval', limit: 10 }),
     staleTime: 10_000,
     refetchInterval: 15_000,
@@ -50,7 +50,7 @@ export function useAwaitingRuns() {
 
 export function useObjective(objectiveId: string | null) {
   return useQuery({
-    queryKey: ['research', 'objective', objectiveId],
+    queryKey: ['research-engine', 'objective', objectiveId],
     queryFn: () => fetchObjective(objectiveId!),
     enabled: Boolean(objectiveId),
   })
@@ -66,9 +66,9 @@ export function notifyArchivedObjective(objectiveId: string, title: string): voi
     undo: () =>
       void patchObjective(objectiveId, { status: 'active' })
         .then(() => {
-          void appQueryClient.invalidateQueries({ queryKey: ['research', 'objective', objectiveId] })
-          void appQueryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-          void appQueryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research-engine', 'objective', objectiveId] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research-engine', 'loop', 'autopilot'] })
         })
         .catch((e: unknown) => notify(`Restore did not save — ${e instanceof Error ? e.message : String(e)}`)),
   })
@@ -80,9 +80,9 @@ export function notifyRestoredObjective(objectiveId: string, title: string): voi
     undo: () =>
       void patchObjective(objectiveId, { status: 'archived' })
         .then(() => {
-          void appQueryClient.invalidateQueries({ queryKey: ['research', 'objective', objectiveId] })
-          void appQueryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-          void appQueryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research-engine', 'objective', objectiveId] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
+          void appQueryClient.invalidateQueries({ queryKey: ['research-engine', 'loop', 'autopilot'] })
         })
         .catch((e: unknown) => notify(`Archive did not save — ${e instanceof Error ? e.message : String(e)}`)),
   })
@@ -93,9 +93,9 @@ export function usePatchObjective() {
   return useMutation({
     mutationFn: (v: { objectiveId: string; body: ObjectivePatchBody }) => patchObjective(v.objectiveId, v.body),
     onSuccess: (_d, v) => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective', v.objectiveId] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective', v.objectiveId] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'loop', 'autopilot'] })
     },
   })
 }
@@ -113,17 +113,17 @@ export function useChangePolicy() {
       return approveResearchDraft(draft.id)
     },
     onSuccess: (_d, v) => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective', v.objectiveId] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'drafts'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective', v.objectiveId] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'loop', 'autopilot'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'drafts'] })
     },
   })
 }
 
 export function useAutopilotStanding() {
   return useQuery({
-    queryKey: ['research', 'loop', 'autopilot'],
+    queryKey: ['research-engine', 'loop', 'autopilot'],
     queryFn: fetchAutopilotStanding,
     refetchInterval: 60_000,
   })
@@ -131,7 +131,7 @@ export function useAutopilotStanding() {
 
 export function useLoopTrust() {
   return useQuery({
-    queryKey: ['research', 'loop-trust'],
+    queryKey: ['research-engine', 'loop-trust'],
     queryFn: () => fetchLoopTrust(),
     staleTime: 30_000,
     refetchInterval: 60_000,
@@ -144,8 +144,8 @@ export function useRunObjective() {
   return useMutation({
     mutationFn: (objectiveId: string) => runObjective(objectiveId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
     },
   })
 }
@@ -155,15 +155,15 @@ export function useCurateRun() {
   return useMutation({
     mutationFn: (runId: string) => curateRun(runId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.drafts })
     },
   })
 }
 
 export function useObjectiveRun(runId: string | undefined, opts?: { live?: boolean }) {
   return useQuery({
-    queryKey: ['research', 'objective-run', runId],
+    queryKey: ['research-engine', 'objective-run', runId],
     queryFn: () => fetchObjectiveRun(runId!),
     enabled: Boolean(runId),
     staleTime: opts?.live ? 0 : 10_000,
@@ -182,10 +182,10 @@ export function useApproveAllRun() {
   return useMutation({
     mutationFn: (runId: string) => approveAllRun(runId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.list })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.drafts })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.list })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'candidates'] })
     },
   })
 }
@@ -205,7 +205,7 @@ export function useApproveAllRun() {
  */
 export function usePolicyDefaults() {
   return useQuery({
-    queryKey: ['research', 'policy-defaults'],
+    queryKey: ['research-engine', 'policy-defaults'],
     queryFn: () => validatePolicy({}),
     staleTime: 10 * 60_000,
     refetchOnWindowFocus: false,
@@ -215,7 +215,7 @@ export function usePolicyDefaults() {
 
 export function usePolicyTemplates() {
   return useQuery({
-    queryKey: ['research', 'policy-templates'],
+    queryKey: ['research-engine', 'policy-templates'],
     queryFn: () => fetchPolicyTemplates(),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -246,7 +246,7 @@ export function useSavePolicyTemplate() {
             is_default: v.is_default,
           }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'policy-templates'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'policy-templates'] })
     },
   })
 }
@@ -256,7 +256,7 @@ export function useDeletePolicyTemplate() {
   return useMutation({
     mutationFn: (id: string) => deletePolicyTemplate(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'policy-templates'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'policy-templates'] })
     },
   })
 }

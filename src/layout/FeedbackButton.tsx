@@ -6,6 +6,7 @@
  * the numbers are the same ones /system/feedback triages.
  */
 import { useQuery } from '@tanstack/react-query'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { fetchFeedbackSummary } from '@/api/research/feedback'
 import { openFeedbackDialog } from '@/lib/feedback/feedbackDialog'
 import { MenubarTip } from './menubar/MenubarTip'
@@ -14,7 +15,7 @@ import { cn } from '@/lib/utils'
 
 export function FeedbackButton() {
   const sumQ = useQuery({
-    queryKey: ['research', 'feedback', 'summary'],
+    queryKey: QUERY_KEYS.tradeResearch.feedback.summary,
     queryFn: fetchFeedbackSummary,
     refetchInterval: 60_000,
     retry: 1,

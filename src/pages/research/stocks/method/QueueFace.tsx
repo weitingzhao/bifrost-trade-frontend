@@ -16,6 +16,7 @@
  * draft "not on the plan"; each answers on DEV.
  */
 import { METHOD_INFO, METHOD_PATH, METHOD_TITLE, type MethodHead } from './methodHead'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -101,27 +102,27 @@ export function QueueFace({ head }: { head: MethodHead }) {
   const health = useSignalHealthSummary()
 
   const candQ = useQuery({
-    queryKey: ['research', 'sepa', 'model-candidates'],
+    queryKey: ['research-engine', 'sepa', 'model-candidates'],
     queryFn: () => fetchSepaCandidates(),
     staleTime: 5 * 60_000,
   })
   const orchQ = useQuery({
-    queryKey: ['research', 'orchestration', 'status'],
+    queryKey: ['research-engine', 'orchestration', 'status'],
     queryFn: fetchOrchestrationStatus,
     staleTime: 60_000,
   })
   const dailyQ = useQuery({
-    queryKey: ['research', 'sepa', 'model-daily', 'funnel'],
+    queryKey: ['research-engine', 'sepa', 'model-daily', 'funnel'],
     queryFn: () => fetchSepaDaily({ limit: 1000 }),
     staleTime: 5 * 60_000,
   })
   const outcomeQ = useQuery({
-    queryKey: ['research', 'candidate-outcome', 'summary'],
+    queryKey: ['research-engine', 'candidate-outcome', 'summary'],
     queryFn: () => fetchCandidateOutcomeSummary(),
     staleTime: 5 * 60_000,
   })
   const reachQ = useQuery({
-    queryKey: ['research', 'universe-reach'],
+    queryKey: ['research-engine', 'universe-reach'],
     queryFn: fetchUniverseReach,
     staleTime: 10 * 60_000,
   })
@@ -134,7 +135,7 @@ export function QueueFace({ head }: { head: MethodHead }) {
   // company name and CRS, the store's own closes for a real 20d momentum,
   // and the settled outcome record per name.
   const wideQ = useQuery({
-    queryKey: ['research', 'sepa-wide-join', symbolsKey],
+    queryKey: ['research-engine', 'sepa-wide-join', symbolsKey],
     queryFn: () => fetchSepaScreenerWide(),
     enabled: symbols.length > 0,
     staleTime: 10 * 60_000,
@@ -146,7 +147,7 @@ export function QueueFace({ head }: { head: MethodHead }) {
     staleTime: 10 * 60_000,
   })
   const outcomeRowsQ = useQuery({
-    queryKey: ['research', 'candidate-outcome', 'rows-all'],
+    queryKey: ['research-engine', 'candidate-outcome', 'rows-all'],
     queryFn: () => fetchCandidateOutcomeRows({ limit: 500 }),
     staleTime: 5 * 60_000,
   })
@@ -175,13 +176,13 @@ export function QueueFace({ head }: { head: MethodHead }) {
   const gexQ = useExhibit('gex_regime', heroSym)
   const pinQ = useExhibit('opex_pin', heroSym)
   const forecastQ = useQuery({
-    queryKey: ['research', 'forecast', 'sessions', heroSym, 'newest'],
+    queryKey: ['research-engine', 'forecast', 'sessions', heroSym, 'newest'],
     queryFn: () => fetchForecastSessions(heroSym, undefined, 1),
     enabled: Boolean(heroSym),
     staleTime: 10 * 60_000,
   })
   const playbookQ = useQuery({
-    queryKey: ['research', 'playbook', 'hit-rate', heroSym, 90, 5],
+    queryKey: ['research-engine', 'playbook', 'hit-rate', heroSym, 90, 5],
     queryFn: () => fetchPlaybookHitRate(heroSym, 90, 5),
     enabled: Boolean(heroSym),
     staleTime: 10 * 60_000,
@@ -189,7 +190,7 @@ export function QueueFace({ head }: { head: MethodHead }) {
   const earnQ = useEarningsDates(heroSym || null)
   // Only when the queue has no committed percentile: the IV store says why.
   const ivStoreQ = useQuery({
-    queryKey: ['research', 'iv-percentile', heroSym],
+    queryKey: QUERY_KEYS.plugin.ivPercentile(heroSym),
     queryFn: () => fetchIvPercentile(heroSym),
     enabled: Boolean(heroSym) && heroRow != null && heroRow.iv_percentile == null,
     staleTime: 10 * 60_000,

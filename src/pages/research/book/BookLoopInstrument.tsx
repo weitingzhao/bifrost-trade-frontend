@@ -98,12 +98,12 @@ export function BookLoopInstrument({ hypotheses }: { hypotheses: readonly Hypoth
   const today = todayIso()
   const standing = useAutopilotStanding()
   const runsQ = useQuery({
-    queryKey: ['research', 'objective-runs', 'book-loop'],
+    queryKey: ['research-engine', 'objective-runs', 'book-loop'],
     queryFn: () => fetchObjectiveRuns({ limit: 100 }),
     staleTime: 60_000,
   })
-  const dayQ = useQuery({ queryKey: ['research', 'journal', 'day', today], queryFn: () => fetchJournalDay(today), staleTime: 60_000 })
-  const memQ = useQuery({ queryKey: ['research', 'journal', 'memory'], queryFn: fetchMemory, staleTime: 300_000 })
+  const dayQ = useQuery({ queryKey: ['research-engine', 'journal', 'day', today], queryFn: () => fetchJournalDay(today), staleTime: 60_000 })
+  const memQ = useQuery({ queryKey: ['research-engine', 'journal', 'memory'], queryFn: fetchMemory, staleTime: 300_000 })
   const r = loopReading({
     hypotheses,
     objectives: standing.data?.objectives ?? null,

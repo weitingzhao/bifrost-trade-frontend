@@ -57,7 +57,7 @@ export default function TradeDeskPage() {
   const [copied, setCopied] = useState<string | null>(null)
 
   const intents = useQuery({
-    queryKey: ['research', 'order-intents', INTENT_STATUS],
+    queryKey: ['research-engine', 'order-intents', INTENT_STATUS],
     queryFn: () => fetchOrderIntents({ status: INTENT_STATUS }),
     staleTime: 60_000,
   })

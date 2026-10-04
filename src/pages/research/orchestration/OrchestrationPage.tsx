@@ -192,7 +192,7 @@ export default function OrchestrationPage() {
   const shown = useMemo(() => filterByPath(rows, path), [rows, path])
   const edges = edgeCount(shown)
   const healthQ = useQuery({
-    queryKey: ['research', 'health'],
+    queryKey: ['research-engine', 'health'],
     queryFn: fetchResearchHealth,
     staleTime: 60_000,
   })

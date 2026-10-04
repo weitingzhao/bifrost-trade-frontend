@@ -6,6 +6,7 @@
  * so a switch flipped in either place reads the same in both.
  */
 import { useState, type ReactNode } from 'react'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useMutation } from '@tanstack/react-query'
 import { SegmentControl } from '@/components/data-display'
 import { ViewState } from '@bifrost/ui'
@@ -342,7 +343,7 @@ export function KeyboardPane() {
 export function ReportsPane() {
   const qc = useQueryClient()
   const reportsQ = useQuery({
-    queryKey: ['research', 'feedback', 'reports', 'all'],
+    queryKey: QUERY_KEYS.tradeResearch.feedback.reports('all'),
     queryFn: () => fetchFeedbackReports('all'),
     refetchInterval: 60_000,
     retry: 1,
@@ -357,7 +358,7 @@ export function ReportsPane() {
     if (!unreadIds) return
     const t = setTimeout(() => {
       void Promise.all(unreadIds.split(',').map((id) => markFeedbackRead(id))).then(() =>
-        qc.invalidateQueries({ queryKey: ['research', 'feedback'] }),
+        qc.invalidateQueries({ queryKey: QUERY_KEYS.tradeResearch.feedback.root }),
       )
     }, 1500)
     return () => clearTimeout(t)

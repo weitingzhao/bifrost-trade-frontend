@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function AiUsageTile() {
   const q = useQuery({
-    queryKey: ['research', 'copilot', 'usage'],
+    queryKey: ['research-engine', 'copilot', 'usage'],
     queryFn: ({ signal }) => fetchCopilotUsage(signal),
     refetchInterval: 30_000,
     retry: 1,

@@ -45,12 +45,12 @@ export function ObjectiveLap({
   const navigate = useNavigate()
 
   const candidatesQ = useQuery({
-    queryKey: ['research', 'candidates', 'lap', 'open'],
+    queryKey: ['research-engine', 'candidates', 'lap', 'open'],
     queryFn: () => fetchCandidates({ status: 'open' }),
     staleTime: 30_000,
   })
   const runsQ = useQuery({
-    queryKey: ['research', 'objective-runs', 'lap', objectiveId],
+    queryKey: ['research-engine', 'objective-runs', 'lap', objectiveId],
     queryFn: () => fetchObjectiveRuns({ objective_id: objectiveId, limit: 200 }),
     staleTime: 30_000,
   })

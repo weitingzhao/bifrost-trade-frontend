@@ -140,7 +140,7 @@ export function PilotToday() {
 
 function PilotDigest({ draftId, status, loading }: { draftId: string | null; status: string | null; loading: boolean }) {
   const q = useQuery({
-    queryKey: ['research', 'drafts', 'digest', draftId, status],
+    queryKey: ['research-engine', 'drafts', 'digest', draftId, status],
     queryFn: () => listResearchDrafts({ kind: 'daily_digest', status: (status ?? 'pending') as DraftStatus, limit: 10 }),
     enabled: Boolean(draftId),
     staleTime: 60_000,

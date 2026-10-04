@@ -64,7 +64,7 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
   /* The one reading the exhibits cannot give: the trend template as a count of
      checks passed rather than a percentage of them. */
   const sepa = useQuery({
-    queryKey: ['research', 'sepa', 'model-daily', 'symbol', symbol],
+    queryKey: ['research-engine', 'sepa', 'model-daily', 'symbol', symbol],
     queryFn: () => fetchSepaDaily({ symbol, limit: 1 }),
     enabled: symbol.trim() !== '',
     staleTime: 5 * 60_000,

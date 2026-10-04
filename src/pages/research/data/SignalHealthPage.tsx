@@ -40,6 +40,7 @@
  * not a row that has to exist to be worth stating.
  */
 import { useQuery } from '@tanstack/react-query'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useState, type ReactNode } from 'react'
 import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { RAISED_PANEL } from '@/components/layout/raisedPanel'
@@ -169,7 +170,7 @@ function fmtAge(h: number | null | undefined): string {
 
 export default function SignalHealthPage() {
   const q = useQuery({
-    queryKey: ['research', 'signal-health'],
+    queryKey: ['research-engine', 'signal-health'],
     queryFn: fetchSignalHealth,
     staleTime: 30_000,
     refetchInterval: 120_000,
@@ -179,7 +180,7 @@ export default function SignalHealthPage() {
   // endpoint — the SEPA criteria stats, which the design notes this page
   // absorbed from the stock screener.
   const readinessQ = useQuery({
-    queryKey: ['research', 'readiness', 'criteria-stats'],
+    queryKey: QUERY_KEYS.tradeResearch.criteriaStats,
     queryFn: fetchSepaCriteriaStats,
     staleTime: 10 * 60_000,
     retry: 0,

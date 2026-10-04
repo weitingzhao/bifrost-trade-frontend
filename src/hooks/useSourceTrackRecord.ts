@@ -32,7 +32,7 @@ export function useSourceTrackRecord(days = TRACK_DAYS) {
   // One read to learn which sources the store actually attributes — the rows
   // endpoint ignores a `source` filter, and the summary is asked for one at a time.
   const rowsQuery = useQuery({
-    queryKey: ['research', 'candidate-outcome', 'sources', days],
+    queryKey: ['research-engine', 'candidate-outcome', 'sources', days],
     queryFn: () => fetchCandidateOutcomeRows({ limit: 500 }),
     staleTime: 10 * 60_000,
   })
@@ -48,7 +48,7 @@ export function useSourceTrackRecord(days = TRACK_DAYS) {
   // above, so this record and Signal Decay cannot disagree about a hit rate.
   const summaries = useQueries({
     queries: sources.map((source) => ({
-      queryKey: ['research', 'candidate-outcome', 'summary', source, days],
+      queryKey: ['research-engine', 'candidate-outcome', 'summary', source, days],
       queryFn: () => fetchCandidateOutcomeSummary({ source, days }),
       staleTime: 10 * 60_000,
     })),

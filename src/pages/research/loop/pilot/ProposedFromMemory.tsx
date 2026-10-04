@@ -67,16 +67,16 @@ export function ProposedFromMemory() {
   const navigate = useNavigate()
   const qc = useQueryClient()
   const [open, setOpen] = useState<string | null>(null)
-  const memQ = useQuery({ queryKey: ['research', 'journal', 'memory'], queryFn: fetchMemory, staleTime: 300_000, retry: 1 })
+  const memQ = useQuery({ queryKey: ['research-engine', 'journal', 'memory'], queryFn: fetchMemory, staleTime: 300_000, retry: 1 })
   const objQ = useQuery({
-    queryKey: QUERY_KEYS.research.objectives({ status: 'active' }),
+    queryKey: QUERY_KEYS.researchEngine.objectives({ status: 'active' }),
     queryFn: () => fetchObjectives({ status: 'active' }),
     staleTime: 15_000,
     refetchOnWindowFocus: false,
   })
   const refresh = () => {
-    void qc.invalidateQueries({ queryKey: ['research', 'objectives'] })
-    void qc.invalidateQueries({ queryKey: ['research', 'journal', 'memory'] })
+    void qc.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
+    void qc.invalidateQueries({ queryKey: ['research-engine', 'journal', 'memory'] })
   }
   const create = useMutation({
     mutationFn: (p: MemoryProposal) => createObjective(draftFromProposal(p, todayIso())),

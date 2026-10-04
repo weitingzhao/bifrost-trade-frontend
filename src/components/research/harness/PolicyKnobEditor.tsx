@@ -91,7 +91,7 @@ export function PolicyKnobEditor({
     onSuccess: () => {
       setOpen(false)
       setWhy('')
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.drafts })
       onDone?.()
     },
   })

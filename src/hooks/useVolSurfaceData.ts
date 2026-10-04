@@ -9,7 +9,7 @@ const STALE_MS = 5 * 60_000
 
 export function useVolSurfaceFit(symbol: string, tradeDate?: string) {
   return useQuery<VolSurfaceFitRow[]>({
-    queryKey: QUERY_KEYS.research.volSurface.fit(symbol, tradeDate ?? 'latest'),
+    queryKey: QUERY_KEYS.researchEngine.volSurface.fit(symbol, tradeDate ?? 'latest'),
     queryFn: () => fetchVolSurfaceFit(symbol, tradeDate),
     enabled: Boolean(symbol),
     staleTime: STALE_MS,
@@ -18,7 +18,7 @@ export function useVolSurfaceFit(symbol: string, tradeDate?: string) {
 
 export function useResiduals(symbol: string, expiry: string, tradeDate?: string) {
   return useQuery<VolSurfaceResidualRow[]>({
-    queryKey: QUERY_KEYS.research.volSurface.residuals(
+    queryKey: QUERY_KEYS.researchEngine.volSurface.residuals(
       symbol,
       tradeDate ?? 'latest',
       expiry,
@@ -31,7 +31,7 @@ export function useResiduals(symbol: string, expiry: string, tradeDate?: string)
 
 export function useSkewExtremes(limit = 20) {
   return useQuery<SkewExtremesResponse>({
-    queryKey: QUERY_KEYS.research.volSurface.skewExtremes(limit),
+    queryKey: QUERY_KEYS.researchEngine.volSurface.skewExtremes(limit),
     queryFn: () => fetchSkewExtremes(limit),
     staleTime: STALE_MS,
   })
@@ -40,7 +40,7 @@ export function useSkewExtremes(limit = 20) {
 /** The repaired ATM IV store's term for the name's latest session (research). */
 export function useAtmIvTerm(symbol: string) {
   return useQuery<AtmIvTerm | null>({
-    queryKey: QUERY_KEYS.research.volSurface.atmIvTerm(symbol),
+    queryKey: QUERY_KEYS.researchEngine.volSurface.atmIvTerm(symbol),
     queryFn: () => fetchAtmIvTerm(symbol),
     enabled: Boolean(symbol),
     staleTime: STALE_MS,
@@ -50,7 +50,7 @@ export function useAtmIvTerm(symbol: string) {
 /** The name's 1y IV cone at 30 / 60 / 90 days (`/research/volatility/iv-cone`). */
 export function useIvCone(symbol: string) {
   return useQuery<IvCone | null>({
-    queryKey: QUERY_KEYS.research.volSurface.ivCone(symbol),
+    queryKey: QUERY_KEYS.researchEngine.volSurface.ivCone(symbol),
     queryFn: () => fetchIvCone(symbol),
     enabled: Boolean(symbol),
     staleTime: STALE_MS,

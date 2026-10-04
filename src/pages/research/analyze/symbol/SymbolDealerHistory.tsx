@@ -87,7 +87,7 @@ export function useDealerTimeline(sym: string, expiry: string | null) {
   const tail = closes.slice(-TIMELINE_SESSIONS)
   const levelQs = useQueries({
     queries: tail.map((b) => ({
-      queryKey: ['research', 'gex-levels', sym, b.date, expiry],
+      queryKey: ['research-engine', 'gex-levels', sym, b.date, expiry],
       queryFn: () => fetchGexLevels(sym, b.date, expiry ?? undefined),
       enabled: Boolean(sym && expiry),
       staleTime: 30 * 60_000,
@@ -215,7 +215,7 @@ export function DealerIntraday({ sym }: { sym: string }) {
   const [picked, setPicked] = useState<{ sym: string; date: string } | null>(null)
   const pick = picked?.sym === sym ? picked.date : null
   const q = useQuery({
-    queryKey: ['research', 'gex-intraday', sym, pick ?? 'newest'],
+    queryKey: ['research-engine', 'gex-intraday', sym, pick ?? 'newest'],
     queryFn: () => fetchGexIntraday(sym, pick ?? undefined),
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,

@@ -180,7 +180,7 @@ export function WatchlistAddButton({
               source: 'symbol_chain',
             })
             setState({ key, ok: res.ok, msg: res.ok ? 'on the watchlist' : (res.error ?? 'add failed') })
-            if (res.ok) await qc.invalidateQueries({ queryKey: QUERY_KEYS.research.watchlist })
+            if (res.ok) await qc.invalidateQueries({ queryKey: QUERY_KEYS.market.watchlist })
           } catch (e) {
             setState({ key, ok: false, msg: e instanceof Error ? e.message : 'add failed' })
           }

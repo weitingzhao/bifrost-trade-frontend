@@ -67,7 +67,7 @@ export function LeadersFace({
   onUniverseAll: () => void
 }) {
   const q = useQuery({
-    queryKey: ['research', 'momentum', 'leaders', RADAR_LIMIT],
+    queryKey: ['research-engine', 'momentum', 'leaders', RADAR_LIMIT],
     queryFn: () => fetchMomentumRadar({ limit: RADAR_LIMIT }),
     staleTime: 10 * 60_000,
   })

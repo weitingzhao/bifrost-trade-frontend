@@ -15,8 +15,8 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 
 export function useBacktestRuns(opts: ListBacktestRunsQuery = {}, enabled = true) {
   const key = opts.hypothesis_id
-    ? [...QUERY_KEYS.research.backtest.runsByHypothesis(opts.hypothesis_id), opts]
-    : [...QUERY_KEYS.research.backtest.runs, opts]
+    ? [...QUERY_KEYS.researchEngine.backtest.runsByHypothesis(opts.hypothesis_id), opts]
+    : [...QUERY_KEYS.researchEngine.backtest.runs, opts]
   return useQuery({
     queryKey: key,
     queryFn: () => fetchBacktestRuns(opts),
@@ -29,8 +29,8 @@ export function useBacktestRuns(opts: ListBacktestRunsQuery = {}, enabled = true
 export function useBacktestRun(runId: string | undefined, enabled = true) {
   return useQuery({
     queryKey: runId
-      ? QUERY_KEYS.research.backtest.run(runId)
-      : ['research', 'backtest', 'run', 'idle'],
+      ? QUERY_KEYS.researchEngine.backtest.run(runId)
+      : ['research-engine', 'backtest', 'run', 'idle'],
     queryFn: () =>
       runId
         ? fetchBacktestRun(runId)
@@ -46,10 +46,10 @@ export function useRunEventQuery() {
   return useMutation({
     mutationFn: (input: EventQueryInput) => postEventQuery(input),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.research.backtest.runs })
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.research.home })
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.list })
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.summaryActive })
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.backtest.runs })
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.home })
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.list })
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.summaryActive })
     },
   })
 }

@@ -25,7 +25,7 @@ import {
 export function useSystemDomains({ live }: { live: boolean }): DomainStanding[] {
   const { data: status } = useMonitorStatus()
   const health = useQuery({
-    queryKey: ['research', 'signal-health'],
+    queryKey: ['research-engine', 'signal-health'],
     queryFn: fetchSignalHealth,
     staleTime: 60_000,
   })

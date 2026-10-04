@@ -141,7 +141,7 @@ function SuggestionQueue() {
    * rather than two panels saying the same thing.
    */
   const drafts = useQuery({
-    queryKey: ['research', 'drafts', 'hypothesis-queue'],
+    queryKey: ['research-engine', 'drafts', 'hypothesis-queue'],
     queryFn: async () => {
       const pages = await Promise.all(
         (['hypothesis_suggestion', 'hypothesis_draft'] as const).map((kind) =>
@@ -154,7 +154,7 @@ function SuggestionQueue() {
   const act = useMutation({
     mutationFn: (id: string) => approveResearchDraft(id),
     onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ['research', 'drafts', 'hypothesis-queue'] }),
+      void qc.invalidateQueries({ queryKey: ['research-engine', 'drafts', 'hypothesis-queue'] }),
   })
   // Dismiss with Undo (Rev .75): the draft leaves at once, the write goes with the toast.
   const { isHeld, dismiss } = useHeldDraftDismiss()
@@ -228,7 +228,7 @@ export default function HypothesisBoardPage() {
   const { objective, select: setObjective } = useObjectiveScope()
   const objectivesQ = useActiveObjectives()
   const runsQ = useQuery({
-    queryKey: ['research', 'objective-runs', 'board'],
+    queryKey: ['research-engine', 'objective-runs', 'board'],
     queryFn: () => fetchObjectiveRuns({ limit: 200 }),
     staleTime: 5 * 60_000,
     enabled: objective !== ALL_OBJECTIVES,
@@ -248,7 +248,7 @@ export default function HypothesisBoardPage() {
    * been deleted.
    */
   const candidatesQ = useQuery({
-    queryKey: QUERY_KEYS.research.candidates({ status: 'all', days: 365 }),
+    queryKey: QUERY_KEYS.researchEngine.candidates({ status: 'all', days: 365 }),
     queryFn: () => fetchCandidates({ status: 'all', days: 365 }),
     staleTime: 5 * 60_000,
     enabled: objective !== ALL_OBJECTIVES,

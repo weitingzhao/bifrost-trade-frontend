@@ -4,7 +4,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 
 export function useWatchlist() {
   return useQuery({
-    queryKey: QUERY_KEYS.research.watchlist,
+    queryKey: QUERY_KEYS.market.watchlist,
     queryFn: fetchWatchlist,
     staleTime: 30_000,
   })

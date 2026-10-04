@@ -111,7 +111,7 @@ export function SymbolPriceChart({
   })
   const exQ = useExhibitComposite(['gex_regime', 'opex_pin', 'vrp'], sym)
   const opexQ = useQuery({
-    queryKey: ['research', 'opex-current', sym, 'no-map'],
+    queryKey: ['research-engine', 'opex-current', sym, 'no-map'],
     queryFn: () => fetchOpexCurrent(sym, undefined, false),
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,

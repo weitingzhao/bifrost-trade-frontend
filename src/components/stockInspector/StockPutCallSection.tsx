@@ -43,7 +43,7 @@ export function StockPutCallSection({
   const qc = useQueryClient()
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: QUERY_KEYS.research.optionPcr(sym),
+    queryKey: QUERY_KEYS.tradeResearch.optionPcr(sym),
     queryFn: () => fetchSymbolOptionPcr(sym, PCR_FETCH_DAYS),
     enabled: !!sym && expanded,
     staleTime: 120_000,
@@ -56,7 +56,7 @@ export function StockPutCallSection({
     if (!sym || refreshing) return
     setRefreshing(true)
     try {
-      await qc.invalidateQueries({ queryKey: QUERY_KEYS.research.optionPcr(sym) })
+      await qc.invalidateQueries({ queryKey: QUERY_KEYS.tradeResearch.optionPcr(sym) })
       await refetch()
     } finally {
       setRefreshing(false)

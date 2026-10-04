@@ -101,7 +101,7 @@ export function SymbolIdentity({
   // The wide table's universe row carries the company's name; the closes give
   // yesterday's close, the denominator of the day change.
   const wideQ = useQuery({
-    queryKey: ['research', 'sepa-wide-one', sym],
+    queryKey: ['research-engine', 'sepa-wide-one', sym],
     queryFn: () => fetchSepaScreenerWide(5, [sym]),
     enabled: Boolean(sym),
     staleTime: 60 * 60_000,

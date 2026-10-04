@@ -152,21 +152,21 @@ function pickSentimentAnomalies(rows: OrderSentiment[], limit = 3): SentimentAno
 
 export function useResearchHomeData(): ResearchHomeData {
   const sepaQ = useQuery({
-    queryKey: [...QUERY_KEYS.research.home, 'sepa-candidates'],
+    queryKey: [...QUERY_KEYS.researchEngine.home, 'sepa-candidates'],
     queryFn: () => fetchSepaCandidates({ top: 10 }),
     staleTime: HOME_STALE_MS,
     refetchOnWindowFocus: false,
   })
 
   const eventsQ = useQuery({
-    queryKey: [...QUERY_KEYS.research.home, 'events'],
+    queryKey: [...QUERY_KEYS.researchEngine.home, 'events'],
     queryFn: () => fetchEventRadarEvents({ limit: 12 }),
     staleTime: HOME_STALE_MS,
     refetchOnWindowFocus: false,
   })
 
   const sentimentQ = useQuery({
-    queryKey: [...QUERY_KEYS.research.home, 'sentiment'],
+    queryKey: [...QUERY_KEYS.researchEngine.home, 'sentiment'],
     queryFn: () => fetchOrderSentiment(),
     staleTime: HOME_STALE_MS,
     refetchOnWindowFocus: false,

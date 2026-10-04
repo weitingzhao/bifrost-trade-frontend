@@ -76,26 +76,26 @@ export function SymbolPlaybookPanel({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const { days } = useSymbolForecastSessions(sym)
   const recordQ = useQuery({
-    queryKey: ['research', 'playbook-hit-rate', sym, 30, 5],
+    queryKey: ['research-engine', 'playbook-hit-rate', sym, 30, 5],
     queryFn: () => fetchPlaybookHitRate(sym, 30, 5),
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,
   })
   const newestDate = days[0]?.trade_date ?? null
   const triggersQ = useQuery({
-    queryKey: ['research', 'playbook-triggers', sym, newestDate],
+    queryKey: ['research-engine', 'playbook-triggers', sym, newestDate],
     queryFn: () => fetchPlaybookTriggers(sym, newestDate ?? undefined),
     enabled: Boolean(sym && newestDate),
     staleTime: 5 * 60_000,
   })
   const terQ = useQuery({
-    queryKey: ['research', 'terrain-daily', sym],
+    queryKey: ['research-engine', 'terrain-daily', sym],
     queryFn: () => fetchTerrain(sym),
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,
   })
   const intraQ = useQuery({
-    queryKey: ['research', 'terrain-intraday', sym],
+    queryKey: ['research-engine', 'terrain-intraday', sym],
     queryFn: () => fetchTerrainIntraday(sym),
     enabled: Boolean(sym),
     refetchInterval: 60_000,

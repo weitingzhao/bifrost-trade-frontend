@@ -5,7 +5,7 @@ import { notify } from '@/lib/shellNotify'
 import type { WatchlistItem } from '@/types/market'
 
 function invalidateWatchlist(qc: ReturnType<typeof useQueryClient>) {
-  return qc.invalidateQueries({ queryKey: QUERY_KEYS.research.watchlist })
+  return qc.invalidateQueries({ queryKey: QUERY_KEYS.market.watchlist })
 }
 
 /** A refused write says why (the server's `detail`), wherever it was asked from. */

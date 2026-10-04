@@ -47,7 +47,7 @@ const SCAN_PAGE = 500
 export function useScreenerSources(): { sources: ScreenerSource[]; loading: boolean } {
   const watchlist = useWatchlist()
   const scan = useQuery({
-    queryKey: ['research', 'scan', 'screener-sources', SCAN_PAGE],
+    queryKey: ['research-engine', 'scan', 'screener-sources', SCAN_PAGE],
     queryFn: () => fetchScan({ limit: SCAN_PAGE }),
     staleTime: 10 * 60_000,
   })

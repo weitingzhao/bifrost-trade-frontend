@@ -7,7 +7,7 @@ import { copilotSpendLine } from '@/lib/copilot/copilotSpendLine'
 /** 10px read-only spend on the composer. Model choice lives in Settings. */
 export function CopilotSpendHint({ model }: { model: CopilotModelId }) {
   const q = useQuery({
-    queryKey: ['research', 'copilot', 'usage'],
+    queryKey: ['research-engine', 'copilot', 'usage'],
     queryFn: ({ signal }) => fetchCopilotUsage(signal),
     refetchInterval: 30_000,
     retry: 1,

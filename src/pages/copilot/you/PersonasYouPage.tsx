@@ -72,19 +72,19 @@ export default function PersonasYouPage() {
   const timers = useRef<Record<string, number>>({})
 
   const memQ = useQuery({
-    queryKey: ['research', 'journal', 'memory'],
+    queryKey: ['research-engine', 'journal', 'memory'],
     queryFn: fetchMemory,
     refetchInterval: 300_000,
     retry: 1,
   })
   const forget = useMutation({
     mutationFn: (id: string) => forgetMemory(id),
-    onSettled: () => qc.invalidateQueries({ queryKey: ['research', 'journal', 'memory'] }),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['research-engine', 'journal', 'memory'] }),
   })
   const sourceMut = useMutation({
     mutationFn: ({ source, enabled }: { source: string; enabled: boolean }) =>
       setMemorySource(source, enabled),
-    onSettled: () => qc.invalidateQueries({ queryKey: ['research', 'journal', 'memory'] }),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['research-engine', 'journal', 'memory'] }),
   })
 
   const all = useMemo(

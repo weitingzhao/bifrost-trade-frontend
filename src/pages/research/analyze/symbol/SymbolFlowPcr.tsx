@@ -156,7 +156,7 @@ function Row({
 export function SymbolFlowPcr({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const q = useQuery({
-    queryKey: ['research', 'pcr-history', sym, 365],
+    queryKey: ['research-engine', 'pcr-history', sym, 365],
     queryFn: () => fetchPcrHistory(sym, 365),
     enabled: Boolean(sym),
     staleTime: 30 * 60_000,

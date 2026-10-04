@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { fetchIvPercentileForSymbols } from '@/api/research/ivRadar'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { IvPercentileRow } from '@/types/ivRadar'
 
 /** Four at a time — the IV Radar's own pool size, for the same endpoint. */
@@ -30,7 +31,9 @@ export function useWatchBook(symbols: readonly string[]) {
   const benchmarks = useBenchmarks([...symbols])
   const hypotheses = useHypothesisList({ limit: 200 })
   const iv = useQuery({
-    queryKey: ['market', 'watchlist', 'iv-rank', key],
+    // The market-data plugin answers this, not the market app: outside `market.watchlist`,
+    // so a watchlist write (which changes `key` when it changes the names) does not refetch it.
+    queryKey: [...QUERY_KEYS.plugin.ivRadar, 'watch-book', key],
     queryFn: () => fetchIvPercentileForSymbols(symbols, IV_CONCURRENCY),
     enabled: symbols.length > 0,
     // A rank moves once a day; refetching it while the reader scrolls buys

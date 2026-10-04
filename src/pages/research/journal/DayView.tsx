@@ -39,7 +39,7 @@ export function DayView() {
   const day = params.get('day') ?? ''
 
   const dayQ = useQuery({
-    queryKey: ['research', 'journal', 'day', day || 'today'],
+    queryKey: ['research-engine', 'journal', 'day', day || 'today'],
     queryFn: () => fetchJournalDay(day || undefined),
     refetchInterval: 120_000,
     retry: 1,

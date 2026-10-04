@@ -91,13 +91,13 @@ export function useRiskExposure(accountFilter: string) {
   const [betaQuery, corrQuery] = useQueries({
     queries: [
       {
-        queryKey: ['research', 'risk', 'beta', symbols.join(','), BETA_WINDOWS.join(',')],
+        queryKey: ['research-engine', 'risk', 'beta', symbols.join(','), BETA_WINDOWS.join(',')],
         queryFn: () => fetchRiskBeta(symbols, 'SPY', [...BETA_WINDOWS]),
         enabled: symbols.length > 0,
         staleTime: 60 * 60_000,
       },
       {
-        queryKey: ['research', 'risk', 'correlation', symbols.join(','), CORR_WINDOW],
+        queryKey: ['research-engine', 'risk', 'correlation', symbols.join(','), CORR_WINDOW],
         queryFn: () => fetchRiskCorrelation(symbols, CORR_WINDOW),
         enabled: symbols.length > 1,
         staleTime: 60 * 60_000,

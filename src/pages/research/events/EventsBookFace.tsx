@@ -84,7 +84,7 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
   // tied to a name (FOMC decisions, CPI prints). Symbol-tied forward rows
   // (dividend dates) are the Market face's forward panel, not this lane.
   const calendar = useQuery({
-    queryKey: ['research', 'events', 'calendar'],
+    queryKey: ['research-engine', 'events', 'calendar'],
     queryFn: fetchEventCalendar,
     staleTime: 5 * 60_000,
   })

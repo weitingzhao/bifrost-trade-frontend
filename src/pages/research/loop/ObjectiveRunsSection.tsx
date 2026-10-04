@@ -56,7 +56,7 @@ export function ObjectiveRunsSection({
   const [runFilter, setRunFilter] = useState<ObjectiveRunStatus | 'all'>('all')
 
   const runsQ = useQuery({
-    queryKey: QUERY_KEYS.research.objectiveRuns({ objective_id: objectiveId }),
+    queryKey: QUERY_KEYS.researchEngine.objectiveRuns({ objective_id: objectiveId }),
     queryFn: () => fetchObjectiveRuns({ objective_id: objectiveId, limit: 100 }),
     refetchInterval: 15_000,
   })
@@ -67,9 +67,9 @@ export function ObjectiveRunsSection({
   )
 
   const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-    void queryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
-    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+    void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+    void queryClient.invalidateQueries({ queryKey: ['research-engine', 'loop', 'autopilot'] })
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.drafts })
   }
   const approveMut = useMutation({
     mutationFn: (runId: string) => approveAllRun(runId),
@@ -91,7 +91,7 @@ export function ObjectiveRunsSection({
     onSuccess: ({ deleted, kept }) => {
       setDeleting(null)
       invalidate()
-      void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'candidates'] })
       setNotice(
         `Deleted ${deleted} run${deleted === 1 ? '' : 's'}. Hypotheses kept.` +
           (kept > 0 ? ` Kept ${kept} candidate(s) that have settled outcomes.` : ''),

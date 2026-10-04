@@ -16,6 +16,7 @@
  * and never recomputed (§14.2).
  */
 import { useMemo, useState } from 'react'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
@@ -145,7 +146,7 @@ export default function CorporateActionsPage() {
    * The design watches the watchlist too: a split distorts a name's chain and
    * its backtest whether or not the book holds it.
    */
-  const watchQuery = useQuery({ queryKey: ['market', 'watchlist'], queryFn: fetchWatchlist })
+  const watchQuery = useQuery({ queryKey: QUERY_KEYS.market.watchlist, queryFn: fetchWatchlist })
   const watchSymbols = useMemo(() => {
     const out = new Set<string>()
     for (const i of watchQuery.data?.items ?? []) {

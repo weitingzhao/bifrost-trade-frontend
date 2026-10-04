@@ -27,7 +27,7 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import { useTradeIndex } from '@/hooks/useTradeIndex'
 import { tradeHowFrom, useOpenTrade } from '@/layout/tradeGo'
 
-const NOTES_KEY = ['research', 'journal', 'notes'] as const
+const NOTES_KEY = ['research-engine', 'journal', 'notes'] as const
 
 /** The trader's day — New York, where the sessions live. */
 export function noteDay(iso: string | null): string {

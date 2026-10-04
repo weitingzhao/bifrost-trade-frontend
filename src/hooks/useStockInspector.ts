@@ -27,7 +27,7 @@ export function useStockInspector(
   const sym = symbol.trim().toUpperCase()
 
   const overview = useQuery({
-    queryKey: QUERY_KEYS.research.tickerOverview(sym),
+    queryKey: QUERY_KEYS.tradeResearch.tickerOverview(sym),
     queryFn: () => fetchTickerOverview(sym),
     staleTime: 600_000,
     retry: 0,
@@ -35,7 +35,7 @@ export function useStockInspector(
   })
 
   const fund = useQuery({
-    queryKey: QUERY_KEYS.research.fundConditions(sym),
+    queryKey: QUERY_KEYS.tradeResearch.fundConditions(sym),
     queryFn: () => fetchSymbolFundamentalConditions(sym),
     staleTime: 300_000,
     retry: 0,
@@ -43,7 +43,7 @@ export function useStockInspector(
   })
 
   const tech = useQuery({
-    queryKey: QUERY_KEYS.research.techConditions(sym),
+    queryKey: QUERY_KEYS.tradeResearch.techConditions(sym),
     queryFn: () => fetchSymbolTechnicalConditions(sym),
     staleTime: 300_000,
     retry: 0,
@@ -51,7 +51,7 @@ export function useStockInspector(
   })
 
   const raw = useQuery({
-    queryKey: QUERY_KEYS.research.fundRaw(sym),
+    queryKey: QUERY_KEYS.tradeResearch.fundRaw(sym),
     queryFn: () => fetchSymbolFundRawData(sym),
     staleTime: 300_000,
     retry: 0,

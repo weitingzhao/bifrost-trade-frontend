@@ -58,7 +58,7 @@ function PromoteDraft({ pick, onDone }: { pick: Extract<OriginPick, { kind: 'dra
   const promote = useMutation({
     mutationFn: () => patchObjective(pick.id, { schedule }),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void qc.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
       onDone()
       navigate(objectivePath(pick.id))
     },
@@ -100,16 +100,16 @@ export function NewObjectiveOrigins({ onClose }: { onClose: () => void }) {
   const [seed, setSeed] = useState<ObjectiveSeed | null>(null)
   const [promoting, setPromoting] = useState<string | null>(null)
   const objQ = useQuery({
-    queryKey: QUERY_KEYS.research.objectives({ status: 'active' }),
+    queryKey: QUERY_KEYS.researchEngine.objectives({ status: 'active' }),
     queryFn: () => fetchObjectives({ status: 'active' }),
     staleTime: 15_000,
   })
   const runsQ = useQuery({
-    queryKey: ['research', 'objective-runs', 'origins'],
+    queryKey: ['research-engine', 'objective-runs', 'origins'],
     queryFn: () => fetchObjectiveRuns({ limit: 200 }),
     staleTime: 60_000,
   })
-  const screensQ = useQuery({ queryKey: ['research', 'screens'], queryFn: fetchSavedScreens, staleTime: 60_000, retry: 1 })
+  const screensQ = useQuery({ queryKey: ['research-engine', 'saved-screens'], queryFn: fetchSavedScreens, staleTime: 60_000, retry: 1 })
   const templatesQ = usePolicyTemplates()
   const standing = useAutopilotStanding()
   const columns = useMemo(() => {

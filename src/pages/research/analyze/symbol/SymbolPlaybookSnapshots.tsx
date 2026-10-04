@@ -48,7 +48,7 @@ export function SymbolPlaybookSnapshots({
   const [chosen, setChosen] = useState<{ key: string; ts: string } | null>(null)
   const sessions = useMarketSessions()
   const dayQ = useQuery({
-    queryKey: ['research', 'terrain-intraday', sym, pick],
+    queryKey: ['research-engine', 'terrain-intraday', sym, pick],
     queryFn: () => fetchTerrainIntraday(sym, pick ?? undefined),
     enabled: Boolean(sym && pick),
     staleTime: 10 * 60_000,

@@ -17,7 +17,7 @@ export function useScreenerEarnings(symbols: readonly string[]): Record<string, 
   const names = [...new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean))].sort()
   return useQueries({
     queries: names.map((sym) => ({
-      queryKey: ['research', 'narrative', 'earnings', sym],
+      queryKey: ['research-engine', 'narrative', 'earnings', sym],
       queryFn: () => fetchEarningsDates(sym),
       staleTime: 60 * 60_000,
       retry: false,

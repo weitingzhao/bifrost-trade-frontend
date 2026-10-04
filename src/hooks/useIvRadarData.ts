@@ -43,7 +43,7 @@ export function useIvRadarData(filter: IvRadarUniverseFilter) {
   const symbolKey = universe.map(u => u.symbol).join(',')
 
   const query = useQuery({
-    queryKey: [...QUERY_KEYS.research.ivRadar, filter, symbolKey],
+    queryKey: [...QUERY_KEYS.plugin.ivRadar, filter, symbolKey],
     queryFn: async (): Promise<IvRadarRow[]> => {
       const dataBySym = await fetchIvPercentileForSymbols(
         universe.map(u => u.symbol),

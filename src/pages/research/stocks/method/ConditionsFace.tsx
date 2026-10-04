@@ -154,7 +154,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
   const [saveOpen, setSaveOpen] = useState(false)
   const [screenName, setScreenName] = useState('')
   const screensQ = useQuery({
-    queryKey: ['research', 'saved-screens'],
+    queryKey: ['research-engine', 'saved-screens'],
     queryFn: fetchSavedScreens,
     staleTime: 60_000,
   })
@@ -175,7 +175,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
     onSuccess: () => {
       setSaveOpen(false)
       setScreenName('')
-      void qc.invalidateQueries({ queryKey: ['research', 'saved-screens'] })
+      void qc.invalidateQueries({ queryKey: ['research-engine', 'saved-screens'] })
     },
   })
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
@@ -184,7 +184,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
   })
 
   const wideQ = useQuery({
-    queryKey: ['research', 'sepa-screener-wide'],
+    queryKey: ['research-engine', 'sepa-screener-wide'],
     queryFn: () => fetchSepaScreenerWide(),
     staleTime: 5 * 60_000,
   })
@@ -192,7 +192,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
   // top 1000 by score and carries one only where the option chain is
   // collected (204 of the 1000 on DEV, 2026-09-26) — joined by symbol.
   const modelQ = useQuery({
-    queryKey: ['research', 'sepa-model-daily', 'iv-join'],
+    queryKey: ['research-engine', 'sepa-model-daily', 'iv-join'],
     queryFn: () => fetchSepaDaily({ limit: 1000 }),
     staleTime: 5 * 60_000,
   })

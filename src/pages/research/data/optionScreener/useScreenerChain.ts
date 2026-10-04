@@ -48,7 +48,7 @@ export function useScreenerChain(args: {
 
   return useQueries({
     queries: names.map((sym) => ({
-      queryKey: [...QUERY_KEYS.research.screener, 'chain', sym, structure],
+      queryKey: [...QUERY_KEYS.tradeResearch.screener, 'chain', sym, structure],
       queryFn: () =>
         fetchScreenerResults({
           structure_type: structure,

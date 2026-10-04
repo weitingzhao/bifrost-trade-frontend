@@ -57,7 +57,7 @@ function stageHref(step: ProgressStep, subject: string | null): string {
 function useLoopSteps(obj: ResearchObjective | null, mode: ObjectiveMode | null): ProgressStep[] {
   const loop = obj != null && (mode === 'assisted' || mode === 'auto')
   const standing = useQuery({
-    queryKey: ['research', 'loop', 'autopilot'],
+    queryKey: ['research-engine', 'loop', 'autopilot'],
     queryFn: fetchAutopilotStanding,
     refetchInterval: 60_000,
     enabled: loop,
@@ -79,7 +79,7 @@ export function ObjectiveControl() {
   const [open, setOpen] = useShellPopover('objective')
   const { objective, isAll, select } = useObjectiveScope()
   const objQuery = useQuery({
-    queryKey: ['research', 'objectives', 'lens'],
+    queryKey: ['research-engine', 'objectives', 'lens'],
     queryFn: () => fetchObjectives({ limit: 50 }),
     staleTime: 5 * 60_000,
   })

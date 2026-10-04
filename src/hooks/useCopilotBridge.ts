@@ -10,7 +10,7 @@ import { createPlaybookCaseFromBridge } from '@/api/playbook'
 
 export function useBridgePresets() {
   return useQuery({
-    queryKey: ['research', 'copilot', 'bridge', 'presets'],
+    queryKey: ['research-engine', 'copilot', 'bridge', 'presets'],
     queryFn: ({ signal }) => fetchBridgePresets(signal),
     staleTime: 60_000,
   })
@@ -28,7 +28,7 @@ export function useCopilotBridge(sessionId: string) {
       frames_from_message_id?: string
     }) => postCopilotBridge(sessionId, input),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['research', 'copilot', 'usage'] })
+      qc.invalidateQueries({ queryKey: ['research-engine', 'copilot', 'usage'] })
     },
   })
 

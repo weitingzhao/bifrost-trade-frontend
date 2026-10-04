@@ -144,7 +144,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const expiry = typeof g.expiry === 'string' ? g.expiry : null
 
   const distQ = useQuery({
-    queryKey: ['research', 'gex-distribution', sym],
+    queryKey: ['research-engine', 'gex-distribution', sym],
     queryFn: () => fetchGexDistribution(sym),
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,
@@ -152,7 +152,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   // Vanna/charm live in the opex store's own daily row; the past cycles in
   // its pin analysis — both were owed until the endpoint was probed.
   const opexQ = useQuery({
-    queryKey: ['research', 'opex-current', sym],
+    queryKey: ['research-engine', 'opex-current', sym],
     queryFn: () => fetchOpexCurrent(sym),
     enabled: Boolean(sym),
     staleTime: 5 * 60_000,
@@ -160,14 +160,14 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   // The store's whole pin record (the route's own cap, 24 cycles) — the
   // retired OpEx section read 24 where this face had read 8.
   const pinsQ = useQuery({
-    queryKey: ['research', 'opex-pins', sym, 24],
+    queryKey: ['research-engine', 'opex-pins', sym, 24],
     queryFn: () => fetchOpexPinAnalysis(sym, 24),
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,
   })
   // Σ vanna / Σ charm as each cycle closed, joined to its pin row by date.
   const cyclesQ = useQuery({
-    queryKey: ['research', 'opex-history', sym, 24],
+    queryKey: ['research-engine', 'opex-history', sym, 24],
     queryFn: () => fetchOpexHistory(sym, 24),
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,

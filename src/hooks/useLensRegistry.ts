@@ -15,7 +15,7 @@ export const EXHIBIT_STALE_MS = 60_000
 
 export function useLensRegistry() {
   return useQuery<LensRegistry>({
-    queryKey: QUERY_KEYS.research.lenses,
+    queryKey: QUERY_KEYS.researchEngine.lenses,
     queryFn: fetchLensRegistry,
     staleTime: REGISTRY_STALE_MS,
   })
@@ -24,7 +24,7 @@ export function useLensRegistry() {
 export function useExhibit(lens: ExhibitLens, symbol: string) {
   const sym = (symbol || '').trim().toUpperCase()
   return useQuery<ExhibitPayload>({
-    queryKey: QUERY_KEYS.research.exhibit(lens, sym),
+    queryKey: QUERY_KEYS.researchEngine.exhibit(lens, sym),
     queryFn: () => fetchExhibit(lens, sym),
     enabled: sym.length > 0,
     staleTime: EXHIBIT_STALE_MS,

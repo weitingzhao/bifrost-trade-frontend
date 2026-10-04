@@ -19,7 +19,7 @@ export type CandidatesQueryParams = {
 
 export function useCandidates(params: CandidatesQueryParams = {}, enabled = true) {
   return useQuery({
-    queryKey: QUERY_KEYS.research.candidates(params),
+    queryKey: QUERY_KEYS.researchEngine.candidates(params),
     queryFn: () => fetchCandidates(params),
     enabled,
     staleTime: 15_000,
@@ -28,7 +28,7 @@ export function useCandidates(params: CandidatesQueryParams = {}, enabled = true
 }
 
 function invalidateCandidateCaches(queryClient: ReturnType<typeof useQueryClient>) {
-  void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
+  void queryClient.invalidateQueries({ queryKey: ['research-engine', 'candidates'] })
 }
 
 export function useAddCandidates() {
@@ -46,9 +46,9 @@ export function usePromoteCandidate() {
       promoteCandidate(args.id, args.body),
     onSuccess: () => {
       invalidateCandidateCaches(queryClient)
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.list })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.summaryActive })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.home })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.list })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.summaryActive })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.home })
     },
   })
 }

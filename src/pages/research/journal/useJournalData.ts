@@ -24,7 +24,7 @@ const STALE = 60_000
 
 export function useJournalRuns() {
   return useQuery({
-    queryKey: [...QUERY_KEYS.research.objectiveRuns(), 'journal'],
+    queryKey: [...QUERY_KEYS.researchEngine.objectiveRuns(), 'journal'],
     queryFn: () => fetchObjectiveRuns({ limit: 200 }),
     staleTime: STALE,
     refetchOnWindowFocus: false,
@@ -33,7 +33,7 @@ export function useJournalRuns() {
 
 export function useJournalCandidates(days: number) {
   return useQuery({
-    queryKey: QUERY_KEYS.research.candidates({ status: 'all', days }),
+    queryKey: QUERY_KEYS.researchEngine.candidates({ status: 'all', days }),
     queryFn: () => fetchCandidates({ status: 'all', days }),
     staleTime: STALE,
     refetchOnWindowFocus: false,
@@ -42,7 +42,7 @@ export function useJournalCandidates(days: number) {
 
 export function useJournalHypotheses() {
   return useQuery({
-    queryKey: [...QUERY_KEYS.research.hypothesis.list, 'journal'],
+    queryKey: [...QUERY_KEYS.researchEngine.hypothesis.list, 'journal'],
     queryFn: () => listHypotheses({ include_retired: true, limit: 200 }),
     staleTime: STALE,
     refetchOnWindowFocus: false,
@@ -51,7 +51,7 @@ export function useJournalHypotheses() {
 
 export function useJournalDrafts() {
   return useQuery({
-    queryKey: ['research', 'drafts', 'journal'],
+    queryKey: ['research-engine', 'drafts', 'journal'],
     queryFn: async () => {
       const pages = await Promise.all(
         DRAFT_STATUSES.map((status) => listResearchDrafts({ status, limit: DRAFTS_PAGE_MAX })),
@@ -65,7 +65,7 @@ export function useJournalDrafts() {
 
 export function useJournalOutcomes() {
   return useQuery({
-    queryKey: [...QUERY_KEYS.research.candidateOutcome.rows, 'journal'],
+    queryKey: [...QUERY_KEYS.researchEngine.candidateOutcome.rows, 'journal'],
     queryFn: async () => (await fetchCandidateOutcomeRows({ limit: 200 })).rows,
     staleTime: STALE,
     refetchOnWindowFocus: false,

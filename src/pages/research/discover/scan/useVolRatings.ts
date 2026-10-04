@@ -43,7 +43,7 @@ export function useVolRatings(universe: PortfolioUniverse) {
   const waitingOnUniverse = universe !== 'all' && portfolio.isLoading
 
   const scan = useQuery({
-    queryKey: [...QUERY_KEYS.research.scan, 'vol-ratings', universe, symbols.join(',')],
+    queryKey: [...QUERY_KEYS.researchEngine.scan, 'vol-ratings', universe, symbols.join(',')],
     queryFn: () =>
       fetchScan({
         symbols: symbols.length ? symbols : undefined,
@@ -57,7 +57,7 @@ export function useVolRatings(universe: PortfolioUniverse) {
   })
 
   const adaptive = useQuery({
-    queryKey: [...QUERY_KEYS.research.scan, 'adaptive-weights'],
+    queryKey: [...QUERY_KEYS.researchEngine.scan, 'adaptive-weights'],
     queryFn: () => fetchScan({ preset: 'adaptive_30d', limit: 1 }),
     staleTime: 30 * 60_000,
   })

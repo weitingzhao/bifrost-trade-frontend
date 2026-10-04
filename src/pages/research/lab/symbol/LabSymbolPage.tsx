@@ -203,7 +203,7 @@ export default function LabSymbolPage() {
 
   // The company's name off the wide universe row — one request, cached an hour.
   const wideQ = useQuery({
-    queryKey: ['research', 'sepa-wide-one', sym],
+    queryKey: ['research-engine', 'sepa-wide-one', sym],
     queryFn: () => fetchSepaScreenerWide(5, [sym]),
     enabled: Boolean(sym),
     staleTime: 60 * 60_000,

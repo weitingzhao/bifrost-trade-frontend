@@ -149,8 +149,8 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
   const batchMut = useMutation({
     mutationFn: (v: { objectiveId: string; overrides: BatchRunOverrides }) => batchRunObjective(v.objectiveId, v.overrides),
     onSuccess: (res) => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'loop', 'autopilot'] })
       if (res.run?.id) navigate(loopPipelinePath(res.run.id, { live: true }))
     },
   })

@@ -34,7 +34,7 @@ export function HistoryCorrelation() {
   const dates = useMemo(() => (asOf && syms.length >= 2 ? weekdaysBack(asOf, DRAWN) : []), [asOf, syms.length])
   const readings = useQueries({
     queries: dates.map((d) => ({
-      queryKey: ['research', 'risk', 'correlation', 'as-of', syms.join(','), CORR_WINDOW, d],
+      queryKey: ['research-engine', 'risk', 'correlation', 'as-of', syms.join(','), CORR_WINDOW, d],
       queryFn: () => fetchRiskCorrelation(syms, CORR_WINDOW, d),
       staleTime: 30 * 60_000,
     })),

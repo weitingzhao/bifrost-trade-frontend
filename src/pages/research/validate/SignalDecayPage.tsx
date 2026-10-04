@@ -215,7 +215,7 @@ function CombinedLensesMatrix({
   const queries = useQueries({
     queries: cells.map((cell) => ({
       queryKey: [
-        ...QUERY_KEYS.research.signalDecayIntersect,
+        ...QUERY_KEYS.researchEngine.signalDecayIntersect,
         cell.key,
         windowDays,
         symbol ?? null,
@@ -422,17 +422,17 @@ export default function SignalDecayPage() {
   )
 
   const q30 = useQuery({
-    queryKey: [...QUERY_KEYS.research.signalDecay, lens, 30, symbol ?? null, regime],
+    queryKey: [...QUERY_KEYS.researchEngine.signalDecay, lens, 30, symbol ?? null, regime],
     queryFn: () => fetchSignalDecay({ lens, windowDays: 30, symbol, regime }),
     staleTime: 60_000,
   })
   const q90 = useQuery({
-    queryKey: [...QUERY_KEYS.research.signalDecay, lens, 90, symbol ?? null, regime],
+    queryKey: [...QUERY_KEYS.researchEngine.signalDecay, lens, 90, symbol ?? null, regime],
     queryFn: () => fetchSignalDecay({ lens, windowDays: 90, symbol, regime }),
     staleTime: 60_000,
   })
   const q252 = useQuery({
-    queryKey: [...QUERY_KEYS.research.signalDecay, lens, 252, symbol ?? null, regime],
+    queryKey: [...QUERY_KEYS.researchEngine.signalDecay, lens, 252, symbol ?? null, regime],
     queryFn: () => fetchSignalDecay({ lens, windowDays: 252, symbol, regime }),
     staleTime: 60_000,
   })

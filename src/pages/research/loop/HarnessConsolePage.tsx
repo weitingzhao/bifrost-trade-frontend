@@ -134,14 +134,14 @@ export default function HarnessConsolePage() {
   }
 
   const objectivesQ = useQuery({
-    queryKey: QUERY_KEYS.research.objectives({ status: objStatus }),
+    queryKey: QUERY_KEYS.researchEngine.objectives({ status: objStatus }),
     queryFn: () => fetchObjectives({ status: objStatus }),
     staleTime: 15_000,
     refetchOnWindowFocus: false,
   })
 
   const runsQ = useQuery({
-    queryKey: QUERY_KEYS.research.objectiveRuns({
+    queryKey: QUERY_KEYS.researchEngine.objectiveRuns({
       status: runStatus === 'all' ? undefined : runStatus,
     }),
     queryFn: () =>
@@ -160,9 +160,9 @@ export default function HarnessConsolePage() {
     mutationFn: (v: { objectiveId: string; overrides: BatchRunOverrides }) =>
       batchRunObjective(v.objectiveId, v.overrides),
     onSuccess: (res) => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.drafts })
       const runId = res.run?.id
       if (runId) openPipeline(runId)
     },
@@ -205,11 +205,11 @@ export default function HarnessConsolePage() {
               heldNames.length ? ` (${heldNames.join(', ')})` : ''
             }${reasons.length ? ` — ${reasons[0]}` : ''}`,
       )
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.list })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.drafts })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.list })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'candidates'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
     },
   })
 
@@ -226,7 +226,7 @@ export default function HarnessConsolePage() {
       setObjectiveStatus(v.id, v.status),
     onSuccess: () => {
       setRetiring(null)
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
     },
   })
 
@@ -234,7 +234,7 @@ export default function HarnessConsolePage() {
     mutationFn: (objectiveId: string) => deleteObjective(objectiveId),
     onSuccess: () => {
       setRetiring(null)
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
     },
   })
 
@@ -263,9 +263,9 @@ export default function HarnessConsolePage() {
       setDeletingGroup(null)
       // A surface pointing at a run that no longer exists is a dead tab.
       for (const id of res.runIds) closeSurface(runSurface(id).key)
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'candidates'] })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'candidates'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.drafts })
       const removed = res.candidates_removed ?? 0
       const kept = res.candidates_kept ?? 0
       const dismissed = res.drafts_dismissed ?? 0
@@ -282,8 +282,8 @@ export default function HarnessConsolePage() {
   const curateMut = useMutation({
     mutationFn: (runId: string) => curateRun(runId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.drafts })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.drafts })
     },
   })
 

@@ -125,7 +125,7 @@ export function useDockLists(watchShown: boolean): DockLists {
   const book = useBookLive(false)
   const { objective, isAll } = useObjectiveScope()
   const { data: objectivesData } = useQuery({
-    queryKey: ['research', 'objectives', 'lens'],
+    queryKey: ['research-engine', 'objectives', 'lens'],
     queryFn: () => fetchObjectives({ limit: 50 }),
     staleTime: 5 * 60_000,
   })

@@ -17,7 +17,7 @@ const STALE_MS = 5 * 60_000
 export function useNarrativeWindow(days: number, opts: { limit?: number; enabled?: boolean } = {}) {
   const limit = opts.limit
   return useQuery({
-    queryKey: ['research', 'narrative', days, 'all', limit ?? null],
+    queryKey: ['research-engine', 'narrative', days, 'all', limit ?? null],
     queryFn: () => fetchNarrative(days, { limit }),
     staleTime: STALE_MS,
     enabled: opts.enabled ?? true,
@@ -28,7 +28,7 @@ export function useNarrativeWindow(days: number, opts: { limit?: number; enabled
 export function useSymbolNarrative(symbol: string | null | undefined, days: number) {
   const sym = symbol?.trim().toUpperCase() || null
   return useQuery({
-    queryKey: ['research', 'narrative', days, 'symbol', sym],
+    queryKey: ['research-engine', 'narrative', days, 'symbol', sym],
     queryFn: () => fetchNarrative(days, { symbol: sym ?? undefined }),
     staleTime: STALE_MS,
     enabled: sym != null,
@@ -42,7 +42,7 @@ export function useSymbolNarrative(symbol: string | null | undefined, days: numb
 export function useEarningsDates(symbol: string | null | undefined) {
   const sym = symbol?.trim().toUpperCase() || null
   return useQuery({
-    queryKey: ['research', 'narrative', 'earnings', sym],
+    queryKey: ['research-engine', 'narrative', 'earnings', sym],
     queryFn: () => fetchEarningsDates(sym as string),
     staleTime: 60 * 60_000,
     enabled: sym != null,

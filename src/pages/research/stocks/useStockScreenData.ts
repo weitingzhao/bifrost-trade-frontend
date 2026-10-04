@@ -15,6 +15,7 @@
  *   momentum-tier signals, sentiment); their counts come from `tier-stats`.
  */
 import { useMemo } from 'react'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { fetchSepaScreenerWide } from '@/api/research/sepaScreenerWide'
 import { fetchMomentumRadar, type MomentumScore } from '@/api/researchEngine'
@@ -96,12 +97,12 @@ async function chipSet(stage: SetStage, id: string): Promise<string[]> {
 
 export function useStockScreenData(on: Record<string, boolean>) {
   const wide = useQuery({
-    queryKey: ['research', 'stock-screen', 'wide'],
+    queryKey: ['research-engine', 'stock-screen', 'wide'],
     queryFn: () => fetchSepaScreenerWide(SET_PAGE),
     staleTime: STALE,
   })
-  const radar = useQuery({ queryKey: ['research', 'stock-screen', 'radar-latest'], queryFn: radarLatest, staleTime: STALE })
-  const scan = useQuery({ queryKey: ['research', 'stock-screen', 'scan-all'], queryFn: scanAll, staleTime: STALE })
+  const radar = useQuery({ queryKey: ['research-engine', 'stock-screen', 'radar-latest'], queryFn: radarLatest, staleTime: STALE })
+  const scan = useQuery({ queryKey: ['research-engine', 'stock-screen', 'scan-all'], queryFn: scanAll, staleTime: STALE })
   const opps = useQuery({
     queryKey: ['strategy', 'opportunities', 'active'],
     queryFn: () => fetchOpportunities(true),
@@ -109,17 +110,17 @@ export function useStockScreenData(on: Record<string, boolean>) {
   })
   const narr = useNarrativeWindow(NARRATIVE_WINDOW_DAYS, { limit: 2000 })
   const structStats = useQuery({
-    queryKey: ['research', 'tier-stats', 'structure'],
+    queryKey: QUERY_KEYS.tradeResearch.tierStats('structure'),
     queryFn: () => fetchTierStats('structure'),
     staleTime: STALE,
   })
   const sentStats = useQuery({
-    queryKey: ['research', 'tier-stats', 'sentiment'],
+    queryKey: QUERY_KEYS.tradeResearch.tierStats('sentiment'),
     queryFn: () => fetchTierStats('sentiment'),
     staleTime: STALE,
   })
   const momStats = useQuery({
-    queryKey: ['research', 'tier-stats', 'momentum'],
+    queryKey: QUERY_KEYS.tradeResearch.tierStats('momentum'),
     queryFn: () => fetchTierStats('momentum'),
     staleTime: STALE,
   })
@@ -134,7 +135,7 @@ export function useStockScreenData(on: Record<string, boolean>) {
   }, [on])
   const setQs = useQueries({
     queries: wanted.map((w) => ({
-      queryKey: ['research', 'stock-screen', 'set', w.stage, w.id],
+      queryKey: QUERY_KEYS.tradeResearch.screenSet(w.stage, w.id),
       queryFn: () => chipSet(w.stage, w.id),
       staleTime: STALE,
     })),

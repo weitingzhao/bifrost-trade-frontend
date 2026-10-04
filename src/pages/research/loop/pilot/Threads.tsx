@@ -61,7 +61,7 @@ const BridgeDialog = lazy(() =>
   import('@/components/cockpit/BridgeDialog').then((m) => ({ default: m.BridgeDialog })),
 )
 
-const sessionKey = (row: CopilotSessionSummary) => ['research', 'copilot', 'session', row.id, row.updated_at ?? null]
+const sessionKey = (row: CopilotSessionSummary) => ['research-engine', 'copilot', 'session', row.id, row.updated_at ?? null]
 
 export function Threads() {
   const queryClient = useQueryClient()
@@ -119,7 +119,7 @@ export function Threads() {
     setPinError(null)
     try {
       await patchCopilotSession(row.id, { pinned: !row.pinned })
-      await queryClient.invalidateQueries({ queryKey: ['research', 'copilot', 'sessions'] })
+      await queryClient.invalidateQueries({ queryKey: ['research-engine', 'copilot', 'sessions'] })
     } catch (err) {
       setPinError(err)
     } finally {
@@ -135,7 +135,7 @@ export function Threads() {
     setRowError(null)
     try {
       await patchCopilotSession(id, { title: trimmed })
-      await queryClient.invalidateQueries({ queryKey: ['research', 'copilot', 'sessions'] })
+      await queryClient.invalidateQueries({ queryKey: ['research-engine', 'copilot', 'sessions'] })
     } catch (err) {
       setRowError(err)
     }
@@ -150,7 +150,7 @@ export function Threads() {
       if (copilotSessionStore.getState().sessionId === archiveTarget.id) {
         copilotSessionStore.clearSession()
       }
-      await queryClient.invalidateQueries({ queryKey: ['research', 'copilot', 'sessions'] })
+      await queryClient.invalidateQueries({ queryKey: ['research-engine', 'copilot', 'sessions'] })
       setArchiveTarget(null)
     } catch (err) {
       setRowError(err)

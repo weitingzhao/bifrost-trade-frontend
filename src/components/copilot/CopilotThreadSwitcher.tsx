@@ -48,7 +48,7 @@ export function CopilotThreadSwitcher() {
     if (!trimmed || trimmed === (current.title ?? '').trim()) return
     try {
       await patchCopilotSession(current.id, { title: trimmed })
-      await queryClient.invalidateQueries({ queryKey: ['research', 'copilot', 'sessions'] })
+      await queryClient.invalidateQueries({ queryKey: ['research-engine', 'copilot', 'sessions'] })
     } catch {
       // list is best-effort
     }

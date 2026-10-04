@@ -21,7 +21,7 @@ const AXIS_ORDER = [
 export function YouBenchCard() {
   const navigate = useNavigate()
   const memQ = useQuery({
-    queryKey: ['research', 'journal', 'memory'],
+    queryKey: ['research-engine', 'journal', 'memory'],
     queryFn: fetchMemory,
     refetchInterval: 300_000,
     retry: 1,

@@ -155,7 +155,7 @@ interface CalRow {
 export function BriefCalendar() {
   const [today] = useMemoToday()
   const calendar = useQuery({
-    queryKey: ['research', 'events', 'calendar'],
+    queryKey: ['research-engine', 'events', 'calendar'],
     queryFn: fetchEventCalendar,
     staleTime: 5 * 60_000,
   })

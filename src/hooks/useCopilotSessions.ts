@@ -15,7 +15,7 @@ export function useCopilotSessions(limit = 20, search?: string) {
   const qc = useQueryClient()
   const term = (search ?? '').trim()
   const q = useQuery({
-    queryKey: ['research', 'copilot', 'sessions', limit, term],
+    queryKey: ['research-engine', 'copilot', 'sessions', limit, term],
     queryFn: () => fetchCopilotSessions(limit, term),
     staleTime: 15_000,
     refetchOnWindowFocus: true,
@@ -27,7 +27,7 @@ export function useCopilotSessions(limit = 20, search?: string) {
   useEffect(() => {
     if (typeof window === 'undefined') return
     function refresh() {
-      qc.invalidateQueries({ queryKey: ['research', 'copilot', 'sessions'] })
+      qc.invalidateQueries({ queryKey: ['research-engine', 'copilot', 'sessions'] })
     }
     window.addEventListener('copilot:turn-done', refresh)
     return () => window.removeEventListener('copilot:turn-done', refresh)

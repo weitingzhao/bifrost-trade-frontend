@@ -29,6 +29,7 @@
  *   stays amber, as the design sets it.
  */
 import { useRef } from 'react'
+import { QUERY_KEYS } from '@/constants/queryKeys'
 import { Link, useLocation } from 'react-router-dom'
 import { ClipboardList, ExternalLink, Flag, KeyRound, Keyboard, Scale, SlidersHorizontal } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
@@ -160,7 +161,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
   // Read only while the card is open (same rule as the header's tooltip):
   // the unread count on My reports comes from the feedback store's summary.
   const sumQ = useQuery({
-    queryKey: ['research', 'feedback', 'summary'],
+    queryKey: QUERY_KEYS.tradeResearch.feedback.summary,
     queryFn: fetchFeedbackSummary,
     staleTime: 60_000,
     retry: 1,

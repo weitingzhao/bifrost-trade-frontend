@@ -144,7 +144,7 @@ export default function CandidatePoolPage() {
     hold(row.id, {
       msg: `${row.symbol} dropped`,
       commit: () => dismissCandidate(row.id),
-      invalidate: [['research', 'candidates']],
+      invalidate: [['research-engine', 'candidates']],
       failed: `${row.symbol} was not dropped`,
     })
 
@@ -172,7 +172,7 @@ export default function CandidatePoolPage() {
   // newest date: the two diverge exactly when a run proposes nothing, which is
   // when you most want to know it ran.
   const runsQ = useQuery({
-    queryKey: ['research', 'objective-runs', 'pool'],
+    queryKey: ['research-engine', 'objective-runs', 'pool'],
     queryFn: () => fetchObjectiveRuns({ limit: 200 }),
     staleTime: 5 * 60_000,
   })

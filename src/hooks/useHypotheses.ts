@@ -21,7 +21,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 
 export function useHypothesisList(opts: ListHypothesesQuery = {}, enabled = true) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.research.hypothesis.list, opts],
+    queryKey: [...QUERY_KEYS.researchEngine.hypothesis.list, opts],
     queryFn: () => listHypotheses(opts),
     enabled,
     staleTime: 15_000,
@@ -31,7 +31,7 @@ export function useHypothesisList(opts: ListHypothesesQuery = {}, enabled = true
 
 export function useActiveHypotheses(topN = 5, enabled = true) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.research.hypothesis.summaryActive, topN],
+    queryKey: [...QUERY_KEYS.researchEngine.hypothesis.summaryActive, topN],
     queryFn: () => fetchActiveSummary(topN),
     enabled,
     staleTime: 15_000,
@@ -41,7 +41,7 @@ export function useActiveHypotheses(topN = 5, enabled = true) {
 
 export function useHypothesis(id: string | undefined, enabled = true) {
   return useQuery({
-    queryKey: id ? QUERY_KEYS.research.hypothesis.byId(id) : ['research', 'hypothesis', 'idle'],
+    queryKey: id ? QUERY_KEYS.researchEngine.hypothesis.byId(id) : ['research-engine', 'hypothesis', 'idle'],
     queryFn: () => (id ? getHypothesis(id) : Promise.reject(new Error('missing id'))),
     enabled: Boolean(id) && enabled,
     staleTime: 15_000,
@@ -50,9 +50,9 @@ export function useHypothesis(id: string | undefined, enabled = true) {
 }
 
 function invalidateHypothesisCaches(queryClient: ReturnType<typeof useQueryClient>) {
-  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.list })
-  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.summaryActive })
-  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.home })
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.list })
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.summaryActive })
+  queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.home })
 }
 
 export function useCreateHypothesis() {
@@ -70,7 +70,7 @@ export function usePatchHypothesis() {
       patchHypothesis(args.id, args.patch),
     onSuccess: (updated: Hypothesis) => {
       invalidateHypothesisCaches(queryClient)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.research.hypothesis.byId(updated.id) })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.hypothesis.byId(updated.id) })
     },
   })
 }

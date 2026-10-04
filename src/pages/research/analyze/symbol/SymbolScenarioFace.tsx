@@ -115,7 +115,7 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
   const num = (val: unknown) => (typeof val === 'number' && Number.isFinite(val) ? val : null)
 
   const histQ = useQuery({
-    queryKey: ['research', 'terrain-history', sym, 30],
+    queryKey: ['research-engine', 'terrain-history', sym, 30],
     queryFn: () => fetchTerrainHistory(sym, 30),
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,

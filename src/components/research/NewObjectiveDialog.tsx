@@ -75,8 +75,8 @@ export function NewObjectiveForm({ onClose, seed }: { onClose: () => void; seed?
   const mutation = useMutation({
     mutationFn: (body: ObjectiveCreateBody) => createObjective(body),
     onSuccess: (created) => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'loop', 'autopilot'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'loop', 'autopilot'] })
       onClose()
       navigate(objectivePath(created.id))
     },

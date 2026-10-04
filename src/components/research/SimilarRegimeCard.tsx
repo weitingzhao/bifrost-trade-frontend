@@ -80,7 +80,7 @@ export function SimilarRegimeCard({
     lensValue !== '' &&
     (typeof lensValue === 'string' || Number.isFinite(lensValue))
   const q = useQuery({
-    queryKey: ['research', 'similar-regime', lens, symbol, lensValue, horizon, k],
+    queryKey: ['research-engine', 'similar-regime', lens, symbol, lensValue, horizon, k],
     queryFn: () =>
       fetchSimilarRegime({
         lens,

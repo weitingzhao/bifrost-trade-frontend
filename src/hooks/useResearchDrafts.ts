@@ -16,7 +16,7 @@ import {
   type DraftStatus,
 } from '@/api/researchDrafts'
 
-export const researchDraftsQueryKey = ['research', 'drafts'] as const
+export const researchDraftsQueryKey = ['research-engine', 'drafts'] as const
 
 /**
  * Pending drafts.
@@ -55,7 +55,7 @@ export function useApproveDraft() {
     mutationFn: (id: string) => approveResearchDraft(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: researchDraftsQueryKey })
-      void qc.invalidateQueries({ queryKey: ['research', 'hypothesis'] })
+      void qc.invalidateQueries({ queryKey: ['research-engine', 'hypothesis'] })
     },
   })
 }

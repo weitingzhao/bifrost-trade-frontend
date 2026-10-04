@@ -10,7 +10,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
  */
 export function useUniverseReach() {
   return useQuery<UniverseReach>({
-    queryKey: QUERY_KEYS.research.universeReach,
+    queryKey: QUERY_KEYS.researchEngine.universeReach,
     queryFn: fetchUniverseReach,
     staleTime: 15 * 60_000,
     refetchOnWindowFocus: false,

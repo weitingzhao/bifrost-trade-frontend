@@ -4,7 +4,7 @@ import { fetchSignalHealth } from '@/api/research/similarRegime'
 
 export function useCopilotStanding() {
   return useQuery({
-    queryKey: ['research', 'copilot', 'standing'],
+    queryKey: ['research-engine', 'copilot', 'standing'],
     queryFn: fetchCopilotStanding,
     staleTime: 30_000,
     refetchInterval: 60_000,
@@ -14,7 +14,7 @@ export function useCopilotStanding() {
 /** Same key the Signal Health page uses, so the two never disagree. */
 export function useSignalHealthSummary() {
   return useQuery({
-    queryKey: ['research', 'signal-health'],
+    queryKey: ['research-engine', 'signal-health'],
     queryFn: fetchSignalHealth,
     staleTime: 60_000,
   })

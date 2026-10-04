@@ -68,7 +68,7 @@ const LAMP_TEXT: Record<string, string> = {
 
 export default function LensCoveragePage() {
   const q = useQuery({
-    queryKey: ['research', 'lens-coverage'],
+    queryKey: ['research-engine', 'lens-coverage'],
     queryFn: () => fetchLensCoverage(),
     staleTime: 60_000,
   })
@@ -77,7 +77,7 @@ export default function LensCoveragePage() {
   // a share of the whole universe wearing a tier's name.
   const tierQs = useQueries({
     queries: (data?.tiers ?? []).map((t) => ({
-      queryKey: ['research', 'lens-coverage', t],
+      queryKey: ['research-engine', 'lens-coverage', t],
       queryFn: () => fetchLensCoverage([t]),
       staleTime: 60_000,
     })),

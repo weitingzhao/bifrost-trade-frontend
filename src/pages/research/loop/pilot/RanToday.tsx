@@ -60,7 +60,7 @@ const DRAFT_PAGE = 100
 export function RanToday() {
   const queries = useQueries({
     queries: DRAFT_STATUSES.map((status) => ({
-      queryKey: ['research', 'drafts', 'ran-today', status],
+      queryKey: ['research-engine', 'drafts', 'ran-today', status],
       queryFn: () => listResearchDrafts({ status, limit: DRAFT_PAGE }),
       staleTime: 60_000,
     })),
@@ -79,7 +79,7 @@ export function RanToday() {
   const runIds = useMemo(() => [...new Set(rows.flatMap((r) => r.runIds))].sort(), [rows])
   const runQueries = useQueries({
     queries: runIds.map((id) => ({
-      queryKey: ['research', 'objective-run', id],
+      queryKey: ['research-engine', 'objective-run', id],
       queryFn: () => fetchObjectiveRunIfKept(id),
       staleTime: 60_000,
     })),
@@ -175,7 +175,7 @@ function Scheduled({ wroteToday }: { wroteToday: ReadonlySet<string> | null }) {
   const standing = useAutopilotStanding()
   const objectivesQ = useActiveObjectives()
   const orchestration = useQuery({
-    queryKey: ['research', 'orchestration', 'status'],
+    queryKey: ['research-engine', 'orchestration', 'status'],
     queryFn: fetchOrchestrationStatus,
     staleTime: 5 * 60_000,
   })
@@ -257,8 +257,8 @@ function RunOneNow() {
     mutationFn: (v: { objectiveId: string; overrides: BatchRunOverrides }) =>
       batchRunObjective(v.objectiveId, v.overrides),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objective-runs'] })
-      void queryClient.invalidateQueries({ queryKey: ['research', 'objectives'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objective-runs'] })
+      void queryClient.invalidateQueries({ queryKey: ['research-engine', 'objectives'] })
       void queryClient.invalidateQueries({ queryKey: researchDraftsQueryKey })
     },
   })

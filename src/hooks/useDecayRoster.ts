@@ -22,7 +22,7 @@ export function useDecayRoster() {
   const queries = useQueries({
     queries: DECAY_LENSES.flatMap((l) =>
       [NOW_DAYS, YEAR_DAYS].map((windowDays) => ({
-        queryKey: ['research', 'signal-decay', 'roster', l.value, windowDays],
+        queryKey: ['research-engine', 'signal-decay', 'roster', l.value, windowDays],
         queryFn: () => fetchSignalDecay({ lens: l.value, windowDays }),
         staleTime: 30 * 60_000,
         retry: 0,

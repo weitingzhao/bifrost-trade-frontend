@@ -392,7 +392,7 @@ function PilotCapsule({ activePath, children }: { activePath: string; children: 
 function LoopRunButton() {
   useSurfaces()
   const latestQ = useQuery({
-    queryKey: ['research', 'objective-runs', 'rail-latest'],
+    queryKey: ['research-engine', 'objective-runs', 'rail-latest'],
     queryFn: () => fetchObjectiveRuns({ limit: 1 }),
     staleTime: 60_000,
     refetchOnWindowFocus: false,

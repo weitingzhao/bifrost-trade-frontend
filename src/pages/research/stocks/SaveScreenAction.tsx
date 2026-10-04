@@ -25,7 +25,7 @@ export function SaveScreenAction({ screen, stages, nOn }: { screen: ScreenState;
     onSuccess: (sc) => {
       setOpen(false)
       setName('')
-      void qc.invalidateQueries({ queryKey: ['research', 'saved-screens'] })
+      void qc.invalidateQueries({ queryKey: ['research-engine', 'saved-screens'] })
       notify(`Saved “${sc.name}” to My screens. It re-runs on tomorrow’s data; the model choice is not part of it.`)
     },
   })

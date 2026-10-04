@@ -196,7 +196,7 @@ export default function ReviewObjectivesPage() {
   const objectivesQ = useActiveObjectives()
   const hypothesesQ = useHypothesisList({ limit: 200 })
   const candidatesQ = useQuery({
-    queryKey: ['research', 'candidates', 'objectives', 'all'],
+    queryKey: ['research-engine', 'candidates', 'objectives', 'all'],
     queryFn: () => fetchCandidates({ status: 'all' }),
     staleTime: 60_000,
   })

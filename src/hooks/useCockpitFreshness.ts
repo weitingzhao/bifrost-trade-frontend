@@ -24,14 +24,14 @@ function ageLamp(iso: string | null | undefined, hasError: boolean, hasData: boo
 
 export function useCockpitFreshness() {
   const hypQ = useQuery({
-    queryKey: [...QUERY_KEYS.research.hypothesis.summaryActive, 1, 'cockpit-freshness'],
+    queryKey: [...QUERY_KEYS.researchEngine.hypothesis.summaryActive, 1, 'cockpit-freshness'],
     queryFn: () => fetchActiveSummary(1),
     staleTime: 15_000,
     refetchInterval: POLL_MS,
     refetchOnWindowFocus: false,
   })
   const btQ = useQuery({
-    queryKey: [...QUERY_KEYS.research.backtest.runs, { limit: 1 }, 'cockpit-freshness'],
+    queryKey: [...QUERY_KEYS.researchEngine.backtest.runs, { limit: 1 }, 'cockpit-freshness'],
     queryFn: () => fetchBacktestRuns({ limit: 1 }),
     staleTime: 15_000,
     refetchInterval: POLL_MS,

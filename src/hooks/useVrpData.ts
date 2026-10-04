@@ -19,7 +19,7 @@ const DEFAULT_STALE_MS = 5 * 60_000
 
 export function useVrpLatest(symbol: string) {
   return useQuery<VrpRow | null>({
-    queryKey: QUERY_KEYS.research.vrp.latest(symbol),
+    queryKey: QUERY_KEYS.researchEngine.vrp.latest(symbol),
     queryFn: () => fetchVrpLatest(symbol),
     enabled: Boolean(symbol),
     staleTime: DEFAULT_STALE_MS,
@@ -28,7 +28,7 @@ export function useVrpLatest(symbol: string) {
 
 export function useVrpHistory(symbol: string, days = 252) {
   return useQuery<VrpRow[]>({
-    queryKey: QUERY_KEYS.research.vrp.history(symbol, days),
+    queryKey: QUERY_KEYS.researchEngine.vrp.history(symbol, days),
     queryFn: () => fetchVrpHistory(symbol, days),
     enabled: Boolean(symbol),
     staleTime: DEFAULT_STALE_MS,
@@ -37,7 +37,7 @@ export function useVrpHistory(symbol: string, days = 252) {
 
 export function useVrpExtremes(bucket: 'high' | 'low', limit = 20) {
   return useQuery<VrpExtremesResponse>({
-    queryKey: QUERY_KEYS.research.vrp.extremes(bucket, limit),
+    queryKey: QUERY_KEYS.researchEngine.vrp.extremes(bucket, limit),
     queryFn: () => fetchVrpExtremes(bucket, limit),
     staleTime: DEFAULT_STALE_MS,
   })
@@ -45,7 +45,7 @@ export function useVrpExtremes(bucket: 'high' | 'low', limit = 20) {
 
 export function useRvCone(symbol: string, years = 2) {
   return useQuery<RvCone | null>({
-    queryKey: QUERY_KEYS.research.vrp.rvCone(symbol, years),
+    queryKey: QUERY_KEYS.researchEngine.vrp.rvCone(symbol, years),
     queryFn: () => fetchRvCone(symbol, years),
     enabled: Boolean(symbol),
     staleTime: DEFAULT_STALE_MS,
@@ -54,7 +54,7 @@ export function useRvCone(symbol: string, years = 2) {
 
 export function useEarningsMoves(symbol: string, limit = 8) {
   return useQuery<EarningsMoves | null>({
-    queryKey: QUERY_KEYS.research.vrp.earningsMoves(symbol, limit),
+    queryKey: QUERY_KEYS.researchEngine.vrp.earningsMoves(symbol, limit),
     queryFn: () => fetchEarningsMoves(symbol, limit),
     enabled: Boolean(symbol),
     // Prints land a few times a year; the rows move only when a close or an IV revises.

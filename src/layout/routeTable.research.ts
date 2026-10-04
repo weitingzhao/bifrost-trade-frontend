@@ -83,9 +83,10 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // One inbox, and it seats in Review (§5a.8). The trail follows the row.
     crumbs: REVIEW,
     design: {
-      // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
+      // Rev .143–.144 (kinds, calls, sections, folded-row actions, keys)
+      // built in batch 4 of the Package .55 plan, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.85',
+      rev: '2026-10-02.144',
       note: DESIGN_NOTES['/research/loop/decisions'],
     },
   },

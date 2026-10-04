@@ -32,4 +32,10 @@
 // 0.9.1 (Rev .135–.142): every Button a capsule; FilterBar without a slab (sticky =
 // the scroll edge); PageHead capsule tabs, no hairline, glass ⓘ note; the sidebar
 // fills its row only on keyboard focus, overlay scrollbar, glass Filter pages.
-export const UI_VERSION_NOW = '0.9.1'
+// 0.10.0 (Rev .150–.154): the list grammar of a grid on glass behind the `data-sr-list`
+// scope (DenseDataTable variant="list", DenseTableRow selected / rowTint, subhead rows
+// as data-sr-group, DenseList / DenseListHead / DenseListRow); stuck marks (useStuck,
+// useStuckMarks: data-stuck on sticky bars and heads, data-sx on wide boxes) and
+// data-sr-edge fade | solid; the sticky toolbar's band only while stuck; IconActionButton
+// variant="close" (data-sr-close); hero readings step 30 / 26 / 24 and wrap at spaces.
+export const UI_VERSION_NOW = '0.10.0'

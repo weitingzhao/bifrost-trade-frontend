@@ -23,8 +23,8 @@ export const positionsUi = {
 
   /**
    * The data card (design Rev .62, Page Look 1a — was §16.6's framed raised
-   * card): no frame, ink 4%, radius 12. Rows inside tables keep their
-   * dividers, which are for scanning, not decoration.
+   * card): no frame, ink 4%, radius 12. Rows inside tables part by the list
+   * grammar's zebra, not by rules (Rev .153).
    */
   panel: 'min-w-0 border mat-card',
   // Rev .62: the head is a rule, not a band — no fill, the ink-6% line.
@@ -50,12 +50,11 @@ export const positionsUi = {
     'font-mono text-xs text-foreground outline-none',
   ),
 
-  // §17.2 (Rev .51, Owner 2026-09-25): 11px, mute. Inside a list scope
-  // (`data-sr-list`, Rev .153 — Positions since the Rev .154 pilot) the scope
-  // overrides the caps, the tracking and the rules: sentence case, an ink 8%
-  // hairline under the head, no row rules, the zebra instead. The caps and
-  // rules here stay for the pages that share these tokens and have not opened
-  // the scope yet; they go when the grammar is site-wide.
-  th: 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-meta font-semibold uppercase leading-[1.3] tracking-[0.05em] text-[var(--sk-mute)]',
-  td: 'whitespace-nowrap border-b border-border px-2 py-1.25 text-right font-mono text-xs leading-normal tabular-nums',
+  // §17.2 (Rev .51, Owner 2026-09-25): 11px, mute — and since the list grammar
+  // went site-wide (Rev .153–.154, batch 3; `data-sr-list` on every page host)
+  // sentence case with no tracking, one hairline under the head and no row
+  // rules: rows part by the scope's 3% zebra, hover and selection are its
+  // capsules. Thirteen pages share these two tokens.
+  th: 'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-meta font-semibold leading-[1.3] text-[var(--sk-mute)]',
+  td: 'whitespace-nowrap px-2 py-1.25 text-right font-mono text-xs leading-normal tabular-nums',
 } as const

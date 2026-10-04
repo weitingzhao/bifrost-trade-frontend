@@ -1,4 +1,9 @@
-/** Tailwind class bundles for Instance tab detail panels (replaces InstanceStrategyPanel.module.css). */
+/**
+ * Tailwind class bundles for Instance tab detail panels (replaces InstanceStrategyPanel.module.css).
+ * Rows follow the list grammar (Rev .153–.154, site-wide since batch 3): no row
+ * rules, no own hover, a row state as `--sr-row` (the scope paints it as the
+ * row's capsule; a `<tr>` background never shows inside a scope).
+ */
 import { cn } from '@/lib/utils'
 
 export const tradePanel = {
@@ -6,11 +11,11 @@ export const tradePanel = {
   filters: 'mb-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5',
   filterBubbleRow: 'inline-flex shrink-0 flex-nowrap items-center gap-x-2 gap-y-1',
   filterBubbleLabel:
-    'shrink-0 whitespace-nowrap text-dense-label font-semibold uppercase tracking-wide text-muted-foreground',
+    'shrink-0 whitespace-nowrap text-dense-label font-semibold text-muted-foreground',
   tableWrap: cn('w-full min-w-0', 'dense-scroll-x'),
   sheetRow:
-    'cursor-pointer hover:bg-muted/35 [&_td]:whitespace-nowrap [&_td]:text-dense-body [&_td:nth-child(2)]:whitespace-normal [&_td:nth-child(2)]:align-top [&_td:nth-child(3)]:whitespace-normal [&_td:nth-child(4)]:whitespace-normal [&_td:nth-child(4)]:align-top',
-  sheetRowExpanded: 'bg-muted/25',
+    'cursor-pointer [&_td]:whitespace-nowrap [&_td]:text-dense-body [&_td:nth-child(2)]:whitespace-normal [&_td:nth-child(2)]:align-top [&_td:nth-child(3)]:whitespace-normal [&_td:nth-child(4)]:whitespace-normal [&_td:nth-child(4)]:align-top',
+  sheetRowExpanded: '[--sr-row:color-mix(in_srgb,var(--sk-ink)_8%,transparent)]',
   oppCell: 'max-w-0 overflow-hidden align-top',
   execQtyCell: 'max-w-36 overflow-hidden text-ellipsis tabular-nums',
   contractTypeCell: 'align-top whitespace-normal',
@@ -18,7 +23,7 @@ export const tradePanel = {
     'block font-semibold leading-snug text-foreground whitespace-normal break-words [overflow-wrap:anywhere]',
   oppSecondary:
     'm-0 cursor-pointer border-none bg-transparent p-0 text-left font-mono text-dense-label font-semibold leading-tight text-link no-underline transition-colors hover:text-link-hover hover:underline focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-link',
-  detailRow: 'border-b border-border/45 bg-transparent hover:bg-transparent',
+  detailRow: 'bg-transparent',
   detailCell:
     'max-w-0 overflow-x-auto overflow-y-visible border-t-0 bg-card p-2 pb-3 align-top whitespace-normal [-webkit-overflow-scrolling:touch]',
   detailStack: 'flex min-w-0 flex-col gap-1.5',
@@ -30,8 +35,7 @@ export const tradePanel = {
   subHeading: 'mb-1.5 border-none p-0 text-sm font-semibold leading-snug text-[#7a8492]',
   subSectionBody: 'min-w-0 border-none bg-transparent p-0',
   subTableWrap: 'm-0 w-full min-w-0 overflow-x-visible rounded-none border-none bg-transparent',
-  subExecRow:
-    'border-b border-border/35 bg-secondary text-[0.88em] hover:bg-[color-mix(in_srgb,var(--secondary)_92%,var(--foreground)_8%)]',
+  subExecRow: 'text-[0.88em]',
   subMutedCell: 'font-normal text-[#7a8492]',
   subTimeAgo: 'font-medium text-warning',
   subExpiryDte: 'text-dense-label font-semibold text-warning',

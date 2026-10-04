@@ -387,6 +387,8 @@ export function EquipFloat() {
         // Frost (Rev .151–.152): thick glass under a page, none under a drawer-kind surface.
         data-frost-host={float.canPage ? 'thick' : 'drawer'}
         data-mat=""
+        // The list grammar, as in the page lane (Rev .153–.154).
+        data-sr-list=""
         onClickCapture={keepEquipmentLinksIn('float')}
       >
         <SurfaceBody surface={float} />

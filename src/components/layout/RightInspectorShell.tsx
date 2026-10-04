@@ -84,6 +84,9 @@ export function RightInspectorShell({
       // vibrancy ink, group fills for the opaque inks; docked, it is thick
       // glass detached 8px like the page (Owner #8). Off with ?frost=0 / solid.
       data-frost-host="inspector"
+      // The list grammar, as in the page lane (Rev .153–.154): the inspector's
+      // tables and data-sr-row lines read as lists on its glass.
+      data-sr-list=""
       data-inspector-dock={docked ? '' : undefined}
       style={{ width: docked ? `${width}px` : `min(${width}px, 96vw)` }}
       role="dialog"

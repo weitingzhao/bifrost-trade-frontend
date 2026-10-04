@@ -445,11 +445,6 @@ export default function PositionsPage() {
   )
 
   return (
-    // The list grammar (design Rev .153–.154 §17.2, @bifrost/ui 0.10.0): every
-    // table and data-sr-row line on this page reads as a macOS list on glass.
-    // Positions is one of the two Rev .154 pilots — the scope is opened here,
-    // page by page, until the Owner has compared it (designNotes).
-    <div data-sr-list="" className="contents">
     <PageShell padding="compact" className="space-y-3">
       <section className={positionsUi.pageCard} aria-label="Positions">
         {/* §16.10 sample page (Rev .32): description behind ⓘ, the fetch
@@ -797,6 +792,5 @@ export default function PositionsPage() {
       />
       <InspectorDrawer state={inspectorDrawerState} onClose={closeInspector} />
     </PageShell>
-    </div>
   )
 }

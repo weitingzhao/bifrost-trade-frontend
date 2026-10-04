@@ -148,10 +148,11 @@ export function LoopRunPipelineBody({
   const toggle = (step: string) => setOpen((o) => ({ ...o, [step]: !o[step] }))
 
   return (
-    // The drawer on the panel's glass (Rev .151): the list grammar for its
-    // lists (data-sr-list, Rev .153), a clear head that bands only while
-    // stuck, the content at 12 × 16 (Autopilot Console L399–410).
-    <div data-sr-list="" className="pb-3">
+    // The drawer on the panel's glass (Rev .151): its lists read in the list
+    // grammar the panel body opens (data-sr-list, Rev .153), a clear head that
+    // bands only while stuck, the content at 12 × 16 (Autopilot Console
+    // L399–410).
+    <div className="pb-3">
       <RightInspectorHeader
         hideWide
         // The prototype's three-line head: kind (11/600) · what (14/600) · id (mono 10).

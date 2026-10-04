@@ -92,8 +92,8 @@ export function DecisionMemo({
 
       {/* A list on glass (Rev .153–.154 §17.2): no rules between picks, the 3%
           zebra, hover as a 6px capsule; the open pick carries the row state
-          (ink 8%, as the prototype's open row) — the Loop Run root opens the
-          scope (data-sr-list). */}
+          (ink 8%, as the prototype's open row) — the panel / float body (and
+          the page lane) open the scope (data-sr-list). */}
       <ol className="border py-1 mat-card">
         {ratings.map((r, i) => {
           const isOpen = open === r.symbol

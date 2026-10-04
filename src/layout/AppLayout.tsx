@@ -166,6 +166,10 @@ export function AppLayout() {
             id="main-content"
             // The page-material scope (Rev .62): index.css reads it.
             data-mat=""
+            // The list grammar (Rev .153–.154 §17.2, @bifrost/ui 0.10.0): every
+            // table and data-sr-row line in a page reads as a macOS list on glass.
+            // Site-wide since batch 3 (the Positions / Loop Run pilots passed).
+            data-sr-list=""
             tabIndex={-1}
             // The last row scrolls clear of the floating toolbar (Rev .73 §3):
             // its height plus the gap, while the toolbar is shown.

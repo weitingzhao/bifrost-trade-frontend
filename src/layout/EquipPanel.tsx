@@ -282,6 +282,8 @@ export function EquipPanel() {
             // tab (canPage:false — Loop Run, Thread) straight on the panel's.
             data-frost-host={t.canPage ? 'thick' : 'drawer'}
             data-mat=""
+            // The list grammar, as in the page lane (Rev .153–.154).
+            data-sr-list=""
             onClickCapture={keepEquipmentLinksIn('panel')}
           >
             <SurfaceBody surface={t} />

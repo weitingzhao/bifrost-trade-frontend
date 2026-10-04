@@ -47,17 +47,17 @@ export function GroupHeaderRow({
 
   const content = isCategory ? categoryLabel : label
 
+  // A group row is a heading in the list grammar (Rev .153–.154 §17.2,
+  // `data-sr-group`): no fill, no zebra, 600 — the scope draws it; a
+  // clickable one takes the scope's ink 5% hover.
   return (
-    <tr className={cn(!isCategory && 'bg-secondary/50', onClick && !isCategory && 'hover:bg-secondary/70')}>
+    <tr data-sr-group="">
       <td
         colSpan={colSpan}
         className={cn(
-          'px-[var(--table-cell-px)]',
-          isCategory
-            ? 'border-y border-border bg-secondary/60 py-1.5'
-            : 'py-1.5 text-xs font-semibold text-muted-foreground',
+          'px-[var(--table-cell-px)] py-1.5',
+          !isCategory && 'text-xs font-semibold text-muted-foreground',
           onClick && 'cursor-pointer',
-          onClick && isCategory && 'hover:bg-secondary/80',
         )}
       >
         {onClick ? (
@@ -90,12 +90,9 @@ export function GroupSubtotalRow({
   className?: string
 }) {
   return (
-    <DenseTableRow
-      className={cn(
-        'border-t border-dashed border-border/60 bg-secondary/20 hover:bg-secondary/20',
-        className,
-      )}
-    >
+    // A subtotal reads by its italic label alone (list grammar, Rev .153: no
+    // row fill, no rule — a <tr> background never shows inside the scope).
+    <DenseTableRow className={className}>
       <DenseTableCell
         colSpan={labelColSpan}
         className={cn('italic text-muted-foreground text-dense-meta')}
@@ -119,12 +116,9 @@ export function GrandTotalRow({
   className?: string
 }) {
   return (
-    <DenseTableRow
-      className={cn(
-        'border-t-2 border-border bg-secondary/30 hover:bg-secondary/30 font-semibold',
-        className,
-      )}
-    >
+    // A total reads by weight alone (list grammar, Rev .153; as the Positions
+    // pilot's totals): no band, no rule.
+    <DenseTableRow className={cn('font-semibold', className)}>
       <DenseTableCell colSpan={labelColSpan}>{label}</DenseTableCell>
       {children}
     </DenseTableRow>

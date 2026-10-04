@@ -12,6 +12,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useStuckMarks } from '@bifrost/ui'
 import { SurfaceBody } from './SurfaceBody'
 import { symbolSurface } from './equipSurface'
 import { parseContract, symbolIn, type SymbolHit } from './shellContextTarget'
@@ -62,6 +63,7 @@ export function QuickLook() {
   const [look, setLook] = useState<Look | null>(null)
   const [shown, setShown] = useState(false)
   const card = useRef<HTMLDivElement | null>(null)
+  const body = useRef<HTMLDivElement | null>(null)
   const hover = useRef<Element | null>(null)
   const lookRef = useRef<Look | null>(null)
   useEffect(() => {
@@ -148,6 +150,9 @@ export function QuickLook() {
       ...(pick ? { tab: pick.multi ? 'payoff' : 'chain', params: contractParams(pick) } : {}),
     })
   }, [hit])
+  // The body is a page host like a panel's: its table heads band only while
+  // stuck (the list grammar, Rev .153 — @bifrost/ui 0.10.0 useStuckMarks).
+  useStuckMarks(body, surface != null)
 
   if (!look || !hit || !surface) return null
   return createPortal(
@@ -164,7 +169,9 @@ export function QuickLook() {
         <span style={{ color: hit.contract ? 'var(--sk-contract)' : 'var(--sk-ticker)' }}>{hit.contract ?? hit.sym}</span>
         <span className={css.keys}>␣ close · ↑↓ next · ↵ open</span>
       </div>
-      <div className={css.body} data-mat="">
+      {/* A page host like a panel body: the page materials and the list
+          grammar (Rev .153–.154). */}
+      <div ref={body} className={css.body} data-mat="" data-sr-list="">
         <SurfaceBody key={surface.key + (hit.contract ?? '')} surface={surface} />
       </div>
     </div>,

@@ -918,9 +918,12 @@ html[data-frost='on']:not([data-glass='solid']) [data-inspector-dock] {
  * glass. The prototype reaches the same result with `!important`; an
  * unlayered rule is the stylesheet's own way of saying the same thing.
  */
-/* Not inside a list scope (`data-sr-list`, @bifrost/ui 0.10.0): there hover
-   is the list's ink 7% capsule and a cell's own background is a heat cell's,
-   never the row's. */
+/* Outside the list scope only (`data-sr-list`, @bifrost/ui 0.10.0 — on the
+   page lane, every panel / float / Quick Look body and the inspector since
+   batch 3): the tables still outside it are the portalled dialogs' (Link
+   option ↔ stock, Open inventory, Calendar day, Structure form, Signal decay's
+   dialog) and the market strip's. Inside, hover is the list's ink 7% capsule
+   and a cell's own background is a heat cell's, never the row's. */
 tbody tr:hover > td:not([data-sr-list] *) {
   background-color: rgb(var(--sk-accent-rgb) / 0.03);
 }
@@ -969,21 +972,17 @@ tbody tr:hover > td:not([data-sr-list] *) {
 }
 
 /* Table heads stick (design Rev .70 §5): every table's head parks under the
-   page's sticky toolbar (--sr-stick, measured by useStickyToolbar) on a
-   glass strip — 82% of the ground and a 10px blur. A head the page already
-   made sticky (thead or row with .sticky) keeps its own offset. */
+   page's sticky toolbar (--sr-stick, measured by useStickyToolbar). A head the
+   page already made sticky (thead or row with .sticky) keeps its own offset.
+   Its fill is the list grammar's (Rev .153, every data-mat host is a list
+   scope since batch 3): none at rest, glass only while stuck over rows
+   (thead[data-stuck], useStuckMarks on the lane, the panel / float / Quick
+   Look body). The always-on 82% strip that was here is gone with the last
+   table outside a scope. */
 [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
   position: sticky;
   top: var(--sr-stick, 0px);
   z-index: 2;
-}
-/* The strip is always on outside a list scope. Inside one (Rev .153) the head
-   has no fill at rest and turns glass only while stuck over rows — the
-   scope's own rule, keyed on thead[data-stuck] (useStuckMarks). */
-[data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky):not([data-sr-list] *) {
-  background-color: color-mix(in srgb, var(--background) 82%, transparent);
-  -webkit-backdrop-filter: blur(10px) saturate(1.4);
-  backdrop-filter: blur(10px) saturate(1.4);
 }
 
 /* A table inside its own sideways scroller: that box is the head's sticky
@@ -1193,21 +1192,8 @@ tbody tr:hover > td:not([data-sr-list] *) {
 
 /* Reduce transparency (design Rev .70 §1): the switch, the system's setting,
    the glass surfaces, poppers and the floating sidebar are @bifrost/ui's
-   hooks since 0.5.0 (styles/materials; --glass-solid-* read this skin). What
-   stays here is this app's own table heads, which the page scope makes sticky. */
-html[data-glass='solid'] [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky):not([data-sr-list] *) {
-  background-color: var(--background);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  html:not([data-glass='glass']) [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky):not([data-sr-list] *) {
-    background-color: var(--background);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}
+   hooks since 0.5.0 (styles/materials; --glass-solid-* read this skin) — the
+   stuck list head and the scrolled first column included (0.10.0). */
 
 /* Page transitions (design Rev .71 §1; lib/pageTransition): only the page
    lane moves — the old page out in 180ms, the new one in over 240ms rising

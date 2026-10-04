@@ -7,8 +7,9 @@
  *
  * - **Strict types**: `"5"` is not a number, `1` is not `true`, `3.0` is not an
  *   integer. A wrong type is 422 and nothing is written. An integer is a number.
- * - **Unknown fields**: ignored and logged in 0.3.1; **422 from 0.3.2**
- *   (`extra="forbid"`). The FE must send no field that is not declared here.
+ * - **Unknown fields**: ignored and logged from api 0.3.1; **422 from api 0.9.0**
+ *   (`extra="forbid"`, type `extra_forbidden`, nothing written). The FE must send no
+ *   field that is not declared here.
  * - Presence: every field is optional at the model; the route's or core's 400
  *   names the ones a write needs (`name is required.` …). A field that is not
  *   optional below (`legs`, `items`, `category_id`, `symbols`, `contract_key`,

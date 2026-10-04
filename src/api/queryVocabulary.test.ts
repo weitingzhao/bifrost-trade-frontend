@@ -1,7 +1,8 @@
 /**
  * TD-51 (api 0.6.6): the Trade API's one query vocabulary — `expiry`, `option_right`,
- * `from_ts` / `to_ts` (Unix seconds), `from_date` / `to_date` (YYYY-MM-DD). The API still
- * accepts the old names for one release; this pins that the app sends only the new ones.
+ * `from_ts` / `to_ts` (Unix seconds), `from_date` / `to_date` (YYYY-MM-DD), `trade_id`.
+ * The API renamed the old names for one release; from api 0.8.3 / 0.8.4 it ignores them
+ * (the filter they carried is not applied), so the app must send only the new ones.
  * Symbols, accounts and ids are invented.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -27,7 +28,18 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const OLD_NAMES = ['since_ts', 'until_ts', 'opened_at_from', 'opened_at_until', 'trade_date_from', 'trade_date_to', 'expiration', 'right']
+const OLD_NAMES = [
+  'since_ts',
+  'until_ts',
+  'opened_at_from',
+  'opened_at_until',
+  'trade_date_from',
+  'trade_date_to',
+  'expiration',
+  'right',
+  'strategy_instance_id',
+  'strategy_instance_ids',
+]
 
 function sentQuery(): URLSearchParams {
   const calls = fetchMock.mock.calls
@@ -56,6 +68,21 @@ describe('query vocabulary (TD-51)', () => {
     await strategy.fetchTrades({ openedAtFrom: 10 }).catch(() => undefined)
     expect(sentQuery().get('from_ts')).toBe('10')
     expectNoOldNames(sentQuery())
+  })
+
+  it('a Trade is trade_id (naming R1)', async () => {
+    const calls: (() => Promise<unknown>)[] = [
+      () => trading.fetchTradePerformance(41),
+      () => trading.fetchTradeExecutions(41),
+      () => trading.fetchPerformance({ trade_id: 41 }),
+      () => trading.fetchExecutionsRange({ trade_id: 41 }),
+    ]
+    for (const call of calls) {
+      await call().catch(() => undefined)
+      const q = sentQuery()
+      expect(q.get('trade_id')).toBe('41')
+      expectNoOldNames(q)
+    }
   })
 
   it('date ranges are from_date / to_date', async () => {

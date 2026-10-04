@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { GateSetGates } from '@/types/strategy'
 
 /**
- * `/api/strategy` response models (api 0.3.1, TD-24 batch 3c-1) — mirrored from
+ * `/api/account` strategy response models (api 0.3.1, TD-24 batch 3c-1) — mirrored from
  * `bifrost_api/strategy/schemas/responses.py`, and the source of the FE types
  * (`z.infer`; `@/types/strategy` re-exports them under their old names).
  *

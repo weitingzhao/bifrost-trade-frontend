@@ -86,7 +86,7 @@ export const STRATEGY_WRITES = {
 
 type StrategyWrite = (typeof STRATEGY_WRITES)[keyof typeof STRATEGY_WRITES]
 
-/** `METHOD /api/strategy/...` as the request goes out (the path only, never the host). */
+/** `METHOD /api/account/...` as the request goes out (the path only, never the host). */
 export function strategyWriteLabel(write: StrategyWrite, id?: number): string {
   const url = strategyUrl(write.path(id as number))
   return `${write.method} ${new URL(url, 'http://local').pathname}`

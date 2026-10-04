@@ -33,7 +33,7 @@ export const JOURNAL_DATE_NOTE =
   'There is no trade-date field: the write path does not store one for journal rows, so the row lands in the undated group by construction — counted in every total, listed under no month.'
 
 export const JOURNAL_NOTE_DISABLED_TITLE =
-  'POST /api/trading/executions has no note field. The row is identified by source journal_closed.'
+  'POST /api/account/executions has no note field. The row is identified by source journal_closed.'
 
 export const JOURNAL_ASSIGNMENT_DISABLED_TITLE =
-  'POST /api/trading/executions has no transaction_type field, so this row cannot be tagged BOOK · assigned. Do not put that tag in the note.'
+  'POST /api/account/executions has no transaction_type field, so this row cannot be tagged BOOK · assigned. Do not put that tag in the note.'

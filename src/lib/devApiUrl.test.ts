@@ -1,7 +1,7 @@
 /**
  * One gateway prefix per API process (TD-55, Owner option B). Each helper is pinned to the
  * prefix of the process that serves it; the account aliases (/api/trading, /api/strategy,
- * /api/portfolio) still answer until B2 but nothing here builds them.
+ * /api/portfolio) went in B2 and nothing here builds them.
  */
 import { describe, expect, it } from 'vitest'
 import {

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * `/api/strategy/preferences/saved-searches` — a page's scope kept under a name
+ * `/api/account/preferences/saved-searches` — a page's scope kept under a name
  * (core 0.28.0 `preference_saved_search`, trade design Rev .139). The state is
  * the page's own; this side writes `{ search }`, the page's filter params.
  */

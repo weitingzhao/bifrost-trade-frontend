@@ -1,5 +1,5 @@
 /**
- * Structured trade plans — `/api/strategy/strategies/plans`.
+ * Structured trade plans — `/api/account/strategies/plans`.
  *
  * The server owns the rules: a refusal comes back as 409 with the reason the
  * plan gave, and that text is what the desk shows. Nothing here decides whether

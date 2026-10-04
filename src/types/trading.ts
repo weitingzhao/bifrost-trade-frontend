@@ -138,7 +138,7 @@ export interface AccountTransaction {
   account_id: string
   /**
    * Epoch seconds, but the API sends it as a string: the SQL behind
-   * /api/trading/transactions selects `extract(epoch from ts)` without a
+   * /api/account/transactions selects `extract(epoch from ts)` without a
    * `::bigint`, so PG returns numeric and psycopg2 maps it to Decimal, which
    * serialises as a JSON string. Convert with `Number()` before any arithmetic
    * or `Number.isFinite` check.

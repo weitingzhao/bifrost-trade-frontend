@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * `/api/strategy/strategies/plans` — structured trade plans (core 0.22.0).
+ * `/api/account/strategies/plans` — structured trade plans (core 0.22.0).
  *
  * Mirrors the api 0.3.1 response models `PlanRow` / `PlanLegRow` / `PlanList`
  * (`bifrost_api/strategy/schemas/responses.py`); the FE types are their

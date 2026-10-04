@@ -1,5 +1,5 @@
 /**
- * Saved searches — `/api/strategy/preferences/saved-searches` (api 0.7.0; under
+ * Saved searches — `/api/account/preferences/saved-searches` (api 0.7.0; under
  * `/strategies/saved-searches` from api 0.1.9 until naming R1).
  * The Finder's smart folders (design Rev .139): a page's filters under a
  * name, kept server-side for the one operator (Owner 2026-10-01).

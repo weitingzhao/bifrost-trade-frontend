@@ -35,10 +35,10 @@ describe('tradeFetch', () => {
     // One prefix per process (TD-55): monitor, account, market, research.
     expect(tradeApiPath('/api/account/strategies/allocations')).toBe('/api/account/strategies/allocations')
     expect(tradeApiPath('/api/market/watchlist')).toBe('/api/market/watchlist')
-    // The account aliases answer until B2 removes them, so a write through one is still Trade's.
-    expect(tradeApiPath('/api/strategy/strategies/allocations')).toBe('/api/strategy/strategies/allocations')
-    expect(tradeApiPath('/api/trading/executions/1')).toBe('/api/trading/executions/1')
-    expect(tradeApiPath('/api/portfolio/instrument-classes/X')).toBe('/api/portfolio/instrument-classes/X')
+    // The account aliases went in TD-55 B2: the gateway no longer routes them.
+    expect(tradeApiPath('/api/strategy/strategies/allocations')).toBeNull()
+    expect(tradeApiPath('/api/trading/executions/1')).toBeNull()
+    expect(tradeApiPath('/api/portfolio/instrument-classes/X')).toBeNull()
     expect(tradeApiPath('/api/accounts/x')).toBeNull()
     expect(tradeApiPath('http://host:30882/api/monitor/control/flatten')).toBe('/api/monitor/control/flatten')
     expect(tradeApiPath('/api/research/research/feedback/reports')).not.toBeNull()
@@ -52,9 +52,9 @@ describe('tradeFetch', () => {
     expect(authOf(fetchMock.mock.calls[0])).toBe(`Bearer ${TOKEN}`)
   })
 
-  it('puts the token on a write through an account alias too (until TD-55 B2)', async () => {
+  it('sends no token to a retired account alias (TD-55 B2)', async () => {
     await tradeFetch('/api/strategy/strategies/allocations', { method: 'POST', body: '{}' })
-    expect(authOf(fetchMock.mock.calls[0])).toBe(`Bearer ${TOKEN}`)
+    expect(authOf(fetchMock.mock.calls[0])).toBeNull()
   })
 
   it('leaves a read alone', async () => {

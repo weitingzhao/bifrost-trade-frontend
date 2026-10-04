@@ -99,7 +99,7 @@ export interface StructureEditFields {
   meta: StructureMetaEntry[]
 }
 
-/** The full `PUT /api/strategy/strategies/structures/{id}` body for an edit (`STRATEGY_WRITES.structure`). */
+/** The full `PUT /api/account/strategies/structures/{id}` body for an edit (`STRATEGY_WRITES.structure`). */
 export function structureEditPayload(f: StructureEditFields): StructurePayload {
   return {
     name: f.name.trim(),

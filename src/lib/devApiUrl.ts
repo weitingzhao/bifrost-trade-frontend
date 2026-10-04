@@ -44,8 +44,7 @@ export function marketUrl(path: string): string {
 
 /**
  * The api-account process (:8769) at its own gateway prefix, `/api/account/…` (TD-55
- * option B1). `/api/trading`, `/api/strategy` and `/api/portfolio` are aliases of the same
- * process and keep answering until B2 removes them; nothing here calls them any more.
+ * option B1). The aliases `/api/trading`, `/api/strategy` and `/api/portfolio` went in B2.
  */
 export function accountUrl(path: string): string {
   return domainUrl('account', path)

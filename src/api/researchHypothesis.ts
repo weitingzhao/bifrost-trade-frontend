@@ -6,6 +6,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson, type RequestJsonOptions } from '@/lib/http'
+import { withResearchAuth } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
 import {
   HypothesisListResponseSchema,
@@ -106,7 +107,15 @@ export interface HypothesisPatchInput {
 
 /** Every hypothesis route answers the `{ ok, data }` envelope. */
 function hypothesisApi<T>(path: string, init: RequestJsonOptions<T> = {}): Promise<T> {
-  return requestJson<T>(researchEngineUrl(path), { ...init, envelope: 'research', label: 'Hypothesis API' })
+  // The Research user's bearer on every route, reads included: the writes
+  // (POST /research/hypothesis, PATCH /{id}) are owner-gated from research
+  // 0.165.0, and a read carrying it costs nothing.
+  return requestJson<T>(researchEngineUrl(path), {
+    ...init,
+    headers: withResearchAuth(init.headers),
+    envelope: 'research',
+    label: 'Hypothesis API',
+  })
 }
 
 const validateList = withValidation<HypothesisListResponse>(

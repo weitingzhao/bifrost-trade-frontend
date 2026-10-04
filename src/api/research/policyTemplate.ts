@@ -9,6 +9,7 @@
 import { withValidation } from '@/lib/apiValidation'
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson } from '@/lib/http'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import {
   PolicyTemplateListSchema,
   PolicyTemplateSchema,
@@ -57,7 +58,7 @@ export async function fetchPolicyTemplates(params?: {
     ? `?universe_mode=${encodeURIComponent(params.universeMode)}`
     : ''
   return validateList(
-    await requestJson<unknown>(`${researchEngineUrl(BASE)}${qs}`, { envelope: 'research', label: LABEL }),
+    await requestJson<unknown>(`${researchEngineUrl(BASE)}${qs}`, { headers: getResearchAuthHeaders(), envelope: 'research', label: LABEL }),
   )
 }
 
@@ -75,6 +76,7 @@ export async function validatePolicy(
     await requestJson<unknown>(researchEngineUrl(`${BASE}/validate`), {
       method: 'POST',
       body: { policy_json: policyJson },
+      headers: getResearchAuthHeaders(),
       envelope: 'research',
       label: LABEL,
     }),
@@ -91,6 +93,7 @@ export async function createPolicyTemplate(body: {
     await requestJson<unknown>(researchEngineUrl(BASE), {
       method: 'POST',
       body,
+      headers: getResearchAuthHeaders(),
       envelope: 'research',
       label: LABEL,
     }),
@@ -110,6 +113,7 @@ export async function patchPolicyTemplate(
     await requestJson<unknown>(researchEngineUrl(`${BASE}/${encodeURIComponent(id)}`), {
       method: 'PATCH',
       body,
+      headers: getResearchAuthHeaders(),
       envelope: 'research',
       label: LABEL,
     }),
@@ -119,6 +123,7 @@ export async function patchPolicyTemplate(
 export async function deletePolicyTemplate(id: string): Promise<{ deleted: boolean }> {
   return requestJson<{ deleted: boolean }>(researchEngineUrl(`${BASE}/${encodeURIComponent(id)}`), {
     method: 'DELETE',
+    headers: getResearchAuthHeaders(),
     envelope: 'research',
     label: LABEL,
   })

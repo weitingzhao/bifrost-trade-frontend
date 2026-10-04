@@ -6,6 +6,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson } from '@/lib/http'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
 import {
   CandidateListResponseSchema,
@@ -86,6 +87,7 @@ export async function fetchCandidates(params?: {
   const qs = q.toString()
   return validateCandidates(
     await requestJson<unknown>(`${researchEngineUrl('/research/candidates')}${qs ? `?${qs}` : ''}`, {
+      headers: getResearchAuthHeaders(),
       envelope: 'research',
     }),
   )
@@ -97,6 +99,7 @@ export async function addCandidates(
   return requestJson<CandidateListResponse>(researchEngineUrl('/research/candidates'), {
     method: 'POST',
     body: { items },
+    headers: getResearchAuthHeaders(),
     envelope: 'research',
   })
 }
@@ -107,13 +110,13 @@ export async function promoteCandidate(
 ): Promise<PromoteCandidateResult> {
   return requestJson<PromoteCandidateResult>(
     researchEngineUrl(`/research/candidates/${encodeURIComponent(id)}/promote`),
-    { method: 'POST', body: body ?? {}, envelope: 'research' },
+    { method: 'POST', body: body ?? {}, headers: getResearchAuthHeaders(), envelope: 'research' },
   )
 }
 
 export async function dismissCandidate(id: string): Promise<ResearchCandidate> {
   return requestJson<ResearchCandidate>(
     researchEngineUrl(`/research/candidates/${encodeURIComponent(id)}/dismiss`),
-    { method: 'POST', body: {}, envelope: 'research' },
+    { method: 'POST', body: {}, headers: getResearchAuthHeaders(), envelope: 'research' },
   )
 }

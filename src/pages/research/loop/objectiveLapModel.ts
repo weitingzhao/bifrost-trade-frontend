@@ -72,8 +72,12 @@ export interface LapInput {
   /** Every run this objective has, so a hypothesis can be traced back to it. */
   runIds: ReadonlySet<string>
   hypotheses: readonly Hypothesis[]
-  /** Pending drafts, any kind — the station picks the policy ones itself. */
-  drafts: readonly AiDraft[]
+  /**
+   * Pending drafts, any kind — the station picks the policy ones itself. Null
+   * when they could not be read (a 401 without a Research user): the station
+   * reads «—», not "no patch waiting".
+   */
+  drafts: readonly AiDraft[] | null
 }
 
 export function objectiveLap(input: LapInput): Station[] {
@@ -87,9 +91,10 @@ export function objectiveLap(input: LapInput): Station[] {
     const run = hypothesisRunId(h)
     return run != null && runIds.has(run)
   }).length
-  const fedBack = drafts.filter(
-    (d) => d.kind === 'policy_suggestion' && draftObjectiveId(d) === objectiveId,
-  ).length
+  const fedBack =
+    drafts == null
+      ? null
+      : drafts.filter((d) => d.kind === 'policy_suggestion' && draftObjectiveId(d) === objectiveId).length
 
   const considered = brief?.last_memo?.considered ?? null
   const judged = rec?.judged ?? null
@@ -145,7 +150,7 @@ export function objectiveLap(input: LapInput): Station[] {
       n: '06',
       label: 'Feed back',
       value: fedBack,
-      detail: fedBack === 0 ? 'no patch waiting' : 'policy patches to approve',
+      detail: fedBack == null ? 'drafts not read' : fedBack === 0 ? 'no patch waiting' : 'policy patches to approve',
       to: '/research/loop/decisions',
     },
   ]

@@ -84,6 +84,8 @@ import { ObjectiveRunsSection } from '@/pages/research/loop/ObjectiveRunsSection
 import { ObjectiveLeashCard } from '@/pages/research/loop/ObjectiveLeashCard'
 import { pendingPolicyPatches } from '@/pages/research/loop/objectivePatch'
 import { useResearchDrafts } from '@/hooks/useResearchDrafts'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { nextRun } from '@/lib/harness/objectiveSchedule'
 
 const TEXTAREA_CLASS =
@@ -469,6 +471,11 @@ function Standing({
  */
 function PatchPending({ objectiveId }: { objectiveId: string }) {
   const drafts = useResearchDrafts({ kind: 'policy_suggestion', status: 'pending', limit: 200 })
+  // Signed out, the drafts answer 401 and there are no rows to count: say
+  // that, rather than drawing nothing as though no patch were waiting.
+  if (firstResearchAuthGapError(drafts.error)) {
+    return <ResearchAuthGap error={drafts.error} layout="banner" />
+  }
   const patches = pendingPolicyPatches(drafts.data?.rows ?? [], objectiveId)
   if (patches.length === 0) return null
   const [first] = patches

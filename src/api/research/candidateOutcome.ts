@@ -6,6 +6,7 @@
 import { withValidation } from '@/lib/apiValidation'
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson } from '@/lib/http'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import {
   CandidateOutcomeRowsSchema,
   CandidateOutcomeSummarySchema,
@@ -65,7 +66,7 @@ export async function fetchCandidateOutcomeSummary(
   const qs = q.toString()
   const data = await requestJson<CandidateOutcomeSummary>(
     `${researchEngineUrl('/research/candidate-outcome/summary')}${qs ? `?${qs}` : ''}`,
-    { envelope: 'research' },
+    { headers: getResearchAuthHeaders(), envelope: 'research' },
   )
   return validateSummary(data)
 }
@@ -80,7 +81,7 @@ export async function fetchCandidateOutcomeRows(
   const qs = q.toString()
   const data = await requestJson<{ rows: CandidateOutcomeRow[]; count: number }>(
     `${researchEngineUrl('/research/candidate-outcome/rows')}${qs ? `?${qs}` : ''}`,
-    { envelope: 'research' },
+    { headers: getResearchAuthHeaders(), envelope: 'research' },
   )
   return validateRows(data)
 }

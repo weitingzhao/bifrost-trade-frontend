@@ -11,7 +11,10 @@ import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
 import type { AiDraft } from '@/api/researchDrafts'
 
 export function useDailyDigest(opts?: { refetchIntervalMs?: number }) {
-  const q = useResearchDrafts({ status: 'pending', refetchIntervalMs: opts?.refetchIntervalMs })
+  // Asked by kind: the newest page of the whole queue is mostly EOD verdicts
+  // (724 pending on DEV, 2026-10-04), and a digest posted in the morning falls
+  // off it by evening.
+  const q = useResearchDrafts({ status: 'pending', kind: 'daily_digest', limit: 5, refetchIntervalMs: opts?.refetchIntervalMs })
   const rows = digestFirst(q.data?.rows ?? [])
   const digest: AiDraft | undefined = rows.find(isDailyDigest)
   return {

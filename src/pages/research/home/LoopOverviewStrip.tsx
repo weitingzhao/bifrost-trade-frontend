@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useLoopOverview, type LoopSegment } from '@/hooks/useLoopOverview'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 
 /** Where each segment lives, so the overview dives into the page that owns it. */
 const SEGMENT_HREF: Record<LoopSegment['id'], string> = {
@@ -91,6 +92,10 @@ export function LoopOverviewStrip() {
           </span>
         </div>
 
+        {/* Not signed in reads as that, not as an empty loop: the draft
+            segments go to «—» and this says why (Design 2026-09-15 Q2=A). */}
+        {loop.authError ? <ResearchAuthGap error={loop.authError} layout="banner" /> : null}
+
         <div className="flex min-w-0 items-stretch gap-1.5 overflow-x-auto">
           {loop.segments.map((s, i) => (
             <SegmentCell key={s.id} segment={s} isLast={i === loop.segments.length - 1} />
@@ -109,9 +114,11 @@ export function LoopOverviewStrip() {
             Back into your rules
           </Link>
           <span className="text-dense-caption text-muted-foreground">
-            {raised} suggestion{raised === 1 ? '' : 's'} raised · {taken} taken up
+            {raised == null || taken == null
+              ? '— suggestions raised · — taken up'
+              : `${raised} suggestion${raised === 1 ? '' : 's'} raised · ${taken} taken up`}
           </span>
-          {raised > 0 && taken === 0 ? (
+          {raised != null && raised > 0 && taken === 0 ? (
             <span className="text-dense-caption text-warning">
               — the loop proposes changes to itself and none has been adopted, so the
               rules have not moved

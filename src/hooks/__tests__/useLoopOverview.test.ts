@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deriveLoopSegments, LOOP_WINDOW_DAYS } from '@/hooks/useLoopOverview'
+import { blankDraftSegments, deriveLoopSegments, LOOP_WINDOW_DAYS } from '@/hooks/useLoopOverview'
 
 /**
  * The loop overview exists to show where the circuit is open. Its arithmetic is
@@ -84,5 +84,18 @@ describe('deriveLoopSegments', () => {
     // showing it.
     const all = deriveLoopSegments({ ...base, objectiveTitles: [] }, LOOP_WINDOW_DAYS)
     expect(all.map((s) => s.id)).toEqual(['system', 'screen', 'decide', 'act', 'learn'])
+  })
+
+  it('reads «—» for the draft segments when the drafts were not read, not 0', () => {
+    // A 401 without a Research user leaves the drafts queries empty; counting
+    // their missing rows said "0 batches waiting" to a reader not signed in.
+    const out = blankDraftSegments(deriveLoopSegments(base, LOOP_WINDOW_DAYS), 'drafts not read — Research user not set')
+    const decide = out.find((x) => x.id === 'decide')!
+    const act = out.find((x) => x.id === 'act')!
+    expect(decide.value).toBeNull()
+    expect(act.value).toBeNull()
+    expect(act.starved).toBe(false)
+    expect(decide.detail).toMatch(/not set/)
+    expect(out.find((x) => x.id === 'system')!.value).toBe(1)
   })
 })

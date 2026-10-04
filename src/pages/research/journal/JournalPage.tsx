@@ -25,6 +25,9 @@ import { NotesView } from './NotesView'
 import { DayView } from './DayView'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail } from '@/lib/viewState'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { classifyResearchAuthError } from '@/lib/auth/researchAuthGap'
+import { useResearchAuth } from '@/lib/auth/researchUser'
 import { SegmentControl } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
@@ -79,13 +82,23 @@ export default function JournalPage() {
   // The Journal is a join of five stores (§17.1): one that fails is named on
   // a strip — its artifacts are absent, not zero — and only all five failing
   // with nothing to show is a failed page.
-  const failedStores = [
-    runs.isError ? 'runs' : null,
-    candidates.isError ? 'candidates' : null,
-    hypotheses.isError ? 'hypotheses' : null,
-    drafts.isError ? 'drafts' : null,
-    outcomes.isError ? 'outcomes' : null,
-  ].filter((x): x is string => x != null)
+  //
+  // A store that answered 401 with no Research user set did not fail: the
+  // reader is not signed in, and that is said once on its own strip rather
+  // than listed as a failure (Design 2026-09-15 Q2=A, `classifyResearchAuthError`).
+  const { token } = useResearchAuth()
+  const stores = [
+    ['runs', runs],
+    ['candidates', candidates],
+    ['hypotheses', hypotheses],
+    ['drafts', drafts],
+    ['outcomes', outcomes],
+  ] as const
+  const notSignedIn = stores.filter(([, q]) => classifyResearchAuthError(q.error, token) === 'not_set')
+  const failedStores = stores
+    .filter(([, q]) => q.isError && classifyResearchAuthError(q.error, token) !== 'not_set')
+    .map(([name]) => name)
+  const authGapError = notSignedIn[0]?.[1].error ?? null
   const retryAll = () => {
     for (const q of [runs, candidates, hypotheses, drafts, outcomes]) if (q.isError) void q.refetch()
   }
@@ -180,7 +193,7 @@ export default function JournalPage() {
       ? preview
       : isLoading && nodes.length === 0
         ? 'loading'
-        : failedStores.length === 5 && nodes.length === 0
+        : failedStores.length + notSignedIn.length === 5 && nodes.length === 0
           ? 'failed'
           : 'ready'
 
@@ -232,6 +245,9 @@ export default function JournalPage() {
         </select>
       </div>
 
+      {authGapError && pageState !== 'failed' ? (
+        <ResearchAuthGap error={authGapError} layout="banner" />
+      ) : null}
       {pageState === 'stale' || (pageState === 'ready' && failedStores.length > 0) ? (
         <ViewState
           kind="stale"
@@ -244,6 +260,8 @@ export default function JournalPage() {
         <section className="overflow-hidden mat-card">
           <ViewState kind="loading" title="Loading the Journal" rows={8} cols={5} />
         </section>
+      ) : pageState === 'failed' && authGapError && failedStores.length === 0 ? (
+        <ResearchAuthGap error={authGapError} />
       ) : pageState === 'failed' ? (
         <section className="overflow-hidden mat-card">
           <ViewState

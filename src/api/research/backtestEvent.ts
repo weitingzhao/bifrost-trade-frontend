@@ -6,6 +6,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson } from '@/lib/http'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
 import {
   EventQueryResponseSchema,
@@ -130,6 +131,7 @@ function backtestApi<T>(path: string, body?: unknown): Promise<T> {
   return requestJson<T>(researchEngineUrl(path), {
     method: body === undefined ? 'GET' : 'POST',
     body,
+    headers: getResearchAuthHeaders(),
     envelope: 'research',
     label: 'Backtest event API',
   })

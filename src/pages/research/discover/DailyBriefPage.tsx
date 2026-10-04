@@ -51,6 +51,9 @@ import { MarkdownContent } from '@/components/cockpit/MarkdownContent'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { useDailyDigest } from '@/hooks/useDailyDigest'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { classifyResearchAuthError } from '@/lib/auth/researchAuthGap'
+import { useResearchAuth } from '@/lib/auth/researchUser'
 import { digestSection } from '@/lib/harness/dailyDigest'
 import { loopLines } from '@/lib/harness/digestRead'
 import { fmtIsoTs } from '@/lib/format'
@@ -71,6 +74,9 @@ export default function DailyBriefPage() {
   const { digest, payload, isLoading, isError, error, refetch } = useDailyDigest({
     refetchIntervalMs: 60_000,
   })
+  // Not signed in is not a failed read (Design 2026-09-15 Q2=A).
+  const { token } = useResearchAuth()
+  const authGap = classifyResearchAuthError(error, token)
 
   const day = typeof payload?.day === 'string' ? payload.day : null
   const oneThing = typeof payload?.markdown === 'string'
@@ -87,7 +93,9 @@ export default function DailyBriefPage() {
       : isError
         ? digest
           ? 'stale'
-          : 'failed'
+          : authGap
+            ? 'signed-out'
+            : 'failed'
         : isLoading && !digest
           ? 'loading'
           : 'ready'
@@ -167,6 +175,8 @@ export default function DailyBriefPage() {
         <section className="overflow-hidden mat-card">
           <ViewState kind="loading" title="Loading the brief" rows={6} cols={3} />
         </section>
+      ) : pageState === 'signed-out' ? (
+        <ResearchAuthGap error={error} onRetry={() => void refetch()} />
       ) : pageState === 'failed' ? (
         <section className="overflow-hidden mat-card">
           <ViewState

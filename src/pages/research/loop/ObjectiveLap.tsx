@@ -29,6 +29,8 @@ import { fetchCandidates } from '@/api/research/candidates'
 import { fetchObjectiveRuns, type AutopilotObjective } from '@/api/research/harness'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useResearchDrafts } from '@/hooks/useResearchDrafts'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { lapEnds, objectiveLap, type LapEnd } from '@/pages/research/loop/objectiveLapModel'
 import type { MemoryOrigin } from '@/lib/harness/objectiveOrigin'
 
@@ -70,7 +72,7 @@ export function ObjectiveLap({
         candidates: candidatesQ.data?.items ?? [],
         runIds,
         hypotheses: hypothesesQ.data?.rows ?? [],
-        drafts: draftsQ.data?.rows ?? [],
+        drafts: draftsQ.data ? draftsQ.data.rows : null,
       }),
     [objectiveId, brief, candidatesQ.data, runIds, hypothesesQ.data, draftsQ.data],
   )
@@ -90,6 +92,11 @@ export function ObjectiveLap({
           what this machine is holding at each station — a chip takes the objective with it
         </span>
       </div>
+
+      {/* Feed back reads the drafts; signed out it shows «—» and this says why. */}
+      {firstResearchAuthGapError(draftsQ.error) ? (
+        <ResearchAuthGap error={draftsQ.error} layout="banner" className="mb-1.5" />
+      ) : null}
 
       <ol className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         <End end={ends[0]} objectiveId={objectiveId} />

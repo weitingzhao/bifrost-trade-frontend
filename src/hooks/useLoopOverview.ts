@@ -17,6 +17,7 @@ import { fetchCandidateOutcomeSummary } from '@/api/research/candidateOutcome'
 import { listResearchDrafts } from '@/api/researchDrafts'
 import { listHypotheses } from '@/api/researchHypothesis'
 import { isRuleResolved } from '@/lib/hypothesisResolution'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 
 /** Business window. Cumulative counts flatter a loop that stopped weeks ago. */
 export const LOOP_WINDOW_DAYS = 30
@@ -37,10 +38,26 @@ export interface LoopSegment {
 export interface LoopOverview {
   windowDays: number
   segments: LoopSegment[]
-  /** The feedback edge: suggestions raised to change the rules, and taken up. */
-  feedback: { raised: number; taken: number }
+  /**
+   * The feedback edge: suggestions raised to change the rules, and taken up.
+   * Null when the drafts could not be read — a refused read is not zero.
+   */
+  feedback: { raised: number | null; taken: number | null }
   isLoading: boolean
   isError: boolean
+  /** The first 401 among the reads: the Research user is not set (or was refused). */
+  authError: unknown
+}
+
+/**
+ * The segments that count drafts, unread. On a 401 the drafts queries hold no
+ * data, and counting their missing rows as none said "0 batches waiting" to a
+ * reader who was simply not signed in.
+ */
+export function blankDraftSegments(segments: LoopSegment[], why: string): LoopSegment[] {
+  return segments.map((s) =>
+    s.id === 'decide' || s.id === 'act' ? { ...s, value: null, detail: why, starved: false } : s,
+  )
 }
 
 export interface LoopInputs {
@@ -180,14 +197,16 @@ export function useLoopOverview(windowDays: number = LOOP_WINDOW_DAYS): LoopOver
     results
   const isLoading = results.some((r) => r.isLoading)
   const isError = results.some((r) => r.isError)
+  const authError = firstResearchAuthGapError(...results.map((r) => r.error))
+  const draftsUnread = [pendingQ, approvedQ, sugPendingQ, sugApprovedQ].some((q) => q.data == null)
 
   const objectives = objectivesQ.data?.items ?? []
   const runs = runsQ.data?.items ?? []
   const pendingBatches = pendingQ.data?.rows ?? []
   const approvedBatches = approvedQ.data?.rows ?? []
   const outcomes = outcomesQ.data
-  const suggestionsRaised = sugPendingQ.data?.rows?.length ?? 0
-  const suggestionsTaken = sugApprovedQ.data?.rows?.length ?? 0
+  const suggestionsRaised = sugPendingQ.data ? sugPendingQ.data.rows.length : null
+  const suggestionsTaken = sugApprovedQ.data ? sugApprovedQ.data.rows.length : null
 
   // A horizon is settled when the holding period elapsed; judged when it was
   // actually scored. Settled-but-unjudged is the queue, not the result.
@@ -200,7 +219,7 @@ export function useLoopOverview(windowDays: number = LOOP_WINDOW_DAYS): LoopOver
     (h) => isRuleResolved(h) && withinWindow(h.updated_at, windowDays),
   ).length
 
-  const segments = deriveLoopSegments(
+  const counted = deriveLoopSegments(
     {
       objectiveTitles: objectives.map((o) => o.title),
       runStartedAt: runs.map((r) => r.started_at),
@@ -213,6 +232,10 @@ export function useLoopOverview(windowDays: number = LOOP_WINDOW_DAYS): LoopOver
     },
     windowDays,
   )
+  const segments =
+    draftsUnread && !isLoading
+      ? blankDraftSegments(counted, authError ? 'drafts not read — Research user not set' : 'drafts could not be read')
+      : counted
 
   return {
     windowDays,
@@ -220,5 +243,6 @@ export function useLoopOverview(windowDays: number = LOOP_WINDOW_DAYS): LoopOver
     feedback: { raised: suggestionsRaised, taken: suggestionsTaken },
     isLoading,
     isError,
+    authError,
   }
 }

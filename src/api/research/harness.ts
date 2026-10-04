@@ -190,6 +190,7 @@ export async function fetchObjectives(params?: {
   if (params?.limit != null) q.set('limit', String(params.limit))
   const qs = q.toString()
   return requestJson<ObjectiveListResponse>(`${researchEngineUrl('/research/objectives')}${qs ? `?${qs}` : ''}`, {
+    headers: getResearchAuthHeaders(),
     envelope: 'research',
   })
 }
@@ -198,6 +199,7 @@ export async function createObjective(body: ObjectiveCreateBody): Promise<Resear
   return requestJson<ResearchObjective>(researchEngineUrl('/research/objectives'), {
     method: 'POST',
     body,
+    headers: getResearchAuthHeaders(),
     envelope: 'research',
   })
 }
@@ -209,14 +211,14 @@ export async function runObjective(objectiveId: string): Promise<{
 }> {
   return requestJson<RunObjectiveResponse>(
     researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}/run`),
-    { method: 'POST', envelope: 'research' },
+    { method: 'POST', headers: getResearchAuthHeaders(), envelope: 'research' },
   )
 }
 
 export async function fetchObjectiveRun(runId: string): Promise<ObjectiveRunDetail> {
   return requestJson<ObjectiveRunDetail>(
     researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}`),
-    { envelope: 'research' },
+    { headers: getResearchAuthHeaders(), envelope: 'research' },
   )
 }
 
@@ -234,7 +236,7 @@ export async function fetchObjectiveRunIfKept(runId: string): Promise<ObjectiveR
   try {
     return await requestJson<ObjectiveRunDetail>(
       researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}`),
-      { envelope: 'research' },
+      { headers: getResearchAuthHeaders(), envelope: 'research' },
     )
   } catch (e) {
     if (e instanceof HttpError && e.status === 404) return null
@@ -254,7 +256,7 @@ export async function fetchObjectiveRuns(params?: {
   const qs = q.toString()
   return requestJson<ObjectiveRunListResponse>(
     `${researchEngineUrl('/research/objective-runs')}${qs ? `?${qs}` : ''}`,
-    { envelope: 'research' },
+    { headers: getResearchAuthHeaders(), envelope: 'research' },
   )
 }
 
@@ -276,7 +278,7 @@ export async function deleteObjectiveRun(
   const q = opts?.force ? '?force=true' : ''
   return requestJson<DeleteObjectiveRunResult>(
     researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}${q}`),
-    { method: 'DELETE', envelope: 'research' },
+    { method: 'DELETE', headers: getResearchAuthHeaders(), envelope: 'research' },
   )
 }
 
@@ -373,12 +375,12 @@ const validateStanding = withValidation<AutopilotStanding>(AutopilotStandingSche
 
 export async function fetchAutopilotStanding(): Promise<AutopilotStanding> {
   return validateStanding(
-    await requestJson<AutopilotStanding>(researchEngineUrl('/research/loop/autopilot'), { envelope: 'research' }),
+    await requestJson<AutopilotStanding>(researchEngineUrl('/research/loop/autopilot'), { headers: getResearchAuthHeaders(), envelope: 'research' }),
   )
 }
 
 export async function fetchLoopTrust(): Promise<LoopTrustStatus> {
-  return requestJson<LoopTrustStatus>(researchEngineUrl('/research/loop/trust'), { envelope: 'research' })
+  return requestJson<LoopTrustStatus>(researchEngineUrl('/research/loop/trust'), { headers: getResearchAuthHeaders(), envelope: 'research' })
 }
 
 export interface BatchRunResult {
@@ -439,7 +441,7 @@ export async function fetchRunEstimate(
       researchEngineUrl(
         `/research/objectives/${encodeURIComponent(objectiveId)}/run-estimate${qs ? `?${qs}` : ''}`,
       ),
-      { envelope: 'research' },
+      { headers: getResearchAuthHeaders(), envelope: 'research' },
     ),
   )
 }
@@ -522,6 +524,7 @@ export async function setObjectiveStatus(
   return requestJson<ResearchObjective>(researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}`), {
     method: 'PATCH',
     body: { status },
+    headers: getResearchAuthHeaders(),
     envelope: 'research',
   })
 }
@@ -576,6 +579,7 @@ export interface AiDraftLike {
 export async function deleteObjective(objectiveId: string): Promise<{ id: string }> {
   return requestJson<{ id: string }>(researchEngineUrl(`/research/objectives/${encodeURIComponent(objectiveId)}`), {
     method: 'DELETE',
+    headers: getResearchAuthHeaders(),
     envelope: 'research',
   })
 }
@@ -583,7 +587,7 @@ export async function deleteObjective(objectiveId: string): Promise<{ id: string
 export async function curateRun(runId: string): Promise<CurateRunResult> {
   return requestJson<CurateRunResult>(
     researchEngineUrl(`/research/objective-runs/${encodeURIComponent(runId)}/curate`),
-    { method: 'POST', envelope: 'research' },
+    { method: 'POST', headers: getResearchAuthHeaders(), envelope: 'research' },
   )
 }
 

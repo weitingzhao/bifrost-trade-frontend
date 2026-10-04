@@ -7,6 +7,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson } from '@/lib/http'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
 import { CanonicalTrajectoryResponseSchema } from '@/lib/schemas/researchData'
 
@@ -75,6 +76,7 @@ export async function fetchCanonicalTrajectory(opts: {
   if (opts.paramsHash) q.set('params_hash', opts.paramsHash)
   return validateTrajectory(
     await requestJson<unknown>(`${researchEngineUrl('/research/canonical-pnl/trajectory')}?${q}`, {
+      headers: getResearchAuthHeaders(),
       envelope: 'research',
     }),
   )
@@ -97,6 +99,6 @@ export async function refreshHypothesisTrajectory(
   const q = new URLSearchParams({ structure })
   return requestJson<RefreshTrajectoryResult>(
     `${researchEngineUrl(`/research/hypothesis/${encodeURIComponent(hypothesisId)}/refresh-trajectory`)}?${q}`,
-    { method: 'POST', envelope: 'research' },
+    { method: 'POST', headers: getResearchAuthHeaders(), envelope: 'research' },
   )
 }

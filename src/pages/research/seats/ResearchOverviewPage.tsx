@@ -32,6 +32,8 @@ import { useCopilotStanding } from '@/hooks/useCopilotStanding'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useActiveObjectives, useAutopilotStanding, useLoopTrust } from '@/hooks/useLoopHarness'
 import { useResearchDrafts } from '@/hooks/useResearchDrafts'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { fmtIsoTs } from '@/lib/format'
 import { funnelReach, parseHarnessTrace } from '@/lib/harness/harnessTrace'
@@ -149,7 +151,9 @@ export default function ResearchOverviewPage() {
   })
 
   // ── Operator cards ─────────────────────────────────────────────────────
-  const pendingPatches = patchesQ.data?.rows.length ?? 0
+  // Null when the drafts could not be read: a 401 is "not signed in", not zero.
+  const pendingPatches = patchesQ.data ? patchesQ.data.rows.length : null
+  const patchesAuthGap = firstResearchAuthGapError(patchesQ.error)
   const cards: OpCardData[] = [
     {
       op: 'hand',
@@ -209,9 +213,9 @@ export default function ResearchOverviewPage() {
         { k: 'forks', v: '—', tone: 'muted', tip: 'What-if branches opened from threads. No branch store exists yet — Fork lands with the verbs (W3).' },
         {
           k: 'distilled',
-          v: String(pendingPatches),
+          v: pendingPatches == null ? '—' : String(pendingPatches),
           sub: '→ policy · in Inbox',
-          tone: pendingPatches > 0 ? 'warn' : 'muted',
+          tone: pendingPatches != null && pendingPatches > 0 ? 'warn' : 'muted',
           tip: 'Policy suggestions pending in the Inbox — the only write path chat has.',
         },
       ],
@@ -227,7 +231,7 @@ export default function ResearchOverviewPage() {
   const hypsToday = (hypsQ.data?.rows ?? []).filter((h) => isToday(h.created_at, nowIso))
   const hypOps = { hand: 0, loop: 0, copilot: 0 }
   for (const h of hypsToday) hypOps[operatorOf(h.origin_page)] += 1
-  const dash = (n: number) => (n > 0 ? String(n) : '—')
+  const dash = (n: number | null) => (n != null && n > 0 ? String(n) : '—')
   const stations: StationRow[] = [
     {
       name: 'Scan', produces: 'screen',
@@ -307,7 +311,7 @@ export default function ResearchOverviewPage() {
       ],
     })
   }
-  if (pendingPatches > 0) {
+  if (pendingPatches != null && pendingPatches > 0) {
     today.push({
       op: 'copilot',
       title: `policy suggestion${pendingPatches === 1 ? '' : 's'} · ${pendingPatches} awaiting you`,
@@ -418,6 +422,9 @@ export default function ResearchOverviewPage() {
           </>
         }
       />
+
+      {/* The patch counts below read the drafts; signed out they show «—», and this says why. */}
+      {patchesAuthGap ? <ResearchAuthGap error={patchesAuthGap} layout="banner" /> : null}
 
       {face === 'census' ? <PipelineCensusFace /> : null}
 

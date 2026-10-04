@@ -6,6 +6,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson } from '@/lib/http'
+import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
 import {
   OrderIntentListResponseSchema,
@@ -59,6 +60,7 @@ export async function fetchOrderIntents(params?: {
   const qs = q.toString()
   return validateIntents(
     await requestJson<unknown>(`${researchEngineUrl('/research/order-intents')}${qs ? `?${qs}` : ''}`, {
+      headers: getResearchAuthHeaders(),
       envelope: 'research',
     }),
   )

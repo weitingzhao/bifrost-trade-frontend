@@ -72,6 +72,12 @@ describe('objectiveLap', () => {
     expect(s.feedback.value).toBe(1)
   })
 
+  it('reads «—» at Feed back when the drafts could not be read', () => {
+    const s = lap({ drafts: null })
+    expect(s.feedback.value).toBeNull()
+    expect(s.feedback.detail).toBe('drafts not read')
+  })
+
   it('reads the standing for the stations the server already counts', () => {
     const s = lap()
     expect(s.scan.value).toBe(3446)

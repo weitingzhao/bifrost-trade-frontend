@@ -9,6 +9,7 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
 import { requestJson, type RequestJsonOptions } from '@/lib/http'
+import { withResearchAuth } from '@/lib/auth/researchUser'
 import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
 
 export interface SavedScreenDefinition {
@@ -46,7 +47,11 @@ const validateScreensEnvelope = withValidation<Envelope<unknown>>(
 
 /** A 422 names the definition's drift; that reason is the error text. */
 async function screensApi<T>(init: RequestJsonOptions<T> = {}): Promise<T> {
-  const body = await requestJson(researchEngineUrl('/research/screens'), { ...init, label: 'saved screens' })
+  const body = await requestJson(researchEngineUrl('/research/screens'), {
+    ...init,
+    headers: withResearchAuth(init.headers),
+    label: 'saved screens',
+  })
   const j = validateScreensEnvelope(body) as Envelope<T>
   return (j.data ?? (j as unknown as T)) as T
 }

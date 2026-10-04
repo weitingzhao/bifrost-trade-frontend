@@ -27,6 +27,8 @@ import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { approveResearchDraft, listResearchDrafts } from '@/api/researchDrafts'
 import { useHeldDraftDismiss } from '@/hooks/useResearchDrafts'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { draftTitle } from '@/lib/harness/draftText'
 import { resolutionLine } from '@/lib/hypothesisResolution'
 import { cardEvidence, splitTitleRef } from '@/lib/hypothesisCardModel'
@@ -159,6 +161,9 @@ function SuggestionQueue() {
   // Dismiss with Undo (Rev .75): the draft leaves at once, the write goes with the toast.
   const { isHeld, dismiss } = useHeldDraftDismiss()
   const rows = (drafts.data?.rows ?? []).filter((d) => !isHeld(d.id))
+  // Signed out, the queue answers 401: say so instead of drawing no queue,
+  // which reads as "nothing proposed".
+  if (firstResearchAuthGapError(drafts.error)) return <ResearchAuthGap error={drafts.error} layout="banner" />
   if (rows.length === 0) return null
   return (
     // The severity is the edge — inline, because `mat-card` clears any

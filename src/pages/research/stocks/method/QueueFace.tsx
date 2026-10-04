@@ -47,6 +47,8 @@ import { useExhibit } from '@/hooks/useLensRegistry'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { useResearchDrafts } from '@/hooks/useResearchDrafts'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { healthFlag, type AsofFlag } from '@/lib/asofTag'
 import { cn } from '@/lib/utils'
 import { withSymbolParam } from '@/lib/symbolLink'
@@ -529,6 +531,9 @@ export function QueueFace({ head }: { head: MethodHead }) {
                       Decision Inbox →
                     </Link>
                   </>
+                ) : firstResearchAuthGapError(draftsQ.error) ? (
+                  // Not signed in is its own state, not "the batches did not answer".
+                  <ResearchAuthGap error={draftsQ.error} layout="banner" />
                 ) : draftsQ.isError ? (
                   'The loop’s candidate batches did not answer — whether a persona wrote about this name is unread.'
                 ) : draftsQ.isLoading ? (

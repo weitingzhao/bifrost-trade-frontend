@@ -132,13 +132,13 @@ export async function fetchTrades(params?: {
   return validateTrades(await requestJson(url, { label: `Strategy /trades` }), url)
 }
 
-/** `InstanceRow` without `executions_count` (the list alone carries it). */
+/** `TradeRow` without `executions_count` (the list alone carries it). */
 export async function fetchTrade(id: number): Promise<Trade> {
   const url = strategyUrl(`/trades/${id}`)
   return validateTrade(await requestJson(url, { label: `Strategy /trades/${id}` }), url)
 }
 
-/** POST /trades answers `{ trade_id }` (and `strategy_instance_id`, the same id, until R4); no `ok` field. */
+/** POST /trades answers `{ trade_id }`; no `ok` field. */
 export async function createTrade(
   body: CreateTradeBody,
 ): Promise<{ trade_id: number }> {

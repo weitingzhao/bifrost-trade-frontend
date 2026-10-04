@@ -254,8 +254,8 @@ describe('requestDelete (strict deletes, api 0.3.0)', () => {
     expect(e.status).toBe(409)
     expect(e.message).toBe('It has 2 trades; a rule with trades stays.')
     fetchMock.mockResolvedValueOnce(
-      json({ detail: 'Cannot write strategy instance 7: the Golden Source is unreachable.', ok: false }, 503),
+      json({ detail: 'Cannot write trade 7: the Golden Source is unreachable.', ok: false }, 503),
     )
-    await expect(requestDelete('/api/account/strategies/instances/7')).rejects.toThrow('Golden Source is unreachable')
+    await expect(requestDelete('/api/account/trades/7')).rejects.toThrow('Golden Source is unreachable')
   })
 })

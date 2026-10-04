@@ -1,5 +1,5 @@
 /**
- * One strategy instance (design Rev .103, `Instance.dc.html`): `/instance/:id`,
+ * One trade (design Rev .103, `Trade.dc.html` since Rev .111): `/trade/:id`,
  * top level and outside every menu — reached only from a `#NNN`.
  *
  * The same component is the Instance surface. In the 440 panel (or any

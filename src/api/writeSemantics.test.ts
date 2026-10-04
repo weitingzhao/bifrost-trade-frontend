@@ -112,7 +112,7 @@ describe('execution attribution', () => {
 
   it('a split fill without fill_splits: [] comes back as { ok: false } with the 409 reason', async () => {
     const msg =
-      'This execution is split across 2 instances; send instance_allocations: [] with the ids to replace the split.'
+      'This execution is split across 2 trades; send fill_splits: [] with the ids to replace the split.'
     fetchMock.mockResolvedValue(refusal(409, msg))
     await expect(patchExecutionAttribution(41, { trade_id: 30 })).resolves.toEqual({ ok: false, error: msg })
   })

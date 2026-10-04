@@ -81,15 +81,19 @@ describe('the shelf opens itself', () => {
 
 describe('a pin follows its page when the page moves', () => {
   it('rewrites a renamed page to its new address and name', () => {
-    expect(forwardPin({ to: '/review/fit', label: 'Single trade' })).toEqual({ to: '/review/trade', label: 'Trade review' })
+    expect(forwardPin({ to: '/review/playbook-stats', label: 'Playbook stats' })).toEqual({
+      to: '/review/playbook?tab=record',
+      label: 'Playbook',
+    })
     expect(forwardPin({ to: '/portfolio/outcome', label: 'Outcome' })).toEqual({
       to: '/review/playbook?tab=record&cut=source',
       label: 'Playbook',
     })
   })
 
-  it('carries an id through and keeps an instance pin’s own label', () => {
-    expect(forwardPin({ to: '/instance/159', label: '#159 · NVDA' })).toEqual({ to: '/trade/159', label: '#159 · NVDA' })
+  it('leaves an address whose redirect is gone where it was saved (naming R4)', () => {
+    expect(forwardPin({ to: '/instance/159', label: '#159 · NVDA' })).toEqual({ to: '/instance/159', label: '#159 · NVDA' })
+    expect(forwardPin({ to: '/review/fit', label: 'Single trade' })).toEqual({ to: '/review/fit', label: 'Single trade' })
   })
 
   it('leaves a live page and an id the redirect cannot carry alone', () => {

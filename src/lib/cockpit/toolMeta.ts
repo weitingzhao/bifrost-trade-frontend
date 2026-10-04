@@ -242,13 +242,13 @@ export const TOOL_META: Record<string, ToolMeta> = {
       }
     },
   },
-  // Research 0.160.0 (naming R2): the trades and the gate sets under their own names. The
-  // old names below stay one version as aliases answering the old keys.
+  // Research 0.160.0 (naming R2): the trades and the gate sets under their own names.
+  // Their old alias names went with naming R4.
   'trade.strategy.trades': {
     title: 'Trade 列表',
     description: '按规则开出的持仓（trade）：每个 trade 一组 legs，带结构与开 / 平状态。',
     category: 'strategy',
-    summarize: (data) => summarizeTrades(asRecord(data), 'trades'),
+    summarize: (data) => summarizeTrades(asRecord(data)),
   },
   'trade.strategy.gate_sets': {
     title: '门禁集 Gate set',
@@ -278,13 +278,6 @@ export const TOOL_META: Record<string, ToolMeta> = {
             : undefined,
       }
     },
-  },
-  /** @deprecated Research 0.160.0 alias of `trade.strategy.trades` (rows under `instances`); goes next version. */
-  'trade.strategy.instances': {
-    title: 'Trade 列表',
-    description: '按规则开出的持仓（trade）——旧工具名，同 trade.strategy.trades。',
-    category: 'strategy',
-    summarize: (data) => summarizeTrades(asRecord(data), 'instances'),
   },
   'trade.strategy.opportunities': {
     title: '策略 Opportunity',
@@ -557,10 +550,10 @@ export function getToolMeta(toolName: string): ToolMeta {
   }
 }
 
-/** The open trades `trade.strategy.trades` lists (and its old alias, under `instances`). */
-function summarizeTrades(d: Record<string, unknown> | null, key: 'trades' | 'instances'): ToolSummary | null {
+/** The open trades `trade.strategy.trades` lists. */
+function summarizeTrades(d: Record<string, unknown> | null): ToolSummary | null {
   if (!d) return null
-  const rows = asArray(d[key]) ?? []
+  const rows = asArray(d.trades) ?? []
   return {
     headline: `${d.count ?? rows.length} 个 trade`,
     table:
@@ -570,7 +563,7 @@ function summarizeTrades(d: Record<string, unknown> | null, key: 'trades' | 'ins
             rows: rows.slice(0, 8).map((r) => {
               const x = r as Record<string, unknown>
               return [
-                `#${String(x.trade_id ?? x.strategy_instance_id ?? x.id ?? '—')}`,
+                `#${String(x.trade_id ?? x.id ?? '—')}`,
                 String(x.label ?? x.strategy_opportunity_name ?? '—'),
                 String(x.strategy_structure_name ?? x.structure_type ?? '—'),
                 String(x.state ?? x.status ?? '—'),

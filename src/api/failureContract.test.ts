@@ -62,9 +62,9 @@ describe('portfolio config', () => {
 
 describe('trading executions', () => {
   it('a refused create shows the detail (400)', async () => {
-    fetchMock.mockResolvedValue(failure(400, 'instance_allocations must be a list.', { account_executions_id: null }))
+    fetchMock.mockResolvedValue(failure(400, 'fill_splits must be a list.', { account_executions_id: null }))
     await expect(createExecution({} as Parameters<typeof createExecution>[0])).rejects.toThrow(
-      'instance_allocations must be a list.',
+      'fill_splits must be a list.',
     )
   })
 

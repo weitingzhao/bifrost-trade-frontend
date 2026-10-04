@@ -41,8 +41,8 @@ describe('schema drift reporter', () => {
   })
 
   it('keeps the URL path only — no origin, no query', () => {
-    expect(driftUrlPath('http://192.0.2.1:30882/api/account/strategies/instances?account_id=U0000001')).toBe(
-      '/api/account/strategies/instances',
+    expect(driftUrlPath('http://192.0.2.1:30882/api/account/trades?account_id=U0000001')).toBe(
+      '/api/account/trades',
     )
     expect(driftUrlPath('/api/account/strategies/opportunities?active_only=false')).toBe(
       '/api/account/strategies/opportunities',

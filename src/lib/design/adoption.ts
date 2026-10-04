@@ -110,8 +110,8 @@ const PARAM_COVERED: Record<string, string> = {
   '/research/loop/objectives/obj-vol-crush': '/research/loop/objectives/:objectiveId',
   '/research/loop/runs': '/research/loop/runs/:runId',
   // Rev .111: the Trade page is `/trade/:id` on both sides, and the design
-  // keeps `/instance` one version as its alias (Trade.dc.html); the app's
-  // `/instance/:id` redirects to it with the id.
+  // keeps `/instance` as its alias (Trade.dc.html). The app's `/instance/:id`
+  // redirect went with naming R4; the Trade page still answers the design row.
   '/trade/:id': '/trade/:id',
   '/instance': '/trade/:id',
 }
@@ -173,6 +173,18 @@ function designOnlyNote(path: string): string {
 }
 
 /**
+ * Old addresses the design still lists as aliases and the app no longer
+ * forwards. Rev .111 renamed Single trade to Trade review and kept `/review/fit`
+ * one version on both sides; naming R4 (decision pack 2026-10-03) dropped the
+ * app's redirect. The page at the new address is the same prototype, so it
+ * still answers the design's alias row — counted as `unbuilt`, a page that is
+ * built would sit in "to build".
+ */
+const DESIGN_ALIASES: Record<string, string> = {
+  '/review/fit': '/review/trade',
+}
+
+/**
  * Design routes the app answers with a redirect, grouped by where they land.
  *
  * A design path the app redirects to a real page is adopted through that page —
@@ -190,7 +202,11 @@ function designOnlyNote(path: string): string {
  */
 function aliasesByTarget(pages: ReadonlySet<string>): Map<string, string[]> {
   const byTarget = new Map<string, string[]>()
-  for (const r of REDIRECT_ROUTES) {
+  const aliases = [
+    ...REDIRECT_ROUTES,
+    ...Object.entries(DESIGN_ALIASES).map(([path, redirect]) => ({ path, redirect })),
+  ]
+  for (const r of aliases) {
     const from = DESIGN_BY_PATH.get(r.path)
     if (!from) continue
     const target = r.redirect.split(/[?#]/)[0]

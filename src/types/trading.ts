@@ -126,7 +126,7 @@ export interface PerformanceResponse {
   realized_by_account?: Record<string, number>
   realized_by_sec_type?: { sec_type: string; total_pnl: number; commission: number; net_pnl: number; fill_count: number; return_pct?: number }[]
   realized_by_strategy_opportunity?: Record<string, number>
-  /** One row per trade (api 0.7.0; `realized_by_strategy_instance` until R4). */
+  /** One row per trade (api 0.7.0). */
   realized_by_trade?: { trade_id: number; total_pnl: number; commission: number; net_pnl: number; fill_count: number; return_pct?: number }[]
   unrealized?: number
   unrealized_by_account?: Record<string, number>

@@ -49,7 +49,7 @@ describe('a note’s instance link (Rev .103)', () => {
 describe('otherEnvOfTradeRef (TD-73)', () => {
   it('names the environment of a qualified trade ref only', () => {
     expect(otherEnvOfTradeRef({ type: 'trade', id: 'dev:159' })).toBe('dev')
-    expect(otherEnvOfTradeRef({ type: 'inst', id: 'prod:7' })).toBe('prod')
+    expect(otherEnvOfTradeRef({ type: 'trade', id: 'prod:7' })).toBe('prod')
     expect(otherEnvOfTradeRef({ type: 'trade', id: '159' })).toBeNull()
     expect(otherEnvOfTradeRef({ type: 'sym', id: 'dev:159' })).toBeNull()
   })

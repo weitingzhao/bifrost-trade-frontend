@@ -55,12 +55,15 @@ export function readPins(): Pin[] {
 
 /**
  * A pin saved before a page moved follows it. Renames and merges leave the old
- * address as a redirect (`/review/fit` → `/review/trade`, `/portfolio/outcome`
- * → Record · By source), and a pin to one read stale under its old name while
- * the click still worked. So the pin is rewritten to where the redirect lands
- * and, for a page, takes that page's name; an instance pin (`/trade/159`) keeps
- * its own label. A redirect whose target cannot carry the id is left alone —
- * the router forwards it (`/strategy/instances/:instanceId`).
+ * address as a redirect (`/review/playbook-stats` → Playbook · Record,
+ * `/portfolio/outcome` → Record · By source), and a pin to one read stale under
+ * its old name while the click still worked. So the pin is rewritten to where
+ * the redirect lands and, for a page, takes that page's name; a pin whose
+ * redirect carries an id keeps its own label. A redirect whose target cannot
+ * carry the id is left alone — the router forwards it
+ * (`/strategy/instances/:instanceId`). An address with no redirect left (naming
+ * R4 dropped `/instance/:id` and `/review/fit`) is not rewritten: the pin
+ * stays where it was saved and reads as stale.
  */
 export function forwardPin(pin: Pin): Pin {
   let cur = pin

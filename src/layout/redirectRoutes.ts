@@ -400,11 +400,4 @@ export const REDIRECTS: readonly RouteEntry[] = [
   // single-trade trace to the Trade page's Lineage. Its address lands on the
   // cut that answers what it asked: settled money by where the idea came from.
   { path: '/portfolio/outcome', label: 'Playbook', crumbs: REVIEW, redirect: '/review/playbook?tab=record&cut=source' },
-  // ── Instance → Trade (design Rev .111) ─────────────────────────────────
-  // The entity is a Trade in the app; the API answers /trades from api 0.7.0 and the
-  // table is still strategy_instance until the naming program's R3. The old addresses
-  // forward one version: /instance/:id carries its id (router.tsx), and
-  // /review/fit keeps its query (`?t=#NNN`, `in`, `list`).
-  { path: '/instance/:id', label: 'Trade', crumbs: [], redirect: '/trade/:id' },
-  { path: '/review/fit', label: 'Trade review', crumbs: REVIEW, redirect: '/review/trade' },
 ]

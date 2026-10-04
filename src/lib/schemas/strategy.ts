@@ -147,8 +147,8 @@ export const GateSetResponseSchema = z
 // ── Trades ───────────────────────────────────────────────────────────────────
 
 /**
- * `TradeRow` — list items, GET / PATCH `/trades/{id}`. Rows still carry
- * `strategy_instance_id` (the same id) until naming R4; the app reads `trade_id`.
+ * `TradeRow` — list items, GET / PATCH `/trades/{id}`. Keyed by `trade_id` (the
+ * old `strategy_instance_id` double went in api 0.9.0, naming R4).
  * No `notes`: a trade's notes live in the journal only (TD-73; api 0.7.1 drops the field).
  */
 export const TradeSchema = z

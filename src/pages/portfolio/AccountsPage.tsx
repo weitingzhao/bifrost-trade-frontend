@@ -10,6 +10,7 @@ import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
 import { useAccountsRefresh } from '@/hooks/useAccountsRefresh'
 import { ViewState } from '@bifrost/ui'
 import { PageHead, PageHeadAction, PageShell } from '@/components/layout'
+import { CloseButton } from '@/components/data-display'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { OverviewCompact } from '@/components/accounts/OverviewCompact'
@@ -185,14 +186,7 @@ export default function AccountsPage() {
                 thing the broker had to give was days old. One merged &quot;updated&quot; number
                 would report that as fresh.
               </p>
-              <button
-                type="button"
-                className={accountsUi.helpClose}
-                onClick={() => setClockHelp(false)}
-                aria-label="Close clock help"
-              >
-                ✕
-              </button>
+              <CloseButton className="ml-auto" onClick={() => setClockHelp(false)} label="Close clock help" />
             </div>
             <div className={accountsUi.helpBody}>
               <p className={accountsUi.helpProse}>

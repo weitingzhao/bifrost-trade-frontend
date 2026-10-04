@@ -35,7 +35,7 @@ export const modelAnalysisDisclaimerClass =
   'rounded-md border border-warning/35 bg-warning-soft/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground'
 
 export const modelAnalysisConfigHintClass =
-  'rounded-md border border-dashed border-border bg-muted px-3 py-2 text-xs leading-relaxed text-muted-foreground max-w-2xl'
+  'rounded-md bg-[var(--sk-raised)] px-3 py-2 text-xs leading-relaxed text-muted-foreground max-w-2xl'
 
 export const modelAnalysisSummaryStripClass = 'flex flex-wrap gap-x-6.5 gap-y-2.5 border-b border-border pb-2.5'
 
@@ -70,7 +70,7 @@ export const modelAnalysisMethodCodeClass =
 export const modelAnalysisScenarioLineClass = 'text-dense-body text-foreground'
 
 export const modelAnalysisMethodologyBlockClass =
-  'my-2 rounded-md border border-dashed border-border bg-muted/40 p-3'
+  'my-2 rounded-md bg-[var(--sk-raised)] p-3'
 
 export const modelAnalysisMethodologyListClass =
   'mt-1.5 list-disc pl-4 text-xs text-muted-foreground leading-relaxed [&_li]:mb-1.5'

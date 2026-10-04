@@ -40,8 +40,7 @@ const PAGE_LEAD =
 // Rev .62: a panel's foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
-/** Row hover and tracks in ink (Rev .84–.85): the accent's lime fallback is gone. */
-const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+/** Tracks in ink (Rev .84–.85): the accent's lime fallback is gone. Row hover is the list grammar's. */
 const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
 
 /** Past this pressure, the broker is closer to closing positions than the house gate is. */
@@ -273,7 +272,7 @@ export default function RiskMarginPage() {
                       </thead>
                       <tbody>
                         {users.map((u) => (
-                          <tr key={u.symbol} className={ROW_HOVER}>
+                          <tr key={u.symbol}>
                             <td data-sr-col="entity" className="font-mono font-bold text-entity-symbol">
                               {u.symbol}
                             </td>

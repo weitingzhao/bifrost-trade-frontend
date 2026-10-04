@@ -49,8 +49,7 @@ const PAGE_LEAD =
 // Rev .62: a panel's foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
 
-/** Row hover and the share track, in ink (Rev .84): the accent's lime fallback is gone. */
-const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+/** The share track, in ink (Rev .84): the accent's lime fallback is gone. Row hover is the list grammar's. */
 const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
 
 
@@ -363,7 +362,7 @@ export default function RiskPortfolioPage() {
                         <tr
                           key={r.symbol}
                           title={`${r.symbol} — open the Symbol page`}
-                          {...rowLink(withSymbolParam(SYMBOL_PATH, r.symbol), ROW_HOVER)}
+                          {...rowLink(withSymbolParam(SYMBOL_PATH, r.symbol))}
                         >
                           <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-entity-symbol')}>
                             {r.symbol}

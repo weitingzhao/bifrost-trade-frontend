@@ -123,10 +123,10 @@ export function PcrChainTable({ rows }: Props) {
           <tr>
             <th className={styles.chainThExp}>Expiration</th>
             <th className={styles.chainThDte}>DTE</th>
-            <th className={styles.chainThPut}>Put Vol</th>
-            <th className={styles.chainThCall}>Call Vol</th>
-            <th className={styles.chainThTotal}>Total Vol</th>
-            <th className={styles.chainThPc}>P/C Vol</th>
+            <th className={styles.chainThPut}>Put vol</th>
+            <th className={styles.chainThCall}>Call vol</th>
+            <th className={styles.chainThTotal}>Total vol</th>
+            <th className={styles.chainThPc}>P/C vol</th>
             <th className={styles.chainThPut}>Put OI</th>
             <th className={styles.chainThCall}>Call OI</th>
             <th className={styles.chainThTotal}>Total OI</th>

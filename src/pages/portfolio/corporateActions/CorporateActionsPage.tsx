@@ -48,7 +48,7 @@ import {
   type BookEvent,
   type UnderlyingSlice,
 } from './corporateActionsModel'
-import { AMBER_EDGE, amountLabel, FOOT, fmtShares, kindLabel, ROW_HOVER, STANDARD_MULTIPLIER } from './corporateActionsFormat'
+import { AMBER_EDGE, amountLabel, FOOT, fmtShares, kindLabel, STANDARD_MULTIPLIER } from './corporateActionsFormat'
 import { KindTag, Ticker } from './corporateActionsMarks'
 import { CorporateActionsCalendar } from './CorporateActionsCalendar'
 import { CorporateActionsBand } from './CorporateActionsBand'
@@ -483,7 +483,7 @@ export default function CorporateActionsPage() {
                           </td>
                         </tr>,
                         ...sl.roles.map((r) => (
-                          <tr key={`${sl.symbol}:${r.role}`} className={ROW_HOVER}>
+                          <tr key={`${sl.symbol}:${r.role}`}>
                             <td className={cn(positionsUi.td, 'border-border pl-4 text-left font-sans text-secondary-foreground')}>
                               {r.role}
                             </td>
@@ -510,7 +510,7 @@ export default function CorporateActionsPage() {
                             </td>
                           </tr>
                         )),
-                        <tr key={`${sl.symbol}:shares`} className={ROW_HOVER}>
+                        <tr key={`${sl.symbol}:shares`}>
                           <td className={cn(positionsUi.td, 'border-border pl-4 text-left font-sans text-secondary-foreground')}>
                             Shares
                           </td>

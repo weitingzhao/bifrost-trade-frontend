@@ -26,19 +26,6 @@ export const ledgerShell = {
   cap: 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground',
   capAttribution: 'text-[var(--color-link)]',
   capInstruments: 'text-[var(--color-entity-category)]',
-
-  symbolCombobox: 'relative min-w-28',
-  symbolInput: cn(
-    'h-[1.875rem] w-full min-w-28 border mat-field',
-    'px-2 text-dense-body text-foreground',
-  ),
-  symbolList: cn(
-    'absolute left-0 right-0 top-[calc(100%+2px)] z-40 m-0 max-h-48',
-    'list-none overflow-auto rounded-md border border-border bg-popover p-1',
-    'shadow-[0_4px_12px_rgb(0_0_0/0.25)]',
-  ),
-  symbolOption: 'cursor-pointer px-2 py-1 text-xs hover:bg-muted',
-  symbolOptionActive: 'bg-muted',
 } as const
 
 /** A view or sub-view chip: lime when on, dim when it would show nothing. */
@@ -56,7 +43,10 @@ export function ledgerChipClass(active: boolean, empty: boolean, filled = true):
   )
 }
 
-const groupRowSurface = 'border-0 border-b border-border bg-secondary/40 hover:bg-secondary'
+// Rev .154 `.lg-grp`: the group head is a raised2 fill (ink 6% on the frost
+// page) over the hairline, ink 5% under the pointer — the prototype's own pair.
+const groupRowSurface =
+  'border-0 border-b border-border bg-[var(--sk-raised2)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]'
 const groupRowLayout =
   'flex min-w-0 cursor-pointer flex-wrap items-baseline gap-2.5 px-2.5 py-1.75 text-left text-foreground'
 

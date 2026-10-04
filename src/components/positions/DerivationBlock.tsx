@@ -72,7 +72,8 @@ function SourceBadge({ source, strong = false }: { source: Variable['source']; s
     <span
       className={cn(
         'text-dense-meta font-semibold text-muted-foreground/70',
-        strong && 'rounded-sm border border-border/60 px-1 text-muted-foreground',
+        // Rev .154: a chip is a fill (ink 8%), not a neutral frame.
+        strong && 'rounded-sm bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-1 text-muted-foreground',
       )}
       title={b.title}
     >

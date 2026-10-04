@@ -116,7 +116,7 @@ export function PerformanceReturnBasis({
               <span className="text-dense-meta text-muted-foreground text-pretty">{m.when}</span>
             </span>
           ))}
-          <span className="flex flex-col gap-0.5 rounded-sm border border-dashed border-border px-2 py-1.5">
+          <span className="flex flex-col gap-0.5 rounded-sm bg-[var(--sk-raised)] px-2 py-1.5">
             <span className="flex flex-wrap items-baseline gap-2">
               <span className="text-xs font-semibold text-foreground">Used today · return on capital base</span>
               <span className={cn(perfUi.mono, 'ml-auto text-dense-body font-bold', pnlColorClass(perf?.summary?.return_pct))}>

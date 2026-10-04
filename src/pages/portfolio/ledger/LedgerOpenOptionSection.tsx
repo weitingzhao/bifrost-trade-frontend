@@ -285,7 +285,7 @@ export function LedgerOpenOptionSection({
         </DenseTableHeader>
         <DenseTableBody>
           {openExpandedGroups.length === 0 ? (
-            <DenseTableRow className="hover:bg-transparent">
+            <DenseTableRow>
               <DenseTableCell
                 colSpan={14}
                 className="py-4 text-center italic text-muted-foreground"

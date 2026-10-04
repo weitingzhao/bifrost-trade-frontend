@@ -415,8 +415,11 @@ function GroupBlock({
     )
   return (
     <>
-      <DenseTableRow className="bg-secondary/50 hover:bg-secondary/50">
-        <DenseTableCell colSpan={12} className="py-2">
+      {/* The symbol head is a full-cell fill, as the prototype paints it
+          (raised2 → ink 6% on the frost page, Owner #7); a <tr> fill is clear
+          in the list grammar. */}
+      <DenseTableRow>
+        <DenseTableCell colSpan={12} className="bg-[var(--sk-raised2)] py-2">
           <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-dense-meta text-muted-foreground">
             {symbolNode}
             <span className="font-mono text-muted-foreground">{pg.accountId || '—'}</span>

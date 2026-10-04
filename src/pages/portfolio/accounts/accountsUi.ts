@@ -92,10 +92,6 @@ export const accountsUi = {
   helpPanel: 'border mat-card',
   helpHead: 'flex flex-wrap items-baseline gap-2 px-3 pt-2 pb-1',
   helpCap: 'text-dense-meta font-semibold text-foreground/85',
-  helpClose: cn(
-    'ml-auto inline-flex h-5 items-center border px-1.5 mat-btn',
-    'text-dense-meta text-muted-foreground hover:text-foreground',
-  ),
   helpBody: 'grid gap-2 px-3 pb-2.5 sm:grid-cols-3',
   helpProse: 'm-0 text-dense-meta text-muted-foreground',
 

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { CloseButton } from '@/components/data-display'
 
 const PANEL_MIN_W = 420
 const PANEL_MAX_W = 920
@@ -248,17 +249,13 @@ export function OdChartExpandOnHover({
                 >
                   {title}
                 </div>
-                <button
-                  type="button"
-                  className="od-chart-expand-panel-close"
+                <CloseButton
                   onClick={e => {
                     e.stopPropagation()
                     close()
                   }}
-                  aria-label="Close enlarged chart"
-                >
-                  ×
-                </button>
+                  label="Close enlarged chart"
+                />
               </div>
               <div className="od-chart-expand-panel-body">{children}</div>
               <p className="od-chart-expand-panel-hint">

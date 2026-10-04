@@ -63,7 +63,7 @@ function LiveExample({ payload }: { payload: LedgerMetricExplainPayload }) {
         <div className="mt-2 overflow-x-auto">
           <table className="w-full border-collapse text-dense-caption">
             <thead>
-              <tr className="border-b border-border">
+              <tr>
                 {payload.detailColumnHeaders.map(h => (
                   <th key={h} className="py-1 pr-2 text-left font-semibold text-foreground">
                     {h}
@@ -73,7 +73,7 @@ function LiveExample({ payload }: { payload: LedgerMetricExplainPayload }) {
             </thead>
             <tbody>
               {payload.detailRows.map((row, ri) => (
-                <tr key={ri} className="border-b border-border/40">
+                <tr key={ri}>
                   {payload.detailColumnHeaders.map(h => (
                     <td key={h} className="py-0.5 pr-2 font-mono text-muted-foreground">
                       {String((row as Record<string, unknown>)[h] ?? '—')}

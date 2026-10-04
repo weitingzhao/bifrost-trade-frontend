@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { segmentButtonClass, segmentGroupClass } from '@/components/data-display'
+import { CloseButton, segmentButtonClass, segmentGroupClass } from '@/components/data-display'
 import {
   LEDGER_SINCE_PRESET_TABS,
   type LedgerSincePreset,
@@ -176,15 +176,7 @@ export function LedgerFilterBar({
             >
               Trade date {fmtIsoDateToken(tradeDay)}
               {onClearTradeDay && (
-                <button
-                  type="button"
-                  onClick={onClearTradeDay}
-                  className="cursor-pointer border-0 bg-transparent p-0 text-inherit hover:text-foreground"
-                  aria-label="Clear the trade date"
-                  title="Clear the trade date"
-                >
-                  ✕
-                </button>
+                <CloseButton size="sm" onClick={onClearTradeDay} label="Clear the trade date" />
               )}
             </span>
           )}

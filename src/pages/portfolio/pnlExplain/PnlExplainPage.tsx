@@ -281,7 +281,7 @@ export default function PnlExplainPage() {
                     </thead>
                     <tbody>
                       {leads.map((l) => (
-                        <tr key={l.key} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+                        <tr key={l.key}>
                           <td
                             className={cn(
                               positionsUi.td,

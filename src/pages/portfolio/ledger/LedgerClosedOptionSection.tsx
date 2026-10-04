@@ -255,7 +255,7 @@ export function LedgerClosedOptionSection({
           })}
         </DenseTableBody>
         <tfoot>
-          <DenseTableRow className="font-semibold hover:bg-transparent border-t-2 border-border">
+          <DenseTableRow className="font-semibold hover:bg-transparent">
             <DenseTableCell colSpan={10} className="text-left text-muted-foreground">
               Total
             </DenseTableCell>
@@ -299,7 +299,7 @@ export function LedgerClosedOptionSection({
         </DenseTableHeader>
         <DenseTableBody>
           {closedExpandedGroups.length === 0 ? (
-            <DenseTableRow className="hover:bg-transparent">
+            <DenseTableRow>
               <DenseTableCell
                 colSpan={11}
                 className="py-4 text-center italic text-muted-foreground"

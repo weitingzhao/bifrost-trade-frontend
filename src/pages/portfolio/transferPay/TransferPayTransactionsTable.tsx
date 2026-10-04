@@ -108,8 +108,10 @@ export function TransferPayTransactionsTable({
             display.map(item => {
               if (item.row === 'month') {
                 return (
-                  <DenseTableRow key={item.key} className="bg-secondary/50">
-                    <DenseTableCell colSpan={COL_COUNT} className="py-1">
+                  // The month head is a full-cell fill, as the prototype paints it
+                  // (raised2 → ink 6%, Owner #7); a <tr> fill is clear in the list grammar.
+                  <DenseTableRow key={item.key}>
+                    <DenseTableCell colSpan={COL_COUNT} className="bg-[var(--sk-raised2)] py-1">
                       <span className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
                         <span className={transferPayUi.monthLabel}>{item.label}</span>
                         <span className={transferPayUi.monthMeta}>
@@ -131,7 +133,7 @@ export function TransferPayTransactionsTable({
               return (
                 <DenseTableRow
                   key={item.key}
-                  className={cn(kind === 'Cancel' && transferPayUi.cancelRowTint)}
+                  rowTint={kind === 'Cancel' ? transferPayUi.cancelRowTint : undefined}
                 >
                   <DenseTableCell>{fmtDateToken(tx.ts)}</DenseTableCell>
                   <DenseTableCell className={denseTable.mutedMeta}>

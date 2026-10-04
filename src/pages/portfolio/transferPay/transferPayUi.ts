@@ -39,9 +39,11 @@ export const transferPayUi = {
   chipOn: 'border-primary/55 bg-primary/[0.12] text-primary',
   chipOff: 'bg-[var(--mat-btn-fill)] text-muted-foreground hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
   chipCount: 'font-mono text-dense-meta font-normal opacity-80',
+  // Rev .154 `.tp-q`: an ink 8% fill, no frame; 14% and accent ink under the pointer.
   iconToggle: cn(
-    'inline-flex h-5 w-5 items-center justify-center rounded-full border border-border',
-    'text-muted-foreground hover:border-primary/60 hover:text-primary',
+    'inline-flex h-5 w-5 items-center justify-center rounded-full border border-transparent',
+    'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] text-muted-foreground',
+    'hover:bg-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] hover:text-primary',
   ),
   kindPanel: 'flex flex-col gap-1.5 px-0 pb-2',
   kindProse: 'm-0 px-3 text-dense-meta text-muted-foreground',
@@ -65,7 +67,8 @@ export const transferPayUi = {
   /** Same violet the design gives a reversal — never a direction or a fault colour. */
   cancelNoteNamed: 'text-entity-category',
   cancelNoteBare: 'text-muted-foreground',
-  cancelRowTint: 'bg-entity-category/[0.06]',
+  /** A cancel row's state, as the prototype's `--sr-row` (trade 6%) — a <tr> fill is clear in the list grammar. */
+  cancelRowTint: 'color-mix(in srgb, var(--sk-trade) 6%, transparent)',
 
   summaryHead: 'mt-1 mb-1.5 flex flex-wrap items-center justify-between gap-2',
   summaryTitle: 'inline-flex items-center gap-1 m-0 text-sm font-semibold',

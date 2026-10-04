@@ -50,31 +50,6 @@
   letter-spacing: 0.02em;
 }
 
-.formHeaderClose {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.formHeaderClose:hover {
-  background: var(--border);
-  color: var(--foreground);
-  border-color: var(--border);
-}
-
 .formBody {
   padding: 1rem 1.25rem;
 }
@@ -269,9 +244,8 @@
   color: var(--primary);
   margin: 0 0 0.5rem;
   padding-bottom: 0.5rem;
+  /* A divider (ink 6% under data-mat); the title itself is sentence case (Rev .154). */
   border-bottom: 1px solid var(--border);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
 }
 
 .detailsCardDesc {
@@ -400,27 +374,19 @@
   font-size: 0.8125rem;
 }
 
+/* Rows part by the list scope's zebra and take its hover; the head is its
+   ink 8% hairline (Rev .153–.154) — no cell rules, no head band, no own hover. */
 .detailsTable th,
 .detailsTable td {
   padding: 0.25rem 0.5rem;
   text-align: left;
-  border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 
 .detailsTable th {
   font-weight: 600;
   color: var(--muted-foreground);
-  background: var(--secondary);
   font-size: 0.75rem;
-}
-
-.detailsTable tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.detailsTable tbody tr:hover td {
-  background: color-mix(in srgb, var(--sk-ink) 2%, transparent);
 }
 
 .detailsConstraints {
@@ -724,7 +690,7 @@
   color: var(--muted-foreground);
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  background: color-mix(in srgb, var(--sk-ink) 3%, transparent);
-  border: 1px solid var(--border);
+  /* A group is a fill, not a frame (Rev .154): ink 4%. */
+  background: color-mix(in srgb, var(--sk-ink) 4%, transparent);
   margin-bottom: 0.75rem;
 }

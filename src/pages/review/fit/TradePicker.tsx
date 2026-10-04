@@ -249,9 +249,11 @@ function GroupRows({
           onKeyDown={(e) => {
             if (e.key === 'Enter') onPick(t)
           }}
+          // The trade on the page is an accent 10% row state (Review Trade.dc.html
+          // Rev .154 `--sr-row`); the group head above keeps its own cell fill.
           className={cn(
             'cursor-pointer',
-            t.contractKey === current?.contractKey && 'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
+            t.contractKey === current?.contractKey && '[--sr-row:color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
           )}
         >
           <td className="whitespace-nowrap">

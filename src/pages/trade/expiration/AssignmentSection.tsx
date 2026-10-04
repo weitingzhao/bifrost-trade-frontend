@@ -43,9 +43,13 @@ const PAGE_LEAD =
 
 // Rev .62: a foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
-const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
-/** The design's wash on a row that wants a look — amber 4%, a state, never a fill colour of its own. */
-const ROW_HOT = '[&>td]:bg-[color-mix(in_srgb,var(--color-warning)_4%,transparent)]'
+/**
+ * The design's wash on a row that wants a look — amber 4%, a state, never a
+ * fill colour of its own: the row state `--sr-row` (Trade Expiration.dc.html
+ * Rev .154), which the list scope paints as the row's capsule. Hover is the
+ * scope's.
+ */
+const ROW_HOT = '[--sr-row:color-mix(in_srgb,var(--color-warning)_4%,transparent)]'
 /** A severity edge on a card must be inline: `mat-card` clears border-colour classes. */
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
@@ -250,7 +254,7 @@ export function AssignmentSection() {
                     const trig = triggers.get(l.contractKey)
                     const rowHot = Boolean(trig?.hot) || (Boolean(l.itm) && thinHere)
                     return (
-                      <tr key={l.contractKey} className={cn(ROW_HOVER, rowHot && ROW_HOT)}>
+                      <tr key={l.contractKey} className={cn(rowHot && ROW_HOT)}>
                         <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
                           {shortOptContractKey(l.contractKey)}
                         </td>
@@ -463,7 +467,7 @@ export function AssignmentSection() {
                     </thead>
                     <tbody>
                       {history.events.map((h) => (
-                        <tr key={h.key} className={ROW_HOVER}>
+                        <tr key={h.key}>
                           <td className={cn(positionsUi.td, 'text-left text-muted-foreground')}>
                             {fmtIsoDateToken(h.date)}
                           </td>

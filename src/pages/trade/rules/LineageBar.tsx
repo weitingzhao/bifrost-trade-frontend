@@ -7,7 +7,7 @@
  * ⌥←) walks it one step, a crumb jumps to it, and the state each step left
  * (filters, folds, scroll) comes back with it.
  */
-import { CollapsibleChevron } from '@/components/data-display'
+import { CloseButton, CollapsibleChevron } from '@/components/data-display'
 import type { ReactNode } from 'react'
 import type { ChainData } from '@/hooks/useRulesChain'
 import { cn } from '@/lib/utils'
@@ -153,15 +153,7 @@ export function LineageBar({
         <div className="flex flex-none items-center gap-2 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3 py-2 @3xl/page:border-t-0">
           <span className="text-dense-micro font-semibold whitespace-nowrap text-muted-foreground">symbol</span>
           <span className="font-mono text-dense-body font-bold text-[var(--sk-ticker)]">{focus.sym}</span>
-          <button
-            type="button"
-            onClick={onClearSym}
-            title="Drop the symbol"
-            aria-label="Drop the symbol"
-            className="text-dense-meta text-muted-foreground hover:text-foreground"
-          >
-            ✕
-          </button>
+          <CloseButton size="sm" label="Drop the symbol" onClick={onClearSym} />
         </div>
       ) : null}
 

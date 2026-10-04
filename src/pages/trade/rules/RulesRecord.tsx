@@ -189,9 +189,11 @@ export function RulesRecord({
                       if (e.key === 'Enter') r.go()
                     }}
                     title={r.title}
+                    // Hover is the list scope's; the picked opportunity is an
+                    // accent 14% row state (Trade Rules.dc.html Rev .154 `--sr-row`).
                     className={cn(
-                      'cursor-pointer hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]',
-                      r.selected && 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)]',
+                      'cursor-pointer',
+                      r.selected && '[--sr-row:color-mix(in_srgb,var(--sk-accent)_14%,transparent)]',
                     )}
                   >
                     <td className="font-semibold">{r.name}</td>

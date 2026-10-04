@@ -192,7 +192,7 @@ export function PeersPanel({
               </thead>
               <tbody>
                 <PeerRow x={self} self pd={selfPd} ld={selfLd} />
-                <tr className="bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+                <tr className="[--sr-row:color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
                   <td className="whitespace-nowrap font-semibold text-[var(--sk-mute2)]">
                     Peer median <span className="text-dense-micro font-normal">of {peers.length}</span>
                   </td>
@@ -261,10 +261,13 @@ function PeerRow({
       }}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
+      // Row states ride --sr-row (Review Trade.dc.html Rev .154): this trade
+      // accent 10%, the peer lit from the chart ink 6% — a <tr> fill never
+      // shows inside the list scope.
       className={cn(
         !self && 'cursor-pointer',
-        self && 'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
-        hovered && 'bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
+        self && '[--sr-row:color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
+        hovered && '[--sr-row:color-mix(in_srgb,var(--sk-ink)_6%,transparent)]',
       )}
     >
       <td className="whitespace-nowrap">

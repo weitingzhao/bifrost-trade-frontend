@@ -50,8 +50,7 @@ import {
   tradesOppNameClass,
   tradesPeriodDaysClass,
   tradesPeriodYearClass,
-  tradesRowCompareClass,
-  tradesRowSelectedClass,
+  tradesRowHeldTint,
   tradesSortBtnClass,
   tradesSortBtnNumClass,
   tradesSortCaretClass,
@@ -560,17 +559,9 @@ export function TradesGroupedTable({
             return (
             <DenseTableRow
               key={inst.trade_id}
-              className={cn(
-                selected && tradesRowSelectedClass,
-                compareId === inst.trade_id && tradesRowCompareClass,
-              )}
+              rowTint={selected || compareId === inst.trade_id ? tradesRowHeldTint : undefined}
             >
-              <DenseTableCell
-                className={cn(
-                  tradesActionsCellClass,
-                  selected && 'bg-primary/12',
-                )}
-              >
+              <DenseTableCell className={tradesActionsCellClass}>
                 <div className={tradesActionsInnerClass}>
                   {onDrill ? (
                     // Rev .103: ◎ focuses it here (its lineage lights, Back

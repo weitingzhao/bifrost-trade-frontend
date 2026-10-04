@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { ViewState } from '@bifrost/ui'
 import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
-import { DenseTag, SegmentControl } from '@/components/data-display'
+import { CloseButton, DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { usePreviewState } from '@/hooks/usePreviewState'
@@ -392,9 +392,11 @@ export default function FillsPage() {
                         <tr
                           key={r.key}
                           onClick={() => selectRow(r.key)}
+                          // The fill under question is an accent 8% row state (Trade
+                          // Fills.dc.html Rev .154 `--sr-row`); hover is the list scope's.
                           className={cn(
-                            'cursor-pointer hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-                            r.key === selectedKey && '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]',
+                            'cursor-pointer',
+                            r.key === selectedKey && '[--sr-row:color-mix(in_srgb,var(--sk-accent)_8%,transparent)]',
                           )}
                         >
                           <td className={cn(positionsUi.td, 'text-secondary-foreground')}>
@@ -462,9 +464,7 @@ export default function FillsPage() {
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>Where does this fill belong?</span>
                 {selectedRow ? (
-                  <button type="button" className={cn(positionsUi.btn, 'ml-auto')} onClick={() => selectRow(selectedRow.key)}>
-                    ✕
-                  </button>
+                  <CloseButton label="Close the question" className="ml-auto" onClick={() => selectRow(selectedRow.key)} />
                 ) : null}
               </header>
               {selectedRow == null ? (

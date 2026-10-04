@@ -96,11 +96,10 @@ export function PlansTable({
           <DenseTableRow
             key={plan.strategy_plan_id}
             onClick={() => onSelect(plan)}
-            className={cn(
-              'cursor-pointer',
-              // Rev .84: the picked row is the accent, mixed — never a lime fallback.
-              plan.strategy_plan_id === selectedId && 'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
-            )}
+            className="cursor-pointer"
+            // Rev .84: the picked row is the accent, mixed; Rev .154: as the
+            // row state (Trade Plans.dc.html `--sr-row`), not a tr fill.
+            rowTint={plan.strategy_plan_id === selectedId ? 'color-mix(in srgb, var(--sk-accent) 10%, transparent)' : undefined}
           >
             <DenseTableCell>
               <DenseTag variant={planStatusVariant(plan.effective_status)}>

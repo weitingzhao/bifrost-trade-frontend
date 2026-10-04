@@ -16,7 +16,8 @@
 import { PLAN_SOURCE_KINDS, PLAN_SOURCE_LABELS, planToken } from '@/utils/tradeOrigin'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { SegmentControl } from '@/components/data-display'
+import { CloseButton, SegmentControl } from '@/components/data-display'
+import { IconActionButton as DsIconActionButton } from '@bifrost/ui'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useStructures } from '@/hooks/useStrategies'
@@ -326,15 +327,7 @@ export function PlanForm({
           Fill the left, watch the right. Nothing is sent anywhere — an intent is a plan marked for TWS, and TWS is
           where you click.
         </span>
-        <button
-          type="button"
-          onClick={onCancel}
-          aria-label="Close form"
-          title="Close — Esc does the same"
-          className="ml-auto shrink-0 px-0.5 text-muted-foreground opacity-70 hover:opacity-100"
-        >
-          ✕
-        </button>
+        <CloseButton label="Close form" title="Close — Esc does the same" className="ml-auto shrink-0" onClick={onCancel} />
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_360px] max-[860px]:grid-cols-1 max-[860px]:overflow-y-auto">
@@ -497,16 +490,14 @@ export function PlanForm({
                     placeholder="1"
                     onChange={(e) => setLeg(i, { ratio: e.target.value })}
                   />
-                  <button
-                    type="button"
-                    aria-label={`Remove leg ${i + 1}`}
+                  {/* The DS close directly: the one leg left cannot go (CloseButton has no disabled). */}
+                  <DsIconActionButton
+                    variant="close"
+                    ariaLabel={`Remove leg ${i + 1}`}
                     title="Remove leg"
-                    className="text-muted-foreground opacity-70 hover:opacity-100 disabled:opacity-30"
                     disabled={legs.length === 1}
                     onClick={() => setLegs((rows) => rows.filter((_, at) => at !== i))}
-                  >
-                    ✕
-                  </button>
+                  />
                 </div>
                 {sideBlocked && writtenLeg(leg) && leg.side !== 'buy' && leg.side !== 'sell' ? (
                   <p className="text-dense-meta text-destructive">{CHOOSE_SIDE}</p>

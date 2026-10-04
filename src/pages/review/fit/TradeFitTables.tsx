@@ -42,12 +42,11 @@ export function CounterfactualsTable({ rows }: { rows: readonly Counterfactual[]
             {rows.map((r) => (
               <tr
                 key={r.key}
-                className={cn(
-                  'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-                  // The realised row is marked by its ground, the accent at 8%;
-                  // its name stays ink (Rev .90 — it was the accent twice over).
-                  r.self && '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_8%,transparent)]',
-                )}
+                // The realised row is marked by its ground, the accent at 8%;
+                // its name stays ink (Rev .90 — it was the accent twice over).
+                // Rev .154: the ground is the row state (`--sr-row`), the hover
+                // the list scope's.
+                className={cn(r.self && '[--sr-row:color-mix(in_srgb,var(--sk-accent)_8%,transparent)]')}
               >
                 <td
                   className={cn(

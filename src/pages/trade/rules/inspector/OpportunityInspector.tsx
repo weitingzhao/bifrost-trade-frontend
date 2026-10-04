@@ -10,9 +10,9 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { InspectorField } from '@bifrost/ui'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { fetchOpportunityDetail, patchOpportunity, STRATEGY_WRITES, strategyWriteLabel } from '@/api/strategy'
-import { SegmentControl } from '@/components/data-display'
+import { CloseButton, SegmentControl } from '@/components/data-display'
 import { opportunityDetailKey } from '@/components/strategy/opportunityCopy'
 import {
   newEntryCondition,
@@ -260,16 +260,13 @@ function OpportunityFields({
                   })
                 }
               />
-              <button
-                type="button"
-                className="inline-flex h-7 w-6 items-center justify-center rounded-md text-[var(--sk-mute)] hover:text-foreground"
-                aria-label={`Remove condition ${idx + 1}`}
+              <CloseButton
+                label={`Remove condition ${idx + 1}`}
+                className="self-center"
                 onClick={() =>
                   edit(`cond:remove:${idx}`, (d) => ({ ...d, conditions: d.conditions.filter((_, i) => i !== idx) }))
                 }
-              >
-                <X className="h-3.5 w-3.5" aria-hidden />
-              </button>
+              />
             </span>
           ))}
           <button

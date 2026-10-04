@@ -14,12 +14,6 @@ export const opportunitiesFormTitleClass = cn(
   'm-0 text-base font-bold tracking-tight text-foreground',
 )
 
-export const opportunitiesFormCloseClass = cn(
-  'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-0 bg-transparent',
-  'text-lg leading-none text-muted-foreground transition-colors',
-  'hover:bg-destructive/15 hover:text-destructive',
-)
-
 export const opportunitiesFormBodyClass = cn(
   'flex flex-col gap-3 px-4 py-3',
 )
@@ -113,9 +107,10 @@ export const opportunitiesColTitleClass = cn(
 
 export const opportunitiesColBodyClass = cn('flex flex-col gap-3 p-3')
 
+// Rev .154: a secondary control is a fill (mat-btn, ink 8% → 13%), never a dashed frame.
 export const opportunitiesAddBtnClass = cn(
-  'inline-flex h-8 items-center gap-1 self-start rounded-full border border-dashed border-border px-3 text-xs text-muted-foreground',
-  'transition-colors hover:border-primary hover:bg-primary/10 hover:text-primary',
+  'inline-flex h-8 items-center gap-1 self-start border px-3 text-xs text-muted-foreground mat-btn',
+  'transition-colors hover:text-foreground',
 )
 
 export const opportunitiesSymbolTagsClass = cn('flex flex-wrap gap-2')
@@ -127,11 +122,6 @@ export const opportunitiesSymbolTagClass = cn(
 
 export const opportunitiesSymbolTagInputClass = cn(
   'h-7 w-[5.5rem] border-0 bg-transparent px-2 font-mono text-xs font-semibold uppercase shadow-none focus-visible:ring-0',
-)
-
-export const opportunitiesSymbolTagRemoveClass = cn(
-  'flex h-7 w-[22px] items-center justify-center border-l border-border bg-transparent text-muted-foreground',
-  'hover:bg-destructive/15 hover:text-destructive',
 )
 
 export const opportunitiesWatchlistActionsClass = cn(
@@ -171,9 +161,4 @@ export const opportunitiesConditionInputClass = cn(
 
 export const opportunitiesConditionInputNumClass = cn(
   'h-8 w-20 shrink-0 font-mono tabular-nums',
-)
-
-export const opportunitiesConditionRemoveClass = cn(
-  'flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded text-muted-foreground',
-  'hover:bg-destructive/15 hover:text-destructive',
 )

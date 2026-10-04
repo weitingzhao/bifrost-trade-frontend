@@ -35,8 +35,10 @@ export const tradeCreateSelectTriggerClass = cn(
   'flex items-center justify-between font-normal',
 )
 
+// Rev .154 (§17.10): a segmented track is an ink 7% fill, not a framed band;
+// the border keeps its width, transparent, so nothing moves.
 export const tradeCreateAccountPillsClass =
-  'inline-flex w-full min-w-0 flex-1 items-center gap-0 rounded-full border border-border bg-secondary/60 p-0.5'
+  'inline-flex w-full min-w-0 flex-1 items-center gap-0 rounded-full border border-transparent bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] p-0.5'
 
 export const tradeCreateAccountPillClass = cn(
   'rounded-full border-0 bg-transparent px-3 py-1 font-mono text-sm font-medium',

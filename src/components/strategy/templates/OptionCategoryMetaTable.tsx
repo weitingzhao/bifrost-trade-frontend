@@ -11,10 +11,9 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
-  IconActionButton,
+  CloseButton,
   NestedDenseTable,
 } from '@/components/data-display'
-import { X } from 'lucide-react'
 import type {
   StrategyTemplateDetail,
   MetaParamItem,
@@ -197,18 +196,14 @@ export function OptionCategoryMetaTable({
                     </Select>
                   </DenseTableCell>
                   <DenseTableCell>
-                    <IconActionButton
-                      tone="danger"
-                      title="Remove parameter"
-                      ariaLabel="Remove parameter"
+                    <CloseButton
+                      label="Remove parameter"
                       onClick={() => {
                         const mp = [...params]
                         mp.splice(i, 1)
                         updateParams(mp)
                       }}
-                    >
-                      <X className="h-4 w-4" />
-                    </IconActionButton>
+                    />
                   </DenseTableCell>
                 </DenseTableRow>
               ))}

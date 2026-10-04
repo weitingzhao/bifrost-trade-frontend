@@ -10,7 +10,7 @@
  */
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { DenseTag } from '@/components/data-display'
+import { CloseButton, DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtIsoDateToken } from '@/lib/format'
@@ -204,14 +204,11 @@ export function TagsPanel({
             {added.map((a) => (
               <span key={a} className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] px-2 py-0.5 text-dense-meta text-foreground">
                 {a}
-                <button
-                  type="button"
-                  aria-label={`Remove tag ${a}`}
-                  className="text-muted-foreground hover:text-foreground"
+                <CloseButton
+                  size="sm"
+                  label={`Remove tag ${a}`}
                   onClick={() => onChange({ added: added.filter((x) => x !== a) })}
-                >
-                  ×
-                </button>
+                />
               </span>
             ))}
           </div>

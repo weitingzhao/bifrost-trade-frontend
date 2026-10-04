@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
+import { CloseButton } from '@/components/data-display'
 import { StructureWizardStepper } from '@/components/strategy/structures/StructureWizardStepper'
 import styles from '@/components/strategy/structures/structuresForm.module.css'
 import { fetchStructure, fetchTemplateDetail } from '@/api/strategy'
@@ -503,14 +504,7 @@ function StructureFormSheetInner({ mode, onClose, onSaved }: StructureFormSheetP
             {isCopy && <span className={styles.formHeaderBadge}>Copy</span>}
             {isEdit && <span className={styles.formHeaderBadge}>ID {mode.id}</span>}
           </h3>
-          <button
-            type="button"
-            className={styles.formHeaderClose}
-            onClick={handleClose}
-            aria-label="Close form"
-          >
-            ×
-          </button>
+          <CloseButton label="Close form" onClick={handleClose} />
         </div>
 
         <div className={styles.formBody}>

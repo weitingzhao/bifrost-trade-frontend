@@ -86,10 +86,9 @@ export function StructureTable({
           {rows.map((r) => (
             <tr
               key={r.key}
-              className={cn(
-                'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-                r.totals && '[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] [&>td]:font-semibold',
-              )}
+              // Totals: the raised ground as the row state (Review Playbook.dc.html
+              // Rev .154 `--sr-row: --sk-raised2`) and the weight; hover is the scope's.
+              className={cn(r.totals && '[--sr-row:var(--sk-raised2)] [&>td]:font-semibold')}
             >
               <td className={cn(positionsUi.td, 'pl-2 whitespace-normal text-left font-sans text-foreground')}>
                 {r.totals || !idByName.has(r.name) ? (

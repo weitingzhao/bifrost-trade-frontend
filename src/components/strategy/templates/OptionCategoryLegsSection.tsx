@@ -10,10 +10,9 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
-  IconActionButton,
+  CloseButton,
   NestedDenseTable,
 } from '@/components/data-display'
-import { X } from 'lucide-react'
 import type { StructureLeg, StrategyTemplateDetail, TemplateConfigOption } from '@/types/positions'
 import { SaveFeedback, type SaveFeedbackState } from '@/components/strategy/templates/SaveFeedback'
 import {
@@ -184,18 +183,14 @@ export function OptionCategoryLegsSection({
                     />
                   </DenseTableCell>
                   <DenseTableCell>
-                    <IconActionButton
-                      tone="danger"
-                      title="Remove leg"
-                      ariaLabel="Remove leg"
+                    <CloseButton
+                      label="Remove leg"
                       onClick={() => {
                         const next = [...legs]
                         next.splice(i, 1)
                         updateLegs(next)
                       }}
-                    >
-                      <X className="h-4 w-4" />
-                    </IconActionButton>
+                    />
                   </DenseTableCell>
                 </DenseTableRow>
               ))}

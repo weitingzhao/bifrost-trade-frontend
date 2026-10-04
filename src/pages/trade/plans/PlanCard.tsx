@@ -10,7 +10,7 @@
 import { planToken } from '@/utils/tradeOrigin'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { DenseTag } from '@/components/data-display'
+import { CloseButton, DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { useAllocations, useTrades, useOpportunities } from '@/hooks/useStrategies'
 import { useLinkStrategyPlanFill, useUpdateStrategyPlan } from '@/hooks/useStrategyPlans'
@@ -291,16 +291,7 @@ export function PlanCard({
         <span className="ml-auto font-mono text-dense-micro text-[var(--sk-mute2)]">
           {planToken(plan.strategy_plan_id)}
         </span>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          className="h-6 px-1 text-dense-meta"
-          onClick={onClose}
-          aria-label="Close plan"
-        >
-          ✕
-        </Button>
+        <CloseButton label="Close plan" onClick={onClose} />
       </header>
 
       <nav aria-label="Plan sections" className="flex items-center gap-0.5 overflow-x-auto px-2 py-1">

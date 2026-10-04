@@ -415,7 +415,7 @@ export default function ExpirationPage() {
                   </thead>
                   <tbody>
                     {(selected?.legs ?? []).map((l) => (
-                      <tr key={l.contractKey} className="hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]">
+                      <tr key={l.contractKey}>
                         <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
                           {shortOptContractKey(l.contractKey)}
                           {l.accounts.length > 1 ? (
@@ -641,13 +641,10 @@ export default function ExpirationPage() {
                       return (
                         <tr
                           key={g.expiry}
-                          // Rev .84: the picked expiry is the accent, mixed; hover is ink 4%.
-                          className={cn(
-                            'cursor-pointer',
-                            on
-                              ? '[&>td]:bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
-                              : 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-                          )}
+                          // Rev .84: the picked expiry is the accent, mixed. Rev .154:
+                          // the list scope's selection capsule and hover, not cell fills.
+                          data-selected={on ? 'true' : undefined}
+                          className="cursor-pointer"
                           onClick={() => setPickedExpiry(g.expiry)}
                         >
                           <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>

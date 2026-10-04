@@ -89,7 +89,7 @@ function OriginTable({ rows, head }: { rows: readonly OriginRow[]; head: string 
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.key} className={ROW_HOVER}>
+            <tr key={r.key}>
               <td className={cn(positionsUi.td, 'pl-2 whitespace-normal text-left font-sans')}>
                 {/* Rev .113 §5.1.4a: No plan / No lens recorded read muted — a hole, not a source. */}
                 <Link
@@ -132,7 +132,6 @@ function OriginTable({ rows, head }: { rows: readonly OriginRow[]; head: string 
 
 // Rev .62: a foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
-const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
 
 /**
  * The allowance is a state, not a signed number (§14.7, Rev .90): full is
@@ -476,7 +475,7 @@ export function PlaybookRecord() {
                   {shownPlays.map((p) => {
                     const cap = sizeCapFor(p)
                     return (
-                      <tr key={p.play} className={ROW_HOVER}>
+                      <tr key={p.play}>
                         <td className={cn(positionsUi.td, 'pl-2 truncate text-left font-sans text-foreground')} title={p.play}>
                           {p.play}
                         </td>

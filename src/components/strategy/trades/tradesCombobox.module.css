@@ -3,16 +3,23 @@
   min-width: 12rem;
 }
 
+/* An input is a fill (mat-field, Rev .62 / .154): ink 7%, radius 8, no frame;
+   focus is the 3px accent glow. The border keeps its width, transparent. */
 .comboboxInput {
   height: 1.75rem;
   width: 100%;
   min-width: 10rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--card);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--mat-field-fill);
   color: var(--foreground);
   font-size: 0.8125rem;
   padding: 0 0.5rem;
+}
+
+.comboboxInput:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--mat-focus);
 }
 
 .comboboxInputDim {

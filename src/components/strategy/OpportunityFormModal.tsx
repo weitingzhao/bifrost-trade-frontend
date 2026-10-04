@@ -15,7 +15,6 @@ import {
   opportunitiesColTitleClass,
   opportunitiesConditionInputClass,
   opportunitiesConditionInputNumClass,
-  opportunitiesConditionRemoveClass,
   opportunitiesConditionRowClass,
   opportunitiesConditionSelectClass,
   opportunitiesConditionsListClass,
@@ -30,7 +29,6 @@ import {
   opportunitiesFormHintClass,
   opportunitiesFormPanelClass,
   opportunitiesFormTitleClass,
-  opportunitiesFormCloseClass,
   opportunitiesGatePillClass,
   opportunitiesGatePillSelectedClass,
   opportunitiesGatePillsClass,
@@ -46,7 +44,6 @@ import {
   opportunitiesStructureGridClass,
   opportunitiesSymbolTagClass,
   opportunitiesSymbolTagInputClass,
-  opportunitiesSymbolTagRemoveClass,
   opportunitiesSymbolTagsClass,
   opportunitiesWatchlistActionsClass,
   opportunitiesWatchlistCheckClass,
@@ -60,7 +57,7 @@ import {
   opportunityToForm,
   scopeTakesSymbols,
 } from '@/components/strategy/opportunities/opportunityForm'
-import { SegmentControl } from '@/components/data-display'
+import { CloseButton, SegmentControl } from '@/components/data-display'
 import { useGateSets } from '@/hooks/useStrategies'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { createOpportunity, patchOpportunity, fetchOpportunityDetail, fetchStructures } from '@/api/strategy'
@@ -278,14 +275,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
     <section className={opportunitiesFormPanelClass} aria-label={formTitle}>
       <div className={opportunitiesFormHeaderClass}>
         <h3 className={opportunitiesFormTitleClass}>{formTitle}</h3>
-        <button
-          type="button"
-          className={opportunitiesFormCloseClass}
-          onClick={onClose}
-          aria-label="Close form"
-        >
-          ×
-        </button>
+        <CloseButton label="Close form" onClick={onClose} />
       </div>
 
       {loading ? (
@@ -457,14 +447,12 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
                             onChange={(e) => handleUpdateSymbol(i, e.target.value)}
                             placeholder="SYM"
                           />
-                          <button
-                            type="button"
-                            className={opportunitiesSymbolTagRemoveClass}
+                          <CloseButton
+                            size="sm"
+                            className="mr-1.5 self-center"
+                            label={`Remove ${sym || 'symbol'}`}
                             onClick={() => handleRemoveSymbol(i)}
-                            aria-label={`Remove ${sym || 'symbol'}`}
-                          >
-                            ×
-                          </button>
+                          />
                         </span>
                       ))}
                     </div>
@@ -588,14 +576,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
                           })
                         }
                       />
-                      <button
-                        type="button"
-                        className={opportunitiesConditionRemoveClass}
-                        onClick={() => handleRemoveCondition(idx)}
-                        aria-label="Remove condition"
-                      >
-                        ×
-                      </button>
+                      <CloseButton label="Remove condition" onClick={() => handleRemoveCondition(idx)} />
                     </div>
                   ))}
                 </div>

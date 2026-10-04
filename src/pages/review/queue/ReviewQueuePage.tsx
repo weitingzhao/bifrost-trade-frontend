@@ -156,7 +156,7 @@ function QueueRow({
   const done = Boolean(review?.reviewed)
   return (
     <tr
-      {...rowSelectProps(false, onOpen, 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]')}
+      {...rowSelectProps(false, onOpen)}
       title="Open this trade on Trade review"
     >
       <td className={cn(positionsUi.td, 'pl-2 text-left whitespace-normal')}>

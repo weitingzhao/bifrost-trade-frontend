@@ -118,10 +118,10 @@ export const tradesGroupToggleClass = cn(
 
 export const tradesGroupMutedClass = 'font-normal text-muted-foreground'
 
-/** Active detail row — left accent + tint so it stands out from peers. */
-export const tradesRowSelectedClass = cn(
-  '[&>td]:bg-primary/12',
-  '[&>td:first-child]:shadow-[inset_3px_0_0_0] [&>td:first-child]:shadow-primary',
-)
-
-export const tradesRowCompareClass = 'bg-blue-500/5'
+/**
+ * The row whose sheet is open, and the row held for comparison: an accent 8%
+ * row state (Trade Rules.dc.html Rev .154 — `--sr-row` on the trade row; the
+ * list scope paints it as the row's capsule, under hover and over the zebra).
+ * Passed as `DenseTableRow rowTint`, not a cell fill or a tr background.
+ */
+export const tradesRowHeldTint = 'color-mix(in srgb, var(--sk-accent) 8%, transparent)'

@@ -66,11 +66,10 @@ import { LIMIT_WATCH, fmtReading } from '@/utils/limitsModel'
 import { firedRows, firedStanding } from './alertsModel'
 import { cn } from '@/lib/utils'
 
-// §17.2: the DS header — uppercase, 11px, mute — and plain ink-6% row rules.
+// §17.2 (Rev .153): the list grammar — a sentence-case 11px mute header, no row rules.
 const armedTh =
-  'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-meta font-semibold uppercase leading-[1.3] tracking-[0.05em] text-[var(--sk-mute)]'
-const armedTd = 'border-b border-border px-2 py-1.5 text-right font-mono text-dense-meta tabular-nums'
-const ROW_HOVER = 'hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+  'whitespace-nowrap px-2 py-1 text-right align-bottom text-dense-meta font-semibold leading-[1.3] text-[var(--sk-mute)]'
+const armedTd = 'px-2 py-1.5 text-right font-mono text-dense-meta tabular-nums'
 
 /** The store's own caps live with the shared query (`useFiredAlerts`). */
 const WINDOW_DAYS = ALERTS_WINDOW_DAYS
@@ -171,7 +170,7 @@ export default function AlertsPage() {
               /* The design's row is two lines at every width — the scope and
                  its readings first, the condition sentence under it — so a
                  narrow surface wraps instead of clipping. */
-              <li key={r.id} className="border-b border-border px-3 py-2 last:border-b-0">
+              <li key={r.id} data-sr-row="" className="px-3 py-2">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                   <StatusLamp lamp={r.lamp} variant="dot" className="h-2 w-2 shrink-0 self-center" />
                   <span className="min-w-0">
@@ -253,7 +252,7 @@ export default function AlertsPage() {
                   const close = !r.breached && use != null && use > LIMIT_WATCH
                   const away = use != null ? Math.max(0, Math.round((1 - use) * 100)) : null
                   return (
-                    <tr key={r.key} className={ROW_HOVER}>
+                    <tr key={r.key}>
                       {/* A limit's scope is a word (book, account, pool), not a
                           ticker — ink, not the ticker lime. */}
                       <td className={cn(armedTd, 'text-left font-sans font-semibold text-foreground')}>{r.scope}</td>

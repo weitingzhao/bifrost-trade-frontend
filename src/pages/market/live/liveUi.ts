@@ -19,8 +19,9 @@ export const liveFilterPillGripClass = 'cursor-grab text-dense-caption leading-n
 
 export const liveFeedbackHintClass = 'text-xs text-muted-foreground animate-pulse'
 
+/** A round icon button: the .154 button fill (ink 8%), no frame. */
 export const liveIconBtnClass =
-  'inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground'
+  'inline-flex h-8 w-8 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] text-muted-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] hover:text-foreground'
 
 export const liveEmptyHintClass = 'text-sm text-muted-foreground py-2'
 

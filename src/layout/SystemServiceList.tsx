@@ -38,8 +38,10 @@ const ZONES = getTopologyLayout(DEFAULT_TOPOLOGY_LAYOUT_MODE).zones.map((z) => (
   label: z.label,
 }))
 
+// The Control Center's row (design `_Shell StatusBar` .sb-r): hover ink 5% —
+// the popover is portalled outside the page's list scope, so it keeps its own.
 const rowClass =
-  'flex w-full items-center gap-2 rounded px-2 py-1 text-left transition-colors hover:bg-muted/60'
+  'flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--sk-ink)_5%,transparent)]'
 const headClass =
   'px-2 pb-0.5 pt-2 text-dense-meta font-semibold text-muted-foreground'
 

@@ -37,7 +37,7 @@ const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-left align-bottom text-dense-caption font-semibold text-secondary-foreground'
-const td = 'border-b border-border px-2 py-1.5 align-top text-dense-meta'
+const td = 'px-2 py-1.5 align-top text-dense-meta'
 const mono = 'font-mono tabular-nums'
 
 /** The tagger's own scale: 3 = high, 2 = med, 1 = low. */
@@ -202,10 +202,8 @@ export function EventsMarketFace({
                     <tr
                       key={t.theme}
                       onClick={() => setTheme(on ? null : t.theme)}
-                      className={cn(
-                        'cursor-pointer hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]',
-                        on && 'bg-[color-mix(in_srgb,var(--sk-accent)_10%,transparent)]',
-                      )}
+                      data-selected={on || undefined}
+                      className="cursor-pointer"
                       title={on ? 'Clear the theme filter' : `Filter the events to ${t.theme}`}
                     >
                       <td className={cn(td, on ? 'font-semibold text-foreground' : 'text-secondary-foreground')}>{t.theme}</td>

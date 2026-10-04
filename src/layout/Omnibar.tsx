@@ -36,6 +36,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { cn } from '@/lib/utils'
 import mb from './menubar/menubar.module.css'
 import css from './spotlight.module.css'
+import { CloseButton } from '@/components/data-display/CloseButton'
 import { useSidebar } from '@/components/ui/sidebar'
 import { toggleThread } from '@/hooks/useCopilotThread'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
@@ -296,9 +297,7 @@ export function Omnibar() {
           placeholder="Symbol, page or command"
           className={css.input}
         />
-        <button type="button" className={css.close} aria-label="Close" onClick={() => omnibar.close()}>
-          ✕
-        </button>
+        <CloseButton onClick={() => omnibar.close()} title="Close · esc" />
       </div>
       <div className={css.body}>
       <CommandList className={css.list}>

@@ -13,8 +13,8 @@
  * carries its underlying and opens the panel on Chain (one leg) or Payoff.
  */
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type RefObject } from 'react'
-import { ChevronRight, PanelRight, PictureInPicture2, Plus, X } from 'lucide-react'
-import { IconActionButton, CollapsibleChevron } from '@/components/data-display'
+import { ChevronRight, PanelRight, PictureInPicture2, Plus } from 'lucide-react'
+import { IconActionButton, CollapsibleChevron, CloseButton } from '@/components/data-display'
 import { stockWatchlistContractKey } from '@/components/research/watchlistContractKey'
 import { useWatchlistMutations } from '@/hooks/useStockWatchlist'
 import { glyph } from '@/lib/design/glyphs'
@@ -303,14 +303,18 @@ export function SymbolDock({
           >
             {isFloat ? <PanelRight className="size-3.5" /> : <PictureInPicture2 className="size-3.5" />}
           </IconActionButton>
-          <IconActionButton
-            className="h-[22px] w-[22px]"
-            title={isFloat ? 'Close' : 'Collapse to a strip'}
-            ariaLabel={isFloat ? 'Close symbol lists' : 'Collapse symbol lists to a strip'}
-            onClick={() => (isFloat ? dockActions.setHidden(true) : dockActions.setMode('strip'))}
-          >
-            {isFloat ? <X className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-          </IconActionButton>
+          {isFloat ? (
+            <CloseButton label="Close symbol lists" title="Close" onClick={() => dockActions.setHidden(true)} />
+          ) : (
+            <IconActionButton
+              className="h-[22px] w-[22px]"
+              title="Collapse to a strip"
+              ariaLabel="Collapse symbol lists to a strip"
+              onClick={() => dockActions.setMode('strip')}
+            >
+              <ChevronRight className="size-3.5" />
+            </IconActionButton>
+          )}
         </span>
       </header>
       {/* Tags pick which lists; this line cycles how they are laid out
@@ -323,7 +327,9 @@ export function SymbolDock({
           {sm} / {SORTS.length} ⇅
         </span>
       </button>
-      <div ref={scrollRef} className={css.scroll} style={{ position: 'relative' }}>
+      {/* The rows are the list grammar (design Rev .154 `_Part SymbolDock`):
+          the dock sits outside the page's scope, so it opens its own. */}
+      <div ref={scrollRef} className={css.scroll} style={{ position: 'relative' }} data-sr-list="">
         {groups.map((g, gi) => (
           <Group key={g.key} g={g} first={gi === 0} cur={cur} quoteOf={quoteOf} flash={flash} pick={pick} loadTip={loadTip} />
         ))}
@@ -405,7 +411,10 @@ function Row({
       <button
         type="button"
         data-dock-sym={r.sym}
-        className={cn(css.grid, css.row, r.sym === cur && css.cur)}
+        data-sr-row=""
+        data-sr-click=""
+        data-selected={r.sym === cur || undefined}
+        className={cn(css.grid, css.row)}
         onClick={(e) => pick(r.sym, howFrom(e))}
         title={tip}
       >
@@ -449,6 +458,8 @@ function Row({
             <button
               key={c.id}
               type="button"
+              data-sr-row=""
+              data-sr-click=""
               className={cn(css.grid, css.contract)}
               onClick={(e) =>
                 pick(r.sym, e.shiftKey ? 'compare' : 'swap', {

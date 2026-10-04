@@ -39,24 +39,6 @@
   color: var(--sk-mute);
 }
 
-.close {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  border: 0;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--sk-ink) 7%, transparent);
-  color: var(--sk-mute2);
-  font-size: 11px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.close:hover {
-  background: color-mix(in srgb, var(--sk-ink) 16%, transparent);
-  color: var(--sk-ink);
-}
-
 .body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

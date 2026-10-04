@@ -15,12 +15,12 @@ import { PageShell } from '@/components/layout'
 import { cn } from '@/lib/utils'
 
 const p = 'm-0 text-dense-body leading-[1.65] text-secondary-foreground text-pretty'
-// Table heads keep the DS uppercase but lose the raised band; rules are the
-// page's own hairline (Rev .91 · .84).
+// The list grammar (Rev .153 §17.2): sentence-case heads on one ink 8%
+// hairline (the scope draws it), no row rules.
 const th =
-  'border-b border-border px-3 py-1.5 text-left text-dense-caption font-semibold uppercase tracking-[0.08em] text-muted-foreground'
+  'px-3 py-1.5 text-left text-dense-caption font-semibold text-muted-foreground'
 const td =
-  'border-b border-border px-3 py-2 align-top text-dense-body leading-[1.55] text-secondary-foreground'
+  'px-3 py-2 align-top text-dense-body leading-[1.55] text-secondary-foreground'
 const strong = 'font-semibold text-foreground'
 
 const VERBS = [

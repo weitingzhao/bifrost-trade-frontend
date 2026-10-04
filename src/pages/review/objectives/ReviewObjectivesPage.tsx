@@ -380,11 +380,11 @@ export default function ReviewObjectivesPage() {
           {loading ? (
             <ViewState kind="loading" title="Loading the gates" rows={3} cols={2} />
           ) : (
-            <div className="divide-y divide-border">
+            <div>
               {chain.rows.map((r) => {
                 const g = widestGate(r)
                 return (
-                  <div key={r.id} className="flex flex-col gap-1 px-3 py-2">
+                  <div key={r.id} data-sr-row="" className="flex flex-col gap-1 px-3 py-2">
                     <div className="flex flex-wrap items-baseline gap-2">
                       <span className="text-dense-label">{r.title}</span>
                       <span

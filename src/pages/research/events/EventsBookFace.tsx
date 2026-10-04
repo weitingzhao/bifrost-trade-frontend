@@ -202,7 +202,7 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                 [
                   {
                     key: 'macro' as const,
-                    label: 'MACRO',
+                    label: 'Macro',
                     // The radar is the macro source either way; the reason
                     // just changes once it has been fed.
                     owed:
@@ -221,13 +221,13 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                   },
                   {
                     key: 'book' as const,
-                    label: 'BOOK',
+                    label: 'Book',
                     owed: 'forward earnings dates are not on the data plan — unmeasured, not omitted',
                     marks: new Set<string>(),
                   },
                   {
                     key: 'watch' as const,
-                    label: 'WATCHLIST',
+                    label: 'Watchlist',
                     owed: 'forward earnings dates are not on the data plan — unmeasured, not omitted',
                     marks: new Set<string>(),
                   },
@@ -236,14 +236,14 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                 <tr key={lane.key}>
                   <th className={cn(cap, 'py-1.5 pr-2 text-left align-middle')}>{lane.label}</th>
                   {lane.owed && lane.marks.size === 0 ? (
-                    <td colSpan={WINDOW_DAYS} className="border-t border-border px-2 py-1.5 text-left font-sans text-dense-caption text-muted-foreground/70">
+                    <td colSpan={WINDOW_DAYS} className="px-2 py-1.5 text-left font-sans text-dense-caption text-muted-foreground/70">
                       {lane.owed}
                     </td>
                   ) : (
                     days.map((d) => (
                       <td
                         key={d.iso}
-                        className={cn('border-t border-border py-1.5 text-center', d.today && 'bg-[color-mix(in_srgb,var(--sk-accent)_6%,transparent)]', d.weekend && 'opacity-40')}
+                        className={cn('py-1.5 text-center', d.today && 'bg-[color-mix(in_srgb,var(--sk-accent)_6%,transparent)]', d.weekend && 'opacity-40')}
                         title={
                           !lane.marks.has(d.iso)
                             ? undefined

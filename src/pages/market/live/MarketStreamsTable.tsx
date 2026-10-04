@@ -49,12 +49,14 @@ function marketStreamsColSpan(hasStreamAccounts: boolean): number {
  * The two cells a group header carries under Since $ — the design puts the
  * category’s own subtotal on its row («Core 3 … +$1,260»). A sum of
  * unknowns stays —, and a partial sum names how many rows it left out.
+ * The row is a list-grammar heading (`data-sr-group`): no band, no rule —
+ * the subtotal reads by weight alone.
  */
 function SinceSubtotalCells({ totalPnl, unpriced }: { totalPnl: number | null; unpriced: number }) {
   return (
     <>
       <DenseTableCell
-        className={cn(denseTableNumCell, 'border-y border-border bg-secondary/60 font-semibold')}
+        className={cn(denseTableNumCell, 'font-semibold')}
         title={
           totalPnl == null
             ? `None of the ${unpriced} rows has a Since $ to add — not a zero`
@@ -72,7 +74,7 @@ function SinceSubtotalCells({ totalPnl, unpriced }: { totalPnl: number | null; u
           </>
         )}
       </DenseTableCell>
-      <DenseTableCell className="border-y border-border bg-secondary/60" />
+      <DenseTableCell />
     </>
   )
 }

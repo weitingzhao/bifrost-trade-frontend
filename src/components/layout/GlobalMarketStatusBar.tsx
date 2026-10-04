@@ -63,23 +63,25 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
   const streamsLabel = model.streamsOnline ? 'Online' : 'Offline'
 
   return (
+    // One line at every width: at 430 the words give way first (the open
+    // orders label, then the Streams label truncates), the numbers stay.
     <section
-      className="flex h-11 shrink-0 items-center gap-2 border-b border-border bg-card px-3 text-xs"
+      className="flex h-11 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b border-border bg-card px-3 text-xs"
       aria-label="Market status"
     >
       <button
         type="button"
         onClick={goLive}
-        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-2.5 py-1 font-medium text-foreground transition-colors hover:bg-secondary"
+        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-2.5 py-1 font-medium text-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)]"
         aria-label="Open orders"
         title="Open orders (PostgreSQL)"
       >
         <ListOrdered className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
-        <span className="text-muted-foreground">Open orders</span>
+        <span className="hidden text-muted-foreground sm:inline">Open orders</span>
         <span className="font-mono tabular-nums">{model.openOrderCount}</span>
       </button>
 
-      <div className="h-5 w-px bg-border" aria-hidden />
+      <div className="h-5 w-px shrink-0 bg-border" aria-hidden />
 
       <button
         type="button"
@@ -90,10 +92,10 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
       >
         <Activity className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
         <StatusLamp lamp={model.streamsLamp} className="shrink-0" />
-        <span className="text-muted-foreground shrink-0">Market Streams</span>
+        <span className="min-w-0 truncate text-muted-foreground">Market Streams</span>
         <span
           className={cn(
-            'font-semibold shrink-0',
+            'shrink-0 font-semibold',
             model.streamsOnline ? 'text-success' : 'text-danger',
           )}
         >
@@ -140,10 +142,12 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
                 empty={{ title: 'No symbols in stream.' }}
               />
             ) : (
-              <div className="max-h-72 overflow-auto">
+              // The list grammar (design Rev .153): the popover is portalled
+              // out of the page's scope, so it opens its own.
+              <div className="max-h-72 overflow-auto" data-sr-list="">
                 <Table>
                   <TableHeader>
-                    <TableRow className="hover:bg-transparent">
+                    <TableRow>
                       <TableHead className="h-8 text-xs">Symbol</TableHead>
                       <TableHead className="h-8 text-xs text-right">Daily %</TableHead>
                       <TableHead className="h-8 text-xs text-right">Daily $</TableHead>

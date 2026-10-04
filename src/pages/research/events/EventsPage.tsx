@@ -199,7 +199,7 @@ function StoreStanding({
       <table className="w-full border-collapse">
         <tbody>
           {standing.stores.map((s) => (
-            <tr key={s.path} className="border-b border-border last:border-b-0">
+            <tr key={s.path}>
               <td className="px-3 py-1.5">
                 <StatusLamp lamp={s.isError ? 'fail' : 'gray'} variant="dot" />
               </td>

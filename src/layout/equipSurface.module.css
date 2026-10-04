@@ -351,8 +351,7 @@
 }
 
 /* The float's one size toggle: a drawn Phone ⇄ Pad, plateless until hovered. */
-.size,
-.close {
+.size {
   width: 26px;
   height: 26px;
   flex: none;
@@ -384,35 +383,25 @@
   background: color-mix(in srgb, var(--sk-ink) 12%, transparent);
 }
 
-/* The close (Rev .59): it still closes the current tab. */
-.close:hover {
-  background: color-mix(in srgb, var(--destructive) 22%, transparent);
-  color: var(--sk-ink);
-}
+/* The close is the DS one (`data-sr-close`, design Rev .151 `.tb-pclose`):
+   round 22, ink 7%, hover 16%. It still closes the current tab. */
 
 /* × only on hover and on the current tab (Rev .59). */
+/* The remove inside an overflow row is the DS chip close (`data-sr-close="sm"`,
+   design Rev .151): its round, fill and ink come from the attribute; this
+   class only keeps it out of sight until the row is pointed at. */
 .tabClose {
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: inherit;
-  font-size: 13px;
-  line-height: 1;
-  padding: 0 4px;
-  cursor: pointer;
-  flex: none;
   opacity: 0;
-  transition: opacity 0.12s ease;
+  transition:
+    opacity 0.12s ease,
+    background 0.15s ease;
 }
 
 .tab:hover .tabClose,
 .tabOn .tabClose,
+.menuRow:hover .tabClose,
 .tabClose:focus-visible {
   opacity: 1;
-}
-
-.tabClose:hover {
-  background: color-mix(in srgb, var(--sk-ink) 10%, transparent);
 }
 
 /* ── The body ────────────────────────────────────────────────────────────── */

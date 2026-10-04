@@ -37,14 +37,14 @@ export function CoverageMatrix({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse">
           <thead>
-            <tr className="border-b border-border">
-              <th className="px-2.5 py-1.5 text-left text-dense-micro font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <tr>
+              <th className="px-2.5 py-1.5 text-left text-dense-micro font-semibold text-muted-foreground">
                 Lens
               </th>
               {columns.map((c) => (
                 <th
                   key={c.tier}
-                  className="whitespace-nowrap px-2.5 py-1.5 text-right text-dense-micro font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+                  className="whitespace-nowrap px-2.5 py-1.5 text-right text-dense-micro font-semibold text-muted-foreground"
                 >
                   {c.label}{' '}
                   <span className="font-mono font-medium tabular-nums opacity-70">
@@ -52,7 +52,7 @@ export function CoverageMatrix({
                   </span>
                 </th>
               ))}
-              <th className="px-2.5 py-1.5 text-left text-dense-micro font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              <th className="px-2.5 py-1.5 text-left text-dense-micro font-semibold text-muted-foreground">
                 Blocked by
               </th>
             </tr>
@@ -60,8 +60,8 @@ export function CoverageMatrix({
           <tbody>
             {faces.map((f) => (
               <Fragment key={f.face}>
-                {/* A face is a group row: a rule and a sentence-case label, no band (Rev .91). */}
-                <tr className="border-b border-border">
+                {/* A face is a group row: a list-grammar heading (data-sr-group, Rev .153). */}
+                <tr data-sr-group="">
                   <td
                     colSpan={columns.length + 2}
                     className="px-2.5 pb-1 pt-2 text-dense-meta font-semibold"
@@ -73,10 +73,7 @@ export function CoverageMatrix({
                   </td>
                 </tr>
                 {f.rows.map((r) => (
-                  <tr
-                    key={r.lens}
-                    className="border-b border-border hover:[&>td]:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]"
-                  >
+                  <tr key={r.lens}>
                     <td
                       className="max-w-[24ch] truncate px-2.5 py-1.5 text-dense-meta"
                       title={`${r.label} · ${r.lens}`}

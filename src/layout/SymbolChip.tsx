@@ -6,8 +6,8 @@
  * difference visible is the whole point: a symbol shown at full strength on a
  * page that is not filtered by it is a lie the reader acts on.
  */
-import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display/CloseButton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useSymbolContext } from '@/lib/symbolContext'
 
@@ -20,19 +20,14 @@ export function SymbolChip() {
       <TooltipTrigger asChild>
         <span
           className={cn(
-            'hidden items-center gap-1 rounded border border-border px-1.5 py-0.5 font-mono text-dense-micro sm:inline-flex',
-            isScoped ? 'bg-secondary text-foreground' : 'text-muted-foreground opacity-55',
+            'hidden items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-dense-micro sm:inline-flex',
+            isScoped
+              ? 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] text-foreground'
+              : 'bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] text-muted-foreground opacity-55',
           )}
         >
           {symbol}
-          <button
-            type="button"
-            onClick={clearSymbol}
-            className="rounded-sm text-muted-foreground hover:text-foreground"
-            aria-label={`Clear symbol ${symbol}`}
-          >
-            <X className="h-2.5 w-2.5" />
-          </button>
+          <CloseButton size="sm" onClick={clearSymbol} label={`Clear symbol ${symbol}`} />
         </span>
       </TooltipTrigger>
       <TooltipContent side="bottom">

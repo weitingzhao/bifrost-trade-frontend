@@ -86,7 +86,7 @@ const MODES: readonly { mode: ThemeMode; label: string; title: string }[] = [
 
 /** The avatar's face: a gradient from the accent into the surface, the design's own. */
 const AVATAR =
-  'relative inline-flex shrink-0 items-center justify-center rounded-full border border-border font-bold tracking-[0.04em] text-foreground ' +
+  'relative inline-flex shrink-0 items-center justify-center rounded-full font-bold tracking-[0.04em] text-foreground ' +
   'bg-[linear-gradient(145deg,color-mix(in_srgb,var(--sk-accent)_30%,var(--sk-surface)),var(--sk-surface))]'
 
 const LAMP_BG: Record<string, string> = {
@@ -233,7 +233,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
                 className={cn(
                   'h-6 flex-1 rounded-full text-dense-meta font-semibold transition-colors',
                   on
-                    ? 'bg-[var(--sk-raised2)] text-foreground shadow-[0_1px_3px_rgb(0_0_0/0.4),inset_0_0_0_1px_color-mix(in_srgb,var(--sk-ink)_10%,transparent)]'
+                    ? 'bg-[color-mix(in_srgb,var(--sk-ink)_15%,transparent)] text-foreground shadow-[var(--glass-lens),0_1px_2px_rgb(0_0_0/0.22)]'
                     : 'text-[var(--sk-mute2)] hover:text-foreground',
                 )}
               >
@@ -278,7 +278,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
                     'h-6 w-7 rounded-full font-semibold leading-none transition-colors',
                     z.className,
                     on
-                      ? 'bg-[var(--sk-raised2)] text-foreground shadow-[0_1px_3px_rgb(0_0_0/0.4),inset_0_0_0_1px_color-mix(in_srgb,var(--sk-ink)_10%,transparent)]'
+                      ? 'bg-[color-mix(in_srgb,var(--sk-ink)_15%,transparent)] text-foreground shadow-[var(--glass-lens),0_1px_2px_rgb(0_0_0/0.22)]'
                       : 'text-[var(--sk-mute2)] hover:text-foreground',
                   )}
                 >
@@ -431,7 +431,7 @@ export function SidebarUserCenter() {
             title={toolbarShown ? 'Hide the bottom toolbar' : 'Show the bottom toolbar'}
             aria-label="Show or hide the bottom toolbar"
             className={cn(
-              'flex size-[30px] flex-none items-center justify-center rounded-full border border-sidebar-border hover:bg-sidebar-accent hover:text-sidebar-foreground',
+              'flex size-[30px] flex-none items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_14%,transparent)] hover:text-sidebar-foreground',
               toolbarShown ? 'text-[var(--sk-mute2)]' : 'text-muted-foreground/50',
             )}
           >

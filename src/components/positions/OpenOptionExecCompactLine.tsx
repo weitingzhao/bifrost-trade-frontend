@@ -80,7 +80,7 @@ export function OpenOptionExecDetailRow({
   const syncFromLabel = book === 'final' ? 'TWS client book' : 'final book'
 
   return (
-    <tr className="hover:bg-muted/20" onClick={e => e.stopPropagation()}>
+    <tr onClick={e => e.stopPropagation()}>
       <td className={cn(execDetailCell, 'pl-2 align-top')}>
         <div className="leading-snug">
           <span className="text-muted-foreground">↳ </span>

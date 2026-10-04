@@ -6,6 +6,7 @@
  */
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display'
 import type { Explanation } from '@/utils/bookExplanations'
 import { positionsUi } from './positionsUi'
 
@@ -35,15 +36,7 @@ export function ExplanationBlock({
       <div className="flex flex-wrap items-baseline gap-2 px-2.5 pt-1.75 pb-1">
         <span className={cn(positionsUi.cap, 'text-secondary-foreground')}>How · {explanation.title}</span>
         <span className="min-w-0 flex-[1_1_260px] text-dense-meta text-muted-foreground text-pretty">{lead}</span>
-        <button
-          type="button"
-          onClick={onClose}
-          className={cn(positionsUi.btn, 'h-4.5 px-1.25')}
-          aria-label="Close explanation"
-          title="Close (Esc)"
-        >
-          ✕
-        </button>
+        <CloseButton onClick={onClose} label="Close explanation" title="Close (Esc)" />
       </div>
       {rest.length > 0 || (explanation.rows && explanation.rows.length > 0) ? (
         <div className="flex flex-col gap-1 px-2.5 pb-1.5">

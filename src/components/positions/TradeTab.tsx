@@ -262,7 +262,8 @@ export function TradeTab({
   return (
     <div className="overflow-x-auto">
       {/* §14.6: nine columns, the design's 940 floor. */}
-      <table className="w-full min-w-[940px] table-fixed border-collapse">
+      {/* Collapse is the list grammar's to set (separate, 6px side inset — Rev .153). */}
+      <table className="w-full min-w-[940px] table-fixed">
         {/* Measured at the 940 floor with every row open: the name column takes the slack. */}
         <colgroup>
           <col style={{ width: '21%' }} />
@@ -340,7 +341,10 @@ export function TradeTab({
             const beSpot =
               fromOptions.length === 1 ? (resolveSpot(fromOptions[0] as string)?.price ?? null) : null
 
-            const rowBg = isExpanded ? '[&>td]:bg-[var(--sk-surface)]' : 'hover:[&>td]:bg-[var(--sk-raised2)]'
+            // The open strategy is a full-cell fill, as the prototype paints it
+            // (`r.bg` = surface on every cell, Owner #7): ink 8% on the frost page.
+            // Hover is the list grammar's capsule — no row hover of the page's own.
+            const rowBg = isExpanded ? '[&>td]:bg-[var(--sk-surface)]' : ''
             const name = oppName ?? instLabel
             const sub = oppName ? instLabel : id == null ? 'not on any strategy' : 'unnamed trade'
             const nameInk = oppName ? 'text-foreground' : id == null ? 'text-warning' : 'text-secondary-foreground'
@@ -463,7 +467,7 @@ export function TradeTab({
 
             const detailRow = isExpanded ? (
               <tr key={`inst-detail-${instKey}`}>
-                <td colSpan={colSpan} className="border-b border-border bg-[var(--sk-raised2)] px-2.5 pt-1 pb-2.5 pl-6.5 align-top">
+                <td colSpan={colSpan} className="bg-[var(--sk-raised2)] px-2.5 pt-1 pb-2.5 pl-6.5 align-top">
                   <div className={tradePanel.detailStack}>
                     {openedMeta ? <div className="text-dense-caption text-muted-foreground">Opened {openedMeta}</div> : null}
                     <TradeOptionSubTable

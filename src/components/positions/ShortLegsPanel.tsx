@@ -9,6 +9,7 @@
 import { useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { useContainerHeight } from '@/hooks/useContainerWidth'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display'
 import { fmtIsoDateToken } from '@/lib/format'
 import { ShortLegRiskMap } from './charts/ShortLegRiskMap'
 import { positionsUi } from './positionsUi'
@@ -209,15 +210,7 @@ export function ShortLegsPanel({
                 </button>
               ) : null}
               <span className="text-dense-meta text-muted-foreground">grid below shows this leg</span>
-              <button
-                type="button"
-                className={cn(positionsUi.btn, 'ml-auto h-5 px-1.5')}
-                onClick={() => onSelect(null)}
-                aria-label="Clear selection"
-                title="Clear selection (Esc)"
-              >
-                ✕
-              </button>
+              <CloseButton className="ml-auto" onClick={() => onSelect(null)} label="Clear selection" title="Clear selection (Esc)" />
             </span>
           </div>
         ) : (

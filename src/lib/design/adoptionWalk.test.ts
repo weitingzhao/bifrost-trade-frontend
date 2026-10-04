@@ -194,7 +194,9 @@ describe('the design walk, as it stands', () => {
     // Method faces — nothing signed is behind its rev any more.
     // Rev .111's rename moved /instance, /review/fit and /trade/desk for a
     // package; the app's rename re-walked all three, so it is back to 4.
-    expect(counts.aligned + counts.byState.stale).toBe(4)
+    // 3 with the Rev .151–.154 pilot (2026-10-04): Loop Run, rebuilt on the
+    // panel glass, waits for a look in `reviewing`.
+    expect(counts.aligned + counts.byState.stale).toBe(3)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -225,7 +227,8 @@ describe('the design walk, as it stands', () => {
     // re-stamped 73 routes — hero rows, section h2s, selection in the accent,
     // counts out of the direction inks. 52 signed pages read stale until
     // batches J1–J5 re-walk them; the sum above held at 56 until J1.
-    expect(counts.aligned).toBe(4)
+    // 3 with the Rev .154 pilot: Loop Run back in `reviewing`.
+    expect(counts.aligned).toBe(3)
     expect(
       rows
         .filter((r) => r.state === 'stale')
@@ -495,7 +498,8 @@ describe('the design walk, as it stands', () => {
     // Rev .112: Outcome is an alias of Playbook now, not a page of its own.
     // 71 with Rev .121: Stock ratings, Stock screen and their two method
     // faces are one page and one method face (four aliases now).
-    expect(counts.byState.reviewing).toBe(71)
+    // 72 with the Rev .154 pilot: Loop Run, rebuilt on the panel glass.
+    expect(counts.byState.reviewing).toBe(72)
     // Since 2026-09-29 a reviewing page whose design rev passed its walk reads
     // stale too; the thirteen that had (Rev .100–.103 built in batches R–V)
     // were re-stamped with the design receipt, so none does.
@@ -508,7 +512,6 @@ describe('the design walk, as it stands', () => {
     ).toEqual([
       // Rev .95: the four signed pages the §16 refinement round did not re-stamp.
       '/research/copilot/trading',
-      '/research/loop/runs',
       '/research/workbench',
       '/review/proposals',
     ])
@@ -562,6 +565,7 @@ describe('the design walk, as it stands', () => {
       '/research/loop/objectives/obj-earnings-iv',
       '/research/loop/objectives/obj-smallcap-sepa',
       '/research/loop/objectives/obj-vol-crush',
+      '/research/loop/runs',
       '/research/narrative',
       '/research/orchestration',
       '/research/overview',

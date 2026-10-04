@@ -9,7 +9,7 @@
  * and behind each card the full case. Every figure here was written by the run;
  * nothing is recomputed on the page.
  */
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { DenseTag } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
@@ -90,12 +90,21 @@ export function DecisionMemo({
         </div>
       </div>
 
-      <ol className="divide-y divide-border/50 border mat-card">
+      {/* A list on glass (Rev .153–.154 §17.2): no rules between picks, the 3%
+          zebra, hover as a 6px capsule; the open pick carries the row state
+          (ink 8%, as the prototype's open row) — the Loop Run root opens the
+          scope (data-sr-list). */}
+      <ol className="border py-1 mat-card">
         {ratings.map((r, i) => {
           const isOpen = open === r.symbol
           const row = bySymbol.get(r.symbol) ?? null
           return (
-            <li key={r.symbol} className={cn(isOpen && 'bg-secondary/30')}>
+            <li
+              key={r.symbol}
+              data-sr-row=""
+              data-sr-click=""
+              style={isOpen ? ({ '--sr-row': 'color-mix(in srgb, var(--sk-ink) 8%, transparent)' } as CSSProperties) : undefined}
+            >
               <RatingCard rank={i + 1} r={r} open={isOpen} onToggle={() => setOpen(isOpen ? null : r.symbol)} />
               {isOpen ? <RatingCase r={r} row={row} /> : null}
             </li>
@@ -126,7 +135,7 @@ function RatingCard({
     <button
       type="button"
       onClick={onToggle}
-      className="grid w-full grid-cols-[1.5rem_5.5rem_1fr] items-start gap-x-3 px-2.5 py-2 text-left hover:bg-muted/30 @2xl/page:grid-cols-[1.5rem_5.5rem_1fr_17rem]"
+      className="grid w-full grid-cols-[1.5rem_5.5rem_1fr] items-start gap-x-3 px-2.5 py-2 text-left @2xl/page:grid-cols-[1.5rem_5.5rem_1fr_17rem]"
       aria-expanded={open}
     >
       <span className="flex items-center gap-1 pt-0.5 font-mono text-dense-micro text-muted-foreground">
@@ -134,7 +143,7 @@ function RatingCard({
         {String(rank).padStart(2, '0')}
       </span>
       <span className="min-w-0">
-        <span className="block font-mono text-dense-body font-semibold tracking-wide">{r.symbol}</span>
+        <span className="block font-mono text-dense-body font-semibold">{r.symbol}</span>
         <span className="block text-dense-micro text-muted-foreground">
           {r.grade ? (
             <>
@@ -194,7 +203,7 @@ function RatingCard({
 
 function Level({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: 'success' | 'danger' }) {
   return (
-    <span className="rounded border border-border/60 bg-background px-1.5 py-1">
+    <span className="rounded-[6px] bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] px-1.5 py-1">
       <span className="block text-dense-meta font-semibold text-muted-foreground">{label}</span>
       <span className={cn('block font-mono text-dense-meta tabular-nums', tone === 'success' && 'text-success', tone === 'danger' && 'text-destructive')}>{value}</span>
       {sub ? <span className="block truncate text-dense-micro text-muted-foreground/80">{sub}</span> : null}

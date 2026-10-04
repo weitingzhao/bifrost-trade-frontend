@@ -4,6 +4,7 @@ import {
   DenseDataTable,
   DenseTableRow,
   DenseTableCell,
+  denseTable,
 } from '@bifrost/ui'
 
 export {
@@ -134,11 +135,27 @@ export function NestedDenseTable({
   children,
   className,
   tableClassName,
+  hscroll = false,
 }: {
   children: ReactNode
   className?: string
   tableClassName?: string
+  /**
+   * A wide sub-table as the design draws it (Rev .153, Positions L529): one
+   * group (ink 4%, radius 12) that is itself the sideways scroller
+   * (`data-sr-hscroll`), the table straight inside it — no card in a card. The
+   * first column stays put; in a list scope it is clear at rest and turns glass
+   * with its divider once the box scrolls (`data-sx`).
+   */
+  hscroll?: boolean
 }) {
+  if (hscroll) {
+    return (
+      <div data-sr-hscroll="" className={cn('dense-scroll-x min-w-0 border mat-card', className)}>
+        <table className={cn(denseTable.table, tableClassName)}>{children}</table>
+      </div>
+    )
+  }
   return (
     <div className={cn('border p-2 mat-card', className)}>
       <DenseDataTable wrapClassName="border-0 rounded-none" tableClassName={tableClassName}>

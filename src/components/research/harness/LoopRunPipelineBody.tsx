@@ -148,11 +148,22 @@ export function LoopRunPipelineBody({
   const toggle = (step: string) => setOpen((o) => ({ ...o, [step]: !o[step] }))
 
   return (
-    <div className="space-y-2 px-1 pb-3">
+    // The drawer on the panel's glass (Rev .151): the list grammar for its
+    // lists (data-sr-list, Rev .153), a clear head that bands only while
+    // stuck, the content at 12 × 16 (Autopilot Console L399–410).
+    <div data-sr-list="" className="pb-3">
       <RightInspectorHeader
         hideWide
-        title="Smart Decision Run"
-        meta={running ? 'Live' : (run?.status ?? '…')}
+        // The prototype's three-line head: kind (11/600) · what (14/600) · id (mono 10).
+        title={
+          <span className="flex min-w-0 flex-1 flex-col font-sans tracking-normal">
+            <span className="truncate text-dense-meta font-semibold leading-normal text-muted-foreground">
+              Smart Decision Run · {running ? 'Live' : (run?.status ?? '…')}
+            </span>
+            <span className="truncate text-sm font-semibold leading-[1.3] text-foreground">{title}</span>
+            {run ? <span className="font-mono text-dense-caption font-normal text-muted-foreground">{run.id}</span> : null}
+          </span>
+        }
         actions={
           run ? (
             <>
@@ -213,6 +224,7 @@ export function LoopRunPipelineBody({
         }
       />
 
+      <div className="flex flex-col gap-2 px-4 pt-3">
       {runQ.isError ? <QueryErrorAlert error={runQ.error} /> : null}
       {runQ.isLoading ? <Skeleton className="h-24 w-full" /> : null}
       {curate.isError ? <QueryErrorAlert error={curate.error} /> : null}
@@ -226,9 +238,7 @@ export function LoopRunPipelineBody({
               <DenseTag variant={statusVariant(run.status)} size="cell">
                 {terminal?.label ?? run.status}
               </DenseTag>
-              <span className="min-w-0 flex-1 truncate text-dense-label font-medium">
-                {run.objective_title ?? run.objective_id}
-              </span>
+              {/* The objective and the run id moved up into the head (prototype). */}
             </div>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-dense-caption text-muted-foreground">
               <span>{universeMode}</span>
@@ -249,7 +259,6 @@ export function LoopRunPipelineBody({
                 </span>
               ) : null}
               <span>{fmtDuration(runDurationMs(run.started_at, run.finished_at))}</span>
-              <span className="font-mono">{run.id}</span>
             </div>
           </div>
 
@@ -396,6 +405,7 @@ export function LoopRunPipelineBody({
           </div>
         </>
       ) : null}
+      </div>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display'
 import { pnlColorClass } from '@/utils/dailyChange'
 import type { RiskProfile, RiskPosition, RiskScenarioBreakdown } from '@/utils/riskProfile'
 import {
@@ -82,9 +83,7 @@ function ScenarioMatrixExplainPanel({
           <strong>
             {rowTitle} — Option ({formatRiskUsd(selection.scenario.options_pnl)})
           </strong>
-          <button type="button" className={styles.explainClose} onClick={onDismiss} aria-label="Dismiss">
-            ×
-          </button>
+          <CloseButton onClick={onDismiss} label="Dismiss" />
         </div>
         <p className={styles.explainPrinciple}>
           Expiration snapshot at <strong>S = {S.toFixed(2)}</strong> (sample grid: 0, strikes, 2× top strike).
@@ -105,9 +104,7 @@ function ScenarioMatrixExplainPanel({
       <div className={styles.explain} role="region" onClick={(e) => e.stopPropagation()}>
         <div className={styles.explainHead}>
           <strong>{rowTitle} — Stk ({formatRiskUsd(stk)})</strong>
-          <button type="button" className={styles.explainClose} onClick={onDismiss} aria-label="Dismiss">
-            ×
-          </button>
+          <CloseButton onClick={onDismiss} label="Dismiss" />
         </div>
         <p className={styles.explainPrinciple}>No covered shares in this model → Stk is 0.</p>
       </div>
@@ -118,9 +115,7 @@ function ScenarioMatrixExplainPanel({
       <div className={styles.explain} role="region" onClick={(e) => e.stopPropagation()}>
         <div className={styles.explainHead}>
           <strong>{rowTitle} — Stk ({formatRiskUsd(stk)})</strong>
-          <button type="button" className={styles.explainClose} onClick={onDismiss} aria-label="Dismiss">
-            ×
-          </button>
+          <CloseButton onClick={onDismiss} label="Dismiss" />
         </div>
         <p className={styles.explainPrinciple}>
           Covered shares ({covered_shares}) but average cost missing → Stk treated as 0.
@@ -135,9 +130,7 @@ function ScenarioMatrixExplainPanel({
         <strong>
           {rowTitle} — Stk ({formatRiskUsd(stk)})
         </strong>
-        <button type="button" className={styles.explainClose} onClick={onDismiss} aria-label="Dismiss">
-          ×
-        </button>
+        <CloseButton onClick={onDismiss} label="Dismiss" />
       </div>
       <p className={styles.explainPrinciple}>
         Mark-to-spot on <strong>{covered_shares}</strong> coverage share(s) at hypothetical S.

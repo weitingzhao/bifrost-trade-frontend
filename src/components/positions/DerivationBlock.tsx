@@ -10,6 +10,7 @@
  */
 import { Fragment, useState, type KeyboardEvent } from 'react'
 import { cn } from '@/lib/utils'
+import { CloseButton } from '@/components/data-display'
 import {
   derivationFields,
   derivationRows,
@@ -174,15 +175,7 @@ export function DerivationBlock({
     >
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <span className="text-dense-meta font-semibold text-muted-foreground">How · {d.title}</span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-dense-caption text-muted-foreground hover:text-foreground"
-          aria-label="Close explanation"
-          title="Close (Esc)"
-        >
-          ×
-        </button>
+        <CloseButton onClick={onClose} label="Close explanation" title="Close (Esc)" />
       </div>
       <p className="leading-snug text-muted-foreground">{d.intro}</p>
 

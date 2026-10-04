@@ -81,7 +81,9 @@ export function PipelineStageRow({
             state === 'done' && 'border-success/40 bg-success/15 text-success',
             state === 'active' &&
               'border-warning/50 bg-warning/20 text-warning animate-pulse',
-            state === 'pending' && 'border-border bg-muted/40 text-muted-foreground/60',
+            // Rev .154: a pending numeral is a filled disc on the glass (ink 6%, no
+            // frame); done / active keep their state edge.
+            state === 'pending' && 'border-transparent bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] text-muted-foreground/60',
           )}
         >
           {state === 'done' ? <Check className="size-3" /> : index}
@@ -99,8 +101,8 @@ export function PipelineStageRow({
       <div className={cn('min-w-0 flex-1', isLast ? 'pb-0' : 'pb-2')}>
         <div
           className={cn(
-            'flex items-center gap-2 rounded-md px-1.5 py-1',
-            expandable && 'cursor-pointer hover:bg-secondary/60',
+            'flex items-center gap-2 rounded-[6px] px-1.5 py-1',
+            expandable && 'cursor-pointer hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]',
             state === 'pending' && 'opacity-55',
           )}
           onClick={expandable ? onToggle : undefined}
@@ -206,7 +208,7 @@ function FunnelBarRow({ step }: { step: HarnessFunnelStep }) {
     >
       <div className="flex items-baseline gap-2 text-dense-meta">
         <span className="w-28 shrink-0 truncate font-medium">{step.name}</span>
-        <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-sm bg-muted">
+        <div className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-[2px] bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]">
           <div
             className={cn('h-full', cut ? 'bg-warning' : 'bg-success/60')}
             style={{ width: `${Math.max(kept * 100, 1.5)}%` }}

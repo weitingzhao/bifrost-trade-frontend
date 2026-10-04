@@ -13,6 +13,7 @@ import { useLocation } from 'react-router-dom'
 import { scrollWhenPresent, flashFound } from '@/lib/scrollWhenPresent'
 import { useQueryClient } from '@tanstack/react-query'
 import { SegmentControl } from '@/components/data-display'
+import { CloseButton } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { PositionsTier } from '@/components/positions/PositionsTier'
 import { QUERY_KEYS } from '@/constants/queryKeys'
@@ -44,7 +45,10 @@ import type { DailyBenchmark, QuoteItem } from '@/types/market'
 /** A row's bucket as the store spells the class. */
 const CLASS_OF: Record<ShareBucket, string> = { stk: 'stock', fi: 'fixed_income', cash: 'cash_like' }
 
-const HEAD_ROW = 'bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
+// A group head is a full-cell fill on every cell (prototype L765–772, Owner #7):
+// raised2, which the frost page turns into ink 6%. On the cells, not the row —
+// the list grammar keeps rows clear and paints its zebra / hover over cells.
+const HEAD_ROW = '[&>td]:bg-[var(--sk-raised2)]'
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
 function callsText(n: number | null): string {
@@ -246,15 +250,11 @@ export function SharesBand({
                 <span className={cn(positionsUi.mono, 'text-dense-micro text-muted-foreground')}>
                   {all.filter((r) => r.category === c.name).length}
                 </span>
-                <button
-                  type="button"
-                  className={positionsUi.q}
+                <CloseButton
+                  size="sm"
                   onClick={() => setPending({ id: c.category_id, name: c.name })}
-                  title={`Delete ${c.name}`}
-                  aria-label={`Delete ${c.name}`}
-                >
-                  ✕
-                </button>
+                  label={`Delete ${c.name}`}
+                />
               </span>
             ))}
             <input
@@ -315,7 +315,7 @@ export function SharesBand({
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1080px] border-collapse">
+          <table className="w-full min-w-[1080px]">
             <thead>
               <tr>
                 <th className={cn(positionsUi.th, 'pl-3 text-left')}>Symbol</th>

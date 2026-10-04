@@ -32,14 +32,14 @@
 .passBadgeUnknown {
   background: color-mix(in srgb, var(--muted) 80%, transparent);
   color: var(--muted-foreground);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
 }
 
 .conditionsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
 }
 
 .conditionsCol {
@@ -48,7 +48,7 @@
 }
 
 .conditionsCol + .conditionsCol {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
 }
 
 .condList {
@@ -63,7 +63,7 @@
   align-items: center;
   gap: 0.55rem;
   padding: 6px 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
   font-size: 0.78rem;
 }
 
@@ -188,7 +188,7 @@
 .summaryWarn {
   background: color-mix(in srgb, var(--muted) 60%, transparent);
   color: var(--muted-foreground);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
 }
 
 /* 11/600 sentence case (Rev .92): the inspector's labels lose the tracked caps; table heads keep the DS case. */
@@ -205,9 +205,10 @@
 
 .extGroup {
   margin-top: 0.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: 6px;
   overflow: hidden;
+  background: color-mix(in srgb, var(--sk-ink) 4%, transparent);
 }
 
 .extGroupSummary {
@@ -241,13 +242,14 @@
 .extGroupBadgeInsuf {
   background: color-mix(in srgb, var(--muted) 70%, transparent);
   color: var(--muted-foreground);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
 }
 
 .tierDetails {
   margin-top: 0.4rem;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: 6px;
+  background: color-mix(in srgb, var(--sk-ink) 4%, transparent);
 }
 
 .tierSummary {
@@ -277,10 +279,11 @@
 .chip {
   font-size: 0.65rem;
   padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
+  border-radius: 6px;
+  border: 1px solid transparent;
   color: var(--muted-foreground);
   font-family: var(--font-mono);
+  background: color-mix(in srgb, var(--sk-ink) 8%, transparent);
 }
 
 .chipSector {
@@ -354,7 +357,7 @@
 .rawTable th,
 .rawTable td {
   padding: 4px 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
   text-align: right;
 }
 
@@ -434,7 +437,7 @@
 .stmtDataTable th,
 .stmtDataTable td {
   padding: 4px 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
   text-align: right;
   white-space: nowrap;
 }
@@ -482,7 +485,7 @@
 
 .barSection {
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
 }
 
 .barTopRow {
@@ -499,8 +502,9 @@
   gap: 0.35rem;
   font-size: 0.65rem;
   padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--sk-ink) 8%, transparent);
   font-family: var(--font-mono);
 }
 
@@ -516,8 +520,8 @@
   font-size: 0.65rem;
   padding: 3px 10px;
   border-radius: 999px; /* Rev .142: push buttons are capsules */
-  border: 1px solid var(--border);
-  background: transparent;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--sk-ink) 8%, transparent);
   color: var(--muted-foreground);
   cursor: pointer;
 }
@@ -548,8 +552,8 @@
   text-align: center;
   padding: 0.5rem;
   border-radius: 6px;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--muted) 35%, transparent);
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--sk-ink) 4%, transparent);
 }
 
 .pcrKpiLabel {
@@ -635,8 +639,8 @@
   appearance: none;
   padding: 3px 10px;
   border-radius: 999px;
-  border: 1px solid var(--border);
-  background: transparent;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--sk-ink) 8%, transparent);
   color: var(--muted-foreground);
   font-size: 0.62rem;
   font-weight: 600;
@@ -792,7 +796,7 @@
 .pcrTrendTable th,
 .pcrTrendTable td {
   padding: 4px 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
   text-align: right;
 }
 
@@ -865,7 +869,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted-foreground);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
   text-align: right;
   white-space: nowrap;
 }

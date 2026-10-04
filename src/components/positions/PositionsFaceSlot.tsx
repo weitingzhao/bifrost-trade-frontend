@@ -10,6 +10,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
+import { CloseButton } from '@/components/data-display'
 import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
 import { RiskProfileDetail } from './RiskProfileDetail'
 import { TradeAdminRow, type TradeAdminReading } from './TradeAdminRow'
@@ -123,8 +124,10 @@ export function PositionsFaceSlot({
             onClick={() => onFace(f.id)}
             aria-pressed={face === f.id}
             title={f.title}
+            // Rev .154 `.ps-face`: the ink 4% group fill, radius 12; the selected
+            // face keeps its accent edge and ink (the prototype's faces list).
             className={cn(
-              'h-6 cursor-pointer whitespace-nowrap rounded-full border bg-transparent px-2.25',
+              'h-6 cursor-pointer whitespace-nowrap rounded-full border bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-2.25',
               'text-dense-meta leading-normal font-semibold',
               face === f.id ? 'border-primary text-primary' : 'border-border text-secondary-foreground hover:text-foreground',
             )}
@@ -132,9 +135,7 @@ export function PositionsFaceSlot({
             {f.label}
           </button>
         ))}
-        <button type="button" className={cn(positionsUi.btn, 'ml-auto')} onClick={onClose} title="Close · esc" aria-label="Close">
-          ✕
-        </button>
+        <CloseButton className="ml-auto" onClick={onClose} title="Close · esc" />
       </header>
 
       {face === 'contract' ? (

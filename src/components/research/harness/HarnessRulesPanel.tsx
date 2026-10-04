@@ -169,7 +169,7 @@ export function RulesImpactPanel({
         {rules.map((r) => (
           <li key={r.key} className="flex items-baseline gap-2 text-dense-caption">
             <span className="w-28 shrink-0 truncate font-mono">{r.key}</span>
-            <span className={cn('w-16 shrink-0 uppercase', RULE_KIND_TONE[r.kind])}>
+            <span className={cn('w-16 shrink-0', RULE_KIND_TONE[r.kind])}>
               {r.kind}
             </span>
             <span className="min-w-0 flex-1 truncate text-muted-foreground">

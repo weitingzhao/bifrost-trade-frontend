@@ -508,7 +508,8 @@ export function OptionsTab({
           })}
         </DenseTableBody>
         <tfoot>
-          <tr className="border-t border-border bg-secondary/30 font-semibold">
+          {/* A total reads by weight alone (prototype tfoot: no fill, no rule). */}
+          <tr className="font-semibold">
             <td colSpan={12} className="px-[var(--table-cell-px)] py-[var(--table-cell-py)] text-xs">
               Total
             </td>

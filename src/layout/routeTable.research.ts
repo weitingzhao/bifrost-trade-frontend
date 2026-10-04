@@ -148,8 +148,10 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Loop Run',
     crumbs: AUTOPILOT,
     design: {
-      state: 'aligned',
-      rev: '2026-09-18.2',
+      // Signed 2026-09-23 at Rev .18.2; the Rev .151–.154 pilot (drawer on the
+      // panel glass, clear head, the memo as a list) waits for the Owner's look.
+      state: 'reviewing',
+      rev: '2026-10-02.154',
       note: DESIGN_NOTES['/research/loop/runs/:runId'],
     },
   },

@@ -169,7 +169,8 @@ export const ROUTES: readonly RouteEntry[] = [
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-09-28.103',
+      // Rev .151–.154 pilot (2026-10-04, batch 2): the frost shell and the list grammar, waiting for a look.
+      rev: '2026-10-02.154',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },

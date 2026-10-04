@@ -171,11 +171,10 @@
   text-align: left;
   font-weight: 600;
   font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  /* Sentence case, no tracking, the ink 8% hairline (Rev .153–.154 §17.2). */
   color: var(--muted-foreground);
   padding: 0.35rem 0.5rem 0.35rem 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 8%, transparent);
 }
 
 .scenarioMatrix tbody th {
@@ -285,21 +284,6 @@
   justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
-}
-
-.explainClose {
-  cursor: pointer;
-  padding: 0.15rem 0.45rem;
-  border: none;
-  border-radius: 999px;
-  background: var(--muted);
-  color: var(--foreground);
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.explainClose:hover {
-  background: color-mix(in srgb, var(--muted-foreground) 30%, transparent);
 }
 
 .explainPrinciple {

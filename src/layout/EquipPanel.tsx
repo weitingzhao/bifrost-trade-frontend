@@ -50,6 +50,7 @@ import { sidePanelPushes } from '@/components/layout/inspectorDock'
 import css from './equipSurface.module.css'
 import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
+import { useStuckMarks } from '@bifrost/ui'
 
 /** The width grip's drag: the column follows the pointer, and is kept on release. */
 function resizeFrom(e: ReactPointerEvent<HTMLDivElement>): void {
@@ -156,6 +157,10 @@ export function EquipPanel() {
     if (open && !wasOpen.current && card.current) animatePanelIn(card.current)
     wasOpen.current = open
   }, [open])
+
+  // Sticky heads, bars and wide boxes in every body mark themselves stuck
+  // (@bifrost/ui 0.10.0, Rev .150–.153) — the panel's scrollers, not the page's.
+  useStuckMarks(card, open)
 
   // The Symbol list's column sits right of the panel: the panel measures its
   // room without it and stands off it (`right = column + 8`).
@@ -273,6 +278,9 @@ export function EquipPanel() {
           <div
             key={t.key}
             className={`${css.body} ${t.key === panel.active ? '' : css.bodyHidden}`}
+            // Frost (Rev .151–.152): a page tab sits on thick glass, a drawer-kind
+            // tab (canPage:false — Loop Run, Thread) straight on the panel's.
+            data-frost-host={t.canPage ? 'thick' : 'drawer'}
             data-mat=""
             onClickCapture={keepEquipmentLinksIn('panel')}
           >

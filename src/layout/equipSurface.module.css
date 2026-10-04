@@ -432,6 +432,23 @@
   container: page / inline-size;
 }
 
+/* Frost (design Rev .151–.152, _Shell TopBar L103–108): the inset card goes.
+   A page tab or float (canPage) is clear and the body adds the thick tint —
+   the panel's 46% glass plus this 60% reads ≈80%, calm under dense numbers.
+   A drawer-kind tab (canPage:false — Loop Run, Thread) adds nothing: its
+   content sits on the panel glass itself. Solid / ?frost=0 keep the card. */
+:global(html[data-frost='on']:not([data-glass='solid'])) .body[data-frost-host] {
+  margin: 0;
+  border-color: transparent;
+  border-radius: 0 0 12px 12px;
+}
+:global(html[data-frost='on']:not([data-glass='solid'])) .body[data-frost-host='thick'] {
+  background: color-mix(in srgb, var(--glass-base) 60%, transparent);
+}
+:global(html[data-frost='on']:not([data-glass='solid'])) .body[data-frost-host='drawer'] {
+  background: transparent;
+}
+
 /* Loading: five shimmering bars in the shape of a page, then the page fades
    in (design Rev .25). A tab that is already loaded does not replay it — it
    stays mounted, so it never suspends again. */

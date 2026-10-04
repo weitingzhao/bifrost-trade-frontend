@@ -49,6 +49,7 @@ import { SHELL_TOP_BAR_PX } from './shellChrome'
 import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
 import css from './equipSurface.module.css'
+import { useStuckMarks } from '@bifrost/ui'
 
 /**
  * One toggle: the icon is the size it is, the title says what a click makes it.
@@ -143,6 +144,8 @@ export function EquipFloat() {
   usePanelWidth()
   const carried = useCarriedSymbol()
   const [viewport, setViewport] = useState(() => window.innerWidth)
+  // Sticky heads, bars and wide boxes in the body mark themselves stuck (0.10.0).
+  useStuckMarks(ref, key != null)
 
   useEffect(() => {
     const onResize = () => setViewport(window.innerWidth)
@@ -379,7 +382,13 @@ export function EquipFloat() {
         <span className={css.barSep} aria-hidden />
         <PlaceButtons surface={float} here="float" />
       </div>
-      <div className={css.body} data-mat="" onClickCapture={keepEquipmentLinksIn('float')}>
+      <div
+        className={css.body}
+        // Frost (Rev .151–.152): thick glass under a page, none under a drawer-kind surface.
+        data-frost-host={float.canPage ? 'thick' : 'drawer'}
+        data-mat=""
+        onClickCapture={keepEquipmentLinksIn('float')}
+      >
         <SurfaceBody surface={float} />
       </div>
       <span className={css.grip} onPointerDown={onGrip} title="Drag to resize" aria-hidden />

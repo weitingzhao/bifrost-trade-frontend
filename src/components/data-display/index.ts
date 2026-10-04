@@ -32,6 +32,7 @@ export { ExecSourceBadge } from './ExecSourceBadge'
 export { DenseLinkButton, SymbolLinkButton } from './DenseLinkButton'
 export { DenseOptionCategoryLabel } from './DenseOptionCategoryLabel'
 export { IconActionButton } from './IconActionButton'
+export { CloseButton } from './CloseButton'
 export { ExpandToggleCell } from './ExpandToggleCell'
 export {
   CollapsibleGroup,

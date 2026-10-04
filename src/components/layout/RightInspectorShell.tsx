@@ -1,5 +1,5 @@
 import { usePanelWidth } from '@/layout/equipSurface'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
@@ -10,6 +10,7 @@ import { useSurfaces } from '@/layout/equipSurface'
 import { useDockColumn } from '@/layout/symbolDock/dockState'
 import { useInspectorWide } from '@/hooks/useInspectorWide'
 import { useInspectorSlot } from './inspectorSlot'
+import { useStuckMarks } from '@bifrost/ui'
 
 interface Props {
   open: boolean
@@ -46,6 +47,11 @@ export function RightInspectorShell({
   const dock = useDockColumn()
   // The panel's column moves with its width (Rev .72 §6): re-read it.
   usePanelWidth()
+  // The head and any sticky bar inside paint their band only while stuck (0.10.0).
+  // A callback ref: docking and floating mount different elements.
+  const [asideEl, setAsideEl] = useState<HTMLElement | null>(null)
+  const asideRef = useMemo(() => ({ current: asideEl }), [asideEl])
+  useStuckMarks(asideRef, open && asideEl != null)
 
   useEffect(() => {
     if (!open || !onClose) return
@@ -63,6 +69,7 @@ export function RightInspectorShell({
 
   const panel = (
     <aside
+      ref={setAsideEl}
       className={cn(
         'flex min-h-0 max-w-full flex-col',
         docked
@@ -73,6 +80,11 @@ export function RightInspectorShell({
             'sr-glass-side pointer-events-auto my-2 mr-2 h-[calc(100svh-16px)] overflow-hidden rounded-[14px] animate-in fade-in-0 slide-in-from-right-4 duration-[240ms] motion-reduce:animate-none',
       )}
       data-glass-surface={docked ? undefined : 'surface'}
+      // Frost (Rev .151–.152, index.css): the inspector reads on its glass —
+      // vibrancy ink, group fills for the opaque inks; docked, it is thick
+      // glass detached 8px like the page (Owner #8). Off with ?frost=0 / solid.
+      data-frost-host="inspector"
+      data-inspector-dock={docked ? '' : undefined}
       style={{ width: docked ? `${width}px` : `min(${width}px, 96vw)` }}
       role="dialog"
       aria-modal="false"

@@ -11,13 +11,17 @@
   container-name: inspector;
 }
 
+/* The head on glass (design Rev .151 `data-sr-head`): clear, one ink 8%
+   hairline, 12 × 16. It sticks; the ground band shows only while it is pinned
+   over content (`data-sr-edge="solid"`, marked by useStuckMarks — @bifrost/ui
+   0.10.0), so at rest the inspector's glass runs to the top. */
 .header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--background);
+  gap: 0.5rem 0.625rem;
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 8%, transparent);
+  background: transparent;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -54,6 +58,8 @@
   flex-shrink: 0;
 }
 
+/* A head icon action (pin, widen). The close itself is the DS round close
+   (`IconActionButton variant="close"`, data-sr-close). */
 .headerClose {
   background: none;
   border: none;
@@ -61,7 +67,7 @@
   color: var(--muted-foreground);
   cursor: pointer;
   padding: 0.15rem 0.4rem;
-  border-radius: 4px;
+  border-radius: 6px;
   line-height: 1;
   flex-shrink: 0;
 }

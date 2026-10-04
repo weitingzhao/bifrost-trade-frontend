@@ -730,6 +730,110 @@ html[data-theme='light'] {
     var(--sk-ground);
 }
 
+/* ── Frost (design Rev .151–.152, Panel Chrome 2a / 2b · shell-registry.js
+   L909–924, _Shell TopBar L103–108) ─────────────────────────────────────
+   Trade-only, not @bifrost/ui (HANDOFF "app 侧"). Every rule keys on
+   `html[data-frost='on']` (lib/frost.ts: on unless ?frost=0 / bifrost.frost=0
+   or the surfaces are solid) and on `:not([data-glass='solid'])` as well, so
+   Reduce transparency drops the whole layer whatever the script last wrote.
+
+   - The window gets a ground to frost: five soft colour fields, fixed.
+   - The page is a detached glass sheet over it — SidebarInset, top bar
+     included (Owner #8): 8px off every edge, radius 14, the DS glass base at
+     62% over its gradient rim, lens and drop, vibrancy for secondary ink.
+     No backdrop-filter / transform / filter on it: nothing scrolls behind the
+     page, and the top bar's fixed layers would re-anchor to it.
+   - `@theme inline` resolves `--muted-foreground`, `--card`, `--secondary`…
+     on the root, so overriding `--sk-mute` or `--sk-surface` in a subtree
+     never reaches `text-muted-foreground` or `bg-secondary`. Each scope below
+     re-declares the resolved names alongside the ramp names (D2 §1.1).
+   - Inside a page the opaque inks become the group fills (raised ink 4% ·
+     raised2 6% · surface 8% · card clear) — the page lane, a panel / float
+     body and the inspector. Overlays portal to <body> and keep their solid
+     ground without a re-pin rule. */
+:root {
+  --sr-frost: color-mix(in srgb, var(--glass-base) 70%, var(--sk-ground));
+}
+
+html[data-frost='on']:not([data-glass='solid']) {
+  --ground:
+    radial-gradient(640px 440px at 80% 14%, color-mix(in srgb, var(--sk-accent) 22%, transparent), transparent 70%),
+    radial-gradient(520px 380px at 56% 58%, color-mix(in srgb, var(--sk-contract) 12%, transparent), transparent 70%),
+    radial-gradient(460px 340px at 34% 28%, color-mix(in srgb, var(--sk-ticker) 7%, transparent), transparent 70%),
+    radial-gradient(720px 520px at 96% 96%, color-mix(in srgb, var(--sk-trade) 16%, transparent), transparent 70%),
+    radial-gradient(820px 600px at 14% 104%, color-mix(in srgb, var(--sk-contract) 9%, transparent), transparent 70%),
+    var(--sk-ground);
+}
+
+html[data-frost='on']:not([data-glass='solid']) [data-slot='sidebar-inset'] {
+  margin: 8px;
+  height: calc(100svh - 16px);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(
+        color-mix(in srgb, var(--glass-base) 62%, transparent),
+        color-mix(in srgb, var(--glass-base) 62%, transparent)
+      )
+      padding-box,
+    var(--glass-rim) border-box;
+  box-shadow: var(--glass-lens), var(--glass-drop);
+  --sk-ground: var(--sr-frost);
+  --background: var(--sr-frost);
+  --scroll-edge-from: color-mix(in srgb, var(--sr-frost) 86%, transparent);
+  --sk-mute: var(--vib-mute);
+  --sk-mute2: var(--vib-mute2);
+  --sk-soft: var(--vib-soft);
+  --muted-foreground: var(--vib-mute);
+  --secondary-foreground: var(--vib-soft);
+}
+
+html[data-frost='on']:not([data-glass='solid']) :is(#main-content, [data-frost-host]) {
+  --sk-raised: color-mix(in srgb, var(--sk-ink) 4%, transparent);
+  --sk-raised2: color-mix(in srgb, var(--sk-ink) 6%, transparent);
+  --sk-surface: color-mix(in srgb, var(--sk-ink) 8%, transparent);
+  --card: transparent;
+  --secondary: color-mix(in srgb, var(--sk-ink) 8%, transparent);
+  --muted: color-mix(in srgb, var(--sk-ink) 8%, transparent);
+  --accent: color-mix(in srgb, var(--sk-ink) 8%, transparent);
+  --sk-ground: var(--sr-frost);
+  --background: var(--sr-frost);
+  --scroll-edge-from: color-mix(in srgb, var(--sr-frost) 86%, transparent);
+}
+
+/* A drawer-kind surface (canPage:false — Loop Run, Thread) and the inspector
+   read on the glass itself: vibrancy for secondary ink (Rev .151). A page in
+   a panel sits on thick glass (≈80%) and keeps the page's own inks. */
+html[data-frost='on']:not([data-glass='solid']) [data-frost-host='drawer'],
+html[data-frost='on']:not([data-glass='solid']) [data-frost-host='inspector'] {
+  --sk-mute: var(--vib-mute);
+  --sk-mute2: var(--vib-mute2);
+  --sk-soft: var(--vib-soft);
+  --muted-foreground: var(--vib-mute);
+  --secondary-foreground: var(--vib-soft);
+}
+
+/* The docked inspector (Owner #8): thick glass — detached 8px like the page,
+   the DS base at 80% over the rim, so a dense column of numbers reads calm. */
+html[data-frost='on']:not([data-glass='solid']) [data-inspector-dock] {
+  margin: 8px 8px 8px 0;
+  height: calc(100svh - 16px);
+  border: 1px solid transparent;
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(
+        color-mix(in srgb, var(--glass-base) 80%, transparent),
+        color-mix(in srgb, var(--glass-base) 80%, transparent)
+      )
+      padding-box,
+    var(--glass-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: var(--glass-lens), var(--glass-drop);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -814,7 +918,10 @@ html[data-theme='light'] {
  * glass. The prototype reaches the same result with `!important`; an
  * unlayered rule is the stylesheet's own way of saying the same thing.
  */
-tbody tr:hover > td {
+/* Not inside a list scope (`data-sr-list`, @bifrost/ui 0.10.0): there hover
+   is the list's ink 7% capsule and a cell's own background is a heat cell's,
+   never the row's. */
+tbody tr:hover > td:not([data-sr-list] *) {
   background-color: rgb(var(--sk-accent-rgb) / 0.03);
 }
 /* The sidebar's glass, capsules and frameless carets moved to
@@ -869,6 +976,11 @@ tbody tr:hover > td {
   position: sticky;
   top: var(--sr-stick, 0px);
   z-index: 2;
+}
+/* The strip is always on outside a list scope. Inside one (Rev .153) the head
+   has no fill at rest and turns glass only while stuck over rows — the
+   scope's own rule, keyed on thead[data-stuck] (useStuckMarks). */
+[data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky):not([data-sr-list] *) {
   background-color: color-mix(in srgb, var(--background) 82%, transparent);
   -webkit-backdrop-filter: blur(10px) saturate(1.4);
   backdrop-filter: blur(10px) saturate(1.4);
@@ -1083,14 +1195,14 @@ tbody tr:hover > td {
    the glass surfaces, poppers and the floating sidebar are @bifrost/ui's
    hooks since 0.5.0 (styles/materials; --glass-solid-* read this skin). What
    stays here is this app's own table heads, which the page scope makes sticky. */
-html[data-glass='solid'] [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
+html[data-glass='solid'] [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky):not([data-sr-list] *) {
   background-color: var(--background);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  html:not([data-glass='glass']) [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky) {
+  html:not([data-glass='glass']) [data-mat] table > thead:not(.sticky) > tr:not(.sticky) > th:not(.sticky):not([data-sr-list] *) {
     background-color: var(--background);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;

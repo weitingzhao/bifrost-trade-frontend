@@ -20,6 +20,12 @@
           // Reduce transparency (Rev .70): the user's switch, before first paint (src/lib/glass.ts).
           var g = localStorage.getItem('bifrost.glass');
           if (g === 'solid' || g === 'glass') r.dataset.glass = g;
+          // The frost shell (Rev .151–.152, src/lib/frost.ts): on unless ?frost=0 / bifrost.frost=0
+          // or the surfaces are solid (the switch above, else the system's reduced transparency).
+          var fq = new URLSearchParams(location.search).get('frost');
+          if (fq === '0' || fq === '1') localStorage.setItem('bifrost.frost', fq);
+          var solid = g ? g === 'solid' : window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
+          r.dataset.frost = localStorage.getItem('bifrost.frost') !== '0' && !solid ? 'on' : 'off';
           // Display options (Rev .72 §11, src/lib/display.ts).
           if (localStorage.getItem('bifrost.contrast') === 'more') r.dataset.contrast = 'more';
           var ts = localStorage.getItem('bifrost.textsize');

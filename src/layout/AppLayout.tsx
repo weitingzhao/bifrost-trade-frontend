@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useAmbientPageContext } from '@/hooks/useAmbientPageContext'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
@@ -13,6 +13,7 @@ import { ShellContextMenu } from './ShellContextMenu'
 import { useShellArrows } from './useShellArrows'
 import { usePageLane } from './usePageLane'
 import { useGlassSync } from '@/lib/glass'
+import { useFrostSync } from '@/lib/frost'
 import { useDisplaySync } from '@/lib/display'
 import { NumberStepper } from './NumberStepper'
 import { WhatsNew } from './WhatsNew'
@@ -39,7 +40,7 @@ import { TradeOperatorDialog } from '@/components/auth/TradeOperatorDialog'
 import { NoteComposer } from './NoteComposer'
 import { VisitBeaconHost } from '@/hooks/useVisitBeacon'
 import { CellPickOverlay } from './CellPickOverlay'
-import { setViewStateReportHandler } from '@bifrost/ui'
+import { setViewStateReportHandler, useStuckMarks } from '@bifrost/ui'
 import { openFeedbackDialog } from '@/lib/feedback/feedbackDialog'
 import { SymbolDockHost } from './symbolDock/SymbolDockHost'
 import { useCockpitKeybinds } from '@/lib/cockpit/keybinds'
@@ -113,6 +114,12 @@ export function AppLayout() {
   // route keeps its scroll for this tab's session.
   usePageLane()
   useGlassSync()
+  // Rev .151–.152: the frost shell (lib/frost.ts) — on unless ?frost=0 or solid.
+  useFrostSync()
+  // Rev .150–.153: sticky bars, table heads and wide boxes in the page lane
+  // paint their band only while stuck (@bifrost/ui 0.10.0 `useStuckMarks`).
+  const lane = useRef<HTMLElement | null>(null)
+  useStuckMarks(lane)
   const toolbarShown = useToolbarShown()
   // Rev .72: display options on <html>, and Enter confirms a sheet.
   useDisplaySync()
@@ -142,7 +149,9 @@ export function AppLayout() {
         <AppSidebar />
         {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport.
           Transparent, with the lane below: one window ground (Rev .61) — the
-          floating sidebar, the top bar and the page share the body's. */}
+          floating sidebar, the top bar and the page share the body's. With the
+          frost on (Rev .152 r2, index.css) it is the page's glass sheet, top
+          bar included: 8px off the edges over the colour fields. */}
         <SidebarInset className="h-svh overflow-hidden bg-transparent">
           {/* The menu bar (Rev .60): the status pill retired into the top
               bar's right end, and the Alerts panel hangs off its clock. */}
@@ -153,6 +162,7 @@ export function AppLayout() {
             lays out with `@…/page:` reads its own width in both places — the
             design's surfaces are iframes, where the viewport *is* that width. */}
           <main
+            ref={lane}
             id="main-content"
             // The page-material scope (Rev .62): index.css reads it.
             data-mat=""

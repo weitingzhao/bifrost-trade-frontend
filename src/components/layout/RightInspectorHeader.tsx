@@ -3,6 +3,7 @@ import { Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useInspectorWide } from '@/hooks/useInspectorWide'
+import { CloseButton } from '@/components/data-display'
 import { inspectorShell } from './rightInspectorUi'
 
 interface Props {
@@ -31,7 +32,7 @@ export function RightInspectorHeader({
 }: Props) {
   const { wide, toggle } = useInspectorWide()
   return (
-    <header className={cn(inspectorShell.header, className)}>
+    <header className={cn(inspectorShell.header, className)} data-sr-head="" data-sr-edge="solid">
       <h3 className={inspectorShell.headerTitle}>
         {title}
         {meta != null && meta !== false ? (
@@ -59,16 +60,7 @@ export function RightInspectorHeader({
               </TooltipContent>
             </Tooltip>
           )}
-          {onClose ? (
-            <button
-              type="button"
-              className={inspectorShell.headerClose}
-              onClick={onClose}
-              aria-label={closeLabel}
-            >
-              ✕
-            </button>
-          ) : null}
+          {onClose ? <CloseButton onClick={onClose} label={closeLabel} /> : null}
         </div>
       )}
     </header>

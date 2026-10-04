@@ -30,12 +30,7 @@ import { typedFirst } from '@/lib/harness/inboxOrder'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { draftParentId } from '@/lib/research/draftProvenance'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
-import {
-  useApproveDraft,
-  useHeldDraftDismiss,
-  useResearchDrafts,
-  DRAFTS_PAGE_MAX,
-} from '@/hooks/useResearchDrafts'
+import { useApproveDraft, useHeldDraftDismiss, useInboxQueue } from '@/hooks/useResearchDrafts'
 import {
   WRITES_TO_LABEL,
   WRITES_TO_ORDER,
@@ -137,13 +132,11 @@ export default function DecisionInboxPage() {
     if (next !== 'any' && view === 'briefings') setViewState('decisions')
   }
 
-  // The whole queue is read and narrowed here: `Writes to` is a grouping over
-  // kinds rather than one of them, so there is no server filter that answers it.
-  const apiKind = undefined
-
-  // The whole queue, not a page of it: every count on this page is computed
-  // from what comes back, and the cards are the work itself.
-  const query = useResearchDrafts({ status: 'pending', kind: apiKind, limit: DRAFTS_PAGE_MAX })
+  // The whole queue, one kind at a time (`useInboxQueue`). One page of every
+  // kind was the newest 200 drafts, and on DEV (2026-10-04) 184 of them were
+  // EOD verdicts: 16 of the 144 drafts waiting for a call were visible, and
+  // every count below was taken off those 16.
+  const query = useInboxQueue()
   const approve = useApproveDraft()
   // Dismiss with Undo (Rev .75): the card leaves at once and the write goes
   // when the toast does, since the server cannot take a dismissal back.
@@ -153,18 +146,15 @@ export default function DecisionInboxPage() {
   // list; the six-second strip belongs to the two surfaces that have no rail.
   const [landed, setLanded] = useState<LandedApproval[]>([])
 
-  const rawRows = query.data?.rows
-  const liveRows = useMemo(() => (rawRows ?? []).filter((d) => !isHeld(d.id)), [rawRows, isHeld])
-  const heldCount = (rawRows?.length ?? 0) - liveRows.length
+  const rawRows = useMemo(() => [...query.decisions, ...query.briefings], [query.decisions, query.briefings])
+  const liveRows = useMemo(() => rawRows.filter((d) => !isHeld(d.id)), [rawRows, isHeld])
+  const heldCount = rawRows.length - liveRows.length
   const digest = liveRows.find(isDailyDigest)
 
   // Read state for briefings, kept in this browser (see inboxRead.ts). It is
   // pruned only against the whole queue: a narrowed list, or a page that could
   // not hold every pending draft, would un-read everything it did not contain.
-  const allRows = rawRows ?? []
-  const wholeQueue =
-    query.data != null && (query.data.pending_count ?? 0) <= allRows.length
-  const { read, setRead } = useReadDrafts(wholeQueue ? allRows.map((d) => d.id) : null)
+  const { read, setRead } = useReadDrafts(query.complete ? rawRows.map((d) => d.id) : null)
 
   // Three kinds — decision_draft, order_intent, policy_suggestion — carry only
   // a `hypothesis_id`, so without this every one of their cards was headed by
@@ -230,30 +220,23 @@ export default function DecisionInboxPage() {
   const counts = useMemo(() => {
     const all = liveRows
     const decisionGroups = groupIdenticalDrafts(all.filter((d) => isDecisionKind(d.kind)))
-    // `pending_count` is the whole queue's, whatever `kind` the query asked for:
-    // narrowed to EOD verdicts on DEV it still said 182 beside 118 rows, and the
-    // line read "182 pending of this kind · 64 not shown". On a narrowed query the
-    // rows are the count, and only a full page can be hiding more.
-    const total = apiKind ? all.length : (query.data?.pending_count ?? all.length) - heldCount
+    // The server's count of the whole queue; the kinds read add up to it, and
+    // `unaccounted` is what sits in a kind this page does not read.
+    const total = (query.pendingCount ?? all.length) - heldCount
     return {
       decisions: decisionGroups.filter((g) => isActionableDraft(g.draft)).length,
       inert: decisionGroups.filter((g) => !isActionableDraft(g.draft)).length,
       collapsed: decisionGroups.reduce((n, g) => n + g.superseded.length, 0),
       briefings: all.filter((d) => BRIEFING_KINDS.has(d.kind)).length,
       total,
-      // Every other number here is counted off the rows that arrived. When the
-      // queue is longer than one page they describe a subset while `total`
-      // describes the queue, and the line reads as though they agree — which
-      // is how "24 to decide · 77 pending" came to mean twenty-seven drafts
-      // nobody could see.
-      unseen: apiKind ? 0 : Math.max(0, total - all.length),
-      pageFull: all.length >= DRAFTS_PAGE_MAX,
+      // Pending on the server in a kind this page does not read.
+      unseen: query.unaccounted,
       unreadBriefings: unreadCount(
         all.filter((d) => BRIEFING_KINDS.has(d.kind)).map((d) => d.id),
         read,
       ),
     }
-  }, [liveRows, heldCount, query.data?.pending_count, apiKind, read])
+  }, [liveRows, heldCount, query.pendingCount, query.unaccounted, read])
 
   /** Pending per place, for the segment's own labels. */
   const pendingByDest = useMemo(() => {
@@ -342,9 +325,12 @@ export default function DecisionInboxPage() {
                 itself is narrowed. Say what the list is. */}
             {dest !== 'any' ? `${groups.length + shownRules.length} shown · ${counts.total} pending` : null}
             {counts.unseen > 0 ? (
-              <span className="text-warning" title={`Showing the newest ${DRAFTS_PAGE_MAX}.`}>
+              <span
+                className="text-warning"
+                title="The server counts more pending drafts than the kinds this page reads add up to — a kind it does not know yet."
+              >
                 {dest !== 'any' ? ' · ' : ''}
-                {counts.unseen} not shown
+                {counts.unseen} pending in kinds this page does not read
               </span>
             ) : null}
           </span>
@@ -424,9 +410,9 @@ export default function DecisionInboxPage() {
           leash did not accept on its own, so the rule sits next to its result. */}
       <div className="grid gap-4 @4xl/page:grid-cols-[minmax(0,1fr)_18rem] @4xl/page:items-start">
       <div className="min-w-0">
-      {query.isError ? (
+      {query.error ? (
         <ResearchAuthGap error={query.error} />
-      ) : query.isLoading ? (
+      ) : query.decisionsLoading ? (
         <Skeleton className="h-48 w-full rounded-md" />
       ) : rows.length === 0 && shownRules.length === 0 ? (
         <EmptyState

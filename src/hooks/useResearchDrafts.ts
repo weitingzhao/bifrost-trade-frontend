@@ -2,12 +2,18 @@
  * TanStack Query hooks for Research Cockpit draft inbox (Wave RS-E3).
  */
 import { useCallback } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
+import {
+  BRIEFING_QUEUE_KINDS,
+  combineInboxQueue,
+  INBOX_QUEUE_KINDS,
+} from '@/lib/harness/inboxQueue'
 import {
   approveResearchDraft,
   createResearchDraft,
   dismissResearchDraft,
+  listAllResearchDrafts,
   listResearchDrafts,
   runEodAgent,
   runMorningAgent,
@@ -48,6 +54,24 @@ export function useResearchDrafts(opts?: {
 
 /** The API's own ceiling (`api/agents.py`: `le=200`). */
 export const DRAFTS_PAGE_MAX = 200
+
+/**
+ * The whole pending queue for the Decision Inbox, read one kind at a time
+ * (see `lib/harness/inboxQueue`). Under the drafts prefix, so every write that
+ * invalidates the drafts refreshes this too. Briefings poll at half the rate:
+ * there are hundreds of them and none needs an answer.
+ */
+export function useInboxQueue() {
+  return useQueries({
+    queries: INBOX_QUEUE_KINDS.map((kind) => ({
+      queryKey: [...researchDraftsQueryKey, 'pending', kind, 'every-page'] as const,
+      queryFn: () => listAllResearchDrafts({ status: 'pending', kind }),
+      refetchInterval: BRIEFING_QUEUE_KINDS.includes(kind) ? 60_000 : 30_000,
+      staleTime: 10_000,
+    })),
+    combine: combineInboxQueue,
+  })
+}
 
 export function useApproveDraft() {
   const qc = useQueryClient()

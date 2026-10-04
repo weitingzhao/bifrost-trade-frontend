@@ -85,6 +85,7 @@ export async function listResearchDrafts(params?: {
   status?: DraftStatus | null
   kind?: DraftKind
   limit?: number
+  offset?: number
 }): Promise<DraftListResponse> {
   const qs = new URLSearchParams()
   if (params?.status) qs.set('status', params.status)
@@ -95,10 +96,39 @@ export async function listResearchDrafts(params?: {
   }
   if (params?.kind) qs.set('kind', params.kind)
   if (params?.limit) qs.set('limit', String(params.limit))
+  if (params?.offset) qs.set('offset', String(params.offset))
   const suffix = qs.toString() ? `?${qs}` : ''
   return validateDraftList(
     await draftsApi(`/research/drafts${suffix}`),
   )
+}
+
+/** The API's page ceiling (`api/agents.py` `list_drafts`: `limit le=200`). */
+export const DRAFTS_LIST_PAGE = 200
+/** 25 pages = 5,000 drafts of one kind — far past any queue a person reads, short of a runaway loop. */
+const DRAFTS_LIST_MAX_PAGES = 25
+
+/**
+ * Every draft of one kind and status, page by page (`limit` + `offset`).
+ *
+ * The Decision Inbox read one page of the whole queue, newest first, and on
+ * DEV (2026-10-04) 724 pending `eod_verdict` rows filled it: of 133 drafts
+ * waiting for a call, the page saw 16. Asked per kind, each decision kind fits
+ * in one page and the briefings take as many as they need.
+ */
+export async function listAllResearchDrafts(params: {
+  status: DraftStatus
+  kind: DraftKind
+}): Promise<DraftListResponse> {
+  const rows: AiDraft[] = []
+  let pendingCount = 0
+  for (let page = 0; page < DRAFTS_LIST_MAX_PAGES; page++) {
+    const res = await listResearchDrafts({ ...params, limit: DRAFTS_LIST_PAGE, offset: page * DRAFTS_LIST_PAGE })
+    rows.push(...res.rows)
+    pendingCount = res.pending_count
+    if (res.rows.length < DRAFTS_LIST_PAGE) break
+  }
+  return { rows, count: rows.length, pending_count: pendingCount, limit: rows.length, offset: 0 }
 }
 
 export async function approveResearchDraft(

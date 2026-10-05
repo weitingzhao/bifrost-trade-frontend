@@ -14,12 +14,15 @@
  * so `updated_ts` is when the row was last *seen*, not when the order went in.
  * The design's "working 14m" has no field behind it; a row says its IB status
  * where the age would go, and the snapshot's age rides in the title.
+ *
+ * Numbers are read with `numericOrNull`: Postgres `numeric` can arrive as a string.
  */
 import type { OpenOrderRow } from '@/types/monitor'
 import { inAccountScope, type AccountScope } from '@/lib/accountScope'
 import { accountTag } from '@/utils/accountTag'
 import { parseOptionContractKey } from '@/lib/format'
 import { formatExpiryIbGroupLabel } from '@/utils/marketStreamsSort'
+import { numericOrNull } from '@/utils/finite'
 
 export interface WorkingOrderRow {
   key: string
@@ -30,10 +33,6 @@ export interface WorkingOrderRow {
   /** `LMT 1.45`, or — when the snapshot has no limit price. */
   price: string
   title: string
-}
-
-function num(v: number | null | undefined): number | null {
-  return v != null && Number.isFinite(v) ? v : null
 }
 
 function trimNum(v: number): string {
@@ -69,16 +68,16 @@ export function workingOrderRows(
     .filter((o) => inAccountScope(o.account_id, scope, hostId, secondaryId))
     .map((o, i) => {
       const name = orderContractName(o)
-      const qty = num(o.remaining) ?? num(o.total_quantity)
+      const qty = numericOrNull(o.remaining) ?? numericOrNull(o.total_quantity)
       const side = [(o.action ?? '').trim().toUpperCase(), qty == null ? '' : trimNum(qty)].filter(Boolean).join(' ') || '—'
       const acct = (o.account_id ?? '').trim()
       const tag = acct ? accountTag(acct, hostId, secondaryId) : 'no account'
       const status = (o.status ?? '').trim()
-      const lmt = num(o.limit_price)
-      const seen = num(o.updated_ts)
+      const lmt = numericOrNull(o.limit_price)
+      const seen = numericOrNull(o.updated_ts)
       const ago = seen == null ? null : Math.max(0, Math.round((nowSec - seen) / 60))
-      const filled = num(o.filled)
-      const total = num(o.total_quantity)
+      const filled = numericOrNull(o.filled)
+      const total = numericOrNull(o.total_quantity)
       return {
         key: `${o.perm_id ?? o.order_id ?? 'x'}|${acct}|${i}`,
         name,

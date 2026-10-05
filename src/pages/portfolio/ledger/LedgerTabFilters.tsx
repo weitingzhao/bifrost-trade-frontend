@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { InfoTooltip } from '@/components/ui/InfoTooltip'
-import { SegmentControl, segmentButtonClass, segmentGroupClass } from '@/components/data-display'
+import { SegmentControl } from '@/components/data-display'
 import { LedgerSortIcon as SortIcon } from './LedgerSortIcon'
 import type {
   GroupBy,
@@ -149,22 +149,18 @@ function TypeSwitch({
 
   return (
     <Control label="Type">
-      <div className={segmentGroupClass('xs')}>
-        {options.map(opt => (
-          <button
-            key={opt.value || 'all'}
-            type="button"
-            className={segmentButtonClass(optRightFilter === opt.value, 'xs')}
-            aria-pressed={optRightFilter === opt.value}
-            onClick={() => {
-              if (opt.value === '') setOptRightFilter('')
-              else setOptRightFilter(prev => (prev === opt.value ? '' : opt.value))
-            }}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
+      {/* A second click on Call or Put drops back to All. */}
+      <SegmentControl
+        size="xs"
+        ariaLabel="Option type"
+        value={optRightFilter}
+        onChange={v => {
+          const next = v as '' | 'C' | 'P'
+          if (next === '') setOptRightFilter('')
+          else setOptRightFilter(prev => (prev === next ? '' : next))
+        }}
+        options={options}
+      />
     </Control>
   )
 }
@@ -295,20 +291,22 @@ export function LedgerTabFilterRow(props: LedgerTabFilterProps) {
           {optSubTab === 'contracts' && (
             <>
               <Control label="Sort">
-                <div className={segmentGroupClass('xs')}>
-                  {(['expiry', 'trade_date'] as const).map(col => (
-                    <button
-                      key={col}
-                      type="button"
-                      className={segmentButtonClass(optSort.col === col, 'xs')}
-                      aria-pressed={optSort.col === col}
-                      onClick={() => toggleOptSort(col)}
-                    >
-                      {col === 'expiry' ? 'Expiry' : 'Trade date'}{' '}
-                      <SortIcon active={optSort.col === col} dir={optSort.dir} />
-                    </button>
-                  ))}
-                </div>
+                {/* A second click on the picked column flips its direction. */}
+                <SegmentControl
+                  size="xs"
+                  ariaLabel="Sort closed contracts"
+                  value={optSort.col}
+                  onChange={v => toggleOptSort(v as OptSortCol)}
+                  options={(['expiry', 'trade_date'] as const).map(col => ({
+                    value: col,
+                    label: (
+                      <>
+                        {col === 'expiry' ? 'Expiry' : 'Trade date'}{' '}
+                        <SortIcon active={optSort.col === col} dir={optSort.dir} />
+                      </>
+                    ),
+                  }))}
+                />
               </Control>
               <Control label="Trade">
                 <SegmentControl

@@ -330,7 +330,7 @@ export default function ReviewObjectivesPage() {
           {
             label: 'Net from objectives',
             value: chain.wired ? fmtUsd(0) : '—',
-            sub: `0 of ${chain.unattributed.settled ?? 0} settled attributed`,
+            sub: `${authGap ? '—' : 0} of ${chain.unattributed.settled ?? 0} settled attributed`,
             ink: 'text-muted-foreground',
             tip: `Realised on settled positions whose lineage reaches a run. Nothing reaches one: ${BROKEN_LINK} is empty on every hypothesis, so this is unknown rather than zero.`,
           },
@@ -343,7 +343,7 @@ export default function ReviewObjectivesPage() {
           },
           {
             label: 'Patches argued for',
-            value: '0',
+            value: authGap ? '—' : '0',
             sub: "by this quarter's record",
             ink: 'text-muted-foreground',
             tip: 'A patch drafted from settled evidence, waiting to be sent to the Decision Inbox. None can be drafted while no settled contract can be attributed to an objective.',

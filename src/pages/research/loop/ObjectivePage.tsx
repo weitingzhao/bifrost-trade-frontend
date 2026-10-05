@@ -111,6 +111,16 @@ export default function ObjectivePage() {
       </PageShell>
     )
   }
+  // The objective is found in the objectives list, which step 4 gates: signed
+  // out, the page says who is missing rather than "Couldn’t load" in red.
+  if (objQ.isError && firstResearchAuthGapError(objQ.error)) {
+    return (
+      <PageShell padding="default" className="space-y-3">
+        <PageHead title="Objective" />
+        <ResearchAuthGap error={objQ.error} onRetry={() => void objQ.refetch()} />
+      </PageShell>
+    )
+  }
   if (objQ.isError) {
     return (
       <PageShell padding="default" className="space-y-3">

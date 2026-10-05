@@ -632,7 +632,10 @@ function SummaryTile({
   const toneClass =
     tone === 'profit' ? 'text-profit' : tone === 'loss' ? 'text-loss' : 'text-foreground'
   return (
-    <div className="border-b border-r border-border/60 bg-background px-3 py-2 last:border-r-0 md:border-b-0">
+    // No fill of its own: the tiles read on their row's ink-4% group, divided by
+    // the rule (Research Backtest.dc.html L140 · L27). bg-background was the
+    // page ground — under the frost an opaque block on the glass.
+    <div className="border-b border-r border-border/60 px-3 py-2 last:border-r-0 md:border-b-0">
       <span className="text-dense-meta font-semibold text-muted-foreground">
         {label}
       </span>

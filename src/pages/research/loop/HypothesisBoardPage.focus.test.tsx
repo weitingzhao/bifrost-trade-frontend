@@ -4,8 +4,8 @@
  * whole instead of cut to one sentence. A card the board cannot show says why.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import type { Hypothesis } from '@/api/researchHypothesis'
 
@@ -57,12 +57,18 @@ vi.mock('@/lib/scrollWhenPresent', () => ({ scrollWhenPresent: () => () => {}, f
 
 import HypothesisBoardPage from './HypothesisBoardPage'
 
+function Where() {
+  const l = useLocation()
+  return <output data-testid="where">{l.search}</output>
+}
+
 function renderAt(url: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[url]}>
         <HypothesisBoardPage />
+        <Where />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -83,5 +89,14 @@ describe('HypothesisBoardPage — ?h=', () => {
   it('says so when the id is not on the board', async () => {
     renderAt('/research/loop/hypotheses?h=hyp-gone')
     await waitFor(() => expect(screen.getByText('Hypothesis hyp-gone is not on the board as it stands')).toBeTruthy())
+  })
+  it('a card the ?lane= hides says so, and Show all lanes puts the lane back in the URL', async () => {
+    const { container } = renderAt('/research/loop/hypotheses?h=hyp-b&lane=validated')
+    await waitFor(() => expect(screen.getByText('The lane picked hides it.')).toBeTruthy())
+    expect(container.querySelector('[data-hypothesis-id="hyp-b"]')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show all lanes' }))
+    await waitFor(() => expect(container.querySelector('[data-hypothesis-id="hyp-b"]')).not.toBeNull())
+    expect(screen.getByTestId('where').textContent).toBe('?h=hyp-b')
+    expect(container.querySelector('[data-hypothesis-id="hyp-b"]')?.getAttribute('aria-current')).toBe('true')
   })
 })

@@ -5,9 +5,11 @@
  * the next 30 days, and what the market is charging for it. Four lanes, each
  * drawn only as far as a store answers: OPEX dates are arithmetic (third
  * Fridays) and always real; macro dates come from the event radar, which is
- * measured by the page's own store probes; forward earnings dates are not on
- * the data plan, so BOOK and WATCHLIST earnings keep their lanes with the
- * reason instead of dots.
+ * measured by the page's own store probes; BOOK and WATCHLIST earnings are
+ * Research's estimates (`/research/narrative/earnings` · `expected_next`:
+ * last year's same-quarter results 8-K plus 52 weeks), marked `est.` — the
+ * vendor's confirmed calendar (Benzinga) is outside the plan, 403 not
+ * entitled. A name with no estimate is listed under the lanes with why.
  *
  * BOOK × EVENTS is real end to end: exposures are the option legs the
  * monitor holds, priced move is the front straddle off the chain snapshot at
@@ -20,13 +22,18 @@ import { Link } from 'react-router-dom'
 import { fetchOptionSnapshots } from '@/api/marketData/optionGreeks'
 import { fetchEventCalendar } from '@/api/researchEngine'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { useBookWatchNames } from '@/hooks/useBookWatchNames'
+import { useNamesEarnings } from '@/hooks/useNamesEarnings'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { withSymbolParam } from '@/lib/symbolLink'
+import { shortDate } from '@/utils/earningsEstimate'
 import { useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { fmtIsoDateToken } from '@/lib/format'
 import { symbolTabHref } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots } from '@/utils/optionChain'
 import { isoDaysFrom, opexDatesAround } from '@/utils/bookCalendar'
-import { bookExposures, daysUntil, type ExposureRow } from './eventsBookModel'
+import { bookExposures, daysUntil, earningsLanes, type EarningsLane, type ExposureRow } from './eventsBookModel'
 import { straddleMid } from '@/pages/research/analyze/symbol/symbolChainModel'
 
 const WINDOW_DAYS = 30
@@ -45,9 +52,10 @@ function laneDot(kind: 'macro' | 'opex' | 'book' | 'watch') {
       ? 'bg-[var(--sk-contract,#7dd3fc)]'
       : kind === 'book'
         ? 'bg-[var(--sk-ticker)] rounded-full'
-        : // The watchlist's earnings are the ticker ring, as the design keys
-          // them — a name you watch, not a warning.
-          'rounded-full border border-[var(--sk-ticker)] bg-transparent'
+        : // The watchlist's earnings are a ring, as the design keys them — a
+          // name you watch, not a warning; grey because every print here is
+          // an estimate (the design's estimated ◎).
+          'rounded-full border-[1.5px] border-[var(--sk-mute2)] bg-transparent'
 }
 
 /** The calendar's key — the page toolbar carries it on the Book face (Rev .89). */
@@ -56,9 +64,44 @@ export function EventsBookLegend() {
     <span className="flex flex-wrap items-center gap-x-3 text-dense-caption text-muted-foreground">
       <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2', laneDot('macro'))} />macro</span>
       <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2 rounded-[2px]', laneDot('opex'))} />OPEX</span>
-      <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2', laneDot('book'))} />earnings · book</span>
-      <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2', laneDot('watch'))} />earnings · watchlist</span>
+      <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2', laneDot('book'))} />earnings · book (est.)</span>
+      <span className="inline-flex items-center gap-1"><i className={cn('h-2 w-2', laneDot('watch'))} />earnings · watchlist (est.)</span>
     </span>
+  )
+}
+
+/** Why an earnings lane has no mark in the window — or when the next one is. */
+function earningsOwed(lane: EarningsLane, names: number, reading: boolean, failed: boolean): string | null {
+  if (lane.byDate.size > 0) return null
+  if (failed) return 'couldn’t read the names — no estimate was asked for'
+  if (names === 0) return 'no names to read'
+  if (reading) return 'reading Research’s estimates…'
+  return lane.nextBeyond
+    ? `no estimated print inside ${WINDOW_DAYS} days — the next is ${lane.nextBeyond.sym} ~${shortDate(lane.nextBeyond.date)} (est.)`
+    : `no estimated print for these ${names} names — see why below`
+}
+
+/** One day's estimated prints on a lane: the first ticker, `+N` for the rest, each a door to the name. */
+function EarningsChip({ lane, marks }: { lane: 'book' | 'watch'; marks: readonly { sym: string; title: string }[] }) {
+  const [first, ...rest] = marks
+  if (!first) return null
+  return (
+    <Link
+      to={withSymbolParam(SYMBOL_PATH, first.sym)}
+      title={marks.map((m) => m.title).join('\n')}
+      className="relative mx-auto flex w-max items-center gap-0.5 hover:underline"
+    >
+      <span className={cn('block h-2 w-2 flex-none', laneDot(lane))} />
+      <span
+        className={cn(
+          'font-mono text-dense-micro font-semibold',
+          lane === 'book' ? 'text-[var(--sk-ticker)]' : 'text-[var(--sk-mute2)]',
+        )}
+      >
+        {first.sym}
+        {rest.length > 0 ? `+${rest.length}` : ''}
+      </span>
+    </Link>
   )
 }
 
@@ -96,6 +139,13 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
       }),
     [today],
   )
+
+  // ── Earnings: Research's estimate for every name the book and the watchlist hold ──
+  const names = useBookWatchNames()
+  const earnings = useNamesEarnings(names.all)
+  // The hook's map is rebuilt each render (see useNamesEarnings), so the
+  // lanes are rebuilt with it; they are a few dozen names.
+  const lanes = earningsLanes(names, earnings, days.map((d) => d.iso))
 
   // ── The book's own legs, grouped by name × expiry ──
   const accounts = useMemo(() => status.data?.portfolio?.accounts ?? [], [status.data?.portfolio?.accounts])
@@ -188,14 +238,14 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                   {
                     key: 'book' as const,
                     label: 'Book',
-                    owed: 'forward earnings dates are not on the data plan — unmeasured, not omitted',
-                    marks: new Set<string>(),
+                    owed: earningsOwed(lanes.book, names.book.length, lanes.pending > 0, names.bookFailed),
+                    marks: new Set(lanes.book.byDate.keys()),
                   },
                   {
                     key: 'watch' as const,
                     label: 'Watchlist',
-                    owed: 'forward earnings dates are not on the data plan — unmeasured, not omitted',
-                    marks: new Set<string>(),
+                    owed: earningsOwed(lanes.watch, names.watch.length, lanes.pending > 0, names.watchFailed),
+                    marks: new Set(lanes.watch.byDate.keys()),
                   },
                 ]
               ).map((lane) => (
@@ -215,12 +265,16 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
                             ? undefined
                             : lane.key === 'macro'
                               ? `${macroByDate.get(d.iso)?.join(' · ') ?? 'macro'} · ${fmtIsoDateToken(d.iso)}`
-                              : `OPEX · ${fmtIsoDateToken(d.iso)}`
+                              : lane.key === 'opex'
+                                ? `OPEX · ${fmtIsoDateToken(d.iso)}`
+                                : undefined
                         }
                       >
-                        {lane.marks.has(d.iso) ? (
+                        {!lane.marks.has(d.iso) ? null : lane.key === 'book' || lane.key === 'watch' ? (
+                          <EarningsChip lane={lane.key} marks={(lane.key === 'book' ? lanes.book : lanes.watch).byDate.get(d.iso) ?? []} />
+                        ) : (
                           <span className={cn('mx-auto block h-2 w-2', laneDot(lane.key))} />
-                        ) : null}
+                        )}
                       </td>
                     ))
                   )}
@@ -229,8 +283,21 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
             </tbody>
           </table>
           <p className="m-0 pt-1 text-dense-caption text-muted-foreground">
-            lime column = today · dim columns = weekend
+            lime column = today · dim columns = weekend · earnings are Research’s estimates (est.): last year’s same-quarter
+            results 8-K plus 52 weeks — the vendor’s confirmed calendar (Benzinga) is not on the plan, 403 not entitled
           </p>
+          {lanes.read > 0 ? (
+            <p className="m-0 pt-0.5 text-dense-caption text-muted-foreground" data-testid="earnings-coverage">
+              {lanes.estimated} of {lanes.read} names have an estimate
+              {lanes.pending > 0 ? ` · ${lanes.pending} still reading` : ''}
+              {lanes.absent.map((a) => (
+                <span key={a.code}>
+                  {' · '}
+                  <span className="font-mono text-secondary-foreground">{a.names.join(' ')}</span>: {a.label}
+                </span>
+              ))}
+            </p>
+          ) : null}
         </div>
       </section>
 

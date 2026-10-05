@@ -224,6 +224,26 @@ export const EventQueryResponseSchema = z
   })
   .passthrough()
 
+/** Simulator (research 0.170.0): the summary, trades and curve are the run. */
+export const SimResponseSchema = z
+  .object({
+    run_id: z.string().nullable(),
+    run: z.record(z.string(), z.unknown()),
+    summary: z.object({ n_trades: z.number(), win_rate: z.number() }).passthrough(),
+    trades: z.array(z.record(z.string(), z.unknown())),
+    equity: z.array(z.record(z.string(), z.unknown())),
+    advisory: z.string(),
+  })
+  .passthrough()
+
+export const SimDetailSchema = z
+  .object({
+    row: BacktestRunRowSchema,
+    trades: z.array(z.record(z.string(), z.unknown())),
+    equity: z.array(z.record(z.string(), z.unknown())),
+  })
+  .passthrough()
+
 export const IvPercentileRowSchema = z
   .object({
     symbol: z.string(),

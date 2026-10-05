@@ -53,9 +53,9 @@ const EVENT_KIND_OPTIONS: { value: Exclude<EventKind, 'sql'>; label: string; hin
 // bifrost-research/src/bifrost_research/engines/backtest/strategy_templates.py —
 // a template the backend knows but this list omits is unreachable from the UI.
 //
-// Stock-leg templates lead: every option template prices against
-// raw_market.option_daily, which currently holds a few weeks of history, so a
-// multi-year event study on one of those returns nothing at all.
+// Stock-leg templates lead: they reach back five years (raw_market.stock_daily);
+// option templates price against raw_market.option_daily, which starts
+// 2024-10, so events before that are skipped rather than priced.
 const TEMPLATE_OPTIONS: { value: string; label: string; note?: string }[] = [
   { value: 'long_stock_event', label: 'Long stock across event', note: 'stock only' },
   { value: 'short_stock_event', label: 'Short stock across event', note: 'stock only' },
@@ -64,6 +64,7 @@ const TEMPLATE_OPTIONS: { value: string; label: string; note?: string }[] = [
   { value: 'long_atm_call', label: 'Long ATM call' },
   { value: 'long_atm_put', label: 'Long ATM put' },
   { value: 'short_30d_iron_condor', label: 'Short 30d iron condor' },
+  { value: 'short_strangle_30d', label: 'Short 16Δ strangle (30d)' },
   { value: 'covered_call_1sd', label: 'Covered call (1σ, needs stock leg)' },
 ]
 
@@ -251,7 +252,7 @@ export function EventQueryBuilder({
               htmlFor="event-query-entry-offset"
               className="text-dense-meta font-semibold text-muted-foreground"
             >
-              Entry offset (days)
+              Entry offset (sessions)
             </Label>
             <Input
               id="event-query-entry-offset"
@@ -268,7 +269,7 @@ export function EventQueryBuilder({
               htmlFor="event-query-exit-offset"
               className="text-dense-meta font-semibold text-muted-foreground"
             >
-              Exit offset (days)
+              Exit offset (sessions)
             </Label>
             <Input
               id="event-query-exit-offset"
@@ -424,14 +425,14 @@ export function EventQueryBuilder({
               checked={walkForward}
               onCheckedChange={(v) => setWalkForward(v === true)}
             />
-            Include walk-forward
+            Include walk-forward (P&L proxy)
           </label>
           <label className="flex items-center gap-2 text-dense-label">
             <Checkbox
               checked={benchmark}
               onCheckedChange={(v) => setBenchmark(v === true)}
             />
-            Include SPY / zero-signal benchmark
+            Include proxy / zero-signal benchmark (not SPY)
           </label>
         </div>
 

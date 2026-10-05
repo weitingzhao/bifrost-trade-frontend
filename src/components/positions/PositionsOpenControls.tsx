@@ -9,7 +9,7 @@
  */
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { ToolbarClear } from '@bifrost/ui'
+import { FilterChip, FilterTray, ToolbarClear } from '@bifrost/ui'
 import { DenseTagButton } from '@/components/data-display'
 import type { AccountFilter } from '@/utils/positionsGrouping'
 import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
@@ -44,28 +44,13 @@ interface Props {
   onClearScope?: () => void
 }
 
-/** A toggle group is a fill, not a frame (Rev .154: the prototype's ink 4% group, transparent edge). */
-const SCOPE_GROUP =
-  'inline-flex overflow-hidden rounded-full border border-transparent bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)]'
-
-function AccountToggle({ label, on, onClick, title }: { label: string; on: boolean; onClick: () => void; title?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={on}
-      title={title ?? `${on ? 'In scope — click to drop' : 'Out of scope — click to add'} ${label}. Margin follows scope; the two are never mixed.`}
-      className={cn(
-        'h-5.5 cursor-pointer border-0 px-2.5 text-dense-meta font-semibold',
-        // Rev .86: an account in scope is the accent, mixed — not the surface token.
-        on
-          ? 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] text-primary'
-          : 'bg-transparent text-muted-foreground hover:text-foreground',
-      )}
-    >
-      {label}
-    </button>
-  )
+/**
+ * Scope and Type are "pick several" (§17.10, Rev .150): DS filter chips in a
+ * joined tray — on = ink 15% + ink, off = no fill + mute, `aria-pressed`. No
+ * accent: the accent is for the page's one current thing, never a filter.
+ */
+function scopeTitle(label: string, on: boolean): string {
+  return `${on ? 'In scope — click to drop' : 'Out of scope — click to add'} ${label}. Margin follows scope; the two are never mixed.`
 }
 
 export function PositionsOpenControls({
@@ -100,48 +85,50 @@ export function PositionsOpenControls({
     <div data-sr-toolbar="" className="leading-normal" role="toolbar" aria-label="Page scope">
       <span data-sr-tb="label">Scope</span>
       {showAccountToggles && (
-        <span
-          className={SCOPE_GROUP}
-          aria-label="Accounts in scope"
-        >
+        <FilterTray variant="joined" aria-label="Accounts in scope">
           {hostAccountId && (
-            <AccountToggle
-              label="Host"
-              on={accountFilter.host}
-              onClick={() => onAccountFilterChange({ ...accountFilter, host: !accountFilter.host })}
-            />
+            <FilterChip
+              pressed={accountFilter.host}
+              title={scopeTitle('Host', accountFilter.host)}
+              onPressedChange={(host) => onAccountFilterChange({ ...accountFilter, host })}
+            >
+              Host
+            </FilterChip>
           )}
           {secondaryAccountId && secondaryAccountId !== hostAccountId && (
-            <AccountToggle
-              label="Secondary"
-              on={accountFilter.secondary}
-              onClick={() => onAccountFilterChange({ ...accountFilter, secondary: !accountFilter.secondary })}
-            />
+            <FilterChip
+              pressed={accountFilter.secondary}
+              title={scopeTitle('Secondary', accountFilter.secondary)}
+              onPressedChange={(secondary) => onAccountFilterChange({ ...accountFilter, secondary })}
+            >
+              Secondary
+            </FilterChip>
           )}
-        </span>
+        </FilterTray>
       )}
 
       {types && onTypesChange ? (
-        <span className={SCOPE_GROUP} aria-label="Holding types in scope">
+        <FilterTray variant="joined" aria-label="Holding types in scope">
           {(
             [
               ['opt', 'Options', 'the option lines · the expiry filter applies here only'],
               ['sh', 'Shares', 'stocks, fixed income, cash-like'],
             ] as const
           ).map(([k, label, what]) => (
-            <AccountToggle
+            <FilterChip
               key={k}
-              label={label}
-              on={types[k]}
+              pressed={types[k]}
               title={`${types[k] ? 'Showing' : 'Hidden — click to show'} ${what}`}
-              onClick={() => {
-                const next = { ...types, [k]: !types[k] }
+              onPressedChange={(on) => {
+                const next = { ...types, [k]: on }
                 // At least one stays on: hiding both would read as an empty book.
                 if (next.opt || next.sh) onTypesChange(next)
               }}
-            />
+            >
+              {label}
+            </FilterChip>
           ))}
-        </span>
+        </FilterTray>
       ) : null}
 
       {/* Rev .120: no Symbol box — the page reads the top bar's symbol. */}

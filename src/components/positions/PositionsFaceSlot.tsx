@@ -10,7 +10,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
-import { CloseButton } from '@/components/data-display'
+import { CloseButton, SegmentControl } from '@/components/data-display'
 import { OptionContractDetailFromOpenPosition } from '@/components/optionDiscovery/OptionContractDetailFromOpenPosition'
 import { RiskProfileDetail } from './RiskProfileDetail'
 import { TradeAdminRow, type TradeAdminReading } from './TradeAdminRow'
@@ -117,24 +117,15 @@ export function PositionsFaceSlot({
       }}
     >
       <header className={positionsUi.panelHead}>
-        {FACES.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => onFace(f.id)}
-            aria-pressed={face === f.id}
-            title={f.title}
-            // Rev .154 `.ps-face`: the ink 4% group fill, radius 12; the selected
-            // face keeps its accent edge and ink (the prototype's faces list).
-            className={cn(
-              'h-6 cursor-pointer whitespace-nowrap rounded-full border bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] px-2.25',
-              'text-dense-meta leading-normal font-semibold',
-              face === f.id ? 'border-primary text-primary' : 'border-border text-secondary-foreground hover:text-foreground',
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+        {/* §17.3 / §17.10: the face is pick-one, so it is the DS SegmentControl —
+            the picked face is ink 15%, not an accent edge. */}
+        <SegmentControl
+          size="xs"
+          ariaLabel="Detail face"
+          value={face}
+          onChange={(v) => onFace(v as PositionsFace)}
+          options={FACES.map((f) => ({ value: f.id, label: f.label, title: f.title }))}
+        />
         <CloseButton className="ml-auto" onClick={onClose} title="Close · esc" />
       </header>
 

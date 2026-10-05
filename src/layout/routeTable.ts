@@ -170,7 +170,8 @@ export const ROUTES: readonly RouteEntry[] = [
       state: 'reviewing',
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
       // Rev .151–.154 pilot (2026-10-04, batch 2): the frost shell and the list grammar, waiting for a look.
-      rev: '2026-10-02.154',
+      // Rev .155 (2026-10-04, Package .56): the market strip retired, working orders in the Account control — the shell record lives here.
+      rev: '2026-10-04.155',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },

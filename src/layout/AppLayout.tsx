@@ -2,8 +2,7 @@ import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties } fr
 import { Outlet, useLocation } from 'react-router-dom'
 import { useAmbientPageContext } from '@/hooks/useAmbientPageContext'
 import { useCopilotDeepLink } from '@/hooks/useCopilotDeepLink'
-import { shouldShowGlobalMarketStrip } from '@/constants/globalMarketStrip'
-import { GlobalMarketStatusBar, SkipToContent } from '@/components/layout'
+import { SkipToContent } from '@/components/layout'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { ShellTip } from './ShellTip'
 import { cn } from '@/lib/utils'
@@ -24,7 +23,6 @@ import { useAlertBanners } from '@/hooks/useAlertBanners'
 import { AppSidebar } from './AppSidebar'
 import { AppHeader } from './AppHeader'
 import { initialSidebarOpen, SHELL_SIDEBAR_WIDTH } from './shellChrome'
-import { isSystemRoute } from './routeRegistry'
 import { MessageToastStack } from '@/components/MessageCenter/MessageToastStack'
 import { useSystemMessages } from '@/hooks/useSystemMessages'
 import { alertsSummary, useAlerts } from '@/hooks/useAlerts'
@@ -84,10 +82,6 @@ export function AppLayout() {
     )
     return () => setViewStateReportHandler(null)
   }, [])
-  // System pages that live under /research (Signal Health, Calibration, the
-  // agents…) are the machine room, not a market page: the design draws no
-  // market strip anywhere in System.
-  const showMarketStrip = shouldShowGlobalMarketStrip(pathname) && !isSystemRoute(pathname)
   // One SSE subscription, two readers: Alerts groups it by source, the toast
   // stack decides which of it is allowed to interrupt.
   const stream = useSystemMessages()
@@ -155,8 +149,12 @@ export function AppLayout() {
         <SidebarInset className="h-svh overflow-hidden bg-transparent">
           {/* The menu bar (Rev .60): the status pill retired into the top
               bar's right end, and the Alerts panel hangs off its clock. */}
+          {/* Rev .155: no market strip under it. Its four readings each had a
+              home already — working orders in the Account control, the
+              stream in the Control Center's Market data row, the symbols'
+              quotes on Market › Live; the subscribed set's Daily % / $ is
+              gone (Shell Spec §4). */}
           <AppHeader alertGroups={groups} alerts={summary} onDismissAllAlerts={stream.dismissAll} />
-          <GlobalMarketStatusBar enabled={showMarketStrip} />
           {/* `@container/page`: the width a page is given, queried by name. A
             float or panel body declares the same container, so a page that
             lays out with `@…/page:` reads its own width in both places — the

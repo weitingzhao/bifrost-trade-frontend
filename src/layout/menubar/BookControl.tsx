@@ -24,6 +24,13 @@
  * subtotal; one type lists flat. A stock's bucket is its position category,
  * because IB books bond and T-bill ETFs as STK. The Δ counts stocks and
  * options only. Legs and breaches are not split.
+ *
+ * Rev .155 (Shell Spec §4, the market strip retired): working orders at IB
+ * moved here. On the bar, a clock and N after the Δ — only while N > 0, in
+ * neutral ink, because a working order is not a warning. In the centre the
+ * wide Δ tile splits into Δ and Orders; Orders opens the list (the contract in
+ * sky, side · IB status · account, the limit), each row to Orders & Fills.
+ * Both follow the account scope (`utils/bookOrders`).
  */
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -36,6 +43,7 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import { cn } from '@/lib/utils'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { BOOK_BUCKETS, type BookBucket } from '@/utils/bookLive'
+import { workingOrderRows } from '@/utils/bookOrders'
 import { routeFor } from '../routeRegistry'
 import { MenubarTip } from './MenubarTip'
 import { useShellPopover } from '@/lib/shellPopover'
@@ -73,6 +81,18 @@ const STACK = (
     <path d="m3 13 9 5 9-5" />
   </svg>
 )
+const CLOCK = (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+)
+const CLOCK_TILE = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+)
 const TREND = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
     <path d="M4 18 9 12l4 3 7-8" />
@@ -80,7 +100,7 @@ const TREND = (
   </svg>
 )
 
-type ListKind = 'pos' | 'legs' | 'breach'
+type ListKind = 'pos' | 'legs' | 'breach' | 'ord'
 
 interface ListRow {
   key: string
@@ -88,6 +108,10 @@ interface ListRow {
   head?: boolean
   dot: string
   name: string
+  /** The name's ink when it is not the row's default (a working order's contract is sky). */
+  nameInk?: string
+  /** The row's own tip, when it says more than its line. */
+  title?: string
   sub: string
   right: string
   rightInk: string
@@ -103,7 +127,8 @@ export function BookControl() {
   // Rev .114: the Positions list by holding type — All is grouped, one type is flat.
   const [bucketPick, setBucket] = useState<'all' | BookBucket>('all')
   const scope = useAccountScope()
-  const status = useMonitorStatus().data
+  const statusQuery = useMonitorStatus()
+  const status = statusQuery.data
   const hostId = status?.config?.ib_client?.account?.event_host ?? ''
   const secondaryId = status?.config?.ib_client?.account?.event_secondary ?? ''
   // Every 3s while the centre is open, every 30s while shut — the bar only
@@ -126,6 +151,12 @@ export function BookControl() {
   const scopedId = scopeAccountId(scope, hostId, secondaryId)
   const delta = scopedId ? (book.modelDeltaByAccount[scopedId] ?? null) : book.modelDelta
   const legs = scoped.filter((r) => r.next.warn)
+  // The strip's `Open orders N`, from the same status read (Rev .155). The
+  // snapshot's age is measured against when that read landed, not a clock.
+  const orders = useMemo(
+    () => workingOrderRows(status?.portfolio?.open_orders, scope, hostId, secondaryId, statusQuery.dataUpdatedAt / 1000),
+    [status?.portfolio?.open_orders, scope, hostId, secondaryId, statusQuery.dataUpdatedAt],
+  )
   const breaches = limits.breaches
   const hardBreach = breaches.some((b) => b.kind === 'hard')
   const breachInk = breaches.length === 0 ? 'var(--sk-mute2)' : hardBreach ? 'var(--color-loss)' : 'var(--color-lamp-yellow)'
@@ -143,6 +174,7 @@ export function BookControl() {
       ? `Day ${fmtSignedUsd0(day)} over ${scoped.length - dayUnknown} of ${scoped.length} holdings${dayUnknown > 0 ? ` — ${dayUnknown} without a day figure` : ''}`
       : 'No holdings read yet',
     delta == null ? 'Δ: the model service has not answered' : `Δ ${signedInt(delta)} shares-equivalent (model service)`,
+    ...(orders.length ? [`◷ ${orders.length} working ${orders.length === 1 ? 'order' : 'orders'} at IB`] : []),
     `▲ ${legs.length} short ${legs.length === 1 ? 'leg' : 'legs'} inside the warning line`,
     `⯃ ${breaches.length} breached ${breaches.length === 1 ? 'limit' : 'limits'}${breaches.length ? ` — ${breaches.map((b) => b.name).join(' · ')}` : ''}`,
   ].join('\n')
@@ -216,9 +248,27 @@ export function BookControl() {
               rightInk: b.kind === 'hard' ? 'var(--color-loss)' : 'var(--color-lamp-yellow)',
               to: '/risk/limits',
             }))
-          : []
+          : list === 'ord'
+            ? orders.map((o) => ({
+                key: o.key,
+                dot: 'var(--sk-line2)',
+                name: o.name,
+                nameInk: 'var(--sk-contract)',
+                title: o.title,
+                sub: o.sub,
+                right: o.price,
+                rightInk: 'var(--sk-soft)',
+                to: '/trade/fills',
+              }))
+            : []
   const emptyText =
-    list === 'pos' ? 'Nothing held in this scope.' : list === 'legs' ? 'No short leg is inside the warning line.' : 'No line the bar watches is crossed.'
+    list === 'pos'
+      ? 'Nothing held in this scope.'
+      : list === 'legs'
+        ? 'No short leg is inside the warning line.'
+        : list === 'ord'
+          ? 'No working orders at IB.'
+          : 'No line the bar watches is crossed.'
 
   const go = (to: string) => {
     setOpen(false)
@@ -255,6 +305,12 @@ export function BookControl() {
                 Δ{delta == null ? '—' : signedInt(delta)}
               </span>
             </span>
+            {orders.length > 0 ? (
+              <span className={cn(css.bookLegs, 'inline-flex items-center gap-[3px] text-[var(--sk-mute2)]')}>
+                {CLOCK}
+                <span className={cn(css.mono, css.fs11)}>{orders.length}</span>
+              </span>
+            ) : null}
             {legs.length > 0 ? (
               <span className={cn(css.bookLegs, 'inline-flex items-center gap-[3px] text-[var(--color-lamp-yellow)]')}>
                 {TRIANGLE}
@@ -315,13 +371,23 @@ export function BookControl() {
               {dayText}
             </span>
           </button>
+          {/* Rev .155: the wide Δ tile split — Δ in the third column, Orders in the fourth. */}
           <div
-            className={cn(css.tile, 'col-span-2 justify-start gap-2.5 px-3')}
+            className={cn(css.tile, 'flex-col gap-[3px]')}
             title="Effective delta — the model service's, stocks and options only: fixed income and cash-like holdings carry no equity delta and are left out"
           >
             <span className={cn(css.round, 'font-mono font-bold', css.fs14)}>Δ</span>
-            <span className={cn(css.mono, 'font-semibold', css.fs16)}>{delta == null ? '—' : signedInt(delta)}</span>
+            <span className={cn(css.mono, 'font-semibold', css.fs12)}>{delta == null ? '—' : signedInt(delta)}</span>
           </div>
+          <button
+            type="button"
+            className={cn(css.tile, 'flex-col gap-[3px]')}
+            title={`Working orders at IB · ${orders.length}`}
+            {...tile('ord')}
+          >
+            <span className={cn(css.round, 'text-[var(--sk-mute2)]')}>{CLOCK_TILE}</span>
+            <span className={cn(css.mono, 'font-semibold', css.fs12)}>{orders.length}</span>
+          </button>
           <button type="button" className={cn(css.tile, 'flex-col gap-[3px]')} title="Short legs inside the warning line" {...tile('legs')}>
             <span
               className={css.round}
@@ -377,10 +443,20 @@ export function BookControl() {
                     </span>
                   </div>
                 ) : (
-                <div key={r.key} className={css.row} onClick={() => go(r.to)} role="link" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && go(r.to)}>
+                <div
+                  key={r.key}
+                  className={css.row}
+                  onClick={() => go(r.to)}
+                  role="link"
+                  tabIndex={0}
+                  title={r.title}
+                  onKeyDown={(e) => e.key === 'Enter' && go(r.to)}
+                >
                   <span className="size-[7px] rounded-full" style={{ background: r.dot }} />
                   <span className="flex min-w-0 flex-col gap-px">
-                    <span className={cn(css.mono, 'truncate text-[var(--sk-ink)]', css.fs12)}>{r.name}</span>
+                    <span className={cn(css.mono, 'truncate', css.fs12)} style={{ color: r.nameInk ?? 'var(--sk-ink)' }}>
+                      {r.name}
+                    </span>
                     <span className={cn('truncate text-[var(--sk-mute2)]', css.fs11)}>{r.sub}</span>
                   </span>
                   <span className={cn(css.mono, 'text-right', css.fs12)} style={{ color: r.rightInk }}>

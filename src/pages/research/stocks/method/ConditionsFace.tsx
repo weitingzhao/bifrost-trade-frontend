@@ -17,7 +17,7 @@ import { METHOD_INFO, METHOD_PATH, METHOD_TITLE, type MethodHead } from './metho
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Input, ViewState } from '@bifrost/ui'
+import { FilterChip, Input, ViewState } from '@bifrost/ui'
 import { DenseTag } from '@/components/data-display'
 import { fetchSepaScreenerWide, type SepaWideRow } from '@/api/research/sepaScreenerWide'
 import { createSavedScreen, fetchSavedScreens } from '@/api/research/savedScreens'
@@ -55,22 +55,6 @@ import {
 
 /** The universe is thousands of rows; the table draws this many under the sort. */
 const RENDER_CAP = 200
-
-// A chip is a toggle: off on the ink fill, on in the accent (Rev .84 — the
-// selection is the accent, never a framed box).
-const chipBase =
-  'cursor-pointer rounded-full border border-transparent px-1.75 py-0.75 font-mono text-dense-caption transition-colors'
-const chipOff =
-  'bg-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] text-muted-foreground hover:text-foreground'
-const chipOn = 'bg-[color-mix(in_srgb,var(--sk-accent)_14%,transparent)] font-semibold text-primary'
-
-function FilterChip({ label, on, onToggle }: { label: string; on: boolean; onToggle: () => void }) {
-  return (
-    <button type="button" aria-pressed={on} onClick={onToggle} className={cn(chipBase, on ? chipOn : chipOff)}>
-      {label}
-    </button>
-  )
-}
 
 function CondCheck({
   label,
@@ -391,10 +375,12 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
                   {PATHS.map((p) => (
                     <FilterChip
                       key={p}
-                      label={p}
-                      on={filter.paths.includes(p)}
-                      onToggle={() => toggleIn('paths', p)}
-                    />
+                      className="font-mono"
+                      pressed={filter.paths.includes(p)}
+                      onPressedChange={() => toggleIn('paths', p)}
+                    >
+                      {p}
+                    </FilterChip>
                   ))}
                 </div>
               </div>
@@ -404,10 +390,12 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
                   {GRADES.map((g) => (
                     <FilterChip
                       key={g}
-                      label={g}
-                      on={filter.grades.includes(g)}
-                      onToggle={() => toggleIn('grades', g)}
-                    />
+                      className="font-mono"
+                      pressed={filter.grades.includes(g)}
+                      onPressedChange={() => toggleIn('grades', g)}
+                    >
+                      {g}
+                    </FilterChip>
                   ))}
                 </div>
               </div>

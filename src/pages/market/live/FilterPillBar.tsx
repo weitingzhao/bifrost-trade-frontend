@@ -1,4 +1,5 @@
-import { DenseTagButton, denseEntityFilterChipClass, SegmentControl } from '@/components/data-display'
+import { FilterChip } from '@bifrost/ui'
+import { SegmentControl } from '@/components/data-display'
 import {
   STREAM_ACCOUNT_VIEW_OPTIONS,
   OPT_PREMIUM_UNIT_OPTIONS,
@@ -75,13 +76,12 @@ export function FilterPillBar({
           {streamCategoryOrder.map(cat => {
             const active = positionCategoryFilters.has(cat)
             return (
-              <DenseTagButton
+              // §17.10 (Owner #14, Rev .150): a category is a filter chip — on is
+              // ink 15%, never the category's entity colour. Drag to reorder.
+              <FilterChip
                 key={cat}
-                variant="category"
-                size="pill"
-                className={denseEntityFilterChipClass('category', active)}
-                onClick={() => onToggleCategory(cat)}
-                aria-pressed={active}
+                pressed={active}
+                onPressedChange={() => onToggleCategory(cat)}
                 draggable
                 onDragStart={e => {
                   e.dataTransfer.setData('application/x-market-streams-category', cat)
@@ -101,7 +101,7 @@ export function FilterPillBar({
                   ⋮⋮
                 </span>
                 {cat}
-              </DenseTagButton>
+              </FilterChip>
             )
           })}
         </div>

@@ -104,11 +104,14 @@ export function DsNav({
   onJump: (anchor: string) => void
 }) {
   return (
-    // Rev .142: the sticky strip has no plate — it parks over the scroll edge
-    // (the ground fading out under a blur), as the DS sticky FilterBar does.
+    // Rev .150 (§17.3 · B.4): the sticky strip is clear at rest and takes the
+    // ground band only while stuck over content — `data-sr-edge="fade"`, marked
+    // by the page lane's useStuckMarks. No hand-drawn band, no negative margin
+    // pulling the next block under it.
     <nav
       aria-label="Sections"
-      className="sticky -top-3 z-[2] mt-1 -mb-2 flex flex-wrap gap-1 bg-[linear-gradient(var(--scroll-edge-from)_60%,transparent)] pt-2.5 pb-3.5 backdrop-blur-[var(--scroll-edge-blur)] [mask-image:linear-gradient(black_70%,transparent)]"
+      data-sr-edge="fade"
+      className="sticky -top-3 z-[2] mt-1 flex flex-wrap gap-1 pt-2.5 pb-2"
     >
       {labels.map((label, i) => {
         const id = `ds-${i + 1}`

@@ -15,8 +15,7 @@ import {
   DenseTableHeader,
   DenseTableHeadRow,
   DenseTableRow,
-  DenseTag,
-  DenseTagButton,
+  DenseTag, 
   ExecSourceBadge,
   IconActionButton,
   PnlCell,
@@ -24,7 +23,7 @@ import {
   denseTableEntityLink,
   type SegmentOption,
 } from '@/components/data-display'
-import { ViewState, type ViewStateKind } from '@bifrost/ui'
+import { FilterChip, FilterGroup, FilterTray, ViewState, type ViewStateKind } from '@bifrost/ui'
 import { fmtPctSigned } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { fmtDollar, unrealizedPnlColorClass } from '@/utils/dailyChange'
@@ -173,28 +172,54 @@ const SEGMENTS: SegmentOption[] = [
   { value: 'all', label: 'All' },
 ]
 
+const DEMO_LAYERS = {
+  book: [
+    { id: 'expiries', label: 'Expiries', count: 6 },
+    { id: 'earnings', label: 'Earnings', count: 4 },
+    { id: 'dividends', label: 'Dividends', count: 2 },
+  ],
+  loop: [
+    { id: 'hypotheses', label: 'Hypotheses', count: 3 },
+    { id: 'drafts', label: 'Draft expiry', count: 1 },
+  ],
+} as const
+
 export function FiltersSection() {
   const [seg, setSeg] = useState('host')
+  const [types, setTypes] = useState({ opt: true, sh: false })
+  const [layers, setLayers] = useState<Set<string>>(() => new Set(['expiries', 'earnings', 'hypotheses']))
   return (
     <DsSection
       n={8}
       title="Filters"
-      lede="Up to five fixed options: SegmentControl. A longer list or a form: Select. Chip filters over tags: DenseTagButton. Never a native select or per-page pill CSS."
+      lede="Ask how many the reader picks, then pick the control (§17.10, Rev .150). Pick one of six or fewer: SegmentControl, the count in the segment's name. Pick several: FilterChip. Several in business groups: FilterGroup. Include / exclude: IncludeExcludeToggle. A filter's pick is ink 15% — never the accent."
       bodyClassName="flex flex-col gap-3"
     >
       <div className="flex flex-wrap items-center gap-4.5">
         <SegmentControl size="xs" options={SEGMENTS} value={seg} onChange={setSeg} ariaLabel="Account" />
+        <FilterTray variant="joined" aria-label="Holding types demo">
+          <FilterChip
+            pressed={types.opt}
+            onPressedChange={(opt) => (opt || types.sh) && setTypes({ ...types, opt })}
+          >
+            Options
+          </FilterChip>
+          <FilterChip pressed={types.sh} onPressedChange={(sh) => (sh || types.opt) && setTypes({ ...types, sh })}>
+            Shares
+          </FilterChip>
+        </FilterTray>
         <span className="flex gap-1.5">
-          <DenseTagButton variant="category" size="pill" onClick={noop}>
-            Tech
-          </DenseTagButton>
-          <DenseTagButton variant="category" size="pill" onClick={noop}>
-            Watching
-          </DenseTagButton>
-          <DenseTagButton variant="neutral" size="pill" onClick={noop}>
-            Clear
-          </DenseTagButton>
+          <FilterChip pressed={layers.has('expiries')} count={6} onPressedChange={() => setLayers((v) => toggled(v, 'expiries'))}>
+            Expiries
+          </FilterChip>
+          <FilterChip pressed={layers.has('drafts')} count={1} onPressedChange={() => setLayers((v) => toggled(v, 'drafts'))}>
+            Draft expiry
+          </FilterChip>
         </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <FilterGroup label="Book & market" items={DEMO_LAYERS.book} value={layers} onChange={setLayers} />
+        <FilterGroup label="Research loop" items={DEMO_LAYERS.loop} value={layers} onChange={setLayers} />
       </div>
       <div data-sr-toolbar="" className="flex items-center gap-3">
         <span data-sr-tb="label">Filters</span>
@@ -204,20 +229,29 @@ export function FiltersSection() {
       <DsRules
         use={[
           <>
-            <Code>SegmentControl</Code> for five or fewer · shadcn <Code>{'<Select>'}</Code> for a list or a form ·{' '}
-            <Code>DenseTagButton</Code> for chips over tags · a toolbar is <Code>data-sr-toolbar</Code> with{' '}
-            <Code>ToolbarClear</Code> when anything is set
+            <Code>SegmentControl</Code> for one of six or fewer (<Code>Active 3</Code>) · <Code>FilterChip</Code> for
+            several, in a <Code>FilterTray variant=&quot;joined&quot;</Code> for a short on / off set ·{' '}
+            <Code>FilterGroup</Code> when several fall into business groups · shadcn <Code>{'<Select>'}</Code> past
+            six or in a form · a toolbar is <Code>data-sr-toolbar</Code> with <Code>ToolbarClear</Code> when anything
+            is set
           </>,
         ]}
         never={[
           <>
-            A native <Code>{'<select>'}</Code> · hand-rolled pill CSS · <Code>bg-primary</Code> toggle buttons · a
-            filter bar with its own ground
+            The accent or an entity colour as a filter&apos;s pick · a native <Code>{'<select>'}</Code> ·
+            hand-rolled pill CSS · <Code>bg-primary</Code> toggle buttons · a filter bar with its own ground
           </>,
         ]}
       />
     </DsSection>
   )
+}
+
+function toggled(v: ReadonlySet<string>, id: string): Set<string> {
+  const next = new Set(v)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  return next
 }
 
 const STATES: { kind: ViewStateKind; title?: string; detail: string; action?: string }[] = [

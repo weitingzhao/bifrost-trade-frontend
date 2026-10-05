@@ -10,12 +10,21 @@
  * because the shell owns no account scope yet (each page owns its own) and a
  * control that shows a scope it cannot set is the thing the Lens existed to
  * prevent — that question is with Design.
+ *
+ * The objectives are a Research read. Refused for want of a Research user (a
+ * 401 with no token), the chip does not say "No objective" — that is a claim
+ * about the book made from a request that never landed. It says what
+ * `ResearchAuthGap` says: the user is not set (or `—` when the token was
+ * refused or the read failed), and the popover offers Set user.
  */
 import { useMemo, useRef, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { HealthLamp } from '@bifrost/ui'
 import { DenseTag } from '@/components/data-display'
+import { RESEARCH_AUTH_EXPIRED_LINE, RESEARCH_AUTH_NOT_SET_LINE, ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { classifyResearchAuthError } from '@/lib/auth/researchAuthGap'
+import { useResearchAuth } from '@/lib/auth/researchUser'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { fetchAutopilotStanding, fetchObjectives, type ResearchObjective } from '@/api/research/harness'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
@@ -88,6 +97,11 @@ export function ObjectiveControl() {
   const mode = current && isObjectiveMode(current.mode) ? current.mode : null
   const subject = current?.subject ?? null
   const loopSteps = useLoopSteps(current, mode)
+  const { token } = useResearchAuth()
+  // Nothing in force only when the read answered; a refused or failed read is unknown.
+  const unread = !current && objQuery.isError
+  const gap = unread ? classifyResearchAuthError(objQuery.error, token) : null
+  const chipLabel = current ? current.title : !unread ? 'No objective' : gap === 'not_set' ? 'Research user not set' : '—'
 
   const pick = (o: ResearchObjective | null) => {
     select(o ? o.id : ALL_OBJECTIVES)
@@ -107,7 +121,13 @@ export function ObjectiveControl() {
     const wait = waitingStep(steps)
     const chipTitle = current
       ? `${current.title}${mode ? ` · ${mode}` : ''}${wait ? ` · ${wait.stage} ${wait.v}` : ''}`
-      : 'No objective — pick one to scope lineage'
+      : !unread
+        ? 'No objective — pick one to scope lineage'
+        : gap === 'not_set'
+          ? `${RESEARCH_AUTH_NOT_SET_LINE} — objectives are read as a Research user`
+          : gap === 'expired'
+            ? RESEARCH_AUTH_EXPIRED_LINE
+            : 'Objectives did not load — the objective in force is unknown'
     return (
       <Popover open={open} onOpenChange={setOpen}>
         {/* Rev .60: the sidebar's own Objectives glyph + the short name + the
@@ -122,7 +142,7 @@ export function ObjectiveControl() {
               <span
                 className={cn(mb.objName, mb.fs12, 'max-w-[11rem] truncate font-semibold', current ? 'text-foreground' : 'text-muted-foreground')}
               >
-                {current ? current.title : 'No objective'}
+                {chipLabel}
               </span>
               {wait ? <span className={cn(mb.mono, mb.fs11, 'text-[var(--color-lamp-yellow)]')}>{wait.v}</span> : null}
             </button>
@@ -169,6 +189,8 @@ export function ObjectiveControl() {
                 ))}
               </div>
             </>
+          ) : unread ? (
+            <ResearchAuthGap error={objQuery.error} layout="banner" onRetry={() => void objQuery.refetch()} className="m-2" />
           ) : (
             <p className="m-0 border-b border-border px-3 py-2.5 text-dense-meta leading-normal text-muted-foreground">
               No objective is in force. Pick one to see its progress and scope the pages that read it.

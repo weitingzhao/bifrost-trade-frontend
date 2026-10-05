@@ -10,8 +10,8 @@
  * queue as every other loop write — approving records the call and writes no
  * hypothesis, and the panel says so.
  */
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { fetchObjectiveRuns } from '@/api/research/harness'
 import { fetchCandidates } from '@/api/research/candidates'
 import { QUERY_KEYS } from '@/constants/queryKeys'
@@ -20,7 +20,7 @@ import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import { useQuery } from '@tanstack/react-query'
 import { ObjectiveScopeBanner, PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { DenseTag, type DenseTagVariant } from '@/components/data-display'
-import { ViewState } from '@bifrost/ui'
+import { SegmentControl, ViewState } from '@bifrost/ui'
 import { Card } from '@/components/ui/card'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
@@ -214,7 +214,20 @@ function SuggestionQueue() {
 }
 
 export default function HypothesisBoardPage() {
-  const [lane, setLane] = useState<BoardLane>('all')
+  // §17.10 rule 5: the lane is in the URL (`?lane=`), so a link reopens it.
+  const [params, setParams] = useSearchParams()
+  const laneParam = params.get('lane')
+  const lane: BoardLane = BOARD_LANES.includes(laneParam as BoardLane) ? (laneParam as BoardLane) : 'all'
+  const setLane = (next: BoardLane) =>
+    setParams(
+      (p) => {
+        const q = new URLSearchParams(p)
+        if (next === 'all') q.delete('lane')
+        else q.set('lane', next)
+        return q
+      },
+      { replace: true },
+    )
   const query = useHypothesisList({ include_retired: true, limit: 100 })
   const rows = useMemo(() => query.data?.rows ?? [], [query.data])
   const nowIso = new Date().toISOString()
@@ -335,28 +348,21 @@ export default function HypothesisBoardPage() {
         </ObjectiveScopeBanner>
       ) : null}
 
-      {/* Rev .88: the lanes are the toolbar's pills (§17.3) — the picked one
-          on an accent 20% ground with ink text, as the sidebar marks its row. */}
-      <div data-sr-toolbar="" role="tablist" aria-label="Lane">
+      {/* Rev .150 (§17.10): the lane is pick-one, so it is the DS SegmentControl —
+          the count is part of the segment's name (`Active 3`), the pick is ink
+          15%, never the accent. The words are the server's (Rev .88). */}
+      <div data-sr-toolbar="">
         <span data-sr-tb="label">Lane</span>
-        {BOARD_LANES.map((k) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            aria-selected={lane === k}
-            onClick={() => setLane(k)}
-            className={cn(
-              'inline-flex h-6 cursor-pointer items-center gap-1.5 rounded-full border-0 px-2.5 text-dense-meta',
-              lane === k
-                ? 'bg-[color-mix(in_srgb,var(--sk-accent)_20%,transparent)] text-foreground'
-                : 'bg-transparent text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {k === 'all' ? 'All' : k}
-            <span className="font-mono text-dense-caption opacity-80">{authGap ? '—' : counts[k]}</span>
-          </button>
-        ))}
+        <SegmentControl
+          size="xs"
+          ariaLabel="Lane"
+          value={lane}
+          onChange={(v) => setLane(v as BoardLane)}
+          options={BOARD_LANES.map((k) => ({
+            value: k,
+            label: `${k === 'all' ? 'All' : k.charAt(0).toUpperCase() + k.slice(1)} ${authGap ? '—' : counts[k]}`,
+          }))}
+        />
       </div>
 
       <SuggestionQueue />

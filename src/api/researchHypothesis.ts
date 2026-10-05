@@ -65,6 +65,43 @@ export interface Hypothesis {
   retired_at: string | null
   /** Present only when an outcome rule settled the status (B3). */
   resolution_json?: HypothesisResolution | null
+  /**
+   * The day a candidate-born hypothesis settles by its objective's outcome rule
+   * (research 0.168.0, Owner plan #16): the outcome engine's exit date once it
+   * has written one, else the projected exit session. Null with the reason in
+   * `settles_basis` when it cannot settle by rule; absent before 0.168.0.
+   */
+  settles_on?: string | null
+  settles_basis?: HypothesisSettlesBasis | null
+}
+
+/** Why `settles_on` is what it is (research 0.168.0). */
+export interface HypothesisSettlesBasis {
+  /** `candidate_outcome` once the engine wrote the exit; else projected from the candidate's trade date. */
+  from?: 'candidate_trade_date' | 'candidate_outcome' | null
+  settled?: boolean
+  /** Null when there is a date; otherwise why there is none. */
+  reason?:
+    | 'resolved'
+    | 'retired'
+    | 'no_candidate_lineage'
+    | 'candidate_not_found'
+    | 'candidate_trade_date_missing'
+    | 'resolution_disabled'
+    | 'horizon_not_settled_by_engine'
+    | 'outside_settlement_window'
+    | 'lookup_failed'
+    | null
+  candidate_id?: string | null
+  objective_id?: string | null
+  horizon_sessions?: number | null
+  source?: 'policy' | 'default' | null
+  trade_date?: string | null
+  /** Past its exit session with no outcome written yet. */
+  overdue?: boolean
+  status?: string | null
+  exit_date?: string | null
+  resolved_by?: string | null
 }
 
 export interface HypothesisListResponse {

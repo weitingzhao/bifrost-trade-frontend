@@ -190,3 +190,24 @@ export function objectiveScopeReading(
   }
   return { attributable, byHand, danglingRun, otherObjective, total: rows.length }
 }
+
+/**
+ * Where a `?h=` card stands: drawn (`shown`), hidden by the lane or the
+ * objective scope, not among the rows read at all, or not yet knowable.
+ */
+export function boardFocus(
+  id: string | null,
+  board: {
+    loaded: boolean
+    rows: readonly { id: string }[]
+    inScope: readonly { id: string }[]
+    shown: readonly { id: string }[]
+  },
+): { state: 'none' | 'loading' | 'shown' | 'lane' | 'scoped' | 'missing' } {
+  if (!id) return { state: 'none' }
+  if (!board.loaded) return { state: 'loading' }
+  if (board.shown.some((h) => h.id === id)) return { state: 'shown' }
+  if (board.inScope.some((h) => h.id === id)) return { state: 'lane' }
+  if (board.rows.some((h) => h.id === id)) return { state: 'scoped' }
+  return { state: 'missing' }
+}

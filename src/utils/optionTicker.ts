@@ -85,6 +85,19 @@ export function extractUnderlyingRootSymbol(raw: string | null | undefined): str
 }
 
 /**
+ * The underlying of a fill or a position row, read off its contract key first.
+ *
+ * TWS and Flex write `symbol` differently for the same option (`NVDA` against
+ * the OCC string `NVDA  261120C00190000`); the contract key's first segment is
+ * the same shape whichever wrote it, so it is the join (ledger trap, 2026-09).
+ * Falls back to `symbol` for a row without a key.
+ */
+export function underlyingOfContract(row: { contract_key?: string | null; symbol?: string | null }): string {
+  const head = (row.contract_key ?? '').split('|')[0] ?? ''
+  return extractUnderlyingRootSymbol(head) || extractUnderlyingRootSymbol(row.symbol)
+}
+
+/**
  * Calendar days from today to an expiry, or null when either is unreadable.
  *
  * Shared because three pages ask it of the same contract — Expiration for the

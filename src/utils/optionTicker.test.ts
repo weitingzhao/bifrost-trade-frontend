@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildOptionTicker, parseOptionTicker, positionGreek } from './optionTicker'
+import { buildOptionTicker, parseOptionTicker, positionGreek, underlyingOfContract } from './optionTicker'
 
 describe('buildOptionTicker', () => {
   it('reproduces a ticker the warehouse actually returned', () => {
@@ -76,5 +76,17 @@ describe('parseOptionTicker', () => {
   it('answers null for anything that is not a vendor option ticker', () => {
     expect(parseOptionTicker('PLTR')).toBeNull()
     expect(parseOptionTicker('O:PLTR261016X00150000')).toBeNull()
+  })
+})
+
+describe('underlyingOfContract', () => {
+  it('reads the contract key first, whichever way the source wrote the symbol', () => {
+    expect(underlyingOfContract({ contract_key: 'ZZZ  261016C00090000|OPT|20261016|90.0|C', symbol: 'ZZZ' })).toBe('ZZZ')
+    expect(underlyingOfContract({ contract_key: 'ZZZ|BAG||||', symbol: 'ZZZ' })).toBe('ZZZ')
+    expect(underlyingOfContract({ contract_key: 'ZZZ|STK|||', symbol: null })).toBe('ZZZ')
+  })
+  it('falls back to the symbol when there is no key', () => {
+    expect(underlyingOfContract({ contract_key: null, symbol: 'YYY  261016P00010000' })).toBe('YYY')
+    expect(underlyingOfContract({})).toBe('')
   })
 })

@@ -9,7 +9,7 @@
  * Nothing here sends an order. Orders are worked in TWS and this page reads
  * them (D10).
  */
-import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
+import { underlyingOfContract } from '@/utils/optionTicker'
 import { collectPeerTradePicks } from '@/utils/ledger/ledgerOptHelpers'
 import type { Execution } from '@/types/positions'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
@@ -227,7 +227,7 @@ function execKey(e: Execution): string {
  * "somebody did, and it never got linked".
  */
 export function orphanReason(e: Execution, planSymbols: ReadonlySet<string>): string {
-  const symbol = extractUnderlyingRootSymbol(e.symbol)
+  const symbol = underlyingOfContract(e)
   if (planSymbols.has(symbol)) return `no trade · a plan exists on ${symbol}`
   return `no trade · no plan on ${symbol || 'this symbol'}`
 }
@@ -245,7 +245,8 @@ export function buildFillRows(
         execId: e.account_executions_id ?? null,
         time: e.time ?? null,
         tradeDate: e.trade_date ?? null,
-        symbol: extractUnderlyingRootSymbol(e.symbol),
+        // The contract key's root, so a TWS fill and a Flex fill of one option read one name.
+        symbol: underlyingOfContract(e),
         contractKey: e.contract_key ?? '',
         secType: (e.sec_type ?? '').toUpperCase(),
         accountId: (e.account_id ?? '').trim(),

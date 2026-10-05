@@ -345,3 +345,12 @@ export function feedReach(input: {
     shallow: shallow.sort(),
   }
 }
+
+/**
+ * The page narrowed to the top bar's symbol (`?symbol=`, Owner plan #21) —
+ * every list about names, not the feed's reach, which is a fact about the
+ * feed. No symbol, no narrowing.
+ */
+export function narrowToSymbol<T extends { symbol: string }>(list: readonly T[], symbol: string): T[] {
+  return symbol ? list.filter((x) => x.symbol === symbol) : [...list]
+}

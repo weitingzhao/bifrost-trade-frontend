@@ -10,8 +10,9 @@
  * queue as every other loop write — approving records the call and writes no
  * hypothesis, and the panel says so.
  */
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { flashFound, scrollWhenPresent } from '@/lib/scrollWhenPresent'
 import { fetchObjectiveRuns } from '@/api/research/harness'
 import { fetchCandidates } from '@/api/research/candidates'
 import { QUERY_KEYS } from '@/constants/queryKeys'
@@ -38,6 +39,7 @@ import { OPERATOR_CHIP, operatorOf } from '@/lib/research/operatorOf'
 import {
   ageOf,
   BOARD_LANES,
+  boardFocus,
   laneCounts,
   laneRows,
   hypothesisObjectiveId,
@@ -54,7 +56,16 @@ const STATUS_VARIANT: Record<HypothesisStatus, DenseTagVariant> = {
   archived: 'neutral',
 }
 
-function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: string }) {
+function BoardCard({
+  hypothesis,
+  nowIso,
+  selected = false,
+}: {
+  hypothesis: Hypothesis
+  nowIso: string
+  /** Opened by `?h=` — ringed, and the thesis read whole rather than cut to one line. */
+  selected?: boolean
+}) {
   const { title } = splitTitleRef(hypothesis.title)
   const dest = originDest(hypothesis.origin_page)
   const settled = resolutionLine(hypothesis.resolution_json)
@@ -67,7 +78,13 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
   return (
     <Card
       variant="elevated"
-      className={cn('space-y-1.5 p-3', hypothesis.status === 'archived' && 'opacity-60')}
+      data-hypothesis-id={hypothesis.id}
+      aria-current={selected ? 'true' : undefined}
+      className={cn(
+        'space-y-1.5 p-3',
+        hypothesis.status === 'archived' && !selected && 'opacity-60',
+        selected && 'ring-2 ring-[color-mix(in_srgb,var(--sk-accent)_60%,transparent)]',
+      )}
     >
       <div className="flex items-baseline gap-2">
         <DenseTag variant={STATUS_VARIANT[hypothesis.status]}>
@@ -85,11 +102,11 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
           the whole thesis cannot be the card's evidence line. The full text
           is on the element, so nothing is lost by the cut. */}
       <p
-        className="line-clamp-2 text-dense-meta leading-normal text-muted-foreground"
-        title={hypothesis.thesis ?? undefined}
+        className={cn('text-dense-meta leading-normal text-muted-foreground', !selected && 'line-clamp-2')}
+        title={selected ? undefined : (hypothesis.thesis ?? undefined)}
       >
         {hypothesis.origin_page ? `Born on ${hypothesis.origin_page}. ` : ''}
-        {cardEvidence(hypothesis.thesis)}
+        {selected ? hypothesis.thesis : cardEvidence(hypothesis.thesis)}
       </p>
       {/* The design's own order: what it is worth, what is riding on it, who
           wrote it, where it lives. The record leads because that is the
@@ -214,6 +231,13 @@ function SuggestionQueue() {
 }
 
 export default function HypothesisBoardPage() {
+  /**
+   * `?h=<hypothesis id>` — the Calendar's Hypothesis horizons layer (and any
+   * other link) opens the board on that card: on the All lane, ringed, its
+   * thesis whole, scrolled to. A card the board cannot show says why.
+   */
+  const [searchParams] = useSearchParams()
+  const focusId = searchParams.get('h')?.trim() || null
   const [lane, setLane] = useState<BoardLane>('all')
   const query = useHypothesisList({ include_retired: true, limit: 100 })
   const rows = useMemo(() => query.data?.rows ?? [], [query.data])
@@ -287,6 +311,11 @@ export default function HypothesisBoardPage() {
   // scope has already taken away.
   const counts = laneCounts(inScope)
   const shown = laneRows(inScope, lane)
+  const focus = boardFocus(focusId, { loaded: query.data != null, rows, inScope, shown })
+  useEffect(() => {
+    if (focus.state !== 'shown' || !focusId) return
+    return scrollWhenPresent(`[data-hypothesis-id="${CSS.escape(focusId)}"]`, 8_000, flashFound)
+  }, [focus.state, focusId])
   const scopeName =
     objectivesQ.data?.items?.find((o) => o.id === objective)?.title ?? objective
   const navigate = useNavigate()
@@ -359,6 +388,29 @@ export default function HypothesisBoardPage() {
         ))}
       </div>
 
+      {focus.state === 'missing' || focus.state === 'scoped' || focus.state === 'lane' ? (
+        <ViewState
+          kind="stale"
+          layout="strip"
+          title={`Hypothesis ${focusId} is not on the board as it stands`}
+          detail={
+            focus.state === 'missing'
+              ? `It is not among the ${rows.length} hypotheses the board read — retired past the read’s limit, or an id that no longer exists.`
+              : focus.state === 'scoped'
+                ? 'The objective scope hides it — it came from another objective or carries no provenance to follow.'
+                : 'The lane picked hides it.'
+          }
+          actionLabel={focus.state === 'scoped' ? 'Clear the scope' : focus.state === 'lane' ? 'Show all lanes' : undefined}
+          onAction={
+            focus.state === 'scoped'
+              ? () => setObjective(ALL_OBJECTIVES)
+              : focus.state === 'lane'
+                ? () => setLane('all')
+                : undefined
+          }
+        />
+      ) : null}
+
       <SuggestionQueue />
 
       {pageState === 'stale' ? (
@@ -397,7 +449,7 @@ export default function HypothesisBoardPage() {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,21.25rem),1fr))] items-start gap-2.5">
           {shown.map((h) => (
-            <BoardCard key={h.id} hypothesis={h} nowIso={nowIso} />
+            <BoardCard key={h.id} hypothesis={h} nowIso={nowIso} selected={h.id === focusId} />
           ))}
         </div>
       )}

@@ -202,6 +202,8 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/portfolio/corporate-actions',
     label: 'Corporate Actions',
     crumbs: PORTFOLIO,
+    // Reads ?symbol= and narrows its name lists (Owner plan #21, 2026-10-04).
+    symbolScope: true,
     design: {
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
@@ -364,6 +366,8 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/trade/fills',
     label: 'Orders & Fills',
     crumbs: TRADE_DESK,
+    // Reads ?symbol= and narrows the executions (Owner plan #21, 2026-10-04).
+    symbolScope: true,
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',

@@ -13,7 +13,7 @@
  */
 import { useMemo, useState } from 'react'
 import { usePageViewState } from '@/lib/pageView'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { ViewState } from '@bifrost/ui'
@@ -26,6 +26,7 @@ import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { fmtIsoDateToken } from '@/lib/format'
 import { fmtUsd } from '@/utils/positions'
 import { shortOptContractKey } from '@/utils/ledger/optionsModeBridge'
+import { underlyingOfContract } from '@/utils/optionTicker'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { useExecutionsAll } from '@/hooks/useExecutions'
 import { useOpenOrders } from '@/hooks/useOpenOrders'
@@ -44,6 +45,8 @@ import {
   summarize,
 } from './fillsModel'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { clearCarriedSymbol, normalizeSymbol } from '@/lib/symbolContext'
+import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 
 const PAGE_LEAD =
   'The work side of the ledger: what IB is working right now, what came back, and which fills still need a home. Nothing here sends an order — TWS does that, and the reserved Send action lives on Plans, not wired.'
@@ -105,8 +108,38 @@ export default function FillsPage() {
     () => buildFillRows(execQuery.data?.items ?? [], plans),
     [execQuery.data?.items, plans],
   )
+  /**
+   * The top bar's symbol (`?symbol=`, Owner plan #21 — the Calendar's Fills
+   * layer links here with it): the executions and the open orders narrow to
+   * the name, read off the contract key so TWS and Flex fills of one option
+   * agree. The imports band stays book-wide — it is about the feeds.
+   */
+  const [searchParams, setSearchParams] = useSearchParams()
+  const scopeSymbol = normalizeSymbol(searchParams.get('symbol'))
+  const clearScopeSymbol = () => {
+    clearCarriedSymbol()
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('symbol')
+        return next
+      },
+      { replace: true },
+    )
+  }
   const days = WINDOWS.find((w) => w.value === windowKey)?.days ?? null
-  const windowRows = useMemo(() => scopeFills(all, days, today), [all, days, today])
+  const bookWindowRows = useMemo(() => scopeFills(all, days, today), [all, days, today])
+  const windowRows = useMemo(
+    () => (scopeSymbol ? bookWindowRows.filter((r) => r.symbol === scopeSymbol) : bookWindowRows),
+    [bookWindowRows, scopeSymbol],
+  )
+  /** The named symbol's newest fill in the whole book, for an empty window to point at. */
+  const newestOfSymbol = useMemo(() => {
+    if (!scopeSymbol) return null
+    let newest: string | null = null
+    for (const r of all) if (r.symbol === scopeSymbol && r.tradeDate && (newest == null || r.tradeDate > newest)) newest = r.tradeDate
+    return newest
+  }, [all, scopeSymbol])
   const rows = useMemo(
     () => (show === 'all' ? windowRows : windowRows.filter((r) => (show === 'needs' ? r.state === 'orphan' : r.state === 'linked'))),
     [windowRows, show],
@@ -114,7 +147,7 @@ export default function FillsPage() {
   const summary = useMemo(() => summarize(windowRows, all), [windowRows, all])
   const imports = useMemo(() => {
     const todayBySource = new Map<string, number>()
-    for (const r of windowRows) {
+    for (const r of bookWindowRows) {
       if (r.tradeDate === today) todayBySource.set(r.source, (todayBySource.get(r.source) ?? 0) + 1)
     }
     const flexRun =
@@ -125,9 +158,12 @@ export default function FillsPage() {
       todayBySource,
       todayUtc: new Date().toISOString().slice(0, 10),
     })
-  }, [windowRows, today, flexQuery.data?.dimensions, freshnessQuery.data?.items])
-  const planRows = useMemo(() => buildPlanRows(plans), [plans])
-  const orders = ordersQuery.data ?? []
+  }, [bookWindowRows, today, flexQuery.data?.dimensions, freshnessQuery.data?.items])
+  const planRows = useMemo(
+    () => buildPlanRows(plans).filter((p) => !scopeSymbol || p.symbol.trim().toUpperCase() === scopeSymbol),
+    [plans, scopeSymbol],
+  )
+  const orders = (ordersQuery.data ?? []).filter((o) => !scopeSymbol || underlyingOfContract(o) === scopeSymbol)
 
   const linkedIds = rows.flatMap((r) => (r.state === 'linked' && r.tradeId != null ? [r.tradeId] : []))
   const selectedRow = useMemo(() => windowRows.find((r) => r.key === selectedKey) ?? null, [windowRows, selectedKey])
@@ -211,6 +247,8 @@ export default function FillsPage() {
             onChange={setWindowKey}
             options={WINDOWS.map((w) => ({ value: w.value, label: w.label }))}
           />
+          <span data-sr-tb="sep" />
+          <SymbolScopeChip symbol={scopeSymbol} onClear={clearScopeSymbol} />
           <span data-sr-tb="meta">
             {summary.newestTradeDate ? `newest fill ${fmtIsoDateToken(summary.newestTradeDate)} · ` : ''}
             <Link to="/portfolio/ledger" className={positionsUi.link}>
@@ -346,7 +384,20 @@ export default function FillsPage() {
               </header>
               {rows.length === 0 ? (
                 <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground text-pretty">
-                  {windowRows.length === 0 ? (
+                  {windowRows.length === 0 && scopeSymbol ? (
+                    <span data-testid="fills-scope-empty">
+                      No {scopeSymbol} fill in this window
+                      {newestOfSymbol ? ` — its newest is ${fmtIsoDateToken(newestOfSymbol)}.` : ' — the book has none.'}{' '}
+                      {newestOfSymbol && windowKey !== 'all' ? (
+                        <button type="button" className={positionsUi.link} onClick={() => setWindowKey('all')}>
+                          Window: All
+                        </button>
+                      ) : null}{' '}
+                      <button type="button" className={positionsUi.link} onClick={clearScopeSymbol}>
+                        Clear {scopeSymbol}
+                      </button>
+                    </span>
+                  ) : windowRows.length === 0 ? (
                     <>
                       Nothing came back in this window
                       {summary.newestTradeDate
@@ -579,7 +630,9 @@ export default function FillsPage() {
                 </Link>
               </header>
               {planRows.length === 0 ? (
-                <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No plan has been written.</p>
+                <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
+                  {scopeSymbol && plans.length > 0 ? `No plan has been written on ${scopeSymbol}.` : 'No plan has been written.'}
+                </p>
               ) : (
                 // Stacked rows, not the record's table: this rail is 340–440px
                 // and the design stacks a plan's facts for the same reason.

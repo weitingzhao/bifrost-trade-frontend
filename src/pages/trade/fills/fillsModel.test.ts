@@ -60,6 +60,17 @@ describe('buildFillRows', () => {
   })
 })
 
+describe('the name a fill is filed under', () => {
+  it('is the contract key’s root, so a TWS fill and a Flex fill of one option read one name', () => {
+    const rows = buildFillRows([
+      fill({ exec_id: 'flex', symbol: 'ZZZ  261016C00090000', source: 'flex_trades' }),
+      fill({ exec_id: 'tws', symbol: 'ZZZ', source: 'tws_client', time: T0 + 1 }),
+      fill({ exec_id: 'nokey', contract_key: '', symbol: 'YYY  261016P00010000', time: T0 + 2 }),
+    ])
+    expect(rows.map((r) => r.symbol)).toEqual(['YYY', 'ZZZ', 'ZZZ'])
+  })
+})
+
 describe('scopeFills', () => {
   const rows = buildFillRows([
     fill({ exec_id: 'a', trade_date: '2026-09-16' }),

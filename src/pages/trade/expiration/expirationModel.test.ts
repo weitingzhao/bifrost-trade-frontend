@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { PositionAttribution } from '@/types/positions'
 import { cushionPct } from '@/utils/optionMoneyness'
 import { buildExpiryLegs, groupByExpiry, type ExpiryLeg } from '@/utils/expiryLegs'
-import { decisionEffect, settleImpact } from './expirationModel'
+import { decisionEffect, pickExpiryGroup, settleImpact } from './expirationModel'
 
 function leg(over: Partial<PositionAttribution>): PositionAttribution {
   return {
@@ -238,5 +238,23 @@ describe('decisionEffect', () => {
       expect(impact.creditsKept).toBe(0)
       expect(impact.creditsUnknown).toBe(1)
     })
+  })
+})
+
+describe('pickExpiryGroup — the ladder pick, the ?fri= link, the nearest', () => {
+  const g = (expiry: string) => ({ expiry, dte: null, legs: [], unpriced: 0, closeCost: 0, itm: 0, tightest: null })
+  const groups = [g('20261120'), g('20261218'), g('20270115')]
+
+  it('opens on the nearest with nothing asked', () => {
+    expect(pickExpiryGroup(groups, { picked: null, fri: null })).toEqual({ selected: groups[0], friMissed: false })
+  })
+  it('opens on the expiry a ?fri= link names', () => {
+    expect(pickExpiryGroup(groups, { picked: null, fri: '2026-12-18' }).selected?.expiry).toBe('20261218')
+  })
+  it('says so when the book holds nothing on that date, and shows the nearest', () => {
+    expect(pickExpiryGroup(groups, { picked: null, fri: '2026-10-16' })).toEqual({ selected: groups[0], friMissed: true })
+  })
+  it('a pick in the ladder wins over the link it was made under', () => {
+    expect(pickExpiryGroup(groups, { picked: '20270115', fri: '2026-12-18' })).toEqual({ selected: groups[2], friMissed: false })
   })
 })

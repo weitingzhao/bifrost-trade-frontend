@@ -5,6 +5,7 @@ import {
   declaredBeyond,
   dividendBefore,
   feedReach,
+  narrowToSymbol,
   recentHistory,
   splitAdjustedQty,
   sliceByUnderlying,
@@ -237,5 +238,16 @@ describe('the forward edges', () => {
     expect(dividendBefore(events, 'QUOK', '2026-10-16')).toBeNull()
     // A split is not a dividend, and a past dividend is history.
     expect(dividendBefore(events, 'ZEBR', '2026-12-18')).toBeNull()
+  })
+})
+
+describe('narrowToSymbol — ?symbol= narrows the name lists', () => {
+  const rows = [{ symbol: 'ZZZ', n: 1 }, { symbol: 'YYY', n: 2 }, { symbol: 'ZZZ', n: 3 }]
+  it('keeps only the named symbol', () => {
+    expect(narrowToSymbol(rows, 'ZZZ').map((r) => r.n)).toEqual([1, 3])
+    expect(narrowToSymbol(rows, 'XXX')).toEqual([])
+  })
+  it('narrows nothing without a symbol', () => {
+    expect(narrowToSymbol(rows, '')).toEqual(rows)
   })
 })

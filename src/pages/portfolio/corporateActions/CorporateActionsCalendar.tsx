@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import {
   CALENDAR_DAYS,
   CORPORATE_ACTIONS_UNRECORDED,
+  narrowToSymbol,
   type BookEvent,
   type FeedReach,
 } from './corporateActionsModel'
@@ -20,10 +21,11 @@ import { KindTag, Ticker } from './corporateActionsMarks'
 
 type Show = 'all' | 'book' | 'reshaping'
 
-function shown(list: readonly BookEvent[], show: Show, bookSymbols: ReadonlySet<string>): BookEvent[] {
-  if (show === 'book') return list.filter((e) => bookSymbols.has(e.symbol))
-  if (show === 'reshaping') return list.filter((e) => e.touchesAContract)
-  return [...list]
+function shown(list: readonly BookEvent[], show: Show, bookSymbols: ReadonlySet<string>, symbol: string): BookEvent[] {
+  const named = narrowToSymbol(list, symbol)
+  if (show === 'book') return named.filter((e) => bookSymbols.has(e.symbol))
+  if (show === 'reshaping') return named.filter((e) => e.touchesAContract)
+  return named
 }
 
 function EventRow({ e, bookSymbols }: { e: BookEvent; bookSymbols: ReadonlySet<string> }) {
@@ -72,6 +74,8 @@ export function CorporateActionsCalendar({
   beyond,
   reach,
   bookSymbols,
+  symbol = '',
+  onClearSymbol,
 }: {
   /** Declared inside the window, nearest first. */
   ahead: readonly BookEvent[]
@@ -79,11 +83,14 @@ export function CorporateActionsCalendar({
   beyond: readonly BookEvent[]
   reach: FeedReach
   bookSymbols: ReadonlySet<string>
+  /** The top bar's symbol (`?symbol=`): the rows narrow to it. */
+  symbol?: string
+  onClearSymbol?: () => void
 }) {
   // The Show filter belongs to this panel alone, so it stays in its head (§17.3).
   const [show, setShow] = useState<Show>('all')
-  const rows = useMemo(() => shown(ahead, show, bookSymbols), [ahead, show, bookSymbols])
-  const later = useMemo(() => shown(beyond, show, bookSymbols), [beyond, show, bookSymbols])
+  const rows = useMemo(() => shown(ahead, show, bookSymbols, symbol), [ahead, show, bookSymbols, symbol])
+  const later = useMemo(() => shown(beyond, show, bookSymbols, symbol), [beyond, show, bookSymbols, symbol])
   const empty = ahead.length === 0
 
   return (
@@ -170,10 +177,24 @@ export function CorporateActionsCalendar({
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className={cn(positionsUi.td, 'pl-2 text-left font-sans text-muted-foreground')}>
-                  No event in the window matches this filter.{' '}
-                  <button type="button" className={positionsUi.link} onClick={() => setShow('all')}>
-                    Show all
-                  </button>
+                  {symbol && shown(ahead, 'all', bookSymbols, symbol).length === 0 ? (
+                    <>
+                      Nothing declared for {symbol} inside the window
+                      {later.length > 0 ? ' — the next is listed below the line' : ''}.{' '}
+                      {onClearSymbol ? (
+                        <button type="button" className={positionsUi.link} onClick={onClearSymbol}>
+                          Clear {symbol}
+                        </button>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      No event in the window matches this filter.{' '}
+                      <button type="button" className={positionsUi.link} onClick={() => setShow('all')}>
+                        Show all
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ) : (

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import {
+  boardFocus,
   ageOf,
   laneCounts,
   laneRows,
@@ -142,5 +143,22 @@ describe('hypothesisObjectiveId', () => {
     expect(
       hypothesisObjectiveId({ origin_ref: { run_id: 'gone', candidate_id: 'cand-a' } }, runs, cands),
     ).toBe('obj-2')
+  })
+})
+
+describe('boardFocus — where a ?h= card stands', () => {
+  const a = { id: 'a' }
+  const b = { id: 'b' }
+  const c = { id: 'c' }
+  const board = { loaded: true, rows: [a, b, c], inScope: [a, b], shown: [a] }
+  it('reads drawn, lane-hidden, scope-hidden and missing apart', () => {
+    expect(boardFocus('a', board).state).toBe('shown')
+    expect(boardFocus('b', board).state).toBe('lane')
+    expect(boardFocus('c', board).state).toBe('scoped')
+    expect(boardFocus('z', board).state).toBe('missing')
+  })
+  it('waits for the read, and is nothing without an id', () => {
+    expect(boardFocus('a', { ...board, loaded: false }).state).toBe('loading')
+    expect(boardFocus(null, board).state).toBe('none')
   })
 })

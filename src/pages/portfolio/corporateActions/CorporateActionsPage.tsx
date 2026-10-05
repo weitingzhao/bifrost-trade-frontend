@@ -18,7 +18,7 @@
 import { useMemo, useState } from 'react'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
 import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
@@ -34,6 +34,8 @@ import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
 import { useAssignmentLegs } from '@/hooks/useAssignmentLegs'
 import { usePreviewState } from '@/hooks/usePreviewState'
+import { clearCarriedSymbol, normalizeSymbol } from '@/lib/symbolContext'
+import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import { fetchWatchlist } from '@/api/market'
 import type { CorporateActionRow } from '@/api/marketData/corporateActions'
 import { useCorporateActionsByName } from '@/hooks/useCorporateActionsByName'
@@ -43,6 +45,7 @@ import {
   buildBookEvents,
   declaredBeyond,
   feedReach,
+  narrowToSymbol,
   recentHistory,
   sliceByUnderlying,
   upcoming,
@@ -83,6 +86,25 @@ export default function CorporateActionsPage() {
   const statusQ = useMonitorStatus()
   const status = statusQ.data
   const [accountFilter, setAccountFilter] = useState('all')
+  /**
+   * The top bar's symbol (`?symbol=`, Owner plan #21 — the Calendar's
+   * Corporate actions layer links here with it): the contract changes, the
+   * calendar and the history narrow to that name; the feed panel stays a
+   * reading about the feed.
+   */
+  const [searchParams, setSearchParams] = useSearchParams()
+  const scopeSymbol = normalizeSymbol(searchParams.get('symbol'))
+  const clearScopeSymbol = () => {
+    clearCarriedSymbol()
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('symbol')
+        return next
+      },
+      { replace: true },
+    )
+  }
 
   const accountIds = useMemo(
     () => (status?.portfolio?.accounts ?? []).map((a) => (a.account_id ?? '').trim()).filter(Boolean),
@@ -214,8 +236,8 @@ export default function CorporateActionsPage() {
     return by
   }, [ahead])
   const slices = useMemo(
-    () => sliceByUnderlying({ legs, sharesBySymbol, coverBySymbol, eventBySymbol }),
-    [legs, sharesBySymbol, coverBySymbol, eventBySymbol],
+    () => narrowToSymbol(sliceByUnderlying({ legs, sharesBySymbol, coverBySymbol, eventBySymbol }), scopeSymbol),
+    [legs, sharesBySymbol, coverBySymbol, eventBySymbol, scopeSymbol],
   )
 
   /**
@@ -226,8 +248,8 @@ export default function CorporateActionsPage() {
    */
   const assignment = useAssignmentLegs()
   const shortCalls = useMemo(
-    () => assignment.legs.filter((l) => l.right === 'C'),
-    [assignment.legs],
+    () => narrowToSymbol(assignment.legs.filter((l) => l.right === 'C'), scopeSymbol),
+    [assignment.legs, scopeSymbol],
   )
 
   // §17.1: the book (monitor status) and the feed are both needed to say
@@ -273,18 +295,23 @@ export default function CorporateActionsPage() {
           </PageHeadLink>
         }
       />
-      {accountIds.length > 1 ? (
-        <div data-sr-toolbar="">
-          <span data-sr-tb="label">Account</span>
-          <SegmentControl
-            size="xs"
-            ariaLabel="Account"
-            value={accountFilter}
-            onChange={setAccountFilter}
-            options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
-          />
-        </div>
-      ) : null}
+      {/* §17.3 (Rev .120): the top bar's symbol stands as a chip, no Symbol box of the page's own. */}
+      <div data-sr-toolbar="">
+        {accountIds.length > 1 ? (
+          <>
+            <span data-sr-tb="label">Account</span>
+            <SegmentControl
+              size="xs"
+              ariaLabel="Account"
+              value={accountFilter}
+              onChange={setAccountFilter}
+              options={[{ value: 'all', label: 'All' }, ...accountIds.map((a) => ({ value: a, label: a }))]}
+            />
+            <span data-sr-tb="sep" />
+          </>
+        ) : null}
+        <SymbolScopeChip symbol={scopeSymbol} onClear={clearScopeSymbol} />
+      </div>
 
       {pageState === 'stale' ? (
         <ViewState
@@ -423,6 +450,13 @@ export default function CorporateActionsPage() {
             </header>
             {legs.length === 0 ? (
               <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">The book holds no option leg.</p>
+            ) : slices.length === 0 && scopeSymbol ? (
+              <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground" data-testid="ca-scope-empty">
+                The book holds no option leg or shares in {scopeSymbol}.{' '}
+                <button type="button" className={positionsUi.link} onClick={clearScopeSymbol}>
+                  Clear {scopeSymbol}
+                </button>
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 {/* §14.6: six columns, the design's 900 floor. */}
@@ -537,9 +571,21 @@ export default function CorporateActionsPage() {
           <SectionHead note="Book and watchlist · a watchlist name matters because a split distorts its chain and its backtest">
             Calendar
           </SectionHead>
-          <CorporateActionsCalendar ahead={ahead} beyond={beyond} reach={reach} bookSymbols={bookSymbols} />
+          <CorporateActionsCalendar
+            ahead={ahead}
+            beyond={beyond}
+            reach={reach}
+            bookSymbols={bookSymbols}
+            symbol={scopeSymbol}
+            onClearSymbol={clearScopeSymbol}
+          />
 
-          <CorporateActionsBand shortCalls={shortCalls} events={events} history={history} legSymbols={legSymbols} />
+          <CorporateActionsBand
+            shortCalls={shortCalls}
+            events={events}
+            history={narrowToSymbol(history, scopeSymbol)}
+            legSymbols={legSymbols}
+          />
           </div>
 
           <p className="m-0 border px-3 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty mat-card">

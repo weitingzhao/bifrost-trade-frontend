@@ -17,7 +17,7 @@
  * that write; this page carries the leg to it (D10).
  */
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { ViewState } from '@bifrost/ui'
@@ -49,6 +49,7 @@ import {
   EXPIRATION_NEAR_DAYS,
   EXPIRATION_UNRECORDED,
   decisionEffect,
+  pickExpiryGroup,
   settleImpact,
   type LegDecision,
 } from './expirationModel'
@@ -91,7 +92,17 @@ export default function ExpirationPage() {
   const { data: status, isLoading: statusLoading } = useMonitorStatus()
   const attrQuery = usePositionAttribution()
   const preview = usePreviewState()
-  const [pickedExpiry, setPickedExpiry] = useState<string | null>(null)
+  /**
+   * `?fri=YYYY-MM-DD` — the Calendar's Expiries layer (and any other link)
+   * opens the desk on that expiry. A pick in the ladder is kept against the
+   * `fri` it was made under, so a new link replaces it rather than losing to it.
+   */
+  const [searchParams] = useSearchParams()
+  const friParam = searchParams.get('fri')
+  const fri = friParam && /^\d{4}-\d{2}-\d{2}$/.test(friParam) ? friParam : null
+  const [picked, setPicked] = useState<{ fri: string | null; expiry: string } | null>(null)
+  const pickedExpiry = picked != null && picked.fri === fri ? picked.expiry : null
+  const setPickedExpiry = (expiry: string) => setPicked({ fri, expiry })
 
   const [today] = useState(() => {
     const now = new Date()
@@ -245,7 +256,10 @@ export default function ExpirationPage() {
   }
   const groups = useMemo(() => groupByExpiry(legs, today), [legs, today])
   const nearest = groups[0] ?? null
-  const selected = groups.find((g) => g.expiry === pickedExpiry) ?? nearest
+  const { selected, friMissed } = useMemo(
+    () => pickExpiryGroup(groups, { picked: pickedExpiry, fri }),
+    [groups, pickedExpiry, fri],
+  )
   /** What the chosen paths add up to, over the picked expiry's decided legs. */
   const impact = useMemo(() => settleImpact(selected?.legs ?? [], decisionMap), [selected?.legs, decisionMap])
   const markAsOf = legs.find((l) => l.markAsOf)?.markAsOf ?? null
@@ -267,6 +281,11 @@ export default function ExpirationPage() {
     if (location.hash !== '#assignment') return
     return scrollWhenPresent('#assignment', 8_000, flashFound)
   }, [location.hash])
+  // A `?fri=` link lands on the legs it names.
+  useEffect(() => {
+    if (!fri || location.hash === '#assignment') return
+    return scrollWhenPresent('[aria-label="Legs expiring"]', 8_000, flashFound)
+  }, [fri, location.hash])
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -346,6 +365,13 @@ export default function ExpirationPage() {
             <SectionHead note="Tightest first — the one nearest its strike is the one to decide.">
               {selected ? `Legs expiring ${fmtIsoDateToken(isoDay(selected.expiry))}` : 'Legs'}
             </SectionHead>
+            {friMissed && fri ? (
+              // A `?fri=` the book holds nothing on is said, not silently swapped.
+              <p className="m-0 text-dense-meta text-muted-foreground" data-testid="expiry-fri-missed">
+                No leg expires <span className={positionsUi.mono}>{fmtIsoDateToken(fri)}</span> — the nearest expiry the
+                book holds is shown.
+              </p>
+            ) : null}
             <section className={positionsUi.panel} aria-label="Legs expiring">
               <header className={positionsUi.panelHead}>
                 <span className={positionsUi.panelTitle}>

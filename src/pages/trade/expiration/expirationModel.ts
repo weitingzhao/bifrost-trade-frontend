@@ -13,7 +13,7 @@
  * with future events, and a decision written from here would be a new write
  * path — the page links to Trade Plans instead (D10).
  */
-import type { ExpiryLeg } from '@/utils/expiryLegs'
+import type { ExpiryGroup, ExpiryLeg } from '@/utils/expiryLegs'
 
 
 // ── Decisions ────────────────────────────────────────────────────────────────
@@ -144,3 +144,21 @@ export const EXPIRATION_UNRECORDED = {
     'A decision in the table is scratch until Create plans writes it — and what that writes is a draft Trade Plan, through the same call the Plans form makes, so the plan store keeps its one write path. Undecided legs are outside the settle numbers, not assumed to expire.',
   roll: 'A roll candidate needs a quote on the target contract. The vendor snapshot carries a dated close but no bid or ask, so a credit quoted from it would be yesterday’s, presented as today’s.',
 } as const
+
+/**
+ * Which expiry the desk shows: a pick in the ladder, else the `?fri=` a link
+ * carried (ISO date), else the nearest. A `fri` the book holds nothing on is
+ * reported (`friMissed`), not silently swapped for the nearest.
+ */
+export function pickExpiryGroup(
+  groups: readonly ExpiryGroup[],
+  opts: { picked: string | null; fri: string | null },
+): { selected: ExpiryGroup | null; friMissed: boolean } {
+  const picked = opts.picked ? (groups.find((g) => g.expiry === opts.picked) ?? null) : null
+  const iso = (e: string) => `${e.slice(0, 4)}-${e.slice(4, 6)}-${e.slice(6, 8)}`
+  const friGroup = opts.fri ? (groups.find((g) => iso(g.expiry) === opts.fri) ?? null) : null
+  return {
+    selected: picked ?? friGroup ?? groups[0] ?? null,
+    friMissed: opts.fri != null && friGroup == null && picked == null && groups.length > 0,
+  }
+}

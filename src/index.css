@@ -749,8 +749,8 @@ html[data-theme='light'] {
      re-declares the resolved names alongside the ramp names (D2 §1.1).
    - Inside a page the opaque inks become the group fills (raised ink 4% ·
      raised2 6% · surface 8% · card clear) — the page lane, a panel / float
-     body and the inspector. Overlays portal to <body> and keep their solid
-     ground without a re-pin rule. */
+     body, the inspector and the market strip above the lane. Overlays portal
+     to <body> and keep their solid ground without a re-pin rule. */
 :root {
   --sr-frost: color-mix(in srgb, var(--glass-base) 70%, var(--sk-ground));
 }
@@ -789,7 +789,7 @@ html[data-frost='on']:not([data-glass='solid']) [data-slot='sidebar-inset'] {
   --secondary-foreground: var(--vib-soft);
 }
 
-html[data-frost='on']:not([data-glass='solid']) :is(#main-content, [data-frost-host]) {
+html[data-frost='on']:not([data-glass='solid']) :is(#main-content, [data-frost-host], [data-frost-band]) {
   --sk-raised: color-mix(in srgb, var(--sk-ink) 4%, transparent);
   --sk-raised2: color-mix(in srgb, var(--sk-ink) 6%, transparent);
   --sk-surface: color-mix(in srgb, var(--sk-ink) 8%, transparent);
@@ -800,6 +800,22 @@ html[data-frost='on']:not([data-glass='solid']) :is(#main-content, [data-frost-h
   --sk-ground: var(--sr-frost);
   --background: var(--sr-frost);
   --scroll-edge-from: color-mix(in srgb, var(--sr-frost) 86%, transparent);
+}
+
+/* A band of the page's own chrome between the top bar and the lane — the
+   market strip (GlobalMarketStatusBar). The prototype draws no such band; the
+   top bar it sits under is clear with no standing edge (_Shell TopBar L144–149).
+   Owner 2026-10-04: an opaque band here cuts the glass page in two. So it
+   takes the lane's inks above (card clear, muted / secondary / accent ink 8%)
+   and its edge and divider are the DS table rule — ink 6%, the hairline lines
+   inside a group use — not --sk-line. ?frost=0 / solid keep the card.
+   The inspector is the other glass host outside a page-material scope (it
+   portals out of the lane; panel and float bodies carry `data-mat`), so a
+   body's own `border-border` head or divider drew --sk-line, an opaque
+   neutral rule across its glass (Vol ratings' Why head). Same token as the
+   lane: --border is the table rule there too (`[data-mat]`). */
+html[data-frost='on']:not([data-glass='solid']) :is([data-frost-band], [data-frost-host='inspector']) {
+  --border: var(--table-rule);
 }
 
 /* A drawer-kind surface (canPage:false — Loop Run, Thread) and the inspector

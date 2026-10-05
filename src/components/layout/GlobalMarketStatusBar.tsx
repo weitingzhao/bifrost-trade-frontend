@@ -47,6 +47,8 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
       <section
         className="flex h-11 shrink-0 items-center gap-3 border-b border-border bg-card px-3"
         aria-label="Market status"
+        // A band inside the frosted page (index.css): clear, an ink hairline.
+        data-frost-band=""
       >
         <Skeleton className="h-7 w-28 rounded-md" />
         <Skeleton className="h-7 w-40 rounded-md" />
@@ -65,9 +67,13 @@ export function GlobalMarketStatusBar({ enabled }: GlobalMarketStatusBarProps) {
   return (
     // One line at every width: at 430 the words give way first (the open
     // orders label, then the Streams label truncates), the numbers stay.
+    // With the frost on it is a band of the page's glass, not a slab on it
+    // (index.css `[data-frost-band]`): no fill of its own, the DS table rule
+    // for its edge and divider. ?frost=0 / solid keep the card and the line.
     <section
       className="flex h-11 min-w-0 shrink-0 items-center gap-2 overflow-hidden border-b border-border bg-card px-3 text-xs"
       aria-label="Market status"
+      data-frost-band=""
     >
       <button
         type="button"

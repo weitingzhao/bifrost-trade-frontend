@@ -29,6 +29,7 @@ import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
 import { useOptionLiveBasis } from '@/hooks/useOptionLiveBasis'
+import { useNamesEarnings } from '@/hooks/useNamesEarnings'
 import { useQuotesMap } from '@/hooks/useQuoteStream'
 import { accountTag } from '@/utils/accountTag'
 import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveRow, type BookLiveTotals } from '@/utils/bookLive'
@@ -43,6 +44,7 @@ import type { QuoteItem } from '@/types/market'
 import type { LivePositionRow } from '@/types/positions'
 
 const LIVE_PATH = '/market/live'
+const NO_NAMES: readonly string[] = []
 
 export interface BookLive {
   rows: BookLiveRow[]
@@ -134,6 +136,16 @@ export function useBookLive(open: boolean): BookLive {
   // the only reader, so it waits for the drawer.
   const optRows = useMemo(() => (open ? extractOptPositionRows(accounts) : []), [open, accounts])
   const { optionLiveBasisByRow } = useOptionLiveBasis(optRows)
+  // A stock's Next is its estimated print (Research `expected_next`, est.) —
+  // one read per name, cached an hour and shared with Events and the
+  // Calendar; like the basis, it waits for the drawer. The map is rebuilt on
+  // every render, so the rows key on its content, not its identity.
+  const earningsRead = useNamesEarnings(open ? stkSymbols : NO_NAMES)
+  const earningsSig = Object.entries(earningsRead)
+    .map(([sym, r]) => `${sym}:${r.kind === 'expected' ? `${r.next.date}:${r.next.daysAway}` : r.absence.code}`)
+    .join(',')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const earnings = useMemo(() => earningsRead, [earningsSig])
 
   const models = useQueries({
     queries: accountIds.map((id) => ({
@@ -205,8 +217,9 @@ export function useBookLive(open: boolean): BookLive {
         basisByKey: optionLiveBasisByRow,
         todayEt,
         tagOf,
+        earnings,
       }),
-    [accounts, spotOf, optQuotes, bench, greeks.perShareByTicker, shortLegs.data, tightPct, optionLiveBasisByRow, todayEt, tagOf],
+    [accounts, spotOf, optQuotes, bench, greeks.perShareByTicker, shortLegs.data, tightPct, optionLiveBasisByRow, todayEt, tagOf, earnings],
   )
   const totals = useMemo(() => bookLiveTotals(rows), [rows])
 

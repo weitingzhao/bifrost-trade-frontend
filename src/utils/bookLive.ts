@@ -37,6 +37,8 @@ import { buildOptionTicker, positionGreek } from '@/utils/optionTicker'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { cushionBand, shortLegCushion } from '@/utils/positionsOptionRisk'
 import { classifyStockBucket } from '@/utils/positionsGrouping'
+import { fmtIsoDateToken } from '@/lib/format'
+import type { EarningsReading } from '@/utils/earningsReading'
 
 export interface BookLiveNext {
   text: string
@@ -107,6 +109,11 @@ export interface BookLiveInputs {
   todayEt: string
   /** Account ordering and short names. */
   tagOf: (accountId: string) => string
+  /**
+   * Research's next-print reading per stock symbol (`useNamesEarnings`), for a
+   * stock's Next. A name absent from the map is still being read.
+   */
+  earnings?: Readonly<Record<string, EarningsReading>>
 }
 
 export interface BookLiveTotals {
@@ -117,7 +124,32 @@ export interface BookLiveTotals {
   warnCount: number
 }
 
-const NOT_ON_PLAN = 'Forward earnings dates are not on the data plan — unmeasured, not omitted'
+/**
+ * A stock's Next: its next print as Research estimates it (`expected_next`,
+ * marked est. — the vendor's confirmed calendar is 403 not entitled), the same
+ * reading the Events lanes and the Calendar print; with none, why there is
+ * none (`earningsAbsence`), not a claim that the data plan lacks the date.
+ */
+export function stockNext(reading: EarningsReading | undefined): BookLiveNext {
+  if (!reading) return { text: '—', warn: false, title: 'Reading the next print from Research…' }
+  if (reading.kind === 'none') {
+    return { text: 'no earnings est.', warn: false, title: `No earnings estimate — ${reading.absence.text}` }
+  }
+  const { date, daysAway, track } = reading.next
+  if (daysAway < 0) {
+    return {
+      text: 'earnings late · est.',
+      warn: false,
+      title: `The estimated print (${date}) passed with no results 8-K on file yet`,
+    }
+  }
+  const miss = track.medianMissDays != null ? ` · the rule has missed by a median ${track.medianMissDays}d over ${track.n} prints` : ''
+  return {
+    text: `earnings ${fmtIsoDateToken(date)} est. · ${daysAway === 0 ? 'today' : `${daysAway}d`}`,
+    warn: false,
+    title: `Estimated: last year's same-quarter results 8-K plus 52 weeks (Research)${miss}. The vendor's confirmed calendar is not on the plan (403 not entitled).`,
+  }
+}
 
 /** `YYYY-MM-DD` in New York for an ISO timestamp, or null. */
 export function etDate(iso: string | null | undefined): string | null {
@@ -190,7 +222,7 @@ function stkRow(p: IbPositionRow, accountId: string, x: BookLiveInputs): BookLiv
         : null,
     pnl,
     deltaEff: qty,
-    next: { text: '—', warn: false, title: NOT_ON_PLAN },
+    next: stockNext(x.earnings?.[symbol]),
   }
 }
 

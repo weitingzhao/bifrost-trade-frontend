@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
-import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveInputs, BOOK_BUCKETS, stockBookBucket } from './bookLive'
+import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveInputs, BOOK_BUCKETS, stockBookBucket, stockNext } from './bookLive'
 
 const TODAY = '2031-03-12'
 
@@ -145,5 +145,36 @@ describe('holding type (Rev .114)', () => {
 
   it('keeps the four buckets in the design’s order', () => {
     expect(BOOK_BUCKETS.map(([k]) => k)).toEqual(['opt', 'stk', 'fi', 'cash'])
+  })
+})
+
+describe("a stock's Next is its estimated print", () => {
+  const expected = {
+    kind: 'expected' as const,
+    next: { daysAway: 17, date: '2031-03-20', track: { n: 6, medianMissDays: 2, maxMissDays: 5 }, lastResult: '2030-12-15' },
+  }
+  const none = {
+    kind: 'none' as const,
+    reason: 'no 8-K on file',
+    absence: { code: 'no_filings' as const, text: 'no 8-K on file — an ETF files none, nor does a foreign issuer (6-K)' },
+  }
+
+  it('prints the estimate, marked est., not "not on the data plan"', () => {
+    const stk = buildBookLiveRows(inputs({ earnings: { ZZZ: expected } })).find((r) => r.kind === 'stk')!
+    expect(stk.next.text).toBe('earnings 20MAR31 est. · 17d')
+    expect(stk.next.title).toContain('Estimated')
+    expect(stk.next.title).not.toContain('data plan')
+    expect(stockNext(expected).warn).toBe(false)
+  })
+
+  it('says why a name has no estimate', () => {
+    const stk = buildBookLiveRows(inputs({ earnings: { ZZZ: none } })).find((r) => r.kind === 'stk')!
+    expect(stk.next.text).toBe('no earnings est.')
+    expect(stk.next.title).toContain('an ETF files none')
+  })
+
+  it('reads a passed estimate as late, and an unread name as still reading', () => {
+    expect(stockNext({ ...expected, next: { ...expected.next, daysAway: -3 } }).text).toBe('earnings late · est.')
+    expect(stockNext(undefined)).toEqual({ text: '—', warn: false, title: 'Reading the next print from Research…' })
   })
 })

@@ -196,6 +196,8 @@ export function BookControl() {
     dot: r.kind === 'opt' ? 'var(--sk-contract)' : 'var(--sk-ticker)',
     name: r.label,
     sub: `${book.tagOf(r.accountId)} · ${r.qty > 0 ? '+' : ''}${r.qty}${r.next.text ? ` · ${r.next.text}` : ''}`,
+    // The Next's reason — a stock's earnings estimate and its basis, or why it has none.
+    title: r.next.title,
     right: r.dayUsd == null ? '—' : fmtSignedUsd0(r.dayUsd),
     rightInk: dirInk(r.dayUsd),
     // Rev .115: an option row lands on Positions › Options, a stock-like row on Positions › Shares.

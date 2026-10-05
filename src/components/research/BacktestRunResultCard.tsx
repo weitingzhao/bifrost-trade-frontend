@@ -4,10 +4,13 @@
  *
  * Confidence tag on the design's own thresholds (n < 5 noise, < 30 thin),
  * summary tiles, win/loss bar, equity and per-event histogram from real event
- * trades (persisted runs carry none and say so), walk-forward and SPY
- * buy-hold read with tolerant parsers written against the engine's actual
+ * trades (persisted runs carry none and say so), walk-forward and the
+ * proxy buy-hold read with tolerant parsers written against the engine's actual
  * payloads — the previous card's types described a shape the server never
- * sent, unnoticed because no persisted run on DEV carries either.
+ * sent, unnoticed because no persisted run on DEV carries either. Both are
+ * computed over a series built from the per-event P&L (100 + pnl), not over
+ * SPY or the underlying: the server's `spy_buy_hold` key is that series'
+ * buy-hold, so the panel says so instead of repeating the key's name.
  *
  * All colors use site-wide tokens (`text-profit` / `text-loss` /
  * `pnlColorClass()`).
@@ -518,7 +521,7 @@ export function BacktestRunResultCard({ response, headerless }: BacktestRunResul
         <section className={panel}>
           <header className={panelHead}>
             <span className={cap}>Against the benchmark</span>
-            <span className="text-dense-body font-semibold">SPY buy-hold</span>
+            <span className="text-dense-body font-semibold">Proxy buy-hold (not SPY)</span>
             <span className="ml-auto text-dense-caption text-muted-foreground">
               same window · P&L proxy series
             </span>

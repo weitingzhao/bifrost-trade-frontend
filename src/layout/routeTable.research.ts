@@ -115,7 +115,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // (trail + memory changes; the cited prose summary is owed) and the
       // §20.1 note lock the .99 head describes.
       state: 'reviewing',
-      rev: '2026-09-27.99',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/research/loop/hypotheses'],
     },
   },
@@ -178,7 +178,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     design: {
       state: 'reviewing',
-      rev: '2026-09-30.123',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/research/lab/stocks'],
     },
   },
@@ -478,7 +478,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
       // Rev .103 instance links open the surface (T5); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-09-28.103',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/research/journal'],
     },
   },
@@ -493,7 +493,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       state: 'reviewing',
       // Rev .104: Trace in the registry, a Book member (V5); walk rev moved with Package .33.
-      rev: '2026-09-29.104',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/research/trace'],
     },
   },
@@ -549,7 +549,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.85',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/market/live'],
     },
   },

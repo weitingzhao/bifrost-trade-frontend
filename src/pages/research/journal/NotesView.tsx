@@ -22,6 +22,7 @@ import {
 import { ViewState } from '@bifrost/ui'
 import { Button } from '@/components/ui/button'
 import { failedDetail } from '@/lib/viewState'
+import { etDayOf } from '@/lib/freshness'
 import { cn } from '@/lib/utils'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { useTradeIndex } from '@/hooks/useTradeIndex'
@@ -31,15 +32,7 @@ const NOTES_KEY = ['research-engine', 'journal', 'notes'] as const
 
 /** The trader's day — New York, where the sessions live. */
 export function noteDay(iso: string | null): string {
-  if (!iso) return '—'
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/New_York',
-      dateStyle: 'short',
-    }).format(new Date(iso))
-  } catch {
-    return iso.slice(0, 10)
-  }
+  return etDayOf(iso) || '—'
 }
 
 export function groupByDay(notes: readonly JournalNote[]): [string, JournalNote[]][] {

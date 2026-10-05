@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { etStamp, fmtAge, freshReading, inRTH, snapshotStale, tradingCalendar } from './freshness'
+import { etDayOf, etStamp, fmtAge, freshReading, inRTH, snapshotStale, tradingCalendar } from './freshness'
 
 // September is EDT (UTC−4): 14:00 ET is 18:00Z.
 const THU_1400 = Date.UTC(2026, 8, 24, 18, 0, 0)
@@ -79,5 +79,36 @@ describe('etStamp', () => {
     expect(etStamp(Date.parse('2031-03-11T10:32:00Z'), now)).toBe('today 06:32 ET')
     expect(etStamp(Date.parse('2031-03-09T10:29:00Z'), now)).toBe('Sun 06:29 ET')
     expect(etStamp(Date.parse('2031-02-20T11:29:00Z'), now)).toBe('02-20 06:29 ET')
+  })
+})
+
+describe('etDayOf', () => {
+  it('files an instant after 20:00 ET on its New York day, not the UTC date', () => {
+    // 2026-09-11T00:30Z is 20:30 EDT on Thu 10 Sep.
+    expect(etDayOf('2026-09-11T00:30:00+00:00')).toBe('2026-09-10')
+    expect(etDayOf('2026-09-11T00:30:00Z')).toBe('2026-09-10')
+    // 19:59 EDT and 00:01 EDT the next day either side of the UTC midnight.
+    expect(etDayOf('2026-09-10T23:59:00Z')).toBe('2026-09-10')
+    expect(etDayOf('2026-09-11T04:01:00Z')).toBe('2026-09-11')
+  })
+
+  it('follows the clock change, both ways', () => {
+    // Spring forward, Sun 8 Mar 2026 (EST −5 → EDT −4 at 02:00 local).
+    expect(etDayOf('2026-03-08T04:30:00Z')).toBe('2026-03-07') // 23:30 EST Sat
+    expect(etDayOf('2026-03-08T05:30:00Z')).toBe('2026-03-08') // 00:30 EST Sun
+    expect(etDayOf('2026-03-09T03:30:00Z')).toBe('2026-03-08') // 23:30 EDT Sun
+    expect(etDayOf('2026-03-09T04:30:00Z')).toBe('2026-03-09') // 00:30 EDT Mon
+    // Fall back, Sun 1 Nov 2026 (EDT −4 → EST −5 at 02:00 local).
+    expect(etDayOf('2026-11-01T03:30:00Z')).toBe('2026-10-31') // 23:30 EDT Sat
+    expect(etDayOf('2026-11-01T04:30:00Z')).toBe('2026-11-01') // 00:30 EDT Sun
+    expect(etDayOf('2026-11-02T04:30:00Z')).toBe('2026-11-01') // 23:30 EST Sun
+    expect(etDayOf('2026-11-02T05:30:00Z')).toBe('2026-11-02') // 00:30 EST Mon
+  })
+
+  it('keeps a bare date as written and refuses what does not parse', () => {
+    expect(etDayOf('2026-09-10')).toBe('2026-09-10')
+    expect(etDayOf('not a date at all')).toBe('')
+    expect(etDayOf(null)).toBe('')
+    expect(etDayOf('')).toBe('')
   })
 })

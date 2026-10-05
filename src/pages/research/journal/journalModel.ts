@@ -25,6 +25,7 @@
  */
 import type { ObjectiveRun } from '@/api/research/harness'
 import { readStr as str } from '@/lib/readUnknown'
+import { etDayOf } from '@/lib/freshness'
 import type { ResearchCandidate } from '@/api/research/candidates'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { AiDraft } from '@/api/researchDrafts'
@@ -134,9 +135,12 @@ const MACHINE_ORIGIN: Record<string, JournalOperator> = {
   harness: 'loop',
 }
 
-function dayOf(iso: string | null | undefined): string {
-  return typeof iso === 'string' && iso.length >= 10 ? iso.slice(0, 10) : ''
-}
+/**
+ * The New York day an artifact belongs to (Owner 2026-10-04): the day the
+ * Notes, the Day view's server read and the Calendar use. Cutting the stamp
+ * at ten characters filed anything written after 20:00 ET a day late.
+ */
+const dayOf = etDayOf
 
 /** A draft's parent, in the order the store makes it available. */
 /** Moved to `lib/research/draftProvenance` when the Inbox card became its

@@ -6,10 +6,9 @@
  * (`research.ai_action_log` has no read endpoint), so a batch of verdicts
  * lands on the day its drafts were written.
  *
- * Day: New York, from `created_at`. The Journal itself still files a node
- * under the UTC date of `created_at` (`journalModel.dayOf`), so a draft
- * written after 20:00 ET is a day later there — left for the Owner to settle,
- * not changed here.
+ * Day: New York, from `created_at` — the day the Journal files the same
+ * artifact under (`journalModel.dayOf` = `etDayOf`, Owner 2026-10-04), so a
+ * Decisions item's `?view=day&day=` opens the Journal on its own day.
  *
  * Pending drafts are not decisions; expired drafts are not read (the Journal
  * does not read them either). Every page of approved and dismissed drafts is
@@ -21,7 +20,7 @@ import { listAllResearchDrafts, type AiDraft } from '@/api/researchDrafts'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useHypothesisList } from '@/hooks/useHypotheses'
-import { etDate } from '@/lib/freshness'
+import { etDayOf } from '@/lib/freshness'
 import { draftTitle } from '@/lib/harness/draftText'
 import { readStr, readStrings } from '@/lib/readUnknown'
 import { layerStateOf, type CalendarItem, type CalendarLayerReading } from './calendarLayers'
@@ -29,10 +28,9 @@ import { layerStateOf, type CalendarItem, type CalendarLayerReading } from './ca
 /** The Hypothesis Board's read — the same key, so the Calendar shares its cache. */
 export const BOARD_HYPOTHESES = { include_retired: true, limit: 100 } as const
 
-/** The New York day of an instant; null when it does not parse. */
+/** The New York day of a stamp — the Journal's own rule (`etDayOf`); null when it does not parse. */
 export function nyDayOf(iso: string | null | undefined): string | null {
-  const t = Date.parse(iso ?? '')
-  return Number.isFinite(t) ? etDate(t) : null
+  return etDayOf(iso) || null
 }
 
 function draftSyms(d: AiDraft): string[] {

@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchJournalDay, type DayTrace } from '@/api/research/journal'
 import { ViewState } from '@bifrost/ui'
 import { failedDetail } from '@/lib/viewState'
+import { etTodayIso } from '@/lib/freshness'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
 
@@ -36,11 +37,14 @@ function localDay(iso: string): string {
 export function DayView() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const day = params.get('day') ?? ''
+  // A New York day, always: opened bare it is today in New York. Left to the
+  // server, no `date` means the server process's own local date — on a UTC
+  // host that is tomorrow from 20:00 ET.
+  const day = params.get('day') || etTodayIso()
 
   const dayQ = useQuery({
-    queryKey: ['research-engine', 'journal', 'day', day || 'today'],
-    queryFn: () => fetchJournalDay(day || undefined),
+    queryKey: ['research-engine', 'journal', 'day', day],
+    queryFn: () => fetchJournalDay(day),
     refetchInterval: 120_000,
     retry: 1,
   })

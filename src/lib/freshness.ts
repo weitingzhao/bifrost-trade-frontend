@@ -69,6 +69,26 @@ export function etDate(ms: number): string {
   return etParts(ms).date
 }
 
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * The New York day a stored value belongs to, `YYYY-MM-DD`; '' when it does
+ * not parse. An instant (`created_at`, `started_at`) is read in New York, so
+ * a row written after 20:00 ET — already tomorrow in UTC — stays on its own
+ * trading day. A bare date (`exit_date`, `trade_date`) already is a day and is
+ * kept as written: parsed as an instant it would be UTC midnight, the evening
+ * before in New York.
+ *
+ * The Journal, the Calendar and Research's own `/research/journal/day`
+ * (`AT TIME ZONE 'America/New_York'`) all date by this.
+ */
+export function etDayOf(value: string | null | undefined): string {
+  if (typeof value !== 'string' || value.length < 10) return ''
+  if (DATE_ONLY.test(value)) return value
+  const t = Date.parse(value)
+  return Number.isFinite(t) ? etDate(t) : ''
+}
+
 /** Today's `YYYY-MM-DD` in New York — the date expiries, and DTE, are counted from. */
 export function etTodayIso(nowMs: number = Date.now()): string {
   return etDate(nowMs)

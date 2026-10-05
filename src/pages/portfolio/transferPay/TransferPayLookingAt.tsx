@@ -1,4 +1,5 @@
 import { HelpCircle } from 'lucide-react'
+import { FilterChip } from '@bifrost/ui'
 import { InlinePnl, SegmentControl } from '@/components/data-display'
 import {
   Select,
@@ -53,6 +54,11 @@ type Props = {
   onPage: (page: number) => void
 }
 
+/**
+ * Type and Kind are pick-several (§17.10): DS filter chips, on = ink 15%, the
+ * count mono after the label. Never the accent — it marks the page's one
+ * current thing, not a filter state.
+ */
 function FilterCountChip({
   label,
   count,
@@ -67,19 +73,26 @@ function FilterCountChip({
   onClick: () => void
 }) {
   return (
-    <button
-      type="button"
-      className={cn(transferPayUi.chip, active ? transferPayUi.chipOn : transferPayUi.chipOff)}
-      aria-pressed={active}
+    <FilterChip
+      pressed={active}
+      onPressedChange={onClick}
       /* Spelled out, because the label and the count are separate text nodes and
          would otherwise be announced run together as "All accounts116". */
       aria-label={`${label}, ${count} events`}
       title={title}
-      onClick={onClick}
+      count={count === 0 ? <span className="opacity-50">0</span> : count}
     >
       {label}
-      <span className={cn(transferPayUi.chipCount, count === 0 && 'opacity-50')}>{count}</span>
-    </button>
+    </FilterChip>
+  )
+}
+
+/** Pick-one with the count in the segment's name (§17.10: `Active 3`). */
+function countLabel(label: string, count: number) {
+  return (
+    <>
+      {label} <span className={cn('font-mono font-normal', count === 0 && 'opacity-50')}>{count}</span>
+    </>
   )
 }
 
@@ -118,25 +131,21 @@ export function TransferPayLookingAt({
       <div className={transferPayUi.panel}>
         <div className={transferPayUi.chipRow}>
           <span className={transferPayUi.chipRowLabel}>Account</span>
-          <div className={transferPayUi.chipGroup} role="group" aria-label="Account">
-            <FilterCountChip
-              label="All accounts"
-              count={totalCount}
-              active={activeAccountId === 'all'}
-              title="Every account"
-              onClick={() => onActiveAccountId('all')}
-            />
-            {accountIds.map(id => (
-              <FilterCountChip
-                key={id}
-                label={id}
-                count={accountCounts[id] ?? 0}
-                active={activeAccountId === id}
-                title="Cash events happen in an account even when it holds no positions"
-                onClick={() => onActiveAccountId(id)}
-              />
-            ))}
-          </div>
+          {/* Which account is pick-one: the DS SegmentControl (§17.10). */}
+          <SegmentControl
+            size="xs"
+            ariaLabel="Account"
+            value={activeAccountId}
+            onChange={onActiveAccountId}
+            options={[
+              { value: 'all', label: countLabel('All accounts', totalCount), title: 'Every account' },
+              ...accountIds.map(id => ({
+                value: id,
+                label: countLabel(id, accountCounts[id] ?? 0),
+                title: 'Cash events happen in an account even when it holds no positions',
+              })),
+            ]}
+          />
         </div>
 
         <div className={transferPayUi.chipRow}>

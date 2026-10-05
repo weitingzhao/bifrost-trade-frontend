@@ -32,13 +32,6 @@ export const transferPayUi = {
   chipRow: 'flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2',
   chipRowLabel: ledgerFilterLabelClass,
   chipGroup: 'flex flex-wrap gap-1',
-  chip: cn(
-    'inline-flex h-6 items-center gap-1.5 border px-2 mat-tag',
-    'text-xs font-semibold transition-colors',
-  ),
-  chipOn: 'border-primary/55 bg-primary/[0.12] text-primary',
-  chipOff: 'bg-[var(--mat-btn-fill)] text-muted-foreground hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
-  chipCount: 'font-mono text-dense-meta font-normal opacity-80',
   // Rev .154 `.tp-q`: an ink 8% fill, no frame; 14% and accent ink under the pointer.
   iconToggle: cn(
     'inline-flex h-5 w-5 items-center justify-center rounded-full border border-transparent',

@@ -37,8 +37,11 @@ import type {
   EventQueryResponse,
   FillConfig,
 } from '@/api/research/backtestEvent'
+import { INDICATOR_SIGNALS, type IndicatorSignalId } from '@/api/research/indicators'
 
-const EVENT_KIND_OPTIONS: { value: Exclude<EventKind, 'sql'>; label: string; hint: string }[] = [
+type BuilderKind = Exclude<EventKind, 'sql' | 'schedule'>
+
+const EVENT_KIND_OPTIONS: { value: BuilderKind; label: string; hint: string }[] = [
   { value: 'earnings', label: 'Earnings', hint: 'Corp actions · event_radar · stub fallback' },
   { value: 'opex', label: 'OpEx (3rd Fri)', hint: 'Third Friday over lookback window' },
   { value: 'sepa_hit', label: 'SEPA hit', hint: 'features.stock_signal_sepa_daily ≥ threshold' },
@@ -46,6 +49,11 @@ const EVENT_KIND_OPTIONS: { value: Exclude<EventKind, 'sql'>; label: string; hin
     value: 'iv_percentile_threshold',
     label: 'IV percentile',
     hint: 'features.option_metric_iv_percentile crossing',
+  },
+  {
+    value: 'indicator_signal',
+    label: 'Indicator signal',
+    hint: 'MACD / RSI / Bollinger / EMA crossing on daily closes',
   },
 ]
 
@@ -88,7 +96,7 @@ export function EventQueryBuilder({
   initialHypothesisId,
   defaultSymbols,
 }: EventQueryBuilderProps) {
-  const [kind, setKind] = useState<Exclude<EventKind, 'sql'>>('earnings')
+  const [kind, setKind] = useState<BuilderKind>('earnings')
   const [symbolsStr, setSymbolsStr] = useState(
     (defaultSymbols ?? ['NVDA', 'AAPL', 'AMZN', 'MSFT']).join(', '),
   )
@@ -99,6 +107,7 @@ export function EventQueryBuilder({
   const [sepaMinScore, setSepaMinScore] = useState(70)
   const [ivThreshold, setIvThreshold] = useState(0.8)
   const [ivDirection, setIvDirection] = useState<'above' | 'below'>('above')
+  const [signalId, setSignalId] = useState<IndicatorSignalId>('macd_cross_up')
   const [fillOpen, setFillOpen] = useState(false)
   const [fill, setFill] = useState<FillConfig>(DEFAULT_FILL)
   const [walkForward, setWalkForward] = useState(false)
@@ -127,6 +136,8 @@ export function EventQueryBuilder({
     } else if (kind === 'iv_percentile_threshold') {
       params.threshold = ivThreshold
       params.direction = ivDirection
+    } else if (kind === 'indicator_signal') {
+      params.signal = signalId
     }
     return {
       event_def: { kind, params },
@@ -167,7 +178,11 @@ export function EventQueryBuilder({
             <Label className="text-dense-meta font-semibold text-muted-foreground">
               Event kind
             </Label>
-            <Select value={kind} onValueChange={(v) => setKind(v as Exclude<EventKind, 'sql'>)}>
+            <Select value={kind} onValueChange={(v) => {
+              setKind(v as BuilderKind)
+              // A crossing is only known at its close: entering before it would be look-ahead.
+              if (v === 'indicator_signal' && entryOffset < 0) setEntryOffset(1)
+            }}>
               <SelectTrigger className="h-8 text-dense-body">
                 <SelectValue />
               </SelectTrigger>
@@ -282,6 +297,26 @@ export function EventQueryBuilder({
             />
           </div>
         </div>
+
+        {kind === 'indicator_signal' && (
+          <div className="space-y-1">
+            <Label className="text-dense-meta font-semibold text-muted-foreground">
+              Signal (default parameters; fires on the crossing session&apos;s close)
+            </Label>
+            <Select value={signalId} onValueChange={(v) => setSignalId(v as IndicatorSignalId)}>
+              <SelectTrigger className="h-8 w-72 text-dense-body" aria-label="Indicator signal">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INDICATOR_SIGNALS.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {kind === 'sepa_hit' && (
           <div className="space-y-1">

@@ -20,6 +20,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchBars } from '@/api/market'
 import { fetchOpexCurrent } from '@/api/research/opexCycle'
+import {
+  INDICATOR_SIGNALS,
+  fetchIndicatorSeries,
+  indicatorSignal,
+  type IndicatorSignalId,
+} from '@/api/research/indicators'
 import { SectionPanel } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import {
@@ -102,6 +108,18 @@ export function SymbolPriceChart({
   const [others, setOthers] = usePersistedChoice<'dim' | 'hide'>('bifrost.chart.others', 'dim', ['dim', 'hide'])
   const [tradesOn, setTradesOn] = useState(true)
   const [hover, setHover] = useState<string | null>(null)
+  // Technicals and signal marks come from Research (computed with full warm-up),
+  // the same series the simulator and Signal decay evaluate.
+  const [techs, setTechs] = useState<{ bb: boolean; macd: boolean; rsi: boolean }>({
+    bb: false,
+    macd: false,
+    rsi: false,
+  })
+  const [sigId, setSigId] = usePersistedChoice<IndicatorSignalId | ''>(
+    'bifrost.chart.signal',
+    '',
+    ['', ...INDICATOR_SIGNALS.map((x) => x.id)]
+  )
 
   const barsQ = useQuery({
     queryKey: ['market', 'bars', sym, '1 D', HISTORY_LIMIT],
@@ -127,6 +145,19 @@ export function SymbolPriceChart({
   }, [barsQ.data])
   const dates = useMemo(() => daily.map((b) => barIsoDate(b.time as number)), [daily])
   const total = daily.length
+
+  const wantIndicators = !isMini && (techs.bb || techs.macd || techs.rsi || sigId !== '')
+  const indQ = useQuery({
+    queryKey: ['research-engine', 'indicators', 'series', sym, dates[0] ?? '', sigId],
+    queryFn: () =>
+      fetchIndicatorSeries({ symbol: sym, start: dates[0], signals: sigId ? [sigId] : [] }),
+    enabled: Boolean(sym) && wantIndicators && dates.length > 0,
+    staleTime: 10 * 60_000,
+  })
+  const indByDate = useMemo(
+    () => new Map((indQ.data?.bars ?? []).map((b) => [b.date, b])),
+    [indQ.data]
+  )
 
   // An instance's page opens on its whole life, a little either side.
   const focusStart = useMemo(() => {
@@ -156,6 +187,34 @@ export function SymbolPriceChart({
     () => aggregateBars(daily.slice(winStart, winEnd), agg),
     [daily, winStart, winEnd, agg]
   )
+  // Daily indicator values only line up with daily candles; weekly candles keep the chart's own.
+  const indicatorSeries = useMemo(() => {
+    if (agg !== 1 || indByDate.size === 0) return undefined
+    const rows = dates.slice(winStart, winEnd).map((d) => indByDate.get(d))
+    return {
+      rsi: rows.map((r) => r?.rsi ?? null),
+      macd: rows.map((r) =>
+        r && r.macd != null && r.macd_signal != null
+          ? { macd: r.macd, signal: r.macd_signal, hist: r.macd_hist }
+          : { macd: null, signal: null, hist: null }
+      ),
+      bollinger: rows.map((r) => ({
+        mid: r?.bb_mid ?? null,
+        upper: r?.bb_upper ?? null,
+        lower: r?.bb_lower ?? null,
+      })),
+    }
+  }, [agg, indByDate, dates, winStart, winEnd])
+  // Signal sessions inside the window, as candle indexes (a weekly candle takes its week's).
+  const signalMarks = useMemo(() => {
+    const rem = (winEnd - winStart) % agg
+    const lead = rem === 0 ? 0 : agg - rem
+    return (indQ.data?.markers ?? []).flatMap((m) => {
+      const idx = sessionIndexFor(dates, m.date)
+      if (idx == null || dates[idx] !== m.date || idx < winStart || idx >= winEnd) return []
+      return [{ ...m, at: Math.floor((idx - winStart + lead) / agg) }]
+    })
+  }, [indQ.data, dates, winStart, winEnd, agg])
 
   const readings = (id: string) =>
     (exQ.data?.find((e) => e.lens === id || e.lens_id === id)?.readings ?? {}) as Record<
@@ -309,6 +368,23 @@ export function SymbolPriceChart({
       <g
         data-price-scale={`${ctx.yForPrice(0)},${ctx.yForPrice(0) - ctx.yForPrice(1)},${ctx.paddingTop},${ctx.paddingTop + ctx.priceHeight}`}
       />
+      {signalMarks.map((m) => {
+        const x = ctx.xForIndex(m.at)
+        const y = ctx.yForPrice(m.close)
+        const up = m.direction === 'up'
+        const tip = up ? y + 14 : y - 14
+        const base = up ? tip + 7 : tip - 7
+        return (
+          <path
+            key={`${m.signal}-${m.date}`}
+            d={`M${x},${tip} L${x - 4.5},${base} L${x + 4.5},${base} Z`}
+            fill={up ? 'var(--color-profit)' : 'var(--color-loss)'}
+            opacity={0.9}
+          >
+            <title>{`${m.date} · ${m.label} · close ${m.close.toFixed(2)}`}</title>
+          </path>
+        )
+      })}
       {tradesOn && (shown.length > 0 || holding) ? (
         <SymbolTradeOverlay
           ctx={ctx}
@@ -422,6 +498,10 @@ export function SymbolPriceChart({
             : undefined
         }
         renderPriceOverlay={renderTrades}
+        showBollinger={!isMini && techs.bb}
+        showMacd={!isMini && techs.macd}
+        showRsi={!isMini && techs.rsi}
+        indicatorSeries={indicatorSeries}
       />
     </SymbolChartPointer>
   )
@@ -491,7 +571,15 @@ export function SymbolPriceChart({
           </span>
         </span>
       }
-      note="levels from this page — no technicals"
+      note={
+        wantIndicators
+          ? indQ.isError
+            ? 'technicals: Research unreachable — the chart computes its own'
+            : sigId
+              ? `${signalMarks.length} ${indicatorSignal(sigId)?.label ?? sigId} in view`
+              : 'technicals from Research'
+          : 'levels from this page'
+      }
       action={
         <span className="inline-flex items-center gap-2">
           <SegmentControl
@@ -527,6 +615,42 @@ export function SymbolPriceChart({
               trades · {tracks.length}
             </button>
           ) : null}
+          {(['bb', 'macd', 'rsi'] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setTechs((t) => ({ ...t, [k]: !t[k] }))}
+              title={
+                k === 'bb'
+                  ? 'Bollinger 20 · 2σ'
+                  : k === 'macd'
+                    ? 'MACD 12 · 26 · 9'
+                    : 'RSI 14'
+              }
+              className={cn(
+                'inline-flex h-5 items-center rounded-full border px-1.5 font-mono text-dense-micro uppercase',
+                techs[k]
+                  ? 'border-[var(--sk-accent)] text-foreground'
+                  : 'border-border text-muted-foreground',
+              )}
+            >
+              {k}
+            </button>
+          ))}
+          <select
+            aria-label="Mark signal"
+            value={sigId}
+            onChange={(e) => setSigId(e.target.value as IndicatorSignalId | '')}
+            title="Mark the sessions a signal fired — the same signal the simulator can enter on"
+            className="h-5 rounded-full border border-border bg-transparent px-1.5 font-mono text-dense-micro text-muted-foreground"
+          >
+            <option value="">signals: off</option>
+            {INDICATOR_SIGNALS.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.label}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={() => navigate(withSymbolParam('/research/stocks?model=sepa', sym))}

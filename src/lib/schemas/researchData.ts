@@ -356,3 +356,25 @@ export const RiskCorrelationResponseSchema = z
     matrix: z.record(z.string(), z.record(z.string(), z.object({ rho: z.number().nullable(), n: z.number() }).passthrough())),
   })
   .passthrough()
+
+/** `GET /research/indicators/series` (research 0.172.0, W6). */
+export const IndicatorSeriesSchema = z
+  .object({
+    symbol: z.string(),
+    bars: z.array(
+      z.object({ date: z.string(), close: z.number(), rsi: z.number().nullable() }).passthrough()
+    ),
+    markers: z.array(
+      z.object({ date: z.string(), signal: z.string(), direction: z.enum(['up', 'down']), close: z.number() }).passthrough()
+    ),
+  })
+  .passthrough()
+
+/** `GET /research/indicators/signal-stats` (research 0.172.0, W6). */
+export const SignalStatsSchema = z
+  .object({
+    signals: z.number(),
+    sample_note: z.string(),
+    by_horizon: z.record(z.string(), z.object({ win_rate_edge: z.number().nullable() }).passthrough()),
+  })
+  .passthrough()

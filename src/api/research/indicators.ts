@@ -9,6 +9,8 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson } from '@/lib/http'
+import { withValidation } from '@/lib/apiValidation'
+import { IndicatorSeriesSchema, SignalStatsSchema } from '@/lib/schemas/researchData'
 
 export type IndicatorSignalId =
   | 'macd_cross_up'
@@ -71,6 +73,15 @@ export function signalShortLabel(id: string, params?: Record<string, unknown>): 
   return [`${head} ${arrow}`, ...changed].join(' · ')
 }
 
+const validateSeries = withValidation<IndicatorSeriesResponse>(
+  IndicatorSeriesSchema,
+  'research/indicators/series'
+)
+const validateStats = withValidation<SignalStatsResponse>(
+  SignalStatsSchema,
+  'research/indicators/signal-stats'
+)
+
 export interface IndicatorBar {
   date: string
   open: number | null
@@ -116,9 +127,11 @@ export async function fetchIndicatorSeries(params: {
   if (params.start) q.set('start', params.start)
   if (params.end) q.set('end', params.end)
   if (params.signals?.length) q.set('signals', params.signals.join(','))
-  return requestJson<IndicatorSeriesResponse>(
-    `${researchEngineUrl('/research/indicators/series')}?${q}`,
-    { envelope: 'research', label: 'Indicator series API' }
+  return validateSeries(
+    await requestJson<IndicatorSeriesResponse>(
+      `${researchEngineUrl('/research/indicators/series')}?${q}`,
+      { envelope: 'research', label: 'Indicator series API' }
+    )
   )
 }
 
@@ -158,8 +171,10 @@ export async function fetchSignalStats(params: {
   if (params.end) q.set('end', params.end)
   if (params.horizons?.length) q.set('horizons', params.horizons.join(','))
   if (params.moveThreshold != null) q.set('move_threshold', String(params.moveThreshold))
-  return requestJson<SignalStatsResponse>(
-    `${researchEngineUrl('/research/indicators/signal-stats')}?${q}`,
-    { envelope: 'research', label: 'Indicator signal stats API' }
+  return validateStats(
+    await requestJson<SignalStatsResponse>(
+      `${researchEngineUrl('/research/indicators/signal-stats')}?${q}`,
+      { envelope: 'research', label: 'Indicator signal stats API' }
+    )
   )
 }

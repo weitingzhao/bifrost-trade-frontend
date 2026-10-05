@@ -29,7 +29,8 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { etDate, etStamp } from '@/lib/freshness'
 import { SCREEN_DELTA_BAND } from '@/lib/screenBand'
 import type { ScreenerContractRow, ScreenerResponse, ScreenerSymbolGroup } from '@/types/research'
-import { spansEarnings, type EarningsReading } from './screenerEarnings'
+import { spansEarnings } from './screenerEarnings'
+import type { EarningsReading } from '@/utils/earningsReading'
 
 /** The design's six sliders, in its units: days, percent, dollars. */
 export interface LiveFilters {

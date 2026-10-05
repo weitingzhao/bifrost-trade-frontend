@@ -14,41 +14,7 @@
  * rule: a contract spans earnings when the expected print falls on or before
  * its expiry.
  */
-import type { EarningsDates } from '@/api/research/narrative'
-
-export interface NameEarnings {
-  /** Calendar days to the expected print (New York); below zero, the print is late. */
-  daysAway: number
-  /** ISO date of the expected print. */
-  date: string
-  /** How the rule has done on this name's own prints. */
-  track: { n: number; medianMissDays: number | null; maxMissDays: number | null }
-  /** The newest results release on file, ISO; null when none. */
-  lastResult: string | null
-}
-
-/** What the store says about a name's next print: a date, or why there is none. */
-export type EarningsReading =
-  | { kind: 'expected'; next: NameEarnings }
-  | { kind: 'none'; reason: string }
-
-export function readEarnings(d: EarningsDates | null | undefined): EarningsReading {
-  if (!d) return { kind: 'none', reason: 'no earnings reading' }
-  const n = d.expected_next
-  if (n && Number.isFinite(n.days_away)) {
-    return {
-      kind: 'expected',
-      next: {
-        daysAway: n.days_away,
-        date: n.date,
-        track: { n: n.track.n, medianMissDays: n.track.median_miss_days, maxMissDays: n.track.max_miss_days },
-        lastResult: d.dates.length > 0 ? d.dates[d.dates.length - 1] : null,
-      },
-    }
-  }
-  if (d.filings === 0) return { kind: 'none', reason: 'no 8-K on file — the filings feed never carried this name' }
-  return { kind: 'none', reason: 'no quarterly cadence to estimate the next print from' }
-}
+import type { EarningsReading } from '@/utils/earningsReading'
 
 /**
  * The prototype's rule: a contract spans earnings when the print falls on or

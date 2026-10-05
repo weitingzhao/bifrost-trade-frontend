@@ -18,7 +18,7 @@ import {
   spreadMeasured,
   TOP_PER_NAME,
 } from './screenerModel'
-import type { EarningsReading } from './screenerEarnings'
+import type { EarningsReading } from '@/utils/earningsReading'
 
 // Invented contracts — none of these is a real quote.
 function row(p: Partial<ScreenerContractRow>): ScreenerContractRow {
@@ -411,7 +411,7 @@ describe('earnings, filtered against the expected print', () => {
   })
 
   it('excludes nothing for a name with no date, and nothing while the read is in flight', () => {
-    const none: EarningsReading = { kind: 'none', reason: 'no 8-K on file' }
+    const none: EarningsReading = { kind: 'none', reason: 'no 8-K on file', absence: { code: 'no_filings', text: 'no 8-K on file' } }
     const [g1] = buildScreenGroups([group('ABC', [after])], f, 'grouped', {}, [], {}, { earnings: { ABC: none }, include: false })
     const [g2] = buildScreenGroups([group('ABC', [after])], f, 'grouped', {}, [], {}, { earnings: {}, include: false })
     expect(g1.rows).toHaveLength(1)

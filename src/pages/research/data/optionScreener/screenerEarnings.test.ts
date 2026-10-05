@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EarningsDates } from '@/api/research/narrative'
-import { earningsLabel, readEarnings, spansEarnings } from './screenerEarnings'
+import { earningsLabel, spansEarnings } from './screenerEarnings'
+import { readEarnings } from '@/utils/earningsReading'
 
 // Invented readings — no real name's calendar.
 function dates(p: Partial<EarningsDates>): EarningsDates {

@@ -50,7 +50,7 @@ import {
   type ScreenView,
 } from './screenerModel'
 import { useScreenerChain } from './useScreenerChain'
-import { useScreenerEarnings } from './useScreenerEarnings'
+import { useNamesEarnings } from '@/hooks/useNamesEarnings'
 import { useScreenerSources, type ScreenerSource } from './useScreenerSources'
 
 interface Saved {
@@ -115,7 +115,7 @@ export default function OptionScreenerPage() {
   const structures = useStructures()
   const structureOn = STRUCTURE_TYPES.some((s) => s.value === structure && s.enabled)
   const chain = useScreenerChain({ symbols, structure, enabled: structureOn })
-  const earnings = useScreenerEarnings(symbols)
+  const earnings = useNamesEarnings(symbols)
   const data = chain.data
 
   const failed = useMemo(() => {

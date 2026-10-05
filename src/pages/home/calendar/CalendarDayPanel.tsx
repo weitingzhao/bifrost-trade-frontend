@@ -16,8 +16,8 @@ import { CALENDAR_LAYERS, LAYER_GROUPS, LAYER_BY_ID, dayGroups, journalDayHref, 
 import { CalendarPnlFigure } from './CalendarViews'
 import { calendarInkClass, textBesideSymbol } from './calendarUi'
 
-const CAP = 'text-[11px] font-semibold whitespace-nowrap text-[var(--sk-mute)]'
-const LINK = 'text-[11px] whitespace-nowrap text-[var(--sk-accent)] hover:text-[var(--sk-accent2)]'
+const CAP = 'text-dense-meta font-semibold whitespace-nowrap text-[var(--sk-mute)]'
+const LINK = 'text-dense-meta whitespace-nowrap text-[var(--sk-accent)] hover:text-[var(--sk-accent2)]'
 const RULE = 'border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)]'
 
 export interface CalendarDayPanelProps {
@@ -55,7 +55,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
         meta={<span className={p.day === p.today ? 'text-[var(--sk-accent)]' : undefined}>{rel}</span>}
         className="-mx-3 -mt-3"
       />
-      {p.holiday ? <div className="text-[12px] text-[var(--sk-mute)]">{p.holiday.label}</div> : null}
+      {p.holiday ? <div className="text-dense-label text-[var(--sk-mute)]">{p.holiday.label}</div> : null}
 
       {p.pnl ? (
         <div className="flex flex-col gap-1">
@@ -63,7 +63,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
             <span className={CAP} title="Broker-realized P&L on the day — what Performance prints as R, summed over its four tabs">
               Realized P&amp;L
             </span>
-            <CalendarPnlFigure value={p.pnl.realized} className="text-[18px] font-bold" />
+            <CalendarPnlFigure value={p.pnl.realized} className="text-lg font-bold" />
             <Link
               to="/portfolio/performance"
               className={cn(LINK, 'ml-auto')}
@@ -73,7 +73,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
             </Link>
           </div>
           {Math.abs(p.pnl.optionsUnrealized) >= 0.005 ? (
-            <div className="text-[11px] text-[var(--sk-mute)]">
+            <div className="text-dense-meta text-[var(--sk-mute)]">
               Options U <span className="font-mono text-unrealized">{fmtSignedUsd0(p.pnl.optionsUnrealized)}</span> — the
               day’s unmatched premium, a path figure; never added to R.
             </div>
@@ -85,7 +85,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
         <div key={g.layer.id} className="flex min-w-0 flex-col gap-1.5">
           <div className="flex items-baseline gap-2">
             <span className={CAP}>{g.layer.label}</span>
-            <span className="font-mono text-[11px] text-[var(--sk-mute)]">{g.items.length}</span>
+            <span className="font-mono text-dense-meta text-[var(--sk-mute)]">{g.items.length}</span>
             <Link to={ownerHref(g.layer.id)} className={cn(LINK, 'ml-auto')}>
               {g.layer.owner} →
             </Link>
@@ -98,12 +98,12 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
                   key={i.key}
                   onClick={(e) => p.onOpen(i, e as MouseEvent)}
                   title={`Open in ${LAYER_BY_ID[i.layer].owner}`}
-                  className="flex min-w-0 items-baseline gap-2 py-[3px] text-[12px]"
+                  className="flex min-w-0 items-baseline gap-2 py-[3px] text-dense-label"
                 >
                   {sym ? (
                     <button
                       type="button"
-                      className="flex-none cursor-pointer border-0 bg-transparent p-0 font-mono text-[11px] font-bold text-entity-symbol hover:underline"
+                      className="flex-none cursor-pointer border-0 bg-transparent p-0 font-mono text-dense-meta font-bold text-entity-symbol hover:underline"
                       title={`Open ${sym} beside`}
                       onClick={(e) => {
                         e.stopPropagation()
@@ -125,7 +125,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
                     {sym ? (
                       <button
                         type="button"
-                        className="h-[18px] cursor-pointer rounded-full border-0 bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-[7px] text-[10px] text-[var(--sk-mute2)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_13%,transparent)] hover:text-foreground"
+                        className="h-[18px] cursor-pointer rounded-full border-0 bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] px-[7px] text-dense-caption text-[var(--sk-mute2)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_13%,transparent)] hover:text-foreground"
                         title={`Scope to ${sym} — the top bar carries it to other pages`}
                         aria-label={`Scope to ${sym}`}
                         onClick={(e) => {
@@ -136,7 +136,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
                         Only
                       </button>
                     ) : null}
-                    <span aria-hidden className="text-[11px] text-[var(--sk-accent)]">
+                    <span aria-hidden className="text-dense-meta text-[var(--sk-accent)]">
                       →
                     </span>
                   </span>
@@ -149,7 +149,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
 
       {empty ? (
         <div className="flex flex-col gap-2">
-          <div className="text-[12px] leading-normal text-[var(--sk-mute)]">
+          <div className="text-dense-label leading-normal text-[var(--sk-mute)]">
             {p.hidden > 0
               ? `Nothing on the visible layers. ${p.hidden} item${p.hidden === 1 ? '' : 's'} on hidden layers.`
               : p.holiday?.kind === 'closed'
@@ -157,7 +157,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
                 : 'Nothing dated on this day.'}
           </div>
           {p.hidden > 0 ? (
-            <button type="button" className="self-start mat-btn h-6 px-2.5 text-[12px]" onClick={p.onShowAll}>
+            <button type="button" className="self-start mat-btn h-6 px-2.5 text-dense-label" onClick={p.onShowAll}>
               Show all layers
             </button>
           ) : null}
@@ -167,7 +167,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
       {happened ? (
         <Link
           to={journalDayHref(p.day)}
-          className={cn(LINK, RULE, 'block w-full pt-1 text-left text-[12px]')}
+          className={cn(LINK, RULE, 'block w-full pt-1 text-left text-dense-label')}
           title="The whole trail of the day: notes, fills, threads, visits, artifacts, decisions"
         >
           Open the day in Journal →
@@ -181,12 +181,12 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
           const owners = g.ids.map((id) => LAYER_BY_ID[id]).filter((l) => (seen.has(l.owner) ? false : (seen.add(l.owner), true)))
           return (
             <div key={g.label} className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-              <span className="basis-full text-[10px] font-semibold text-[var(--sk-mute)]">{g.label}</span>
+              <span className="basis-full text-dense-caption font-semibold text-[var(--sk-mute)]">{g.label}</span>
               {owners.map((l) => (
                 <Link
                   key={l.owner}
                   to={l.owner === 'Journal' && happened ? journalDayHref(p.day) : l.to}
-                  className={cn(LINK, 'text-[12px]')}
+                  className={cn(LINK, 'text-dense-label')}
                   title={`Open ${l.owner} · ${CALENDAR_LAYERS.filter((x) => x.owner === l.owner)
                     .map((x) => x.label)
                     .join(' · ')}`}

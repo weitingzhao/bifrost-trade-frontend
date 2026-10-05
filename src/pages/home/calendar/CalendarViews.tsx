@@ -21,7 +21,7 @@ export function CalendarPnlFigure({ value, className }: { value: number; classNa
   )
 }
 
-const LINE = 'block min-w-0 truncate text-[11px] leading-4'
+const LINE = 'block min-w-0 truncate text-dense-meta leading-4'
 
 /** A month cell's body: the lines up to the cap, then `+N more`. */
 export function MonthCellBody({ lines, cap }: { lines: readonly CellLine[]; cap: number }) {
@@ -44,12 +44,12 @@ export function WeekCellBody({ items }: { items: readonly CalendarItem[] }) {
     <div className="flex min-w-0 flex-col gap-2 pt-1">
       {dayGroups(items).map((g) => (
         <div key={g.layer.id} className="flex min-w-0 flex-col gap-[3px]">
-          <span className="text-[10px] font-semibold whitespace-nowrap text-[var(--sk-mute)]">{g.layer.label}</span>
+          <span className="text-dense-caption font-semibold whitespace-nowrap text-[var(--sk-mute)]">{g.layer.label}</span>
           {g.items.map((i) => (
             <span
               key={i.key}
               className={cn(
-                'text-[11px] leading-[1.4] text-pretty',
+                'text-dense-meta leading-[1.4] text-pretty',
                 g.layer.tense === 'future' ? calendarInkClass(i.ink) : 'text-[var(--sk-soft)]',
               )}
             >
@@ -106,26 +106,26 @@ export function CalendarListView({
             <div className="flex flex-col gap-px">
               <span
                 className={cn(
-                  'text-[12px] font-semibold',
+                  'text-dense-label font-semibold',
                   day.d === today ? 'text-[var(--sk-accent)]' : day.d < today ? 'text-[var(--sk-mute2)]' : 'text-foreground',
                 )}
               >
                 {formatDayLabel(day.d)}
               </span>
-              <span className="text-[10px] text-[var(--sk-mute)]">{formatRelativeDays(day.d, today)}</span>
+              <span className="text-dense-caption text-[var(--sk-mute)]">{formatRelativeDays(day.d, today)}</span>
             </div>
             <div className="flex min-w-0 flex-col gap-[3px]">
               {day.items.map((i) => (
                 <div
                   key={i.key}
-                  className="grid min-w-0 cursor-pointer grid-cols-[116px_minmax(0,1fr)] gap-2 rounded-lg px-1.5 py-[3px] text-[12px] hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]"
+                  className="grid min-w-0 cursor-pointer grid-cols-[116px_minmax(0,1fr)] gap-2 rounded-lg px-1.5 py-[3px] text-dense-label hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]"
                   onClick={(e) => {
                     e.stopPropagation()
                     onOpen(i, e)
                   }}
                   title={`Open in ${LAYER_BY_ID[i.layer].owner}`}
                 >
-                  <span className="text-[11px] font-medium whitespace-nowrap text-[var(--sk-mute)]">
+                  <span className="text-dense-meta font-medium whitespace-nowrap text-[var(--sk-mute)]">
                     {LAYER_BY_ID[i.layer].label}
                   </span>
                   <span
@@ -139,7 +139,7 @@ export function CalendarListView({
                 </div>
               ))}
             </div>
-            <span className="text-[12px] font-semibold">
+            <span className="text-dense-label font-semibold">
               {day.pnl != null ? <CalendarPnlFigure value={day.pnl} /> : null}
             </span>
           </DenseListRow>

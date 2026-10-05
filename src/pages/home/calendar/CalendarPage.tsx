@@ -285,26 +285,26 @@ export default function CalendarPage() {
       </div>
 
       {sym ? (
-        <div className="flex flex-wrap items-baseline gap-2 text-[11px] text-[var(--sk-mute)]">
+        <div className="flex flex-wrap items-baseline gap-2 text-dense-meta text-[var(--sk-mute)]">
           <span>
             Scoped to <span className="font-mono font-bold text-entity-symbol">{sym}</span> from the top bar. P&amp;L is
             book-level and hides; macro events and OPEX stay, since they reach every name.
           </span>
-          <button type="button" className="cursor-pointer border-0 bg-transparent p-0 text-[11px] text-[var(--sk-accent)]" onClick={clearSymbol}>
+          <button type="button" className="cursor-pointer border-0 bg-transparent p-0 text-dense-meta text-[var(--sk-accent)]" onClick={clearSymbol}>
             Clear
           </button>
         </div>
       ) : null}
 
       {signedOut.length > 0 || layerNotes.length > 0 ? (
-        <div className="flex flex-col gap-1 text-[11px] leading-normal text-[var(--sk-mute)]" data-testid="calendar-layer-notes">
+        <div className="flex flex-col gap-1 text-dense-meta leading-normal text-[var(--sk-mute)]" data-testid="calendar-layer-notes">
           {signedOut.length > 0 ? (
             <div className="flex flex-wrap items-baseline gap-2">
               <span>
                 {signedOut.map((l) => l.label).join(' · ')} not read — {signedOutWords.split(' — ')[0]}. The layers are
                 unread, not empty.
               </span>
-              <button type="button" className="cursor-pointer border-0 bg-transparent p-0 text-[11px] text-[var(--sk-accent)]" onClick={() => setAuthOpen(true)}>
+              <button type="button" className="cursor-pointer border-0 bg-transparent p-0 text-dense-meta text-[var(--sk-accent)]" onClick={() => setAuthOpen(true)}>
                 Set user
               </button>
               <ResearchUserSwitcher showTrigger={false} open={authOpen} onOpenChange={setAuthOpen} />
@@ -355,7 +355,7 @@ export default function CalendarPage() {
                 cellLabel={cellLabel}
               />
               {view === 'month' ? (
-                <div className="text-[11px] text-[var(--sk-mute)]">
+                <div className="text-dense-meta text-[var(--sk-mute)]">
                   {weekendShown
                     ? 'Weekdays, and the weekend days that hold something (or today).'
                     : 'Weekdays only. Nothing on the visible layers is dated on a weekend this month.'}

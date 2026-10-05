@@ -14,6 +14,7 @@
  * with no short legs report no cushion rather than a reassuring one.
  */
 import { daysUntilExpiry } from './positions'
+import { bucketByExpiry } from './bookCalendar'
 
 export interface OptionLegLike {
   strike: number
@@ -228,16 +229,10 @@ export function buildExpiryLadder(
   legs: readonly LadderLeg[],
   spotOf: (leg: LadderLeg) => number | null,
 ): ExpiryLadderRow[] {
-  const byExpiry = new Map<string, LadderLeg[]>()
-  for (const leg of legs) {
-    if (daysUntilExpiry(leg.expiry) == null) continue
-    const bucket = byExpiry.get(leg.expiry)
-    if (bucket) bucket.push(leg)
-    else byExpiry.set(leg.expiry, [leg])
-  }
-
   const rows: ExpiryLadderRow[] = []
-  for (const [expiry, bucket] of byExpiry) {
+  // One grouping rule for every expiry reader (§14.2); it drops a leg whose
+  // expiry cannot be placed in time, as this ladder always did.
+  for (const { expiry, items: bucket } of bucketByExpiry(legs, (leg) => leg.expiry)) {
     const symbols = new Set<string>()
     const trades = new Set<string>()
     let shortContracts = 0
@@ -276,7 +271,7 @@ export function buildExpiryLadder(
     })
   }
 
-  return rows.sort((a, b) => a.expiry.localeCompare(b.expiry))
+  return rows
 }
 
 

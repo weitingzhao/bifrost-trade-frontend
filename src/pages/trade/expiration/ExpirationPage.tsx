@@ -48,13 +48,11 @@ import {
   DECISION_OPTIONS,
   EXPIRATION_NEAR_DAYS,
   EXPIRATION_UNRECORDED,
-  buildExpiryLegs,
   decisionEffect,
-  groupByExpiry,
   settleImpact,
-  type ExpiryLeg,
   type LegDecision,
 } from './expirationModel'
+import { buildExpiryLegs, groupByExpiry, type ExpiryLeg } from '@/utils/expiryLegs'
 
 const PAGE_LEAD =
   'What expires next, what each leg is worth if it does, and what closing it would cost. A decision is written in Trade Plans; this page carries the leg there.'

@@ -27,15 +27,51 @@ export function isoDaysFrom(todayIso: string, n: number): string {
 }
 
 /** `20261016` / `2026-10-16` → `2026-10-16`; anything shorter is unusable. */
+export function isoOfExpiry(raw: string | null | undefined): string | null {
+  const d = String(raw ?? '').replace(/\D/g, '')
+  if (d.length < 8) return null
+  return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
+}
+
+/** A position row's expiry as an ISO date, falling back to the contract key's date segment. */
 export function expiryIso(
   row: Pick<IbPositionRow, 'expiry' | 'lastTradeDateOrContractMonth' | 'contract_key'>,
 ): string | null {
-  const raw = String(row.expiry ?? row.lastTradeDateOrContractMonth ?? '')
-  const d = raw.replace(/\D/g, '')
-  if (d.length < 8) {
-    const seg = (row.contract_key ?? '').split('|').find((s) => /^\d{8}$/.test(s))
-    if (!seg) return null
-    return `${seg.slice(0, 4)}-${seg.slice(4, 6)}-${seg.slice(6, 8)}`
+  const direct = isoOfExpiry(String(row.expiry ?? row.lastTradeDateOrContractMonth ?? ''))
+  if (direct) return direct
+  const seg = (row.contract_key ?? '').split('|').find((s) => /^\d{8}$/.test(s))
+  return seg ? isoOfExpiry(seg) : null
+}
+
+/** One expiry date and what falls on it. */
+export interface ExpiryBucket<T> {
+  /** The expiry as the first item on the date reported it (`YYYYMMDD` or ISO) — callers key on their own format. */
+  expiry: string
+  /** The same date, ISO. */
+  iso: string
+  items: T[]
+}
+
+/**
+ * Items grouped by the day they expire, nearest first — the one grouping every
+ * page that reads the book by expiry uses (§14.2): Expiry's desk, the Events
+ * Book face's crossings, Positions' Expiries view and the Calendar's Expiries
+ * layer. Items with no readable expiry are left out: a row that cannot be
+ * placed in time would sit at one end of the list implying an urgency it has
+ * not earned. Within a date, items keep the order they came in.
+ */
+export function bucketByExpiry<T>(
+  items: readonly T[],
+  expiryOf: (item: T) => string | null | undefined,
+): ExpiryBucket<T>[] {
+  const by = new Map<string, ExpiryBucket<T>>()
+  for (const item of items) {
+    const raw = expiryOf(item)
+    const iso = isoOfExpiry(raw)
+    if (!raw || !iso) continue
+    const bucket = by.get(iso)
+    if (bucket) bucket.items.push(item)
+    else by.set(iso, { expiry: raw, iso, items: [item] })
   }
-  return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`
+  return [...by.values()].sort((a, b) => a.iso.localeCompare(b.iso))
 }

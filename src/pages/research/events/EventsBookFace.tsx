@@ -25,22 +25,11 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { symbolTabHref } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots } from '@/utils/optionChain'
-import { expiryIso, isoDaysFrom, opexDatesAround } from '@/utils/bookCalendar'
+import { isoDaysFrom, opexDatesAround } from '@/utils/bookCalendar'
+import { bookExposures, daysUntil, type ExposureRow } from './eventsBookModel'
 import { straddleMid } from '@/pages/research/analyze/symbol/symbolChainModel'
 
 const WINDOW_DAYS = 30
-
-function daysUntil(todayIso: string, dateIso: string): number {
-  return Math.round((Date.parse(dateIso) - Date.parse(todayIso)) / 86_400_000)
-}
-
-interface ExposureRow {
-  sym: string
-  expiry: string
-  inDays: number
-  isOpex: boolean
-  legs: string
-}
 
 const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
@@ -109,37 +98,14 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
   )
 
   // ── The book's own legs, grouped by name × expiry ──
-  const accounts = status.data?.portfolio?.accounts ?? []
+  const accounts = useMemo(() => status.data?.portfolio?.accounts ?? [], [status.data?.portfolio?.accounts])
   const spotOf = new Map<string, number>()
   for (const a of accounts)
     for (const p of a.positions ?? [])
       if ((p.secType ?? '').toUpperCase() === 'STK' && p.symbol && p.price != null)
         spotOf.set(p.symbol.toUpperCase(), Number(p.price))
 
-  const exposures: ExposureRow[] = useMemo(() => {
-    const byKey = new Map<string, { sym: string; expiry: string; legs: string[] }>()
-
-    for (const a of accounts)
-      for (const p of a.positions ?? []) {
-        if ((p.secType ?? '').toUpperCase() !== 'OPT' || !p.symbol || !p.position) continue
-        const exp = expiryIso(p)
-        if (!exp) continue
-        const key = `${p.symbol}|${exp}`
-        const cur = byKey.get(key) ?? { sym: p.symbol.toUpperCase(), expiry: exp, legs: [] }
-        const qty = Number(p.position)
-        cur.legs.push(`${qty > 0 ? '+' : '−'}${Math.abs(qty)} ${p.strike ?? ''}${p.right ?? ''}`)
-        byKey.set(key, cur)
-      }
-    return [...byKey.values()]
-      .map((g) => ({
-        sym: g.sym,
-        expiry: g.expiry,
-        inDays: daysUntil(today, g.expiry),
-        isOpex: opexDates.includes(g.expiry),
-        legs: g.legs.join(' · '),
-      }))
-      .sort((a, b) => a.inDays - b.inDays)
-  }, [accounts, opexDates, today])
+  const exposures: ExposureRow[] = useMemo(() => bookExposures(accounts, today, opexDates), [accounts, opexDates, today])
 
   const inWindow = exposures.filter((e) => e.inDays >= 0 && e.inDays <= WINDOW_DAYS)
   const nearestBeyond = exposures.find((e) => e.inDays > WINDOW_DAYS) ?? null

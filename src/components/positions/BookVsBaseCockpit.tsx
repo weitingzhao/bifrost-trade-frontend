@@ -161,8 +161,14 @@ export function BookVsBaseCockpit({
         </div>
       ) : null}
 
-      {/* flex-1: on a §16.5 band the panel is as tall as its row, and the two cells fill it. */}
-      <div className="grid flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,13.125rem),1fr))] gap-px rounded-b-[9px] bg-[var(--sk-line0)]">
+      {/* flex-1: on a §16.5 band the panel is as tall as its row, and the two cells fill it.
+          The cells sit on the panel's own fill, a hairline between them (Portfolio
+          Positions.dc.html L22 `.ps-ds > div + div`). They were raised wells over a
+          --sk-line0 grid showing through a 1px gap — under the frost the wells go
+          to ink 4% and the whole grid read as an opaque --sk-line0 block. The grid is
+          the cells' container: two columns from 2 × 13.125rem, a rule between them;
+          stacked, the rule runs across instead, where the gap line used to. */}
+      <div className="@container grid flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,13.125rem),1fr))]">
         <DemandSupplyCell
           name="Demand — what the options need"
           items={[
@@ -210,7 +216,7 @@ function DemandSupplyCell({
   explanationFor: (t: ExplainTopic, boxClass?: string) => ReactNode
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5 bg-[var(--sk-raised)] px-3 pt-2 pb-2.5 leading-normal first:rounded-bl-[9px] last:rounded-br-[9px]">
+    <div className="flex min-w-0 flex-col gap-1.5 px-3 pt-2 pb-2.5 leading-normal not-first:border-t @min-[26.25rem]:not-first:border-t-0 @min-[26.25rem]:not-first:border-l">
       <span className={positionsUi.cap}>{name}</span>
       {items.map((it) => (
         <div key={it.topic} className="flex min-w-0 flex-col gap-0.5">

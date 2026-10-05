@@ -2,7 +2,7 @@ import { fmtIsoDateToken, fmtUsd } from '@/lib/format'
 import type { Derivation, Variable } from '@/utils/derivation'
 import type { GrowthLayer, OptionsPnLMode } from '@/utils/ledger/equityGrowthChart'
 import type { OptionsModeBridgeSummary } from '@/utils/ledger/optionsModeBridge'
-import type { CalendarAssetTab } from './performanceCalendarModel'
+import type { CalendarAssetTab } from '@/utils/ledger/performanceDayCells'
 
 export type PerformanceTree = 'bridge' | 'equity' | 'calendar' | 'otf'
 

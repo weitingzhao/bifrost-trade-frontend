@@ -10,12 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { CloseButton, DenseTag, SegmentControl, type SegmentOption } from '@/components/data-display'
 import { CalendarSummaryPanel } from '@/pages/portfolio/performance/components/CalendarSummaryPanel'
 import { CalendarDayDetail } from '@/pages/portfolio/performance/components/CalendarDayDetail'
-import {
-  buildCalendarGrid,
-  CALENDAR_ASSET_TABS,
-  WEEKDAY_LABELS,
-  type CalendarAssetTab,
-} from './performanceCalendarModel'
+import { buildCalendarGrid, WEEKDAY_LABELS } from './performanceCalendarModel'
+import { CALENDAR_ASSET_TABS, type CalendarAssetTab } from '@/utils/ledger/performanceDayCells'
 import { CALENDAR_HELP } from './performanceConstants'
 import { fmtMoneyFull } from './performanceFormatters'
 import { buildDayStats, fmtCellMoney, type DayStat } from './performanceDayRecords'

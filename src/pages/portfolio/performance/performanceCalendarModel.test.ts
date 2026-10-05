@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { PerformanceResponse } from '@/types/trading'
-import { buildCalendarGrid, buildDayMapFromApi, WEEKDAY_LABELS } from './performanceCalendarModel'
+import { buildCalendarGrid, WEEKDAY_LABELS } from './performanceCalendarModel'
+import { buildDayMapFromApi } from '@/utils/ledger/performanceDayCells'
 
 describe('performanceCalendarModel', () => {
   it('uses Sun-first weekday labels (Legacy US calendar)', () => {

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { useOpportunities, useTrades } from '@/hooks/useStrategies'
-import { usePerformanceBulk } from '@/hooks/usePerformanceBulk'
+import { usePerformanceDayCells } from '@/hooks/usePerformanceDayCells'
 import { usePerformanceQuery } from '@/hooks/usePerformanceQuery'
 import {
   getTimeRangeDates,
@@ -37,12 +37,8 @@ import {
 } from '@/pages/portfolio/performance/performanceDerivations'
 import { DerivationBlock } from '@/components/positions/DerivationBlock'
 import { buildOptionsModeBridgeSummary } from '@/utils/ledger/optionsModeBridge'
-import {
-  buildCalendarGrid,
-  buildDayMapFromApi,
-  buildDayMapFromBulk,
-  type CalendarAssetTab,
-} from '@/pages/portfolio/performance/performanceCalendarModel'
+import { buildCalendarGrid } from '@/pages/portfolio/performance/performanceCalendarModel'
+import type { CalendarAssetTab } from '@/utils/ledger/performanceDayCells'
 
 const PAGE_LEAD =
   'Did the system make money — by layer, by month, by day. Deposits and withdrawals recorded in Transfer & Pay are not P&L.'
@@ -104,12 +100,17 @@ export default function PerformancePage() {
   const perf = perfQuery.data
   const summary = perf?.summary
 
-  const bulkQuery = usePerformanceBulk({
-    timeRange,
-    calendarMonth,
-    strategyOpportunityId: selectedOppId,
-    tradeId: selectedInstId,
-  })
+  // The calendar cells and everything else the bulk load feeds — one load,
+  // the same cells the Calendar's P&L layer quotes (§14.2).
+  const { query: bulkQuery, dayMapByTab } = usePerformanceDayCells(
+    {
+      timeRange,
+      calendarMonth,
+      strategyOpportunityId: selectedOppId,
+      tradeId: selectedInstId,
+    },
+    perf,
+  )
   const bulk = bulkQuery.data
 
   const { data: monitorStatus } = useMonitorStatus()
@@ -188,13 +189,6 @@ export default function PerformancePage() {
       growthUnit,
     })
   }, [bulk, monitorStatus, timeRange, calendarMonth, growthUnit])
-
-  const dayMapByTab = useMemo(() => {
-    if (bulk?.calendarDayPnLByAsset && bulk.calendarStkNotionalByBucket) {
-      return buildDayMapFromBulk(bulk.calendarDayPnLByAsset, bulk.calendarStkNotionalByBucket)
-    }
-    return buildDayMapFromApi(perf)
-  }, [bulk, perf])
 
   const activeDayMap = useMemo(
     () => dayMapByTab[calendarAssetTab],

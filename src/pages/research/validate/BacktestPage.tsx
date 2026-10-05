@@ -4,6 +4,10 @@
  * `Research Backtest.dc.html`, route rev 2026-09-22.6). Historical only —
  * nothing on this page places an order (D10).
  *
+ * The Simulator tab (research 0.170.0) replays one seller structure with daily
+ * management; its runs are the `sim:*` rows of the same table, so the Event
+ * tab leaves them out.
+ *
  * The Event tab is run-first: the persisted `research.backtest_run` rows are
  * the page's spine (newest first), a click opens the run's detail, and the
  * builder is behind ＋ New run rather than always open. The Settlement tab
@@ -34,6 +38,8 @@ import { EventQueryBuilder } from '@/components/research/EventQueryBuilder'
 import { BacktestRunResultCard } from '@/components/research/BacktestRunResultCard'
 import { cap, mono, panel, panelHead, td, th } from '@/components/research/labFaceUi'
 import { useBacktestRun, useBacktestRuns } from '@/hooks/useBacktestEventQuery'
+import { SimulatorTab } from './SimulatorTab'
+import { isSimRun } from './simRuns'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { settlementFineGrain } from '@/lib/researchSettlement'
 import { withSymbolParam } from '@/lib/symbolLink'
@@ -45,16 +51,18 @@ import type {
   EventQueryResponse,
 } from '@/api/research/backtestEvent'
 
-type TabKey = 'event' | 'settlement'
+type TabKey = 'event' | 'sim' | 'settlement'
 
 const TAB_OPTIONS: { value: TabKey; label: string }[] = [
   { value: 'event', label: 'Event backtest' },
+  { value: 'sim', label: 'Simulator' },
   { value: 'settlement', label: 'Settlement' },
 ]
 
 function normalizeTab(raw: string | null): TabKey {
   // 'event-query' is the page's own old name for the tab; bookmarks predate it.
   if (raw === 'settlement') return 'settlement'
+  if (raw === 'sim') return 'sim'
   return 'event'
 }
 
@@ -94,10 +102,18 @@ export default function BacktestPage() {
     symbols: seededSymbols,
   })
   const [liveResult, setLiveResult] = useState<EventQueryResponse | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(runIdParam ?? null)
+  const [selectedId, setSelectedId] = useState<string | null>(
+    params.get('tab') === 'sim' ? null : runIdParam ?? null,
+  )
 
-  const runsQ = useBacktestRuns({ limit: 100 }, tab === 'event')
-  const rows = useMemo(() => runsQ.data?.rows ?? [], [runsQ.data?.rows])
+  const runsQ = useBacktestRuns({ limit: 100 }, tab !== 'settlement')
+  const allRows = useMemo(() => runsQ.data?.rows ?? [], [runsQ.data?.rows])
+  const rows = useMemo(() => allRows.filter((r) => !isSimRun(r)), [allRows])
+  const simRows = useMemo(() => allRows.filter(isSimRun), [allRows])
+  const [showSimBuilder, setShowSimBuilder] = useState(false)
+  const [simSelectedId, setSimSelectedId] = useState<string | null>(
+    params.get('tab') === 'sim' ? runIdParam ?? null : null,
+  )
   // Nothing picked yet: the newest run is the rest state, derived rather than
   // set so the first render after load already shows it.
   const effectiveId = selectedId ?? rows[0]?.id ?? null
@@ -119,11 +135,12 @@ export default function BacktestPage() {
   useEffect(() => {
     const next = new URLSearchParams(params)
     next.set('tab', tab)
-    if (effectiveId) next.set('run_id', effectiveId)
+    const linked = tab === 'sim' ? simSelectedId : tab === 'event' ? effectiveId : null
+    if (linked) next.set('run_id', linked)
     else next.delete('run_id')
     if (next.toString() !== params.toString()) setParams(next, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, effectiveId])
+  }, [tab, effectiveId, simSelectedId])
 
   const fills = selectedRow?.fill_config ?? null
   const newestRun = rows[0]?.created_at ?? null
@@ -163,6 +180,14 @@ export default function BacktestPage() {
               >
                 ＋ New run
               </PageHeadAction>
+            ) : tab === 'sim' ? (
+              <PageHeadAction
+                primary
+                title="Replay a seller structure with daily management"
+                onClick={() => setShowSimBuilder((v) => !v)}
+              >
+                ＋ New sim
+              </PageHeadAction>
             ) : null}
           </>
         }
@@ -194,7 +219,9 @@ export default function BacktestPage() {
           </span>
         ) : null}
         <span data-sr-tb="meta" className={mono}>
-          {tab === 'event'
+          {tab === 'sim'
+            ? 'research.backtest_run · sim:* · backtest_trade · backtest_equity'
+            : tab === 'event'
             ? newestRun
               ? `research.backtest_run · newest ${newestRun.slice(0, 10)}`
               : 'research.backtest_run'
@@ -229,7 +256,7 @@ export default function BacktestPage() {
               <header className={panelHead}>
                 <span className="text-dense-body font-semibold">Runs</span>
                 <span className={cn(mono, 'text-dense-caption text-muted-foreground')}>
-                  {runsQ.data ? fmtNumLocale(runsQ.data.count, 0) : '…'}
+                  {runsQ.data ? fmtNumLocale(rows.length, 0) : '…'}
                 </span>
                 <span className="ml-auto text-dense-caption text-muted-foreground">
                   research.backtest_run · newest first
@@ -452,6 +479,19 @@ export default function BacktestPage() {
             </section>
           </div>
         </div>
+      ) : tab === 'sim' ? (
+        <SimulatorTab
+          rows={simRows}
+          loading={runsQ.isLoading}
+          error={runsQ.error}
+          hasData={Boolean(runsQ.data)}
+          onRetry={() => void runsQ.refetch()}
+          builderOpen={showSimBuilder}
+          onBuilderClose={() => setShowSimBuilder(false)}
+          selectedId={simSelectedId}
+          onSelect={setSimSelectedId}
+          heldSymbol={heldSymbol}
+        />
       ) : (
         <SettlementTab />
       )}

@@ -122,6 +122,8 @@ export const QUERY_KEYS = {
       runsByHypothesis: (hid: string) =>
         ['research-engine', 'backtest', 'runs', 'hypothesis', hid] as const,
       run: (runId: string) => ['research-engine', 'backtest', 'run', runId] as const,
+      /** A simulator run's trades and curve — under `run`, so a rerun's invalidation reaches it. */
+      simDetail: (runId: string) => ['research-engine', 'backtest', 'run', runId, 'sim'] as const,
     },
     home: ['research-engine', 'home', 'aggregate'] as const,
   },

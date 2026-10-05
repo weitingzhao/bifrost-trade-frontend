@@ -126,6 +126,21 @@ export const ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/home'],
     },
   },
+  {
+    // Design Rev .145–.150 (`Home Calendar.dc.html`): every dated thing in one
+    // grid, each layer quoted from the page that owns it. Under Home, between
+    // Events and Daily Brief (shell-registry Home group). It reads the carried
+    // symbol (Rev .149: no Symbol box of its own).
+    path: '/home/calendar',
+    label: 'Calendar',
+    crumbs: MARKET,
+    symbolScope: true,
+    design: {
+      state: 'reviewing',
+      rev: '2026-10-02.149',
+      note: DESIGN_NOTES['/home/calendar'],
+    },
+  },
   // ── Portfolio ──────────────────────────────────────────────────────────
   {
     // The layer's own page (design §5a.1). Two folds and neither is Portfolio,

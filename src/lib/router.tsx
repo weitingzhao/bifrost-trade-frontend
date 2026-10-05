@@ -239,6 +239,10 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/home/today/TodayPage')),
       },
       {
+        path: 'home/calendar',
+        lazy: lazyPage(() => import('@/pages/home/calendar/CalendarPage')),
+      },
+      {
         path: 'portfolio/corporate-actions',
         lazy: lazyPage(() => import('@/pages/portfolio/corporateActions/CorporateActionsPage')),
       },

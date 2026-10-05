@@ -6,6 +6,7 @@ import { Flag,
   Sigma,
   BookOpen,
   CalendarClock,
+  CalendarDays,
   Briefcase,
   ClipboardList,
   List,
@@ -121,7 +122,15 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     // Objectives came here from Review at Rev .55: an objective is a working
     // object for the whole desk, not one layer's post-mortem, so its roll-up
     // opens Home. Its path (`/review/objectives`) did not move.
-    items: [route('Objectives', '/review/objectives', Target), ...Object.values(MARKET_PAGES), COPILOT_PAGES.brief],
+    //
+    // Calendar joined at Rev .145 (2026-10-02): Objectives · Events ·
+    // Calendar · Daily Brief, the design's Home order.
+    items: [
+      route('Objectives', '/review/objectives', Target),
+      ...Object.values(MARKET_PAGES),
+      route('Calendar', '/home/calendar', CalendarDays),
+      COPILOT_PAGES.brief,
+    ],
   },
   {
     // Rev .111: the layer is Trading — Trade is the entity (one position from

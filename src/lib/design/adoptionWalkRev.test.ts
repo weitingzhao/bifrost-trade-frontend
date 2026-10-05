@@ -135,7 +135,10 @@ describe('the design walk, by revision', () => {
     // Apple patterns, promoted to @bifrost/ui only (0.9.0); no page moved.
     // Package .52 @ Rev .142 (2026-10-01, full): the Apple merge — the shell
     // (.134–.139), Plans (.138), the Desk (.140) and every page's controls (.142).
-    expect(DESIGN_REV).toBe('2026-10-01.142')
+    // Package .56 @ Rev .155 (2026-10-04, snapshot for the Calendar batch):
+    // the registry gains /home/calendar (Rev .145–.150, page rev .149); no
+    // other page's rev moved.
+    expect(DESIGN_REV).toBe('2026-10-04.155')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

@@ -269,8 +269,13 @@ describe('Review nav', () => {
 })
 
 describe('Home nav', () => {
-  it('opens with Objectives, then the market clock (Rev .55)', () => {
+  it('opens with Objectives, then the market clock (Rev .55), Calendar after Events (Rev .145)', () => {
     const home = NAV_GROUPS.find((g) => g.label === 'Home')!
-    expect(home.items!.map((c) => c.to)).toEqual(['/review/objectives', '/research/events', '/research/daily-brief'])
+    expect(home.items!.map((c) => c.to)).toEqual([
+      '/review/objectives',
+      '/research/events',
+      '/home/calendar',
+      '/research/daily-brief',
+    ])
   })
 })

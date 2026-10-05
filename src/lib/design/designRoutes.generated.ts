@@ -5,7 +5,7 @@
  * adoption tracker has a design side to compute against and the app builds
  * without the design package present.
  *
- * Derived, not typed: 106 routes, 106 with a designed page,
+ * Derived, not typed: 107 routes, 107 with a designed page,
  * 0 resolving to the stub. One route per line, so a
  * diff on this file reads as the design's menu change.
  */
@@ -156,6 +156,7 @@ export const DESIGN_GLYPHS: Readonly<Record<string, string>> = {
   "layers": "M12 3l9 5-9 5-9-5 9-5zM3 14l9 5 9-5",
   "matched": "M3 9h13l-3.5-3.5M21 15H8l3.5 3.5",
   "model": "M6 6a2 2 0 100 4 2 2 0 000-4M6 14a2 2 0 100 4 2 2 0 000-4M18 10a2 2 0 100 4 2 2 0 000-4M8 8.6l8 2.8M8 15.4l8-2.8",
+  "monthgrid": "M4 5h16v15H4zM8 3v4M16 3v4M4 10h16M4 15h16M9.3 10v10M14.7 10v10",
   "openbook": "M12 7C10 5 7 4.4 4 5v13c3-.6 6 0 8 2 2-2 5-2.6 8-2V5c-3-.6-6 0-8 2zM12 7v14",
   "pages": "M3 8c3-1.2 6-1.2 9 0 3-1.2 6-1.2 9 0M3 13c3-1.2 6-1.2 9 0 3-1.2 6-1.2 9 0M3 18c3-1.2 6-1.2 9 0 3-1.2 6-1.2 9 0",
   "panel3": "M10 7a3 3 0 106 0 3 3 0 00-6 0M6 20a7 7 0 0114 0M3.5 10.5a2.5 2.5 0 103 4M2 19a5 5 0 013-4.2",
@@ -192,6 +193,7 @@ export const DESIGN_ROUTE_GLYPH: Readonly<Record<string, string>> = {
   "/docs/research-blueprint": "blueprint",
   "/docs/tech-stack": "layers",
   "/docs/ui-design-system": "swatch",
+  "/home/calendar": "monthgrid",
   "/portfolio/accounts": "wallet",
   "/portfolio/backing": "pillars",
   "/portfolio/corporate-actions": "restrike",
@@ -306,13 +308,14 @@ export const DESIGN_SCOPE: Readonly<Record<string, 'underlying' | 'contract'>> =
   "/review/trade": "contract",
 }
 
-export const DESIGN_REV = "2026-10-01.142"
+export const DESIGN_REV = "2026-10-04.155"
 
 export const DESIGN_ROUTES: readonly DesignRoute[] = [
   {"path":"/home","label":"Today","crumbs":[],"designed":true,"file":"Home Today.dc.html","round":"NEW","rev":"2026-09-25.82","inNav":true,"group":"Home","designOnly":false},
   {"path":"/trade/:id","label":"Trade","crumbs":[],"designed":true,"file":"Trade.dc.html","round":null,"rev":"2026-09-29.112","inNav":false,"group":null,"designOnly":false},
   {"path":"/instance","label":"Trade","crumbs":[],"designed":true,"file":"Trade.dc.html","round":null,"rev":"2026-09-29.111","inNav":false,"group":null,"designOnly":false},
   {"path":"/research/events","label":"Events","crumbs":["Home"],"designed":true,"file":"Home Events.dc.html","round":"NEW","rev":"2026-09-25.89","inNav":true,"group":"Home","designOnly":false},
+  {"path":"/home/calendar","label":"Calendar","crumbs":["Home"],"designed":true,"file":"Home Calendar.dc.html","round":null,"rev":"2026-10-02.149","inNav":true,"group":"Home","designOnly":false},
   {"path":"/market/live","label":"Live","crumbs":["Market"],"designed":true,"file":"Market Live.dc.html","round":null,"rev":"2026-09-25.85","inNav":false,"group":null,"designOnly":false},
   {"path":"/risk/portfolio","label":"Exposure","crumbs":["Risk"],"designed":true,"file":"Risk Portfolio.dc.html","round":"NEW","rev":"2026-09-29.107","inNav":true,"group":"Risk","designOnly":false},
   {"path":"/portfolio/pnl-explain","label":"P&L Explain","crumbs":["Portfolio","Performance"],"designed":true,"file":"Portfolio PnL Explain.dc.html","round":"NEW","rev":"2026-09-29.112","inNav":true,"group":"Portfolio","designOnly":false},

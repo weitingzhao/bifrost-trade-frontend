@@ -173,5 +173,7 @@ export const QUERY_KEYS = {
     ivPercentile: (symbol: string) => ['plugin', 'market-data', 'iv-percentile', symbol] as const,
     flexConfigSummary: ['plugin', 'flex-query', 'config-summary'] as const,
     flexCoverageFreshness: ['plugin', 'flex-query', 'coverage-freshness'] as const,
+    /** One name's corporate actions (`/market/corporate-actions`, the default 400 rows) — Corporate Actions and the Calendar share it. */
+    corporateActions: (symbol: string) => ['market-data', 'corporate-actions', symbol] as const,
   },
 } as const

@@ -17,7 +17,7 @@
  */
 import { useMemo, useState } from 'react'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
@@ -35,7 +35,8 @@ import { usePositionsBook } from '@/hooks/usePositionsBook'
 import { useAssignmentLegs } from '@/hooks/useAssignmentLegs'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { fetchWatchlist } from '@/api/market'
-import { fetchCorporateActions, type CorporateActionRow } from '@/api/marketData/corporateActions'
+import type { CorporateActionRow } from '@/api/marketData/corporateActions'
+import { useCorporateActionsByName } from '@/hooks/useCorporateActionsByName'
 import {
   CALENDAR_DAYS,
   CORPORATE_ACTIONS_UNRECORDED,
@@ -169,14 +170,7 @@ export default function CorporateActionsPage() {
     [bookSymbols, watchSymbols],
   )
 
-  const feedQueries = useQueries({
-    queries: symbols.map((symbol) => ({
-      queryKey: ['market-data', 'corporate-actions', symbol],
-      queryFn: () => fetchCorporateActions(symbol),
-      enabled: Boolean(symbol),
-      staleTime: 60 * 60_000,
-    })),
-  })
+  const feedQueries = useCorporateActionsByName(symbols)
   // Errors move the stamp too: an unread name leaves the counts below.
   const feedStamp = feedQueries.map((q) => `${q.dataUpdatedAt}:${q.errorUpdatedAt}`).join(',')
   const feedLoading = feedQueries.some((q) => q.isLoading)

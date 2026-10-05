@@ -354,6 +354,9 @@ export const AutopilotStandingSchema = z
         folded: z.number(),
         inert: z.number(),
         briefings: z.number(),
+        // Research 0.165.1 — absent on an older backend.
+        pending: z.number().optional(),
+        by_kind: z.record(z.string(), z.number()).optional(),
       })
       .passthrough()
       .optional(),

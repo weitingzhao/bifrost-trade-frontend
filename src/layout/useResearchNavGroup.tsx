@@ -33,11 +33,19 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
       // candidate batches, which is what `pending_memos` counts and what the
       // objective rows below want. The badge said three while the page it
       // opened offered twenty-four calls.
+      //
+      // `calls` is the Inbox's cards, counted on the server (Research
+      // 0.165.1). The page's "To decide" also holds its rule proposals, which
+      // are read off Review's habits — some 65 requests no badge should make
+      // on every page — so the badge leaves them out and says so.
       const inbox = standing.pending_decisions?.calls ?? standing.pending_memos
       if (inbox > 0) {
         byPath.set(
           AUTOPILOT_PAGES.inbox.to!,
-          <NavBadge tone="var(--color-lamp-yellow)" title="Drafts waiting on a call">
+          <NavBadge
+            tone="var(--color-lamp-yellow)"
+            title="Draft cards waiting on a call — rule proposals not counted"
+          >
             {inbox}
           </NavBadge>,
         )

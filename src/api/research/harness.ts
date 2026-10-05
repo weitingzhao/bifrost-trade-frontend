@@ -355,17 +355,29 @@ export interface AutopilotStanding {
   pending_memos: number
   pending_drafts?: number
   /**
-   * The whole Decision Inbox queue, counted the way that page counts it: a
-   * briefing is not a call, repeats of one batch are one call, and a policy
-   * suggestion that would write nothing is not a call. Optional because an
-   * older backend does not send it.
+   * The whole Decision Inbox queue, counted in SQL the way that page folds it
+   * into cards (Research 0.165.1 — `inboxCardKey` in lib/harness/inboxCards):
+   * a hypothesis's verdict and vehicle are one call, an objective's batches
+   * (and its patches) are one card, every other draft is its own. Not
+   * truncated. It cannot see the Inbox's rule proposals, which are read off
+   * Review's habits in the browser — the page's "To decide" is `calls` plus
+   * those. Optional because an older backend does not send it.
    */
   pending_decisions?: {
+    /** Inbox cards, including the ones whose Approve writes nothing. */
     calls: number
+    /** Decision drafts behind those cards. */
     drafts: number
+    /** Drafts folded under a newer one on the same card. */
     folded: number
+    /** Cards other than calls whose Approve writes nothing (`cardWrites` false). */
     inert: number
+    /** Pending briefings: EOD verdicts, daily digests and morning briefs. */
     briefings: number
+    /** The whole pending queue — `/research/drafts`' `pending_count`. 0.165.1+. */
+    pending?: number
+    /** Pending drafts per kind. 0.165.1+. */
+    by_kind?: Record<string, number>
   }
   best_conviction: number
   objectives: AutopilotObjective[]

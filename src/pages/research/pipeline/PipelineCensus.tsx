@@ -347,7 +347,9 @@ function CensusRowView({
         </span>
       </div>
       {open ? (
-        <div className="space-y-1.5 border-t border-border/40 bg-background px-3 py-2 pl-10">
+        // No fill of its own: the expand area reads on its row's group. bg-background
+        // was the page ground — under the frost an opaque block on the glass.
+        <div className="space-y-1.5 border-t border-border/40 px-3 py-2 pl-10">
           <div className="flex flex-wrap items-center gap-2">
             <DenseTag variant={tag.variant} size="cell">
               {tag.label}

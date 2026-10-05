@@ -246,7 +246,8 @@ export default function TracePage() {
               ))}
             </section>
             {immune ? (
-              <footer className="flex flex-col gap-1.5 border-t border-[var(--sk-line)] pt-2.5">
+              // A hairline, not a --sk-line rule: under the frost a solid rule reads as a seam in the glass.
+              <footer className="flex flex-col gap-1.5 border-t border-[var(--table-rule)] pt-2.5">
                 <div className="flex items-baseline gap-2">
                   <span className="flex-none font-mono text-dense-micro font-bold tracking-[.1em] uppercase" style={{ color: IMMUNE_INK[immune.verdict] }}>
                     {IMMUNE_CAP[immune.verdict]}

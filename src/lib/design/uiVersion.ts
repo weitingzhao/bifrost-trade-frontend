@@ -38,4 +38,9 @@
 // useStuckMarks: data-stuck on sticky bars and heads, data-sx on wide boxes) and
 // data-sr-edge fade | solid; the sticky toolbar's band only while stuck; IconActionButton
 // variant="close" (data-sr-close); hero readings step 30 / 26 / 24 and wrap at spaces.
-export const UI_VERSION_NOW = '0.10.0'
+// 0.11.0 (Rev .146 · .150 · .151, plan batches 5 + 6): PanelHead (data-sr-head) and the
+// Rev .151 overlay values; DialogContent size sm (glass) · md / lg (opaque); the round
+// built-in close and --glass-drop on every sheet; SegmentControl's selected segment ink 15%
+// + lens; FilterChip · FilterTray · FilterGroup (tri-state head); CalendarGrid · CalendarNav
+// · MiniMonth · TimeStrip and the shared date words (§17.9).
+export const UI_VERSION_NOW = '0.11.0'

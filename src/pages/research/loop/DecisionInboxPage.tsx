@@ -34,22 +34,28 @@ import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useObjectiveList } from '@/hooks/useLoopHarness'
 import { draftParentId } from '@/lib/research/draftProvenance'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
-import { useApproveDraft, useHeldDraftWrites, useInboxQueue } from '@/hooks/useResearchDrafts'
+import { useApproveDraft } from '@/hooks/useResearchDrafts'
+import { useInboxCards } from '@/hooks/useInboxCards'
 import { WRITES_TO_LABEL, WRITES_TO_ORDER, type WritesTo } from '@/lib/harness/writesTo'
 import { buildProposals } from '@/pages/research/loop/proposals/proposalsModel'
 import { NO_RULES_STORE } from '@/pages/research/loop/proposals/RuleProposalCard'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
-import { unreadCount, useReadDrafts, useStoredDraftIds } from '@/pages/research/loop/inboxRead'
+import { unreadCount, useReadDrafts } from '@/lib/harness/inboxRead'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
 import { approveEffect, draftAskedBy } from '@/lib/harness/draftText'
 import { draftHeadline, type DraftHeadline } from '@/lib/harness/draftHeadline'
-import { buildInboxCards, cardHoldingDraft, hiddenDecisionCount, inboxSections, type InboxCard } from '@/lib/harness/inboxCards'
+import {
+  cardDismissToast,
+  cardHoldingDraft,
+  hiddenDecisionCount,
+  inboxSections,
+  type InboxCard,
+} from '@/lib/harness/inboxCards'
 import { useDraftWriteFailures } from '@/lib/harness/draftWriteFailures'
 import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { useInSurface } from '@/lib/surfaceScope'
 import { notify } from '@/lib/shellNotify'
-import { STORAGE_KEYS } from '@/constants/storage'
 import { InboxDecisionList, InboxKeyHints, type InboxItem } from '@/pages/research/loop/inbox/InboxDecisionList'
 import { InboxBriefings } from '@/pages/research/loop/inbox/InboxBriefings'
 import { InboxStrips } from '@/pages/research/loop/inbox/InboxStrips'
@@ -114,11 +120,20 @@ export default function DecisionInboxPage() {
 
   // The whole queue, one kind at a time (`useInboxQueue`): a single page of
   // every kind was 200 rows of which 184 were briefings.
-  const queue = useInboxQueue()
+  // Shared with the Copilot's waiting queue (`useInboxCards`), so "To decide"
+  // and "N waiting on you" count the same cards.
+  const {
+    queue,
+    decisionRows,
+    briefingRows: briefingsHeldOut,
+    heldCount,
+    pendingIds,
+    hidden: { ids: hidden, setMany: setHidden },
+    cards,
+    dismiss,
+    record,
+  } = useInboxCards()
   const approve = useApproveDraft()
-  // Dismiss and Record answer are held behind the toast's Undo (Rev .75 ·
-  // Owner 2026-10-04 #9): the server cannot take either back.
-  const { isHeld, dismiss, record } = useHeldDraftWrites()
   const failures = useDraftWriteFailures()
   // The card leaves on approval and the server cannot take one back, so what
   // was accepted is only ever recorded here.
@@ -128,18 +143,11 @@ export default function DecisionInboxPage() {
     [],
   )
 
-  const decisionRows = useMemo(() => queue.decisions.filter((d) => !isHeld(d.id)), [queue.decisions, isHeld])
-  const briefingRows = useMemo(() => digestFirst(queue.briefings.filter((d) => !isHeld(d.id))), [queue.briefings, isHeld])
-  const heldCount = queue.listed - decisionRows.length - briefingRows.length
+  const briefingRows = useMemo(() => digestFirst(briefingsHeldOut), [briefingsHeldOut])
   const digest = briefingRows.find(isDailyDigest)
 
-  // Read state and hidden earlier runs, kept in this browser (inboxRead.ts),
-  // pruned only against the whole queue — a partial read would drop every id
-  // it did not happen to contain.
-  const pendingKey = queue.complete ? [...queue.decisions, ...queue.briefings].map((d) => d.id).join(',') : null
-  const pendingIds = useMemo(() => (pendingKey == null ? null : pendingKey.split(',').filter(Boolean)), [pendingKey])
+  // Read state, kept in this browser (inboxRead.ts), pruned only against the whole queue.
   const { read, setRead } = useReadDrafts(pendingIds)
-  const { ids: hidden, setMany: setHidden } = useStoredDraftIds(STORAGE_KEYS.inboxHiddenEarlier, pendingIds)
 
   // Three kinds carry only a `hypothesis_id`; the Book holds the sentence.
   const hypotheses = useHypothesisList({ limit: 200 })
@@ -178,7 +186,6 @@ export default function DecisionInboxPage() {
   const ruleCards = useMemo(() => proposals.filter((p) => !p.thin), [proposals])
   const thin = useMemo(() => proposals.filter((p) => p.thin), [proposals])
 
-  const cards = useMemo(() => buildInboxCards(decisionRows, hidden), [decisionRows, hidden])
   const items = useMemo<InboxItem[]>(
     () => [
       ...cards.map((card) => ({ type: 'draft' as const, key: card.key, card })),
@@ -272,13 +279,7 @@ export default function DecisionInboxPage() {
   }
   const dismissCard = (card: InboxCard) => {
     const ids = card.answers.map((d) => d.id)
-    const msg =
-      card.shape === 'call'
-        ? `Call dismissed${ids.length > 1 ? ` (${ids.length} drafts)` : ''}`
-        : card.folded.length > 0
-          ? 'Dismissed — the earlier runs stay pending and fold away here'
-          : 'Draft dismissed'
-    dismiss(ids, msg, card.shape === 'objective' ? { onCommitted: () => hideFolded(card) } : {})
+    dismiss(ids, cardDismissToast(card), card.shape === 'objective' ? { onCommitted: () => hideFolded(card) } : {})
     settle()
   }
   const discussCard = (card: InboxCard) =>

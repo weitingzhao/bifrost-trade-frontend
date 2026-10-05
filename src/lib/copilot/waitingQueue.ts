@@ -1,18 +1,21 @@
 /**
- * Panel waiting queue — the same calls as Desk / Decision Inbox.
+ * Panel waiting queue — the Decision Inbox's queue, folded into one row.
+ *
+ * It reads what the Inbox reads (`useInboxQueue`, every kind in full) and
+ * counts what the Inbox counts: one per card (`buildInboxCards`), with the
+ * same held writes and the same earlier runs hidden in this browser left out.
+ * It used to read the newest 200 pending drafts of every kind at once — on
+ * DEV mostly EOD briefings — and borrow the server's call count for its
+ * title, so the title and the list counted different sets and neither was the
+ * Inbox's "To decide".
  *
  * Chat writes stay in the message stream (Owner C2-a5 option a).
  */
 import type { AiDraft } from '@/api/researchDrafts'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
-import { draftTitle, kindTag } from '@/lib/harness/draftText'
-import {
-  BRIEFING_KINDS,
-  groupIdenticalDrafts,
-  isActionableDraft,
-  isDecisionKind,
-  type DraftGroup,
-} from '@/lib/harness/harnessDraftHelpers'
+import { draftTitle } from '@/lib/harness/draftText'
+import { cardWrites, type InboxCard } from '@/lib/harness/inboxCards'
+import { BRIEFING_KINDS } from '@/lib/harness/harnessDraftHelpers'
 
 export type WaitingQueueKind = 'briefings' | 'decision' | 'run'
 
@@ -23,12 +26,11 @@ export type WaitingQueueItem = {
   what: string
   showApprove: boolean
   showDismiss: boolean
+  /** The draft the row is drawn from: a briefing, or a card's head. */
   draft?: AiDraft
+  /** Decision rows: the Inbox card the row stands for. */
+  card?: InboxCard
   runId?: string
-}
-
-export function waitingDecisionGroups(rows: readonly AiDraft[]): DraftGroup[] {
-  return groupIdenticalDrafts(rows.filter((d) => isDecisionKind(d.kind)))
 }
 
 export function waitingBriefingDrafts(rows: readonly AiDraft[]): AiDraft[] {
@@ -36,31 +38,11 @@ export function waitingBriefingDrafts(rows: readonly AiDraft[]): AiDraft[] {
 }
 
 /**
- * Same three rules as `pending_decision_calls` (Inbox badge): briefings are
- * not calls, identical batches fold, a policy suggestion that would write
- * nothing is not a call.
+ * The title. `null` while the queue cannot be read — a refused read is not
+ * zero calls.
  */
-export function waitingQueueCountsAsCall(draft: AiDraft): boolean {
-  if (!isDecisionKind(draft.kind)) return false
-  if (draft.kind === 'policy_suggestion' && !isActionableDraft(draft)) return false
-  return true
-}
-
-export function waitingQueueCallCount(rows: readonly AiDraft[]): number {
-  return waitingDecisionGroups(rows).filter((g) => waitingQueueCountsAsCall(g.draft)).length
-}
-
-export function waitingQueueHeadline(n: number): string {
-  return `${n} waiting on you`
-}
-
-/**
- * When the drafts page cannot list every Inbox call, say so. Equal counts
- * stay quiet — the list already matches the title.
- */
-export function waitingQueueTruncationLine(listed: number, headline: number): string | null {
-  if (!(listed < headline)) return null
-  return `${listed} of ${headline} listed · Open Decision Inbox →`
+export function waitingQueueHeadline(n: number | null): string {
+  return `${n ?? '—'} waiting on you`
 }
 
 export function waitingQueueSummary(opts: { briefingCount: number; runCount: number }): string {
@@ -70,10 +52,6 @@ export function waitingQueueSummary(opts: { briefingCount: number; runCount: num
     bits.push(`${opts.runCount} run${opts.runCount === 1 ? '' : 's'}`)
   }
   return bits.join(' · ')
-}
-
-export function waitingQueueShowsApprove(draft: AiDraft): boolean {
-  return isActionableDraft(draft)
 }
 
 export function waitingBriefingWhat(drafts: readonly AiDraft[]): string {
@@ -87,13 +65,20 @@ export function waitingBriefingWhat(drafts: readonly AiDraft[]): string {
   return `${drafts.length} briefings`
 }
 
+/**
+ * Briefings as one row, then one row per Inbox card, then the runs waiting
+ * for a rating. Approve shows only where the Inbox's Approve writes something
+ * (`cardWrites`): a call is answered on the Inbox, where its verdict and
+ * vehicle are read side by side.
+ */
 export function waitingQueueItems(
-  rows: readonly AiDraft[],
+  cards: readonly InboxCard[],
+  briefingRows: readonly AiDraft[],
   runs: readonly { id: string; objective_id: string }[],
   objectiveTitleById: ReadonlyMap<string, string>
 ): WaitingQueueItem[] {
   const out: WaitingQueueItem[] = []
-  const briefings = waitingBriefingDrafts(rows)
+  const briefings = waitingBriefingDrafts(briefingRows)
   if (briefings.length > 0) {
     out.push({
       key: `briefings:${briefings[0].id}`,
@@ -105,17 +90,17 @@ export function waitingQueueItems(
       draft: briefings.find(isDailyDigest) ?? briefings[0],
     })
   }
-  for (const group of waitingDecisionGroups(rows)) {
-    const draft = group.draft
+  for (const card of cards) {
     out.push({
-      key: `draft:${draft.id}`,
+      key: card.key,
       kind: 'decision',
-      // The Inbox's five words: this is the same queue (Rev .143).
-      kindLabel: kindTag(draft.kind, draft.scope),
-      what: draftTitle(draft),
-      showApprove: waitingQueueShowsApprove(draft),
+      // The Inbox's words: this is the same queue (Rev .143).
+      kindLabel: card.tag,
+      what: draftTitle(card.head),
+      showApprove: cardWrites(card),
       showDismiss: true,
-      draft,
+      draft: card.head,
+      card,
     })
   }
   for (const run of runs) {

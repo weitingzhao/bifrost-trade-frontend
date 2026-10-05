@@ -8,8 +8,9 @@
  * lives in localStorage — another browser starts with everything unread — and
  * is pruned to drafts still pending, so it does not grow for ever.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { STORAGE_KEYS } from '@/constants/storage'
+import { createExternalStore } from '@/lib/cockpit/externalStore'
 
 /** The stored set, tolerating anything that is not a JSON list of strings. */
 export function parseReadIds(raw: string | null): Set<string> {
@@ -50,6 +51,30 @@ function save(key: StoredKey, ids: ReadonlySet<string>): void {
   }
 }
 
+type StoredSet = ReturnType<typeof createExternalStore<{ ids: Set<string> }>>
+
+/**
+ * One store per key, so every reader of a set sees the same one: the Decision
+ * Inbox and the Copilot's waiting queue both fold the earlier runs you hid,
+ * and a hide on one has to take the card off the other at once rather than at
+ * its next mount.
+ */
+const stores = new Map<StoredKey, StoredSet>()
+
+function storeFor(key: StoredKey): StoredSet {
+  let s = stores.get(key)
+  if (!s) {
+    s = createExternalStore<{ ids: Set<string> }>({ ids: load(key) })
+    stores.set(key, s)
+  }
+  return s
+}
+
+/** Tests only: forget every set read so far, so the next read comes from storage. */
+export function resetStoredDraftIds(): void {
+  stores.clear()
+}
+
 /**
  * A set of draft ids kept in this browser, pruned to the drafts still pending.
  *
@@ -58,7 +83,8 @@ function save(key: StoredKey, ids: ReadonlySet<string>): void {
  * nothing is sent).
  */
 export function useStoredDraftIds(key: StoredKey, pendingIds: readonly string[] | null) {
-  const [ids, setIdsState] = useState<Set<string>>(() => load(key))
+  const store = storeFor(key)
+  const { ids } = store.useStore()
 
   // Prune only against a full answer: a narrowed or loading list would drop
   // every id it did not happen to contain. The page sees the pruned set; the
@@ -77,21 +103,26 @@ export function useStoredDraftIds(key: StoredKey, pendingIds: readonly string[] 
 
   const setMany = useCallback(
     (list: readonly string[], on: boolean) => {
-      setIdsState((prev) => {
-        if (list.every((id) => prev.has(id) === on)) return prev
-        const next = new Set(prev)
+      store.setState((prev) => {
+        if (list.every((id) => prev.ids.has(id) === on)) return prev
+        const next = new Set(prev.ids)
         for (const id of list) {
           if (on) next.add(id)
           else next.delete(id)
         }
         save(key, next)
-        return next
+        return { ids: next }
       })
     },
-    [key],
+    [key, store],
   )
 
   return { ids: current, setMany }
+}
+
+/** The earlier runs hidden under their card, in this browser (Owner 2026-10-04 #11). */
+export function useHiddenEarlier(pendingIds: readonly string[] | null) {
+  return useStoredDraftIds(STORAGE_KEYS.inboxHiddenEarlier, pendingIds)
 }
 
 export function useReadDrafts(pendingIds: readonly string[] | null) {

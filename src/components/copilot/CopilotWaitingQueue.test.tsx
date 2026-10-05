@@ -1,88 +1,76 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+/**
+ * The waiting queue reads the Inbox's queue (every kind, in full) and counts
+ * its cards — so its title is the Inbox's "To decide" for the same drafts,
+ * not the newest 200 of every kind, and not the server's call count beside a
+ * list of something else. Fixtures are made up.
+ */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AiDraft, DraftKind } from '@/api/researchDrafts'
+import { RESEARCH_AUTH_NOT_SET_LINE } from '@/components/auth/ResearchAuthGap'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
+import { resetStoredDraftIds } from '@/lib/harness/inboxRead'
+import { HttpError } from '@/lib/http'
+import { memoryStorage } from '@/test/memoryStorage'
 
-vi.mock('@/hooks/useResearchDrafts', () => ({
-  DRAFTS_PAGE_MAX: 200,
-  useResearchDrafts: () => ({
-    data: {
-      rows: [
-        {
-          id: 'd1',
-          kind: 'daily_digest',
-          payload: { title: 'Tuesday digest', day: '2026-09-14' },
-          scope: 'global',
-          status: 'pending',
-          generated_by: 'digest_agent',
-          linked_action_id: null,
-          created_at: '2026-09-14T12:00:00Z',
-          expires_at: null,
-        },
-        {
-          id: 'eod',
-          kind: 'eod_verdict',
-          payload: { title: 'NVDA EOD' },
-          scope: 'NVDA',
-          status: 'pending',
-          generated_by: 'eod_agent',
-          linked_action_id: null,
-          created_at: '2026-09-14T12:30:00Z',
-          expires_at: null,
-        },
-        {
-          id: 'd2',
-          kind: 'candidate_batch',
-          payload: { title: 'Batch A' },
-          scope: 'obj-1',
-          status: 'pending',
-          generated_by: 'harness',
-          linked_action_id: null,
-          created_at: '2026-09-14T13:00:00Z',
-          expires_at: null,
-        },
-        {
-          id: 'dec',
-          kind: 'decision_draft',
-          payload: { title: 'Hold NVDA' },
-          scope: 'NVDA',
-          status: 'pending',
-          generated_by: 'curator',
-          linked_action_id: null,
-          created_at: '2026-09-14T13:10:00Z',
-          expires_at: null,
-        },
-      ],
-      pending_count: 4,
+function draft(kind: DraftKind, id: string, payload: Record<string, unknown>, at: string): AiDraft {
+  return {
+    id,
+    kind,
+    payload,
+    scope: 'research',
+    status: 'pending',
+    generated_by: 'harness',
+    linked_action_id: null,
+    created_at: at,
+    expires_at: null,
+  }
+}
+
+// 250 EOD briefings: more than one page of the old all-kinds read, which saw
+// none of the calls behind them.
+const EOD = Array.from({ length: 250 }, (_, i) =>
+  draft('eod_verdict', `eod-${i}`, { title: `EOD ${i}` }, `2026-09-14T20:${String(i % 60).padStart(2, '0')}:00Z`),
+)
+const QUEUE: AiDraft[] = [
+  draft('daily_digest', 'dig', { title: 'Tuesday digest', day: '2026-09-14' }, '2026-09-14T12:00:00Z'),
+  ...EOD,
+  draft('candidate_batch', 'b1', { title: 'Batch A', objective_id: 'o1', items: [{ symbol: 'AAA' }] }, '2026-09-14T13:00:00Z'),
+  draft('candidate_batch', 'b0', { title: 'Batch A0', objective_id: 'o1', items: [{ symbol: 'BBB' }] }, '2026-09-13T13:00:00Z'),
+  draft('decision_draft', 'dec', { title: 'Hold XYZ', hypothesis_id: 'h1' }, '2026-09-14T13:10:00Z'),
+  draft('order_intent', 'oi', { title: 'XYZ vehicle', hypothesis_id: 'h1' }, '2026-09-14T13:11:00Z'),
+  draft('playbook_note', 'note', { title: 'A note' }, '2026-09-14T13:20:00Z'),
+]
+
+const drafts = vi.hoisted(() => ({ mode: 'ok' as 'ok' | 'signed-out' }))
+
+vi.mock('@/api/researchDrafts', async (orig) => {
+  const actual = await orig<typeof import('@/api/researchDrafts')>()
+  return {
+    ...actual,
+    listAllResearchDrafts: async ({ kind }: { kind: DraftKind }) => {
+      if (drafts.mode === 'signed-out') throw new HttpError(401, 'Drafts API HTTP 401')
+      const rows = QUEUE.filter((d) => d.kind === kind)
+      return { rows, count: rows.length, pending_count: QUEUE.length, limit: rows.length, offset: 0 }
     },
-    isLoading: false,
-    isError: false,
-  }),
-  useApproveDraft: () => ({
-    mutate: vi.fn(),
-    isPending: false,
-    data: undefined,
-    variables: undefined,
-  }),
-  useHeldDraftDismiss: () => ({ isHeld: () => false, dismiss: vi.fn() }),
-}))
+    approveResearchDraft: vi.fn(),
+    dismissResearchDraft: vi.fn(),
+  }
+})
+
+const runs = vi.hoisted(() => ({ mode: 'ok' as 'ok' | 'signed-out' }))
 
 vi.mock('@/hooks/useLoopHarness', () => ({
-  useAwaitingRuns: () => ({
-    data: {
-      items: [{ id: 'r1', objective_id: 'o1' }],
-      count: 1,
-    },
-    isLoading: false,
-    isError: false,
-  }),
+  useAwaitingRuns: () =>
+    runs.mode === 'signed-out'
+      ? { data: undefined, isError: true, error: new HttpError(401, 'Runs HTTP 401'), refetch: vi.fn() }
+      : { data: { items: [{ id: 'r1', objective_id: 'o1' }], count: 1 }, isError: false, error: null },
   useActiveObjectives: () => ({
     data: { items: [{ id: 'o1', title: 'Daily Loop Stock Explorer' }] },
-  }),
-  useAutopilotStanding: () => ({
-    data: { pending_decisions: { calls: 45, drafts: 50, folded: 5, inert: 0, briefings: 2 } },
   }),
 }))
 
@@ -94,32 +82,56 @@ vi.mock('@/lib/harness/loopCopilotPrefill', () => ({
 
 import { CopilotWaitingQueue } from './CopilotWaitingQueue'
 
-describe('CopilotWaitingQueue', () => {
-  it('counts Inbox calls and hides Approve on eod_verdict and decision_draft', async () => {
-    cockpitDrawerStore.getState().setInboxOpen(false)
-    render(
+function renderQueue() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={client}>
       <MemoryRouter>
         <CopilotWaitingQueue />
-      </MemoryRouter>,
-    )
-    // Badge口径: standing.pending_decisions.calls, not the truncated drafts page.
-    expect(screen.getByText('45 waiting on you')).toBeTruthy()
-    expect(screen.getByText('Briefings · 1 run')).toBeTruthy()
-    expect(screen.queryByText('2 waiting on you')).toBeNull()
-    expect(screen.queryByText('4 waiting on you')).toBeNull()
-    expect(screen.queryByText(/224 waiting/)).toBeNull()
+      </MemoryRouter>
+    </QueryClientProvider>,
+  )
+}
 
-    await userEvent.click(screen.getByText('45 waiting on you'))
-    expect(screen.getByText('Daily digest · 1 more')).toBeTruthy()
+describe('CopilotWaitingQueue', () => {
+  beforeEach(() => {
+    drafts.mode = 'ok'
+    runs.mode = 'ok'
+    vi.stubGlobal('localStorage', memoryStorage())
+    resetStoredDraftIds()
+    cockpitDrawerStore.getState().setInboxOpen(false)
+  })
+
+  it('counts the Inbox cards, read kind by kind, past a page of briefings', async () => {
+    renderQueue()
+    // Batch A + A0 are one objective card; the verdict and its vehicle one call; the note one.
+    await waitFor(() => expect(screen.getByText('3 waiting on you')).toBeTruthy())
+    expect(screen.getByText('Briefings · 1 run')).toBeTruthy()
+
+    await userEvent.click(screen.getByText('3 waiting on you'))
+    expect(screen.getByText('Daily digest · 250 more')).toBeTruthy()
     expect(screen.getByText('Batch A')).toBeTruthy()
-    expect(screen.getByText('Hold NVDA')).toBeTruthy()
+    expect(screen.queryByText('Batch A0')).toBeNull()
+    expect(screen.getByText('Hold XYZ')).toBeTruthy()
     expect(screen.getByText('Daily Loop Stock Explorer')).toBeTruthy()
-    expect(screen.queryByText('NVDA EOD')).toBeNull()
-    expect(screen.getAllByText('Ask')).toHaveLength(4)
-    expect(screen.getAllByText('✓')).toHaveLength(1)
-    // Dismiss is the round DS close (Rev .151 data-sr-close), named Dismiss.
-    expect(screen.getAllByRole('button', { name: 'Dismiss' })).toHaveLength(2)
-    const truncation = screen.getByRole('link', { name: '2 of 45 listed · Open Decision Inbox →' })
-    expect(truncation).toHaveAttribute('href', '/research/loop/decisions')
+    // Approve only where the Inbox's Approve writes: the batch and the note, not the call.
+    expect(screen.getAllByText('✓')).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: 'Dismiss' })).toHaveLength(3)
+  })
+
+  it('leaves out the runs hidden on the Inbox, as the Inbox does', async () => {
+    // Every run of the objective hidden in this browser: no card, on either surface.
+    localStorage.setItem('bifrost-inbox-hidden-earlier', JSON.stringify(['b1', 'b0']))
+    resetStoredDraftIds()
+    renderQueue()
+    await waitFor(() => expect(screen.getByText('2 waiting on you')).toBeTruthy())
+  })
+
+  it('signed out, says so instead of a count', async () => {
+    drafts.mode = 'signed-out'
+    runs.mode = 'signed-out'
+    renderQueue()
+    await waitFor(() => expect(screen.getByText(RESEARCH_AUTH_NOT_SET_LINE)).toBeTruthy())
+    expect(screen.queryByText(/waiting on you/)).toBeNull()
   })
 })

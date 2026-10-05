@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AiDraft } from '@/api/researchDrafts'
-import {
-  waitingQueueCallCount,
-  waitingQueueHeadline,
-  waitingQueueItems,
-  waitingQueueShowsApprove,
-  waitingQueueSummary,
-  waitingQueueTruncationLine,
-} from './waitingQueue'
+import { buildInboxCards } from '@/lib/harness/inboxCards'
+import { waitingQueueHeadline, waitingQueueItems, waitingQueueSummary } from './waitingQueue'
 
 function draft(kind: AiDraft['kind'], id: string, payload: Record<string, unknown> = {}): AiDraft {
   return {
@@ -24,88 +18,56 @@ function draft(kind: AiDraft['kind'], id: string, payload: Record<string, unknow
 }
 
 describe('waitingQueue', () => {
-  it('counts Inbox-badge calls, not every pending draft', () => {
+  it('lists one row per Inbox card, so its count is the Inbox\'s', () => {
     const rows = [
-      draft('daily_digest', 'dig', { title: 'Tuesday digest' }),
-      draft('eod_verdict', 'eod1'),
-      draft('eod_verdict', 'eod2'),
-      draft('morning_brief', 'morn'),
-      draft('candidate_batch', 'b1', {
-        objective_id: 'obj-a',
-        items: [{ symbol: 'NVDA' }, { symbol: 'AAPL' }],
-      }),
-      draft('candidate_batch', 'b2', {
-        objective_id: 'obj-a',
-        items: [{ symbol: 'AAPL' }, { symbol: 'NVDA' }],
-      }),
-      draft('decision_draft', 'dec'),
-      draft('policy_suggestion', 'pol-empty', {
-        current_policy: { preset: 'neutral' },
-        suggestion: {},
-      }),
-      draft('policy_suggestion', 'pol-write', {
-        current_policy: { preset: 'neutral', min_hit_rate: 0.5 },
-        suggestion: { min_hit_rate: 0.7 },
-      }),
+      draft('candidate_batch', 'b1', { objective_id: 'obj-a', items: [{ symbol: 'NVDA' }, { symbol: 'AAPL' }] }),
+      // A different set of names from the same objective is still that objective's card (Rev .143 #5).
+      draft('candidate_batch', 'b2', { objective_id: 'obj-a', items: [{ symbol: 'MSFT' }] }),
+      // A verdict and its vehicle are one call (#2).
+      draft('decision_draft', 'dec', { hypothesis_id: 'hyp-1' }),
+      draft('order_intent', 'oi', { hypothesis_id: 'hyp-1' }),
+      draft('policy_suggestion', 'pol-empty', { current_policy: { preset: 'neutral' }, suggestion: {} }),
       draft('playbook_note', 'note'),
     ]
-    // 1 folded batch + decision_draft + writing policy + playbook_note.
-    // Briefings and the empty policy are not calls (standing.pending_decisions.calls).
-    expect(waitingQueueCallCount(rows)).toBe(4)
+    const cards = buildInboxCards(rows)
+    const items = waitingQueueItems(cards, [], [], new Map())
+    expect(items.filter((i) => i.kind === 'decision')).toHaveLength(cards.length)
+    expect(cards).toHaveLength(4)
+    // A policy suggestion that writes nothing is still a card on the Inbox, so it is counted here too.
+    expect(items.find((i) => i.card?.head.id === 'pol-empty')?.showApprove).toBe(false)
   })
 
-  it('does not Approve eod_verdict or decision_draft', () => {
-    expect(waitingQueueShowsApprove(draft('eod_verdict', 'eod'))).toBe(false)
-    expect(waitingQueueShowsApprove(draft('decision_draft', 'dec'))).toBe(false)
-    expect(waitingQueueShowsApprove(draft('daily_digest', 'dig'))).toBe(false)
-    expect(
-      waitingQueueShowsApprove(draft('candidate_batch', 'b', { items: [{ symbol: 'NVDA' }] }))
-    ).toBe(true)
+  it('does not Approve a call — it is answered on the Inbox', () => {
+    const cards = buildInboxCards([
+      draft('decision_draft', 'dec', { hypothesis_id: 'hyp-1' }),
+      draft('candidate_batch', 'b', { objective_id: 'obj-a', items: [{ symbol: 'NVDA' }] }),
+    ])
+    const items = waitingQueueItems(cards, [], [], new Map())
+    expect(items.find((i) => i.card?.shape === 'call')?.showApprove).toBe(false)
+    expect(items.find((i) => i.card?.shape === 'call')?.showDismiss).toBe(true)
+    expect(items.find((i) => i.card?.shape === 'objective')?.showApprove).toBe(true)
   })
 
   it('folds briefings into one row without Approve or Dismiss', () => {
     const items = waitingQueueItems(
-      [
-        draft('daily_digest', 'dig', { title: 'Tuesday digest' }),
-        draft('eod_verdict', 'eod'),
-        draft('decision_draft', 'dec', { title: 'Hold NVDA' }),
-        draft('candidate_batch', 'b', {
-          title: 'Batch A',
-          objective_id: 'obj-a',
-          items: [{ symbol: 'NVDA' }],
-        }),
-      ],
+      buildInboxCards([draft('decision_draft', 'dec', { title: 'Hold NVDA' })]),
+      [draft('daily_digest', 'dig', { title: 'Tuesday digest' }), draft('eod_verdict', 'eod')],
       [{ id: 'r1', objective_id: 'o1' }],
       new Map([['o1', 'Daily Loop Stock Explorer']])
     )
     const briefings = items.find((i) => i.kind === 'briefings')
-    const eod = items.find((i) => i.draft?.kind === 'eod_verdict')
-    const verdict = items.find((i) => i.draft?.kind === 'decision_draft')
-    const batch = items.find((i) => i.draft?.kind === 'candidate_batch')
     const run = items.find((i) => i.kind === 'run')
+    expect(briefings?.what).toBe('Daily digest · 1 more')
     expect(briefings?.showApprove).toBe(false)
     expect(briefings?.showDismiss).toBe(false)
-    expect(eod).toBeUndefined()
-    expect(verdict?.showApprove).toBe(false)
-    expect(verdict?.showDismiss).toBe(true)
-    expect(batch?.showApprove).toBe(true)
+    expect(items.find((i) => i.draft?.kind === 'eod_verdict')).toBeUndefined()
+    expect(run?.what).toBe('Daily Loop Stock Explorer')
     expect(run?.showApprove).toBe(false)
-    expect(
-      waitingQueueHeadline(
-        waitingQueueCallCount([
-          draft('daily_digest', 'dig'),
-          draft('eod_verdict', 'eod'),
-          draft('decision_draft', 'dec'),
-          draft('candidate_batch', 'b', { items: [{ symbol: 'NVDA' }] }),
-        ])
-      )
-    ).toBe('2 waiting on you')
     expect(waitingQueueSummary({ briefingCount: 2, runCount: 1 })).toBe('Briefings · 1 run')
   })
 
-  it('names the missing calls only when the page lists fewer than the title', () => {
-    expect(waitingQueueTruncationLine(42, 47)).toBe('42 of 47 listed · Open Decision Inbox →')
-    expect(waitingQueueTruncationLine(47, 47)).toBeNull()
-    expect(waitingQueueTruncationLine(48, 47)).toBeNull()
+  it('says «—» rather than 0 when the queue could not be read', () => {
+    expect(waitingQueueHeadline(2)).toBe('2 waiting on you')
+    expect(waitingQueueHeadline(null)).toBe('— waiting on you')
   })
 })

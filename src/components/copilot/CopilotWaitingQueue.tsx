@@ -1,53 +1,41 @@
-import { Link } from 'react-router-dom'
 import { useMemo } from 'react'
 import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { digestExhibits, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { draftAskedBy, draftLandsIn, draftTitle } from '@/lib/harness/draftText'
+import { cardDismissToast, type InboxCard } from '@/lib/harness/inboxCards'
 import {
   openDigestInCopilot,
   openDraftInCopilot,
   openLoopRunInCopilot,
 } from '@/lib/harness/loopCopilotPrefill'
 import { useCockpitDrawer } from '@/hooks/useCockpitDrawer'
-import {
-  DRAFTS_PAGE_MAX,
-  useApproveDraft,
-  useHeldDraftDismiss,
-  useResearchDrafts,
-} from '@/hooks/useResearchDrafts'
-import { useActiveObjectives, useAutopilotStanding, useAwaitingRuns } from '@/hooks/useLoopHarness'
+import { useInboxCards } from '@/hooks/useInboxCards'
+import { useApproveDraft } from '@/hooks/useResearchDrafts'
+import { useActiveObjectives, useAwaitingRuns } from '@/hooks/useLoopHarness'
 import {
   waitingBriefingDrafts,
-  waitingQueueCallCount,
   waitingQueueHeadline,
   waitingQueueItems,
   waitingQueueSummary,
-  waitingQueueTruncationLine,
 } from '@/lib/copilot/waitingQueue'
 import { cn } from '@/lib/utils'
 import { CloseButton } from '@/components/data-display'
 
 /**
- * The Desk / Inbox waiting queue, one collapsed row. Same fetch and the same
- * call-count as the Decision Inbox badge. Chat writes stay in the thread.
- * InboxBanner / LoopBanner files remain (R4).
+ * The Desk / Inbox waiting queue, one collapsed row. It reads and counts what
+ * the Decision Inbox does (`useInboxCards`): "N waiting on you" is the Inbox's
+ * "To decide" less its rule proposals, which are read off Review's habits and
+ * have no draft to answer here. Chat writes stay in the thread.
  */
 export function CopilotWaitingQueue({ className }: { className?: string }) {
   const { inboxOpen, setInboxOpen } = useCockpitDrawer()
-  const draftsQ = useResearchDrafts({
-    status: 'pending',
-    limit: DRAFTS_PAGE_MAX,
-    refetchIntervalMs: 15_000,
-  })
+  const { queue, briefingRows, cards, hidden, dismiss } = useInboxCards()
   const approve = useApproveDraft()
-  // ✕ is a Dismiss with Undo (Rev .79): held until the toast leaves.
-  const { isHeld, dismiss } = useHeldDraftDismiss()
   const approvedStrip = useApprovedStripState(approve.data)
   const awaitingQ = useAwaitingRuns()
   const objectivesQ = useActiveObjectives()
-  const standingQ = useAutopilotStanding()
 
   const objectiveTitleById = useMemo(() => {
     const map = new Map<string, string>()
@@ -55,38 +43,38 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
     return map
   }, [objectivesQ.data?.items])
 
-  const rawDraftRows = draftsQ.data?.rows
-  const draftRows = useMemo(() => rawDraftRows?.filter((d) => !isHeld(d.id)), [rawDraftRows, isHeld])
   const runRows = awaitingQ.data?.items
-  const listedCallCount = waitingQueueCallCount(draftRows ?? [])
-  const callCount =
-    standingQ.data?.pending_decisions?.calls ?? listedCallCount
-  const truncationLine = waitingQueueTruncationLine(listedCallCount, callCount)
   const items = useMemo(
-    () => waitingQueueItems(draftRows ?? [], runRows ?? [], objectiveTitleById),
-    [draftRows, objectiveTitleById, runRows],
+    () => waitingQueueItems(cards, briefingRows, runRows ?? [], objectiveTitleById),
+    [cards, briefingRows, objectiveTitleById, runRows],
   )
-  const briefingDraftCount = waitingBriefingDrafts(draftRows ?? []).length
+  const briefingDraftCount = waitingBriefingDrafts(briefingRows).length
   const runCount = awaitingQ.data?.count ?? runRows?.length ?? 0
-  const n = callCount
+  const draftsFailed = queue.error != null
+  const runsFailed = awaitingQ.isError
+  // A refused read is not zero calls: the title says «—» until the queue is in.
+  const n = draftsFailed || queue.decisionsLoading ? null : cards.length
   const summary = waitingQueueSummary({
     briefingCount: briefingDraftCount,
     runCount,
   })
 
-  const draftsFailed = draftsQ.isError
-  const runsFailed = awaitingQ.isError
+  // Signed out, every Research read is refused alike: one grey line, not a
+  // queue of «—» (Design 2026-09-15 Q2=A).
+  const authGap = firstResearchAuthGapError(queue.error, awaitingQ.error)
+  if (authGap) {
+    return <ResearchAuthGap error={authGap} layout="banner" className={className} />
+  }
 
-  if (!draftsFailed && !runsFailed && n === 0 && briefingDraftCount === 0 && runCount === 0) {
+  if (!draftsFailed && !runsFailed && !n && briefingDraftCount === 0 && runCount === 0) {
     return approvedStrip ? <ApprovedStrip state={approvedStrip} className={className} /> : null
   }
 
-  if (n === 0 && briefingDraftCount === 0 && runCount === 0 && (draftsFailed || runsFailed)) {
+  if (!n && briefingDraftCount === 0 && runCount === 0 && (draftsFailed || runsFailed)) {
     return (
       <ResearchAuthGap
-        error={firstResearchAuthGapError(draftsQ.error, awaitingQ.error) ?? draftsQ.error ?? awaitingQ.error}
+        error={queue.error ?? awaitingQ.error}
         onRetry={() => {
-          if (draftsFailed) void draftsQ.refetch()
           if (runsFailed) void awaitingQ.refetch()
         }}
         layout="banner"
@@ -94,6 +82,20 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
       />
     )
   }
+
+  const approveCard = (card: InboxCard) =>
+    approve.mutate(card.head.id, {
+      // The newest run covers the earlier ones: they fold away here (Owner 2026-10-04 #11).
+      onSuccess: () => {
+        if (card.shape === 'objective') hidden.setMany(card.folded.map((d) => d.id), true)
+      },
+    })
+  const dismissCard = (card: InboxCard) =>
+    dismiss(
+      card.answers.map((d) => d.id),
+      cardDismissToast(card),
+      card.shape === 'objective' ? { onCommitted: () => hidden.setMany(card.folded.map((d) => d.id), true) } : {},
+    )
 
   return (
     <div
@@ -178,19 +180,19 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
                 >
                   Ask
                 </button>
-                {row.showApprove && row.draft ? (
+                {row.showApprove && row.card ? (
                   <button
                     type="button"
                     className="h-5 px-1 text-dense-caption text-primary hover:bg-secondary"
                     disabled={approve.isPending}
-                    onClick={() => approve.mutate(row.draft!.id)}
+                    onClick={() => approveCard(row.card!)}
                   >
                     ✓
                   </button>
                 ) : null}
-                {row.showDismiss && row.draft ? (
+                {row.showDismiss && row.card ? (
                   <CloseButton
-                    onClick={() => dismiss(row.draft!.id, 'Dismissed')}
+                    onClick={() => dismissCard(row.card!)}
                     label="Dismiss"
                     title="Dismiss — Undo for five seconds"
                   />
@@ -198,14 +200,6 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
               </span>
             </div>
           ))}
-          {truncationLine ? (
-            <Link
-              to="/research/loop/decisions"
-              className="flex min-w-0 items-center border-t border-warning/20 px-2 py-1.5 text-dense-caption text-muted-foreground hover:bg-warning/10 hover:text-foreground"
-            >
-              {truncationLine}
-            </Link>
-          ) : null}
         </div>
       ) : null}
     </div>

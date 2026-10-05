@@ -5,7 +5,7 @@
 import type { AiDraft } from '@/api/researchDrafts'
 import { approveEffect } from '@/lib/harness/draftText'
 import type { DraftHeadline } from '@/lib/harness/draftHeadline'
-import { candidateBatchItems, isActionableDraft, policySuggestionMergeCount } from '@/lib/harness/harnessDraftHelpers'
+import { candidateBatchItems, policySuggestionMergeCount } from '@/lib/harness/harnessDraftHelpers'
 import type { InboxCard } from '@/lib/harness/inboxCards'
 import { orderIntentView } from '@/lib/harness/orderIntent'
 import { isObjectivePatch } from '@/lib/harness/writesTo'
@@ -66,14 +66,8 @@ export function cardMeta(card: InboxCard, head: DraftHeadline): string {
   return parts.join(' · ')
 }
 
-/**
- * Whether answering this card writes anything. A call writes nothing (D10), a
- * patch whose fields are all unchanged merges nothing; both stay on the page
- * at lower weight rather than moving.
- */
-export function cardWrites(card: InboxCard): boolean {
-  return card.shape !== 'call' && isActionableDraft(card.head)
-}
+/** Shared with the Copilot's waiting queue, so it lives with the cards. */
+export { cardWrites } from '@/lib/harness/inboxCards'
 
 /** The toast for a recorded call. */
 export function recordToast(card: InboxCard, head: DraftHeadline): string {

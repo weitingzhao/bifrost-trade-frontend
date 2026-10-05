@@ -25,7 +25,7 @@
  */
 import type { AiDraft } from '@/api/researchDrafts'
 import { kindTag } from '@/lib/harness/draftText'
-import { isDecisionKind } from '@/lib/harness/harnessDraftHelpers'
+import { isActionableDraft, isDecisionKind } from '@/lib/harness/harnessDraftHelpers'
 import { isObjectivePatch, writesTo, WRITES_TO_ORDER, type WritesTo } from '@/lib/harness/writesTo'
 
 export type InboxCardShape = 'call' | 'objective' | 'single'
@@ -174,6 +174,22 @@ export function buildInboxCards(rows: readonly AiDraft[], hidden: ReadonlySet<st
     } else cards.push(singleCard(members[0]))
   }
   return cards.sort((a, b) => b.newestAt - a.newestAt || (a.key < b.key ? -1 : 1))
+}
+
+/**
+ * Whether answering this card writes anything. A call writes nothing (D10), a
+ * patch whose fields are all unchanged merges nothing; both stay on the page
+ * at lower weight rather than moving.
+ */
+export function cardWrites(card: InboxCard): boolean {
+  return card.shape !== 'call' && isActionableDraft(card.head)
+}
+
+/** The toast for a dismissed card — the Inbox and the Copilot queue say the same. */
+export function cardDismissToast(card: InboxCard): string {
+  const n = card.answers.length
+  if (card.shape === 'call') return `Call dismissed${n > 1 ? ` (${n} drafts)` : ''}`
+  return card.folded.length > 0 ? 'Dismissed — the earlier runs stay pending and fold away here' : 'Draft dismissed'
 }
 
 /** The card holding a draft, by any of its drafts' ids — how `?card=` finds it. */

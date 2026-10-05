@@ -118,7 +118,8 @@ const DRAFTS_LIST_MAX_PAGES = 25
  */
 export async function listAllResearchDrafts(params: {
   status: DraftStatus
-  kind: DraftKind
+  /** Omit to page through every kind in the status. */
+  kind?: DraftKind
 }): Promise<DraftListResponse> {
   const rows: AiDraft[] = []
   let pendingCount = 0

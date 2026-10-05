@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { Execution } from '@/types/positions'
 import type { StrategyPlan } from '@/lib/schemas/strategyPlan'
-import { belongCandidates, buildFillRows, buildPlanRows, importRows, orphanReason, scopeFills, summarize } from './fillsModel'
+import { belongCandidates, buildPlanRows, importRows, scopeFills, summarize } from './fillsModel'
+import { buildFillRows, orphanReason } from '@/utils/fillRows'
 
 const T0 = 1_780_000_000
 

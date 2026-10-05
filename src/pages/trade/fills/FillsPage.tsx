@@ -38,12 +38,12 @@ import { useFlexCoverageFreshness } from '@/hooks/useFlexCoverageFreshness'
 import {
   FILLS_UNRECORDED,
   belongCandidates,
-  buildFillRows,
   buildPlanRows,
   importRows,
   scopeFills,
   summarize,
 } from './fillsModel'
+import { buildFillRows } from '@/utils/fillRows'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { clearCarriedSymbol, normalizeSymbol } from '@/lib/symbolContext'
 import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'

@@ -459,6 +459,8 @@ export default function ResearchOverviewPage() {
         stationsFootnote={stationsFootnote}
         bookRows={bookRows}
         cards={cards}
+        earnUnread={unread(standingQ) || unread(objectivesQ)}
+        todayUnread={unread(runsQ) || unread(hypsQ)}
       /> : null}
     </PageShell>
   )
@@ -477,9 +479,14 @@ function LoopFace(props: {
   stationsFootnote: string
   bookRows: React.ComponentProps<typeof BookPanel>['rows']
   cards: OpCardData[]
+  /** The leash rows' reads were refused: the dial's earn line says so. */
+  earnUnread: boolean
+  /** Today's reads were refused: an empty feed is not "nothing recorded". */
+  todayUnread: boolean
 }) {
   const {
     stations, machines, dialCells, dialCurrent, earn, today, nowIso, health, stationsFootnote, bookRows, cards,
+    earnUnread, todayUnread,
   } = props
   return (
     <>
@@ -487,10 +494,10 @@ function LoopFace(props: {
           what this layer is — then how much of it passes without you, then
           what came out today and whether the engines behind it are up. */}
       <LoopCircuit cards={loopCards(stations)} machines={machines} />
-      <DialStrip cells={dialCells} earn={earn} current={dialCurrent} />
+      <DialStrip cells={dialCells} earn={earn} current={dialCurrent} unread={earnUnread} />
 
       <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
-        <TodayFeed items={today} asOf={`${nowIso.slice(0, 10)} · ${nowIso.slice(11, 16)}Z`} />
+        <TodayFeed items={today} asOf={`${nowIso.slice(0, 10)} · ${nowIso.slice(11, 16)}Z`} unread={todayUnread} />
         <HealthPanel cells={health} />
       </div>
 

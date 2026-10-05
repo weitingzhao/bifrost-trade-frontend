@@ -341,7 +341,11 @@ export interface BookView {
  * of them is worth clicking today.
  */
 export function bookViews(bands: readonly CensusBand[]): BookView[] {
-  const n = (label: string) => bands.find((b) => b.label === label)?.n ?? 0
+  // A band with no split could not be counted (its read was refused): «—», not 0.
+  const n = (label: string) => {
+    const b = bands.find((x) => x.label === label)
+    return b == null || b.parts == null ? '—' : String(b.n)
+  }
   return [
     {
       name: 'Hypothesis Board',

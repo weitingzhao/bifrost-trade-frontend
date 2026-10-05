@@ -294,7 +294,9 @@ function RunOneNow() {
         >
           {eod.isPending ? 'EOD Review — running…' : 'EOD Review'}
         </Button>
-        {objectives.length === 0 ? (
+        {objectives.length === 0 && !objectivesQ.data && objectivesQ.isError ? (
+          <span title="The objectives could not be read">Active objective — not read</span>
+        ) : objectives.length === 0 ? (
           <span title="No objective is active">Active objective — none</span>
         ) : (
           objectives.map((o) => (

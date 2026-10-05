@@ -135,7 +135,10 @@ export function PilotToday() {
         </SectionPanel>
         <Writes approvals={s?.approvals} />
       </div>
-      <PilotDigest draftId={s?.brief?.draft_id ?? null} status={s?.brief?.status ?? null} loading={standingQ.isLoading} />
+      {/* The digest is found through the standing; unread, its absence is not "no digest yet". */}
+      {standingQ.isError && !s ? null : (
+        <PilotDigest draftId={s?.brief?.draft_id ?? null} status={s?.brief?.status ?? null} loading={standingQ.isLoading} />
+      )}
     </>
   )
 }

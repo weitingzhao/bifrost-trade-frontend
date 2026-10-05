@@ -313,7 +313,7 @@ export default function CandidatePoolPage() {
         note={
           <>
             {query.data?.count ?? '—'} shown
-            {status === 'open' || status === 'all' ? ` · ${openCount} open in view` : null}
+            {(status === 'open' || status === 'all') && !authGap ? ` · ${openCount} open in view` : null}
           </>
         }
         action={

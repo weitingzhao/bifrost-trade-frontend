@@ -68,10 +68,13 @@ export function DialStrip({
   cells,
   earn,
   current,
+  unread = false,
 }: {
   cells: DialCell[]
   earn: EarnRow | null
   current: string
+  /** The standing or the objectives were refused (signed out): not "nothing settled". */
+  unread?: boolean
 }) {
   const [confirm, setConfirm] = useState<DialCell | null>(null)
   useEffect(() => {
@@ -190,7 +193,9 @@ export function DialStrip({
           </>
         ) : (
           <span className="text-dense-meta text-muted-foreground">
-            Nothing settled under L1 yet — the gate starts counting when outcomes do.
+            {unread
+              ? 'The record was not read — Research user not set.'
+              : 'Nothing settled under L1 yet — the gate starts counting when outcomes do.'}
           </span>
         )}
       </div>
@@ -399,7 +404,7 @@ const TODAY_OP_INK: Record<ResearchOperator, string> = {
   copilot: 'text-primary',
 }
 
-export function TodayFeed({ items, asOf }: { items: TodayItem[]; asOf: string }) {
+export function TodayFeed({ items, asOf, unread = false }: { items: TodayItem[]; asOf: string; unread?: boolean }) {
   return (
     <section className="overflow-hidden border mat-card">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border bg-secondary/40 px-3 py-2">
@@ -409,7 +414,9 @@ export function TodayFeed({ items, asOf }: { items: TodayItem[]; asOf: string })
       </header>
       {items.length === 0 ? (
         <p className="px-3 py-3 text-dense-meta text-muted-foreground">
-          Nothing recorded today yet — the loop's next run and the morning brief land here.
+          {unread
+            ? 'Today’s runs and hypotheses were not read — Research user not set.'
+            : 'Nothing recorded today yet — the loop’s next run and the morning brief land here.'}
         </p>
       ) : (
         items.map((t, i) => (

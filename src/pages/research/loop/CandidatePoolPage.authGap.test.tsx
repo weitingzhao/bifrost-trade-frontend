@@ -52,5 +52,6 @@ describe('CandidatePoolPage — signed out', () => {
     expect(screen.getByText(/runs not read — Research user not set/)).toBeTruthy()
     expect(screen.queryByText('Outcomes — unavailable')).toBeNull()
     expect(screen.getByText(/— shown/)).toBeTruthy()
+    expect(screen.queryByText(/0 open in view/)).toBeNull()
   })
 })

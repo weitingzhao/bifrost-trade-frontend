@@ -152,7 +152,12 @@ export default function ResearchBookPage() {
     if (hypotheses.data == null && hypotheses.isError) {
       out = out
         .map(unread('Hypotheses', NOT_READ))
-        .map(unread('Watchlist', 'thesis split not read — Research user not set'))
+        // The names are counted; only their split by thesis rests on the hypotheses.
+        .map((b) =>
+          b.label === 'Watchlist'
+            ? { ...b, parts: [{ label: 'thesis split not read', n: 0, variant: 'neutral' as const }] }
+            : b,
+        )
     }
     if (candidates.data == null && candidates.isError) out = out.map(unread('Candidates', NOT_READ))
     return out

@@ -60,7 +60,6 @@ export function InboxDecisionList({
   litKey,
   headlineOf,
   failures,
-  approvingId,
   handlers,
 }: {
   sections: InboxSection<InboxItem>[]
@@ -69,7 +68,6 @@ export function InboxDecisionList({
   litKey: string | null
   headlineOf: (card: InboxCard) => DraftHeadline
   failures: Readonly<Record<string, DraftWriteFailure>>
-  approvingId: string | null
   handlers: InboxListHandlers
 }) {
   return (
@@ -113,7 +111,6 @@ export function InboxDecisionList({
                   defaultVerb={item.key === litKey ? 'explain' : null}
                   onToggle={() => handlers.toggle(item.key)}
                   muted={!cardWrites(card)}
-                  approving={approvingId === card.head.id}
                   dismissing={false}
                   onApprove={() => (isCall ? handlers.record(card) : handlers.approve(card))}
                   onDismiss={() => handlers.dismiss(card)}

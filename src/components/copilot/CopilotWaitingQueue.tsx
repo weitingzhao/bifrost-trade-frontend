@@ -1,10 +1,14 @@
-import { useMemo } from 'react'
-import { ApprovedStrip, useApprovedStripState } from '@/components/cockpit/ApprovedStrip'
+import { useMemo, useState } from 'react'
+import {
+  ApprovedStrip,
+  useApprovedStripState,
+  type ApprovedDraftResult,
+} from '@/components/cockpit/ApprovedStrip'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { digestExhibits, isDailyDigest } from '@/lib/harness/dailyDigest'
 import { draftAskedBy, draftLandsIn, draftTitle } from '@/lib/harness/draftText'
-import { cardDismissToast, type InboxCard } from '@/lib/harness/inboxCards'
+import { cardApproveToast, cardDismissToast, type InboxCard } from '@/lib/harness/inboxCards'
 import {
   openDigestInCopilot,
   openDraftInCopilot,
@@ -12,7 +16,6 @@ import {
 } from '@/lib/harness/loopCopilotPrefill'
 import { useCockpitDrawer } from '@/hooks/useCockpitDrawer'
 import { useInboxCards } from '@/hooks/useInboxCards'
-import { useApproveDraft } from '@/hooks/useResearchDrafts'
 import { useActiveObjectives, useAwaitingRuns } from '@/hooks/useLoopHarness'
 import {
   waitingBriefingDrafts,
@@ -31,9 +34,10 @@ import { CloseButton } from '@/components/data-display'
  */
 export function CopilotWaitingQueue({ className }: { className?: string }) {
   const { inboxOpen, setInboxOpen } = useCockpitDrawer()
-  const { queue, briefingRows, cards, hidden, dismiss } = useInboxCards()
-  const approve = useApproveDraft()
-  const approvedStrip = useApprovedStripState(approve.data)
+  const { queue, briefingRows, cards, hidden, dismiss, approve } = useInboxCards()
+  // What the last held approval wrote, once it went out.
+  const [approved, setApproved] = useState<ApprovedDraftResult | undefined>(undefined)
+  const approvedStrip = useApprovedStripState(approved)
   const awaitingQ = useAwaitingRuns()
   const objectivesQ = useActiveObjectives()
 
@@ -83,18 +87,24 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
     )
   }
 
+  // The newest run covers the earlier ones: they leave with it and, once the
+  // write lands, stay folded away (Owner 2026-10-04 #11) — as on the Inbox.
+  const foldAway = (card: InboxCard) =>
+    card.shape === 'objective' && card.folded.length > 0
+      ? {
+          alsoHide: card.folded.map((d) => d.id),
+          onCommitted: () => hidden.setMany(card.folded.map((d) => d.id), true),
+        }
+      : {}
+  // Approve and Dismiss are both held: the row leaves at once, Undo or ⌘Z
+  // for five seconds, then the write (batch 4 follow-up).
   const approveCard = (card: InboxCard) =>
-    approve.mutate(card.head.id, {
-      // The newest run covers the earlier ones: they fold away here (Owner 2026-10-04 #11).
-      onSuccess: () => {
-        if (card.shape === 'objective') hidden.setMany(card.folded.map((d) => d.id), true)
-      },
-    })
+    approve(card.head.id, cardApproveToast(card, draftTitle(card.head)), { onLanded: setApproved, ...foldAway(card) })
   const dismissCard = (card: InboxCard) =>
     dismiss(
       card.answers.map((d) => d.id),
       cardDismissToast(card),
-      card.shape === 'objective' ? { onCommitted: () => hidden.setMany(card.folded.map((d) => d.id), true) } : {},
+      foldAway(card),
     )
 
   return (
@@ -184,7 +194,7 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
                   <button
                     type="button"
                     className="h-5 px-1 text-dense-caption text-primary hover:bg-secondary"
-                    disabled={approve.isPending}
+                    title="Approve — Undo for five seconds"
                     onClick={() => approveCard(row.card!)}
                   >
                     ✓

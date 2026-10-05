@@ -6,7 +6,7 @@
  * list of something else. Fixtures are made up.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -15,6 +15,7 @@ import { RESEARCH_AUTH_NOT_SET_LINE } from '@/components/auth/ResearchAuthGap'
 import { cockpitDrawerStore } from '@/hooks/useCockpitDrawer'
 import { resetStoredDraftIds } from '@/lib/harness/inboxRead'
 import { HttpError } from '@/lib/http'
+import { dismissToast, runUndo, toastStore } from '@/lib/shellNotify'
 import { memoryStorage } from '@/test/memoryStorage'
 
 function draft(kind: DraftKind, id: string, payload: Record<string, unknown>, at: string): AiDraft {
@@ -46,7 +47,7 @@ const QUEUE: AiDraft[] = [
   draft('playbook_note', 'note', { title: 'A note' }, '2026-09-14T13:20:00Z'),
 ]
 
-const drafts = vi.hoisted(() => ({ mode: 'ok' as 'ok' | 'signed-out' }))
+const drafts = vi.hoisted(() => ({ mode: 'ok' as 'ok' | 'signed-out', approve: vi.fn() }))
 
 vi.mock('@/api/researchDrafts', async (orig) => {
   const actual = await orig<typeof import('@/api/researchDrafts')>()
@@ -57,7 +58,7 @@ vi.mock('@/api/researchDrafts', async (orig) => {
       const rows = QUEUE.filter((d) => d.kind === kind)
       return { rows, count: rows.length, pending_count: QUEUE.length, limit: rows.length, offset: 0 }
     },
-    approveResearchDraft: vi.fn(),
+    approveResearchDraft: (id: string) => drafts.approve(id),
     dismissResearchDraft: vi.fn(),
   }
 })
@@ -117,6 +118,30 @@ describe('CopilotWaitingQueue', () => {
     // Approve only where the Inbox's Approve writes: the batch and the note, not the call.
     expect(screen.getAllByText('✓')).toHaveLength(2)
     expect(screen.getAllByRole('button', { name: 'Dismiss' })).toHaveLength(3)
+  })
+
+  it('✓ is held like Dismiss: nothing is sent until the toast leaves, ⌘Z sends nothing', async () => {
+    drafts.approve.mockReset()
+    drafts.approve.mockImplementation(async (id: string) => ({ draft: QUEUE.find((d) => d.id === id) }))
+    renderQueue()
+    await waitFor(() => expect(screen.getByText('3 waiting on you')).toBeTruthy())
+    await userEvent.click(screen.getByText('3 waiting on you'))
+    const approveNote = () => screen.getAllByText('✓')[0]
+
+    await userEvent.click(approveNote())
+    expect(toastStore.getState().toast?.msg).toMatch(/^Approved A note/)
+    expect(drafts.approve).not.toHaveBeenCalled()
+    await waitFor(() => expect(screen.getByText('2 waiting on you')).toBeTruthy())
+    act(() => {
+      expect(runUndo()).toBe(true)
+    })
+    await waitFor(() => expect(screen.getByText('3 waiting on you')).toBeTruthy())
+    expect(drafts.approve).not.toHaveBeenCalled()
+
+    await userEvent.click(approveNote())
+    act(() => dismissToast(toastStore.getState().toast!.id))
+    await waitFor(() => expect(drafts.approve).toHaveBeenCalledWith('note'))
+    expect(drafts.approve).toHaveBeenCalledTimes(1)
   })
 
   it('leaves out the runs hidden on the Inbox, as the Inbox does', async () => {

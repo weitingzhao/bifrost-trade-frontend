@@ -25,7 +25,6 @@ import { Inbox } from 'lucide-react'
 import { HeroCard, HeroRow, PageHead, PageShell } from '@/components/layout'
 import { EmptyState, SegmentControl } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApprovalsLanded, landedApproval, type LandedApproval } from '@/pages/research/loop/ApprovalsLanded'
@@ -34,7 +33,6 @@ import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useObjectiveList } from '@/hooks/useLoopHarness'
 import { draftParentId } from '@/lib/research/draftProvenance'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
-import { useApproveDraft } from '@/hooks/useResearchDrafts'
 import { useInboxCards } from '@/hooks/useInboxCards'
 import { WRITES_TO_LABEL, WRITES_TO_ORDER, type WritesTo } from '@/lib/harness/writesTo'
 import { buildProposals } from '@/pages/research/loop/proposals/proposalsModel'
@@ -46,6 +44,7 @@ import { LeashPanel } from '@/pages/research/loop/LeashPanel'
 import { approveEffect, draftAskedBy } from '@/lib/harness/draftText'
 import { draftHeadline, type DraftHeadline } from '@/lib/harness/draftHeadline'
 import {
+  cardApproveToast,
   cardDismissToast,
   cardHoldingDraft,
   hiddenDecisionCount,
@@ -131,9 +130,9 @@ export default function DecisionInboxPage() {
     hidden: { ids: hidden, setMany: setHidden },
     cards,
     dismiss,
+    approve,
     record,
   } = useInboxCards()
-  const approve = useApproveDraft()
   const failures = useDraftWriteFailures()
   // The card leaves on approval and the server cannot take one back, so what
   // was accepted is only ever recorded here.
@@ -267,19 +266,26 @@ export default function DecisionInboxPage() {
     )
     settle()
   }
+  // An objective's newest run covers the earlier ones: they leave with it, and
+  // once the write lands they stay folded away here (Owner 2026-10-04 #11).
+  const foldAway = (card: InboxCard) =>
+    card.shape === 'objective' && card.folded.length > 0
+      ? { alsoHide: card.folded.map((d) => d.id), onCommitted: () => hideFolded(card) }
+      : {}
+  // Approve is held like Dismiss and Record answer (batch 4 follow-up): the
+  // card leaves at once, Undo or ⌘Z for five seconds, then the write.
   const approveCard = (card: InboxCard) => {
     if (card.shape === 'call') return recordCard(card)
-    approve.mutate(card.head.id, {
-      onSuccess: (result) => {
-        land(result)
-        if (card.shape === 'objective') hideFolded(card)
-      },
-    })
+    const head = headlineOf(card)
+    approve(card.head.id, cardApproveToast(card, head.sym ?? head.title), { onLanded: land, ...foldAway(card) })
     settle()
   }
   const dismissCard = (card: InboxCard) => {
-    const ids = card.answers.map((d) => d.id)
-    dismiss(ids, cardDismissToast(card), card.shape === 'objective' ? { onCommitted: () => hideFolded(card) } : {})
+    dismiss(
+      card.answers.map((d) => d.id),
+      cardDismissToast(card),
+      foldAway(card),
+    )
     settle()
   }
   const discussCard = (card: InboxCard) =>
@@ -425,7 +431,6 @@ export default function DecisionInboxPage() {
         onReadDigest={() => setView('briefings')}
       />
 
-      {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}
       {/* The queue, and beside it the leash: what reaches this page is what the
           leash did not accept on its own, so the rule sits next to its result. */}
       <div className="grid gap-4 @4xl/page:grid-cols-[minmax(0,1fr)_18rem] @4xl/page:items-start">
@@ -464,7 +469,6 @@ export default function DecisionInboxPage() {
                 litKey={litKey}
                 headlineOf={headlineOf}
                 failures={failures}
-                approvingId={approve.isPending ? (approve.variables ?? null) : null}
                 handlers={{
                   toggle,
                   approve: approveCard,
@@ -485,8 +489,7 @@ export default function DecisionInboxPage() {
               setRead={setRead}
               litId={cardParam}
               onDismiss={(id) => dismiss(id)}
-              onApprove={(id) => approve.mutate(id, { onSuccess: land })}
-              approvingId={approve.isPending ? (approve.variables ?? null) : null}
+              onApprove={(id) => approve(id, 'Approved', { onLanded: land })}
             />
           )}
         </div>

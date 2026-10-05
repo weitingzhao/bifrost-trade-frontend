@@ -99,16 +99,37 @@ export function useDismissDraft() {
 export interface HeldWriteOptions {
   /** Called once the write has gone out and at least one draft landed. */
   onCommitted?: (landed: readonly string[]) => void
+  /**
+   * Drafts that leave the list with the answered ones but are not written —
+   * an objective's earlier runs, which its newest run covers (Owner
+   * 2026-10-04 #11). Undo brings them back with the rest; once the write
+   * lands, `onCommitted` is where they are hidden for good.
+   */
+  alsoHide?: readonly string[]
 }
+
+type ApproveResult = Awaited<ReturnType<typeof approveResearchDraft>>
+
+export interface HeldApproveOptions extends HeldWriteOptions {
+  /** Each draft that landed, with what the server wrote for it. */
+  onLanded?: (result: ApproveResult) => void
+}
+
+/** Approve and Record answer are the same request; only the words differ. */
+const APPROVE_WORDS = {
+  approve: { verb: 'Approve', partial: 'Approved', failed: 'Approve did not save' },
+  record: { verb: 'Record answer', partial: 'Recorded', failed: 'Record answer did not save' },
+} as const
 
 /**
  * Held writes on drafts (design Rev .75/.79; Record answer since Owner
- * 2026-10-04 #9). Neither write can be taken back on the server — a dismissal
- * also marks the linked action rejected, an approval moves the draft out of
- * the queue for good — so the draft leaves every list at once, the toast offers
+ * 2026-10-04 #9, Approve since batch 4's follow-up). None of the three can be
+ * taken back on the server — a dismissal also marks the linked action
+ * rejected, an approval writes into The Book and moves the draft out of the
+ * queue for good — so the draft leaves every list at once, the toast offers
  * Undo for 5s (and ⌘Z while it is up), and the write goes out when the toast
- * does. One scope for the store, so a draft held on the Inbox is gone from the
- * Copilot queue and the Hypothesis board too.
+ * does. One scope for the store, so a draft held on the Inbox is gone from
+ * the Copilot queue and the Hypothesis board too.
  *
  * Several ids are one toast and one request each. When some land and some do
  * not, the ones that did not come back on their card with the reason
@@ -120,7 +141,7 @@ export function useHeldDraftWrites() {
     (ids: string | readonly string[], msg = 'Draft dismissed', opts: HeldWriteOptions = {}) => {
       const list: readonly string[] = typeof ids === 'string' ? [ids] : ids
       if (list.length === 0) return
-      hold(list, {
+      hold([...list, ...(opts.alsoHide ?? [])], {
         msg,
         commit: async () => {
           const { landed, failed } = await settleDraftWrites(list, 'Dismiss', (id) => dismissResearchDraft(id))
@@ -133,6 +154,38 @@ export function useHeldDraftWrites() {
     },
     [hold],
   )
+  const approveHeld = useCallback(
+    (words: (typeof APPROVE_WORDS)[keyof typeof APPROVE_WORDS], ids: string | readonly string[], msg: string, opts: HeldApproveOptions) => {
+      const list: readonly string[] = typeof ids === 'string' ? [ids] : ids
+      if (list.length === 0) return
+      hold([...list, ...(opts.alsoHide ?? [])], {
+        msg,
+        commit: async () => {
+          const { landed, failed } = await settleDraftWrites(
+            list,
+            words.verb,
+            (id) => approveResearchDraft(id),
+            (_id, result) => opts.onLanded?.(result),
+          )
+          if (failed.length > 0) notify(`${words.partial} ${landed.length} of ${list.length} — the rest stay on the card`)
+          opts.onCommitted?.(landed)
+        },
+        invalidate: [researchDraftsQueryKey, ['research-engine', 'hypothesis']],
+        failed: words.failed,
+      })
+    },
+    [hold],
+  )
+  /**
+   * Approve (batch 4 follow-up): accepts the draft into The Book — a batch
+   * into the Pool, a patch into its policy, a playbook entry into the
+   * Playbook. Final on the server, so it waits behind the same toast.
+   */
+  const approve = useCallback(
+    (ids: string | readonly string[], msg: string, opts: HeldApproveOptions = {}) =>
+      approveHeld(APPROVE_WORDS.approve, ids, msg, opts),
+    [approveHeld],
+  )
   /**
    * Record answer on a call (Rev .144): the server's approve for
    * `decision_draft` / `order_intent` is an advisory pass-through — it writes
@@ -140,32 +193,11 @@ export function useHeldDraftWrites() {
    * is still final, so it waits behind the same toast as Dismiss.
    */
   const record = useCallback(
-    (
-      ids: string | readonly string[],
-      msg: string,
-      opts: HeldWriteOptions & { onLanded?: (result: Awaited<ReturnType<typeof approveResearchDraft>>) => void } = {},
-    ) => {
-      const list: readonly string[] = typeof ids === 'string' ? [ids] : ids
-      if (list.length === 0) return
-      hold(list, {
-        msg,
-        commit: async () => {
-          const { landed, failed } = await settleDraftWrites(
-            list,
-            'Record answer',
-            (id) => approveResearchDraft(id),
-            (_id, result) => opts.onLanded?.(result),
-          )
-          if (failed.length > 0) notify(`Recorded ${landed.length} of ${list.length} — the rest stay on the card`)
-          opts.onCommitted?.(landed)
-        },
-        invalidate: [researchDraftsQueryKey, ['research-engine', 'hypothesis']],
-        failed: 'Record answer did not save',
-      })
-    },
-    [hold],
+    (ids: string | readonly string[], msg: string, opts: HeldApproveOptions = {}) =>
+      approveHeld(APPROVE_WORDS.record, ids, msg, opts),
+    [approveHeld],
   )
-  return { isHeld, dismiss, record }
+  return { isHeld, dismiss, approve, record }
 }
 
 /** Dismiss with Undo, for the surfaces that only dismiss. */

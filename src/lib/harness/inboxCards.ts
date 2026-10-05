@@ -24,7 +24,7 @@
  * the reader never looked at.
  */
 import type { AiDraft } from '@/api/researchDrafts'
-import { kindTag } from '@/lib/harness/draftText'
+import { approveEffect, kindTag } from '@/lib/harness/draftText'
 import { isActionableDraft, isDecisionKind } from '@/lib/harness/harnessDraftHelpers'
 import { isObjectivePatch, writesTo, WRITES_TO_ORDER, type WritesTo } from '@/lib/harness/writesTo'
 
@@ -190,6 +190,16 @@ export function cardDismissToast(card: InboxCard): string {
   const n = card.answers.length
   if (card.shape === 'call') return `Call dismissed${n > 1 ? ` (${n} drafts)` : ''}`
   return card.folded.length > 0 ? 'Dismissed — the earlier runs stay pending and fold away here' : 'Draft dismissed'
+}
+
+/**
+ * The toast for an approved card, while it is held (Undo · ⌘Z). Names where
+ * the approval writes, so the five seconds are spent on the right question.
+ */
+export function cardApproveToast(card: InboxCard, what: string): string {
+  const effect = approveEffect(card.head)
+  const folded = card.folded.length > 0 ? ' · the earlier runs fold away here' : ''
+  return `Approved ${what}${effect ? ` → ${effect.label}` : ' — writes nothing'}${folded}`
 }
 
 /** The card holding a draft, by any of its drafts' ids — how `?card=` finds it. */

@@ -21,7 +21,6 @@ export function InboxBriefings({
   litId,
   onDismiss,
   onApprove,
-  approvingId,
 }: {
   rows: readonly AiDraft[]
   loading: boolean
@@ -31,7 +30,6 @@ export function InboxBriefings({
   litId: string | null
   onDismiss: (id: string) => void
   onApprove: (id: string) => void
-  approvingId: string | null
 }) {
   const [shown, setShown] = useState(BRIEFINGS_PAGE)
   // One open at a time, like the decisions; `null` is "the first one".
@@ -57,7 +55,6 @@ export function InboxBriefings({
           defaultVerb={d.id === litId ? 'explain' : null}
           expanded={open === d.id}
           onToggle={() => setOpenId(open === d.id ? '' : d.id)}
-          approving={approvingId === d.id}
           onApprove={() => onApprove(d.id)}
           onDismiss={() => onDismiss(d.id)}
           read={read.has(d.id)}

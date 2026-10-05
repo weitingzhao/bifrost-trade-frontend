@@ -6,13 +6,12 @@ import { Button } from '@/components/ui/button'
 import {
   DenseLinkButton,
   DenseOptionCategoryLabel,
-  DenseTag,
-  DenseTagButton,
+  DenseTag, 
   ExecSourceBadge,
   InlinePnl,
-  PnlCell,
-  denseEntityFilterChipClass,
+  PnlCell, 
 } from '@/components/data-display'
+import { FilterChip } from '@bifrost/ui'
 import { StatusLamp } from '@/components/StatusLamp'
 import { fmtPctSigned } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -204,24 +203,13 @@ export function CategorySection() {
           </div>
           <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-background px-2.5 py-2">
             <span className={EYEBROW}>filter</span>
-            <DenseTagButton
-              variant="category"
-              size="pill"
-              className={denseEntityFilterChipClass('category', false)}
-              onClick={noop}
-              aria-pressed={false}
-            >
+            {/* §17.10 (Rev .150): a filter's pick is ink 15%, not the category ink. */}
+            <FilterChip pressed={false} onClick={noop}>
               watchlist
-            </DenseTagButton>
-            <DenseTagButton
-              variant="category"
-              size="pill"
-              className={denseEntityFilterChipClass('category', true)}
-              onClick={noop}
-              aria-pressed
-            >
+            </FilterChip>
+            <FilterChip pressed onClick={noop}>
               portfolio
-            </DenseTagButton>
+            </FilterChip>
           </div>
         </div>
       </div>
@@ -234,7 +222,7 @@ export function CategorySection() {
           <>
             Position category: <Code>DenseTag variant=&quot;category&quot;</Code> in cells and filters; a group header
             is <Code>GroupHeaderRow variant=&quot;category&quot;</Code> (label, raised band, border-y — no pill); a
-            filter chip is grey until chosen (<Code>denseEntityFilterChipClass</Code>)
+            category filter is a <Code>FilterChip</Code> — ink 15% when on, never the category ink (§17.10)
           </>,
         ]}
         never={[

@@ -64,9 +64,9 @@ const CANDIDATE_DAYS = 30
 
 const OPERATOR_SEGMENTS = [
   { value: 'all', label: 'All', title: 'Every author' },
-  { value: 'loop', label: 'loop', title: 'The unattended machine: runs and what they wrote' },
-  { value: 'copilot', label: 'copilot', title: 'The machine you asked' },
-  { value: 'hand', label: 'hand', title: 'Written by you, from a page' },
+  { value: 'hand', label: 'Hand', title: 'Written by you, from a page' },
+  { value: 'loop', label: 'Loop', title: 'The unattended machine: runs and what they wrote' },
+  { value: 'copilot', label: 'Copilot', title: 'The machine you asked' },
 ]
 
 export default function JournalPage() {

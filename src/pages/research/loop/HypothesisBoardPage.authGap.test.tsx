@@ -50,7 +50,7 @@ describe('HypothesisBoardPage — signed out', () => {
     await waitFor(() => expect(screen.getAllByText(RESEARCH_AUTH_NOT_SET_LINE).length).toBeGreaterThan(0))
     expect(screen.queryByText('Couldn’t load the board')).toBeNull()
     expect(screen.queryByText('No hypotheses in this lane')).toBeNull()
-    const lanes = screen.getByRole('tablist', { name: 'Lane' })
+    const lanes = screen.getByRole('group', { name: 'Lane' })
     expect(lanes.textContent).not.toMatch(/\d/)
     expect(lanes.textContent).toContain('—')
   })

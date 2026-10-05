@@ -286,26 +286,16 @@ export function PlaybookPage() {
               onChange={(e) => setNewRuleTitle(e.target.value)}
               className="h-8"
             />
-            <div role="radiogroup" aria-label="Rule category" className="flex flex-wrap items-center gap-2">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  role="radio"
-                  aria-checked={newRuleCategory === c}
-                  onClick={() => setNewRuleCategory(c)}
-                  className={cn(
-                    // The picked category is a selection, so it wears the accent (Rev .90).
-                    'rounded-full border px-2 py-0.5 font-mono text-dense-micro font-semibold',
-                    newRuleCategory === c
-                      ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_20%,transparent)] text-primary'
-                      : 'border-transparent bg-[var(--mat-btn-fill)] text-muted-foreground hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
+            {/* The category is pick-one: the DS SegmentControl, ink 15% on the
+                pick — the accent is not a selection colour (§17.10 rule 1). */}
+            <SegmentControl
+              size="xs"
+              ariaLabel="Rule category"
+              className="max-w-full flex-wrap"
+              value={newRuleCategory}
+              onChange={setNewRuleCategory}
+              options={CATEGORIES.map((c) => ({ value: c, label: <span className="font-mono">{c}</span> }))}
+            />
             <textarea
               className="min-h-[100px] w-full border p-2 text-dense-label mat-field"
               placeholder="Markdown body — the rule, the reason, the tell that you are about to break it"

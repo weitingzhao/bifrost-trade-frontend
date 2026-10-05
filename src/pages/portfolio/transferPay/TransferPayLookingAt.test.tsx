@@ -51,11 +51,12 @@ function renderPanel(over: Partial<Parameters<typeof TransferPayLookingAt>[0]> =
 describe('TransferPayLookingAt chips', () => {
   it('puts a count on every account chip, including the account nobody trades in', () => {
     renderPanel()
+    // Account is pick-one: a SegmentControl whose segment names carry the count.
     const group = within(screen.getByRole('group', { name: 'Account' }))
-    expect(group.getByRole('button', { name: 'All accounts, 116 events' })).toBeInTheDocument()
-    expect(group.getByRole('button', { name: `${A}, 70 events` })).toBeInTheDocument()
-    expect(group.getByRole('button', { name: `${B}, 37 events` })).toBeInTheDocument()
-    expect(group.getByRole('button', { name: `${C}, 9 events` })).toBeInTheDocument()
+    expect(group.getByRole('button', { name: 'All accounts 116' })).toHaveAttribute('aria-pressed', 'true')
+    expect(group.getByRole('button', { name: `${A} 70` })).toBeInTheDocument()
+    expect(group.getByRole('button', { name: `${B} 37` })).toBeInTheDocument()
+    expect(group.getByRole('button', { name: `${C} 9` })).toBeInTheDocument()
   })
 
   it('puts a count on every type chip — the distribution is the finding', () => {

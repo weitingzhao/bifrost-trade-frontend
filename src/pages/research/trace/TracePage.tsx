@@ -20,7 +20,8 @@ import { objectiveOrigin } from '@/lib/harness/objectiveOrigin'
 import { PageHead, PageShell } from '@/components/layout'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
-import { ViewState } from '@bifrost/ui'
+import { SegmentControl, ViewState } from '@bifrost/ui'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { immuneCheck, SOURCE_STANDING, traceChain, type TraceArc, type TraceNode } from './traceModel'
 
@@ -30,6 +31,9 @@ const ORANGE = 'var(--color-unrealized)'
 const LIME = 'var(--sk-ticker)'
 const PURPLE = 'var(--sk-accent)'
 const SKY = 'var(--sk-contract)'
+
+/** §17.10: pick-one past six reads as a Select, not a segment rail. */
+const MEMORY_SEGMENT_MAX = 6
 
 const ARC_INK: Record<TraceArc, string> = {
   trail: MUTE,
@@ -196,26 +200,37 @@ export default function TracePage() {
           meta={memory ? 'where it came from, what it caused' : undefined}
           info="Opens from any artifact's Trace action. Every node is a Journal artifact; solid arcs happened, dashed arcs are the loop's not-yet. Up asks provenance, down asks consequence (Vision §22.6). A trace is a walk over Journal edges — evidence refs, citations, objective origin, run → verdict attribution. No new store; the chain is derived."
         />
+        {/* §17.10: which memory is pick-one — a SegmentControl while the store
+            holds six or fewer, a Select past that. Never the unrealized ink. */}
         {memories.length > 1 ? (
           <div data-sr-toolbar className="flex flex-wrap items-center gap-1.5">
             <span className="text-dense-meta text-muted-foreground">Trace a memory</span>
-            {memories.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => pick(m.id)}
-                title={m.text}
-                aria-pressed={m.id === memory?.id}
-                className={cn(
-                  'h-5.5 cursor-pointer rounded-full border-0 px-1.5 font-mono text-dense-micro font-bold',
-                  m.id === memory?.id
-                    ? 'bg-[color-mix(in_srgb,var(--color-unrealized)_18%,transparent)] text-[var(--color-unrealized)]'
-                    : 'bg-transparent text-[var(--sk-soft)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)]',
-                )}
-              >
-                {m.id}
-              </button>
-            ))}
+            {memories.length <= MEMORY_SEGMENT_MAX ? (
+              <SegmentControl
+                size="xs"
+                ariaLabel="Trace a memory"
+                value={memory?.id ?? ''}
+                onChange={pick}
+                options={memories.map((m) => ({
+                  value: m.id,
+                  label: <span className="font-mono">{m.id}</span>,
+                  title: m.text,
+                }))}
+              />
+            ) : (
+              <Select value={memory?.id ?? ''} onValueChange={pick}>
+                <SelectTrigger className="h-6 min-w-[8rem] px-2 font-mono text-dense-meta" aria-label="Trace a memory">
+                  <SelectValue placeholder="Pick a memory" />
+                </SelectTrigger>
+                <SelectContent>
+                  {memories.map((m) => (
+                    <SelectItem key={m.id} value={m.id} title={m.text} className="font-mono">
+                      {m.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         ) : null}
 

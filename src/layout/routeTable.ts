@@ -209,7 +209,7 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.86',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/portfolio/backing'],
     },
   },
@@ -360,7 +360,7 @@ export const ROUTES: readonly RouteEntry[] = [
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-09-28.103',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/portfolio/ledger'],
     },
   },
@@ -371,7 +371,7 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.86',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/portfolio/transfer'],
     },
   },
@@ -458,7 +458,7 @@ export const ROUTES: readonly RouteEntry[] = [
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       // Rev .112: Record gains the Source and Lens cuts (from Outcome) and Earned from.
       state: 'reviewing',
-      rev: '2026-09-29.112',
+      rev: '2026-10-02.150',
       note: DESIGN_NOTES['/review/playbook'],
     },
   },
@@ -548,7 +548,7 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'UI Design System',
     crumbs: DOCS,
     // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
-    design: { state: 'reviewing', rev: '2026-09-25.91', note: DESIGN_NOTES['/docs/ui-design-system'] },
+    design: { state: 'reviewing', rev: '2026-10-02.150', note: DESIGN_NOTES['/docs/ui-design-system'] },
   },
   {
     // The options half of the gallery `/docs/ui-design-system` already is. The

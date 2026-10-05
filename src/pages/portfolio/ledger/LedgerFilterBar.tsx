@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { CloseButton, segmentButtonClass, segmentGroupClass } from '@/components/data-display'
+import { CloseButton, SegmentControl, segmentButtonClass } from '@/components/data-display'
 import {
   LEDGER_SINCE_PRESET_TABS,
   type LedgerSincePreset,
@@ -120,52 +120,25 @@ export function LedgerFilterBar({
           <div className="inline-flex flex-wrap items-center gap-x-2 gap-y-1" role="group" aria-label="Since (rolling trade date window)">
             <span className={ledgerFilterLabelClass}>Since</span>
             <InfoTooltip text={SINCE_TOOLTIP} />
-            <div className={segmentGroupClass('sm')}>
-              <button
-                type="button"
-                onClick={() => { onSincePreset('all'); clearExpiryFilters() }}
-                className={segmentButtonClass(sincePreset === 'all' && !expiryFilterYear && !tradeDay, 'sm')}
-                aria-pressed={sincePreset === 'all' && !expiryFilterYear && !tradeDay}
-              >
-                All
-              </button>
-              {SINCE_PRESET_TABS.map(t => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => { onSincePreset(t.id); clearExpiryFilters() }}
-                  className={segmentButtonClass(sincePreset === t.id && !expiryFilterYear && !tradeDay, 'sm')}
-                  aria-pressed={sincePreset === t.id && !expiryFilterYear && !tradeDay}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+            {/* A trade date or an expiry year replaces the window, so no segment is picked then. */}
+            <SegmentControl
+              ariaLabel="Since"
+              value={tradeDay || expiryFilterYear ? '' : sincePreset}
+              onChange={(v) => {
+                onSincePreset(v as LedgerSincePreset)
+                clearExpiryFilters()
+              }}
+              options={[{ value: 'all', label: 'All' }, ...SINCE_PRESET_TABS.map((t) => ({ value: t.id, label: t.label }))]}
+            />
           </div>
 
           {accountTabs.length > 0 && (
-            <div className={segmentGroupClass('sm')} role="group" aria-label="Account filter">
-              <button
-                type="button"
-                onClick={() => onAccountFilter('all')}
-                className={segmentButtonClass(accountFilter === 'all', 'sm')}
-                aria-pressed={accountFilter === 'all'}
-              >
-                All
-              </button>
-              {accountTabs.map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => onAccountFilter(id)}
-                  className={segmentButtonClass(accountFilter === id, 'sm')}
-                  aria-pressed={accountFilter === id}
-                  title={id}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            <SegmentControl
+              ariaLabel="Account filter"
+              value={accountFilter}
+              onChange={onAccountFilter}
+              options={[{ value: 'all', label: 'All' }, ...accountTabs.map(({ id, label }) => ({ value: id, label, title: id }))]}
+            />
           )}
 
           {tradeDay && (
@@ -314,19 +287,12 @@ export function LedgerFilterBar({
 
           <span className="ml-auto inline-flex flex-wrap items-center gap-2">
             <span className={ledgerFilterLabelClass}>Type</span>
-            <div className={segmentGroupClass('sm')} role="group" aria-label="Row type">
-              {LEDGER_ROW_TYPE_TABS.map(t => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => onRowType(t.id)}
-                  className={segmentButtonClass(rowType === t.id, 'sm')}
-                  aria-pressed={rowType === t.id}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+            <SegmentControl
+              ariaLabel="Row type"
+              value={rowType}
+              onChange={(v) => onRowType(v as LedgerRowType)}
+              options={LEDGER_ROW_TYPE_TABS.map((t) => ({ value: t.id, label: t.label }))}
+            />
             {typeNote ? (
               <span className="max-w-[13rem] text-dense-caption text-muted-foreground text-pretty">{typeNote}</span>
             ) : null}

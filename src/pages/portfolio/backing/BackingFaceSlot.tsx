@@ -9,7 +9,7 @@
  */
 import { cn } from '@/lib/utils'
 import { Link } from 'react-router-dom'
-import { CloseButton, DenseTag } from '@/components/data-display'
+import { CloseButton, SegmentControl, DenseTag } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtUsd, fmtSignedPct } from '@/utils/positions'
 import { computeIndependentHoldingMetrics } from '@/utils/independentHoldings'
@@ -71,22 +71,15 @@ export function BackingFaceSlot({
       }}
     >
       <header className={positionsUi.panelHead}>
-        {FACES.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => onFace(f.id)}
-            aria-pressed={face === f.id}
-            title={f.title}
-            className={cn(
-              'h-6 cursor-pointer whitespace-nowrap rounded-full border bg-transparent px-2.25',
-              'text-dense-meta leading-normal font-semibold',
-              face === f.id ? 'border-primary text-primary' : 'border-border text-secondary-foreground hover:text-foreground',
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+        {/* §17.3 / §17.10: the face is pick-one, so it is the DS SegmentControl —
+            the picked face is ink 15%, not an accent edge. */}
+        <SegmentControl
+          size="xs"
+          ariaLabel="Detail face"
+          value={face}
+          onChange={(v) => onFace(v as BackingFace)}
+          options={FACES.map((f) => ({ value: f.id, label: f.label, title: f.title }))}
+        />
         <CloseButton className="ml-auto" onClick={onClose} title="Close · esc" />
       </header>
 

@@ -24,11 +24,23 @@
  *                  so; open interest, spread and weeklies have no store.
  */
 import { MOMENTUM_INDICATORS, SENTIMENT_INDICATORS, STRUCTURE_INDICATORS } from '@/constants/stockScreenerCatalog'
+import { PINE_BUILTINS } from '@/api/research/pine'
 import { NARRATIVE_CONDITIONS } from '@/lib/research/narrativeItems'
 import { AGREE_BAR, type ScreenState, type Stage } from './stockScreenModel'
 
 const NO_CALENDAR =
   'No earnings window or theme is served across the universe: the event calendar holds 8 rows and earnings dates are read one symbol at a time.'
+/**
+ * Pine library scripts (research 0.173.0, W6): a chip passes a name when the
+ * script's buy or sell plot fired on it in the last PINE_WITHIN_SESSIONS
+ * sessions (`/research/pine/signals`). Ids are `pine:<script>:<side>`.
+ */
+export const PINE_WITHIN_SESSIONS = 5
+export const PINE_SCREEN_SCRIPTS = PINE_BUILTINS
+export function pineChipId(script: string, side: 'buy' | 'sell'): string {
+  return `pine:${script}:${side}`
+}
+
 const NO_LIQUIDITY = 'No store carries open interest, spread or listed weeklies across the universe.'
 
 export const STAGES: readonly Stage[] = [
@@ -157,6 +169,21 @@ export const STAGES: readonly Stage[] = [
       { id: 'no_event_30d', label: 'No event 30d', missing: NO_CALENDAR },
       ...NARRATIVE_CONDITIONS.map((c) => ({ id: c.id, label: c.label, narrative: c.desc, fromSet: true })),
     ],
+  },
+  {
+    id: 'pine',
+    title: 'Pine signals',
+    mode: `any selected · fired in the last ${PINE_WITHIN_SESSIONS} sessions`,
+    kind: 'any',
+    missing: null,
+    chips: PINE_SCREEN_SCRIPTS.flatMap((p) =>
+      (['buy', 'sell'] as const).map((side) => ({
+        id: pineChipId(p.id, side),
+        label: `${p.label} ${side === 'buy' ? '↑' : '↓'}`,
+        title: `Pine library script ${p.id}: its ${side} plot fired in the last ${PINE_WITHIN_SESSIONS} sessions`,
+        fromSet: true,
+      }))
+    ),
   },
   {
     id: 'options',

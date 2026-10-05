@@ -51,6 +51,7 @@ import {
 import { fmtNum, fmtPctWholeFromFraction } from '@/lib/format'
 import { PortfolioTag } from '@/components/portfolio/PortfolioTag'
 import { Card, CardContent } from '@/components/ui/card'
+import { SignalWinRatePanel } from './SignalWinRatePanel'
 import {
   Dialog,
   DialogContent,
@@ -778,6 +779,7 @@ export default function SignalDecayPage() {
       ) : null}
 
       <CombinedLensesMatrix windowDays={windowDays} symbol={symbol} regime={regime} />
+      <SignalWinRatePanel />
     </PageShell>
   )
 }

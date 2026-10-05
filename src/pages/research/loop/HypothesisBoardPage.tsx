@@ -17,7 +17,7 @@ import { fetchCandidates } from '@/api/research/candidates'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { ALL_OBJECTIVES, candidateObjectiveId, useObjectiveScope } from '@/lib/objectiveScope'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { ObjectiveScopeBanner, PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { DenseTag, type DenseTagVariant } from '@/components/data-display'
 import { ViewState } from '@bifrost/ui'
@@ -25,8 +25,8 @@ import { Card } from '@/components/ui/card'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { useHypothesisList } from '@/hooks/useHypotheses'
-import { approveResearchDraft, listResearchDrafts } from '@/api/researchDrafts'
-import { useHeldDraftDismiss } from '@/hooks/useResearchDrafts'
+import { listResearchDrafts } from '@/api/researchDrafts'
+import { useHeldDraftWrites } from '@/hooks/useResearchDrafts'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { draftTitle } from '@/lib/harness/draftText'
@@ -135,7 +135,6 @@ function BoardCard({ hypothesis, nowIso }: { hypothesis: Hypothesis; nowIso: str
 }
 
 function SuggestionQueue() {
-  const qc = useQueryClient()
   /**
    * Two kinds feed one queue. `hypothesis_suggestion` is what the Copilot
    * writes from a note or a reading; `hypothesis_draft` is what an agent
@@ -153,13 +152,10 @@ function SuggestionQueue() {
       return { rows: pages.flatMap((p) => p.rows) }
     },
   })
-  const act = useMutation({
-    mutationFn: (id: string) => approveResearchDraft(id),
-    onSuccess: () =>
-      void qc.invalidateQueries({ queryKey: ['research-engine', 'drafts', 'hypothesis-queue'] }),
-  })
-  // Dismiss with Undo (Rev .75): the draft leaves at once, the write goes with the toast.
-  const { isHeld, dismiss } = useHeldDraftDismiss()
+  // Approve and Dismiss with Undo (Rev .75; Approve since batch 4's
+  // follow-up): the draft leaves at once, the write goes with the toast, and
+  // the drafts prefix it invalidates covers this queue.
+  const { isHeld, dismiss, approve } = useHeldDraftWrites()
   const rows = (drafts.data?.rows ?? []).filter((d) => !isHeld(d.id))
   // Signed out, the queue answers 401: say so instead of drawing no queue,
   // which reads as "nothing proposed".
@@ -182,9 +178,6 @@ function SuggestionQueue() {
         </span>
       </header>
       <div className="space-y-2.5 px-3 py-2.5">
-        {act.error ? (
-          <p className="text-dense-meta text-destructive">{(act.error as Error).message}</p>
-        ) : null}
         {rows.map((d) => (
           <div key={d.id} className="space-y-1">
             <div className="flex items-baseline gap-2.5">
@@ -200,9 +193,8 @@ function SuggestionQueue() {
               <button
                 type="button"
                 className="text-dense-meta text-primary hover:underline disabled:opacity-50"
-                disabled={act.isPending}
-                title="Records your call on the draft — no hypothesis is written; create one from its evidence page"
-                onClick={() => act.mutate(d.id)}
+                title="Records your call on the draft — no hypothesis is written; create one from its evidence page. Undo for five seconds"
+                onClick={() => approve(d.id, `Approved ${draftTitle(d)} — nothing written`)}
               >
                 Approve
               </button>

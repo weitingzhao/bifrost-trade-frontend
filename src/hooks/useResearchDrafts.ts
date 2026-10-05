@@ -5,7 +5,7 @@ import { useCallback } from 'react'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useHeldRemoval } from '@/hooks/useHeldRemoval'
 import { notify } from '@/lib/shellNotify'
-import { settleDraftWrites } from '@/lib/harness/draftWriteFailures'
+import { settleDraftWrites, settledLine } from '@/lib/harness/draftWriteFailures'
 import {
   BRIEFING_QUEUE_KINDS,
   combineInboxQueue,
@@ -133,7 +133,8 @@ const APPROVE_WORDS = {
  *
  * Several ids are one toast and one request each. When some land and some do
  * not, the ones that did not come back on their card with the reason
- * (`draftWriteFailures`).
+ * (`draftWriteFailures`). A draft that expired while it waited (409, Research
+ * 0.166.0) is not a failure: it leaves the card and a neutral line says why.
  */
 export function useHeldDraftWrites() {
   const { isHeld, hold } = useHeldRemoval('research-draft')
@@ -144,9 +145,10 @@ export function useHeldDraftWrites() {
       hold([...list, ...(opts.alsoHide ?? [])], {
         msg,
         commit: async () => {
-          const { landed, failed } = await settleDraftWrites(list, 'Dismiss', (id) => dismissResearchDraft(id))
-          if (failed.length > 0) notify(`Dismissed ${landed.length} of ${list.length} — the rest stay on the card`)
-          opts.onCommitted?.(landed)
+          const settled = await settleDraftWrites(list, 'Dismiss', (id) => dismissResearchDraft(id))
+          const line = settledLine('Dismissed', list.length, settled)
+          if (line) notify(line)
+          if (settled.landed.length > 0) opts.onCommitted?.(settled.landed)
         },
         invalidate: [researchDraftsQueryKey],
         failed: 'Dismiss did not save',
@@ -161,14 +163,15 @@ export function useHeldDraftWrites() {
       hold([...list, ...(opts.alsoHide ?? [])], {
         msg,
         commit: async () => {
-          const { landed, failed } = await settleDraftWrites(
+          const settled = await settleDraftWrites(
             list,
             words.verb,
             (id) => approveResearchDraft(id),
             (_id, result) => opts.onLanded?.(result),
           )
-          if (failed.length > 0) notify(`${words.partial} ${landed.length} of ${list.length} — the rest stay on the card`)
-          opts.onCommitted?.(landed)
+          const line = settledLine(words.partial, list.length, settled)
+          if (line) notify(line)
+          if (settled.landed.length > 0) opts.onCommitted?.(settled.landed)
         },
         invalidate: [researchDraftsQueryKey, ['research-engine', 'hypothesis']],
         failed: words.failed,

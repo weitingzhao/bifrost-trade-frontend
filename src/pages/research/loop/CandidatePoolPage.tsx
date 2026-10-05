@@ -28,6 +28,8 @@ import {
   splitByObjective,
 } from '@/pages/research/loop/objectiveLapModel'
 import { fetchObjectiveRuns } from '@/api/research/harness'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { runSpend } from '@/lib/harness/runSpend'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { fmtUsd } from '@/utils/positions'
@@ -213,6 +215,10 @@ export default function CandidatePoolPage() {
   const preview = usePreviewState()
   const pageState =
     preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(query)
+  // Signed out, the pool and the runs answer 401: the panel says so instead of
+  // "couldn't load" in red, and the curator cell says «—», not "no run recorded".
+  const authGap = query.data == null ? firstResearchAuthGapError(query.error) : undefined
+  const runsGap = runsQ.data == null ? firstResearchAuthGapError(runsQ.error) : undefined
 
   return (
     <PageShell padding="default" className="space-y-3">
@@ -250,7 +256,9 @@ export default function CandidatePoolPage() {
             {curator?.startedAt ? curator.startedAt.slice(0, 16).replace('T', ' ') : '—'}
           </span>
           <span data-sr-kpi-s="">
-            {curator == null
+            {runsGap
+              ? 'runs not read — Research user not set'
+              : curator == null
               ? 'no run recorded'
               : `+${curator.proposed} in · ${curator.expired} expired · ${fmtUsd(curator.usd)}`}
             {latestBatch ? ` · newest batch ${latestBatch.date} · ${latestBatch.n}` : ''}
@@ -304,7 +312,7 @@ export default function CandidatePoolPage() {
         }
         note={
           <>
-            {query.data?.count ?? 0} shown
+            {query.data?.count ?? '—'} shown
             {status === 'open' || status === 'all' ? ` · ${openCount} open in view` : null}
           </>
         }
@@ -318,7 +326,9 @@ export default function CandidatePoolPage() {
           />
         }
       >
-      {pageState === 'failed' ? (
+      {authGap ? (
+        <ResearchAuthGap error={authGap} onRetry={() => void query.refetch()} className="p-2" />
+      ) : pageState === 'failed' ? (
         <ViewState
           kind="failed"
           title="Couldn’t load the pool"

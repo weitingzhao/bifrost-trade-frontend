@@ -36,6 +36,8 @@ import { StatusLamp } from '@/components/StatusLamp'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   approveAllRun,
@@ -321,6 +323,17 @@ export default function HarnessConsolePage() {
   // machine has nothing", which is a different claim from "it is not here".
   const scopeMissing = objective !== ALL_OBJECTIVES && objectives.length === 0
   const runs = useMemo(() => runsQ.data?.items ?? [], [runsQ.data?.items])
+  // Signed out, every Research read here answers 401. One line says so; the
+  // chips, the reach and the lists that could not be read say «—» or step
+  // aside rather than reading as "not L0", "no run today" or "no objectives".
+  const trustGap = trustQ.data == null ? firstResearchAuthGapError(trustQ.error) : undefined
+  const runsGap = runsQ.data == null ? firstResearchAuthGapError(runsQ.error) : undefined
+  const objectivesGap = objectivesQ.data == null ? firstResearchAuthGapError(objectivesQ.error) : undefined
+  const authGap =
+    trustGap ??
+    runsGap ??
+    objectivesGap ??
+    (standingQ.data == null ? firstResearchAuthGapError(standingQ.error) : undefined)
 
   // One row per result, not per record. The console listed 23 runs with the same
   // funnel repeating eight times — a day's re-runs of one objective screening the
@@ -378,14 +391,14 @@ export default function HarnessConsolePage() {
         </span>
         <span
           className="inline-flex h-[22px] items-center gap-1.5 border px-2 text-dense-meta text-[var(--sk-mute2)] mat-tag"
-          title={trust?.reason ?? 'Loading Trust…'}
+          title={trustGap ? 'Trust not read — Research user not set' : (trust?.reason ?? 'Loading Trust…')}
         >
           <StatusLamp
-            lamp={(trust?.matrix_l0 ?? trust?.l0) ? 'green' : 'yellow'}
+            lamp={trustGap ? 'gray' : (trust?.matrix_l0 ?? trust?.l0) ? 'green' : 'yellow'}
             variant="dot"
             title={trust?.reason ?? ((trust?.matrix_l0 ?? trust?.l0) ? 'Trust L0' : 'Trust not L0')}
           />
-          Trust {trust?.matrix_level ?? (trust?.l0 ? 'L0' : 'not L0')}
+          Trust {trustGap ? '—' : (trust?.matrix_level ?? (trust?.l0 ? 'L0' : 'not L0'))}
         </span>
         <Button
           type="button"
@@ -429,19 +442,24 @@ export default function HarnessConsolePage() {
         </span>
       </div>
 
+      {authGap ? <ResearchAuthGap error={authGap} layout="banner" /> : null}
+
       {/* Whether the thing is switched on — before any objective. */}
       {standingQ.data ? <AutopilotKpis standing={standingQ.data} /> : null}
 
       {/* The design's reach: today's widest run as a funnel. The warehouse
           strip below it is this side's own capability — what the loop could
           see, kept beside what it did see (its destination is the Owner's). */}
-      <ReachTodayStrip
-        reach={reachToday(
-          runs,
-          standingQ.data?.pending_drafts ?? standingQ.data?.pending_memos ?? null,
-          new Date().toISOString().slice(0, 10),
-        )}
-      />
+      {/* Unread runs are not "no run today yet". */}
+      {runsGap ? null : (
+        <ReachTodayStrip
+          reach={reachToday(
+            runs,
+            standingQ.data?.pending_drafts ?? standingQ.data?.pending_memos ?? null,
+            new Date().toISOString().slice(0, 10),
+          )}
+        />
+      )}
       <UniverseReachStrip />
 
       {/* The design mounts the leash here too (Rev 2026-09-18.2): what a run
@@ -512,7 +530,9 @@ export default function HarnessConsolePage() {
           }
         />
 
-        {objectivesQ.isError ? (
+        {objectivesGap ? (
+          <ResearchAuthGap error={objectivesGap} layout="banner" />
+        ) : objectivesQ.isError ? (
           <QueryErrorAlert error={objectivesQ.error} />
         ) : objectivesQ.isLoading ? (
           <Skeleton className="h-40 w-full rounded-md" />
@@ -592,6 +612,9 @@ export default function HarnessConsolePage() {
           }
         />
 
+        {runsGap ? (
+          <ResearchAuthGap error={runsGap} layout="banner" />
+        ) : (
         <HarnessRunsTable
           groups={
             objective === ALL_OBJECTIVES
@@ -605,6 +628,7 @@ export default function HarnessConsolePage() {
           onOpenObjective={(id) => navigate(`/research/loop/objectives/${id}`)}
           {...runsTableProps}
         />
+        )}
 
         <p className="text-dense-caption leading-relaxed text-muted-foreground">
           Identical re-runs fold into one row but not out of the bill. A run whose objective was
@@ -632,7 +656,7 @@ export default function HarnessConsolePage() {
             errNotice(deleteRunMut.error, deleteRunMut.isError),
             errNotice(approveMut.error, approveMut.isError),
             errNotice(curateMut.error, curateMut.isError),
-            errNotice(runsQ.error, runsQ.isError),
+            errNotice(runsQ.error, runsQ.isError && !runsGap),
           ]}
         />
       </section>

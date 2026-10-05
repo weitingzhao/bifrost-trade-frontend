@@ -140,6 +140,22 @@ describe('lanes', () => {
     today: TODAY,
   })
 
+  it('does not say Research proposed nothing when its intents went unread (signed out)', () => {
+    const [decide] = buildLanes({
+      intents: [],
+      intentsUnread: true,
+      legs: [],
+      tightPct: TIGHT,
+      plans: [],
+      orders: [],
+      fills: [],
+      outsideRules: () => null,
+      today: TODAY,
+    })
+    expect(decide.emptyRead).toMatch(/not read — Research user not set/)
+    expect(decide.emptyRead).not.toMatch(/proposed nothing/)
+  })
+
   it('gives an empty lane a reading of its own rather than a blank panel', () => {
     for (const lane of empty) {
       expect(lane.items).toHaveLength(0)

@@ -68,10 +68,17 @@ export function draftObjectiveId(d: Pick<AiDraft, 'payload'>): string | null {
 export interface LapInput {
   objectiveId: string
   brief: AutopilotObjective | null
-  candidates: readonly ResearchCandidate[]
-  /** Every run this objective has, so a hypothesis can be traced back to it. */
-  runIds: ReadonlySet<string>
-  hypotheses: readonly Hypothesis[]
+  /**
+   * The standing could not be read (a 401 without a Research user): Scan,
+   * Judge and Settle read «—» rather than "no run yet" / "no standing".
+   */
+  briefUnread?: boolean
+  /** Null when the pool could not be read — Nominate reads «—», not 0. */
+  candidates: readonly ResearchCandidate[] | null
+  /** Every run this objective has, so a hypothesis can be traced back to it. Null when unread. */
+  runIds: ReadonlySet<string> | null
+  /** Null when the hypotheses could not be read. */
+  hypotheses: readonly Hypothesis[] | null
   /**
    * Pending drafts, any kind — the station picks the policy ones itself. Null
    * when they could not be read (a 401 without a Research user): the station
@@ -80,17 +87,24 @@ export interface LapInput {
   drafts: readonly AiDraft[] | null
 }
 
+/** What a station says when the read it counts was refused. */
+export const LAP_UNREAD = 'not read — Research user not set'
+
 export function objectiveLap(input: LapInput): Station[] {
-  const { objectiveId, brief, candidates, runIds, hypotheses, drafts } = input
+  const { objectiveId, brief, briefUnread = false, candidates, runIds, hypotheses, drafts } = input
   const rec = brief?.track_record ?? null
 
-  const nominated = candidates.filter(
-    (c) => c.status === 'open' && candidateObjectiveId(c) === objectiveId,
-  ).length
-  const decided = hypotheses.filter((h) => {
-    const run = hypothesisRunId(h)
-    return run != null && runIds.has(run)
-  }).length
+  const nominated =
+    candidates == null
+      ? null
+      : candidates.filter((c) => c.status === 'open' && candidateObjectiveId(c) === objectiveId).length
+  const decided =
+    hypotheses == null || runIds == null
+      ? null
+      : hypotheses.filter((h) => {
+          const run = hypothesisRunId(h)
+          return run != null && runIds.has(run)
+        }).length
   const fedBack =
     drafts == null
       ? null
@@ -107,7 +121,7 @@ export function objectiveLap(input: LapInput): Station[] {
       value: considered,
       // Per run, not cumulative: the policy's reach is what it opened the last
       // time it ran, and summing runs would count the same names daily.
-      detail: considered == null ? 'no run yet' : 'names its policy opened, last run',
+      detail: briefUnread ? LAP_UNREAD : considered == null ? 'no run yet' : 'names its policy opened, last run',
       to: '/research/scan',
     },
     {
@@ -115,7 +129,7 @@ export function objectiveLap(input: LapInput): Station[] {
       n: '02',
       label: 'Nominate',
       value: nominated,
-      detail: nominated === 0 ? 'nothing of its own in the pool' : 'open in the pool',
+      detail: nominated == null ? LAP_UNREAD : nominated === 0 ? 'nothing of its own in the pool' : 'open in the pool',
       to: '/research/loop/candidates',
     },
     {
@@ -123,7 +137,7 @@ export function objectiveLap(input: LapInput): Station[] {
       n: '03',
       label: 'Judge',
       value: brief?.pending_memos ?? null,
-      detail: brief == null ? 'no standing' : 'memos waiting on your call',
+      detail: briefUnread ? LAP_UNREAD : brief == null ? 'no standing' : 'memos waiting on your call',
       to: '/research/loop/decisions',
     },
     {
@@ -131,7 +145,7 @@ export function objectiveLap(input: LapInput): Station[] {
       n: '04',
       label: 'Decide',
       value: decided,
-      detail: decided === 0 ? 'no hypothesis born in its runs' : 'hypotheses born in its runs',
+      detail: decided == null ? LAP_UNREAD : decided === 0 ? 'no hypothesis born in its runs' : 'hypotheses born in its runs',
       to: '/research/loop/hypotheses',
     },
     {
@@ -139,8 +153,9 @@ export function objectiveLap(input: LapInput): Station[] {
       n: '05',
       label: 'Settle',
       value: judged,
-      detail:
-        rec == null || judged == null
+      detail: briefUnread
+        ? LAP_UNREAD
+        : rec == null || judged == null
           ? 'nothing settled'
           : `settled · hit ${fmtPct0(rec.hit_rate)}${rec.pending ? ` · ${rec.pending} open` : ''}`,
       to: '/research/signal-decay',

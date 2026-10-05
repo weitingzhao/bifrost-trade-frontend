@@ -15,6 +15,7 @@ import { fetchBacktestRuns } from '@/api/research/backtestEvent'
 import { fetchSepaDaily } from '@/api/researchEngine'
 import { fetchScan } from '@/api/research/scan'
 import { useHypothesisList } from '@/hooks/useHypotheses'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useResearchHomeData } from '@/hooks/useResearchHomeData'
 import { useUniverseReach } from '@/hooks/useUniverseReach'
 import {
@@ -54,7 +55,13 @@ export function usePipelineCensus() {
   const home = useResearchHomeData()
   const reachQ = useUniverseReach()
 
-  const error = sepaQ.error ?? scanQ.error ?? runsQ.error ?? hypQ.error ?? null
+  // Signed out, the backtest runs and the hypotheses answer 401. Without the
+  // hypotheses nothing can be said about what came out of a station — every
+  // row would read 100% stuck — so the census says who is missing instead.
+  const authGap =
+    firstResearchAuthGapError(hypQ.data ? null : hypQ.error, runsQ.data ? null : runsQ.error) ?? null
+  const gapped = (e: unknown) => (e != null && e === authGap ? null : e)
+  const error = sepaQ.error ?? scanQ.error ?? gapped(runsQ.error) ?? gapped(hypQ.error) ?? null
   const loading =
     sepaQ.isLoading || scanQ.isLoading || runsQ.isLoading || hypQ.isLoading
 
@@ -211,6 +218,7 @@ export function usePipelineCensus() {
     universeScanned,
     loading,
     error,
+    authGap,
     hypothesisCount: hypQ.data?.rows.length ?? 0,
   }
 }

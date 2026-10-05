@@ -18,6 +18,7 @@ import { DenseTag } from '@/components/data-display'
 import { DiscoveryCapture, type DiscoveryTarget } from '@/components/research/DiscoveryCapture'
 import { Skeleton } from '@/components/ui/skeleton'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { cn } from '@/lib/utils'
 import { fmtPct0 } from '@/utils/positions'
 import { type CensusRow } from './pipelineModel'
@@ -37,8 +38,10 @@ function day(stamp: string | null): string {
 
 export function PipelineCensus() {
   const [open, setOpen] = useState<string | null>(null)
-  const { rows, stations, totals, oldest, worst, hits, left, universeScanned, loading, error, hypothesisCount } =
+  const { rows, stations, totals, oldest, worst, hits, left, universeScanned, loading, error, authGap, hypothesisCount } =
     usePipelineCensus()
+
+  if (authGap) return <ResearchAuthGap error={authGap} />
 
   return (
     <div className="space-y-3">

@@ -38,9 +38,12 @@ export function ObjectiveLap({
   objectiveId,
   brief,
   origin = null,
+  standingUnread = false,
 }: {
   objectiveId: string
   brief: AutopilotObjective | null
+  /** The standing answered 401: the stations it feeds read «—». */
+  standingUnread?: boolean
   /** The memory it was drafted from (`policy_json.origin`), when it was. */
   origin?: MemoryOrigin | null
 }) {
@@ -60,21 +63,30 @@ export function ObjectiveLap({
   const draftsQ = useResearchDrafts({ status: 'pending', kind: 'policy_suggestion', limit: 100 })
 
   const runIds = useMemo(
-    () => new Set((runsQ.data?.items ?? []).map((r) => r.id)),
+    () => (runsQ.data ? new Set(runsQ.data.items.map((r) => r.id)) : null),
     [runsQ.data],
   )
 
+  // A read that answered nothing is «—» at its station, not zero (a 401
+  // without a Research user — or any refusal — is not an empty pool).
   const stations = useMemo(
     () =>
       objectiveLap({
         objectiveId,
         brief,
-        candidates: candidatesQ.data?.items ?? [],
-        runIds,
-        hypotheses: hypothesesQ.data?.rows ?? [],
+        briefUnread: standingUnread,
+        candidates: candidatesQ.data ? candidatesQ.data.items : candidatesQ.isError ? null : [],
+        runIds: runIds ?? (runsQ.isError ? null : new Set()),
+        hypotheses: hypothesesQ.data ? hypothesesQ.data.rows : hypothesesQ.isError ? null : [],
         drafts: draftsQ.data ? draftsQ.data.rows : null,
       }),
-    [objectiveId, brief, candidatesQ.data, runIds, hypothesesQ.data, draftsQ.data],
+    [objectiveId, brief, standingUnread, candidatesQ.data, candidatesQ.isError, runIds, runsQ.isError, hypothesesQ.data, hypothesesQ.isError, draftsQ.data],
+  )
+  const authGap = firstResearchAuthGapError(
+    draftsQ.data ? null : draftsQ.error,
+    candidatesQ.data ? null : candidatesQ.error,
+    runsQ.data ? null : runsQ.error,
+    hypothesesQ.data ? null : hypothesesQ.error,
   )
 
   const ends = lapEnds(origin)
@@ -93,10 +105,8 @@ export function ObjectiveLap({
         </span>
       </div>
 
-      {/* Feed back reads the drafts; signed out it shows «—» and this says why. */}
-      {firstResearchAuthGapError(draftsQ.error) ? (
-        <ResearchAuthGap error={draftsQ.error} layout="banner" className="mb-1.5" />
-      ) : null}
+      {/* Signed out, the stations it could not count show «—» and this says why. */}
+      {authGap ? <ResearchAuthGap error={authGap} layout="banner" className="mb-1.5" /> : null}
 
       <ol className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         <End end={ends[0]} objectiveId={objectiveId} />

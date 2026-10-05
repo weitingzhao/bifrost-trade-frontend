@@ -14,6 +14,7 @@ import {
   scoreShare,
   splitByObjective,
   type LapInput,
+  LAP_UNREAD,
 } from './objectiveLapModel'
 
 const OBJ = 'obj-daily-loop-stock'
@@ -46,6 +47,18 @@ const lap = (over: Partial<LapInput> = {}) => {
 }
 
 describe('objectiveLap', () => {
+  it('a refused read is «—» at its station, never zero (Research step 4, signed out)', () => {
+    const s = lap({ brief: null, briefUnread: true, candidates: null, runIds: null, hypotheses: null, drafts: null })
+    for (const id of ['scan', 'nominate', 'judge', 'decide', 'settle', 'feedback'] as const) {
+      expect(s[id].value).toBeNull()
+    }
+    expect(s.scan.detail).toBe(LAP_UNREAD)
+    expect(s.nominate.detail).toBe(LAP_UNREAD)
+    expect(s.judge.detail).toBe(LAP_UNREAD)
+    expect(s.decide.detail).toBe(LAP_UNREAD)
+    expect(s.settle.detail).toBe(LAP_UNREAD)
+  })
+
   it('counts only this objective’s stock at each station', () => {
     const s = lap({
       candidates: [

@@ -254,13 +254,14 @@ export function WatchBookStandingNote({
   aging,
 }: {
   names: number
-  withoutThesis: number
+  /** Null when the hypotheses could not be read — not "every name lacks one". */
+  withoutThesis: number | null
   aging: number
 }) {
   return (
     <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-dense-caption text-muted-foreground">
-      <DenseTag variant={withoutThesis > 0 ? 'danger' : 'neutral'} size="cell">
-        {withoutThesis} of {names} without a thesis
+      <DenseTag variant={withoutThesis != null && withoutThesis > 0 ? 'danger' : 'neutral'} size="cell">
+        {withoutThesis ?? '—'} of {names} without a thesis
       </DenseTag>
       <span>
         a watch without a thesis expires in 10 sessions — write one or let it fall off.

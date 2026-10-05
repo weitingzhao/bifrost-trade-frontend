@@ -399,6 +399,8 @@ export function expiringItem(legs: readonly ShortLeg[], today: string): DeskItem
 
 export function buildLanes(args: {
   intents: readonly OrderIntentDraft[]
+  /** Research's intents answered nothing (a 401 without a Research user): not "proposed nothing". */
+  intentsUnread?: boolean
   legs: readonly ShortLeg[]
   tightPct: number
   plans: readonly StrategyPlan[]
@@ -415,8 +417,9 @@ export function buildLanes(args: {
       title: 'Handed to you',
       from: 'Research · Positions',
       items: decideItems(args.intents, args.legs, args.tightPct, args.today, tradeByContract(args.fills)),
-      emptyRead:
-        'Research has proposed nothing and no short leg is inside its cushion line. Nothing is waiting on a decision.',
+      emptyRead: args.intentsUnread
+        ? 'Research’s intents were not read — Research user not set. No short leg is inside its cushion line.'
+        : 'Research has proposed nothing and no short leg is inside its cushion line. Nothing is waiting on a decision.',
     },
     {
       key: 'execute',

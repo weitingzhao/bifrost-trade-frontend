@@ -28,6 +28,8 @@ import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { mapIntentToPrefill } from '@/components/strategy/orderIntentPrefill'
 import { fetchOrderIntents } from '@/api/research/orderIntents'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { fetchShortLegs } from '@/api/shortLegs'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { useExecutionsAll } from '@/hooks/useExecutions'
@@ -83,6 +85,7 @@ export default function TradeDeskPage() {
     () =>
       buildLanes({
         intents: intents.data?.items ?? [],
+        intentsUnread: intents.data == null && intents.isError,
         legs: (legs.data?.legs ?? []).filter((l) => inAccountScope(l.account_id, acct, hostId, secondaryId)),
         tightPct,
         plans: (plans.data?.items ?? []).filter((p) => inAccountScope(p.account_id, acct, hostId, secondaryId)),
@@ -97,7 +100,8 @@ export default function TradeDeskPage() {
         today,
       }),
     [
-      intents.data?.items,
+      intents.data,
+      intents.isError,
       legs.data?.legs,
       tightPct,
       plans.data?.items,
@@ -248,6 +252,10 @@ export default function TradeDeskPage() {
       />
 
       {error ? <QueryErrorAlert error={error} onRetry={() => void status.refetch()} /> : null}
+      {/* Signed out, Research's intents answer 401 — the decide lane says so too. */}
+      {!intents.data && firstResearchAuthGapError(intents.error) ? (
+        <ResearchAuthGap error={intents.error} layout="banner" />
+      ) : null}
 
       {loading ? (
         <div className="flex flex-col gap-3">

@@ -18,6 +18,7 @@ import { PageFaceSwitch, PageHead, PageHeadAction, PageShell } from '@/component
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { SegmentControl, type SegmentOption } from '@/components/data-display'
 import { fetchSavedScreens, type SavedScreen } from '@/api/research/savedScreens'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { usePageViewState } from '@/lib/pageView'
 import { notify } from '@/lib/shellNotify'
 import { publishSymbolTrail } from '@/lib/symbolTrail'
@@ -437,7 +438,9 @@ export default function StockScreenPage() {
       ? `${nOn} conditions`
       : 'No screen · all pass'
   const savedNote = saved.isError
-    ? 'My screens did not load (/research/screens).'
+    ? firstResearchAuthGapError(saved.error)
+      ? 'My screens: not read — Research user not set.'
+      : 'My screens did not load (/research/screens).'
     : saved.data && saved.data.count === 0
       ? 'My screens: none saved yet — Save screen above, or write one on the Method face.'
       : null

@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/select'
 import { createObjective, type ObjectiveCreateBody } from '@/api/research/harness'
 import { usePolicyTemplates } from '@/hooks/useLoopHarness'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { PERSONAS, SCHEDULES, objectivePath } from '@/lib/harness/objectivePolicy'
 
 const TEXTAREA_CLASS =
@@ -152,7 +153,15 @@ export function NewObjectiveForm({ onClose, seed }: { onClose: () => void; seed?
               disabled={submitting || templates.length === 0}
             >
               <SelectTrigger id="objective-template">
-                <SelectValue placeholder={templatesQ.isLoading ? 'Loading templates…' : 'No templates'} />
+                <SelectValue
+                  placeholder={
+                    templatesQ.isLoading
+                      ? 'Loading templates…'
+                      : firstResearchAuthGapError(templatesQ.error)
+                        ? 'Templates not read — Research user not set'
+                        : 'No templates'
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {templates.map((t) => (

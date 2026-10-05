@@ -14,6 +14,8 @@
  */
 import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useAutopilotStanding, useActiveObjectives } from '@/hooks/useLoopHarness'
 import {
   LEASH_CONDITIONS,
@@ -55,6 +57,21 @@ export function ObjectiveLeashCard({ objectiveId }: { objectiveId: string }) {
   const leash = rows.find((r) => r.id === objectiveId) ?? null
   const armed = Boolean(standing.data?.trust?.matrix_l0)
   const tag = TAG[leash?.standing ?? 'no-record']
+  // Signed out, both reads answer 401: say so rather than "not on the roster".
+  const gap =
+    standing.data == null || objectives.data == null
+      ? firstResearchAuthGapError(standing.error, objectives.error)
+      : undefined
+  if (gap) {
+    return (
+      <section className="overflow-hidden border mat-card">
+        <header className="border-b border-border px-3 py-2">
+          <span className="text-dense-body font-semibold">Leash standing</span>
+        </header>
+        <ResearchAuthGap error={gap} layout="banner" className="m-2" />
+      </section>
+    )
+  }
 
   return (
     <section className="overflow-hidden border mat-card">

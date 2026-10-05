@@ -8,6 +8,9 @@ import { fetchBacktestRuns } from '@/api/research/backtestEvent'
 import { useResearchHomeData } from '@/hooks/useResearchHomeData'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { LampColor } from '@/lib/researchFreshness'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
+
+const RESEARCH_USER_NOT_SET = 'Not read — Research user not set'
 
 const POLL_MS = 60_000
 
@@ -51,17 +54,21 @@ export function useCockpitFreshness() {
         ? new Date().toISOString()
         : null
 
+  // Signed out both answer 401: a grey lamp that says so, not a red one.
+  const hypGap = !hypQ.data && firstResearchAuthGapError(hypQ.error) != null
+  const btGap = !btQ.data && firstResearchAuthGapError(btQ.error) != null
+
   return {
     hypothesis: {
-      lamp: ageLamp(lastHypTs, hypQ.isError, Boolean(lastHyp)),
+      lamp: hypGap ? 'gray' : ageLamp(lastHypTs, hypQ.isError, Boolean(lastHyp)),
       ts: lastHypTs,
-      label: lastHyp?.title ?? null,
+      label: hypGap ? RESEARCH_USER_NOT_SET : (lastHyp?.title ?? null),
       isLoading: hypQ.isLoading,
     },
     backtest: {
-      lamp: ageLamp(lastBtTs, btQ.isError, Boolean(lastBt)),
+      lamp: btGap ? 'gray' : ageLamp(lastBtTs, btQ.isError, Boolean(lastBt)),
       ts: lastBtTs,
-      label: lastBt?.id ?? null,
+      label: btGap ? RESEARCH_USER_NOT_SET : (lastBt?.id ?? null),
       isLoading: btQ.isLoading,
     },
     discovery: {

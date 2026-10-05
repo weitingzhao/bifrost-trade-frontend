@@ -241,12 +241,18 @@ export default function DecisionInboxPage() {
     return n
   }, [items])
 
+  // Signed out the queue answers 401: what was not read is «—», not a count of
+  // the rule proposals alone (they are read off Review, which still answers).
+  const unread = queue.error != null
   const destOptions = useMemo(
     () => [
       { value: 'any' as Dest, label: 'Any' },
-      ...WRITES_TO_ORDER.map((w) => ({ value: w as Dest, label: `${WRITES_TO_LABEL[w]} ${pendingByDest[w]}` })),
+      ...WRITES_TO_ORDER.map((w) => ({
+        value: w as Dest,
+        label: `${WRITES_TO_LABEL[w]} ${unread && w !== 'rules' ? '—' : pendingByDest[w]}`,
+      })),
     ],
-    [pendingByDest],
+    [pendingByDest, unread],
   )
 
   // ── Answers ──────────────────────────────────────────────────────────────
@@ -401,9 +407,9 @@ export default function DecisionInboxPage() {
       <HeroRow label="The queue">
         <HeroCard
           label="To decide"
-          value={queue.decisionsLoading ? '—' : String(counts.decisions)}
-          valueClassName={counts.decisions > 0 ? 'text-foreground' : 'text-muted-foreground'}
-          state={counts.decisions > 0 ? 'warn' : null}
+          value={queue.decisionsLoading || unread ? '—' : String(counts.decisions)}
+          valueClassName={counts.decisions > 0 && !unread ? 'text-foreground' : 'text-muted-foreground'}
+          state={counts.decisions > 0 && !unread ? 'warn' : null}
           title={countsLine}
           sub={`${counts.rules} rule change${counts.rules === 1 ? '' : 's'} among them${
             counts.inert > 0 ? ` · ${counts.inert} would write nothing` : ''
@@ -411,10 +417,10 @@ export default function DecisionInboxPage() {
         />
         <HeroCard
           label="Unread briefings"
-          value={queue.briefingsLoading ? '—' : String(counts.unreadBriefings)}
-          valueClassName={counts.unreadBriefings > 0 ? 'text-foreground' : 'text-muted-foreground'}
+          value={queue.briefingsLoading || unread ? '—' : String(counts.unreadBriefings)}
+          valueClassName={counts.unreadBriefings > 0 && !unread ? 'text-foreground' : 'text-muted-foreground'}
           title={countsLine}
-          sub={`of ${counts.briefings} · need reading, not a decision`}
+          sub={`of ${unread ? '—' : counts.briefings} · need reading, not a decision`}
         />
         <HeroCard
           label="Pending"

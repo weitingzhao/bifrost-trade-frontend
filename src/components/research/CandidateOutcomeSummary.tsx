@@ -1,4 +1,6 @@
 import { DenseTag } from '@/components/data-display'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useCandidateOutcomeSummary } from '@/hooks/useCandidateOutcome'
 import { fmtPct1 } from '@/lib/format'
 
@@ -10,7 +12,10 @@ import { fmtPct1 } from '@/lib/format'
  * nothing settled shows `pending`, never 0%: a young pool is not a failing one.
  */
 export function CandidateOutcomeSummary({ source }: { source?: string }) {
-  const { data, isLoading, isError } = useCandidateOutcomeSummary({ source })
+  const { data, isLoading, isError, error } = useCandidateOutcomeSummary({ source })
+  // Signed out it answers 401 — say who is missing, not "unavailable".
+  const gap = data ? undefined : firstResearchAuthGapError(error)
+  if (gap) return <ResearchAuthGap error={gap} layout="banner" />
 
   if (isLoading) {
     return <div className="text-dense-meta text-muted-foreground">Outcomes — loading…</div>

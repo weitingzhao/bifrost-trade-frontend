@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchObjectiveRuns, fetchObjectives, patchObjective } from '@/api/research/harness'
 import { fetchSavedScreens } from '@/api/research/savedScreens'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { NewObjectiveForm, type ObjectiveSeed } from '@/components/research/NewObjectiveDialog'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useAutopilotStanding, usePolicyTemplates } from '@/hooks/useLoopHarness'
@@ -125,6 +127,15 @@ export function NewObjectiveOrigins({ onClose }: { onClose: () => void }) {
     })
   }, [objQ.data, runsQ.data, standing.data, screensQ.data, templatesQ.data])
   const loading = objQ.isLoading || runsQ.isLoading || templatesQ.isLoading
+  // Signed out these reads answer 401; an origin with nothing to offer would
+  // otherwise say its empty line ("no objective has a record yet") as fact.
+  const gap = firstResearchAuthGapError(
+    objQ.data ? null : objQ.error,
+    runsQ.data ? null : runsQ.error,
+    templatesQ.data ? null : templatesQ.error,
+    screensQ.data ? null : screensQ.error,
+    standing.data ? null : standing.error,
+  )
   const today = todayIso()
 
   return (
@@ -136,6 +147,7 @@ export function NewObjectiveOrigins({ onClose }: { onClose: () => void }) {
         </span>
         <CloseButton className="ml-auto self-center" onClick={onClose} label="Close new objective" />
       </header>
+      {gap ? <ResearchAuthGap error={gap} layout="banner" className="mx-3 mt-2" /> : null}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))]">
         {columns.map((c, ci) => (
           <div key={c.id} className={cn('flex min-w-0 flex-col gap-1.5 px-3 py-3', ci > 0 && 'border-l border-border')}>
@@ -152,7 +164,7 @@ export function NewObjectiveOrigins({ onClose }: { onClose: () => void }) {
             {loading ? (
               <span className="text-dense-meta text-muted-foreground">Reading…</span>
             ) : c.picks.length === 0 ? (
-              <span className="text-dense-meta leading-normal text-muted-foreground">{c.empty}</span>
+              <span className="text-dense-meta leading-normal text-muted-foreground">{gap ? '— not read' : c.empty}</span>
             ) : (
               <div className="flex flex-col gap-0.5">
                 {c.picks.map((p) => (

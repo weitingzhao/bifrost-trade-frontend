@@ -33,8 +33,8 @@
 import { DenseTag } from '@/components/data-display'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { TRACK_DAYS, TRACK_THIN, horizonOf, useSourceTrackRecord } from '@/hooks/useSourceTrackRecord'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { cn } from '@/lib/utils'
 import { fmtPct0, fmtSignedPct } from '@/utils/positions'
 
@@ -91,11 +91,12 @@ export function JudgeTrackRecord() {
         against the outcome that followed, so no row here can carry a judge's name.
       </p>
 
-      {error ? <QueryErrorAlert error={error} /> : null}
+      {/* Signed out it answers 401: the Research-user line, and no "nothing settled". */}
+      {error ? <ResearchAuthGap error={error} layout="banner" /> : null}
 
       {loading ? (
         <Skeleton className="h-28 w-full rounded-md" />
-      ) : rows.length === 0 ? (
+      ) : error ? null : rows.length === 0 ? (
         <p className="text-dense-meta text-muted-foreground">
           Nothing has settled in the last {DAYS} days. An empty record is not a bad one.
         </p>

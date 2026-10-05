@@ -19,6 +19,7 @@ import { DenseTag, EmptyState } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import { validatePolicy, type PolicyTemplate } from '@/api/research/policyTemplate'
 import {
@@ -91,7 +92,8 @@ export function PolicyTemplatePanel() {
     }
   }
 
-  if (templatesQ.isError) return <QueryErrorAlert error={templatesQ.error} />
+  // Signed out the list answers 401: say who is missing, not that it failed.
+  if (templatesQ.isError) return <ResearchAuthGap error={templatesQ.error} onRetry={() => void templatesQ.refetch()} />
   if (templatesQ.isLoading) return <Skeleton className="h-24 w-full rounded-md" />
 
   return (

@@ -19,6 +19,7 @@ import { isProposable } from '@/lib/harness/memoryProposals'
 import { objectiveOrigin } from '@/lib/harness/objectiveOrigin'
 import { PageHead, PageShell } from '@/components/layout'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
 import { immuneCheck, SOURCE_STANDING, traceChain, type TraceArc, type TraceNode } from './traceModel'
@@ -154,6 +155,11 @@ export default function TracePage() {
     staleTime: 60_000,
   })
   const standing = useAutopilotStanding()
+  const downstreamGap = firstResearchAuthGapError(
+    objQ.data ? null : objQ.error,
+    bornRunsQ.data || !bornObj ? null : bornRunsQ.error,
+    standing.data || !bornObj ? null : standing.error,
+  )
   const bornRec = bornObj ? standing.data?.objectives.find((o) => o.id === bornObj.id)?.track_record : undefined
   const downstream = memory
     ? {
@@ -213,6 +219,9 @@ export default function TracePage() {
           </div>
         ) : null}
 
+        {/* The memory read, its consequences not: an objective it drafted
+            would vanish from the chain rather than read as unknown. */}
+        {memQ.data && downstreamGap ? <ResearchAuthGap error={downstreamGap} layout="banner" /> : null}
         {memQ.isLoading ? (
           <ViewState kind="loading" title="Reading the memory store" rows={6} cols={3} />
         ) : memQ.isError ? (

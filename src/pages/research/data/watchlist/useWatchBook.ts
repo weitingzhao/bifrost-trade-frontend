@@ -17,6 +17,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { useHypothesisList } from '@/hooks/useHypotheses'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { fetchIvPercentileForSymbols } from '@/api/research/ivRadar'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import type { IvPercentileRow } from '@/types/ivRadar'
@@ -56,5 +57,7 @@ export function useWatchBook(symbols: readonly string[]) {
      */
     ivLoading: iv.isLoading,
     thesisUnavailable: hypotheses.isError,
+    /** The 401 behind it, when the Research user is not set. */
+    thesisGap: hypotheses.data ? undefined : firstResearchAuthGapError(hypotheses.error),
   }
 }

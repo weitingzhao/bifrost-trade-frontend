@@ -25,6 +25,8 @@ import { fmtNumLocale } from '@/lib/format'
 import { Input } from '@/components/ui/input'
 import { ViewState } from '@bifrost/ui'
 import { failedDetail, staleDetail } from '@/lib/viewState'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { fetchSettlements, type ForecastSettlement } from '@/api/researchEngine'
 import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
@@ -235,6 +237,9 @@ export default function BacktestPage() {
               </header>
               {runsQ.isLoading ? (
                 <ViewState kind="loading" title="Loading the runs" rows={6} cols={5} />
+              ) : !runsQ.data && firstResearchAuthGapError(runsQ.error) ? (
+                // Signed out the list answers 401 — who is missing, not a red failure.
+                <ResearchAuthGap error={runsQ.error} onRetry={() => void runsQ.refetch()} className="p-2" />
               ) : runsQ.isError && !runsQ.data ? (
                 <ViewState
                   kind="failed"
@@ -422,7 +427,9 @@ export default function BacktestPage() {
                   </span>
                 </div>
               ) : null}
-              {byIdQ.isError && selectedId && !listedRun ? (
+              {byIdQ.isError && selectedId && !listedRun && firstResearchAuthGapError(byIdQ.error) ? (
+                <ResearchAuthGap error={byIdQ.error} layout="banner" />
+              ) : byIdQ.isError && selectedId && !listedRun ? (
                 <ViewState
                   kind="failed"
                   layout="strip"

@@ -96,6 +96,9 @@ export default function ObjectivePage() {
   const objQ = useObjective(objectiveId || null)
   const standingQ = useAutopilotStanding()
   const brief = standingQ.data?.objectives.find((o) => o.id === objectiveId) ?? null
+  // Signed out, the standing answers 401: its tiles and the lap's stations it
+  // feeds read «—» with the Research-user line, not "not loaded" or zero.
+  const standingGap = standingQ.data == null ? firstResearchAuthGapError(standingQ.error) : undefined
   const navigate = useNavigate()
 
   if (objQ.isLoading) {
@@ -140,10 +143,19 @@ export default function ObjectivePage() {
       </PageShell>
     )
   }
-  return <ObjectiveBody obj={obj} brief={brief} />
+  return <ObjectiveBody obj={obj} brief={brief} standingGap={standingGap} />
 }
 
-function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: AutopilotObjective | null }) {
+function ObjectiveBody({
+  obj,
+  brief,
+  standingGap,
+}: {
+  obj: ResearchObjective
+  brief: AutopilotObjective | null
+  /** The 401 that kept the standing from being read, if one did. */
+  standingGap?: unknown
+}) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const patchMut = usePatchObjective()
@@ -279,6 +291,7 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
       <Standing
         obj={obj}
         brief={brief}
+        standingGap={standingGap}
         archived={archived}
         onOpenMemo={(runId) => navigate(loopPipelinePath(runId, { live: false }))}
       />
@@ -287,7 +300,12 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
 
       {/* Under the standing, as the design places it: the row above says how
           this machine is doing, this one says where its work is. */}
-      <ObjectiveLap objectiveId={obj.id} brief={brief} origin={objectiveOrigin(obj)} />
+      <ObjectiveLap
+        objectiveId={obj.id}
+        brief={brief}
+        standingUnread={standingGap != null}
+        origin={objectiveOrigin(obj)}
+      />
 
       {/* Identity and the leash side by side, as the design pairs them: what
           this objective *is*, and what it is allowed to do on its own. */}
@@ -383,11 +401,13 @@ function ObjectiveBody({ obj, brief }: { obj: ResearchObjective; brief: Autopilo
 function Standing({
   obj,
   brief,
+  standingGap,
   archived,
   onOpenMemo,
 }: {
   obj: ResearchObjective
   brief: AutopilotObjective | null
+  standingGap?: unknown
   archived: boolean
   onOpenMemo: (runId: string) => void
 }) {
@@ -395,6 +415,7 @@ function Standing({
   // pattern the Book and the Watchlist use, for the same reason.
   const [now] = useState(() => Date.now())
   const next = nextRun(obj.schedule, obj.status, now)
+  if (!brief && standingGap != null) return <ResearchAuthGap error={standingGap} layout="banner" />
   if (!brief) {
     return (
       <p className="text-dense-label text-muted-foreground">

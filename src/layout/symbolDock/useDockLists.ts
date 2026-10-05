@@ -24,6 +24,7 @@ import { fetchScan } from '@/api/research/scan'
 import { fetchObjectives } from '@/api/research/harness'
 import { useBookLive } from '@/hooks/useBookLive'
 import { useCandidates } from '@/hooks/useCandidates'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useFiredAlerts } from '@/hooks/useFiredAlerts'
 import { useHoldingSymbols } from '@/hooks/useHoldingSymbols'
 import { useWatchlist } from '@/hooks/useWatchlist'
@@ -248,7 +249,9 @@ export function useDockLists(watchShown: boolean): DockLists {
       head: 'State',
       rows: objRows,
       empty: candidates.isError
-        ? 'The candidate pool did not answer.'
+        ? firstResearchAuthGapError(candidates.error)
+          ? 'Candidates not read — Research user not set.'
+          : 'The candidate pool did not answer.'
         : isAll
           ? 'No candidates in the pool.'
           : `${objTitle} has proposed no candidates.`,
@@ -304,5 +307,5 @@ export function useDockLists(watchShown: boolean): DockLists {
     }
 
     return { lists: { source, watch: watchList, port, obj, recent: recentList, alerts: alertList }, todayEt }
-  }, [trail, held, ivScan.data, watch.data, watch.isError, watch.isLoading, watchSyms, book.rows, book.tagOf, book.isLoading, isAll, objectivesData, objective, candidates.data, candidates.isError, candidates.isLoading, recent, now, alerts.data, alerts.isError, alerts.isLoading, todayEt])
+  }, [trail, held, ivScan.data, watch.data, watch.isError, watch.isLoading, watchSyms, book.rows, book.tagOf, book.isLoading, isAll, objectivesData, objective, candidates.data, candidates.error, candidates.isError, candidates.isLoading, recent, now, alerts.data, alerts.isError, alerts.isLoading, todayEt])
 }

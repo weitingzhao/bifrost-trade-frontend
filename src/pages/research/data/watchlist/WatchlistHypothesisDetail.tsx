@@ -5,6 +5,8 @@ import { dataState } from '@/lib/dataState'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useHypothesisList } from '@/hooks/useHypotheses'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import {
   fetchCanonicalTrajectory,
   refreshHypothesisTrajectory,
@@ -123,6 +125,8 @@ export function WatchlistHypothesisDetail({ symbol }: { symbol: string }) {
           </p>
           {listQ.isLoading ? (
             <Skeleton className="h-12 w-full" />
+          ) : hyps.length === 0 && firstResearchAuthGapError(listQ.error) ? (
+            <ResearchAuthGap error={listQ.error} layout="banner" />
           ) : hyps.length === 0 ? (
             <DataStateBlock
               state={dataState({ isError: listQ.isError, isEmpty: true })}

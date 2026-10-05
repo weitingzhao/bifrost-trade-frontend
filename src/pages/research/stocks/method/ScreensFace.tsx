@@ -13,6 +13,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ViewState } from '@bifrost/ui'
 import { PageFaceSwitch, PageHead, PageShell } from '@/components/layout'
 import { fetchSavedScreens, type SavedScreen } from '@/api/research/savedScreens'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { FUND_CONDS, TECH_CONDS } from '@/utils/sepaScreenModel'
 import { METHOD_INFO, METHOD_PATH, METHOD_TITLE, type MethodHead } from './methodHead'
 
@@ -58,6 +60,8 @@ export function ScreensFace({ head }: { head: MethodHead }) {
           </header>
           {q.isLoading ? (
             <ViewState kind="loading" rows={3} cols={2} />
+          ) : firstResearchAuthGapError(q.error) ? (
+            <ResearchAuthGap error={q.error} layout="banner" className="m-1.5" />
           ) : q.isError ? (
             <ViewState kind="failed" title="My screens did not load" detail={(q.error as Error).message} onAction={() => void q.refetch()} />
           ) : screens.length === 0 ? (

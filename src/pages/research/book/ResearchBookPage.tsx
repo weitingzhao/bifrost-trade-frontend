@@ -45,6 +45,8 @@ import { useRowLink } from '@/hooks/useRowLink'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { fetchCandidates } from '@/api/research/candidates'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { BookLoopInstrument } from './BookLoopInstrument'
 import {
   bookViews,
@@ -117,6 +119,8 @@ function CensusCard({ band }: { band: CensusBand }) {
   )
 }
 
+const NOT_READ = 'not read — Research user not set'
+
 export default function ResearchBookPage() {
   const watch = useWatchlist()
   const hypotheses = useHypothesisList({ limit: 200 })
@@ -132,7 +136,27 @@ export default function ResearchBookPage() {
   const hyp = useMemo(() => hypotheses.data?.rows ?? [], [hypotheses.data])
   const cand = useMemo(() => candidates.data?.items ?? [], [candidates.data])
 
-  const bands = useMemo(() => census(items, hyp, cand), [items, hyp, cand])
+  // Signed out the Research reads answer 401. A refused read is not a book
+  // with nothing in it: the bands it feeds read «—» with the reason, and the
+  // "waiting" list is not drawn from it (every watched name would read "no
+  // thesis" against hypotheses nobody read).
+  const authGap = firstResearchAuthGapError(
+    hypotheses.data ? null : hypotheses.error,
+    candidates.data ? null : candidates.error,
+  )
+  const bands = useMemo(() => {
+    const read = census(items, hyp, cand)
+    const unread = (label: string, missing: string) => (b: CensusBand) =>
+      b.label === label ? { ...b, parts: null, missing } : b
+    let out = read
+    if (hypotheses.data == null && hypotheses.isError) {
+      out = out
+        .map(unread('Hypotheses', NOT_READ))
+        .map(unread('Watchlist', 'thesis split not read — Research user not set'))
+    }
+    if (candidates.data == null && candidates.isError) out = out.map(unread('Candidates', NOT_READ))
+    return out
+  }, [items, hyp, cand, hypotheses.data, hypotheses.isError, candidates.data, candidates.isError])
   const views = useMemo(() => bookViews(bands), [bands])
   // One clock for the whole page, read once on mount rather than during
   // render: every age is then measured against the same moment, and the
@@ -183,8 +207,9 @@ export default function ResearchBookPage() {
       />
 
       {watch.isError ? <QueryErrorAlert error={watch.error} /> : null}
-      {hypotheses.isError ? <QueryErrorAlert error={hypotheses.error} /> : null}
-      {candidates.isError ? <QueryErrorAlert error={candidates.error} /> : null}
+      {authGap ? <ResearchAuthGap error={authGap} layout="banner" /> : null}
+      {hypotheses.isError && !authGap ? <QueryErrorAlert error={hypotheses.error} /> : null}
+      {candidates.isError && !authGap ? <QueryErrorAlert error={candidates.error} /> : null}
 
       {loading ? (
         <HeroRow basis={200}>
@@ -213,17 +238,19 @@ export default function ResearchBookPage() {
       <SectionPanel
         cap="Waiting on you"
         title={
-          stuck.length === 0
-            ? 'Clear'
-            : `${stuck.length} ${stuck.length === 1 ? 'row needs' : 'rows need'} a decision`
+          authGap
+            ? '—'
+            : stuck.length === 0
+              ? 'Clear'
+              : `${stuck.length} ${stuck.length === 1 ? 'row needs' : 'rows need'} a decision`
         }
         capTitle="Rows that cannot move to the next state without a decision"
-        tone={stuck.length === 0 ? undefined : 'warning'}
+        tone={stuck.length === 0 || authGap ? undefined : 'warning'}
       >
         {/* One cause, named before its rows. The list is true and complete;
             without this line it is also a wall, and the row that is actually
             yours to answer is somewhere inside it. */}
-        {cause != null ? (
+        {cause != null && !authGap ? (
           <p className="border-b border-border/60 px-3 py-1.5 text-dense-meta text-muted-foreground">
             <span className="text-foreground/80">
               {cause.n} of {stuck.length}
@@ -235,7 +262,9 @@ export default function ResearchBookPage() {
               : ''}
           </p>
         ) : null}
-        {loading ? (
+        {authGap ? (
+          <ResearchAuthGap error={authGap} className="p-2" />
+        ) : loading ? (
           <ViewState kind="loading" title="Loading what is waiting" rows={4} cols={5} />
         ) : stuck.length === 0 ? (
           <EmptyState

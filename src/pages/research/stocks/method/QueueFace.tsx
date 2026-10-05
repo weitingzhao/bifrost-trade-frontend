@@ -286,10 +286,14 @@ export function QueueFace({ head }: { head: MethodHead }) {
   // joins only add columns — each of those fails as a strip.
   const pageState =
     preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(candQ)
+  // Signed out, the outcome store answers 401: say who is missing, and each
+  // row's record reads «—», not "unsettled".
+  const outcomeGap = outcomeRowsQ.data ? undefined : firstResearchAuthGapError(outcomeRowsQ.error)
+  const outcomeUnread = outcomeRowsQ.isError && !outcomeRowsQ.data
   const joinsUnread = [
     wideQ.isError && !wideQ.data ? 'company and CRS' : null,
     barsQ.isError && !barsQ.data ? '20d momentum' : null,
-    outcomeRowsQ.isError && !outcomeRowsQ.data ? 'each name’s settled hit record' : null,
+    outcomeUnread && !outcomeGap ? 'each name’s settled hit record' : null,
   ].filter((x): x is string => x != null)
   const batchFlag: AsofFlag | null =
     state === 'failed'
@@ -360,6 +364,7 @@ export function QueueFace({ head }: { head: MethodHead }) {
           onAction={() => void orchQ.refetch()}
         />
       ) : null}
+      {pageState === 'ready' && outcomeGap ? <ResearchAuthGap error={outcomeGap} layout="banner" /> : null}
       {pageState === 'ready' && joinsUnread.length > 0 ? (
         <ViewState
           kind="stale"
@@ -622,7 +627,7 @@ export function QueueFace({ head }: { head: MethodHead }) {
                         : 'No settled outcome rows for this name yet.'
                     }
                   >
-                    {c.hit ? `hit ${Math.round((c.hit.hits / c.hit.n) * 100)}% /${c.hit.n}` : 'unsettled'}
+                    {c.hit ? `hit ${Math.round((c.hit.hits / c.hit.n) * 100)}% /${c.hit.n}` : outcomeUnread ? '—' : 'unsettled'}
                   </span>
                   <span
                     className={cn(

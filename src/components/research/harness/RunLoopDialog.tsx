@@ -27,6 +27,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { fetchRunEstimate, type BatchRunOverrides } from '@/api/research/harness'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { fmtUsd } from '@/lib/harness/runSpend'
 import { JUDGE_MODEL_CHOICES, judgeCountWarning } from '@/lib/harness/judgeModels'
 
@@ -74,6 +76,7 @@ export function RunLoopDialog({
     if (estimateQ.isError || !est) return 'cost unknown — the estimate could not be read'
     return est.summary
   }, [est, estimateQ.isError, estimateQ.isLoading])
+  const estimateGap = est ? undefined : firstResearchAuthGapError(estimateQ.error)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,6 +158,7 @@ export function RunLoopDialog({
               </span>{' '}
               <span className="text-muted-foreground">{priceLine}</span>
             </p>
+            {estimateGap ? <ResearchAuthGap error={estimateGap} layout="banner" className="mt-1" /> : null}
             {est && est.source === 'typical' ? (
               <p className="mt-0.5 text-dense-micro text-warning">
                 No judged run of this objective to measure, so this is a rate borrowed

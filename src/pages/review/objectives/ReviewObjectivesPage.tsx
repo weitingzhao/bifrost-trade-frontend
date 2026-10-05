@@ -52,6 +52,8 @@ import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { useReviewContracts } from '@/hooks/useReviewContracts'
 import { fetchCandidates } from '@/api/research/candidates'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useObjectiveScope, ALL_OBJECTIVES } from '@/lib/objectiveScope'
 import {
   BROKEN_LINK,
@@ -226,6 +228,15 @@ export default function ReviewObjectivesPage() {
           : 'failed'
         : 'ready'
 
+  // Signed out the three Research reads answer 401: the page says who is
+  // missing — not "couldn't load" in red, and not a chain "broken at traded"
+  // over hypotheses nobody read.
+  const authGap = firstResearchAuthGapError(
+    objectivesQ.data ? null : objectivesQ.error,
+    hypothesesQ.data ? null : hypothesesQ.error,
+    candidatesQ.data ? null : candidatesQ.error,
+  )
+
   return (
     <PageShell padding="compact" className="space-y-3">
       {/* §16.10: the lead behind ⓘ; the window the figures are true of as the
@@ -255,7 +266,9 @@ export default function ReviewObjectivesPage() {
         </ObjectiveScopeBanner>
       ) : null}
 
-      {pageState === 'failed' ? (
+      {authGap ? (
+        <ResearchAuthGap error={authGap} layout="banner" />
+      ) : pageState === 'failed' ? (
         <section className="overflow-hidden mat-card">
           <ViewState
             kind="failed"
@@ -284,7 +297,7 @@ export default function ReviewObjectivesPage() {
 
       {/* The page's own headline while the chain is broken. It sits above the
           table rather than under it, because every number below inherits it. */}
-      {!chain.wired ? (
+      {!chain.wired && !authGap ? (
         <section
           className="border px-3 py-2 text-dense-meta mat-card"
           style={{ borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }}
@@ -308,7 +321,7 @@ export default function ReviewObjectivesPage() {
         {[
           {
             label: 'Machines earning',
-            value: `${earning} of ${chain.rows.length}`,
+            value: authGap ? '—' : `${earning} of ${chain.rows.length}`,
             sub: 'by settled money',
             // A count of machines, not money — ink, never the direction inks.
             ink: earning > 0 ? 'text-foreground' : 'text-muted-foreground',

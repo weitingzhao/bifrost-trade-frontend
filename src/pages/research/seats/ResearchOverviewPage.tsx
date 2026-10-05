@@ -153,7 +153,13 @@ export default function ResearchOverviewPage() {
   // ── Operator cards ─────────────────────────────────────────────────────
   // Null when the drafts could not be read: a 401 is "not signed in", not zero.
   const pendingPatches = patchesQ.data ? patchesQ.data.rows.length : null
-  const patchesAuthGap = firstResearchAuthGapError(patchesQ.error)
+  // Signed out every Research read here answers 401. One line says so, and
+  // each number that rests on a refused read is «—» rather than zero.
+  const unread = (q: { data?: unknown; error: unknown }) => q.data == null && firstResearchAuthGapError(q.error) != null
+  const authGap = firstResearchAuthGapError(
+    ...[patchesQ, standingQ, trustQ, objectivesQ, hypsQ, candsQ, runsQ].map((q) => (q.data == null ? q.error : null)),
+  )
+  const trustUnread = unread(trustQ) && unread(standingQ)
   const cards: OpCardData[] = [
     {
       op: 'hand',
@@ -176,7 +182,9 @@ export default function ResearchOverviewPage() {
         {
           k: 'next run',
           v: nextRunText(standingQ.data?.next_run_at),
-          sub: `${objectivesQ.data?.items.length ?? 0} objective${(objectivesQ.data?.items.length ?? 0) === 1 ? '' : 's'}`,
+          sub: objectivesQ.data
+            ? `${objectivesQ.data.items.length} objective${objectivesQ.data.items.length === 1 ? '' : 's'}`
+            : '— objectives',
           tip: 'The nearest scheduled objective.',
         },
         {
@@ -189,14 +197,16 @@ export default function ResearchOverviewPage() {
         {
           k: 'trust',
           v: standingQ.data?.trust.matrix_level ?? (trustL0 ? 'L0' : '—'),
-          sub: trustL0 ? 'leash may accept' : 'nothing auto-approved',
-          tone: trustL0 ? 'good' : 'warn',
+          sub: trustUnread ? 'not read' : trustL0 ? 'leash may accept' : 'nothing auto-approved',
+          tone: trustUnread ? 'muted' : trustL0 ? 'good' : 'warn',
           tip: 'The cluster matrix grant. The design shows what the leash accepted on its own today; that count is not exposed yet, so the grant that governs it stands here.',
         },
       ],
-      note: trustL0
-        ? 'Trust L0 · the leash may accept research drafts on its own. Policy patches it proposes from settled runs wait in the Inbox.'
-        : 'Trust below L0 — the loop still runs, judges and rates; every draft waits for you.',
+      note: trustUnread
+        ? 'Trust not read — the standing is read as a Research user.'
+        : trustL0
+          ? 'Trust L0 · the leash may accept research drafts on its own. Policy patches it proposes from settled runs wait in the Inbox.'
+          : 'Trust below L0 — the loop still runs, judges and rates; every draft waits for you.',
     },
     {
       op: 'copilot',
@@ -275,9 +285,18 @@ export default function ResearchOverviewPage() {
     'Feed back counts patches waiting in the Inbox.'
 
   // ── The Book ───────────────────────────────────────────────────────────
+  const notRead = { share: { hand: 0, loop: 0, copilot: 0, total: 0 }, meta: '— not read' }
   const bookRows = [
-    { label: 'Hypotheses', to: '/research/loop/hypotheses', ...hypothesesBook(hypsQ.data?.rows ?? []) },
-    { label: 'Candidates', to: '/research/loop/candidates', ...candidatesBook(candsQ.data?.items ?? [], nowIso) },
+    {
+      label: 'Hypotheses',
+      to: '/research/loop/hypotheses',
+      ...(unread(hypsQ) ? notRead : hypothesesBook(hypsQ.data?.rows ?? [])),
+    },
+    {
+      label: 'Candidates',
+      to: '/research/loop/candidates',
+      ...(unread(candsQ) ? notRead : candidatesBook(candsQ.data?.items ?? [], nowIso)),
+    },
     { label: 'Watchlist', to: '/research/watchlist', ...watchlistBook(watchQ.data?.items.length ?? 0) },
   ]
 
@@ -370,14 +389,14 @@ export default function ResearchOverviewPage() {
     tip: s.last_run_ended_at ? `Last run ended ${fmtIsoTs(s.last_run_ended_at)}` : 'Never ran.',
   }))
 
-  const inboxN = standingQ.data?.pending_drafts ?? standingQ.data?.pending_memos ?? 0
+  const inboxN = standingQ.data ? (standingQ.data.pending_drafts ?? standingQ.data.pending_memos) : null
 
   // ── The machines ───────────────────────────────────────────────────────
   // The band inside the circuit: the objectives running laps on it. The
   // design draws five states; this store keeps two (`active` / `archived`,
   // `OBJECTIVE_STATUSES`), so the chip prints the one the row actually
   // carries rather than a state the server cannot mean.
-  const machines: MachineChip[] = (objectivesQ.data?.items ?? []).map((o) => ({
+  const machines: MachineChip[] | null = unread(objectivesQ) ? null : (objectivesQ.data?.items ?? []).map((o) => ({
     id: o.id,
     name: o.title,
     state: o.status,
@@ -415,16 +434,16 @@ export default function ResearchOverviewPage() {
             <PageHeadLink
               to="/research/loop/decisions"
               title="Calls the loop could not make on its own"
-              ink={inboxN > 0 ? 'var(--sk-warn)' : undefined}
+              ink={inboxN != null && inboxN > 0 ? 'var(--sk-warn)' : undefined}
             >
-              <Inbox className="size-3.5" aria-hidden /> Inbox · {inboxN} waiting
+              <Inbox className="size-3.5" aria-hidden /> Inbox · {inboxN ?? '—'} waiting
             </PageHeadLink>
           </>
         }
       />
 
-      {/* The patch counts below read the drafts; signed out they show «—», and this says why. */}
-      {patchesAuthGap ? <ResearchAuthGap error={patchesAuthGap} layout="banner" /> : null}
+      {/* Signed out the counts below show «—», and this says why. */}
+      {authGap ? <ResearchAuthGap error={authGap} layout="banner" /> : null}
 
       {face === 'census' ? <PipelineCensusFace /> : null}
 

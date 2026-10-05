@@ -15,6 +15,8 @@ import { Link } from 'react-router-dom'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { useActiveObjectives, useAutopilotStanding } from '@/hooks/useLoopHarness'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
 import {
   DEFAULT_MIN_SOURCE_HIT_RATE,
@@ -37,6 +39,12 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
   const trust = standing.data?.trust
   const rows = objectiveLeash(objectivesQ.data?.items ?? [], standing.data?.objectives ?? [])
   const armed = Boolean(trust?.matrix_l0)
+  // Signed out, both reads answer 401: "No active objectives" and "Trust is
+  // not L0" would be claims about data nobody read.
+  const gap =
+    standing.data == null || objectivesQ.data == null
+      ? firstResearchAuthGapError(standing.error, objectivesQ.error)
+      : undefined
 
   if (home === 'console') {
     return (
@@ -55,7 +63,9 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
             ))}
           </ol>
           <div className="flex flex-col gap-2 px-3 py-2.5">
-            {rows.length === 0 ? (
+            {gap ? (
+              <ResearchAuthGap error={gap} layout="banner" />
+            ) : rows.length === 0 ? (
               <span className="text-dense-meta text-muted-foreground">No active objectives.</span>
             ) : (
               rows.map((o) => (
@@ -75,7 +85,9 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
               ))
             )}
             <span className="text-dense-caption text-muted-foreground">
-              {armed
+              {gap
+                ? 'The standing and the objectives are read as a Research user.'
+                : armed
                 ? `Floor default ${leashPct(DEFAULT_MIN_SOURCE_HIT_RATE)} when an objective sets none. Accepting a candidate opens a hypothesis — never an order.`
                 : 'Trust is not L0 — the four conditions are moot until it is; every batch waits in the Inbox.'}
             </span>
@@ -110,6 +122,7 @@ export function LeashPanel({ home = 'inbox' }: { home?: 'inbox' | 'console' } = 
           </span>
         </div>
         {trust?.note ? <p className="text-muted-foreground">{trust.note}</p> : null}
+        {gap ? <ResearchAuthGap error={gap} layout="banner" /> : null}
       </div>
 
       <div>

@@ -15,8 +15,8 @@ import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { SegmentControl } from '@/components/data-display'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import {
   approveAllRun,
   curateRun,
@@ -104,7 +104,8 @@ export function ObjectiveRunsSection({
   const firstError = [approveMut, curateMut, deleteMut].find((m) => m.isError)?.error
 
   if (runsQ.isLoading) return <Skeleton className="h-24 w-full" />
-  if (runsQ.isError) return <QueryErrorAlert error={runsQ.error} onRetry={() => void runsQ.refetch()} />
+  // A 401 without a Research user reads as not signed in, not as a failure.
+  if (runsQ.isError) return <ResearchAuthGap error={runsQ.error} onRetry={() => void runsQ.refetch()} layout="banner" />
 
   return (
     <div className="space-y-2">

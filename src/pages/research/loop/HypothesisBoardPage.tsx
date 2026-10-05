@@ -293,6 +293,9 @@ export default function HypothesisBoardPage() {
   const preview = usePreviewState()
   const pageState =
     preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(query)
+  // Signed out, the list answers 401: the board says so, not "couldn't load"
+  // in red, and its lane counts are «—» rather than an empty board's zeros.
+  const authGap = query.data == null ? firstResearchAuthGapError(query.error) : undefined
 
   return (
     <PageShell padding="default" className="space-y-3">
@@ -307,7 +310,7 @@ export default function HypothesisBoardPage() {
         }
       />
 
-      {scope != null ? (
+      {scope != null && !authGap ? (
         <ObjectiveScopeBanner
           name={scopeName}
           onClear={() => setObjective(ALL_OBJECTIVES)}
@@ -351,7 +354,7 @@ export default function HypothesisBoardPage() {
             )}
           >
             {k === 'all' ? 'All' : k}
-            <span className="font-mono text-dense-caption opacity-80">{counts[k]}</span>
+            <span className="font-mono text-dense-caption opacity-80">{authGap ? '—' : counts[k]}</span>
           </button>
         ))}
       </div>
@@ -366,7 +369,9 @@ export default function HypothesisBoardPage() {
           onAction={() => void query.refetch()}
         />
       ) : null}
-      {pageState === 'failed' ? (
+      {authGap ? (
+        <ResearchAuthGap error={authGap} onRetry={() => void query.refetch()} />
+      ) : pageState === 'failed' ? (
         <section className="overflow-hidden mat-card">
           <ViewState
             kind="failed"

@@ -37,7 +37,7 @@ import { RanToday } from './RanToday'
  */
 function BenchStrip() {
   const navigate = useNavigate()
-  const { rows, loading } = useSourceTrackRecord(TRACK_DAYS)
+  const { rows, loading, error } = useSourceTrackRecord(TRACK_DAYS)
   const chips = rows
     .map(({ source, summary }) => {
       const five = horizonOf(summary, 5)
@@ -53,7 +53,9 @@ function BenchStrip() {
         Track record · by source
       </span>
       {loading ? <span className="text-dense-meta text-muted-foreground">…</span> : null}
-      {!loading && chips.length === 0 ? (
+      {/* A refused read is not "nothing settled". */}
+      {!loading && error ? <ResearchAuthGap error={error} layout="banner" className="min-w-0 flex-1" /> : null}
+      {!loading && !error && chips.length === 0 ? (
         <span className="text-dense-meta text-muted-foreground">nothing settled at 5 days in {TRACK_DAYS} days</span>
       ) : null}
       {chips.map((c) => {

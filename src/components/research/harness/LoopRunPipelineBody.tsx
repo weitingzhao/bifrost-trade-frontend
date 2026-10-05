@@ -20,6 +20,7 @@ import {
 } from '@/components/data-display'
 import { Button } from '@/components/ui/button'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RightInspectorHeader } from '@/components/layout/RightInspectorHeader'
 import {
@@ -226,7 +227,8 @@ export function LoopRunPipelineBody({
       />
 
       <div className="flex flex-col gap-2 px-4 pt-3">
-      {runQ.isError ? <QueryErrorAlert error={runQ.error} /> : null}
+      {/* Signed out, the run answers 401: the Research-user line, not a red failure. */}
+      {runQ.isError ? <ResearchAuthGap error={runQ.error} onRetry={() => void runQ.refetch()} /> : null}
       {runQ.isLoading ? <Skeleton className="h-24 w-full" /> : null}
       {curate.isError ? <QueryErrorAlert error={curate.error} /> : null}
       {approve.isError ? <QueryErrorAlert error={approve.error} /> : null}

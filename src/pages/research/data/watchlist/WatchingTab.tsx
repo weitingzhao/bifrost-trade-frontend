@@ -100,7 +100,7 @@ export function WatchingTab({
       [...new Set(stockItems.map((i) => (i.symbol ?? '').trim().toUpperCase()).filter(Boolean))],
     [stockItems],
   )
-  const { benchmarks, hypotheses, ivBySymbol, isJoining, ivLoading, thesisUnavailable } =
+  const { benchmarks, hypotheses, ivBySymbol, isJoining, ivLoading, thesisUnavailable, thesisGap } =
     useWatchBook(symbols)
 
   // One clock for the whole face, read once, so the render stays pure and the
@@ -141,15 +141,17 @@ export function WatchingTab({
         cap="Stocks"
         title={`${standing.names} name${standing.names === 1 ? '' : 's'}`}
         note={
-          thesisUnavailable
-            ? 'the hypothesis board did not answer — the thesis column reads empty for that reason, not because the names have none'
-            : undefined
+          thesisGap
+            ? 'hypotheses not read — Research user not set; the thesis column reads empty for that reason, not because the names have none'
+            : thesisUnavailable
+              ? 'the hypothesis board did not answer — the thesis column reads empty for that reason, not because the names have none'
+              : undefined
         }
       >
         <div className="px-3 py-2">
           <WatchBookStandingNote
             names={standing.names}
-            withoutThesis={standing.withoutThesis}
+            withoutThesis={thesisUnavailable ? null : standing.withoutThesis}
             aging={standing.aging}
           />
         </div>

@@ -29,6 +29,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { SegmentControl } from '@/components/data-display'
 import { useActiveHypotheses } from '@/hooks/useHypotheses'
+import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useRunEventQuery } from '@/hooks/useBacktestEventQuery'
 import type {
   EventKind,
@@ -451,6 +452,10 @@ export function EventQueryBuilder({
               ))}
             </SelectContent>
           </Select>
+          {!hypothesesQ.data && firstResearchAuthGapError(hypothesesQ.error) ? (
+            // Signed out the list answers 401: "none" would read as no hypothesis to attach to.
+            <p className="text-dense-caption text-muted-foreground">Hypotheses not read — Research user not set.</p>
+          ) : null}
           <p className="text-dense-caption text-muted-foreground">
             Auto-appends the resulting run id to
             <code className="ml-1 rounded bg-muted px-1 py-0.5">

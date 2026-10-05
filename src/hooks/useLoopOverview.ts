@@ -55,9 +55,20 @@ export interface LoopOverview {
  * reader who was simply not signed in.
  */
 export function blankDraftSegments(segments: LoopSegment[], why: string): LoopSegment[] {
-  return segments.map((s) =>
-    s.id === 'decide' || s.id === 'act' ? { ...s, value: null, detail: why, starved: false } : s,
-  )
+  return blankSegments(segments, ['decide', 'act'], why)
+}
+
+/**
+ * Any segments, unread. The same reasoning for every read the strip fans out
+ * to: a refused objectives list is not "no active objective" (and not starved),
+ * refused runs are not "0 runs", refused outcomes are not "0 judged".
+ */
+export function blankSegments(
+  segments: LoopSegment[],
+  ids: readonly LoopSegment['id'][],
+  why: string,
+): LoopSegment[] {
+  return segments.map((s) => (ids.includes(s.id) ? { ...s, value: null, detail: why, starved: false } : s))
 }
 
 export interface LoopInputs {
@@ -232,10 +243,15 @@ export function useLoopOverview(windowDays: number = LOOP_WINDOW_DAYS): LoopOver
     },
     windowDays,
   )
-  const segments =
-    draftsUnread && !isLoading
-      ? blankDraftSegments(counted, authError ? 'drafts not read — Research user not set' : 'drafts could not be read')
-      : counted
+  // Each segment rests on its own reads; one that answered nothing is «—».
+  const why = (what: string) => (authError ? `${what} not read — Research user not set` : `${what} could not be read`)
+  let segments = counted
+  if (!isLoading) {
+    if (draftsUnread) segments = blankDraftSegments(segments, why('drafts'))
+    if (objectivesQ.data == null) segments = blankSegments(segments, ['system'], why('objectives'))
+    if (runsQ.data == null) segments = blankSegments(segments, ['screen'], why('runs'))
+    if (outcomesQ.data == null) segments = blankSegments(segments, ['learn'], why('outcomes'))
+  }
 
   return {
     windowDays,

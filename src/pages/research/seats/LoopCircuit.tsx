@@ -113,7 +113,14 @@ function Arrow({ glyph }: { glyph: '→' | '←' }) {
   )
 }
 
-export function LoopCircuit({ cards, machines }: { cards: LoopCard[]; machines: MachineChip[] }) {
+export function LoopCircuit({
+  cards,
+  machines,
+}: {
+  cards: LoopCard[]
+  /** Null when the objectives could not be read — not "no objective is running". */
+  machines: MachineChip[] | null
+}) {
   const top = cards.filter((c) => c.row === 'top')
   const bottom = cards.filter((c) => c.row === 'bottom')
   return (
@@ -174,7 +181,11 @@ export function LoopCircuit({ cards, machines }: { cards: LoopCard[]; machines: 
             </Link>
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-            {machines.length === 0 ? (
+            {machines == null ? (
+              <span className="text-dense-meta text-muted-foreground/70">
+                Objectives not read — Research user not set.
+              </span>
+            ) : machines.length === 0 ? (
               <span className="text-dense-meta text-muted-foreground/70">
                 No objective is running — the stations below are all your hand today.
               </span>

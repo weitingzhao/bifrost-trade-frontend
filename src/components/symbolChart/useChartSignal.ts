@@ -7,7 +7,7 @@
  * scripts (`usePineLibrary`), so a pasted script is offered once it is saved.
  */
 import { useSearchParams } from 'react-router-dom'
-import { INDICATOR_SIGNALS, type IndicatorSignalId } from '@/api/research/indicators'
+import { INDICATOR_SIGNALS, signalShortLabel, type IndicatorSignalId } from '@/api/research/indicators'
 import { PINE_SCRIPT_ID, type PineLibraryEntry } from '@/api/research/pine'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
 import { usePineLibrary } from '@/hooks/usePineLibrary'
@@ -38,8 +38,10 @@ export function useChartSignal(isMini: boolean) {
   const inSurface = useInSurface()
   const ownsUrl = !isMini && !inSurface
   const [storedSig, storeSig] = usePersistedChoice<string>('bifrost.chart.signal', '', isChartSignal)
-  const urlSig = ownsUrl ? params.get(CHART_SIGNAL_PARAM) : null
-  const sigId = canonical(urlSig != null && isChartSignal(urlSig) ? urlSig : storedSig)
+  // The mini chart has no picker (K-LINE-SPEC B1-3): it marks only what a link asks for.
+  const urlSig = ownsUrl || isMini ? params.get(CHART_SIGNAL_PARAM) : null
+  const fromUrl = urlSig != null && isChartSignal(urlSig) ? urlSig : null
+  const sigId = canonical(fromUrl ?? (isMini ? '' : storedSig))
   const setSigId = (next: string) => {
     storeSig(next)
     if (!ownsUrl) return
@@ -61,4 +63,13 @@ export function useChartSignal(isMini: boolean) {
     pineId && !scripts.some((p) => p.id === pineId) ? [...scripts, { id: pineId, label: pineId, origin: 'user' }] : scripts
   const pineName = pineChoices.find((p) => p.id === pineId)?.label ?? pineId
   return { sigId, setSigId, pineId, indSig, pineChoices, pineName }
+}
+
+/** The chart's short name for a signal: the indicator's arrowed label, or the Pine script's library label. */
+export function signalLabel(sigId: string, pine: readonly PineLibraryEntry[]): string {
+  if (sigId.startsWith('pine:')) {
+    const id = sigId.slice(5)
+    return pine.find((p) => p.id === id)?.label ?? id
+  }
+  return signalShortLabel(canonical(sigId))
 }

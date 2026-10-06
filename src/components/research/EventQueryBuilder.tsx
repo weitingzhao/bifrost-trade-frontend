@@ -31,6 +31,7 @@ import { SegmentControl } from '@/components/data-display'
 import { useActiveHypotheses } from '@/hooks/useHypotheses'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useRunEventQuery } from '@/hooks/useBacktestEventQuery'
+import { eventQueryParams } from './eventQueryParams'
 import {
   isSignalEventKind,
   type EventKind,
@@ -106,7 +107,9 @@ export function EventQueryBuilder({
   const [entryOffset, setEntryOffset] = useState(-1)
   const [exitOffset, setExitOffset] = useState(2)
   const [sepaMinScore, setSepaMinScore] = useState(70)
-  const [ivThreshold, setIvThreshold] = useState(0.8)
+  // Both on research's 0–100 scale (sepa_score, iv_percentile_1y); research 0.176.1
+  // refuses a threshold of 1 or less — the 0–1 reading that made every session a hit.
+  const [ivThreshold, setIvThreshold] = useState(80)
   const [ivDirection, setIvDirection] = useState<'above' | 'below'>('above')
   const [signalId, setSignalId] = useState<IndicatorSignalId>('macd_cross_up')
   const [fillOpen, setFillOpen] = useState(false)
@@ -131,15 +134,7 @@ export function EventQueryBuilder({
   const disabled = mutation.isPending || symbols.length === 0
 
   function buildInput(): EventQueryInput {
-    const params: Record<string, unknown> = { symbols }
-    if (kind === 'sepa_hit') {
-      params.min_total_score = sepaMinScore
-    } else if (kind === 'iv_percentile_threshold') {
-      params.threshold = ivThreshold
-      params.direction = ivDirection
-    } else if (kind === 'indicator_signal') {
-      params.signal = signalId
-    }
+    const params = eventQueryParams(kind, { symbols, sepaMinScore, ivThreshold, ivDirection, signalId })
     return {
       event_def: { kind, params },
       strategy_template: template,
@@ -334,12 +329,12 @@ export function EventQueryBuilder({
               htmlFor="event-query-sepa-score"
               className="text-dense-meta font-semibold text-muted-foreground"
             >
-              SEPA min total score
+              SEPA score at least (0–100)
             </Label>
             <Input
               id="event-query-sepa-score"
               type="number"
-              min={0}
+              min={2}
               max={100}
               value={sepaMinScore}
               onChange={(e) => setSepaMinScore(Number(e.target.value) || 70)}
@@ -355,16 +350,16 @@ export function EventQueryBuilder({
                 htmlFor="event-query-iv-threshold"
                 className="text-dense-meta font-semibold text-muted-foreground"
               >
-                IV percentile threshold
+                IV percentile threshold (0–100)
               </Label>
               <Input
                 id="event-query-iv-threshold"
                 type="number"
-                min={0}
-                max={1}
-                step={0.05}
+                min={2}
+                max={100}
+                step={5}
                 value={ivThreshold}
-                onChange={(e) => setIvThreshold(Number(e.target.value) || 0.8)}
+                onChange={(e) => setIvThreshold(Number(e.target.value) || 80)}
                 className="h-8 w-40 text-dense-body"
               />
             </div>

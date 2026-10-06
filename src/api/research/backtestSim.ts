@@ -18,7 +18,7 @@ import type { BacktestRunRow } from '@/api/research/backtestEvent'
 export type SimStructure = 'short_put' | 'put_credit_spread' | 'short_strangle' | 'iron_condor'
 
 export interface SimEntryEvent {
-  kind: 'earnings' | 'opex' | 'sepa_hit' | 'iv_percentile_threshold' | 'indicator_signal'
+  kind: 'earnings' | 'opex' | 'sepa_hit' | 'iv_percentile_threshold' | 'indicator_signal' | 'pine_signal'
   params?: Record<string, unknown>
 }
 

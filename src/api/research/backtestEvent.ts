@@ -23,6 +23,7 @@ export type EventKind =
   | 'sepa_hit'
   | 'iv_percentile_threshold'
   | 'indicator_signal'
+  | 'pine_signal'
   | 'sql'
   /** A simulator run opened on a schedule stores this kind (no event). */
   | 'schedule'

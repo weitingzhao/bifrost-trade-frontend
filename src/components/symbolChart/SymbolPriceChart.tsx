@@ -26,6 +26,7 @@ import {
   indicatorSignal,
   type IndicatorSignalId,
 } from '@/api/research/indicators'
+import { PINE_BUILTINS, fetchPineSignals } from '@/api/research/pine'
 import { SectionPanel } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import {
@@ -115,11 +116,14 @@ export function SymbolPriceChart({
     macd: false,
     rsi: false,
   })
-  const [sigId, setSigId] = usePersistedChoice<IndicatorSignalId | ''>(
+  // '' = off · an indicator signal id · `pine:<script>` for a Pine library script.
+  const [sigId, setSigId] = usePersistedChoice<string>(
     'bifrost.chart.signal',
     '',
-    ['', ...INDICATOR_SIGNALS.map((x) => x.id)]
+    ['', ...INDICATOR_SIGNALS.map((x) => x.id), ...PINE_BUILTINS.map((p) => `pine:${p.id}`)]
   )
+  const pineId = sigId.startsWith('pine:') ? sigId.slice(5) : null
+  const indSig = pineId ? '' : (sigId as IndicatorSignalId | '')
 
   const barsQ = useQuery({
     queryKey: ['market', 'bars', sym, '1 D', HISTORY_LIMIT],
@@ -146,12 +150,18 @@ export function SymbolPriceChart({
   const dates = useMemo(() => daily.map((b) => barIsoDate(b.time as number)), [daily])
   const total = daily.length
 
-  const wantIndicators = !isMini && (techs.bb || techs.macd || techs.rsi || sigId !== '')
+  const wantIndicators = !isMini && (techs.bb || techs.macd || techs.rsi || indSig !== '')
   const indQ = useQuery({
-    queryKey: ['research-engine', 'indicators', 'series', sym, dates[0] ?? '', sigId],
+    queryKey: ['research-engine', 'indicators', 'series', sym, dates[0] ?? '', indSig],
     queryFn: () =>
-      fetchIndicatorSeries({ symbol: sym, start: dates[0], signals: sigId ? [sigId] : [] }),
+      fetchIndicatorSeries({ symbol: sym, start: dates[0], signals: indSig ? [indSig] : [] }),
     enabled: Boolean(sym) && wantIndicators && dates.length > 0,
+    staleTime: 10 * 60_000,
+  })
+  const pineQ = useQuery({
+    queryKey: ['research-engine', 'pine', 'signals', 'symbol', sym, pineId, dates[0] ?? ''],
+    queryFn: () => fetchPineSignals({ scripts: [pineId as string], symbol: sym, start: dates[0] }),
+    enabled: !isMini && Boolean(sym) && pineId != null && dates.length > 0,
     staleTime: 10 * 60_000,
   })
   const indByDate = useMemo(
@@ -209,12 +219,23 @@ export function SymbolPriceChart({
   const signalMarks = useMemo(() => {
     const rem = (winEnd - winStart) % agg
     const lead = rem === 0 ? 0 : agg - rem
-    return (indQ.data?.markers ?? []).flatMap((m) => {
+    const pineName = PINE_BUILTINS.find((p) => p.id === pineId)?.label ?? pineId
+    const source = pineId
+      ? (pineQ.data?.rows ?? []).map((r) => ({
+          date: r.date,
+          signal: `pine:${r.script}`,
+          label: `${pineName} ${r.side}`,
+          direction: r.side === 'buy' ? ('up' as const) : ('down' as const),
+          close: r.close ?? NaN,
+        }))
+      : (indQ.data?.markers ?? [])
+    return source.flatMap((m) => {
       const idx = sessionIndexFor(dates, m.date)
       if (idx == null || dates[idx] !== m.date || idx < winStart || idx >= winEnd) return []
-      return [{ ...m, at: Math.floor((idx - winStart + lead) / agg) }]
+      const close = Number.isFinite(m.close) ? m.close : daily[idx].close
+      return [{ ...m, close, at: Math.floor((idx - winStart + lead) / agg) }]
     })
-  }, [indQ.data, dates, winStart, winEnd, agg])
+  }, [indQ.data, pineQ.data, pineId, dates, daily, winStart, winEnd, agg])
 
   const readings = (id: string) =>
     (exQ.data?.find((e) => e.lens === id || e.lens_id === id)?.readings ?? {}) as Record<
@@ -572,13 +593,17 @@ export function SymbolPriceChart({
         </span>
       }
       note={
-        wantIndicators
-          ? indQ.isError
-            ? 'technicals: Research unreachable — the chart computes its own'
-            : sigId
-              ? `${signalMarks.length} ${indicatorSignal(sigId)?.label ?? sigId} in view`
-              : 'technicals from Research'
-          : 'levels from this page'
+        pineId
+          ? pineQ.isError
+            ? 'Pine signals: not read from Research'
+            : `${signalMarks.length} ${PINE_BUILTINS.find((p) => p.id === pineId)?.label ?? pineId} signals in view`
+          : wantIndicators
+            ? indQ.isError
+              ? 'technicals: Research unreachable — the chart computes its own'
+              : indSig
+                ? `${signalMarks.length} ${indicatorSignal(indSig)?.label ?? indSig} in view`
+                : 'technicals from Research'
+            : 'levels from this page'
       }
       action={
         <span className="inline-flex items-center gap-2">
@@ -640,16 +665,25 @@ export function SymbolPriceChart({
           <select
             aria-label="Mark signal"
             value={sigId}
-            onChange={(e) => setSigId(e.target.value as IndicatorSignalId | '')}
+            onChange={(e) => setSigId(e.target.value)}
             title="Mark the sessions a signal fired — the same signal the simulator can enter on"
             className="h-5 rounded-full border border-border bg-transparent px-1.5 font-mono text-dense-micro text-muted-foreground"
           >
             <option value="">signals: off</option>
-            {INDICATOR_SIGNALS.map((x) => (
-              <option key={x.id} value={x.id}>
-                {x.label}
-              </option>
-            ))}
+            <optgroup label="Indicators">
+              {INDICATOR_SIGNALS.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.label}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Pine library">
+              {PINE_BUILTINS.map((p) => (
+                <option key={p.id} value={`pine:${p.id}`}>
+                  {p.label}
+                </option>
+              ))}
+            </optgroup>
           </select>
           <button
             type="button"

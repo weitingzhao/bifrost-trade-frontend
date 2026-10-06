@@ -39,6 +39,7 @@ import { BacktestRunResultCard } from '@/components/research/BacktestRunResultCa
 import { cap, mono, panel, panelHead, td, th } from '@/components/research/labFaceUi'
 import { useBacktestRun, useBacktestRuns } from '@/hooks/useBacktestEventQuery'
 import { SimulatorTab } from './SimulatorTab'
+import { PineLibraryTab } from './PineLibraryTab'
 import { isSimRun } from './simRuns'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { settlementFineGrain } from '@/lib/researchSettlement'
@@ -51,18 +52,20 @@ import type {
   EventQueryResponse,
 } from '@/api/research/backtestEvent'
 
-type TabKey = 'event' | 'sim' | 'settlement'
+type TabKey = 'event' | 'sim' | 'settlement' | 'pine'
 
 const TAB_OPTIONS: { value: TabKey; label: string }[] = [
   { value: 'event', label: 'Event backtest' },
   { value: 'sim', label: 'Simulator' },
   { value: 'settlement', label: 'Settlement' },
+  { value: 'pine', label: 'Pine library' },
 ]
 
 function normalizeTab(raw: string | null): TabKey {
   // 'event-query' is the page's own old name for the tab; bookmarks predate it.
   if (raw === 'settlement') return 'settlement'
   if (raw === 'sim') return 'sim'
+  if (raw === 'pine') return 'pine'
   return 'event'
 }
 
@@ -219,7 +222,9 @@ export default function BacktestPage() {
           </span>
         ) : null}
         <span data-sr-tb="meta" className={mono}>
-          {tab === 'sim'
+          {tab === 'pine'
+            ? 'research.pine_script · stock_signal_pine_daily'
+            : tab === 'sim'
             ? 'research.backtest_run · sim:* · backtest_trade · backtest_equity'
             : tab === 'event'
             ? newestRun
@@ -492,6 +497,8 @@ export default function BacktestPage() {
           onSelect={setSimSelectedId}
           heldSymbol={heldSymbol}
         />
+      ) : tab === 'pine' ? (
+        <PineLibraryTab />
       ) : (
         <SettlementTab />
       )}

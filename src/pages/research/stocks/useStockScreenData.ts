@@ -32,7 +32,8 @@ import { usePortfolioSymbols } from '@/hooks/usePortfolioSymbols'
 import { NARRATIVE_WINDOW_DAYS, namesByCondition } from '@/lib/research/narrativeItems'
 import { ruleIndex, toVolRow, type VolRow } from '@/lib/research/volRatingsModel'
 import { joinNames, type NameRow } from './stockScreenModel'
-import { STAGE_OF } from './stockScreenStages'
+import { PINE_SCREEN_SCRIPTS, PINE_WITHIN_SESSIONS, STAGE_OF, pineChipId } from './stockScreenStages'
+import { fetchPineSignals } from '@/api/research/pine'
 
 const STALE = 10 * 60_000
 const RADAR_PAGE = 500
@@ -141,6 +142,23 @@ export function useStockScreenData(on: Record<string, boolean>) {
     })),
   })
   const setsKey = setQs.map((q) => q.dataUpdatedAt).join(',')
+  // One read answers every Pine chip: who fired what in the last few sessions.
+  const pineOn = Object.keys(on).some((k) => on[k] && k.startsWith('pine:'))
+  const pine = useQuery({
+    queryKey: ['research-engine', 'pine', 'signals', 'screen', PINE_WITHIN_SESSIONS],
+    queryFn: () => fetchPineSignals({ withinSessions: PINE_WITHIN_SESSIONS }),
+    enabled: pineOn,
+    staleTime: STALE,
+  })
+  const pineSets = useMemo(() => {
+    const m = new Map<string, Set<string>>()
+    for (const r of pine.data?.rows ?? []) {
+      const id = pineChipId(r.script, r.side)
+      if (!m.has(id)) m.set(id, new Set())
+      m.get(id)!.add(r.symbol.toUpperCase())
+    }
+    return m
+  }, [pine.data])
 
   const sets = useMemo(() => {
     const m = new Map<string, ReadonlySet<string>>()
@@ -149,10 +167,18 @@ export function useStockScreenData(on: Record<string, boolean>) {
       if (d) m.set(w.id, new Set(d))
     })
     if (narr.data) for (const [id, s] of namesByCondition(narr.data.tags)) m.set(id, s)
+    if (pine.data) {
+      // A chip whose script fired on nobody is an empty set, not a missing one.
+      for (const p of PINE_SCREEN_SCRIPTS)
+        for (const side of ['buy', 'sell'] as const) {
+          const id = pineChipId(p.id, side)
+          m.set(id, pineSets.get(id) ?? new Set())
+        }
+    }
     return m
     // setQs is a new array each render; its answers are keyed by setsKey.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wanted, setsKey, narr.data])
+  }, [wanted, setsKey, narr.data, pine.data, pineSets])
 
   const rows: NameRow[] = useMemo(
     () => joinNames(wide.data?.rows ?? [], radar.data?.rows ?? [], scan.data?.rows ?? []),
@@ -166,13 +192,16 @@ export function useStockScreenData(on: Record<string, boolean>) {
     for (const c of momStats.data?.conditions ?? []) m.set(c.id, c.pass)
     for (const c of sentStats.data?.conditions ?? []) m.set(c.id, c.pass)
     if (narr.data) for (const [id, s] of namesByCondition(narr.data.tags)) m.set(id, s.size)
+    for (const [id, s] of pineSets) m.set(id, s.size)
     return m
-  }, [structStats.data, momStats.data, sentStats.data, narr.data])
+  }, [structStats.data, momStats.data, sentStats.data, narr.data, pineSets])
 
   const rules = useMemo(() => ruleIndex(opps.data?.items ?? []), [opps.data])
 
-  const setsPending = setQs.some((q) => q.isLoading)
-  const setError = setQs.find((q) => q.error)?.error as Error | undefined
+  const setsPending = setQs.some((q) => q.isLoading) || (pineOn && pine.isLoading)
+  const setError = (setQs.find((q) => q.error)?.error ?? (pineOn ? pine.error : null)) as
+    | Error
+    | undefined
 
   return {
     rows,

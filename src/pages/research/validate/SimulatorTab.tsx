@@ -8,6 +8,7 @@
  * every run says so. Historical only — nothing here places an order (D10).
  */
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Play } from 'lucide-react'
 import { ViewState } from '@bifrost/ui'
@@ -40,6 +41,7 @@ import {
   signalShortLabel,
   type IndicatorSignalId,
 } from '@/api/research/indicators'
+import { fetchPineScripts, type PineSide } from '@/api/research/pine'
 import type {
   SimEquityPoint,
   SimInput,
@@ -348,6 +350,7 @@ function entryLabel(r: BacktestRunRow): string {
   const p = (ev.params ?? {}) as Record<string, unknown>
   const off = p.offset_sessions != null ? ` ${Number(p.offset_sessions) >= 0 ? '+' : ''}${p.offset_sessions}` : ''
   if (ev.kind === 'indicator_signal') return `${signalShortLabel(String(p.signal ?? ''), p)}${off}`
+  if (ev.kind === 'pine_signal') return `Pine ${String(p.script ?? '')} ${String(p.side ?? 'buy')}${off}`
   return `${String(ev.kind).replace(/_/g, ' ')}${off}`
 }
 
@@ -378,7 +381,17 @@ function SimBuilder({
   const [dteExit, setDteExit] = useState(21)
   const [priceField, setPriceField] = useState<'vwap' | 'close'>('vwap')
   const [slip, setSlip] = useState(1)
-  const [entryMode, setEntryMode] = useState<'schedule' | 'signal'>('schedule')
+  const [entryMode, setEntryMode] = useState<'schedule' | 'signal' | 'pine'>('schedule')
+  const [pineScript, setPineScript] = useState('')
+  const [pineSide, setPineSide] = useState<PineSide>('buy')
+  const pineQ = useQuery({
+    queryKey: ['research-engine', 'pine', 'scripts'],
+    queryFn: () => fetchPineScripts(),
+    enabled: entryMode === 'pine',
+    staleTime: 5 * 60_000,
+  })
+  const pineScripts = (pineQ.data?.scripts ?? []).filter((x) => x.is_active)
+  const pineId = pineScript || pineScripts[0]?.id || ''
   const [signalId, setSignalId] = useState<IndicatorSignalId>('macd_cross_up')
   const [signalParams, setSignalParams] = useState<Record<string, number>>(
     () => ({ ...INDICATOR_SIGNALS[0].defaults })
@@ -402,13 +415,19 @@ function SimBuilder({
   const tooMany = symbols.length > 10
 
   function input(withSignal: boolean): SimInput {
-    const entry: Partial<SimInput> =
-      withSignal && entryMode === 'signal'
+    const entry: Partial<SimInput> = !withSignal
+      ? {}
+      : entryMode === 'signal'
         ? {
             entry_event: { kind: 'indicator_signal', params: { signal: signalId, ...signalParams } },
             entry_offset_sessions: offset,
           }
-        : {}
+        : entryMode === 'pine'
+          ? {
+              entry_event: { kind: 'pine_signal', params: { script: pineId, side: pineSide } },
+              entry_offset_sessions: offset,
+            }
+          : {}
     return {
       ...entry,
       symbols,
@@ -480,9 +499,10 @@ function SimBuilder({
           options={[
             { value: 'schedule', label: 'Schedule' },
             { value: 'signal', label: 'Indicator signal' },
+            { value: 'pine', label: 'Pine script' },
           ]}
           value={entryMode}
-          onChange={(v) => setEntryMode(v as 'schedule' | 'signal')}
+          onChange={(v) => setEntryMode(v as 'schedule' | 'signal' | 'pine')}
         />
       </div>
       {entryMode === 'signal' ? (
@@ -537,6 +557,55 @@ function SimBuilder({
           </label>
         </div>
       ) : null}
+      {entryMode === 'pine' ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-[16rem_9rem_minmax(0,8rem)_auto]">
+          <Field label="Script">
+            <Select value={pineId} onValueChange={setPineScript}>
+              <SelectTrigger className="h-8 text-dense-body" aria-label="Pine script">
+                <SelectValue placeholder={pineQ.isLoading ? 'Loading…' : 'No scripts'} />
+              </SelectTrigger>
+              <SelectContent>
+                {pineScripts.map((x) => (
+                  <SelectItem key={x.id} value={x.id}>
+                    {x.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Signal">
+            <SegmentControl
+              options={[
+                { value: 'buy', label: 'Buy' },
+                { value: 'sell', label: 'Sell' },
+              ]}
+              value={pineSide}
+              onChange={(v) => setPineSide(v as PineSide)}
+            />
+          </Field>
+          <NumField
+            id="sim-pine-offset"
+            label="Enter at (sessions after)"
+            value={offset}
+            onChange={setOffset}
+            min={0}
+            max={10}
+          />
+          <label className="flex items-center gap-2 self-end pb-1.5 text-dense-caption">
+            <input
+              type="checkbox"
+              checked={compare}
+              onChange={(e) => setCompare(e.target.checked)}
+            />
+            Compare with the schedule
+          </label>
+          {pineQ.isError ? (
+            <span className="col-span-full text-dense-caption text-destructive">
+              The script library did not load — Research may not have the Pine tables yet.
+            </span>
+          ) : null}
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <NumField
           id="sim-dte"
@@ -568,7 +637,7 @@ function SimBuilder({
         ) : null}
         <NumField
           id="sim-every"
-          label={entryMode === 'signal' ? 'Schedule baseline: every (sessions)' : 'Open every (sessions)'}
+          label={entryMode !== 'schedule' ? 'Schedule baseline: every (sessions)' : 'Open every (sessions)'}
           value={every}
           onChange={setEvery}
           min={1}
@@ -640,7 +709,7 @@ function SimBuilder({
             baselineMutation.reset()
             mutation.mutate(input(true), {
               onSuccess: (res) => {
-                if (entryMode !== 'signal' || !compare) {
+                if (entryMode === 'schedule' || !compare) {
                   onRun(res)
                   return
                 }
@@ -651,7 +720,9 @@ function SimBuilder({
               },
             })
           }}
-          disabled={pending || symbols.length === 0 || tooMany}
+          disabled={
+            pending || symbols.length === 0 || tooMany || (entryMode === 'pine' && !pineId)
+          }
         >
           <Play className="h-3.5 w-3.5" />
           {mutation.isPending
@@ -695,7 +766,11 @@ function EntryComparison({ signal, baseline }: { signal: SimResponse; baseline: 
   const b = baseline.summary
   const rule = (a as SimSummary & { entry_rule?: Record<string, unknown> }).entry_rule
   const ev = (rule?.event_def as { params?: Record<string, unknown> } | undefined)?.params ?? {}
-  const sigLabel = signalShortLabel(String(ev.signal ?? ''), ev)
+  const evKind = (rule?.event_def as { kind?: string } | undefined)?.kind
+  const sigLabel =
+    evKind === 'pine_signal'
+      ? `Pine ${String(ev.script ?? '')} ${String(ev.side ?? 'buy')}`
+      : signalShortLabel(String(ev.signal ?? ''), ev)
   const rows: Array<{ k: string; a: string; b: string; diff?: number | null; money?: boolean }> = [
     { k: 'Trades', a: String(a.n_trades), b: String(b.n_trades) },
     { k: 'Win rate', a: pct(a.win_rate), b: pct(b.win_rate), diff: a.win_rate - b.win_rate },

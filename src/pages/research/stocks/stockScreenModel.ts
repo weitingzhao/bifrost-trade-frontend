@@ -234,6 +234,7 @@ export type StageId =
   | 'sentiment'
   | 'quality'
   | 'catalyst'
+  | 'pine'
   | 'options'
 
 export type StageKind = 'agree' | 'min' | 'any' | 'all'

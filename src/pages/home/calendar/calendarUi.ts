@@ -4,16 +4,17 @@
  */
 import type { CalendarInk, CalendarItem } from '@/lib/calendar/calendarLayers'
 
-/** The prototype's inks: macro ink, contract sky, ticker lime, soft, mute (Rev .145). */
+/** The prototype's inks: macro ink, contract sky, ticker lime, profit, soft, mute (Rev .145; profit Rev .157). */
 const INK: Record<CalendarInk, string> = {
   macro: 'text-foreground',
   contract: 'text-entity-option',
   sym: 'text-entity-symbol',
+  profit: 'text-profit',
   soft: 'text-[var(--sk-soft)]',
   mute: 'text-[var(--sk-mute2)]',
 }
 
-/** The ink a line is drawn in. Only the coming layers wear their item's ink; a count is soft. */
+/** The ink a line is drawn in: the item's own — a past layer's rows are soft, a dividend profit, a print its ticker. */
 export function calendarInkClass(ink: CalendarInk): string {
   return INK[ink]
 }

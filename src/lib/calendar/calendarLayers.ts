@@ -24,8 +24,8 @@ export type CalendarLayerId =
   | 'horizons'
   | 'drafts'
 
-/** The prototype's inks: macro ink, contract sky, ticker lime, soft, mute. */
-export type CalendarInk = 'macro' | 'contract' | 'sym' | 'soft' | 'mute'
+/** The prototype's inks: macro ink, contract sky, ticker lime, profit (a dividend received, Rev .157), soft, mute. */
+export type CalendarInk = 'macro' | 'contract' | 'sym' | 'profit' | 'soft' | 'mute'
 
 /** One dated thing on one layer — the prototype's `I(d, layer, cell, text, syms, ink)`. */
 export interface CalendarItem {

@@ -68,13 +68,17 @@ describe('the today boundary (Owner #19)', () => {
     expect(inTense(item('2031-03-13', 'events', { past: true }), TODAY)).toBe(false)
   })
 
-  it('counts dividends and lists a past print by its label', () => {
+  it('lists a dividend as `SYM $x` in profit ink and a past print by its label', () => {
     const lines = cellLines([
-      item('2031-03-11', 'dividends'),
-      item('2031-03-11', 'dividends'),
-      item('2031-03-11', 'events', { cell: 'AAA earnings', past: true, ink: 'sym' }),
+      item('2031-03-11', 'fills'),
+      item('2031-03-11', 'dividends', { cell: 'AAA $12.00', ink: 'profit' }),
+      item('2031-03-11', 'events', { cell: 'BBB earnings', past: true, ink: 'sym' }),
     ])
-    expect(lines.map((l) => l.text)).toEqual(['2 dividends', 'AAA earnings'])
+    expect(lines.map((l) => [l.text, l.ink])).toEqual([
+      ['1 fill', 'soft'],
+      ['AAA $12.00', 'profit'],
+      ['BBB earnings', 'sym'],
+    ])
   })
 
   it('leaves Dividends off in every preset', () => {

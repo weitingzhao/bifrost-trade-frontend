@@ -9,7 +9,9 @@
  * date, so the UTC date is the day — as Transfer & Pay groups its months.
  * One item per name per day: a payment and its payment-in-lieu are one cash
  * event; the withholding on the same name that day is netted in the text.
- * Off in every preset (Rev .157) — a chip to turn on, not a default.
+ * Off in every preset (Rev .157) — a chip to turn on, not a default. The
+ * cell reads `SYM $x` (the amount received) in profit ink, as the prototype
+ * writes it; the day panel adds the withholding and the net.
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -55,10 +57,10 @@ export function dividendItems(rows: readonly AccountTransaction[]): CalendarItem
       key: `dividends:${k}`,
       d: e.d,
       layer: 'dividends',
-      cell: '',
-      text: `${e.sym} dividend ${fmtUsd(e.gross)}${tax}`,
+      cell: `${e.sym} ${fmtUsd(e.gross)}`,
+      text: `${e.sym} dividend received ${fmtUsd(e.gross)}${tax}`,
       syms: [e.sym],
-      ink: 'soft',
+      ink: 'profit',
       to: '/portfolio/transfer',
     })
   }

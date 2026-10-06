@@ -32,6 +32,39 @@ export const PINE_BUILTINS: readonly { id: string; label: string }[] = [
   { id: 'ichimoku_tk', label: 'Ichimoku TK' },
 ]
 
+/** Research's script-id rule (`library.py`): 2–48 of a–z, 0–9, _ starting with a letter. */
+export const PINE_SCRIPT_ID = /^[a-z][a-z0-9_]{1,47}$/
+
+/** A script the daily build runs, as the Screener chips and the chart picker name it. */
+export interface PineLibraryEntry {
+  id: string
+  label: string
+  origin: PineScriptRow['origin']
+}
+
+const BUILTIN_ENTRIES: readonly PineLibraryEntry[] = PINE_BUILTINS.map((b) => ({ ...b, origin: 'bifrost' }))
+
+/**
+ * The active scripts in reading order: the built-ins in their fixed order under
+ * their short labels, then pasted scripts under their own names, in the order
+ * the library lists them. With no library yet (loading, or Research did not
+ * answer) the built-ins stand in, which is what every surface showed before
+ * it read the library.
+ */
+export function pineLibraryEntries(rows: readonly PineScriptRow[] | undefined): readonly PineLibraryEntry[] {
+  if (!rows) return BUILTIN_ENTRIES
+  const active = rows.filter((r) => r.is_active)
+  const ids = new Set(active.map((r) => r.id))
+  const builtins = BUILTIN_ENTRIES.filter((b) => ids.has(b.id))
+  const known = new Set(builtins.map((b) => b.id))
+  return [
+    ...builtins,
+    ...active
+      .filter((r) => !known.has(r.id))
+      .map((r) => ({ id: r.id, label: r.name.trim() || r.id, origin: r.origin })),
+  ]
+}
+
 export interface PineScriptRow {
   id: string
   name: string

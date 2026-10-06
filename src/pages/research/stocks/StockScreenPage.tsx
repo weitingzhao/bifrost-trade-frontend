@@ -61,7 +61,8 @@ import {
   type ScreenState,
   type ScreenVersion,
 } from './stockScreenModel'
-import { LEGACY_SCREEN, STAGES } from './stockScreenStages'
+import { LEGACY_SCREEN, pineChartSignal, stagesWithPine } from './stockScreenStages'
+import { usePineLibrary } from '@/hooks/usePineLibrary'
 
 type UniverseId = 'all' | 'options' | 'sp500' | 'watch' | 'book'
 
@@ -136,6 +137,8 @@ export default function StockScreenPage() {
   }
 
   const data = useStockScreenData(screen.on)
+  const pineLib = usePineLibrary()
+  const stages = useMemo(() => stagesWithPine(pineLib.scripts), [pineLib.scripts])
   const probe = useMemo(() => rowProbe(data.sets), [data.sets])
   const pf = data.portfolio
 
@@ -145,8 +148,8 @@ export default function StockScreenPage() {
     return data.rows.filter(inU)
   }, [data.rows, universe, pf])
 
-  const { counts, cuts, survivors } = useMemo(() => runStages(pool, STAGES, screen, probe), [pool, screen, probe])
-  const base = useMemo(() => pool.filter((r) => passesAll(r, STAGES, screen, probe, 'agree')), [pool, screen, probe])
+  const { counts, cuts, survivors } = useMemo(() => runStages(pool, stages, screen, probe), [pool, stages, screen, probe])
+  const base = useMemo(() => pool.filter((r) => passesAll(r, stages, screen, probe, 'agree')), [pool, stages, screen, probe])
   const cells = useMemo(() => matchRate(base), [base])
   const funnels = useMemo(() => funnelsOf(pool, base), [pool, base])
   const visible = visibleAxes(screen)
@@ -159,9 +162,9 @@ export default function StockScreenPage() {
     if (cutAt != null) return null
     const lfKeys = Object.keys(focus).length
     const fpool = ffStep ? ffStep.set.filter((r) => inFocus(r, focus)) : lfKeys ? base.filter((r) => inFocus(r, focus)) : null
-    return fpool ? runStages(fpool, STAGES, screen, probe).counts : null
-  }, [cutAt, ffStep, focus, base, screen, probe])
-  const hover = hs != null && STAGES[hs] ? stageHover(hs, STAGES[hs], base, screen, probe, cuts[hs]?.length ?? 0) : null
+    return fpool ? runStages(fpool, stages, screen, probe).counts : null
+  }, [cutAt, ffStep, focus, base, stages, screen, probe])
+  const hover = hs != null && stages[hs] ? stageHover(hs, stages[hs], base, screen, probe, cuts[hs]?.length ?? 0) : null
   const nOn = conditionCount(screen)
 
   // ── Versions (Rev .121 #4): every change is a fork of the one you stand on.
@@ -259,7 +262,7 @@ export default function StockScreenPage() {
   // Chip counts in this universe; a server-set chip not loaded yet reads its tier's own count.
   const chipCounts = useMemo(() => {
     const m = new Map<string, number>()
-    for (const st of STAGES) {
+    for (const st of stages) {
       for (const c of st.chips) {
         if (c.fromSet && !data.sets.has(c.id)) continue
         let n = 0
@@ -268,18 +271,18 @@ export default function StockScreenPage() {
       }
     }
     return m
-  }, [pool, probe, data.sets])
+  }, [pool, stages, probe, data.sets])
   // Rev .157: a row-evaluated chip that no name in range has a reading for.
   const chipsWithoutReading = useMemo(() => {
     const out = new Set<string>()
     if (!pool.length) return out
-    for (const st of STAGES) {
+    for (const st of stages) {
       for (const c of st.chips) {
         if (!c.fromSet && pool.every((r) => !rowHasReading(r, c))) out.add(c.id)
       }
     }
     return out
-  }, [pool])
+  }, [pool, stages])
   const chipCount = (id: string): { n: number | null; where: string; noReading?: boolean } => {
     const n = chipCounts.get(id)
     if (n != null) return { n, where: `of ${pool.length} in universe`, noReading: chipsWithoutReading.has(id) }
@@ -392,7 +395,7 @@ export default function StockScreenPage() {
     return `#${above + 1} of ${of} in ${UNIVERSE_LABEL[universe]}`
   }
   const lfChips = [
-    ...(cutAt != null ? [{ key: 'sf', label: `Cut by stage ${cutAt + 1} · ${STAGES[cutAt].title}`, clear: () => setSf(null) }] : []),
+    ...(cutAt != null ? [{ key: 'sf', label: `Cut by stage ${cutAt + 1} · ${stages[cutAt].title}`, clear: () => setSf(null) }] : []),
     ...(ffStep && ff ? [{ key: 'ff', label: `${funnels[ff.f].title} funnel · ${ffStep.label}`, clear: () => setFf(null) }] : []),
     ...Object.entries(focus).map(([a, n]) => ({
       key: `lf${a}`,
@@ -465,7 +468,7 @@ export default function StockScreenPage() {
         info="One page for picking stocks. A model ranks, a screen cuts, and each works alone or with the other: choose a universe, a model to order it (or none), then a screen to narrow it. The Method face (⧉) is where models are defined, conditions are written and screens are versioned."
         actions={
           <>
-            <SaveScreenAction screen={screen} stages={STAGES} nOn={nOn} />
+            <SaveScreenAction screen={screen} stages={stages} nOn={nOn} />
             <PageHeadAction
               disabled
               title="An objective from a screen writes a standing schedule, and what it stamps as its source is a product call — owed, as on Vol ratings."
@@ -598,7 +601,7 @@ export default function StockScreenPage() {
                 starts={starts}
                 startId={startId}
                 savedNote={savedNote}
-                stages={STAGES}
+                stages={stages}
                 counts={counts}
                 screen={screen}
                 chipCountOf={chipCount}
@@ -669,6 +672,7 @@ export default function StockScreenPage() {
                       }}
                       rules={data.rules}
                       sepaDate={data.sepaDate}
+                      chartSignal={pineChartSignal(screen.on)}
                     />
                   ) : (
                     <ViewState
@@ -731,7 +735,7 @@ export default function StockScreenPage() {
                     : `#${walk.indexOf(whyRow.sym) + 1} of ${rated.length} ranked by ${MODEL_LABEL[model]}`
             }
             screen={screen}
-            stages={STAGES}
+            stages={stages}
             probe={probe}
             rankIn={rankIn}
             leadersSession={view === 'leaders' && lsel ? lsel.date : null}

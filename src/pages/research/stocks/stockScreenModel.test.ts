@@ -23,7 +23,7 @@ import {
   type NameRow,
   type ScreenState,
 } from './stockScreenModel'
-import { LEGACY_SCREEN, STAGES, STAGE_OF } from './stockScreenStages'
+import { LEGACY_SCREEN, STAGES, STAGE_OF, pineChartSignal, stagesWithPine } from './stockScreenStages'
 import { toSavedDefinition } from './stockScreenView'
 
 const MODEL_W = { trend: 35, growth: 30, mom: 20, opt: 15 }
@@ -228,5 +228,29 @@ describe('rowHasReading (Rev .157 missing chips)', () => {
     expect(rowHasReading(bare, { id: 'grade_a' })).toBe(false)
     expect(rowHasReading(bare, { id: 'ivr_ge_40' })).toBe(false)
     expect(rowHasReading(bare, { id: 'pine:x:buy', fromSet: true })).toBe(true)
+  })
+})
+
+describe('Pine stage from the library', () => {
+  it('draws a buy and a sell chip per active script, and leaves the other stages alone', () => {
+    const stages = stagesWithPine([
+      { id: 'supertrend', label: 'Supertrend', origin: 'bifrost' },
+      { id: 'my_cross', label: 'EMA cross', origin: 'user' },
+    ])
+    const pine = stages.find((st) => st.id === 'pine')!
+    expect(pine.chips.map((c) => c.id)).toEqual([
+      'pine:supertrend:buy',
+      'pine:supertrend:sell',
+      'pine:my_cross:buy',
+      'pine:my_cross:sell',
+    ])
+    expect(pine.chips[2].label).toBe('EMA cross ↑')
+    expect(pine.chips.every((c) => c.fromSet)).toBe(true)
+    expect(stages.filter((st) => st.id !== 'pine')).toEqual(STAGES.filter((st) => st.id !== 'pine'))
+  })
+
+  it('opens names on the first Pine script the screen selects', () => {
+    expect(pineChartSignal({ ivr_ge_40: true, 'pine:my_cross:sell': true, 'pine:supertrend:buy': true })).toBe('pine:my_cross')
+    expect(pineChartSignal({ 'pine:supertrend:buy': false, ivr_ge_40: true })).toBeNull()
   })
 })

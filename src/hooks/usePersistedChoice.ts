@@ -10,12 +10,14 @@ import { useCallback, useState } from 'react'
 export function usePersistedChoice<T extends string>(
   key: string,
   fallback: T,
-  allowed: readonly T[],
+  /** The allowed set, or a test for a set only known at run time (the Pine library). */
+  allowed: readonly T[] | ((raw: string) => raw is T),
 ): [T, (next: T) => void] {
   const [value, setValue] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(key)
-      return raw != null && (allowed as readonly string[]).includes(raw) ? (raw as T) : fallback
+      const ok = typeof allowed === 'function' ? allowed : (v: string) => (allowed as readonly string[]).includes(v)
+      return raw != null && ok(raw) ? (raw as T) : fallback
     } catch {
       return fallback
     }

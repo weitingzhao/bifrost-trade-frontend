@@ -24,7 +24,7 @@
  *                  so; open interest, spread and weeklies have no store.
  */
 import { MOMENTUM_INDICATORS, SENTIMENT_INDICATORS, STRUCTURE_INDICATORS } from '@/constants/stockScreenerCatalog'
-import { PINE_BUILTINS } from '@/api/research/pine'
+import { pineLibraryEntries, type PineLibraryEntry } from '@/api/research/pine'
 import { NARRATIVE_CONDITIONS } from '@/lib/research/narrativeItems'
 import { AGREE_BAR, type ScreenState, type Stage } from './stockScreenModel'
 
@@ -34,11 +34,32 @@ const NO_CALENDAR =
  * Pine library scripts (research 0.173.0, W6): a chip passes a name when the
  * script's buy or sell plot fired on it in the last PINE_WITHIN_SESSIONS
  * sessions (`/research/pine/signals`). Ids are `pine:<script>:<side>`.
+ *
+ * The chips are the library's active scripts (`usePineLibrary`), so a script
+ * pasted in Backtest › Pine library joins the screen once it is saved; until
+ * the library answers, the eight built-ins stand in.
  */
 export const PINE_WITHIN_SESSIONS = 5
-export const PINE_SCREEN_SCRIPTS = PINE_BUILTINS
 export function pineChipId(script: string, side: 'buy' | 'sell'): string {
   return `pine:${script}:${side}`
+}
+
+function pineStage(scripts: readonly PineLibraryEntry[]): Stage {
+  return {
+    id: 'pine',
+    title: 'Pine signals',
+    mode: `any selected · fired in the last ${PINE_WITHIN_SESSIONS} sessions`,
+    kind: 'any',
+    missing: null,
+    chips: scripts.flatMap((p) =>
+      (['buy', 'sell'] as const).map((side) => ({
+        id: pineChipId(p.id, side),
+        label: `${p.label} ${side === 'buy' ? '↑' : '↓'}`,
+        title: `${p.origin === 'bifrost' ? 'Pine library' : `Pine ${p.origin}`} script ${p.id}: its ${side} plot fired in the last ${PINE_WITHIN_SESSIONS} sessions`,
+        fromSet: true,
+      }))
+    ),
+  }
 }
 
 const NO_LIQUIDITY = 'No store carries open interest, spread or listed weeklies across the universe.'
@@ -170,21 +191,7 @@ export const STAGES: readonly Stage[] = [
       ...NARRATIVE_CONDITIONS.map((c) => ({ id: c.id, label: c.label, narrative: c.desc, fromSet: true })),
     ],
   },
-  {
-    id: 'pine',
-    title: 'Pine signals',
-    mode: `any selected · fired in the last ${PINE_WITHIN_SESSIONS} sessions`,
-    kind: 'any',
-    missing: null,
-    chips: PINE_SCREEN_SCRIPTS.flatMap((p) =>
-      (['buy', 'sell'] as const).map((side) => ({
-        id: pineChipId(p.id, side),
-        label: `${p.label} ${side === 'buy' ? '↑' : '↓'}`,
-        title: `Pine library script ${p.id}: its ${side} plot fired in the last ${PINE_WITHIN_SESSIONS} sessions`,
-        fromSet: true,
-      }))
-    ),
-  },
+  pineStage(pineLibraryEntries(undefined)),
   {
     id: 'options',
     title: 'Options fit',
@@ -206,6 +213,17 @@ export const STAGES: readonly Stage[] = [
 ]
 
 export const STAGE_OF = Object.fromEntries(STAGES.map((s) => [s.id, s])) as Record<Stage['id'], Stage>
+
+/** STAGES with the Pine stage's chips drawn from the library's active scripts. */
+export function stagesWithPine(scripts: readonly PineLibraryEntry[]): readonly Stage[] {
+  return STAGES.map((s) => (s.id === 'pine' ? pineStage(scripts) : s))
+}
+
+/** The first Pine script a screen selects, as the Symbol chart's `?signal=` — names open with its marks on. */
+export function pineChartSignal(on: Readonly<Record<string, boolean>>): string | null {
+  const id = Object.keys(on).find((k) => on[k] && k.startsWith('pine:'))
+  return id ? `pine:${id.split(':')[1]}` : null
+}
 
 /** A chip nothing can evaluate — the whole stage missing, or the chip itself. */
 export function chipMissing(stageId: Stage['id'], chipId: string): string | null {

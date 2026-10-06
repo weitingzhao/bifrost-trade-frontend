@@ -22,3 +22,17 @@ export function withSymbolParam(route: string, symbol?: string | null): string {
   const joiner = pathAndQuery.includes('?') ? '&' : '?'
   return `${pathAndQuery}${joiner}symbol=${encodeURIComponent(sym)}${hash ? `#${hash}` : ''}`
 }
+
+/**
+ * `?signal=` — the signal the Symbol chart marks: an indicator signal id, or
+ * `pine:<script>` for a Pine library script. A shared link opens on it.
+ */
+export const CHART_SIGNAL_PARAM = 'signal'
+
+/** A route with `signal=` attached, ahead of any anchor; an empty signal leaves it as it was. */
+export function withChartSignal(route: string, signal?: string | null): string {
+  if (!signal) return route
+  const [pathAndQuery, hash] = route.split('#', 2)
+  const joiner = pathAndQuery.includes('?') ? '&' : '?'
+  return `${pathAndQuery}${joiner}${CHART_SIGNAL_PARAM}=${encodeURIComponent(signal)}${hash ? `#${hash}` : ''}`
+}

@@ -84,6 +84,8 @@ export const QUERY_KEYS = {
       rows: ['research-engine', 'candidate-outcome', 'rows'] as const,
     },
     scan: ['research-engine', 'scan'] as const,
+    /** Active Pine scripts; saving one invalidates `['research-engine', 'pine']`. */
+    pineScripts: ['research-engine', 'pine', 'scripts'] as const,
     alerts: ['research-engine', 'alerts'] as const,
     signalDecay: ['research-engine', 'signal-decay'] as const,
     signalDecayIntersect: ['research-engine', 'signal-decay', 'intersect'] as const,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { withSymbolParam } from './symbolLink'
+import { withChartSignal, withSymbolParam } from './symbolLink'
 
 describe('withSymbolParam', () => {
   it('joins with ? on a bare route and & on one that already has a query', () => {
@@ -28,5 +28,19 @@ describe('withSymbolParam', () => {
     expect(withSymbolParam('/research/flow', '')).toBe('/research/flow')
     expect(withSymbolParam('/research/flow', null)).toBe('/research/flow')
     expect(withSymbolParam('/research/flow')).toBe('/research/flow')
+  })
+})
+
+describe('withChartSignal', () => {
+  it('attaches the signal ahead of the anchor and composes with the symbol', () => {
+    expect(withChartSignal('/research/symbol', 'pine:supertrend')).toBe('/research/symbol?signal=pine%3Asupertrend')
+    expect(withSymbolParam(withChartSignal('/research/symbol#price', 'macd_cross_up'), 'nvda')).toBe(
+      '/research/symbol?signal=macd_cross_up&symbol=NVDA#price'
+    )
+  })
+
+  it('leaves the route alone with no signal', () => {
+    expect(withChartSignal('/research/symbol?tab=overview', null)).toBe('/research/symbol?tab=overview')
+    expect(withChartSignal('/research/symbol', '')).toBe('/research/symbol')
   })
 })

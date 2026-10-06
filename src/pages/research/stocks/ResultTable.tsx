@@ -24,7 +24,7 @@ import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { RuleCell } from '@/components/research/RuleCell'
 import { rowSelectProps } from '@/hooks/useRowLink'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
-import { withSymbolParam } from '@/lib/symbolLink'
+import { withChartSignal, withSymbolParam } from '@/lib/symbolLink'
 import { regimeVariant, type VolRule } from '@/lib/research/volRatingsModel'
 import { cn } from '@/lib/utils'
 import type { SepaDiscoveryHit } from '@/hooks/useResearchHomeData'
@@ -255,6 +255,7 @@ export function ResultTable({
   bookOf,
   rules,
   sepaDate,
+  chartSignal = null,
 }: {
   model: RankModel
   rated: readonly Scored[]
@@ -269,6 +270,8 @@ export function ResultTable({
   bookOf: (sym: string) => string
   rules: ReadonlyMap<string, VolRule[]>
   sepaDate: string | null
+  /** The chart signal a name opens with — the screen's Pine script, when it selects one. */
+  chartSignal?: string | null
 }) {
   const cols = colsOf(model)
   const cap = showAll ? Infinity : ROW_CAP
@@ -284,7 +287,7 @@ export function ResultTable({
         <DenseTableCell className={cn(denseTableNumCell, 'max-w-none text-dense-meta text-muted-foreground')}>{rank ?? ''}</DenseTableCell>
         <DenseTableCell className="max-w-none whitespace-nowrap">
           <Link
-            to={withSymbolParam(SYMBOL_PATH, x.row.sym)}
+            to={withSymbolParam(withChartSignal(SYMBOL_PATH, chartSignal), x.row.sym)}
             onClick={(e) => e.stopPropagation()}
             className={cn('font-mono font-bold text-entity-symbol hover:underline', x.score == null && model !== 'none' && 'opacity-60')}
             title={`Open ${x.row.sym} on Symbol`}

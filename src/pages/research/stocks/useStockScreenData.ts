@@ -32,8 +32,9 @@ import { usePortfolioSymbols } from '@/hooks/usePortfolioSymbols'
 import { NARRATIVE_WINDOW_DAYS, namesByCondition } from '@/lib/research/narrativeItems'
 import { ruleIndex, toVolRow, type VolRow } from '@/lib/research/volRatingsModel'
 import { joinNames, type NameRow } from './stockScreenModel'
-import { PINE_SCREEN_SCRIPTS, PINE_WITHIN_SESSIONS, STAGE_OF, pineChipId } from './stockScreenStages'
+import { PINE_WITHIN_SESSIONS, STAGE_OF, pineChipId } from './stockScreenStages'
 import { fetchPineSignals } from '@/api/research/pine'
+import { usePineLibrary } from '@/hooks/usePineLibrary'
 
 const STALE = 10 * 60_000
 const RADAR_PAGE = 500
@@ -150,6 +151,7 @@ export function useStockScreenData(on: Record<string, boolean>) {
     enabled: pineOn,
     staleTime: STALE,
   })
+  const pineLib = usePineLibrary()
   const pineSets = useMemo(() => {
     const m = new Map<string, Set<string>>()
     for (const r of pine.data?.rows ?? []) {
@@ -169,7 +171,7 @@ export function useStockScreenData(on: Record<string, boolean>) {
     if (narr.data) for (const [id, s] of namesByCondition(narr.data.tags)) m.set(id, s)
     if (pine.data) {
       // A chip whose script fired on nobody is an empty set, not a missing one.
-      for (const p of PINE_SCREEN_SCRIPTS)
+      for (const p of pineLib.scripts)
         for (const side of ['buy', 'sell'] as const) {
           const id = pineChipId(p.id, side)
           m.set(id, pineSets.get(id) ?? new Set())
@@ -178,7 +180,7 @@ export function useStockScreenData(on: Record<string, boolean>) {
     return m
     // setQs is a new array each render; its answers are keyed by setsKey.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wanted, setsKey, narr.data, pine.data, pineSets])
+  }, [wanted, setsKey, narr.data, pine.data, pineSets, pineLib.scripts])
 
   const rows: NameRow[] = useMemo(
     () => joinNames(wide.data?.rows ?? [], radar.data?.rows ?? [], scan.data?.rows ?? []),

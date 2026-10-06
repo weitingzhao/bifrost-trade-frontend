@@ -24,9 +24,8 @@ import {
   INDICATOR_SIGNALS,
   fetchIndicatorSeries,
   indicatorSignal,
-  type IndicatorSignalId,
 } from '@/api/research/indicators'
-import { PINE_BUILTINS, fetchPineSignals } from '@/api/research/pine'
+import { fetchPineSignals } from '@/api/research/pine'
 import { SectionPanel } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
 import {
@@ -68,6 +67,7 @@ import { SymbolChartPointer } from '@/components/symbolChart/SymbolChartPointer'
 import { useOpenTrade } from '@/layout/tradeGo'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
 import { useTradeIndex } from '@/hooks/useTradeIndex'
+import { useChartSignal } from '@/components/symbolChart/useChartSignal'
 
 /** The vendor keeps two rolling years; the API caps a page at 500. */
 const HISTORY_LIMIT = 500
@@ -116,14 +116,7 @@ export function SymbolPriceChart({
     macd: false,
     rsi: false,
   })
-  // '' = off · an indicator signal id · `pine:<script>` for a Pine library script.
-  const [sigId, setSigId] = usePersistedChoice<string>(
-    'bifrost.chart.signal',
-    '',
-    ['', ...INDICATOR_SIGNALS.map((x) => x.id), ...PINE_BUILTINS.map((p) => `pine:${p.id}`)]
-  )
-  const pineId = sigId.startsWith('pine:') ? sigId.slice(5) : null
-  const indSig = pineId ? '' : (sigId as IndicatorSignalId | '')
+  const { sigId, setSigId, pineId, indSig, pineChoices, pineName } = useChartSignal(isMini)
 
   const barsQ = useQuery({
     queryKey: ['market', 'bars', sym, '1 D', HISTORY_LIMIT],
@@ -219,7 +212,6 @@ export function SymbolPriceChart({
   const signalMarks = useMemo(() => {
     const rem = (winEnd - winStart) % agg
     const lead = rem === 0 ? 0 : agg - rem
-    const pineName = PINE_BUILTINS.find((p) => p.id === pineId)?.label ?? pineId
     const source = pineId
       ? (pineQ.data?.rows ?? []).map((r) => ({
           date: r.date,
@@ -235,7 +227,7 @@ export function SymbolPriceChart({
       const close = Number.isFinite(m.close) ? m.close : daily[idx].close
       return [{ ...m, close, at: Math.floor((idx - winStart + lead) / agg) }]
     })
-  }, [indQ.data, pineQ.data, pineId, dates, daily, winStart, winEnd, agg])
+  }, [indQ.data, pineQ.data, pineId, pineName, dates, daily, winStart, winEnd, agg])
 
   const readings = (id: string) =>
     (exQ.data?.find((e) => e.lens === id || e.lens_id === id)?.readings ?? {}) as Record<
@@ -596,7 +588,7 @@ export function SymbolPriceChart({
         pineId
           ? pineQ.isError
             ? 'Pine signals: not read from Research'
-            : `${signalMarks.length} ${PINE_BUILTINS.find((p) => p.id === pineId)?.label ?? pineId} signals in view`
+            : `${signalMarks.length} ${pineName} signals in view`
           : wantIndicators
             ? indQ.isError
               ? 'technicals: Research unreachable — the chart computes its own'
@@ -666,10 +658,13 @@ export function SymbolPriceChart({
             aria-label="Mark signal"
             value={sigId}
             onChange={(e) => setSigId(e.target.value)}
-            title="Mark the sessions a signal fired — the same signal the simulator can enter on"
-            className="h-5 rounded-full border border-border bg-transparent px-1.5 font-mono text-dense-micro text-muted-foreground"
+            title="Mark the sessions a signal fired — an indicator or a Pine library script, the same signal the Screener, the simulator and Signal Decay read"
+            className={cn(
+              'h-5 rounded-full border bg-transparent px-1.5 font-mono text-dense-micro',
+              sigId ? 'border-[var(--sk-accent)] text-foreground' : 'border-border text-muted-foreground',
+            )}
           >
-            <option value="">signals: off</option>
+            <option value="">signals · Pine</option>
             <optgroup label="Indicators">
               {INDICATOR_SIGNALS.map((x) => (
                 <option key={x.id} value={x.id}>
@@ -678,9 +673,9 @@ export function SymbolPriceChart({
               ))}
             </optgroup>
             <optgroup label="Pine library">
-              {PINE_BUILTINS.map((p) => (
+              {pineChoices.map((p) => (
                 <option key={p.id} value={`pine:${p.id}`}>
-                  {p.label}
+                  Pine · {p.label}
                 </option>
               ))}
             </optgroup>

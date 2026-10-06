@@ -31,7 +31,7 @@ import {
 } from '@/components/data-display'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
-import { withSymbolParam } from '@/lib/symbolLink'
+import { withChartSignal, withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import {
@@ -203,7 +203,17 @@ export function PineLibraryTab() {
                       <DenseTableCell className={denseTableNumCell}>{s.buy_signals ?? 0}</DenseTableCell>
                       <DenseTableCell className={denseTableNumCell}>{s.sell_signals ?? 0}</DenseTableCell>
                       <DenseTableCell className="font-mono text-dense-caption">{s.last_signal ?? '—'}</DenseTableCell>
-                      <DenseTableCell className="text-right">
+                      <DenseTableCell className="whitespace-nowrap text-right">
+                        {s.is_active ? (
+                          <Link
+                            to={withSymbolParam(withChartSignal(SYMBOL_PATH, `pine:${s.id}`), checkSym)}
+                            onClick={(e) => e.stopPropagation()}
+                            title={`Open ${checkSym.trim().toUpperCase() || 'the symbol'} on Symbol with this script's buy and sell marked on the chart`}
+                            className="mr-3 text-dense-caption text-[var(--sk-accent)] hover:underline"
+                          >
+                            Chart
+                          </Link>
+                        ) : null}
                         <button
                           type="button"
                           className="text-dense-caption text-[var(--sk-accent)] hover:underline"

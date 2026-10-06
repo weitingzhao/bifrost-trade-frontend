@@ -10,11 +10,12 @@ import { CloseButton, IconActionButton } from '@/components/data-display'
 import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 import { PlanThisButton } from '@/components/research/PlanThisButton'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
-import { withSymbolParam } from '@/lib/symbolLink'
+import { withChartSignal, withSymbolParam } from '@/lib/symbolLink'
 import { momentumFactorReadings } from '@/lib/momentumFactors'
 import { compositeParts as volParts } from '@/lib/research/volRatingsModel'
 import { cn } from '@/lib/utils'
 import { MODEL_TINT } from './stockScreenView'
+import { pineChartSignal } from './stockScreenStages'
 import { MomentumFactorsPanel } from './MomentumFactorsPanel'
 import {
   AGREE_BAR,
@@ -140,7 +141,7 @@ export function WhyDrawer({
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-2 border-b border-foreground/[0.06] px-3 py-2.5">
-        <Link to={withSymbolParam(SYMBOL_PATH, row.sym)} className="font-mono text-dense-body font-bold text-entity-symbol hover:underline">
+        <Link to={withSymbolParam(withChartSignal(SYMBOL_PATH, pineChartSignal(screen.on)), row.sym)} className="font-mono text-dense-body font-bold text-entity-symbol hover:underline">
           {row.sym}
         </Link>
         <span className="min-w-0 truncate text-dense-label text-[var(--sk-mute2)]">{row.company ?? ''}</span>
@@ -252,7 +253,7 @@ export function WhyDrawer({
 
       <div className="mt-auto flex flex-wrap gap-1.5 border-t border-foreground/[0.06] px-3 py-2.5">
         <PlanThisButton symbol={row.sym} source="stock-screen" sourceLabel="Stock screen" note={`Ranked by ${MODEL_LABEL[model]}`} variant="primary" />
-        <Link to={withSymbolParam(SYMBOL_PATH, row.sym)} className="mat-btn inline-flex h-7 items-center border px-2.5 text-dense-label">
+        <Link to={withSymbolParam(withChartSignal(SYMBOL_PATH, pineChartSignal(screen.on)), row.sym)} className="mat-btn inline-flex h-7 items-center border px-2.5 text-dense-label">
           Symbol →
         </Link>
         <AddToPoolButton symbol={row.sym} source="stock-screen" score={score} tags={['stock-screen', model]} label="Pool" />

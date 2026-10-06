@@ -17,13 +17,21 @@ import { useInSurface } from '@/lib/surfaceScope'
 const INDICATOR_SIGNAL_IDS = new Set<string>(INDICATOR_SIGNALS.map((x) => x.id))
 
 /**
- * '' = off · an indicator signal id · `pine:<script>` for any script in the
- * Pine library. Pine ids are checked by shape, not against the library: a
- * pasted script is only known once the library answers.
+ * '' = off · an indicator signal id (bare, or `ind:<id>` as Shell Spec §9
+ * writes links) · `pine:<script>` for any script in the Pine library. Pine ids
+ * are checked by shape, not against the library: a pasted script is only known
+ * once the library answers.
  */
 export function isChartSignal(v: string): v is string {
-  return v === '' || INDICATOR_SIGNAL_IDS.has(v) || (v.startsWith('pine:') && PINE_SCRIPT_ID.test(v.slice(5)))
+  return (
+    v === '' ||
+    INDICATOR_SIGNAL_IDS.has(v.startsWith('ind:') ? v.slice(4) : v) ||
+    (v.startsWith('pine:') && PINE_SCRIPT_ID.test(v.slice(5)))
+  )
 }
+
+/** One spelling per signal: `ind:<id>` reads as the bare indicator id the picker and the API use. */
+const canonical = (v: string) => (v.startsWith('ind:') ? v.slice(4) : v)
 
 export function useChartSignal(isMini: boolean) {
   const [params, setParams] = useSearchParams()
@@ -31,7 +39,7 @@ export function useChartSignal(isMini: boolean) {
   const ownsUrl = !isMini && !inSurface
   const [storedSig, storeSig] = usePersistedChoice<string>('bifrost.chart.signal', '', isChartSignal)
   const urlSig = ownsUrl ? params.get(CHART_SIGNAL_PARAM) : null
-  const sigId = urlSig != null && isChartSignal(urlSig) ? urlSig : storedSig
+  const sigId = canonical(urlSig != null && isChartSignal(urlSig) ? urlSig : storedSig)
   const setSigId = (next: string) => {
     storeSig(next)
     if (!ownsUrl) return

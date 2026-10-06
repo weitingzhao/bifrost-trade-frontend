@@ -96,3 +96,74 @@ export const EARNINGS_ABSENCE_LABEL: Record<EarningsAbsence['code'], string> = {
   no_cadence: 'the last four releases are not a quarterly cadence, or the estimate passed with none',
   unread: 'the earnings read failed',
 }
+
+/**
+ * What every estimated print date is, and is not — one sentence for every
+ * surface that prints one or names its absence. The vendor's confirmed
+ * calendar sits outside the data subscription (403 not entitled): an
+ * accepted gap with its seat kept (§15.8), not a missing read or a fault.
+ */
+export const ESTIMATE_ONLY = 'estimated date only — confirmed dates are not in the data subscription'
+
+/**
+ * The window "this week" means where a page asks which names print soon —
+ * Today's earnings check and the Limits book's earnings-week premium line —
+ * so the two cannot disagree about the same name.
+ */
+export const EARNINGS_WEEK_DAYS = 7
+
+/** A name whose estimated print falls inside the window, or is late. */
+export interface PrintAhead {
+  symbol: string
+  /** ISO date of the estimated print. */
+  date: string
+  /** Calendar days to it (New York); below zero, the print is late. */
+  daysAway: number
+  /** The estimate passed with no results 8-K on file yet — it can land any day. */
+  late: boolean
+}
+
+export interface PrintsAhead {
+  /** Inside the window or late, soonest (latest-overdue) first. */
+  ahead: PrintAhead[]
+  /** Names Research answered with an estimate past the window. */
+  beyond: number
+  /** Names Research answered with no estimate, and why. */
+  none: { symbol: string; absence: EarningsAbsence }[]
+  /** Names whose read failed — unread, not "no estimate". */
+  unread: string[]
+  /** Names not answered yet. */
+  pending: string[]
+}
+
+/**
+ * Which of `names` print inside `days`, read off `useNamesEarnings`' map.
+ * A late estimate counts as inside: the print can land any day until the
+ * results 8-K is on file.
+ */
+export function printsAhead(
+  names: readonly string[],
+  readings: Readonly<Record<string, EarningsReading>>,
+  days: number = EARNINGS_WEEK_DAYS,
+): PrintsAhead {
+  const out: PrintsAhead = { ahead: [], beyond: 0, none: [], unread: [], pending: [] }
+  for (const symbol of [...new Set(names.map((s) => s.trim().toUpperCase()).filter(Boolean))].sort()) {
+    const r = readings[symbol]
+    if (!r) out.pending.push(symbol)
+    else if (r.kind === 'none') {
+      if (r.absence.code === 'unread') out.unread.push(symbol)
+      else out.none.push({ symbol, absence: r.absence })
+    } else if (r.next.daysAway <= days) {
+      out.ahead.push({ symbol, date: r.next.date, daysAway: r.next.daysAway, late: r.next.daysAway < 0 })
+    } else out.beyond += 1
+  }
+  out.ahead.sort((a, b) => a.daysAway - b.daysAway || a.symbol.localeCompare(b.symbol))
+  return out
+}
+
+/** `BALI, PFF (no 8-K on file …) · NNE (8-Ks on file, none a results release)` — names grouped by why. */
+export function noneByReason(none: PrintsAhead['none']): string {
+  const by = new Map<EarningsAbsence['code'], string[]>()
+  for (const n of none) by.set(n.absence.code, [...(by.get(n.absence.code) ?? []), n.symbol])
+  return [...by].map(([code, syms]) => `${syms.join(', ')} (${EARNINGS_ABSENCE_LABEL[code]})`).join(' · ')
+}

@@ -358,6 +358,7 @@ export default function RiskLimitsPage() {
                             </td>
                             <td
                               data-sr-col="num"
+                              title={r.detail ?? undefined}
                               className={cn(
                                 'font-semibold',
                                 r.current == null

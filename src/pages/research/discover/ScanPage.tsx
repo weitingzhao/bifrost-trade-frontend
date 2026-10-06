@@ -78,6 +78,8 @@ import { cn } from '@/lib/utils'
 import { VolWhyInspector } from './scan/VolWhyInspector'
 import { LensUniverseTables } from './scan/LensUniverseTables'
 import { useVolRatings } from './scan/useVolRatings'
+import { useNamesEarnings } from '@/hooks/useNamesEarnings'
+import { EARNINGS_GATE_DAYS } from '@/utils/earningsEstimate'
 import {
   ADAPTIVE_NOTE,
   COLD_AT,
@@ -86,6 +88,7 @@ import {
   SERVER_WEIGHTS,
   VOL_LENSES,
   composite,
+  earnCell,
   flagOf,
   lensReading,
   lensSpread,
@@ -101,6 +104,14 @@ const LEAD =
 
 /** How many rows the list draws before it stops and says so. */
 const ROW_CAP = 200
+
+/**
+ * The most names the Earn column asks Research about, one request each. The
+ * default universe (Both — the book and the watchlist) sits well under it and
+ * shares the Events / Calendar cache; All (up to 500) asks only for the
+ * selected row and shows what other pages already read.
+ */
+const EARN_READ_CAP = 60
 
 /** All / Hot / Cold, the design's own third filter — on the composite. */
 const SHOW_OPTIONS = [
@@ -194,6 +205,24 @@ export default function ScanPage() {
   )
 
   const selected = params.get('sym')
+
+  // Days to the next print: Research's estimate (est.), one read per name.
+  const earnNames = useMemo(() => withComposite.map((r) => r.row.symbol), [withComposite])
+  const earnReadAll = universe !== 'all' && earnNames.length <= EARN_READ_CAP
+  const earnings = useNamesEarnings(earnNames, earnReadAll ? true : (sym) => sym === selected)
+  const hotPrints = useMemo(() => {
+    let read = 0
+    let inside = 0
+    for (const r of withComposite) {
+      if (flagOf(r.score) !== 'hot') continue
+      const e = earnings[r.row.symbol]
+      if (!e || (e.kind === 'none' && e.absence.code === 'unread')) continue
+      read += 1
+      if (e.kind === 'expected' && e.next.daysAway <= EARNINGS_GATE_DAYS) inside += 1
+    }
+    return { read, inside }
+  }, [withComposite, earnings])
+
   const selectedIndex = scored.findIndex((r) => r.row.symbol === selected)
   const selectedRow = selectedIndex >= 0 ? scored[selectedIndex] : null
 
@@ -270,7 +299,7 @@ export default function ScanPage() {
     })
   }, [scored, presets, weights])
 
-  const tape = volTape(counts.hot, counts.cold, counts.total)
+  const tape = volTape(counts.hot, counts.cold, counts.total, hotPrints)
   const spreads: LensSpread[] = useMemo(
     () =>
       VOL_LENSES.map((lens) => {
@@ -486,14 +515,18 @@ export default function ScanPage() {
                     ))}
                     <DenseTableHead className="w-24 max-w-none">Regime</DenseTableHead>
                     <DenseTableHead
-                      className="w-14 max-w-none text-right"
-                      title="Days to the next print. No forward earnings date reaches this side — /research/events/calendar answers count 0, and the gap behind it is a vendor subscription. The column stays so the absence is visible where the design put the number."
+                      className="w-18 max-w-none text-right"
+                      title={`Days to the next print — Research's estimate (est.): last year's same-quarter results 8-K plus 52 weeks. Estimated date only — confirmed dates are not in the data subscription. Amber inside ${EARNINGS_GATE_DAYS} days or late. ${
+                        earnReadAll
+                          ? 'Read for every name in this universe.'
+                          : 'Read one name at a time, so across All only the selected row and names other pages have read show a date — narrow the universe to read them all.'
+                      }`}
                     >
                       Earn
                     </DenseTableHead>
                     <DenseTableHead
                       className="w-36 max-w-none"
-                      title="Which active opportunity is registered on this name, from strategy_opportunity's own symbol list. What it does not say is that the opportunity's entry conditions are met — nothing evaluates those per name, and the design's earnings veto has no date to read."
+                      title="Which active opportunity is registered on this name, from strategy_opportunity's own symbol list. What it does not say is that the opportunity's entry conditions are met — nothing evaluates those per name, so the design's earnings veto is yours, off the Earn column's estimated date."
                     >
                       Rule
                     </DenseTableHead>
@@ -562,12 +595,7 @@ export default function ScanPage() {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </DenseTableCell>
-                      <DenseTableCell
-                        className={cn(denseTableNumCell, 'max-w-none text-muted-foreground')}
-                        title="No earnings date on this side — see the column header."
-                      >
-                        —
-                      </DenseTableCell>
+                      <EarnTableCell cell={earnCell(earnings[row.symbol], earnReadAll || selected === row.symbol)} />
                       <DenseTableCell className="max-w-none whitespace-nowrap text-dense-meta">
                         <RuleCell rules={rules.get(row.symbol)} />
                       </DenseTableCell>
@@ -615,6 +643,23 @@ export default function ScanPage() {
         ) : null}
       </RightInspectorShell>
     </PageShell>
+  )
+}
+
+/** Days to the estimated print, marked est.; amber inside the veto window or late. */
+function EarnTableCell({ cell }: { cell: ReturnType<typeof earnCell> }) {
+  return (
+    <DenseTableCell
+      className={cn(
+        denseTableNumCell,
+        'max-w-none whitespace-nowrap',
+        cell.warn ? 'text-warning' : cell.est ? 'text-foreground' : 'text-muted-foreground',
+      )}
+      title={cell.title}
+    >
+      {cell.text}
+      {cell.est ? <span className="ml-0.5 text-dense-micro text-muted-foreground">est.</span> : null}
+    </DenseTableCell>
   )
 }
 

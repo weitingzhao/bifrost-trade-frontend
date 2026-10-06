@@ -15,6 +15,7 @@ import {
   SERVER_WEIGHTS,
   composite,
   compositeParts,
+  earnCell,
   flagOf,
   lensReading,
   lensSpread,
@@ -175,8 +176,52 @@ describe('volTape', () => {
     expect(volTape(0, 0, 0).label).toBe('Nothing scored')
   })
 
-  it('names the earnings absence rather than dropping the warning', () => {
-    expect(volTape(5, 1, 20).sentence).toContain('no earnings calendar')
+  it('keeps the earnings warning, and says the date is an estimate read per name', () => {
+    const s = volTape(5, 1, 20).sentence
+    expect(s).toContain('check the print date before sizing')
+    expect(s).toContain('confirmed dates are not in the data subscription')
+    expect(s).not.toContain('no earnings calendar')
+  })
+
+  it('counts the hot names printing inside ten days when every one was read', () => {
+    expect(volTape(5, 1, 20, { read: 5, inside: 2 }).sentence).toContain('2 of the 5 hot names print inside 10 days (est.)')
+    expect(volTape(5, 1, 20, { read: 5, inside: 0 }).sentence).toContain('none of the 5 hot names print inside 10 days')
+  })
+
+  it('says how many hot names it could not read', () => {
+    expect(volTape(5, 1, 20, { read: 3, inside: 1 }).sentence).toContain('1 of the 3 hot names read here prints inside 10 days (est.); the other 2')
+  })
+})
+
+// Invented names and dates.
+function expected(daysAway: number, medianMissDays: number | null = 1) {
+  return {
+    kind: 'expected' as const,
+    next: { daysAway, date: '2026-10-20', track: { n: 6, medianMissDays, maxMissDays: 3 }, lastResult: '2025-10-21' },
+  }
+}
+
+describe('earnCell', () => {
+  it('prints days to the estimate, marked est., amber inside the ten-day veto', () => {
+    expect(earnCell(expected(14), true)).toMatchObject({ text: '14d', est: true, warn: false })
+    expect(earnCell(expected(4), true)).toMatchObject({ text: '4d', est: true, warn: true })
+    expect(earnCell(expected(4), true).title).toContain('confirmed dates are not in the data subscription')
+  })
+  it('a passed estimate is late, not a day count below zero', () => {
+    expect(earnCell(expected(-3), true)).toMatchObject({ text: 'late', est: true, warn: true })
+  })
+  it('a name with no estimate says why', () => {
+    const none = {
+      kind: 'none' as const,
+      reason: 'no 8-K on file',
+      absence: { code: 'no_filings' as const, text: 'no 8-K on file — an ETF files none' },
+    }
+    expect(earnCell(none, true)).toMatchObject({ text: '—', est: false })
+    expect(earnCell(none, true).title).toContain('an ETF files none')
+  })
+  it('a name not read tells reading apart from not asked', () => {
+    expect(earnCell(undefined, true).text).toBe('…')
+    expect(earnCell(undefined, false).title).toContain('one request per name')
   })
 })
 

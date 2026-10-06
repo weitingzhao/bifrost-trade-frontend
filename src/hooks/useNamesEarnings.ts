@@ -78,9 +78,22 @@ function useEarningsReads(symbols: readonly string[]): Record<string, Read> {
  * object whenever an answer lands, so a caller's memo must list it as a
  * dependency — leaving it out froze the group rows at "earnings …" after every
  * read had landed (walk 2026-09-27).
+ *
+ * `ask` (default all) limits which names the batch fetches. A name left out is
+ * still answered when the per-name cache already holds it — Scan's All universe
+ * asks the selected row and keeps dates other pages have read, without one
+ * request per name.
  */
-export function useNamesEarnings(symbols: readonly string[]): Record<string, EarningsReading> {
-  const reads = useEarningsReads(symbols)
+export function useNamesEarnings(
+  symbols: readonly string[],
+  ask: boolean | ((symbol: string) => boolean) = true,
+): Record<string, EarningsReading> {
+  const qc = useQueryClient()
+  const nameKey = namesOf(symbols).join(',')
+  const askedKey = (nameKey ? nameKey.split(',') : [])
+    .filter((sym) => (typeof ask === 'function' ? ask(sym) : ask))
+    .join(',')
+  const reads = useEarningsReads(askedKey ? askedKey.split(',') : [])
   return useMemo(() => {
     const out: Record<string, EarningsReading> = {}
     for (const [sym, r] of Object.entries(reads)) {
@@ -90,8 +103,13 @@ export function useNamesEarnings(symbols: readonly string[]): Record<string, Ear
         out[sym] = { kind: 'none', reason, absence: { code: 'unread', text: reason } }
       }
     }
+    for (const sym of nameKey ? nameKey.split(',') : []) {
+      if (out[sym]) continue
+      const cached = qc.getQueryData<EarningsDates>(earningsKey(sym))
+      if (cached) out[sym] = readEarnings(cached)
+    }
     return out
-  }, [reads])
+  }, [reads, nameKey, askedKey, qc])
 }
 
 /**

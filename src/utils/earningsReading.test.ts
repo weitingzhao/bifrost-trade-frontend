@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { EarningsDates } from '@/api/research/narrative'
-import { earningsAbsence, readEarnings } from './earningsReading'
+import { earningsAbsence, printsAhead, readEarnings, type EarningsReading } from './earningsReading'
 
 // Invented names and dates.
 function dates(p: Partial<EarningsDates>): EarningsDates {
@@ -32,5 +32,31 @@ describe('readEarnings', () => {
   it('carries the absence on a name without an estimate, leaving the screener’s reason as it was', () => {
     const r = readEarnings(dates({ filings: 0 }))
     expect(r).toMatchObject({ kind: 'none', reason: expect.stringContaining('no 8-K'), absence: { code: 'no_filings' } })
+  })
+})
+
+describe('printsAhead', () => {
+  const exp = (daysAway: number): EarningsReading => ({
+    kind: 'expected',
+    next: { daysAway, date: '2026-10-12', track: { n: 4, medianMissDays: 1, maxMissDays: 2 }, lastResult: null },
+  })
+  it('sorts the window, counts the rest, keeps unread apart from no estimate', () => {
+    const out = printsAhead(['qrs', 'ABC', 'LATE', 'FAR', 'ETF', 'ERR', 'WAIT'], {
+      QRS: exp(6),
+      ABC: exp(2),
+      LATE: exp(-1),
+      FAR: exp(30),
+      ETF: readEarnings(dates({ filings: 0 })),
+      ERR: { kind: 'none', reason: 'earnings read failed — 503', absence: { code: 'unread', text: 'earnings read failed — 503' } },
+    })
+    expect(out.ahead.map((p) => [p.symbol, p.late])).toEqual([
+      ['LATE', true],
+      ['ABC', false],
+      ['QRS', false],
+    ])
+    expect(out.beyond).toBe(1)
+    expect(out.none.map((n) => n.symbol)).toEqual(['ETF'])
+    expect(out.unread).toEqual(['ERR'])
+    expect(out.pending).toEqual(['WAIT'])
   })
 })

@@ -60,7 +60,7 @@ import {
   type SimSummary,
   type SimTrade,
 } from '@/api/research/backtestSim'
-import { PineExitComparison } from './PineExitComparison'
+import { SimComparison } from './SimComparison'
 import {
   ONE_SIDED,
   STRUCTURE_LABEL,
@@ -269,17 +269,20 @@ export function SimulatorTab({
               }
             />
           ) : null}
-          {showLive && live && baseline ? (
-            <EntryComparison signal={live} baseline={baseline} lib={pineLib} />
-          ) : !showLive && view && view.entry.kind !== 'schedule' ? (
-            // Rev .160 Q3: the comparison is a second run this page makes, so a stored run has none.
-            <p className={cn(panel, 'm-0 px-3 py-2 text-dense-caption text-muted-foreground')}>
-              Signal entry vs schedule is not stored with a run. Run this configuration again with Compare with the
-              schedule on to see it.
-            </p>
-          ) : null}
-          {view?.summary.pine_exit_comparison ? (
-            <PineExitComparison comparison={view.summary.pine_exit_comparison} pine={view.summary.pine} />
+          {view && (view.summary.pine_exit_comparison || view.entry.kind !== 'schedule') ? (
+            <SimComparison
+              exit={view.summary.pine_exit_comparison}
+              signalRun={view.entry.kind !== 'schedule'}
+              schedule={
+                showLive && live && baseline
+                  ? {
+                      signal: live.summary,
+                      baseline: baseline.summary,
+                      events: (live.summary as SimSummary & { entry_rule?: { events?: number } }).entry_rule?.events,
+                    }
+                  : null
+              }
+            />
           ) : null}
           {view ? (
             <SimResult
@@ -373,6 +376,10 @@ interface RunEntry {
   after: number | null
   /** A v1 run (no `entry_timing`): offset 0 entered on the signal's own session. */
   v1: boolean
+  /** research 0.178.0: the run let the script's exit close positions. */
+  pineExit: boolean
+  /** research 0.178.0: the Pine line the short strike was placed against, if any. */
+  anchorLine: string | null
 }
 
 function runEntryOf(ev: BacktestRunRow['event_def'] | undefined, summary: Partial<SimSummary>): RunEntry {
@@ -382,7 +389,14 @@ function runEntryOf(ev: BacktestRunRow['event_def'] | undefined, summary: Partia
   const off = params.offset_sessions
   const after =
     kind === 'schedule' || off == null || !Number.isFinite(Number(off)) ? null : sessionsAfterOf(Number(off), !v1)
-  return { kind, params, after, v1 }
+  return {
+    kind,
+    params,
+    after,
+    v1,
+    pineExit: Boolean(summary.pine_exit_comparison) || Boolean(summary.pine?.exit_mode),
+    anchorLine: summary.pine?.anchor_plot ?? null,
+  }
 }
 
 type EntryRule = { kind?: string; every_sessions?: number; offset_sessions?: number; event_def?: BacktestRunRow['event_def'] }
@@ -414,7 +428,10 @@ function entryLabel(e: RunEntry, lib: readonly PineLibraryEntry[]): string {
   if (e.kind === 'schedule') return p.every_sessions != null ? `every ${String(p.every_sessions)}` : ''
   const off = e.after == null ? '' : ` +${e.after}${e.v1 && e.after === 0 ? ' (same session)' : ''}`
   if (e.kind === 'indicator_signal') return `${signalShortLabel(String(p.signal ?? ''), p)}${off}`
-  if (e.kind === 'pine_signal') return `Pine ${scriptName(lib, String(p.script ?? ''))} ${String(p.side ?? 'buy')}${off}`
+  if (e.kind === 'pine_signal') {
+    const extra = `${e.pineExit ? ' · Pine exit' : ''}${e.anchorLine ? ` · K at ${e.anchorLine}` : ''}`
+    return `Pine ${scriptName(lib, String(p.script ?? ''))} ${String(p.side ?? 'buy')}${off}${extra}`
+  }
   return `${e.kind.replace(/_/g, ' ')}${off}`
 }
 
@@ -464,13 +481,32 @@ function SimBuilder({
   const pineId = pineScript || pineLib[0]?.id || ''
   // Pine decides the timing, Bifrost the structure (research 0.178.0): the script's own exit, and a strike at its line.
   const [pineExit, setPineExit] = useState(false)
+  // Kept when a structure or script cannot take a line: it runs by Δ and comes back with the next one that can.
   const [strikeAtLine, setStrikeAtLine] = useState(false)
   const lines = pricePlots(pineRows?.find((r) => r.id === pineId))
   const [linePick, setLinePick] = useState('')
   const line = lines.includes(linePick) ? linePick : (lines[0] ?? '')
-  const [railLo, setRailLo] = useState(0.05)
-  const [railHi, setRailHi] = useState(0.4)
-  const anchorOn = entryMode === 'pine' && strikeAtLine
+  const [railLo, setRailLo] = useState(0.1)
+  const [railHi, setRailHi] = useState(0.35)
+  const lineOK = ONE_SIDED.has(structure) && lines.length > 0
+  const lineWhy = !ONE_SIDED.has(structure)
+    ? 'A Pine line places one short strike, so it takes a short put or a put or call credit spread'
+    : `${scriptName(pineLib, pineId)} plots no price line`
+  const anchorOn = entryMode === 'pine' && lineOK && strikeAtLine
+  const shortRight = structure === 'call_credit_spread' ? 'call' : 'put'
+  const scriptNotes = [
+    ...(lineOK ? [] : [`Short strike by Δ — ${lineWhy.charAt(0).toLowerCase()}${lineWhy.slice(1)}.`]),
+    ...(anchorOn
+      ? [
+          `The short ${shortRight} goes at the first strike ${shortRight === 'call' ? 'at or above' : 'at or below'} the line’s value on the session before entry. Outside the |Δ| floor and ceiling the entry is skipped and counted, never opened.`,
+        ]
+      : []),
+    ...(pineExit
+      ? [
+          'The script’s exit (a strategy close or the opposite plot) closes the position on the first session after it is known, alongside profit take, stop and DTE — whichever comes first.',
+        ]
+      : []),
+  ]
   const [signalId, setSignalId] = useState<IndicatorSignalId>('macd_cross_up')
   const [signalParams, setSignalParams] = useState<Record<string, number>>(
     () => ({ ...INDICATOR_SIGNALS[0].defaults })
@@ -543,13 +579,9 @@ function SimBuilder({
         ? 'Name at least one symbol.'
         : entryMode === 'pine' && !pineId
           ? 'No active Pine script to enter on.'
-          : anchorOn && !ONE_SIDED.has(structure)
-            ? `A Pine line places one short strike; ${STRUCTURE_LABEL[structure]} has two — pick a one-sided structure or strike by Δ.`
-            : anchorOn && !line
-              ? 'This script draws no price line to place a strike against (only overlay=true plots are prices).'
-              : anchorOn && !(railLo < railHi)
-                ? 'The Δ floor must be below the ceiling.'
-                : basisUnknown
+          : anchorOn && !(railLo < railHi)
+            ? 'The |Δ| floor must be below the ceiling.'
+            : basisUnknown
             ? basis.failed
               ? 'Research did not say its version, so a signal’s entry session cannot be placed — try again.'
               : 'Reading Research’s entry basis…'
@@ -658,28 +690,6 @@ function SimBuilder({
                   onChange={(v) => setPineSide(v as PineSide)}
                 />
               </SimField>
-              <SimField label="Exit">
-                <SegmentControl
-                  ariaLabel="Exit rule"
-                  options={[
-                    { value: 'premium', label: 'Premium rules' },
-                    { value: 'pine', label: '+ Pine exit' },
-                  ]}
-                  value={pineExit ? 'pine' : 'premium'}
-                  onChange={(v) => setPineExit(v === 'pine')}
-                />
-              </SimField>
-              <SimField label="Short strike">
-                <SegmentControl
-                  ariaLabel="Short strike"
-                  options={[
-                    { value: 'delta', label: 'By Δ' },
-                    { value: 'line', label: 'At a Pine line' },
-                  ]}
-                  value={strikeAtLine ? 'line' : 'delta'}
-                  onChange={(v) => setStrikeAtLine(v === 'line')}
-                />
-              </SimField>
             </>
           ) : null}
           {entryMode === 'signal' ? (
@@ -740,42 +750,90 @@ function SimBuilder({
           </div>
         ) : null}
 
-        {anchorOn ? (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-            <SimField label="Line">
-              <Select value={line} onValueChange={setLinePick} disabled={lines.length === 0}>
-                <SelectTrigger className="h-8 w-[11rem] text-dense-body" aria-label="Pine line">
-                  <SelectValue placeholder="No price line" />
-                </SelectTrigger>
-                <SelectContent>
-                  {lines.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </SimField>
-            <NumField id="sim-rail-lo" label="|Δ| floor" value={railLo} onChange={setRailLo} min={0} max={0.95} step={0.01} />
-            <NumField id="sim-rail-hi" label="|Δ| ceiling" value={railHi} onChange={setRailHi} min={0.01} max={1} step={0.01} />
-            <p className="col-span-2 m-0 self-end pb-1.5 text-dense-caption text-muted-foreground">
-              {pineSide === 'sell' ? 'Short call at or above' : 'Short put at or below'} the line’s value the session before
-              entry; a strike outside the |Δ| rails is skipped and counted, not opened.
-            </p>
+        {entryMode === 'pine' ? (
+          <div className="flex flex-col gap-2 border-t border-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)] pt-2.5">
+            <div className="flex flex-wrap items-baseline gap-2">
+              <span className={cap}>From the script</span>
+              <span className="text-dense-caption text-muted-foreground">
+                the script times the entry and, if you let it, the exit and the short strike; the structure stays as set
+                above
+              </span>
+            </div>
+            <div className="flex flex-wrap items-end gap-x-4 gap-y-2.5">
+              <SimField label="Exit">
+                <SegmentControl
+                  ariaLabel="Exit"
+                  options={[
+                    { value: 'premium', label: 'Premium rules' },
+                    { value: 'pine', label: '+ Pine exit' },
+                  ]}
+                  value={pineExit ? 'pine' : 'premium'}
+                  onChange={(v) => setPineExit(v === 'pine')}
+                />
+              </SimField>
+              <SimField label="Short strike">
+                {lineOK ? (
+                  <SegmentControl
+                    ariaLabel="Short strike"
+                    options={[
+                      { value: 'delta', label: 'By Δ' },
+                      { value: 'line', label: 'At a Pine line' },
+                    ]}
+                    value={strikeAtLine ? 'line' : 'delta'}
+                    onChange={(v) => setStrikeAtLine(v === 'line')}
+                  />
+                ) : (
+                  <span title={lineWhy} className="inline-flex h-8 items-center text-dense-body text-[var(--sk-soft)]">
+                    By Δ
+                  </span>
+                )}
+              </SimField>
+              {anchorOn ? (
+                <>
+                  <SimField label="Line">
+                    <Select value={line} onValueChange={setLinePick}>
+                      <SelectTrigger className="h-8 w-[11rem] text-dense-body" aria-label="Pine line">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {lines.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </SimField>
+                  <div className="w-24">
+                    <NumField id="sim-rail-lo" label="|Δ| floor" value={railLo} onChange={setRailLo} min={0} max={0.95} step={0.01} />
+                  </div>
+                  <div className="w-24">
+                    <NumField id="sim-rail-hi" label="|Δ| ceiling" value={railHi} onChange={setRailHi} min={0.01} max={1} step={0.01} />
+                  </div>
+                </>
+              ) : null}
+            </div>
+            {scriptNotes.map((t) => (
+              <p key={t} className="m-0 text-dense-caption text-muted-foreground">
+                {t}
+              </p>
+            ))}
           </div>
         ) : null}
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           <NumField id="sim-dte" label="Target DTE" value={targetDte} onChange={setTargetDte} min={7} max={80} />
-          <NumField
-            id="sim-delta"
-            label="Short Δ"
-            value={shortDelta}
-            onChange={setShortDelta}
-            min={0.05}
-            max={0.5}
-            step={0.01}
-          />
+          {anchorOn ? null : (
+            <NumField
+              id="sim-delta"
+              label="Short Δ"
+              value={shortDelta}
+              onChange={setShortDelta}
+              min={0.05}
+              max={0.5}
+              step={0.01}
+            />
+          )}
           {WINGED.has(structure) ? (
             <NumField
               id="sim-wing"
@@ -871,85 +929,6 @@ function SimBuilder({
           )
         ) : null}
       </div>
-    </section>
-  )
-}
-
-/**
- * Signal entry next to the schedule it replaces, same structure, symbols,
- * window and management — the only difference is when positions open.
- */
-function EntryComparison({
-  signal,
-  baseline,
-  lib,
-}: {
-  signal: SimResponse
-  baseline: SimResponse
-  lib: readonly PineLibraryEntry[]
-}) {
-  const a = signal.summary
-  const b = baseline.summary
-  const rule = (a as SimSummary & { entry_rule?: EntryRule & { events?: number } }).entry_rule
-  const entry = runEntryOf(liveEventDef(a), a)
-  const rows: Array<{ k: string; a: string; b: string; diff?: number | null; money?: boolean }> = [
-    { k: 'Trades', a: String(a.n_trades), b: String(b.n_trades) },
-    { k: 'Win rate', a: pct(a.win_rate), b: pct(b.win_rate), diff: a.win_rate - b.win_rate },
-    { k: 'Avg / trade', a: simUsd(a.avg_pnl), b: simUsd(b.avg_pnl), diff: a.avg_pnl - b.avg_pnl, money: true },
-    { k: 'Total P&L', a: simUsd(a.total_pnl), b: simUsd(b.total_pnl), diff: a.total_pnl - b.total_pnl, money: true },
-    { k: 'Worst trade', a: simUsd(a.worst_trade), b: simUsd(b.worst_trade), diff: a.worst_trade - b.worst_trade, money: true },
-    { k: 'Max drawdown', a: simUsd(a.max_drawdown), b: simUsd(b.max_drawdown) },
-    { k: 'Sharpe', a: a.sharpe_annual?.toFixed(2) ?? '—', b: b.sharpe_annual?.toFixed(2) ?? '—', diff: (a.sharpe_annual ?? 0) - (b.sharpe_annual ?? 0) },
-  ]
-  return (
-    <section className={panel}>
-      <header className={panelHead}>
-        <span className="text-dense-body font-semibold">Signal entry vs schedule</span>
-        <DenseTag size="cell" variant="neutral">
-          {entryLabel(entry, lib)}
-        </DenseTag>
-        <span className="ml-auto text-dense-caption text-muted-foreground">
-          {rule?.events != null ? `${String(rule.events)} signals · ` : ''}same structure, window and exits — only the
-          entry differs
-        </span>
-      </header>
-      <table className="w-full">
-        <thead>
-          <tr>
-            <th className={cn(th, 'text-left')}>Reading</th>
-            <th className={th}>Signal</th>
-            <th className={th}>Schedule</th>
-            <th className={th}>Difference</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.k}>
-              <td className={cn(td, 'text-left font-sans')}>{r.k}</td>
-              <td className={td}>{r.a}</td>
-              <td className={cn(td, 'text-muted-foreground')}>{r.b}</td>
-              <td className={cn(td, r.diff != null ? pnlColorClass(r.diff) : '')}>
-                {r.diff == null || !Number.isFinite(r.diff)
-                  ? ''
-                  : r.money
-                    ? `${r.diff >= 0 ? '+' : ''}${simUsd(r.diff)}`
-                    : r.k === 'Win rate'
-                      ? `${r.diff >= 0 ? '+' : ''}${(r.diff * 100).toFixed(0)} pt`
-                      : `${r.diff >= 0 ? '+' : ''}${r.diff.toFixed(2)}`}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {a.sample_note !== 'ok' ? (
-        <p className="m-0 border-t border-border px-3 py-1.5 text-dense-caption text-warning">
-          The signal run has {a.n_trades} trades ({a.sample_note}); read the difference as a lead, not a result.
-        </p>
-      ) : null}
-      <p className="m-0 border-t border-border px-3 py-1.5 text-dense-caption text-muted-foreground">
-        Schedule = this page ran the same configuration a second time with the schedule entry. Research has no paired
-        baseline yet, so this comparison is not stored with the run and is gone once another run is picked.
-      </p>
     </section>
   )
 }
@@ -1126,7 +1105,7 @@ function SimResult({
           ))}
           {skipped.length ? (
             <span className="ml-2 text-dense-caption text-muted-foreground">
-              entries skipped: {skipped.map(([k, v]) => `${k.replace(/_/g, ' ')} ${v}`).join(' · ')}
+              entries skipped: {skipped.map(([k, v]) => `${skipLabel(k)} ${v}`).join(' · ')}
             </span>
           ) : null}
         </div>
@@ -1206,6 +1185,16 @@ function EquityCurve({ equity }: { equity: SimEquityPoint[] }) {
       </svg>
     </div>
   )
+}
+
+/** A skipped-entry reason as the run reads it (Rev .161 names the |Δ| guard). */
+function skipLabel(k: string): string {
+  const named: Record<string, string> = {
+    anchor_delta_out_of_band: 'outside |Δ| guard',
+    anchor_no_strike: 'no strike beyond the line',
+    anchor_missing: 'no line value yet',
+  }
+  return named[k] ?? k.replace(/_/g, ' ')
 }
 
 /** The Pine level a trade's short strike was placed against, and the exit it was due, if any. */

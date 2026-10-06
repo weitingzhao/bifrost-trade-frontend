@@ -29,6 +29,8 @@ export interface ChartPointerProps {
   /** The marked signal by bar index, and its name. */
   signalAt: ReadonlyMap<number, 'up' | 'down' | 'both'>
   signalName: string
+  /** The marked Pine script's price lines by bar index (K-LINE-SPEC §7: one readout group). */
+  lines?: readonly { title: string; vals: readonly (number | null)[] }[]
 }
 
 export function SymbolChartPointer(p: ChartPointerProps) {
@@ -85,6 +87,10 @@ export function SymbolChartPointer(p: ChartPointerProps) {
         if (b.volume != null) add(`vol ${(Number(b.volume) / 1e6).toFixed(1)}M`)
         const wall = (w: number | null) => (w != null && b.close ? fmtPctSigned((w / b.close - 1) * 100) : '—')
         if (P.callWall != null || P.putWall != null) add(`call wall ${wall(P.callWall)} · put wall ${wall(P.putWall)}`)
+        const lineVals = (P.lines ?? [])
+          .map((ln) => (ln.vals[idx] != null ? `${ln.title} ${(ln.vals[idx] as number).toFixed(2)}` : null))
+          .filter(Boolean)
+        if (lineVals.length) add(lineVals.join(' · '), 'text-[var(--sk-ink)]')
         const s = P.signalAt.get(idx)
         if (s)
           add(

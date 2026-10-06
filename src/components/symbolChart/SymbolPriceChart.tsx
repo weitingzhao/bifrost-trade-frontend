@@ -65,6 +65,7 @@ import {
   bbPaths,
   candlePaths,
   linePath,
+  sideFlips,
   conePath,
   cx,
   eventPath,
@@ -177,11 +178,11 @@ export function SymbolPriceChart({
   const lineQ = useQuery({
     queryKey: ['research-engine', 'pine', 'line', sym, pineId ?? '', pineRow?.version ?? 0, lineTitles.join('|')],
     queryFn: () => checkPineScript({ script: pineId as string, symbol: sym, days: LINE_DAYS, plots: lineTitles }),
-    enabled: Boolean(sym) && pineId != null && lineTitles.length > 0 && layers.pine && Boolean(auth.token),
+    enabled: Boolean(sym) && pineId != null && lineTitles.length > 0 && layers.line && Boolean(auth.token),
     staleTime: 30 * 60_000,
   })
   const lineMaps = useMemo(
-    () => Object.values(lineQ.data?.series ?? {}).map((pts) => new Map(pts)),
+    () => Object.entries(lineQ.data?.series ?? {}).map(([title, pts]) => ({ title, byDate: new Map(pts) })),
     [lineQ.data],
   )
 
@@ -266,7 +267,15 @@ export function SymbolPriceChart({
 
   const subKinds: SubPaneKind[] = isMini ? [] : [...(layers.macd ? (['macd'] as const) : []), ...(layers.rsi ? (['rsi'] as const) : [])]
   const tech = barDates.map((d) => techByDate.get(d) ?? null)
-  const lines = layers.pine && lineTitles.length ? lineMaps.map((m) => barDates.map((d) => m.get(d) ?? null)) : []
+  // §4.9: one line draws as a trailing stop and breaks where it flips sides; two lines (bands, Tenkan / Kijun) never flip.
+  const lines =
+    layers.line && lineTitles.length
+      ? lineMaps.map((m, i) => {
+          const vals = barDates.map((d) => m.byDate.get(d) ?? null)
+          const breaks = lineMaps.length === 1 ? sideFlips(vals, chartBars.map((b) => b.close)) : undefined
+          return { key: `pine-${i}`, title: m.title, vals, breaks }
+        })
+      : []
   const g = frameGeom({
     bars: chartBars,
     coneSlots,
@@ -276,7 +285,7 @@ export function SymbolPriceChart({
     levelsOn: layers.levels,
     live,
     bb: !isMini && layers.bb ? tech.map((t) => t?.bb ?? null) : null,
-    lines,
+    lines: lines.map((ln) => ln.vals),
     panes: subKinds,
     mini: isMini,
   })
@@ -381,6 +390,20 @@ export function SymbolPriceChart({
       tags.push({ key: 'sdD', v: lastClose - w, text: `−1σ ${(lastClose - w).toFixed(0)}`, bar: 'var(--sk-accent)', title: `−1σ to ${at} · ${(lastClose - w).toFixed(2)}` })
     }
   }
+  // §5.2: each Pine line's value at the window's last bar; hovering it lights the line.
+  lines.forEach((ln, i) => {
+    const v = ln.vals[nBars - 1]
+    if (v == null) return
+    const which = lines.length > 1 ? (i ? ' (dashed)' : ' (solid)') : ''
+    tags.push({
+      key: ln.key,
+      v,
+      text: v.toFixed(2),
+      bar: 'color-mix(in srgb, var(--sk-ink) 50%, transparent)',
+      title: `${pineName ?? 'Pine'} · ${ln.title}${which} ${v.toFixed(2)}${pctFrom(v)}`,
+      hover: ln.key,
+    })
+  })
   if (layers.trades && holding?.avg != null && !holdEdge)
     tags.push({ key: 'hold', v: holding.avg, text: holding.avg.toFixed(2), bar: 'var(--sk-ticker)', title: `${holding.qty.toLocaleString('en-US')} sh · avg ${holding.avg.toFixed(2)} · hover for backing / free`, hover: 'hold' })
   const placedTags = stackTags(g, tags)
@@ -465,6 +488,7 @@ export function SymbolPriceChart({
           putWall={putWall}
           signalAt={signalAt}
           signalName={sigName}
+          lines={lines}
         >
           <svg
             viewBox={`0 0 ${PLOT_W} ${g.H}`}
@@ -481,17 +505,6 @@ export function SymbolPriceChart({
             ) : null}
             <path d={bb.band} fill="color-mix(in srgb, var(--sk-ink) 5%, transparent)" />
             <path d={bb.mid} fill="none" stroke="color-mix(in srgb, var(--sk-ink) 30%, transparent)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-            {lines.map((vals, i) => (
-              <path
-                key={`pine-line-${i}`}
-                d={linePath(g, vals)}
-                fill="none"
-                stroke="color-mix(in srgb, var(--sk-ink) 60%, transparent)"
-                strokeWidth={1.25}
-                strokeDasharray={i ? '4 3' : undefined}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
             {L ? (
               <>
                 <path d={levelPath(g, callWall)} fill="none" stroke="var(--color-profit)" strokeDasharray="2 3" opacity={lvOp('call')} vectorEffect="non-scaling-stroke" />
@@ -506,6 +519,18 @@ export function SymbolPriceChart({
                 ) : null}
               </>
             ) : null}
+            {lines.map((ln, i) => (
+              <path
+                key={`pine-line-${i}`}
+                d={linePath(g, ln.vals, ln.breaks)}
+                fill="none"
+                stroke="var(--sk-ink)"
+                opacity={hover === ln.key ? 1 : 0.5}
+                strokeWidth={1.25}
+                strokeDasharray={i ? '4 3' : undefined}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
             <path d={candles.volUp} fill="color-mix(in srgb, var(--color-profit) 30%, transparent)" />
             <path d={candles.volDn} fill="color-mix(in srgb, var(--color-loss) 30%, transparent)" />
             <path d={candles.wicks} fill="none" stroke="var(--sk-mute)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
@@ -622,7 +647,7 @@ export function SymbolPriceChart({
     )
   }
 
-  const layerChip = (k: 'levels' | 'trades' | 'bb' | 'macd' | 'rsi' | 'pine', label: string, tip: string, count?: number) => (
+  const layerChip = (k: 'levels' | 'trades' | 'bb' | 'macd' | 'rsi' | 'line', label: string, tip: string, count?: number) => (
     <FilterChip key={k} pressed={layers[k]} onPressedChange={(v) => setLayer(k, v)} count={count != null ? String(count) : undefined} title={tip}>
       {label}
     </FilterChip>
@@ -662,7 +687,7 @@ export function SymbolPriceChart({
             {layerChip('rsi', 'RSI', 'RSI 14 in its own pane, 30 / 70 guides')}
             {lineTitles.length
               ? layerChip(
-                  'pine',
+                  'line',
                   'Line',
                   `${pineName ?? 'The script'}: ${lineTitles.join(' · ')} on the price pane (solid, then dashed) — the script's own levels, run for this name by Research's pine-runner${auth.token ? '' : '. Needs a Research identity'}${lineQ.isError ? '. Not drawn: Research did not answer' : ''}`,
                 )

@@ -249,7 +249,7 @@ describe('Simulator tab', () => {
     expect(postSim.mock.calls[0][0]).toMatchObject({
       entry_event: { kind: 'pine_signal', params: { script: 'supertrend', side: 'buy' } },
       pine_exit: 'auto',
-      strike_anchor: { plot: 'Supertrend', min_delta: 0.05, max_delta: 0.4 },
+      strike_anchor: { plot: 'Supertrend', min_delta: 0.1, max_delta: 0.35 },
     })
     // the schedule baseline has no Pine entry, so research would refuse either option
     expect(postSim.mock.calls[1][0]).not.toHaveProperty('pine_exit')
@@ -258,19 +258,28 @@ describe('Simulator tab', () => {
     researchAuthStore.clear()
   })
 
-  it('a Pine line on a two-sided structure is refused before it is sent', async () => {
+  it('a two-sided structure offers no line: it says why where the choice is made and still runs, by Δ', async () => {
     fetchResearchHealth.mockResolvedValue({ status: 'ok', version: '0.183.0' })
+    postSim.mockReset()
+    postSim.mockResolvedValue({ run_id: null, run: { persisted: false }, summary, trades: [], equity: [], params: {}, advisory: '' })
     researchAuthStore.setCredentials('t', 'tester')
     renderTab({ rows: [], builderOpen: true })
     await userEvent.click(screen.getByRole('button', { name: 'Pine script' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: /Compare with the schedule/ }))
     await userEvent.click(screen.getByRole('button', { name: 'At a Pine line' }))
+    expect(screen.queryByLabelText('Short Δ')).toBeNull() // the line places the strike
     await userEvent.click(screen.getByRole('button', { name: 'Short strangle' }))
+    expect(screen.queryByRole('button', { name: 'At a Pine line' })).toBeNull()
+    expect(screen.getByText(/Short strike by Δ — a Pine line places one short strike/)).toBeTruthy()
+    expect(screen.getByLabelText('Short Δ')).toBeTruthy()
     const run = screen.getByRole('button', { name: /Run simulation/ }) as HTMLButtonElement
-    expect(run.disabled).toBe(true)
-    expect(screen.getByText(/A Pine line places one short strike; Short strangle has two/)).toBeTruthy()
-    await userEvent.click(screen.getByRole('button', { name: 'Call credit spread' }))
     await vi.waitFor(() => expect(run.disabled).toBe(false))
-    expect(screen.getByText(/Short put at or below the line’s value/)).toBeTruthy()
+    await userEvent.click(run)
+    await vi.waitFor(() => expect(postSim).toHaveBeenCalledTimes(1))
+    expect(postSim.mock.calls[0][0]).not.toHaveProperty('strike_anchor')
+    // back on a one-sided structure the line choice is still there
+    await userEvent.click(screen.getByRole('button', { name: 'Call credit spread' }))
+    expect(screen.getByText(/The short call goes at the first strike at or above the line’s value/)).toBeTruthy()
     researchAuthStore.clear()
   })
 
@@ -294,10 +303,15 @@ describe('Simulator tab', () => {
       },
     } as unknown as BacktestRunRow
     renderTab({ rows: [pineRow] })
-    const panel = await screen.findByRole('region', { name: 'Pine exit vs premium rules' })
-    expect(panel.textContent).toContain('exit on the opposite plot')
+    const panel = await screen.findByRole('region', { name: 'Compared with' })
+    expect(panel.textContent).toContain('stored with the run · same entries, only the exit differs')
     expect(panel.textContent).toContain('−$966')
-    expect(panel.textContent).toContain('4 entries in both runs · the Pine exit changed 1')
-    expect(panel.textContent).toContain('(too few for an interval)')
+    expect(panel.textContent).toContain('Paired 4 · too few')
+    expect(screen.getAllByText(/Pine Supertrend buy .* · Pine exit/).length).toBeGreaterThan(0)
+    // four pairs: too few to colour the differences
+    expect(panel.querySelector('.text-profit, .text-loss, [class*="color-loss"], [class*="color-profit"]')).toBeNull()
+    // the schedule page is there too, and says a stored run has none
+    await userEvent.click(screen.getByRole('button', { name: 'Schedule entry' }))
+    expect(panel.textContent).toContain('Signal entry vs schedule is not stored with a run')
   })
 })

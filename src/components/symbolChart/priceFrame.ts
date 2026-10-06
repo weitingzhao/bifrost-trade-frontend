@@ -190,8 +190,12 @@ export function conePath(g: FrameGeom, nBars: number, coneSlots: number, anchor:
   return `M${top.join('L')}L${bot.join('L')}z`
 }
 
-/** One price line (a Pine plot), broken wherever it has no value (warm-up, `na`). */
-export function linePath(g: FrameGeom, vals: readonly (number | null)[]): string {
+/**
+ * One price line (a Pine plot), broken wherever it has no value (warm-up, `na`)
+ * and before each index in `breaks` (K-LINE-SPEC §4.9: a trailing stop that
+ * flips sides is not joined by a vertical stroke).
+ */
+export function linePath(g: FrameGeom, vals: readonly (number | null)[], breaks?: ReadonlySet<number>): string {
   let d = ''
   let pen = false
   vals.forEach((v, i) => {
@@ -199,10 +203,31 @@ export function linePath(g: FrameGeom, vals: readonly (number | null)[]): string
       pen = false
       return
     }
+    if (breaks?.has(i)) pen = false
     d += `${pen ? 'L' : 'M'}${f1(cx(g, i))} ${f1(py(g, v))}`
     pen = true
   })
   return d
+}
+
+/**
+ * Where a single trailing line (Supertrend, a Chandelier stop) changes side of
+ * the close — the flip the script draws as a new line, not a jump.
+ */
+export function sideFlips(vals: readonly (number | null)[], closes: readonly (number | null | undefined)[]): Set<number> {
+  const out = new Set<number>()
+  let prev = 0
+  vals.forEach((v, i) => {
+    const c = closes[i]
+    if (!isNum(v) || !isNum(c)) {
+      prev = 0
+      return
+    }
+    const side = c > v ? 1 : c < v ? -1 : 0
+    if (side && prev && side !== prev) out.add(i)
+    if (side) prev = side
+  })
+  return out
 }
 
 export function bbPaths(g: FrameGeom, bb: readonly (BollingerPoint | null)[]) {

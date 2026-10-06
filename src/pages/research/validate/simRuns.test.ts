@@ -6,6 +6,7 @@ import {
   exitReasonRows,
   isSimRun,
   legsLabel,
+  pairedLine,
   pineExitRows,
   sampleTone,
   simStructure,
@@ -83,20 +84,28 @@ describe('Pine exit and Pine line readers (research 0.178.0)', () => {
     expect(ONE_SIDED.has('call_credit_spread') && !ONE_SIDED.has('iron_condor')).toBe(true)
   })
 
-  it('reads the comparison Pine exit first, with signed differences', () => {
+  it('reads the comparison Pine exit first, signed, and colours only what has a better side', () => {
     const side = { n_trades: 17, win_rate: 0.88, total_pnl: 3514, avg_pnl: 206.7, avg_days_held: 15.6, worst_trade: -223, max_drawdown: -1394 }
     const rows = pineExitRows({
       premium_only: side,
-      with_pine_exit: { ...side, win_rate: 0.82, total_pnl: 2937, avg_pnl: 172.8, avg_days_held: 14.8, exit_reasons: { pine_exit: 1 } },
+      with_pine_exit: { ...side, win_rate: 0.82, total_pnl: 2937, avg_pnl: 172.8, avg_days_held: 10.6, max_drawdown: -1200, exit_reasons: { pine_exit: 1 } },
       delta: {},
       paired: { n: 17, exits_changed: 1, avg_pnl_diff: -34, avg_pnl_diff_ci95: [-102, 0], only_premium_only: 0, only_with_pine_exit: 0 },
     })
     const by = Object.fromEntries(rows.map((r) => [r.k, r]))
-    expect(by['Closed by Pine'].pine).toBe('1')
+    expect(by['Closed by Pine'].a).toBe('1')
     expect(diffLabel(by['Total P&L'])).toBe('−$577')
-    expect(diffLabel(by['Win rate'])).toBe('-6 pt')
+    expect(diffLabel(by['Win rate'])).toBe('−6 pt')
     expect(diffLabel(by['Trades'])).toBe('0')
-    expect(by['Trades'].diff).toBe(0)
-    expect(diffLabel(by['Days held'])).toBe('-0.8')
+    expect(diffLabel(by['Days held'])).toBe('−5 d')
+    expect(diffLabel(by['Max drawdown'])).toBe('+$194') // a smaller drawdown is a positive, better difference
+    expect(rows.filter((r) => r.colored).map((r) => r.k)).toEqual(['Win rate', 'Avg / trade', 'Total P&L', 'Worst trade', 'Max drawdown'])
+  })
+
+  it('says the paired line the way the design writes it', () => {
+    const p = { n: 35, exits_changed: 9, avg_pnl_diff: 38, avg_pnl_diff_ci95: [-21, 97] as [number, number], only_premium_only: 0, only_with_pine_exit: 0 }
+    expect(pairedLine(p)).toBe('Paired 35 opened on both sides · Pine changed 9 · avg +$38 per pair · 95% −$21 to $97')
+    expect(pairedLine({ ...p, n: 3 })).toBe('Paired 3 · too few')
+    expect(pairedLine({ ...p, avg_pnl_diff_ci95: null })).toBe('Paired 35 opened on both sides · Pine changed 9 · avg +$38 per pair')
   })
 })

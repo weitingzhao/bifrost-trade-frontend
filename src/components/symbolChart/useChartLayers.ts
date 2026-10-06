@@ -1,7 +1,7 @@
 /**
  * The price chart's layer switches (design K-LINE-SPEC §8): Levels and Trades
- * on, BB · MACD · RSI off; the marked Pine script's price line on (P1 / G10,
- * shown only for a script that draws one). Remembered on this machine under
+ * on, BB · MACD · RSI off; Line — the marked Pine script's price line — on
+ * (§4.9, shown only for a script that draws one). Remembered on this machine under
  * `bifrost.chart.layers`. A display preference, not a reading.
  */
 import { useCallback, useState } from 'react'
@@ -12,11 +12,11 @@ export interface ChartLayers {
   bb: boolean
   macd: boolean
   rsi: boolean
-  pine: boolean
+  line: boolean
 }
 
 const KEY = 'bifrost.chart.layers'
-export const DEFAULT_LAYERS: ChartLayers = { levels: true, trades: true, bb: false, macd: false, rsi: false, pine: true }
+export const DEFAULT_LAYERS: ChartLayers = { levels: true, trades: true, bb: false, macd: false, rsi: false, line: true }
 
 function readLayers(): ChartLayers {
   try {

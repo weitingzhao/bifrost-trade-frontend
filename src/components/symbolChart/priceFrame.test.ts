@@ -3,6 +3,7 @@ import {
   frameGeom,
   linePath,
   placeEdges,
+  sideFlips,
   priceTicks,
   py,
   signalPaths,
@@ -108,5 +109,20 @@ describe('a Pine price line (P1 / G10)', () => {
     const gap = line.map((v, i) => (i === 30 ? null : v))
     expect(linePath(g, gap).match(/M/g)?.length).toBe(2)
     expect(linePath(g, [null, null])).toBe('')
+  })
+})
+
+describe('a trailing stop breaks where it flips sides (K-LINE-SPEC §4.9)', () => {
+  it('finds each change of side and lifts the pen there', () => {
+    // below the close, then above it (a Supertrend flip down), then below again
+    const closes = [100, 101, 102, 95, 94, 99, 103]
+    const line = [96, 97, 98, 99, 98.5, 97, 98]
+    const flips = sideFlips(line, closes)
+    expect([...flips]).toEqual([3, 5])
+    const g = frameGeom(base)
+    expect(linePath(g, line, flips).match(/M/g)?.length).toBe(3)
+    expect(linePath(g, line).match(/M/g)?.length).toBe(1)
+    // a null in between does not count as a flip by itself
+    expect([...sideFlips([96, null, 97], [100, 100, 101])]).toEqual([])
   })
 })

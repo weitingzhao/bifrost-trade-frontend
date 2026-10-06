@@ -378,3 +378,50 @@ export const SignalStatsSchema = z
     by_horizon: z.record(z.string(), z.object({ win_rate_edge: z.number().nullable() }).passthrough()),
   })
   .passthrough()
+
+/** Pine library and signals (research 0.173.0, W6) — `api/research/pine.ts`. */
+const PineSideSchema = z.enum(['buy', 'sell'])
+
+export const PineScriptRowSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    version: z.number(),
+    origin: z.string(),
+    is_active: z.boolean(),
+    signals: z.array(PineSideSchema),
+  })
+  .passthrough()
+
+export const PineScriptsResponseSchema = z
+  .object({ scripts: z.array(PineScriptRowSchema), count: z.number() })
+  .passthrough()
+
+export const PineSignalsResponseSchema = z
+  .object({
+    rows: z.array(
+      z
+        .object({ script: z.string(), symbol: z.string(), date: z.string(), side: PineSideSchema, close: z.number().nullable() })
+        .passthrough(),
+    ),
+    count: z.number(),
+  })
+  .passthrough()
+
+export const PineSignalStatsSchema = z
+  .object({
+    script: z.string(),
+    side: PineSideSchema,
+    signals: z.number(),
+    sample_note: z.string(),
+    by_horizon: z.record(z.string(), z.object({ win_rate_edge: z.number().nullable() }).passthrough()),
+  })
+  .passthrough()
+
+export const PineCheckResponseSchema = z
+  .object({
+    symbol: z.string(),
+    bars: z.number(),
+    marks: z.array(z.object({ date: z.string(), side: PineSideSchema, close: z.number().nullable() }).passthrough()),
+  })
+  .passthrough()

@@ -69,7 +69,7 @@ const STRUCTURES: SimStructure[] = [
   'iron_condor',
 ]
 
-function usd(v: number | null | undefined, digits = 0): string {
+function simUsd(v: number | null | undefined, digits = 0): string {
   if (v == null || !Number.isFinite(v)) return '—'
   const s = `$${Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: digits })}`
   return v < 0 ? `−${s}` : s
@@ -234,7 +234,7 @@ export function SimulatorTab({
                           {s.n_trades ?? '—'}
                         </td>
                         <td className={td}>{pct(s.win_rate)}</td>
-                        <td className={cn(td, pnlColorClass(s.total_pnl))}>{usd(s.total_pnl)}</td>
+                        <td className={cn(td, pnlColorClass(s.total_pnl))}>{simUsd(s.total_pnl)}</td>
                       </tr>
                     )
                   })}
@@ -293,7 +293,7 @@ export function SimulatorTab({
   )
 }
 
-function Field({ id, label, children }: { id?: string; label: string; children: React.ReactNode }) {
+function SimField({ id, label, children }: { id?: string; label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
       <Label htmlFor={id} className="text-dense-meta font-semibold text-muted-foreground">
@@ -322,7 +322,7 @@ function NumField({
   step?: number
 }) {
   return (
-    <Field id={id} label={label}>
+    <SimField id={id} label={label}>
       <Input
         id={id}
         type="number"
@@ -336,7 +336,7 @@ function NumField({
         }}
         className="h-8 text-dense-body"
       />
-    </Field>
+    </SimField>
   )
 }
 
@@ -450,7 +450,7 @@ function SimBuilder({
   return (
     <section className={cn(panel, 'space-y-3 px-3 py-3')}>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_14rem_9rem_9rem]">
-        <Field id="sim-symbols" label="Symbols (1–10)">
+        <SimField id="sim-symbols" label="Symbols (1–10)">
           <Input
             id="sim-symbols"
             value={symbolsStr}
@@ -458,8 +458,8 @@ function SimBuilder({
             placeholder="SPY, QQQ"
             className="h-8 text-dense-body"
           />
-        </Field>
-        <Field label="Structure">
+        </SimField>
+        <SimField label="Structure">
           <Select value={structure} onValueChange={(v) => setStructure(v as SimStructure)}>
             <SelectTrigger className="h-8 text-dense-body" aria-label="Structure">
               <SelectValue />
@@ -472,8 +472,8 @@ function SimBuilder({
               ))}
             </SelectContent>
           </Select>
-        </Field>
-        <Field id="sim-start" label="Start">
+        </SimField>
+        <SimField id="sim-start" label="Start">
           <Input
             id="sim-start"
             type="date"
@@ -481,8 +481,8 @@ function SimBuilder({
             onChange={(e) => setStart(e.target.value)}
             className="h-8 text-dense-body"
           />
-        </Field>
-        <Field id="sim-end" label="End">
+        </SimField>
+        <SimField id="sim-end" label="End">
           <Input
             id="sim-end"
             type="date"
@@ -490,7 +490,7 @@ function SimBuilder({
             onChange={(e) => setEnd(e.target.value)}
             className="h-8 text-dense-body"
           />
-        </Field>
+        </SimField>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -507,7 +507,7 @@ function SimBuilder({
       </div>
       {entryMode === 'signal' ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-[16rem_repeat(4,minmax(0,8rem))]">
-          <Field label="Signal">
+          <SimField label="Signal">
             <Select
               value={signalId}
               onValueChange={(v) => {
@@ -526,7 +526,7 @@ function SimBuilder({
                 ))}
               </SelectContent>
             </Select>
-          </Field>
+          </SimField>
           {Object.entries(signalParams).map(([k, v]) => (
             <NumField
               key={`${signalId}-${k}`}
@@ -559,7 +559,7 @@ function SimBuilder({
       ) : null}
       {entryMode === 'pine' ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-[16rem_9rem_minmax(0,8rem)_auto]">
-          <Field label="Script">
+          <SimField label="Script">
             <Select value={pineId} onValueChange={setPineScript}>
               <SelectTrigger className="h-8 text-dense-body" aria-label="Pine script">
                 <SelectValue placeholder={pineQ.isLoading ? 'Loading…' : 'No scripts'} />
@@ -572,8 +572,8 @@ function SimBuilder({
                 ))}
               </SelectContent>
             </Select>
-          </Field>
-          <Field label="Signal">
+          </SimField>
+          <SimField label="Signal">
             <SegmentControl
               options={[
                 { value: 'buy', label: 'Buy' },
@@ -582,7 +582,7 @@ function SimBuilder({
               value={pineSide}
               onChange={(v) => setPineSide(v as PineSide)}
             />
-          </Field>
+          </SimField>
           <NumField
             id="sim-pine-offset"
             label="Enter at (sessions after)"
@@ -681,7 +681,7 @@ function SimBuilder({
           min={0}
           max={80}
         />
-        <Field label="Fill price">
+        <SimField label="Fill price">
           <SegmentControl
             options={[
               { value: 'vwap', label: 'VWAP' },
@@ -690,7 +690,7 @@ function SimBuilder({
             value={priceField}
             onChange={(v) => setPriceField(v as 'vwap' | 'close')}
           />
-        </Field>
+        </SimField>
         <NumField
           id="sim-slip"
           label="Slippage (× tier)"
@@ -774,10 +774,10 @@ function EntryComparison({ signal, baseline }: { signal: SimResponse; baseline: 
   const rows: Array<{ k: string; a: string; b: string; diff?: number | null; money?: boolean }> = [
     { k: 'Trades', a: String(a.n_trades), b: String(b.n_trades) },
     { k: 'Win rate', a: pct(a.win_rate), b: pct(b.win_rate), diff: a.win_rate - b.win_rate },
-    { k: 'Avg / trade', a: usd(a.avg_pnl), b: usd(b.avg_pnl), diff: a.avg_pnl - b.avg_pnl, money: true },
-    { k: 'Total P&L', a: usd(a.total_pnl), b: usd(b.total_pnl), diff: a.total_pnl - b.total_pnl, money: true },
-    { k: 'Worst trade', a: usd(a.worst_trade), b: usd(b.worst_trade), diff: a.worst_trade - b.worst_trade, money: true },
-    { k: 'Max drawdown', a: usd(a.max_drawdown), b: usd(b.max_drawdown) },
+    { k: 'Avg / trade', a: simUsd(a.avg_pnl), b: simUsd(b.avg_pnl), diff: a.avg_pnl - b.avg_pnl, money: true },
+    { k: 'Total P&L', a: simUsd(a.total_pnl), b: simUsd(b.total_pnl), diff: a.total_pnl - b.total_pnl, money: true },
+    { k: 'Worst trade', a: simUsd(a.worst_trade), b: simUsd(b.worst_trade), diff: a.worst_trade - b.worst_trade, money: true },
+    { k: 'Max drawdown', a: simUsd(a.max_drawdown), b: simUsd(b.max_drawdown) },
     { k: 'Sharpe', a: a.sharpe_annual?.toFixed(2) ?? '—', b: b.sharpe_annual?.toFixed(2) ?? '—', diff: (a.sharpe_annual ?? 0) - (b.sharpe_annual ?? 0) },
   ]
   return (
@@ -811,7 +811,7 @@ function EntryComparison({ signal, baseline }: { signal: SimResponse; baseline: 
                 {r.diff == null || !Number.isFinite(r.diff)
                   ? ''
                   : r.money
-                    ? `${r.diff >= 0 ? '+' : ''}${usd(r.diff)}`
+                    ? `${r.diff >= 0 ? '+' : ''}${simUsd(r.diff)}`
                     : r.k === 'Win rate'
                       ? `${r.diff >= 0 ? '+' : ''}${(r.diff * 100).toFixed(0)} pt`
                       : `${r.diff >= 0 ? '+' : ''}${r.diff.toFixed(2)}`}
@@ -931,23 +931,23 @@ function SimResult({
         <Tile label="Win rate" value={pct(summary.win_rate)} />
         <Tile
           label="Total P&L"
-          value={usd(summary.total_pnl)}
+          value={simUsd(summary.total_pnl)}
           cls={pnlColorClass(summary.total_pnl)}
         />
         <Tile
           label="Avg / trade"
-          value={usd(summary.avg_pnl)}
+          value={simUsd(summary.avg_pnl)}
           cls={pnlColorClass(summary.avg_pnl)}
-          note={ci ? `95% CI ${usd(ci[0])} to ${usd(ci[1])}` : 'too few trades for an interval'}
+          note={ci ? `95% CI ${simUsd(ci[0])} to ${simUsd(ci[1])}` : 'too few trades for an interval'}
         />
         <Tile
           label="Worst trade"
-          value={usd(summary.worst_trade)}
+          value={simUsd(summary.worst_trade)}
           cls={pnlColorClass(summary.worst_trade)}
         />
         <Tile
           label="Max drawdown"
-          value={usd(summary.max_drawdown)}
+          value={simUsd(summary.max_drawdown)}
           note={pct(summary.max_drawdown_pct, 1) + ' of capital'}
         />
         <Tile
@@ -958,7 +958,7 @@ function SimResult({
         <Tile
           label="On peak margin"
           value={pct(summary.return_on_peak_margin, 1)}
-          note={`peak ${usd(summary.peak_margin)}`}
+          note={`peak ${simUsd(summary.peak_margin)}`}
         />
       </div>
 
@@ -1029,7 +1029,7 @@ function EquityCurve({ equity }: { equity: SimEquityPoint[] }) {
         <span>
           P&amp;L · {c.first} to {c.last}
         </span>
-        <span className={pnlColorClass(c.pnl[n - 1])}>{usd(c.pnl[n - 1])}</span>
+        <span className={pnlColorClass(c.pnl[n - 1])}>{simUsd(c.pnl[n - 1])}</span>
       </div>
       <svg
         viewBox="0 0 320 96"
@@ -1097,8 +1097,8 @@ function TradesTable({ trades }: { trades: SimTrade[] }) {
                 {legsLabel(t.legs)}
                 <span className="ml-1.5 text-muted-foreground">{tradeExpiry(t) ?? ''}</span>
               </td>
-              <td className={td}>{usd(t.entry_credit)}</td>
-              <td className={cn(td, pnlColorClass(t.pnl))}>{usd(t.pnl)}</td>
+              <td className={td}>{simUsd(t.entry_credit)}</td>
+              <td className={cn(td, pnlColorClass(t.pnl))}>{simUsd(t.pnl)}</td>
               <td className={td}>{t.days_held}</td>
               <td className={cn(td, 'text-left font-sans text-dense-caption')}>
                 {t.exit_reason.replace(/_/g, ' ')}

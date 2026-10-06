@@ -9,6 +9,14 @@
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { requestJson } from '@/lib/http'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
+import { withValidation } from '@/lib/apiValidation'
+import {
+  PineCheckResponseSchema,
+  PineScriptRowSchema,
+  PineScriptsResponseSchema,
+  PineSignalStatsSchema,
+  PineSignalsResponseSchema,
+} from '@/lib/schemas/researchData'
 
 export type PineSide = 'buy' | 'sell'
 
@@ -85,6 +93,15 @@ export interface PineScriptInput {
   is_active?: boolean
 }
 
+const validateScripts = withValidation<{ scripts: PineScriptRow[]; count: number }>(PineScriptsResponseSchema, 'research/pine/scripts')
+const validateScript = withValidation<PineScriptRow>(PineScriptRowSchema, 'research/pine/scripts/{id}')
+const validateCheck = withValidation<{ symbol: string; bars: number; marks: { date: string; side: PineSide; close: number | null }[] }>(
+  PineCheckResponseSchema,
+  'research/pine/check',
+)
+const validateSignals = withValidation<PineSignalsResponse>(PineSignalsResponseSchema, 'research/pine/signals')
+const validateStats = withValidation<PineSignalStats>(PineSignalStatsSchema, 'research/pine/signal-stats')
+
 function get<T>(path: string, q?: URLSearchParams): Promise<T> {
   return requestJson<T>(`${researchEngineUrl(path)}${q && q.toString() ? `?${q}` : ''}`, {
     envelope: 'research',
@@ -103,15 +120,15 @@ function send<T>(path: string, method: 'PUT' | 'POST', body: unknown): Promise<T
 }
 
 export async function fetchPineScripts(withSource = false): Promise<{ scripts: PineScriptRow[]; count: number }> {
-  return get('/research/pine/scripts', new URLSearchParams(withSource ? { with_source: 'true' } : {}))
+  return validateScripts(await get('/research/pine/scripts', new URLSearchParams(withSource ? { with_source: 'true' } : {})))
 }
 
 export async function fetchPineScript(id: string): Promise<PineScriptRow> {
-  return get(`/research/pine/scripts/${encodeURIComponent(id)}`)
+  return validateScript(await get(`/research/pine/scripts/${encodeURIComponent(id)}`))
 }
 
 export async function savePineScript(id: string, input: PineScriptInput): Promise<PineScriptRow> {
-  return send(`/research/pine/scripts/${encodeURIComponent(id)}`, 'PUT', input)
+  return validateScript(await send(`/research/pine/scripts/${encodeURIComponent(id)}`, 'PUT', input))
 }
 
 export async function checkPineScript(input: {
@@ -119,7 +136,7 @@ export async function checkPineScript(input: {
   symbol: string
   days?: number
 }): Promise<{ symbol: string; bars: number; marks: { date: string; side: PineSide; close: number | null }[] }> {
-  return send('/research/pine/check', 'POST', input)
+  return validateCheck(await send('/research/pine/check', 'POST', input))
 }
 
 export async function fetchPineSignals(params: {
@@ -139,7 +156,7 @@ export async function fetchPineSignals(params: {
   if (params.symbol) q.set('symbol', params.symbol)
   if (params.start) q.set('start', params.start)
   if (params.end) q.set('end', params.end)
-  return get('/research/pine/signals', q)
+  return validateSignals(await get('/research/pine/signals', q))
 }
 
 export async function fetchPineSignalStats(params: {
@@ -151,5 +168,5 @@ export async function fetchPineSignalStats(params: {
   const q = new URLSearchParams({ script: params.script, side: params.side })
   if (params.symbols?.length) q.set('symbols', params.symbols.join(','))
   if (params.horizons?.length) q.set('horizons', params.horizons.join(','))
-  return get('/research/pine/signal-stats', q)
+  return validateStats(await get('/research/pine/signal-stats', q))
 }

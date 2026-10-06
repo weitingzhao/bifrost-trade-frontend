@@ -19,6 +19,9 @@ export const STORAGE_KEYS = {
   // Earlier runs folded under a newer one that you hid in the Decision Inbox
   // (Dismiss earlier). Per browser and sent nowhere: they stay pending.
   inboxHiddenEarlier: 'bifrost-inbox-hidden-earlier',
+  // Expired drafts you put away in the Decision Inbox (design Rev .156: they
+  // go with Dismiss earlier). Per browser and sent nowhere.
+  inboxHiddenExpired: 'bifrost-inbox-hidden-expired',
   // Last exhibit this browser saw per symbol — prior half of "Since you last looked".
   symbolExhibitSnapshot: 'bifrost-symbol-exhibit-snapshot',
   // Option Discovery compare drawer — survives symbol / expiry switches.

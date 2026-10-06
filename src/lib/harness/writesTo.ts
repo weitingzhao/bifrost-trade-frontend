@@ -62,7 +62,8 @@ export function writesTo(kind: string, scope?: string | null): WritesTo | null {
 export const WRITES_TO_ORDER: readonly WritesTo[] = ['rules', 'policy', 'book', 'pool', 'nothing']
 
 export const WRITES_TO_LABEL: Record<WritesTo, string> = {
-  rules: 'Rules',
+  // Rev .156: the section is called Playbook — that is where Approve writes.
+  rules: 'Playbook',
   policy: 'Policy',
   book: 'Book',
   pool: 'Pool',
@@ -71,7 +72,7 @@ export const WRITES_TO_LABEL: Record<WritesTo, string> = {
 
 /** The section head's sentence: what Approve does in this place (prototype `PLACES`). */
 export const WRITES_TO_NOTE: Record<WritesTo, string> = {
-  rules: 'Approve edits a rule in Trading › Rules or files it in the Playbook',
+  rules: 'Approve writes a rule into Review › Playbook',
   policy: 'Approve merges into an objective’s policy; the next run reads it',
   book: 'Approve opens a hypothesis in The Book',
   pool: 'Approve enters the candidates into the pool and opens a hypothesis per name',

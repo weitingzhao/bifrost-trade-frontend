@@ -75,6 +75,20 @@ export function useInboxQueue() {
   })
 }
 
+/**
+ * Drafts that expired lately (design Rev .156): the Inbox keeps them in place,
+ * inert. The newest 200 by creation are plenty for a three-day window; the
+ * page filters by when they expired (`lib/harness/expiredDrafts`).
+ */
+export function useExpiredDrafts() {
+  return useQuery({
+    queryKey: [...researchDraftsQueryKey, 'expired', 'all', DRAFTS_PAGE_MAX] as const,
+    queryFn: () => listResearchDrafts({ status: 'expired', limit: DRAFTS_PAGE_MAX }),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+}
+
 export function useApproveDraft() {
   const qc = useQueryClient()
   return useMutation({

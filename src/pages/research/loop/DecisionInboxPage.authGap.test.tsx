@@ -65,6 +65,6 @@ describe('DecisionInboxPage — signed out', () => {
     expect(screen.queryByText('Couldn’t load')).toBeNull()
     // The draft destinations are unread; the rule proposals still count.
     expect(screen.getByText('Policy —')).toBeTruthy()
-    expect(screen.getByText('Rules 2')).toBeTruthy()
+    expect(screen.getByText('Playbook 2')).toBeTruthy()
   })
 })

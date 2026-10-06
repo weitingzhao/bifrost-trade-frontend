@@ -86,6 +86,15 @@ export const QUERY_KEYS = {
     scan: ['research-engine', 'scan'] as const,
     /** Active Pine scripts; saving one invalidates `['research-engine', 'pine']`. */
     pineScripts: ['research-engine', 'pine', 'scripts'] as const,
+    pine: ['research-engine', 'pine'] as const,
+    pineScriptsWithSource: ['research-engine', 'pine', 'scripts', 'with-source'] as const,
+    pineSignalsWithin: (sessions: number) => ['research-engine', 'pine', 'signals', 'within', sessions] as const,
+    pineSignalStats: (script: string, side: string, basket: string) =>
+      ['research-engine', 'pine', 'signal-stats', script, side, basket] as const,
+    indicatorSignalStats: (signal: string, basket: string) =>
+      ['research-engine', 'indicators', 'signal-stats', signal, basket] as const,
+    /** research-api `/health` — its version decides the simulator's offset basis. */
+    health: ['research-engine', 'health'] as const,
     alerts: ['research-engine', 'alerts'] as const,
     signalDecay: ['research-engine', 'signal-decay'] as const,
     signalDecayIntersect: ['research-engine', 'signal-decay', 'intersect'] as const,

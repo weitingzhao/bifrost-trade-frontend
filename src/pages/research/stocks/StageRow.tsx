@@ -12,7 +12,8 @@
  */
 import { FilterChip } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
-import { stageActive, type ScreenState, type Stage, type StageCount } from './stockScreenModel'
+import { pineOf, stageActive, type PineStageSettings, type ScreenState, type Stage, type StageCount } from './stockScreenModel'
+import { PineStageBody } from './PineStageBody'
 import { chipMissing } from './stockScreenStages'
 
 /**
@@ -73,6 +74,7 @@ export function StageRow({
   chipCountOf,
   onChip,
   onMin,
+  onPine,
 }: {
   index: number
   stage: Stage
@@ -94,6 +96,7 @@ export function StageRow({
   chipCountOf: (id: string) => { n: number | null; where: string; noReading?: boolean }
   onChip: (id: string, label: string) => void
   onMin: (stageId: string, next: number, label: string) => void
+  onPine: (next: PineStageSettings, why: string) => void
 }) {
   const st = stage
   const agree = st.kind === 'agree'
@@ -102,6 +105,10 @@ export function StageRow({
   const picked = st.chips.filter((c) => screen.on[c.id]).length
   const labels = st.chips.filter((c) => screen.on[c.id]).map((c) => c.label)
   if ((st.kind === 'min' || agree) && need > 0) labels.unshift(`≥ ${need} of ${st.max ?? st.chips.length}`)
+  if (st.id === 'pine' && labels.length) {
+    const p = pineOf(screen)
+    labels.push(`within ${p.within}${labels.length > 1 ? ` · ${p.match}` : ''}`)
+  }
   const summary = agree
     ? `${active ? `${labels.join(' · ')} · ` : ''}set by the cards above`
     : st.missing
@@ -199,7 +206,9 @@ export function StageRow({
             ) : null}
           </div>
           {st.missing ? <span className="text-dense-caption text-muted-foreground">{st.missing}</span> : null}
-          {agree ? null : (
+          {st.id === 'pine' ? (
+            <PineStageBody stage={st} screen={screen} chipCountOf={chipCountOf} onChip={onChip} onPine={onPine} />
+          ) : agree ? null : (
             <div className="flex flex-wrap gap-1">
               {st.chips.map((c) => {
                 const cc = chipCountOf(c.id)

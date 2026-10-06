@@ -249,6 +249,8 @@ export interface StageChip {
   /** Chip membership comes from a server set, not from the row. */
   fromSet?: boolean
   title?: string
+  /** A Pine stage chip: the script and side it reads (drawn per script, Rev .158 B2). */
+  pine?: { script: string; name: string; origin: string; side: 'buy' | 'sell' }
 }
 
 export interface Stage {
@@ -263,9 +265,27 @@ export interface Stage {
   missing: string | null
 }
 
+/** The Pine stage's own window and match (Rev .158 B2): saved with the screen and its versions. */
+export type PineWithin = 1 | 5 | 10
+export interface PineStageSettings {
+  within: PineWithin
+  match: 'any' | 'all'
+}
+export const PINE_DEFAULT: PineStageSettings = { within: 5, match: 'any' }
+
 export interface ScreenState {
   on: Record<string, boolean>
   mins: Record<string, number>
+  /** Absent on screens made before Rev .158 — read as PINE_DEFAULT. */
+  pine?: PineStageSettings
+}
+
+export function pineOf(s: Pick<ScreenState, 'pine'>): PineStageSettings {
+  const p = s.pine
+  return {
+    within: p?.within === 1 || p?.within === 10 ? p.within : 5,
+    match: p?.match === 'all' ? 'all' : 'any',
+  }
 }
 
 export const EMPTY_SCREEN: ScreenState = { on: {}, mins: {} }
@@ -361,7 +381,8 @@ export function passesStage(r: NameRow, stage: Stage, s: ScreenState, probe: Pro
     return sel.every((id) => probe(r, id))
   }
   if (!sel.length) return true
-  return stage.kind === 'all' ? sel.every((id) => probe(r, id)) : sel.some((id) => probe(r, id))
+  const all = stage.kind === 'all' || (stage.id === 'pine' && pineOf(s).match === 'all')
+  return all ? sel.every((id) => probe(r, id)) : sel.some((id) => probe(r, id))
 }
 
 export function passesAll(

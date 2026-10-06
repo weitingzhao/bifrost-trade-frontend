@@ -36,3 +36,22 @@ export function withChartSignal(route: string, signal?: string | null): string {
   const joiner = pathAndQuery.includes('?') ? '&' : '?'
   return `${pathAndQuery}${joiner}${CHART_SIGNAL_PARAM}=${encodeURIComponent(signal)}${hash ? `#${hash}` : ''}`
 }
+
+/** The chart signal value for an indicator crossing — `ind:<id>` (Shell Spec §9). */
+export function indicatorChartSignal(id: string): string {
+  return `ind:${id}`
+}
+
+/** The chart signal value for a Pine library script — `pine:<id>` (Shell Spec §9). */
+export function pineChartSignalOf(id: string): string {
+  return `pine:${id}`
+}
+
+/**
+ * A Pine script's home: Backtest › Pine library with that script selected
+ * (`?tab=pine&script=<id>`, Shell Spec §9). No id opens the library on its
+ * first script.
+ */
+export function pineLibraryPath(id?: string | null): string {
+  return `/research/backtest?tab=pine${id ? `&script=${encodeURIComponent(id)}` : ''}`
+}

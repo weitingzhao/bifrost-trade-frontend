@@ -13,6 +13,7 @@ import type { SimResponse } from '@/api/research/backtestSim'
 
 const fetchSimDetail = vi.fn()
 const postSim = vi.fn()
+const fetchResearchHealth = vi.fn()
 
 vi.mock('@/api/research/backtestSim', async (orig) => ({
   ...(await orig<typeof import('@/api/research/backtestSim')>()),
@@ -20,6 +21,18 @@ vi.mock('@/api/research/backtestSim', async (orig) => ({
   postSim: (input: unknown) => postSim(input),
 }))
 
+vi.mock('@/api/research/health', () => ({ fetchResearchHealth: () => fetchResearchHealth() }))
+vi.mock('@/api/research/pine', async (orig) => ({
+  ...(await orig<typeof import('@/api/research/pine')>()),
+  fetchPineScripts: async () => ({
+    scripts: [
+      { id: 'supertrend', name: 'Supertrend', version: 1, origin: 'bifrost', license: null, source_url: null, notes: null, is_active: true, signals: ['buy', 'sell'] },
+    ],
+    count: 1,
+  }),
+}))
+
+import { researchAuthStore } from '@/lib/auth/researchUser'
 import { SimulatorTab } from './SimulatorTab'
 
 const summary = {
@@ -152,6 +165,7 @@ describe('Simulator tab', () => {
       advisory: 'D10 BLOCKED — historical replay only',
     }
     postSim.mockResolvedValue(res)
+    researchAuthStore.setCredentials('t', 'tester')
     renderTab({ rows: [], builderOpen: true })
     await userEvent.click(screen.getByRole('button', { name: /Run simulation/ }))
     expect(await screen.findByText('This run was not stored')).toBeTruthy()
@@ -160,5 +174,42 @@ describe('Simulator tab', () => {
       structure: 'put_credit_spread',
       profit_take_pct: 0.5,
     })
+  })
+
+  it('greys Run without a Research identity and says why', () => {
+    researchAuthStore.clear()
+    renderTab({ rows: [], builderOpen: true })
+    expect((screen.getByRole('button', { name: /Run simulation/ }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText('Set user — runs need a Research identity')).toBeTruthy()
+  })
+
+  it.each([
+    ['0.175.0', 0],
+    ['0.174.1', 1],
+  ])('a Pine entry 1 session after the signal posts offset for research %s as %i', async (version, offset) => {
+    fetchResearchHealth.mockResolvedValue({ status: 'ok', version })
+    postSim.mockReset()
+    postSim.mockResolvedValue({
+      run_id: null,
+      run: { persisted: false },
+      summary,
+      trades: [],
+      equity: [],
+      params: {},
+      advisory: '',
+    })
+    researchAuthStore.setCredentials('t', 'tester')
+    renderTab({ rows: [], builderOpen: true })
+    await userEvent.click(screen.getByRole('button', { name: 'Pine script' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: /Compare with the schedule/ }))
+    const run = screen.getByRole('button', { name: /Run simulation/ }) as HTMLButtonElement
+    await vi.waitFor(() => expect(run.disabled).toBe(false))
+    await userEvent.click(run)
+    await vi.waitFor(() => expect(postSim).toHaveBeenCalled())
+    expect(postSim.mock.calls[0][0]).toMatchObject({
+      entry_event: { kind: 'pine_signal', params: { script: 'supertrend', side: 'buy' } },
+      entry_offset_sessions: offset,
+    })
+    researchAuthStore.clear()
   })
 })

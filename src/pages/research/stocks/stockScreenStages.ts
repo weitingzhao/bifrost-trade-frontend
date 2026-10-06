@@ -31,15 +31,17 @@ import { AGREE_BAR, type ScreenState, type Stage } from './stockScreenModel'
 const NO_CALENDAR =
   'No earnings window or theme is served across the universe: the event calendar holds 8 rows and earnings dates are read one symbol at a time.'
 /**
- * Pine library scripts (research 0.173.0, W6): a chip passes a name when the
- * script's buy or sell plot fired on it in the last PINE_WITHIN_SESSIONS
- * sessions (`/research/pine/signals`). Ids are `pine:<script>:<side>`.
+ * Pine library scripts (research 0.173.0, W6; design Rev .158 B2): a chip
+ * passes a name when the script's buy or sell plot fired on it within the
+ * stage's window — 1, 5 or 10 sessions, the screen's own `pine.within`
+ * (`/research/pine/signals`). Ids are `pine:<script>:<side>`. The stage is
+ * drawn one row per script with a joined ↑ buy / ↓ sell pair; `pine.match`
+ * reads the picked chips as Any or All.
  *
  * The chips are the library's active scripts (`usePineLibrary`), so a script
  * pasted in Backtest › Pine library joins the screen once it is saved; until
  * the library answers, the eight built-ins stand in.
  */
-export const PINE_WITHIN_SESSIONS = 5
 export function pineChipId(script: string, side: 'buy' | 'sell'): string {
   return `pine:${script}:${side}`
 }
@@ -48,15 +50,16 @@ function pineStage(scripts: readonly PineLibraryEntry[]): Stage {
   return {
     id: 'pine',
     title: 'Pine signals',
-    mode: `any selected · fired in the last ${PINE_WITHIN_SESSIONS} sessions`,
+    mode: 'per script · fired within the window',
     kind: 'any',
     missing: null,
     chips: scripts.flatMap((p) =>
       (['buy', 'sell'] as const).map((side) => ({
         id: pineChipId(p.id, side),
         label: `${p.label} ${side === 'buy' ? '↑' : '↓'}`,
-        title: `${p.origin === 'bifrost' ? 'Pine library' : `Pine ${p.origin}`} script ${p.id}: its ${side} plot fired in the last ${PINE_WITHIN_SESSIONS} sessions`,
+        title: `${p.origin === 'bifrost' ? 'Pine library' : `Pine ${p.origin}`} script ${p.id}: its ${side} plot fired within the window`,
         fromSet: true,
+        pine: { script: p.id, name: p.label, origin: p.origin, side },
       }))
     ),
   }

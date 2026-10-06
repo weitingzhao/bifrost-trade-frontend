@@ -12,6 +12,8 @@ import {
   joinNames,
   matchRate,
   passesAll,
+  passesStage,
+  pineOf,
   rowHasReading,
   rowProbe,
   runStages,
@@ -254,3 +256,29 @@ describe('Pine stage from the library', () => {
     expect(pineChartSignal({ 'pine:supertrend:buy': false, ivr_ge_40: true })).toBeNull()
   })
 })
+
+describe('Pine stage window and match (Rev .158 B2)', () => {
+  const pine = stagesWithPine([
+    { id: 'supertrend', label: 'Supertrend', origin: 'bifrost' },
+    { id: 'my_cross', label: 'EMA cross', origin: 'user' },
+  ]).find((st) => st.id === 'pine')!
+  const hits: Record<string, boolean> = { 'pine:supertrend:buy': true, 'pine:my_cross:sell': false }
+  const probe = (_r: unknown, id: string) => !!hits[id]
+  const r = {} as Parameters<typeof passesStage>[0]
+  const on = { 'pine:supertrend:buy': true, 'pine:my_cross:sell': true }
+
+  it('reads Any by default and All when the screen says so', () => {
+    expect(passesStage(r, pine, { on, mins: {} }, probe)).toBe(true)
+    expect(passesStage(r, pine, { on, mins: {}, pine: { within: 5, match: 'all' } }, probe)).toBe(false)
+  })
+
+  it('defaults an old screen to 5 sessions, any', () => {
+    expect(pineOf({})).toEqual({ within: 5, match: 'any' })
+    expect(pineOf({ pine: { within: 10, match: 'all' } })).toEqual({ within: 10, match: 'all' })
+  })
+
+  it('carries each chip’s script and side for the per-script rows', () => {
+    expect(pine.chips[2].pine).toEqual({ script: 'my_cross', name: 'EMA cross', origin: 'user', side: 'buy' })
+  })
+})
+

@@ -46,6 +46,7 @@ import {
   inFocus,
   matchRate,
   passesAll,
+  pineOf,
   rowHasReading,
   rowProbe,
   runStages,
@@ -136,7 +137,7 @@ export default function StockScreenPage() {
     pulseTimer.current = setTimeout(() => setPulse(false), 1400)
   }
 
-  const data = useStockScreenData(screen.on)
+  const data = useStockScreenData(screen.on, pineOf(screen).within)
   const pineLib = usePineLibrary()
   const stages = useMemo(() => stagesWithPine(pineLib.scripts), [pineLib.scripts])
   const probe = useMemo(() => rowProbe(data.sets), [data.sets])
@@ -608,6 +609,7 @@ export default function StockScreenPage() {
                 pending={data.setsPending}
                 onChip={toggle}
                 onMin={(stageId, n, why) => commit({ ...screen, mins: { ...screen.mins, [stageId]: n } }, why)}
+                onPine={(pine, why) => commit({ ...screen, pine }, why)}
                 collapsed={!scrOpen}
                 onToggle={() => setScrOpen(!scrOpen)}
                 hovered={hs}

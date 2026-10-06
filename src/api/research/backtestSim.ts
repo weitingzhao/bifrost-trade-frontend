@@ -67,6 +67,11 @@ export interface SimSummary {
   fill_basis: string
   rule_timing?: string
   skipped_entries?: Record<string, number>
+  /**
+   * Entry timing basis (research 0.175.0+). Absent = v1, where a signal entry's
+   * offset 0 was the signal's own session (filled before the signal was known).
+   */
+  entry_timing?: { version: number; anchor: string; fill?: string; note?: string }
 }
 
 export interface SimLeg {
@@ -144,4 +149,39 @@ export async function postSim(input: SimInput): Promise<SimResponse> {
 
 export async function fetchSimDetail(runId: string): Promise<SimDetail> {
   return validateDetail(await simApi(`/research/backtest/sim/${encodeURIComponent(runId)}/detail`))
+}
+
+/**
+ * Signal-entry timing became next-session in research 0.175.0 (method v2):
+ * `entry_offset_sessions` 0 = the first session after the signal. Before it,
+ * 0 was the signal's own session and 1 the next.
+ */
+export const SIM_ENTRY_V2_VERSION = '0.175.0'
+
+/** `a >= b` for dotted numeric versions; an unreadable version is not at least anything. */
+export function versionAtLeast(a: string | null | undefined, b: string): boolean {
+  if (!a) return false
+  const pa = a.split('.').map((x) => Number.parseInt(x, 10))
+  const pb = b.split('.').map((x) => Number.parseInt(x, 10))
+  if (pa.some((x) => !Number.isFinite(x))) return false
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0)
+    if (d !== 0) return d > 0
+  }
+  return true
+}
+
+/**
+ * The request's `entry_offset_sessions` for "enter N sessions after the
+ * signal" (N ≥ 1; 1 = the next session). v2 counts from the next session, v1
+ * from the signal's own, so the same N is one less on v2.
+ */
+export function entryOffsetFor(sessionsAfter: number, v2: boolean): number {
+  const n = Math.max(1, Math.round(sessionsAfter))
+  return v2 ? n - 1 : n
+}
+
+/** A stored signal run's offset, as sessions after the signal (inverse of `entryOffsetFor`). */
+export function sessionsAfterOf(offset: number, v2: boolean): number {
+  return v2 ? offset + 1 : offset
 }

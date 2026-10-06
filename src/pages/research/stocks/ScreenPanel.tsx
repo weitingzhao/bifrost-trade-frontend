@@ -6,7 +6,7 @@
  * collapses to a 38px strip so the table can take the row.
  */
 import { useState } from 'react'
-import { stageActive, type ScreenState, type Stage, type StageCount } from './stockScreenModel'
+import { stageActive, type PineStageSettings, type ScreenState, type Stage, type StageCount } from './stockScreenModel'
 import { chipMissing } from './stockScreenStages'
 import { ScreenChip, StageRow } from './StageRow'
 import type { StartChoice } from './stockScreenView'
@@ -27,6 +27,7 @@ export function ScreenPanel({
   pending,
   onChip,
   onMin,
+  onPine,
   collapsed,
   onToggle,
   hovered,
@@ -53,6 +54,7 @@ export function ScreenPanel({
   pending: boolean
   onChip: (id: string, label: string) => void
   onMin: (stageId: string, next: number, label: string) => void
+  onPine: (next: PineStageSettings, why: string) => void
   collapsed: boolean
   onToggle: () => void
   hovered: number | null
@@ -191,6 +193,7 @@ export function ScreenPanel({
           chipCountOf={chipCountOf}
           onChip={onChip}
           onMin={onMin}
+          onPine={onPine}
         />
       ))}
       <div className="text-pretty border-t border-foreground/[0.06] px-3 py-2 text-dense-meta leading-normal text-muted-foreground">

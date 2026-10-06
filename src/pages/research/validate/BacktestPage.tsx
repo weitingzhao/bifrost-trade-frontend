@@ -57,8 +57,8 @@ type TabKey = 'event' | 'sim' | 'settlement' | 'pine'
 const TAB_OPTIONS: { value: TabKey; label: string }[] = [
   { value: 'event', label: 'Event backtest' },
   { value: 'sim', label: 'Simulator' },
-  { value: 'settlement', label: 'Settlement' },
   { value: 'pine', label: 'Pine library' },
+  { value: 'settlement', label: 'Settlement' },
 ]
 
 function normalizeTab(raw: string | null): TabKey {
@@ -89,6 +89,17 @@ export default function BacktestPage() {
   const heldSymbol = symbol.trim().toUpperCase()
   const [params, setParams] = useSearchParams()
   const [tab, setTab] = useState<TabKey>(normalizeTab(params.get('tab')))
+  // A link into this page while it is open (Symbol's `Manage scripts ↗`, the
+  // Simulator's script `↗`) changes `?tab=` under a mounted page: follow it.
+  const urlTab = normalizeTab(params.get('tab'))
+  const [seenUrlTab, setSeenUrlTab] = useState(urlTab)
+  if (urlTab !== seenUrlTab) {
+    setSeenUrlTab(urlTab)
+    setTab(urlTab)
+  }
+  // Pine library: `&script=<id>` selects a script (Shell Spec §9).
+  const pineScript = tab === 'pine' ? params.get('script') : null
+  const [newScriptTick, setNewScriptTick] = useState(0)
 
   const runIdParam = params.get('run_id') || undefined
   // Arriving from a Hypothesis card: open the builder seeded with the thesis
@@ -141,6 +152,7 @@ export default function BacktestPage() {
     const linked = tab === 'sim' ? simSelectedId : tab === 'event' ? effectiveId : null
     if (linked) next.set('run_id', linked)
     else next.delete('run_id')
+    if (tab !== 'pine') next.delete('script')
     if (next.toString() !== params.toString()) setParams(next, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, effectiveId, simSelectedId])
@@ -190,6 +202,14 @@ export default function BacktestPage() {
                 onClick={() => setShowSimBuilder((v) => !v)}
               >
                 ＋ New sim
+              </PageHeadAction>
+            ) : tab === 'pine' ? (
+              <PageHeadAction
+                primary
+                title="Paste a Pine script — Check it on a symbol, then Save"
+                onClick={() => setNewScriptTick((n) => n + 1)}
+              >
+                ＋ New script
               </PageHeadAction>
             ) : null}
           </>
@@ -498,7 +518,17 @@ export default function BacktestPage() {
           heldSymbol={heldSymbol}
         />
       ) : tab === 'pine' ? (
-        <PineLibraryTab />
+        <PineLibraryTab
+          selectedId={pineScript}
+          onSelect={(id) => {
+            const next = new URLSearchParams(params)
+            if (id) next.set('script', id)
+            else next.delete('script')
+            setParams(next, { replace: true })
+          }}
+          newScriptTick={newScriptTick}
+          heldSymbol={heldSymbol}
+        />
       ) : (
         <SettlementTab />
       )}

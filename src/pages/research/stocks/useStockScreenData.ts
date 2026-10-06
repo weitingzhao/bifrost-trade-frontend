@@ -32,7 +32,8 @@ import { usePortfolioSymbols } from '@/hooks/usePortfolioSymbols'
 import { NARRATIVE_WINDOW_DAYS, namesByCondition } from '@/lib/research/narrativeItems'
 import { ruleIndex, toVolRow, type VolRow } from '@/lib/research/volRatingsModel'
 import { joinNames, type NameRow } from './stockScreenModel'
-import { PINE_WITHIN_SESSIONS, STAGE_OF, pineChipId } from './stockScreenStages'
+import { STAGE_OF, pineChipId } from './stockScreenStages'
+import type { PineWithin } from './stockScreenModel'
 import { fetchPineSignals } from '@/api/research/pine'
 import { usePineLibrary } from '@/hooks/usePineLibrary'
 
@@ -97,7 +98,8 @@ async function chipSet(stage: SetStage, id: string): Promise<string[]> {
   return (res.symbols ?? []).map((s) => s.symbol.toUpperCase())
 }
 
-export function useStockScreenData(on: Record<string, boolean>) {
+/** `pineWithin` null: a reader with no Pine stage (Method › Models) — the signals are not read. */
+export function useStockScreenData(on: Record<string, boolean>, pineWithin: PineWithin | null = null) {
   const wide = useQuery({
     queryKey: ['research-engine', 'stock-screen', 'wide'],
     queryFn: () => fetchSepaScreenerWide(SET_PAGE),
@@ -143,12 +145,14 @@ export function useStockScreenData(on: Record<string, boolean>) {
     })),
   })
   const setsKey = setQs.map((q) => q.dataUpdatedAt).join(',')
-  // One read answers every Pine chip: who fired what in the last few sessions.
+  // One read answers every Pine chip: who fired what within the stage's
+  // window. Read whether or not a chip is on, so each chip carries its count
+  // (≈2,400 rows at 10 sessions on DEV 2026-10-06, 47 ms).
   const pineOn = Object.keys(on).some((k) => on[k] && k.startsWith('pine:'))
   const pine = useQuery({
-    queryKey: ['research-engine', 'pine', 'signals', 'screen', PINE_WITHIN_SESSIONS],
-    queryFn: () => fetchPineSignals({ withinSessions: PINE_WITHIN_SESSIONS }),
-    enabled: pineOn,
+    queryKey: QUERY_KEYS.researchEngine.pineSignalsWithin(pineWithin ?? 0),
+    queryFn: () => fetchPineSignals({ withinSessions: pineWithin ?? 1 }),
+    enabled: pineWithin != null,
     staleTime: STALE,
   })
   const pineLib = usePineLibrary()

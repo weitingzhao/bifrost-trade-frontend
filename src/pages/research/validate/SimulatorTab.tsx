@@ -8,7 +8,6 @@
  * every run says so. Historical only — nothing here places an order (D10).
  */
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Play } from 'lucide-react'
 import { ViewState } from '@bifrost/ui'
@@ -22,12 +21,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { DenseTag, SegmentControl } from '@/components/data-display'
+import { CloseButton, DenseTag, SegmentControl } from '@/components/data-display'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { failedDetail } from '@/lib/viewState'
 import { fmtNumLocale } from '@/lib/format'
-import { withSymbolParam } from '@/lib/symbolLink'
+import {
+  indicatorChartSignal,
+  pineChartSignalOf,
+  pineLibraryPath,
+  withChartSignal,
+  withSymbolParam,
+} from '@/lib/symbolLink'
+import { useResearchAuth } from '@/lib/auth/researchUser'
+import { usePineLibrary } from '@/hooks/usePineLibrary'
+import { useSimEntryBasis } from '@/hooks/useSimEntryBasis'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -41,14 +49,16 @@ import {
   signalShortLabel,
   type IndicatorSignalId,
 } from '@/api/research/indicators'
-import { fetchPineScripts, type PineSide } from '@/api/research/pine'
-import type {
-  SimEquityPoint,
-  SimInput,
-  SimResponse,
-  SimStructure,
-  SimSummary,
-  SimTrade,
+import type { PineLibraryEntry, PineSide } from '@/api/research/pine'
+import {
+  entryOffsetFor,
+  sessionsAfterOf,
+  type SimEquityPoint,
+  type SimInput,
+  type SimResponse,
+  type SimStructure,
+  type SimSummary,
+  type SimTrade,
 } from '@/api/research/backtestSim'
 import {
   STRUCTURE_LABEL,
@@ -104,6 +114,7 @@ export function SimulatorTab({
   onSelect,
   heldSymbol,
 }: SimulatorTabProps) {
+  const pineLib = usePineLibrary().scripts
   const [live, setLive] = useState<SimResponse | null>(null)
   // The same run with the schedule entry, when the builder asked for the comparison.
   const [baseline, setBaseline] = useState<SimResponse | null>(null)
@@ -121,6 +132,7 @@ export function SimulatorTab({
         trades: live.trades,
         equity: live.equity,
         row: null as BacktestRunRow | null,
+        entry: runEntryOf(liveEventDef(live.summary), live.summary),
       }
     : selectedRow
       ? {
@@ -128,6 +140,7 @@ export function SimulatorTab({
           trades: detailQ.data?.trades ?? [],
           equity: detailQ.data?.equity ?? [],
           row: selectedRow,
+          entry: runEntryOf(selectedRow.event_def, simSummaryOf(selectedRow)),
         }
       : null
 
@@ -136,6 +149,7 @@ export function SimulatorTab({
       {builderOpen ? (
         <SimBuilder
           defaultSymbols={heldSymbol ? [heldSymbol] : undefined}
+          onClose={onBuilderClose}
           onRun={(res, base) => {
             setLive(res)
             setBaseline(base ?? null)
@@ -178,7 +192,7 @@ export function SimulatorTab({
                 <thead>
                   <tr>
                     <th className={cn(th, 'text-left')}>Run</th>
-                    <th className={cn(th, 'text-left')}>Structure · symbols</th>
+                    <th className={cn(th, 'text-left')}>Structure · symbols · entry</th>
                     <th className={th}>n</th>
                     <th className={th}>Win</th>
                     <th className={th}>P&amp;L</th>
@@ -187,6 +201,7 @@ export function SimulatorTab({
                 <tbody>
                   {rows.map((r) => {
                     const s = simSummaryOf(r)
+                    const entry = runEntryOf(r.event_def, s)
                     const tone = sampleTone(s.sample_note)
                     const on = r.id === effectiveId && !(showLive && live?.run_id == null)
                     return (
@@ -218,7 +233,9 @@ export function SimulatorTab({
                           </div>
                           <div className={cn(mono, 'text-dense-micro text-muted-foreground')}>
                             {runSymbols(r.event_def.params).join(' ') || '—'}
-                            <span className="ml-1.5">{entryLabel(r)}</span>
+                            <span className="ml-1.5" title={entryBasisTitle(entry)}>
+                              {entryLabel(entry, pineLib)}
+                            </span>
                           </div>
                         </td>
                         <td
@@ -257,13 +274,17 @@ export function SimulatorTab({
               }
             />
           ) : null}
-          {showLive && live && baseline ? <EntryComparison signal={live} baseline={baseline} /> : null}
+          {showLive && live && baseline ? (
+            <EntryComparison signal={live} baseline={baseline} lib={pineLib} />
+          ) : null}
           {view ? (
             <SimResult
               summary={view.summary}
               trades={view.trades}
               equity={view.equity}
               row={view.row}
+              entry={view.entry}
+              lib={pineLib}
               detailState={
                 view.row && detailQ.isLoading
                   ? 'loading'
@@ -340,18 +361,65 @@ function NumField({
   )
 }
 
-/** What opened a stored run's positions: a schedule, or the event it waited for. */
-function entryLabel(r: BacktestRunRow): string {
-  const ev = r.event_def
-  if (!ev || ev.kind === 'schedule') {
-    const every = (ev?.params as Record<string, unknown> | undefined)?.every_sessions
-    return every != null ? `every ${every}` : ''
-  }
-  const p = (ev.params ?? {}) as Record<string, unknown>
-  const off = p.offset_sessions != null ? ` ${Number(p.offset_sessions) >= 0 ? '+' : ''}${p.offset_sessions}` : ''
-  if (ev.kind === 'indicator_signal') return `${signalShortLabel(String(p.signal ?? ''), p)}${off}`
-  if (ev.kind === 'pine_signal') return `Pine ${String(p.script ?? '')} ${String(p.side ?? 'buy')}${off}`
-  return `${String(ev.kind).replace(/_/g, ' ')}${off}`
+/** A run's entry: what opened it and how many sessions after the signal, on its own basis. */
+interface RunEntry {
+  kind: string
+  params: Record<string, unknown>
+  /** Sessions after the signal (1 = the next session), or null for a schedule. */
+  after: number | null
+  /** A v1 run (no `entry_timing`): offset 0 entered on the signal's own session. */
+  v1: boolean
+}
+
+function runEntryOf(ev: BacktestRunRow['event_def'] | undefined, summary: Partial<SimSummary>): RunEntry {
+  const kind = String(ev?.kind ?? 'schedule')
+  const params = (ev?.params ?? {}) as Record<string, unknown>
+  const v1 = !summary.entry_timing || summary.entry_timing.version < 2
+  const off = params.offset_sessions
+  const after =
+    kind === 'schedule' || off == null || !Number.isFinite(Number(off)) ? null : sessionsAfterOf(Number(off), !v1)
+  return { kind, params, after, v1 }
+}
+
+type EntryRule = { kind?: string; every_sessions?: number; offset_sessions?: number; event_def?: BacktestRunRow['event_def'] }
+
+/** A fresh run's entry, from `summary.entry_rule`, in the stored row's `event_def` shape. */
+function liveEventDef(summary: SimSummary): BacktestRunRow['event_def'] {
+  const rule = (summary as SimSummary & { entry_rule?: EntryRule }).entry_rule
+  if (!rule?.event_def) return { kind: 'schedule', params: { every_sessions: rule?.every_sessions } }
+  return {
+    kind: rule.event_def.kind,
+    params: { ...(rule.event_def.params ?? {}), offset_sessions: rule.offset_sessions },
+  } as BacktestRunRow['event_def']
+}
+
+/** The run's entry signal as the Symbol chart's `?signal=`, or null for a schedule. */
+function runChartSignal(e: RunEntry): string | null {
+  if (e.kind === 'pine_signal' && e.params.script) return pineChartSignalOf(String(e.params.script))
+  if (e.kind === 'indicator_signal' && e.params.signal) return indicatorChartSignal(String(e.params.signal))
+  return null
+}
+
+function scriptName(lib: readonly PineLibraryEntry[], id: string): string {
+  return lib.find((x) => x.id === id)?.label ?? id
+}
+
+/** What opened a run's positions: a schedule, or the signal it waited for, `+N` sessions after. */
+function entryLabel(e: RunEntry, lib: readonly PineLibraryEntry[]): string {
+  const p = e.params
+  if (e.kind === 'schedule') return p.every_sessions != null ? `every ${String(p.every_sessions)}` : ''
+  const off = e.after == null ? '' : ` +${e.after}${e.v1 && e.after === 0 ? ' (same session)' : ''}`
+  if (e.kind === 'indicator_signal') return `${signalShortLabel(String(p.signal ?? ''), p)}${off}`
+  if (e.kind === 'pine_signal') return `Pine ${scriptName(lib, String(p.script ?? ''))} ${String(p.side ?? 'buy')}${off}`
+  return `${e.kind.replace(/_/g, ' ')}${off}`
+}
+
+/** The title on a run's entry: which timing basis its `+N` was counted on. */
+function entryBasisTitle(e: RunEntry): string | undefined {
+  if (e.after == null) return undefined
+  return e.v1
+    ? 'Run before research 0.175.0: its offset counted from the signal’s own session, so +0 entered before the signal was known.'
+    : 'Entered N sessions after the signal’s session, at that session’s fill price.'
 }
 
 function isoDaysAgo(days: number): string {
@@ -363,10 +431,15 @@ function isoDaysAgo(days: number): string {
 function SimBuilder({
   defaultSymbols,
   onRun,
+  onClose,
 }: {
   defaultSymbols?: string[]
   onRun: (r: SimResponse, baseline?: SimResponse) => void
+  onClose: () => void
 }) {
+  const auth = useResearchAuth()
+  const basis = useSimEntryBasis()
+  const pineLib = usePineLibrary().scripts
   const [symbolsStr, setSymbolsStr] = useState((defaultSymbols ?? ['SPY']).join(', '))
   const [structure, setStructure] = useState<SimStructure>('put_credit_spread')
   const [start, setStart] = useState(isoDaysAgo(365))
@@ -384,25 +457,21 @@ function SimBuilder({
   const [entryMode, setEntryMode] = useState<'schedule' | 'signal' | 'pine'>('schedule')
   const [pineScript, setPineScript] = useState('')
   const [pineSide, setPineSide] = useState<PineSide>('buy')
-  const pineQ = useQuery({
-    queryKey: ['research-engine', 'pine', 'scripts'],
-    queryFn: () => fetchPineScripts(),
-    enabled: entryMode === 'pine',
-    staleTime: 5 * 60_000,
-  })
-  const pineScripts = (pineQ.data?.scripts ?? []).filter((x) => x.is_active)
-  const pineId = pineScript || pineScripts[0]?.id || ''
+  const pineId = pineScript || pineLib[0]?.id || ''
   const [signalId, setSignalId] = useState<IndicatorSignalId>('macd_cross_up')
   const [signalParams, setSignalParams] = useState<Record<string, number>>(
     () => ({ ...INDICATOR_SIGNALS[0].defaults })
   )
-  // +1: enter on the close after the signal session — the signal is only known at its close.
-  const [offset, setOffset] = useState(1)
+  // Sessions after the signal session: 1 = the next session, the earliest a
+  // signal known only at its close can be acted on. The request's offset is
+  // derived per server basis (entryOffsetFor), so 1 means the next session on both.
+  const [after, setAfter] = useState(1)
   const [compare, setCompare] = useState(true)
   const mutation = useRunSim()
   const baselineMutation = useRunSim()
   const pending = mutation.isPending || baselineMutation.isPending
   const failed = mutation.isError ? mutation : baselineMutation.isError ? baselineMutation : null
+  const isSignal = entryMode !== 'schedule'
 
   const symbols = useMemo(
     () =>
@@ -413,8 +482,12 @@ function SimBuilder({
     [symbolsStr]
   )
   const tooMany = symbols.length > 10
+  const noIdentity = !auth.token
+  // A signal entry's offset depends on the server's basis; until it is read, wait.
+  const basisUnknown = isSignal && basis.v2 == null
 
   function input(withSignal: boolean): SimInput {
+    const offset = entryOffsetFor(after, basis.v2 === true)
     const entry: Partial<SimInput> = !withSignal
       ? {}
       : entryMode === 'signal'
@@ -447,312 +520,289 @@ function SimBuilder({
     }
   }
 
-  return (
-    <section className={cn(panel, 'space-y-3 px-3 py-3')}>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_14rem_9rem_9rem]">
-        <SimField id="sim-symbols" label="Symbols (1–10)">
-          <Input
-            id="sim-symbols"
-            value={symbolsStr}
-            onChange={(e) => setSymbolsStr(e.target.value)}
-            placeholder="SPY, QQQ"
-            className="h-8 text-dense-body"
-          />
-        </SimField>
-        <SimField label="Structure">
-          <Select value={structure} onValueChange={(v) => setStructure(v as SimStructure)}>
-            <SelectTrigger className="h-8 text-dense-body" aria-label="Structure">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STRUCTURES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STRUCTURE_LABEL[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </SimField>
-        <SimField id="sim-start" label="Start">
-          <Input
-            id="sim-start"
-            type="date"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            className="h-8 text-dense-body"
-          />
-        </SimField>
-        <SimField id="sim-end" label="End">
-          <Input
-            id="sim-end"
-            type="date"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-            className="h-8 text-dense-body"
-          />
-        </SimField>
-      </div>
+  const blockedWhy = noIdentity
+    ? 'Set user — runs need a Research identity'
+    : tooMany
+      ? 'At most 10 symbols per run.'
+      : symbols.length === 0
+        ? 'Name at least one symbol.'
+        : entryMode === 'pine' && !pineId
+          ? 'No active Pine script to enter on.'
+          : basisUnknown
+            ? basis.failed
+              ? 'Research did not say its version, so a signal’s entry session cannot be placed — try again.'
+              : 'Reading Research’s entry basis…'
+            : null
 
-      <div className="flex flex-wrap items-center gap-3">
-        <span className={cap}>Entry</span>
-        <SegmentControl
-          options={[
-            { value: 'schedule', label: 'Schedule' },
-            { value: 'signal', label: 'Indicator signal' },
-            { value: 'pine', label: 'Pine script' },
-          ]}
-          value={entryMode}
-          onChange={(v) => setEntryMode(v as 'schedule' | 'signal' | 'pine')}
-        />
-      </div>
-      {entryMode === 'signal' ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-[16rem_repeat(4,minmax(0,8rem))]">
-          <SimField label="Signal">
-            <Select
-              value={signalId}
-              onValueChange={(v) => {
-                setSignalId(v as IndicatorSignalId)
-                setSignalParams({ ...(indicatorSignal(v)?.defaults ?? {}) })
-              }}
-            >
-              <SelectTrigger className="h-8 text-dense-body" aria-label="Signal">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {INDICATOR_SIGNALS.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+  return (
+    <section className={panel} aria-label="New simulation">
+      <header className={panelHead}>
+        <span className="text-dense-body font-semibold">New simulation</span>
+        <span className="text-dense-caption text-muted-foreground">
+          one seller structure, opened on a schedule or a signal, managed every session, settled at intrinsic
+        </span>
+        <span className="ml-auto">
+          <CloseButton label="Close the builder" onClick={onClose} />
+        </span>
+      </header>
+      <div className="space-y-3 px-3 py-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1.6fr)_minmax(0,.7fr)_minmax(0,.7fr)]">
+          <SimField id="sim-symbols" label="Symbols (1–10)">
+            <Input
+              id="sim-symbols"
+              value={symbolsStr}
+              onChange={(e) => setSymbolsStr(e.target.value)}
+              placeholder="SPY, QQQ"
+              className="h-8 text-dense-body"
+            />
           </SimField>
-          {Object.entries(signalParams).map(([k, v]) => (
-            <NumField
-              key={`${signalId}-${k}`}
-              id={`sim-sig-${k}`}
-              label={k}
-              value={v}
-              onChange={(n) => setSignalParams((p) => ({ ...p, [k]: n }))}
-              min={k === 'mult' ? 0.5 : 2}
-              max={k === 'level' ? 98 : k === 'mult' ? 5 : 400}
-              step={k === 'mult' ? 0.25 : 1}
+          <SimField id="sim-start" label="Start">
+            <Input
+              id="sim-start"
+              type="date"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              className="h-8 text-dense-body"
             />
-          ))}
-          <NumField
-            id="sim-offset"
-            label="Enter at (sessions after)"
-            value={offset}
-            onChange={setOffset}
-            min={0}
-            max={10}
-          />
-          <label className="flex items-center gap-2 self-end pb-1.5 text-dense-caption">
-            <input
-              type="checkbox"
-              checked={compare}
-              onChange={(e) => setCompare(e.target.checked)}
+          </SimField>
+          <SimField id="sim-end" label="End">
+            <Input
+              id="sim-end"
+              type="date"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              className="h-8 text-dense-body"
             />
-            Compare with the schedule
-          </label>
+          </SimField>
         </div>
-      ) : null}
-      {entryMode === 'pine' ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-[16rem_9rem_minmax(0,8rem)_auto]">
-          <SimField label="Script">
-            <Select value={pineId} onValueChange={setPineScript}>
-              <SelectTrigger className="h-8 text-dense-body" aria-label="Pine script">
-                <SelectValue placeholder={pineQ.isLoading ? 'Loading…' : 'No scripts'} />
-              </SelectTrigger>
-              <SelectContent>
-                {pineScripts.map((x) => (
-                  <SelectItem key={x.id} value={x.id}>
-                    {x.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </SimField>
-          <SimField label="Signal">
+
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+          <SimField label="Structure">
             <SegmentControl
-              options={[
-                { value: 'buy', label: 'Buy' },
-                { value: 'sell', label: 'Sell' },
-              ]}
-              value={pineSide}
-              onChange={(v) => setPineSide(v as PineSide)}
+              ariaLabel="Structure"
+              options={STRUCTURES.map((v) => ({ value: v, label: STRUCTURE_LABEL[v] }))}
+              value={structure}
+              onChange={(v) => setStructure(v as SimStructure)}
             />
           </SimField>
-          <NumField
-            id="sim-pine-offset"
-            label="Enter at (sessions after)"
-            value={offset}
-            onChange={setOffset}
-            min={0}
-            max={10}
-          />
-          <label className="flex items-center gap-2 self-end pb-1.5 text-dense-caption">
-            <input
-              type="checkbox"
-              checked={compare}
-              onChange={(e) => setCompare(e.target.checked)}
+          <SimField label="Entry">
+            <SegmentControl
+              ariaLabel="Entry"
+              options={[
+                { value: 'schedule', label: 'Schedule' },
+                { value: 'signal', label: 'Indicator signal' },
+                { value: 'pine', label: 'Pine script' },
+              ]}
+              value={entryMode}
+              onChange={(v) => setEntryMode(v as 'schedule' | 'signal' | 'pine')}
             />
-            Compare with the schedule
-          </label>
-          {pineQ.isError ? (
-            <span className="col-span-full text-dense-caption text-destructive">
-              The script library did not load — Research may not have the Pine tables yet.
-            </span>
+          </SimField>
+          {entryMode === 'pine' ? (
+            <>
+              <SimField label="Script">
+                <span className="flex items-center gap-1.5">
+                  <Select value={pineId} onValueChange={setPineScript}>
+                    <SelectTrigger className="h-8 w-[13rem] text-dense-body" aria-label="Pine script">
+                      <SelectValue placeholder="No active scripts" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pineLib.map((x) => (
+                        <SelectItem key={x.id} value={x.id}>
+                          {x.label}
+                          {x.origin === 'user' ? ' · mine' : x.origin === 'community' ? ' · community' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {pineId ? (
+                    <Link
+                      to={pineLibraryPath(pineId)}
+                      title="Open this script in the Pine library"
+                      aria-label="Open this script in the Pine library"
+                      className="mat-btn inline-flex h-8 items-center px-2 text-dense-label"
+                    >
+                      ↗
+                    </Link>
+                  ) : null}
+                </span>
+              </SimField>
+              <SimField label="Signal">
+                <SegmentControl
+                  ariaLabel="Signal side"
+                  options={[
+                    { value: 'buy', label: 'Buy' },
+                    { value: 'sell', label: 'Sell' },
+                  ]}
+                  value={pineSide}
+                  onChange={(v) => setPineSide(v as PineSide)}
+                />
+              </SimField>
+            </>
+          ) : null}
+          {entryMode === 'signal' ? (
+            <SimField label="Signal">
+              <Select
+                value={signalId}
+                onValueChange={(v) => {
+                  setSignalId(v as IndicatorSignalId)
+                  setSignalParams({ ...(indicatorSignal(v)?.defaults ?? {}) })
+                }}
+              >
+                <SelectTrigger className="h-8 w-[16rem] text-dense-body" aria-label="Signal">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {INDICATOR_SIGNALS.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SimField>
+          ) : null}
+          {isSignal ? (
+            <>
+              <div className="w-[9.5rem]" title="The signal is only known at its session’s close, so 1 — the next session — is the earliest">
+                <NumField
+                  id="sim-offset"
+                  label="Enter at (sessions after)"
+                  value={after}
+                  onChange={setAfter}
+                  min={1}
+                  max={11}
+                />
+              </div>
+              <label className="flex items-center gap-2 pb-1.5 text-dense-caption">
+                <input type="checkbox" checked={compare} onChange={(e) => setCompare(e.target.checked)} />
+                Compare with the schedule
+              </label>
+            </>
           ) : null}
         </div>
-      ) : null}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <NumField
-          id="sim-dte"
-          label="Target DTE"
-          value={targetDte}
-          onChange={setTargetDte}
-          min={7}
-          max={80}
-        />
-        <NumField
-          id="sim-delta"
-          label="Short Δ"
-          value={shortDelta}
-          onChange={setShortDelta}
-          min={0.05}
-          max={0.5}
-          step={0.01}
-        />
-        {WINGED.has(structure) ? (
-          <NumField
-            id="sim-wing"
-            label="Wing width (% of strike)"
-            value={wingPct}
-            onChange={setWingPct}
-            min={1}
-            max={50}
-            step={0.5}
-          />
+        {entryMode === 'signal' && Object.keys(signalParams).length ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            {Object.entries(signalParams).map(([k, v]) => (
+              <NumField
+                key={`${signalId}-${k}`}
+                id={`sim-sig-${k}`}
+                label={k}
+                value={v}
+                onChange={(n) => setSignalParams((p) => ({ ...p, [k]: n }))}
+                min={k === 'mult' ? 0.5 : 2}
+                max={k === 'level' ? 98 : k === 'mult' ? 5 : 400}
+                step={k === 'mult' ? 0.25 : 1}
+              />
+            ))}
+          </div>
         ) : null}
-        <NumField
-          id="sim-every"
-          label={entryMode !== 'schedule' ? 'Schedule baseline: every (sessions)' : 'Open every (sessions)'}
-          value={every}
-          onChange={setEvery}
-          min={1}
-          max={60}
-        />
-        <NumField
-          id="sim-maxopen"
-          label="Max open per symbol"
-          value={maxOpen}
-          onChange={setMaxOpen}
-          min={1}
-          max={20}
-        />
-      </div>
 
-      <div className={cap}>Management · 0 turns a rule off</div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <NumField
-          id="sim-pt"
-          label="Profit take (% of credit)"
-          value={profitTake}
-          onChange={setProfitTake}
-          min={0}
-          max={100}
-          step={5}
-        />
-        <NumField
-          id="sim-stop"
-          label="Stop (× credit)"
-          value={stopMult}
-          onChange={setStopMult}
-          min={0}
-          max={20}
-          step={0.5}
-        />
-        <NumField
-          id="sim-dteexit"
-          label="Close at DTE"
-          value={dteExit}
-          onChange={setDteExit}
-          min={0}
-          max={80}
-        />
-        <SimField label="Fill price">
-          <SegmentControl
-            options={[
-              { value: 'vwap', label: 'VWAP' },
-              { value: 'close', label: 'Close' },
-            ]}
-            value={priceField}
-            onChange={(v) => setPriceField(v as 'vwap' | 'close')}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <NumField id="sim-dte" label="Target DTE" value={targetDte} onChange={setTargetDte} min={7} max={80} />
+          <NumField
+            id="sim-delta"
+            label="Short Δ"
+            value={shortDelta}
+            onChange={setShortDelta}
+            min={0.05}
+            max={0.5}
+            step={0.01}
           />
-        </SimField>
-        <NumField
-          id="sim-slip"
-          label="Slippage (× tier)"
-          value={slip}
-          onChange={setSlip}
-          min={0}
-          max={10}
-          step={0.25}
-        />
-      </div>
+          {WINGED.has(structure) ? (
+            <NumField
+              id="sim-wing"
+              label="Wing width (% of strike)"
+              value={wingPct}
+              onChange={setWingPct}
+              min={1}
+              max={50}
+              step={0.5}
+            />
+          ) : null}
+          <NumField
+            id="sim-every"
+            label={isSignal ? 'Schedule baseline: every' : 'Open every (sessions)'}
+            value={every}
+            onChange={setEvery}
+            min={1}
+            max={60}
+          />
+          <NumField id="sim-maxopen" label="Max open per symbol" value={maxOpen} onChange={setMaxOpen} min={1} max={20} />
+        </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          size="sm"
-          onClick={() => {
-            baselineMutation.reset()
-            mutation.mutate(input(true), {
-              onSuccess: (res) => {
-                if (entryMode === 'schedule' || !compare) {
-                  onRun(res)
-                  return
-                }
-                baselineMutation.mutate(input(false), {
-                  onSuccess: (base) => onRun(res, base),
-                  onError: () => onRun(res),
-                })
-              },
-            })
-          }}
-          disabled={
-            pending || symbols.length === 0 || tooMany || (entryMode === 'pine' && !pineId)
-          }
-        >
-          <Play className="h-3.5 w-3.5" />
-          {mutation.isPending
-            ? 'Simulating…'
-            : baselineMutation.isPending
-              ? 'Running the schedule baseline…'
-              : 'Run simulation'}
-        </Button>
-        <span className="text-dense-caption text-muted-foreground">
-          {tooMany
-            ? 'At most 10 symbols per run.'
-            : 'Fills are modelled: option_daily has no bid/ask, so the price is VWAP or close plus a tiered slippage.'}
-        </span>
-      </div>
-      {failed ? (
-        firstResearchAuthGapError(failed.error) ? (
-          <ResearchAuthGap error={failed.error} layout="banner" />
-        ) : (
-          <ViewState
-            kind="failed"
-            layout="strip"
-            title={
-              failed === mutation
-                ? 'The simulation did not run'
-                : 'The schedule baseline did not run'
-            }
-            detail={failed.error instanceof Error ? failed.error.message : String(failed.error)}
+        <div className={cap}>Management · 0 turns a rule off</div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+          <NumField
+            id="sim-pt"
+            label="Profit take (% of credit)"
+            value={profitTake}
+            onChange={setProfitTake}
+            min={0}
+            max={100}
+            step={5}
           />
-        )
-      ) : null}
+          <NumField id="sim-stop" label="Stop (× credit)" value={stopMult} onChange={setStopMult} min={0} max={20} step={0.5} />
+          <NumField id="sim-dteexit" label="Close at DTE" value={dteExit} onChange={setDteExit} min={0} max={80} />
+          <NumField id="sim-slip" label="Slippage (× tier)" value={slip} onChange={setSlip} min={0} max={10} step={0.25} />
+          <SimField label="Fill price">
+            <SegmentControl
+              ariaLabel="Fill price"
+              options={[
+                { value: 'vwap', label: 'VWAP' },
+                { value: 'close', label: 'Close' },
+              ]}
+              value={priceField}
+              onChange={(v) => setPriceField(v as 'vwap' | 'close')}
+            />
+          </SimField>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            size="sm"
+            title={blockedWhy ?? undefined}
+            onClick={() => {
+              baselineMutation.reset()
+              mutation.mutate(input(true), {
+                onSuccess: (res) => {
+                  if (!isSignal || !compare) {
+                    onRun(res)
+                    return
+                  }
+                  baselineMutation.mutate(input(false), {
+                    onSuccess: (base) => onRun(res, base),
+                    onError: () => onRun(res),
+                  })
+                },
+              })
+            }}
+            disabled={pending || blockedWhy != null}
+          >
+            <Play className="h-3.5 w-3.5" />
+            {mutation.isPending
+              ? 'Simulating…'
+              : baselineMutation.isPending
+                ? 'Running the schedule baseline…'
+                : 'Run simulation'}
+          </Button>
+          <span className={cn('text-dense-caption', blockedWhy ? 'text-foreground' : 'text-muted-foreground')}>
+            {blockedWhy ??
+              `Fills are modelled: option_daily has no bid / ask, so the price is VWAP or close plus a tiered slippage. Runs as ${auth.userLabel ?? 'you'} — a run needs a Research identity.`}
+          </span>
+        </div>
+        {failed ? (
+          firstResearchAuthGapError(failed.error) ? (
+            <ResearchAuthGap error={failed.error} layout="banner" />
+          ) : (
+            <ViewState
+              kind="failed"
+              layout="strip"
+              title={failed === mutation ? 'The simulation did not run' : 'The schedule baseline did not run'}
+              detail={failed.error instanceof Error ? failed.error.message : String(failed.error)}
+            />
+          )
+        ) : null}
+      </div>
     </section>
   )
 }
@@ -761,16 +811,19 @@ function SimBuilder({
  * Signal entry next to the schedule it replaces, same structure, symbols,
  * window and management — the only difference is when positions open.
  */
-function EntryComparison({ signal, baseline }: { signal: SimResponse; baseline: SimResponse }) {
+function EntryComparison({
+  signal,
+  baseline,
+  lib,
+}: {
+  signal: SimResponse
+  baseline: SimResponse
+  lib: readonly PineLibraryEntry[]
+}) {
   const a = signal.summary
   const b = baseline.summary
-  const rule = (a as SimSummary & { entry_rule?: Record<string, unknown> }).entry_rule
-  const ev = (rule?.event_def as { params?: Record<string, unknown> } | undefined)?.params ?? {}
-  const evKind = (rule?.event_def as { kind?: string } | undefined)?.kind
-  const sigLabel =
-    evKind === 'pine_signal'
-      ? `Pine ${String(ev.script ?? '')} ${String(ev.side ?? 'buy')}`
-      : signalShortLabel(String(ev.signal ?? ''), ev)
+  const rule = (a as SimSummary & { entry_rule?: EntryRule & { events?: number } }).entry_rule
+  const entry = runEntryOf(liveEventDef(a), a)
   const rows: Array<{ k: string; a: string; b: string; diff?: number | null; money?: boolean }> = [
     { k: 'Trades', a: String(a.n_trades), b: String(b.n_trades) },
     { k: 'Win rate', a: pct(a.win_rate), b: pct(b.win_rate), diff: a.win_rate - b.win_rate },
@@ -785,11 +838,11 @@ function EntryComparison({ signal, baseline }: { signal: SimResponse; baseline: 
       <header className={panelHead}>
         <span className="text-dense-body font-semibold">Signal entry vs schedule</span>
         <DenseTag size="cell" variant="neutral">
-          {sigLabel}
-          {rule?.offset_sessions != null ? ` · +${String(rule.offset_sessions)}` : ''}
+          {entryLabel(entry, lib)}
         </DenseTag>
         <span className="ml-auto text-dense-caption text-muted-foreground">
-          {rule?.events != null ? `${String(rule.events)} signals · ` : ''}same structure, window and exits
+          {rule?.events != null ? `${String(rule.events)} signals · ` : ''}same structure, window and exits — only the
+          entry differs
         </span>
       </header>
       <table className="w-full">
@@ -825,6 +878,10 @@ function EntryComparison({ signal, baseline }: { signal: SimResponse; baseline: 
           The signal run has {a.n_trades} trades ({a.sample_note}); read the difference as a lead, not a result.
         </p>
       ) : null}
+      <p className="m-0 border-t border-border px-3 py-1.5 text-dense-caption text-muted-foreground">
+        Schedule = this page ran the same configuration a second time with the schedule entry. Research has no paired
+        baseline yet, so this comparison is not stored with the run and is gone once another run is picked.
+      </p>
     </section>
   )
 }
@@ -862,6 +919,8 @@ function SimResult({
   trades,
   equity,
   row,
+  entry,
+  lib,
   detailState,
   detailError,
   onRetryDetail,
@@ -870,6 +929,8 @@ function SimResult({
   trades: SimTrade[]
   equity: SimEquityPoint[]
   row: BacktestRunRow | null
+  entry: RunEntry
+  lib: readonly PineLibraryEntry[]
   detailState: 'loading' | 'failed' | 'ok'
   detailError: string | null
   onRetryDetail: () => void
@@ -905,6 +966,11 @@ function SimResult({
         ) : (
           <span className="font-semibold">This run</span>
         )}
+        {entry.kind !== 'schedule' ? (
+          <span className="text-dense-caption text-muted-foreground" title={entryBasisTitle(entry)}>
+            {entryLabel(entry, lib)}
+          </span>
+        ) : null}
         {tone ? (
           <DenseTag size="cell" variant={tone === 'destructive' ? 'danger' : 'warning'}>
             {summary.sample_note === 'noise' ? 'noise · under 5 trades' : 'thin · under 30 trades'}
@@ -928,11 +994,20 @@ function SimResult({
               : undefined
           }
         />
-        <Tile label="Win rate" value={pct(summary.win_rate)} />
+        <Tile
+          label="Win rate"
+          value={pct(summary.win_rate)}
+          note={
+            summary.win_rate != null && summary.n_trades
+              ? `${Math.round(summary.win_rate * summary.n_trades)} of ${summary.n_trades}`
+              : undefined
+          }
+        />
         <Tile
           label="Total P&L"
           value={simUsd(summary.total_pnl)}
           cls={pnlColorClass(summary.total_pnl)}
+          note="net of modelled fills"
         />
         <Tile
           label="Avg / trade"
@@ -944,6 +1019,7 @@ function SimResult({
           label="Worst trade"
           value={simUsd(summary.worst_trade)}
           cls={pnlColorClass(summary.worst_trade)}
+          note="single position"
         />
         <Tile
           label="Max drawdown"
@@ -953,7 +1029,7 @@ function SimResult({
         <Tile
           label="Sharpe"
           value={summary.sharpe_annual != null ? summary.sharpe_annual.toFixed(2) : '—'}
-          note="daily equity, annualised"
+          note={summary.sharpe_annual != null ? 'daily equity, annualised' : 'withheld · too few trades'}
         />
         <Tile
           label="On peak margin"
@@ -1000,7 +1076,7 @@ function SimResult({
       ) : (
         <>
           <EquityCurve equity={equity} />
-          <TradesTable trades={trades} />
+          <TradesTable trades={trades} chartSignal={runChartSignal(entry)} />
         </>
       )}
     </section>
@@ -1064,7 +1140,7 @@ function EquityCurve({ equity }: { equity: SimEquityPoint[] }) {
   )
 }
 
-function TradesTable({ trades }: { trades: SimTrade[] }) {
+function TradesTable({ trades, chartSignal }: { trades: SimTrade[]; chartSignal: string | null }) {
   if (trades.length === 0) {
     return (
       <p className="m-0 px-3 py-2 text-dense-caption text-muted-foreground">
@@ -1090,7 +1166,15 @@ function TradesTable({ trades }: { trades: SimTrade[] }) {
         <tbody>
           {trades.map((t) => (
             <tr key={`${t.symbol}-${t.seq}`}>
-              <td className={cn(td, 'text-left font-bold text-entity-symbol')}>{t.symbol}</td>
+              <td className={cn(td, 'text-left')}>
+                <Link
+                  to={withSymbolParam(withChartSignal(SYMBOL_PATH, chartSignal), t.symbol)}
+                  title={`Open ${t.symbol} in Symbol${chartSignal ? ' with this run’s entry signal marked' : ''}`}
+                  className="font-bold text-entity-symbol hover:underline"
+                >
+                  {t.symbol}
+                </Link>
+              </td>
               <td className={cn(td, 'text-left text-muted-foreground')}>{t.entry_date}</td>
               <td className={cn(td, 'text-left text-muted-foreground')}>{t.exit_date}</td>
               <td className={cn(td, 'text-left')}>

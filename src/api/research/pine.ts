@@ -105,6 +105,41 @@ export interface PineMeasure {
   avg_return: number | null
 }
 
+/** A 90% interval, or null when the sample is too small for one. */
+export type Ci90 = [number, number] | null
+
+/**
+ * One horizon of signal-stats. The first three fields are the original
+ * (0.173.0) shape; everything after is the method-v2 addition (research
+ * 0.175.0, "Make Pine backtests honest"), absent on older servers. On v2 the
+ * original names carry the strict values — next-open entry, deduped, net of
+ * cost — and the `_gross` twins keep the old reading.
+ */
+export interface PineHorizonStats {
+  signal: PineMeasure & { win_rate_gross?: number | null; avg_return_gross?: number | null }
+  baseline: PineMeasure & { win_rate_gross?: number | null; avg_return_gross?: number | null }
+  win_rate_edge: number | null
+  /** Signals before the cooldown dedupe; `signal.n` is after. */
+  n_raw?: number
+  sample_note?: 'noise' | 'thin' | 'ok'
+  clusters?: number
+  delisted_exits?: number
+  avg_return_edge?: number | null
+  ci90?: { win_rate?: Ci90; avg_return?: Ci90; win_rate_edge?: Ci90; avg_return_edge?: Ci90 }
+}
+
+/** How a v2 server measured (absent before 0.175.0). */
+export interface PineStatsMethod {
+  version: number
+  entry?: string
+  entry_fallback?: string
+  exit?: string
+  cost_bps_one_way?: number
+  cooldown?: string
+  baseline?: string
+  ci?: { level?: number; method?: string; draws?: number }
+}
+
 export interface PineSignalStats {
   script: string
   side: PineSide
@@ -113,7 +148,8 @@ export interface PineSignalStats {
   move_threshold: number
   signals: number
   sample_note: 'noise' | 'thin' | 'ok'
-  by_horizon: Record<string, { signal: PineMeasure; baseline: PineMeasure; win_rate_edge: number | null }>
+  by_horizon: Record<string, PineHorizonStats>
+  method?: PineStatsMethod
 }
 
 export interface PineScriptInput {

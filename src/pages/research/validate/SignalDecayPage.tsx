@@ -595,7 +595,11 @@ export default function SignalDecayPage() {
         </>
       )}
 
-      {/* Below the roster: the per-lens instrument this page already was. */}
+      {/* Under the lens table (Rev .158 B4): a signal's edge across a basket —
+          a cross-section, not a decay curve, so it carries no alert. */}
+      <SignalWinRatePanel />
+
+      {/* Below them: the per-lens instrument this page already was. */}
       <SectionHead
         note="The per-lens instrument: hot against cold, three windows, one regime."
         meta={
@@ -779,7 +783,6 @@ export default function SignalDecayPage() {
       ) : null}
 
       <CombinedLensesMatrix windowDays={windowDays} symbol={symbol} regime={regime} />
-      <SignalWinRatePanel />
     </PageShell>
   )
 }

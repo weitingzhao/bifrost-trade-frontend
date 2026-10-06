@@ -34,6 +34,12 @@ import { runSymbols } from '@/utils/backtestRuns'
 import { cap, mono, panel, panelHead, td, th } from '@/components/research/labFaceUi'
 import { useRunSim, useSimDetail } from '@/hooks/useBacktestSim'
 import type { BacktestRunRow } from '@/api/research/backtestEvent'
+import {
+  INDICATOR_SIGNALS,
+  indicatorSignal,
+  signalShortLabel,
+  type IndicatorSignalId,
+} from '@/api/research/indicators'
 import type {
   SimEquityPoint,
   SimInput,
@@ -97,6 +103,8 @@ export function SimulatorTab({
   heldSymbol,
 }: SimulatorTabProps) {
   const [live, setLive] = useState<SimResponse | null>(null)
+  // The same run with the schedule entry, when the builder asked for the comparison.
+  const [baseline, setBaseline] = useState<SimResponse | null>(null)
   const effectiveId = selectedId ?? live?.run_id ?? rows[0]?.id ?? null
   const selectedRow = rows.find((r) => r.id === effectiveId) ?? null
   // A live run that did not persist (DDL not applied yet, or persist off) has
@@ -126,8 +134,9 @@ export function SimulatorTab({
       {builderOpen ? (
         <SimBuilder
           defaultSymbols={heldSymbol ? [heldSymbol] : undefined}
-          onRun={(res) => {
+          onRun={(res, base) => {
             setLive(res)
+            setBaseline(base ?? null)
             onBuilderClose()
             if (res.run_id) onSelect(res.run_id)
           }}
@@ -207,6 +216,7 @@ export function SimulatorTab({
                           </div>
                           <div className={cn(mono, 'text-dense-micro text-muted-foreground')}>
                             {runSymbols(r.event_def.params).join(' ') || '—'}
+                            <span className="ml-1.5">{entryLabel(r)}</span>
                           </div>
                         </td>
                         <td
@@ -245,6 +255,7 @@ export function SimulatorTab({
               }
             />
           ) : null}
+          {showLive && live && baseline ? <EntryComparison signal={live} baseline={baseline} /> : null}
           {view ? (
             <SimResult
               summary={view.summary}
@@ -327,6 +338,19 @@ function NumField({
   )
 }
 
+/** What opened a stored run's positions: a schedule, or the event it waited for. */
+function entryLabel(r: BacktestRunRow): string {
+  const ev = r.event_def
+  if (!ev || ev.kind === 'schedule') {
+    const every = (ev?.params as Record<string, unknown> | undefined)?.every_sessions
+    return every != null ? `every ${every}` : ''
+  }
+  const p = (ev.params ?? {}) as Record<string, unknown>
+  const off = p.offset_sessions != null ? ` ${Number(p.offset_sessions) >= 0 ? '+' : ''}${p.offset_sessions}` : ''
+  if (ev.kind === 'indicator_signal') return `${signalShortLabel(String(p.signal ?? ''), p)}${off}`
+  return `${String(ev.kind).replace(/_/g, ' ')}${off}`
+}
+
 function isoDaysAgo(days: number): string {
   const d = new Date()
   d.setUTCDate(d.getUTCDate() - days)
@@ -338,7 +362,7 @@ function SimBuilder({
   onRun,
 }: {
   defaultSymbols?: string[]
-  onRun: (r: SimResponse) => void
+  onRun: (r: SimResponse, baseline?: SimResponse) => void
 }) {
   const [symbolsStr, setSymbolsStr] = useState((defaultSymbols ?? ['SPY']).join(', '))
   const [structure, setStructure] = useState<SimStructure>('put_credit_spread')
@@ -354,7 +378,18 @@ function SimBuilder({
   const [dteExit, setDteExit] = useState(21)
   const [priceField, setPriceField] = useState<'vwap' | 'close'>('vwap')
   const [slip, setSlip] = useState(1)
+  const [entryMode, setEntryMode] = useState<'schedule' | 'signal'>('schedule')
+  const [signalId, setSignalId] = useState<IndicatorSignalId>('macd_cross_up')
+  const [signalParams, setSignalParams] = useState<Record<string, number>>(
+    () => ({ ...INDICATOR_SIGNALS[0].defaults })
+  )
+  // +1: enter on the close after the signal session — the signal is only known at its close.
+  const [offset, setOffset] = useState(1)
+  const [compare, setCompare] = useState(true)
   const mutation = useRunSim()
+  const baselineMutation = useRunSim()
+  const pending = mutation.isPending || baselineMutation.isPending
+  const failed = mutation.isError ? mutation : baselineMutation.isError ? baselineMutation : null
 
   const symbols = useMemo(
     () =>
@@ -366,8 +401,16 @@ function SimBuilder({
   )
   const tooMany = symbols.length > 10
 
-  function input(): SimInput {
+  function input(withSignal: boolean): SimInput {
+    const entry: Partial<SimInput> =
+      withSignal && entryMode === 'signal'
+        ? {
+            entry_event: { kind: 'indicator_signal', params: { signal: signalId, ...signalParams } },
+            entry_offset_sessions: offset,
+          }
+        : {}
     return {
+      ...entry,
       symbols,
       start,
       end,
@@ -431,7 +474,69 @@ function SimBuilder({
         </Field>
       </div>
 
-      <div className={cap}>Entry</div>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className={cap}>Entry</span>
+        <SegmentControl
+          options={[
+            { value: 'schedule', label: 'Schedule' },
+            { value: 'signal', label: 'Indicator signal' },
+          ]}
+          value={entryMode}
+          onChange={(v) => setEntryMode(v as 'schedule' | 'signal')}
+        />
+      </div>
+      {entryMode === 'signal' ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-[16rem_repeat(4,minmax(0,8rem))]">
+          <Field label="Signal">
+            <Select
+              value={signalId}
+              onValueChange={(v) => {
+                setSignalId(v as IndicatorSignalId)
+                setSignalParams({ ...(indicatorSignal(v)?.defaults ?? {}) })
+              }}
+            >
+              <SelectTrigger className="h-8 text-dense-body" aria-label="Signal">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INDICATOR_SIGNALS.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          {Object.entries(signalParams).map(([k, v]) => (
+            <NumField
+              key={`${signalId}-${k}`}
+              id={`sim-sig-${k}`}
+              label={k}
+              value={v}
+              onChange={(n) => setSignalParams((p) => ({ ...p, [k]: n }))}
+              min={k === 'mult' ? 0.5 : 2}
+              max={k === 'level' ? 98 : k === 'mult' ? 5 : 400}
+              step={k === 'mult' ? 0.25 : 1}
+            />
+          ))}
+          <NumField
+            id="sim-offset"
+            label="Enter at (sessions after)"
+            value={offset}
+            onChange={setOffset}
+            min={0}
+            max={10}
+          />
+          <label className="flex items-center gap-2 self-end pb-1.5 text-dense-caption">
+            <input
+              type="checkbox"
+              checked={compare}
+              onChange={(e) => setCompare(e.target.checked)}
+            />
+            Compare with the schedule
+          </label>
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <NumField
           id="sim-dte"
@@ -463,7 +568,7 @@ function SimBuilder({
         ) : null}
         <NumField
           id="sim-every"
-          label="Open every (sessions)"
+          label={entryMode === 'signal' ? 'Schedule baseline: every (sessions)' : 'Open every (sessions)'}
           value={every}
           onChange={setEvery}
           min={1}
@@ -532,12 +637,28 @@ function SimBuilder({
         <Button
           size="sm"
           onClick={() => {
-            mutation.mutate(input(), { onSuccess: onRun })
+            baselineMutation.reset()
+            mutation.mutate(input(true), {
+              onSuccess: (res) => {
+                if (entryMode !== 'signal' || !compare) {
+                  onRun(res)
+                  return
+                }
+                baselineMutation.mutate(input(false), {
+                  onSuccess: (base) => onRun(res, base),
+                  onError: () => onRun(res),
+                })
+              },
+            })
           }}
-          disabled={mutation.isPending || symbols.length === 0 || tooMany}
+          disabled={pending || symbols.length === 0 || tooMany}
         >
           <Play className="h-3.5 w-3.5" />
-          {mutation.isPending ? 'Simulating…' : 'Run simulation'}
+          {mutation.isPending
+            ? 'Simulating…'
+            : baselineMutation.isPending
+              ? 'Running the schedule baseline…'
+              : 'Run simulation'}
         </Button>
         <span className="text-dense-caption text-muted-foreground">
           {tooMany
@@ -545,19 +666,89 @@ function SimBuilder({
             : 'Fills are modelled: option_daily has no bid/ask, so the price is VWAP or close plus a tiered slippage.'}
         </span>
       </div>
-      {mutation.isError ? (
-        firstResearchAuthGapError(mutation.error) ? (
-          <ResearchAuthGap error={mutation.error} layout="banner" />
+      {failed ? (
+        firstResearchAuthGapError(failed.error) ? (
+          <ResearchAuthGap error={failed.error} layout="banner" />
         ) : (
           <ViewState
             kind="failed"
             layout="strip"
-            title="The simulation did not run"
-            detail={
-              mutation.error instanceof Error ? mutation.error.message : String(mutation.error)
+            title={
+              failed === mutation
+                ? 'The simulation did not run'
+                : 'The schedule baseline did not run'
             }
+            detail={failed.error instanceof Error ? failed.error.message : String(failed.error)}
           />
         )
+      ) : null}
+    </section>
+  )
+}
+
+/**
+ * Signal entry next to the schedule it replaces, same structure, symbols,
+ * window and management — the only difference is when positions open.
+ */
+function EntryComparison({ signal, baseline }: { signal: SimResponse; baseline: SimResponse }) {
+  const a = signal.summary
+  const b = baseline.summary
+  const rule = (a as SimSummary & { entry_rule?: Record<string, unknown> }).entry_rule
+  const ev = (rule?.event_def as { params?: Record<string, unknown> } | undefined)?.params ?? {}
+  const sigLabel = signalShortLabel(String(ev.signal ?? ''), ev)
+  const rows: Array<{ k: string; a: string; b: string; diff?: number | null; money?: boolean }> = [
+    { k: 'Trades', a: String(a.n_trades), b: String(b.n_trades) },
+    { k: 'Win rate', a: pct(a.win_rate), b: pct(b.win_rate), diff: a.win_rate - b.win_rate },
+    { k: 'Avg / trade', a: usd(a.avg_pnl), b: usd(b.avg_pnl), diff: a.avg_pnl - b.avg_pnl, money: true },
+    { k: 'Total P&L', a: usd(a.total_pnl), b: usd(b.total_pnl), diff: a.total_pnl - b.total_pnl, money: true },
+    { k: 'Worst trade', a: usd(a.worst_trade), b: usd(b.worst_trade), diff: a.worst_trade - b.worst_trade, money: true },
+    { k: 'Max drawdown', a: usd(a.max_drawdown), b: usd(b.max_drawdown) },
+    { k: 'Sharpe', a: a.sharpe_annual?.toFixed(2) ?? '—', b: b.sharpe_annual?.toFixed(2) ?? '—', diff: (a.sharpe_annual ?? 0) - (b.sharpe_annual ?? 0) },
+  ]
+  return (
+    <section className={panel}>
+      <header className={panelHead}>
+        <span className="text-dense-body font-semibold">Signal entry vs schedule</span>
+        <DenseTag size="cell" variant="neutral">
+          {sigLabel}
+          {rule?.offset_sessions != null ? ` · +${String(rule.offset_sessions)}` : ''}
+        </DenseTag>
+        <span className="ml-auto text-dense-caption text-muted-foreground">
+          {rule?.events != null ? `${String(rule.events)} signals · ` : ''}same structure, window and exits
+        </span>
+      </header>
+      <table className="w-full">
+        <thead>
+          <tr>
+            <th className={cn(th, 'text-left')}>Reading</th>
+            <th className={th}>Signal</th>
+            <th className={th}>Schedule</th>
+            <th className={th}>Difference</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.k}>
+              <td className={cn(td, 'text-left font-sans')}>{r.k}</td>
+              <td className={td}>{r.a}</td>
+              <td className={cn(td, 'text-muted-foreground')}>{r.b}</td>
+              <td className={cn(td, r.diff != null ? pnlColorClass(r.diff) : '')}>
+                {r.diff == null || !Number.isFinite(r.diff)
+                  ? ''
+                  : r.money
+                    ? `${r.diff >= 0 ? '+' : ''}${usd(r.diff)}`
+                    : r.k === 'Win rate'
+                      ? `${r.diff >= 0 ? '+' : ''}${(r.diff * 100).toFixed(0)} pt`
+                      : `${r.diff >= 0 ? '+' : ''}${r.diff.toFixed(2)}`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {a.sample_note !== 'ok' ? (
+        <p className="m-0 border-t border-border px-3 py-1.5 text-dense-caption text-warning">
+          The signal run has {a.n_trades} trades ({a.sample_note}); read the difference as a lead, not a result.
+        </p>
       ) : null}
     </section>
   )

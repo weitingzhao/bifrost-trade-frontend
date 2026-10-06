@@ -8,6 +8,8 @@ import { finiteVwap } from '@/utils/chart/finiteVwap'
 import {
   bollingerSeries,
   macdSeries,
+  type BollingerPoint,
+  type MacdPoint,
   normalizeBarForChart,
   pivotLevelsFromHlc,
   rsiSeries,
@@ -90,6 +92,16 @@ export interface BarsCandlestickChartProps {
   domainPrices?: number[]
   /** Extra SVG in the price pane's coordinate space, drawn above the candles. */
   renderPriceOverlay?: (ctx: ChartOverlayContext) => ReactNode
+  /**
+   * Indicator values computed elsewhere (Research, with full warm-up), aligned
+   * index for index to `bars`. A series of the wrong length is ignored and the
+   * chart computes its own from the closes it has.
+   */
+  indicatorSeries?: {
+    rsi?: (number | null)[]
+    macd?: MacdPoint[]
+    bollinger?: BollingerPoint[]
+  }
 }
 
 const VWAP_STROKE = 'var(--color-link)'
@@ -145,6 +157,7 @@ export function BarsCandlestickChart({
   cone,
   domainPrices,
   renderPriceOverlay,
+  indicatorSeries,
 }: BarsCandlestickChartProps) {
   const fullBars = useMemo(
     () => (rawBars || []).map(normalizeBarForChart).filter((x): x is Bar => x != null),
@@ -183,11 +196,36 @@ export function BarsCandlestickChart({
   const xCount = fullCount + futureCount
 
   const closesAll = useMemo(() => fullBars.map(b => b.close), [fullBars])
-  const rsiAll = useMemo(() => (showRsi && fullBars.length > 0 ? rsiSeries(closesAll, 14) : []), [closesAll, fullBars.length, showRsi])
-  const macdAll = useMemo(() => (showMacd && fullBars.length > 0 ? macdSeries(closesAll) : []), [closesAll, fullBars.length, showMacd])
+  const given = (arr: unknown[] | undefined) => arr != null && arr.length === fullBars.length
+  const rsiAll = useMemo(
+    () =>
+      !showRsi || fullBars.length === 0
+        ? []
+        : given(indicatorSeries?.rsi)
+          ? indicatorSeries!.rsi!
+          : rsiSeries(closesAll, 14),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [closesAll, fullBars.length, showRsi, indicatorSeries?.rsi],
+  )
+  const macdAll = useMemo(
+    () =>
+      !showMacd || fullBars.length === 0
+        ? []
+        : given(indicatorSeries?.macd)
+          ? indicatorSeries!.macd!
+          : macdSeries(closesAll),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [closesAll, fullBars.length, showMacd, indicatorSeries?.macd],
+  )
   const bbAll = useMemo(
-    () => (showBollinger && fullBars.length > 0 ? bollingerSeries(closesAll, 20, 2) : []),
-    [closesAll, fullBars.length, showBollinger],
+    () =>
+      !showBollinger || fullBars.length === 0
+        ? []
+        : given(indicatorSeries?.bollinger)
+          ? indicatorSeries!.bollinger!
+          : bollingerSeries(closesAll, 20, 2),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [closesAll, fullBars.length, showBollinger, indicatorSeries?.bollinger],
   )
 
   const pivotLevels = useMemo(() => {

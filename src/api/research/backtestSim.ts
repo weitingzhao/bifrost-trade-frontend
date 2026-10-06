@@ -17,6 +17,11 @@ import type { BacktestRunRow } from '@/api/research/backtestEvent'
 
 export type SimStructure = 'short_put' | 'put_credit_spread' | 'short_strangle' | 'iron_condor'
 
+export interface SimEntryEvent {
+  kind: 'earnings' | 'opex' | 'sepa_hit' | 'iv_percentile_threshold' | 'indicator_signal'
+  params?: Record<string, unknown>
+}
+
 export interface SimInput {
   symbols: string[]
   start?: string
@@ -27,6 +32,10 @@ export interface SimInput {
   wing_width_pct?: number
   quantity?: number
   entry_every_sessions?: number
+  /** An event in place of the schedule (research 0.171.0; `indicator_signal` from W6). */
+  entry_event?: SimEntryEvent | null
+  /** Sessions from the event to the entry; +1 enters on the close after the signal session. */
+  entry_offset_sessions?: number
   max_open_per_symbol?: number
   profit_take_pct?: number | null
   stop_loss_mult?: number | null

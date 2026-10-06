@@ -206,24 +206,26 @@ export function recentHistory(events: readonly BookEvent[], days: number = HISTO
 export interface FeedReach {
   /** Symbols asked for. */
   asked: number
-  /** Symbols the feed answered with at least one row. */
+  /** Symbols the feed answered with at least one event on record. */
   covered: number
-  /** Symbols with nothing at all — the feed cannot say whether they pay. */
-  silent: string[]
+  /**
+   * Symbols the vendor answered with no event on record — a complete answer
+   * (measured after the 09-29 backfill: a name that pays no dividend and has
+   * never split carries none), not a gap. A read that failed is not here; the
+   * page leaves it out of every count (`feedUnread`).
+   */
+  noneOnRecord: string[]
   rows: number
   oldest: string | null
   newest: string | null
   /** Rows dated ahead of today. The whole forward half of the page turns on it. */
   ahead: number
   /**
-   * Names whose only row is a single one.
-   *
-   * A quarterly payer backfilled properly carries decades. A name carrying
-   * exactly one row has been reached by the feed but not backfilled, which is a
-   * different fault from silence and reads the same on a table unless it is
-   * named.
+   * Names with exactly one event on record — the vendor's whole answer for
+   * the name (a single split, say, on a name that pays nothing), not a thin
+   * backfill. Named so a table row that stands alone reads as all there is.
    */
-  shallow: string[]
+  oneOnRecord: string[]
 }
 
 export function feedReach(input: {
@@ -234,14 +236,14 @@ export function feedReach(input: {
   let ahead = 0
   let oldest: string | null = null
   let newest: string | null = null
-  const silent: string[] = []
-  const shallow: string[] = []
+  const noneOnRecord: string[] = []
+  const oneOnRecord: string[] = []
   for (const [symbol, list] of input.bySymbol) {
     if (list.length === 0) {
-      silent.push(symbol)
+      noneOnRecord.push(symbol)
       continue
     }
-    if (list.length === 1) shallow.push(symbol)
+    if (list.length === 1) oneOnRecord.push(symbol)
     rows += list.length
     for (const r of list) {
       const ex = r.ex_date ? r.ex_date.slice(0, 10) : null
@@ -253,13 +255,13 @@ export function feedReach(input: {
   }
   return {
     asked: input.bySymbol.size,
-    covered: input.bySymbol.size - silent.length,
-    silent: silent.sort(),
+    covered: input.bySymbol.size - noneOnRecord.length,
+    noneOnRecord: noneOnRecord.sort(),
     rows,
     oldest,
     newest,
     ahead,
-    shallow: shallow.sort(),
+    oneOnRecord: oneOnRecord.sort(),
   }
 }
 

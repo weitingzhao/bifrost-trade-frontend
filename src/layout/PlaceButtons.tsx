@@ -114,6 +114,7 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
       <CloseButton
         label={`Close ${surface.label}`}
         title="Close"
+        className={css.close}
         onClick={() => dismissSurface(surface.key)}
       />
     </>

@@ -383,16 +383,19 @@ export function SymbolPriceChart({
       />
       {signalMarks.map((m) => {
         const x = ctx.xForIndex(m.at)
-        const y = ctx.yForPrice(m.close)
+        const bar = chartBars[m.at]
         const up = m.direction === 'up'
-        const tip = up ? y + 14 : y - 14
-        const base = up ? tip + 7 : tip - 7
+        const y = ctx.yForPrice(bar ? (up ? bar.low : bar.high) : m.close)
+        const tip = up ? y + 5 : y - 5
+        const base = up ? tip + 10 : tip - 10
         return (
           <path
             key={`${m.signal}-${m.date}`}
-            d={`M${x},${tip} L${x - 4.5},${base} L${x + 4.5},${base} Z`}
+            d={`M${x},${tip} L${x - 6},${base} L${x + 6},${base} Z`}
             fill={up ? 'var(--color-profit)' : 'var(--color-loss)'}
-            opacity={0.9}
+            stroke="var(--background)"
+            strokeWidth={1.5}
+            paintOrder="stroke"
           >
             <title>{`${m.date} · ${m.label} · close ${m.close.toFixed(2)}`}</title>
           </path>

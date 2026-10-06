@@ -1017,7 +1017,7 @@ export function BarsCandlestickChart({
 
         {renderPriceOverlay?.(overlayCtx)}
 
-        {lastBar && bars.length > 1 && (
+        {lastBar && bars.length > 1 && period !== '1 D' && (
           <text
             x={paddingLeft + innerWidth}
             y={height - 6}
@@ -1116,7 +1116,7 @@ export function BarsCandlestickChart({
       </svg>
 
       {lastBar && (
-        <div className="data-bars-chart-legend">
+        <div className="data-bars-chart-legend flex flex-wrap gap-x-3 font-mono text-dense-micro text-muted-foreground">
           <span className="data-bars-chart-legend-time">{fmtTsForPeriod(lastBar.time, period)}</span>
           <span>O {fmtUsd(lastBar.open)}</span>
           <span>H {fmtUsd(lastBar.high)}</span>

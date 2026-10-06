@@ -303,7 +303,9 @@ export function fmtTsForPeriod(ts: number | null | undefined, period: string): s
   if (ts == null || !Number.isFinite(ts)) return '—'
   const d = new Date(ts * 1000)
   if (period === '1 D') {
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+    // Daily bars are stamped at the session's UTC midnight; a local reading
+    // west of Greenwich names the day before.
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
   }
   if (period === '1 min' || period === '5 mins') {
     return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })

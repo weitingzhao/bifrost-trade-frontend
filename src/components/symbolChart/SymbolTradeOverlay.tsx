@@ -154,7 +154,7 @@ export function SymbolTradeOverlay(p: TradeOverlayProps) {
           </text>
           <text
             x={right - 2}
-            y={hy.y + 10}
+            y={hy.edge === '↓' ? hy.y - 15 : hy.y + 10}
             fontSize="9"
             fontFamily="var(--font-mono)"
             textAnchor="end"

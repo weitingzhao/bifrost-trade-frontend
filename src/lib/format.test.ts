@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtPctWholeFromFraction, fmtIsoDateToken, fmtMonthKeyToken, fmtEpochEtClock, fmtOccContractToken } from '@/lib/format'
+import { fmtPct1, fmtPct2, fmtPctFromFraction, fmtPctSigned, fmtPctWholeFromFraction, fmtIsoDateToken, fmtMonthKeyToken, fmtEpochEtClock, fmtOccContractToken, fmtTsForPeriod } from '@/lib/format'
 
 /**
  * The two percentage families must stay distinguishable.
@@ -76,5 +76,12 @@ describe('fmtOccContractToken', () => {
   it('leaves anything else as it is', () => {
     expect(fmtOccContractToken('ZZZ')).toBe('ZZZ')
     expect(fmtOccContractToken(null)).toBe('')
+  })
+})
+
+describe('fmtTsForPeriod', () => {
+  it('names a daily bar by its session date, whatever the reader’s zone', () => {
+    // 2026-10-05T00:00Z — the Monday session; a local reading west of UTC said Oct 4.
+    expect(fmtTsForPeriod(1791158400, '1 D')).toMatch(/\b5\b/)
   })
 })

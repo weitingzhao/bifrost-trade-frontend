@@ -14,6 +14,7 @@ import { INDICATOR_SIGNALS } from '@/api/research/indicators'
 import type { PineLibraryEntry } from '@/api/research/pine'
 import { cn } from '@/lib/utils'
 import { signalLabel } from '@/components/symbolChart/useChartSignal'
+import { pineLibraryPath } from '@/lib/symbolLink'
 
 export interface SignalMenuProps {
   /** '' · an indicator id · `pine:<script>`. */
@@ -49,7 +50,7 @@ export function SignalMenu(p: SignalMenuProps) {
   }
   const on = p.sigId !== ''
   const pineId = p.sigId.startsWith('pine:') ? p.sigId.slice(5) : null
-  const manage = `/research/backtest?tab=pine${pineId ? `&script=${encodeURIComponent(pineId)}` : ''}`
+  const manage = pineLibraryPath(pineId)
   return (
     <Popover
       open={open}

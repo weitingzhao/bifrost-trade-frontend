@@ -142,12 +142,13 @@ export interface CellLine {
   ink: CalendarItem['ink']
 }
 
-/** The past layers a cell counts rather than lists. */
-const COUNTED_LAYERS = ['fills', 'decisions', 'notes', 'dividends'] as const
+/** The past layers a cell counts rather than lists; Dividends lists `SYM $x` (Rev .157). */
+const COUNTED_LAYERS = ['fills', 'decisions', 'notes'] as const
 
 /**
- * A cell's lines: one count per past layer (`4 fills`), then each item of the
- * other layers by its short label — coming ones, and a past print on Events.
+ * A cell's lines: one count per counted layer (`4 fills`), then each item of
+ * the other layers by its short label — coming ones, a dividend received and
+ * a past print on Events.
  */
 export function cellLines(dayItems: readonly CalendarItem[]): CellLine[] {
   const counted = new Set<CalendarLayerId>(COUNTED_LAYERS)

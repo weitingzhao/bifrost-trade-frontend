@@ -116,7 +116,7 @@ export function CalendarDayPanel(p: CalendarDayPanelProps) {
                   <span
                     className={cn(
                       'min-w-0 leading-[1.45] text-pretty',
-                      g.layer.tense === 'future' ? calendarInkClass(i.ink) : 'text-[var(--sk-soft)]',
+                      calendarInkClass(i.ink),
                     )}
                   >
                     {p.linkOf(i, textBesideSymbol(i.text, sym))}

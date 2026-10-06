@@ -256,8 +256,12 @@ describe('Dividends — Transfer & Pay’s dividend rows, net of the same-day wi
       ['2026-09-04', ['AAA'], 'dividends'],
       ['2026-09-04', ['BBB'], 'dividends'],
     ])
-    expect(items[0].text).toBe('AAA dividend $354.70 · -$10.50 tax · net $344.20')
-    expect(items[1].text).toBe('BBB dividend $12.00')
+    expect(items.map((i) => [i.cell, i.ink])).toEqual([
+      ['AAA $354.70', 'profit'],
+      ['BBB $12.00', 'profit'],
+    ])
+    expect(items[0].text).toBe('AAA dividend received $354.70 · -$10.50 tax · net $344.20')
+    expect(items[1].text).toBe('BBB dividend received $12.00')
     expect(items[0].to).toBe('/portfolio/transfer')
   })
 })

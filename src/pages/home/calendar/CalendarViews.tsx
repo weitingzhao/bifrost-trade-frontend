@@ -50,7 +50,7 @@ export function WeekCellBody({ items }: { items: readonly CalendarItem[] }) {
               key={i.key}
               className={cn(
                 'text-dense-meta leading-[1.4] text-pretty',
-                g.layer.tense === 'future' ? calendarInkClass(i.ink) : 'text-[var(--sk-soft)]',
+                calendarInkClass(i.ink),
               )}
             >
               {itemLine(i)}
@@ -131,7 +131,7 @@ export function CalendarListView({
                   <span
                     className={cn(
                       'min-w-0 text-pretty',
-                      LAYER_BY_ID[i.layer].tense === 'future' ? calendarInkClass(i.ink) : 'text-[var(--sk-soft)]',
+                      calendarInkClass(i.ink),
                     )}
                   >
                     {linkOf(i, itemLine(i))}

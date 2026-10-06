@@ -176,6 +176,8 @@ export const HypothesisSchema = z
     linked_backtest_ids: z.array(z.string()),
     created_at: z.string(),
     updated_at: z.string(),
+    // research 0.193.0 (TD-143): derived from Trade's plans; null when Trade was unread.
+    linked_trade_ids: z.array(z.number()).nullable().optional(),
   })
   .passthrough()
 

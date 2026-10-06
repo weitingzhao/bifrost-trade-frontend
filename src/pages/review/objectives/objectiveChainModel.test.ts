@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { RECORD_BY_SOURCE_PATH } from '@/utils/tradeOrigin'
 import type { ResearchObjective } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
-import type { Hypothesis } from '@/api/researchHypothesis'
+import type { Hypothesis, TradeLinkBasis } from '@/api/researchHypothesis'
 import type { ReviewContract } from '@/utils/reviewContracts'
 import {
   BROKEN_LINK,
@@ -29,13 +29,25 @@ const cand = (objectiveId: string | null, status = 'open'): ResearchCandidate =>
 const hyp = (over: Partial<Hypothesis> = {}): Hypothesis =>
   ({ id: 'h1', status: 'active', symbols: [], linked_opportunity_ids: [], ...over }) as Hypothesis
 
-const trade = (realised: number, win: boolean): ReviewContract =>
-  ({ closedOn: '2026-09-01', realised, win }) as ReviewContract
+const trade = (realised: number, win: boolean, tradeId: number | null = null): ReviewContract =>
+  ({ closedOn: '2026-09-01', realised, win, tradeId }) as ReviewContract
+
+const basis = (over: Partial<TradeLinkBasis> = {}): TradeLinkBasis => ({
+  trade_env: 'dev',
+  source: 'trade-api /strategies/plans?status=filled (dev)',
+  plans_read: 3,
+  truncated: false,
+  error: null,
+  ...over,
+})
 
 describe('lineageIsWired', () => {
-  it('is the one reading the page turns on', () => {
-    expect(lineageIsWired([hyp(), hyp()])).toBe(false)
-    expect(lineageIsWired([hyp(), hyp({ linked_opportunity_ids: [7] as never })])).toBe(true)
+  it('is the one reading the page turns on: is the derived link readable here', () => {
+    expect(lineageIsWired(undefined, 'dev')).toBe(false) // Research before 0.193.0
+    expect(lineageIsWired(basis(), null)).toBe(false) // which Trade is this page?
+    expect(lineageIsWired(basis({ error: 'unreachable' }), 'dev')).toBe(false)
+    expect(lineageIsWired(basis({ trade_env: 'prod' }), 'dev')).toBe(false) // PROD ids are not DEV trades
+    expect(lineageIsWired(basis(), 'dev')).toBe(true)
   })
 })
 
@@ -90,8 +102,10 @@ describe('objectiveChain once the link exists', () => {
     const wired = objectiveChain({
       objectives: [obj('o1')],
       candidates: [cand('o1')],
-      hypotheses: [hyp({ linked_opportunity_ids: [7] as never })],
+      hypotheses: [hyp({ linked_trade_ids: [] })],
       trades: [],
+      linkBasis: basis(),
+      tradeEnv: 'dev',
     })
     expect(wired.wired).toBe(true)
     // Zero settled is a reading now, not an unknown — and below the floor it
@@ -153,5 +167,50 @@ describe('chainWindow', () => {
 
   it('says nothing closed rather than printing an empty range', () => {
     expect(chainWindow([])).toContain('nothing closed yet')
+  })
+})
+
+describe('objectiveChain through the derived link (TD-143)', () => {
+  // o1's candidate carries hypothesis h1; a filled plan written from h1 became trade 901.
+  const withHyp = (objectiveId: string, hypothesisId: string, status = 'promoted') =>
+    ({ ...cand(objectiveId, status), hypothesis_id: hypothesisId }) as ResearchCandidate
+  const built = objectiveChain({
+    objectives: [obj('o1'), obj('o2')],
+    candidates: [withHyp('o1', 'h1'), withHyp('o2', 'h2', 'open')],
+    hypotheses: [hyp({ id: 'h1', linked_trade_ids: [901] }), hyp({ id: 'h2', linked_trade_ids: [] })],
+    trades: [trade(120, true, 901), trade(-40, false, 901), trade(75, true, 555), trade(10, true, null)],
+    linkBasis: basis(),
+    tradeEnv: 'dev',
+    floor: 2,
+  })
+
+  it('is not broken: the link reaches the trade and its settled contracts', () => {
+    expect(built.wired).toBe(true)
+    expect(built.rows[0]).toMatchObject({ traded: 1, settled: 2, hit: 0.5, net: 80 })
+    expect(built.rows[0].verdict).toBe('EARNING')
+  })
+
+  it('reads an objective whose hypotheses became no trade as zero, not unknown', () => {
+    expect(built.rows[1]).toMatchObject({ traded: 0, settled: 0, hit: null, net: null })
+  })
+
+  it('leaves only the contracts no linked plan reaches in Unattributed', () => {
+    expect(built.unattributed).toMatchObject({ settled: 2, net: 85 })
+    expect(built.unattributed.why).not.toContain(BROKEN_LINK)
+  })
+
+  it('breaks again, naming the field, when the link is read from another environment', () => {
+    const other = objectiveChain({
+      objectives: [obj('o1')],
+      candidates: [withHyp('o1', 'h1')],
+      hypotheses: [hyp({ id: 'h1', linked_trade_ids: [901] })],
+      trades: [trade(120, true, 901)],
+      linkBasis: basis({ trade_env: 'prod' }),
+      tradeEnv: 'dev',
+    })
+    expect(other.wired).toBe(false)
+    expect(other.rows[0]).toMatchObject({ traded: null, settled: null })
+    expect(other.rows[0].why).toContain(BROKEN_LINK)
+    expect(other.unattributed.settled).toBe(1)
   })
 })

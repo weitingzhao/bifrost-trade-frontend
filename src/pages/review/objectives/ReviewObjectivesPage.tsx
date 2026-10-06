@@ -7,17 +7,12 @@
  * the loop closes, because a verdict here is what sends a patch back.
  *
  * **Built with the chain broken, deliberately** (Owner's option (c),
- * 2026-09-20). Nothing on this side links a hypothesis to a settled position:
- * 29 hypotheses, none carrying an opportunity id, against 25 opportunity ids
- * on the settled side — intersection zero. So `traded`, `settled`, `hit` and
- * `net` read `—` per objective, every closed trade sits in Unattributed, and
- * every verdict is NO VERDICT.
- *
- * That is not a page waiting to be useful. It is the only surface that can
- * say *which field* is missing, and it names it: `hypothesis.
- * linked_opportunity_ids`. The alternative was to backfill first and build
- * later, which would have left the sentence with nowhere to be said. The
- * request is R5 in `REQUEST-research-data-2026-09-20.md`.
+ * 2026-09-20), when nothing linked a hypothesis to a settled position. Since
+ * research 0.193.0 (TD-143) the link is `hypothesis.linked_trade_ids`, derived
+ * from this Trade environment's filled plans written from a hypothesis
+ * (`objectiveChainModel.ts`); the hypothesis read names the environment
+ * (`useTradeEnv`), because a DEV trade id is not a PROD one. Where the link
+ * cannot be read the page still breaks the chain at `traded` and says why.
  */
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
@@ -50,6 +45,7 @@ import { fmtUsd, fmtPct0 } from '@/utils/positions'
 import { pnlColorClass } from '@/utils/dailyChange'
 import { useActiveObjectives } from '@/hooks/useLoopHarness'
 import { useHypothesisList } from '@/hooks/useHypotheses'
+import { useTradeEnv } from '@/hooks/useTradeEnv'
 import { useReviewContracts } from '@/hooks/useReviewContracts'
 import { fetchCandidates } from '@/api/research/candidates'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
@@ -57,6 +53,7 @@ import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useObjectiveScope, ALL_OBJECTIVES } from '@/lib/objectiveScope'
 import {
   BROKEN_LINK,
+  LINK_SOURCE,
   VERDICT_FLOOR,
   chainAction,
   chainWindow,
@@ -196,7 +193,12 @@ function ChainTable({ rows, scoped }: { rows: ChainRow[]; scoped: string }) {
 export default function ReviewObjectivesPage() {
   const { objective, select: setObjective } = useObjectiveScope()
   const objectivesQ = useActiveObjectives()
-  const hypothesesQ = useHypothesisList({ limit: 200 })
+  // The links derive from this environment's Trade plans, so the read names it.
+  const tradeEnv = useTradeEnv()
+  const hypothesesQ = useHypothesisList(
+    { limit: 200, include_retired: true, trade_env: tradeEnv.env ?? undefined },
+    !tradeEnv.loading,
+  )
   const candidatesQ = useQuery({
     queryKey: ['research-engine', 'candidates', 'objectives', 'all'],
     queryFn: () => fetchCandidates({ status: 'all' }),
@@ -211,9 +213,14 @@ export default function ReviewObjectivesPage() {
         candidates: candidatesQ.data?.items ?? [],
         hypotheses: hypothesesQ.data?.rows ?? [],
         trades: review.trades,
+        linkBasis: hypothesesQ.data?.trade_link_basis,
+        tradeEnv: tradeEnv.env,
       }),
-    [objectivesQ.data, candidatesQ.data, hypothesesQ.data, review.trades],
+    [objectivesQ.data, candidatesQ.data, hypothesesQ.data, review.trades, tradeEnv.env],
   )
+  const linkedHyps = (hypothesesQ.data?.rows ?? []).filter((h) => (h.linked_trade_ids ?? []).length > 0).length
+  const attributedNet = chain.rows.reduce((a, r) => a + (r.net ?? 0), 0)
+  const attributedN = chain.rows.reduce((a, r) => a + (r.settled ?? 0), 0)
 
   const loading = objectivesQ.isLoading || candidatesQ.isLoading || review.loading
   const rows = [...chain.rows, chain.unattributed]
@@ -306,15 +313,19 @@ export default function ReviewObjectivesPage() {
             The chain is broken at <span className="font-mono">traded</span>.
           </p>
           <p className="max-w-[92ch] text-muted-foreground">
-            No hypothesis on this side carries an opportunity id —{' '}
-            <span className="font-mono text-foreground/80">{BROKEN_LINK}</span> is empty on all{' '}
-            {hypothesesQ.data?.rows.length ?? 0} of them. So none of the{' '}
-            {chain.unattributed.settled ?? 0} closed contracts can be reached from a belief, and no
-            position can be traced back to the objective that proposed it: the four columns after{' '}
+            {chain.link.read ? null : chain.link.why} So none of the {chain.unattributed.settled ?? 0}{' '}
+            closed contracts can be reached from a belief: the four columns after{' '}
             <span className="font-mono">accepted</span> read <span className="font-mono">—</span>,
             not zero, and every settled contract sits in Unattributed. Proposed and accepted are real.
           </p>
         </section>
+      ) : null}
+      {chain.link.read ? (
+        <p className="max-w-[92ch] text-dense-meta text-muted-foreground" title={hypothesesQ.data?.trade_link_basis?.source}>
+          <span className="font-mono text-foreground/80">{BROKEN_LINK}</span> from {LINK_SOURCE} ({chain.link.env}):{' '}
+          {linkedHyps} of {hypothesesQ.data?.rows.length ?? 0} hypotheses became a trade.
+          {chain.link.truncated ? ' The plan read hit its 500-row cap, so an older link may be missing.' : ''}
+        </p>
       ) : null}
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-2">
@@ -329,10 +340,12 @@ export default function ReviewObjectivesPage() {
           },
           {
             label: 'Net from objectives',
-            value: chain.wired ? fmtUsd(0) : '—',
-            sub: `${authGap ? '—' : 0} of ${chain.unattributed.settled ?? 0} settled attributed`,
-            ink: 'text-muted-foreground',
-            tip: `Realised on settled positions whose lineage reaches a run. Nothing reaches one: ${BROKEN_LINK} is empty on every hypothesis, so this is unknown rather than zero.`,
+            value: chain.wired ? fmtUsd(attributedNet) : '—',
+            sub: `${authGap || !chain.wired ? '—' : attributedN} of ${attributedN + (chain.unattributed.settled ?? 0)} settled attributed`,
+            ink: chain.wired && attributedN > 0 ? pnlColorClass(attributedNet) : 'text-muted-foreground',
+            tip: chain.wired
+              ? `Realised on settled contracts whose trade a plan written from an objective's hypothesis became (${BROKEN_LINK}).`
+              : `Realised on settled positions whose lineage reaches a run. ${chain.link.read ? '' : chain.link.why} So this is unknown rather than zero.`,
           },
           {
             label: 'Unattributed',

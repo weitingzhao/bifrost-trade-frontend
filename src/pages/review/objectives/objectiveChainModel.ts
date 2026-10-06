@@ -6,30 +6,26 @@
  * **proposed → accepted → traded → settled** for each of them, and it is the
  * one place the loop closes: a verdict here is what sends a patch back.
  *
- * **On this side the chain breaks at `traded`, and this file's job is to
- * break it honestly.** Measured on DEV 2026-09-20:
+ * **The link at `traded`** is `hypothesis.linked_trade_ids` (research
+ * 0.193.0, TD-143): Research derives it at read time from this Trade
+ * environment's filled plans written from a hypothesis (`source_kind =
+ * 'hypothesis'`, `source_ref` = the hypothesis id, `trade_id` set). Nothing
+ * is stored for it. The chain runs objective → candidate (`source_ref.
+ * objective_id`) → hypothesis (`candidate.hypothesis_id`) → trade ids → the
+ * closed contracts booked to those trades.
  *
- *   /research/objectives       1
- *   /research/objective-runs  29
- *   /research/candidates      62  (10 carry a hypothesis_id)
- *   /research/hypothesis      29  — and **0** carry a linked_opportunity_id
- *   settled side              25 distinct strategy_opportunity_id
- *   intersection               0
- *
- * So nothing links a belief to a position, and no settled trade can be
- * attributed to the objective that proposed it. The columns that need the
- * link read `—` with the field named, and every settled trade lands in the
- * Unattributed row — which the design makes a hard requirement for exactly
- * this reason: *"a chain with a missing link is a fact about the record, not
- * a rounding error"*, and hiding it would make every rate above it wrong.
- *
- * The request for the missing write is R5 in
- * `REQUEST-research-data-2026-09-20.md`.
+ * Until 0.193.0 nothing linked a belief to a position (`linked_opportunity_ids`
+ * empty on all 91 hypotheses, 2026-10-06), and the page broke the chain
+ * honestly at `traded`. It still does whenever the link cannot be read — an
+ * older Research, a failed Trade read, or an environment this page cannot
+ * name — and then the columns after `accepted` read `—`, not zero. Once it is
+ * read, a zero is a reading: no filled plan was written from that objective's
+ * hypotheses. Settled contracts no plan links land in Unattributed.
  */
 import { RECORD_BY_SOURCE_PATH } from '@/utils/tradeOrigin'
 import type { ResearchObjective } from '@/api/research/harness'
 import type { ResearchCandidate } from '@/api/research/candidates'
-import type { Hypothesis } from '@/api/researchHypothesis'
+import type { Hypothesis, TradeEnv, TradeLinkBasis } from '@/api/researchHypothesis'
 import type { ReviewContract } from '@/utils/reviewContracts'
 import { candidateObjectiveId } from '@/lib/objectiveScope'
 
@@ -45,7 +41,30 @@ export const VERDICT_FLOOR = 5
 export type Verdict = 'EARNING' | 'DID NOT EARN' | 'BELOW FLOOR' | 'NO VERDICT' | 'NOT A MACHINE'
 
 /** The one field whose absence breaks the chain. Named, not described. */
-export const BROKEN_LINK = 'hypothesis.linked_opportunity_ids'
+export const BROKEN_LINK = 'hypothesis.linked_trade_ids'
+
+/** Where the link comes from, in the stores' own words. */
+export const LINK_SOURCE = "Trade plans · source_kind 'hypothesis' → trade_id"
+
+/** Whether the link can be read on this page — and when not, why. */
+export type LinkState = { read: true; env: TradeEnv; truncated: boolean } | { read: false; why: string }
+
+export function linkStateOf(basis: TradeLinkBasis | null | undefined, env: TradeEnv | null): LinkState {
+  if (!basis) {
+    return { read: false, why: `\`${BROKEN_LINK}\` is not served — Research before 0.193.0 does not derive it.` }
+  }
+  if (env == null) {
+    return {
+      read: false,
+      why: `This page could not tell which Trade environment it reads (account /health config_profile), so \`${BROKEN_LINK}\` cannot be matched to its trades.`,
+    }
+  }
+  if (basis.error) return { read: false, why: `\`${BROKEN_LINK}\` is unread — Trade's plans did not answer: ${basis.error}` }
+  if (basis.trade_env !== env) {
+    return { read: false, why: `\`${BROKEN_LINK}\` was read from ${basis.trade_env} plans; this page reads ${env} trades.` }
+  }
+  return { read: true, env, truncated: basis.truncated }
+}
 
 export interface ChainRow {
   id: string
@@ -75,14 +94,20 @@ export interface ChainRow {
   to: string | null
 }
 
-function verdictOf(settled: number | null, hit: number | null, net: number | null, floor: number): {
+function verdictOf(
+  settled: number | null,
+  hit: number | null,
+  net: number | null,
+  floor: number,
+  unread = '',
+): {
   verdict: Verdict
   why: string
 } {
   if (settled == null) {
     return {
       verdict: 'NO VERDICT',
-      why: `Nothing links this objective to a settled position — \`${BROKEN_LINK}\` is empty on every hypothesis, so the contracts it may have produced cannot be found. Not a bad machine, an unmeasurable one.`,
+      why: `Nothing links this objective to a settled position. ${unread} The contracts it may have produced cannot be found. Not a bad machine, an unmeasurable one.`,
     }
   }
   if (settled < floor) {
@@ -112,38 +137,53 @@ export interface ChainInput {
   hypotheses: readonly Hypothesis[]
   /** Closed trades, from the same builder the Review queue reads. */
   trades: readonly ReviewContract[]
+  /** The hypothesis list's `trade_link_basis` (research 0.193.0); absent before. */
+  linkBasis?: TradeLinkBasis | null
+  /** The Trade environment this page reads trades from. */
+  tradeEnv?: TradeEnv | null
   floor?: number
 }
 
 /**
- * Whether any hypothesis carries a settled position.
- *
- * The whole page turns on this one reading, so it is computed once and named:
- * while it is false, `traded` and everything after it is unknowable per
- * objective, and the page must say which field would make it knowable rather
- * than showing zeroes that look like an answer.
+ * Whether the link can be read at all. The whole page turns on this one
+ * reading: while it is false, `traded` and everything after it is unknowable
+ * per objective, and the page must say why rather than showing zeroes that
+ * look like an answer.
  */
-export function lineageIsWired(hypotheses: readonly Hypothesis[]): boolean {
-  return hypotheses.some((h) => (h.linked_opportunity_ids ?? []).length > 0)
+export function lineageIsWired(basis: TradeLinkBasis | null | undefined, env: TradeEnv | null): boolean {
+  return linkStateOf(basis, env).read
 }
 
 export function objectiveChain(input: ChainInput): {
   rows: ChainRow[]
   unattributed: ChainRow
   wired: boolean
+  link: LinkState
 } {
   const { objectives, candidates, hypotheses, trades } = input
   const floor = input.floor ?? VERDICT_FLOOR
-  const wired = lineageIsWired(hypotheses)
+  const link = linkStateOf(input.linkBasis, input.tradeEnv ?? null)
+  const wired = link.read
+  const unread = link.read ? '' : link.why
+  const closed = trades.filter((t) => t.closedOn != null)
+  const tradesOf = new Map(hypotheses.map((h) => [h.id, h.linked_trade_ids ?? []]))
+  const linked = new Set(hypotheses.flatMap((h) => h.linked_trade_ids ?? []))
 
   const rows: ChainRow[] = objectives.map((o) => {
     const mine = candidates.filter((c) => candidateObjectiveId(c) === o.id)
     const proposed = mine.length
     const accepted = mine.filter((c) => c.status === 'promoted').length
-    // Everything past `accepted` needs the link. Null, never zero: a zero here
-    // would read as "it traded nothing", and what is true is "we cannot tell".
-    const settled = wired ? 0 : null
-    const v = verdictOf(settled, null, null, floor)
+    // Everything past `accepted` needs the link. Null, never zero, while it is
+    // unread: a zero would read as "it traded nothing", and what is true is
+    // "we cannot tell".
+    const ids = new Set(
+      mine.flatMap((c) => (c.hypothesis_id ? (tradesOf.get(c.hypothesis_id) ?? []) : [])),
+    )
+    const settledRows = wired ? closed.filter((t) => t.tradeId != null && ids.has(t.tradeId)) : []
+    const settled = wired ? settledRows.length : null
+    const hit = settled ? settledRows.filter((t) => t.win).length / settled : null
+    const net = settled ? settledRows.reduce((a, t) => a + t.realised, 0) : null
+    const v = verdictOf(settled, hit, net, floor, unread)
     return {
       id: o.id,
       title: o.title ?? o.id,
@@ -152,20 +192,19 @@ export function objectiveChain(input: ChainInput): {
       hitFloor: null,
       proposed,
       accepted,
-      traded: wired ? 0 : null,
+      traded: wired ? ids.size : null,
       settled,
-      hit: null,
-      net: null,
+      hit,
+      net,
       verdict: v.verdict,
       why: v.why,
       to: `/research/loop/objectives/${o.id}`,
     }
   })
 
-  // Every closed trade, because none of them can be attributed. The design
-  // requires this row so the rates above it stay honest; here it holds the
-  // whole book rather than the remainder.
-  const closed = trades.filter((t) => t.closedOn != null)
+  // Every closed trade no linked plan reaches — the whole book while the link
+  // is unread. The design requires this row so the rates above it stay honest.
+  const rest = wired ? closed.filter((t) => t.tradeId == null || !linked.has(t.tradeId)) : closed
   const unattributed: ChainRow = {
     id: 'unattributed',
     title: 'Unattributed',
@@ -175,19 +214,19 @@ export function objectiveChain(input: ChainInput): {
     proposed: null,
     accepted: null,
     traded: null,
-    settled: closed.length,
-    hit: closed.length > 0 ? closed.filter((t) => t.win).length / closed.length : null,
-    net: closed.reduce((a, t) => a + t.realised, 0),
+    settled: rest.length,
+    hit: rest.length > 0 ? rest.filter((t) => t.win).length / rest.length : null,
+    net: rest.reduce((a, t) => a + t.realised, 0),
     verdict: 'NOT A MACHINE',
     why: wired
-      ? 'Hand-opened, or a plan edited past the point where its lineage could be traced back to a run. Real money, and not evidence about any objective.'
-      : `Every settled contract is here, because \`${BROKEN_LINK}\` is empty on every hypothesis — nothing on this side ties a position back to the objective that proposed it. Real money, and not yet evidence about any machine.`,
+      ? 'Opened without a plan written from a hypothesis, or from one no objective proposed. Real money, and not evidence about any objective.'
+      : `Every settled contract is here: ${unread} Nothing on this side ties a position back to the objective that proposed it. Real money, and not yet evidence about any machine.`,
     // Settled money read by where the idea came from is the question this row
     // raises — Outcome's cut, Playbook › Record · By source since Rev .112.
     to: RECORD_BY_SOURCE_PATH,
   }
 
-  return { rows, unattributed, wired }
+  return { rows, unattributed, wired, link }
 }
 
 /**

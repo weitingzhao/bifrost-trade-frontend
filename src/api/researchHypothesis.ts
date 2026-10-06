@@ -73,7 +73,35 @@ export interface Hypothesis {
    */
   settles_on?: string | null
   settles_basis?: HypothesisSettlesBasis | null
+  /**
+   * The trades this hypothesis became (research 0.193.0, TD-143): derived at
+   * read time from the Trade environment's filled plans written from it
+   * (`source_kind = 'hypothesis'`, `source_ref` = this id). Null when Trade
+   * could not be read; absent before 0.193.0. Nothing is stored for it.
+   */
+  linked_trade_ids?: number[] | null
+  linked_trades?: HypothesisTradeLink[] | null
+  trade_link_basis?: TradeLinkBasis
 }
+
+export interface HypothesisTradeLink {
+  trade_id: number
+  strategy_plan_id: number | null
+  symbol: string | null
+  structure_label: string | null
+}
+
+/** Whose plans the links were read from, and whether the read is whole. */
+export interface TradeLinkBasis {
+  trade_env: TradeEnv
+  source: string
+  plans_read: number
+  /** True when the read hit trade-api's 500-plan cap — an absent link is then not a fact. */
+  truncated: boolean
+  error: string | null
+}
+
+export type TradeEnv = 'dev' | 'stg' | 'prod'
 
 /** Why `settles_on` is what it is (research 0.168.0). */
 export interface HypothesisSettlesBasis {
@@ -109,6 +137,8 @@ export interface HypothesisListResponse {
   count: number
   limit: number
   offset: number
+  /** research 0.193.0 (TD-143). */
+  trade_link_basis?: TradeLinkBasis
 }
 
 export interface HypothesisSummaryActive {
@@ -172,6 +202,8 @@ export interface ListHypothesesQuery {
   include_retired?: boolean
   limit?: number
   offset?: number
+  /** Whose Trade plans the links derive from (research 0.193.0; default prod). */
+  trade_env?: TradeEnv
 }
 
 export function listHypotheses(opts: ListHypothesesQuery = {}): Promise<HypothesisListResponse> {
@@ -182,6 +214,7 @@ export function listHypotheses(opts: ListHypothesesQuery = {}): Promise<Hypothes
   if (opts.include_retired) params.set('include_retired', 'true')
   if (opts.limit) params.set('limit', String(opts.limit))
   if (opts.offset) params.set('offset', String(opts.offset))
+  if (opts.trade_env) params.set('trade_env', opts.trade_env)
   const suffix = params.toString() ? `?${params.toString()}` : ''
   return hypothesisApi(`/research/hypothesis${suffix}`).then(validateList)
 }

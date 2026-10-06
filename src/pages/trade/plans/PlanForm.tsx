@@ -50,14 +50,14 @@ const SOURCE_LABELS = PLAN_SOURCE_LABELS
 const SOURCE_REF_HINTS: Record<StrategyPlan['source_kind'], string> = {
   manual: 'Optional note',
   symbol: 'Option Scan · composite 88',
-  hypothesis: 'H-118',
+  hypothesis: 'The hypothesis id, e.g. nvda-stage-2a-…-6a1e9d34c5',
   inbox_draft: 'D-0412',
   roll: 'The plan it replaces, e.g. #212',
 }
 const SOURCE_HINTS: Record<StrategyPlan['source_kind'], string> = {
   manual: 'No upstream. Still gets matched to its fill.',
   symbol: 'Came off the Symbol page — the chain pick travels in source_json.',
-  hypothesis: 'Links the plan to a hypothesis so its outcome flows back to the board.',
+  hypothesis: 'The hypothesis id exactly as Research stores it. Once the plan is linked to its fill, Research reads the trade back onto the hypothesis and Review › Objectives counts it.',
   inbox_draft: 'Drafted by the Copilot or Autopilot and taken over here.',
   roll: 'Replaces an earlier plan — name it in the ref.',
 }

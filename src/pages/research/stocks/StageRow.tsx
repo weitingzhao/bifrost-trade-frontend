@@ -10,10 +10,17 @@
  * click scrolls back to them. With two or more models picked, its "at least
  * N" stays here — the cards carry no such control.
  */
+import { FilterChip } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
 import { stageActive, type ScreenState, type Stage, type StageCount } from './stockScreenModel'
 import { chipMissing } from './stockScreenStages'
 
+/**
+ * One condition chip — the DS `FilterChip` (Rev .157 §17.10): on = ink 15%,
+ * never the accent; `dashed` for a narrative (8-K) condition, drawn on and
+ * off; `missing` when nothing in range can evaluate it — faint, not
+ * clickable, the reason in `title`. Pine signal chips are the same chip.
+ */
 export function ScreenChip({
   on,
   label,
@@ -32,23 +39,18 @@ export function ScreenChip({
   onClick: () => void
 }) {
   return (
-    <button
-      type="button"
-      onClick={missing ? undefined : onClick}
-      aria-disabled={missing || undefined}
-      aria-pressed={on}
+    <FilterChip
+      pressed={on}
+      onPressedChange={onClick}
+      dashed={narrative}
+      missing={missing}
       title={title}
-      className={cn(
-        'mat-tag inline-flex h-[22px] items-center gap-1.5 whitespace-nowrap border text-dense-meta',
-        narrative ? 'border-dashed' : 'border-transparent',
-        on ? '!border-primary bg-primary/15 text-foreground' : 'text-[var(--sk-soft)] hover:text-foreground',
-        missing && 'cursor-not-allowed opacity-45 hover:text-[var(--sk-soft)]',
-      )}
+      count={n}
+      className="h-[22px] px-2 text-dense-meta"
     >
       {narrative ? <span className="font-mono text-dense-caption text-[var(--sk-mute2)]">8-K</span> : null}
       <span>{label}</span>
-      <span className="font-mono text-dense-caption text-muted-foreground">{n}</span>
-    </button>
+    </FilterChip>
   )
 }
 
@@ -89,7 +91,7 @@ export function StageRow({
   /** A funnel / lineage focus counted through this stage, or null. */
   focusCount: StageCount | null
   onToCards: () => void
-  chipCountOf: (id: string) => { n: number | null; where: string }
+  chipCountOf: (id: string) => { n: number | null; where: string; noReading?: boolean }
   onChip: (id: string, label: string) => void
   onMin: (stageId: string, next: number, label: string) => void
 }) {
@@ -200,8 +202,10 @@ export function StageRow({
           {agree ? null : (
             <div className="flex flex-wrap gap-1">
               {st.chips.map((c) => {
-                const miss = chipMissing(st.id, c.id)
                 const cc = chipCountOf(c.id)
+                const miss =
+                  chipMissing(st.id, c.id) ??
+                  (cc.noReading ? `${c.label} — no name in this universe has a reading for it` : null)
                 const n = miss ? null : cc.n
                 return (
                   <ScreenChip

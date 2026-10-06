@@ -7,6 +7,11 @@
  */
 import type { AiDraft } from '@/api/researchDrafts'
 import { DraftCard } from '@/components/cockpit/DraftCard'
+import { DenseTag } from '@/components/data-display'
+import { draftHeadline } from '@/lib/harness/draftHeadline'
+import { kindTag } from '@/lib/harness/draftText'
+import { expiredLine, type ExpiredInfo } from '@/lib/harness/expiredDrafts'
+import type { WritesTo } from '@/lib/harness/writesTo'
 import type { DraftWriteFailure } from '@/lib/harness/draftWriteFailures'
 import type { DraftHeadline } from '@/lib/harness/draftHeadline'
 import type { InboxCard, InboxSection } from '@/lib/harness/inboxCards'
@@ -17,6 +22,15 @@ import { cardMeta, cardWrites, describeDraft, quickApproveHint } from './inboxCa
 
 export type InboxItem = { type: 'draft'; key: string; card: InboxCard } | { type: 'rule'; key: string; proposal: Proposal }
 
+/** An expired draft kept in place (design Rev .156): inert, not counted, not on the keys. */
+export interface ExpiredItem {
+  key: string
+  draft: AiDraft
+  info: ExpiredInfo
+  /** The card holding the draft that replaced it, when that card is on the page. */
+  newerKey: string | null
+}
+
 export interface InboxListHandlers {
   toggle: (key: string) => void
   approve: (card: InboxCard) => void
@@ -25,6 +39,66 @@ export interface InboxListHandlers {
   discuss: (card: InboxCard) => void
   hideEarlier: (card: InboxCard) => void
   showEarlier: (card: InboxCard) => void
+  openNewer: (key: string) => void
+  putAwayExpired: (item: ExpiredItem) => void
+}
+
+/**
+ * The expired card (Rev .156): where it was, a neutral `expired` tag, no
+ * Approve or Dismiss, one muted line, `Open newer →` when a newer draft
+ * replaced it. It goes with Dismiss earlier — here, in this browser only.
+ */
+export function ExpiredDraftCard({
+  item,
+  onOpenNewer,
+  onPutAway,
+}: {
+  item: ExpiredItem
+  onOpenNewer: (key: string) => void
+  onPutAway: () => void
+}) {
+  const head = draftHeadline(item.draft)
+  return (
+    <div
+      data-card={item.key}
+      data-expired=""
+      className="space-y-1 rounded-md border border-l-4 border-border/35 border-l-border/60 bg-transparent px-2.5 py-2 text-dense-meta opacity-70"
+    >
+      <div className="flex min-w-0 flex-nowrap items-baseline gap-x-2">
+        <DenseTag variant="category" size="cell">
+          {kindTag(item.draft.kind, item.draft.scope)}
+        </DenseTag>
+        {head.sym ? (
+          <span data-ctx-sym={head.sym} className="shrink-0 font-mono text-dense-label font-bold text-entity-symbol">
+            {head.sym}
+          </span>
+        ) : null}
+        <span className="min-w-0 truncate text-dense-label font-medium">{head.title}</span>
+        <DenseTag variant="neutral" size="cell" className="shrink-0">
+          expired
+        </DenseTag>
+        <span className="ml-auto shrink-0 text-dense-micro text-muted-foreground">
+          {item.draft.generated_by} · {new Date(item.draft.created_at).toLocaleString()}
+        </span>
+      </div>
+      <div className="flex items-baseline gap-3 text-dense-micro text-muted-foreground">
+        <span>{expiredLine(item.info)}</span>
+        <button
+          type="button"
+          onClick={onPutAway}
+          className="hover:text-foreground hover:underline"
+          title="Put away in this browser — nothing is sent; the draft is already expired on the server"
+        >
+          Dismiss earlier
+        </button>
+        {item.newerKey ? (
+          <button type="button" onClick={() => onOpenNewer(item.newerKey as string)} className="ml-auto text-primary hover:underline">
+            Open newer →
+          </button>
+        ) : null}
+      </div>
+    </div>
+  )
 }
 
 /** `J K move · Space open · A approve · D dismiss`, right-aligned above the list (Rev .144). */
@@ -55,6 +129,7 @@ export function InboxKeyHints() {
 
 export function InboxDecisionList({
   sections,
+  expired,
   openKey,
   curKey,
   litKey,
@@ -63,6 +138,8 @@ export function InboxDecisionList({
   handlers,
 }: {
   sections: InboxSection<InboxItem>[]
+  /** Expired drafts by section, drawn after its pending cards (Rev .156). */
+  expired?: ReadonlyMap<WritesTo, readonly ExpiredItem[]>
   openKey: string
   curKey: string
   litKey: string | null
@@ -89,7 +166,7 @@ export function InboxDecisionList({
                   onToggle={() => handlers.toggle(item.key)}
                   // No rules store: Dismiss is drawn and says why rather than
                   // answering nothing (Rev .144 on a card the store cannot hold).
-                  quick={<InboxQuickActions approveHint="Approve → edit Rules" onDismiss={() => {}} dismissOff={`Dismiss — ${NO_RULES_STORE}`} />}
+                  quick={<InboxQuickActions approveHint="Approve → Playbook" onDismiss={() => {}} dismissOff={`Dismiss — ${NO_RULES_STORE}`} />}
                 />
               )
             }
@@ -136,6 +213,9 @@ export function InboxDecisionList({
               </div>
             )
           })}
+          {(expired?.get(section.dest) ?? []).map((x) => (
+            <ExpiredDraftCard key={x.key} item={x} onOpenNewer={handlers.openNewer} onPutAway={() => handlers.putAwayExpired(x)} />
+          ))}
         </section>
       ))}
     </div>

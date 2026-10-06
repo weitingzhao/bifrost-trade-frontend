@@ -111,6 +111,31 @@ describe('FilterChip · FilterTray · FilterGroup (§17.10)', () => {
     expect(chip.className).not.toMatch(/sk-accent|text-primary/)
   })
 
+  it('0.12.0 (Rev .156): sm, dashed and missing — missing refuses the click and says why', () => {
+    const onPressedChange = vi.fn()
+    render(
+      <>
+        <FilterChip pressed={false} size="sm">AVOID</FilterChip>
+        <FilterChip pressed dashed>Guidance</FilterChip>
+        <FilterChip pressed={false} missing title="No reading in range" onPressedChange={onPressedChange} count="—">
+          Earnings
+        </FilterChip>
+      </>,
+    )
+    const sm = screen.getByRole('button', { name: 'AVOID' })
+    expect(sm.getAttribute('data-size')).toBe('sm')
+    expect(sm.className).toMatch(/h-5/)
+    const dashed = screen.getByRole('button', { name: 'Guidance' })
+    expect(dashed.getAttribute('data-dashed')).toBe('true')
+    expect(dashed.className).toMatch(/border-dashed/)
+    const missing = screen.getByRole('button', { name: /Earnings/ })
+    expect(missing.getAttribute('aria-disabled')).toBe('true')
+    expect(missing.getAttribute('title')).toBe('No reading in range')
+    expect(missing.className).toMatch(/sk-faint/)
+    fireEvent.click(missing)
+    expect(onPressedChange).not.toHaveBeenCalled()
+  })
+
   it('a joined tray squares its chips', () => {
     render(
       <FilterTray variant="joined" aria-label="Accounts in scope">

@@ -12,6 +12,7 @@ import {
   joinNames,
   matchRate,
   passesAll,
+  rowHasReading,
   rowProbe,
   runStages,
   sepaParts,
@@ -213,5 +214,19 @@ describe('focus and hover (Rev .131)', () => {
     expect(before.keep).toBeNull()
     expect(before.note).toMatch(/cut 2 before the lineage; none of these 1 fail it/)
     expect(stageHover(2, STAGE_OF.growth, ROWS, { on: {}, mins: {} }, probe, 0).note).toMatch(/pass-through, cuts nothing/)
+  })
+})
+
+describe('rowHasReading (Rev .157 missing chips)', () => {
+  const bare = { sym: 'X', company: null, sepa: null, radar: null, prem: null, cond: {} }
+  it('a condition not evaluated is no reading; false is a reading', () => {
+    expect(rowHasReading(bare, { id: 'sma50_gt_sma150' })).toBe(false)
+    expect(rowHasReading({ ...bare, cond: { sma50_gt_sma150: null } }, { id: 'sma50_gt_sma150' })).toBe(false)
+    expect(rowHasReading({ ...bare, cond: { sma50_gt_sma150: false } }, { id: 'sma50_gt_sma150' })).toBe(true)
+  })
+  it('model and grade chips read off their model; server sets always read', () => {
+    expect(rowHasReading(bare, { id: 'grade_a' })).toBe(false)
+    expect(rowHasReading(bare, { id: 'ivr_ge_40' })).toBe(false)
+    expect(rowHasReading(bare, { id: 'pine:x:buy', fromSet: true })).toBe(true)
   })
 })

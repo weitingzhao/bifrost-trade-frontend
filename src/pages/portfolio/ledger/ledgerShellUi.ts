@@ -28,14 +28,17 @@ export const ledgerShell = {
   capInstruments: 'text-[var(--color-entity-category)]',
 } as const
 
-/** A view or sub-view chip: lime when on, dim when it would show nothing. */
-export function ledgerChipClass(active: boolean, empty: boolean, filled = true): string {
+/**
+ * A view chip: ink 15% and full ink when on — never the accent (Rev .156
+ * §17.10) — dim when it would show nothing. Sub-views are a SegmentControl.
+ */
+export function ledgerChipClass(active: boolean, empty: boolean): string {
   return cn(
-    // Rev .62: no frame — on is the accent fill, off the ink one. Rev .142: a capsule.
+    // Rev .62: no frame. Rev .142: a capsule. Rev .156: on is ink 15%, off the button fill.
     'inline-flex h-5.5 cursor-pointer items-center gap-1.25 whitespace-nowrap rounded-full border border-transparent px-2',
     'text-dense-meta font-semibold transition-colors',
     active
-      ? cn('text-primary', filled ? 'bg-primary/15' : 'bg-[var(--mat-btn-fill)]')
+      ? 'bg-[color-mix(in_srgb,var(--sk-ink)_15%,transparent)] text-[var(--sk-ink)]'
       : cn(
         'bg-[var(--mat-btn-fill)] hover:bg-[var(--mat-btn-fill-hover)] hover:text-foreground',
         empty ? 'text-[var(--color-text-dim)]' : 'text-muted-foreground',

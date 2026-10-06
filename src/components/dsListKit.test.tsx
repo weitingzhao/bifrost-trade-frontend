@@ -16,6 +16,7 @@ import {
   DenseListRow,
   DenseTableBody,
   DenseTableCell,
+  DenseTableDetailRow,
   DenseTableRow,
   DenseTableSubheadRow,
   FilterBar,
@@ -337,6 +338,32 @@ describe('the 0.10.0 patterns layer', () => {
       </DenseDataTable>,
     )
     expect(container.querySelector('[data-sr-list] table > tfoot > tr')).not.toBeNull()
+  })
+
+  it('draws the detail row as an expansion (0.12.0, Rev .156 §17.2)', () => {
+    if (!css) return
+    const sels = rules.flatMap((r) => selectors(r.sel).map((sel) => ({ sel, body: r.body })))
+    const cells = sels.find((r) => r.sel === '[data-sr-list] table > tbody > tr[data-sr-detail] > :is(td, th)')
+    expect(cells?.body).toMatch(/--sr-z:\s*transparent/)
+    expect(cells?.body).toMatch(/--sr-sel:\s*transparent/)
+    expect(cells?.body).toMatch(/--sr-h:\s*transparent/)
+    expect(cells?.body).toMatch(/border-bottom:\s*1px solid color-mix\(in srgb, var\(--sk-ink, var\(--foreground\)\) 8%/)
+    // Zebra counts data rows only, so an open row does not shift the stripes.
+    expect(sels.some((r) => r.sel.includes('nth-child(even of :where(:not([data-sr-detail])))'))).toBe(true)
+    // Nested table: its head does not stick.
+    expect(sels.find((r) => r.sel === '[data-sr-list] tr[data-sr-detail] table > thead')?.body).toMatch(/position:\s*static/)
+    const { container } = render(
+      <table>
+        <DenseTableBody>
+          <DenseTableDetailRow indent={28}>
+            <DenseTableCell>legs</DenseTableCell>
+          </DenseTableDetailRow>
+        </DenseTableBody>
+      </table>,
+    )
+    const tr = container.querySelector('tr')!
+    expect(tr.hasAttribute('data-sr-detail')).toBe(true)
+    expect(tr.style.getPropertyValue('--sr-detail-indent')).toBe('28px')
   })
 
   it('gives every --sr-* reference a fallback', () => {

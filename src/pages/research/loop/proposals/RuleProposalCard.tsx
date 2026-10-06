@@ -112,7 +112,7 @@ export function RuleProposalCard({
               <div className="flex items-baseline gap-2">
                 <span className={positionsUi.cap}>Diff</span>
                 <span className={cn(positionsUi.mono, 'text-dense-caption text-[var(--sk-layer-analysis)]')}>
-                  → Rules › {p.target}
+                  → Playbook › {p.target}
                 </span>
               </div>
               <span
@@ -207,7 +207,7 @@ export function RuleProposalCard({
                 openArtifactDiscussion({
                   anchor: `proposal:${p.key}`,
                   label: `Rule · ${p.target}`,
-                  prompt: `Challenge this rule proposal before I decide: "${p.title}" for Rules › ${p.target}. What in the trades argues for it, what argues against, and what would I lose? D10 observe-only.`,
+                  prompt: `Challenge this rule proposal before I decide: "${p.title}" for Playbook › ${p.target}. What in the trades argues for it, what argues against, and what would I lose? D10 observe-only.`,
                 })
               }
             >
@@ -217,7 +217,7 @@ export function RuleProposalCard({
               Habits →
             </Link>
             <span className="min-w-0 text-dense-caption text-muted-foreground">
-              Approve would write the + line into Rules › {p.target} — {NO_STORE}.
+              Approve would write the + line into Playbook › {p.target} — {NO_STORE}.
             </span>
           </div>
         </>

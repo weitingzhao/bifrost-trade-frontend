@@ -43,4 +43,7 @@
 // built-in close and --glass-drop on every sheet; SegmentControl's selected segment ink 15%
 // + lens; FilterChip · FilterTray · FilterGroup (tri-state head); CalendarGrid · CalendarNav
 // · MiniMonth · TimeStrip and the shared date words (§17.9).
-export const UI_VERSION_NOW = '0.11.0'
+// 0.12.0 (Rev .156): FilterChip size="sm" · dashed · missing (§17.10); DenseTableDetailRow
+// as an expansion in a list scope — no fill, no zebra, no capsule, a hairline under,
+// `indent`; a nested table's head does not stick (§17.2).
+export const UI_VERSION_NOW = '0.12.0'

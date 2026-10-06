@@ -34,12 +34,15 @@ import { useObjectiveList } from '@/hooks/useLoopHarness'
 import { draftParentId } from '@/lib/research/draftProvenance'
 import { NewDraftDialog } from '@/components/research/NewDraftDialog'
 import { useInboxCards } from '@/hooks/useInboxCards'
-import { WRITES_TO_LABEL, WRITES_TO_ORDER, type WritesTo } from '@/lib/harness/writesTo'
+import { WRITES_TO_LABEL, WRITES_TO_ORDER, writesTo, type WritesTo } from '@/lib/harness/writesTo'
 import { buildProposals } from '@/pages/research/loop/proposals/proposalsModel'
 import { NO_RULES_STORE } from '@/pages/research/loop/proposals/RuleProposalCard'
 import { useReviewHabits } from '@/hooks/useReviewHabits'
 import { digestFirst, isDailyDigest } from '@/lib/harness/dailyDigest'
-import { unreadCount, useReadDrafts } from '@/lib/harness/inboxRead'
+import { unreadCount, useReadDrafts, useStoredDraftIds } from '@/lib/harness/inboxRead'
+import { STORAGE_KEYS } from '@/constants/storage'
+import { useExpiredDrafts } from '@/hooks/useResearchDrafts'
+import { expiredInfo, recentExpired } from '@/lib/harness/expiredDrafts'
 import { LeashPanel } from '@/pages/research/loop/LeashPanel'
 import { approveEffect, draftAskedBy } from '@/lib/harness/draftText'
 import { draftHeadline, type DraftHeadline } from '@/lib/harness/draftHeadline'
@@ -55,7 +58,12 @@ import { useDraftWriteFailures } from '@/lib/harness/draftWriteFailures'
 import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { useInSurface } from '@/lib/surfaceScope'
 import { notify } from '@/lib/shellNotify'
-import { InboxDecisionList, InboxKeyHints, type InboxItem } from '@/pages/research/loop/inbox/InboxDecisionList'
+import {
+  InboxDecisionList,
+  InboxKeyHints,
+  type ExpiredItem,
+  type InboxItem,
+} from '@/pages/research/loop/inbox/InboxDecisionList'
 import { InboxBriefings } from '@/pages/research/loop/inbox/InboxBriefings'
 import { InboxStrips } from '@/pages/research/loop/inbox/InboxStrips'
 import { cardWrites, recordToast } from '@/pages/research/loop/inbox/inboxCardText'
@@ -218,6 +226,41 @@ export default function DecisionInboxPage() {
     return inboxSections(shown, itemDest, litKey ? (i) => i.key === litKey : undefined)
   }, [showDecisions, dest, items, litKey])
   const order = useMemo(() => sections.flatMap((s) => s.items.map((i) => i.key)), [sections])
+
+  // Expired drafts (design Rev .156): kept in place, inert, in their section,
+  // counted nowhere and skipped by the keys. Put away in this browser only.
+  const expiredQ = useExpiredDrafts()
+  const expiredRows = useMemo(() => recentExpired(expiredQ.data?.rows ?? [], new Date()), [expiredQ.data])
+  const expiredIds = useMemo(() => (expiredQ.data ? expiredRows.map((d) => d.id) : null), [expiredQ.data, expiredRows])
+  const { ids: hiddenExpired, setMany: setHiddenExpired } = useStoredDraftIds(STORAGE_KEYS.inboxHiddenExpired, expiredIds)
+  const expiredByDest = useMemo(() => {
+    const by = new Map<WritesTo, ExpiredItem[]>()
+    for (const d of expiredRows) {
+      const w = writesTo(d.kind, d.scope)
+      if (!w || hiddenExpired.has(d.id) || (dest !== 'any' && w !== dest)) continue
+      const info = expiredInfo(d)
+      const newer = info.by ? cardHoldingDraft(cards, info.by) : null
+      const list = by.get(w) ?? []
+      list.push({ key: `expired:${d.id}`, draft: d, info, newerKey: newer?.key ?? null })
+      by.set(w, list)
+    }
+    return by
+  }, [expiredRows, hiddenExpired, dest, cards])
+  // A section that holds only expired cards is still drawn while something else waits.
+  const drawnSections = useMemo(() => {
+    const have = new Set(sections.map((s) => s.dest))
+    const extra = WRITES_TO_ORDER.filter((w) => !have.has(w) && expiredByDest.has(w)).map((w) => ({ dest: w, items: [] as InboxItem[] }))
+    if (!extra.length) return sections
+    const rank = (w: WritesTo) => WRITES_TO_ORDER.indexOf(w)
+    const [lead, ...rest] = sections
+    const tail = [...rest, ...extra].sort((a, b) => rank(a.dest) - rank(b.dest))
+    return lead && litKey && lead.items.some((i) => i.key === litKey) ? [lead, ...tail] : [...sections, ...extra].sort((a, b) => rank(a.dest) - rank(b.dest))
+  }, [sections, expiredByDest, litKey])
+  const openNewer = (key: string) => {
+    setCur(key)
+    setOpenId(key)
+    revealCard(key)
+  }
   const openKey = openId ?? (litKey && order.includes(litKey) ? litKey : (order[0] ?? ''))
 
   const counts = useMemo(() => {
@@ -469,7 +512,8 @@ export default function DecisionInboxPage() {
               {/* The keys work on the route page only, so a surfaced Inbox does not advertise them. */}
               {inSurface ? null : <InboxKeyHints />}
               <InboxDecisionList
-                sections={sections}
+                sections={drawnSections}
+                expired={expiredByDest}
                 openKey={openKey}
                 curKey={cur}
                 litKey={litKey}
@@ -483,6 +527,8 @@ export default function DecisionInboxPage() {
                   discuss: discussCard,
                   hideEarlier: hideFolded,
                   showEarlier: (card) => setHidden(card.hiddenEarlier.map((d) => d.id), false),
+                  openNewer,
+                  putAwayExpired: (item) => setHiddenExpired([item.draft.id], true),
                 }}
               />
             </>

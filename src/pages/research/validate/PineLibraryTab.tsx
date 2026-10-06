@@ -291,7 +291,10 @@ export function PineLibraryTab({
                       <td className={td}>{s.buy_signals ? s.buy_signals.toLocaleString('en-US') : '—'}</td>
                       <td className={td}>{s.sell_signals ? s.sell_signals.toLocaleString('en-US') : '—'}</td>
                       <td className={cn(td, 'text-left')}>{s.last_signal ?? '—'}</td>
-                      <td className={cn(td, 'text-left font-sans text-dense-caption', s.is_active ? 'text-[var(--sk-soft)]' : 'text-muted-foreground')}>
+                      <td
+                        className={cn(td, 'text-left font-sans text-dense-caption', s.is_active ? 'text-[var(--sk-soft)]' : 'text-muted-foreground')}
+                        title={s.origin === 'bifrost' ? 'Built-in · always active — copy to my scripts to switch one off' : undefined}
+                      >
                         {s.is_active ? 'active' : 'off'}
                       </td>
                       <td className={cn(td, 'whitespace-nowrap')}>
@@ -518,9 +521,16 @@ export function PineLibraryTab({
                     <span>Off = gone from the screener, chart, simulator and decay at once.</span>
                   </div>
                 </>
-              ) : editing?.notes ? (
-                <p className="m-0 text-dense-caption text-muted-foreground">{editing.notes}</p>
-              ) : null}
+              ) : (
+                <>
+                  {editing?.notes ? <p className="m-0 text-dense-caption text-muted-foreground">{editing.notes}</p> : null}
+                  {editing?.origin === 'bifrost' ? (
+                    <p className="m-0 text-dense-caption text-muted-foreground">
+                      Built-in scripts are always active. To switch one off, copy it to my scripts and turn the copy off.
+                    </p>
+                  ) : null}
+                </>
+              )}
 
               <div className="space-y-2 border-t border-border pt-3">
                 <div className="flex items-baseline gap-2">

@@ -16,12 +16,28 @@ import { cap, mono, panel, panelHead, td, th } from '@/components/research/labFa
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { usePineLibrary } from '@/hooks/usePineLibrary'
-import { indicatorChartSignal, pineChartSignalOf, pineLibraryPath, withChartSignal, withSymbolParam } from '@/lib/symbolLink'
+import {
+  indicatorChartSignal,
+  pineChartSignalOf,
+  pineLibraryPath,
+  withChartSignal,
+  withSymbolParam,
+} from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { INDICATOR_SIGNALS, fetchSignalStats } from '@/api/research/indicators'
 import { fetchPineSignalStats } from '@/api/research/pine'
-import { basisNote, cellOf, ciTitle, fmtPt, sortRows, type StatsLike, type WinRateRow } from './signalWinRateModel'
+import {
+  basisNote,
+  cellOf,
+  ciText,
+  edgeText,
+  edgeTitle,
+  groupRows,
+  nTitle,
+  type StatsLike,
+  type WinRateRow,
+} from './signalWinRateModel'
 
 /** When the watchlist has no stock names (or has not answered): the design's basket. */
 const FALLBACK_BASKET = ['NVDA', 'AMD', 'AVGO', 'SMCI', 'PLTR', 'TSLA']
@@ -39,8 +55,15 @@ function errText(e: unknown): string | null {
 export function SignalWinRatePanel() {
   const watch = useWatchlist()
   const watchSyms = useMemo(
-    () => [...new Set((watch.data?.items ?? []).filter((i) => i.sec_type === 'STK').map((i) => i.symbol.toUpperCase()))].slice(0, MAX_BASKET),
-    [watch.data],
+    () =>
+      [
+        ...new Set(
+          (watch.data?.items ?? [])
+            .filter((i) => i.sec_type === 'STK')
+            .map((i) => i.symbol.toUpperCase())
+        ),
+      ].slice(0, MAX_BASKET),
+    [watch.data]
   )
   // The basket starts as the watchlist (the Watch list) and is the reader's once edited.
   const [edited, setEdited] = useState<string[] | null>(null)
@@ -60,11 +83,14 @@ export function SignalWinRatePanel() {
       staleTime: 10 * 60_000,
     })),
   })
-  const pineCells = pine.scripts.flatMap((s) => (['buy', 'sell'] as const).map((side) => ({ s, side })))
+  const pineCells = pine.scripts.flatMap((s) =>
+    (['buy', 'sell'] as const).map((side) => ({ s, side }))
+  )
   const pineQs = useQueries({
     queries: pineCells.map(({ s, side }) => ({
       queryKey: QUERY_KEYS.researchEngine.pineSignalStats(s.id, side, key),
-      queryFn: () => fetchPineSignalStats({ script: s.id, side, symbols: basket, horizons: HORIZONS }),
+      queryFn: () =>
+        fetchPineSignalStats({ script: s.id, side, symbols: basket, horizons: HORIZONS }),
       enabled: basket.length > 0 && src !== 'ind',
       staleTime: 10 * 60_000,
     })),
@@ -73,7 +99,7 @@ export function SignalWinRatePanel() {
   // useQueries returns a new array each render; its answers are keyed by their update stamps.
   const pineStamp = pineQs.map((x) => x.dataUpdatedAt + x.errorUpdatedAt).join()
   const indStamp = indQs.map((x) => x.dataUpdatedAt + x.errorUpdatedAt).join()
-  const rows = useMemo(() => {
+  const rows = useMemo((): WinRateRow[] => {
     const out: WinRateRow[] = []
     if (src !== 'ind')
       pineCells.forEach(({ s, side }, i) => {
@@ -83,7 +109,12 @@ export function SignalWinRatePanel() {
           chartSignal: pineChartSignalOf(s.id),
           name: s.label,
           source: 'pine',
-          sourceLabel: s.origin === 'user' ? 'pine · mine' : s.origin === 'community' ? 'pine · community' : 'pine',
+          sourceLabel:
+            s.origin === 'user'
+              ? 'pine · mine'
+              : s.origin === 'community'
+                ? 'pine · community'
+                : 'pine',
           side,
           state: qq?.isError ? 'failed' : qq?.data ? 'ok' : 'loading',
           error: errText(qq?.error),
@@ -105,9 +136,10 @@ export function SignalWinRatePanel() {
           ...cellOf(qq?.data as StatsLike | undefined, h),
         })
       })
-    return sortRows(out)
+    return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, h, pine.scripts, pineStamp, indStamp])
+  const groups = groupRows(rows)
 
   const add = () => {
     const v = q.trim().toUpperCase()
@@ -118,7 +150,9 @@ export function SignalWinRatePanel() {
   const first = basket[0] ?? null
   const windowNote = (() => {
     const anyData = pineQs.find((x) => x.data)?.data ?? indQs.find((x) => x.data)?.data
-    return anyData?.window ? `${anyData.window.start.slice(0, 4)}–${anyData.window.end.slice(0, 4)}` : 'daily'
+    return anyData?.window
+      ? `${anyData.window.start.slice(0, 4)}–${anyData.window.end.slice(0, 4)}`
+      : 'daily'
   })()
 
   return (
@@ -134,12 +168,27 @@ export function SignalWinRatePanel() {
         <span className={cap}>Basket</span>
         <span
           className="inline-flex min-h-7 flex-wrap items-center gap-1 rounded-lg bg-foreground/[0.07] py-0.5 pl-2 pr-1"
-          title={basketFrom === 'watchlist' ? 'Your watchlist’s stocks, until you edit it' : basketFrom === 'default' ? 'The watchlist has no stocks; a default basket' : undefined}
+          title={
+            basketFrom === 'watchlist'
+              ? 'Your watchlist’s stocks, until you edit it'
+              : basketFrom === 'default'
+                ? 'The watchlist has no stocks; a default basket'
+                : undefined
+          }
         >
           {basket.map((sym) => (
-            <span key={sym} className="inline-flex h-5 items-center gap-0.5 rounded-full bg-foreground/[0.09] pl-1.5 pr-0.5">
-              <span className={cn(mono, 'text-dense-caption font-bold text-entity-symbol')}>{sym}</span>
-              <CloseButton size="sm" label={`Remove ${sym}`} onClick={() => setEdited(basket.filter((x) => x !== sym))} />
+            <span
+              key={sym}
+              className="inline-flex h-5 items-center gap-0.5 rounded-full bg-foreground/[0.09] pl-1.5 pr-0.5"
+            >
+              <span className={cn(mono, 'text-dense-caption font-bold text-entity-symbol')}>
+                {sym}
+              </span>
+              <CloseButton
+                size="sm"
+                label={`Remove ${sym}`}
+                onClick={() => setEdited(basket.filter((x) => x !== sym))}
+              />
             </span>
           ))}
           <input
@@ -151,7 +200,10 @@ export function SignalWinRatePanel() {
             }}
             placeholder="add ↩"
             aria-label="Add a symbol to the basket"
-            className={cn(mono, 'h-[22px] w-16 border-0 bg-transparent text-dense-caption outline-none')}
+            className={cn(
+              mono,
+              'h-[22px] w-16 border-0 bg-transparent text-dense-caption outline-none'
+            )}
           />
         </span>
         <span className={cap}>Horizon</span>
@@ -180,7 +232,9 @@ export function SignalWinRatePanel() {
       </div>
       {basket.length === 0 ? (
         <p className="m-0 px-3 pb-2 text-dense-caption text-muted-foreground">
-          {watch.isLoading ? 'Reading the watchlist for the basket…' : 'The basket is empty — add a symbol.'}
+          {watch.isLoading
+            ? 'Reading the watchlist for the basket…'
+            : 'The basket is empty — add a symbol.'}
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -199,81 +253,114 @@ export function SignalWinRatePanel() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => {
-                const noise = r.sample === 'noise'
-                return (
-                  <tr key={r.key} className={cn(noise && 'opacity-70')}>
-                    <td className={cn(td, 'text-left font-sans text-dense-body font-medium')}>{r.name}</td>
-                    <td className={cn(td, 'text-left font-sans text-dense-caption text-muted-foreground')}>{r.sourceLabel}</td>
-                    <td className={cn(td, 'text-left font-sans text-dense-caption text-[var(--sk-soft)]')}>
-                      {r.side === 'buy' ? '▲ buy' : '▼ sell'}
-                    </td>
-                    {r.state === 'loading' ? (
-                      <td colSpan={5} className={cn(td, 'text-muted-foreground')}>
-                        …
-                      </td>
-                    ) : r.state === 'failed' ? (
-                      <td colSpan={5} className={cn(td, 'text-left font-sans text-dense-caption text-destructive')} title={r.error ?? undefined}>
-                        not read — {(r.error ?? '').slice(0, 80)}
-                      </td>
-                    ) : (
-                      <>
-                        <td
-                          className={td}
-                          title={r.nRaw != null && r.n != null && r.nRaw !== r.n ? `${r.nRaw} before overlapping signals were deduped` : undefined}
-                        >
-                          {r.n ?? '—'}
-                        </td>
-                        <td className={td}>{pct(r.win)}</td>
-                        <td className={cn(td, 'text-muted-foreground')}>{pct(r.base)}</td>
-                        <td
-                          className={cn(
-                            td,
-                            'font-semibold',
-                            noise || r.edge == null || Math.round(r.edge * 100) === 0
-                              ? 'text-muted-foreground'
-                              : r.edge > 0
-                                ? 'text-[var(--color-profit)]'
-                                : 'text-[var(--color-loss)]',
-                          )}
-                        >
-                          {fmtPt(r.edge)}
-                          {r.edgeCi ? (
-                            <div className="text-dense-micro font-normal text-muted-foreground" title={ciTitle(r.ciMethod)}>
-                              {fmtPt(r.edgeCi[0])} to {fmtPt(r.edgeCi[1])}
-                            </div>
-                          ) : null}
-                        </td>
-                        <td className={cn(td, 'text-left')}>
-                          {r.sample && r.sample !== 'ok' ? (
-                            <DenseTag size="cell" variant={noise ? 'danger' : 'warning'}>
-                              {r.sample}
-                            </DenseTag>
-                          ) : null}
-                        </td>
-                      </>
-                    )}
-                    <td className={cn(td, 'whitespace-nowrap')}>
-                      {first ? (
-                        <Link
-                          to={withSymbolParam(withChartSignal(SYMBOL_PATH, r.chartSignal), first)}
-                          title={`Open ${first} with ${r.name} marked`}
-                          className="font-sans text-dense-caption text-[var(--sk-accent)] hover:underline"
-                        >
-                          chart ↗
-                        </Link>
-                      ) : null}
+              {groups.map((g) => [
+                g.head ? (
+                  <tr key={`${g.key}-head`} data-sr-group="">
+                    <td colSpan={9} className={cn(td, 'text-left font-sans text-dense-caption')}>
+                      <span className="font-semibold text-foreground">{g.head.title}</span>
+                      <span className="text-muted-foreground">
+                        {' · '}
+                        <span className={mono}>{g.head.method}</span> — {g.head.basis}
+                      </span>
                     </td>
                   </tr>
-                )
-              })}
+                ) : null,
+                ...g.rows.map((r) => {
+                  const noise = r.sample === 'noise'
+                  return (
+                    <tr key={r.key} className={cn(noise && 'opacity-70')}>
+                      <td className={cn(td, 'text-left font-sans text-dense-body font-medium')}>
+                        {r.name}
+                      </td>
+                      <td
+                        className={cn(
+                          td,
+                          'text-left font-sans text-dense-caption text-muted-foreground'
+                        )}
+                      >
+                        {r.sourceLabel}
+                      </td>
+                      <td
+                        className={cn(
+                          td,
+                          'text-left font-sans text-dense-caption text-[var(--sk-soft)]'
+                        )}
+                      >
+                        {r.side === 'buy' ? '▲ buy' : '▼ sell'}
+                      </td>
+                      {r.state === 'loading' ? (
+                        <td colSpan={5} className={cn(td, 'text-muted-foreground')}>
+                          …
+                        </td>
+                      ) : r.state === 'failed' ? (
+                        <td
+                          colSpan={5}
+                          className={cn(
+                            td,
+                            'text-left font-sans text-dense-caption text-destructive'
+                          )}
+                          title={r.error ?? undefined}
+                        >
+                          not read — {(r.error ?? '').slice(0, 80)}
+                        </td>
+                      ) : (
+                        <>
+                          <td className={td} title={nTitle(r) || undefined}>
+                            {r.n ?? '—'}
+                          </td>
+                          <td className={td}>{pct(r.win)}</td>
+                          <td className={cn(td, 'text-muted-foreground')}>{pct(r.base)}</td>
+                          <td
+                            className={cn(
+                              td,
+                              'font-semibold',
+                              noise || r.edge == null || /^0(\.0)? pt$/.test(edgeText(r))
+                                ? 'text-muted-foreground'
+                                : r.edge > 0
+                                  ? 'text-[var(--color-profit)]'
+                                  : 'text-[var(--color-loss)]'
+                            )}
+                            title={edgeTitle(r)}
+                          >
+                            {edgeText(r)}
+                            {ciText(r) ? (
+                              <div className="text-dense-caption font-normal text-muted-foreground">
+                                {ciText(r)}
+                              </div>
+                            ) : null}
+                          </td>
+                          <td className={cn(td, 'text-left')}>
+                            {r.sample && r.sample !== 'ok' ? (
+                              <DenseTag size="cell" variant={noise ? 'danger' : 'warning'}>
+                                {r.sample}
+                              </DenseTag>
+                            ) : null}
+                          </td>
+                        </>
+                      )}
+                      <td className={cn(td, 'whitespace-nowrap')}>
+                        {first ? (
+                          <Link
+                            to={withSymbolParam(withChartSignal(SYMBOL_PATH, r.chartSignal), first)}
+                            title={`Open ${first} with ${r.name} marked`}
+                            className="font-sans text-dense-caption text-[var(--sk-accent)] hover:underline"
+                          >
+                            chart ↗
+                          </Link>
+                        ) : null}
+                      </td>
+                    </tr>
+                  )
+                }),
+              ])}
             </tbody>
           </table>
         </div>
       )}
       <p className="m-0 text-pretty border-t border-border px-3 py-2 text-dense-caption leading-normal text-muted-foreground">
-        Win = the close {h} sessions after the signal moved its way. Baseline = the same names over every session in the window.{' '}
-        {basisNote(rows)} Under 5 signals reads noise, under 30 thin. Same library as the screener, the chart and the simulator —{' '}
+        Win = the close {h} sessions after the signal moved its way. Baseline = the same names over
+        every session in the window. {basisNote(rows)} Under 5 signals reads noise, under 30 thin.
+        Same library as the screener, the chart and the simulator —{' '}
         <Link to={pineLibraryPath()} className="text-[var(--sk-accent)] hover:underline">
           Pine library
         </Link>

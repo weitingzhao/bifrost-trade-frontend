@@ -176,6 +176,26 @@ describe('Simulator tab', () => {
     })
   })
 
+  it('says a stored signal run carries no schedule comparison (Rev .160 Q3)', async () => {
+    fetchSimDetail.mockResolvedValue({ row, trades: [], equity: [] })
+    const signalRow = {
+      ...row,
+      id: 'bt_sim_pine0001',
+      event_def: { kind: 'pine_signal', params: { script: 'supertrend', side: 'buy', offset_sessions: 0, symbols: ['SPY'] } },
+      summary: { ...summary, entry_timing: { version: 2, anchor: 'session_after_signal' } },
+    } as unknown as BacktestRunRow
+    renderTab({ rows: [signalRow] })
+    expect(await screen.findByText(/Signal entry vs schedule is not stored with a run/)).toBeTruthy()
+    expect(screen.getAllByText(/Pine Supertrend buy \+1/).length).toBeGreaterThan(0)
+  })
+
+  it('shows no such line for a schedule run', async () => {
+    fetchSimDetail.mockResolvedValue({ row, trades: [], equity: [] })
+    renderTab()
+    await screen.findAllByText(/every 5|Put credit spread/)
+    expect(screen.queryByText(/is not stored with a run/)).toBeNull()
+  })
+
   it('greys Run without a Research identity and says why', () => {
     researchAuthStore.clear()
     renderTab({ rows: [], builderOpen: true })

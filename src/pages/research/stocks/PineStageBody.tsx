@@ -68,7 +68,7 @@ export function PineStageBody({
         pressed={!!screen.on[c.id]}
         onPressedChange={() => onChip(c.id, c.label)}
         count={cc.n == null ? '—' : String(cc.n)}
-        title={`${r.name} ${side} within ${win} · ${cc.n ?? '—'} ${cc.where}`}
+        title={`${r.name} ${side} within ${win} · ${cc.n ?? '—'} names across the market (not this pool)`}
         className="h-[22px] px-2 text-dense-meta"
       >
         {side === 'buy' ? '↑ buy' : '↓ sell'}

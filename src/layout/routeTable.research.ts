@@ -166,7 +166,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     design: {
       state: 'reviewing',
-      rev: '2026-10-05.159',
+      rev: '2026-10-06.160',
       note: DESIGN_NOTES['/research/stocks'],
     },
   },
@@ -347,7 +347,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .158–.159 B4 (Indicator & Pine panel under the lens table), waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-05.159',
+      rev: '2026-10-06.160',
       note: DESIGN_NOTES['/research/signal-decay'],
     },
   },
@@ -368,7 +368,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .158–.159 B3 Simulator + B5 Pine library, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-05.159',
+      rev: '2026-10-06.160',
       note: DESIGN_NOTES['/research/backtest'],
     },
   },

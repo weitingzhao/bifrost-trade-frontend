@@ -276,6 +276,12 @@ export function SimulatorTab({
           ) : null}
           {showLive && live && baseline ? (
             <EntryComparison signal={live} baseline={baseline} lib={pineLib} />
+          ) : !showLive && view && view.entry.kind !== 'schedule' ? (
+            // Rev .160 Q3: the comparison is a second run this page makes, so a stored run has none.
+            <p className={cn(panel, 'm-0 px-3 py-2 text-dense-caption text-muted-foreground')}>
+              Signal entry vs schedule is not stored with a run. Run this configuration again with Compare with the
+              schedule on to see it.
+            </p>
           ) : null}
           {view ? (
             <SimResult

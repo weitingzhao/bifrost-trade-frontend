@@ -93,6 +93,8 @@ export const QUERY_KEYS = {
       ['research-engine', 'pine', 'signal-stats', script, side, basket] as const,
     indicatorSignalStats: (signal: string, basket: string) =>
       ['research-engine', 'indicators', 'signal-stats', signal, basket] as const,
+    /** What each saved-screen vocabulary accepts (`/research/screens/vocabulary`). */
+    screenVocabulary: ['research-engine', 'saved-screens', 'vocabulary'] as const,
     /** research-api `/health` — its version decides the simulator's offset basis. */
     health: ['research-engine', 'health'] as const,
     alerts: ['research-engine', 'alerts'] as const,

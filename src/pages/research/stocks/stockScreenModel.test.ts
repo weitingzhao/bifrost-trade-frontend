@@ -26,7 +26,6 @@ import {
   type ScreenState,
 } from './stockScreenModel'
 import { LEGACY_SCREEN, STAGES, STAGE_OF, pineChartSignal, stagesWithPine } from './stockScreenStages'
-import { toSavedDefinition } from './stockScreenView'
 
 const MODEL_W = { trend: 35, growth: 30, mom: 20, opt: 15 }
 
@@ -192,12 +191,6 @@ describe('versions and saving', () => {
     expect(versionDiff(b, a)).toBe('vs v1 · +CCC  −BBB')
   })
 
-  it('saves only what the saved-screen vocabulary can hold, and names the rest', () => {
-    const ok = toSavedDefinition({ on: { price_gt_sma50: true, eps_acc_fy: true, m_sepa: true }, mins: {} }, STAGES)
-    expect(ok.definition).toEqual({ q: '', paths: ['SETUP', 'PIVOT'], grades: [], min_composite: 0, tech: ['price_gt_sma50'], fund: ['eps_acc_fy'] })
-    const no = toSavedDefinition({ on: { bb_squeeze: true }, mins: { trend: 8 } }, STAGES)
-    expect(no.blocked).toEqual(['Trend template ≥ 8', 'BB squeeze (width < 50D avg)'])
-  })
 })
 
 describe('focus and hover (Rev .131)', () => {

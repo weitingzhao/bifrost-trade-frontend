@@ -10,8 +10,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FilterChip, FilterTray } from '@bifrost/ui'
-import { SegmentControl } from '@/components/data-display'
+import { CloseButton, SegmentControl } from '@/components/data-display'
 import { pineLibraryPath } from '@/lib/symbolLink'
+import { pineOffPicks } from './stockScreenStages'
 import { pineOf, type PineStageSettings, type PineWithin, type ScreenState, type Stage, type StageChip } from './stockScreenModel'
 
 const FOLD = 10
@@ -58,6 +59,15 @@ export function PineStageBody({
   const rows = scriptRows(stage.chips)
   const shown = rows.length > FOLD && !more ? rows.slice(0, FOLD) : rows
   const win = `${pine.within} session${pine.within === 1 ? '' : 's'}`
+  // Picks of scripts the library has switched off since the screen was saved:
+  // kept in their place, drawn missing, evaluating nothing (Rev .160 receipt).
+  const off = pineOffPicks(stage, screen.on)
+  const offBy = new Map<string, ('buy' | 'sell')[]>()
+  for (const id of off) {
+    const [, script, side] = id.split(':')
+    offBy.set(script, [...(offBy.get(script) ?? []), side as 'buy' | 'sell'])
+  }
+  const offScripts = [...offBy.entries()]
   const chip = (r: ScriptRow, c: StageChip | null) => {
     if (!c) return null
     const side = c.pine!.side
@@ -129,6 +139,39 @@ export function PineStageBody({
           ]
         })}
       </div>
+      {off.length ? (
+        <div className="flex flex-col gap-0.5">
+          <div aria-hidden className="my-1 h-px bg-foreground/[0.08]" />
+          {offScripts.map(([script, sides]) => (
+            <div key={script} className="flex min-h-7 items-center gap-1.5">
+              <span className="truncate text-dense-label text-muted-foreground" title={script}>
+                {script}
+              </span>
+              <span className="rounded-full bg-foreground/[0.09] px-1.5 text-dense-caption leading-4 text-[var(--sk-mute2)]">off</span>
+              <span className="ml-auto inline-flex items-center gap-1">
+                <FilterTray variant="joined" aria-label={`${script} (off)`}>
+                  {sides.map((side) => (
+                    <FilterChip
+                      key={side}
+                      pressed={false}
+                      missing
+                      title="script off — switched off in the Pine library"
+                      className="h-[22px] px-2 text-dense-meta"
+                    >
+                      {side === 'buy' ? '↑ buy' : '↓ sell'}
+                    </FilterChip>
+                  ))}
+                </FilterTray>
+                <CloseButton
+                  size="sm"
+                  label={`Remove ${script} from this screen`}
+                  onClick={() => sides.forEach((side) => onChip(`pine:${script}:${side}`, `${script} ${side === 'buy' ? '↑' : '↓'}`))}
+                />
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
       {rows.length > FOLD ? (
         <button type="button" className="self-start text-dense-meta text-[var(--sk-accent)] hover:underline" onClick={() => setMore(!more)}>
           {more ? 'Show fewer' : `Show ${rows.length - FOLD} more`}

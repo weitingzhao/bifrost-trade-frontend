@@ -111,5 +111,5 @@ export function forkBody(src: ResearchObjective, today: string): ObjectiveCreate
 
 /** A promoted screen: a draft whose origin names the screen; its filters ride with the origin. */
 export function screenOrigin(s: SavedScreen, today: string): Record<string, unknown> {
-  return { kind: 'screen', screen_id: s.id, name: s.name, definition: s.definition, at: today }
+  return { kind: 'screen', screen_id: s.id, name: s.name, vocabulary: s.vocabulary, definition: s.definition, at: today }
 }

@@ -228,6 +228,19 @@ export function pineChartSignal(on: Readonly<Record<string, boolean>>): string |
   return id ? `pine:${id.split(':')[1]}` : null
 }
 
+/**
+ * Pine picks the screen holds whose script is not among the stage's chips —
+ * switched off (or removed) in the Pine library since the screen was saved.
+ * They are kept and shown as off, and evaluate nothing (Rev .160 receipt).
+ */
+export function pineOffPicks(stage: Pick<Stage, 'id' | 'chips'>, on: Readonly<Record<string, boolean>>): string[] {
+  if (stage.id !== 'pine') return []
+  const live = new Set(stage.chips.map((c) => c.id))
+  return Object.keys(on)
+    .filter((k) => on[k] && k.startsWith('pine:') && !live.has(k))
+    .sort()
+}
+
 /** A chip nothing can evaluate — the whole stage missing, or the chip itself. */
 export function chipMissing(stageId: Stage['id'], chipId: string): string | null {
   const st = STAGE_OF[stageId]

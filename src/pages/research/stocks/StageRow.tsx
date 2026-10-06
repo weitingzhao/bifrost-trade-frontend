@@ -14,7 +14,7 @@ import { FilterChip } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
 import { pineOf, stageActive, type PineStageSettings, type ScreenState, type Stage, type StageCount } from './stockScreenModel'
 import { PineStageBody } from './PineStageBody'
-import { chipMissing } from './stockScreenStages'
+import { chipMissing, pineOffPicks } from './stockScreenStages'
 
 /**
  * One condition chip — the DS `FilterChip` (Rev .157 §17.10): on = ink 15%,
@@ -109,11 +109,13 @@ export function StageRow({
     const p = pineOf(screen)
     labels.push(`within ${p.within}${labels.length > 1 ? ` · ${p.match}` : ''}`)
   }
+  const offN = pineOffPicks(st, screen.on).length
+  if (offN) labels.push(`${offN} off`)
   const summary = agree
     ? `${active ? `${labels.join(' · ')} · ` : ''}set by the cards above`
     : st.missing
       ? 'no store answers it'
-      : active
+      : active || offN
         ? labels.join(' · ')
         : 'pass-through'
   const expanded = agree ? picked >= 2 : open

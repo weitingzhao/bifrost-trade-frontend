@@ -7,7 +7,7 @@
  */
 import { useState } from 'react'
 import { stageActive, type PineStageSettings, type ScreenState, type Stage, type StageCount } from './stockScreenModel'
-import { chipMissing } from './stockScreenStages'
+import { chipMissing, pineOffPicks } from './stockScreenStages'
 import { ScreenChip, StageRow } from './StageRow'
 import type { StartChoice } from './stockScreenView'
 
@@ -178,7 +178,7 @@ export function ScreenPanel({
           total={stages.length}
           poolN={poolN}
           screen={screen}
-          open={stageActive(st, screen) || !!openSt[st.id]}
+          open={stageActive(st, screen) || !!openSt[st.id] || pineOffPicks(st, screen.on).length > 0}
           onOpen={() => {
             const open = stageActive(st, screen) || !!openSt[st.id]
             setOpenSt((o) => ({ ...o, [st.id]: !open }))

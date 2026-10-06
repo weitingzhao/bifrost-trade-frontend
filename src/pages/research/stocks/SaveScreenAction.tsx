@@ -1,35 +1,50 @@
 /**
- * Save screen (head action). The saved-screen vocabulary (v1,
- * `research.saved_screen`) holds paths, grades, a composite floor and the
- * required trend / growth conditions — so a screen saves when every active
- * condition is one of those, and otherwise the button says which it cannot
- * hold. Never a silently smaller screen.
+ * Save screen (head action). The screen is saved as `stock_screen.v2`
+ * (research 0.181.0): every stage's conditions and "at least N", the Pine
+ * block (picks, window, match) and the universe — Rank by is a view, not part
+ * of the screen. Before Save, the definition is checked against Research's own
+ * vocabulary (`/research/screens/vocabulary`); a name it does not accept keeps
+ * the button off and is named, the same check its 422 would make.
  */
 import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
 import { PageHeadAction } from '@/components/layout'
-import { createSavedScreen } from '@/api/research/savedScreens'
+import { QUERY_KEYS } from '@/constants/queryKeys'
+import { SCREEN_VOCABULARY_V2, createSavedScreen, fetchScreenVocabulary } from '@/api/research/savedScreens'
 import { notify } from '@/lib/shellNotify'
 import type { ScreenState, Stage } from './stockScreenModel'
-import { toSavedDefinition } from './stockScreenView'
+import { toSavedDefinitionV2, vocabularyGaps } from './stockScreenView'
 
-export function SaveScreenAction({ screen, stages, nOn }: { screen: ScreenState; stages: readonly Stage[]; nOn: number }) {
+export function SaveScreenAction({
+  screen,
+  stages,
+  nOn,
+  universe,
+}: {
+  screen: ScreenState
+  stages: readonly Stage[]
+  nOn: number
+  universe: string
+}) {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
-  const plan = toSavedDefinition(screen, stages)
+  const definition = toSavedDefinitionV2(screen, stages, universe)
+  const vocab = useQuery({ queryKey: QUERY_KEYS.researchEngine.screenVocabulary, queryFn: fetchScreenVocabulary, staleTime: 5 * 60_000 })
+  const v2 = vocab.data?.[SCREEN_VOCABULARY_V2]
+  const gaps = v2 ? vocabularyGaps(definition, v2) : []
   const save = useMutation({
     mutationFn: () =>
-      createSavedScreen({ name: name.trim(), definition: plan.definition!, origin_page: '/research/stocks' }),
+      createSavedScreen({ name: name.trim(), definition, vocabulary: SCREEN_VOCABULARY_V2, origin_page: '/research/stocks' }),
     onSuccess: (sc) => {
       setOpen(false)
       setName('')
       void qc.invalidateQueries({ queryKey: ['research-engine', 'saved-screens'] })
-      notify(`Saved “${sc.name}” to My screens. It re-runs on tomorrow’s data; the model choice is not part of it.`)
+      notify(`Saved “${sc.name}” to My screens — its stages, the Pine window and match, and the universe. Rank by is not part of it.`)
     },
   })
-  if (open && plan.definition) {
+  if (open && nOn > 0 && gaps.length === 0) {
     return (
       <>
         {save.isError ? (
@@ -61,11 +76,11 @@ export function SaveScreenAction({ screen, stages, nOn }: { screen: ScreenState;
   const title =
     nOn === 0
       ? 'No condition is on — nothing to save.'
-      : plan.blocked
-        ? `The saved-screen vocabulary (v1) holds required trend and growth conditions and SEPA path; it cannot hold: ${plan.blocked.join(' · ')}.`
-        : 'Save the conditions as one screen (research.saved_screen). The universe and the model are not part of it.'
+      : gaps.length
+        ? `Research’s screen vocabulary does not accept: ${gaps.join(' · ')}.`
+        : 'Save the stages, the Pine window and match, and the universe as one screen (research.saved_screen · stock_screen.v2). Rank by is not part of it.'
   return (
-    <PageHeadAction primary disabled={nOn === 0 || !!plan.blocked} onClick={() => setOpen(true)} title={title}>
+    <PageHeadAction primary disabled={nOn === 0 || gaps.length > 0} onClick={() => setOpen(true)} title={title}>
       Save screen
     </PageHeadAction>
   )

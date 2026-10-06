@@ -17,7 +17,7 @@ import { ViewState } from '@bifrost/ui'
 import { PageFaceSwitch, PageHead, PageHeadAction, PageShell } from '@/components/layout'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { SegmentControl, type SegmentOption } from '@/components/data-display'
-import { fetchSavedScreens, type SavedScreen } from '@/api/research/savedScreens'
+import { fetchSavedScreens, screenV1, screenV2, type SavedScreen } from '@/api/research/savedScreens'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { usePageViewState } from '@/lib/pageView'
 import { notify } from '@/lib/shellNotify'
@@ -31,7 +31,7 @@ import { ResultHead } from './ResultHead'
 import { ResultTable, type Scored, type SortKey } from './ResultTable'
 import { SaveScreenAction } from './SaveScreenAction'
 import { ScreenPanel } from './ScreenPanel'
-import { presetChoices, type WeightSet } from './stockScreenView'
+import { presetChoices, screenFromV1, screenFromV2, type WeightSet } from './stockScreenView'
 import { WhyDrawer } from './WhyDrawer'
 import { useStockScreenData } from './useStockScreenData'
 import {
@@ -62,7 +62,7 @@ import {
   type ScreenState,
   type ScreenVersion,
 } from './stockScreenModel'
-import { LEGACY_SCREEN, pineChartSignal, stagesWithPine } from './stockScreenStages'
+import { LEGACY_SCREEN, pineChartSignal, pineOffPicks, stagesWithPine } from './stockScreenStages'
 import { usePineLibrary } from '@/hooks/usePineLibrary'
 
 type UniverseId = 'all' | 'options' | 'sp500' | 'watch' | 'book'
@@ -241,17 +241,27 @@ export default function StockScreenPage() {
 
   const saved = useQuery({ queryKey: ['research-engine', 'saved-screens'], queryFn: fetchSavedScreens, staleTime: 60_000 })
   const applySaved = (s: SavedScreen) => {
-    const on: Record<string, boolean> = {}
-    for (const id of [...s.definition.tech, ...s.definition.fund]) on[id] = true
-    const paths = s.definition.paths ?? []
-    if (paths.length && paths.every((p) => p === 'SETUP' || p === 'PIVOT')) on.m_sepa = true
-    const lost = [
-      paths.some((p) => p !== 'SETUP' && p !== 'PIVOT') ? `path ${paths.join('|')}` : null,
-      s.definition.grades?.length ? `grade ${s.definition.grades.join('|')}` : null,
-      s.definition.min_composite > 0 ? `composite ≥ ${s.definition.min_composite}` : null,
-      s.definition.q ? `search “${s.definition.q}”` : null,
-    ].filter(Boolean)
-    commit({ on, mins: {} }, `start ${s.name}`, `saved:${s.id}`)
+    const v2 = screenV2(s)
+    if (v2) {
+      const { screen: next, universe: uni } = screenFromV2(v2)
+      const u = uni && uni in UNIVERSE_LABEL ? (uni as UniverseId) : universe
+      if (u !== universe) setUniverse(u)
+      commit(next, `start ${s.name}`, `saved:${s.id}`, u)
+      const off = pineOffPicks(stages.find((st) => st.id === 'pine') ?? { id: 'pine', chips: [] }, next.on)
+      notify(
+        off.length
+          ? `Loaded “${s.name}”. Switched off in the Pine library: ${off.map((id) => id.split(':').slice(1).join(' ')).join(' · ')} — kept, evaluates nothing.`
+          : `Loaded “${s.name}” from My screens.`,
+      )
+      return
+    }
+    const v1 = screenV1(s)
+    if (!v1) {
+      notify(`“${s.name}” speaks ${s.vocabulary}, which this page does not read.`)
+      return
+    }
+    const { screen: next, lost } = screenFromV1(v1)
+    commit(next, `start ${s.name}`, `saved:${s.id}`)
     notify(
       lost.length
         ? `Loaded “${s.name}”. Not a stage on this face: ${lost.join(' · ')} — open it on the Method face.`
@@ -469,7 +479,7 @@ export default function StockScreenPage() {
         info="One page for picking stocks. A model ranks, a screen cuts, and each works alone or with the other: choose a universe, a model to order it (or none), then a screen to narrow it. The Method face (⧉) is where models are defined, conditions are written and screens are versioned."
         actions={
           <>
-            <SaveScreenAction screen={screen} stages={stages} nOn={nOn} />
+            <SaveScreenAction screen={screen} stages={stages} nOn={nOn} universe={universe} />
             <PageHeadAction
               disabled
               title="An objective from a screen writes a standing schedule, and what it stamps as its source is a product call — owed, as on Vol ratings."

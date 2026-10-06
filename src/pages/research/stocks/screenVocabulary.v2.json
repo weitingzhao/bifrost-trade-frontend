@@ -1,0 +1,139 @@
+{
+  "_comment": "Snapshot of bifrost-research 0.181.0 repositories/saved_screen.vocabulary_catalog()['stock_screen.v2'] without the live script ids. stockScreenVocabulary.test.ts pins Stock screen's stages to it both ways; regenerate from Research when either side changes.",
+  "keys": [
+    "pine",
+    "stages",
+    "universe"
+  ],
+  "stages": {
+    "agree": {
+      "kind": "agree",
+      "max": 3,
+      "conditions": [
+        "m_sepa",
+        "m_radar",
+        "m_prem"
+      ]
+    },
+    "trend": {
+      "kind": "min",
+      "max": 11,
+      "conditions": [
+        "avg_volume_50_gt_threshold",
+        "close_ge_high52_x_0_75",
+        "close_ge_low52_x_1_3",
+        "crs_ge_70",
+        "price_gt_sma150",
+        "price_gt_sma200",
+        "price_gt_sma50",
+        "sma150_gt_sma200",
+        "sma200_rising_1m",
+        "sma50_gt_sma150",
+        "sma50_gt_sma200"
+      ]
+    },
+    "growth": {
+      "kind": "min",
+      "max": 8,
+      "conditions": [
+        "eps_3y_ge_15pct",
+        "eps_acc_2q",
+        "eps_acc_fy",
+        "eps_q2q_ge_25pct",
+        "rev_3y_ge_15pct",
+        "rev_acc_2q",
+        "rev_acc_fy",
+        "rev_q2q_ge_25pct"
+      ]
+    },
+    "momtier": {
+      "kind": "min",
+      "max": 10,
+      "conditions": [
+        "rsi_above_50",
+        "rsi_healthy_range",
+        "macd_bullish",
+        "macd_strong",
+        "roc_10_positive",
+        "roc_21_positive",
+        "rs_gt_spy",
+        "volume_expanding",
+        "volume_surge",
+        "price_gt_sma10"
+      ]
+    },
+    "radar": {
+      "kind": "any",
+      "max": null,
+      "conditions": [
+        "grade_aplus",
+        "grade_a",
+        "grade_b",
+        "grade_c",
+        "grade_d"
+      ]
+    },
+    "structure": {
+      "kind": "any",
+      "max": null,
+      "conditions": [
+        "bb_squeeze",
+        "bb_tight_squeeze",
+        "adx_trending",
+        "adx_strong_trend",
+        "aroon_bullish",
+        "aroon_up_strong",
+        "vol_contracting",
+        "vol_tight_contraction"
+      ]
+    },
+    "sentiment": {
+      "kind": "any",
+      "max": null,
+      "conditions": [
+        "si_declining",
+        "low_short_float",
+        "high_days_to_cover",
+        "short_float_declining",
+        "low_short_volume",
+        "sv_ratio_declining"
+      ]
+    },
+    "catalyst": {
+      "kind": "any",
+      "max": null,
+      "conditions": [
+        "n8k_202_7d",
+        "n8k_101_7d",
+        "n8k_502_7d",
+        "n8k_any_7d"
+      ]
+    },
+    "options": {
+      "kind": "all",
+      "max": null,
+      "conditions": [
+        "ivr_ge_40",
+        "ivr_ge_60",
+        "vrp_pct_ge_70"
+      ]
+    }
+  },
+  "pine": {
+    "windows": [
+      1,
+      5,
+      10
+    ],
+    "match": [
+      "any",
+      "all"
+    ]
+  },
+  "universes": [
+    "all",
+    "options",
+    "watch",
+    "book"
+  ]
+}

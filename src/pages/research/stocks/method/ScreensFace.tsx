@@ -9,19 +9,28 @@
  * their forks, so this face says so rather than drawing a tree it cannot read.
  */
 import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ViewState } from '@bifrost/ui'
 import { PageFaceSwitch, PageHead, PageShell } from '@/components/layout'
-import { fetchSavedScreens, type SavedScreen } from '@/api/research/savedScreens'
+import { fetchSavedScreens, screenV1, screenV2, type SavedScreen } from '@/api/research/savedScreens'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { FUND_CONDS, TECH_CONDS } from '@/utils/sepaScreenModel'
 import { METHOD_INFO, METHOD_PATH, METHOD_TITLE, type MethodHead } from './methodHead'
+import { stagesWithPine } from '../stockScreenStages'
+import type { Stage } from '../stockScreenModel'
+import { usePineLibrary } from '@/hooks/usePineLibrary'
+import { describeV2 } from '../stockScreenView'
 
 const LABEL = new Map([...TECH_CONDS, ...FUND_CONDS])
 
-function conds(s: SavedScreen): string {
-  const d = s.definition
+/** A screen's conditions in words — v2 by Stock screen's stages, v1 by the SEPA wide table's filters. */
+function conds(s: SavedScreen, stages: readonly Stage[]): string {
+  const v2 = screenV2(s)
+  if (v2) return describeV2(v2, stages)
+  const d = screenV1(s)
+  if (!d) return `speaks ${s.vocabulary}`
   const parts = [
     d.paths?.length ? `path ${d.paths.join('|')}` : null,
     d.grades?.length ? `grade ${d.grades.join('|')}` : null,
@@ -36,6 +45,8 @@ function conds(s: SavedScreen): string {
 export function ScreensFace({ head }: { head: MethodHead }) {
   const q = useQuery({ queryKey: ['research-engine', 'saved-screens'], queryFn: fetchSavedScreens, staleTime: 60_000 })
   const screens = q.data?.screens ?? []
+  const pineLib = usePineLibrary()
+  const stages = useMemo(() => stagesWithPine(pineLib.scripts), [pineLib.scripts])
   return (
     <PageShell padding="compact" className="space-y-3">
       <PageHead title={METHOD_TITLE} info={METHOD_INFO} tabs={head.tabs} tab={head.tab} onTab={head.onTab} />
@@ -78,7 +89,7 @@ export function ScreensFace({ head }: { head: MethodHead }) {
                   <span className="font-mono text-dense-caption text-muted-foreground" title={`vocabulary ${s.vocabulary}`}>
                     {s.origin_page ?? '—'} · {s.created_at.slice(0, 10)}
                   </span>
-                  <span className="col-span-2 text-dense-meta text-[var(--sk-soft)]">{conds(s)}</span>
+                  <span className="col-span-2 text-dense-meta text-[var(--sk-soft)]">{conds(s, stages)}</span>
                 </div>
               ))}
             </div>

@@ -104,6 +104,7 @@ describe('one tree, both homes', () => {
       ['Validate', 'caption'],
       ['Signal Decay', 'row'],
       ['Backtest', 'row'],
+      ['Pine library', 'row'],
     ])
   })
 

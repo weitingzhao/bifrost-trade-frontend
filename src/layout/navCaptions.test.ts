@@ -94,8 +94,10 @@ describe('the Research tree uses captions where §5a.7 says to', () => {
     //
     // The Book signpost row (2026-09-22) left on 2026-09-29 (Owner): the
     // design leaves it out on purpose, and Filter pages finds the Book.
-    // Nine since Rev .121: Stock ratings and Stock screen are one page.
-    expect(rows).toHaveLength(9)
+    // Nine since Rev .121: Stock ratings and Stock screen are one page. Ten
+    // since 2026-10-06: Pine library got its own row (Owner; app-side, in
+    // "to ask" for Design until it says keep or fold back into Backtest).
+    expect(rows).toHaveLength(10)
     // The half of §5a.8 that still holds without exception: no row nests. The
     // equipment's pages are on the rail — a row with children here is the
     // tree filling up again.

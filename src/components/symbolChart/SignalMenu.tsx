@@ -147,7 +147,7 @@ export function SignalMenu(p: SignalMenuProps) {
             setOpen(false)
             navigate(manage)
           }}
-          title="Backtest › Pine library — add, copy or check a script"
+          title="Pine library — add, copy or check a script"
           className={cn(ROW, 'text-[var(--sk-mute2)] hover:text-[var(--sk-ink)]')}
         >
           Manage scripts ↗

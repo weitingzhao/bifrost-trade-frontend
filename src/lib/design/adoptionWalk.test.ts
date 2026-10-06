@@ -621,8 +621,11 @@ describe('the design walk, as it stands', () => {
     // and nothing here is waiting on Design any more. 0 on 2026-09-25: the
     // Owner carried the collapse out and all nine forward (redirectRoutes.ts
     // names where each capability went), so "to ask" is empty.
-    expect(counts.byState.staging).toBe(0)
-    expect(rows.filter((r) => r.state === 'staging').map((r) => r.path)).toEqual([])
+    // 0 → 1 on 2026-10-06: the Pine library's own page and menu row (Owner),
+    // which the design draws as Backtest's third tab — asked of Design in
+    // design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.
+    expect(counts.byState.staging).toBe(1)
+    expect(rows.filter((r) => r.state === 'staging').map((r) => r.path)).toEqual(['/research/pine'])
     // Rev 2026-09-15.13: the design filled almost all of its own backlog — the
     // Risk layer, the Portfolio accounts cluster, the market and workbench data
     // pages, Copilot/Autopilot, Assignment. 82 routes, 78 with a prototype, and

@@ -380,6 +380,24 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       note: DESIGN_NOTES['/research/backtest'],
     },
   },
+  {
+    // App-side page (Owner 2026-10-06): the Pine library under its own menu row
+    // so it can be found; the design draws it as Backtest's third tab (Rev
+    // .158 B5), which stays. Receipt for Design:
+    // design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.
+    path: '/research/pine',
+    label: 'Pine library',
+    crumbs: VALIDATE,
+    symbolScope: true,
+    design: {
+      state: 'staging',
+      note:
+        'Owner 2026-10-06: the Pine library needs a menu row — nobody found the editor as Backtest\u2019s third tab, and no user script was ever saved. ' +
+        'Built app-side as its own page (the same library editor, PineLibraryTab) under Research \u203a Validate; every Manage scripts / Pine library link lands here. ' +
+        'The question for Design: keep it as a page with its own row, or fold it back into Backtest with a row that opens the tab. ' +
+        'Receipt: design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.',
+    },
+  },
 
   // ── Research · Workbench · Data ────────────────────────────────────────
   // Plumbing: neither takes a symbol, and what they answer is whether the

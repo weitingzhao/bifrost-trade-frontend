@@ -48,10 +48,10 @@ export function pineChartSignalOf(id: string): string {
 }
 
 /**
- * A Pine script's home: Backtest › Pine library with that script selected
- * (`?tab=pine&script=<id>`, Shell Spec §9). No id opens the library on its
- * first script.
+ * A Pine script's home: the Pine library page with that script selected
+ * (`/research/pine?script=<id>`, Owner 2026-10-06; it was Backtest's
+ * `?tab=pine`, which still works). No id opens the library on its first script.
  */
 export function pineLibraryPath(id?: string | null): string {
-  return `/research/backtest?tab=pine${id ? `&script=${encodeURIComponent(id)}` : ''}`
+  return `/research/pine${id ? `?script=${encodeURIComponent(id)}` : ''}`
 }

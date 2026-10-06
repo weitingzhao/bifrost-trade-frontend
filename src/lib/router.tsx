@@ -341,6 +341,10 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/research/validate/BacktestPage')),
       },
       {
+        path: 'research/pine',
+        lazy: lazyPage(() => import('@/pages/research/validate/PineLibraryPage')),
+      },
+      {
         path: 'research/event-radar',
         lazy: lazyPage(() => import('@/pages/research/alerts/AlertsPage')),
       },

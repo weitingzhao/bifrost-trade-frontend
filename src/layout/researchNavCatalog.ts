@@ -38,6 +38,7 @@ import {
   type LucideIcon,
   Columns2,
   FileText,
+  FileCode,
 } from 'lucide-react'
 import type { IconComponent, ShellNavGroup, ShellNavItem, ShellNavSubGroup } from '@bifrost/ui'
 import { foldGlyph, routeGlyph } from '@/lib/design/glyphs'
@@ -208,7 +209,13 @@ export const BENCHES: Bench[] = [
     id: 'validate',
     label: 'Validate',
     icon: foldGlyph('Validate') ?? History,
-    items: [route('Signal Decay', '/research/signal-decay', Activity), route('Backtest', '/research/backtest', History)],
+    // Pine library is app-side (Owner 2026-10-06): the design keeps it as
+    // Backtest's third tab, which had no menu row of its own.
+    items: [
+      route('Signal Decay', '/research/signal-decay', Activity),
+      route('Backtest', '/research/backtest', History),
+      route('Pine library', '/research/pine', FileCode),
+    ],
   },
 ]
 

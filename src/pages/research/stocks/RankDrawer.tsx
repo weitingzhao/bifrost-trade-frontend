@@ -10,6 +10,7 @@ import { VOL_LENSES } from '@/lib/research/volRatingsModel'
 import { cn } from '@/lib/utils'
 import { SEPA_LENSES, SEPA_PRESETS, type RankModel } from './stockScreenModel'
 import { PREMIUM_PRESETS, type WeightSet } from './stockScreenView'
+import type { NoneSort } from './stockScreenEarnings'
 
 const RANK_DESC: Record<RankModel, { title: string; desc: string }> = {
   sepa: {
@@ -24,7 +25,7 @@ const RANK_DESC: Record<RankModel, { title: string; desc: string }> = {
     title: 'Premium (vol model)',
     desc: 'Ranks the underlying for selling premium: IV rank, VRP, term slope, pin and terrain. It says nothing about the company.',
   },
-  none: { title: 'No model', desc: 'The screen alone: a set, not a ranking. Sort it by name.' },
+  none: { title: 'No model', desc: 'The screen alone: a set, not a ranking. Sort it by name, or by the next estimated print.' },
 }
 
 function presetIdOf(presets: readonly { id: string; weights: Record<string, number> }[], w: Record<string, number>) {
@@ -35,11 +36,15 @@ export function RankDrawer({
   model,
   weights,
   onWeights,
+  noneSort,
+  onNoneSort,
   source,
 }: {
   model: RankModel
   weights: WeightSet
   onWeights: (next: WeightSet) => void
+  noneSort: NoneSort
+  onNoneSort: (by: NoneSort) => void
   source: string
 }) {
   const d = RANK_DESC[model]
@@ -121,12 +126,11 @@ export function RankDrawer({
                 {
                   value: 'earn',
                   label: 'Earnings',
-                  disabled: true,
-                  title: 'Sorting the set by its next print is not built yet — each row’s Earn column carries Research’s estimate.',
+                  title: 'Nearest estimated print first (Research’s estimate, the Earn column); names without one last, A–Z.',
                 },
               ]}
-              value="sym"
-              onChange={() => {}}
+              value={noneSort}
+              onChange={(v) => onNoneSort(v as NoneSort)}
               size="xs"
               ariaLabel="Sort"
             />

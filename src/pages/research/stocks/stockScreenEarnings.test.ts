@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { EarningsReading } from '@/utils/earningsReading'
-import { earnCell, earningsWindowSets } from './stockScreenEarnings'
+import { earnCell, earningsWindowSets, orderNoModel } from './stockScreenEarnings'
 
 const expected = (daysAway: number): EarningsReading => ({
   kind: 'expected',
@@ -22,5 +22,15 @@ describe('stock screen earnings', () => {
     expect(earnCell(expected(-3)).text).toBe('3d late')
     expect(earnCell(none)).toMatchObject({ text: '—', title: 'No estimate: no 8-K on file.' })
     expect(earnCell(undefined).text).toBe('…')
+  })
+
+  // TD-179 ratchet: No model + Earnings orders by days to the estimated print,
+  // late first, and every name without an estimate last, A–Z.
+  it('orders No model by the next print, unknown last', () => {
+    const rows = ['ZE', 'ZA', 'ZF', 'ZC', 'ZB', 'ZD', 'ZG'].map((sym) => ({ row: { sym } }))
+    const earnings = { ZA: expected(30), ZB: expected(3), ZC: expected(-2), ZD: expected(3), ZE: none, ZG: none }
+    expect(orderNoModel(rows, 'earn', earnings).map((x) => x.row.sym)).toEqual(['ZC', 'ZB', 'ZD', 'ZA', 'ZE', 'ZF', 'ZG'])
+    expect(orderNoModel(rows, 'sym', earnings).map((x) => x.row.sym)).toEqual(['ZA', 'ZB', 'ZC', 'ZD', 'ZE', 'ZF', 'ZG'])
+    expect(rows[0].row.sym).toBe('ZE')
   })
 })

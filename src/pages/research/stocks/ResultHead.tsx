@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
 import { cn } from '@/lib/utils'
 import { RankDrawer } from './RankDrawer'
+import type { NoneSort } from './stockScreenEarnings'
 import { RANK_OPTIONS, type WeightSet } from './stockScreenView'
 import type { RankModel, ScreenVersion } from './stockScreenModel'
 
@@ -36,6 +37,8 @@ export function ResultHead({
   onToggleW,
   weights,
   onWeights,
+  noneSort,
+  onNoneSort,
   source,
   versions,
   cur,
@@ -56,6 +59,9 @@ export function ResultHead({
   onToggleW: () => void
   weights: WeightSet
   onWeights: (w: WeightSet) => void
+  /** No model's order (TD-179). */
+  noneSort: NoneSort
+  onNoneSort: (by: NoneSort) => void
   source: string
   versions: readonly ScreenVersion[]
   cur: number
@@ -132,7 +138,16 @@ export function ResultHead({
           </span>
         </div>
       </div>
-      {wOpen ? <RankDrawer model={model} weights={weights} onWeights={onWeights} source={source} /> : null}
+      {wOpen ? (
+        <RankDrawer
+          model={model}
+          weights={weights}
+          onWeights={onWeights}
+          noneSort={noneSort}
+          onNoneSort={onNoneSort}
+          source={source}
+        />
+      ) : null}
       <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5 border-b border-foreground/[0.06] px-3 py-1.5">
         <span data-sr-tb="label" className="mr-1">
           Versions

@@ -29,6 +29,7 @@ import { FlowPanel, type FunnelFocus } from './FlowPanel'
 import { MatchCards, type ModelReach } from './MatchCards'
 import { ResultHead } from './ResultHead'
 import { ResultTable, type Scored, type SortKey } from './ResultTable'
+import { orderNoModel, type NoneSort } from './stockScreenEarnings'
 import { SaveScreenAction } from './SaveScreenAction'
 import { ScreenPanel } from './ScreenPanel'
 import { presetChoices, screenFromV1, screenFromV2, type WeightSet } from './stockScreenView'
@@ -92,7 +93,7 @@ const FOOT: Record<RankModel, string> = {
   sepa: 'SEPA and the Trend / Growth stages read the same evaluation table: a name’s Trend 9/11 here is the count the Trend template stage tests. Grade · path are the mart’s cuts at Model weights.',
   radar: 'Radar is its own engine and grades A+ · A · B · C · D. It is not SEPA’s momentum tier. Factor columns are 0–100 sub-scores for the latest session.',
   premium: 'Premium ranks the underlying for selling options, not the company. The same model has its own page, Vol ratings, for one more version.',
-  none: 'No model: the screen is a set, A–Z. “Rule” names an active opportunity registered on the name; it does not say its entry conditions are met.',
+  none: 'No model: the screen is a set, A–Z or by the next estimated print (Earn). “Rule” names an active opportunity registered on the name; it does not say its entry conditions are met.',
 }
 
 const DEFAULT_W: WeightSet = { sepa: { ...SEPA_PRESETS[0].weights }, premium: { ...SERVER_WEIGHTS } }
@@ -107,6 +108,7 @@ export default function StockScreenPage() {
   const [weights, setWeights] = usePageViewState<WeightSet>('w', DEFAULT_W)
   const [sort, setSort] = usePageViewState<SortKey>('sort', 'score')
   const [dir, setDir] = usePageViewState<-1 | 1>('dir', -1)
+  const [nsort, setNsort] = usePageViewState<NoneSort>('nsort', 'sym')
   const [universe, setUniverse] = usePageViewState<UniverseId>('universe', 'all')
   const [screen, setScreen] = usePageViewState<ScreenState>('screen', EMPTY_SCREEN)
   const [sel, setSel] = usePageViewState<string | null>('sel', null)
@@ -324,7 +326,7 @@ export default function StockScreenPage() {
   const { rated, unrated } = useMemo(() => {
     const scored: Scored[] = shown.map((row) => ({ row, score: scoreOf(row) }))
     const bySym = (a: Scored, b: Scored) => a.row.sym.localeCompare(b.row.sym)
-    if (model === 'none') return { rated: scored.sort(bySym), unrated: [] as Scored[] }
+    if (model === 'none') return { rated: orderNoModel(scored, nsort, data.earnings), unrated: [] as Scored[] }
     const key = (x: Scored): number =>
       sort === 'trend'
         ? (x.row.sepa?.trendN ?? -1)
@@ -339,7 +341,7 @@ export default function StockScreenPage() {
       rated: scored.filter((x) => x.score != null).sort((a, b) => (key(b) - key(a)) * -dir || (b.score ?? 0) - (a.score ?? 0)),
       unrated: scored.filter((x) => x.score == null).sort(bySym),
     }
-  }, [shown, scoreOf, model, sort, dir])
+  }, [shown, scoreOf, model, sort, dir, nsort, data.earnings])
   const walk = useMemo(() => rated.concat(unrated).map((x) => x.row.sym), [rated, unrated])
 
   useEffect(() => {
@@ -640,7 +642,7 @@ export default function StockScreenPage() {
                   <ResultHead
                     title={
                       model === 'none'
-                        ? `${rated.length} names · A–Z`
+                        ? `${rated.length} names · ${nsort === 'earn' ? 'by next print' : 'A–Z'}`
                         : `${rated.length} ranked by ${MODEL_LABEL[model]}${unrated.length ? ` · ${unrated.length} not rated` : ''}`
                     }
                     version={curV ? `v${curV.v}` : 'v…'}
@@ -656,6 +658,8 @@ export default function StockScreenPage() {
                     onToggleW={() => setWOpen(!wOpen)}
                     weights={weights}
                     onWeights={setWeights}
+                    noneSort={nsort}
+                    onNoneSort={setNsort}
                     source={source[model]}
                     versions={versions}
                     cur={cur}

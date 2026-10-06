@@ -55,3 +55,30 @@ export function earnCell(r: EarningsReading | undefined): { text: string; title:
     muted: false,
   }
 }
+
+/** How No model orders the set (TD-179): by name, or by the next estimated print. */
+export type NoneSort = 'sym' | 'earn'
+
+/**
+ * No model's order. `earn` puts the nearest estimated print first — a late
+ * one (below zero days) leads, since its results are due now — and every
+ * name without an estimate (none, or not read yet) after them, A–Z.
+ */
+export function orderNoModel<T extends { row: { sym: string } }>(
+  scored: readonly T[],
+  by: NoneSort,
+  earnings: Readonly<Record<string, EarningsReading>>,
+): T[] {
+  const bySym = (a: T, b: T) => a.row.sym.localeCompare(b.row.sym)
+  if (by === 'sym') return [...scored].sort(bySym)
+  const days = (x: T): number | null => {
+    const r = earnings[x.row.sym]
+    return r?.kind === 'expected' ? r.next.daysAway : null
+  }
+  return [...scored].sort((a, b) => {
+    const da = days(a)
+    const db = days(b)
+    if (da == null || db == null) return da == null && db == null ? bySym(a, b) : da == null ? 1 : -1
+    return da - db || bySym(a, b)
+  })
+}

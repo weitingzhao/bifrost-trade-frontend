@@ -314,4 +314,41 @@ describe('Simulator tab', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Schedule entry' }))
     expect(panel.textContent).toContain('Signal entry vs schedule is not stored with a run')
   })
+
+  it('a run that was not stored does not say its comparison is stored with it', async () => {
+    fetchResearchHealth.mockResolvedValue({ status: 'ok', version: '0.183.0' })
+    const side = { n_trades: 4, win_rate: 0.5, total_pnl: -212, avg_pnl: -53, avg_days_held: 14.8, worst_trade: -455, max_drawdown: -1750 }
+    postSim.mockReset()
+    postSim.mockResolvedValue({
+      run_id: null,
+      run: { persisted: false },
+      summary: {
+        ...summary,
+        exit_reasons: { profit_take: 2, dte_exit: 1, pine_exit: 1 },
+        pine_exit_comparison: {
+          premium_only: side,
+          with_pine_exit: { ...side, total_pnl: -1157, avg_pnl: -289, exit_reasons: { pine_exit: 1 } },
+          delta: {},
+          paired: { n: 4, exits_changed: 1, avg_pnl_diff: -236, avg_pnl_diff_ci95: null, only_premium_only: 0, only_with_pine_exit: 0 },
+        },
+      },
+      trades: [],
+      equity: [],
+      params: {},
+      advisory: '',
+    })
+    researchAuthStore.setCredentials('t', 'tester')
+    renderTab({ rows: [], builderOpen: true })
+    await userEvent.click(screen.getByRole('button', { name: 'Pine script' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: /Compare with the schedule/ }))
+    await userEvent.click(screen.getByRole('button', { name: '+ Pine exit' }))
+    const run = screen.getByRole('button', { name: /Run simulation/ }) as HTMLButtonElement
+    await vi.waitFor(() => expect(run.disabled).toBe(false))
+    await userEvent.click(run)
+    const panel = await screen.findByRole('region', { name: 'Compared with' })
+    expect(screen.getByText('This run was not stored')).toBeTruthy()
+    expect(panel.textContent).toContain('same entries, only the exit differs')
+    expect(panel.textContent).not.toContain('stored with the run')
+    researchAuthStore.clear()
+  })
 })

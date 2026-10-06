@@ -273,6 +273,7 @@ export function SimulatorTab({
             <SimComparison
               exit={view.summary.pine_exit_comparison}
               signalRun={view.entry.kind !== 'schedule'}
+              stored={showLive ? Boolean(live?.run_id) : true}
               schedule={
                 showLive && live && baseline
                   ? {

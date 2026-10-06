@@ -28,6 +28,8 @@ export interface SimComparisonProps {
   exit?: PineExitComparison
   /** A signal run: the schedule page applies (fresh or stored). */
   signalRun: boolean
+  /** The run was stored, so its Pine-exit comparison is too; a run with persist off has it on this screen only. */
+  stored: boolean
   /** The schedule twin this page ran for a fresh signal run, if it did. */
   schedule?: { signal: Partial<SimSummary>; baseline: Partial<SimSummary>; events?: number } | null
 }
@@ -57,7 +59,7 @@ function Table({ rows, a, b, few }: { rows: CompareRow[]; a: string; b: string; 
   )
 }
 
-export function SimComparison({ exit, signalRun, schedule }: SimComparisonProps) {
+export function SimComparison({ exit, signalRun, stored, schedule }: SimComparisonProps) {
   const pages: { value: Page; label: string }[] = [
     ...(exit ? [{ value: 'exit' as const, label: 'Premium rules only' }] : []),
     ...(signalRun ? [{ value: 'schedule' as const, label: 'Schedule entry' }] : []),
@@ -69,7 +71,7 @@ export function SimComparison({ exit, signalRun, schedule }: SimComparisonProps)
   const sNote = s?.sample_note
   const note =
     page === 'exit'
-      ? 'stored with the run · same entries, only the exit differs'
+      ? `${stored ? 'stored with the run · ' : ''}same entries, only the exit differs`
       : schedule && s
         ? sNote && sNote !== 'ok'
           ? `${s.n_trades} trades (${sNote}) — read the difference as a lead, not a result`

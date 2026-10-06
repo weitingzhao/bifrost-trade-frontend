@@ -28,6 +28,24 @@ export type EventKind =
   /** A simulator run opened on a schedule stores this kind (no event). */
   | 'schedule'
 
+/**
+ * Kinds whose value is known only after their session's close (research
+ * `event_defs.SIGNAL_KINDS`): an entry offset counts from the next session
+ * (0 = the session after the signal) and may not be negative — research 0.175.0
+ * for indicator and Pine signals, 0.176.0 for SEPA hits and IV percentiles.
+ * Earnings and OpEx dates are known in advance: 0 is the event session.
+ */
+const SIGNAL_EVENT_KINDS: ReadonlySet<EventKind> = new Set<EventKind>([
+  'indicator_signal',
+  'pine_signal',
+  'sepa_hit',
+  'iv_percentile_threshold',
+])
+
+export function isSignalEventKind(kind: EventKind): boolean {
+  return SIGNAL_EVENT_KINDS.has(kind)
+}
+
 export interface EventDef {
   kind: EventKind
   params: Record<string, unknown>

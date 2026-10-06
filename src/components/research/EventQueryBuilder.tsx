@@ -31,11 +31,12 @@ import { SegmentControl } from '@/components/data-display'
 import { useActiveHypotheses } from '@/hooks/useHypotheses'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useRunEventQuery } from '@/hooks/useBacktestEventQuery'
-import type {
-  EventKind,
-  EventQueryInput,
-  EventQueryResponse,
-  FillConfig,
+import {
+  isSignalEventKind,
+  type EventKind,
+  type EventQueryInput,
+  type EventQueryResponse,
+  type FillConfig,
 } from '@/api/research/backtestEvent'
 import { INDICATOR_SIGNALS, type IndicatorSignalId } from '@/api/research/indicators'
 
@@ -180,8 +181,8 @@ export function EventQueryBuilder({
             </Label>
             <Select value={kind} onValueChange={(v) => {
               setKind(v as BuilderKind)
-              // A crossing is only known at its close: entering before it would be look-ahead.
-              if (v === 'indicator_signal' && entryOffset < 0) setEntryOffset(1)
+              // A signal is only known at its close; offsets count from the next session.
+              if (isSignalEventKind(v as BuilderKind) && entryOffset < 0) setEntryOffset(0)
             }}>
               <SelectTrigger className="h-8 text-dense-body">
                 <SelectValue />
@@ -272,12 +273,21 @@ export function EventQueryBuilder({
             <Input
               id="event-query-entry-offset"
               type="number"
-              min={-10}
+              min={isSignalEventKind(kind) ? 0 : -10}
               max={10}
               value={entryOffset}
-              onChange={(e) => setEntryOffset(Number(e.target.value) || 0)}
+              onChange={(e) => {
+                const v = Number(e.target.value) || 0
+                setEntryOffset(isSignalEventKind(kind) ? Math.max(0, v) : v)
+              }}
+              aria-describedby="event-query-entry-offset-note"
               className="h-8 text-dense-body"
             />
+            <p id="event-query-entry-offset-note" className="m-0 text-dense-caption text-muted-foreground">
+              {isSignalEventKind(kind)
+                ? '0 = the session after the signal (known only at its close)'
+                : '0 = the event session · −1 = the session before'}
+            </p>
           </div>
           <div className="space-y-1">
             <Label

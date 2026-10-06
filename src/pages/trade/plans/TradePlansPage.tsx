@@ -45,6 +45,7 @@ import { planToken } from '@/utils/tradeOrigin'
 import { usePageViewParams } from '@/lib/pageView'
 import { PlanCard } from './PlanCard'
 import { PlanForm } from './PlanForm'
+import { planSeedFromParams, type PlanSeed } from '@/lib/plans/planSeed'
 import { PlanSheet } from './PlanSheet'
 import { PlansTable } from './PlansTable'
 import { planCashSecured } from './planCardModel'
@@ -65,7 +66,7 @@ import {
 
 /** The new-plan sheet is a local mode; which card is open is the URL's
  *  business. Editing is the inspector's (Rev .138) — the edit sheet retired. */
-type Form = { kind: 'new' } | null
+type Form = { kind: 'new'; seed?: PlanSeed | null } | null
 
 const PLANS_VIEW_PARAMS = ['status', 'plan', 'q'] as const
 
@@ -102,7 +103,11 @@ export default function TradePlansPage() {
   // `?new=1` opens the form on arrival — the Desk's "＋ Plan a trade" lands
   // here, and a button that only exists on this page would have made the desk
   // a signpost rather than a start.
-  const [form, setForm] = useState<Form>(params.get('new') === '1' ? { kind: 'new' } : null)
+  // `source_kind` / `source_ref` beside it pre-fill the sheet (TD-177: the
+  // hypothesis card's Plan lands here naming its hypothesis).
+  const [form, setForm] = useState<Form>(
+    params.get('new') === '1' ? { kind: 'new', seed: planSeedFromParams(params) } : null,
+  )
 
   // The whole book, filtered client-side, so `N of M plans` can name the true
   // denominator. The symbol is the top bar's (Rev .120) — a whole name, not a prefix.
@@ -598,7 +603,7 @@ export default function TradePlansPage() {
       </RightInspectorShell>
       {form != null ? (
         <PlanSheet label="Plan a trade" onClose={closeForm}>
-          <PlanForm editing={null} onDone={(id, intended) => void planSaved(id, intended)} onCancel={closeForm} />
+          <PlanForm editing={null} seed={form.seed} onDone={(id, intended) => void planSaved(id, intended)} onCancel={closeForm} />
         </PlanSheet>
       ) : null}
     </PageShell>

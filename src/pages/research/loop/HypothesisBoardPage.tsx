@@ -33,6 +33,7 @@ import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { draftTitle } from '@/lib/harness/draftText'
 import { resolutionLine } from '@/lib/hypothesisResolution'
 import { cardEvidence, splitTitleRef } from '@/lib/hypothesisCardModel'
+import { hypothesisPlanHref } from '@/lib/plans/planSeed'
 import type { Hypothesis, HypothesisStatus } from '@/api/researchHypothesis'
 import { cn } from '@/lib/utils'
 import { OPERATOR_CHIP, operatorOf } from '@/lib/research/operatorOf'
@@ -70,6 +71,7 @@ function BoardCard({
   const dest = originDest(hypothesis.origin_page)
   const settled = resolutionLine(hypothesis.resolution_json)
   const record = settled ?? hypothesis.conclusion ?? null
+  const plannable = hypothesis.status === 'active' || hypothesis.status === 'validated'
   const backtestTo = `/research/backtest?tab=event-query&hypothesis_id=${encodeURIComponent(hypothesis.id)}${
     hypothesis.symbols.length > 0
       ? `&symbols=${encodeURIComponent(hypothesis.symbols.join(','))}`
@@ -140,9 +142,23 @@ function BoardCard({
         >
           {operatorOf(hypothesis.origin_page)}
         </span>
+        {/* TD-177: a plan written from here carries source_kind hypothesis
+            and this id, which is how Research reads the filled trade back
+            onto the hypothesis. Opens the order sheet; nothing is written
+            until the reader saves. Settled-against beliefs offer none. */}
+        {plannable ? (
+          <Link
+            to={hypothesisPlanHref(hypothesis)}
+            className="ml-auto whitespace-nowrap text-dense-caption text-primary hover:underline"
+            title="Open the plan sheet with this hypothesis as its source — advisory, nothing is sent (D10)"
+            aria-label={`Plan a trade from ${title}`}
+          >
+            ＋ Plan
+          </Link>
+        ) : null}
         <Link
           to={dest?.to ?? backtestTo}
-          className="ml-auto whitespace-nowrap text-dense-caption text-primary hover:underline"
+          className={cn('whitespace-nowrap text-dense-caption text-primary hover:underline', !plannable && 'ml-auto')}
         >
           {dest ? `${dest.label} →` : 'Backtest →'}
         </Link>

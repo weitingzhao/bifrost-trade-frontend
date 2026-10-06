@@ -32,6 +32,7 @@ import {
   type PlanLegDraft,
 } from '@/lib/plans/planLegFromContract'
 import type { PlanWriteBody } from '@/api/strategyPlans'
+import type { PlanSeed } from '@/lib/plans/planSeed'
 import type { PlanLeg, StrategyPlan } from '@/lib/schemas/strategyPlan'
 import { checkPasses, planCheck } from './planCheck'
 import { PlanCheckPanel } from './PlanCheckPanel'
@@ -168,11 +169,14 @@ function Field({
 
 export function PlanForm({
   editing,
+  seed = null,
   onDone,
   onCancel,
 }: {
   /** A draft being edited, or null for a new plan. */
   editing: StrategyPlan | null
+  /** A new plan's pre-fill from the link that opened it (`?source_kind=` …); ignored when editing. */
+  seed?: PlanSeed | null
   /** The plan that was written — the page opens its card. */
   /** `intended`: it was saved as an intent, not a draft. */
   onDone: (strategyPlanId: number, intended: boolean) => void
@@ -188,7 +192,8 @@ export function PlanForm({
   // after the first render, and a state seeded from it would stay empty.
   const [pickedAccount, setAccountId] = useState<string | null>(editing?.account_id ?? null)
   const accountId = pickedAccount ?? defaultAccount
-  const [symbol, setSymbol] = useState(editing?.symbol ?? '')
+  const fill = editing ? null : seed
+  const [symbol, setSymbol] = useState(editing?.symbol ?? fill?.symbol ?? '')
   const [structureLabel, setStructureLabel] = useState(editing?.structure_label ?? '')
   const [structureId, setStructureId] = useState(
     editing?.strategy_structure_id == null ? '' : String(editing.strategy_structure_id),
@@ -213,9 +218,9 @@ export function PlanForm({
   const [expiresAt, setExpiresAt] = useState(editing?.expires_at?.slice(0, 10) ?? '')
   const [rationale, setRationale] = useState(editing?.rationale ?? '')
   const [sourceKind, setSourceKind] = useState<StrategyPlan['source_kind']>(
-    editing?.source_kind ?? 'manual',
+    editing?.source_kind ?? fill?.sourceKind ?? 'manual',
   )
-  const [sourceRef, setSourceRef] = useState(editing?.source_ref ?? '')
+  const [sourceRef, setSourceRef] = useState(editing?.source_ref ?? fill?.sourceRef ?? '')
   const [sideBlocked, setSideBlocked] = useState(false)
 
   const pending = create.isPending || update.isPending || intend.isPending

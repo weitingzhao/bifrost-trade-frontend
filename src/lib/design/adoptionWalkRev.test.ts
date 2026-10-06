@@ -138,7 +138,10 @@ describe('the design walk, by revision', () => {
     // Package .56 @ Rev .155 (2026-10-04, snapshot for the Calendar batch):
     // the registry gains /home/calendar (Rev .145–.150, page rev .149); no
     // other page's rev moved.
-    expect(DESIGN_REV).toBe('2026-10-04.155')
+    // Package .58 @ Rev .157 (2026-10-05, increment): the answers to the app's
+    // 10-04 ASK batch (Rev .156) and the six prototypes merged (.157); no
+    // route or page rev moved.
+    expect(DESIGN_REV).toBe('2026-10-04.157')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

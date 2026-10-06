@@ -26,7 +26,7 @@ vi.mock('@/api/research/pine', async (orig) => ({
   ...(await orig<typeof import('@/api/research/pine')>()),
   fetchPineScripts: async () => ({
     scripts: [
-      { id: 'supertrend', name: 'Supertrend', version: 1, origin: 'bifrost', license: null, source_url: null, notes: null, is_active: true, signals: ['buy', 'sell'] },
+      { id: 'supertrend', name: 'Supertrend', version: 1, origin: 'bifrost', license: null, source_url: null, notes: null, is_active: true, signals: ['buy', 'sell'], plots: ['Supertrend'], overlay: true },
     ],
     count: 1,
   }),
@@ -231,5 +231,73 @@ describe('Simulator tab', () => {
       entry_offset_sessions: offset,
     })
     researchAuthStore.clear()
+  })
+
+  it('a Pine run asks for the script’s exit and a strike at its line; the schedule baseline asks for neither', async () => {
+    fetchResearchHealth.mockResolvedValue({ status: 'ok', version: '0.183.0' })
+    postSim.mockReset()
+    postSim.mockResolvedValue({ run_id: null, run: { persisted: false }, summary, trades: [], equity: [], params: {}, advisory: '' })
+    researchAuthStore.setCredentials('t', 'tester')
+    renderTab({ rows: [], builderOpen: true })
+    await userEvent.click(screen.getByRole('button', { name: 'Pine script' }))
+    await userEvent.click(screen.getByRole('button', { name: '+ Pine exit' }))
+    await userEvent.click(screen.getByRole('button', { name: 'At a Pine line' }))
+    const run = screen.getByRole('button', { name: /Run simulation/ }) as HTMLButtonElement
+    await vi.waitFor(() => expect(run.disabled).toBe(false))
+    await userEvent.click(run)
+    await vi.waitFor(() => expect(postSim).toHaveBeenCalledTimes(2))
+    expect(postSim.mock.calls[0][0]).toMatchObject({
+      entry_event: { kind: 'pine_signal', params: { script: 'supertrend', side: 'buy' } },
+      pine_exit: 'auto',
+      strike_anchor: { plot: 'Supertrend', min_delta: 0.05, max_delta: 0.4 },
+    })
+    // the schedule baseline has no Pine entry, so research would refuse either option
+    expect(postSim.mock.calls[1][0]).not.toHaveProperty('pine_exit')
+    expect(postSim.mock.calls[1][0]).not.toHaveProperty('strike_anchor')
+    expect(postSim.mock.calls[1][0]).not.toHaveProperty('entry_event')
+    researchAuthStore.clear()
+  })
+
+  it('a Pine line on a two-sided structure is refused before it is sent', async () => {
+    fetchResearchHealth.mockResolvedValue({ status: 'ok', version: '0.183.0' })
+    researchAuthStore.setCredentials('t', 'tester')
+    renderTab({ rows: [], builderOpen: true })
+    await userEvent.click(screen.getByRole('button', { name: 'Pine script' }))
+    await userEvent.click(screen.getByRole('button', { name: 'At a Pine line' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Short strangle' }))
+    const run = screen.getByRole('button', { name: /Run simulation/ }) as HTMLButtonElement
+    expect(run.disabled).toBe(true)
+    expect(screen.getByText(/A Pine line places one short strike; Short strangle has two/)).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Call credit spread' }))
+    await vi.waitFor(() => expect(run.disabled).toBe(false))
+    expect(screen.getByText(/Short put at or below the line’s value/)).toBeTruthy()
+    researchAuthStore.clear()
+  })
+
+  it('shows a stored Pine-exit run beside its premium-rules-only twin', async () => {
+    fetchSimDetail.mockResolvedValue({ row, trades: [], equity: [] })
+    const side = { n_trades: 4, win_rate: 0.5, total_pnl: -47, avg_pnl: -12, avg_days_held: 15, worst_trade: -455, max_drawdown: -1640 }
+    const pineRow = {
+      ...row,
+      id: 'bt_sim_pine0002',
+      event_def: { kind: 'pine_signal', params: { script: 'supertrend', side: 'buy', offset_sessions: 0, symbols: ['QQQ'] } },
+      summary: {
+        ...summary,
+        exit_reasons: { profit_take: 2, dte_exit: 1, pine_exit: 1 },
+        pine: { script: 'supertrend', exit_mode: 'auto', exit_mode_used: 'reverse_plot', errors: {} },
+        pine_exit_comparison: {
+          premium_only: { ...side, exit_reasons: { profit_take: 2, dte_exit: 2 } },
+          with_pine_exit: { ...side, total_pnl: -1013, avg_pnl: -253, avg_days_held: 9.5, exit_reasons: { profit_take: 2, dte_exit: 1, pine_exit: 1 } },
+          delta: { total_pnl: -966 },
+          paired: { n: 4, exits_changed: 1, avg_pnl_diff: -241.5, avg_pnl_diff_ci95: null, only_premium_only: 0, only_with_pine_exit: 0 },
+        },
+      },
+    } as unknown as BacktestRunRow
+    renderTab({ rows: [pineRow] })
+    const panel = await screen.findByRole('region', { name: 'Pine exit vs premium rules' })
+    expect(panel.textContent).toContain('exit on the opposite plot')
+    expect(panel.textContent).toContain('−$966')
+    expect(panel.textContent).toContain('4 entries in both runs · the Pine exit changed 1')
+    expect(panel.textContent).toContain('(too few for an interval)')
   })
 })

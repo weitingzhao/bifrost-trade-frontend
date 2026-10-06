@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   frameGeom,
+  linePath,
   placeEdges,
   priceTicks,
   py,
@@ -93,5 +94,19 @@ describe('signal marks', () => {
     expect(s.count).toBe(2)
     expect(s.up.split('M').length - 1).toBe(1)
     expect(s.dn.split('M').length - 1).toBe(1)
+  })
+})
+
+describe('a Pine price line (P1 / G10)', () => {
+  it('widens the scale like BB and breaks where the plot has no value', () => {
+    const plain = frameGeom(base)
+    const line = bars.map((b, i) => (i < 10 ? null : b.low - 8))
+    const g = frameGeom({ ...base, lines: [line] })
+    expect(g.rng).toBeGreaterThan(plain.rng)
+    expect(linePath(g, line).startsWith('M')).toBe(true)
+    expect(linePath(g, line).match(/M/g)?.length).toBe(1)
+    const gap = line.map((v, i) => (i === 30 ? null : v))
+    expect(linePath(g, gap).match(/M/g)?.length).toBe(2)
+    expect(linePath(g, [null, null])).toBe('')
   })
 })

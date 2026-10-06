@@ -38,6 +38,8 @@ export interface FrameInput {
   levelsOn: boolean
   live: boolean
   bb: readonly (BollingerPoint | null)[] | null
+  /** Price lines drawn on the price pane (the marked Pine script's plots); they set the scale like BB. */
+  lines?: readonly (readonly (number | null)[])[] | null
   panes: readonly SubPaneKind[]
   mini: boolean
 }
@@ -83,6 +85,7 @@ export function frameGeom(inp: FrameInput): FrameGeom {
   for (const p of inp.bb ?? []) {
     if (p && isNum(p.upper) && isNum(p.lower)) pts.push(p.upper, p.lower)
   }
+  for (const line of inp.lines ?? []) for (const v of line) if (isNum(v)) pts.push(v)
   const hi = pts.length ? Math.max(...pts) : 1
   const lo = pts.length ? Math.min(...pts) : 0
   const span = hi - lo || Math.max(1, Math.abs(hi) * 0.02)
@@ -185,6 +188,21 @@ export function conePath(g: FrameGeom, nBars: number, coneSlots: number, anchor:
     bot.unshift(`${x} ${f1(py(g, anchor - w))}`)
   }
   return `M${top.join('L')}L${bot.join('L')}z`
+}
+
+/** One price line (a Pine plot), broken wherever it has no value (warm-up, `na`). */
+export function linePath(g: FrameGeom, vals: readonly (number | null)[]): string {
+  let d = ''
+  let pen = false
+  vals.forEach((v, i) => {
+    if (!isNum(v)) {
+      pen = false
+      return
+    }
+    d += `${pen ? 'L' : 'M'}${f1(cx(g, i))} ${f1(py(g, v))}`
+    pen = true
+  })
+  return d
 }
 
 export function bbPaths(g: FrameGeom, bb: readonly (BollingerPoint | null)[]) {

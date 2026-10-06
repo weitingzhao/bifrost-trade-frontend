@@ -24,7 +24,7 @@ import { FilterChip, FilterTray } from '@bifrost/ui'
 import { fetchBars } from '@/api/market'
 import { fetchOpexCurrent } from '@/api/research/opexCycle'
 import { INDICATOR_SIGNALS, fetchIndicatorSeries } from '@/api/research/indicators'
-import { fetchPineSignals } from '@/api/research/pine'
+import { checkPineScript, fetchPineSignals, pricePlots } from '@/api/research/pine'
 import { bollingerSeries, macdSeries, rsiSeries, type BollingerPoint, type MacdPoint } from '@/components/charts/barsChartMath'
 import { SectionPanel } from '@/components/layout'
 import { SegmentControl } from '@/components/data-display'
@@ -35,6 +35,8 @@ import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { useSymbolLegs } from '@/hooks/useSymbolLegs'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
 import { useTradeIndex } from '@/hooks/useTradeIndex'
+import { usePineLibrary } from '@/hooks/usePineLibrary'
+import { useResearchAuth } from '@/lib/auth/researchUser'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
@@ -62,6 +64,7 @@ import {
   PLOT_W,
   bbPaths,
   candlePaths,
+  linePath,
   conePath,
   cx,
   eventPath,
@@ -87,6 +90,8 @@ import { signalLabel, useChartSignal } from '@/components/symbolChart/useChartSi
 
 /** The vendor keeps two rolling years; the API caps a page at 500. */
 const HISTORY_LIMIT = 500
+// Calendar days of bars the pine-runner gets for a script's line: the 500-session history plus its warm-up.
+const LINE_DAYS = 900
 const CONE_CAP_SESSIONS = 30
 const ALL_INDICATOR_IDS = INDICATOR_SIGNALS.map((x) => x.id)
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -123,7 +128,7 @@ export function SymbolPriceChart({
   const [layers, setLayer] = useChartLayers()
   const [hover, setHover] = useState<string | null>(null)
   const [wantCounts, setWantCounts] = useState(false)
-  const { sigId, setSigId, pineId, indSig, pineChoices } = useChartSignal(isMini)
+  const { sigId, setSigId, pineId, indSig, pineChoices, pineName } = useChartSignal(isMini)
   const techOn = !isMini && (layers.bb || layers.macd || layers.rsi)
 
   const barsQ = useQuery({
@@ -163,6 +168,22 @@ export function SymbolPriceChart({
     enabled: Boolean(sym) && dates.length > 0 && (pineId != null || wantCounts),
     staleTime: 10 * 60_000,
   })
+  // The marked Pine script's own price line (P1 / G10), e.g. the Supertrend line: computed for this
+  // name by Research's pine-runner on request, never stored. Only overlay scripts draw prices.
+  const { rows: pineRows } = usePineLibrary()
+  const auth = useResearchAuth()
+  const pineRow = pineId ? pineRows?.find((r) => r.id === pineId) : undefined
+  const lineTitles = isMini ? [] : pricePlots(pineRow)
+  const lineQ = useQuery({
+    queryKey: ['research-engine', 'pine', 'line', sym, pineId ?? '', pineRow?.version ?? 0, lineTitles.join('|')],
+    queryFn: () => checkPineScript({ script: pineId as string, symbol: sym, days: LINE_DAYS, plots: lineTitles }),
+    enabled: Boolean(sym) && pineId != null && lineTitles.length > 0 && layers.pine && Boolean(auth.token),
+    staleTime: 30 * 60_000,
+  })
+  const lineMaps = useMemo(
+    () => Object.values(lineQ.data?.series ?? {}).map((pts) => new Map(pts)),
+    [lineQ.data],
+  )
 
   // Research's technicals by date; computed here from the daily closes only when Research did not answer.
   const techByDate = useMemo(() => {
@@ -245,6 +266,7 @@ export function SymbolPriceChart({
 
   const subKinds: SubPaneKind[] = isMini ? [] : [...(layers.macd ? (['macd'] as const) : []), ...(layers.rsi ? (['rsi'] as const) : [])]
   const tech = barDates.map((d) => techByDate.get(d) ?? null)
+  const lines = layers.pine && lineTitles.length ? lineMaps.map((m) => barDates.map((d) => m.get(d) ?? null)) : []
   const g = frameGeom({
     bars: chartBars,
     coneSlots,
@@ -254,6 +276,7 @@ export function SymbolPriceChart({
     levelsOn: layers.levels,
     live,
     bb: !isMini && layers.bb ? tech.map((t) => t?.bb ?? null) : null,
+    lines,
     panes: subKinds,
     mini: isMini,
   })
@@ -458,6 +481,17 @@ export function SymbolPriceChart({
             ) : null}
             <path d={bb.band} fill="color-mix(in srgb, var(--sk-ink) 5%, transparent)" />
             <path d={bb.mid} fill="none" stroke="color-mix(in srgb, var(--sk-ink) 30%, transparent)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+            {lines.map((vals, i) => (
+              <path
+                key={`pine-line-${i}`}
+                d={linePath(g, vals)}
+                fill="none"
+                stroke="color-mix(in srgb, var(--sk-ink) 60%, transparent)"
+                strokeWidth={1.25}
+                strokeDasharray={i ? '4 3' : undefined}
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
             {L ? (
               <>
                 <path d={levelPath(g, callWall)} fill="none" stroke="var(--color-profit)" strokeDasharray="2 3" opacity={lvOp('call')} vectorEffect="non-scaling-stroke" />
@@ -588,7 +622,7 @@ export function SymbolPriceChart({
     )
   }
 
-  const layerChip = (k: 'levels' | 'trades' | 'bb' | 'macd' | 'rsi', label: string, tip: string, count?: number) => (
+  const layerChip = (k: 'levels' | 'trades' | 'bb' | 'macd' | 'rsi' | 'pine', label: string, tip: string, count?: number) => (
     <FilterChip key={k} pressed={layers[k]} onPressedChange={(v) => setLayer(k, v)} count={count != null ? String(count) : undefined} title={tip}>
       {label}
     </FilterChip>
@@ -626,6 +660,13 @@ export function SymbolPriceChart({
             {layerChip('bb', 'BB', 'Bollinger 20 · 2σ on the price pane — Research indicators, the values the Simulator uses')}
             {layerChip('macd', 'MACD', 'MACD 12 26 9 in its own pane')}
             {layerChip('rsi', 'RSI', 'RSI 14 in its own pane, 30 / 70 guides')}
+            {lineTitles.length
+              ? layerChip(
+                  'pine',
+                  'Line',
+                  `${pineName ?? 'The script'}: ${lineTitles.join(' · ')} on the price pane (solid, then dashed) — the script's own levels, run for this name by Research's pine-runner${auth.token ? '' : '. Needs a Research identity'}${lineQ.isError ? '. Not drawn: Research did not answer' : ''}`,
+                )
+              : null}
           </FilterTray>
           <SignalMenu
             sigId={sigId}

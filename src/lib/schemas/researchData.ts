@@ -224,12 +224,32 @@ export const EventQueryResponseSchema = z
   })
   .passthrough()
 
+const SimSideSchema = z
+  .object({ n_trades: z.number(), win_rate: z.number(), total_pnl: z.number(), avg_pnl: z.number() })
+  .passthrough()
+
 /** Simulator (research 0.170.0): the summary, trades and curve are the run. */
 export const SimResponseSchema = z
   .object({
     run_id: z.string().nullable(),
     run: z.record(z.string(), z.unknown()),
-    summary: z.object({ n_trades: z.number(), win_rate: z.number() }).passthrough(),
+    summary: z
+      .object({
+        n_trades: z.number(),
+        win_rate: z.number(),
+        /** research 0.178.0: a Pine-exit run beside the premium-rules-only one. */
+        pine_exit_comparison: z
+          .object({
+            premium_only: SimSideSchema,
+            with_pine_exit: SimSideSchema,
+            paired: z
+              .object({ n: z.number(), exits_changed: z.number(), avg_pnl_diff: z.number().nullable() })
+              .passthrough(),
+          })
+          .passthrough()
+          .optional(),
+      })
+      .passthrough(),
     trades: z.array(z.record(z.string(), z.unknown())),
     equity: z.array(z.record(z.string(), z.unknown())),
     advisory: z.string(),
@@ -390,6 +410,9 @@ export const PineScriptRowSchema = z
     origin: z.string(),
     is_active: z.boolean(),
     signals: z.array(PineSideSchema),
+    /** research 0.183.0: numeric plot titles, and whether they are prices (overlay=true). */
+    plots: z.array(z.string()).optional(),
+    overlay: z.boolean().optional(),
   })
   .passthrough()
 
@@ -423,5 +446,7 @@ export const PineCheckResponseSchema = z
     symbol: z.string(),
     bars: z.number(),
     marks: z.array(z.object({ date: z.string(), side: PineSideSchema, close: z.number().nullable() }).passthrough()),
+    /** research 0.183.0, when `plots` was asked: [[session, value | null]] oldest first. */
+    series: z.record(z.string(), z.array(z.tuple([z.string(), z.number().nullable()]))).optional(),
   })
   .passthrough()

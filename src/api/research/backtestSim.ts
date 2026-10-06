@@ -15,7 +15,7 @@ import { withValidation } from '@/lib/apiValidation'
 import { SimDetailSchema, SimResponseSchema } from '@/lib/schemas/researchData'
 import type { BacktestRunRow } from '@/api/research/backtestEvent'
 
-export type SimStructure = 'short_put' | 'put_credit_spread' | 'short_strangle' | 'iron_condor'
+export type SimStructure = 'short_put' | 'put_credit_spread' | 'call_credit_spread' | 'short_strangle' | 'iron_condor'
 
 export interface SimEntryEvent {
   kind: 'earnings' | 'opex' | 'sepa_hit' | 'iv_percentile_threshold' | 'indicator_signal' | 'pine_signal'
@@ -42,8 +42,73 @@ export interface SimInput {
   dte_exit?: number | null
   price_field?: 'vwap' | 'close'
   slippage_scale?: number
+  /**
+   * Pine exit (research 0.178.0, pine_signal entries only): the script's own
+   * exit — its strategy() close, or the opposite plot — closes a position the
+   * session after it is known, unless expiry or a premium rule comes first.
+   */
+  pine_exit?: PineExitMode | null
+  /** Short strike at the first listed strike beyond a Pine plot's level (0.178.0), inside |Δ| rails. */
+  strike_anchor?: SimStrikeAnchor | null
   persist?: boolean
   hypothesis_id?: string | null
+}
+
+export type PineExitMode = 'auto' | 'strategy' | 'reverse_plot'
+
+export interface SimStrikeAnchor {
+  plot: string
+  min_delta?: number
+  max_delta?: number
+}
+
+/** The headline readings both sides of a Pine-exit run carry (a subset of `SimSummary`). */
+export interface PineExitSide {
+  n_trades: number
+  win_rate: number
+  total_pnl: number
+  avg_pnl: number
+  median_pnl?: number
+  avg_pnl_ci95?: [number, number] | null
+  avg_days_held?: number
+  worst_trade?: number
+  max_drawdown?: number
+  sharpe_annual?: number
+  return_on_peak_margin?: number | null
+  exit_reasons?: Record<string, number>
+  skipped_entries?: Record<string, number>
+}
+
+/**
+ * A Pine-exit run next to the same run managed by premium rules only (research
+ * 0.178.0): same signals, same strike rule. `paired` is over the entries both
+ * opened — P&L with the Pine exit minus without.
+ */
+export interface PineExitComparison {
+  premium_only: PineExitSide
+  with_pine_exit: PineExitSide
+  delta: Partial<Record<'n_trades' | 'win_rate' | 'total_pnl' | 'avg_pnl' | 'avg_days_held' | 'max_drawdown' | 'sharpe_annual', number>>
+  paired: {
+    n: number
+    exits_changed: number
+    avg_pnl_diff: number | null
+    avg_pnl_diff_ci95: [number, number] | null
+    only_premium_only: number
+    only_with_pine_exit: number
+  }
+  note?: string
+}
+
+/** What the run asked the pine-runner (research 0.178.0). */
+export interface SimPineReport {
+  script: string
+  script_version?: number
+  exit_mode?: PineExitMode | null
+  exit_mode_used?: string | string[] | null
+  anchor_plot?: string | null
+  per_symbol?: Record<string, { exits_long: number; exits_short: number; level_sessions: number }>
+  errors?: Record<string, string>
+  warnings?: Record<string, Array<{ code: string; message?: string }>>
 }
 
 export interface SimSummary {
@@ -72,6 +137,10 @@ export interface SimSummary {
    * offset 0 was the signal's own session (filled before the signal was known).
    */
   entry_timing?: { version: number; anchor: string; fill?: string; note?: string }
+  /** Present on a run with `pine_exit` (research 0.178.0). */
+  pine_exit_comparison?: PineExitComparison
+  /** Present on a run with `pine_exit` or `strike_anchor` (research 0.178.0). */
+  pine?: SimPineReport
 }
 
 export interface SimLeg {
@@ -86,6 +155,8 @@ export interface SimLeg {
   exit_fill: number
   entry_iv: number | null
   entry_delta: number | null
+  /** The Pine level the strike was placed against (research 0.178.0, `strike_anchor`). */
+  anchor_level?: number
 }
 
 export interface SimTrade {
@@ -105,6 +176,8 @@ export interface SimTrade {
   mfe: number
   mae: number
   fill_basis: string
+  /** The session the Pine exit was due, or null when none came before the end (runs with `pine_exit`). */
+  pine_exit_on?: string | null
 }
 
 export interface SimEquityPoint {

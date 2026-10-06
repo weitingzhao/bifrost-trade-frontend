@@ -49,7 +49,7 @@ import {
   signalShortLabel,
   type IndicatorSignalId,
 } from '@/api/research/indicators'
-import type { PineLibraryEntry, PineSide } from '@/api/research/pine'
+import { pricePlots, type PineLibraryEntry, type PineSide } from '@/api/research/pine'
 import {
   entryOffsetFor,
   sessionsAfterOf,
@@ -60,13 +60,17 @@ import {
   type SimSummary,
   type SimTrade,
 } from '@/api/research/backtestSim'
+import { PineExitComparison } from './PineExitComparison'
 import {
+  ONE_SIDED,
   STRUCTURE_LABEL,
   WINGED,
   curveFrom,
   exitReasonRows,
   legsLabel,
+  pct,
   sampleTone,
+  simUsd,
   simStructure,
   simSummaryOf,
   tradeExpiry,
@@ -75,19 +79,10 @@ import {
 const STRUCTURES: SimStructure[] = [
   'short_put',
   'put_credit_spread',
+  'call_credit_spread',
   'short_strangle',
   'iron_condor',
 ]
-
-function simUsd(v: number | null | undefined, digits = 0): string {
-  if (v == null || !Number.isFinite(v)) return '—'
-  const s = `$${Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: digits })}`
-  return v < 0 ? `−${s}` : s
-}
-
-function pct(v: number | null | undefined, digits = 0): string {
-  return v == null || !Number.isFinite(v) ? '—' : `${(v * 100).toFixed(digits)}%`
-}
 
 interface SimulatorTabProps {
   rows: BacktestRunRow[]
@@ -283,6 +278,9 @@ export function SimulatorTab({
               schedule on to see it.
             </p>
           ) : null}
+          {view?.summary.pine_exit_comparison ? (
+            <PineExitComparison comparison={view.summary.pine_exit_comparison} pine={view.summary.pine} />
+          ) : null}
           {view ? (
             <SimResult
               summary={view.summary}
@@ -445,7 +443,7 @@ function SimBuilder({
 }) {
   const auth = useResearchAuth()
   const basis = useSimEntryBasis()
-  const pineLib = usePineLibrary().scripts
+  const { scripts: pineLib, rows: pineRows } = usePineLibrary()
   const [symbolsStr, setSymbolsStr] = useState((defaultSymbols ?? ['SPY']).join(', '))
   const [structure, setStructure] = useState<SimStructure>('put_credit_spread')
   const [start, setStart] = useState(isoDaysAgo(365))
@@ -464,6 +462,15 @@ function SimBuilder({
   const [pineScript, setPineScript] = useState('')
   const [pineSide, setPineSide] = useState<PineSide>('buy')
   const pineId = pineScript || pineLib[0]?.id || ''
+  // Pine decides the timing, Bifrost the structure (research 0.178.0): the script's own exit, and a strike at its line.
+  const [pineExit, setPineExit] = useState(false)
+  const [strikeAtLine, setStrikeAtLine] = useState(false)
+  const lines = pricePlots(pineRows?.find((r) => r.id === pineId))
+  const [linePick, setLinePick] = useState('')
+  const line = lines.includes(linePick) ? linePick : (lines[0] ?? '')
+  const [railLo, setRailLo] = useState(0.05)
+  const [railHi, setRailHi] = useState(0.4)
+  const anchorOn = entryMode === 'pine' && strikeAtLine
   const [signalId, setSignalId] = useState<IndicatorSignalId>('macd_cross_up')
   const [signalParams, setSignalParams] = useState<Record<string, number>>(
     () => ({ ...INDICATOR_SIGNALS[0].defaults })
@@ -505,6 +512,8 @@ function SimBuilder({
           ? {
               entry_event: { kind: 'pine_signal', params: { script: pineId, side: pineSide } },
               entry_offset_sessions: offset,
+              ...(pineExit ? { pine_exit: 'auto' as const } : {}),
+              ...(anchorOn && line ? { strike_anchor: { plot: line, min_delta: railLo, max_delta: railHi } } : {}),
             }
           : {}
     return {
@@ -534,7 +543,13 @@ function SimBuilder({
         ? 'Name at least one symbol.'
         : entryMode === 'pine' && !pineId
           ? 'No active Pine script to enter on.'
-          : basisUnknown
+          : anchorOn && !ONE_SIDED.has(structure)
+            ? `A Pine line places one short strike; ${STRUCTURE_LABEL[structure]} has two — pick a one-sided structure or strike by Δ.`
+            : anchorOn && !line
+              ? 'This script draws no price line to place a strike against (only overlay=true plots are prices).'
+              : anchorOn && !(railLo < railHi)
+                ? 'The Δ floor must be below the ceiling.'
+                : basisUnknown
             ? basis.failed
               ? 'Research did not say its version, so a signal’s entry session cannot be placed — try again.'
               : 'Reading Research’s entry basis…'
@@ -643,6 +658,28 @@ function SimBuilder({
                   onChange={(v) => setPineSide(v as PineSide)}
                 />
               </SimField>
+              <SimField label="Exit">
+                <SegmentControl
+                  ariaLabel="Exit rule"
+                  options={[
+                    { value: 'premium', label: 'Premium rules' },
+                    { value: 'pine', label: '+ Pine exit' },
+                  ]}
+                  value={pineExit ? 'pine' : 'premium'}
+                  onChange={(v) => setPineExit(v === 'pine')}
+                />
+              </SimField>
+              <SimField label="Short strike">
+                <SegmentControl
+                  ariaLabel="Short strike"
+                  options={[
+                    { value: 'delta', label: 'By Δ' },
+                    { value: 'line', label: 'At a Pine line' },
+                  ]}
+                  value={strikeAtLine ? 'line' : 'delta'}
+                  onChange={(v) => setStrikeAtLine(v === 'line')}
+                />
+              </SimField>
             </>
           ) : null}
           {entryMode === 'signal' ? (
@@ -700,6 +737,31 @@ function SimBuilder({
                 step={k === 'mult' ? 0.25 : 1}
               />
             ))}
+          </div>
+        ) : null}
+
+        {anchorOn ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            <SimField label="Line">
+              <Select value={line} onValueChange={setLinePick} disabled={lines.length === 0}>
+                <SelectTrigger className="h-8 w-[11rem] text-dense-body" aria-label="Pine line">
+                  <SelectValue placeholder="No price line" />
+                </SelectTrigger>
+                <SelectContent>
+                  {lines.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </SimField>
+            <NumField id="sim-rail-lo" label="|Δ| floor" value={railLo} onChange={setRailLo} min={0} max={0.95} step={0.01} />
+            <NumField id="sim-rail-hi" label="|Δ| ceiling" value={railHi} onChange={setRailHi} min={0.01} max={1} step={0.01} />
+            <p className="col-span-2 m-0 self-end pb-1.5 text-dense-caption text-muted-foreground">
+              {pineSide === 'sell' ? 'Short call at or above' : 'Short put at or below'} the line’s value the session before
+              entry; a strike outside the |Δ| rails is skipped and counted, not opened.
+            </p>
           </div>
         ) : null}
 
@@ -1146,6 +1208,16 @@ function EquityCurve({ equity }: { equity: SimEquityPoint[] }) {
   )
 }
 
+/** The Pine level a trade's short strike was placed against, and the exit it was due, if any. */
+function anchorTitle(t: SimTrade): string | undefined {
+  const leg = t.legs.find((l) => l.anchor_level != null)
+  const parts = [
+    leg ? `${leg.label} ${leg.strike} placed against the Pine line at ${leg.anchor_level}` : null,
+    t.pine_exit_on ? `Pine exit due ${t.pine_exit_on}` : null,
+  ].filter(Boolean)
+  return parts.length ? parts.join(' · ') : undefined
+}
+
 function TradesTable({ trades, chartSignal }: { trades: SimTrade[]; chartSignal: string | null }) {
   if (trades.length === 0) {
     return (
@@ -1183,7 +1255,7 @@ function TradesTable({ trades, chartSignal }: { trades: SimTrade[]; chartSignal:
               </td>
               <td className={cn(td, 'text-left text-muted-foreground')}>{t.entry_date}</td>
               <td className={cn(td, 'text-left text-muted-foreground')}>{t.exit_date}</td>
-              <td className={cn(td, 'text-left')}>
+              <td className={cn(td, 'text-left')} title={anchorTitle(t)}>
                 {legsLabel(t.legs)}
                 <span className="ml-1.5 text-muted-foreground">{tradeExpiry(t) ?? ''}</span>
               </td>

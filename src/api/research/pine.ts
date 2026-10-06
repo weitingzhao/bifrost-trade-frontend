@@ -75,6 +75,10 @@ export interface PineScriptRow {
   notes: string | null
   is_active: boolean
   signals: PineSide[]
+  /** research 0.183.0: the numeric plot() titles, in source order (not buy / sell). */
+  plots?: string[]
+  /** research 0.183.0: overlay=true — the plots are prices, drawn on the price pane. */
+  overlay?: boolean
   source?: string
   buy_signals?: number
   sell_signals?: number
@@ -164,7 +168,7 @@ export interface PineScriptInput {
 
 const validateScripts = withValidation<{ scripts: PineScriptRow[]; count: number }>(PineScriptsResponseSchema, 'research/pine/scripts')
 const validateScript = withValidation<PineScriptRow>(PineScriptRowSchema, 'research/pine/scripts/{id}')
-const validateCheck = withValidation<{ symbol: string; bars: number; marks: { date: string; side: PineSide; close: number | null }[] }>(
+const validateCheck = withValidation<PineCheckResult>(
   PineCheckResponseSchema,
   'research/pine/check',
 )
@@ -200,12 +204,35 @@ export async function savePineScript(id: string, input: PineScriptInput): Promis
   return validateScript(await send(`/research/pine/scripts/${encodeURIComponent(id)}`, 'PUT', input))
 }
 
-export async function checkPineScript(input: {
-  source: string
+export interface PineCheckResult {
   symbol: string
-  days?: number
-}): Promise<{ symbol: string; bars: number; marks: { date: string; side: PineSide; close: number | null }[] }> {
+  bars: number
+  marks: { date: string; side: PineSide; close: number | null }[]
+  /** research 0.183.0, when `plots` was asked: each plot's [session, value | null], oldest first. */
+  series?: Record<string, [string, number | null][]>
+}
+
+/**
+ * Run a pasted `source`, or a library `script` by id (research 0.183.0), over
+ * one symbol — nothing is stored. `plots` asks for those numeric plots' values.
+ */
+export async function checkPineScript(
+  input: ({ source: string; script?: never } | { script: string; source?: never }) & {
+    symbol: string
+    days?: number
+    plots?: string[]
+  },
+): Promise<PineCheckResult> {
   return validateCheck(await send('/research/pine/check', 'POST', input))
+}
+
+/**
+ * The plots of a script that are prices — its numeric plots when it draws on
+ * the price pane (`overlay=true`). An oscillator's plots (ADX, WaveTrend) are
+ * not. Empty when Research predates 0.183.0, which sends neither field.
+ */
+export function pricePlots(row: Pick<PineScriptRow, 'plots' | 'overlay'> | undefined): string[] {
+  return row?.overlay ? [...(row.plots ?? [])] : []
 }
 
 export async function fetchPineSignals(params: {

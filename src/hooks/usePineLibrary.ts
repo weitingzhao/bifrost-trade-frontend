@@ -8,10 +8,15 @@
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchPineScripts, pineLibraryEntries, type PineLibraryEntry } from '@/api/research/pine'
+import { fetchPineScripts, pineLibraryEntries, type PineLibraryEntry, type PineScriptRow } from '@/api/research/pine'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
-export function usePineLibrary(): { scripts: readonly PineLibraryEntry[]; fromLibrary: boolean } {
+export function usePineLibrary(): {
+  scripts: readonly PineLibraryEntry[]
+  fromLibrary: boolean
+  /** The library's rows as Research sent them (plots, overlay…); undefined until it answers. */
+  rows: readonly PineScriptRow[] | undefined
+} {
   const q = useQuery({
     queryKey: QUERY_KEYS.researchEngine.pineScripts,
     queryFn: () => fetchPineScripts(),
@@ -19,5 +24,5 @@ export function usePineLibrary(): { scripts: readonly PineLibraryEntry[]; fromLi
   })
   const rows = q.data?.scripts
   const scripts = useMemo(() => pineLibraryEntries(rows), [rows])
-  return { scripts, fromLibrary: rows != null }
+  return { scripts, fromLibrary: rows != null, rows }
 }

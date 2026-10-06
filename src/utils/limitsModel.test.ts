@@ -7,6 +7,7 @@ import {
   gateParams,
   limitRules,
   openBreaches,
+  shortPremiumIntoEarnings,
   unwritten,
   watching,
   withHeadroom,
@@ -189,5 +190,49 @@ describe('gateLimitRules', () => {
     expect(row.current).toBe(3)
     expect(row.limit).toBe(10)
     expect(withHeadroom([row])[0].use).toBeCloseTo(0.3, 6)
+  })
+})
+
+describe('short premium into earnings week', () => {
+  // Invented names and dates.
+  const exp = (daysAway: number, date: string) => ({
+    kind: 'expected' as const,
+    next: { daysAway, date, track: { n: 4, medianMissDays: 1, maxMissDays: 2 }, lastResult: null },
+  })
+  it('counts a short leg held through an estimated print inside the week, or a late one', () => {
+    const r = shortPremiumIntoEarnings(
+      [
+        { symbol: 'ZQX', expiry: '20261016' },
+        { symbol: 'QUOK', expiry: '2026-10-09' },
+        { symbol: 'LATE', expiry: '20261016' },
+        { symbol: 'FAR', expiry: '20261120' },
+        { symbol: 'FUND', expiry: '20261016' },
+      ],
+      {
+        ZQX: exp(4, '2026-10-10'),
+        // Expires before the print: no premium carried into it.
+        QUOK: exp(4, '2026-10-10'),
+        LATE: exp(-2, '2026-10-04'),
+        FAR: exp(30, '2026-11-05'),
+        FUND: { kind: 'none', reason: 'no 8-K', absence: { code: 'no_filings', text: 'no 8-K' } },
+      },
+    )
+    expect(r).toEqual({ names: ['LATE', 'ZQX'], pending: 0, withoutEstimate: ['FUND'] })
+  })
+
+  it('reads the line once every name has answered, and says it is an estimate', () => {
+    const rule = limitRules({ ...READINGS, earningsWeek: { names: ['ZQX'], pending: 0, withoutEstimate: [] } }).find(
+      (x) => x.key === 'earnings-premium',
+    )!
+    expect(rule.current).toBe(1)
+    expect(rule.limit).toBeNull()
+    expect(rule.detail).toContain('confirmed dates are not in the data subscription')
+    const waiting = limitRules({ ...READINGS, earningsWeek: { names: [], pending: 2, withoutEstimate: [] } }).find(
+      (x) => x.key === 'earnings-premium',
+    )!
+    expect(waiting.current).toBeNull()
+    const unread = limitRules(READINGS).find((x) => x.key === 'earnings-premium')!
+    expect(unread.current).toBeNull()
+    expect(unread.noReading).toContain('not read on this surface')
   })
 })

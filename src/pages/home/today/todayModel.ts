@@ -22,6 +22,8 @@
  * could not be checked.
  */
 import type { MarketSessionSegment } from '@/lib/marketSession'
+import { fmtIsoDateToken } from '@/lib/format'
+import { ESTIMATE_ONLY, noneByReason, type PrintsAhead } from '@/utils/earningsReading'
 
 export type HomeSegment = MarketSessionSegment
 export type HomeUrgency = 'now' | 'soon' | 'today'
@@ -159,4 +161,34 @@ export function blindSpots(checks: readonly HomeCheck[]): HomeCheck[] {
 
 export function allRows(checks: readonly HomeCheck[]): HomeRow[] {
   return checks.flatMap((c) => c.rows)
+}
+
+/**
+ * "Does a holding report earnings this week?" — answered from Research's
+ * estimated print (`expected_next`, est.), the read the Events lanes and the
+ * Book drawer use. The confirmed calendar is outside the data subscription,
+ * so every row says it is an estimate; a name with no estimate is named with
+ * why, and the check reads as answered for part of the book rather than clean.
+ */
+export function earningsWeekCheck(
+  prints: PrintsAhead,
+  asked: number,
+): { rows: Pick<HomeRow, 'urg' | 'what' | 'why'>[]; partial: string | null } {
+  const rows = prints.ahead.map((p) => {
+    const day = fmtIsoDateToken(p.date)
+    return {
+      urg: p.late || p.daysAway <= 1 ? ('now' as const) : ('soon' as const),
+      what: p.late
+        ? `${p.symbol}'s print is late — est. ${day}, no results 8-K on file yet`
+        : `${p.symbol} reports ${p.daysAway === 0 ? 'today' : p.daysAway === 1 ? 'tomorrow' : `in ${p.daysAway} days`} — ${day} est.`,
+      why: `Research's estimate: last year's same-quarter results 8-K plus 52 weeks (${ESTIMATE_ONLY}). Check what the book carries through the print.`,
+    }
+  })
+  const parts: string[] = []
+  if (prints.pending.length > 0) parts.push(`${prints.pending.length} of ${asked} names are still being read`)
+  if (prints.unread.length > 0) parts.push(`the earnings read failed for ${prints.unread.join(', ')}`)
+  if (prints.none.length > 0) {
+    parts.push(`no estimate for ${prints.none.length} of ${asked} names — ${noneByReason(prints.none)}`)
+  }
+  return { rows, partial: parts.length > 0 ? parts.join('; ') : null }
 }

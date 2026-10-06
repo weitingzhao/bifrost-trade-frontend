@@ -24,6 +24,7 @@
  */
 import { fmtPct0 } from '@/utils/positions'
 import { fmtMvAbbrev } from '@/utils/positionsCharts'
+import { EARNINGS_WEEK_DAYS, ESTIMATE_ONLY, type EarningsReading } from '@/utils/earningsReading'
 
 export type LimitKind = 'hard' | 'soft' | 'gate'
 export type LimitGroup = 'Concentration' | 'Velocity' | 'Margin' | 'Greeks' | 'Event' | 'Gate'
@@ -53,6 +54,8 @@ export interface LimitRule {
   citedFrom: { label: string; to: string } | null
   /** Why there is no reading, when there is none. */
   noReading: string | null
+  /** What stands behind a reading that is a count of names — which names, and how it was read. */
+  detail?: string | null
 }
 
 export interface LimitRow extends LimitRule {
@@ -65,7 +68,7 @@ export interface LimitRow extends LimitRule {
 
 export const LIMITS_UNRECORDED = {
   store:
-    'Nine of the twelve rules have no number behind them. The design edits limits in Trading › Rules and this page only reads them; that store does not exist yet. Seven of those nine still carry a live reading and only want a line; the other two — sector share and earnings-week premium — have no reading either, and say on the row which half is missing.',
+    'Nine of the twelve rules have no number behind them. The design edits limits in Trading › Rules and this page only reads them; that store does not exist yet. Eight of those nine still carry a live reading and only want a line — earnings-week premium reads Research’s estimated print dates (estimated date only — confirmed dates are not in the data subscription); the other — sector share — has no reading either, and says on the row which half is missing.',
   history:
     'Nothing records when a line was crossed. A breach is computable right now — the readings are live — but there is no store behind it, so there is no yesterday, no acknowledgement and no duration. An empty history table would read as a clean record rather than as no record.',
   ack: 'Acknowledging a soft breach would be a write into that missing store. The row names what to do instead, and on which page.',
@@ -100,6 +103,80 @@ export interface LimitReadings {
   netBetaDelta: number | null
   shortGamma: number | null
   nakedShortPuts: number | null
+  /**
+   * Short premium held through an estimated print (`shortPremiumIntoEarnings`).
+   * Absent where a surface does not read earnings (the status bar's cheap
+   * subset, Today's breach check) — the line has no limit, so it cannot breach.
+   */
+  earningsWeek?: EarningsWeekReading
+}
+
+/** Names with short premium held through an estimated print inside the window. */
+export interface EarningsWeekReading {
+  /** Inside the window (or late) with a short leg expiring on or after it. */
+  names: string[]
+  /** Short-premium names not answered yet. */
+  pending: number
+  /** Short-premium names with no estimate (or a failed read). */
+  withoutEstimate: string[]
+}
+
+/**
+ * The earnings-week premium line's reading: every name with a short option
+ * leg whose expiry is on or after Research's estimated print (est.), the
+ * print inside `days` — or late, which can land any day. A short leg that
+ * expires before the print carries no premium into it.
+ */
+export function shortPremiumIntoEarnings(
+  shortLegs: readonly { symbol: string; expiry: string | null | undefined }[],
+  readings: Readonly<Record<string, EarningsReading>>,
+  days: number = EARNINGS_WEEK_DAYS,
+): EarningsWeekReading {
+  const lastExpiry = new Map<string, string>()
+  for (const l of shortLegs) {
+    const sym = l.symbol.trim().toUpperCase()
+    const d = (l.expiry ?? '').replace(/\D/g, '')
+    const iso = d.length >= 8 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : ''
+    if (!sym) continue
+    const prev = lastExpiry.get(sym)
+    if (prev == null || iso > prev) lastExpiry.set(sym, iso)
+  }
+  const names: string[] = []
+  const withoutEstimate: string[] = []
+  let pending = 0
+  for (const [sym, expiry] of [...lastExpiry].sort(([a], [b]) => a.localeCompare(b))) {
+    const r = readings[sym]
+    if (!r) pending += 1
+    else if (r.kind === 'none') withoutEstimate.push(sym)
+    else if (r.next.daysAway <= days && (r.next.daysAway < 0 || expiry === '' || expiry >= r.next.date)) names.push(sym)
+  }
+  return { names, pending, withoutEstimate }
+}
+
+function earningsWeekRule(
+  r: EarningsWeekReading | undefined,
+): Pick<LimitRule, 'current' | 'scope' | 'citedFrom' | 'noReading' | 'detail'> {
+  const scope = `per name · print est. inside ${EARNINGS_WEEK_DAYS} days`
+  if (!r) {
+    return {
+      current: null,
+      scope,
+      citedFrom: null,
+      noReading: 'not read on this surface — Limits reads it from Research’s estimated print dates',
+    }
+  }
+  if (r.pending > 0) {
+    return { current: null, scope, citedFrom: null, noReading: 'reading Research’s estimated print dates…' }
+  }
+  const named = r.names.length > 0 ? `Short premium through the print: ${r.names.join(', ')}.` : 'No short premium is held through an estimated print.'
+  const missing = r.withoutEstimate.length > 0 ? ` No estimate for ${r.withoutEstimate.join(', ')}.` : ''
+  return {
+    current: r.names.length,
+    scope,
+    citedFrom: { label: 'Events', to: '/research/events' },
+    noReading: null,
+    detail: `${named}${missing} Research’s estimate — ${ESTIMATE_ONLY}.`,
+  }
 }
 
 /**
@@ -274,14 +351,11 @@ export function limitRules(r: LimitReadings): LimitRule[] {
       group: 'Event',
       name: 'Short premium into earnings week',
       kind: 'soft',
-      scope: 'per name in window',
       unit: 'count',
-      current: null,
       limit: null,
       bound: 'ceiling',
       onBreach: 'acknowledge',
-      citedFrom: null,
-      noReading: 'no future earnings date reaches this side, so no window can be drawn',
+      ...earningsWeekRule(r.earningsWeek),
     },
   ]
 }

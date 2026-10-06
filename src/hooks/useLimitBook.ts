@@ -10,8 +10,8 @@
  * where two answers is worse than none.
  *
  * It is expensive, and honestly so: the model service per account, the
- * positions book, Research's β and correlation, the fills, the allocation and
- * its gate. That cost is why the status bar reads a cheap subset instead
+ * positions book, Research's β and correlation, Research's estimated print
+ * per short-premium name, the fills, the allocation and its gate. That cost is why the status bar reads a cheap subset instead
  * (`useRiskLimitWatch`) and says which lines it is not watching.
  */
 import { useMemo } from 'react'
@@ -23,6 +23,7 @@ import { rollupMargin } from '@/utils/marginPressure'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
 import { useExecutionsAll } from '@/hooks/useExecutions'
+import { useNamesEarnings } from '@/hooks/useNamesEarnings'
 import { readTrades } from '@/utils/tradeReadings'
 import {
   fetchAllocations,
@@ -30,7 +31,15 @@ import {
   fetchTrades,
 } from '@/api/strategy'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
-import { gateLimitRules, limitRules, withHeadroom, type GateReadings, type LimitRow } from '@/utils/limitsModel'
+import {
+  gateLimitRules,
+  limitRules,
+  shortPremiumIntoEarnings,
+  withHeadroom,
+  type EarningsWeekReading,
+  type GateReadings,
+  type LimitRow,
+} from '@/utils/limitsModel'
 import { daemonPaperTrade } from '@/utils/daemonMode'
 import type { StatusStrategyActive } from '@/types/monitor'
 import type { StrategyAllocation } from '@/types/strategy'
@@ -137,6 +146,28 @@ export function useLimitBook(accountFilter: string): LimitBook {
   }, [book.isLoading, book.filteredOptions])
 
   /**
+   * Short premium into a print: the short legs, against Research's estimated
+   * print per name (est.) — read under the Events / Calendar cache key, one
+   * request per short-premium name.
+   */
+  const shortLegs = useMemo(
+    () =>
+      book.filteredOptions
+        .filter((p) => Number(p.qty ?? 0) < 0)
+        .map((p) => ({ symbol: extractUnderlyingRootSymbol(p.symbol), expiry: p.expiry })),
+    [book.filteredOptions],
+  )
+  const shortNames = useMemo(() => [...new Set(shortLegs.map((l) => l.symbol))].sort(), [shortLegs])
+  const shortEarnings = useNamesEarnings(shortNames)
+  const earningsWeek = useMemo<EarningsWeekReading>(
+    () =>
+      book.isLoading
+        ? { names: [], pending: 1, withoutEstimate: [] }
+        : shortPremiumIntoEarnings(shortLegs, shortEarnings),
+    [book.isLoading, shortLegs, shortEarnings],
+  )
+
+  /**
    * The gate the daemon runs under — the only limits in this book anyone has
    * written down. Design DECISIONS 2026-09-18: a gate is a limit at scope =
    * allocation, defined in Trading › Rules and read here.
@@ -221,10 +252,11 @@ export function useLimitBook(accountFilter: string): LimitBook {
           netBetaDelta: totals.withBetaDelta > 0 ? totals.betaDeltaDollars : null,
           shortGamma: legs.length > 0 ? totals.gamma : null,
           nakedShortPuts,
+          earningsWeek,
         }),
         ...gateLimitRules(gateReadings),
       ]),
-    [exposure, clusters, velocity, margin, ceiling, judgment, totals, legs.length, nakedShortPuts, gateReadings],
+    [exposure, clusters, velocity, margin, ceiling, judgment, totals, legs.length, nakedShortPuts, earningsWeek, gateReadings],
   )
 
 

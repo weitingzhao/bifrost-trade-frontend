@@ -6,12 +6,13 @@
  * shared hook or model that page uses, so a row here and the page it links to
  * cannot disagree (§14.2). Nothing is re-derived and nothing is written.
  *
- * Six of the thirteen checks cannot run at all on this book, and each says
+ * Five of the thirteen checks cannot run at all on this book, and each says
  * which half is missing rather than answering "clean". They are the honest
  * shape of the system today, not an oversight: no daily snapshot means no
  * overnight capital move, no plan has ever been linked to a position so no stop
- * or planned exit can be watched, no future earnings date reaches this side,
- * and nothing records that a trade was reviewed.
+ * or planned exit can be watched, and nothing records that a trade was
+ * reviewed. The earnings check runs on Research's estimated print dates
+ * (est.) — confirmed dates are not in the data subscription.
  */
 import { useMemo, useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
@@ -19,6 +20,8 @@ import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { fetchCorporateActions } from '@/api/marketData/corporateActions'
 import { useExecutionsAll } from '@/hooks/useExecutions'
 import { useAssignmentLegs } from '@/hooks/useAssignmentLegs'
+import { bookWatchNames } from '@/hooks/useBookWatchNames'
+import { useNamesEarnings } from '@/hooks/useNamesEarnings'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
 import { HOUSE_GATE_PCT } from '@/utils/backingJudgment'
@@ -30,7 +33,8 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { fmtPct0 } from '@/utils/positions'
 import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import { limitRules, openBreaches, withHeadroom } from '@/utils/limitsModel'
-import type { HomeCheck, HomeRow, TapeRow } from './todayModel'
+import { printsAhead } from '@/utils/earningsReading'
+import { earningsWeekCheck, type HomeCheck, type HomeRow, type TapeRow } from './todayModel'
 
 /** Inside this many days, an expiry is a decision rather than a date. */
 const EXPIRY_WINDOW_DAYS = 2
@@ -93,15 +97,23 @@ export function useTodayChecks(accountFilter: string) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caStamp, legSymbols, today])
 
-  const margin = useMemo(
+  const scopedAccounts = useMemo(
     () =>
-      rollupMargin(
-        (exposure.status?.portfolio?.accounts ?? []).filter(
-          (a) => accountFilter === 'all' || (a.account_id ?? '').trim() === accountFilter,
-        ),
+      (exposure.status?.portfolio?.accounts ?? []).filter(
+        (a) => accountFilter === 'all' || (a.account_id ?? '').trim() === accountFilter,
       ),
     [exposure.status, accountFilter],
   )
+  const margin = useMemo(() => rollupMargin(scopedAccounts), [scopedAccounts])
+
+  /**
+   * Every name the book holds in this scope, shares and legs alike — the set
+   * the Events Book lane asks about, read under its cache key, so a name
+   * already read there (or on Symbol) is not asked again.
+   */
+  const heldNames = useMemo(() => bookWatchNames(scopedAccounts, []).book, [scopedAccounts])
+  const earningsRead = useNamesEarnings(heldNames)
+  const prints = useMemo(() => printsAhead(heldNames, earningsRead), [heldNames, earningsRead])
 
   /** Limits' own book, held against its own lines — the same model that page draws. */
   const breaches = useMemo(() => {
@@ -172,18 +184,21 @@ export function useTodayChecks(accountFilter: string) {
       ),
     })
 
-    out.push({
+    // Research's estimated print per held name (est.); Events' Book face draws
+    // the same read as lanes, so the check opens there.
+    const earningsCheck = {
       key: 'earnings',
-      seg: 'pre',
-      layer: 'research',
+      seg: 'pre' as const,
+      layer: 'research' as const,
       question: 'Does a holding report earnings this week?',
-      // Events is unbuilt, so the check opens the page that carries what this
-      // side does have — the event feeds per name. Pointing at the unbuilt
-      // page would be a row whose only action lands on nothing.
-      to: '/research/event-radar',
-      rows: [],
-      cannotRun:
-        'no future earnings date reaches this side for any name in the book, so the week ahead cannot be read',
+      to: '/research/events',
+    }
+    const earnings = earningsWeekCheck(prints, heldNames.length)
+    out.push({
+      ...earningsCheck,
+      cannotRun: null,
+      partial: earnings.partial,
+      rows: earnings.rows.map((r, i) => row(earningsCheck, i, r)),
     })
     out.push({
       key: 'overnight-capital',
@@ -345,7 +360,7 @@ export function useTodayChecks(accountFilter: string) {
     })
 
     return out
-  }, [assignment.legs, eventsAhead, breaches, plansQuery.data?.items, execQuery.data?.items, today])
+  }, [assignment.legs, eventsAhead, prints, heldNames.length, breaches, plansQuery.data?.items, execQuery.data?.items, today])
 
   /**
    * The ambient tape: what a short-premium book watches on open.

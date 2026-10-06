@@ -3,6 +3,7 @@ import {
   allRows,
   blindSpots,
   countByUrgency,
+  earningsWeekCheck,
   segmentViews,
   sessionLabel,
   sessionSegment,
@@ -118,5 +119,48 @@ describe('counts', () => {
     expect(blindSpots(checks).map((c) => c.key)).toEqual(['capital'])
     // A blind check never contributes a row, so it cannot inflate the header.
     expect(allRows(checks).some((r) => r.key.startsWith('capital'))).toBe(false)
+  })
+})
+
+describe('earningsWeekCheck', () => {
+  // Invented names and dates.
+  it('one row per estimated print inside the week, each saying it is an estimate', () => {
+    const out = earningsWeekCheck(
+      {
+        ahead: [
+          { symbol: 'ZQX', date: '2026-10-06', daysAway: -2, late: true },
+          { symbol: 'QUOK', date: '2026-10-12', daysAway: 4, late: false },
+        ],
+        beyond: 3,
+        none: [],
+        unread: [],
+        pending: [],
+      },
+      5,
+    )
+    expect(out.rows.map((r) => r.what)).toEqual([
+      "ZQX's print is late — est. 06OCT26, no results 8-K on file yet",
+      'QUOK reports in 4 days — 12OCT26 est.',
+    ])
+    expect(out.rows[0].urg).toBe('now')
+    expect(out.rows[1].why).toContain('confirmed dates are not in the data subscription')
+    expect(out.partial).toBeNull()
+  })
+
+  it('a name without an estimate leaves the check answered for part of the book, with why', () => {
+    const out = earningsWeekCheck(
+      {
+        ahead: [],
+        beyond: 2,
+        none: [{ symbol: 'FUNDX', absence: { code: 'no_filings', text: 'no 8-K on file' } }],
+        unread: ['HUSH'],
+        pending: ['SLOW'],
+      },
+      5,
+    )
+    expect(out.rows).toEqual([])
+    expect(out.partial).toContain('1 of 5 names are still being read')
+    expect(out.partial).toContain('the earnings read failed for HUSH')
+    expect(out.partial).toContain('no estimate for 1 of 5 names — FUNDX (no 8-K on file')
   })
 })

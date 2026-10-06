@@ -43,10 +43,12 @@
  *
  * ## What the design draws and the data does not carry
  *
- * - an **Earn** column. No forward earnings date reaches this side:
- *   `/research/events/calendar` answers `count 0`, and the gap behind it is a
- *   vendor subscription. The design also vetoes a rule when a print is inside
- *   ten days, which is the same absence twice.
+ * - a **confirmed** print date in the Earn column. The vendor's confirmed
+ *   calendar is outside the data subscription (403 not entitled), so the
+ *   column prints Research's estimate (`expected_next`, est.) — read one name
+ *   at a time, so only where the universe is narrow enough to ask (`earnCell`).
+ *   The design also vetoes a rule when a print is inside ten days; nothing
+ *   evaluates rules per name here, so the veto is the reader's, off that column.
  * - the per-lens **252-session band** behind each bar. The row reports today's
  *   reading and none of the lens's history, so the bar can only say where the
  *   score sits on its own scale.
@@ -56,6 +58,8 @@
 
 import { finiteOrNull } from '@/utils/finite'
 import type { ScanRow } from '@/api/research/scan'
+import { ESTIMATE_ONLY, type EarningsReading } from '@/utils/earningsReading'
+import { EARNINGS_GATE_DAYS } from '@/utils/earningsEstimate'
 
 /** The five the model combines, in the design's reading order. */
 export const VOL_LENSES = [
@@ -314,14 +318,16 @@ export function lensSpread(
  *
  * The design's three, and its thresholds — a quarter of the set, floor of
  * three. Its rich-tape sentence goes on to say *"check earnings dates before
- * sizing — K of the hot names print inside 10 days"*; no earnings date reaches
- * this side, so the sentence names the absence instead of dropping the
- * warning.
+ * sizing — K of the hot names print inside 10 days"*. The dates are Research's
+ * estimates (est.), read one name at a time: `prints` counts the hot names read
+ * and how many of them print inside the window; without it the sentence says
+ * where the estimate is read instead of dropping the warning.
  */
 export function volTape(
   hot: number,
   cold: number,
   total: number,
+  prints?: { read: number; inside: number } | null,
 ): { label: string; sentence: string } {
   const quarter = Math.max(3, Math.floor(total * 0.25))
   if (total === 0) {
@@ -333,7 +339,7 @@ export function volTape(
   if (hot >= quarter) {
     return {
       label: 'Rich tape',
-      sentence: `${hot} of ${total} clear ${HOT_AT} at these weights. Premium is there to sell — check the print date before sizing, which this page cannot do for you: no earnings calendar reaches it.`,
+      sentence: `${hot} of ${total} clear ${HOT_AT} at these weights. Premium is there to sell — ${hotPrints(hot, prints)}`,
     }
   }
   if (cold >= quarter) {
@@ -348,6 +354,75 @@ export function volTape(
   }
 }
 
+function hotPrints(hot: number, prints: { read: number; inside: number } | null | undefined): string {
+  const window = `inside ${EARNINGS_GATE_DAYS} days (est.)`
+  if (!prints || prints.read === 0) {
+    return `check the print date before sizing: Research estimates it one name at a time (${ESTIMATE_ONLY}), on the Earn column where this universe is narrow enough to ask, and on Symbol.`
+  }
+  const k = prints.inside === 0 ? 'none' : String(prints.inside)
+  if (prints.read >= hot) {
+    return `${k} of the ${hot} hot names ${prints.inside === 1 ? 'prints' : 'print'} ${window}; check them before sizing.`
+  }
+  return `${k} of the ${prints.read} hot names read here ${prints.inside === 1 ? 'prints' : 'print'} ${window}; the other ${hot - prints.read} are not read on this page — check them on Symbol before sizing.`
+}
+
+/** What the Earn column prints for one name. */
+export interface EarnCell {
+  text: string
+  /** The figure is Research's estimate — the cell marks it est. */
+  est: boolean
+  /** Inside the design's ten-day veto window, or late. */
+  warn: boolean
+  title: string
+}
+
+/**
+ * The Earn cell: days to Research's estimated print (est.), `late` when the
+ * estimate passed with no results 8-K yet, or a dash that says why — no
+ * estimate for this name, or not read here because the universe is too wide
+ * to ask one name at a time (`readHere` false, and no other page has read it).
+ */
+export function earnCell(reading: EarningsReading | undefined, readHere: boolean): EarnCell {
+  if (!reading) {
+    return readHere
+      ? { text: '…', est: false, warn: false, title: 'Reading the next print from Research…' }
+      : {
+          text: '—',
+          est: false,
+          warn: false,
+          title:
+            'Not read across this universe: Research estimates the next print one name at a time, one request per name. Narrow the universe to Holdings, Watchlist or Both, select the row, or open the name on Symbol.',
+        }
+  }
+  if (reading.kind === 'none') {
+    return {
+      text: '—',
+      est: false,
+      warn: false,
+      title:
+        reading.absence.code === 'unread'
+          ? reading.reason
+          : `No earnings estimate — ${reading.absence.text}. Confirmed dates are not in the data subscription.`,
+    }
+  }
+  const { date, daysAway, track } = reading.next
+  if (daysAway < 0) {
+    return {
+      text: 'late',
+      est: true,
+      warn: true,
+      title: `The estimated print (${date}) passed with no results 8-K on file yet — it can land any day. ${ESTIMATE_ONLY[0].toUpperCase()}${ESTIMATE_ONLY.slice(1)}.`,
+    }
+  }
+  const miss = track.medianMissDays != null ? `; the rule has missed by a median ${track.medianMissDays}d over ${track.n} prints` : ''
+  return {
+    text: `${daysAway}d`,
+    est: true,
+    warn: daysAway <= EARNINGS_GATE_DAYS,
+    title: `Estimated ${date}: last year's same-quarter results 8-K plus 52 weeks (Research)${miss}. ${ESTIMATE_ONLY[0].toUpperCase()}${ESTIMATE_ONLY.slice(1)}.`,
+  }
+}
+
 /**
  * Which active opportunity is registered on a name — the design's Rule column.
  *
@@ -357,7 +432,8 @@ export function volTape(
  * *an active opportunity is registered on this name* — measured 2026-09-21, 7
  * active opportunities covering 15 symbols, 14 of which are in the scan's 500.
  * What it cannot say is that a rule's entry conditions are *met*: nothing
- * evaluates those per name, and the earnings veto has no date to read.
+ * evaluates those per name, so the earnings veto is the reader's, off the Earn
+ * column's estimated date.
  *
  * The id travels with the name so the cell can open that opportunity's own
  * chain on `/trade/rules?pick=opportunity:<id>` — where the seven Strategy

@@ -48,6 +48,7 @@ import { SymbolIdentity } from '@/pages/research/analyze/symbol/SymbolIdentity'
 import { SymbolInsightChip } from '@/pages/research/analyze/symbol/SymbolInsightChip'
 import { useSectionAnchor } from '@/pages/research/analyze/symbol/useSectionAnchor'
 import { SymbolMyLegs } from '@/pages/research/analyze/symbol/SymbolMyLegs'
+import { SymbolAdjustedOnlyNote } from '@/pages/research/analyze/symbol/SymbolAdjustedOnlyNote'
 import { SymbolRecordRail } from '@/pages/research/analyze/symbol/SymbolRecordRail'
 import { SymbolSinceSnapshot } from '@/pages/research/analyze/symbol/SymbolSinceSnapshot'
 import { SymbolVerdictPanel } from '@/pages/research/analyze/symbol/SymbolVerdictPanel'
@@ -220,6 +221,9 @@ export default function SymbolPage() {
       {/* Contract §11.7 — the judgement is read against what you already
           carry on this name, so the leg rail sits above the body. */}
       {symbol ? <SymbolMyLegs symbol={symbol} /> : null}
+      {/* A name whose chain lists only adjusted contracts: every option face
+          reads empty by Research's rule, said once for the whole page. */}
+      {symbol && active !== 'payoff' ? <SymbolAdjustedOnlyNote symbol={symbol} /> : null}
 
       {/* Keyed so a tab switch remounts: a lab's selected row, sort and filters
           belong to that lab, not to its neighbour. */}

@@ -21,7 +21,7 @@ import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { INDICATOR_SIGNALS, fetchSignalStats } from '@/api/research/indicators'
 import { fetchPineSignalStats } from '@/api/research/pine'
-import { basisNote, cellOf, fmtPt, sortRows, type StatsLike, type WinRateRow } from './signalWinRateModel'
+import { basisNote, cellOf, ciTitle, fmtPt, sortRows, type StatsLike, type WinRateRow } from './signalWinRateModel'
 
 /** When the watchlist has no stock names (or has not answered): the design's basket. */
 const FALLBACK_BASKET = ['NVDA', 'AMD', 'AVGO', 'SMCI', 'PLTR', 'TSLA']
@@ -239,7 +239,7 @@ export function SignalWinRatePanel() {
                         >
                           {fmtPt(r.edge)}
                           {r.edgeCi ? (
-                            <div className="text-dense-micro font-normal text-muted-foreground" title="90% interval of the edge">
+                            <div className="text-dense-micro font-normal text-muted-foreground" title={ciTitle(r.ciMethod)}>
                               {fmtPt(r.edgeCi[0])} to {fmtPt(r.edgeCi[1])}
                             </div>
                           ) : null}

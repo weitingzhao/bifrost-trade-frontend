@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { basisNote, cellOf, fmtPt, sortRows, type WinRateRow } from './signalWinRateModel'
+import { basisNote, cellOf, ciTitle, fmtPt, sortRows, type WinRateRow } from './signalWinRateModel'
 import { entryOffsetFor, sessionsAfterOf, versionAtLeast } from '@/api/research/backtestSim'
 
 function row(p: Partial<WinRateRow>): WinRateRow {
@@ -18,6 +18,7 @@ function row(p: Partial<WinRateRow>): WinRateRow {
     base: 0.55,
     edge: 0.05,
     edgeCi: null,
+    ciMethod: null,
     sample: 'ok',
     method: null,
     ...p,
@@ -39,12 +40,14 @@ describe('Signal Decay › Indicator & Pine signals', () => {
             n_raw: 58,
             sample_note: 'thin',
             ci90: { win_rate_edge: [-0.02, 0.11] },
+            ci_method: 'iid_signal',
           },
         },
       },
       10,
     )
-    expect(c).toMatchObject({ n: 41, nRaw: 58, edge: 0.05, edgeCi: [-0.02, 0.11], sample: 'thin' })
+    expect(c).toMatchObject({ n: 41, nRaw: 58, edge: 0.05, edgeCi: [-0.02, 0.11], ciMethod: 'iid_signal', sample: 'thin' })
+    expect(ciTitle('iid_signal')).toMatch(/fewer than 5 names/)
     expect(cellOf(undefined, 5)).toMatchObject({ n: null, edge: null, sample: null })
   })
 

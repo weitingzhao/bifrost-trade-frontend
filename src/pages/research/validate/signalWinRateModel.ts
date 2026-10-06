@@ -22,6 +22,8 @@ export interface HorizonCell {
   n_raw?: number
   sample_note?: SampleNote
   ci90?: { win_rate_edge?: Ci90 }
+  /** How the interval was drawn: by symbol (≥ 5 names), by signal (fewer), or null (n < 5). */
+  ci_method?: string | null
 }
 
 export interface StatsLike {
@@ -49,6 +51,8 @@ export interface WinRateRow {
   base: number | null
   edge: number | null
   edgeCi: Ci90
+  /** `cluster_bootstrap_symbol` · `iid_signal` · null. */
+  ciMethod: string | null
   sample: SampleNote | null
   /** The response's method, when it says one (v2). */
   method: PineStatsMethod | null
@@ -64,6 +68,7 @@ export function cellOf(stats: StatsLike | undefined, h: number): Omit<WinRateRow
     base: c?.baseline.win_rate ?? null,
     edge: c?.win_rate_edge ?? null,
     edgeCi: c?.ci90?.win_rate_edge ?? null,
+    ciMethod: c?.ci_method ?? null,
     sample: sample === 'noise' || sample === 'thin' || sample === 'ok' ? sample : null,
     method: stats?.method ?? null,
   }
@@ -101,4 +106,12 @@ export function basisNote(rows: readonly WinRateRow[]): string {
   return v1Sources.length
     ? `${head} ${name(v1Sources)} rows are still descriptive — same-session close, no costs, no interval — so the two are not on one basis.`
     : head
+}
+
+/** The edge interval's hover: which resampling drew it — by signal is narrower than by symbol. */
+export function ciTitle(method: string | null): string {
+  if (method === 'cluster_bootstrap_symbol') return '90% interval of the edge · resampled by symbol'
+  if (method === 'iid_signal')
+    return '90% interval of the edge · resampled by signal, because the basket has fewer than 5 names — narrower than a by-symbol interval would be'
+  return '90% interval of the edge'
 }

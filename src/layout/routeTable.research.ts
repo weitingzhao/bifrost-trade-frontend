@@ -165,8 +165,10 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Stock screen',
     crumbs: DISCOVER,
     design: {
+      // Rev .158–.161 Pine stage, saved-screen v2 and the off-script ✕ built;
+      // re-checked against Rev .162 (TD-188), waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-06.160',
+      rev: '2026-10-06.162',
       note: DESIGN_NOTES['/research/stocks'],
     },
   },
@@ -292,6 +294,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // + trade-history overlay built in batch K3 — waiting for a look.
       state: 'reviewing',
       // Rev .102–.103 price chart + instances (T3); walk rev moved 2026-09-29 with the design receipt.
+      // Not moved to .162 (TD-188): the K-line build's five named divergences
+      // (Rev .158–.159) have no Design answer yet — see the note.
       rev: '2026-09-28.103',
       note: DESIGN_NOTES['/research/symbol'],
     },
@@ -345,9 +349,10 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Signal Decay',
     crumbs: VALIDATE,
     design: {
-      // Rev .158–.159 B4 (Indicator & Pine panel under the lens table), waiting for a look.
+      // Rev .158–.159 B4 (Indicator & Pine panel under the lens table) and the
+      // Rev .160 Q2 grouping; re-checked against Rev .162 (TD-188), waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-06.160',
+      rev: '2026-10-06.162',
       note: DESIGN_NOTES['/research/signal-decay'],
     },
   },
@@ -366,9 +371,12 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: VALIDATE,
     symbolScope: true,
     design: {
-      // Rev .158–.159 B3 Simulator + B5 Pine library, waiting for a look.
+      // Rev .158–.159 B3 Simulator + B5 Pine library, Rev .161 From the script
+      // and Compared with; Rev .162 is Design writing the app's copy back
+      // (TD-188). Waiting for a look; Check's mini K-line still owes a walk
+      // with a Research identity.
       state: 'reviewing',
-      rev: '2026-10-06.160',
+      rev: '2026-10-06.162',
       note: DESIGN_NOTES['/research/backtest'],
     },
   },

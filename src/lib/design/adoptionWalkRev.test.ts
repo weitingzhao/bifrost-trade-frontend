@@ -141,7 +141,12 @@ describe('the design walk, by revision', () => {
     // Package .58 @ Rev .157 (2026-10-05, increment): the answers to the app's
     // 10-04 ASK batch (Rev .156) and the six prototypes merged (.157); no
     // route or page rev moved.
-    expect(DESIGN_REV).toBe('2026-10-04.157')
+    // Packages .60–.63 @ Rev .158–.162 (2026-10-05/06, increments): the Price
+    // chart to K-LINE-SPEC and the Pine pages (Stock screen's Pine stage,
+    // Backtest's Simulator and Pine library, Signal Decay's Indicator & Pine
+    // panel), then their receipts; the registry moved no route or page rev
+    // (synced 2026-10-06, TD-188).
+    expect(DESIGN_REV).toBe('2026-10-06.162')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

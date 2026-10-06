@@ -187,7 +187,7 @@ export function summarizeBreakeven(
 export interface LadderLeg extends OptionLegLike {
   /** Root symbol of the underlying, resolved by the caller. */
   underlying: string
-  /** Identifies the strategy instance the leg belongs to. */
+  /** Identifies the trade the leg belongs to. */
   tradeKey: string
 }
 

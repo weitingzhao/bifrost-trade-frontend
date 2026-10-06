@@ -295,10 +295,10 @@ export function tradePath(id: number, list?: readonly number[], from?: string): 
 }
 
 /**
- * One strategy instance as a surface (design Rev .103, Instance ≅ Symbol).
+ * One trade as a surface (design Rev .103, Instance ≅ Symbol; Rev .111 Trade).
  *
- * **One** following tab keyed `instance` — each `#NNN` click shows its
- * instance there; ⇧ opens a **fresh** tab keyed `instance:NNN` beside it, the
+ * **One** following tab keyed `trade` — each `#NNN` click shows its
+ * trade there; ⇧ opens a **fresh** tab keyed `trade:NNN` beside it, the
  * same number twice being one tab. Home is the panel; place memory is shared
  * by both kinds, so wherever the last one went, the next goes.
  */

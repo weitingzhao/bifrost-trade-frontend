@@ -1,5 +1,5 @@
 /**
- * A strategy instance, read with its own fills.
+ * A trade, read with its own fills.
  *
  * Open or closed is the server's answer (core 0.41.0, TD-43): the list carries
  * `state` — `no_fills` · `open` · `expired` · `closed` — derived from the

@@ -67,8 +67,8 @@ function rightOf(a: PositionAttribution): 'C' | 'P' | '' {
 /**
  * One row per contract, not per attribution row.
  *
- * The attribution service answers one row per *scope* — an instance-attributed
- * row per strategy instance plus an unattributed one — and `position_qty` is
+ * The attribution service answers one row per *scope* — a trade-attributed
+ * row per trade plus an unattributed one — and `position_qty` is
  * the whole position repeated on each of them. On DEV 2026-09-22 RKLB 18DEC26
  * 90C arrives three times carrying -26 every time, so summing every row drew a
  * -78 position that does not exist (and would have written a 78-contract draft

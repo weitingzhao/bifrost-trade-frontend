@@ -1,4 +1,4 @@
-/** Strategy instance detail sidebar width — keep in sync with `--instance-detail-sidebar-width` in index.css */
+/** Trade detail sidebar width */
 export const TRADE_DETAIL_SIDEBAR_WIDTH_PX = 960
 
 /** Max width when compare mode shows two panes side by side */

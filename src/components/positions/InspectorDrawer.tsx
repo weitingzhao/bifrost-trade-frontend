@@ -20,7 +20,7 @@ interface Props {
   onClose: () => void
 }
 
-/** Stock inspector shell. Strategy instances open the Instance surface (`useOpenInstance`). */
+/** Stock inspector shell. Trades open the Trade surface (`useOpenTrade`). */
 export function InspectorDrawer({ state, onClose }: Props) {
   if (!state.type || state.type === 'option') return null
 

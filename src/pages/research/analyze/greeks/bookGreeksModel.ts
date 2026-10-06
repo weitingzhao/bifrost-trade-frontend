@@ -27,7 +27,7 @@
  *
  * ## One row per contract, not per holding
  *
- * The book flattens a leg per account × strategy instance, so one contract can
+ * The book flattens a leg per account × trade, so one contract can
  * arrive three times — RKLB 18DEC26 90C does. Greeks are a property of the
  * contract and the net quantity, so the rows are netted by ticker before they
  * are scaled. The first pass did not, and drew three RKLB rows carrying

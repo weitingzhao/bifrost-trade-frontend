@@ -37,7 +37,7 @@ export function useBookGreeks(todayIso: string, filterSym?: string | null) {
    * Book legs before netting, for the name in view.
    *
    * `bookLegRows` nets per contract; the book itself holds one leg per account
-   * × strategy instance, so the same contract held three ways is three legs
+   * × trade, so the same contract held three ways is three legs
    * and one row. Risk › Exposure counts the legs, this page counts the
    * contracts — both right, and a reader who clicks «3» and lands on «1» has
    * no way to know that unless the page says it.

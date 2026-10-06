@@ -33,7 +33,7 @@ Three independent taxonomies — do not mix tokens across them. Living contract:
 | Concept | Token | Utility | Accessor |
 |---------|-------|---------|----------|
 | Strategy | `--color-entity-strategy` | `text-entity-strategy` | `DenseTag` / `DenseLinkButton variant="strategy"` |
-| Instance | `--color-entity-instance` | `text-entity-instance` | `DenseTag` / `DenseLinkButton variant="instance"` |
+| Trade | `--color-entity-trade` | `text-entity-trade` | `DenseTag` / `DenseLinkButton variant="trade"` |
 | Opportunity | `--color-option-category-opportunity` *(planned)* | *(planned)* | Planned `DenseTag` / `DenseLinkButton` variant |
 | Structure | `--color-option-category-structure` *(planned)* | *(planned)* | Planned `DenseTag` / `DenseLinkButton` variant |
 

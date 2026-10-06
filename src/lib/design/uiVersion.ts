@@ -46,4 +46,5 @@
 // 0.12.0 (Rev .156): FilterChip size="sm" · dashed · missing (§17.10); DenseTableDetailRow
 // as an expansion in a list scope — no fill, no zebra, no capsule, a hairline under,
 // `indent`; a nested table's head does not stick (§17.2).
-export const UI_VERSION_NOW = '0.12.0'
+// 0.13.0 (naming R0): the `--sk-instance` alias goes; `--sk-trade` is the only name.
+export const UI_VERSION_NOW = '0.13.0'

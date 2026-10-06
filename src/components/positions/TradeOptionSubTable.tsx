@@ -111,7 +111,7 @@ export function TradeOptionSubTable({
    *
    * Scaled here from the vendor's per-share row by *this* row's own signed
    * quantity, rather than read from the rollup's `byTicker`. The book flattens
-   * a leg per account × strategy instance, so one contract reaches this table
+   * a leg per account × trade, so one contract reaches this table
    * more than once — on DEV 2026-09-22, RKLB 18DEC26 90C three times (-10 /
    * -6 / -10) and HIMS 18DEC26 40C twice (-9 / +5) — while `byTicker` holds
    * *position* greeks keyed by contract, so the last leg written wins. Every

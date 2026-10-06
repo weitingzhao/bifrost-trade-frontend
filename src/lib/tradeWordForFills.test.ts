@@ -1,10 +1,10 @@
 /**
- * TD-19: 'trade' is the entity (a strategy instance, `Trade #NNN`). A fill count is
+ * TD-19: 'trade' is the entity (one position opened under the rules, `Trade #NNN`). A fill count is
  * Fills, and one option contract taken flat is a contract (`ReviewContract`).
  *
  * Two ways the word drifts back, both caught here: a metric labelled 'Trades' whose
- * value is a fill count (`trade_count` from the API counts every fill, opening ones
- * included), and the contract-level review names coming back under the old ones.
+ * value is a fill count (the API's old `trade_count`, gone in core 0.42.0, counted every
+ * fill, opening ones included), and the contract-level review names coming back under the old ones.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'

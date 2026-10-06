@@ -122,7 +122,7 @@ export function useRiskExposure(accountFilter: string) {
    *
    * One entry per *holding*, each scaled by its own signed quantity, because
    * `greeksByUnderlying` and `riskByExpiry` both sum what is in here and the
-   * book flattens a leg per account × strategy instance. Read from the
+   * book flattens a leg per account × trade. Read from the
    * rollup's `byTicker` this loop pushed one holding's scaled numbers once per
    * holding: on DEV 2026-09-22 that made RKLB's Γ/Θ/vega the -10 leg's three
    * times over (a -30 book against a -26 position) and HIMS's the +5 leg's

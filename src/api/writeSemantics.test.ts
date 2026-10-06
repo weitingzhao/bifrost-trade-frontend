@@ -176,13 +176,13 @@ describe('strategy rules', () => {
     expect((await deleteAllocation(6)).deleted).toBe('gone')
   })
 
-  it('instance: PATCH answers the row; delete 409 / 503 throw their reasons', async () => {
+  it('trade: PATCH answers the row; delete 409 / 503 throw their reasons', async () => {
     fetchMock.mockResolvedValueOnce(json({ trade_id: 7, label: null }))
     await patchTrade(7, { label: null })
     expect(call(0)).toEqual({ url: '/api/account/trades/7', method: 'PATCH', body: { label: null } })
-    fetchMock.mockResolvedValueOnce(refusal(409, '3 executions are attributed to this instance.'))
-    await expect(deleteTrade(7)).rejects.toThrow('3 executions are attributed')
-    fetchMock.mockResolvedValueOnce(refusal(503, 'Cannot write strategy instance 7: the Golden Source is unreachable.'))
+    fetchMock.mockResolvedValueOnce(refusal(409, '3 fills are attributed to this trade.'))
+    await expect(deleteTrade(7)).rejects.toThrow('3 fills are attributed')
+    fetchMock.mockResolvedValueOnce(refusal(503, 'Cannot write trade 7: the Golden Source is unreachable.'))
     await expect(deleteTrade(7)).rejects.toThrow('Golden Source is unreachable')
   })
 

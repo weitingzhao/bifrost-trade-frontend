@@ -82,7 +82,7 @@ export interface ReviewContract {
   fills: ReviewFill[]
   /** The play this trade belonged to, from the fills' own opportunity name. */
   play: string | null
-  /** The strategy instance the fills were booked to (`#NNN`), when any was. */
+  /** The trade the fills were booked to (`#NNN`), when any was. */
   tradeId: number | null
   openedOn: string | null
   closedOn: string | null

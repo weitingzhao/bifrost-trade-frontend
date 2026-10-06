@@ -103,7 +103,7 @@ describe('rollupGreeks', () => {
   })
 
   it('loses a holding from byTicker but never from perShareByTicker', () => {
-    // The book flattens a leg per account × strategy instance, so one contract
+    // The book flattens a leg per account × trade, so one contract
     // arrives more than once — DEV 2026-09-22: HIMS 18DEC26 40C at -9 and +5.
     const g = rollupGreeks([{ ...muLeg, qty: -9 }, { ...muLeg, qty: 5 }], rows(MU_CALL), IDLE)
     // Totals sum per leg, so they were never wrong.

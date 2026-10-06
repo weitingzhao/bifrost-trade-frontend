@@ -185,8 +185,8 @@ export function getOptionStockLinkDetailForExecution(
 }
 
 /**
- * Prorated sum of option–stock link slippage attributed to this strategy instance.
- * For split executions, slippage scales by (|instance qty| / |parent execution qty|).
+ * Prorated sum of option–stock link slippage attributed to this trade.
+ * For fill splits, slippage scales by (|split qty| / |parent fill qty|).
  */
 export function tradeOptionStockSlippageAdjustment(
   executionsFinalRaw: Execution[],

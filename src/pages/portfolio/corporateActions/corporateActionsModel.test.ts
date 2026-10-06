@@ -121,7 +121,7 @@ describe('split arithmetic', () => {
 })
 
 describe('feedReach', () => {
-  it('tells silence apart from a shallow backfill', () => {
+  it('tells none on record apart from one event on record', () => {
     const reach = feedReach({
       bySymbol: new Map([
         ['ZEBR', rows.filter((r) => r.symbol === 'ZEBR')],
@@ -132,11 +132,10 @@ describe('feedReach', () => {
     })
     expect(reach.asked).toBe(3)
     expect(reach.covered).toBe(2)
-    // Nothing at all: the feed cannot say whether this name pays.
-    expect(reach.silent).toEqual(['HUSH'])
-    // Reached, but carrying a single row — a different fault, and one that
-    // reads exactly like a name that has only ever paid once.
-    expect(reach.shallow).toEqual(['QUOK'])
+    // The vendor answered and has no event on record for this name — an answer, not a gap.
+    expect(reach.noneOnRecord).toEqual(['HUSH'])
+    // A single event on record is the vendor's whole answer for the name.
+    expect(reach.oneOnRecord).toEqual(['QUOK'])
     expect(reach.rows).toBe(3)
     expect(reach.oldest).toBe('2026-03-02')
     expect(reach.newest).toBe('2026-09-25')

@@ -197,7 +197,7 @@ export default function CorporateActionsPage() {
   // Errors move the stamp too: an unread name leaves the counts below.
   const feedStamp = feedQueries.map((q) => `${q.dataUpdatedAt}:${q.errorUpdatedAt}`).join(',')
   const feedLoading = feedQueries.some((q) => q.isLoading)
-  /** Names whose feed read failed with nothing held — silent, not "carries nothing". */
+  /** Names whose feed read failed with nothing held — unread, not "none on record". */
   const feedUnread = symbols.filter((_, i) => feedQueries[i]?.isError && !feedQueries[i]?.data)
 
   /** New York's today — a date, so it only moves at New York midnight. */
@@ -205,7 +205,7 @@ export default function CorporateActionsPage() {
 
   const bySymbol = useMemo(() => {
     const by = new Map<string, CorporateActionRow[]>()
-    // An unread name is left out rather than counted as silent.
+    // An unread name is left out rather than counted as none on record.
     symbols.forEach((symbol, i) => {
       const q = feedQueries[i]
       if (q?.isError && !q.data) return
@@ -289,7 +289,7 @@ export default function CorporateActionsPage() {
             </DenseTag>
           ) : null
         }
-        meta={pageState === 'ready' || pageState === 'stale' ? `${reach.covered} / ${reach.asked} names · ${reach.rows} rows` : undefined}
+        meta={pageState === 'ready' || pageState === 'stale' ? `${reach.covered} / ${reach.asked} names with events · ${reach.rows} rows` : undefined}
         actions={
           <PageHeadLink to="/trade/expiration#assignment" title="Assignment risk → Trading › Expiry">
             Assignment risk →
@@ -327,7 +327,7 @@ export default function CorporateActionsPage() {
           kind="stale"
           layout="strip"
           title={`Couldn’t read the feed for ${feedUnread.length} of ${symbols.length} names`}
-          detail={`${feedUnread.join(', ')} — left out of every count below; unread is not “carries nothing”.`}
+          detail={`${feedUnread.join(', ')} — left out of every count below; unread is not “none on record”.`}
           onAction={() => feedQueries.forEach((q) => void q.refetch())}
         />
       ) : null}
@@ -385,12 +385,12 @@ export default function CorporateActionsPage() {
             </header>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,11rem),1fr))] gap-x-4 gap-y-2 px-3 py-2.5">
               <PositionsStat
-                cap="Names covered"
+                cap="Names with events"
                 value={`${reach.covered} / ${reach.asked}`}
                 sub={
-                  reach.silent.length > 0
-                    ? `${reach.silent.length} carry nothing at all: ${reach.silent.join(', ')}`
-                    : 'every name the book touches answers'
+                  reach.noneOnRecord.length > 0
+                    ? `vendor answered none on record for ${reach.noneOnRecord.length}: ${reach.noneOnRecord.join(', ')}`
+                    : 'every name the book touches has an event on record'
                 }
               />
               <PositionsStat
@@ -413,13 +413,12 @@ export default function CorporateActionsPage() {
                 }
               />
               <PositionsStat
-                cap="Backfilled thinly"
-                value={String(reach.shallow.length)}
-                ink={reach.shallow.length > 0 ? 'text-warning' : undefined}
+                cap="One event on record"
+                value={String(reach.oneOnRecord.length)}
                 sub={
-                  reach.shallow.length > 0
-                    ? `one row each: ${reach.shallow.join(', ')}`
-                    : 'every covered name carries a series'
+                  reach.oneOnRecord.length > 0
+                    ? `the vendor’s whole answer: ${reach.oneOnRecord.join(', ')}`
+                    : 'every name with events carries more than one'
                 }
               />
             </div>

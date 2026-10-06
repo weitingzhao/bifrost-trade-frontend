@@ -10,13 +10,16 @@
  *   weeks), the Events lanes' own read (`useNamesEarnings`). The vendor's
  *   confirmed calendar (Benzinga) is not on the plan — 403 not entitled. A
  *   late print (estimate passed, no 8-K yet) has no day ahead and is left off.
+ * - Past earnings (Rev .157): each book and watchlist name's results releases
+ *   on file — the 8-K dates the estimate is built from — on the day the
+ *   release was filed. Facts, so they sit in the past tense (`past`).
  * - OPEX: third Fridays, arithmetic (`bookCalendar.thirdFriday`).
  */
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchEventCalendar, type EventRadarRow } from '@/api/researchEngine'
 import { useBookWatchNames } from '@/hooks/useBookWatchNames'
-import { useNamesEarnings } from '@/hooks/useNamesEarnings'
+import { useNamesEarnings, useNamesResultDates } from '@/hooks/useNamesEarnings'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { thirdFriday } from '@/utils/bookCalendar'
@@ -70,6 +73,37 @@ export function earningsItems(
   return out
 }
 
+/** Results releases on file, on the day each 8-K was filed; a name on both lists is the book's. */
+export function pastEarningsItems(
+  names: { book: readonly string[]; watch: readonly string[] },
+  dates: Readonly<Record<string, readonly string[]>>,
+): CalendarItem[] {
+  const out: CalendarItem[] = []
+  const seen = new Set<string>()
+  const place = (sym: string, where: 'book' | 'watchlist') => {
+    if (seen.has(sym)) return
+    seen.add(sym)
+    for (const raw of dates[sym] ?? []) {
+      const d = raw.slice(0, 10)
+      if (!d) continue
+      out.push({
+        key: `events:reported:${sym}:${d}`,
+        d,
+        layer: 'events',
+        cell: `${sym} earnings`,
+        text: `earnings reported ${d} · results 8-K · ${where}`,
+        syms: [sym],
+        ink: 'sym',
+        to: withSymbolParam(SYMBOL_PATH, sym),
+        past: true,
+      })
+    }
+  }
+  for (const s of names.book) place(s, 'book')
+  for (const s of names.watch) place(s, 'watchlist')
+  return out
+}
+
 /** Monthly OPEX, every third Friday from January of `fromYear` for `years` years. */
 export function opexItems(fromYear: number, years = 2): CalendarItem[] {
   return Array.from({ length: years * 12 }, (_, i) => {
@@ -87,12 +121,14 @@ export function useCalendarEvents(): CalendarLayerReading {
   })
   const names = useBookWatchNames()
   const readings = useNamesEarnings(names.all)
+  const resultDates = useNamesResultDates(names.all)
   const year = new Date().getFullYear()
   const macro = useMemo(() => macroItems(calendar.data?.rows ?? []), [calendar.data?.rows])
   const opex = useMemo(() => opexItems(year), [year])
   // `readings` is rebuilt every render (see useNamesEarnings), so this is too — a few dozen names.
   const earnings = earningsItems(names, readings)
-  const items = [...macro, ...earnings, ...opex].sort((a, b) => a.d.localeCompare(b.d))
+  const reported = pastEarningsItems(names, resultDates)
+  const items = [...macro, ...reported, ...earnings, ...opex].sort((a, b) => a.d.localeCompare(b.d))
   const pending = names.all.filter((s) => readings[s] == null).length
   const absent = Object.entries(readings).filter(([, r]) => r.kind === 'none')
   const state = layerStateOf([calendar])
@@ -102,7 +138,7 @@ export function useCalendarEvents(): CalendarLayerReading {
     state: state === 'ready' && (names.bookLoading || pending > 0) ? 'loading' : state,
     note: [
       state === 'failed' ? 'The macro calendar read failed — OPEX and earnings estimates still stand.' : null,
-      `Earnings are Research’s estimates (est.) — the vendor’s confirmed calendar (Benzinga) is not on the plan, 403 not entitled.`,
+      `Coming earnings are Research’s estimates (est.) — the vendor’s confirmed calendar (Benzinga) is not on the plan, 403 not entitled. Past earnings sit on the day the results 8-K was filed.`,
       absent.length > 0
         ? `No estimate for ${absent.length} of ${names.all.length} names: ${absent
             .map(([sym, r]) => `${sym} (${r.kind === 'none' ? EARNINGS_ABSENCE_LABEL[r.absence.code] : ''})`)

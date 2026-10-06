@@ -63,6 +63,24 @@ describe('the today boundary (Owner #19)', () => {
     expect(inTense(item('2031-03-13', 'expiry'), TODAY)).toBe(true)
   })
 
+  it('keeps a past print on Events in the past, as a past layer', () => {
+    expect(inTense(item('2031-03-11', 'events', { past: true }), TODAY)).toBe(true)
+    expect(inTense(item('2031-03-13', 'events', { past: true }), TODAY)).toBe(false)
+  })
+
+  it('counts dividends and lists a past print by its label', () => {
+    const lines = cellLines([
+      item('2031-03-11', 'dividends'),
+      item('2031-03-11', 'dividends'),
+      item('2031-03-11', 'events', { cell: 'AAA earnings', past: true, ink: 'sym' }),
+    ])
+    expect(lines.map((l) => l.text)).toEqual(['2 dividends', 'AAA earnings'])
+  })
+
+  it('leaves Dividends off in every preset', () => {
+    for (const ids of Object.values(CALENDAR_PRESETS)) expect(ids).not.toContain('dividends')
+  })
+
   it('puts today’s fills and today’s events in the same cell', () => {
     const all = [item(TODAY, 'fills'), item(TODAY, 'fills'), item(TODAY, 'events', { cell: 'CPI', ink: 'macro' })]
     const vis = visibleItems(all, { on: new Set(['fills', 'events']), sym: '', today: TODAY })

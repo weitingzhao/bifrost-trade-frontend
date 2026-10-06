@@ -3,13 +3,14 @@
  * (`lib/calendar`) — the Calendar adds no request a page it quotes would not
  * make, and computes no figure of its own (§14.2).
  *
- * All nine are read whether or not they are on: a chip's count is what
+ * All ten are read whether or not they are on: a chip's count is what
  * turning it on would add, so an off layer still has to be known.
  */
 import { useMemo } from 'react'
 import type { CalendarItem, CalendarLayerId, CalendarLayerReading } from '@/lib/calendar/calendarLayers'
 import { useCalendarCorporateActions } from '@/lib/calendar/corpActionsLayer'
 import { useCalendarDecisions } from '@/lib/calendar/decisionsLayer'
+import { useCalendarDividends } from '@/lib/calendar/dividendsLayer'
 import { useCalendarDraftExpiry } from '@/lib/calendar/draftExpiryLayer'
 import { useCalendarEvents } from '@/lib/calendar/eventsLayer'
 import { useCalendarExpiries } from '@/lib/calendar/expiriesLayer'
@@ -41,6 +42,7 @@ export function useCalendarData(months: readonly [string, string]): CalendarData
   const fills = useCalendarFills()
   const decisions = useCalendarDecisions()
   const notes = useCalendarNotes()
+  const dividends = useCalendarDividends()
   const events = useCalendarEvents()
   const expiry = useCalendarExpiries()
   const corp = useCalendarCorporateActions()
@@ -48,7 +50,7 @@ export function useCalendarData(months: readonly [string, string]): CalendarData
   const drafts = useCalendarDraftExpiry()
   const hol = useCalendarHolidays()
 
-  const layers = [fills, decisions, notes, events, expiry, corp, horizons, drafts]
+  const layers = [fills, decisions, notes, dividends, events, expiry, corp, horizons, drafts]
   // The readers hand back fresh arrays each render where an owner's own read
   // does (Events' earnings); the join keys on their content.
   const sig = layers.map((l) => `${l.layer}:${l.items.map((i) => `${i.key}@${i.d}`).join(',')}`).join('|')
@@ -74,6 +76,7 @@ export function useCalendarData(months: readonly [string, string]): CalendarData
     fills: pick(fills),
     decisions: pick(decisions),
     notes: pick(notes),
+    dividends: pick(dividends),
     events: pick(events),
     expiry: pick(expiry),
     corp: pick(corp),

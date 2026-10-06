@@ -17,6 +17,7 @@ export type CalendarLayerId =
   | 'fills'
   | 'decisions'
   | 'notes'
+  | 'dividends'
   | 'events'
   | 'expiry'
   | 'corp'
@@ -44,6 +45,12 @@ export interface CalendarItem {
   to: string
   /** An estimate rather than a fact (earnings `est.`). */
   est?: boolean
+  /**
+   * A fact on a future layer — a results release that already came out
+   * (Events, Rev .157). It sits on its day in the past tense, as a past
+   * layer's rows do, and never in the future.
+   */
+  past?: boolean
 }
 
 /**

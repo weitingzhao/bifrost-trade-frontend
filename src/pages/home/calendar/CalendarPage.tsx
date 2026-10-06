@@ -214,7 +214,7 @@ export default function CalendarPage() {
         id,
         label: L.short ?? L.label,
         count: chipCountText(n, r),
-        title: [`From ${L.owner}`, L.tense === 'past' ? 'days up to today' : 'today on', state, why].filter(Boolean).join(' · '),
+        title: [`From ${L.owner}`, L.tense === 'past' ? 'days up to today' : L.id === 'events' ? 'past prints, then today on' : 'today on', state, why].filter(Boolean).join(' · '),
       }
     })
 

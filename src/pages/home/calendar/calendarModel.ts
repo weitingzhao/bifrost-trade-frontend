@@ -31,12 +31,13 @@ export interface CalendarLayerMeta {
   many?: string
 }
 
-// The prototype's LAYERS, in its order (Rev .148).
+// The prototype's LAYERS, in its order (Rev .148; Dividends Rev .157, off in every preset).
 export const CALENDAR_LAYERS: readonly CalendarLayerMeta[] = [
   { id: 'pnl', label: 'P&L', tense: 'past', owner: 'Performance', to: '/portfolio/performance' },
   { id: 'fills', label: 'Fills', tense: 'past', owner: 'Orders & Fills', to: '/trade/fills', one: 'fill', many: 'fills' },
   { id: 'decisions', label: 'Decisions', tense: 'past', owner: 'Journal', to: '/research/journal', one: 'decision', many: 'decisions' },
   { id: 'notes', label: 'Notes', tense: 'past', owner: 'Journal', to: '/research/journal?view=notes', one: 'note', many: 'notes' },
+  { id: 'dividends', label: 'Dividends', tense: 'past', owner: 'Transfer & Pay', to: '/portfolio/transfer', one: 'dividend', many: 'dividends' },
   { id: 'events', label: 'Events', tense: 'future', owner: 'Events', to: '/research/events' },
   { id: 'expiry', label: 'Expiries', tense: 'future', owner: 'Expiry', to: '/trade/expiration' },
   { id: 'corp', label: 'Corporate actions', short: 'Corp actions', tense: 'future', owner: 'Corporate Actions', to: '/portfolio/corporate-actions' },
@@ -48,7 +49,7 @@ export const LAYER_BY_ID = Object.fromEntries(CALENDAR_LAYERS.map((l) => [l.id, 
 
 /** The two business groups of the layer trays (Rev .148): tense is a property, not the grouping. */
 export const LAYER_GROUPS: readonly { label: string; ids: readonly CalendarLayerId[] }[] = [
-  { label: 'Book & market', ids: ['pnl', 'fills', 'expiry', 'corp', 'events'] },
+  { label: 'Book & market', ids: ['pnl', 'fills', 'dividends', 'expiry', 'corp', 'events'] },
   { label: 'Research loop', ids: ['decisions', 'notes', 'horizons', 'drafts'] },
 ]
 
@@ -83,12 +84,17 @@ export function layerParamOf(on: ReadonlySet<CalendarLayerId>): string {
   return CALENDAR_LAYERS.filter((l) => on.has(l.id)).map((l) => l.id).join(',')
 }
 
+/** An item's own tense: its layer's, unless it is a fact on a future layer (a past print on Events). */
+export function tenseOf(item: Pick<CalendarItem, 'layer' | 'past'>): LayerTense {
+  return item.past ? 'past' : LAYER_BY_ID[item.layer].tense
+}
+
 /**
  * Whether an item is in its tense on this day. Before today only what
  * happened; after today only what is coming; today both (Owner #19).
  */
-export function inTense(item: Pick<CalendarItem, 'd' | 'layer'>, today: string): boolean {
-  return LAYER_BY_ID[item.layer].tense === 'past' ? item.d <= today : item.d >= today
+export function inTense(item: Pick<CalendarItem, 'd' | 'layer' | 'past'>, today: string): boolean {
+  return tenseOf(item) === 'past' ? item.d <= today : item.d >= today
 }
 
 /**
@@ -136,10 +142,17 @@ export interface CellLine {
   ink: CalendarItem['ink']
 }
 
-/** A cell's lines: one count per past layer (`4 fills`), then each coming item by its short label. */
+/** The past layers a cell counts rather than lists. */
+const COUNTED_LAYERS = ['fills', 'decisions', 'notes', 'dividends'] as const
+
+/**
+ * A cell's lines: one count per past layer (`4 fills`), then each item of the
+ * other layers by its short label — coming ones, and a past print on Events.
+ */
 export function cellLines(dayItems: readonly CalendarItem[]): CellLine[] {
+  const counted = new Set<CalendarLayerId>(COUNTED_LAYERS)
   const lines: CellLine[] = []
-  for (const id of ['fills', 'decisions', 'notes'] as const) {
+  for (const id of COUNTED_LAYERS) {
     const n = dayItems.filter((i) => i.layer === id).length
     if (n) {
       const L = LAYER_BY_ID[id]
@@ -147,7 +160,7 @@ export function cellLines(dayItems: readonly CalendarItem[]): CellLine[] {
     }
   }
   for (const i of dayItems) {
-    if (LAYER_BY_ID[i.layer].tense === 'future') lines.push({ key: i.key, text: i.cell || i.text, ink: i.ink })
+    if (!counted.has(i.layer)) lines.push({ key: i.key, text: i.cell || i.text, ink: i.ink })
   }
   return lines
 }

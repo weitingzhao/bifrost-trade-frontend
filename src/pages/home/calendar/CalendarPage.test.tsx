@@ -49,6 +49,7 @@ const DATA: CalendarData = {
     fills: ready,
     decisions: ready,
     notes: { state: 'signed-out', note: 'Notes are keyed by the research user — sign in to read them.', floor: false },
+    dividends: ready,
     events: ready,
     expiry: ready,
     corp: ready,

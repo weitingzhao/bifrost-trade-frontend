@@ -13,7 +13,9 @@ import { pnlDays } from './pnlLayer'
 import { fillItems } from './fillsLayer'
 import { decisionItems, nyDayOf } from './decisionsLayer'
 import { noteItems } from './notesLayer'
-import { earningsItems, macroItems, opexItems } from './eventsLayer'
+import { earningsItems, macroItems, opexItems, pastEarningsItems } from './eventsLayer'
+import { cashDay, dividendItems } from './dividendsLayer'
+import type { AccountTransaction } from '@/types/trading'
 import { expiryItems } from './expiriesLayer'
 import { corpActionItems } from './corpActionsLayer'
 import { holidayDays } from './holidaysLayer'
@@ -136,6 +138,17 @@ describe('Events — macro, earnings est., OPEX', () => {
     expect(items[1].text).toContain('watchlist')
     expect(items[0].to).toBe('/research/symbol?symbol=AAA')
   })
+  it('puts each results 8-K on the day it was filed, in the past tense, a held name under the book', () => {
+    const items = pastEarningsItems({ book: ['AAA'], watch: ['AAA', 'BBB', 'ETF'] }, { AAA: ['2026-05-20', '2026-08-26'], BBB: ['2026-07-30'], ETF: [] })
+    expect(items.map((i) => [i.key, i.d, i.cell, i.past])).toEqual([
+      ['events:reported:AAA:2026-05-20', '2026-05-20', 'AAA earnings', true],
+      ['events:reported:AAA:2026-08-26', '2026-08-26', 'AAA earnings', true],
+      ['events:reported:BBB:2026-07-30', '2026-07-30', 'BBB earnings', true],
+    ])
+    expect(items[0].text).toContain('book')
+    expect(items[2].text).toContain('watchlist')
+    expect(items[0].to).toBe('/research/symbol?symbol=AAA')
+  })
   it('OPEX is every third Friday', () => {
     const opex = opexItems(2026, 1)
     expect(opex).toHaveLength(12)
@@ -218,5 +231,33 @@ describe('Hypothesis horizons — Research’s settles_on, never projected here'
     ])
     expect(r.items[0].text).toContain('20 sessions from 2026-09-17')
     expect(r.undated).toEqual([{ reason: 'no candidate behind it — settles by hand', n: 2 }])
+  })
+})
+
+describe('Dividends — Transfer & Pay’s dividend rows, net of the same-day withholding', () => {
+  const tx = (o: Partial<AccountTransaction>): AccountTransaction => ({ account_id: 'A1', ts: '0', amount: 0, type: 'other', ...o })
+  // 2026-09-04 00:00 UTC, as the broker stamps a posting date.
+  const SEP4 = String(Date.UTC(2026, 8, 4) / 1000)
+  it('dates a cash row by its UTC posting date', () => {
+    expect(cashDay(`${SEP4}.000000`)).toBe('2026-09-04')
+    expect(cashDay('x')).toBeNull()
+  })
+  it('one item per name per day, payment in lieu folded in, tax netted, other rows left out', () => {
+    const items = dividendItems([
+      tx({ ts: SEP4, amount: 354.39, type: 'dividend', symbol: 'AAA', description: 'AAA CASH DIVIDEND USD 0.30 PER SHARE' }),
+      tx({ ts: SEP4, amount: 0.31, type: 'dividend', symbol: 'AAA', description: 'AAA PAYMENT IN LIEU OF DIVIDEND' }),
+      tx({ ts: SEP4, amount: -10.5, type: 'other', symbol: 'AAA', description: 'AAA CASH DIVIDEND USD 0.30 PER SHARE - US TAX' }),
+      tx({ ts: SEP4, amount: 12, type: 'dividend', symbol: 'BBB', description: 'BBB CASH DIVIDEND' }),
+      tx({ ts: SEP4, amount: -3, type: 'other', symbol: 'CCC', description: 'CCC CASH DIVIDEND - US TAX' }),
+      tx({ ts: SEP4, amount: -10, type: 'other', symbol: null, description: 'SNAPSHOT FEE' }),
+      tx({ ts: SEP4, amount: 500, type: 'deposit' }),
+    ])
+    expect(items.map((i) => [i.d, i.syms, i.layer])).toEqual([
+      ['2026-09-04', ['AAA'], 'dividends'],
+      ['2026-09-04', ['BBB'], 'dividends'],
+    ])
+    expect(items[0].text).toBe('AAA dividend $354.70 · -$10.50 tax · net $344.20')
+    expect(items[1].text).toBe('BBB dividend $12.00')
+    expect(items[0].to).toBe('/portfolio/transfer')
   })
 })

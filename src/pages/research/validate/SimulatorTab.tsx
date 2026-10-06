@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { CloseButton, DenseTag, SegmentControl } from '@/components/data-display'
-import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { ResearchAuthGap, ResearchUserNeeded } from '@/components/auth/ResearchAuthGap'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { failedDetail } from '@/lib/viewState'
 import { fmtNumLocale } from '@/lib/format'
@@ -912,10 +912,14 @@ function SimBuilder({
                 ? 'Running the schedule baseline…'
                 : 'Run simulation'}
           </Button>
+          {noIdentity ? (
+            <ResearchUserNeeded line="A run needs a Research user — none is set in this browser." />
+          ) : (
           <span className={cn('text-dense-caption', blockedWhy ? 'text-foreground' : 'text-muted-foreground')}>
             {blockedWhy ??
               `Fills are modelled: option_daily has no bid / ask, so the price is VWAP or close plus a tiered slippage. Runs as ${auth.userLabel ?? 'you'} — a run needs a Research identity.`}
           </span>
+          )}
         </div>
         {failed ? (
           firstResearchAuthGapError(failed.error) ? (

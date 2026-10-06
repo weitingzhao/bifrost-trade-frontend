@@ -11,6 +11,30 @@ export const RESEARCH_AUTH_NOT_SET_LINE = 'Research user not set — Set user'
 export const RESEARCH_AUTH_EXPIRED_LINE = 'Research user token was rejected — Set user again'
 
 /**
+ * A control that needs a Research user, before anything was sent: the reason and
+ * the way to fix it on the same line. Without this, a page that greys its
+ * buttons when no user is set has no handle — ResearchAuthGap only appears
+ * after a request failed, and a greyed button never sends one (Pine library,
+ * Simulator; Owner 2026-10-06).
+ */
+export function ResearchUserNeeded({ line, className }: { line: string; className?: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <span className={cn('inline-flex min-w-0 flex-wrap items-baseline gap-x-2', className)}>
+      <span className="min-w-0 text-dense-caption text-foreground">{line}</span>
+      <button
+        type="button"
+        className="shrink-0 text-dense-caption text-primary underline"
+        onClick={() => setOpen(true)}
+      >
+        Set user
+      </button>
+      <ResearchUserSwitcher showTrigger={false} open={open} onOpenChange={setOpen} />
+    </span>
+  )
+}
+
+/**
  * Design 2026-09-15 Q2=A: no token + 401 is grey empty, not failed.
  * A token the server still refuses is expired — red, Retry, different copy.
  */

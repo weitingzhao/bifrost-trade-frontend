@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { ResearchHttpError } from '@/lib/auth/researchHttpError'
 import { researchAuthStore } from '@/lib/auth/researchUser'
-import { RESEARCH_AUTH_EXPIRED_LINE, RESEARCH_AUTH_NOT_SET_LINE, ResearchAuthGap } from './ResearchAuthGap'
+import { RESEARCH_AUTH_EXPIRED_LINE, RESEARCH_AUTH_NOT_SET_LINE, ResearchAuthGap, ResearchUserNeeded } from './ResearchAuthGap'
 
 describe('ResearchAuthGap', () => {
   beforeEach(() => {
@@ -35,5 +36,14 @@ describe('ResearchAuthGap', () => {
     expect(screen.getByText('engine down')).toBeTruthy()
     expect(screen.getByRole('button', { name: /retry/i })).toBeTruthy()
     expect(screen.queryByText(RESEARCH_AUTH_NOT_SET_LINE)).toBeNull()
+  })
+})
+
+describe('ResearchUserNeeded', () => {
+  it('says why and opens the identity dialog from the same line, before any request', async () => {
+    render(<ResearchUserNeeded line="Check and Save run as a Research user" />)
+    expect(screen.getByText('Check and Save run as a Research user')).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Set user' }))
+    expect(await screen.findByText('Research identity')).toBeTruthy()
   })
 })

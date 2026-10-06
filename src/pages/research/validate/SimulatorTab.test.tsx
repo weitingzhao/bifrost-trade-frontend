@@ -196,11 +196,12 @@ describe('Simulator tab', () => {
     expect(screen.queryByText(/is not stored with a run/)).toBeNull()
   })
 
-  it('greys Run without a Research identity and says why', () => {
+  it('greys Run without a Research identity, says why and offers Set user', () => {
     researchAuthStore.clear()
     renderTab({ rows: [], builderOpen: true })
     expect((screen.getByRole('button', { name: /Run simulation/ }) as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.getByText('Set user — runs need a Research identity')).toBeTruthy()
+    expect(screen.getByText('A run needs a Research user — none is set in this browser.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Set user' })).toBeTruthy()
   })
 
   it.each([

@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DenseTag, SegmentControl } from '@/components/data-display'
-import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
+import { ResearchAuthGap, ResearchUserNeeded } from '@/components/auth/ResearchAuthGap'
 import { cap, mono, panel, panelHead, td, th } from '@/components/research/labFaceUi'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useResearchAuth } from '@/lib/auth/researchUser'
@@ -391,7 +391,9 @@ export function PineLibraryTab({
             </span>
           </header>
           {!auth.token ? (
-            <p className="m-0 border-b border-border px-3 py-1.5 text-dense-caption text-foreground">{NO_IDENTITY}</p>
+            <div className="border-b border-border px-3 py-1.5">
+              <ResearchUserNeeded line="Check and Save run as a Research user — none is set in this browser." />
+            </div>
           ) : null}
 
           <div className="grid grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">

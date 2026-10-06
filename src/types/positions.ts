@@ -19,6 +19,14 @@ export interface OpenOptionPosition {
   qty: number
   avg_cost: number | null
   mark_price: number | null
+  /**
+   * Where `mark_price` came from when the attribution row priced it (core 0.51.0, TD-171):
+   * 'vendor_eod' is the vendor's close of `mark_date`, not a live quote. Absent for an IB
+   * live price, an off-track leg, or an API older than core 0.51.0.
+   */
+  mark_source?: AttributionMarkSource | null
+  /** New York date (YYYY-MM-DD) the mark belongs to. */
+  mark_date?: string | null
   unrealized_pnl: number
   pool_label: 'On' | 'Off'
   account_id: string
@@ -92,6 +100,9 @@ export interface TradeAllGroup {
   risk_profile: RiskProfile | null
 }
 
+/** core 0.51.0 (TD-140): a fresh live quote, or the vendor's newest session close. */
+export type AttributionMarkSource = 'quote_live' | 'vendor_eod'
+
 /** One row from GET /executions/position-attribution: one (position, instance). */
 export interface PositionTradeAttribution {
   account_id: string
@@ -103,8 +114,14 @@ export interface PositionTradeAttribution {
   option_right: string
   position_qty: number
   avg_cost: number | null
+  /** A live mid only; never a close. */
   price_mid: number | null
+  /** A live last, or — from core 0.51.0, with no live quote — the vendor close of `mark_date`. */
   price_last: number | null
+  /** core 0.51.0; absent from an older API. null: nothing priced the row. */
+  mark_source?: AttributionMarkSource | null
+  /** core 0.51.0: the New York date (YYYY-MM-DD) of the price. */
+  mark_date?: string | null
   trade_id: number | null
   trade_label: string | null
   strategy_opportunity_id: number | null

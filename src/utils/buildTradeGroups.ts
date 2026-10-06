@@ -1,8 +1,16 @@
-import type { LivePositionRow, OpenOptionPosition, TradePositionGroup, PositionTradeAttribution, Execution } from '@/types/positions'
+import type {
+  AttributionMarkSource,
+  LivePositionRow,
+  OpenOptionPosition,
+  TradePositionGroup,
+  PositionTradeAttribution,
+  Execution,
+} from '@/types/positions'
 import type { AccountFilter } from '@/utils/positionsGrouping'
 import { positionMatchesAccountFilter } from '@/utils/positionsGrouping'
 import { buildOffTrackPositions } from '@/utils/offTrackPositions'
 import { optContractKey } from '@/utils/contractKey'
+import { numericOrNull } from '@/utils/finite'
 
 export function normalizeAvgCostPerShare(raw: number | null | undefined): number | null {
   if (raw == null || !Number.isFinite(Number(raw))) return null
@@ -22,6 +30,33 @@ export function optionExpiryMatchesFilter(expiryRaw: string, filterRaw: string):
 function contractLabelSymbol(contractKey: string): string {
   const parts = (contractKey ?? '').split('|')
   return (parts[0] ?? '').trim()
+}
+
+/**
+ * The leg's mark: the IB live position price, else the attribution row's live mid, else its
+ * `price_last` — which from core 0.51.0 may be the vendor's close of `mark_date` (TD-171).
+ * The row's `mark_source` / `mark_date` travel only with a price the row itself supplied;
+ * undefined when IB priced the leg or the API predates them.
+ */
+function attributionMark(
+  livePos: LivePositionRow | undefined,
+  a: PositionTradeAttribution,
+): { markPrice: number | null; markSource: AttributionMarkSource | null | undefined; markDate: string | null | undefined } {
+  const ib = numericOrNull(livePos?.price)
+  if (ib != null) return { markPrice: ib, markSource: undefined, markDate: undefined }
+  const rowMark = numericOrNull(a.price_mid) ?? numericOrNull(a.price_last)
+  if (rowMark == null) return { markPrice: null, markSource: undefined, markDate: undefined }
+  return { markPrice: rowMark, markSource: a.mark_source, markDate: a.mark_date }
+}
+
+/**
+ * "EOD 10-05" when the leg is marked at a vendor session close rather than a live quote
+ * (core 0.51.0, TD-171) — the same tag TradeRecord prints beside a dated close; null otherwise.
+ */
+export function eodMarkLabel(pos: Pick<OpenOptionPosition, 'mark_source' | 'mark_date'>): string | null {
+  if (pos.mark_source !== 'vendor_eod') return null
+  const day = (pos.mark_date ?? '').slice(0, 10)
+  return day.length === 10 ? `EOD ${day.slice(5)}` : 'EOD'
 }
 
 function attributionAttrType(a: PositionTradeAttribution): 'single' | 'mixed' | 'unassigned' {
@@ -116,14 +151,7 @@ export function buildTradeGroups(input: BuildTradeGroupsInput): TradePositionGro
     positionsHandledByAttribution.add(`${acct}\x00${ck}`)
 
     const livePos = livePositionMap.get(`${acct}\x00${ck}`)
-    const markPrice =
-      livePos?.price != null && Number.isFinite(Number(livePos.price))
-        ? Number(livePos.price)
-        : a.price_mid != null && Number.isFinite(Number(a.price_mid))
-          ? Number(a.price_mid)
-          : a.price_last != null && Number.isFinite(Number(a.price_last))
-            ? Number(a.price_last)
-            : null
+    const { markPrice, markSource, markDate } = attributionMark(livePos, a)
     const avgCostPerShare =
       livePos?.avgCost != null
         ? normalizeAvgCostPerShare(Number(livePos.avgCost))
@@ -144,6 +172,7 @@ export function buildTradeGroups(input: BuildTradeGroupsInput): TradePositionGro
       qty: estQty,
       avg_cost: avgCostPerShare,
       mark_price: markPrice,
+      ...(markSource !== undefined ? { mark_source: markSource, mark_date: markDate ?? null } : {}),
       unrealized_pnl: pnl,
       pool_label: 'On',
       account_id: acct,

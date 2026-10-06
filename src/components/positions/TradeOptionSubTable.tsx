@@ -45,6 +45,7 @@ import type { OpenOptionPosition, Execution, TradeAllGroup } from '@/types/posit
 import type { QuoteItem } from '@/types/market'
 import type { DetailViewMode } from './LinesToolbar'
 import { scopedExecListsForPosition } from '@/utils/tradeSheetExec'
+import { eodMarkLabel } from '@/utils/buildTradeGroups'
 import { tradePanel } from './tradePanelClasses'
 import { positionsUi } from './positionsUi'
 import { localDayStamp } from '@/utils/positions'
@@ -324,6 +325,7 @@ export function TradeOptionSubTable({
               liveMid != null && avgPerShare != null
                 ? computeOptionMtmPnlUsd(liveMid, avgPerShare, pos.qty)
                 : null
+            const eodTag = eodMarkLabel(pos)
             const execCount = scopedFinalExecs.length + scopedTwsExecs.length
             const hasExecs = execCount > 0
 
@@ -452,11 +454,18 @@ export function TradeOptionSubTable({
                     )}
                   >
                     {fmtUsd(pos.unrealized_pnl)}
-                    {livePnl != null && (
+                    {eodTag ? (
+                      <span
+                        className={cn('ml-1 text-dense-meta font-normal', denseTable.mutedMeta)}
+                        title={`At the contract's vendor close of ${pos.mark_date ?? 'an earlier session'} — no live quote`}
+                      >
+                        {eodTag}
+                      </span>
+                    ) : livePnl != null ? (
                       <span className={cn('ml-1 text-dense-meta', denseTable.mutedMeta)}>
                         snap
                       </span>
-                    )}
+                    ) : null}
                   </div>
                 </DenseTableCell>
                 <DenseTableCell className={tradePanel.subMutedCell}>{pos.pool_label}</DenseTableCell>

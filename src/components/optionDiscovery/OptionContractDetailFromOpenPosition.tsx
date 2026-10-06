@@ -214,9 +214,13 @@ export function OptionContractDetailFromOpenPosition({
     }
     if (snapshotRows.length === 0) {
       warnings.push('No Polygon snapshot rows in PostgreSQL for this expiry/strike band — Greeks/IV charts may be sparse. Use Research → Option Discovery to sync chain, or wait for Market Data Plugin backfill.')
+      // The row's mark is then the position's own — a dated vendor close from core 0.51.0 (TD-171).
+      if (position.mark_source === 'vendor_eod') {
+        warnings.push(`Mark is the vendor close of ${position.mark_date ?? 'an earlier session'} — no live quote.`)
+      }
     }
     setEventContextWarnings(warnings)
-  }, [expirationDisplay, greeksCoverage, snapshotRows.length])
+  }, [expirationDisplay, greeksCoverage, snapshotRows.length, position.mark_source, position.mark_date])
 
   const {
     liquidityLoading,

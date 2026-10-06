@@ -303,6 +303,37 @@ export function rowProbe(sets: ReadonlyMap<string, ReadonlySet<string>>): Probe 
   }
 }
 
+/**
+ * Does a name carry a reading for a row-evaluated chip — true or false, as
+ * against not evaluated (Rev .157: a chip no name in range has a reading for
+ * is `missing`, not zero)? Server-set chips (`fromSet`) answer membership for
+ * every name, so they always read.
+ */
+export function rowHasReading(r: NameRow, chip: Pick<StageChip, 'id' | 'fromSet'>): boolean {
+  if (chip.fromSet) return true
+  const id = chip.id
+  switch (id) {
+    case 'm_sepa':
+      return r.sepa != null
+    case 'm_radar':
+    case 'grade_aplus':
+    case 'grade_a':
+    case 'grade_b':
+    case 'grade_c':
+    case 'grade_d':
+      return r.radar != null
+    case 'm_prem':
+      return r.prem != null
+    case 'ivr_ge_40':
+    case 'ivr_ge_60':
+      return r.prem?.raw.ivRank != null
+    case 'vrp_pct_ge_70':
+      return r.prem?.raw.vrp != null
+    default:
+      return r.cond[id] != null
+  }
+}
+
 /** How many of a min stage's conditions a name holds. */
 function minCount(stage: Stage, r: NameRow, probe: Probe): number {
   if (stage.id === 'trend') return r.sepa?.trendN ?? 0

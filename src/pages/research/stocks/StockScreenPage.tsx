@@ -46,6 +46,7 @@ import {
   inFocus,
   matchRate,
   passesAll,
+  rowHasReading,
   rowProbe,
   runStages,
   sepaScoreAt,
@@ -268,9 +269,20 @@ export default function StockScreenPage() {
     }
     return m
   }, [pool, probe, data.sets])
-  const chipCount = (id: string): { n: number | null; where: string } => {
+  // Rev .157: a row-evaluated chip that no name in range has a reading for.
+  const chipsWithoutReading = useMemo(() => {
+    const out = new Set<string>()
+    if (!pool.length) return out
+    for (const st of STAGES) {
+      for (const c of st.chips) {
+        if (!c.fromSet && pool.every((r) => !rowHasReading(r, c))) out.add(c.id)
+      }
+    }
+    return out
+  }, [pool])
+  const chipCount = (id: string): { n: number | null; where: string; noReading?: boolean } => {
     const n = chipCounts.get(id)
-    if (n != null) return { n, where: `of ${pool.length} in universe` }
+    if (n != null) return { n, where: `of ${pool.length} in universe`, noReading: chipsWithoutReading.has(id) }
     const tier = data.setCounts.get(id)
     return { n: tier ?? null, where: 'in its tier’s own universe (select it to count this universe)' }
   }

@@ -49,7 +49,7 @@ export function ScreenPanel({
   counts: readonly StageCount[]
   screen: ScreenState
   /** A chip's count in the universe; a server-set chip not yet loaded reads its tier's own count. */
-  chipCountOf: (id: string) => { n: number | null; where: string }
+  chipCountOf: (id: string) => { n: number | null; where: string; noReading?: boolean }
   pending: boolean
   onChip: (id: string, label: string) => void
   onMin: (stageId: string, next: number, label: string) => void

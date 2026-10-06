@@ -127,7 +127,7 @@ export function OptGroupRow({
           return (
             <DenseTableDetailRow key={oid ?? `${t.time}-${t.price}`}>
               <DenseTableCell />
-              <DenseTableCell className="font-mono text-muted-foreground pl-6">
+              <DenseTableCell className="font-mono text-muted-foreground">
                 <span>{executionDateStr(t)}</span>
                 {linkCount > 0 && (
                   <button

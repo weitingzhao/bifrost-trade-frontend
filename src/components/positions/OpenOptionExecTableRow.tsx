@@ -72,7 +72,7 @@ export function OpenOptionExecTableRow({
   return (
     <DenseTableDetailRow>
       <DenseTableCell className={denseTable.expandColCell}>{null}</DenseTableCell>
-      <DenseTableCell colSpan={2} className={cn('pl-6', denseTable.detailCellClip)}>
+      <DenseTableCell colSpan={2} className={denseTable.detailCellClip}>
         <div className="flex flex-col gap-0.5">
           <div className={denseTable.detailRowLabel} title={execTitle}>
             {execLabel}

@@ -73,7 +73,7 @@ function CondCheck({
         type="checkbox"
         checked={on}
         onChange={onToggle}
-        className="m-0 h-[13px] w-[13px] accent-[var(--sk-accent)]"
+        className="m-0 h-[13px] w-[13px] accent-[var(--sk-soft)]"
       />
       <span className="flex-1">{label}</span>
       <span
@@ -375,6 +375,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
                   {PATHS.map((p) => (
                     <FilterChip
                       key={p}
+                      size="sm"
                       className="font-mono"
                       pressed={filter.paths.includes(p)}
                       onPressedChange={() => toggleIn('paths', p)}
@@ -390,6 +391,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
                   {GRADES.map((g) => (
                     <FilterChip
                       key={g}
+                      size="sm"
                       className="font-mono"
                       pressed={filter.grades.includes(g)}
                       onPressedChange={() => toggleIn('grades', g)}
@@ -413,7 +415,7 @@ export function ConditionsFace({ head }: { head: MethodHead }) {
                   step={5}
                   value={filter.minScore}
                   onChange={(e) => setFilter((f) => ({ ...f, minScore: Number(e.target.value) }))}
-                  className="m-0 h-3.5 w-full accent-[var(--sk-accent)]"
+                  className="m-0 h-3.5 w-full accent-[var(--sk-soft)]"
                   aria-label="Minimum composite"
                 />
               </div>

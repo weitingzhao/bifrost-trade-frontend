@@ -12,7 +12,7 @@ import type {
   StrategyScope,
 } from './ledgerTypes'
 import { isSharesTab } from './ledgerTypes'
-import { ledgerChipClass, ledgerShell } from './ledgerShellUi'
+import { ledgerShell } from './ledgerShellUi'
 
 export type LedgerTabFilterProps = {
   activeTab: MainTab
@@ -70,6 +70,11 @@ function Control({ label, tooltip, children }: { label: string; tooltip?: string
   )
 }
 
+/**
+ * The active view's sub-views: one of N with counts — the DS SegmentControl,
+ * the count written into the segment's name (design Rev .156 §17.10; it was a
+ * row of accent chips).
+ */
 function SubChips<T extends string>({
   label,
   value,
@@ -84,25 +89,17 @@ function SubChips<T extends string>({
   return (
     <span className={ledgerShell.inlineControl}>
       <span className={ledgerShell.cap}>{label}</span>
-      <span className={ledgerShell.chipRow} role="radiogroup" aria-label={label}>
-        {chips.map(chip => {
-          const active = chip.value === value
-          return (
-            <button
-              key={chip.value}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              title={chip.empty ? 'Nothing here for the current filters' : chip.label}
-              onClick={() => onChange(chip.value)}
-              className={ledgerChipClass(active, chip.empty, false)}
-            >
-              {chip.label}
-              {chip.count ? <span className="font-mono font-normal opacity-80">{chip.count}</span> : null}
-            </button>
-          )
-        })}
-      </span>
+      <SegmentControl
+        size="xs"
+        ariaLabel={label}
+        value={value}
+        onChange={(v) => onChange(v as T)}
+        options={chips.map((chip) => ({
+          value: chip.value,
+          label: chip.count ? `${chip.label} ${chip.count}` : chip.label,
+          title: chip.empty ? 'Nothing here for the current filters' : chip.label,
+        }))}
+      />
     </span>
   )
 }

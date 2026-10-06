@@ -468,7 +468,7 @@ export default function SignalDecayPage() {
       return {
         tone: 'neutral' as const,
         label: 'No evaluated triggers',
-        narrative: `No ${scope}${lens} hit rows in the last ${windowDays}d${regimeNote}. Wait for research-signal-hit Cron.`,
+        narrative: `No ${scope}${lens} hit rows in the last ${windowDays}d${regimeNote}. Wait for the nightly research_trading_day batch (signal_hit).`,
       }
     }
     if ((hot ?? 0) >= 0.55) {
@@ -697,7 +697,7 @@ export default function SignalDecayPage() {
           <ViewState
             kind="empty"
             title="No lens hits yet"
-            detail="Nothing settled in this window and regime — the research-signal-hit job fills stock_signal_lens_hit_daily."
+            detail="Nothing settled in this window and regime — the nightly research_trading_day batch (signal_hit) fills stock_signal_lens_hit_daily."
           />
         </section>
       ) : data ? (

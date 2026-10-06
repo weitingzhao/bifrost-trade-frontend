@@ -11,7 +11,8 @@
  * user script is stored only in Research's database (the repositories are
  * public). Each script must plot a series titled `buy` and/or `sell`. The
  * library is one: saving or switching a script off shows up on the Screener,
- * the Symbol chart, the Simulator and Signal Decay at once.
+ * the Symbol chart, the Simulator and Signal Decay at once. Below the editor,
+ * the option context series a script can read (research 0.195.0, S6).
  */
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -37,6 +38,7 @@ import {
   savePineScript,
   type PineScriptRow,
 } from '@/api/research/pine'
+import { PineContextPanel } from './PineContextPanel'
 import { PineCheckChart } from './PineCheckChart'
 
 const TEMPLATE = `//@version=5
@@ -564,6 +566,14 @@ export function PineLibraryTab({
                         : '…'}
                     </span>
                   ) : null}
+                  {checked?.context ? (
+                    <span
+                      className={cn(mono, 'text-dense-caption text-muted-foreground')}
+                      title="The nightly build stores this script's signals from this session on: 100 sessions after the latest first value among the series it reads"
+                    >
+                      reads {checked.context.series.join(', ')} · stored from {checked.context.warm_from ?? 'never in this window'}
+                    </span>
+                  ) : null}
                 </div>
                 {check.isError ? (
                   firstResearchAuthGapError(check.error) ? (
@@ -630,6 +640,7 @@ export function PineLibraryTab({
           />
         </section>
       ) : null}
+      <PineContextPanel />
     </div>
   )
 }

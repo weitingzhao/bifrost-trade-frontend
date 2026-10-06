@@ -448,5 +448,27 @@ export const PineCheckResponseSchema = z
     marks: z.array(z.object({ date: z.string(), side: PineSideSchema, close: z.number().nullable() }).passthrough()),
     /** research 0.183.0, when `plots` was asked: [[session, value | null]] oldest first. */
     series: z.record(z.string(), z.array(z.tuple([z.string(), z.number().nullable()]))).optional(),
+    /** research 0.195.0, when the script reads option context (S6). */
+    context: z.object({ series: z.array(z.string()), warm_from: z.string().nullable() }).passthrough().optional(),
+  })
+  .passthrough()
+
+/** GET research/pine/context (research 0.195.0, S6): the series a script reads with request.security. */
+export const PineContextResponseSchema = z
+  .object({
+    series: z.array(
+      z
+        .object({
+          name: z.string(),
+          kind: z.enum(['symbol', 'market']),
+          unit: z.string(),
+          description: z.string(),
+          history_from: z.string(),
+          note: z.string(),
+          pine: z.string(),
+        })
+        .passthrough(),
+    ),
+    rules: z.record(z.string(), z.string()),
   })
   .passthrough()

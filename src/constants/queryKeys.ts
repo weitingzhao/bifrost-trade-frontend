@@ -88,6 +88,7 @@ export const QUERY_KEYS = {
     pineScripts: ['research-engine', 'pine', 'scripts'] as const,
     pine: ['research-engine', 'pine'] as const,
     pineScriptsWithSource: ['research-engine', 'pine', 'scripts', 'with-source'] as const,
+    pineContext: ['research-engine', 'pine', 'context'] as const,
     pineSignalsWithin: (sessions: number) => ['research-engine', 'pine', 'signals', 'within', sessions] as const,
     pineSignalStats: (script: string, side: string, basket: string) =>
       ['research-engine', 'pine', 'signal-stats', script, side, basket] as const,

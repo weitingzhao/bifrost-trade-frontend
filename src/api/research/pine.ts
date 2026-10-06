@@ -12,6 +12,7 @@ import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
 import {
   PineCheckResponseSchema,
+  PineContextResponseSchema,
   PineScriptRowSchema,
   PineScriptsResponseSchema,
   PineSignalStatsSchema,
@@ -210,6 +211,37 @@ export interface PineCheckResult {
   marks: { date: string; side: PineSide; close: number | null }[]
   /** research 0.183.0, when `plots` was asked: each plot's [session, value | null], oldest first. */
   series?: Record<string, [string, number | null][]>
+  /**
+   * research 0.195.0: the option context series the script reads, and the first
+   * session the nightly build stores its signals (null: none in this window).
+   */
+  context?: { series: string[]; warm_from: string | null }
+}
+
+/** One option context series a script reads with `request.security("NAME", timeframe.period, close)` (S6). */
+export interface PineContextSeries {
+  name: string
+  /** `symbol`: the script's own symbol's series; `market`: the same for every symbol. */
+  kind: 'symbol' | 'market'
+  unit: string
+  description: string
+  /** First session with a value (measured 2026-10-06). */
+  history_from: string
+  note: string
+  pine: string
+}
+
+export interface PineContextCatalog {
+  series: PineContextSeries[]
+  /** timeframe, missing_day, warm_up, as_of — one sentence each. */
+  rules: Record<string, string>
+}
+
+const validateContext = withValidation<PineContextCatalog>(PineContextResponseSchema, 'research/pine/context')
+
+/** The option context series (research 0.195.0); an older Research answers 404. */
+export async function fetchPineContext(): Promise<PineContextCatalog> {
+  return validateContext(await get('/research/pine/context'))
 }
 
 /**

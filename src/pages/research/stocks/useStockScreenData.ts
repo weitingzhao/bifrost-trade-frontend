@@ -13,6 +13,10 @@
  *   the route caps at 500 and the option universe is 691.
  * - **Server sets** are fetched only for chips that are on (structure and
  *   momentum-tier signals, sentiment); their counts come from `tier-stats`.
+ * - **Earnings** is Research's estimated next print for every name
+ *   (`useNamesEarnings`, the batch read — research 0.193.0, TD-158): the Earn
+ *   column and the Catalyst stage's three earnings chips
+ *   (`stockScreenEarnings.ts`). Read only where `withEarnings` asks for it.
  */
 import { useMemo } from 'react'
 import { QUERY_KEYS } from '@/constants/queryKeys'
@@ -36,6 +40,8 @@ import { STAGE_OF, pineChipId } from './stockScreenStages'
 import type { PineWithin } from './stockScreenModel'
 import { fetchPineSignals } from '@/api/research/pine'
 import { usePineLibrary } from '@/hooks/usePineLibrary'
+import { useNamesEarnings } from '@/hooks/useNamesEarnings'
+import { earningsWindowSets, type EarnChipId } from './stockScreenEarnings'
 
 const STALE = 10 * 60_000
 const RADAR_PAGE = 500
@@ -99,7 +105,11 @@ async function chipSet(stage: SetStage, id: string): Promise<string[]> {
 }
 
 /** `pineWithin` null: a reader with no Pine stage (Method › Models) — the signals are not read. */
-export function useStockScreenData(on: Record<string, boolean>, pineWithin: PineWithin | null = null) {
+export function useStockScreenData(
+  on: Record<string, boolean>,
+  pineWithin: PineWithin | null = null,
+  withEarnings = false,
+) {
   const wide = useQuery({
     queryKey: ['research-engine', 'stock-screen', 'wide'],
     queryFn: () => fetchSepaScreenerWide(SET_PAGE),
@@ -166,8 +176,24 @@ export function useStockScreenData(on: Record<string, boolean>, pineWithin: Pine
     return m
   }, [pine.data])
 
+  const rows: NameRow[] = useMemo(
+    () => joinNames(wide.data?.rows ?? [], radar.data?.rows ?? [], scan.data?.rows ?? []),
+    [wide.data, radar.data, scan.data],
+  )
+
+  // Every name's estimated print; the chips' sets only once every name has answered,
+  // so a chip never counts a half-read universe.
+  const earnNames = useMemo(() => (withEarnings ? rows.map((r) => r.sym) : []), [rows, withEarnings])
+  const earnings = useNamesEarnings(earnNames)
+  const earnSets = useMemo(() => {
+    const answered = Object.keys(earnings).length
+    return earnNames.length > 0 && answered >= new Set(earnNames).size ? earningsWindowSets(earnings) : null
+  }, [earnings, earnNames])
+  const earnOn = Object.keys(on).some((k) => on[k] && k.startsWith('earn_'))
+
   const sets = useMemo(() => {
     const m = new Map<string, ReadonlySet<string>>()
+    if (earnSets) for (const [id, s] of earnSets) m.set(id, s)
     wanted.forEach((w, i) => {
       const d = setQs[i]?.data
       if (d) m.set(w.id, new Set(d))
@@ -184,12 +210,7 @@ export function useStockScreenData(on: Record<string, boolean>, pineWithin: Pine
     return m
     // setQs is a new array each render; its answers are keyed by setsKey.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wanted, setsKey, narr.data, pine.data, pineSets, pineLib.scripts])
-
-  const rows: NameRow[] = useMemo(
-    () => joinNames(wide.data?.rows ?? [], radar.data?.rows ?? [], scan.data?.rows ?? []),
-    [wide.data, radar.data, scan.data],
-  )
+  }, [wanted, setsKey, narr.data, pine.data, pineSets, pineLib.scripts, earnSets])
 
   /** Chip counts for server-set chips, over the tier mart's own universe. */
   const setCounts = useMemo(() => {
@@ -199,12 +220,13 @@ export function useStockScreenData(on: Record<string, boolean>, pineWithin: Pine
     for (const c of sentStats.data?.conditions ?? []) m.set(c.id, c.pass)
     if (narr.data) for (const [id, s] of namesByCondition(narr.data.tags)) m.set(id, s.size)
     for (const [id, s] of pineSets) m.set(id, s.size)
+    if (earnSets) for (const [id, s] of earnSets) m.set(id as EarnChipId, s.size)
     return m
-  }, [structStats.data, momStats.data, sentStats.data, narr.data, pineSets])
+  }, [structStats.data, momStats.data, sentStats.data, narr.data, pineSets, earnSets])
 
   const rules = useMemo(() => ruleIndex(opps.data?.items ?? []), [opps.data])
 
-  const setsPending = setQs.some((q) => q.isLoading) || (pineOn && pine.isLoading)
+  const setsPending = setQs.some((q) => q.isLoading) || (pineOn && pine.isLoading) || (earnOn && withEarnings && !earnSets)
   const setError = (setQs.find((q) => q.error)?.error ?? (pineOn ? pine.error : null)) as
     | Error
     | undefined
@@ -216,6 +238,7 @@ export function useStockScreenData(on: Record<string, boolean>, pineWithin: Pine
     setsPending,
     setError: setError?.message ?? null,
     rules,
+    earnings,
     portfolio,
     wide,
     radar,

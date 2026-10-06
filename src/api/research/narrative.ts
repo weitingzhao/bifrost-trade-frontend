@@ -8,7 +8,7 @@
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
 import { withValidation } from '@/lib/apiValidation'
-import { ResearchEnvelopeSchema } from '@/lib/schemas/research'
+import { EarningsBatchSchema, ResearchEnvelopeSchema } from '@/lib/schemas/research'
 import { requestJson } from '@/lib/http'
 
 export type NarrativeBasis = 'sec' | 'vendor'
@@ -127,4 +127,25 @@ export async function fetchEarningsDates(symbol: string): Promise<EarningsDates>
     label: 'narrative/earnings',
   })
   return (validateEarnings(body) as Envelope<EarningsDates>).data
+}
+
+/** Names per batch call — research's `EARNINGS_BATCH_MAX`. */
+export const EARNINGS_BATCH_MAX = 500
+
+const validateEarningsBatch = withValidation<Record<string, EarningsDates>>(
+  EarningsBatchSchema,
+  'research/narrative/earnings/batch',
+)
+
+/**
+ * The earnings reading for many names in one request (research 0.193.0,
+ * TD-158): each name maps to exactly what `fetchEarningsDates` answers. At most
+ * `EARNINGS_BATCH_MAX` names; `useNamesEarnings` splits longer lists.
+ */
+export async function fetchEarningsDatesBatch(symbols: readonly string[]): Promise<Record<string, EarningsDates>> {
+  const params = new URLSearchParams({ symbols: symbols.join(',') })
+  const body = await requestJson<unknown>(researchEngineUrl(`/research/narrative/earnings/batch?${params.toString()}`), {
+    label: 'narrative/earnings/batch',
+  })
+  return validateEarningsBatch((validateEarnings(body) as Envelope<unknown>).data)
 }

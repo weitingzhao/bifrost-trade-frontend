@@ -29,6 +29,8 @@ import { regimeVariant, type VolRule } from '@/lib/research/volRatingsModel'
 import { cn } from '@/lib/utils'
 import type { SepaDiscoveryHit } from '@/hooks/useResearchHomeData'
 import { MODEL_TINT, NOT_RATED, ROW_CAP } from './stockScreenView'
+import { earnCell } from './stockScreenEarnings'
+import type { EarningsReading } from '@/utils/earningsReading'
 import {
   AGREE_BAR,
   MODEL_LABEL,
@@ -255,6 +257,7 @@ export function ResultTable({
   bookOf,
   rules,
   sepaDate,
+  earnings,
   chartSignal = null,
 }: {
   model: RankModel
@@ -270,6 +273,8 @@ export function ResultTable({
   bookOf: (sym: string) => string
   rules: ReadonlyMap<string, VolRule[]>
   sepaDate: string | null
+  /** Research's estimated next print per name (TD-158); a name still loading is absent. */
+  earnings: Readonly<Record<string, EarningsReading>>
   /** The chart signal a name opens with — the screen's Pine script, when it selects one. */
   chartSignal?: string | null
 }) {
@@ -300,12 +305,14 @@ export function ResultTable({
           <ModelMarks r={x.row} />
         </DenseTableCell>
         {cellsOf(model, x.row, x.score)}
-        <DenseTableCell
-          className={cn(denseTableNumCell, 'max-w-none text-muted-foreground')}
-          title="No earnings date is served across the universe — see the column header."
-        >
-          —
-        </DenseTableCell>
+        {(() => {
+          const e = earnCell(earnings[x.row.sym])
+          return (
+            <DenseTableCell className={cn(denseTableNumCell, 'max-w-none', e.muted && 'text-muted-foreground')} title={e.title}>
+              {e.text}
+            </DenseTableCell>
+          )
+        })()}
         <DenseTableCell className="max-w-[150px] whitespace-nowrap text-dense-meta">
           <RuleCell rules={rules.get(x.row.sym)} />
         </DenseTableCell>
@@ -342,7 +349,7 @@ export function ResultTable({
             ))}
             <DenseTableHead
               className="w-12 max-w-none text-right"
-              title="Earnings: no earnings date is served across the universe (the event calendar holds 8 rows); read it on Symbol."
+              title="Days to the next print, estimated by Research: last year’s same-quarter results 8-K plus 52 weeks. Confirmed dates are not in the subscription; — = no estimate (hover for why)."
             >
               Earn
             </DenseTableHead>

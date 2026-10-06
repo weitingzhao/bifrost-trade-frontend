@@ -16,7 +16,10 @@
  *   Sentiment      not drawn by the design; the sentiment tier's six signals
  *                  (`tier-filter?tier=sentiment`), kept from the old screen.
  *   Quality        `fundamental-filter` answers nothing for these seven ids.
- *   Catalyst       no earnings window or theme is served across the universe
+ *   Catalyst       the three earnings windows read Research's estimated next
+ *                  print for every name (`/research/narrative/earnings/batch`,
+ *                  research 0.193.0, TD-158; `stockScreenEarnings.ts`); a live
+ *                  theme and "no event 30d" have no per-name store
  *                  (`/research/events/calendar` holds 8 rows); the four 8-K
  *                  conditions are live (`/research/narrative?days=7`).
  *   Options fit    IV rank from the Premium scan (691 underlyings); VRP is kept
@@ -27,9 +30,10 @@ import { MOMENTUM_INDICATORS, SENTIMENT_INDICATORS, STRUCTURE_INDICATORS } from 
 import { pineLibraryEntries, type PineLibraryEntry } from '@/api/research/pine'
 import { NARRATIVE_CONDITIONS } from '@/lib/research/narrativeItems'
 import { AGREE_BAR, type ScreenState, type Stage } from './stockScreenModel'
+import { EARN_CHIP_TITLE } from './stockScreenEarnings'
 
-const NO_CALENDAR =
-  'No earnings window or theme is served across the universe: the event calendar holds 8 rows and earnings dates are read one symbol at a time.'
+const NO_THEME =
+  'No per-name store for themes or other events: the event calendar holds 8 rows. Earnings windows are live (Research’s estimate).'
 /**
  * Pine library scripts (research 0.173.0, W6; design Rev .158 B2): a chip
  * passes a name when the script's buy or sell plot fired on it within the
@@ -186,11 +190,11 @@ export const STAGES: readonly Stage[] = [
     kind: 'any',
     missing: null,
     chips: [
-      { id: 'earn_gt_10d', label: 'Earnings > 10d', missing: NO_CALENDAR },
-      { id: 'earn_10_30d', label: 'Earnings 10–30d', missing: NO_CALENDAR },
-      { id: 'earn_lt_10d', label: 'Earnings < 10d', missing: NO_CALENDAR },
-      { id: 'news_theme', label: 'In a live theme', missing: NO_CALENDAR },
-      { id: 'no_event_30d', label: 'No event 30d', missing: NO_CALENDAR },
+      { id: 'earn_gt_10d', label: 'Earnings > 10d', fromSet: true, title: EARN_CHIP_TITLE.earn_gt_10d },
+      { id: 'earn_10_30d', label: 'Earnings 10–30d', fromSet: true, title: EARN_CHIP_TITLE.earn_10_30d },
+      { id: 'earn_lt_10d', label: 'Earnings < 10d', fromSet: true, title: EARN_CHIP_TITLE.earn_lt_10d },
+      { id: 'news_theme', label: 'In a live theme', missing: NO_THEME },
+      { id: 'no_event_30d', label: 'No event 30d', missing: NO_THEME },
       ...NARRATIVE_CONDITIONS.map((c) => ({ id: c.id, label: c.label, narrative: c.desc, fromSet: true })),
     ],
   },
@@ -290,7 +294,7 @@ export const START_PRESETS: readonly StartPreset[] = [
     k: '≤ 30d',
     title: 'Earnings inside 30 days, or in a live theme',
     screen: { on: { earn_lt_10d: true, earn_10_30d: true, news_theme: true }, mins: {} },
-    missing: NO_CALENDAR,
+    missing: 'No per-name store for themes, so this preset runs on the earnings window alone.',
   },
   {
     id: 'p-seller',
@@ -298,7 +302,7 @@ export const START_PRESETS: readonly StartPreset[] = [
     k: 'IV · no print',
     title: 'Rich IV, VRP, liquid options and no earnings inside 10 days',
     screen: { on: { ivr_ge_40: true, vrp_pct_ge_70: true, oi_liquid: true, earn_gt_10d: true }, mins: { trend: 7 } },
-    missing: `${NO_LIQUIDITY} The earnings veto has no date to read either.`,
+    missing: `${NO_LIQUIDITY} The earnings veto reads Research’s estimate; names without one fail it.`,
   },
 ]
 

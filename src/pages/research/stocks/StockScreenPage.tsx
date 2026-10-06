@@ -137,7 +137,7 @@ export default function StockScreenPage() {
     pulseTimer.current = setTimeout(() => setPulse(false), 1400)
   }
 
-  const data = useStockScreenData(screen.on, pineOf(screen).within)
+  const data = useStockScreenData(screen.on, pineOf(screen).within, true)
   const pineLib = usePineLibrary()
   const stages = useMemo(() => stagesWithPine(pineLib.scripts), [pineLib.scripts])
   const probe = useMemo(() => rowProbe(data.sets), [data.sets])
@@ -684,6 +684,7 @@ export default function StockScreenPage() {
                       }}
                       rules={data.rules}
                       sepaDate={data.sepaDate}
+                      earnings={data.earnings}
                       chartSignal={pineChartSignal(screen.on)}
                     />
                   ) : (
@@ -700,7 +701,7 @@ export default function StockScreenPage() {
                     />
                   )}
                   <div className="text-pretty border-t border-foreground/[0.06] px-3 py-2 text-dense-meta leading-normal text-muted-foreground">
-                    {FOOT[model]} Earn is — on every row: no earnings date is served across the universe.
+                    {FOOT[model]} Earn is Research’s estimated next print (last year’s same-quarter results 8-K + 52 weeks); — where a name has none.
                   </div>
                 </>
               ) : (

@@ -149,9 +149,13 @@ describe('success returns what the old code returned', () => {
     }
   })
 
-  it('exhibit composite returns the exhibits', async () => {
+  it('exhibit composite returns the exhibits and the option listing', async () => {
     fetchMock.mockResolvedValueOnce(env({ symbol: 'ZZQ', lenses: ['iv_rank'], exhibits: [] }))
-    expect(await fetchExhibitComposite(['iv_rank'], 'ZZQ')).toEqual([])
+    // Before research 0.193.0 there is no option_listing: unknown, not "no options".
+    expect(await fetchExhibitComposite(['iv_rank'], 'ZZQ')).toEqual({ exhibits: [], optionListing: undefined })
+    const listing = { as_of: '2031-01-02', standard_contracts: 0, adjusted_contracts: 3, adjusted_roots: ['ZZQ1'] }
+    fetchMock.mockResolvedValueOnce(env({ symbol: 'ZZQ', lenses: [], exhibits: [], option_listing: listing }))
+    expect((await fetchExhibitComposite([], 'ZZQ')).optionListing).toEqual(listing)
   })
 
   it('bare-payload readers return the body', async () => {

@@ -707,6 +707,20 @@ export const EarningsMovesSchema = z
   })
   .passthrough()
 
+/** `/research/narrative/earnings` and each value of `/earnings/batch?symbols=` (≤ 500 names; research 0.193.0, TD-158). */
+const SetAsideSchema = z.object({ filed: z.string(), release: z.string().nullable(), reason: z.string() }).passthrough()
+const TrackSchema = z.object({ n: z.number(), median_miss_days: z.number().nullable(), max_miss_days: z.number().nullable() })
+const NextSchema = z.object({ date: z.string(), basis: z.string(), from: z.string(), days_away: z.number(), track: TrackSchema })
+export const EarningsDatesSchema = z
+  .object({ symbol: z.string(), dates: z.array(z.string()), set_aside: z.array(SetAsideSchema).optional() })
+  .extend({ expected_next: NextSchema.passthrough().nullable().optional(), filings: z.number(), first_filed: z.string().nullable() })
+  .extend({ last_filed: z.string().nullable() })
+  .passthrough()
+export const EarningsBatchSchema = z.record(z.string(), EarningsDatesSchema)
+/** `option_listing` on `/research/exhibit/composite` (0.193.0, TD-159): null = no OI rows; `error` = the count failed. */
+export const OptionListingSchema = z
+  .object({ as_of: z.string().nullable(), standard_contracts: z.number().nullable(), adjusted_contracts: z.number().nullable() })
+  .extend({ adjusted_roots: z.array(z.string()), error: z.string().optional() }).passthrough()
 /** GET /analytics/options/atm-iv/term — the repaired ATM IV store's term for its latest session (not enveloped). */
 export const AtmIvTermSchema = z
   .object({

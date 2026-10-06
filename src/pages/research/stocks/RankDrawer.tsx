@@ -122,7 +122,7 @@ export function RankDrawer({
                   value: 'earn',
                   label: 'Earnings',
                   disabled: true,
-                  title: 'No earnings date is served across the universe — earnings are read one symbol at a time.',
+                  title: 'Sorting the set by its next print is not built yet — each row’s Earn column carries Research’s estimate.',
                 },
               ]}
               value="sym"

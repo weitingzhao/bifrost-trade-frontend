@@ -1,51 +1,97 @@
 /**
- * The next print for a set of names — one Research read per name, keyed like
- * the Symbol page's (`useEarningsDates`) so a name already open there is not
- * asked again. See `utils/earningsReading.ts` for the source and the rule.
+ * The next print for a set of names — one Research read per 500 names
+ * (`/research/narrative/earnings/batch`, research 0.193.0, TD-158), not one per
+ * name. Each answer also fills the per-name cache the Symbol page reads
+ * (`useEarningsDates`, same key), so a name opened next is not asked again.
+ * See `utils/earningsReading.ts` for the source and the rule.
  *
- * Read by the Option screen, the Events Book face and the Calendar's Events
- * layer (§14.2: moved out of the screener when Events became its second
- * reader).
+ * Read by the Option screen, the Events Book face, the Calendar's Events layer
+ * (§14.2: moved out of the screener when Events became its second reader) and
+ * Stock screen across its whole universe.
  */
-import { useQueries } from '@tanstack/react-query'
-import { fetchEarningsDates } from '@/api/research/narrative'
+import { useCallback, useMemo } from 'react'
+import { useQueries, useQueryClient, type QueryClient, type UseQueryResult } from '@tanstack/react-query'
+import { EARNINGS_BATCH_MAX, fetchEarningsDatesBatch, type EarningsDates } from '@/api/research/narrative'
 import { readEarnings, type EarningsReading } from '@/utils/earningsReading'
+
+const STALE = 60 * 60_000
 
 function namesOf(symbols: readonly string[]): string[] {
   return [...new Set(symbols.map((s) => s.trim().toUpperCase()).filter(Boolean))].sort()
 }
 
-function earningsQuery(sym: string) {
+/** The per-name key — `useEarningsDates` on the Symbol page reads the same one. */
+export function earningsKey(sym: string) {
+  return ['research-engine', 'narrative', 'earnings', sym] as const
+}
+
+/** Sorted names in calls of at most `EARNINGS_BATCH_MAX`. */
+export function earningsChunks(names: readonly string[], size = EARNINGS_BATCH_MAX): string[][] {
+  const out: string[][] = []
+  for (let i = 0; i < names.length; i += size) out.push(names.slice(i, i + size))
+  return out
+}
+
+function batchQuery(qc: QueryClient, chunk: string[]) {
   return {
-    queryKey: ['research-engine', 'narrative', 'earnings', sym],
-    queryFn: () => fetchEarningsDates(sym),
-    staleTime: 60 * 60_000,
+    queryKey: ['research-engine', 'narrative', 'earnings-batch', chunk.join(',')],
+    queryFn: async () => {
+      const data = await fetchEarningsDatesBatch(chunk)
+      for (const sym of chunk) if (data[sym]) qc.setQueryData(earningsKey(sym), data[sym])
+      return data
+    },
+    staleTime: STALE,
     retry: false,
   }
 }
 
-/**
- * Name → reading; a name still loading is absent, not `none`. The map is
- * rebuilt on every render (an inline `combine`), so a caller's memo must list
- * it as a dependency — leaving it out froze the group rows at "earnings …"
- * after every read had landed (walk 2026-09-27).
- */
-export function useNamesEarnings(symbols: readonly string[]): Record<string, EarningsReading> {
-  const names = namesOf(symbols)
-  return useQueries({
-    queries: names.map(earningsQuery),
-    combine: (results) => {
-      const out: Record<string, EarningsReading> = {}
+/** Per name: the reading, the error that kept it unread, or absent while loading. */
+type Read = { data: EarningsDates } | { error: string }
+
+function useEarningsReads(symbols: readonly string[]): Record<string, Read> {
+  const qc = useQueryClient()
+  const key = namesOf(symbols).join(',')
+  const chunks = useMemo(() => earningsChunks(key ? key.split(',') : []), [key])
+  // A stable `combine`: the map changes only when an answer does, so a list of
+  // 3,700 names is not re-read on every render.
+  const combine = useCallback(
+    (results: UseQueryResult<Record<string, EarningsDates>>[]) => {
+      const out: Record<string, Read> = {}
       results.forEach((r, i) => {
         if (r.isPending) return
-        if (r.isError) {
-          const reason = `earnings read failed — ${(r.error as Error).message}`
-          out[names[i]] = { kind: 'none', reason, absence: { code: 'unread', text: reason } }
-        } else out[names[i]] = readEarnings(r.data)
+        for (const sym of chunks[i] ?? []) {
+          const d = r.data?.[sym]
+          if (r.isError) out[sym] = { error: (r.error as Error).message }
+          else if (d) out[sym] = { data: d }
+          else out[sym] = { error: 'the batch answered without this name' }
+        }
       })
       return out
     },
-  })
+    [chunks],
+  )
+  return useQueries({ queries: chunks.map((c) => batchQuery(qc, c)), combine })
+}
+
+/**
+ * Name → reading; a name still loading is absent, not `none`. The map is a new
+ * object whenever an answer lands, so a caller's memo must list it as a
+ * dependency — leaving it out froze the group rows at "earnings …" after every
+ * read had landed (walk 2026-09-27).
+ */
+export function useNamesEarnings(symbols: readonly string[]): Record<string, EarningsReading> {
+  const reads = useEarningsReads(symbols)
+  return useMemo(() => {
+    const out: Record<string, EarningsReading> = {}
+    for (const [sym, r] of Object.entries(reads)) {
+      if ('data' in r) out[sym] = readEarnings(r.data)
+      else {
+        const reason = `earnings read failed — ${r.error}`
+        out[sym] = { kind: 'none', reason, absence: { code: 'unread', text: reason } }
+      }
+    }
+    return out
+  }, [reads])
 }
 
 /**
@@ -54,15 +100,10 @@ export function useNamesEarnings(symbols: readonly string[]): Record<string, Ear
  * The same reads as `useNamesEarnings`; a name still loading or failed is absent.
  */
 export function useNamesResultDates(symbols: readonly string[]): Record<string, readonly string[]> {
-  const names = namesOf(symbols)
-  return useQueries({
-    queries: names.map(earningsQuery),
-    combine: (results) => {
-      const out: Record<string, readonly string[]> = {}
-      results.forEach((r, i) => {
-        if (r.data) out[names[i]] = r.data.dates
-      })
-      return out
-    },
-  })
+  const reads = useEarningsReads(symbols)
+  return useMemo(() => {
+    const out: Record<string, readonly string[]> = {}
+    for (const [sym, r] of Object.entries(reads)) if ('data' in r) out[sym] = r.data.dates
+    return out
+  }, [reads])
 }

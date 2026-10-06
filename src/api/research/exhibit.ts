@@ -10,6 +10,7 @@ import { withValidation } from '@/lib/apiValidation'
 import { requestJson } from '@/lib/http'
 import {
   ExhibitSchema,
+  OptionListingSchema,
 } from '@/lib/schemas/research'
 import type { LensBand } from '@/api/research/lenses'
 
@@ -104,13 +105,51 @@ export async function fetchExhibit(lens: ExhibitLens, symbol: string): Promise<E
 export async function fetchExhibitComposite(
   lenses: readonly string[],
   symbol: string
-): Promise<ExhibitPayload[]> {
+): Promise<ExhibitComposite> {
   const q = new URLSearchParams({ symbol: symbol.trim().toUpperCase(), lenses: lenses.join(',') })
-  const data = await requestJson<{ symbol: string; lenses: string[]; exhibits: ExhibitPayload[] }>(
-    `${researchEngineUrl('/research/exhibit/composite')}?${q}`,
-    { envelope: 'research' }
-  )
-  return (data.exhibits ?? []).map((ex) => validate(ex))
+  const data = await requestJson<{
+    symbol: string
+    lenses: string[]
+    exhibits: ExhibitPayload[]
+    option_listing?: unknown
+  }>(`${researchEngineUrl('/research/exhibit/composite')}?${q}`, { envelope: 'research' })
+  return {
+    exhibits: (data.exhibits ?? []).map((ex) => validate(ex)),
+    // Absent before research 0.193.0: unknown, not "no options".
+    optionListing: data.option_listing === undefined ? undefined : validateListing(data.option_listing),
+  }
+}
+
+/**
+ * The name's standard and adjusted option contracts on its latest
+ * open-interest session (research 0.193.0, TD-159), counted by Research's own
+ * rule (`engines/adjusted_contracts.py`). An adjusted contract is what a
+ * corporate action leaves behind; Research leaves it out of every option metric.
+ */
+export interface OptionListing {
+  as_of: string | null
+  /** Null with `error` when the count failed. */
+  standard_contracts: number | null
+  adjusted_contracts: number | null
+  /** The adjusted OCC roots (`CUE1`). */
+  adjusted_roots: string[]
+  error?: string
+}
+
+export interface ExhibitComposite {
+  exhibits: ExhibitPayload[]
+  /** Null: no open-interest rows for the name. Undefined: the server predates the field. */
+  optionListing: OptionListing | null | undefined
+}
+
+const validateListing = withValidation<OptionListing | null>(
+  OptionListingSchema.nullable(),
+  'research/exhibit/composite option_listing',
+)
+
+/** Adjusted contracts listed and no standard one: every option metric is empty by rule. */
+export function adjustedOnlyListing(l: OptionListing | null | undefined): l is OptionListing {
+  return l != null && (l.adjusted_contracts ?? 0) > 0 && l.standard_contracts === 0
 }
 
 /** True when the batch stubbed this lens because its builder threw. */

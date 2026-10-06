@@ -1,5 +1,5 @@
 {
-  "_comment": "Snapshot of bifrost-research 0.181.0 repositories/saved_screen.vocabulary_catalog()['stock_screen.v2'] without the live script ids. stockScreenVocabulary.test.ts pins Stock screen's stages to it both ways; regenerate from Research when either side changes.",
+  "_comment": "Snapshot of bifrost-research 0.196.0 repositories/saved_screen.vocabulary_catalog()['stock_screen.v2'] without the live script ids. stockScreenVocabulary.test.ts pins Stock screen's stages to it both ways; regenerate from Research when either side changes.",
   "keys": [
     "pine",
     "stages",
@@ -106,7 +106,10 @@
         "n8k_202_7d",
         "n8k_101_7d",
         "n8k_502_7d",
-        "n8k_any_7d"
+        "n8k_any_7d",
+        "earn_lt_10d",
+        "earn_10_30d",
+        "earn_gt_10d"
       ]
     },
     "options": {

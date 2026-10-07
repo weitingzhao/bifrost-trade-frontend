@@ -38,6 +38,12 @@ export const QUERY_KEYS = {
     positionCategories: ['portfolio', 'position-categories'] as const,
     marketStreamsSymbolOrder: ['portfolio', 'market-streams-symbol-order'] as const,
     shortLegs: ['portfolio', 'short-legs'] as const,
+    /** The daily book snapshots (api 0.12.0, TD-138): one prefix, three reads. */
+    snapshots: ['portfolio', 'snapshots'] as const,
+    navHistory: (f: { from?: string | null; to?: string | null; accountId?: string | null } = {}) =>
+      ['portfolio', 'snapshots', 'nav-history', f.from ?? null, f.to ?? null, f.accountId ?? null] as const,
+    pnlAttribution: (f: { from?: string | null; to?: string | null; tradeId?: number | null } = {}) =>
+      ['portfolio', 'snapshots', 'pnl-attribution', f.from ?? null, f.to ?? null, f.tradeId ?? null] as const,
   },
   /**
    * The Trade API's research app (`/api/research/…`, `tradeResearchUrl`): screener, Greeks,

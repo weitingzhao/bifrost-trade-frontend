@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AssetMixCard } from '@/components/accounts/AssetMixCard'
 import { NetLiqChart } from '@/components/accounts/NetLiqChart'
+import { useNavHistory } from '@/hooks/useSnapshots'
 import { PortfolioCategoryRing } from '@/components/accounts/PortfolioCategoryRing'
 import {
   DenseDataTable,
@@ -61,6 +62,7 @@ export function AccountsComposedBand({
   onSymbolClick: (symbol: string) => void
 }) {
   const [cut, setCut] = useState<Cut>('category')
+  const navHistory = useNavHistory()
   const bySymbol = useMemo(
     () =>
       buildBySymbolRows({
@@ -128,7 +130,7 @@ export function AccountsComposedBand({
           ) : null}
         </div>
 
-        <NetLiqChart accounts={accounts} />
+        <NetLiqChart accounts={accounts} history={navHistory.data} />
       </div>
     </section>
   )

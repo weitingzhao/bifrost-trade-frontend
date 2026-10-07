@@ -3,50 +3,95 @@
  * reading P&L Explain used to carry, quoted per trade.
  *
  * The attribution — Δ, Γ, vega, θ and what is left unexplained — is computed
- * on P&L Explain from a daily snapshot of positions, marks and Greeks, keyed by
- * trade; Review quotes it and never recomputes it. No such snapshot is stored
- * (measured 2026-09-29: no attribution endpoint on trade-api, Research or the
- * market-data plugin), so every cell reads — and the panel says why, in the
- * design's own not-wired form.
+ * from the nightly book snapshot (api 0.12.0, TD-138), keyed by trade; Review
+ * quotes this contract's rows of it and never recomputes them. The snapshot is
+ * taken from 05OCT26 on: a trade whose life has no session pair on file reads
+ * no attribution, and the panel says which of the two reasons it is.
  */
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { DenseTag } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
+import { pnlColorClass } from '@/utils/dailyChange'
+import { fmtSignedUsd0 } from '@/utils/performanceReading'
+import { usePnlAttribution } from '@/hooks/useSnapshots'
 import type { ReviewContract } from '@/utils/reviewContracts'
-
-const PARTS = ['Δ · direction', 'Γ · convexity', 'Vega · vol marks', 'Θ · carry', 'Unexplained'] as const
+import { contractAttribution, tradeLifeRange } from './pnlSourceModel'
 
 /** A severity edge on a card is inline: `mat-card` clears border-colour classes. */
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
-export function PnlSourcePanel({ trade }: { trade: Pick<ReviewContract, 'shortPremium' | 'exitKind'> }) {
+type Trade = Pick<
+  ReviewContract,
+  'shortPremium' | 'exitKind' | 'tradeId' | 'openedOn' | 'closedOn' | 'underlying' | 'expiry' | 'strike' | 'right' | 'accountId'
+>
+
+export function PnlSourcePanel({ trade }: { trade: Trade }) {
   // A credit trade is a sell-vol play and should earn from carry; a debit one is a drift play.
   const should = trade.shortPremium ? 'should earn from θ + vega' : 'should earn from Δ'
+  const range = tradeLifeRange(trade.openedOn, trade.closedOn)
+  const q = usePnlAttribution({ ...range, tradeId: trade.tradeId }, { enabled: trade.tradeId != null })
+  const reading = q.data ? contractAttribution(q.data.items, trade) : null
+  const read = reading != null && reading.sessions.length > 0
+
+  const reason =
+    trade.tradeId == null
+      ? 'The fills were never booked to a trade, and the attribution is keyed by trade.'
+      : q.isLoading
+        ? 'Reading the daily snapshot…'
+        : q.isError
+          ? 'The daily snapshot could not be read just now.'
+          : q.data === null
+            ? 'This API does not serve the daily snapshot yet (trade-api 0.12.0 adds it).'
+            : 'No session pair of the daily snapshot falls inside this trade’s life — it is taken nightly from 05OCT26.'
+
+  const parts: { label: string; value: number | null }[] = [
+    { label: 'Δ · direction', value: read ? reading.delta : null },
+    { label: 'Γ · convexity', value: read ? reading.gamma : null },
+    { label: 'Vega · vol marks', value: read ? reading.vega : null },
+    { label: 'Θ · carry', value: read ? reading.theta : null },
+    { label: 'Unexplained', value: read ? reading.unexplained : null },
+  ]
+
   return (
-    <section className={positionsUi.panel} style={WARN_EDGE} aria-label="Where the P&L came from">
+    <section className={positionsUi.panel} style={read ? undefined : WARN_EDGE} aria-label="Where the P&L came from">
       <header className={positionsUi.panelHead}>
         <span className={positionsUi.cap}>Where the P&amp;L came from</span>
         <span className={positionsUi.panelTitle}>{should}</span>
-        <DenseTag variant="warning" size="cell" className="ml-auto">
-          ⚠ needs the daily snapshot
-        </DenseTag>
+        {read ? (
+          <DenseTag variant={reading.degraded ? 'warning' : 'neutral'} size="cell" className="ml-auto">
+            {reading.sessions.length} {reading.sessions.length === 1 ? 'session' : 'sessions'} read
+            {reading.degraded ? ` · ${reading.degraded} degraded Greeks` : ''}
+          </DenseTag>
+        ) : (
+          <DenseTag variant="warning" size="cell" className="ml-auto">
+            ⚠ no session pair read
+          </DenseTag>
+        )}
         <Link to="/portfolio/pnl-explain" className={positionsUi.link}>
           P&amp;L Explain →
         </Link>
       </header>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(6rem,1fr))] gap-2 px-3 py-2.5">
-        {PARTS.map((label) => (
-          <div key={label} className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-dense-meta font-semibold text-muted-foreground">{label}</span>
-            <span className={cn(positionsUi.mono, 'text-dense-body font-semibold text-muted-foreground')}>—</span>
-            <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>no snapshot</span>
+        {parts.map((p) => (
+          <div key={p.label} className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-dense-meta font-semibold text-muted-foreground">{p.label}</span>
+            <span
+              className={cn(
+                positionsUi.mono,
+                'text-dense-body font-semibold',
+                p.value == null ? 'text-muted-foreground' : pnlColorClass(p.value),
+              )}
+            >
+              {p.value == null ? '—' : fmtSignedUsd0(p.value)}
+            </span>
           </div>
         ))}
       </div>
       <p className="m-0 border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty">
-        The attribution for this trade is computed on P&amp;L Explain from the daily snapshot, keyed by trade. No snapshot
-        is stored yet, so nothing here is a reading{trade.exitKind === 'open' ? ' — and on an open trade it would be provisional' : ''}.
+        {read
+          ? `This contract's rows of trade #${trade.tradeId} in the daily snapshot: held P&L ${fmtSignedUsd0(reading.held)} over the sessions read, each against the close before it${reading.unread ? `; ${reading.unread} row${reading.unread === 1 ? '' : 's'} not read (opened or closed inside a session, or no Greeks)` : ''}${reading.missing ? `; ${reading.missing} without vendor Greeks` : ''}${trade.exitKind === 'open' ? ' — provisional on an open trade' : ''}.`
+          : `${reason}${trade.exitKind === 'open' ? ' On an open trade a reading would be provisional.' : ''}`}
       </p>
     </section>
   )

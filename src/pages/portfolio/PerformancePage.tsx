@@ -363,7 +363,7 @@ export default function PerformancePage() {
       {view === 'loading' || view === 'failed' ? null : (
         <>
           <PerformanceReadingPanel rangeLabel={RANGE_WORD[timeRange]} metrics={strip} />
-          <PerformanceReturnBasis perf={perf} rangeEndsToday={rangeEndsToday} />
+          <PerformanceReturnBasis perf={perf} rangeEndsToday={rangeEndsToday} sinceStr={sinceStr} untilStr={untilStr} />
         </>
       )}
 

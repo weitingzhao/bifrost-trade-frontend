@@ -33,6 +33,7 @@ import { TransferPayTransactionsTable } from '@/pages/portfolio/transferPay/Tran
 import { TransferPaySummaryTable } from '@/pages/portfolio/transferPay/TransferPaySummaryTable'
 import { TransferPayWhatPanel } from '@/pages/portfolio/transferPay/TransferPayWhatPanel'
 import { TransferPayDownstream } from '@/pages/portfolio/transferPay/TransferPayDownstream'
+import { useNavHistory } from '@/hooks/useSnapshots'
 import type { TransactionKind } from '@/utils/transactionKind'
 import { netOf } from '@/pages/portfolio/transferPay/transferPayRows'
 import {
@@ -69,6 +70,7 @@ export default function TransferPayPage() {
   const rangeLabel = rangeLabelOf(rangePreset, RANGE_PRESET_OPTIONS)
 
   const preview = usePreviewState()
+  const navQuery = useNavHistory()
   const txQuery = useQuery({
     queryKey: [...QUERY_KEYS.trading.transactions, rangePreset],
     queryFn: () => getTransactions({ from_ts: sinceTs, to_ts: untilTs, limit: 500 }),
@@ -375,7 +377,7 @@ export default function TransferPayPage() {
         </section>
 
         <section className={transferPayUi.section} aria-label="Downstream readers">
-          <TransferPayDownstream />
+          <TransferPayDownstream navSessions={navQuery.data === undefined ? undefined : (navQuery.data?.sessions ?? null)} />
         </section>
     </PageShell>
   )

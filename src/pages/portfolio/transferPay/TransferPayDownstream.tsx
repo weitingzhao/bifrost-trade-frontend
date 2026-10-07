@@ -1,16 +1,22 @@
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
+import { fmtIsoDateToken } from '@/lib/format'
 import { transferPayUi } from './transferPayUi'
 
 /**
  * Two statements, and the section is only honest with both of them.
  *
- * Saying only that returns are measured net of these flows would describe code
- * that does not exist. Saying only that nothing is wired would hide a decision
- * the Owner has already made (DESIGN_CONTRACTS §14.5, ruled 2026-09-16), and a
- * real gap between the two.
+ * The ruling (DESIGN_CONTRACTS §14.5, ruled 2026-09-16) and what reads it today.
+ * Performance's Return basis takes these deposits and withdrawals out of the
+ * closing net liquidation the nightly snapshot stores (api 0.12.0, TD-138);
+ * against an API that does not serve it, the second line says so instead.
+ *
+ * `navSessions`: the stored sessions; null when the API does not serve the
+ * route; undefined while loading.
  */
-export function TransferPayDownstream() {
+export function TransferPayDownstream({ navSessions }: { navSessions?: readonly string[] | null }) {
+  const n = navSessions?.length ?? 0
+  const first = navSessions?.[0] ?? null
   return (
     <div className={transferPayUi.downstreamPanel}>
       <div className={transferPayUi.downstreamHead}>
@@ -35,16 +41,39 @@ export function TransferPayDownstream() {
         </p>
         <p className={transferPayUi.downstreamLine}>
           <span
-            className={cn(transferPayUi.downstreamLamp, transferPayUi.downstreamLampUnwired)}
+            className={cn(
+              transferPayUi.downstreamLamp,
+              n >= 2 ? transferPayUi.downstreamLampRuled : transferPayUi.downstreamLampUnwired,
+            )}
             aria-hidden
           />
-          <span>
-            <strong className={transferPayUi.downstreamStrong}>Not wired yet.</strong> Nothing in
-            code subtracts them today: this table is written, read here, and read nowhere else.
-            Performance shows the basis it will use, marked{' '}
-            <span className="font-mono">designed · not wired</span> — so nobody reads today&apos;s
-            return as already net.
-          </span>
+          {navSessions === undefined ? (
+            <span className="text-muted-foreground">
+              Who reads these rows is not known yet — the stored net liquidation has not answered.
+            </span>
+          ) : navSessions === null ? (
+            <span>
+              <strong className={transferPayUi.downstreamStrong}>Not wired yet.</strong> Nothing in
+              code subtracts them today: this API does not serve the stored net liquidation, so
+              Performance shows the basis it will use, marked{' '}
+              <span className="font-mono">designed · not wired</span> — so nobody reads today&apos;s
+              return as already net.
+            </span>
+          ) : n >= 2 ? (
+            <span>
+              <strong className={transferPayUi.downstreamStrong}>Read by Performance.</strong>{' '}
+              Return basis takes these deposits and withdrawals out of the closing net liquidation
+              stored each night since {fmtIsoDateToken(first)} — {n} sessions so far — and chains a
+              time-weighted return over them. Dividends, fees, tax and interest stay in the gain.
+            </span>
+          ) : (
+            <span>
+              <strong className={transferPayUi.downstreamStrong}>Wired, not yet readable.</strong>{' '}
+              Closing net liquidation is stored nightly
+              {first ? ` from ${fmtIsoDateToken(first)}` : ''}; a return needs two closes, so nothing
+              subtracts these yet.
+            </span>
+          )}
         </p>
       </div>
       <div className={transferPayUi.downstreamFoot}>
@@ -52,8 +81,7 @@ export function TransferPayDownstream() {
           Return basis → Performance
         </Link>
         <span className="text-muted-foreground">
-          the panel that states the arithmetic, and the one place that number may be computed. This
-          is a link, not evidence that anything reads these rows.
+          the panel that states the arithmetic, and the one place that number may be computed.
         </span>
       </div>
     </div>

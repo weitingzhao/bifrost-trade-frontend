@@ -3,14 +3,15 @@
  *
  * The design writes this page as one identity: Day P&L = Δ + Γ + vega + θ +
  * Unexplained, where Unexplained is *defined* as the difference, not measured.
- * Taking that difference needs the four attributions, and the four need a
- * per-day snapshot of positions, marks and vendor Greeks that nothing stores
- * yet. So the difference is not taken here, and the page says so rather than
- * printing a residual it cannot stand behind.
+ * The four attributions read the nightly book snapshot (api 0.12.0, TD-138):
+ * each session against the session before it, from the positions, marks and
+ * vendor Greeks as they stood at the prior close. A session whose prior
+ * session was not captured has no reading — it is never differenced against an
+ * older day (SNAPSHOT-SPEC §2).
  *
- * What the book *can* see are named leaks: rows in one source that never
- * reached the one Performance counts, cash that moved with no position behind
- * it, and lines carrying no mark at all. Each is a lead with a page that
+ * What the book can see on its own are named leaks: rows in one source that
+ * never reached the one Performance counts, cash that moved with no position
+ * behind it, and lines carrying no mark at all. Each is a lead with a page that
  * settles it — which is what the design asks the band to be. None of them is
  * asserted as the answer.
  */
@@ -20,6 +21,7 @@ import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import type { Execution } from '@/types/positions'
 import type { AccountTransaction } from '@/types/trading'
 import type { ByDayRangeData, PerformanceDayPnLCell } from '@/types/trading'
+import type { AttributionSession, AttributionSums, PnlAttributionResponse } from '@/lib/schemas/snapshots'
 
 /** How loudly a lead reads: amber past the threshold, grey when it has no amount. */
 export type PnlLeadReading = 'worth a look' | 'inside tolerance' | 'no reading'
@@ -41,66 +43,95 @@ export interface PnlLead {
 /** Amber past this share of the window's own P&L. Below it, a residual is normal. */
 export const PNL_UNEXPLAINED_THRESHOLD = 0.05
 
-/** The readings this page cannot make, and what would have to exist first. */
+/** What the attribution band says when it has no reading, and why. */
 export const PNL_UNRECORDED = {
-  snapshot:
-    'The four attributions need a per-day snapshot of positions, marks and vendor Greeks. Nothing stores one, so Δ, Γ, vega and θ have no reading — and neither does the difference they define. What is missing is not the market: the benchmark carries each name’s prior close, so today’s move is readable. It is the position and its Greeks as they stood at that close.',
+  notServed:
+    'This API does not serve the daily snapshot yet (trade-api 0.12.0 adds GET /portfolio/pnl-attribution), so Δ, Γ, vega and θ have no reading here — and neither does the difference they define.',
+  noPair:
+    'No session in this window has its prior session on file. The snapshot is taken nightly from 05OCT26; a session is read against the one before it, never against an older day.',
+  heldBook:
+    'Read from the nightly snapshot: the book as it stood at each prior close, marked at both closes, split by the vendor Greeks of the prior close. Fills and closes inside a session are not in it — their P&L is Performance’s.',
   symbol:
     'these rows carry no symbol — account-level cash, not about any one name, so they cannot be placed against one.',
 } as const
 
 /**
- * The five lines the design stacks, with what each needs and what is in hand.
- *
- * The panel is marked as a whole, but the five are not blocked for the same
- * reason, and a reader deciding what to build next needs to know which.
- * Today's price move per name *is* available — the benchmark carries each
- * name's prior close — so what is missing is never the market. It is the
- * position and its Greeks as they stood at that close.
+ * The five lines the design stacks, and the formula each reads from the
+ * snapshot. Units are the vendor's: vega per vol point, theta per calendar day.
  */
 export const ATTRIBUTION_LINES: {
-  key: string
+  key: 'delta_pnl' | 'gamma_pnl' | 'vega_pnl' | 'theta_pnl' | 'unexplained'
   label: string
   what: string
-  needs: string
-  inHand: string
+  formula: string
 }[] = [
   {
-    key: 'delta',
+    key: 'delta_pnl',
     label: 'Δ · direction',
     what: 'the move times the position delta — the shares plus the deltas of the legs, net',
-    needs: 'the delta as it stood at yesterday’s close',
-    inHand: 'today’s move per name, and the delta as it stands now',
+    formula: 'qty × delta(t−1) × Δspot',
   },
   {
-    key: 'gamma',
+    key: 'gamma_pnl',
     label: 'Γ · convexity',
     what: 'what the move did beyond delta',
-    needs: 'the same prior-close snapshot — gamma is read against the delta it moved',
-    inHand: 'gamma on the priced legs',
+    formula: 'qty × ½ gamma(t−1) × Δspot²',
   },
   {
-    key: 'vega',
+    key: 'vega_pnl',
     label: 'Vega · vol marks',
     what: 'IV re-marks on the open legs',
-    needs: 'yesterday’s implied vol per leg — no IV history reaches the legs in this book',
-    inHand: 'vega on the priced legs',
+    formula: 'qty × vega(t−1) × ΔIV in points',
   },
   {
-    key: 'theta',
+    key: 'theta_pnl',
     label: 'Θ · carry',
     what: 'decay collected over the window',
-    needs: 'a theta per day to accumulate over a window longer than one session',
-    inHand: 'theta on the priced legs, as it stands now',
+    formula: 'qty × theta(t−1) × calendar days',
   },
   {
     key: 'unexplained',
     label: 'Unexplained',
     what: 'everything the four cannot account for — defined as the difference, never measured',
-    needs: 'all four above; a difference of four unknowns is not a residual',
-    inHand: 'nothing until they are taken',
+    formula: 'held P&L − (Δ + Γ + vega + θ)',
   },
 ]
+
+/** The sessions of a window the snapshot could read, and the ones it could not. */
+export function attributionCoverage(attr: Pick<PnlAttributionResponse, 'sessions'> | null | undefined): {
+  read: AttributionSession[]
+  noPrior: AttributionSession[]
+} {
+  const sessions = attr?.sessions ?? []
+  return {
+    read: sessions.filter((s) => s.status === 'ok'),
+    noPrior: sessions.filter((s) => s.status === 'no_prior_snapshot'),
+  }
+}
+
+/** Δ + Γ + vega + θ over the fully read rows. */
+export function explainedOf(t: Pick<AttributionSums, 'delta_pnl' | 'gamma_pnl' | 'vega_pnl' | 'theta_pnl'>): number {
+  return t.delta_pnl + t.gamma_pnl + t.vega_pnl + t.theta_pnl
+}
+
+/**
+ * The Greeks cell of a row group: a missing Greek is grey (no reading, §11.3), a
+ * degraded one amber, vendor values neutral; a group with no option leg is shares.
+ */
+export function greeksTag(q: { vendor: number; degraded: number; missing: number }): {
+  label: string
+  variant: 'neutral' | 'warning'
+  title: string
+} {
+  if (q.missing > 0) {
+    return { label: `MISSING ${q.missing}`, variant: 'neutral', title: 'The vendor had no Greeks at the prior close: the four parts of these rows are not read.' }
+  }
+  if (q.degraded > 0) {
+    return { label: `DEG ${q.degraded}`, variant: 'warning', title: 'Greeks present but not that session’s vendor close — read, and marked so.' }
+  }
+  if (q.vendor > 0) return { label: 'VENDOR', variant: 'neutral', title: 'The vendor’s Greeks of the prior close.' }
+  return { label: 'SHARES', variant: 'neutral', title: 'Shares only: delta 1, no Greek to read.' }
+}
 
 const ASSET_CLASSES = ['opt', 'stocks', 'fixed_income', 'cash_like'] as const
 

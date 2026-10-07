@@ -2,11 +2,10 @@
  * P&L Explain — why the number moved, and what part of it nothing accounts for.
  *
  * The amount belongs to Performance; this page only takes it apart, and where
- * it cannot, it says so. The design writes the page in two phases and this
- * build keeps that line exactly where the design draws it: the leads band is
- * live, and the attribution and thesis bands carry `⚠ needs the daily
- * snapshot` on their edge — never by dimming the text, which would drop these
- * cells under the contrast floor.
+ * it cannot, it says so. The leads band reads the book on its own; the
+ * attribution band reads the nightly snapshot (api 0.12.0, TD-138) and keeps the
+ * design's marked shape for any window it cannot read — never by dimming the
+ * text, which would drop these cells under the contrast floor.
  */
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -27,18 +26,21 @@ import { useQuery } from '@tanstack/react-query'
 import { getTransactions } from '@/api/trading'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
+import { usePnlAttribution } from '@/hooks/useSnapshots'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail, staleDetail } from '@/lib/viewState'
 import {
-  ATTRIBUTION_LINES,
   PNL_UNEXPLAINED_THRESHOLD,
   PNL_UNRECORDED,
+  attributionCoverage,
   bookGapFills,
   cashInWindow,
+  explainedOf,
   leadsTotal,
   pnlLeads,
   windowBookPnl,
 } from './pnlExplainModel'
+import { PnlAttributionBand } from './PnlAttributionBand'
 
 const PAGE_LEAD =
   'Why the number moved, and what part of it nothing can account for. The amount itself belongs to Performance; this page only takes it apart.'
@@ -89,6 +91,14 @@ export default function PnlExplainPage() {
     { accountFilter: { host: true, secondary: true }, filterSymbol: '', filterExpiry: '' },
     0,
   )
+
+  const attrQuery = usePnlAttribution({ from: sinceStr, to: untilStr })
+  const attr = attrQuery.data
+  const readSessions = attributionCoverage(attr).read.length
+  const explained = attr && readSessions > 0 ? explainedOf(attr.totals) : null
+  const unexplained = attr && readSessions > 0 ? attr.totals.unexplained : null
+  const attributionNote =
+    attr === null ? PNL_UNRECORDED.notServed : readSessions === 0 ? PNL_UNRECORDED.noPair : PNL_UNRECORDED.heldBook
 
   const windowPnl = useMemo(
     () => windowBookPnl(bulk.data?.byDayRangeData, sinceStr, untilStr),
@@ -207,16 +217,24 @@ export default function PnlExplainPage() {
                 />
                 <HeroCard
                   label="Explained · Δ Γ vega θ"
-                  value="—"
-                  valueClassName="text-muted-foreground"
-                  sub="the four attributions, summed"
-                  title={PNL_UNRECORDED.snapshot}
+                  value={explained == null ? '—' : fmtSignedUsd0(explained)}
+                  valueClassName={explained == null ? 'text-muted-foreground' : pnlColorClass(explained)}
+                  sub={
+                    explained == null
+                      ? 'the four attributions, summed'
+                      : `held book · ${readSessions} ${readSessions === 1 ? 'session' : 'sessions'} read`
+                  }
+                  title={attributionNote}
                 />
                 <HeroCard
                   label="Unexplained"
-                  value="—"
-                  valueClassName="text-muted-foreground"
-                  sub="defined as the difference — so it needs the four"
+                  value={unexplained == null ? '—' : fmtSignedUsd0(unexplained)}
+                  valueClassName={unexplained == null ? 'text-muted-foreground' : pnlColorClass(unexplained)}
+                  sub={
+                    unexplained == null
+                      ? 'defined as the difference — so it needs the four'
+                      : 'held P&L less the four — always shown, even at zero'
+                  }
                 />
                 <HeroCard
                   label="Leads that carry an amount"
@@ -225,16 +243,18 @@ export default function PnlExplainPage() {
                   sub={`${total.withAmount} with a figure · ${total.countOnly} a count only`}
                 />
               </HeroRow>
-              <DenseTag variant="warning" size="cell" className="mt-3">
-                ⚠ the difference is not taken
-              </DenseTag>
+              {unexplained == null ? (
+                <DenseTag variant="warning" size="cell" className="mt-3">
+                  ⚠ the difference is not taken
+                </DenseTag>
+              ) : null}
             </div>
             <section className={positionsUi.panel} aria-label="Does it tie out">
               <p className={cn(FOOT, 'm-0')}>
                 <span className={positionsUi.mono}>Window P&amp;L = Δ + Γ + vega + θ + Unexplained.</span> Performance
                 owns the amount — FIFO realized plus unrealized — and this page only takes it apart; Performance is the
-                source. {PNL_UNRECORDED.snapshot} What is below is not that difference: it is the
-                leaks the book can name on its own.
+                source. {attributionNote} The leads below are not that difference: they are the leaks
+                the book can name on its own.
               </p>
             </section>
 
@@ -327,8 +347,8 @@ export default function PnlExplainPage() {
                 <span>
                   Threshold: amber past {(PNL_UNEXPLAINED_THRESHOLD * 100).toFixed(0)}% of the window&rsquo;s own P&amp;L.
                   The design takes the same {(PNL_UNEXPLAINED_THRESHOLD * 100).toFixed(0)}% of <em>a name&rsquo;s</em>{' '}
-                  own P&amp;L, which is a sharper test and the one worth having — it needs a per-name day P&amp;L, and
-                  that needs the same daily marks the band below is waiting on.
+                  own P&amp;L, which is a sharper test and the one worth having — the per-name held P&amp;L is in the
+                  attribution below for every session the snapshot reads.
                 </span>
                 <span className="ml-auto">
                   Each cause is a candidate the named page can confirm or rule out. Nothing here is asserted as the
@@ -337,105 +357,17 @@ export default function PnlExplainPage() {
               </div>
             </section>
 
-            <SectionHead note={PNL_UNRECORDED.snapshot}>Attribution</SectionHead>
-            <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Attribution">
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.cap}>{TIME_RANGE_OPTIONS.find((o) => o.id === timeRange)?.label}</span>
-                <span className={cn(positionsUi.mono, 'text-dense-body font-bold', pnlColorClass(windowPnl))}>
-                  {fmtSignedUsd0(windowPnl)}
-                </span>
-                <DenseTag variant="warning" size="cell">
-                  ⚠ needs the daily snapshot
-                </DenseTag>
-                <span className="ml-auto text-dense-meta text-muted-foreground">
-                  the shape below is the design&rsquo;s, the figures are not a reading
-                </span>
-              </header>
-              <div className="flex flex-col">
-                {ATTRIBUTION_LINES.map((c) => (
-                  <div
-                    key={c.key}
-                    className="grid grid-cols-[8rem_minmax(0,1fr)_5rem] items-start gap-x-3 gap-y-0.5 border-b border-border/55 px-3.5 py-2 last:border-b-0"
-                  >
-                    <span className="inline-flex items-center gap-1.5 text-xs leading-normal font-semibold text-foreground">
-                      <StatusLamp lamp="gray" variant="dot" title="No reading" />
-                      {c.label}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
-                        {c.what}
-                      </span>
-                      <span className="block text-dense-meta leading-normal text-pretty">
-                        <span className="text-warning">Needs</span>{' '}
-                        <span className="text-secondary-foreground">{c.needs}</span>
-                        <span className="text-muted-foreground"> · in hand: {c.inHand}</span>
-                      </span>
-                    </span>
-                    <span className={cn(positionsUi.mono, 'text-right text-xs text-muted-foreground')}>n/c</span>
-                  </div>
-                ))}
-                <p className="m-0 border-t border-border/60 px-3.5 py-2 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                  The bars the design draws are the five above, signed and to scale. None is drawn here because none is
-                  read: over a window θ should accumulate roughly with the number of sessions, and on a covered book Δ
-                  and vega routinely offset — that is the trade working, not a loss — and neither statement can be made
-                  without a prior-close snapshot to difference against. A bar drawn to an invented figure would make the
-                  one page whose premise is <em>one number, one source</em> the page that invents one.
-                </p>
-              </div>
-              <div className="overflow-x-auto border-t border-border">
-                {/* §14.6: eight columns, the design's 980 floor. */}
-                <table className="w-full min-w-[980px] table-fixed border-collapse">
-                  <colgroup>
-                    <col style={{ width: '13%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '20%' }} />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th className={cn(positionsUi.th, 'text-left')}>Symbol</th>
-                      <th className={positionsUi.th}>Δ</th>
-                      <th className={positionsUi.th}>Γ</th>
-                      <th className={positionsUi.th}>Vega</th>
-                      <th className={positionsUi.th}>Θ</th>
-                      <th className={positionsUi.th}>Unexpl.</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>Greeks</th>
-                      <th className={cn(positionsUi.th, 'text-left')}>What moved it</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {legNames.map((n) => (
-                      <tr key={n.symbol}>
-                        <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
-                          {n.symbol}
-                        </td>
-                        {['d', 'g', 'v', 't', 'u'].map((k) => (
-                          <td key={k} className={cn(positionsUi.td, 'text-muted-foreground')}>
-                            —
-                          </td>
-                        ))}
-                        <td className={cn(positionsUi.td, 'text-left')}>
-                          <span className="inline-flex h-4 items-center border px-1.25 font-mono text-dense-micro font-bold tracking-[0.04em] text-muted-foreground mat-tag">
-                            NO SNAPSHOT
-                          </span>
-                        </td>
-                        <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-muted-foreground')}>
-                          {n.legs} open {n.legs === 1 ? 'leg' : 'legs'} · nothing to difference against
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className={cn(FOOT, 'm-0')}>
-                A degraded Greek would be marked here, never averaged away. Today none of them is degraded — none of
-                them is read at all.
-              </p>
-            </section>
+            <SectionHead note="Each session against the one before it, from the nightly snapshot of positions, marks and vendor Greeks.">
+              Attribution
+            </SectionHead>
+            <PnlAttributionBand
+              attr={attr}
+              loading={attrQuery.isLoading}
+              failed={attrQuery.isError}
+              windowLabel={TIME_RANGE_OPTIONS.find((o) => o.id === timeRange)?.label ?? ''}
+              windowPnl={windowPnl}
+              legNames={legNames}
+            />
 
             {/* Rev .112 (§5.1.3): Judgment or luck moved to Review — the attribution stays
                 computed here, and Review quotes it per play (Record · Earned from) and per trade. */}

@@ -47,6 +47,8 @@ import { lensRows, ORIGIN_SAMPLE_FLOOR, sourceRows, type OriginRow } from './ori
 import { useTradeOrigins } from '@/hooks/useTradeOrigins'
 import { buildReviewedTrades } from '@/utils/reviewedTrades'
 import { ORIGIN_UNRECORDED } from '@/utils/tradeOrigin'
+import { usePnlAttribution } from '@/hooks/useSnapshots'
+import { earnedFromByPlay } from './earnedFrom'
 
 /** Rev .112: four cuts — the two Outcome contributed read where the idea came from. */
 const RECORD_CUTS = ['play', 'structure', 'source', 'lens'] as const
@@ -56,8 +58,10 @@ function coerceRecordCut(raw: string | null): RecordCut {
   return (RECORD_CUTS as readonly string[]).includes(raw ?? '') ? (raw as RecordCut) : 'play'
 }
 
-/** Earned from needs the per-trade attribution P&L Explain computes from a daily snapshot nothing stores yet. */
-const EARNED_UNWIRED = 'needs the daily snapshot — computed on P&L Explain'
+/** Earned from quotes the per-trade attribution P&L Explain computes from the nightly snapshot (from 05OCT26). */
+const EARNED_HEAD = 'θ + vega vs Δ share of the move, from the daily snapshot — computed on P&L Explain'
+const EARNED_NONE = 'no session pair of the daily snapshot (taken from 05OCT26) falls inside this play’s trades'
+const EARNED_NOT_SERVED = 'this API does not serve the daily snapshot yet (trade-api 0.12.0)'
 
 function OriginTable({ rows, head }: { rows: readonly OriginRow[]; head: string }) {
   return (
@@ -240,6 +244,14 @@ export function PlaybookRecord() {
   // Rev .112 origin cuts: per trade, because a plan names a trade, not a contract.
   const origins = useTradeOrigins()
   const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  // The whole stored snapshot history, inside the API's 800-day cap.
+  const [snapFrom] = useState(() => new Date(Date.now() - 790 * 86_400_000).toISOString().slice(0, 10))
+  const attribution = usePnlAttribution({ from: snapFrom, to: today })
+  const earned = useMemo(
+    () => earnedFromByPlay(trades, attribution.data?.by_trade ?? []),
+    [trades, attribution.data?.by_trade],
+  )
+  const earnedNone = attribution.data === null ? EARNED_NOT_SERVED : EARNED_NONE
   // Open / closed is the instance list's state (core 0.41.0, TD-43).
   const states = useTradeStates()
   const closedTrades = useMemo(() => {
@@ -465,7 +477,7 @@ export function PlaybookRecord() {
                     <th className={positionsUi.th}>Worst</th>
                     <th className={positionsUi.th}>MAE</th>
                     <th className={positionsUi.th}>Profit factor</th>
-                    <th className={cn(positionsUi.th, 'text-left')} title={`θ + vega vs Δ share of the move — ${EARNED_UNWIRED}`}>
+                    <th className={cn(positionsUi.th, 'text-left')} title={EARNED_HEAD}>
                       Earned from
                     </th>
                     <th className={cn(positionsUi.th, 'text-left')}>Size cap it would earn</th>
@@ -507,8 +519,15 @@ export function PlaybookRecord() {
                           {p.profitFactor == null ? 'no loser yet' : p.profitFactor.toFixed(2)}
                         </td>
                         {/* Rev .112: from P&L Explain's Judgment-or-luck band; quoted, never recomputed here. */}
-                        <td className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')} title={EARNED_UNWIRED}>
-                          —
+                        <td
+                          className={cn(positionsUi.td, 'text-left font-sans text-muted-foreground')}
+                          title={
+                            earned.get(p.play)
+                              ? `${earned.get(p.play)!.trades} trade(s), ${earned.get(p.play)!.readRows} row(s) read`
+                              : earnedNone
+                          }
+                        >
+                          {earned.get(p.play)?.text ?? '—'}
                         </td>
                         <td className={cn(positionsUi.td, 'whitespace-normal text-left font-sans')}>
                           <span className={capClass(cap.label)}>{cap.label}</span>{' '}

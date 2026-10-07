@@ -308,6 +308,11 @@ export interface EventRadarRow {
   batch_id: string
   collected_at: string
   event_date?: string | null
+  /** `/research/events/calendar` only (research 0.199.0+): which store the
+   *  row came from — `event_radar` or `macro_event_daily`. */
+  origin?: string | null
+  /** Macro rows' release instant (UTC ISO); null on radar rows. */
+  release_ts?: string | null
   source: string
   subject: string
   event_summary: string

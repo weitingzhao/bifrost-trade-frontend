@@ -22,6 +22,7 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import type { EventRadarRow } from '@/api/researchEngine'
+import { fmtReleaseEt } from './eventDate'
 
 export interface EventThemeRow {
   theme: string
@@ -264,9 +265,13 @@ export function EventsMarketFace({
               <tbody>
                 {forward.map((e) => {
                   const inDays = daysUntil(e.event_date as string)
+                  const releaseEt = fmtReleaseEt(e.release_ts)
                   return (
                     <tr key={e.event_id}>
-                      <td className={cn(td, mono, 'text-secondary-foreground')}>{fmtIsoDateToken(e.event_date as string)}</td>
+                      <td className={cn(td, mono, 'whitespace-nowrap text-secondary-foreground')}>
+                        {fmtIsoDateToken(e.event_date as string)}
+                        {releaseEt && <span className="text-muted-foreground"> {releaseEt}</span>}
+                      </td>
                       <td className={cn(td, mono, 'text-right', inDays <= 7 ? 'text-warning' : 'text-muted-foreground')}>{inDays}d</td>
                       <td className={cn(td, 'text-secondary-foreground')}>{e.subject}</td>
                       <td className={td}>

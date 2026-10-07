@@ -41,6 +41,8 @@ import { AskCopilotButton } from '@/components/research/AskCopilotButton'
 import { compactSnapshot } from '@/components/research/compactSnapshot'
 import { SaveAsHypothesisButton } from '@/components/research/SaveAsHypothesisButton'
 import { AddToPoolButton } from '@/components/research/AddToPoolButton'
+import { fmtIsoDateToken } from '@/lib/format'
+import { eventDayOf, fmtReleaseEt } from './eventDate'
 
 type ViewMode = 'events' | 'themes' | 'calendar'
 
@@ -65,6 +67,20 @@ function importanceTag(imp: number | null) {
   if (imp >= 3) return <DenseTag variant="danger">High</DenseTag>
   if (imp >= 2) return <DenseTag variant="warning">Medium</DenseTag>
   return <DenseTag variant="neutral">Low</DenseTag>
+}
+
+/** The row's own date (TD-193) — event_date, collected_at only when it has none, and labelled so. */
+function EventDay({ row, withTime = false }: { row: EventRadarRow; withTime?: boolean }) {
+  const day = eventDayOf(row)
+  if (!day) return <>—</>
+  const time = withTime ? fmtReleaseEt(row.release_ts) : null
+  return (
+    <span title={day.basis === 'event' ? `collected ${row.collected_at ?? '—'}` : 'no event date — collected date shown'}>
+      {fmtIsoDateToken(day.date)}
+      {time && <span className="text-muted-foreground"> {time}</span>}
+      {day.basis === 'collected' && <span className="text-muted-foreground"> (collected)</span>}
+    </span>
+  )
 }
 
 function sentimentBar(score: number) {
@@ -298,7 +314,7 @@ export function EventRadarBody({ state: injected }: { state?: EventRadarState } 
                     </DenseTableCell>
                     <DenseTableCell>{importanceTag(row.importance)}</DenseTableCell>
                     <DenseTableCell className="text-dense-meta text-muted-foreground">
-                      {row.collected_at ?? '—'}
+                      <EventDay row={row} />
                     </DenseTableCell>
                   </DenseTableRow>
                   )
@@ -397,7 +413,7 @@ export function EventRadarBody({ state: injected }: { state?: EventRadarState } 
                   return (
                   <DenseTableRow key={row.event_id}>
                     <DenseTableCell className="text-dense-meta">
-                      {row.collected_at ?? '—'}
+                      <EventDay row={row} withTime />
                     </DenseTableCell>
                     <DenseTableCell className="max-w-[120px] truncate">
                       {row.subject}

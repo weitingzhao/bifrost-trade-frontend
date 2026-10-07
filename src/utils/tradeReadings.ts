@@ -35,12 +35,25 @@ export interface TradeReading {
   structureId: number | null
   structureName: string
   openedOn: string | null
+  /**
+   * The ledger day it closed (`closed_on`: the last day a leg went flat, or the
+   * last expiry), on the fills' Chicago `trade_date` calendar. Null while open.
+   */
+  closedOn: string | null
   fills: number
   /** The server's state; null when the record came without one (an api older than 0.6.12). */
   state: TradeState | null
   closed: boolean
   /** Signed cash over the instance's own fills. Null while it is still open. */
   realised: number | null
+}
+
+/**
+ * Contract multiplier of one fill. Executions carry no multiplier field; the
+ * fills attributed to trades are options (×100), and a stock fill is per share.
+ */
+export function fillMultiplier(e: Pick<Execution, 'sec_type'>): number {
+  return (e.sec_type ?? '').trim().toUpperCase() === 'STK' ? 1 : 100
 }
 
 /**
@@ -68,7 +81,8 @@ export function readTrades(
           const qty = Math.abs(Number(e.quantity) || 0)
           const price = Number(e.price) || 0
           const commission = Number(e.commission) || 0
-          return a + (isBuySide(e.side) ? -(price * qty * 100 + commission) : price * qty * 100 - commission)
+          const gross = price * qty * fillMultiplier(e)
+          return a + (isBuySide(e.side) ? -(gross + commission) : gross - commission)
         }, 0)
       : null
 
@@ -82,6 +96,7 @@ export function readTrades(
       structureId: i.strategy_structure_id,
       structureName: i.strategy_structure_name ?? '—',
       openedOn: i.opened_at ? i.opened_at.slice(0, 10) : null,
+      closedOn: closed ? (i.closed_on ?? '').slice(0, 10) || null : null,
       fills: own.length,
       state: i.state ?? null,
       closed,

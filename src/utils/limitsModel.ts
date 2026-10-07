@@ -347,7 +347,11 @@ export interface GateReadings {
   openTrades: number | null
   /** The allocation's own ceiling on concurrent instances. */
   maxPositions: number | null
-  /** Realised on the allocation's instances today. */
+  /**
+   * Realised on the allocation's instances that closed today (the ledger's
+   * Chicago day); null until a fill booked to a trade today says the day's
+   * fills have arrived.
+   */
   lossToday: number | null
   /** True when the gate is configured for paper trading. */
   paperTrade: boolean | null
@@ -407,7 +411,7 @@ export function gateLimitRules(r: GateReadings): LimitRule[] {
       bound: 'ceiling',
       onBreach: 'the daemon halts opens for the day',
       citedFrom: inRules,
-      noReading: r.lossToday == null ? 'nothing closed under this allocation today' : null,
+      noReading: r.lossToday == null ? 'no fill booked to a trade today yet' : null,
     })
   }
 

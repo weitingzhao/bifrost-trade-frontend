@@ -33,7 +33,8 @@ import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import { gateLimitRules, limitRules, withHeadroom, type GateReadings, type LimitRow } from '@/utils/limitsModel'
 import { daemonPaperTrade } from '@/utils/daemonMode'
 import type { StatusStrategyActive } from '@/types/monitor'
-import type { StrategyAllocation } from '@/types/strategy'
+import type { GateSetFull, StrategyAllocation, Trade } from '@/types/strategy'
+import type { Execution } from '@/types/positions'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { chicagoTodayDateStr } from '@/utils/ledger/optAsOfPnL'
 
@@ -58,6 +59,58 @@ export function runningGate(
   return {
     allocation: id == null ? null : allocations.find((a) => a.strategy_allocation_id === id) ?? null,
     gateId: active?.gate_safety?.id ?? null,
+  }
+}
+
+/**
+ * What the running allocation's gate is read against: open trades and the
+ * day's realised loss.
+ *
+ * `today` is the ledger's Chicago day (`chicagoTodayDateStr`, TD-214): fills'
+ * `trade_date` and a trade's `closed_on` are on that calendar. Today's loss is
+ * the realised of the allocation's trades that closed today — never of every
+ * trade it ever closed (TD-213), which on an up-overall allocation hid a
+ * losing day behind a zero.
+ */
+export function allocationGateReadings(input: {
+  allocation: StrategyAllocation | null
+  gate: GateSetFull | null
+  trades: readonly Trade[]
+  executions: readonly Execution[]
+  paperTrade: boolean | null
+  today: string
+}): GateReadings {
+  const { allocation, gate, trades, executions, paperTrade, today } = input
+  const guard = ((gate?.gates as Record<string, unknown> | undefined)?.guard as
+    | Record<string, unknown>
+    | undefined)?.risk as Record<string, unknown> | undefined
+  if (allocation == null || gate == null) {
+    return {
+      allocationName: allocation?.name ?? null,
+      gateName: gate?.name ?? null,
+      gateVersion: gate?.version ?? null,
+      guard: guard ?? null,
+      openTrades: null,
+      maxPositions: allocation?.max_positions ?? null,
+      lossToday: null,
+      paperTrade,
+    }
+  }
+  const oppIds = new Set(allocation.strategy_opportunity_ids ?? [])
+  const mine = readTrades(trades, executions).filter((i) => oppIds.has(i.opportunityId))
+  const closedToday = mine.filter((i) => i.closed && i.closedOn === today)
+  const todayFills = executions.filter((e) => (e.trade_date ?? '').slice(0, 10) === today && e.trade_id != null)
+  return {
+    allocationName: allocation.name,
+    gateName: gate.name,
+    gateVersion: gate.version,
+    guard: guard ?? null,
+    openTrades: mine.filter((i) => !i.closed).length,
+    maxPositions: allocation.max_positions ?? null,
+    // Nothing settled under the allocation today is a reading of zero loss,
+    // not an absence — but only once a fill today exists to say so.
+    lossToday: todayFills.length === 0 ? null : closedToday.reduce((a, i) => a + (i.realised ?? 0), 0),
+    paperTrade,
   }
 }
 
@@ -164,46 +217,18 @@ export function useLimitBook(accountFilter: string): LimitBook {
     enabled: gateId != null,
   })
 
-  const gateReadings = useMemo<GateReadings>(() => {
-    const gate = gateFullQuery.data ?? null
-    const guard = ((gate?.gates as Record<string, unknown> | undefined)?.guard as
-      | Record<string, unknown>
-      | undefined)?.risk as Record<string, unknown> | undefined
-    if (allocation == null || gate == null) {
-      return {
-        allocationName: allocation?.name ?? null,
-        gateName: gate?.name ?? null,
-        gateVersion: gate?.version ?? null,
-        guard: guard ?? null,
-        openTrades: null,
-        maxPositions: allocation?.max_positions ?? null,
-        lossToday: null,
+  const gateReadings = useMemo<GateReadings>(
+    () =>
+      allocationGateReadings({
+        allocation,
+        gate: gateFullQuery.data ?? null,
+        trades: tradesQuery.data?.items ?? [],
+        executions: execQuery.data?.items ?? [],
         paperTrade,
-      }
-    }
-    const oppIds = new Set(allocation.strategy_opportunity_ids ?? [])
-    const mine = readTrades(tradesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter((i) =>
-      oppIds.has(i.opportunityId),
-    )
-    // Fills carry the ledger's Chicago trade_date; today on the same calendar.
-    const today = chicagoTodayDateStr()
-    const closedToday = mine.filter((i) => i.closed && i.openedOn != null)
-    const todayFills = (execQuery.data?.items ?? []).filter(
-      (e) => (e.trade_date ?? '').slice(0, 10) === today && e.trade_id != null,
-    )
-    return {
-      allocationName: allocation.name,
-      gateName: gate.name,
-      gateVersion: gate.version,
-      guard: guard ?? null,
-      openTrades: mine.filter((i) => !i.closed).length,
-      maxPositions: allocation.max_positions ?? null,
-      // Nothing settled under the allocation today is a reading of zero loss,
-      // not an absence — but only once a fill today exists to say so.
-      lossToday: todayFills.length === 0 ? null : closedToday.reduce((a, i) => a + (i.realised ?? 0), 0),
-      paperTrade,
-    }
-  }, [allocation, gateFullQuery.data, tradesQuery.data?.items, execQuery.data?.items, paperTrade])
+        today: chicagoTodayDateStr(),
+      }),
+    [allocation, gateFullQuery.data, tradesQuery.data?.items, execQuery.data?.items, paperTrade],
+  )
 
   const rows = useMemo(
     () =>

@@ -50,7 +50,7 @@ describe('PnlAttributionBand', () => {
   it('reads the session pair: figures, the Greek quality tag, and no not-wired text', () => {
     const { container } = renderBand(READ)
     const text = container.textContent ?? ''
-    expect(text).not.toMatch(/Nothing stores one/)
+    expect(text).not.toMatch(/Nothing stores/)
     expect(text).not.toMatch(/needs the daily snapshot/)
     expect(text).not.toMatch(/no session pair read/)
     expect(screen.getByText(/1 session read · 1 without a prior snapshot/)).toBeInTheDocument()

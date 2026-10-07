@@ -23,20 +23,14 @@
  * earlier is measured from the first stored session and says so — the start
  * of the range itself is not recorded.
  */
+import { etDate } from '@/lib/freshness'
 import { kindOf } from '@/utils/transactionKind'
 import type { AccountTransaction } from '@/types/trading'
 import type { NavRow } from '@/lib/schemas/snapshots'
 
-const NY_DATE = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'America/New_York',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-})
-
 /** Epoch seconds → the New York calendar date, `YYYY-MM-DD`. */
 export function nyDateOf(epochSec: number): string {
-  return NY_DATE.format(new Date(epochSec * 1000))
+  return etDate(epochSec * 1000)
 }
 
 export interface ExternalFlow {

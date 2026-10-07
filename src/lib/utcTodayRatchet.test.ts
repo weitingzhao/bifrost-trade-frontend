@@ -7,6 +7,11 @@
  * catches the `new Date(Date.now())` spelling and holds the allowlist: a site
  * may stay only when it is UTC on purpose and says so in its name (`todayUtc`).
  * The allowlist may only shrink.
+ *
+ * TD-247: the same UTC date cut from a look-back instant
+ * (`new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10)`) starts
+ * the window a day late every evening. A look-back start is
+ * `etDaysAgoIso(n)`; this form has no allowlist.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
@@ -25,6 +30,10 @@ const ALLOWLIST: Record<string, number> = {
 /** The date part of a UTC "now": slice / substring / substr from 0, or split. A UTC clock (`slice(11, 16)`) is not a day. */
 const UTC_TODAY =
   /new Date\(\s*(?:Date\.now\(\)\s*)?\)\s*\.\s*(?:toISOString|toJSON)\(\)\s*\.\s*(?:(?:slice|substring|substr)\(\s*0\s*,|split\()/g
+
+/** The date part of `Date.now() ± offset`: a look-back (or look-ahead) start on the UTC calendar. */
+const UTC_LOOKBACK =
+  /new Date\(\s*Date\.now\(\)\s*[-+][^;\n]*?\)\s*\.\s*(?:toISOString|toJSON)\(\)\s*\.\s*(?:(?:slice|substring|substr)\(\s*0\s*,|split\()/g
 
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -46,6 +55,22 @@ describe('UTC "today" ratchet', () => {
     // A cleared allowlist entry is removed, so the count cannot creep back.
     const stale = Object.entries(ALLOWLIST).filter(([f, n]) => (found[f] ?? 0) < n)
     expect(stale, 'lower ALLOWLIST to what is left').toEqual([])
+  })
+
+  it('cuts no look-back start from Date.now() on the UTC calendar (TD-247)', () => {
+    const found = files(SRC)
+      .filter((p) => (readFileSync(p, 'utf8').match(UTC_LOOKBACK)?.length ?? 0) > 0)
+      .map((p) => relative(SRC, p).split('\\').join('/'))
+    expect(found, 'use etDaysAgoIso(n) from @/lib/freshness').toEqual([])
+  })
+
+  it('the look-back pattern still sees the spellings it bans', () => {
+    const hits = (code: string) => code.match(UTC_LOOKBACK)?.length ?? 0
+    expect(hits('new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10)')).toBe(1)
+    expect(hits("new Date(Date.now() - 420 * 86_400_000).toISOString().split('T')[0]")).toBe(1)
+    expect(hits('new Date(Date.now() + 7 * DAY_MS).toJSON().substring(0, 10)')).toBe(1)
+    // An instant (no date cut) is not a calendar day.
+    expect(hits('new Date(Date.now() - 3_600_000).toISOString()')).toBe(0)
   })
 
   it('keeps each allowed site named as UTC', () => {

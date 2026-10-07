@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { etDayOf, etStamp, fmtAge, freshReading, inRTH, snapshotStale, tradingCalendar } from './freshness'
+import { etDate, etDayOf, etDaysAgoIso, etStamp, etTodayIso, fmtAge, freshReading, inRTH, snapshotStale, tradingCalendar } from './freshness'
 
 // September is EDT (UTC−4): 14:00 ET is 18:00Z.
 const THU_1400 = Date.UTC(2026, 8, 24, 18, 0, 0)
@@ -79,6 +79,36 @@ describe('etStamp', () => {
     expect(etStamp(Date.parse('2031-03-11T10:32:00Z'), now)).toBe('today 06:32 ET')
     expect(etStamp(Date.parse('2031-03-09T10:29:00Z'), now)).toBe('Sun 06:29 ET')
     expect(etStamp(Date.parse('2031-02-20T11:29:00Z'), now)).toBe('02-20 06:29 ET')
+  })
+})
+
+describe('etDate', () => {
+  it('puts a late-UTC instant on the ET day it belongs to', () => {
+    // 2026-09-12T01:30Z is 21:30 on 11 Sep in New York — the EOD agent's own
+    // slot. Bucketing it by UTC would file the whole EOD pass under tomorrow.
+    expect(etDate(Date.parse('2026-09-12T01:30:00Z'))).toBe('2026-09-11')
+    expect(etDate(Date.parse('2026-09-11T21:30:42Z'))).toBe('2026-09-11')
+    expect(etDate(Date.parse('2026-09-11T13:30:00Z'))).toBe('2026-09-11')
+  })
+})
+
+describe('etDaysAgoIso (TD-247)', () => {
+  // 2026-09-12T01:30Z is 21:30 EDT on Fri 11 Sep: already the 12th in UTC.
+  const EVENING = Date.parse('2026-09-12T01:30:00Z')
+
+  it('counts back from New York\'s today, not the UTC date', () => {
+    expect(etTodayIso(EVENING)).toBe('2026-09-11')
+    expect(etDaysAgoIso(0, EVENING)).toBe('2026-09-11')
+    expect(etDaysAgoIso(30, EVENING)).toBe('2026-08-12')
+    // The UTC instant arithmetic it replaces lands a day late.
+    expect(new Date(EVENING - 30 * 86_400_000).toISOString().slice(0, 10)).toBe('2026-08-13')
+  })
+
+  it('steps whole calendar days across a clock change and a year end', () => {
+    // 00:30 EST Mon 9 Mar 2026, the day after spring forward.
+    expect(etDaysAgoIso(1, Date.parse('2026-03-09T05:30:00Z'))).toBe('2026-03-08')
+    expect(etDaysAgoIso(2, Date.parse('2026-03-09T05:30:00Z'))).toBe('2026-03-07')
+    expect(etDaysAgoIso(420, Date.parse('2027-01-01T04:59:00Z'))).toBe('2025-11-06')
   })
 })
 

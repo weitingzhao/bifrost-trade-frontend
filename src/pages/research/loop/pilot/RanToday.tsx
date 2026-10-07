@@ -27,13 +27,13 @@ import {
 import { researchDraftsQueryKey, useRunEodAgent, useRunMorningAgent } from '@/hooks/useResearchDrafts'
 import { useActiveObjectives, useAutopilotStanding, useAwaitingRuns, useCurateRun } from '@/hooks/useLoopHarness'
 import { fmtIsoTs } from '@/lib/format'
+import { etTodayIso } from '@/lib/freshness'
 import { loopPipelinePath } from '@/lib/harness/loopCopilotPrefill'
 import { fmtUsd, runSpend } from '@/lib/harness/runSpend'
 import { rowLamp, type RunStatusRead } from '@/lib/harness/runLamp'
 import {
   agentsThatWroteOn,
   humanKind,
-  nyDate,
   nyWhen,
   objectiveSchedule,
   rowCost,
@@ -70,7 +70,7 @@ export function RanToday() {
   const errored = queries.filter((q) => q.isError)
   const rows = useMemo(() => {
     const drafts = queries.flatMap((q) => q.data?.rows ?? [])
-    return agentsThatWroteOn(drafts, nyDate(new Date()))
+    return agentsThatWroteOn(drafts, etTodayIso())
   }, [queries])
   // A page that came back full is a page that may have been cut off.
   const maybeShort = queries.some((q) => (q.data?.rows.length ?? 0) >= DRAFT_PAGE)

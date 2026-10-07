@@ -15,6 +15,7 @@
  * A fill that booked realised P&L is a close; closes and derisks never spend
  * budget (the design's own rule), so it reads 0 with that note.
  */
+import { etDate } from '@/lib/freshness'
 import type { Execution } from '@/types/positions'
 
 export interface TakenRow {
@@ -90,13 +91,9 @@ export function fillRisk(e: Execution): { risk: number | null; note: string } {
 
 /** YYYY-MM-DD of a fill in New York, where the trading day is counted. */
 export function fillDate(e: Execution): string | null {
-  if (e.time != null && Number.isFinite(e.time)) return nyDate(e.time)
+  if (e.time != null && Number.isFinite(e.time)) return etDate(e.time * 1000)
   const d = (e.trade_date ?? '').slice(0, 10)
   return d.length === 10 ? d : null
-}
-
-export function nyDate(unixSec: number): string {
-  return new Date(unixSec * 1000).toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
 }
 
 /** Today's fills, newest first, each with the running total up to it. */

@@ -32,7 +32,8 @@ import { useOptionLiveBasis } from '@/hooks/useOptionLiveBasis'
 import { useNamesEarnings } from '@/hooks/useNamesEarnings'
 import { useQuotesMap } from '@/hooks/useQuoteStream'
 import { accountTag } from '@/utils/accountTag'
-import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveRow, type BookLiveTotals } from '@/utils/bookLive'
+import { bookLiveTotals, buildBookLiveRows, type BookLiveRow, type BookLiveTotals } from '@/utils/bookLive'
+import { etTodayIso } from '@/lib/freshness'
 import { equityDeltaOf, noEquityDeltaKeys } from '@/utils/equityDelta'
 import {
   extractOptPositionRows,
@@ -202,7 +203,7 @@ export function useBookLive(open: boolean): BookLive {
     const id = window.setInterval(() => setNowSec(Date.now() / 1000), open ? 1_000 : 60_000)
     return () => window.clearInterval(id)
   }, [open])
-  const todayEt = etDate(new Date(nowSec * 1000).toISOString()) ?? ''
+  const todayEt = etTodayIso(nowSec * 1000)
 
   const rows = useMemo(
     () =>

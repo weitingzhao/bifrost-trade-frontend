@@ -32,11 +32,19 @@ export default tseslint.config(
         ...[
           "CallExpression[callee.property.name=/^(slice|substring|substr)$/][arguments.0.value=0]",
           "CallExpression[callee.property.name='split']",
-        ].map((call) => ({
-          selector: `${call} > MemberExpression > CallExpression[callee.property.name=/^(toISOString|toJSON)$/] > MemberExpression > NewExpression[callee.name='Date'][arguments.length=0]`,
-          message:
-            "UTC 'today': from 20:00 ET this is tomorrow. Use etTodayIso() (New York session day, @/lib/freshness) or chicagoTodayDateStr() (ledger day).",
-        })),
+        ].flatMap((call) => [
+          {
+            selector: `${call} > MemberExpression > CallExpression[callee.property.name=/^(toISOString|toJSON)$/] > MemberExpression > NewExpression[callee.name='Date'][arguments.length=0]`,
+            message:
+              "UTC 'today': from 20:00 ET this is tomorrow. Use etTodayIso() (New York session day, @/lib/freshness) or chicagoTodayDateStr() (ledger day).",
+          },
+          // TD-247: a look-back start cut from `Date.now() - n days` is a UTC date too.
+          {
+            selector: `${call} > MemberExpression > CallExpression[callee.property.name=/^(toISOString|toJSON)$/] > MemberExpression > NewExpression[callee.name='Date'][arguments.0.type='BinaryExpression'][arguments.0.left.callee.object.name='Date'][arguments.0.left.callee.property.name='now']`,
+            message:
+              "UTC look-back: `Date.now() - n days` cut to a date is the UTC day. Use etDaysAgoIso(n) (@/lib/freshness).",
+          },
+        ]),
       ],
     },
   },

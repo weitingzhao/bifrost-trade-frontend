@@ -18,7 +18,7 @@ import { useEarningsDates } from '@/hooks/useNarrative'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useAtmIvTerm, useIvCone, useResiduals, useVolSurfaceFit } from '@/hooks/useVolSurfaceData'
 import { ordinal } from '@/lib/analyzeDepth'
-import { etTodayIso } from '@/lib/freshness'
+import { etDaysAgoIso, etTodayIso } from '@/lib/freshness'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots, type ChainContract } from '@/utils/optionChain'
 import { daysTo } from '@/utils/optionTicker'
@@ -213,7 +213,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   const closesQ = useQuery({
     queryKey: ['market', 'stock-daily-closes-1y', sym],
     queryFn: () =>
-      fetchStockDailyCloses(sym, new Date(Date.now() - 420 * 86_400_000).toISOString().slice(0, 10), today),
+      fetchStockDailyCloses(sym, etDaysAgoIso(420), today),
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,
   })

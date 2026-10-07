@@ -19,11 +19,12 @@
  *  - The worksheet has no rows: nothing stores a sized candidate — Compare
  *    hands its structures on as a Plan.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
+import { etTodayIso } from '@/lib/freshness'
 import { HeroCard, HeroRow, PageHead, PageHeadLink, PageShell } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
@@ -43,7 +44,7 @@ import { readTrades } from '@/utils/tradeReadings'
 import { RISK_CONCENTRATION_FLOOR } from '@/utils/riskExposure'
 import { useRiskExposure } from '@/hooks/useRiskExposure'
 import { RISK_BUDGET_UNRECORDED } from '@/utils/riskBudget'
-import { nyDate, takenToday, weekOf } from './sizingTodayModel'
+import { takenToday, weekOf } from './sizingTodayModel'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 
 const PAGE_LEAD =
@@ -104,7 +105,7 @@ export default function RiskSizingPage() {
   )
 
   // The New York date, read once per mount — a page left open overnight keeps the day it opened on.
-  const [today] = useState(() => nyDate(Date.now() / 1000))
+  const today = etTodayIso()
   const fills = useMemo(
     () => (execQuery.data?.items ?? []).filter((e) => inAccountScope(e.account_id, scope, host, secondary)),
     [execQuery.data?.items, scope, host, secondary],

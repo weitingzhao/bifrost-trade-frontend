@@ -43,8 +43,8 @@ import { rowSelectProps } from '@/hooks/useRowLink'
 import { useCopilotSessions } from '@/hooks/useCopilotSessions'
 import { hydrateCopilotMessages } from '@/lib/cockpit/hydrateCopilotMessages'
 import { fmtIsoTs } from '@/lib/format'
+import { etTodayIso } from '@/lib/freshness'
 import { openResearchCopilot } from '@/lib/harness/loopCopilotPrefill'
-import { nyDate } from '@/pages/research/loop/pilot/agentActivity'
 import {
   THREAD_FILTERS,
   deskThreadsQuery,
@@ -162,7 +162,7 @@ export function Threads() {
   if (listQ.isLoading && rows.length === 0 && !searching) return <Skeleton className="h-32 w-full" />
   if (listQ.isError) return <ResearchAuthGap error={listQ.error} onRetry={() => void listQ.refetch()} />
 
-  const today = nyDate(new Date())
+  const today = etTodayIso()
   const shown = rows.flatMap((row, i) => (threadInFilter(row, filter, today) ? [{ row, detail: details[i] }] : []))
   const emptyBook = rows.length === 0 && !searching
 

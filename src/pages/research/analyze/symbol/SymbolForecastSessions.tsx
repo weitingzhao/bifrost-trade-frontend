@@ -20,6 +20,7 @@ import { useSearchParams } from 'react-router-dom'
 import { fetchForecastCalibration } from '@/api/researchEngine'
 import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { useEarningsDates } from '@/hooks/useNarrative'
+import { etDaysAgoIso } from '@/lib/freshness'
 import { cn } from '@/lib/utils'
 import { SymbolSessionInspector } from './SymbolSessionInspector'
 import { forecastPrints } from './scenarioEarnings'
@@ -47,14 +48,13 @@ const tl = 'text-left'
 const SESSION_PARAM = 'session'
 const WINDOW_DAYS = 30
 
-const daysAgoIso = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10)
 const pctOf = (v: number | null | undefined, digits = 0) => (v == null ? '—' : `${(v * 100).toFixed(digits)}%`)
 const signedPct = (v: number, digits = 1) => `${v >= 0 ? '+' : '−'}${Math.abs(v * 100).toFixed(digits)}%`
 
 export function SymbolForecastSessions({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
   const { days: allDays, isLoading } = useSymbolForecastSessions(sym)
-  const since = daysAgoIso(WINDOW_DAYS)
+  const since = etDaysAgoIso(WINDOW_DAYS)
   const days = allDays.filter((d) => d.trade_date >= since)
   const newestSettled = days.find((d) => d.settlement != null)?.trade_date ?? ''
   const settled = days.map((d) => d.settlement).filter(isForecastSettlement)

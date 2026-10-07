@@ -17,7 +17,7 @@
  * So this file does Persona and the filters that need nothing else.
  */
 import type { CopilotSessionSummary, PersistedCopilotFrame } from '@/api/researchCopilotSessions'
-import { nyDate } from '@/pages/research/loop/pilot/agentActivity'
+import { etDate } from '@/lib/freshness'
 
 /** Moved to `lib/copilot/threadPersona` when the dock became its second reader. */
 export { threadPersona } from '@/lib/copilot/threadPersona'
@@ -79,7 +79,7 @@ export function threadInFilter(
   if (filter === 'today') {
     if (!row.updated_at) return false
     const at = new Date(row.updated_at)
-    return !Number.isNaN(at.getTime()) && nyDate(at) === today
+    return !Number.isNaN(at.getTime()) && etDate(at.getTime()) === today
   }
   return true
 }

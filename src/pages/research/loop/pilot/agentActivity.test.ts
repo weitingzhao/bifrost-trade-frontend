@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   agentsThatWroteOn,
   humanKind,
-  nyDate,
   nyWhen,
   objectiveSchedule,
   rowCost,
@@ -29,16 +28,6 @@ function draft(
     expires_at: null,
   }
 }
-
-describe('nyDate', () => {
-  it('puts a late-UTC instant on the ET day it belongs to', () => {
-    // 2026-09-12T01:30Z is 21:30 on 11 Sep in New York — the EOD agent's own
-    // slot. Bucketing it by UTC would file the whole EOD pass under tomorrow.
-    expect(nyDate(new Date('2026-09-12T01:30:00Z'))).toBe('2026-09-11')
-    expect(nyDate(new Date('2026-09-11T21:30:42Z'))).toBe('2026-09-11')
-    expect(nyDate(new Date('2026-09-11T13:30:00Z'))).toBe('2026-09-11')
-  })
-})
 
 describe('agentsThatWroteOn', () => {
   const rows = [

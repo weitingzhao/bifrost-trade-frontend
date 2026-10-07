@@ -11,7 +11,7 @@
  */
 import type { CopilotWriteRow, CopilotWrites } from '@/api/research/copilotWrites'
 import { ET_ZONE, fmtIsoDateToken } from '@/lib/format'
-import { nyDate } from '@/pages/research/loop/pilot/agentActivity'
+import { etDate } from '@/lib/freshness'
 
 export type WriteResultTone = 'green' | 'warn' | 'danger' | 'muted'
 
@@ -50,8 +50,8 @@ function dayBefore(ymd: string): string {
 export function writeDay(iso: string | null | undefined, now: Date): string | null {
   const d = parsed(iso)
   if (!d) return '—'
-  const day = nyDate(d)
-  const today = nyDate(now)
+  const day = etDate(d.getTime())
+  const today = etDate(now.getTime())
   if (day === today) return null
   if (day === dayBefore(today)) return 'yesterday'
   return fmtIsoDateToken(day)
@@ -126,6 +126,6 @@ export function writesEmptyLine(data: Pick<CopilotWrites, 'days' | 'last_write_a
   const head = `No chat writes in the last ${data.days} day${data.days === 1 ? '' : 's'}.`
   const last = parsed(data.last_write_at)
   return last
-    ? `${head} The last one was ${fmtIsoDateToken(nyDate(last))}.`
+    ? `${head} The last one was ${fmtIsoDateToken(etDate(last.getTime()))}.`
     : `${head} The chat has not written anything yet.`
 }

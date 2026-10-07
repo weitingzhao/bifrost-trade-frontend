@@ -7,6 +7,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { EventRadarRow } from '@/api/researchEngine'
+import { etDaysAgoIso } from '@/lib/freshness'
 import { fmtIsoDateToken } from '@/lib/format'
 import { eventDayOf, fmtReleaseEt } from './eventDate'
 
@@ -50,7 +51,7 @@ describe('eventDayOf', () => {
 describe('EventsMarketFace forward panel', () => {
   it('shows the event date and the macro release time', async () => {
     const { EventsMarketFace } = await import('./EventsMarketFace')
-    const soon = new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10)
+    const soon = etDaysAgoIso(-5)
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false, enabled: false } } })
     render(
       <QueryClientProvider client={qc}>

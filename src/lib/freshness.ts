@@ -94,6 +94,16 @@ export function etTodayIso(nowMs: number = Date.now()): string {
   return etDate(nowMs)
 }
 
+/**
+ * The New York day `n` calendar days before today, `YYYY-MM-DD` — where a
+ * look-back window starts. Counted on dates, not instants: `Date.now() - n
+ * days` cut at ten characters is a UTC date, a day ahead of New York every
+ * evening after 20:00 ET (TD-247). A negative `n` counts forward.
+ */
+export function etDaysAgoIso(n: number, nowMs: number = Date.now()): string {
+  return new Date(Date.parse(`${etTodayIso(nowMs)}T00:00:00Z`) - n * 86_400_000).toISOString().slice(0, 10)
+}
+
 /** `HH:MM` (or `HH:MM:SS`) in New York. */
 export function etClock(ms: number, seconds = false): string {
   return new Date(ms).toLocaleTimeString('en-US', {

@@ -1,4 +1,5 @@
 import type { AiDraft } from '@/api/researchDrafts'
+import { etDate } from '@/lib/freshness'
 
 /**
  * Which scheduled agents wrote today, and what they wrote.
@@ -35,25 +36,6 @@ export interface AgentActivityRow {
   runIds: string[]
 }
 
-/**
- * The ET calendar date of an instant, `YYYY-MM-DD`.
- *
- * ET because the trading day is ET and the design labels the section with it.
- * Built from parts rather than a locale string: the same locale formats dates
- * differently across runtimes, and a day boundary is not a place to find that
- * out.
- */
-export function nyDate(at: Date): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(at)
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
-  return `${get('year')}-${get('month')}-${get('day')}`
-}
-
 /** `eod_verdict` → `eod verdict`. */
 export function humanKind(kind: string): string {
   return kind.replace(/_/g, ' ')
@@ -68,7 +50,7 @@ export function agentsThatWroteOn(
   for (const draft of drafts) {
     if (!draft.created_at) continue
     const at = new Date(draft.created_at)
-    if (Number.isNaN(at.getTime()) || nyDate(at) !== day) continue
+    if (Number.isNaN(at.getTime()) || etDate(at.getTime()) !== day) continue
 
     const agent = draft.generated_by || 'unattributed'
     const entry = byAgent.get(agent) ?? { lastAt: draft.created_at, kinds: new Map(), runIds: new Set() }
@@ -159,7 +141,10 @@ export function objectiveSchedule(
   }))
 }
 
-/** "Mon 14 Sep 09:30 ET" — built from parts for the same reason `nyDate` is. */
+/**
+ * "Mon 14 Sep 09:30 ET" — built from parts, as `@/lib/freshness` builds the
+ * date: the same locale formats dates differently across runtimes.
+ */
 export function nyWhen(at: Date): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/New_York',

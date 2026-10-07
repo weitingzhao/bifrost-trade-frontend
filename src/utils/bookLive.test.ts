@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
-import { bookLiveTotals, buildBookLiveRows, etDate, type BookLiveInputs, BOOK_BUCKETS, stockBookBucket, stockNext } from './bookLive'
+import { bookLiveTotals, buildBookLiveRows, type BookLiveInputs, BOOK_BUCKETS, stockBookBucket, stockNext } from './bookLive'
 
 const TODAY = '2031-03-12'
 
@@ -122,13 +122,6 @@ describe('buildBookLiveRows', () => {
     expect(t.dayUsd).toBe(20)
     expect(t.dayUnknown).toBe(2)
     expect(t.warnCount).toBe(1)
-  })
-})
-
-describe('etDate', () => {
-  it('reads the New York calendar day, not UTC', () => {
-    expect(etDate('2031-03-12T02:30:00Z')).toBe('2031-03-11')
-    expect(etDate(null)).toBeNull()
   })
 })
 

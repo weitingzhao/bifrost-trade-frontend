@@ -38,6 +38,7 @@ import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { cushionBand, shortLegCushion } from '@/utils/positionsOptionRisk'
 import { classifyStockBucket } from '@/utils/positionsGrouping'
 import { fmtIsoDateToken } from '@/lib/format'
+import { etDate, etDayOf } from '@/lib/freshness'
 import type { EarningsReading } from '@/utils/earningsReading'
 
 export interface BookLiveNext {
@@ -151,14 +152,6 @@ export function stockNext(reading: EarningsReading | undefined): BookLiveNext {
   }
 }
 
-/** `YYYY-MM-DD` in New York for an ISO timestamp, or null. */
-export function etDate(iso: string | null | undefined): string | null {
-  if (!iso) return null
-  const t = Date.parse(iso)
-  if (!Number.isFinite(t)) return null
-  return new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
-}
-
 function daysBetween(fromIso: string, toYmd: string): number | null {
   const d = toYmd.replace(/\D/g, '')
   if (d.length < 8) return null
@@ -200,7 +193,7 @@ function stkRow(p: IbPositionRow, accountId: string, x: BookLiveInputs): BookLiv
           ? spot.source === 'close' ? 'close' : "broker's mark"
           : spot.source === 'close'
             ? `close · ${new Date(spot.asOf * 1000).toISOString().slice(0, 10)}`
-            : `broker's mark · ${etDate(new Date(spot.asOf * 1000).toISOString())}`
+            : `broker's mark · ${etDate(spot.asOf * 1000)}`
   return {
     key: `${accountId}|${symbol}`,
     kind: 'stk',
@@ -241,7 +234,7 @@ function optRow(p: IbPositionRow, accountId: string, x: BookLiveInputs): BookLiv
   const ticker = buildOptionTicker({ underlying: symbol, expiry: parts.expiry, strike: parts.strike, right: parts.right })
   const vendor = ticker ? x.vendorByTicker.get(ticker) : undefined
 
-  const closeDay = etDate(vendor?.snapshot_ts)
+  const closeDay = etDayOf(vendor?.snapshot_ts) || null
   const vendorClose = vendor?.day_close ?? null
   const prior = vendorClose != null && closeDay != null && closeDay < x.todayEt ? vendorClose : null
   // No live mid: the dated close stands in for the mark and the P&L, and says so.

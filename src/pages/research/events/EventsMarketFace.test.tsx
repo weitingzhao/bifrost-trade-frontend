@@ -11,8 +11,9 @@ import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { EventsMarketFace } from './EventsMarketFace'
 import type { EventRadarRow } from '@/api/researchEngine'
+import { etDaysAgoIso } from '@/lib/freshness'
 
-const tomorrow = new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10)
+const tomorrow = etDaysAgoIso(-5)
 
 function row(over: Partial<EventRadarRow>): EventRadarRow {
   return {

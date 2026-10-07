@@ -49,7 +49,7 @@ import { buildReviewedTrades } from '@/utils/reviewedTrades'
 import { ORIGIN_UNRECORDED } from '@/utils/tradeOrigin'
 import { usePnlAttribution } from '@/hooks/useSnapshots'
 import { earnedFromByPlay } from './earnedFrom'
-import { etTodayIso } from '@/lib/freshness'
+import { etDaysAgoIso, etTodayIso } from '@/lib/freshness'
 
 /** Rev .112: four cuts — the two Outcome contributed read where the idea came from. */
 const RECORD_CUTS = ['play', 'structure', 'source', 'lens'] as const
@@ -246,7 +246,7 @@ export function PlaybookRecord() {
   const origins = useTradeOrigins()
   const today = etTodayIso()
   // The whole stored snapshot history, inside the API's 800-day cap.
-  const [snapFrom] = useState(() => new Date(Date.now() - 790 * 86_400_000).toISOString().slice(0, 10))
+  const snapFrom = etDaysAgoIso(790)
   const attribution = usePnlAttribution({ from: snapFrom, to: today })
   const earned = useMemo(
     () => earnedFromByPlay(trades, attribution.data?.by_trade ?? []),

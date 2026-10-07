@@ -6,59 +6,28 @@
  * `import()`; `@/` and relative specifiers) and lists every non-test module
  * under src/ it never reaches.
  *
- * KNOWN_ORPHANS is the 2026-10-07 baseline (42). It may only shrink:
+ * KNOWN_ORPHANS is the baseline after the TD-243 deletions (0). It may only shrink:
  * - a new orphan fails — import it from the app, or delete it;
  * - a listed module that is gone or reachable again fails until it is taken
  *   off the list, so the room it frees cannot be quietly re-used.
  * Test support (`*.test.*`, `*.spec.*`, `*.fixture.ts`, src/test/) is not counted.
+ * Generated files on GENERATED_FILE_ALLOWLIST are not counted either.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { expect, it } from 'vitest'
 
-const KNOWN_ORPHANS: readonly string[] = [
-  'components/BifrostLogo.tsx',
-  'components/DraggableExplainPanel.tsx',
-  'components/accounts/HoldingsBySymbolCard.tsx',
-  'components/cockpit/CockpitSaveHypothesisHost.tsx',
-  'components/cockpit/InboxBanner.tsx',
-  'components/cockpit/LoopBanner.tsx',
-  'components/cockpit/PinChip.tsx',
-  'components/cockpit/PinsSection.tsx',
-  'components/cockpit/QuickActionButton.tsx',
-  'components/cockpit/SessionListSidebar.tsx',
-  'components/cockpit/index.ts',
-  'components/positions/LinkOptionStockModal.tsx',
-  'components/positions/ui.tsx',
-  'components/positions/ui/PosStatusBadge.tsx',
-  'components/research/DiscoveryHitList.tsx',
-  'components/research/HypothesisCard.tsx',
-  'components/ui/sheet.tsx',
-  'components/ui/toggle-group.tsx',
-  'hooks/use-mobile.ts',
+const KNOWN_ORPHANS: readonly string[] = []
+
+/**
+ * Generated files the app is not supposed to import.
+ *
+ * `lib/design/designInks.generated.ts` is written by `scripts/design-nav-snapshot.mjs`
+ * and read by `identityColour.test.ts` (the design-registry mirror held against
+ * `@bifrost/ui`). It stays out of orphan accounting on purpose.
+ */
+const GENERATED_FILE_ALLOWLIST: readonly string[] = [
   'lib/design/designInks.generated.ts',
-  'lib/researchEnvelope.ts',
-  'lib/uiClasses.ts',
-  'pages/portfolio/ledger/OptGroupRow.tsx',
-  'pages/portfolio/ledger/OptGroupsTable.tsx',
-  'pages/portfolio/ledger/ViewOptionStockLinksModal.tsx',
-  'pages/portfolio/ledger/types.tsx',
-  'pages/research/home/BenchDirectory.tsx',
-  'pages/research/loop/harnessConsoleColgroups.tsx',
-  'store/saveHypothesisIntentStore.ts',
-  'types/watchlistDbCoverage.ts',
-  'utils/dataOverview/buildWatchlistSummaryRows.ts',
-  'utils/dataOverview/coverageSummaryFormat.ts',
-  'utils/dataOverview/optionFocusDataset.ts',
-  'utils/dataOverview/stockFocusDataset.ts',
-  'utils/dataOverview/watchlistMatrixFormat.ts',
-  'utils/dataOverview/watchlistUnifiedFocus.ts',
-  'utils/ledger/index.ts',
-  'utils/navLampIcon.ts',
-  'utils/openStockPositions.ts',
-  'utils/tradeCalc.ts',
-  'utils/tradesUrlSync.ts',
-  'utils/winRate.ts',
 ]
 
 const SRC = resolve(__dirname, '..')
@@ -77,6 +46,11 @@ function sources(dir: string): string[] {
 function isTestSupport(p: string): boolean {
   const rel = relative(SRC, p)
   return /\.(test|spec)\.tsx?$/.test(rel) || /\.fixture\.ts$/.test(rel) || rel.startsWith(`test${sep}`)
+}
+
+function isGeneratedAllowlisted(p: string): boolean {
+  const rel = relative(SRC, p).split(sep).join('/')
+  return GENERATED_FILE_ALLOWLIST.includes(rel)
 }
 
 function resolveSpec(from: string, spec: string): string | null {
@@ -110,7 +84,7 @@ function orphans(): string[] {
     stack.push(...(edges.get(f) ?? []))
   }
   return files
-    .filter((f) => !isTestSupport(f) && !seen.has(f))
+    .filter((f) => !isTestSupport(f) && !isGeneratedAllowlisted(f) && !seen.has(f))
     .map((f) => relative(SRC, f).split(sep).join('/'))
     .sort()
 }

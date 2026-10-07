@@ -28,7 +28,7 @@ import { fetchPineSignalStats, fetchPineSummary, type PineSide, type PineSignalS
 import type { BacktestRunRow } from '@/api/research/backtestEvent'
 import { PineEdgeTable } from './PineTryPanel'
 import { PineRunControl } from './PineRunControl'
-import { STRUCTURE_LABEL, isSimRun, simStructure, simSummaryOf, simUsd } from './simRuns'
+import { STRUCTURE_LABEL, isSimRun, signedPct, simStructure, simSummaryOf, simUsd } from './simRuns'
 
 const HORIZONS = [5, 10, 20] as const
 const SIDES: readonly PineSide[] = ['buy', 'sell']
@@ -37,10 +37,6 @@ const RUNS_LIMIT = 100
 
 function errText(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
-}
-
-function signed(v: number | null | undefined, digits = 1): string {
-  return v == null ? '—' : `${v >= 0 ? '+' : ''}${(v * 100).toFixed(digits)}%`
 }
 
 /** Every month from `first` to `last` (YYYY-MM), so a quiet month reads as a gap, not as nothing. */
@@ -304,10 +300,10 @@ export default function PineReportPage() {
                             <td className={td}>{r.sell || '—'}</td>
                             <td className={cn(td, 'text-left')}>{r.last ?? '—'}</td>
                             <td className={td} title={b ? `n ${b.n}` : undefined}>
-                              {signed(b?.avg_return)}
+                              {signedPct(b?.avg_return, 1)}
                             </td>
                             <td className={td} title={s ? `n ${s.n}` : undefined}>
-                              {signed(s?.avg_return)}
+                              {signedPct(s?.avg_return, 1)}
                             </td>
                             <td className={td}>
                               <Link to={chartHref(r.symbol)} className="font-sans text-dense-caption hover:underline">
@@ -355,7 +351,7 @@ export default function PineReportPage() {
                             <td className={td}>{r.side === 'buy' ? '▲' : '▼'}</td>
                             {HORIZONS.map((h) => (
                               <td key={h} className={cn(td, pnlColorClass(r.ret[h]))}>
-                                {signed(r.ret[h])}
+                                {signedPct(r.ret[h], 1)}
                               </td>
                             ))}
                             <td className={td}>

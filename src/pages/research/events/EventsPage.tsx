@@ -142,7 +142,8 @@ export default function EventsPage() {
         /* The design's own restructure, built 2026-09-24 on the Owner's ask:
            Importance / Direction / theme filters, the themes panel with its
            bull-neutral-bear stack, the forward calendar and the ingest rows.
-           `EventRadarBody` stays the Explorer tab's body — nothing deleted. */
+           It replaced the old three-tab board (EventRadarBody), which lost its
+           last importer here and was deleted 2026-10-07 (TD-199). */
         <EventsMarketFace
           events={events.data?.rows ?? []}
           themes={themes.data?.rows ?? []}

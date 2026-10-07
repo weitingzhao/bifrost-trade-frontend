@@ -26,6 +26,7 @@ import {
   type PineSide,
   type PineTryResult,
 } from '@/api/research/pine'
+import { signedPct } from './simRuns'
 
 type BasketChoice = PineBasket | 'custom'
 
@@ -39,10 +40,6 @@ const WINDOWS = [
   { value: '730', label: '2 y' },
   { value: '1095', label: '3 y' },
 ]
-
-function pct(v: number | null | undefined, digits = 2): string {
-  return v == null ? '—' : `${v >= 0 ? '+' : ''}${(v * 100).toFixed(digits)}%`
-}
 
 function rate(v: number | null | undefined): string {
   return v == null ? '—' : `${Math.round(v * 100)}%`
@@ -96,13 +93,13 @@ export function PineEdgeTable({
                     <td className={cn(td, mono)}>{h}</td>
                     <td className={cn(td, mono, 'text-right')}>{r?.signal.n ?? '—'}</td>
                     <td className={cn(td, mono, 'text-right')}>{rate(r?.signal.win_rate)}</td>
-                    <td className={cn(td, mono, 'text-right')}>{pct(r?.signal.avg_return)}</td>
-                    <td className={cn(td, mono, 'text-right text-muted-foreground')}>{pct(r?.baseline.avg_return)}</td>
+                    <td className={cn(td, mono, 'text-right')}>{signedPct(r?.signal.avg_return)}</td>
+                    <td className={cn(td, mono, 'text-right text-muted-foreground')}>{signedPct(r?.baseline.avg_return)}</td>
                     <td
                       className={cn(td, mono, 'text-right', clear && cn('font-semibold', pnlColorClass(edge)))}
                       title={clear ? 'The interval does not cross zero' : 'The interval crosses zero'}
                     >
-                      {pct(edge)} {ci ? <span className="text-muted-foreground">[{pct(ci[0], 1)}, {pct(ci[1], 1)}]</span> : null}
+                      {signedPct(edge)} {ci ? <span className="text-muted-foreground">[{signedPct(ci[0], 1)}, {signedPct(ci[1], 1)}]</span> : null}
                     </td>
                   </tr>
                 )

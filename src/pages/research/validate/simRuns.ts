@@ -43,6 +43,11 @@ export function pct(v: number | null | undefined, digits = 0): string {
   return v == null || !Number.isFinite(v) ? '—' : `${(v * 100).toFixed(digits)}%`
 }
 
+/** A return as a signed percent: 0.0123 → +1.23%. */
+export function signedPct(v: number | null | undefined, digits = 2): string {
+  return v == null ? '—' : `${v >= 0 ? '+' : ''}${(v * 100).toFixed(digits)}%`
+}
+
 /**
  * One row of the Compared with panel (Rev .161): this run, the run it is
  * compared with, and the difference. `colored` rows read better-for-the-seller

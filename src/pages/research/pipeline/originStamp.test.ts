@@ -81,7 +81,9 @@ describe('the stamps the app writes', () => {
     // the shape of the bug it exists to catch.
     // The floor was 10 while the retired Symbol lab sections (never mounted since
     // 2026-09-24) still carried eight Save buttons; they went with the orphans.
-    expect(savedStamps().length).toBeGreaterThan(5)
+    // 5 → 4 on 2026-10-07: the unmounted EventsBoard took its event-radar Save
+    // with it (TD-199). Stamps already on file keep their STAMP_ROW entry.
+    expect(savedStamps().length).toBeGreaterThan(4)
   })
 
   it('leaves no stamp the census cannot place or excuse', () => {

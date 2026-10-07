@@ -2,8 +2,8 @@
  * TD-193 ratchet: a calendar row is shown on its event_date, never on the day
  * the ingest collected it. Fixtures are invented (the fixture rule).
  */
-import { describe, expect, it, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { EventRadarRow } from '@/api/researchEngine'
@@ -33,27 +33,6 @@ function row(over: Partial<EventRadarRow>): EventRadarRow {
   }
 }
 
-const calendarRows: EventRadarRow[] = [
-  row({
-    subject: 'Fixture macro print',
-    origin: 'macro_event_daily',
-    event_date: '2031-03-11',
-    release_ts: '2031-03-11T12:30:00+00:00',
-  }),
-  row({ subject: 'Undated fixture', origin: 'event_radar', collected_at: '2031-02-20' }),
-]
-
-vi.mock('@/api/researchEngine', async (importOriginal) => {
-  const orig = await importOriginal<typeof import('@/api/researchEngine')>()
-  return {
-    ...orig,
-    fetchEventRadarEvents: vi.fn(async () => ({ rows: [], count: 0 })),
-    fetchEventBatches: vi.fn(async () => ({ rows: [], count: 0 })),
-    fetchEventThemes: vi.fn(async () => ({ rows: [], count: 0 })),
-    fetchEventCalendar: vi.fn(async () => ({ rows: calendarRows, count: calendarRows.length })),
-  }
-})
-
 describe('eventDayOf', () => {
   it('prefers event_date over collected_at', () => {
     expect(eventDayOf(row({ event_date: '2031-03-11' }))).toEqual({ date: '2031-03-11', basis: 'event' })
@@ -65,31 +44,6 @@ describe('eventDayOf', () => {
     // 12:30Z in March 2031 is after the DST switch (09 Mar) → 08:30 EDT.
     expect(fmtReleaseEt('2031-03-11T12:30:00+00:00')).toBe('08:30 ET')
     expect(fmtReleaseEt(null)).toBeNull()
-  })
-})
-
-describe('EventRadarBody calendar view', () => {
-  it('renders a dated row on its event_date, not its collected_at', async () => {
-    const { EventRadarBody } = await import('./EventsBoard')
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    render(
-      <QueryClientProvider client={qc}>
-        <MemoryRouter>
-          <EventRadarBody />
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Calendar' }))
-    await waitFor(() => expect(screen.getByText('Fixture macro print')).toBeTruthy())
-
-    const dated = screen.getByText('Fixture macro print').closest('tr') as HTMLElement
-    expect(dated.textContent).toContain(fmtIsoDateToken('2031-03-11'))
-    expect(dated.textContent).toContain('08:30 ET')
-    expect(dated.textContent).not.toContain(fmtIsoDateToken('2031-03-02'))
-
-    const undated = screen.getByText('Undated fixture').closest('tr') as HTMLElement
-    expect(undated.textContent).toContain(fmtIsoDateToken('2031-02-20'))
-    expect(undated.textContent).toContain('(collected)')
   })
 })
 

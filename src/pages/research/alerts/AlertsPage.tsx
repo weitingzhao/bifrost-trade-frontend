@@ -12,8 +12,9 @@
  * Events to exist before the calendar could come off.
  *
  * Two measurements made the move safe now rather than later. The events half
- * has a home that is not this route: `/research/events` renders
- * the same `EventRadarBody`, and has since the Owner's 2026-09-20 tab ruling.
+ * has a home that is not this route: `/research/events` (then the old
+ * `EventRadarBody` board; its Market face since 2026-09-24 — the board itself
+ * was deleted 2026-10-07, TD-199).
  * And the events half has nothing in it: all four stores answer zero rows on
  * DEV 2026-09-22 — `event-radar/events` (also with `include_dropped`),
  * `events/calendar`, `events/themes`, `events/batches`, with

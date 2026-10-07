@@ -7,12 +7,13 @@
  * entry event of the simulator and the event backtest.
  */
 import { researchEngineUrl } from '@/lib/devApiUrl'
-import { requestJson } from '@/lib/http'
+import { HttpError, requestJson } from '@/lib/http'
 import { getResearchAuthHeaders } from '@/lib/auth/researchUser'
 import { withValidation } from '@/lib/apiValidation'
 import {
   PineCheckResponseSchema,
   PineContextResponseSchema,
+  PineTryResponseSchema,
   PineScriptRowSchema,
   PineScriptsResponseSchema,
   PineSignalStatsSchema,
@@ -216,6 +217,70 @@ export interface PineCheckResult {
    * session the nightly build stores its signals (null: none in this window).
    */
   context?: { series: string[]; warm_from: string | null }
+}
+
+/** A problem in a script, 1-based, as Research returns it (research 0.200.0 / runner 0.5.0). */
+export interface PineIssue {
+  line: number
+  col: number
+  message: string
+}
+
+/**
+ * The lines a refused save, Check or Try named — the response's top-level
+ * `issues` beside the one-line `detail`. Empty for any other failure.
+ */
+export function pineIssuesOf(error: unknown): PineIssue[] {
+  if (!(error instanceof HttpError)) return []
+  const body = error.body as { issues?: unknown } | null
+  if (!body || !Array.isArray(body.issues)) return []
+  return body.issues.filter(
+    (i): i is PineIssue =>
+      typeof i === 'object' && i != null && typeof (i as PineIssue).line === 'number' && typeof (i as PineIssue).message === 'string',
+  ).map((i) => ({ line: i.line, col: typeof i.col === 'number' ? i.col : 1, message: i.message }))
+}
+
+export type PineBasket = 'resident' | 'liquid50'
+
+export interface PineTrySymbol {
+  symbol: string
+  buy: number
+  sell: number
+  error?: string
+  line?: number
+  col?: number
+  /** For a script that reads option context: the first session its signals count from. */
+  counts_from?: string | null
+}
+
+export interface PineTryResult {
+  window: { start: string; end: string }
+  basket: PineBasket | null
+  horizons: number[]
+  cost_bps: number
+  context: string[]
+  symbols: PineTrySymbol[]
+  /** Per side, the same block as GET signal-stats (signals, sample_note, by_horizon, method). */
+  stats: Record<PineSide, Pick<PineSignalStats, 'signals' | 'sample_note' | 'by_horizon' | 'method'>>
+  script?: string
+  script_version?: number
+}
+
+const validateTry = withValidation<PineTryResult>(PineTryResponseSchema, 'research/pine/try')
+
+/**
+ * Run a pasted `source` or a library `script` over a basket now and measure its
+ * signals the way Signal Decay does (research 0.200.0) — nothing is stored.
+ */
+export async function tryPineScript(
+  input: ({ source: string; script?: never } | { script: string; source?: never }) & {
+    basket?: PineBasket
+    symbols?: string[]
+    days?: number
+    horizons?: number[]
+  },
+): Promise<PineTryResult> {
+  return validateTry(await send('/research/pine/try', 'POST', input))
 }
 
 /** One option context series a script reads with `request.security("NAME", timeframe.period, close)` (S6). */

@@ -443,6 +443,33 @@ export const PineSignalStatsSchema = z
   })
   .passthrough()
 
+/** POST research/pine/try (research 0.200.0, S13): a script over a basket, measured like Signal Decay. */
+export const PineTryResponseSchema = z
+  .object({
+    window: z.object({ start: z.string(), end: z.string() }).passthrough(),
+    basket: z.string().nullable(),
+    horizons: z.array(z.number()),
+    context: z.array(z.string()),
+    symbols: z.array(
+      z
+        .object({
+          symbol: z.string(),
+          buy: z.number(),
+          sell: z.number(),
+          error: z.string().optional(),
+          line: z.number().optional(),
+          col: z.number().optional(),
+          counts_from: z.string().nullable().optional(),
+        })
+        .passthrough(),
+    ),
+    stats: z.record(
+      z.string(),
+      z.object({ signals: z.number(), sample_note: z.string(), by_horizon: z.record(z.string(), z.object({}).passthrough()) }).passthrough(),
+    ),
+  })
+  .passthrough()
+
 export const PineCheckResponseSchema = z
   .object({
     symbol: z.string(),

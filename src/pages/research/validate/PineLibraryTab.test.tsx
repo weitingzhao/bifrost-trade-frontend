@@ -6,8 +6,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const savePineScript = vi.fn()
 vi.mock('@/api/research/pine', async (orig) => ({
   ...(await orig<typeof import('@/api/research/pine')>()),
+  savePineScript: (id: string, input: unknown) => savePineScript(id, input),
   fetchPineScripts: async () => ({
     scripts: [
       {
@@ -22,6 +24,7 @@ vi.mock('@/api/research/pine', async (orig) => ({
 }))
 
 import { researchAuthStore } from '@/lib/auth/researchUser'
+import { HttpError } from '@/lib/http'
 import { PineLibraryTab } from './PineLibraryTab'
 
 function mount() {
@@ -53,5 +56,21 @@ describe('PineLibraryTab without a Research user', () => {
     await screen.findAllByRole('button', { name: 'Check' })
     expect(screen.queryByText(/Check and Save run as a Research user/)).toBeNull()
     expect(screen.queryByRole('button', { name: 'Set user' })).toBeNull()
+  })
+})
+
+describe('PineLibraryTab problems', () => {
+  beforeEach(() => researchAuthStore.setCredentials('tok_owner', 'owner'))
+
+  it('lists the lines a refused save named under the editor', async () => {
+    const body = { detail: 'the script has 1 problem; line 3: …', issues: [{ line: 3, col: 11, message: 'line 3 ends with `+` but the next line does not continue it' }] }
+    savePineScript.mockRejectedValue(new HttpError(400, body.detail, { detail: body.detail, body }))
+    mount()
+    await userEvent.click(await screen.findByRole('button', { name: 'Copy to my scripts' }))
+    const saves = screen.getAllByRole('button', { name: 'Save' })
+    await userEvent.click(saves[0])
+    const list = await screen.findByRole('list', { name: 'Problems in the script' })
+    expect(list.textContent).toContain('Line 3 · line 3 ends with `+`')
+    expect(screen.getByText('Not saved')).toBeTruthy()
   })
 })

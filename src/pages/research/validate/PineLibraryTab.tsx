@@ -14,7 +14,7 @@
  * the Symbol chart, the Simulator and Signal Decay at once. Below the editor,
  * the option context series a script can read (research 0.195.0, S6).
  */
-import { useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { FilterChip, ViewState } from '@bifrost/ui'
@@ -35,11 +35,17 @@ import {
   PINE_SCRIPT_ID,
   checkPineScript,
   fetchPineScripts,
+  pineIssuesOf,
   savePineScript,
+  type PineIssue,
   type PineScriptRow,
 } from '@/api/research/pine'
 import { PineContextPanel } from './PineContextPanel'
 import { PineCheckChart } from './PineCheckChart'
+import { PineTryPanel } from './PineTryPanel'
+
+// CodeMirror only loads with the library (S12).
+const PineEditor = lazy(() => import('@/components/pine/PineEditor'))
 
 const TEMPLATE = `//@version=5
 indicator("My signal", overlay=true)
@@ -195,7 +201,17 @@ export function PineLibraryTab({
   const isNew = newDraft != null
   const idOk = draft == null || PINE_SCRIPT_ID.test(draft.id)
   const idTaken = newDraft != null && scripts.some((s) => s.id === newDraft.id)
-  const lineNos = Array.from({ length: Math.max(1, source.split('\n').length) }, (_, i) => i + 1).join('\n')
+  // The lines a refused Save, Check or Try named — only while the source is the one they were about.
+  const [tried, setTried] = useState<{ source: string; issues: PineIssue[] }>({ source: '', issues: [] })
+  const issues: PineIssue[] =
+    save.isError && save.variables?.source === source
+      ? pineIssuesOf(save.error)
+      : check.isError && check.variables?.source === source
+        ? pineIssuesOf(check.error)
+        : tried.source === source
+          ? tried.issues
+          : []
+  const [jump, setJump] = useState<{ line: number } | null>(null)
   const activeN = scripts.filter((s) => s.is_active).length
   const chartSym = (checked?.symbol ?? checkSym).trim().toUpperCase() || 'SPY'
 
@@ -404,31 +420,42 @@ export function PineLibraryTab({
                   {ro ? 'built-in · read-only — copy it to change it' : 'plain text · kept in the Research library, never in a public repo'}
                 </span>
               </div>
-              <div className="flex min-h-[18rem] overflow-hidden rounded-lg bg-foreground/[0.04]">
-                <pre
-                  aria-hidden
-                  className="m-0 select-none overflow-hidden border-r border-border px-2 py-2 text-right font-mono text-dense-caption leading-5 text-muted-foreground"
-                >
-                  {lineNos}
-                </pre>
-                <textarea
+              <Suspense
+                fallback={
+                  <pre className="m-0 min-h-[18rem] overflow-auto rounded-lg bg-foreground/[0.04] p-2 font-mono text-dense-caption leading-5">
+                    {source}
+                  </pre>
+                }
+              >
+                <PineEditor
                   key={draftKey ?? 'none'}
-                  aria-label="Pine source"
                   value={source}
                   readOnly={ro}
-                  onChange={(e) => draft && setDraft({ ...draft, source: e.target.value })}
-                  spellCheck={false}
-                  wrap="off"
-                  rows={Math.max(14, source.split('\n').length + 1)}
-                  className={cn(
-                    'block min-w-0 flex-1 resize-y bg-transparent px-2 py-2 font-mono text-dense-caption leading-5 outline-none',
-                    ro && 'text-[var(--sk-mute2)]',
-                  )}
+                  onChange={(next) => draft && setDraft({ ...draft, source: next })}
+                  issues={issues}
+                  jumpTo={jump}
                 />
-              </div>
+              </Suspense>
+              {issues.length ? (
+                <div className="space-y-0.5" role="list" aria-label="Problems in the script">
+                  {issues.map((i) => (
+                    <button
+                      key={`${i.line}:${i.col}:${i.message}`}
+                      type="button"
+                      role="listitem"
+                      onClick={() => setJump({ line: i.line })}
+                      className="block w-full text-left text-dense-caption text-destructive hover:underline"
+                    >
+                      <span className={mono}>Line {i.line}</span> · {i.message}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               {draft ? (
                 <p className="m-0 text-dense-caption text-muted-foreground">
-                  Must plot <span className={mono}>buy</span> and/or <span className={mono}>sell</span>; request.* calls are not supported.
+                  Must plot <span className={mono}>buy</span> and/or <span className={mono}>sell</span>. Option context (IV, VRP,
+                  term structure, earnings, SPY) is read with request.security on the script’s own timeframe — see Option context
+                  below. Check and Save first look for slips Pine would run quietly and name their lines.
                 </p>
               ) : null}
             </div>
@@ -623,6 +650,12 @@ export function PineLibraryTab({
                   </>
                 ) : null}
               </div>
+              <PineTryPanel
+                source={source}
+                canRun={Boolean(auth.token)}
+                blockedWhy={NO_IDENTITY}
+                onIssues={(found) => setTried({ source, issues: found })}
+              />
               {save.isError ? (
                 firstResearchAuthGapError(save.error) ? (
                   <ResearchAuthGap error={save.error} layout="banner" />

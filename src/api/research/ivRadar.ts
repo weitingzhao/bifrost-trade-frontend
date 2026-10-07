@@ -77,20 +77,44 @@ export async function mapPool<T, R>(
   return results
 }
 
-/** Fetch latest IV rows for many symbols; missing symbols stay null (no fabricate). */
+/**
+ * One name's IV percentile read, in three states (TD-233, CLAUDE.md §5):
+ * - `row` — the plugin answered with a row;
+ * - `absent` — the plugin answered that it has none (404 / empty rows): real
+ *   absence, the only state a page may call "no data";
+ * - `error` — the read failed (5xx, timeout, network, a bad body): unknown,
+ *   which a page must say as a failed read, never as "no data".
+ */
+export type IvLookup =
+  | { status: 'row'; row: IvPercentileRow }
+  | { status: 'absent' }
+  | { status: 'error'; message: string }
+
+/** The row when there is one; null for both absent and failed (they differ in `status`). */
+export function ivLookupRow(l: IvLookup | undefined): IvPercentileRow | null {
+  return l?.status === 'row' ? l.row : null
+}
+
+/** Read one name into an `IvLookup`; a failure stays a failure, it is not turned into absence. */
+export async function lookupIvPercentile(symbol: string): Promise<IvLookup> {
+  try {
+    const row = await fetchIvPercentile(symbol)
+    return row ? { status: 'row', row } : { status: 'absent' }
+  } catch (e) {
+    return { status: 'error', message: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+/**
+ * Latest IV rows for many symbols, one `IvLookup` each. One name's failure does
+ * not blank the others, and it is not reported as that name having no data.
+ */
 export async function fetchIvPercentileForSymbols(
   symbols: readonly string[],
   concurrency = 4,
-): Promise<Map<string, IvPercentileRow | null>> {
+): Promise<Map<string, IvLookup>> {
   const uniq = [...new Set(symbols.map(s => s.trim().toUpperCase()).filter(Boolean))]
-  const rows = await mapPool(uniq, concurrency, async sym => {
-    try {
-      return [sym, await fetchIvPercentile(sym)] as const
-    } catch {
-      // Treat hard errors as no data for that symbol so one failure does not blank the radar
-      return [sym, null] as const
-    }
-  })
+  const rows = await mapPool(uniq, concurrency, async sym => [sym, await lookupIvPercentile(sym)] as const)
   return new Map(rows)
 }
 

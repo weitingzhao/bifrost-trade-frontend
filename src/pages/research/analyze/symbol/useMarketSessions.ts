@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchStockDailyCloses } from '@/api/marketData/dailyBars'
-import { todayIso } from '@/lib/researchFreshness'
+import { etTodayIso } from '@/lib/freshness'
 
 /**
  * The market's sessions, oldest first, read off SPY's year of closes. Trading
@@ -13,7 +13,7 @@ export function useMarketSessions(): string[] {
   const q = useQuery({
     queryKey: ['market', 'stock-daily-closes-1y', 'SPY'],
     queryFn: () =>
-      fetchStockDailyCloses('SPY', new Date(Date.now() - 420 * 86_400_000).toISOString().slice(0, 10), todayIso()),
+      fetchStockDailyCloses('SPY', new Date(Date.now() - 420 * 86_400_000).toISOString().slice(0, 10), etTodayIso()),
     staleTime: 10 * 60_000,
   })
   return useMemo(() => (q.data ?? []).map((c) => c.date), [q.data])

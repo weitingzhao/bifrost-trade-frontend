@@ -39,14 +39,10 @@ import { DerivationBlock } from '@/components/positions/DerivationBlock'
 import { buildOptionsModeBridgeSummary } from '@/utils/ledger/optionsModeBridge'
 import { buildCalendarGrid } from '@/pages/portfolio/performance/performanceCalendarModel'
 import type { CalendarAssetTab } from '@/utils/ledger/performanceDayCells'
+import { chicagoTodayDateStr } from '@/utils/ledger/optAsOfPnL'
 
 const PAGE_LEAD =
   'Did the system make money — by layer, by month, by day. Deposits and withdrawals recorded in Transfer & Pay are not P&L.'
-
-function todayIso(): string {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-}
 
 const RANGE_WORD: Record<PerformanceTimeRange, string> = {
   month: 'this month',
@@ -135,7 +131,7 @@ export default function PerformancePage() {
       growthUnit,
       layersVisible: growthLayersVisible,
       optionsMode: optionsPnLMode,
-      lastDate: todayIso(),
+      lastDate: chicagoTodayDateStr(),
     })
   }, [bulk, perf, growthUnit, growthLayersVisible, optionsPnLMode])
 
@@ -151,7 +147,7 @@ export default function PerformancePage() {
           growthUnit: 'usd',
           layersVisible: growthLayersVisible,
           optionsMode: optionsPnLMode,
-          lastDate: todayIso(),
+          lastDate: chicagoTodayDateStr(),
         })
     if (!usd) return null
     const { options, stocks, fixed_income, cash_like } = usd.last
@@ -173,9 +169,8 @@ export default function PerformancePage() {
   const readingMetrics = useMemo(() => buildReadingMetrics(perf), [perf])
   const scopeNote = useMemo(() => buildScopeNote(bulk?.byDayRangeData, perf), [bulk, perf])
   const rangeEndsToday = useMemo(() => {
-    const now = new Date()
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-    return untilStr >= today
+    // The ledger's day (Chicago), the calendar every range on this page is cut in.
+    return untilStr >= chicagoTodayDateStr()
   }, [untilStr])
 
   const fiBarData = useMemo(() => {

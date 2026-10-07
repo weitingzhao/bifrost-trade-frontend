@@ -38,6 +38,7 @@ import {
 } from '@/lib/alertRanking'
 import type { AnalyzeAlert } from '@/api/research/alertScan'
 import { fmtPctFromFraction } from '@/lib/format'
+import { firedOn } from '@/hooks/useFiredAlerts'
 
 /** The reason payload is untyped, so a rate only prints when it is a number. */
 const pctOf = (v: unknown): string =>
@@ -138,7 +139,8 @@ export interface FiredStanding {
  * The design's header is `N today`. Today is usually zero here, and a zero
  * printed as "0 today" reads as an all-clear — which is the one thing an alert
  * surface may never say by accident. So the line names the newest day the
- * store has and how long it has been quiet since.
+ * store has and how long it has been quiet since. `today` is the New York day
+ * (`etTodayIso()`); "fired today" is `firedOn`, the rail's definition.
  */
 export function firedStanding(
   items: readonly AnalyzeAlert[],
@@ -155,9 +157,10 @@ export function firedStanding(
   const onNewest = items.filter((i) => i.trade_date === newest).length
   // `info` is a note; anything the ranker puts above it wants a look.
   const loud = items.some((i) => severityRank(i.severity) <= 1)
-  const quiet =
-    newest === today
-      ? 'today'
+  // Fired today = written today (New York), not stamped with today's session:
+  // the store's trade_date is the session judged, always an earlier one.
+  const quiet = items.some((i) => i.trade_date === newest && firedOn(i, today))
+      ? 'fired today'
       : `${onNewest === 1 ? 'it is' : 'they are'} the newest — nothing has fired since`
   return {
     text: `${items.length} in the last ${windowDays} days · ${onNewest} on ${newest}, ${quiet}`,

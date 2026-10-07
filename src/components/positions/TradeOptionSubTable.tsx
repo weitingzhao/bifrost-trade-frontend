@@ -48,13 +48,13 @@ import { scopedExecListsForPosition } from '@/utils/tradeSheetExec'
 import { eodMarkLabel } from '@/utils/buildTradeGroups'
 import { tradePanel } from './tradePanelClasses'
 import { positionsUi } from './positionsUi'
-import { localDayStamp } from '@/utils/positions'
 import { LEG_GREEKS_TITLE, OptionLegGreeksCell } from './OptionLegGreeksCell'
 import { buildOptionTicker, positionGreek } from '@/utils/optionTicker'
 import { fmtIsoDateToken } from '@/lib/format'
 import { extractUnderlyingRootSymbol } from './linkExecutionModalHelpers'
 import type { PositionGreeks } from '@/hooks/useOptionGreeks'
 import type { VendorGreeksRow } from '@/api/marketData/optionGreeks'
+import { etTodayIso } from '@/lib/freshness'
 
 interface Props {
   group: Pick<TradeAllGroup, 'trade_id' | 'strategy_opportunity_id'>
@@ -106,7 +106,8 @@ export function TradeOptionSubTable({
   onOpenStrategy,
   canonicalOptContractKeys = new Set(),
 }: Props) {
-  const todayStamp = localDayStamp()
+  // New York's day, as the vendor stamps its rows (UTC would roll after 20:00 ET).
+  const todayStamp = etTodayIso()
   /**
    * Positions carry the parts; the warehouse keys rows by one ticker string.
    *

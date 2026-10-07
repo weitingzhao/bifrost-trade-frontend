@@ -25,13 +25,14 @@ import { fetchObjectives } from '@/api/research/harness'
 import { useBookLive } from '@/hooks/useBookLive'
 import { useCandidates } from '@/hooks/useCandidates'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
-import { useFiredAlerts } from '@/hooks/useFiredAlerts'
+import { firedOn, useFiredAlerts } from '@/hooks/useFiredAlerts'
+import { etTodayIso } from '@/lib/freshness'
 import { useHoldingSymbols } from '@/hooks/useHoldingSymbols'
 import { useWatchlist } from '@/hooks/useWatchlist'
 import { candidateObjectiveId, useObjectiveScope } from '@/lib/objectiveScope'
 import { useRecentSymbols } from '@/lib/recentSymbols'
 import { useSymbolTrailList } from '@/lib/symbolTrail'
-import { etDate, type BookLiveRow } from '@/utils/bookLive'
+import { type BookLiveRow } from '@/utils/bookLive'
 import type { ListKey } from './dockState'
 import { agoLabel, fmtShares, fmtSignedUsd, type DockContractIn, type DockListIn, type DockRowIn } from './dockModel'
 
@@ -117,7 +118,7 @@ export interface DockLists {
 
 export function useDockLists(watchShown: boolean): DockLists {
   const now = useMinuteClock()
-  const todayEt = etDate(new Date(now).toISOString()) ?? ''
+  const todayEt = etTodayIso(now)
   const holdings = useHoldingSymbols().symbols
   const held = useMemo(() => new Set(holdings), [holdings])
 
@@ -275,7 +276,7 @@ export function useDockLists(watchShown: boolean): DockLists {
       loading: false,
     }
 
-    const today = (alerts.data?.items ?? []).filter((a) => a.trade_date === todayEt)
+    const today = (alerts.data?.items ?? []).filter((a) => firedOn(a, todayEt))
     const named = today.filter((a) => a.symbol)
     const seenAlert = new Set<string>()
     const alertRows: DockRowIn[] = []

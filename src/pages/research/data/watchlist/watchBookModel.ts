@@ -25,7 +25,7 @@
  */
 import type { DailyBenchmark, QuoteItem, WatchlistItem } from '@/types/market'
 import type { Hypothesis } from '@/api/researchHypothesis'
-import type { IvPercentileRow } from '@/types/ivRadar'
+import { ivLookupRow, type IvLookup } from '@/api/research/ivRadar'
 import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import { stuckAgeTone, thesisFor } from '@/lib/research/bookCensus'
 
@@ -48,6 +48,11 @@ export interface WatchBookRow {
    * the fixed-income rows keep their sentence from the first paint.
    */
   ivMeasuring: boolean
+  /**
+   * The IV percentile read failed (5xx, timeout, network): its message. A
+   * failure is unknown, not absence, so it is never worded as "no row" (TD-233).
+   */
+  ivReadFailed: string | null
   /** The belief this name is held on, or null — the design's Thesis column. */
   thesis: Hypothesis | null
   ageDays: number | null
@@ -65,7 +70,7 @@ export function watchBookRows(
   items: readonly WatchlistItem[],
   quoteBySymbol: Readonly<Record<string, QuoteItem>>,
   benchmarks: Readonly<Record<string, DailyBenchmark>>,
-  ivBySymbol: ReadonlyMap<string, IvPercentileRow | null>,
+  ivBySymbol: ReadonlyMap<string, IvLookup>,
   hypotheses: readonly Hypothesis[],
   now: number,
   ivLoading = false,
@@ -78,7 +83,9 @@ export function watchBookRows(
     // close, and `is_today` decides which of the benchmark's two it is.
     const base = resolveDailyBasePrice(null, benchmarks[symbol])
     const { dailyPct } = computeDailyChange(last, base, 1)
-    const iv = ivBySymbol.get(symbol)?.iv_rank_1y ?? null
+    const lookup = ivBySymbol.get(symbol)
+    const iv = ivLookupRow(lookup)?.iv_rank_1y ?? null
+    const ivReadFailed = lookup?.status === 'error' ? lookup.message : null
     const noChain = NO_CHAIN_CATEGORIES.has(item.category ?? '')
     const ivMeasuring = iv == null && ivLoading && !noChain
     const at = addedAt(item)
@@ -94,8 +101,11 @@ export function watchBookRows(
           ? null
           : noChain
             ? 'no options chain — a fixed-income ETF has no IV to rank'
-            : 'no IV percentile row for this name yet',
+            : ivReadFailed != null
+              ? `IV percentile read failed — unknown, not absent: ${ivReadFailed}`
+              : 'no IV percentile row for this name yet',
       ivMeasuring,
+      ivReadFailed: noChain ? null : ivReadFailed,
       thesis: thesisFor(hypotheses, symbol),
       ageDays,
       ageTone: stuckAgeTone(ageDays),

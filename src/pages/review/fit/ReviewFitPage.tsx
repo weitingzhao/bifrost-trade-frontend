@@ -43,6 +43,7 @@ import { PnlSourcePanel } from './PnlSourcePanel'
 import { useTradeOrigins } from '@/hooks/useTradeOrigins'
 import { useQuery } from '@tanstack/react-query'
 import { fetchCorporateActions } from '@/api/marketData/corporateActions'
+import { etTodayIso } from '@/lib/freshness'
 
 const PAGE_LEAD =
   'One trade — every leg on one line, rolls as seams, open ones as an interim read — against the path it actually traded: what I did, what the position was worth on every session it was held, and the best and worst that path ever offered. The distance to my plan would be discipline — and the plan is the one thing not recorded.'
@@ -51,7 +52,7 @@ export default function ReviewFitPage() {
   const [params, setParams] = useSearchParams()
   // The same cache entry every Review page reads — held here for its §17 state.
   const execQuery = useExecutionsAll()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = etTodayIso()
 
   // Rev .104: the unit is the instance (open ones first). Rev .110: `?t=#NNN`
   // picks one (`?inst=` still read); an older `?trade=<contract>` link lands on

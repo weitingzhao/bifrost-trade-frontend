@@ -9,7 +9,8 @@
  * days.
  */
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
-import { fetchAlerts, type AlertsResponse } from '@/api/research/alertScan'
+import { fetchAlerts, type AlertsResponse, type AnalyzeAlert } from '@/api/research/alertScan'
+import { etDayOf } from '@/lib/freshness'
 
 export const ALERTS_WINDOW_DAYS = 90
 export const ALERTS_ROW_CAP = 200
@@ -22,7 +23,21 @@ export function useFiredAlerts(): UseQueryResult<AlertsResponse> {
   })
 }
 
+/**
+ * Whether an alert fired on the New York day `today` (`etTodayIso()`).
+ *
+ * Fired is when the scan wrote it — `computed_at`, read as a New York day — and
+ * never `trade_date`: alert_scan stamps each alert with the session it judges
+ * and writes it on a later day (computed_at 2026-10-05T22:30Z carries
+ * trade_date 2026-10-02), so a trade_date can never equal today and a count
+ * keyed on it is always 0 (TD-219). No `computed_at` means the store did not
+ * say when, and an unknown is not counted as today.
+ */
+export function firedOn(item: Pick<AnalyzeAlert, 'computed_at'>, today: string): boolean {
+  return item.computed_at != null && etDayOf(item.computed_at) === today
+}
+
 /** How many fired today — the rail's amber count. Zero until the store answers. */
 export function firedTodayCount(data: AlertsResponse | undefined, today: string): number {
-  return (data?.items ?? []).filter((i) => i.trade_date === today).length
+  return (data?.items ?? []).filter((i) => firedOn(i, today)).length
 }

@@ -37,15 +37,12 @@ import {
   tradeCreateTitleClass,
 } from './tradeCreateModalUi'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { etTodayIso } from '@/lib/freshness'
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   status: StatusResponse | undefined
-}
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
 }
 
 function TradeCreateFormRow({
@@ -73,7 +70,7 @@ export function TradeCreateModal({ open, onOpenChange, status }: Props) {
 
   const [opportunityId, setOpportunityId] = useState<string>('')
   const [accountIdPick, setAccountIdPick] = useState<string>('')
-  const [openedAt, setOpenedAt] = useState<string>(todayIso())
+  const [openedAt, setOpenedAt] = useState<string>(() => etTodayIso())
   const [label, setLabel] = useState<string>('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -89,7 +86,7 @@ export function TradeCreateModal({ open, onOpenChange, status }: Props) {
     setOpportunityId('')
     setAccountIdPick('')
     setLabel('')
-    setOpenedAt(todayIso())
+    setOpenedAt(etTodayIso())
     setError(null)
   }
 

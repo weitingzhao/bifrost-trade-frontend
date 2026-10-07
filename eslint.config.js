@@ -21,6 +21,23 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       'no-console': 'error',
+      // TD-232: `new Date().toISOString().slice(0, 10)` is the UTC date — from
+      // 20:00 ET it is already tomorrow. "Today" is etTodayIso() (New York's
+      // session day, @/lib/freshness) or chicagoTodayDateStr() (the ledger's
+      // Chicago day). A site that is UTC on purpose names it (todayUtc) and
+      // disables this line with a reason; src/lib/utcTodayRatchet.test.ts
+      // holds the allowlist.
+      'no-restricted-syntax': [
+        'error',
+        ...[
+          "CallExpression[callee.property.name=/^(slice|substring|substr)$/][arguments.0.value=0]",
+          "CallExpression[callee.property.name='split']",
+        ].map((call) => ({
+          selector: `${call} > MemberExpression > CallExpression[callee.property.name=/^(toISOString|toJSON)$/] > MemberExpression > NewExpression[callee.name='Date'][arguments.length=0]`,
+          message:
+            "UTC 'today': from 20:00 ET this is tomorrow. Use etTodayIso() (New York session day, @/lib/freshness) or chicagoTodayDateStr() (ledger day).",
+        })),
+      ],
     },
   },
   {

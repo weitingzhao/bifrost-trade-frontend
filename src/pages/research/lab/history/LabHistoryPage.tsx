@@ -33,7 +33,7 @@ import { usePreviewState } from '@/hooks/usePreviewState'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { healthFlag } from '@/lib/asofTag'
-import { daysBack, todayIso } from '@/lib/researchFreshness'
+import { daysBack } from '@/lib/researchFreshness'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
@@ -48,6 +48,7 @@ import {
   type Overlap,
   type PctlMethod,
 } from './labHistoryModel'
+import { etTodayIso } from '@/lib/freshness'
 
 const LEAD =
   'The reading face answers where IV sits. This one answers what it sits inside — the estimator, the window, the percentile convention, and what each of them does to the number Trade quotes.'
@@ -81,7 +82,7 @@ interface Control<T extends string | number> {
 export default function LabHistoryPage() {
   const { symbol } = useResearchContext()
   const sym = symbol.trim().toUpperCase()
-  const today = todayIso()
+  const today = etTodayIso()
   const preview = usePreviewState()
   const [est, setEst] = useState<Estimator>('cc')
   const [ann, setAnn] = useState<252 | 260>(252)

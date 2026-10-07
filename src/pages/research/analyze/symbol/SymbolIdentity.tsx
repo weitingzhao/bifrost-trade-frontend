@@ -55,6 +55,7 @@ import { symbolHypothesisPrefill } from './symbolHypothesisPrefill'
 import css from './symbolHead.module.css'
 import { sharesHeld, useSymbolLegs } from '@/hooks/useSymbolLegs'
 import { PagePlaceButtons } from '@/layout/PagePlaceButtons'
+import { etTodayIso } from '@/lib/freshness'
 
 /**
  * Which Method tab explains the face you are on — the design's `LAB_TAB`.
@@ -198,7 +199,7 @@ export function SymbolIdentity({
           cockpitPinStore.getState().pinHit({
             kind: 'iv',
             symbol: sym,
-            ts: new Date().toISOString().slice(0, 10),
+            ts: etTodayIso(),
             detail: { verdict: thesis, decisive: faces.decisive },
             originPage: SYMBOL_PATH,
           })

@@ -261,6 +261,11 @@ function IvRankTable() {
           </div>
         ))}
       </div>
+      {!isLoading && !isError && counts.failed > 0 ? (
+        <p className="m-0 border-b border-border/60 px-3 py-1.5 text-dense-meta text-warning">
+          {counts.failed} of {counts.total} names failed to read — marked read failed, not counted as no data.
+        </p>
+      ) : null}
       {isLoading ? (
         <p className="m-0 px-3 py-4 text-dense-meta text-muted-foreground">Loading the radar…</p>
       ) : isError ? (
@@ -323,7 +328,11 @@ function IvRankTable() {
                   <SymbolCell
                     symbol={r.symbol}
                     tag={
-                      r.bucket === 'no_data' ? (
+                      r.readFailed != null ? (
+                        <DenseTag variant="warning" title={`The IV percentile read failed — unknown, not absent: ${r.readFailed}`}>
+                          read failed
+                        </DenseTag>
+                      ) : r.bucket === 'no_data' ? (
                         <span className="text-dense-micro text-muted-foreground">no data</span>
                       ) : (
                         <DenseTag variant={r.bucket === 'high' ? 'danger' : r.bucket === 'low' ? 'success' : 'warning'}>

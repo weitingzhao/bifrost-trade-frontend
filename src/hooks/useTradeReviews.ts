@@ -3,7 +3,7 @@
  * trade and the Review menu badge, so the three can never disagree about what
  * is still awaiting a look.
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { fetchTradeReviews, saveTradeReview, type TradeReview, type TradeReviewPatch } from '@/api/tradeReviews'
@@ -11,6 +11,7 @@ import { fetchExecutions } from '@/api/trading'
 import type { ExecutionsResponse } from '@/types/positions'
 import { buildReviewedTrades } from '@/utils/reviewedTrades'
 import { useTradeStates } from '@/hooks/useStrategies'
+import { etTodayIso } from '@/lib/freshness'
 
 export function useTradeReviews() {
   const q = useQuery({
@@ -57,7 +58,7 @@ export function useReviewBadge(): number | null {
   const reviews = useTradeReviews()
   // The instance list's state when a page has already read it; the legs' reading otherwise.
   const states = useTradeStates(true)
-  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  const today = etTodayIso() // New York's day: expiries and DTE are counted there
   return useMemo(() => {
     const items = execQ.data?.items
     if (!items || !reviews.data) return null

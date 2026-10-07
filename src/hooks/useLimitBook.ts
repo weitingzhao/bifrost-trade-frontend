@@ -35,6 +35,7 @@ import { daemonPaperTrade } from '@/utils/daemonMode'
 import type { StatusStrategyActive } from '@/types/monitor'
 import type { StrategyAllocation } from '@/types/strategy'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { chicagoTodayDateStr } from '@/utils/ledger/optAsOfPnL'
 
 /**
  * The window "new underlyings this week" looks back over.
@@ -184,7 +185,8 @@ export function useLimitBook(accountFilter: string): LimitBook {
     const mine = readTrades(tradesQuery.data?.items ?? [], execQuery.data?.items ?? []).filter((i) =>
       oppIds.has(i.opportunityId),
     )
-    const today = new Date().toISOString().slice(0, 10)
+    // Fills carry the ledger's Chicago trade_date; today on the same calendar.
+    const today = chicagoTodayDateStr()
     const closedToday = mine.filter((i) => i.closed && i.openedOn != null)
     const todayFills = (execQuery.data?.items ?? []).filter(
       (e) => (e.trade_date ?? '').slice(0, 10) === today && e.trade_id != null,

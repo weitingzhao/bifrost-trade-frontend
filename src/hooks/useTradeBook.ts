@@ -19,6 +19,7 @@ import { computeTradePositionStatus } from '@/utils/tradeListMetrics'
 import { primaryUnderlyingFromExecutions } from '@/components/positions/linkExecutionModalHelpers'
 import type { TradeFilterOptions, TradeListFilterValues } from '@/components/strategy/TradeListFilters'
 import type { Trade } from '@/types/positions'
+import { etTodayIso } from '@/lib/freshness'
 
 /** An opportunity, as this derivation needs to read it. */
 export interface BookOpportunity {
@@ -34,16 +35,17 @@ export interface TradeGroup {
   rows: Trade[]
 }
 
-function ymdUtcMonthsAgo(months: number): string {
-  const d = new Date()
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - months, d.getUTCDate())).toISOString().slice(0, 10)
+/** `months` calendar months before New York's today. */
+function ymdEtMonthsAgo(months: number): string {
+  const [y, m, d] = etTodayIso().split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1 - months, d)).toISOString().slice(0, 10)
 }
 
 export function sinceThresholdYmd(v: TradeListFilterValues['since']): string | null {
-  if (v === '1m') return ymdUtcMonthsAgo(1)
-  if (v === 'q') return ymdUtcMonthsAgo(3)
-  if (v === 'half') return ymdUtcMonthsAgo(6)
-  if (v === '1y') return ymdUtcMonthsAgo(12)
+  if (v === '1m') return ymdEtMonthsAgo(1)
+  if (v === 'q') return ymdEtMonthsAgo(3)
+  if (v === 'half') return ymdEtMonthsAgo(6)
+  if (v === '1y') return ymdEtMonthsAgo(12)
   if (v === 'ytd') return `${new Date().getUTCFullYear()}-01-01`
   return null
 }
@@ -214,7 +216,7 @@ export function useTradeBook(args: {
 
   const sinceRangeText = useMemo(() => {
     const start = values.since ? sinceThresholdYmd(values.since) : null
-    return start == null ? null : `${start} ~ ${new Date().toISOString().slice(0, 10)}`
+    return start == null ? null : `${start} ~ ${etTodayIso()}`
   }, [values.since])
 
   return { metricsMap, filterOptions, filtered, groups, sinceRangeText }

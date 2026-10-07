@@ -38,7 +38,6 @@ import { useTradeIndex } from '@/hooks/useTradeIndex'
 import { usePineLibrary } from '@/hooks/usePineLibrary'
 import { useResearchAuth } from '@/lib/auth/researchUser'
 import { withSymbolParam } from '@/lib/symbolLink'
-import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { fmtExpiry } from '@/utils/positions'
 import type { Bar } from '@/types/market'
@@ -88,6 +87,7 @@ import { SignalMenu } from '@/components/symbolChart/SignalMenu'
 import { SymbolChartPointer } from '@/components/symbolChart/SymbolChartPointer'
 import { useChartLayers } from '@/components/symbolChart/useChartLayers'
 import { signalLabel, useChartSignal } from '@/components/symbolChart/useChartSignal'
+import { etTodayIso } from '@/lib/freshness'
 
 /** The vendor keeps two rolling years; the API caps a page at 500. */
 const HISTORY_LIMIT = 500
@@ -243,7 +243,7 @@ export function SymbolPriceChart({
   const iv30 = readingNum(readings('vrp').atm_iv_30d)
 
   // The cone's expiry is the page's selection (`?expiration=`, shared with the Chain tab), else the next OpEx.
-  const today = todayIso()
+  const today = etTodayIso()
   const urlExpiry = (params.get('expiration') ?? '').trim() || null
   const expiryRaw = urlExpiry ?? opexQ.data?.next_opex_date ?? null
   const expiryIso = expiryRaw

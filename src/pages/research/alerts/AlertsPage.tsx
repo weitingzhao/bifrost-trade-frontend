@@ -58,6 +58,7 @@ import { ViewState } from '@bifrost/ui'
 import { PageHead, PageHeadLink, PageShell, SectionPanel } from '@/components/layout'
 import { StatusLamp } from '@/components/StatusLamp'
 import { ALERTS_WINDOW_DAYS, useFiredAlerts } from '@/hooks/useFiredAlerts'
+import { etTodayIso } from '@/lib/freshness'
 import { useLimitBook } from '@/hooks/useLimitBook'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
@@ -97,7 +98,7 @@ export default function AlertsPage() {
   const q = useFiredAlerts()
   const items = useMemo(() => q.data?.items ?? [], [q.data?.items])
   const rows = firedRows(items)
-  const today = new Date().toISOString().slice(0, 10)
+  const today = etTodayIso()
   const standing = firedStanding(items, today, WINDOW_DAYS)
   // The limit book is the armed table's store — same hook Limits & Breaches
   // reads, so the two pages cannot disagree (§14.2).

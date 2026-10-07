@@ -2,6 +2,7 @@ import { extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { getContractLabelParts } from '@/lib/format'
 import type { Execution, Trade, StrategyOpportunity } from '@/types/positions'
 import { fillQtyShown } from '@/utils/fillQuantity'
+import { etTodayIso } from '@/lib/freshness'
 
 export function formatTradeOpenedDate(si: Trade): string {
   let ms: number | null = null
@@ -24,13 +25,6 @@ export function formatTradeOpenedDate(si: Trade): string {
   }
   return label ? `${label} · ${num}` : num
 }
-
-function todayDateStr(): string {
-  const now = new Date()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-}
-
 
 function opportunityMentionsSymbol(o: StrategyOpportunity, sym: string): boolean {
   const name = (o.name ?? '').trim().toUpperCase()
@@ -94,7 +88,7 @@ export function defaultOpenedAtFromExecution(ex?: Execution | null): string {
     const pad = (n: number) => String(n).padStart(2, '0')
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
   }
-  return todayDateStr()
+  return etTodayIso() // New York's day, as TradeCreateModal's default opened_at
 }
 
 /**

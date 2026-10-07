@@ -13,8 +13,8 @@ import { dismissMemoryHint, fetchMemory } from '@/api/research/journal'
 import { createObjective, deleteObjective, fetchObjectives } from '@/api/research/harness'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { objectivePath } from '@/lib/harness/objectivePolicy'
-import { todayIso } from '@/lib/researchFreshness'
 import { draftFromProposal, memoryProposals, QUIET_AT, type MemoryProposal } from '@/lib/harness/memoryProposals'
+import { etTodayIso } from '@/lib/freshness'
 
 const MEM = 'var(--color-unrealized)'
 
@@ -79,7 +79,7 @@ export function ProposedFromMemory() {
     void qc.invalidateQueries({ queryKey: ['research-engine', 'journal', 'memory'] })
   }
   const create = useMutation({
-    mutationFn: (p: MemoryProposal) => createObjective(draftFromProposal(p, todayIso())),
+    mutationFn: (p: MemoryProposal) => createObjective(draftFromProposal(p, etTodayIso())),
     onSuccess: () => {
       setOpen(null)
       refresh()

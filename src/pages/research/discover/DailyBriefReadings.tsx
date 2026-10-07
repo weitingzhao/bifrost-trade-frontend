@@ -25,6 +25,7 @@ import { healthFlag } from '@/lib/asofTag'
 import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { expiryIso, isoDaysFrom, opexDatesAround } from '@/utils/bookCalendar'
+import { etTodayIso } from '@/lib/freshness'
 
 /** How far back "overnight" reaches: the last session and the night after it. */
 const OVERNIGHT_HOURS = 36
@@ -262,6 +263,5 @@ function useMemoNow(hoursBack: number): [number] {
 }
 
 function useMemoToday(): [string] {
-  const [iso] = useState(() => new Date().toISOString().slice(0, 10))
-  return [iso]
+  return [etTodayIso()]
 }

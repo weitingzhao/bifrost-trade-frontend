@@ -31,7 +31,7 @@ import { useCreateHypothesis } from '@/hooks/useHypotheses'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
 import { useResearchContext } from '@/hooks/useResearchContext'
-import { daysBack, todayIso } from '@/lib/researchFreshness'
+import { daysBack } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { chainFromSnapshots, pickExpiry } from '@/utils/optionChain'
 import { daysTo } from '@/utils/optionTicker'
@@ -50,6 +50,7 @@ import {
   pickDefaultLeg,
   scenarioRows,
 } from './payoffModel'
+import { etTodayIso } from '@/lib/freshness'
 
 const fmtSigned = (v: number) =>
   `${v >= 0 ? '+' : '−'}$${Math.round(Math.abs(v)).toLocaleString('en-US')}`
@@ -81,7 +82,7 @@ const td =
 export function PayoffBody() {
   const { symbol } = useResearchContext()
   const sym = symbol.trim().toUpperCase()
-  const today = todayIso()
+  const today = etTodayIso()
   const [params, setParams] = useSearchParams()
   const [kind, setKind] = useState<StructureKind>('single')
   const [side, setSide] = useState<StructureSide>('short')

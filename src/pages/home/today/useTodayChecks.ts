@@ -13,7 +13,7 @@
  * or planned exit can be watched, no future earnings date reaches this side,
  * and nothing records that a trade was reviewed.
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { useStrategyPlans } from '@/hooks/useStrategyPlans'
 import { fetchCorporateActions } from '@/api/marketData/corporateActions'
@@ -31,6 +31,7 @@ import { fmtPct0 } from '@/utils/positions'
 import { computeDailyChange, resolveDailyBasePrice } from '@/utils/dailyChange'
 import { limitRules, openBreaches, withHeadroom } from '@/utils/limitsModel'
 import type { HomeCheck, HomeRow, TapeRow } from './todayModel'
+import { chicagoTodayDateStr } from '@/utils/ledger/optAsOfPnL'
 
 /** Inside this many days, an expiry is a decision rather than a date. */
 const EXPIRY_WINDOW_DAYS = 2
@@ -54,13 +55,10 @@ export function useTodayChecks(accountFilter: string) {
   const execQuery = useExecutionsAll()
   const plansQuery = useStrategyPlans()
 
-  // The book's dates are calendar dates on the desk, not UTC ones: after 20:00
-  // ET `toISOString()` is already tomorrow, and "fills booked today" would look
-  // at the wrong day.
-  const [today] = useState(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  })
+  // The book's dates are the ledger's Chicago trade dates, not UTC ones: after
+  // 20:00 ET `toISOString()` is already tomorrow, and "fills booked today"
+  // would look at the wrong day.
+  const today = chicagoTodayDateStr()
 
   const book = exposure.book
   /** Names carrying an open leg — the only ones an event can reshape here. */

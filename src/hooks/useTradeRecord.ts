@@ -24,7 +24,6 @@ import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
 import { buildOptionTicker } from '@/utils/optionTicker'
-import { todayIso } from '@/lib/researchFreshness'
 import { fetchExecutionsRange } from '@/api/trading'
 import { fetchOptionDailyBars, fetchStockDailyCloses, occToOptionTicker } from '@/api/marketData/dailyBars'
 import type { Trade } from '@/types/positions'
@@ -39,6 +38,7 @@ import {
   twsRowsFor,
   type LegMark,
 } from '@/utils/tradeRecord/tradeRecordModel'
+import { etTodayIso } from '@/lib/freshness'
 
 const shiftIso = (iso: string, days: number) =>
   new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10)
@@ -48,7 +48,7 @@ export function useTradeRecord(trade: Trade | null, opts?: { tws?: boolean; with
   const accounts = status?.portfolio?.accounts ?? undefined
   const detail = useTradeDetailData(trade, accounts, trade != null)
   const execs = useMemo(() => detail?.executionsFinal ?? [], [detail?.executionsFinal])
-  const today = todayIso()
+  const today = etTodayIso()
 
   const bare = useMemo(() => legsOf(execs, {}), [execs])
   const openKeys = useMemo(() => bare.filter((l) => l.open).map((l) => l.key), [bare])

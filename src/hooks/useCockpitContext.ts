@@ -8,14 +8,15 @@ import { useVrpLatest } from '@/hooks/useVrpData'
 import { useCockpitPins } from '@/hooks/useCockpitPins'
 import { useHypothesis } from '@/hooks/useHypotheses'
 import type { LampColor } from '@/lib/researchFreshness'
-import { datePrefix, todayIso } from '@/lib/researchFreshness'
+import { datePrefix } from '@/lib/researchFreshness'
 import { vrpBandLabel } from '@/lib/optionSemantics'
+import { etTodayIso } from '@/lib/freshness'
 
 function tradingDaysAgo(isoDate: string | null | undefined): number | null {
   const td = datePrefix(isoDate)
   if (!td) return null
   const target = new Date(`${td}T12:00:00`)
-  const now = new Date(`${todayIso()}T12:00:00`)
+  const now = new Date(`${etTodayIso()}T12:00:00`)
   if (Number.isNaN(target.getTime())) return null
   const diffMs = now.getTime() - target.getTime()
   return Math.max(0, Math.round(diffMs / (24 * 60 * 60 * 1000)))

@@ -27,12 +27,12 @@ import { LensVerdictBlock } from '@/components/research/LensVerdictBlock'
 import { SymbolForecastSessions } from '@/pages/research/analyze/symbol/SymbolForecastSessions'
 import { SymbolPlaybookPanel } from '@/pages/research/analyze/symbol/SymbolPlaybookPanel'
 import { useExhibitComposite } from '@/hooks/useExhibitComposite'
-import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { shortDate } from '@/utils/earningsEstimate'
 import { rankPathEarnings } from './rankPathEarnings'
 import { horizonEarnings } from './scenarioEarnings'
 import { useSymbolEarnings } from './useSymbolEarnings'
+import { etTodayIso } from '@/lib/freshness'
 
 const cap =
   'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
@@ -140,7 +140,7 @@ export function SymbolScenarioFace({ symbol }: { symbol: string }) {
   const earn = useSymbolEarnings(sym)
   const horizon = horizonEarnings({
     next: earn.next,
-    from: newest ? String(newest.trade_date).slice(0, 10) : todayIso(),
+    from: newest ? String(newest.trade_date).slice(0, 10) : etTodayIso(),
     gap: earn.gap,
     spot,
   })

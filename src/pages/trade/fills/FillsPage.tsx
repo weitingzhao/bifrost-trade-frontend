@@ -47,6 +47,7 @@ import { buildFillRows } from '@/utils/fillRows'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { clearCarriedSymbol, normalizeSymbol } from '@/lib/symbolContext'
 import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
+import { chicagoTodayDateStr } from '@/utils/ledger/optAsOfPnL'
 
 const PAGE_LEAD =
   'The work side of the ledger: what IB is working right now, what came back, and which fills still need a home. Nothing here sends an order — TWS does that, and the reserved Send action lives on Plans, not wired.'
@@ -76,10 +77,8 @@ function contractToken(row: { secType: string; contractKey: string; symbol: stri
 export default function FillsPage() {
   // The window, the Show filter and the open fill are the page's view (Rev .79 `day · execFilter · sel`).
   const [windowKey, setWindowKey] = usePageViewState('day', 'week')
-  const [today] = useState(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  })
+  // The ledger's day (Chicago), the calendar fills' trade_date is written in.
+  const today = chicagoTodayDateStr()
 
   /**
    * The design opens on the actionable subset — `Show: Needs a home` — because
@@ -156,6 +155,8 @@ export default function FillsPage() {
       freshness: freshnessQuery.data?.items ?? [],
       flexRunTs: flexRun,
       todayBySource,
+      // UTC on purpose: compared with the Flex run's own UTC stamp (flexRunTs.slice(0, 10)).
+      // eslint-disable-next-line no-restricted-syntax -- todayUtc is the UTC date by name (TD-232 allowlist)
       todayUtc: new Date().toISOString().slice(0, 10),
     })
   }, [bookWindowRows, today, flexQuery.data?.dimensions, freshnessQuery.data?.items])

@@ -19,7 +19,6 @@ import { TradeRecord } from '@/components/tradeRecord/TradeRecord'
 import { useTradeRecord } from '@/hooks/useTradeRecord'
 import { useSymbolGo } from '@/layout/symbolGo'
 import { withSymbolParam } from '@/lib/symbolLink'
-import { todayIso } from '@/lib/researchFreshness'
 import { fmtPctSigned, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { pnlColorClass } from '@/utils/dailyChange'
@@ -29,6 +28,7 @@ import type { Trade } from '@/types/positions'
 import { byOpening, fillRows, ledgerRows, timelineRows } from './tradePageModel'
 import { TradeJournal, TradeLineage } from './TradeRail'
 import { TradeBlock } from './TradeBlock'
+import { etTodayIso } from '@/lib/freshness'
 
 const UNREALIZED = 'text-[var(--color-unrealized)]'
 const signed = (v: number | null | undefined) => (v == null ? '—' : v > 0 ? `+${fmtUsdRound(v)}` : fmtUsdRound(v))
@@ -55,7 +55,7 @@ export function TradeWide({
   const navigate = useNavigate()
   const symbolGo = useSymbolGo()
   const id = trade.trade_id
-  const today = todayIso()
+  const today = etTodayIso()
   const r = useTradeRecord(trade, { withShares: true })
   const d = r.detail
   const execs = useMemo(() => d?.executionsFinal ?? [], [d?.executionsFinal])

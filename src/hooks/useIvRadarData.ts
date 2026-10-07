@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { fetchIvPercentileForSymbols } from '@/api/research/ivRadar'
+import { fetchIvPercentileForSymbols, ivLookupRow } from '@/api/research/ivRadar'
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useHoldingSymbols } from '@/hooks/useHoldingSymbols'
 import { useWatchlistStkSymbols } from '@/hooks/useWatchlistStkSymbols'
-import type { IvRadarRow, IvRadarUniverseFilter } from '@/types/ivRadar'
+import type { IvLookup } from '@/api/research/ivRadar'
+import type { IvRadarRow, IvRadarUniverseFilter, IvRadarUniverseItem } from '@/types/ivRadar'
 import {
   assembleUniverse,
   bucketByIvRank,
@@ -35,6 +36,33 @@ export function useIvRadarUniverse(filter: IvRadarUniverseFilter) {
   }
 }
 
+/**
+ * Join the universe onto its reads. A failed read keeps its failure
+ * (`readFailed`) rather than reading as a name without an IV rank, and when
+ * every read failed it throws, so the query is in error and the page says the
+ * radar failed instead of listing a universe of "no data" (TD-233).
+ */
+export function ivRadarRows(
+  universe: readonly IvRadarUniverseItem[],
+  dataBySym: ReadonlyMap<string, IvLookup>,
+): IvRadarRow[] {
+  const rows = universe.map((item): IvRadarRow => {
+    const lookup = dataBySym.get(item.symbol)
+    const data = ivLookupRow(lookup)
+    return {
+      ...item,
+      data,
+      bucket: bucketByIvRank(data?.iv_rank_1y),
+      readFailed: lookup?.status === 'error' ? lookup.message : null,
+    }
+  })
+  const failed = rows.filter((r) => r.readFailed != null)
+  if (rows.length > 0 && failed.length === rows.length) {
+    throw new Error(`Every IV percentile read failed (${rows.length} names): ${failed[0].readFailed}`)
+  }
+  return rows
+}
+
 /** TanStack Query: IV percentile/rank for the assembled universe (bounded concurrency). */
 export function useIvRadarData(filter: IvRadarUniverseFilter) {
   const { universe, isLoadingSources, isErrorSources, watchlistSymbols, holdingsSymbols } =
@@ -49,14 +77,7 @@ export function useIvRadarData(filter: IvRadarUniverseFilter) {
         universe.map(u => u.symbol),
         FETCH_CONCURRENCY,
       )
-      return universe.map(item => {
-        const data = dataBySym.get(item.symbol) ?? null
-        return {
-          ...item,
-          data,
-          bucket: bucketByIvRank(data?.iv_rank_1y),
-        }
-      })
+      return ivRadarRows(universe, dataBySym)
     },
     enabled: !isLoadingSources,
     staleTime: 60_000,
@@ -69,13 +90,15 @@ export function useIvRadarData(filter: IvRadarUniverseFilter) {
     let neutral = 0
     let low = 0
     let noData = 0
+    let failed = 0
     for (const r of rows) {
-      if (r.bucket === 'high') high++
+      if (r.readFailed != null) failed++
+      else if (r.bucket === 'high') high++
       else if (r.bucket === 'neutral') neutral++
       else if (r.bucket === 'low') low++
       else noData++
     }
-    return { high, neutral, low, noData, total: rows.length }
+    return { high, neutral, low, noData, failed, total: rows.length }
   }, [rows])
 
   return {

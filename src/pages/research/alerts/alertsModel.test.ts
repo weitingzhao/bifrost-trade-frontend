@@ -95,10 +95,15 @@ describe('firedStanding', () => {
     expect(s.tone).toBe('warn')
   })
 
-  it('says today when the newest really is today', () => {
-    expect(firedStanding([alert({ trade_date: '2026-09-22' })], '2026-09-22', 90).text).toContain(
-      '1 on 2026-09-22, today',
-    )
+  it('says fired today when the newest session was written today (New York)', () => {
+    // The store stamps the session judged (09-18) and writes it days later.
+    const late = alert({ trade_date: '2026-09-18', computed_at: '2026-09-23T01:30:00Z' }) // 21:30 ET on the 22nd
+    expect(firedStanding([late], '2026-09-22', 90).text).toContain('1 on 2026-09-18, fired today')
+  })
+
+  it('does not read a trade_date equal to today as fired today', () => {
+    const stamped = alert({ trade_date: '2026-09-22', computed_at: '2026-09-21T22:30:43Z' })
+    expect(firedStanding([stamped], '2026-09-22', 90).text).toContain('nothing has fired since')
   })
 
   it('says the store answered, rather than implying a filter hid something', () => {

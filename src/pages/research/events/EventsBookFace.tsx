@@ -35,6 +35,7 @@ import { chainFromSnapshots } from '@/utils/optionChain'
 import { isoDaysFrom, opexDatesAround } from '@/utils/bookCalendar'
 import { bookExposures, daysUntil, earningsLanes, type EarningsLane, type ExposureRow } from './eventsBookModel'
 import { straddleMid } from '@/pages/research/analyze/symbol/symbolChainModel'
+import { etTodayIso } from '@/lib/freshness'
 
 const WINDOW_DAYS = 30
 
@@ -107,7 +108,7 @@ function EarningsChip({ lane, marks }: { lane: 'book' | 'watch'; marks: readonly
 
 export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
   const status = useMonitorStatus()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = etTodayIso()
   const opexDates = useMemo(() => opexDatesAround(today), [today])
 
   // Forward-dated radar events (time_code=2, event_date ASC on the server).

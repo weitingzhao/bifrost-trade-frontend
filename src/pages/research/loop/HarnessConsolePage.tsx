@@ -74,6 +74,7 @@ import { useCopilotPromptLang } from '@/lib/copilot/promptLang'
 import { notifyArchivedObjective, useLoopTrust,
   useAutopilotStanding,
 } from '@/hooks/useLoopHarness'
+import { etTodayIso } from '@/lib/freshness'
 
 type RunStatusFilter = ObjectiveRunStatus | 'all'
 
@@ -456,7 +457,7 @@ export default function HarnessConsolePage() {
           reach={reachToday(
             runs,
             standingQ.data?.pending_drafts ?? standingQ.data?.pending_memos ?? null,
-            new Date().toISOString().slice(0, 10),
+            etTodayIso(),
           )}
         />
       )}

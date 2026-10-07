@@ -8,6 +8,7 @@
 import { fmtInt } from '@/lib/format'
 import { parseHarnessTrace, traceFunnel, funnelReach } from '@/lib/harness/harnessTrace'
 import type { ObjectiveRun } from '@/api/research/harness'
+import { etDayOf } from '@/lib/freshness'
 
 export interface ReachToday {
   universe: number
@@ -20,7 +21,7 @@ export interface ReachToday {
 export function reachToday(runs: readonly ObjectiveRun[], pendingDrafts: number | null, todayKey: string): ReachToday | null {
   let best: ReachToday | null = null
   for (const run of runs) {
-    if ((run.started_at ?? '').slice(0, 10) !== todayKey) continue
+    if (etDayOf(run.started_at) !== todayKey) continue
     const trace = parseHarnessTrace(run.trace_json)
     const reach = funnelReach(trace)
     if (!reach) continue

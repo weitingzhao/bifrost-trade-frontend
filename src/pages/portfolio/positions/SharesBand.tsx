@@ -41,6 +41,7 @@ import type { CoverRow } from '@/utils/bookVsBase'
 import type { LivePositionRow } from '@/types/positions'
 import type { InstrumentClass } from '@/types/monitor'
 import type { DailyBenchmark, QuoteItem } from '@/types/market'
+import { etTodayIso } from '@/lib/freshness'
 
 /** A row's bucket as the store spells the class. */
 const CLASS_OF: Record<ShareBucket, string> = { stk: 'stock', fi: 'fixed_income', cash: 'cash_like' }
@@ -87,7 +88,7 @@ export function SharesBand({
   // Rename came with Accounts' Categories face; the design's bar only adds and deletes, and a weaker home drops nothing (§15.6).
   const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
-  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  const today = etTodayIso()
 
   // A registration shows at once: the monitor's status is cached for about 15 s
   // server-side, and the select must not snap back to the old type meanwhile.

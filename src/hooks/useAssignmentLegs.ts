@@ -12,7 +12,7 @@
  * model service's, and close and delta are the vendor legs the Positions page
  * already prices.
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { fetchModelAnalysis } from '@/api/portfolio'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
@@ -20,14 +20,13 @@ import { usePositionAttribution } from '@/hooks/usePositionAttribution'
 import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
 import { buildOptionTicker, daysTo, extractUnderlyingRootSymbol } from '@/utils/optionTicker'
 import { assignmentTotals, buildAssignmentLegs, thinExtrinsic } from '@/utils/assignmentRisk'
+import { etTodayIso } from '@/lib/freshness'
 
 export function useAssignmentLegs() {
   const { data: status, isLoading: statusLoading } = useMonitorStatus()
   const attrQuery = usePositionAttribution()
-  const [today] = useState(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  })
+  // New York's day: expiries are dated there, whatever the browser's zone.
+  const today = etTodayIso()
 
   const attributions = useMemo(() => attrQuery.data?.items ?? [], [attrQuery.data?.items])
   const accountIds = useMemo(

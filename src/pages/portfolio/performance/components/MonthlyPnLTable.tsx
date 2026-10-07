@@ -10,6 +10,7 @@ import OpenOptInventoryDialog from '@/pages/portfolio/performance/components/Ope
 import { cn } from '@/lib/utils'
 import { fmtIsoDateToken } from '@/lib/format'
 import { perfUi } from '@/pages/portfolio/performance/performanceUi'
+import { chicagoTodayDateStr } from '@/utils/ledger/optAsOfPnL'
 
 interface MonthlyPnLTableProps {
   byDayRangeData: ByDayRangeData | null
@@ -108,8 +109,8 @@ export default function MonthlyPnLTable({
     if (!byDayRangeData) return []
 
     // The range runs to the end of the quarter; a day that has not happened has no session to show.
-    const now = new Date()
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    // The ledger's day (Chicago) — the calendar byDayRangeData is keyed in.
+    const today = chicagoTodayDateStr()
     // A weekend is not a session: the prototype lists sessions only.
     const isWeekend = (d: string) => {
       const dow = new Date(`${d}T12:00:00Z`).getUTCDay()

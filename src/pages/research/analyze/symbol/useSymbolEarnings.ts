@@ -7,9 +7,9 @@
 import type { ExpectedEarnings } from '@/api/research/narrative'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
-import { todayIso } from '@/lib/researchFreshness'
 import { eventMove, type EventMove } from '@/utils/earningsEstimate'
 import { daysTo } from '@/utils/optionTicker'
+import { etTodayIso } from '@/lib/freshness'
 
 export function useSymbolEarnings(symbol: string): {
   filings: string[]
@@ -19,7 +19,7 @@ export function useSymbolEarnings(symbol: string): {
   const earnQ = useEarningsDates(symbol)
   const termQ = useAtmIvTerm(symbol)
   const next = earnQ.data?.expected_next ?? null
-  const today = todayIso()
+  const today = etTodayIso()
   const gap =
     next && next.days_away >= 0
       ? eventMove(

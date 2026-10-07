@@ -18,14 +18,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { useHypothesisList } from '@/hooks/useHypotheses'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
-import { fetchIvPercentileForSymbols } from '@/api/research/ivRadar'
+import { fetchIvPercentileForSymbols, type IvLookup } from '@/api/research/ivRadar'
 import { QUERY_KEYS } from '@/constants/queryKeys'
-import type { IvPercentileRow } from '@/types/ivRadar'
 
 /** Four at a time — the IV Radar's own pool size, for the same endpoint. */
 const IV_CONCURRENCY = 4
 
-const EMPTY_IV: ReadonlyMap<string, IvPercentileRow | null> = new Map()
+const EMPTY_IV: ReadonlyMap<string, IvLookup> = new Map()
 
 export function useWatchBook(symbols: readonly string[]) {
   const key = [...symbols].sort().join(',')

@@ -13,8 +13,8 @@ import { fetchObjectiveRuns } from '@/api/research/harness'
 import { fetchJournalDay, fetchMemory } from '@/api/research/journal'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
-import { todayIso } from '@/lib/researchFreshness'
 import { loopReading } from './bookLoopModel'
+import { etTodayIso } from '@/lib/freshness'
 
 const MUTE = 'var(--sk-mute, var(--muted-foreground))'
 const BOOK = 'var(--equip-book)'
@@ -95,7 +95,7 @@ const n = (v: number | null) => (v == null ? '—' : String(v))
 
 export function BookLoopInstrument({ hypotheses }: { hypotheses: readonly Hypothesis[] | null }) {
   const navigate = useNavigate()
-  const today = todayIso()
+  const today = etTodayIso()
   const standing = useAutopilotStanding()
   const runsQ = useQuery({
     queryKey: ['research-engine', 'objective-runs', 'book-loop'],

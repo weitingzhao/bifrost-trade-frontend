@@ -20,7 +20,6 @@ import { fetchSepaDaily } from '@/api/researchEngine'
 import { useDossier } from '@/hooks/useDossier'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
-import { todayIso } from '@/lib/researchFreshness'
 import { eventMove } from '@/utils/earningsEstimate'
 import { daysTo } from '@/utils/optionTicker'
 import { useLensRegistry } from '@/hooks/useLensRegistry'
@@ -36,6 +35,7 @@ import {
 import { symbolRecord, type SymbolRecord } from '@/lib/symbolRecord'
 import { finiteOrNull } from '@/utils/finite'
 import { GROWTH_CHECKS, TREND_CHECKS, faceExtras, type SepaCounts } from './faceExtras'
+import { etTodayIso } from '@/lib/freshness'
 
 export interface SymbolFaces {
   views: DossierFaceView[]
@@ -85,7 +85,7 @@ export function useSymbolFaces(symbol: string): SymbolFaces {
         }
       : null
     const next = earnQ.data?.expected_next ?? null
-    const today = todayIso()
+    const today = etTodayIso()
     const gap =
       next && next.days_away >= 0
         ? eventMove(

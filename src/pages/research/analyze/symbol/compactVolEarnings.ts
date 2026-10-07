@@ -14,7 +14,6 @@ import type { ExpectedEarnings } from '@/api/research/narrative'
 import { useVrpHistory } from '@/hooks/useVrpData'
 import { useEarningsDates } from '@/hooks/useNarrative'
 import { useAtmIvTerm } from '@/hooks/useVolSurfaceData'
-import { todayIso } from '@/lib/researchFreshness'
 import {
   EVENT_WINDOW_DAYS,
   estimateCaveat,
@@ -26,6 +25,7 @@ import {
 } from '@/utils/earningsEstimate'
 import { daysTo } from '@/utils/optionTicker'
 import { rankPathEarnings } from './rankPathEarnings'
+import { etTodayIso } from '@/lib/freshness'
 
 export interface FoldEarningsLine {
   text: string
@@ -106,7 +106,7 @@ export function useVolFoldEarnings(symbol: string, on: boolean): VolFoldEarnings
   const earnQ = useEarningsDates(symbol)
   const termQ = useAtmIvTerm(symbol)
   if (!on || !earnQ.data) return {}
-  const today = todayIso()
+  const today = etTodayIso()
   return volFoldEarnings({
     sessions: (vrpQ.data ?? []).map((r) => r.trade_date),
     filings: earnQ.data.dates,

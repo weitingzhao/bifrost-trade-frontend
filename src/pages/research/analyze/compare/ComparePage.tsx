@@ -15,7 +15,6 @@ import { SymbolContextGuard } from '@/components/research/SymbolContextGuard'
 import { QueryErrorAlert } from '@/components/ui/QueryErrorAlert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useResearchContext } from '@/hooks/useResearchContext'
-import { todayIso } from '@/lib/researchFreshness'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { fmtPct0 } from '@/utils/positions'
@@ -25,6 +24,7 @@ import { CompareHowBig } from './CompareHowBig'
 import { ComparePayoff, type PayoffCurve } from './ComparePayoff'
 import { CompareTable } from './CompareTable'
 import { useCompareRows, useSessionClose, type CompareRow } from './useCompareRows'
+import { etTodayIso } from '@/lib/freshness'
 
 const FIELD =
   'h-6 w-[4.5rem] border px-1.5 text-right font-mono text-dense-meta tabular-nums text-foreground mat-field'
@@ -80,7 +80,7 @@ function CompareBody({
   typed: View
   set: (key: string, value: string | null) => void
 }) {
-  const today = todayIso()
+  const today = etTodayIso()
   // The rows are read with the suggested levels until the reader types their
   // own; the note beside the view says which levels are whose.
   const { spot } = useSessionClose(sym, today)

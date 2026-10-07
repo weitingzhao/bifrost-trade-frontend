@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest'
 import type { DailyBenchmark, QuoteItem, WatchlistItem } from '@/types/market'
 import type { Hypothesis } from '@/api/researchHypothesis'
 import type { IvPercentileRow } from '@/types/ivRadar'
+import type { IvLookup } from '@/api/research/ivRadar'
 import { watchBookRows, watchBookStanding } from './watchBookModel'
 
 const NOW = Date.parse('2026-09-22T12:00:00Z')
@@ -57,11 +58,11 @@ const SETTLED: DailyBenchmark = {
   is_stale: false,
 }
 
-const ivMap = (m: Record<string, number | null>): Map<string, IvPercentileRow | null> =>
+const ivMap = (m: Record<string, number | null>): Map<string, IvLookup> =>
   new Map(
-    Object.entries(m).map(([k, v]) => [
+    Object.entries(m).map(([k, v]): [string, IvLookup] => [
       k,
-      v == null ? null : ({ symbol: k, iv_rank_1y: v } as IvPercentileRow),
+      v == null ? { status: 'absent' } : { status: 'row', row: { symbol: k, iv_rank_1y: v } as IvPercentileRow },
     ]),
   )
 
@@ -124,6 +125,19 @@ describe('watchBookRows', () => {
     expect(rows[1].ivAbsence).toContain('no IV percentile row')
     expect(rows[2].ivAbsence).toBeNull()
     expect(rows[2].ivRank).toBe(64)
+  })
+
+  it('says a failed IV read failed, never that the name has no row (TD-233)', () => {
+    const ivBySymbol = new Map<string, IvLookup>([
+      ['NBIS', { status: 'error', message: 'HTTP 502' }],
+      ['AMD', { status: 'absent' }],
+    ])
+    const rows = watchBookRows([item('NBIS'), item('AMD')], QUOTES, {}, ivBySymbol, [], NOW)
+    expect(rows[0].ivReadFailed).toBe('HTTP 502')
+    expect(rows[0].ivAbsence).toContain('read failed')
+    expect(rows[0].ivAbsence).not.toContain('no IV percentile row')
+    expect(rows[1].ivReadFailed).toBeNull()
+    expect(rows[1].ivAbsence).toContain('no IV percentile row')
   })
 
   it('ages a watch by the day it was opened, and marks the design’s eighth', () => {

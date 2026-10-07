@@ -1,18 +1,11 @@
 import type { LampTone } from '@/lib/lampTone'
+import { etTodayIso } from '@/lib/freshness'
 
 /**
  * The same four states `lampTone` renders. Kept under this name because 16
  * modules already speak it; there is only one definition now.
  */
 export type LampColor = LampTone
-
-export function todayIso(): string {
-  const d = new Date()
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 
 /** The ISO date `n` days before `today` — the far edge of a bars window. */
 export function daysBack(today: string, n: number): string {
@@ -37,7 +30,7 @@ export function freshnessLamp(
   if (hasError) return 'red'
   if (!hasData) return 'gray'
   const td = datePrefix(tradeDate)
-  const target = selectedDate || todayIso()
+  const target = selectedDate || etTodayIso()
   if (!td) return 'yellow'
   if (td === target) return 'green'
   return 'yellow'

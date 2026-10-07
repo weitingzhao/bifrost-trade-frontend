@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { todayIso } from '@/lib/researchFreshness'
 // The held symbol is shell-wide now, not Research's own — same record, same
 // query parameter, one owner. See `lib/symbolContext`.
 import { readStoredContext, writeStoredContext } from '@/lib/symbolContext'
+import { etTodayIso } from '@/lib/freshness'
 
 export function useResearchContext() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -12,7 +12,7 @@ export function useResearchContext() {
   const urlSymbol = searchParams.get('symbol')?.trim().toUpperCase()
   const symbol = urlSymbol || stored.symbol || ''
   const dateInput = searchParams.get('date') ?? stored.date ?? ''
-  const selectedDate = dateInput || todayIso()
+  const selectedDate = dateInput || etTodayIso()
 
   const setSymbol = useCallback(
     (value: string) => {

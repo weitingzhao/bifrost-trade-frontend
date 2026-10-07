@@ -54,6 +54,7 @@ import {
   type LegDecision,
 } from './expirationModel'
 import { buildExpiryLegs, groupByExpiry, type ExpiryLeg } from '@/utils/expiryLegs'
+import { etTodayIso } from '@/lib/freshness'
 
 const PAGE_LEAD =
   'What expires next, what each leg is worth if it does, and what closing it would cost. A decision is written in Trade Plans; this page carries the leg there.'
@@ -104,10 +105,8 @@ export default function ExpirationPage() {
   const pickedExpiry = picked != null && picked.fri === fri ? picked.expiry : null
   const setPickedExpiry = (expiry: string) => setPicked({ fri, expiry })
 
-  const [today] = useState(() => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  })
+  // New York's day: expiries are dated there, whatever the browser's zone.
+  const today = etTodayIso()
 
   const attributions = useMemo(() => attrQuery.data?.items ?? [], [attrQuery.data?.items])
 

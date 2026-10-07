@@ -49,6 +49,7 @@ import { fetchObjectiveRuns } from '@/api/research/harness'
 import { useAutopilotStanding } from '@/hooks/useLoopHarness'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { firedTodayCount, useFiredAlerts } from '@/hooks/useFiredAlerts'
+import { etTodayIso } from '@/lib/freshness'
 import { computeLiveNavLamp } from '@/utils/livePageLamps'
 import { EQUIP_GROUPS, EQUIP_HUE, LOOP_RUN, equipGroupOf, type EquipGroup, type EquipPage } from './equip'
 import { isVisible, openSurfaceKeys, opensAsPage, placeOf, runSurface, surfaceForRoute, symbolSurface, usePanelWidth, useSurfaces } from './equipSurface'
@@ -430,7 +431,8 @@ export function EquipRail() {
   const { pathname } = useLocation()
   const standing = useAutopilotStanding().data
   const alerts = useFiredAlerts().data
-  const firedToday = firedTodayCount(alerts, new Date().toISOString().slice(0, 10))
+  // New York's day, the one the scan writes in (TD-219) — not the UTC date.
+  const firedToday = firedTodayCount(alerts, etTodayIso())
   const { panel } = useSurfaces()
   const visible = useToolbarShown()
   // An overlaying panel takes the lane's right end; a pushing one already

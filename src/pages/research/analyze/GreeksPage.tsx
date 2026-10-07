@@ -40,6 +40,7 @@ import { pnlColorClass } from '@/utils/dailyChange'
 import { ChainCalculatorFace } from './greeks/ChainCalculatorFace'
 import { BookLegsPanel } from './greeks/BookLegsPanel'
 import { useBookGreeks } from './greeks/useBookGreeks'
+import { etTodayIso } from '@/lib/freshness'
 
 type Face = 'book' | 'chain'
 
@@ -49,8 +50,8 @@ const FACES = [
 ]
 
 function BookFace() {
-  // Read once: DTE must not change under the reader between renders.
-  const [todayIso] = useState(() => new Date().toISOString().slice(0, 10))
+  // New York's day — DTE is counted there; it only moves at New York midnight.
+  const todayIso = etTodayIso()
   const [params, setParams] = useSearchParams()
   // `?sym=` is a filter on the book, not a scope on a symbol — the design is
   // explicit (DECISIONS 2026-09-23), and it is why this page's subject stayed

@@ -23,6 +23,7 @@ import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import type { EventRadarRow } from '@/api/researchEngine'
 import { fmtReleaseEt } from './eventDate'
+import { etTodayIso } from '@/lib/freshness'
 
 export interface EventThemeRow {
   theme: string
@@ -60,7 +61,7 @@ function symbolsOf(affected: string | null | undefined): string[] {
 }
 
 function daysUntil(dateIso: string): number {
-  return Math.round((Date.parse(dateIso) - Date.parse(new Date().toISOString().slice(0, 10))) / 86_400_000)
+  return Math.round((Date.parse(dateIso) - Date.parse(etTodayIso())) / 86_400_000)
 }
 
 function SymbolLinks({ symbols, inBook }: { symbols: string[]; inBook: (s: string) => boolean }) {

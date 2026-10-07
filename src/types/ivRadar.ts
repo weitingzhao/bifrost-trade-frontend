@@ -24,5 +24,8 @@ export interface IvRadarUniverseItem {
 
 export interface IvRadarRow extends IvRadarUniverseItem {
   data: IvPercentileRow | null
+  /** `no_data` both when the plugin has no row and when the read failed — see `readFailed`. */
   bucket: IvRadarBucket
+  /** The read failed (not absent): the error's message. Null when the plugin answered. */
+  readFailed: string | null
 }

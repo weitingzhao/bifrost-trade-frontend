@@ -56,6 +56,7 @@ import { AMBER_EDGE, amountLabel, FOOT, fmtShares, kindLabel, STANDARD_MULTIPLIE
 import { KindTag, Ticker } from './corporateActionsMarks'
 import { CorporateActionsCalendar } from './CorporateActionsCalendar'
 import { CorporateActionsBand } from './CorporateActionsBand'
+import { etTodayIso } from '@/lib/freshness'
 
 const PAGE_LEAD =
   'Events that reshape what you hold — and what they turn each contract into. A split changes a strike overnight; three other pages move at once and nobody says why.'
@@ -199,8 +200,8 @@ export default function CorporateActionsPage() {
   /** Names whose feed read failed with nothing held — silent, not "carries nothing". */
   const feedUnread = symbols.filter((_, i) => feedQueries[i]?.isError && !feedQueries[i]?.data)
 
-  /** Today, taken once — a render must not read a moving clock. */
-  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  /** New York's today — a date, so it only moves at New York midnight. */
+  const today = etTodayIso()
 
   const bySymbol = useMemo(() => {
     const by = new Map<string, CorporateActionRow[]>()

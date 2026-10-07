@@ -20,6 +20,7 @@ import { HarnessRunsTable } from '@/pages/research/loop/HarnessRunsTable'
 import type { RunsTableProps } from '@/pages/research/loop/HarnessConsolePage'
 import { objectiveBorn, objectiveDial } from '@/lib/harness/objectiveOrigin'
 import { objectiveLoopStrip, type LoopSegment } from '@/pages/research/loop/objectiveLoopStrip'
+import { etTodayIso, etDayOf } from '@/lib/freshness'
 
 export function ObjectiveRows({
   row,
@@ -64,10 +65,11 @@ export function ObjectiveRows({
   // Re-runs are folded into their row but not out of the bill. The design's
   // cell is today's spend; the whole listed window rides in the tooltip.
   const spend = groups.reduce((sum, g) => sum + groupSpend(g).total_usd, 0)
-  const todayKey = new Date().toISOString().slice(0, 10)
+  // Both sides in New York: a run started after 20:00 ET is still today's.
+  const todayKey = etTodayIso()
   const spendToday = groups.reduce(
     (sum, g) =>
-      (g.run.started_at ?? '').slice(0, 10) === todayKey ? sum + groupSpend(g).total_usd : sum,
+      etDayOf(g.run.started_at) === todayKey ? sum + groupSpend(g).total_usd : sum,
     0,
   )
   const memo = brief?.last_memo ?? null

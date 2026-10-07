@@ -36,6 +36,7 @@ import { THIN_SAMPLE } from '@/utils/reviewContracts'
 import { habitReadings, type HabitReading } from '@/utils/reviewHabits'
 import { HabitStrip } from './HabitStrip'
 import { CostSplit, NotClaimed, PlanAdherenceQuadrants } from './HabitsAside'
+import { etTodayIso } from '@/lib/freshness'
 
 const PAGE_LEAD =
   'Measured tendencies over the closed book — each one a distribution, a sample count, and what it cost or earned. No scores and no trader archetypes: a label you cannot falsify is not a finding.'
@@ -80,7 +81,7 @@ export default function ReviewHabitsPage() {
   // The same cache entry the hook reads — held here for its §17 state.
   const execQuery = useExecutionsAll()
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = etTodayIso()
   const inWindow = useMemo(() => {
     const days = WINDOWS.find((w) => w.value === window)?.days
     if (days == null) return trades

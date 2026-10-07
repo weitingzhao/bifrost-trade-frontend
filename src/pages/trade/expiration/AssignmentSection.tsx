@@ -14,7 +14,7 @@
  * (`assignmentReadings.ts`). The history is read off the broker's own book
  * entries, which is where an assignment lands.
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { ViewState } from '@bifrost/ui'
@@ -37,6 +37,7 @@ import { fmtMvAbbrev } from '@/utils/positionsCharts'
 import { shortOptContractKey, shortOptLegLabel } from '@/utils/ledger/optionsModeBridge'
 import { ASSIGNMENT_UNRECORDED, THIN_EXTRINSIC } from '@/utils/assignmentRisk'
 import { bookedHistory, earlyTrigger } from './assignmentReadings'
+import { etTodayIso } from '@/lib/freshness'
 
 const PAGE_LEAD =
   'What can be exercised against you, and what the book becomes if it is. Only a short can be assigned — a long is exercised by its holder, who is you.'
@@ -56,7 +57,7 @@ const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, t
 export function AssignmentSection() {
   const { attrQuery, legs, totals, thin, loading } = useAssignmentLegs()
   const execQuery = useExecutionsAll()
-  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  const today = etTodayIso()
 
   // One read per name carrying a short call, on the key Home · Today uses —
   // one cache entry, so the two surfaces cannot disagree about an ex-date.

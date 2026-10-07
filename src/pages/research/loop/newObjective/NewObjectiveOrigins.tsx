@@ -18,10 +18,10 @@ import { NewObjectiveForm, type ObjectiveSeed } from '@/components/research/NewO
 import { QUERY_KEYS } from '@/constants/queryKeys'
 import { useAutopilotStanding, usePolicyTemplates } from '@/hooks/useLoopHarness'
 import { SCHEDULES, objectivePath } from '@/lib/harness/objectivePolicy'
-import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { forkBody, objectiveOrigins, screenOrigin, type OriginColumn, type OriginPick } from './objectiveOrigins'
 import { CloseButton } from '@/components/data-display'
+import { etTodayIso } from '@/lib/freshness'
 
 const TAG_INK: Record<OriginColumn['id'], string> = {
   promote: 'var(--color-profit)',
@@ -136,7 +136,7 @@ export function NewObjectiveOrigins({ onClose }: { onClose: () => void }) {
     screensQ.data ? null : screensQ.error,
     standing.data ? null : standing.error,
   )
-  const today = todayIso()
+  const today = etTodayIso()
 
   return (
     <section className="overflow-hidden bg-[color-mix(in_srgb,var(--sk-accent)_6%,transparent)] mat-card" aria-label="New objective">

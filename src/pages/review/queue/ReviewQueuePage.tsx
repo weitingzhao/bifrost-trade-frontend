@@ -45,6 +45,7 @@ import { useTradeReviews } from '@/hooks/useTradeReviews'
 import { useTradeStates } from '@/hooks/useStrategies'
 import { buildReviewedTrades, type ReviewedTrade } from '@/utils/reviewedTrades'
 import type { TradeReview } from '@/api/tradeReviews'
+import { etTodayIso } from '@/lib/freshness'
 
 const PAGE_LEAD =
   'Closed trades, newest first, each row carrying the gap between what the plan said and what I did. Reviewing here is what produces the labels — Habits is empty arithmetic without it.'
@@ -239,7 +240,7 @@ export default function ReviewQueuePage() {
   const reviews = useTradeReviews()
   // Rev .110: the queue reads instances — the same #NNN Trade review and the
   // Instance page read. Contract-level trades stay for the book's daily bars.
-  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  const today = etTodayIso()
   // The Auto tags column reads each contract's own daily bars — the same
   // book-wide read (and cache entry) Habits and Playbook stats use. The two
   // plan tags (held past plan · exited early) stay out: no plan is linked.

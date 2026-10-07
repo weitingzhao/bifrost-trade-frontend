@@ -4,6 +4,7 @@ import {
   normalizeStrike,
   executionDateStr,
   getTimeRangeDates,
+  getTimeRangeStamps,
   listDateStrings,
   listMonthKeysInRange,
   computeOptPairsFromExecutions,
@@ -114,6 +115,30 @@ describe('getTimeRangeDates', () => {
     const { sinceStr, untilStr } = getTimeRangeDates('year', '2024-12')
     expect(sinceStr).toBe('2024-01-01')
     expect(untilStr).toBe('2024-12-31')
+  })
+})
+
+describe('getTimeRangeStamps', () => {
+  // TD-214: trade-api compares from_ts / to_ts as Chicago calendar days. The
+  // answer must not depend on the browser's zone — run this file under
+  // TZ=UTC and TZ=America/Chicago and both give the same two numbers.
+  it('starts the quarter at Chicago midnight and ends it at 23:59:59 Chicago', () => {
+    const { sinceTs, untilTs } = getTimeRangeStamps('quarter', '2026-09')
+    expect(sinceTs).toBe(1782882000) // 2026-07-01T05:00:00Z = 00:00 CDT
+    expect(untilTs).toBe(1790830799) // 2026-10-01T04:59:59Z = 23:59:59 CDT 09-30
+  })
+
+  it('does not reach back into the previous month (UTC midnight is 19:00 Chicago the day before)', () => {
+    const { sinceTs } = getTimeRangeStamps('month', '2026-05')
+    expect(sinceTs).toBe(getChicagoDayRange('2026-05-01').since_ts)
+    expect(sinceTs).toBeGreaterThan(getChicagoDayRange('2026-04-30').until_ts)
+  })
+
+  it('agrees with the by-day calendar on both ends across a DST change', () => {
+    const { sinceTs, untilTs } = getTimeRangeStamps('year', '2026-12')
+    expect(sinceTs).toBe(getChicagoDayRange('2026-01-01').since_ts) // CST
+    expect(untilTs).toBe(getChicagoDayRange('2026-12-31').until_ts)
+    expect(sinceTs).toBe(Date.UTC(2026, 0, 1, 6) / 1000)
   })
 })
 

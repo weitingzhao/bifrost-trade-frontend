@@ -29,11 +29,11 @@ import { GexTimelineChart } from '@/components/charts/GexTimelineChart'
 import { fmtEtClock } from '@/lib/format'
 import { fetchStockDailyCloses, type DailyBar } from '@/api/marketData/dailyBars'
 import { useEarningsDates } from '@/hooks/useNarrative'
-import { todayIso } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { rankPathEarnings, type RankPathMark } from './rankPathEarnings'
 import { SessionStepper } from './SessionStepper'
 import { useMarketSessions } from './useMarketSessions'
+import { etTodayIso } from '@/lib/freshness'
 
 const cap = 'whitespace-nowrap text-dense-meta font-semibold text-muted-foreground'
 const th =
@@ -54,7 +54,7 @@ function useSymbolCloses(sym: string) {
   return useQuery({
     queryKey: ['market', 'stock-daily-closes-1y', sym],
     queryFn: () =>
-      fetchStockDailyCloses(sym, new Date(Date.now() - 420 * 86_400_000).toISOString().slice(0, 10), todayIso()),
+      fetchStockDailyCloses(sym, new Date(Date.now() - 420 * 86_400_000).toISOString().slice(0, 10), etTodayIso()),
     enabled: Boolean(sym),
     staleTime: 10 * 60_000,
   })

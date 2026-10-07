@@ -18,6 +18,7 @@ import {
 } from '@/api/marketData/dailyBars'
 import { buildExpiryBranch, buildMarkPath, type ExpiryBranch, type MarkPath } from '@/utils/reviewMarkPath'
 import type { ReviewContract } from '@/utils/reviewContracts'
+import { etTodayIso } from '@/lib/freshness'
 
 export interface TradeMarkPath {
   path: MarkPath | null
@@ -28,16 +29,12 @@ export interface TradeMarkPath {
 
 const EMPTY: TradeMarkPath = { path: null, expiryBranch: null, underlying: [], optionTicker: null }
 
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
-}
-
 export function useContractMarkPath(trade: ReviewContract | null) {
   const optionTicker = trade ? occToOptionTicker(trade.contractKey) : null
   const from = trade?.openedOn ?? null
   // Expiry, or today when the contract has not reached it — the vendor has no
   // bars past the last session either way.
-  const to = trade?.expiry ? (trade.expiry < today() ? trade.expiry : today()) : null
+  const to = trade?.expiry ? (trade.expiry < etTodayIso() ? trade.expiry : etTodayIso()) : null
   const enabled = Boolean(trade && optionTicker && from && to)
 
   const query = useQuery({
@@ -52,7 +49,7 @@ export function useContractMarkPath(trade: ReviewContract | null) {
       ])
       return {
         path: buildMarkPath(trade, bars),
-        expiryBranch: buildExpiryBranch(trade, underlying, today()),
+        expiryBranch: buildExpiryBranch(trade, underlying, etTodayIso()),
         underlying,
         optionTicker,
       }

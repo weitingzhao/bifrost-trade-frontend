@@ -13,6 +13,7 @@ import {
   type CanonicalStructure,
 } from '@/api/research/canonicalPnl'
 import { PromoteToWatchlistButton } from '@/components/research/PromoteToWatchlistButton'
+import { etTodayIso } from '@/lib/freshness'
 
 const STRUCTURES: { value: CanonicalStructure; label: string }[] = [
   { value: 'short_strangle', label: 'Strangle' },
@@ -90,7 +91,7 @@ export function WatchlistHypothesisDetail({ symbol }: { symbol: string }) {
   )
 
   const entryDate =
-    hyps[0]?.created_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10)
+    hyps[0]?.created_at?.slice(0, 10) ?? etTodayIso()
 
   const trajQ = useQuery({
     queryKey: ['canonical-pnl', sym, entryDate, structure],

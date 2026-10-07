@@ -147,11 +147,14 @@ export function getTimeRangeDates(
 /**
  * The same range as seconds, for the endpoints that take timestamps.
  *
- * Where the range *ends* is a definition, not an arithmetic detail: the last
- * day runs to 23:59:59 local, so a fill at the close is inside the quarter.
- * Performance and the Portfolio layer page both ask the summary endpoint for
- * this range, and two copies of that definition is two quarters that can
- * disagree by a day.
+ * Both ends are Chicago days, because trade-api compares from_ts / to_ts as the
+ * timestamp's calendar day in America/Chicago: the range starts at Chicago
+ * midnight on the first day and ends at 23:59:59 Chicago on the last, whatever
+ * the browser's own zone. (A bare `new Date('YYYY-MM-01')` is UTC midnight —
+ * 19:00 Chicago the evening before — and pulled the previous month's last day
+ * into every summary; TD-214.) Performance and the Portfolio layer page both
+ * ask the summary endpoint for this range, and the by-day calendar reads the
+ * same Chicago days through getChicagoDayRange, so strip and calendar agree.
  */
 export function getTimeRangeStamps(
   timeRange: PerformanceTimeRange,
@@ -159,8 +162,8 @@ export function getTimeRangeStamps(
 ): { sinceTs: number; untilTs: number } {
   const { sinceStr, untilStr } = getTimeRangeDates(timeRange, calendarMonth)
   return {
-    sinceTs: Math.floor(new Date(sinceStr).getTime() / 1000),
-    untilTs: Math.floor(new Date(`${untilStr}T23:59:59`).getTime() / 1000),
+    sinceTs: getChicagoDayRange(sinceStr).since_ts,
+    untilTs: getChicagoDayRange(untilStr).until_ts,
   }
 }
 

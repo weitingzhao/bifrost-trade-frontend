@@ -26,10 +26,11 @@ import { ResearchAuthGap, ResearchUserNeeded } from '@/components/auth/ResearchA
 import { cap, mono, panel, panelHead, td, th } from '@/components/research/labFaceUi'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
 import { useResearchAuth } from '@/lib/auth/researchUser'
-import { pineChartSignalOf, withChartSignal, withSymbolParam } from '@/lib/symbolLink'
+import { pineChartSignalOf, pineReportPath, withChartSignal, withSymbolParam } from '@/lib/symbolLink'
 import { SYMBOL_PATH } from '@/lib/symbolTabs'
 import { cn } from '@/lib/utils'
 import { QUERY_KEYS } from '@/constants/queryKeys'
+import { usePineRun } from '@/hooks/usePineRun'
 import { fetchIndicatorSeries } from '@/api/research/indicators'
 import {
   PINE_SCRIPT_ID,
@@ -41,6 +42,7 @@ import {
   type PineScriptRow,
 } from '@/api/research/pine'
 import { PineContextPanel } from './PineContextPanel'
+import { PineRunControl } from './PineRunControl'
 import { PineCheckChart } from './PineCheckChart'
 import { PineTryPanel } from './PineTryPanel'
 
@@ -176,6 +178,7 @@ export function PineLibraryTab({
     enabled: checked != null,
     staleTime: 10 * 60_000,
   })
+  const run = usePineRun(draftKey === 'new' ? null : (view?.id ?? null))
   const save = useMutation({
     mutationFn: (d: Draft) =>
       savePineScript(d.id, {
@@ -189,6 +192,8 @@ export function PineLibraryTab({
       }),
     onSuccess: (row) => {
       void qc.invalidateQueries({ queryKey: QUERY_KEYS.researchEngine.pine })
+      // research 0.201.0: saving an active new or edited script starts its build (S14)
+      if (row.run && row.run.status !== 'not_started') run.track(row.id, row.run)
       setDraftKey(null)
       onSelect(row.id)
     },
@@ -316,6 +321,14 @@ export function PineLibraryTab({
                         {s.is_active ? 'active' : 'off'}
                       </td>
                       <td className={cn(td, 'whitespace-nowrap')}>
+                        <Link
+                          to={pineReportPath(s.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          title={`${s.name}: stored signals, edge after them, names, latest signals, simulations`}
+                          className="mat-btn mr-1 inline-flex h-6 items-center px-2 font-sans text-dense-caption"
+                        >
+                          Report ↗
+                        </Link>
                         {s.is_active ? (
                           <Link
                             to={withSymbolParam(withChartSignal(SYMBOL_PATH, pineChartSignalOf(s.id)), chartSym)}
@@ -397,7 +410,7 @@ export function PineLibraryTab({
                         ? 'Id: 2–48 of a–z, 0–9, _ starting with a letter'
                         : idTaken
                           ? `${draft.id} is taken — pick another id`
-                          : 'Save — the screener, chart, simulator and decay read it from the next build'
+                          : 'Save — an active script is built right away; the screener, chart, simulator and decay read it when the build ends'
                   }
                   onClick={() => save.mutate(draft)}
                 >
@@ -409,6 +422,17 @@ export function PineLibraryTab({
           {!auth.token ? (
             <div className="border-b border-border px-3 py-1.5">
               <ResearchUserNeeded line="Check and Save run as a Research user — none is set in this browser." />
+            </div>
+          ) : null}
+          {editing && !newDraft ? (
+            <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-1.5">
+              <PineRunControl run={run} active={editing.is_active} canRun={Boolean(auth.token)} blockedWhy={NO_IDENTITY} />
+              {save.data?.run?.status === 'not_started' && save.data.id === editing.id ? (
+                <span className="text-dense-caption text-muted-foreground">Saved; the build did not start — {save.data.run.message}</span>
+              ) : null}
+              <Link to={pineReportPath(editing.id)} className="mat-btn ml-auto inline-flex h-7 items-center px-2.5 font-sans text-dense-label">
+                Report ↗
+              </Link>
             </div>
           ) : null}
 

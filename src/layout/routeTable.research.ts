@@ -398,6 +398,21 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
         'Receipt: design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.',
     },
   },
+  {
+    // App-side page (ledger B7, Owner 2026-10-06 option B): one script's
+    // report, reached from the library's Report ↗ — in no menu, like an
+    // objective's detail. Same receipt.
+    path: '/research/pine/:scriptId',
+    label: 'Pine script',
+    crumbs: VALIDATE,
+    design: {
+      state: 'staging',
+      note:
+        'Owner 2026-10-06 (B7): one Pine script on one page — stored signals and Run now, edge after the signal on both sides, signals by month, names, latest signals, the simulator runs that entered on it. ' +
+        'Built app-side in the existing panel language from the Signal Decay, Simulator and Try on a basket pieces; Design has not drawn it. ' +
+        'Receipt: design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.',
+    },
+  },
 
   // ── Research · Workbench · Data ────────────────────────────────────────
   // Plumbing: neither takes a symbol, and what they answer is whether the

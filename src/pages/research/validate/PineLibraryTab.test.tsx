@@ -21,6 +21,7 @@ vi.mock('@/api/research/pine', async (orig) => ({
     count: 1,
   }),
   fetchPineContext: async () => ({ series: [], rules: {} }),
+  fetchLatestPineRun: async () => null,
 }))
 
 import { researchAuthStore } from '@/lib/auth/researchUser'
@@ -72,5 +73,32 @@ describe('PineLibraryTab problems', () => {
     const list = await screen.findByRole('list', { name: 'Problems in the script' })
     expect(list.textContent).toContain('Line 3 · line 3 ends with `+`')
     expect(screen.getByText('Not saved')).toBeTruthy()
+  })
+})
+
+describe('PineLibraryTab save starts a run (S14)', () => {
+  beforeEach(() => researchAuthStore.setCredentials('tok_owner', 'owner'))
+
+  it('shows the run a save started', async () => {
+    savePineScript.mockImplementation(async (id: string) => ({
+      id, name: 'Supertrend (copy)', version: 1, origin: 'user', license: null, source_url: null, notes: null,
+      is_active: true, signals: ['buy'],
+      run: { id: 'pr-1', script_id: id, status: 'running', started_at: '2026-10-06T20:00:00Z', finished_at: null, rows: null, mode: null, errors: null, message: null },
+    }))
+    let selected: string | null = null
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const view = (id: string | null) => (
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <PineLibraryTab selectedId={id} onSelect={(next) => (selected = next)} newScriptTick={0} heldSymbol="SPY" />
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+    render(view(null))
+    await userEvent.click(await screen.findByRole('button', { name: 'Copy to my scripts' }))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Save' })[0])
+    await vi.waitFor(() => expect(selected).toBe('supertrend_copy'))
+    // filed under the saved id, so the editor shows and polls it once the page selects that id
+    expect(qc.getQueryData(['research-engine', 'pine', 'run', 'supertrend_copy'])).toMatchObject({ id: 'pr-1', status: 'running' })
   })
 })

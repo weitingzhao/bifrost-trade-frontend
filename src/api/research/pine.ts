@@ -13,6 +13,8 @@ import { withValidation } from '@/lib/apiValidation'
 import {
   PineCheckResponseSchema,
   PineContextResponseSchema,
+  PineRunJobSchema,
+  PineSummaryResponseSchema,
   PineTryResponseSchema,
   PineScriptRowSchema,
   PineScriptsResponseSchema,
@@ -146,6 +148,14 @@ export interface PineStatsMethod {
   ci?: { level?: number; method?: string; draws?: number }
 }
 
+/** One signal with `detail` (research 0.201.0): its gross return at each horizon, and whether the cooldown counted it. */
+export interface PineRecentSignal {
+  symbol: string
+  date: string
+  /** `ret_<h>`: the undirected gross return to h sessions (null: not there yet); `counted_<h>`: kept by the cooldown. */
+  [key: `ret_${number}` | `counted_${number}`]: number | boolean | null | undefined
+}
+
 export interface PineSignalStats {
   script: string
   side: PineSide
@@ -156,6 +166,10 @@ export interface PineSignalStats {
   sample_note: 'noise' | 'thin' | 'ok'
   by_horizon: Record<string, PineHorizonStats>
   method?: PineStatsMethod
+  /** With `detail` (research 0.201.0): each name's signals and per-horizon measure. */
+  per_symbol?: Record<string, { signals: number; by_horizon: Record<string, PineMeasure & { win_rate_gross?: number | null; avg_return_gross?: number | null }> }>
+  /** With `detail`: the 50 most recent signals, newest first. */
+  recent?: PineRecentSignal[]
 }
 
 export interface PineScriptInput {
@@ -202,8 +216,73 @@ export async function fetchPineScript(id: string): Promise<PineScriptRow> {
   return validateScript(await get(`/research/pine/scripts/${encodeURIComponent(id)}`))
 }
 
-export async function savePineScript(id: string, input: PineScriptInput): Promise<PineScriptRow> {
-  return validateScript(await send(`/research/pine/scripts/${encodeURIComponent(id)}`, 'PUT', input))
+/**
+ * A save of an active script that is new, edited or switched back on also
+ * starts a run (research 0.201.0, S14): `run` is that job, or `not_started`
+ * when another run held the slot.
+ */
+export type PineSaved = PineScriptRow & { run?: PineRunJob | { status: 'not_started'; message: string } }
+
+export async function savePineScript(id: string, input: PineScriptInput): Promise<PineSaved> {
+  return validateScript(await send(`/research/pine/scripts/${encodeURIComponent(id)}`, 'PUT', input)) as PineSaved
+}
+
+/** A run of one script's build now (research 0.201.0, S14). Kept in Research's memory only. */
+export interface PineRunJob {
+  id: string
+  script_id: string
+  status: 'running' | 'done' | 'failed' | 'skipped'
+  started_at: string
+  finished_at: string | null
+  rows: number | null
+  mode: 'rebuild' | 'recent' | string | null
+  errors: number | null
+  message: string | null
+}
+
+const validateRun = withValidation<PineRunJob>(PineRunJobSchema, 'research/pine/runs/{job}')
+const validateRunOrNull = withValidation<PineRunJob | null>(PineRunJobSchema.nullable(), 'research/pine/scripts/{id}/run')
+
+/**
+ * Build this script's signals now, on Research's side (202). A run already
+ * going answers 409 with it in the error body's `run` (see `pineRunOf`).
+ */
+export async function runPineScript(id: string): Promise<PineRunJob> {
+  return validateRun(await send(`/research/pine/scripts/${encodeURIComponent(id)}/run`, 'POST', {}))
+}
+
+/** The latest run of a script since Research started, or null. */
+export async function fetchLatestPineRun(id: string): Promise<PineRunJob | null> {
+  return validateRunOrNull(await get(`/research/pine/scripts/${encodeURIComponent(id)}/run`))
+}
+
+/** The run another script holds, from a 409 of `runPineScript`. */
+export function pineRunOf(error: unknown): PineRunJob | null {
+  if (!(error instanceof HttpError)) return null
+  const run = (error.body as { run?: unknown } | null)?.run
+  const parsed = PineRunJobSchema.safeParse(run)
+  return parsed.success ? (parsed.data as PineRunJob) : null
+}
+
+export interface PineSummary {
+  script: PineScriptRow
+  /** The script version the stored signals were built from (null: none stored). */
+  built_version: number | null
+  first: string | null
+  last: string | null
+  signals: number
+  /** Every name with a stored signal; `by_name` lists at most 300 of them. */
+  names: number
+  by_month: { month: string; buy: number; sell: number }[]
+  by_name: { symbol: string; buy: number; sell: number; last: string | null }[]
+  run: PineRunJob | null
+}
+
+const validateSummary = withValidation<PineSummary>(PineSummaryResponseSchema, 'research/pine/scripts/{id}/summary')
+
+/** What the build stored for one script (research 0.201.0, B7) — the script report's head. */
+export async function fetchPineSummary(id: string): Promise<PineSummary> {
+  return validateSummary(await get(`/research/pine/scripts/${encodeURIComponent(id)}/summary`))
 }
 
 export interface PineCheckResult {
@@ -357,9 +436,12 @@ export async function fetchPineSignalStats(params: {
   side: PineSide
   symbols?: string[]
   horizons?: number[]
+  /** research 0.201.0: also `per_symbol` and the 50 most `recent` signals. */
+  detail?: boolean
 }): Promise<PineSignalStats> {
   const q = new URLSearchParams({ script: params.script, side: params.side })
   if (params.symbols?.length) q.set('symbols', params.symbols.join(','))
   if (params.horizons?.length) q.set('horizons', params.horizons.join(','))
+  if (params.detail) q.set('detail', 'true')
   return validateStats(await get('/research/pine/signal-stats', q))
 }

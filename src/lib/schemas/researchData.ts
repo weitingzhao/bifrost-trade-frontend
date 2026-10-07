@@ -443,6 +443,36 @@ export const PineSignalStatsSchema = z
   })
   .passthrough()
 
+/** A run of one script's build now (research 0.201.0, S14): POST/GET research/pine/scripts/{id}/run, GET research/pine/runs/{job}. */
+export const PineRunJobSchema = z
+  .object({
+    id: z.string(),
+    script_id: z.string(),
+    status: z.enum(['running', 'done', 'failed', 'skipped']),
+    started_at: z.string(),
+    finished_at: z.string().nullable(),
+    rows: z.number().nullable(),
+    mode: z.string().nullable(),
+    errors: z.number().nullable(),
+    message: z.string().nullable(),
+  })
+  .passthrough()
+
+/** GET research/pine/scripts/{id}/summary (research 0.201.0, B7): what the build stored for a script. */
+export const PineSummaryResponseSchema = z
+  .object({
+    script: PineScriptRowSchema,
+    built_version: z.number().nullable(),
+    first: z.string().nullable(),
+    last: z.string().nullable(),
+    signals: z.number(),
+    names: z.number(),
+    by_month: z.array(z.object({ month: z.string(), buy: z.number(), sell: z.number() }).passthrough()),
+    by_name: z.array(z.object({ symbol: z.string(), buy: z.number(), sell: z.number(), last: z.string().nullable() }).passthrough()),
+    run: PineRunJobSchema.nullable(),
+  })
+  .passthrough()
+
 /** POST research/pine/try (research 0.200.0, S13): a script over a basket, measured like Signal Decay. */
 export const PineTryResponseSchema = z
   .object({

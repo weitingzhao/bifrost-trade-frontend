@@ -48,10 +48,21 @@ function rate(v: number | null | undefined): string {
   return v == null ? '—' : `${Math.round(v * 100)}%`
 }
 
-function SideTable({ side, result }: { side: PineSide; result: PineTryResult }) {
-  const s = result.stats[side]
+/**
+ * One side's signals against the baseline, a row per holding period — the
+ * same table for Try on a basket and the script report (B7).
+ */
+export function PineEdgeTable({
+  side,
+  stats: s,
+  horizons,
+}: {
+  side: PineSide
+  stats: Pick<PineTryResult['stats'][PineSide], 'signals' | 'sample_note' | 'by_horizon'> | undefined
+  horizons: readonly number[]
+}) {
   if (!s) return null
-  const rows = result.horizons.map((h) => [h, s.by_horizon[String(h)] as PineHorizonStats | undefined] as const)
+  const rows = horizons.map((h) => [h, s.by_horizon[String(h)] as PineHorizonStats | undefined] as const)
   return (
     <div className="min-w-0 space-y-1">
       <div className="flex items-baseline gap-2">
@@ -186,8 +197,8 @@ export function PineTryPanel({
       ) : null}
       {res ? (
         <div className="space-y-3">
-          <SideTable side="buy" result={res} />
-          <SideTable side="sell" result={res} />
+          <PineEdgeTable side="buy" stats={res.stats.buy} horizons={res.horizons} />
+          <PineEdgeTable side="sell" stats={res.stats.sell} horizons={res.horizons} />
           {failed.length ? (
             <div className="space-y-0.5">
               <span className={cap}>Did not run on {failed.length}</span>

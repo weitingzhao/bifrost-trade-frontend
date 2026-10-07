@@ -89,6 +89,9 @@ export const QUERY_KEYS = {
     pine: ['research-engine', 'pine'] as const,
     pineScriptsWithSource: ['research-engine', 'pine', 'scripts', 'with-source'] as const,
     pineContext: ['research-engine', 'pine', 'context'] as const,
+    /** research 0.201.0: a script's latest run-now job (S14) and its report head (B7). */
+    pineRun: (script: string) => ['research-engine', 'pine', 'run', script] as const,
+    pineSummary: (script: string) => ['research-engine', 'pine', 'summary', script] as const,
     pineSignalsWithin: (sessions: number) => ['research-engine', 'pine', 'signals', 'within', sessions] as const,
     pineSignalStats: (script: string, side: string, basket: string) =>
       ['research-engine', 'pine', 'signal-stats', script, side, basket] as const,

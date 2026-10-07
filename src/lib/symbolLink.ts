@@ -55,3 +55,8 @@ export function pineChartSignalOf(id: string): string {
 export function pineLibraryPath(id?: string | null): string {
   return `/research/pine${id ? `?script=${encodeURIComponent(id)}` : ''}`
 }
+
+/** One Pine script's report (`/research/pine/<id>`, ledger B7, Owner 2026-10-06). */
+export function pineReportPath(id: string): string {
+  return `/research/pine/${encodeURIComponent(id)}`
+}

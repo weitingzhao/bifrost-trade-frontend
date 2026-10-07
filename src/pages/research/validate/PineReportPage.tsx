@@ -105,7 +105,9 @@ function recentRows(stats: Partial<Record<PineSide, PineSignalStats>>): RecentRo
     for (const r of stats[side]?.recent ?? []) {
       const ret: Record<number, number | null> = {}
       for (const h of HORIZONS) ret[h] = (r[`ret_${h}`] as number | null | undefined) ?? null
-      rows.push({ side, symbol: r.symbol, date: r.date, ret, counted: r[`counted_${HORIZONS[0]}`] !== false })
+      // A signal too new for its first horizon has no return yet and is not counted either — that is not the cooldown.
+      const settled = ret[HORIZONS[0]] != null
+      rows.push({ side, symbol: r.symbol, date: r.date, ret, counted: !settled || r[`counted_${HORIZONS[0]}`] !== false })
     }
   }
   return rows.sort((a, b) => (a.date === b.date ? a.symbol.localeCompare(b.symbol) : a.date < b.date ? 1 : -1)).slice(0, 50)
@@ -324,7 +326,7 @@ export default function PineReportPage() {
                 <header className={panelHead}>
                   <span className="text-dense-body font-semibold">Latest signals</span>
                   <span className="ml-auto text-dense-caption text-muted-foreground">
-                    price change after the signal, before cost · dimmed: inside an earlier signal’s cooldown, not counted
+                    price change after the signal, before cost · — not there yet · dimmed: inside an earlier signal’s cooldown, not counted
                   </span>
                 </header>
                 {statQs.some((x) => x.isLoading) ? (

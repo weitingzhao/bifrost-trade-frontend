@@ -69,7 +69,11 @@ function stats(side: 'buy' | 'sell') {
     by_horizon: { '20': { signal: { n: 7, win_rate: 0.6, hit_rate: 0.3, avg_return: 0.012 }, baseline: { n: 900, win_rate: 0.5, hit_rate: 0.2, avg_return: 0.004 }, win_rate_edge: 0.1, avg_return_edge: 0.008 } },
     method: { version: 2, cost_bps_one_way: 5 },
     per_symbol: { AAA: { signals: 5, by_horizon: { '20': { n: 5, win_rate: 0.6, hit_rate: 0.2, avg_return: 0.021 } } } },
-    recent: [{ symbol: 'AAA', date: side === 'buy' ? '2026-02-02' : '2026-01-15', ret_5: 0.01, ret_10: -0.02, ret_20: null, counted_5: side === 'buy' }],
+    recent: [
+      { symbol: 'AAA', date: side === 'buy' ? '2026-02-02' : '2026-01-15', ret_5: 0.01, ret_10: -0.02, ret_20: null, counted_5: side === 'buy' },
+      // too new for any return: not counted, but not the cooldown either
+      ...(side === 'buy' ? [{ symbol: 'BBB', date: '2026-02-03', ret_5: null, ret_10: null, ret_20: null, counted_5: false }] : []),
+    ],
   }
 }
 
@@ -133,8 +137,8 @@ describe('PineReportPage', () => {
     expect(await names.findAllByText('+2.1%')).toHaveLength(2)
     const latest = within(screen.getByRole('region', { name: 'Latest signals' }))
     const rows = latest.getAllByRole('row').slice(1)
-    expect(rows.map((r) => r.textContent?.slice(0, 10))).toEqual(['2026-02-02', '2026-01-15'])
-    expect(rows[1].className).toContain('opacity-55')
+    expect(rows.map((r) => r.textContent?.slice(0, 10))).toEqual(['2026-02-03', '2026-02-02', '2026-01-15'])
+    expect(rows.map((r) => r.className.includes('opacity-55'))).toEqual([false, false, true])
     const sims = within(screen.getByRole('region', { name: 'Simulations' }))
     expect(sims.getAllByRole('row')).toHaveLength(2)
     expect(sims.getByRole('link', { name: 'Open ↗' }).getAttribute('href')).toBe('/research/backtest?tab=sim&run_id=r1')

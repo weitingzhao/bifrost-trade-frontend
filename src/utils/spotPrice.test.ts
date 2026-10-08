@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildSpotResolver, describeSpot, repriceRows, spotMixOf, type LatestBar } from './spotPrice'
+import { buildSpotResolver, describeSpot, repriceAccounts, repriceRows, spotMixOf, type LatestBar } from './spotPrice'
 import type { QuoteItem } from '@/types/market'
 import type { LivePositionRow } from '@/types/positions'
 
@@ -66,6 +66,22 @@ describe('spotMixOf / describeSpot', () => {
     expect(describeSpot({ price: 1, source: 'live', asOf: 1 })).toBe('live')
     expect(describeSpot({ price: 1, source: 'close', asOf: FRIDAY })).toMatch(/^close \d\d-\d\d$/)
     expect(describeSpot(null)).toBe('no quote')
+  })
+})
+
+describe('repriceAccounts', () => {
+  it('prices a snapshot row that carries no price (light /status, core 0.60.0) from the live quote or the dated close', () => {
+    const accounts = [
+      { account_id: 'U1', positions: [{ symbol: 'NVDA', secType: 'STK', position: 10, avgCost: 200, price: null }] },
+      { account_id: 'U2', positions: [{ symbol: 'ACME', secType: 'STK', position: 5, avgCost: 30, price: null }] },
+    ]
+    const out = repriceAccounts(accounts, { ACME: quote('ACME', 31) }, bars)
+    expect(out[0].positions?.[0]).toMatchObject({ price: 230.36, unrealized_pnl: (230.36 - 200) * 10 })
+    expect(out[1].positions?.[0]).toMatchObject({ price: 31, unrealized_pnl: 5 })
+  })
+  it('leaves a row nothing prices without a price rather than at its cost', () => {
+    const accounts = [{ account_id: 'U1', positions: [{ symbol: 'XYZ', secType: 'STK', position: 10, avgCost: 9, price: null }] }]
+    expect(repriceAccounts(accounts, {})[0].positions?.[0].price).toBeNull()
   })
 })
 

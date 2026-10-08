@@ -18,6 +18,7 @@
  * is fine when its date is written where the number is.)
  */
 import type { QuoteItem } from '@/types/market'
+import type { IbPositionRow } from '@/types/monitor'
 import type { LivePositionRow } from '@/types/positions'
 
 export type SpotSource = 'live' | 'close' | 'mark'
@@ -160,4 +161,21 @@ export function repriceRows(rows: readonly LivePositionRow[], resolve: SpotResol
       ...(prev != null ? { daily_prev_close: prev } : {}),
     }
   })
+}
+
+/**
+ * Every account with its stock rows re-priced through one resolver built over
+ * the whole book. For readers that take the status snapshot as accounts — the
+ * category ring, fixed-income market value, the ledger's stock snapshot, Sizing
+ * — which otherwise price at `row.price`: since core 0.60.0 the light /status
+ * carries none (TD-260), and before that it carried March.
+ */
+export function repriceAccounts<A extends { account_id?: string; positions?: IbPositionRow[] }>(
+  accounts: readonly A[],
+  quotesBySymbol: Record<string, QuoteItem>,
+  barsBySymbol: Readonly<Record<string, LatestBar>> = {},
+): A[] {
+  const rowsOf = (a: A): LivePositionRow[] => (a.positions ?? []).map((p) => ({ ...p, account_id: a.account_id ?? '' }))
+  const resolve = buildSpotResolver(quotesBySymbol, accounts.flatMap(rowsOf), barsBySymbol)
+  return accounts.map((a) => (a.positions ? { ...a, positions: repriceRows(rowsOf(a), resolve, barsBySymbol) } : a))
 }

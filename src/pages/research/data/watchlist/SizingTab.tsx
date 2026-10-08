@@ -1,3 +1,4 @@
+import { usePricedStatus } from '@/hooks/usePricedStatus'
 import { useMemo } from 'react'
 import type { KellyMetrics } from '@/utils/riskSizing'
 import type { AtrResult, PositionSizeResult } from '@/utils/riskSizing'
@@ -106,8 +107,9 @@ export function SizingTab(props: SizingTabProps) {
 
   const { sizingStockRows, stocksForPromoteToSizing, hasPosition, symbolFromItem } = workflow
 
-  const capital = useMemo(() => aggregateCapital(status), [status])
-  const portfolioCashRollup = useMemo(() => buildPortfolioCashRollup(status), [status])
+  const pricedStatus = usePricedStatus(status)
+  const capital = useMemo(() => aggregateCapital(pricedStatus), [pricedStatus])
+  const portfolioCashRollup = useMemo(() => buildPortfolioCashRollup(pricedStatus), [pricedStatus])
 
   const staticRiskBudgetUsd = useMemo(() => {
     if (capital <= 0) return 0
@@ -283,7 +285,7 @@ export function SizingTab(props: SizingTabProps) {
       </p>
 
       <PortfolioRiskPower
-        status={status}
+        status={pricedStatus}
         staticMaxDdPctCap={staticMaxDdPctCap}
         staticRiskPctPerTrade={staticRiskPctPerTrade}
         capital={capital}

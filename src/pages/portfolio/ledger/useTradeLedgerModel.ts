@@ -1,3 +1,4 @@
+import { usePricedStatus } from '@/hooks/usePricedStatus'
 import { useCallback, useMemo } from 'react'
 import { fmtIsoDateToken } from '@/lib/format'
 import type { StatusResponse } from '@/types/monitor'
@@ -333,7 +334,8 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   })
   }, [stkExecsSorted, effectiveStkCategoryTab, catMap])
 
-  const stkPositionSnapshotMap = useMemo(() => buildStkPositionSnapshotMap(status), [status])
+  const pricedStatus = usePricedStatus(status)
+  const stkPositionSnapshotMap = useMemo(() => buildStkPositionSnapshotMap(pricedStatus), [pricedStatus])
 
   const stkPositionGroups = useMemo(() => {
   if (!groupByPosition) return null

@@ -1,3 +1,4 @@
+import { usePricedStatus } from '@/hooks/usePricedStatus'
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { useOpportunities, useTrades } from '@/hooks/useStrategies'
 import { usePerformanceDayCells } from '@/hooks/usePerformanceDayCells'
@@ -110,6 +111,7 @@ export default function PerformancePage() {
   const bulk = bulkQuery.data
 
   const { data: monitorStatus } = useMonitorStatus()
+  const pricedStatus = usePricedStatus(monitorStatus)
 
   const positionCategoryKey = useMemo(
     () => serializePositionCategoryKey(monitorStatus),
@@ -175,7 +177,7 @@ export default function PerformancePage() {
 
   const fiBarData = useMemo(() => {
     if (!bulk?.byDayRangeData) return null
-    const fiMv = sumStkPositionMarketValueForBucket(monitorStatus, 'fixed_income')
+    const fiMv = sumStkPositionMarketValueForBucket(pricedStatus, 'fixed_income')
     return buildFiBarChart({
       byDayRangeData: bulk.byDayRangeData,
       fiPositionMarketValue: fiMv,
@@ -183,7 +185,7 @@ export default function PerformancePage() {
       calendarMonth,
       growthUnit,
     })
-  }, [bulk, monitorStatus, timeRange, calendarMonth, growthUnit])
+  }, [bulk, pricedStatus, timeRange, calendarMonth, growthUnit])
 
   const activeDayMap = useMemo(
     () => dayMapByTab[calendarAssetTab],

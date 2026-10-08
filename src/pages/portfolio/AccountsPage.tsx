@@ -16,7 +16,7 @@ import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { OverviewCompact } from '@/components/accounts/OverviewCompact'
 import { buildQuoteMap, uniqueSymbols } from '@/utils/positions'
 import { flattenPositions, splitBySecType } from '@/utils/positionsGrouping'
-import { buildSpotResolver, repriceRows } from '@/utils/spotPrice'
+import { repriceAccounts } from '@/utils/spotPrice'
 import {
   flexPullTsFromCoverage,
   latestClientExecFreshness,
@@ -101,10 +101,11 @@ export default function AccountsPage() {
   const benchBySymbol = benchData?.benchmarks ?? {}
 
   const barsBySymbol = useLatestBars(stkSymbols)
-  const allRows = useMemo(() => {
-    const raw = flattenPositions(accounts)
-    return repriceRows(raw, buildSpotResolver(quotesBySymbol, raw, barsBySymbol), barsBySymbol)
-  }, [accounts, quotesBySymbol, barsBySymbol])
+  const pricedAccounts = useMemo(
+    () => repriceAccounts(accounts, quotesBySymbol, barsBySymbol),
+    [accounts, quotesBySymbol, barsBySymbol],
+  )
+  const allRows = useMemo(() => flattenPositions(pricedAccounts), [pricedAccounts])
   const { stocks: allStocks } = splitBySecType(allRows)
 
   const freshnessRows = useMemo(
@@ -246,7 +247,7 @@ export default function AccountsPage() {
             />
 
             <AccountsComposedBand
-              accounts={accounts}
+              accounts={pricedAccounts}
               allStocks={allStocks}
               allPositions={allRows}
               quotesBySymbol={quotesBySymbol}

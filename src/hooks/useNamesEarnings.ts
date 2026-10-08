@@ -109,7 +109,7 @@ export function useNamesEarnings(
       if (cached) out[sym] = readEarnings(cached)
     }
     return out
-  }, [reads, nameKey, askedKey, qc])
+  }, [reads, nameKey, qc])
 }
 
 /**

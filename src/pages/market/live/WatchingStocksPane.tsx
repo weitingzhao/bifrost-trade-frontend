@@ -176,11 +176,11 @@ export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }:
       <div className={livePaneTitleRowClass}>
         <StatusLamp
           lamp={streamsLamp}
-          title="Quotes: green when Market API can read Redis and IB ingestor is connected (OPT quotes via contract_quote_live)."
+          title="Quotes: green when Market API can read Redis and IB ingestor is connected (option quotes from the IB Gateway option cache)."
         />
         <h2 className={livePaneTitleClass}>
           Watching Options
-          <InfoTooltip text="Option contracts from Watchlist; quotes from daemon (contract_quote_live). Same quote-path health as Market Streams." />
+          <InfoTooltip text="Option contracts from Watchlist; quotes from the IB Gateway option cache. Same quote-path health as Market Streams." />
         </h2>
       </div>
       {items.length === 0 ? (

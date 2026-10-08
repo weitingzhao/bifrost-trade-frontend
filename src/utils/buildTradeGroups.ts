@@ -10,7 +10,7 @@ import type { AccountFilter } from '@/utils/positionsGrouping'
 import { positionMatchesAccountFilter } from '@/utils/positionsGrouping'
 import { buildOffTrackPositions } from '@/utils/offTrackPositions'
 import { optContractKey } from '@/utils/contractKey'
-import { numericOrNull } from '@/utils/finite'
+import { resolveOptionLegMark } from '@/utils/spotPrice'
 
 export function normalizeAvgCostPerShare(raw: number | null | undefined): number | null {
   if (raw == null || !Number.isFinite(Number(raw))) return null
@@ -42,11 +42,7 @@ function attributionMark(
   livePos: LivePositionRow | undefined,
   a: PositionTradeAttribution,
 ): { markPrice: number | null; markSource: AttributionMarkSource | null | undefined; markDate: string | null | undefined } {
-  const ib = numericOrNull(livePos?.price)
-  if (ib != null) return { markPrice: ib, markSource: undefined, markDate: undefined }
-  const rowMark = numericOrNull(a.price_mid) ?? numericOrNull(a.price_last)
-  if (rowMark == null) return { markPrice: null, markSource: undefined, markDate: undefined }
-  return { markPrice: rowMark, markSource: a.mark_source, markDate: a.mark_date }
+  return resolveOptionLegMark(livePos, a)
 }
 
 /**

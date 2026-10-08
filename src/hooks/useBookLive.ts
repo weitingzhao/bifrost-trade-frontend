@@ -35,6 +35,7 @@ import { accountTag } from '@/utils/accountTag'
 import { bookLiveTotals, buildBookLiveRows, type BookLiveRow, type BookLiveTotals } from '@/utils/bookLive'
 import { etTodayIso } from '@/lib/freshness'
 import { equityDeltaOf, noEquityDeltaKeys } from '@/utils/equityDelta'
+import { sumDegradedLegs } from '@/utils/modelAnalysisGreeks'
 import {
   extractOptPositionRows,
   mergeQuotesIntoSymbolMap,
@@ -58,6 +59,9 @@ export interface BookLive {
   modelDeltaByAccount: Record<string, number>
   /** `modelDegraded` per account. */
   modelDegradedByAccount: Record<string, number>
+  /** Option legs the model could not price (`degraded_leg_count` summed). */
+  modelDegradedLegs: number
+  modelDegradedLegsByAccount: Record<string, number>
   /** Newest quote in the book, seconds ago. */
   quoteAgeSec: number | null
   tagOf: (accountId: string) => string
@@ -162,12 +166,20 @@ export function useBookLive(open: boolean): BookLive {
   // Rev .114: the Δ is stocks + options. A bond or T-bill ETF carries no equity
   // delta, so its shares leave the sum (an option written on it stays).
   const noEquityDelta = useMemo(() => noEquityDeltaKeys(accounts), [accounts])
-  const { modelDelta, modelDegraded, modelDeltaByAccount, modelDegradedByAccount } = useMemo(() => {
+  const { modelDelta, modelDegraded, modelDeltaByAccount, modelDegradedByAccount, modelDegradedLegs, modelDegradedLegsByAccount } =
+    useMemo(() => {
     let sum: number | null = null
     let degraded = 0
+    let degradedLegs = 0
     const byAccount: Record<string, number> = {}
     const degradedByAccount: Record<string, number> = {}
+    const degradedLegsByAccount: Record<string, number> = {}
     models.forEach((m, i) => {
+      const legs = sumDegradedLegs(m.data?.per_underlying ?? [])
+      if (legs > 0) {
+        degradedLegs += legs
+        degradedLegsByAccount[accountIds[i]] = (degradedLegsByAccount[accountIds[i]] ?? 0) + legs
+      }
       for (const u of m.data?.per_underlying ?? []) {
         if (u.greeks?.degraded) {
           degraded += 1
@@ -180,7 +192,14 @@ export function useBookLive(open: boolean): BookLive {
         }
       }
     })
-    return { modelDelta: sum, modelDegraded: degraded, modelDeltaByAccount: byAccount, modelDegradedByAccount: degradedByAccount }
+    return {
+      modelDelta: sum,
+      modelDegraded: degraded,
+      modelDeltaByAccount: byAccount,
+      modelDegradedByAccount: degradedByAccount,
+      modelDegradedLegs: degradedLegs,
+      modelDegradedLegsByAccount: degradedLegsByAccount,
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelStamp, noEquityDelta])
 
@@ -246,6 +265,8 @@ export function useBookLive(open: boolean): BookLive {
     modelDegraded,
     modelDeltaByAccount,
     modelDegradedByAccount,
+    modelDegradedLegs,
+    modelDegradedLegsByAccount,
     quoteAgeSec,
     tagOf,
     isLoading: statusLoading || (!onLive && snapshot.isLoading),

@@ -45,6 +45,14 @@ function renderBand(over: Partial<ModelBandProps> = {}) {
 }
 
 describe('ModelBandSection', () => {
+  it('renders degraded_leg_count on the summary strip and per-row delta (TD-264)', () => {
+    renderBand({ table: { open: true, expandedSymbol: null, onToggle: vi.fn(), onToggleSymbol: vi.fn() } })
+    const strip = screen.getByRole('status', { name: 'Account summary' })
+    expect(within(strip).getByText('Option legs without quote')).toBeInTheDocument()
+    expect(within(strip).getByText('1')).toBeInTheDocument()
+    expect(screen.getByText(/1 leg no quote/)).toBeInTheDocument()
+  })
+
   it('with both accounts in scope: a switchable control on Host, and the sentence says it reads one of two', () => {
     const { props } = renderBand()
     const host = screen.getByRole('button', { name: 'Host' })

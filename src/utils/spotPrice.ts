@@ -19,7 +19,7 @@
  */
 import type { QuoteItem } from '@/types/market'
 import type { IbPositionRow } from '@/types/monitor'
-import type { LivePositionRow } from '@/types/positions'
+import type { AttributionMarkSource, LivePositionRow, PositionTradeAttribution } from '@/types/positions'
 
 export type SpotSource = 'live' | 'close' | 'mark'
 
@@ -72,10 +72,8 @@ export function buildSpotResolver(
     } else if (bar && finitePositive(bar.close)) {
       // A mark stamped after the close is an intraday price the bar has not
       // caught up with; one stamped before it is older than the close.
-      spot =
-        mark && mark.asOf != null && mark.asOf > bar.date
-          ? mark
-          : { price: bar.close, source: 'close', asOf: bar.date }
+      const close: Spot = { price: bar.close, source: 'close', asOf: bar.date }
+      spot = mark ? preferFresherCloseOrMark(close, mark) : close
     } else if (mark) {
       spot = mark
     }
@@ -119,6 +117,22 @@ export function spotMixOf(symbols: readonly string[], resolve: SpotResolver): Sp
  * calendar day, read in UTC so a reader west of Greenwich does not see Friday's
  * close labelled Thursday. A live quote or a mark is an instant, read locally.
  */
+/** Vendor session date (`YYYY-MM-DD`) as unix seconds at UTC midnight — same basis as a daily bar. */
+export function sessionDateToUnix(day: string | null | undefined): number | null {
+  const d = (day ?? '').slice(0, 10)
+  if (d.length !== 10) return null
+  const ms = Date.parse(`${d}T00:00:00.000Z`)
+  return Number.isFinite(ms) ? Math.floor(ms / 1000) : null
+}
+
+/**
+ * When a dated close and a fresher mark both exist, the mark wins — the rule
+ * `buildSpotResolver` uses for stocks and option legs share.
+ */
+export function preferFresherCloseOrMark(close: Spot, mark: Spot): Spot {
+  return mark.asOf != null && close.asOf != null && mark.asOf > close.asOf ? mark : close
+}
+
 export function fmtSpotDate(asOf: number | null, source: SpotSource = 'mark'): string {
   if (asOf == null || !Number.isFinite(asOf)) return '—'
   const d = new Date(asOf * 1000)
@@ -142,6 +156,42 @@ export function describeSpot(spot: Spot | null): string {
  * broker's mark (on DEV and PROD a March quote, TD-260), and beside a live mark
  * it printed a gain whose percentage said loss. No average cost, no figure.
  */
+/**
+ * Option leg mark on Positions: dated EOD attribution wins over a stale IB
+ * `/status` price, and a fresher IB mark wins over an older EOD — the same
+ * close-vs-mark rule stocks use in `buildSpotResolver`.
+ */
+export function resolveOptionLegMark(
+  livePos: LivePositionRow | undefined,
+  a: Pick<PositionTradeAttribution, 'price_mid' | 'price_last' | 'mark_source' | 'mark_date'>,
+): {
+  markPrice: number | null
+  markSource: AttributionMarkSource | null | undefined
+  markDate: string | null | undefined
+} {
+  const rowMark = finitePositive(a.price_mid) ? Number(a.price_mid) : finitePositive(a.price_last) ? Number(a.price_last) : null
+  const ibPrice = finitePositive(livePos?.price) ? Number(livePos!.price) : null
+  const ibAsOf = livePos?.price_updated_at ?? null
+
+  if (a.mark_source === 'vendor_eod' && rowMark != null) {
+    const eodAsOf = sessionDateToUnix(a.mark_date)
+    if (eodAsOf != null) {
+      const eodSpot: Spot = { price: rowMark, source: 'close', asOf: eodAsOf }
+      if (ibPrice != null && ibAsOf != null) {
+        const ibSpot: Spot = { price: ibPrice, source: 'mark', asOf: ibAsOf }
+        const picked = preferFresherCloseOrMark(eodSpot, ibSpot)
+        if (picked.source === 'mark') return { markPrice: ibPrice, markSource: undefined, markDate: undefined }
+        return { markPrice: rowMark, markSource: a.mark_source, markDate: a.mark_date }
+      }
+      return { markPrice: rowMark, markSource: a.mark_source, markDate: a.mark_date }
+    }
+  }
+
+  if (ibPrice != null) return { markPrice: ibPrice, markSource: undefined, markDate: undefined }
+  if (rowMark == null) return { markPrice: null, markSource: undefined, markDate: undefined }
+  return { markPrice: rowMark, markSource: a.mark_source, markDate: a.mark_date }
+}
+
 export function repriceRows(rows: readonly LivePositionRow[], resolve: SpotResolver, barsBySymbol: Readonly<Record<string, LatestBar>> = {}): LivePositionRow[] {
   return rows.map((row) => {
     if ((row.secType ?? '').toUpperCase() === 'OPT') return row

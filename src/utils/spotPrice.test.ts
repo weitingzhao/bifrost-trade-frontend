@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { buildSpotResolver, describeSpot, repriceAccounts, repriceRows, spotMixOf, type LatestBar } from './spotPrice'
+import {
+  buildSpotResolver,
+  describeSpot,
+  preferFresherCloseOrMark,
+  repriceAccounts,
+  repriceRows,
+  resolveOptionLegMark,
+  sessionDateToUnix,
+  spotMixOf,
+  type LatestBar,
+  type Spot,
+} from './spotPrice'
 import type { QuoteItem } from '@/types/market'
 import type { LivePositionRow } from '@/types/positions'
 
@@ -82,6 +93,36 @@ describe('repriceAccounts', () => {
   it('leaves a row nothing prices without a price rather than at its cost', () => {
     const accounts = [{ account_id: 'U1', positions: [{ symbol: 'XYZ', secType: 'STK', position: 10, avgCost: 9, price: null }] }]
     expect(repriceAccounts(accounts, {})[0].positions?.[0].price).toBeNull()
+  })
+})
+
+describe('resolveOptionLegMark (TD-264)', () => {
+  const eodDay = '2031-10-03'
+  const eodAsOf = sessionDateToUnix(eodDay)!
+
+  it('keeps vendor EOD over a stale IB mark', () => {
+    const m = resolveOptionLegMark(
+      { price: 5.5, price_updated_at: eodAsOf - 86_400 } as LivePositionRow,
+      { price_mid: null, price_last: 4.2, mark_source: 'vendor_eod', mark_date: eodDay },
+    )
+    expect(m.markPrice).toBe(4.2)
+    expect(m.markSource).toBe('vendor_eod')
+  })
+
+  it('takes IB when its stamp is after the EOD session', () => {
+    const m = resolveOptionLegMark(
+      { price: 5.5, price_updated_at: eodAsOf + 3600 } as LivePositionRow,
+      { price_mid: null, price_last: 4.2, mark_source: 'vendor_eod', mark_date: eodDay },
+    )
+    expect(m.markPrice).toBe(5.5)
+    expect(m.markSource).toBeUndefined()
+  })
+
+  it('shares the stock close-vs-mark rule via preferFresherCloseOrMark', () => {
+    const close: Spot = { price: 4.2, source: 'close', asOf: eodAsOf }
+    const mark: Spot = { price: 5.5, source: 'mark', asOf: eodAsOf + 1 }
+    expect(preferFresherCloseOrMark(close, mark)).toBe(mark)
+    expect(preferFresherCloseOrMark(close, { ...mark, asOf: eodAsOf - 1 })).toBe(close)
   })
 })
 

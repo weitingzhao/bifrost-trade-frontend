@@ -45,6 +45,7 @@ import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { BOOK_BUCKETS, type BookBucket } from '@/utils/bookLive'
 import { workingOrderRows } from '@/utils/bookOrders'
 import { deltaShortNote, markDeltaShort } from '@/utils/equityDelta'
+import { degradedLegsSummary } from '@/utils/modelAnalysisGreeks'
 import { routeFor } from '../routeRegistry'
 import { MenubarTip } from './MenubarTip'
 import { useShellPopover } from '@/lib/shellPopover'
@@ -152,6 +153,8 @@ export function BookControl() {
   const scopedId = scopeAccountId(scope, hostId, secondaryId)
   const delta = scopedId ? (book.modelDeltaByAccount[scopedId] ?? null) : book.modelDelta
   const deltaShort = scopedId ? (book.modelDegradedByAccount[scopedId] ?? 0) : book.modelDegraded
+  const degradedLegs = scopedId ? (book.modelDegradedLegsByAccount[scopedId] ?? 0) : book.modelDegradedLegs
+  const degradedLegsNote = degradedLegsSummary(degradedLegs)
   const deltaText = markDeltaShort(delta == null ? '—' : signedInt(delta), deltaShort)
   const legs = scoped.filter((r) => r.next.warn)
   // The strip's `Open orders N`, from the same status read (Rev .155). The
@@ -178,7 +181,7 @@ export function BookControl() {
       : 'No holdings read yet',
     delta == null
       ? 'Δ: the model service has not answered'
-      : `Δ ${signedInt(delta)} shares-equivalent (model service)${deltaShort > 0 ? ` — ${deltaShortNote(deltaShort)}` : ''}`,
+      : `Δ ${signedInt(delta)} shares-equivalent (model service)${deltaShort > 0 ? ` — ${deltaShortNote(deltaShort)}` : ''}${degradedLegsNote ? ` — ${degradedLegsNote}` : ''}`,
     ...(orders.length ? [`◷ ${orders.length} working ${orders.length === 1 ? 'order' : 'orders'} at IB`] : []),
     `▲ ${legs.length} short ${legs.length === 1 ? 'leg' : 'legs'} inside the warning line`,
     `⯃ ${breaches.length} breached ${breaches.length === 1 ? 'limit' : 'limits'}${breaches.length ? ` — ${breaches.map((b) => b.name).join(' · ')}` : ''}`,

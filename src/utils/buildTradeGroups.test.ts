@@ -104,10 +104,19 @@ describe('buildTradeGroups', () => {
     expect(eodMarkLabel(leg)).toBeNull()
   })
 
-  it('does not carry the row label when IB prices the leg (TD-171)', () => {
-    const groups = buildTradeGroups({
-      attributions: [attrRow({ price_mid: null, price_last: 4.2, mark_source: 'vendor_eod', mark_date: '2031-10-03' })],
-      liveOptions: [{ account_id: 'U001', contract_key: 'NVDA|OPT|20250620|120|P', price: 5.5 } as LivePositionRow],
+  it('uses IB only when it is stamped after the EOD session (TD-264)', () => {
+    const eodDay = '2031-10-03'
+    const eodAsOf = Math.floor(Date.parse(`${eodDay}T00:00:00.000Z`) / 1000)
+    const groupsStale = buildTradeGroups({
+      attributions: [attrRow({ price_mid: null, price_last: 4.2, mark_source: 'vendor_eod', mark_date: eodDay })],
+      liveOptions: [
+        {
+          account_id: 'U001',
+          contract_key: 'NVDA|OPT|20250620|120|P',
+          price: 5.5,
+          price_updated_at: eodAsOf - 86_400,
+        } as LivePositionRow,
+      ],
       accountFilter: { host: true, secondary: true },
       hostAccountId: '',
       secondaryAccountId: '',
@@ -116,7 +125,28 @@ describe('buildTradeGroups', () => {
       showOffTrack: false,
       executionsFinal: [],
     })
-    const leg = groups[0].positions[0]
+    expect(groupsStale[0].positions[0].mark_price).toBe(4.2)
+    expect(eodMarkLabel(groupsStale[0].positions[0])).toBe('EOD 10-03')
+
+    const groupsFresh = buildTradeGroups({
+      attributions: [attrRow({ price_mid: null, price_last: 4.2, mark_source: 'vendor_eod', mark_date: eodDay })],
+      liveOptions: [
+        {
+          account_id: 'U001',
+          contract_key: 'NVDA|OPT|20250620|120|P',
+          price: 5.5,
+          price_updated_at: eodAsOf + 3600,
+        } as LivePositionRow,
+      ],
+      accountFilter: { host: true, secondary: true },
+      hostAccountId: '',
+      secondaryAccountId: '',
+      filterSymbol: '',
+      filterExpiry: '',
+      showOffTrack: false,
+      executionsFinal: [],
+    })
+    const leg = groupsFresh[0].positions[0]
     expect(leg.mark_price).toBe(5.5)
     expect(eodMarkLabel(leg)).toBeNull()
   })

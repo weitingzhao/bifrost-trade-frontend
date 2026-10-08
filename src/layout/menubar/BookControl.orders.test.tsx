@@ -38,6 +38,8 @@ vi.mock('@/hooks/useBookLive', () => ({
     modelDegraded: bookState.degraded,
     modelDeltaByAccount: { [HOST]: 70, [SEC]: 50 },
     modelDegradedByAccount: bookState.degradedByAccount,
+    modelDegradedLegs: 0,
+    modelDegradedLegsByAccount: {},
     quoteAgeSec: null,
     tagOf: (id: string) => (id === HOST ? 'HOST' : id === SEC ? 'SEC' : id.slice(-4)),
     isLoading: false,

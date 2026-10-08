@@ -12,6 +12,12 @@ import {
   markDeltaShort,
   noEquityDeltaKeys,
 } from '@/utils/equityDelta'
+import {
+  degradedLegCount,
+  degradedLegsRowNote,
+  degradedLegsSummary,
+  sumDegradedLegs,
+} from '@/utils/modelAnalysisGreeks'
 import { Badge } from '@/components/ui/badge'
 import {
   CollapsibleChevron,
@@ -159,9 +165,13 @@ export function ModelAnalysisMainTable({ data, filterSymbol, open, onToggle, exp
                           {u.capital_at_risk.has_unbounded ? 'N/A' : fmtUsd(u.capital_at_risk.effective)}
                         </DenseTableCell>
                         <DenseTableCell className={denseTableNumCell}>{fmtRatioAsPct(u.annualized_return_on_car)}</DenseTableCell>
-                        <DenseTableCell className={denseTableNumCell}>
-                          {fmtModelDelta(u.greeks.delta)}
-                          {u.greeks.degraded ? ' *' : ''}
+                        <DenseTableCell className={denseTableNumCell} title={degradedLegsRowNote(u.greeks) ?? undefined}>
+                          {markDeltaShort(fmtModelDelta(u.greeks.delta), u.greeks.degraded ? 1 : 0)}
+                          {degradedLegCount(u.greeks) > 0 ? (
+                            <span className="ml-1 text-dense-meta font-normal text-warning">
+                              · {degradedLegCount(u.greeks)} leg{degradedLegCount(u.greeks) === 1 ? '' : 's'} no quote
+                            </span>
+                          ) : null}
                         </DenseTableCell>
                         <DenseTableCell className={denseTableNumCell}>{fmtUsd(u.greeks.delta_dollars)}</DenseTableCell>
                       </DenseTableRow>
@@ -312,7 +322,15 @@ export function ModelAnalysisSummaryStrip({ data }: SummaryProps) {
     dollars: rollups.total_delta_dollars ?? null,
   })
   const deltaShort = (data.per_underlying ?? []).filter((u) => u.greeks?.degraded).length
-  const deltaTitle = deltaShort > 0 ? `${EQUITY_DELTA_TITLE}\n${deltaShortNote(deltaShort)}` : EQUITY_DELTA_TITLE
+  const degradedLegs = sumDegradedLegs(data.per_underlying ?? [])
+  const degradedNote = degradedLegsSummary(degradedLegs)
+  const deltaTitle = [
+    EQUITY_DELTA_TITLE,
+    deltaShort > 0 ? deltaShortNote(deltaShort) : null,
+    degradedNote,
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   const items = [
     { label: 'Net Liquidation', value: fmtUsd(summary.net_liquidation) },
@@ -325,6 +343,9 @@ export function ModelAnalysisSummaryStrip({ data }: SummaryProps) {
     { label: 'Wtd Annual Return', value: fmtRatioAsPct(rollups.weighted_annualized_return) },
     { label: `Δ · share equivalent · ${EQUITY_DELTA_LABEL}`, value: markDeltaShort(fmtModelDelta(eq.delta), deltaShort), title: deltaTitle },
     { label: `Δ$ · exposure · ${EQUITY_DELTA_LABEL}`, value: markDeltaShort(fmtUsd(eq.dollars), deltaShort), title: deltaTitle },
+    ...(degradedLegs > 0
+      ? [{ label: 'Option legs without quote', value: String(degradedLegs), title: degradedNote ?? undefined }]
+      : []),
   ]
 
   return (

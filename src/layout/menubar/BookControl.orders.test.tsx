@@ -16,7 +16,10 @@ import { setAccountScope } from '@/lib/accountScope'
 const HOST = 'U1000001'
 const SEC = 'U2000002'
 
-const { statusState } = vi.hoisted(() => ({ statusState: { orders: [] as OpenOrderRow[] } }))
+const { statusState, bookState } = vi.hoisted(() => ({
+  statusState: { orders: [] as OpenOrderRow[] },
+  bookState: { degraded: 0, degradedByAccount: {} as Record<string, number> },
+}))
 
 vi.mock('@/hooks/useMonitorStatus', () => ({
   useMonitorStatus: () => ({
@@ -32,8 +35,9 @@ vi.mock('@/hooks/useBookLive', () => ({
     rows: [],
     totals: {},
     modelDelta: 120,
-    modelDegraded: 0,
-    modelDeltaByAccount: {},
+    modelDegraded: bookState.degraded,
+    modelDeltaByAccount: { [HOST]: 70, [SEC]: 50 },
+    modelDegradedByAccount: bookState.degradedByAccount,
     quoteAgeSec: null,
     tagOf: (id: string) => (id === HOST ? 'HOST' : id === SEC ? 'SEC' : id.slice(-4)),
     isLoading: false,
@@ -90,6 +94,8 @@ afterEach(() => {
   cleanup()
   act(() => setAccountScope('all'))
   statusState.orders = []
+  bookState.degraded = 0
+  bookState.degradedByAccount = {}
 })
 
 describe('Account control — working orders (Rev .155)', () => {
@@ -131,5 +137,18 @@ describe('Account control — working orders (Rev .155)', () => {
     openCentre()
     fireEvent.click(screen.getByTitle('Working orders at IB · 0'))
     expect(screen.getByText('No working orders at IB.')).toBeTruthy()
+  })
+})
+
+describe('Account control — a Δ without its option legs (TD-260)', () => {
+  it('marks the Δ +? and says why, rather than reading the missing legs as 0', () => {
+    bookState.degraded = 2
+    bookState.degradedByAccount = { [HOST]: 2 }
+    renderBar()
+    expect(trigger().textContent).toBe('—Δ+120+?')
+    expect(trigger().getAttribute('data-tip')).toContain('2 underlyings without option-leg delta — no option quote is served')
+
+    act(() => setAccountScope('SEC'))
+    expect(trigger().textContent).toBe('S—Δ+50')
   })
 })

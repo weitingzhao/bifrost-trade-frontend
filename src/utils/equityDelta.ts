@@ -17,6 +17,22 @@ export const EQUITY_DELTA_LABEL = 'stocks + options'
 export const EQUITY_DELTA_TITLE =
   'Stocks and options only — fixed-income and cash-like shares are left out, the same count as the menu bar’s Book Δ'
 
+/**
+ * A Δ the model computed without its option legs. No option quote is served
+ * (contract_quote_live has no writer, TD-260), so a leg has no mid, no IV and no
+ * delta; the underlying is flagged degraded and its Δ is the shares alone. The
+ * reading is marked `+?` — short by an unknown amount, never a 0 for those legs.
+ */
+export function deltaShortNote(degradedUnderlyings: number): string {
+  const n = degradedUnderlyings
+  return `${n} ${n === 1 ? 'underlying' : 'underlyings'} without option-leg delta — no option quote is served`
+}
+
+/** The Δ figure with the `+?` mark when some of it is missing. */
+export function markDeltaShort(text: string, degradedUnderlyings: number): string {
+  return degradedUnderlyings > 0 && text !== '—' ? `${text}+?` : text
+}
+
 const keyOf = (accountId: string, symbol: string) => `${accountId.trim()}|${symbol.trim().toUpperCase()}`
 
 /** `account|SYMBOL` for every stock holding registered as fixed income or cash-like. */

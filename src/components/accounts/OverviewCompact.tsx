@@ -12,7 +12,9 @@ interface Props {
 function computeOverviewTotals(accounts: IbAccountSnapshot[]) {
   const optKeys = new Set<string>()
   let stockLines = 0
-  let unrealizedPnl = 0
+  // Only lines that carry a figure are summed; none at all is no reading, not $0 (TD-260).
+  let unrealizedPnl: number | null = null
+  let unpriced = 0
 
   for (const account of accounts) {
     for (const position of account.positions ?? []) {
@@ -28,11 +30,13 @@ function computeOverviewTotals(accounts: IbAccountSnapshot[]) {
       } else {
         stockLines += 1
       }
-      unrealizedPnl += Number(position.unrealized_pnl) || 0
+      const u = position.unrealized_pnl == null ? NaN : Number(position.unrealized_pnl)
+      if (Number.isFinite(u)) unrealizedPnl = (unrealizedPnl ?? 0) + u
+      else unpriced += 1
     }
   }
 
-  return { optionContracts: optKeys.size, stockLines, unrealizedPnl }
+  return { optionContracts: optKeys.size, stockLines, unrealizedPnl, unpriced }
 }
 
 export function OverviewCompact({ accounts, className }: Props) {
@@ -57,9 +61,14 @@ export function OverviewCompact({ accounts, className }: Props) {
       <span className="mx-2 opacity-40">·</span>
       <span>
         <span className="font-medium text-foreground/70">Unrealized PnL</span>{' '}
-        <span className={cn('font-mono', unrealizedPnlColorClass(totals.unrealizedPnl))}>
-          {fmtUsd(totals.unrealizedPnl)}
-        </span>
+        {totals.unrealizedPnl == null ? (
+          <span className="font-mono">—</span>
+        ) : (
+          <span className={cn('font-mono', unrealizedPnlColorClass(totals.unrealizedPnl))}>
+            {fmtUsd(totals.unrealizedPnl)}
+            {totals.unpriced > 0 ? '+?' : ''}
+          </span>
+        )}
       </span>
     </p>
   )

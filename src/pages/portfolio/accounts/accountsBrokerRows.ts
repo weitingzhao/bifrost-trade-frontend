@@ -11,7 +11,7 @@
  * the same as a zero and not the same as broken.
  */
 import { summaryNum } from '@/utils/marginPressure'
-import type { IbAccountSnapshot } from '@/types/monitor'
+import type { IbAccountSnapshot, IbPositionRow } from '@/types/monitor'
 import type { ExecutionFreshnessItem } from '@/types/trading'
 import { accountRoles, daysFor } from '@/utils/accountsFreshnessRows'
 
@@ -113,10 +113,23 @@ export function buildBrokerRows(
   return { rows, totals }
 }
 
-export function unrealizedPnlTotal(accounts: readonly IbAccountSnapshot[]): number {
-  let total = 0
-  for (const a of accounts) {
-    for (const p of a.positions ?? []) total += Number(p.unrealized_pnl) || 0
+/** The unrealized P&L the open lines carry. A line without a figure is counted, never read as 0. */
+export interface UnrealizedReading {
+  /** Sum over the lines that carry a figure; null when none does. */
+  total: number | null
+  /** Open lines with no figure — every option, and a stock nothing prices (TD-260). */
+  unpriced: number
+}
+
+export function unrealizedPnlTotal(rows: readonly IbPositionRow[]): UnrealizedReading {
+  let total: number | null = null
+  let unpriced = 0
+  for (const p of rows) {
+    const qty = Number(p.position)
+    if (!Number.isFinite(qty) || qty === 0) continue
+    const u = p.unrealized_pnl == null ? NaN : Number(p.unrealized_pnl)
+    if (Number.isFinite(u)) total = (total ?? 0) + u
+    else unpriced += 1
   }
-  return total
+  return { total, unpriced }
 }

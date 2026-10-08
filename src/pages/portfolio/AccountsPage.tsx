@@ -242,7 +242,7 @@ export default function AccountsPage() {
               totals={broker.totals}
               selectedAccountId={selected?.account_id ?? null}
               onSelect={setSelectedAccountId}
-              unrealizedPnl={unrealizedPnlTotal(accounts)}
+              unrealizedPnl={unrealizedPnlTotal(allRows)}
             />
 
             <AccountsComposedBand

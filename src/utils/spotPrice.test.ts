@@ -83,4 +83,12 @@ describe('repriceRows', () => {
     const row = stock('XYZ', null)
     expect(repriceRows([row], r)[0]).toBe(row)
   })
+  it('unrealized P&L follows the price written onto the row, not the broker mark it arrived with (TD-260)', () => {
+    // Invented: the row's own figure was computed at a March mark above the live price.
+    const marchRow = { ...stock('NVDA', 183.885, MARCH), avgCost: 180, unrealized_pnl: 388.5 } as LivePositionRow
+    const live = buildSpotResolver({ NVDA: quote('NVDA', 175) }, [marchRow], bars)
+    expect(repriceRows([marchRow], live)[0].unrealized_pnl).toBeCloseTo((175 - 180) * 100)
+    const noCost = { ...marchRow, avgCost: null }
+    expect(repriceRows([noCost], live)[0].unrealized_pnl).toBeNull()
+  })
 })

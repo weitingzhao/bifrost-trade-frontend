@@ -17,7 +17,7 @@ import { fmtPct1, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { unrealizedPnlColorClass } from '@/utils/dailyChange'
 import { TWS_REC_WARN_DAYS } from '@/utils/accountsClocks'
-import type { BrokerAccountRow, BrokerTotals } from './accountsBrokerRows'
+import type { BrokerAccountRow, BrokerTotals, UnrealizedReading } from './accountsBrokerRows'
 import { accountsUi, formatAgeDays } from './accountsUi'
 import { SectionHead } from '@/components/layout'
 
@@ -37,7 +37,7 @@ export function AccountsBrokerBand({
   totals: BrokerTotals
   selectedAccountId: string | null
   onSelect: (accountId: string) => void
-  unrealizedPnl: number
+  unrealizedPnl: UnrealizedReading
 }) {
   const nlv = totals.netLiq
   const cashShare = nlv > 0 ? (totals.cash / nlv) * 100 : null
@@ -50,8 +50,21 @@ export function AccountsBrokerBand({
         <div className={accountsUi.tileRow}>
           <StatTile
             label="Unrealized PnL"
-            value={<span className={unrealizedPnlColorClass(unrealizedPnl)}>{fmtUsd(unrealizedPnl)}</span>}
-            sub="all accounts"
+            value={
+              unrealizedPnl.total == null ? (
+                '—'
+              ) : (
+                <span className={unrealizedPnlColorClass(unrealizedPnl.total)}>
+                  {fmtUsd(unrealizedPnl.total)}
+                  {unrealizedPnl.unpriced > 0 ? '+?' : ''}
+                </span>
+              )
+            }
+            sub={
+              unrealizedPnl.unpriced > 0
+                ? `all accounts · ${unrealizedPnl.unpriced} unpriced, not counted`
+                : 'all accounts'
+            }
           />
           <StatTile label="Net liquidation" value={fmtUsdRound(nlv)} sub={`${rows.length} accounts`} />
           <StatTile

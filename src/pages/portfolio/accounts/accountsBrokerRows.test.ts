@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildBrokerRows, unrealizedPnlTotal } from './accountsBrokerRows'
-import type { IbAccountSnapshot } from '@/types/monitor'
+import type { IbAccountSnapshot, IbPositionRow } from '@/types/monitor'
 import type { ExecutionFreshnessItem } from '@/types/trading'
 
 // Three accounts shaped the way DEV reports them, figures invented: the third
@@ -111,7 +111,15 @@ describe('the by-account table', () => {
 })
 
 describe('unrealizedPnlTotal', () => {
-  it('sums what the broker reported per line', () => {
-    expect(unrealizedPnlTotal(ACCOUNTS)).toBe(23 * 100 + 5 * 50)
+  const rows = (ps: Partial<IbPositionRow>[]): IbPositionRow[] => ps.map((p) => ({ position: 1, ...p }))
+  it('sums the lines that carry a figure', () => {
+    expect(unrealizedPnlTotal(ACCOUNTS.flatMap((a) => rows(a.positions ?? [])))).toEqual({ total: 23 * 100 + 5 * 50, unpriced: 0 })
+  })
+  it('a line with no figure is counted as unpriced, not added as 0 (TD-260)', () => {
+    const r = unrealizedPnlTotal(rows([{ unrealized_pnl: 40 }, { secType: 'OPT' }, { unrealized_pnl: null }, { position: 0 }]))
+    expect(r).toEqual({ total: 40, unpriced: 2 })
+  })
+  it('nothing priced reads as no total at all', () => {
+    expect(unrealizedPnlTotal(rows([{ secType: 'OPT' }, { secType: 'STK' }]))).toEqual({ total: null, unpriced: 2 })
   })
 })

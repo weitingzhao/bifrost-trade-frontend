@@ -4,7 +4,14 @@ import type { ModelAnalysisResponse } from '@/types/modelAnalysis'
 import { fmtUsd } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { EQUITY_DELTA_LABEL, EQUITY_DELTA_TITLE, equityDeltaRollup, noEquityDeltaKeys } from '@/utils/equityDelta'
+import {
+  EQUITY_DELTA_LABEL,
+  EQUITY_DELTA_TITLE,
+  deltaShortNote,
+  equityDeltaRollup,
+  markDeltaShort,
+  noEquityDeltaKeys,
+} from '@/utils/equityDelta'
 import { Badge } from '@/components/ui/badge'
 import {
   CollapsibleChevron,
@@ -304,6 +311,8 @@ export function ModelAnalysisSummaryStrip({ data }: SummaryProps) {
     delta: rollups.total_delta ?? null,
     dollars: rollups.total_delta_dollars ?? null,
   })
+  const deltaShort = (data.per_underlying ?? []).filter((u) => u.greeks?.degraded).length
+  const deltaTitle = deltaShort > 0 ? `${EQUITY_DELTA_TITLE}\n${deltaShortNote(deltaShort)}` : EQUITY_DELTA_TITLE
 
   const items = [
     { label: 'Net Liquidation', value: fmtUsd(summary.net_liquidation) },
@@ -314,8 +323,8 @@ export function ModelAnalysisSummaryStrip({ data }: SummaryProps) {
       value: rollups.car_has_unbounded ? 'Unbounded' : fmtUsd(rollups.total_car),
     },
     { label: 'Wtd Annual Return', value: fmtRatioAsPct(rollups.weighted_annualized_return) },
-    { label: `Δ · share equivalent · ${EQUITY_DELTA_LABEL}`, value: fmtModelDelta(eq.delta), title: EQUITY_DELTA_TITLE },
-    { label: `Δ$ · exposure · ${EQUITY_DELTA_LABEL}`, value: fmtUsd(eq.dollars), title: EQUITY_DELTA_TITLE },
+    { label: `Δ · share equivalent · ${EQUITY_DELTA_LABEL}`, value: markDeltaShort(fmtModelDelta(eq.delta), deltaShort), title: deltaTitle },
+    { label: `Δ$ · exposure · ${EQUITY_DELTA_LABEL}`, value: markDeltaShort(fmtUsd(eq.dollars), deltaShort), title: deltaTitle },
   ]
 
   return (

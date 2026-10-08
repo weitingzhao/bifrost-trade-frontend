@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { equityDeltaOf, equityDeltaRollup, noEquityDeltaKeys } from './equityDelta'
+import { deltaShortNote, equityDeltaOf, equityDeltaRollup, markDeltaShort, noEquityDeltaKeys } from './equityDelta'
 
 // Invented holdings (fixtures are never copied from DEV).
 const accounts = [
@@ -42,5 +42,17 @@ describe('equity delta — stocks + options (Rev .119)', () => {
     ]
     expect(equityDeltaRollup(per, 'U0000001', keys, { delta: 400, dollars: 9000 })).toEqual({ delta: 150, dollars: 5000 })
     expect(equityDeltaRollup(per, 'U0000001', keys, { delta: null, dollars: null })).toEqual({ delta: null, dollars: null })
+  })
+})
+
+describe('a Δ short of its option legs (TD-260)', () => {
+  it('is marked +? and never left looking whole', () => {
+    expect(markDeltaShort('+120', 1)).toBe('+120+?')
+    expect(markDeltaShort('+120', 0)).toBe('+120')
+    expect(markDeltaShort('—', 3)).toBe('—')
+  })
+  it('names how many underlyings are short and why', () => {
+    expect(deltaShortNote(1)).toBe('1 underlying without option-leg delta — no option quote is served')
+    expect(deltaShortNote(4)).toContain('4 underlyings')
   })
 })

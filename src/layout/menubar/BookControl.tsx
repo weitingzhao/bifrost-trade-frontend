@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils'
 import { fmtSignedUsd0 } from '@/utils/performanceReading'
 import { BOOK_BUCKETS, type BookBucket } from '@/utils/bookLive'
 import { workingOrderRows } from '@/utils/bookOrders'
+import { deltaShortNote, markDeltaShort } from '@/utils/equityDelta'
 import { routeFor } from '../routeRegistry'
 import { MenubarTip } from './MenubarTip'
 import { useShellPopover } from '@/lib/shellPopover'
@@ -150,6 +151,8 @@ export function BookControl() {
   const dayUnknown = scoped.filter((r) => r.dayUsd == null).length
   const scopedId = scopeAccountId(scope, hostId, secondaryId)
   const delta = scopedId ? (book.modelDeltaByAccount[scopedId] ?? null) : book.modelDelta
+  const deltaShort = scopedId ? (book.modelDegradedByAccount[scopedId] ?? 0) : book.modelDegraded
+  const deltaText = markDeltaShort(delta == null ? '—' : signedInt(delta), deltaShort)
   const legs = scoped.filter((r) => r.next.warn)
   // The strip's `Open orders N`, from the same status read (Rev .155). The
   // snapshot's age is measured against when that read landed, not a clock.
@@ -173,7 +176,9 @@ export function BookControl() {
     hasBook
       ? `Day ${fmtSignedUsd0(day)} over ${scoped.length - dayUnknown} of ${scoped.length} holdings${dayUnknown > 0 ? ` — ${dayUnknown} without a day figure` : ''}`
       : 'No holdings read yet',
-    delta == null ? 'Δ: the model service has not answered' : `Δ ${signedInt(delta)} shares-equivalent (model service)`,
+    delta == null
+      ? 'Δ: the model service has not answered'
+      : `Δ ${signedInt(delta)} shares-equivalent (model service)${deltaShort > 0 ? ` — ${deltaShortNote(deltaShort)}` : ''}`,
     ...(orders.length ? [`◷ ${orders.length} working ${orders.length === 1 ? 'order' : 'orders'} at IB`] : []),
     `▲ ${legs.length} short ${legs.length === 1 ? 'leg' : 'legs'} inside the warning line`,
     `⯃ ${breaches.length} breached ${breaches.length === 1 ? 'limit' : 'limits'}${breaches.length ? ` — ${breaches.map((b) => b.name).join(' · ')}` : ''}`,
@@ -304,7 +309,7 @@ export function BookControl() {
                 {dayText}
               </span>
               <span className={cn(css.mono, css.bookDelta, 'text-[var(--sk-mute2)]', css.fs11)}>
-                Δ{delta == null ? '—' : signedInt(delta)}
+                Δ{deltaText}
               </span>
             </span>
             {orders.length > 0 ? (
@@ -376,10 +381,10 @@ export function BookControl() {
           {/* Rev .155: the wide Δ tile split — Δ in the third column, Orders in the fourth. */}
           <div
             className={cn(css.tile, 'flex-col gap-[3px]')}
-            title="Effective delta — the model service's, stocks and options only: fixed income and cash-like holdings carry no equity delta and are left out"
+            title={`Effective delta — the model service's, stocks and options only: fixed income and cash-like holdings carry no equity delta and are left out${deltaShort > 0 ? `\n${deltaShortNote(deltaShort)}` : ''}`}
           >
             <span className={cn(css.round, 'font-mono font-bold', css.fs14)}>Δ</span>
-            <span className={cn(css.mono, 'font-semibold', css.fs12)}>{delta == null ? '—' : signedInt(delta)}</span>
+            <span className={cn(css.mono, 'font-semibold', css.fs12)}>{deltaText}</span>
           </div>
           <button
             type="button"

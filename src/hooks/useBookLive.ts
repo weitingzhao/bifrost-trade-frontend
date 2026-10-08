@@ -56,6 +56,8 @@ export interface BookLive {
   modelDegraded: number
   /** The same Δ per account, for a view narrowed to one (the menu bar's Book). */
   modelDeltaByAccount: Record<string, number>
+  /** `modelDegraded` per account. */
+  modelDegradedByAccount: Record<string, number>
   /** Newest quote in the book, seconds ago. */
   quoteAgeSec: number | null
   tagOf: (accountId: string) => string
@@ -160,13 +162,17 @@ export function useBookLive(open: boolean): BookLive {
   // Rev .114: the Δ is stocks + options. A bond or T-bill ETF carries no equity
   // delta, so its shares leave the sum (an option written on it stays).
   const noEquityDelta = useMemo(() => noEquityDeltaKeys(accounts), [accounts])
-  const { modelDelta, modelDegraded, modelDeltaByAccount } = useMemo(() => {
+  const { modelDelta, modelDegraded, modelDeltaByAccount, modelDegradedByAccount } = useMemo(() => {
     let sum: number | null = null
     let degraded = 0
     const byAccount: Record<string, number> = {}
+    const degradedByAccount: Record<string, number> = {}
     models.forEach((m, i) => {
       for (const u of m.data?.per_underlying ?? []) {
-        if (u.greeks?.degraded) degraded += 1
+        if (u.greeks?.degraded) {
+          degraded += 1
+          degradedByAccount[accountIds[i]] = (degradedByAccount[accountIds[i]] ?? 0) + 1
+        }
         const d = equityDeltaOf(u, accountIds[i], noEquityDelta).delta
         if (d != null && Number.isFinite(d)) {
           sum = (sum ?? 0) + d
@@ -174,7 +180,7 @@ export function useBookLive(open: boolean): BookLive {
         }
       }
     })
-    return { modelDelta: sum, modelDegraded: degraded, modelDeltaByAccount: byAccount }
+    return { modelDelta: sum, modelDegraded: degraded, modelDeltaByAccount: byAccount, modelDegradedByAccount: degradedByAccount }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modelStamp, noEquityDelta])
 
@@ -239,6 +245,7 @@ export function useBookLive(open: boolean): BookLive {
     modelDelta,
     modelDegraded,
     modelDeltaByAccount,
+    modelDegradedByAccount,
     quoteAgeSec,
     tagOf,
     isLoading: statusLoading || (!onLive && snapshot.isLoading),

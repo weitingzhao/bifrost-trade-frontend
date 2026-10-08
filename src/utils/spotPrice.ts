@@ -137,6 +137,9 @@ export function describeSpot(spot: Spot | null): string {
  * `row.price` — market value, cover valuation, the rings — prices the way the
  * risk side does. The bar's previous close replaces the row's own, since the
  * daily change must be measured against the close before the price in use.
+ * `unrealized_pnl` is recomputed at that price: the row's own came from the
+ * broker's mark (on DEV and PROD a March quote, TD-260), and beside a live mark
+ * it printed a gain whose percentage said loss. No average cost, no figure.
  */
 export function repriceRows(rows: readonly LivePositionRow[], resolve: SpotResolver, barsBySymbol: Readonly<Record<string, LatestBar>> = {}): LivePositionRow[] {
   return rows.map((row) => {
@@ -146,10 +149,14 @@ export function repriceRows(rows: readonly LivePositionRow[], resolve: SpotResol
     if (!spot) return row
     const bar = barsBySymbol[sym]
     const prev = spot.source === 'close' && bar?.prevClose != null ? bar.prevClose : undefined
+    const qty = Number(row.position)
+    const cost = row.avgCost != null ? Number(row.avgCost) : NaN
+    const unrealized = Number.isFinite(qty) && Number.isFinite(cost) ? (spot.price - cost) * qty : null
     return {
       ...row,
       price: spot.price,
       price_updated_at: spot.asOf ?? row.price_updated_at ?? null,
+      unrealized_pnl: unrealized,
       ...(prev != null ? { daily_prev_close: prev } : {}),
     }
   })

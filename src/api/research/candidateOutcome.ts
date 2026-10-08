@@ -24,12 +24,25 @@ export interface CandidateOutcomeHorizon {
   avg_excess: number | null
 }
 
+export interface CandidateOutcomeRegimeSlice {
+  regime: string | null
+  horizon_days: number
+  settled: number
+  judged: number
+  hits: number
+  /** null = nothing judged in this regime, which is not a 0% hit rate. */
+  hit_rate: number | null
+  avg_excess: number | null
+}
+
 export interface CandidateOutcomeSummary {
   source: string | null
   days: number
   candidates: number
   pending: number
   horizons: CandidateOutcomeHorizon[]
+  /** Present when the summary was asked with `by_regime=true`. */
+  by_regime?: CandidateOutcomeRegimeSlice[]
 }
 
 export interface CandidateOutcomeRow {
@@ -46,6 +59,9 @@ export interface CandidateOutcomeRow {
   excess_return: number | null
   hit: boolean | null
   source: string | null
+  regime?: string | null
+  regime_scope?: string | null
+  regime_date?: string | null
 }
 
 const validateSummary = withValidation<CandidateOutcomeSummary>(
@@ -58,11 +74,12 @@ const validateRows = withValidation<{ rows: CandidateOutcomeRow[]; count: number
 )
 
 export async function fetchCandidateOutcomeSummary(
-  params: { source?: string; days?: number } = {},
+  params: { source?: string; days?: number; byRegime?: boolean } = {},
 ): Promise<CandidateOutcomeSummary> {
   const q = new URLSearchParams()
   if (params.source) q.set('source', params.source)
   if (params.days != null) q.set('days', String(params.days))
+  if (params.byRegime) q.set('by_regime', 'true')
   const qs = q.toString()
   const data = await requestJson<CandidateOutcomeSummary>(
     `${researchEngineUrl('/research/candidate-outcome/summary')}${qs ? `?${qs}` : ''}`,
@@ -72,11 +89,20 @@ export async function fetchCandidateOutcomeSummary(
 }
 
 export async function fetchCandidateOutcomeRows(
-  params: { symbol?: string; horizonDays?: number; limit?: number } = {},
+  params: {
+    symbol?: string
+    horizonDays?: number
+    /** Empty string is every source — the same as omitting it. */
+    source?: string
+    days?: number
+    limit?: number
+  } = {},
 ): Promise<{ rows: CandidateOutcomeRow[]; count: number }> {
   const q = new URLSearchParams()
   if (params.symbol) q.set('symbol', params.symbol)
   if (params.horizonDays != null) q.set('horizon_days', String(params.horizonDays))
+  if (params.source != null) q.set('source', params.source)
+  if (params.days != null) q.set('days', String(params.days))
   if (params.limit != null) q.set('limit', String(params.limit))
   const qs = q.toString()
   const data = await requestJson<{ rows: CandidateOutcomeRow[]; count: number }>(

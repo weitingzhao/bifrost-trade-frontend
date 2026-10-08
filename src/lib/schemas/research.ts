@@ -239,36 +239,16 @@ export const UniverseReachSchema = z
   .passthrough()
 
 // ── Candidate outcome ───────────────────────────────────────────────────
-// `hit_rate` is nullable: no settled horizon yet is "not known", which must not
-// render as a 0% hit rate.
+// Objects live in candidateOutcome.ts. This file is on the 800-line ceiling
+// (code-health counts a file over 800). `hit_rate` stays nullable.
 
-export const CandidateOutcomeHorizonSchema = z
-  .object({
-    horizon_days: z.number(),
-    settled: z.number(),
-    judged: z.number(),
-    hits: z.number(),
-    hit_rate: z.number().nullable(),
-    avg_return: z.number().nullable(),
-    avg_benchmark: z.number().nullable(),
-    avg_excess: z.number().nullable(),
-  })
-  .passthrough()
-
-export const CandidateOutcomeSummarySchema = z
-  .object({
-    candidates: z.number(),
-    pending: z.number(),
-    horizons: z.array(CandidateOutcomeHorizonSchema),
-  })
-  .passthrough()
-
-export const CandidateOutcomeRowsSchema = z
-  .object({
-    rows: z.array(z.record(z.string(), z.unknown())),
-    count: z.number(),
-  })
-  .passthrough()
+export {
+  CandidateOutcomeHorizonSchema,
+  CandidateOutcomeRegimeSliceSchema,
+  CandidateOutcomeRowSchema,
+  CandidateOutcomeRowsSchema,
+  CandidateOutcomeSummarySchema,
+} from './candidateOutcome'
 
 // ── Run cost estimate ───────────────────────────────────────────────────
 // The one number in this file the Owner spends money on the strength of, so it

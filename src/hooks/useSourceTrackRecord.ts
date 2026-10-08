@@ -29,11 +29,13 @@ export function sourceLabel(source: string): string {
 }
 
 export function useSourceTrackRecord(days = TRACK_DAYS) {
-  // One read to learn which sources the store actually attributes — the rows
-  // endpoint ignores a `source` filter, and the summary is asked for one at a time.
+  // One read to learn which sources the store attributes. `/rows` honors
+  // `source` and `days` (the same meaning as `/summary`); this call omits
+  // both so every source in the window is visible, then the summary is asked
+  // for one source at a time.
   const rowsQuery = useQuery({
     queryKey: ['research-engine', 'candidate-outcome', 'sources', days],
-    queryFn: () => fetchCandidateOutcomeRows({ limit: 500 }),
+    queryFn: () => fetchCandidateOutcomeRows({ days, limit: 500 }),
     staleTime: 10 * 60_000,
   })
   const sources = useMemo(() => {
@@ -48,8 +50,8 @@ export function useSourceTrackRecord(days = TRACK_DAYS) {
   // above, so this record and Signal Decay cannot disagree about a hit rate.
   const summaries = useQueries({
     queries: sources.map((source) => ({
-      queryKey: ['research-engine', 'candidate-outcome', 'summary', source, days],
-      queryFn: () => fetchCandidateOutcomeSummary({ source, days }),
+      queryKey: ['research-engine', 'candidate-outcome', 'summary', source, days, 'by-regime'],
+      queryFn: () => fetchCandidateOutcomeSummary({ source, days, byRegime: true }),
       staleTime: 10 * 60_000,
     })),
   })

@@ -15,6 +15,7 @@ import {
   journalStation,
   journalPct,
   policyChanges,
+  settledRightWrong,
   type JournalNode,
 } from './journalModel'
 import type { ObjectiveRun } from '@/api/research/harness'
@@ -237,6 +238,34 @@ describe('what settled', () => {
   it('says the attribution is missing rather than naming a lens nothing measured', () => {
     const node = build().find((n) => n.type === 'settlement')
     expect(node?.provenance.find(([k]) => k === 'attribution')?.[1]).toMatch(/not recorded/)
+  })
+
+  it('splits a hit into Right and a miss into Wrong, by regime', () => {
+    const hit = build().find((n) => n.type === 'settlement')
+    expect(hit).toBeTruthy()
+    expect(settledRightWrong(hit as JournalNode)).toEqual({ right: 'unlabelled', wrong: '—' })
+    const miss = journalNodes(
+      {
+        runs: [],
+        candidates: [],
+        hypotheses: [],
+        drafts: [],
+        outcomes: [{ ...outcome, hit: false, regime: 'trending', regime_scope: 'symbol' }],
+      },
+      sketch,
+    )[0]
+    expect(settledRightWrong(miss)).toEqual({ right: '—', wrong: 'trending' })
+    const silent = journalNodes(
+      {
+        runs: [],
+        candidates: [],
+        hypotheses: [],
+        drafts: [],
+        outcomes: [{ ...outcome, hit: null, regime: 'range' }],
+      },
+      sketch,
+    )[0]
+    expect(settledRightWrong(silent)).toEqual({ right: '—', wrong: '—' })
   })
 
   it('prints a sign a reader can see without colour', () => {

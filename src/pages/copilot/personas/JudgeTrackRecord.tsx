@@ -16,13 +16,13 @@
  *   five judge rows (`vol_desk` · `momentum` · `value` · `research`, plus
  *   you) cannot be drawn. These rows are origins, and the header says so
  *   rather than letting them be read as judges.
- * - It settles at **1 and 5 days**. The design scores at 20; that horizon is
- *   not computed, so the column is named and left empty rather than quietly
- *   re-based onto 5d, which would make a judge look decided by a rule nobody
- *   agreed to.
+ * - It settles at **1, 5 and 20 days**. This table draws 1d and 5d. Hit 20d
+ *   stays in the list below rather than being quietly re-based onto 5d.
  * - **Agrees with you** needs a hand verdict beside a machine one on the same
  *   name. The hand-verdict store (Vision §4 · §9.3) does not exist yet.
- * - **Best regime** needs a regime label on the settled outcome. There is none.
+ * - **Best regime** is the terrain regime with the highest 5-day hit rate among
+ *   regimes with at least 5 settled outcomes. Under that floor the cell is an
+ *   em dash, never 0.
  * - **Weight** is the persona's own preference, not a scored figure, and it
  *   lives in the editor below — so the row links there instead of restating it.
  *
@@ -30,31 +30,47 @@
  * names the half that is missing. A table quietly shipped with four of eight
  * columns reads as the whole scoreboard.
  */
+import type { CandidateOutcomeSummary } from '@/api/research/candidateOutcome'
+import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { DenseTag } from '@/components/data-display'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TRACK_DAYS, TRACK_THIN, horizonOf, useSourceTrackRecord } from '@/hooks/useSourceTrackRecord'
-import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { cn } from '@/lib/utils'
+import { bestRegime, bestRegimeTitle, type BestRegime } from '@/pages/copilot/personas/bestRegime'
 import { fmtPct0, fmtSignedPct } from '@/utils/positions'
 
 const DAYS = TRACK_DAYS
 const THIN = TRACK_THIN
-/** The horizons the store settles. The design scores at 20; see the file's note. */
+/** Horizons drawn in the row. The summary also settles 20 days; see the file note. */
 const HORIZONS = [1, 5] as const
 
 /** What the design asks for and this side cannot compute, each with the reason. */
 const UNSCORED: { column: string; missing: string }[] = [
   {
     column: 'Hit 20d',
-    missing: 'the outcome store settles at 1 and 5 days — no 20-day horizon is computed',
+    missing: 'the summary settles 20 days; this row still draws 1d and 5d only',
   },
   {
     column: 'Agrees with you',
     missing: 'nothing records a hand verdict beside the machine’s on the same name',
   },
-  { column: 'Best regime', missing: 'settled outcomes carry no regime label' },
 ]
+
+function bestRegimeCell(summary: CandidateOutcomeSummary | undefined): {
+  text: string
+  title: string
+} {
+  if (summary?.by_regime == null) {
+    return { text: '—', title: 'no regime breakdown on this summary' }
+  }
+  const best: BestRegime | null = bestRegime(summary.by_regime)
+  if (!best) return { text: '—', title: bestRegimeTitle() }
+  return {
+    text: best.regime,
+    title: `${best.regime} · ${fmtPct0(best.hit_rate)} at 5d · ${best.settled} settled`,
+  }
+}
 
 /** Where a nomination came from, as the operator who owns it. */
 function operatorOf(source: string): { label: string; variant: 'neutral' | 'category' } {
@@ -110,6 +126,7 @@ export function JudgeTrackRecord() {
               <col className="min-w-[5rem]" />
               <col className="min-w-[5rem]" />
               <col className="min-w-[6rem]" />
+              <col className="min-w-[6rem]" />
             </colgroup>
             <thead>
               <tr>
@@ -136,12 +153,19 @@ export function JudgeTrackRecord() {
                 >
                   Excess 5d
                 </th>
+                <th
+                  className="px-2 py-1 text-left text-dense-micro font-semibold text-muted-foreground"
+                  title="Terrain regime with the highest 5-day hit rate, when at least 5 settled"
+                >
+                  Best regime
+                </th>
               </tr>
             </thead>
             <tbody>
               {rows.map(({ source, summary }) => {
                 const op = operatorOf(source)
                 const five = horizonOf(summary, 5)
+                const regime = bestRegimeCell(summary)
                 const settled = Math.max(...HORIZONS.map((h) => horizonOf(summary, h)?.settled ?? 0))
                 const thin = settled < THIN
                 return (
@@ -181,6 +205,9 @@ export function JudgeTrackRecord() {
                     })}
                     <td className="px-2 py-1 text-right font-mono tabular-nums text-muted-foreground">
                       {fmtSignedPct(five?.avg_excess)}
+                    </td>
+                    <td className="px-2 py-1 text-muted-foreground" title={regime.title}>
+                      {regime.text}
                     </td>
                   </tr>
                 )

@@ -41,6 +41,7 @@ import {
   journalNodes,
   journalStation,
   journalTypeLabel,
+  settledRightWrong,
   type JournalNode,
   type JournalOperator,
 } from './journalModel'
@@ -75,7 +76,7 @@ export default function JournalPage() {
   const candidates = useJournalCandidates(CANDIDATE_DAYS)
   const hypotheses = useJournalHypotheses()
   const drafts = useJournalDrafts()
-  const outcomes = useJournalOutcomes()
+  const outcomes = useJournalOutcomes(CANDIDATE_DAYS)
 
   const error =
     runs.error ?? candidates.error ?? hypotheses.error ?? drafts.error ?? outcomes.error ?? null
@@ -166,20 +167,6 @@ export default function JournalPage() {
     next.delete('day')
     setParams(next, { replace: true })
   }
-  /**
-   * What a settled candidate cited when it was nominated. The settlement node
-   * carries the return; the evidence lives on the candidate above it, which
-   * is the only half of the design's Right/Wrong columns the store can fill.
-   */
-  const citedBy = useMemo(() => {
-    const byId = new Map(nodes.map((n) => [n.id, n]))
-    return (n: JournalNode): string => {
-      const parent = n.parentId != null ? byId.get(n.parentId) : undefined
-      if (parent == null) return 'the candidate is outside this window'
-      return parent.summary
-    }
-  }, [nodes])
-
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(params)
     if (value) next.set(key, value)
@@ -351,7 +338,6 @@ export default function JournalPage() {
 
               <SettledPanel
                 rows={settled}
-                citedBy={citedBy}
                 onSelect={(id) => setParam('sel', id)}
               />
             </div>
@@ -385,21 +371,17 @@ export default function JournalPage() {
 /**
  * Settled — what was right.
  *
- * The design gives this table a **Right** and a **Wrong** column: which lens,
- * which persona, which judge the outcome belongs to. The store settles
- * candidates against a benchmark and stops there — nothing joins an outcome
- * to the evidence the nomination cited. So the two columns become one,
- * **Cited**, which is what the candidate actually carried, and **Feeds** says
- * the attribution is missing rather than printing a lens that nothing
- * measured. That gap is the learning loop's input; naming it is the point.
+ * Right and Wrong are the terrain regime the name stood in, taken from
+ * `/research/candidate-outcome/rows?source=&days=` and split by `hit`. A hit
+ * names the regime under Right; a miss names it under Wrong. Which lens or
+ * judge earned the outcome is still not on the row, so Feeds says so rather
+ * than printing a lens nothing measured.
  */
 function SettledPanel({
   rows,
-  citedBy,
   onSelect,
 }: {
   rows: readonly JournalNode[]
-  citedBy: (n: JournalNode) => string
   onSelect: (id: string) => void
 }) {
   return (
@@ -417,7 +399,7 @@ function SettledPanel({
         <table className="w-full">
           <thead>
             <tr>
-              {['Artifact', 'Wrote it', 'Outcome', 'Cited', 'Feeds'].map((h) => (
+              {['Artifact', 'Wrote it', 'Outcome', 'Right', 'Wrong', 'Feeds'].map((h) => (
                 <th
                   key={h}
                   className={cn(
@@ -432,50 +414,65 @@ function SettledPanel({
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td className="px-2.5 py-1.5">
-                  <button
-                    type="button"
-                    onClick={() => onSelect(r.id)}
-                    className="font-mono text-dense-meta text-primary hover:underline"
+            {rows.map((r) => {
+              const side = settledRightWrong(r)
+              return (
+                <tr key={r.id}>
+                  <td className="px-2.5 py-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onSelect(r.id)}
+                      className="font-mono text-dense-meta text-primary hover:underline"
+                    >
+                      {r.title}
+                    </button>
+                  </td>
+                  <td className="px-2.5 py-1.5">
+                    <DenseTag variant={OPERATOR_TAG[r.operator]} size="cell">
+                      {r.operatorRaw}
+                    </DenseTag>
+                  </td>
+                  <td
+                    className={cn(
+                      'px-2.5 py-1.5 font-mono text-dense-meta tabular-nums',
+                      r.state.endsWith('right')
+                        ? 'text-success'
+                        : r.state.endsWith('wrong')
+                          ? 'text-destructive'
+                          : 'text-muted-foreground',
+                    )}
                   >
-                    {r.title}
-                  </button>
-                </td>
-                <td className="px-2.5 py-1.5">
-                  <DenseTag variant={OPERATOR_TAG[r.operator]} size="cell">
-                    {r.operatorRaw}
-                  </DenseTag>
-                </td>
-                <td
-                  className={cn(
-                    'px-2.5 py-1.5 font-mono text-dense-meta tabular-nums',
-                    r.state.endsWith('right')
-                      ? 'text-success'
-                      : r.state.endsWith('wrong')
-                        ? 'text-destructive'
-                        : 'text-muted-foreground',
-                  )}
-                >
-                  {r.state.replace('settled · ', '')} · {r.diff}
-                </td>
-                <td className="px-2.5 py-1.5 text-dense-meta text-muted-foreground">
-                  {citedBy(r)}
-                </td>
-                <td className="px-2.5 py-1.5 text-right text-dense-caption text-muted-foreground/70">
-                  attribution not recorded
-                </td>
-              </tr>
-            ))}
+                    {r.state.replace('settled · ', '')} · {r.diff}
+                  </td>
+                  <td
+                    className={cn(
+                      'px-2.5 py-1.5 text-dense-meta',
+                      side.right === '—' ? 'text-muted-foreground' : 'text-success',
+                    )}
+                  >
+                    {side.right}
+                  </td>
+                  <td
+                    className={cn(
+                      'px-2.5 py-1.5 text-dense-meta',
+                      side.wrong === '—' ? 'text-muted-foreground' : 'text-destructive',
+                    )}
+                  >
+                    {side.wrong}
+                  </td>
+                  <td className="px-2.5 py-1.5 text-right text-dense-caption text-muted-foreground/70">
+                    attribution not recorded
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       )}
       <p className="px-3 py-2 text-dense-caption leading-relaxed text-muted-foreground">
-        An outcome that attributes to nothing is marked unattributed, never forced onto a lens.
-        Here every one of them is: the store settles a candidate against a benchmark and keeps no
-        record of which evidence earned it. Until it does, the count of unattributed outcomes is
-        itself the reading — what this book cannot yet explain.
+        Right and Wrong name the terrain regime the name stood in when the outcome was a hit or a
+        miss. Which lens or judge earned it is still not recorded, so Feeds stays unattributed and
+        an outcome is never forced onto a lens.
       </p>
     </SectionPanel>
   )

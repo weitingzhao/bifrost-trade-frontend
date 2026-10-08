@@ -389,12 +389,30 @@ function settlementNode(o: CandidateOutcomeRow): JournalNode {
       ['entry', `${tradeDate || NOTHING} · ${o.entry_close ?? NOTHING}`],
       ['exit', `${o.exit_date ?? NOTHING} · ${o.exit_close ?? NOTHING}`],
       ['benchmark', o.benchmark_symbol ?? NOTHING],
+      ['regime', o.regime ?? 'unlabelled'],
+      ['regime_scope', o.regime_scope ?? 'unlabelled'],
       ['parent', o.candidate_id],
       ['attribution', 'not recorded — no lens carries the outcome'],
     ],
     to: '/research/loop/candidates',
     toLabel: 'Candidate Pool →',
   }
+}
+
+/**
+ * Right / Wrong for one settled row.
+ *
+ * The rows endpoint says whether the candidate beat its benchmark (`hit`) and
+ * which terrain regime the name stood in. A hit names that regime under
+ * Right; a miss names it under Wrong. A null hit is neither. Lens and judge
+ * attribution is still not on the row — that stays on Feeds.
+ */
+export function settledRightWrong(n: JournalNode): { right: string; wrong: string } {
+  const regime = n.provenance.find(([k]) => k === 'regime')?.[1]
+  const named = regime && regime !== 'unlabelled' ? regime : 'unlabelled'
+  if (n.state.endsWith('right')) return { right: named, wrong: '—' }
+  if (n.state.endsWith('wrong')) return { right: '—', wrong: named }
+  return { right: '—', wrong: '—' }
 }
 
 /**

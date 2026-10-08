@@ -63,10 +63,22 @@ export function useJournalDrafts() {
   })
 }
 
-export function useJournalOutcomes() {
+/**
+ * Settled rows for the Journal's Right / Wrong split.
+ *
+ * `source: ''` is every nomination source (measured: the same as omitting it).
+ * `days` is the candidate window, the same parameter `/summary` uses, so the
+ * split is not the newest 200 rows with no date bound. The API caps `limit`
+ * at 500; the 30-day window on DEV 2026-10-07 was 166 rows.
+ */
+export function journalOutcomeQuery(days: number) {
+  return { source: '', days, limit: 500 }
+}
+
+export function useJournalOutcomes(days: number) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.researchEngine.candidateOutcome.rows, 'journal'],
-    queryFn: async () => (await fetchCandidateOutcomeRows({ limit: 200 })).rows,
+    queryKey: [...QUERY_KEYS.researchEngine.candidateOutcome.rows, 'journal', days],
+    queryFn: async () => (await fetchCandidateOutcomeRows(journalOutcomeQuery(days))).rows,
     staleTime: STALE,
     refetchOnWindowFocus: false,
   })

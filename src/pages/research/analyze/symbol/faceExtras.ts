@@ -37,6 +37,7 @@
  * chain rather than in the flow lens; Flow gets the two put/call ratios it does
  * carry instead, which answer the same question from the same store.
  */
+import { readGexLevels } from './gexReading'
 import type { ExhibitPayload } from '@/api/research/exhibit'
 import type { DossierFaceId, FaceExtras } from '@/lib/dossier'
 import { canonicalLens } from '@/lib/regimeRibbon'
@@ -104,7 +105,8 @@ export function faceExtras(
   const putWall = readNum(gex, 'major_put_wall')
   const callWall = readNum(gex, 'major_call_wall')
   const zeroGamma = readNum(gex, 'zero_gamma')
-  const regime = readStr(gex, 'regime')
+  const gexReading = readGexLevels(gex)
+  const regime = gexReading.regime
   const expectedClose = readNum(terrain, 'expected_close')
   const structure = readNum(sepaR, 'structure_score')
   const momGrade = readStr(mom, 'grade')
@@ -139,8 +141,8 @@ export function faceExtras(
     },
     dealer: {
       values: {
-        ...(regime && zeroGamma != null
-          ? { gex_regime: `${regime} γ · flip ${fmtNum(zeroGamma, 0)}` }
+        ...(regime
+          ? { gex_regime: `${regime} γ${zeroGamma != null ? ` · flip ${fmtNum(zeroGamma, 0)}` : gexReading.noFlip ? ' · no flip' : ''}` }
           : {}),
         // The design prints the distance *and* the strike it is a distance
         // from: `1.2% · 155`. A percentage with no strike is a number you
@@ -155,7 +157,7 @@ export function faceExtras(
               {
                 id: 'walls',
                 label: 'Walls · put / call',
-                value: `${putWall == null ? '—' : fmtNum(putWall, 0)} / ${callWall == null ? '—' : fmtNum(callWall, 0)}`,
+                value: `${putWall == null ? gexReading.putLabel : fmtNum(putWall, 0)} / ${callWall == null ? gexReading.callLabel : fmtNum(callWall, 0)}`,
                 means: null,
               },
             ]

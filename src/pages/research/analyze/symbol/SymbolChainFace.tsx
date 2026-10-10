@@ -1,3 +1,4 @@
+import { GexLevelChips } from './GexLevelChips'
 /**
  * The Chain face — one name only (design `Research Symbol.dc.html`,
  * §isOptions). Four numbered steps: pick when (expiry cards off the fit's
@@ -127,7 +128,6 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
   const spot = numOf(g.spot) ?? numOf(p.close)
   const callWall = numOf(g.major_call_wall)
   const putWall = numOf(g.major_put_wall)
-  const zeroG = numOf(g.zero_gamma)
   const pinStrike = numOf(p.max_pain_strike)
 
   // The next print, estimated by Research (no forward calendar reaches this side).
@@ -229,9 +229,6 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
   // The print inside this expiry, sized as the Payoff face sizes it (a late one has no date to split at).
   const gap = useChainEarningsGap(sym, nextEarnings, spot, dte, today, rows.map((r) => r.strike))
   const levelChips = [
-    { label: 'Call wall', k: callWall, cls: 'text-profit' },
-    { label: 'Zero γ', k: zeroG, cls: 'text-warning' },
-    { label: 'Put wall', k: putWall, cls: 'text-loss' },
     ...(rich ? [{ label: 'Rich to SVI', k: rich.strike, cls: 'text-warning', extra: `+${rich.pts.toFixed(0)} pts` }] : []),
     { label: 'OpEx pin', k: pinStrike, cls: 'text-secondary-foreground' },
     ...gap.chips,
@@ -333,6 +330,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
           </span>
           <span className="h-4 w-px bg-border" />
           <span className="flex flex-wrap gap-1.5">
+            <GexLevelChips readings={g} />
             {levelChips.map((c) => (
               <span
                 key={c.label}

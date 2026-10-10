@@ -1,3 +1,4 @@
+import { readGexLevels, gexRegimeStreak } from './gexReading'
 /**
  * The Dealer face's two history panels — the ones its first walk seated as
  * «unmeasured» and the stores answer (Owner 2026-09-26, DESIGN_CONTRACTS
@@ -66,8 +67,10 @@ export interface TimelineRow {
   zeroGamma: number | null
   callWall: number | null
   putWall: number | null
-  /** Spot above zero γ: dealers long gamma, they damp. */
+  /** Research regime: sign of total net gamma, independent of a flip. */
   longGamma: boolean | null
+  reading?: ReturnType<typeof readGexLevels>
+  unavailable?: boolean
   /** Close-to-close change into the next session; null on the newest. */
   nextMove: number | null
   /** A results 8-K's session (or where a late print was expected). */
@@ -100,6 +103,7 @@ export function useDealerTimeline(sym: string, expiry: string | null) {
   ).marks
   const rows: TimelineRow[] = tail.map((b, i) => {
     const raw = (levelQs[i]?.data?.rows ?? [])[0] as Record<string, unknown> | undefined
+    const reading = readGexLevels(levelQs[i]?.isError ? undefined : raw)
     const spot = numOf(raw?.spot)
     const zeroGamma = numOf(raw?.zero_gamma)
     const at = closes.length - tail.length + i
@@ -111,23 +115,16 @@ export function useDealerTimeline(sym: string, expiry: string | null) {
       zeroGamma,
       callWall: numOf(raw?.major_call_wall),
       putWall: numOf(raw?.major_put_wall),
-      longGamma: spot != null && zeroGamma != null ? spot > zeroGamma : null,
+      longGamma: reading.longGamma,
+      reading,
+      unavailable: levelQs[i]?.isError ?? false,
       nextMove: next != null && cur != null && cur > 0 ? (next / cur - 1) * 100 : null,
       earnings: marks[i],
     }
   })
-  // Sessions on the newest row's side of zero γ, counted back without a break.
-  const newest = [...rows].reverse().find((r) => r.longGamma != null)
-  let streak = 0
-  if (newest) {
-    for (let i = rows.length - 1; i >= 0; i--) {
-      if (rows[i].longGamma == null) continue
-      if (rows[i].longGamma !== newest.longGamma) break
-      streak += 1
-    }
-  }
+  const { streak, longGamma } = gexRegimeStreak(rows)
   const loading = closesQ.isLoading || levelQs.some((q) => q.isLoading)
-  return { rows, streak: newest ? streak : null, longGamma: newest?.longGamma ?? null, loading }
+  return { rows, streak, longGamma, loading }
 }
 
 export function DealerRegimeTimeline({
@@ -139,7 +136,8 @@ export function DealerRegimeTimeline({
   loading: boolean
   expiry: string | null
 }) {
-  const shown = rows.filter((r) => r.spot != null)
+  const hasReading = rows.some((r) => r.spot != null || r.reading?.regime != null || r.callWall != null || r.putWall != null)
+  const shown = hasReading ? rows : rows.filter((r) => r.unavailable)
   if (shown.length === 0) {
     return (
       <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">
@@ -178,10 +176,10 @@ export function DealerRegimeTimeline({
                   </span>
                 ) : null}
               </td>
-              <td className={td}>{r.spot?.toFixed(2)}</td>
-              <td className={cn(td, 'text-warning')}>{r.zeroGamma != null ? r.zeroGamma.toFixed(1) : '—'}</td>
-              <td className={cn(td, 'text-muted-foreground')}>{r.callWall ?? '—'}</td>
-              <td className={cn(td, 'text-muted-foreground')}>{r.putWall ?? '—'}</td>
+              <td className={td}>{r.spot?.toFixed(2) ?? '—'}</td>
+              <td className={cn(td, 'text-warning')}>{r.unavailable ? 'unavailable' : r.zeroGamma != null ? r.zeroGamma.toFixed(1) : r.reading?.zeroLabel ?? '—'}</td>
+              <td className={cn(td, 'text-muted-foreground')}>{r.callWall ?? r.reading?.callLabel ?? '—'}</td>
+              <td className={cn(td, 'text-muted-foreground')}>{r.putWall ?? r.reading?.putLabel ?? '—'}</td>
               <td className={cn(td, 'text-left font-sans', r.longGamma === false ? 'text-warning' : 'text-foreground')}>
                 {r.longGamma == null ? '—' : r.longGamma ? 'long γ' : 'short γ'}
               </td>

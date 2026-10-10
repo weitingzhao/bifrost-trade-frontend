@@ -1,3 +1,4 @@
+import { readGexLevels } from './gexReading'
 /**
  * The Dealer face — one name only (design `Research Symbol.dc.html`,
  * §isDealer). Gamma levels with the walls on a ruler and the strike GEX
@@ -141,6 +142,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const callWall = num(g.major_call_wall)
   const putWall = num(g.major_put_wall)
   const netGex = num(g.total_net_gex)
+  const gexReading = readGexLevels(g)
   const expiry = typeof g.expiry === 'string' ? g.expiry : null
 
   const distQ = useQuery({
@@ -203,10 +205,11 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
   const cumLo = Math.min(0, ...cums)
   const cumHi = Math.max(0, ...cums)
 
+  const levelValues = [spot, zeroG, callWall, putWall].filter((v): v is number => v != null)
   const marks =
-    spot != null && zeroG != null && callWall != null && putWall != null
+    levelValues.length > 0
       ? (() => {
-          const vals = [spot, zeroG, callWall, putWall]
+          const vals = levelValues
           const lo = Math.min(...vals)
           const hi = Math.max(...vals)
           const pad = (hi - lo) * 0.12 || 1
@@ -315,8 +318,9 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           </p>
         ) : null}
         <div className="px-4 pb-1 pt-8">
+          {gexReading.noFlip ? <p className="mb-7 text-dense-meta text-warning">{gexReading.longGamma ? 'long γ' : 'short γ'} · no flip — cumulative net gamma never changes sign.</p> : null}
           {marks ? (
-            <div className="relative mb-7 h-1.5 rounded-full bg-[var(--sk-line0)]">
+            <div role="group" aria-label="Dealer levels" className="relative mb-7 h-1.5 rounded-full bg-[var(--sk-line0)]">
               {putWall != null ? (
                 <span className="absolute -top-5 -translate-x-1/2 whitespace-nowrap font-mono text-dense-micro text-loss" style={{ left: `${marks.posOf(putWall)}%` }}>
                   Put wall {putWall}
@@ -382,7 +386,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
               <div className="flex flex-wrap gap-x-3.5 gap-y-1 pt-1.5 text-dense-micro text-muted-foreground">
                 <span><i className="mr-1 inline-block h-0.5 w-3.5 bg-profit align-[3px]" />calls · dealers long γ</span>
                 <span><i className="mr-1 inline-block h-0.5 w-3.5 bg-loss align-[3px]" />puts · dealers short γ</span>
-                <span><i className="mr-1 inline-block h-0.5 w-3.5 bg-foreground align-[3px]" />cumulative — crosses zero at the flip</span>
+                <span><i className="mr-1 inline-block h-0.5 w-3.5 bg-foreground align-[3px]" />cumulative — {gexReading.noFlip ? 'no sign change' : 'crosses zero at the flip'}</span>
                 <span><i className="mr-1 inline-block w-3.5 border-t-2 border-dashed border-warning align-[3px]" />zero γ</span>
                 <span><i className="mr-1 inline-block w-3.5 border-t-2 border-[var(--sk-ticker)] align-[3px]" />spot</span>
               </div>
@@ -393,9 +397,9 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
             </p>
           )}
           <div className="grid grid-cols-2 gap-2.5 py-2.5 sm:grid-cols-5">
-            <FaceKv label="to put wall" value={dist(putWall)} cls="text-loss" />
-            <FaceKv label="to zero γ" value={dist(zeroG)} cls="text-warning" />
-            <FaceKv label="to call wall" value={dist(callWall)} cls="text-profit" />
+            <FaceKv label="to put wall" value={putWall != null ? dist(putWall) : gexReading.putLabel} cls="text-loss" />
+            <FaceKv label="to zero γ" value={gexReading.noFlip ? 'no flip' : dist(zeroG)} cls="text-warning" />
+            <FaceKv label="to call wall" value={callWall != null ? dist(callWall) : gexReading.callLabel} cls="text-profit" />
             <FaceKv label="net GEX" value={netGex != null ? fmtM(netGex) : '—'} />
             <FaceKv
               label="sessions in regime"
@@ -405,7 +409,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
                   : '—'
               }
               cls={timeline.streak == null ? 'text-muted-foreground' : timeline.longGamma ? undefined : 'text-warning'}
-              title={`Sessions on today's side of zero γ without a break, from the regime timeline (levels at ${expiry ?? 'the exhibit expiry'}).`}
+              title={`Consecutive sessions with today's net gamma sign; a missing reading breaks the count, from the regime timeline (levels at ${expiry ?? 'the exhibit expiry'}).`}
             />
           </div>
         </div>
@@ -514,12 +518,12 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
         <header className={panelHead}>
           <span className={cap}>Regime timeline</span>
           <span className="text-dense-body font-semibold">last 12 sessions</span>
-          <span className="ml-auto text-dense-caption text-muted-foreground">spot vs zero γ</span>
+          <span className="ml-auto text-dense-caption text-muted-foreground">net gamma sign</span>
         </header>
         <DealerRegimeTimeline rows={timeline.rows} loading={timeline.loading} expiry={expiry} />
         <p className={note}>
-          A flip that held two sessions is a regime; a one-day cross is noise. Next-day move is the
-          realised check of damp vs chase. Each session is read at {expiry ?? 'the exhibit’s'} expiry,
+          Regime follows the sign of total net gamma, as Research defines it. No flip means cumulative
+          net gamma never changes sign; it is not missing data. Next-day move is the realised check. Each session is read at {expiry ?? 'the exhibit’s'} expiry,
           so its walls are the panel above&rsquo;s.
         </p>
       </section>

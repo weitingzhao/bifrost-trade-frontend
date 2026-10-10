@@ -3,7 +3,7 @@ name: monitoring-ui
 description: >-
   监控页面 UI 修改规则与视觉参考（Skote reference atlas、traffic lights、IB 账户布局）。
   Use when changing monitoring/daemon/IB-account pages, status lamps, or layout in bifrost-trade-frontend.
-parity-id: monitoring-ui-v2
+parity-id: monitoring-ui-v3
 ---
 
 # 监控页面 UI 修改规则与参考资源
@@ -22,7 +22,6 @@ parity-id: monitoring-ui-v2
 
 - **本机路径**（用于今后做页面 UI 时借鉴）：
   - `~/Desktop/framework/Skote_Nodejs_v4.2.0`
-  - 或绝对路径：`/Users/vision-mac-trader/Desktop/framework/Skote_Nodejs_v4.2.0`
 - **说明**：Skote 为 Admin/Dashboard 模板（Express + EJS + Bootstrap 5），可参考其 `Admin/views/` 下 dashboard、crypto、tables 等页面的卡片、表格、网格布局与视觉细节；不引入其代码或依赖。
 
 ## 何时更新本规则

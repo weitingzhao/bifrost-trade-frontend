@@ -26,6 +26,8 @@ import { sviFromRow, sviIvPts } from '@/utils/sviSmile'
 import { SkewSurfaceChart, TermCurveChart } from '@/pages/research/analyze/symbol/symbolVolCharts'
 import { lateLead, shortDate, termEarningsLegend, termEarningsMark, termEarningsNote } from '@/utils/earningsEstimate'
 import { rankPathEarnings, type RankPathMark } from './rankPathEarnings'
+import { IvScoreReading } from './IvScoreReading'
+import { ivScore } from './ivScore'
 import {
   LensOwnRecord,
   ResidualHeatmap,
@@ -130,7 +132,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   )
   const fitQ = useVolSurfaceFit(sym)
 
-  // ── IV rank readings, off the vrp store's own year ──
+  // Historical IV range comes from VRP; current scores come from Research.
   const year = useMemo(() => vrpQ.data ?? [], [vrpQ.data])
   const ivs = useMemo(
     () => year.map((r) => r.atm_iv_30d).filter((v): v is number => v != null && Number.isFinite(v)),
@@ -141,14 +143,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
   const rv20 = last?.rv_20d != null ? last.rv_20d * 100 : null
   const low = ivs.length > 0 ? Math.min(...ivs) * 100 : null
   const high = ivs.length > 0 ? Math.max(...ivs) * 100 : null
-  const rank =
-    iv30 != null && low != null && high != null && high > low
-      ? ((iv30 - low) / (high - low)) * 100
-      : null
-  const pctl =
-    iv30 != null && ivs.length > 0
-      ? (ivs.filter((v) => v * 100 < iv30).length / ivs.length) * 100
-      : null
+  const rank = ivScore(exOf('iv_rank'), 'iv_rank_1y')
   const pos = (v: number | null) =>
     v == null || low == null || high == null || high <= low
       ? null
@@ -165,12 +160,12 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
     [window60, earnQ.data?.dates, nextEarnings]
   )
   const rankPath = useMemo(() => {
-    if (low == null || high == null || high <= low) return []
+    if (rank == null || low == null || high == null || high <= low) return []
     return window60.map((r, i) => {
       const v = r.atm_iv_30d != null ? r.atm_iv_30d * 100 : null
       return { h: v == null ? 0 : ((v - low) / (high - low)) * 100, mark: pathEarnings.marks[i] }
     })
-  }, [window60, low, high, pathEarnings])
+  }, [window60, low, high, pathEarnings, rank])
 
   // ── VRP deciles: the year's spread distribution, current decile lit ──
   const vrp = last?.vrp_60d != null ? last.vrp_60d * 100 : null
@@ -338,14 +333,14 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
         <header className={panelHead}>
           <span className={cap}>IV rank</span>
           <span className="text-dense-body font-semibold">30d implied vs its own year</span>
-          <span className="ml-auto text-dense-caption text-muted-foreground">source · vrp store · 252d</span>
+          <span className="ml-auto text-dense-caption text-muted-foreground">source · Research IV scores · 252d</span>
         </header>
         <LensVerdictBlock lensId="iv_rank" exhibit={exOf('iv_rank')} />
         <div className="px-3 pb-1 pt-2.5">
           <div className="relative mb-6 h-1.5 rounded-full bg-[var(--sk-line0)]">
-            {low != null && high != null ? (
+            {rank != null && low != null && high != null ? (
               <>
-                <span className="absolute -bottom-5 left-0 text-dense-micro text-muted-foreground">1y low {low.toFixed(0)}</span>
+                <span className="absolute -bottom-5 left-0 text-dense-micro text-muted-foreground">history low {low.toFixed(0)}</span>
                 {rv20 != null && pos(rv20) != null ? (
                   <span className="absolute -top-5 -translate-x-1/2 whitespace-nowrap font-mono text-dense-micro text-secondary-foreground" style={{ left: `${pos(rv20)}%` }}>
                     RV20 {rv20.toFixed(1)}
@@ -356,7 +351,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
                     IV30 {iv30.toFixed(1)}
                   </span>
                 ) : null}
-                <span className="absolute -bottom-5 right-0 text-dense-micro text-muted-foreground">1y high {high.toFixed(0)}</span>
+                <span className="absolute -bottom-5 right-0 text-dense-micro text-muted-foreground">history high {high.toFixed(0)}</span>
                 {pos(iv30) != null ? (
                   <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-foreground" style={{ left: `${pos(iv30)}%` }} />
                 ) : null}
@@ -364,8 +359,7 @@ export function SymbolVolatilityFace({ symbol }: { symbol: string }) {
             ) : null}
           </div>
           <div className="grid grid-cols-2 gap-2.5 pb-2 sm:grid-cols-4">
-            <FaceKv label="IV rank" value={rank != null ? rank.toFixed(0) : '—'} cls={rank != null && rank >= 70 ? 'text-profit' : rank != null && rank <= 30 ? 'text-loss' : undefined} />
-            <FaceKv label="IV pctl" value={pctl != null ? pctl.toFixed(0) : '—'} />
+            <IvScoreReading exhibit={exOf('iv_rank')} />
             <FaceKv label="IV30" value={iv30 != null ? `${iv30.toFixed(1)}%` : '—'} />
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className={cap}>60d rank path</span>

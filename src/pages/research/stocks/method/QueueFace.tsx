@@ -302,7 +302,9 @@ export function QueueFace({ head }: { head: MethodHead }) {
           detail: orchQ.data?.detail ?? 'The orchestrator reports the nightly job unhealthy',
           tone: 'warning',
         }
-      : healthFlag(health.data, { loading: health.isLoading, error: health.isError })
+      : orchQ.data?.verdict === 'caution'
+        ? { flag: 'CHECKS CAUTION', detail: orchQ.data.detail ?? 'Output coverage unverified', tone: 'warning' }
+        : healthFlag(health.data, { loading: health.isLoading, error: health.isError })
 
   return (
     <PageShell padding="compact" className="space-y-3">
@@ -341,11 +343,17 @@ export function QueueFace({ head }: { head: MethodHead }) {
         >
           {state === 'failed'
             ? 'retry pending · needs Ops'
-            : nextTick
+            : orchQ.data?.verdict === 'caution'
+              ? 'checks caution · valid rows retained'
+              : nextTick
               ? `next ${nextTick}`
               : (orchQ.data?.verdict ?? '—')}
         </span>
       </div>
+
+      {state !== 'failed' && orchQ.data?.verdict === 'caution' ? (
+        <p className="text-dense-meta text-warning">{orchQ.data.detail ?? 'Output coverage unverified'}</p>
+      ) : null}
 
       {pageState === 'stale' ? (
         <ViewState

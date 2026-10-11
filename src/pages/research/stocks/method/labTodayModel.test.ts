@@ -75,6 +75,12 @@ describe('the batch state', () => {
     ;(o as { schedules: { last_run_status: string }[] }).schedules[0].last_run_status = 'FAILURE'
     expect(batchState(o, true, 8)).toBe('failed')
   })
+
+  it('retains valid rows under check caution while respecting overdue runs', () => {
+    expect(batchState(orch({ verdict: 'caution' }), true, 8)).toBe('live')
+    expect(batchState(orch({ verdict: 'caution' }), true, 0)).toBe('empty')
+    expect(batchState(orch({ verdict: 'caution', overdue: true }), true, 8)).toBe('failed')
+  })
 })
 
 describe('a candidate’s card', () => {

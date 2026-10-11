@@ -45,7 +45,7 @@ export function batchState(
   const sched = orch?.schedules.find((s) => s.job_name === 'research_trading_day')
   const failed =
     orch?.overdue === true ||
-    (orch?.verdict != null && orch.verdict !== 'healthy') ||
+    (orch?.verdict != null && !['healthy', 'caution'].includes(orch.verdict)) ||
     sched?.last_run_status === 'FAILURE'
   if (failed) return 'failed'
   return queueCount === 0 ? 'empty' : 'live'

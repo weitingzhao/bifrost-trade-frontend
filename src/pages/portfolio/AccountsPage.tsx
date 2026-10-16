@@ -53,7 +53,7 @@ export default function AccountsPage() {
   const [inspector, setInspector] = useState<AccountsInspectorState>({ type: null })
 
   const accountsFetchedAt = data?.portfolio.accounts_fetched_at
-  const { refresh, isRefreshing, feedback } = useAccountsRefresh(accountsFetchedAt)
+  const { refresh, isRefreshing, feedback, feedbackTone } = useAccountsRefresh(accountsFetchedAt)
 
   const accounts = useMemo(
     () =>
@@ -214,8 +214,11 @@ export default function AccountsPage() {
           <p
             className={cn(
               'text-xs',
-              feedback.startsWith('Refreshed') ? 'text-success' : 'text-muted-foreground',
+              feedbackTone === 'success' && 'text-success',
+              feedbackTone === 'warning' && 'text-warning',
+              feedbackTone === 'muted' && 'text-muted-foreground',
             )}
+            role={feedbackTone === 'warning' ? 'alert' : undefined}
           >
             {feedback}
           </p>

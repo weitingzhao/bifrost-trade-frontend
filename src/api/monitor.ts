@@ -12,10 +12,18 @@ export async function fetchMonitorStatus(): Promise<StatusResponse> {
   return validateStatus(await requestJson(monitorUrl('/status'), { label: `Monitor /status` }))
 }
 
-export async function postRefreshAccounts(signal?: AbortSignal): Promise<{ ok: boolean; message?: string; error?: string }> {
-  const res = await tradeFetch(monitorUrl('/control/refresh_accounts'), { method: 'POST', signal })
-  if (!res.ok) throw new Error(`Refresh accounts: ${res.status}`)
-  return res.json()
+/**
+ * Ask monitor to pull accounts from IB now. A refusal throws `HttpError` in the
+ * server's words — api 0.12.2 answers 503 with a `detail` such as "IB is not
+ * connected on the host slot: …"; older builds sent 500 `{ ok: false, error }`,
+ * whose code is read the same way.
+ */
+export async function postRefreshAccounts(signal?: AbortSignal): Promise<{ ok: boolean; message?: string }> {
+  return requestJson(monitorUrl('/control/refresh_accounts'), {
+    method: 'POST',
+    signal,
+    label: 'Refresh accounts',
+  })
 }
 
 export async function postSuspend(): Promise<{ ok?: boolean; error?: string }> {
